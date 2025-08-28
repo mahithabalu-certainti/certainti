@@ -1934,23 +1934,23 @@ class AccountService {
           rid: { [Op.in]: childAccountIds },
         };
 
-        const globalAccount = await repository.findAll({
-          where: parentWhereClauseBase,
-          attributes: ["rid", "account_name"],
-          include: [
-            {
-              model: Account,
-              as: "child_accounts",
-              attributes: ["rid", "account_name"],
-              required: false,
-              where: childWhereClauseBase,
-              separate: true,
-              order: [[sortBy, sortOrder]],
-            },
-          ],
-          order: [[sortBy, sortOrder]],
-          ...paginationOptions,
-        });
+      const globalAccount = await repository.findAll({
+        where: parentWhereClauseBase,
+        attributes: ['rid', 'account_name','currency_rid'],
+        include: [
+          {
+            model: Account,
+            as: 'child_accounts',
+            attributes: ['rid', 'account_name','currency_rid'],
+            required: false,
+            where: childWhereClauseBase,
+            separate: true,
+            order: [[sortBy, sortOrder]],
+          }
+        ],
+        order: [[sortBy, sortOrder]],
+        ...paginationOptions
+      });
 
         return {
           statusCode: HttpStatus.SUCCESS,
@@ -1962,27 +1962,27 @@ class AccountService {
         };
       }
 
-      // DEFAULT: Return all top-level (parent) accounts with their children
-      const globalAccount = await repository.findAll({
-        where: {
-          parent_account_rid: {
-            [Op.is]: null,
-          },
-        },
-        attributes: ["rid", "account_name"],
-        include: [
-          {
-            model: Account,
-            as: "child_accounts",
-            attributes: ["rid", "account_name"],
-            required: false,
-            separate: true,
-            order: [[sortBy, sortOrder]],
-          },
-        ],
-        order: [[sortBy, sortOrder]],
-        ...paginationOptions,
-      });
+    // DEFAULT: Return all top-level (parent) accounts with their children
+    const globalAccount = await repository.findAll({
+      where: {
+        parent_account_rid: {
+          [Op.is]: null
+        }
+      },
+      attributes: ['rid', 'account_name','currency_rid'],
+      include: [
+        {
+          model: Account,
+          as: 'child_accounts',
+          attributes: ['rid', 'account_name','currency_rid'],
+          required: false,
+          separate: true,
+          order: [[sortBy, sortOrder]],
+        }
+      ],
+      order: [[sortBy, sortOrder]],
+      ...paginationOptions
+    });
 
       return {
         statusCode: HttpStatus.SUCCESS,

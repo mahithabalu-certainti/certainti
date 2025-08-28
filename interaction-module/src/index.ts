@@ -4,6 +4,8 @@ import initExpressServer from "./servers/expressServer";
 import './services/cronJob/renewSubscriptions';
 // import initGraphQLServer from "./servers/graphqlServer";
 
+//import { Kafka } from "kafkajs";
+//import interactionsController from "./controllers/interactionsController";
 const PORT = process.env.SERVER_PORT || 3000;
 
 async function startServer() {
@@ -20,4 +22,26 @@ async function startServer() {
   }
 }
 
+/*const kafka = new Kafka({
+  clientId: "my-app",
+  brokers: [process.env.KAFKA_BROKER || "localhost:9092"], // update with your broker address
+});
+const consumer = kafka.consumer({ groupId: process.env.KAFKA_CONSUMER_GROUP || "interaction-group" });
+async function startKafkaConsumer() {
+  await consumer.connect();
+  const topic = process.env.KAFKA_TOPIC_INTERACTION || 'test_topic';
+  await consumer.subscribe({ topic, fromBeginning: false });
+
+  await consumer.run({
+    eachMessage: async ({ message }: { message: any }) => {
+      console.log("Received message:", message.value?.toString());
+      await interactionsController.processKafkaMessages(message.value?.toString());
+    },
+  });
+}
+*/
+
+
+
 startServer();
+//startKafkaConsumer();

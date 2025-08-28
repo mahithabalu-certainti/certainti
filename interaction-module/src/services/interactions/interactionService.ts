@@ -37,6 +37,7 @@ export class InteractionService {
 
   async createInteraction(
     interactionData: ICreateInteraction,
+    interactionSource: string,
     userId: string
   ): Promise<{
     statusCode: number;
@@ -58,8 +59,7 @@ export class InteractionService {
       }
 
       const {  intSource,intType } =
-        await this.getInteractionStatusAndSource();
-    //  interactionData.status_rid = interactionStatus || "";
+        await this.getInteractionStatusAndSource(interactionSource);
       interactionData.interaction_source_rid = intSource || "";
       interactionData.interaction_type_rid = intType || "";
 
@@ -94,10 +94,14 @@ export class InteractionService {
         );
       }
       await transaction.commit();
+      let interactionStatus;
       //check if auto send enabled
-      const interactionStatus = await this.interactionSchemaService.getInteractionStatusById(
-        interactionData.status_rid
-      );
+      if( interactionData.status_rid)
+      {
+        interactionStatus = await this.interactionSchemaService.getInteractionStatusById(
+          interactionData.status_rid
+        );
+      }
       if(interactionStatus === statusAction.CREATE)
       await this.checkAutoSendEnabled(accountNumber,interactionData,interaction.rid,userId);
       return {
@@ -125,10 +129,10 @@ export class InteractionService {
        }], interactionData.account_rid, userId);
     }
   }
-  async getInteractionStatusAndSource() {
-  
+  async getInteractionStatusAndSource(interactionSource: string) {
+
     const intSource = await this.interactionSchemaService.getInteractionSourceByType(
-      interactionSource.MANUAL
+      interactionSource
     );
     const intType = await this.interactionSchemaService.getInteractionType(
       interactionType.RD
@@ -157,32 +161,14 @@ export class InteractionService {
       if (!accountNumber) {
         throw new Error("Invalid account ID");
       }
-      const existingInteractionData =
-        await this.interactionSchemaService.fetchInteractionById(
-          accountNumber,
-          interactionData.interaction_rid
-        );
-       //  const {  intSource } =
-       // await this.getInteractionStatusAndSource();
-      //  interactionData.interaction_source_rid = intSource || "";
-      // if(interactionData.status_action === 'DRAFT')
-      // {
-      //  const {  intSource } =
-      //   await this.getInteractionStatusAndSource(interactionData.status_action);
-      //   interactionData.interaction_source_rid = intSource || "";
-      // }
-      // else{
-
-      //   const { interactionStatus, intSource } =
-      //     await this.getInteractionStatusAndSource(interactionData.status_action);
-      //   if(!interactionData.status_rid)
-      //     interactionData.status_rid = interactionStatus || "";
-      //   interactionData.interaction_source_rid = intSource || "";
-      // }
-       const interactionStatus = await this.interactionSchemaService.getInteractionStatusById(
+    
+      let interactionStatus;
+      if(interactionData.status_rid)
+      {
+          interactionStatus = await this.interactionSchemaService.getInteractionStatusById(
         interactionData.status_rid
       );
-      if(interactionStatus === statusAction.RESUME)
+       if(interactionStatus === statusAction.RESUME)
       {
         const prevStatus = await this.interactionSchemaService.getPreviousInteractionStatus(interactionData.status_rid, accountNumber);
         if(prevStatus)
@@ -190,6 +176,7 @@ export class InteractionService {
           interactionData.status_rid = prevStatus;
         }
       }
+      }   
       const updatedInteraction =
         await this.interactionSchemaService.updateInteraction(
           accountNumber,
@@ -213,15 +200,6 @@ export class InteractionService {
           userId,
           transaction
         );
-
-        // await this.interactionSchemaService.addInteractionHistory(
-        //   accountNumber,
-        //   interactionData,
-        //   existingInteractionData,
-        //   interactionData.interaction_rid,
-        //   userId,
-        //   transaction
-        // );
       }
 
       await transaction.commit();
@@ -608,6 +586,7 @@ export class InteractionService {
 
     // Header rows
     const headerRows = [
+      ["Account ID", interactionInfo.accountInfo?.r_number ?? ""],
       ["Interaction ID", interactionInfo.interactionInfo?.interaction_id ?? ""],
       ["Project ID", interactionInfo.projectInfo?.project_id ?? ""],
       ["Project Name", interactionInfo.projectInfo?.project_name ?? ""],
@@ -621,13 +600,14 @@ export class InteractionService {
     });
 
     // Column headers
-    worksheet.addRow(["Questions", "Answers", "Notes", "Is Mandatory"]);
-    worksheet.getRow(4).eachCell((cell) => {
+    worksheet.addRow(["Question No","Questions", "Answers", "Notes", "Is Mandatory"]);
+    worksheet.getRow(5).eachCell((cell) => {
       cell.font = { bold: true };
       cell.protection = { locked: true };
     });
 
     worksheet.columns = [
+      { key: "question no", width: 15 },
       { key: "question", width: 50 },
       { key: "answer", width: 50 },
       { key: "notes", width: 30 },
@@ -638,17 +618,19 @@ export class InteractionService {
     interactionItems.forEach((item: any) => {
       const plain = item.get ? item.get({ plain: true }) : item;
       const row = worksheet.addRow({
-        question: plain.question,
-        answer: "",
-        notes: "",
-        is_mandatory: plain.is_mandatory ? "Yes" : "No",
+        "question no": plain.question_seq_num,
+        "question": plain.question,
+        "answer": "",
+        "notes": "",
+        "is_mandatory": plain.is_mandatory ? "Yes" : "No",
       });
 
       // Lock specific columns right away
       row.getCell(1).protection = { locked: true };
-      row.getCell(2).protection = { locked: false};
-      row.getCell(3).protection = { locked: true };
+      row.getCell(2).protection = { locked: true};
+      row.getCell(3).protection = { locked: false };
       row.getCell(4).protection = { locked: true };
+      row.getCell(5).protection = { locked: true };
     });
 
     // Now protect worksheet AFTER all protections are set
@@ -834,7 +816,7 @@ export class InteractionService {
           interaction_source_rid: d.interaction_source,
           interaction_source_name: sourceMap.get(d.interaction_source),
           response_source_rid: d.response_source,
-          response_source: responseSourceMap.get(d.response_source),
+          response_source_name : responseSourceMap.get(d.response_source) == undefined ? null : responseSourceMap.get(d.response_source),
           created_by: d.created_by,
           created_user_name: createdMap.get(d.created_by) || null,
           modified_by: d.modified_by,
@@ -1180,7 +1162,7 @@ export class InteractionService {
       entity_transaction_id: data.correlation_id
 
     }
-    await this.interactionSchemaService.updateQrePercentAndTechSummary(data.qre, accountNumber,data.project_id,techSummaryPayload)
+    //await this.interactionSchemaService.updateQrePercentAndTechSummary(data.qre, accountNumber,data.project_id,techSummaryPayload)
     return {
       statusMessage : "Details updated successfully",
       status : data.status,
@@ -1190,38 +1172,48 @@ export class InteractionService {
 
   async processKafkaMessage(message: any): Promise<void> {
     try {
-      // Parse message if needed
+      console.log("Processing Kafka message...",message)
+      
       const parsedMessage = typeof message === "string" ? JSON.parse(message) : message;
 
-      // Example: Extract required fields
-      const { company_id, project_fiscal_id, type, qre_percent } = parsedMessage;
+      const { company_id, project_fiscal_id, type, qre_percent,project_summary,correlation_id,questions } = parsedMessage;
 
-      // Validate required fields
       if (!company_id || !project_fiscal_id || !type) {
         this.logger.error("Kafka message missing required fields", parsedMessage);
         return;
       }
-       // Fetch account number
       const { accountNumber } = await this.interactionSchemaService.fetchValidAccountNumberById(company_id);
       if (!accountNumber) {
         this.logger.error("Invalid account ID in Kafka message", company_id);
         return;
       }
       if(type === 'QRE'){
- await this.interactionSchemaService.updateQrePercent(qre_percent, accountNumber,project_fiscal_id)
+        await this.interactionSchemaService.updateQrePercent(qre_percent, accountNumber,project_fiscal_id)
       }
+      if(type ==="TECH_SUMMARY"){
+         await this.interactionSchemaService.updateTechSummary(project_summary, accountNumber,project_fiscal_id,company_id,correlation_id)
+      }
+      if(type === "QUESTIONS"){ 
+       
+        const projectInfo = await this.interactionSchemaService.fetchProjectInfo(accountNumber,project_fiscal_id)
+        const statusRid = await this.interactionSchemaService.getInteractionStatusByType(statusAction.CREATE) 
+        const questionsWithActionType = Array.isArray(questions)
+          ? questions.map((q: any) => ({ ...q, action_type: "add" }))
+          : [];
 
-
-     
-
-      // Update interaction in DB
-      // await this.interactionSchemaService.updateInteraction(
-      //   accountNumber,
-      //   { ...updateData, interaction_rid },
-      //   userId || "system",
-      //   undefined // No transaction for Kafka consumer
-      // );
-
+        let interactionData = {
+          account_rid: company_id,
+          project_fiscal_rid: project_fiscal_id,
+          fiscal_year: projectInfo.fiscal_year,
+          status_rid: statusRid ?? statusAction.CREATE,
+          project_rid: projectInfo?.project_rid,
+          questions: questionsWithActionType,
+          interaction_source_rid: interactionSource.AUTO,
+          interaction_type_rid: interactionType.RD,
+          created_by: process.env.SYSTEM_USER_ID!,
+        };
+        await this.createInteraction(interactionData,interactionSource.AUTO,"userID")
+      }
       this.logger.info(`Processed Kafka message for interaction_rid: ${company_id}`);
     } catch (err) {
       this.logger.error("Error processing Kafka message", err);
@@ -1229,8 +1221,3 @@ export class InteractionService {
   }
 
 }
-
-
-
-// Call this function somewhere in your app startup
-// startKafkaConsumer(yourInteractionServiceInstance);

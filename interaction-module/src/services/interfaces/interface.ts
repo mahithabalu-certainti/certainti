@@ -5,6 +5,7 @@ import {
 } from "../../utils/types";
 
 export interface IInteractionService {
+  processKafkaMessage(data: any): Promise<void>;
   listInteractionPrjAccount(data: any): Promise<any>;
   fetchInteractionSummary(
     data: any
@@ -14,6 +15,7 @@ export interface IInteractionService {
   ): Promise<{ statusCodeValue: string; data: any }>;
   createInteraction(
     interactionData: ICreateInteraction,
+    interactionSource: string,
     userId: string
   ): Promise<{
     statusCode: number;

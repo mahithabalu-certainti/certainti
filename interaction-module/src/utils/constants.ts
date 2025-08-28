@@ -29,6 +29,11 @@ export const statusAction = {
   RESENT: "Resent"
 };
 
+export const techSummaryStatus = {
+  ACTIVE: "active",
+  INACTIVE: "inactive"
+}
+
 export const interactionSource = {
   AUTO: "Auto",
   MANUAL: "Manual",
@@ -75,7 +80,10 @@ export const filtersColumns : Record<string, string> =
     modified_datetime : "modified_datetime",
     status_rid : "status_rid",
     interaction_type_rid : "interaction_type_rid",
-    interaction_iteration : "interaction_iteration"
+    interaction_iteration : "interaction_iteration",
+    project_code : "project_code",
+    fiscal_year : "fiscal_year",
+    response_source_rid : "response_source_rid"
   }
 
   export const filterTypes : Record<string, any> = 
@@ -94,7 +102,10 @@ export const filtersColumns : Record<string, string> =
     created_datetime : "datetime",
     modified_datetime : "datetime",
     status_rid : "string",
-    interaction_type_rid : "string"
+    interaction_type_rid : "string",
+    project_code : "string",
+    fiscal_year : "number",
+    response_source_rid : "string"
   }
 
   export const ALPHANUMERIC_CONDITIONS : Record <string, string> = {
@@ -120,7 +131,8 @@ export const mainTableFilters : Record<any, any> = {
   updated_user_name : "updated_user_name",
   interaction_type_name : "interaction_type_name",
   interaction_source_name : "interaction_source_name",
-  status_name : "status_name"
+  status_name : "status_name",
+  response_source_name : "response_source_name"
 }
 
 export const STATUS_MESSAGE = {
@@ -267,7 +279,7 @@ export const rawQueries = {
   },
   fetchProjectInfo(rid : string,schemaName : string) {
     return `
-    SELECT rid, project_name,project_code,r_number,fiscal_year FROM ${schemaName}.project_fiscal WHERE rid = '${rid}'`
+    SELECT rid, project_name,project_code,r_number,fiscal_year,project_rid FROM ${schemaName}.project_fiscal WHERE rid = '${rid}'`
   },
    updateQreInfo(rid : string, schemaName : string, qrePercent: number) {
     return `
@@ -279,7 +291,7 @@ export const rawQueries = {
   },
   fetchAccountInfo(rid: string) {
     return `
-    SELECT rid, account_name FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`
+    SELECT rid, account_name,r_number FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`
   },
   fetchPreviousInteractionStatus(statusRid: string,schemaName: string) {
     return `
@@ -369,7 +381,11 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     updated_user_name : "string",
     status_rid : "string",
     interaction_type_rid : "string",
-    interaction_iteration : "number"
+    interaction_iteration : "number",
+    account_name : "string",
+    project_code : "string",
+    fiscal_year : "number",
+    response_source_rid : "string"
   }
 
   export const filtersColumnsForInteractionSummary : Record<string, string> =
@@ -394,7 +410,12 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     status_rid : "status_rid",
     interaction_type_rid : "interaction_type_rid",
     status_name : "status_name",
-    interaction_iteration : "interaction_iteration"
+    interaction_iteration : "interaction_iteration",
+    account_name : "account_name",
+    project_code : "project_code",
+    fiscal_year : "fiscal_year",
+    response_source_rid : "response_source_rid",
+    response_source_name : "response_source_name"
   }
 
   export const responseSortKeys = ["r_number","response_by", "response_on","response_email","interaction_response", "interaction_version"]
@@ -404,3 +425,9 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     status_rid : "string",
     date : "datetime"
   }
+
+  export const interactionTypes = [
+    "qre",
+    "interaction",
+    "tech_summary"
+  ]
