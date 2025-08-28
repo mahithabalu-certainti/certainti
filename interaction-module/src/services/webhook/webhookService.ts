@@ -193,6 +193,8 @@ export class WebHookService {
         }
       }
 
+      const responsSource: any = await this.fetchResponseSource();
+
       const updateResponeObj = {
         interaction_rid: interaction.rid,
         account_rid: interaction.account_rid,
@@ -204,7 +206,7 @@ export class WebHookService {
         attachments: [],
         questions: answers,
         created_by: interaction.recipient_email || "",
-        response_source_rid: ""
+        response_source_rid: responsSource[0]?.rid || ""
       };
 
       await this.interactionService.updateInteractionResponse(
@@ -239,6 +241,20 @@ export class WebHookService {
     return interaction;
   }
 
+  async fetchResponseSource(){
+    const mainDbSequelize =
+      await this.interactionModelService.getMainSequelize();
+
+    const responseSource = await mainDbSequelize.query(
+      `SELECT rid FROM ${MAIN_SCHEMA_NAME}.interaction_response_source WHERE response_source_name = 'Email'`,
+      {
+        type: "SELECT",
+      }
+    );
+
+    return responseSource;
+  }
+
   async fetchInteractionItemById(accountNumber: string, interactionId: string) {
     const { InteractionItem } = await this.interactionModelService.getModels(
       accountNumber
@@ -251,21 +267,6 @@ export class WebHookService {
     });
 
     return interaction;
-  }
-
-  async storeInteractions(results: any) {
-    const { InteractionItem } = await this.interactionModelService.getModels(
-      ""
-    );
-
-    await InteractionItem.update(
-      {},
-      {
-        where: {
-          rid: "",
-        },
-      }
-    );
   }
 
   async createSubscription() {
