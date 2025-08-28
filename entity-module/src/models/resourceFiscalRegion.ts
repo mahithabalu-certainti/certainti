@@ -14,15 +14,6 @@ interface ResourceFiscalRegionAttributes {
   fiscal_year?: number;
   country_rid?: string | null;
   country_region_rid?: string | null;
-  cost_type?:
-    | "Annual"
-    | "Semi-Annual"
-    | "Monthly"
-    | "Bi-Weekly"
-    | "Weekly"
-    | "Daily"
-    | "Hourly"
-    | null;
   annual_cost?: number;
   semiannual_cost?: number;
   monthly_cost?: number;
@@ -62,15 +53,6 @@ export class ResourceFiscalRegion
   public fiscal_year?: number;
   public country_rid?: string | null;
   public country_region_rid?: string | null;
-  public cost_type?:
-    | "Annual"
-    | "Semi-Annual"
-    | "Monthly"
-    | "Bi-Weekly"
-    | "Weekly"
-    | "Daily"
-    | "Hourly"
-    | null;
   public annual_cost?: number;
   public semiannual_cost?: number;
   public monthly_cost?: number;
@@ -156,17 +138,6 @@ export class ResourceFiscalRegion
         },
         country_region_rid: {
           type: DataTypes.STRING(50),
-          allowNull: true,
-        },
-        cost_type: {
-          type: DataTypes.ENUM(
-            "Annual",
-            "Monthly",
-            "Bi-Weekly",
-            "Weekly",
-            "Daily",
-            "Hourly"
-          ),
           allowNull: true,
         },
         annual_cost: {

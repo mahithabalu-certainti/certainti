@@ -564,7 +564,7 @@ export const rawQueries = {
     return `INSERT INTO ${schemaName}.project_timeline
                 (created_by, created_datetime, account_rid, entity_rid, event_name, event_type, event_status, event_datetime)
                 VALUES
-                ('${data.userId}', NOW(), '${data.account_rid}', '${data.project_rid}', '${STATUS_MESSAGE.eventUpdate}', '${STATUS_MESSAGE.uiHandler}', '${STATUS_MESSAGE.success}', NOW())
+                ('${data.userId}', NOW(), '${data.account_rid}', '${data.project_fiscal_rid}', '${STATUS_MESSAGE.eventUpdate}', '${STATUS_MESSAGE.uiHandler}', '${STATUS_MESSAGE.success}', NOW())
        `;
   },
   insertProjectHistory(
