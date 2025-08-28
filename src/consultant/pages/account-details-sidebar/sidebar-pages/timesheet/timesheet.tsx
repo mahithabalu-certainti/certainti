@@ -267,7 +267,9 @@ const Timesheet: React.FC<TimeSheetProps> = ({
 
   const timesheetResourcesFilterFields = getTimesheetResourceTabFilterFields(
     memoizedCountry,
-    memoizedRegion
+    memoizedRegion,
+    memoizedResourceType,
+    memoizedStatus,
   );
 
   const timesheetProjectTaskFilterFields =

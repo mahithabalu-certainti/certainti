@@ -49,13 +49,13 @@ const TimesheetResourcesTab: React.FC<ProjectTabListProps> = ({
   );
   const timesheetResourcesIsEnable = checkPermission(
     modules,
-    AllModules.PROJECT_RESOURCES
+    AllModules.RESOURCES
   );
   // TODO: Have to update view & edit permissions
   const timesheetResourceViewEditFields = useMemo(
     () =>
       permission?.find(
-        (item) => item.name === AllPermissions.PROJECTS_RESOURCES_VIEW_EDIT
+        (item) => item.name === AllPermissions.ACCOUNT_RESOURCES_VIEW_EDIT
       )?.fields ?? [],
     [permission]
   );
