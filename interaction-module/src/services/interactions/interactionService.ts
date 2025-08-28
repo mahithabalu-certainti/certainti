@@ -1136,45 +1136,43 @@ export class InteractionService {
     }
     return this.producer;
   }
-  async triggerAI (data : any) {
-    let payload: {
-      company_id: any;
-      input_text: string;
-      model_type: string;
-      project_id?: any;
-    } = {
-      company_id : data.account_rid, // "test_company_456",
-      input_text : "This is some text to be processed by the AI.",
-      model_type : "NA"
-    }
-    if(data.account_rid && !data.project_rid){
-      const { accountNumber } =
-        await this.interactionSchemaService.fetchValidAccountNumberById(
-           data.account_rid
-        );
+  async triggerAI(req: any) {
+    try {
+      console.log(req.data);
+      console.log(req.type);
+      let payload: {
+        company_id?: any;
+        input_text: string;
+        model_type: string;
+        project_id?: any;
+      } = {
+        input_text: "This is some text to be processed by the AI.",
+        model_type: "NA"
+      };
+      if (req.type === 'account') {
+        payload.company_id = req.data[0].account_rid;
+        const { accountNumber } =
+          await this.interactionSchemaService.fetchValidAccountNumberById(
+            req.data[0].account_rid
+          );
 
-      if (!accountNumber) {
-        throw new Error("Invalid account ID");
+        if (!accountNumber) {
+          throw new Error("Invalid account ID");
+        }
+        if (!this.orgDbSequelize) {
+          this.orgDbSequelize = await initOrgSequelize();
+        }
+        const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
+        const [projects]: any[] = await this.orgDbSequelize.query(rawQueries.fetchProjectsByAccount(req.data[0].account_rid, schemaName));
+        const projectIds = Array.isArray(projects) ? projects.map((p: any) => p.rid) : [];
+        payload.project_id = projectIds;
+      } else {
+        payload.company_id = req.data[0].account_rid;
+        payload.project_id = req.data[0].project_fiscal_rid;
       }
-      if(!this.orgDbSequelize)
-      {
-        this.orgDbSequelize = await initOrgSequelize()
-      }
-       const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
-      const [projects]: any[] = await this.orgDbSequelize.query(rawQueries.fetchProjectsByAccount(data.account_rid,schemaName));
-      const projectIds = Array.isArray(projects) ? projects.map((p: any) => p.rid) : [];
-      payload.project_id = projectIds;
-    }
-    else
-    {
-      payload.project_id = data.project_rid;
-    }
-    console.log("Triggering AI with payload:", payload);
+      console.log("Triggering AI with payload:", payload);
 
-    let headers = {
-      contentType : "application/json"
-    }
-     const topic = "ai_assessment_request";
+      const topic = "ai_assessment_request";
       const message = {
         value: JSON.stringify(payload),
       };
@@ -1184,15 +1182,20 @@ export class InteractionService {
         messages: [message],
       });
       return {
-          statusMessage : "Request is being processed",
-    status : "success",
-    data : null
-      }
-    // let callTriggerAi = await axios.post(process.env.TRIGGER_AI_URL!, payload, {
-    //   headers : headers
-    // })
-    // const sendAiResponse = await this.fetchAndUpdateFromAiTriggerResponse(callTriggerAi.data.data)
-    // return sendAiResponse
+        statusMessage: "Request is being processed",
+        status: "success",
+        data: null
+      };
+    } catch (error) {
+      console.log(error)
+      this.logger.error("Error in triggerAI", error);
+      return {
+        statusMessage: "Failed to process AI request",
+        status: "error",
+        data: null,
+        errorMessage: error instanceof Error ? error.message : String(error)
+      };
+    }
   }
   async fetchAndUpdateFromAiTriggerResponse (data : any) {
     const account_rid = data.company_id;

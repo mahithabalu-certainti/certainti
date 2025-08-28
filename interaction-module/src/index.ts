@@ -27,16 +27,21 @@ const kafka = new Kafka({
 });
 const consumer = kafka.consumer({ groupId: process.env.KAFKA_CONSUMER_GROUP || "interaction-group" });
 async function startKafkaConsumer() {
-  await consumer.connect();
-  const topic = process.env.KAFKA_TOPIC_INTERACTION || 'ai_assessment_response';
-  await consumer.subscribe({ topic, fromBeginning: false });
+  try {
+    await consumer.connect();
+    const topic = process.env.KAFKA_TOPIC_INTERACTION || 'ai_assessment_response';
+    await consumer.subscribe({ topic, fromBeginning: false });
 
-  await consumer.run({
-    eachMessage: async ({ message }: { message: any }) => {
-      console.log("Received message:", message.value?.toString());
-      await interactionsController.processKafkaMessages(message.value?.toString());
-    },
-  });
+    await consumer.run({
+      eachMessage: async ({ message }: { message: any }) => {
+        console.log("Received message:", message.value?.toString());
+        await interactionsController.processKafkaMessages(message.value?.toString());
+      },
+    });
+  } catch (err: any) {
+    console.log("Kafka consumer could not be started:", err.message);
+    // Do not throw error, just log and continue
+  }
 }
 
 
