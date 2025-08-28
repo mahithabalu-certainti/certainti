@@ -204,6 +204,7 @@ export class WebHookService {
         attachments: [],
         questions: answers,
         created_by: interaction.recipient_email || "",
+        response_source_rid: ""
       };
 
       await this.interactionService.updateInteractionResponse(
