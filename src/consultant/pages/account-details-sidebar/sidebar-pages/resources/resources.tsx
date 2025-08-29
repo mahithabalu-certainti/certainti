@@ -28,6 +28,7 @@ import {
 import { ResourceList } from '../../../../types/resource';
 import {
   AllMenus,
+  AllModules,
   AllPermissions,
   Permissions,
   useGetAllCountries,
@@ -78,7 +79,7 @@ export interface TabMenus {
   label: string;
   value: string;
   hide: boolean;
-  id: AllPermissions;
+  id: AllModules | AllPermissions;
 }
 
 const resourceTabs: ResourceTabs[] = [
@@ -525,9 +526,9 @@ const Resource: React.FC<ResourceProps> = ({
     const accNumber = accountDetails?.data?.accountById.r_number;
     navigate(
       RESOURCE +
-        '/edit/' +
-        resourceId +
-        `?account_id=${accountid}&acc_number=${accNumber}`,
+      '/edit/' +
+      resourceId +
+      `?account_id=${accountid}&acc_number=${accNumber}`,
       {
         state: {
           resource: resourceData,
