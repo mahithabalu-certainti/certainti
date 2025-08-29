@@ -93,7 +93,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     message: string;
     onConfirm: () => void;
     confirmLabel?: string;
-  }>({ isOpen: false, message: '', onConfirm: () => {}, confirmLabel: '' });
+  }>({ isOpen: false, message: '', onConfirm: () => { }, confirmLabel: '' });
 
   const autoCompleteFilter = createFilterOptions<SelectOption>();
 
@@ -1387,11 +1387,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               value={dayjs(fieldValue, 'YYYY-MM-DD')}
               disabled={field.disabled}
               format='YYYY-MM-DD'
-              referenceDate={ 
-                   customMaxDate
+              referenceDate={
+                customMaxDate
                   ? dayjs(customMinDate)
                   : dayjs(customMaxDate)
-              } 
+              }
               // onOpen={() => {
               //   if (!fieldValue && isFinancialDateField && selectedFiscalYear) {
               //     // Show calendar from Jan 1 of fiscal year
@@ -1769,14 +1769,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 const fiscalYearStart = field.minDate
                   ? dayjs(field.minDate, 'YYYY-MM-DD').startOf('day')
                   : dayjs(`${selectedFiscalYear}-01-01`, 'YYYY-MM-DD').startOf(
-                      'day'
-                    );
+                    'day'
+                  );
 
                 const fiscalYearEnd = field.maxDate
                   ? dayjs(field.maxDate, 'YYYY-MM-DD').endOf('day')
                   : dayjs(`${selectedFiscalYear}-12-31`, 'YYYY-MM-DD').endOf(
-                      'day'
-                    );
+                    'day'
+                  );
 
                 if (dateValue) {
                   const currentDate = dayjs(dateValue, 'YYYY-MM-DD');
@@ -2442,7 +2442,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                               maxWidth: `${field.width}`,
                               paddingLeft:
                                 `${field.type}` === 'iconButton' ||
-                                `${field.type}` === 'radio'
+                                  `${field.type}` === 'radio'
                                   ? '10px !important'
                                   : 'none',
                               verticalAlign:
@@ -2474,9 +2474,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                               },
                               '& .MuiOutlinedInput-root': {
                                 '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                                  {
-                                    border: '1px solid #60A5FA !important',
-                                  },
+                                {
+                                  border: '1px solid #60A5FA !important',
+                                },
                               },
                             }}
                             key={colIndex}
