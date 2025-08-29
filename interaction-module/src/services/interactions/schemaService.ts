@@ -159,6 +159,41 @@ class InteractionSchemaService {
     const existingData = await InteractionItem.findOne({
       where: { interaction_rid: interactionRid, rid: question.rid },
     });
+      await Promise.all([
+      InteractionHistory.create(
+      {
+        interaction_rid: interactionRid,
+        attribute_name: "question",
+        old_value: existingData?.dataValues?.question ?? "",
+        new_value:  "",
+        interaction_item_rid: question?.rid ?? "",
+        created_by: userId,
+      },
+      { transaction }
+      ),
+      InteractionHistory.create(
+      {
+        interaction_rid: interactionRid,
+        attribute_name: "notes",
+        old_value: existingData?.dataValues?.notes ?? "",
+        new_value: "",
+        interaction_item_rid: question?.rid ?? "",
+        created_by: userId,
+      },
+      { transaction }
+      ),
+      InteractionHistory.create(
+      {
+        interaction_rid: interactionRid,
+        attribute_name: "is_mandatory",
+        old_value: existingData?.dataValues?.is_mandatory ?? "",
+        new_value: "",
+        interaction_item_rid: question?.rid ?? "",
+        created_by: userId,
+      },
+      { transaction }
+      )
+    ]);
     await InteractionItem.destroy({
       where: { interaction_rid: interactionRid, rid: question.rid },
       transaction,
@@ -855,6 +890,7 @@ if(!this.orgDbSequelize)
       this.mainDbSequelize =
         await this.interactionModelService.getMainSequelize();
     }
+    let isAutoTriggerEnabled = false;
     const [responseSourceIDs]:any= await this.mainDbSequelize.query(rawQueries.fetchResponseSourceByType(responseData.response_source));
     responseData.response_source_rid = responseSourceIDs[0]?.rid ?? null;
     const [emailInfo]: any[] = await this.mainDbSequelize.query(rawQueries.fetchUserEmail(userId));
@@ -964,12 +1000,14 @@ if(!this.orgDbSequelize)
           response_source_rid: responseData.response_source_rid,
        //   attachment_count: attachmentcount
         };
-       
-        if (status === "Response Received") {
+        if (status === statusAction.RESPONSE_RECEIVED) {
           updateData.response_submitted_on = new Date();
           updateData.response_submission_by = userEmailId;
           summaryUpdateData.response_submitted_on = new Date();
           summaryUpdateData.response_submission_by = userEmailId;
+          //check for auto trigger ai
+           isAutoTriggerEnabled = await this.isAutoTriggerEnabled(accountNumber, responseData.project_fiscal_rid);
+          console.log("isAutoTriggerEnabled",isAutoTriggerEnabled)
         }
 
         await Interaction.update(updateData, {
@@ -980,7 +1018,8 @@ if(!this.orgDbSequelize)
         });
       }
       return {
-        interactionVersion
+        interactionVersion,
+        isAutoTriggerEnabled
       };
     } catch (err) {
       throw new Error(
@@ -1344,10 +1383,31 @@ async isAutoSendInteractionEnabled(accountNumber: string,interactionDetails: any
       { type: "SELECT" }
     );
 
-    return projectInfo?.auto_send_ai_interaction ?? false;
+    return projectInfo?.auto_access_rd ?? false;
   } catch (err) {
     throw new Error(
       "Error checking auto-send interaction status: " + (err as Error).message
+    );
+  }
+}
+
+async isAutoTriggerEnabled(accountNumber: string,project_fiscal_rid: string) {
+  try {
+    if (!this.orgDbSequelize) {
+      this.orgDbSequelize = await this.interactionModelService.getSequelize();
+    }
+    const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
+
+    // Fetch project info
+    const [projectInfo]: any[] = await this.orgDbSequelize.query(
+      rawQueries.fetchisAutoTriggerEnabled(project_fiscal_rid, schemaName),
+      { type: "SELECT" }
+    );
+
+    return projectInfo?.auto_access_rd ?? false;
+  } catch (err) {
+    throw new Error(
+      "Error checking auto-trigger interaction status: " + (err as Error).message
     );
   }
 }
@@ -1362,6 +1422,10 @@ async updateTechSummary( projectSummary: string, accountNumber: string, projectF
     }
     
     const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
+    await this.orgDbSequelize.query(
+      rawQueries.updateAIProcessedFlag(projectFiscalId,schemaName ),
+      { type: "UPDATE" }
+    );
 
      const [projectInfo]: any[] = await this.orgDbSequelize.query(
       rawQueries.fetchProjectInfo(projectFiscalId, schemaName),
@@ -1412,6 +1476,38 @@ async updateTechSummary( projectSummary: string, accountNumber: string, projectF
     );
   }
 }
+async updateAssessmentErrorResponse( error:JSON, accountNumber: string, projectFiscalId: string, accountId: string,transactionId: string)
+{
+  try {
+    if (!this.orgDbSequelize) {
+      this.orgDbSequelize = await this.interactionModelService.getSequelize();
+    }
+    const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
+
+     const [projectInfo]: any[] = await this.orgDbSequelize.query(
+      rawQueries.fetchProjectInfo(projectFiscalId, schemaName),
+      { type: "SELECT" }
+    );
+
+    const { AiAssessmentError } = await this.interactionModelService.getModels(accountNumber);
+
+    const aiResponse = await AiAssessmentError.create(
+      {
+        account_rid: accountId,
+        created_by:process.env.SYSTEM_USER_ID || "system",
+        project_rid :projectFiscalId,
+        transaction_id: transactionId,
+        errorMessage: error
+      }
+    );
+    
+  } catch (err) {
+    throw new Error(
+      "Error updating Tech Summary: " + (err as Error).message
+    );
+  }
+}
+
 
 async fetchProjectInfo(accountNumber: string, projectFiscalId: string)
 {
@@ -1435,7 +1531,7 @@ async fetchProjectInfo(accountNumber: string, projectFiscalId: string)
   }
 }
 
-async updateQrePercent(qrePercent:number, accountNumber: string,projectFiscalRid:string)
+async updateQrePercent(qrePercent:number, accountNumber: string,projectFiscalRid:string,qreBreakdown:JSON)
 {
   try {
     if (!this.orgDbSequelize) {
@@ -1448,7 +1544,11 @@ async updateQrePercent(qrePercent:number, accountNumber: string,projectFiscalRid
     const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
 
     await this.orgDbSequelize.query(
-      rawQueries.updateQreInfo(projectFiscalRid,schemaName,qrePercent, ),
+      rawQueries.updateQreInfo(projectFiscalRid,schemaName,qrePercent,qreBreakdown ),
+      { type: "UPDATE" }
+    );
+    await this.orgDbSequelize.query(
+      rawQueries.updateAIProcessedFlag(projectFiscalRid,schemaName ),
       { type: "UPDATE" }
     );
     await this.mainDbSequelize.query(
@@ -1457,6 +1557,7 @@ async updateQrePercent(qrePercent:number, accountNumber: string,projectFiscalRid
     );
     
   } catch (err) {
+    console.log(err)
     throw new Error(
       "Error updating QRE percent: " + (err as Error).message
     );

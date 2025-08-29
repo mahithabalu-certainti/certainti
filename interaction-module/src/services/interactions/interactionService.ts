@@ -6,7 +6,7 @@ import {
 } from "../../utils/types";
 import InteractionSchemaService from "./schemaService";
 import { InteractionModelService } from "../interactionModelsService";
-import { ALPHANUMERIC_CONDITIONS, HttpStatus, mainTableFilters, rawQueries,interactionSource,statusAction, constants, interactionType, STATUS_MESSAGE, interactionFlag } from "../../utils/constants";
+import { ALPHANUMERIC_CONDITIONS, HttpStatus, mainTableFilters, rawQueries,interactionSource,statusAction, constants, interactionType, STATUS_MESSAGE, interactionFlag, MAIN_SCHEMA_NAME } from "../../utils/constants";
 import { Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
@@ -16,6 +16,7 @@ import { surveyMailTemplate } from "../../utils/mailTemplate";
 import { sendEmailWithAttachment } from "../emailService";
 import ExcelJS from 'exceljs';
 import axios from 'axios'
+import { Kafka, Producer } from "kafkajs";
 type filterType = {
         [key : string] : {
             [condition : string] : any
@@ -26,6 +27,7 @@ export class InteractionService {
   private interactionSchemaService: InteractionSchemaService;
   private interactionModelService: InteractionModelService; // Assuming this is defined somewhere in your code
   private logger: Logger;
+  private producer!: Producer;
   private orgDbSequelize : Sequelize | null = null
   private mainDbSequelize : Sequelize | null = null 
 
@@ -257,11 +259,28 @@ export class InteractionService {
           transaction
         );
       await transaction.commit();
-      await this.interactionSchemaService.updateAttachmentCount(
-        accountNumber,
-        interactionData.interaction_rid,
-        updatedInteractionResponse.interactionVersion
+      const parallelTasks = [];
+      if (updatedInteractionResponse.isAutoTriggerEnabled) {
+        const req = {
+          data: [
+        {
+          account_rid: interactionData.account_rid,
+          project_fiscal_rid: [interactionData.project_fiscal_rid],
+        },
+          ],
+          type: "project",
+        };
+        parallelTasks.push(this.triggerAI(req));
+      }
+
+      parallelTasks.push(
+        this.interactionSchemaService.updateAttachmentCount(
+          accountNumber,
+          interactionData.interaction_rid,
+          updatedInteractionResponse.interactionVersion
+        )
       );
+      await Promise.all(parallelTasks);
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -1123,21 +1142,77 @@ export class InteractionService {
       }
     }
   }
-  async triggerAI (data : any) {
-    let payload = {
-      project_id : data.project_rid, //"test_project_123" 
-      company_id : data.account_rid, // "test_company_456",
-      input_text : "This is some text to be processed by the AI.",
-      model_type : "NA"
+  private async getProducer(): Promise<Producer> {
+    if (!this.producer) {
+      const kafka = new Kafka({
+        clientId: "my-app",
+        brokers: [process.env.KAFKA_BROKER || "kafka:9092"],
+      });
+      this.producer = kafka.producer();
+      await this.producer.connect();
     }
-    let headers = {
-      contentType : "application/json"
+    return this.producer;
+  }
+  async triggerAI(req: any) {
+    try {
+      let payload: {
+        company_id?: any;
+        input_text: string;
+        model_type: string;
+        project_id?: any;
+      } = {
+        input_text: "This is some text to be processed by the AI.",
+        model_type: "NA"
+      };
+      if (req.type === 'account') {
+        payload.company_id = req.data[0].account_rid;
+        const { accountNumber } =
+          await this.interactionSchemaService.fetchValidAccountNumberById(
+            req.data[0].account_rid
+          );
+
+        if (!accountNumber) {
+          throw new Error("Invalid account ID");
+        }
+        if (!this.orgDbSequelize) {
+          this.orgDbSequelize = await initOrgSequelize();
+        }
+        const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
+        const [projects]: any[] = await this.orgDbSequelize.query(rawQueries.fetchProjectsByAccount(req.data[0].account_rid, schemaName));
+        const projectIds = Array.isArray(projects) ? projects.map((p: any) => p.rid) : [];
+        payload.project_id = projectIds;
+      } else {
+        payload.company_id = req.data[0].account_rid;
+        payload.project_id = req.data[0].project_fiscal_rid;
+      }
+      console.log("Triggering AI with payload:", payload);
+
+      const topic = process.env.KAFKA_AI_REQUEST_TRIGGER_TOPIC || "ai_assessment_request";
+      const message = {
+        value: JSON.stringify(payload),
+      };
+      const producer = await this.getProducer();
+      const sendResult = await producer.send({
+        topic,
+        messages: [message],
+      });
+      // Check if the message was processed successfully
+      console.log("Send result to topic", sendResult);
+      return {
+        statusMessage: "AI Assessment Initiated",
+        status: "success",
+        data: null
+      };
+    } catch (error) {
+      console.log(error)
+      this.logger.error("Error in triggerAI", error);
+      return {
+        statusMessage: "Failed to process AI request",
+        status: "error",
+        data: null,
+        errorMessage: error instanceof Error ? error.message : String(error)
+      };
     }
-    let callTriggerAi = await axios.post(process.env.TRIGGER_AI_URL!, payload, {
-      headers : headers
-    })
-    const sendAiResponse = await this.fetchAndUpdateFromAiTriggerResponse(callTriggerAi.data.data)
-    return sendAiResponse
   }
   async fetchAndUpdateFromAiTriggerResponse (data : any) {
     const account_rid = data.company_id;
@@ -1172,47 +1247,56 @@ export class InteractionService {
 
   async processKafkaMessage(message: any): Promise<void> {
     try {
-      console.log("Processing Kafka message...",message)
-      
-      const parsedMessage = typeof message === "string" ? JSON.parse(message) : message;
-
-      const { company_id, project_fiscal_id, type, qre_percent,project_summary,correlation_id,questions } = parsedMessage;
-
-      if (!company_id || !project_fiscal_id || !type) {
-        this.logger.error("Kafka message missing required fields", parsedMessage);
-        return;
+      console.log("Processing Kafka message...", message);
+      // Handle both cases: message is a string, or an object with/without 'data'
+      let parsedMessage: any;
+      if (typeof message === "string") {
+        parsedMessage = JSON.parse(message);
+      } else if (message.data !== undefined) {
+        parsedMessage = message.data;
+      } else {
+        parsedMessage = message;
       }
+      const { company_id, project_id, type, qre_percent, project_summary, transaction_id, questions, detailed_breakdown, statusCode } = parsedMessage.data;
       const { accountNumber } = await this.interactionSchemaService.fetchValidAccountNumberById(company_id);
       if (!accountNumber) {
         this.logger.error("Invalid account ID in Kafka message", company_id);
         return;
       }
-      if(type === 'QRE'){
-        await this.interactionSchemaService.updateQrePercent(qre_percent, accountNumber,project_fiscal_id)
-      }
-      if(type ==="TECH_SUMMARY"){
-         await this.interactionSchemaService.updateTechSummary(project_summary, accountNumber,project_fiscal_id,company_id,correlation_id)
-      }
-      if(type === "QUESTIONS"){ 
-       
-        const projectInfo = await this.interactionSchemaService.fetchProjectInfo(accountNumber,project_fiscal_id)
-        const statusRid = await this.interactionSchemaService.getInteractionStatusByType(statusAction.CREATE) 
-        const questionsWithActionType = Array.isArray(questions)
-          ? questions.map((q: any) => ({ ...q, action_type: "add" }))
-          : [];
+      if (statusCode === 200) {
+        if (!company_id || !project_id || !type) {
+          this.logger.error("Kafka message missing required fields", parsedMessage);
+          return;
+        }
 
-        let interactionData = {
-          account_rid: company_id,
-          project_fiscal_rid: project_fiscal_id,
-          fiscal_year: projectInfo.fiscal_year,
-          status_rid: statusRid ?? statusAction.CREATE,
-          project_rid: projectInfo?.project_rid,
-          questions: questionsWithActionType,
-          interaction_source_rid: interactionSource.AUTO,
-          interaction_type_rid: interactionType.RD,
-          created_by: process.env.SYSTEM_USER_ID!,
-        };
-        await this.createInteraction(interactionData,interactionSource.AUTO,"userID")
+        if (type === 'qre_percent') {
+          await this.interactionSchemaService.updateQrePercent(qre_percent, accountNumber, project_id, detailed_breakdown);
+        }
+        if (type === "project_summary") {
+          await this.interactionSchemaService.updateTechSummary(project_summary, accountNumber, project_id, company_id, transaction_id);
+        }
+        if (type === "interaction_questions") {
+          const projectInfo = await this.interactionSchemaService.fetchProjectInfo(accountNumber, project_id);
+          const statusRid = await this.interactionSchemaService.getInteractionStatusByType(statusAction.CREATE);
+          const questionsWithActionType = Array.isArray(questions)
+            ? questions.map((q: any) => ({ ...q, action_type: "add" }))
+            : [];
+
+          let interactionData = {
+            account_rid: company_id,
+            project_fiscal_rid: project_id,
+            fiscal_year: projectInfo.fiscal_year,
+            status_rid: statusRid ?? statusAction.CREATE,
+            project_rid: projectInfo?.project_rid,
+            questions: questionsWithActionType,
+            interaction_source_rid: interactionSource.AUTO,
+            interaction_type_rid: interactionType.RD,
+            created_by: process.env.SYSTEM_USER_ID!,
+          };
+          await this.createInteraction(interactionData, interactionSource.AUTO, "userID");
+        }
+      } else {
+        await this.interactionSchemaService.updateAssessmentErrorResponse(parsedMessage, accountNumber, project_id, company_id, transaction_id);
       }
       this.logger.info(`Processed Kafka message for interaction_rid: ${company_id}`);
     } catch (err) {
