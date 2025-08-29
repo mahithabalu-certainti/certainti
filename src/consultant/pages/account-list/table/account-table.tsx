@@ -86,7 +86,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
 
   useEffect(() => {
     if (data) {
-      setTotalCount(data.count || 0);
+      setTotalCount(data?.totalResult || 0);
     }
   }, [data]);
 
