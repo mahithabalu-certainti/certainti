@@ -183,7 +183,7 @@ export const getStatusId = (
   currentStatusId: string,
   statusOptions: { label: string; value: string; disable: boolean }[]
 ): string => {
-  if (formData.status) {
+  if (formData.status && formData.status !== currentStatusId) {
     return formData.status;
   }
 

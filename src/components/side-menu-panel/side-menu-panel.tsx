@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AdminSubmenuActiveIcon, ArrowBackIcon, BackIcon } from '../../assets';
@@ -211,7 +212,6 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
   }, [accountMenus]); // Run when accountMenus is ready
 
   const renderMenuItem = (item: MenuItem): React.ReactNode => {
-    console.log('+++', item);
     if (item.hide) return null;
     const hasSubmenus = item.subMenu && item.subMenu.length > 0;
     const isExpanded = expandedItems.has(item.key);

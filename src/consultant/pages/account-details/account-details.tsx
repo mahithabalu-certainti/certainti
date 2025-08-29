@@ -356,7 +356,6 @@ export const AccountDetails = () => {
       });
     } else if (exportType === 'interactions') {
       if (interactionHistoryId) {
-        console.log('interactions history');
         const projectInteractionHistoryExportPayload = {
           account_rid: accountid || '',
           interaction_rid: interactionHistoryId,
@@ -370,7 +369,6 @@ export const AccountDetails = () => {
         exportInteractionsHistory(projectInteractionHistoryExportPayload);
         return;
       } else {
-        console.log('interactions table');
         const projectInteractionExportPayload = {
           account_rid: accountid || '',
           fiscal_year: convertedFiscalYear,
@@ -753,8 +751,6 @@ export const AccountDetails = () => {
       ? allMenus
       : allMenus.filter((item) => item.id !== AllMenus.FINANCIAL_HIGHLIGHTS);
   }, [disable, isFinancialHighlightsEnable]);
-
-  console.log('sidemenu', sideMenuItems);
 
   const goBack = () => {
     window.history.back();

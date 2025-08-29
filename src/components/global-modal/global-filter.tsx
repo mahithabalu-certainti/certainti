@@ -353,9 +353,12 @@ const GlobalFilterModal: React.FC<GlobalFilterModalProps> = ({
                           <ArrowIcon alt='arrowIcon' {...props} />
                         )}
                         renderValue={(selected) => (
-                          <div className='flex items-center gap-1'>
-                            <AllAccountIcon alt='account' className='w-4 h-4' />
-                            <span className='pt-0.5'>
+                          <div className='flex items-center gap-1 w-full'>
+                            <AllAccountIcon
+                              alt='account'
+                              className='w-4 h-4 shrink-0'
+                            />
+                            <span className='pt-0.5 truncate'>
                               {selected
                                 ? accounts?.find((acc) => acc.rid === selected)
                                     ?.account_name
@@ -391,6 +394,7 @@ const GlobalFilterModal: React.FC<GlobalFilterModalProps> = ({
                               }}
                               key={account.rid}
                               value={account.rid}
+                              title={account.account_name}
                             >
                               <Checkbox
                                 size='small'
@@ -499,6 +503,7 @@ const GlobalFilterModal: React.FC<GlobalFilterModalProps> = ({
                                 }}
                                 key={child.rid}
                                 value={child.rid}
+                                title={child.account_name}
                               >
                                 <Checkbox
                                   size='small'
