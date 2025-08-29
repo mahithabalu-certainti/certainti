@@ -1766,12 +1766,12 @@ class ProjectIngestionService {
       projects = projectData;
 
       totalCount = count;
-      if (projects && projects.length > 0 && !bothParentAndChild) {
-        projects = projects.filter((val: any) => val.ProjectFiscal.length > 0);
-        if (totalCount > projects.length) {
-          totalCount = projects.length;
-        }
-      }
+      // if (projects && projects.length > 0 && !bothParentAndChild) {
+      //   projects = projects.filter((val: any) => val.ProjectFiscal.length > 0);
+      //   if (totalCount > projects.length) {
+      //     totalCount = projects.length;
+      //   }
+      // }
 
       if (isChildOnlyFilter && bothParentAndChild) {
         projects = projects.filter((val: any) => val.ProjectFiscal.length > 0);
