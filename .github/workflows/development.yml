@@ -477,7 +477,8 @@ jobs:
           KAFKA_CONSUMER_GROUP="ai_assessment_request"
           KAFKA_AI_RESPONSE_TRIGGER_TOPIC="ai_assessment_response"
           KAFKA_AI_REQUEST_TRIGGER_TOPIC = "ai_assessment_request"
-          SYSTEM_USER_ID = "D001-477aac5d-3d92-4420-8e65-4153af4f3aed"          
+          SYSTEM_USER_ID = "D001-477aac5d-3d92-4420-8e65-4153af4f3aed"
+          JWT_EXPIRY='1h'        
           EOF
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
@@ -603,6 +604,11 @@ jobs:
           INTERACTION_BASE_URL='https://development-thinkrd365-api-management.azure-api.net/interactionService/api'
           NODE_ENV_DB_PREFIX="D001-"
           JWT_SECRET='lknmpsa*2626_ddm'
+          CUSTOM_PVT_KEY=custom-pvt
+          CUSTOM_PUB_KEY=custom-pub
+          CUSTOM_JWT_AUDIENCE=custom-jwt-audience
+          CUSTOM_JWT_ISSUER=custom-jwt-issuer
+          JWT_EXPIRY='1h'
           EOF
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
@@ -732,7 +738,11 @@ jobs:
           KAFKA_CONSUMER_GROUP="ai_assessment_response"
           KAFKA_AI_RESPONSE_TRIGGER_TOPIC="ai_assessment_response"
           KAFKA_AI_REQUEST_TRIGGER_TOPIC = "ai_assessment_request"
-          SYSTEM_USER_ID = "D001-477aac5d-3d92-4420-8e65-4153af4f3aed"          
+          SYSTEM_USER_ID = "D001-477aac5d-3d92-4420-8e65-4153af4f3aed"
+          CUSTOM_PVT_KEY=custom-pvt
+          CUSTOM_PUB_KEY=custom-pub
+          CUSTOM_JWT_AUDIENCE=custom-jwt-audience
+          CUSTOM_JWT_ISSUER=custom-jwt-issuer         
           EOF
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
