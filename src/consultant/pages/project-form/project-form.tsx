@@ -364,7 +364,6 @@ const ProjectForm: React.FC = () => {
       };
       setEffortFinancials(efforts);
 
-      // *** FIX: Set the disable flags based on initial data ***
       setIsEffortFteEdited(!!initialEffortFte);
       setIsEffortSubconEdited(!!initialEffortSubcon);
 
@@ -425,12 +424,16 @@ const ProjectForm: React.FC = () => {
   };
 
   const submitData = (formValues: Partial<NewProjectData>) => {
-    const projectData = transformFormData(
-      {
-        ...formValues,
-        account_id: accountID,
-        project_id: isEditView ? account?.project_rid : projectID,
-      },
+    const finalPayload = {
+      ...formValues,
+      ...effortFinancials,
+      ...costFinancials,
+      account_id: accountID,
+      project_id: isEditView ? account?.project_rid : projectID,
+    };
+
+    const projectPayload = transformFormData(
+      finalPayload,
       isEditView,
       memoizedStatus,
       defaultActiveValue,
@@ -440,9 +443,9 @@ const ProjectForm: React.FC = () => {
     );
 
     if (isEditView) {
-      updateProject.mutate(projectData);
+      updateProject.mutate(projectPayload);
     } else {
-      createProject.mutate(projectData);
+      createProject.mutate(projectPayload);
     }
   };
 
