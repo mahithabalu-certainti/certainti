@@ -2083,7 +2083,6 @@ private async createInteractionTable(
 
     await sequelize.query(`
       ALTER TABLE "${schemaName}".interaction_history ADD CONSTRAINT interaction_history_interaction_rid_fkey FOREIGN KEY (interaction_rid) REFERENCES "${schemaName}".interactions(rid) ON UPDATE CASCADE;
-      ALTER TABLE "${schemaName}".interaction_history ADD CONSTRAINT interaction_history_interaction_item_rid_fkey FOREIGN KEY (interaction_item_rid) REFERENCES "${schemaName}".interaction_items(rid) ON UPDATE CASCADE;
     `);
   }
   

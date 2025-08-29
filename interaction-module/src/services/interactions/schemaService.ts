@@ -159,6 +159,41 @@ class InteractionSchemaService {
     const existingData = await InteractionItem.findOne({
       where: { interaction_rid: interactionRid, rid: question.rid },
     });
+      await Promise.all([
+      InteractionHistory.create(
+      {
+        interaction_rid: interactionRid,
+        attribute_name: "question",
+        old_value: existingData?.dataValues?.question ?? "",
+        new_value:  "",
+        interaction_item_rid: question?.rid ?? "",
+        created_by: userId,
+      },
+      { transaction }
+      ),
+      InteractionHistory.create(
+      {
+        interaction_rid: interactionRid,
+        attribute_name: "notes",
+        old_value: existingData?.dataValues?.notes ?? "",
+        new_value: "",
+        interaction_item_rid: question?.rid ?? "",
+        created_by: userId,
+      },
+      { transaction }
+      ),
+      InteractionHistory.create(
+      {
+        interaction_rid: interactionRid,
+        attribute_name: "is_mandatory",
+        old_value: existingData?.dataValues?.is_mandatory ?? "",
+        new_value: "",
+        interaction_item_rid: question?.rid ?? "",
+        created_by: userId,
+      },
+      { transaction }
+      )
+    ]);
     await InteractionItem.destroy({
       where: { interaction_rid: interactionRid, rid: question.rid },
       transaction,
