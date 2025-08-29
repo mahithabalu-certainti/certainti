@@ -1397,12 +1397,12 @@ export class ProjectResourceService {
       fiscal_year,
       transaction
     );
-    await this.projectResourceSchema.aggregatesProjectSummary(
-      accountNumber,
-      account_rid,
-      project_code,
-      transaction
-    );
+    // await this.projectResourceSchema.aggregatesProjectSummary(
+    //   accountNumber,
+    //   account_rid,
+    //   project_code,
+    //   transaction
+    // );
   }
 
   private async aggregateAccount(
