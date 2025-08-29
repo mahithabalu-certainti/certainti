@@ -25,6 +25,8 @@ async function updateInteractionResponse(
       updateInteractionResponseSchema,
       res
     );
+
+    const authToken = req.headers['authorization'] as string;
     const userId = req.headers["x-user-id"] as string;
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
@@ -42,7 +44,8 @@ async function updateInteractionResponse(
     }
     const interaction = await interactionService.updateInteractionResponse(
       value,
-      userId
+      userId,
+      authToken
     );
     console.log(
       `[${methodName}] Service response:`,
@@ -158,6 +161,8 @@ async function uploadAttachmentToAzure(
   try {
     console.log(`[${methodName}] Request received`);
     //  const value = await validateRequest(req, sendInteractionSchema, res)
+
+    const authToken = req.headers['authorization'] as string;
     const userId = req.headers["x-user-id"] as string;
     let value = req.body;
     if (!userId) {
@@ -177,7 +182,8 @@ async function uploadAttachmentToAzure(
         value?.account_rid,
         value?.interaction_rid,
         value?.project_rid,
-        userId
+        userId,
+        authToken
       );
       if (
         fileInfo &&
@@ -228,6 +234,7 @@ async function deleteAttachmentFromAzure(
 ): Promise<void> {
   const methodName = "Delete attachment from Azure";
   try {
+    const authToken = req.headers['authorization'] as string;
     const userId = req.headers["x-user-id"] as string;
     let value = req.body;
     if (!userId) {
@@ -242,7 +249,7 @@ async function deleteAttachmentFromAzure(
     }
 
     if (value.file_url) {
-      let deleted = await interactionService.deleteFromAzureBlob(value.file_url, userId);
+      let deleted = await interactionService.deleteFromAzureBlob(value.file_url, userId, authToken);
       if (
         deleted &&
         deleted.statusCode === HttpStatus.SUCCESS

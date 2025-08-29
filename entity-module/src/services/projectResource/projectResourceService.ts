@@ -1383,12 +1383,12 @@ export class ProjectResourceService {
       fiscal_year,
       transaction
     );
-    await this.projectResourceSchema.aggregatesProject(
-      accountNumber,
-      account_rid,
-      project_code,
-      transaction
-    );
+    // await this.projectResourceSchema.aggregatesProject(
+    //   accountNumber,
+    //   account_rid,
+    //   project_code,
+    //   transaction
+    // );
     await this.projectResourceSchema.aggregatesProjectFiscalSummary(
       accountNumber,
       account_rid,
@@ -1423,11 +1423,11 @@ export class ProjectResourceService {
       fiscal_year,
       transaction
     );
-    await this.projectResourceSchema.aggregatesAccount(
-      accountNumber,
-      account_rid,
-      transaction
-    );
+    // await this.projectResourceSchema.aggregatesAccount(
+    //   accountNumber,
+    //   account_rid,
+    //   transaction
+    // );
   }
 
   private async recordTimelineAndHistory(
