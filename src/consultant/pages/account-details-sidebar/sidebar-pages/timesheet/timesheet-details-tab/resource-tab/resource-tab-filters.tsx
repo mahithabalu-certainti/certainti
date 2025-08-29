@@ -37,7 +37,7 @@ export const getTimesheetResourceTabFilterFields = (
   countries: { option: string; value: string }[],
   regions: { option: string; value: string }[],
   resourceTypeOptions: { option: string; value: string }[],
-  memoizedStatus: { option: string; value: string }[],
+  memoizedStatus: { option: string; value: string }[]
 ): FieldConfig[] => {
   // Permission Mangement
   const { permission } = useSelector((state: RootState) => state.permission);
