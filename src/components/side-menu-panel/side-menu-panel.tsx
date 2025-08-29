@@ -111,6 +111,7 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
     searchParams.delete('tab');
     searchParams.delete('attachment_entity');
     searchParams.delete('file_id');
+    searchParams.delete('timesheet_id');
     searchParams.delete('interaction_id');
     searchParams.delete('interaction_rid');
     searchParams.delete('interaction_history_id');
