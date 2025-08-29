@@ -12,6 +12,7 @@ interface UploadsProps {
   attachID: string | undefined | null;
   accountInActive?: boolean;
   onUploadSuccess?: () => void;
+  projectFiscalYear?: number | string;
 }
 
 const MAX_FILE_SIZE_MB = 100;
@@ -33,6 +34,7 @@ const Uploads: React.FC<UploadsProps> = ({
   accountId,
   accountInActive,
   onUploadSuccess,
+  projectFiscalYear,
 }) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [message, setMessage] = useState<{
@@ -217,7 +219,11 @@ const Uploads: React.FC<UploadsProps> = ({
         </div>
       </div>
       <div style={{ pointerEvents: loading ? 'none' : 'all' }}>
-        <AttachmentForm formRef={formRef} onFormSubmit={handleSubmit} />
+        <AttachmentForm
+          formRef={formRef}
+          onFormSubmit={handleSubmit}
+          projectFiscalYear={projectFiscalYear}
+        />
         <div className='flex flex-col border-t border-[#cbd6e2] items-center justify-center gap-4 px-4 py-10'>
           <div
             onDrop={handleDrop}

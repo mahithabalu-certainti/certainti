@@ -353,9 +353,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       newData[`key_contact_email_${newRowIndex}`] = '';
       newData[`key_contact_rid_${newRowIndex}`] = '';
       newData[`is_primary_contact_${newRowIndex}`] = 'no';
-      newData[`include_in_communication_${newRowIndex}`] = 'no';
+      newData[`interaction_cc_recipient_${newRowIndex}`] = 'no';
       if (isFromProject) {
-        newData[`interaction_cc_recipient_${newRowIndex}`] = 'no';
+        newData[`include_in_communication_${newRowIndex}`] = 'no';
       }
       newData[`key_contact_status_${newRowIndex}`] = 'active';
       newData[`button_${newRowIndex}`] = '';

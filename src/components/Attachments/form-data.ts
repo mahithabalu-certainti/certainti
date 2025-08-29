@@ -13,7 +13,8 @@ export const AttachmentFormData = (
   docTypeOptions: SelectOption[],
   docTypeLoading?: boolean,
   showCategoryOthersField?: boolean,
-  showTypeOthersField?: boolean
+  showTypeOthersField?: boolean,
+  projectFiscalYear?: number | string
   //   permissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): FormType[] => {
   return useMemo(
@@ -26,6 +27,7 @@ export const AttachmentFormData = (
             options: fiscalYears,
             placeholder: 'Choose Fiscal Year',
             required: true,
+            hide: projectFiscalYear ? true : false,
           }),
           createSelectField('document_category_rid', 'Document Category', {
             options: categoryOptions,
