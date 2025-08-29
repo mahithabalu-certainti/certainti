@@ -1199,7 +1199,7 @@ export class InteractionService {
       // Check if the message was processed successfully
       console.log("Send result to topic", sendResult);
       return {
-        statusMessage: "Request is being processed",
+        statusMessage: "AI Assessment Initiated",
         status: "success",
         data: null
       };
