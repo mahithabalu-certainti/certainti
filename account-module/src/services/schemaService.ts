@@ -529,7 +529,8 @@ class SchemaService {
       is_rd_qualified BOOLEAN,
       qre NUMERIC(18, 2),
 
-      assessment_status VARCHAR(150)
+      assessment_status VARCHAR(150),
+      qre_detailed_breakdown json
     );
 
     `);
