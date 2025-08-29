@@ -296,19 +296,27 @@ const InteractionForm = () => {
   };
 
   const handleAddQuestion = () => {
-    setFormData((prev) => ({
-      ...prev,
-      questions: [
-        ...prev.questions,
-        {
-          question_seq_num: `SNO_${prev.questions.length + 1}`,
-          question: '',
-          is_mandatory: false,
-          is_editable: true,
-          notes: '',
-        },
-      ],
-    }));
+    setFormData((prev) => {
+      // Find the highest sequence number
+      const highestSeq = prev.questions.reduce((max, q) => {
+        const seqNum = parseInt(q.question_seq_num.replace('SNO_', ''));
+        return isNaN(seqNum) ? max : Math.max(max, seqNum);
+      }, 0);
+
+      return {
+        ...prev,
+        questions: [
+          ...prev.questions,
+          {
+            question_seq_num: `SNO_${highestSeq + 1}`,
+            question: '',
+            is_mandatory: false,
+            is_editable: true,
+            notes: '',
+          },
+        ],
+      };
+    });
   };
 
   const handleRemoveQuestion = (index: number) => {
