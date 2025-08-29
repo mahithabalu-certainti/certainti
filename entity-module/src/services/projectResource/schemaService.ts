@@ -5353,7 +5353,7 @@ export class ProjectResourceSchemaService {
     }
   
     let resourceCodes = await Resources.findAll({
-      attributes: ["rid", "resource_code", "resource_type_rid"],
+      attributes: ["rid", "resource_code", "resource_type_rid", "resource_name"],
       where: whereClause,
       order: [["resource_code", "ASC"]]
     });
