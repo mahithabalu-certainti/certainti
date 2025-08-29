@@ -79,6 +79,7 @@ export const ProjectResourceFormData = (
             options: projectResourceCodes,
             required: true,
             onChange: true,
+            showCreateBtn: true,
             placeholder: 'Choose Resource Code',
             resetDependsFields: [
               'salary',
@@ -392,7 +393,6 @@ export const ProjectResourceFormData = (
       projectResourceCodes,
       isSalaryRequired,
       autoCalculatedValue,
-      isSalaryRequired,
       isEditView,
       permissionMap,
       resourceStatusOptions,

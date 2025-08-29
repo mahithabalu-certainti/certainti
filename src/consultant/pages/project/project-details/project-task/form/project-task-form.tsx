@@ -1,9 +1,13 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useMemo } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { EditIcon, CreateResourceIcon } from '../../../../../../assets';
 import { useToast } from '../../../../../../hooks';
-import { AllPermissions, Layout } from '../../../../../../common-service';
+import {
+  AllPermissions,
+  Layout,
+  OnChange,
+} from '../../../../../../common-service';
 import { FormFiscalDateType, SelectResourceOption } from '../../../../../types';
 import TextButton from '../../../../../../components/button/text-button';
 import { FormBuilder } from '../../../../../../components';
@@ -22,17 +26,23 @@ import {
   formatDateToYYYYMMDDWithTime,
   getDateFormat,
 } from '../../../../../../common-utils';
+import { RESOURCE_CREATE } from '../../../../../../routes';
 
 const ProjectTaskForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
   const { successToast } = useToast();
   const location = useLocation();
+  const navigate = useNavigate();
   const { taskId } = useParams();
   const queryParams = new URLSearchParams(location.search);
   const account_Id = queryParams.get('account_Id');
+  const account_name = queryParams.get('account_name');
+  const account_number = queryParams.get('account_number');
   const project_Id = queryParams.get('project_Id');
   const projectPFY = queryParams.get('PFY');
   const projectCode = queryParams.get('projectCode');
+  const createdNewResourceCode = queryParams.get('created_resource_code') || '';
+
   const fiscalDate: FormFiscalDateType = projectPFY
     ? JSON.parse(projectPFY)
     : undefined;
@@ -127,12 +137,39 @@ const ProjectTaskForm: React.FC = () => {
     }
   };
 
+  const handleCreateNewResource = (resCode?: string) => {
+    const queryParams = new URLSearchParams({
+      account_id: account_Id || '',
+      account_name: account_name || '',
+      acc_number: account_number || '',
+      new_res_code: resCode || '',
+    });
+    navigate(`${RESOURCE_CREATE}?${queryParams.toString()}`, {
+      state: { from: location },
+    });
+  };
+
+  const onChangeField = (data: OnChange) => {
+    if (data.fieldName === 'resource_code') {
+      const selectedResource = memoizedProjectResourceCode.find(
+        (option) => String(option.value) === String(data.fieldValue)
+      );
+      if (!selectedResource) {
+        handleCreateNewResource(data.fieldValue as string);
+      }
+    }
+  };
+
   const handleExternalSubmit = () => {
     formRef.current?.requestSubmit();
   };
 
   const goBack = () => {
-    window.history.back();
+    if (createdNewResourceCode) {
+      navigate(-2);
+    } else {
+      window.history.back();
+    }
   };
 
   return (
@@ -188,12 +225,14 @@ const ProjectTaskForm: React.FC = () => {
           values={
             isEditView && projectTaskDetailsData
               ? { ...projectTaskDetailsData }
-              : undefined
+              : !isEditView
+                ? { resource_code: createdNewResourceCode }
+                : {}
           }
           outData={submitData}
           formRef={formRef}
           layout={Layout.TYPE_1}
-          onChange={() => console.log('onChange')}
+          onChange={onChangeField}
           keyStart='start_date'
           keyEnd='end_date'
         />

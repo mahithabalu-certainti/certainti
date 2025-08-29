@@ -52,6 +52,7 @@ export interface FormTypeFields {
   assignDefaultValue?: boolean;
   dependantLabel?: string;
   isFiscalYear?: boolean;
+  showCreateBtn?: boolean;
 }
 
 export type InputType =
@@ -74,6 +75,7 @@ export interface SelectOption {
   label: string;
   value: string;
   desc?: string;
+  isCreate?: boolean;
 }
 export interface SelectResourceOption {
   label: string;
@@ -132,6 +134,7 @@ export interface FieldType {
   assignDefaultValue?: boolean;
   dependantLabel?: string;
   isFiscalYear?: boolean;
+  showCreateBtn?: boolean;
 }
 
 export type AllowedCountry =

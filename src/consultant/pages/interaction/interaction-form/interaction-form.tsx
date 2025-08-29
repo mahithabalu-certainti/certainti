@@ -190,6 +190,7 @@ const InteractionForm = () => {
         accountName:
           interactionData.account_name || selectedProject.account_name || '',
         fiscalYear: Number(interactionData.fiscal_year),
+        status: interactionData?.status || '',
         questions:
           interactionData.questions.length > 0
             ? interactionData.questions.map((qus, index) => ({

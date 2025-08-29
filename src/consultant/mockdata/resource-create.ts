@@ -71,6 +71,7 @@ export const mockResourceCreateApiResponse: ResourceCreateApiResponse = {
       r_number: 'RES0001',
       eid: null,
       resource_desc: null,
+      resource_code: '',
     },
   },
 };

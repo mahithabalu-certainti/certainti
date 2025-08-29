@@ -28,6 +28,7 @@ interface KeyContactTypes {
   key_contact_role?: string;
   is_primary_contact?: boolean | null;
   include_in_communication?: boolean;
+  interaction_cc_recipient?: boolean;
   status_rid: string;
   role_name?: string;
   status_name?: string;
@@ -56,6 +57,8 @@ export const transformKeyContactsFromAPI = (
       : 'no';
     formData[`include_in_communication_${index}`] =
       contact.include_in_communication ? 'yes' : 'no';
+    formData[`interaction_cc_recipient_${index}`] =
+      contact.interaction_cc_recipient ? 'yes' : 'no';
     formData[`key_contact_status_${index}`] =
       getStatusLabelById(contact.status_rid) || 'active';
   });
@@ -109,6 +112,8 @@ export const keyContactsTransformPayload = (
         is_primary_contact: formData[`is_primary_contact_${index}`] === 'yes',
         include_in_communication:
           formData[`include_in_communication_${index}`] === 'yes',
+        interaction_cc_recipient:
+          formData[`interaction_cc_recipient_${index}`] === 'yes',
         status_rid:
           getStatusIdByLabel(formData[`key_contact_status_${index}`] || '') ||
           defaultActiveValue,
@@ -126,6 +131,7 @@ export const keyContactsTransformPayload = (
         keyContacts.push({
           rid: contact.rid,
           include_in_communication: contact.include_in_communication,
+          interaction_cc_recipient: contact.interaction_cc_recipient,
           status_rid: contact.status_rid,
           is_primary_contact: contact.is_primary_contact,
           key_contact_name: contact.key_contact_name,

@@ -408,7 +408,11 @@ export const ProjectDetails = () => {
           <ProjectResources
             accountOrProjectInActive={accountInActive || projectInActive}
             projectID={projectID}
-            accountID={accountID}
+            accountData={{
+              accountID: accountID,
+              accountName: projectData?.account_name || '',
+              accountNumber: projectData?.account_number || '',
+            }}
             projectFiscalDate={fiscalDate}
             setExportType={setExportType}
             setAttachmentParams={setProjectResourceParams}
@@ -420,7 +424,11 @@ export const ProjectDetails = () => {
           <ProjectTask
             accountOrProjectInActive={accountInActive || projectInActive}
             projectID={projectID}
-            accountID={accountID}
+            accountData={{
+              accountID: accountID,
+              accountName: projectData?.account_name || '',
+              accountNumber: projectData?.account_number || '',
+            }}
             projectFiscalDate={fiscalDate}
             setExportType={setExportType}
             setProjectTaskParams={setProjectTaskParams}

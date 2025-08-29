@@ -88,12 +88,12 @@ export const newKeyContactFields = (
     required: true,
     disabled: disabled || false,
   }),
-  createRadioField('include_in_communication', 'Interaction Recipient?', {
-    radioOptions: YES_NO_OPTIONS,
-    width: '200px',
-    required: true,
-    disabled: disabled || false,
-  }),
+  // createRadioField('include_in_communication', 'Interaction Recipient?', {
+  //   radioOptions: YES_NO_OPTIONS,
+  //   width: '200px',
+  //   required: true,
+  //   disabled: disabled || false,
+  // }),
   createRadioField('interaction_cc_recipient', 'Interaction CC Recipient?', {
     radioOptions: YES_NO_OPTIONS,
     width: '200px',
@@ -118,7 +118,7 @@ const createDynamicField = (
   removeKeyContact: (index: number) => void
 ) => {
   const fieldsArr = [];
-  const groupIndex = Math.floor(index / 9);
+  const groupIndex = Math.floor(index / 8);
   const { name, label, ...rest } = contacts;
   const dynamicName = `${name}_${groupIndex}`;
   if (contacts.type === 'text') {

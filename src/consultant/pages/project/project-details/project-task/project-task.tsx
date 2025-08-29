@@ -71,7 +71,7 @@ const projectTabs: ProjectsTabs[] = [
 
 export const ProjectTask = ({
   projectID,
-  accountID,
+  accountData,
   projectFiscalDate,
   setExportType,
   setProjectTaskParams,
@@ -79,7 +79,11 @@ export const ProjectTask = ({
   accountOrProjectInActive,
 }: {
   projectID?: string;
-  accountID?: string;
+  accountData?: {
+    accountID: string;
+    accountName: string;
+    accountNumber: string;
+  };
   projectFiscalDate?: FormFiscalDateType;
   setExportType?: (type: ExportType) => void;
   setProjectTaskParams: React.Dispatch<
@@ -103,6 +107,8 @@ export const ProjectTask = ({
   const [showProjectTaskDetails, setShowProjectTaskDetails] =
     useState<boolean>(false);
   const [searchParams] = useSearchParams();
+  const accountID =
+    accountData?.accountID || searchParams.get('accountID') || '';
 
   const navigate = useNavigate();
   const [refreshProjectsTrigger, setRefreshProjectsTrigger] = useState<number>(
@@ -311,6 +317,8 @@ export const ProjectTask = ({
     const queryParams = new URLSearchParams({
       account_Id,
       project_Id,
+      account_name: accountData?.accountName || '',
+      account_number: accountData?.accountNumber || '',
       PFY: JSON.stringify(PFY),
       projectCode: projectCode ?? '',
       source: 'createProjectTask',

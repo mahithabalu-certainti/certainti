@@ -233,6 +233,7 @@ export const createAutoCompleteField = (
     defaultValue?: string;
     assignDefaultValue?: boolean;
     dependantLabel?: string;
+    showCreateBtn?: boolean;
   }
 ): FieldType => ({
   type: 'autocomplete',
@@ -251,6 +252,7 @@ export const createAutoCompleteField = (
   resetDependsFields: others.resetDependsFields,
   assignDefaultValue: others.assignDefaultValue,
   dependantLabel: others.dependantLabel,
+  showCreateBtn: others.showCreateBtn,
 });
 
 export const createButton = (

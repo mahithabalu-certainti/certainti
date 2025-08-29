@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AdminSubmenuActiveIcon, ArrowBackIcon, BackIcon } from '../../assets';
@@ -55,7 +56,13 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
         const menu = menus.find((menu) => menu.name === item.id);
         const updatedItem = {
           ...item,
-          hide: module ? !module.is_enabled : menu ? !menu.is_enabled : false,
+          hide: !item.hide
+            ? module
+              ? !module.is_enabled
+              : menu
+                ? !menu.is_enabled
+                : false
+            : true,
         };
         if (item.subMenu) {
           updatedItem.subMenu = updateMenuItems(item.subMenu);

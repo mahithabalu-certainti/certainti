@@ -52,7 +52,16 @@ const defaultKeyContactHeaders: KeyContactHeader[] = [
     label: 'Interaction Recipient?',
     width: '200px',
   },
-  { name: 'key_contact_status', label: 'Key Contact Status', width: '140px' },
+  {
+    name: 'interaction_cc_recipient',
+    label: 'Interaction CC Recipient?',
+    width: '200px',
+  },
+  {
+    name: 'key_contact_status',
+    label: 'Key Contact Status',
+    width: '140px',
+  },
   { name: 'button', label: '', width: '35px' },
 ];
 
@@ -398,7 +407,7 @@ const ProjectForm: React.FC = () => {
 
   const removeKeyContactInfo = (fieldIndex: number) => {
     const contactsArr = [...keyContacts];
-    const groupSize = 8;
+    const groupSize = 9;
     const groupIndex = Math.floor(fieldIndex / groupSize);
     const startIndex = groupIndex * groupSize;
     if (contactsArr.length <= groupSize) {
@@ -704,6 +713,7 @@ const ProjectForm: React.FC = () => {
             keyStart='project_startdate'
             keyEnd='project_enddate'
             layout={Layout.TYPE_1}
+            newContactLength={9}
             keyContactHeaders={defaultKeyContactHeaders}
             highlight={highlight}
           />
