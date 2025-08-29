@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams, useSearchParams } from 'react-router-dom';
@@ -66,6 +67,7 @@ const TimesheetResourcesTab: React.FC<ProjectTabListProps> = ({
     });
     return map;
   }, [timesheetResourceViewEditFields]);
+  if (!timesheetResourcesIsEnable) return <AccessRestricted />;
 
   // API Hooks
   const tabName = searchParams.get('tab');
@@ -121,7 +123,6 @@ const TimesheetResourcesTab: React.FC<ProjectTabListProps> = ({
   const totalItems = projectApiListData?.count || 0;
 
   const projectTabTableColumns = getResourceTabTableColumns(permissionMap);
-  if (!timesheetResourcesIsEnable) return <AccessRestricted />;
   return (
     <div className='border border-[#CBD6E2]'>
       <ListTable

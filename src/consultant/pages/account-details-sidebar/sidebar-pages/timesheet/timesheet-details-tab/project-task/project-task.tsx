@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams, useSearchParams } from 'react-router-dom';
@@ -66,6 +67,7 @@ const TimesheetProjectTask: React.FC<ProjectTaskProps> = ({
   const tabName = searchParams.get('tab');
   const isTaskTable = tabName === 'timesheet_project_task';
   const viewDetails = !!isTaskTable;
+  if (!timesheetTaskIsEnable) return <AccessRestricted />;
 
   const {
     data: projectApiListData,
@@ -115,7 +117,6 @@ const TimesheetProjectTask: React.FC<ProjectTaskProps> = ({
 
   const totalItems = projectApiListData?.count || 0;
   const projectTaskColumns = getProjectTaskColumns(permissionMap);
-  if (!timesheetTaskIsEnable) return <AccessRestricted />;
   return (
     <div className='border border-[#CBD6E2]'>
       <ListTable

@@ -18,7 +18,7 @@ import {
 import { FailureType, ImportEntityType } from '../../../../types/imports';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
-import { AllPermissions } from '../../../../../common-service';
+import { AllPermissions, AllModules } from '../../../../../common-service';
 import { TabMenus } from '../resources/resources';
 import TimesheetProjectTab from './timesheet-details-tab/project-tab/project-tab';
 import { ExportType, TimeSheetListURLParams } from '../../../../types';
@@ -57,19 +57,19 @@ const tabs: TabMenus[] = [
     label: 'Project',
     value: 'timesheet_project',
     hide: false,
-    id: AllPermissions.ACCOUNT_TIMESHEET_PROJECT_VIEW,
+    id: AllModules.PROJECTS,
   },
   {
     label: 'Resource',
     value: 'timesheet_project_resource',
     hide: false,
-    id: AllPermissions.ACCOUNT_TIMESHEET_RESOURCE_VIEW,
+    id: AllModules.RESOURCES,
   },
   {
     label: 'Project Task',
     value: 'timesheet_project_task',
     hide: false,
-    id: AllPermissions.ACCOUNT_TIMESHEET_PROJECT_TASK_VIEW,
+    id: AllModules.PROJECT_TASK,
   },
 ];
 
@@ -166,24 +166,23 @@ const TimesheetDetails: React.FC<TimesheetDetailsProps> = ({
       ),
       key: 'records_failed_to_load',
     },
-    {
-      label: 'Entity',
-      value: data?.entity,
-      key: 'entity',
-    },
+    // {
+    //   label: 'Entity',
+    //   value: data?.entity,
+    //   key: 'entity',
+    // },
     {
       label: 'Status',
       value: (
         <span
-          className={`font-semibold ${
-            data?.status === 'Failed'
+          className={`font-semibold ${data?.status === 'Failed'
               ? 'text-red-600'
               : data?.status === 'Completed'
                 ? 'text-green-600'
                 : data?.status === 'Processing'
                   ? 'text-yellow-600'
                   : 'text-gray-700'
-          }`}
+            }`}
         >
           {data?.status}
         </span>
