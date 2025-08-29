@@ -25,7 +25,6 @@ export class InteractionService {
   }> {
     try {
       const newCustomJwtToken = await this.generateNewToken(authToken);
-      console.log("newCustomJwtToken", newCustomJwtToken);
 
       const response = await axios.put(
         `${INTERACTION_BASE_URL}/extInteractions/updateResponse`,

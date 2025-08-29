@@ -115,7 +115,6 @@ async function validateToken(token: string) {
 
 async function getAzureCustomJwtSecrets() {
   try {
-    console.log("Inside hwt hanfler", process.env.CUSTOM_PVT_KEY);
     const secrets = await Promise.all([
       getSecret(process.env.CUSTOM_PVT_KEY as string),
       getSecret(process.env.CUSTOM_PUB_KEY as string),
