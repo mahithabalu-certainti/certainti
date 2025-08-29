@@ -626,12 +626,22 @@ const ListTable = <T extends RowData>({
       return;
     }
     // check if 'conditionallyEdit' have or not
-    const conditionallyEdit = column.conditionallyEdit?.key
-      ? // If yes
-        row[column.conditionallyEdit.key] ===
-          column.conditionallyEdit.matchValue && column.editable
-      : column.editable;
-    if (!conditionallyEdit) return;
+    const { conditionallyEdit, editable } = column;
+    let canEdit = editable;
+
+    if (canEdit && conditionallyEdit && conditionallyEdit.length > 0) {
+      canEdit = conditionallyEdit.every((condition) => {
+        const cellValue = row[condition.key];
+        const { matchValue } = condition;
+
+        if (Array.isArray(matchValue)) {
+          return matchValue.includes(cellValue as never);
+        } else {
+          return cellValue === matchValue;
+        }
+      });
+    }
+    if (!canEdit) return;
     if (Object.keys(editingCells).length > 0) {
       return;
     }
@@ -1078,13 +1088,13 @@ const ListTable = <T extends RowData>({
                       sx={{
                         display: hideRow ? 'none' : '',
                         '&:hover td': {
-                          backgroundColor: '#f5f7fa',
+                          backgroundColor: isSaving ? '#fff' : '#f5f7fa',
                         },
                         '&.Mui-selected td': {
-                          backgroundColor: '#f5f7fa',
+                          backgroundColor: isSaving ? '#fff' : '#f5f7fa',
                         },
                         '&.Mui-selected:hover td': {
-                          backgroundColor: '#f5f7fa',
+                          backgroundColor: isSaving ? '#fff' : '#f5f7fa',
                         },
                         ...(!parentBorder && rowLevel === 0
                           ? {
@@ -1156,12 +1166,25 @@ const ListTable = <T extends RowData>({
                             ? cellValue
                             : '-';
                         // check if 'conditionallyEdit' have or not
-                        const conditionallyEdit = column.conditionallyEdit?.key
-                          ? // If yes
-                            row[column.conditionallyEdit.key] ===
-                              column.conditionallyEdit.matchValue &&
-                            column.editable
-                          : column.editable;
+                        let conditionallyEdit = column.editable;
+                        if (
+                          conditionallyEdit &&
+                          column.conditionallyEdit &&
+                          column.conditionallyEdit.length > 0
+                        ) {
+                          conditionallyEdit = column.conditionallyEdit.every(
+                            (condition) => {
+                              const cellValue = row[condition.key];
+                              const { matchValue } = condition;
+
+                              if (Array.isArray(matchValue)) {
+                                return matchValue.includes(cellValue as never);
+                              } else {
+                                return cellValue === matchValue;
+                              }
+                            }
+                          );
+                        }
 
                         const isFirstDataColumn =
                           column.id === visibleColumns[0].id && expandable;
@@ -1232,7 +1255,7 @@ const ListTable = <T extends RowData>({
                                 })}
 
                                 {isSaving && (
-                                  <span className='absolute top-2.5 right-2 bg-white'>
+                                  <span className='absolute top-2.5 right-2 bg-white z-10'>
                                     <CircularProgress size='15px' />
                                   </span>
                                 )}
@@ -1276,7 +1299,7 @@ const ListTable = <T extends RowData>({
                                   isFirstDataColumn &&
                                   renderExpandIcon(row, rowId)}
 
-                                {isChildRows && (
+                                {isChildRows  && (
                                   <div className='flex items-center justify-center w-[18px] h-[17px] bg-[#425A76] rounded-[4px] shrink-0'>
                                     <React.Suspense fallback={null}>
                                       <ChildAccountIcon
@@ -1286,34 +1309,56 @@ const ListTable = <T extends RowData>({
                                     </React.Suspense>
                                   </div>
                                 )}
-                                <TruncateWithTooltip
-                                  maxWidth={Number(column.width)}
-                                  className={
-                                    component === 'account' &&
-                                    rowLevel === 0 &&
-                                    expandable &&
-                                    isFirstDataColumn
-                                      ? `inline-flex items-center rounded-[4px] !text-[14px] px-2 h-[26px] !font-semibold cursor-pointer group-hover:underline`
-                                      : ''
-                                  }
-                                  style={
-                                    component === 'account' &&
-                                    rowLevel === 0 &&
-                                    expandable &&
-                                    isFirstDataColumn
-                                      ? {
-                                          background: `linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)), ${row?.bgColor}`,
-                                          color: row?.color as
-                                            | string
-                                            | undefined,
-                                        }
-                                      : undefined
-                                  }
-                                >
-                                  {displayValue as React.ReactNode}
-                                </TruncateWithTooltip>
-
-                                {isEditableCell && (
+                                {component === 'timesheet-project' ? (
+                                  // For timesheet-project -> show only first column on parent row, all columns for child rows
+                                  (rowLevel > 0 || isFirstDataColumn) && (
+                                    <TruncateWithTooltip
+                                      maxWidth={Number(column.width)}
+                                      className={
+                                        rowLevel === 0 && expandable && isFirstDataColumn
+                                          ? `inline-flex items-center rounded-[4px] !text-[14px] px-2 h-[26px] !font-semibold cursor-pointer group-hover:underline`
+                                          : ''
+                                      }
+                                      style={
+                                        rowLevel === 0 && expandable && isFirstDataColumn
+                                          ? {
+                                              background: `linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)), ${row?.bgColor}`,
+                                              color: row?.color as string | undefined,
+                                            }
+                                          : undefined
+                                      }
+                                    >
+                                      {displayValue as React.ReactNode}
+                                    </TruncateWithTooltip>
+                                  )
+                                ) : (
+                                  // For account (or others) -> show normally (your previous logic)
+                                  <TruncateWithTooltip
+                                    maxWidth={Number(column.width)}
+                                    className={
+                                      component === 'account' &&
+                                      rowLevel === 0 &&
+                                      expandable &&
+                                      isFirstDataColumn
+                                        ? `inline-flex items-center rounded-[4px] !text-[14px] px-2 h-[26px] !font-semibold cursor-pointer group-hover:underline`
+                                        : ''
+                                    }
+                                    style={
+                                      component === 'account' &&
+                                      rowLevel === 0 &&
+                                      expandable &&
+                                      isFirstDataColumn
+                                        ? {
+                                            background: `linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)), ${row?.bgColor}`,
+                                            color: row?.color as string | undefined,
+                                          }
+                                        : undefined
+                                    }
+                                  >
+                                    {displayValue as React.ReactNode}
+                                  </TruncateWithTooltip>
+                                )} 
+                                {isEditableCell &&  (
                                   <button
                                     className='edit-pencil-icon absolute -right-1.5 top-1/2 cursor-pointer transform -translate-y-1/2 w-6 h-[28px] flex items-center justify-center bg-[#f5f7fa]'
                                     onClick={(e) => {

@@ -439,7 +439,6 @@ const Interactions: React.FC<InteractionsProps> = ({
             onBackClick={handleBackFromResponse}
             buttons={headerButtons}
           />
-
           <div className='border border-[#CBD6E2]'>
             {!viewResponseHistory ? (
               <ListTable

@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import TabPanel from '../../components/tab';
-// import ListTable from '../../components/table';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import ResourceTableHeader from '../resources/resource-table-header';
@@ -14,7 +13,7 @@ import { generatePath, useNavigate, useParams } from 'react-router-dom';
 import { Project, ProjectListParams } from '../../../../types/project';
 import { ListTable } from '../../../../../components/table';
 import { AccessRestricted } from '../../../../../components/account-restricted';
-import { checkPermission } from '../../../../../common-utils';
+import { checkPermission, REGEX_PATTERNS } from '../../../../../common-utils';
 import { AllModules, AllPermissions } from '../../../../../common-service';
 import { ResourceTabs } from '../resources/resources';
 import {
@@ -402,6 +401,7 @@ const Projects: React.FC<ProjectsProps> = ({
 
     if (!childFiscal) return;
 
+    // Prepare update data
     const updateData = updates.reduce<Record<string, FieldChangeValue>>(
       (acc, item) => {
         acc[item.editId || item.columnId] = item.value;
@@ -425,6 +425,46 @@ const Projects: React.FC<ProjectsProps> = ({
       updateData['project_classification_other'] = '';
     }
 
+    // Calculate total_cost if any cost field is updated
+    const isCostFieldUpdated = updates.some(
+      (item) =>
+        item.columnId === 'total_cost_fte' ||
+        item.columnId === 'total_cost_subcon' ||
+        item.columnId === 'total_cost_nonlabor'
+    );
+
+    if (isCostFieldUpdated) {
+      // Get current values from childFiscal or updateData
+      const fteCost =
+        updateData['total_cost_fte'] ?? childFiscal.total_cost_fte ?? 0;
+      const subconCost =
+        updateData['total_cost_subcon'] ?? childFiscal.total_cost_subcon ?? 0;
+      const nonLaborCost =
+        updateData['total_cost_nonlabor'] ??
+        childFiscal.total_cost_nonlabor ??
+        0;
+
+      // Convert to numbers and ensure they are valid
+      const fteCostNum = parseFloat(fteCost as string) || 0;
+      const subconCostNum = parseFloat(subconCost as string) || 0;
+      const nonLaborCostNum = parseFloat(nonLaborCost as string) || 0;
+
+      // Calculate total_cost
+      const totalCost = fteCostNum + subconCostNum + nonLaborCostNum;
+
+      // Validate total_cost
+      const totalCostString = totalCost.toFixed(2);
+      if (!REGEX_PATTERNS.EFFORTS_NUMBER.test(totalCostString)) {
+        errorToast(
+          'Invalid total cost calculated. Must be a positive number with up to 16 digits and 2 decimal places.'
+        );
+        return;
+      }
+
+      // Add total_cost to updateData
+      updateData['total_cost'] = totalCostString;
+    }
+
     try {
       const res = await updateProjectMutation({
         variables: { data: updateData },
@@ -444,11 +484,11 @@ const Projects: React.FC<ProjectsProps> = ({
 
         setProjectList(newProjects);
       } else {
-        errorToast(result?.statusMessage || 'Failed to update filed');
+        errorToast(result?.statusMessage || 'Failed to update field');
         setProjectList(previousProject);
       }
     } catch (error) {
-      errorToast((error as Error)?.message || 'Failed to update filed');
+      errorToast((error as Error)?.message || 'Failed to update field');
       setProjectList(previousProject);
     }
   };

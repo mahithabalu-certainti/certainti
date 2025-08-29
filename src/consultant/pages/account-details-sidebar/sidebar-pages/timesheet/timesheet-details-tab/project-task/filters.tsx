@@ -119,7 +119,7 @@ export const projectTaskFilterFields = (
     },
 
     {
-      name: 'Resource ID',
+      name: 'Project Task ID',
       value: 'r_number',
       type: 'text',
       required: true,

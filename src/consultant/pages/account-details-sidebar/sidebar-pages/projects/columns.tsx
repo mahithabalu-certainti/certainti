@@ -335,6 +335,12 @@ export const getProjectColumns = (
     hide:
       !permissionMap?.['total_effort']?.read &&
       !permissionMap?.['total_effort']?.edit,
+    conditionallyEdit: [
+      {
+        key: 'total_effort',
+        matchValue: [null, '0.00'],
+      },
+    ],
     sx: {
       textAlign: 'right',
     },
@@ -349,6 +355,44 @@ export const getProjectColumns = (
           regex: REGEX_PATTERNS.EFFORTS_NUMBER,
           errorMessage:
             'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+        },
+      ],
+    },
+  },
+  {
+    id: 'total_cost',
+    editId: 'total_cost',
+    label: 'Project Cost',
+    sortable: true,
+    sortId: 'total_cost',
+    width: 130,
+    editable:
+      permissionMap?.['total_cost']?.read &&
+      permissionMap?.['total_cost']?.edit &&
+      !accountInActive,
+    hide:
+      !permissionMap?.['total_cost']?.read &&
+      !permissionMap?.['total_cost']?.edit,
+    conditionallyEdit: [
+      {
+        key: 'total_cost',
+        matchValue: [null, '0.00'],
+      },
+    ],
+    sx: {
+      textAlign: 'right',
+    },
+    render: (row: Project) =>
+      row.total_cost ? costDisplay(row.total_cost, row.currency_symbol) : '-',
+    field: {
+      type: 'text',
+      required: false,
+      placeholder: 'Enter Project Cost',
+      validation: [
+        {
+          regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+          errorMessage:
+            'Project Cost must be a positive integer with up to 16 digits and 2 decimal places',
         },
       ],
     },
@@ -454,37 +498,67 @@ export const getProjectColumns = (
     },
   },
   {
-    id: 'total_cost_nonlabor',
-    editId: 'total_cost_nonlabor',
-    label: 'Non-Labor Cost',
+    id: 'project_point_of_contact',
+    label: 'Project Point of Contact',
     sortable: true,
-    sortId: 'total_cost_nonlabor',
-    editable:
-      permissionMap?.['total_cost_nonlabor']?.read &&
-      permissionMap?.['total_cost_nonlabor']?.edit &&
-      !accountInActive,
+    sortId: 'project_point_of_contact',
+    width: 200,
     hide:
-      !permissionMap?.['total_cost_nonlabor']?.read &&
-      !permissionMap?.['total_cost_nonlabor']?.edit,
-    width: 140,
-    sx: {
-      textAlign: 'right',
+      !permissionMap?.['key_contacts']?.read &&
+      !permissionMap?.['key_contacts']?.edit,
+    render: (row: Project & { _level?: number }) => {
+      const isClickable =
+        permissionMap?.['key_contacts']?.read &&
+        permissionMap?.['key_contacts']?.edit &&
+        row._level !== undefined &&
+        row._level === 1;
+      return isClickable ? (
+        <div
+          onDoubleClick={() =>
+            handleEdit(row, row.project_point_of_contact, 'key_contacts_list')
+          }
+          className='!h-[31px] !min-h[31px] pt-1.5'
+        >
+          {row.project_point_of_contact}
+        </div>
+      ) : (
+        <span>
+          {row.project_point_of_contact ? row.project_point_of_contact : '-'}
+        </span>
+      );
     },
-    render: (row: Project) =>
-      row.total_cost_nonlabor
-        ? costDisplay(row.total_cost_nonlabor, row.currency_symbol)
-        : '-',
-    field: {
-      type: 'text',
-      required: false,
-      placeholder: 'Enter Non Labor Cost',
-      validation: [
-        {
-          regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-          errorMessage:
-            'Non Labor Cost must be a positive integer with up to 16 digits and 2 decimal places',
-        },
-      ],
+  },
+  {
+    id: 'technical_point_of_contact',
+    label: 'Technical Point of Contact',
+    sortable: true,
+    sortId: 'technical_point_of_contact',
+    width: 210,
+    hide:
+      !permissionMap?.['key_contacts']?.read &&
+      !permissionMap?.['key_contacts']?.edit,
+    render: (row: Project & { _level?: number }) => {
+      const isClickable =
+        permissionMap?.['key_contacts']?.read &&
+        permissionMap?.['key_contacts']?.edit &&
+        row._level !== undefined &&
+        row._level === 1;
+      return isClickable ? (
+        <div
+          onDoubleClick={() =>
+            handleEdit(row, row.technical_point_of_contact, 'key_contacts_list')
+          }
+          className='!h-[31px] !min-h[31px] pt-1.5'
+        >
+          {row.technical_point_of_contact}
+        </div>
+      ) : (
+        <span>
+          {row.technical_point_of_contact
+            ? row.technical_point_of_contact
+            : '-'}
+        </span>
+      );
     },
   },
   {
