@@ -157,6 +157,7 @@ interface ProjectResourceCodeData {
   resource_type_name?: string;
   rid: string;
   resource_code: string;
+  resource_name: string;
 }
 // skill type
 export interface PRSkillSubTypeResponse extends CommonApiResponse {

@@ -785,6 +785,7 @@ export const AccountDetails = () => {
           showActions={false}
           showSettings={false}
           goBack={goBack}
+          isLoading={isPending}
         />
       </div>
       <InfoSection
@@ -809,6 +810,7 @@ export const AccountDetails = () => {
             showBackIcon={true}
             isCollapsed={isCollapsed}
             onToggleCollapse={() => setIsCollapsed((prev) => !prev)}
+            isLoading={isPending}
           />
         </div>
         <div

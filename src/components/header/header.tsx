@@ -9,6 +9,7 @@ import {
 import { ActionsDropdown } from '../actions-dropdown';
 import TextButton from '../button/text-button';
 import { ActionsDropdownItem } from '../../common-utils';
+import { Skeleton } from '@mui/material';
 
 const DEFAULT_BUTTON_STYLES = {
   height: '24px',
@@ -44,6 +45,7 @@ interface HeaderProps {
   onSettingsClick?: () => void;
   variant?: 'main' | 'sub'; // To distinguish between main page and sub-page headers
   goBack?: () => void;
+  isLoading?: boolean;
 }
 
 export const PageHeader: React.FC<HeaderProps> = ({
@@ -67,6 +69,7 @@ export const PageHeader: React.FC<HeaderProps> = ({
   onSettingsClick,
   variant = 'main', // Default to main variant
   goBack,
+  isLoading = false,
 }) => {
   return (
     <div
@@ -97,6 +100,11 @@ export const PageHeader: React.FC<HeaderProps> = ({
                 </>
               )}
               <div className='font-bold text-[16px] -mt-1 text-[#2D3E4F] overflow-ellipsis truncate'>
+                {isLoading ? (
+                  <Skeleton variant='text' width='20%' height={20} />
+                ) : (
+                  title
+                )}
                 {title}
               </div>
             </div>
