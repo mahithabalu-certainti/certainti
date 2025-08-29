@@ -33,7 +33,7 @@ export class AIAssessmentService {
     try {
       const topic = process.env.KAFKA_AI_RESPONSE_TRIGGER_TOPIC || "ai_assessment_response";
       const message = {
-        value: JSON.stringify(aiResponse.data),
+        value: JSON.stringify(aiResponse),
       };
       if (!this.producer) {
         await this.initProducer();
@@ -46,6 +46,11 @@ export class AIAssessmentService {
         topic,
         aiResponse,
       });
+       return {
+      statusCode: HttpStatus.SUCCESS,
+      message: HttpStatus.SUCCESS_MESSAGE,
+      data: "",
+    };
     } catch (error) {
       this.logger.error("Failed to send AI response to Kafka topic:", {
         error,
@@ -55,12 +60,7 @@ export class AIAssessmentService {
         message: "Failed to send AI response to Kafka topic",
         errorMessage: error instanceof Error ? error.message : String(error),
       };
-    }
-    return {
-      statusCode: HttpStatus.SUCCESS,
-      message: HttpStatus.SUCCESS_MESSAGE,
-      data: "",
-    };
+    } 
   }
   async disconnectProducer() {
     if (this.producer) {
