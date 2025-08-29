@@ -1,4 +1,5 @@
 import { CommonApiResponse } from '../../common-service';
+import { FilterType } from './common';
 
 // Complete API Response Type
 export interface UserGroupApiResponse extends CommonApiResponse {
@@ -78,6 +79,10 @@ export type ProjectListByAccounts = {
   access_type: null | string;
   project_rid: string;
   project_code: string;
+  fiscal_year: string;
+  classification_name: string;
+  project_type: string;
+  project_point_of_contact: string;
 };
 
 export type ActiveUserForGroup = {
@@ -165,4 +170,5 @@ export interface FetchUsersByAccountBody {
   account_rid: string[];
   group_type_rid?: string;
   group_rid?: string;
+  filters?: Record<string, FilterType>;
 }

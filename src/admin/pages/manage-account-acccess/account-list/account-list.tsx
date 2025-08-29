@@ -35,6 +35,7 @@ import { FilterState } from '../../../../consultant/types/account-filter';
 import { checkPermission } from '../../../../common-utils';
 import { AccessRestricted } from '../../../../components/account-restricted';
 import { MANAGE_ACCOUNT_ACCESS } from '../../../../routes';
+import { useGetUserGroupTypes } from '../../../service';
 
 const AccountList = () => {
   const [page, setPage] = useState<number>(1);
@@ -145,6 +146,7 @@ const AccountList = () => {
 
   const countriesList = useGetAllCountries();
   const industry = useFetchIndustrys();
+  const allUserGroupTypes = useGetUserGroupTypes({ type: 'All' });
   const permissionMap = useMemo(() => {
     const map: Record<string, { read: boolean; edit: boolean }> = {};
     userViewEditFields.forEach((item) => {
@@ -169,13 +171,21 @@ const AccountList = () => {
       })) || [],
     [industry.data?.data.industries]
   );
+  const allGroupTypes: SelectOption[] = useMemo(
+    () =>
+      allUserGroupTypes.data?.data.groupTypes.map((groupTypes) => ({
+        label: groupTypes.group_type_name,
+        value: groupTypes.rid,
+      })) || [],
+    [allUserGroupTypes.data?.data.groupTypes]
+  );
   const accountFilterFields = getManageAccountFilterFields(
     allCountries,
     allIndustries,
     permissionMap
   );
   const userFilterFeilds = getManageUserListFilterFields();
-  const groupFilterFeilds = getManageGroupListFilterFields();
+  const groupFilterFeilds = getManageGroupListFilterFields(allGroupTypes);
   const projectFilterFeilds = getManageProjectListFilterFields();
   const getFilterFields = () => {
     if (!accountname) {
@@ -328,7 +338,6 @@ const AccountList = () => {
           )}
         </div>
       </div>
-
       {!accountId && (
         <div className='border border-[#CBD6E2]'>
           <ManageAccountTable
