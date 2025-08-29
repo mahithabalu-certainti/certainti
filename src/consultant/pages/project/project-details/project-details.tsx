@@ -459,6 +459,7 @@ export const ProjectDetails = () => {
             setExportType={setExportType}
             setAttachmentParams={setAttachmentParams}
             refetchProjectDetails={onRefreshClick}
+            projectFiscalYear={projectData?.fiscal_year}
           />
         );
       case 'checklists':

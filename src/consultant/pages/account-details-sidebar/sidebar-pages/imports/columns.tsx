@@ -62,6 +62,14 @@ export const getImportsListColumns = (
     hide: !permissionMap?.['size']?.edit && !permissionMap?.['size']?.read,
   },
   {
+    id: 'status',
+    sortId: 'status',
+    label: 'Status',
+    width: 140,
+    sortable: true,
+    hide: !permissionMap?.['status']?.edit && !permissionMap?.['status']?.read,
+  },
+  {
     id: 'fiscal',
     editId: 'fiscal_year',
     sortId: 'fiscal',
@@ -130,14 +138,6 @@ export const getImportsListColumns = (
     sx: {
       textAlign: 'right',
     },
-  },
-  {
-    id: 'status',
-    sortId: 'status',
-    label: 'Status',
-    width: 140,
-    sortable: true,
-    hide: !permissionMap?.['status']?.edit && !permissionMap?.['status']?.read,
   },
   {
     id: 'status_descriptions',
