@@ -269,13 +269,12 @@ const Timesheet: React.FC<TimeSheetProps> = ({
     memoizedCountry,
     memoizedRegion,
     memoizedResourceType,
-    memoizedStatus,
+    memoizedStatus
   );
 
   const timesheetProjectTaskFilterFields =
     projectTaskFilterFields(memoizedResourceType);
 
-  const showUploads = searchParams.get('upload') === 'true';
   const totalItems = data?.count || 0;
   const timesheetColumns = getTimesheetListColumns(
     handleDocument,
@@ -300,6 +299,7 @@ const Timesheet: React.FC<TimeSheetProps> = ({
       setCurrentCountry(String(value));
     }
   };
+
   return (
     <div className='w-full pt-2 pl-2 pr-4'>
       <SectionTabPanel
@@ -321,11 +321,7 @@ const Timesheet: React.FC<TimeSheetProps> = ({
         toggleEnabled={toggleEnabled}
         setToggleEnabled={setToggleEnabled}
         showRefresh={
-          !showUploads ||
-          !viewDetails ||
-          isProjectTab ||
-          isResourceTab ||
-          isProjectTaskTab
+          !viewDetails || isProjectTab || isResourceTab || isProjectTaskTab
         }
         onRefreshClick={onRefreshClick}
         onFilterChange={handleCountry}

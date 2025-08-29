@@ -526,9 +526,9 @@ const Resource: React.FC<ResourceProps> = ({
     const accNumber = accountDetails?.data?.accountById.r_number;
     navigate(
       RESOURCE +
-      '/edit/' +
-      resourceId +
-      `?account_id=${accountid}&acc_number=${accNumber}`,
+        '/edit/' +
+        resourceId +
+        `?account_id=${accountid}&acc_number=${accNumber}`,
       {
         state: {
           resource: resourceData,
