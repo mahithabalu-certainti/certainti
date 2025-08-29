@@ -1387,6 +1387,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               value={dayjs(fieldValue, 'YYYY-MM-DD')}
               disabled={field.disabled}
               format='YYYY-MM-DD'
+              referenceDate={ 
+                   customMaxDate
+                  ? dayjs(customMinDate)
+                  : dayjs(customMaxDate)
+              } 
               // onOpen={() => {
               //   if (!fieldValue && isFinancialDateField && selectedFiscalYear) {
               //     // Show calendar from Jan 1 of fiscal year
