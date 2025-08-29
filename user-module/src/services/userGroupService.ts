@@ -1232,7 +1232,7 @@ async getAccountGroups(
         'modified_datetime': (value: any) => this.processDateFilter('modified_datetime', value, whereClause),
         'created_by': (value: any) => this.processRelationFilter('created_by', value, whereClause, includeClause),
         'user_count': (value: any) => this.processUserCountFilter(value, whereClause),
-        'organisation_name': (value: any) => this.processOrganisationNameFilter( value, whereClause), // Added organisation filter
+        'organization_name': (value: any) => this.processOrganisationNameFilter( value, whereClause), // Added organisation filter
       };
       Object.keys(filters).forEach(key => {
         
