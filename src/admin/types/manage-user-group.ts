@@ -131,6 +131,7 @@ export type UserGroupList = {
   user_count: string;
   user: User;
   usergrouptype: string;
+  usergroup_type: string;
   account_name: string | null;
 };
 
