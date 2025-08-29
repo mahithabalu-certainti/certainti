@@ -21,7 +21,7 @@ export interface ICreateInteraction {
   interaction_age?: number;
   created_by: string;
   modified_by?: string;
-  status_action: string; // This should match the keys in statusAction
+  status_action?: string;
 }
 
 export interface IUpdateInteraction {
@@ -46,7 +46,7 @@ export interface IUpdateInteraction {
   interaction_age?: number;
   created_by: string;
   modified_by?: string;
-  status_action: string;
+  status_action?: string;
 }
 
 export interface InteractionDetailsResponse {
@@ -80,6 +80,7 @@ export interface InteractionResponse {
   fiscal_year: number;
   status_rid: string;
   status_action:string;
+  response_source_rid:string;
   response_source:string;
   attachments:any;
   questions: {

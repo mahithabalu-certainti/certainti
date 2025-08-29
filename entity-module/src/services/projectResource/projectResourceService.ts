@@ -657,7 +657,7 @@ export class ProjectResourceService {
       // construct filters
       const { whereClause } = this.buildWhereClause(filters);
 
-      const { data: projectResources, count } =
+      let { data: projectResources, count } =
         await this.projectResourceSchema.listProjectResourceSchema(
           accountNumber,
           accountId,
@@ -671,6 +671,7 @@ export class ProjectResourceService {
           sortBy,
           sortOrder
         );
+        projectResources = projectResources.slice(offset, page * limit)
        
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -1382,12 +1383,12 @@ export class ProjectResourceService {
       fiscal_year,
       transaction
     );
-    await this.projectResourceSchema.aggregatesProject(
-      accountNumber,
-      account_rid,
-      project_code,
-      transaction
-    );
+    // await this.projectResourceSchema.aggregatesProject(
+    //   accountNumber,
+    //   account_rid,
+    //   project_code,
+    //   transaction
+    // );
     await this.projectResourceSchema.aggregatesProjectFiscalSummary(
       accountNumber,
       account_rid,
@@ -1396,12 +1397,12 @@ export class ProjectResourceService {
       fiscal_year,
       transaction
     );
-    await this.projectResourceSchema.aggregatesProjectSummary(
-      accountNumber,
-      account_rid,
-      project_code,
-      transaction
-    );
+    // await this.projectResourceSchema.aggregatesProjectSummary(
+    //   accountNumber,
+    //   account_rid,
+    //   project_code,
+    //   transaction
+    // );
   }
 
   private async aggregateAccount(
@@ -1422,11 +1423,11 @@ export class ProjectResourceService {
       fiscal_year,
       transaction
     );
-    await this.projectResourceSchema.aggregatesAccount(
-      accountNumber,
-      account_rid,
-      transaction
-    );
+    // await this.projectResourceSchema.aggregatesAccount(
+    //   accountNumber,
+    //   account_rid,
+    //   transaction
+    // );
   }
 
   private async recordTimelineAndHistory(

@@ -4,8 +4,7 @@ import Configurations from '../config/config';
 import { errorLog, generateExcelBase64, handleErrorResponse, handleSuccessResponse, successLog, validateImportListByRidRequest, validateImportListRequest, validateRequest } from '../utils/helpers';
 import { validateLoadErrorListRequest, validateStagingErrorListRequest } from '../utils/helpers';
 import { generateSasUrl } from '../utils/blob';
-import { exportImportedAccountLevelProjects, exportImportedAccountLevelProjectTasks, importedAccountLevelProjects, importedAccountLevelProjectTasks, importedAccountLevelProjectResources, exportImportedAccountLevelProjectResources } from '../lib/joi/schemas/schema';
-
+import { exportImportedAccountLevelProjects, exportImportedAccountLevelProjectTasks, exportImportedAccountLevelResources, importedAccountLevelProjects, importedAccountLevelProjectTasks, importedAccountLevelResources } from '../lib/joi/schemas/schema';
 const services = Configurations.getInstance().getServices();
 const importServices = services.importGraphqlServices;
 
@@ -304,7 +303,8 @@ async function exportStagingFailureList (req : Request, res : Response) {
                     "Start Date" : data.start_date,
                     "End Date" : data.end_date,
                     "Effort In Hours" : data.effort_in_hours,
-                    "Salary" : data.salary
+                    "Salary" : data.salary,
+                    "Error Description": data.error_descriptions
                 }))
                 break;
 
@@ -800,16 +800,15 @@ async function exportImportedProjectList(req: Request, res: Response): Promise<v
   }
 }
 
-async function importedAccountLevelProjectResourcesList(req: Request, res: Response): Promise<void> {
-  const methodName = "importedAccountLevelProjectResourcesList";
+async function importedAccountLevelresourceList(req: Request, res: Response): Promise<void> {
+  const methodName = "importedAccountLevelresourceList";
   try {
-    const { accountId} = req.params;
+    const { accountId } = req.params;
 
-    const userId = req.headers["x-user-id"] as string;
-
-    const value = await validateRequest(req, importedAccountLevelProjectResources, res, "GET");
+    const value = await validateRequest(req, importedAccountLevelResources, res, "GET");
 
     let parsedFilters: Record<string, any> = {};
+    const userId = req.headers["x-user-id"] as string;
 
     if (!value) {
       return;
@@ -829,42 +828,28 @@ async function importedAccountLevelProjectResourcesList(req: Request, res: Respo
     const pageNum: number = parseInt(value.page, 10) || 1;
     const limitNum: number = parseInt(value.limit, 10) || 25;
 
-    if (!userId) {
-      handleErrorResponse(
-        res,
-        HttpStatus.BAD_REQUEST,
-        HttpStatus.BAD_REQUEST_MESSAGE,
-        "User ID is required in headers"
-      );
-      return;
-    }
+    const resource = await importServices.fetchAccountLevelImportedResources(
+      accountId,
+      pageNum,
+      limitNum,
+      value.search,
+      parsedFilters,
+      value.sortBy,
+      value.sortOrder,
+      value.documentRid
+    );
 
-    const projectResourceDetails =
-      await importServices.fetchAccountLevelImportedProjectResources(
-        accountId,
-        pageNum,
-        limitNum,
-        value.search,
-        value.fiscalYear !== "" && value.fiscalYear !== null
-          ? value.fiscalYear
-          : 0,
-        parsedFilters,
-        value.sortBy,
-        value.sortOrder,
-        value.documentRid
-      );
-
-    if (projectResourceDetails.statusCode === HttpStatus.SUCCESS) {
+    if (resource.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
-      handleSuccessResponse(res, projectResourceDetails.data);
+      handleSuccessResponse(res, resource.data);
       return;
     } else {
-      errorLog(methodName, projectResourceDetails.errorMessage);
+      errorLog(methodName, resource.errorMessage);
       handleErrorResponse(
         res,
         HttpStatus.BAD_REQUEST,
         HttpStatus.BAD_REQUEST_MESSAGE,
-        projectResourceDetails.errorMessage
+        resource.errorMessage
       );
       return;
     }
@@ -881,14 +866,24 @@ async function importedAccountLevelProjectResourcesList(req: Request, res: Respo
   }
 }
 
-async function exportImportedProjectResourceList(req: Request, res: Response): Promise<void> {
-  const methodName = "exportImportedProjectResourceList";
+async function exportImportedResourceList(req: Request, res: Response): Promise<void> {
+  const methodName = "exportImportedResourceList";
   try {
-    const { accountId} = req.params;
-
+    const { accountId } = req.params;
     const userId = req.headers["x-user-id"] as string;
 
-    const value = await validateRequest(req, exportImportedAccountLevelProjectResources, res, "GET");
+    if (!userId) {
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User id is required"
+      );
+      return;
+    }
+
+
+    const value = await validateRequest(req, exportImportedAccountLevelResources, res, "GET");
 
     let parsedFilters: Record<string, any> = {};
 
@@ -907,41 +902,27 @@ async function exportImportedProjectResourceList(req: Request, res: Response): P
       );
     }
 
-    if (!userId) {
-      handleErrorResponse(
-        res,
-        HttpStatus.BAD_REQUEST,
-        HttpStatus.BAD_REQUEST_MESSAGE,
-        "User ID is required in headers"
-      );
-      return;
-    }
+    const resourcesList = await importServices.exportAccountLevelImportedResources(
+      accountId,
+      value.search,
+      parsedFilters,
+      value.sortBy,
+      value.sortOrder,
+      value.documentRid,
+      userId
+    );
 
-    const projectResourceDetails =
-      await importServices.exportAccountLevelImportedProjectResources(
-        accountId,
-        value.search,
-        value.fiscalYear !== "" && value.fiscalYear !== null
-          ? value.fiscalYear
-          : 0,
-        parsedFilters,
-        value.sortBy,
-        value.sortOrder,
-        userId,
-        value.documentRid
-      );
-
-    if (projectResourceDetails.statusCode === HttpStatus.SUCCESS) {
+    if (resourcesList.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
-      handleSuccessResponse(res, await generateExcelBase64(projectResourceDetails?.data?.projectResources,"Project Resources"));
+      handleSuccessResponse(res, await generateExcelBase64(resourcesList?.data?.resources,"Resources"));
       return;
     } else {
-      errorLog(methodName, projectResourceDetails.errorMessage);
+      errorLog(methodName, resourcesList.errorMessage);
       handleErrorResponse(
         res,
         HttpStatus.BAD_REQUEST,
         HttpStatus.BAD_REQUEST_MESSAGE,
-        projectResourceDetails.errorMessage
+        resourcesList.errorMessage
       );
       return;
     }
@@ -1109,9 +1090,9 @@ export default {
     exportStagingFailureList,
     exportLoadFailureList,
     importedAccountLevelprojectList,
-    importedAccountLevelProjectResourcesList,
+    importedAccountLevelresourceList,
     importedAccountLevelProjectTaskList,
     exportImportedProjectList,
-    exportImportedProjectResourceList,
+    exportImportedResourceList,
     exportImportedProjectTaskList
 }   

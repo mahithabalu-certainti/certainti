@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { HttpStatus, STATUS_MESSAGE } from "../utils/constants";
+import { HttpStatus, interactionSource, STATUS_MESSAGE } from "../utils/constants";
 import {
   deleteFromAzureBlob,
   errorLog,
@@ -44,7 +44,7 @@ async function createInteraction(req: Request, res: Response): Promise<void> {
       return;
     }
     const interaction = await interactionService.createInteraction(
-      value,
+      value,interactionSource.MANUAL,
       userId
     );
     console.log(
@@ -1088,9 +1088,9 @@ async function fetchResponseHistoryDetails (req : Request, res : Response) {
     const result = await interactionService.triggerAI(data)
     return res.status(HttpStatus.SUCCESS).json({
       statusCode : HttpStatus.SUCCESS,
-      statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
-      statusMessage : result.statusMessage,
-      data: result.data
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.assessmentInitiated,
+        data : result.data
     })
     } catch (err) {
     const error = err as Error;
@@ -1153,6 +1153,19 @@ async function fetchResponseHistoryDetails (req : Request, res : Response) {
     return;
   }
   }
+  async function processKafkaMessages(data:any)
+  {
+    const methodName = "processKafkaMessages";
+    try {
+      console.log(`[${methodName}] Processing Kafka messages`);
+       const result = await interactionService.processKafkaMessage(data)
+      // Implement your Kafka message processing logic here
+    } catch (err) {
+      const error = err as Error;
+      errorLog(methodName, error.message);
+      console.log(`[${methodName}] Exception:`, error);
+    }
+  }
 
 
 
@@ -1179,5 +1192,6 @@ export default {
   fetchInteractionAttachments,
   fetchResponseHistoryDetails,
   triggerAIAndPassResponse,
-  exportInteractionHistory
+  exportInteractionHistory,
+  processKafkaMessages
 };

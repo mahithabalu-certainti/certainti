@@ -28,7 +28,8 @@ export interface IOtpServices {
 export interface IInteractionService {
   updateInteractionResponse(
     interactionData: InteractionResponse,
-    userId: string
+    userId: string,
+    authToken: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -48,7 +49,8 @@ export interface IInteractionService {
   }>;
   deleteFromAzureBlob(
     fileUrl: string,
-    userId: string
+    userId: string,
+    authToken: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -60,7 +62,8 @@ export interface IInteractionService {
     accountId: string,
     interactionRid: string,
     projectId: string,
-    userId: string
+    userId: string,
+    authToken: string
   ): Promise<{
     statusCode: number;
     message: string;

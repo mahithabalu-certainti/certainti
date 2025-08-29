@@ -5,7 +5,7 @@ import { IEmailMessage, IGenerateOtp, IVerifyOtp } from "../../utils/types";
 import { OtpSchemaService } from "./schemeService";
 import {
   compareOtp,
-  generateJwtToken,
+  generateCustomJwtToken,
   generateRandomOtpDigit,
   hashOtp,
 } from "../../utils/otpGenerator";
@@ -250,7 +250,7 @@ export class OtpService {
           email,
         };
     
-        const token = generateJwtToken(payload);
+        const token = await generateCustomJwtToken(payload);
 
         return {
           statusCode: HttpStatus.SUCCESS,
