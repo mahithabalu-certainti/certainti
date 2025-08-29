@@ -3167,10 +3167,12 @@ private buildSQLConditions(filters: Record<string, any>): string | null {
   for (const [column, condition] of Object.entries(filters)) {
     if (condition === undefined || condition === null) continue;
 
+    const sqlColumn = column === 'account_name' ? 'acc.account_name' : column;
+
     // If filter name is in numberFilters, treat as number
     if (numberFilters.includes(column)) {
       if (typeof condition === 'number') {
-        conditions.push(`${column} = ${condition}`);
+        conditions.push(`${sqlColumn} = ${condition}`);
         continue;
       }
       if (typeof condition === 'object') {
@@ -3179,31 +3181,30 @@ private buildSQLConditions(filters: Record<string, any>): string | null {
           switch (operator.toLowerCase()) {
             case 'equals':
             case 'eq':
-              conditions.push(`${column} = ${value}`);
+              conditions.push(`${sqlColumn} = ${value}`);
               break;
             case 'not_equals':
             case 'ne':
-              conditions.push(`${column} != ${value}`);
+              conditions.push(`${sqlColumn} != ${value}`);
               break;
             case 'gt':
-              conditions.push(`${column} > ${value}`);
+              conditions.push(`${sqlColumn} > ${value}`);
               break;
             case 'lt':
-              conditions.push(`${column} < ${value}`);
+              conditions.push(`${sqlColumn} < ${value}`);
               break;
             case 'gte':
-              conditions.push(`${column} >= ${value}`);
+              conditions.push(`${sqlColumn} >= ${value}`);
               break;
             case 'lte':
-              conditions.push(`${column} <= ${value}`);
+              conditions.push(`${sqlColumn} <= ${value}`);
               break;
             case 'between':
               if (Array.isArray(value) && value.length === 2) {
-                conditions.push(`${column} BETWEEN ${value[0]} AND ${value[1]}`);
+                conditions.push(`${sqlColumn} BETWEEN ${value[0]} AND ${value[1]}`);
               }
               break;
             default:
-              // Ignore unsupported operators for number filters
               break;
           }
         }
@@ -3213,11 +3214,11 @@ private buildSQLConditions(filters: Record<string, any>): string | null {
 
     // If condition is a primitive (number or string), treat as equals
     if (typeof condition === 'number') {
-      conditions.push(`${column} = ${condition}`);
+      conditions.push(`${sqlColumn} = ${condition}`);
       continue;
     }
     if (typeof condition === 'string') {
-      conditions.push(`LOWER(${column}) = '${condition.toLowerCase()}'`);
+      conditions.push(`LOWER(${sqlColumn}) = '${condition.toLowerCase()}'`);
       continue;
     }
 
@@ -3225,12 +3226,12 @@ private buildSQLConditions(filters: Record<string, any>): string | null {
     if (typeof condition === 'object') {
       for (const [operator, value] of Object.entries(condition)) {
         if (value === undefined || value === null) continue;
-        const lowerColumn = `LOWER(${column})`;
+        const lowerColumn = `LOWER(${sqlColumn})`;
         switch (operator.toLowerCase()) {
           case 'equals':
           case 'eq':
             if (typeof value === 'number') {
-              conditions.push(`${column} = ${value}`);
+              conditions.push(`${sqlColumn} = ${value}`);
             } else {
               conditions.push(`${lowerColumn} = '${String(value).toLowerCase()}'`);
             }
@@ -3238,7 +3239,7 @@ private buildSQLConditions(filters: Record<string, any>): string | null {
           case 'not_equals':
           case 'ne':
             if (typeof value === 'number') {
-              conditions.push(`${column} != ${value}`);
+              conditions.push(`${sqlColumn} != ${value}`);
             } else {
               conditions.push(`${lowerColumn} != '${String(value).toLowerCase()}'`);
             }
@@ -3252,7 +3253,7 @@ private buildSQLConditions(filters: Record<string, any>): string | null {
           case 'in':
             if (Array.isArray(value)) {
               if (value.length > 0 && typeof value[0] === 'number') {
-                conditions.push(`${column} IN (${value.join(', ')})`);
+                conditions.push(`${sqlColumn} IN (${value.join(', ')})`);
               } else {
                 const quotedValues = value
                   .map(v => `'${String(v).toLowerCase()}'`)
@@ -3262,24 +3263,23 @@ private buildSQLConditions(filters: Record<string, any>): string | null {
             }
             break;
           case 'gt':
-            conditions.push(`${column} > ${value}`);
+            conditions.push(`${sqlColumn} > ${value}`);
             break;
           case 'lt':
-            conditions.push(`${column} < ${value}`);
+            conditions.push(`${sqlColumn} < ${value}`);
             break;
           case 'gte':
-            conditions.push(`${column} >= ${value}`);
+            conditions.push(`${sqlColumn} >= ${value}`);
             break;
           case 'lte':
-            conditions.push(`${column} <= ${value}`);
+            conditions.push(`${sqlColumn} <= ${value}`);
             break;
           case 'between':
             if (Array.isArray(value) && value.length === 2) {
-              conditions.push(`${column} BETWEEN ${value[0]} AND ${value[1]}`);
+              conditions.push(`${sqlColumn} BETWEEN ${value[0]} AND ${value[1]}`);
             }
             break;
           default:
-            // Ignore unsupported operators
             break;
         }
       }
