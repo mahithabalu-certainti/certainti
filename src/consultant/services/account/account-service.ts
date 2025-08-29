@@ -58,21 +58,32 @@ export const fetchGlobalAccounts = async (): Promise<{
 
 export const fetchAccounts = async (
   params: AccountListURLParams = {}
-): Promise<{ accounts: AccountList[]; count: number }> => {
+): Promise<{ accounts: AccountList[]; count: number; totalResult: number }> => {
   const response = await accountServiceApi.get<AccountListResponse>(
     AccountListURL(params)
   );
   return {
     accounts: response.data.data.account.data,
-    count: response.data.data.account.total,
+    count: response?.data?.data?.count,
+    totalResult: response?.data?.data?.account?.total,
   };
 };
 
 export const useAccounts = (
   params: AccountListURLParams = {},
   refreshAccountTrigger?: number
-): UseQueryResult<{ accounts: AccountList[]; count: number }, Error> => {
-  return useQuery<{ accounts: AccountList[]; count: number }, Error>({
+): UseQueryResult<
+  {
+    accounts: AccountList[];
+    count: number;
+    totalResult: number;
+  },
+  Error
+> => {
+  return useQuery<
+    { accounts: AccountList[]; count: number; totalResult: number },
+    Error
+  >({
     queryKey: ['accounts', params, refreshAccountTrigger],
     queryFn: () => fetchAccounts(params),
     retry: 0,
