@@ -329,6 +329,7 @@ export type AccountListResponse = {
     account: {
       data: AccountList[];
       total: number;
+      totaltotalResult?: number;
     };
     count: number;
   };
