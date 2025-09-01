@@ -340,7 +340,7 @@ export class ProjectResourceSchemaService {
       return {
         accountNumber: accountRnumber,
         accountId: account?.rid,
-        accountName: account.account_name,
+        accountName: account?.account_name,
       };
     } catch (err) {
       throw new Error("Error fetching account : " + (err as Error).message);
@@ -402,6 +402,7 @@ export class ProjectResourceSchemaService {
     const startDateTocheck = projectResourceData.start_date
       ? moment.utc(projectResourceData.start_date, "YYYY-MM-DD")
       : null;
+
     const endDateToCheck = projectResourceData.end_date ? moment.utc(projectResourceData.end_date, "YYYY-MM-DD") : null;
 
     const projectData = await ProjectResource.findOne({
@@ -413,16 +414,32 @@ export class ProjectResourceSchemaService {
         rid: { [Op.ne]: projectResourceData.project_resource_rid },
         project_fiscal_rid: projectResourceData.project_fiscal_rid,
         resource_rid: resourceData.rid
-        // [Op.and]: [
-        //   Sequelize.where(
-        //     Sequelize.fn("LOWER", Sequelize.col("project_code")),
-        //     Sequelize.fn("LOWER", projectCode)
-        //   ),
-        //   Sequelize.where(
-        //     Sequelize.fn("LOWER", Sequelize.col("resource_code")),
-        //     Sequelize.fn("LOWER", projectResourceData.resource_code)
-        //   ),
-        // ],
+      },
+    });
+
+    return !!projectData;
+  }
+
+  async validateProjectResourceInlineEdit(accountNumber: string, projectResourceData: any,
+    fiscalYear: number, projectCode: string, existingProjectResource: any, resourceData: any
+  ){
+    const { ProjectResource } = await this.getModels(accountNumber);
+
+    const startDateTocheck = projectResourceData.start_date
+      ? moment.utc(projectResourceData.start_date, "YYYY-MM-DD")
+      : existingProjectResource.start_date ? moment.utc(existingProjectResource.start_date, "YYYY-MM-DD") : null;
+
+    const endDateToCheck = projectResourceData.end_date ? moment.utc(projectResourceData.end_date, "YYYY-MM-DD") : existingProjectResource.end_date ? moment.utc(existingProjectResource.end_date, "YYYY-MM-DD") : null;
+
+    const projectData = await ProjectResource.findOne({
+      where: {
+        account_rid: projectResourceData.account_rid,
+        fiscal_year: fiscalYear,
+        start_date: startDateTocheck ? startDateTocheck?.toDate() : null,
+        end_date: endDateToCheck ? endDateToCheck?.toDate() : null,
+        rid: { [Op.ne]: projectResourceData.project_resource_rid },
+        project_fiscal_rid: projectResourceData.project_fiscal_rid,
+        resource_rid: resourceData.rid
       },
     });
 
@@ -453,7 +470,7 @@ export class ProjectResourceSchemaService {
         fiscal_year: fiscalYear,
         start_date: startDateTocheck ? startDateTocheck?.toDate() : null,
         end_date: endDateToCheck ? endDateToCheck?.toDate() : null,
-        project_rid: projectData.rid,
+        project_fiscal_rid: projectData.rid,
         resource_rid: resourceData.rid
         // [Op.and]: [
         //   Sequelize.where(
@@ -4045,11 +4062,11 @@ export class ProjectResourceSchemaService {
     // 2. Update Account fiscal table with aggregated totals
     await AccountFiscal.update(
       {
-        total_projects: aggregates.total_projects,
-        total_project_cost: aggregates.effective_cost,
-        total_project_hours: aggregates.effective_effort,
-        total_fte: aggregates.effective_total_fte,
-        total_subcon: aggregates.effective_total_subcon,
+        // total_projects: aggregates.total_projects,
+        // total_project_cost: aggregates.effective_cost,
+        // total_project_hours: aggregates.effective_effort,
+        // total_fte: aggregates.effective_total_fte,
+        // total_subcon: aggregates.effective_total_subcon,
         total_project_res_cost: aggregates.total_cost_from_prj_res,
         total_project_res_hours: aggregates.total_effort_from_prj_res,
         total_project_res_hours_fte: aggregates.total_effort_fte_from_prj_res,
@@ -4856,8 +4873,6 @@ export class ProjectResourceSchemaService {
         : order;
 
     let projectResource = await ProjectResource.findAll({
-      offset,
-      limit,
       order: dbOrder,
       where: {
         ...whereFilters,

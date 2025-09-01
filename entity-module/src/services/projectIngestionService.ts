@@ -801,62 +801,62 @@ class ProjectIngestionService {
         [
           Sequelize.fn(
             "SUM",
-            Sequelize.literal("COALESCE(effective_effort, 0)")
+            Sequelize.literal("COALESCE(total_effort_prj, 0)")
           ),
-          "effective_effort",
+          "total_effort_prj",
         ],
         [
-          Sequelize.fn("SUM", Sequelize.literal("COALESCE(effective_cost, 0)")),
-          "effective_cost",
-        ],
-        [
-          Sequelize.fn(
-            "SUM",
-            Sequelize.literal("COALESCE(effective_total_fte, 0)")
-          ),
-          "effective_total_fte",
+          Sequelize.fn("SUM", Sequelize.literal("COALESCE(total_cost_prj, 0)")),
+          "total_cost_prj",
         ],
         [
           Sequelize.fn(
             "SUM",
-            Sequelize.literal("COALESCE(effective_total_subcon, 0)")
+            Sequelize.literal("COALESCE(total_fte_prj, 0)")
           ),
-          "effective_total_subcon",
+          "total_fte_prj",
         ],
         [
           Sequelize.fn(
             "SUM",
-            Sequelize.literal("COALESCE(effective_fte_effort, 0)")
+            Sequelize.literal("COALESCE(total_subcon_prj, 0)")
           ),
-          "effective_fte_effort",
+          "total_subcon_prj",
         ],
         [
           Sequelize.fn(
             "SUM",
-            Sequelize.literal("COALESCE(effective_subcon_effort, 0)")
+            Sequelize.literal("COALESCE(total_effort_fte_prj, 0)")
           ),
-          "effective_subcon_effort",
+          "total_effort_fte_prj",
         ],
         [
           Sequelize.fn(
             "SUM",
-            Sequelize.literal("COALESCE(effective_fte_cost, 0)")
+            Sequelize.literal("COALESCE(total_effort_subcon_prj, 0)")
           ),
-          "effective_fte_cost",
+          "total_effort_subcon_prj",
         ],
         [
           Sequelize.fn(
             "SUM",
-            Sequelize.literal("COALESCE(effective_subcon_cost, 0)")
+            Sequelize.literal("COALESCE(total_cost_fte_prj, 0)")
           ),
-          "effective_subcon_cost",
+          "total_cost_fte_prj",
         ],
         [
           Sequelize.fn(
             "SUM",
-            Sequelize.literal("COALESCE(effective_nonlabor_cost, 0)")
+            Sequelize.literal("COALESCE(total_cost_subcon_prj, 0)")
           ),
-          "effective_nonlabor_cost",
+          "total_cost_subcon_prj",
+        ],
+        [
+          Sequelize.fn(
+            "SUM",
+            Sequelize.literal("COALESCE(total_cost_nonlabor_prj, 0)")
+          ),
+          "total_cost_nonlabor_prj",
         ],
       ],
       where: {
@@ -873,15 +873,15 @@ class ProjectIngestionService {
     await AccountFiscal.update(
       {
         total_projects: aggregates.total_projects,
-        total_project_cost: aggregates.effective_cost,
-        total_project_hours: aggregates.effective_effort,
-        total_fte: aggregates.effective_total_fte,
-        total_subcon: aggregates.effective_total_subcon,
-        total_project_hours_fte: aggregates.effective_fte_effort,
-        total_project_hours_subcon: aggregates.effective_subcon_effort,
-        total_project_cost_fte: aggregates.effective_fte_cost,
-        total_project_cost_subcon: aggregates.effective_subcon_cost,
-        total_project_cost_nonlabor: aggregates.effective_nonlabor_cost,
+        total_project_cost: aggregates.total_cost_prj,
+        total_project_hours: aggregates.total_effort_prj,
+        total_fte: aggregates.total_fte_prj,
+        total_subcon: aggregates.total_subcon_prj,
+        total_project_hours_fte: aggregates.total_effort_fte_prj,
+        total_project_hours_subcon: aggregates.total_effort_subcon_prj,
+        total_project_cost_fte: aggregates.total_cost_fte_prj,
+        total_project_cost_subcon: aggregates.total_cost_subcon_prj,
+        total_project_cost_nonlabor: aggregates.total_cost_nonlabor_prj,
       },
       {
         where: {
@@ -915,62 +915,62 @@ class ProjectIngestionService {
         [
           Sequelize.fn(
             "SUM",
-            Sequelize.literal("COALESCE(effective_effort, 0)")
+            Sequelize.literal("COALESCE(total_effort_prj, 0)")
           ),
-          "effective_effort",
+          "total_effort_prj",
         ],
         [
-          Sequelize.fn("SUM", Sequelize.literal("COALESCE(effective_cost, 0)")),
-          "effective_cost",
-        ],
-        [
-          Sequelize.fn(
-            "SUM",
-            Sequelize.literal("COALESCE(effective_total_fte, 0)")
-          ),
-          "effective_total_fte",
+          Sequelize.fn("SUM", Sequelize.literal("COALESCE(total_cost_prj, 0)")),
+          "total_cost_prj",
         ],
         [
           Sequelize.fn(
             "SUM",
-            Sequelize.literal("COALESCE(effective_total_subcon, 0)")
+            Sequelize.literal("COALESCE(total_fte_prj, 0)")
           ),
-          "effective_total_subcon",
+          "total_fte_prj",
         ],
         [
           Sequelize.fn(
             "SUM",
-            Sequelize.literal("COALESCE(effective_fte_effort, 0)")
+            Sequelize.literal("COALESCE(total_subcon_prj, 0)")
           ),
-          "effective_fte_effort",
+          "total_subcon_prj",
         ],
         [
           Sequelize.fn(
             "SUM",
-            Sequelize.literal("COALESCE(effective_subcon_effort, 0)")
+            Sequelize.literal("COALESCE(total_effort_fte_prj, 0)")
           ),
-          "effective_subcon_effort",
+          "total_effort_fte_prj",
         ],
         [
           Sequelize.fn(
             "SUM",
-            Sequelize.literal("COALESCE(effective_fte_cost, 0)")
+            Sequelize.literal("COALESCE(total_effort_subcon_prj, 0)")
           ),
-          "effective_fte_cost",
+          "total_effort_subcon_prj",
         ],
         [
           Sequelize.fn(
             "SUM",
-            Sequelize.literal("COALESCE(effective_subcon_cost, 0)")
+            Sequelize.literal("COALESCE(total_cost_fte_prj, 0)")
           ),
-          "effective_subcon_cost",
+          "total_cost_fte_prj",
         ],
         [
           Sequelize.fn(
             "SUM",
-            Sequelize.literal("COALESCE(effective_nonlabor_cost, 0)")
+            Sequelize.literal("COALESCE(total_cost_subcon_prj, 0)")
           ),
-          "effective_nonlabor_cost",
+          "total_cost_subcon_prj",
+        ],
+        [
+          Sequelize.fn(
+            "SUM",
+            Sequelize.literal("COALESCE(total_cost_nonlabor_prj, 0)")
+          ),
+          "total_cost_nonlabor_prj",
         ],
       ],
       where: {
@@ -988,9 +988,9 @@ class ProjectIngestionService {
     await AccountFiscalRegion.update(
       {
         total_projects: aggregates.total_projects,
-        total_project_cost: aggregates.effective_cost,
-        total_project_hours: aggregates.effective_effort,
-        total_fte: aggregates.total_fte__prj,
+        total_project_cost: aggregates.total_cost_prj,
+        total_project_hours: aggregates.total_effort_prj,
+        total_fte: aggregates.total_fte_prj,
         total_subcon: aggregates.total_subcon_prj,
         total_project_hours_fte: aggregates.total_effort_fte_prj,
         total_project_hours_subcon: aggregates.total_effort_subcon_prj,
@@ -1665,7 +1665,7 @@ class ProjectIngestionService {
       } else {
         if (field === "created_datetime") {
           fullOrder.push([
-            Sequelize.literal(`"Project"."project_code" ${nullsHandled}`),
+            Sequelize.literal(`"Project"."project_code" ASC NULLS LAST`),
           ]);
         } else {
           fullOrder.push([
@@ -1683,8 +1683,6 @@ class ProjectIngestionService {
     }
       projectData = await Project.findAll({
         where: whereProject,
-        offset,
-        limit,
         subQuery: false,
         order: fullOrder,
         attributes: {
@@ -1768,12 +1766,12 @@ class ProjectIngestionService {
       projects = projectData;
 
       totalCount = count;
-      if (projects && projects.length > 0 && !bothParentAndChild) {
-        projects = projects.filter((val: any) => val.ProjectFiscal.length > 0);
-        if (totalCount > projects.length) {
-          totalCount = projects.length;
-        }
-      }
+      // if (projects && projects.length > 0 && !bothParentAndChild) {
+      //   projects = projects.filter((val: any) => val.ProjectFiscal.length > 0);
+      //   if (totalCount > projects.length) {
+      //     totalCount = projects.length;
+      //   }
+      // }
 
       if (isChildOnlyFilter && bothParentAndChild) {
         projects = projects.filter((val: any) => val.ProjectFiscal.length > 0);
@@ -3073,20 +3071,28 @@ async deleteAccountFiscalForInlineEdit(r_number: any, account_rid: any, fiscal_y
     }
 
 async deleteAccountFiscalRegionForInlineEdit(r_number: any, account_rid: any, fiscal_year: any, projectData: ICreateProject) {
-        const{AccountFiscalRegion, ProjectFiscalRegion}=await this.getModels(r_number);
-        const existingProjectFiscalRegion = await ProjectFiscalRegion.findOne({
+        const{AccountFiscalRegion, ProjectFiscalRegion, ProjectFiscal}=await this.getModels(r_number);
+        const existingProjectFiscal = await ProjectFiscal.findOne({
           where: {
             account_rid,
             fiscal_year,
-
+            region_rid: projectData.region_rid,
           },
         });
+        if(!existingProjectFiscal) {
+           await ProjectFiscalRegion.destroy({
+             where: {
+               account_rid,
+               fiscal_year,
+               region_rid: projectData.region_rid,
+             }
+           });
 
-        if(!existingProjectFiscalRegion) {
            await AccountFiscalRegion.destroy({
              where: {
                account_rid,
                fiscal_year,
+               region_rid: projectData.region_rid,
              }
            })
         }
