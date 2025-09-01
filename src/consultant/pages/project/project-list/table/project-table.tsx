@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   GetProjectTypeApiResponse,
   Project,
+  ProjectFiscalSummary,
   // ProjectList,
   ProjectListParams,
 } from '../../../../types/project';
@@ -17,7 +18,10 @@ import {
   FieldChangeValue,
 } from '../../../../../components/table/types';
 import { EditIcon } from '../../../../../assets';
-import { reshapeGlobalFilter } from '../../../../../common-utils';
+import {
+  REGEX_PATTERNS,
+  reshapeGlobalFilter,
+} from '../../../../../common-utils';
 import { ClassificationApiResponse, FilterState } from '../../../../types';
 import { ListTable } from '../../../../../components/table';
 import { useMutation } from '@apollo/client';
@@ -49,7 +53,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
   setTableParams,
   setTotalCount,
   refreshProjectsTrigger,
-  toggleEnabled,
+  // toggleEnabled, // Commented for it may use in future
   dropdownOptions,
 }) => {
   const navigate = useNavigate();
@@ -93,7 +97,11 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
   }, [appliedFilters, fiscalYear, filters]);
 
   const { data, isLoading, isError } = useAllProjects(
-    { ...tableParams, bothParentAndChild: toggleEnabled },
+    {
+      ...tableParams,
+      bothParentAndChild: false,
+      // bothParentAndChild: toggleEnabled // Commented for it may use in future
+    },
     refreshProjectsTrigger
   );
   const totalItems = data?.count || 0;
@@ -281,6 +289,46 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
       updateData['project_classification_other'] = '';
     }
 
+    // Calculate total_cost if any cost field is updated
+    const isCostFieldUpdated = updates.some(
+      (item) =>
+        item.columnId === 'total_cost_fte' ||
+        item.columnId === 'total_cost_subcon' ||
+        item.columnId === 'total_cost_nonlabor'
+    );
+
+    if (isCostFieldUpdated) {
+      // Get current values from childFiscal or updateData
+      const fteCost =
+        updateData['total_cost_fte'] ?? childFiscal.total_cost_fte ?? 0;
+      const subconCost =
+        updateData['total_cost_subcon'] ?? childFiscal.total_cost_subcon ?? 0;
+      const nonLaborCost =
+        updateData['total_cost_nonlabor'] ??
+        childFiscal.total_cost_nonlabor ??
+        0;
+
+      // Convert to numbers and ensure they are valid
+      const fteCostNum = parseFloat(fteCost as string) || 0;
+      const subconCostNum = parseFloat(subconCost as string) || 0;
+      const nonLaborCostNum = parseFloat(nonLaborCost as string) || 0;
+
+      // Calculate total_cost
+      const totalCost = fteCostNum + subconCostNum + nonLaborCostNum;
+
+      // Validate total_cost
+      const totalCostString = totalCost.toFixed(2);
+      if (!REGEX_PATTERNS.EFFORTS_NUMBER.test(totalCostString)) {
+        errorToast(
+          'Invalid total cost calculated. Must be a positive number with up to 16 digits and 2 decimal places.'
+        );
+        return;
+      }
+
+      // Add total_cost to updateData
+      updateData['total_cost'] = totalCostString;
+    }
+
     try {
       const res = await updateProjectMutation({
         variables: { data: updateData },
@@ -293,7 +341,17 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
 
         const newProjects = allProjectList.map((project) => {
           if (project.project_rid === updatedParentData.project_rid) {
-            return updatedParentData;
+            return {
+              ...project,
+              ...updatedParentData,
+              ProjectFiscal: project.ProjectFiscal.map((fiscal) => {
+                const updatedFiscal = updatedParentData.ProjectFiscal?.find(
+                  (data: ProjectFiscalSummary) =>
+                    data.project_fiscal_rid === fiscal.project_fiscal_rid
+                );
+                return updatedFiscal ? { ...fiscal, ...updatedFiscal } : fiscal;
+              }),
+            };
           }
           return project;
         });

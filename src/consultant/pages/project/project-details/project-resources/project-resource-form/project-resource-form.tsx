@@ -457,6 +457,7 @@ const ProjectResourceForm: React.FC = () => {
           onChange={onChangeField}
           keyStart='start_date'
           keyEnd='end_date'
+          isFrom='project_resource'
         />
       </div>
     </>

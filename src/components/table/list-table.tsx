@@ -1,6 +1,7 @@
 import {
   Box,
   Checkbox,
+  CircularProgress,
   IconButton,
   Table as MuiTable,
   Switch,
@@ -125,28 +126,47 @@ const ListTable = <T extends RowData>({
     if (expandAllParent || expandAllChild) {
       const newExpandedRows: ExpandedState = {};
 
+      // Expand all parent rows
       data.forEach((parent) => {
         const parentId = getRowId(parent);
         const children = parent[childrenKey] as T[] | undefined;
+        const hasChildren = children && children.length > 0;
 
-        const shouldExpandParent =
-          expandAllParent && children && children.length > 0;
-        if (shouldExpandParent || expandAllChild) {
+        // Expand parent only if it has children and expandAllParent is true
+        if (expandAllParent && hasChildren) {
           newExpandedRows[parentId] = {
             expanded: true,
             level: 0,
             children: {},
           };
 
-          if (expandAllChild && children && children.length > 0) {
-            children.forEach((child) => {
+          // If expandAllChild is also true, expand all children that have grandchildren
+          if (expandAllChild) {
+            children?.forEach((child) => {
               const childId = getRowId(child);
-              if (newExpandedRows[parentId].children) {
-                newExpandedRows[parentId].children[childId] = {
+              const grandchildren = child[grandchildrenKey] as T[] | undefined;
+              const hasGrandchildren =
+                grandchildren && grandchildren.length > 0;
+
+              // Expand child only if it has grandchildren
+              if (hasGrandchildren) {
+                newExpandedRows[childId] = {
                   expanded: true,
                   level: 1,
                   children: {},
                 };
+
+                // Expand all grandchildren (they are leaf nodes, so always expand if they exist)
+                if (hasGrandchildren) {
+                  grandchildren.forEach((_, index) => {
+                    const gcId = `${childId}-gc-${index}`;
+                    newExpandedRows[gcId] = {
+                      expanded: false,
+                      level: 2,
+                      children: {},
+                    };
+                  });
+                }
               }
             });
           }
@@ -155,7 +175,14 @@ const ListTable = <T extends RowData>({
 
       setExpandedRows(newExpandedRows);
     }
-  }, [data, expandAllParent, expandAllChild, childrenKey, getRowId]);
+  }, [
+    data,
+    expandAllParent,
+    expandAllChild,
+    childrenKey,
+    grandchildrenKey,
+    getRowId,
+  ]);
 
   // Handle row expansion
   const toggleRowExpansion = (rowId: string, level: number = 0) => {
@@ -594,12 +621,22 @@ const ListTable = <T extends RowData>({
       return;
     }
     // check if 'conditionallyEdit' have or not
-    const conditionallyEdit = column.conditionallyEdit?.key
-      ? // If yes
-        row[column.conditionallyEdit.key] ===
-          column.conditionallyEdit.matchValue && column.editable
-      : column.editable;
-    if (!conditionallyEdit) return;
+    const { conditionallyEdit, editable } = column;
+    let canEdit = editable;
+
+    if (canEdit && conditionallyEdit && conditionallyEdit.length > 0) {
+      canEdit = conditionallyEdit.every((condition) => {
+        const cellValue = row[condition.key];
+        const { matchValue } = condition;
+
+        if (Array.isArray(matchValue)) {
+          return matchValue.includes(cellValue as never);
+        } else {
+          return cellValue === matchValue;
+        }
+      });
+    }
+    if (!canEdit) return;
     if (Object.keys(editingCells).length > 0) {
       return;
     }
@@ -1042,13 +1079,13 @@ const ListTable = <T extends RowData>({
                       sx={{
                         display: hideRow ? 'none' : '',
                         '&:hover td': {
-                          backgroundColor: '#f5f7fa',
+                          backgroundColor: isSaving ? '#fff' : '#f5f7fa',
                         },
                         '&.Mui-selected td': {
-                          backgroundColor: '#f5f7fa',
+                          backgroundColor: isSaving ? '#fff' : '#f5f7fa',
                         },
                         '&.Mui-selected:hover td': {
-                          backgroundColor: '#f5f7fa',
+                          backgroundColor: isSaving ? '#fff' : '#f5f7fa',
                         },
                         ...(!parentBorder && rowLevel === 0
                           ? {
@@ -1117,12 +1154,25 @@ const ListTable = <T extends RowData>({
                             ? cellValue
                             : '-';
                         // check if 'conditionallyEdit' have or not
-                        const conditionallyEdit = column.conditionallyEdit?.key
-                          ? // If yes
-                            row[column.conditionallyEdit.key] ===
-                              column.conditionallyEdit.matchValue &&
-                            column.editable
-                          : column.editable;
+                        let conditionallyEdit = column.editable;
+                        if (
+                          conditionallyEdit &&
+                          column.conditionallyEdit &&
+                          column.conditionallyEdit.length > 0
+                        ) {
+                          conditionallyEdit = column.conditionallyEdit.every(
+                            (condition) => {
+                              const cellValue = row[condition.key];
+                              const { matchValue } = condition;
+
+                              if (Array.isArray(matchValue)) {
+                                return matchValue.includes(cellValue as never);
+                              } else {
+                                return cellValue === matchValue;
+                              }
+                            }
+                          );
+                        }
 
                         const isFirstDataColumn =
                           column.id === visibleColumns[0].id && expandable;
@@ -1158,7 +1208,9 @@ const ListTable = <T extends RowData>({
                                   backgroundColor: '#FEF2F2 !important',
                                 }),
                               background:
-                                expandable && isExpanded ? '#ECECEC' : '#fff',
+                                !isEditing && expandable && isExpanded
+                                  ? '#ECECEC'
+                                  : '#fff',
                             }}
                             className={`${
                               hoverHighlight &&
@@ -1189,6 +1241,12 @@ const ListTable = <T extends RowData>({
                                   rowData: row,
                                   allEditingCells: editingCells,
                                 })}
+
+                                {isSaving && (
+                                  <span className='absolute top-2.5 right-2 bg-white z-10'>
+                                    <CircularProgress size='15px' />
+                                  </span>
+                                )}
 
                                 {isEditing.error && (
                                   <Tooltip
