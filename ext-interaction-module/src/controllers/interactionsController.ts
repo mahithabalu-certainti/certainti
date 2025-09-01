@@ -59,7 +59,7 @@ async function updateInteractionResponse(
       errorLog(methodName, interaction.errorMessage);
       handleErrorResponse(
         res,
-        HttpStatus.BAD_REQUEST,
+        interaction.statusCode,
         HttpStatus.BAD_REQUEST_MESSAGE,
         interaction.errorMessage
       );
@@ -134,7 +134,7 @@ async function getInteractionDetailsById(
       errorLog(methodName, interactionDetails.errorMessage);
       handleErrorResponse(
         res,
-        HttpStatus.BAD_REQUEST,
+        interactionDetails.statusCode,
         HttpStatus.BAD_REQUEST_MESSAGE,
         interactionDetails.errorMessage
       );
@@ -200,7 +200,7 @@ async function uploadAttachmentToAzure(
       } else {
         handleErrorResponse(
           res,
-          HttpStatus.BAD_REQUEST,
+          fileInfo.statusCode,
           HttpStatus.BAD_REQUEST_MESSAGE,
           fileInfo.errorMessage
         );
@@ -259,7 +259,7 @@ async function deleteAttachmentFromAzure(
       } else {
         handleErrorResponse(
           res,
-          HttpStatus.BAD_REQUEST,
+          deleted.statusCode,
           HttpStatus.BAD_REQUEST_MESSAGE,
           deleted.errorMessage
         );
