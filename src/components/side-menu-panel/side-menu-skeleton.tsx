@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Skeleton } from '@mui/material';
 
@@ -6,10 +5,17 @@ const SideMenuSkeleton: React.FC<{ isCollapsed?: boolean }> = ({
   isCollapsed,
 }) => {
   const renderSkeletonItem = (isSubmenu = false) => (
-    <li className={`min-h-[32px] mb-1 flex items-center ${isSubmenu ? (isCollapsed ? 'pl-[15px]' : 'pl-9') : (isCollapsed ? 'pl-[15px]' : 'pl-[15px]')} py-1.5 pr-3`}>
-      <Skeleton variant="circular" width={22} height={22} className="flex-shrink-0" />
+    <li
+      className={`min-h-[32px] mb-1 flex items-center ${isSubmenu ? (isCollapsed ? 'pl-[15px]' : 'pl-9') : isCollapsed ? 'pl-[15px]' : 'pl-[15px]'} py-1.5 pr-3`}
+    >
+      <Skeleton
+        variant='circular'
+        width={22}
+        height={22}
+        className='flex-shrink-0'
+      />
       {!isCollapsed && (
-        <Skeleton variant="text" className="flex-1 ml-2" width="80%" />
+        <Skeleton variant='text' className='flex-1 ml-2' width='80%' />
       )}
     </li>
   );
@@ -33,8 +39,8 @@ const SideMenuSkeleton: React.FC<{ isCollapsed?: boolean }> = ({
             !isCollapsed ? 'justify-between w-full' : 'gap-0'
           }`}
         >
-          {!isCollapsed && <Skeleton variant="text" width={100} />}
-          <Skeleton variant="rectangular" width={18} height={18} />
+          {!isCollapsed && <Skeleton variant='text' width={100} />}
+          <Skeleton variant='rectangular' width={18} height={18} />
         </div>
       </div>
 
