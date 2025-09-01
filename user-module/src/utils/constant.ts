@@ -112,6 +112,7 @@ export const constants = {
       ps.project_point_of_contact,
       ps.project_classification_rid,
       pc.classification_name,
+      pt.project_type_name,
       CASE 
         WHEN uga.rid IS NOT NULL AND uga.access_type != 'EXCLUDE' THEN true
         ELSE false
@@ -121,6 +122,7 @@ export const constants = {
      LEFT JOIN ${MAIN_SCHEMA_NAME}.account acc
       ON acc.rid = ps.account_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc ON pc.rid = ps.project_classification_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.project_type pt ON pt.rid = ps.project_type_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.user_group_entity_access uga 
       ON uga.entity_rid = ps.project_fiscal_rid 
       AND uga.entity_type = 'PROJECT'
@@ -131,6 +133,10 @@ export const constants = {
   `,
   SQL_GET_ALL_PROJECTS_OF_ACCOUNT_COUNT : `SELECT COUNT(DISTINCT ps.project_rid) as total_count
       FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary ps
+       LEFT JOIN ${MAIN_SCHEMA_NAME}.account acc
+      ON acc.rid = ps.account_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc ON pc.rid = ps.project_classification_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.project_type pt ON pt.rid = ps.project_type_rid
       WHERE {whereClauses}`,
   SQL_GET_PROJECTS_COUNT : `SELECT COUNT(*) as total_count
     FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary ps
