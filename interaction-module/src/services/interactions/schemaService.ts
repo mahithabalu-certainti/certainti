@@ -1564,6 +1564,44 @@ async updateQrePercent(qrePercent:number, accountNumber: string,projectFiscalRid
   }
 }
 
+async fetchValidAccountNumberByNumber(accountNumber: string) {
+  try {
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize =
+        await this.interactionModelService.getMainSequelize();
+    }
+
+    const [account]: any[] = await this.mainDbSequelize.query(
+      `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE r_number = :r_number`,
+      {
+        replacements: { r_number: accountNumber },
+        type: "SELECT",
+      }
+    );
+
+    let accountRnumber = account?.r_number;
+
+    if (account?.storage_type === "store_in_parent") {
+      const [accountData]: any[] = await this.mainDbSequelize.query(
+        `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
+        {
+          replacements: { rid: account?.parent_account_rid },
+          type: "SELECT",
+        }
+      );
+      accountRnumber = accountData?.r_number;
+    }
+
+    return {
+      accountNumber: accountRnumber,
+      accountId: account?.rid,
+      accountName: account.account_name,
+    };
+  } catch (err) {
+    throw new Error("Error fetching account : " + (err as Error).message);
+  }
+}
+
 }
 
 
