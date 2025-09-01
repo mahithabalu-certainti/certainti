@@ -16,7 +16,6 @@ RUN apk add --no-cache curl
 # Copy built application from build stage
 COPY --from=build /app /app
 
-EXPOSE 5008
+EXPOSE 5009
 RUN npm install ts-node
 CMD ["npx", "ts-node", "src/index.ts"]
-

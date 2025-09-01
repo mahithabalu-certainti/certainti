@@ -10,6 +10,7 @@ on:
       - entity-module/**
       - interaction-module/**
       - ext-interaction-module/**
+      - event-stream-module/**
 
 env:
   ENVIRONMENT: development
@@ -25,6 +26,7 @@ jobs:
       entity-module: ${{ steps.filter.outputs.entity-module }}
       interaction-module: ${{ steps.filter.outputs.interaction-module }}
       ext-interaction-module: ${{ steps.filter.outputs.ext-interaction-module }}
+      event-stream-module: ${{ steps.filter.outputs.event-stream-module }}
     # For pull requests it's not necessary to checkout the code
     steps:
       - uses: actions/checkout@v3
@@ -43,6 +45,8 @@ jobs:
               - 'interaction-module/**'
             ext-interaction-module:
               - 'ext-interaction-module/**'
+            event-stream-module:
+              - 'event-stream-module/**'  
 
   # JOB to build backend user-module code
   user-module:
@@ -467,9 +471,14 @@ jobs:
           LOG_LEVEL=debug
           NODE_ENV=DEVELOPMENT
           TRIGGER_AI_URL=https://platform-demo.certainti.ai/thinkrd365_triggerai
- 
           NODE_ENV_DB_PREFIX="D001-"
           INTERACTION_URL="https://thinkrd365-development.certainti.ai/ext/interaction"
+          KAFKA_BROKER="kafka:9092"
+          KAFKA_CONSUMER_GROUP="ai_assessment_request"
+          KAFKA_AI_RESPONSE_TRIGGER_TOPIC="ai_assessment_response"
+          KAFKA_AI_REQUEST_TRIGGER_TOPIC = "ai_assessment_request"
+          SYSTEM_USER_ID = "D001-477aac5d-3d92-4420-8e65-4153af4f3aed"
+          JWT_EXPIRY='1h'        
           EOF
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
@@ -494,7 +503,6 @@ jobs:
           
             # Update only the interaction-module image tag
             echo "Updating docker-compose.yml..."
-            # sed -i 's|image:.*interaction-module:.*|image: ${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}/interaction-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
             sed -i '/interaction-module:/,/image:/ s|image:.*|image: '"${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}"'/interaction-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
             echo "Docker Compose updated successfully!"
 
@@ -596,6 +604,11 @@ jobs:
           INTERACTION_BASE_URL='https://development-thinkrd365-api-management.azure-api.net/interactionService/api'
           NODE_ENV_DB_PREFIX="D001-"
           JWT_SECRET='lknmpsa*2626_ddm'
+          CUSTOM_PVT_KEY=custom-pvt
+          CUSTOM_PUB_KEY=custom-pub
+          CUSTOM_JWT_AUDIENCE=custom-jwt-audience
+          CUSTOM_JWT_ISSUER=custom-jwt-issuer
+          JWT_EXPIRY='1h'
           EOF
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
@@ -620,7 +633,6 @@ jobs:
           
             # Update only the ext-interaction-module image tag
             echo "Updating docker-compose.yml..."
-            # sed -i 's|image:.*ext-interaction-module:.*|image: ${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}/ext-interaction-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
             sed -i '/ext-interaction-module:/,/image:/ s|image:.*|image: '"${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}"'/ext-interaction-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
             echo "Docker Compose updated successfully!"
 
@@ -634,6 +646,140 @@ jobs:
           
             # Pull latest changes and restart
             if docker compose up -d --pull always --no-deps ext-interaction-module; then
+              echo "Deployment successful!"
+              # Remove old stopped containers
+              docker container prune -f || true
+              # Remove unused images (keeps only the latest deployed version)
+              docker image prune -af || true
+            else
+              echo "Deployment failed!"
+              exit 1
+            fi
+          EOF
+  # JOB to build backend event-stream-module code
+  event-stream-module:
+    needs:
+      - changes
+    if: ${{ needs.changes.outputs.event-stream-module == 'true' }}
+    name: Build and Deploy Event Stream Module
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set Up Tag
+        run: echo "IMAGE_TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Login to ACR
+        run: az acr login --name ${{ secrets.DEVELOPMENT_ACR_NAME }}
+        working-directory: event-stream-module
+      - name: Build Docker Image
+        run: |
+          docker build -t ${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}/event-stream-module:${{ env.IMAGE_TAG }} .
+        working-directory: event-stream-module
+      - name: Push Docker Image to ACR
+        run: docker push ${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}/event-stream-module:${{ env.IMAGE_TAG }}
+        working-directory: event-stream-module
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEVELOPMENT_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.DEVELOPMENT_BACKEND_VM_HOST }} >> ~/.ssh/known_hosts
+      - name: Fetch secrets and create .env file
+        working-directory: event-stream-module
+        run: |
+          KEY_VAULT_NAME=${{ secrets.DEVELOPMENT_KEY_VAULT_NAME }}
+          ENV_FILE=".env.eventstreammodule"
+          
+          # Ensure Azure CLI is authenticated
+          az account show > /dev/null 2>&1
+          if [ $? -ne 0 ]; then
+          echo "Error: Azure CLI is not authenticated. Run 'az login' first."
+          exit 1
+          fi
+          
+          # Fetch secrets from Azure Key Vault and write to .env file
+          echo "Fetching secrets from Azure Key Vault: $KEY_VAULT_NAME"
+          
+          KEY_VAULT_URI=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "key-vault-uri" --query value -o tsv)
+          MAIL_CLIENT_SECRET=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "mail-app-client-secret" --query value -o tsv)
+          MAIL_CLIENT_ID=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "mail-app-client-id" --query value -o tsv)
+          MAIL_TENANT_ID=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "mail-app-tenant-id" --query value -o tsv)
+          
+          # Write secrets to .env file
+          cat <<EOF > $ENV_FILE
+          SERVER_PORT=5009
+          KEY_VAULT_URI=$KEY_VAULT_URI
+          AZURE_SCOPE=https://graph.microsoft.com/.default
+          AZURE_STORAGE_CONNECTION_STRING = "storage-account-connection-string"
+          MAINDB_NAME=main-database-name
+          MAINDB_PASSWORD=main-db-admin-password
+          MAINDB_USERNAME=main-db-admin-username
+          MAINDB_ENDPOINT=main-db-endpoint
+          ORGDB_NAME=org-database-name
+          ORGDB_PASSWORD=org-db-admin-password
+          ORGDB_USERNAME=org-db-admin-username
+          ORGDB_ENDPOINT=org-db-endpoint
+          MAIL_TENANT_ID=$MAIL_TENANT_ID
+          MAIL_CLIENT_ID=$MAIL_CLIENT_ID
+          MAIL_CLIENT_SECRET=$MAIL_CLIENT_SECRET
+          EMAIL_FROM=interactions@certainti.ai
+          LOGIN_URL=https://thinkrd365-development.certainti.ai
+          SUPPORT_EMAIL=support@certainti.ai
+          LOG_LEVEL=debug
+          NODE_ENV=DEVELOPMENT
+          TRIGGER_AI_URL=https://platform-demo.certainti.ai/thinkrd365_triggerai
+          NODE_ENV_DB_PREFIX="D001-"
+          INTERACTION_URL="https://thinkrd365-development.certainti.ai/ext/interaction"
+          KAFKA_BROKER="kafka:9092"
+          KAFKA_CONSUMER_GROUP="ai_assessment_response"
+          KAFKA_AI_RESPONSE_TRIGGER_TOPIC="ai_assessment_response"
+          KAFKA_AI_REQUEST_TRIGGER_TOPIC = "ai_assessment_request"
+          SYSTEM_USER_ID = "D001-477aac5d-3d92-4420-8e65-4153af4f3aed"
+          CUSTOM_PVT_KEY=custom-pvt
+          CUSTOM_PUB_KEY=custom-pub
+          CUSTOM_JWT_AUDIENCE=custom-jwt-audience
+          CUSTOM_JWT_ISSUER=custom-jwt-issuer         
+          EOF
+          echo "$ENV_FILE file created successfully!"
+      - name: Copy .env file to VM
+        run: |
+          scp -o StrictHostKeyChecking=no .env.eventstreammodule adminuser@${{ secrets.DEVELOPMENT_BACKEND_VM_HOST }}:/tmp/
+        working-directory: event-stream-module
+      - name: SSH into VM and deploy
+        run: |
+          ssh -o StrictHostKeyChecking=no adminuser@${{ secrets.DEVELOPMENT_BACKEND_VM_HOST }} << 'EOF'
+            sudo -s
+            cd /app/backend
+
+            # Ensure docker-compose.yml exists
+            if [ ! -f "docker-compose.yml" ]; then
+              echo "docker-compose.yml not found!"
+              exit 1
+            fi
+            
+            # Move .env file with sudo
+            sudo mv /tmp/.env.eventstreammodule /app/backend/.env.eventstreammodule
+            echo ".env file moved successfully!"
+          
+            # Update only the event-stream-module image tag
+            echo "Updating docker-compose.yml..."
+            sed -i '/event-stream-module:/,/image:/ s|image:.*|image: '"${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}"'/event-stream-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
+            echo "Docker Compose updated successfully!"
+
+            # Verify the change
+            echo "Verifying the change:"
+            grep -A5 -B2 "event-stream-module:" docker-compose.yml
+          
+            # Login to ACR 
+            az acr login --name ${{ secrets.DEVELOPMENT_ACR_NAME }}
+            echo "Logged in to ACR successfully!"
+          
+            # Pull latest changes and restart
+            if docker compose up -d --pull always --no-deps event-stream-module; then
               echo "Deployment successful!"
               # Remove old stopped containers
               docker container prune -f || true
