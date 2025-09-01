@@ -29,7 +29,6 @@ export class AIAssessmentService {
     errorMessage?: string;
     data?: string;
   }> {
-    console.log("AI Response received in service:", aiResponse);
     try {
       const topic = process.env.KAFKA_AI_RESPONSE_TRIGGER_TOPIC || "ai_assessment_response";
       const message = {
@@ -42,15 +41,12 @@ export class AIAssessmentService {
         topic,
         messages: [message],
       });
-      this.logger.info("AI response sent to Kafka topic:", {
-        topic,
-        aiResponse,
-      });
-       return {
-      statusCode: HttpStatus.SUCCESS,
-      message: HttpStatus.SUCCESS_MESSAGE,
-      data: "",
-    };
+      this.logger.info("AI response sent to Kafka topic:", topic);
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: "",
+      };
     } catch (error) {
       this.logger.error("Failed to send AI response to Kafka topic:", {
         error,

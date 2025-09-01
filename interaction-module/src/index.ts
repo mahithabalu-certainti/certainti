@@ -34,7 +34,6 @@ async function startKafkaConsumer() {
 
     await consumer.run({
       eachMessage: async ({ message }: { message: any }) => {
-        console.log("Received message:", message.value?.toString());
         await interactionsController.processKafkaMessages(message.value?.toString());
       },
     });
