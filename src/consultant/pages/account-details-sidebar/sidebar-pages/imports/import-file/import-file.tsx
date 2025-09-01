@@ -106,6 +106,13 @@ const ImportFile: React.FC<ImportFileProps> = ({
     const validFiles: File[] = [];
 
     for (const file of Array.from(files)) {
+      if (/\s/.test(file.name)) {
+        showError(
+          `"${file.name}" is invalid. Filename must not contain spaces.`
+        );
+        continue;
+      }
+
       const isAcceptedType =
         ACCEPTED_FILE_TYPES.includes(file.type) ||
         /\.(csv|xls|xlsx)$/i.test(file.name);
@@ -164,7 +171,7 @@ const ImportFile: React.FC<ImportFileProps> = ({
 
       const payload: UploadImportPayload = {
         entity_type: entityType,
-        file: selectedFiles[0],
+        file: file,
         fiscal_year:
           entityType === 'Resource' || entityType === 'Resource Skill'
             ? currentYear.toString()
