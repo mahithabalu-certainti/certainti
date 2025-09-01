@@ -617,6 +617,7 @@ export const ProjectDetails = () => {
           showActions={false}
           showSettings={false}
           goBack={goBack}
+          isLoading={isLoading}
         />
       </div>
       <InfoSection
@@ -641,6 +642,7 @@ export const ProjectDetails = () => {
             showBackIcon={true}
             isCollapsed={isCollapsed}
             onToggleCollapse={() => setIsCollapsed((prev) => !prev)}
+            isLoading={isLoading}
           />
         </div>
         <div

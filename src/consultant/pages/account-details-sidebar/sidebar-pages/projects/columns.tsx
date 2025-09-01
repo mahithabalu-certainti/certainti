@@ -373,44 +373,6 @@ export const getProjectColumns = (
     hide:
       !permissionMap?.['total_cost']?.read &&
       !permissionMap?.['total_cost']?.edit,
-    conditionallyEdit: [
-      {
-        key: 'total_cost',
-        matchValue: [null, '0.00'],
-      },
-    ],
-    sx: {
-      textAlign: 'right',
-    },
-    render: (row: Project) =>
-      row.total_cost ? costDisplay(row.total_cost, row.currency_symbol) : '-',
-    field: {
-      type: 'text',
-      required: false,
-      placeholder: 'Enter Project Cost',
-      validation: [
-        {
-          regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-          errorMessage:
-            'Project Cost must be a positive integer with up to 16 digits and 2 decimal places',
-        },
-      ],
-    },
-  },
-  {
-    id: 'total_cost',
-    editId: 'total_cost',
-    label: 'Project Cost',
-    sortable: true,
-    sortId: 'total_cost',
-    width: 130,
-    editable:
-      permissionMap?.['total_cost']?.read &&
-      permissionMap?.['total_cost']?.edit &&
-      !accountInActive,
-    hide:
-      !permissionMap?.['total_cost']?.read &&
-      !permissionMap?.['total_cost']?.edit,
     sx: {
       textAlign: 'right',
     },
@@ -493,6 +455,39 @@ export const getProjectColumns = (
           regex: REGEX_PATTERNS.EFFORTS_NUMBER,
           errorMessage:
             'Sub Con Cost must be a positive integer up to 16 digits and 2 decimal places',
+        },
+      ],
+    },
+  },
+  {
+    id: 'total_cost_nonlabor',
+    editId: 'total_cost_nonlabor',
+    label: 'Non-Labor Cost',
+    sortable: true,
+    editable:
+      permissionMap?.['total_cost_nonlabor']?.read &&
+      permissionMap?.['total_cost_nonlabor']?.edit,
+    hide:
+      !permissionMap?.['total_cost_nonlabor']?.read &&
+      !permissionMap?.['total_cost_nonlabor']?.edit,
+    sortId: 'total_cost_nonlabor',
+    width: 140,
+    sx: {
+      textAlign: 'right',
+    },
+    render: (row: Project) =>
+      row.total_cost_nonlabor
+        ? costDisplay(row.total_cost_nonlabor, row.currency_symbol)
+        : '-',
+    field: {
+      type: 'text',
+      required: false,
+      placeholder: 'Enter Non Labor Cost',
+      validation: [
+        {
+          regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+          errorMessage:
+            'Non Labor Cost must be a positive integer with up to 16 digits and 2 decimal places',
         },
       ],
     },
