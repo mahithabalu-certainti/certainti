@@ -90,7 +90,7 @@ export const constants = {
         uga.access_type,
         (uga.access_type = 'INCLUDE') AS has_access
         {isGroupedSelect}
-      FROM ${MAIN_SCHEMA_NAME}.project_summary ps
+      FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary ps
       {extraJoin}
       LEFT JOIN ${MAIN_SCHEMA_NAME}.user_group_entity_access uga
         ON uga.entity_rid = ps.project_rid
@@ -102,21 +102,29 @@ export const constants = {
 `,
   SQL_GET_ALL_PROJECTS_OF_ACCOUNT: `
     SELECT distinct
+      ps.project_fiscal_rid,
       ps.project_rid,
       ps.project_name,
       ps.project_code,
       ps.account_rid,
       acc.account_name,
+      ps.fiscal_year,
+      ps.project_point_of_contact,
+      ps.project_classification_rid,
+      pc.classification_name,
+      pt.project_type_name,
       CASE 
         WHEN uga.rid IS NOT NULL AND uga.access_type != 'EXCLUDE' THEN true
         ELSE false
       END as has_access,
       uga.access_type
-    FROM ${MAIN_SCHEMA_NAME}.project_summary ps
+    FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary ps
      LEFT JOIN ${MAIN_SCHEMA_NAME}.account acc
       ON acc.rid = ps.account_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc ON pc.rid = ps.project_classification_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.project_type pt ON pt.rid = ps.project_type_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.user_group_entity_access uga 
-      ON uga.entity_rid = ps.project_rid 
+      ON uga.entity_rid = ps.project_fiscal_rid 
       AND uga.entity_type = 'PROJECT'
       AND uga.group_rid = :group_rid -- only works if group_rid is provided
     WHERE {whereClauses}
@@ -124,10 +132,14 @@ export const constants = {
     LIMIT :limit OFFSET :offset
   `,
   SQL_GET_ALL_PROJECTS_OF_ACCOUNT_COUNT : `SELECT COUNT(DISTINCT ps.project_rid) as total_count
-      FROM ${MAIN_SCHEMA_NAME}.project_summary ps
+      FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary ps
+       LEFT JOIN ${MAIN_SCHEMA_NAME}.account acc
+      ON acc.rid = ps.account_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc ON pc.rid = ps.project_classification_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.project_type pt ON pt.rid = ps.project_type_rid
       WHERE {whereClauses}`,
   SQL_GET_PROJECTS_COUNT : `SELECT COUNT(*) as total_count
-    FROM ${MAIN_SCHEMA_NAME}.project_summary ps
+    FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary ps
     {extraJoin}
     LEFT JOIN ${MAIN_SCHEMA_NAME}.user_group_entity_access uga
       ON uga.entity_rid = ps.rid
@@ -140,7 +152,7 @@ export const constants = {
      FROM ${MAIN_SCHEMA_NAME}.account a
      JOIN ${MAIN_SCHEMA_NAME}.user_group_account_mapping uga 
      ON uga.account_rid = a.rid AND uga.group_rid = :group_rid`,
-  SQL_GET_DEFAULT_PROJECT_ACCESS:`SELECT project_rid, project_name,project_code ,true as has_access FROM ${MAIN_SCHEMA_NAME}.project_summary`,
+  SQL_GET_DEFAULT_PROJECT_ACCESS:`SELECT project_rid, project_name,project_code ,true as has_access FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary`,
   SQL_GET_SELECTED_PROJECT_ACCESS: `SELECT 
       ps.project_rid,
       ps.project_name,
@@ -152,7 +164,7 @@ export const constants = {
         ELSE false
       END as has_access,
       uga.access_type
-    FROM ${MAIN_SCHEMA_NAME}.project_summary ps
+    FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary ps
      LEFT JOIN ${MAIN_SCHEMA_NAME}.account acc
       ON acc.rid = ps.account_rid
     INNER JOIN ${MAIN_SCHEMA_NAME}.user_group_entity_access uga 
@@ -168,7 +180,7 @@ export const constants = {
    PROJECT_OF_SELECTED_ACCOUNTS:`
     SELECT DISTINCT ugm.entity_rid
     FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access ugm
-    JOIN ${MAIN_SCHEMA_NAME}.project_summary p ON ugm.entity_rid = p.project_rid
+    JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary p ON ugm.entity_rid = p.project_rid
     WHERE ugm.group_rid = :group_rid
     AND p.account_rid IN (:revokedAccounts)`,
   SELECT: 'SELECT',

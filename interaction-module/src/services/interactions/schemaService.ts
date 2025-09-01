@@ -159,6 +159,41 @@ class InteractionSchemaService {
     const existingData = await InteractionItem.findOne({
       where: { interaction_rid: interactionRid, rid: question.rid },
     });
+      await Promise.all([
+      InteractionHistory.create(
+      {
+        interaction_rid: interactionRid,
+        attribute_name: "question",
+        old_value: existingData?.dataValues?.question ?? "",
+        new_value:  "",
+        interaction_item_rid: question?.rid ?? "",
+        created_by: userId,
+      },
+      { transaction }
+      ),
+      InteractionHistory.create(
+      {
+        interaction_rid: interactionRid,
+        attribute_name: "notes",
+        old_value: existingData?.dataValues?.notes ?? "",
+        new_value: "",
+        interaction_item_rid: question?.rid ?? "",
+        created_by: userId,
+      },
+      { transaction }
+      ),
+      InteractionHistory.create(
+      {
+        interaction_rid: interactionRid,
+        attribute_name: "is_mandatory",
+        old_value: existingData?.dataValues?.is_mandatory ?? "",
+        new_value: "",
+        interaction_item_rid: question?.rid ?? "",
+        created_by: userId,
+      },
+      { transaction }
+      )
+    ]);
     await InteractionItem.destroy({
       where: { interaction_rid: interactionRid, rid: question.rid },
       transaction,
@@ -1441,6 +1476,38 @@ async updateTechSummary( projectSummary: string, accountNumber: string, projectF
     );
   }
 }
+async updateAssessmentErrorResponse( error:JSON, accountNumber: string, projectFiscalId: string, accountId: string,transactionId: string)
+{
+  try {
+    if (!this.orgDbSequelize) {
+      this.orgDbSequelize = await this.interactionModelService.getSequelize();
+    }
+    const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
+
+     const [projectInfo]: any[] = await this.orgDbSequelize.query(
+      rawQueries.fetchProjectInfo(projectFiscalId, schemaName),
+      { type: "SELECT" }
+    );
+
+    const { AiAssessmentError } = await this.interactionModelService.getModels(accountNumber);
+
+    const aiResponse = await AiAssessmentError.create(
+      {
+        account_rid: accountId,
+        created_by:process.env.SYSTEM_USER_ID || "system",
+        project_rid :projectFiscalId,
+        transaction_id: transactionId,
+        errorMessage: error
+      }
+    );
+    
+  } catch (err) {
+    throw new Error(
+      "Error updating Tech Summary: " + (err as Error).message
+    );
+  }
+}
+
 
 async fetchProjectInfo(accountNumber: string, projectFiscalId: string)
 {
@@ -1464,7 +1531,7 @@ async fetchProjectInfo(accountNumber: string, projectFiscalId: string)
   }
 }
 
-async updateQrePercent(qrePercent:number, accountNumber: string,projectFiscalRid:string)
+async updateQrePercent(qrePercent:number, accountNumber: string,projectFiscalRid:string,qreBreakdown:JSON)
 {
   try {
     if (!this.orgDbSequelize) {
@@ -1477,7 +1544,7 @@ async updateQrePercent(qrePercent:number, accountNumber: string,projectFiscalRid
     const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
 
     await this.orgDbSequelize.query(
-      rawQueries.updateQreInfo(projectFiscalRid,schemaName,qrePercent, ),
+      rawQueries.updateQreInfo(projectFiscalRid,schemaName,qrePercent,qreBreakdown ),
       { type: "UPDATE" }
     );
     await this.orgDbSequelize.query(
@@ -1490,6 +1557,7 @@ async updateQrePercent(qrePercent:number, accountNumber: string,projectFiscalRid
     );
     
   } catch (err) {
+    console.log(err)
     throw new Error(
       "Error updating QRE percent: " + (err as Error).message
     );

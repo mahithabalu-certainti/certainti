@@ -1,8 +1,9 @@
 import { Logger } from "winston";
-import FormData from 'form-data';
-import axios from "axios";
+import FormData from "form-data";
+import axios, { AxiosError } from "axios";
 import { InteractionResponse } from "../../utils/types";
 import { HttpStatus } from "../../utils/constants";
+import { generateNewCustomJwtKey } from "../../utils/otpGenerator";
 
 const INTERACTION_BASE_URL = process.env.INTERACTION_BASE_URL!;
 export class InteractionService {
@@ -14,7 +15,8 @@ export class InteractionService {
 
   async updateInteractionResponse(
     interactionData: InteractionResponse,
-    userId: string
+    userId: string,
+    authToken: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -22,6 +24,8 @@ export class InteractionService {
     data?: { interactions: any };
   }> {
     try {
+      const newCustomJwtToken = await this.generateNewToken(authToken);
+
       const response = await axios.put(
         `${INTERACTION_BASE_URL}/extInteractions/updateResponse`,
         {
@@ -30,7 +34,7 @@ export class InteractionService {
         {
           headers: {
             "x-user-id": userId,
-            Authorization: "Bearer ",
+            Authorization: newCustomJwtToken,
           },
         }
       );
@@ -55,7 +59,7 @@ export class InteractionService {
         },
       };
     } catch (err) {
-      throw this.throwServiceError(err as Error);
+      return this.handleError(err);
     }
   }
 
@@ -71,12 +75,14 @@ export class InteractionService {
     data?: { interactionDetails: any };
   }> {
     try {
+      const newCustomJwtToken = await this.generateNewToken(authToken);
+
       const response = await axios.get(
         `${INTERACTION_BASE_URL}/extInteractions/detail/${accountRid}/${interactionRid}`,
         {
           headers: {
             "x-user-id": userId,
-            Authorization: authToken,
+            Authorization: newCustomJwtToken,
           },
         }
       );
@@ -101,8 +107,7 @@ export class InteractionService {
         },
       };
     } catch (err) {
-      console.log("Error fetching details", err);
-      throw this.throwServiceError(err as Error);
+      return this.handleError(err);
     }
   }
 
@@ -111,7 +116,8 @@ export class InteractionService {
     accountRid: string,
     interactionRid: string,
     projectId: string,
-    userId: string
+    userId: string,
+    authToken: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -121,18 +127,20 @@ export class InteractionService {
       fileSize: number;
       fileType: string;
       fileUrl: string;
-    }
+    };
   }> {
     try {
       const formData = new FormData();
-      formData.append('file', file.buffer, {
+      formData.append("file", file.buffer, {
         filename: file.originalname,
         contentType: file.mimetype,
-      });      
+      });
 
       formData.append("account_rid", accountRid);
       formData.append("interaction_rid", interactionRid);
       formData.append("project_rid", projectId);
+
+      const newCustomJwtToken = await this.generateNewToken(authToken);
 
       const response = await axios.post(
         `${INTERACTION_BASE_URL}/extInteractions/uploadAttachment`,
@@ -140,7 +148,7 @@ export class InteractionService {
         {
           headers: {
             "x-user-id": userId,
-            Authorization: "Bearer ",
+            Authorization: newCustomJwtToken,
           },
         }
       );
@@ -165,33 +173,34 @@ export class InteractionService {
         },
       };
     } catch (err) {
-      console.log("Error uploading attachments", err);
-      throw this.throwServiceError(err as Error);
+      return this.handleError(err);
     }
   }
 
   async deleteFromAzureBlob(
     fileUrl: string,
-    userId: string
+    userId: string,
+    authToken: string
   ): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: any
+    data?: any;
   }> {
     try {
+      const newCustomJwtToken = await this.generateNewToken(authToken);
       const response = await axios.delete(
         `${INTERACTION_BASE_URL}/extInteractions/deleteAttachment`,
         {
           data: {
-            file_url: fileUrl
+            file_url: fileUrl,
           },
           headers: {
-            'x-user-id': userId,
-            Authorization: 'Bearer ',
+            "x-user-id": userId,
+            Authorization: newCustomJwtToken,
           },
         }
-      );      
+      );
 
       if (response.status !== 200) {
         return {
@@ -208,12 +217,59 @@ export class InteractionService {
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
-        data: {}
+        data: {},
       };
     } catch (err) {
-      console.log("Error uploading attachments", err);
-      throw this.throwServiceError(err as Error);
+      return this.handleError(err);
     }
+  }
+
+  async generateNewToken(oldToken: string): Promise<string> {
+    if (!oldToken || typeof oldToken !== "string") {
+      throw new Error("Invalid old token");
+    }
+
+    const parts = oldToken.trim().split(" ");
+    const rawToken = parts.length === 2 ? parts[1] : parts[0];
+
+    if (!rawToken) {
+      throw new Error("Token format is invalid");
+    }
+
+    const newToken = await generateNewCustomJwtKey(rawToken);
+
+    return `Bearer ${newToken}`;
+  }
+
+  private handleError(err: unknown) {
+    if (axios.isAxiosError(err)) {
+      return this.handleAxiosError(err);
+    }
+
+    return this.handleUnknownError(err);
+  }
+
+  private handleAxiosError(error: AxiosError) {
+    const apiMessage =
+      (error.response?.data as { message?: string })?.message;
+  
+    if (this.isUnauthorizedError(error)) {
+      console.log("Inside unauthorized error", error, error.response?.status);
+      return this.throwServiceError(error, apiMessage || "Unauthorized", error.response?.status);
+    }
+  
+    return this.throwServiceError(
+      error,
+      apiMessage || error.message || "An unexpected API error occurred."
+    );
+  }
+
+  private isUnauthorizedError(error: AxiosError): boolean {
+    return error.response?.status === 401;
+  }
+
+  private handleUnknownError(err: unknown) {
+    return this.throwServiceError(err as Error, "Unexpected error occurred.");
   }
 
   /**
@@ -222,15 +278,19 @@ export class InteractionService {
    * @param {Error} err - The caught error.
    * @returns {object} - Standardized error response object.
    */
-  throwServiceError(err: Error): {
+  throwServiceError(
+    err: Error,
+    errMessage?: string,
+    errCode?: number
+  ): {
     statusCode: number;
     message: string;
     errorMessage: string;
   } {
     return {
-      statusCode: HttpStatus.FAILED,
+      statusCode: errCode ?? HttpStatus.FAILED,
       message: HttpStatus.FAILED_MESSAGE,
-      errorMessage: err.message,
+      errorMessage: errMessage ?? err.message,
     };
   }
 }

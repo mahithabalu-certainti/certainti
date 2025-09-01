@@ -285,9 +285,10 @@ export const rawQueries = {
     return `
     SELECT rid, project_rid FROM ${schemaName}.project_fiscal WHERE account_rid = '${accountRid}'`
   },
-  updateQreInfo(rid : string, schemaName : string, qrePercent: number) {
+  updateQreInfo(rid: string, schemaName: string, qrePercent: number, qreBreakdown: object) {
+    const breakdownStr = JSON.stringify(qreBreakdown);
     return `
-    UPDATE ${schemaName}.project_fiscal SET qre_final = ${qrePercent} WHERE rid = '${rid}'`
+    UPDATE ${schemaName}.project_fiscal SET qre_final = ${qrePercent}, qre_detailed_breakdown = '${breakdownStr}' WHERE rid = '${rid}'`;
   },
   updateAIProcessedFlag(rid: string, schemaName: string) {
     return `

@@ -46,7 +46,12 @@ async function createAttachment(req: Request, res: Response): Promise<void> {
 
     if (attachment.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
-      handleSuccessResponse(res, attachment.data);
+      res.status(attachment.statusCode).json({
+        statusCode: attachment.statusCode,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: "Attachment uploaded successfully.",  
+        data: attachment.data,
+      });
       return;
     } else {
       errorLog(methodName, attachment.errorMessage);
