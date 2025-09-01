@@ -109,6 +109,10 @@ export const validateInteractionForm = (
       isValid = false;
     }
 
+    if (!REGEX_PATTERNS.MAX_2000.test(question.question)) {
+      currentQuestionErrors.question = 'Max length exceeded';
+      isValid = false;
+    }
     if (!REGEX_PATTERNS.MAX_2000.test(question.notes)) {
       currentQuestionErrors.notes = 'Max length exceeded';
       isValid = false;

@@ -156,7 +156,7 @@ export const transformFormData = (
   showClassifyOthersField?: boolean
 ): Partial<NewProjectData> => {
   const data: Partial<NewProjectData> = {
-    account_id: formData.account_id,
+    account_id: formData.account_rid,
     project_id: formData.project_id,
     account_number: formData.account_number,
     project_code: formData.project_code,

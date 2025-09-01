@@ -505,12 +505,35 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
             ) : (
               <div
                 className={`
-                mt-2 border border-[#CBD6E2] rounded-[2px] py-2 px-3 min-h-20
-                text-[14px] text-[#425A76] font-normal bg-[#FFFBFA]
-                [&_p]:mb-2 [&_strong]:font-bold [&_em]:italic
-                [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5
-                [&_li]:mb-1 [&_a]:text-blue-600 [&_blockquote]:border-l-2 [&_blockquote]:pl-2 [&_blockquote]:italic
-              `}
+  mt-2 border border-[#CBD6E2] rounded-[2px] py-2 px-3 min-h-20
+  text-[14px] text-[#425A76] font-normal bg-[#FFFBFA]
+
+  [&_p]:mb-2
+  [&_strong]:font-bold [&_em]:italic
+  [&_u]:underline [&_s]:line-through
+
+  [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-3
+  [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mb-2
+  [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mb-2
+  [&_h4]:text-base [&_h4]:font-medium [&_h4]:mb-1
+  [&_h5]:text-sm [&_h5]:font-medium [&_h5]:mb-1
+  [&_h6]:text-xs [&_h6]:font-medium [&_h6]:mb-1
+
+  [&_ul]:list-disc [&_ul]:pl-5
+  [&_ol]:list-decimal [&_ol]:pl-5
+  [&_li]:mb-1
+
+  [&_a]:text-blue-600 [&_a]:underline
+  [&_blockquote]:border-l-2 [&_blockquote]:pl-3 [&_blockquote]:italic
+
+  [&_code]:font-mono [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:rounded
+  [&_pre]:font-mono [&_pre]:bg-gray-100 [&_pre]:p-2 [&_pre]:rounded [&_pre]:overflow-x-auto
+
+  [&_img]:max-w-full [&_img]:rounded
+  [&_table]:border-collapse [&_table]:border [&_table]:border-gray-300 [&_table]:my-2
+  [&_th]:border [&_th]:border-gray-300 [&_th]:bg-gray-100 [&_th]:px-2 [&_th]:py-1
+  [&_td]:border [&_td]:border-gray-300 [&_td]:px-2 [&_td]:py-1
+`}
                 dangerouslySetInnerHTML={{ __html: q.response || '' }}
               />
             )}
