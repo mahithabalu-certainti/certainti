@@ -146,6 +146,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
       accountID,
       projectID,
       source: 'project',
+      type: 'global',
     });
 
     navigate(

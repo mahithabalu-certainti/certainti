@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { EditIcon, ProjectCreateIcon } from '../../../assets';
@@ -24,6 +25,7 @@ import {
   FieldType,
   KeyContactHeader,
   OthersEnum,
+  ParentChildSelectOption,
   SelectOption,
 } from '../../types';
 import { transformFormData, transformKeyContactsFromAPI } from './utils';
@@ -39,8 +41,9 @@ import { formatDateToYYYYMMDDWithTime } from '../account-details-sidebar/sidebar
 import SkeletonForm from '../../../components/form-builder/skeleton-form';
 import SingleSkeleton from '../../../components/skeleton-component/singleskeleton';
 import { useSelector } from 'react-redux';
-import { RootState } from '../../../store/store';
+import { RootState, useAppDispatch } from '../../../store/store';
 import { AccessRestricted } from '../../../components/account-restricted';
+import { fetchAccountsThunk } from '../../../store/slices';
 
 const defaultKeyContactHeaders: KeyContactHeader[] = [
   { name: 'key_contact_name', label: 'Key Contact Name', width: '190px' },
@@ -77,6 +80,7 @@ const ProjectForm: React.FC = () => {
   const [showClassifyOthersField, setShowClassifyOthersField] = useState(false);
   const [keyContacts, setKeyContacts] = useState<FieldType[]>([]);
   const { successToast } = useToast();
+  const dispatch = useAppDispatch();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const { projectid: projectID } = useParams();
@@ -100,7 +104,7 @@ const ProjectForm: React.FC = () => {
     total_cost_nonlabor: '',
     total_cost: '',
   });
-
+  const [currencyValue, setCurrencyValue] = useState('');
   // State to track field edits for disabling logic
   const [isEffortFteEdited, setIsEffortFteEdited] = useState(false);
   const [isEffortSubconEdited, setIsEffortSubconEdited] = useState(false);
@@ -114,7 +118,11 @@ const ProjectForm: React.FC = () => {
     field: location.state?.field,
     section: location.state?.section,
   };
-
+  useEffect(() => {
+    // Get Global accounts list only in create
+    dispatch(fetchAccountsThunk());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const source = searchParams.get('source');
   const AccountNameValue = searchParams.get('AccountName');
   let breadcrumbLabel = '';
@@ -144,7 +152,7 @@ const ProjectForm: React.FC = () => {
   const states = useFetchState(currentCountry);
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();
-
+  const dollercurrencyridValue = 'D001-571523e6-2dba-41ff-b857-6aee33dc3db5';
   // Permission Management
   const { modules, permission } = useSelector(
     (state: RootState) => state.permission
@@ -178,6 +186,11 @@ const ProjectForm: React.FC = () => {
     permission,
     AllPermissions.ACCOUNTS_VIEW_EDIT
   );
+  const globalType = searchParams.get('type') === 'global';
+  const { accounts, loading } = useSelector(
+    (state: RootState) => state.account
+  );
+  // console.log('accounts', accounts);
   const defaultActiveValue = useMemo(() => {
     const activeOption = memoizedStatus.find(
       (option) => option.label.toLowerCase() === 'active'
@@ -319,6 +332,20 @@ const ProjectForm: React.FC = () => {
       })) || [],
     [keyContactRoles.data?.data.keyContactRoles]
   );
+  const memoizedAccounts: ParentChildSelectOption[] = useMemo(() => {
+    if (!accounts) return [];
+
+    return accounts.map((account) => ({
+      parent_value: account.rid,
+      parent_label: account.account_name,
+      childList:
+        account.child_accounts?.map((child) => ({
+          child_value: child.rid,
+          child_label: child.account_name,
+          currency_rid: child.currency_rid ?? undefined,
+        })) || [],
+    }));
+  }, [accounts]);
 
   useEffect(() => {
     const existingContacts = account?.keyContact || [];
@@ -428,7 +455,7 @@ const ProjectForm: React.FC = () => {
       ...formValues,
       ...effortFinancials,
       ...costFinancials,
-      account_id: accountID,
+      ...(globalType ? {} : { account_rid: accountID }),
       project_id: isEditView ? account?.project_rid : projectID,
     };
 
@@ -483,7 +510,52 @@ const ProjectForm: React.FC = () => {
         selectedClassification?.label.toLowerCase() === OthersEnum.Other
       );
     }
+    if (data.fieldName === 'account_rid') {
+      const selectedRid = data.fieldValue;
+      let currencyValue = '';
 
+      // Step 1: Check children first
+      let foundChild: any = null;
+      for (const acc of accounts) {
+        foundChild = acc.child_accounts?.find(
+          (childAcc: any) => childAcc.rid === selectedRid
+        );
+        if (foundChild) break;
+      }
+
+      if (foundChild) {
+        // Child currency
+        currencyValue = foundChild.currency_rid || '';
+        console.log(
+          'Selected Child:',
+          foundChild.account_name,
+          'Currency RID:',
+          currencyValue
+        );
+      } else {
+        const parentAccount = accounts.find(
+          (acc: any) => acc.rid === selectedRid
+        );
+        if (parentAccount?.currency_rid) {
+          currencyValue = parentAccount.currency_rid;
+          console.log(
+            'Selected Parent:',
+            parentAccount.account_name,
+            'Currency RID:',
+            currencyValue
+          );
+        }
+      }
+
+      // Step 3: Fallback to default dollar currency
+      if (!currencyValue) {
+        currencyValue = dollercurrencyridValue;
+        console.log('Fallback: Dollar Currency RID', currencyValue);
+      }
+
+      // Finally set state
+      setCurrencyValue(currencyValue);
+    }
     // Handle effort fields
     if (
       data.fieldName === 'total_effort_fte' ||
@@ -600,6 +672,8 @@ const ProjectForm: React.FC = () => {
     memoizedState,
     memoizedIndustry,
     memoizedClassification,
+    memoizedAccounts,
+    // memoizedRole,
     keyContacts,
     addKeyContactInfo,
     removeKeyContactInfo,
@@ -610,8 +684,10 @@ const ProjectForm: React.FC = () => {
     permissionMap,
     effortFinancials.total_effort || '',
     finalTotalCost,
+    currencyValue,
     disableTotalEffort,
-    disableTotalCost
+    disableTotalCost,
+    globalType
   );
 
   const formLoading =
@@ -621,7 +697,8 @@ const ProjectForm: React.FC = () => {
     Classification.isLoading ||
     statusOptions.isLoading ||
     projectTypeOptions.isLoading ||
-    keyContactRoles.isLoading;
+    keyContactRoles.isLoading ||
+    loading;
 
   if (!accountIsEnable || !accountViewEnable) return <AccessRestricted />;
 
