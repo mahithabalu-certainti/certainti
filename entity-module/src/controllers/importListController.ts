@@ -534,7 +534,7 @@ async function importListByRid (req : Request, res : Response) {
 
 async function exportAllImportedData (req : Request, res : Response) {
     const data = req.body;
-    const {permissionModule} = data;
+    const {permissionModule,isTimeSheet} = data;
     let importedByFilter;
     let importedByCondition : string;
     let totalCount : number = 0
@@ -560,13 +560,13 @@ async function exportAllImportedData (req : Request, res : Response) {
         }
 
         let flatData = result.data.flatMap((d : any) => {
-            return d.imports == null ? [] : d.imports.map((data : any) => ({
+            return d.imports == null ? [] : d.imports.map((data: any) => {
+              const record: any = {
                 rid : data.rid,
                 r_number : data.r_number,
                 file_name : data.file_name,
                 format : data.format,
                 size : data.size,
-                entity : data.entity,
                 total_records : data.total_records,
                 fiscal : data.fiscal,
                 records_loaded_successfully : data.records_loaded_successfully,
@@ -576,8 +576,12 @@ async function exportAllImportedData (req : Request, res : Response) {
                 status_description : data.status_description,
                 imported_on : new Date(data.imported_on).toISOString(),
                 imported_by : data.imported_by,
-            })
-        )
+              };
+              if (!isTimeSheet) {
+                record.entity = data.entity;
+              }
+              return record;
+            });
         })
         if (importedByFilter) {
         const conditionObj = importedByFilter;
@@ -645,13 +649,16 @@ async function exportAllImportedData (req : Request, res : Response) {
         let finalPaginatedData = paginatedData.map((data: any) => {
           const exportRecord: Record<string, any> = {};
           
-          IMPORT_FIELD_MAPPINGS_FOR_EXPORT.forEach(mapping => {
-              if (allowedFieldSet.has(mapping.permissionField)) {
-                  exportRecord[mapping.exportField] = mapping.formatter 
-                      ? mapping.formatter(data[mapping.dataField])
-                      : data[mapping.dataField];
+            IMPORT_FIELD_MAPPINGS_FOR_EXPORT.forEach(mapping => {
+              if (isTimeSheet && mapping.dataField === 'entity') {
+                return;
               }
-          });
+              if (allowedFieldSet.has(mapping.permissionField)) {
+                exportRecord[mapping.exportField] = mapping.formatter 
+                  ? mapping.formatter(data[mapping.dataField])
+                  : data[mapping.dataField];
+              }
+            });
           
           return exportRecord;
       });
