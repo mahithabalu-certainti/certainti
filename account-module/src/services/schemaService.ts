@@ -2107,8 +2107,8 @@ private async createInteractionTable(
         interaction_rid character varying(50) NOT NULL,
         question_seq_num VARCHAR(20) UNIQUE DEFAULT 'QUE-' || LPAD(nextval('"${schemaName}".question_seq')::TEXT, 10, '0'),
         is_mandatory boolean DEFAULT false NOT NULL,
-        question text,
-        notes text,
+        question character varying(2000),
+        notes character varying(2000),
         is_attachment boolean
       );
     `);

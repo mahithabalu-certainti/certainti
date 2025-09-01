@@ -13,8 +13,8 @@ const createInteractionSchema = Joi.object({
   questions: Joi.array()
     .items(
       Joi.object({
-        question: Joi.string().max(255).required(),
-        notes: Joi.string().max(1000).allow(""),
+        question: Joi.string().max(2000).required(),
+        notes: Joi.string().max(2000).allow(""),
         is_mandatory: Joi.boolean().required(),
         action_type: Joi.string().valid("add", "update", "delete").required(),
       })
@@ -55,8 +55,8 @@ const updateInteractionSchema = Joi.object({
     .items(
       Joi.object({
         rid: Joi.string().pattern(uuidRegex).allow(null, ""),
-        question: Joi.string().max(255).required(),
-        notes: Joi.string().max(1000).allow(""),
+        question: Joi.string().max(2000).required(),
+        notes: Joi.string().max(2000).allow(""),
         is_mandatory: Joi.boolean().required(),
         action_type: Joi.string().valid("add", "edit", "delete").required(),
       })
