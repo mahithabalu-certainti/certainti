@@ -2,7 +2,7 @@ import { Client } from "@microsoft/microsoft-graph-client";
 import { ClientSecretCredential } from "@azure/identity";
 import csv from "csv-parser";
 import ExcelJS from "exceljs";
-import { HttpStatus, MAIN_SCHEMA_NAME } from "../../utils/constants";
+import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries } from "../../utils/constants";
 import { Readable } from "stream";
 import { InteractionModelService } from "../interactionModelsService";
 import InteractionSchemaService from "../interactions/schemaService";
@@ -16,6 +16,7 @@ export class WebHookService {
   private interactionSchemaService: InteractionSchemaService;
   private interactionService: InteractionService;
   private processedMessageIds = new Set();
+  private logger: Logger;
 
   constructor(logger: Logger) {
     const credential = new ClientSecretCredential(
@@ -23,6 +24,8 @@ export class WebHookService {
       process.env.CLIENT_ID!,
       process.env.CLIENT_SECRET!
     );
+
+    this.logger = logger;
 
     this.interactionModelService = new InteractionModelService();
     this.interactionSchemaService = new InteractionSchemaService();
@@ -189,7 +192,7 @@ export class WebHookService {
         if (matchingItem) {
           answer.rid = matchingItem.rid;
         } else {
-          console.warn(`No matching interaction item found for question_seq_num: ${questionSeqNum}`);
+          this.logger.warn(`No matching interaction item found for question_seq_num: ${questionSeqNum}`);
         }
       }
 
@@ -214,15 +217,15 @@ export class WebHookService {
         interaction.recipient_email || ""
       );
 
-      console.log("Finished response", updateResponeObj);
-
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {},
       };
     } catch (err) {
-      console.log("Error handling webhook", err);
+      this.logger.error(
+        `Error handling webhook: ${err instanceof Error ? err.message : JSON.stringify(err)}`
+      );
       throw this.throwServiceError(err as Error);
     }
   }
@@ -246,10 +249,8 @@ export class WebHookService {
       await this.interactionModelService.getMainSequelize();
 
     const responseSource = await mainDbSequelize.query(
-      `SELECT rid FROM ${MAIN_SCHEMA_NAME}.interaction_response_source WHERE response_source_name = 'Email'`,
-      {
-        type: "SELECT",
-      }
+      rawQueries.fetchEmailResponseSourceRid(),
+      { type: "SELECT" }
     );
 
     return responseSource;
@@ -284,10 +285,12 @@ export class WebHookService {
       });
 
       if (response && response.id) {
-        console.log("Subscription created:", response.id);
+        this.logger.info(
+          `Subscription created for : ${response.id}`
+        );
       }
     } catch (err) {
-      console.error("Failed to create subscription:", err);
+      this.logger.error(`Failed to create subscription`);
     }
   }
 
@@ -304,13 +307,12 @@ export class WebHookService {
             expirationDateTime: expiration.toISOString(),
           });
 
-          console.log(
-            `Renewed subscription ${sub.id} to ${expiration.toISOString()}`
-          );
+          this.logger.info(`Renewed subscription ${sub.id} to ${expiration.toISOString()}`);
         }
       }
     } catch (err) {
-      console.error("Error renewing subscriptions:", err);
+      const errorMessage = err instanceof Error ? err.message : JSON.stringify(err);
+      this.logger.info(`Error renewing subscriptions: ${errorMessage}`);
     }
   }
 
@@ -344,11 +346,9 @@ export class WebHookService {
 
     const message = await resp.json();
 
-    console.log("Received message", message);
-
     const subject = message.subject;
     if (!subject.toLowerCase().includes("interaction")) {
-      console.log("Subject is not related to interaction. Skipping.");
+      this.logger.error("Subject is not related to interaction. Skipping.");
       return {
         success: false
       };
@@ -362,10 +362,9 @@ export class WebHookService {
     const match = subject.match(/INT-\d{10}/);
     if (match) {
       interactionIdFomSubject = match[0];
-      const globalInteraction: any = await this.fetchGlobalnteractions(
+      const globalInteraction: any = await this.fetchGlobalInteractions(
         interactionIdFomSubject
       );
-      console.log(globalInteraction);
       const { accountNumber } =
         await this.interactionSchemaService.fetchValidAccountNumberById(
           globalInteraction[1].account_rid
@@ -425,7 +424,7 @@ export class WebHookService {
     );
 
     if (markAsRead.ok) {
-      console.log("Email marked as Read");
+      this.logger.info("Email marked as Read");
     }
 
     return {
@@ -470,7 +469,7 @@ export class WebHookService {
         parsedData = rows;
 
         if (this.validateCSV(rows)) {
-          console.log("✅ Valid CSV:", att.name);
+          this.logger.info("Valid CSV:", att.name);
         } else {
           shouldForward = true;
           reason = "CSV validation failed";
@@ -489,7 +488,7 @@ export class WebHookService {
           forwardEmail,
           token
         );
-        console.warn(`❗ Forwarding file "${att.name}" due to: ${reason}`);
+        this.logger.error(`Forwarding file "${att.name}" due to: ${reason}`);
       }
     } else if (isXlsx) {
       try {
@@ -509,7 +508,7 @@ export class WebHookService {
         parsedData = rows;
 
         if (this.validateCSV(rows)) {
-          console.log("✅ Valid XLSX:", att.name);
+          this.logger.info("Valid XLSX:", att.name);
         } else {
           shouldForward = true;
           reason = "XLSX validation failed";
@@ -528,9 +527,7 @@ export class WebHookService {
         forwardEmail,
         token
       );
-      console.warn(
-        `📎 Non-CSV file "${att.name}" received. Skipping or forward as needed.`
-      );
+      this.logger.warn(`Non-CSV file "${att.name}" received. Skipping or forward as needed.`);
     }
 
     return {
@@ -540,12 +537,12 @@ export class WebHookService {
     };
   }
 
-  private async fetchGlobalnteractions(interactionId: string) {
+  private async fetchGlobalInteractions(interactionId: string) {
     const mainDbSequelize =
       await this.interactionModelService.getMainSequelize();
 
     const interactions = await mainDbSequelize.query(
-      `SELECT rid, r_number, account_rid FROM ${MAIN_SCHEMA_NAME}.interactions_summary WHERE r_number = :r_number`,
+      rawQueries.fetchInteractionSummaryByRNumber(),
       {
         type: "SELECT",
         replacements: {
@@ -566,7 +563,7 @@ export class WebHookService {
 
     // Step 1: Fetch key contact details from organization-specific DB
     const keyContacts = await orgDbSequelize.query(
-      `SELECT rid, key_contact_role, key_contact_email FROM "${schemaName}".key_contact_details WHERE entity_rid = :entity_rid`,
+      rawQueries.fetchKeyContactsByEntityRid(schemaName),
       {
         replacements: { entity_rid: accountId },
         type: "SELECT",
@@ -583,7 +580,7 @@ export class WebHookService {
 
     // Step 2: Fetch role names from main DB
     const roles = await mainDbSequelize.query(
-      `SELECT rid, role_name FROM "${MAIN_SCHEMA_NAME}".key_contact_role WHERE rid IN (:roleIds)`,
+      rawQueries.fetchRolesByIds(),
       {
         replacements: { roleIds },
         type: "SELECT",
@@ -730,11 +727,11 @@ export class WebHookService {
           }
         );
 
-        console.log(`✅ Forwarded "${filename}" due to: ${reason}`);
+        this.logger.info(`Forwarded "${filename}" due to: ${reason}`);
       }
-      console.log("Inside send email forward");
     } catch (err) {
-      console.error("❌ sendMailWithAttachment error:", err);
+      const errorMessage = err instanceof Error ? err.message : JSON.stringify(err);
+      this.logger.error(`sendMailWithAttachment error: ${errorMessage}`);
     }
   }
 

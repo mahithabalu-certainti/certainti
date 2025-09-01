@@ -24,7 +24,7 @@ routes.get("/health", async (req, res) => {
   }
 });
 
-routes.use("/otp", otpRoutes);
 routes.use("/interactions", interactionRoutes);
+routes.use("/otp", otpRoutes);
 
 export default routes;

@@ -371,8 +371,31 @@ export const rawQueries = {
     let query =
     `SELECT r_number FROM ${MAIN_SCHEMA_NAME}.account WHERE storage_type = '${STATUS_MESSAGE.separateDb}' AND parent_account_rid IS NULL`
     return query;
-
-}
+  },
+  fetchEmailResponseSourceRid(): string {
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.interaction_response_source WHERE response_source_name = 'Email'`;
+  },
+  fetchInteractionSummaryByRNumber(): string {
+    return `
+      SELECT rid, r_number, account_rid
+      FROM ${MAIN_SCHEMA_NAME}.interactions_summary
+      WHERE r_number = :r_number
+    `;
+  },
+  fetchKeyContactsByEntityRid(schemaName: string): string {
+    return `
+      SELECT rid, key_contact_role, key_contact_email
+      FROM "${schemaName}".key_contact_details
+      WHERE entity_rid = :entity_rid
+    `;
+  },
+  fetchRolesByIds(): string {
+    return `
+      SELECT rid, role_name
+      FROM "${MAIN_SCHEMA_NAME}".key_contact_role
+      WHERE rid IN (:roleIds)
+    `;
+  }  
 };
 
 export const filterTypesForSummaryInteractions : Record<string, any> = 
