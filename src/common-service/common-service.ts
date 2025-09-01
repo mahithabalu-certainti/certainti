@@ -8,6 +8,7 @@ import {
 } from '../api/api';
 import {
   CommonApiResponse,
+  DeleteAttachmentRequest,
   DocumentTypeResponse,
   GenerateOtp,
   GetAllCountriesApiResponse,
@@ -17,12 +18,16 @@ import {
   GetInteractionStatusApiResponse,
   GetInteractionTypesApiResponse,
   GetStatusApiResponse,
+  InteractionQuestionUpdateRequest,
+  UploadAttachmentRequest,
   VerifyOtp,
   VerifyOtpApiResponse,
 } from './';
 import {
   InteractionDetails,
   InteractionDetailsResponse,
+  InteractionQuestionResUpdateResponse,
+  UploadInteractionAttachmentResponse,
 } from '../consultant/types';
 
 export const getAllCountriesUrl = (): string => {
@@ -368,32 +373,174 @@ export const useGetInteractionSources = () => {
 const fetchInteractionQuestions = async (
   accountId: string,
   interactionId: string,
-  auth_token: string
+  authToken: string,
+  userId: string
 ): Promise<InteractionDetails> => {
-  const parseData = JSON.parse(auth_token);
-  const response = await interactionServiceApi.get<InteractionDetailsResponse>(
-    `/api/interactions/detail/${accountId}/${interactionId}`,
-    {
-      headers: {
-        Authorization: `Bearer ${parseData.auth_token}`,
-        'x-user-id': parseData.email,
-      },
-    }
-  );
+  // Only send the provided headers, do not merge with defaults
+  const response =
+    await exInteractionServiceApi.get<InteractionDetailsResponse>(
+      `/api/interactions/detail/${accountId}/${interactionId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          'x-user-id': userId,
+        },
+        // Prevent merging with common headers if axios is configured that way
+        transformRequest: [
+          (data, headers) => {
+            headers['Authorization'] = `Bearer ${authToken}`;
+            headers['x-user-id'] = userId;
+            // Remove any other headers that may be set globally
+            Object.keys(headers).forEach((key) => {
+              if (key !== 'Authorization' && key !== 'x-user-id') {
+                delete headers[key];
+              }
+            });
+            return data;
+          },
+        ],
+      }
+    );
   return response.data.data.interactionDetails;
 };
 
 export const useGetInteractionQuestions = (
   accountId?: string,
   interactionId?: string,
-  auth_token?: string
+  authToken?: string,
+  userId?: string
 ): UseQueryResult<InteractionDetails | undefined, Error> => {
   return useQuery<InteractionDetails | undefined, Error>({
     queryKey: ['interaction-questions', accountId, interactionId],
     queryFn: () =>
-      fetchInteractionQuestions(accountId!, interactionId!, auth_token!),
+      fetchInteractionQuestions(
+        accountId!,
+        interactionId!,
+        authToken!,
+        userId!
+      ),
     retry: 0,
     gcTime: 0,
-    enabled: !!auth_token && !!interactionId && !!accountId,
+    enabled: !!authToken && !!userId && !!interactionId && !!accountId,
+  });
+};
+
+export const updateInteractionQuestions = async (
+  body: InteractionQuestionUpdateRequest
+): Promise<InteractionQuestionResUpdateResponse> => {
+  try {
+    // Always use authToken and userId from body, even if available elsewhere
+    const { authToken, userId, ...rest } = body;
+    const { data } =
+      await exInteractionServiceApi.put<InteractionQuestionResUpdateResponse>(
+        '/api/interactions/updateResponse',
+        rest,
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+            'x-user-id': userId,
+          },
+          // Remove all other headers except Authorization and x-user-id
+          // transformRequest: [
+          //   (data, headers) => {
+          //     headers['Authorization'] = `Bearer ${authToken}`;
+          //     headers['x-user-id'] = userId;
+          //     Object.keys(headers).forEach((key) => {
+          //       if (key !== 'Authorization' && key !== 'x-user-id') {
+          //         delete headers[key];
+          //       }
+          //     });
+          //     return data;
+          //   },
+          // ],
+        }
+      );
+    return data;
+  } catch (error) {
+    console.error('Error updating interaction response:', error);
+    throw error;
+  }
+};
+
+export const useUpdateInteractionQuestion = () => {
+  return useMutation<
+    InteractionQuestionResUpdateResponse,
+    Error,
+    InteractionQuestionUpdateRequest
+  >({
+    mutationFn: (body) => updateInteractionQuestions(body),
+  });
+};
+
+export const uploadAttachment = async (
+  body: UploadAttachmentRequest
+): Promise<UploadInteractionAttachmentResponse> => {
+  try {
+    const { authToken, userId, ...rest } = body;
+    const formData = new FormData();
+    formData.append('account_rid', rest.account_rid);
+    formData.append('project_rid', rest.project_rid);
+    formData.append('interaction_rid', rest.interaction_rid);
+    formData.append('file', rest.file);
+
+    const response = await exInteractionServiceApi.post(
+      '/api/interactions/uploadAttachment',
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${authToken}`,
+          'x-user-id': userId,
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error('Error uploading attachment:', error);
+    throw error;
+  }
+};
+
+export const useUploadAttachment = () => {
+  return useMutation<
+    UploadInteractionAttachmentResponse,
+    Error,
+    UploadAttachmentRequest
+  >({
+    mutationFn: (body) => uploadAttachment(body),
+  });
+};
+
+export const deleteAttachment = async (
+  body: DeleteAttachmentRequest
+): Promise<CommonApiResponse> => {
+  try {
+    const { authToken, userId, ...rest } = body;
+    const response = await exInteractionServiceApi.delete(
+      '/api/interactions/deleteAttachment ',
+      {
+        data: rest,
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          'x-user-id': userId,
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error('Error uploading attachment:', error);
+    throw error;
+  }
+};
+
+export const useDeleteAttachment = () => {
+  return useMutation<
+    CommonApiResponse,
+    Error,
+    DeleteAttachmentRequest
+  >({
+    mutationFn: (body) => deleteAttachment(body),
   });
 };

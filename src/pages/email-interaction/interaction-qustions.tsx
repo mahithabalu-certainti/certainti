@@ -1,13 +1,9 @@
 import React, { useState, useRef } from 'react';
-import { SxProps, Tooltip } from '@mui/material';
+import { Skeleton, SxProps, Tooltip } from '@mui/material';
 import { Theme } from '@emotion/react';
 import ReactQuill from 'react-quill';
 import { Attachment, InteractionQuestion } from '../../consultant/types';
 import TextButton from '../../components/button/text-button';
-import {
-  useUpdateInteractionQuestionResponse,
-  useUploadInteractionAttachment,
-} from '../../consultant/services/interactions/response-interaction-service';
 import {
   AttachmentsSideIcon,
   DownloadIcon,
@@ -15,6 +11,12 @@ import {
   PdfIcon,
 } from '../../assets';
 import { formatDateToYYYYMMDDWithTime } from '../../common-utils';
+import {
+  InteractionQuestionUpdateRequest,
+  useDeleteAttachment,
+  useUpdateInteractionQuestion,
+  useUploadAttachment,
+} from '../../common-service';
 
 interface SectionHeaderButton {
   label: string;
@@ -33,6 +35,11 @@ interface InteractionQuesProps {
   actionButtonEnable?: boolean;
   refetchDeetails?: () => void;
   formData?: Record<string, string>;
+  createdBy?: string;
+  parseToken: {
+    auth_token: string;
+    email: string;
+  };
 }
 
 const InteractionQuestions: React.FC<InteractionQuesProps> = ({
@@ -42,6 +49,8 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   actionButtonEnable,
   refetchDeetails,
   formData,
+  createdBy,
+  parseToken,
 }) => {
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editedAnswers, setEditedAnswers] = useState<Record<string, string>>(
@@ -73,8 +82,9 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
     {}
   );
 
-  const uploadFileMutation = useUploadInteractionAttachment();
-  const updateInteractionQusResponse = useUpdateInteractionQuestionResponse();
+  const uploadFileMutation = useUploadAttachment();
+  const updateInteractionQusResponse = useUpdateInteractionQuestion();
+  const deleteAttachment = useDeleteAttachment();
 
   const handleEditClick = () => {
     setIsEditing(true);
@@ -121,11 +131,13 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
       })),
     };
 
-    const finalPayload = {
+    const finalPayload: InteractionQuestionUpdateRequest = {
       account_rid: formData?.account_rid || '',
       project_rid: formData?.project_rid || '',
       project_fiscal_rid: formData?.project_fiscal_rid || '',
       interaction_rid: formData?.interaction_rid || '',
+      authToken: parseToken.auth_token,
+      userId: parseToken.email,
       ...payload,
     };
     updateInteractionQusResponse.mutate(finalPayload, {
@@ -153,6 +165,8 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
         project_rid: formData?.project_rid || '',
         interaction_rid: formData?.interaction_rid || '',
         file,
+        authToken: parseToken.auth_token,
+        userId: parseToken.email,
       });
       setNewGlobalAttachments((prev) => [...prev, res.data]);
       e.target.value = '';
@@ -173,6 +187,8 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
         project_rid: formData?.project_rid || '',
         interaction_rid: formData?.interaction_rid || '',
         file,
+        authToken: parseToken.auth_token,
+        userId: parseToken.email,
       });
       setQuestionAttachments((prev) => ({
         ...prev,
@@ -184,13 +200,43 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
     }
   };
   const removeGlobalAttachment = (index: number) => {
-    setNewGlobalAttachments((prev) => prev.filter((_, i) => i !== index));
+    const fileObj = newGlobalAttachments.find((_, i) => i === index);
+    if (fileObj && fileObj.fileUrl) {
+      deleteAttachment.mutate(
+        {
+          authToken: parseToken.auth_token,
+          userId: parseToken.email,
+          file_url: fileObj.fileUrl,
+        },
+        {
+          onSuccess: () => {
+            setNewGlobalAttachments((prev) =>
+              prev.filter((_, i) => i !== index)
+            );
+          },
+        }
+      );
+    }
   };
   const removeQuestionAttachment = (questionId: string, index: number) => {
-    setQuestionAttachments((prev) => ({
-      ...prev,
-      [questionId]: prev[questionId].filter((_, i) => i !== index),
-    }));
+    const fileObj = newGlobalAttachments.find((_, i) => i === index);
+    if (fileObj && fileObj.fileUrl) {
+      deleteAttachment.mutate(
+        {
+          authToken: parseToken.auth_token,
+          userId: parseToken.email,
+          file_url: fileObj.fileUrl,
+        },
+        {
+          onSuccess: () => {
+            setQuestionAttachments((prev) => ({
+              ...prev,
+              [questionId]: prev[questionId].filter((_, i) => i !== index),
+            }));
+          },
+        }
+      );
+    }
   };
   const handleDownload = (documentUrl: string) => {
     if (!documentUrl) return;
@@ -202,6 +248,24 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
     link.click();
     document.body.removeChild(link);
   };
+
+  // /* Add custom icon to Quill toolbar using JS after mount */
+  // React.useEffect(
+  //   () => {
+  //     const toolbar = document.querySelector(`.ql-toolbar .ql-attach`);
+  //     if (toolbar && !toolbar.querySelector('.custom-attach-icon')) {
+  //       toolbar.innerHTML = '';
+  //       const icon = document.createElement('span');
+  //       icon.className = 'custom-attach-icon';
+  //       icon.style.display = 'inline-flex';
+  //       icon.style.alignItems = 'center';
+  //       icon.style.justifyContent = 'center';
+  //       icon.innerHTML = `<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M17 13V7a5 5 0 0 0-10 0v8a5 5 0 0 0 10 0V9" stroke="#425A76" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>`;
+  //       toolbar.appendChild(icon);
+  //     }
+  //   },
+  //   [isEditing] /* Only run once per mount */
+  // );
 
   const isUpdateLoading = updateInteractionQusResponse.isPending || isLoading;
   const buttons: SectionHeaderButton[] = isEditing
@@ -251,7 +315,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
     <>
       <div className='flex justify-between py-2'>
         <span className='text-[14px] text-[#2D3E4F] font-bold'>
-          Hello James
+          Hello {createdBy}
         </span>
         <div className='flex gap-2'>
           {buttons.map((button, index) => {
@@ -283,47 +347,51 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                 : 'overflow-visible'
             }`}
           >
-            {(isEditing ? newGlobalAttachments : globalAttachments).map(
-              (file, idx) => (
-                <div
-                  key={idx}
-                  className='flex items-center justify-between border border-[#CBD6E2] bg-[#FFFBFA] rounded-[2px] p-2 px-3'
-                >
-                  <div className='flex items-center gap-2'>
-                    <React.Suspense fallback={null}>
-                      <PdfIcon />
-                    </React.Suspense>
-                    <div className='text-[14px] text-[#425A76] font-normal'>
-                      {file.fileName}.{file.fileType}
+            {deleteAttachment.isPending ? (
+              <Skeleton variant='rounded' width='100%' height={42} />
+            ) : (
+              (isEditing ? newGlobalAttachments : globalAttachments).map(
+                (file, idx) => (
+                  <div
+                    key={idx}
+                    className='flex items-center justify-between border border-[#CBD6E2] bg-[#FFFBFA] rounded-[2px] p-2 px-3'
+                  >
+                    <div className='flex items-center gap-2'>
+                      <React.Suspense fallback={null}>
+                        <PdfIcon />
+                      </React.Suspense>
+                      <div className='text-[14px] text-[#425A76] font-normal'>
+                        {file.fileName}.{file.fileType}
+                      </div>
                     </div>
-                  </div>
-                  {isEditing ? (
-                    <Tooltip title='Remove file' arrow placement='top'>
+                    {isEditing ? (
+                      <Tooltip title='Remove file' arrow placement='top'>
+                        <button
+                          onClick={() => removeGlobalAttachment(idx)}
+                          className='cursor-pointer p-[4px]'
+                        >
+                          <React.Suspense fallback={null}>
+                            <KeyContactRemoveIcon />
+                          </React.Suspense>
+                        </button>
+                      </Tooltip>
+                    ) : (
                       <button
-                        onClick={() => removeGlobalAttachment(idx)}
-                        className='cursor-pointer p-[4px]'
+                        onClick={() => handleDownload(file.fileUrl)}
+                        className='p-1 border border-[#CBD6E2] rounded-[2px] cursor-pointer'
+                        style={{
+                          boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
+                          background:
+                            'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
+                        }}
                       >
                         <React.Suspense fallback={null}>
-                          <KeyContactRemoveIcon />
+                          <DownloadIcon />
                         </React.Suspense>
                       </button>
-                    </Tooltip>
-                  ) : (
-                    <button
-                      onClick={() => handleDownload(file.fileUrl)}
-                      className='p-1 border border-[#CBD6E2] rounded-[2px] cursor-pointer'
-                      style={{
-                        boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
-                        background:
-                          'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
-                      }}
-                    >
-                      <React.Suspense fallback={null}>
-                        <DownloadIcon />
-                      </React.Suspense>
-                    </button>
-                  )}
-                </div>
+                    )}
+                  </div>
+                )
               )
             )}
           </div>
@@ -366,21 +434,31 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                     theme='snow'
                     className='rounded-[2px] bg-white'
                     modules={{
-                      toolbar: [
-                        [{ header: [1, 2, 3, 4, 5, 6, false] }],
-                        [{ font: [] }],
-                        [{ size: [] }],
-                        ['bold', 'italic', 'underline', 'strike'],
-                        [{ color: [] }, { background: [] }],
-                        [{ script: 'sub' }, { script: 'super' }],
-                        ['blockquote'],
-                        [{ list: 'ordered' }, { list: 'bullet' }],
-                        [{ indent: '-1' }, { indent: '+1' }],
-                        [{ direction: 'rtl' }],
-                        [{ align: [] }],
-                        // ['image', 'video'],
-                        ['clean'],
-                      ],
+                      toolbar: {
+                        container: [
+                          [{ header: [1, 2, 3, 4, 5, 6, false] }],
+                          [{ font: [] }],
+                          [{ size: [] }],
+                          ['bold', 'italic', 'underline', 'strike'],
+                          [{ color: [] }, { background: [] }],
+                          [{ script: 'sub' }, { script: 'super' }],
+                          ['blockquote'],
+                          [{ list: 'ordered' }, { list: 'bullet' }],
+                          [{ indent: '-1' }, { indent: '+1' }],
+                          [{ direction: 'rtl' }],
+                          [{ align: [] }],
+                          // ['image', 'video'],
+                          ['clean'],
+                          // [{ attach: true }], // Custom icon button
+                        ],
+                        // handlers: {
+                        //   attach: () => {
+                        //     if (questionFileInputRefs.current[q.rid]) {
+                        //       questionFileInputRefs.current[q.rid]?.click();
+                        //     }
+                        //   },
+                        // },
+                      },
                     }}
                     formats={[
                       'header',
@@ -404,6 +482,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                       // 'image',
                       // 'video',
                       'clean',
+                      // 'attach',
                     ]}
                   />
                   <button
@@ -444,8 +523,13 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                       : 'overflow-visible'
                   }`}
                 >
-                  {(isEditing ? questionAttachments[q.rid] : q.attachments).map(
-                    (file, index) => (
+                  {deleteAttachment.isPending ? (
+                    <Skeleton variant='rounded' width='100%' height={42} />
+                  ) : (
+                    (isEditing
+                      ? questionAttachments[q.rid]
+                      : q.attachments
+                    ).map((file, index) => (
                       <div
                         key={index}
                         className='flex items-center justify-between border border-[#CBD6E2] bg-[#FFFBFA] rounded-[2px] p-2 px-3'
@@ -488,7 +572,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                           </button>
                         )}
                       </div>
-                    )
+                    ))
                   )}
                 </div>
               )}

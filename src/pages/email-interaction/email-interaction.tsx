@@ -89,6 +89,7 @@ const EmailInteraction: React.FC = () => {
 
   const timeout = localStorage.getItem('otp_timeout');
   const auth_token = localStorage.getItem('temAuth');
+  const parseToken = auth_token ? JSON.parse(auth_token) : '';
   const account_rid = searchParams.get('acc');
   const interaction_rid = searchParams.get('int');
   const checkEveryOtpValue = otp.every((digit) => digit !== '');
@@ -104,7 +105,8 @@ const EmailInteraction: React.FC = () => {
   } = useGetInteractionQuestions(
     account_rid as string,
     interaction_rid as string,
-    auth_token as string
+    parseToken.auth_token as string,
+    parseToken.email as string
   );
 
   useEffect(() => {
@@ -125,13 +127,11 @@ const EmailInteraction: React.FC = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, auth_token]);
-
   useEffect(() => {
     if (data && !timeout) {
       localStorage.setItem('otp_timeout', JSON.stringify(Date.now()));
     }
   }, [data, timeout]);
-
   useEffect(() => {
     if (timeout) {
       const startTime = JSON.parse(timeout);
@@ -141,7 +141,6 @@ const EmailInteraction: React.FC = () => {
       setTimer(remainingTime);
     }
   }, [timeout]);
-
   useEffect(() => {
     if (timer > 0 && (timeout || data)) {
       const countdown = setInterval(() => {
@@ -152,7 +151,6 @@ const EmailInteraction: React.FC = () => {
       };
     }
   }, [timer, timeout, data]);
-
   useEffect(() => {
     if (verifyOtp.data) {
       localStorage.setItem(
@@ -165,7 +163,6 @@ const EmailInteraction: React.FC = () => {
       setIsAuthentic(true);
     }
   }, [verifyOtp.data]);
-
   useEffect(() => {
     if (reSendOtp.data) {
       localStorage.setItem('otp_timeout', JSON.stringify(Date.now()));
@@ -186,7 +183,6 @@ const EmailInteraction: React.FC = () => {
       }
     }
   };
-
   const resetTimer = () => {
     if (account_rid && interaction_rid) {
       reSendOtp.mutate({
@@ -195,7 +191,6 @@ const EmailInteraction: React.FC = () => {
       });
     }
   };
-
   const validateOtp = () => {
     verifyOtp.mutate({
       account_rid: account_rid as string,
@@ -217,15 +212,21 @@ const EmailInteraction: React.FC = () => {
       {(!isPending || !reSendOtp.isPending) &&
         (isAuthentic ? (
           <div className='px-10 py-4'>
-            {questions?.questions && questions?.questions.length > 0 ? (
+            {questions?.questions && (
               <InteractionQuestions
                 questions={questions?.questions}
                 globalAttachments={questions?.global_attachments}
                 actionButtonEnable
                 refetchDeetails={refetch}
+                createdBy={questions.created_by}
+                parseToken={parseToken}
+                formData={{
+                  account_rid: questions?.account_rid || '',
+                  project_rid: questions?.project_rid || '',
+                  project_fiscal_rid: questions?.project_fiscal_rid || '',
+                  interaction_rid: questions?.interaction_rid || '',
+                }}
               />
-            ) : (
-              <p>No questions are available!</p>
             )}
           </div>
         ) : (
