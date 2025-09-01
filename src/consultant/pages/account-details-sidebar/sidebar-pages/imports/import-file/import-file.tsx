@@ -104,12 +104,14 @@ const ImportFile: React.FC<ImportFileProps> = ({
     if (!files) return [];
 
     const validFiles: File[] = [];
+    let hasError = false;
 
     for (const file of Array.from(files)) {
       if (/\s/.test(file.name)) {
         showError(
           `"${file.name}" is invalid. Filename must not contain spaces.`
         );
+        hasError = true;
         continue;
       }
 
@@ -119,15 +121,21 @@ const ImportFile: React.FC<ImportFileProps> = ({
 
       if (!isAcceptedType) {
         showError(`"${file.name}" is not a valid CSV or Excel file.`);
+        hasError = true;
         continue;
       }
 
       if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
         showError(`"${file.name}" exceeds the 50MB limit.`);
+        hasError = true;
         continue;
       }
 
       validFiles.push(file);
+    }
+
+    if (!hasError && validFiles.length > 0) {
+      setMessage(null);
     }
 
     return validFiles;
