@@ -88,18 +88,18 @@ export class AIAssessmentService {
           const transaction_id = uuidv4();
 
           const payload = { company_id, project_id: id, input_text, transaction_id:transaction_id };
-            // let callTriggerAi = await axios.post(process.env.TRIGGER_AI_URL!, payload, {
-            //   headers: headers
-            // });
+           let callTriggerAi = await axios.post(process.env.TRIGGER_AI_URL!, payload, {
+               headers: headers
+           });
         
         }
       } else {
          const transaction_id = uuidv4();
         const payload = { company_id, project_id, input_text ,transaction_id};
 
-            // let callTriggerAi = await axios.post(process.env.TRIGGER_AI_URL!, payload, {
-            //   headers: headers
-            // });
+         let callTriggerAi = await axios.post(process.env.TRIGGER_AI_URL!, payload, {
+               headers: headers
+         });
           
       }
 
