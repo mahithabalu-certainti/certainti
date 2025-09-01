@@ -105,7 +105,6 @@ export const PageHeader: React.FC<HeaderProps> = ({
                 ) : (
                   title
                 )}
-                {title}
               </div>
             </div>
             {showFilter && (

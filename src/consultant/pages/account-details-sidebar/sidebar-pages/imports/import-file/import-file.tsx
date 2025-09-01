@@ -42,6 +42,9 @@ const ImportFile: React.FC<ImportFileProps> = ({
   const [fiscalYear, setFiscalYear] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
 
+  const { successToast, errorToast } = useToast();
+  const entityTypes = useGetImportEntityTypes();
+
   useEffect(() => {
     if (
       message?.type === 'error' &&
@@ -54,8 +57,11 @@ const ImportFile: React.FC<ImportFileProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entityType, fiscalYear, selectedFiles]);
 
-  const { successToast, errorToast } = useToast();
-  const entityTypes = useGetImportEntityTypes();
+  useEffect(() => {
+    if (entityType === 'Resource' || entityType === 'Resource Skill') {
+      setFiscalYear('');
+    }
+  }, [entityType]);
 
   const entityOptions = useMemo(
     () =>
@@ -78,6 +84,7 @@ const ImportFile: React.FC<ImportFileProps> = ({
       };
     }
   );
+
   const handleFiscalYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
     setFiscalYear(value);
@@ -125,7 +132,11 @@ const ImportFile: React.FC<ImportFileProps> = ({
       return;
     }
 
-    if (!fiscalYear) {
+    if (
+      !fiscalYear &&
+      entityType !== 'Resource' &&
+      entityType !== 'Resource Skill'
+    ) {
       showError('Please select a Fiscal Year.');
       return;
     }
@@ -149,18 +160,25 @@ const ImportFile: React.FC<ImportFileProps> = ({
     }
 
     try {
+      const currentYear = new Date().getFullYear();
+
       const payload: UploadImportPayload = {
         entity_type: entityType,
         file: selectedFiles[0],
-        fiscal_year: fiscalYear,
+        fiscal_year:
+          entityType === 'Resource' || entityType === 'Resource Skill'
+            ? currentYear.toString()
+            : fiscalYear,
         account_rid: accountId,
         related_to: 'account',
         related_to_rid: accountId,
         uploaded_by_user_rid: userId,
         account_r_number: accountNo,
       };
+
       setLoading(true);
       const response = await uploadImportFile(payload);
+
       if (
         response?.data.statusCode === 201 ||
         response?.data.statusCode === 200
@@ -221,6 +239,7 @@ const ImportFile: React.FC<ImportFileProps> = ({
   const openFileDialog = () => {
     fileInputRef.current?.click();
   };
+
   const goBack = () => {
     handleShowUpload();
   };
@@ -283,6 +302,9 @@ const ImportFile: React.FC<ImportFileProps> = ({
             onChange={handleFiscalYearChange}
             placeholder='FY-Year'
             className='text-[#425A76] text-[13px] font-semibold border border-[#CBD6E2] shadow-[0px_1px_2px_0px_rgba(42,54,71,0.05)] bg-gradient-to-b from-[#FFFFFF] to-[#E4E6E7]'
+            disabled={
+              entityType === 'Resource' || entityType === 'Resource Skill'
+            }
           />
         </div>
       </div>
