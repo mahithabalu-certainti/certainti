@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { EditIcon, ProjectCreateIcon } from '../../../assets';
@@ -111,7 +110,7 @@ const ProjectForm: React.FC = () => {
   const [isCostFteEdited, setIsCostFteEdited] = useState(false);
   const [isCostSubconEdited, setIsCostSubconEdited] = useState(false);
   const [isNonLaborCostEdited, setIsNonLaborCostEdited] = useState(false);
-
+  const globalType = searchParams.get('type') === 'global';
   const accountName = account?.account_name;
   const projectCode = account?.project_code;
   const highlight = {
@@ -119,10 +118,10 @@ const ProjectForm: React.FC = () => {
     section: location.state?.section,
   };
   useEffect(() => {
-    // Get Global accounts list only in create
-    dispatch(fetchAccountsThunk());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (globalType) {
+      dispatch(fetchAccountsThunk());
+    }
+  }, [globalType, dispatch]);
   const source = searchParams.get('source');
   const AccountNameValue = searchParams.get('AccountName');
   let breadcrumbLabel = '';
@@ -152,7 +151,6 @@ const ProjectForm: React.FC = () => {
   const states = useFetchState(currentCountry);
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();
-  const dollercurrencyridValue = 'D001-571523e6-2dba-41ff-b857-6aee33dc3db5';
   // Permission Management
   const { modules, permission } = useSelector(
     (state: RootState) => state.permission
@@ -186,11 +184,10 @@ const ProjectForm: React.FC = () => {
     permission,
     AllPermissions.ACCOUNTS_VIEW_EDIT
   );
-  const globalType = searchParams.get('type') === 'global';
+
   const { accounts, loading } = useSelector(
     (state: RootState) => state.account
   );
-  // console.log('accounts', accounts);
   const defaultActiveValue = useMemo(() => {
     const activeOption = memoizedStatus.find(
       (option) => option.label.toLowerCase() === 'active'
@@ -515,10 +512,10 @@ const ProjectForm: React.FC = () => {
       let currencyValue = '';
 
       // Step 1: Check children first
-      let foundChild: any = null;
+      let foundChild = null;
       for (const acc of accounts) {
         foundChild = acc.child_accounts?.find(
-          (childAcc: any) => childAcc.rid === selectedRid
+          (childAcc) => childAcc.rid === selectedRid
         );
         if (foundChild) break;
       }
@@ -526,34 +523,7 @@ const ProjectForm: React.FC = () => {
       if (foundChild) {
         // Child currency
         currencyValue = foundChild.currency_rid || '';
-        console.log(
-          'Selected Child:',
-          foundChild.account_name,
-          'Currency RID:',
-          currencyValue
-        );
-      } else {
-        const parentAccount = accounts.find(
-          (acc: any) => acc.rid === selectedRid
-        );
-        if (parentAccount?.currency_rid) {
-          currencyValue = parentAccount.currency_rid;
-          console.log(
-            'Selected Parent:',
-            parentAccount.account_name,
-            'Currency RID:',
-            currencyValue
-          );
-        }
       }
-
-      // Step 3: Fallback to default dollar currency
-      if (!currencyValue) {
-        currencyValue = dollercurrencyridValue;
-        console.log('Fallback: Dollar Currency RID', currencyValue);
-      }
-
-      // Finally set state
       setCurrencyValue(currencyValue);
     }
     // Handle effort fields

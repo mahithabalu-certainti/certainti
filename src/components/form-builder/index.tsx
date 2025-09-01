@@ -105,11 +105,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         : [...prev, parentId]
     );
   };
-  // React.useEffect(() => {
-  //   if (menuOpen && currentField?.expandedAll && currentField?.expandOptions) {
-  //     setExpandedParents(currentField.expandOptions.map((p) => p.parent_value));
-  //   }
-  // }, [menuOpen, currentField?.expandedAll, currentField?.expandOptions]);
   const autoCompleteFilter = createFilterOptions<SelectOption>();
 
   const CommonSkeleton = (
