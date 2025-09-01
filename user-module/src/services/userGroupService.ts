@@ -2923,10 +2923,14 @@ async  getProjectsOfSelectedAccounts(
        const replacements: any = { accountRidArray, limit, offset,
         group_rid: group_rid ?? null,
       };
-      const filterConditions = this.buildSQLConditions(filters);
-      if (filterConditions) {
-        baseWhereClauses.push(filterConditions);
+      if (filters && typeof filters === 'object' && Object.keys(filters).length > 0) {
+        const filterConditions = this.buildSQLConditions(filters);
+        if (filterConditions) {
+          baseWhereClauses.push(filterConditions);
         }
+      }
+
+      
         
     // Build ORDER BY clause with proper access type sorting
       let orderByClause: string;
@@ -3162,55 +3166,11 @@ async getUserGroupType(type: string): Promise<{
 private buildSQLConditions(filters: Record<string, any>): string | null {
   const conditions: string[] = [];
   // List of filter names that should always be treated as numbers
-  const numberFilters = ['fiscal_year'];
-
+  
   for (const [column, condition] of Object.entries(filters)) {
     if (condition === undefined || condition === null) continue;
 
     const sqlColumn = column === 'account_name' ? 'acc.account_name' : column;
-
-    // If filter name is in numberFilters, treat as number
-    if (numberFilters.includes(column)) {
-      if (typeof condition === 'number') {
-        conditions.push(`${sqlColumn} = ${condition}`);
-        continue;
-      }
-      if (typeof condition === 'object') {
-        for (const [operator, value] of Object.entries(condition)) {
-          if (value === undefined || value === null) continue;
-          switch (operator.toLowerCase()) {
-            case 'equals':
-            case 'eq':
-              conditions.push(`${sqlColumn} = ${value}`);
-              break;
-            case 'not_equals':
-            case 'ne':
-              conditions.push(`${sqlColumn} != ${value}`);
-              break;
-            case 'gt':
-              conditions.push(`${sqlColumn} > ${value}`);
-              break;
-            case 'lt':
-              conditions.push(`${sqlColumn} < ${value}`);
-              break;
-            case 'gte':
-              conditions.push(`${sqlColumn} >= ${value}`);
-              break;
-            case 'lte':
-              conditions.push(`${sqlColumn} <= ${value}`);
-              break;
-            case 'between':
-              if (Array.isArray(value) && value.length === 2) {
-                conditions.push(`${sqlColumn} BETWEEN ${value[0]} AND ${value[1]}`);
-              }
-              break;
-            default:
-              break;
-          }
-        }
-        continue;
-      }
-    }
 
     // If condition is a primitive (number or string), treat as equals
     if (typeof condition === 'number') {
@@ -3229,7 +3189,6 @@ private buildSQLConditions(filters: Record<string, any>): string | null {
         const lowerColumn = `LOWER(${sqlColumn})`;
         switch (operator.toLowerCase()) {
           case 'equals':
-          case 'eq':
             if (typeof value === 'number') {
               conditions.push(`${sqlColumn} = ${value}`);
             } else {
@@ -3237,7 +3196,6 @@ private buildSQLConditions(filters: Record<string, any>): string | null {
             }
             break;
           case 'not_equals':
-          case 'ne':
             if (typeof value === 'number') {
               conditions.push(`${sqlColumn} != ${value}`);
             } else {
