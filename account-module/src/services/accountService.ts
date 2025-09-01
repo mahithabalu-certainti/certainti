@@ -2421,48 +2421,48 @@ class AccountService {
     };
   }
 
-  async provisionMonitoredAccount(accountName: string) {
-    const uniqueUsername = accountName
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ".")  
-    .replace(/\.{2,}/g, ".")     
-    .replace(/^\.|\.$/g, "");
+  // async provisionMonitoredAccount(accountName: string) {
+  //   const uniqueUsername = accountName
+  //   .trim()
+  //   .toLowerCase()
+  //   .replace(/[^a-z0-9]+/g, ".")  
+  //   .replace(/\.{2,}/g, ".")     
+  //   .replace(/^\.|\.$/g, "");
 
-    const orgData = await this.schemaService.getOrgInfo();
-    const userEmail = `${uniqueUsername}@${orgData.domain_name}`; 
+  //   const orgData = await this.schemaService.getOrgInfo();
+  //   const userEmail = `${uniqueUsername}@${orgData.domain_name}`; 
   
-    // Step 1: Create User
-    const userResponse = await this.graphClient.api("/users").post({
-      accountEnabled: true,
-      displayName: `${accountName}`,
-      mailNickname: uniqueUsername,
-      userPrincipalName: userEmail,
-      passwordProfile: {
-        forceChangePasswordNextSignIn: false,
-        password: generateSecurePassword(12),
-      },
-    });
+  //   // Step 1: Create User
+  //   const userResponse = await this.graphClient.api("/users").post({
+  //     accountEnabled: true,
+  //     displayName: `${accountName}`,
+  //     mailNickname: uniqueUsername,
+  //     userPrincipalName: userEmail,
+  //     passwordProfile: {
+  //       forceChangePasswordNextSignIn: false,
+  //       password: generateSecurePassword(12),
+  //     },
+  //   });
 
-    const userId = userResponse.id;
+  //   const userId = userResponse.id;
 
-    const skuId = await this.getExchangeSkuId(); 
-    await this.graphClient.api(`/users/${userId}/assignLicense`).post({
-      addLicenses: [
-        {
-          skuId: skuId,
-        },
-      ],
-      removeLicenses: [],
-    });
+  //   const skuId = await this.getExchangeSkuId(); 
+  //   await this.graphClient.api(`/users/${userId}/assignLicense`).post({
+  //     addLicenses: [
+  //       {
+  //         skuId: skuId,
+  //       },
+  //     ],
+  //     removeLicenses: [],
+  //   });
 
-    const mailboxReady = await this.waitForMailbox(userId);
-    if (!mailboxReady) {
-      throw new Error("Mailbox not ready after waiting");
-    }
+  //   const mailboxReady = await this.waitForMailbox(userId);
+  //   if (!mailboxReady) {
+  //     throw new Error("Mailbox not ready after waiting");
+  //   }
 
-    await this.createEmailSubscription(userEmail);
-  }
+  //   await this.createEmailSubscription(userEmail);
+  // }
 
   private async waitForMailbox(userId: string): Promise<boolean> {
     const maxRetries = 10;
@@ -2490,27 +2490,27 @@ class AccountService {
     return sku.skuId;
   }
 
-  private async createEmailSubscription(email: string) {
-    try {
-      const expiration = new Date();
-      expiration.setMinutes(expiration.getMinutes() + 4230);
+  // private async createEmailSubscription(email: string) {
+  //   try {
+  //     const expiration = new Date();
+  //     expiration.setMinutes(expiration.getMinutes() + 4230);
 
-      const response = await this.graphClient.api("/subscriptions").post({
-        changeType: "created",
-        notificationUrl: process.env.NOTIFICATION_URL,
-        resource: `users/${email}/mailFolders('Inbox')/messages`,
-        expirationDateTime: expiration.toISOString(),
-        clientState:
-          process.env.CLIENT_STATE || "custom_secret_validation_string",
-      });
+  //     const response = await this.graphClient.api("/subscriptions").post({
+  //       changeType: "created",
+  //       notificationUrl: process.env.NOTIFICATION_URL,
+  //       resource: `users/${email}/mailFolders('Inbox')/messages`,
+  //       expirationDateTime: expiration.toISOString(),
+  //       clientState:
+  //         process.env.CLIENT_STATE || "custom_secret_validation_string",
+  //     });
 
-      if (response && response.id) {
-        console.log("Subscription created:", response.id);
-      }
-    } catch (err) {
-      console.error("Failed to create subscription:", err);
-    }
-  }
+  //     if (response && response.id) {
+  //       console.log("Subscription created:", response.id);
+  //     }
+  //   } catch (err) {
+  //     console.error("Failed to create subscription:", err);
+  //   }
+  // }
 
   // private applyAccountIDFilter(
   //   globalFilters: Record<string, string[]>,

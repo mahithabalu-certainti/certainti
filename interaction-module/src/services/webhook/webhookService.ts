@@ -318,12 +318,9 @@ export class WebHookService {
     const messageId = notification.resourceData?.id;
     if (!messageId) return null;
 
-    console.log("Inside api receieved", messageId);
-
     const email = "support@yourdomain.com";
 
-    const accesss_token =
-      "";
+    const accesss_token = process.env.EMAIL_WEBHOOK_TOKEN!;
 
     // const url = `/users/${email}/messages/${encodeURIComponent(
     //   messageId
