@@ -249,24 +249,6 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
     document.body.removeChild(link);
   };
 
-  // /* Add custom icon to Quill toolbar using JS after mount */
-  // React.useEffect(
-  //   () => {
-  //     const toolbar = document.querySelector(`.ql-toolbar .ql-attach`);
-  //     if (toolbar && !toolbar.querySelector('.custom-attach-icon')) {
-  //       toolbar.innerHTML = '';
-  //       const icon = document.createElement('span');
-  //       icon.className = 'custom-attach-icon';
-  //       icon.style.display = 'inline-flex';
-  //       icon.style.alignItems = 'center';
-  //       icon.style.justifyContent = 'center';
-  //       icon.innerHTML = `<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M17 13V7a5 5 0 0 0-10 0v8a5 5 0 0 0 10 0V9" stroke="#425A76" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>`;
-  //       toolbar.appendChild(icon);
-  //     }
-  //   },
-  //   [isEditing] /* Only run once per mount */
-  // );
-
   const isUpdateLoading = updateInteractionQusResponse.isPending || isLoading;
   const buttons: SectionHeaderButton[] = isEditing
     ? [
@@ -434,31 +416,21 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                     theme='snow'
                     className='rounded-[2px] bg-white'
                     modules={{
-                      toolbar: {
-                        container: [
-                          [{ header: [1, 2, 3, 4, 5, 6, false] }],
-                          [{ font: [] }],
-                          [{ size: [] }],
-                          ['bold', 'italic', 'underline', 'strike'],
-                          [{ color: [] }, { background: [] }],
-                          [{ script: 'sub' }, { script: 'super' }],
-                          ['blockquote'],
-                          [{ list: 'ordered' }, { list: 'bullet' }],
-                          [{ indent: '-1' }, { indent: '+1' }],
-                          [{ direction: 'rtl' }],
-                          [{ align: [] }],
-                          // ['image', 'video'],
-                          ['clean'],
-                          // [{ attach: true }], // Custom icon button
-                        ],
-                        // handlers: {
-                        //   attach: () => {
-                        //     if (questionFileInputRefs.current[q.rid]) {
-                        //       questionFileInputRefs.current[q.rid]?.click();
-                        //     }
-                        //   },
-                        // },
-                      },
+                      toolbar: [
+                        [{ header: [1, 2, 3, 4, 5, 6, false] }],
+                        [{ font: [] }],
+                        [{ size: [] }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        [{ color: [] }, { background: [] }],
+                        [{ script: 'sub' }, { script: 'super' }],
+                        ['blockquote'],
+                        [{ list: 'ordered' }, { list: 'bullet' }],
+                        [{ indent: '-1' }, { indent: '+1' }],
+                        [{ direction: 'rtl' }],
+                        [{ align: [] }],
+                        // ['image', 'video'],
+                        ['clean'],
+                      ],
                     }}
                     formats={[
                       'header',
@@ -482,7 +454,6 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                       // 'image',
                       // 'video',
                       'clean',
-                      // 'attach',
                     ]}
                   />
                   <button
