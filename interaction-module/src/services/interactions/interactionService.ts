@@ -1257,13 +1257,13 @@ export class InteractionService {
       } else {
         parsedMessage = message;
       }
-      const { company_id, project_id, type, qre_percent, project_summary, transaction_id, questions, detailed_breakdown, statusCode } = parsedMessage.data;
+      const { company_id, project_id, type, qre_percent, project_summary, transaction_id, questions, detailed_breakdown } = parsedMessage.data;
       const { accountNumber } = await this.interactionSchemaService.fetchValidAccountNumberById(company_id);
       if (!accountNumber) {
         this.logger.error("Invalid account ID in Kafka message", company_id);
         return;
       }
-      if (statusCode === 200) {
+      if (parsedMessage.statusCode === 200) {
         if (!company_id || !project_id || !type) {
           this.logger.error("Kafka message missing required fields", parsedMessage);
           return;
