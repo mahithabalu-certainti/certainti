@@ -26,10 +26,14 @@ import {
   useGetProjectType,
 } from '../../../services/project';
 import { useFetchClassification } from '../../../services/account';
-// import { Switch } from '@mui/material'; // Commented for it may use in future
+// import { Switch } from '@mui/material';
+import TextButton from '../../../../components/button/text-button';
+import { PROJECT_CREATE } from '../../../../routes';
+import { useNavigate } from 'react-router-dom';
 
 export const Projects: React.FC = () => {
-  // const [toggleEnabled, setToggleEnabled] = useState(false); // Commented for it may use in future
+  // const [toggleEnabled, setToggleEnabled] = useState(false);
+  const navigate = useNavigate();
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
   const [page, setPage] = useState<number>(1);
   const [totalCount, setTotalCount] = useState<number>(0);
@@ -187,13 +191,16 @@ export const Projects: React.FC = () => {
     memoizedStatus,
     projectPermissionMap
   );
+
   // Commented for it may use in future
   // const handleToggleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
   //   if (setToggleEnabled) {
   //     setToggleEnabled(event.target.checked);
   //   }
   // };
-
+  const handleNewProjectCLick = () => {
+    navigate(`${PROJECT_CREATE}?type=global`);
+  };
   const dropdownOptions = {
     classification: Classification?.data,
     projectType: projectTypeOptions?.data,
@@ -221,6 +228,13 @@ export const Projects: React.FC = () => {
           </div>
         </div>
         <div className='flex gap-3 justify-center items-center'>
+          <div>
+            <TextButton
+              label='New'
+              onClick={() => handleNewProjectCLick()}
+              // sx={ ...BUTTON_STYLES, width: '48px', minWidth: '48px' }
+            />
+          </div>
           <ActionsDropdown actions={menuItems} />
           <div
             className='flex items-center justify-center border border-[#CBD6E2] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] w-[24px] h-[23px] cursor-pointer'

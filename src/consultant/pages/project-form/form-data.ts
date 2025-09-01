@@ -5,6 +5,7 @@ import {
   createEmptyField,
   createImgButton,
   createRadioField,
+  createSelectChildField,
   createSelectField,
   createTextAreaField,
   createTextField,
@@ -12,7 +13,12 @@ import {
   STATUS_OPTIONS,
   YES_NO_OPTIONS,
 } from '../../../common-utils';
-import { FieldType, FormType, SelectOption } from '../../types';
+import {
+  FieldType,
+  FormType,
+  ParentChildSelectOption,
+  SelectOption,
+} from '../../types';
 import { fiscalYears } from '../resource-form/form-data';
 import { CloseIcon } from '../../../assets';
 const DATE_CONFIG = {
@@ -182,6 +188,8 @@ export const FormData = (
   state: SelectOption[],
   industry: SelectOption[],
   classification: SelectOption[],
+  accountList: ParentChildSelectOption[],
+  // roles: SelectOption[],
   keyContacts: FieldType[],
   addNewKeyContact: () => void,
   removeKeyContact: (index: number) => void,
@@ -192,8 +200,10 @@ export const FormData = (
   permissionMap?: Record<string, { read: boolean; edit: boolean }>,
   totalEffort?: string,
   calculatedTotalCost?: string,
+  currencyValue?: string,
   disableTotalEffort?: boolean,
-  disableTotalCost?: boolean
+  disableTotalCost?: boolean,
+  globalType?: boolean
 ): FormType[] => {
   return useMemo(
     () => [
@@ -201,6 +211,15 @@ export const FormData = (
         sectionName: 'Basic Information',
         fillType: 'half',
         fields: [
+          createSelectChildField('account_rid', 'Account Name', {
+            expandOptions: accountList,
+            placeholder: 'Choose Account Name',
+            required: true,
+            onChange: true,
+            hide: !globalType,
+            expandedAll: true,
+            disabled: isEditView,
+          }),
           createTextField('project_code', 'Project Code', {
             required: true,
             placeholder: 'Enter Project Code',
@@ -550,7 +569,10 @@ export const FormData = (
           createSelectField('currency', 'Currency', {
             options: currency,
             required: false,
+            onChange: true,
+            defaultValue: currencyValue,
             placeholder: 'Choose Currency',
+            dependantLabel: 'account_rid',
             disabled:
               isEditView &&
               permissionMap?.['currency']?.read &&
@@ -831,25 +853,28 @@ export const FormData = (
       },
     ],
     [
-      statusOptions,
+      accountList,
+      globalType,
+      isEditView,
+      permissionMap,
       projectTypeOptions,
       classification,
       showClassifyOthersField,
       industry,
       showOthersField,
+      statusOptions,
       country,
       state,
       stateLoading,
       currency,
+      currencyValue,
       keyContacts,
       addNewKeyContact,
-      removeKeyContact,
-      isEditView,
-      permissionMap,
       totalEffort,
-      calculatedTotalCost,
       disableTotalEffort,
+      calculatedTotalCost,
       disableTotalCost,
+      removeKeyContact,
     ]
   );
 };

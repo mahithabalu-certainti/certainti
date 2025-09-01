@@ -24,6 +24,7 @@ import {
   FiscalDates,
   FormFiscalDateType,
   InputType,
+  ParentChildSelectOption,
   SelectOption,
   YesNo,
 } from '../consultant/types';
@@ -177,6 +178,46 @@ export const createRadioField = (
   clearValue: options.clearValue,
 });
 
+export const createSelectChildField = (
+  name: string,
+  label: string,
+  others: {
+    expandOptions: ParentChildSelectOption[];
+    expandedAll?: boolean;
+    required: boolean;
+    width?: string;
+    placeholder?: string;
+    disabled?: boolean;
+    clearValue?: Record<string, string>;
+    onChange?: boolean;
+    isLoading?: boolean;
+    hide?: boolean;
+    resetDependsFields?: string[];
+    defaultValue?: string;
+    assignDefaultValue?: boolean;
+    dependantLabel?: string;
+    isFiscalYear?: boolean;
+  }
+): FieldType => ({
+  type: 'expandselect',
+  name,
+  label,
+  required: others.required,
+  expandOptions: others.expandOptions,
+  width: others.width,
+  disabled: others.disabled,
+  placeholder: others.placeholder,
+  clearValue: others.clearValue,
+  onChange: others.onChange,
+  isLoading: others.isLoading,
+  hide: others.hide,
+  defaultValue: others.defaultValue,
+  resetDependsFields: others.resetDependsFields,
+  assignDefaultValue: others.assignDefaultValue,
+  dependantLabel: others.dependantLabel,
+  isFiscalYear: others.isFiscalYear,
+  expandedAll: others.expandedAll,
+});
 export const createSelectField = (
   name: string,
   label: string,

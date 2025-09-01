@@ -1,6 +1,7 @@
 import {
   Autocomplete,
   Checkbox,
+  ClickAwayListener,
   createFilterOptions,
   MenuItem,
   Select,
@@ -31,6 +32,7 @@ import {
   // SearchBlackIcon, /* It may use in future, based on client confirmation */
   VerticalSeparatorIcon,
   ErrorInfoIcon,
+  ArrowUpIcon,
 } from '../../assets';
 
 import { useLocation } from 'react-router-dom';
@@ -93,8 +95,16 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     message: string;
     onConfirm: () => void;
     confirmLabel?: string;
-  }>({ isOpen: false, message: '', onConfirm: () => { }, confirmLabel: '' });
-
+  }>({ isOpen: false, message: '', onConfirm: () => {}, confirmLabel: '' });
+  const [expandedParents, setExpandedParents] = React.useState<string[]>([]);
+  const [menuOpen, setMenuOpen] = React.useState(false);
+  const toggleExpand = (parentId: string) => {
+    setExpandedParents((prev) =>
+      prev.includes(parentId)
+        ? prev.filter((id) => id !== parentId)
+        : [...prev, parentId]
+    );
+  };
   const autoCompleteFilter = createFilterOptions<SelectOption>();
 
   const CommonSkeleton = (
@@ -1151,6 +1161,118 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           </div>
         );
       }
+      case 'expandselect': {
+        const fieldValue =
+          (constructFormData[field.name] || field.defaultValue) ?? '';
+
+        const handleSelectChange = (value: string) => {
+          handleChange(value);
+          setMenuOpen(false);
+        };
+
+        return (
+          <ClickAwayListener onClickAway={() => setMenuOpen(false)}>
+            <div className='w-full relative'>
+              <div
+                tabIndex={0}
+                className={`w-full h-[32px] px-3 py-1.5 border rounded-[2px] text-[13px] flex items-center justify-between
+                ${field.error ? isError : 'border-[#CBD6E2]'} 
+                ${
+                  field.disabled
+                    ? 'bg-gray-100 cursor-default'
+                    : 'cursor-pointer focus:outline-none focus:!border-2 focus:border-[#60A5FA]'
+                }`}
+                onClick={() => !field.disabled && setMenuOpen(!menuOpen)}
+              >
+                <span
+                  className={`block truncate text-[13px] ${
+                    fieldValue ? 'text-black' : 'text-[#7D98B6]'
+                  }`}
+                >
+                  {fieldValue
+                    ? (() => {
+                        for (const parent of field?.expandOptions || []) {
+                          const child = parent.childList?.find(
+                            (c) => c.child_value === fieldValue
+                          );
+                          if (child) return child.child_label;
+                        }
+                        return field.placeholder;
+                      })()
+                    : field.placeholder || 'Select'}
+                </span>
+
+                <span>
+                  <ArrowUpIcon
+                    alt={menuOpen ? 'arrowUp' : 'arrowDown'}
+                    style={{
+                      filter:
+                        'invert(62%) sepia(15%) saturate(656%) hue-rotate(179deg) brightness(90%) contrast(87%)',
+                      transform: menuOpen ? 'rotate(0deg)' : 'rotate(180deg)',
+                      transition: 'transform 0.3s ease',
+                    }}
+                  />
+                </span>
+              </div>
+              {menuOpen && (
+                <div className='absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded shadow-lg max-h-60 overflow-y-auto'>
+                  {field?.expandOptions?.map((parent, idx) => {
+                    const isExpanded = expandedParents.includes(
+                      parent.parent_value
+                    );
+                    return (
+                      <div key={idx}>
+                        {/* Parent item */}
+                        <div
+                          title={parent.parent_label}
+                          className='px-3 py-2 bg-gray-100 font-semibold text-[13px] text-[#425A76] cursor-pointer flex items-center gap-2 hover:bg-[#f4f4f4]'
+                          onClick={() => toggleExpand(parent.parent_value)}
+                        >
+                          <span>
+                            <ArrowUpIcon
+                              alt={isExpanded ? 'arrowUp' : 'arrowDown'}
+                              style={{
+                                filter:
+                                  'invert(62%) sepia(15%) saturate(656%) hue-rotate(179deg) brightness(90%) contrast(87%)',
+                                transform: isExpanded
+                                  ? 'rotate(0deg)'
+                                  : 'rotate(180deg)',
+                                transition: 'transform 0.3s ease',
+                              }}
+                            />
+                          </span>
+
+                          <span className='truncate block text-[13px] w-full'>
+                            {parent.parent_label}
+                          </span>
+                        </div>
+
+                        {/* Child items */}
+                        {!isExpanded &&
+                          parent.childList?.map((child, cIdx) => (
+                            <div
+                              title={child.child_label}
+                              key={cIdx}
+                              className='px-6 py-2 text-[#425A76] text-[13px] cursor-pointer hover:bg-[#F9F9F9] truncate'
+                              onClick={() =>
+                                handleSelectChange(child.child_value)
+                              }
+                            >
+                              <span className='truncate block text-[13px] w-full'>
+                                {child.child_label}
+                              </span>
+                            </div>
+                          ))}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </ClickAwayListener>
+        );
+      }
+
       case 'textarea':
         return (
           <textarea
@@ -1388,9 +1510,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               disabled={field.disabled}
               format='YYYY-MM-DD'
               referenceDate={
-                customMaxDate
-                  ? dayjs(customMinDate)
-                  : dayjs(customMaxDate)
+                customMaxDate ? dayjs(customMinDate) : dayjs(customMaxDate)
               }
               // onOpen={() => {
               //   if (!fieldValue && isFinancialDateField && selectedFiscalYear) {
@@ -1769,14 +1889,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 const fiscalYearStart = field.minDate
                   ? dayjs(field.minDate, 'YYYY-MM-DD').startOf('day')
                   : dayjs(`${selectedFiscalYear}-01-01`, 'YYYY-MM-DD').startOf(
-                    'day'
-                  );
+                      'day'
+                    );
 
                 const fiscalYearEnd = field.maxDate
                   ? dayjs(field.maxDate, 'YYYY-MM-DD').endOf('day')
                   : dayjs(`${selectedFiscalYear}-12-31`, 'YYYY-MM-DD').endOf(
-                    'day'
-                  );
+                      'day'
+                    );
 
                 if (dateValue) {
                   const currentDate = dayjs(dateValue, 'YYYY-MM-DD');
@@ -2442,7 +2562,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                               maxWidth: `${field.width}`,
                               paddingLeft:
                                 `${field.type}` === 'iconButton' ||
-                                  `${field.type}` === 'radio'
+                                `${field.type}` === 'radio'
                                   ? '10px !important'
                                   : 'none',
                               verticalAlign:
@@ -2474,9 +2594,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                               },
                               '& .MuiOutlinedInput-root': {
                                 '&.Mui-focused .MuiOutlinedInput-notchedOutline':
-                                {
-                                  border: '1px solid #60A5FA !important',
-                                },
+                                  {
+                                    border: '1px solid #60A5FA !important',
+                                  },
                               },
                             }}
                             key={colIndex}
