@@ -52,6 +52,7 @@ import { AllPermissions } from '../../../../common-service';
 import { FilterModal } from '../../../../components';
 import { getProjectFilterFields, getUserGroupFilterFields } from './helpers';
 import { useFetchClassification } from '../../../../consultant/services/account';
+import { useGetProjectType } from '../../../../consultant/services/project';
 
 const HEADER_STYLES = {
   adminPermission:
@@ -154,6 +155,7 @@ export const CreateUserGroup: React.FC = () => {
   const allUserGroupTypes = useGetUserGroupTypes({ type: 'All' });
   const userGroupDetails = useGetUserGroupDetails(groupId as string);
   const classification = useFetchClassification();
+  const projectTypeOptions = useGetProjectType();
 
   // Variables
   const tabOrder = [Tabs.FORM, Tabs.USER, Tabs.PROJECT];
@@ -198,10 +200,18 @@ export const CreateUserGroup: React.FC = () => {
       })) || [],
     [classification.data?.data.projectClassifications]
   );
+  const memoizedProjectTypes = useMemo(
+    () =>
+      projectTypeOptions?.data?.data?.projectType.map((item) => ({
+        label: item.project_type_name,
+        value: item.rid,
+      })) || [],
+    [projectTypeOptions?.data?.data?.projectType]
+  );
   const userGroupFilterFields =
     tabs === Tabs.USER
       ? getUserGroupFilterFields()
-      : getProjectFilterFields(memoizedClassification);
+      : getProjectFilterFields(memoizedClassification, memoizedProjectTypes);
   const groupTypeNotCustom = currentGroupType?.type !== 'CUSTOM';
   const prefixGroupName = 'G-';
   const isGroupNameDisabled =

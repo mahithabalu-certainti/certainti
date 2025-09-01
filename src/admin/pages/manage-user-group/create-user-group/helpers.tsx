@@ -50,7 +50,8 @@ export const getUserGroupFilterFields = (): FieldConfig[] => [
 ];
 
 export const getProjectFilterFields = (
-  classificationOption: FilterSelectOption[]
+  classificationOption: FilterSelectOption[],
+  projectTypeOptions: FilterSelectOption[]
 ): FieldConfig[] => [
   {
     label: 'Account Name',
@@ -85,10 +86,11 @@ export const getProjectFilterFields = (
     options: classificationOption,
   },
   {
-    label: 'Type',
-    name: 'type',
-    type: 'text',
-    operatorOption: textfieldOptions,
+    label: 'Project Type',
+    name: 'project_type_rid',
+    type: 'enumSelect',
+    options: projectTypeOptions,
+    operatorOption: fiscalOptions,
   },
   {
     label: 'Project Point of Contact',

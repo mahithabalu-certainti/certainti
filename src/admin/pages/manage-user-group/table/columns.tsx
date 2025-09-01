@@ -166,8 +166,8 @@ export const getAvailableProjectsColumns = () => [
     sortable: false,
   },
   {
-    id: 'type',
-    sortId: 'type',
+    id: 'project_type_name',
+    sortId: 'project_type_name',
     label: 'Type',
     sortable: false,
   },
