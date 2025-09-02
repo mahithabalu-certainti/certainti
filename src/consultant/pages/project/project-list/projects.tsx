@@ -47,6 +47,8 @@ export const Projects: React.FC = () => {
   const [refreshProjectsTrigger, setRefreshProjectsTrigger] =
     useState<number>();
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
+  const [columnAnchorEl, setColumnAnchorEl] =
+    React.useState<HTMLButtonElement | null>(null);
   const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   const onRefreshClick = () => {
@@ -140,6 +142,9 @@ export const Projects: React.FC = () => {
   const statusOptions = useGetStatus();
   const projectTypeOptions = useGetProjectType();
 
+  const isModalOpen = Boolean(columnAnchorEl);
+  const modalId = isModalOpen ? 'project-column-visibility-popover' : undefined;
+
   const memoizedClassification = useMemo(
     () =>
       Classification.data?.data.projectClassifications.map((data) => ({
@@ -208,6 +213,12 @@ export const Projects: React.FC = () => {
 
   if (!projectIsEnable || !isProjectViewEnable) return <AccessRestricted />;
 
+  const handleColumnVisibility = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setColumnAnchorEl(event.currentTarget);
+  };
+
   return (
     <div className='flex flex-col w-full  h-full'>
       <div className='flex items-center justify-between w-full h-[55px] min-h-[55px] max-h-[55px] border-b border-[#CBD6E2] px-4'>
@@ -262,7 +273,7 @@ export const Projects: React.FC = () => {
             color='success'
           />
         </div> */}
-        <div className='relative'>
+        <div className='flex gap-2 relative'>
           <button
             aria-describedby={filterId}
             className={`w-[64px] h-[26px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
@@ -281,6 +292,13 @@ export const Projects: React.FC = () => {
                 </span>
               </div>
             ) : null}
+          </button>
+          <button
+            aria-describedby={modalId}
+            className={`w-[120px] h-[24px] text-[13px] mt-[1px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative ${isModalOpen ? 'bg-[#F3F3F3]' : ''}`}
+            onClick={handleColumnVisibility}
+          >
+            Show/Hide Fields
           </button>
           <Suspense fallback={null}>
             <Filter
@@ -313,6 +331,8 @@ export const Projects: React.FC = () => {
           refreshProjectsTrigger={refreshProjectsTrigger}
           // toggleEnabled={toggleEnabled} // Commented for it may use in future
           dropdownOptions={dropdownOptions}
+          setColumnAnchorEl={setColumnAnchorEl}
+          columnAnchorEl={columnAnchorEl}
         />
       </div>
     </div>

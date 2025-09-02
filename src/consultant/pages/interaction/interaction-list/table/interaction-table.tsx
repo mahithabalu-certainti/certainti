@@ -1,12 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { InteractionList, InteractionListURLParams } from '../../../../types';
 import { useGlobalInteractionList } from '../../../../services/interactions/interactions-service';
-import { ListTable } from '../../../../../components/table';
+import {
+  ListTable,
+  ManageColumnsPopover,
+} from '../../../../../components/table';
 import { getGlobalInteractionListColumns } from './columns';
 import { generatePath, useNavigate } from 'react-router-dom';
 import { GLOBAL_INTERACTIONS_EDIT } from '../../../../../routes';
 import { EditIcon } from '../../../../../assets';
-import { ActionItem } from '../../../../../components/table/types';
+import {
+  ActionItem,
+  ListTableColumn,
+  ShowHideTableColumn,
+} from '../../../../../components/table/types';
 
 interface InteractionTableProps {
   tableParams: InteractionListURLParams;
@@ -15,6 +22,10 @@ interface InteractionTableProps {
   >;
   setTotalCount: React.Dispatch<React.SetStateAction<number>>;
   refreshTrigger?: number;
+  columnAnchorEl: HTMLButtonElement | null;
+  setColumnAnchorEl: React.Dispatch<
+    React.SetStateAction<HTMLButtonElement | null>
+  >;
 }
 
 export const InteractionTable: React.FC<InteractionTableProps> = ({
@@ -22,6 +33,8 @@ export const InteractionTable: React.FC<InteractionTableProps> = ({
   setTableParams,
   setTotalCount,
   refreshTrigger,
+  columnAnchorEl,
+  setColumnAnchorEl,
 }) => {
   const navigate = useNavigate();
   const [interactionList, setInteractionList] = useState<InteractionList[]>([]);
@@ -114,35 +127,77 @@ export const InteractionTable: React.FC<InteractionTableProps> = ({
     handleViewInteractionAttachmentCount
   );
 
+  const RestrictedColumns = [
+    {
+      id: 'r_number',
+      canHide: false,
+      canDrag: false,
+    },
+  ];
+
+  const [visibleColumns, setVisibleColumns] = useState<
+    ListTableColumn<InteractionList>[]
+  >(interactionColumns.filter((col) => !col.hide));
+
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    setVisibleColumns(
+      updatedColumns.filter(
+        (col) => !col.hide
+      ) as ListTableColumn<InteractionList>[]
+    );
+  };
+
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
+  };
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const modalId = isModalOpen
+    ? 'interaction-column-visibility-popover'
+    : undefined;
+
   return (
-    <ListTable
-      data={interactionList}
-      columns={interactionColumns}
-      getRowId={getRowId}
-      hoverHighlight={false}
-      tableStyle={{
-        height: '100%',
-        maxHeight: 'calc(100vh - 180px)',
-        overflow: 'auto',
-      }}
-      stickyHeader={true}
-      stickyColumnsCount={2}
-      selectable={true}
-      onSelectionChange={(selectedIds) => console.log('Selected:', selectedIds)}
-      actionWidth={60}
-      actionDisplayMode='dropdown'
-      actionMenuItems={actionButtons}
-      loading={isLoading}
-      error={isError ? 'Failed to load interaction data' : undefined}
-      rowsPerPageOptions={[25, 50, 100]}
-      rowsPerPage={tableParams.limit}
-      currentPage={(tableParams.page ?? 1) - 1}
-      totalItems={totalItems}
-      onPageChange={handlePageChange}
-      onRowsPerPageChange={handleRowsPerPageChange}
-      sortBy={tableParams.sort}
-      sortOrder={tableParams.sort_by}
-      onSort={handleSort}
-    />
+    <div className='border-t border-[#CBD6E2] h-full'>
+      <ManageColumnsPopover
+        anchorEl={columnAnchorEl}
+        open={isModalOpen}
+        popoverId={modalId}
+        onClose={handlePopoverClose}
+        columns={interactionColumns}
+        onColumnsChange={handleColumnsChange}
+        columnRestrictions={RestrictedColumns}
+      />
+      <ListTable
+        data={interactionList}
+        columns={visibleColumns}
+        getRowId={getRowId}
+        hoverHighlight={false}
+        tableStyle={{
+          height: '100%',
+          maxHeight: 'calc(100vh - 180px)',
+          overflow: 'auto',
+        }}
+        stickyHeader={true}
+        stickyColumnsCount={2}
+        selectable={true}
+        onSelectionChange={(selectedIds) =>
+          console.log('Selected:', selectedIds)
+        }
+        actionWidth={60}
+        actionDisplayMode='dropdown'
+        actionMenuItems={actionButtons}
+        loading={isLoading}
+        error={isError ? 'Failed to load interaction data' : undefined}
+        rowsPerPageOptions={[25, 50, 100]}
+        rowsPerPage={tableParams.limit}
+        currentPage={(tableParams.page ?? 1) - 1}
+        totalItems={totalItems}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+        sortBy={tableParams.sort}
+        sortOrder={tableParams.sort_by}
+        onSort={handleSort}
+      />
+    </div>
   );
 };
