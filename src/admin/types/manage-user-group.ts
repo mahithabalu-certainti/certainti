@@ -92,6 +92,7 @@ export type ActiveUserForGroup = {
   first_name: string;
   org_id: string;
   is_consultant_firm: boolean;
+  organization_name: string
 };
 
 export type UserGroupTypes = {

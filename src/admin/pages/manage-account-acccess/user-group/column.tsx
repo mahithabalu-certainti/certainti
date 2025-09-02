@@ -3,7 +3,8 @@ import { ManageAccountsGroupList } from '../../../types/manage-account';
 
 export const manageUserGroupColumns = (
   onClick: (row: ManageAccountsGroupList) => void,
-  addedAccounts: string[]
+  addedAccounts: string[],
+  viewUserList: (id: string) => void
 ): ListTableColumn<ManageAccountsGroupList>[] => [
   {
     id: 'group_name',
@@ -56,5 +57,15 @@ export const manageUserGroupColumns = (
     label: 'Number of Users',
     width: '25%',
     sortable: true,
+    render: (row: ManageAccountsGroupList) => {
+      return (
+        <span
+          onClick={() => viewUserList(row.rid)}
+          className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
+        >
+          {row.user_count}
+        </span>
+      );
+    },
   },
 ];

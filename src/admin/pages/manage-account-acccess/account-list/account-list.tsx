@@ -1,21 +1,25 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Suspense, useEffect, useMemo, useState } from 'react';
-import { NewFilterIcon, UserIcon } from '../../../../assets';
+import { LeftArrowIcon, NewFilterIcon, UserIcon } from '../../../../assets';
 import { ManageAccountTable } from './table';
 import { ProjectListParams } from '../../../../consultant/types/project';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import UserTab from './tab';
 import { BUTTON_STYLES } from '../../manage-user-detail/styles';
 import TextButton from '../../../../components/button/text-button';
-import { useUpdateProjectAccesseDetails } from '../../../service/manage-account-access/manage-account-service';
+import {
+  useUpdateProjectAccesseDetails,
+  useUserGroupList,
+} from '../../../service/manage-account-access/manage-account-service';
 import { useToast } from '../../../../hooks';
-import { FilterType } from '../../../types';
+import { ActiveUserForGroup, FilterType } from '../../../types';
 import { FilterModal } from '../../../../components';
 import {
   getManageAccountFilterFields,
   getManageGroupListFilterFields,
   getManageProjectListFilterFields,
   getManageUserListFilterFields,
+  getUserListFilterFields,
 } from './helper';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
@@ -36,6 +40,9 @@ import { checkPermission } from '../../../../common-utils';
 import { AccessRestricted } from '../../../../components/account-restricted';
 import { MANAGE_ACCOUNT_ACCESS } from '../../../../routes';
 import { useGetUserGroupTypes } from '../../../service';
+import { ListTable } from '../../../../components/table';
+import { getAvailableUserColumns } from './column';
+import { UserListParams } from '../../../types/manage-user';
 
 const AccountList = () => {
   const [page, setPage] = useState<number>(1);
@@ -48,6 +55,11 @@ const AccountList = () => {
     sortBy: 'account_name',
     sortOrder: 'ASC',
   });
+  const [userParams, setUserParams] = useState<UserListParams>({
+    page: 1,
+    limit: 100,
+  });
+
   useEffect(() => {
     const saved = getStoredFilters();
     if (saved) {
@@ -81,16 +93,33 @@ const AccountList = () => {
   const handleFilterModal = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
+  const userPageChange = (newPage: number) => {
+    setUserParams((prev) => ({
+      ...prev,
+      page: newPage + 1,
+    }));
+  };
+  const userRowsPerPageChange = (newLimit: number) => {
+    setUserParams((prev) => ({
+      ...prev,
+      limit: newLimit,
+      page: 1,
+    }));
+  };
+
   const accountList = searchParams.get('accountList');
   const accountId = searchParams.get('accountid');
   const accountname = searchParams.get('accountname');
   const username = searchParams.get('username');
   const groupname = searchParams.get('groupname');
   const tabIndex = searchParams.get('tabIndex');
+  const groupId = searchParams.get('groupid');
   const name = username || groupname || '';
   const type = username ? 'USER' : groupname ? 'GROUP' : '';
 
   const projectListAccess = useUpdateProjectAccesseDetails();
+  const availableUsers = useUserGroupList({ page: 1, count: 10 });
+  const totalUsers = availableUsers?.data?.data.count || 0;
   const commonSuccess = projectListAccess.isSuccess;
   const [addedProjects, setAddedProjects] = useState<{
     [rid: string]: boolean;
@@ -190,6 +219,8 @@ const AccountList = () => {
   const getFilterFields = () => {
     if (!accountname) {
       return accountFilterFields;
+    } else if (groupId) {
+      return getUserListFilterFields();
     } else if (type === 'GROUP' || type === 'USER') {
       return projectFilterFeilds;
     } else if (tabIndex === '0') {
@@ -222,6 +253,7 @@ const AccountList = () => {
     });
     return map;
   }, [userViewEdit]);
+  const getRowId = (row: ActiveUserForGroup) => row.rid;
 
   const disabled =
     permissionMapListView?.['assign']?.read &&
@@ -268,15 +300,32 @@ const AccountList = () => {
       </div>
 
       <div className='flex items-center justify-between h-[42px] min-h-[42px] max-h-[42px] px-4'>
-        <div className='flex flex-col'>
-          <div className='font-bold text-[14px] leading-[32px] text-[#2D3E4F]'>
-            All Accounts
-          </div>
-          {accountname && (
-            <div className='font-semibold text-[#7D98B6] text-[12px] -mt-2'>
-              {` ${accountname}  ${name ? ` > ${name}` : ''}`}
-            </div>
+        <div className='flex items-center gap-4'>
+          {groupId && (
+            <LeftArrowIcon
+              className='h-[12px] cursor-pointer'
+              alt='leftArrowIcon'
+              onClick={() => {
+                searchParams.delete('groupid');
+                navigate(
+                  { search: searchParams.toString() },
+                  { replace: true }
+                );
+              }}
+            />
           )}
+          <div className='flex flex-col'>
+            <div className='font-bold text-[14px] leading-[32px] text-[#2D3E4F]'>
+              {groupId ? 'All Users' : 'All Accounts'}
+            </div>
+            {(accountname || groupId) && (
+              <div className='font-semibold text-[#7D98B6] text-[12px] -mt-2'>
+                {groupId
+                  ? 'Group name'
+                  : `${accountname}  ${name ? ` > ${name}` : ''}`}
+              </div>
+            )}
+          </div>
         </div>
         <div className='flex items-center gap-3'>
           <div className='relative h-[32px]'>
@@ -348,7 +397,7 @@ const AccountList = () => {
           />
         </div>
       )}
-      {accountId && (
+      {accountId && !groupId && (
         <div>
           <UserTab
             type={type}
@@ -357,6 +406,31 @@ const AccountList = () => {
             setAppliedFilters={setAppliedFilters}
             disabled={disabled}
             hide={hide}
+          />
+        </div>
+      )}
+      {groupId && (
+        <div className='border-t border-[#CBD6E2]'>
+          <ListTable
+            data={availableUsers.data?.data.users || []}
+            columns={getAvailableUserColumns()}
+            getRowId={getRowId}
+            hoverHighlight={false}
+            tableStyle={{
+              height: '100%',
+              maxHeight: 'calc(100vh - 195px)',
+              overflow: 'auto',
+            }}
+            selectable={false}
+            actionWidth={60}
+            rowsPerPageOptions={[25, 50, 100]}
+            rowsPerPage={userParams.limit}
+            currentPage={(userParams.page ?? 1) - 1}
+            totalItems={totalUsers}
+            onPageChange={userPageChange}
+            onRowsPerPageChange={userRowsPerPageChange}
+            stickyHeader
+            loading={availableUsers.isPending}
           />
         </div>
       )}

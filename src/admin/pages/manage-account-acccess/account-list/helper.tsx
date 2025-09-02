@@ -93,3 +93,24 @@ export const getManageProjectListFilterFields = (): FieldConfig[] => [
     operatorOption: keyOptions,
   },
 ];
+
+export const getUserListFilterFields = (): FieldConfig[] => [
+  {
+    label: 'Username',
+    name: 'first_name',
+    type: 'text',
+    operatorOption: textfieldOptions,
+  },
+  {
+    label: 'Email Address',
+    name: 'email',
+    type: 'text',
+    operatorOption: textfieldOptions,
+  },
+  {
+    label: 'Organisation Name',
+    name: 'organization_name',
+    type: 'text',
+    operatorOption: textfieldOptions,
+  },
+];

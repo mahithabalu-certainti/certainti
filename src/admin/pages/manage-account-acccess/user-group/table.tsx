@@ -170,9 +170,14 @@ export const ManageAccountUserGroupTable: React.FC<UserTableProps> = ({
       }
     );
   };
+  const viewUserList = (id: string) => {
+    searchParams.set('groupid', id);
+    navigate({ search: searchParams.toString() }, { replace: true });
+  };
   const projectColumns = manageUserGroupColumns(
     handleAccountName,
-    addedAccounts
+    addedAccounts,
+    viewUserList
   );
   return (
     <div className='pt-1'>
