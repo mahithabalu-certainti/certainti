@@ -50,6 +50,7 @@ export const createTextField = (
     errorHandling?: ErrorHandling[];
     resetDependsFields?: string[];
     clearValue?: Record<string, string>;
+    formatCostValue?: boolean;
     lengthRequired?: {
       key: string;
       minMatchedValue: RegExp;
@@ -77,6 +78,7 @@ export const createTextField = (
   clearValue: options.clearValue,
   defaultValue: options.defaultValue,
   resetDependsFields: options.resetDependsFields,
+  formatCostValue: options.formatCostValue,
 });
 
 export const createPhoneInputField = (
@@ -931,3 +933,51 @@ export const getFiscalDateBounds = (
 //     endMax: endDateMax,
 //   };
 // };
+
+export const formatCostValue = (value: string): string => {
+  // if (!value || value === '') return '';
+
+  // // Remove any existing formatting and non-numeric characters except decimal point
+  // const cleanValue = value.replace(/[^\d.]/g, '');
+
+  // // Split into integer and decimal parts
+  // const [integerPart, decimalPart] = cleanValue.split('.');
+
+  // if (!integerPart) return '';
+
+  // // Format the integer part with Indian numbering system
+  // let formattedInteger = '';
+  // const reversedInteger = integerPart.split('').reverse().join('');
+
+  // for (let i = 0; i < reversedInteger.length; i++) {
+  //   if (i === 3) {
+  //     // Add comma after first 3 digits (hundreds place)
+  //     formattedInteger = ',' + formattedInteger;
+  //   } else if (i > 3 && (i - 3) % 2 === 0) {
+  //     // Add comma every 2 digits after the first 3 digits
+  //     formattedInteger = ',' + formattedInteger;
+  //   }
+  //   formattedInteger = reversedInteger[i] + formattedInteger;
+  // }
+
+  // // Add decimal part if it exists
+  // if (decimalPart !== undefined) {
+  //   return formattedInteger + '.' + decimalPart;
+  // }
+
+  // return formattedInteger;
+  if (value === null || value === undefined) return '';
+
+  const costStr = String(value);
+  const [whole, decimal] = costStr.split('.');
+  const formattedWhole = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const formattedCost =
+    decimal !== undefined ? `${formattedWhole}.${decimal}` : formattedWhole;
+
+  return `${formattedCost}`;
+};
+
+// Function to remove formatting for processing
+export const removeFormatCostValue = (value: string): string => {
+  return value.replace(/,/g, '');
+};

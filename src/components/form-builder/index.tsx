@@ -48,6 +48,7 @@ import ConfirmationPopup from '../../common-utils/confirmation-popup';
 import TextButton from '../button/text-button';
 import { ArrowDropDownIcon } from '@mui/x-date-pickers/icons';
 import FormFiscalYearDropdown from '../fiscal-dropdown/form-fiscal-dropdown';
+import { formatCostValue, removeFormatCostValue } from '../../common-utils';
 
 interface FormBuilderProps {
   data: FormType[];
@@ -968,8 +969,43 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               fieldDisabled
             }
             disabled={field.disabled}
-            onChange={(e) => handleChange(e.target.value)}
-            value={fieldValue || field.defaultValue || ''}
+            onChange={(e) => {
+              const inputValue = e.target.value;
+              if (field.formatCostValue) {
+                // For Indian numbering format, remove existing formatting first, then apply new formatting
+                const cleanValue = removeFormatCostValue(inputValue);
+                // Only format if it's a valid number
+                if (/^\d*\.?\d*$/.test(cleanValue)) {
+                  const formattedValue = formatCostValue(cleanValue);
+                  // Update the input display value
+                  e.target.value = formattedValue;
+                  // Store the clean value in form data for processing
+                  handleChange(cleanValue);
+                } else {
+                  handleChange(inputValue);
+                }
+              } else {
+                handleChange(inputValue);
+              }
+            }}
+            onBlur={(e) => {
+              if (field.formatCostValue) {
+                // Reformat on blur to ensure proper formatting
+                const inputValue = e.target.value;
+                const cleanValue = removeFormatCostValue(inputValue);
+                if (/^\d*\.?\d*$/.test(cleanValue) && cleanValue !== '') {
+                  const formattedValue = formatCostValue(cleanValue);
+                  e.target.value = formattedValue;
+                }
+              }
+            }}
+            value={
+              field.formatCostValue && fieldValue
+                ? formatCostValue(fieldValue)
+                : field.formatCostValue && field.defaultValue
+                  ? formatCostValue(field.defaultValue)
+                  : fieldValue || field.defaultValue || ''
+            }
           />
         );
       case 'file':
