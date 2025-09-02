@@ -530,8 +530,16 @@ async function exportAllInteractions (req : Request, res : Response) {
           "Last Reminder Date": d.last_reminder_on == null ? '' : new Date(d.last_reminder_on).toISOString().split('T')[0],
           "Response Date": d.response_submitted_on === null ? '' : new Date(d.response_submitted_on).toISOString().split('T')[0],
           "Last Response Update": d.response_updated_on == null ? '' : new Date(d.response_updated_on).toISOString().split('T')[0],
-          "Attachments": d.attachment_count,
-          "Interaction Link": d.interaction_url,
+          "Attachments": d.attachment_count === 0 || d.attachment_count === "" ? null : d.attachment_count,
+          "Interaction Link": d.interaction_url
+            ? {
+          text: "Link",
+          hyperlink: d.interaction_url,
+          style: {
+            fontColor: "1755E7",
+          }
+              }
+            : null,
           "Parent Interaction ID": d.parent_interaction_rid,
           "Type": d.interaction_type_name,
           "Response Source": d.response_source_name,
@@ -648,7 +656,15 @@ async function exportAllInteractionSummary (req : Request, res : Response) {
           "Response Date": d.response_submitted_on === null ? '' : new Date(d.response_submitted_on).toISOString().split('T')[0],
           "Last Response Update": d.response_updated_on == null ? '' : new Date(d.response_updated_on).toISOString().split('T')[0],
           "Attachments": d.attachment_count,
-          "Interaction Link": d.interaction_url,
+          "Interaction Link": d.interaction_url
+            ? {
+          text: "Link",
+          hyperlink: d.interaction_url,
+          style: {
+            fontColor: "1755E7",
+          }
+              }
+            : null,
           "Parent Interaction ID": d.parent_interaction_rid,
           "Type": d.interaction_type_name,
           "Response Source": d.response_source_name,
