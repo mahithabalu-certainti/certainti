@@ -440,19 +440,6 @@ export const updateInteractionQuestions = async (
             Authorization: `Bearer ${authToken}`,
             'x-user-id': userId,
           },
-          // Remove all other headers except Authorization and x-user-id
-          // transformRequest: [
-          //   (data, headers) => {
-          //     headers['Authorization'] = `Bearer ${authToken}`;
-          //     headers['x-user-id'] = userId;
-          //     Object.keys(headers).forEach((key) => {
-          //       if (key !== 'Authorization' && key !== 'x-user-id') {
-          //         delete headers[key];
-          //       }
-          //     });
-          //     return data;
-          //   },
-          // ],
         }
       );
     return data;
@@ -536,11 +523,7 @@ export const deleteAttachment = async (
 };
 
 export const useDeleteAttachment = () => {
-  return useMutation<
-    CommonApiResponse,
-    Error,
-    DeleteAttachmentRequest
-  >({
+  return useMutation<CommonApiResponse, Error, DeleteAttachmentRequest>({
     mutationFn: (body) => deleteAttachment(body),
   });
 };

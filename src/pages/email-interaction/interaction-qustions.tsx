@@ -1,15 +1,10 @@
 import React, { useState, useRef } from 'react';
-import { Skeleton, SxProps, Tooltip } from '@mui/material';
+import { CircularProgress, SxProps, Tooltip } from '@mui/material';
 import { Theme } from '@emotion/react';
 import ReactQuill from 'react-quill';
 import { Attachment, InteractionQuestion } from '../../consultant/types';
 import TextButton from '../../components/button/text-button';
-import {
-  AttachmentsSideIcon,
-  DownloadIcon,
-  KeyContactRemoveIcon,
-  PdfIcon,
-} from '../../assets';
+import { DownloadIcon, KeyContactRemoveIcon, PdfIcon } from '../../assets';
 import { formatDateToYYYYMMDDWithTime } from '../../common-utils';
 import {
   InteractionQuestionUpdateRequest,
@@ -76,6 +71,14 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
       {} as Record<string, Attachment[]>
     )
   );
+  // Track which global attachment is being deleted
+  const [removingGlobalIdx, setRemovingGlobalIdx] = useState<number | null>(
+    null
+  );
+  // Track which question attachment is being deleted: { [questionId]: index }
+  const [removingQuestionAttachment, setRemovingQuestionAttachment] = useState<{
+    [key: string]: number | null;
+  }>({});
 
   const globalFileInputRef = useRef<HTMLInputElement | null>(null);
   const questionFileInputRefs = useRef<Record<string, HTMLInputElement | null>>(
@@ -85,6 +88,45 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   const uploadFileMutation = useUploadAttachment();
   const updateInteractionQusResponse = useUpdateInteractionQuestion();
   const deleteAttachment = useDeleteAttachment();
+
+  // Inject attachment button into Quill toolbar after mount
+  React.useEffect(() => {
+    if (!isEditing) return;
+    const toolbar = document.querySelectorAll('.ql-toolbar.ql-snow');
+    if (!toolbar.length) return;
+    questions.forEach((q) => {
+      const seqNum =
+        typeof q.question_seq_num === 'number'
+          ? q.question_seq_num
+          : parseInt(q.question_seq_num, 10);
+      const toolbarEl =
+        toolbar[!isNaN(seqNum) && seqNum > 0 ? seqNum - 1 : 0] || toolbar[0];
+      if (!toolbarEl) return;
+      // Prevent duplicate button
+      if (toolbarEl.querySelector('.custom-attach-btn')) return;
+      const span = document.createElement('span');
+      span.className = 'ql-formats';
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'custom-attach-btn cursor-pointer';
+      btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4"><path d="M2.40585 6.0086L1.50604 5.1082C1.02837 4.63053 0.76001 3.98266 0.76001 3.30712C0.76001 2.63159 1.02837 1.98372 1.50604 1.50604C1.98372 1.02837 2.63159 0.76001 3.30712 0.76001C3.98266 0.76001 4.63053 1.02837 5.1082 1.50604L10.5112 6.90899C10.9813 7.38823 11.2432 8.03369 11.24 8.70501C11.2368 9.37633 10.9686 10.0192 10.4939 10.4939C10.0192 10.9686 9.37633 11.2368 8.70501 11.24C8.03369 11.2432 7.38823 10.9813 6.90899 10.5112L4.88311 8.48468C4.59459 8.18415 4.43537 7.7825 4.43962 7.36591C4.44387 6.94933 4.61124 6.55101 4.90583 6.25642C5.20042 5.96184 5.59874 5.79446 6.01532 5.79021C6.43191 5.78597 6.83356 5.94518 7.13409 6.2337L8.25959 7.35919" stroke="#2D3E4F" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>`;
+      btn.onclick = () => {
+        if (questionFileInputRefs.current[q.rid]) {
+          if (questionFileInputRefs.current[q.rid]) {
+            questionFileInputRefs.current[q.rid]!.click();
+          }
+        }
+      };
+      span.appendChild(btn);
+      toolbarEl.appendChild(span);
+    });
+    // Cleanup on unmount or edit mode off
+    return () => {
+      document
+        .querySelectorAll('.custom-attach-btn')
+        .forEach((el) => el.remove());
+    };
+  }, [isEditing, questions]);
 
   const handleEditClick = () => {
     setIsEditing(true);
@@ -202,6 +244,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   const removeGlobalAttachment = (index: number) => {
     const fileObj = newGlobalAttachments.find((_, i) => i === index);
     if (fileObj && fileObj.fileUrl) {
+      setRemovingGlobalIdx(index);
       deleteAttachment.mutate(
         {
           authToken: parseToken.auth_token,
@@ -213,14 +256,22 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
             setNewGlobalAttachments((prev) =>
               prev.filter((_, i) => i !== index)
             );
+            setRemovingGlobalIdx(null);
+          },
+          onSettled: () => {
+            setRemovingGlobalIdx(null);
           },
         }
       );
     }
   };
   const removeQuestionAttachment = (questionId: string, index: number) => {
-    const fileObj = newGlobalAttachments.find((_, i) => i === index);
+    const fileObj = (questionAttachments[questionId] || [])[index];
     if (fileObj && fileObj.fileUrl) {
+      setRemovingQuestionAttachment((prev) => ({
+        ...prev,
+        [questionId]: index,
+      }));
       deleteAttachment.mutate(
         {
           authToken: parseToken.auth_token,
@@ -232,6 +283,16 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
             setQuestionAttachments((prev) => ({
               ...prev,
               [questionId]: prev[questionId].filter((_, i) => i !== index),
+            }));
+            setRemovingQuestionAttachment((prev) => ({
+              ...prev,
+              [questionId]: null,
+            }));
+          },
+          onSettled: () => {
+            setRemovingQuestionAttachment((prev) => ({
+              ...prev,
+              [questionId]: null,
             }));
           },
         }
@@ -329,51 +390,52 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                 : 'overflow-visible'
             }`}
           >
-            {deleteAttachment.isPending ? (
-              <Skeleton variant='rounded' width='100%' height={42} />
-            ) : (
-              (isEditing ? newGlobalAttachments : globalAttachments).map(
-                (file, idx) => (
-                  <div
-                    key={idx}
-                    className='flex items-center justify-between border border-[#CBD6E2] bg-[#FFFBFA] rounded-[2px] p-2 px-3'
-                  >
-                    <div className='flex items-center gap-2'>
-                      <React.Suspense fallback={null}>
-                        <PdfIcon />
-                      </React.Suspense>
-                      <div className='text-[14px] text-[#425A76] font-normal'>
-                        {file.fileName}.{file.fileType}
-                      </div>
+            {(isEditing ? newGlobalAttachments : globalAttachments).map(
+              (file, idx) => (
+                <div
+                  key={idx}
+                  className='flex items-center justify-between border border-[#CBD6E2] bg-[#FFFBFA] rounded-[2px] p-2 px-3'
+                >
+                  <div className='flex items-center gap-2'>
+                    <React.Suspense fallback={null}>
+                      <PdfIcon />
+                    </React.Suspense>
+                    <div className='text-[14px] text-[#425A76] font-normal'>
+                      {file.fileName}.{file.fileType}
                     </div>
-                    {isEditing ? (
+                  </div>
+                  {isEditing ? (
+                    removingGlobalIdx === idx && deleteAttachment.isPending ? (
+                      <CircularProgress size={24} />
+                    ) : (
                       <Tooltip title='Remove file' arrow placement='top'>
                         <button
                           onClick={() => removeGlobalAttachment(idx)}
                           className='cursor-pointer p-[4px]'
+                          disabled={deleteAttachment.isPending}
                         >
                           <React.Suspense fallback={null}>
                             <KeyContactRemoveIcon />
                           </React.Suspense>
                         </button>
                       </Tooltip>
-                    ) : (
-                      <button
-                        onClick={() => handleDownload(file.fileUrl)}
-                        className='p-1 border border-[#CBD6E2] rounded-[2px] cursor-pointer'
-                        style={{
-                          boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
-                          background:
-                            'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
-                        }}
-                      >
-                        <React.Suspense fallback={null}>
-                          <DownloadIcon />
-                        </React.Suspense>
-                      </button>
-                    )}
-                  </div>
-                )
+                    )
+                  ) : (
+                    <button
+                      onClick={() => handleDownload(file.fileUrl)}
+                      className='p-1 border border-[#CBD6E2] rounded-[2px] cursor-pointer'
+                      style={{
+                        boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
+                        background:
+                          'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
+                      }}
+                    >
+                      <React.Suspense fallback={null}>
+                        <DownloadIcon />
+                      </React.Suspense>
+                    </button>
+                  )}
+                </div>
               )
             )}
           </div>
@@ -456,17 +518,6 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                       'clean',
                     ]}
                   />
-                  <button
-                    type='button'
-                    onClick={() =>
-                      questionFileInputRefs.current[q.rid]?.click()
-                    }
-                    className='absolute top-3 right-[8%] w-6 h-5 flex items-center justify-center cursor-pointer'
-                  >
-                    <React.Suspense fallback={null}>
-                      <AttachmentsSideIcon className='w-4 h-4' />
-                    </React.Suspense>
-                  </button>
                   <input
                     ref={(el) => (questionFileInputRefs.current[q.rid] = el)}
                     type='file'
@@ -494,13 +545,8 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                       : 'overflow-visible'
                   }`}
                 >
-                  {deleteAttachment.isPending ? (
-                    <Skeleton variant='rounded' width='100%' height={42} />
-                  ) : (
-                    (isEditing
-                      ? questionAttachments[q.rid]
-                      : q.attachments
-                    ).map((file, index) => (
+                  {(isEditing ? questionAttachments[q.rid] : q.attachments).map(
+                    (file, index) => (
                       <div
                         key={index}
                         className='flex items-center justify-between border border-[#CBD6E2] bg-[#FFFBFA] rounded-[2px] p-2 px-3'
@@ -514,18 +560,24 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                           </div>
                         </div>
                         {isEditing ? (
-                          <Tooltip title='Remove file' arrow placement='top'>
-                            <button
-                              onClick={() =>
-                                removeQuestionAttachment(q.rid, index)
-                              }
-                              className='cursor-pointer p-[4px]'
-                            >
-                              <React.Suspense fallback={null}>
-                                <KeyContactRemoveIcon />
-                              </React.Suspense>
-                            </button>
-                          </Tooltip>
+                          removingQuestionAttachment[q.rid] === index &&
+                          deleteAttachment.isPending ? (
+                            <CircularProgress size={24} />
+                          ) : (
+                            <Tooltip title='Remove file' arrow placement='top'>
+                              <button
+                                onClick={() =>
+                                  removeQuestionAttachment(q.rid, index)
+                                }
+                                className='cursor-pointer p-[4px]'
+                                disabled={deleteAttachment.isPending}
+                              >
+                                <React.Suspense fallback={null}>
+                                  <KeyContactRemoveIcon />
+                                </React.Suspense>
+                              </button>
+                            </Tooltip>
+                          )
                         ) : (
                           <button
                             onClick={() => handleDownload(file.fileUrl)}
@@ -543,7 +595,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                           </button>
                         )}
                       </div>
-                    ))
+                    )
                   )}
                 </div>
               )}

@@ -11,75 +11,6 @@ import {
 } from '../../common-service';
 import { LOGIN } from '../../routes';
 
-// const questions = [
-//   {
-//     rid: 'D001-f712f508-439a-4b8b-b3c9-f2d131197cf7',
-//     question_seq_num: 'QUE-0000000011',
-//     question: 'What is the difference between RAM and ROM?',
-//     notes: 'Test',
-//     is_mandatory: true,
-//     response_on_datetime: null,
-//     attachments: [
-//       {
-//         fileUrl:
-//           'https://developmentthinkrd365sto.blob.core.windows.net/account/D001-224d1cdd-1677-405e-b12e-8ae1a4c09de3/D001-7a5d9553-e828-4a9d-ad8a-ac0b6d11932d/D001-3ed37a08-3232-422c-a9f7-9e8fc56bca4e/attachements/file_example_xls_5000_web_20250722T140934%20(3).csv',
-//         fileName: 'file_example_xls_5000_web_20250722T1409343',
-//         fileSize: '0.64',
-//         fileType: '.csv',
-//       },
-//       {
-//         fileUrl:
-//           'https://developmentthinkrd365sto.blob.core.windows.net/account/D001-224d1cdd-1677-405e-b12e-8ae1a4c09de3/D001-7a5d9553-e828-4a9d-ad8a-ac0b6d11932d/D001-3ed37a08-3232-422c-a9f7-9e8fc56bca4e/attachements/file_example_xls_5000_web_20250722T140934%20(3).csv',
-//         fileName: 'file_example_xls_5000_web_20250722T1409343',
-//         fileSize: '0.64',
-//         fileType: '.csv',
-//       },
-//       {
-//         fileUrl:
-//           'https://developmentthinkrd365sto.blob.core.windows.net/account/D001-224d1cdd-1677-405e-b12e-8ae1a4c09de3/D001-7a5d9553-e828-4a9d-ad8a-ac0b6d11932d/D001-3ed37a08-3232-422c-a9f7-9e8fc56bca4e/attachements/download.jpeg',
-//         fileName: 'download',
-//         fileSize: '0.01',
-//         fileType: '.jpeg',
-//       },
-//       {
-//         fileUrl:
-//           'https://developmentthinkrd365sto.blob.core.windows.net/account////attachements/download.jpeg',
-//         fileName: 'download',
-//         fileSize: '0.01',
-//         fileType: '.jpeg',
-//       },
-//       {
-//         fileUrl:
-//           'https://developmentthinkrd365sto.blob.core.windows.net/account////attachements/UIFields_Requirement%20(2).xlsx',
-//         fileName: 'UIFields_Requirement2',
-//         fileSize: '0.06',
-//         fileType: '.xlsx',
-//       },
-//       {
-//         fileUrl:
-//           'https://developmentthinkrd365sto.blob.core.windows.net/account/D001-224d1cdd-1677-405e-b12e-8ae1a4c09de3/D001-7a5d9553-e828-4a9d-ad8a-ac0b6d11932d/D001-3ed37a08-3232-422c-a9f7-9e8fc56bca4e/attachements/file_example_xls_5000_web_20250722T140934%20(3).csv',
-//         fileName: 'file_example_xls_5000_web_20250722T1409343',
-//         fileSize: '0.64',
-//         fileType: '.csv',
-//       },
-//     ],
-//     is_editable: false,
-//     response: '<p><strong>RAM </strong>is Random Access Memory</p>',
-//   },
-//   {
-//     rid: 'D001-f712f508-439a-4b8b-b3c9-f2d131197cr4',
-//     question_seq_num: 'QUE-0000000012',
-//     question: 'What is the project status?',
-//     notes: 'Test',
-//     is_mandatory: true,
-//     response_on_datetime: null,
-//     attachments: [],
-//     is_editable: false,
-//     response:
-//       'Lorem ipsum dolor sit amet, consectetur adipisicing elit. Soluta, doloremque. Vero, nam hic. Soluta culpa possimus similique impedit a eos',
-//   },
-// ];
-
 const EmailInteraction: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -109,6 +40,12 @@ const EmailInteraction: React.FC = () => {
     parseToken.email as string
   );
 
+  useEffect(() => {
+    // clear authentication when enter interaction
+    if (questions?.questions && questions.questions.length > 0) {
+      localStorage.removeItem('auth');
+    }
+  }, [questions]);
   useEffect(() => {
     if (
       account_rid &&
