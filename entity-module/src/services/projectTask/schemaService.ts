@@ -528,16 +528,16 @@ export class ProjectTaskSchemaService {
     transaction: Transaction
   ) {
     // project resources
-    await this.addProjectResource(
-      accountNumber,
-      projectTaskData,
-      projectData,
-      resourceData,
-      fiscalYear,
-      resourceId,
-      userId,
-      transaction
-    );
+    // await this.addProjectResource(
+    //   accountNumber,
+    //   projectTaskData,
+    //   projectData,
+    //   resourceData,
+    //   fiscalYear,
+    //   resourceId,
+    //   userId,
+    //   transaction
+    // );
     await this.aggregateProjectResourceFiscal(
       accountNumber,
       projectTaskData,
@@ -1747,16 +1747,16 @@ export class ProjectTaskSchemaService {
     transaction: Transaction
   ){
     // project resource
-    await this.addProjectResource(
-      accountNumber,
-      projectTaskData,
-      projectData,
-      resourceData,
-      fiscalYear,
-      resourceId,
-      userId,
-      transaction
-    );
+    // await this.addProjectResource(
+    //   accountNumber,
+    //   projectTaskData,
+    //   projectData,
+    //   resourceData,
+    //   fiscalYear,
+    //   resourceId,
+    //   userId,
+    //   transaction
+    // );
     await this.aggregateProjectResourceFiscalOnUpdate(
       accountNumber,
       projectTaskData,
