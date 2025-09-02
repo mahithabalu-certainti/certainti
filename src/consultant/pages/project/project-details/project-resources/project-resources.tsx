@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useMemo, useState } from 'react';
 import TabPanel from '../../../account-details-sidebar/components/tab';
-import { CreateResourceIcon, ResourceProfileIcon } from '../../../../../assets';
+import { CreateResourceIcon, ResourcesIcon } from '../../../../../assets';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import {
@@ -69,7 +69,7 @@ const projectTabs: ResourceTabs[] = [
 
 export const ProjectResources = ({
   projectID,
-  accountID,
+  accountData,
   projectFiscalDate,
   setExportType,
   setAttachmentParams,
@@ -77,7 +77,11 @@ export const ProjectResources = ({
   accountOrProjectInActive,
 }: {
   projectID?: string;
-  accountID?: string;
+  accountData?: {
+    accountID: string;
+    accountName: string;
+    accountNumber: string;
+  };
   projectFiscalDate?: FormFiscalDateType;
   setExportType?: (type: ExportType) => void;
   setAttachmentParams: React.Dispatch<
@@ -121,11 +125,12 @@ export const ProjectResources = ({
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
   const navigate = useNavigate();
-  // const [searchParams] = useSearchParams();
   const fileId = searchParams.get('page');
   const resID = searchParams.get('pro_res_id');
   const checkDetail = fileId === 'details' && resID;
   const viewDetails = !!checkDetail;
+  const accountID =
+    accountData?.accountID || searchParams.get('accountID') || '';
 
   const [refreshProjectsTrigger, setRefreshProjectsTrigger] = useState<number>(
     Date.now()
@@ -390,6 +395,8 @@ export const ProjectResources = ({
     const queryParams = new URLSearchParams({
       account_Id,
       project_Id,
+      account_name: accountData?.accountName || '',
+      account_number: accountData?.accountNumber || '',
       PFY: JSON.stringify(PFY),
       source: 'createProjectResource',
       currency_rid: currency_rid ?? '',
@@ -529,13 +536,21 @@ export const ProjectResources = ({
               }
               title={'Project Resource'}
               titleIcon={
-                viewDetails ? <ResourceProfileIcon /> : <CreateResourceIcon />
+                viewDetails ? (
+                  <ResourcesIcon
+                    alt='resource header icon'
+                    className='[&>path]:stroke-white w-[14px] h-[14px]'
+                  />
+                ) : (
+                  <CreateResourceIcon />
+                )
               }
               count={totalItems}
               showBackArrow={viewDetails}
               headerButtons={headerButtons}
               projectResourceNumber={resourceData?.r_number}
               onBackClick={handleBackClick}
+              iconBg={viewDetails ? '#7785ff' : ''}
             />
             <div className='border border-[#CBD6E2]'>
               {showProjectResourceDetails ? (

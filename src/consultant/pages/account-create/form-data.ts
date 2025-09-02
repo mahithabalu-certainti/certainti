@@ -88,12 +88,12 @@ export const newKeyContactFields = (
     required: true,
     disabled: disabled || false,
   }),
-  createRadioField('include_in_communication', 'Interaction Recipient?', {
-    radioOptions: YES_NO_OPTIONS,
-    width: '200px',
-    required: true,
-    disabled: disabled || false,
-  }),
+  // createRadioField('include_in_communication', 'Interaction Recipient?', {
+  //   radioOptions: YES_NO_OPTIONS,
+  //   width: '200px',
+  //   required: true,
+  //   disabled: disabled || false,
+  // }),
   createRadioField('interaction_cc_recipient', 'Interaction CC Recipient?', {
     radioOptions: YES_NO_OPTIONS,
     width: '200px',
@@ -118,7 +118,7 @@ const createDynamicField = (
   removeKeyContact: (index: number) => void
 ) => {
   const fieldsArr = [];
-  const groupIndex = Math.floor(index / 9);
+  const groupIndex = Math.floor(index / 8);
   const { name, label, ...rest } = contacts;
   const dynamicName = `${name}_${groupIndex}`;
   if (contacts.type === 'text') {
@@ -347,9 +347,9 @@ export const AccFormData = (
               permissionMap?.['status_rid']?.read &&
               !permissionMap?.['status_rid']?.edit,
           }),
-          createTextField('organisation_name', 'Org Name', {
+          createTextField('organisation_name', 'Business Name', {
             required: true,
-            placeholder: 'Enter Org Name',
+            placeholder: 'Enter Business Name',
             hide:
               isEditView &&
               !permissionMap?.['organisation_name']?.read &&
@@ -361,7 +361,8 @@ export const AccFormData = (
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MIN_ORG_NAME_LEGNTH,
-                errorMessage: 'Org Name must be more than 6 characters long',
+                errorMessage:
+                  'Business Name must be more than 6 characters long',
               },
               {
                 regex: REGEX_PATTERNS.MAX_125,
@@ -374,7 +375,7 @@ export const AccFormData = (
               },
             ],
           }),
-          createTextField('logo', 'Org Logo', {
+          createTextField('logo', 'Business Logo', {
             type: 'file',
             onChange: true,
             required: false,
@@ -523,9 +524,10 @@ export const AccFormData = (
             radioOptions: dataResidency,
             disabled: isEditView,
             hide:
-              isEditView &&
-              !permissionMap?.['data_storage']?.read &&
-              !permissionMap?.['data_storage']?.edit,
+              (!isParentAccountRequired && dataResidency.length === 0) ||
+              (isEditView &&
+                !permissionMap?.['data_storage']?.read &&
+                !permissionMap?.['data_storage']?.edit),
           }),
         ],
       },

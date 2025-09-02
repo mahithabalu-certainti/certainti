@@ -79,6 +79,7 @@ export const ProjectResourceFormData = (
             options: projectResourceCodes,
             required: true,
             onChange: true,
+            showCreateBtn: true,
             placeholder: 'Choose Resource Code',
             resetDependsFields: [
               'salary',
@@ -180,10 +181,10 @@ export const ProjectResourceFormData = (
             required: false,
             minDate: fiscalDate?.startMin,
             maxDate: fiscalDate?.endMax,
-            greaterThan: {
-              field: 'start_date',
-              message: 'End Date must be after Start Date',
-            },
+            // greaterThan: {
+            //   field: 'start_date',
+            //   message: 'End Date must be after Start Date',
+            // },
             disabled:
               isEditView &&
               permissionMap?.['end_date']?.read &&
@@ -392,7 +393,6 @@ export const ProjectResourceFormData = (
       projectResourceCodes,
       isSalaryRequired,
       autoCalculatedValue,
-      isSalaryRequired,
       isEditView,
       permissionMap,
       resourceStatusOptions,

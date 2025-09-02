@@ -241,7 +241,7 @@ export interface KeyContacts {
   key_contact_email: string;
   key_contact_role: string;
   is_primary_contact: boolean;
-  include_in_communication: boolean;
+  include_in_communication?: boolean;
   interaction_cc_recipient?: boolean;
   status_name?: string;
   status_rid: string;
@@ -329,6 +329,7 @@ export type AccountListResponse = {
     account: {
       data: AccountList[];
       total: number;
+      totaltotalResult?: number;
     };
     count: number;
   };
@@ -501,7 +502,11 @@ export type ExportType =
   | 'resource_attachments'
   | 'projectTask'
   | 'project_resource'
-  | 'timesheet';
+  | 'timesheet'
+  | 'interactions'
+  | 'timesheet_project'
+  | 'timesheet_project_resource'
+  | 'timesheet_project_task';
 
 export type FinancialSummaryFlag = 'all' | 'rd_qualified';
 

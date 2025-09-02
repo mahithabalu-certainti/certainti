@@ -77,6 +77,14 @@ export const getImportsFilterFields = (
       hide: !permissionMap?.['size']?.edit && !permissionMap?.['size']?.read,
     },
     {
+      name: 'Status',
+      value: 'status',
+      type: 'text',
+      operatorOption: textOptions,
+      hide:
+        !permissionMap?.['status']?.edit && !permissionMap?.['status']?.read,
+    },
+    {
       name: 'Fiscal Year',
       value: 'fiscal',
       type: 'enum',
@@ -130,21 +138,13 @@ export const getImportsFilterFields = (
         !permissionMap?.['records_failed_to_load']?.read,
     },
     {
-      name: 'Status',
-      value: 'status',
-      type: 'text',
-      operatorOption: textOptions,
-      hide:
-        !permissionMap?.['status']?.edit && !permissionMap?.['status']?.read,
-    },
-    {
       name: 'Status Description',
       value: 'status_description',
       type: 'text',
       operatorOption: nonReqTextOptions,
       hide:
-        !permissionMap?.['status_description']?.edit &&
-        !permissionMap?.['status_description']?.read,
+        !permissionMap?.['status_descriptions']?.edit &&
+        !permissionMap?.['status_descriptions']?.read,
     },
     // {
     //   name: 'Import Type',

@@ -57,7 +57,7 @@ export const exportUserList = async (params: UserListParams = {}) => {
   const url = getUserExportUrl(params);
   const response = await userServiceApi.get(url);
   const base64Data = response.data?.data;
-  generateFile(base64Data);
+  generateFile(base64Data, 'User_Details');
 };
 
 export const getUserDetailUrl = (userId: string): string => {

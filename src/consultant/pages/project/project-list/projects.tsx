@@ -26,10 +26,14 @@ import {
   useGetProjectType,
 } from '../../../services/project';
 import { useFetchClassification } from '../../../services/account';
-import { Switch } from '@mui/material';
+// import { Switch } from '@mui/material';
+import TextButton from '../../../../components/button/text-button';
+import { PROJECT_CREATE } from '../../../../routes';
+import { useNavigate } from 'react-router-dom';
 
 export const Projects: React.FC = () => {
-  const [toggleEnabled, setToggleEnabled] = useState(false);
+  // const [toggleEnabled, setToggleEnabled] = useState(false);
+  const navigate = useNavigate();
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
   const [page, setPage] = useState<number>(1);
   const [totalCount, setTotalCount] = useState<number>(0);
@@ -119,7 +123,8 @@ export const Projects: React.FC = () => {
       fiscalYear: tableParams.fiscalYear,
       globalFilters: tableParams.globalFilters,
       timezone: systemTimezone,
-      bothParentAndChild: toggleEnabled,
+      bothParentAndChild: false,
+      // bothParentAndChild: toggleEnabled, // Commented for it may use in future
     };
     exportProjectData('projectall', projectParams);
   };
@@ -187,12 +192,15 @@ export const Projects: React.FC = () => {
     projectPermissionMap
   );
 
-  const handleToggleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (setToggleEnabled) {
-      setToggleEnabled(event.target.checked);
-    }
+  // Commented for it may use in future
+  // const handleToggleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  //   if (setToggleEnabled) {
+  //     setToggleEnabled(event.target.checked);
+  //   }
+  // };
+  const handleNewProjectCLick = () => {
+    navigate(`${PROJECT_CREATE}?type=global`);
   };
-
   const dropdownOptions = {
     classification: Classification?.data,
     projectType: projectTypeOptions?.data,
@@ -220,6 +228,13 @@ export const Projects: React.FC = () => {
           </div>
         </div>
         <div className='flex gap-3 justify-center items-center'>
+          <div>
+            <TextButton
+              label='New'
+              onClick={() => handleNewProjectCLick()}
+              // sx={ ...BUTTON_STYLES, width: '48px', minWidth: '48px' }
+            />
+          </div>
           <ActionsDropdown actions={menuItems} />
           <div
             className='flex items-center justify-center border border-[#CBD6E2] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] w-[24px] h-[23px] cursor-pointer'
@@ -236,7 +251,7 @@ export const Projects: React.FC = () => {
         </div>
       </div>
       <div className='flex items-center justify-end h-[34px] min-h-[34px] px-4'>
-        <div className='flex items-center gap-2'>
+        {/* <div className='flex items-center gap-2'>  // Commented for it may use in future
           <span className='font-semibold text-[13px] text-[#425A76]'>
             Include Parent
           </span>
@@ -246,7 +261,7 @@ export const Projects: React.FC = () => {
             size='small'
             color='success'
           />
-        </div>
+        </div> */}
         <div className='relative'>
           <button
             aria-describedby={filterId}
@@ -296,7 +311,7 @@ export const Projects: React.FC = () => {
           isProjectEditEnable={isProjectFieldsEditable}
           isProjectDeleteEnable={isProjectDeleteEnable}
           refreshProjectsTrigger={refreshProjectsTrigger}
-          toggleEnabled={toggleEnabled}
+          // toggleEnabled={toggleEnabled} // Commented for it may use in future
           dropdownOptions={dropdownOptions}
         />
       </div>

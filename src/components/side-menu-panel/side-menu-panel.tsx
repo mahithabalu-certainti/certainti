@@ -1,10 +1,11 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AdminSubmenuActiveIcon, ArrowBackIcon, BackIcon } from '../../assets';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import { MenuItem } from '../../consultant/types';
-import { Tooltip } from '@mui/material';
+import { Skeleton, Tooltip } from '@mui/material';
 
 interface SideMenuPanelProps {
   menuItems: MenuItem[];
@@ -14,6 +15,7 @@ interface SideMenuPanelProps {
   showBackIcon?: boolean;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
+  isLoading?: boolean;
 }
 
 const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
@@ -24,6 +26,7 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
   showBackIcon = true,
   isCollapsed,
   onToggleCollapse,
+  isLoading = false,
 }) => {
   const [accountMenus, setAccountMenus] = useState<MenuItem[]>(menuItems);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
@@ -55,7 +58,13 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
         const menu = menus.find((menu) => menu.name === item.id);
         const updatedItem = {
           ...item,
-          hide: module ? !module.is_enabled : menu ? !menu.is_enabled : false,
+          hide: !item.hide
+            ? module
+              ? !module.is_enabled
+              : menu
+                ? !menu.is_enabled
+                : false
+            : true,
         };
         if (item.subMenu) {
           updatedItem.subMenu = updateMenuItems(item.subMenu);
@@ -104,6 +113,12 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
     searchParams.delete('tab');
     searchParams.delete('attachment_entity');
     searchParams.delete('file_id');
+    searchParams.delete('timesheet_id');
+    searchParams.delete('interaction_id');
+    searchParams.delete('interaction_rid');
+    searchParams.delete('interaction_history_id');
+    searchParams.delete('interaction_attachment_count');
+    searchParams.delete('history');
     searchParams.delete('upload');
     //For project resource and task
     searchParams.delete('page');
@@ -198,6 +213,34 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
       });
     }
   }, [accountMenus]); // Run when accountMenus is ready
+
+  const renderSkeletonItem = () => {
+    return (
+      <ul className='overflow-y-auto'>
+        {Array.from({ length: 12 }).map((_, index) => (
+          <li className='min-h-[32px] mb-1.5 pr-2' key={index}>
+            <div
+              className={`w-full flex items-center text-[14px] gap-2 text-left
+              pl-[15px] py-1.5 pr-3 justify-start`}
+            >
+              <Skeleton
+                variant='rectangular'
+                width={16}
+                height={16}
+                sx={{ borderRadius: '2px' }}
+              />
+              <Skeleton
+                variant='text'
+                width='80%'
+                height={20}
+                sx={{ borderRadius: '2px', mb: '1px' }}
+              />
+            </div>
+          </li>
+        ))}
+      </ul>
+    );
+  };
 
   const renderMenuItem = (item: MenuItem): React.ReactNode => {
     if (item.hide) return null;
@@ -433,15 +476,23 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
               }}
               onClick={onToggleCollapse}
             >
-              <BackIcon className='w-[18px] h-[18px]' />
+              <React.Suspense fallback={null}>
+                <BackIcon className='w-[18px] h-[18px]' />
+              </React.Suspense>
             </div>
           )}
         </div>
       </div>
 
-      <ul className='overflow-y-auto'>
-        {accountMenus.map((item) => renderMenuItem(item))}
-      </ul>
+      {isLoading ? (
+        renderSkeletonItem()
+      ) : (
+        <React.Suspense fallback={null}>
+          <ul className='overflow-y-auto'>
+            {accountMenus.map((item) => renderMenuItem(item))}
+          </ul>
+        </React.Suspense>
+      )}
     </div>
   );
 };

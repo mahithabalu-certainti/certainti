@@ -13,11 +13,13 @@ import { AttachmentUploadPayload } from '../../consultant/types/attachment';
 interface AttachmentFormProps {
   onFormSubmit: (data: Partial<AttachmentUploadPayload>) => void;
   formRef: React.RefObject<HTMLFormElement>;
+  projectFiscalYear?: number | string;
 }
 
 export const AttachmentForm: React.FC<AttachmentFormProps> = ({
   onFormSubmit,
   formRef,
+  projectFiscalYear,
 }) => {
   const [currentCategory, setCurrentCategory] = useState<string>('');
   const [showCategoryOthersField, setShowCategoryOthersField] =
@@ -86,7 +88,8 @@ export const AttachmentForm: React.FC<AttachmentFormProps> = ({
     memoizedDocumentTypes,
     categoryTypes.isLoading,
     showCategoryOthersField,
-    showTypeOthersField
+    showTypeOthersField,
+    projectFiscalYear
   );
 
   return (
@@ -94,7 +97,9 @@ export const AttachmentForm: React.FC<AttachmentFormProps> = ({
       <FormBuilder
         loading={false}
         data={formConfig}
-        values={{}}
+        values={
+          projectFiscalYear ? { fiscal_year: String(projectFiscalYear) } : {}
+        }
         outData={submitData}
         formRef={formRef}
         onChange={onChangeField}

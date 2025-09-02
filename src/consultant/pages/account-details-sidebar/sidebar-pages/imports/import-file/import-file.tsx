@@ -5,10 +5,11 @@ import {
   useGetImportEntityTypes,
 } from '../../../../../../common-service';
 import { uploadImportFile } from '../../../../../services/import';
-import { ImportIcon, UploadIcon } from '../../../../../../assets';
+import { ImportsIcon, UploadIcon } from '../../../../../../assets';
 import SectionHeader from '../../../../../../components/details-section/section-header';
 import {
   ButtonDropdown,
+  FileList,
   GlobalFiscalYearDropdown,
 } from '../../../../../../components';
 
@@ -41,6 +42,9 @@ const ImportFile: React.FC<ImportFileProps> = ({
   const [fiscalYear, setFiscalYear] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
 
+  const { successToast, errorToast } = useToast();
+  const entityTypes = useGetImportEntityTypes();
+
   useEffect(() => {
     if (
       message?.type === 'error' &&
@@ -53,8 +57,11 @@ const ImportFile: React.FC<ImportFileProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entityType, fiscalYear, selectedFiles]);
 
-  const { successToast, errorToast } = useToast();
-  const entityTypes = useGetImportEntityTypes();
+  useEffect(() => {
+    if (entityType === 'Resource' || entityType === 'Resource Skill') {
+      setFiscalYear('');
+    }
+  }, [entityType]);
 
   const entityOptions = useMemo(
     () =>
@@ -77,6 +84,7 @@ const ImportFile: React.FC<ImportFileProps> = ({
       };
     }
   );
+
   const handleFiscalYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
     setFiscalYear(value);
@@ -86,9 +94,6 @@ const ImportFile: React.FC<ImportFileProps> = ({
     setMessage({ type: 'error', text });
   };
 
-  const showSuccess = (text: string) => {
-    setMessage({ type: 'success', text });
-  };
   const ACCEPTED_FILE_TYPES = [
     'text/csv',
     'application/vnd.ms-excel', // .xls
@@ -99,23 +104,38 @@ const ImportFile: React.FC<ImportFileProps> = ({
     if (!files) return [];
 
     const validFiles: File[] = [];
+    let hasError = false;
 
     for (const file of Array.from(files)) {
+      if (/\s/.test(file.name)) {
+        showError(
+          `"${file.name}" is invalid. Filename must not contain spaces.`
+        );
+        hasError = true;
+        continue;
+      }
+
       const isAcceptedType =
         ACCEPTED_FILE_TYPES.includes(file.type) ||
         /\.(csv|xls|xlsx)$/i.test(file.name);
 
       if (!isAcceptedType) {
         showError(`"${file.name}" is not a valid CSV or Excel file.`);
+        hasError = true;
         continue;
       }
 
       if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
         showError(`"${file.name}" exceeds the 50MB limit.`);
+        hasError = true;
         continue;
       }
 
       validFiles.push(file);
+    }
+
+    if (!hasError && validFiles.length > 0) {
+      setMessage(null);
     }
 
     return validFiles;
@@ -127,7 +147,11 @@ const ImportFile: React.FC<ImportFileProps> = ({
       return;
     }
 
-    if (!fiscalYear) {
+    if (
+      !fiscalYear &&
+      entityType !== 'Resource' &&
+      entityType !== 'Resource Skill'
+    ) {
       showError('Please select a Fiscal Year.');
       return;
     }
@@ -151,18 +175,25 @@ const ImportFile: React.FC<ImportFileProps> = ({
     }
 
     try {
+      const currentYear = new Date().getFullYear();
+
       const payload: UploadImportPayload = {
         entity_type: entityType,
-        file: selectedFiles[0],
-        fiscal_year: fiscalYear,
+        file: file,
+        fiscal_year:
+          entityType === 'Resource' || entityType === 'Resource Skill'
+            ? currentYear.toString()
+            : fiscalYear,
         account_rid: accountId,
         related_to: 'account',
         related_to_rid: accountId,
         uploaded_by_user_rid: userId,
         account_r_number: accountNo,
       };
+
       setLoading(true);
       const response = await uploadImportFile(payload);
+
       if (
         response?.data.statusCode === 201 ||
         response?.data.statusCode === 200
@@ -204,7 +235,6 @@ const ImportFile: React.FC<ImportFileProps> = ({
     const validFiles = validateFiles(e.target.files);
     if (validFiles.length > 0) {
       setSelectedFiles(validFiles);
-      showSuccess(`File "${validFiles[0].name}" added successfully.`);
     }
   };
 
@@ -214,7 +244,6 @@ const ImportFile: React.FC<ImportFileProps> = ({
 
     if (validFiles.length > 0) {
       setSelectedFiles((prevFiles) => [...prevFiles, ...validFiles]);
-      showSuccess(`File "${validFiles[0].name}" added successfully.`);
     }
   };
 
@@ -225,6 +254,7 @@ const ImportFile: React.FC<ImportFileProps> = ({
   const openFileDialog = () => {
     fileInputRef.current?.click();
   };
+
   const goBack = () => {
     handleShowUpload();
   };
@@ -251,7 +281,14 @@ const ImportFile: React.FC<ImportFileProps> = ({
     <div className='h-auto border border-[#CBD6E2] flex flex-col rounded-tr-[2px] rounded-tl-[2px] '>
       <SectionHeader
         title='Imports'
-        titleIcon={<ImportIcon alt='Imports-upload-icon' />}
+        titleIcon={
+          <ImportsIcon
+            className='[&>path]:stroke-white'
+            alt='Imports-header-icon'
+          />
+        }
+        iconBg='#af78ff'
+        bgType='circle'
         className='border-b border-[#CBD6E2] h-[40px]'
         buttons={headerButtons}
       />
@@ -280,6 +317,9 @@ const ImportFile: React.FC<ImportFileProps> = ({
             onChange={handleFiscalYearChange}
             placeholder='FY-Year'
             className='text-[#425A76] text-[13px] font-semibold border border-[#CBD6E2] shadow-[0px_1px_2px_0px_rgba(42,54,71,0.05)] bg-gradient-to-b from-[#FFFFFF] to-[#E4E6E7]'
+            disabled={
+              entityType === 'Resource' || entityType === 'Resource Skill'
+            }
           />
         </div>
       </div>
@@ -330,6 +370,12 @@ const ImportFile: React.FC<ImportFileProps> = ({
             {message.text}
           </div>
         )}
+
+        <FileList
+          fileInputRef={fileInputRef}
+          selectedFiles={selectedFiles}
+          setSelectedFiles={setSelectedFiles}
+        />
       </div>
     </div>
   );

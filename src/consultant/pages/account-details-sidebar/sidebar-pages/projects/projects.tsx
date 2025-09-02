@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ProjectHeaderIcon } from '../../../../../assets';
 import TabPanel from '../../components/tab';
-// import ListTable from '../../components/table';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import ResourceTableHeader from '../resources/resource-table-header';
@@ -15,7 +13,7 @@ import { generatePath, useNavigate, useParams } from 'react-router-dom';
 import { Project, ProjectListParams } from '../../../../types/project';
 import { ListTable } from '../../../../../components/table';
 import { AccessRestricted } from '../../../../../components/account-restricted';
-import { checkPermission } from '../../../../../common-utils';
+import { checkPermission, REGEX_PATTERNS } from '../../../../../common-utils';
 import { AllModules, AllPermissions } from '../../../../../common-service';
 import { ResourceTabs } from '../resources/resources';
 import {
@@ -28,6 +26,7 @@ import { UPDATE_PROJECT } from '../../../../../api/graphql/queries/project-query
 import { useMutation } from '@apollo/client';
 import { resourceClient } from '../../../../../api/graphql/clients/client';
 import { useToast } from '../../../../../hooks';
+import { ProjectsSideIcon } from '../../../../../assets';
 const BUTTON_STYLES = {
   height: '24px !important',
   fontSize: '13px',
@@ -155,7 +154,8 @@ const Projects: React.FC<ProjectsProps> = ({
       filters: appliedFilters,
       fiscalYear: convertedFiscalYear,
       accountNumber: accountid ?? accountDetails?.accountDetails?.account_rid,
-      bothParentAndChild: toggleEnabled,
+      bothParentAndChild: false,
+      // bothParentAndChild: toggleEnabled  // Commented for it may use in future
     },
     projectOverviewIsEnable && projectViewAllIsEnable,
     refreshProjectsTrigger
@@ -401,6 +401,7 @@ const Projects: React.FC<ProjectsProps> = ({
 
     if (!childFiscal) return;
 
+    // Prepare update data
     const updateData = updates.reduce<Record<string, FieldChangeValue>>(
       (acc, item) => {
         acc[item.editId || item.columnId] = item.value;
@@ -424,6 +425,46 @@ const Projects: React.FC<ProjectsProps> = ({
       updateData['project_classification_other'] = '';
     }
 
+    // Calculate total_cost if any cost field is updated
+    const isCostFieldUpdated = updates.some(
+      (item) =>
+        item.columnId === 'total_cost_fte' ||
+        item.columnId === 'total_cost_subcon' ||
+        item.columnId === 'total_cost_nonlabor'
+    );
+
+    if (isCostFieldUpdated) {
+      // Get current values from childFiscal or updateData
+      const fteCost =
+        updateData['total_cost_fte'] ?? childFiscal.total_cost_fte ?? 0;
+      const subconCost =
+        updateData['total_cost_subcon'] ?? childFiscal.total_cost_subcon ?? 0;
+      const nonLaborCost =
+        updateData['total_cost_nonlabor'] ??
+        childFiscal.total_cost_nonlabor ??
+        0;
+
+      // Convert to numbers and ensure they are valid
+      const fteCostNum = parseFloat(fteCost as string) || 0;
+      const subconCostNum = parseFloat(subconCost as string) || 0;
+      const nonLaborCostNum = parseFloat(nonLaborCost as string) || 0;
+
+      // Calculate total_cost
+      const totalCost = fteCostNum + subconCostNum + nonLaborCostNum;
+
+      // Validate total_cost
+      const totalCostString = totalCost.toFixed(2);
+      if (!REGEX_PATTERNS.EFFORTS_NUMBER.test(totalCostString)) {
+        errorToast(
+          'Invalid total cost calculated. Must be a positive number with up to 16 digits and 2 decimal places.'
+        );
+        return;
+      }
+
+      // Add total_cost to updateData
+      updateData['total_cost'] = totalCostString;
+    }
+
     try {
       const res = await updateProjectMutation({
         variables: { data: updateData },
@@ -443,19 +484,19 @@ const Projects: React.FC<ProjectsProps> = ({
 
         setProjectList(newProjects);
       } else {
-        errorToast(result?.statusMessage || 'Failed to update filed');
+        errorToast(result?.statusMessage || 'Failed to update field');
         setProjectList(previousProject);
       }
     } catch (error) {
-      errorToast((error as Error)?.message || 'Failed to update filed');
+      errorToast((error as Error)?.message || 'Failed to update field');
       setProjectList(previousProject);
     }
   };
-
-  const isProjectViewEditEnable = checkPermission(
-    permission,
-    AllPermissions.PROJECTS_VIEW_EDIT
-  );
+  // Commented for it may use in future
+  // const isProjectViewEditEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.PROJECTS_VIEW_EDIT
+  // );
 
   if (!projectIsEnable || !projectViewAllIsEnable) return <AccessRestricted />;
 
@@ -476,7 +517,8 @@ const Projects: React.FC<ProjectsProps> = ({
         sortFilterCount={sortFilterCount}
         setSortFilterCount={setSortFilterCount}
         toggleLabel='Include Parent'
-        showToggle={isProjectViewEditEnable}
+        showToggle={false}
+        // showToggle={isProjectViewEditEnable} // Commented for it may use in future
         toggleEnabled={toggleEnabled}
         setToggleEnabled={setToggleEnabled}
       />
@@ -486,8 +528,14 @@ const Projects: React.FC<ProjectsProps> = ({
             value={'projects'}
             title='Projects'
             count={totalItems}
-            titleIcon={<ProjectHeaderIcon alt='project-header-icon' />}
+            titleIcon={
+              <ProjectsSideIcon
+                alt='project-header-icon'
+                className='[&>path]:stroke-[#E54787] w-[14px] h-[14px]'
+              />
+            }
             headerButtons={headerButtons}
+            iconBg='#FFE7F1'
           />
           <div className='border border-[#CBD6E2]'>
             <ListTable

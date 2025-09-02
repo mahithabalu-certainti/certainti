@@ -27,12 +27,14 @@ export interface KeyContacts {
   key_contact_email: string;
   key_contact_role: string;
   is_primary_contact: boolean;
-  include_in_communication: boolean;
+  include_in_communication?: boolean;
+  interaction_cc_recipient?: boolean;
   status_name?: string;
   status_rid: string;
   action_type?: string;
   key_contact_status?: Status;
   role_name?: string;
+  rid?: string;
 }
 export interface NewProjectData {
   showOthersField?: boolean;

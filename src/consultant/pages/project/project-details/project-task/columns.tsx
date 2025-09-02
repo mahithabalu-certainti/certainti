@@ -4,8 +4,11 @@ import {
   PROJECT_TASK_REGEX,
   valueDisplay,
 } from '../../../../../common-utils';
-import { ListTableColumn } from '../../../../../components/table/types';
-import { SelectOption } from '../../../../types';
+import {
+  DependencyRowData,
+  ListTableColumn,
+} from '../../../../../components/table/types';
+import { FormFiscalDateType, SelectOption } from '../../../../types';
 import { ProjectTaskListType } from '../../../../types/project-task';
 
 export const formatDateToYMD = (dateString: string): string => {
@@ -23,7 +26,8 @@ export const getProjectTaskColumns = (
     string,
     { read: boolean; edit: boolean }
   >,
-  accountOrProjectInActive?: boolean
+  accountOrProjectInActive?: boolean,
+  fiscalDate?: FormFiscalDateType
 ): ListTableColumn<ProjectTaskListType>[] => [
   {
     id: 'resource_code',
@@ -55,7 +59,7 @@ export const getProjectTaskColumns = (
     },
     render: (row: ProjectTaskListType) => (
       <span
-        className='cursor-pointer hover:!text-blue-600 hover:underline'
+        className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
         onClick={() => onClick(row)}
       >
         {row.resource_code}
@@ -93,18 +97,83 @@ export const getProjectTaskColumns = (
       !permissionMapTaskTableColumn?.['resource_role']?.edit,
   },
   {
-    id: 'start_date',
-    label: 'Task Date',
+    id: 'effective_from',
+    label: 'Start Date',
     sortable: true,
+    editId: 'start_date',
     sortId: 'start_date',
     width: 160,
+    editable:
+      permissionMapTaskTableColumn?.['start_date']?.read &&
+      permissionMapTaskTableColumn?.['start_date']?.edit,
     hide:
       !permissionMapTaskTableColumn?.['start_date']?.read &&
       !permissionMapTaskTableColumn?.['start_date']?.edit,
+    field: {
+      type: 'date',
+      required: false,
+      placeholder: 'YYYY-MM-DD',
+      dateConfig: {
+        disableFutureDates: true,
+        minDate: fiscalDate?.startMin,
+        maxDate: fiscalDate?.startMax,
+      },
+      getFieldData: (rowData: DependencyRowData) => {
+        return String(rowData.start_date);
+      },
+      resetDependentFields: ['end_date'],
+      dependencies: [
+        {
+          dependsOn: ['end_date'],
+          action: 'enable',
+          condition: (value) => !value,
+          message: '',
+        },
+      ],
+    },
     render: (row: ProjectTaskListType) =>
       row.start_date ? getDateFormat(row.start_date) : '-',
   },
-
+  {
+    id: 'end_date',
+    label: 'End Date',
+    sortable: true,
+    editId: 'end_date',
+    sortId: 'end_date',
+    width: 160,
+    editable:
+      permissionMapTaskTableColumn?.['end_date']?.read &&
+      permissionMapTaskTableColumn?.['end_date']?.edit,
+    hide:
+      !permissionMapTaskTableColumn?.['end_date']?.read &&
+      !permissionMapTaskTableColumn?.['end_date']?.edit,
+    field: {
+      type: 'date',
+      required: false,
+      placeholder: 'YYYY-MM-DD',
+      dateConfig: {
+        disableFutureDates: true,
+        minDate: fiscalDate?.startMin,
+        maxDate: fiscalDate?.endMax,
+      },
+      getFieldData: (rowData: DependencyRowData) => {
+        return String(rowData.end_date);
+      },
+      dependencies: [
+        {
+          dependsOn: ['effective_from'],
+          condition: (_, rowData) => {
+            const startDate = rowData.start_date;
+            return !startDate;
+          },
+          action: 'disabled',
+          message: '',
+        },
+      ],
+    },
+    render: (row: ProjectTaskListType) =>
+      row.end_date ? getDateFormat(row.end_date) : '-',
+  },
   {
     id: 'total_cost_pro_task',
     label: 'Cost',

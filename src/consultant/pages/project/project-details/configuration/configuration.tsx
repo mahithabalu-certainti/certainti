@@ -1,9 +1,5 @@
 import { useSearchParams } from 'react-router-dom';
-import {
-  ComingSoon,
-  RealatedListDetailsIcon,
-  ResourceProfileIcon,
-} from '../../../../../assets';
+import { ComingSoon, DetailsIcon, ResourcesIcon } from '../../../../../assets';
 import { Settings } from './settings';
 import { SectionTabPanel } from '../../../../../components';
 import { useRef, useState } from 'react';
@@ -116,12 +112,17 @@ const Configuration: React.FC = () => {
   const getTitleIcon = () => {
     switch (list) {
       case 'users':
-        return <ResourceProfileIcon alt='users-header-icon' />;
+        return (
+          <ResourcesIcon
+            alt='resource header icon'
+            className='[&>path]:stroke-white w-[14px] h-[14px]'
+          />
+        );
       case 'settings':
         return (
-          <RealatedListDetailsIcon
+          <DetailsIcon
             alt='settings-header-icon'
-            className='w-7 h-7'
+            className='[&>path]:stroke-[#294F98] w-[14px] h-[14px]'
           />
         );
       default:
@@ -182,6 +183,8 @@ const Configuration: React.FC = () => {
         count={count}
         showItemCount={list !== 'settings'}
         hideSection={hideSection}
+        iconBg={list === 'users' ? '#7785ff' : '#D7E5FF'}
+        bgType='circle'
       />
       {renderContent()}
     </div>

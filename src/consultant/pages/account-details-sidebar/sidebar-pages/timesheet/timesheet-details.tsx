@@ -18,11 +18,32 @@ import {
 import { FailureType, ImportEntityType } from '../../../../types/imports';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
-import { AllPermissions } from '../../../../../common-service';
+import { AllPermissions, AllModules } from '../../../../../common-service';
 import { TabMenus } from '../resources/resources';
+import TimesheetProjectTab from './timesheet-details-tab/project-tab/project-tab';
+import { ExportType, TimeSheetListURLParams } from '../../../../types';
+import TimesheetResourcesTab from './timesheet-details-tab/resource-tab/resource-tab';
+import TimesheetProjectTask from './timesheet-details-tab/project-task/project-task';
+import { TimesheetProjectExportListURLParams } from '../../../../types/timesheet-projects';
 
 interface TimesheetDetailsProps {
   handleBackClick: () => void;
+  appliedFilters?: Record<string, string | number | boolean | string[]>;
+  bothParentAndChild: boolean;
+  setExportType?: (type: ExportType) => void;
+  setTimesheetParams?: React.Dispatch<
+    React.SetStateAction<TimeSheetListURLParams>
+  >;
+  onRefreshClick?: number;
+  setTimesheetProjectParams: React.Dispatch<
+    React.SetStateAction<TimesheetProjectExportListURLParams>
+  >;
+  setTimesheetResourceParams: React.Dispatch<
+    React.SetStateAction<TimesheetProjectExportListURLParams>
+  >;
+  setTimesheetTaskParams: React.Dispatch<
+    React.SetStateAction<TimesheetProjectExportListURLParams>
+  >;
 }
 
 const tabs: TabMenus[] = [
@@ -34,37 +55,49 @@ const tabs: TabMenus[] = [
   },
   {
     label: 'Project',
-    value: 'project',
+    value: 'timesheet_project',
     hide: false,
-    id: AllPermissions.ACCOUNT_TIMESHEET_PROJECT_VIEW,
+    id: AllModules.PROJECTS,
   },
   {
     label: 'Resource',
-    value: 'resource',
+    value: 'timesheet_project_resource',
     hide: false,
-    id: AllPermissions.ACCOUNT_TIMESHEET_RESOURCE_VIEW,
+    id: AllModules.RESOURCES,
   },
   {
     label: 'Project Task',
-    value: 'projectTask',
+    value: 'timesheet_project_task',
     hide: false,
-    id: AllPermissions.ACCOUNT_TIMESHEET_PROJECT_TASK_VIEW,
+    id: AllModules.PROJECT_TASK,
   },
 ];
 
 const TimesheetDetails: React.FC<TimesheetDetailsProps> = ({
   handleBackClick,
+  bothParentAndChild,
+  appliedFilters,
+  setExportType,
+  onRefreshClick,
+  setTimesheetProjectParams,
+  setTimesheetResourceParams,
+  setTimesheetTaskParams,
 }) => {
   const navigate = useNavigate();
   const { accountid } = useParams();
   const [searchParams] = useSearchParams();
-  const fileId = searchParams.get('file_id') || undefined;
+  const fileId = searchParams.get('timesheet_id') || undefined;
   const { permission } = useSelector((state: RootState) => state.permission);
 
-  const [value, setValue] = useState('details'); // Resource inner tab value
-
+  const [value, setValue] = useState('details');
+  const [documentRid, setDocumentRid] = useState<string>('');
   const { data, isLoading, error } = useTimesheetDetails(accountid, fileId);
 
+  useEffect(() => {
+    if (data) {
+      setDocumentRid(data?.document_rid || '');
+    }
+  }, [data]);
   const handleExportFailureData = (
     type: FailureType,
     entity: ImportEntityType
@@ -133,11 +166,11 @@ const TimesheetDetails: React.FC<TimesheetDetailsProps> = ({
       ),
       key: 'records_failed_to_load',
     },
-    {
-      label: 'Entity',
-      value: data?.entity,
-      key: 'entity',
-    },
+    // {
+    //   label: 'Entity',
+    //   value: data?.entity,
+    //   key: 'entity',
+    // },
     {
       label: 'Status',
       value: (
@@ -221,13 +254,12 @@ const TimesheetDetails: React.FC<TimesheetDetailsProps> = ({
   const auditDetails = applyHidePermission(auditInfo, permissionMap);
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: string) => {
-    // update the URL with the tab value
     searchParams.set('tab', newValue);
+    if (setExportType) setExportType(undefined as unknown as ExportType);
     navigate({ search: searchParams.toString() }, { replace: true });
   };
 
   useEffect(() => {
-    // update tab when refereshing the page
     const tab = searchParams.get('tab');
     if (tab) {
       setValue(tab);
@@ -241,7 +273,7 @@ const TimesheetDetails: React.FC<TimesheetDetailsProps> = ({
         subValue={data?.r_number}
         titleIcon={
           <TimeSheetIcon
-            className='[&>path]:stroke-white'
+            className='[&>path]:stroke-white w-[14px] h-[14px]'
             alt='Timesheet-header-icon'
           />
         }
@@ -306,6 +338,32 @@ const TimesheetDetails: React.FC<TimesheetDetailsProps> = ({
                 isAudit={true}
               />
             </>
+          )}
+          {value === 'timesheet_project' && (
+            <TimesheetProjectTab
+              bothParentAndChild={bothParentAndChild}
+              documentRid={documentRid}
+              appliedFilters={appliedFilters}
+              onRefreshClick={onRefreshClick}
+              setTimesheetProjectParams={setTimesheetProjectParams}
+            />
+          )}
+          {value === 'timesheet_project_resource' && (
+            <TimesheetResourcesTab
+              documentRid={documentRid}
+              appliedFilters={appliedFilters}
+              onRefreshClick={onRefreshClick}
+              setTimesheetResourceParams={setTimesheetResourceParams}
+            />
+          )}
+
+          {value === 'timesheet_project_task' && (
+            <TimesheetProjectTask
+              documentRid={documentRid}
+              appliedFilters={appliedFilters}
+              onRefreshClick={onRefreshClick}
+              setTimesheetTaskParams={setTimesheetTaskParams}
+            />
           )}
         </>
       )}

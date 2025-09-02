@@ -43,7 +43,7 @@ const BUTTON_STYLES = {
 
 export const Accounts: React.FC = () => {
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>();
-  // const [searchTerm, setSearchTerm] = useState<string>('');
+  const [expandChild, setExpandChild] = useState<boolean>(false);
   const [order, setOrder] = useState<'asc' | 'desc'>('asc');
   const [orderBy, setOrderBy] = useState<keyof AccountList>('account_name');
   const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';
@@ -277,7 +277,17 @@ export const Accounts: React.FC = () => {
         </div>
       </div>
 
-      <div className='flex items-center justify-end h-[34px] min-h-[34px] px-4'>
+      <div className='flex items-center justify-end gap-4 h-[34px] min-h-[34px] px-4'>
+        <TextButton
+          label={expandChild ? 'Collapse' : 'Expand All'}
+          onClick={() => setExpandChild(!expandChild)}
+          sx={{
+            ...BUTTON_STYLES,
+            width: '80px',
+            minWidth: '80px',
+            maxWidth: '80px',
+          }}
+        />
         <div className='flex gap-2 relative'>
           <button
             aria-describedby={filterId}
@@ -337,6 +347,7 @@ export const Accounts: React.FC = () => {
           onRefreshClick={onRefreshClick}
           setColumnAnchorEl={setColumnAnchorEl}
           columnAnchorEl={columnAnchorEl}
+          expandChild={expandChild}
         />
       </div>
     </div>

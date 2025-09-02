@@ -20,6 +20,7 @@ import {
   SettingIcon,
   TimeSheetIcon,
   ConfigIcon,
+  InteractionsIcon,
 } from '../../../assets';
 import { InfoSection, PageHeader, SideMenuPanel } from '../../../components';
 import { ACCOUNT } from '../../../routes';
@@ -37,6 +38,7 @@ import {
   Resources,
   Timesheet,
   Configuration,
+  Interactions,
 } from '../account-details-sidebar';
 import {
   accountDetailsProps,
@@ -63,13 +65,25 @@ import { exportProjectData } from '../../services/project';
 import { ProjectListParams } from '../../types/project';
 import { exportAttachmentsData } from '../../services/attachments/attachments-service';
 import { AttachmentsListExportParams } from '../../types/attachment';
-import { exportImportsData, exportTimesheetData } from '../../services/import';
+import {
+  exportImportsData,
+  exportTimesheetData,
+  exportTimesheetProjectData,
+  exportTimesheetResourceData,
+  exportTimesheetTaskData,
+} from '../../services/import';
+
 import { ImportsListURLParams } from '../../types/imports';
 import {
   exportFinancialProjectCost,
   exportFinancialResourceCost,
 } from '../../services/financial/financial-service';
 import DetailsSectionSkeleton from '../../../components/skeleton-component/detailsskeleton';
+import {
+  exportInteractionsHistory,
+  exportInteractions,
+} from '../../services/interactions/interactions-service';
+import { TimesheetProjectExportListURLParams } from '../../types/timesheet-projects';
 
 export const AccountDetails = () => {
   const [searchParams] = useSearchParams();
@@ -88,6 +102,10 @@ export const AccountDetails = () => {
     (state: RootState) => state.account
   );
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
+  const interactionHistoryId = searchParams.get('interaction_history_id');
+  const interactionId = searchParams.get('interaction_id');
+  const interactionRID = searchParams.get('interaction_rid');
+  const viewDetails = !!interactionId || !!interactionRID;
 
   // Permission Mangement
   const accountIsEnable = checkPermission(modules, AllModules.ACCOUNTS);
@@ -107,7 +125,14 @@ export const AccountDetails = () => {
     permission,
     AllPermissions.PROJECTS_EXPORT
   );
-
+  const isProjectResourceExportViewEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECTS_RESOURCES_EXPORT
+  );
+  const isProjectTaskExportViewEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECTS_TASK_EXPORT
+  );
   const isAttachmentViewEnable = checkPermission(
     permission,
     AllPermissions.ATTACHMENT_VIEW_EDIT
@@ -184,6 +209,41 @@ export const AccountDetails = () => {
     account_rid: accountid || '',
   });
 
+  const [interactionsParams, setInteractionsParams] =
+    useState<AttachmentsListExportParams>({
+      sortBy: 'status_name',
+      sortOrder: 'ASC',
+      filters: {},
+      page: 1,
+      limit: 100,
+    });
+  const [timesheetProjectParams, setTimesheetProjectParams] =
+    useState<TimesheetProjectExportListURLParams>({
+      sortBy: 'project_code',
+      sortOrder: 'ASC',
+      filters: {},
+      fiscalYear: convertedFiscalYear,
+      account_rid: accountid || '',
+      bothParentAndChild: toggleEnabled,
+      documentRid: '',
+    });
+  const [timesheetResourceParams, setTimesheetResourceParams] =
+    useState<TimesheetProjectExportListURLParams>({
+      sortBy: 'project_code',
+      sortOrder: 'ASC',
+      filters: {},
+      account_rid: accountid || '',
+      documentRid: '',
+    });
+  const [timesheetTaskParams, setTimesheetTaskParams] =
+    useState<TimesheetProjectExportListURLParams>({
+      sortBy: 'project_code',
+      sortOrder: 'ASC',
+      filters: {},
+      account_rid: accountid || '',
+      documentRid: '',
+    });
+
   const [financialResCostParams, setFinancialResCostParams] =
     useState<ProjectFinancialResourceExportParams>({
       sortBy: 'project_code',
@@ -202,13 +262,18 @@ export const AccountDetails = () => {
   const [exportType, setExportType] = useState<ExportType>('resource');
 
   const handleExport = (exportType: ExportType) => {
+    const tab = searchParams.get('tab');
     if (
       searchParams.get('list') !== 'resources' &&
       searchParams.get('list') !== 'projects' &&
       searchParams.get('list') !== 'attachments' &&
       searchParams.get('list') !== 'imports' &&
       searchParams.get('list') !== 'financial' &&
-      searchParams.get('list') !== 'timesheet'
+      searchParams.get('list') !== 'timesheet' &&
+      searchParams.get('list') !== 'interactions' &&
+      searchParams.get('tab') !== 'timesheet_project' &&
+      searchParams.get('tab') !== 'timesheet_project_resource' &&
+      searchParams.get('tab') !== 'timesheet_project_task'
     ) {
       return;
     }
@@ -265,7 +330,7 @@ export const AccountDetails = () => {
       });
     } else if (exportType === 'imports') {
       exportImportsData(importsParams);
-    } else if (exportType === 'timesheet') {
+    } else if (exportType === 'timesheet' && !tab) {
       exportTimesheetData({
         ...importsParams,
         filters: {
@@ -273,6 +338,12 @@ export const AccountDetails = () => {
           entity: { equals: 'project_task' },
         },
       });
+    } else if (exportType === 'timesheet_project') {
+      exportTimesheetProjectData(timesheetProjectParams);
+    } else if (exportType === 'timesheet_project_resource') {
+      exportTimesheetResourceData(timesheetResourceParams);
+    } else if (exportType === 'timesheet_project_task') {
+      exportTimesheetTaskData(timesheetTaskParams);
     } else if (exportType === 'financial_resource_cost') {
       exportFinancialResourceCost({
         ...financialResCostParams,
@@ -283,6 +354,34 @@ export const AccountDetails = () => {
         ...financialProjectCostParams,
         ...financialProjectPayload,
       });
+    } else if (exportType === 'interactions') {
+      if (interactionHistoryId) {
+        const projectInteractionHistoryExportPayload = {
+          account_rid: accountid || '',
+          interaction_rid: interactionHistoryId,
+          page: interactionsParams?.page || 1,
+          limit: interactionsParams?.limit || 100,
+          sort: interactionsParams.sortBy || 'status_name',
+          sort_by: interactionsParams?.sortOrder || 'ASC',
+          filters: interactionsParams?.filters || {},
+          flag: 'account',
+        };
+        exportInteractionsHistory(projectInteractionHistoryExportPayload);
+        return;
+      } else {
+        const projectInteractionExportPayload = {
+          account_rid: accountid || '',
+          fiscal_year: convertedFiscalYear,
+          page: interactionsParams?.page || 1,
+          limit: interactionsParams?.limit || 100,
+          sort: interactionsParams?.sortBy || 'action',
+          sort_by: interactionsParams?.sortOrder || 'ASC',
+          filters: interactionsParams?.filters || {},
+          flag: 'account',
+        };
+        exportInteractions(projectInteractionExportPayload);
+        return;
+      }
     } else {
       exportData(exportType, exportPayload);
     }
@@ -371,8 +470,16 @@ export const AccountDetails = () => {
       return !isFinancialResourceCostExportEnable;
     } else if (list === 'financial' && tab === 'project_cost') {
       return !isFinancialProjectCostExportEnable;
-    } else if (list === 'timesheet') {
+    } else if (list === 'timesheet' && !tab) {
       return !isTimesheetExportEnable;
+    } else if (list === 'interactions') {
+      return viewDetails;
+    } else if (list === 'timesheet' && tab === 'timesheet_project') {
+      return !isProjectExportEnable;
+    } else if (list === 'timesheet' && tab === 'timesheet_project_resource') {
+      return !isProjectResourceExportViewEnable;
+    } else if (list === 'timesheet' && tab === 'timesheet_project_task') {
+      return !isProjectTaskExportViewEnable;
     } else {
       return true;
     }
@@ -412,7 +519,6 @@ export const AccountDetails = () => {
       setActiveKey(location.state.activeKey);
     }
   }, [location.state]);
-
   const renderContent = () => {
     switch (activeKey) {
       case 'financial':
@@ -466,6 +572,15 @@ export const AccountDetails = () => {
             setToggleEnabled={setToggleEnabled}
           />
         );
+      case 'interactions':
+        return (
+          <Interactions
+            accountInActive={accountInActive}
+            accountDetails={{ ...data?.data } as accountDetailsProps}
+            setExportType={setExportType}
+            setInteractionsParams={setInteractionsParams}
+          />
+        );
       case 'cases':
         return <Cases />;
       case 'activities':
@@ -479,6 +594,9 @@ export const AccountDetails = () => {
           <Timesheet
             setExportType={setExportType}
             setTimesheetParams={setImportsParams}
+            setTimesheetProjectParams={setTimesheetProjectParams}
+            setTimesheetResourceParams={setTimesheetResourceParams}
+            setTimesheetTaskParams={setTimesheetTaskParams}
           />
         );
       case 'imports':
@@ -513,6 +631,7 @@ export const AccountDetails = () => {
         key: 'financial',
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: disable,
+        hide: disable,
         icon: FinancialIcon,
       },
       {
@@ -527,6 +646,7 @@ export const AccountDetails = () => {
         key: 'resources',
         id: AllModules.RESOURCES,
         disabled: disable,
+        hide: disable,
         icon: ResourcesIcon,
       },
       {
@@ -534,13 +654,23 @@ export const AccountDetails = () => {
         key: 'projects',
         id: AllMenus.PROJECTS,
         disabled: disable,
+        hide: disable,
         icon: ProjectsSideIcon,
+      },
+      {
+        name: 'Interactions',
+        key: 'interactions',
+        id: AllModules.PROJECT_INTERACTIONS,
+        disabled: disable,
+        hide: disable,
+        icon: InteractionsIcon,
       },
       {
         name: 'Cases',
         key: 'cases',
         id: AllMenus.CASES,
         disabled: disable,
+        hide: disable,
         icon: CasesIcon,
       },
       {
@@ -548,6 +678,7 @@ export const AccountDetails = () => {
         key: 'activities',
         id: AllModules.ACTIVITIES,
         disabled: disable,
+        hide: disable,
         icon: ActivitiesIcon,
       },
       {
@@ -555,6 +686,7 @@ export const AccountDetails = () => {
         key: 'notes',
         id: AllMenus.NOTES,
         disabled: disable,
+        hide: disable,
         icon: NotesSideIcon,
       },
       {
@@ -562,6 +694,7 @@ export const AccountDetails = () => {
         key: 'attachments',
         id: AllMenus.ATTACHMENTS,
         disabled: disable,
+        hide: disable,
         icon: AttachmentsSideIcon,
       },
       {
@@ -569,6 +702,7 @@ export const AccountDetails = () => {
         key: 'checklist',
         id: AllMenus.CHECKLISTS,
         disabled: disable,
+        hide: disable,
         icon: ChecklistIcon,
       },
       {
@@ -583,6 +717,7 @@ export const AccountDetails = () => {
         key: 'imports',
         id: AllMenus.IMPORTS,
         disabled: disable,
+        hide: disable,
         icon: ImportsIcon,
       },
       {
@@ -590,6 +725,7 @@ export const AccountDetails = () => {
         key: 'configuration',
         id: AllMenus.CONFIGURATION,
         disabled: disable,
+        hide: disable,
         icon: ConfigIcon,
         subMenu: [
           {
@@ -597,6 +733,7 @@ export const AccountDetails = () => {
             key: 'users',
             id: AllMenus.MANAGE_ACCOUNT_ACCESS,
             disabled: disable,
+            hide: disable,
             icon: ResourcesIcon,
           },
           {
@@ -604,6 +741,7 @@ export const AccountDetails = () => {
             key: 'settings',
             id: AllMenus.ACCOUNT_SETTINGS,
             disabled: disable,
+            hide: disable,
             icon: SettingIcon,
           },
         ],
@@ -647,6 +785,7 @@ export const AccountDetails = () => {
           showActions={false}
           showSettings={false}
           goBack={goBack}
+          isLoading={isPending}
         />
       </div>
       <InfoSection
@@ -671,6 +810,7 @@ export const AccountDetails = () => {
             showBackIcon={true}
             isCollapsed={isCollapsed}
             onToggleCollapse={() => setIsCollapsed((prev) => !prev)}
+            isLoading={isPending}
           />
         </div>
         <div
