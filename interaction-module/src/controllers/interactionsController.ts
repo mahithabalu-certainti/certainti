@@ -516,23 +516,31 @@ async function exportAllInteractions (req : Request, res : Response) {
     const result = await interactionService.listInteractionPrjAccount(data)
     if(result.status == HttpStatus.SUCCESS) {
       const finalStructuredData = result.data.interactions.length < 1 ? [] : result.data.interactions.map(( d : any) => {
-       return {
+      
+        return {
           "Interaction ID": d.r_number,
-          "Last Sent Date": d.last_resent_on === null ? '' : new Date(d.last_resent_on).toISOString().split('T')[0],
-          "Recipient Name": d.recipient_name,
-          "Age": d.interaction_age,
-          "Interaction Link": d.interaction_url,
-          "Recipient Email": d.recipient_email,
-          "Response Source": d.response_source,
-          "Last Reminder Date": d.last_reminder_on == null ? '' : new Date(d.last_reminder_on).toISOString().split('T')[0],
-          "Last Updated Date": d.modified_datetime == null ? '' : new Date(d.modified_datetime).toISOString().split('T')[0],
-          "Last Response Update": d.response_updated_on == null ? '' : new Date(d.response_updated_on).toISOString().split('T')[0],
-          "Response Date": d.response_submitted_on === null ? '' : new Date(d.response_submitted_on).toISOString().split('T')[0],
-          "Parent Interaction ID": d.parent_interaction_rid,
+          "Project Code": d.project_code,
+          "Iteration": d.interaction_iteration,
+          "Age (Days)": d.interaction_age,
+          "Fiscal Year": d.fiscal_year,
           "Status": d.status_name,
+          "Recipient Name": d.recipient_name,
+          "Recipient Email": d.recipient_email,
+          "Last Sent Date": d.last_resent_on === null ? '' : new Date(d.last_resent_on).toISOString().split('T')[0],
+          "Last Reminder Date": d.last_reminder_on == null ? '' : new Date(d.last_reminder_on).toISOString().split('T')[0],
+          "Response Date": d.response_submitted_on === null ? '' : new Date(d.response_submitted_on).toISOString().split('T')[0],
+          "Last Response Update": d.response_updated_on == null ? '' : new Date(d.response_updated_on).toISOString().split('T')[0],
+          "Attachments": d.attachment_count,
+          "Interaction Link": d.interaction_url,
+          "Parent Interaction ID": d.parent_interaction_rid,
           "Type": d.interaction_type_name,
-          "Created By": d.created_user_name,
-          "Last Updated By": d.updated_user_name
+          "Response Source": d.response_source_name,
+           "Created By": d.created_user_name,
+           "Created Date": d.created_datetime == null ? '' : new Date(d.created_datetime).toISOString().split('T')[0],
+           "Last Updated By": d.updated_user_name,
+          "Last Updated Date": d.modified_datetime == null ? '' : new Date(d.modified_datetime).toISOString().split('T')[0],
+
+          
         }
       });
 
@@ -627,22 +635,27 @@ async function exportAllInteractionSummary (req : Request, res : Response) {
       let structuredData = result.data.length < 1 ? [] : result.data.map(( d : any) => {
         return {
           "Interaction ID": d.r_number,
-          "Last Sent Date": d.last_resent_on === null ? '' : new Date(d.last_resent_on).toISOString().split('T')[0],
-          "Recipient Name": d.recipient_name,
-          "Age": d.interaction_age,
-          "Interaction Link": d.interaction_url,
-          "Recipient Email": d.recipient_email,
-          "Response Source": d.response_source,
-          "Last Reminder Date": d.last_reminder_on == null ? '' : new Date(d.last_reminder_on).toISOString().split('T')[0],
-          "Last Updated Date": d.modified_datetime == null ? '' : new Date(d.modified_datetime).toISOString().split('T')[0],
-          "Last Response Update": d.response_updated_on == null ? '' : new Date(d.response_updated_on).toISOString().split('T')[0],
-          "Response Date": d.response_submitted_on === null ? '' : new Date(d.response_submitted_on).toISOString().split('T')[0],
-          "Parent Interaction ID": d.parent_interaction_rid,
+          "Account Name":d.account_name,
+          "Project Code": d.project_code,
+          "Iteration": d.interaction_iteration,
+          "Age (Days)": d.interaction_age,
+          "Fiscal Year": d.fiscal_year,
           "Status": d.status_name,
+          "Recipient Name": d.recipient_name,
+          "Recipient Email": d.recipient_email,
+          "Last Sent Date": d.last_resent_on === null ? '' : new Date(d.last_resent_on).toISOString().split('T')[0],
+          "Last Reminder Date": d.last_reminder_on == null ? '' : new Date(d.last_reminder_on).toISOString().split('T')[0],
+          "Response Date": d.response_submitted_on === null ? '' : new Date(d.response_submitted_on).toISOString().split('T')[0],
+          "Last Response Update": d.response_updated_on == null ? '' : new Date(d.response_updated_on).toISOString().split('T')[0],
+          "Attachments": d.attachment_count,
+          "Interaction Link": d.interaction_url,
+          "Parent Interaction ID": d.parent_interaction_rid,
           "Type": d.interaction_type_name,
+          "Response Source": d.response_source_name,
           "Created By": d.created_user_name,
-          "Last Updated By": d.updated_user_name
-        }
+          "Created Date":d.created_datetime == null ? '' : new Date(d.created_datetime).toISOString().split('T')[0],
+          "Last Updated By": d.updated_user_name,
+          "Last Updated Date": d.modified_datetime == null ? '' : new Date(d.modified_datetime).toISOString().split('T')[0]}
         });
     const base64Response = await generateExcelBase64(structuredData, "Interactions")
     handleSuccessResponse(res, base64Response);

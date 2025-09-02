@@ -34,7 +34,7 @@ async function startKafkaConsumer() {
     await consumer.subscribe({ topic, fromBeginning: false });
     await consumer.run({
       eachMessage: async ({ message }: { message: any }) => {
-        await interactionsController.processKafkaMessages(message.value?.toString());
+         interactionsController.processKafkaMessages(message.value?.toString());
       },
     });
   } catch (err: any) {
