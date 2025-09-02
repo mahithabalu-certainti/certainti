@@ -124,14 +124,6 @@ export const validateDependentFields = <T extends RowData>(
 ): Record<string, string> => {
   const errors: Record<string, string> = {};
 
-  // Get current values for start and end dates
-  const startDateValue = getDependentValue(
-    'effective_from',
-    rowData,
-    editingCells
-  );
-  const endDateValue = getDependentValue('end_date', rowData, editingCells);
-
   for (const column of columns) {
     const cellKey = Object.keys(editingCells).find(
       (key) => editingCells[key].columnId === column.id
@@ -148,27 +140,13 @@ export const validateDependentFields = <T extends RowData>(
       continue;
     }
 
-    // Special validation for start/end date mutual requirement
-    if (column.id === 'effective_from' || column.id === 'end_date') {
-      // If either start or end date has a value, both must have values
-      if (
-        (startDateValue && !endDateValue) ||
-        (!startDateValue && endDateValue)
-      ) {
-        if (column.id === 'effective_from' && endDateValue && !cellValue) {
-          errors[cellKey] = 'Both Effective date and End date must be provided';
-          continue;
-        }
-        if (column.id === 'end_date' && startDateValue && !cellValue) {
-          errors[cellKey] = 'Both Effective date and End date must be provided';
-          continue;
-        }
-      }
-    }
-
-    // Validate date fields with fiscal year and date range validation
+    // Date-specific validation
     if (column.field?.type === 'date' && column.field?.dateConfig) {
       const dateConfig = column.field.dateConfig;
+
+      // Default to legacy names if not provided
+      const relatedStartField = dateConfig.startFieldId || 'effective_from';
+      const relatedEndField = dateConfig.endFieldId || 'end_date';
 
       if (cellValue) {
         const selectedDate = dayjs(String(cellValue));
@@ -229,24 +207,44 @@ export const validateDependentFields = <T extends RowData>(
       }
 
       // Special validation for start/end date relationships
-      if (column.id === 'end_date') {
-        const startDateValue = getDependentValue(
-          'effective_from',
-          rowData,
-          editingCells
-        );
+      const startDateValue = getDependentValue(
+        relatedStartField,
+        rowData,
+        editingCells
+      );
+      const endDateValue = getDependentValue(
+        relatedEndField,
+        rowData,
+        editingCells
+      );
 
-        if (
-          cellValue &&
-          startDateValue &&
-          dayjs(String(cellValue)).isSameOrBefore(
-            dayjs(String(startDateValue)),
-            'day'
-          )
-        ) {
-          errors[cellKey] = 'End Date must be after Effective Date';
+      // If either has a value, both must be present
+      if (
+        (startDateValue && !endDateValue) ||
+        (!startDateValue && endDateValue)
+      ) {
+        if (column.id === relatedStartField && endDateValue && !cellValue) {
+          errors[cellKey] = 'Both Start Date and End Date must be provided';
           continue;
         }
+        if (column.id === relatedEndField && startDateValue && !cellValue) {
+          errors[cellKey] = 'Both Start Date and End Date must be provided';
+          continue;
+        }
+      }
+
+      // End date must be after start date
+      if (
+        column.id === relatedEndField &&
+        cellValue &&
+        startDateValue &&
+        dayjs(String(cellValue)).isSameOrBefore(
+          dayjs(String(startDateValue)),
+          'day'
+        )
+      ) {
+        errors[cellKey] = 'End Date must be after Start Date';
+        continue;
       }
     }
 
