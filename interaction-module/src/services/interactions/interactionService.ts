@@ -1297,7 +1297,7 @@ export class InteractionService {
       } else {
         await this.interactionSchemaService.updateAssessmentErrorResponse(parsedMessage, accountNumber, project_id, company_id, transaction_id);
       }
-      this.logger.info(`Processed Kafka message for interaction_rid: ${company_id}`);
+      this.logger.info(`Processed Kafka message for account: ${company_id}`);
     } catch (err) {
       this.logger.error("Error processing Kafka message", err);
     }
