@@ -972,7 +972,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             onChange={(e) => {
               const inputValue = e.target.value;
               if (field.formatCostValue) {
-                // For Indian numbering format, remove existing formatting first, then apply new formatting
                 const cleanValue = removeFormatCostValue(inputValue);
                 // Only format if it's a valid number
                 if (/^\d*\.?\d*$/.test(cleanValue)) {
