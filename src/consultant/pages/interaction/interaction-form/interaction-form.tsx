@@ -111,13 +111,13 @@ const InteractionForm = () => {
   const source = searchParams.get('source');
   const accountName = searchParams.get('account_name');
   const isProjectFields = source !== 'account';
-  const isGloalInteraction = source === 'global';
+  const isGlobalInteraction = source === 'global';
 
   useEffect(() => {
-    if (isGloalInteraction && !isEditView) {
+    if (isGlobalInteraction && !isEditView) {
       dispatch(fetchAccountsThunk());
     }
-  }, [isGloalInteraction, dispatch, isEditView]);
+  }, [isGlobalInteraction, dispatch, isEditView]);
 
   useEffect(() => {
     if (projectDetails && source !== 'account') {
@@ -214,7 +214,7 @@ const InteractionForm = () => {
       sortOrder: 'ASC',
       accountNumber: accountId || currentAccountId || '',
     },
-    !isProjectFields || isGloalInteraction
+    !isProjectFields || isGlobalInteraction
   );
 
   const statusOptions = useMemo(
@@ -503,7 +503,7 @@ const InteractionForm = () => {
 
   const formLoading =
     isLoading ||
-    (projectsLoading && !isGloalInteraction) ||
+    (projectsLoading && !isGlobalInteraction) ||
     interactionStatus.isLoading ||
     loading;
 
@@ -598,7 +598,7 @@ const InteractionForm = () => {
             <div
               className={`grid md:grid-cols-3 gap-x-4 gap-y-[2px] px-10 pt-1`}
             >
-              {isGloalInteraction && !isEditView ? (
+              {isGlobalInteraction && !isEditView ? (
                 <ExpandCollapseDropdown
                   label='Account Name'
                   selectedValue={currentAccountId}
@@ -633,7 +633,7 @@ const InteractionForm = () => {
             <div
               className={`grid md:grid-cols-3 gap-x-4 gap-y-[2px] px-10 pt-1 mb-5`}
             >
-              {(!isProjectFields || isGloalInteraction) && !isEditView ? (
+              {(!isProjectFields || isGlobalInteraction) && !isEditView ? (
                 <div className='w-full'>
                   <label
                     className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
@@ -642,7 +642,7 @@ const InteractionForm = () => {
                     Project Code
                     <span className='text-red-500'> *</span>
                   </label>
-                  {projectsLoading && isGloalInteraction ? (
+                  {projectsLoading && isGlobalInteraction ? (
                     <div>
                       <Skeleton
                         variant='rounded'
