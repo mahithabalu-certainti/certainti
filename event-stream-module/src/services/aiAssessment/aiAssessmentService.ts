@@ -66,7 +66,7 @@ export class AIAssessmentService {
   }
   async processKafkaMessage(message: any): Promise<void> {
     try {
-      console.log("Processing Kafka message...", message);
+      this.logger.info("Processing Kafka message...", message);
 
       const parsedMessage =
         typeof message === "string" ? JSON.parse(message) : message;
@@ -88,26 +88,23 @@ export class AIAssessmentService {
           const transaction_id = uuidv4();
 
           const payload = { company_id, project_id: id, input_text, transaction_id:transaction_id };
-          console.log("Trigger AI payload", payload);
+         this.logger.info(`Trigger AI payload: ${JSON.stringify(payload)}`);
           let callTriggerAi = await axios.post(process.env.TRIGGER_AI_URL!, payload, {
                headers: headers
            });
-          console.log("Trigger AI Response", callTriggerAi);
+
+          this.logger.info(`Trigger AI Response: ${JSON.stringify(callTriggerAi)}`);
         }
       } else {
          const transaction_id = uuidv4();
         const payload = { company_id, project_id, input_text ,transaction_id};
-        console.log("Trigger Ai invoked", payload);
+       this.logger.info(`Trigger AI payload: ${JSON.stringify(payload)}`);
          let callTriggerAi = await axios.post(process.env.TRIGGER_AI_URL!, payload, {
                headers: headers
          });
-          console.log("Trigger Ai Response", callTriggerAi);
-          
+        this.logger.info(`Trigger AI Response: ${JSON.stringify(callTriggerAi)}`);
       }
 
-      this.logger.info(
-        `Processed Kafka message for interaction_rid: ${company_id}`
-      );
     } catch (err) {
       console.log(err)
       this.logger.error("Error processing Kafka message", err);
