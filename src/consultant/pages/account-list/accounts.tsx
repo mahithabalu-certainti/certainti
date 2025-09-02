@@ -277,7 +277,7 @@ export const Accounts: React.FC = () => {
         </div>
       </div>
 
-      <div className='flex items-center justify-end gap-4 h-[34px] min-h-[34px] px-4'>
+      <div className='flex items-center justify-end gap-2 h-[34px] min-h-[34px] px-4'>
         <TextButton
           label={expandChild ? 'Collapse' : 'Expand All'}
           onClick={() => setExpandChild(!expandChild)}
@@ -288,7 +288,17 @@ export const Accounts: React.FC = () => {
             maxWidth: '80px',
           }}
         />
-        <div className='flex gap-2 relative'>
+        <div className='flex gap-1 relative'>
+          <button
+            aria-describedby={modalId}
+            className={`w-[120px] h-[24px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative border border-[#CBD6E2] px-0 py-0 normal-case ${isModalOpen ? 'bg-[#F3F3F3]' : 'bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'} hover:text-[#425A76] transition-colors duration-150`}
+            style={{
+              boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
+            }}
+            onClick={handleColumnVisibility}
+          >
+            Show/Hide Fields
+          </button>
           <button
             aria-describedby={filterId}
             className={`w-[64px] h-[24px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
@@ -307,13 +317,6 @@ export const Accounts: React.FC = () => {
                 </span>
               </div>
             ) : null}
-          </button>
-          <button
-            aria-describedby={modalId}
-            className={`w-[120px] h-[24px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative ${isModalOpen ? 'bg-[#F3F3F3]' : ''}`}
-            onClick={handleColumnVisibility}
-          >
-            Show/Hide Fields
           </button>
           <Suspense fallback={null}>
             <FilterModal
