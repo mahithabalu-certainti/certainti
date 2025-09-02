@@ -10,7 +10,7 @@ export const manageUserGroupColumns = (
     editId: 'group_name',
     sortId: 'group_name',
     label: 'Group Names',
-    width: '45%',
+    width: '33.3%',
     sortable: true,
     sticky: true,
     sx: {
@@ -44,10 +44,17 @@ export const manageUserGroupColumns = (
     },
   },
   {
+    id: 'group_type_name',
+    sortId: 'group_type_name',
+    label: 'Group Type',
+    width: '33.3%',
+    sortable: true,
+  },
+  {
     id: 'user_count',
     sortId: 'user_count',
     label: 'Number of Users',
-    width: '43%',
+    width: '25%',
     sortable: true,
   },
 ];
