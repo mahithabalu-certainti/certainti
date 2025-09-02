@@ -1051,8 +1051,7 @@ export class InteractionService {
       let responseData = result[0][0].attachments
       const createdByIds = [...new Set(responseData.map((d : any) => d.created_by))]
       const fetchUsers = await mainDb.query(rawQueries.fetchUser(createdByIds))
-      const mapUsers : Map<string, string> = new Map(fetchUsers[0].map((d : any) => [d.rid, `${d.first_name}, ${d.last_name}`]))
-
+      const mapUsers : Map<string, string> = new Map(fetchUsers[0].map((d : any) => [d.rid, `${d.first_name} ${d.last_name}`]))
       responseData = await Promise.all(responseData.map(async (d : any) => {
         return {
           ...d,
