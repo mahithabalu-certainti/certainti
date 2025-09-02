@@ -308,6 +308,7 @@ class ProjectGraphQlServices {
                             total_cost_subcon: d.total_cost_subcon,
                             total_cost_nonlabor: d.total_cost_nonlabor,
                             project_type_name: d.project_type_name,
+                            currency_symbol: d.currency_symbol,
                         }
                     })
                     }
