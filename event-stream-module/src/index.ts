@@ -34,10 +34,9 @@ async function startKafkaConsumer() {
     await consumer.connect();
     const topic = process.env.KAFKA_AI_REQUEST_TRIGGER_TOPIC || "ai_assessment_request";
     await consumer.subscribe({ topic, fromBeginning: false });
-
     await consumer.run({
       eachMessage: async ({ message }: { message: any }) => {
-        console.log("Received message:", message.value?.toString());
+        console.log("Received message: ", message.value?.toString());
         await aiAssessmentController.processKafkaMessages(message.value?.toString());
       },
     });
