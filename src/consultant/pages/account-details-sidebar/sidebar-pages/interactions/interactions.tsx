@@ -83,6 +83,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   const [count, setCount] = useState<number>(0);
   const [sendModalOpen, setSendModalOpen] = useState(false);
   const [selectedRows, setSelectedRows] = useState<InteractionList[]>([]);
+  const [clearSelectedRows, setClearSelectedRows] = useState<boolean>(false);
 
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
     (state: RootState) => state.account
@@ -170,6 +171,7 @@ const Interactions: React.FC<InteractionsProps> = ({
 
       setInteractionList(updatedInteractions);
       setSelectedRows([]);
+      setClearSelectedRows((prev) => !prev);
     }
   }, [data]);
 
@@ -264,6 +266,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
     setSelectedRows([]);
+    setClearSelectedRows((prev) => !prev);
   };
 
   const handleRowsPerPageChange = (newPageSize: number) => {
@@ -289,6 +292,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       searchParams.set('interaction_id', rowId);
       navigate({ search: searchParams.toString() }, { replace: true });
       setSelectedRows([]);
+      setClearSelectedRows((prev) => !prev);
       setCount(0);
     }
   };
@@ -342,6 +346,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       searchParams.set('interaction_history_id', interactionHistoryId);
       navigate({ search: searchParams.toString() }, { replace: true });
       setSelectedRows([]);
+      setClearSelectedRows((prev) => !prev);
     }
   };
 
@@ -357,6 +362,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       );
       navigate({ search: searchParams.toString() }, { replace: true });
       setSelectedRows([]);
+      setClearSelectedRows((prev) => !prev);
     }
   };
 
@@ -462,6 +468,7 @@ const Interactions: React.FC<InteractionsProps> = ({
                 sortBy={sortField}
                 sortOrder={sortBy}
                 onSort={handleSortRequest}
+                clearSelectedRows={clearSelectedRows}
               />
             ) : (
               <HistoryTable setCount={setCount} />

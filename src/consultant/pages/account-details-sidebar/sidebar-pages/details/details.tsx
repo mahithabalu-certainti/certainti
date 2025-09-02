@@ -11,6 +11,9 @@ import { AllMenus, AllPermissions } from '../../../../../common-service';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import DetailsSectionSkeleton from '../../../../../components/skeleton-component/detailsskeleton';
+import { ProjectTriggerAI } from '../../../../services/project';
+import { ProjectTiggerAIPayload } from '../../../../types/project';
+import { useToast } from '../../../../../hooks';
 // import { checkPermission } from '../../../../../common-utils';
 
 const BUTTON_STYLES = {
@@ -95,6 +98,28 @@ const Details: React.FC<DetailsProps> = ({
     const accountId = accountDetails?.accountById?.rid || '';
     navigate(ACCOUNT + '/edit/' + accountId);
   };
+  const { successToast } = useToast();
+  const triggerAIMutation = ProjectTriggerAI();
+  const handleTriggerAI = () => {
+    const accountId = accountDetails?.accountById?.rid || '';
+    const payload: ProjectTiggerAIPayload = {
+      data: [
+        {
+          account_rid: accountId,
+          project_fiscal_rid: [],
+        },
+      ],
+      type: 'account',
+    };
+    triggerAIMutation.mutate(payload, {
+      onSuccess: (res) => {
+        successToast(res.statusMessage);
+      },
+      onError: (err) => {
+        console.log(err);
+      },
+    });
+  };
 
   const menuActivity = [
     {
@@ -123,6 +148,15 @@ const Details: React.FC<DetailsProps> = ({
       onClick: handleEdit,
       sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
       hide: !isAccountEditEnable,
+    },
+    {
+      label: 'Trigger AI',
+      variant: 'outlined' as const,
+      onClick: () => handleTriggerAI(),
+      loading: triggerAIMutation.isPending,
+      sx: { ...BUTTON_STYLES, width: '96px', minWidth: '96px' },
+      // hide: !projectDownloadIsEnable,
+      hide: false,
     },
   ];
 
@@ -173,6 +207,7 @@ const Details: React.FC<DetailsProps> = ({
                       label={button.label}
                       // variant={button.variant}
                       onClick={button.onClick}
+                      loading={button.loading}
                       aria-label={button.label}
                       sx={button.sx}
                       disabled={button.disabled}

@@ -258,6 +258,7 @@ export interface ListTableProps<T extends RowData> {
   unCheckedToggleTooltip?: string;
   toggleClick?: (rowId: string, value: boolean) => void;
   showEmptyRow?: boolean;
+  clearSelectedRows?: boolean;
 }
 
 export interface EditingCell {

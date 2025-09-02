@@ -39,6 +39,7 @@ interface ProjectOverviewProps {
   headerButtons: {
     label: string;
     variant: 'text' | 'outlined' | 'contained';
+    loading?: boolean;
     onClick: () => void;
     sx?: SxProps<Theme>;
     disabled?: boolean;
@@ -340,6 +341,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
                 <TextButton
                   key={`header-button-${index}`}
                   label={button.label}
+                  loading={button.loading}
                   onClick={
                     button.label.toLowerCase() === 'view'
                       ? toggleViewMode

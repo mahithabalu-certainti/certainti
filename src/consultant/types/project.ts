@@ -239,3 +239,17 @@ export type FiscalYearType = {
   startDate?: string;
   endDate?: string;
 };
+
+export type ProjectTiggerAIResponse = {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+};
+interface ProjectItem {
+  account_rid: string;
+  project_fiscal_rid: string[];
+}
+export type ProjectTiggerAIPayload = {
+  data: ProjectItem[];
+  type: string;
+};

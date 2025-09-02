@@ -102,6 +102,7 @@ const ListTable = <T extends RowData>({
   checkedToggleTooltip,
   unCheckedToggleTooltip,
   toggleClick,
+  clearSelectedRows = false,
 }: ListTableProps<T>) => {
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [editingCells, setEditingCells] = useState<MultipleEditingCells>({});
@@ -183,7 +184,9 @@ const ListTable = <T extends RowData>({
     grandchildrenKey,
     getRowId,
   ]);
-
+  useEffect(() => {
+    setSelectedRows(new Set());
+  }, [clearSelectedRows]);
   // Handle row expansion
   const toggleRowExpansion = (rowId: string, level: number = 0) => {
     setExpandedRows((prev) => ({

@@ -1,14 +1,23 @@
-import { useQuery, UseQueryResult } from '@tanstack/react-query';
+import { useMutation, useQuery, UseQueryResult } from '@tanstack/react-query';
 import {
   GetProjectTypeApiResponse,
   Project,
   ProjectAccordionResponse,
   // ProjectList,
   ProjectListParams,
-  // ProjectListResponse,
+  ProjectTiggerAIPayload,
 } from '../../types/project';
-import { accountServiceApi, resourceServiceApi } from '../../../api/api';
-import { ProjectExportListURL, ProjectListURL } from '../urls';
+import {
+  accountServiceApi,
+  interactionServiceApi,
+  resourceServiceApi,
+} from '../../../api/api';
+import {
+  ProjectExportListURL,
+  ProjectListURL,
+  ProjectTriggerAIUrl,
+} from '../urls';
+import { CommonApiResponse } from '../../../common-service';
 
 export const fetchProjects = async (
   params: ProjectListParams
@@ -127,4 +136,44 @@ export const useGetProjectType = () => {
     refetchOnMount: false, // Don't refetch on component mount
     refetchOnReconnect: false, // Don't refetch on reconnect
   });
+};
+
+// export const ProjectTriggerAI = () => {
+//   return useApiMutationSericve<
+//     Partial<ProjectTiggerAIResponse>,
+//     ProjectTiggerAIPayload
+//   >(ProjectTriggerAIUrl, 'post');
+// };
+
+// export const ProjectTriggerAI = async (
+//   params: ProjectTiggerAIPayload
+// ): Promise<ProjectTiggerAIResponse> => {
+//   const { data } = await interactionServiceApi.post<ProjectTiggerAIPayload>(
+//     ProjectTriggerAIUrl,
+//     params
+//   );
+//   return data;
+// };
+
+export const TriggerInteraction = async (
+  body: Partial<ProjectTiggerAIPayload>
+): Promise<CommonApiResponse> => {
+  try {
+    const { data } = await interactionServiceApi.post<CommonApiResponse>(
+      ProjectTriggerAIUrl(),
+      body
+    );
+    return data;
+  } catch (error) {
+    console.error('Error create interaction:', error);
+    throw error;
+  }
+};
+
+export const ProjectTriggerAI = () => {
+  return useMutation<CommonApiResponse, Error, Partial<ProjectTiggerAIPayload>>(
+    {
+      mutationFn: (body) => TriggerInteraction({ ...body }),
+    }
+  );
 };
