@@ -33,8 +33,16 @@ async function startKafkaConsumer() {
     const topic = process.env.KAFKA_AI_RESPONSE_TRIGGER_TOPIC || 'ai_assessment_response';
     await consumer.subscribe({ topic, fromBeginning: false });
     await consumer.run({
-      eachMessage: async ({ message }: { message: any }) => {
-        await interactionsController.processKafkaMessages(message.value?.toString());
+      eachMessage: async ({ topic, partition, message }) => {
+        try {
+          console.log(
+            `Received message from ${topic}[${partition}] @ offset ${message.offset}:`,
+            message.value?.toString()
+          );
+          interactionsController.processKafkaMessages(message.value?.toString());
+        } catch (err) {
+          console.error("Error processing message:", err);
+        }
       },
     });
   } catch (err: any) {
