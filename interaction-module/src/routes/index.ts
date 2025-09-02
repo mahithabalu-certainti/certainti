@@ -2,6 +2,7 @@ import { Router } from "express";
 import { errorLog, successLog } from "../utils/helpers";
 import interactionRoutes from "./interactionRoutes";
 import extInteractionRoute from "./extInteractionRoute";
+import webhookRoute from "./webhookRoute";
 
 const routes: Router = Router();
 
@@ -28,5 +29,6 @@ routes.get("/health", async (req, res) => {
 // Initialize interaction module endpoints here
 routes.use("/interactions", interactionRoutes);
 routes.use("/extInteractions", extInteractionRoute);
+routes.use("/email", webhookRoute);
 
 export default routes;

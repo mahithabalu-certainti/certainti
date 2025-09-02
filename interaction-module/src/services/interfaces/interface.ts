@@ -42,7 +42,10 @@ export interface IInteractionService {
     data?: { interactions: any };
   }>;
 
-  getInteractionStatus(statusScope?: string, currentStatus?: string): Promise<{
+  getInteractionStatus(
+    statusScope?: string,
+    currentStatus?: string
+  ): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -101,24 +104,35 @@ export interface IInteractionService {
     errorMessage?: string;
     data?: { interactionResponse: any };
   }>;
-  fetchInteractionHistory(data : any) : Promise<{
-    statusCodeValue : string,
-    data : any
-  }>
-  listInteractionAttachments(data : any) : Promise<{
-    statusCodeValue : string,
-    page : number,
-    limit : number,
-    totalRecords : number,
-    attachments : any
-  }>
-  listResponseHistoryDetails(data : any) : Promise<{
-    statusCodeValue : string,
-    data : any
-  }>
+  fetchInteractionHistory(data: any): Promise<{
+    statusCodeValue: string;
+    data: any;
+  }>;
+  listInteractionAttachments(data: any): Promise<{
+    statusCodeValue: string;
+    page: number;
+    limit: number;
+    totalRecords: number;
+    attachments: any;
+  }>;
+  listResponseHistoryDetails(data: any): Promise<{
+    statusCodeValue: string;
+    data: any;
+  }>;
   triggerAI(data : any) : Promise<{
     statusMessage : string,
     status : any,
     data : any
   }>
+}
+
+export interface IWebHookService {
+  webhookHanlder(
+    data: any
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: any;
+  }>;
 }
