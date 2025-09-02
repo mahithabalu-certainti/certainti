@@ -1231,7 +1231,8 @@ async getAccountGroups(
         'created_datetime': (value: any) => this.processDateFilter('created_datetime', value, whereClause),
         'modified_datetime': (value: any) => this.processDateFilter('modified_datetime', value, whereClause),
         'created_by': (value: any) => this.processRelationFilter('created_by', value, whereClause, includeClause),
-        'user_count': (value: any) => this.processUserCountFilter(value, whereClause)
+        'user_count': (value: any) => this.processUserCountFilter(value, whereClause),
+        'organization_name': (value: any) => this.processOrganisationNameFilter( value, whereClause), // Added organisation filter
       };
       Object.keys(filters).forEach(key => {
         
@@ -1396,6 +1397,79 @@ private createUserCountCondition(operator: string, value: number): any {
         } else {
           whereClause[field] = { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: '' }] };
         }
+      }
+    }
+  }
+
+  private processOrganisationNameFilter(whereClause: Record<string | symbol, any>, value: any): void {
+    // Handles computed field 'organization_name' (from account/account_name or org_id)
+    if (typeof value === 'string') {
+      whereClause[Op.or] = [
+        Sequelize.where(
+          Sequelize.fn('LOWER',
+            Sequelize.literal(`CASE WHEN "User"."is_consultant_firm" = true THEN "User"."org_id" ELSE (SELECT account_name FROM ${MAIN_SCHEMA_NAME}.account WHERE account.rid = "User".org_id) END`)
+          ),
+          value.toLowerCase()
+        )
+      ];
+    } else if (typeof value === 'object') {
+      const conditions: any[] = [];
+      if (value.equals !== undefined) {
+        conditions.push(
+          Sequelize.where(
+            Sequelize.fn('LOWER',
+              Sequelize.literal(`CASE WHEN "User"."is_consultant_firm" = true THEN "User"."org_id" ELSE (SELECT account_name FROM ${MAIN_SCHEMA_NAME}.account WHERE account.rid = "User".org_id) END`)
+            ),
+            value.equals.toLowerCase()
+          )
+        );
+      }
+      if (value.not_equals !== undefined) {
+        conditions.push(
+          Sequelize.where(
+            Sequelize.fn('LOWER',
+              Sequelize.literal(`CASE WHEN "User"."is_consultant_firm" = true THEN "User"."org_id" ELSE (SELECT account_name FROM ${MAIN_SCHEMA_NAME}.account WHERE account.rid = "User".org_id) END`)
+            ),
+            '!=',
+            value.not_equals.toLowerCase()
+          )
+        );
+      }
+      if (value.contains !== undefined) {
+        conditions.push(
+          Sequelize.where(
+            Sequelize.literal(`CASE WHEN "User"."is_consultant_firm" = true THEN "User"."org_id" ELSE (SELECT account_name FROM ${MAIN_SCHEMA_NAME}.account WHERE account.rid = "User".org_id) END`),
+            { [Op.iLike]: `%${value.contains}%` }
+          )
+        );
+      }
+      if (Array.isArray(value.in) && value.in.length > 0) {
+        conditions.push(
+          Sequelize.where(
+            Sequelize.literal(`CASE WHEN "User"."is_consultant_firm" = true THEN "User"."org_id" ELSE (SELECT account_name FROM ${MAIN_SCHEMA_NAME}.account WHERE account.rid = "User".org_id) END`),
+            { [Op.in]: value.in.map((v: string) => v) }
+          )
+        );
+      }
+      if (value.is_empty !== undefined) {
+        if (value.is_empty) {
+          conditions.push(
+            Sequelize.where(
+              Sequelize.literal(`CASE WHEN "User"."is_consultant_firm" = true THEN "User"."org_id" ELSE (SELECT account_name FROM ${MAIN_SCHEMA_NAME}.account WHERE account.rid = "User".org_id) END`),
+              { [Op.or]: [null, ''] }
+            )
+          );
+        } else {
+          conditions.push(
+            Sequelize.where(
+              Sequelize.literal(`CASE WHEN "User"."is_consultant_firm" = true THEN "User"."org_id" ELSE (SELECT account_name FROM ${MAIN_SCHEMA_NAME}.account WHERE account.rid = "User".org_id) END`),
+              { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: '' }] }
+            )
+          );
+        }
+      }
+      if (conditions.length > 0) {
+        whereClause[Op.and] = (whereClause[Op.and] || []).concat(conditions);
       }
     }
   }
@@ -2849,10 +2923,14 @@ async  getProjectsOfSelectedAccounts(
        const replacements: any = { accountRidArray, limit, offset,
         group_rid: group_rid ?? null,
       };
-      const filterConditions = this.buildSQLConditions(filters);
-      if (filterConditions) {
-        baseWhereClauses.push(filterConditions);
+      if (filters && typeof filters === 'object' && Object.keys(filters).length > 0) {
+        const filterConditions = this.buildSQLConditions(filters);
+        if (filterConditions) {
+          baseWhereClauses.push(filterConditions);
         }
+      }
+
+      
         
     // Build ORDER BY clause with proper access type sorting
       let orderByClause: string;
@@ -3087,51 +3165,81 @@ async getUserGroupType(type: string): Promise<{
 
 private buildSQLConditions(filters: Record<string, any>): string | null {
   const conditions: string[] = [];
-
+  // List of filter names that should always be treated as numbers
+  
   for (const [column, condition] of Object.entries(filters)) {
-    if (!condition || typeof condition !== 'object') continue;
+    if (condition === undefined || condition === null) continue;
+
+    const sqlColumn = column === 'account_name' ? 'acc.account_name' : column;
+
+    // If condition is a primitive (number or string), treat as equals
+    if (typeof condition === 'number') {
+      conditions.push(`${sqlColumn} = ${condition}`);
+      continue;
+    }
+    if (typeof condition === 'string') {
+      conditions.push(`LOWER(${sqlColumn}) = '${condition.toLowerCase()}'`);
+      continue;
+    }
 
     // Handle operators like { equals: "value" }, { contains: "value" }
-    for (const [operator, value] of Object.entries(condition)) {
-      if (value === undefined || value === null) continue;
-      const lowerColumn = `LOWER(${column})`; // wrap column in LOWER()
-      switch (operator.toLowerCase()) {
-        case 'equals':
-        case 'eq':
-          conditions.push(`${lowerColumn} = '${String(value).toLowerCase()}'`);
-          break;
-        case 'not_equals':
-        case 'ne':
-           conditions.push(`${lowerColumn} != '${String(value).toLowerCase()}'`);
-          break;
-        case 'is_empty':
-          conditions.push(`(${lowerColumn} IS NULL OR ${lowerColumn} = '')`);
-          break;
-        case 'contains':
-          conditions.push(`${lowerColumn} LIKE '%${String(value).toLowerCase()}%'`);
-          break;
-        case 'in':
-          if (Array.isArray(value)) {
-            const quotedValues = value
-              .map(v => `'${String(v).toLowerCase()}'`)
-              .join(', ');
-            conditions.push(`${lowerColumn} IN (${quotedValues})`);
-          }
-          break;
-        case 'gt':
-          conditions.push(`${column} > ${value}`);
-          break;
-        case 'lt':
-          conditions.push(`${column} < ${value}`);
-          break;
-        case 'gte':
-          conditions.push(`${column} >= ${value}`);
-          break;
-        case 'lte':
-          conditions.push(`${column} <= ${value}`);
-          break;
-        default:
-          console.warn(`Unsupported operator: ${operator}`);
+    if (typeof condition === 'object') {
+      for (const [operator, value] of Object.entries(condition)) {
+        if (value === undefined || value === null) continue;
+        const lowerColumn = `LOWER(${sqlColumn})`;
+        switch (operator.toLowerCase()) {
+          case 'equals':
+            if (typeof value === 'number') {
+              conditions.push(`${sqlColumn} = ${value}`);
+            } else {
+              conditions.push(`${lowerColumn} = '${String(value).toLowerCase()}'`);
+            }
+            break;
+          case 'not_equals':
+            if (typeof value === 'number') {
+              conditions.push(`${sqlColumn} != ${value}`);
+            } else {
+              conditions.push(`${lowerColumn} != '${String(value).toLowerCase()}'`);
+            }
+            break;
+          case 'is_empty':
+            conditions.push(`(${lowerColumn} IS NULL OR ${lowerColumn} = '')`);
+            break;
+          case 'contains':
+            conditions.push(`${lowerColumn} LIKE '%${String(value).toLowerCase()}%'`);
+            break;
+          case 'in':
+            if (Array.isArray(value)) {
+              if (value.length > 0 && typeof value[0] === 'number') {
+                conditions.push(`${sqlColumn} IN (${value.join(', ')})`);
+              } else {
+                const quotedValues = value
+                  .map(v => `'${String(v).toLowerCase()}'`)
+                  .join(', ');
+                conditions.push(`${lowerColumn} IN (${quotedValues})`);
+              }
+            }
+            break;
+          case 'gt':
+            conditions.push(`${sqlColumn} > ${value}`);
+            break;
+          case 'lt':
+            conditions.push(`${sqlColumn} < ${value}`);
+            break;
+          case 'gte':
+            conditions.push(`${sqlColumn} >= ${value}`);
+            break;
+          case 'lte':
+            conditions.push(`${sqlColumn} <= ${value}`);
+            break;
+          case 'between':
+            if (Array.isArray(value) && value.length === 2) {
+              conditions.push(`${sqlColumn} BETWEEN ${value[0]} AND ${value[1]}`);
+            }
+            break;
+          default:
+            break;
+        }
       }
     }
   }

@@ -29,7 +29,6 @@ export class AIAssessmentService {
     errorMessage?: string;
     data?: string;
   }> {
-    console.log("AI Response received in service:", aiResponse);
     try {
       const topic = process.env.KAFKA_AI_RESPONSE_TRIGGER_TOPIC || "ai_assessment_response";
       const message = {
@@ -42,10 +41,12 @@ export class AIAssessmentService {
         topic,
         messages: [message],
       });
-      this.logger.info("AI response sent to Kafka topic:", {
-        topic,
-        aiResponse,
-      });
+      this.logger.info("AI response sent to Kafka topic:", topic);
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: "",
+      };
     } catch (error) {
       this.logger.error("Failed to send AI response to Kafka topic:", {
         error,
@@ -55,12 +56,7 @@ export class AIAssessmentService {
         message: "Failed to send AI response to Kafka topic",
         errorMessage: error instanceof Error ? error.message : String(error),
       };
-    }
-    return {
-      statusCode: HttpStatus.SUCCESS,
-      message: HttpStatus.SUCCESS_MESSAGE,
-      data: "",
-    };
+    } 
   }
   async disconnectProducer() {
     if (this.producer) {
@@ -92,26 +88,19 @@ export class AIAssessmentService {
           const transaction_id = uuidv4();
 
           const payload = { company_id, project_id: id, input_text, transaction_id:transaction_id };
-          for (const type of ["QRE", "QUESTION", "TECH_SUMMARY"]) {
-            const payloadWithType = { ...payload, type };
-            console.log("Payload to be sent:", payloadWithType);
-             console.log("--------------if-------------------");
-            // let callTriggerAi = await axios.post(process.env.TRIGGER_AI_URL!, payloadWithType, {
-            //   headers: headers
-            // });
-          }
+           let callTriggerAi = await axios.post(process.env.TRIGGER_AI_URL!, payload, {
+               headers: headers
+           });
+        
         }
       } else {
          const transaction_id = uuidv4();
         const payload = { company_id, project_id, input_text ,transaction_id};
-         for (const type of ["QRE", "QUESTION", "TECH_SUMMARY"]) {
-            const payloadWithType = { ...payload, type };
-             console.log("Payload to be sent:", payloadWithType);
-             console.log("---------------else------------------");
-            // let callTriggerAi = await axios.post(process.env.TRIGGER_AI_URL!, payloadWithType, {
-            //   headers: headers
-            // });
-          }
+
+         let callTriggerAi = await axios.post(process.env.TRIGGER_AI_URL!, payload, {
+               headers: headers
+         });
+          
       }
 
       this.logger.info(

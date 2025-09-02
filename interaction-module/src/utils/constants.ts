@@ -285,9 +285,10 @@ export const rawQueries = {
     return `
     SELECT rid, project_rid FROM ${schemaName}.project_fiscal WHERE account_rid = '${accountRid}'`
   },
-  updateQreInfo(rid : string, schemaName : string, qrePercent: number) {
+  updateQreInfo(rid: string, schemaName: string, qrePercent: number, qreBreakdown: object) {
+    const breakdownStr = JSON.stringify(qreBreakdown);
     return `
-    UPDATE ${schemaName}.project_fiscal SET qre_final = ${qrePercent} WHERE rid = '${rid}'`
+    UPDATE ${schemaName}.project_fiscal SET qre_final = ${qrePercent}, qre_detailed_breakdown = '${breakdownStr}' WHERE rid = '${rid}'`;
   },
   updateAIProcessedFlag(rid: string, schemaName: string) {
     return `
@@ -371,8 +372,31 @@ export const rawQueries = {
     `SELECT r_number FROM ${MAIN_SCHEMA_NAME}.account WHERE storage_type = '${STATUS_MESSAGE.separateDb}' AND parent_account_rid IS NULL
     ORDER BY r_number ASC`
     return query;
-
-}
+  },
+  fetchEmailResponseSourceRid(): string {
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.interaction_response_source WHERE response_source_name = 'Email'`;
+  },
+  fetchInteractionSummaryByRNumber(): string {
+    return `
+      SELECT rid, r_number, account_rid
+      FROM ${MAIN_SCHEMA_NAME}.interactions_summary
+      WHERE r_number = :r_number
+    `;
+  },
+  fetchKeyContactsByEntityRid(schemaName: string): string {
+    return `
+      SELECT rid, key_contact_role, key_contact_email
+      FROM "${schemaName}".key_contact_details
+      WHERE entity_rid = :entity_rid
+    `;
+  },
+  fetchRolesByIds(): string {
+    return `
+      SELECT rid, role_name
+      FROM "${MAIN_SCHEMA_NAME}".key_contact_role
+      WHERE rid IN (:roleIds)
+    `;
+  }  
 };
 
 export const filterTypesForSummaryInteractions : Record<string, any> = 

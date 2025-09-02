@@ -109,6 +109,7 @@ class SchemaService {
       await this.createInteractionAttachments(schemaName, sequelize);
       await this.createAITechnicalSummary(schemaName, sequelize);
       await this.createInteractionTimeline(schemaName, sequelize);
+      await this.createAIAssessmentError(schemaName, sequelize);
 
       await this.createOtpEntries(schemaName, sequelize);
       await this.createOtpEntriesHistory(schemaName, sequelize);
@@ -151,6 +152,24 @@ class SchemaService {
       ALTER TABLE "${schemaName}".ai_technical_summary ADD CONSTRAINT ai_technical_summary_project_fiscal_rid_fkey FOREIGN KEY (project_fiscal_rid) REFERENCES "${schemaName}".project_fiscal(rid) ON UPDATE CASCADE;
     `);
   }
+  private async  createAIAssessmentError( schemaName: string,
+    sequelize: Sequelize) {
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}".ai_assessment_error (
+        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        created_by varchar(50) NOT NULL,
+        modified_by varchar(50),
+        created_datetime TIMESTAMP NOT NULL DEFAULT NOW(),
+        modified_datetime TIMESTAMP,
+        account_rid varchar(50) NOT NULL,
+        project_fiscal_rid VARCHAR(50) NOT NULL,
+        transaction_id    VARCHAR(50) NOT NULL,
+        error_message     JSON 
+      );
+    `);
+  }
+
+  
 
   private async createAttachmentTimeline(
     schemaName: string,
@@ -529,7 +548,8 @@ class SchemaService {
       is_rd_qualified BOOLEAN,
       qre NUMERIC(18, 2),
 
-      assessment_status VARCHAR(150)
+      assessment_status VARCHAR(150),
+      qre_detailed_breakdown json
     );
 
     `);
@@ -2063,7 +2083,6 @@ private async createInteractionTable(
 
     await sequelize.query(`
       ALTER TABLE "${schemaName}".interaction_history ADD CONSTRAINT interaction_history_interaction_rid_fkey FOREIGN KEY (interaction_rid) REFERENCES "${schemaName}".interactions(rid) ON UPDATE CASCADE;
-      ALTER TABLE "${schemaName}".interaction_history ADD CONSTRAINT interaction_history_interaction_item_rid_fkey FOREIGN KEY (interaction_item_rid) REFERENCES "${schemaName}".interaction_items(rid) ON UPDATE CASCADE;
     `);
   }
   
@@ -2088,8 +2107,8 @@ private async createInteractionTable(
         interaction_rid character varying(50) NOT NULL,
         question_seq_num VARCHAR(20) UNIQUE DEFAULT 'QUE-' || LPAD(nextval('"${schemaName}".question_seq')::TEXT, 10, '0'),
         is_mandatory boolean DEFAULT false NOT NULL,
-        question text,
-        notes text,
+        question character varying(2000),
+        notes character varying(2000),
         is_attachment boolean
       );
     `);
@@ -2510,7 +2529,7 @@ private async createInteractionTable(
           website: accountData.website ?? null,
           business_details: accountData.business_details,
           comments: accountData.comments ?? null,
-          modified_datetime: new Date(),
+          modified_datetime: new Date()
         },
       }
     );
@@ -3263,7 +3282,7 @@ private async createInteractionTable(
       const mainDdSequilze = await initSequelize();
 
       const result: any = await mainDdSequilze.query(
-        `SELECT logo_url,firm_name FROM ${MAIN_SCHEMA_NAME}.organization_licenses`,
+        `SELECT logo_url, firm_name, domain_name FROM ${MAIN_SCHEMA_NAME}.organization_licenses`,
         {
           type: "SELECT",
         }

@@ -1088,9 +1088,9 @@ async function fetchResponseHistoryDetails (req : Request, res : Response) {
     const result = await interactionService.triggerAI(data)
     return res.status(HttpStatus.SUCCESS).json({
       statusCode : HttpStatus.SUCCESS,
-      statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
-      statusMessage : result.statusMessage,
-      data: result.data
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.assessmentInitiated,
+        data : result.data
     })
     } catch (err) {
     const error = err as Error;

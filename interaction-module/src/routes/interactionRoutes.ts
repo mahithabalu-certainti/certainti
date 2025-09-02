@@ -8,27 +8,27 @@ const routes: Router = Router();
 
 routes.post(
   "/new",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("interactions_create"),
   controller.interactionsController.createInteraction
 );
 routes.put(
   "/update",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("interactions_view_edit"),
   controller.interactionsController.updateInteraction
 );
 routes.put(
   "/updateResponse",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("interactions_view_edit"),
   controller.interactionsController.updateInteractionResponse
 );
 routes.get(
   "/detail/:accountId/:interactionRid",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("interactions_view_edit"),
   controller.interactionsController.getInteractionDetailsById
 );
 routes.get(
   "/questionsInfo/:accountId/:interactionRid",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("interactions_view_edit"),
   controller.interactionsController.getInteractionQuestionsById
 );
 routes.get(
@@ -52,33 +52,33 @@ routes.get(
   controller.interactionsController.getResponseSource
 );
 
-routes.post('/list', checkUserStatusMiddleware("NA"), controller.interactionsController.listAllInteractionPrjAcc)
-routes.post('/export', checkUserStatusMiddleware("NA"), controller.interactionsController.exportAllInteractions)
-routes.post('/globalList', checkUserStatusMiddleware("NA"), controller.interactionsController.listOutAllInteractionSummary)
-routes.post('/globalList/export', checkUserStatusMiddleware("NA"), controller.interactionsController.exportAllInteractionSummary)
-routes.post('/responseHistory/list', checkUserStatusMiddleware("NA"), controller.interactionsController.listResponseHistory)
-routes.post('/responseHistory/export', checkUserStatusMiddleware("NA"), controller.interactionsController.exportResponseHistory)
-routes.post('/history', checkUserStatusMiddleware("NA"), controller.interactionsController.listInteractionHistory)
-routes.post('/attachments', checkUserStatusMiddleware("NA"), controller.interactionsController.fetchInteractionAttachments)
-routes.post('/responseHistory/details', checkUserStatusMiddleware('NA'), controller.interactionsController.fetchResponseHistoryDetails)
-routes.post('/triggerAi', checkUserStatusMiddleware("NA"), controller.interactionsController.triggerAIAndPassResponse)
-routes.post('/history/export', checkUserStatusMiddleware("NA"), controller.interactionsController.exportInteractionHistory)
+routes.post('/list', checkUserStatusMiddleware("interactions_view_edit"), controller.interactionsController.listAllInteractionPrjAcc)
+routes.post('/export', checkUserStatusMiddleware("interactions_export"), controller.interactionsController.exportAllInteractions)
+routes.post('/globalList', checkUserStatusMiddleware("interactions_view_edit"), controller.interactionsController.listOutAllInteractionSummary)
+routes.post('/globalList/export', checkUserStatusMiddleware("interactions_export"), controller.interactionsController.exportAllInteractionSummary)
+routes.post('/responseHistory/list', checkUserStatusMiddleware("interactions_view_edit"), controller.interactionsController.listResponseHistory)
+routes.post('/responseHistory/export', checkUserStatusMiddleware("interactions_export"), controller.interactionsController.exportResponseHistory)
+routes.post('/history', checkUserStatusMiddleware("interactions_view_edit"), controller.interactionsController.listInteractionHistory)
+routes.post('/attachments', checkUserStatusMiddleware("interactions_view_edit"), controller.interactionsController.fetchInteractionAttachments)
+routes.post('/responseHistory/details', checkUserStatusMiddleware('interactions_view_edit'), controller.interactionsController.fetchResponseHistoryDetails)
+routes.post('/triggerAi', checkUserStatusMiddleware("trigger_ai_assessment"), controller.interactionsController.triggerAIAndPassResponse)
+routes.post('/history/export', checkUserStatusMiddleware("interactions_export"), controller.interactionsController.exportInteractionHistory)
 const upload = multer(); // You can configure storage if needed
 
 routes.post(
   "/uploadAttachment",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("interactions_view_edit"),
   upload.single("file"), // 'file' is the field name for the uploaded file
   controller.interactionsController.uploadAttachmentToAzure
 );
 routes.delete(
   "/deleteAttachment",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("interactions_view_edit"),
   controller.interactionsController.deleteAttachmentFromAzure
 );
 
 routes.post("/sendInteraction",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("send_interactions"),
   controller.interactionsController.sendInteraction
 );
 //routes.post("/new", checkUserStatusMiddleware("NA"), controller.interactionsController.createResource);

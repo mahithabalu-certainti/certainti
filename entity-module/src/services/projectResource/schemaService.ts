@@ -4062,11 +4062,11 @@ export class ProjectResourceSchemaService {
     // 2. Update Account fiscal table with aggregated totals
     await AccountFiscal.update(
       {
-        total_projects: aggregates.total_projects,
-        total_project_cost: aggregates.effective_cost,
-        total_project_hours: aggregates.effective_effort,
-        total_fte: aggregates.effective_total_fte,
-        total_subcon: aggregates.effective_total_subcon,
+        // total_projects: aggregates.total_projects,
+        // total_project_cost: aggregates.effective_cost,
+        // total_project_hours: aggregates.effective_effort,
+        // total_fte: aggregates.effective_total_fte,
+        // total_subcon: aggregates.effective_total_subcon,
         total_project_res_cost: aggregates.total_cost_from_prj_res,
         total_project_res_hours: aggregates.total_effort_from_prj_res,
         total_project_res_hours_fte: aggregates.total_effort_fte_from_prj_res,
@@ -5353,7 +5353,7 @@ export class ProjectResourceSchemaService {
     }
   
     let resourceCodes = await Resources.findAll({
-      attributes: ["rid", "resource_code", "resource_type_rid"],
+      attributes: ["rid", "resource_code", "resource_type_rid", "resource_name"],
       where: whereClause,
       order: [["resource_code", "ASC"]]
     });

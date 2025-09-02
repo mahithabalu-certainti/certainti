@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 import initExpressServer from "./servers/expressServer";
 import { schedulerForTriggerAi } from "./utils/cronScheduler";
+// import './services/cronJob/renewSubscriptions';
 // import initGraphQLServer from "./servers/graphqlServer";
 
 import { Kafka } from "kafkajs";
@@ -33,10 +34,8 @@ async function startKafkaConsumer() {
     await consumer.connect();
     const topic = process.env.KAFKA_AI_RESPONSE_TRIGGER_TOPIC || 'ai_assessment_response';
     await consumer.subscribe({ topic, fromBeginning: false });
-
     await consumer.run({
       eachMessage: async ({ message }: { message: any }) => {
-        console.log("Received message:", message.value?.toString());
         await interactionsController.processKafkaMessages(message.value?.toString());
       },
     });
