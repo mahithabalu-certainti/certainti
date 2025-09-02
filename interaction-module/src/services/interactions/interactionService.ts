@@ -1293,7 +1293,7 @@ export class InteractionService {
             interaction_type_rid: interactionType.RD,
             created_by: process.env.SYSTEM_USER_ID!,
           };
-          await this.createInteraction(interactionData, interactionSource.AUTO, "userID");
+          await this.createInteraction(interactionData, interactionSource.AUTO, process.env.SYSTEM_USER_ID!);
         }
       } else {
         await this.interactionSchemaService.updateAssessmentErrorResponse(parsedMessage, accountNumber, project_id, company_id, transaction_id);
