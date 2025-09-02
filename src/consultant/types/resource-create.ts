@@ -32,6 +32,7 @@ export interface ResourceCreatePayload {
 // Define types for the resource in the API response
 export interface Resource {
   rid: string;
+  resource_code: string;
   created_datetime: string;
   modified_datetime: string;
   resource_ref_id: string;

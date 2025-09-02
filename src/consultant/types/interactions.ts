@@ -106,6 +106,7 @@ export interface InteractionFormErrors {
 
 // List and Details Types
 export type InteractionList = {
+  status_name: string;
   rid: string;
   r_number: string;
   iteration: number;
@@ -126,7 +127,7 @@ export type InteractionList = {
   interaction_type_name: string;
   response_source: string | null;
   created_by: string;
-  created_user_name: string;
+  created_user_name: string | null;
   created_datetime: string;
   modified_by: string | null;
   updated_user_name: string | null;
@@ -138,9 +139,10 @@ export type InteractionList = {
   totalCount: number;
   last_resent_on: string | null;
   interaction_iteration: number | null;
-  status_name: string | null;
   attachment_count: number | null;
+  has_email_recipient: boolean;
   disableCheckBox?: boolean;
+  account_name?: string | null;
 };
 export type ResponseInteractionList = {
   rid: string;
@@ -157,6 +159,7 @@ export type ResponseInteractionList = {
   interaction_source_name: string;
   interaction_version: number;
   response_by: string;
+  attachment_count: number | string | null;
 };
 export interface InteractionListURLParams {
   page: number;
@@ -164,6 +167,7 @@ export interface InteractionListURLParams {
   sort: string;
   sort_by: 'ASC' | 'DESC';
   filters?: object;
+  globalFilters?: object;
   account_rid?: string;
   interaction_rid?: string;
   project_rid?: string;
@@ -279,6 +283,7 @@ export interface InteractionDetailsHistoryResponse {
   statusMessage: string;
   data: {
     history_details: InteractionHistoryResponse[];
+    global_attachments: Attachment[];
     interaction_rid: string;
     project_name: string;
   };
@@ -345,6 +350,7 @@ export interface InteractionQuestionResUpdateRequest {
   status_action: 'RESPONSE_DRAFT' | 'RESPONSE_RECEIVED';
   attachments: Attachment[];
   questions: InteractionQuestionResponseType[];
+  response_source: 'Manual' | 'Email' | 'Sheet';
 }
 
 export interface InteractionQuestionResUpdateResponse {

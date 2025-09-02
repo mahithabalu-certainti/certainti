@@ -321,7 +321,7 @@ export interface UserDetail {
 export interface UploadImportPayload {
   entity_type: string;
   file: File;
-  fiscal_year: string;
+  fiscal_year?: string;
   account_rid: string;
   related_to: string;
   related_to_rid: string;
@@ -413,14 +413,26 @@ export interface GetInteractionTypesApiResponse extends CommonApiResponse {
   };
 }
 
-export interface InteractionSourceItem {
+export interface InteractionResSourceItem {
   rid: string;
-  interaction_source_name: string;
+  response_source_name: string;
 }
 
-export interface GetInteractionSourcesApiResponse extends CommonApiResponse {
+export interface GetInteractionResponeSourcesApiResponse
+  extends CommonApiResponse {
   data: {
-    interactionSource: InteractionSourceItem[];
+    responseSource: InteractionResSourceItem[];
+  };
+}
+
+export interface InteractionResponseSourceItem {
+  rid: string;
+  response_source_name: string;
+}
+export interface GetInteractionResponseSourcesApiResponse
+  extends CommonApiResponse {
+  data: {
+    responseSource: InteractionResponseSourceItem[];
   };
 }
 

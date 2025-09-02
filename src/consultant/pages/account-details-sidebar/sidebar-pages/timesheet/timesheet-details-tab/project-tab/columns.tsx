@@ -250,11 +250,10 @@ export const getProjectTabTableColumns = (
     sortId: 'project_point_of_contact',
     width: 200,
     hide:
-      !permissionMap?.['project_point_of_contact']?.read &&
-      !permissionMap?.['project_point_of_contact']?.edit,
-    render: (row: TimesheetProjectList) => {
-      return row.project_point_of_contact;
-    },
+      !permissionMap?.['key_contacts']?.read &&
+      !permissionMap?.['key_contacts']?.edit,
+    render: (row: TimesheetProjectList) =>
+      row.project_point_of_contact ? row.project_point_of_contact : '-',
   },
   {
     id: 'technical_point_of_contact',
@@ -263,11 +262,10 @@ export const getProjectTabTableColumns = (
     sortId: 'technical_point_of_contact',
     width: 210,
     hide:
-      !permissionMap?.['technical_point_of_contact']?.read &&
-      !permissionMap?.['technical_point_of_contact']?.edit,
-    render: (row: TimesheetProjectList) => {
-      return row.technical_point_of_contact;
-    },
+      !permissionMap?.['key_contacts']?.read &&
+      !permissionMap?.['key_contacts']?.edit,
+    render: (row: TimesheetProjectList) =>
+      row.technical_point_of_contact ? row.technical_point_of_contact : '-',
   },
   {
     id: 'comments',

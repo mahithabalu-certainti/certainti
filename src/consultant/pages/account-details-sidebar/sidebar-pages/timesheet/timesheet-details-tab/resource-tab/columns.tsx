@@ -10,7 +10,7 @@ export const getResourceTabTableColumns = (
     label: 'Resource Code',
     sortable: true,
     sortId: 'resource_code',
-    width: 180,
+    width: 150,
     sticky: true,
     hide:
       !permissionMap?.['resource_code']?.read &&
@@ -23,6 +23,56 @@ export const getResourceTabTableColumns = (
       borderRight: '1px solid #CBD6E2 !important',
       borderBottom: '1px solid #CBD6E2 !important',
     },
+  },
+  {
+    id: 'resource_name',
+    sortId: 'resource_name',
+    label: 'Name',
+    width: 200,
+    sortable: true,
+    hide:
+      !permissionMap?.['resource_name']?.edit &&
+      !permissionMap?.['resource_name']?.read,
+  },
+  {
+    id: 'resource_type_name',
+    sortId: 'resource_type_rid',
+    label: 'Resource Type',
+    width: 140,
+    sortable: true,
+    hide:
+      !permissionMap?.['resource_type_rid']?.edit &&
+      !permissionMap?.['resource_type_rid']?.read,
+  },
+  {
+    id: 'resource_orgname',
+    sortId: 'resource_orgname',
+    label: 'Org Name',
+    width: 160,
+    sortable: true,
+    hide:
+      !permissionMap?.['resource_orgname']?.edit &&
+      !permissionMap?.['resource_orgname']?.read,
+  },
+  {
+    id: 'resource_designation',
+    sortId: 'resource_designation',
+    label: 'Designation',
+    width: 200,
+    sortable: true,
+    hide:
+      !permissionMap?.['resource_designation']?.edit &&
+      !permissionMap?.['resource_designation']?.read,
+  },
+  {
+    id: 'resource_role',
+    sortId: 'resource_role',
+    label: 'Role',
+    width: 200,
+    sortable: true,
+    hide:
+      !permissionMap?.['resource_role']?.edit &&
+      !permissionMap?.['resource_role']?.read,
   },
   {
     id: 'country_name',
@@ -49,75 +99,75 @@ export const getResourceTabTableColumns = (
   },
 
   {
-    id: 'total_hours_pro_res',
-    label: 'Effort (Hours)',
+    id: 'total_project_hours',
+    label: 'Total Project Hours',
     sortable: true,
     hide:
-      !permissionMap?.['total_hours_pro_res']?.read &&
-      !permissionMap?.['total_hours_pro_res']?.edit,
-    sortId: 'total_hours_pro_res',
-    width: 170,
+      !permissionMap?.['total_project_hours']?.read &&
+      !permissionMap?.['total_project_hours']?.edit,
+    sortId: 'total_project_hours',
+    width: 160,
     sx: {
       textAlign: 'right',
     },
     render: (row: TimesheetResourceListType) =>
-      row.total_hours_pro_res ? valueDisplay(row.total_hours_pro_res) : '-',
+      row.total_project_hours ? valueDisplay(row.total_project_hours) : '-',
   },
   {
-    id: 'total_cost_pro_res',
-    label: 'Cost',
+    id: 'estimated_rd_hours',
+    label: 'Estimated R&D Hours',
     sortable: true,
     hide:
-      !permissionMap?.['total_cost_pro_res']?.read &&
-      !permissionMap?.['total_cost_pro_res']?.edit,
-    sortId: 'total_cost_pro_res',
-    width: 130,
+      !permissionMap?.['estimated_rd_hours']?.read &&
+      !permissionMap?.['estimated_rd_hours']?.edit,
+    sortId: 'estimated_rd_hours',
+    width: 180,
     sx: {
       textAlign: 'right',
     },
     render: (row: TimesheetResourceListType) =>
-      row.total_cost_pro_res
-        ? costDisplay(row.total_cost_pro_res, row.currency_symbol)
+      row.estimated_rd_hours
+        ? costDisplay(row.estimated_rd_hours, row.currency_symbol)
         : '-',
   },
   {
-    id: 'qre_percent',
-    label: 'QRE %',
+    id: 'status_name',
+    label: 'Status',
     sortable: true,
-    sortId: 'qre_percent',
-    width: 130,
+    sortId: 'status_name',
+    width: 150,
     sx: {
       textAlign: 'right',
     },
     hide:
-      !permissionMap?.['qre_percent']?.read &&
-      !permissionMap?.['qre_percent']?.edit,
-    render: (row: TimesheetResourceListType) =>
-      row.qre_percent ? row.qre_percent : '-',
+      !permissionMap?.['status_name']?.read &&
+      !permissionMap?.['status_name']?.edit,
+    render: (row: TimesheetResourceListType) => (
+      <span
+        className={`${
+          row.status_name === 'Active' ? 'text-[#199806]' : 'text-[#f44336]'
+        }`}
+      >
+        {row.status_name || '-'}
+      </span>
+    ),
   },
   {
-    id: 'qre_final',
-    label: 'QRE',
-    sortable: true,
-    sortId: 'qre_final',
-    width: 130,
-    sx: {
-      textAlign: 'right',
-    },
-    hide:
-      !permissionMap?.['qre_final']?.read &&
-      !permissionMap?.['qre_final']?.edit,
-    render: (row: TimesheetResourceListType) =>
-      row.qre_final ? costDisplay(row.qre_final, row.currency_symbol) : '-',
-  },
-  {
-    id: 'description',
+    id: 'comments',
     label: 'Comments',
     sortable: true,
-    sortId: 'description',
+    sortId: 'comments',
     width: 200,
     hide:
-      !permissionMap?.['description']?.read &&
-      !permissionMap?.['description']?.edit,
+      !permissionMap?.['comments']?.read && !permissionMap?.['comments']?.edit,
+  },
+  {
+    id: 'r_number',
+    sortId: 'r_number',
+    label: 'Resource ID',
+    width: 150,
+    sortable: true,
+    hide:
+      !permissionMap?.['r_number']?.edit && !permissionMap?.['r_number']?.read,
   },
 ];

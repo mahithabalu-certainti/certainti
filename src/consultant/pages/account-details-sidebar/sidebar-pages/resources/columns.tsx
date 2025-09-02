@@ -38,7 +38,7 @@ export const getResourceColumns = (
       onResourceIdClick ? (
         <span
           onClick={() => onResourceIdClick(row)}
-          className='cursor-pointer no-underline hover:underline hover:text-[#1755E7]'
+          className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
         >
           {row.resource_code}
         </span>

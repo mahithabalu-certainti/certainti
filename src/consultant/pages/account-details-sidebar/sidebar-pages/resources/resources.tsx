@@ -28,6 +28,7 @@ import {
 import { ResourceList } from '../../../../types/resource';
 import {
   AllMenus,
+  AllModules,
   AllPermissions,
   Permissions,
   useGetAllCountries,
@@ -78,7 +79,7 @@ export interface TabMenus {
   label: string;
   value: string;
   hide: boolean;
-  id: AllPermissions;
+  id: AllModules | AllPermissions;
 }
 
 const resourceTabs: ResourceTabs[] = [

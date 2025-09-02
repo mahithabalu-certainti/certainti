@@ -55,11 +55,11 @@ const defaultKeyContactHeaders: KeyContactHeader[] = [
   { name: 'key_contact_email', label: 'Key Contact Email', width: '180px' },
   // { name: 'key_contact_rid', label: 'Key Contact ID', width: '120px' },
   { name: 'is_primary_contact', label: 'Is Primary Contact?', width: '140px' },
-  {
-    name: 'include_in_communication',
-    label: 'Interaction Recipient?',
-    width: '200px',
-  },
+  // {
+  //   name: 'include_in_communication',
+  //   label: 'Interaction Recipient?',
+  //   width: '200px',
+  // },
   {
     name: 'interaction_cc_recipient',
     label: 'Interaction CC Recipient?',
@@ -149,6 +149,7 @@ export const AccountForm: React.FC = () => {
       const fileType = getMimeTypeFromExtension(logoName);
       setLogo({ name: logoName, type: fileType } as File);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account, logoName]);
 
   const statusOptions = useGetStatus();
@@ -237,7 +238,13 @@ export const AccountForm: React.FC = () => {
       setCurrentCountry(accountData.country_rid);
     }
   }, [accountData.country_rid]);
-
+  useEffect(() => {
+    if (accountData.is_parent === YesNo.Yes) {
+      setDataResidency([]);
+    } else {
+      setDataResidency(DATA_STORAGE_OPTIONS);
+    }
+  }, [accountData.is_parent]);
   const memoizedContry: SelectOption[] = useMemo(
     () =>
       allCountries.data?.data.country.map((country) => ({
@@ -324,6 +331,7 @@ export const AccountForm: React.FC = () => {
         !keyContactRoles.isPending &&
         !statusOptions.isPending
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     getAccount.isPending,
     keyContactRoles.isPending,
@@ -335,7 +343,7 @@ export const AccountForm: React.FC = () => {
 
   const removeKeyContactInfo = (fieldIndex: number) => {
     const contactsArr = [...keyContacts];
-    const groupSize = 9;
+    const groupSize = 8;
     const groupIndex = Math.floor(fieldIndex / groupSize);
     const startIndex = groupIndex * groupSize;
     if (contactsArr.length <= groupSize) {
@@ -395,11 +403,7 @@ export const AccountForm: React.FC = () => {
     }
     if (data.fieldName === 'is_parent') {
       if (data.fieldValue === YesNo.Yes) {
-        setDataResidency(
-          DATA_STORAGE_OPTIONS.filter(
-            (item) => item.value !== 'store_in_parent'
-          )
-        );
+        setDataResidency([]);
         setIsParentAccountRequired(false);
       } else {
         setDataResidency(DATA_STORAGE_OPTIONS);
@@ -529,7 +533,6 @@ export const AccountForm: React.FC = () => {
             layout={Layout.TYPE_1}
             logo={logo}
             keyContactHeaders={defaultKeyContactHeaders}
-            newContactLength={9}
             highlight={highlight}
           />
         )}

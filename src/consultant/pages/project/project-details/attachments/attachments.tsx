@@ -58,6 +58,7 @@ interface AttachmentsProps {
   >;
   accountOrProjectInActive: boolean;
   refetchProjectDetails: () => void;
+  projectFiscalYear?: number | string;
 }
 
 const Attachments: React.FC<AttachmentsProps> = ({
@@ -65,6 +66,7 @@ const Attachments: React.FC<AttachmentsProps> = ({
   setAttachmentParams,
   accountOrProjectInActive,
   refetchProjectDetails,
+  projectFiscalYear,
 }) => {
   const { errorToast } = useToast();
   const [searchParams] = useSearchParams();
@@ -376,6 +378,7 @@ const Attachments: React.FC<AttachmentsProps> = ({
           accountId={accountID}
           attachID={projectid}
           onUploadSuccess={onRefreshClick}
+          projectFiscalYear={projectFiscalYear}
         />
       ) : (
         <>

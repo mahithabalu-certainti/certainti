@@ -39,6 +39,16 @@ export const getInteractionListColumns = (
     ),
   },
   {
+    id: 'project_code',
+    sortId: 'project_code',
+    label: 'Project Code',
+    width: 140,
+    sortable: true,
+    // hide:
+    //   !permissionMap?.['iteration']?.edit &&
+    //   !permissionMap?.['iteration']?.read,
+  },
+  {
     id: 'interaction_iteration',
     sortId: 'interaction_iteration',
     label: 'Iteration',
@@ -56,6 +66,16 @@ export const getInteractionListColumns = (
     sortable: true,
     // hide:
     //   !permissionMap?.['interaction_age']?.edit && !permissionMap?.['interaction_age']?.read,
+  },
+  {
+    id: 'fiscal_year',
+    sortId: 'fiscal_year',
+    label: 'Fiscal Year',
+    width: 140,
+    sortable: true,
+    // hide:
+    //   !permissionMap?.['iteration']?.edit &&
+    //   !permissionMap?.['iteration']?.read,
   },
   {
     id: 'status_name',
@@ -226,8 +246,8 @@ export const getInteractionListColumns = (
     // hide: !permissionMap?.['interaction_type']?.edit && !permissionMap?.['interaction_type']?.read,
   },
   {
-    id: 'response_source',
-    sortId: 'response_source',
+    id: 'response_source_name',
+    sortId: 'response_source_name',
     label: 'Response Source',
     width: 180,
     sortable: true,

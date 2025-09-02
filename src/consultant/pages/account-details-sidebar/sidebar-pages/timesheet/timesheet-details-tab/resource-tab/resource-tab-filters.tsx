@@ -35,14 +35,16 @@ const enumOptions: { option: string; value: string }[] = [
 
 export const getTimesheetResourceTabFilterFields = (
   countries: { option: string; value: string }[],
-  regions: { option: string; value: string }[]
+  regions: { option: string; value: string }[],
+  resourceTypeOptions: { option: string; value: string }[],
+  memoizedStatus: { option: string; value: string }[]
 ): FieldConfig[] => {
   // Permission Mangement
   const { permission } = useSelector((state: RootState) => state.permission);
   const timesheetResourceViewEditFields = useMemo(
     () =>
       permission?.find(
-        (item) => item.name === AllPermissions.PROJECTS_RESOURCES_VIEW_EDIT
+        (item) => item.name === AllPermissions.ACCOUNT_RESOURCES_VIEW_EDIT
       )?.fields ?? [],
     [permission]
   );
@@ -62,6 +64,48 @@ export const getTimesheetResourceTabFilterFields = (
       hide:
         !permissionMap?.['resource_code']?.edit &&
         !permissionMap?.['resource_code']?.read,
+    },
+    {
+      name: 'Name',
+      value: 'resource_name',
+      type: 'text',
+      hide:
+        !permissionMap?.['resource_name']?.read &&
+        !permissionMap?.['resource_name']?.edit,
+    },
+    {
+      name: 'Resource Type',
+      value: 'resource_type_rid',
+      type: 'enum',
+      options: resourceTypeOptions,
+      filterOptions: enumOptions,
+      hide:
+        !permissionMap?.['resource_type_rid']?.read &&
+        !permissionMap?.['resource_type_rid']?.edit,
+    },
+    {
+      name: 'Org Name',
+      value: 'resource_orgname',
+      type: 'text',
+      hide:
+        !permissionMap?.['resource_orgname']?.read &&
+        !permissionMap?.['resource_orgname']?.edit,
+    },
+    {
+      name: 'Designation',
+      value: 'resource_designation',
+      type: 'text',
+      hide:
+        !permissionMap?.['resource_designation']?.read &&
+        !permissionMap?.['resource_designation']?.edit,
+    },
+    {
+      name: 'Role',
+      value: 'resource_role',
+      type: 'text',
+      hide:
+        !permissionMap?.['resource_role']?.read &&
+        !permissionMap?.['resource_role']?.edit,
     },
     {
       name: 'Resource Country',
@@ -85,17 +129,17 @@ export const getTimesheetResourceTabFilterFields = (
         !permissionMap?.['region_rid']?.read,
     },
     {
-      name: 'Effort (Hours)',
-      value: 'total_hours_pro_res',
+      name: 'Total Project Hours',
+      value: 'total_project_hours',
       type: 'number',
       operatorOption: numberOptions,
       hide:
-        !permissionMap?.['total_hours_pro_res']?.edit &&
-        !permissionMap?.['total_hours_pro_res']?.read,
+        !permissionMap?.['total_project_hours']?.edit &&
+        !permissionMap?.['total_project_hours']?.read,
     },
     {
-      name: 'Cost',
-      value: 'total_cost_pro_res',
+      name: 'Estimated R&D Hours',
+      value: 'estimated_rd_hours',
       type: 'number',
       operatorOption: numberOptions,
       hide:
@@ -103,31 +147,33 @@ export const getTimesheetResourceTabFilterFields = (
         !permissionMap?.['total_cost_pro_res']?.read,
     },
     {
-      name: 'QRE %',
-      value: 'qre_percent',
-      type: 'number',
-      operatorOption: numberOptions,
-      hide:
-        !permissionMap?.['qre_percent']?.edit &&
-        !permissionMap?.['qre_percent']?.read,
-    },
-    {
-      name: 'QRE',
-      value: 'qre_final',
+      name: 'Status',
+      value: 'status_rid',
       type: 'enum',
-      operatorOption: enumOptions,
+      required: true,
+      options: memoizedStatus,
+      filterOptions: enumOptions,
       hide:
-        !permissionMap?.['qre_final']?.edit &&
-        !permissionMap?.['qre_final']?.read,
+        !permissionMap?.['status_rid']?.read &&
+        !permissionMap?.['status_rid']?.edit,
     },
     {
       name: 'Comments',
-      value: 'description',
+      value: 'comments',
       type: 'text',
       operatorOption: nonReqTextOptions,
       hide:
-        !permissionMap?.['description']?.edit &&
-        !permissionMap?.['description']?.read,
+        !permissionMap?.['comments']?.edit &&
+        !permissionMap?.['comments']?.read,
+    },
+    {
+      name: 'Resource ID',
+      value: 'r_number',
+      type: 'text',
+      filterOptions: textOptions,
+      hide:
+        !permissionMap?.['r_number']?.read &&
+        !permissionMap?.['r_number']?.edit,
     },
     {
       name: 'Sort Options',

@@ -71,7 +71,7 @@ export const getProjectColumns = (
           onClick={() => onClick(row)}
           className={
             row.fiscal_year
-              ? 'cursor-pointer no-underline hover:underline hover:text-[#1755E7]'
+              ? 'cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
               : ''
           }
         >
@@ -335,6 +335,12 @@ export const getProjectColumns = (
     hide:
       !permissionMap?.['total_effort']?.read &&
       !permissionMap?.['total_effort']?.edit,
+    conditionallyEdit: [
+      {
+        key: 'total_effort',
+        matchValue: [null, '0.00'],
+      },
+    ],
     sx: {
       textAlign: 'right',
     },
@@ -458,14 +464,13 @@ export const getProjectColumns = (
     editId: 'total_cost_nonlabor',
     label: 'Non-Labor Cost',
     sortable: true,
-    sortId: 'total_cost_nonlabor',
     editable:
       permissionMap?.['total_cost_nonlabor']?.read &&
-      permissionMap?.['total_cost_nonlabor']?.edit &&
-      !accountInActive,
+      permissionMap?.['total_cost_nonlabor']?.edit,
     hide:
       !permissionMap?.['total_cost_nonlabor']?.read &&
       !permissionMap?.['total_cost_nonlabor']?.edit,
+    sortId: 'total_cost_nonlabor',
     width: 140,
     sx: {
       textAlign: 'right',
@@ -485,6 +490,70 @@ export const getProjectColumns = (
             'Non Labor Cost must be a positive integer with up to 16 digits and 2 decimal places',
         },
       ],
+    },
+  },
+  {
+    id: 'project_point_of_contact',
+    label: 'Project Point of Contact',
+    sortable: true,
+    sortId: 'project_point_of_contact',
+    width: 200,
+    hide:
+      !permissionMap?.['key_contacts']?.read &&
+      !permissionMap?.['key_contacts']?.edit,
+    render: (row: Project & { _level?: number }) => {
+      const isClickable =
+        permissionMap?.['key_contacts']?.read &&
+        permissionMap?.['key_contacts']?.edit &&
+        row._level !== undefined &&
+        row._level === 1;
+      return isClickable ? (
+        <div
+          onDoubleClick={() =>
+            handleEdit(row, row.project_point_of_contact, 'key_contacts_list')
+          }
+          className='!h-[31px] !min-h[31px] pt-1.5'
+        >
+          {row.project_point_of_contact}
+        </div>
+      ) : (
+        <span>
+          {row.project_point_of_contact ? row.project_point_of_contact : '-'}
+        </span>
+      );
+    },
+  },
+  {
+    id: 'technical_point_of_contact',
+    label: 'Technical Point of Contact',
+    sortable: true,
+    sortId: 'technical_point_of_contact',
+    width: 210,
+    hide:
+      !permissionMap?.['key_contacts']?.read &&
+      !permissionMap?.['key_contacts']?.edit,
+    render: (row: Project & { _level?: number }) => {
+      const isClickable =
+        permissionMap?.['key_contacts']?.read &&
+        permissionMap?.['key_contacts']?.edit &&
+        row._level !== undefined &&
+        row._level === 1;
+      return isClickable ? (
+        <div
+          onDoubleClick={() =>
+            handleEdit(row, row.technical_point_of_contact, 'key_contacts_list')
+          }
+          className='!h-[31px] !min-h[31px] pt-1.5'
+        >
+          {row.technical_point_of_contact}
+        </div>
+      ) : (
+        <span>
+          {row.technical_point_of_contact
+            ? row.technical_point_of_contact
+            : '-'}
+        </span>
+      );
     },
   },
   {

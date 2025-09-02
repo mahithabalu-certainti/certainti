@@ -24,6 +24,7 @@ import {
   FiscalDates,
   FormFiscalDateType,
   InputType,
+  ParentChildSelectOption,
   SelectOption,
   YesNo,
 } from '../consultant/types';
@@ -47,6 +48,7 @@ export const createTextField = (
     hide?: boolean;
     defaultValue?: string;
     errorHandling?: ErrorHandling[];
+    resetDependsFields?: string[];
     clearValue?: Record<string, string>;
     lengthRequired?: {
       key: string;
@@ -74,6 +76,7 @@ export const createTextField = (
   errorHandling: options.errorHandling,
   clearValue: options.clearValue,
   defaultValue: options.defaultValue,
+  resetDependsFields: options.resetDependsFields,
 });
 
 export const createPhoneInputField = (
@@ -175,6 +178,46 @@ export const createRadioField = (
   clearValue: options.clearValue,
 });
 
+export const createSelectChildField = (
+  name: string,
+  label: string,
+  others: {
+    expandOptions: ParentChildSelectOption[];
+    expandedAll?: boolean;
+    required: boolean;
+    width?: string;
+    placeholder?: string;
+    disabled?: boolean;
+    clearValue?: Record<string, string>;
+    onChange?: boolean;
+    isLoading?: boolean;
+    hide?: boolean;
+    resetDependsFields?: string[];
+    defaultValue?: string;
+    assignDefaultValue?: boolean;
+    dependantLabel?: string;
+    isFiscalYear?: boolean;
+  }
+): FieldType => ({
+  type: 'expandselect',
+  name,
+  label,
+  required: others.required,
+  expandOptions: others.expandOptions,
+  width: others.width,
+  disabled: others.disabled,
+  placeholder: others.placeholder,
+  clearValue: others.clearValue,
+  onChange: others.onChange,
+  isLoading: others.isLoading,
+  hide: others.hide,
+  defaultValue: others.defaultValue,
+  resetDependsFields: others.resetDependsFields,
+  assignDefaultValue: others.assignDefaultValue,
+  dependantLabel: others.dependantLabel,
+  isFiscalYear: others.isFiscalYear,
+  expandedAll: others.expandedAll,
+});
 export const createSelectField = (
   name: string,
   label: string,
@@ -231,6 +274,7 @@ export const createAutoCompleteField = (
     defaultValue?: string;
     assignDefaultValue?: boolean;
     dependantLabel?: string;
+    showCreateBtn?: boolean;
   }
 ): FieldType => ({
   type: 'autocomplete',
@@ -249,6 +293,7 @@ export const createAutoCompleteField = (
   resetDependsFields: others.resetDependsFields,
   assignDefaultValue: others.assignDefaultValue,
   dependantLabel: others.dependantLabel,
+  showCreateBtn: others.showCreateBtn,
 });
 
 export const createButton = (
@@ -776,8 +821,6 @@ export const getFiscalDateBounds = (
   year: string,
   accountFiscalDates: FiscalDates
 ): FormFiscalDateType => {
-  const today = new Date();
-  const currentYear = today.getFullYear();
   const fiscalYear = Number(year);
 
   const [startMonthStr, startDayStr] = accountFiscalDates.startDate.split('/');
@@ -788,31 +831,40 @@ export const getFiscalDateBounds = (
   const endMonth = Number(endMonthStr);
   const endDay = Number(endDayStr);
 
+  // Check if fiscal year spans across two calendar years
   const isYearSpanning =
     endMonth < startMonth || (endMonth === startMonth && endDay < startDay);
 
-  const endDateYear = isYearSpanning ? fiscalYear + 1 : fiscalYear;
+  // Decide which year the range belongs to
+  let startYear: number;
+  let endYear: number;
+
+  if (isYearSpanning) {
+    // FY 2024 with Apr–Mar → Apr 2023 to Mar 2024
+    startYear = fiscalYear - 1;
+    endYear = fiscalYear;
+  } else {
+    // FY 2024 with Jan–Dec → Jan 2023 to Dec 2023
+    startYear = fiscalYear - 1;
+    endYear = fiscalYear - 1;
+  }
 
   const startDateMin = getFiscalParseDateFromMMDD(
     accountFiscalDates.startDate,
-    fiscalYear
+    startYear
   );
   const accountEndDate = getFiscalParseDateFromMMDD(
     accountFiscalDates.endDate,
-    endDateYear
+    endYear
   );
 
+  const today = new Date();
   let endDateMax: Date;
+
   if (!startDateMin || !accountEndDate) {
     endDateMax = today;
   } else {
-    if (fiscalYear === currentYear) {
-      endDateMax = today > accountEndDate ? accountEndDate : accountEndDate;
-    } else if (fiscalYear < currentYear) {
-      endDateMax = accountEndDate;
-    } else {
-      endDateMax = accountEndDate;
-    }
+    endDateMax = accountEndDate;
   }
 
   const startDateMax = new Date(endDateMax);
@@ -825,3 +877,57 @@ export const getFiscalDateBounds = (
     endMax: endDateMax,
   };
 };
+// For future referance
+// export const getFiscalDateBounds = (
+//   year: string,
+//   accountFiscalDates: FiscalDates
+// ): FormFiscalDateType => {
+//   const today = new Date();
+//   const currentYear = today.getFullYear();
+//   const fiscalYear = Number(year);
+
+//   const [startMonthStr, startDayStr] = accountFiscalDates.startDate.split('/');
+//   const [endMonthStr, endDayStr] = accountFiscalDates.endDate.split('/');
+
+//   const startMonth = Number(startMonthStr);
+//   const startDay = Number(startDayStr);
+//   const endMonth = Number(endMonthStr);
+//   const endDay = Number(endDayStr);
+
+//   const isYearSpanning =
+//     endMonth < startMonth || (endMonth === startMonth && endDay < startDay);
+
+//   const endDateYear = isYearSpanning ? fiscalYear + 1 : fiscalYear;
+
+//   const startDateMin = getFiscalParseDateFromMMDD(
+//     accountFiscalDates.startDate,
+//     fiscalYear
+//   );
+//   const accountEndDate = getFiscalParseDateFromMMDD(
+//     accountFiscalDates.endDate,
+//     endDateYear
+//   );
+
+//   let endDateMax: Date;
+//   if (!startDateMin || !accountEndDate) {
+//     endDateMax = today;
+//   } else {
+//     if (fiscalYear === currentYear) {
+//       endDateMax = today > accountEndDate ? accountEndDate : accountEndDate;
+//     } else if (fiscalYear < currentYear) {
+//       endDateMax = accountEndDate;
+//     } else {
+//       endDateMax = accountEndDate;
+//     }
+//   }
+
+//   const startDateMax = new Date(endDateMax);
+//   startDateMax.setDate(endDateMax.getDate() - 1);
+
+//   return {
+//     year: fiscalYear,
+//     startMin: startDateMin,
+//     startMax: startDateMax,
+//     endMax: endDateMax,
+//   };
+// };

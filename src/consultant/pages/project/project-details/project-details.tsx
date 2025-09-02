@@ -408,7 +408,11 @@ export const ProjectDetails = () => {
           <ProjectResources
             accountOrProjectInActive={accountInActive || projectInActive}
             projectID={projectID}
-            accountID={accountID}
+            accountData={{
+              accountID: accountID,
+              accountName: projectData?.account_name || '',
+              accountNumber: projectData?.account_number || '',
+            }}
             projectFiscalDate={fiscalDate}
             setExportType={setExportType}
             setAttachmentParams={setProjectResourceParams}
@@ -420,7 +424,11 @@ export const ProjectDetails = () => {
           <ProjectTask
             accountOrProjectInActive={accountInActive || projectInActive}
             projectID={projectID}
-            accountID={accountID}
+            accountData={{
+              accountID: accountID,
+              accountName: projectData?.account_name || '',
+              accountNumber: projectData?.account_number || '',
+            }}
             projectFiscalDate={fiscalDate}
             setExportType={setExportType}
             setProjectTaskParams={setProjectTaskParams}
@@ -451,6 +459,7 @@ export const ProjectDetails = () => {
             setExportType={setExportType}
             setAttachmentParams={setAttachmentParams}
             refetchProjectDetails={onRefreshClick}
+            projectFiscalYear={projectData?.fiscal_year}
           />
         );
       case 'checklists':
@@ -608,6 +617,7 @@ export const ProjectDetails = () => {
           showActions={false}
           showSettings={false}
           goBack={goBack}
+          isLoading={isLoading}
         />
       </div>
       <InfoSection
@@ -632,6 +642,7 @@ export const ProjectDetails = () => {
             showBackIcon={true}
             isCollapsed={isCollapsed}
             onToggleCollapse={() => setIsCollapsed((prev) => !prev)}
+            isLoading={isLoading}
           />
         </div>
         <div

@@ -63,7 +63,7 @@ export const getProjectResourcesColumns = (
     },
     render: (row: ProjectResourcesListType) => (
       <span
-        className='cursor-pointer hover:!text-blue-600 hover:underline'
+        className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
         onClick={() => onClick(row)}
       >
         {row.resource_code}
