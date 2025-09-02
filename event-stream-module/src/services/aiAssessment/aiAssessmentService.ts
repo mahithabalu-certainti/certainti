@@ -88,18 +88,20 @@ export class AIAssessmentService {
           const transaction_id = uuidv4();
 
           const payload = { company_id, project_id: id, input_text, transaction_id:transaction_id };
-           let callTriggerAi = await axios.post(process.env.TRIGGER_AI_URL!, payload, {
+          console.log("Trigger AI payload", payload);
+          let callTriggerAi = await axios.post(process.env.TRIGGER_AI_URL!, payload, {
                headers: headers
            });
-        
+          console.log("Trigger AI Response", callTriggerAi);
         }
       } else {
          const transaction_id = uuidv4();
         const payload = { company_id, project_id, input_text ,transaction_id};
-
+        console.log("Trigger Ai invoked", payload);
          let callTriggerAi = await axios.post(process.env.TRIGGER_AI_URL!, payload, {
                headers: headers
          });
+          console.log("Trigger Ai Response", callTriggerAi);
           
       }
 
@@ -107,6 +109,7 @@ export class AIAssessmentService {
         `Processed Kafka message for interaction_rid: ${company_id}`
       );
     } catch (err) {
+      console.log(err)
       this.logger.error("Error processing Kafka message", err);
     }
   }
