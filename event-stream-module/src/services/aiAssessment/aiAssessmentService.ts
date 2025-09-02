@@ -103,7 +103,6 @@ export class AIAssessmentService {
                headers: headers
          });
         this.logger.info(`Trigger AI Response: ${JSON.stringify(callTriggerAi)}`);
-
       }
 
     } catch (err) {
