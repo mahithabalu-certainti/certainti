@@ -7,6 +7,7 @@ import {
   ActionIcon,
   NewFilterIcon,
   RefreshIcon,
+  SearchBlackIcon,
 } from '../../../assets';
 import { FilterModal } from '../../../components';
 import ActionsDropdown from '../../../components/actions-dropdown/actions-dropdown';
@@ -44,6 +45,7 @@ const BUTTON_STYLES = {
 export const Accounts: React.FC = () => {
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>();
   const [expandChild, setExpandChild] = useState<boolean>(false);
+  const [searchText, setSearchText] = useState<string>('');
   const [order, setOrder] = useState<'asc' | 'desc'>('asc');
   const [orderBy, setOrderBy] = useState<keyof AccountList>('account_name');
   const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';
@@ -266,7 +268,22 @@ export const Accounts: React.FC = () => {
         </div>
       </div>
 
-      <div className='flex items-center justify-end gap-4 h-[34px] min-h-[34px] px-4'>
+      <div className='flex items-center justify-end gap-3 h-[34px] min-h-[34px] px-2'>
+        <div className='relative'>
+          <input
+            type='text'
+            placeholder='Search'
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            className='placeholder-custom-color placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-[200px] sm:text-sm pl-1 pr-10 h-[24px] border border-[#CBD6E2] rounded-xs'
+          />
+          <button
+            onClick={() => console.log('clicked')}
+            className='absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center justify-center hover:bg-gray-100 rounded cursor-pointer'
+          >
+            <SearchBlackIcon alt='search' className='w-4 h-4' />
+          </button>
+        </div>
         <TextButton
           label={expandChild ? 'Collapse' : 'Expand All'}
           onClick={() => setExpandChild(!expandChild)}
