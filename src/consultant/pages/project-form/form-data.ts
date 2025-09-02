@@ -12,6 +12,7 @@ import {
   REGEX_PATTERNS,
   STATUS_OPTIONS,
   YES_NO_OPTIONS,
+  formatCostValue,
 } from '../../../common-utils';
 import {
   FieldType,
@@ -712,6 +713,7 @@ export const FormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             placeholder: 'Enter Total FTE Cost',
             onChange: true,
+            formatCostValue: true,
             disabled:
               isEditView &&
               permissionMap?.['total_cost_fte']?.read &&
@@ -728,6 +730,7 @@ export const FormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             placeholder: 'Enter Total Sub Con Cost',
             onChange: true,
+            formatCostValue: true,
             disabled:
               isEditView &&
               permissionMap?.['total_cost_subcon']?.read &&
@@ -744,6 +747,7 @@ export const FormData = (
               'Total Non Labor Cost must be a positive integer with up to 16 digits and 2 decimal places',
             placeholder: 'Enter Total Non Labor Cost',
             onChange: true,
+            formatCostValue: true,
             disabled:
               isEditView &&
               permissionMap?.['total_cost_nonlabor']?.read &&
@@ -759,7 +763,10 @@ export const FormData = (
               'Total Cost must be a positive integer with up to 16 digits and 2 decimal places',
             placeholder: 'Enter Total Cost',
             onChange: true,
-            defaultValue: calculatedTotalCost || '',
+            formatCostValue: true,
+            defaultValue: calculatedTotalCost
+              ? formatCostValue(calculatedTotalCost)
+              : '',
             disabled:
               (isEditView &&
                 permissionMap?.['total_cost']?.read &&

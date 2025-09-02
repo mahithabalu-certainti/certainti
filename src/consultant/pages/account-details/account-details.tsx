@@ -710,6 +710,7 @@ export const AccountDetails = () => {
         key: 'timesheet',
         id: AllMenus.TIMESHEETS,
         disabled: disable,
+        hide: disable,
         icon: TimeSheetIcon,
       },
       {

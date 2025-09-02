@@ -55,6 +55,7 @@ export interface FormTypeFields {
   dependantLabel?: string;
   isFiscalYear?: boolean;
   showCreateBtn?: boolean;
+  formatCostValue?: boolean;
 }
 
 export type InputType =
@@ -139,6 +140,7 @@ export interface FieldType {
   dependantLabel?: string;
   isFiscalYear?: boolean;
   showCreateBtn?: boolean;
+  formatCostValue?: boolean;
 }
 
 export type AllowedCountry =
