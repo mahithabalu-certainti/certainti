@@ -11,6 +11,7 @@ import {
   TableRow,
   Tooltip,
   SelectChangeEvent,
+  Skeleton,
 } from '@mui/material';
 import { Project } from '../../../types/project';
 import {
@@ -49,13 +50,19 @@ import SingleSkeleton from '../../../../components/skeleton-component/singleskel
 import TextButton from '../../../../components/button/text-button';
 import SkeletonForm from '../../../../components/form-builder/skeleton-form';
 import {
+  ExpandCollapseSelectOptions,
   useGetInteractionStatus,
   useGetInteractionStatusById,
 } from '../../../../common-service';
+import { fetchAccountsThunk } from '../../../../store/slices';
+import { RootState, useAppDispatch } from '../../../../store/store';
+import { useSelector } from 'react-redux';
+import { ExpandCollapseDropdown } from '../../../../components';
 
 const InteractionForm = () => {
   const { interactionId } = useParams();
   const [searchParams] = useSearchParams();
+  const dispatch = useAppDispatch();
   const { successToast } = useToast();
   const [projectList, setProjectList] = useState<Project[]>([]);
   const [currentStatusId, setCurrentStatusId] = useState<string>('');
@@ -92,6 +99,11 @@ const InteractionForm = () => {
     updated_by: '',
   });
   const [errors, setErrors] = useState<InteractionFormErrors>({});
+  const [currentAccountId, setCurrentAccountId] = useState<string>('');
+
+  const { accounts, loading } = useSelector(
+    (state: RootState) => state.account
+  );
 
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
   const projectDetails = searchParams.get('projectDetails');
@@ -99,6 +111,13 @@ const InteractionForm = () => {
   const source = searchParams.get('source');
   const accountName = searchParams.get('account_name');
   const isProjectFields = source !== 'account';
+  const isGloalInteraction = source === 'global';
+
+  useEffect(() => {
+    if (isGloalInteraction && !isEditView) {
+      dispatch(fetchAccountsThunk());
+    }
+  }, [isGloalInteraction, dispatch, isEditView]);
 
   useEffect(() => {
     if (projectDetails && source !== 'account') {
@@ -129,6 +148,46 @@ const InteractionForm = () => {
     }
   }, [accountName, projectDetails, searchParams, source]);
 
+  const accountsData: ExpandCollapseSelectOptions[] = useMemo(() => {
+    if (!accounts) return [];
+
+    return accounts.map((account) => ({
+      group: account.account_name,
+      options:
+        account.child_accounts?.map((child) => ({
+          value: child.rid,
+          label: child.account_name,
+        })) || [],
+    }));
+  }, [accounts]);
+
+  const handleAccountChange = (accountRid: string) => {
+    // Find the selected account
+    let selectedAccountName = '';
+    accountsData.forEach((group) => {
+      const account = group.options.find((acc) => acc.value === accountRid);
+      if (account) {
+        selectedAccountName = account.label;
+      }
+    });
+
+    setCurrentAccountId(accountRid);
+    setFormData((prev) => ({
+      ...prev,
+      accountName: selectedAccountName,
+      projectCode: '',
+      projectName: '',
+      fiscalYear: 0,
+    }));
+    setErrors((prev) => ({
+      ...prev,
+      accountName: undefined,
+      projectCode: undefined,
+      projectName: undefined,
+      fiscalYear: undefined,
+    }));
+  };
+
   const { data: interactionData, isLoading } = useInteractionDetails(
     accountId,
     interactionId
@@ -153,9 +212,9 @@ const InteractionForm = () => {
       limit: 1000,
       sortBy: 'project_code',
       sortOrder: 'ASC',
-      accountNumber: accountId,
+      accountNumber: accountId || currentAccountId || '',
     },
-    !isProjectFields
+    !isProjectFields || isGloalInteraction
   );
 
   const statusOptions = useMemo(
@@ -443,7 +502,10 @@ const InteractionForm = () => {
   };
 
   const formLoading =
-    isLoading || projectsLoading || interactionStatus.isLoading;
+    isLoading ||
+    (projectsLoading && !isGloalInteraction) ||
+    interactionStatus.isLoading ||
+    loading;
 
   return (
     <div>
@@ -536,29 +598,42 @@ const InteractionForm = () => {
             <div
               className={`grid md:grid-cols-3 gap-x-4 gap-y-[2px] px-10 pt-1`}
             >
-              <div>
-                <label
-                  className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
-                  htmlFor='account_name'
-                >
-                  Account Name
-                </label>
-                <input
-                  type='text'
-                  name='account_name'
-                  placeholder='Enter Account Name'
-                  autoComplete='off'
-                  className='placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs'
-                  disabled={true}
-                  value={formData.accountName}
+              {isGloalInteraction && !isEditView ? (
+                <ExpandCollapseDropdown
+                  label='Account Name'
+                  selectedValue={currentAccountId}
+                  selectedLabel={formData.accountName}
+                  required={true}
+                  onChange={handleAccountChange}
+                  dropdownOptions={accountsData}
+                  placeholder='Choose Account Name'
+                  error={errors?.accountName}
+                  expandAll={true}
                 />
-              </div>
+              ) : (
+                <div>
+                  <label
+                    className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
+                    htmlFor='account_name'
+                  >
+                    Account Name
+                  </label>
+                  <input
+                    type='text'
+                    name='account_name'
+                    placeholder='Enter Account Name'
+                    autoComplete='off'
+                    className='placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs'
+                    disabled={true}
+                    value={formData.accountName}
+                  />
+                </div>
+              )}
             </div>
-
             <div
               className={`grid md:grid-cols-3 gap-x-4 gap-y-[2px] px-10 pt-1 mb-5`}
             >
-              {!isProjectFields && !isEditView ? (
+              {(!isProjectFields || isGloalInteraction) && !isEditView ? (
                 <div className='w-full'>
                   <label
                     className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
@@ -567,94 +642,105 @@ const InteractionForm = () => {
                     Project Code
                     <span className='text-red-500'> *</span>
                   </label>
-                  <Select
-                    name='project_code'
-                    className={`custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]
+                  {projectsLoading && isGloalInteraction ? (
+                    <div>
+                      <Skeleton
+                        variant='rounded'
+                        width='100%'
+                        height={32}
+                        sx={{ borderRadius: '2px' }}
+                      />
+                    </div>
+                  ) : (
+                    <Select
+                      name='project_code'
+                      className={`custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]
                       ${formData.projectCode === '' ? 'text-[#7D98B6] ' : ''} ${errors?.projectCode && 'border-red-500 bg-[#FEF2F2]'}
                     `}
-                    onChange={handleProjectChange}
-                    value={formData.projectCode}
-                    displayEmpty
-                    required
-                    fullWidth
-                    size='small'
-                    MenuProps={{
-                      PaperProps: {
-                        sx: {
-                          maxWidth: 300,
-                          maxHeight: 300,
-                          marginTop: '4px',
-                          boxShadow:
-                            'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
-                          '& .MuiMenuItem-root': {
-                            fontSize: '13px',
-                            padding: '6px 12px',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
+                      onChange={handleProjectChange}
+                      value={formData.projectCode}
+                      displayEmpty
+                      required
+                      fullWidth
+                      size='small'
+                      MenuProps={{
+                        PaperProps: {
+                          sx: {
+                            maxWidth: 300,
+                            maxHeight: 300,
+                            marginTop: '4px',
+                            boxShadow:
+                              'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
+                            '& .MuiMenuItem-root': {
+                              fontSize: '13px',
+                              padding: '6px 12px',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                            },
                           },
                         },
-                      },
-                    }}
-                    sx={{
-                      height: '32px',
-                      fontSize: '13px',
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        border: '2px solid #60A5FA',
-                      },
-                      '& .MuiOutlinedInput-root': {
-                        '&.Mui-focused': {
-                          boxShadow: 'none',
-                        },
-                      },
-                      '.MuiSelect-select': {
-                        padding: '6px 6px',
-                        color:
-                          formData.projectCode === '' ? '#7D98B6' : 'black',
-                      },
-                      '&.Mui-disabled': {
-                        backgroundColor: '#f3f4f6',
-                      },
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        border: errors?.projectCode
-                          ? '1px solid #ef4444'
-                          : '1px solid #CBD6E2',
-                        borderRadius: '2px',
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        border: errors?.projectCode
-                          ? '1px solid #ef4444'
-                          : '1px solid #CBD6E2',
-                      },
-                      '& svg': {
-                        color: '#7D98B6',
-                      },
-                    }}
-                  >
-                    <MenuItem
-                      value=''
+                      }}
                       sx={{
-                        color: '#425A76',
+                        height: '32px',
                         fontSize: '13px',
-                        fontWeight: '500',
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          border: '2px solid #60A5FA',
+                        },
+                        '& .MuiOutlinedInput-root': {
+                          '&.Mui-focused': {
+                            boxShadow: 'none',
+                          },
+                        },
+                        '.MuiSelect-select': {
+                          padding: '6px 6px',
+                          color:
+                            formData.projectCode === '' ? '#7D98B6' : 'black',
+                        },
+                        '&.Mui-disabled': {
+                          backgroundColor: '#f3f4f6',
+                        },
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          border: errors?.projectCode
+                            ? '1px solid #ef4444'
+                            : '1px solid #CBD6E2',
+                          borderRadius: '2px',
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          border: errors?.projectCode
+                            ? '1px solid #ef4444'
+                            : '1px solid #CBD6E2',
+                        },
+                        '& svg': {
+                          color: '#7D98B6',
+                        },
                       }}
                     >
-                      Choose Project Code
-                    </MenuItem>
-                    {projectCodeList?.map((option, i) => (
                       <MenuItem
+                        value=''
                         sx={{
                           color: '#425A76',
                           fontSize: '13px',
                           fontWeight: '500',
                         }}
-                        key={`${option.value}-${i}`}
-                        value={option.value}
-                        title={option.label}
                       >
-                        {option.label}
+                        Choose Project Code
                       </MenuItem>
-                    ))}
-                  </Select>
+                      {projectCodeList?.map((option, i) => (
+                        <MenuItem
+                          sx={{
+                            color: '#425A76',
+                            fontSize: '13px',
+                            fontWeight: '500',
+                          }}
+                          key={`${option.value}-${i}`}
+                          value={option.value}
+                          title={option.label}
+                        >
+                          {option.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  )}
                   {errors?.projectCode && (
                     <span className='text-[12px] text-red-400 col-span-full'>
                       {errors.projectCode}
@@ -805,6 +891,7 @@ const InteractionForm = () => {
                 >
                   <MenuItem
                     value=''
+                    disabled
                     sx={{
                       color: '#425A76',
                       fontSize: '13px',

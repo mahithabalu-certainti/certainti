@@ -51,6 +51,7 @@ import {
   INTERACTIONS,
   INTERACTIONS_DETAILS,
   GLOBAL_INTERACTIONS_EDIT,
+  GLOBAL_INTERACTIONS_CREATE,
 } from './routes';
 import { RootState } from './store/store';
 import ProjectTaskForm from './consultant/pages/project/project-details/project-task/form/project-task-form';
@@ -197,6 +198,10 @@ export const App: React.FC<IApp> = ({ instance }) => {
                 />
                 <Route
                   path={INTERACTIONS_CREATE}
+                  element={<InteractionForm />}
+                />
+                <Route
+                  path={GLOBAL_INTERACTIONS_CREATE}
                   element={<InteractionForm />}
                 />
                 <Route path={INTERACTIONS_EDIT} element={<InteractionForm />} />

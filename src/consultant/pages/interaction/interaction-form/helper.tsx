@@ -89,7 +89,11 @@ export const validateInteractionForm = (
   const questionErrors: InteractionQuestionErrors[] = [];
 
   // Validate project fields when source is account
-  if (source === 'account') {
+  if (source === 'account' || source === 'global') {
+    if (!formData.accountName && source === 'global') {
+      newErrors.accountName = 'Account Name is required';
+      isValid = false;
+    }
     if (!formData.projectCode) {
       newErrors.projectCode = 'Project Code is required';
       isValid = false;
