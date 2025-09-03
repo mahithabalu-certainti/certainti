@@ -20,8 +20,12 @@ import {
 } from '../../../../common-service';
 import { reshapeGlobalFilter } from '../../../../common-utils';
 import { exportGlobalInteractions } from '../../../services/interactions/interactions-service';
+import TextButton from '../../../../components/button/text-button';
+import { GLOBAL_INTERACTIONS_CREATE } from '../../../../routes';
+import { useNavigate } from 'react-router-dom';
 
 const Interaction: React.FC = () => {
+  const navigate = useNavigate();
   const { fiscalYear, filters } = useSelector<
     RootState,
     { filters: unknown; fiscalYear: string }
@@ -153,6 +157,13 @@ const Interaction: React.FC = () => {
     memoizedInteractionResponseSources
   );
 
+  const handleCreate = () => {
+    const queryParams = new URLSearchParams({
+      source: 'global',
+    });
+    navigate(`${GLOBAL_INTERACTIONS_CREATE}?${queryParams.toString()}`);
+  };
+
   const isModalOpen = Boolean(columnAnchorEl);
   const modalId = isModalOpen
     ? 'interaction-column-visibility-popover'
@@ -188,6 +199,15 @@ const Interaction: React.FC = () => {
           >
             <RefreshIcon alt='refresh-icon' className='h-4' />
           </div>
+          <TextButton
+            label='Create Interaction'
+            onClick={handleCreate}
+            sx={{
+              width: '124px',
+              minWidth: '124px',
+              maxWidth: '124px',
+            }}
+          />
           <div className='hidden border border-[#CBD6E2] w-[24px] h-[24px] justify-center items-center bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'>
             <ActionIcon alt='menu-icon' className='h-4' />
           </div>

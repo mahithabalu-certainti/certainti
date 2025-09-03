@@ -376,6 +376,12 @@ export const getProjectColumns = (
     sx: {
       textAlign: 'right',
     },
+    conditionallyEdit: [
+      {
+        key: 'total_cost',
+        matchValue: [null, '0.00'],
+      },
+    ],
     render: (row: Project) =>
       row.total_cost ? costDisplay(row.total_cost, row.currency_symbol) : '-',
     field: {

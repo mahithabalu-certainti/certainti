@@ -50,6 +50,7 @@ export const createTextField = (
     errorHandling?: ErrorHandling[];
     resetDependsFields?: string[];
     clearValue?: Record<string, string>;
+    formatCostValue?: boolean;
     lengthRequired?: {
       key: string;
       minMatchedValue: RegExp;
@@ -77,6 +78,7 @@ export const createTextField = (
   clearValue: options.clearValue,
   defaultValue: options.defaultValue,
   resetDependsFields: options.resetDependsFields,
+  formatCostValue: options.formatCostValue,
 });
 
 export const createPhoneInputField = (
@@ -931,3 +933,19 @@ export const getFiscalDateBounds = (
 //     endMax: endDateMax,
 //   };
 // };
+
+export const formatCostValue = (value: string): string => {
+  if (value === null || value === undefined) return '';
+
+  const costStr = String(value);
+  const [whole, decimal] = costStr.split('.');
+  const formattedWhole = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const formattedCost =
+    decimal !== undefined ? `${formattedWhole}.${decimal}` : formattedWhole;
+
+  return `${formattedCost}`;
+};
+
+export const removeFormatCostValue = (value: string): string => {
+  return value.replace(/,/g, '');
+};

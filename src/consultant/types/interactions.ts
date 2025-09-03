@@ -97,6 +97,7 @@ export interface InteractionQuestionErrors {
 }
 
 export interface InteractionFormErrors {
+  accountName?: string;
   projectCode?: string;
   projectName?: string;
   fiscalYear?: string;

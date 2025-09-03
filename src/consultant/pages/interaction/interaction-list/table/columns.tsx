@@ -293,7 +293,7 @@ export const getGlobalInteractionListColumns = (
     // hide:
     //   !permissionMap?.['modified_by']?.edit &&
     //   !permissionMap?.['modified_by']?.read,
-    render: (row: InteractionList) => row.updated_user_name || '-',
+    render: (row: InteractionList) => row?.updated_user_name?.trim() || '-',
   },
   {
     id: 'modified_datetime',
