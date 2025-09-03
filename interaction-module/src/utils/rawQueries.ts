@@ -775,7 +775,8 @@ const findDateDifferenceQuery = (schemaName : string, rid : any, dateTimeColumn 
     return `SELECT COALESCE(DATE(NOW()) - DATE(i.${dateTimeColumn}), 0) AS age, i.rid
             FROM ${schemaName}.interactions i
             WHERE
-            i.status_rid = '${rid}'`
+            i.status_rid = '${rid}'
+            `
 }
 
 const updateInteractionForAgeQuery = (schemaName : string, rid : string, age : number) => {
