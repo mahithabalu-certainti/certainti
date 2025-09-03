@@ -46,6 +46,7 @@ import {
 import { useLocation } from 'react-router-dom';
 import { ArrowIcon, CheckedIcon, CloseIcon } from '../../../../../assets';
 import { MENU_PROPS, SELECT_STYLES } from '../../../../../components';
+import dayjs from 'dayjs';
 
 const Filter: React.FC<FilterComponentProps> = ({
   value,
@@ -622,7 +623,7 @@ const Filter: React.FC<FilterComponentProps> = ({
             menuOption={field.operatorOption || dateOptions}
             fieldName={field.value}
             state={fieldState}
-            minDate={field.minDate}
+            minDate={dayjs('1950-01-01').toDate()}
             maxDate={field.maxDate}
             onOptionChange={handleFilterOptionChange}
             onValueChange={handleDateChange}

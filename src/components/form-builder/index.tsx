@@ -1528,7 +1528,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 : today
               : today;
           }
-          return field?.maxDate ? dayjs(field.maxDate) : undefined;
+          return field?.maxDate ? dayjs(field.maxDate) : today;
         })();
 
         return (

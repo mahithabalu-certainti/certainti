@@ -511,11 +511,11 @@ export const ResourceFormData = (
             minDate: fiscalDate?.startMin,
             maxDate: fiscalDate?.startMax,
             disabled:
-              isEditView &&
+              isEditView &&  
               resourceCostPermissionMap?.['effective_from']?.read &&
               !resourceCostPermissionMap?.['effective_from']?.edit,
             hide:
-              isEditView &&
+              isEditView && 
               !resourceCostPermissionMap?.['effective_from']?.read &&
               !resourceCostPermissionMap?.['effective_from']?.edit,
           }),
@@ -666,7 +666,6 @@ export const ResourceFormData = (
         fields: [
           createDateField('skill_start_date', 'Effective Date', {
             required: false,
-            minDate: new Date('1950-01-01'),
             maxDate: currentDate,
             disableFutureDates: true,
             disabled:

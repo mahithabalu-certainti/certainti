@@ -41,6 +41,7 @@ export const getCostFilterFields = (
     name: 'Effective Date',
     value: 'effective_from',
     type: 'date',
+    minDate: new Date('1950-01-01'),
     maxDate: new Date(),
     hide:
       !resourceCostpermissionMap?.['effective_from']?.read &&
@@ -50,6 +51,7 @@ export const getCostFilterFields = (
     name: 'End Date',
     value: 'end_date',
     type: 'date',
+    minDate: new Date('1950-01-01'),
     maxDate: new Date(),
     hide:
       !resourceCostpermissionMap?.['end_date']?.read &&
