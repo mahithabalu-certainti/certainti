@@ -95,6 +95,8 @@ export interface DateFieldConfig {
   minDate?: string | Date | null;
   maxDate?: string | Date | null;
   fiscalYearValidation?: boolean;
+  startFieldId?: string;
+  endFieldId?: string;
 }
 
 export interface TableField {
@@ -258,6 +260,7 @@ export interface ListTableProps<T extends RowData> {
   unCheckedToggleTooltip?: string;
   toggleClick?: (rowId: string, value: boolean) => void;
   showEmptyRow?: boolean;
+  clearSelectedRows?: boolean;
 }
 
 export interface EditingCell {

@@ -71,6 +71,7 @@ export const UPDATE_PROJECT = gql`
           modified_by
           created_datetime
           modified_datetime
+          currency_symbol
           project_rid
           project_code
           industry_rid

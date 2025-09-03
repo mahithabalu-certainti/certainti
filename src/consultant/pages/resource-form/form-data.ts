@@ -11,7 +11,7 @@ import {
 import { FormFiscalDateType, FormType, SelectOption } from '../../types';
 
 // 1. Extract date constants
-const minYear = 2000;
+const minYear = 1950;
 const currentYear = new Date().getFullYear();
 export const DATE_CONFIG = {
   FISCAL_YEARS_RANGE: 6,
@@ -511,11 +511,11 @@ export const ResourceFormData = (
             minDate: fiscalDate?.startMin,
             maxDate: fiscalDate?.startMax,
             disabled:
-              isEditView &&
+              isEditView &&  
               resourceCostPermissionMap?.['effective_from']?.read &&
               !resourceCostPermissionMap?.['effective_from']?.edit,
             hide:
-              isEditView &&
+              isEditView && 
               !resourceCostPermissionMap?.['effective_from']?.read &&
               !resourceCostPermissionMap?.['effective_from']?.edit,
           }),
@@ -666,7 +666,6 @@ export const ResourceFormData = (
         fields: [
           createDateField('skill_start_date', 'Effective Date', {
             required: false,
-            minDate: new Date('1950-01-01'),
             maxDate: currentDate,
             disableFutureDates: true,
             disabled:
@@ -821,7 +820,6 @@ export const ResourceFormData = (
         fields: [
           createDateField('resource_startdate', 'Effective Date', {
             required: false,
-            minDate: new Date('1950-01-01'),
             maxDate: previousDate,
             disableFutureDates: true,
             disabled:
