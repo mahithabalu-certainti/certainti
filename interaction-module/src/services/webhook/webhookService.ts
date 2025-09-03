@@ -2,13 +2,13 @@ import { Client } from "@microsoft/microsoft-graph-client";
 import { ClientSecretCredential } from "@azure/identity";
 import csv from "csv-parser";
 import ExcelJS from "exceljs";
-import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries } from "../../utils/constants";
+import { HttpStatus, rawQueries } from "../../utils/constants";
 import { Readable } from "stream";
 import { InteractionModelService } from "../interactionModelsService";
 import InteractionSchemaService from "../interactions/schemaService";
 import { InteractionService } from "../interactions/interactionService";
 import { Logger } from "winston";
-import { isLeafType } from "graphql";
+import axios from "axios";
 
 export class WebHookService {
   private graphClient: Client;
@@ -320,28 +320,65 @@ export class WebHookService {
     const messageId = notification.resourceData?.id;
     if (!messageId) return null;
 
-    const email = "support@yourdomain.com";
 
     const accesss_token = process.env.EMAIL_WEBHOOK_TOKEN!;
+    const refresh_token = process.env.EMAIL_WEBHOOK_REFRESH_TOKEN!;
+    let generatedAccessToken = null;
 
     // const url = `/users/${email}/messages/${encodeURIComponent(
     //   messageId
     // )}?$expand=attachments`;
     // const message = await this.graphClient.api(url).get();
 
-    const url = `https://graph.microsoft.com/v1.0/me/messages/${encodeURIComponent(
-      messageId
-    )}?$expand=attachments`;
-    const resp = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${accesss_token}`,
-        "Content-Type": "application/json",
-      },
-    });
 
-    if (!resp.ok) {
-      const txt = await resp.text();
-      throw new Error(`Failed to fetch message: ${resp.status} ${txt}`);
+    const fetchMessage = async (token: string) => {
+      const url = `https://graph.microsoft.com/v1.0/me/messages/${encodeURIComponent(
+        messageId
+      )}?$expand=attachments`;
+  
+      const resp = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+  
+      return resp;
+    };
+  
+    // Try fetching message with current access token
+    let resp = await fetchMessage(accesss_token);
+  
+    // If access token is expired or invalid, refresh it
+    if (resp.status === 401 || resp.status === 403) {
+      this.logger.warn('Access token expired or invalid, attempting refresh...');
+  
+      try {
+        const tokenResponse = await axios.post(
+          `https://login.microsoftonline.com/${process.env.WEBHOOK_API_TENANT_ID!}/oauth2/v2.0/token`,
+          new URLSearchParams({
+            grant_type: 'refresh_token',
+            refresh_token: refresh_token,
+            client_id: process.env.WEBHOOK_API_CLIENT_ID!,
+            client_secret: process.env.WEBHOOK_API_CLIENT_SECRET!,
+            scope: 'https://graph.microsoft.com/.default',
+          }),
+          {
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          }
+        );
+  
+        // Get the new access token
+        generatedAccessToken = tokenResponse.data.access_token;
+  
+        // Optionally: persist new accessToken and refreshToken somewhere
+  
+        // Retry the original Graph API request with new token
+        resp = await fetchMessage(generatedAccessToken);
+      } catch (refreshError: any) {
+        console.error('Failed to refresh token:', refreshError.response?.data || refreshError.message);
+        throw new Error('Token refresh failed');
+      }
     }
 
     const message = await resp.json();

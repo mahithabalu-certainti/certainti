@@ -381,68 +381,23 @@ class ProjectIngestionService {
     const aggregates = await ProjectFiscal.findOne({
       attributes: [
         "project_code",
-        [
-          Sequelize.fn("SUM", Sequelize.literal("COALESCE(total_cost_prj, 0)")),
-          "total_cost_prj",
-        ],
-        [
-          Sequelize.fn(
-            "SUM",
-            Sequelize.literal("COALESCE(total_effort_prj, 0)")
-          ),
-          "total_effort_prj",
-        ],
-        [
-          Sequelize.fn("SUM", Sequelize.literal("COALESCE(total_fte_prj, 0)")),
-          "total_fte_prj",
-        ],
-        [
-          Sequelize.fn(
-            "SUM",
-            Sequelize.literal("COALESCE(total_subcon_prj, 0)")
-          ),
-          "total_subcon_prj",
-        ],
-        [
-          Sequelize.fn(
-            "SUM",
-            Sequelize.literal("COALESCE(total_effort_fte_prj, 0)")
-          ),
-          "total_effort_fte_prj",
-        ],
-        [
-          Sequelize.fn(
-            "SUM",
-            Sequelize.literal("COALESCE(total_effort_subcon_prj, 0)")
-          ),
-          "total_effort_subcon_prj",
-        ],
-        [
-          Sequelize.fn(
-            "SUM",
-            Sequelize.literal("COALESCE(total_cost_fte_prj, 0)")
-          ),
-          "total_cost_fte_prj",
-        ],
-        [
-          Sequelize.fn(
-            "SUM",
-            Sequelize.literal("COALESCE(total_cost_subcon_prj, 0)")
-          ),
-          "total_cost_subcon_prj",
-        ],
-        [
-          Sequelize.fn(
-            "SUM",
-            Sequelize.literal("COALESCE(total_cost_nonlabor_prj, 0)")
-          ),
-          "total_cost_nonlabor_prj",
-        ],
+        [Sequelize.fn("SUM", Sequelize.col("total_cost_prj")), "total_cost_prj"],
+        [Sequelize.fn("SUM", Sequelize.col("total_effort_prj")), "total_effort_prj"],
+        [Sequelize.fn("SUM", Sequelize.col("total_fte_prj")), "total_fte_prj"],
+        [Sequelize.fn("SUM", Sequelize.col("total_subcon_prj")), "total_subcon_prj"],
+        [Sequelize.fn("SUM", Sequelize.col("total_effort_fte_prj")), "total_effort_fte_prj"],
+        [Sequelize.fn("SUM", Sequelize.col("total_effort_subcon_prj")), "total_effort_subcon_prj"],
+        [Sequelize.fn("SUM", Sequelize.col("total_cost_fte_prj")), "total_cost_fte_prj"],
+        [Sequelize.fn("SUM", Sequelize.col("total_cost_subcon_prj")), "total_cost_subcon_prj"],
+        [Sequelize.fn("SUM", Sequelize.col("total_cost_nonlabor_prj")), "total_cost_nonlabor_prj"],
       ],
-      where: { project_code: projectCode, account_rid: accountId },
+      where: {
+        project_code: projectCode,
+        account_rid: accountId,
+      },
       group: ["project_code"],
       raw: true,
-    });
+    });    
 
     if (!aggregates) return;
 
