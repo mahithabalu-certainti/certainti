@@ -29,7 +29,7 @@ export const getGlobalInteractionListColumns = (
     render: (row: InteractionList) => (
       <span
         onClick={() => handleViewInteraction(row)}
-        className='cursor-pointer no-underline hover:underline hover:text-[#1755E7]'
+        className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
       >
         {row.r_number}
       </span>
@@ -80,6 +80,8 @@ export const getGlobalInteractionListColumns = (
     label: 'Fiscal Year',
     width: 140,
     sortable: true,
+    render: (row: InteractionList) =>
+      row.fiscal_year ? `FY-${row.fiscal_year}` : '-',
     // hide:
     //   !permissionMap?.['iteration']?.edit &&
     //   !permissionMap?.['iteration']?.read,
@@ -178,7 +180,7 @@ export const getGlobalInteractionListColumns = (
           onClick={() =>
             row.attachment_count && handleViewInteractionAttachmentCount(row)
           }
-          className='text-[#1755E7] hover:underline cursor-pointer'
+          className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
         >
           {row.attachment_count}
         </span>
@@ -202,7 +204,7 @@ export const getGlobalInteractionListColumns = (
       row.interaction_history ? (
         <span
           onClick={() => handleViewInteractionHistory(row)}
-          className='text-[#1755E7] hover:underline cursor-pointer'
+          className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
         >
           View
         </span>
@@ -225,7 +227,7 @@ export const getGlobalInteractionListColumns = (
           onClick={() =>
             row.interaction_url && window.open(row.interaction_url, '_blank')
           }
-          className='text-[#1755E7] hover:underline cursor-pointer'
+          className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
         >
           Link
         </span>

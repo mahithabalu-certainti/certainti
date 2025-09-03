@@ -27,7 +27,7 @@ export const getInteractionListColumns = (
     render: (row: ResponseInteractionList) => (
       <span
         onClick={() => handleViewInteraction(row)}
-        className='cursor-pointer no-underline hover:underline hover:text-[#1755E7]'
+        className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
       >
         {row?.response_source_name}
       </span>

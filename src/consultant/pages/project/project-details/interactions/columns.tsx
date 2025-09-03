@@ -152,7 +152,7 @@ export const getInteractionListColumns = (
             row.attachment_count &&
             handleViewInteractionAttachmentCount(row.attachment_count, row.rid)
           }
-          className='text-[#1755E7] hover:underline cursor-pointer'
+          className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
         >
           {row.attachment_count}
         </span>
@@ -176,7 +176,7 @@ export const getInteractionListColumns = (
       row.interaction_history ? (
         <span
           onClick={() => handleViewInteractionHistory(row.interaction_history)}
-          className='text-[#1755E7] hover:underline cursor-pointer'
+          className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
         >
           View
         </span>
@@ -199,7 +199,7 @@ export const getInteractionListColumns = (
           onClick={() =>
             row.interaction_url && window.open(row.interaction_url, '_blank')
           }
-          className='text-[#1755E7] hover:underline cursor-pointer'
+          className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
         >
           Link
         </span>
