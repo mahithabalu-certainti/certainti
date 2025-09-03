@@ -35,3 +35,41 @@ export const NODE_ENV = {
   DEV: "DEV",
   PROD: "PRODUCTION",
 };
+
+export const rawQueries = {
+  async fetchParentAccount(
+    accountRid: any,
+    mainSequelize: Sequelize
+  ): Promise<any> {
+    let [checkIsSeparateDb]: any[] = await mainSequelize.query(
+      `SELECT rid, r_number, account_name, storage_type FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`
+    );
+
+    console.log(checkIsSeparateDb)
+    if (checkIsSeparateDb.storage_type == STATUS_MESSAGE.separateDb) {
+      return `SELECT rid, r_number, account_name, storage_type FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`;
+    } else {
+      return `
+      with fetch_account_details AS (
+      SELECT rid, r_number, parent_account_rid FROM ${MAIN_SCHEMA_NAME}.account where rid = '${accountRid}'
+      )
+      SELECT a.rid, a.r_number, a.account_name, a.is_parent 
+      FROM ${MAIN_SCHEMA_NAME}.account a
+      LEFT JOIN fetch_account_details ad ON ad.parent_account_rid = a.rid
+      WHERE a.rid = ad.parent_account_rid`;
+    }
+  },
+  fetchSchemaName(r_number: string) {
+    return `${MAIN_SCHEMA_NAME}_${r_number.replace("ACC-", "")}`;
+  },
+  insertAuditLogEntry(schemaName:string){
+    return `INSERT INTO ${schemaName}.ai_assessment_audit (transaction_id, account_rid, project_fiscal_rid,created_by) VALUES (?, ?, ?,?)`
+  },
+
+  
+
+};
+
+export const STATUS_MESSAGE = {
+separateDb: "separate_db",
+};

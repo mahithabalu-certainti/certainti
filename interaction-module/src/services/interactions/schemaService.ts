@@ -1427,7 +1427,7 @@ async isAutoTriggerEnabled(accountNumber: string,project_fiscal_rid: string) {
     );
   }
 }
-async updateTechSummary( projectSummary: string, accountNumber: string, projectFiscalId: string, accountId: string,correlationId: string)
+async updateTechSummary( projectSummary: string, accountNumber: string, projectFiscalId: string, accountId: string,correlationId: string,response:any)
 {
   try {
     if (!this.orgDbSequelize) {
@@ -1448,7 +1448,7 @@ async updateTechSummary( projectSummary: string, accountNumber: string, projectF
       { type: "SELECT" }
     );
    
-    const { AiTechnicalSummary } = await this.interactionModelService.getModels(accountNumber);
+    const { AiTechnicalSummary,AiAssessmentAudit } = await this.interactionModelService.getModels(accountNumber);
     const maxVersion = await AiTechnicalSummary.max("version", {
       where: {
         account_rid: accountId,
@@ -1468,9 +1468,19 @@ async updateTechSummary( projectSummary: string, accountNumber: string, projectF
       status: techSummaryStatus.ACTIVE,
       entity_transaction_id: correlationId
      }
-    const aiResponse = await AiTechnicalSummary.create(
-      techSummaryPayload
-    );
+      const updateData: any = {
+    is_tech_summary_processed: response.statusCode === 200,
+    };
+    if (response.statusCode !== 200) {
+      updateData.tech_summary_error_message = response.error_message;
+    }
+    const [aiResponse] = await Promise.all([
+      AiTechnicalSummary.create(techSummaryPayload),
+      AiAssessmentAudit.update(
+      updateData,
+      { where: { transaction_id: correlationId } }
+      )
+    ]);
     if(aiResponse.rid)
     {
       await AiTechnicalSummary.update(
@@ -1547,7 +1557,7 @@ async fetchProjectInfo(accountNumber: string, projectFiscalId: string)
   }
 }
 
-async updateQrePercent(qrePercent:number, accountNumber: string,projectFiscalRid:string,qreBreakdown:JSON)
+async updateQrePercent(qrePercent:number, accountNumber: string,projectFiscalRid:string,qreBreakdown:JSON, accountId: string,transaction_id:string,response:any)
 {
   try {
     if (!this.orgDbSequelize) {
@@ -1558,20 +1568,80 @@ async updateQrePercent(qrePercent:number, accountNumber: string,projectFiscalRid
     }
     
     const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
+    await Promise.all([
+      this.orgDbSequelize.query(
+      rawQueries.updateQreInfo(projectFiscalRid, schemaName, qrePercent),
+      { type: "UPDATE" }
+      ),
+      this.orgDbSequelize.query(
+      rawQueries.updateAIProcessedFlag(projectFiscalRid, schemaName),
+      { type: "UPDATE" }
+      ),
+      this.mainDbSequelize.query(
+      rawQueries.updateQreInfoSummary(projectFiscalRid, qrePercent),
+      { type: "UPDATE" }
+      ),
+    ]);
 
-    await this.orgDbSequelize.query(
-      rawQueries.updateQreInfo(projectFiscalRid,schemaName,qrePercent,qreBreakdown ),
-      { type: "UPDATE" }
+    // Fetch project info after updates
+    const [projectInfo]: any[] = await this.orgDbSequelize.query(
+      rawQueries.fetchProjectInfo(projectFiscalRid, schemaName),
+      { type: "SELECT" }
     );
-    await this.orgDbSequelize.query(
-      rawQueries.updateAIProcessedFlag(projectFiscalRid,schemaName ),
-      { type: "UPDATE" }
+
+    const { AiAssessmentQre, AiAssessmentAudit } = await this.interactionModelService.getModels(accountNumber);
+    const maxVersion = await AiAssessmentQre.max("version", {
+      where: {
+      account_rid: accountId,
+      project_rid: projectInfo?.project_rid ?? null,
+      project_fiscal_rid: projectFiscalRid,
+      },
+    });
+    let version = (typeof maxVersion === "number" ? maxVersion : parseInt(maxVersion as any) || 0) + 1;
+    let qrePayload = {
+      created_by: process.env.SYSTEM_USER_ID || "system",
+      account_rid: accountId,
+      project_rid: projectInfo?.project_rid ?? null,
+      project_fiscal_rid: projectFiscalRid,
+      qre_percent: qrePercent,
+      version,
+      qre_detailed_breakdown: qreBreakdown,
+      transaction_id: transaction_id
+    };
+    const updateData: any = {
+      is_qre_processed: response.statusCode === 200,
+    };
+    if (response.statusCode !== 200) {
+      updateData.qre_error_message = response.error_message;
+    }
+    const [aiResponse] = await Promise.all([
+      AiAssessmentQre.create(qrePayload),
+      AiAssessmentAudit.update(
+      updateData,
+      { where: { transaction_id: transaction_id } }
+      )
+    ]);
+  } catch (err) {
+    console.log(err)
+    throw new Error(
+      "Error updating QRE percent: " + (err as Error).message
     );
-    await this.mainDbSequelize.query(
-      rawQueries.updateQreInfoSummary(projectFiscalRid,qrePercent, ),
-      { type: "UPDATE" }
-    );
-    
+  }
+}
+async updateInteractionStatus(accountNumber: string, response: any)
+{
+  try {
+    const { AiAssessmentAudit } = await this.interactionModelService.getModels(accountNumber);
+    const updateData: any = {
+      is_interaction_question_processed: response.statusCode === 200,
+    };
+    if (response.statusCode !== 200) {
+      updateData.interaction_question_error_message = response.error_message;
+    }
+    await AiAssessmentAudit.update(updateData, {
+      where: { transaction_id: response.transaction_id },
+    });
+   
   } catch (err) {
     console.log(err)
     throw new Error(

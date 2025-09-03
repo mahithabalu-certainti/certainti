@@ -77,7 +77,7 @@ export interface IAccountService {
     limit?: number,
     sortBy?: string,
     sortOrder?: string,
-    filters?: Record<string, any>
+     globalFilters?: Record<string, string[]>,
   
   ): Promise<{
     statusCode: number;

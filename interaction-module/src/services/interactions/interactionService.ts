@@ -1298,10 +1298,10 @@ export class InteractionService {
         }
 
         if (type === 'qre_percent') {
-          await this.interactionSchemaService.updateQrePercent(qre_percent, accountNumber, project_id, detailed_breakdown);
+          await this.interactionSchemaService.updateQrePercent(qre_percent, accountNumber, project_id, detailed_breakdown, company_id, transaction_id,parsedMessage);
         }
         if (type === "project_summary") {
-          await this.interactionSchemaService.updateTechSummary(project_summary, accountNumber, project_id, company_id, transaction_id);
+          await this.interactionSchemaService.updateTechSummary(project_summary, accountNumber, project_id, company_id, transaction_id,parsedMessage);
         }
         if (type === "interaction_questions") {
           const projectInfo = await this.interactionSchemaService.fetchProjectInfo(accountNumber, project_id);
@@ -1322,10 +1322,12 @@ export class InteractionService {
             created_by: process.env.SYSTEM_USER_ID!,
           };
           await this.createInteraction(interactionData, interactionSource.AUTO, process.env.SYSTEM_USER_ID!);
+          
         }
       } else {
         await this.interactionSchemaService.updateAssessmentErrorResponse(parsedMessage, accountNumber, project_id, company_id, transaction_id);
       }
+      await this.interactionSchemaService.updateInteractionStatus(accountNumber, parsedMessage)
       this.logger.info(`Processed Kafka message for account: ${company_id}`);
     } catch (err) {
       this.logger.error("Error processing Kafka message", err);
