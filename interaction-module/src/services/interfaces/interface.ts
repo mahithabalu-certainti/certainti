@@ -124,6 +124,7 @@ export interface IInteractionService {
     status : any,
     data : any
   }>
+  triggerAiFromScheduler() : Promise<void>
    getAllowedExportFields(
       userId: string,
       permission_name: string
