@@ -85,7 +85,9 @@ export class InteractionService {
           accountNumber,
           interactionData,
           interaction.rid,
-          interaction.get("r_number") || ""
+          interaction.get("r_number") || "",
+          interaction.get("interaction_iteration") || 0,
+          interaction.get("parent_interaction_rid") || null
         );
         await this.interactionSchemaService.addInteractionTimeline(
           accountNumber,
@@ -1330,6 +1332,13 @@ export class InteractionService {
       this.logger.error("Error processing Kafka message", err);
     }
   }
+  
+  async getAllowedExportFields(
+      userId: string,
+      permission_name: string
+    ): Promise<any[]> {
+      return this.interactionSchemaService.getAllowedExportFields(userId, permission_name);
+    }
 
   async triggerAiFromScheduler () {
     const mainDb = await this.getMainDb()
