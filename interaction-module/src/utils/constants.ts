@@ -83,7 +83,8 @@ export const filtersColumns : Record<string, string> =
     interaction_iteration : "interaction_iteration",
     project_code : "project_code",
     fiscal_year : "fiscal_year",
-    response_source_rid : "response_source_rid"
+    response_source_rid : "response_source_rid",
+    parent_interaction_rid : "parent_interaction_rid"
   }
 
   export const filterTypes : Record<string, any> = 
@@ -105,7 +106,8 @@ export const filtersColumns : Record<string, string> =
     interaction_type_rid : "string",
     project_code : "string",
     fiscal_year : "number",
-    response_source_rid : "string"
+    response_source_rid : "string",
+    parent_interaction_rid:"string"
   }
 
   export const ALPHANUMERIC_CONDITIONS : Record <string, string> = {
@@ -450,7 +452,8 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     account_name : "string",
     project_code : "string",
     fiscal_year : "number",
-    response_source_rid : "string"
+    response_source_rid : "string",
+    parent_interaction_rid:"string"
   }
 
   export const filtersColumnsForInteractionSummary : Record<string, string> =
@@ -480,7 +483,8 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     project_code : "project_code",
     fiscal_year : "fiscal_year",
     response_source_rid : "response_source_rid",
-    response_source_name : "response_source_name"
+    response_source_name : "response_source_name",
+    parent_interaction_rid:"parent_interaction_rid"
   }
 
   export const responseSortKeys = ["r_number","response_by", "response_on","response_email","interaction_response", "interaction_version"]
