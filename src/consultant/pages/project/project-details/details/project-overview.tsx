@@ -191,6 +191,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
       keyContactEmail: contact.key_contact_email,
       isPrimaryContact: contact.is_primary_contact,
       includeInCommnunications: contact.include_in_communication,
+      interactionccRecipient: contact.interaction_cc_recipient,
       keyContactStatus: contact.status_name,
     }));
   const financialInfo: DetailItem[] = [
@@ -393,6 +394,8 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
             <KeyContactSection
               title='Key Contacts List'
               data={keyContactsList || []}
+              ccAvailable={true}
+              communicationAvailable={true}
             />
           )}
           <DetailsSection
