@@ -17,7 +17,6 @@ import { sendEmailWithAttachment } from "../emailService";
 import ExcelJS from 'exceljs';
 import axios from 'axios'
 import { Kafka, Producer } from "kafkajs";
-import postRequestToKafka from "../../utils/kafka.producer";
 
 type filterType = {
         [key : string] : {
@@ -1304,13 +1303,6 @@ export class InteractionService {
     } catch (err) {
       this.logger.error("Error processing Kafka message", err);
     }
-  }
-
-  async sendPayloadToAi (data : any) : Promise<any> {
-    const result = await postRequestToKafka(data);
-    if(result.statusCodeValue == HttpStatus.SUCCESS_MESSAGE) {
-      return result.statusMessage
-    } 
   }
 
   async triggerAiFromScheduler () {
