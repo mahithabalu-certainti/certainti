@@ -120,7 +120,7 @@ export const getInteractionFilterFields = (
     {
       name: 'Attachments',
       value: 'attachment_count',
-      type: 'text',
+      type: 'number',
       // hide:
       //   !permissionMap?.['attachments']?.edit &&
       //   !permissionMap?.['attachments']?.read,
