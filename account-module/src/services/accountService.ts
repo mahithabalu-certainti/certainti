@@ -1927,15 +1927,22 @@ class AccountService {
 
         const parentWhereClauseBase = {
           rid: { [Op.in]: allParentIds },
-          parent_account_rid: { [Op.is]: null }, // ✅ Enforce top-level parents only
+          parent_account_rid: { [Op.is]: null },
         };
 
         const childWhereClauseBase = {
           rid: { [Op.in]: childAccountIds },
         };
+        const { parentWhereClause, childWhereClause } = this.applyAccountIDFilter(
+        globalFilters,
+        {
+          parentWhereClause: { ...parentWhereClauseBase },
+          childWhereClause: {  ...childWhereClauseBase },
+        }
+      );
 
       const globalAccount = await repository.findAll({
-        where: parentWhereClauseBase,
+        where: parentWhereClause,
         attributes: ['rid', 'account_name','currency_rid'],
         include: [
           {
@@ -1943,7 +1950,7 @@ class AccountService {
             as: 'child_accounts',
             attributes: ['rid', 'account_name','currency_rid'],
             required: false,
-            where: childWhereClauseBase,
+            where: childWhereClause,
             separate: true,
             order: [[sortBy, sortOrder]],
           }
@@ -1961,19 +1968,20 @@ class AccountService {
           },
         };
       }
+      
+      const { parentWhereClause, childWhereClause } = this.applyAccountIDFilterForGlobalList(
+        globalFilters
+      );
 
     // DEFAULT: Return all top-level (parent) accounts with their children
     const globalAccount = await repository.findAll({
-      where: {
-        parent_account_rid: {
-          [Op.is]: null
-        }
-      },
+      where: parentWhereClause,
       attributes: ['rid', 'account_name','currency_rid'],
       include: [
         {
           model: Account,
           as: 'child_accounts',
+            where: childWhereClause,
           attributes: ['rid', 'account_name','currency_rid'],
           required: false,
           separate: true,
@@ -2512,36 +2520,38 @@ class AccountService {
   //   }
   // }
 
-  // private applyAccountIDFilter(
-  //   globalFilters: Record<string, string[]>,
-  //   whereClause: Record<string, any>
-  // ): { parentWhereClause: Record<string, any>; childWhereClause: Record<string, any> } {
-  //   // Parent: only get global filter and must have no parent_account
-  //   let parentWhereClause: Record<string, any> = {
-  //     parent_account_rid: { [Op.is]: null }
-  //   };
+  private applyAccountIDFilterForGlobalList(
+    globalFilters: Record<string, string[]>
+  ): { parentWhereClause: Record<string, any>; childWhereClause: Record<string, any> } {
+    // Parent: only get global filter and must have no parent_account
+    let parentWhereClause: Record<string, any> = {
+      parent_account_rid: { [Op.is]: null }
+    };
+   
+    // Child: inherit original filters
+    let childWhereClause: Record<string, any> = {} ;
+    if (typeof globalFilters === 'string') {
+      globalFilters = JSON.parse(globalFilters);
+    }
+    if (globalFilters && Object.keys(globalFilters).length > 0) {
+      // Only use the actual parent account IDs (the keys of globalFilters)
+      const parentIds = Object.keys(globalFilters);
+      const childIds: string[] = Object.values(globalFilters).flat();
 
-  //   // Child: inherit original filters
-  //   let childWhereClause: Record<string, any> = { ...whereClause };
+      // Parent account filtering
+      parentWhereClause.rid = { [Op.in]: parentIds };
 
-  //   if (globalFilters && Object.keys(globalFilters).length > 0) {
-  //     const parentIds = Object.keys(globalFilters);
-  //     const childIds: string[] = Object.values(globalFilters).flat();
+      // Child account filtering (on account_rid)
+      if (childIds.length > 0) {
+        childWhereClause.rid = { [Op.in]: childIds };
+      }
+    }
 
-  //     // Parent account filtering
-  //     parentWhereClause.rid = { [Op.in]: parentIds };
-
-  //     // Child account filtering (on account_rid)
-  //     if (childIds.length > 0) {
-  //       childWhereClause.rid = { [Op.in]: childIds };
-  //     }
-  //   }
-
-  //   return {
-  //     parentWhereClause,
-  //     childWhereClause
-  //   };
-  // }
+    return {
+      parentWhereClause,
+      childWhereClause
+    };
+  }
 
   getSortParameters(sortBy: string, sortOrder: string): [string, string] {
     const validSortColumns = [

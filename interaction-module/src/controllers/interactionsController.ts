@@ -700,11 +700,11 @@ async function exportAllInteractionSummary (req : Request, res : Response) {
           "attachment_count":d.attachment_count === 0 || d.attachment_count === "" ? null : d.attachment_count,
           "interaction_url": d.interaction_url
             ? {
-          text: "Link",
-          hyperlink: d.interaction_url,
-          style: {
-            fontColor: "1755E7",
-          }
+              text: "Link",
+              hyperlink: d.interaction_url,
+              style: {
+                fontColor: "1755E7",
+              }
               }
             : null,
           "parent_interaction_id": d.parent_interaction_rid,
