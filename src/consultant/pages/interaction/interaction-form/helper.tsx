@@ -110,11 +110,12 @@ export const validateInteractionForm = (
     }
 
     if (!REGEX_PATTERNS.MAX_2000.test(question.question)) {
-      currentQuestionErrors.question = 'Max length exceeded';
+      currentQuestionErrors.question =
+        'Interaction Questions must be within 2000 characters';
       isValid = false;
     }
     if (!REGEX_PATTERNS.MAX_2000.test(question.notes)) {
-      currentQuestionErrors.notes = 'Max length exceeded';
+      currentQuestionErrors.notes = 'Notes must be within 2000 characters';
       isValid = false;
     }
 
