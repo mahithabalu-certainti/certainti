@@ -98,10 +98,6 @@ export const validateInteractionForm = (
       newErrors.projectCode = 'Project Code is required';
       isValid = false;
     }
-    if (!formData.fiscalYear) {
-      newErrors.fiscalYear = 'Fiscal Year is required';
-      isValid = false;
-    }
   }
 
   // Validate questions
@@ -257,4 +253,36 @@ export const transFormPayload = (
   }
 
   return basePayload;
+};
+
+export const shouldHideField = (
+  fieldName: string,
+  isEditView: boolean,
+  permissionMap: Record<string, { read: boolean; edit: boolean }>
+): boolean => {
+  if (!permissionMap || !permissionMap[fieldName]) {
+    return false;
+  }
+
+  const fieldPermissions = permissionMap[fieldName];
+  if (isEditView) {
+    return !fieldPermissions.read && !fieldPermissions.edit;
+  }
+  return false;
+};
+
+export const shouldDisableField = (
+  fieldName: string,
+  isEditView: boolean,
+  permissionMap: Record<string, { read: boolean; edit: boolean }>
+): boolean => {
+  if (!permissionMap || !permissionMap[fieldName]) {
+    return false;
+  }
+
+  const fieldPermissions = permissionMap[fieldName];
+  if (isEditView) {
+    return fieldPermissions.read && !fieldPermissions.edit;
+  }
+  return false;
 };

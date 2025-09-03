@@ -105,7 +105,7 @@ export const AccountDetails = () => {
   const interactionHistoryId = searchParams.get('interaction_history_id');
   const interactionId = searchParams.get('interaction_id');
   const interactionRID = searchParams.get('interaction_rid');
-  const viewDetails = !!interactionId || !!interactionRID;
+  const interactionsView = !!interactionId || !!interactionRID;
 
   // Permission Mangement
   const accountIsEnable = checkPermission(modules, AllModules.ACCOUNTS);
@@ -141,6 +141,11 @@ export const AccountDetails = () => {
   const isImportExportEnable = checkPermission(
     permission,
     AllPermissions.IMPORTS_EXPORT
+  );
+
+  const isInteractionsExportEnable = checkPermission(
+    permission,
+    AllPermissions.INTERACTIONS_EXPORT
   );
 
   const isFinancialResourceCostExportEnable = checkPermission(
@@ -475,8 +480,8 @@ export const AccountDetails = () => {
       return !isFinancialProjectCostExportEnable;
     } else if (list === 'timesheet' && !tab) {
       return !isTimesheetExportEnable;
-    } else if (list === 'interactions') {
-      return viewDetails;
+    } else if (list === 'interactions' && !interactionsView) {
+      return !isInteractionsExportEnable;
     } else if (list === 'timesheet' && tab === 'timesheet_project') {
       return !isProjectExportEnable;
     } else if (list === 'timesheet' && tab === 'timesheet_project_resource') {
@@ -663,7 +668,7 @@ export const AccountDetails = () => {
       {
         name: 'Interactions',
         key: 'interactions',
-        id: AllModules.PROJECT_INTERACTIONS,
+        id: AllModules.INTERACTIONS,
         disabled: disable,
         hide: disable,
         icon: InteractionsIcon,

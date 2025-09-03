@@ -1,4 +1,4 @@
-import { AccountListURLParams } from '../../types';
+import { AccountListURLParams, GlobalAccountListParams } from '../../types';
 
 export const AccountListUrl = '/accounts';
 export const AccountCreateUrl = '/api/accounts/new';
@@ -84,4 +84,19 @@ export const getAccountExportUrl = ({
 
 export const getKeyContactRolesUrl = (entityType: string): string => {
   return `/api/accounts/keycontactroles?entity_type=${entityType}`;
+};
+
+export const GloablAcconuntsListURL = ({
+  fiscalYear,
+  globalFilters,
+}: GlobalAccountListParams) => {
+  const baseUrl = '/api/accounts/list/global';
+  const searchParams = new URLSearchParams();
+
+  if (fiscalYear) searchParams.set('fiscalYear', fiscalYear.toString());
+  if (globalFilters !== undefined) {
+    searchParams.set('globalFilters', JSON.stringify(globalFilters));
+  }
+
+  return `${baseUrl}?${searchParams.toString()}`;
 };

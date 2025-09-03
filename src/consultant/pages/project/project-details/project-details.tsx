@@ -160,7 +160,7 @@ export const ProjectDetails = () => {
   const interactionHistoryId = searchParams.get('interaction_history_id');
   const interactionId = searchParams.get('interaction_id');
   const interactionRID = searchParams.get('interaction_rid');
-  const viewDetails = !!interactionId || !!interactionRID;
+  const interactionsView = !!interactionId || !!interactionRID;
 
   const { data, isLoading, isError } = useProjectDetail(
     accountID,
@@ -212,6 +212,12 @@ export const ProjectDetails = () => {
     permission,
     AllPermissions.PROJECTS_TASK_EXPORT
   );
+
+  const isInteractionsExportEnable = checkPermission(
+    permission,
+    AllPermissions.INTERACTIONS_EXPORT
+  );
+
   const checkExport = () => {
     const list = searchParams.get('list');
     const tab = searchParams.get('tab');
@@ -229,8 +235,8 @@ export const ProjectDetails = () => {
       return !isFinancialResourceCostExportEnable;
     } else if (list === 'projectResources') {
       return !isResourceExportViewEnable;
-    } else if (list === 'interactions') {
-      return viewDetails;
+    } else if (list === 'interactions' && !interactionsView) {
+      return !isInteractionsExportEnable;
     } else {
       return true;
     }
@@ -515,7 +521,7 @@ export const ProjectDetails = () => {
       {
         name: 'Interactions',
         key: 'interactions',
-        id: AllModules.PROJECT_INTERACTIONS,
+        id: AllModules.INTERACTIONS,
         disabled: false,
         icon: InteractionsIcon,
       },

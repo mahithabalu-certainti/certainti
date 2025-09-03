@@ -29,8 +29,8 @@ const dateOptions = [
 export const getInteractionFilterFields = (
   interactionTypes: { option: string; value: string }[],
   interactionResponseSources: { option: string; value: string }[],
-  interactionStatus: { option: string; value: string }[]
-  // permissionMap: Record<string, { read: boolean; edit: boolean }>
+  interactionStatus: { option: string; value: string }[],
+  permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => {
   return [
     {
@@ -38,25 +38,25 @@ export const getInteractionFilterFields = (
       value: 'r_number',
       type: 'text',
       operatorOption: textOptions,
-      // hide:
-      //   !permissionMap?.['r_number']?.edit &&
-      //   !permissionMap?.['r_number']?.read,
+      hide:
+        !permissionMap?.['r_number']?.edit &&
+        !permissionMap?.['r_number']?.read,
     },
     {
       name: 'Iteration',
       value: 'interaction_iteration',
       type: 'number',
-      // hide:
-      //   !permissionMap?.['iteration']?.edit &&
-      //   !permissionMap?.['iteration']?.read,
+      hide:
+        !permissionMap?.['interaction_iteration']?.edit &&
+        !permissionMap?.['interaction_iteration']?.read,
     },
     {
       name: 'Age (Days)',
       value: 'interaction_age',
       type: 'number',
-      // hide:
-      //   !permissionMap?.['age_days']?.edit &&
-      //   !permissionMap?.['age_days']?.read,
+      hide:
+        !permissionMap?.['interaction_age']?.edit &&
+        !permissionMap?.['interaction_age']?.read,
     },
     {
       name: 'Status',
@@ -64,75 +64,75 @@ export const getInteractionFilterFields = (
       type: 'enum',
       options: interactionStatus,
       operatorOption: enumOptions,
-      // hide:
-      //   !permissionMap?.['status']?.edit && !permissionMap?.['status']?.read,
+      hide:
+        !permissionMap?.['status']?.edit && !permissionMap?.['status']?.read,
     },
     {
       name: 'Recipient Name',
       value: 'recipient_name',
       type: 'text',
       operatorOption: textOptions,
-      // hide:
-      //   !permissionMap?.['recipient_name']?.edit &&
-      //   !permissionMap?.['recipient_name']?.read,
+      hide:
+        !permissionMap?.['recipient_name']?.edit &&
+        !permissionMap?.['recipient_name']?.read,
     },
     {
       name: 'Recipient Email',
       value: 'recipient_email',
       type: 'text',
       operatorOption: textOptions,
-      // hide:
-      //   !permissionMap?.['recipient_email']?.edit &&
-      //   !permissionMap?.['recipient_email']?.read,
+      hide:
+        !permissionMap?.['recipient_email']?.edit &&
+        !permissionMap?.['recipient_email']?.read,
     },
     {
       name: 'Last Sent Date',
       value: 'last_resent_on',
       type: 'date',
-      // hide:
-      //   !permissionMap?.['last_sent_date']?.edit &&
-      //   !permissionMap?.['last_sent_date']?.read,
+      hide:
+        !permissionMap?.['last_resent_on']?.edit &&
+        !permissionMap?.['last_resent_on']?.read,
     },
     {
       name: 'Last Reminder Date',
       value: 'last_reminder_on',
       type: 'date',
-      // hide:
-      //   !permissionMap?.['last_reminder_date']?.edit &&
-      //   !permissionMap?.['last_reminder_date']?.read,
+      hide:
+        !permissionMap?.['last_reminder_on']?.edit &&
+        !permissionMap?.['last_reminder_on']?.read,
     },
     {
       name: 'Response Date',
       value: 'response_submitted_on',
       type: 'date',
-      // hide:
-      //   !permissionMap?.['response_date']?.edit &&
-      //   !permissionMap?.['response_date']?.read,
+      hide:
+        !permissionMap?.['response_submitted_on']?.edit &&
+        !permissionMap?.['response_submitted_on']?.read,
     },
     {
       name: 'Last Response Update',
       value: 'response_updated_on',
       type: 'date',
-      // hide:
-      //   !permissionMap?.['last_response_update']?.edit &&
-      //   !permissionMap?.['last_response_update']?.read,
+      hide:
+        !permissionMap?.['response_updated_on']?.edit &&
+        !permissionMap?.['response_updated_on']?.read,
     },
     {
       name: 'Attachments',
       value: 'attachment_count',
       type: 'number',
-      // hide:
-      //   !permissionMap?.['attachments']?.edit &&
-      //   !permissionMap?.['attachments']?.read,
+      hide:
+        !permissionMap?.['attachment_count']?.edit &&
+        !permissionMap?.['attachment_count']?.read,
     },
     {
       name: 'Parent Interaction ID',
       value: 'parent_interaction_rid',
       type: 'text',
       operatorOption: nonReqTextOptions,
-      // hide:
-      //   !permissionMap?.['parent_interaction_id']?.edit &&
-      //   !permissionMap?.['parent_interaction_id']?.read,
+      hide:
+        !permissionMap?.['parent_interaction_rid']?.edit &&
+        !permissionMap?.['parent_interaction_rid']?.read,
     },
     {
       name: 'Type',
@@ -140,7 +140,9 @@ export const getInteractionFilterFields = (
       type: 'enum',
       options: interactionTypes,
       operatorOption: enumOptions,
-      // hide: !permissionMap?.['type']?.edit && !permissionMap?.['type']?.read,
+      hide:
+        !permissionMap?.['interaction_type_name']?.edit &&
+        !permissionMap?.['interaction_type_name']?.read,
     },
     {
       name: 'Response Source',
@@ -148,50 +150,50 @@ export const getInteractionFilterFields = (
       type: 'enum',
       options: interactionResponseSources,
       operatorOption: enumOptions,
-      // hide:
-      //   !permissionMap?.['response_source']?.edit &&
-      //   !permissionMap?.['response_source']?.read,
+      hide:
+        !permissionMap?.['response_source_name']?.edit &&
+        !permissionMap?.['response_source_name']?.read,
     },
     {
       name: 'Created By',
       value: 'created_user_name',
       type: 'text',
       operatorOption: textOptions,
-      // hide:
-      //   !permissionMap?.['created_by']?.edit &&
-      //   !permissionMap?.['created_by']?.read,
+      hide:
+        !permissionMap?.['created_by']?.edit &&
+        !permissionMap?.['created_by']?.read,
     },
     {
       name: 'Created Date',
       value: 'created_datetime',
       type: 'date',
       operatorOption: dateOptions,
-      // hide:
-      //   !permissionMap?.['created_date']?.edit &&
-      //   !permissionMap?.['created_date']?.read,
+      hide:
+        !permissionMap?.['created_datetime']?.edit &&
+        !permissionMap?.['created_datetime']?.read,
     },
     {
       name: 'Last Updated By',
       value: 'updated_user_name',
       type: 'text',
       operatorOption: textOptions,
-      // hide:
-      //   !permissionMap?.['last_updated_by']?.edit &&
-      //   !permissionMap?.['last_updated_by']?.read,
+      hide:
+        !permissionMap?.['modified_by']?.edit &&
+        !permissionMap?.['modified_by']?.read,
     },
     {
       name: 'Last Updated Date',
       value: 'modified_datetime',
       type: 'date',
-      // hide:
-      //   !permissionMap?.['last_updated_date']?.edit &&
-      //   !permissionMap?.['last_updated_date']?.read,
+      hide:
+        !permissionMap?.['modified_datetime']?.edit &&
+        !permissionMap?.['modified_datetime']?.read,
     },
     {
       name: 'Sort Options',
       value: 'sort_options',
       type: 'system-sort',
-      options: [{ value: 'created_datetime_desc', option: 'Recently Created' }],
+      options: [{ value: 'createdAt_desc', option: 'Recently Created' }],
     },
   ];
 };
