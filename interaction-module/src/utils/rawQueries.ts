@@ -1,3 +1,4 @@
+import { Sequelize } from "sequelize"
 import { ALPHANUMERIC_CONDITIONS, filtersColumns, filtersColumnsForInteractionSummary, filterTypes, filterTypesForIntHistory, filterTypesForSummaryInteractions, interactionFlag, MAIN_SCHEMA_NAME, responseSortKeys, STATUS_MESSAGE } from "./constants"
 
 type filterType = {
@@ -707,7 +708,7 @@ export const fetchAllParentRNumber = () => {
 export const fetchProjectAttachmentsRids = (schemaName : string) => {
     let query =
     `
-    SELECT attach_to, account_rid FROM "${schemaName}".attachments where attachment_level = 'project' AND
+    SELECT attach_to AS project_fiscal_rid, account_rid FROM "${schemaName}".attachments where attachment_level = 'project' AND
     is_ai_processed = false
     `
     return query;
@@ -719,4 +720,65 @@ export const fetchProjectInteractionRid = (schemaName : string) => {
     SELECT account_rid, project_fiscal_rid FROM ${schemaName}.interactions WHERE is_ai_processed = false
     `
     return query;
+}
+
+export const checkTableExists = (schemaName : string, table : string) => {
+    return `SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_schema = '${schemaName}' AND table_name = '${table}')`
+}
+
+export const fetchInteractionForSentResentStatus = async (schemaName : string, mainDb : Sequelize, orgDb : Sequelize) => {
+    let fetchInteractionStatus : any = await mainDb.query(`SELECT rid, status_name from ${MAIN_SCHEMA_NAME}.interaction_status WHERE LOWER(status_name) IN ('sent', 'resent')`)
+    const mapInteractionStatus : Map<string, string> = new Map(fetchInteractionStatus[0].map((d : any) => [d.rid, d.status_name]))
+    const fetchAllInteractions : any = await orgDb.query(`SELECT rid, status_rid FROM ${schemaName}.interactions`)
+
+    let updatedResponse = fetchAllInteractions[0].map((d : any) => {
+        return {
+            ...d,
+            status_name : mapInteractionStatus.get(d.status_rid) == undefined ? null : mapInteractionStatus.get(d.status_rid)?.toLowerCase()
+        }
+    })
+    for(let data of updatedResponse) {
+        await updateInteractionAge(data, schemaName, orgDb)
+    }
+}
+
+const updateInteractionAge = async (data : any, schemaName : string, orgDb : Sequelize) => {
+    let interactions : any;
+    let dateTimeColumn : any;
+    console.log("statusName : ", data.status_name)
+    if(data.status_name === 'sent') {
+        dateTimeColumn = `sent_on_datetime`
+        interactions = await orgDb.query(findDateDifferenceQuery(schemaName, data.status_rid, dateTimeColumn))
+        console.log("interactions ====> ", interactions[0])
+        console.log("interactions ====> ", interactions[0].length)
+        if(interactions[0].length > 0) {
+            for(let i of interactions[0]) {
+                await orgDb.query(
+                    updateInteractionForAgeQuery(schemaName, i.rid, i.age)
+                )
+            }
+        }
+    } else if(data.status_name === 'resent') {
+        dateTimeColumn = `last_resent_on`
+        interactions = await orgDb.query(findDateDifferenceQuery(schemaName, data.status_rid, dateTimeColumn))
+        if(interactions[0].length > 0) {
+            for(let i of interactions[0]) {
+                await orgDb.query(
+                    updateInteractionForAgeQuery(schemaName, i.rid, i.age)
+                )
+            }
+        }
+    }
+}
+
+const findDateDifferenceQuery = (schemaName : string, rid : any, dateTimeColumn : string) => {
+    return `SELECT COALESCE(DATE(NOW()) - DATE(i.${dateTimeColumn}), 0) AS age, i.rid
+            FROM ${schemaName}.interactions i
+            WHERE
+            i.status_rid = '${rid}'
+            `
+}
+
+const updateInteractionForAgeQuery = (schemaName : string, rid : string, age : number) => {
+    return `UPDATE ${schemaName}.interactions i SET interaction_age = ${age} WHERE i.rid = '${rid}'` 
 }

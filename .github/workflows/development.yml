@@ -481,7 +481,8 @@ jobs:
           JWT_EXPIRY='1h'
           CLIENT_ID=3e5c4e6a-59fc-44b2-8750-5042ba4b939a
           CLIENT_SECRET=enC8Q~xT6KWh.yPUGxOViUg17LOpCHtDTRzDtcXq
-          TENANT_ID=328e96fd-558b-4dd9-8ac6-cca8734170ec        
+          TENANT_ID=328e96fd-558b-4dd9-8ac6-cca8734170ec
+          SCHEDULER_EXPRESSION="0 0 * * *"        
           EOF
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
