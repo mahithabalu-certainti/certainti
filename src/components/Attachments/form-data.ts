@@ -28,6 +28,7 @@ export const AttachmentFormData = (
             placeholder: 'Choose Fiscal Year',
             required: true,
             hide: projectFiscalYear ? true : false,
+            isFiscalYear: true,
           }),
           createSelectField('document_category_rid', 'Document Category', {
             options: categoryOptions,

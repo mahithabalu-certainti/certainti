@@ -1,5 +1,9 @@
 import dayjs from 'dayjs';
 import { User } from '../admin/types/admin-user-detail';
+import {
+  Attachment,
+  InteractionQuestionResponseType,
+} from '../consultant/types';
 
 export interface CommonApiResponse {
   statusCode: number;
@@ -8,6 +12,13 @@ export interface CommonApiResponse {
 }
 export interface ProfileApiResponse extends CommonApiResponse {
   data: ManageProfileResponse;
+}
+
+export interface VerifyOtpApiResponse extends CommonApiResponse {
+  data: {
+    auth_token: string;
+    email: string;
+  };
 }
 export interface ManageProfileResponse {
   profile_id: string;
@@ -322,6 +333,14 @@ export enum Layout {
   TYPE_1 = 1,
 }
 
+export interface ExpandCollapseSelectOptions {
+  group: string;
+  options: {
+    value: string;
+    label: string;
+  }[];
+}
+
 export interface StatusItem {
   rid: string;
   status_name: string;
@@ -369,6 +388,15 @@ export interface GetImportEntityTypeApiResponse extends CommonApiResponse {
   data: EntityTypes[];
 }
 
+export interface GenerateOtp {
+  interaction_rid: string;
+  account_rid: string;
+}
+
+export interface VerifyOtp extends GenerateOtp {
+  otp: string;
+}
+
 //Interactions
 export interface InteractionStatusItem {
   rid: string;
@@ -414,4 +442,31 @@ export interface GetInteractionResponseSourcesApiResponse
   data: {
     responseSource: InteractionResponseSourceItem[];
   };
+}
+
+export interface InteractionQuestionUpdateRequest {
+  account_rid: string;
+  project_rid: string;
+  project_fiscal_rid: string;
+  interaction_rid: string;
+  status_action: 'RESPONSE_DRAFT' | 'RESPONSE_RECEIVED';
+  attachments: Attachment[];
+  questions: InteractionQuestionResponseType[];
+  authToken: string;
+  userId: string;
+}
+
+export interface UploadAttachmentRequest {
+  account_rid: string;
+  project_rid: string;
+  interaction_rid: string;
+  file: File;
+  authToken: string;
+  userId: string;
+}
+
+export interface DeleteAttachmentRequest {
+  file_url: string;
+  authToken: string;
+  userId: string;
 }

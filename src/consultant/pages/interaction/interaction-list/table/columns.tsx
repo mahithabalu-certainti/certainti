@@ -29,7 +29,7 @@ export const getGlobalInteractionListColumns = (
     render: (row: InteractionList) => (
       <span
         onClick={() => handleViewInteraction(row)}
-        className='cursor-pointer no-underline hover:underline hover:text-[#1755E7]'
+        className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
       >
         {row.r_number}
       </span>
@@ -293,7 +293,7 @@ export const getGlobalInteractionListColumns = (
     // hide:
     //   !permissionMap?.['modified_by']?.edit &&
     //   !permissionMap?.['modified_by']?.read,
-    render: (row: InteractionList) => row.updated_user_name || '-',
+    render: (row: InteractionList) => row?.updated_user_name?.trim() || '-',
   },
   {
     id: 'modified_datetime',

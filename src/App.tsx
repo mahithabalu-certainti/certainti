@@ -50,7 +50,9 @@ import {
   INTERACTIONS_EDIT,
   INTERACTIONS,
   INTERACTIONS_DETAILS,
+  EMAIL_INTERACTION,
   GLOBAL_INTERACTIONS_EDIT,
+  GLOBAL_INTERACTIONS_CREATE,
 } from './routes';
 import { RootState } from './store/store';
 import ProjectTaskForm from './consultant/pages/project/project-details/project-task/form/project-task-form';
@@ -70,6 +72,9 @@ const Resource = lazy(
     )
 );
 const Login = lazy(() => import('./pages/login/login'));
+const EmailInteraction = lazy(
+  () => import('./pages/email-interaction/email-interaction')
+);
 const Profile = lazy(() => import('./pages/profile/profile'));
 const HomePage = lazy(() => import('./consultant/pages/home/Home'));
 const NotFound = lazy(() => import('./pages/not-found/NotFound'));
@@ -158,6 +163,9 @@ export const App: React.FC<IApp> = ({ instance }) => {
                 )
               }
             />
+
+            <Route path={EMAIL_INTERACTION} element={<EmailInteraction />} />
+
             <Route element={<ProtectedRoute />}>
               <Route element={<AppLayout />}>
                 <Route index element={<HomePage />} />
@@ -197,6 +205,10 @@ export const App: React.FC<IApp> = ({ instance }) => {
                 />
                 <Route
                   path={INTERACTIONS_CREATE}
+                  element={<InteractionForm />}
+                />
+                <Route
+                  path={GLOBAL_INTERACTIONS_CREATE}
                   element={<InteractionForm />}
                 />
                 <Route path={INTERACTIONS_EDIT} element={<InteractionForm />} />

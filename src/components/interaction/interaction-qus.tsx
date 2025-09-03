@@ -81,6 +81,9 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
       {} as Record<string, Attachment[]>
     )
   );
+  const [validationErrors, setValidationErrors] = useState<
+    Record<string, boolean>
+  >({});
 
   const globalFileInputRef = useRef<HTMLInputElement | null>(null);
   const questionFileInputRefs = useRef<Record<string, HTMLInputElement | null>>(
@@ -111,14 +114,18 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
         {} as Record<string, Attachment[]>
       )
     );
+
+    setValidationErrors({});
   }, [questions, globalAttachments]);
 
   const handleEditClick = () => {
     setIsEditing(true);
+    setValidationErrors({});
   };
 
   const handleCancel = () => {
     setIsEditing(false);
+    setValidationErrors({});
 
     // revert answers
     setEditedAnswers(
@@ -151,7 +158,30 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
     return trimmed ? value : '';
   };
 
+  const validateMandatoryQuestions = () => {
+    const errors: Record<string, boolean> = {};
+    let isValid = true;
+
+    questions.forEach((q) => {
+      if (q.is_mandatory) {
+        const answer = sanitizeQuillValue(editedAnswers[q.rid] || '');
+        if (!answer) {
+          errors[q.rid] = true;
+          isValid = false;
+        }
+      }
+    });
+
+    setValidationErrors(errors);
+    return isValid;
+  };
+
   const handleSave = async (flag: FlagTypeEnum) => {
+    // For submit action, validate mandatory questions
+    if (flag === FlagTypeEnum.submit && !validateMandatoryQuestions()) {
+      return;
+    }
+
     setActiveFlag(flag);
     const payload = {
       status_action: (flag === FlagTypeEnum.draft
@@ -179,6 +209,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
         await refetchDetails?.();
         setIsEditing(false);
         setActiveFlag(null);
+        setValidationErrors({});
       },
       onError: () => {
         setActiveFlag(null);
@@ -191,6 +222,13 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
       ...prev,
       [questionId]: value,
     }));
+
+    if (validationErrors[questionId]) {
+      setValidationErrors((prev) => ({
+        ...prev,
+        [questionId]: false,
+      }));
+    }
   };
 
   const handleGlobalFileUpload = async (
@@ -415,6 +453,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
             <div className='font-medium text-[14px] text-[#2D3E4F]'>
               <span className='font-bold'>
                 {q.question_seq_num || `Q00${index + 1}`}
+                {q.is_mandatory && <span className='text-red-500 ml-1'>*</span>}
               </span>{' '}
               - {q.question}
             </div>
@@ -467,7 +506,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                   value={editedAnswers[q.rid]}
                   onChange={(value) => handleAnswerChange(q.rid, value)}
                   theme='snow'
-                  className='rounded-[2px] bg-white'
+                  className={`rounded-[2px] ${validationErrors[q.rid] ? 'border border-red-500 bg-[#FEF2F2]' : 'bg-white'}`}
                   modules={{
                     toolbar: {
                       container: `#toolbar-${q.rid}`,
@@ -493,6 +532,12 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                     'clean',
                   ]}
                 />
+
+                {validationErrors[q.rid] && (
+                  <div className='text-red-500 text-sm mt-1'>
+                    This question is mandatory
+                  </div>
+                )}
 
                 {/* Hidden File Input */}
                 <input

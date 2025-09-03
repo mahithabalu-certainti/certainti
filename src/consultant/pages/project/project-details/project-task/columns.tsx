@@ -97,7 +97,7 @@ export const getProjectTaskColumns = (
       !permissionMapTaskTableColumn?.['resource_role']?.edit,
   },
   {
-    id: 'effective_from',
+    id: 'start_date',
     label: 'Start Date',
     sortable: true,
     editId: 'start_date',
@@ -117,6 +117,8 @@ export const getProjectTaskColumns = (
         disableFutureDates: true,
         minDate: fiscalDate?.startMin,
         maxDate: fiscalDate?.startMax,
+        startFieldId: 'start_date',
+        endFieldId: 'end_date',
       },
       getFieldData: (rowData: DependencyRowData) => {
         return String(rowData.start_date);
@@ -155,13 +157,15 @@ export const getProjectTaskColumns = (
         disableFutureDates: true,
         minDate: fiscalDate?.startMin,
         maxDate: fiscalDate?.endMax,
+        startFieldId: 'start_date',
+        endFieldId: 'end_date',
       },
       getFieldData: (rowData: DependencyRowData) => {
         return String(rowData.end_date);
       },
       dependencies: [
         {
-          dependsOn: ['effective_from'],
+          dependsOn: ['start_date'],
           condition: (_, rowData) => {
             const startDate = rowData.start_date;
             return !startDate;
