@@ -2748,7 +2748,7 @@ private async createInteractionTable(
           key_contact_email VARCHAR(125),
           key_contact_role varchar(50),
           is_primary_contact BOOLEAN,
-          interaction_recipient BOOLEAN,
+          include_in_communication BOOLEAN,
           interaction_cc_recipient BOOLEAN,
           status_rid VARCHAR(50)
         );

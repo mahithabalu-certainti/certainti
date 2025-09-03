@@ -455,7 +455,7 @@ async function ListGlobalAccounts(req: Request, res: Response): Promise<void> {
       value.limit,
       value.sortBy,
       value.sortOrder,
-      parsedFilters,
+      value.globalFilters
     );
 
     if (account.statusCode === HttpStatus.SUCCESS) {

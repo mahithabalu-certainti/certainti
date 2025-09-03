@@ -1,3 +1,4 @@
+import { Sequelize } from "sequelize"
 import { ALPHANUMERIC_CONDITIONS, filtersColumns, filtersColumnsForInteractionSummary, filterTypes, filterTypesForIntHistory, filterTypesForSummaryInteractions, interactionFlag, MAIN_SCHEMA_NAME, responseSortKeys, STATUS_MESSAGE } from "./constants"
 
 type filterType = {
@@ -235,7 +236,7 @@ export const listAllInteractionSummary = (
     LEFT JOIN ${MAIN_SCHEMA_NAME}.interaction_status s ON s.rid = i.status_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.user u ON u.rid = i.created_by
     LEFT JOIN ${MAIN_SCHEMA_NAME}.user uu ON uu.rid = i.modified_by
-    LEFT JOIN ${MAIN_SCHEMA_NAME}.interactions_summary p ON p.rid = i.parent_interaction_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.interactions_summary p ON p.interaction_rid = i.parent_interaction_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.interaction_source sn ON sn.rid = i.interaction_source_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.account a ON a.rid = i.account_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.project_summary pf ON pf.project_rid = i.project_rid
@@ -314,8 +315,9 @@ const filterForInteractions = (
                         else dynamicReference = `i`
                         if(condition == ALPHANUMERIC_CONDITIONS.equals) 
                             filteredQueryArray.push(`LOWER(${dynamicReference}.${filteredColumns}) = LOWER('${values}')`)
-                        if(condition == ALPHANUMERIC_CONDITIONS.notEquals)
-                            filteredQueryArray.push(`LOWER(${dynamicReference}.${filteredColumns}) != LOWER('${values}')`)
+                        if(condition == ALPHANUMERIC_CONDITIONS.notEquals) {
+                            filteredQueryArray.push(`(LOWER(${dynamicReference}.${filteredColumns}) != LOWER('${values}') OR ${dynamicReference}.${filteredColumns} IS NULL)`)
+                        }
                         if(condition == ALPHANUMERIC_CONDITIONS.isEmpty) 
                             filteredQueryArray.push(`${dynamicReference}.${filteredColumns} IS NULL`)
                         if(condition == ALPHANUMERIC_CONDITIONS.contains)
@@ -347,7 +349,7 @@ const filterForInteractions = (
                         if(condition == ALPHANUMERIC_CONDITIONS.after) 
                             filteredQueryArray.push(`DATE(i.${filteredColumns}) > '${values}'`)
                         if(condition == ALPHANUMERIC_CONDITIONS.between) 
-                            filteredQueryArray.push(`DATE(i.${filteredColumns}) BETWEEN '${values.map((d : any) => `'${d}'`).join(' AND ')}'`)
+                            filteredQueryArray.push(`DATE(i.${filteredColumns}) BETWEEN ${values.map((d : any) => `'${d}'`).join(' AND ')}`)
                         if(condition == ALPHANUMERIC_CONDITIONS.isEmpty)
                             filteredQueryArray.push(`DATE(i.${filteredColumns}) IS NULL`)                    }
                 }
@@ -448,37 +450,37 @@ export const listInteractionHistory = (page : number, limit : number, sort : str
                 switch(keyType) {
                     case "string" : {
                         if(cond === ALPHANUMERIC_CONDITIONS['equals']) {
-                            filterQueryArray.push(`ih.new_status_rid = '${values}'`)
+                            filterQueryArray.push(` ih.new_status_rid = '${values}'`)
                             break;
                         }
                         if(cond === ALPHANUMERIC_CONDITIONS['notEquals']) {
-                            filterQueryArray.push(`ih.new_status_rid != '${values}'`)
+                            filterQueryArray.push(` ih.new_status_rid != '${values}'`)
                             break;
                         }
                         if(cond === ALPHANUMERIC_CONDITIONS['IN']) {
-                            filterQueryArray.push(`ih.new_status_rid IN (${values.map((d : any) => `'${d}'`).join(',')})`)
+                            filterQueryArray.push(` ih.new_status_rid IN (${values.map((d : any) => `'${d}'`).join(',')})`)
                             break;
                         }
                     }
                     case "datetime" : {
                         if(cond === ALPHANUMERIC_CONDITIONS['equals']) {
-                            filterQueryArray.push(`DATE(ih.created_datetime) = '${values}'`)
+                            filterQueryArray.push(` DATE(ih.created_datetime) = '${values}'`)
                             break
                         }
                         if(cond === ALPHANUMERIC_CONDITIONS['before']) {
-                            filterQueryArray.push(`DATE(ih.created_datetime) < '${values}'`)
+                            filterQueryArray.push(` DATE(ih.created_datetime) < '${values}'`)
                             break;
                         }
                         if(cond === ALPHANUMERIC_CONDITIONS['after']) {
-                            filterQueryArray.push(`DATE(ih.created_datetime) > '${values}'`)
+                            filterQueryArray.push(` DATE(ih.created_datetime) > '${values}'`)
                             break;
                         }
                         if(cond === ALPHANUMERIC_CONDITIONS['between']) {
-                            filterQueryArray.push(`DATE(ih.created_datetime) BETWEEN ${values.map((d : any) => `'${d}'`).join(' AND ')}`)
+                            filterQueryArray.push(` DATE(ih.created_datetime) BETWEEN ${values.map((d : any) => `'${d}'`).join(' AND ')}`)
                             break;
                         }
                         if(cond === ALPHANUMERIC_CONDITIONS['isEmpty']) {
-                            filterQueryArray.push(`ih.created_datetime IS NULL`)
+                            filterQueryArray.push(` ih.created_datetime IS NULL`)
                             break;
                         }
                     }
@@ -502,7 +504,7 @@ export const listInteractionHistory = (page : number, limit : number, sort : str
     `WITH fetch_interaction_history AS (
     SELECT 
     i.r_number, ih.rid, ih.new_status_rid, ih.created_datetime,
-    i.response_source, p.project_code, p.project_name,
+    i.response_source_rid, p.project_code, p.project_name,i.interaction_source_rid,
     COUNT(*) OVER() AS total_records
     FROM 
     ${schemaName}.interaction_status_history ih
@@ -513,7 +515,7 @@ export const listInteractionHistory = (page : number, limit : number, sort : str
     ${andConditions}
     ${filterQueryCombinedValues}
     GROUP BY 
-    i.r_number, p.project_name, p.project_code, i.response_source, ih.rid
+    i.r_number, p.project_name, p.project_code, i.response_source_rid, ih.rid,i.interaction_source_rid
     ),
     paginated_data AS (
     SELECT * from fetch_interaction_history ${pagination})
@@ -524,9 +526,10 @@ export const listInteractionHistory = (page : number, limit : number, sort : str
     'interaction_rnumber', ih.r_number,
     'project_code', ih.project_code, 
     'project_name', ih.project_name,
-    'response_source', ih.response_source,
+    'response_source_rid', ih.response_source_rid,
     'interaction_history_rid', ih.rid,
     'new_status_rid', ih.new_status_rid,
+    'interaction_source_rid', ih.interaction_source_rid,
     'date', ih.created_datetime
     )${sortValue} NULLS LAST) AS interaction_history
     FROM
@@ -707,7 +710,7 @@ export const fetchAllParentRNumber = () => {
 export const fetchProjectAttachmentsRids = (schemaName : string) => {
     let query =
     `
-    SELECT attach_to, account_rid FROM "${schemaName}".attachments where attachment_level = 'project' AND
+    SELECT attach_to AS project_fiscal_rid, account_rid FROM "${schemaName}".attachments where attachment_level = 'project' AND
     is_ai_processed = false
     `
     return query;
@@ -719,4 +722,65 @@ export const fetchProjectInteractionRid = (schemaName : string) => {
     SELECT account_rid, project_fiscal_rid FROM ${schemaName}.interactions WHERE is_ai_processed = false
     `
     return query;
+}
+
+export const checkTableExists = (schemaName : string, table : string) => {
+    return `SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_schema = '${schemaName}' AND table_name = '${table}')`
+}
+
+export const fetchInteractionForSentResentStatus = async (schemaName : string, mainDb : Sequelize, orgDb : Sequelize) => {
+    let fetchInteractionStatus : any = await mainDb.query(`SELECT rid, status_name from ${MAIN_SCHEMA_NAME}.interaction_status WHERE LOWER(status_name) IN ('sent', 'resent')`)
+    const mapInteractionStatus : Map<string, string> = new Map(fetchInteractionStatus[0].map((d : any) => [d.rid, d.status_name]))
+    const fetchAllInteractions : any = await orgDb.query(`SELECT rid, status_rid FROM ${schemaName}.interactions`)
+
+    let updatedResponse = fetchAllInteractions[0].map((d : any) => {
+        return {
+            ...d,
+            status_name : mapInteractionStatus.get(d.status_rid) == undefined ? null : mapInteractionStatus.get(d.status_rid)?.toLowerCase()
+        }
+    })
+    for(let data of updatedResponse) {
+        await updateInteractionAge(data, schemaName, orgDb)
+    }
+}
+
+const updateInteractionAge = async (data : any, schemaName : string, orgDb : Sequelize) => {
+    let interactions : any;
+    let dateTimeColumn : any;
+    console.log("statusName : ", data.status_name)
+    if(data.status_name === 'sent') {
+        dateTimeColumn = `sent_on_datetime`
+        interactions = await orgDb.query(findDateDifferenceQuery(schemaName, data.status_rid, dateTimeColumn))
+        console.log("interactions ====> ", interactions[0])
+        console.log("interactions ====> ", interactions[0].length)
+        if(interactions[0].length > 0) {
+            for(let i of interactions[0]) {
+                await orgDb.query(
+                    updateInteractionForAgeQuery(schemaName, i.rid, i.age)
+                )
+            }
+        }
+    } else if(data.status_name === 'resent') {
+        dateTimeColumn = `last_resent_on`
+        interactions = await orgDb.query(findDateDifferenceQuery(schemaName, data.status_rid, dateTimeColumn))
+        if(interactions[0].length > 0) {
+            for(let i of interactions[0]) {
+                await orgDb.query(
+                    updateInteractionForAgeQuery(schemaName, i.rid, i.age)
+                )
+            }
+        }
+    }
+}
+
+const findDateDifferenceQuery = (schemaName : string, rid : any, dateTimeColumn : string) => {
+    return `SELECT COALESCE(DATE(NOW()) - DATE(i.${dateTimeColumn}), 0) AS age, i.rid
+            FROM ${schemaName}.interactions i
+            WHERE
+            i.status_rid = '${rid}'
+            `
+}
+
+const updateInteractionForAgeQuery = (schemaName : string, rid : string, age : number) => {
+    return `UPDATE ${schemaName}.interactions i SET interaction_age = ${age} WHERE i.rid = '${rid}'` 
 }

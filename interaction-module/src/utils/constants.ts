@@ -89,7 +89,7 @@ export const filtersColumns : Record<string, string> =
   export const filterTypes : Record<string, any> = 
   {
     r_number : "string",
-    iteration : "number",
+    interaction_iteration : "number",
     interaction_age : "number",
     recipient_name : "string",
     recipient_email : "string",
@@ -285,10 +285,9 @@ export const rawQueries = {
     return `
     SELECT rid, project_rid FROM ${schemaName}.project_fiscal WHERE account_rid = '${accountRid}'`
   },
-  updateQreInfo(rid: string, schemaName: string, qrePercent: number, qreBreakdown: object) {
-    const breakdownStr = JSON.stringify(qreBreakdown);
+  updateQreInfo(rid: string, schemaName: string, qrePercent: number) {
     return `
-    UPDATE ${schemaName}.project_fiscal SET qre_final = ${qrePercent}, qre_detailed_breakdown = '${breakdownStr}' WHERE rid = '${rid}'`;
+    UPDATE ${schemaName}.project_fiscal SET qre_final = ${qrePercent} WHERE rid = '${rid}'`;
   },
   updateAIProcessedFlag(rid: string, schemaName: string) {
     return `
@@ -369,7 +368,8 @@ export const rawQueries = {
   },
   fetchAllParentRNumber () {
     let query =
-    `SELECT r_number FROM ${MAIN_SCHEMA_NAME}.account WHERE storage_type = '${STATUS_MESSAGE.separateDb}' AND parent_account_rid IS NULL`
+    `SELECT r_number FROM ${MAIN_SCHEMA_NAME}.account WHERE storage_type = '${STATUS_MESSAGE.separateDb}' AND parent_account_rid IS NULL
+    ORDER BY r_number ASC`
     return query;
   },
   fetchEmailResponseSourceRid(): string {
@@ -395,7 +395,35 @@ export const rawQueries = {
       FROM "${MAIN_SCHEMA_NAME}".key_contact_role
       WHERE rid IN (:roleIds)
     `;
-  }  
+  },
+  fetchUserProfileId(): string {
+    return `
+      SELECT profile_rid FROM ${MAIN_SCHEMA_NAME}.user WHERE rid = :userId LIMIT 1;
+    `;
+  },
+  fetchProfilePermissions(): string {
+    return `
+      SELECT pf.field_desc, pf.field_name, pfa.read, pfa.edit
+      FROM ${MAIN_SCHEMA_NAME}.profile_fields_access pfa
+      JOIN ${MAIN_SCHEMA_NAME}.permission_fields pf ON pfa.permission_field_id = pf.rid
+      JOIN ${MAIN_SCHEMA_NAME}.module_permission mp ON pf.module_permission_id = mp.rid
+        WHERE mp.permission_name = :permissionName
+          AND pfa.profile_id = :profileId
+        `;
+  },
+  fetchUserPermissions(): string {
+    return `
+      SELECT pf.field_desc, pf.field_name, ufa.read, ufa.edit
+      FROM ${MAIN_SCHEMA_NAME}.user_fields_access ufa
+      JOIN ${MAIN_SCHEMA_NAME}.permission_fields pf ON ufa.permission_field_id = pf.rid
+      JOIN ${MAIN_SCHEMA_NAME}.module_permission mp ON pf.module_permission_id = mp.rid
+      WHERE mp.permission_name = :permissionName
+        AND ufa.user_id = :userId
+    `;
+  }
+
+  
+
 };
 
 export const filterTypesForSummaryInteractions : Record<string, any> = 
@@ -468,3 +496,28 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     "interaction",
     "tech_summary"
   ]
+
+  export const interactionFieldMappings = [
+     { permissionField: 'account_name', exportField: 'Account Name', dataField: 'account_name' },
+    { permissionField: 'r_number', exportField: 'Interaction ID', dataField: 'r_number' },
+    { permissionField: 'project_code', exportField: 'Project Code', dataField: 'project_code' },
+    { permissionField: 'interaction_iteration', exportField: 'Iteration', dataField: 'interaction_iteration' },
+    { permissionField: 'interaction_age', exportField: 'Age (Days)', dataField: 'interaction_age' },
+    { permissionField: 'fiscal_year', exportField: 'Fiscal Year', dataField: 'fiscal_year' },
+    { permissionField: 'status', exportField: 'Status', dataField: 'status_name' },
+    { permissionField: 'recipient_name', exportField: 'Recipient Name', dataField: 'recipient_name' },
+    { permissionField: 'recipient_email', exportField: 'Recipient Email', dataField: 'recipient_email' },
+    { permissionField: 'last_resent_on', exportField: 'Last Sent Date', dataField: 'last_resent_on' },
+    { permissionField: 'last_reminder_on', exportField: 'Last Reminder Date', dataField: 'last_reminder_on' },
+    { permissionField: 'response_submitted_on', exportField: 'Response Date', dataField: 'response_submitted_on' },
+    { permissionField: 'response_updated_on', exportField: 'Last Response Update', dataField: 'response_updated_on' },
+    { permissionField: 'attachment_count', exportField: 'Attachments', dataField: 'attachment_count' },
+    { permissionField: 'interaction_url', exportField: 'Interaction Link', dataField: 'interaction_url' },
+    { permissionField: 'parent_interaction_rid', exportField: 'Parent Interaction ID', dataField: 'parent_interaction_rid' },
+    { permissionField: 'interaction_type_name', exportField: 'Type', dataField: 'interaction_type_name' },
+    { permissionField: 'response_source_name', exportField: 'Response Source', dataField: 'response_source_name' },
+    { permissionField: 'created_by', exportField: 'Created By', dataField: 'created_by' },
+    { permissionField: 'created_datetime', exportField: 'Created Date', dataField: 'created_datetime' },
+    { permissionField: 'modified_by', exportField: 'Last Updated By', dataField: 'modified_by' },
+    { permissionField: 'modified_datetime', exportField: 'Last Updated Date', dataField: 'modified_datetime' }
+  ];

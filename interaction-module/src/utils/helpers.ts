@@ -6,6 +6,7 @@ import configurations from "../config/config";
 import ExcelJS from 'exceljs'
 import { getSecret } from "./azureSecrets";
 import { BlobServiceClient } from "@azure/storage-blob";
+import moment from "moment";
 
 function getLogger() {
   return configurations.getInstance().getLogger();
@@ -207,4 +208,8 @@ export async function deleteFromAzureBlob(blobUrl: string): Promise<void> {
   } else {
     console.log(`Blob not found: ${blobName}`);
   }
+}
+
+export  function isValidTimezone(tz: string) {
+  return moment.tz.names().includes(tz);
 }
