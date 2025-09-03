@@ -175,6 +175,7 @@ export const AccountDetails = () => {
   const [refreshAccountDetails, setRefreshAccountDetails] = useState<number>(
     Date.now()
   );
+  const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   const [tableParams, setTableParams] = useState<ExportModule>({
     sortBy: 'created_datetime',
@@ -364,6 +365,7 @@ export const AccountDetails = () => {
           sort: interactionsParams.sortBy || 'status_name',
           sort_by: interactionsParams?.sortOrder || 'ASC',
           filters: interactionsParams?.filters || {},
+          timezone: systemTimezone,
           flag: 'account',
         };
         exportInteractionsHistory(projectInteractionHistoryExportPayload);
@@ -377,6 +379,7 @@ export const AccountDetails = () => {
           sort: interactionsParams?.sortBy || 'action',
           sort_by: interactionsParams?.sortOrder || 'ASC',
           filters: interactionsParams?.filters || {},
+          timezone: systemTimezone,
           flag: 'account',
         };
         exportInteractions(projectInteractionExportPayload);

@@ -48,6 +48,7 @@ const Interaction: React.FC = () => {
   const [refreshTrigger, setRefreshTrigger] = useState<number>();
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
+  const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   const handleFilterModal = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -105,6 +106,7 @@ const Interaction: React.FC = () => {
       sort_by: tableParams?.sort_by || 'ASC',
       filters: tableParams?.filters || {},
       fiscal_year: newFiscalYear,
+      timezone: systemTimezone,
       globalFilters: reshapeGlobalFilter(filters as FilterState) || {},
     };
     exportGlobalInteractions(projectInteractionHistoryExportPayload);

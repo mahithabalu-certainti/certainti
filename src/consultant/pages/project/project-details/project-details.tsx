@@ -75,6 +75,7 @@ export const ProjectDetails = () => {
   const [refreshProjectDetails, setRefreshProjectDetails] = useState<number>(
     Date.now()
   );
+  const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const [interactionsParams, setInteractionsParams] =
     useState<AttachmentsListExportParams>({
       sortBy: '',
@@ -308,6 +309,7 @@ export const ProjectDetails = () => {
           sort: interactionsParams.sortBy || 'status_name',
           sort_by: interactionsParams?.sortOrder || 'ASC',
           filters: interactionsParams?.filters || {},
+          timezone: systemTimezone,
           flag: 'project',
         };
         exportInteractionsHistory(projectInteractionHistoryExportPayload);
@@ -323,6 +325,7 @@ export const ProjectDetails = () => {
           sort: interactionsParams?.sortBy || 'r_number',
           sort_by: interactionsParams?.sortOrder || 'ASC',
           filters: interactionsParams?.filters || {},
+          timezone: systemTimezone,
           flag: 'project',
         };
         exportInteractions(projectInteractionExportPayload);
