@@ -252,8 +252,9 @@ const Timesheet: React.FC<TimeSheetProps> = ({
     [statusOptions?.data?.data?.status]
   );
   // Variables
+  const minYear = 1950;
   const currentYear = new Date().getFullYear();
-  const fiscalYears = getFiscalYears(currentYear - 2000 + 1);
+  const fiscalYears = getFiscalYears(currentYear - minYear + 1);
   const timesheetFilterFields = getTimesheetFilterFields(
     fiscalYears,
     permissionMap
