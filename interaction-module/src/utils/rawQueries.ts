@@ -97,6 +97,7 @@ export const fetchInteractionForProjectLevelQuery = (
             ${whereConditions}
             ${filteredData?.andConditions}
             ${filterQueryValues}
+            ${sortValue}
     ),
     paginated_datas AS (
     SELECT * FROM fetch_interaction ${pagination}
@@ -247,6 +248,7 @@ export const listAllInteractionSummary = (
     ${fiscalYearQuery}
     ${andConditionsForjoinsForThree}
     ${filterQueryValues}
+    ${sortValue}
     ),
     paginated_data AS (
     SELECT * FROM fetch_all_interactions ${pagination}
@@ -387,8 +389,8 @@ export const listResponseHistory = (interaction_rid : string, schemaName : strin
     let pagination = `LIMIT ${limit} OFFSET ${offset}`
     let sortQuery : string = ``
 
-    if(responseSortKeys.includes(sort.toLowerCase())) sortQuery = `ORDER BY i.${sort} ${sortBy}`
-    else sortQuery = `ORDER BY i.r_number ASC`
+    if(responseSortKeys.includes(sort.toLowerCase())) sortQuery = `ORDER BY ${sort} ${sortBy}`
+    else sortQuery = `ORDER BY r_number ASC`
     
     let query = 
     `
@@ -410,7 +412,7 @@ export const listResponseHistory = (interaction_rid : string, schemaName : strin
     SELECT f.*, COUNT(f.*) OVER() AS total_records FROM fetch_interaction_response f
     ),
     paginated_data AS (
-    SELECT * FROM counted_datas ${pagination}
+    SELECT * FROM counted_datas   ${sortQuery}  ${pagination}
     )
     
     SELECT 
@@ -521,6 +523,7 @@ export const listInteractionHistory = (page : number, limit : number, sort : str
     ${filterQueryCombinedValues}
     GROUP BY 
     i.r_number, p.project_name, p.project_code, i.response_source_rid, ih.rid,i.interaction_source_rid
+    ${sortValue}
     ),
     paginated_data AS (
     SELECT * from fetch_interaction_history ${pagination})
