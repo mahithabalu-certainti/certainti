@@ -593,64 +593,64 @@ export const getProjectColumns = (
     hide: !permissionMap?.['qre']?.read && !permissionMap?.['qre']?.edit,
     render: (row: Project) => (row.qre ? row.qre : '-'),
   },
-  {
-    id: 'project_point_of_contact',
-    label: 'Project Point of Contact',
-    sortable: true,
-    sortId: 'project_point_of_contact',
-    width: 200,
-    hide:
-      !permissionMap?.['key_contacts']?.read &&
-      !permissionMap?.['key_contacts']?.edit,
-    render: (row: Project & { _level?: number }) => {
-      const isClickable =
-        permissionMap?.['key_contacts']?.read &&
-        permissionMap?.['key_contacts']?.edit &&
-        row._level !== undefined &&
-        row._level === 1;
-      return isClickable ? (
-        <div
-          onDoubleClick={() =>
-            handleEdit(row, row.project_point_of_contact, 'key_contacts_list')
-          }
-          className='!h-[31px] !min-h[31px] pt-1.5'
-        >
-          {row.project_point_of_contact}
-        </div>
-      ) : (
-        <span>{row.project_point_of_contact}</span>
-      );
-    },
-  },
-  {
-    id: 'technical_point_of_contact',
-    label: 'Technical Point of Contact',
-    sortable: true,
-    sortId: 'technical_point_of_contact',
-    width: 210,
-    hide:
-      !permissionMap?.['key_contacts']?.read &&
-      !permissionMap?.['key_contacts']?.edit,
-    render: (row: Project & { _level?: number }) => {
-      const isClickable =
-        permissionMap?.['key_contacts']?.read &&
-        permissionMap?.['key_contacts']?.edit &&
-        row._level !== undefined &&
-        row._level === 1;
-      return isClickable ? (
-        <div
-          onDoubleClick={() =>
-            handleEdit(row, row.technical_point_of_contact, 'key_contacts_list')
-          }
-          className='!h-[31px] !min-h[31px] pt-1.5'
-        >
-          {row.technical_point_of_contact}
-        </div>
-      ) : (
-        <span>{row.technical_point_of_contact}</span>
-      );
-    },
-  },
+  // {
+  //   id: 'project_point_of_contact',
+  //   label: 'Project Point of Contact',
+  //   sortable: true,
+  //   sortId: 'project_point_of_contact',
+  //   width: 200,
+  //   hide:
+  //     !permissionMap?.['key_contacts']?.read &&
+  //     !permissionMap?.['key_contacts']?.edit,
+  //   render: (row: Project & { _level?: number }) => {
+  //     const isClickable =
+  //       permissionMap?.['key_contacts']?.read &&
+  //       permissionMap?.['key_contacts']?.edit &&
+  //       row._level !== undefined &&
+  //       row._level === 1;
+  //     return isClickable ? (
+  //       <div
+  //         onDoubleClick={() =>
+  //           handleEdit(row, row.project_point_of_contact, 'key_contacts_list')
+  //         }
+  //         className='!h-[31px] !min-h[31px] pt-1.5'
+  //       >
+  //         {row.project_point_of_contact}
+  //       </div>
+  //     ) : (
+  //       <span>{row.project_point_of_contact}</span>
+  //     );
+  //   },
+  // },
+  // {
+  //   id: 'technical_point_of_contact',
+  //   label: 'Technical Point of Contact',
+  //   sortable: true,
+  //   sortId: 'technical_point_of_contact',
+  //   width: 210,
+  //   hide:
+  //     !permissionMap?.['key_contacts']?.read &&
+  //     !permissionMap?.['key_contacts']?.edit,
+  //   render: (row: Project & { _level?: number }) => {
+  //     const isClickable =
+  //       permissionMap?.['key_contacts']?.read &&
+  //       permissionMap?.['key_contacts']?.edit &&
+  //       row._level !== undefined &&
+  //       row._level === 1;
+  //     return isClickable ? (
+  //       <div
+  //         onDoubleClick={() =>
+  //           handleEdit(row, row.technical_point_of_contact, 'key_contacts_list')
+  //         }
+  //         className='!h-[31px] !min-h[31px] pt-1.5'
+  //       >
+  //         {row.technical_point_of_contact}
+  //       </div>
+  //     ) : (
+  //       <span>{row.technical_point_of_contact}</span>
+  //     );
+  //   },
+  // },
   {
     id: 'comments',
     editId: 'comments',

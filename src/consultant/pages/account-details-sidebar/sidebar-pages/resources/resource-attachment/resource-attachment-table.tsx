@@ -3,7 +3,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAttachmentList } from '../../../../../services/attachments/attachments-service';
 import { AttachmentList } from '../../../../../types/attachment';
-import { ListTable } from '../../../../../../components/table';
+import {
+  ListTable,
+  ManageColumnsPopover,
+} from '../../../../../../components/table';
 import { useParams } from 'react-router-dom';
 import {
   AllModules,
@@ -24,6 +27,8 @@ import {
   CellEditData,
   FieldChangeEvent,
   FieldChangeValue,
+  ListTableColumn,
+  ShowHideTableColumn,
 } from '../../../../../../components/table/types';
 import { RootState } from '../../../../../../store/store';
 import { useSelector } from 'react-redux';
@@ -43,6 +48,10 @@ interface ResourceSkillTableProps {
   setCount?: (count: number) => void;
   resourceInActive?: boolean;
   accountDetails?: Record<string, any>;
+  columnAnchorEl: HTMLButtonElement | null;
+  setColumnAnchorEl: React.Dispatch<
+    React.SetStateAction<HTMLButtonElement | null>
+  >;
 }
 const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
   appliedFilters,
@@ -56,6 +65,8 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
   refreshAttachments,
   accountDetails,
   setCount,
+  columnAnchorEl,
+  setColumnAnchorEl,
 }) => {
   const { errorToast } = useToast();
   const { accountid } = useParams();
@@ -259,13 +270,51 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
     }
   };
 
+  const RestrictedColumns = [
+    {
+      id: 'document_name',
+      canHide: false,
+      canDrag: false,
+    },
+  ];
+
+  const [visibleColumns, setVisibleColumns] = useState<
+    ListTableColumn<AttachmentList>[]
+  >(attachmentColumns.filter((col) => !col.hide));
+
   if (!attachmentEnable || !isAttachmentViewEnable) return <AccessRestricted />;
+
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    setVisibleColumns(
+      updatedColumns.filter(
+        (col) => !col.hide
+      ) as ListTableColumn<AttachmentList>[]
+    );
+  };
+
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
+  };
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const modalId = isModalOpen
+    ? 'interaction-column-visibility-popover'
+    : undefined;
 
   return (
     <div>
+      <ManageColumnsPopover
+        anchorEl={columnAnchorEl}
+        open={isModalOpen}
+        popoverId={modalId}
+        onClose={handlePopoverClose}
+        columns={attachmentColumns}
+        onColumnsChange={handleColumnsChange}
+        columnRestrictions={RestrictedColumns}
+      />
       <ListTable
         data={attachmentList}
-        columns={attachmentColumns}
+        columns={visibleColumns}
         getRowId={getRowId}
         hoverHighlight={false}
         tableStyle={{
