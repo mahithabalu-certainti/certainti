@@ -511,11 +511,11 @@ export const ResourceFormData = (
             minDate: fiscalDate?.startMin,
             maxDate: fiscalDate?.startMax,
             disabled:
-              isEditView &&  
+              isEditView &&
               resourceCostPermissionMap?.['effective_from']?.read &&
               !resourceCostPermissionMap?.['effective_from']?.edit,
             hide:
-              isEditView && 
+              isEditView &&
               !resourceCostPermissionMap?.['effective_from']?.read &&
               !resourceCostPermissionMap?.['effective_from']?.edit,
           }),

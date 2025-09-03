@@ -174,7 +174,7 @@ const processQueue = (error: unknown, token: string | null = null) => {
           console.error('refreshError', refreshError);
           const message = (error?.response?.data as { message?: string })
             ?.message;
-          if (message?.includes("Interaction")) {
+          if (message?.includes('Interaction')) {
             localStorage.removeItem('temAuth');
             localStorage.removeItem('otp_timeout');
           } else {

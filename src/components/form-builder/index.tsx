@@ -1539,7 +1539,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 isError +
                 fieldDisabled
               }
-              minDate={customMinDate || dayjs("1950-01-01")}
+              minDate={customMinDate || dayjs('1950-01-01')}
               maxDate={customMaxDate}
               value={dayjs(fieldValue, 'YYYY-MM-DD')}
               disabled={field.disabled}
