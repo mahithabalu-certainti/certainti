@@ -127,10 +127,20 @@ export async function generateExcelBase64(
   // Get headers from the first object in data
   const headers = Object.keys(data[0] || {});
   worksheet.addRow(headers);
-  
-  // Add data rows
+
+  // Add data rows with hyperlink and style support
   data.forEach((row: any) => {
-    worksheet.addRow(Object.values(row));
+    const rowValues = headers.map((header) => row[header]);
+    const excelRow = worksheet.addRow(rowValues);
+    rowValues.forEach((cellValue, colIdx) => {
+      const cell = excelRow.getCell(colIdx + 1);
+      if (cellValue && typeof cellValue === 'object' && cellValue.hyperlink && cellValue.text) {
+        cell.value = { text: cellValue.text, hyperlink: cellValue.hyperlink };
+        cell.font = {
+          color: { argb: cellValue.style?.fontColor || '0000FF' }
+        };
+      }
+    });
   });
 
   // Generate buffer

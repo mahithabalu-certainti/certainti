@@ -934,31 +934,58 @@ export class InteractionService {
     if(responseHistoryresult[0][0].response_history !== null) {
       let finalData = responseHistoryresult[0][0].response_history
       let fetchSourceIds : any = [...new Set(finalData.map((d : any) => d.interaction_source_rid))]
+        let fetchResponseSourceIds : any = [...new Set(finalData.map((d : any) => d.response_source_rid))]
       let fetchUserIds : any = [...new Set(finalData.map((d : any) => d.response_by_rid))]
       let fetchUserDetails : any = await mainDb.query(rawQueries.fetchUser(fetchUserIds))
       let fetchInteractionSource : any = await mainDb.query(rawQueries.fetchInteractionSource(fetchSourceIds))
+      let fetchResponseSource : any = await mainDb.query(rawQueries.fetchInteractionResponseSource(fetchResponseSourceIds))
       let mapSources = new Map(fetchInteractionSource[0].map((source : any) => [source.rid, source.interaction_source_name]))
+      let mapResponseSource = new Map(fetchResponseSource[0].map((source : any) => [source.rid, source.response_source_name]))
       let userMap = new Map(fetchUserDetails[0].map((d : any) => [d.rid, `${d.first_name} ${d.last_name}`]))
       let updatedFinalData = finalData.map((d : any) => {
         return {
           ...d,
           interaction_source_name : mapSources.get(d.interaction_source_rid),
+          response_source_name : mapResponseSource.get(d.response_source_rid),
           response_by : userMap.get(d.response_by_rid)
         }
       })
       
-      if(data.sort.toLowerCase() == "interaction_source_name" && data.sort_by.toLowerCase() == 'asc') {
-        updatedFinalData = updatedFinalData.sort((a : any, b : any) => {
-          if(!a?.interaction_source_name) return 1
-          if(!b?.interaction_source_name) return -1 
-          return a.interaction_source_name.localeCompare(b.interaction_source_name)
-        })
-      } else if(data.sort.toLowerCase() == "interaction_source_name" && data.sort_by.toLowerCase() == 'desc'){
-         updatedFinalData = updatedFinalData.sort((a : any, b : any) => {
-          if(!b?.interaction_source_name) return 1
-          if(!a?.interaction_source_name) return -1 
-          return b.interaction_source_name.localeCompare(a.interaction_source_name)
-        })
+      const sortByField = (
+        data: any[],
+        field: string,
+        order: "asc" | "desc"
+      ) => {
+        return data.sort((a: any, b: any) => {
+          const aField = a?.[field] ?? "";
+          const bField = b?.[field] ?? "";
+          if (!aField) return order === "asc" ? 1 : -1;
+          if (!bField) return order === "asc" ? -1 : 1;
+          return order === "asc"
+        ? aField.localeCompare(bField)
+        : bField.localeCompare(aField);
+        });
+      };
+
+      if (
+        data.sort.toLowerCase() === "interaction_source_name" &&
+        ["asc", "desc"].includes(data.sort_by.toLowerCase())
+      ) {
+        updatedFinalData = sortByField(
+          updatedFinalData,
+          "interaction_source_name",
+          data.sort_by.toLowerCase() as "asc" | "desc"
+        );
+      }
+      if (
+        data.sort.toLowerCase() === "response_source_name" &&
+        ["asc", "desc"].includes(data.sort_by.toLowerCase())
+      ) {
+        updatedFinalData = sortByField(
+          updatedFinalData,
+          "response_source_name",
+          data.sort_by.toLowerCase() as "asc" | "desc"
+        );
       }
       return {
         statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
@@ -1052,8 +1079,7 @@ export class InteractionService {
       let responseData = result[0][0].attachments
       const createdByIds = [...new Set(responseData.map((d : any) => d.created_by))]
       const fetchUsers = await mainDb.query(rawQueries.fetchUser(createdByIds))
-      const mapUsers : Map<string, string> = new Map(fetchUsers[0].map((d : any) => [d.rid, `${d.first_name}, ${d.last_name}`]))
-
+      const mapUsers : Map<string, string> = new Map(fetchUsers[0].map((d : any) => [d.rid, `${d.first_name} ${d.last_name}`]))
       responseData = await Promise.all(responseData.map(async (d : any) => {
         return {
           ...d,
@@ -1294,12 +1320,12 @@ export class InteractionService {
             interaction_type_rid: interactionType.RD,
             created_by: process.env.SYSTEM_USER_ID!,
           };
-          await this.createInteraction(interactionData, interactionSource.AUTO, "userID");
+          await this.createInteraction(interactionData, interactionSource.AUTO, process.env.SYSTEM_USER_ID!);
         }
       } else {
         await this.interactionSchemaService.updateAssessmentErrorResponse(parsedMessage, accountNumber, project_id, company_id, transaction_id);
       }
-      this.logger.info(`Processed Kafka message for interaction_rid: ${company_id}`);
+      this.logger.info(`Processed Kafka message for account: ${company_id}`);
     } catch (err) {
       this.logger.error("Error processing Kafka message", err);
     }

@@ -8,6 +8,9 @@ on:
       - user-module/**
       - account-module/**
       - entity-module/**
+      - interaction-module/**
+      - ext-interaction-module/**
+      - event-stream-module/**
 
 env:
   ENVIRONMENT: prod
@@ -21,6 +24,9 @@ jobs:
       user-module: ${{ steps.filter.outputs.user-module }}
       account-module: ${{ steps.filter.outputs.account-module }}
       entity-module: ${{ steps.filter.outputs.entity-module }}
+      interaction-module: ${{ steps.filter.outputs.interaction-module }}
+      ext-interaction-module: ${{ steps.filter.outputs.ext-interaction-module }}
+      event-stream-module: ${{ steps.filter.outputs.event-stream-module }}
     # For pull requests it's not necessary to checkout the code
     steps:
       - uses: actions/checkout@v3
@@ -35,6 +41,12 @@ jobs:
               - 'account-module/**'
             entity-module:
               - 'entity-module/**'
+            interaction-module:
+              - 'interaction-module/**'
+            ext-interaction-module:
+              - 'ext-interaction-module/**'
+            event-stream-module:
+              - 'event-stream-module/**' 
 
   # JOB to build backend user-module code
   user-module:
@@ -102,7 +114,6 @@ jobs:
           AZURE_B2C_TENANT_ID=$API_TENANT_ID
           AZURE_SCOPE=https://graph.microsoft.com/.default
           AZURE_STORAGE_CONNECTION_STRING = "storage-account-connection-string"
-
           MAINDB_NAME=main-database-name
           MAINDB_PASSWORD=main-db-admin-password
           MAINDB_USERNAME=main-db-admin-username
@@ -115,10 +126,8 @@ jobs:
           SUPPORT_EMAIL=platform-support@certainti.ai
           LOG_LEVEL=debug
           NODE_ENV=PROD
-
           NODE_ENV_DB_PREFIX="P001-"
           EOF
-          
           echo "$ENV_FILE file created successfully!"
           ls -la
       - name: Copy .env file to VM
@@ -218,7 +227,6 @@ jobs:
           SERVER_PORT=5001
           KEY_VAULT_URI=$KEY_VAULT_URI
           AZURE_STORAGE_CONNECTION_STRING = "storage-account-connection-string"
-          
           MAINDB_NAME=main-database-name
           MAINDB_PASSWORD=main-db-admin-password
           MAINDB_USERNAME=main-db-admin-username
@@ -229,10 +237,8 @@ jobs:
           ORGDB_ENDPOINT=org-db-endpoint
           LOG_LEVEL=debug
           NODE_ENV=PROD
-
           NODE_ENV_DB_PREFIX="P001-"
           EOF
-          
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
         run: |
@@ -340,11 +346,9 @@ jobs:
           ORGDB_ENDPOINT=org-db-endpoint
           LOG_LEVEL=debug
           NODE_ENV=PROD
-
           NODE_ENV_DB_PREFIX="P001-"
           AZURE_STORAGE_CONNECTION_STRING = "storage-account-connection-string"
           EOF
-          
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
         run: |

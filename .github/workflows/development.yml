@@ -128,7 +128,6 @@ jobs:
           NODE_ENV=DEVELOPMENT
           NODE_ENV_DB_PREFIX="D001-"
           EOF
-          
           echo "$ENV_FILE file created successfully!"
           ls -la
       - name: Copy .env file to VM
@@ -239,8 +238,10 @@ jobs:
           LOG_LEVEL=debug
           NODE_ENV=DEVELOPMENT
           NODE_ENV_DB_PREFIX="D001-"
+          AZURE_TENANT_ID="b6734060-665c-4b7b-94e2-716458c1d933"
+          AZURE_CLIENT_ID="0d6c589d-aead-4576-9ff7-30b719c00046"
+          AZURE_CLIENT_SECRET="3Sw8Q~8hP7QTX64ko~jj76KT4vePLznIfJTgUaA3"
           EOF
-          
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
         run: |
@@ -351,7 +352,6 @@ jobs:
           NODE_ENV_DB_PREFIX="D001-"
           AZURE_STORAGE_CONNECTION_STRING = "storage-account-connection-string"
           EOF
-          
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
         run: |
@@ -478,7 +478,10 @@ jobs:
           KAFKA_AI_RESPONSE_TRIGGER_TOPIC="ai_assessment_response"
           KAFKA_AI_REQUEST_TRIGGER_TOPIC = "ai_assessment_request"
           SYSTEM_USER_ID = "D001-477aac5d-3d92-4420-8e65-4153af4f3aed"
-          JWT_EXPIRY='1h'        
+          JWT_EXPIRY='1h'
+          CLIENT_ID=3e5c4e6a-59fc-44b2-8750-5042ba4b939a
+          CLIENT_SECRET=enC8Q~xT6KWh.yPUGxOViUg17LOpCHtDTRzDtcXq
+          TENANT_ID=328e96fd-558b-4dd9-8ac6-cca8734170ec        
           EOF
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
@@ -526,6 +529,7 @@ jobs:
               exit 1
             fi
           EOF
+
   # JOB to build backend ext-interaction-module code
   ext-interaction-module:
     needs:
@@ -656,6 +660,7 @@ jobs:
               exit 1
             fi
           EOF
+          
   # JOB to build backend event-stream-module code
   event-stream-module:
     needs:
