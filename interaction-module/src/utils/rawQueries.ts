@@ -312,6 +312,11 @@ const filterForInteractions = (
                         let dynamicReference = ``
                         if(filteredColumns == 'project_code') dynamicReference = `pf`
                         else if(filteredColumns == 'account_name') dynamicReference = `a`
+                        else if(filteredColumns == 'parent_interaction_rid')
+                            {
+                                dynamicReference = `p`;
+                                filteredColumns = 'r_number'
+                            }
                         else dynamicReference = `i`
                         if(condition == ALPHANUMERIC_CONDITIONS.equals) 
                             filteredQueryArray.push(`LOWER(${dynamicReference}.${filteredColumns}) = LOWER('${values}')`)

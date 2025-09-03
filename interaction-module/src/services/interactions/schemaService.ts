@@ -1201,12 +1201,7 @@ async fetchGlobalAttachmentsByInteractionRid(accountNumber: string, interactionR
         const response = await InteractionResponseHistory.findOne({
           where: {
             interaction_item_rid: item.rid,
-            interaction_response: {
-              [require("sequelize").Op.and]: [
-          { [require("sequelize").Op.ne]: null },
-          { [require("sequelize").Op.ne]: "" }
-              ]
-            }
+            interaction_version: interactionVersion ,
           },
           order: [["response_on", "DESC"]],
         });
