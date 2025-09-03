@@ -316,6 +316,7 @@ export const AccFormData = (
           createTextField('annual_revenue', 'Annual Revenue', {
             required: false,
             regex: REGEX_PATTERNS.ANNUAL_REVENUE,
+            formatCostValue: true,
             hide:
               isEditView &&
               !permissionMap?.['annual_revenue']?.read &&

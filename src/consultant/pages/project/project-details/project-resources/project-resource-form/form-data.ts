@@ -212,6 +212,7 @@ export const ProjectResourceFormData = (
           createTextField('salary', 'Salary', {
             required: false,
             placeholder: 'Enter Salary',
+            formatCostValue: true,
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             onChange: true,
             regexErrorMessage:
@@ -230,6 +231,7 @@ export const ProjectResourceFormData = (
           createTextField('bonus', 'Bonus', {
             required: false,
             placeholder: 'Enter Bonus',
+            formatCostValue: true,
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             onChange: true,
             regexErrorMessage:
@@ -248,6 +250,7 @@ export const ProjectResourceFormData = (
           createTextField('insurance', 'Insurance', {
             required: false,
             placeholder: 'Enter Insurance',
+            formatCostValue: true,
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             onChange: true,
             regexErrorMessage:
@@ -266,6 +269,7 @@ export const ProjectResourceFormData = (
           createTextField('deductions', 'Deductions', {
             required: false,
             placeholder: 'Enter Deductions',
+            formatCostValue: true,
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             onChange: true,
             regexErrorMessage:
@@ -282,6 +286,7 @@ export const ProjectResourceFormData = (
           createTextField('total_cost_pro_res', 'Cost', {
             required: isSalaryRequired,
             regex: PROJECT_RESOURCE_REGEX.COST_REGEX,
+            formatCostValue: true,
             onChange: true,
             regexErrorMessage:
               'Cost must be a 18-digit number with up to 2 decimals',
@@ -299,6 +304,7 @@ export const ProjectResourceFormData = (
             required: false,
             disabled: true,
             onChange: true,
+            formatCostValue: true,
             defaultValue: autoCalculatedValue
               ? autoCalculatedValue.toString()
               : '0',

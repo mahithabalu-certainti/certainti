@@ -511,11 +511,11 @@ export const ResourceFormData = (
             minDate: fiscalDate?.startMin,
             maxDate: fiscalDate?.startMax,
             disabled:
-              isEditView &&  
+              isEditView &&
               resourceCostPermissionMap?.['effective_from']?.read &&
               !resourceCostPermissionMap?.['effective_from']?.edit,
             hide:
-              isEditView && 
+              isEditView &&
               !resourceCostPermissionMap?.['effective_from']?.read &&
               !resourceCostPermissionMap?.['effective_from']?.edit,
           }),
@@ -551,6 +551,7 @@ export const ResourceFormData = (
           createTextField('salary', 'Salary', {
             required: false,
             placeholder: 'Enter Salary',
+            formatCostValue: true,
             disabled:
               isEditView &&
               resourceCostPermissionMap?.['salary']?.read &&
@@ -569,6 +570,7 @@ export const ResourceFormData = (
           createTextField('bonus', 'Bonus', {
             required: false,
             placeholder: 'Enter Bonus',
+            formatCostValue: true,
             disabled:
               isEditView &&
               resourceCostPermissionMap?.['bouns']?.read &&
@@ -587,6 +589,7 @@ export const ResourceFormData = (
           createTextField('insurance', 'Insurance', {
             required: false,
             placeholder: 'Enter Insurance',
+            formatCostValue: true,
             disabled:
               isEditView &&
               resourceCostPermissionMap?.['insurance']?.read &&
@@ -605,6 +608,7 @@ export const ResourceFormData = (
           createTextField('deductions', 'Deductions', {
             required: false,
             placeholder: 'Enter Deductions',
+            formatCostValue: true,
             disabled:
               isEditView &&
               resourceCostPermissionMap?.['deductions']?.read &&
@@ -621,6 +625,7 @@ export const ResourceFormData = (
           createTextField('resource_cost', 'Resource Cost', {
             required: isSalaryRequired,
             placeholder: 'Enter Cost',
+            formatCostValue: true,
             disabled:
               isEditView &&
               resourceCostPermissionMap?.['resource_cost']?.read &&
@@ -637,6 +642,7 @@ export const ResourceFormData = (
           createTextField('net_resource_cost', 'Net Resource Cost', {
             required: false,
             disabled: true,
+            formatCostValue: true,
             hide:
               isEditView &&
               !resourceCostPermissionMap?.['net_resource_cost']?.read &&
