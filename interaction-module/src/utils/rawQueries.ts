@@ -212,6 +212,8 @@ export const listAllInteractionSummary = (
     else if(sort === filtersColumnsForInteractionSummary.account_name) sortValue = ` ORDER BY i.account_name ${sortBy}`
     else if(sort === filtersColumnsForInteractionSummary.fiscal_year) sortValue = ` ORDER BY i.fiscal_year ${sortBy}`
     else if(sort === filtersColumnsForInteractionSummary.response_source_name) sortValue = ` ORDER BY i.response_source_name ${sortBy}`
+    else if(sort === filtersColumnsForInteractionSummary.parent_interaction_rid) sortValue = ` ORDER BY parent_r_number ${sortBy}`
+   
     else sortValue = `ORDER BY i.r_number ASC`
 
 
@@ -289,7 +291,7 @@ export const listAllInteractionSummary = (
             'updated_user_name', i.updated_user_name,
             'attachment_count', i.attachment_count,
             'project_code', i.project_code
-        )${sortValue} NULLS LAST) AS interactions
+        )) AS interactions
 
         FROM
         paginated_data i`
