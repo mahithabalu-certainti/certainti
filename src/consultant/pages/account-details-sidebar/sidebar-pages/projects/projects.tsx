@@ -14,7 +14,7 @@ import { generatePath, useNavigate, useParams } from 'react-router-dom';
 import {
   Project,
   ProjectListParams,
-  ProjectTiggerAIPayload,
+  ProjectTriggerAIPayload,
 } from '../../../../types/project';
 import { ListTable } from '../../../../../components/table';
 import { AccessRestricted } from '../../../../../components/account-restricted';
@@ -262,7 +262,7 @@ const Projects: React.FC<ProjectsProps> = ({
   const triggerAIMutation = ProjectTriggerAI();
 
   const handleTriggerAIBtn = () => {
-    const payload: ProjectTiggerAIPayload = {
+    const payload: ProjectTriggerAIPayload = {
       data: [
         {
           account_rid: accountid || '',

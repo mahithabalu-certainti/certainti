@@ -12,7 +12,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import DetailsSectionSkeleton from '../../../../../components/skeleton-component/detailsskeleton';
 import { ProjectTriggerAI } from '../../../../services/project';
-import { ProjectTiggerAIPayload } from '../../../../types/project';
+import { ProjectTriggerAIPayload } from '../../../../types/project';
 import { useToast } from '../../../../../hooks';
 // import { checkPermission } from '../../../../../common-utils';
 
@@ -102,7 +102,7 @@ const Details: React.FC<DetailsProps> = ({
   const triggerAIMutation = ProjectTriggerAI();
   const handleTriggerAI = () => {
     const accountId = accountDetails?.accountById?.rid || '';
-    const payload: ProjectTiggerAIPayload = {
+    const payload: ProjectTriggerAIPayload = {
       data: [
         {
           account_rid: accountId,

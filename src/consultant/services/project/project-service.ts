@@ -5,7 +5,7 @@ import {
   ProjectAccordionResponse,
   // ProjectList,
   ProjectListParams,
-  ProjectTiggerAIPayload,
+  ProjectTriggerAIPayload,
 } from '../../types/project';
 import {
   accountServiceApi,
@@ -139,7 +139,7 @@ export const useGetProjectType = () => {
 };
 
 export const TriggerInteraction = async (
-  body: Partial<ProjectTiggerAIPayload>
+  body: Partial<ProjectTriggerAIPayload>
 ): Promise<CommonApiResponse> => {
   try {
     const { data } = await interactionServiceApi.post<CommonApiResponse>(
@@ -154,9 +154,11 @@ export const TriggerInteraction = async (
 };
 
 export const ProjectTriggerAI = () => {
-  return useMutation<CommonApiResponse, Error, Partial<ProjectTiggerAIPayload>>(
-    {
-      mutationFn: (body) => TriggerInteraction({ ...body }),
-    }
-  );
+  return useMutation<
+    CommonApiResponse,
+    Error,
+    Partial<ProjectTriggerAIPayload>
+  >({
+    mutationFn: (body) => TriggerInteraction({ ...body }),
+  });
 };

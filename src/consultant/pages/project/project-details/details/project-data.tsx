@@ -5,7 +5,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import ProjectOverview from './project-overview';
 import {
   NewProjectData,
-  ProjectTiggerAIPayload,
+  ProjectTriggerAIPayload,
 } from '../../../../types/project';
 import {
   AllMenus,
@@ -101,7 +101,7 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
   const { successToast } = useToast();
   const triggerAIMutation = ProjectTriggerAI();
   const handleTriggerAI = () => {
-    const payload: ProjectTiggerAIPayload = {
+    const payload: ProjectTriggerAIPayload = {
       data: [
         {
           account_rid: projectDetails?.account_rid || '',

@@ -249,7 +249,7 @@ interface ProjectItem {
   account_rid: string;
   project_fiscal_rid: string[];
 }
-export type ProjectTiggerAIPayload = {
+export type ProjectTriggerAIPayload = {
   data: ProjectItem[];
   type: string;
 };
