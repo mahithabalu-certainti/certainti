@@ -159,6 +159,7 @@ export type ResponseInteractionList = {
   interaction_source_rid: string;
   interaction_source_name: string;
   interaction_version: number;
+  response_source_name: string;
   response_by: string;
   attachment_count: number | string | null;
 };

@@ -157,6 +157,7 @@ export enum AllModules {
   ATTACHMENTS = 'attachments',
   IMPORTS = 'imports',
   MANAGE_ACCOUNT_ACCESS = 'manage_account_access',
+  INTERACTIONS = 'interactions',
 }
 
 export enum AllPermissions {
@@ -235,6 +236,10 @@ export enum AllPermissions {
   INTERACTIONS_OVERVIEW = 'interactions_overview',
   INTERACTIONS_TIMELINE = 'interactions_timeline',
   ACCOUNT_TIMESHEET_EXPORT = 'timesheet_export',
+  INTERACTIONS_VIEW_EDIT = 'interactions_view_edit',
+  INTERACTIONS_EXPORT = 'interactions_export',
+  INTERACTIONS_CREATE = 'interactions_create',
+  SEND_INTERACTIONS = 'send_interactions',
 }
 
 export interface Country {
