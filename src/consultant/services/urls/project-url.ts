@@ -70,8 +70,6 @@ export const ProjectExportListURL = ({
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 };
 
-// export const ProjectTriggerAIUrl = '/api/interactions/triggerAi';
-
 export const ProjectTriggerAIUrl = (): string => {
   return '/api/interactions/triggerAi';
 };

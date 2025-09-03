@@ -138,23 +138,6 @@ export const useGetProjectType = () => {
   });
 };
 
-// export const ProjectTriggerAI = () => {
-//   return useApiMutationSericve<
-//     Partial<ProjectTiggerAIResponse>,
-//     ProjectTiggerAIPayload
-//   >(ProjectTriggerAIUrl, 'post');
-// };
-
-// export const ProjectTriggerAI = async (
-//   params: ProjectTiggerAIPayload
-// ): Promise<ProjectTiggerAIResponse> => {
-//   const { data } = await interactionServiceApi.post<ProjectTiggerAIPayload>(
-//     ProjectTriggerAIUrl,
-//     params
-//   );
-//   return data;
-// };
-
 export const TriggerInteraction = async (
   body: Partial<ProjectTiggerAIPayload>
 ): Promise<CommonApiResponse> => {
