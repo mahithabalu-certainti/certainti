@@ -449,37 +449,37 @@ export const listInteractionHistory = (page : number, limit : number, sort : str
                 switch(keyType) {
                     case "string" : {
                         if(cond === ALPHANUMERIC_CONDITIONS['equals']) {
-                            filterQueryArray.push(`ih.new_status_rid = '${values}'`)
+                            filterQueryArray.push(` ih.new_status_rid = '${values}'`)
                             break;
                         }
                         if(cond === ALPHANUMERIC_CONDITIONS['notEquals']) {
-                            filterQueryArray.push(`ih.new_status_rid != '${values}'`)
+                            filterQueryArray.push(` ih.new_status_rid != '${values}'`)
                             break;
                         }
                         if(cond === ALPHANUMERIC_CONDITIONS['IN']) {
-                            filterQueryArray.push(`ih.new_status_rid IN (${values.map((d : any) => `'${d}'`).join(',')})`)
+                            filterQueryArray.push(` ih.new_status_rid IN (${values.map((d : any) => `'${d}'`).join(',')})`)
                             break;
                         }
                     }
                     case "datetime" : {
                         if(cond === ALPHANUMERIC_CONDITIONS['equals']) {
-                            filterQueryArray.push(`DATE(ih.created_datetime) = '${values}'`)
+                            filterQueryArray.push(` DATE(ih.created_datetime) = '${values}'`)
                             break
                         }
                         if(cond === ALPHANUMERIC_CONDITIONS['before']) {
-                            filterQueryArray.push(`DATE(ih.created_datetime) < '${values}'`)
+                            filterQueryArray.push(` DATE(ih.created_datetime) < '${values}'`)
                             break;
                         }
                         if(cond === ALPHANUMERIC_CONDITIONS['after']) {
-                            filterQueryArray.push(`DATE(ih.created_datetime) > '${values}'`)
+                            filterQueryArray.push(` DATE(ih.created_datetime) > '${values}'`)
                             break;
                         }
                         if(cond === ALPHANUMERIC_CONDITIONS['between']) {
-                            filterQueryArray.push(`DATE(ih.created_datetime) BETWEEN ${values.map((d : any) => `'${d}'`).join(' AND ')}`)
+                            filterQueryArray.push(` DATE(ih.created_datetime) BETWEEN ${values.map((d : any) => `'${d}'`).join(' AND ')}`)
                             break;
                         }
                         if(cond === ALPHANUMERIC_CONDITIONS['isEmpty']) {
-                            filterQueryArray.push(`ih.created_datetime IS NULL`)
+                            filterQueryArray.push(` ih.created_datetime IS NULL`)
                             break;
                         }
                     }
@@ -503,7 +503,7 @@ export const listInteractionHistory = (page : number, limit : number, sort : str
     `WITH fetch_interaction_history AS (
     SELECT 
     i.r_number, ih.rid, ih.new_status_rid, ih.created_datetime,
-    i.response_source, p.project_code, p.project_name,
+    i.response_source_rid, p.project_code, p.project_name,i.interaction_source_rid,
     COUNT(*) OVER() AS total_records
     FROM 
     ${schemaName}.interaction_status_history ih
@@ -514,7 +514,7 @@ export const listInteractionHistory = (page : number, limit : number, sort : str
     ${andConditions}
     ${filterQueryCombinedValues}
     GROUP BY 
-    i.r_number, p.project_name, p.project_code, i.response_source, ih.rid
+    i.r_number, p.project_name, p.project_code, i.response_source_rid, ih.rid,i.interaction_source_rid
     ),
     paginated_data AS (
     SELECT * from fetch_interaction_history ${pagination})
@@ -525,9 +525,10 @@ export const listInteractionHistory = (page : number, limit : number, sort : str
     'interaction_rnumber', ih.r_number,
     'project_code', ih.project_code, 
     'project_name', ih.project_name,
-    'response_source', ih.response_source,
+    'response_source_rid', ih.response_source_rid,
     'interaction_history_rid', ih.rid,
     'new_status_rid', ih.new_status_rid,
+    'interaction_source_rid', ih.interaction_source_rid,
     'date', ih.created_datetime
     )${sortValue} NULLS LAST) AS interaction_history
     FROM
