@@ -28,7 +28,9 @@ export const AttachmentForm: React.FC<AttachmentFormProps> = ({
     useState<boolean>(false);
   const allDocumentInfo = useGetAllDocumentInfo();
   const categoryTypes = useGetDocumentCategoryType(currentCategory);
-  const fiscalYears = getFiscalYears(20);
+  const minYear = 1950;
+  const currentYear = new Date().getFullYear();
+  const fiscalYears = getFiscalYears(currentYear - minYear + 1);
 
   const memoizedDocumentTypes: SelectOption[] = useMemo(
     () =>

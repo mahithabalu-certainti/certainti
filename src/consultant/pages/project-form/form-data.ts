@@ -305,7 +305,6 @@ export const FormData = (
           }),
           createDateField('project_startdate', 'Start Date', {
             required: false,
-            minDate: new Date('2000-01-01'),
             maxDate: currentDate,
             disableFutureDates: true,
             disabled:
@@ -319,7 +318,6 @@ export const FormData = (
           }),
           createDateField('project_enddate', 'End Date', {
             required: false,
-            minDate: new Date('2000-01-01'),
             maxDate: currentDate,
             disabled:
               isEditView &&
