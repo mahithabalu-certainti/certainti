@@ -315,8 +315,9 @@ const filterForInteractions = (
                         else dynamicReference = `i`
                         if(condition == ALPHANUMERIC_CONDITIONS.equals) 
                             filteredQueryArray.push(`LOWER(${dynamicReference}.${filteredColumns}) = LOWER('${values}')`)
-                        if(condition == ALPHANUMERIC_CONDITIONS.notEquals)
-                            filteredQueryArray.push(`LOWER(${dynamicReference}.${filteredColumns}) != LOWER('${values}')`)
+                        if(condition == ALPHANUMERIC_CONDITIONS.notEquals) {
+                            filteredQueryArray.push(`(LOWER(${dynamicReference}.${filteredColumns}) != LOWER('${values}') OR ${dynamicReference}.${filteredColumns} IS NULL)`)
+                        }
                         if(condition == ALPHANUMERIC_CONDITIONS.isEmpty) 
                             filteredQueryArray.push(`${dynamicReference}.${filteredColumns} IS NULL`)
                         if(condition == ALPHANUMERIC_CONDITIONS.contains)
@@ -348,7 +349,7 @@ const filterForInteractions = (
                         if(condition == ALPHANUMERIC_CONDITIONS.after) 
                             filteredQueryArray.push(`DATE(i.${filteredColumns}) > '${values}'`)
                         if(condition == ALPHANUMERIC_CONDITIONS.between) 
-                            filteredQueryArray.push(`DATE(i.${filteredColumns}) BETWEEN '${values.map((d : any) => `'${d}'`).join(' AND ')}'`)
+                            filteredQueryArray.push(`DATE(i.${filteredColumns}) BETWEEN ${values.map((d : any) => `'${d}'`).join(' AND ')}`)
                         if(condition == ALPHANUMERIC_CONDITIONS.isEmpty)
                             filteredQueryArray.push(`DATE(i.${filteredColumns}) IS NULL`)                    }
                 }

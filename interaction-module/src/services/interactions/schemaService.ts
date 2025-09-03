@@ -1170,6 +1170,10 @@ async fetchGlobalAttachmentsByInteractionRid(accountNumber: string, interactionR
           "notes",
           "is_mandatory"
         ],
+        order: [
+          ["question_seq_num", "ASC"],
+          ["created_datetime", "ASC"]
+        ],
         where: { interaction_rid: interactionRid },
       });
       const plainItems = items.map(item => item.get({ plain: true }));
