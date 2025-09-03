@@ -1,7 +1,7 @@
 import { InteractionModelService } from "../interactionModelsService";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { initMainDbSequelize } from "../../config/mainDataSource";
-import { Sequelize, Transaction } from "sequelize";
+import { QueryTypes, Sequelize, Transaction } from "sequelize";
 import {
   ICreateInteraction,
   InteractionDetailsResponse,
@@ -370,7 +370,9 @@ class InteractionSchemaService {
     accountNumber: string,
     interactionData: ICreateInteraction,
     interactionRid: string,
-    interactionRnumber: string
+    interactionRnumber: string,
+    interactionIteration: number,
+    parentInteractionRid: string | null
   ) {
     try {
       const { InteractionSummary } =
@@ -378,6 +380,8 @@ class InteractionSchemaService {
 
       await InteractionSummary.create({
         interaction_rid: interactionRid,
+        parent_interaction_rid: parentInteractionRid,
+        interaction_iteration: interactionIteration,
         r_number: interactionRnumber,
         ...interactionData,
       });
@@ -427,7 +431,7 @@ class InteractionSchemaService {
     userId: string,
     transaction: Transaction
   ) {
-    const { Interaction } = await this.interactionModelService.getModels(
+    const { Interaction, InteractionSummary } = await this.interactionModelService.getModels(
       accountNumber
     );
 
@@ -442,6 +446,18 @@ class InteractionSchemaService {
           rid: interactionData.interaction_rid,
         },
         transaction,
+      }
+    );
+    await InteractionSummary.update(
+      {
+        ...interactionData,
+        modified_by: userId,
+        modified_datetime: new Date(),
+      },
+      {
+        where: {
+          interaction_rid: interactionData.interaction_rid,
+        }
       }
     );
 
@@ -1601,6 +1617,81 @@ async fetchValidAccountNumberByNumber(accountNumber: string) {
     throw new Error("Error fetching account : " + (err as Error).message);
   }
 }
+ async getAllowedExportFields(
+      userId: string,
+      permission_name: string
+    ): Promise<any[]> {
+      if (!this.mainDbSequelize) {
+        this.mainDbSequelize =
+          await this.interactionModelService.getMainSequelize();
+      }
+      const [userInfo] = (await this.mainDbSequelize.query(
+       rawQueries.fetchUserProfileId(),
+        {
+          replacements: { userId },
+          type: QueryTypes.SELECT,
+        }
+      )) as [{ profile_rid: string }] | [];
+  
+      if (!userInfo?.profile_rid) {
+        return [];
+      }
+  
+      const [profileFields, userFields] = await Promise.all([
+        this.mainDbSequelize.query(
+          rawQueries.fetchProfilePermissions(),
+          {
+            replacements: {
+              permissionName: permission_name,
+              profileId: userInfo?.profile_rid,
+            },
+            type: "SELECT",
+          }
+        ),
+       this.mainDbSequelize.query(
+          rawQueries.fetchUserPermissions(),
+          {
+            replacements: {
+              permissionName: permission_name,
+              userId,
+            },
+            type: QueryTypes.SELECT,
+          }
+        ),
+      ]);
+  
+      // Merge: user overrides profile
+      const userFieldMap = new Map<string, any>();
+      for (const field of userFields as any[]) {
+        userFieldMap.set(field.field_name, field);
+      }
+  
+      const merged = (profileFields as any[]).map((pf) => {
+        const userPerm = userFieldMap.get(pf.field_name);
+        if (userPerm) {
+          userFieldMap.delete(pf.field_name);
+          return {
+            field_desc: pf.field_desc,
+            field_name: pf.field_name,
+            read: pf.read ? true : userPerm?.read === true,
+          };
+        }
+        return {
+          field_desc: pf.field_desc,
+          field_name: pf.field_name,
+          read: pf.read,
+        };
+      });
+  
+      const userOnly = Array.from(userFieldMap.values()).map((uf) => ({
+        field_desc: uf.field_desc,
+        field_name: uf.field_name,
+        read: uf.read,
+      }));
+  
+      const exportableFields = [...merged, ...userOnly].filter((f) => f.read);
+      return exportableFields;
+    }
 
 }
 

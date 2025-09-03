@@ -124,6 +124,11 @@ export interface IInteractionService {
     status : any,
     data : any
   }>
+   getAllowedExportFields(
+      userId: string,
+      permission_name: string
+    ): Promise<any[]>;
+  
 }
 
 export interface IWebHookService {
