@@ -1019,7 +1019,7 @@ export class InteractionService {
       const mapStatus = new Map(fetchStatus[0].map((d : any) => [d.rid, d.status_name]))
       const mapResponseSource = new Map(fetchResponseSources[0].map((d : any) => [d.rid, d.response_source_name]))
        let sourceMap : Map<string, string> = new Map(fetchSourceTypes[0].map((types : any) => [types.rid, types.interaction_source_name]))
-      responseData = responseData.interaction_history.map((d : any) => {
+       responseData = responseData.interaction_history.map((d : any) => {
         return {
           ...d,
           status_name : mapStatus.get(d.new_status_rid),
