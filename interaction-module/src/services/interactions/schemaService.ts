@@ -674,14 +674,11 @@ if(!this.orgDbSequelize)
         interaction_status =
           Array.isArray(result) && result.length > 0 ? result[0] : null;
       }
-      if (interactionDetails?.dataValues?.rid) {
+      if (interactionDetails?.dataValues?.project_fiscal_rid) {
         const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
         const result = await this.orgDbSequelize.query(
-          `SELECT project_code, project_name FROM ${schemaName}.project WHERE rid = :id`,
-          {
-            replacements: { id: interactionDetails.dataValues.project_rid },
-            type: "SELECT",
-          }
+          rawQueries.fetchProjectInfo(interactionDetails.project_fiscal_rid, schemaName),
+      { type: "SELECT" }
         );
         project_info =
           Array.isArray(result) && result.length > 0 ? result[0] : null;

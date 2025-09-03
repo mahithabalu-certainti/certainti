@@ -1011,12 +1011,20 @@ export class InteractionService {
       let totalRecords;
       let responseData = result[0][0]
       const statusIds = [...new Set(responseData.interaction_history.map((d : any) => d.new_status_rid))]
+      const sourceTypeIds : any[] = [...new Set(responseData.interaction_history.map((d : any) => d.interaction_source_rid))]
+      const responseSourceIds = [...new Set(responseData.interaction_history.map((d : any) => d.response_source_rid))]
       const fetchStatus : any = await mainDb.query(rawQueries.fetchInteractionStatus(statusIds))
+      let fetchSourceTypes :any= await mainDb.query(rawQueries.fetchInteractionSource(sourceTypeIds))
+      const fetchResponseSources : any = await mainDb.query(rawQueries.fetchInteractionResponseSource(responseSourceIds))
       const mapStatus = new Map(fetchStatus[0].map((d : any) => [d.rid, d.status_name]))
+      const mapResponseSource = new Map(fetchResponseSources[0].map((d : any) => [d.rid, d.response_source_name]))
+       let sourceMap : Map<string, string> = new Map(fetchSourceTypes[0].map((types : any) => [types.rid, types.interaction_source_name]))
       responseData = responseData.interaction_history.map((d : any) => {
         return {
           ...d,
-          status_name : mapStatus.get(d.new_status_rid)
+          status_name : mapStatus.get(d.new_status_rid),
+          response_source : mapResponseSource.get(d.response_source_rid),
+          interaction_source_name : sourceMap.get(d.interaction_source_rid)
         }
       })
     finalResponseData = responseData
@@ -1037,6 +1045,7 @@ export class InteractionService {
       project_code : finalSortedData[0].project_code,
       project_name : finalSortedData[0].project_name,
       response_source : finalSortedData[0].response_source,
+      interaction_source_name : finalResponseData[0].interaction_source_name,
       interaction_history : finalSortedData.map((d : any) => {
         return {
           rid : d.interaction_history_rid,

@@ -89,7 +89,7 @@ export const filtersColumns : Record<string, string> =
   export const filterTypes : Record<string, any> = 
   {
     r_number : "string",
-    iteration : "number",
+    interaction_iteration : "number",
     interaction_age : "number",
     recipient_name : "string",
     recipient_email : "string",
