@@ -368,7 +368,8 @@ export const rawQueries = {
   },
   fetchAllParentRNumber () {
     let query =
-    `SELECT r_number FROM ${MAIN_SCHEMA_NAME}.account WHERE storage_type = '${STATUS_MESSAGE.separateDb}' AND parent_account_rid IS NULL`
+    `SELECT r_number FROM ${MAIN_SCHEMA_NAME}.account WHERE storage_type = '${STATUS_MESSAGE.separateDb}' AND parent_account_rid IS NULL
+    ORDER BY r_number ASC`
     return query;
   },
   fetchEmailResponseSourceRid(): string {
