@@ -123,6 +123,7 @@ type ProjectFiscalDetails {
     total_cost_subcon : String
     total_cost_nonlabor : String
     project_type_name : String
+    currency_symbol: String
   }
 
 type projectNewResponse {

@@ -1,15 +1,17 @@
 import { Request, Response } from "express";
-import { HttpStatus, interactionSource, STATUS_MESSAGE } from "../utils/constants";
+import { HttpStatus, interactionFieldMappings, interactionSource, STATUS_MESSAGE } from "../utils/constants";
 import {
   deleteFromAzureBlob,
   errorLog,
   generateExcelBase64,
   handleErrorResponse,
   handleSuccessResponse,
+  isValidTimezone,
   successLog,
   uploadToAzureBlob,
   validateRequest,
 } from "../utils/helpers";
+import moment from "moment-timezone";
 import configurations from "../config/config";
 import {
   createInteractionSchema,
@@ -514,26 +516,67 @@ async function exportAllInteractions (req : Request, res : Response) {
       return;
     }
     const result = await interactionService.listInteractionPrjAccount(data)
-    if(result.status == HttpStatus.SUCCESS) {
-      const finalStructuredData = result.data.interactions.length < 1 ? [] : result.data.interactions.map(( d : any) => {
-       return {
-          "Interaction ID": d.r_number,
-          "Last Sent Date": d.last_resent_on === null ? '' : new Date(d.last_resent_on).toISOString().split('T')[0],
-          "Recipient Name": d.recipient_name,
-          "Age": d.interaction_age,
-          "Interaction Link": d.interaction_url,
-          "Recipient Email": d.recipient_email,
-          "Response Source": d.response_source,
-          "Last Reminder Date": d.last_reminder_on == null ? '' : new Date(d.last_reminder_on).toISOString().split('T')[0],
-          "Last Updated Date": d.modified_datetime == null ? '' : new Date(d.modified_datetime).toISOString().split('T')[0],
-          "Last Response Update": d.response_updated_on == null ? '' : new Date(d.response_updated_on).toISOString().split('T')[0],
-          "Response Date": d.response_submitted_on === null ? '' : new Date(d.response_submitted_on).toISOString().split('T')[0],
-          "Parent Interaction ID": d.parent_interaction_rid,
-          "Status": d.status_name,
-          "Type": d.interaction_type_name,
-          "Created By": d.created_user_name,
-          "Last Updated By": d.updated_user_name
+    const fields = await interactionService.getAllowedExportFields(
+          userId,
+          "interactions_view_edit"
+        );
+      const allowedFieldSet = new Set<string>();
+      for (const field of fields) {
+        if (field.read) {
+          allowedFieldSet.add(field.field_name);
         }
+      }
+       const isValidTZ = data.timezone &&  isValidTimezone(data.timezone);
+       const formatDate = (date?: Date) =>
+        date
+          ? moment(date).tz(isValidTZ ? data.timezone : 'UTC').format('YYYY-MM-DD, hh:mm:ss A')
+          : null;
+
+    if(result.status == HttpStatus.SUCCESS) {
+      const finalStructuredData = result.data.interactions.length < 1 ? [] : result.data.interactions.map((d: any) => {
+        // Build resultMap with formatted fields
+        console.log(d)
+        let resultMap: { [key: string]: any } = {
+          "r_number": d.r_number,
+          "project_code": d.project_code,
+          "interaction_iteration": d.interaction_iteration,
+          "interaction_age": d.interaction_age,
+          "fiscal_year": d.fiscal_year,
+          "status_name": d.status_name,
+          "recipient_name": d.recipient_name,
+          "recipient_email": d.recipient_email,
+          "last_resent_on": d.last_resent_on === null ? '' : formatDate(d.last_resent_on),
+          "last_reminder_on": d.last_reminder_on == null ? '' : formatDate(d.last_reminder_on),
+          "response_submitted_on": d.response_submitted_on === null ? '' : formatDate(d.response_submitted_on),
+          "response_updated_on": d.response_updated_on == null ? '' : formatDate(d.response_updated_on),
+          "attachment_count": d.attachment_count === 0 || d.attachment_count === "" ? null : d.attachment_count,
+          "interaction_url": d.interaction_url
+        ? {
+            text: "Link",
+            hyperlink: d.interaction_url,
+            style: {
+          fontColor: "1755E7",
+            }
+          }
+        : null,
+          "parent_interaction_rid": d.parent_interaction_rid,
+          "interaction_type_name": d.interaction_type_name,
+          "response_source_name": d.response_source_name,
+          "created_by": d.created_user_name,
+          "created_datetime":formatDate(d.created_datetime),
+          "modified_by": d.updated_user_name,
+          "modified_datetime": d.modified_datetime == null ? '' : formatDate(d.modified_datetime),
+        };
+
+        // Build exportRecord using allowed fields and resultMap
+        const exportRecord: Record<string, any> = {};
+        interactionFieldMappings.forEach(mapping => {
+          if (allowedFieldSet.has(mapping.permissionField)) {
+            exportRecord[mapping.exportField] = resultMap[mapping.dataField];
+          }
+        });
+
+        return exportRecord;
       });
 
       const base64Response = await generateExcelBase64(finalStructuredData, "Interactions")
@@ -623,27 +666,65 @@ async function exportAllInteractionSummary (req : Request, res : Response) {
       return;
     }
     const result = await interactionService.fetchInteractionSummary(data);
+     const fields = await interactionService.getAllowedExportFields(
+          userId,
+          "interactions_view_edit"
+        );
+      const allowedFieldSet = new Set<string>();
+      for (const field of fields) {
+        if (field.read) {
+          allowedFieldSet.add(field.field_name);
+        }
+      }
+       const isValidTZ = data.timezone &&  isValidTimezone(data.timezone);
+       const formatDate = (date?: Date) =>
+        date
+          ? moment(date).tz(isValidTZ ? data.timezone : 'UTC').format('YYYY-MM-DD, hh:mm:ss A')
+          : null;
     if(result.statusCodeValue == HttpStatus.SUCCESS_MESSAGE) {
       let structuredData = result.data.length < 1 ? [] : result.data.map(( d : any) => {
-        return {
-          "Interaction ID": d.r_number,
-          "Last Sent Date": d.last_resent_on === null ? '' : new Date(d.last_resent_on).toISOString().split('T')[0],
-          "Recipient Name": d.recipient_name,
-          "Age": d.interaction_age,
-          "Interaction Link": d.interaction_url,
-          "Recipient Email": d.recipient_email,
-          "Response Source": d.response_source,
-          "Last Reminder Date": d.last_reminder_on == null ? '' : new Date(d.last_reminder_on).toISOString().split('T')[0],
-          "Last Updated Date": d.modified_datetime == null ? '' : new Date(d.modified_datetime).toISOString().split('T')[0],
-          "Last Response Update": d.response_updated_on == null ? '' : new Date(d.response_updated_on).toISOString().split('T')[0],
-          "Response Date": d.response_submitted_on === null ? '' : new Date(d.response_submitted_on).toISOString().split('T')[0],
-          "Parent Interaction ID": d.parent_interaction_rid,
-          "Status": d.status_name,
-          "Type": d.interaction_type_name,
-          "Created By": d.created_user_name,
-          "Last Updated By": d.updated_user_name
+       let resultMap: { [key: string]: any }  = {
+          "r_number": d.r_number,
+          "account_name":d.account_name,
+          "project_code": d.project_code,
+          "interaction_iteration": d.interaction_iteration,
+          "interaction_age": d.interaction_age,
+          "fiscal_year": d.fiscal_year,
+          "status_name": d.status_name,
+          "recipient_name": d.recipient_name,
+          "recipient_email": d.recipient_email,
+          "last_sent_date": d.last_resent_on === null ? '' : formatDate(d.last_resent_on),
+          "last_reminder_date": d.last_reminder_on == null ? '' : formatDate(d.last_reminder_on),
+          "response_submitted_on": d.response_submitted_on === null ? '' : formatDate(d.response_submitted_on),
+          "response_updated_on": d.response_updated_on == null ? '' : formatDate(d.response_updated_on),
+          "attachment_count":d.attachment_count === 0 || d.attachment_count === "" ? null : d.attachment_count,
+          "interaction_url": d.interaction_url
+            ? {
+              text: "Link",
+              hyperlink: d.interaction_url,
+              style: {
+                fontColor: "1755E7",
+              }
+              }
+            : null,
+          "parent_interaction_id": d.parent_interaction_rid,
+          "interaction_type_name": d.interaction_type_name,
+          "response_source_name": d.response_source_name,
+          "created_by": d.created_user_name,
+          "created_datetime": d.created_datetime == null ? '' : formatDate(d.created_datetime),
+          "modified_by": d.updated_user_name,
+          "modified_datetime": d.modified_datetime == null ? '' : formatDate(d.modified_datetime)
         }
+
+            const exportRecord: Record<string, any> = {};
+        interactionFieldMappings.forEach(mapping => {
+          if (allowedFieldSet.has(mapping.permissionField)) {
+            exportRecord[mapping.exportField] = resultMap[mapping.dataField];
+          }
         });
+        return exportRecord;
+        }
+      );
     const base64Response = await generateExcelBase64(structuredData, "Interactions")
     handleSuccessResponse(res, base64Response);
     return; 

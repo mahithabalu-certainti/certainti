@@ -1,7 +1,7 @@
 import { InteractionModelService } from "../interactionModelsService";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { initMainDbSequelize } from "../../config/mainDataSource";
-import { Sequelize, Transaction } from "sequelize";
+import { QueryTypes, Sequelize, Transaction } from "sequelize";
 import {
   ICreateInteraction,
   InteractionDetailsResponse,
@@ -370,7 +370,9 @@ class InteractionSchemaService {
     accountNumber: string,
     interactionData: ICreateInteraction,
     interactionRid: string,
-    interactionRnumber: string
+    interactionRnumber: string,
+    interactionIteration: number,
+    parentInteractionRid: string | null
   ) {
     try {
       const { InteractionSummary } =
@@ -378,6 +380,8 @@ class InteractionSchemaService {
 
       await InteractionSummary.create({
         interaction_rid: interactionRid,
+        parent_interaction_rid: parentInteractionRid,
+        interaction_iteration: interactionIteration,
         r_number: interactionRnumber,
         ...interactionData,
       });
@@ -427,7 +431,7 @@ class InteractionSchemaService {
     userId: string,
     transaction: Transaction
   ) {
-    const { Interaction } = await this.interactionModelService.getModels(
+    const { Interaction, InteractionSummary } = await this.interactionModelService.getModels(
       accountNumber
     );
 
@@ -442,6 +446,18 @@ class InteractionSchemaService {
           rid: interactionData.interaction_rid,
         },
         transaction,
+      }
+    );
+    await InteractionSummary.update(
+      {
+        ...interactionData,
+        modified_by: userId,
+        modified_datetime: new Date(),
+      },
+      {
+        where: {
+          interaction_rid: interactionData.interaction_rid,
+        }
       }
     );
 
@@ -658,14 +674,11 @@ if(!this.orgDbSequelize)
         interaction_status =
           Array.isArray(result) && result.length > 0 ? result[0] : null;
       }
-      if (interactionDetails?.dataValues?.rid) {
+      if (interactionDetails?.dataValues?.project_fiscal_rid) {
         const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
         const result = await this.orgDbSequelize.query(
-          `SELECT project_code, project_name FROM ${schemaName}.project WHERE rid = :id`,
-          {
-            replacements: { id: interactionDetails.dataValues.project_rid },
-            type: "SELECT",
-          }
+          rawQueries.fetchProjectInfo(interactionDetails.project_fiscal_rid, schemaName),
+      { type: "SELECT" }
         );
         project_info =
           Array.isArray(result) && result.length > 0 ? result[0] : null;
@@ -1157,6 +1170,10 @@ async fetchGlobalAttachmentsByInteractionRid(accountNumber: string, interactionR
           "notes",
           "is_mandatory"
         ],
+        order: [
+          ["question_seq_num", "ASC"],
+          ["created_datetime", "ASC"]
+        ],
         where: { interaction_rid: interactionRid },
       });
       const plainItems = items.map(item => item.get({ plain: true }));
@@ -1411,7 +1428,7 @@ async isAutoTriggerEnabled(accountNumber: string,project_fiscal_rid: string) {
     );
   }
 }
-async updateTechSummary( projectSummary: string, accountNumber: string, projectFiscalId: string, accountId: string,correlationId: string)
+async updateTechSummary( projectSummary: string, accountNumber: string, projectFiscalId: string, accountId: string,correlationId: string,response:any)
 {
   try {
     if (!this.orgDbSequelize) {
@@ -1432,7 +1449,7 @@ async updateTechSummary( projectSummary: string, accountNumber: string, projectF
       { type: "SELECT" }
     );
    
-    const { AiTechnicalSummary } = await this.interactionModelService.getModels(accountNumber);
+    const { AiTechnicalSummary,AiAssessmentAudit } = await this.interactionModelService.getModels(accountNumber);
     const maxVersion = await AiTechnicalSummary.max("version", {
       where: {
         account_rid: accountId,
@@ -1452,9 +1469,19 @@ async updateTechSummary( projectSummary: string, accountNumber: string, projectF
       status: techSummaryStatus.ACTIVE,
       entity_transaction_id: correlationId
      }
-    const aiResponse = await AiTechnicalSummary.create(
-      techSummaryPayload
-    );
+      const updateData: any = {
+    is_tech_summary_processed: response.statusCode === 200,
+    };
+    if (response.statusCode !== 200) {
+      updateData.tech_summary_error_message = response.error_message;
+    }
+    const [aiResponse] = await Promise.all([
+      AiTechnicalSummary.create(techSummaryPayload),
+      AiAssessmentAudit.update(
+      updateData,
+      { where: { transaction_id: correlationId } }
+      )
+    ]);
     if(aiResponse.rid)
     {
       await AiTechnicalSummary.update(
@@ -1531,7 +1558,7 @@ async fetchProjectInfo(accountNumber: string, projectFiscalId: string)
   }
 }
 
-async updateQrePercent(qrePercent:number, accountNumber: string,projectFiscalRid:string,qreBreakdown:JSON)
+async updateQrePercent(qrePercent:number, accountNumber: string,projectFiscalRid:string,qreBreakdown:JSON, accountId: string,transaction_id:string,response:any)
 {
   try {
     if (!this.orgDbSequelize) {
@@ -1542,20 +1569,59 @@ async updateQrePercent(qrePercent:number, accountNumber: string,projectFiscalRid
     }
     
     const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
+    await Promise.all([
+      this.orgDbSequelize.query(
+      rawQueries.updateQreInfo(projectFiscalRid, schemaName, qrePercent),
+      { type: "UPDATE" }
+      ),
+      this.orgDbSequelize.query(
+      rawQueries.updateAIProcessedFlag(projectFiscalRid, schemaName),
+      { type: "UPDATE" }
+      ),
+      this.mainDbSequelize.query(
+      rawQueries.updateQreInfoSummary(projectFiscalRid, qrePercent),
+      { type: "UPDATE" }
+      ),
+    ]);
 
-    await this.orgDbSequelize.query(
-      rawQueries.updateQreInfo(projectFiscalRid,schemaName,qrePercent,qreBreakdown ),
-      { type: "UPDATE" }
+    // Fetch project info after updates
+    const [projectInfo]: any[] = await this.orgDbSequelize.query(
+      rawQueries.fetchProjectInfo(projectFiscalRid, schemaName),
+      { type: "SELECT" }
     );
-    await this.orgDbSequelize.query(
-      rawQueries.updateAIProcessedFlag(projectFiscalRid,schemaName ),
-      { type: "UPDATE" }
-    );
-    await this.mainDbSequelize.query(
-      rawQueries.updateQreInfoSummary(projectFiscalRid,qrePercent, ),
-      { type: "UPDATE" }
-    );
-    
+
+    const { AiAssessmentQre, AiAssessmentAudit } = await this.interactionModelService.getModels(accountNumber);
+    const maxVersion = await AiAssessmentQre.max("version", {
+      where: {
+      account_rid: accountId,
+      project_rid: projectInfo?.project_rid ?? null,
+      project_fiscal_rid: projectFiscalRid,
+      },
+    });
+    let version = (typeof maxVersion === "number" ? maxVersion : parseInt(maxVersion as any) || 0) + 1;
+    let qrePayload = {
+      created_by: process.env.SYSTEM_USER_ID || "system",
+      account_rid: accountId,
+      project_rid: projectInfo?.project_rid ?? null,
+      project_fiscal_rid: projectFiscalRid,
+      qre_percent: qrePercent,
+      version,
+      qre_detailed_breakdown: qreBreakdown,
+      transaction_id: transaction_id
+    };
+    const updateData: any = {
+      is_qre_processed: response.statusCode === 200,
+    };
+    if (response.statusCode !== 200) {
+      updateData.qre_error_message = response.error_message;
+    }
+    const [aiResponse] = await Promise.all([
+      AiAssessmentQre.create(qrePayload),
+      AiAssessmentAudit.update(
+      updateData,
+      { where: { transaction_id: transaction_id } }
+      )
+    ]);
   } catch (err) {
     console.log(err)
     throw new Error(
@@ -1563,6 +1629,140 @@ async updateQrePercent(qrePercent:number, accountNumber: string,projectFiscalRid
     );
   }
 }
+async updateInteractionStatus(accountNumber: string, response: any)
+{
+  try {
+    const { AiAssessmentAudit } = await this.interactionModelService.getModels(accountNumber);
+    const updateData: any = {
+      is_interaction_question_processed: response.statusCode === 200,
+    };
+    if (response.statusCode !== 200) {
+      updateData.interaction_question_error_message = response.error_message;
+    }
+    await AiAssessmentAudit.update(updateData, {
+      where: { transaction_id: response.transaction_id },
+    });
+   
+  } catch (err) {
+    console.log(err)
+    throw new Error(
+      "Error updating QRE percent: " + (err as Error).message
+    );
+  }
+}
+
+async fetchValidAccountNumberByNumber(accountNumber: string) {
+  try {
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize =
+        await this.interactionModelService.getMainSequelize();
+    }
+
+    const [account]: any[] = await this.mainDbSequelize.query(
+      `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE r_number = :r_number`,
+      {
+        replacements: { r_number: accountNumber },
+        type: "SELECT",
+      }
+    );
+
+    let accountRnumber = account?.r_number;
+
+    if (account?.storage_type === "store_in_parent") {
+      const [accountData]: any[] = await this.mainDbSequelize.query(
+        `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
+        {
+          replacements: { rid: account?.parent_account_rid },
+          type: "SELECT",
+        }
+      );
+      accountRnumber = accountData?.r_number;
+    }
+
+    return {
+      accountNumber: accountRnumber,
+      accountId: account?.rid,
+      accountName: account.account_name,
+    };
+  } catch (err) {
+    throw new Error("Error fetching account : " + (err as Error).message);
+  }
+}
+ async getAllowedExportFields(
+      userId: string,
+      permission_name: string
+    ): Promise<any[]> {
+      if (!this.mainDbSequelize) {
+        this.mainDbSequelize =
+          await this.interactionModelService.getMainSequelize();
+      }
+      const [userInfo] = (await this.mainDbSequelize.query(
+       rawQueries.fetchUserProfileId(),
+        {
+          replacements: { userId },
+          type: QueryTypes.SELECT,
+        }
+      )) as [{ profile_rid: string }] | [];
+  
+      if (!userInfo?.profile_rid) {
+        return [];
+      }
+  
+      const [profileFields, userFields] = await Promise.all([
+        this.mainDbSequelize.query(
+          rawQueries.fetchProfilePermissions(),
+          {
+            replacements: {
+              permissionName: permission_name,
+              profileId: userInfo?.profile_rid,
+            },
+            type: "SELECT",
+          }
+        ),
+       this.mainDbSequelize.query(
+          rawQueries.fetchUserPermissions(),
+          {
+            replacements: {
+              permissionName: permission_name,
+              userId,
+            },
+            type: QueryTypes.SELECT,
+          }
+        ),
+      ]);
+  
+      // Merge: user overrides profile
+      const userFieldMap = new Map<string, any>();
+      for (const field of userFields as any[]) {
+        userFieldMap.set(field.field_name, field);
+      }
+  
+      const merged = (profileFields as any[]).map((pf) => {
+        const userPerm = userFieldMap.get(pf.field_name);
+        if (userPerm) {
+          userFieldMap.delete(pf.field_name);
+          return {
+            field_desc: pf.field_desc,
+            field_name: pf.field_name,
+            read: pf.read ? true : userPerm?.read === true,
+          };
+        }
+        return {
+          field_desc: pf.field_desc,
+          field_name: pf.field_name,
+          read: pf.read,
+        };
+      });
+  
+      const userOnly = Array.from(userFieldMap.values()).map((uf) => ({
+        field_desc: uf.field_desc,
+        field_name: uf.field_name,
+        read: uf.read,
+      }));
+  
+      const exportableFields = [...merged, ...userOnly].filter((f) => f.read);
+      return exportableFields;
+    }
 
 }
 

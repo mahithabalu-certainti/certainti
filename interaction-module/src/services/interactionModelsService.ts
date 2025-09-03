@@ -12,6 +12,8 @@ import { InteractionResponseHistory } from "../models/interactionResponseHistory
 import { InteractionAttachment } from "../models/interactionAttachment";
 import { AiTechnicalSummary } from "../models/aiTechnicalSummary";
 import { AiAssessmentError } from "../models/aiAssessmentError";
+import { AiAssessmentQre } from "../models/aiAssessmentQre";
+import { AiAssessmentAudit } from "../models/aiAssessmentAudit";
 
 export class InteractionModelService {
   orgDbSequelize: Sequelize | null = null;
@@ -84,6 +86,14 @@ export class InteractionModelService {
       sequelize,
       schemaName
     );
+    const AiAssessmentQreModel   = AiAssessmentQre.initialize(
+      sequelize,
+      schemaName
+    );
+    const AiAssessmentAuditModel = AiAssessmentAudit.initialize(
+      sequelize,
+      schemaName
+    );
 
     const models = {
       Interaction: InteractionModel,
@@ -95,7 +105,9 @@ export class InteractionModelService {
       InteractionSummary: InteractionSummaryModel,
       InteractionAttachment: InteractionAttachmentModel,
       AiTechnicalSummary: AiTechnicalSummaryModel,
+      AiAssessmentAudit: AiAssessmentAuditModel,
       AiAssessmentError: AiAssessmentErrorResponseModel,
+      AiAssessmentQre: AiAssessmentQreModel,
     };
 
     this.modelCache.set(schemaName, models);

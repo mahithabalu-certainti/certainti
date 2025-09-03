@@ -73,21 +73,21 @@ export interface InteractionDetailsResponse {
 }
 export interface InteractionResponse {
   interaction_rid: string;
-  interaction_item_rid: string;
+  interaction_item_rid?: string;
   project_fiscal_rid: string;
   account_rid: string;
   project_rid: string;
-  fiscal_year: number;
-  status_rid: string;
+  fiscal_yea?: number;
+  status_rid?: string;
   status_action:string;
   response_source_rid:string;
   response_source:string;
   attachments:any;
   questions: {
     rid: string;
-    notes: string;
+    notes?: string;
     response: string;
-    action_type: string;
+    action_type?: string;
     question_seq_num?: string;
     attachments:any; // Assuming attachments are stored as an array of strings (URLs or IDs)
   }[];

@@ -1,6 +1,6 @@
 import { Logger } from "winston";
 import FormData from "form-data";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { InteractionResponse } from "../../utils/types";
 import { HttpStatus } from "../../utils/constants";
 import { generateNewCustomJwtKey } from "../../utils/otpGenerator";
@@ -59,8 +59,7 @@ export class InteractionService {
         },
       };
     } catch (err) {
-      console.log("Error pdate respinse", err);
-      throw this.throwServiceError(err as Error);
+      return this.handleError(err);
     }
   }
 
@@ -108,8 +107,7 @@ export class InteractionService {
         },
       };
     } catch (err) {
-      console.log("Error fetchig details", err);
-      throw this.throwServiceError(err as Error);
+      return this.handleError(err);
     }
   }
 
@@ -175,8 +173,7 @@ export class InteractionService {
         },
       };
     } catch (err) {
-      console.log("Error uploading attachments", err);
-      throw this.throwServiceError(err as Error);
+      return this.handleError(err);
     }
   }
 
@@ -223,8 +220,7 @@ export class InteractionService {
         data: {},
       };
     } catch (err) {
-      console.log("Error uploading attachments", err);
-      throw this.throwServiceError(err as Error);
+      return this.handleError(err);
     }
   }
 
@@ -245,21 +241,56 @@ export class InteractionService {
     return `Bearer ${newToken}`;
   }
 
+  private handleError(err: unknown) {
+    if (axios.isAxiosError(err)) {
+      return this.handleAxiosError(err);
+    }
+
+    return this.handleUnknownError(err);
+  }
+
+  private handleAxiosError(error: AxiosError) {
+    const apiMessage =
+      (error.response?.data as { message?: string })?.message;
+  
+    if (this.isUnauthorizedError(error)) {
+      console.log("Inside unauthorized error", error, error.response?.status);
+      return this.throwServiceError(error, apiMessage || "Unauthorized", error.response?.status);
+    }
+  
+    return this.throwServiceError(
+      error,
+      apiMessage || error.message || "An unexpected API error occurred."
+    );
+  }
+
+  private isUnauthorizedError(error: AxiosError): boolean {
+    return error.response?.status === 401;
+  }
+
+  private handleUnknownError(err: unknown) {
+    return this.throwServiceError(err as Error, "Unexpected error occurred.");
+  }
+
   /**
    * Formats an error response to be returned from service methods.
    *
    * @param {Error} err - The caught error.
    * @returns {object} - Standardized error response object.
    */
-  throwServiceError(err: Error): {
+  throwServiceError(
+    err: Error,
+    errMessage?: string,
+    errCode?: number
+  ): {
     statusCode: number;
     message: string;
     errorMessage: string;
   } {
     return {
-      statusCode: HttpStatus.FAILED,
+      statusCode: errCode ?? HttpStatus.FAILED,
       message: HttpStatus.FAILED_MESSAGE,
-      errorMessage: err.message,
+      errorMessage: errMessage ?? err.message,
     };
   }
 }

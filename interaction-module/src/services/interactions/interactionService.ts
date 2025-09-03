@@ -10,13 +10,14 @@ import { ALPHANUMERIC_CONDITIONS, HttpStatus, mainTableFilters, rawQueries,inter
 import { Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
-import { fetchInteractionForProjectLevelQuery, interactionResponseHistoryByVersion, listAllInteractionSummary, listAttachments, listInteractionHistory, listResponseHistory } from "../../utils/rawQueries";
+import { checkTableExists, fetchAllParentRNumber, fetchInteractionForProjectLevelQuery, fetchInteractionForSentResentStatus, fetchProjectAttachmentsRids, fetchProjectInteractionRid, interactionResponseHistoryByVersion, listAllInteractionSummary, listAttachments, listInteractionHistory, listResponseHistory } from "../../utils/rawQueries";
 import { generateSasUrl } from "../../utils/blob";
 import { surveyMailTemplate } from "../../utils/mailTemplate";
 import { sendEmailWithAttachment } from "../emailService";
 import ExcelJS from 'exceljs';
 import axios from 'axios'
 import { Kafka, Producer } from "kafkajs";
+
 type filterType = {
         [key : string] : {
             [condition : string] : any
@@ -84,7 +85,9 @@ export class InteractionService {
           accountNumber,
           interactionData,
           interaction.rid,
-          interaction.get("r_number") || ""
+          interaction.get("r_number") || "",
+          interaction.get("interaction_iteration") || 0,
+          interaction.get("parent_interaction_rid") || null
         );
         await this.interactionSchemaService.addInteractionTimeline(
           accountNumber,
@@ -933,31 +936,58 @@ export class InteractionService {
     if(responseHistoryresult[0][0].response_history !== null) {
       let finalData = responseHistoryresult[0][0].response_history
       let fetchSourceIds : any = [...new Set(finalData.map((d : any) => d.interaction_source_rid))]
+        let fetchResponseSourceIds : any = [...new Set(finalData.map((d : any) => d.response_source_rid))]
       let fetchUserIds : any = [...new Set(finalData.map((d : any) => d.response_by_rid))]
       let fetchUserDetails : any = await mainDb.query(rawQueries.fetchUser(fetchUserIds))
       let fetchInteractionSource : any = await mainDb.query(rawQueries.fetchInteractionSource(fetchSourceIds))
+      let fetchResponseSource : any = await mainDb.query(rawQueries.fetchInteractionResponseSource(fetchResponseSourceIds))
       let mapSources = new Map(fetchInteractionSource[0].map((source : any) => [source.rid, source.interaction_source_name]))
+      let mapResponseSource = new Map(fetchResponseSource[0].map((source : any) => [source.rid, source.response_source_name]))
       let userMap = new Map(fetchUserDetails[0].map((d : any) => [d.rid, `${d.first_name} ${d.last_name}`]))
       let updatedFinalData = finalData.map((d : any) => {
         return {
           ...d,
           interaction_source_name : mapSources.get(d.interaction_source_rid),
+          response_source_name : mapResponseSource.get(d.response_source_rid),
           response_by : userMap.get(d.response_by_rid)
         }
       })
       
-      if(data.sort.toLowerCase() == "interaction_source_name" && data.sort_by.toLowerCase() == 'asc') {
-        updatedFinalData = updatedFinalData.sort((a : any, b : any) => {
-          if(!a?.interaction_source_name) return 1
-          if(!b?.interaction_source_name) return -1 
-          return a.interaction_source_name.localeCompare(b.interaction_source_name)
-        })
-      } else if(data.sort.toLowerCase() == "interaction_source_name" && data.sort_by.toLowerCase() == 'desc'){
-         updatedFinalData = updatedFinalData.sort((a : any, b : any) => {
-          if(!b?.interaction_source_name) return 1
-          if(!a?.interaction_source_name) return -1 
-          return b.interaction_source_name.localeCompare(a.interaction_source_name)
-        })
+      const sortByField = (
+        data: any[],
+        field: string,
+        order: "asc" | "desc"
+      ) => {
+        return data.sort((a: any, b: any) => {
+          const aField = a?.[field] ?? "";
+          const bField = b?.[field] ?? "";
+          if (!aField) return order === "asc" ? 1 : -1;
+          if (!bField) return order === "asc" ? -1 : 1;
+          return order === "asc"
+        ? aField.localeCompare(bField)
+        : bField.localeCompare(aField);
+        });
+      };
+
+      if (
+        data.sort.toLowerCase() === "interaction_source_name" &&
+        ["asc", "desc"].includes(data.sort_by.toLowerCase())
+      ) {
+        updatedFinalData = sortByField(
+          updatedFinalData,
+          "interaction_source_name",
+          data.sort_by.toLowerCase() as "asc" | "desc"
+        );
+      }
+      if (
+        data.sort.toLowerCase() === "response_source_name" &&
+        ["asc", "desc"].includes(data.sort_by.toLowerCase())
+      ) {
+        updatedFinalData = sortByField(
+          updatedFinalData,
+          "response_source_name",
+          data.sort_by.toLowerCase() as "asc" | "desc"
+        );
       }
       return {
         statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
@@ -981,12 +1011,20 @@ export class InteractionService {
       let totalRecords;
       let responseData = result[0][0]
       const statusIds = [...new Set(responseData.interaction_history.map((d : any) => d.new_status_rid))]
+      const sourceTypeIds : any[] = [...new Set(responseData.interaction_history.map((d : any) => d.interaction_source_rid))]
+      const responseSourceIds = [...new Set(responseData.interaction_history.map((d : any) => d.response_source_rid))]
       const fetchStatus : any = await mainDb.query(rawQueries.fetchInteractionStatus(statusIds))
+      let fetchSourceTypes :any= await mainDb.query(rawQueries.fetchInteractionSource(sourceTypeIds))
+      const fetchResponseSources : any = await mainDb.query(rawQueries.fetchInteractionResponseSource(responseSourceIds))
       const mapStatus = new Map(fetchStatus[0].map((d : any) => [d.rid, d.status_name]))
-      responseData = responseData.interaction_history.map((d : any) => {
+      const mapResponseSource = new Map(fetchResponseSources[0].map((d : any) => [d.rid, d.response_source_name]))
+       let sourceMap : Map<string, string> = new Map(fetchSourceTypes[0].map((types : any) => [types.rid, types.interaction_source_name]))
+       responseData = responseData.interaction_history.map((d : any) => {
         return {
           ...d,
-          status_name : mapStatus.get(d.new_status_rid)
+          status_name : mapStatus.get(d.new_status_rid),
+          response_source : mapResponseSource.get(d.response_source_rid),
+          interaction_source_name : sourceMap.get(d.interaction_source_rid)
         }
       })
     finalResponseData = responseData
@@ -1007,6 +1045,7 @@ export class InteractionService {
       project_code : finalSortedData[0].project_code,
       project_name : finalSortedData[0].project_name,
       response_source : finalSortedData[0].response_source,
+      interaction_source_name : finalResponseData[0].interaction_source_name,
       interaction_history : finalSortedData.map((d : any) => {
         return {
           rid : d.interaction_history_rid,
@@ -1051,8 +1090,7 @@ export class InteractionService {
       let responseData = result[0][0].attachments
       const createdByIds = [...new Set(responseData.map((d : any) => d.created_by))]
       const fetchUsers = await mainDb.query(rawQueries.fetchUser(createdByIds))
-      const mapUsers : Map<string, string> = new Map(fetchUsers[0].map((d : any) => [d.rid, `${d.first_name}, ${d.last_name}`]))
-
+      const mapUsers : Map<string, string> = new Map(fetchUsers[0].map((d : any) => [d.rid, `${d.first_name} ${d.last_name}`]))
       responseData = await Promise.all(responseData.map(async (d : any) => {
         return {
           ...d,
@@ -1257,23 +1295,23 @@ export class InteractionService {
       } else {
         parsedMessage = message;
       }
-      const { company_id, project_id, type, qre_percent, project_summary, transaction_id, questions, detailed_breakdown, statusCode } = parsedMessage.data;
+      const { company_id, project_id, type, qre_percent, project_summary, transaction_id, questions, detailed_breakdown } = parsedMessage.data;
       const { accountNumber } = await this.interactionSchemaService.fetchValidAccountNumberById(company_id);
       if (!accountNumber) {
         this.logger.error("Invalid account ID in Kafka message", company_id);
         return;
       }
-      if (statusCode === 200) {
+      if (parsedMessage.statusCode === 200) {
         if (!company_id || !project_id || !type) {
           this.logger.error("Kafka message missing required fields", parsedMessage);
           return;
         }
 
         if (type === 'qre_percent') {
-          await this.interactionSchemaService.updateQrePercent(qre_percent, accountNumber, project_id, detailed_breakdown);
+          await this.interactionSchemaService.updateQrePercent(qre_percent, accountNumber, project_id, detailed_breakdown, company_id, transaction_id,parsedMessage);
         }
         if (type === "project_summary") {
-          await this.interactionSchemaService.updateTechSummary(project_summary, accountNumber, project_id, company_id, transaction_id);
+          await this.interactionSchemaService.updateTechSummary(project_summary, accountNumber, project_id, company_id, transaction_id,parsedMessage);
         }
         if (type === "interaction_questions") {
           const projectInfo = await this.interactionSchemaService.fetchProjectInfo(accountNumber, project_id);
@@ -1293,15 +1331,68 @@ export class InteractionService {
             interaction_type_rid: interactionType.RD,
             created_by: process.env.SYSTEM_USER_ID!,
           };
-          await this.createInteraction(interactionData, interactionSource.AUTO, "userID");
+          await this.createInteraction(interactionData, interactionSource.AUTO, process.env.SYSTEM_USER_ID!);
+          
         }
       } else {
         await this.interactionSchemaService.updateAssessmentErrorResponse(parsedMessage, accountNumber, project_id, company_id, transaction_id);
       }
-      this.logger.info(`Processed Kafka message for interaction_rid: ${company_id}`);
+      await this.interactionSchemaService.updateInteractionStatus(accountNumber, parsedMessage)
+      this.logger.info(`Processed Kafka message for account: ${company_id}`);
     } catch (err) {
       this.logger.error("Error processing Kafka message", err);
     }
   }
+  
+  async getAllowedExportFields(
+      userId: string,
+      permission_name: string
+    ): Promise<any[]> {
+      return this.interactionSchemaService.getAllowedExportFields(userId, permission_name);
+    }
 
+  async triggerAiFromScheduler () {
+    const mainDb = await this.getMainDb()
+    const orgDb = await this.getOrgDb()
+ 
+    let fetchAllParentsAccountsRnumber : any = await mainDb.query(rawQueries.fetchAllParentRNumber())
+    for(let account of fetchAllParentsAccountsRnumber[0]) {
+      let schemaName = rawQueries.fetchSchemaName(account.r_number);
+      let verifyTableExistsForAttachments : any = await orgDb.query(checkTableExists(schemaName, "attachments"))
+      let verifyTableExistsForInteractions : any = await orgDb.query(checkTableExists(schemaName, "interactions"))
+      if(verifyTableExistsForInteractions[0][0].exists === true) {
+        await fetchInteractionForSentResentStatus(schemaName, mainDb, orgDb)
+        let fetchProjectIdsFromInteractions : any = await orgDb.query(fetchProjectInteractionRid(schemaName))
+        await this.createPayloadForTriggerAi(fetchProjectIdsFromInteractions[0])
+      }
+      if(verifyTableExistsForAttachments[0][0].exists == true) {
+        let fetchProjectIdsFromAttachments : any = await orgDb.query(fetchProjectAttachmentsRids(schemaName))
+        await this.createPayloadForTriggerAi(fetchProjectIdsFromAttachments[0])
+      }
+    }
+  }
+
+  async createPayloadForTriggerAi (data : any) {
+    let mappingData : Map<string, {account_rid : string, project_fiscal_rid : string[]}> = new Map()
+    if(data.length > 0) {
+      for(let items of data) {
+        if(!mappingData.has(items.account_rid)) {
+          mappingData.set(items.account_rid, {
+            account_rid : items.account_rid,
+            project_fiscal_rid : [items.project_fiscal_rid]
+          })
+        } else {
+          let existsIds = mappingData.get(items.account_rid)
+          if(existsIds && !existsIds?.project_fiscal_rid.includes(items.project_fiscal_rid)) {
+            existsIds.project_fiscal_rid.push(items.project_fiscal_rid)
+          }
+        }
+      }
+      let payload = {
+        data : Array.from(mappingData.values()),
+        type : "project"
+      }
+      await this.triggerAI(payload)
+    }
+  }
 }

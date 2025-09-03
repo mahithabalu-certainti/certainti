@@ -1,6 +1,8 @@
 import dotenv from "dotenv";
 dotenv.config();
 import initExpressServer from "./servers/expressServer";
+import { schedulerForTriggerAi } from "./utils/cronScheduler";
+// import './services/cronJob/renewSubscriptions';
 // import initGraphQLServer from "./servers/graphqlServer";
 
 import { Kafka } from "kafkajs";
@@ -11,10 +13,11 @@ async function startServer() {
   try {
     const { app } = await initExpressServer();
     // const { graphqlPath } = await initGraphQLServer(app);
+    await schedulerForTriggerAi()
 
     app.listen(PORT, () => {
       // console.log(`Graphql Server ready at: ${graphqlPath}`);
-      console.log(`Server running on port : ${PORT}`);
+      console.log(`Server running on port : ${PORT}`);      
     });
   } catch (err: any) {
     console.log("Error starting server", err.message);
@@ -31,11 +34,17 @@ async function startKafkaConsumer() {
     await consumer.connect();
     const topic = process.env.KAFKA_AI_RESPONSE_TRIGGER_TOPIC || 'ai_assessment_response';
     await consumer.subscribe({ topic, fromBeginning: false });
-
     await consumer.run({
-      eachMessage: async ({ message }: { message: any }) => {
-        console.log("Received message:", message.value?.toString());
-        await interactionsController.processKafkaMessages(message.value?.toString());
+      eachMessage: async ({ topic, partition, message }) => {
+        try {
+          console.log(
+            `Received message from ${topic}[${partition}] @ offset ${message.offset}:`,
+            message.value?.toString()
+          );
+          interactionsController.processKafkaMessages(message.value?.toString());
+        } catch (err) {
+          console.error("Error processing message:", err);
+        }
       },
     });
   } catch (err: any) {

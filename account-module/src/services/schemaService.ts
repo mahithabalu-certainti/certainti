@@ -2071,8 +2071,8 @@ private async createInteractionTable(
       r_number VARCHAR(20) UNIQUE DEFAULT 'INH-' || LPAD(nextval('"${schemaName}".interaction_history_seq')::TEXT, 10, '0'),
       created_by varchar(50) NOT NULL,
       modified_by varchar(50),
-      created_datetime TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
-      modified_datetime TIMESTAMP WITHOUT TIME ZONE,
+      created_datetime TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+      modified_datetime TIMESTAMP WITH TIME ZONE,
       interaction_rid varchar(50) NOT NULL,
       interaction_item_rid varchar(50) NOT NULL,
       attribute_name VARCHAR(100) NOT NULL,
@@ -2098,8 +2098,8 @@ private async createInteractionTable(
         eid character varying(50),
         created_by varchar(50) NOT NULL,
         modified_by varchar(50),
-        created_datetime TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
-        modified_datetime TIMESTAMP WITHOUT TIME ZONE,
+        created_datetime TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+        modified_datetime TIMESTAMP WITH TIME ZONE,
         account_rid character varying(50) NOT NULL,
         project_rid character varying(50) NOT NULL,
         fiscal_year character varying(50) NOT NULL,
@@ -2107,8 +2107,8 @@ private async createInteractionTable(
         interaction_rid character varying(50) NOT NULL,
         question_seq_num VARCHAR(20) UNIQUE DEFAULT 'QUE-' || LPAD(nextval('"${schemaName}".question_seq')::TEXT, 10, '0'),
         is_mandatory boolean DEFAULT false NOT NULL,
-        question text,
-        notes text,
+        question character varying(2000),
+        notes character varying(2000),
         is_attachment boolean
       );
     `);
@@ -2146,8 +2146,8 @@ private async createInteractionTable(
         r_number VARCHAR(20) UNIQUE DEFAULT 'ITR-' || LPAD(nextval('"${schemaName}".interaction_response_seq')::TEXT, 10, '0'),
         created_by varchar(50) NOT NULL,
         modified_by varchar(50),
-        created_datetime TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
-        modified_datetime TIMESTAMP WITHOUT TIME ZONE,
+        created_datetime TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+        modified_datetime TIMESTAMP WITH TIME ZONE,
         interaction_rid character varying(50) NOT NULL,
         interaction_item_rid character varying(50),
         interaction_response text,
@@ -2202,8 +2202,8 @@ private async createInteractionTable(
         rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
         created_by varchar(50) NOT NULL,
         modified_by varchar(50),
-        created_datetime TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
-        modified_datetime TIMESTAMP WITHOUT TIME ZONE,
+        created_datetime TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+        modified_datetime TIMESTAMP WITH TIME ZONE,
         interaction_rid character varying(50) NOT NULL,
         interaction_item_rid character varying(50),
         interaction_response_rid character varying(50),
@@ -2529,7 +2529,7 @@ private async createInteractionTable(
           website: accountData.website ?? null,
           business_details: accountData.business_details,
           comments: accountData.comments ?? null,
-          modified_datetime: new Date(),
+          modified_datetime: new Date()
         },
       }
     );
@@ -2748,7 +2748,7 @@ private async createInteractionTable(
           key_contact_email VARCHAR(125),
           key_contact_role varchar(50),
           is_primary_contact BOOLEAN,
-          interaction_recipient BOOLEAN,
+          include_in_communication BOOLEAN,
           interaction_cc_recipient BOOLEAN,
           status_rid VARCHAR(50)
         );
@@ -3282,7 +3282,7 @@ private async createInteractionTable(
       const mainDdSequilze = await initSequelize();
 
       const result: any = await mainDdSequilze.query(
-        `SELECT logo_url,firm_name FROM ${MAIN_SCHEMA_NAME}.organization_licenses`,
+        `SELECT logo_url, firm_name, domain_name FROM ${MAIN_SCHEMA_NAME}.organization_licenses`,
         {
           type: "SELECT",
         }

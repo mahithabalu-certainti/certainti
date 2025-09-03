@@ -12,6 +12,7 @@ router.get('/list/:accountRid/:rid',
 router.post('/list/export',
      checkUserStatusMiddleware('timesheet_export'),
 (req, res, next) => {
+     req.body.isTimeSheet = true;
     req.body.permissionModule = 'timesheet_view_edit'; // Pass specific module
     next();
   },          
