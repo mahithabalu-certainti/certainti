@@ -72,7 +72,6 @@ interface TabProps {
     { read: boolean; edit: boolean }
   >;
   fiscalDatesArg?: FormFiscalDateType;
-
 }
 const TabPanel: React.FC<TabProps> = ({
   resourceTab,
@@ -97,7 +96,7 @@ const TabPanel: React.FC<TabProps> = ({
   fieldOptions,
   handleFilterChange,
   permissionMapTaskTableColumn,
-  fiscalDatesArg
+  fiscalDatesArg,
 }) => {
   const [tabValue, setTabValue] = useState('');
   const location = useLocation();

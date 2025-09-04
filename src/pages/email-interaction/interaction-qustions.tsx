@@ -4,7 +4,12 @@ import { Theme } from '@emotion/react';
 import ReactQuill from 'react-quill';
 import { Attachment, InteractionQuestion } from '../../consultant/types';
 import TextButton from '../../components/button/text-button';
-import { AttachmentsSideIcon, DownloadIcon, KeyContactRemoveIcon, PdfIcon } from '../../assets';
+import {
+  AttachmentsSideIcon,
+  DownloadIcon,
+  KeyContactRemoveIcon,
+  PdfIcon,
+} from '../../assets';
 import { formatDateToYYYYMMDDWithTime } from '../../common-utils';
 import {
   InteractionQuestionUpdateRequest,
@@ -100,7 +105,6 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   const uploadFileMutation = useUploadAttachment();
   const updateInteractionQusResponse = useUpdateInteractionQuestion();
   const deleteAttachment = useDeleteAttachment();
-  
 
   const handleEditClick = () => {
     setIsEditing(true);

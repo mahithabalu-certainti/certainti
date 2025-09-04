@@ -627,7 +627,7 @@ const Filter: React.FC<FilterComponentProps> = ({
             onOptionChange={handleFilterOptionChange}
             onValueChange={handleDateChange}
             mode={mode as 'date' | 'year'}
-            // onChange={handleBooleanChange} 
+            // onChange={handleBooleanChange}
           />
         );
       case 'select':

@@ -437,7 +437,7 @@ export const DateFilterControl: React.FC<{
               <DatePicker
                 name='from'
                 maxDate={maxDate ? dayjs(maxDate) : dayjs(today)}
-                minDate={minDate ? dayjs(minDate) : dayjs("1950-01-01")}
+                minDate={minDate ? dayjs(minDate) : dayjs('1950-01-01')}
                 value={dayjs(state.date?.value.from, 'YYYY-MM-DD')}
                 disabled={disableInput}
                 format='YYYY-MM-DD'
