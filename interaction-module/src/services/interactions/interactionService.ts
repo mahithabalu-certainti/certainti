@@ -949,7 +949,7 @@ export class InteractionService {
           ...d,
           interaction_source_name : mapSources.get(d.interaction_source_rid),
           response_source_name : mapResponseSource.get(d.response_source_rid),
-          response_by : userMap.get(d.response_by_rid)
+          response_by : userMap.get(d.response_by_rid) || d.response_by_rid
         }
       })
       
