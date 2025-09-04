@@ -750,11 +750,11 @@ export const fetchInteractionForSentResentStatus = async (schemaName : string, m
         }
     })
     for(let data of updatedResponse) {
-        await updateInteractionAge(data, schemaName, orgDb)
+        await updateInteractionAge(data, schemaName, orgDb, mainDb)
     }
 }
 
-const updateInteractionAge = async (data : any, schemaName : string, orgDb : Sequelize) => {
+const updateInteractionAge = async (data : any, schemaName : string, orgDb : Sequelize, mainDb : Sequelize) => {
     let interactions : any;
     let dateTimeColumn : any;
     console.log("statusName : ", data.status_name)
@@ -767,6 +767,9 @@ const updateInteractionAge = async (data : any, schemaName : string, orgDb : Seq
             for(let i of interactions[0]) {
                 await orgDb.query(
                     updateInteractionForAgeQuery(schemaName, i.rid, i.age)
+                )
+                await mainDb.query(
+                    updateInteractionAgeSummary( i.rid, i.age)
                 )
             }
         }
@@ -794,3 +797,8 @@ const findDateDifferenceQuery = (schemaName : string, rid : any, dateTimeColumn 
 const updateInteractionForAgeQuery = (schemaName : string, rid : string, age : number) => {
     return `UPDATE ${schemaName}.interactions i SET interaction_age = ${age} WHERE i.rid = '${rid}'` 
 }
+
+const updateInteractionAgeSummary = (rid : string, age : number) => {
+    return `UPDATE ${MAIN_SCHEMA_NAME}.interactions_summary i SET interaction_age = ${age} WHERE i.interaction_rid = '${rid}'` 
+}
+
