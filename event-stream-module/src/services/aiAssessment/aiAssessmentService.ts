@@ -110,7 +110,7 @@ export class AIAssessmentService {
   }
   async processKafkaMessage(message: any): Promise<void> {
     try {
-      this.logger.info("Processing Kafka message...", message);
+      this.logger.info("Processing Kafka message...", JSON.stringify(message));
 
       const parsedMessage =
         typeof message === "string" ? JSON.parse(message) : message;
@@ -170,7 +170,7 @@ export class AIAssessmentService {
       }
     } catch (err) {
       console.log(err);
-      this.logger.error("Error processing Kafka message", err);
+      this.logger.error("Error processing Kafka message", JSON.stringify(err));
     }
   }
 }
