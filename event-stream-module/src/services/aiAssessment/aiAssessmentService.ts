@@ -95,8 +95,6 @@ export class AIAssessmentService {
     let schemaName = rawQueries.fetchSchemaName(
       fetchParentAccount[0][0].r_number
     );
-
-    await orgDb?.transaction(async (transaction) => {
       await orgDb?.query(rawQueries.insertAuditLogEntry(schemaName), {
         replacements: [
           transaction_id,
@@ -104,9 +102,8 @@ export class AIAssessmentService {
           project_id,
           process.env.SYSTEM_USER_ID!,
         ],
-        transaction,
       });
-    });
+    
   }
   async processKafkaMessage(message: any): Promise<void> {
     try {
@@ -142,6 +139,7 @@ export class AIAssessmentService {
            let callTriggerAi = await axios.post(process.env.TRIGGER_AI_URL!, payload, {
                 headers: headers
             });
+          this.logger.info(`Trigger AI Response: ${JSON.stringify(callTriggerAi)}`);
            await this.createAuditLogEntry(
             transaction_id,
             company_id,
@@ -149,7 +147,7 @@ export class AIAssessmentService {
             input_text,
             account_number
           );
-          this.logger.info(`Trigger AI Response: ${JSON.stringify(callTriggerAi)}`);
+          
         }
       } else {
         const transaction_id = uuidv4();
@@ -159,6 +157,7 @@ export class AIAssessmentService {
           let callTriggerAi = await axios.post(process.env.TRIGGER_AI_URL!, payload, {
                 headers: headers
           });
+        this.logger.info(`Trigger AI Response: ${JSON.stringify(callTriggerAi)}`);
          await this.createAuditLogEntry(
           transaction_id,
           company_id,
@@ -166,7 +165,7 @@ export class AIAssessmentService {
           input_text,
           account_number
         );
-         this.logger.info(`Trigger AI Response: ${JSON.stringify(callTriggerAi)}`);
+         
       }
     } catch (err) {
       console.log(err);
