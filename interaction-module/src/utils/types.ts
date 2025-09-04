@@ -70,6 +70,8 @@ export interface InteractionDetailsResponse {
   created_datetime: Date | null;
   response_updated_by: string | null;
   response_updated_on: Date | null;
+  recipient_name: string | null;
+  recipient_email: string | null;
 }
 export interface InteractionResponse {
   interaction_rid: string;

@@ -109,7 +109,8 @@ class SchemaService {
       await this.createInteractionAttachments(schemaName, sequelize);
       await this.createAITechnicalSummary(schemaName, sequelize);
       await this.createInteractionTimeline(schemaName, sequelize);
-      await this.createAIAssessmentError(schemaName, sequelize);
+      await this.createAIAssesmentAudit(schemaName, sequelize);
+      await this.createQRETracker(schemaName, sequelize);
 
       await this.createOtpEntries(schemaName, sequelize);
       await this.createOtpEntriesHistory(schemaName, sequelize);
@@ -120,6 +121,56 @@ class SchemaService {
     }
   }
 
+   private async  createQRETracker( schemaName: string,
+    sequelize: Sequelize) {
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}".ai_assessment_qre (
+        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        created_by varchar(50) NOT NULL,
+        modified_by varchar(50),
+        created_datetime TIMESTAMP NOT NULL DEFAULT NOW(),
+        modified_datetime TIMESTAMP,
+        transaction_id    VARCHAR(50) NOT NULL,
+        project_fiscal_rid VARCHAR(50) NOT NULL,
+        project_rid VARCHAR(50),
+        account_rid VARCHAR(50) NOT NULL,
+        qre_percent  DECIMAL(18,2) NOT NULL,
+        qre_detailed_breakdown JSON,
+        version     integer
+      );
+    `);
+   await sequelize.query(`
+        ALTER TABLE "${schemaName}".ai_assessment_qre ADD CONSTRAINT ai_assessment_qre_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
+        ALTER TABLE "${schemaName}".ai_assessment_qre ADD CONSTRAINT ai_assessment_qre_project_rid_fkey FOREIGN KEY (project_rid) REFERENCES "${schemaName}".project(rid) ON UPDATE CASCADE;
+        ALTER TABLE "${schemaName}".ai_assessment_qre ADD CONSTRAINT ai_assessment_qre_project_fiscal_rid_fkey FOREIGN KEY (project_fiscal_rid) REFERENCES "${schemaName}".project_fiscal(rid) ON UPDATE CASCADE;
+    `);
+  }
+
+   private async  createAIAssesmentAudit( schemaName:string,
+    sequelize: Sequelize) {
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}".ai_assessment_audit (
+        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        created_by varchar(50) NOT NULL,
+        modified_by varchar(50),
+        created_datetime TIMESTAMP NOT NULL DEFAULT NOW(),
+        modified_datetime TIMESTAMP,
+         transaction_id    VARCHAR(50) NOT NULL,
+         project_rid VARCHAR(50) ,
+         project_fiscal_rid VARCHAR(50) NOT NULL,
+         account_rid VARCHAR(50) NOT NULL,
+         is_qre_processed BOOLEAN NOT NULL DEFAULT FALSE,
+         is_tech_summary_processed BOOLEAN NOT NULL DEFAULT FALSE,
+         is_interaction_question_processed BOOLEAN NOT NULL DEFAULT FALSE,
+         ai_assessment_api_status text 
+      );
+    `);
+     await sequelize.query(`
+        ALTER TABLE "${schemaName}".ai_assessment_audit ADD CONSTRAINT ai_assessment_audit_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
+        ALTER TABLE "${schemaName}".ai_assessment_audit ADD CONSTRAINT ai_assessment_audit_project_rid_fkey FOREIGN KEY (project_rid) REFERENCES "${schemaName}".project(rid) ON UPDATE CASCADE;
+        ALTER TABLE "${schemaName}".ai_assessment_audit ADD CONSTRAINT ai_assessment_audit_project_fiscal_rid_fkey FOREIGN KEY (project_fiscal_rid) REFERENCES "${schemaName}".project_fiscal(rid) ON UPDATE CASCADE;
+    `);
+  }
   private async  createAITechnicalSummary( schemaName: string,
     sequelize: Sequelize) {
      await sequelize.query(`
@@ -152,23 +203,6 @@ class SchemaService {
       ALTER TABLE "${schemaName}".ai_technical_summary ADD CONSTRAINT ai_technical_summary_project_fiscal_rid_fkey FOREIGN KEY (project_fiscal_rid) REFERENCES "${schemaName}".project_fiscal(rid) ON UPDATE CASCADE;
     `);
   }
-  private async  createAIAssessmentError( schemaName: string,
-    sequelize: Sequelize) {
-    await sequelize.query(`
-      CREATE TABLE IF NOT EXISTS "${schemaName}".ai_assessment_error (
-        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
-        created_by varchar(50) NOT NULL,
-        modified_by varchar(50),
-        created_datetime TIMESTAMP NOT NULL DEFAULT NOW(),
-        modified_datetime TIMESTAMP,
-        account_rid varchar(50) NOT NULL,
-        project_fiscal_rid VARCHAR(50) NOT NULL,
-        transaction_id    VARCHAR(50) NOT NULL,
-        error_message     JSON 
-      );
-    `);
-  }
-
   
 
   private async createAttachmentTimeline(
