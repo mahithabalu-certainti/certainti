@@ -45,7 +45,7 @@ const ALLOWED_FILE_TYPES = [
   'text/csv',
 ];
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const MAX_FILE_SIZE = 20 * 1024 * 1024;
 const MAX_FILES_LIMIT = 10;
 
 interface InteractionQuesProps {
@@ -262,7 +262,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
     if (file.size > MAX_FILE_SIZE) {
       return {
         isValid: false,
-        error: 'File size must be less than 10MB',
+        error: 'File size must be less than 20MB',
       };
     }
 
