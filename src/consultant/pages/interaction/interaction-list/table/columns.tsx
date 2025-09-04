@@ -127,7 +127,7 @@ export const getGlobalInteractionListColumns = (
       !permissionMap?.['last_resent_on']?.edit &&
       !permissionMap?.['last_resent_on']?.read,
     render: (row: InteractionList) =>
-      row.last_sent_on && formatDateToYYYYMMDDWithTime(row.last_resent_on),
+      row.last_resent_on && formatDateToYYYYMMDDWithTime(row.last_resent_on),
   },
   {
     id: 'last_reminder_on',

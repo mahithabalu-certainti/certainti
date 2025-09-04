@@ -84,6 +84,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   const [sendModalOpen, setSendModalOpen] = useState(false);
   const [selectedRows, setSelectedRows] = useState<InteractionList[]>([]);
   const [clearSelectedRows, setClearSelectedRows] = useState<boolean>(false);
+  const [interactionNumber, setInteractionNumber] = useState<string>('');
 
   const interactionId = searchParams.get('interaction_id');
   const interactionHistoryId = searchParams.get('interaction_history_id');
@@ -486,7 +487,7 @@ const Interactions: React.FC<InteractionsProps> = ({
           <SectionHeader
             title={
               viewResponseHistory
-                ? `Interaction Response History`
+                ? `Interaction Response History${interactionResponseId ? `  ${interactionNumber}` : ''}`
                 : 'Interaction'
             }
             titleIcon={
@@ -535,7 +536,10 @@ const Interactions: React.FC<InteractionsProps> = ({
                 clearSelectedRows={clearSelectedRows}
               />
             ) : (
-              <HistoryTable setCount={setCount} />
+              <HistoryTable
+                setCount={setCount}
+                setInteractionNumber={setInteractionNumber}
+              />
             )}
             <SendInteractionModal
               isOpen={sendModalOpen}
