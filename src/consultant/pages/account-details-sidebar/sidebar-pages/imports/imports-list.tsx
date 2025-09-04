@@ -113,8 +113,9 @@ const Imports: React.FC<ImportsProps> = ({
     refreshImports
   );
   const totalItems = data?.count || 0;
+  const minYear = 1950;
   const currentYear = new Date().getFullYear();
-  const fiscalYears = getFiscalYears(currentYear - 2000 + 1);
+  const fiscalYears = getFiscalYears(currentYear - minYear + 1);
 
   useEffect(() => {
     if (data) {

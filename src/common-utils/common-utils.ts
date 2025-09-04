@@ -636,11 +636,14 @@ export const ALLOWED_COUNTRIES: AllowedCountry[] = [
   'au',
   'fr',
 ];
-
-export const fiscalYears = Array.from({ length: 26 }, (_, i) => {
-  const year = new Date().getFullYear() - i;
-  return { value: year.toString(), label: `FY-${year}` };
-});
+const currentYear = new Date().getFullYear();
+export const fiscalYears = Array.from(
+  { length: currentYear - 1950 + 1 },
+  (_, i) => {
+    const year = currentYear - i;
+    return { value: year.toString(), label: `FY-${year}` };
+  }
+);
 
 export const checkError = (data: CheckError[]) => {
   return data.some((value) => value.isError === true);

@@ -29,7 +29,7 @@ export const getTimesheetListColumns = (
     render: (row: TimeSheetList) => (
       <span
         onClick={() => handleDocument(row.rid)}
-        className='cursor-pointer no-underline hover:underline hover:text-[#1755E7]'
+        className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
       >
         {row.r_number}
       </span>

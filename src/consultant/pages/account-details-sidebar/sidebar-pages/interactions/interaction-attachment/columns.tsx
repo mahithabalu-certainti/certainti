@@ -25,7 +25,7 @@ export const getInteractionAttachmentListColumns = (
   {
     id: 'name',
     sortId: 'name',
-    label: 'Name',
+    label: 'File Name',
     width: 140,
     render: (row: InteractionAttachmentType) => row.name || '-',
   },

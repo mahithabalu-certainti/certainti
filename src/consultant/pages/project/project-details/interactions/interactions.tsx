@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
+  AllModules,
   AllPermissions,
   OverviewTabs,
   useGetInteractionResponeSources,
@@ -30,6 +31,10 @@ import HistoryTable from './response-history/history-table';
 import { InteractionAttachment } from './interaction-attachment';
 import { getInteractionHistoryFilterFields } from './interaction-history/helper';
 import { AttachmentsListExportParams } from '../../../../types/attachment';
+import { checkPermission } from '../../../../../common-utils';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../store/store';
+import { AccessRestricted } from '../../../../../components/account-restricted';
 
 const InteractionsTabs: OverviewTabs[] = [
   {
@@ -78,6 +83,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   const [count, setCount] = useState<number>(0);
   const [sendModalOpen, setSendModalOpen] = useState(false);
   const [selectedRows, setSelectedRows] = useState<InteractionList[]>([]);
+  const [clearSelectedRows, setClearSelectedRows] = useState<boolean>(false);
 
   const interactionId = searchParams.get('interaction_id');
   const interactionHistoryId = searchParams.get('interaction_history_id');
@@ -91,6 +97,10 @@ const Interactions: React.FC<InteractionsProps> = ({
   const viewInteractionHistory = !!interactionHistoryId;
   const viewInteractionAttachment = !!interactionAttachmentId;
   const viewResponseHistory = !!responseHistory;
+
+  const { permission, modules } = useSelector(
+    (state: RootState) => state.permission
+  );
 
   const projectData = {
     project_code: projectDetails?.project_code || '',
@@ -132,6 +142,45 @@ const Interactions: React.FC<InteractionsProps> = ({
   const interactionResSources = useGetInteractionResponeSources();
   const interactionStatus = useGetInteractionStatus();
 
+  // Permissions
+  const interactionsEnable = checkPermission(modules, AllModules.INTERACTIONS);
+  const interactionsViewEnable = checkPermission(
+    permission,
+    AllPermissions.INTERACTIONS_VIEW_EDIT
+  );
+  const sendInteractionsEnable = checkPermission(
+    permission,
+    AllPermissions.SEND_INTERACTIONS
+  );
+  const createInteractionsEnable = checkPermission(
+    permission,
+    AllPermissions.INTERACTIONS_CREATE
+  );
+
+  const interactionsViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.INTERACTIONS_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const interactionFieldsEditable = useMemo(
+    () =>
+      permission
+        .find((item) => item.name === AllPermissions.INTERACTIONS_VIEW_EDIT)
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    interactionsViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [interactionsViewEditFields]);
+
   const memoizedInteractionStatus = useMemo(
     () =>
       interactionStatus.data?.data.interactionStatus.map((status) => ({
@@ -167,6 +216,7 @@ const Interactions: React.FC<InteractionsProps> = ({
           return {
             ...item,
             disableCheckBox:
+              !sendInteractionsEnable ||
               !item.has_email_recipient ||
               status === StatusTypeEnum.draft ||
               status === StatusTypeEnum.cancelled ||
@@ -177,7 +227,9 @@ const Interactions: React.FC<InteractionsProps> = ({
 
       setInteractionList(updatedInteractions);
       setSelectedRows([]);
+      setClearSelectedRows((prev) => !prev);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
   useEffect(() => {
@@ -256,7 +308,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       disabled: selectedRows.length === 0 || accountInActive,
       onClick: () => setSendModalOpen(true),
       sx: { width: '120px', minWidth: '120px' },
-      hide: viewResponseHistory,
+      hide: !sendInteractionsEnable || viewResponseHistory,
     },
     {
       label: 'New',
@@ -264,13 +316,14 @@ const Interactions: React.FC<InteractionsProps> = ({
       disabled: accountInActive,
       onClick: () => handleCreate(),
       sx: { width: '48px', minWidth: '48px' },
-      hide: viewResponseHistory,
+      hide: !createInteractionsEnable || viewResponseHistory,
     },
   ];
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
     setSelectedRows([]);
+    setClearSelectedRows((prev) => !prev);
   };
 
   const handleRowsPerPageChange = (newPageSize: number) => {
@@ -297,6 +350,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       navigate({ search: searchParams.toString() }, { replace: true });
       setSelectedRows([]);
       setCount(0);
+      setClearSelectedRows((prev) => !prev);
     }
   };
 
@@ -305,21 +359,23 @@ const Interactions: React.FC<InteractionsProps> = ({
       searchParams.set('interaction_history_id', interactionHistoryId);
       navigate({ search: searchParams.toString() }, { replace: true });
       setSelectedRows([]);
+      setClearSelectedRows((prev) => !prev);
     }
   };
 
   const handleViewInteractionAttachmentCount = (
-    interactionAttachentCount: string | number,
+    interactionAttachmentCount: string | number,
     rowId: string
   ) => {
-    if (interactionAttachentCount) {
+    if (interactionAttachmentCount) {
       searchParams.set('interaction_rid', rowId);
       searchParams.set(
         'interaction_attachment_count',
-        String(interactionAttachentCount)
+        String(interactionAttachmentCount)
       );
       navigate({ search: searchParams.toString() }, { replace: true });
       setSelectedRows([]);
+      setClearSelectedRows((prev) => !prev);
     }
   };
 
@@ -358,6 +414,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       label: 'Edit',
       onClick: (row: InteractionList) => handleEdit(row),
       icon: EditIcon,
+      hide: !interactionFieldsEditable,
       disabled: (row: InteractionList) =>
         accountInActive || disableInteractionEditBtn(row),
       iconStyle: {
@@ -371,16 +428,21 @@ const Interactions: React.FC<InteractionsProps> = ({
   const interactionColumns = getInteractionListColumns(
     handleViewInteraction,
     handleViewInteractionHistory,
-    handleViewInteractionAttachmentCount
+    handleViewInteractionAttachmentCount,
+    permissionMap
   );
 
   const filterFields = !viewInteractionHistory
     ? getInteractionFilterFields(
         memoizedInteractionTypes,
         memoizedInteractionResSources,
-        memoizedInteractionStatus
+        memoizedInteractionStatus,
+        permissionMap
       )
     : getInteractionHistoryFilterFields(memoizedInteractionStatus);
+
+  if (!interactionsEnable || !interactionsViewEnable)
+    return <AccessRestricted />;
 
   return (
     <div className='w-full pt-2 pl-2 pr-4'>
@@ -470,6 +532,7 @@ const Interactions: React.FC<InteractionsProps> = ({
                 sortBy={sortField}
                 sortOrder={sortBy}
                 onSort={handleSortRequest}
+                clearSelectedRows={clearSelectedRows}
               />
             ) : (
               <HistoryTable setCount={setCount} />

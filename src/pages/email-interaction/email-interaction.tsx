@@ -61,6 +61,8 @@ const EmailInteraction: React.FC = () => {
 
     if (auth_token) {
       setIsAuthentic(true);
+    } else {
+      setIsAuthentic(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, auth_token]);

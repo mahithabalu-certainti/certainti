@@ -69,3 +69,7 @@ export const ProjectExportListURL = ({
   const queryString = searchParams.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 };
+
+export const ProjectTriggerAIUrl = (): string => {
+  return '/api/interactions/triggerAi';
+};
