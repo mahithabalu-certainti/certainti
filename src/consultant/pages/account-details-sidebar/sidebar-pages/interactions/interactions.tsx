@@ -16,7 +16,11 @@ import {
 import { ExportType, InteractionList, StatusTypeEnum } from '../../../../types';
 import { useInteractionList } from '../../../../services/interactions/interactions-service';
 import { INTERACTIONS_CREATE, INTERACTIONS_EDIT } from '../../../../../routes';
-import { ActionItem } from '../../../../../components/table/types';
+import {
+  ActionItem,
+  ListTableColumn,
+  ShowHideTableColumn,
+} from '../../../../../components/table/types';
 import { EditIcon, InteractionDetailIcon } from '../../../../../assets';
 import { getInteractionListColumns } from './columns';
 import { getInteractionFilterFields } from './helpers';
@@ -26,7 +30,10 @@ import {
 } from '../../../../../components';
 import InteractionDetails from './interaction-details/interaction-details';
 import SectionHeader from '../../../../../components/details-section/section-header';
-import { ListTable } from '../../../../../components/table';
+import {
+  ListTable,
+  ManageColumnsPopover,
+} from '../../../../../components/table';
 import { accountDetailsProps } from '../../../account-details/utils';
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
@@ -87,6 +94,15 @@ const Interactions: React.FC<InteractionsProps> = ({
   const [sendModalOpen, setSendModalOpen] = useState(false);
   const [selectedRows, setSelectedRows] = useState<InteractionList[]>([]);
   const [clearSelectedRows, setClearSelectedRows] = useState<boolean>(false);
+  const [columnAnchorEl, setColumnAnchorEl] =
+    React.useState<HTMLButtonElement | null>(null);
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const handleColumnVisibility = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setColumnAnchorEl(event.currentTarget);
+  };
 
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
     (state: RootState) => state.account
@@ -309,6 +325,14 @@ const Interactions: React.FC<InteractionsProps> = ({
       sx: { width: '48px', minWidth: '48px' },
       hide: !createInteractionsEnable || viewResponseHistory,
     },
+    {
+      label: 'Show/Hide Fields',
+      variant: 'outlined' as const,
+      disabled: false,
+      onClick: handleColumnVisibility,
+      sx: { width: '125px', minWidth: '125px' },
+      hide: false,
+    },
   ];
 
   const handlePageChange = (newPage: number) => {
@@ -432,8 +456,36 @@ const Interactions: React.FC<InteractionsProps> = ({
       )
     : getInteractionHistoryFilterFields(memoizedInteractionStatus);
 
+  const RestrictedColumns = [
+    {
+      id: 'r_number',
+      canHide: false,
+      canDrag: false,
+    },
+  ];
+
+  const [visibleColumns, setVisibleColumns] = useState<
+    ListTableColumn<InteractionList>[]
+  >(interactionColumns.filter((col) => !col.hide));
+
   if (!interactionsEnable || !interactionsViewEnable)
     return <AccessRestricted />;
+
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    setVisibleColumns(
+      updatedColumns.filter(
+        (col) => !col.hide
+      ) as ListTableColumn<InteractionList>[]
+    );
+  };
+
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
+  };
+
+  const modalId = isModalOpen
+    ? 'account-interaction-list-column-visibility-popover'
+    : undefined;
 
   return (
     <div className='w-full pt-2 pl-2 pr-4'>
@@ -495,7 +547,7 @@ const Interactions: React.FC<InteractionsProps> = ({
             {!viewResponseHistory ? (
               <ListTable
                 data={interactionList}
-                columns={interactionColumns}
+                columns={visibleColumns}
                 getRowId={getRowId}
                 hoverHighlight={false}
                 tableStyle={{
@@ -533,6 +585,15 @@ const Interactions: React.FC<InteractionsProps> = ({
             onClose={() => setSendModalOpen(false)}
             selectedRows={selectedRows}
             onSuccessRefetch={handleRefresh}
+          />
+          <ManageColumnsPopover
+            anchorEl={columnAnchorEl}
+            open={isModalOpen}
+            popoverId={modalId}
+            onClose={handlePopoverClose}
+            columns={interactionColumns}
+            onColumnsChange={handleColumnsChange}
+            columnRestrictions={RestrictedColumns}
           />
         </>
       )}
