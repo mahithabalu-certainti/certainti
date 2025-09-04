@@ -4,7 +4,7 @@ import { Theme } from '@emotion/react';
 import ReactQuill from 'react-quill';
 import { Attachment, InteractionQuestion } from '../../consultant/types';
 import TextButton from '../../components/button/text-button';
-import { DownloadIcon, KeyContactRemoveIcon, PdfIcon } from '../../assets';
+import { AttachmentsSideIcon, DownloadIcon, KeyContactRemoveIcon, PdfIcon } from '../../assets';
 import { formatDateToYYYYMMDDWithTime } from '../../common-utils';
 import {
   InteractionQuestionUpdateRequest,
@@ -12,6 +12,7 @@ import {
   useUpdateInteractionQuestion,
   useUploadAttachment,
 } from '../../common-service';
+import { useToast } from '../../hooks';
 
 interface SectionHeaderButton {
   label: string;
@@ -35,6 +36,11 @@ interface InteractionQuesProps {
     auth_token: string;
     email: string;
   };
+  isEditEnable?: boolean;
+}
+enum FlagTypeEnum {
+  draft = 'draft',
+  submit = 'submit',
 }
 
 const InteractionQuestions: React.FC<InteractionQuesProps> = ({
@@ -46,8 +52,14 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   formData,
   createdBy,
   parseToken,
+  isEditEnable,
 }) => {
+  const { successToast, errorToast } = useToast();
   const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [activeFlag, setActiveFlag] = useState<FlagTypeEnum | null>(null);
+  const [validationErrors, setValidationErrors] = useState<
+    Record<string, boolean>
+  >({});
   const [editedAnswers, setEditedAnswers] = useState<Record<string, string>>(
     questions.reduce(
       (acc, q) => {
@@ -88,38 +100,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   const uploadFileMutation = useUploadAttachment();
   const updateInteractionQusResponse = useUpdateInteractionQuestion();
   const deleteAttachment = useDeleteAttachment();
-
-  // Inject attachment button into Quill toolbar after mount
-  React.useEffect(() => {
-    if (!isEditing) return;
-    const toolbars = document.querySelectorAll('.ql-toolbar.ql-snow');
-    if (!toolbars.length) return;
-    toolbars.forEach((toolbarEl, idx) => {
-      // Prevent duplicate button
-      if (toolbarEl.querySelector('.custom-attach-btn')) return;
-      const span = document.createElement('span');
-      span.className = 'ql-formats';
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'custom-attach-btn cursor-pointer';
-      btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4"><path d="M2.40585 6.0086L1.50604 5.1082C1.02837 4.63053 0.76001 3.98266 0.76001 3.30712C0.76001 2.63159 1.02837 1.98372 1.50604 1.50604C1.98372 1.02837 2.63159 0.76001 3.30712 0.76001C3.98266 0.76001 4.63053 1.02837 5.1082 1.50604L10.5112 6.90899C10.9813 7.38823 11.2432 8.03369 11.24 8.70501C11.2368 9.37633 10.9686 10.0192 10.4939 10.4939C10.0192 10.9686 9.37633 11.2368 8.70501 11.24C8.03369 11.2432 7.38823 10.9813 6.90899 10.5112L4.88311 8.48468C4.59459 8.18415 4.43537 7.7825 4.43962 7.36591C4.44387 6.94933 4.61124 6.55101 4.90583 6.25642C5.20042 5.96184 5.59874 5.79446 6.01532 5.79021C6.43191 5.78597 6.83356 5.94518 7.13409 6.2337L8.25959 7.35919" stroke="#2D3E4F" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>`;
-      // Find the corresponding question by index
-      const q = questions[idx];
-      btn.onclick = () => {
-        if (q && questionFileInputRefs.current[q.rid]) {
-          questionFileInputRefs.current[q.rid]!.click();
-        }
-      };
-      span.appendChild(btn);
-      toolbarEl.appendChild(span);
-    });
-    // Cleanup on unmount or edit mode off
-    return () => {
-      document
-        .querySelectorAll('.custom-attach-btn')
-        .forEach((el) => el.remove());
-    };
-  }, [isEditing, questions]);
+  
 
   const handleEditClick = () => {
     setIsEditing(true);
@@ -152,7 +133,33 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
       )
     );
   };
-  const handleSave = async (flag: 'draft' | 'submit') => {
+  const sanitizeQuillValue = (value: string) => {
+    const trimmed = value.replace(/<(.|\n)*?>/g, '').trim();
+    return trimmed ? value : '';
+  };
+  const validateMandatoryQuestions = () => {
+    const errors: Record<string, boolean> = {};
+    let isValid = true;
+
+    questions.forEach((q) => {
+      if (q.is_mandatory) {
+        const answer = sanitizeQuillValue(editedAnswers[q.rid] || '');
+        if (!answer) {
+          errors[q.rid] = true;
+          isValid = false;
+        }
+      }
+    });
+
+    setValidationErrors(errors);
+    return isValid;
+  };
+  const handleSave = async (flag: FlagTypeEnum) => {
+    // For submit action, validate mandatory questions
+    if (flag === FlagTypeEnum.submit && !validateMandatoryQuestions()) {
+      return;
+    }
+    setActiveFlag(flag);
     const payload = {
       status_action: (flag === 'draft'
         ? 'RESPONSE_DRAFT'
@@ -173,12 +180,25 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
       interaction_rid: formData?.interaction_rid || '',
       authToken: parseToken.auth_token,
       userId: parseToken.email,
+      response_source: 'Email',
       ...payload,
     };
     updateInteractionQusResponse.mutate(finalPayload, {
-      onSuccess: () => {
-        refetchDeetails?.();
+      onSuccess: async () => {
+        await refetchDeetails?.();
         setIsEditing(false);
+        setValidationErrors({});
+        setActiveFlag(null);
+        console.log('activeFlag', flag);
+        successToast(
+          flag === FlagTypeEnum.draft
+            ? 'Draft saved successfully'
+            : 'Interaction submitted successfully'
+        );
+      },
+      onError: () => {
+        setActiveFlag(null);
+        errorToast('Failed to save response. Please try again.');
       },
     });
   };
@@ -187,6 +207,12 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
       ...prev,
       [questionId]: value,
     }));
+    if (validationErrors[questionId]) {
+      setValidationErrors((prev) => ({
+        ...prev,
+        [questionId]: false,
+      }));
+    }
   };
   const handleGlobalFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>
@@ -309,17 +335,17 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
         {
           label: 'Save as Draft',
           variant: 'contained' as const,
-          onClick: () => handleSave('draft'),
+          onClick: () => handleSave(FlagTypeEnum.draft),
           sx: { width: '110px', minWidth: '110px' },
-          loading: isUpdateLoading,
+          loading: activeFlag === FlagTypeEnum.draft && isUpdateLoading,
           disabled: uploadFileMutation.isPending,
         },
         {
           label: 'Save & Submit',
           variant: 'contained' as const,
-          onClick: () => handleSave('submit'),
+          onClick: () => handleSave(FlagTypeEnum.submit),
           sx: { width: '110px', minWidth: '110px' },
-          loading: isUpdateLoading,
+          loading: activeFlag === FlagTypeEnum.submit && isUpdateLoading,
           disabled: uploadFileMutation.isPending,
         },
         {
@@ -344,6 +370,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
           onClick: handleEditClick,
           sx: { width: '60px' },
           hide: !actionButtonEnable,
+          disabled: !isEditEnable,
         },
       ];
 
@@ -448,6 +475,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
               type='file'
               className='hidden'
               onChange={handleGlobalFileUpload}
+              accept='.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv'
             />
           </div>
         </div>
@@ -459,33 +487,66 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
               <div className='font-medium text-[14px] text-[#2D3E4F]'>
                 <span className='font-bold'>
                   {q.question_seq_num || `Q00${index + 1}`}
+                  {q.is_mandatory && (
+                    <span className='text-red-500 ml-1'>*</span>
+                  )}
                 </span>{' '}
                 - {q.question}
               </div>
 
               {isEditing ? (
                 <div className='mt-2 relative'>
+                  <div
+                    id={`toolbar-${q.rid}`}
+                    className='flex flex-wrap items-center gap-1'
+                  >
+                    <select className='ql-header' defaultValue=''>
+                      <option value='1'></option>
+                      <option value='2'></option>
+                      <option value='3'></option>
+                      <option value='4'></option>
+                      <option value='5'></option>
+                      <option value='6'></option>
+                      <option value=''></option>
+                    </select>
+                    <select className='ql-font'></select>
+                    <select className='ql-size'></select>
+                    <button className='ql-bold'></button>
+                    <button className='ql-italic'></button>
+                    <button className='ql-underline'></button>
+                    <button className='ql-strike'></button>
+                    <button
+                      type='button'
+                      onClick={() =>
+                        questionFileInputRefs.current[q.rid]?.click()
+                      }
+                      className='ml-2 flex items-center'
+                    >
+                      <AttachmentsSideIcon className='w-4 h-2.5 attachment-icon' />
+                    </button>
+                    <select className='ql-color'></select>
+                    <select className='ql-background'></select>
+                    <button className='ql-script' value='sub'></button>
+                    <button className='ql-script' value='super'></button>
+                    <button className='ql-blockquote'></button>
+                    <button className='ql-list' value='ordered'></button>
+                    <button className='ql-list' value='bullet'></button>
+                    <button className='ql-indent' value='-1'></button>
+                    <button className='ql-indent' value='+1'></button>
+                    <button className='ql-direction' value='rtl'></button>
+                    <select className='ql-align'></select>
+                    <button className='ql-clean'></button>
+                  </div>
+
                   <ReactQuill
                     value={editedAnswers[q.rid]}
                     onChange={(value) => handleAnswerChange(q.rid, value)}
                     theme='snow'
-                    className='rounded-[2px] bg-white'
+                    className={`rounded-[2px] ${validationErrors[q.rid] ? 'border border-red-500 bg-[#FEF2F2]' : 'bg-white'}`}
                     modules={{
-                      toolbar: [
-                        [{ header: [1, 2, 3, 4, 5, 6, false] }],
-                        [{ font: [] }],
-                        [{ size: [] }],
-                        ['bold', 'italic', 'underline', 'strike'],
-                        [{ color: [] }, { background: [] }],
-                        [{ script: 'sub' }, { script: 'super' }],
-                        ['blockquote'],
-                        [{ list: 'ordered' }, { list: 'bullet' }],
-                        [{ indent: '-1' }, { indent: '+1' }],
-                        [{ direction: 'rtl' }],
-                        [{ align: [] }],
-                        // ['image', 'video'],
-                        ['clean'],
-                      ],
+                      toolbar: {
+                        container: `#toolbar-${q.rid}`,
+                      },
                     }}
                     formats={[
                       'header',
@@ -499,30 +560,62 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                       'background',
                       'script',
                       'blockquote',
-                      // 'code-block',
                       'list',
                       'bullet',
                       'indent',
                       'direction',
                       'align',
-                      // 'link',
-                      // 'image',
-                      // 'video',
                       'clean',
                     ]}
                   />
+
+                  {validationErrors[q.rid] && (
+                    <div className='text-red-500 text-sm mt-1'>
+                      This question is mandatory
+                    </div>
+                  )}
+
+                  {/* Hidden File Input */}
                   <input
                     ref={(el) => (questionFileInputRefs.current[q.rid] = el)}
                     type='file'
                     className='hidden'
                     onChange={(e) => handleQuestionFileUpload(e, q.rid)}
+                    accept='.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv'
                   />
                 </div>
               ) : (
                 <div
-                  className={`mt-2 border border-[#CBD6E2] rounded-[2px] py-2 px-3 min-h-20 text-[14px] text-[#425A76] font-normal ${
-                    q.response ? 'bg-[#FFFBFA]' : 'bg-[#FCFCFC]'
-                  }`}
+                  className={`
+  mt-2 border border-[#CBD6E2] rounded-[2px] py-2 px-3 min-h-20
+  text-[14px] text-[#425A76] font-normal bg-[#FFFBFA]
+
+  [&_p]:mb-2
+  [&_strong]:font-bold [&_em]:italic
+  [&_u]:underline [&_s]:line-through
+
+  [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-3
+  [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mb-2
+  [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mb-2
+  [&_h4]:text-base [&_h4]:font-medium [&_h4]:mb-1
+  [&_h5]:text-sm [&_h5]:font-medium [&_h5]:mb-1
+  [&_h6]:text-xs [&_h6]:font-medium [&_h6]:mb-1
+
+  [&_ul]:list-disc [&_ul]:pl-5
+  [&_ol]:list-decimal [&_ol]:pl-5
+  [&_li]:mb-1
+
+  [&_a]:text-blue-600 [&_a]:underline
+  [&_blockquote]:border-l-2 [&_blockquote]:pl-3 [&_blockquote]:italic
+
+  [&_code]:font-mono [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:rounded
+  [&_pre]:font-mono [&_pre]:bg-gray-100 [&_pre]:p-2 [&_pre]:rounded [&_pre]:overflow-x-auto
+
+  [&_img]:max-w-full [&_img]:rounded
+  [&_table]:border-collapse [&_table]:border [&_table]:border-gray-300 [&_table]:my-2
+  [&_th]:border [&_th]:border-gray-300 [&_th]:bg-gray-100 [&_th]:px-2 [&_th]:py-1
+  [&_td]:border [&_td]:border-gray-300 [&_td]:px-2 [&_td]:py-1
+`}
                   dangerouslySetInnerHTML={{ __html: q.response || '' }}
                 />
               )}
