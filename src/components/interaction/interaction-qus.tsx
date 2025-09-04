@@ -46,6 +46,7 @@ const ALLOWED_FILE_TYPES = [
 ];
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const MAX_FILES_LIMIT = 10;
 
 interface InteractionQuesProps {
   questions: InteractionQuestion[];
@@ -274,6 +275,15 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Check file count limit
+    if (newGlobalAttachments.length >= MAX_FILES_LIMIT) {
+      errorToast(
+        `Maximum ${MAX_FILES_LIMIT} files allowed. Please remove some files before uploading new ones.`
+      );
+      e.target.value = '';
+      return;
+    }
+
     // Validate file
     const validation = validateFile(file);
     if (!validation.isValid) {
@@ -302,6 +312,15 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    const currentQuestionFiles = questionAttachments[questionId] || [];
+    if (currentQuestionFiles.length >= MAX_FILES_LIMIT) {
+      errorToast(
+        `Maximum ${MAX_FILES_LIMIT} files allowed per question. Please remove some files before uploading new ones.`
+      );
+      e.target.value = '';
+      return;
+    }
 
     // Validate file
     const validation = validateFile(file);
