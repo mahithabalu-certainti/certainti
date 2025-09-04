@@ -210,7 +210,8 @@ input updateInlineProject {
     total_cost_subcon : String,
     total_cost_fte : String,
     total_effort : String,
-    total_cost : String
+    total_cost : String,
+    global_fiscal_year : Int!
 }
 
 type Mutation {
