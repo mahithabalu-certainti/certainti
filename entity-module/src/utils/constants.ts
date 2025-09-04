@@ -915,6 +915,12 @@ export const SUMMARY_HIGHLIGHTS_TYPE_FLAG = {
   summary: "summary",
 };
 
+export const primaryKeyContacts = {
+  "technical_point_of_contact": "technical_point_of_contact",
+  "financial_consultant": "financial_consultant",
+  "project_point_of_contact": "project_point_of_contact"
+};
+
 
 export const IMPORT_FIELD_MAPPINGS_FOR_EXPORT = [
     { permissionField: 'r_number', exportField: 'Import ID', dataField: 'r_number' },
