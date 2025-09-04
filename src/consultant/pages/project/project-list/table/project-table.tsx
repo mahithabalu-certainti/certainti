@@ -276,6 +276,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
         account_rid: parentProject.account_rid,
         project_rid: childFiscal.project_rid,
         project_fiscal_rid: childFiscal.project_fiscal_rid,
+        global_fiscal_year: convertedFiscalYear || 0,
       }
     );
 
