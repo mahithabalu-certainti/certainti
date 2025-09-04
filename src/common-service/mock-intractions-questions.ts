@@ -2,6 +2,7 @@ import { InteractionDetails } from '../consultant/types';
 
 export const mockIntractionsQuestions: InteractionDetails = {
   rid: 'INT-001',
+  recipient_name: 'test',
   interaction_rid: 'IR-2025-01',
   account_rid: 'ACC-789',
   project_rid: 'PROJ-456',

@@ -455,7 +455,6 @@ export const ProjectTask = ({
         projectResourceProjectID={projectID}
         permissionMapTaskTableColumn={permissionMapTaskTableColumn}
         fiscalDatesArg={fiscalDatesArg}
-
       />
       {showUploads ? (
         <Uploads

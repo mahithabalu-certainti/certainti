@@ -460,6 +460,7 @@ export interface InteractionQuestionUpdateRequest {
   questions: InteractionQuestionResponseType[];
   authToken: string;
   userId: string;
+  response_source: string;
 }
 
 export interface UploadAttachmentRequest {
