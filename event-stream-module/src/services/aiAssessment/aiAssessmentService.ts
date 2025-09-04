@@ -84,7 +84,8 @@ export class AIAssessmentService {
     company_id: string,
     project_id: string,
     input_text: string,
-    account_number: string
+    account_number: string,
+    ai_assessment_api_status:string
   ) {
     // Implementation for creating an audit log entry
     const mainDb = await this.getMainDb();
@@ -101,6 +102,7 @@ export class AIAssessmentService {
           company_id,
           project_id,
           process.env.SYSTEM_USER_ID!,
+          ai_assessment_api_status
         ],
       });
     
@@ -139,14 +141,15 @@ export class AIAssessmentService {
            let callTriggerAi = await axios.post(process.env.TRIGGER_AI_URL!, payload, {
                 headers: headers
             });
-          this.logger.info(`Trigger AI Response: ${JSON.stringify(callTriggerAi)}`);
-           await this.createAuditLogEntry(
+            this.logger.info(`Trigger AI Response: ${JSON.stringify(callTriggerAi.data)}`);
+             await this.createAuditLogEntry(
             transaction_id,
             company_id,
             id,
             input_text,
-            account_number
-          );
+            account_number,
+            `${callTriggerAi?.data?.statusCode || ""} - ${callTriggerAi?.data?.statusMessage || ""}`
+            );
           
         }
       } else {
@@ -157,13 +160,14 @@ export class AIAssessmentService {
           let callTriggerAi = await axios.post(process.env.TRIGGER_AI_URL!, payload, {
                 headers: headers
           });
-        this.logger.info(`Trigger AI Response: ${JSON.stringify(callTriggerAi)}`);
+           this.logger.info(`Trigger AI Response: ${JSON.stringify(callTriggerAi.data)}`);
          await this.createAuditLogEntry(
           transaction_id,
           company_id,
           project_id,
           input_text,
-          account_number
+          account_number,
+           `${callTriggerAi?.data?.statusCode || ""} - ${callTriggerAi?.data?.statusMessage || ""}`
         );
          
       }
