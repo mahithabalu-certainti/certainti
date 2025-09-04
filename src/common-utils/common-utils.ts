@@ -637,10 +637,13 @@ export const ALLOWED_COUNTRIES: AllowedCountry[] = [
   'fr',
 ];
 const currentYear = new Date().getFullYear();
-export const fiscalYears = Array.from({ length: currentYear - 1950 + 1 }, (_, i) => {
-  const year = currentYear - i;
-  return { value: year.toString(), label: `FY-${year}` };
-});
+export const fiscalYears = Array.from(
+  { length: currentYear - 1950 + 1 },
+  (_, i) => {
+    const year = currentYear - i;
+    return { value: year.toString(), label: `FY-${year}` };
+  }
+);
 
 export const checkError = (data: CheckError[]) => {
   return data.some((value) => value.isError === true);

@@ -220,7 +220,7 @@ export const postMailIntractionOtp = async (
     );
     return data;
   } catch (error) {
-    console.error('Error fetching highlights details:', error);
+    console.error('Error generate OTP', error);
     throw error;
   }
 };

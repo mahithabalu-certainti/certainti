@@ -172,16 +172,23 @@ const processQueue = (error: unknown, token: string | null = null) => {
           processQueue(refreshError, null);
           isRefreshing = false;
           console.error('refreshError', refreshError);
-          // Show error toast
-          showToast('Session expired. Please login again.', 'error');
-          setTimeout(() => {
-            localStorage.removeItem('auth');
-            localStorage.removeItem('showAdminSidebar');
-            localStorage.removeItem('resetPassword');
-            if (window.location.pathname !== LOGIN) {
-              window.location.href = LOGIN;
-            }
-          }, 3000);
+          const message = (error?.response?.data as { message?: string })
+            ?.message;
+          if (message?.includes('Interaction')) {
+            localStorage.removeItem('temAuth');
+            localStorage.removeItem('otp_timeout');
+          } else {
+            // Show error toast
+            showToast('Session expired. Please login again.', 'error');
+            setTimeout(() => {
+              localStorage.removeItem('auth');
+              localStorage.removeItem('showAdminSidebar');
+              localStorage.removeItem('resetPassword');
+              if (window.location.pathname !== LOGIN) {
+                window.location.href = LOGIN;
+              }
+            }, 3000);
+          }
           return Promise.reject(refreshError);
         }
       } else if (error.response?.status === 403) {
