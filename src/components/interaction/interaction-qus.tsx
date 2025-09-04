@@ -8,7 +8,7 @@ import {
   AttachmentsSideIcon,
   DownloadIcon,
   KeyContactRemoveIcon,
-  PdfIcon,
+  DocumentIcon,
 } from '../../assets';
 import { formatDateToYYYYMMDDWithTime } from '../../common-utils';
 import {
@@ -16,6 +16,7 @@ import {
   useUploadInteractionAttachment,
 } from '../../consultant/services/interactions/response-interaction-service';
 import { TruncateWithTooltip } from '../truncate-with-tooltip';
+import { useToast } from '../../hooks';
 
 interface SectionHeaderButton {
   label: string;
@@ -31,6 +32,20 @@ enum FlagTypeEnum {
   draft = 'draft',
   submit = 'submit',
 }
+
+const ALLOWED_FILE_TYPES = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'text/plain',
+  'text/csv',
+];
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 interface InteractionQuesProps {
   questions: InteractionQuestion[];
@@ -55,6 +70,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   formData,
   className,
 }) => {
+  const { successToast, errorToast } = useToast();
   const [activeFlag, setActiveFlag] = useState<FlagTypeEnum | null>(null);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editedAnswers, setEditedAnswers] = useState<Record<string, string>>(
@@ -210,9 +226,11 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
         setIsEditing(false);
         setActiveFlag(null);
         setValidationErrors({});
+        successToast('Response saved successfully');
       },
       onError: () => {
         setActiveFlag(null);
+        errorToast('Failed to save response. Please try again.');
       },
     });
   };
@@ -231,11 +249,38 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
     }
   };
 
+  const validateFile = (file: File): { isValid: boolean; error?: string } => {
+    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+      return {
+        isValid: false,
+        error:
+          'Only document files (PDF, Word, Excel, PowerPoint, Text) are allowed',
+      };
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      return {
+        isValid: false,
+        error: 'File size must be less than 10MB',
+      };
+    }
+
+    return { isValid: true };
+  };
+
   const handleGlobalFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Validate file
+    const validation = validateFile(file);
+    if (!validation.isValid) {
+      errorToast(validation?.error || '');
+      e.target.value = '';
+      return;
+    }
 
     try {
       const res = await uploadFileMutation.mutateAsync({
@@ -257,6 +302,14 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Validate file
+    const validation = validateFile(file);
+    if (!validation.isValid) {
+      errorToast(validation?.error || '');
+      e.target.value = '';
+      return;
+    }
 
     try {
       const res = await uploadFileMutation.mutateAsync({
@@ -384,6 +437,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
             type='file'
             className='hidden'
             onChange={handleGlobalFileUpload}
+            accept='.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv'
           />
         </div>
       </div>
@@ -406,7 +460,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                   className='flex items-center justify-between border border-[#CBD6E2] bg-[#FFFBFA] rounded-[2px] p-2 px-3'
                 >
                   <div className='flex items-center gap-2 w-[95%]'>
-                    <PdfIcon />
+                    <DocumentIcon className='w-6 h-6' />
                     <div className='text-[14px] text-[#425A76] font-normal max-w-[90%]'>
                       <TruncateWithTooltip
                         text={`${file.fileName}${file.fileType}`}
@@ -545,6 +599,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                   type='file'
                   className='hidden'
                   onChange={(e) => handleQuestionFileUpload(e, q.rid)}
+                  accept='.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv'
                 />
               </div>
             ) : (
@@ -601,7 +656,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                       className='flex items-center justify-between border border-[#CBD6E2] bg-[#FFFBFA] rounded-[2px] p-2 px-3'
                     >
                       <div className='flex items-center gap-2 w-[95%]'>
-                        <PdfIcon />
+                        <DocumentIcon className='w-6 h-6' />
                         <div className='text-[14px] text-[#425A76] font-normal max-w-[90%]'>
                           <TruncateWithTooltip
                             text={`${file.fileName}${file.fileType}`}

@@ -5,12 +5,17 @@ import { RootState } from '../../../../../store/store';
 import ResourceTableHeader from '../resources/resource-table-header';
 import { getProjectColumns } from './columns';
 import {
+  ProjectTriggerAI,
   useAccountProjects,
   useGetProjectType,
 } from '../../../../services/project';
 import { PROJECT_CREATE, PROJECT_DETAILS } from '../../../../../routes';
 import { generatePath, useNavigate, useParams } from 'react-router-dom';
-import { Project, ProjectListParams } from '../../../../types/project';
+import {
+  Project,
+  ProjectListParams,
+  ProjectTriggerAIPayload,
+} from '../../../../types/project';
 import {
   ListTable,
   ManageColumnsPopover,
@@ -74,7 +79,7 @@ const Projects: React.FC<ProjectsProps> = ({
 }) => {
   const { accountid } = useParams();
   const navigate = useNavigate();
-  const { errorToast } = useToast();
+  const { successToast, errorToast } = useToast();
   const projectTypeOptions = useGetProjectType();
   const Classification = useFetchClassification();
   const [projectsTabs, setProjectsTabs] = useState(projectTabs);
@@ -109,7 +114,8 @@ const Projects: React.FC<ProjectsProps> = ({
     accountDetails?.accountById?.status?.status_name?.toLowerCase() !==
     'active';
   const [projectList, setProjectList] = useState<Project[]>([]);
-
+  const [selectedTableId, setSelectedTableIds] = useState<string[]>([]);
+  const [clearTrigger, setClearTrigger] = useState(false);
   // Permission Mangement
   const { modules, permission } = useSelector(
     (state: RootState) => state.permission
@@ -263,6 +269,34 @@ const Projects: React.FC<ProjectsProps> = ({
     }
     return row.project_rid || '';
   };
+
+  const handleselectedList = (id: string[]) => {
+    console.log(id);
+    const childIds = id.filter((_, index) => index % 2 === 0);
+    setSelectedTableIds(childIds);
+  };
+  const triggerAIMutation = ProjectTriggerAI();
+
+  const handleTriggerAIBtn = () => {
+    const payload: ProjectTriggerAIPayload = {
+      data: [
+        {
+          account_rid: accountid || '',
+          project_fiscal_rid: selectedTableId,
+        },
+      ],
+      type: 'project',
+    };
+    triggerAIMutation.mutate(payload, {
+      onSuccess: (res) => {
+        successToast(res.statusMessage);
+        setClearTrigger((prev) => !prev);
+      },
+      onError: (err) => {
+        console.log(err);
+      },
+    });
+  };
   const actionMenuItems = [
     {
       label: 'Edit',
@@ -301,6 +335,15 @@ const Projects: React.FC<ProjectsProps> = ({
       disabled: accountInActive,
       onClick: () => handleCreateProject(),
       sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
+      hide: !projectCreateIsEnable,
+    },
+    {
+      label: 'Trigger AI',
+      variant: 'outlined' as const,
+      disabled: accountInActive || selectedTableId.length === 0,
+      onClick: () => handleTriggerAIBtn(),
+      loading: triggerAIMutation.isPending,
+      sx: { ...BUTTON_STYLES, width: '80px', minWidth: '80px' },
       hide: !projectCreateIsEnable,
     },
     {
@@ -630,10 +673,11 @@ const Projects: React.FC<ProjectsProps> = ({
               onSort={handleSort}
               selectable={true}
               onSelectionChange={(selectedIds) =>
-                console.log('Selected:', selectedIds)
+                handleselectedList(selectedIds)
               }
               component='project'
               onCellEdit={handleCellEdit}
+              clearSelectedRows={clearTrigger}
             />
           </div>
         </>

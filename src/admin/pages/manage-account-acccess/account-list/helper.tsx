@@ -2,6 +2,7 @@ import {
   industryOperator,
   keyOptions,
 } from '../../../../consultant/pages/account-list/helpers';
+import { SelectOption } from '../../../../consultant/types';
 import {
   FieldConfig,
   FilterSelectOption,
@@ -56,12 +57,21 @@ export const getManageUserListFilterFields = (): FieldConfig[] => [
     operatorOption: textfieldOptions,
   },
 ];
-export const getManageGroupListFilterFields = (): FieldConfig[] => [
+export const getManageGroupListFilterFields = (
+  allGroupTypes: SelectOption[]
+): FieldConfig[] => [
   {
     label: 'Group Name',
     name: 'group_name',
     type: 'text',
     operatorOption: textfieldOptions,
+  },
+  {
+    label: 'Group Type',
+    name: 'group_type',
+    type: 'enumSelect',
+    operatorOption: industryOperator,
+    options: allGroupTypes,
   },
   {
     label: 'Number of Users',

@@ -74,8 +74,9 @@ const ImportFile: React.FC<ImportFileProps> = ({
 
   const currentYear = new Date().getFullYear();
 
+  const minYear = 1950;
   const fiscalYearsOptions: { label: string; value: string }[] = Array.from(
-    { length: currentYear - 2000 + 1 },
+    { length: currentYear - minYear + 1 },
     (_, index) => {
       const year = currentYear - index;
       return {

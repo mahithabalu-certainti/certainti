@@ -14,15 +14,18 @@ import { InteractionTable } from './table/interaction-table';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import {
+  AllModules,
+  AllPermissions,
   useGetInteractionResponeSources,
   useGetInteractionStatus,
   useGetInteractionTypes,
 } from '../../../../common-service';
-import { reshapeGlobalFilter } from '../../../../common-utils';
+import { checkPermission, reshapeGlobalFilter } from '../../../../common-utils';
 import { exportGlobalInteractions } from '../../../services/interactions/interactions-service';
 import TextButton from '../../../../components/button/text-button';
 import { GLOBAL_INTERACTIONS_CREATE } from '../../../../routes';
 import { useNavigate } from 'react-router-dom';
+import { AccessRestricted } from '../../../../components/account-restricted';
 
 const Interaction: React.FC = () => {
   const navigate = useNavigate();
@@ -50,6 +53,44 @@ const Interaction: React.FC = () => {
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
+  const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  const { permission, modules } = useSelector(
+    (state: RootState) => state.permission
+  );
+
+  // Permissions
+  const interactionsEnable = checkPermission(modules, AllModules.INTERACTIONS);
+  const interactionsViewEnable = checkPermission(
+    permission,
+    AllPermissions.INTERACTIONS_VIEW_EDIT
+  );
+
+  const createInteractionsEnable = checkPermission(
+    permission,
+    AllPermissions.INTERACTIONS_CREATE
+  );
+
+  const isInteractionsExportEnable = checkPermission(
+    permission,
+    AllPermissions.INTERACTIONS_EXPORT
+  );
+
+  const interactionsViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.INTERACTIONS_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    interactionsViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [interactionsViewEditFields]);
 
   const handleFilterModal = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -107,6 +148,7 @@ const Interaction: React.FC = () => {
       sort_by: tableParams?.sort_by || 'ASC',
       filters: tableParams?.filters || {},
       fiscal_year: newFiscalYear,
+      timezone: systemTimezone,
       globalFilters: reshapeGlobalFilter(filters as FilterState) || {},
     };
     exportGlobalInteractions(projectInteractionHistoryExportPayload);
@@ -115,7 +157,7 @@ const Interaction: React.FC = () => {
   const menuItems = [
     {
       label: 'Export',
-      hide: false,
+      hide: !isInteractionsExportEnable,
       onClick: () => handleExport(),
     },
   ];
@@ -154,7 +196,8 @@ const Interaction: React.FC = () => {
     memoizedInteractionTypes,
     // memoizedInteractionSources,
     memoizedInteractionStatus,
-    memoizedInteractionResponseSources
+    memoizedInteractionResponseSources,
+    permissionMap
   );
 
   const handleCreate = () => {
@@ -174,6 +217,9 @@ const Interaction: React.FC = () => {
   ) => {
     setColumnAnchorEl(event.currentTarget);
   };
+
+  if (!interactionsEnable || !interactionsViewEnable)
+    return <AccessRestricted />;
 
   return (
     <div className='flex flex-col w-full  h-full'>
@@ -202,6 +248,7 @@ const Interaction: React.FC = () => {
           <TextButton
             label='Create Interaction'
             onClick={handleCreate}
+            hide={!createInteractionsEnable}
             sx={{
               width: '124px',
               minWidth: '124px',

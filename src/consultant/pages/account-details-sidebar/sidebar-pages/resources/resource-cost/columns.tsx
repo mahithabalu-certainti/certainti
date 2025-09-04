@@ -23,7 +23,7 @@ const getFiscalYears = (range: number) => {
   });
 };
 
-const fiscalYearsCost = getFiscalYears(DATE_CONFIG.TOTAL_YEARS);
+const fiscalYearsCost = getFiscalYears(DATE_CONFIG.COST_FISCAL_YEARS_RANGE);
 
 export const getResourceCostColumns = (
   currencyOptions: ListOption[],

@@ -1,5 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { InteractionList, InteractionListURLParams } from '../../../../types';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  InteractionList,
+  InteractionListURLParams,
+  StatusTypeEnum,
+} from '../../../../types';
 import { useGlobalInteractionList } from '../../../../services/interactions/interactions-service';
 import {
   ListTable,
@@ -14,6 +18,9 @@ import {
   ListTableColumn,
   ShowHideTableColumn,
 } from '../../../../../components/table/types';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../store/store';
+import { AllPermissions } from '../../../../../common-service';
 
 interface InteractionTableProps {
   tableParams: InteractionListURLParams;
@@ -39,6 +46,8 @@ export const InteractionTable: React.FC<InteractionTableProps> = ({
   const navigate = useNavigate();
   const [interactionList, setInteractionList] = useState<InteractionList[]>([]);
 
+  const { permission } = useSelector((state: RootState) => state.permission);
+
   const { data, isLoading, isError } = useGlobalInteractionList(
     tableParams,
     refreshTrigger
@@ -52,6 +61,31 @@ export const InteractionTable: React.FC<InteractionTableProps> = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
+
+  // Permissions
+  const interactionsViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.INTERACTIONS_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const interactionFieldsEditable = useMemo(
+    () =>
+      permission
+        .find((item) => item.name === AllPermissions.INTERACTIONS_VIEW_EDIT)
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    interactionsViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [interactionsViewEditFields]);
 
   const handleSort = (sort: string, sortOrder: 'asc' | 'desc') => {
     const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
@@ -84,9 +118,18 @@ export const InteractionTable: React.FC<InteractionTableProps> = ({
     const queryParams = new URLSearchParams({
       accountId: row.account_rid,
       account_name: row.account_name ?? '',
-      source: 'account',
+      source: 'global',
     });
     navigate(`${path}?${queryParams.toString()}`);
+  };
+
+  const disableInteractionEditBtn = (row: InteractionList): boolean => {
+    const status = (row.status_name || '').toLowerCase() as StatusTypeEnum;
+    return [
+      StatusTypeEnum.cancelled,
+      StatusTypeEnum.completed,
+      StatusTypeEnum.response_received,
+    ].includes(status);
   };
 
   const actionButtons: ActionItem<InteractionList>[] = [
@@ -94,7 +137,8 @@ export const InteractionTable: React.FC<InteractionTableProps> = ({
       label: 'Edit',
       onClick: (row: InteractionList) => handleEdit(row),
       icon: EditIcon,
-      disabled: false,
+      hide: !interactionFieldsEditable,
+      disabled: (row: InteractionList) => disableInteractionEditBtn(row),
       iconStyle: {
         filter:
           'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
@@ -124,7 +168,8 @@ export const InteractionTable: React.FC<InteractionTableProps> = ({
   const interactionColumns = getGlobalInteractionListColumns(
     handleViewInteraction,
     handleViewInteractionHistory,
-    handleViewInteractionAttachmentCount
+    handleViewInteractionAttachmentCount,
+    permissionMap
   );
 
   const RestrictedColumns = [
