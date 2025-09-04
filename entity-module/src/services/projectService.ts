@@ -6,6 +6,7 @@ import {
   HttpStatus,
   MAIN_SCHEMA_NAME,
   STATUS_MESSAGE,
+  primaryKeyContacts,
   rawQueries,
 } from "../utils/constants";
 import { ICreateProject, IUpdateProject } from "../utils/types";
@@ -1735,10 +1736,11 @@ export class ProjectService {
       ].filter(Boolean);
 
       let keyContactMap: Record<string, string> = {};
+      let keyContactRoleMap: Record<string, string> = {};
 
       if (keyContactIds.length > 0) {
         const keyContactRows = await mainDbSequlize.query(
-          `SELECT rid, role_name FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE rid IN (:ids)`,
+          `SELECT rid, role_name ,role_map FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE rid IN (:ids)`,
           {
             replacements: { ids: keyContactIds },
             type: "SELECT",
@@ -1747,6 +1749,9 @@ export class ProjectService {
 
         keyContactMap = Object.fromEntries(
           keyContactRows.map((c: any) => [c.rid, c.role_name])
+        );
+        keyContactRoleMap = Object.fromEntries(
+          keyContactRows.map((c: any) => [c.role_map, c.role_name])
         );
       }
 
@@ -1757,16 +1762,17 @@ export class ProjectService {
 
       const technicalContact = enrichedKeyContacts.find(
         (e: any) =>
-          e.role_name === "Client Project Technical Point of Contact" &&
+          e.role_name === keyContactRoleMap[primaryKeyContacts.technical_point_of_contact] &&
           e.is_primary_contact
       );
       const financialContact = enrichedKeyContacts.find(
         (e: any) =>
-          e.role_name === "Financial Consultant" && e.is_primary_contact
+          e.role_name === keyContactRoleMap[primaryKeyContacts.financial_consultant] &&
+           e.is_primary_contact
       );
       const pointOfContact = enrichedKeyContacts.find(
         (e: any) =>
-          e.role_name === "Client Project Point of Contact" &&
+          e.role_name === keyContactRoleMap[primaryKeyContacts.project_point_of_contact] &&
           e.is_primary_contact
       );
 

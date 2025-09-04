@@ -2974,10 +2974,10 @@ private async createInteractionTable(
           primary_contact_role: roleKey || "",
           primary_contact_name: name || "", // technical_consultant: getPrimaryContactName("Technical Consultant") || "-",
           professional_services_consultant:
-            getPrimaryContactName("Professional Services Consultant") || "-",
+            getPrimaryContactName(roleKeyMap.professional_services_consultant) || "-",
           finance_executive:
-            getPrimaryContactName("Client Finance Executive") || "-",
-          finance_lead: getPrimaryContactName("Client Finance Lead") || "-",
+            getPrimaryContactName(roleKeyMap.finance_executive) || "-",
+          finance_lead: getPrimaryContactName(roleKeyMap.finance_lead) || "-",
           ...(isChild && {
             projects_by_fiscal_year: accountFiscalMap.get(account.rid) || [],
           }),

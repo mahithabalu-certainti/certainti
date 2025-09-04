@@ -45,8 +45,6 @@ export const fetchInteractionForProjectLevelQuery = (
         i.project_fiscal_rid = '${project_fiscal_rid}'
         AND
         i.project_rid = '${project_id}'
-        AND
-        i.fiscal_year = ${fiscal_year}
         `
     }
     let filteredData = filterForInteractions(filters, andConditions, filteredQueryArray, filterTypes, filtersColumns)
@@ -66,6 +64,7 @@ export const fetchInteractionForProjectLevelQuery = (
     else if(sort === filtersColumns.modified_datetime) sortValue = `ORDER BY i.modified_datetime ${sortBy}`
     else if(sort === filtersColumns.project_code) sortValue = `ORDER BY i.project_code ${sortBy}`
     else if(sort === filtersColumns.fiscal_year) sortValue = `ORDER BY i.fiscal_year ${sortBy}`
+    else if(sort === filtersColumns.parent_interaction_rid) sortValue = `ORDER BY p.r_number ${sortBy}`
     else sortValue = `ORDER BY i.r_number ASC`
 
     if(filteredData?.filteredQueryArray.length! > 0) {
@@ -84,19 +83,20 @@ export const fetchInteractionForProjectLevelQuery = (
             i.response_submitted_on, i.response_source_rid, i.created_by, i.modified_by,
             i.created_datetime, i.modified_datetime, p.r_number AS parent_r_number,
             i.account_rid, i.project_rid, i.rid AS interaction_history, 
-            i.interaction_url, i.fiscal_year, i.project_fiscal_rid,
+            i.interaction_url,i.project_fiscal_rid,
             COUNT(i.rid) OVER() AS total_records, i.interaction_age,
             i.interaction_source_rid, i.interaction_type_rid, i.attachment_count,
-            pf.project_code
+            pf.project_code,pf.fiscal_year
 
             FROM
             ${schemaName}.interactions i
             LEFT JOIN ${schemaName}.interactions p ON p.rid = i.parent_interaction_rid
-            LEFT JOIN ${schemaName}.project pf ON pf.rid = i.project_rid
+            LEFT JOIN ${schemaName}.project_fiscal pf ON pf.rid = i.project_fiscal_rid
             WHERE
             ${whereConditions}
             ${filteredData?.andConditions}
             ${filterQueryValues}
+            ${sortValue}
     ),
     paginated_datas AS (
     SELECT * FROM fetch_interaction ${pagination}
@@ -132,7 +132,7 @@ export const fetchInteractionForProjectLevelQuery = (
         'interaction_source', i.interaction_source_rid,
         'attachment_count', i.attachment_count,
         'project_code', i.project_code
-        )${sortValue} NULLS LAST) AS interactions
+        ) ) AS interactions
 
         FROM
         paginated_datas i
@@ -173,7 +173,7 @@ export const listAllInteractionSummary = (
     }
 
     if(fiscal_year == 0) fiscalYearQuery = ``
-    else fiscalYearQuery = ` i.fiscal_year = ${fiscal_year}`
+    else fiscalYearQuery = ` pf.fiscal_year = ${fiscal_year}`
 
     if(globalFiltersQueryConditions !== '' || fiscalYearQuery !== '' || filterQueryValues !== '') whereKey = ` WHERE `
     else whereKey = ``
@@ -212,6 +212,8 @@ export const listAllInteractionSummary = (
     else if(sort === filtersColumnsForInteractionSummary.account_name) sortValue = ` ORDER BY i.account_name ${sortBy}`
     else if(sort === filtersColumnsForInteractionSummary.fiscal_year) sortValue = ` ORDER BY i.fiscal_year ${sortBy}`
     else if(sort === filtersColumnsForInteractionSummary.response_source_name) sortValue = ` ORDER BY i.response_source_name ${sortBy}`
+    else if(sort === filtersColumnsForInteractionSummary.parent_interaction_rid) sortValue = ` ORDER BY parent_r_number ${sortBy}`
+   
     else sortValue = `ORDER BY i.r_number ASC`
 
 
@@ -226,10 +228,10 @@ export const listAllInteractionSummary = (
     it.interaction_type_name, ir.rid AS response_source_rid, ir.response_source_name,
     i.created_by, CONCAT(u.first_name, ' ', u.last_name) AS created_user_name,
     CONCAT(uu.first_name, ' ', uu.last_name) AS updated_user_name,
-    i.created_datetime, i.modified_datetime, i.fiscal_year, i.account_rid, i.project_rid,
+    i.created_datetime, i.modified_datetime, i.account_rid, i.project_rid,
     i.interaction_source_rid, sn.interaction_source_name,
     i.project_fiscal_rid, COUNT(*) OVER() AS total_records, i.modified_by, i.interaction_age,
-    a.account_name, pf.project_code
+    a.account_name, pf.project_code, pf.fiscal_year
     FROM
     ${MAIN_SCHEMA_NAME}.interactions_summary i
     LEFT JOIN ${MAIN_SCHEMA_NAME}.interaction_type it ON it.rid = i.interaction_type_rid
@@ -239,7 +241,7 @@ export const listAllInteractionSummary = (
     LEFT JOIN ${MAIN_SCHEMA_NAME}.interactions_summary p ON p.interaction_rid = i.parent_interaction_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.interaction_source sn ON sn.rid = i.interaction_source_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.account a ON a.rid = i.account_rid
-    LEFT JOIN ${MAIN_SCHEMA_NAME}.project_summary pf ON pf.project_rid = i.project_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary pf ON pf.project_fiscal_rid = i.project_fiscal_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.interaction_response_source ir ON ir.rid = i.response_source_rid
     ${whereKey}
     ${globalFiltersQueryConditions}
@@ -247,9 +249,10 @@ export const listAllInteractionSummary = (
     ${fiscalYearQuery}
     ${andConditionsForjoinsForThree}
     ${filterQueryValues}
+    
     ),
     paginated_data AS (
-    SELECT * FROM fetch_all_interactions ${pagination}
+    SELECT * FROM fetch_all_interactions i ${sortValue} ${pagination}
     )
     SELECT 
         array_agg(jsonb_build_object(
@@ -288,7 +291,7 @@ export const listAllInteractionSummary = (
             'updated_user_name', i.updated_user_name,
             'attachment_count', i.attachment_count,
             'project_code', i.project_code
-        )${sortValue} NULLS LAST) AS interactions
+        )) AS interactions
 
         FROM
         paginated_data i`
@@ -312,6 +315,7 @@ const filterForInteractions = (
                         let dynamicReference = ``
                         if(filteredColumns == 'project_code') dynamicReference = `pf`
                         else if(filteredColumns == 'account_name') dynamicReference = `a`
+                        else if(filteredColumns == 'fiscal_year') dynamicReference = `pf`
                         else if(filteredColumns == 'parent_interaction_rid')
                             {
                                 dynamicReference = `p`;
@@ -387,8 +391,8 @@ export const listResponseHistory = (interaction_rid : string, schemaName : strin
     let pagination = `LIMIT ${limit} OFFSET ${offset}`
     let sortQuery : string = ``
 
-    if(responseSortKeys.includes(sort.toLowerCase())) sortQuery = `ORDER BY i.${sort} ${sortBy}`
-    else sortQuery = `ORDER BY i.r_number ASC`
+    if(responseSortKeys.includes(sort.toLowerCase())) sortQuery = `ORDER BY ${sort} ${sortBy}`
+    else sortQuery = `ORDER BY r_number ASC`
     
     let query = 
     `
@@ -410,7 +414,7 @@ export const listResponseHistory = (interaction_rid : string, schemaName : strin
     SELECT f.*, COUNT(f.*) OVER() AS total_records FROM fetch_interaction_response f
     ),
     paginated_data AS (
-    SELECT * FROM counted_datas ${pagination}
+    SELECT * FROM counted_datas   ${sortQuery}  ${pagination}
     )
     
     SELECT 
@@ -521,6 +525,7 @@ export const listInteractionHistory = (page : number, limit : number, sort : str
     ${filterQueryCombinedValues}
     GROUP BY 
     i.r_number, p.project_name, p.project_code, i.response_source_rid, ih.rid,i.interaction_source_rid
+    ${sortValue}
     ),
     paginated_data AS (
     SELECT * from fetch_interaction_history ${pagination})
