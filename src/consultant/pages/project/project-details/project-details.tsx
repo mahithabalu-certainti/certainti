@@ -448,7 +448,7 @@ export const ProjectDetails = () => {
       case 'interactions':
         return (
           <Interactions
-            accountInActive={accountInActive}
+            accountInActive={accountInActive || projectInActive}
             projectDetails={projectData}
             setInteractionsParams={setInteractionsParams}
           />

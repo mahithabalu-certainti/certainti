@@ -6,6 +6,7 @@ import { CloseIcon, ErrorInfoIcon } from '../../assets';
 import TextButton from '../button/text-button';
 import { useSendInteraction } from '../../consultant/services/interactions/interactions-service';
 import { useParams, useSearchParams } from 'react-router-dom';
+import { useToast } from '../../hooks';
 
 interface SendInteractionModalProps {
   isOpen: boolean;
@@ -23,6 +24,7 @@ const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
   const [searchParams] = useSearchParams();
   const { accountid } = useParams();
   const accountId = searchParams.get('accountID') || '';
+  const { successToast } = useToast();
 
   const [emails, setEmails] = useState<
     Record<string, { email: string; name: string }>
@@ -124,7 +126,8 @@ const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
         interactions,
       };
       sendInteraction.mutate(payload, {
-        onSuccess: () => {
+        onSuccess: (response) => {
+          successToast(response?.statusMessage);
           handleClose();
           onSuccessRefetch();
         },
@@ -150,7 +153,8 @@ const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
         interactions,
       };
       sendInteraction.mutate(payload, {
-        onSuccess: () => {
+        onSuccess: (response) => {
+          successToast(response?.statusMessage);
           handleClose();
           onSuccessRefetch();
         },
@@ -179,8 +183,8 @@ const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
         {!showEmailFields && (
           <div className='mt-4'>
             <h3 className='text-[16px] font-bold text-[#2D3E4F] text-center text-sm mb-8'>
-              Would you like to add one or more external email addresses to
-              notify additional recipients for this interaction?
+              Do you want to add external email addresses to notify additional
+              recipients for this interaction?
             </h3>
             <div className='flex gap-3 justify-end'>
               <TextButton
@@ -196,12 +200,12 @@ const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
                 }}
               />
               <TextButton
-                label='Confirm'
+                label='Add Recipients'
                 onClick={() => setShowEmailFields(true)}
                 disabled={sendInteraction.isPending}
                 sx={{
-                  width: '64px',
-                  minWidth: '64px',
+                  width: '110px',
+                  minWidth: '110px',
                   fontWeight: 400,
                   fontSize: '13px',
                   height: '32px',

@@ -254,6 +254,11 @@ const Projects: React.FC<ProjectsProps> = ({
     return row.project_rid || '';
   };
 
+  const TriggerAIEnable = checkPermission(
+    permission,
+    AllPermissions.TRIGGER_AI_ASSESSMENT
+  );
+
   const handleselectedList = (id: string[]) => {
     console.log(id);
     const childIds = id.filter((_, index) => index % 2 === 0);
@@ -328,7 +333,7 @@ const Projects: React.FC<ProjectsProps> = ({
       onClick: () => handleTriggerAIBtn(),
       loading: triggerAIMutation.isPending,
       sx: { ...BUTTON_STYLES, width: '80px', minWidth: '80px' },
-      hide: !projectCreateIsEnable,
+      hide: !TriggerAIEnable,
     },
     {
       label: 'Download',
@@ -454,6 +459,7 @@ const Projects: React.FC<ProjectsProps> = ({
         account_rid: parentProject.account_rid,
         project_rid: childFiscal.project_rid,
         project_fiscal_rid: childFiscal.project_fiscal_rid,
+        global_fiscal_year: convertedFiscalYear || 0,
       }
     );
 
