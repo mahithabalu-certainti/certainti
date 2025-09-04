@@ -277,7 +277,7 @@ export const rawQueries = {
   },
   fetchResponseSourceByType(type : string) {
     return `
-    SELECT rid, response_source_name FROM ${MAIN_SCHEMA_NAME}.interaction_response_source WHERE response_source_name = '${type}'`
+    SELECT rid, response_source_name FROM ${MAIN_SCHEMA_NAME}.interaction_response_source WHERE type = '${type}'`
   },
   fetchProjectInfo(rid : string,schemaName : string) {
     return `
