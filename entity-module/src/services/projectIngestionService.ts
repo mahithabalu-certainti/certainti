@@ -1561,6 +1561,9 @@ class ProjectIngestionService {
       whereFiscal = {
         account_rid: accountData.rid,
       };
+      if (fiscalYear) {
+        whereFiscal.fiscal_year = fiscalYear;
+      }
 
         projectData = await Project.findAll({
         where: whereProject,
