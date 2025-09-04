@@ -1104,7 +1104,8 @@ export class InteractionService {
       delete d.download_link
       const data =  {
         ...d,
-        download_link : d.new_url
+        download_link : d.new_url,
+        size: d.size ? `${d.size} mb` : null
       }
       delete data.total_records
       delete data.new_url
