@@ -897,7 +897,7 @@ if(!this.orgDbSequelize)
     transaction: Transaction
   ) {
     try {
-      const { InteractionResponseHistory, InteractionAttachment } =
+      const { InteractionResponseHistory, InteractionAttachment,Interaction } =
         await this.interactionModelService.getModels(accountNumber);
       if (!this.mainDbSequelize) {
       this.mainDbSequelize =
@@ -906,6 +906,14 @@ if(!this.orgDbSequelize)
     let isAutoTriggerEnabled = false;
     const [responseSourceIDs]:any= await this.mainDbSequelize.query(rawQueries.fetchResponseSourceByType(responseData.response_source));
     responseData.response_source_rid = responseSourceIDs[0]?.rid ?? null;
+    if(responseData.response_source === 'Email' || responseData.response_source === 'Link')
+    {
+      const interaction = await Interaction.findOne({
+        where: { rid: responseData.interaction_rid },
+      });
+      const fetchRecipientName = interaction ? [{ recipient_name: interaction.recipient_name }] : [{ recipient_name: null }];
+      userId = fetchRecipientName[0]?.recipient_name ?? userId;
+    }
     const [emailInfo]: any[] = await this.mainDbSequelize.query(rawQueries.fetchUserEmail(userId));
      const userEmailId = emailInfo[0]?.email ?? userId;
       let responseCreated = false;
