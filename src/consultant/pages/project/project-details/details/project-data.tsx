@@ -15,6 +15,7 @@ import {
 import { Box } from '@mui/material';
 import { ProjectTriggerAI } from '../../../../services/project';
 import { useToast } from '../../../../../hooks';
+import { checkPermission } from '../../../../../common-utils';
 
 const BUTTON_STYLES = {
   height: '26px !important',
@@ -120,6 +121,11 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
     });
   };
 
+  const TriggerAIEnable = checkPermission(
+    permission,
+    AllPermissions.TRIGGER_AI_ASSESSMENT
+  );
+
   const isKeyContactAvailable =
     projectDetails?.keyContact && projectDetails?.keyContact.length > 0;
   const headerButtons = [
@@ -145,8 +151,7 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
       loading: triggerAIMutation.isPending,
       onClick: () => handleTriggerAI(),
       sx: { ...BUTTON_STYLES, width: '96px', minWidth: '96px' },
-      // hide: !projectDownloadIsEnable,
-      hide: false,
+      hide: !TriggerAIEnable,
     },
   ];
 
