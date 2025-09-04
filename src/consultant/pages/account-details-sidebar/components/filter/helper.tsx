@@ -437,7 +437,7 @@ export const DateFilterControl: React.FC<{
               <DatePicker
                 name='from'
                 maxDate={maxDate ? dayjs(maxDate) : dayjs(today)}
-                minDate={minDate ? dayjs(minDate) : dayjs(sixYearsAgo)}
+                minDate={minDate ? dayjs(minDate) : dayjs("1950-01-01")}
                 value={dayjs(state.date?.value.from, 'YYYY-MM-DD')}
                 disabled={disableInput}
                 format='YYYY-MM-DD'
@@ -448,6 +448,9 @@ export const DateFilterControl: React.FC<{
                     dayjs(newValue).format('YYYY-MM-DD')
                   );
                 }}
+                referenceDate={
+                  maxDate ? dayjs(minDate || dayjs(today)) : dayjs(maxDate)
+                }
                 shouldDisableDate={(date) =>
                   dayjs(date).isAfter(dayjs(), 'day')
                 }
