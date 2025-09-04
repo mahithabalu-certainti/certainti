@@ -558,7 +558,9 @@ if(!this.orgDbSequelize)
         created_by,
         created_datetime,
         response_updated_by,
-        response_updated_on
+        response_updated_on,
+        recipient_name,
+        recipient_email,
       } = interactionDetails.dataValues;
       const metainfo = await this.insertAdditionalInfo(
         interactionDetails,
@@ -590,6 +592,8 @@ if(!this.orgDbSequelize)
         response_updated_by: response_updated_by ?? null,
         response_updated_on: response_updated_on ?? null,
         global_attachments: globalAttachments,
+        recipient_name: recipient_name || null,
+        recipient_email: recipient_email || null,
       };
 
       return response;
