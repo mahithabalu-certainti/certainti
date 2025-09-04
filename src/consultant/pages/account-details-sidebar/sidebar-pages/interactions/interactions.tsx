@@ -18,7 +18,6 @@ import { useInteractionList } from '../../../../services/interactions/interactio
 import { INTERACTIONS_CREATE, INTERACTIONS_EDIT } from '../../../../../routes';
 import {
   ActionItem,
-  ListTableColumn,
   ShowHideTableColumn,
 } from '../../../../../components/table/types';
 import { EditIcon, InteractionDetailIcon } from '../../../../../assets';
@@ -464,19 +463,24 @@ const Interactions: React.FC<InteractionsProps> = ({
     },
   ];
 
-  const [visibleColumns, setVisibleColumns] = useState<
-    ListTableColumn<InteractionList>[]
-  >(interactionColumns.filter((col) => !col.hide));
+  const [columnVisibility, setColumnVisibility] = useState<
+    Record<string, boolean>
+  >(Object.fromEntries(interactionColumns.map((col) => [col.id, !col.hide])));
 
+  const visibleColumns = interactionColumns.filter(
+    (col) => columnVisibility[col.id]
+  );
   if (!interactionsEnable || !interactionsViewEnable)
     return <AccessRestricted />;
 
   const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
-    setVisibleColumns(
-      updatedColumns.filter(
-        (col) => !col.hide
-      ) as ListTableColumn<InteractionList>[]
-    );
+    setColumnVisibility((prev) => {
+      const newVisibility = { ...prev };
+      updatedColumns.forEach((col) => {
+        newVisibility[col.id] = !col.hide;
+      });
+      return newVisibility;
+    });
   };
 
   const handlePopoverClose = () => {
