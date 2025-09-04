@@ -1006,77 +1006,90 @@ export class InteractionService {
     let fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
     let schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number); 
     const result : any = await orgDb.query(listInteractionHistory(data.page, data.limit, data.sort, data.sort_by, data.filters, data.interaction_rid, schemaName));
-    if(result[0][0].interaction_history !== null) {
-      let finalResponseData;
-      let totalRecords;
-      let responseData = result[0][0]
-      const statusIds = [...new Set(responseData.interaction_history.map((d : any) => d.new_status_rid))]
-      const sourceTypeIds : any[] = [...new Set(responseData.interaction_history.map((d : any) => d.interaction_source_rid))]
-      const responseSourceIds = [...new Set(responseData.interaction_history.map((d : any) => d.response_source_rid))]
-      const fetchStatus : any = await mainDb.query(rawQueries.fetchInteractionStatus(statusIds))
-      let fetchSourceTypes :any= await mainDb.query(rawQueries.fetchInteractionSource(sourceTypeIds))
-      const fetchResponseSources : any = await mainDb.query(rawQueries.fetchInteractionResponseSource(responseSourceIds))
-      const mapStatus = new Map(fetchStatus[0].map((d : any) => [d.rid, d.status_name]))
-      const mapResponseSource = new Map(fetchResponseSources[0].map((d : any) => [d.rid, d.response_source_name]))
-       let sourceMap : Map<string, string> = new Map(fetchSourceTypes[0].map((types : any) => [types.rid, types.interaction_source_name]))
-       responseData = responseData.interaction_history.map((d : any) => {
-        return {
-          ...d,
-          status_name : mapStatus.get(d.new_status_rid),
-          response_source : mapResponseSource.get(d.response_source_rid),
-          interaction_source_name : sourceMap.get(d.interaction_source_rid)
-        }
-      })
-    finalResponseData = responseData
-    totalRecords =  finalResponseData[0].total_records
-    let finalSortedData = data.sort === 'status_name' ? finalResponseData.sort((a : any, b : any) => {
-      if(data.sort_by.toLowerCase() === 'desc') {
-        if(!a?.status_name) return 1
-        if(!b?.status_name) return -1 
-        return b.status_name.localeCompare(a.status_name)
-      } else {
-        return a.status_name.localeCompare(b.status_name)
-      }
-    }) : finalResponseData
 
-    
-    let finalStructuredData = {
-      interaction_rnumber : finalSortedData[0].interaction_rnumber,
-      project_code : finalSortedData[0].project_code,
-      project_name : finalSortedData[0].project_name,
-      response_source : finalSortedData[0].response_source,
-      interaction_source_name : finalResponseData[0].interaction_source_name,
-      interaction_history : finalSortedData.map((d : any) => {
-        return {
-          rid : d.interaction_history_rid,
-          status_rid : d.new_status_rid,
-          status_name : d.status_name,
-          date : d.date
-        }
-      })
-    }
 
-    let response = {
-      page : data.page,
-      limit : data.limit,
-      total_records : totalRecords,
-      data : finalStructuredData
-    }
-    return {
-      statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
-      data : response
-    };
-    } else {
-      let response = {
-      page : data.page,
-      limit : data.limit,
-      total_records : 0,
-      interaction_history : []
-    }
+    const responseData = result[0][0]; // Always exists
+
+    // Step 1: Extract response & source RIDs from the base interaction (not from history)
+    const responseSourceIds = [responseData.response_source_rid].filter(Boolean);
+    const sourceTypeIds = [responseData.interaction_source_rid].filter(Boolean);
+
+    // Step 2: Fetch response source & interaction source names
+    const fetchResponseSources: any = await mainDb.query(rawQueries.fetchInteractionResponseSource(responseSourceIds));
+    const fetchSourceTypes: any = await mainDb.query(rawQueries.fetchInteractionSource(sourceTypeIds));
+
+    const mapResponseSource = new Map(fetchResponseSources[0].map((d: any) => [d.rid, d.response_source_name]));
+    const sourceMap = new Map(fetchSourceTypes[0].map((d: any) => [d.rid, d.interaction_source_name]));
+
+    if (responseData.interaction_history.length !== 0) {
+      // Step 3: Process status IDs from history
+      const statusIds = [...new Set(responseData.interaction_history.map((d: any) => d.new_status_rid))];
+      const fetchStatus: any = await mainDb.query(rawQueries.fetchInteractionStatus(statusIds));
+      const mapStatus = new Map(fetchStatus[0].map((d: any) => [d.rid, d.status_name]));
+
+      // Step 4: Enrich history with status_name only (response/source already handled above)
+      const enrichedHistory = responseData.interaction_history.map((d: any) => ({
+        ...d,
+        status_name: mapStatus.get(d.new_status_rid) || null
+      }));
+
+      const totalRecords = enrichedHistory[0].total_records;
+
+      const sortedData =
+        data.sort === "status_name"
+          ? enrichedHistory.sort((a: any, b: any) => {
+              const sortBy = data.sort_by.toLowerCase();
+              if (!a?.status_name) return 1;
+              if (!b?.status_name) return -1;
+              return sortBy === "desc"
+                ? b.status_name.localeCompare(a.status_name)
+                : a.status_name.localeCompare(b.status_name);
+            })
+          : enrichedHistory;
+
+      const finalStructuredData = {
+        interaction_rnumber: responseData.interaction_rnumber,
+        project_code: responseData.project_code,
+        project_name: responseData.project_name,
+        response_source: mapResponseSource.get(responseData.response_source_rid) || null,
+        interaction_source_name: sourceMap.get(responseData.interaction_source_rid) || null,
+        interaction_history: sortedData.map((d: any) => ({
+          rid: d.interaction_history_rid,
+          status_rid: d.new_status_rid,
+          status_name: d.status_name,
+          date: d.date
+        }))
+      };
+
       return {
-      statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
-      data : response
-    };
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          page: data.page,
+          limit: data.limit,
+          total_records: totalRecords,
+          data: finalStructuredData
+        }
+      };
+    } else {
+      // No history, but still include top-level fields
+      const finalStructuredData = {
+        interaction_rnumber: responseData.interaction_rnumber,
+        project_code: responseData.project_code,
+        project_name: responseData.project_name,
+        response_source: mapResponseSource.get(responseData.response_source_rid) || null,
+        interaction_source_name: sourceMap.get(responseData.interaction_source_rid) || null,
+        interaction_history: []
+      };
+
+      return {
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          page: data.page,
+          limit: data.limit,
+          total_records: 0,
+          data: finalStructuredData
+        }
+      };
     }
   }
   async listInteractionAttachments (data : any) {
