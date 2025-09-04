@@ -1,5 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ListTable } from '../../../../../../../../components/table';
+import {
+  ListTable,
+  ManageColumnsPopover,
+} from '../../../../../../../../components/table';
 import { getConfigAssignUsersColumns } from './column';
 import {
   AssignUserAccess,
@@ -15,17 +18,27 @@ import { useToast } from '../../../../../../../../hooks';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../../../store/store';
 import { AllPermissions } from '../../../../../../../../common-service';
+import {
+  ListTableColumn,
+  ShowHideTableColumn,
+} from '../../../../../../../../components/table/types';
 
 interface AssignUserProps {
   reFetchData: number;
   setCount: (value: number) => void;
   filterParams: ConfigAssignUserListParms;
+  columnAnchorEl: HTMLButtonElement | null;
+  setColumnAnchorEl: React.Dispatch<
+    React.SetStateAction<HTMLButtonElement | null>
+  >;
 }
 
 const AssignUsers: React.FC<AssignUserProps> = ({
   reFetchData,
   filterParams,
   setCount,
+  columnAnchorEl,
+  setColumnAnchorEl,
 }) => {
   const { projectid } = useParams();
   const [searchParams] = useSearchParams();
@@ -182,42 +195,82 @@ const AssignUsers: React.FC<AssignUserProps> = ({
   const hideToggle =
     !permissionMap?.['assign']?.read && !permissionMap?.['assign']?.edit;
 
+  const [visibleColumns, setVisibleColumns] = useState<
+    ListTableColumn<ConfigAssignUserList>[]
+  >(getConfigAssignUsersColumns().filter((col) => !col.hide));
+
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    setVisibleColumns(
+      updatedColumns.filter(
+        (col) => !col.hide
+      ) as ListTableColumn<ConfigAssignUserList>[]
+    );
+  };
+
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
+  };
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const modalId = isModalOpen
+    ? 'interaction-column-visibility-popover'
+    : undefined;
+
+  const RestrictedColumns = [
+    {
+      id: 'first_name',
+      canHide: false,
+      canDrag: false,
+    },
+  ];
+
   return (
-    <ListTable
-      data={assignUserList}
-      columns={getConfigAssignUsersColumns()}
-      getRowId={getRowId}
-      hoverHighlight={false}
-      tableStyle={{
-        height: '100%',
-        maxHeight: 'calc(100vh - 320px)',
-        overflow: 'auto',
-        paddingTop: '2px',
-      }}
-      stickyHeader={true}
-      stickyColumnsCount={1}
-      selectable={false}
-      actionWidth={80}
-      actionDisplayMode={hideToggle ? undefined : 'toggle'}
-      actionMenuItems={[]}
-      loading={isLoading}
-      error={isError ? 'Failed to load user data' : ''}
-      rowsPerPageOptions={[25, 50, 100]}
-      rowsPerPage={tableParams.limit}
-      currentPage={(tableParams.page ?? 1) - 1}
-      totalItems={totalItems}
-      onPageChange={handlePageChange}
-      onRowsPerPageChange={handleRowsPerPageChange}
-      sortBy={tableParams.sortBy}
-      sortOrder={tableParams.sortOrder}
-      onSort={handleSort}
-      actionColumnName='Exclusion / Inclusion'
-      toggleClick={toggleProjects}
-      toggleData={addedAccounts}
-      disabledToggle={disabledToggle}
-      checkedToggleTooltip='Inclusion'
-      unCheckedToggleTooltip='Exclusion'
-    />
+    <>
+      <ManageColumnsPopover
+        anchorEl={columnAnchorEl}
+        open={isModalOpen}
+        popoverId={modalId}
+        onClose={handlePopoverClose}
+        columns={getConfigAssignUsersColumns()}
+        onColumnsChange={handleColumnsChange}
+        columnRestrictions={RestrictedColumns}
+      />
+      <ListTable
+        data={assignUserList}
+        columns={visibleColumns}
+        getRowId={getRowId}
+        hoverHighlight={false}
+        tableStyle={{
+          height: '100%',
+          maxHeight: 'calc(100vh - 320px)',
+          overflow: 'auto',
+          paddingTop: '2px',
+        }}
+        stickyHeader={true}
+        stickyColumnsCount={1}
+        selectable={false}
+        actionWidth={80}
+        actionDisplayMode={hideToggle ? undefined : 'toggle'}
+        actionMenuItems={[]}
+        loading={isLoading}
+        error={isError ? 'Failed to load user data' : ''}
+        rowsPerPageOptions={[25, 50, 100]}
+        rowsPerPage={tableParams.limit}
+        currentPage={(tableParams.page ?? 1) - 1}
+        totalItems={totalItems}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+        sortBy={tableParams.sortBy}
+        sortOrder={tableParams.sortOrder}
+        onSort={handleSort}
+        actionColumnName='Exclusion / Inclusion'
+        toggleClick={toggleProjects}
+        toggleData={addedAccounts}
+        disabledToggle={disabledToggle}
+        checkedToggleTooltip='Inclusion'
+        unCheckedToggleTooltip='Exclusion'
+      />
+    </>
   );
 };
 
