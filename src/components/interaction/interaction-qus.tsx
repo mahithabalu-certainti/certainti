@@ -58,6 +58,7 @@ interface InteractionQuesProps {
   refetchDetails?: () => void;
   formData?: Record<string, string>;
   className?: string;
+  responseDate?: string;
 }
 
 const InteractionQuestions: React.FC<InteractionQuesProps> = ({
@@ -70,6 +71,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   refetchDetails,
   formData,
   className,
+  responseDate,
 }) => {
   const { successToast, errorToast } = useToast();
   const [activeFlag, setActiveFlag] = useState<FlagTypeEnum | null>(null);
@@ -282,7 +284,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
     // Check file count limit
     if (newGlobalAttachments.length >= MAX_FILES_LIMIT) {
       errorToast(
-        `Maximum ${MAX_FILES_LIMIT} files allowed. Please remove some files before uploading new ones.`
+        `You can only upload up to ${MAX_FILES_LIMIT} attachments per response`
       );
       e.target.value = '';
       return;
@@ -320,7 +322,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
     const currentQuestionFiles = questionAttachments[questionId] || [];
     if (currentQuestionFiles.length >= MAX_FILES_LIMIT) {
       errorToast(
-        `Maximum ${MAX_FILES_LIMIT} files allowed per question. Please remove some files before uploading new ones.`
+        `You can only upload up to ${MAX_FILES_LIMIT} attachments per response`
       );
       e.target.value = '';
       return;
@@ -720,7 +722,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
               </div>
             )}
 
-            {!isEditing && q.response_on_datetime && (
+            {!isEditing && !responseDate && q.response_on_datetime && (
               <div className='py-1 w-full flex justify-end items-center gap-2 text-[12px] text-[#425A76]'>
                 <span className='text-[#7D98B6]'>Response Received on:</span>
                 {formatDateToYYYYMMDDWithTime(q.response_on_datetime)}
@@ -729,6 +731,13 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
           </div>
         ))}
       </div>
+
+      {!isEditing && responseDate && (
+        <div className='py-1 pr-4 w-full flex justify-end items-center gap-2 mb-5 text-[12px] text-[#425A76]'>
+          <span className='text-[#7D98B6]'>Response Received on:</span>
+          {formatDateToYYYYMMDDWithTime(responseDate)}
+        </div>
+      )}
     </div>
   );
 };

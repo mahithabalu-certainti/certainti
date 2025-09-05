@@ -188,24 +188,24 @@ const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
             </h3>
             <div className='flex gap-3 justify-end'>
               <TextButton
-                label='Cancel'
+                label='No'
                 onClick={handleSend}
                 loading={sendInteraction.isPending}
                 sx={{
-                  width: '64px',
-                  minWidth: '64px',
+                  width: '60px',
+                  minWidth: '60px',
                   fontWeight: 400,
                   fontSize: '13px',
                   height: '32px',
                 }}
               />
               <TextButton
-                label='Add Recipients'
+                label='Yes'
                 onClick={() => setShowEmailFields(true)}
                 disabled={sendInteraction.isPending}
                 sx={{
-                  width: '110px',
-                  minWidth: '110px',
+                  width: '60px',
+                  minWidth: '60px',
                   fontWeight: 400,
                   fontSize: '13px',
                   height: '32px',

@@ -38,7 +38,7 @@ const HistoryTable: React.FC<HistoryTableProps> = ({
 }) => {
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = useState(100);
-  const [sortField, setSortField] = useState<string>('response_source');
+  const [sortField, setSortField] = useState<string>('interaction_source_name');
   const [sortBy, setSortBy] = useState<'ASC' | 'DESC'>('ASC');
 
   const [detailQuestions, setDetailQuestions] = useState<any[]>([]);
@@ -112,9 +112,7 @@ const HistoryTable: React.FC<HistoryTableProps> = ({
 
   const handleViewInteraction = (row: ResponseInteractionList) => {
     if (row) {
-      console.log('rowId', row);
       const versionValue = String(row?.interaction_version);
-      setInteractionNumber(row?.r_number);
       searchParams.set('versionID', versionValue);
       navigate({ search: searchParams.toString() }, { replace: true });
     }
@@ -167,6 +165,7 @@ const HistoryTable: React.FC<HistoryTableProps> = ({
                 isEditEnable={false}
                 actionButtonEnable={false}
                 className='border-0'
+                responseDate={detialsResponse?.data?.response_on || ''}
               />
             )
           )}

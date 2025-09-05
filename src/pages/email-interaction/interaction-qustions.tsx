@@ -29,6 +29,21 @@ interface SectionHeaderButton {
   loading?: boolean;
 }
 
+const ALLOWED_FILE_TYPES = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'text/plain',
+  'text/csv',
+];
+
+const MAX_FILE_SIZE = 20 * 1024 * 1024;
+const MAX_FILES_LIMIT = 10;
+
 interface InteractionQuesProps {
   questions: InteractionQuestion[];
   globalAttachments: Attachment[];
@@ -108,9 +123,11 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
 
   const handleEditClick = () => {
     setIsEditing(true);
+    setValidationErrors({});
   };
   const handleCancel = () => {
     setIsEditing(false);
+    setValidationErrors({});
 
     // revert answers
     setEditedAnswers(
@@ -193,7 +210,6 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
         setIsEditing(false);
         setValidationErrors({});
         setActiveFlag(null);
-        console.log('activeFlag', flag);
         successToast(
           flag === FlagTypeEnum.draft
             ? 'Draft saved successfully'
@@ -218,11 +234,48 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
       }));
     }
   };
+
+  const validateFile = (file: File): { isValid: boolean; error?: string } => {
+    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+      return {
+        isValid: false,
+        error:
+          'Only document files (PDF, Word, Excel, PowerPoint, Text) are allowed',
+      };
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      return {
+        isValid: false,
+        error: 'File size must be less than 20MB',
+      };
+    }
+
+    return { isValid: true };
+  };
+
   const handleGlobalFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Check file count limit
+    if (newGlobalAttachments.length >= MAX_FILES_LIMIT) {
+      errorToast(
+        `You can only upload up to ${MAX_FILES_LIMIT} attachments per response`
+      );
+      e.target.value = '';
+      return;
+    }
+
+    // Validate file
+    const validation = validateFile(file);
+    if (!validation.isValid) {
+      errorToast(validation?.error || '');
+      e.target.value = '';
+      return;
+    }
 
     try {
       const res = await uploadFileMutation.mutateAsync({
@@ -245,6 +298,23 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    const currentQuestionFiles = questionAttachments[questionId] || [];
+    if (currentQuestionFiles.length >= MAX_FILES_LIMIT) {
+      errorToast(
+        `You can only upload up to ${MAX_FILES_LIMIT} attachments per response`
+      );
+      e.target.value = '';
+      return;
+    }
+
+    // Validate file
+    const validation = validateFile(file);
+    if (!validation.isValid) {
+      errorToast(validation?.error || '');
+      e.target.value = '';
+      return;
+    }
 
     try {
       const res = await uploadFileMutation.mutateAsync({
@@ -342,7 +412,9 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
           onClick: () => handleSave(FlagTypeEnum.draft),
           sx: { width: '110px', minWidth: '110px' },
           loading: activeFlag === FlagTypeEnum.draft && isUpdateLoading,
-          disabled: uploadFileMutation.isPending,
+          disabled:
+            (activeFlag !== null && activeFlag !== FlagTypeEnum.draft) ||
+            uploadFileMutation.isPending,
         },
         {
           label: 'Save & Submit',
@@ -350,7 +422,9 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
           onClick: () => handleSave(FlagTypeEnum.submit),
           sx: { width: '110px', minWidth: '110px' },
           loading: activeFlag === FlagTypeEnum.submit && isUpdateLoading,
-          disabled: uploadFileMutation.isPending,
+          disabled:
+            (activeFlag !== null && activeFlag !== FlagTypeEnum.submit) ||
+            uploadFileMutation.isPending,
         },
         {
           label: 'Upload Files',

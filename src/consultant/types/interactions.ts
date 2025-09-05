@@ -288,6 +288,7 @@ export interface InteractionDetailsHistoryResponse {
     history_details: InteractionHistoryResponse[];
     global_attachments: Attachment[];
     interaction_rid: string;
+    response_on: string;
     project_name: string;
   };
 }
