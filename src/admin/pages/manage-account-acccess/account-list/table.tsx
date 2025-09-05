@@ -1,13 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ListTable } from '../../../../components/table';
+import { ListTable, ManageColumnsPopover } from '../../../../components/table';
 import { ProjectListParams } from '../../../../consultant/types/project';
 import { manageAccountListColumns } from './column';
-import { Suspense } from 'react';
+import { Suspense, useState } from 'react';
 import { AccountList } from '../../../../consultant/types';
 import { useAccounts } from '../../../../consultant/services/account';
 import { FilterType } from '../../../types';
 import { clearFilters } from '../../../../components/filter-component/utils';
+import {
+  ListTableColumn,
+  ShowHideTableColumn,
+} from '../../../../components/table/types';
 
 interface AcoountTableProps {
   appliedFilters: Record<string, FilterType>;
@@ -18,12 +22,18 @@ interface AcoountTableProps {
   >;
   disabled?: boolean;
   hide?: boolean;
+  columnAnchorEl: HTMLButtonElement | null;
+  setColumnAnchorEl: React.Dispatch<
+    React.SetStateAction<HTMLButtonElement | null>
+  >;
 }
 export const ManageAccountTable: React.FC<AcoountTableProps> = ({
   appliedFilters,
   tableParams,
   setTableParams,
   setAppliedFilters,
+  columnAnchorEl,
+  setColumnAnchorEl,
 }) => {
   const navigate = useNavigate();
   const handlePageChange = (newPage: number) => {
@@ -74,12 +84,50 @@ export const ManageAccountTable: React.FC<AcoountTableProps> = ({
   );
   const totalCount = data?.count || 0;
   const projectColumns = manageAccountListColumns(handleAccountName);
+
+  const RestrictedColumns = [
+    {
+      id: 'account_name',
+      canHide: false,
+      canDrag: false,
+    },
+  ];
+
+  const [visibleColumns, setVisibleColumns] = useState<
+    ListTableColumn<AccountList>[]
+  >(projectColumns.filter((col) => !col.hide));
+
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    setVisibleColumns(
+      updatedColumns.filter(
+        (col) => !col.hide
+      ) as ListTableColumn<AccountList>[]
+    );
+  };
+
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
+  };
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const modalId = isModalOpen
+    ? 'interaction-column-visibility-popover'
+    : undefined;
   return (
     <div>
       <Suspense fallback={null}>
+        <ManageColumnsPopover
+          anchorEl={columnAnchorEl}
+          open={isModalOpen}
+          popoverId={modalId}
+          onClose={handlePopoverClose}
+          columns={projectColumns}
+          onColumnsChange={handleColumnsChange}
+          columnRestrictions={RestrictedColumns}
+        />
         <ListTable
           data={data?.accounts || []}
-          columns={projectColumns}
+          columns={visibleColumns}
           getRowId={getRowId}
           hoverHighlight={false}
           tableStyle={{
