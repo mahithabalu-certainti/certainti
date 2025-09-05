@@ -48,8 +48,9 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     accountid,
     interactionId
   );
-  const disableEditResBtn =
-    data?.status_name.toLowerCase() === StatusTypeEnum.response_received;
+  // Commented for future use
+  // const disableEditResBtn =
+  //   data?.status_name.toLowerCase() === StatusTypeEnum.cancelled;
 
   const disableInteractionEditBtn = [
     StatusTypeEnum.cancelled,
@@ -235,7 +236,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
         <InteractionQuestions
           questions={data?.questions}
           globalAttachments={data?.global_attachments}
-          isEditEnable={!disableEditResBtn}
+          isEditEnable={!disableInteractionEditBtn}
           actionButtonEnable={true}
           handleResponseHistory={handleResponseHistory}
           refetchDetails={refetch}
