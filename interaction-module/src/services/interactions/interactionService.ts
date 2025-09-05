@@ -551,7 +551,7 @@ export class InteractionService {
           interactionInfo
         );
         const excelAttachment = {
-          filename: `interactions.xlsx`,
+          filename: `interaction_${interaction_rid}.xlsx`,
           content: Buffer.from(excelBuffer).toString("base64"),
           contentType:
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
