@@ -1030,10 +1030,11 @@ export class InteractionService {
     const sourceTypeIds = [responseData.interaction_source_rid].filter(Boolean);
 
     // Step 2: Fetch response source & interaction source names
-    const fetchResponseSources: any = await mainDb.query(rawQueries.fetchInteractionResponseSource(responseSourceIds));
+
+    //const fetchResponseSources: any = await mainDb.query(rawQueries.fetchInteractionResponseSource(responseSourceIds));
     const fetchSourceTypes: any = await mainDb.query(rawQueries.fetchInteractionSource(sourceTypeIds));
 
-    const mapResponseSource = new Map(fetchResponseSources[0].map((d: any) => [d.rid, d.response_source_name]));
+   // const mapResponseSource = new Map(fetchResponseSources[0].map((d: any) => [d.rid, d.response_source_name]));
     const sourceMap = new Map(fetchSourceTypes[0].map((d: any) => [d.rid, d.interaction_source_name]));
 
     if (responseData.interaction_history.length !== 0) {
@@ -1066,7 +1067,7 @@ export class InteractionService {
         interaction_rnumber: responseData.interaction_rnumber,
         project_code: responseData.project_code,
         project_name: responseData.project_name,
-        response_source: mapResponseSource.get(responseData.response_source_rid) || null,
+      //  response_source: mapResponseSource.get(responseData.response_source_rid) || null,
         interaction_source_name: sourceMap.get(responseData.interaction_source_rid) || null,
         interaction_history: sortedData.map((d: any) => ({
           rid: d.interaction_history_rid,
@@ -1091,7 +1092,7 @@ export class InteractionService {
         interaction_rnumber: responseData.interaction_rnumber,
         project_code: responseData.project_code,
         project_name: responseData.project_name,
-        response_source: mapResponseSource.get(responseData.response_source_rid) || null,
+      //  response_source: mapResponseSource.get(responseData.response_source_rid) || null,
         interaction_source_name: sourceMap.get(responseData.interaction_source_rid) || null,
         interaction_history: []
       };
