@@ -551,7 +551,7 @@ export class InteractionService {
           interactionInfo
         );
         const excelAttachment = {
-          filename: `interaction_${interaction_rid}.xlsx`,
+          filename: `interactions.xlsx`,
           content: Buffer.from(excelBuffer).toString("base64"),
           contentType:
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -612,6 +612,7 @@ export class InteractionService {
       ["Interaction ID", interactionInfo.interactionInfo?.interaction_id ?? ""],
       ["Project ID", interactionInfo.projectInfo?.project_id ?? ""],
       ["Project Name", interactionInfo.projectInfo?.project_name ?? ""],
+      ["Project Code", interactionInfo.projectInfo?.project_code ?? ""],
     ];
 
     headerRows.forEach((row, idx) => {
@@ -623,7 +624,7 @@ export class InteractionService {
 
     // Column headers
     worksheet.addRow(["Question No","Questions", "Answers", "Notes", "Is Mandatory"]);
-    worksheet.getRow(5).eachCell((cell) => {
+    worksheet.getRow(6).eachCell((cell) => {
       cell.font = { bold: true };
       cell.protection = { locked: true };
     });
