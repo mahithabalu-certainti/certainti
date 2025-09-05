@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import TabPanel from '../../../account-details-sidebar/components/tab';
 import { CreateResourceIcon, ResourcesIcon } from '../../../../../assets';
 import { useSelector } from 'react-redux';
@@ -24,7 +24,10 @@ import {
   AllPermissions,
   useGetAllCountries,
 } from '../../../../../common-service';
-import { ListTable } from '../../../../../components/table';
+import {
+  ListTable,
+  ManageColumnsPopover,
+} from '../../../../../components/table';
 import { checkPermission } from '../../../../../common-utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import { resourceClient } from '../../../../../api/graphql/clients/client';
@@ -34,6 +37,8 @@ import {
   CellEditData,
   FieldChangeEvent,
   FieldChangeValue,
+  ListTableColumn,
+  ShowHideTableColumn,
 } from '../../../../../components/table/types';
 import { useToast } from '../../../../../hooks';
 import { useGetProjectResourceCode } from '../../../../services/project-resources/project-resources-form-service';
@@ -110,6 +115,15 @@ export const ProjectResources = ({
   const [showProjectResourceDetails, setShowProjectResourceDetails] =
     useState<boolean>(false);
   const [currentCountry, setCurrentCountry] = useState<string>('');
+  const [columnAnchorEl, setColumnAnchorEl] =
+    React.useState<HTMLButtonElement | null>(null);
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const handleColumnVisibility = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setColumnAnchorEl(event.currentTarget);
+  };
 
   const [searchParams] = useSearchParams();
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
@@ -369,6 +383,14 @@ export const ProjectResources = ({
         : !isResourceCreateViewEnable,
       disabled: accountOrProjectInActive,
     },
+    {
+      label: 'Show/Hide Fields',
+      variant: 'outlined' as const,
+      disabled: false,
+      onClick: handleColumnVisibility,
+      sx: { ...BUTTON_STYLES, width: '125px', minWidth: '125px' },
+      hide: viewDetails ? true : false,
+    },
   ];
   const handleFilter = () => {
     setShowFilter(!showFilter);
@@ -497,7 +519,35 @@ export const ProjectResources = ({
     }
   };
 
+  const RestrictedColumns = [
+    {
+      id: 'resource_code',
+      canHide: false,
+      canDrag: false,
+    },
+  ];
+
+  const [visibleColumns, setVisibleColumns] = useState<
+    ListTableColumn<ProjectResourcesListType>[]
+  >(projectResourcesColumns.filter((col) => !col.hide));
+
   if (!projectIsEnable) return <AccessRestricted />;
+
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    setVisibleColumns(
+      updatedColumns.filter(
+        (col) => !col.hide
+      ) as ListTableColumn<ProjectResourcesListType>[]
+    );
+  };
+
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
+  };
+
+  const modalId = isModalOpen
+    ? 'account-interaction-attachment-list-column-visibility-popover'
+    : undefined;
 
   return (
     <div className='w-full pt-2 pb-2 pl-2 pr-4 bg'>
@@ -564,42 +614,53 @@ export const ProjectResources = ({
                   permission={permission}
                 />
               ) : (
-                <ListTable
-                  data={projectResourceList}
-                  columns={projectResourcesColumns}
-                  actionMenuItems={actionMenuItems}
-                  getRowId={(row: ProjectResourcesListType): string =>
-                    row.rid || ''
-                  }
-                  hoverHighlight={false}
-                  tableStyle={{
-                    height: '100%',
-                    maxHeight: 'calc(100vh - 290px)',
-                    overflow: 'auto',
-                  }}
-                  stickyHeader={true}
-                  stickyColumnsCount={1}
-                  actionWidth={60}
-                  actionDisplayMode='dropdown'
-                  loading={isLoading}
-                  error={error ? 'Failed to load projects' : undefined}
-                  rowsPerPageOptions={[25, 50, 100]}
-                  rowsPerPage={rowsPerPage}
-                  currentPage={currentPage ?? 1}
-                  totalItems={data?.count || 0}
-                  onPageChange={setCurrentPage}
-                  onRowsPerPageChange={setRowsPerPage}
-                  sortBy={sortField}
-                  sortOrder={sortOrder}
-                  onSort={handleSorting}
-                  selectable={false}
-                  onSelectionChange={(selectedIds: unknown) =>
-                    console.log('Selected:', selectedIds)
-                  }
-                  component='project resources'
-                  onCellEdit={handleCellEdit}
-                  onFieldChange={handleFieldChange}
-                />
+                <>
+                  <ManageColumnsPopover
+                    anchorEl={columnAnchorEl}
+                    open={isModalOpen}
+                    popoverId={modalId}
+                    onClose={handlePopoverClose}
+                    columns={projectResourcesColumns}
+                    onColumnsChange={handleColumnsChange}
+                    columnRestrictions={RestrictedColumns}
+                  />
+                  <ListTable
+                    data={projectResourceList}
+                    columns={visibleColumns}
+                    actionMenuItems={actionMenuItems}
+                    getRowId={(row: ProjectResourcesListType): string =>
+                      row.rid || ''
+                    }
+                    hoverHighlight={false}
+                    tableStyle={{
+                      height: '100%',
+                      maxHeight: 'calc(100vh - 290px)',
+                      overflow: 'auto',
+                    }}
+                    stickyHeader={true}
+                    stickyColumnsCount={1}
+                    actionWidth={60}
+                    actionDisplayMode='dropdown'
+                    loading={isLoading}
+                    error={error ? 'Failed to load projects' : undefined}
+                    rowsPerPageOptions={[25, 50, 100]}
+                    rowsPerPage={rowsPerPage}
+                    currentPage={currentPage ?? 1}
+                    totalItems={data?.count || 0}
+                    onPageChange={setCurrentPage}
+                    onRowsPerPageChange={setRowsPerPage}
+                    sortBy={sortField}
+                    sortOrder={sortOrder}
+                    onSort={handleSorting}
+                    selectable={false}
+                    onSelectionChange={(selectedIds: unknown) =>
+                      console.log('Selected:', selectedIds)
+                    }
+                    component='project resources'
+                    onCellEdit={handleCellEdit}
+                    onFieldChange={handleFieldChange}
+                  />
+                </>
               )}
             </div>
           </>

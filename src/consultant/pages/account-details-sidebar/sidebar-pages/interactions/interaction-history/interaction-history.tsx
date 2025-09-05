@@ -1,18 +1,27 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import SectionHeader from '../../../../../../components/details-section/section-header';
 import { InteractionDetailIcon } from '../../../../../../assets';
-import { ListTable } from '../../../../../../components/table';
+import {
+  ListTable,
+  ManageColumnsPopover,
+} from '../../../../../../components/table';
 import { getInteractionHistoryListColumns } from './columns';
 import { InfoSection } from '../../../../../../components';
 import { Box } from '@mui/material';
 import {
   InteractionHistoryAction,
+  InteractionHistoryList,
   transformInteractionHistoryData,
 } from './utils';
 
 import { useInteractionHistoryList } from '../../../../../services/interactions/interaction-history-service';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { AttachmentsListExportParams } from '../../../../../types/attachment';
+import {
+  ListTableColumn,
+  ShowHideTableColumn,
+} from '../../../../../../components/table/types';
+import { BUTTON_STYLES } from '../../../../../../admin/pages/manage-user-detail/styles';
 interface InteractionHistoryProps {
   handleBackClick: () => void;
   refresh?: number;
@@ -35,6 +44,15 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
   const [rowsPerPage, setRowsPerPage] = useState(100);
   const [sortField, setSortField] = useState<string>('date');
   const [sortBy, setSortBy] = useState<'ASC' | 'DESC'>('ASC');
+  const [columnAnchorEl, setColumnAnchorEl] =
+    React.useState<HTMLButtonElement | null>(null);
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const handleColumnVisibility = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setColumnAnchorEl(event.currentTarget);
+  };
 
   const {
     data: interactionHistoryData,
@@ -98,6 +116,37 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
     [interactionHistoryData]
   );
 
+  const headerButtons = [
+    {
+      label: 'Show/Hide Fields',
+      variant: 'outlined' as const,
+      disabled: false,
+      onClick: handleColumnVisibility,
+      sx: { ...BUTTON_STYLES, width: '125px', minWidth: '125px' },
+      hide: false,
+    },
+  ];
+
+  const [visibleColumns, setVisibleColumns] = useState<
+    ListTableColumn<InteractionHistoryList>[]
+  >(interactionHistoryColumns.filter((col) => !col.hide));
+
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    setVisibleColumns(
+      updatedColumns.filter(
+        (col) => !col.hide
+      ) as ListTableColumn<InteractionHistoryList>[]
+    );
+  };
+
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
+  };
+
+  const modalId = isModalOpen
+    ? 'account-attachment-list-column-visibility-popover'
+    : undefined;
+
   return (
     <>
       <div className='border border-[#CBD6E2]'>
@@ -117,6 +166,7 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
           showBackArrow={true}
           count={totalItems}
           showItemCount={true}
+          buttons={headerButtons}
         />
         <Box className='border-t border-b-0 border-[#CBD6E2] rounded-bl-[2px] rounded-br-[2px] bg-white'>
           <InfoSection
@@ -127,9 +177,17 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
           />
         </Box>
         <div className='border-t border-[#CBD6E2]'>
+          <ManageColumnsPopover
+            anchorEl={columnAnchorEl}
+            open={isModalOpen}
+            popoverId={modalId}
+            onClose={handlePopoverClose}
+            columns={interactionHistoryColumns}
+            onColumnsChange={handleColumnsChange}
+          />
           <ListTable
             data={actionData}
-            columns={interactionHistoryColumns}
+            columns={visibleColumns}
             getRowId={getRowId}
             hoverHighlight={false}
             tableStyle={{
