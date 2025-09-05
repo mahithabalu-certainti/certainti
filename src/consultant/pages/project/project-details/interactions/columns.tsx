@@ -43,6 +43,7 @@ export const getInteractionListColumns = (
     label: 'Iteration',
     width: 120,
     sortable: true,
+    sx: { textAlign: 'right' },
     hide:
       !permissionMap?.['interaction_iteration']?.edit &&
       !permissionMap?.['interaction_iteration']?.read,
@@ -53,6 +54,7 @@ export const getInteractionListColumns = (
     label: 'Age (Days)',
     width: 120,
     sortable: true,
+    sx: { textAlign: 'right' },
     hide:
       !permissionMap?.['interaction_age']?.edit &&
       !permissionMap?.['interaction_age']?.read,
@@ -98,7 +100,7 @@ export const getInteractionListColumns = (
       !permissionMap?.['last_resent_on']?.edit &&
       !permissionMap?.['last_resent_on']?.read,
     render: (row: InteractionList) =>
-      row.last_sent_on && formatDateToYYYYMMDDWithTime(row.last_resent_on),
+      row.last_resent_on && formatDateToYYYYMMDDWithTime(row.last_resent_on),
   },
   {
     id: 'last_reminder_on',
@@ -145,6 +147,7 @@ export const getInteractionListColumns = (
     label: 'Number of Attachments',
     width: 200,
     sortable: true,
+    sx: { textAlign: 'right' },
     render: (row: InteractionList) =>
       row.attachment_count ? (
         <span

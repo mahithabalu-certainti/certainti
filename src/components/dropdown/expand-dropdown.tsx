@@ -41,7 +41,10 @@ const ExpandCollapseDropdown: React.FC<ExpandCollapseDropdownProps> = ({
     if (dropdownOptions.length > 0 && expandAll) {
       const initialOpenState = dropdownOptions.reduce(
         (acc, group) => {
-          acc[group.group] = true;
+          // Only expand groups that have options
+          if (group.options && group.options.length > 0) {
+            acc[group.group] = true;
+          }
           return acc;
         },
         {} as { [key: string]: boolean }
@@ -119,35 +122,46 @@ const ExpandCollapseDropdown: React.FC<ExpandCollapseDropdownProps> = ({
                   {dropdownOptions?.length > 0 &&
                     dropdownOptions.map((group) => (
                       <div key={group.group}>
-                        <div
-                          className='flex items-center gap-1 h-[32px] bg-gray-100 text-[#425A76] px-3 text-[13px] font-bold cursor-pointer'
-                          title={group.group}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleGroup(group.group);
-                          }}
-                        >
-                          <React.Suspense fallback={null}>
-                            <ArrowUpIcon
-                              alt={
-                                openGroups[group.group]
-                                  ? 'arrowUp'
-                                  : 'arrowDown'
-                              }
-                              style={{
-                                filter:
-                                  'invert(62%) sepia(15%) saturate(656%) hue-rotate(179deg) brightness(90%) contrast(87%)',
-                                transform: openGroups[group.group]
-                                  ? 'rotate(180deg)'
-                                  : 'rotate(90deg)',
-                                transition: 'transform 0.3s ease',
-                              }}
-                            />
-                          </React.Suspense>
-                          <span className='truncate'>{group.group}</span>
-                        </div>
+                        {group.options && group.options.length > 0 ? (
+                          <div
+                            className='flex items-center gap-1 h-[32px] bg-gray-100 text-[#425A76] px-3 text-[13px] font-bold cursor-pointer'
+                            title={group.group}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleGroup(group.group);
+                            }}
+                          >
+                            <React.Suspense fallback={null}>
+                              <ArrowUpIcon
+                                alt={
+                                  openGroups[group.group]
+                                    ? 'arrowUp'
+                                    : 'arrowDown'
+                                }
+                                style={{
+                                  filter:
+                                    'invert(62%) sepia(15%) saturate(656%) hue-rotate(179deg) brightness(90%) contrast(87%)',
+                                  transform: openGroups[group.group]
+                                    ? 'rotate(180deg)'
+                                    : 'rotate(90deg)',
+                                  transition: 'transform 0.3s ease',
+                                }}
+                              />
+                            </React.Suspense>
+                            <span className='truncate'>{group.group}</span>
+                          </div>
+                        ) : (
+                          <div
+                            className='h-[32px] bg-gray-100 text-[#425A76] px-3 text-[13px] font-bold flex items-center'
+                            title={group.group}
+                          >
+                            <span className='truncate ml-5'>{group.group}</span>
+                          </div>
+                        )}
 
-                        {openGroups[group.group] &&
+                        {group.options &&
+                          group.options.length > 0 &&
+                          openGroups[group.group] &&
                           group.options.map((option) => (
                             <div
                               key={option.value}

@@ -141,11 +141,20 @@ const EmailInteraction: React.FC = () => {
     }
   };
   const validateOtp = () => {
-    verifyOtp.mutate({
-      account_rid: account_rid as string,
-      interaction_rid: interaction_rid as string,
-      otp: otp.join(''),
-    });
+    verifyOtp.mutate(
+      {
+        account_rid: account_rid as string,
+        interaction_rid: interaction_rid as string,
+        otp: otp.join(''),
+      },
+      {
+        onError: () => {
+          setOtp(['', '', '', '', '', '']);
+          const firstInput = document.getElementById('otp-0');
+          if (firstInput) (firstInput as HTMLInputElement).focus();
+        },
+      }
+    );
   };
 
   return (
@@ -204,6 +213,45 @@ const EmailInteraction: React.FC = () => {
                     className='w-12 h-12 border border-gray-300 rounded-md text-center text-lg focus:outline-none focus:ring-2 focus:ring-[#F16137]'
                     disabled={!timeout}
                     autoComplete='off'
+                    onKeyDown={(e) => {
+                      if (e.key === 'Backspace') {
+                        e.preventDefault();
+                        const newOtp = [...otp];
+                        if (digit) {
+                          newOtp[idx] = '';
+                          setOtp(newOtp);
+                        } else if (idx > 0) {
+                          const prevInput = document.getElementById(
+                            `otp-${idx - 1}`
+                          );
+                          if (prevInput) {
+                            (prevInput as HTMLInputElement).focus();
+                            newOtp[idx - 1] = '';
+                            setOtp(newOtp);
+                          }
+                        }
+                      }
+                    }}
+                    onPaste={(e) => {
+                      e.preventDefault();
+                      const pasteData = e.clipboardData.getData('Text').trim();
+                      if (/^\d+$/.test(pasteData)) {
+                        const pasteArray = pasteData.split('').slice(0, 6);
+                        const newOtp = [...otp];
+                        pasteArray.forEach((char, i) => {
+                          newOtp[i] = char;
+                        });
+                        setOtp(newOtp);
+
+                        const lastIndex = pasteArray.length - 1;
+                        const nextInput = document.getElementById(
+                          `otp-${lastIndex}`
+                        );
+                        if (nextInput) {
+                          (nextInput as HTMLInputElement).focus();
+                        }
+                      }
+                    }}
                   />
                 ))}
               </div>

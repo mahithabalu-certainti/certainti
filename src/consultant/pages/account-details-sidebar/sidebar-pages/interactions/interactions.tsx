@@ -332,7 +332,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       disabled: false,
       onClick: handleColumnVisibility,
       sx: { width: '125px', minWidth: '125px' },
-      hide: false,
+      hide: Boolean(interactionResponseId),
     },
   ];
 

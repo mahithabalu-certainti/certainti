@@ -10,11 +10,7 @@ import {
   ListTable,
   ManageColumnsPopover,
 } from '../../../../../../components/table';
-import {
-  InfoSection,
-  InteractionQuestions,
-} from '../../../../../../components';
-import { DisplayColumn, transformInteractionData } from './ultils';
+import { InteractionQuestions } from '../../../../../../components';
 import {
   useInteractionResponseHistoryList,
   useResponseInteractionDetails,
@@ -42,11 +38,9 @@ const HistoryTable: React.FC<HistoryTableProps> = ({
 }) => {
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = useState(100);
-  const [sortField, setSortField] = useState<string>('response_source');
+  const [sortField, setSortField] = useState<string>('interaction_source_name');
   const [sortBy, setSortBy] = useState<'ASC' | 'DESC'>('ASC');
-  const [responseHistoryDetails, setResponseHistoryDetails] = useState<
-    DisplayColumn[]
-  >([]);
+
   const [detailQuestions, setDetailQuestions] = useState<any[]>([]);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -54,15 +48,12 @@ const HistoryTable: React.FC<HistoryTableProps> = ({
   const interactionId = searchParams.get('interaction_id') || undefined;
   const interactionResponseId = searchParams.get('versionID') || undefined;
 
-  const {
-    data: detialsResponse,
-    isLoading: detailsLoading,
-    isError: detailsError,
-  } = useResponseInteractionDetails({
-    account_rid: accountId,
-    interaction_rid: interactionId,
-    version: Number(interactionResponseId),
-  });
+  const { data: detialsResponse, isLoading: detailsLoading } =
+    useResponseInteractionDetails({
+      account_rid: accountId,
+      interaction_rid: interactionId,
+      version: Number(interactionResponseId),
+    });
 
   useEffect(() => {
     if (detialsResponse?.data.history_details) {
@@ -98,12 +89,6 @@ const HistoryTable: React.FC<HistoryTableProps> = ({
   );
 
   useEffect(() => {
-    if (detialsResponse) {
-      setResponseHistoryDetails(transformInteractionData(detialsResponse));
-    }
-  }, [detialsResponse]);
-
-  useEffect(() => {
     if (responseDataList) {
       setCount(responseDataList?.count || 0);
     }
@@ -127,7 +112,6 @@ const HistoryTable: React.FC<HistoryTableProps> = ({
 
   const handleViewInteraction = (row: ResponseInteractionList) => {
     if (row) {
-      console.log('rowId', row);
       const versionValue = String(row?.interaction_version);
       searchParams.set('versionID', versionValue);
       navigate({ search: searchParams.toString() }, { replace: true });
@@ -170,12 +154,6 @@ const HistoryTable: React.FC<HistoryTableProps> = ({
     <div>
       {interactionResponseId ? (
         <>
-          <InfoSection
-            columns={responseHistoryDetails}
-            loading={detailsLoading}
-            error={detailsError}
-            singleLineView={true}
-          />
           {detailsLoading ? (
             <DetailsSectionSkeleton />
           ) : (
@@ -187,6 +165,7 @@ const HistoryTable: React.FC<HistoryTableProps> = ({
                 isEditEnable={false}
                 actionButtonEnable={false}
                 className='border-0'
+                responseDate={detialsResponse?.data?.response_on || ''}
               />
             )
           )}
