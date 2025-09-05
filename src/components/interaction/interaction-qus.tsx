@@ -227,7 +227,11 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
         setIsEditing(false);
         setActiveFlag(null);
         setValidationErrors({});
-        successToast('Response saved successfully');
+        successToast(
+          flag === FlagTypeEnum.draft
+            ? 'Draft saved successfully'
+            : 'Interaction submitted successfully'
+        );
       },
       onError: () => {
         setActiveFlag(null);

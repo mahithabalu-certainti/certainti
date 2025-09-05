@@ -221,6 +221,8 @@ const Interactions: React.FC<InteractionsProps> = ({
               status === StatusTypeEnum.draft ||
               status === StatusTypeEnum.cancelled ||
               status === StatusTypeEnum.response_received ||
+              status === StatusTypeEnum.completed ||
+              status === StatusTypeEnum.on_hold ||
               status === '',
           };
         }) || [];
