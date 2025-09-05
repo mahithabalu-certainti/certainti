@@ -1408,7 +1408,7 @@ async isAutoSendInteractionEnabled(accountNumber: string,interactionDetails: any
       { type: "SELECT" }
     );
 
-    return projectInfo?.auto_access_rd ?? false;
+    return projectInfo?.auto_send_ai_interaction ?? false;
   } catch (err) {
     throw new Error(
       "Error checking auto-send interaction status: " + (err as Error).message
