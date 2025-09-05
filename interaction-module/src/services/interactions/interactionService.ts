@@ -1161,6 +1161,7 @@ export class InteractionService {
         interaction_rid : result[0][0].responses_history_details[0].response_id,
         interaction_r_number : result[0][0].responses_history_details[0].r_number,
         project_name : result[0][0].responses_history_details[0].project_name,
+        response_on: result[0][0].responses_history_details[0].response_updated_on,
         global_attachments : await Promise.all(result[0][0].responses_history_details[0].global_attachments.filter((f : any) =>f.file_url !== null).map(async (da : any) => {
           return {
             fileName : da.file_name,
