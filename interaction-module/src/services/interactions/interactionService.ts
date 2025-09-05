@@ -1286,8 +1286,7 @@ export class InteractionService {
 
   async processKafkaMessage(message: any): Promise<void> {
     try {
-      console.log("Processing Kafka message...", message);
-      // Handle both cases: message is a string, or an object with/without 'data'
+       this.logger.info("Processing Kafka message...", JSON.stringify(message));
       let parsedMessage: any;
       if (typeof message === "string") {
         parsedMessage = JSON.parse(message);
@@ -1296,7 +1295,7 @@ export class InteractionService {
       } else {
         parsedMessage = message;
       }
-      const { company_id, project_id, type, qre_percent, project_summary, transaction_id, questions, detailed_breakdown } = parsedMessage.data;
+      const { company_id, project_id, type, qre_percent, project_summary, transaction_id, interaction_questions, detailed_breakdown } = parsedMessage.data;
       const { accountNumber } = await this.interactionSchemaService.fetchValidAccountNumberById(company_id);
       if (!accountNumber) {
         this.logger.error("Invalid account ID in Kafka message", company_id);
@@ -1317,8 +1316,8 @@ export class InteractionService {
         if (type === "interaction_questions") {
           const projectInfo = await this.interactionSchemaService.fetchProjectInfo(accountNumber, project_id);
           const statusRid = await this.interactionSchemaService.getInteractionStatusByType(statusAction.CREATE);
-          const questionsWithActionType = Array.isArray(questions)
-            ? questions.map((q: any) => ({ ...q, action_type: "add" }))
+          const questionsWithActionType = Array.isArray(interaction_questions)
+            ? interaction_questions.map((q: any) => ({ ...q, action_type: "add" }))
             : [];
 
           let interactionData = {
@@ -1335,13 +1334,11 @@ export class InteractionService {
           await this.createInteraction(interactionData, interactionSource.AUTO, process.env.SYSTEM_USER_ID!);
           
         }
-      } else {
-        await this.interactionSchemaService.updateAssessmentErrorResponse(parsedMessage, accountNumber, project_id, company_id, transaction_id);
       }
       await this.interactionSchemaService.updateInteractionStatus(accountNumber, parsedMessage)
       this.logger.info(`Processed Kafka message for account: ${company_id}`);
     } catch (err) {
-      this.logger.error("Error processing Kafka message", err);
+       this.logger.error("Error processing Kafka message", JSON.stringify(err));
     }
   }
   
