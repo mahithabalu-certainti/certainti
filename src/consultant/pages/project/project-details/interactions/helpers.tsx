@@ -118,7 +118,7 @@ export const getInteractionFilterFields = (
         !permissionMap?.['response_updated_on']?.read,
     },
     {
-      name: 'Attachments',
+      name: 'Number of Attachments',
       value: 'attachment_count',
       type: 'number',
       hide:
