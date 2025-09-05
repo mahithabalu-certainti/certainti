@@ -33,7 +33,7 @@ async function startKafkaConsumer() {
   try {
     await consumer.connect();
     const topic = process.env.KAFKA_AI_REQUEST_TRIGGER_TOPIC || "ai_assessment_request";
-    await consumer.subscribe({ topic, fromBeginning: false });
+    await consumer.subscribe({ topic, fromBeginning: true });
     await consumer.run({
       eachMessage: async ({ topic, partition, message }) => {
         try {
