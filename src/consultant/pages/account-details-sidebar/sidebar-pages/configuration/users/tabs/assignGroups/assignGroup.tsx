@@ -191,7 +191,7 @@ const AssignGroups: React.FC<AssignGroupsProps> = ({
 
   const RestrictedColumns = [
     {
-      id: 'project_code',
+      id: 'group_name',
       canHide: false,
       canDrag: false,
     },
@@ -249,6 +249,7 @@ const AssignGroups: React.FC<AssignGroupsProps> = ({
         loading={isLoading}
         error={isError ? 'Failed to load group data' : ''}
         rowsPerPageOptions={[25, 50, 100]}
+        loadindRowCount={7}
         rowsPerPage={tableParams.limit}
         currentPage={(tableParams.page ?? 1) - 1}
         totalItems={totalItems}

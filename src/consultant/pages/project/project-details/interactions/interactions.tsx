@@ -476,28 +476,31 @@ const Interactions: React.FC<InteractionsProps> = ({
     Record<string, boolean>
   >(Object.fromEntries(interactionColumns.map((col) => [col.id, !col.hide])));
 
-  const visibleColumns = interactionColumns.filter(
-    (col) => columnVisibility[col.id]
+  const [columnOrder, setColumnOrder] = useState(
+    interactionColumns.map((col) => col.id)
   );
+
   if (!interactionsEnable || !interactionsViewEnable)
     return <AccessRestricted />;
 
   const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
-    setColumnVisibility((prev) => {
-      const newVisibility = { ...prev };
-      updatedColumns.forEach((col) => {
-        newVisibility[col.id] = !col.hide;
-      });
-      return newVisibility;
-    });
+    const newVisibility = Object.fromEntries(
+      updatedColumns.map((col) => [col.id, !col.hide])
+    );
+    setColumnVisibility(newVisibility);
+    setColumnOrder(updatedColumns.map((col) => col.id));
   };
+
+  const visibleColumns = columnOrder
+    .map((id) => interactionColumns.find((col) => col.id === id)!)
+    .filter((col) => columnVisibility[col.id]);
 
   const handlePopoverClose = () => {
     setColumnAnchorEl(null);
   };
 
   const modalId = isModalOpen
-    ? 'account-interaction-list-column-visibility-popover'
+    ? 'interaction-list-column-visibility-popover'
     : undefined;
 
   if (!interactionsEnable || !interactionsViewEnable)

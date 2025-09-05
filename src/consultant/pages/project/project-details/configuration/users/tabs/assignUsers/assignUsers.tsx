@@ -255,6 +255,7 @@ const AssignUsers: React.FC<AssignUserProps> = ({
         loading={isLoading}
         error={isError ? 'Failed to load user data' : ''}
         rowsPerPageOptions={[25, 50, 100]}
+        loadindRowCount={7}
         rowsPerPage={tableParams.limit}
         currentPage={(tableParams.page ?? 1) - 1}
         totalItems={totalItems}
