@@ -877,7 +877,7 @@ const InteractionForm = () => {
                 <input
                   type='text'
                   name='project_name'
-                  placeholder='Enter Project Name'
+                  placeholder='-'
                   autoComplete='off'
                   className='placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs'
                   disabled={true}
@@ -905,7 +905,7 @@ const InteractionForm = () => {
                 <input
                   type='text'
                   name='fiscal_year'
-                  placeholder='Enter Fiscal Year'
+                  placeholder='-'
                   autoComplete='off'
                   className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${errors?.fiscalYear && 'border-red-500 disabled:!bg-[#FEF2F2] bg-[#FEF2F2]'}`}
                   disabled={true}

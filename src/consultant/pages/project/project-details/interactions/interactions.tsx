@@ -10,7 +10,10 @@ import {
 import { EditIcon, InteractionDetailIcon } from '../../../../../assets';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { SectionTabPanel } from '../../../../../components';
-import { ListTable } from '../../../../../components/table';
+import {
+  ListTable,
+  ManageColumnsPopover,
+} from '../../../../../components/table';
 import { InteractionList, StatusTypeEnum } from '../../../../types';
 import { useInteractionList } from '../../../../services/interactions/interactions-service';
 import {
@@ -23,7 +26,10 @@ import { getInteractionListColumns } from './columns';
 import { getInteractionFilterFields } from './helpers';
 import InteractionDetails from './interaction-details/interaction-details';
 import { InteractionHistory } from './interaction-history';
-import { ActionItem } from '../../../../../components/table/types';
+import {
+  ActionItem,
+  ShowHideTableColumn,
+} from '../../../../../components/table/types';
 import { INTERACTIONS_CREATE, INTERACTIONS_EDIT } from '../../../../../routes';
 import { NewProjectData } from '../../../../types/project';
 import { SendInteractionModal } from '../../../../../components/interaction';
@@ -84,7 +90,15 @@ const Interactions: React.FC<InteractionsProps> = ({
   const [sendModalOpen, setSendModalOpen] = useState(false);
   const [selectedRows, setSelectedRows] = useState<InteractionList[]>([]);
   const [clearSelectedRows, setClearSelectedRows] = useState<boolean>(false);
-  const [interactionNumber, setInteractionNumber] = useState<string>('');
+  const [columnAnchorEl, setColumnAnchorEl] =
+    React.useState<HTMLButtonElement | null>(null);
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const handleColumnVisibility = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setColumnAnchorEl(event.currentTarget);
+  };
 
   const interactionId = searchParams.get('interaction_id');
   const interactionHistoryId = searchParams.get('interaction_history_id');
@@ -222,6 +236,8 @@ const Interactions: React.FC<InteractionsProps> = ({
               status === StatusTypeEnum.draft ||
               status === StatusTypeEnum.cancelled ||
               status === StatusTypeEnum.response_received ||
+              status === StatusTypeEnum.completed ||
+              status === StatusTypeEnum.on_hold ||
               status === '',
           };
         }) || [];
@@ -318,6 +334,14 @@ const Interactions: React.FC<InteractionsProps> = ({
       onClick: () => handleCreate(),
       sx: { width: '48px', minWidth: '48px' },
       hide: !createInteractionsEnable || viewResponseHistory,
+    },
+    {
+      label: 'Show/Hide Fields',
+      variant: 'outlined' as const,
+      disabled: false,
+      onClick: handleColumnVisibility,
+      sx: { width: '125px', minWidth: '125px' },
+      hide: false,
     },
   ];
 
@@ -442,6 +466,45 @@ const Interactions: React.FC<InteractionsProps> = ({
       )
     : getInteractionHistoryFilterFields(memoizedInteractionStatus);
 
+  const RestrictedColumns = [
+    {
+      id: 'r_number',
+      canHide: false,
+      canDrag: false,
+    },
+  ];
+
+  const [columnVisibility, setColumnVisibility] = useState<
+    Record<string, boolean>
+  >(Object.fromEntries(interactionColumns.map((col) => [col.id, !col.hide])));
+
+  const [columnOrder, setColumnOrder] = useState(
+    interactionColumns.map((col) => col.id)
+  );
+
+  if (!interactionsEnable || !interactionsViewEnable)
+    return <AccessRestricted />;
+
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    const newVisibility = Object.fromEntries(
+      updatedColumns.map((col) => [col.id, !col.hide])
+    );
+    setColumnVisibility(newVisibility);
+    setColumnOrder(updatedColumns.map((col) => col.id));
+  };
+
+  const visibleColumns = columnOrder
+    .map((id) => interactionColumns.find((col) => col.id === id)!)
+    .filter((col) => columnVisibility[col.id]);
+
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
+  };
+
+  const modalId = isModalOpen
+    ? 'interaction-list-column-visibility-popover'
+    : undefined;
+
   if (!interactionsEnable || !interactionsViewEnable)
     return <AccessRestricted />;
 
@@ -487,7 +550,7 @@ const Interactions: React.FC<InteractionsProps> = ({
           <SectionHeader
             title={
               viewResponseHistory
-                ? `Interaction Response History${interactionResponseId ? `  ${interactionNumber}` : ''}`
+                ? `Interaction Response History`
                 : 'Interaction'
             }
             titleIcon={
@@ -504,41 +567,53 @@ const Interactions: React.FC<InteractionsProps> = ({
           />
           <div className='border border-[#CBD6E2]'>
             {!viewResponseHistory ? (
-              <ListTable
-                data={interactionList}
-                columns={interactionColumns}
-                getRowId={getRowId}
-                hoverHighlight={false}
-                tableStyle={{
-                  borderBottom: '1px solid #CBD6E2',
-                  height: '100%',
-                  maxHeight: 'calc(100vh - 290px)',
-                  overflow: 'auto',
-                }}
-                stickyHeader={true}
-                stickyColumnsCount={1}
-                selectable={true}
-                onSelectionChange={handleSelectionChange}
-                actionWidth={80}
-                actionDisplayMode='dropdown'
-                actionMenuItems={actionButtons}
-                loading={isLoading || !fiscalYear}
-                error={isError ? 'Failed to load data' : undefined}
-                rowsPerPageOptions={[25, 50, 100]}
-                rowsPerPage={rowsPerPage}
-                currentPage={currentPage}
-                totalItems={totalItems}
-                onPageChange={handlePageChange}
-                onRowsPerPageChange={handleRowsPerPageChange}
-                sortBy={sortField}
-                sortOrder={sortBy}
-                onSort={handleSortRequest}
-                clearSelectedRows={clearSelectedRows}
-              />
+              <>
+                <ManageColumnsPopover
+                  anchorEl={columnAnchorEl}
+                  open={isModalOpen}
+                  popoverId={modalId}
+                  onClose={handlePopoverClose}
+                  columns={interactionColumns}
+                  onColumnsChange={handleColumnsChange}
+                  columnRestrictions={RestrictedColumns}
+                />
+                <ListTable
+                  data={interactionList}
+                  columns={visibleColumns}
+                  getRowId={getRowId}
+                  hoverHighlight={false}
+                  tableStyle={{
+                    borderBottom: '1px solid #CBD6E2',
+                    height: '100%',
+                    maxHeight: 'calc(100vh - 290px)',
+                    overflow: 'auto',
+                  }}
+                  stickyHeader={true}
+                  stickyColumnsCount={1}
+                  selectable={true}
+                  onSelectionChange={handleSelectionChange}
+                  actionWidth={80}
+                  actionDisplayMode='dropdown'
+                  actionMenuItems={actionButtons}
+                  loading={isLoading || !fiscalYear}
+                  error={isError ? 'Failed to load data' : undefined}
+                  rowsPerPageOptions={[25, 50, 100]}
+                  rowsPerPage={rowsPerPage}
+                  currentPage={currentPage}
+                  totalItems={totalItems}
+                  onPageChange={handlePageChange}
+                  onRowsPerPageChange={handleRowsPerPageChange}
+                  sortBy={sortField}
+                  sortOrder={sortBy}
+                  onSort={handleSortRequest}
+                  clearSelectedRows={clearSelectedRows}
+                />
+              </>
             ) : (
               <HistoryTable
                 setCount={setCount}
-                setInteractionNumber={setInteractionNumber}
+                setColumnAnchorEl={setColumnAnchorEl}
+                columnAnchorEl={columnAnchorEl}
               />
             )}
             <SendInteractionModal

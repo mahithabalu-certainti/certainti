@@ -2,7 +2,7 @@ import { useSearchParams } from 'react-router-dom';
 import { ComingSoon, DetailsIcon, ResourcesIcon } from '../../../../../assets';
 import { Settings } from './settings';
 import { SectionTabPanel } from '../../../../../components';
-import { useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { ResourceTabs } from '../resources/resources';
 import { AllModules, AllPermissions } from '../../../../../common-service';
 import Users from './users/users';
@@ -42,6 +42,8 @@ const Configuration: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [reFetchData, setReFetchData] = useState<number>(Date.now());
   const [count, setCount] = useState<number>(0);
+  const [columnAnchorEl, setColumnAnchorEl] =
+    React.useState<HTMLButtonElement | null>(null);
 
   const list = searchParams.get('subMenu');
   const tabParam = searchParams.get('tab');
@@ -69,6 +71,12 @@ const Configuration: React.FC = () => {
     clearFilters(`account-settings-${tabParam}`);
   };
 
+  const handleColumnVisibility = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setColumnAnchorEl(event.currentTarget);
+  };
+
   const renderContent = () => {
     switch (list) {
       case 'users':
@@ -83,6 +91,8 @@ const Configuration: React.FC = () => {
               limit: 100,
               entity_type: '',
             }}
+            setColumnAnchorEl={setColumnAnchorEl}
+            columnAnchorEl={columnAnchorEl}
           />
         );
       case 'settings':
@@ -131,6 +141,14 @@ const Configuration: React.FC = () => {
       hide: list === 'users',
       disabled: isSaveDisable,
       loading: isFormSaving,
+    },
+    {
+      label: 'Show/Hide Fields',
+      variant: 'outlined' as const,
+      disabled: false,
+      onClick: handleColumnVisibility,
+      sx: { width: '125px', minWidth: '125px' },
+      hide: false,
     },
   ];
 

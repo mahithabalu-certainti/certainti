@@ -6,24 +6,35 @@ import {
   ResponseInteractionList,
 } from '../../../../../types';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { ListTable } from '../../../../../../components/table';
+import {
+  ListTable,
+  ManageColumnsPopover,
+} from '../../../../../../components/table';
 import { InteractionQuestions } from '../../../../../../components';
 import {
   useInteractionResponseHistoryList,
   useResponseInteractionDetails,
 } from '../../../../../services/interactions/response-interaction-service';
 import DetailsSectionSkeleton from '../../../../../../components/skeleton-component/detailsskeleton';
+import {
+  ListTableColumn,
+  ShowHideTableColumn,
+} from '../../../../../../components/table/types';
 
 interface HistoryTableProps {
   loading?: boolean;
   isError?: boolean;
   setCount: (value: number) => void;
-  setInteractionNumber: (value: string) => void;
+  columnAnchorEl: HTMLButtonElement | null;
+  setColumnAnchorEl: React.Dispatch<
+    React.SetStateAction<HTMLButtonElement | null>
+  >;
 }
 
 const HistoryTable: React.FC<HistoryTableProps> = ({
   setCount,
-  setInteractionNumber,
+  columnAnchorEl,
+  setColumnAnchorEl,
 }) => {
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = useState(100);
@@ -109,6 +120,35 @@ const HistoryTable: React.FC<HistoryTableProps> = ({
   const getRowId = (row: ResponseInteractionList) => row.rid;
   const interactionColumns = getInteractionListColumns(handleViewInteraction);
 
+  const RestrictedColumns = [
+    {
+      id: 'response_source_name',
+      canHide: false,
+      canDrag: false,
+    },
+  ];
+
+  const [visibleColumns, setVisibleColumns] = useState<
+    ListTableColumn<ResponseInteractionList>[]
+  >(interactionColumns.filter((col) => !col.hide));
+
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    setVisibleColumns(
+      updatedColumns.filter(
+        (col) => !col.hide
+      ) as ListTableColumn<ResponseInteractionList>[]
+    );
+  };
+
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
+  };
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const modalId = isModalOpen
+    ? 'interaction-response-history-visibility-popover'
+    : undefined;
+
   return (
     <div>
       {interactionResponseId ? (
@@ -131,35 +171,46 @@ const HistoryTable: React.FC<HistoryTableProps> = ({
           )}
         </>
       ) : (
-        <ListTable
-          data={responseDataList?.interactions || []}
-          columns={interactionColumns}
-          getRowId={getRowId}
-          hoverHighlight={false}
-          tableStyle={{
-            borderBottom: '1px solid #CBD6E2',
-            height: '100%',
-            maxHeight: 'calc(100vh - 290px)',
-            overflow: 'auto',
-          }}
-          stickyHeader={true}
-          stickyColumnsCount={1}
-          selectable={false}
-          actionWidth={80}
-          actionDisplayMode='dropdown'
-          actionMenuItems={[]}
-          loading={isLoading}
-          error={isError ? 'error occurs' : undefined}
-          rowsPerPageOptions={[25, 50, 100]}
-          rowsPerPage={rowsPerPage}
-          currentPage={currentPage}
-          totalItems={responseDataList?.count || 0}
-          onPageChange={handlePageChange}
-          onRowsPerPageChange={handleRowsPerPageChange}
-          sortBy={sortField}
-          sortOrder={sortBy}
-          onSort={handleSortRequest}
-        />
+        <>
+          <ManageColumnsPopover
+            anchorEl={columnAnchorEl}
+            open={isModalOpen}
+            popoverId={modalId}
+            onClose={handlePopoverClose}
+            columns={interactionColumns}
+            onColumnsChange={handleColumnsChange}
+            columnRestrictions={RestrictedColumns}
+          />
+          <ListTable
+            data={responseDataList?.interactions || []}
+            columns={visibleColumns}
+            getRowId={getRowId}
+            hoverHighlight={false}
+            tableStyle={{
+              borderBottom: '1px solid #CBD6E2',
+              height: '100%',
+              maxHeight: 'calc(100vh - 290px)',
+              overflow: 'auto',
+            }}
+            stickyHeader={true}
+            stickyColumnsCount={1}
+            selectable={false}
+            actionWidth={80}
+            actionDisplayMode='dropdown'
+            actionMenuItems={[]}
+            loading={isLoading}
+            error={isError ? 'error occurs' : undefined}
+            rowsPerPageOptions={[25, 50, 100]}
+            rowsPerPage={rowsPerPage}
+            currentPage={currentPage}
+            totalItems={responseDataList?.count || 0}
+            onPageChange={handlePageChange}
+            onRowsPerPageChange={handleRowsPerPageChange}
+            sortBy={sortField}
+            sortOrder={sortBy}
+            onSort={handleSortRequest}
+          />
+        </>
       )}
     </div>
   );

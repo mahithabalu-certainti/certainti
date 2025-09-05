@@ -13,7 +13,7 @@ interface ResourceTableHeaderProps {
     label: string;
     variant: 'text' | 'outlined' | 'contained';
     loading?: boolean;
-    onClick: () => void;
+    onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
     sx?: SxProps<Theme>;
     hide?: boolean;
     disabled?: boolean;
