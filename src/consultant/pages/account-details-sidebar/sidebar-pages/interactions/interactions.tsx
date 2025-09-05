@@ -549,39 +549,54 @@ const Interactions: React.FC<InteractionsProps> = ({
           />
           <div className='border border-[#CBD6E2]'>
             {!viewResponseHistory ? (
-              <ListTable
-                data={interactionList}
-                columns={visibleColumns}
-                getRowId={getRowId}
-                hoverHighlight={false}
-                tableStyle={{
-                  borderBottom: '1px solid #CBD6E2',
-                  height: '100%',
-                  maxHeight: 'calc(100vh - 290px)',
-                  overflow: 'auto',
-                }}
-                stickyHeader={true}
-                stickyColumnsCount={1}
-                selectable={true}
-                onSelectionChange={handleSelectionChange}
-                actionWidth={80}
-                actionDisplayMode='dropdown'
-                actionMenuItems={actionButtons}
-                loading={isLoading}
-                error={isError ? 'Failed to load data' : undefined}
-                rowsPerPageOptions={[25, 50, 100]}
-                rowsPerPage={rowsPerPage}
-                currentPage={currentPage}
-                totalItems={totalItems}
-                onPageChange={handlePageChange}
-                onRowsPerPageChange={handleRowsPerPageChange}
-                sortBy={sortField}
-                sortOrder={sortBy}
-                onSort={handleSortRequest}
-                clearSelectedRows={clearSelectedRows}
-              />
+              <>
+                <ManageColumnsPopover
+                  anchorEl={columnAnchorEl}
+                  open={isModalOpen}
+                  popoverId={modalId}
+                  onClose={handlePopoverClose}
+                  columns={interactionColumns}
+                  onColumnsChange={handleColumnsChange}
+                  columnRestrictions={RestrictedColumns}
+                />
+                <ListTable
+                  data={interactionList}
+                  columns={visibleColumns}
+                  getRowId={getRowId}
+                  hoverHighlight={false}
+                  tableStyle={{
+                    borderBottom: '1px solid #CBD6E2',
+                    height: '100%',
+                    maxHeight: 'calc(100vh - 290px)',
+                    overflow: 'auto',
+                  }}
+                  stickyHeader={true}
+                  stickyColumnsCount={1}
+                  selectable={true}
+                  onSelectionChange={handleSelectionChange}
+                  actionWidth={80}
+                  actionDisplayMode='dropdown'
+                  actionMenuItems={actionButtons}
+                  loading={isLoading}
+                  error={isError ? 'Failed to load data' : undefined}
+                  rowsPerPageOptions={[25, 50, 100]}
+                  rowsPerPage={rowsPerPage}
+                  currentPage={currentPage}
+                  totalItems={totalItems}
+                  onPageChange={handlePageChange}
+                  onRowsPerPageChange={handleRowsPerPageChange}
+                  sortBy={sortField}
+                  sortOrder={sortBy}
+                  onSort={handleSortRequest}
+                  clearSelectedRows={clearSelectedRows}
+                />
+              </>
             ) : (
-              <HistoryTable setCount={setCount} />
+              <HistoryTable
+                setCount={setCount}
+                setColumnAnchorEl={setColumnAnchorEl}
+                columnAnchorEl={columnAnchorEl}
+              />
             )}
           </div>
           <SendInteractionModal
@@ -589,15 +604,6 @@ const Interactions: React.FC<InteractionsProps> = ({
             onClose={() => setSendModalOpen(false)}
             selectedRows={selectedRows}
             onSuccessRefetch={handleRefresh}
-          />
-          <ManageColumnsPopover
-            anchorEl={columnAnchorEl}
-            open={isModalOpen}
-            popoverId={modalId}
-            onClose={handlePopoverClose}
-            columns={interactionColumns}
-            onColumnsChange={handleColumnsChange}
-            columnRestrictions={RestrictedColumns}
           />
         </>
       )}

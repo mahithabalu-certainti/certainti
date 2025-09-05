@@ -156,6 +156,10 @@ const ManageColumnsPopover = <T extends ShowHideTableColumn>({
   initialConfigs,
   columnRestrictions = [],
 }: ManageColumnsPopoverProps<T>) => {
+  const visibleColumns = useMemo(
+    () => columns.filter((column) => !column.hide),
+    [columns]
+  );
   const restrictionMap = useMemo(
     () =>
       new Map(
@@ -173,7 +177,7 @@ const ManageColumnsPopover = <T extends ShowHideTableColumn>({
         initialConfigs.map((config) => [String(config.id), config])
       );
 
-      return columns
+      return visibleColumns
         .map((col, index) => {
           const storedConfig = configMap.get(String(col.id));
           const restriction = restrictionMap.get(String(col.id));
@@ -193,7 +197,7 @@ const ManageColumnsPopover = <T extends ShowHideTableColumn>({
         .sort((a, b) => a.order - b.order);
     }
 
-    return columns.map((col, index) => {
+    return visibleColumns.map((col, index) => {
       const restriction = restrictionMap.get(String(col.id));
       const defaultVisible = !col.hide;
       const visible = restriction?.canHide === false ? true : defaultVisible;
@@ -205,7 +209,7 @@ const ManageColumnsPopover = <T extends ShowHideTableColumn>({
         order: index,
       };
     });
-  }, [columns, initialConfigs, restrictionMap]);
+  }, [visibleColumns, initialConfigs, restrictionMap]);
 
   const [columnConfigs, setColumnConfigs] = useState<ShowHideColumnConfig[]>(
     () => initializeColumnConfigs()
@@ -228,7 +232,7 @@ const ManageColumnsPopover = <T extends ShowHideTableColumn>({
   );
 
   useEffect(() => {
-    const currentColumnIds = columns.map((col) => String(col.id));
+    const currentColumnIds = visibleColumns.map((col) => String(col.id));
     const configColumnIds = columnConfigs.map((config) => config.id);
 
     const columnsChanged =
@@ -240,7 +244,7 @@ const ManageColumnsPopover = <T extends ShowHideTableColumn>({
       setColumnConfigs(newConfigs);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [columns]);
+  }, [visibleColumns]);
 
   const updateColumnConfigs = useCallback(
     (configs: ShowHideColumnConfig[]) => {
@@ -248,7 +252,7 @@ const ManageColumnsPopover = <T extends ShowHideTableColumn>({
 
       const configMap = new Map(configs.map((config) => [config.id, config]));
 
-      const updatedColumns = columns
+      const updatedColumns = visibleColumns
         .map((col) => {
           const config = configMap.get(String(col.id));
           const restriction = restrictionMap.get(String(col.id));
@@ -269,7 +273,7 @@ const ManageColumnsPopover = <T extends ShowHideTableColumn>({
 
       onColumnsChange(updatedColumns);
     },
-    [columns, onColumnsChange, restrictionMap]
+    [visibleColumns, onColumnsChange, restrictionMap]
   );
 
   const handleDragEnd = (event: DragEndEvent) => {
