@@ -612,6 +612,7 @@ export class InteractionService {
       ["Interaction ID", interactionInfo.interactionInfo?.interaction_id ?? ""],
       ["Project ID", interactionInfo.projectInfo?.project_id ?? ""],
       ["Project Name", interactionInfo.projectInfo?.project_name ?? ""],
+      ["Project Code", interactionInfo.projectInfo?.project_code ?? ""],
     ];
 
     headerRows.forEach((row, idx) => {
@@ -623,7 +624,7 @@ export class InteractionService {
 
     // Column headers
     worksheet.addRow(["Question No","Questions", "Answers", "Notes", "Is Mandatory"]);
-    worksheet.getRow(5).eachCell((cell) => {
+    worksheet.getRow(6).eachCell((cell) => {
       cell.font = { bold: true };
       cell.protection = { locked: true };
     });
@@ -1173,6 +1174,7 @@ export class InteractionService {
         interaction_rid : result[0][0].responses_history_details[0].response_id,
         interaction_r_number : result[0][0].responses_history_details[0].r_number,
         project_name : result[0][0].responses_history_details[0].project_name,
+        response_on: result[0][0].responses_history_details[0].response_updated_on,
         global_attachments : await Promise.all(result[0][0].responses_history_details[0].global_attachments.filter((f : any) =>f.file_url !== null).map(async (da : any) => {
           return {
             fileName : da.file_name,

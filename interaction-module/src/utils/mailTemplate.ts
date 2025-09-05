@@ -8,19 +8,19 @@ function surveyMailTemplate(
 ): { message: IEmailMessage } {
   const emailMessage = {
     message: {
-      subject: `Survey Invitation: R&D Credits Claims Process for ${project.project_name || ""} (${project.project_code}) - FY ${project.fiscalYear}`,
+      subject: `Interaction Invitation: R&D Credits Claims Process for ${project.project_name || ""} (${project.project_code}) - FY ${project.fiscalYear}`,
       body: {
         contentType: "HTML",
         content: `
           <p>Dear ${recipient.name || ""},</p>
           <p>Greetings For The Day!</p>
           <p>
-            We are conducting a survey for R&D Credits Claims Process for ${account.account_name || ""} FY ${project.fiscalYear} for the project <strong>${project.project_name || ""}</strong> (Project ID: <strong>${project.project_code || ""}</strong>).
+            We are conducting a interaction for R&D Credits Claims Process for ${account.account_name || ""} FY ${project.fiscalYear} for the project <strong>${project.project_name || ""}</strong> (Project Code: <strong>${project.project_code || ""}</strong>).
           </p>
-          <p>Please take a moment to complete the survey using one of the following options:</p>
+          <p>Please take a moment to complete the interaction using one of the following options:</p>
           <ol>
             <li>
-              <strong>Click on this <a href="${interactionLink}" style="color: #0073e6;">Link</a> to complete the survey.</strong>
+              <strong>Click on this <a href="${interactionLink}" style="color: #0073e6;">Link</a> to complete the interaction.</strong>
               <br>
               If you are not able to access the above link due to security restrictions, please use option #2.
             </li>
@@ -28,7 +28,7 @@ function surveyMailTemplate(
               Fill the answers in the attached excel template and simply reply back to this email.
             </li>
           </ol>
-          <p>Your responses are invaluable to us and will contribute significantly to our efforts. Upon completion, submit the survey, and your responses will be securely forwarded to us for further processing.</p>
+          <p>Your responses are invaluable to us and will contribute significantly to our efforts. Upon completion, submit the interaction, and your responses will be securely forwarded to us for further processing.</p>
           <p>Thank you,<br><strong>Think R&D Team</strong><br>Powered by Certainiti.ai</p>
         `,
       },

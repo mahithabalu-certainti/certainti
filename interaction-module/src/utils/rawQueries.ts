@@ -816,7 +816,7 @@ export const interactionResponseHistoryByVersion = (
         SELECT 
             i.r_number AS response_rnumber, p.project_name,
             ii.question_seq_num, ii.question, a.attachments, a.global_attachments,
-            a.interaction_response, a.response_on,
+            a.interaction_response, a.response_on,i.response_updated_on,
             i.response_submitted_on, i.rid AS interaction_rid,
             ii.rid AS interaction_item_rid, a.rid AS interaction_response_rid, a.interaction_version
         FROM
@@ -831,7 +831,7 @@ export const interactionResponseHistoryByVersion = (
         GROUP BY
 		    a.rid, a.r_number, p.project_name,
             ii.question_seq_num, ii.question,
-            a.interaction_response, a.response_on,
+            a.interaction_response, a.response_on,i.response_updated_on,
             i.response_submitted_on, i.rid,
             ii.rid, a.rid, a.attachments, a.interaction_version, a.global_attachments
     )
@@ -844,6 +844,7 @@ export const interactionResponseHistoryByVersion = (
     'response_id', i.response_rnumber,
     'project_name', i.project_name,
     'response_on', i.response_on,
+    'response_updated_on', i.response_updated_on,
     'response_submitted_on', i.response_submitted_on,
     'question_id', i.question_seq_num,
     'question', i.question,
