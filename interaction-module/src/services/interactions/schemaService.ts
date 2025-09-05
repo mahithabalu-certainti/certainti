@@ -1380,6 +1380,7 @@ async updateInteractionInfo(
       updateData.status_rid = statusRid;
     } else {
       updateData.sent_on_datetime = new Date();
+      updateData.last_resent_on = new Date();
       const [statusArr]: any = await this.mainDbSequelize.query(rawQueries.fetchInteractionStatusByType(status));
       const statusRid = Array.isArray(statusArr) && statusArr.length > 0 ? statusArr[0].rid : null;
       updateData.status_rid = statusRid;
