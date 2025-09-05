@@ -240,6 +240,7 @@ export enum AllPermissions {
   INTERACTIONS_EXPORT = 'interactions_export',
   INTERACTIONS_CREATE = 'interactions_create',
   SEND_INTERACTIONS = 'send_interactions',
+  TRIGGER_AI_ASSESSMENT = 'trigger_ai_assessment',
 }
 
 export interface Country {
@@ -459,6 +460,7 @@ export interface InteractionQuestionUpdateRequest {
   questions: InteractionQuestionResponseType[];
   authToken: string;
   userId: string;
+  response_source: string;
 }
 
 export interface UploadAttachmentRequest {

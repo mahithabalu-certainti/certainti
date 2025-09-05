@@ -2,17 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { certaintiLogo } from '../../assets/images';
 import InteractionQuestions from './interaction-qustions';
 import { CircularProgress } from '@mui/material';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import {
   useGetInteractionQuestions,
   usePostGenerateOtp,
   usePostReSendOtp,
   usePostVerifyOtp,
 } from '../../common-service';
-import { LOGIN } from '../../routes';
+import { StatusTypeEnum } from '../../consultant/types';
 
 const EmailInteraction: React.FC = () => {
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [otp, setOtp] = useState<string[]>(['', '', '', '', '', '']);
   const [timer, setTimer] = useState(600); // 10 minutes in seconds
@@ -20,6 +19,7 @@ const EmailInteraction: React.FC = () => {
 
   const timeout = localStorage.getItem('otp_timeout');
   const auth_token = localStorage.getItem('temAuth');
+  const intractionId = localStorage.getItem('intractionId');
   const parseToken = auth_token ? JSON.parse(auth_token) : '';
   const account_rid = searchParams.get('acc');
   const interaction_rid = searchParams.get('int');
@@ -39,7 +39,17 @@ const EmailInteraction: React.FC = () => {
     parseToken.auth_token as string,
     parseToken.email as string
   );
+  const disableEditResBtn =
+    questions?.status_name.toLowerCase() === StatusTypeEnum.response_received;
 
+  useEffect(() => {
+    // clear old session when open new link
+    if (interaction_rid && intractionId !== interaction_rid) {
+      localStorage.removeItem('otp_timeout');
+      localStorage.removeItem('temAuth');
+      localStorage.setItem('intractionId', interaction_rid);
+    }
+  }, [interaction_rid, intractionId]);
   useEffect(() => {
     // clear authentication when enter interaction
     if (questions?.questions && questions.questions.length > 0) {
@@ -157,8 +167,9 @@ const EmailInteraction: React.FC = () => {
                 globalAttachments={questions?.global_attachments}
                 actionButtonEnable
                 refetchDeetails={refetch}
-                createdBy={questions.created_by}
+                createdBy={questions.recipient_name}
                 parseToken={parseToken}
+                isEditEnable={!disableEditResBtn}
                 formData={{
                   account_rid: questions?.account_rid || '',
                   project_rid: questions?.project_rid || '',
@@ -242,7 +253,7 @@ const EmailInteraction: React.FC = () => {
               </button>
               <button
                 className='w-full mt-3 border border-[#F16137] text-[#F16137] py-2 rounded-sm hover:bg-orange-50 transition cursor-pointer'
-                onClick={() => navigate(LOGIN)}
+                onClick={() => window.history.back()}
               >
                 Cancel
               </button>

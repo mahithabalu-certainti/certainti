@@ -390,24 +390,22 @@ export const ProjectTask = ({
     };
   };
   const fiscalDate = PFY ? convertDates(PFY) : null;
+  let fiscalDatesArg;
+  if (fiscalDate) {
+    fiscalDatesArg = {
+      endMax: fiscalDate.endMax ? new Date(fiscalDate.endMax) : undefined,
+      startMax: fiscalDate.startMax ? new Date(fiscalDate.startMax) : undefined,
+      startMin: fiscalDate.startMin ? new Date(fiscalDate.startMin) : undefined,
+      year: fiscalDate.year,
+    };
+  }
 
   const projectTaskColumns = getProjectTaskColumns(
     handleProjectTaskClick,
     memoizedProjectResourceCode,
     permissionMapTaskTableColumn,
     accountOrProjectInActive,
-    fiscalDate
-      ? {
-          endMax: fiscalDate.endMax ? new Date(fiscalDate.endMax) : undefined,
-          startMax: fiscalDate.startMax
-            ? new Date(fiscalDate.startMax)
-            : undefined,
-          startMin: fiscalDate.startMin
-            ? new Date(fiscalDate.startMin)
-            : undefined,
-          year: fiscalDate.year,
-        }
-      : undefined
+    fiscalDatesArg
   );
   const onRefreshClick = () => {
     setRefreshProjectsTrigger(Date.now());
@@ -505,6 +503,7 @@ export const ProjectTask = ({
         projectResourceAccountID={accountID}
         projectResourceProjectID={projectID}
         permissionMapTaskTableColumn={permissionMapTaskTableColumn}
+        fiscalDatesArg={fiscalDatesArg}
       />
       {showUploads ? (
         <Uploads

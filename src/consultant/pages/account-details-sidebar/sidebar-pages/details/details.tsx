@@ -14,6 +14,7 @@ import DetailsSectionSkeleton from '../../../../../components/skeleton-component
 import { ProjectTriggerAI } from '../../../../services/project';
 import { ProjectTriggerAIPayload } from '../../../../types/project';
 import { useToast } from '../../../../../hooks';
+import { checkPermission } from '../../../../../common-utils';
 // import { checkPermission } from '../../../../../common-utils';
 
 const BUTTON_STYLES = {
@@ -62,11 +63,10 @@ const Details: React.FC<DetailsProps> = ({
   const [tabValue, setTabValue] = useState('');
 
   const { permission } = useSelector((state: RootState) => state?.permission);
-  // Functionality will be implemented later
-  // const isAccountDetailActivityEnable = checkPermission(
-  //   permission,
-  //   AllPermissions.ACCOUNT_DETAILS_ADD_ACTIVITY
-  // );
+  const TriggerAIEnable = checkPermission(
+    permission,
+    AllPermissions.TRIGGER_AI_ASSESSMENT
+  );
 
   const isAccountDetailActivityEnable = false;
 
@@ -155,8 +155,7 @@ const Details: React.FC<DetailsProps> = ({
       onClick: () => handleTriggerAI(),
       loading: triggerAIMutation.isPending,
       sx: { ...BUTTON_STYLES, width: '96px', minWidth: '96px' },
-      // hide: !projectDownloadIsEnable,
-      hide: false,
+      hide: !TriggerAIEnable,
     },
   ];
 
