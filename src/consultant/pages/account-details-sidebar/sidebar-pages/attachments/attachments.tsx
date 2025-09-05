@@ -1,10 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ResourceTabs } from '../resources/resources';
 import { useNavigate, useParams } from 'react-router-dom';
 import { BUTTON_STYLES } from '../../../../../admin/pages/manage-user-detail/styles';
 import ResourceTableHeader from '../resources/resource-table-header';
-import { ListTable } from '../../../../../components/table';
+import {
+  ListTable,
+  ManageColumnsPopover,
+} from '../../../../../components/table';
 import {
   AllModules,
   AllPermissions,
@@ -29,6 +32,8 @@ import {
   CellEditData,
   FieldChangeEvent,
   FieldChangeValue,
+  ListTableColumn,
+  ShowHideTableColumn,
 } from '../../../../../components/table/types';
 import { ATTACHMENT_UPDATE } from '../../../../../api/graphql/queries/attachment-query';
 import { resourceClient } from '../../../../../api/graphql/clients/client';
@@ -90,6 +95,15 @@ const Attachments: React.FC<AttachmentsProps> = ({
   const [attachmentList, setAttachmentList] = useState<AttachmentList[]>([]);
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [currentCategory, setCurrentCategory] = useState<string>('');
+  const [columnAnchorEl, setColumnAnchorEl] =
+    React.useState<HTMLButtonElement | null>(null);
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const handleColumnVisibility = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setColumnAnchorEl(event.currentTarget);
+  };
   const [updateAttachment] = useMutation(ATTACHMENT_UPDATE, {
     client: resourceClient,
   });
@@ -203,6 +217,14 @@ const Attachments: React.FC<AttachmentsProps> = ({
       onClick: () => handleOpen(),
       sx: { ...BUTTON_STYLES, width: '90px', minWidth: '90px' },
       hide: !attachmentCreateEnable,
+    },
+    {
+      label: 'Show/Hide Fields',
+      variant: 'outlined' as const,
+      disabled: false,
+      onClick: handleColumnVisibility,
+      sx: { ...BUTTON_STYLES, width: '125px', minWidth: '125px' },
+      hide: false,
     },
   ];
 
@@ -352,6 +374,34 @@ const Attachments: React.FC<AttachmentsProps> = ({
     }
   };
 
+  const RestrictedColumns = [
+    {
+      id: 'document_name',
+      canHide: false,
+      canDrag: false,
+    },
+  ];
+
+  const [visibleColumns, setVisibleColumns] = useState<
+    ListTableColumn<AttachmentList>[]
+  >(attachmentColumns.filter((col) => !col.hide));
+
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    setVisibleColumns(
+      updatedColumns.filter(
+        (col) => !col.hide
+      ) as ListTableColumn<AttachmentList>[]
+    );
+  };
+
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
+  };
+
+  const modalId = isModalOpen
+    ? 'account-attachment-list-column-visibility-popover'
+    : undefined;
+
   if (!attachmentEnable || !isAttachmentViewEnable) return <AccessRestricted />;
 
   return (
@@ -395,9 +445,18 @@ const Attachments: React.FC<AttachmentsProps> = ({
             iconBg='#D8E9FF'
           />
           <div className='border border-[#CBD6E2]'>
+            <ManageColumnsPopover
+              anchorEl={columnAnchorEl}
+              open={isModalOpen}
+              popoverId={modalId}
+              onClose={handlePopoverClose}
+              columns={attachmentColumns}
+              onColumnsChange={handleColumnsChange}
+              columnRestrictions={RestrictedColumns}
+            />
             <ListTable
               data={attachmentList}
-              columns={attachmentColumns}
+              columns={visibleColumns}
               getRowId={getRowId}
               hoverHighlight={false}
               tableStyle={{

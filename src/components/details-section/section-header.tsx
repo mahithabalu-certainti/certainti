@@ -7,7 +7,7 @@ import TextButton from '../button/text-button';
 interface SectionHeaderButton {
   label: string;
   variant: 'text' | 'outlined' | 'contained';
-  onClick: () => void;
+  onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
   sx?: SxProps<Theme>;
   hide?: boolean;
   disabled?: boolean;

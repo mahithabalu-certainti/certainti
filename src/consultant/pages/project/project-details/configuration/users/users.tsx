@@ -17,6 +17,10 @@ interface UserProps {
   handleReset: () => void;
   setCount: (value: number) => void;
   filterParams: ConfigAssignGroupsListParms | ConfigAssignUserListParms;
+  columnAnchorEl: HTMLButtonElement | null;
+  setColumnAnchorEl: React.Dispatch<
+    React.SetStateAction<HTMLButtonElement | null>
+  >;
 }
 
 const Users: React.FC<UserProps> = ({
@@ -24,6 +28,8 @@ const Users: React.FC<UserProps> = ({
   handleReset,
   setCount,
   filterParams,
+  columnAnchorEl,
+  setColumnAnchorEl,
 }) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -80,6 +86,8 @@ const Users: React.FC<UserProps> = ({
             reFetchData={reFetchData}
             filterParams={filterParams}
             setCount={setCount}
+            setColumnAnchorEl={setColumnAnchorEl}
+            columnAnchorEl={columnAnchorEl}
           />
         )}
         {tabParam === 'assign_group' && (
@@ -87,6 +95,8 @@ const Users: React.FC<UserProps> = ({
             reFetchData={reFetchData}
             filterParams={filterParams}
             setCount={setCount}
+            setColumnAnchorEl={setColumnAnchorEl}
+            columnAnchorEl={columnAnchorEl}
           />
         )}
       </div>
