@@ -171,8 +171,8 @@ export const getGlobalInteractionListColumns = (
   {
     id: 'attachment_count',
     sortId: 'attachment_count',
-    label: 'Attachments',
-    width: 160,
+    label: 'Number of Attachments',
+    width: 200,
     sortable: true,
     render: (row: InteractionList) =>
       row.attachment_count ? (
