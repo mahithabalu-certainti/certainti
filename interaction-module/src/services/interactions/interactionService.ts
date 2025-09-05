@@ -543,8 +543,7 @@ export class InteractionService {
           interaction_rid,
           interactionInfo.accountInfo.account_rid
         );
-
-        // Prepare Excel workbook
+        const senderEmailInfo = await this.getSenderEmailInfo(accountNumber,interactionInfo.accountInfo.parent_account_rid);
         const excelBuffer = await this.generateExcelBuffer(
           interaction_rid,
           interactionItems,
@@ -564,7 +563,8 @@ export class InteractionService {
           interactionInfo.projectInfo,
           interactionInfo.accountInfo,
           excelAttachment,
-          interactionLink
+          interactionLink,
+          senderEmailInfo
         );
         if (emailResponse) {
           await this.interactionSchemaService.updateInteractionInfo(
@@ -595,6 +595,16 @@ export class InteractionService {
       throw this.throwServiceError(err as Error);
     }
   }
+
+  async getSenderEmailInfo(accountNumber: string, parentAccountRid: string | null) {
+    if (!parentAccountRid) {
+      return null;
+    }
+    // Fetch sender email info from the database or another service
+    const senderEmailInfo = await this.interactionSchemaService.fetchSenderEmailInfoByAccountId(accountNumber, parentAccountRid);
+    return senderEmailInfo;
+  }
+
   async generateInteractionLink(interactionRid: string, accountRid: string) {
     return `${process.env.INTERACTION_URL}?acc=${accountRid}&int=${interactionRid}`;
   }
@@ -677,7 +687,8 @@ export class InteractionService {
     },
     accountInfo: { account_name: string },
     excelAttachment: { filename: string; content: string; contentType: string },
-    interactionLink: string
+    interactionLink: string,
+    senderEmailInfo: string
   ) {
     let emailResponse = false;
     try {
@@ -687,6 +698,8 @@ export class InteractionService {
         accountInfo,
         interactionLink
       );
+      //fetch sender email info
+      
       emailResponse = await sendEmailWithAttachment({
         message: emailContent.message,
         attachments: [
@@ -697,6 +710,7 @@ export class InteractionService {
             contentType: excelAttachment.contentType,
           },
         ],
+        senderEmailInfo:senderEmailInfo
       });
       return emailResponse;
     } catch (error) {
@@ -1335,6 +1349,10 @@ export class InteractionService {
           };
           await this.createInteraction(interactionData, interactionSource.AUTO, process.env.SYSTEM_USER_ID!);
           
+        }
+        if(type === 'data_ingestion')
+        {
+         // await this.interactionSchemaService.updateAIProcessed(parsedMessage, accountNumber, project_id, company_id, transaction_id);
         }
       }
       await this.interactionSchemaService.updateInteractionStatus(accountNumber, parsedMessage)

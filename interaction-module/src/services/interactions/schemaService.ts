@@ -742,6 +742,7 @@ if(!this.orgDbSequelize)
       accountInfo: {
         account_name: accountInfo?.account_name ?? null,
         account_rid: accountInfo?.rid ?? null,
+        parent_account_rid: accountInfo?.parent_account_rid ?? null,
         r_number: accountInfo?.r_number ?? null
       },
       interactionInfo:{
@@ -1292,7 +1293,38 @@ async fetchInteractionQuestionsById(
       );
     }
   }
-
+async fetchSenderEmailInfoByAccountId(accountNumber: string, parentAccountId: string)  {
+    try {
+       if (!this.orgDbSequelize) {
+      this.orgDbSequelize = await this.interactionModelService.getSequelize();
+    }
+     const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
+      const [senderEmailInfo]: any[] = await this.orgDbSequelize.query(
+        rawQueries.fetchInteractionSenderEmail(schemaName,parentAccountId)
+      );
+      console.log("senderEmailInfo",senderEmailInfo)
+      if (!senderEmailInfo[0]) {
+        // if (!this.mainDbSequelize) {
+        //   this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
+        // }
+        // const [mainSenderEmailInfo]: any[] = await this.mainDbSequelize.query(
+        //   rawQueries.fetchGlobalSenderEmail()
+        // );
+        // if (mainSenderEmailInfo && mainSenderEmailInfo.length > 0) {
+        //   senderEmailInfo[0] = mainSenderEmailInfo[0];
+        // }
+        return process.env.EMAIL_FROM!
+      }
+      else
+      {
+        return senderEmailInfo[0].support_email ?? process.env.EMAIL_FROM!
+      }
+    } catch (err) {
+      throw new Error(
+        "Error fetching sender email info: " + (err as Error).message
+      );
+    }
+  };
   async fetchEmailInfo(accountNumber: string, interactionRid: string, projectFiscalRid: string, accountRid: string) {
     try {
         if (!this.orgDbSequelize) {
