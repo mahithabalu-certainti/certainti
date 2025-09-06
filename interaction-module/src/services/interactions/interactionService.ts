@@ -750,9 +750,50 @@ export class InteractionService {
     this.logger.info("Interact method called.");
     // Implementation here
   }
-  async listInteractionPrjAccount(data : any) {
+  async listInteractionPrjAccount(data : any,userId : string) : Promise<any>{
     const mainDb = await this.getMainDb()
     const orgDb = await this.getOrgDb()
+      const userGroupType = await this.interactionSchemaService.getUserGroupType(userId);
+      const userProfileType = await this.interactionSchemaService.getUserProfileType(
+        userId
+      );
+      const isCustomGlobal = userGroupType === "DEFAULT";
+      const isDefaultParent = userGroupType === "AUTO_ASSIGNED_PARENT";
+      const isPOCProfile =
+        userProfileType?.profileName === "Project Point of Contact";
+      let accessibleIds: string[] = [];
+      if (!isCustomGlobal) {
+        accessibleIds = await this.interactionSchemaService.getAccessibleProjectIds(
+          userId,
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
+        );
+        if (accessibleIds.length === 0) {
+           return {
+        statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+        data : []
+      }
+        }
+      }
+
+      if (isCustomGlobal && isPOCProfile) {
+        accessibleIds = await this.interactionSchemaService.getAccessibleProjectIds(
+          userId,
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
+        );
+        if (accessibleIds.length === 0) {
+          return {
+            statusCodeValue: HttpStatus.NOT_FOUND_MESSAGE,
+            data: []
+          };
+        }
+      }
+
     let fetchParentAccount : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb))
     let schemaName = rawQueries.fetchSchemaName(fetchParentAccount[0][0].r_number)
     let createdByFilter;
@@ -804,7 +845,8 @@ export class InteractionService {
       data.limit,
       data.flag, 
       schemaName,
-      disablePagination
+      disablePagination,
+      accessibleIds
     ))
     let hasEmailRecipient = false;
      if(data.flag == interactionFlag.project)
@@ -924,10 +966,50 @@ export class InteractionService {
       }
     }
   }
-  async fetchInteractionSummary (data : any) {
+  async fetchInteractionSummary (data : any,userId:string) {
     const mainDb = await this.getMainDb()
+       const userGroupType = await this.interactionSchemaService.getUserGroupType(userId);
+      const userProfileType = await this.interactionSchemaService.getUserProfileType(
+        userId
+      );
+      const isCustomGlobal = userGroupType === "DEFAULT";
+      const isDefaultParent = userGroupType === "AUTO_ASSIGNED_PARENT";
+      const isPOCProfile =
+        userProfileType?.profileName === "Project Point of Contact";
+      let accessibleIds: string[] = [];
+      if (!isCustomGlobal) {
+        accessibleIds = await this.interactionSchemaService.getAccessibleProjectIds(
+          userId,
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
+        );
+        if (accessibleIds.length === 0) {
+           return {
+        statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+        data : []
+      }
+        }
+      }
+
+      if (isCustomGlobal && isPOCProfile) {
+        accessibleIds = await this.interactionSchemaService.getAccessibleProjectIds(
+          userId,
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
+        );
+        if (accessibleIds.length === 0) {
+         return {
+        statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+        data : []
+      }
+        }
+      }
     const result : any = await mainDb.query(listAllInteractionSummary(data.page, data.limit, 
-      data.filters, data.globalFilters, data.fiscal_year, data.sort, data.sort_by
+      data.filters, data.globalFilters, data.fiscal_year, data.sort, data.sort_by,accessibleIds
     ))
     if(result[0][0].interactions != null) {
       return {
@@ -1331,7 +1413,7 @@ export class InteractionService {
         this.logger.error("Invalid account ID in Kafka message", company_id);
         return;
       }
-      if (parsedMessage.statusCode === 200) {
+      if (parsedMessage.statusCode) {
         if (!company_id || !project_id || !type) {
           this.logger.error("Kafka message missing required fields", parsedMessage);
           return;
@@ -1362,14 +1444,17 @@ export class InteractionService {
             created_by: process.env.SYSTEM_USER_ID!,
           };
           await this.createInteraction(interactionData, interactionSource.AUTO, process.env.SYSTEM_USER_ID!);
-          
+          await this.interactionSchemaService.updateInteractionStatus(accountNumber, parsedMessage)
         }
         if(type === 'data_ingestion')
         {
-         // await this.interactionSchemaService.updateAIProcessed(parsedMessage, accountNumber, project_id, company_id, transaction_id);
+          await this.interactionSchemaService.updateAIProcessed(accountNumber, project_id,parsedMessage);
         }
       }
-      await this.interactionSchemaService.updateInteractionStatus(accountNumber, parsedMessage)
+      else{
+        this.logger.error("Kafka message indicates failure status", JSON.stringify(message));
+      }
+
       this.logger.info(`Processed Kafka message for account: ${company_id}`);
     } catch (err) {
        this.logger.error("Error processing Kafka message", JSON.stringify(err));

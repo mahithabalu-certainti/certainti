@@ -244,20 +244,20 @@ export const rawQueries = {
   fetchSchemaName(r_number: string) {
     return `${MAIN_SCHEMA_NAME}_${r_number.replace("ACC-", "")}`;
   },
-  fetchInteractionTypes(data : any) {
-    let ids = data.map((d : any) => `'${d}'`)
+  fetchInteractionTypes(data: any) {
+    let ids = data.map((d: any) => `'${d}'`);
     return `
-    SELECT rid, interaction_type_name FROM ${MAIN_SCHEMA_NAME}.interaction_type WHERE rid IN (${ids})`
+    SELECT rid, interaction_type_name FROM ${MAIN_SCHEMA_NAME}.interaction_type WHERE rid IN (${ids})`;
   },
-  fetchInteractionSource(data : any) {
-     let ids = data.map((d : any) => `'${d}'`)
+  fetchInteractionSource(data: any) {
+    let ids = data.map((d: any) => `'${d}'`);
     return `
-    SELECT rid, interaction_source_name FROM ${MAIN_SCHEMA_NAME}.interaction_source WHERE rid IN (${ids})`
+    SELECT rid, interaction_source_name FROM ${MAIN_SCHEMA_NAME}.interaction_source WHERE rid IN (${ids})`;
   },
   fetchInteractionResponseSource(data: any) {
     let ids = data.map((d: any) => `'${d}'`);
     return `
-    SELECT rid, response_source_name FROM ${MAIN_SCHEMA_NAME}.interaction_response_source WHERE rid IN (${ids})`
+    SELECT rid, response_source_name FROM ${MAIN_SCHEMA_NAME}.interaction_response_source WHERE rid IN (${ids})`;
   },
   fetchInteractionStatus(data: any) {
     let ids: string[];
@@ -271,58 +271,78 @@ export const rawQueries = {
     return `
     SELECT rid, status_name  FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE rid IN (${ids})`;
   },
-  fetchInteractionStatusByType(type : string) {
+  fetchInteractionStatusByType(type: string) {
     return `
-    SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE status_name = '${type}'`
+    SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE status_name = '${type}'`;
   },
-  fetchResponseSourceByType(type : string) {
+  fetchResponseSourceByType(type: string) {
     return `
-    SELECT rid, response_source_name FROM ${MAIN_SCHEMA_NAME}.interaction_response_source WHERE type = '${type}'`
+    SELECT rid, response_source_name FROM ${MAIN_SCHEMA_NAME}.interaction_response_source WHERE type = '${type}'`;
   },
-  fetchProjectInfo(rid : string,schemaName : string) {
+  fetchProjectInfo(rid: string, schemaName: string) {
     return `
-    SELECT rid, project_name,project_code,r_number,fiscal_year,project_rid FROM ${schemaName}.project_fiscal WHERE rid = '${rid}'`
+    SELECT rid, project_name,project_code,r_number,fiscal_year,project_rid FROM ${schemaName}.project_fiscal WHERE rid = '${rid}'`;
   },
   fetchProjectsByAccount(accountRid: string, schemaName: string) {
     return `
-    SELECT rid, project_rid FROM ${schemaName}.project_fiscal WHERE account_rid = '${accountRid}'`
+    SELECT rid, project_rid FROM ${schemaName}.project_fiscal WHERE account_rid = '${accountRid}'`;
   },
   updateQreInfo(rid: string, schemaName: string, qrePercent: number) {
     return `
     UPDATE ${schemaName}.project_fiscal SET qre_final = ${qrePercent} WHERE rid = '${rid}'`;
   },
-  updateAIProcessedFlag(rid: string, schemaName: string) {
+  updateAIProcessedFlag(
+    rid: string,
+    schemaName: string,
+    isAiProcessed: boolean
+  ) {
     return `
-    UPDATE ${schemaName}.interactions SET is_ai_processed = true WHERE rid = '${rid}'`
+    UPDATE ${schemaName}.interactions SET is_ai_processed = ${isAiProcessed} WHERE rid = '${rid}'`;
+  },
+  updateAIProcessedFlagAttachments(
+    rid: string,
+    schemaName: string,
+    isAiProcessed: boolean
+  ) {
+    return `
+    UPDATE ${schemaName}.attachments SET is_ai_processed = ${isAiProcessed} WHERE entity_rid = '${rid}'`;
   },
   updateQreInfoSummary(rid: string, qrePercent: number) {
     return `
-    UPDATE ${MAIN_SCHEMA_NAME}.project_fiscal_summary SET qre_final = ${qrePercent} WHERE project_fiscal_rid = '${rid}'`
+    UPDATE ${MAIN_SCHEMA_NAME}.project_fiscal_summary SET qre_final = ${qrePercent} WHERE project_fiscal_rid = '${rid}'`;
   },
   fetchAccountInfo(rid: string) {
     return `
-    SELECT rid, account_name,r_number FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`
+    SELECT rid, account_name,r_number,parent_account_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`;
   },
-  fetchPreviousInteractionStatus(statusRid: string,schemaName: string) {
+  fetchPreviousInteractionStatus(statusRid: string, schemaName: string) {
     return `
-    SELECT old_status_rid FROM ${schemaName}.interaction_status_history WHERE new_status_rid = '${statusRid}' ORDER BY created_datetime DESC LIMIT 1`
+    SELECT old_status_rid FROM ${schemaName}.interaction_status_history WHERE new_status_rid = '${statusRid}' ORDER BY created_datetime DESC LIMIT 1`;
   },
-  fetchUser(data : any) {
-     let ids = data.map((d : any) => `'${d}'`)
+  fetchUser(data: any) {
+    let ids = data.map((d: any) => `'${d}'`);
     return `
-    SELECT rid, first_name, last_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (${ids})`
+    SELECT rid, first_name, last_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (${ids})`;
   },
   fetchInteractionRecipientSummary(projectFiscalRid: any, schemaName: string) {
-    let ids = projectFiscalRid.map((d : any) => `'${d}'`)
+    let ids = projectFiscalRid.map((d: any) => `'${d}'`);
     return `
-    SELECT  is_interaction_recipient,project_fiscal_rid FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary WHERE project_fiscal_rid IN (${ids})`
+    SELECT  is_interaction_recipient,project_fiscal_rid FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary WHERE project_fiscal_rid IN (${ids})`;
   },
   fetchPOCEmail(projectFiscalRid: string) {
     return `
-    SELECT project_point_of_contact_email,project_point_of_contact FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary WHERE project_fiscal_rid = '${projectFiscalRid}' LIMIT 1`
+    SELECT project_point_of_contact_email,project_point_of_contact FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary WHERE project_fiscal_rid = '${projectFiscalRid}' LIMIT 1`;
+  },
+  fetchInteractionSenderEmail(schemaName: string, accountRid: string) {
+    return `
+    SELECT support_email FROM ${schemaName}.account_details WHERE account_rid = '${accountRid}'  and  subscription_created is true  and support_email is not null LIMIT 1`;
+  },
+  fetchGlobalSenderEmail() {
+    return `
+    SELECT email FROM ${MAIN_SCHEMA_NAME}.global_settings WHERE is_active is true LIMIT 1`;
   },
   isEmailRecipientAvailable(projectFiscalRid: string, schemaName: string) {
-  return `
+    return `
     SELECT EXISTS (
       SELECT 1
       FROM ${schemaName}.key_contact_details
@@ -331,47 +351,46 @@ export const rawQueries = {
         AND entity_rid = '${projectFiscalRid}'
     ) AS recipient_available
   `;
-}
-,
+  },
   fetchInteractionRecipient(projectFiscalRid: string, schemaName: string) {
     return `
-    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE entity_type = 'Project' and include_in_communication is true and entity_rid = '${projectFiscalRid}'`
+    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE entity_type = 'Project' and include_in_communication is true and entity_rid = '${projectFiscalRid}'`;
   },
-  fetchInteractionRecipientProject(projectFiscalRid: string, schemaName: string) {
+  fetchInteractionRecipientProject(
+    projectFiscalRid: string,
+    schemaName: string
+  ) {
     return `
-    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE entity_type = 'Project' and interaction_cc_recipient is true and entity_rid = '${projectFiscalRid}'`
+    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE entity_type = 'Project' and interaction_cc_recipient is true and entity_rid = '${projectFiscalRid}'`;
   },
   fetchInteractionRecipientAccount(accountRid: string, schemaName: string) {
     return `
-    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE entity_type = 'Account' and interaction_cc_recipient is true and entity_rid = '${accountRid}'`
+    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE entity_type = 'Account' and interaction_cc_recipient is true and entity_rid = '${accountRid}'`;
   },
-  fetchisAutoSendEnabled(projectFiscalRid: string,schemaName : string) {
+  fetchisAutoSendEnabled(projectFiscalRid: string, schemaName: string) {
     return `
-    SELECT auto_send_ai_interaction FROM ${schemaName}.project_fiscal WHERE rid = '${projectFiscalRid}' LIMIT 1`
+    SELECT auto_send_ai_interaction FROM ${schemaName}.project_fiscal WHERE rid = '${projectFiscalRid}' LIMIT 1`;
   },
-  fetchisAutoTriggerEnabled(projectFiscalRid: string,schemaName : string) {
+  fetchisAutoTriggerEnabled(projectFiscalRid: string, schemaName: string) {
     return `
-    SELECT auto_access_rd FROM ${schemaName}.project_fiscal WHERE rid = '${projectFiscalRid}' LIMIT 1`
+    SELECT auto_access_rd FROM ${schemaName}.project_fiscal WHERE rid = '${projectFiscalRid}' LIMIT 1`;
   },
-  
+
   fetchInteractionStatusList(whereClause: string) {
     return `
-    SELECT rid, status_name,status_type FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE ${whereClause} ORDER BY status_name ASC`
+    SELECT rid, status_name,status_type FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE ${whereClause} ORDER BY status_name ASC`;
   },
-  fetchUserEmail(userId:string)
-  {
+  fetchUserEmail(userId: string) {
     return `
-    SELECT email FROM ${MAIN_SCHEMA_NAME}.user WHERE rid = '${userId}' LIMIT 1`
+    SELECT email FROM ${MAIN_SCHEMA_NAME}.user WHERE rid = '${userId}' LIMIT 1`;
   },
-  fetchInteractionType(type:string)
-  {
+  fetchInteractionType(type: string) {
     return `
-    SELECT rid FROM ${MAIN_SCHEMA_NAME}.interaction_type WHERE interaction_type_name = '${type}' LIMIT 1`
+    SELECT rid FROM ${MAIN_SCHEMA_NAME}.interaction_type WHERE interaction_type_name = '${type}' LIMIT 1`;
   },
-  fetchAllParentRNumber () {
-    let query =
-    `SELECT r_number FROM ${MAIN_SCHEMA_NAME}.account WHERE storage_type = '${STATUS_MESSAGE.separateDb}' AND parent_account_rid IS NULL
-    ORDER BY r_number ASC`
+  fetchAllParentRNumber() {
+    let query = `SELECT r_number FROM ${MAIN_SCHEMA_NAME}.account WHERE storage_type = '${STATUS_MESSAGE.separateDb}' AND parent_account_rid IS NULL
+    ORDER BY r_number ASC`;
     return query;
   },
   fetchEmailResponseSourceRid(): string {
@@ -422,10 +441,122 @@ export const rawQueries = {
       WHERE mp.permission_name = :permissionName
         AND ufa.user_id = :userId
     `;
-  }
-
-  
-
+  },
+  GET_ACCOUNT_ACCESS: `
+(
+  (
+    EXISTS (
+      SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access uea
+      WHERE uea.user_rid = ? 
+      AND uea.entity_type = 'ACCOUNT'
+      AND uea.entity_rid = ps.account_rid
+      AND uea.access_type = 'INCLUDE' 
+    )
+    OR EXISTS (
+      SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_mapping ugm
+      JOIN ${MAIN_SCHEMA_NAME}.user_group_entity_access ugea 
+        ON ugea.group_rid = ugm.group_rid
+      WHERE ugm.user_rid = ?
+      AND ugea.entity_type = 'ACCOUNT'
+      AND ugea.entity_rid = ps.account_rid
+      AND ugea.access_type = 'INCLUDE'
+    )
+  )
+  AND NOT EXISTS (
+    SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access uea
+    WHERE uea.user_rid = ? 
+    AND uea.entity_type = 'ACCOUNT'
+    AND uea.entity_rid = ps.account_rid
+    AND uea.access_type = 'EXCLUDE'
+  )
+  AND NOT EXISTS (
+    SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_mapping ugm
+    JOIN ${MAIN_SCHEMA_NAME}.user_group_entity_access ugea 
+      ON ugea.group_rid = ugm.group_rid
+    WHERE ugm.user_rid = ?
+    AND ugea.entity_type = 'ACCOUNT'
+    AND ugea.entity_rid = ps.account_rid
+    AND ugea.access_type = 'EXCLUDE'
+  )
+)`,
+  GET_PROJECT_ACCESS: `
+      AND (
+        (
+          EXISTS (
+            SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access uea
+            WHERE uea.user_rid = ? 
+            AND uea.entity_type = 'PROJECT'
+            AND uea.entity_rid = ps.project_rid
+            AND uea.access_type = 'INCLUDE'
+          )
+          OR EXISTS (
+            SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_mapping ugm
+            JOIN ${MAIN_SCHEMA_NAME}.user_group_entity_access ugea 
+              ON ugea.group_rid = ugm.group_rid
+            WHERE ugm.user_rid = ?
+            AND ugea.entity_type = 'PROJECT'
+            AND ugea.entity_rid = ps.project_rid
+            AND ugea.access_type = 'INCLUDE'
+          )
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access uea
+          WHERE uea.user_rid = ? 
+          AND uea.entity_type = 'PROJECT'
+          AND uea.entity_rid = ps.project_rid
+          AND uea.access_type = 'EXCLUDE'
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_mapping ugm
+          JOIN ${MAIN_SCHEMA_NAME}.user_group_entity_access ugea 
+            ON ugea.group_rid = ugm.group_rid
+          WHERE ugm.user_rid = ?
+          AND ugea.entity_type = 'PROJECT'
+          AND ugea.entity_rid = ps.project_rid
+          AND ugea.access_type = 'EXCLUDE'
+        )
+      )
+    `,
+  fetchUserGroupType: `
+      SELECT type group_type
+      FROM ${MAIN_SCHEMA_NAME}.user_groups ug
+      JOIN ${MAIN_SCHEMA_NAME}.user_group_mapping ugm ON ug.rid = ugm.group_rid 
+      JOIN ${MAIN_SCHEMA_NAME}.user_group_type ugt ON ugt.rid = ug.group_type_rid
+      WHERE ugm.user_rid = :userRid
+      LIMIT 1`,
+  fetchDirectAccountAccess: `
+      SELECT 
+        ugea.entity_rid,
+        a.parent_account_rid,
+        CASE WHEN a.parent_account_rid IS NULL THEN false ELSE true END as is_child
+      FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access ugea
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.account a ON ugea.entity_rid = a.rid
+      WHERE ugea.user_rid = :userRid 
+        AND ugea.entity_type = 'ACCOUNT'
+        AND ugea.access_type = 'INCLUDE'
+      `,
+  fetchGroupAccountAccess: `
+      WITH user_groups AS (
+        SELECT group_rid FROM ${MAIN_SCHEMA_NAME}.user_group_mapping
+        WHERE user_rid = :userRid
+      )
+      SELECT DISTINCT 
+        gea.entity_rid,
+        a.parent_account_rid,
+        CASE WHEN a.parent_account_rid IS NULL THEN false ELSE true END as is_child
+      FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access gea
+      JOIN user_groups ug ON gea.group_rid = ug.group_rid
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.account a ON gea.entity_rid = a.rid
+      WHERE gea.entity_type = 'ACCOUNT'
+        AND gea.access_type = 'INCLUDE'
+      `,
+  fetchUserProfileInfo: `
+      SELECT p.profile_name, u.email
+      FROM ${MAIN_SCHEMA_NAME}.user u
+      JOIN ${MAIN_SCHEMA_NAME}.profile p ON u.profile_rid = p.rid 
+      WHERE u.rid = :userRid
+      LIMIT 1
+      `,
 };
 
 export const filterTypesForSummaryInteractions : Record<string, any> = 

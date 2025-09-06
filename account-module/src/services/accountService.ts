@@ -1933,6 +1933,9 @@ class AccountService {
         const childWhereClauseBase = {
           rid: { [Op.in]: childAccountIds },
         };
+         if (typeof globalFilters === 'string') {
+          globalFilters = JSON.parse(globalFilters);
+        }
         const { parentWhereClause, childWhereClause } = this.applyAccountIDFilter(
         globalFilters,
         {

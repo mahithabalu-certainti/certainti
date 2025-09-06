@@ -36,6 +36,7 @@ export async function sendEmailWithAttachment(emailMessage: {
     contentBytes: string;
     contentType?: string;
   }>;
+  senderEmailInfo: string;
 }): Promise<any> {
   const credential = new ClientSecretCredential(
     process.env.MAIL_TENANT_ID!,
@@ -63,11 +64,12 @@ export async function sendEmailWithAttachment(emailMessage: {
 
   try {
     const response = await graphClient
-      .api(`/users/${process.env.EMAIL_FROM}/sendMail`)
+      .api(`/users/${emailMessage.senderEmailInfo}/sendMail`)
       .post(mail);
 
     return true;
   } catch (error: any) {
+    console.error("Error sending email with attachment:", error);
     return false
   }
 }

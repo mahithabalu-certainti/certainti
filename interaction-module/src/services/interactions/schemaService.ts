@@ -1016,6 +1016,8 @@ if(!this.orgDbSequelize)
           response_updated_on: new Date(),
           response_updated_by: userEmailId,
           response_source_rid: responseData.response_source_rid,
+          modified_by: userId,
+          modified_datetime: new Date(),
        //   attachment_count: attachmentcount
         };
 
@@ -1024,6 +1026,8 @@ if(!this.orgDbSequelize)
           response_updated_on: new Date(),
           response_updated_by: userEmailId,
           response_source_rid: responseData.response_source_rid,
+          modified_by: userId,
+          modified_datetime: new Date(),
        //   attachment_count: attachmentcount
         };
         if (status === statusAction.RESPONSE_RECEIVED) {
@@ -1302,7 +1306,6 @@ async fetchSenderEmailInfoByAccountId(accountNumber: string, parentAccountId: st
       const [senderEmailInfo]: any[] = await this.orgDbSequelize.query(
         rawQueries.fetchInteractionSenderEmail(schemaName,parentAccountId)
       );
-      console.log("senderEmailInfo",senderEmailInfo)
       if (!senderEmailInfo[0]) {
         // if (!this.mainDbSequelize) {
         //   this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
@@ -1325,7 +1328,7 @@ async fetchSenderEmailInfoByAccountId(accountNumber: string, parentAccountId: st
       );
     }
   };
-  async fetchEmailInfo(accountNumber: string, interactionRid: string, projectFiscalRid: string, accountRid: string) {
+async fetchEmailInfo(accountNumber: string, interactionRid: string, projectFiscalRid: string, accountRid: string) {
     try {
         if (!this.orgDbSequelize) {
       this.orgDbSequelize = await this.interactionModelService.getSequelize();
@@ -1374,6 +1377,181 @@ async fetchSenderEmailInfoByAccountId(accountNumber: string, parentAccountId: st
     );
   }
 }
+
+async getUserGroupType(userRid: string): Promise<string | null> {
+    const mainDbSequelize = await initMainDbSequelize();
+
+    try {
+      const results = await mainDbSequelize.query<{ group_type: string }>(
+       rawQueries.fetchUserGroupType,
+        {
+          replacements: { userRid },
+          type: QueryTypes.SELECT,
+        }
+      );
+
+      if (!results || results.length === 0) {
+        return null;
+      }
+
+      return results[0]?.group_type || null;
+    } catch (error) {
+      // Log the error for debugging
+      console.error("Error fetching user group type:", error);
+      throw new Error("Failed to get user group type");
+    }
+  }
+async getAccessibleAccountInfo(userRid: string): Promise<
+    Array<{
+      id: string;
+      isChild: boolean;
+      parentId: string | null;
+    }>
+  > {
+    const mainDbSequelize = await initMainDbSequelize();
+
+    try {
+      // 1. Direct access with account info
+      const directAccess = await mainDbSequelize.query<{
+        entity_rid: string;
+        parent_account_rid: string | null;
+        is_child: boolean;
+      }>(
+       rawQueries.fetchDirectAccountAccess,
+        {
+          replacements: { userRid },
+          type: QueryTypes.SELECT,
+        }
+      );
+
+      // 2. Group access with account info
+      const groupAccess = await mainDbSequelize.query<{
+        entity_rid: string;
+        parent_account_rid: string | null;
+        is_child: boolean;
+      }>(
+       rawQueries.fetchGroupAccountAccess,
+        {
+          replacements: { userRid },
+          type: QueryTypes.SELECT,
+        }
+      );
+
+      // 3. Combine and deduplicate
+      const allAccess = [...directAccess, ...groupAccess];
+      const uniqueAccess = new Map<
+        string,
+        {
+          id: string;
+          isChild: boolean;
+          parentId: string | null;
+        }
+      >();
+
+      allAccess.forEach((access) => {
+        if (!uniqueAccess.has(access.entity_rid)) {
+          uniqueAccess.set(access.entity_rid, {
+            id: access.entity_rid,
+            isChild: access.is_child,
+            parentId: access.parent_account_rid,
+          });
+        }
+      });
+
+      return Array.from(uniqueAccess.values());
+    } catch (err) {
+      console.error("Error in getAccessibleAccountInfo:", err);
+      return [];
+    }
+  }
+
+    async getUserProfileType(
+    userRid: string
+  ): Promise<{ profileName: string; email: string } | null> {
+    const mainDbSequelize = await initMainDbSequelize();
+
+    try {
+      const results = await mainDbSequelize.query<{
+        profile_name: string;
+        email: string;
+      }>(
+       rawQueries.fetchUserProfileInfo,
+        {
+          replacements: { userRid },
+          type: QueryTypes.SELECT,
+        }
+      );
+
+      if (!results || results.length === 0) {
+        return null;
+      }
+
+      // Return renamed keys to match camelCase (optional)
+      return {
+        profileName: results[0]?.profile_name || "Standard User",
+        email: results[0]?.email || "",
+      };
+    } catch (error) {
+      console.error("Error fetching user profile info:", error);
+      throw new Error("Failed to get user profile information");
+    }
+  }
+
+    async getAccessibleProjectIds(
+    userId: string,
+    isdefaultparent: boolean,
+    isPOC: boolean = false,
+    userEmail?: string,
+    isCustomGlobal: boolean = false
+  ): Promise<string[]> {
+    const mainDbSequelize = await initMainDbSequelize();
+    const MAIN_SCHEMA_NAME = "trd365";
+
+    const replacements: any[] = [];
+
+    let accessControlWhere = "WHERE 1=1";
+
+    if (isCustomGlobal) {
+      // If isPOC is also true, restrict to POC email
+      if (isPOC && userEmail) {
+        accessControlWhere += ` AND (ps.project_point_of_contact_email = ? OR pfs.project_point_of_contact_email = ?)`;
+        replacements.push(userEmail, userEmail);
+      }
+      // Else allow all projects (no extra access checks)
+    } else {
+      // Non-global user – apply account/project access checks
+      const accountAccessSubquery = rawQueries.GET_ACCOUNT_ACCESS;
+      replacements.push(userId, userId, userId, userId);
+      accessControlWhere += ` AND ${accountAccessSubquery}`;
+
+      if (!isdefaultparent) {
+        // Add project-level access checks if not a parent group
+        accessControlWhere += rawQueries.GET_PROJECT_ACCESS;
+        replacements.push(userId, userId, userId, userId);
+      }
+
+      // Only non-global users can be further filtered by POC
+      if (isPOC && userEmail) {
+        accessControlWhere += ` AND (ps.project_point_of_contact_email = ? OR pfs.project_point_of_contact_email = ?)`;
+        replacements.push(userEmail, userEmail);
+      }
+    }
+
+    const query = `
+    SELECT DISTINCT ps.project_rid
+    FROM ${MAIN_SCHEMA_NAME}.project_summary AS ps
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary AS pfs ON ps.project_rid = pfs.project_rid
+    ${accessControlWhere}
+  `;
+
+    const results = await mainDbSequelize.query(query, {
+      replacements,
+      type: "SELECT",
+    });
+
+    return results.map((row: any) => row.project_rid);
+  }
+
 async updateInteractionInfo(
   accountNumber: string,
   interactionRid: string,
@@ -1479,11 +1657,6 @@ async updateTechSummary( projectSummary: string, accountNumber: string, projectF
     }
     
     const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
-    await this.orgDbSequelize.query(
-      rawQueries.updateAIProcessedFlag(projectFiscalId,schemaName ),
-      { type: "UPDATE" }
-    );
-
      const [projectInfo]: any[] = await this.orgDbSequelize.query(
       rawQueries.fetchProjectInfo(projectFiscalId, schemaName),
       { type: "SELECT" }
@@ -1543,38 +1716,6 @@ async updateTechSummary( projectSummary: string, accountNumber: string, projectF
     );
   }
 }
-async updateAssessmentErrorResponse( error:JSON, accountNumber: string, projectFiscalId: string, accountId: string,transactionId: string)
-{
-  try {
-    if (!this.orgDbSequelize) {
-      this.orgDbSequelize = await this.interactionModelService.getSequelize();
-    }
-    const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
-
-     const [projectInfo]: any[] = await this.orgDbSequelize.query(
-      rawQueries.fetchProjectInfo(projectFiscalId, schemaName),
-      { type: "SELECT" }
-    );
-
-    const { AiAssessmentError } = await this.interactionModelService.getModels(accountNumber);
-
-    const aiResponse = await AiAssessmentError.create(
-      {
-        account_rid: accountId,
-        created_by:process.env.SYSTEM_USER_ID || "system",
-        project_rid :projectFiscalId,
-        transaction_id: transactionId,
-        errorMessage: error
-      }
-    );
-    
-  } catch (err) {
-    throw new Error(
-      "Error updating Tech Summary: " + (err as Error).message
-    );
-  }
-}
-
 
 async fetchProjectInfo(accountNumber: string, projectFiscalId: string)
 {
@@ -1582,7 +1723,6 @@ async fetchProjectInfo(accountNumber: string, projectFiscalId: string)
     if (!this.orgDbSequelize) {
       this.orgDbSequelize = await this.interactionModelService.getSequelize();
     }
-    
     const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
 
      const [projectInfo]: any[] = await this.orgDbSequelize.query(
@@ -1596,6 +1736,57 @@ async fetchProjectInfo(accountNumber: string, projectFiscalId: string)
       "Error updating QRE percent: " + (err as Error).message
     );
   }
+}
+async updateAIProcessed(accountNumber: string, projectFiscalRid: string,response:any)
+{
+  try {   
+    if (!this.orgDbSequelize) { 
+      this.orgDbSequelize = await this.interactionModelService.getSequelize();
+    }
+    let isAiProcessed = false;
+    if(response.statusCode === 200)
+    {
+      isAiProcessed = true
+    }
+    const {  AiAssessmentAudit } = await this.interactionModelService.getModels(accountNumber);
+    const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
+  
+     const updateData: any = {
+      data_ingestion: response.statusCode === 200,
+    };
+    if (response.statusCode !== 200) {
+      updateData.data_ingestion_error_message = response.error_message;
+    }
+    const [aiResponse] = await Promise.all([
+      await this.orgDbSequelize.query(
+        rawQueries.updateAIProcessedFlag(
+          projectFiscalRid,
+          schemaName,
+          isAiProcessed
+        ),
+        { type: "UPDATE" }
+      ),
+      await this.orgDbSequelize.query(
+        rawQueries.updateAIProcessedFlagAttachments(
+          projectFiscalRid,
+          schemaName,
+          isAiProcessed
+        ),
+        { type: "UPDATE" }
+      )
+    ]);
+    console.log("AI Processed flag updated successfully", aiResponse);
+    if(response?.data?.transaction_id)
+    {
+       AiAssessmentAudit.update(updateData, {
+        where: { transaction_id: response?.data?.transaction_id },
+      });
+    }
+  } catch (err) {
+    throw new Error(
+      "Error updating AI processed flag: " + (err as Error).message
+    );
+  } 
 }
 
 async updateQrePercent(qrePercent:number, accountNumber: string,projectFiscalRid:string,qreBreakdown:JSON, accountId: string,transaction_id:string,response:any)
@@ -1612,10 +1803,6 @@ async updateQrePercent(qrePercent:number, accountNumber: string,projectFiscalRid
     await Promise.all([
       this.orgDbSequelize.query(
       rawQueries.updateQreInfo(projectFiscalRid, schemaName, qrePercent),
-      { type: "UPDATE" }
-      ),
-      this.orgDbSequelize.query(
-      rawQueries.updateAIProcessedFlag(projectFiscalRid, schemaName),
       { type: "UPDATE" }
       ),
       this.mainDbSequelize.query(

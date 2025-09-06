@@ -14,10 +14,12 @@ export interface AiAssessmentAuditAttributes {
   is_qre_processed: boolean;
   is_tech_summary_processed: boolean;
   is_interaction_question_processed: boolean;
+  data_ingestion?: boolean;
   ai_assessment_request_api_status: string;
-  interaction_question_error_message?:JSON;
-  qre_error_message?:JSON;
-  tech_summary_error_message?:JSON;
+  interaction_question_error_message?: JSON;
+  qre_error_message?: JSON;
+  tech_summary_error_message?: JSON;
+  data_ingestion_error_message?: JSON;
 
 }
 
@@ -36,10 +38,12 @@ export class AiAssessmentAudit extends Model<AiAssessmentAuditAttributes, AiAsse
   public is_qre_processed!: boolean;
   public is_tech_summary_processed!: boolean;
   public is_interaction_question_processed!: boolean;
+  public data_ingestion?: boolean;
   public ai_assessment_request_api_status!: string;
   public interaction_question_error_message?: JSON;
   public qre_error_message?: JSON;
   public tech_summary_error_message?: JSON;
+  public data_ingestion_error_message?: JSON;
 
   static initialize(sequelize: Sequelize, schemaName: string = MAIN_SCHEMA_NAME) {
     return AiAssessmentAudit.init(
@@ -60,7 +64,8 @@ export class AiAssessmentAudit extends Model<AiAssessmentAuditAttributes, AiAsse
         is_qre_processed: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
         is_tech_summary_processed: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
         is_interaction_question_processed: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
-        ai_assessment_request_api_status: { type: DataTypes.STRING(50), allowNull: false },
+       data_ingestion: { type: DataTypes.BOOLEAN, allowNull: true, defaultValue: false },
+        ai_assessment_request_api_status: { type: DataTypes.TEXT, allowNull: false },
         interaction_question_error_message:{
           type: DataTypes.JSON,
           allowNull: true
@@ -70,6 +75,10 @@ export class AiAssessmentAudit extends Model<AiAssessmentAuditAttributes, AiAsse
           allowNull: true
         },
         tech_summary_error_message:{
+          type: DataTypes.JSON,
+          allowNull: true
+        },
+        data_ingestion_error_message:{
           type: DataTypes.JSON,
           allowNull: true
         }

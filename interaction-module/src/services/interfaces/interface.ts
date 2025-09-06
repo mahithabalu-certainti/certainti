@@ -6,9 +6,9 @@ import {
 
 export interface IInteractionService {
   processKafkaMessage(data: any): Promise<void>;
-  listInteractionPrjAccount(data: any): Promise<any>;
+  listInteractionPrjAccount(data: any,userId: string): Promise<any>;
   fetchInteractionSummary(
-    data: any
+    data: any,userId: string
   ): Promise<{ statusCodeValue: string; data: any }>;
   listInteractionResponseHistory(
     data: any
