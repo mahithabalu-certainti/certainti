@@ -49,7 +49,6 @@ async function startKafkaConsumer() {
     });
   } catch (err: any) {
     console.log("Kafka consumer could not be started:", err.message);
-
   }
 }
 startServer();
