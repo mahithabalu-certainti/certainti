@@ -476,7 +476,7 @@ async function listAllInteractionPrjAcc (req : Request, res : Response) {
       );
       return;
     }
-    const result = await interactionService.listInteractionPrjAccount(data)
+    const result = await interactionService.listInteractionPrjAccount(data,userId)
     if(result.status == HttpStatus.SUCCESS) {
       return res.status(HttpStatus.SUCCESS).json({
         statusCode : HttpStatus.SUCCESS,
@@ -515,7 +515,7 @@ async function exportAllInteractions (req : Request, res : Response) {
       );
       return;
     }
-    const result = await interactionService.listInteractionPrjAccount(data)
+    const result = await interactionService.listInteractionPrjAccount(data,userId)
     const fields = await interactionService.getAllowedExportFields(
           userId,
           "interactions_view_edit"
@@ -611,7 +611,7 @@ async function listOutAllInteractionSummary (req : Request, res : Response) {
       );
       return;
     }
-    const result = await interactionService.fetchInteractionSummary(data)
+    const result = await interactionService.fetchInteractionSummary(data,userId);
     if(result.statusCodeValue == HttpStatus.SUCCESS_MESSAGE) {
       const finalData = {
         page : data.page,
@@ -665,7 +665,7 @@ async function exportAllInteractionSummary (req : Request, res : Response) {
       );
       return;
     }
-    const result = await interactionService.fetchInteractionSummary(data);
+    const result = await interactionService.fetchInteractionSummary(data,userId);
      const fields = await interactionService.getAllowedExportFields(
           userId,
           "interactions_view_edit"
