@@ -244,6 +244,14 @@ export const rawQueries = {
   fetchSchemaName(r_number: string) {
     return `${MAIN_SCHEMA_NAME}_${r_number.replace("ACC-", "")}`;
   },
+  fetchGlobalAutoSendAccess() {
+    return `
+    SELECT auto_send_interaction FROM ${MAIN_SCHEMA_NAME}.organization_licenses limit 1`;
+  },
+  fetchGlobalAutoTriggerAccess() {
+    return `
+    SELECT auto_access_rd FROM ${MAIN_SCHEMA_NAME}.organization_licenses limit 1`;
+  },
   fetchInteractionTypes(data: any) {
     let ids = data.map((d: any) => `'${d}'`);
     return `
@@ -294,10 +302,11 @@ export const rawQueries = {
   updateAIProcessedFlag(
     rid: string,
     schemaName: string,
-    isAiProcessed: boolean
+    isAiProcessed: boolean,
+    statusRid:string
   ) {
     return `
-    UPDATE ${schemaName}.interactions SET is_ai_processed = ${isAiProcessed} WHERE rid = '${rid}'`;
+    UPDATE ${schemaName}.interactions SET is_ai_processed = ${isAiProcessed} WHERE rid = '${rid}' and status_rid='${statusRid}' `;
   },
   updateAIProcessedFlagAttachments(
     rid: string,
