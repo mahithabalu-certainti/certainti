@@ -6,6 +6,13 @@ const enumOptions = [
   { option: 'In', value: 'in' },
 ];
 
+const dateOptions = [
+  { option: 'Equals', value: 'equals' },
+  { option: 'Before', value: 'before' },
+  { option: 'After', value: 'after' },
+  { option: 'Between', value: 'between' },
+];
+
 export const getInteractionHistoryFilterFields = (
   interactionStatus: { option: string; value: string }[] // permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => {
@@ -24,6 +31,7 @@ export const getInteractionHistoryFilterFields = (
       name: 'Date',
       value: 'date',
       type: 'date',
+      operatorOption: dateOptions,
       // hide:
       //   !permissionMap?.['last_updated_date']?.edit &&
       //   !permissionMap?.['last_updated_date']?.read,

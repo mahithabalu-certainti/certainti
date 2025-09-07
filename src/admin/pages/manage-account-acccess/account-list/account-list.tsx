@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { NewFilterIcon, UserIcon } from '../../../../assets';
 import { ManageAccountTable } from './table';
 import { ProjectListParams } from '../../../../consultant/types/project';
@@ -35,6 +35,7 @@ import { FilterState } from '../../../../consultant/types/account-filter';
 import { checkPermission } from '../../../../common-utils';
 import { AccessRestricted } from '../../../../components/account-restricted';
 import { MANAGE_ACCOUNT_ACCESS } from '../../../../routes';
+import { useGetUserGroupTypes } from '../../../service';
 
 const AccountList = () => {
   const [page, setPage] = useState<number>(1);
@@ -57,6 +58,11 @@ const AccountList = () => {
   }, []);
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
+  const [columnAnchorEl, setColumnAnchorEl] =
+    React.useState<HTMLButtonElement | null>(null);
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const modalId = isModalOpen ? 'account-column-visibility-popover' : undefined;
 
   const isFilterOpen = Boolean(anchorEl);
   const filterId = isFilterOpen ? 'profile-filter-popover' : undefined;
@@ -145,6 +151,7 @@ const AccountList = () => {
 
   const countriesList = useGetAllCountries();
   const industry = useFetchIndustrys();
+  const allUserGroupTypes = useGetUserGroupTypes({ type: 'All' });
   const permissionMap = useMemo(() => {
     const map: Record<string, { read: boolean; edit: boolean }> = {};
     userViewEditFields.forEach((item) => {
@@ -169,13 +176,21 @@ const AccountList = () => {
       })) || [],
     [industry.data?.data.industries]
   );
+  const allGroupTypes: SelectOption[] = useMemo(
+    () =>
+      allUserGroupTypes.data?.data.groupTypes.map((groupTypes) => ({
+        label: groupTypes.group_type_name,
+        value: groupTypes.rid,
+      })) || [],
+    [allUserGroupTypes.data?.data.groupTypes]
+  );
   const accountFilterFields = getManageAccountFilterFields(
     allCountries,
     allIndustries,
     permissionMap
   );
   const userFilterFeilds = getManageUserListFilterFields();
-  const groupFilterFeilds = getManageGroupListFilterFields();
+  const groupFilterFeilds = getManageGroupListFilterFields(allGroupTypes);
   const projectFilterFeilds = getManageProjectListFilterFields();
   const getFilterFields = () => {
     if (!accountname) {
@@ -220,6 +235,11 @@ const AccountList = () => {
     !permissionMapListView?.['assign']?.read &&
     !permissionMapListView?.['assign']?.edit;
   if (!manageaccountIsEnable || !accountViewEnable) return <AccessRestricted />;
+  const handleColumnVisibility = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setColumnAnchorEl(event.currentTarget);
+  };
   return (
     <div>
       <div className='flex items-center justify-between w-full h-[55px] min-h-[50px] border-b border-[#CBD6E2] px-4'>
@@ -269,7 +289,17 @@ const AccountList = () => {
           )}
         </div>
         <div className='flex items-center gap-3'>
-          <div className='relative h-[32px]'>
+          <div className='flex gap-1 relative'>
+            <button
+              aria-describedby={modalId}
+              className={`w-[120px] h-[24px] mt-1 text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative border border-[#CBD6E2] px-0 py-0 normal-case ${isModalOpen ? 'bg-[#F3F3F3]' : 'bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'} hover:text-[#425A76] transition-colors duration-150`}
+              style={{
+                boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
+              }}
+              onClick={handleColumnVisibility}
+            >
+              Show/Hide Fields
+            </button>
             <button
               className={`w-[64px] h-[24px] text-[13px] mt-[5px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative `}
               onClick={handleFilterModal}
@@ -336,6 +366,8 @@ const AccountList = () => {
             tableParams={tableParams}
             setTableParams={setTableParams}
             setAppliedFilters={setAppliedFilters}
+            setColumnAnchorEl={setColumnAnchorEl}
+            columnAnchorEl={columnAnchorEl}
           />
         </div>
       )}
@@ -348,6 +380,8 @@ const AccountList = () => {
             setAppliedFilters={setAppliedFilters}
             disabled={disabled}
             hide={hide}
+            setColumnAnchorEl={setColumnAnchorEl}
+            columnAnchorEl={columnAnchorEl}
           />
         </div>
       )}

@@ -89,13 +89,13 @@ export const validateInteractionForm = (
   const questionErrors: InteractionQuestionErrors[] = [];
 
   // Validate project fields when source is account
-  if (source === 'account') {
-    if (!formData.projectCode) {
-      newErrors.projectCode = 'Project Code is required';
+  if (source === 'account' || source === 'global') {
+    if (!formData.accountName && source === 'global') {
+      newErrors.accountName = 'Account Name is required';
       isValid = false;
     }
-    if (!formData.fiscalYear) {
-      newErrors.fiscalYear = 'Fiscal Year is required';
+    if (!formData.projectCode) {
+      newErrors.projectCode = 'Project Code is required';
       isValid = false;
     }
   }
@@ -110,11 +110,12 @@ export const validateInteractionForm = (
     }
 
     if (!REGEX_PATTERNS.MAX_2000.test(question.question)) {
-      currentQuestionErrors.question = 'Max length exceeded';
+      currentQuestionErrors.question =
+        'Interaction Questions must be within 2000 characters';
       isValid = false;
     }
     if (!REGEX_PATTERNS.MAX_2000.test(question.notes)) {
-      currentQuestionErrors.notes = 'Max length exceeded';
+      currentQuestionErrors.notes = 'Notes must be within 2000 characters';
       isValid = false;
     }
 
@@ -253,4 +254,36 @@ export const transFormPayload = (
   }
 
   return basePayload;
+};
+
+export const shouldHideField = (
+  fieldName: string,
+  isEditView: boolean,
+  permissionMap: Record<string, { read: boolean; edit: boolean }>
+): boolean => {
+  if (!permissionMap || !permissionMap[fieldName]) {
+    return false;
+  }
+
+  const fieldPermissions = permissionMap[fieldName];
+  if (isEditView) {
+    return !fieldPermissions.read && !fieldPermissions.edit;
+  }
+  return false;
+};
+
+export const shouldDisableField = (
+  fieldName: string,
+  isEditView: boolean,
+  permissionMap: Record<string, { read: boolean; edit: boolean }>
+): boolean => {
+  if (!permissionMap || !permissionMap[fieldName]) {
+    return false;
+  }
+
+  const fieldPermissions = permissionMap[fieldName];
+  if (isEditView) {
+    return fieldPermissions.read && !fieldPermissions.edit;
+  }
+  return false;
 };

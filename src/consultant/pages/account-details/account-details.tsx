@@ -105,7 +105,7 @@ export const AccountDetails = () => {
   const interactionHistoryId = searchParams.get('interaction_history_id');
   const interactionId = searchParams.get('interaction_id');
   const interactionRID = searchParams.get('interaction_rid');
-  const viewDetails = !!interactionId || !!interactionRID;
+  const interactionsView = !!interactionId || !!interactionRID;
 
   // Permission Mangement
   const accountIsEnable = checkPermission(modules, AllModules.ACCOUNTS);
@@ -143,6 +143,11 @@ export const AccountDetails = () => {
     AllPermissions.IMPORTS_EXPORT
   );
 
+  const isInteractionsExportEnable = checkPermission(
+    permission,
+    AllPermissions.INTERACTIONS_EXPORT
+  );
+
   const isFinancialResourceCostExportEnable = checkPermission(
     permission,
     AllPermissions.ACCOUNT_FINANCIAL_RESOURCE_COST_EXPORT
@@ -175,6 +180,7 @@ export const AccountDetails = () => {
   const [refreshAccountDetails, setRefreshAccountDetails] = useState<number>(
     Date.now()
   );
+  const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   const [tableParams, setTableParams] = useState<ExportModule>({
     sortBy: 'created_datetime',
@@ -364,6 +370,7 @@ export const AccountDetails = () => {
           sort: interactionsParams.sortBy || 'status_name',
           sort_by: interactionsParams?.sortOrder || 'ASC',
           filters: interactionsParams?.filters || {},
+          timezone: systemTimezone,
           flag: 'account',
         };
         exportInteractionsHistory(projectInteractionHistoryExportPayload);
@@ -377,6 +384,7 @@ export const AccountDetails = () => {
           sort: interactionsParams?.sortBy || 'action',
           sort_by: interactionsParams?.sortOrder || 'ASC',
           filters: interactionsParams?.filters || {},
+          timezone: systemTimezone,
           flag: 'account',
         };
         exportInteractions(projectInteractionExportPayload);
@@ -472,8 +480,8 @@ export const AccountDetails = () => {
       return !isFinancialProjectCostExportEnable;
     } else if (list === 'timesheet' && !tab) {
       return !isTimesheetExportEnable;
-    } else if (list === 'interactions') {
-      return viewDetails;
+    } else if (list === 'interactions' && !interactionsView) {
+      return !isInteractionsExportEnable;
     } else if (list === 'timesheet' && tab === 'timesheet_project') {
       return !isProjectExportEnable;
     } else if (list === 'timesheet' && tab === 'timesheet_project_resource') {
@@ -660,7 +668,7 @@ export const AccountDetails = () => {
       {
         name: 'Interactions',
         key: 'interactions',
-        id: AllModules.PROJECT_INTERACTIONS,
+        id: AllModules.INTERACTIONS,
         disabled: disable,
         hide: disable,
         icon: InteractionsIcon,
@@ -710,6 +718,7 @@ export const AccountDetails = () => {
         key: 'timesheet',
         id: AllMenus.TIMESHEETS,
         disabled: disable,
+        hide: disable,
         icon: TimeSheetIcon,
       },
       {

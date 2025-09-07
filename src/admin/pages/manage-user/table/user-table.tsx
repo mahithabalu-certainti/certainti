@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ListTable } from '../../../../components/table';
+import { ListTable, ManageColumnsPopover } from '../../../../components/table';
 import { ADMIN_MANAGE_USER } from '../../../../routes';
 import { useManageUserList } from '../../../service/manage-user/manage-user-service';
 import {
@@ -14,6 +14,8 @@ import {
   ActionItem,
   CellEditData,
   FieldChangeValue,
+  ListTableColumn,
+  ShowHideTableColumn,
 } from '../../../../components/table/types';
 import { EditIcon, EyeIcon } from '../../../../assets';
 import { AllPermissions, useGetStatus } from '../../../../common-service';
@@ -34,6 +36,10 @@ interface IUserTableProps {
   refreshUserTrigger?: number;
   profileOptions: { label: string; value: string }[];
   roleOptions: { label: string; value: string }[];
+  columnAnchorEl: HTMLButtonElement | null;
+  setColumnAnchorEl: React.Dispatch<
+    React.SetStateAction<HTMLButtonElement | null>
+  >;
 }
 
 export const UserTable: React.FC<IUserTableProps> = ({
@@ -46,6 +52,8 @@ export const UserTable: React.FC<IUserTableProps> = ({
   refreshUserTrigger,
   profileOptions,
   roleOptions,
+  columnAnchorEl,
+  setColumnAnchorEl,
 }) => {
   const [users, setUsers] = useState<ManageUser[]>([]);
   const navigate = useNavigate();
@@ -244,41 +252,79 @@ export const UserTable: React.FC<IUserTableProps> = ({
     }
   };
 
+  const RestrictedColumns = [
+    {
+      id: 'username',
+      canHide: false,
+      canDrag: false,
+    },
+  ];
+
+  const [visibleColumns, setVisibleColumns] = useState<
+    ListTableColumn<ManageUser>[]
+  >(userColumns.filter((col) => !col.hide));
+
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    setVisibleColumns(
+      updatedColumns.filter((col) => !col.hide) as ListTableColumn<ManageUser>[]
+    );
+  };
+
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
+  };
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const modalId = isModalOpen
+    ? 'interaction-column-visibility-popover'
+    : undefined;
+
   return (
-    <ListTable
-      data={users}
-      columns={userColumns}
-      getRowId={getRowId}
-      hoverHighlight={true}
-      tableStyle={{
-        height: '100%',
-        maxHeight: 'calc(100vh - 195px)',
-        overflow: 'auto',
-      }}
-      stickyHeader={true}
-      stickyColumnsCount={2}
-      // Selection
-      selectable={true}
-      onSelectionChange={onSelectionChange}
-      // Actions
-      actionWidth={60}
-      actionDisplayMode='dropdown'
-      actionMenuItems={actionButtons}
-      // State
-      loading={isLoading}
-      error={isError ? 'Failed to load users' : undefined}
-      // Pagination
-      rowsPerPageOptions={[25, 50, 100]}
-      rowsPerPage={tableParams.limit}
-      currentPage={(tableParams.page ?? 1) - 1}
-      totalItems={totalItems}
-      onPageChange={handlePageChange}
-      onRowsPerPageChange={handleRowsPerPageChange}
-      // Sorting
-      sortBy={tableParams.sortBy}
-      sortOrder={tableParams.sortOrder}
-      onSort={handleSort}
-      onCellEdit={handleCellEdit}
-    />
+    <>
+      <ManageColumnsPopover
+        anchorEl={columnAnchorEl}
+        open={isModalOpen}
+        popoverId={modalId}
+        onClose={handlePopoverClose}
+        columns={userColumns}
+        onColumnsChange={handleColumnsChange}
+        columnRestrictions={RestrictedColumns}
+      />
+      <ListTable
+        data={users}
+        columns={visibleColumns}
+        getRowId={getRowId}
+        hoverHighlight={true}
+        tableStyle={{
+          height: '100%',
+          maxHeight: 'calc(100vh - 195px)',
+          overflow: 'auto',
+        }}
+        stickyHeader={true}
+        stickyColumnsCount={2}
+        // Selection
+        selectable={true}
+        onSelectionChange={onSelectionChange}
+        // Actions
+        actionWidth={60}
+        actionDisplayMode='dropdown'
+        actionMenuItems={actionButtons}
+        // State
+        loading={isLoading}
+        error={isError ? 'Failed to load users' : undefined}
+        // Pagination
+        rowsPerPageOptions={[25, 50, 100]}
+        rowsPerPage={tableParams.limit}
+        currentPage={(tableParams.page ?? 1) - 1}
+        totalItems={totalItems}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+        // Sorting
+        sortBy={tableParams.sortBy}
+        sortOrder={tableParams.sortOrder}
+        onSort={handleSort}
+        onCellEdit={handleCellEdit}
+      />
+    </>
   );
 };

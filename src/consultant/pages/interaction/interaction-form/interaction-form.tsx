@@ -11,9 +11,11 @@ import {
   TableRow,
   Tooltip,
   SelectChangeEvent,
+  Skeleton,
 } from '@mui/material';
 import { Project } from '../../../types/project';
 import {
+  FilterState,
   InteractionFormData,
   InteractionFormErrors,
   InteractionFormQuestion,
@@ -30,12 +32,17 @@ import {
   useUpdateInteractionDetails,
 } from '../../../services/interactions/interactions-service';
 import { useAccountProjects } from '../../../services/project';
-import { formatDateToYYYYMMDDWithTime } from '../../../../common-utils';
+import {
+  formatDateToYYYYMMDDWithTime,
+  reshapeGlobalFilter,
+} from '../../../../common-utils';
 import {
   getQuestionTableColumns,
   getStatusId,
   hasFormValuesChanged,
   ProjectDetails,
+  shouldDisableField,
+  shouldHideField,
   transFormPayload,
   validateInteractionForm,
 } from './helper';
@@ -49,9 +56,15 @@ import SingleSkeleton from '../../../../components/skeleton-component/singleskel
 import TextButton from '../../../../components/button/text-button';
 import SkeletonForm from '../../../../components/form-builder/skeleton-form';
 import {
+  AllPermissions,
+  ExpandCollapseSelectOptions,
   useGetInteractionStatus,
   useGetInteractionStatusById,
 } from '../../../../common-service';
+import { RootState } from '../../../../store/store';
+import { useSelector } from 'react-redux';
+import { ExpandCollapseDropdown } from '../../../../components';
+import { useGlobalAccountsList } from '../../../services/account';
 
 const InteractionForm = () => {
   const { interactionId } = useParams();
@@ -92,6 +105,34 @@ const InteractionForm = () => {
     updated_by: '',
   });
   const [errors, setErrors] = useState<InteractionFormErrors>({});
+  const [currentAccountId, setCurrentAccountId] = useState<string>('');
+
+  // State to track expanded questions
+  const [expandedQuestions, setExpandedQuestions] = useState<Set<number>>(
+    new Set()
+  );
+
+  const { fiscalYear, filters } = useSelector(
+    (state: RootState) => state.account
+  );
+
+  const { permission } = useSelector((state: RootState) => state.permission);
+
+  const interactionsViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.INTERACTIONS_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    interactionsViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [interactionsViewEditFields]);
 
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
   const projectDetails = searchParams.get('projectDetails');
@@ -99,6 +140,59 @@ const InteractionForm = () => {
   const source = searchParams.get('source');
   const accountName = searchParams.get('account_name');
   const isProjectFields = source !== 'account';
+  const isGlobalInteraction = source === 'global';
+
+  const newFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
+
+  const { data: globalAccountList, isLoading: isGlobalLoading } =
+    useGlobalAccountsList(
+      {
+        globalFilters: reshapeGlobalFilter(filters as FilterState),
+      },
+      isGlobalInteraction && !isEditView
+    );
+
+  // Clear account name only when filters change
+  useEffect(() => {
+    if (isGlobalInteraction && !isEditView) {
+      setCurrentAccountId('');
+      setFormData((prev) => ({
+        ...prev,
+        accountName: '',
+      }));
+      setErrors((prev) => ({
+        ...prev,
+        accountName: undefined,
+      }));
+    }
+  }, [filters, isGlobalInteraction, isEditView]);
+
+  // Clear project details when either fiscalYear or filters change
+  useEffect(() => {
+    if (isGlobalInteraction && !isEditView) {
+      setFormData((prev) => ({
+        ...prev,
+        projectCode: '',
+        projectName: '',
+        fiscalYear: 0,
+      }));
+      setSelectedProject({
+        account_name: '',
+        project_code: '',
+        project_name: '',
+        fiscal_year: 0,
+        project_fiscal_rid: '',
+        project_rid: '',
+        account_rid: '',
+      });
+      setErrors((prev) => ({
+        ...prev,
+        projectCode: undefined,
+        projectName: undefined,
+        fiscalYear: undefined,
+      }));
+    }
+  }, [fiscalYear, filters, isGlobalInteraction, isEditView]);
 
   useEffect(() => {
     if (projectDetails && source !== 'account') {
@@ -129,6 +223,46 @@ const InteractionForm = () => {
     }
   }, [accountName, projectDetails, searchParams, source]);
 
+  const accountsData: ExpandCollapseSelectOptions[] = useMemo(() => {
+    if (!globalAccountList?.accounts) return [];
+
+    return globalAccountList?.accounts?.map((account) => ({
+      group: account.account_name,
+      options:
+        account.child_accounts?.map((child) => ({
+          value: child.rid,
+          label: child.account_name,
+        })) || [],
+    }));
+  }, [globalAccountList?.accounts]);
+
+  const handleAccountChange = (accountRid: string) => {
+    // Find the selected account
+    let selectedAccountName = '';
+    accountsData.forEach((group) => {
+      const account = group.options.find((acc) => acc.value === accountRid);
+      if (account) {
+        selectedAccountName = account.label;
+      }
+    });
+
+    setCurrentAccountId(accountRid);
+    setFormData((prev) => ({
+      ...prev,
+      accountName: selectedAccountName,
+      projectCode: '',
+      projectName: '',
+      fiscalYear: 0,
+    }));
+    setErrors((prev) => ({
+      ...prev,
+      accountName: undefined,
+      projectCode: undefined,
+      projectName: undefined,
+      fiscalYear: undefined,
+    }));
+  };
+
   const { data: interactionData, isLoading } = useInteractionDetails(
     accountId,
     interactionId
@@ -153,9 +287,10 @@ const InteractionForm = () => {
       limit: 1000,
       sortBy: 'project_code',
       sortOrder: 'ASC',
-      accountNumber: accountId,
+      accountNumber: accountId || currentAccountId || '',
+      fiscalYear: newFiscalYear,
     },
-    !isProjectFields
+    !isProjectFields || isGlobalInteraction
   );
 
   const statusOptions = useMemo(
@@ -188,7 +323,10 @@ const InteractionForm = () => {
         projectName:
           interactionData.project_name || selectedProject.project_name || '',
         accountName:
-          interactionData.account_name || selectedProject.account_name || '',
+          interactionData.account_name ||
+          selectedProject.account_name ||
+          accountName ||
+          '',
         fiscalYear: Number(interactionData.fiscal_year),
         status: interactionData?.status || '',
         questions:
@@ -219,6 +357,7 @@ const InteractionForm = () => {
     interactionData,
     interactionId,
     isEditView,
+    accountName,
   ]);
 
   useEffect(() => {
@@ -373,6 +512,19 @@ const InteractionForm = () => {
     });
   };
 
+  // Toggle question expansion
+  const toggleQuestionExpansion = (index: number) => {
+    setExpandedQuestions((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(index)) {
+        newSet.delete(index);
+      } else {
+        newSet.add(index);
+      }
+      return newSet;
+    });
+  };
+
   const validateForm = (): boolean => {
     const { isValid, errors: validationErrors } = validateInteractionForm(
       formData,
@@ -443,7 +595,9 @@ const InteractionForm = () => {
   };
 
   const formLoading =
-    isLoading || projectsLoading || interactionStatus.isLoading;
+    isLoading ||
+    (projectsLoading && !isGlobalInteraction) ||
+    interactionStatus.isLoading;
 
   return (
     <div>
@@ -459,9 +613,11 @@ const InteractionForm = () => {
                   </div>
                 ) : (
                   <div className='font-semibold text-[12px] leading-[20px] ml-2 mb-[-6px] text-[#7D98B6]'>
-                    {isProjectFields
+                    {isProjectFields && !isGlobalInteraction
                       ? `Project > ${formData.projectCode} > ${interactionData?.r_number}`
-                      : `Account > ${formData.accountName} > ${formData.projectCode} > ${interactionData?.r_number}`}
+                      : isGlobalInteraction
+                        ? `Interactions > ${interactionData?.r_number}`
+                        : `Account > ${formData.accountName} > ${formData.projectCode} > ${interactionData?.r_number}`}
                   </div>
                 )}
               </>
@@ -536,29 +692,53 @@ const InteractionForm = () => {
             <div
               className={`grid md:grid-cols-3 gap-x-4 gap-y-[2px] px-10 pt-1`}
             >
-              <div>
-                <label
-                  className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
-                  htmlFor='account_name'
-                >
-                  Account Name
-                </label>
-                <input
-                  type='text'
-                  name='account_name'
-                  placeholder='Enter Account Name'
-                  autoComplete='off'
-                  className='placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs'
-                  disabled={true}
-                  value={formData.accountName}
+              {isGlobalInteraction && !isEditView ? (
+                <ExpandCollapseDropdown
+                  label='Account Name'
+                  selectedValue={currentAccountId}
+                  selectedLabel={formData.accountName}
+                  required={true}
+                  onChange={handleAccountChange}
+                  dropdownOptions={accountsData}
+                  placeholder='Choose Account Name'
+                  error={errors?.accountName}
+                  expandAll={true}
+                  isLoading={isGlobalLoading}
                 />
-              </div>
+              ) : (
+                <div
+                  style={{
+                    display: shouldHideField(
+                      'account_name',
+                      isEditView,
+                      permissionMap
+                    )
+                      ? 'none'
+                      : 'block',
+                  }}
+                >
+                  <label
+                    className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
+                    htmlFor='account_name'
+                  >
+                    Account Name
+                  </label>
+                  <input
+                    type='text'
+                    name='account_name'
+                    placeholder='Enter Account Name'
+                    autoComplete='off'
+                    className='placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs'
+                    disabled={true}
+                    value={formData.accountName}
+                  />
+                </div>
+              )}
             </div>
-
             <div
               className={`grid md:grid-cols-3 gap-x-4 gap-y-[2px] px-10 pt-1 mb-5`}
             >
-              {!isProjectFields && !isEditView ? (
+              {(!isProjectFields || isGlobalInteraction) && !isEditView ? (
                 <div className='w-full'>
                   <label
                     className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
@@ -567,94 +747,105 @@ const InteractionForm = () => {
                     Project Code
                     <span className='text-red-500'> *</span>
                   </label>
-                  <Select
-                    name='project_code'
-                    className={`custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]
+                  {projectsLoading && isGlobalInteraction ? (
+                    <div>
+                      <Skeleton
+                        variant='rounded'
+                        width='100%'
+                        height={32}
+                        sx={{ borderRadius: '2px' }}
+                      />
+                    </div>
+                  ) : (
+                    <Select
+                      name='project_code'
+                      className={`custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]
                       ${formData.projectCode === '' ? 'text-[#7D98B6] ' : ''} ${errors?.projectCode && 'border-red-500 bg-[#FEF2F2]'}
                     `}
-                    onChange={handleProjectChange}
-                    value={formData.projectCode}
-                    displayEmpty
-                    required
-                    fullWidth
-                    size='small'
-                    MenuProps={{
-                      PaperProps: {
-                        sx: {
-                          maxWidth: 300,
-                          maxHeight: 300,
-                          marginTop: '4px',
-                          boxShadow:
-                            'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
-                          '& .MuiMenuItem-root': {
-                            fontSize: '13px',
-                            padding: '6px 12px',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
+                      onChange={handleProjectChange}
+                      value={formData.projectCode}
+                      displayEmpty
+                      required
+                      fullWidth
+                      size='small'
+                      MenuProps={{
+                        PaperProps: {
+                          sx: {
+                            maxWidth: 300,
+                            maxHeight: 300,
+                            marginTop: '4px',
+                            boxShadow:
+                              'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
+                            '& .MuiMenuItem-root': {
+                              fontSize: '13px',
+                              padding: '6px 12px',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                            },
                           },
                         },
-                      },
-                    }}
-                    sx={{
-                      height: '32px',
-                      fontSize: '13px',
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        border: '2px solid #60A5FA',
-                      },
-                      '& .MuiOutlinedInput-root': {
-                        '&.Mui-focused': {
-                          boxShadow: 'none',
-                        },
-                      },
-                      '.MuiSelect-select': {
-                        padding: '6px 6px',
-                        color:
-                          formData.projectCode === '' ? '#7D98B6' : 'black',
-                      },
-                      '&.Mui-disabled': {
-                        backgroundColor: '#f3f4f6',
-                      },
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        border: errors?.projectCode
-                          ? '1px solid #ef4444'
-                          : '1px solid #CBD6E2',
-                        borderRadius: '2px',
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        border: errors?.projectCode
-                          ? '1px solid #ef4444'
-                          : '1px solid #CBD6E2',
-                      },
-                      '& svg': {
-                        color: '#7D98B6',
-                      },
-                    }}
-                  >
-                    <MenuItem
-                      value=''
+                      }}
                       sx={{
-                        color: '#425A76',
+                        height: '32px',
                         fontSize: '13px',
-                        fontWeight: '500',
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          border: '2px solid #60A5FA',
+                        },
+                        '& .MuiOutlinedInput-root': {
+                          '&.Mui-focused': {
+                            boxShadow: 'none',
+                          },
+                        },
+                        '.MuiSelect-select': {
+                          padding: '6px 6px',
+                          color:
+                            formData.projectCode === '' ? '#7D98B6' : 'black',
+                        },
+                        '&.Mui-disabled': {
+                          backgroundColor: '#f3f4f6',
+                        },
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          border: errors?.projectCode
+                            ? '1px solid #ef4444'
+                            : '1px solid #CBD6E2',
+                          borderRadius: '2px',
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          border: errors?.projectCode
+                            ? '1px solid #ef4444'
+                            : '1px solid #CBD6E2',
+                        },
+                        '& svg': {
+                          color: '#7D98B6',
+                        },
                       }}
                     >
-                      Choose Project Code
-                    </MenuItem>
-                    {projectCodeList?.map((option, i) => (
                       <MenuItem
+                        value=''
                         sx={{
                           color: '#425A76',
                           fontSize: '13px',
                           fontWeight: '500',
                         }}
-                        key={`${option.value}-${i}`}
-                        value={option.value}
-                        title={option.label}
                       >
-                        {option.label}
+                        Choose Project Code
                       </MenuItem>
-                    ))}
-                  </Select>
+                      {projectCodeList?.map((option, i) => (
+                        <MenuItem
+                          sx={{
+                            color: '#425A76',
+                            fontSize: '13px',
+                            fontWeight: '500',
+                          }}
+                          key={`${option.value}-${i}`}
+                          value={option.value}
+                          title={option.label}
+                        >
+                          {option.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  )}
                   {errors?.projectCode && (
                     <span className='text-[12px] text-red-400 col-span-full'>
                       {errors.projectCode}
@@ -662,7 +853,17 @@ const InteractionForm = () => {
                   )}
                 </div>
               ) : (
-                <div>
+                <div
+                  style={{
+                    display: shouldHideField(
+                      'project_code',
+                      isEditView,
+                      permissionMap
+                    )
+                      ? 'none'
+                      : 'block',
+                  }}
+                >
                   <label
                     className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
                     htmlFor='project_code'
@@ -685,7 +886,17 @@ const InteractionForm = () => {
                   )}
                 </div>
               )}
-              <div>
+              <div
+                style={{
+                  display: shouldHideField(
+                    'project_name',
+                    isEditView,
+                    permissionMap
+                  )
+                    ? 'none'
+                    : 'block',
+                }}
+              >
                 <label
                   className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
                   htmlFor='project_name'
@@ -695,7 +906,7 @@ const InteractionForm = () => {
                 <input
                   type='text'
                   name='project_name'
-                  placeholder='Enter Project Name'
+                  placeholder='-'
                   autoComplete='off'
                   className='placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs'
                   disabled={true}
@@ -703,7 +914,17 @@ const InteractionForm = () => {
                 />
               </div>
 
-              <div>
+              <div
+                style={{
+                  display: shouldHideField(
+                    'fiscal_year',
+                    isEditView,
+                    permissionMap
+                  )
+                    ? 'none'
+                    : 'block',
+                }}
+              >
                 <label
                   className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
                   htmlFor='fiscal_year'
@@ -713,11 +934,11 @@ const InteractionForm = () => {
                 <input
                   type='text'
                   name='fiscal_year'
-                  placeholder='Enter Fiscal Year'
+                  placeholder='-'
                   autoComplete='off'
                   className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${errors?.fiscalYear && 'border-red-500 disabled:!bg-[#FEF2F2] bg-[#FEF2F2]'}`}
                   disabled={true}
-                  value={formData.fiscalYear}
+                  value={formData.fiscalYear ? `FY-${formData.fiscalYear}` : ''}
                 />
                 {errors?.fiscalYear && (
                   <span className='text-[12px] text-red-400 col-span-full'>
@@ -726,7 +947,15 @@ const InteractionForm = () => {
                 )}
               </div>
 
-              <div className={`${isEditView ? 'block' : 'hidden'}`}>
+              <div
+                style={{
+                  display:
+                    isEditView &&
+                    !shouldHideField('status', isEditView, permissionMap)
+                      ? 'block'
+                      : 'none',
+                }}
+              >
                 <label
                   className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
                   htmlFor='status'
@@ -750,6 +979,11 @@ const InteractionForm = () => {
                   }}
                   value={formData.status || ''}
                   displayEmpty
+                  disabled={shouldDisableField(
+                    'status',
+                    isEditView,
+                    permissionMap
+                  )}
                   fullWidth
                   size='small'
                   MenuProps={{
@@ -805,6 +1039,7 @@ const InteractionForm = () => {
                 >
                   <MenuItem
                     value=''
+                    disabled
                     sx={{
                       color: '#425A76',
                       fontSize: '13px',
@@ -837,7 +1072,18 @@ const InteractionForm = () => {
               </div>
             </div>
 
-            <div className='w-full mb-5'>
+            <div
+              className='w-full mb-5'
+              style={{
+                display: shouldHideField(
+                  'interaction_questions',
+                  isEditView,
+                  permissionMap
+                )
+                  ? 'none'
+                  : 'block',
+              }}
+            >
               <div
                 className={`border capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-10`}
               >
@@ -913,7 +1159,7 @@ const InteractionForm = () => {
                             position: 'relative',
                             p: 0,
                           }}
-                          className={`${!question.is_editable && isEditView ? 'bg-[#f3f4f6] cursor-default pointer-events-none' : ''}`}
+                          className={`${(!question.is_editable && isEditView) || shouldDisableField('interaction_questions', isEditView, permissionMap) ? 'bg-[#f3f4f6] cursor-default' : ''}`}
                         >
                           {questionTableColumns
                             .filter((col) => !col.hide)
@@ -961,22 +1207,56 @@ const InteractionForm = () => {
                                     <div
                                       className={`flex relative ${error ? 'bg-[#FEF2F2]' : ''}`}
                                     >
-                                      <textarea
-                                        name='interaction_question'
-                                        placeholder='Enter Interaction Question'
-                                        autoComplete='off'
-                                        className={`outline-none placeholder-custom-color w-full sm:text-sm p-2 resize-none focus:border-2 focus:border-blue-400 ${error ? 'bg-[#FEF2F2] focus:!bg-[#FEF2F2]' : ''}`}
-                                        onChange={(e) =>
-                                          handleQuestionChange(
-                                            index,
-                                            'question',
-                                            e.target.value
-                                          )
-                                        }
-                                        value={question.question}
-                                        // rows={1}
-                                        disabled={isDisabled}
-                                      />
+                                      {isDisabled ? (
+                                        <div
+                                          className='w-full p-2 min-h-[66px] max-h-[150px] overflow-y-auto'
+                                          style={{
+                                            scrollbarWidth: 'thin',
+                                            scrollbarColor: '#9ca3af #f3f4f6',
+                                          }}
+                                        >
+                                          {expandedQuestions.has(index) ||
+                                          question.question.length <= 360
+                                            ? question.question
+                                            : `${question.question.substring(0, 360)}...`}
+                                          {question.question.length > 360 && (
+                                            <button
+                                              type='button'
+                                              className='absolute right-2.5 -bottom-2 px-2 h-[20px] transform -translate-y-1/2 text-xs text-blue-500 underline border-none cursor-pointer bg-[#f3f4f6]'
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                toggleQuestionExpansion(index);
+                                              }}
+                                            >
+                                              {expandedQuestions.has(index)
+                                                ? 'View less'
+                                                : 'Read more'}
+                                            </button>
+                                          )}
+                                        </div>
+                                      ) : (
+                                        <textarea
+                                          name='interaction_question'
+                                          placeholder='Enter Interaction Question'
+                                          autoComplete='off'
+                                          className={`outline-none placeholder-custom-color w-full sm:text-sm p-2 resize-none focus:border-2 focus:border-blue-400 ${error ? 'bg-[#FEF2F2] focus:!bg-[#FEF2F2]' : ''}`}
+                                          onChange={(e) =>
+                                            handleQuestionChange(
+                                              index,
+                                              'question',
+                                              e.target.value
+                                            )
+                                          }
+                                          value={question.question}
+                                          rows={3}
+                                          disabled={isDisabled}
+                                          style={{
+                                            scrollbarWidth: 'thin',
+                                            scrollbarColor:
+                                              '#9ca3af transparent',
+                                          }}
+                                        />
+                                      )}
                                       {error && (
                                         <Tooltip
                                           title={error}
@@ -1024,24 +1304,64 @@ const InteractionForm = () => {
 
                                   {col.name === 'notes' && (
                                     <div
-                                      className={`flex relative ${error ? 'bg-[#FEF2F2]' : ''}`}
+                                      className={`flex ${isDisabled && !question.notes ? '' : 'relative'} ${error ? 'bg-[#FEF2F2]' : ''}`}
                                     >
-                                      <textarea
-                                        name='notes'
-                                        placeholder='Enter Notes'
-                                        autoComplete='off'
-                                        className={`outline-none placeholder-custom-color w-full sm:text-sm py-2 px-3 resize-none focus:border-2 focus:border-blue-400 ${error ? 'bg-[#FEF2F2] focus:!bg-[#FEF2F2]' : ''}`}
-                                        value={question.notes}
-                                        onChange={(e) =>
-                                          handleQuestionChange(
-                                            index,
-                                            'notes',
-                                            e.target.value
-                                          )
-                                        }
-                                        // rows={1}
-                                        disabled={isDisabled}
-                                      />
+                                      {isDisabled ? (
+                                        <div
+                                          className='w-full min-h-[66px] p-2 max-h-[150px] overflow-y-auto'
+                                          style={{
+                                            scrollbarWidth: 'thin',
+                                            scrollbarColor: '#9ca3af #f3f4f6',
+                                          }}
+                                        >
+                                          {!question.notes ? (
+                                            <span className='absolute top-2 left-3 text-[#7d98b6]'>
+                                              Enter Notes
+                                            </span>
+                                          ) : expandedQuestions.has(index) ||
+                                            question.notes.length <= 100 ? (
+                                            question.notes
+                                          ) : (
+                                            `${question.notes.substring(0, 100)}...`
+                                          )}
+                                          {question.notes.length > 100 && (
+                                            <button
+                                              type='button'
+                                              className='absolute right-2.5 bottom-0.5 px-2 h-[20px] text-xs text-blue-500 underline border-none cursor-pointer bg-[#f3f4f6]'
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                toggleQuestionExpansion(index);
+                                              }}
+                                            >
+                                              {expandedQuestions.has(index)
+                                                ? 'View less'
+                                                : 'Read more'}
+                                            </button>
+                                          )}
+                                        </div>
+                                      ) : (
+                                        <textarea
+                                          name='notes'
+                                          placeholder='Enter Notes'
+                                          autoComplete='off'
+                                          className={`outline-none placeholder-custom-color w-full sm:text-sm py-2 px-3 resize-none focus:border-2 focus:border-blue-400 ${error ? 'bg-[#FEF2F2] focus:!bg-[#FEF2F2]' : ''}`}
+                                          value={question.notes}
+                                          style={{
+                                            scrollbarWidth: 'thin',
+                                            scrollbarColor:
+                                              '#9ca3af transparent',
+                                          }}
+                                          onChange={(e) =>
+                                            handleQuestionChange(
+                                              index,
+                                              'notes',
+                                              e.target.value
+                                            )
+                                          }
+                                          rows={3}
+                                          disabled={isDisabled}
+                                        />
+                                      )}
                                       {error && (
                                         <Tooltip
                                           title={error}
@@ -1114,9 +1434,14 @@ const InteractionForm = () => {
 
               <div className='mt-2 pl-10'>
                 <button
-                  className='flex items-center cursor-pointer gap-1 bg-[#EAF0F5] h-[30px] rounded-[2px] color-[#2D3E4F] px-2 text-[12px] font-semibold disabled:cursor-default'
+                  className='flex items-center cursor-pointer gap-1 bg-[#EAF0F5] h-[30px] rounded-[2px] color-[#2D3E4F] px-2 text-[12px] font-semibold disabled:bg-gray-100 disabled:cursor-default'
                   type='button'
                   onClick={handleAddQuestion}
+                  disabled={shouldDisableField(
+                    'interaction_questions',
+                    isEditView,
+                    permissionMap
+                  )}
                 >
                   <span>
                     <React.Suspense fallback={null}>
@@ -1136,24 +1461,70 @@ const InteractionForm = () => {
               </div>
               <div className='grid md:grid-cols-3 gap-x-4 gap-y-[2px] px-10 pt-1 mb-4'>
                 {[
-                  { label: 'Record ID', value: formData.rid },
-                  { label: 'Created On', value: formData.created_on },
-                  { label: 'Created By', value: formData.created_by },
-                  { label: 'Interaction ID', value: formData.interaction_id },
-                  { label: 'Updated On', value: formData.updated_on },
-                  { label: 'Updated By', value: formData.updated_by },
-                ].map((field, idx) => (
-                  <div key={idx}>
-                    <label className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px] md:text-left mt-1 block'>
-                      {field.label}
-                    </label>
-                    <div className='placeholder-[#7D98B6] bg-gray-100 text-black w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs flex items-center cursor-not-allowed select-none text-nowrap overflow-hidden'>
-                      <span className='overflow-hidden text-ellipsis whitespace-nowrap'>
-                        {field.value || '-'}
-                      </span>
+                  {
+                    label: 'Record ID',
+                    value: formData.rid,
+                    hide: shouldHideField('rid', isEditView, permissionMap),
+                  },
+                  {
+                    label: 'Created On',
+                    value: formData.created_on,
+                    hide: shouldHideField(
+                      'created_datetime',
+                      isEditView,
+                      permissionMap
+                    ),
+                  },
+                  {
+                    label: 'Created By',
+                    value: formData.created_by,
+                    hide: shouldHideField(
+                      'created_by',
+                      isEditView,
+                      permissionMap
+                    ),
+                  },
+                  {
+                    label: 'Interaction ID',
+                    value: formData.interaction_id,
+                    hide: shouldHideField(
+                      'r_number',
+                      isEditView,
+                      permissionMap
+                    ),
+                  },
+                  {
+                    label: 'Updated On',
+                    value: formData.updated_on,
+                    hide: shouldHideField(
+                      'modified_datetime',
+                      isEditView,
+                      permissionMap
+                    ),
+                  },
+                  {
+                    label: 'Updated By',
+                    value: formData.updated_by,
+                    hide: shouldHideField(
+                      'modified_by',
+                      isEditView,
+                      permissionMap
+                    ),
+                  },
+                ]
+                  .filter((field) => !field.hide)
+                  .map((field, idx) => (
+                    <div key={idx}>
+                      <label className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px] md:text-left mt-1 block'>
+                        {field.label}
+                      </label>
+                      <div className='placeholder-[#7D98B6] bg-gray-100 text-black w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs flex items-center cursor-not-allowed select-none text-nowrap overflow-hidden'>
+                        <span className='overflow-hidden text-ellipsis whitespace-nowrap'>
+                          {field.value || '-'}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             </div>
           </form>

@@ -463,6 +463,11 @@ export interface keyContactRolesApiResponse extends CommonApiResponse {
   };
 }
 
+export interface GlobalAccountListParams {
+  fiscalYear?: number | string;
+  globalFilters?: globalFilters;
+}
+
 export interface FormField {
   id: string;
   label: string;

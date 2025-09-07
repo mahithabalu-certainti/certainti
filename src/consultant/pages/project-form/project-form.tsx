@@ -34,7 +34,11 @@ import {
   useUpdateProject,
 } from '../../services/project/project-create-service';
 import { useGetProjectType, useProjectDetail } from '../../services/project';
-import { checkPermission, getDateFormat } from '../../../common-utils';
+import {
+  checkPermission,
+  getDateFormat,
+  removeFormatCostValue,
+} from '../../../common-utils';
 import { FormData, newKeyContactFields } from './form-data';
 import { formatDateToYYYYMMDDWithTime } from '../account-details-sidebar/sidebar-pages/resources/utils';
 import SkeletonForm from '../../../components/form-builder/skeleton-form';
@@ -575,7 +579,7 @@ const ProjectForm: React.FC = () => {
       setCostFinancials((prev) => {
         const updated = {
           ...prev,
-          [data.fieldName]: formatNumber(data.fieldValue as string),
+          [data.fieldName]: removeFormatCostValue(data.fieldValue as string),
         };
 
         if (

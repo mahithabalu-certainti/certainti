@@ -14,13 +14,18 @@ import { useMutation } from '@apollo/client';
 import { UPDATE_RESOURCE_SKILL } from '../../../../../../api/graphql/queries/resource-query';
 import { resourceClient } from '../../../../../../api/graphql/clients/client';
 import { RESOURCESKILL } from '../../../../../../routes';
-import { ListTable } from '../../../../../../components/table';
+import {
+  ListTable,
+  ManageColumnsPopover,
+} from '../../../../../../components/table';
 import { getResourceSkillColumns } from './columns';
 import { SkillSubtype, SkillType } from '../../../../../types/resource';
 import {
   CellEditData,
   FieldChangeEvent,
   FieldChangeValue,
+  ListTableColumn,
+  ShowHideTableColumn,
 } from '../../../../../../components/table/types';
 import { useToast } from '../../../../../../hooks';
 import { useSelector } from 'react-redux';
@@ -45,6 +50,10 @@ interface ResourceSkillTableProps {
   refreshSkillTrigger?: number;
   setCount?: (count: number) => void;
   resourceInActive: boolean;
+  columnAnchorEl: HTMLButtonElement | null;
+  setColumnAnchorEl: React.Dispatch<
+    React.SetStateAction<HTMLButtonElement | null>
+  >;
 }
 const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   appliedFilters,
@@ -60,6 +69,8 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   refreshSkillTrigger,
   setCount,
   resourceInActive,
+  columnAnchorEl,
+  setColumnAnchorEl,
 }) => {
   const navigate = useNavigate();
   const { accountid } = useParams();
@@ -307,42 +318,74 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   const showUploads =
     searchParams.get('attachment_entity') === 'resource_skill';
 
+  const [visibleColumns, setVisibleColumns] = useState<
+    ListTableColumn<ResourceSkillList>[]
+  >(resourceSkillColumns.filter((col) => !col.hide));
+
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    setVisibleColumns(
+      updatedColumns.filter(
+        (col) => !col.hide
+      ) as ListTableColumn<ResourceSkillList>[]
+    );
+  };
+
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
+  };
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const modalId = isModalOpen
+    ? 'interaction-column-visibility-popover'
+    : undefined;
+
   return (
     <div>
       {showUploads ? (
         <Uploads accountId={accountid} attachID={selectedRowId} />
       ) : (
-        <ListTable
-          data={resourceSkillList}
-          columns={resourceSkillColumns}
-          getRowId={getRowId}
-          hoverHighlight={false}
-          stickyHeader={false}
-          stickyColumnsCount={1}
-          tableStyle={{
-            borderBottom: '1px solid #CBD6E2',
-            height: '100%',
-            maxHeight: 'calc(100vh - 410px)',
-            overflow: 'auto',
-          }}
-          selectable={true}
-          actionWidth={80}
-          actionDisplayMode='dropdown'
-          actionMenuItems={actionMenuItems}
-          loading={isLoading}
-          error={error ? 'Failed to load resource' : undefined}
-          rowsPerPageOptions={[25, 50, 100]}
-          rowsPerPage={rowsPerPage}
-          currentPage={currentPage}
-          totalItems={skillList?.count ?? 0}
-          onPageChange={handlePageChange}
-          onRowsPerPageChange={handleRowsPerPageChange}
-          sortBy={skillOrderBy}
-          sortOrder={skillOrder.toUpperCase() as 'ASC' | 'DESC'}
-          onSort={handleSortRequest}
-          onCellEdit={handleCellEdit}
-          onFieldChange={handleFieldChange}
-        />
+        <>
+          <ManageColumnsPopover
+            anchorEl={columnAnchorEl}
+            open={isModalOpen}
+            popoverId={modalId}
+            onClose={handlePopoverClose}
+            columns={resourceSkillColumns}
+            onColumnsChange={handleColumnsChange}
+            // columnRestrictions={RestrictedColumns}
+          />
+          <ListTable
+            data={resourceSkillList}
+            columns={visibleColumns}
+            getRowId={getRowId}
+            hoverHighlight={false}
+            stickyHeader={false}
+            stickyColumnsCount={1}
+            tableStyle={{
+              borderBottom: '1px solid #CBD6E2',
+              height: '100%',
+              maxHeight: 'calc(100vh - 410px)',
+              overflow: 'auto',
+            }}
+            selectable={true}
+            actionWidth={80}
+            actionDisplayMode='dropdown'
+            actionMenuItems={actionMenuItems}
+            loading={isLoading}
+            error={error ? 'Failed to load resource' : undefined}
+            rowsPerPageOptions={[25, 50, 100]}
+            rowsPerPage={rowsPerPage}
+            currentPage={currentPage}
+            totalItems={skillList?.count ?? 0}
+            onPageChange={handlePageChange}
+            onRowsPerPageChange={handleRowsPerPageChange}
+            sortBy={skillOrderBy}
+            sortOrder={skillOrder.toUpperCase() as 'ASC' | 'DESC'}
+            onSort={handleSortRequest}
+            onCellEdit={handleCellEdit}
+            onFieldChange={handleFieldChange}
+          />
+        </>
       )}
     </div>
   );

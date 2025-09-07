@@ -1,3 +1,4 @@
+import { FormFiscalDateType } from '../../../../../types';
 import { FieldConfig } from '../../../../account-details-sidebar/components/filter/filterType';
 import { numberOptions } from '../../../../account-details-sidebar/sidebar-pages/projects/utils';
 const requiredFieldFilterOptionsForText: { option: string; value: string }[] = [
@@ -17,7 +18,8 @@ export const projectTaskFilterFields = (
   permissionMapTaskTableColumn?: Record<
     string,
     { read: boolean; edit: boolean }
-  >
+  >,
+  fiscalDatesArg?: FormFiscalDateType
 ): FieldConfig[] => [
   {
     name: 'Resource Code',
@@ -63,6 +65,8 @@ export const projectTaskFilterFields = (
     name: 'Start Date',
     value: 'start_date',
     type: 'date',
+    minDate: fiscalDatesArg?.startMin,
+    maxDate: fiscalDatesArg?.startMax,
     hide:
       !permissionMapTaskTableColumn?.['start_date']?.read &&
       !permissionMapTaskTableColumn?.['start_date']?.edit,
@@ -71,6 +75,8 @@ export const projectTaskFilterFields = (
     name: 'End Date',
     value: 'end_date',
     type: 'date',
+    minDate: fiscalDatesArg?.startMin,
+    maxDate: fiscalDatesArg?.endMax,
     hide:
       !permissionMapTaskTableColumn?.['end_date']?.read &&
       !permissionMapTaskTableColumn?.['end_date']?.edit,

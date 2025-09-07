@@ -1,12 +1,26 @@
-import React, { useEffect, useState } from 'react';
-import { InteractionList, InteractionListURLParams } from '../../../../types';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  InteractionList,
+  InteractionListURLParams,
+  StatusTypeEnum,
+} from '../../../../types';
 import { useGlobalInteractionList } from '../../../../services/interactions/interactions-service';
-import { ListTable } from '../../../../../components/table';
+import {
+  ListTable,
+  ManageColumnsPopover,
+} from '../../../../../components/table';
 import { getGlobalInteractionListColumns } from './columns';
 import { generatePath, useNavigate } from 'react-router-dom';
 import { GLOBAL_INTERACTIONS_EDIT } from '../../../../../routes';
 import { EditIcon } from '../../../../../assets';
-import { ActionItem } from '../../../../../components/table/types';
+import {
+  ActionItem,
+  ListTableColumn,
+  ShowHideTableColumn,
+} from '../../../../../components/table/types';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../store/store';
+import { AllPermissions } from '../../../../../common-service';
 
 interface InteractionTableProps {
   tableParams: InteractionListURLParams;
@@ -15,6 +29,10 @@ interface InteractionTableProps {
   >;
   setTotalCount: React.Dispatch<React.SetStateAction<number>>;
   refreshTrigger?: number;
+  columnAnchorEl: HTMLButtonElement | null;
+  setColumnAnchorEl: React.Dispatch<
+    React.SetStateAction<HTMLButtonElement | null>
+  >;
 }
 
 export const InteractionTable: React.FC<InteractionTableProps> = ({
@@ -22,9 +40,13 @@ export const InteractionTable: React.FC<InteractionTableProps> = ({
   setTableParams,
   setTotalCount,
   refreshTrigger,
+  columnAnchorEl,
+  setColumnAnchorEl,
 }) => {
   const navigate = useNavigate();
   const [interactionList, setInteractionList] = useState<InteractionList[]>([]);
+
+  const { permission } = useSelector((state: RootState) => state.permission);
 
   const { data, isLoading, isError } = useGlobalInteractionList(
     tableParams,
@@ -39,6 +61,31 @@ export const InteractionTable: React.FC<InteractionTableProps> = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
+
+  // Permissions
+  const interactionsViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.INTERACTIONS_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const interactionFieldsEditable = useMemo(
+    () =>
+      permission
+        .find((item) => item.name === AllPermissions.INTERACTIONS_VIEW_EDIT)
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    interactionsViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [interactionsViewEditFields]);
 
   const handleSort = (sort: string, sortOrder: 'asc' | 'desc') => {
     const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
@@ -71,9 +118,18 @@ export const InteractionTable: React.FC<InteractionTableProps> = ({
     const queryParams = new URLSearchParams({
       accountId: row.account_rid,
       account_name: row.account_name ?? '',
-      source: 'account',
+      source: 'global',
     });
     navigate(`${path}?${queryParams.toString()}`);
+  };
+
+  const disableInteractionEditBtn = (row: InteractionList): boolean => {
+    const status = (row.status_name || '').toLowerCase() as StatusTypeEnum;
+    return [
+      StatusTypeEnum.cancelled,
+      StatusTypeEnum.completed,
+      StatusTypeEnum.response_received,
+    ].includes(status);
   };
 
   const actionButtons: ActionItem<InteractionList>[] = [
@@ -81,7 +137,8 @@ export const InteractionTable: React.FC<InteractionTableProps> = ({
       label: 'Edit',
       onClick: (row: InteractionList) => handleEdit(row),
       icon: EditIcon,
-      disabled: false,
+      hide: !interactionFieldsEditable,
+      disabled: (row: InteractionList) => disableInteractionEditBtn(row),
       iconStyle: {
         filter:
           'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
@@ -111,38 +168,81 @@ export const InteractionTable: React.FC<InteractionTableProps> = ({
   const interactionColumns = getGlobalInteractionListColumns(
     handleViewInteraction,
     handleViewInteractionHistory,
-    handleViewInteractionAttachmentCount
+    handleViewInteractionAttachmentCount,
+    permissionMap
   );
 
+  const RestrictedColumns = [
+    {
+      id: 'r_number',
+      canHide: false,
+      canDrag: false,
+    },
+  ];
+
+  const [visibleColumns, setVisibleColumns] = useState<
+    ListTableColumn<InteractionList>[]
+  >(interactionColumns.filter((col) => !col.hide));
+
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    setVisibleColumns(
+      updatedColumns.filter(
+        (col) => !col.hide
+      ) as ListTableColumn<InteractionList>[]
+    );
+  };
+
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
+  };
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const modalId = isModalOpen
+    ? 'interaction-column-visibility-popover'
+    : undefined;
+
   return (
-    <ListTable
-      data={interactionList}
-      columns={interactionColumns}
-      getRowId={getRowId}
-      hoverHighlight={false}
-      tableStyle={{
-        height: '100%',
-        maxHeight: 'calc(100vh - 180px)',
-        overflow: 'auto',
-      }}
-      stickyHeader={true}
-      stickyColumnsCount={2}
-      selectable={true}
-      onSelectionChange={(selectedIds) => console.log('Selected:', selectedIds)}
-      actionWidth={60}
-      actionDisplayMode='dropdown'
-      actionMenuItems={actionButtons}
-      loading={isLoading}
-      error={isError ? 'Failed to load interaction data' : undefined}
-      rowsPerPageOptions={[25, 50, 100]}
-      rowsPerPage={tableParams.limit}
-      currentPage={(tableParams.page ?? 1) - 1}
-      totalItems={totalItems}
-      onPageChange={handlePageChange}
-      onRowsPerPageChange={handleRowsPerPageChange}
-      sortBy={tableParams.sort}
-      sortOrder={tableParams.sort_by}
-      onSort={handleSort}
-    />
+    <div className='border-t border-[#CBD6E2] h-full'>
+      <ManageColumnsPopover
+        anchorEl={columnAnchorEl}
+        open={isModalOpen}
+        popoverId={modalId}
+        onClose={handlePopoverClose}
+        columns={interactionColumns}
+        onColumnsChange={handleColumnsChange}
+        columnRestrictions={RestrictedColumns}
+      />
+      <ListTable
+        data={interactionList}
+        columns={visibleColumns}
+        getRowId={getRowId}
+        hoverHighlight={false}
+        tableStyle={{
+          height: '100%',
+          maxHeight: 'calc(100vh - 180px)',
+          overflow: 'auto',
+        }}
+        stickyHeader={true}
+        stickyColumnsCount={2}
+        selectable={true}
+        onSelectionChange={(selectedIds) =>
+          console.log('Selected:', selectedIds)
+        }
+        actionWidth={60}
+        actionDisplayMode='dropdown'
+        actionMenuItems={actionButtons}
+        loading={isLoading}
+        error={isError ? 'Failed to load interaction data' : undefined}
+        rowsPerPageOptions={[25, 50, 100]}
+        rowsPerPage={tableParams.limit}
+        currentPage={(tableParams.page ?? 1) - 1}
+        totalItems={totalItems}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+        sortBy={tableParams.sort}
+        sortOrder={tableParams.sort_by}
+        onSort={handleSort}
+      />
+    </div>
   );
 };

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
+  AllModules,
   AllPermissions,
   OverviewTabs,
   useGetInteractionResponeSources,
@@ -15,7 +16,10 @@ import {
 import { ExportType, InteractionList, StatusTypeEnum } from '../../../../types';
 import { useInteractionList } from '../../../../services/interactions/interactions-service';
 import { INTERACTIONS_CREATE, INTERACTIONS_EDIT } from '../../../../../routes';
-import { ActionItem } from '../../../../../components/table/types';
+import {
+  ActionItem,
+  ShowHideTableColumn,
+} from '../../../../../components/table/types';
 import { EditIcon, InteractionDetailIcon } from '../../../../../assets';
 import { getInteractionListColumns } from './columns';
 import { getInteractionFilterFields } from './helpers';
@@ -25,7 +29,10 @@ import {
 } from '../../../../../components';
 import InteractionDetails from './interaction-details/interaction-details';
 import SectionHeader from '../../../../../components/details-section/section-header';
-import { ListTable } from '../../../../../components/table';
+import {
+  ListTable,
+  ManageColumnsPopover,
+} from '../../../../../components/table';
 import { accountDetailsProps } from '../../../account-details/utils';
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
@@ -34,6 +41,8 @@ import { InteractionAttachment } from './interaction-attachment';
 import HistoryTable from './response-history/history-table';
 import { getInteractionHistoryFilterFields } from './interaction-history/helper';
 import { AttachmentsListExportParams } from '../../../../types/attachment';
+import { checkPermission } from '../../../../../common-utils';
+import { AccessRestricted } from '../../../../../components/account-restricted';
 
 const InteractionsTabs: OverviewTabs[] = [
   {
@@ -83,9 +92,23 @@ const Interactions: React.FC<InteractionsProps> = ({
   const [count, setCount] = useState<number>(0);
   const [sendModalOpen, setSendModalOpen] = useState(false);
   const [selectedRows, setSelectedRows] = useState<InteractionList[]>([]);
+  const [clearSelectedRows, setClearSelectedRows] = useState<boolean>(false);
+  const [columnAnchorEl, setColumnAnchorEl] =
+    React.useState<HTMLButtonElement | null>(null);
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const handleColumnVisibility = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setColumnAnchorEl(event.currentTarget);
+  };
 
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
     (state: RootState) => state.account
+  );
+
+  const { permission, modules } = useSelector(
+    (state: RootState) => state.permission
   );
 
   const newFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
@@ -124,6 +147,45 @@ const Interactions: React.FC<InteractionsProps> = ({
   const interactionResSources = useGetInteractionResponeSources();
   const interactionStatus = useGetInteractionStatus();
 
+  // Permissions
+  const interactionsEnable = checkPermission(modules, AllModules.INTERACTIONS);
+  const interactionsViewEnable = checkPermission(
+    permission,
+    AllPermissions.INTERACTIONS_VIEW_EDIT
+  );
+  const sendInteractionsEnable = checkPermission(
+    permission,
+    AllPermissions.SEND_INTERACTIONS
+  );
+  const createInteractionsEnable = checkPermission(
+    permission,
+    AllPermissions.INTERACTIONS_CREATE
+  );
+
+  const interactionsViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.INTERACTIONS_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const interactionFieldsEditable = useMemo(
+    () =>
+      permission
+        .find((item) => item.name === AllPermissions.INTERACTIONS_VIEW_EDIT)
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    interactionsViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [interactionsViewEditFields]);
+
   const memoizedInteractionStatus = useMemo(
     () =>
       interactionStatus.data?.data.interactionStatus.map((status) => ({
@@ -160,17 +222,22 @@ const Interactions: React.FC<InteractionsProps> = ({
           return {
             ...item,
             disableCheckBox:
+              !sendInteractionsEnable ||
               !item.has_email_recipient ||
               status === StatusTypeEnum.draft ||
               status === StatusTypeEnum.cancelled ||
               status === StatusTypeEnum.response_received ||
+              status === StatusTypeEnum.completed ||
+              status === StatusTypeEnum.on_hold ||
               status === '',
           };
         }) || [];
 
       setInteractionList(updatedInteractions);
       setSelectedRows([]);
+      setClearSelectedRows((prev) => !prev);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
   useEffect(() => {
@@ -249,7 +316,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       disabled: selectedRows.length === 0 || accountInActive,
       onClick: () => setSendModalOpen(true),
       sx: { width: '120px', minWidth: '120px' },
-      hide: viewResponseHistory,
+      hide: !sendInteractionsEnable || viewResponseHistory,
     },
     {
       label: 'New',
@@ -257,13 +324,22 @@ const Interactions: React.FC<InteractionsProps> = ({
       disabled: accountInActive,
       onClick: () => handleCreate(),
       sx: { width: '48px', minWidth: '48px' },
-      hide: viewResponseHistory,
+      hide: !createInteractionsEnable || viewResponseHistory,
+    },
+    {
+      label: 'Show/Hide Fields',
+      variant: 'outlined' as const,
+      disabled: false,
+      onClick: handleColumnVisibility,
+      sx: { width: '125px', minWidth: '125px' },
+      hide: Boolean(interactionResponseId),
     },
   ];
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
     setSelectedRows([]);
+    setClearSelectedRows((prev) => !prev);
   };
 
   const handleRowsPerPageChange = (newPageSize: number) => {
@@ -289,6 +365,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       searchParams.set('interaction_id', rowId);
       navigate({ search: searchParams.toString() }, { replace: true });
       setSelectedRows([]);
+      setClearSelectedRows((prev) => !prev);
       setCount(0);
     }
   };
@@ -328,6 +405,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       label: 'Edit',
       onClick: (row: InteractionList) => handleEdit(row),
       icon: EditIcon,
+      hide: !interactionFieldsEditable,
       disabled: (row: InteractionList) =>
         accountInActive || disableInteractionEditBtn(row),
       iconStyle: {
@@ -342,21 +420,23 @@ const Interactions: React.FC<InteractionsProps> = ({
       searchParams.set('interaction_history_id', interactionHistoryId);
       navigate({ search: searchParams.toString() }, { replace: true });
       setSelectedRows([]);
+      setClearSelectedRows((prev) => !prev);
     }
   };
 
   const handleViewInteractionAttachmentCount = (
-    interactionAttachentCount: string | number,
+    interactionAttachmentCount: string | number,
     rowId: string
   ) => {
-    if (interactionAttachentCount) {
+    if (interactionAttachmentCount) {
       searchParams.set('interaction_rid', rowId);
       searchParams.set(
         'interaction_attachment_count',
-        String(interactionAttachentCount)
+        String(interactionAttachmentCount)
       );
       navigate({ search: searchParams.toString() }, { replace: true });
       setSelectedRows([]);
+      setClearSelectedRows((prev) => !prev);
     }
   };
 
@@ -364,16 +444,60 @@ const Interactions: React.FC<InteractionsProps> = ({
   const interactionColumns = getInteractionListColumns(
     handleViewInteraction,
     handleViewInteractionHistory,
-    handleViewInteractionAttachmentCount
+    handleViewInteractionAttachmentCount,
+    permissionMap
   );
 
   const filterFields = !viewInteractionHistory
     ? getInteractionFilterFields(
         memoizedInteractionTypes,
         memoizedInteractionResSources,
-        memoizedInteractionStatus
+        memoizedInteractionStatus,
+        permissionMap
       )
     : getInteractionHistoryFilterFields(memoizedInteractionStatus);
+
+  const RestrictedColumns = [
+    {
+      id: 'r_number',
+      canHide: false,
+      canDrag: false,
+    },
+  ];
+
+  const [columnVisibility, setColumnVisibility] = useState<
+    Record<string, boolean>
+  >(Object.fromEntries(interactionColumns.map((col) => [col.id, !col.hide])));
+
+  const [columnOrder, setColumnOrder] = useState(
+    interactionColumns.map((col) => col.id)
+  );
+
+  if (!interactionsEnable || !interactionsViewEnable)
+    return <AccessRestricted />;
+
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    const newVisibility = Object.fromEntries(
+      updatedColumns.map((col) => [col.id, !col.hide])
+    );
+    setColumnVisibility(newVisibility);
+    setColumnOrder(updatedColumns.map((col) => col.id));
+  };
+
+  const visibleColumns = columnOrder
+    .map((id) => interactionColumns.find((col) => col.id === id)!)
+    .filter((col) => columnVisibility[col.id]);
+
+  if (!interactionsEnable || !interactionsViewEnable)
+    return <AccessRestricted />;
+
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
+  };
+
+  const modalId = isModalOpen
+    ? 'account-interaction-list-column-visibility-popover'
+    : undefined;
 
   return (
     <div className='w-full pt-2 pl-2 pr-4'>
@@ -433,38 +557,54 @@ const Interactions: React.FC<InteractionsProps> = ({
           />
           <div className='border border-[#CBD6E2]'>
             {!viewResponseHistory ? (
-              <ListTable
-                data={interactionList}
-                columns={interactionColumns}
-                getRowId={getRowId}
-                hoverHighlight={false}
-                tableStyle={{
-                  borderBottom: '1px solid #CBD6E2',
-                  height: '100%',
-                  maxHeight: 'calc(100vh - 290px)',
-                  overflow: 'auto',
-                }}
-                stickyHeader={true}
-                stickyColumnsCount={1}
-                selectable={true}
-                onSelectionChange={handleSelectionChange}
-                actionWidth={80}
-                actionDisplayMode='dropdown'
-                actionMenuItems={actionButtons}
-                loading={isLoading}
-                error={isError ? 'Failed to load data' : undefined}
-                rowsPerPageOptions={[25, 50, 100]}
-                rowsPerPage={rowsPerPage}
-                currentPage={currentPage}
-                totalItems={totalItems}
-                onPageChange={handlePageChange}
-                onRowsPerPageChange={handleRowsPerPageChange}
-                sortBy={sortField}
-                sortOrder={sortBy}
-                onSort={handleSortRequest}
-              />
+              <>
+                <ManageColumnsPopover
+                  anchorEl={columnAnchorEl}
+                  open={isModalOpen}
+                  popoverId={modalId}
+                  onClose={handlePopoverClose}
+                  columns={interactionColumns}
+                  onColumnsChange={handleColumnsChange}
+                  columnRestrictions={RestrictedColumns}
+                />
+                <ListTable
+                  data={interactionList}
+                  columns={visibleColumns}
+                  getRowId={getRowId}
+                  hoverHighlight={false}
+                  tableStyle={{
+                    borderBottom: '1px solid #CBD6E2',
+                    height: '100%',
+                    maxHeight: 'calc(100vh - 290px)',
+                    overflow: 'auto',
+                  }}
+                  stickyHeader={true}
+                  stickyColumnsCount={1}
+                  selectable={true}
+                  onSelectionChange={handleSelectionChange}
+                  actionWidth={80}
+                  actionDisplayMode='dropdown'
+                  actionMenuItems={actionButtons}
+                  loading={isLoading}
+                  error={isError ? 'Failed to load data' : undefined}
+                  rowsPerPageOptions={[25, 50, 100]}
+                  rowsPerPage={rowsPerPage}
+                  currentPage={currentPage}
+                  totalItems={totalItems}
+                  onPageChange={handlePageChange}
+                  onRowsPerPageChange={handleRowsPerPageChange}
+                  sortBy={sortField}
+                  sortOrder={sortBy}
+                  onSort={handleSortRequest}
+                  clearSelectedRows={clearSelectedRows}
+                />
+              </>
             ) : (
-              <HistoryTable setCount={setCount} />
+              <HistoryTable
+                setCount={setCount}
+                setColumnAnchorEl={setColumnAnchorEl}
+                columnAnchorEl={columnAnchorEl}
+              />
             )}
           </div>
           <SendInteractionModal

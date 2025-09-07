@@ -48,6 +48,7 @@ import ConfirmationPopup from '../../common-utils/confirmation-popup';
 import TextButton from '../button/text-button';
 import { ArrowDropDownIcon } from '@mui/x-date-pickers/icons';
 import FormFiscalYearDropdown from '../fiscal-dropdown/form-fiscal-dropdown';
+import { formatCostValue, removeFormatCostValue } from '../../common-utils';
 
 interface FormBuilderProps {
   data: FormType[];
@@ -968,8 +969,42 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               fieldDisabled
             }
             disabled={field.disabled}
-            onChange={(e) => handleChange(e.target.value)}
-            value={fieldValue || field.defaultValue || ''}
+            onChange={(e) => {
+              const inputValue = e.target.value;
+              if (field.formatCostValue) {
+                const cleanValue = removeFormatCostValue(inputValue);
+                // Only format if it's a valid number
+                if (/^\d*\.?\d*$/.test(cleanValue)) {
+                  const formattedValue = formatCostValue(cleanValue);
+                  // Update the input display value
+                  e.target.value = formattedValue;
+                  // Store the clean value in form data for processing
+                  handleChange(cleanValue);
+                } else {
+                  handleChange(inputValue);
+                }
+              } else {
+                handleChange(inputValue);
+              }
+            }}
+            onBlur={(e) => {
+              if (field.formatCostValue) {
+                // Reformat on blur to ensure proper formatting
+                const inputValue = e.target.value;
+                const cleanValue = removeFormatCostValue(inputValue);
+                if (/^\d*\.?\d*$/.test(cleanValue) && cleanValue !== '') {
+                  const formattedValue = formatCostValue(cleanValue);
+                  e.target.value = formattedValue;
+                }
+              }
+            }}
+            value={
+              field.formatCostValue && fieldValue
+                ? formatCostValue(fieldValue)
+                : field.formatCostValue && field.defaultValue
+                  ? formatCostValue(field.defaultValue)
+                  : fieldValue || field.defaultValue || ''
+            }
           />
         );
       case 'file':
@@ -1493,7 +1528,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 : today
               : today;
           }
-          return field?.maxDate ? dayjs(field.maxDate) : undefined;
+          return field?.maxDate ? dayjs(field.maxDate) : today;
         })();
 
         return (
@@ -1504,7 +1539,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 isError +
                 fieldDisabled
               }
-              minDate={customMinDate}
+              minDate={customMinDate || dayjs('1950-01-01')}
               maxDate={customMaxDate}
               value={dayjs(fieldValue, 'YYYY-MM-DD')}
               disabled={field.disabled}
@@ -2090,7 +2125,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             // Check if date is before the minimum allowed date (1-1-1950)
             const minAllowedDate =
               field.name === 'project_startdate'
-                ? dayjs('2000-01-01', 'YYYY-MM-DD')
+                ? dayjs('1950-01-01', 'YYYY-MM-DD')
                 : dayjs('1-1-1950', 'D-M-YYYY');
             if (dayjs(dateValue).isBefore(minAllowedDate, 'day')) {
               hasError = true;
@@ -2102,9 +2137,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     : field.name === 'skill_start_date'
                       ? 'Start Date cannot be before 1950-01-01'
                       : field.name === 'project_startdate'
-                        ? 'Start Date cannot be before 2000-01-01'
+                        ? 'Start Date cannot be before 1950-01-01'
                         : field.name === 'project_enddate'
-                          ? 'End Date cannot be before 2000-01-01'
+                          ? 'End Date cannot be before 1950-01-01'
                           : 'Date cannot be before 1950-01-01',
               };
             }

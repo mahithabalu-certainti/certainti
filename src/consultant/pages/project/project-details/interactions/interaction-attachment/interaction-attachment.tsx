@@ -1,11 +1,19 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { getInteractionAttachmentListColumns } from './columns';
 import SectionHeader from '../../../../../../components/details-section/section-header';
 import { InteractionDetailIcon } from '../../../../../../assets';
-import { ListTable } from '../../../../../../components/table';
+import {
+  ListTable,
+  ManageColumnsPopover,
+} from '../../../../../../components/table';
 import { useGetInteractionAttachmentList } from '../../../../../services/interactions/interaction-attachment-service';
 import { InteractionAttachmentType } from '../../../../../types';
 import { useSearchParams } from 'react-router-dom';
+import { BUTTON_STYLES } from '../../../../../../admin/pages/manage-user-detail/styles';
+import {
+  ListTableColumn,
+  ShowHideTableColumn,
+} from '../../../../../../components/table/types';
 
 interface InteractionAttachmentProps {
   handleBackClick: () => void;
@@ -21,6 +29,16 @@ const InteractionAttachment: React.FC<InteractionAttachmentProps> = ({
   const [searchParams] = useSearchParams();
   const accountId = searchParams.get('accountID') || '';
   const interactionId = searchParams.get('interaction_rid') || '';
+
+  const [columnAnchorEl, setColumnAnchorEl] =
+    React.useState<HTMLButtonElement | null>(null);
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const handleColumnVisibility = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setColumnAnchorEl(event.currentTarget);
+  };
 
   const { data, isLoading, isError } = useGetInteractionAttachmentList(
     {
@@ -56,6 +74,45 @@ const InteractionAttachment: React.FC<InteractionAttachmentProps> = ({
     setCurrentPage(newPage);
   };
 
+  const headerButtons = [
+    {
+      label: 'Show/Hide Fields',
+      variant: 'outlined' as const,
+      disabled: false,
+      onClick: handleColumnVisibility,
+      sx: { ...BUTTON_STYLES, width: '125px', minWidth: '125px' },
+      hide: false,
+    },
+  ];
+
+  const RestrictedColumns = [
+    {
+      id: 'question_rnumber',
+      canHide: false,
+      canDrag: false,
+    },
+  ];
+
+  const [visibleColumns, setVisibleColumns] = useState<
+    ListTableColumn<InteractionAttachmentType>[]
+  >(interactionAttachmentColumns.filter((col) => !col.hide));
+
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    setVisibleColumns(
+      updatedColumns.filter(
+        (col) => !col.hide
+      ) as ListTableColumn<InteractionAttachmentType>[]
+    );
+  };
+
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
+  };
+
+  const modalId = isModalOpen
+    ? 'project-interaction-attachment-list-column-visibility-popover'
+    : undefined;
+
   return (
     <>
       <div className='border border-[#CBD6E2]'>
@@ -72,11 +129,21 @@ const InteractionAttachment: React.FC<InteractionAttachmentProps> = ({
           showBackArrow={true}
           count={data?.data.totalRecords || 0}
           showItemCount={true}
+          buttons={headerButtons}
         />
         <div className='border-t border-[#CBD6E2]'>
+          <ManageColumnsPopover
+            anchorEl={columnAnchorEl}
+            open={isModalOpen}
+            popoverId={modalId}
+            onClose={handlePopoverClose}
+            columns={interactionAttachmentColumns}
+            onColumnsChange={handleColumnsChange}
+            columnRestrictions={RestrictedColumns}
+          />
           <ListTable
             data={data?.data.data || []}
-            columns={interactionAttachmentColumns}
+            columns={visibleColumns}
             getRowId={getRowId}
             hoverHighlight={false}
             tableStyle={{

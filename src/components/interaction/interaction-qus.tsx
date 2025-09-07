@@ -8,7 +8,7 @@ import {
   AttachmentsSideIcon,
   DownloadIcon,
   KeyContactRemoveIcon,
-  PdfIcon,
+  DocumentIcon,
 } from '../../assets';
 import { formatDateToYYYYMMDDWithTime } from '../../common-utils';
 import {
@@ -16,6 +16,7 @@ import {
   useUploadInteractionAttachment,
 } from '../../consultant/services/interactions/response-interaction-service';
 import { TruncateWithTooltip } from '../truncate-with-tooltip';
+import { useToast } from '../../hooks';
 
 interface SectionHeaderButton {
   label: string;
@@ -32,6 +33,21 @@ enum FlagTypeEnum {
   submit = 'submit',
 }
 
+const ALLOWED_FILE_TYPES = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'text/plain',
+  'text/csv',
+];
+
+const MAX_FILE_SIZE = 20 * 1024 * 1024;
+const MAX_FILES_LIMIT = 10;
+
 interface InteractionQuesProps {
   questions: InteractionQuestion[];
   globalAttachments: Attachment[];
@@ -42,6 +58,7 @@ interface InteractionQuesProps {
   refetchDetails?: () => void;
   formData?: Record<string, string>;
   className?: string;
+  responseDate?: string;
 }
 
 const InteractionQuestions: React.FC<InteractionQuesProps> = ({
@@ -54,7 +71,9 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   refetchDetails,
   formData,
   className,
+  responseDate,
 }) => {
+  const { successToast, errorToast } = useToast();
   const [activeFlag, setActiveFlag] = useState<FlagTypeEnum | null>(null);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editedAnswers, setEditedAnswers] = useState<Record<string, string>>(
@@ -81,6 +100,9 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
       {} as Record<string, Attachment[]>
     )
   );
+  const [validationErrors, setValidationErrors] = useState<
+    Record<string, boolean>
+  >({});
 
   const globalFileInputRef = useRef<HTMLInputElement | null>(null);
   const questionFileInputRefs = useRef<Record<string, HTMLInputElement | null>>(
@@ -111,14 +133,18 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
         {} as Record<string, Attachment[]>
       )
     );
+
+    setValidationErrors({});
   }, [questions, globalAttachments]);
 
   const handleEditClick = () => {
     setIsEditing(true);
+    setValidationErrors({});
   };
 
   const handleCancel = () => {
     setIsEditing(false);
+    setValidationErrors({});
 
     // revert answers
     setEditedAnswers(
@@ -151,7 +177,30 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
     return trimmed ? value : '';
   };
 
+  const validateMandatoryQuestions = () => {
+    const errors: Record<string, boolean> = {};
+    let isValid = true;
+
+    questions.forEach((q) => {
+      if (q.is_mandatory) {
+        const answer = sanitizeQuillValue(editedAnswers[q.rid] || '');
+        if (!answer) {
+          errors[q.rid] = true;
+          isValid = false;
+        }
+      }
+    });
+
+    setValidationErrors(errors);
+    return isValid;
+  };
+
   const handleSave = async (flag: FlagTypeEnum) => {
+    // For submit action, validate mandatory questions
+    if (flag === FlagTypeEnum.submit && !validateMandatoryQuestions()) {
+      return;
+    }
+
     setActiveFlag(flag);
     const payload = {
       status_action: (flag === FlagTypeEnum.draft
@@ -179,9 +228,16 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
         await refetchDetails?.();
         setIsEditing(false);
         setActiveFlag(null);
+        setValidationErrors({});
+        successToast(
+          flag === FlagTypeEnum.draft
+            ? 'Draft saved successfully'
+            : 'Interaction submitted successfully'
+        );
       },
       onError: () => {
         setActiveFlag(null);
+        errorToast('Failed to save response. Please try again.');
       },
     });
   };
@@ -191,6 +247,32 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
       ...prev,
       [questionId]: value,
     }));
+
+    if (validationErrors[questionId]) {
+      setValidationErrors((prev) => ({
+        ...prev,
+        [questionId]: false,
+      }));
+    }
+  };
+
+  const validateFile = (file: File): { isValid: boolean; error?: string } => {
+    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+      return {
+        isValid: false,
+        error:
+          'Only document files (PDF, Word, Excel, PowerPoint, Text) are allowed',
+      };
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      return {
+        isValid: false,
+        error: 'File size must be less than 20MB',
+      };
+    }
+
+    return { isValid: true };
   };
 
   const handleGlobalFileUpload = async (
@@ -198,6 +280,23 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Check file count limit
+    if (newGlobalAttachments.length >= MAX_FILES_LIMIT) {
+      errorToast(
+        `You can only upload up to ${MAX_FILES_LIMIT} attachments per response`
+      );
+      e.target.value = '';
+      return;
+    }
+
+    // Validate file
+    const validation = validateFile(file);
+    if (!validation.isValid) {
+      errorToast(validation?.error || '');
+      e.target.value = '';
+      return;
+    }
 
     try {
       const res = await uploadFileMutation.mutateAsync({
@@ -219,6 +318,23 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    const currentQuestionFiles = questionAttachments[questionId] || [];
+    if (currentQuestionFiles.length >= MAX_FILES_LIMIT) {
+      errorToast(
+        `You can only upload up to ${MAX_FILES_LIMIT} attachments per response`
+      );
+      e.target.value = '';
+      return;
+    }
+
+    // Validate file
+    const validation = validateFile(file);
+    if (!validation.isValid) {
+      errorToast(validation?.error || '');
+      e.target.value = '';
+      return;
+    }
 
     try {
       const res = await uploadFileMutation.mutateAsync({
@@ -346,6 +462,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
             type='file'
             className='hidden'
             onChange={handleGlobalFileUpload}
+            accept='.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv'
           />
         </div>
       </div>
@@ -368,7 +485,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                   className='flex items-center justify-between border border-[#CBD6E2] bg-[#FFFBFA] rounded-[2px] p-2 px-3'
                 >
                   <div className='flex items-center gap-2 w-[95%]'>
-                    <PdfIcon />
+                    <DocumentIcon className='w-6 h-6' />
                     <div className='text-[14px] text-[#425A76] font-normal max-w-[90%]'>
                       <TruncateWithTooltip
                         text={`${file.fileName}${file.fileType}`}
@@ -415,6 +532,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
             <div className='font-medium text-[14px] text-[#2D3E4F]'>
               <span className='font-bold'>
                 {q.question_seq_num || `Q00${index + 1}`}
+                {q.is_mandatory && <span className='text-red-500 ml-1'>*</span>}
               </span>{' '}
               - {q.question}
             </div>
@@ -467,7 +585,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                   value={editedAnswers[q.rid]}
                   onChange={(value) => handleAnswerChange(q.rid, value)}
                   theme='snow'
-                  className='rounded-[2px] bg-white'
+                  className={`rounded-[2px] ${validationErrors[q.rid] ? 'border border-red-500 bg-[#FEF2F2]' : 'bg-white'}`}
                   modules={{
                     toolbar: {
                       container: `#toolbar-${q.rid}`,
@@ -494,12 +612,19 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                   ]}
                 />
 
+                {validationErrors[q.rid] && (
+                  <div className='text-red-500 text-sm mt-1'>
+                    This question is mandatory
+                  </div>
+                )}
+
                 {/* Hidden File Input */}
                 <input
                   ref={(el) => (questionFileInputRefs.current[q.rid] = el)}
                   type='file'
                   className='hidden'
                   onChange={(e) => handleQuestionFileUpload(e, q.rid)}
+                  accept='.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv'
                 />
               </div>
             ) : (
@@ -556,7 +681,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                       className='flex items-center justify-between border border-[#CBD6E2] bg-[#FFFBFA] rounded-[2px] p-2 px-3'
                     >
                       <div className='flex items-center gap-2 w-[95%]'>
-                        <PdfIcon />
+                        <DocumentIcon className='w-6 h-6' />
                         <div className='text-[14px] text-[#425A76] font-normal max-w-[90%]'>
                           <TruncateWithTooltip
                             text={`${file.fileName}${file.fileType}`}
@@ -597,7 +722,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
               </div>
             )}
 
-            {!isEditing && q.response_on_datetime && (
+            {!isEditing && !responseDate && q.response_on_datetime && (
               <div className='py-1 w-full flex justify-end items-center gap-2 text-[12px] text-[#425A76]'>
                 <span className='text-[#7D98B6]'>Response Received on:</span>
                 {formatDateToYYYYMMDDWithTime(q.response_on_datetime)}
@@ -606,6 +731,13 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
           </div>
         ))}
       </div>
+
+      {!isEditing && responseDate && (
+        <div className='py-1 pr-4 w-full flex justify-end items-center gap-2 mb-5 text-[12px] text-[#425A76]'>
+          <span className='text-[#7D98B6]'>Response Received on:</span>
+          {formatDateToYYYYMMDDWithTime(responseDate)}
+        </div>
+      )}
     </div>
   );
 };

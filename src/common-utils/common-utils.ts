@@ -50,6 +50,7 @@ export const createTextField = (
     errorHandling?: ErrorHandling[];
     resetDependsFields?: string[];
     clearValue?: Record<string, string>;
+    formatCostValue?: boolean;
     lengthRequired?: {
       key: string;
       minMatchedValue: RegExp;
@@ -77,6 +78,7 @@ export const createTextField = (
   clearValue: options.clearValue,
   defaultValue: options.defaultValue,
   resetDependsFields: options.resetDependsFields,
+  formatCostValue: options.formatCostValue,
 });
 
 export const createPhoneInputField = (
@@ -634,11 +636,14 @@ export const ALLOWED_COUNTRIES: AllowedCountry[] = [
   'au',
   'fr',
 ];
-
-export const fiscalYears = Array.from({ length: 26 }, (_, i) => {
-  const year = new Date().getFullYear() - i;
-  return { value: year.toString(), label: `FY-${year}` };
-});
+const currentYear = new Date().getFullYear();
+export const fiscalYears = Array.from(
+  { length: currentYear - 1950 + 1 },
+  (_, i) => {
+    const year = currentYear - i;
+    return { value: year.toString(), label: `FY-${year}` };
+  }
+);
 
 export const checkError = (data: CheckError[]) => {
   return data.some((value) => value.isError === true);
@@ -931,3 +936,19 @@ export const getFiscalDateBounds = (
 //     endMax: endDateMax,
 //   };
 // };
+
+export const formatCostValue = (value: string): string => {
+  if (value === null || value === undefined) return '';
+
+  const costStr = String(value);
+  const [whole, decimal] = costStr.split('.');
+  const formattedWhole = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const formattedCost =
+    decimal !== undefined ? `${formattedWhole}.${decimal}` : formattedWhole;
+
+  return `${formattedCost}`;
+};
+
+export const removeFormatCostValue = (value: string): string => {
+  return value.replace(/,/g, '');
+};

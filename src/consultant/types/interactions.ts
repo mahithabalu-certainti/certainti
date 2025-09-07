@@ -97,6 +97,7 @@ export interface InteractionQuestionErrors {
 }
 
 export interface InteractionFormErrors {
+  accountName?: string;
   projectCode?: string;
   projectName?: string;
   fiscalYear?: string;
@@ -158,6 +159,7 @@ export type ResponseInteractionList = {
   interaction_source_rid: string;
   interaction_source_name: string;
   interaction_version: number;
+  response_source_name: string;
   response_by: string;
   attachment_count: number | string | null;
 };
@@ -236,6 +238,7 @@ export interface InteractionQuestion {
 export interface InteractionDetails {
   rid?: string;
   interaction_rid?: string;
+  recipient_name: string;
   account_rid: string;
   project_rid: string;
   fiscal_year: number;
@@ -285,6 +288,7 @@ export interface InteractionDetailsHistoryResponse {
     history_details: InteractionHistoryResponse[];
     global_attachments: Attachment[];
     interaction_rid: string;
+    response_on: string;
     project_name: string;
   };
 }
