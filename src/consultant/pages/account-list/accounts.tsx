@@ -7,7 +7,6 @@ import {
   ActionIcon,
   NewFilterIcon,
   RefreshIcon,
-  SearchBlackIcon,
 } from '../../../assets';
 import { FilterModal } from '../../../components';
 import ActionsDropdown from '../../../components/actions-dropdown/actions-dropdown';
@@ -45,7 +44,6 @@ const BUTTON_STYLES = {
 export const Accounts: React.FC = () => {
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>();
   const [expandChild, setExpandChild] = useState<boolean>(false);
-  const [searchText, setSearchText] = useState<string>('');
   const [order, setOrder] = useState<'asc' | 'desc'>('asc');
   const [orderBy, setOrderBy] = useState<keyof AccountList>('account_name');
   const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';
