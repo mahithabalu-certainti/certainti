@@ -1297,7 +1297,7 @@ class InteractionSchemaService {
           },
           order: [["response_on", "DESC"]],
         });
-        item.is_editable = !response;
+        item.is_editable = !response || response === null || response.interaction_response === null || response.interaction_response === ""; // false if response exists and has a response, true otherwise
         item.response =
           response && typeof response.interaction_response === "string"
             ? response.interaction_response
@@ -1416,6 +1416,16 @@ class InteractionSchemaService {
       if (!this.orgDbSequelize) {
         this.orgDbSequelize = await this.interactionModelService.getSequelize();
       }
+      if(!this.mainDbSequelize) {
+        this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
+      }
+      const [statusArr]: any[] = await this.mainDbSequelize.query(
+        rawQueries.fetchActiveStatusByType('Active'),
+        {
+          type: "SELECT",
+        }
+      );
+      console.log("activeStatus", statusArr);
       const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
         /\D/g,
         ""
@@ -1428,7 +1438,7 @@ class InteractionSchemaService {
         };
       }
       const [interactionRecipients]: any[] = await this.orgDbSequelize.query(
-        rawQueries.fetchInteractionRecipient(projectFiscalRid, schemaName),
+        rawQueries.fetchInteractionRecipient(projectFiscalRid, statusArr.rid, schemaName),
         {
           type: "SELECT",
         }
@@ -1437,13 +1447,14 @@ class InteractionSchemaService {
       const interactionCCRecipients: any[] = await this.orgDbSequelize.query(
         rawQueries.fetchInteractionRecipientProject(
           projectFiscalRid,
+          statusArr.rid,
           schemaName
         ),
         { type: "SELECT" }
       );
       const interactionCCRecipientsAccount: any[] =
         await this.orgDbSequelize.query(
-          rawQueries.fetchInteractionRecipientAccount(accountRid, schemaName),
+          rawQueries.fetchInteractionRecipientAccount(accountRid,statusArr.rid ,schemaName),
           { type: "SELECT" }
         );
 
@@ -1699,6 +1710,43 @@ class InteractionSchemaService {
     } catch (err) {
       throw new Error(
         "Error updating interaction status: " + (err as Error).message
+      );
+    }
+  }
+
+  async isEmailRecipientAvailable
+  (     
+    accountNumber: string,  
+    projectFiscalRid: string
+  ): Promise<boolean> {
+    try {
+      if (!this.orgDbSequelize) {     
+        this.orgDbSequelize = await this.interactionModelService.getSequelize();
+      }
+      if(!this.mainDbSequelize)
+      {
+        this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
+      }
+      const [activeStatus]: any[] = await this.mainDbSequelize.query(
+        rawQueries.fetchActiveStatusByType("Active"),
+        { type: "SELECT" }
+      );
+
+       const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+          /\D/g,
+          ""
+        )}`;
+      const [recipientInfo]: any[] = await this.orgDbSequelize.query(
+        rawQueries.fetchInteractionRecipient(projectFiscalRid, activeStatus.rid, schemaName),
+        { type: "SELECT" }
+      );
+
+      return !!(recipientInfo && recipientInfo.key_contact_email);
+    } catch (err) {       
+        
+      throw new Error(
+        "Error checking email recipient availability: " +
+          (err as Error).message
       );
     }
   }

@@ -84,7 +84,8 @@ export const filtersColumns : Record<string, string> =
     project_code : "project_code",
     fiscal_year : "fiscal_year",
     response_source_rid : "response_source_rid",
-    parent_interaction_rid : "parent_interaction_rid"
+    parent_interaction_rid : "parent_interaction_rid",
+    createdAt : "createdAt"
   }
 
   export const filterTypes : Record<string, any> = 
@@ -107,7 +108,8 @@ export const filtersColumns : Record<string, string> =
     project_code : "string",
     fiscal_year : "number",
     response_source_rid : "string",
-    parent_interaction_rid:"string"
+    parent_interaction_rid:"string",
+    createdAt:"datetime",
   }
 
   export const ALPHANUMERIC_CONDITIONS : Record <string, string> = {
@@ -217,7 +219,10 @@ export const STATUS_MESSAGE = {
   interactionFailed:"Interaction Creation Failed",
   interactionUpdateFailed:"Interaction Update Failed",
   responseUpdateFailed:"Interaction Response Update Failed",
-  assessmentInitiated : "AI Assessment Initiated"
+  assessmentInitiated : "AI Assessment Initiated",
+  interactionCreatedButNoEmailRecipient:"Auto send skipped as no email recipient found",
+  interactionCreated:"Interaction created successfully",
+  interactionUpdated:"Interaction updated successfully"
 };
 
 export const rawQueries = {
@@ -361,20 +366,21 @@ export const rawQueries = {
     ) AS recipient_available
   `;
   },
-  fetchInteractionRecipient(projectFiscalRid: string, schemaName: string) {
+  fetchInteractionRecipient(projectFiscalRid: string, statusRid: string, schemaName: string) {
     return `
-    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE entity_type = 'Project' and include_in_communication is true and entity_rid = '${projectFiscalRid}'`;
+    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE entity_type = 'Project' and include_in_communication is true and entity_rid = '${projectFiscalRid}' and status_rid = '${statusRid}'`;
   },
   fetchInteractionRecipientProject(
     projectFiscalRid: string,
+    statusRid: string,
     schemaName: string
   ) {
     return `
-    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE entity_type = 'Project' and interaction_cc_recipient is true and entity_rid = '${projectFiscalRid}'`;
+    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE entity_type = 'Project' and interaction_cc_recipient is true and entity_rid = '${projectFiscalRid}' and status_rid = '${statusRid}'`;
   },
-  fetchInteractionRecipientAccount(accountRid: string, schemaName: string) {
+  fetchInteractionRecipientAccount(accountRid: string,statusRid:string,schemaName: string) {
     return `
-    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE entity_type = 'Account' and interaction_cc_recipient is true and entity_rid = '${accountRid}'`;
+    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE entity_type = 'Account' and interaction_cc_recipient is true and entity_rid = '${accountRid}' and status_rid = '${statusRid}'`;
   },
   fetchisAutoSendEnabled(projectFiscalRid: string, schemaName: string) {
     return `
@@ -449,6 +455,11 @@ export const rawQueries = {
       JOIN ${MAIN_SCHEMA_NAME}.module_permission mp ON pf.module_permission_id = mp.rid
       WHERE mp.permission_name = :permissionName
         AND ufa.user_id = :userId
+    `;
+  },
+  fetchActiveStatusByType(type: string): string {
+    return `
+      SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name = '${type}' AND status = 'active' LIMIT 1
     `;
   },
   GET_ACCOUNT_ACCESS: `
@@ -593,7 +604,8 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     project_code : "string",
     fiscal_year : "number",
     response_source_rid : "string",
-    parent_interaction_rid:"string"
+    parent_interaction_rid:"string",
+    createdAt:"datetime",
   }
 
   export const filtersColumnsForInteractionSummary : Record<string, string> =
@@ -624,7 +636,8 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     fiscal_year : "fiscal_year",
     response_source_rid : "response_source_rid",
     response_source_name : "response_source_name",
-    parent_interaction_rid:"parent_interaction_rid"
+    parent_interaction_rid:"parent_interaction_rid",
+    createdAt:"createdAt"
   }
 
   export const responseSortKeys = ["r_number","response_by", "response_on","response_email","interaction_response", "interaction_version"]

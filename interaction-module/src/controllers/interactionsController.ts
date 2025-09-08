@@ -4,6 +4,7 @@ import {
   deleteFromAzureBlob,
   errorLog,
   generateExcelBase64,
+  handleCustomResponse,
   handleErrorResponse,
   handleSuccessResponse,
   isValidTimezone,
@@ -55,7 +56,7 @@ async function createInteraction(req: Request, res: Response): Promise<void> {
     );
     if (interaction.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
-      handleSuccessResponse(res, interaction.data);
+      handleCustomResponse(res, interaction.data,interaction.message);
       return;
     } else {
       errorLog(methodName, interaction.errorMessage);
@@ -110,7 +111,7 @@ async function updateInteraction(req: Request, res: Response): Promise<void> {
     );
     if (interaction.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
-      handleSuccessResponse(res, interaction.data);
+      handleCustomResponse(res, interaction.data, interaction.message);
       return;
     } else {
       errorLog(methodName, interaction.errorMessage);

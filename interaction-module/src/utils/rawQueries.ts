@@ -102,6 +102,8 @@ export const fetchInteractionForProjectLevelQuery = (
     sortValue = `ORDER BY i.fiscal_year ${sortBy}`;
   else if (sort === filtersColumns.parent_interaction_rid)
     sortValue = `ORDER BY p.r_number ${sortBy}`;
+  else if (sort === filtersColumns.createdAt)
+    sortValue = `ORDER BY i.created_datetime ${sortBy}`;
   else sortValue = `ORDER BY i.r_number ASC`;
 
   if (filteredData?.filteredQueryArray.length! > 0) {
@@ -306,6 +308,8 @@ export const listAllInteractionSummary = (
     sortValue = ` ORDER BY i.response_source_name ${sortBy}`;
   else if (sort === filtersColumnsForInteractionSummary.parent_interaction_rid)
     sortValue = ` ORDER BY parent_r_number ${sortBy}`;
+  else if (sort === filtersColumnsForInteractionSummary.createdAt)
+    sortValue = ` ORDER BY i.created_datetime ${sortBy}`;
   else sortValue = `ORDER BY i.r_number ASC`;
 
   let query = `
