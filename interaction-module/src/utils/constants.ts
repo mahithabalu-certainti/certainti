@@ -474,7 +474,6 @@ export const rawQueries = {
       SELECT rid, email from ${MAIN_SCHEMA_NAME}.organization_licenses
     `;
   },
-  },
   fetchActiveStatusByType(type: string): string {
     return `
       SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name = '${type}' AND status = 'active' LIMIT 1
