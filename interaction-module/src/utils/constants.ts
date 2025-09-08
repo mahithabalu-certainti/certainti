@@ -355,7 +355,7 @@ export const rawQueries = {
     return `
     SELECT email FROM ${MAIN_SCHEMA_NAME}.global_settings WHERE is_active is true LIMIT 1`;
   },
-  isEmailRecipientAvailable(projectFiscalRid: string, schemaName: string) {
+  isEmailRecipientAvailable(projectFiscalRid: string, schemaName: string, statusRid: string) {
     return `
     SELECT EXISTS (
       SELECT 1
@@ -363,6 +363,7 @@ export const rawQueries = {
       WHERE entity_type = 'Project'
         AND include_in_communication IS true
         AND entity_rid = '${projectFiscalRid}'
+        AND status_rid = '${statusRid}'
     ) AS recipient_available
   `;
   },
