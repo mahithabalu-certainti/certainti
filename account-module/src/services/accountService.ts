@@ -1401,20 +1401,20 @@ class AccountService {
         const role = await this.schemaService.getKeyContactRoleById(
           contact.key_contact_role
         );
-        const roleName = (role as any)?.role_name;
+        const roleName = (role as any)?.role_map;
 
         if (contact.is_primary_contact) {
           if (
-            roleName === "Professional Services Consultant" &&
+            roleName === primaryKeyContacts.professional_services_consultant &&
             !professional_services_consultant
           ) {
             professional_services_consultant = contact.key_contact_name;
           } else if (
-            roleName === "Client Finance Executive" &&
+            roleName === primaryKeyContacts.finance_executive &&
             !finance_executive
           ) {
             finance_executive = contact.key_contact_name;
-          } else if (roleName === "Client Finance Lead" && !finance_lead) {
+          } else if (roleName === primaryKeyContacts.finance_lead && !finance_lead) {
             finance_lead = contact.key_contact_name;
           }
         }

@@ -2,6 +2,7 @@ import { Router } from "express";
 import userRoutes from "./userRoutes";
 import { errorLog, successLog } from "../utils/helpers";
 import userGroupRoutes from "./userGroupRoutes";
+import settingsRoutes from "./settingsRoutes";
 
 const routes: Router = Router();
 
@@ -27,5 +28,6 @@ routes.get("/health", async (req, res) => {
 });
 routes.use("/user", userRoutes);
 routes.use("/user_group", userGroupRoutes);
+routes.use("/admin_settings", settingsRoutes);
 
 export default routes;

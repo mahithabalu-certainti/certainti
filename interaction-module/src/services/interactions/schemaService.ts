@@ -1662,8 +1662,6 @@ class InteractionSchemaService {
         where: { rid: interactionRid },
       });
       const updateData: any = {
-        modified_by: userId,
-        modified_datetime: new Date(),
         recipient_email: emailInfo.email,
         recipient_name: emailInfo.name,
         sent_by_rid: userId,
