@@ -124,7 +124,7 @@ export interface IInteractionService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { techSummaryInfo: any ,count: number};
+    data?: { techSummaryInfo: any , count: number};
   }>;
   triggerAI(data : any) : Promise<{
     statusMessage : string,
