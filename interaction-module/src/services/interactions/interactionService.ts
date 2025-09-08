@@ -325,6 +325,57 @@ export class InteractionService {
         };
     }
   }
+    async listTechnicalSummary(data : any) :  Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { techSummaryInfo: any,count: number };
+  }> {
+    try {
+        const { accountNumber } =
+        await this.interactionSchemaService.fetchValidAccountNumberById(
+          data.account_rid
+        );
+
+      if (!accountNumber) {
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: "Invalid account ID",
+        };
+      }
+      const techSummary =
+        await this.interactionSchemaService.listTechnicalSummary(
+          accountNumber,
+          data.project_fiscal_rid
+        );
+
+      if (!techSummary) {
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: "Invalid interaction ID",
+        };
+      }
+      else
+      {
+        
+      }
+
+       return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          techSummaryInfo: techSummary.technicalSummary,
+          count:techSummary.count
+        },
+      };
+    }
+    catch (err) {
+      throw this.throwServiceError(err as Error);
+    }
+
+  }
   async getInteractionDetailsById(
     interactionRid: string,
     accountRid: string
@@ -569,6 +620,7 @@ export class InteractionService {
           interactionInfo.accountInfo.account_rid
         );
         const senderEmailInfo = await this.getSenderEmailInfo(accountNumber,interactionInfo.accountInfo.parent_account_rid);
+        console.log("senderEmailInfo", senderEmailInfo);
         const excelBuffer = await this.generateExcelBuffer(
           interaction_rid,
           interactionItems,
@@ -887,7 +939,7 @@ export class InteractionService {
               rawQueries.fetchActiveStatusByType("Active"),
               { type: "SELECT" }
             );
-      const [emailInfoResult]: any = await orgDb.query(rawQueries.isEmailRecipientAvailable(data.project_fiscal_rid, schemaName, activeStatus[0]?.rid));
+      const [emailInfoResult]: any = await orgDb.query(rawQueries.isEmailRecipientAvailable(data.project_fiscal_rid, schemaName, activeStatus?.rid));
       hasEmailRecipient = emailInfoResult[0]?.recipient_available ?? false;
      }
     if(result[0][0].interactions != null) {
