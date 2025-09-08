@@ -53,6 +53,14 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   // const disableEditResBtn =
   //   data?.status_name.toLowerCase() === StatusTypeEnum.response_received;
 
+  const interactionFieldsEditable = useMemo(
+    () =>
+      permission
+        .find((item) => item.name === AllPermissions.INTERACTIONS_VIEW_EDIT)
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
+
   const disableInteractionEditBtn = [
     StatusTypeEnum.cancelled,
     StatusTypeEnum.completed,
@@ -114,7 +122,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       disabled: accountInActive || disableInteractionEditBtn,
       onClick: () => handleEdit(),
       sx: { width: '48px', minWidth: '48px' },
-      hide: false,
+      hide: !interactionFieldsEditable,
     },
   ];
 
@@ -204,6 +212,12 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     permissionMap
   );
   const auditDetails = applyHidePermission(auditInfo, permissionMap);
+  const hideQuestions =
+    !permissionMap['interaction_questions']?.read &&
+    !permissionMap['interaction_questions']?.edit;
+
+  const showInteractionQuestions =
+    data?.questions && data?.questions.length > 0 && !hideQuestions;
 
   return (
     <>
@@ -245,12 +259,12 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
           </>
         )}
       </div>
-      {data?.questions && data?.questions.length > 0 && (
+      {showInteractionQuestions && (
         <InteractionQuestions
           questions={data?.questions}
           globalAttachments={data?.global_attachments}
           isEditEnable={!disableInteractionEditBtn}
-          actionButtonEnable={true}
+          actionButtonEnable={interactionFieldsEditable}
           handleResponseHistory={handleResponseHistory}
           refetchDetails={refetch}
           formData={{

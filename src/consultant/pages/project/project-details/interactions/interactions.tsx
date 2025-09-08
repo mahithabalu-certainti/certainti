@@ -101,6 +101,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   };
 
   const interactionId = searchParams.get('interaction_id');
+  const interactionNumber = searchParams.get('interaction_number') || '';
   const interactionHistoryId = searchParams.get('interaction_history_id');
   const interactionAttachmentId = searchParams.get(
     'interaction_attachment_count'
@@ -369,9 +370,10 @@ const Interactions: React.FC<InteractionsProps> = ({
     setSelectedRows(selectedData);
   };
 
-  const handleViewInteraction = (rowId: string) => {
+  const handleViewInteraction = (rowId: string, rNumber: string) => {
     if (rowId) {
       searchParams.set('interaction_id', rowId);
+      searchParams.set('interaction_number', rNumber);
       navigate({ search: searchParams.toString() }, { replace: true });
       setSelectedRows([]);
       setCount(0);
@@ -390,10 +392,12 @@ const Interactions: React.FC<InteractionsProps> = ({
 
   const handleViewInteractionAttachmentCount = (
     interactionAttachmentCount: string | number,
-    rowId: string
+    rowId: string,
+    rNumber: string
   ) => {
     if (interactionAttachmentCount) {
       searchParams.set('interaction_rid', rowId);
+      searchParams.set('interaction_number', rNumber);
       searchParams.set(
         'interaction_attachment_count',
         String(interactionAttachmentCount)
@@ -410,6 +414,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       searchParams.delete('interaction_history_id');
       searchParams.delete('interaction_attachment_count');
       searchParams.delete('interaction_rid');
+      searchParams.delete('interaction_number');
       navigate({ search: searchParams.toString() }, { replace: true });
     }
   };
@@ -550,7 +555,7 @@ const Interactions: React.FC<InteractionsProps> = ({
           <SectionHeader
             title={
               viewResponseHistory
-                ? `Interaction Response History`
+                ? `Interaction Response History ${interactionNumber}`
                 : 'Interaction'
             }
             titleIcon={
