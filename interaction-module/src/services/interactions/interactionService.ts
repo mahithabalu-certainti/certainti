@@ -12,7 +12,7 @@ import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { checkTableExists, fetchAllParentRNumber, fetchInteractionForProjectLevelQuery, fetchInteractionForSentResentStatus, fetchProjectAttachmentsRids, fetchProjectInteractionRid, interactionResponseHistoryByVersion, listAllInteractionSummary, listAttachments, listInteractionHistory, listResponseHistory } from "../../utils/rawQueries";
 import { generateSasUrl } from "../../utils/blob";
-import { surveyMailTemplate } from "../../utils/mailTemplate";
+import { interactionMailTemplate } from "../../utils/mailTemplate";
 import { sendEmailWithAttachment } from "../emailService";
 import ExcelJS from 'exceljs';
 import axios from 'axios'
@@ -108,11 +108,24 @@ export class InteractionService {
           interactionData.status_rid
         );
       }
-      if(interactionStatus === statusAction.CREATE)
+      const isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(accountNumber, interactionData.project_fiscal_rid);
+
+      if(interactionStatus === statusAction.CREATE && isEmailRecipientAvailable)
       await this.checkAutoSendEnabled(accountNumber,interactionData,interaction.rid,userId);
+       else
+       {
+        if(!isEmailRecipientAvailable && interactionStatus === statusAction.CREATE)
+         return {
+        statusCode: HttpStatus.SUCCESS,
+        message: STATUS_MESSAGE.interactionCreatedButNoEmailRecipient,
+        data: {
+          interactions: interaction,
+        },
+      };
+       }
       return {
         statusCode: HttpStatus.SUCCESS,
-        message: HttpStatus.SUCCESS_MESSAGE,
+        message: STATUS_MESSAGE.interactionCreated,
         data: {
           interactions: interaction,
         },
@@ -209,13 +222,24 @@ export class InteractionService {
       }
 
       await transaction.commit();
-      
-       if(interactionStatus === "Created")
+      const isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(accountNumber, interactionData.interaction_rid);
+      if(interactionStatus === statusAction.CREATE && isEmailRecipientAvailable)
       await this.checkAutoSendEnabled(accountNumber,interactionData,interactionData.interaction_rid,userId);
-
+      else{
+        if(!isEmailRecipientAvailable && interactionStatus === statusAction.CREATE)
+        {
+           return {
+        statusCode: HttpStatus.SUCCESS,
+        message: STATUS_MESSAGE.interactionCreatedButNoEmailRecipient,
+        data: {
+          interactions: null,
+        },
+      };
+        }
+      }
       return {
         statusCode: HttpStatus.SUCCESS,
-        message: HttpStatus.SUCCESS_MESSAGE,
+        message: STATUS_MESSAGE.interactionUpdated,
         data: {
           interactions: null,
         },
@@ -565,7 +589,8 @@ export class InteractionService {
           interactionInfo.accountInfo,
           excelAttachment,
           interactionLink,
-          senderEmailInfo
+          senderEmailInfo,
+          interaction_rid
         );
         if (emailResponse) {
           await this.interactionSchemaService.updateInteractionInfo(
@@ -689,15 +714,17 @@ export class InteractionService {
     accountInfo: { account_name: string },
     excelAttachment: { filename: string; content: string; contentType: string },
     interactionLink: string,
-    senderEmailInfo: string
+    senderEmailInfo: string,
+    interactionRid:string
   ) {
     let emailResponse = false;
     try {
-      const emailContent = surveyMailTemplate(
+      const emailContent = interactionMailTemplate(
         emailInfo,
         projectInfo,
         accountInfo,
-        interactionLink
+        interactionLink,
+        interactionRid
       );
       //fetch sender email info
       
@@ -833,6 +860,9 @@ export class InteractionService {
         delete data.filters[key]
       }
     })
+    if (mainTableFilters[data.sort] !== undefined) {
+      disablePagination = true;
+    }
     
     const result : any = await orgDb.query(fetchInteractionForProjectLevelQuery(
       data.account_rid, 
@@ -1472,7 +1502,7 @@ export class InteractionService {
   async triggerAiFromScheduler (schedulerRecord : SchedulerExecutions) {
     const mainDb = await this.getMainDb()
     const orgDb = await this.getOrgDb()
- 
+    this.logger.info("AI Trigger Scheduler started")
     let fetchAllParentsAccountsRnumber : any = await mainDb.query(rawQueries.fetchAllParentRNumber())
     for(let account of fetchAllParentsAccountsRnumber[0]) {
       let schemaName = rawQueries.fetchSchemaName(account.r_number);

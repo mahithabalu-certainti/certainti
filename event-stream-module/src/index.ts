@@ -52,5 +52,6 @@ async function startKafkaConsumer() {
   }
 }
 startServer();
-startKafkaConsumer();
-
+setTimeout(() => {
+  startKafkaConsumer();
+}, 2 * 60 * 1000);

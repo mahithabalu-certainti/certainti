@@ -9,6 +9,8 @@ interface OrganizationLicensesAttributes {
   modified_datetime?: Date;
   created_by?: string;
   modified_by?: string;
+  auto_send_interaction?:boolean;
+  auto_access_rd?:boolean
 }
 
 interface OrganizationLicensesCreationAttributes
@@ -28,6 +30,8 @@ export class OrganizationLicenses
   public readonly modified_datetime!: Date;
   public created_by?: string;
   public modified_by?: string;
+  public auto_send_interaction?:boolean;
+  public auto_access_rd?:boolean;
 
   static initialize(sequelize: Sequelize) {
     OrganizationLicenses.init(
@@ -67,7 +71,14 @@ export class OrganizationLicenses
           type: DataTypes.TEXT,
           allowNull: false,
         },
-        
+        auto_send_interaction:{
+          type: DataTypes.BOOLEAN,
+          allowNull: true,            
+      },
+      auto_access_rd:{    
+          type: DataTypes.BOOLEAN,
+          allowNull: true,            
+      }
       },
       {
         sequelize,
