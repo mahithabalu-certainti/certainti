@@ -540,7 +540,6 @@ async function exportAllInteractions (req : Request, res : Response) {
         let resultMap: { [key: string]: any } = {
           "r_number": d.r_number,
           "project_code": d.project_code,
-          "interaction_iteration": d.interaction_iteration,
           "interaction_age": d.interaction_age,
           "fiscal_year": d.fiscal_year,
           "status_name": d.status_name,
@@ -688,7 +687,6 @@ async function exportAllInteractionSummary (req : Request, res : Response) {
           "r_number": d.r_number,
           "account_name":d.account_name,
           "project_code": d.project_code,
-          "interaction_iteration": d.interaction_iteration,
           "interaction_age": d.interaction_age,
           "fiscal_year": d.fiscal_year,
           "status_name": d.status_name,
