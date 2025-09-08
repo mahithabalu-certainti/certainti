@@ -224,5 +224,10 @@ export const rawQuery = {
     `
   }
 }
-
+export const statusMessage = {
+    orgNotFound: "Organization not found",
+    orgNotFoundError: "No organization found with the given ID",  
+    orgUpdated: "Organization updated successfully",
+    orgRetrieved: "Organization settings retrieved successfully",
+}
 export const ENV_PREFIX = process.env.NODE_ENV_DB_PREFIX || 'D001-';
