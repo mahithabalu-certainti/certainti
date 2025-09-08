@@ -348,7 +348,25 @@ export class WebHookService {
 
     const accountNumber = accountData[0]?.r_number;
     const accountId = accountData[0]?.rid;
-    const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+    const schemaName = accountNumber ? `trd365_${accountNumber.replace(/\D/g, "")}` : null;
+
+    if(!schemaName){
+      const platformSettings: any = await mainDbSequelize.query(
+        rawQueries.fetchPlatformSettings(),
+        {
+          type: "SELECT",
+        }
+      );
+      let accountEmail = platformSettings[0].email ?? null;
+
+      return {
+        email: accountEmail,
+        tenant_id: null,
+        client_id: null,
+        client_secret: null,
+        subscription_created: null,
+      }
+    }
 
     const orgDbSequelize = await this.interactionModelService.getSequelize();
     const accountDetails: any = await orgDbSequelize.query(
