@@ -1297,7 +1297,7 @@ class InteractionSchemaService {
           },
           order: [["response_on", "DESC"]],
         });
-        item.is_editable = !response || response === null || response.interaction_response === null || response.interaction_response === ""; // false if response exists and has a response, true otherwise
+        item.is_editable = !response || response === null || response.interaction_response === null || response.interaction_response === "";
         item.response =
           response && typeof response.interaction_response === "string"
             ? response.interaction_response
