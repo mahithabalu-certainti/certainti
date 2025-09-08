@@ -9,7 +9,7 @@ import {
   IUpdateInteraction,
 } from "../../utils/types";
 import { Interaction } from "../../models/interaction";
-import { MAIN_SCHEMA_NAME, rawQueries, statusAction, techSummaryStatus } from "../../utils/constants";
+import { MAIN_SCHEMA_NAME, rawQueries, schedulerStatus, statusAction, techSummaryStatus } from "../../utils/constants";
 import { InteractionHistory } from "../../models/interactionHistory";
 
 class InteractionSchemaService {
@@ -2168,6 +2168,80 @@ class InteractionSchemaService {
     const exportableFields = [...merged, ...userOnly].filter((f) => f.read);
     return exportableFields;
   }
+
+  async createSchedulerRecords () {
+    const { SchedulerExecution } = await this.interactionModelService.getModels("");
+    const findSchedulerExists = await SchedulerExecution.findOne({
+      where : {
+        status : schedulerStatus.Running
+      }
+    })
+    if(!findSchedulerExists) {
+      const createSchedulerExecution = await SchedulerExecution.create({
+        created_datetime : new Date(),
+        started_at : new Date(),
+        status : schedulerStatus.Running
+      })
+      return createSchedulerExecution
+    }
+  }
+
+  async createSchedulerTaskRecords (executionRid : string, taskName : string) {
+    const {SchedulerTaskExecution, SchedulerExecution} = await this.interactionModelService.getModels("")
+    const findTaskAlreadyRunning = await SchedulerExecution.findOne({
+      where : {
+        rid : executionRid,
+        status : schedulerStatus.Running
+      }
+    })
+    if(findTaskAlreadyRunning) {
+      const taskCreationRecord = await SchedulerTaskExecution.create({
+        task_name : taskName,
+        execution_rid : executionRid,
+        started_at : new Date(),
+        created_datetime : new Date(),
+        status : schedulerStatus.Running
+      })
+      return taskCreationRecord;
+    }
+  }
+
+  async updateSchedulerRecords (executionRid : string, status : string) {
+    const {SchedulerExecution} = await this.interactionModelService.getModels("")
+    await SchedulerExecution.update({
+      status : status
+    }, {
+      where : {
+        rid : executionRid
+      }
+    })
+  }
+
+  async updateSchedulerTaskRecords (executionRid : string, taskName : string, status : string, errorMessage : string) {
+    const {SchedulerTaskExecution} = await this.interactionModelService.getModels("")
+    await SchedulerTaskExecution.update({
+      status : status,
+      error_message : errorMessage,
+      completed_at : status == schedulerStatus.Success ? new Date() : null
+    }, {
+      where : {
+        execution_rid : executionRid,
+        task_name : taskName
+      }
+    })
+  }
+  async findTaskRecordExists (executionRid : string, taskName : string) {
+    const {SchedulerTaskExecution} = await this.interactionModelService.getModels("")
+    return await SchedulerTaskExecution.findOne({
+      where : {
+        execution_rid : executionRid,
+        task_name : taskName
+      }, 
+      attributes: ["rid"],
+      raw : true,
+    })
+  }
+
 }
 
 
