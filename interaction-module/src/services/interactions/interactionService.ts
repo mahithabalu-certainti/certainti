@@ -1471,7 +1471,7 @@ export class InteractionService {
   async triggerAiFromScheduler () {
     const mainDb = await this.getMainDb()
     const orgDb = await this.getOrgDb()
- 
+    this.logger.info("AI Trigger Scheduler started")
     let fetchAllParentsAccountsRnumber : any = await mainDb.query(rawQueries.fetchAllParentRNumber())
     for(let account of fetchAllParentsAccountsRnumber[0]) {
       let schemaName = rawQueries.fetchSchemaName(account.r_number);
