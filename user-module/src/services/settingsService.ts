@@ -1,6 +1,6 @@
 
 import { OrganizationLicenses } from "../models/organisationLicense";
-import { constants } from "../utils/constant";
+import { constants, statusMessage } from "../utils/constant";
 class SettingsService {
   async updateSettings(userId: string, settingsData: any): Promise<any> {
     // Logic to update settings for a user
@@ -8,8 +8,8 @@ class SettingsService {
     if (!org) {
         return {
             statusCode: constants.NOT_FOUND,
-            message: "Organization not found",
-            errorMessage: "No organization found with the given ID",
+            message: statusMessage.orgNotFound,
+            errorMessage: statusMessage.orgNotFoundError,
         };
     }
 
@@ -17,7 +17,7 @@ class SettingsService {
 
     return {
         statusCode: constants.SUCCESS,
-        message: "Settings updated successfully",
+        message: statusMessage.orgUpdated,
         data: {
             settings: org,
         },
@@ -35,14 +35,14 @@ class SettingsService {
            if (!org) {
                return {
                    statusCode: constants.NOT_FOUND,
-                   message: "Organization not found",
-                   errorMessage: "No organization found with the given ID",
+                   message: statusMessage.orgNotFound,
+                   errorMessage: statusMessage.orgNotFoundError,
                };
            }
 
            return {
                statusCode: constants.SUCCESS,
-               message: "Organization settings retrieved successfully",
+               message: statusMessage.orgRetrieved,
                data: {
                    settings: org,
                },
