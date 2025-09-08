@@ -620,6 +620,11 @@ const Projects: React.FC<ProjectsProps> = ({
         // showToggle={isProjectViewEditEnable} // Commented for it may use in future
         toggleEnabled={toggleEnabled}
         setToggleEnabled={setToggleEnabled}
+        showSearch={true}
+        searchDisabled={false}
+        searchPlaceholder='Search'
+        onSearch={(text) => console.log('Searching for:', text)}
+        onSearchTextChange={(text) => console.log('Typing:', text)}
       />
       {projectOverviewIsEnable && projectViewAllIsEnable ? (
         <>

@@ -186,6 +186,11 @@ const Configuration: React.FC = () => {
         showRefresh={list !== 'settings'}
         onRefreshClick={onRefreshClick}
         hideTabPanel={hideSection}
+        showSearch={list === 'users' ? true : false}
+        searchDisabled={false}
+        searchPlaceholder='Search'
+        onSearch={(text) => console.log('Searching for:', text)}
+        onSearchTextChange={(text) => console.log('Typing:', text)}
       />
       <SectionHeader
         title={list ? list.charAt(0).toUpperCase() + list.slice(1) : ''}

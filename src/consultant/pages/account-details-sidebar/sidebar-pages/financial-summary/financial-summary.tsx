@@ -237,6 +237,11 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
         }
         showFilter={showFilter}
         // showFiscalYear={true}
+        showSearch={tabParam === 'project_cost' || tabParam === 'resource_cost'}
+        searchDisabled={false}
+        searchPlaceholder='Search'
+        onSearch={(text) => console.log('Searching for:', text)}
+        onSearchTextChange={(text) => console.log('Typing:', text)}
       />
       <SectionHeader
         title='Financial Summary'

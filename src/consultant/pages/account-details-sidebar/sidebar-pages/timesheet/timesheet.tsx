@@ -381,6 +381,11 @@ const Timesheet: React.FC<TimeSheetProps> = ({
         }
         onRefreshClick={onRefreshClick}
         onFilterChange={handleCountry}
+        showSearch={viewDetails ? false : true}
+        searchDisabled={false}
+        searchPlaceholder='Search'
+        onSearch={(text) => console.log('Searching for:', text)}
+        onSearchTextChange={(text) => console.log('Typing:', text)}
       />
       {viewDetails ? (
         <TimesheetDetails

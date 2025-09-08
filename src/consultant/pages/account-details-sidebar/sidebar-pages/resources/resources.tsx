@@ -888,6 +888,11 @@ const Resource: React.FC<ResourceProps> = ({
         setSortFilterCount={setSortFilterCount}
         fieldOptions={fieldOptions}
         handleFilterChange={handleCategory}
+        showSearch={value === 'details' ? false : true}
+        searchDisabled={false}
+        searchPlaceholder='Search'
+        onSearch={(text) => console.log('Searching for:', text)}
+        onSearchTextChange={(text) => console.log('Typing:', text)}
       />
       {showUploads ? (
         <Uploads accountId={accountid} attachID={resId} />

@@ -45,6 +45,7 @@ import ActionImportDropdown from '../../../../components/actions-dropdown/import
 import { FilterValue } from './filter/filterType';
 import { projectTaskFilterFields } from '../../project/project-details/project-task/filters/filter-fields';
 import { FormFiscalDateType } from '../../../types';
+import SearchBar from '../../../../components/search/search-bar';
 interface TabProps {
   resourceTab?: ResourceTabs[];
   filterVisibility: boolean;
@@ -72,6 +73,12 @@ interface TabProps {
     { read: boolean; edit: boolean }
   >;
   fiscalDatesArg?: FormFiscalDateType;
+  showSearch?: boolean;
+  searchDisabled?: boolean;
+  searchHidden?: boolean;
+  searchPlaceholder?: string;
+  onSearchTextChange?: (text: string) => void;
+  onSearch?: (text: string) => void;
 }
 const TabPanel: React.FC<TabProps> = ({
   resourceTab,
@@ -97,6 +104,12 @@ const TabPanel: React.FC<TabProps> = ({
   handleFilterChange,
   permissionMapTaskTableColumn,
   fiscalDatesArg,
+  showSearch,
+  searchDisabled,
+  searchHidden,
+  searchPlaceholder,
+  onSearchTextChange,
+  onSearch,
 }) => {
   const [tabValue, setTabValue] = useState('');
   const location = useLocation();
@@ -120,6 +133,7 @@ const TabPanel: React.FC<TabProps> = ({
     { option: string; value: string }[]
   >([]);
   const [, setSelectedSort] = useState('Accounts');
+  const [searchText, setSearchText] = useState('');
 
   useEffect(() => {
     // assign default tab value
@@ -542,6 +556,22 @@ const TabPanel: React.FC<TabProps> = ({
           </Tabs>
         )}
         <Box className='flex items-center'>
+          {showSearch && (
+            <Box className='mr-2'>
+              <SearchBar
+                initialSearchText={searchText}
+                onSearch={(value) => {
+                  setSearchText(value);
+                  onSearch?.(value);
+                  onSearchTextChange?.(value);
+                }}
+                placeholder={searchPlaceholder || ''}
+                disabled={searchDisabled}
+                hide={searchHidden}
+              />
+            </Box>
+          )}
+
           {/* <ActionsDropdown actions={MENU_ITEMS} /> */}
           {showToggle && (
             <div className='flex items-center gap-2'>
