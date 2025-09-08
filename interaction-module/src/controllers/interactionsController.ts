@@ -996,6 +996,53 @@ async function deleteAttachmentFromAzure(req: Request, res: Response): Promise<v
   }
 }
 
+async function listTechnicalSummary(req: Request, res: Response) {
+  const methodName = "listTechnicalSummary"
+  try {
+    console.log(`[${methodName}] Request received`);
+    const userId = req.headers["x-user-id"] as string;
+    let data = req.query;
+    console.log(`[${methodName}] userId:`, userId);
+    console.log
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const result = await interactionService.listTechnicalSummary(data)
+    if(result.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.interactionHistoryFetched,
+        data : result.data
+      })
+    } else {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.dataNotFound,
+        data : result.data
+      })
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    console.log(`[${methodName}] Exception:`, error);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
 async function listInteractionHistory (req : Request, res : Response) {
   const methodName = "listInteractionHistory"
   try {
@@ -1273,5 +1320,6 @@ export default {
   fetchResponseHistoryDetails,
   triggerAIAndPassResponse,
   exportInteractionHistory,
-  processKafkaMessages
+  processKafkaMessages,
+  listTechnicalSummary
 };

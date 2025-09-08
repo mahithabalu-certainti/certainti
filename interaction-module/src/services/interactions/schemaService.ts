@@ -528,7 +528,51 @@ class InteractionSchemaService {
       throw new Error("Error fetching account : " + (err as Error).message);
     }
   }
+  async listTechnicalSummary(accountNumber: string, projectFiscalRid: string)
+    {
+      const { AiTechnicalSummary } = await this.interactionModelService.getModels(
+      accountNumber
+    );
+    if(!this.mainDbSequelize)
+    {
+      this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
+    }
+    console.log("projectFiscalRid", projectFiscalRid);
+    // Fetch technical summaries and count
+    const { rows: technicalSummary, count } = await AiTechnicalSummary.findAndCountAll({
+      where: {
+      project_fiscal_rid: projectFiscalRid,
+      },
+    });
+    // You can now use both technicalSummary (array) and count (number)
+     let createdByIds : any[] = [...new Set(technicalSummary.map((user : any) => user.created_by))]
+             console.log("createdByIds", createdByIds);
+            let modifiedByIds : any[] = [...new Set(technicalSummary.map((user : any) => user.modified_by))]
+             let fetchCreatedByUsers = await this.mainDbSequelize.query(rawQueries.fetchUser(createdByIds))
+          let fetchModifiedByUsers = await this.mainDbSequelize.query(rawQueries.fetchUser(modifiedByIds))
+      let createdMap : Map<string, string> = new Map(fetchCreatedByUsers[0].map((user : any) => [user.rid, `${user.first_name} ${user.last_name}`]))
+      let modifiedMap : Map<string, string> = new Map(fetchModifiedByUsers[0].map((user : any) => [user.rid, `${user.first_name} ${user.last_name}`]))
+       let finalData = technicalSummary == null ? [] : technicalSummary.map((d : any) => {
+           return {
+             rid: d.rid,
+             r_number: d.r_number,
+             technical_summary: d.technical_summary,
+             version: d.version,
+             status: d.status,
+             created_by: d.created_by,
+             created_user_name: createdMap.get(d.created_by) || null,
+             modified_by: d.modified_by,
+             modified_user_name: modifiedMap.get(d.modified_by) || null,
+             created_datetime: d.created_datetime,
+             modified_datetime: d.modified_datetime
+          };
+      });
+      return {
+        technicalSummary: finalData,
+        count
+      };
 
+    }
   async fetchInteractionDetailsById(
     accountNumber: string,
     interactionRid: string
@@ -1388,18 +1432,18 @@ class InteractionSchemaService {
         rawQueries.fetchInteractionSenderEmail(schemaName, parentAccountId)
       );
       if (!senderEmailInfo[0]) {
-        // if (!this.mainDbSequelize) {
-        //   this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
-        // }
-        // const [mainSenderEmailInfo]: any[] = await this.mainDbSequelize.query(
-        //   rawQueries.fetchGlobalSenderEmail()
-        // );
-        // if (mainSenderEmailInfo && mainSenderEmailInfo.length > 0) {
-        //   senderEmailInfo[0] = mainSenderEmailInfo[0];
-        // }
-        return process.env.EMAIL_FROM!;
+         if (!this.mainDbSequelize) {
+           this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
+         }
+         const [mainSenderEmailInfo]: any[] = await this.mainDbSequelize.query(
+           rawQueries.fetchGlobalSenderEmail()
+         );
+         if (mainSenderEmailInfo && mainSenderEmailInfo.length > 0) {
+           senderEmailInfo[0] = mainSenderEmailInfo[0].email;
+         }
+        return senderEmailInfo[0];
       } else {
-        return senderEmailInfo[0].support_email ?? process.env.EMAIL_FROM!;
+        return senderEmailInfo[0].support_email;
       }
     } catch (err) {
       throw new Error(

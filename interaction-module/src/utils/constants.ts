@@ -353,7 +353,7 @@ export const rawQueries = {
   },
   fetchGlobalSenderEmail() {
     return `
-    SELECT email FROM ${MAIN_SCHEMA_NAME}.global_settings WHERE is_active is true LIMIT 1`;
+    SELECT email FROM ${MAIN_SCHEMA_NAME}.organization_licenses LIMIT 1`;
   },
   isEmailRecipientAvailable(projectFiscalRid: string, schemaName: string, statusRid: string) {
     return `

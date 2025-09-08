@@ -119,6 +119,12 @@ export interface IInteractionService {
     statusCodeValue: string;
     data: any;
   }>;
+  listTechnicalSummary(data: any): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { techSummaryInfo: any ,count: number};
+  }>;
   triggerAI(data : any) : Promise<{
     statusMessage : string,
     status : any,

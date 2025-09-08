@@ -52,6 +52,7 @@ routes.get(
   controller.interactionsController.getResponseSource
 );
 
+routes.get('/technicalSummary/list', checkUserStatusMiddleware("interactions_view_edit"), controller.interactionsController.listTechnicalSummary)
 routes.post('/list', checkUserStatusMiddleware("interactions_view_edit"), controller.interactionsController.listAllInteractionPrjAcc)
 routes.post('/export', checkUserStatusMiddleware("interactions_export"), controller.interactionsController.exportAllInteractions)
 routes.post('/globalList', checkUserStatusMiddleware("interactions_view_edit"), controller.interactionsController.listOutAllInteractionSummary)
