@@ -706,4 +706,5 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     interactionAge : "interaction_age",
     interaction : "interactions",
     attachments : "attachments"
+    
   }
