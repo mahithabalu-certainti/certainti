@@ -1,4 +1,5 @@
 import { Sequelize } from "sequelize";
+import { encryptClientSecret } from "./helpers";
 export const HttpStatus = {
   SUCCESS: 200,
   BAD_REQUEST: 400,
@@ -141,6 +142,11 @@ export const STATUS_MESSAGE = {
   effortExceeded: "Effort cannot exceed the total hours in the duration",
   effort24HrsExceeded: "Effort cannot exceed 24 hours for the day",
   startDateLessThanEndDate: "Start date must be less than end date",
+  emailMissing: 'Support Email is missing or invalid.',
+  tenantIdInvalidLength: 'Tenant ID must be a valid UUID (36 characters).',
+  clientIdInvalidLength: 'Client ID must be a valid UUID (36 characters).',
+  clientSecretTooShort: 'Client Secret is too short or invalid.',
+  invalidCredentials: 'Provided Azure credentials are invalid or unusable'
 };
 
 export const TYPES = {
@@ -730,7 +736,9 @@ export const rawQueries = {
     schemaName: string,
     data: any,
     orgDb: Sequelize,
-    mainDb: Sequelize
+    mainDb: Sequelize,
+    parentAccountID: string,
+    subscriptionId?: string
   ) {
     let tableName: string[];
     let whereParams: string = ``;
@@ -792,6 +800,26 @@ export const rawQueries = {
       ${setValues}
       ${whereParams}
       `;
+      if(data.flag == UPDATE_FLAG.account && t == "account_details" && subscriptionId){
+        const encryptedSecretKey = encryptClientSecret(data.client_secret);
+        let query = `
+        UPDATE ${schema}.${t}
+        SET
+        support_email = '${data.support_email}',
+        tenant_id = '${data.tenant_id}',
+        client_id = '${data.client_id}',
+        client_secret = '${encryptedSecretKey}',
+        subscription_created = true
+        WHERE account_rid = '${parentAccountID}'
+        `;
+
+        const subscriptionQuery = `
+          UPDATE ${MAIN_SCHEMA_NAME}.account set subscription_id = '${subscriptionId}'
+          WHERE rid = '${parentAccountID}'
+        `
+        await dbConnection.query(query);
+        await mainDb.query(subscriptionQuery);
+      }
       await dbConnection.query(query);
     }
     return HttpStatus.SUCCESS_MESSAGE;

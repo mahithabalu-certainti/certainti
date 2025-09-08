@@ -3,10 +3,11 @@ import { Request, Response } from "express";
 import { errorResponse, successResponse } from "./apiResponse";
 import { HttpStatus } from "./constants";
 import configurations from "../config/config";
-import ExcelJS from 'exceljs'
+import ExcelJS from "exceljs";
 import { getSecret } from "./azureSecrets";
 import { BlobServiceClient } from "@azure/storage-blob";
 import moment from "moment";
+import crypto from "crypto";
 
 function getLogger() {
   return configurations.getInstance().getLogger();
@@ -118,13 +119,10 @@ export function handlePromptResponse(
   });
 }
 
-export async function generateExcelBase64(
-  data: any,
-  sheetName: string
-) {
+export async function generateExcelBase64(data: any, sheetName: string) {
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet(sheetName);
-  
+
   // Get headers from the first object in data
   const headers = Object.keys(data[0] || {});
   worksheet.addRow(headers);
@@ -135,10 +133,15 @@ export async function generateExcelBase64(
     const excelRow = worksheet.addRow(rowValues);
     rowValues.forEach((cellValue, colIdx) => {
       const cell = excelRow.getCell(colIdx + 1);
-      if (cellValue && typeof cellValue === 'object' && cellValue.hyperlink && cellValue.text) {
+      if (
+        cellValue &&
+        typeof cellValue === "object" &&
+        cellValue.hyperlink &&
+        cellValue.text
+      ) {
         cell.value = { text: cellValue.text, hyperlink: cellValue.hyperlink };
         cell.font = {
-          color: { argb: cellValue.style?.fontColor || '0000FF' }
+          color: { argb: cellValue.style?.fontColor || "0000FF" },
         };
       }
     });
@@ -146,58 +149,70 @@ export async function generateExcelBase64(
 
   // Generate buffer
   const buffer = await workbook.xlsx.writeBuffer();
-  return Buffer.from(buffer).toString('base64');
+  return Buffer.from(buffer).toString("base64");
 }
 
-export async function uploadToAzureBlob
-(file: Express.Multer.File,account_id:string,project_id:string,interaction_id:string):Promise<{
+export async function uploadToAzureBlob(
+  file: Express.Multer.File,
+  account_id: string,
+  project_id: string,
+  interaction_id: string
+): Promise<{
   url: string;
   name: string;
   extension: string;
   size: number;
 }> {
-  const connectionString =  await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
-  const containerName = 'account';
-  
-  const connString =  connectionString;
-  if (!connString) throw new Error('Azure storage connection string is required');
-  const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+  const connectionString = await getSecret(
+    process.env.AZURE_STORAGE_CONNECTION_STRING as string
+  );
+  const containerName = "account";
+
+  const connString = connectionString;
+  if (!connString)
+    throw new Error("Azure storage connection string is required");
+  const blobServiceClient =
+    BlobServiceClient.fromConnectionString(connectionString);
   const containerClient = blobServiceClient.getContainerClient(containerName);
   await containerClient.createIfNotExists();
   const blobName = `${account_id}/${project_id}/${interaction_id}/attachements/${file.originalname}`;
   const blockBlobClient = containerClient.getBlockBlobClient(blobName);
   await blockBlobClient.uploadData(file.buffer, {
-    blobHTTPHeaders: { blobContentType: file.mimetype }
+    blobHTTPHeaders: { blobContentType: file.mimetype },
   });
   const sizeInMB = parseFloat((file.size / (1024 * 1024)).toFixed(2));
-  const originalExtension = file.originalname.includes('.') 
-      ? file.originalname.substring(file.originalname.lastIndexOf('.'))
-      : '';
+  const originalExtension = file.originalname.includes(".")
+    ? file.originalname.substring(file.originalname.lastIndexOf("."))
+    : "";
   const baseName = file.originalname.replace(/\.[^/.]+$/, ""); // Remove extension
-  const sanitizedBaseName = baseName.replace(/[^a-zA-Z0-9\-_]/g, ''); // More strict sanitization
-    
+  const sanitizedBaseName = baseName.replace(/[^a-zA-Z0-9\-_]/g, ""); // More strict sanitization
 
-   return {
-      url: blockBlobClient.url,
-      name: sanitizedBaseName,
-      extension: originalExtension,
-      size: sizeInMB
-    };
+  return {
+    url: blockBlobClient.url,
+    name: sanitizedBaseName,
+    extension: originalExtension,
+    size: sizeInMB,
+  };
 }
 
 export async function deleteFromAzureBlob(blobUrl: string): Promise<void> {
   if (!blobUrl) return;
 
-  const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
-  const containerName = 'account';
+  const connectionString = await getSecret(
+    process.env.AZURE_STORAGE_CONNECTION_STRING as string
+  );
+  const containerName = "account";
 
   const url = new URL(blobUrl);
-  const blobName = decodeURIComponent(url.pathname.split('/').slice(2).join('/')); 
+  const blobName = decodeURIComponent(
+    url.pathname.split("/").slice(2).join("/")
+  );
   // slice(2) skips the container and empty slash
   if (!connectionString) {
-    throw new Error('Azure storage connection string is required');
+    throw new Error("Azure storage connection string is required");
   }
-  const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+  const blobServiceClient =
+    BlobServiceClient.fromConnectionString(connectionString);
   const containerClient = blobServiceClient.getContainerClient(containerName);
   const blockBlobClient = containerClient.getBlockBlobClient(blobName);
 
@@ -210,6 +225,33 @@ export async function deleteFromAzureBlob(blobUrl: string): Promise<void> {
   }
 }
 
-export  function isValidTimezone(tz: string) {
+export function isValidTimezone(tz: string) {
   return moment.tz.names().includes(tz);
+}
+
+export function decryptClientSecret(encryptedText: string): string {
+  const ENCRYPTION_KEY = process.env.CLIENT_SECRET_ENCRYPTION_KEY;
+  
+  if (!ENCRYPTION_KEY) {
+    throw new Error('CLIENT_SECRET_ENCRYPTION_KEY is not set in environment');
+  }
+
+  const [ivHex, encryptedHex] = encryptedText.split(":");
+
+  if (!ivHex || !encryptedHex) {
+    throw new Error('Invalid encrypted text format. Expected format "iv:encrypted"');
+  }
+
+  const iv = Buffer.from(ivHex, "hex");
+  const encrypted = Buffer.from(encryptedHex, "hex");
+
+  const decipher = crypto.createDecipheriv(
+    "aes-256-cbc",
+    Buffer.from(ENCRYPTION_KEY),
+    iv
+  );
+  let decrypted = decipher.update(encrypted);
+  decrypted = Buffer.concat([decrypted, decipher.final()]);
+
+  return decrypted.toString();
 }
