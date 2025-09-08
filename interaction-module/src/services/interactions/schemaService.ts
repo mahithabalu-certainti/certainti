@@ -1441,9 +1441,20 @@ class InteractionSchemaService {
          if (mainSenderEmailInfo && mainSenderEmailInfo.length > 0) {
            senderEmailInfo[0] = mainSenderEmailInfo[0].email;
          }
-        return senderEmailInfo[0];
+         return {
+            email: senderEmailInfo[0],
+            clientId: process.env.CLIENT_ID,
+            clientSecret: process.env.CLIENT_SECRET,
+            tenantId: process.env.TENANT_ID
+          }
       } else {
-        return senderEmailInfo[0].support_email;
+        
+          return {
+            email: senderEmailInfo[0].support_email,
+            clientId: senderEmailInfo[0].client_id,
+            clientSecret: senderEmailInfo[0].client_secret,
+            tenantId: senderEmailInfo[0].tenant_id,
+          }
       }
     } catch (err) {
       throw new Error(

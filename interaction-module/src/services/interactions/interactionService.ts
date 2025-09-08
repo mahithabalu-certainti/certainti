@@ -620,7 +620,13 @@ export class InteractionService {
           interactionInfo.accountInfo.account_rid
         );
         const senderEmailInfo = await this.getSenderEmailInfo(accountNumber,interactionInfo.accountInfo.parent_account_rid);
-        console.log("senderEmailInfo", senderEmailInfo);
+        if(!senderEmailInfo)
+        { return {
+              statusCode: HttpStatus.FAILED,
+              message: HttpStatus.FAILED_MESSAGE,
+              errorMessage: "Invalid account ID",
+            };
+        }
         const excelBuffer = await this.generateExcelBuffer(
           interaction_rid,
           interactionItems,
@@ -766,7 +772,7 @@ export class InteractionService {
     accountInfo: { account_name: string },
     excelAttachment: { filename: string; content: string; contentType: string },
     interactionLink: string,
-    senderEmailInfo: string,
+    senderEmailInfo: {email:string,clientId:string, tenantId:string,clientSecret:string},
     interactionRid:string
   ) {
     let emailResponse = false;
