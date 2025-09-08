@@ -47,17 +47,17 @@ export const getInteractionListColumns = (
       !permissionMap?.['project_code']?.edit &&
       !permissionMap?.['project_code']?.read,
   },
-  {
-    id: 'interaction_iteration',
-    sortId: 'interaction_iteration',
-    label: 'Iteration',
-    width: 120,
-    sortable: true,
-    sx: { textAlign: 'right' },
-    hide:
-      !permissionMap?.['interaction_iteration']?.edit &&
-      !permissionMap?.['interaction_iteration']?.read,
-  },
+  // {
+  //   id: 'interaction_iteration',
+  //   sortId: 'interaction_iteration',
+  //   label: 'Iteration',
+  //   width: 120,
+  //   sortable: true,
+  //   sx: { textAlign: 'right' },
+  //   hide:
+  //     !permissionMap?.['interaction_iteration']?.edit &&
+  //     !permissionMap?.['interaction_iteration']?.read,
+  // },
   {
     id: 'interaction_age',
     sortId: 'interaction_age',

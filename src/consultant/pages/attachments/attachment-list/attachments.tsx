@@ -41,6 +41,8 @@ export const Attachments: React.FC = () => {
   });
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [currentCategory, setCurrentCategory] = useState<string>('');
+  const [columnAnchorEl, setColumnAnchorEl] =
+    React.useState<HTMLButtonElement | null>(null);
 
   const onRefreshClick = () => {
     setRefreshTrigger(Date.now());
@@ -69,6 +71,11 @@ export const Attachments: React.FC = () => {
 
   const isFilterOpen = Boolean(anchorEl);
   const filterId = isFilterOpen ? 'all-project-filter-popover' : undefined;
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const modalId = isModalOpen
+    ? 'attachment-column-visibility-popover'
+    : undefined;
 
   const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
     const defaultSortField = 'document_name';
@@ -174,6 +181,12 @@ export const Attachments: React.FC = () => {
     },
   ];
 
+  const handleColumnVisibility = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setColumnAnchorEl(event.currentTarget);
+  };
+
   if (!attachmentEnable || !isAttachmentViewEnable) return <AccessRestricted />;
 
   return (
@@ -212,7 +225,17 @@ export const Attachments: React.FC = () => {
         </div>
       </div>
       <div className='flex items-center justify-end h-[34px] min-h-[34px] px-4'>
-        <div className='relative'>
+        <div className='flex gap-1 relative'>
+          <button
+            aria-describedby={modalId}
+            className={`w-[120px] h-[24px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative border border-[#CBD6E2] px-0 py-0 normal-case ${isModalOpen ? 'bg-[#F3F3F3]' : 'bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'} hover:text-[#425A76] transition-colors duration-150`}
+            style={{
+              boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
+            }}
+            onClick={handleColumnVisibility}
+          >
+            Show/Hide Fields
+          </button>
           <button
             aria-describedby={filterId}
             className={`w-[64px] h-[26px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
@@ -258,6 +281,8 @@ export const Attachments: React.FC = () => {
           refreshTrigger={refreshTrigger}
           fieldOptions={fieldOptions}
           setCurrentCategory={setCurrentCategory}
+          setColumnAnchorEl={setColumnAnchorEl}
+          columnAnchorEl={columnAnchorEl}
         />
       </div>
     </div>
