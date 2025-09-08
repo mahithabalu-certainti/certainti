@@ -2432,49 +2432,6 @@ class AccountService {
     };
   }
 
-  // async provisionMonitoredAccount(accountName: string) {
-  //   const uniqueUsername = accountName
-  //   .trim()
-  //   .toLowerCase()
-  //   .replace(/[^a-z0-9]+/g, ".")  
-  //   .replace(/\.{2,}/g, ".")     
-  //   .replace(/^\.|\.$/g, "");
-
-  //   const orgData = await this.schemaService.getOrgInfo();
-  //   const userEmail = `${uniqueUsername}@${orgData.domain_name}`; 
-  
-  //   // Step 1: Create User
-  //   const userResponse = await this.graphClient.api("/users").post({
-  //     accountEnabled: true,
-  //     displayName: `${accountName}`,
-  //     mailNickname: uniqueUsername,
-  //     userPrincipalName: userEmail,
-  //     passwordProfile: {
-  //       forceChangePasswordNextSignIn: false,
-  //       password: generateSecurePassword(12),
-  //     },
-  //   });
-
-  //   const userId = userResponse.id;
-
-  //   const skuId = await this.getExchangeSkuId(); 
-  //   await this.graphClient.api(`/users/${userId}/assignLicense`).post({
-  //     addLicenses: [
-  //       {
-  //         skuId: skuId,
-  //       },
-  //     ],
-  //     removeLicenses: [],
-  //   });
-
-  //   const mailboxReady = await this.waitForMailbox(userId);
-  //   if (!mailboxReady) {
-  //     throw new Error("Mailbox not ready after waiting");
-  //   }
-
-  //   await this.createEmailSubscription(userEmail);
-  // }
-
   private async waitForMailbox(userId: string): Promise<boolean> {
     const maxRetries = 10;
     const delayMs = 30000;

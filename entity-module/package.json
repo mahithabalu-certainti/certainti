@@ -25,6 +25,7 @@
     "@azure/keyvault-secrets": "^4.9.0",
     "@azure/storage-blob": "^12.27.0",
     "@graphql-tools/load-files": "^7.0.1",
+    "@microsoft/microsoft-graph-client": "^3.0.7",
     "@types/compression": "^1.8.1",
     "@types/jest": "^29.5.14",
     "apollo-server-express": "^3.13.0",
