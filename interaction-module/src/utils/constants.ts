@@ -311,7 +311,7 @@ export const rawQueries = {
     statusRid:string
   ) {
     return `
-    UPDATE ${schemaName}.interactions SET is_ai_processed = ${isAiProcessed} WHERE rid = '${rid}' and status_rid='${statusRid}' `;
+    UPDATE ${schemaName}.interactions SET is_ai_processed = ${isAiProcessed} WHERE project_fiscal_rid = '${rid}' and status_rid='${statusRid}' `;
   },
   updateAIProcessedFlagAttachments(
     rid: string,
@@ -658,7 +658,6 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
      { permissionField: 'account_name', exportField: 'Account Name', dataField: 'account_name' },
     { permissionField: 'r_number', exportField: 'Interaction ID', dataField: 'r_number' },
     { permissionField: 'project_code', exportField: 'Project Code', dataField: 'project_code' },
-    { permissionField: 'interaction_iteration', exportField: 'Iteration', dataField: 'interaction_iteration' },
     { permissionField: 'interaction_age', exportField: 'Age (Days)', dataField: 'interaction_age' },
     { permissionField: 'fiscal_year', exportField: 'Fiscal Year', dataField: 'fiscal_year' },
     { permissionField: 'status', exportField: 'Status', dataField: 'status_name' },

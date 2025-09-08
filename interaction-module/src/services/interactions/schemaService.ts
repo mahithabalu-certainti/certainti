@@ -592,7 +592,7 @@ class InteractionSchemaService {
         interaction_type_name: metainfo?.interaction_type_name ?? "",
         status: status_rid ?? "",
         status_name: metainfo?.interaction_status_name ?? "",
-        modified_by: userInfo.modified_name ?? "",
+        modified_by: userInfo.modified_name ?? modified_by,
         created_by: userInfo.created_name ?? "",
         created_datetime: created_datetime ?? null,
         modified_datetime:
@@ -938,6 +938,7 @@ class InteractionSchemaService {
           await this.interactionModelService.getMainSequelize();
       }
       let isAutoTriggerEnabled = false;
+       let resonseBy =userId
       const [responseSourceIDs]: any = await this.mainDbSequelize.query(
         rawQueries.fetchResponseSourceByType(responseData.response_source)
       );
@@ -952,7 +953,7 @@ class InteractionSchemaService {
         const fetchRecipientName = interaction
           ? [{ recipient_name: interaction.recipient_name }]
           : [{ recipient_name: null }];
-        userId = fetchRecipientName[0]?.recipient_name ?? userId;
+        resonseBy = fetchRecipientName[0]?.recipient_name ?? userId;
       }
       const [emailInfo]: any[] = await this.mainDbSequelize.query(
         rawQueries.fetchUserEmail(userId)
@@ -983,7 +984,7 @@ class InteractionSchemaService {
           interaction_response: "",
           created_by: userId,
           response_email: userEmailId,
-          response_by: userId,
+          response_by: resonseBy,
           response_on: new Date(),
           response_source_rid: responseData.response_source_rid,
         });
@@ -1014,7 +1015,7 @@ class InteractionSchemaService {
               interaction_response: question.response,
               created_by: userId,
               response_email: userEmailId,
-              response_by: userId,
+              response_by: resonseBy,
               response_on: new Date(),
               response_source_rid: responseData.response_source_rid,
             },
@@ -1059,7 +1060,7 @@ class InteractionSchemaService {
           response_updated_on: new Date(),
           response_updated_by: userEmailId,
           response_source_rid: responseData.response_source_rid,
-          modified_by: userId,
+          modified_by: userEmailId,
           modified_datetime: new Date(),
           //   attachment_count: attachmentcount
         };
@@ -1069,7 +1070,7 @@ class InteractionSchemaService {
           response_updated_on: new Date(),
           response_updated_by: userEmailId,
           response_source_rid: responseData.response_source_rid,
-          modified_by: userId,
+          modified_by: userEmailId,
           modified_datetime: new Date(),
           //   attachment_count: attachmentcount
         };
