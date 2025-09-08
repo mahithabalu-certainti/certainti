@@ -4,6 +4,7 @@ import {
   deleteFromAzureBlob,
   errorLog,
   generateExcelBase64,
+  handleCustomResponse,
   handleErrorResponse,
   handleSuccessResponse,
   isValidTimezone,
@@ -55,7 +56,7 @@ async function createInteraction(req: Request, res: Response): Promise<void> {
     );
     if (interaction.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
-      handleSuccessResponse(res, interaction.data);
+      handleCustomResponse(res, interaction.data,interaction.message);
       return;
     } else {
       errorLog(methodName, interaction.errorMessage);
@@ -110,7 +111,7 @@ async function updateInteraction(req: Request, res: Response): Promise<void> {
     );
     if (interaction.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
-      handleSuccessResponse(res, interaction.data);
+      handleCustomResponse(res, interaction.data, interaction.message);
       return;
     } else {
       errorLog(methodName, interaction.errorMessage);
@@ -539,7 +540,6 @@ async function exportAllInteractions (req : Request, res : Response) {
         let resultMap: { [key: string]: any } = {
           "r_number": d.r_number,
           "project_code": d.project_code,
-          "interaction_iteration": d.interaction_iteration,
           "interaction_age": d.interaction_age,
           "fiscal_year": d.fiscal_year,
           "status_name": d.status_name,
@@ -687,7 +687,6 @@ async function exportAllInteractionSummary (req : Request, res : Response) {
           "r_number": d.r_number,
           "account_name":d.account_name,
           "project_code": d.project_code,
-          "interaction_iteration": d.interaction_iteration,
           "interaction_age": d.interaction_age,
           "fiscal_year": d.fiscal_year,
           "status_name": d.status_name,

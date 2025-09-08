@@ -1,10 +1,11 @@
 import { IEmailMessage } from "./types";
 
-function surveyMailTemplate(
+function interactionMailTemplate(
   recipient: { name: string | null; email: string ,ccEmails?: string[] | [] },
   project: { project_name: string; project_code: string,fiscalYear: number },
   account: { account_name: string;},
-  interactionLink: string
+  interactionLink: string,
+  interactionRid: string,
 ): { message: IEmailMessage } {
   const emailMessage = {
     message: {
@@ -15,7 +16,7 @@ function surveyMailTemplate(
           <p>Dear ${recipient.name || ""},</p>
           <p>Greetings For The Day!</p>
           <p>
-            We are conducting a interaction for R&D Credits Claims Process for ${account.account_name || ""} FY ${project.fiscalYear} for the project <strong>${project.project_name || ""}</strong> (Project Code: <strong>${project.project_code || ""}</strong>).
+            We are conducting a interaction(Interaction Ref Id: ${interactionRid || null}) for R&D Credits Claims Process for ${account.account_name || ""} FY ${project.fiscalYear} for the project <strong>${project.project_name || ""}</strong> (Project Code: <strong>${project.project_code || ""}</strong>).
           </p>
           <p>Please take a moment to complete the interaction using one of the following options:</p>
           <ol>
@@ -98,4 +99,4 @@ function otpMailTemplate(otp: string, email: string): { message: IEmailMessage }
   return emailMessage;
 }
 
-export { otpMailTemplate,surveyMailTemplate };
+export { otpMailTemplate,interactionMailTemplate };

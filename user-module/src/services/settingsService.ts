@@ -30,7 +30,7 @@ class SettingsService {
     data?: { settings: any;};
   }> {
      const org = await OrganizationLicenses.findOne({
-             attributes: ["auto_send_interaction", "auto_access_rd","rid"],
+             attributes: ["auto_send_interaction", "auto_access_rd", "email","rid"],
            });
            if (!org) {
                return {
