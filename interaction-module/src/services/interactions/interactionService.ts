@@ -882,8 +882,12 @@ export class InteractionService {
     let hasEmailRecipient = false;
      if(data.flag == interactionFlag.project)
      {
-
-      const [emailInfoResult]: any = await orgDb.query(rawQueries.isEmailRecipientAvailable(data.project_fiscal_rid, schemaName));
+      
+       const [activeStatus]: any[] = await mainDb.query(
+              rawQueries.fetchActiveStatusByType("Active"),
+              { type: "SELECT" }
+            );
+      const [emailInfoResult]: any = await orgDb.query(rawQueries.isEmailRecipientAvailable(data.project_fiscal_rid, schemaName, activeStatus[0]?.rid));
       hasEmailRecipient = emailInfoResult[0]?.recipient_available ?? false;
      }
     if(result[0][0].interactions != null) {
