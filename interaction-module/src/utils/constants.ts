@@ -412,11 +412,11 @@ export const rawQueries = {
   fetchEmailResponseSourceRid(): string {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.interaction_response_source WHERE response_source_name = 'Email'`;
   },
-  fetchInteractionSummaryByRNumber(): string {
+  fetchInteractionSummaryById(): string {
     return `
-      SELECT rid, r_number, account_rid
+      SELECT rid, r_number, account_rid, interaction_rid
       FROM ${MAIN_SCHEMA_NAME}.interactions_summary
-      WHERE r_number = :r_number
+      WHERE interaction_rid = :interaction_rid
     `;
   },
   fetchKeyContactsByEntityRid(schemaName: string): string {
@@ -456,6 +456,23 @@ export const rawQueries = {
       JOIN ${MAIN_SCHEMA_NAME}.module_permission mp ON pf.module_permission_id = mp.rid
       WHERE mp.permission_name = :permissionName
         AND ufa.user_id = :userId
+    `;
+  },
+  fetchAccountBySubscriptionId(): string {
+    return `
+      SELECT rid, r_number from ${MAIN_SCHEMA_NAME}.account
+      WHERE subscription_id = :subscriptionId
+    `;
+  },
+  fetchAccountDetailsById(schemaName: string): string {
+    return `
+      SELECT rid, support_email, tenant_id, client_id, client_secret, subscription_created from ${schemaName}.account_details
+      WHERE account_rid = :accountId
+    `;
+  },
+  fetchPlatformSettings(): string {
+    return `
+      SELECT rid, email from ${MAIN_SCHEMA_NAME}.organization_licenses
     `;
   },
   fetchActiveStatusByType(type: string): string {
@@ -678,3 +695,16 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     { permissionField: 'modified_by', exportField: 'Last Updated By', dataField: 'modified_by' },
     { permissionField: 'modified_datetime', exportField: 'Last Updated Date', dataField: 'modified_datetime' }
   ];
+
+  export const schedulerStatus = {
+    Success : "success",
+    Failed : "failed",
+    Running : "running"
+  }
+
+  export const interactionTaskName = {
+    interactionAge : "interaction_age",
+    interaction : "interactions",
+    attachments : "attachments"
+    
+  }
