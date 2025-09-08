@@ -1,3 +1,4 @@
+import { SchedulerExecutions } from "../../models/schedulerExecution";
 import {
   ICreateInteraction,
   InteractionResponse,
@@ -124,7 +125,7 @@ export interface IInteractionService {
     status : any,
     data : any
   }>
-  triggerAiFromScheduler() : Promise<void>
+  triggerAiFromScheduler(schedulerRecord : SchedulerExecutions) : Promise<void>
    getAllowedExportFields(
       userId: string,
       permission_name: string
