@@ -665,3 +665,15 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     { permissionField: 'modified_by', exportField: 'Last Updated By', dataField: 'modified_by' },
     { permissionField: 'modified_datetime', exportField: 'Last Updated Date', dataField: 'modified_datetime' }
   ];
+
+  export const schedulerStatus = {
+    Success : "success",
+    Failed : "failed",
+    Running : "running"
+  }
+
+  export const interactionTaskName = {
+    interactionAge : "interaction_age",
+    interaction : "interactions",
+    attachments : "attachments"
+  }
