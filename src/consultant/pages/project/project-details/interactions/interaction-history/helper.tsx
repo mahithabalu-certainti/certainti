@@ -18,6 +18,15 @@ export const getInteractionHistoryFilterFields = (
 ): FieldConfig[] => {
   return [
     {
+      name: 'Date',
+      value: 'date',
+      type: 'date',
+      operatorOption: dateOptions,
+      // hide:
+      //   !permissionMap?.['last_updated_date']?.edit &&
+      //   !permissionMap?.['last_updated_date']?.read,
+    },
+    {
       name: 'Action',
       value: 'status_rid',
       type: 'enum',
@@ -26,15 +35,6 @@ export const getInteractionHistoryFilterFields = (
       // hide:
       //   !permissionMap?.['r_number']?.edit &&
       //   !permissionMap?.['r_number']?.read,
-    },
-    {
-      name: 'Date',
-      value: 'date',
-      type: 'date',
-      operatorOption: dateOptions,
-      // hide:
-      //   !permissionMap?.['last_updated_date']?.edit &&
-      //   !permissionMap?.['last_updated_date']?.read,
     },
   ];
 };

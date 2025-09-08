@@ -57,7 +57,9 @@ const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
       const rowErrors: { name?: string; email?: string } = {};
 
       // Email validation
-      if (email?.trim()) {
+      if (!email?.trim()) {
+        rowErrors.email = 'Recipient Email is required';
+      } else {
         if (!REGEX_PATTERNS.MAX_EMAIL_REGEX.test(email)) {
           rowErrors.email = 'Max length exceeded';
         } else if (!REGEX_PATTERNS.EMAIL.test(email)) {
@@ -66,12 +68,12 @@ const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
       }
 
       // Name validation
-      if (name?.trim()) {
+      if (!name?.trim()) {
+        rowErrors.name = 'Recipient Name is required';
+      } else {
         if (!REGEX_PATTERNS.NAME_REGEX.test(name.trim())) {
           rowErrors.name =
-            "Name must contain only letters, spaces, apostrophes(') and hyphens(-).";
-        } else if (name?.trim() && !email?.trim()) {
-          rowErrors.email = 'Email is required when name is provided';
+            "Recipient Name must contain only letters, spaces, apostrophes(') and hyphens(-).";
         }
       }
 
@@ -226,6 +228,7 @@ const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
                   <div key={row.rid} className='mb-3'>
                     <label className='block font-medium mb-1'>
                       {row.r_number || row.rid}
+                      <span className='text-red-500 text-[16px] ml-1'>*</span>
                     </label>
                     <div className='flex gap-3'>
                       {/* Name field */}
@@ -273,7 +276,7 @@ const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
                       >
                         <input
                           type='text'
-                          placeholder='Enter Recipient Email (optional)'
+                          placeholder='Enter Recipient Email'
                           value={emails[row.rid]?.email || ''}
                           onChange={(e) =>
                             handleChange(row.rid, 'email', e.target.value)

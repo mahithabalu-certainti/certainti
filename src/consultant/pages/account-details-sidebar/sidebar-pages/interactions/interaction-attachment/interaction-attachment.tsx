@@ -29,6 +29,7 @@ const InteractionAttachment: React.FC<InteractionAttachmentProps> = ({
   const [searchParams] = useSearchParams();
   const { accountid } = useParams();
   const interactionId = searchParams.get('interaction_rid') || '';
+  const interactionNumber = searchParams.get('interaction_number') || '';
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
 
@@ -117,6 +118,7 @@ const InteractionAttachment: React.FC<InteractionAttachmentProps> = ({
       <div className='border border-[#CBD6E2]'>
         <SectionHeader
           title='Interaction Attachment'
+          subValue={interactionNumber || ''}
           titleIcon={
             <InteractionDetailIcon
               alt='financial-header-icon'

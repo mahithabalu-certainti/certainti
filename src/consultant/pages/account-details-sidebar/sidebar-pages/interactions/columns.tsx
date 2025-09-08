@@ -3,11 +3,12 @@ import { ListTableColumn } from '../../../../../components/table/types';
 import { InteractionList } from '../../../../types';
 
 export const getInteractionListColumns = (
-  handleViewInteraction: (rid: string) => void,
+  handleViewInteraction: (rid: string, rNumber: string) => void,
   handleViewInteractionHistory: (interactionHistory: string) => void,
   handleViewInteractionAttachmentCount: (
     interactionAttachmentCount: string | number,
-    rid: string
+    rid: string,
+    rNumber: string
   ) => void,
   permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<InteractionList>[] => [
@@ -30,7 +31,7 @@ export const getInteractionListColumns = (
     },
     render: (row: InteractionList) => (
       <span
-        onClick={() => handleViewInteraction(row.rid)}
+        onClick={() => handleViewInteraction(row.rid, row.r_number)}
         className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
       >
         {row.r_number}
@@ -47,17 +48,17 @@ export const getInteractionListColumns = (
       !permissionMap?.['project_code']?.edit &&
       !permissionMap?.['project_code']?.read,
   },
-  {
-    id: 'interaction_iteration',
-    sortId: 'interaction_iteration',
-    label: 'Iteration',
-    width: 120,
-    sortable: true,
-    sx: { textAlign: 'right' },
-    hide:
-      !permissionMap?.['interaction_iteration']?.edit &&
-      !permissionMap?.['interaction_iteration']?.read,
-  },
+  // {
+  //   id: 'interaction_iteration',
+  //   sortId: 'interaction_iteration',
+  //   label: 'Iteration',
+  //   width: 120,
+  //   sortable: true,
+  //   sx: { textAlign: 'right' },
+  //   hide:
+  //     !permissionMap?.['interaction_iteration']?.edit &&
+  //     !permissionMap?.['interaction_iteration']?.read,
+  // },
   {
     id: 'interaction_age',
     sortId: 'interaction_age',
@@ -175,7 +176,11 @@ export const getInteractionListColumns = (
         <span
           onClick={() =>
             row.attachment_count &&
-            handleViewInteractionAttachmentCount(row.attachment_count, row.rid)
+            handleViewInteractionAttachmentCount(
+              row.attachment_count,
+              row.rid,
+              row.r_number
+            )
           }
           className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
         >

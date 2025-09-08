@@ -65,14 +65,14 @@ export const getInteractionFilterFields = (
         !permissionMap?.['project_code']?.edit &&
         !permissionMap?.['project_code']?.read,
     },
-    {
-      name: 'Iteration',
-      value: 'interaction_iteration',
-      type: 'number',
-      hide:
-        !permissionMap?.['interaction_iteration']?.edit &&
-        !permissionMap?.['interaction_iteration']?.read,
-    },
+    // {
+    //   name: 'Iteration',
+    //   value: 'interaction_iteration',
+    //   type: 'number',
+    //   hide:
+    //     !permissionMap?.['interaction_iteration']?.edit &&
+    //     !permissionMap?.['interaction_iteration']?.read,
+    // },
     {
       name: 'Age (Days)',
       value: 'interaction_age',

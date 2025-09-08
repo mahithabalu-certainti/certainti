@@ -10,8 +10,13 @@ import {
   CellEditData,
   FieldChangeEvent,
   FieldChangeValue,
+  ListTableColumn,
+  ShowHideTableColumn,
 } from '../../../../../components/table/types';
-import { ListTable } from '../../../../../components/table';
+import {
+  ListTable,
+  ManageColumnsPopover,
+} from '../../../../../components/table';
 import { reshapeGlobalFilter } from '../../../../../common-utils';
 import { FilterState } from '../../../../types';
 import {
@@ -34,6 +39,10 @@ interface IAttachmentTableProps {
   refreshTrigger?: number;
   fieldOptions: FieldOptionType;
   setCurrentCategory: (rowId: string) => void;
+  columnAnchorEl: HTMLButtonElement | null;
+  setColumnAnchorEl: React.Dispatch<
+    React.SetStateAction<HTMLButtonElement | null>
+  >;
 }
 
 export const AttachmentTable: React.FC<IAttachmentTableProps> = ({
@@ -44,6 +53,8 @@ export const AttachmentTable: React.FC<IAttachmentTableProps> = ({
   refreshTrigger,
   fieldOptions,
   setCurrentCategory,
+  setColumnAnchorEl,
+  columnAnchorEl,
 }) => {
   const { errorToast } = useToast();
   const { fiscalYear, filters } = useSelector<
@@ -222,37 +233,78 @@ export const AttachmentTable: React.FC<IAttachmentTableProps> = ({
     }
   };
 
+  const [visibleColumns, setVisibleColumns] = useState<
+    ListTableColumn<AttachmentList>[]
+  >(attachmentsColumns.filter((col) => !col.hide));
+
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    setVisibleColumns(
+      updatedColumns.filter(
+        (col) => !col.hide
+      ) as ListTableColumn<AttachmentList>[]
+    );
+  };
+
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
+  };
+
+  const RestrictedColumns = [
+    {
+      id: 'document_name',
+      canHide: false,
+      canDrag: false,
+      // tooltip: 'Account name cannot be hidden or dragged',
+    },
+  ];
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const modalId = isModalOpen ? 'account-column-visibility-popover' : undefined;
+
   return (
-    <ListTable
-      data={attachmentList || []}
-      columns={attachmentsColumns}
-      getRowId={getRowId}
-      hoverHighlight={false}
-      tableStyle={{
-        height: '100%',
-        maxHeight: 'calc(100vh - 180px)',
-        overflow: 'auto',
-      }}
-      stickyHeader={true}
-      stickyColumnsCount={2}
-      selectable={true}
-      onSelectionChange={(selectedIds) => console.log('Selected:', selectedIds)}
-      actionWidth={60}
-      actionDisplayMode='dropdown'
-      actionMenuItems={[]}
-      loading={isLoading}
-      error={isError ? 'Failed to load Attachment data' : undefined}
-      rowsPerPageOptions={[25, 50, 100]}
-      rowsPerPage={tableParams.limit}
-      currentPage={(tableParams.page ?? 1) - 1}
-      totalItems={totalItems}
-      onPageChange={handlePageChange}
-      onRowsPerPageChange={handleRowsPerPageChange}
-      sortBy={tableParams.sortBy}
-      sortOrder={tableParams.sortOrder}
-      onSort={handleSort}
-      onCellEdit={handleCellEdit}
-      onFieldChange={handleFieldChange}
-    />
+    <>
+      <ManageColumnsPopover
+        anchorEl={columnAnchorEl}
+        open={isModalOpen}
+        popoverId={modalId}
+        onClose={handlePopoverClose}
+        columns={attachmentsColumns}
+        onColumnsChange={handleColumnsChange}
+        columnRestrictions={RestrictedColumns}
+      />
+      <ListTable
+        data={attachmentList || []}
+        columns={visibleColumns}
+        getRowId={getRowId}
+        hoverHighlight={false}
+        tableStyle={{
+          height: '100%',
+          maxHeight: 'calc(100vh - 180px)',
+          overflow: 'auto',
+        }}
+        stickyHeader={true}
+        stickyColumnsCount={2}
+        selectable={true}
+        onSelectionChange={(selectedIds) =>
+          console.log('Selected:', selectedIds)
+        }
+        actionWidth={60}
+        actionDisplayMode='dropdown'
+        actionMenuItems={[]}
+        loading={isLoading}
+        error={isError ? 'Failed to load Attachment data' : undefined}
+        rowsPerPageOptions={[25, 50, 100]}
+        rowsPerPage={tableParams.limit}
+        currentPage={(tableParams.page ?? 1) - 1}
+        totalItems={totalItems}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+        sortBy={tableParams.sortBy}
+        sortOrder={tableParams.sortOrder}
+        onSort={handleSort}
+        onCellEdit={handleCellEdit}
+        onFieldChange={handleFieldChange}
+      />
+    </>
   );
 };
