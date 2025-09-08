@@ -67,6 +67,13 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     StatusTypeEnum.response_received,
   ].includes((data?.status_name || '').toLowerCase() as StatusTypeEnum);
 
+  const disableEditResBtn = [
+    StatusTypeEnum.cancelled,
+    StatusTypeEnum.draft,
+    StatusTypeEnum.completed,
+    StatusTypeEnum.response_received,
+  ].includes((data?.status_name || '').toLowerCase() as StatusTypeEnum);
+
   //permission
   const interactionsViewEditFields = useMemo(
     () =>
@@ -263,7 +270,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
         <InteractionQuestions
           questions={data?.questions}
           globalAttachments={data?.global_attachments}
-          isEditEnable={!disableInteractionEditBtn}
+          isEditEnable={!disableEditResBtn}
           actionButtonEnable={interactionFieldsEditable}
           handleResponseHistory={handleResponseHistory}
           refetchDetails={refetch}
