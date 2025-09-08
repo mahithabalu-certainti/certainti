@@ -36,12 +36,17 @@ export async function sendEmailWithAttachment(emailMessage: {
     contentBytes: string;
     contentType?: string;
   }>;
-  senderEmailInfo: string;
+  senderEmailInfo: {
+    email: string;
+    clientId: string;
+    tenantId: string;
+    clientSecret: string  
+  };
 }): Promise<any> {
   const credential = new ClientSecretCredential(
-    process.env.MAIL_TENANT_ID!,
-    process.env.MAIL_CLIENT_ID!,
-    process.env.MAIL_CLIENT_SECRET!
+    emailMessage.senderEmailInfo.tenantId,
+    emailMessage.senderEmailInfo.clientId,
+    emailMessage.senderEmailInfo.clientSecret
   );
 
   const graphClient = Client.initWithMiddleware({
@@ -64,7 +69,7 @@ export async function sendEmailWithAttachment(emailMessage: {
 
   try {
     const response = await graphClient
-      .api(`/users/${emailMessage.senderEmailInfo}/sendMail`)
+      .api(`/users/${emailMessage.senderEmailInfo.email}/sendMail`)
       .post(mail);
 
     return true;
