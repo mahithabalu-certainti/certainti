@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { certaintiLogo } from '../../assets/images';
 import InteractionQuestions from './interaction-qustions';
 import { CircularProgress } from '@mui/material';
@@ -14,8 +14,10 @@ import { StatusTypeEnum } from '../../consultant/types';
 const EmailInteraction: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [otp, setOtp] = useState<string[]>(['', '', '', '', '', '']);
-  const [timer, setTimer] = useState(600); // 10 minutes in seconds
+  const [timer, setTimer] = useState(0);
   const [isAuthentic, setIsAuthentic] = useState(false);
+  const [currentIntractionId, setCurrentIntractionId] = useState('');
+  const isGenerateOtpCall = useRef(false);
 
   const timeout = localStorage.getItem('otp_timeout');
   const auth_token = localStorage.getItem('temAuth');
@@ -48,6 +50,7 @@ const EmailInteraction: React.FC = () => {
       localStorage.removeItem('otp_timeout');
       localStorage.removeItem('temAuth');
       localStorage.setItem('intractionId', interaction_rid);
+      setCurrentIntractionId(interaction_rid);
     }
   }, [interaction_rid, intractionId]);
   useEffect(() => {
@@ -60,12 +63,14 @@ const EmailInteraction: React.FC = () => {
     if (
       account_rid &&
       interaction_rid &&
-      !localStorage.getItem('otp_timeout')
+      !timeout &&
+      !isGenerateOtpCall.current
     ) {
       const payload = {
         interaction_rid,
         account_rid,
       };
+      isGenerateOtpCall.current = true;
       mutate(payload);
     }
 
@@ -75,10 +80,12 @@ const EmailInteraction: React.FC = () => {
       setIsAuthentic(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, auth_token]);
+  }, [timeout, account_rid, interaction_rid, currentIntractionId, auth_token]);
   useEffect(() => {
     if (data && !timeout) {
-      localStorage.setItem('otp_timeout', JSON.stringify(Date.now()));
+      const timeNow = Date.now();
+      localStorage.setItem('otp_timeout', JSON.stringify(timeNow));
+      setTimer(timeNow);
     }
   }, [data, timeout]);
   useEffect(() => {
@@ -264,7 +271,7 @@ const EmailInteraction: React.FC = () => {
                     {Math.floor(timer / 60)
                       .toString()
                       .padStart(2, '0')}
-                    :{(timer % 60).toString().padStart(2, '0')}s
+                    :{(timer % 60).toString().padStart(2, '0')}m
                   </span>
                 </span>
                 <span>
@@ -298,12 +305,6 @@ const EmailInteraction: React.FC = () => {
                 ) : (
                   'Verify'
                 )}
-              </button>
-              <button
-                className='w-full mt-3 border border-[#F16137] text-[#F16137] py-2 rounded-sm hover:bg-orange-50 transition cursor-pointer'
-                onClick={() => window.history.back()}
-              >
-                Cancel
               </button>
             </div>
           </div>
