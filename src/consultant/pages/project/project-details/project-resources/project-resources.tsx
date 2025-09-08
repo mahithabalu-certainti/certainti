@@ -37,7 +37,6 @@ import {
   CellEditData,
   FieldChangeEvent,
   FieldChangeValue,
-  ListTableColumn,
   ShowHideTableColumn,
 } from '../../../../../components/table/types';
 import { useToast } from '../../../../../hooks';
@@ -527,27 +526,39 @@ export const ProjectResources = ({
     },
   ];
 
-  const [visibleColumns, setVisibleColumns] = useState<
-    ListTableColumn<ProjectResourcesListType>[]
-  >(projectResourcesColumns.filter((col) => !col.hide));
-
-  if (!projectIsEnable) return <AccessRestricted />;
-
-  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
-    setVisibleColumns(
-      updatedColumns.filter(
-        (col) => !col.hide
-      ) as ListTableColumn<ProjectResourcesListType>[]
-    );
-  };
-
   const handlePopoverClose = () => {
     setColumnAnchorEl(null);
   };
 
   const modalId = isModalOpen
-    ? 'account-interaction-attachment-list-column-visibility-popover'
+    ? 'project-resource-list-column-visibility-popover'
     : undefined;
+
+  const [columnVisibility, setColumnVisibility] = useState<
+    Record<string, boolean>
+  >(
+    Object.fromEntries(
+      projectResourcesColumns.map((col) => [col.id, !col.hide])
+    )
+  );
+
+  const [columnOrder, setColumnOrder] = useState(
+    projectResourcesColumns.map((col) => col.id)
+  );
+
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    const newVisibility = Object.fromEntries(
+      updatedColumns.map((col) => [col.id, !col.hide])
+    );
+    setColumnVisibility(newVisibility);
+    setColumnOrder(updatedColumns.map((col) => col.id));
+  };
+
+  const visibleColumns = columnOrder
+    .map((id) => projectResourcesColumns.find((col) => col.id === id)!)
+    .filter((col) => columnVisibility[col.id]);
+
+  if (!projectIsEnable) return <AccessRestricted />;
 
   return (
     <div className='w-full pt-2 pb-2 pl-2 pr-4 bg'>

@@ -6,9 +6,9 @@ import { Attachment, InteractionQuestion } from '../../consultant/types';
 import TextButton from '../../components/button/text-button';
 import {
   AttachmentsSideIcon,
+  DocumentIcon,
   DownloadIcon,
   KeyContactRemoveIcon,
-  PdfIcon,
 } from '../../assets';
 import { formatDateToYYYYMMDDWithTime } from '../../common-utils';
 import {
@@ -496,7 +496,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                 >
                   <div className='flex items-center gap-2'>
                     <React.Suspense fallback={null}>
-                      <PdfIcon />
+                      <DocumentIcon className='w-6 h-6' />
                     </React.Suspense>
                     <div className='text-[14px] text-[#425A76] font-normal'>
                       {file.fileName}.{file.fileType}
@@ -717,7 +717,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                       >
                         <div className='flex items-center gap-2'>
                           <React.Suspense fallback={null}>
-                            <PdfIcon />
+                            <DocumentIcon className='w-6 h-6' />
                           </React.Suspense>
                           <div className='text-[14px] text-[#425A76] font-normal'>
                             {file.fileName}.{file.fileType}
