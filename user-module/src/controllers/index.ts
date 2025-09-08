@@ -23,6 +23,8 @@ import {
 
 
 } from "./userGroupController";
+import { listSettings, updateSettings } from "./settingsController";
+
 import { get } from "http";
 const controller = {
   userController: {
@@ -59,6 +61,10 @@ const controller = {
     assignEntityAccessToAccount,
     assignEntityAccessToProject,
     getUserGroupType
+  },
+  settingsController:{
+    updateSettings,
+    listSettings
   }
 };
 

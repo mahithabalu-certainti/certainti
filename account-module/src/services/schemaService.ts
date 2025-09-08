@@ -319,8 +319,10 @@ class SchemaService {
         data_residency VARCHAR(255),
         data_storage VARCHAR(255) CHECK (data_storage IN ('separate_db', 'store_in_parent')),
         auto_access_rd BOOLEAN NOT NULL,
-        business_details VARCHAR(2000) NOT NULL
-        
+        business_details VARCHAR(2000) NOT NULL,
+        support_email VARCHAR(255),
+        subscription_created BOOLEAN DEFAULT FALSE
+
       );
     `);
 

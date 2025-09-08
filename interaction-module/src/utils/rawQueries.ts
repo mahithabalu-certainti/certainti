@@ -30,7 +30,8 @@ export const fetchInteractionForProjectLevelQuery = (
   limit: number,
   flag: string,
   schemaName: string,
-  disablePagination: boolean
+  disablePagination: boolean,
+  accessibleIds: string[] = [],
 ) => {
   let offset = (page - 1) * limit;
   let pagination = `LIMIT ${limit} OFFSET ${offset}`;
@@ -57,6 +58,9 @@ export const fetchInteractionForProjectLevelQuery = (
         AND
         i.project_rid = '${project_id}'
         `;
+  }
+  if (accessibleIds.length > 0) {
+    whereConditions += ` AND pf.project_rid = ANY(ARRAY[${accessibleIds.map(id => `'${id}'`).join(",")}]::text[])`;     
   }
   let filteredData = filterForInteractions(
     filters,
@@ -93,11 +97,13 @@ export const fetchInteractionForProjectLevelQuery = (
   else if (sort === filtersColumns.modified_datetime)
     sortValue = `ORDER BY i.modified_datetime ${sortBy}`;
   else if (sort === filtersColumns.project_code)
-    sortValue = `ORDER BY i.project_code ${sortBy}`;
+    sortValue = `ORDER BY pf.project_code ${sortBy}`;
   else if (sort === filtersColumns.fiscal_year)
     sortValue = `ORDER BY i.fiscal_year ${sortBy}`;
   else if (sort === filtersColumns.parent_interaction_rid)
     sortValue = `ORDER BY p.r_number ${sortBy}`;
+  else if (sort === filtersColumns.createdAt)
+    sortValue = `ORDER BY i.created_datetime ${sortBy}`;
   else sortValue = `ORDER BY i.r_number ASC`;
 
   if (filteredData?.filteredQueryArray.length! > 0) {
@@ -180,7 +186,8 @@ export const listAllInteractionSummary = (
   globalFilters: any,
   fiscal_year: number,
   sort: string,
-  sortBy: string
+  sortBy: string,
+  accessibleIds: string[] = [],
 ) => {
   let offset = (page - 1) * limit;
   let pagination = `LIMIT ${limit} OFFSET ${offset}`;
@@ -215,6 +222,10 @@ export const listAllInteractionSummary = (
       .map((d: any) => `'${d}'`)
       .join(",")})`;
   }
+  const includeProjectFilter = accessibleIds.length > 0;
+  const accessibleProjectsCondition = includeProjectFilter
+    ? `pf.project_rid = ANY(ARRAY[${accessibleIds.map(id => `'${id}'`).join(",")}]::text[])`
+    : "1=1";
 
   if (fiscal_year == 0) fiscalYearQuery = ``;
   else fiscalYearQuery = ` pf.fiscal_year = ${fiscal_year}`;
@@ -222,29 +233,35 @@ export const listAllInteractionSummary = (
   if (
     globalFiltersQueryConditions !== "" ||
     fiscalYearQuery !== "" ||
-    filterQueryValues !== ""
+    filterQueryValues !== "" ||
+    accessibleProjectsCondition !== ""
   )
     whereKey = ` WHERE `;
   else whereKey = ``;
 
-  if (
-    globalFiltersQueryConditions !== "" &&
-    fiscalYearQuery !== "" &&
-    filterQueryValues !== ""
-  ) {
-    andConditionsForjoinsForTwo = ` AND `;
-    andConditionsForjoinsForThree = ` AND `;
-  } else if (globalFiltersQueryConditions !== "" && fiscalYearQuery !== "")
-    andConditionsForjoinsForTwo = ` AND `;
-  else if (globalFiltersQueryConditions !== "" && filterQueryValues !== "")
-    andConditionsForjoinsForThree = ` AND `;
-  else if (fiscalYearQuery !== "" && filterQueryValues !== "")
-    andConditionsForjoinsForThree = ` AND `;
-  else {
-    andConditionsForjoinsForTwo = ``;
-    andConditionsForjoinsForThree = ``;
-  }
+  // Dynamically add "AND" between non-empty conditions
+  const conditions = [
+    accessibleProjectsCondition,
+    globalFiltersQueryConditions,
+    fiscalYearQuery,
+    filterQueryValues,
+  ].filter(Boolean);
 
+  // Helper to determine if "AND" is needed before each condition
+  const getAnd = (index: number) => (index > 0 ? " AND " : "");
+
+  // Build the joined conditions for the query
+  let joinedConditions = "";
+  conditions.forEach((cond, idx) => {
+    joinedConditions += getAnd(idx) + cond;
+  });
+
+  // Assign ANDs for joins based on the order of conditions
+  // (for backward compatibility with the rest of the query)
+  andConditionsForjoinsForTwo = conditions.length > 1 ? " AND " : "";
+  andConditionsForjoinsForThree = conditions.length > 2 ? " AND " : "";
+
+ 
   if (sort === filtersColumnsForInteractionSummary.r_number)
     sortValue = `ORDER BY i.r_number ${sortBy}`;
   else if (sort === filtersColumnsForInteractionSummary.iteration)
@@ -291,6 +308,8 @@ export const listAllInteractionSummary = (
     sortValue = ` ORDER BY i.response_source_name ${sortBy}`;
   else if (sort === filtersColumnsForInteractionSummary.parent_interaction_rid)
     sortValue = ` ORDER BY parent_r_number ${sortBy}`;
+  else if (sort === filtersColumnsForInteractionSummary.createdAt)
+    sortValue = ` ORDER BY i.created_datetime ${sortBy}`;
   else sortValue = `ORDER BY i.r_number ASC`;
 
   let query = `
@@ -319,12 +338,7 @@ export const listAllInteractionSummary = (
     LEFT JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary pf ON pf.project_fiscal_rid = i.project_fiscal_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.interaction_response_source ir ON ir.rid = i.response_source_rid
     ${whereKey}
-    ${globalFiltersQueryConditions}
-    ${andConditionsForjoinsForTwo}
-    ${fiscalYearQuery}
-    ${andConditionsForjoinsForThree}
-    ${filterQueryValues}
-    
+    ${joinedConditions}
     ),
     paginated_data AS (
     SELECT * FROM fetch_all_interactions i ${sortValue} ${pagination}
@@ -816,7 +830,7 @@ export const interactionResponseHistoryByVersion = (
         SELECT 
             i.r_number AS response_rnumber, p.project_name,
             ii.question_seq_num, ii.question, a.attachments, a.global_attachments,
-            a.interaction_response, a.response_on,
+            a.interaction_response, a.response_on,i.response_updated_on,
             i.response_submitted_on, i.rid AS interaction_rid,
             ii.rid AS interaction_item_rid, a.rid AS interaction_response_rid, a.interaction_version
         FROM
@@ -831,7 +845,7 @@ export const interactionResponseHistoryByVersion = (
         GROUP BY
 		    a.rid, a.r_number, p.project_name,
             ii.question_seq_num, ii.question,
-            a.interaction_response, a.response_on,
+            a.interaction_response, a.response_on,i.response_updated_on,
             i.response_submitted_on, i.rid,
             ii.rid, a.rid, a.attachments, a.interaction_version, a.global_attachments
     )
@@ -844,6 +858,7 @@ export const interactionResponseHistoryByVersion = (
     'response_id', i.response_rnumber,
     'project_name', i.project_name,
     'response_on', i.response_on,
+    'response_updated_on', i.response_updated_on,
     'response_submitted_on', i.response_submitted_on,
     'question_id', i.question_seq_num,
     'question', i.question,

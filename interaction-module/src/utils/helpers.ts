@@ -96,6 +96,16 @@ export function handleSuccessResponse(res: Response, data: any) {
   );
 }
 
+export function handleCustomResponse(res: Response, data: any,message:string) {
+  return successResponse(
+    res,
+    HttpStatus.SUCCESS,
+    HttpStatus.SUCCESS_MESSAGE,
+    data,
+    message
+  );
+}
+
 export function handleErrorResponse(
   res: Response,
   statusCode: number,

@@ -1,6 +1,6 @@
 import { Sequelize } from "sequelize";
 import { IKeyContactDetail, IUpdateKeyContactDetail } from "../utils/types";
-import { MAIN_SCHEMA_NAME, primaryKeyContacts } from "../utils/constants";
+import { MAIN_SCHEMA_NAME, primaryKeyContacts, STATUS_MESSAGE } from "../utils/constants";
 
 export class KeyContactService {
   async manageKeyContacts(
@@ -104,7 +104,7 @@ export class KeyContactService {
       );
 
       const isEmailRecipientInfo = enrichedKeyContacts.some(
-        (e: any) => e.include_in_communication === true
+        (e: any) => e.include_in_communication === true && e.status_name === STATUS_MESSAGE.active
       );
 
       technicalConsultant = technicalContact

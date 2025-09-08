@@ -12,7 +12,7 @@ import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { checkTableExists, fetchAllParentRNumber, fetchInteractionForProjectLevelQuery, fetchInteractionForSentResentStatus, fetchProjectAttachmentsRids, fetchProjectInteractionRid, interactionResponseHistoryByVersion, listAllInteractionSummary, listAttachments, listInteractionHistory, listResponseHistory } from "../../utils/rawQueries";
 import { generateSasUrl } from "../../utils/blob";
-import { surveyMailTemplate } from "../../utils/mailTemplate";
+import { interactionMailTemplate } from "../../utils/mailTemplate";
 import { sendEmailWithAttachment } from "../emailService";
 import ExcelJS from 'exceljs';
 import axios from 'axios'
@@ -107,11 +107,24 @@ export class InteractionService {
           interactionData.status_rid
         );
       }
-      if(interactionStatus === statusAction.CREATE)
+      const isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(accountNumber, interactionData.project_fiscal_rid);
+
+      if(interactionStatus === statusAction.CREATE && isEmailRecipientAvailable)
       await this.checkAutoSendEnabled(accountNumber,interactionData,interaction.rid,userId);
+       else
+       {
+        if(!isEmailRecipientAvailable && interactionStatus === statusAction.CREATE)
+         return {
+        statusCode: HttpStatus.SUCCESS,
+        message: STATUS_MESSAGE.interactionCreatedButNoEmailRecipient,
+        data: {
+          interactions: interaction,
+        },
+      };
+       }
       return {
         statusCode: HttpStatus.SUCCESS,
-        message: HttpStatus.SUCCESS_MESSAGE,
+        message: STATUS_MESSAGE.interactionCreated,
         data: {
           interactions: interaction,
         },
@@ -208,13 +221,24 @@ export class InteractionService {
       }
 
       await transaction.commit();
-      
-       if(interactionStatus === "Created")
+      const isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(accountNumber, interactionData.interaction_rid);
+      if(interactionStatus === statusAction.CREATE && isEmailRecipientAvailable)
       await this.checkAutoSendEnabled(accountNumber,interactionData,interactionData.interaction_rid,userId);
-
+      else{
+        if(!isEmailRecipientAvailable && interactionStatus === statusAction.CREATE)
+        {
+           return {
+        statusCode: HttpStatus.SUCCESS,
+        message: STATUS_MESSAGE.interactionCreatedButNoEmailRecipient,
+        data: {
+          interactions: null,
+        },
+      };
+        }
+      }
       return {
         statusCode: HttpStatus.SUCCESS,
-        message: HttpStatus.SUCCESS_MESSAGE,
+        message: STATUS_MESSAGE.interactionUpdated,
         data: {
           interactions: null,
         },
@@ -543,8 +567,7 @@ export class InteractionService {
           interaction_rid,
           interactionInfo.accountInfo.account_rid
         );
-
-        // Prepare Excel workbook
+        const senderEmailInfo = await this.getSenderEmailInfo(accountNumber,interactionInfo.accountInfo.parent_account_rid);
         const excelBuffer = await this.generateExcelBuffer(
           interaction_rid,
           interactionItems,
@@ -564,7 +587,9 @@ export class InteractionService {
           interactionInfo.projectInfo,
           interactionInfo.accountInfo,
           excelAttachment,
-          interactionLink
+          interactionLink,
+          senderEmailInfo,
+          interaction_rid
         );
         if (emailResponse) {
           await this.interactionSchemaService.updateInteractionInfo(
@@ -595,6 +620,16 @@ export class InteractionService {
       throw this.throwServiceError(err as Error);
     }
   }
+
+  async getSenderEmailInfo(accountNumber: string, parentAccountRid: string | null) {
+    if (!parentAccountRid) {
+      return null;
+    }
+    // Fetch sender email info from the database or another service
+    const senderEmailInfo = await this.interactionSchemaService.fetchSenderEmailInfoByAccountId(accountNumber, parentAccountRid);
+    return senderEmailInfo;
+  }
+
   async generateInteractionLink(interactionRid: string, accountRid: string) {
     return `${process.env.INTERACTION_URL}?acc=${accountRid}&int=${interactionRid}`;
   }
@@ -612,6 +647,7 @@ export class InteractionService {
       ["Interaction ID", interactionInfo.interactionInfo?.interaction_id ?? ""],
       ["Project ID", interactionInfo.projectInfo?.project_id ?? ""],
       ["Project Name", interactionInfo.projectInfo?.project_name ?? ""],
+      ["Project Code", interactionInfo.projectInfo?.project_code ?? ""],
     ];
 
     headerRows.forEach((row, idx) => {
@@ -623,7 +659,7 @@ export class InteractionService {
 
     // Column headers
     worksheet.addRow(["Question No","Questions", "Answers", "Notes", "Is Mandatory"]);
-    worksheet.getRow(5).eachCell((cell) => {
+    worksheet.getRow(6).eachCell((cell) => {
       cell.font = { bold: true };
       cell.protection = { locked: true };
     });
@@ -676,16 +712,21 @@ export class InteractionService {
     },
     accountInfo: { account_name: string },
     excelAttachment: { filename: string; content: string; contentType: string },
-    interactionLink: string
+    interactionLink: string,
+    senderEmailInfo: string,
+    interactionRid:string
   ) {
     let emailResponse = false;
     try {
-      const emailContent = surveyMailTemplate(
+      const emailContent = interactionMailTemplate(
         emailInfo,
         projectInfo,
         accountInfo,
-        interactionLink
+        interactionLink,
+        interactionRid
       );
+      //fetch sender email info
+      
       emailResponse = await sendEmailWithAttachment({
         message: emailContent.message,
         attachments: [
@@ -696,6 +737,7 @@ export class InteractionService {
             contentType: excelAttachment.contentType,
           },
         ],
+        senderEmailInfo:senderEmailInfo
       });
       return emailResponse;
     } catch (error) {
@@ -735,9 +777,50 @@ export class InteractionService {
     this.logger.info("Interact method called.");
     // Implementation here
   }
-  async listInteractionPrjAccount(data : any) {
+  async listInteractionPrjAccount(data : any,userId : string) : Promise<any>{
     const mainDb = await this.getMainDb()
     const orgDb = await this.getOrgDb()
+      const userGroupType = await this.interactionSchemaService.getUserGroupType(userId);
+      const userProfileType = await this.interactionSchemaService.getUserProfileType(
+        userId
+      );
+      const isCustomGlobal = userGroupType === "DEFAULT";
+      const isDefaultParent = userGroupType === "AUTO_ASSIGNED_PARENT";
+      const isPOCProfile =
+        userProfileType?.profileName === "Project Point of Contact";
+      let accessibleIds: string[] = [];
+      if (!isCustomGlobal) {
+        accessibleIds = await this.interactionSchemaService.getAccessibleProjectIds(
+          userId,
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
+        );
+        if (accessibleIds.length === 0) {
+           return {
+        statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+        data : []
+      }
+        }
+      }
+
+      if (isCustomGlobal && isPOCProfile) {
+        accessibleIds = await this.interactionSchemaService.getAccessibleProjectIds(
+          userId,
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
+        );
+        if (accessibleIds.length === 0) {
+          return {
+            statusCodeValue: HttpStatus.NOT_FOUND_MESSAGE,
+            data: []
+          };
+        }
+      }
+
     let fetchParentAccount : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb))
     let schemaName = rawQueries.fetchSchemaName(fetchParentAccount[0][0].r_number)
     let createdByFilter;
@@ -776,6 +859,9 @@ export class InteractionService {
         delete data.filters[key]
       }
     })
+    if (mainTableFilters[data.sort] !== undefined) {
+      disablePagination = true;
+    }
     
     const result : any = await orgDb.query(fetchInteractionForProjectLevelQuery(
       data.account_rid, 
@@ -789,7 +875,8 @@ export class InteractionService {
       data.limit,
       data.flag, 
       schemaName,
-      disablePagination
+      disablePagination,
+      accessibleIds
     ))
     let hasEmailRecipient = false;
      if(data.flag == interactionFlag.project)
@@ -909,10 +996,50 @@ export class InteractionService {
       }
     }
   }
-  async fetchInteractionSummary (data : any) {
+  async fetchInteractionSummary (data : any,userId:string) {
     const mainDb = await this.getMainDb()
+       const userGroupType = await this.interactionSchemaService.getUserGroupType(userId);
+      const userProfileType = await this.interactionSchemaService.getUserProfileType(
+        userId
+      );
+      const isCustomGlobal = userGroupType === "DEFAULT";
+      const isDefaultParent = userGroupType === "AUTO_ASSIGNED_PARENT";
+      const isPOCProfile =
+        userProfileType?.profileName === "Project Point of Contact";
+      let accessibleIds: string[] = [];
+      if (!isCustomGlobal) {
+        accessibleIds = await this.interactionSchemaService.getAccessibleProjectIds(
+          userId,
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
+        );
+        if (accessibleIds.length === 0) {
+           return {
+        statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+        data : []
+      }
+        }
+      }
+
+      if (isCustomGlobal && isPOCProfile) {
+        accessibleIds = await this.interactionSchemaService.getAccessibleProjectIds(
+          userId,
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
+        );
+        if (accessibleIds.length === 0) {
+         return {
+        statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+        data : []
+      }
+        }
+      }
     const result : any = await mainDb.query(listAllInteractionSummary(data.page, data.limit, 
-      data.filters, data.globalFilters, data.fiscal_year, data.sort, data.sort_by
+      data.filters, data.globalFilters, data.fiscal_year, data.sort, data.sort_by,accessibleIds
     ))
     if(result[0][0].interactions != null) {
       return {
@@ -1015,10 +1142,11 @@ export class InteractionService {
     const sourceTypeIds = [responseData.interaction_source_rid].filter(Boolean);
 
     // Step 2: Fetch response source & interaction source names
-    const fetchResponseSources: any = await mainDb.query(rawQueries.fetchInteractionResponseSource(responseSourceIds));
+
+    //const fetchResponseSources: any = await mainDb.query(rawQueries.fetchInteractionResponseSource(responseSourceIds));
     const fetchSourceTypes: any = await mainDb.query(rawQueries.fetchInteractionSource(sourceTypeIds));
 
-    const mapResponseSource = new Map(fetchResponseSources[0].map((d: any) => [d.rid, d.response_source_name]));
+   // const mapResponseSource = new Map(fetchResponseSources[0].map((d: any) => [d.rid, d.response_source_name]));
     const sourceMap = new Map(fetchSourceTypes[0].map((d: any) => [d.rid, d.interaction_source_name]));
 
     if (responseData.interaction_history.length !== 0) {
@@ -1051,7 +1179,7 @@ export class InteractionService {
         interaction_rnumber: responseData.interaction_rnumber,
         project_code: responseData.project_code,
         project_name: responseData.project_name,
-        response_source: mapResponseSource.get(responseData.response_source_rid) || null,
+      //  response_source: mapResponseSource.get(responseData.response_source_rid) || null,
         interaction_source_name: sourceMap.get(responseData.interaction_source_rid) || null,
         interaction_history: sortedData.map((d: any) => ({
           rid: d.interaction_history_rid,
@@ -1076,7 +1204,7 @@ export class InteractionService {
         interaction_rnumber: responseData.interaction_rnumber,
         project_code: responseData.project_code,
         project_name: responseData.project_name,
-        response_source: mapResponseSource.get(responseData.response_source_rid) || null,
+      //  response_source: mapResponseSource.get(responseData.response_source_rid) || null,
         interaction_source_name: sourceMap.get(responseData.interaction_source_rid) || null,
         interaction_history: []
       };
@@ -1173,6 +1301,7 @@ export class InteractionService {
         interaction_rid : result[0][0].responses_history_details[0].response_id,
         interaction_r_number : result[0][0].responses_history_details[0].r_number,
         project_name : result[0][0].responses_history_details[0].project_name,
+        response_on: result[0][0].responses_history_details[0].response_updated_on,
         global_attachments : await Promise.all(result[0][0].responses_history_details[0].global_attachments.filter((f : any) =>f.file_url !== null).map(async (da : any) => {
           return {
             fileName : da.file_name,
@@ -1314,7 +1443,7 @@ export class InteractionService {
         this.logger.error("Invalid account ID in Kafka message", company_id);
         return;
       }
-      if (parsedMessage.statusCode === 200) {
+      if (parsedMessage.statusCode) {
         if (!company_id || !project_id || !type) {
           this.logger.error("Kafka message missing required fields", parsedMessage);
           return;
@@ -1345,10 +1474,17 @@ export class InteractionService {
             created_by: process.env.SYSTEM_USER_ID!,
           };
           await this.createInteraction(interactionData, interactionSource.AUTO, process.env.SYSTEM_USER_ID!);
-          
+          await this.interactionSchemaService.updateInteractionStatus(accountNumber, parsedMessage)
+        }
+        if(type === 'data_ingestion')
+        {
+          await this.interactionSchemaService.updateAIProcessed(accountNumber, project_id,parsedMessage);
         }
       }
-      await this.interactionSchemaService.updateInteractionStatus(accountNumber, parsedMessage)
+      else{
+        this.logger.error("Kafka message indicates failure status", JSON.stringify(message));
+      }
+
       this.logger.info(`Processed Kafka message for account: ${company_id}`);
     } catch (err) {
        this.logger.error("Error processing Kafka message", JSON.stringify(err));
@@ -1365,7 +1501,7 @@ export class InteractionService {
   async triggerAiFromScheduler () {
     const mainDb = await this.getMainDb()
     const orgDb = await this.getOrgDb()
- 
+    this.logger.info("AI Trigger Scheduler started")
     let fetchAllParentsAccountsRnumber : any = await mainDb.query(rawQueries.fetchAllParentRNumber())
     for(let account of fetchAllParentsAccountsRnumber[0]) {
       let schemaName = rawQueries.fetchSchemaName(account.r_number);
