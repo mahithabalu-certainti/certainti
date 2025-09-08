@@ -3,6 +3,7 @@ import { HttpStatus, interactionFieldMappings, interactionSource, STATUS_MESSAGE
 import {
   deleteFromAzureBlob,
   errorLog,
+  formatToLocalTime,
   generateExcelBase64,
   handleCustomResponse,
   handleErrorResponse,
@@ -1207,7 +1208,7 @@ async function fetchResponseHistoryDetails (req : Request, res : Response) {
       if(result.statusCodeValue == HttpStatus.SUCCESS_MESSAGE) {
         let finalStructuredData = result.data.data.interaction_history.map((data : any) => ({
           "Action" : data.status_name,
-          "Date" : new Date(data.date).toISOString().split('T')[0]
+          "Date" : formatToLocalTime(data.date)
         }))
         const generateBase64Response = await generateExcelBase64(finalStructuredData, "Interaction-History")
         handleSuccessResponse(res, generateBase64Response);
