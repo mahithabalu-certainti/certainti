@@ -25,12 +25,14 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { FilterValue } from '../../account-details-sidebar/components/filter/filterType';
 import { AccessRestricted } from '../../../../components/account-restricted';
+import SearchBar from '../../../../components/search/search-bar';
 
 export const Attachments: React.FC = () => {
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
   const [page, setPage] = useState<number>(1);
   const [totalCount, setTotalCount] = useState<number>(0);
   const [refreshTrigger, setRefreshTrigger] = useState(Date.now());
+  const [searchText, setSearchText] = useState<string>('');
   const [tableParams, setTableParams] = useState<AttachmentsListURLParams>({
     page: page,
     limit: 100,
@@ -212,7 +214,17 @@ export const Attachments: React.FC = () => {
         </div>
       </div>
       <div className='flex items-center justify-end h-[34px] min-h-[34px] px-4'>
-        <div className='relative'>
+        <div className='flex gap-1 relative'>
+          <SearchBar
+            initialSearchText={searchText}
+            onSearch={(value) => {
+              setSearchText(value);
+              console.log('Search triggered for:', value);
+            }}
+            placeholder='Search'
+            disabled={false}
+            hide={false}
+          />
           <button
             aria-describedby={filterId}
             className={`w-[64px] h-[26px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
