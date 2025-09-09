@@ -17,6 +17,7 @@ import moment from "moment-timezone";
 import configurations from "../config/config";
 import {
   createInteractionSchema,
+  exportTechnicalSummarySchema,
   getInteractionStatusSchema,
   listAllTechnicalSummarySchema,
   listTechnicalSummarySchema,
@@ -1193,7 +1194,7 @@ async function exportTechnicalSummary(req: Request, res: Response) {
 
     console.log(`[${methodName}] Request received`);
     const userId = req.headers["x-user-id"] as string;
-    const value = await validateRequest(req, listAllTechnicalSummarySchema, res, "GET");
+    const value = await validateRequest(req, exportTechnicalSummarySchema, res, "GET");
     console.log(`[${methodName}] userId:`, userId);
     console.log(`[${methodName}] value:`, value);
     if (!userId) {
