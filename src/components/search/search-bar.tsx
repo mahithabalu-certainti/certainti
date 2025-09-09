@@ -44,7 +44,7 @@ const SearchBar: React.FC<SearchBarProps> = React.memo(
         <button
           onClick={() => !disabled && onSearch(text)}
           disabled={disabled}
-          className={`flex items-center justify-center w-[30px] h-full border-l border-[#CBD6E2] rounded-r-xs bg-gradient-to-b from-white to-[#E4E6E7] hover:from-[#f0f0f0] hover:to-[#d4d6d7] active:scale-95 transition-all duration-200 ${disabled ? 'cursor-not-allowed' : ''}`}
+          className={`flex items-center justify-center w-[30px] h-full border-l border-[#CBD6E2] rounded-r-xs bg-gradient-to-b from-white to-[#E4E6E7] hover:from-[#f0f0f0] hover:to-[#d4d6d7] active:scale-95 transition-all duration-200 ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
         >
           <SearchBlackIcon alt='search' className='w-4 h-4' />
         </button>
