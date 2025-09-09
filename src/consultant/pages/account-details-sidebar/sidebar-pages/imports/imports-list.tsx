@@ -20,10 +20,7 @@ import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import { ImportsIcon } from '../../../../../assets';
-import {
-  ListTableColumn,
-  ShowHideTableColumn,
-} from '../../../../../components/table/types';
+import { ShowHideTableColumn } from '../../../../../components/table/types';
 
 const ImportsTabs: ResourceTabs[] = [
   {
@@ -268,6 +265,14 @@ const Imports: React.FC<ImportsProps> = ({
 
   const getRowId = (row: ImportsList) => row.rid;
 
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
+  };
+
+  const modalId = isModalOpen
+    ? 'account-timesheet-list-column-visibility-popover'
+    : undefined;
+
   const RestrictedColumns = [
     {
       id: 'r_number',
@@ -276,27 +281,27 @@ const Imports: React.FC<ImportsProps> = ({
     },
   ];
 
-  const [visibleColumns, setVisibleColumns] = useState<
-    ListTableColumn<ImportsList>[]
-  >(importsColumns.filter((col) => !col.hide));
+  const [columnVisibility, setColumnVisibility] = useState<
+    Record<string, boolean>
+  >(Object.fromEntries(importsColumns.map((col) => [col.id, !col.hide])));
 
-  if (!importsEnable || !importsViewEnable) return <AccessRestricted />;
+  const [columnOrder, setColumnOrder] = useState(
+    importsColumns.map((col) => col.id)
+  );
 
   const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
-    setVisibleColumns(
-      updatedColumns.filter(
-        (col) => !col.hide
-      ) as ListTableColumn<ImportsList>[]
+    const newVisibility = Object.fromEntries(
+      updatedColumns.map((col) => [col.id, !col.hide])
     );
+    setColumnVisibility(newVisibility);
+    setColumnOrder(updatedColumns.map((col) => col.id));
   };
 
-  const handlePopoverClose = () => {
-    setColumnAnchorEl(null);
-  };
+  const visibleColumns = columnOrder
+    .map((id) => importsColumns.find((col) => col.id === id)!)
+    .filter((col) => columnVisibility[col.id]);
 
-  const modalId = isModalOpen
-    ? 'account-interaction-list-column-visibility-popover'
-    : undefined;
+  if (!importsEnable || !importsViewEnable) return <AccessRestricted />;
 
   return (
     <div className='w-full pt-2 pl-2 pr-4'>

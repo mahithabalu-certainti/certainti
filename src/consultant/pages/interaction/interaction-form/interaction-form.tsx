@@ -107,11 +107,6 @@ const InteractionForm = () => {
   const [errors, setErrors] = useState<InteractionFormErrors>({});
   const [currentAccountId, setCurrentAccountId] = useState<string>('');
 
-  // State to track expanded questions
-  const [expandedQuestions, setExpandedQuestions] = useState<Set<number>>(
-    new Set()
-  );
-
   const { fiscalYear, filters } = useSelector(
     (state: RootState) => state.account
   );
@@ -509,19 +504,6 @@ const InteractionForm = () => {
         ...prev,
         questions: newQuestionErrors,
       };
-    });
-  };
-
-  // Toggle question expansion
-  const toggleQuestionExpansion = (index: number) => {
-    setExpandedQuestions((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(index)) {
-        newSet.delete(index);
-      } else {
-        newSet.add(index);
-      }
-      return newSet;
     });
   };
 
@@ -1164,11 +1146,18 @@ const InteractionForm = () => {
                           {questionTableColumns
                             .filter((col) => !col.hide)
                             .map((col: InteractionFormTableColumn) => {
+                              const permissionDisabled = shouldDisableField(
+                                'interaction_questions',
+                                isEditView,
+                                permissionMap
+                              );
                               const isDisabled =
                                 (!question.is_editable && isEditView) ||
+                                permissionDisabled ||
                                 col.disabled;
                               const isBtnDisabled =
                                 (!question.is_editable && isEditView) ||
+                                permissionDisabled ||
                                 col.disabled;
                               const error =
                                 errors.questions?.[index]?.[
@@ -1207,56 +1196,25 @@ const InteractionForm = () => {
                                     <div
                                       className={`flex relative ${error ? 'bg-[#FEF2F2]' : ''}`}
                                     >
-                                      {isDisabled ? (
-                                        <div
-                                          className='w-full p-2 min-h-[66px] max-h-[150px] overflow-y-auto'
-                                          style={{
-                                            scrollbarWidth: 'thin',
-                                            scrollbarColor: '#9ca3af #f3f4f6',
-                                          }}
-                                        >
-                                          {expandedQuestions.has(index) ||
-                                          question.question.length <= 360
-                                            ? question.question
-                                            : `${question.question.substring(0, 360)}...`}
-                                          {question.question.length > 360 && (
-                                            <button
-                                              type='button'
-                                              className='absolute right-2.5 -bottom-2 px-2 h-[20px] transform -translate-y-1/2 text-xs text-blue-500 underline border-none cursor-pointer bg-[#f3f4f6]'
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                toggleQuestionExpansion(index);
-                                              }}
-                                            >
-                                              {expandedQuestions.has(index)
-                                                ? 'View less'
-                                                : 'Read more'}
-                                            </button>
-                                          )}
-                                        </div>
-                                      ) : (
-                                        <textarea
-                                          name='interaction_question'
-                                          placeholder='Enter Interaction Question'
-                                          autoComplete='off'
-                                          className={`outline-none placeholder-custom-color w-full sm:text-sm p-2 resize-none focus:border-2 focus:border-blue-400 ${error ? 'bg-[#FEF2F2] focus:!bg-[#FEF2F2]' : ''}`}
-                                          onChange={(e) =>
-                                            handleQuestionChange(
-                                              index,
-                                              'question',
-                                              e.target.value
-                                            )
-                                          }
-                                          value={question.question}
-                                          rows={3}
-                                          disabled={isDisabled}
-                                          style={{
-                                            scrollbarWidth: 'thin',
-                                            scrollbarColor:
-                                              '#9ca3af transparent',
-                                          }}
-                                        />
-                                      )}
+                                      <textarea
+                                        name='interaction_question'
+                                        placeholder='Enter Interaction Question'
+                                        autoComplete='off'
+                                        className={`outline-none placeholder-custom-color w-full sm:text-sm p-2 resize-none focus:border-2 focus:border-blue-400 ${error ? 'bg-[#FEF2F2] focus:!bg-[#FEF2F2]' : ''}`}
+                                        onChange={(e) =>
+                                          handleQuestionChange(
+                                            index,
+                                            'question',
+                                            e.target.value
+                                          )
+                                        }
+                                        value={question.question}
+                                        disabled={isDisabled}
+                                        style={{
+                                          scrollbarWidth: 'thin',
+                                          scrollbarColor: '#9ca3af transparent',
+                                        }}
+                                      />
                                       {error && (
                                         <Tooltip
                                           title={error}
@@ -1306,62 +1264,25 @@ const InteractionForm = () => {
                                     <div
                                       className={`flex ${isDisabled && !question.notes ? '' : 'relative'} ${error ? 'bg-[#FEF2F2]' : ''}`}
                                     >
-                                      {isDisabled ? (
-                                        <div
-                                          className='w-full min-h-[66px] p-2 max-h-[150px] overflow-y-auto'
-                                          style={{
-                                            scrollbarWidth: 'thin',
-                                            scrollbarColor: '#9ca3af #f3f4f6',
-                                          }}
-                                        >
-                                          {!question.notes ? (
-                                            <span className='absolute top-2 left-3 text-[#7d98b6]'>
-                                              Enter Notes
-                                            </span>
-                                          ) : expandedQuestions.has(index) ||
-                                            question.notes.length <= 100 ? (
-                                            question.notes
-                                          ) : (
-                                            `${question.notes.substring(0, 100)}...`
-                                          )}
-                                          {question.notes.length > 100 && (
-                                            <button
-                                              type='button'
-                                              className='absolute right-2.5 bottom-0.5 px-2 h-[20px] text-xs text-blue-500 underline border-none cursor-pointer bg-[#f3f4f6]'
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                toggleQuestionExpansion(index);
-                                              }}
-                                            >
-                                              {expandedQuestions.has(index)
-                                                ? 'View less'
-                                                : 'Read more'}
-                                            </button>
-                                          )}
-                                        </div>
-                                      ) : (
-                                        <textarea
-                                          name='notes'
-                                          placeholder='Enter Notes'
-                                          autoComplete='off'
-                                          className={`outline-none placeholder-custom-color w-full sm:text-sm py-2 px-3 resize-none focus:border-2 focus:border-blue-400 ${error ? 'bg-[#FEF2F2] focus:!bg-[#FEF2F2]' : ''}`}
-                                          value={question.notes}
-                                          style={{
-                                            scrollbarWidth: 'thin',
-                                            scrollbarColor:
-                                              '#9ca3af transparent',
-                                          }}
-                                          onChange={(e) =>
-                                            handleQuestionChange(
-                                              index,
-                                              'notes',
-                                              e.target.value
-                                            )
-                                          }
-                                          rows={3}
-                                          disabled={isDisabled}
-                                        />
-                                      )}
+                                      <textarea
+                                        name='notes'
+                                        placeholder='Enter Notes'
+                                        autoComplete='off'
+                                        className={`outline-none placeholder-custom-color w-full sm:text-sm py-2 px-3 resize-none focus:border-2 focus:border-blue-400 ${error ? 'bg-[#FEF2F2] focus:!bg-[#FEF2F2]' : ''}`}
+                                        value={question.notes}
+                                        style={{
+                                          scrollbarWidth: 'thin',
+                                          scrollbarColor: '#9ca3af transparent',
+                                        }}
+                                        onChange={(e) =>
+                                          handleQuestionChange(
+                                            index,
+                                            'notes',
+                                            e.target.value
+                                          )
+                                        }
+                                        disabled={isDisabled}
+                                      />
                                       {error && (
                                         <Tooltip
                                           title={error}
@@ -1434,7 +1355,7 @@ const InteractionForm = () => {
 
               <div className='mt-2 pl-10'>
                 <button
-                  className='flex items-center cursor-pointer gap-1 bg-[#EAF0F5] h-[30px] rounded-[2px] color-[#2D3E4F] px-2 text-[12px] font-semibold disabled:bg-gray-100 disabled:cursor-default'
+                  className='flex items-center cursor-pointer gap-1 bg-[#EAF0F5] h-[30px] rounded-[2px] color-[#2D3E4F] px-2 text-[12px] font-semibold disabled:bg-gray-100 disabled:opacity-75 disabled:cursor-default'
                   type='button'
                   onClick={handleAddQuestion}
                   disabled={shouldDisableField(

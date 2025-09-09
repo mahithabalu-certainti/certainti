@@ -152,9 +152,6 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
       <div className='border border-[#CBD6E2]'>
         <SectionHeader
           title='Interaction History'
-          subValue={
-            interactionHistoryData?.data?.data?.interaction_rnumber || ''
-          }
           titleIcon={
             <InteractionDetailIcon
               alt='financial-header-icon'

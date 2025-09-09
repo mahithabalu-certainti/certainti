@@ -32,10 +32,7 @@ import { useGetResourceType } from '../../../../services/resource-list';
 import { TimesheetProjectExportListURLParams } from '../../../../types/timesheet-projects';
 import { useFetchState } from '../../../../services/account';
 import { FilterValue } from '../../components/filter/filterType';
-import {
-  ListTableColumn,
-  ShowHideTableColumn,
-} from '../../../../../components/table/types';
+import { ShowHideTableColumn } from '../../../../../components/table/types';
 
 interface TimeSheetProps {
   setExportType?: (type: ExportType) => void;
@@ -327,6 +324,13 @@ const Timesheet: React.FC<TimeSheetProps> = ({
       hide: false,
     },
   ];
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
+  };
+
+  const modalId = isModalOpen
+    ? 'account-timesheet-list-column-visibility-popover'
+    : undefined;
 
   const RestrictedColumns = [
     {
@@ -336,25 +340,25 @@ const Timesheet: React.FC<TimeSheetProps> = ({
     },
   ];
 
-  const [visibleColumns, setVisibleColumns] = useState<
-    ListTableColumn<TimeSheetList>[]
-  >(timesheetColumns.filter((col) => !col.hide));
+  const [columnVisibility, setColumnVisibility] = useState<
+    Record<string, boolean>
+  >(Object.fromEntries(timesheetColumns.map((col) => [col.id, !col.hide])));
+
+  const [columnOrder, setColumnOrder] = useState(
+    timesheetColumns.map((col) => col.id)
+  );
 
   const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
-    setVisibleColumns(
-      updatedColumns.filter(
-        (col) => !col.hide
-      ) as ListTableColumn<TimeSheetList>[]
+    const newVisibility = Object.fromEntries(
+      updatedColumns.map((col) => [col.id, !col.hide])
     );
+    setColumnVisibility(newVisibility);
+    setColumnOrder(updatedColumns.map((col) => col.id));
   };
 
-  const handlePopoverClose = () => {
-    setColumnAnchorEl(null);
-  };
-
-  const modalId = isModalOpen
-    ? 'account-interaction-list-column-visibility-popover'
-    : undefined;
+  const visibleColumns = columnOrder
+    .map((id) => timesheetColumns.find((col) => col.id === id)!)
+    .filter((col) => columnVisibility[col.id]);
 
   return (
     <div className='w-full pt-2 pl-2 pr-4'>

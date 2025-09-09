@@ -53,7 +53,7 @@ export const transformInteractionHistoryData = (
     {
       items: [
         {
-          label: 'Type',
+          label: 'Interaction Source',
           value: `${getValueOrDefault(nestedData?.interaction_source_name)} `,
         },
       ],

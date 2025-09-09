@@ -42,14 +42,14 @@ export const getInteractionFilterFields = (
         !permissionMap?.['r_number']?.edit &&
         !permissionMap?.['r_number']?.read,
     },
-    {
-      name: 'Iteration',
-      value: 'interaction_iteration',
-      type: 'number',
-      hide:
-        !permissionMap?.['interaction_iteration']?.edit &&
-        !permissionMap?.['interaction_iteration']?.read,
-    },
+    // {
+    //   name: 'Iteration',
+    //   value: 'interaction_iteration',
+    //   type: 'number',
+    //   hide:
+    //     !permissionMap?.['interaction_iteration']?.edit &&
+    //     !permissionMap?.['interaction_iteration']?.read,
+    // },
     {
       name: 'Age (Days)',
       value: 'interaction_age',
