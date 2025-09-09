@@ -537,13 +537,18 @@ class InteractionSchemaService {
     filters: Record<string, string>,
     sortBy: string = "created_datetime",
     sortOrder: string = "ASC",
-    disablePagination: boolean = false
+    type: string = "list"
   ) {
     try {
       const offset = (page - 1) * limit;
         let modifiedByFilter;
       let modifiedByConditions;
       let totalResults: number = 0;
+      let disablePagination = false;
+      if(type === "download")
+        {
+          disablePagination = true
+        }
        const detectConditions = (filters: any) => {
         if (!filters) return null;
         for (let conditions of Object.values(ALPHANUMERIC_CONDITIONS)) {
@@ -646,7 +651,17 @@ class InteractionSchemaService {
         });
       }
       totalResults = disablePagination ? finalData.length : count;
-      let finalPaginatedData = disablePagination ? finalData.slice((page - 1) * limit, page * limit) : finalData;
+      let finalPaginatedData = [];
+      if(type === "download") 
+        {
+          finalPaginatedData = finalData;
+        }
+        else
+        {
+           finalPaginatedData = disablePagination ? finalData.slice((page - 1) * limit, page * limit) : finalData;
+        }
+
+    
       return {
         technicalSummary: finalPaginatedData,
         count: totalResults

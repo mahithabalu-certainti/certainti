@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { HttpStatus, interactionFieldMappings, interactionSource, STATUS_MESSAGE } from "../utils/constants";
+import { HttpStatus, interactionFieldMappings, interactionSource, STATUS_MESSAGE, techSummaryFieldMappings } from "../utils/constants";
 import {
   deleteFromAzureBlob,
   errorLog,
@@ -1219,7 +1219,7 @@ async function exportTechnicalSummary(req: Request, res: Response) {
     const result = await interactionService.exportTechnicalSummary(value,parsedFilters)
     const fields = await interactionService.getAllowedExportFields(
           userId,
-          "interactions_view_edit"
+          "projects_tech_summary_view_edit"
         );
       const allowedFieldSet = new Set<string>();
       for (const field of fields) {
@@ -1244,13 +1244,13 @@ async function exportTechnicalSummary(req: Request, res: Response) {
           "technical_summary": d.technical_summary,
           "created_by": d.created_user_name,
           "created_datetime":formatDate(d.created_datetime),
-          "modified_by": d.updated_user_name,
+          "modified_by": d.modified_user_name,
           "modified_datetime": d.modified_datetime == null ? '' : formatDate(d.modified_datetime),
         };
 
         // Build exportRecord using allowed fields and resultMap
         const exportRecord: Record<string, any> = {};
-        interactionFieldMappings.forEach(mapping => {
+        techSummaryFieldMappings.forEach(mapping => {
           if (allowedFieldSet.has(mapping.permissionField)) {
             exportRecord[mapping.exportField] = resultMap[mapping.dataField];
           }

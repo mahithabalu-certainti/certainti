@@ -710,6 +710,18 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     { permissionField: 'modified_datetime', exportField: 'Last Updated Date', dataField: 'modified_datetime' }
   ];
 
+   export const techSummaryFieldMappings = [
+     
+    { permissionField: 'r_number', exportField: 'Sequence Number', dataField: 'r_number' },
+    { permissionField: 'version', exportField: 'Summary Version', dataField: 'version' },
+    { permissionField: 'created_by', exportField: 'Created By', dataField: 'created_by' },
+    { permissionField: 'created_datetime', exportField: 'Created On', dataField: 'created_datetime' },
+    { permissionField: 'modified_by', exportField: 'Updated By', dataField: 'modified_by' },
+    { permissionField: 'modified_datetime', exportField: 'Updated On', dataField: 'modified_datetime' }
+   
+  ];
+
+
   export const schedulerStatus = {
     Success : "success",
     Failed : "failed",
