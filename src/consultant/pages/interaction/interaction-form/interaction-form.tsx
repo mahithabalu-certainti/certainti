@@ -375,43 +375,45 @@ const InteractionForm = () => {
 
   const projectCodeList: SelectOption[] = useMemo(() => {
     return (
-      projectsData?.projects.flatMap((project) =>
-        project.ProjectFiscal && project.ProjectFiscal.length > 0
-          ? [
-              {
-                label: project.project_code,
-                value: project.project_code,
-              },
-            ]
-          : []
+      projectsData?.projects.flatMap(
+        (project) =>
+          project.ProjectFiscal?.map((fiscal) => ({
+            label: fiscal.project_code,
+            value: `${fiscal.project_code}_${fiscal.fiscal_year}`,
+          })) || []
       ) || []
     );
   }, [projectsData?.projects]);
 
   const handleProjectChange = (event: SelectChangeEvent<string>) => {
-    const projectCode = event.target.value;
+    const selectedValue = event.target.value;
+    const [projectCode, fiscalYear] = selectedValue.split('_');
 
     const selectedProject = projectList.find((project) =>
       project.ProjectFiscal?.some(
-        (fiscal) => fiscal.project_code === projectCode
+        (fiscal) =>
+          fiscal.project_code === projectCode &&
+          fiscal.fiscal_year === Number(fiscalYear)
       )
     );
 
     if (selectedProject) {
       const matchingFiscal = selectedProject.ProjectFiscal.find(
-        (fiscal) => fiscal.project_code === projectCode
+        (fiscal) =>
+          fiscal.project_code === projectCode &&
+          fiscal.fiscal_year === Number(fiscalYear)
       );
 
       setFormData((prev) => ({
         ...prev,
-        projectCode: matchingFiscal?.project_code || '',
+        projectCode: selectedValue || '',
         projectName: matchingFiscal?.project_name || '',
         fiscalYear: matchingFiscal?.fiscal_year || 0,
       }));
 
       setSelectedProject({
         account_name: matchingFiscal?.account_name || '',
-        project_code: matchingFiscal?.project_code || '',
+        project_code: selectedValue || '',
         project_name: matchingFiscal?.project_name || '',
         fiscal_year: matchingFiscal?.fiscal_year || 0,
         project_fiscal_rid: matchingFiscal?.rid || '',
