@@ -342,6 +342,8 @@ export class WebHookService {
         interaction.rid
       );
 
+      const unmatchedSeqNums: string[] = [];
+
       for (const answer of answers) {
         const questionSeqNum = answer?.questionSeqId || ""; // Adjust key if needed
 
@@ -353,11 +355,36 @@ export class WebHookService {
         if (matchingItem) {
           answer.rid = matchingItem.rid;
         } else {
+          unmatchedSeqNums.push(questionSeqNum);
           this.logger.warn(
             `No matching interaction item found for question_seq_num: ${questionSeqNum}`
           );
         }
       }
+
+      if (unmatchedSeqNums.length > 0) {
+        await this.logWebhookEmailEvent({
+          schemaName: mailProcessedResults.accountNumber,
+          emailSubject: mailProcessedResults.subject,
+          emailSender: mailProcessedResults.from,
+          status: "FAILED",
+          errorMessage: "Invalid Question Number",
+        });
+        this.sendMailWithAttachment(
+          finalResult,
+          "",
+          null,
+          "Invalid Question Number",
+          finalResult.forwardEmail,
+          this.graphClient,
+          receivedEmail
+        );
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: "Invalid Question Number",
+        };
+      }      
 
       const responsSource: any = await this.fetchResponseSource();
 
@@ -470,7 +497,7 @@ export class WebHookService {
   }
 
   async validateProjectData(
-    schemaName: string,
+    accountNumber: string,
     {
       projectId,
       projectName,
@@ -495,6 +522,8 @@ export class WebHookService {
   
     try {
       const orgDbSequelize = await this.interactionModelService.getSequelize();
+
+      const schemaName =  `trd365_${accountNumber.replace(/\D/g, "")}`;
   
       const [result] = await orgDbSequelize.query(
         `SELECT 1 FROM "${schemaName}".project_fiscal 
@@ -998,12 +1027,30 @@ export class WebHookService {
       return false;
     }
 
+    const missingFields: Array<{ rowIndex: number; missing: string[] }> = [];
+
     // Validate the data rows
     for (let i = 6; i < array.length; i++) {
       const row = array[i];
+      const questionId = row?.[0];
       const question = row?.[1];
       const answer = row?.[2];
+      const notes = row?.[3];
       const isMandatory = row?.[4]?.trim().toLowerCase();
+
+      const missing: string[] = [];
+
+      if (!questionId) missing.push("questionId");
+      if (!question) missing.push("question");
+      if (!answer) missing.push("answer");
+      if (!isMandatory) missing.push("isMandatory");
+
+      if (missing.length > 0) {
+        missingFields.push({
+          rowIndex: i + 1,
+          missing,
+        });
+      }
 
       // If row is empty, skip
       if (!question && !answer && !isMandatory) continue;
@@ -1012,6 +1059,10 @@ export class WebHookService {
       if (isMandatory === "yes" && !answer?.trim()) {
         return false;
       }
+    }
+
+    if (missingFields.length > 0) {
+      return false;
     }
 
     return true;

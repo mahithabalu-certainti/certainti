@@ -28,13 +28,11 @@ export class InteractionService {
   }> {
     try {
       const newCustomJwtToken = await this.generateNewToken(authToken);
-      const responsSource: any = await this.fetchResponseSource();
 
       const response = await axios.put(
         `${INTERACTION_BASE_URL}/extInteractions/updateResponse`,
         {
           ...interactionData,
-          response_source_rid: responsSource[0]?.rid || "",
         },
         {
           headers: {
