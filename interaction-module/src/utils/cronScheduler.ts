@@ -7,7 +7,7 @@ const interactionService = services.interactionService
 const interactionSchemaService = new InteractionSchemaService()
 
 export const schedulerForTriggerAi = () => {
-    const task = cron.schedule('*/1 * * * *', async () => {
+    const task = cron.schedule(process.env.SCHEDULER_EXPRESSION!, async () => {
         console.log("Scheduler starts at : ", new Date().toISOString())
         try {
             const schedulerRecord = await interactionSchemaService.createSchedulerRecords()
