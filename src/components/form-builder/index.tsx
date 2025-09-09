@@ -2276,12 +2276,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               ] as string;
               const endDate = constructFormData['resource_enddate'] as string;
 
-              // Check if one is provided without the other
-              if ((startDate && !endDate) || (!startDate && endDate)) {
+              if (!startDate && endDate) {
                 hasError = true;
                 return {
                   ...field,
-                  error: 'Both Effective Date and End Date must be provided',
+                  error: 'Effective Date is required if End Date is provided',
                 };
               }
 
