@@ -191,7 +191,7 @@ class SchemaService {
         project_fiscal_rid VARCHAR(50),
         technical_summary TEXT,
         version INT DEFAULT 1,
-        status VARCHAR(50),
+        status_rid VARCHAR(50),
         entity_transaction_rid VARCHAR(50),
         technical_summary_refinement_prompt TEXT
       );
@@ -1997,7 +1997,7 @@ private async createInteractionTable(
       interaction_iteration integer,
       last_resent_on timestamp with time zone,
       last_reminder_on timestamp with time zone,
-      last_reminder_by timestamp with time zone,
+      last_reminder_by varchar(255),
       response_from character varying(255),
       response_updated_on timestamp with time zone,
       response_updated_by character varying(50),

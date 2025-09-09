@@ -18,9 +18,12 @@ import configurations from "../config/config";
 import {
   createInteractionSchema,
   getInteractionStatusSchema,
+  listAllTechnicalSummarySchema,
+  listTechnicalSummarySchema,
   sendInteractionSchema,
   updateInteractionResponseSchema,
   updateInteractionSchema,
+  updateTechSummaryContextSchema,
 } from "../lib/joi/schemas/schema";
 
 // import Joi schemas and interaction services as needed
@@ -268,6 +271,136 @@ async function getInteractionDetailsById(
     return;
   }
 }
+async function getTechnicalSummaryDetailsById(
+  req: Request,
+  res: Response
+): Promise<void> {
+  const methodName = "Get technical summary details";
+  try {
+    console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
+    const value = await validateRequest(req, listTechnicalSummarySchema, res, "GET");
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    if (!value) {
+      errorLog(
+        methodName,
+        "tech_summary_rid and account_rid are required in params"
+      );
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "interactionRid and accountId are required in params"
+      );
+      return;
+    }
+
+    const interactionDetails =
+      await interactionService.getTechnicalSummaryDetailsById(
+        value.tech_summary_rid,
+        value.account_rid
+      );
+    console.log(
+      `[${methodName}] Service response:`,
+      JSON.stringify(interactionDetails)
+    );
+    if (interactionDetails.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, interactionDetails.data);
+      return;
+    } else {
+      errorLog(methodName, interactionDetails.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        interactionDetails.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function updateTechSummaryContext(req: Request, res: Response): Promise<void> {
+  const methodName = "Update technical summary context";
+  try {
+    console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
+    const value = await validateRequest(req, updateTechSummaryContextSchema, res);
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    if (!value) {
+      errorLog(methodName, "Request body is empty");
+      return;
+    }
+    const interaction = await interactionService.updateTechSummaryContext(
+      value.summary_context,
+      value.tech_summary_rid,
+      value.account_rid,
+      userId
+    );
+    console.log(
+      `[${methodName}] Service response:`,
+      JSON.stringify(interaction)
+    );
+    if (interaction.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, interaction.data, interaction.message);
+      return;
+    } else {
+      errorLog(methodName, interaction.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        interaction.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+
+
+
 async function getInteractionQuestionsById(
   req: Request,
   res: Response
@@ -536,8 +669,6 @@ async function exportAllInteractions (req : Request, res : Response) {
 
     if(result.status == HttpStatus.SUCCESS) {
       const finalStructuredData = result.data.interactions.length < 1 ? [] : result.data.interactions.map((d: any) => {
-        // Build resultMap with formatted fields
-        console.log(d)
         let resultMap: { [key: string]: any } = {
           "r_number": d.r_number,
           "project_code": d.project_code,
@@ -872,7 +1003,8 @@ async function sendInteraction(req: Request, res: Response): Promise<void> {
      const interaction = await interactionService.sendInteraction(
        value.interactions,
        value.account_rid,
-       userId
+       userId,
+       value.is_interaction_followup
      );
     console.log(
       `[${methodName}] Service response:`,
@@ -1002,9 +1134,9 @@ async function listTechnicalSummary(req: Request, res: Response) {
   try {
     console.log(`[${methodName}] Request received`);
     const userId = req.headers["x-user-id"] as string;
-    let data = req.query;
+    const value = await validateRequest(req, listAllTechnicalSummarySchema, res, "GET");
     console.log(`[${methodName}] userId:`, userId);
-    console.log
+    console.log(`[${methodName}] value:`, value);
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -1015,7 +1147,20 @@ async function listTechnicalSummary(req: Request, res: Response) {
       );
       return;
     }
-    const result = await interactionService.listTechnicalSummary(data)
+    if (!value) return;
+    let parsedFilters: Record<string, any> = {};
+    try {
+      parsedFilters = JSON.parse(value.filters);
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+
+    const page: number = parseInt(value.page, 10) || 1;
+    const limit: number = parseInt(value.limit, 10) || 10;
+    const result = await interactionService.listTechnicalSummary(value,page,limit,parsedFilters)
     if(result.statusCode === HttpStatus.SUCCESS) {
       return res.status(HttpStatus.SUCCESS).json({
         statusCode : HttpStatus.SUCCESS,
@@ -1023,6 +1168,101 @@ async function listTechnicalSummary(req: Request, res: Response) {
         statusMessage : STATUS_MESSAGE.interactionHistoryFetched,
         data : result.data
       })
+    } else {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.dataNotFound,
+        data : result.data
+      })
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    console.log(`[${methodName}] Exception:`, error);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+async function exportTechnicalSummary(req: Request, res: Response) {
+  const methodName = "exportTechnicalSummary"
+  try {
+
+    console.log(`[${methodName}] Request received`);
+    const userId = req.headers["x-user-id"] as string;
+    const value = await validateRequest(req, listAllTechnicalSummarySchema, res, "GET");
+    console.log(`[${methodName}] userId:`, userId);
+    console.log(`[${methodName}] value:`, value);
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    if (!value) return;
+    let parsedFilters: Record<string, any> = {};
+    try {
+      parsedFilters = JSON.parse(value.filters);
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+    const result = await interactionService.exportTechnicalSummary(value,parsedFilters)
+    const fields = await interactionService.getAllowedExportFields(
+          userId,
+          "interactions_view_edit"
+        );
+      const allowedFieldSet = new Set<string>();
+      for (const field of fields) {
+        if (field.read) {
+          allowedFieldSet.add(field.field_name);
+        }
+      }
+     const isValidTZ = value.timezone &&  isValidTimezone(value.timezone);
+       const formatDate = (date?: Date) =>
+        date
+          ? moment(date).tz(isValidTZ ? value.timezone : 'UTC').format('YYYY-MM-DD, hh:mm:ss A')
+          : null;
+    if(result.statusCode === HttpStatus.SUCCESS) {
+         const finalStructuredData = result?.data?.techSummaryInfo.length < 1 ? [] : result?.data?.techSummaryInfo.map((d: any) => {
+        let resultMap: { [key: string]: any } = {
+          "r_number": d.r_number,
+          "project_code": d.project_code,
+          "fiscal_year": d.fiscal_year,
+          "status_name": d.status_name,
+          "version": d.version,
+          "summary_context": d.summary_context,
+          "technical_summary": d.technical_summary,
+          "created_by": d.created_user_name,
+          "created_datetime":formatDate(d.created_datetime),
+          "modified_by": d.updated_user_name,
+          "modified_datetime": d.modified_datetime == null ? '' : formatDate(d.modified_datetime),
+        };
+
+        // Build exportRecord using allowed fields and resultMap
+        const exportRecord: Record<string, any> = {};
+        interactionFieldMappings.forEach(mapping => {
+          if (allowedFieldSet.has(mapping.permissionField)) {
+            exportRecord[mapping.exportField] = resultMap[mapping.dataField];
+          }
+        });
+
+        return exportRecord;
+      });
+
+       const generateBase64Response = await generateExcelBase64(finalStructuredData, "Technical Summary")
+        handleSuccessResponse(res, generateBase64Response);
     } else {
       return res.status(HttpStatus.SUCCESS).json({
         statusCode : HttpStatus.SUCCESS,
@@ -1322,5 +1562,8 @@ export default {
   triggerAIAndPassResponse,
   exportInteractionHistory,
   processKafkaMessages,
-  listTechnicalSummary
+  listTechnicalSummary,
+  getTechnicalSummaryDetailsById,
+  updateTechSummaryContext,
+  exportTechnicalSummary
 };
