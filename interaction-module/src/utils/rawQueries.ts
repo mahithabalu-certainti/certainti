@@ -321,7 +321,7 @@ export const listAllInteractionSummary = (
     i.interaction_url, p.r_number AS parent_r_number, i.interaction_type_rid,
     it.interaction_type_name, ir.rid AS response_source_rid, ir.response_source_name,
     i.created_by, CONCAT(u.first_name, ' ', u.last_name) AS created_user_name,
-    CONCAT(uu.first_name, ' ', uu.last_name) AS updated_user_name,
+    CASE WHEN uu.first_name IS NULL THEN i.modified_by ELSE CONCAT(uu.first_name, ' ', uu.last_name) END AS updated_user_name,
     i.created_datetime, i.modified_datetime, i.account_rid, i.project_rid,
     i.interaction_source_rid, sn.interaction_source_name,
     i.project_fiscal_rid, COUNT(*) OVER() AS total_records, i.modified_by, i.interaction_age,

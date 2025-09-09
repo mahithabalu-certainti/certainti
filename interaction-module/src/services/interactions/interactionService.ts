@@ -1182,7 +1182,7 @@ export class InteractionService {
           created_by: d.created_by,
           created_user_name: createdMap.get(d.created_by) || null,
           modified_by: d.modified_by,
-          updated_user_name: modifiedMap.get(d.modified_by) || null,
+          updated_user_name: modifiedMap.get(d.modified_by) == undefined ? d.modified_by : modifiedMap.get(d.modified_by),
           has_email_recipient: data.flag === interactionFlag.account
             ? recipientMap.get(d.project_fiscal_rid) || false
             : hasEmailRecipient
