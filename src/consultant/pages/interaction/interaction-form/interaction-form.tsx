@@ -10,8 +10,6 @@ import {
   TableHead,
   TableRow,
   Tooltip,
-  SelectChangeEvent,
-  Skeleton,
 } from '@mui/material';
 import { Project } from '../../../types/project';
 import {
@@ -21,7 +19,6 @@ import {
   InteractionFormQuestion,
   InteractionFormTableColumn,
   InteractionQuestionErrors,
-  SelectOption,
   StatusActionEnum,
   StatusTypeEnum,
 } from '../../../types';
@@ -373,20 +370,20 @@ const InteractionForm = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [commonSuccess, isEditView]);
 
-  const projectCodeList: SelectOption[] = useMemo(() => {
-    return (
-      projectsData?.projects.flatMap(
-        (project) =>
-          project.ProjectFiscal?.map((fiscal) => ({
-            label: fiscal.project_code,
-            value: `${fiscal.project_code}_${fiscal.fiscal_year}`,
-          })) || []
-      ) || []
-    );
-  }, [projectsData?.projects]);
+  const projectCodeList: ExpandCollapseSelectOptions[] = useMemo(() => {
+    if (!projectsData) return [];
 
-  const handleProjectChange = (event: SelectChangeEvent<string>) => {
-    const selectedValue = event.target.value;
+    return projectsData?.projects?.map((project) => ({
+      group: project.project_code,
+      options:
+        project.ProjectFiscal?.map((child) => ({
+          label: `FY${child.fiscal_year} - ${child.project_code}`,
+          value: `${child.project_code}_${child.fiscal_year}`,
+        })) || [],
+    }));
+  }, [projectsData]);
+
+  const handleProjectChange = (selectedValue: string) => {
     const [projectCode, fiscalYear] = selectedValue.split('_');
 
     const selectedProject = projectList.find((project) =>
@@ -724,117 +721,22 @@ const InteractionForm = () => {
             >
               {(!isProjectFields || isGlobalInteraction) && !isEditView ? (
                 <div className='w-full'>
-                  <label
-                    className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
-                    htmlFor='project_code'
-                  >
-                    Project Code
-                    <span className='text-red-500'> *</span>
-                  </label>
-                  {projectsLoading && isGlobalInteraction ? (
-                    <div>
-                      <Skeleton
-                        variant='rounded'
-                        width='100%'
-                        height={32}
-                        sx={{ borderRadius: '2px' }}
-                      />
-                    </div>
-                  ) : (
-                    <Select
-                      name='project_code'
-                      className={`custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]
-                      ${formData.projectCode === '' ? 'text-[#7D98B6] ' : ''} ${errors?.projectCode && 'border-red-500 bg-[#FEF2F2]'}
-                    `}
-                      onChange={handleProjectChange}
-                      value={formData.projectCode}
-                      displayEmpty
-                      required
-                      fullWidth
-                      size='small'
-                      MenuProps={{
-                        PaperProps: {
-                          sx: {
-                            maxWidth: 300,
-                            maxHeight: 300,
-                            marginTop: '4px',
-                            boxShadow:
-                              'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
-                            '& .MuiMenuItem-root': {
-                              fontSize: '13px',
-                              padding: '6px 12px',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                            },
-                          },
-                        },
-                      }}
-                      sx={{
-                        height: '32px',
-                        fontSize: '13px',
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          border: '2px solid #60A5FA',
-                        },
-                        '& .MuiOutlinedInput-root': {
-                          '&.Mui-focused': {
-                            boxShadow: 'none',
-                          },
-                        },
-                        '.MuiSelect-select': {
-                          padding: '6px 6px',
-                          color:
-                            formData.projectCode === '' ? '#7D98B6' : 'black',
-                        },
-                        '&.Mui-disabled': {
-                          backgroundColor: '#f3f4f6',
-                        },
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          border: errors?.projectCode
-                            ? '1px solid #ef4444'
-                            : '1px solid #CBD6E2',
-                          borderRadius: '2px',
-                        },
-                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                          border: errors?.projectCode
-                            ? '1px solid #ef4444'
-                            : '1px solid #CBD6E2',
-                        },
-                        '& svg': {
-                          color: '#7D98B6',
-                        },
-                      }}
-                    >
-                      <MenuItem
-                        value=''
-                        sx={{
-                          color: '#425A76',
-                          fontSize: '13px',
-                          fontWeight: '500',
-                        }}
-                      >
-                        Choose Project Code
-                      </MenuItem>
-                      {projectCodeList?.map((option, i) => (
-                        <MenuItem
-                          sx={{
-                            color: '#425A76',
-                            fontSize: '13px',
-                            fontWeight: '500',
-                          }}
-                          key={`${option.value}-${i}`}
-                          value={option.value}
-                          title={option.label}
-                        >
-                          {option.label}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  )}
-                  {errors?.projectCode && (
-                    <span className='text-[12px] text-red-400 col-span-full'>
-                      {errors.projectCode}
-                    </span>
-                  )}
+                  <ExpandCollapseDropdown
+                    label='Project Code'
+                    selectedValue={formData.projectCode}
+                    selectedLabel={
+                      formData.fiscalYear && formData.projectCode
+                        ? `FY${formData.fiscalYear} - ${formData.projectCode.split('_')[0]}`
+                        : ''
+                    }
+                    required={true}
+                    onChange={handleProjectChange}
+                    dropdownOptions={projectCodeList}
+                    placeholder='Choose Project Code'
+                    error={errors?.projectCode}
+                    expandAll={true}
+                    isLoading={projectsLoading && isGlobalInteraction}
+                  />
                 </div>
               ) : (
                 <div

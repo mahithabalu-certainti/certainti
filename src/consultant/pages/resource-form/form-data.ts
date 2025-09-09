@@ -848,10 +848,10 @@ export const ResourceFormData = (
               isEditView &&
               !resourcePermissionMap?.['resource_enddate']?.read &&
               !resourcePermissionMap?.['resource_enddate']?.edit,
-            greaterThan: {
-              field: 'resource_startdate',
-              message: 'End Date must be after Effective Date',
-            },
+            // greaterThan: {
+            //   field: 'resource_startdate',
+            //   message: 'End Date must be after Effective Date',
+            // },
           }),
           createEmptyField('', '', {
             name: 'emptyData',
