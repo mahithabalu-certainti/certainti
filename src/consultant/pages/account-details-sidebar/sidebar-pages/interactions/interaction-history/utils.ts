@@ -56,21 +56,5 @@ export const transformInteractionHistoryData = (
         },
       ],
     },
-    {
-      items: [
-        {
-          label: 'Project Code',
-          value: getValueOrDefault(nestedData?.project_code),
-        },
-      ],
-    },
-    {
-      items: [
-        {
-          label: 'Project Name',
-          value: getValueOrDefault(nestedData?.project_name),
-        },
-      ],
-    },
   ];
 };

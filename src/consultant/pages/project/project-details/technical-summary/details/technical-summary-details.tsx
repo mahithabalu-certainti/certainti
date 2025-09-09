@@ -218,7 +218,7 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
               Technical Summary Information
             </div>
             <div
-              className={`p-3 min-h-20 mx-3 my-2
+              className={`min-h-20 mx-6 my-2
   [&_p]:mb-2
   [&_strong]:font-bold [&_em]:italic
   [&_u]:underline [&_s]:line-through
@@ -255,13 +255,13 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
             className={`${updateTechSummaryText.isPending ? 'pointer-events-none cursor-default' : ''} ${hideAdditionalSummaryText ? 'hidden' : ''}`}
           >
             <div className='flex items-center align-middle px-6 h-[30px] border-t border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
-              Summary Context
+              Refinement Prompt
             </div>
             <div className='py-2 px-6'>
               <TextareaAutosize
                 ref={textareaRef}
                 name='summary_context'
-                placeholder='Enter Summary Context'
+                placeholder='Enter Refinement Prompt'
                 autoComplete='off'
                 minRows={3}
                 maxRows={5}
