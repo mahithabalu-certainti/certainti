@@ -1367,8 +1367,8 @@ class InteractionSchemaService {
       );
       responseData.response_source_rid = responseSourceIDs[0]?.rid ?? null;
       if (
-        responseData.response_source === "Email" ||
-        responseData.response_source === "Link"
+        responseData.response_source === "Email Reply" ||
+        responseData.response_source === "Email"
       ) {
         const interaction = await Interaction.findOne({
           where: { rid: responseData.interaction_rid },
@@ -1377,6 +1377,10 @@ class InteractionSchemaService {
           ? [{ recipient_name: interaction.recipient_name }]
           : [{ recipient_name: null }];
         resonseBy = fetchRecipientName[0]?.recipient_name ?? userId;
+      }
+      else
+      {
+        resonseBy =userId
       }
       const [emailInfo]: any[] = await this.mainDbSequelize.query(
         rawQueries.fetchUserEmail(userId)
@@ -1483,7 +1487,7 @@ class InteractionSchemaService {
           response_updated_on: new Date(),
           response_updated_by: userEmailId,
           response_source_rid: responseData.response_source_rid,
-          modified_by: userEmailId,
+          modified_by: resonseBy,
           modified_datetime: new Date(),
           //   attachment_count: attachmentcount
         };
@@ -1493,7 +1497,7 @@ class InteractionSchemaService {
           response_updated_on: new Date(),
           response_updated_by: userEmailId,
           response_source_rid: responseData.response_source_rid,
-          modified_by: userEmailId,
+          modified_by: resonseBy,
           modified_datetime: new Date(),
           //   attachment_count: attachmentcount
         };
