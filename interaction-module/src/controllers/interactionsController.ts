@@ -691,7 +691,6 @@ async function exportAllInteractions (req : Request, res : Response) {
             }
           }
         : null,
-          "parent_interaction_rid": d.parent_interaction_rid,
           "interaction_type_name": d.interaction_type_name,
           "response_source_name": d.response_source_name,
           "created_by": d.created_user_name,
@@ -838,7 +837,6 @@ async function exportAllInteractionSummary (req : Request, res : Response) {
               }
               }
             : null,
-          "parent_interaction_id": d.parent_interaction_rid,
           "interaction_type_name": d.interaction_type_name,
           "response_source_name": d.response_source_name,
           "created_by": d.created_user_name,
@@ -1165,7 +1163,7 @@ async function listTechnicalSummary(req: Request, res: Response) {
       return res.status(HttpStatus.SUCCESS).json({
         statusCode : HttpStatus.SUCCESS,
         statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
-        statusMessage : STATUS_MESSAGE.interactionHistoryFetched,
+        statusMessage : HttpStatus.SUCCESS_NOTIFICATION,
         data : result.data
       })
     } else {

@@ -285,7 +285,7 @@ export class InteractionService {
 
       return {
         statusCode: HttpStatus.SUCCESS,
-        message: STATUS_MESSAGE.interactionUpdated,
+        message: STATUS_MESSAGE.techSummarycontextUpdated,
         data: {
           interactions: null,
         },
