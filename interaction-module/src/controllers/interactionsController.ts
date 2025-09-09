@@ -1163,7 +1163,7 @@ async function listTechnicalSummary(req: Request, res: Response) {
       return res.status(HttpStatus.SUCCESS).json({
         statusCode : HttpStatus.SUCCESS,
         statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
-        statusMessage : STATUS_MESSAGE.interactionHistoryFetched,
+        statusMessage : HttpStatus.SUCCESS_NOTIFICATION,
         data : result.data
       })
     } else {
