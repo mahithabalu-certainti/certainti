@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 import initExpressServer from "./servers/expressServer";
 import { schedulerForTriggerAi } from "./utils/cronScheduler";
-// import './services/cronJob/renewSubscriptions';
+import './services/cronJob/renewSubscriptions';
 // import initGraphQLServer from "./servers/graphqlServer";
 
 import { Kafka } from "kafkajs";

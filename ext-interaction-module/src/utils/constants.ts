@@ -231,6 +231,9 @@ export const rawQueries = {
     return `
     SELECT rid, first_name, last_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (${ids})`;
   },
+  fetchEmailResponseSourceRid(): string {
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.interaction_response_source WHERE response_source_name = 'Email'`;
+  },
 };
 
 export const filterTypesForSummaryInteractions: Record<string, any> = {

@@ -2,15 +2,18 @@ import { Logger } from "winston";
 import FormData from "form-data";
 import axios, { AxiosError } from "axios";
 import { InteractionResponse } from "../../utils/types";
-import { HttpStatus } from "../../utils/constants";
+import { HttpStatus, rawQueries } from "../../utils/constants";
 import { generateNewCustomJwtKey } from "../../utils/otpGenerator";
+import { InteractionModelService } from "../interactionModelsService";
 
 const INTERACTION_BASE_URL = process.env.INTERACTION_BASE_URL!;
 export class InteractionService {
   private logger: Logger;
+  private interactionModelService: InteractionModelService;
 
   constructor(logger: Logger) {
     this.logger = logger;
+    this.interactionModelService = new InteractionModelService();
   }
 
   async updateInteractionResponse(
@@ -25,11 +28,13 @@ export class InteractionService {
   }> {
     try {
       const newCustomJwtToken = await this.generateNewToken(authToken);
+      const responsSource: any = await this.fetchResponseSource();
 
       const response = await axios.put(
         `${INTERACTION_BASE_URL}/extInteractions/updateResponse`,
         {
           ...interactionData,
+          response_source_rid: responsSource[0]?.rid || "",
         },
         {
           headers: {
@@ -222,6 +227,18 @@ export class InteractionService {
     } catch (err) {
       return this.handleError(err);
     }
+  }
+
+  async fetchResponseSource() {
+    const mainDbSequelize =
+      await this.interactionModelService.getMainSequelize();
+
+    const responseSource = await mainDbSequelize.query(
+      rawQueries.fetchEmailResponseSourceRid(),
+      { type: "SELECT" }
+    );
+
+    return responseSource;
   }
 
   async generateNewToken(oldToken: string): Promise<string> {

@@ -114,6 +114,7 @@ class SchemaService {
 
       await this.createOtpEntries(schemaName, sequelize);
       await this.createOtpEntriesHistory(schemaName, sequelize);
+      await this.createEmailWebhookHistory(schemaName, sequelize);
 
       await transaction.commit();
     } catch (Err) {
@@ -321,8 +322,10 @@ class SchemaService {
         auto_access_rd BOOLEAN NOT NULL,
         business_details VARCHAR(2000) NOT NULL,
         support_email VARCHAR(255),
-        subscription_created BOOLEAN DEFAULT FALSE
-
+        subscription_created BOOLEAN DEFAULT FALSE,
+        tenant_id VARCHAR(50),
+        client_id VARCHAR(50),
+        client_secret VARCHAR(300)
       );
     `);
 
@@ -2344,6 +2347,24 @@ private async createInteractionTable(
     await sequelize.query(`
      ALTER TABLE "${schemaName}".otp_entries_history ADD CONSTRAINT fk_otp_entries_history_account_rid FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON DELETE SET NULL;
       ALTER TABLE "${schemaName}".otp_entries_history ADD CONSTRAINT fk_otp_entries_history_interaction_rid FOREIGN KEY (interaction_rid) REFERENCES "${schemaName}".interactions(rid) ON DELETE SET NULL;
+    `);
+  }
+
+  private async createEmailWebhookHistory(schemaName: string, sequelize: any){
+    await sequelize.query(`
+      CREATE TABLE "${schemaName}".webhook_email_history (
+        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        created_by varchar(50) NOT NULL,
+        created_datetime timestamp NOT NULL,
+        email_subject varchar(500) NOT NULL,
+        email_sender varchar(200) NOT NULL,
+        attachment_name varchar(255) NULL,
+        extracted_answers text NULL,
+        uploaded_time timestamp NOT NULL,
+        status varchar(20) NOT NULL,
+        error_message text NULL,
+        CONSTRAINT webhook_email_history_status_check CHECK (((status)::text = ANY ((ARRAY['SUCCESS'::character varying, 'FAILED'::character varying, 'MISSING_ATTACHMENT'::character varying, 'INVALID_FORMAT'::character varying, 'NO_MATCH_FOUND'::character varying])::text[])))
+      );  
     `);
   }
 
