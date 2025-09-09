@@ -105,9 +105,9 @@ const TabPanel: React.FC<TabProps> = ({
   permissionMapTaskTableColumn,
   fiscalDatesArg,
   showSearch,
-  searchDisabled,
+  searchDisabled = false,
   searchHidden,
-  searchPlaceholder,
+  searchPlaceholder = 'Search',
   onSearchTextChange,
   onSearch,
 }) => {

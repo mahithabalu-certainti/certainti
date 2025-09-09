@@ -197,6 +197,9 @@ const Financial: React.FC<ProjectFinancialProps> = ({
         showRefresh={tabParam === 'resource_cost'}
         onRefreshClick={handleRefresh}
         onFilterChange={handleFilterChange}
+        showSearch={tabParam === 'resource_cost'}
+        onSearch={(text) => console.log('Searching for:', text)}
+        onSearchTextChange={(text) => console.log('Typing:', text)}
       />
       <SectionHeader
         title='Financial Summary'

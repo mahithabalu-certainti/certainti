@@ -423,8 +423,6 @@ const Attachments: React.FC<AttachmentsProps> = ({
         onRefreshClick={onRefreshClick}
         onFilterChange={handleCategory}
         showSearch={true}
-        searchDisabled={false}
-        searchPlaceholder='Search'
         onSearch={(text) => console.log('Searching for:', text)}
         onSearchTextChange={(text) => console.log('Typing:', text)}
       />

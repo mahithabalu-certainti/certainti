@@ -425,6 +425,9 @@ const Attachments: React.FC<AttachmentsProps> = ({
         showRefresh={showUploads ? false : true}
         onRefreshClick={onRefreshClick}
         onFilterChange={handleCategory}
+        showSearch={showUploads ? false : true}
+        onSearch={(text) => console.log('Searching for:', text)}
+        onSearchTextChange={(text) => console.log('Typing:', text)}
       />
       {showUploads ? (
         <Uploads

@@ -513,6 +513,9 @@ export const ProjectTask = ({
         projectResourceProjectID={projectID}
         permissionMapTaskTableColumn={permissionMapTaskTableColumn}
         fiscalDatesArg={fiscalDatesArg}
+        showSearch={viewDetails ? false : true}
+        onSearch={(text) => console.log('Searching for:', text)}
+        onSearchTextChange={(text) => console.log('Typing:', text)}
       />
       {showUploads ? (
         <Uploads

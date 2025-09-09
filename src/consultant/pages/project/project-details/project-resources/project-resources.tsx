@@ -581,6 +581,9 @@ export const ProjectResources = ({
         setSortFilterCount={setSortFilterCount}
         projectResourceAccountID={accountID}
         projectResourceProjectID={projectID}
+        showSearch={viewDetails ? false : true}
+        onSearch={(text) => console.log('Searching for:', text)}
+        onSearchTextChange={(text) => console.log('Typing:', text)}
       />
       <>
         {showUploads ? (

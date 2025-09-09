@@ -88,9 +88,9 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
   updatedYear,
   showFiscalYear,
   showSearch,
-  searchDisabled,
+  searchDisabled = false,
   searchHidden,
-  searchPlaceholder,
+  searchPlaceholder = 'Search',
   onSearchTextChange,
   onSearch,
 }) => {

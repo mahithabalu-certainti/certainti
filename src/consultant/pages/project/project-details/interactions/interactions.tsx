@@ -530,6 +530,9 @@ const Interactions: React.FC<InteractionsProps> = ({
         setSortFilterCount={setSortFilterCount}
         showRefresh={!viewDetails}
         onRefreshClick={handleRefresh}
+        showSearch={viewDetails ? false : true}
+        onSearch={(text) => console.log('Searching for:', text)}
+        onSearchTextChange={(text) => console.log('Typing:', text)}
       />
       {viewDetails && !viewResponseHistory ? (
         <InteractionDetails
