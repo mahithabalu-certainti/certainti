@@ -6,13 +6,6 @@ const textOptions = [
   { option: 'Contains', value: 'contains' },
 ];
 
-const nonReqTextOptions = [
-  { option: 'Equals', value: 'equals' },
-  { option: 'Not-Equals', value: 'not_equals' },
-  { option: 'Contains', value: 'contains' },
-  { option: 'Is-Empty', value: 'is_empty' },
-];
-
 const enumOptions = [
   { option: 'Equals', value: 'equals' },
   { option: 'Not Equals', value: 'not_equals' },
