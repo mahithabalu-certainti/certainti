@@ -1925,8 +1925,8 @@ class InteractionSchemaService {
       // Remove duplicates
       const uniqueCCEmails = Array.from(new Set(ccEmails));
       return {
-        name: interactionRecipients.key_contact_name ?? null,
-        email: interactionRecipients.key_contact_email ?? null,
+        name: interactionRecipients?.key_contact_name ?? null,
+        email: interactionRecipients?.key_contact_email ?? null,
         ccEmails: uniqueCCEmails ?? [],
       };
     } catch (err) {

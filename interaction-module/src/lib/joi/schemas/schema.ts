@@ -127,7 +127,17 @@ const listAllTechnicalSummarySchema = Joi.object({
     ,
   filters: Joi.string().default("{}"),
   sortBy: Joi.string().optional(),
-  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC")
+  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
+
+}); 
+
+const exportTechnicalSummarySchema = Joi.object({
+  account_rid: Joi.string().pattern(uuidRegex).required(),
+  project_fiscal_rid: Joi.string().pattern(uuidRegex).required(),
+  filters: Joi.string().default("{}"),
+  sortBy: Joi.string().optional(),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
+  timezone: Joi.string().optional()
 }); 
 
 
@@ -139,5 +149,6 @@ export {
   getInteractionStatusSchema,
   sendInteractionSchema,
   updateTechSummaryContextSchema,
-  listAllTechnicalSummarySchema
+  listAllTechnicalSummarySchema,
+  exportTechnicalSummarySchema
 };
