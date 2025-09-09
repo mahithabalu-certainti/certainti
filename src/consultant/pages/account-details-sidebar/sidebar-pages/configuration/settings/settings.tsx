@@ -42,6 +42,7 @@ const Settings: React.FC<SettingsProps> = ({
   const { successToast } = useToast();
   const updateSettings = useAccountUpdateSettings();
   const [emailRequried, setEmailRequried] = useState<boolean>(false);
+  const [idRequried, setIdRequried] = useState<boolean>(false);
   const { accountid } = useParams();
 
   const { data, isLoading, refetch } = useFetchAccountFields(
@@ -116,6 +117,16 @@ const Settings: React.FC<SettingsProps> = ({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountDetails]);
+  useEffect(() => {
+    if (!formValues) return;
+    setEmailRequried(!!formValues.support_email);
+    const hasAnyIdValue =
+      !!formValues.client_secret ||
+      !!formValues.tenant_id ||
+      !!formValues.client_id;
+
+    setIdRequried(hasAnyIdValue);
+  }, [formValues]);
 
   const handleFormSubmit = (data: object) => {
     const formData = data as FormValues;
@@ -150,6 +161,14 @@ const Settings: React.FC<SettingsProps> = ({
       const hasValue = !!data.fieldValue;
       setEmailRequried(hasValue);
     }
+    if (['client_secret', 'tenant_id', 'client_id'].includes(data.fieldName)) {
+      const hasAnyValue =
+        !!(data.fieldName === 'client_secret' && data.fieldValue) ||
+        !!(data.fieldName === 'tenant_id' && data.fieldValue) ||
+        !!(data.fieldName === 'client_id' && data.fieldValue);
+
+      setIdRequried(hasAnyValue);
+    }
   };
   if (isLoading) {
     return <SkeletonForm />;
@@ -175,7 +194,7 @@ const Settings: React.FC<SettingsProps> = ({
       >
         <FormBuilder
           key={JSON.stringify(accountDetails)}
-          data={settingsFormFields(permissionMap, emailRequried)}
+          data={settingsFormFields(permissionMap, emailRequried, idRequried)}
           formRef={formRef}
           outData={handleFormSubmit}
           values={formValues}
