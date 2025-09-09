@@ -223,7 +223,8 @@ export const STATUS_MESSAGE = {
   assessmentInitiated : "AI Assessment Initiated",
   interactionCreatedButNoEmailRecipient:"Auto send skipped as no email recipient found",
   interactionCreated:"Interaction created successfully",
-  interactionUpdated:"Interaction updated successfully"
+  interactionUpdated:"Interaction updated successfully",
+  techSummarycontextUpdated:"Technical summary context updated successfully",
 };
 
 export const rawQueries = {
