@@ -136,7 +136,8 @@ export const mainTableFilters : Record<any, any> = {
   interaction_type_name : "interaction_type_name",
   interaction_source_name : "interaction_source_name",
   status_name : "status_name",
-  response_source_name : "response_source_name"
+  response_source_name : "response_source_name",
+  modified_by: "modified_by"
 }
 
 export const STATUS_MESSAGE = {
@@ -479,6 +480,19 @@ export const rawQueries = {
     return `
       SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name = '${type}' AND status = 'active' LIMIT 1
     `;
+  },
+
+  fetchAllStatus(): string {
+    return `
+      SELECT rid, status_name, status
+      FROM ${MAIN_SCHEMA_NAME}.status
+      WHERE status = 'active'
+    `;
+  },
+  fetchStatus(statusIds: any): string {
+    let ids = statusIds.map((d: any) => `'${d}'`);
+    return `
+    SELECT rid, status_name as name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid IN (${ids})`;
   },
   GET_ACCOUNT_ACCESS: `
 (

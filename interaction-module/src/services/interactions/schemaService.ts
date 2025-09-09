@@ -1,7 +1,8 @@
 import { InteractionModelService } from "../interactionModelsService";
 import { initOrgSequelize } from "../../config/orgDataSource";
+import dayjs from "dayjs";
 import { initMainDbSequelize } from "../../config/mainDataSource";
-import { QueryTypes, Sequelize, Transaction } from "sequelize";
+import { Op, QueryTypes, Sequelize, Transaction } from "sequelize";
 import {
   ICreateInteraction,
   InteractionDetailsResponse,
@@ -9,7 +10,7 @@ import {
   IUpdateInteraction,
 } from "../../utils/types";
 import { Interaction } from "../../models/interaction";
-import { MAIN_SCHEMA_NAME, rawQueries, schedulerStatus, statusAction, techSummaryStatus } from "../../utils/constants";
+import { ALPHANUMERIC_CONDITIONS, MAIN_SCHEMA_NAME, mainTableFilters, rawQueries, schedulerStatus, statusAction, techSummaryStatus } from "../../utils/constants";
 import { InteractionHistory } from "../../models/interactionHistory";
 
 class InteractionSchemaService {
@@ -528,51 +529,353 @@ class InteractionSchemaService {
       throw new Error("Error fetching account : " + (err as Error).message);
     }
   }
-  async listTechnicalSummary(accountNumber: string, projectFiscalRid: string)
-    {
-      const { AiTechnicalSummary } = await this.interactionModelService.getModels(
+  async listTechnicalSummary(
+    accountNumber: string,
+    projectFiscalRid: string,
+    page: number = 1,
+    limit: number = 100,
+    filters: Record<string, string>,
+    sortBy: string = "created_datetime",
+    sortOrder: string = "ASC",
+    disablePagination: boolean = false
+  ) {
+    try {
+      const offset = (page - 1) * limit;
+        let modifiedByFilter;
+      let modifiedByConditions;
+      let totalResults: number = 0;
+       const detectConditions = (filters: any) => {
+        if (!filters) return null;
+        for (let conditions of Object.values(ALPHANUMERIC_CONDITIONS)) {
+          if (Object.keys(filters).includes(conditions)) return conditions;
+        }
+        return null;
+      };
+      if (filters?.modified_by) {
+        modifiedByFilter = filters.modified_by;
+        modifiedByConditions = detectConditions(modifiedByFilter);
+      }
+       ["modified_by"].forEach(key => {
+        if (filters[key]) {
+          disablePagination = true;
+          delete filters[key];
+        }
+      });
+      if (mainTableFilters[sortBy] !== undefined) {
+            disablePagination = true;
+          }
+      const { whereClause } = this.buildWhereClause(filters);
+      const [finalSortBy, finalSortOrder] = this.getSortParameters(sortBy, sortOrder);
+      const { AiTechnicalSummary } = await this.interactionModelService.getModels(accountNumber);
+      if (!this.mainDbSequelize) {
+        this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
+      }
+
+      // Fetch technical summaries and count
+      const { rows: technicalSummary, count } = await AiTechnicalSummary.findAndCountAll({
+        where: {
+          project_fiscal_rid: projectFiscalRid,
+          ...whereClause
+        },
+        order: [[finalSortBy, finalSortOrder]],
+        ...(disablePagination
+          ? {}
+          : { limit: limit, offset: offset }),
+      });
+      // You can now use both technicalSummary (array) and count (number)
+      if (technicalSummary.length === 0) {
+        return {
+          technicalSummary: [],
+          count: 0
+        };
+      }
+      let createdByIds: any[] = [...new Set(technicalSummary.map((user: any) => user.created_by))];
+      let modifiedByIds: any[] = [...new Set(technicalSummary.map((user: any) => user.modified_by))];
+      let statusIds: any[] = [...new Set(technicalSummary.map((user: any) => user.status_rid))];
+      let fetchCreatedByUsers = await this.mainDbSequelize.query(rawQueries.fetchUser(createdByIds));
+      let fetchModifiedByUsers = await this.mainDbSequelize.query(rawQueries.fetchUser(modifiedByIds));
+      let fetchStatusInfo = await this.mainDbSequelize.query(rawQueries.fetchStatus(statusIds));
+      let createdMap: Map<string, string> = new Map(fetchCreatedByUsers[0].map((user: any) => [user.rid, `${user.first_name} ${user.last_name}`]));
+      let modifiedMap: Map<string, string> = new Map(fetchModifiedByUsers[0].map((user: any) => [user.rid, `${user.first_name} ${user.last_name}`]));
+      let statusMap: Map<string, string> = new Map(fetchStatusInfo[0].map((status: any) => [status.rid, status.name]));
+      let finalData = technicalSummary == null ? [] : technicalSummary.map((d: any) => {
+        return {
+          rid: d.rid,
+          r_number: d.r_number,
+          technical_summary: d.technical_summary,
+          version: d.version,
+          status_rid: d.status_rid,
+          status_name: statusMap.get(d.status_rid) || null,
+          created_by: d.created_by,
+          created_user_name: createdMap.get(d.created_by) || null,
+          modified_by: d.modified_by,
+          modified_user_name: modifiedMap.get(d.modified_by) || null,
+          created_datetime: d.created_datetime,
+          modified_datetime: d.modified_datetime
+        };
+      });
+      const applyFilters = (data: any[], conditions: any, value: any, field: any) => {
+        if (!conditions || !field) return data;
+        const val = value[conditions];
+        switch (conditions) {
+          case ALPHANUMERIC_CONDITIONS.equals:
+            return data.filter((d: any) => d[field]?.toLowerCase() === val?.toLowerCase());
+          case ALPHANUMERIC_CONDITIONS.notEquals:
+            return data.filter((d: any) => d[field]?.toLowerCase() != val?.toLowerCase());
+          case ALPHANUMERIC_CONDITIONS.contains:
+            return data.filter((d: any) => d[field]?.toLowerCase().includes(val?.toLowerCase()));
+          case ALPHANUMERIC_CONDITIONS.isEmpty:
+            return data.filter((d: any) => d[field] == null);
+          default:
+            return data;
+        }
+      };
+      if (modifiedByConditions != null && modifiedByConditions != undefined)
+        finalData = applyFilters(finalData, modifiedByConditions, modifiedByFilter, "modified_by");
+      if (mainTableFilters[sortBy] != undefined && sortBy.toLowerCase() == 'asc') {
+        finalData = finalData.sort((a: any, b: any) => {
+          if (!a?.[sortBy]) return 1;
+          if (!b?.[sortBy]) return -1;
+          return a[sortBy].localeCompare(b[sortBy]);
+        });
+      } else if (mainTableFilters[sortBy] != undefined && sortBy.toLowerCase() == 'desc') {
+        finalData = finalData.sort((a: any, b: any) => {
+          if (!b?.[sortBy]) return 1;
+          if (!a?.[sortBy]) return -1;
+          return b[sortBy].localeCompare(a[sortBy]);
+        });
+      }
+      totalResults = disablePagination ? finalData.length : count;
+      let finalPaginatedData = disablePagination ? finalData.slice((page - 1) * limit, page * limit) : finalData;
+      return {
+        technicalSummary: finalPaginatedData,
+        count: totalResults
+      };
+    } catch (err) {
+      console.log(err);
+      throw new Error("Error listing technical summary: " + (err as Error).message);
+    }
+  }
+
+   private buildWhereClause(filters: Record<string, any>): {
+    whereClause: Record<string, any>;
+  } {
+    let whereClause: Record<string, any> = {};
+    let includeClause: Array<any> = [];
+    console.log("filters", filters);
+    if (filters) {
+      const filterProcessors: Record<string, Function> = {
+        'r_number': (value: any) => this.processTextFilter('r_number', value, whereClause),
+        'technical_summary': (value: any) => this.processTextFilter('technical_summary', value, whereClause),
+        'version': (value: any) => this.processNumberFilter('version', value, whereClause),
+        'created_datetime': (value: any) => this.processDateFilter('created_datetime', value, whereClause),
+        'modified_datetime': (value: any) => this.processDateFilter('modified_datetime', value, whereClause),
+        'status_rid': (value: any) => this.processTextFilter('status_rid', value, whereClause),
+      };
+      Object.keys(filters).forEach(key => {
+        
+        const value = filters[key];
+        if (value === undefined || value === null) return;
+        if (filterProcessors[key]) {
+          filterProcessors[key](value);
+        } else if (value !== '') {
+          whereClause[key] = value;
+        }
+      });
+    }
+    return { whereClause };
+  }
+
+    /**
+   * Validates and normalizes sort parameters
+   * 
+   * @param {string} sortBy - Field to sort by
+   * @param {string} sortOrder - Sort order (ASC or DESC)
+   * @returns {[string, string]} - Tuple of validated sort parameters
+   */
+  private getSortParameters(sortBy: string, sortOrder: string): [string, string] {
+    const validSortColumns = [
+      "r_number",
+      "created_datetime",
+      "created_by",
+      "modified_datetime",     
+       "version",
+      "status"
+    ];
+
+    if (!validSortColumns.includes(sortBy)) {
+      sortBy = "created_datetime";
+    }
+
+    sortOrder = sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC";
+    return [sortBy, sortOrder];
+  }
+
+  /**
+   * Process text field filter with various operators
+   * 
+   * @param {string} field - Field name
+   * @param {any} value - Filter value
+   * @param {Record<string, any>} whereClause - Where clause to modify
+   */
+  private processTextFilter(field: string, value: any,  whereClause: Record<string | symbol, any>): void {
+    if (typeof value === 'string') {
+      // Simple string value - treat as equals
+      whereClause[field] = value;
+    } else if (typeof value === 'object') {
+      if (value.equals !== undefined) {
+        whereClause[field] = Sequelize.where(
+        Sequelize.fn('LOWER', Sequelize.col(field)),
+        value.equals.toLowerCase()
+      );
+      } else if (value.not_equals !== undefined) {
+        whereClause[field] = Sequelize.where(
+        Sequelize.fn('LOWER', Sequelize.col(field)),
+        '!=',
+        value.not_equals.toLowerCase()
+      );
+      } else if (value.contains !== undefined) {
+        whereClause[field] = { [Op.iLike]: `%${value.contains}%` };
+      } else if (Array.isArray(value.in) && value.in.length > 0) {
+        whereClause[Op.or] = value.in.map((val: string) =>
+        Sequelize.where(
+          Sequelize.fn('LOWER', Sequelize.col(field)),
+          '=',
+          val.toLowerCase()
+        )
+      );
+      } else if (value.is_empty !== undefined) {
+        if (value.is_empty) {
+          whereClause[field] = { [Op.or]: [null, ''] };
+        } else {
+          whereClause[field] = { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: '' }] };
+        }
+      }
+    }
+  }
+    private processNumberFilter(field: string, value: any, whereClause: Record<string | symbol, any>): void {
+    if (typeof value === 'number') {
+      // Simple number value - treat as equals
+      whereClause[field] = value;
+    } else if (typeof value === 'object') {
+      if (value.equals !== undefined) {
+        whereClause[field] = value.equals;
+      } else if (value.not_equals !== undefined) {
+        whereClause[field] = { [Op.ne]: value.not_equals };
+      } else if (value.greater_than !== undefined) {
+        whereClause[field] = { ...(whereClause[field] || {}), [Op.gte]: value.gte };
+      } 
+      if (value.less_than !== undefined) {
+        whereClause[field] = { ...(whereClause[field] || {}), [Op.lte]: value.lte };
+      }
+      if (Array.isArray(value.in) && value.in.length > 0) {
+        whereClause[field] = { [Op.in]: value.in };
+      }
+      // Support for between operator (e.g., { between: [min, max] })
+      if ('between' in value && Array.isArray(value.between) && value.between.length === 2) {
+        whereClause[field] = {
+          ...(whereClause[field] || {}),
+          [Op.gte]: value.between[0],
+          [Op.lte]: value.between[1],
+        };
+      }
+    }
+      if (value.is_empty !== undefined) {
+        if (value.is_empty) {
+          whereClause[field] = null;
+        } else {
+          whereClause[field] = { [Op.ne]: null };
+        }
+      }
+    }
+  
+   private processDateFilter(
+    field: string,
+    value: any,
+    whereClause: Record<string, any>
+  ): void {
+    if (typeof value === 'string') {
+      const date = dayjs(value, 'YYYY-MM-DD').startOf('day').toDate();
+      const nextDay = dayjs(date).add(1, 'day').toDate();
+
+      whereClause[field] = {
+        [Op.gte]: date,
+        [Op.lt]: nextDay
+      };
+    } else if (typeof value === 'object') {
+      if (value.equals !== undefined) {
+        const date = dayjs(value.equals, 'YYYY-MM-DD').startOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
+        const nextDay = dayjs(date).add(1, 'day').toDate();
+
+        whereClause[field] = {
+          [Op.gte]: date,
+          [Op.lt]: nextDay
+        };
+      } else if (value.before !== undefined) {
+        const beforeDate = dayjs(value.before, 'YYYY-MM-DD').startOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
+        whereClause[field] = { [Op.lt]: beforeDate };
+      } else if (value.after !== undefined) {
+        const afterDate = dayjs(value.after, 'YYYY-MM-DD').endOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
+        whereClause[field] = { [Op.gt]: afterDate };
+      } else if (value.between?.from && value.between?.to) {
+        const fromDate = dayjs(value.between.from, 'YYYY-MM-DD').startOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
+        const toDate = dayjs(value.between.to, 'YYYY-MM-DD').endOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
+
+        whereClause[field] = {
+          [Op.gte]: fromDate,
+          [Op.lte]: toDate
+        };
+      } else if (value.is_empty !== undefined) {
+        if (value.is_empty) {
+          whereClause[field] = null;
+        } else {
+          whereClause[field] = { [Op.ne]: null };
+        }
+      }
+    }
+  }
+  async fetchTechnicalSummaryDetailsById(
+    accountNumber: string,
+    techSummaryId: string
+  ) {
+    const { AiTechnicalSummary } = await this.interactionModelService.getModels(
       accountNumber
     );
-    if(!this.mainDbSequelize)
-    {
-      this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
-    }
-    console.log("projectFiscalRid", projectFiscalRid);
-    // Fetch technical summaries and count
-    const { rows: technicalSummary, count } = await AiTechnicalSummary.findAndCountAll({
+
+    let techSummaryDetails = await AiTechnicalSummary.findOne({
       where: {
-      project_fiscal_rid: projectFiscalRid,
+        rid: techSummaryId,
       },
     });
-    // You can now use both technicalSummary (array) and count (number)
-     let createdByIds : any[] = [...new Set(technicalSummary.map((user : any) => user.created_by))]
-             console.log("createdByIds", createdByIds);
-            let modifiedByIds : any[] = [...new Set(technicalSummary.map((user : any) => user.modified_by))]
-             let fetchCreatedByUsers = await this.mainDbSequelize.query(rawQueries.fetchUser(createdByIds))
-          let fetchModifiedByUsers = await this.mainDbSequelize.query(rawQueries.fetchUser(modifiedByIds))
-      let createdMap : Map<string, string> = new Map(fetchCreatedByUsers[0].map((user : any) => [user.rid, `${user.first_name} ${user.last_name}`]))
-      let modifiedMap : Map<string, string> = new Map(fetchModifiedByUsers[0].map((user : any) => [user.rid, `${user.first_name} ${user.last_name}`]))
-       let finalData = technicalSummary == null ? [] : technicalSummary.map((d : any) => {
-           return {
-             rid: d.rid,
-             r_number: d.r_number,
-             technical_summary: d.technical_summary,
-             version: d.version,
-             status: d.status,
-             created_by: d.created_by,
-             created_user_name: createdMap.get(d.created_by) || null,
-             modified_by: d.modified_by,
-             modified_user_name: modifiedMap.get(d.modified_by) || null,
-             created_datetime: d.created_datetime,
-             modified_datetime: d.modified_datetime
-          };
-      });
+    if(techSummaryDetails && techSummaryDetails.dataValues){
+       const userInfo = await this.insertUserDetails(
+        techSummaryDetails.dataValues.created_by ?? "",
+        techSummaryDetails.dataValues.modified_by ?? ""
+      );
+      const statusInfo = await this.insertStatusInfo(
+        techSummaryDetails.dataValues.status_rid
+      );
       return {
-        technicalSummary: finalData,
-        count
-      };
-
+        rid: techSummaryDetails.dataValues.rid,
+        r_number: techSummaryDetails.dataValues.r_number,
+        technical_summary: techSummaryDetails.dataValues.technical_summary,
+        version: techSummaryDetails.dataValues.version,
+        status_rid: techSummaryDetails.dataValues.status_rid,
+        status_name: statusInfo?.status_name || null,
+        created_by: techSummaryDetails.dataValues.created_by,
+        created_user_name: userInfo.created_name || null,
+        modified_user_name: userInfo.modified_name || null,
+        modified_by: techSummaryDetails.dataValues.modified_by,
+        created_datetime: techSummaryDetails.dataValues.created_datetime,
+        modified_datetime: techSummaryDetails.dataValues.modified_datetime,
+        technical_summary_refinement_prompt: techSummaryDetails.dataValues.technical_summary_refinement_prompt
+      }
     }
+
+
+    return techSummaryDetails;
+  }
+
   async fetchInteractionDetailsById(
     accountNumber: string,
     interactionRid: string
@@ -602,7 +905,6 @@ class InteractionSchemaService {
         rid,
         account_rid,
         project_rid,
-        fiscal_year,
         project_fiscal_rid,
         r_number,
         interaction_type_rid,
@@ -629,7 +931,7 @@ class InteractionSchemaService {
         project_code: metainfo?.project_code ?? "",
         account_rid,
         project_rid,
-        fiscal_year,
+        fiscal_year: metainfo?.fiscal_year ?? "",
         project_fiscal_rid,
         r_number: r_number ?? "",
         interaction_type: interaction_type_rid ?? "",
@@ -652,6 +954,46 @@ class InteractionSchemaService {
       return response;
     }
     return interactionDetails;
+  }
+
+  async updateTechSummaryContext(
+    summaryContext:string,
+    techSummaryId: string,
+    accountNumber: string,  
+    userId: string
+  )
+  {
+    try {
+    
+      const { AiTechnicalSummary } = await this.interactionModelService.getModels(
+        accountNumber
+      );
+      const techSummary = await AiTechnicalSummary.findOne({
+        where: {
+          rid: techSummaryId,
+        },
+      });
+      if (!techSummary) {
+        throw new Error("Invalid technical summary ID");
+      }
+      techSummary.technical_summary_refinement_prompt = summaryContext;
+      techSummary.modified_by = userId;
+      techSummary.modified_datetime = new Date();
+      await AiTechnicalSummary.update(
+        {
+          technical_summary_refinement_prompt: summaryContext,  
+          modified_by: userId,
+          modified_datetime: new Date(),
+        },
+        {
+          where: {
+            rid: techSummaryId,
+          },
+        }
+      );
+    } catch (err) {
+      throw new Error("Error updating technical summary context" + (err as Error).message);
+    }
   }
 
   async insertUserDetails(
@@ -690,6 +1032,42 @@ class InteractionSchemaService {
       };
     } catch (err) {
       throw new Error("Error adding user details" + (err as Error).message);
+    }
+  }
+
+  async insertStatusInfo(status_rid : any) {
+    try {
+      if (!this.mainDbSequelize) {
+        this.mainDbSequelize =
+          await this.interactionModelService.getMainSequelize();
+      }
+     
+
+      let status: any = null;
+     
+      if (status_rid) {
+        const result = await this.mainDbSequelize.query(
+          `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid = :id`,
+          {
+            replacements: {
+              id: status_rid,
+            },
+            type: "SELECT",
+          }
+        );
+        status =
+          Array.isArray(result) && result.length > 0 ? result[0] : null;
+      }
+    
+    
+      return {
+       
+        status_name: status?.status_name || null,
+      };
+      
+      //return interactionDetails;
+    } catch (err) {
+      throw new Error("Error fetching geo data: " + (err as Error).message);
     }
   }
 
@@ -752,6 +1130,7 @@ class InteractionSchemaService {
         interaction_status_name: interaction_status?.status_name || null,
         project_code: project_info?.project_code || null,
         project_name: project_info?.project_name || null,
+        fiscal_year: project_info?.fiscal_year || null,
       };
 
       //return interactionDetails;
@@ -1770,6 +2149,69 @@ class InteractionSchemaService {
     }
   }
 
+  async updateInteractionInfoForReminder(
+    accountNumber: string,
+    interactionRid: string,
+    status: string,
+    userId: string,
+    emailInfo: { name: string | null; email: string | null | string[] },
+    interactionLink: string
+  ) {
+    try {
+      const { Interaction, InteractionSummary } =
+        await this.interactionModelService.getModels(accountNumber);
+      if (!this.mainDbSequelize) {
+        this.mainDbSequelize =
+          await this.interactionModelService.getMainSequelize();
+      }
+
+      const [senderemailInfo]: any[] = await this.mainDbSequelize.query(
+        rawQueries.fetchUserEmail(userId)
+      );
+      const userEmailId = senderemailInfo[0]?.email ?? userId;
+      const interaction = await Interaction.findOne({
+        where: { rid: interactionRid },
+      });
+      const updateData: any = {
+        last_reminder_on: new Date(),
+        last_reminder_by: userEmailId,
+       
+      };
+
+      if (interaction?.sent_on_datetime) {
+        updateData.last_resent_on = new Date();
+        const [statusArr]: any = await this.mainDbSequelize.query(
+          rawQueries.fetchInteractionStatusByType(statusAction.RESENT)
+        );
+        const statusRid =
+          Array.isArray(statusArr) && statusArr.length > 0
+            ? statusArr[0].rid
+            : null;
+        updateData.status_rid = statusRid;
+      } else {
+        updateData.sent_on_datetime = new Date();
+        updateData.last_resent_on = new Date();
+        const [statusArr]: any = await this.mainDbSequelize.query(
+          rawQueries.fetchInteractionStatusByType(status)
+        );
+        const statusRid =
+          Array.isArray(statusArr) && statusArr.length > 0
+            ? statusArr[0].rid
+            : null;
+        updateData.status_rid = statusRid;
+      }
+
+      await Interaction.update(updateData, { where: { rid: interactionRid } });
+      await InteractionSummary.update(updateData, {
+        where: { interaction_rid: interactionRid },
+      });
+    } catch (err) {
+      throw new Error(
+        "Error updating interaction status: " + (err as Error).message
+      );
+    }
+  }
+
   async isEmailRecipientAvailable
   (     
     accountNumber: string,  
@@ -1910,6 +2352,11 @@ class InteractionSchemaService {
         this.mainDbSequelize =
           await this.interactionModelService.getMainSequelize();
       }
+      const [activeStatus]: any[] = await this.mainDbSequelize.query(
+        rawQueries.fetchAllStatus(),
+        { type: "SELECT" }
+      );
+      console.log("activeStatus", activeStatus);
 
       const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
         /\D/g,
@@ -1941,7 +2388,7 @@ class InteractionSchemaService {
         project_fiscal_rid: projectFiscalId,
         technical_summary: projectSummary,
         version,
-        status: techSummaryStatus.ACTIVE,
+        status_rid: activeStatus[techSummaryStatus.ACTIVE].rid,
         entity_transaction_id: correlationId,
       };
       const updateData: any = {
@@ -1958,7 +2405,7 @@ class InteractionSchemaService {
       ]);
       if (aiResponse.rid) {
         await AiTechnicalSummary.update(
-          { status: techSummaryStatus.INACTIVE },
+          { status_rid: activeStatus[techSummaryStatus.INACTIVE].rid, },
           {
             where: {
               account_rid: accountId,
