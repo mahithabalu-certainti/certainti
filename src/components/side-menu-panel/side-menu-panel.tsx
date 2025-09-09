@@ -121,6 +121,7 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
     searchParams.delete('interaction_attachment_count');
     searchParams.delete('history');
     searchParams.delete('upload');
+    searchParams.delete('technical_summary_id');
     //For project resource and task
     searchParams.delete('page');
     searchParams.delete('pro_res_id');

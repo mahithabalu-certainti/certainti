@@ -33,6 +33,7 @@ import {
   FormFiscalDateType,
   MenuItem,
   ProjectFinancialResourceExportParams,
+  TechnicalSummaryExportListParams,
 } from '../../../types';
 import {
   AllMenus,
@@ -61,6 +62,8 @@ import {
   exportInteractions,
   exportInteractionsHistory,
 } from '../../../services/interactions/interactions-service';
+import { TechnicalSummary } from './technical-summary';
+import { exportTechnicalSummary } from '../../../services/technical-summary/technical-summary-service';
 
 export const ProjectDetails = () => {
   const [searchParams] = useSearchParams();
@@ -106,6 +109,12 @@ export const ProjectDetails = () => {
   const [projectResourceParams, setProjectResourceParams] =
     useState<AttachmentsListExportParams>({
       sortBy: 'resource_code',
+      sortOrder: 'ASC',
+      filters: {},
+    });
+  const [technicalSummaryParams, setTechnicalSummaryParams] =
+    useState<TechnicalSummaryExportListParams>({
+      sortBy: 'r_number',
       sortOrder: 'ASC',
       filters: {},
     });
@@ -161,6 +170,7 @@ export const ProjectDetails = () => {
   const interactionId = searchParams.get('interaction_id');
   const interactionRID = searchParams.get('interaction_rid');
   const interactionsView = !!interactionId || !!interactionRID;
+  const technicalSummaryId = searchParams.get('technical_summary_id');
 
   const { data, isLoading, isError } = useProjectDetail(
     accountID,
@@ -237,6 +247,8 @@ export const ProjectDetails = () => {
       return !isResourceExportViewEnable;
     } else if (list === 'interactions' && !interactionsView) {
       return !isInteractionsExportEnable;
+    } else if (list === 'technicalSummary' && !technicalSummaryId) {
+      return false;
     } else {
       return true;
     }
@@ -261,7 +273,8 @@ export const ProjectDetails = () => {
       list !== 'financial' &&
       list !== 'projectResources' &&
       list !== 'projectsTask' &&
-      list !== 'interactions'
+      list !== 'interactions' &&
+      list !== 'technicalSummary'
     ) {
       return;
     }
@@ -290,6 +303,18 @@ export const ProjectDetails = () => {
       exportProjectResoure({
         ...projectResourceParams,
         ...projectResourcePayload,
+      });
+      return;
+    }
+
+    if (list === 'technicalSummary' && exportType === 'technical_summary') {
+      const technicalSummaryPayload = {
+        account_rid: accountID,
+        project_fiscal_rid: projectID,
+      };
+      exportTechnicalSummary({
+        ...technicalSummaryParams,
+        ...technicalSummaryPayload,
       });
       return;
     }
@@ -454,7 +479,13 @@ export const ProjectDetails = () => {
           />
         );
       case 'technicalSummary':
-        return <NotFound />;
+        return (
+          <TechnicalSummary
+            accountInActive={accountInActive || projectInActive}
+            setExportType={setExportType}
+            setTechnicalSummaryParams={setTechnicalSummaryParams}
+          />
+        );
       case 'cases':
         return <NotFound />;
       case 'activities':
