@@ -173,6 +173,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       onClick: () => handleRemainder(),
       sx: { width: '78px', minWidth: '78px' },
       hide: false,
+      isLoading: sendInteraction.isPending,
     },
   ];
 

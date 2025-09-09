@@ -161,6 +161,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       onClick: () => handleReminderBtn(),
       sx: { width: '78px', minWidth: '78px' },
       hide: false,
+      loading: sendInteraction.isPending,
     },
   ];
 
