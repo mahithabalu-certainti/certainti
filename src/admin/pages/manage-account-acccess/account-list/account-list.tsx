@@ -36,6 +36,7 @@ import { checkPermission } from '../../../../common-utils';
 import { AccessRestricted } from '../../../../components/account-restricted';
 import { MANAGE_ACCOUNT_ACCESS } from '../../../../routes';
 import { useGetUserGroupTypes } from '../../../service';
+import SearchBar from '../../../../components/search/search-bar';
 
 const AccountList = () => {
   const [page, setPage] = useState<number>(1);
@@ -48,6 +49,7 @@ const AccountList = () => {
     sortBy: 'account_name',
     sortOrder: 'ASC',
   });
+  const [searchText, setSearchText] = useState<string>('');
   useEffect(() => {
     const saved = getStoredFilters();
     if (saved) {
@@ -290,9 +292,19 @@ const AccountList = () => {
         </div>
         <div className='flex items-center gap-3'>
           <div className='flex gap-1 relative'>
+            <SearchBar
+              initialSearchText={searchText}
+              onSearch={(value) => {
+                setSearchText(value);
+                console.log('Search triggered for:', value);
+              }}
+              placeholder='Search'
+              disabled={false}
+              hide={false}
+            />
             <button
               aria-describedby={modalId}
-              className={`w-[120px] h-[24px] mt-1 text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative border border-[#CBD6E2] px-0 py-0 normal-case ${isModalOpen ? 'bg-[#F3F3F3]' : 'bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'} hover:text-[#425A76] transition-colors duration-150`}
+              className={`w-[120px] h-[24px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative border border-[#CBD6E2] px-0 py-0 normal-case ${isModalOpen ? 'bg-[#F3F3F3]' : 'bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'} hover:text-[#425A76] transition-colors duration-150`}
               style={{
                 boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
               }}
@@ -301,7 +313,7 @@ const AccountList = () => {
               Show/Hide Fields
             </button>
             <button
-              className={`w-[64px] h-[24px] text-[13px] mt-[5px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative `}
+              className={`w-[64px] h-[24px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative `}
               onClick={handleFilterModal}
             >
               <NewFilterIcon alt='filter-icon' />
