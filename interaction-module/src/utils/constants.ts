@@ -137,7 +137,8 @@ export const mainTableFilters : Record<any, any> = {
   interaction_source_name : "interaction_source_name",
   status_name : "status_name",
   response_source_name : "response_source_name",
-  modified_by: "modified_by"
+  modified_by: "modified_by",
+  modified_user_name:"modified_user_name"
 }
 
 export const STATUS_MESSAGE = {
@@ -487,7 +488,6 @@ export const rawQueries = {
     return `
       SELECT rid, status_name, status
       FROM ${MAIN_SCHEMA_NAME}.status
-      WHERE status = 'active'
     `;
   },
   fetchStatus(statusIds: any): string {
@@ -709,6 +709,18 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     { permissionField: 'modified_by', exportField: 'Last Updated By', dataField: 'modified_by' },
     { permissionField: 'modified_datetime', exportField: 'Last Updated Date', dataField: 'modified_datetime' }
   ];
+
+   export const techSummaryFieldMappings = [
+     
+    { permissionField: 'r_number', exportField: 'Sequence Number', dataField: 'r_number' },
+    { permissionField: 'version', exportField: 'Summary Version', dataField: 'version' },
+    { permissionField: 'created_by', exportField: 'Created By', dataField: 'created_by' },
+    { permissionField: 'created_datetime', exportField: 'Created On', dataField: 'created_datetime' },
+    { permissionField: 'modified_by', exportField: 'Updated By', dataField: 'modified_by' },
+    { permissionField: 'modified_datetime', exportField: 'Updated On', dataField: 'modified_datetime' }
+   
+  ];
+
 
   export const schedulerStatus = {
     Success : "success",

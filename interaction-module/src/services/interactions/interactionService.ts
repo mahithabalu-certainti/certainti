@@ -401,7 +401,7 @@ export class InteractionService {
           filters,
           data.sortBy,
           data.sortOrder,
-          false
+          "list"
         );
 
       if (!techSummary) {
@@ -460,7 +460,7 @@ export class InteractionService {
           filters,
           data.sortBy,
           data.sortOrder,
-          true
+          "download"
         );
 
       if (!techSummary) {
