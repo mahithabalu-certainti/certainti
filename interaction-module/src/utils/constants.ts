@@ -136,7 +136,8 @@ export const mainTableFilters : Record<any, any> = {
   interaction_type_name : "interaction_type_name",
   interaction_source_name : "interaction_source_name",
   status_name : "status_name",
-  response_source_name : "response_source_name"
+  response_source_name : "response_source_name",
+  modified_by: "modified_by"
 }
 
 export const STATUS_MESSAGE = {
@@ -353,9 +354,9 @@ export const rawQueries = {
   },
   fetchGlobalSenderEmail() {
     return `
-    SELECT email FROM ${MAIN_SCHEMA_NAME}.global_settings WHERE is_active is true LIMIT 1`;
+    SELECT email FROM ${MAIN_SCHEMA_NAME}.organization_licenses LIMIT 1`;
   },
-  isEmailRecipientAvailable(projectFiscalRid: string, schemaName: string) {
+  isEmailRecipientAvailable(projectFiscalRid: string, schemaName: string, statusRid: string) {
     return `
     SELECT EXISTS (
       SELECT 1
@@ -363,6 +364,7 @@ export const rawQueries = {
       WHERE entity_type = 'Project'
         AND include_in_communication IS true
         AND entity_rid = '${projectFiscalRid}'
+        AND status_rid = '${statusRid}'
     ) AS recipient_available
   `;
   },
@@ -478,6 +480,19 @@ export const rawQueries = {
     return `
       SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name = '${type}' AND status = 'active' LIMIT 1
     `;
+  },
+
+  fetchAllStatus(): string {
+    return `
+      SELECT rid, status_name, status
+      FROM ${MAIN_SCHEMA_NAME}.status
+      WHERE status = 'active'
+    `;
+  },
+  fetchStatus(statusIds: any): string {
+    let ids = statusIds.map((d: any) => `'${d}'`);
+    return `
+    SELECT rid, status_name as name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid IN (${ids})`;
   },
   GET_ACCOUNT_ACCESS: `
 (
@@ -686,7 +701,6 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     { permissionField: 'response_updated_on', exportField: 'Last Response Update', dataField: 'response_updated_on' },
     { permissionField: 'attachment_count', exportField: 'Attachments', dataField: 'attachment_count' },
     { permissionField: 'interaction_url', exportField: 'Interaction Link', dataField: 'interaction_url' },
-    { permissionField: 'parent_interaction_rid', exportField: 'Parent Interaction ID', dataField: 'parent_interaction_rid' },
     { permissionField: 'interaction_type_name', exportField: 'Type', dataField: 'interaction_type_name' },
     { permissionField: 'response_source_name', exportField: 'Response Source', dataField: 'response_source_name' },
     { permissionField: 'created_by', exportField: 'Created By', dataField: 'created_by' },
@@ -705,4 +719,5 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     interactionAge : "interaction_age",
     interaction : "interactions",
     attachments : "attachments"
+    
   }

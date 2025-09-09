@@ -12,7 +12,7 @@ import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { checkTableExists, fetchAllParentRNumber, fetchInteractionForProjectLevelQuery, fetchInteractionForSentResentStatus, fetchProjectAttachmentsRids, fetchProjectInteractionRid, interactionResponseHistoryByVersion, listAllInteractionSummary, listAttachments, listInteractionHistory, listResponseHistory } from "../../utils/rawQueries";
 import { generateSasUrl } from "../../utils/blob";
-import { interactionMailTemplate } from "../../utils/mailTemplate";
+import { interactionMailTemplate, interactionReminderMailTemplate } from "../../utils/mailTemplate";
 import { sendEmailWithAttachment } from "../emailService";
 import ExcelJS from 'exceljs';
 import axios from 'axios'
@@ -145,7 +145,7 @@ export class InteractionService {
     if (isEnabled) {
       await this.sendInteraction([{ interaction_rid: interactionId,
         project_fiscal_rid: interactionData.project_fiscal_rid
-       }], interactionData.account_rid, userId);
+       }], interactionData.account_rid, userId,false);
     }
   }
   async getInteractionStatusAndSource(interactionSource: string) {
@@ -255,6 +255,52 @@ export class InteractionService {
     }
   }
 
+
+  async updateTechSummaryContext(
+    summaryContext:string,
+    techSummaryId: string,
+    accountId: string,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { interactions: any };
+  }> {
+    try {
+      const { accountNumber } =
+        await this.interactionSchemaService.fetchValidAccountNumberById(
+          accountId
+        );
+
+      if (!accountNumber) {
+        throw new Error("Invalid account ID");
+      }
+      await this.interactionSchemaService.updateTechSummaryContext(
+        summaryContext,
+        techSummaryId,
+        accountNumber,
+        userId
+      );
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: STATUS_MESSAGE.techSummarycontextUpdated,
+        data: {
+          interactions: null,
+        },
+      };
+    } catch (err) {
+      this.logger.error("Error updating interaction", err);
+       return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: STATUS_MESSAGE.interactionUpdateFailed,
+        };
+    }
+  }
+  
+
   async updateInteractionResponse(
     interactionData: InteractionResponse,
     userId: string
@@ -325,6 +371,123 @@ export class InteractionService {
         };
     }
   }
+    async listTechnicalSummary(data : any,
+    page: number, limit: number, filters: Record<string, any>
+    ) :  Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { techSummaryInfo: any,count: number };
+  }> {
+    try {
+        const { accountNumber } =
+        await this.interactionSchemaService.fetchValidAccountNumberById(
+          data.account_rid
+        );
+
+      if (!accountNumber) {
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: "Invalid account ID",
+        };
+      }
+      const techSummary =
+        await this.interactionSchemaService.listTechnicalSummary(
+          accountNumber,
+          data.project_fiscal_rid,
+          page,
+          limit,
+          filters,
+          data.sortBy,
+          data.sortOrder,
+          false
+        );
+
+      if (!techSummary) {
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: "Invalid interaction ID",
+        };
+      }
+      else
+      {
+        
+      }
+
+       return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          techSummaryInfo: techSummary.technicalSummary,
+          count:techSummary.count
+        },
+      };
+    }
+    catch (err) {
+      throw this.throwServiceError(err as Error);
+    }
+
+  }
+   async exportTechnicalSummary(data : any,
+    filters: Record<string, any>
+    ) :  Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { techSummaryInfo: any,count: number };
+  }> {
+    try {
+        const { accountNumber } =
+        await this.interactionSchemaService.fetchValidAccountNumberById(
+          data.account_rid
+        );
+
+      if (!accountNumber) {
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: "Invalid account ID",
+        };
+      }
+      const techSummary =
+        await this.interactionSchemaService.listTechnicalSummary(
+          accountNumber,
+          data.project_fiscal_rid,
+          0,
+          0,
+          filters,
+          data.sortBy,
+          data.sortOrder,
+          true
+        );
+
+      if (!techSummary) {
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: "Invalid interaction ID",
+        };
+      }
+     
+
+       return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          techSummaryInfo: techSummary.technicalSummary,
+          count:techSummary.count
+        },
+      };
+    }
+    catch (err) {
+      throw this.throwServiceError(err as Error);
+    }
+
+  }
+
+  
   async getInteractionDetailsById(
     interactionRid: string,
     accountRid: string
@@ -366,6 +529,55 @@ export class InteractionService {
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
           interactionDetails,
+        },
+      };
+    } catch (err) {
+      console.log("Error creatng resource", err);
+      throw this.throwServiceError(err as Error);
+    }
+  }
+
+  async getTechnicalSummaryDetailsById(
+    techSummaryId: string,
+    accountRid: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { technicalSummaryDetails: any };
+  }> {
+    try {
+      const { accountNumber } =
+        await this.interactionSchemaService.fetchValidAccountNumberById(
+          accountRid
+        );
+
+      if (!accountNumber) {
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: "Invalid account ID",
+        };
+      }
+      const techSummaryDetails =
+        await this.interactionSchemaService.fetchTechnicalSummaryDetailsById(
+          accountNumber,
+          techSummaryId
+        );
+
+      if (!techSummaryDetails) {
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: "Invalid technical summary ID",
+        };
+      }
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          technicalSummaryDetails: techSummaryDetails,
         },
       };
     } catch (err) {
@@ -517,7 +729,8 @@ export class InteractionService {
       project_fiscal_rid: string;
     }[],
     accountRid: string,
-    userId: string
+    userId: string,
+    is_interaction_followup: boolean
   ): Promise<{
     statusCode: number;
     message: string;
@@ -569,6 +782,13 @@ export class InteractionService {
           interactionInfo.accountInfo.account_rid
         );
         const senderEmailInfo = await this.getSenderEmailInfo(accountNumber,interactionInfo.accountInfo.parent_account_rid);
+        if(!senderEmailInfo)
+        { return {
+              statusCode: HttpStatus.FAILED,
+              message: HttpStatus.FAILED_MESSAGE,
+              errorMessage: "Invalid account ID",
+            };
+        }
         const excelBuffer = await this.generateExcelBuffer(
           interaction_rid,
           interactionItems,
@@ -590,10 +810,13 @@ export class InteractionService {
           excelAttachment,
           interactionLink,
           senderEmailInfo,
-          interaction_rid
+          interaction_rid,
+          is_interaction_followup
         );
         if (emailResponse) {
-          await this.interactionSchemaService.updateInteractionInfo(
+          if(!is_interaction_followup)
+          {
+             await this.interactionSchemaService.updateInteractionInfo(
             accountNumber,
             interaction_rid,
             statusAction.SENT,
@@ -601,6 +824,20 @@ export class InteractionService {
             sendEmailInfo,
             interactionLink
           );
+
+          }
+          else
+          {
+             await this.interactionSchemaService.updateInteractionInfoForReminder(
+            accountNumber,
+            interaction_rid,
+            statusAction.SENT,
+            userId,
+            sendEmailInfo,
+            interactionLink
+          );
+          }
+         
         } else {
           //need to add logic for sending toPS team
         }
@@ -714,18 +951,29 @@ export class InteractionService {
     accountInfo: { account_name: string },
     excelAttachment: { filename: string; content: string; contentType: string },
     interactionLink: string,
-    senderEmailInfo: string,
-    interactionRid:string
+    senderEmailInfo: {email:string,clientId:string, tenantId:string,clientSecret:string},
+    interactionRid:string,
+    is_interaction_followup: boolean
   ) {
     let emailResponse = false;
     try {
-      const emailContent = interactionMailTemplate(
+      let emailContent = interactionMailTemplate(
         emailInfo,
         projectInfo,
         accountInfo,
         interactionLink,
         interactionRid
       );
+      if(is_interaction_followup)
+      {
+         emailContent = interactionReminderMailTemplate(
+        emailInfo,
+        projectInfo,
+        accountInfo,
+        interactionLink,
+        interactionRid
+      );
+      }
       //fetch sender email info
       
       emailResponse = await sendEmailWithAttachment({
@@ -882,8 +1130,12 @@ export class InteractionService {
     let hasEmailRecipient = false;
      if(data.flag == interactionFlag.project)
      {
-
-      const [emailInfoResult]: any = await orgDb.query(rawQueries.isEmailRecipientAvailable(data.project_fiscal_rid, schemaName));
+      
+       const [activeStatus]: any[] = await mainDb.query(
+              rawQueries.fetchActiveStatusByType("Active"),
+              { type: "SELECT" }
+            );
+      const [emailInfoResult]: any = await orgDb.query(rawQueries.isEmailRecipientAvailable(data.project_fiscal_rid, schemaName, activeStatus?.rid));
       hasEmailRecipient = emailInfoResult[0]?.recipient_available ?? false;
      }
     if(result[0][0].interactions != null) {
