@@ -146,15 +146,6 @@ export const getInteractionFilterFields = (
         !permissionMap?.['attachment_count']?.read,
     },
     {
-      name: 'Parent Interaction ID',
-      value: 'parent_interaction_rid',
-      type: 'text',
-      operatorOption: nonReqTextOptions,
-      hide:
-        !permissionMap?.['parent_interaction_rid']?.edit &&
-        !permissionMap?.['parent_interaction_rid']?.read,
-    },
-    {
       name: 'Type',
       value: 'interaction_type_rid',
       type: 'enum',

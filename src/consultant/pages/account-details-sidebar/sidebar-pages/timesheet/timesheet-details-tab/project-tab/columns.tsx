@@ -228,8 +228,7 @@ export const getProjectTabTableColumns = (
     hide:
       !permissionMap?.['qre_final']?.read &&
       !permissionMap?.['qre_final']?.edit,
-    render: (row: TimesheetProjectList) =>
-      row.qre_final ? costDisplay(row.qre, row.currency_symbol) : '-',
+    render: (row: TimesheetProjectList) => (row.qre ? row.qre : '-'),
   },
   {
     id: 'qre_final',
