@@ -271,6 +271,10 @@ export interface AccountFieldsTypes {
   modified_by: string;
   created_by: string;
   account_rid: string;
+  client_secret: string;
+  client_id: string;
+  tenant_id: string;
+  support_email: string;
 }
 
 export interface NewAccountData extends AccountFieldsTypes, AccountById {
