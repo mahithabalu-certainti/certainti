@@ -8,6 +8,7 @@ import configurations from "../config/config";
 
 import {
   errorLog,
+  handleCustomMessage,
   handleErrorResponse,
   handleSuccessResponse,
   successLog,
@@ -52,7 +53,12 @@ async function updateSettings(req: Request, res: Response): Promise<void> {
 
     if (updateResponse.statusCode === constants.SUCCESS) {
       successLog(methodName);
-      handleSuccessResponse(res, updateResponse.data);
+      handleCustomMessage(
+        res,
+        updateResponse.statusCode,
+        updateResponse.message,
+        updateResponse.data
+      );
       return;
     } else {
       errorLog(methodName, updateResponse.errorMessage);
