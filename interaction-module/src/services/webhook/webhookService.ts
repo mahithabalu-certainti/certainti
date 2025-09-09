@@ -82,7 +82,7 @@ export class WebHookService {
           client_secret,
         } = await this.fetchCredentialsBySubscriptionId(subscriptionId);
 
-        receivedEmail = subscription_created;
+        receivedEmail = email;
 
         let graphClient: Client;
 
@@ -140,6 +140,10 @@ export class WebHookService {
       const parsedData = results[0].attachments[0].parsedData;
       let interactionId: string | null = null;
       let accountNumber: string | null = null;
+      let projectId: string | null = null;
+      let projectName: string | null = null;
+      let projectCode: string | null = null;
+      let accountNumberById = finalResult.accountNumber;
 
       const answers: {
         rid: string;
@@ -160,6 +164,18 @@ export class WebHookService {
 
         if (row[0]?.toLowerCase() === "account id") {
           accountNumber = row[1] || null;
+        }
+
+        if (row[0]?.toLowerCase() === "project id") {
+          projectId = row[1] || null;
+        }
+
+        if (row[0]?.toLowerCase() === "project name") {
+          projectName = row[1] || null;
+        }
+
+        if (row[0]?.toLowerCase() === "project code") {
+          projectCode = row[1] || null;
         }
 
         // Find header row for questions/answers
@@ -195,7 +211,7 @@ export class WebHookService {
           errorMessage: "Invalid Account Number",
         });
         this.sendMailWithAttachment(
-          finalResult.originalMessage,
+          finalResult,
           "",
           null,
           "Invalid account number",
@@ -219,7 +235,7 @@ export class WebHookService {
           errorMessage: "Invalid Interaction ID",
         });
         this.sendMailWithAttachment(
-          finalResult.originalMessage,
+          finalResult,
           "",
           null,
           "Invalid Interaction ID",
@@ -236,12 +252,37 @@ export class WebHookService {
 
       const { accountNumber: validAccountNumber } =
         await this.interactionSchemaService.fetchValidAccountNumberByNumber(
-          accountNumber
+          accountNumberById
         );
+
+      if(!validAccountNumber){
+        await this.logWebhookEmailEvent({
+          schemaName: mailProcessedResults.accountNumber,
+          emailSubject: mailProcessedResults.subject,
+          emailSender: mailProcessedResults.from,
+          status: "FAILED",
+          errorMessage: "Invalid Account ID",
+        });
+        this.sendMailWithAttachment(
+          finalResult,
+          "",
+          null,
+          "Invalid Account ID",
+          finalResult.forwardEmail,
+          this.graphClient,
+          receivedEmail
+        );
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: "Invalid Account ID",
+        };
+      }
 
       const interaction = await this.fetchInteractionById(
         validAccountNumber,
-        interactionId
+        interactionId,
+        finalResult.interactionId
       );
       if (!interaction) {
         await this.logWebhookEmailEvent({
@@ -252,7 +293,7 @@ export class WebHookService {
           errorMessage: "Invalid Interaction ID",
         });
         this.sendMailWithAttachment(
-          finalResult.originalMessage,
+          finalResult,
           "",
           null,
           "Invalid Interaction ID",
@@ -264,6 +305,35 @@ export class WebHookService {
           statusCode: HttpStatus.SUCCESS,
           message: HttpStatus.BAD_REQUEST_MESSAGE,
           errorMessage: "Invalid Interaction ID",
+        };
+      }
+
+      const projectData = await this.validateProjectData(validAccountNumber , {
+        projectId,
+        projectName,
+        projectCode,
+      });
+      if(projectData !== null){
+        await this.logWebhookEmailEvent({
+          schemaName: mailProcessedResults.accountNumber,
+          emailSubject: mailProcessedResults.subject,
+          emailSender: mailProcessedResults.from,
+          status: "FAILED",
+          errorMessage: projectData,
+        });
+        this.sendMailWithAttachment(
+          finalResult,
+          "",
+          null,
+          projectData,
+          finalResult.forwardEmail,
+          this.graphClient,
+          receivedEmail
+        );
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: projectData,
         };
       }
 
@@ -399,14 +469,68 @@ export class WebHookService {
     };
   }
 
-  async fetchInteractionById(accountNumber: string, interactionId: string) {
+  async validateProjectData(
+    schemaName: string,
+    {
+      projectId,
+      projectName,
+      projectCode,
+    }: {
+      projectId: string | null;
+      projectName: string | null;
+      projectCode: string | null;
+    }
+  ): Promise<string | null> {
+    if (!projectId || typeof projectId !== 'string') {
+      return 'Invalid or missing projectId';
+    }
+  
+    if (!projectName || typeof projectName !== 'string') {
+      return 'Invalid or missing projectName';
+    }
+  
+    if (!projectCode || typeof projectCode !== 'string') {
+      return 'Invalid or missing projectCode';
+    }
+  
+    try {
+      const orgDbSequelize = await this.interactionModelService.getSequelize();
+  
+      const [result] = await orgDbSequelize.query(
+        `SELECT 1 FROM "${schemaName}".project_fiscal 
+         WHERE project_rid = :projectId 
+           OR project_name = :projectName 
+           OR project_code = :projectCode
+         LIMIT 1;`,
+        {
+          type: "SELECT",
+          replacements: {
+            projectId,
+            projectName,
+            projectCode,
+          },
+        }
+      );
+  
+      if (!result) {
+        return 'No matching project found with the provided Project ID, name, or code.'
+      }
+    } catch (err) {
+      return `Database error: ${(err as Error).message || err}`;
+    }
+  
+    return null;
+  }  
+
+  async fetchInteractionById(accountNumber: string, interactionCode: string, interactionId: string) {
     const { Interaction } = await this.interactionModelService.getModels(
       accountNumber
     );
 
     const interaction = await Interaction.findOne({
       where: {
-        r_number: interactionId,
+        r_number: interactionCode,
+        rid: interactionId
       },
     });
 
@@ -599,6 +723,7 @@ export class WebHookService {
       accountNumber: accountRNumber,
       forwardEmail: FORWARD_EMAIL,
       originlMessage: message,
+      interactionId: interactionIdFomBody,
       success: true,
     };
   }
