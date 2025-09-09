@@ -1,6 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { SectionTabPanel } from '../../../../../components';
-import { AllPermissions, OverviewTabs } from '../../../../../common-service';
+import {
+  AllModules,
+  AllPermissions,
+  OverviewTabs,
+} from '../../../../../common-service';
 import {
   ListTable,
   ManageColumnsPopover,
@@ -18,6 +22,10 @@ import SectionHeader from '../../../../../components/details-section/section-hea
 import { TechSummaryIcon } from '../../../../../assets';
 import { getTechnicalSummaryFilterFields } from './helpers';
 import TechnicalSummaryDetails from './details/technical-summary-details';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../store/store';
+import { checkPermission } from '../../../../../common-utils';
+import { AccessRestricted } from '../../../../../components/account-restricted';
 
 const TechnicalSummaryTabs: OverviewTabs[] = [
   {
@@ -60,6 +68,10 @@ const TechnicalSummary: React.FC<TechnicalSummaryProps> = ({
   const [technicalSummaryList, setTechnicalSummaryList] = useState<
     TechnicalSummaryList[]
   >([]);
+
+  const { permission, modules } = useSelector(
+    (state: RootState) => state.permission
+  );
 
   const technicalSummaryId = searchParams.get('technical_summary_id');
   const viewTechSummaryDetails = !!technicalSummaryId;
@@ -106,6 +118,34 @@ const TechnicalSummary: React.FC<TechnicalSummaryProps> = ({
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortField, sortOrder, appliedFilters]);
+
+  // Permissions
+  const technicalSummaryEnable = checkPermission(
+    modules,
+    AllModules.PROJECT_TECHNICAL_SUMMARY
+  );
+
+  const technicalSummaryViewEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECT_TECHNICAL_SUMMARY_VIEW_EDIT
+  );
+
+  const technicalSummaryViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) =>
+          item.name === AllPermissions.PROJECT_TECHNICAL_SUMMARY_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    technicalSummaryViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [technicalSummaryViewEditFields]);
 
   const handleFilter = () => {
     setShowFilter(!showFilter);
@@ -155,7 +195,8 @@ const TechnicalSummary: React.FC<TechnicalSummaryProps> = ({
 
   const getRowId = (row: TechnicalSummaryList) => row.rid;
   const technicalSummaryColumns = getTechnicalSummaryListColumns(
-    handleViewTechnicalSummary
+    handleViewTechnicalSummary,
+    permissionMap
   );
 
   const RestrictedColumns = [
@@ -198,7 +239,10 @@ const TechnicalSummary: React.FC<TechnicalSummaryProps> = ({
     ? 'tech-summary-list-column-visibility-popover'
     : undefined;
 
-  const filterFields = getTechnicalSummaryFilterFields();
+  const filterFields = getTechnicalSummaryFilterFields(permissionMap);
+
+  if (!technicalSummaryEnable || !technicalSummaryViewEnable)
+    return <AccessRestricted />;
 
   return (
     <div className='w-full pt-2 pl-2 pr-4'>

@@ -228,6 +228,10 @@ export const ProjectDetails = () => {
     AllPermissions.INTERACTIONS_EXPORT
   );
 
+  const technicalSummaryExportEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECT_TECHNICAL_SUMMARY_EXPORT
+  );
   const checkExport = () => {
     const list = searchParams.get('list');
     const tab = searchParams.get('tab');
@@ -248,7 +252,7 @@ export const ProjectDetails = () => {
     } else if (list === 'interactions' && !interactionsView) {
       return !isInteractionsExportEnable;
     } else if (list === 'technicalSummary' && !technicalSummaryId) {
-      return false;
+      return !technicalSummaryExportEnable;
     } else {
       return true;
     }
@@ -311,6 +315,7 @@ export const ProjectDetails = () => {
       const technicalSummaryPayload = {
         account_rid: accountID,
         project_fiscal_rid: projectID,
+        timezone: systemTimezone,
       };
       exportTechnicalSummary({
         ...technicalSummaryParams,

@@ -28,51 +28,52 @@ const dateOptions = [
   { option: 'Between', value: 'between' },
 ];
 
-export const getTechnicalSummaryFilterFields = (): FieldConfig[] => {
+export const getTechnicalSummaryFilterFields = (
+  permissionMap: Record<string, { read: boolean; edit: boolean }>
+): FieldConfig[] => {
   return [
     {
       name: 'Sequence Number',
       value: 'r_number',
       type: 'text',
       operatorOption: textOptions,
-      // hide:
-      //   !permissionMap?.['r_number']?.edit &&
-      //   !permissionMap?.['r_number']?.read,
+      hide:
+        !permissionMap?.['r_number']?.edit &&
+        !permissionMap?.['r_number']?.read,
     },
     {
       name: 'Summary Version',
       value: 'version',
       type: 'number',
       operatorOption: numberOptions,
-      // hide:
-      //   !permissionMap?.['version']?.edit &&
-      //   !permissionMap?.['version']?.read,
+      hide:
+        !permissionMap?.['version']?.edit && !permissionMap?.['version']?.read,
     },
     {
       name: 'Created On',
       value: 'created_datetime',
       type: 'date',
       operatorOption: dateOptions,
-      // hide:
-      //   !permissionMap?.['created_datetime']?.edit &&
-      //   !permissionMap?.['created_datetime']?.read,
+      hide:
+        !permissionMap?.['created_datetime']?.edit &&
+        !permissionMap?.['created_datetime']?.read,
     },
     {
       name: 'Updated By',
       value: 'modified_by',
       type: 'text',
       operatorOption: nonReqTextOptions,
-      // hide:
-      //   !permissionMap?.['modified_by']?.edit &&
-      //   !permissionMap?.['modified_by']?.read,
+      hide:
+        !permissionMap?.['modified_by']?.edit &&
+        !permissionMap?.['modified_by']?.read,
     },
     {
       name: 'Updated On',
       value: 'modified_datetime',
       type: 'date',
-      // hide:
-      //   !permissionMap?.['modified_datetime']?.edit &&
-      //   !permissionMap?.['modified_datetime']?.read,
+      hide:
+        !permissionMap?.['modified_datetime']?.edit &&
+        !permissionMap?.['modified_datetime']?.read,
     },
   ];
 };

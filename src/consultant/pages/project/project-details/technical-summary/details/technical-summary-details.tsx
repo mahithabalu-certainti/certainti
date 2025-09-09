@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import SectionHeader from '../../../../../../components/details-section/section-header';
 import { TechSummaryIcon } from '../../../../../../assets';
 import { useParams, useSearchParams } from 'react-router-dom';
@@ -11,8 +11,14 @@ import { Typography, TextareaAutosize } from '@mui/material';
 import DetailsSection, {
   DetailItem,
 } from '../../../../../../components/details-section/details';
-import { formatDateToYYYYMMDDWithTime } from '../../../../../../common-utils';
+import {
+  applyHidePermission,
+  formatDateToYYYYMMDDWithTime,
+} from '../../../../../../common-utils';
 import { useToast } from '../../../../../../hooks';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../../store/store';
+import { AllPermissions } from '../../../../../../common-service';
 
 interface TechnicalSummaryDetailsProps {
   accountInActive: boolean;
@@ -32,6 +38,8 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [summaryContext, setSummaryContext] = useState('');
+
+  const { permission } = useSelector((state: RootState) => state.permission);
 
   const {
     data,
@@ -61,6 +69,24 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
     }
   }, [isEditing]);
 
+  // Permissions
+  const technicalSummaryViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) =>
+          item.name === AllPermissions.PROJECT_TECHNICAL_SUMMARY_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    technicalSummaryViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [technicalSummaryViewEditFields]);
+
   const handleSave = () => {
     const payload = {
       account_rid: accountId,
@@ -85,6 +111,18 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
     setIsEditing(false);
   };
 
+  const hideTechnicalSummary =
+    !permissionMap['technical_summary']?.read &&
+    !permissionMap['technical_summary']?.edit;
+
+  const hideAdditionalSummaryText =
+    !permissionMap['technical_summary_refinement_prompt']?.read &&
+    !permissionMap['technical_summary_refinement_prompt']?.edit;
+
+  const disabledAdditionalSummaryText =
+    permissionMap['technical_summary_refinement_prompt']?.read &&
+    !permissionMap['technical_summary_refinement_prompt']?.edit;
+
   const headerButtons = isEditing
     ? [
         {
@@ -107,12 +145,13 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
         {
           label: 'Edit',
           variant: 'outlined' as const,
-          disabled: accountInActive,
+          disabled: accountInActive || disabledAdditionalSummaryText,
           onClick: () => setIsEditing(true),
           sx: { width: '48px', minWidth: '48px' },
-          hide: false,
+          hide: hideAdditionalSummaryText,
         },
       ];
+
   const auditInfo: DetailItem[] = [
     {
       label: 'Sequence Number',
@@ -146,6 +185,8 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
     },
   ];
 
+  const auditDetails = applyHidePermission(auditInfo, permissionMap);
+
   return (
     <div className='border border-[#CBD6E2] mb-6'>
       <SectionHeader
@@ -172,11 +213,12 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
         </div>
       ) : (
         <>
-          <div className='flex items-center align-middle px-6 h-[30px] border-t border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
-            Technical Summary Information
-          </div>
-          <div
-            className={`p-3 min-h-20 mx-3 my-2
+          <div className={`${hideTechnicalSummary ? 'hidden' : ''}`}>
+            <div className='flex items-center align-middle px-6 h-[30px] border-t border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
+              Technical Summary Information
+            </div>
+            <div
+              className={`p-3 min-h-20 mx-3 my-2
   [&_p]:mb-2
   [&_strong]:font-bold [&_em]:italic
   [&_u]:underline [&_s]:line-through
@@ -203,11 +245,14 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
   [&_th]:border [&_th]:border-gray-300 [&_th]:bg-gray-100 [&_th]:px-2 [&_th]:py-1
   [&_td]:border [&_td]:border-gray-300 [&_td]:px-2 [&_td]:py-1
 `}
-            dangerouslySetInnerHTML={{ __html: data?.technical_summary || '' }}
-          />
+              dangerouslySetInnerHTML={{
+                __html: data?.technical_summary || '',
+              }}
+            />
+          </div>
 
           <div
-            className={`${updateTechSummaryText.isPending ? 'pointer-events-none cursor-default' : ''}`}
+            className={`${updateTechSummaryText.isPending ? 'pointer-events-none cursor-default' : ''} ${hideAdditionalSummaryText ? 'hidden' : ''}`}
           >
             <div className='flex items-center align-middle px-6 h-[30px] border-t border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
               Summary Context
@@ -235,7 +280,7 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
 
           <DetailsSection
             title='Audit Information'
-            data={auditInfo}
+            data={auditDetails}
             customStyle='pt-0 mt-0'
           />
         </>

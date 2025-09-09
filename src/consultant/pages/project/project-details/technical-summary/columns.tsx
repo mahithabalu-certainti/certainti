@@ -3,8 +3,8 @@ import { ListTableColumn } from '../../../../../components/table/types';
 import { TechnicalSummaryList } from '../../../../types';
 
 export const getTechnicalSummaryListColumns = (
-  handleView: (rid: string) => void
-  // permissionMap: Record<string, { read: boolean; edit: boolean }>
+  handleView: (rid: string) => void,
+  permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<TechnicalSummaryList>[] => [
   {
     id: 'r_number',
@@ -13,9 +13,8 @@ export const getTechnicalSummaryListColumns = (
     width: 160,
     sortable: true,
     sticky: true,
-    // hide:
-    //   !permissionMap?.['r_number']?.edit &&
-    //   !permissionMap?.['r_number']?.read,
+    hide:
+      !permissionMap?.['r_number']?.edit && !permissionMap?.['r_number']?.read,
     sx: {
       position: 'sticky',
       left: 32,
@@ -40,9 +39,8 @@ export const getTechnicalSummaryListColumns = (
     width: 160,
     sortable: true,
     sx: { textAlign: 'right' },
-    // hide:
-    //   !permissionMap?.['version']?.edit &&
-    //   !permissionMap?.['version']?.read,
+    hide:
+      !permissionMap?.['version']?.edit && !permissionMap?.['version']?.read,
   },
   {
     id: 'created_user_name',
@@ -50,9 +48,9 @@ export const getTechnicalSummaryListColumns = (
     label: 'Created By',
     width: 160,
     sortable: false,
-    // hide:
-    //   !permissionMap?.['created_by']?.edit &&
-    //   !permissionMap?.['created_by']?.read,
+    hide:
+      !permissionMap?.['created_by']?.edit &&
+      !permissionMap?.['created_by']?.read,
   },
   {
     id: 'created_datetime',
@@ -60,9 +58,9 @@ export const getTechnicalSummaryListColumns = (
     label: 'Created On',
     width: 200,
     sortable: true,
-    // hide:
-    //   !permissionMap?.['created_datetime']?.edit &&
-    //   !permissionMap?.['created_datetime']?.read,
+    hide:
+      !permissionMap?.['created_datetime']?.edit &&
+      !permissionMap?.['created_datetime']?.read,
     render: (row: TechnicalSummaryList) =>
       formatDateToYYYYMMDDWithTime(row.created_datetime),
   },
@@ -72,9 +70,9 @@ export const getTechnicalSummaryListColumns = (
     label: 'Updated By',
     width: 160,
     sortable: true,
-    // hide:
-    //   !permissionMap?.['modified_by']?.edit &&
-    //   !permissionMap?.['modified_by']?.read,
+    hide:
+      !permissionMap?.['modified_by']?.edit &&
+      !permissionMap?.['modified_by']?.read,
   },
   {
     id: 'modified_datetime',
@@ -82,9 +80,9 @@ export const getTechnicalSummaryListColumns = (
     label: 'Updated On',
     width: 200,
     sortable: true,
-    // hide:
-    //   !permissionMap?.['modified_datetime']?.edit &&
-    //   !permissionMap?.['modified_datetime']?.read,
+    hide:
+      !permissionMap?.['modified_datetime']?.edit &&
+      !permissionMap?.['modified_datetime']?.read,
     render: (row: TechnicalSummaryList) =>
       formatDateToYYYYMMDDWithTime(row.modified_datetime),
   },

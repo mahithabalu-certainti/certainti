@@ -69,6 +69,7 @@ export const getTechnicalSummaryExportListURL = ({
   filters,
   account_rid,
   project_fiscal_rid,
+  timezone,
 }: TechnicalSummaryExportListParams): string => {
   const baseUrl = '/api/interactions/technicalSummary/export';
   const searchParams = new URLSearchParams();
@@ -84,6 +85,7 @@ export const getTechnicalSummaryExportListURL = ({
   }
   if (sortBy !== undefined) searchParams.set('sortBy', sortBy);
   if (sortOrder !== undefined) searchParams.set('sortOrder', sortOrder);
+  if (timezone !== undefined) searchParams.set('timezone', timezone);
   const queryString = searchParams.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 };
