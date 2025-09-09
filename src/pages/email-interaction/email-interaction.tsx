@@ -16,7 +16,7 @@ const EmailInteraction: React.FC = () => {
   const [otp, setOtp] = useState<string[]>(['', '', '', '', '', '']);
   const [timer, setTimer] = useState(0);
   const [isAuthentic, setIsAuthentic] = useState(false);
-  const [currentIntractionId, setCurrentIntractionId] = useState('');
+  const [, setCurrentIntractionId] = useState('');
   const isGenerateOtpCall = useRef(false);
 
   const timeout = localStorage.getItem('otp_timeout');
@@ -60,10 +60,6 @@ const EmailInteraction: React.FC = () => {
     }
   }, [questions]);
   useEffect(() => {
-    const isProofpoint = window.location.hostname.includes(
-      'urldefense.proofpoint.com'
-    );
-    if (isProofpoint) return; // don’t call OTP yet
     if (
       account_rid &&
       interaction_rid &&
@@ -75,23 +71,24 @@ const EmailInteraction: React.FC = () => {
         account_rid,
       };
       isGenerateOtpCall.current = true;
-      mutate(payload);
+      mutate(payload, {
+        onSuccess: async () => {
+          const timeNow = Date.now();
+          localStorage.setItem('otp_timeout', JSON.stringify(timeNow));
+          setTimer(timeNow);
+        },
+      });
+      console.log('OTP trigger');
     }
-
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeout, account_rid, interaction_rid]);
+  useEffect(() => {
     if (auth_token) {
       setIsAuthentic(true);
     } else {
       setIsAuthentic(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timeout, account_rid, interaction_rid, currentIntractionId, auth_token]);
-  useEffect(() => {
-    if (data && !timeout) {
-      const timeNow = Date.now();
-      localStorage.setItem('otp_timeout', JSON.stringify(timeNow));
-      setTimer(timeNow);
-    }
-  }, [data, timeout]);
+  }, [auth_token]);
   useEffect(() => {
     if (timeout) {
       const startTime = JSON.parse(timeout);
