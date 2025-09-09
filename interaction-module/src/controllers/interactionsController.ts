@@ -1003,7 +1003,8 @@ async function sendInteraction(req: Request, res: Response): Promise<void> {
      const interaction = await interactionService.sendInteraction(
        value.interactions,
        value.account_rid,
-       userId
+       userId,
+       value.is_interaction_followup
      );
     console.log(
       `[${methodName}] Service response:`,
