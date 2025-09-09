@@ -13,7 +13,7 @@ async function startServer() {
   try {
     const { app } = await initExpressServer();
     // const { graphqlPath } = await initGraphQLServer(app);
-    await schedulerForTriggerAi()
+    schedulerForTriggerAi()
 
     app.listen(PORT, () => {
       // console.log(`Graphql Server ready at: ${graphqlPath}`);
