@@ -832,9 +832,9 @@ class InteractionSchemaService {
       } else if (value.after !== undefined) {
         const afterDate = dayjs(value.after, 'YYYY-MM-DD').endOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
         whereClause[field] = { [Op.gt]: afterDate };
-      } else if (value.between?.from && value.between?.to) {
-        const fromDate = dayjs(value.between.from, 'YYYY-MM-DD').startOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
-        const toDate = dayjs(value.between.to, 'YYYY-MM-DD').endOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
+      } else if (value.between[0] && value.between[1]) {
+        const fromDate = dayjs(value.between[0], 'YYYY-MM-DD').startOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
+        const toDate = dayjs(value.between[1], 'YYYY-MM-DD').endOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
 
         whereClause[field] = {
           [Op.gte]: fromDate,
