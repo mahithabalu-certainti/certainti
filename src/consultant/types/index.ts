@@ -15,3 +15,4 @@ export * from './project-financial';
 export * from './configuration';
 export * from './interactions';
 export * from './timesheet';
+export * from './technical-summary';

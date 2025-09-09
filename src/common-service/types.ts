@@ -241,6 +241,10 @@ export enum AllPermissions {
   INTERACTIONS_CREATE = 'interactions_create',
   SEND_INTERACTIONS = 'send_interactions',
   TRIGGER_AI_ASSESSMENT = 'trigger_ai_assessment',
+  PROJECT_TECHNICAL_SUMMARY_OVERVIEW = 'project_technical_summary_overview',
+  PROJECT_TECHNICAL_SUMMARY_TIMELINE = 'project_technical_summary_timeline',
+  PROJECT_TECHNICAL_SUMMARY_VIEW_EDIT = 'projects_tech_summary_view_edit',
+  PROJECT_TECHNICAL_SUMMARY_EXPORT = 'projects_tech_summary_export',
 }
 
 export interface Country {

@@ -511,7 +511,8 @@ export type ExportType =
   | 'interactions'
   | 'timesheet_project'
   | 'timesheet_project_resource'
-  | 'timesheet_project_task';
+  | 'timesheet_project_task'
+  | 'technical_summary';
 
 export type FinancialSummaryFlag = 'all' | 'rd_qualified';
 
