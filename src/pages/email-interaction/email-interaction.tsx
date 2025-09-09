@@ -60,6 +60,10 @@ const EmailInteraction: React.FC = () => {
     }
   }, [questions]);
   useEffect(() => {
+    const isProofpoint = window.location.hostname.includes(
+      'urldefense.proofpoint.com'
+    );
+    if (isProofpoint) return; // don’t call OTP yet
     if (
       account_rid &&
       interaction_rid &&
