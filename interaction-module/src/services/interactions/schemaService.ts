@@ -2178,17 +2178,7 @@ class InteractionSchemaService {
        
       };
 
-      if (interaction?.sent_on_datetime) {
-        updateData.last_resent_on = new Date();
-        const [statusArr]: any = await this.mainDbSequelize.query(
-          rawQueries.fetchInteractionStatusByType(statusAction.RESENT)
-        );
-        const statusRid =
-          Array.isArray(statusArr) && statusArr.length > 0
-            ? statusArr[0].rid
-            : null;
-        updateData.status_rid = statusRid;
-      } else {
+      if (!interaction?.sent_on_datetime || interaction?.sent_on_datetime === null) {
         updateData.sent_on_datetime = new Date();
         updateData.last_resent_on = new Date();
         const [statusArr]: any = await this.mainDbSequelize.query(
@@ -2199,7 +2189,7 @@ class InteractionSchemaService {
             ? statusArr[0].rid
             : null;
         updateData.status_rid = statusRid;
-      }
+      } 
 
       await Interaction.update(updateData, { where: { rid: interactionRid } });
       await InteractionSummary.update(updateData, {
