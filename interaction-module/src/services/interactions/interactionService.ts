@@ -401,7 +401,7 @@ export class InteractionService {
           filters,
           data.sortBy,
           data.sortOrder,
-          false
+          "list"
         );
 
       if (!techSummary) {
@@ -460,7 +460,7 @@ export class InteractionService {
           filters,
           data.sortBy,
           data.sortOrder,
-          true
+          "download"
         );
 
       if (!techSummary) {
@@ -1182,7 +1182,7 @@ export class InteractionService {
           created_by: d.created_by,
           created_user_name: createdMap.get(d.created_by) || null,
           modified_by: d.modified_by,
-          updated_user_name: modifiedMap.get(d.modified_by) || null,
+          updated_user_name: modifiedMap.get(d.modified_by) == undefined ? d.modified_by : modifiedMap.get(d.modified_by),
           has_email_recipient: data.flag === interactionFlag.account
             ? recipientMap.get(d.project_fiscal_rid) || false
             : hasEmailRecipient
@@ -1310,6 +1310,7 @@ export class InteractionService {
   async listInteractionResponseHistory (data : any) {
     const mainDb = await this.getMainDb()
     const orgDb = await this.getOrgDb();
+    
     let fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb))
     let schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number)
     const responseHistoryresult : any = await orgDb.query(listResponseHistory(data.interaction_rid, schemaName, data.page, data.limit, data.sort, data.sort_by))

@@ -537,13 +537,18 @@ class InteractionSchemaService {
     filters: Record<string, string>,
     sortBy: string = "created_datetime",
     sortOrder: string = "ASC",
-    disablePagination: boolean = false
+    type: string = "list"
   ) {
     try {
       const offset = (page - 1) * limit;
         let modifiedByFilter;
       let modifiedByConditions;
       let totalResults: number = 0;
+      let disablePagination = false;
+      if(type === "download")
+        {
+          disablePagination = true
+        }
        const detectConditions = (filters: any) => {
         if (!filters) return null;
         for (let conditions of Object.values(ALPHANUMERIC_CONDITIONS)) {
@@ -631,7 +636,7 @@ class InteractionSchemaService {
         }
       };
       if (modifiedByConditions != null && modifiedByConditions != undefined)
-        finalData = applyFilters(finalData, modifiedByConditions, modifiedByFilter, "modified_by");
+        finalData = applyFilters(finalData, modifiedByConditions, modifiedByFilter, "modified_user_name");
       if (mainTableFilters[sortBy] != undefined && sortBy.toLowerCase() == 'asc') {
         finalData = finalData.sort((a: any, b: any) => {
           if (!a?.[sortBy]) return 1;
@@ -646,7 +651,17 @@ class InteractionSchemaService {
         });
       }
       totalResults = disablePagination ? finalData.length : count;
-      let finalPaginatedData = disablePagination ? finalData.slice((page - 1) * limit, page * limit) : finalData;
+      let finalPaginatedData = [];
+      if(type === "download") 
+        {
+          finalPaginatedData = finalData;
+        }
+        else
+        {
+           finalPaginatedData = disablePagination ? finalData.slice((page - 1) * limit, page * limit) : finalData;
+        }
+
+    
       return {
         technicalSummary: finalPaginatedData,
         count: totalResults
@@ -763,10 +778,10 @@ class InteractionSchemaService {
       } else if (value.not_equals !== undefined) {
         whereClause[field] = { [Op.ne]: value.not_equals };
       } else if (value.greater_than !== undefined) {
-        whereClause[field] = { ...(whereClause[field] || {}), [Op.gte]: value.gte };
+        whereClause[field] = { ...(whereClause[field] || {}), [Op.gt]: value.greater_than };
       } 
       if (value.less_than !== undefined) {
-        whereClause[field] = { ...(whereClause[field] || {}), [Op.lte]: value.lte };
+        whereClause[field] = { ...(whereClause[field] || {}), [Op.lt]: value.less_than };
       }
       if (Array.isArray(value.in) && value.in.length > 0) {
         whereClause[field] = { [Op.in]: value.in };
@@ -2346,7 +2361,7 @@ class InteractionSchemaService {
         this.mainDbSequelize =
           await this.interactionModelService.getMainSequelize();
       }
-      const [activeStatus]: any[] = await this.mainDbSequelize.query(
+      const activeStatus: any[] = await this.mainDbSequelize.query(
         rawQueries.fetchAllStatus(),
         { type: "SELECT" }
       );
@@ -2374,6 +2389,7 @@ class InteractionSchemaService {
         (typeof maxVersion === "number"
           ? maxVersion
           : parseInt(maxVersion as any) || 0) + 1;
+      const activeStatusObj = activeStatus.find(s => s.status_name === 'Active');
       let techSummaryPayload = {
         created_by: process.env.SYSTEM_USER_ID || "system",
         account_rid: accountId,
@@ -2382,7 +2398,7 @@ class InteractionSchemaService {
         project_fiscal_rid: projectFiscalId,
         technical_summary: projectSummary,
         version,
-        status_rid: activeStatus[techSummaryStatus.ACTIVE].rid,
+        status_rid: activeStatusObj?.rid,
         entity_transaction_id: correlationId,
       };
       const updateData: any = {
@@ -2399,7 +2415,7 @@ class InteractionSchemaService {
       ]);
       if (aiResponse.rid) {
         await AiTechnicalSummary.update(
-          { status_rid: activeStatus[techSummaryStatus.INACTIVE].rid, },
+          { status_rid:activeStatus.find(s => s.status_name === 'In-Active')?.rid },
           {
             where: {
               account_rid: accountId,
