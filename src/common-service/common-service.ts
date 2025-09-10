@@ -440,6 +440,20 @@ export const updateInteractionQuestions = async (
             Authorization: `Bearer ${authToken}`,
             'x-user-id': userId,
           },
+          // Prevent merging with common headers if axios is configured that way
+          transformRequest: [
+            (data, headers) => {
+              // Clear all existing headers first
+              Object.keys(headers).forEach((key) => {
+                delete headers[key];
+              });
+              // Set only the required headers
+              headers['Authorization'] = `Bearer ${authToken}`;
+              headers['x-user-id'] = userId;
+              headers['Content-Type'] = 'application/json';
+              return JSON.stringify(data);
+            },
+          ],
         }
       );
     return data;
@@ -448,7 +462,6 @@ export const updateInteractionQuestions = async (
     throw error;
   }
 };
-
 export const useUpdateInteractionQuestion = () => {
   return useMutation<
     InteractionQuestionResUpdateResponse,
@@ -463,6 +476,7 @@ export const uploadAttachment = async (
   body: UploadAttachmentRequest
 ): Promise<UploadInteractionAttachmentResponse> => {
   try {
+    // Always use authToken and userId from body, even if available elsewhere
     const { authToken, userId, ...rest } = body;
     const formData = new FormData();
     formData.append('account_rid', rest.account_rid);
@@ -479,9 +493,22 @@ export const uploadAttachment = async (
           Authorization: `Bearer ${authToken}`,
           'x-user-id': userId,
         },
+        // Prevent merging with common headers if axios is configured that way
+        transformRequest: [
+          (data, headers) => {
+            // Clear all existing headers first
+            Object.keys(headers).forEach((key) => {
+              delete headers[key];
+            });
+            // Set only the required headers
+            headers['Authorization'] = `Bearer ${authToken}`;
+            headers['x-user-id'] = userId;
+            headers['Content-Type'] = 'multipart/form-data';
+            return data;
+          },
+        ],
       }
     );
-
     return response.data;
   } catch (error) {
     console.error('Error uploading attachment:', error);
@@ -503,6 +530,7 @@ export const deleteAttachment = async (
   body: DeleteAttachmentRequest
 ): Promise<CommonApiResponse> => {
   try {
+    // Always use authToken and userId from body, even if available elsewhere
     const { authToken, userId, ...rest } = body;
     const response = await exInteractionServiceApi.delete(
       '/api/interactions/deleteAttachment ',
@@ -512,6 +540,20 @@ export const deleteAttachment = async (
           Authorization: `Bearer ${authToken}`,
           'x-user-id': userId,
         },
+        // Prevent merging with common headers if axios is configured that way
+        transformRequest: [
+          (data, headers) => {
+            // Clear all existing headers first
+            Object.keys(headers).forEach((key) => {
+              delete headers[key];
+            });
+            // Set only the required headers
+            headers['Authorization'] = `Bearer ${authToken}`;
+            headers['x-user-id'] = userId;
+            headers['Content-Type'] = 'application/json';
+            return JSON.stringify(data);
+          },
+        ],
       }
     );
 
