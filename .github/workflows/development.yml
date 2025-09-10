@@ -473,7 +473,7 @@ jobs:
           TRIGGER_AI_URL=https://platform-demo.certainti.ai/thinkrd365_triggerai
           NODE_ENV_DB_PREFIX="D001-"
           INTERACTION_URL="https://thinkrd365-development.certainti.ai/ext/interaction"
-          KAFKA_BROKER="kafka:9092"
+          KAFKA_BROKER="10.204.3.4:9092"
           KAFKA_CONSUMER_GROUP="ai_assessment_request"
           KAFKA_AI_RESPONSE_TRIGGER_TOPIC="ai_assessment_response"
           KAFKA_AI_REQUEST_TRIGGER_TOPIC = "ai_assessment_request"
@@ -486,7 +486,7 @@ jobs:
           EMAIL_WEBHOOK_REFRESH_TOKEN='1.AUYAYEBztlxme0uU4nFkWMHZM5QxG7XilShJnb0ug4Sz_ViAAHFGAA.AgABAwEAAABVrSpeuWamRam2jAF1XRQEAwDs_wUA9P_EQj4vCoFqkAVloz5sogdJ5opddVp5yyAdkrgXgZGqWXrnHSk6ulKj6gthLKIFRVobllJaPocylzjH7agzN_GZD86OfUOgeTEE5TIW4bdvM_bVfhIsezcRIfmBJdIab_bdz7nZUn-z8kVO3HrVGFZyL9sg8JnYrFZye7j8-UMKXZIlX07cTNR1bSYp7SAeboCi6wQDLL80q2qUaWKv3ai9XH0OKVqpySic1lrwKQtTA3b5TBuJmxIoFjwigBRcmucO-u_miO8SttJV8V1pwYPiZkQHBXKJIOn40xwnbc0kahrONJWDRqlc4ov1lDbjGrTUX3APixyZ4foD5oK7TPtworGSl2PusaRrSpW31Vw1ZGBFyX5CKZWGgmMH7p5RthkTamoWHNqUepSoX3_EqK8Y9t7NWNfZlDGm73tsMvvs2gtG-3VrWkMP7nmDJyBj3qJjrfh-YMrFq4wrVwhXWKOICX7rs0BRX0LExNwMMksxnVRC6hhGs1QPElEFP6STP7ZXK5LD_EDUfPHUFBSO5HH9JF6XSAOYr2VCy3LRDj-F0Cu2vo6wEH0hTftcIjyARhU5NEEsx5-yNUVCBgbGB5aZkaZbWgmQC92p6AkJB9xvaHruSIOGg9CkNvBcLqgqRvkGudL5z-Qyw4ic2ChHaLph1aKySh3BUgfIcbo6dkdZCUH2I8lpSTNCjpZBWPVFm4nsrSLO8wYFRqs2fKRfp77wKTw_NFQZJN32_PqCzFFx2GqeW2lueaIRQNrWxxGR1k_UaHvObi1Kk5YnmUCqlyH-LRrlQ1GDDixEP3rLXnKt_jOk5GBVuKJNO_-kbqWuLLm_sFDdrRg5P6i3ABjeFeWTwopDcNntR8W0usbSeER5bpm2vdlpcRXrNyqStFv66FtqwrhlGWz1K38V_zrMtdPWBi_wUUnPS6lZziHz5NIpEumJgytuH6hryrnN59jKncvXJgm-7vZw0EoH1n-BirxrPZ6jkyhNzdN3rjFDs18JJdqK1tjL5CiNcy2ri_JhjFm2Oa4IxjFBdW8VF_3KeC7-U0i5cQgTndYO8tIVeQwfvmBZbNgjlMYlkqgPHr-XeSLeXdUgZU0HdgS2M8EliMBx-bhU7CK_PcyRuHdiHd0lMzpOZxcRqbRYMTfM0pyUCnyDG_2nhOdcCJVz'
           WEBHOOK_API_CLIENT_ID=b51b3194-95e2-4928-9dbd-2e8384b3fd58
           WEBHOOK_API_CLIENT_SECRET=ajy8Q~xjONlXXoCzkuIcHxQ0TaLA5hYiBav_5b1A
-          WEBHOOK_API_TENANT_ID=b6734060-665c-4b7b-94e2-716458c1d933
+          WEBHOOK_API_TENANT_ID=b6734060-665c-4b7b-94e2-716458c1d933 # Replace with $MAIL_TENANT_ID
           SCHEDULER_EXPRESSION="0 0 * * *"        
           EOF
           echo "$ENV_FILE file created successfully!"
@@ -745,7 +745,7 @@ jobs:
           TRIGGER_AI_URL=https://platform-demo.certainti.ai/thinkrd365_triggerai
           NODE_ENV_DB_PREFIX="D001-"
           INTERACTION_URL="https://thinkrd365-development.certainti.ai/ext/interaction"
-          KAFKA_BROKER="kafka:9092"
+          KAFKA_BROKER="10.204.3.4:9092"
           KAFKA_CONSUMER_GROUP="ai_assessment_response"
           KAFKA_AI_RESPONSE_TRIGGER_TOPIC="ai_assessment_response"
           KAFKA_AI_REQUEST_TRIGGER_TOPIC = "ai_assessment_request"
