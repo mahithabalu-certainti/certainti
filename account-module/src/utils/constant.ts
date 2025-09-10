@@ -239,3 +239,9 @@ export const DEFAULT_ACCOUNT_DETAILS = {
   fiscalEnd : "03/31",
   maxAiInteraction : 5
 }
+
+export const primaryKeyContacts = {
+  "finance_lead": "finance_lead",
+  "finance_executive": "finance_executive",
+  "professional_services_consultant": "professional_services_consultant"
+};

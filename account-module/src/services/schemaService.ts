@@ -109,10 +109,12 @@ class SchemaService {
       await this.createInteractionAttachments(schemaName, sequelize);
       await this.createAITechnicalSummary(schemaName, sequelize);
       await this.createInteractionTimeline(schemaName, sequelize);
-      await this.createAIAssessmentError(schemaName, sequelize);
+      await this.createAIAssesmentAudit(schemaName, sequelize);
+      await this.createQRETracker(schemaName, sequelize);
 
       await this.createOtpEntries(schemaName, sequelize);
       await this.createOtpEntriesHistory(schemaName, sequelize);
+      await this.createEmailWebhookHistory(schemaName, sequelize);
 
       await transaction.commit();
     } catch (Err) {
@@ -120,6 +122,56 @@ class SchemaService {
     }
   }
 
+   private async  createQRETracker( schemaName: string,
+    sequelize: Sequelize) {
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}".ai_assessment_qre (
+        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        created_by varchar(50) NOT NULL,
+        modified_by varchar(50),
+        created_datetime TIMESTAMP NOT NULL DEFAULT NOW(),
+        modified_datetime TIMESTAMP,
+        transaction_id    VARCHAR(50) NOT NULL,
+        project_fiscal_rid VARCHAR(50) NOT NULL,
+        project_rid VARCHAR(50),
+        account_rid VARCHAR(50) NOT NULL,
+        qre_percent  DECIMAL(18,2) NOT NULL,
+        qre_detailed_breakdown JSON,
+        version     integer
+      );
+    `);
+   await sequelize.query(`
+        ALTER TABLE "${schemaName}".ai_assessment_qre ADD CONSTRAINT ai_assessment_qre_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
+        ALTER TABLE "${schemaName}".ai_assessment_qre ADD CONSTRAINT ai_assessment_qre_project_rid_fkey FOREIGN KEY (project_rid) REFERENCES "${schemaName}".project(rid) ON UPDATE CASCADE;
+        ALTER TABLE "${schemaName}".ai_assessment_qre ADD CONSTRAINT ai_assessment_qre_project_fiscal_rid_fkey FOREIGN KEY (project_fiscal_rid) REFERENCES "${schemaName}".project_fiscal(rid) ON UPDATE CASCADE;
+    `);
+  }
+
+   private async  createAIAssesmentAudit( schemaName:string,
+    sequelize: Sequelize) {
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}".ai_assessment_audit (
+        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        created_by varchar(50) NOT NULL,
+        modified_by varchar(50),
+        created_datetime TIMESTAMP NOT NULL DEFAULT NOW(),
+        modified_datetime TIMESTAMP,
+         transaction_id    VARCHAR(50) NOT NULL,
+         project_rid VARCHAR(50) ,
+         project_fiscal_rid VARCHAR(50) NOT NULL,
+         account_rid VARCHAR(50) NOT NULL,
+         is_qre_processed BOOLEAN NOT NULL DEFAULT FALSE,
+         is_tech_summary_processed BOOLEAN NOT NULL DEFAULT FALSE,
+         is_interaction_question_processed BOOLEAN NOT NULL DEFAULT FALSE,
+         ai_assessment_api_status text 
+      );
+    `);
+     await sequelize.query(`
+        ALTER TABLE "${schemaName}".ai_assessment_audit ADD CONSTRAINT ai_assessment_audit_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
+        ALTER TABLE "${schemaName}".ai_assessment_audit ADD CONSTRAINT ai_assessment_audit_project_rid_fkey FOREIGN KEY (project_rid) REFERENCES "${schemaName}".project(rid) ON UPDATE CASCADE;
+        ALTER TABLE "${schemaName}".ai_assessment_audit ADD CONSTRAINT ai_assessment_audit_project_fiscal_rid_fkey FOREIGN KEY (project_fiscal_rid) REFERENCES "${schemaName}".project_fiscal(rid) ON UPDATE CASCADE;
+    `);
+  }
   private async  createAITechnicalSummary( schemaName: string,
     sequelize: Sequelize) {
      await sequelize.query(`
@@ -140,7 +192,7 @@ class SchemaService {
         project_fiscal_rid VARCHAR(50),
         technical_summary TEXT,
         version INT DEFAULT 1,
-        status VARCHAR(50),
+        status_rid VARCHAR(50),
         entity_transaction_rid VARCHAR(50),
         technical_summary_refinement_prompt TEXT
       );
@@ -152,23 +204,6 @@ class SchemaService {
       ALTER TABLE "${schemaName}".ai_technical_summary ADD CONSTRAINT ai_technical_summary_project_fiscal_rid_fkey FOREIGN KEY (project_fiscal_rid) REFERENCES "${schemaName}".project_fiscal(rid) ON UPDATE CASCADE;
     `);
   }
-  private async  createAIAssessmentError( schemaName: string,
-    sequelize: Sequelize) {
-    await sequelize.query(`
-      CREATE TABLE IF NOT EXISTS "${schemaName}".ai_assessment_error (
-        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
-        created_by varchar(50) NOT NULL,
-        modified_by varchar(50),
-        created_datetime TIMESTAMP NOT NULL DEFAULT NOW(),
-        modified_datetime TIMESTAMP,
-        account_rid varchar(50) NOT NULL,
-        project_fiscal_rid VARCHAR(50) NOT NULL,
-        transaction_id    VARCHAR(50) NOT NULL,
-        error_message     JSON 
-      );
-    `);
-  }
-
   
 
   private async createAttachmentTimeline(
@@ -285,8 +320,12 @@ class SchemaService {
         data_residency VARCHAR(255),
         data_storage VARCHAR(255) CHECK (data_storage IN ('separate_db', 'store_in_parent')),
         auto_access_rd BOOLEAN NOT NULL,
-        business_details VARCHAR(2000) NOT NULL
-        
+        business_details VARCHAR(2000) NOT NULL,
+        support_email VARCHAR(255),
+        subscription_created BOOLEAN DEFAULT FALSE,
+        tenant_id VARCHAR(50),
+        client_id VARCHAR(50),
+        client_secret VARCHAR(300)
       );
     `);
 
@@ -1961,7 +2000,7 @@ private async createInteractionTable(
       interaction_iteration integer,
       last_resent_on timestamp with time zone,
       last_reminder_on timestamp with time zone,
-      last_reminder_by timestamp with time zone,
+      last_reminder_by varchar(255),
       response_from character varying(255),
       response_updated_on timestamp with time zone,
       response_updated_by character varying(50),
@@ -2308,6 +2347,24 @@ private async createInteractionTable(
     await sequelize.query(`
      ALTER TABLE "${schemaName}".otp_entries_history ADD CONSTRAINT fk_otp_entries_history_account_rid FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON DELETE SET NULL;
       ALTER TABLE "${schemaName}".otp_entries_history ADD CONSTRAINT fk_otp_entries_history_interaction_rid FOREIGN KEY (interaction_rid) REFERENCES "${schemaName}".interactions(rid) ON DELETE SET NULL;
+    `);
+  }
+
+  private async createEmailWebhookHistory(schemaName: string, sequelize: any){
+    await sequelize.query(`
+      CREATE TABLE "${schemaName}".webhook_email_history (
+        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        created_by varchar(50) NOT NULL,
+        created_datetime timestamp NOT NULL,
+        email_subject varchar(500) NOT NULL,
+        email_sender varchar(200) NOT NULL,
+        attachment_name varchar(255) NULL,
+        extracted_answers text NULL,
+        uploaded_time timestamp NOT NULL,
+        status varchar(20) NOT NULL,
+        error_message text NULL,
+        CONSTRAINT webhook_email_history_status_check CHECK (((status)::text = ANY ((ARRAY['SUCCESS'::character varying, 'FAILED'::character varying, 'MISSING_ATTACHMENT'::character varying, 'INVALID_FORMAT'::character varying, 'NO_MATCH_FOUND'::character varying])::text[])))
+      );  
     `);
   }
 
@@ -2974,10 +3031,10 @@ private async createInteractionTable(
           primary_contact_role: roleKey || "",
           primary_contact_name: name || "", // technical_consultant: getPrimaryContactName("Technical Consultant") || "-",
           professional_services_consultant:
-            getPrimaryContactName("Professional Services Consultant") || "-",
+            getPrimaryContactName(roleKeyMap.professional_services_consultant) || "-",
           finance_executive:
-            getPrimaryContactName("Client Finance Executive") || "-",
-          finance_lead: getPrimaryContactName("Client Finance Lead") || "-",
+            getPrimaryContactName(roleKeyMap.finance_executive) || "-",
+          finance_lead: getPrimaryContactName(roleKeyMap.finance_lead) || "-",
           ...(isChild && {
             projects_by_fiscal_year: accountFiscalMap.get(account.rid) || [],
           }),
@@ -3282,7 +3339,7 @@ private async createInteractionTable(
       const mainDdSequilze = await initSequelize();
 
       const result: any = await mainDdSequilze.query(
-        `SELECT logo_url, firm_name, domain_name FROM ${MAIN_SCHEMA_NAME}.organization_licenses`,
+        `SELECT logo_url, firm_name FROM ${MAIN_SCHEMA_NAME}.organization_licenses`,
         {
           type: "SELECT",
         }

@@ -1,6 +1,6 @@
 import { Sequelize } from "sequelize";
 import { IKeyContactDetail, IUpdateKeyContactDetail } from "../utils/types";
-import { MAIN_SCHEMA_NAME } from "../utils/constants";
+import { MAIN_SCHEMA_NAME, primaryKeyContacts, STATUS_MESSAGE } from "../utils/constants";
 
 export class KeyContactService {
   async manageKeyContacts(
@@ -51,10 +51,11 @@ export class KeyContactService {
 
       let keyContactMap: Record<string, string> = {};
       let statusMap: Record<string, string> = {};
+      let keyContactRoleMap: Record<string, string> = {};
 
       if (keyContactIds.length > 0) {
         const keyContactRows = await mainDbSequlize.query(
-          `SELECT rid, role_name FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE rid IN (:ids)`,
+          `SELECT rid, role_name, role_map FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE rid IN (:ids)`,
           {
             replacements: { ids: keyContactIds },
             type: "SELECT",
@@ -63,6 +64,10 @@ export class KeyContactService {
 
         keyContactMap = Object.fromEntries(
           keyContactRows.map((c: any) => [c.rid, c.role_name])
+        );
+        
+        keyContactRoleMap = Object.fromEntries(
+          keyContactRows.map((c: any) => [c.role_map, c.role_name])
         );
       }
       if (statusIds.length > 0) {
@@ -83,23 +88,23 @@ export class KeyContactService {
         ...kc,
         role_name: keyContactMap[kc.key_contact_role] || null,
         status_name: statusMap[kc.status_rid] || null,
-      }));
-
+        role_map: keyContactRoleMap[kc.key_contact_role] || null,
+      }));  
       const technicalContact = enrichedKeyContacts.find(
         (e: any) =>
-          e.role_name === "Client Project Technical Point of Contact" && e.is_primary_contact
+          e.role_name === keyContactRoleMap[primaryKeyContacts.technical_point_of_contact] && e.is_primary_contact
       );
       const financialContact = enrichedKeyContacts.find(
         (e: any) =>
-          e.role_name === "Financial Consultant" && e.is_primary_contact
+          e.role_name === keyContactRoleMap[primaryKeyContacts.financial_consultant] && e.is_primary_contact
       );
       const pointOfContact = enrichedKeyContacts.find(
         (e: any) =>
-          e.role_name === "Client Project Point of Contact" && e.is_primary_contact
+          e.role_name === keyContactRoleMap[primaryKeyContacts.project_point_of_contact] && e.is_primary_contact
       );
 
       const isEmailRecipientInfo = enrichedKeyContacts.some(
-        (e: any) => e.include_in_communication === true
+        (e: any) => e.include_in_communication === true && e.status_name === STATUS_MESSAGE.active
       );
 
       technicalConsultant = technicalContact
@@ -226,10 +231,11 @@ export class KeyContactService {
       );
 
       let keyContactMap: Record<string, string> = {};
+      let keyContactRoleMap: Record<string, string> = {};
 
       if (keyContactIds.length > 0) {
         const keyContactRows = await mainDbSequelize.query(
-          `SELECT rid, role_name FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE rid IN (:ids)`,
+          `SELECT rid, role_name, role_map FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE rid IN (:ids)`,
           {
             replacements: { ids: keyContactIds },
             type: "SELECT",
@@ -239,6 +245,11 @@ export class KeyContactService {
         keyContactMap = Object.fromEntries(
           (Array.isArray(keyContactRows) ? keyContactRows : []).map(
             (row: any) => [row.rid, row.role_name]
+          )
+        );
+        keyContactRoleMap = Object.fromEntries(
+          (Array.isArray(keyContactRows) ? keyContactRows : []).map(
+            (row: any) => [row.role_map, row.role_name]
           )
         );
       }
@@ -256,9 +267,9 @@ export class KeyContactService {
 
         return {
           keyContact: [],
-          technical_point_of_contact: findPrimary("Client Project Technical Point of Contact"),
-          financial_consultant: findPrimary("Financial Consultant"),
-          project_point_of_contact: findPrimary("Client Project Point of Contact"),
+          technical_point_of_contact: findPrimary(keyContactRoleMap["technical_point_of_contact"]),
+          financial_consultant: findPrimary(keyContactRoleMap["financial_consultant"]),
+          project_point_of_contact: findPrimary(keyContactRoleMap["project_point_of_contact"]),
         };
       };
 

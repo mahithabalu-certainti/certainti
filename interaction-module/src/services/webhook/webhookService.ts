@@ -2,13 +2,14 @@ import { Client } from "@microsoft/microsoft-graph-client";
 import { ClientSecretCredential } from "@azure/identity";
 import csv from "csv-parser";
 import ExcelJS from "exceljs";
-import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries } from "../../utils/constants";
+import { HttpStatus, rawQueries } from "../../utils/constants";
 import { Readable } from "stream";
 import { InteractionModelService } from "../interactionModelsService";
 import InteractionSchemaService from "../interactions/schemaService";
 import { InteractionService } from "../interactions/interactionService";
 import { Logger } from "winston";
-import { isLeafType } from "graphql";
+import { decryptClientSecret } from "../../utils/helpers";
+import { WebhookEmailLogAttributes } from "../../models/webhookEmailLog";
 
 export class WebHookService {
   private graphClient: Client;
@@ -52,8 +53,12 @@ export class WebHookService {
     try {
       const notifications = data.value;
       const results = [];
+      let mailProcessedResults = null;
+      let finalResult = null;
+      let receivedEmail = null;
 
       for (const notification of notifications) {
+        const subscriptionId = notification.subscriptionId;
         const messageId = notification.resourceData?.id;
 
         if (!messageId) {
@@ -68,9 +73,39 @@ export class WebHookService {
           };
         }
         this.processedMessageIds.add(messageId);
-        const result = await this.processNotification(notification);
 
-        if(!result.success){
+        const {
+          subscription_created,
+          email,
+          tenant_id,
+          client_id,
+          client_secret,
+        } = await this.fetchCredentialsBySubscriptionId(subscriptionId);
+
+        receivedEmail = email;
+
+        let graphClient: Client;
+
+        if (subscription_created && email) {
+          const decryptedSecret = decryptClientSecret(client_secret);
+          graphClient = this.createGraphClient(
+            tenant_id,
+            client_id,
+            decryptedSecret
+          );
+        } else {
+          graphClient = this.graphClient;
+        }
+
+        finalResult = await this.processNotification(
+          notification,
+          email,
+          graphClient
+        );
+
+        mailProcessedResults = finalResult;
+
+        if (!finalResult.success) {
           return {
             statusCode: HttpStatus.SUCCESS,
             message: HttpStatus.BAD_REQUEST_MESSAGE,
@@ -78,30 +113,38 @@ export class WebHookService {
           };
         }
 
-        if(result.attachments && result.attachments.length == 0){
+        if (finalResult.attachments && finalResult.attachments.length == 0) {
           return {
             statusCode: HttpStatus.SUCCESS,
             message: HttpStatus.BAD_REQUEST_MESSAGE,
             errorMessage: "Attachemnts Not found",
           };
         }
-        if (result) {
-          results.push(result);
+        if (finalResult) {
+          results.push(finalResult);
         }
       }
 
-      if(!results[0].attachments && results[0].attachments.length === 0 && results[0].attachments[0].parsedData){
+      if (
+        !results[0].attachments &&
+        results[0].attachments.length === 0 &&
+        results[0].attachments[0].parsedData
+      ) {
         return {
           statusCode: HttpStatus.SUCCESS,
           message: HttpStatus.BAD_REQUEST_MESSAGE,
           errorMessage: "Invalid attachments",
-        }
+        };
       }
 
       const parsedData = results[0].attachments[0].parsedData;
       let interactionId: string | null = null;
       let accountNumber: string | null = null;
-      
+      let projectId: string | null = null;
+      let projectName: string | null = null;
+      let projectCode: string | null = null;
+      let accountNumberById = finalResult.accountNumber;
+
       const answers: {
         rid: string;
         notes: string;
@@ -121,6 +164,18 @@ export class WebHookService {
 
         if (row[0]?.toLowerCase() === "account id") {
           accountNumber = row[1] || null;
+        }
+
+        if (row[0]?.toLowerCase() === "project id") {
+          projectId = row[1] || null;
+        }
+
+        if (row[0]?.toLowerCase() === "project name") {
+          projectName = row[1] || null;
+        }
+
+        if (row[0]?.toLowerCase() === "project code") {
+          projectCode = row[1] || null;
         }
 
         // Find header row for questions/answers
@@ -148,6 +203,22 @@ export class WebHookService {
       }
 
       if (!accountNumber) {
+        await this.logWebhookEmailEvent({
+          schemaName: mailProcessedResults.accountNumber,
+          emailSubject: mailProcessedResults.subject,
+          emailSender: mailProcessedResults.from,
+          status: "FAILED",
+          errorMessage: "Invalid Account Number",
+        });
+        this.sendMailWithAttachment(
+          finalResult,
+          "",
+          null,
+          "Invalid account number",
+          finalResult.forwardEmail,
+          this.graphClient,
+          receivedEmail
+        );
         return {
           statusCode: HttpStatus.SUCCESS,
           message: HttpStatus.BAD_REQUEST_MESSAGE,
@@ -156,6 +227,22 @@ export class WebHookService {
       }
 
       if (!interactionId) {
+        await this.logWebhookEmailEvent({
+          schemaName: mailProcessedResults.accountNumber,
+          emailSubject: mailProcessedResults.subject,
+          emailSender: mailProcessedResults.from,
+          status: "FAILED",
+          errorMessage: "Invalid Interaction ID",
+        });
+        this.sendMailWithAttachment(
+          finalResult,
+          "",
+          null,
+          "Invalid Interaction ID",
+          finalResult.forwardEmail,
+          this.graphClient,
+          receivedEmail
+        );
         return {
           statusCode: HttpStatus.SUCCESS,
           message: HttpStatus.BAD_REQUEST_MESSAGE,
@@ -165,14 +252,55 @@ export class WebHookService {
 
       const { accountNumber: validAccountNumber } =
         await this.interactionSchemaService.fetchValidAccountNumberByNumber(
-          accountNumber
+          accountNumberById
         );
+
+      if(!validAccountNumber){
+        await this.logWebhookEmailEvent({
+          schemaName: mailProcessedResults.accountNumber,
+          emailSubject: mailProcessedResults.subject,
+          emailSender: mailProcessedResults.from,
+          status: "FAILED",
+          errorMessage: "Invalid Account ID",
+        });
+        this.sendMailWithAttachment(
+          finalResult,
+          "",
+          null,
+          "Invalid Account ID",
+          finalResult.forwardEmail,
+          this.graphClient,
+          receivedEmail
+        );
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: "Invalid Account ID",
+        };
+      }
 
       const interaction = await this.fetchInteractionById(
         validAccountNumber,
-        interactionId
+        interactionId,
+        finalResult.interactionId
       );
       if (!interaction) {
+        await this.logWebhookEmailEvent({
+          schemaName: mailProcessedResults.accountNumber,
+          emailSubject: mailProcessedResults.subject,
+          emailSender: mailProcessedResults.from,
+          status: "FAILED",
+          errorMessage: "Invalid Interaction ID",
+        });
+        this.sendMailWithAttachment(
+          finalResult,
+          "",
+          null,
+          "Invalid Interaction ID",
+          finalResult.forwardEmail,
+          this.graphClient,
+          receivedEmail
+        );
         return {
           statusCode: HttpStatus.SUCCESS,
           message: HttpStatus.BAD_REQUEST_MESSAGE,
@@ -180,21 +308,83 @@ export class WebHookService {
         };
       }
 
-      const interactionItem = await this.fetchInteractionItemById(validAccountNumber, interaction.rid);
+      const projectData = await this.validateProjectData(validAccountNumber , {
+        projectId,
+        projectName,
+        projectCode,
+      });
+      if(projectData !== null){
+        await this.logWebhookEmailEvent({
+          schemaName: mailProcessedResults.accountNumber,
+          emailSubject: mailProcessedResults.subject,
+          emailSender: mailProcessedResults.from,
+          status: "FAILED",
+          errorMessage: projectData,
+        });
+        this.sendMailWithAttachment(
+          finalResult,
+          "",
+          null,
+          projectData,
+          finalResult.forwardEmail,
+          this.graphClient,
+          receivedEmail
+        );
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: projectData,
+        };
+      }
+
+      const interactionItem = await this.fetchInteractionItemById(
+        validAccountNumber,
+        interaction.rid
+      );
+
+      const unmatchedSeqNums: string[] = [];
 
       for (const answer of answers) {
         const questionSeqNum = answer?.questionSeqId || ""; // Adjust key if needed
-      
+
         const matchingItem = interactionItem.find(
-          (item: any) => item.question_seq_num?.toString() === questionSeqNum?.toString()
+          (item: any) =>
+            item.question_seq_num?.toString() === questionSeqNum?.toString()
         );
-      
+
         if (matchingItem) {
           answer.rid = matchingItem.rid;
         } else {
-          this.logger.warn(`No matching interaction item found for question_seq_num: ${questionSeqNum}`);
+          unmatchedSeqNums.push(questionSeqNum);
+          this.logger.warn(
+            `No matching interaction item found for question_seq_num: ${questionSeqNum}`
+          );
         }
       }
+
+      if (unmatchedSeqNums.length > 0) {
+        await this.logWebhookEmailEvent({
+          schemaName: mailProcessedResults.accountNumber,
+          emailSubject: mailProcessedResults.subject,
+          emailSender: mailProcessedResults.from,
+          status: "FAILED",
+          errorMessage: "Invalid Question Number",
+        });
+        this.sendMailWithAttachment(
+          finalResult,
+          "",
+          null,
+          "Invalid Question Number",
+          finalResult.forwardEmail,
+          this.graphClient,
+          receivedEmail
+        );
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: "Invalid Question Number",
+        };
+      }      
 
       const responsSource: any = await this.fetchResponseSource();
 
@@ -209,13 +399,20 @@ export class WebHookService {
         attachments: [],
         questions: answers,
         created_by: interaction.recipient_email || "",
-        response_source_rid: responsSource[0]?.rid || ""
+        response_source_rid: responsSource[0]?.rid || "",
       };
 
       await this.interactionService.updateInteractionResponse(
         updateResponeObj,
         interaction.recipient_email || ""
       );
+
+      await this.logWebhookEmailEvent({
+        schemaName: mailProcessedResults.accountNumber,
+        emailSubject: mailProcessedResults.subject,
+        emailSender: mailProcessedResults.from,
+        status: "SUCCESS",
+      });
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -224,27 +421,152 @@ export class WebHookService {
       };
     } catch (err) {
       this.logger.error(
-        `Error handling webhook: ${err instanceof Error ? err.message : JSON.stringify(err)}`
+        `Error handling webhook: ${
+          err instanceof Error ? err.message : JSON.stringify(err)
+        }`
       );
       throw this.throwServiceError(err as Error);
     }
   }
 
-  async fetchInteractionById(accountNumber: string, interactionId: string) {
+  async fetchCredentialsBySubscriptionId(subscriptionId: string) {
+    const mainDbSequelize =
+      await this.interactionModelService.getMainSequelize();
+
+    const accountData: any = await mainDbSequelize.query(
+      rawQueries.fetchAccountBySubscriptionId(),
+      {
+        type: "SELECT",
+        replacements: {
+          subscriptionId,
+        },
+      }
+    );
+
+    const accountNumber = accountData[0]?.r_number;
+    const accountId = accountData[0]?.rid;
+    const schemaName = accountNumber ? `trd365_${accountNumber.replace(/\D/g, "")}` : null;
+
+    if(!schemaName){
+      const platformSettings: any = await mainDbSequelize.query(
+        rawQueries.fetchPlatformSettings(),
+        {
+          type: "SELECT",
+        }
+      );
+      let accountEmail = platformSettings[0].email ?? null;
+
+      return {
+        email: accountEmail,
+        tenant_id: null,
+        client_id: null,
+        client_secret: null,
+        subscription_created: null,
+      }
+    }
+
+    const orgDbSequelize = await this.interactionModelService.getSequelize();
+    const accountDetails: any = await orgDbSequelize.query(
+      rawQueries.fetchAccountDetailsById(schemaName),
+      {
+        type: "SELECT",
+        replacements: {
+          accountId,
+        },
+      }
+    );
+    let accountEmail = accountDetails[0].support_email ?? null;
+
+    if(!accountEmail){
+      const platformSettings: any = await mainDbSequelize.query(
+        rawQueries.fetchPlatformSettings(),
+        {
+          type: "SELECT",
+        }
+      );
+      accountEmail = platformSettings[0].email ?? null;
+    }
+
+    return {
+      email: accountEmail,
+      tenant_id: accountDetails[0].tenant_id ?? null,
+      client_id: accountDetails[0].client_id ?? null,
+      client_secret: accountDetails[0].client_secret ?? null,
+      subscription_created: accountDetails[0].subscription_created ?? null,
+    };
+  }
+
+  async validateProjectData(
+    accountNumber: string,
+    {
+      projectId,
+      projectName,
+      projectCode,
+    }: {
+      projectId: string | null;
+      projectName: string | null;
+      projectCode: string | null;
+    }
+  ): Promise<string | null> {
+    if (!projectId || typeof projectId !== 'string') {
+      return 'Invalid or missing projectId';
+    }
+  
+    if (!projectName || typeof projectName !== 'string') {
+      return 'Invalid or missing projectName';
+    }
+  
+    if (!projectCode || typeof projectCode !== 'string') {
+      return 'Invalid or missing projectCode';
+    }
+  
+    try {
+      const orgDbSequelize = await this.interactionModelService.getSequelize();
+
+      const schemaName =  `trd365_${accountNumber.replace(/\D/g, "")}`;
+  
+      const [result] = await orgDbSequelize.query(
+        `SELECT 1 FROM "${schemaName}".project_fiscal 
+         WHERE project_rid = :projectId 
+           OR project_name = :projectName 
+           OR project_code = :projectCode
+         LIMIT 1;`,
+        {
+          type: "SELECT",
+          replacements: {
+            projectId,
+            projectName,
+            projectCode,
+          },
+        }
+      );
+  
+      if (!result) {
+        return 'No matching project found with the provided Project ID, name, or code.'
+      }
+    } catch (err) {
+      return `Database error: ${(err as Error).message || err}`;
+    }
+  
+    return null;
+  }  
+
+  async fetchInteractionById(accountNumber: string, interactionCode: string, interactionId: string) {
     const { Interaction } = await this.interactionModelService.getModels(
       accountNumber
     );
 
     const interaction = await Interaction.findOne({
       where: {
-        r_number: interactionId,
+        r_number: interactionCode,
+        rid: interactionId
       },
     });
 
     return interaction;
   }
 
-  async fetchResponseSource(){
+  async fetchResponseSource() {
     const mainDbSequelize =
       await this.interactionModelService.getMainSequelize();
 
@@ -285,9 +607,7 @@ export class WebHookService {
       });
 
       if (response && response.id) {
-        this.logger.info(
-          `Subscription created for : ${response.id}`
-        );
+        this.logger.info(`Subscription created for : ${response.id}`);
       }
     } catch (err) {
       this.logger.error(`Failed to create subscription`);
@@ -307,90 +627,96 @@ export class WebHookService {
             expirationDateTime: expiration.toISOString(),
           });
 
-          this.logger.info(`Renewed subscription ${sub.id} to ${expiration.toISOString()}`);
+          this.logger.info(
+            `Renewed subscription ${sub.id} to ${expiration.toISOString()}`
+          );
         }
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : JSON.stringify(err);
+      const errorMessage =
+        err instanceof Error ? err.message : JSON.stringify(err);
       this.logger.info(`Error renewing subscriptions: ${errorMessage}`);
     }
   }
 
-  private async processNotification(notification: any): Promise<any | null> {
+  private async processNotification(
+    notification: any,
+    email: string,
+    graphClient: Client
+  ): Promise<any | null> {
     const messageId = notification.resourceData?.id;
     if (!messageId) return null;
 
-    const email = "support@yourdomain.com";
-
-    const accesss_token = process.env.EMAIL_WEBHOOK_TOKEN!;
-
-    // const url = `/users/${email}/messages/${encodeURIComponent(
-    //   messageId
-    // )}?$expand=attachments`;
-    // const message = await this.graphClient.api(url).get();
-
-    const url = `https://graph.microsoft.com/v1.0/me/messages/${encodeURIComponent(
-      messageId
-    )}?$expand=attachments`;
-    const resp = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${accesss_token}`,
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (!resp.ok) {
-      const txt = await resp.text();
-      throw new Error(`Failed to fetch message: ${resp.status} ${txt}`);
-    }
-
-    const message = await resp.json();
+    const message = await graphClient
+      .api(
+        `/users/${email}/messages/${encodeURIComponent(
+          messageId
+        )}?$expand=attachments`
+      )
+      .expand("attachments")
+      .get();
 
     const subject = message.subject;
-    if (!subject.toLowerCase().includes("interaction")) {
+    if (!subject.toLowerCase().includes("interaction invitation")) {
       this.logger.error("Subject is not related to interaction. Skipping.");
       return {
-        success: false
+        success: false,
       };
     }
 
+    const htmlBodyContent = message.body.content;
+
     const from = message.from?.emailAddress?.address;
     const attachments: any = message.attachments || [];
-    let interactionIdFomSubject: string = "";
+    let interactionIdFomBody: string = "";
     let FORWARD_EMAIL: string | null = null;
+    let accountRNumber = "";
 
-    const match = subject.match(/INT-\d{10}/);
-    if (match) {
-      interactionIdFomSubject = match[0];
+    const match = htmlBodyContent.match(/\(Interaction Ref Id:\s*(D001-[a-f0-9\-]+)\s*\)/i);
+    if (match && match[1]) {
+      interactionIdFomBody = match[1];
       const globalInteraction: any = await this.fetchGlobalInteractions(
-        interactionIdFomSubject
+        interactionIdFomBody
       );
       const { accountNumber } =
         await this.interactionSchemaService.fetchValidAccountNumberById(
-          globalInteraction[1].account_rid
+          globalInteraction[0].account_rid
         );
+
+      accountRNumber = accountNumber;
       const keyContactsEmail = await this.fetchKeyContacts(
         accountNumber,
-        globalInteraction[1].account_rid
+        globalInteraction[0].account_rid
       );
       FORWARD_EMAIL = keyContactsEmail;
-    }else{
+    } else {
       return {
-        success: false
+        success: false,
       };
     }
 
     const processedAttachments = [];
 
-    if(attachments.length === 0){
+    if (attachments.length === 0) {
       await this.sendMailWithAttachment(
         message,
         "",
         null,
         "Non-CSV attachment",
         FORWARD_EMAIL,
-        accesss_token
+        graphClient,
+        email
       );
+      this.logWebhookEmailEvent({
+        schemaName: accountRNumber,
+        emailSubject: subject,
+        emailSender: message.from.emailAddress.address,
+        status: "MISSING_ATTACHMENT",
+        errorMessage: "No PDF attachment found in the email.",
+      });
+      return {
+        success: false
+      };
     }
 
     for (const att of attachments) {
@@ -398,40 +724,36 @@ export class WebHookService {
         att,
         message,
         FORWARD_EMAIL,
-        accesss_token
+        graphClient,
+        {
+          accountNumber: accountRNumber,
+          subject: subject,
+          sender: message.from.emailAddress.address
+        },
+        email
       );
       if (result) {
         processedAttachments.push(result);
       }
     }
 
-    // await this.graphClient
-    //   .api(`/users/${email}/messages/${messageId}`)
-    //   .update({ isRead: true });
-
-    const markAsRead = await fetch(
-      `https://graph.microsoft.com/v1.0/me/messages/${encodeURIComponent(
-        messageId
-      )}`,
-      {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${accesss_token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ isRead: true }),
-      }
-    );
-
-    if (markAsRead.ok) {
-      this.logger.info("Email marked as Read");
-    }
+    await graphClient
+      .api(
+        `/users/${encodeURIComponent(
+          email
+        )}/messages/${encodeURIComponent(messageId)}`
+      )
+      .update({ isRead: true });
 
     return {
       subject,
       from,
       attachments: processedAttachments,
-      success: true
+      accountNumber: accountRNumber,
+      forwardEmail: FORWARD_EMAIL,
+      originlMessage: message,
+      interactionId: interactionIdFomBody,
+      success: true,
     };
   }
 
@@ -439,7 +761,13 @@ export class WebHookService {
     att: any,
     message: any,
     forwardEmail: string | null,
-    token: string
+    graphClient: Client,
+    options: {
+      accountNumber: string;
+      subject: string;
+      sender: string;
+    },
+    email: string
   ): Promise<any | null> {
     if (
       att["@odata.type"] !== "#microsoft.graph.fileAttachment" ||
@@ -473,10 +801,24 @@ export class WebHookService {
         } else {
           shouldForward = true;
           reason = "CSV validation failed";
+          this.logWebhookEmailEvent({
+            schemaName: options.accountNumber,
+            emailSubject: options.subject,
+            emailSender: options.sender,
+            status: "INVALID_FORMAT",
+            errorMessage: "CSV validation failed",
+          });
         }
       } catch (err) {
         shouldForward = true;
         reason = `CSV parse error: ${(err as Error).message}`;
+        this.logWebhookEmailEvent({
+          schemaName: options.accountNumber,
+          emailSubject: options.subject,
+          emailSender: options.sender,
+          status: "INVALID_FORMAT",
+          errorMessage: reason,
+        });
       }
 
       if (shouldForward) {
@@ -486,9 +828,11 @@ export class WebHookService {
           buffer,
           reason,
           forwardEmail,
-          token
+          graphClient,
+          email
         );
         this.logger.error(`Forwarding file "${att.name}" due to: ${reason}`);
+        return;
       }
     } else if (isXlsx) {
       try {
@@ -512,10 +856,38 @@ export class WebHookService {
         } else {
           shouldForward = true;
           reason = "XLSX validation failed";
+          this.logWebhookEmailEvent({
+            schemaName: options.accountNumber,
+            emailSubject: options.subject,
+            emailSender: options.sender,
+            status: "INVALID_FORMAT",
+            errorMessage: reason,
+          });
         }
       } catch (err) {
         shouldForward = true;
         reason = `XLSX parse error: ${(err as Error).message}`;
+        this.logWebhookEmailEvent({
+          schemaName: options.accountNumber,
+          emailSubject: options.subject,
+          emailSender: options.sender,
+          status: "INVALID_FORMAT",
+          errorMessage: reason,
+        });
+      }
+
+      if (shouldForward) {
+        await this.sendMailWithAttachment(
+          message,
+          att.name,
+          buffer,
+          reason,
+          forwardEmail,
+          graphClient,
+          email
+        );
+        this.logger.error(`Forwarding file "${att.name}" due to: ${reason}`);
+        return;
       }
     } else {
       // Non-CSV file
@@ -525,9 +897,20 @@ export class WebHookService {
         buffer,
         "Non-CSV attachment",
         forwardEmail,
-        token
+        graphClient,
+        email
       );
-      this.logger.warn(`Non-CSV file "${att.name}" received. Skipping or forward as needed.`);
+      this.logger.warn(
+        `Non-CSV file "${att.name}" received. Skipping or forward as needed.`
+      );
+      this.logWebhookEmailEvent({
+        schemaName: options.accountNumber,
+        emailSubject: options.subject,
+        emailSender: options.sender,
+        status: "MISSING_ATTACHMENT",
+        errorMessage: `Non-CSV file "${att.name}" received`,
+      });
+      return;
     }
 
     return {
@@ -542,11 +925,11 @@ export class WebHookService {
       await this.interactionModelService.getMainSequelize();
 
     const interactions = await mainDbSequelize.query(
-      rawQueries.fetchInteractionSummaryByRNumber(),
+      rawQueries.fetchInteractionSummaryById(),
       {
         type: "SELECT",
         replacements: {
-          r_number: interactionId,
+          interaction_rid: interactionId,
         },
       }
     );
@@ -579,13 +962,10 @@ export class WebHookService {
     }
 
     // Step 2: Fetch role names from main DB
-    const roles = await mainDbSequelize.query(
-      rawQueries.fetchRolesByIds(),
-      {
-        replacements: { roleIds },
-        type: "SELECT",
-      }
-    );
+    const roles = await mainDbSequelize.query(rawQueries.fetchRolesByIds(), {
+      replacements: { roleIds },
+      type: "SELECT",
+    });
 
     // Step 3: Find the rid of "Professional Services Consultant"
     const targetRole: any = roles.find(
@@ -629,12 +1009,14 @@ export class WebHookService {
       !!array?.[1]?.[1] &&
       array?.[2]?.[0] === "Project ID" &&
       !!array?.[2]?.[1] &&
-      array?.[3]?.[0] === "Project Name";
+      array?.[3]?.[0] === "Project Name" &&
+      array?.[4]?.[0] === "Project Code" && 
+      !!array?.[4]?.[1];
 
     if (!headerChecks) return false;
 
     // Validate the column headers at index 4
-    const tableHeader = array[4];
+    const tableHeader = array[5];
     if (
       tableHeader?.[0] !== "Question No" ||
       tableHeader?.[1] !== "Questions" ||
@@ -645,12 +1027,30 @@ export class WebHookService {
       return false;
     }
 
+    const missingFields: Array<{ rowIndex: number; missing: string[] }> = [];
+
     // Validate the data rows
-    for (let i = 5; i < array.length; i++) {
+    for (let i = 6; i < array.length; i++) {
       const row = array[i];
-      const question = row?.[0];
-      const answer = row?.[1];
-      const isMandatory = row?.[3]?.trim().toLowerCase();
+      const questionId = row?.[0];
+      const question = row?.[1];
+      const answer = row?.[2];
+      const notes = row?.[3];
+      const isMandatory = row?.[4]?.trim().toLowerCase();
+
+      const missing: string[] = [];
+
+      if (!questionId) missing.push("questionId");
+      if (!question) missing.push("question");
+      if (!answer) missing.push("answer");
+      if (!isMandatory) missing.push("isMandatory");
+
+      if (missing.length > 0) {
+        missingFields.push({
+          rowIndex: i + 1,
+          missing,
+        });
+      }
 
       // If row is empty, skip
       if (!question && !answer && !isMandatory) continue;
@@ -659,6 +1059,10 @@ export class WebHookService {
       if (isMandatory === "yes" && !answer?.trim()) {
         return false;
       }
+    }
+
+    if (missingFields.length > 0) {
+      return false;
     }
 
     return true;
@@ -670,10 +1074,10 @@ export class WebHookService {
     buffer: Buffer | null,
     reason: string,
     forwardEmail: string | null,
-    token: string
+    graphClient: Client,
+    senderEmail: string
   ): Promise<void> {
     try {
-      const senderEmail = "yogesh.sundaramoorthy@certainti.ai";
       const forwardTo = forwardEmail;
 
       if (!senderEmail) {
@@ -708,30 +1112,83 @@ export class WebHookService {
               : [],
         };
 
-        // await this.graphClient
-        //   .api(`/users/${encodeURIComponent(senderEmail)}/sendMail`)
-        //   .post({
-        //     message,
-        //     saveToSentItems: true,
-        //   });
-
-        const resp = await fetch(
-          "https://graph.microsoft.com/v1.0/me/sendMail",
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ message, saveToSentItems: true }),
-          }
-        );
+        await graphClient
+          .api(`/users/${encodeURIComponent(senderEmail)}/sendMail`)
+          .post({
+            message,
+            saveToSentItems: true,
+          });
 
         this.logger.info(`Forwarded "${filename}" due to: ${reason}`);
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : JSON.stringify(err);
+      const errorMessage =
+        err instanceof Error ? err.message : JSON.stringify(err);
       this.logger.error(`sendMailWithAttachment error: ${errorMessage}`);
+    }
+  }
+
+  private createGraphClient(
+    tenantId: string,
+    clientId: string,
+    clientSecret: string
+  ): Client {
+    const credential = new ClientSecretCredential(
+      tenantId,
+      clientId,
+      clientSecret
+    );
+    return Client.initWithMiddleware({
+      authProvider: {
+        getAccessToken: async () => {
+          const token = await credential.getToken(
+            "https://graph.microsoft.com/.default"
+          );
+          return token.token;
+        },
+      },
+    });
+  }
+
+  async logWebhookEmailEvent({
+    schemaName,
+    emailSubject,
+    emailSender,
+    attachmentName = null,
+    extractedAnswers = null,
+    status,
+    errorMessage = null,
+    uploadedTime = new Date(),
+  }: {
+    schemaName: string;
+    emailSubject: string;
+    emailSender: string;
+    attachmentName?: string | null;
+    extractedAnswers?: string | null;
+    status: WebhookEmailLogAttributes["status"];
+    errorMessage?: string | null;
+    uploadedTime?: Date;
+  }) {
+    try {
+      const { WebhookEmailLog } = await this.interactionModelService.getModels(
+        schemaName
+      );
+
+      await WebhookEmailLog.create({
+        created_by: "SYSTEM",
+        created_datetime: new Date(),
+
+        email_subject: emailSubject,
+        email_sender: emailSender,
+        attachment_name: attachmentName,
+        extracted_answers: extractedAnswers,
+        uploaded_time: uploadedTime,
+
+        status,
+        error_message: errorMessage,
+      });
+    } catch (err) {
+      console.error("Failed to log webhook email event:", err);
     }
   }
 

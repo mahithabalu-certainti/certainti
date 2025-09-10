@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 import initExpressServer from "./servers/expressServer";
 import { schedulerForTriggerAi } from "./utils/cronScheduler";
-// import './services/cronJob/renewSubscriptions';
+import './services/cronJob/renewSubscriptions';
 // import initGraphQLServer from "./servers/graphqlServer";
 
 import { Kafka } from "kafkajs";
@@ -13,7 +13,7 @@ async function startServer() {
   try {
     const { app } = await initExpressServer();
     // const { graphqlPath } = await initGraphQLServer(app);
-    await schedulerForTriggerAi()
+    schedulerForTriggerAi()
 
     app.listen(PORT, () => {
       // console.log(`Graphql Server ready at: ${graphqlPath}`);
@@ -56,4 +56,6 @@ async function startKafkaConsumer() {
 
 
 startServer();
-startKafkaConsumer();
+setTimeout(() => {
+  startKafkaConsumer();
+}, 2 * 60 * 1000); // 2 minutes in milliseconds
