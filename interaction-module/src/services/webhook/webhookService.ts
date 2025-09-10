@@ -1176,7 +1176,7 @@ export class WebHookService {
           toRecipients: [
             {
               emailAddress: {
-                address: "nithish.m@certainti.ai",
+                address: forwardTo,
               },
             },
           ],
