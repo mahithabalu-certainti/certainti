@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import {
-  Select,
-  MenuItem,
   Table,
   TableBody,
   TableCell,
@@ -35,7 +33,6 @@ import {
 } from '../../../../common-utils';
 import {
   getQuestionTableColumns,
-  getStatusId,
   hasFormValuesChanged,
   ProjectDetails,
   shouldDisableField,
@@ -56,7 +53,7 @@ import {
   AllPermissions,
   ExpandCollapseSelectOptions,
   useGetInteractionStatus,
-  useGetInteractionStatusById,
+  // useGetInteractionStatusById,
 } from '../../../../common-service';
 import { RootState } from '../../../../store/store';
 import { useSelector } from 'react-redux';
@@ -68,7 +65,6 @@ const InteractionForm = () => {
   const [searchParams] = useSearchParams();
   const { successToast } = useToast();
   const [projectList, setProjectList] = useState<Project[]>([]);
-  const [currentStatusId, setCurrentStatusId] = useState<string>('');
   const [activeFlag, setActiveFlag] = useState<StatusActionEnum | null>(null);
   const [selectedProject, setSelectedProject] = useState<ProjectDetails>({
     account_name: '',
@@ -261,17 +257,10 @@ const InteractionForm = () => {
   );
   const createInteraction = useCreateInteraction();
   const updateInteraction = useUpdateInteractionDetails();
-  const interactionStatusById = useGetInteractionStatusById(currentStatusId);
-  const interactionAllStatus = useGetInteractionStatus();
-
-  const interactionStatus = isEditView
-    ? interactionStatusById
-    : interactionAllStatus;
+  const interactionStatus = useGetInteractionStatus();
 
   const commonSuccess =
     createInteraction.isSuccess || updateInteraction.isSuccess;
-  const isDraftStatus =
-    interactionData?.status_name?.toLowerCase() === StatusTypeEnum.draft;
 
   const { data: projectsData, isLoading: projectsLoading } = useAccountProjects(
     {
@@ -297,7 +286,6 @@ const InteractionForm = () => {
 
   useEffect(() => {
     if (interactionData && isEditView) {
-      setCurrentStatusId(interactionData.status || '');
       setFormData((prev) => ({
         ...prev,
         created_by: interactionData.created_by,
@@ -320,7 +308,7 @@ const InteractionForm = () => {
           accountName ||
           '',
         fiscalYear: Number(interactionData.fiscal_year),
-        status: interactionData?.status || '',
+        status: interactionData?.status_name || '',
         questions:
           interactionData.questions.length > 0
             ? interactionData.questions.map((qus, index) => ({
@@ -516,22 +504,13 @@ const InteractionForm = () => {
   };
 
   const handleSubmit = (saveFlag: StatusActionEnum) => {
-    if (
-      isEditView &&
-      !isDraftStatus &&
-      !hasFormValuesChanged(formData, interactionData)
-    ) {
+    if (isEditView && !hasFormValuesChanged(formData, interactionData)) {
       goBack(); // No changes, just go back
       return;
     }
 
-    const statusRid = getStatusId(
-      formData,
-      isEditView,
-      isDraftStatus,
-      saveFlag,
-      interactionData?.status || '',
-      statusOptions
+    const draftStatus = statusOptions.find(
+      (option) => option.label.toLowerCase() === StatusTypeEnum.draft
     );
 
     if (!validateForm()) {
@@ -541,7 +520,7 @@ const InteractionForm = () => {
       accountId,
       formData,
       isEditView,
-      statusRid,
+      draftStatus?.value || '',
       interactionData,
       selectedProject
     );
@@ -610,7 +589,7 @@ const InteractionForm = () => {
         </div>
         <div className='flex gap-3'>
           <TextButton
-            label='Save as Draft'
+            label='Save'
             loading={
               activeFlag === StatusActionEnum.Draft &&
               (createInteraction.isPending || updateInteraction.isPending)
@@ -620,26 +599,8 @@ const InteractionForm = () => {
             }
             onClick={() => handleSubmit(StatusActionEnum.Draft)}
             sx={{
-              width: '110px',
-              minWidth: '110px',
-              fontSize: '13px',
-              fontWeight: 400,
-            }}
-            hide={!isDraftStatus && isEditView}
-          />
-          <TextButton
-            label='Save & Submit'
-            loading={
-              activeFlag === StatusActionEnum.Create &&
-              (createInteraction.isPending || updateInteraction.isPending)
-            }
-            disabled={
-              activeFlag !== null && activeFlag !== StatusActionEnum.Create
-            }
-            onClick={() => handleSubmit(StatusActionEnum.Create)}
-            sx={{
-              width: '110px',
-              minWidth: '110px',
+              width: '64px',
+              minWidth: '64px',
               fontSize: '13px',
               fontWeight: 400,
             }}
@@ -848,108 +809,15 @@ const InteractionForm = () => {
                 >
                   Status
                 </label>
-                <Select
+                <input
+                  type='text'
                   name='status'
-                  className={`custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]
-                    ${formData.status === '' ? 'text-[#7D98B6] ' : ''} ${errors?.status && 'border-red-500 bg-[#FEF2F2]'}
-                  `}
-                  onChange={(e) => {
-                    setFormData({
-                      ...formData,
-                      status: e.target.value as string,
-                    });
-                    setErrors((prev) => ({
-                      ...prev,
-                      status: undefined,
-                    }));
-                  }}
-                  value={formData.status || ''}
-                  displayEmpty
-                  disabled={shouldDisableField(
-                    'status',
-                    isEditView,
-                    permissionMap
-                  )}
-                  fullWidth
-                  size='small'
-                  MenuProps={{
-                    PaperProps: {
-                      sx: {
-                        maxWidth: 300,
-                        maxHeight: 300,
-                        marginTop: '4px',
-                        boxShadow:
-                          'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
-                        '& .MuiMenuItem-root': {
-                          fontSize: '13px',
-                          padding: '6px 12px',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        },
-                      },
-                    },
-                  }}
-                  sx={{
-                    height: '32px',
-                    fontSize: '13px',
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                      border: '2px solid #60A5FA',
-                    },
-                    '& .MuiOutlinedInput-root': {
-                      '&.Mui-focused': {
-                        boxShadow: 'none',
-                      },
-                    },
-                    '.MuiSelect-select': {
-                      padding: '6px 6px',
-                      color: formData.status === '' ? '#7D98B6' : 'black',
-                    },
-                    '&.Mui-disabled': {
-                      backgroundColor: '#f3f4f6',
-                    },
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      border: errors?.status
-                        ? '1px solid #ef4444'
-                        : '1px solid #CBD6E2',
-                      borderRadius: '2px',
-                    },
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      border: errors?.status
-                        ? '1px solid #ef4444'
-                        : '1px solid #CBD6E2',
-                    },
-                    '& svg': {
-                      color: '#7D98B6',
-                    },
-                  }}
-                >
-                  <MenuItem
-                    value=''
-                    disabled
-                    sx={{
-                      color: '#425A76',
-                      fontSize: '13px',
-                      fontWeight: '500',
-                    }}
-                  >
-                    Choose Status
-                  </MenuItem>
-                  {statusOptions?.map((option, i) => (
-                    <MenuItem
-                      sx={{
-                        color: '#425A76',
-                        fontSize: '13px',
-                        fontWeight: '500',
-                      }}
-                      key={`${option.value}-${i}`}
-                      value={option.value}
-                      title={option.label}
-                      disabled={option.disable}
-                    >
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </Select>
+                  placeholder='Choose status'
+                  autoComplete='off'
+                  className='placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs'
+                  disabled={true}
+                  value={formData.status}
+                />
                 {errors.status && (
                   <span className='text-[12px] text-red-400 col-span-full'>
                     {errors.status}

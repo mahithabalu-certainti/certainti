@@ -225,11 +225,9 @@ const Interactions: React.FC<InteractionsProps> = ({
             disableCheckBox:
               !sendInteractionsEnable ||
               !item.has_email_recipient ||
-              status === StatusTypeEnum.draft ||
-              status === StatusTypeEnum.cancelled ||
+              status === StatusTypeEnum.sent ||
+              status === StatusTypeEnum.response_draft ||
               status === StatusTypeEnum.response_received ||
-              status === StatusTypeEnum.completed ||
-              status === StatusTypeEnum.on_hold ||
               status === '',
           };
         }) || [];
@@ -397,8 +395,8 @@ const Interactions: React.FC<InteractionsProps> = ({
   const disableInteractionEditBtn = (row: InteractionList): boolean => {
     const status = (row.status_name || '').toLowerCase() as StatusTypeEnum;
     return [
-      StatusTypeEnum.cancelled,
-      StatusTypeEnum.completed,
+      StatusTypeEnum.sent,
+      StatusTypeEnum.response_draft,
       StatusTypeEnum.response_received,
     ].includes(status);
   };
