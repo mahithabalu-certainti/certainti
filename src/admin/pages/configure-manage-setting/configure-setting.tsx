@@ -1,6 +1,5 @@
 import { Box } from '@mui/material';
-import { DetailsIcon } from '../../../assets';
-import SectionHeader from '../../../components/details-section/section-header';
+import { ManageConfigSettingIcon } from '../../../assets';
 import { FormBuilder } from '../../../components';
 import { ConfigureSettingsFormFields } from './helper';
 import { useMemo, useRef } from 'react';
@@ -13,6 +12,8 @@ import {
 } from '../../service/configure-manage-setting/configure-setting';
 import SkeletonForm from '../../../components/form-builder/skeleton-form';
 import { useToast } from '../../../hooks';
+import TextButton from '../../../components/button/text-button';
+import { BUTTON_STYLES } from '../manage-user-detail/styles';
 
 type FormValueType = string | number | boolean | object | string[] | null;
 interface UpdateSettingsSuccess {
@@ -28,19 +29,6 @@ const ConfigureSetting = () => {
   const formRef = useRef<HTMLFormElement>(null);
   // const [emailRequried, setEmailRequried] = useState<boolean>(false);
   const updateManageSettings = useUpdateManageSettings();
-  const headerButtons = [
-    {
-      label: 'Save',
-      variant: 'contained' as const,
-      onClick: () => {
-        if (formRef.current) {
-          formRef.current.requestSubmit();
-        }
-      },
-      // disabled: isSaveDisable,
-      loading: updateManageSettings.isPending,
-    },
-  ];
   const { successToast } = useToast();
   const { data, isLoading, refetch } = useManageSettingDetails();
   const { permission } = useSelector((state: RootState) => state.permission);
@@ -111,21 +99,42 @@ const ConfigureSetting = () => {
   return (
     <>
       <div className='flex flex-col w-full'>
-        <SectionHeader
-          title={'Manage Setting'}
-          titleIcon={
-            <DetailsIcon
-              alt='settings-header-icon'
-              className='[&>path]:stroke-[#294F98] w-[14px] h-[14px]'
+        <div className='flex items-center justify-between w-full h-[55px] min-h-[50px] border-b border-[#CBD6E2] px-4'>
+          <div className='flex h-[33px]'>
+            <div className='flex items-center justify-center'>
+              <ManageConfigSettingIcon
+                alt='manage user group'
+                className='h-7 w-7 rounded-[2px] bg-[#495E74] p-[5px]'
+              />
+              <div className='flex flex-col mx-2.5 pb-1'>
+                <div className='font-semibold text-[#7D98B6] text-[12px] pt-1'>
+                  Configure Settings
+                </div>
+                <div className='font-bold text-[16px] text-[#2D3E4F] -mt-1'>
+                  Manage Settings
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className='flex gap-3 justify-center items-center'>
+            <TextButton
+              label='Save'
+              // onClick={() => navigate(MANAGE_USER_GROUP_CREATE)}
+              onClick={() => {
+                if (formRef.current) {
+                  formRef.current.requestSubmit();
+                }
+              }}
+              sx={{
+                ...BUTTON_STYLES,
+                width: '59px',
+                minWidth: '59px',
+                maxWidth: '59px',
+              }}
+              loading={updateManageSettings.isPending}
             />
-          }
-          buttons={headerButtons}
-          count={10}
-          // showItemCount={list !== 'settings'}
-          // hideSection={hideSection}
-          iconBg={'#D7E5FF'}
-          bgType='circle'
-        />
+          </div>
+        </div>
       </div>
       <div className='flex flex-col gap-0 border border-[#CBD6E2] rounded-[2px] pt-5'>
         <Box
