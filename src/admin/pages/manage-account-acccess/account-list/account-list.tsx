@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Suspense, useEffect, useMemo, useState } from 'react';
 import { LeftArrowIcon, NewFilterIcon, UserIcon } from '../../../../assets';
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
-import { NewFilterIcon, UserIcon } from '../../../../assets';
 import { ManageAccountTable } from './table';
 import { ProjectListParams } from '../../../../consultant/types/project';
 import { useNavigate, useSearchParams } from 'react-router-dom';
