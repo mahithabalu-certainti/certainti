@@ -1,5 +1,5 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ListTable } from '../../../../components/table';
+import { ListTable, ManageColumnsPopover } from '../../../../components/table';
 import { manageUserListColumns } from './column';
 import {
   useManageAccountAccessUserList,
@@ -14,6 +14,10 @@ import { useEffect, useState } from 'react';
 import { useToast } from '../../../../hooks';
 import { FilterType } from '../../../types';
 import { clearFilters } from '../../../../components/filter-component/utils';
+import {
+  ListTableColumn,
+  ShowHideTableColumn,
+} from '../../../../components/table/types';
 
 interface UserTableProps {
   isProfileViewEnable?: boolean;
@@ -23,12 +27,18 @@ interface UserTableProps {
   >;
   disabled?: boolean;
   hide?: boolean;
+  columnAnchorEl: HTMLButtonElement | null;
+  setColumnAnchorEl: React.Dispatch<
+    React.SetStateAction<HTMLButtonElement | null>
+  >;
 }
 export const ManageAccountUserListTable: React.FC<UserTableProps> = ({
   appliedFilters,
   setAppliedFilters,
   disabled,
   hide,
+  columnAnchorEl,
+  setColumnAnchorEl,
 }) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -186,11 +196,49 @@ export const ManageAccountUserListTable: React.FC<UserTableProps> = ({
     );
   };
 
+  const RestrictedColumns = [
+    {
+      id: 'first_name',
+      canHide: false,
+      canDrag: false,
+    },
+  ];
+
+  const [visibleColumns, setVisibleColumns] = useState<
+    ListTableColumn<ManageAccountsUserList>[]
+  >(projectColumns.filter((col) => !col.hide));
+
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    setVisibleColumns(
+      updatedColumns.filter(
+        (col) => !col.hide
+      ) as ListTableColumn<ManageAccountsUserList>[]
+    );
+  };
+
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
+  };
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const modalId = isModalOpen
+    ? 'interaction-column-visibility-popover'
+    : undefined;
+
   return (
     <div className='pt-1'>
+      <ManageColumnsPopover
+        anchorEl={columnAnchorEl}
+        open={isModalOpen}
+        popoverId={modalId}
+        onClose={handlePopoverClose}
+        columns={projectColumns}
+        onColumnsChange={handleColumnsChange}
+        columnRestrictions={RestrictedColumns}
+      />
       <ListTable
         data={userList || []}
-        columns={projectColumns}
+        columns={visibleColumns}
         getRowId={getRowId}
         hoverHighlight={false}
         tableStyle={{

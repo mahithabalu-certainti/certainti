@@ -95,6 +95,8 @@ export interface DateFieldConfig {
   minDate?: string | Date | null;
   maxDate?: string | Date | null;
   fiscalYearValidation?: boolean;
+  startFieldId?: string;
+  endFieldId?: string;
 }
 
 export interface TableField {
@@ -258,6 +260,7 @@ export interface ListTableProps<T extends RowData> {
   unCheckedToggleTooltip?: string;
   toggleClick?: (rowId: string, value: boolean) => void;
   showEmptyRow?: boolean;
+  clearSelectedRows?: boolean;
 }
 
 export interface EditingCell {
@@ -315,4 +318,45 @@ export interface ExpandedState {
     level: number;
     children?: ExpandedState;
   };
+}
+
+// Column Show/Hide Types
+export interface ShowHideTableColumn {
+  id: string;
+  label: string;
+  hide?: boolean;
+  [key: string]: unknown;
+}
+
+export interface ShowHideColumnConfig {
+  id: string;
+  label: string;
+  visible: boolean;
+  order: number;
+}
+
+export interface ShowHideColumnRestriction {
+  id: string;
+  canHide?: boolean;
+  canDrag?: boolean;
+  tooltip?: string;
+}
+
+export interface ShowHideSortableItemProps {
+  id: string;
+  column: ShowHideColumnConfig;
+  restriction?: ShowHideColumnRestriction;
+  onToggle: (id: string, visible: boolean) => void;
+  disableDrag?: boolean;
+}
+
+export interface ManageColumnsPopoverProps<T extends ShowHideTableColumn> {
+  anchorEl: HTMLElement | null;
+  open: boolean;
+  popoverId: string | undefined;
+  onClose: () => void;
+  columns: T[];
+  onColumnsChange: (columns: T[]) => void;
+  initialConfigs?: ShowHideColumnConfig[];
+  columnRestrictions?: ShowHideColumnRestriction[];
 }

@@ -4,7 +4,7 @@ import {
   useGetAllCountries,
 } from '../../../../../common-service';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { FinancialIcon } from '../../../../../assets';
 import { StateWiseSummary, Summary } from './tab';
@@ -76,6 +76,8 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [count, setCount] = useState<number>(0);
+  const [columnAnchorEl, setColumnAnchorEl] =
+    React.useState<HTMLButtonElement | null>(null);
 
   const { permission } = useSelector((state: RootState) => state.permission);
 
@@ -179,6 +181,23 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
     },
   ];
 
+  const handleColumnVisibility = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setColumnAnchorEl(event.currentTarget);
+  };
+
+  const headerButtons = [
+    {
+      label: 'Show/Hide Fields',
+      variant: 'outlined' as const,
+      disabled: false,
+      onClick: handleColumnVisibility,
+      sx: { width: '125px', minWidth: '125px' },
+      hide: tabParam === 'summary' || tabParam === 'state_wise_summary',
+    },
+  ];
+
   const filterFields =
     tabParam === 'resource_cost'
       ? getAccountFinancialResCostFields(memoizedCountry, memoizedResourceType)
@@ -227,7 +246,7 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
             className='[&>path]:stroke-[#f16840]'
           />
         }
-        buttons={[]}
+        buttons={headerButtons}
         count={count}
         showItemCount={
           tabParam === 'project_cost' || tabParam === 'resource_cost'
@@ -270,6 +289,8 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
             setCount={setCount}
             setFinancialProjectCostParams={setFinancialProjectCostParams}
             setExportType={setExportType}
+            setColumnAnchorEl={setColumnAnchorEl}
+            columnAnchorEl={columnAnchorEl}
           />
         )}
         {tabParam === 'resource_cost' && isResourceCostViewEnable && (
@@ -282,6 +303,8 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
             setCount={setCount}
             setResCostExportParams={setResCostExportParams}
             setExportType={setExportType}
+            setColumnAnchorEl={setColumnAnchorEl}
+            columnAnchorEl={columnAnchorEl}
           />
         )}
       </div>

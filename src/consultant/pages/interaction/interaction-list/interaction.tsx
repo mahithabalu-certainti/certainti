@@ -14,14 +14,21 @@ import { InteractionTable } from './table/interaction-table';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import {
+  AllModules,
+  AllPermissions,
   useGetInteractionResponeSources,
   useGetInteractionStatus,
   useGetInteractionTypes,
 } from '../../../../common-service';
-import { reshapeGlobalFilter } from '../../../../common-utils';
+import { checkPermission, reshapeGlobalFilter } from '../../../../common-utils';
 import { exportGlobalInteractions } from '../../../services/interactions/interactions-service';
+import TextButton from '../../../../components/button/text-button';
+import { GLOBAL_INTERACTIONS_CREATE } from '../../../../routes';
+import { useNavigate } from 'react-router-dom';
+import { AccessRestricted } from '../../../../components/account-restricted';
 
 const Interaction: React.FC = () => {
+  const navigate = useNavigate();
   const { fiscalYear, filters } = useSelector<
     RootState,
     { filters: unknown; fiscalYear: string }
@@ -44,6 +51,46 @@ const Interaction: React.FC = () => {
   const [refreshTrigger, setRefreshTrigger] = useState<number>();
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
+  const [columnAnchorEl, setColumnAnchorEl] =
+    React.useState<HTMLButtonElement | null>(null);
+  const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  const { permission, modules } = useSelector(
+    (state: RootState) => state.permission
+  );
+
+  // Permissions
+  const interactionsEnable = checkPermission(modules, AllModules.INTERACTIONS);
+  const interactionsViewEnable = checkPermission(
+    permission,
+    AllPermissions.INTERACTIONS_VIEW_EDIT
+  );
+
+  const createInteractionsEnable = checkPermission(
+    permission,
+    AllPermissions.INTERACTIONS_CREATE
+  );
+
+  const isInteractionsExportEnable = checkPermission(
+    permission,
+    AllPermissions.INTERACTIONS_EXPORT
+  );
+
+  const interactionsViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.INTERACTIONS_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    interactionsViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [interactionsViewEditFields]);
 
   const handleFilterModal = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -101,6 +148,7 @@ const Interaction: React.FC = () => {
       sort_by: tableParams?.sort_by || 'ASC',
       filters: tableParams?.filters || {},
       fiscal_year: newFiscalYear,
+      timezone: systemTimezone,
       globalFilters: reshapeGlobalFilter(filters as FilterState) || {},
     };
     exportGlobalInteractions(projectInteractionHistoryExportPayload);
@@ -109,7 +157,7 @@ const Interaction: React.FC = () => {
   const menuItems = [
     {
       label: 'Export',
-      hide: false,
+      hide: !isInteractionsExportEnable,
       onClick: () => handleExport(),
     },
   ];
@@ -148,8 +196,30 @@ const Interaction: React.FC = () => {
     memoizedInteractionTypes,
     // memoizedInteractionSources,
     memoizedInteractionStatus,
-    memoizedInteractionResponseSources
+    memoizedInteractionResponseSources,
+    permissionMap
   );
+
+  const handleCreate = () => {
+    const queryParams = new URLSearchParams({
+      source: 'global',
+    });
+    navigate(`${GLOBAL_INTERACTIONS_CREATE}?${queryParams.toString()}`);
+  };
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const modalId = isModalOpen
+    ? 'interaction-column-visibility-popover'
+    : undefined;
+
+  const handleColumnVisibility = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setColumnAnchorEl(event.currentTarget);
+  };
+
+  if (!interactionsEnable || !interactionsViewEnable)
+    return <AccessRestricted />;
 
   return (
     <div className='flex flex-col w-full  h-full'>
@@ -167,7 +237,7 @@ const Interaction: React.FC = () => {
             </div>
           </div>
         </div>
-        <div className='flex gap-3 justify-center items-center'>
+        <div className='flex gap-2 justify-center items-center'>
           <ActionsDropdown actions={menuItems} />
           <div
             className='flex items-center justify-center border border-[#CBD6E2] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] w-[24px] h-[23px] cursor-pointer'
@@ -175,6 +245,16 @@ const Interaction: React.FC = () => {
           >
             <RefreshIcon alt='refresh-icon' className='h-4' />
           </div>
+          <TextButton
+            label='Create Interaction'
+            onClick={handleCreate}
+            hide={!createInteractionsEnable}
+            sx={{
+              width: '124px',
+              minWidth: '124px',
+              maxWidth: '124px',
+            }}
+          />
           <div className='hidden border border-[#CBD6E2] w-[24px] h-[24px] justify-center items-center bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'>
             <ActionIcon alt='menu-icon' className='h-4' />
           </div>
@@ -184,7 +264,17 @@ const Interaction: React.FC = () => {
         </div>
       </div>
       <div className='flex items-center justify-end h-[34px] min-h-[34px] px-4'>
-        <div className='relative'>
+        <div className='flex gap-1 relative'>
+          <button
+            aria-describedby={modalId}
+            className={`w-[120px] h-[24px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative border border-[#CBD6E2] px-0 py-0 normal-case ${isModalOpen ? 'bg-[#F3F3F3]' : 'bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'} hover:text-[#425A76] transition-colors duration-150`}
+            style={{
+              boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
+            }}
+            onClick={handleColumnVisibility}
+          >
+            Show/Hide Fields
+          </button>
           <button
             aria-describedby={filterId}
             className={`w-[64px] h-[26px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
@@ -226,6 +316,8 @@ const Interaction: React.FC = () => {
           setTableParams={setTableParams}
           setTotalCount={setTotalCount}
           refreshTrigger={refreshTrigger}
+          setColumnAnchorEl={setColumnAnchorEl}
+          columnAnchorEl={columnAnchorEl}
         />
       </div>
     </div>

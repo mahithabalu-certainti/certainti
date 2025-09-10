@@ -12,7 +12,8 @@ interface ResourceTableHeaderProps {
   headerButtons?: {
     label: string;
     variant: 'text' | 'outlined' | 'contained';
-    onClick: () => void;
+    loading?: boolean;
+    onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
     sx?: SxProps<Theme>;
     hide?: boolean;
     disabled?: boolean;
@@ -91,6 +92,7 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
                 <TextButton
                   key={`header-button-${index}`}
                   label={button.label}
+                  loading={button.loading}
                   onClick={
                     button.label.toLowerCase() === 'view'
                       ? toggleViewMode

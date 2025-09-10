@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import TabPanel from '../../../account-details-sidebar/components/tab';
 import { CreateResourceIcon, ResourcesIcon } from '../../../../../assets';
 import { useSelector } from 'react-redux';
@@ -16,7 +16,10 @@ import {
   AllModules,
   AllPermissions,
 } from '../../../../../common-service';
-import { ListTable } from '../../../../../components/table';
+import {
+  ListTable,
+  ManageColumnsPopover,
+} from '../../../../../components/table';
 import {
   ProjectTaskDetailsType,
   ProjectTaskListExportParams,
@@ -32,6 +35,7 @@ import {
 import {
   CellEditData,
   FieldChangeValue,
+  ShowHideTableColumn,
 } from '../../../../../components/table/types';
 import { useToast } from '../../../../../hooks';
 import { useMutation } from '@apollo/client';
@@ -109,6 +113,16 @@ export const ProjectTask = ({
   const [searchParams] = useSearchParams();
   const accountID =
     accountData?.accountID || searchParams.get('accountID') || '';
+
+  const [columnAnchorEl, setColumnAnchorEl] =
+    React.useState<HTMLButtonElement | null>(null);
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const handleColumnVisibility = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setColumnAnchorEl(event.currentTarget);
+  };
 
   const navigate = useNavigate();
   const [refreshProjectsTrigger, setRefreshProjectsTrigger] = useState<number>(
@@ -267,6 +281,14 @@ export const ProjectTask = ({
       hide: viewDetails ? !isProjectTaskFieldsEditable : !isTaskCreateEnable,
       disabled: accountOrProjectInActive,
     },
+    {
+      label: 'Show/Hide Fields',
+      variant: 'outlined' as const,
+      disabled: false,
+      onClick: handleColumnVisibility,
+      sx: { ...BUTTON_STYLES, width: '125px', minWidth: '125px' },
+      hide: viewDetails ? true : false,
+    },
   ];
   const PFY = projectFiscalDate;
   const handleProjectTaskDetailEdit = () => {
@@ -367,24 +389,22 @@ export const ProjectTask = ({
     };
   };
   const fiscalDate = PFY ? convertDates(PFY) : null;
+  let fiscalDatesArg;
+  if (fiscalDate) {
+    fiscalDatesArg = {
+      endMax: fiscalDate.endMax ? new Date(fiscalDate.endMax) : undefined,
+      startMax: fiscalDate.startMax ? new Date(fiscalDate.startMax) : undefined,
+      startMin: fiscalDate.startMin ? new Date(fiscalDate.startMin) : undefined,
+      year: fiscalDate.year,
+    };
+  }
 
   const projectTaskColumns = getProjectTaskColumns(
     handleProjectTaskClick,
     memoizedProjectResourceCode,
     permissionMapTaskTableColumn,
     accountOrProjectInActive,
-    fiscalDate
-      ? {
-          endMax: fiscalDate.endMax ? new Date(fiscalDate.endMax) : undefined,
-          startMax: fiscalDate.startMax
-            ? new Date(fiscalDate.startMax)
-            : undefined,
-          startMin: fiscalDate.startMin
-            ? new Date(fiscalDate.startMin)
-            : undefined,
-          year: fiscalDate.year,
-        }
-      : undefined
+    fiscalDatesArg
   );
   const onRefreshClick = () => {
     setRefreshProjectsTrigger(Date.now());
@@ -436,7 +456,43 @@ export const ProjectTask = ({
     }
   };
   const filterShow = !searchParams.get('page');
+  const RestrictedColumns = [
+    {
+      id: 'resource_code',
+      canHide: false,
+      canDrag: false,
+    },
+  ];
+
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
+  };
+
+  const modalId = isModalOpen
+    ? 'project-resource-list-column-visibility-popover'
+    : undefined;
+
+  const [columnVisibility, setColumnVisibility] = useState<
+    Record<string, boolean>
+  >(Object.fromEntries(projectTaskColumns.map((col) => [col.id, !col.hide])));
+
+  const [columnOrder, setColumnOrder] = useState(
+    projectTaskColumns.map((col) => col.id)
+  );
+
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    const newVisibility = Object.fromEntries(
+      updatedColumns.map((col) => [col.id, !col.hide])
+    );
+    setColumnVisibility(newVisibility);
+    setColumnOrder(updatedColumns.map((col) => col.id));
+  };
+
+  const visibleColumns = columnOrder
+    .map((id) => projectTaskColumns.find((col) => col.id === id)!)
+    .filter((col) => columnVisibility[col.id]);
   if (!projectTaskIsEnable) return <AccessRestricted />;
+
   return (
     <div className='w-full pt-2 pb-2 pl-2 pr-4'>
       <TabPanel
@@ -456,6 +512,7 @@ export const ProjectTask = ({
         projectResourceAccountID={accountID}
         projectResourceProjectID={projectID}
         permissionMapTaskTableColumn={permissionMapTaskTableColumn}
+        fiscalDatesArg={fiscalDatesArg}
       />
       {showUploads ? (
         <Uploads
@@ -496,39 +553,50 @@ export const ProjectTask = ({
                 detailsError={detailsError}
               />
             ) : (
-              <ListTable
-                data={projectTaskList}
-                columns={projectTaskColumns}
-                actionMenuItems={actionMenuItems}
-                getRowId={getRowId}
-                hoverHighlight={false}
-                tableStyle={{
-                  height: '100%',
-                  maxHeight: 'calc(100vh - 290px)',
-                  overflow: 'auto',
-                }}
-                stickyHeader={true}
-                stickyColumnsCount={1}
-                actionWidth={60}
-                actionDisplayMode='dropdown'
-                loading={isLoading}
-                error={error ? 'Failed to load projects' : undefined}
-                rowsPerPageOptions={[25, 50, 100]}
-                rowsPerPage={rowsPerPage}
-                currentPage={currentPage ?? 1}
-                totalItems={data?.count || 0}
-                onPageChange={setCurrentPage}
-                onRowsPerPageChange={setRowsPerPage}
-                sortBy={sortField}
-                sortOrder={sortOrder}
-                onSort={handleSorting}
-                selectable={false}
-                onSelectionChange={(selectedIds: unknown) =>
-                  console.log('Selected:', selectedIds)
-                }
-                component='project task'
-                onCellEdit={handleCellEdit}
-              />
+              <>
+                <ManageColumnsPopover
+                  anchorEl={columnAnchorEl}
+                  open={isModalOpen}
+                  popoverId={modalId}
+                  onClose={handlePopoverClose}
+                  columns={projectTaskColumns}
+                  onColumnsChange={handleColumnsChange}
+                  columnRestrictions={RestrictedColumns}
+                />
+                <ListTable
+                  data={projectTaskList}
+                  columns={visibleColumns}
+                  actionMenuItems={actionMenuItems}
+                  getRowId={getRowId}
+                  hoverHighlight={false}
+                  tableStyle={{
+                    height: '100%',
+                    maxHeight: 'calc(100vh - 290px)',
+                    overflow: 'auto',
+                  }}
+                  stickyHeader={true}
+                  stickyColumnsCount={1}
+                  actionWidth={60}
+                  actionDisplayMode='dropdown'
+                  loading={isLoading}
+                  error={error ? 'Failed to load projects' : undefined}
+                  rowsPerPageOptions={[25, 50, 100]}
+                  rowsPerPage={rowsPerPage}
+                  currentPage={currentPage ?? 1}
+                  totalItems={data?.count || 0}
+                  onPageChange={setCurrentPage}
+                  onRowsPerPageChange={setRowsPerPage}
+                  sortBy={sortField}
+                  sortOrder={sortOrder}
+                  onSort={handleSorting}
+                  selectable={false}
+                  onSelectionChange={(selectedIds: unknown) =>
+                    console.log('Selected:', selectedIds)
+                  }
+                  component='project task'
+                  onCellEdit={handleCellEdit}
+                />
+              </>
             )}
           </div>
         </>

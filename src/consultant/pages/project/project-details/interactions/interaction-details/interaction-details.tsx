@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import DetailsSectionSkeleton from '../../../../../../components/skeleton-component/detailsskeleton';
 import { Typography } from '@mui/material';
 import DetailsSection, {
@@ -12,13 +12,23 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom';
-import { useInteractionDetails } from '../../../../../services/interactions/interactions-service';
-import { formatDateToYYYYMMDDWithTime } from '../../../../../../common-utils';
+import {
+  useInteractionDetails,
+  useSendInteraction,
+} from '../../../../../services/interactions/interactions-service';
+import {
+  applyHidePermission,
+  formatDateToYYYYMMDDWithTime,
+} from '../../../../../../common-utils';
 import { INTERACTIONS_EDIT } from '../../../../../../routes';
 import { NewProjectData } from '../../../../../types/project';
 import { InteractionQuestions } from '../../../../../../components/interaction';
 import { getInteractionStatusColor } from '../helpers';
 import { StatusTypeEnum } from '../../../../../types';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../../store/store';
+import { AllPermissions } from '../../../../../../common-service';
+import { useToast } from '../../../../../../hooks';
 
 interface InteractionDetailsProps {
   accountInActive: boolean;
@@ -37,18 +47,60 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   const accountId = searchParams.get('accountID') || '';
   const interactionId = searchParams.get('interaction_id') || undefined;
 
+  const { permission } = useSelector((state: RootState) => state.permission);
+  const sendInteraction = useSendInteraction();
+  const { successToast } = useToast();
   const { data, isLoading, error, refetch } = useInteractionDetails(
     accountId,
     interactionId
   );
-  const disableEditResBtn =
-    data?.status_name.toLowerCase() === StatusTypeEnum.response_received;
+  // commented for if may future use
+  // const disableEditResBtn =
+  //   data?.status_name.toLowerCase() === StatusTypeEnum.response_received;
+
+  const interactionFieldsEditable = useMemo(
+    () =>
+      permission
+        .find((item) => item.name === AllPermissions.INTERACTIONS_VIEW_EDIT)
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
 
   const disableInteractionEditBtn = [
     StatusTypeEnum.cancelled,
     StatusTypeEnum.completed,
     StatusTypeEnum.response_received,
   ].includes((data?.status_name || '').toLowerCase() as StatusTypeEnum);
+  const disableRemainderBtn = [
+    StatusTypeEnum.sent,
+    StatusTypeEnum.resent,
+    StatusTypeEnum.question_updated,
+    StatusTypeEnum.response_draft,
+  ].includes((data?.status_name || '').toLowerCase() as StatusTypeEnum);
+
+  const disableEditResBtn = [
+    StatusTypeEnum.cancelled,
+    StatusTypeEnum.draft,
+    StatusTypeEnum.completed,
+    StatusTypeEnum.response_received,
+  ].includes((data?.status_name || '').toLowerCase() as StatusTypeEnum);
+
+  //permission
+  const interactionsViewEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.INTERACTIONS_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    interactionsViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [interactionsViewEditFields]);
 
   const handleEdit = () => {
     const projectData = {
@@ -75,7 +127,31 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
+  const handleRemainder = () => {
+    const interactions = [
+      {
+        interaction_rid: projectDetails?.rid || '',
+        project_fiscal_rid: projectDetails?.project_fiscal_rid || '',
+        email_info: {
+          email: '',
+          name: '',
+        },
+      },
+    ];
 
+    const payload = {
+      account_rid: projectDetails?.account_rid || '',
+      is_interaction_followup: true,
+      interactions,
+    };
+    sendInteraction.mutate(payload, {
+      onSuccess: (response) => {
+        successToast(response?.statusMessage);
+        // onSuccessRefetch();
+      },
+    });
+    return;
+  };
   const handleResponseHistory = () => {
     searchParams.set('history', 'response_histroy');
     navigate({ search: searchParams.toString() }, { replace: true });
@@ -88,7 +164,16 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       disabled: accountInActive || disableInteractionEditBtn,
       onClick: () => handleEdit(),
       sx: { width: '48px', minWidth: '48px' },
+      hide: !interactionFieldsEditable,
+    },
+    {
+      label: 'Reminder',
+      variant: 'outlined' as const,
+      disabled: accountInActive || !disableRemainderBtn,
+      onClick: () => handleRemainder(),
+      sx: { width: '78px', minWidth: '78px' },
       hide: false,
+      isLoading: sendInteraction.isPending,
     },
   ];
 
@@ -114,7 +199,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     {
       label: 'Interaction Type',
       value: data?.interaction_type_name,
-      key: 'interaction_type',
+      key: 'interaction_type_name',
     },
     {
       label: 'Interaction Status',
@@ -172,6 +257,19 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     },
   ];
 
+  const basicDetails = applyHidePermission(basicInfo, permissionMap);
+  const interactionDetails = applyHidePermission(
+    InteractionInfo,
+    permissionMap
+  );
+  const auditDetails = applyHidePermission(auditInfo, permissionMap);
+  const hideQuestions =
+    !permissionMap['interaction_questions']?.read &&
+    !permissionMap['interaction_questions']?.edit;
+
+  const showInteractionQuestions =
+    data?.questions && data?.questions.length > 0 && !hideQuestions;
+
   return (
     <>
       <div className='border border-[#CBD6E2]'>
@@ -201,23 +299,23 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
           <>
             <DetailsSection
               title='Basic Information'
-              data={basicInfo}
+              data={basicDetails}
               customStyle='pt-0 mt-0'
             />
             <DetailsSection
               title='Interaction Information'
-              data={InteractionInfo}
+              data={interactionDetails}
               customStyle='pt-0 mt-0'
             />
           </>
         )}
       </div>
-      {data?.questions && data?.questions.length > 0 && (
+      {showInteractionQuestions && (
         <InteractionQuestions
           questions={data?.questions}
           globalAttachments={data?.global_attachments}
           isEditEnable={!disableEditResBtn}
-          actionButtonEnable={true}
+          actionButtonEnable={interactionFieldsEditable}
           handleResponseHistory={handleResponseHistory}
           refetchDetails={refetch}
           formData={{
@@ -236,7 +334,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
         <div className='border border-t-0 border-[#CBD6E2] mb-4'>
           <DetailsSection
             title='Audit Information'
-            data={auditInfo}
+            data={auditDetails}
             customStyle='pt-0 mt-0'
             isAudit={true}
           />

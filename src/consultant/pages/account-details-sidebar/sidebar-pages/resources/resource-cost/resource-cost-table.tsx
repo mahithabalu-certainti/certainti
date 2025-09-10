@@ -12,10 +12,15 @@ import {
 import {
   FieldChangeEvent,
   FieldChangeValue,
+  ListTableColumn,
+  ShowHideTableColumn,
 } from '../../../../../../components/table/types';
 import { resourceClient } from '../../../../../../api/graphql/clients/client';
 import { RESOURCECOST } from '../../../../../../routes';
-import { ListTable } from '../../../../../../components/table';
+import {
+  ListTable,
+  ManageColumnsPopover,
+} from '../../../../../../components/table';
 import { getResourceCostColumns } from './columns';
 import { convertResourceCost } from './resource-cost-type';
 import { AcceptIcon, RejectIcon } from '../../../../../../assets';
@@ -51,6 +56,10 @@ interface ResourceCostTableProps {
   setCount?: (count: number) => void;
   resourceType: ResourceTypeEnum;
   resourceInActive?: boolean;
+  columnAnchorEl: HTMLButtonElement | null;
+  setColumnAnchorEl: React.Dispatch<
+    React.SetStateAction<HTMLButtonElement | null>
+  >;
 }
 
 const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
@@ -69,6 +78,8 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
   setCount,
   resourceType,
   resourceInActive,
+  columnAnchorEl,
+  setColumnAnchorEl,
 }) => {
   const navigate = useNavigate();
   const { accountid } = useParams();
@@ -396,47 +407,79 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
     !permissionMap?.['status_action']?.edit &&
     !permissionMap?.['status_action']?.read;
 
+  const [visibleColumns, setVisibleColumns] = useState<
+    ListTableColumn<ResourceCostList>[]
+  >(resourceCostColumns.filter((col) => !col.hide));
+
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    setVisibleColumns(
+      updatedColumns.filter(
+        (col) => !col.hide
+      ) as ListTableColumn<ResourceCostList>[]
+    );
+  };
+
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
+  };
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const modalId = isModalOpen
+    ? 'interaction-column-visibility-popover'
+    : undefined;
+
   return (
     <div>
       {showUploads ? (
         <Uploads accountId={accountid} attachID={selectedRowId} />
       ) : (
-        <ListTable
-          data={resourceCostList}
-          columns={resourceCostColumns}
-          getRowId={getRowId}
-          hoverHighlight={false}
-          tableStyle={{
-            borderBottom: '1px solid #CBD6E2',
-            height: '100%',
-            maxHeight: 'calc(100vh - 410px)',
-            overflow: 'auto',
-          }}
-          stickyHeader={true}
-          stickyColumnsCount={1}
-          selectable={false}
-          actionWidth={80}
-          actionDisplayMode='dropdown'
-          actionMenuItems={actionMenuItems}
-          conditionMenuItems={
-            !hideStatusAction
-              ? (row: ResourceCostList) => getConditionMenuItems(row)
-              : undefined
-          }
-          loading={isLoading}
-          error={error ? 'Failed to load resource cost data' : undefined}
-          rowsPerPageOptions={[25, 50, 100]}
-          rowsPerPage={rowsPerPage}
-          currentPage={currentPage}
-          totalItems={costList?.count ?? 0}
-          onPageChange={handlePageChange}
-          onRowsPerPageChange={handleRowsPerPageChange}
-          sortBy={costorderBy}
-          sortOrder={costOrder.toUpperCase() as 'ASC' | 'DESC'}
-          onSort={handleSortRequest}
-          onCellEdit={handleCellEdit}
-          onFieldChange={handleFieldChange}
-        />
+        <>
+          <ManageColumnsPopover
+            anchorEl={columnAnchorEl}
+            open={isModalOpen}
+            popoverId={modalId}
+            onClose={handlePopoverClose}
+            columns={resourceCostColumns}
+            onColumnsChange={handleColumnsChange}
+            // columnRestrictions={RestrictedColumns}
+          />
+          <ListTable
+            data={resourceCostList}
+            columns={visibleColumns}
+            getRowId={getRowId}
+            hoverHighlight={false}
+            tableStyle={{
+              borderBottom: '1px solid #CBD6E2',
+              height: '100%',
+              maxHeight: 'calc(100vh - 410px)',
+              overflow: 'auto',
+            }}
+            stickyHeader={true}
+            stickyColumnsCount={1}
+            selectable={false}
+            actionWidth={80}
+            actionDisplayMode='dropdown'
+            actionMenuItems={actionMenuItems}
+            conditionMenuItems={
+              !hideStatusAction
+                ? (row: ResourceCostList) => getConditionMenuItems(row)
+                : undefined
+            }
+            loading={isLoading}
+            error={error ? 'Failed to load resource cost data' : undefined}
+            rowsPerPageOptions={[25, 50, 100]}
+            rowsPerPage={rowsPerPage}
+            currentPage={currentPage}
+            totalItems={costList?.count ?? 0}
+            onPageChange={handlePageChange}
+            onRowsPerPageChange={handleRowsPerPageChange}
+            sortBy={costorderBy}
+            sortOrder={costOrder.toUpperCase() as 'ASC' | 'DESC'}
+            onSort={handleSortRequest}
+            onCellEdit={handleCellEdit}
+            onFieldChange={handleFieldChange}
+          />
+        </>
       )}
       <ConfirmationPopup
         isOpen={confirmationState.isOpen}

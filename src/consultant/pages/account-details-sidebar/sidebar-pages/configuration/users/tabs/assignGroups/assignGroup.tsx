@@ -1,5 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ListTable } from '../../../../../../../../components/table';
+import {
+  ListTable,
+  ManageColumnsPopover,
+} from '../../../../../../../../components/table';
 import { getConfigAssignGroupsColumns } from './column';
 import { useParams } from 'react-router-dom';
 import { useToast } from '../../../../../../../../hooks';
@@ -15,16 +18,26 @@ import {
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../../../store/store';
 import { AllPermissions } from '../../../../../../../../common-service';
+import {
+  ListTableColumn,
+  ShowHideTableColumn,
+} from '../../../../../../../../components/table/types';
 interface AssignGroupsProps {
   reFetchData: number;
   setCount: (value: number) => void;
   filterParams: ConfigAssignGroupsListParms;
+  columnAnchorEl: HTMLButtonElement | null;
+  setColumnAnchorEl: React.Dispatch<
+    React.SetStateAction<HTMLButtonElement | null>
+  >;
 }
 
 const AssignGroups: React.FC<AssignGroupsProps> = ({
   reFetchData,
   filterParams,
   setCount,
+  columnAnchorEl,
+  setColumnAnchorEl,
 }) => {
   const { accountid } = useParams();
   const { successToast, errorToast } = useToast();
@@ -176,42 +189,83 @@ const AssignGroups: React.FC<AssignGroupsProps> = ({
   const hideToggle =
     !permissionMap?.['assign']?.read && !permissionMap?.['assign']?.edit;
 
+  const RestrictedColumns = [
+    {
+      id: 'group_name',
+      canHide: false,
+      canDrag: false,
+    },
+  ];
+
+  const [visibleColumns, setVisibleColumns] = useState<
+    ListTableColumn<ConfigAssignGroupsList>[]
+  >(getConfigAssignGroupsColumns().filter((col) => !col.hide));
+
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    setVisibleColumns(
+      updatedColumns.filter(
+        (col) => !col.hide
+      ) as ListTableColumn<ConfigAssignGroupsList>[]
+    );
+  };
+
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
+  };
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const modalId = isModalOpen
+    ? 'interaction-column-visibility-popover'
+    : undefined;
+
   return (
-    <ListTable
-      data={assignGroupList}
-      columns={getConfigAssignGroupsColumns()}
-      getRowId={getRowId}
-      hoverHighlight={false}
-      tableStyle={{
-        height: '100%',
-        maxHeight: 'calc(100vh - 320px)',
-        overflow: 'auto',
-        paddingTop: '2px',
-      }}
-      stickyHeader={true}
-      stickyColumnsCount={1}
-      selectable={false}
-      actionWidth={200}
-      actionDisplayMode={hideToggle ? undefined : 'toggle'}
-      actionMenuItems={[]}
-      loading={isLoading}
-      error={isError ? 'Failed to load group data' : ''}
-      rowsPerPageOptions={[25, 50, 100]}
-      rowsPerPage={tableParams.limit}
-      currentPage={(tableParams.page ?? 1) - 1}
-      totalItems={totalItems}
-      onPageChange={handlePageChange}
-      onRowsPerPageChange={handleRowsPerPageChange}
-      sortBy={tableParams.sortBy}
-      sortOrder={tableParams.sortOrder}
-      onSort={handleSort}
-      actionColumnName='Add / Remove'
-      disabledToggle={disabledToggle}
-      toggleClick={toggleProjects}
-      toggleData={addedAccounts}
-      checkedToggleTooltip='Added'
-      unCheckedToggleTooltip='Removed'
-    />
+    <>
+      <ManageColumnsPopover
+        anchorEl={columnAnchorEl}
+        open={isModalOpen}
+        popoverId={modalId}
+        onClose={handlePopoverClose}
+        columns={getConfigAssignGroupsColumns()}
+        onColumnsChange={handleColumnsChange}
+        columnRestrictions={RestrictedColumns}
+      />
+      <ListTable
+        data={assignGroupList}
+        columns={visibleColumns}
+        getRowId={getRowId}
+        hoverHighlight={false}
+        tableStyle={{
+          height: '100%',
+          maxHeight: 'calc(100vh - 320px)',
+          overflow: 'auto',
+          paddingTop: '2px',
+        }}
+        stickyHeader={true}
+        stickyColumnsCount={1}
+        selectable={false}
+        actionWidth={200}
+        actionDisplayMode={hideToggle ? undefined : 'toggle'}
+        actionMenuItems={[]}
+        loading={isLoading}
+        error={isError ? 'Failed to load group data' : ''}
+        rowsPerPageOptions={[25, 50, 100]}
+        loadindRowCount={7}
+        rowsPerPage={tableParams.limit}
+        currentPage={(tableParams.page ?? 1) - 1}
+        totalItems={totalItems}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+        sortBy={tableParams.sortBy}
+        sortOrder={tableParams.sortOrder}
+        onSort={handleSort}
+        actionColumnName='Add / Remove'
+        disabledToggle={disabledToggle}
+        toggleClick={toggleProjects}
+        toggleData={addedAccounts}
+        checkedToggleTooltip='Added'
+        unCheckedToggleTooltip='Removed'
+      />
+    </>
   );
 };
 

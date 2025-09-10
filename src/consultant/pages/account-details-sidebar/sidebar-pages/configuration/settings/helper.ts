@@ -7,7 +7,9 @@ import {
 import { FormType } from '../../../../../types';
 
 export const settingsFormFields = (
-  permissionMap?: Record<string, { read: boolean; edit: boolean }>
+  permissionMap?: Record<string, { read: boolean; edit: boolean }>,
+  emailRequried?: boolean,
+  idRequired?: boolean
 ): FormType[] => {
   return [
     {
@@ -76,6 +78,59 @@ export const settingsFormFields = (
           hide:
             !permissionMap?.['auto_send_interaction']?.read &&
             !permissionMap?.['auto_send_interaction']?.edit,
+        }),
+        createTextField('support_email', 'Email', {
+          required: idRequired,
+          placeholder: 'Enter Email',
+          onChange: true,
+          // disabled:
+          //   permissionMap?.['support_email']?.read &&
+          //   !permissionMap?.['support_email']?.edit,
+          // hide:
+          //   !permissionMap?.['support_email']?.read &&
+          //   !permissionMap?.['support_email']?.edit,
+          regex: REGEX_PATTERNS.EMAIL,
+          regexErrorMessage: 'Invalid email address',
+        }),
+        createTextField('tenant_id', 'Tenant ID', {
+          required: emailRequried,
+          placeholder: 'Enter Tenant ID',
+          onChange: true,
+          // disabled:
+          //   permissionMap?.['tenant_id']?.read &&
+          //   !permissionMap?.['tenant_id']?.edit,
+          // hide:
+          //   !permissionMap?.['tenant_id']?.read &&
+          //   !permissionMap?.['tenant_id']?.edit,
+          regex: REGEX_PATTERNS.ALLOW_36,
+          regexErrorMessage: 'Tenant ID must be exactly 36 characters long',
+        }),
+        createTextField('client_id', 'Client ID', {
+          required: emailRequried,
+          placeholder: 'Enter Client ID',
+          onChange: true,
+          // disabled:
+          //   permissionMap?.['client_id']?.read &&
+          //   !permissionMap?.['client_id']?.edit,
+          // hide:
+          //   !permissionMap?.['client_id']?.read &&
+          //   !permissionMap?.['client_id']?.edit,
+          // regex: REGEX_PATTERNS.BLENDED_NUMBER,
+          regex: REGEX_PATTERNS.ALLOW_36,
+          regexErrorMessage: 'Client ID must be exactly 36 characters long',
+        }),
+        createTextField('client_secret', 'Client Secret', {
+          required: emailRequried,
+          placeholder: 'Enter Client Secret',
+          onChange: true,
+          // disabled:
+          //   permissionMap?.['client_secret']?.read &&
+          //   !permissionMap?.['client_secret']?.edit,
+          // hide:
+          //   !permissionMap?.['client_secret']?.read &&
+          //   !permissionMap?.['client_secret']?.edit,
+          regex: REGEX_PATTERNS.ALLOW_36,
+          regexErrorMessage: 'Client Secret must be exactly 36 characters long',
         }),
       ],
     },

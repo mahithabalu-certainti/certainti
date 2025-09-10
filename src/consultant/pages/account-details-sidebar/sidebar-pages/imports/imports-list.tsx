@@ -1,12 +1,15 @@
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { AllModules, AllPermissions } from '../../../../../common-service';
 import { ResourceTabs } from '../resources/resources';
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ImportsList, ImportsListURLParams } from '../../../../types/imports';
 import { getImportsListColumns } from './columns';
 import { getImportsFilterFields } from './helpers';
 import { SectionTabPanel } from '../../../../../components';
-import { ListTable } from '../../../../../components/table';
+import {
+  ListTable,
+  ManageColumnsPopover,
+} from '../../../../../components/table';
 import { AccountDetailsResponse, ExportType } from '../../../../types';
 import ImportFile from './import-file/import-file';
 import { useImportListList } from '../../../../services/import';
@@ -17,6 +20,7 @@ import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import { ImportsIcon } from '../../../../../assets';
+import { ShowHideTableColumn } from '../../../../../components/table/types';
 
 const ImportsTabs: ResourceTabs[] = [
   {
@@ -65,6 +69,17 @@ const Imports: React.FC<ImportsProps> = ({
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
     (state: RootState) => state.account
   );
+
+  const [columnAnchorEl, setColumnAnchorEl] =
+    React.useState<HTMLButtonElement | null>(null);
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const handleColumnVisibility = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setColumnAnchorEl(event.currentTarget);
+  };
+
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
   const fileId = searchParams.get('file_id');
   const viewDetails = !!fileId;
@@ -113,8 +128,9 @@ const Imports: React.FC<ImportsProps> = ({
     refreshImports
   );
   const totalItems = data?.count || 0;
+  const minYear = 1950;
   const currentYear = new Date().getFullYear();
-  const fiscalYears = getFiscalYears(currentYear - 2000 + 1);
+  const fiscalYears = getFiscalYears(currentYear - minYear + 1);
 
   useEffect(() => {
     if (data) {
@@ -187,6 +203,14 @@ const Imports: React.FC<ImportsProps> = ({
       sx: { width: '90px', minWidth: '90px' },
       hide: false,
     },
+    {
+      label: 'Show/Hide Fields',
+      variant: 'outlined' as const,
+      disabled: false,
+      onClick: handleColumnVisibility,
+      sx: { width: '125px', minWidth: '125px' },
+      hide: false,
+    },
   ];
 
   const handlePageChange = (newPage: number) => {
@@ -241,6 +265,42 @@ const Imports: React.FC<ImportsProps> = ({
 
   const getRowId = (row: ImportsList) => row.rid;
 
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
+  };
+
+  const modalId = isModalOpen
+    ? 'account-timesheet-list-column-visibility-popover'
+    : undefined;
+
+  const RestrictedColumns = [
+    {
+      id: 'r_number',
+      canHide: false,
+      canDrag: false,
+    },
+  ];
+
+  const [columnVisibility, setColumnVisibility] = useState<
+    Record<string, boolean>
+  >(Object.fromEntries(importsColumns.map((col) => [col.id, !col.hide])));
+
+  const [columnOrder, setColumnOrder] = useState(
+    importsColumns.map((col) => col.id)
+  );
+
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    const newVisibility = Object.fromEntries(
+      updatedColumns.map((col) => [col.id, !col.hide])
+    );
+    setColumnVisibility(newVisibility);
+    setColumnOrder(updatedColumns.map((col) => col.id));
+  };
+
+  const visibleColumns = columnOrder
+    .map((id) => importsColumns.find((col) => col.id === id)!)
+    .filter((col) => columnVisibility[col.id]);
+
   if (!importsEnable || !importsViewEnable) return <AccessRestricted />;
 
   return (
@@ -288,9 +348,18 @@ const Imports: React.FC<ImportsProps> = ({
             bgType='circle'
           />
           <div className='border border-[#CBD6E2]'>
+            <ManageColumnsPopover
+              anchorEl={columnAnchorEl}
+              open={isModalOpen}
+              popoverId={modalId}
+              onClose={handlePopoverClose}
+              columns={importsColumns}
+              onColumnsChange={handleColumnsChange}
+              columnRestrictions={RestrictedColumns}
+            />
             <ListTable
               data={importsList}
-              columns={importsColumns}
+              columns={visibleColumns}
               getRowId={getRowId}
               hoverHighlight={false}
               tableStyle={{

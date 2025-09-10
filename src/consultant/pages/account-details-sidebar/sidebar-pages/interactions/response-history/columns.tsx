@@ -7,10 +7,10 @@ export const getInteractionListColumns = (
   // permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<ResponseInteractionList>[] => [
   {
-    id: 'response_source',
-    sortId: 'response_source',
+    id: 'response_source_name',
+    sortId: 'response_source_name',
     label: 'Response Via',
-    width: 120,
+    width: 170,
     sortable: true,
     sticky: true,
     // hide:
@@ -27,9 +27,9 @@ export const getInteractionListColumns = (
     render: (row: ResponseInteractionList) => (
       <span
         onClick={() => handleViewInteraction(row)}
-        className='cursor-pointer no-underline hover:underline hover:text-[#1755E7]'
+        className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
       >
-        {row?.response_source}
+        {row?.response_source_name}
       </span>
     ),
   },
@@ -50,7 +50,7 @@ export const getInteractionListColumns = (
     id: 'response_email',
     sortId: 'response_email',
     label: 'Response Email ID',
-    width: 150,
+    width: 200,
     sortable: true,
     // hide:
     //   !permissionMap?.['interaction_age']?.edit && !permissionMap?.['interaction_age']?.read,

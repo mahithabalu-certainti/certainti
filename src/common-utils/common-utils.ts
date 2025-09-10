@@ -474,6 +474,7 @@ export const REGEX_PATTERNS = {
   MIN_3: /^.{3,}$/,
   MIN_5: /^.{5,}$/,
   MIN_4: /^.{4,}$/,
+  ALLOW_36: /^.{36}$/,
   POSITIVE_INTEGER_REGEX: /^(?:[1-9]|10)$/,
   MAX_AI_INTERACTIONS: /^(10|[1-9])$/,
   MIN_2: /^.{2,}$/,
@@ -636,11 +637,14 @@ export const ALLOWED_COUNTRIES: AllowedCountry[] = [
   'au',
   'fr',
 ];
-
-export const fiscalYears = Array.from({ length: 26 }, (_, i) => {
-  const year = new Date().getFullYear() - i;
-  return { value: year.toString(), label: `FY-${year}` };
-});
+const currentYear = new Date().getFullYear();
+export const fiscalYears = Array.from(
+  { length: currentYear - 1950 + 1 },
+  (_, i) => {
+    const year = currentYear - i;
+    return { value: year.toString(), label: `FY-${year}` };
+  }
+);
 
 export const checkError = (data: CheckError[]) => {
   return data.some((value) => value.isError === true);

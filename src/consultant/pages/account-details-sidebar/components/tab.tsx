@@ -44,6 +44,7 @@ import {
 import ActionImportDropdown from '../../../../components/actions-dropdown/import-dropdown';
 import { FilterValue } from './filter/filterType';
 import { projectTaskFilterFields } from '../../project/project-details/project-task/filters/filter-fields';
+import { FormFiscalDateType } from '../../../types';
 interface TabProps {
   resourceTab?: ResourceTabs[];
   filterVisibility: boolean;
@@ -70,6 +71,7 @@ interface TabProps {
     string,
     { read: boolean; edit: boolean }
   >;
+  fiscalDatesArg?: FormFiscalDateType;
 }
 const TabPanel: React.FC<TabProps> = ({
   resourceTab,
@@ -94,6 +96,7 @@ const TabPanel: React.FC<TabProps> = ({
   fieldOptions,
   handleFilterChange,
   permissionMapTaskTableColumn,
+  fiscalDatesArg,
 }) => {
   const [tabValue, setTabValue] = useState('');
   const location = useLocation();
@@ -412,7 +415,8 @@ const TabPanel: React.FC<TabProps> = ({
       return projectTaskFilterFields(
         memoizedResourceCode,
         memoizedResourceType,
-        permissionMapTaskTableColumn
+        permissionMapTaskTableColumn,
+        fiscalDatesArg
       );
     if (value === 'attachments')
       return getAttachmentsFilterFields(fieldOptions, attachmentPermissionMap);

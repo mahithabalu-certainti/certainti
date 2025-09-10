@@ -6,6 +6,7 @@ import { CloseIcon, ErrorInfoIcon } from '../../assets';
 import TextButton from '../button/text-button';
 import { useSendInteraction } from '../../consultant/services/interactions/interactions-service';
 import { useParams, useSearchParams } from 'react-router-dom';
+import { useToast } from '../../hooks';
 
 interface SendInteractionModalProps {
   isOpen: boolean;
@@ -23,6 +24,7 @@ const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
   const [searchParams] = useSearchParams();
   const { accountid } = useParams();
   const accountId = searchParams.get('accountID') || '';
+  const { successToast } = useToast();
 
   const [emails, setEmails] = useState<
     Record<string, { email: string; name: string }>
@@ -55,7 +57,9 @@ const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
       const rowErrors: { name?: string; email?: string } = {};
 
       // Email validation
-      if (email?.trim()) {
+      if (!email?.trim()) {
+        rowErrors.email = 'Recipient Email is required';
+      } else {
         if (!REGEX_PATTERNS.MAX_EMAIL_REGEX.test(email)) {
           rowErrors.email = 'Max length exceeded';
         } else if (!REGEX_PATTERNS.EMAIL.test(email)) {
@@ -64,12 +68,12 @@ const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
       }
 
       // Name validation
-      if (name?.trim()) {
+      if (!name?.trim()) {
+        rowErrors.name = 'Recipient Name is required';
+      } else {
         if (!REGEX_PATTERNS.NAME_REGEX.test(name.trim())) {
           rowErrors.name =
-            "Name must contain only letters, spaces, apostrophes(') and hyphens(-).";
-        } else if (name?.trim() && !email?.trim()) {
-          rowErrors.email = 'Email is required when name is provided';
+            "Recipient Name must contain only letters, spaces, apostrophes(') and hyphens(-).";
         }
       }
 
@@ -124,7 +128,8 @@ const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
         interactions,
       };
       sendInteraction.mutate(payload, {
-        onSuccess: () => {
+        onSuccess: (response) => {
+          successToast(response?.statusMessage);
           handleClose();
           onSuccessRefetch();
         },
@@ -150,7 +155,8 @@ const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
         interactions,
       };
       sendInteraction.mutate(payload, {
-        onSuccess: () => {
+        onSuccess: (response) => {
+          successToast(response?.statusMessage);
           handleClose();
           onSuccessRefetch();
         },
@@ -179,29 +185,29 @@ const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
         {!showEmailFields && (
           <div className='mt-4'>
             <h3 className='text-[16px] font-bold text-[#2D3E4F] text-center text-sm mb-8'>
-              Would you like to add one or more external email addresses to
-              notify additional recipients for this interaction?
+              Do you want to add external email addresses to notify additional
+              recipients for this interaction?
             </h3>
             <div className='flex gap-3 justify-end'>
               <TextButton
-                label='Cancel'
+                label='No'
                 onClick={handleSend}
                 loading={sendInteraction.isPending}
                 sx={{
-                  width: '64px',
-                  minWidth: '64px',
+                  width: '60px',
+                  minWidth: '60px',
                   fontWeight: 400,
                   fontSize: '13px',
                   height: '32px',
                 }}
               />
               <TextButton
-                label='Confirm'
+                label='Yes'
                 onClick={() => setShowEmailFields(true)}
                 disabled={sendInteraction.isPending}
                 sx={{
-                  width: '64px',
-                  minWidth: '64px',
+                  width: '60px',
+                  minWidth: '60px',
                   fontWeight: 400,
                   fontSize: '13px',
                   height: '32px',
@@ -222,6 +228,7 @@ const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
                   <div key={row.rid} className='mb-3'>
                     <label className='block font-medium mb-1'>
                       {row.r_number || row.rid}
+                      <span className='text-red-500 text-[16px] ml-1'>*</span>
                     </label>
                     <div className='flex gap-3'>
                       {/* Name field */}
@@ -269,7 +276,7 @@ const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
                       >
                         <input
                           type='text'
-                          placeholder='Enter Recipient Email (optional)'
+                          placeholder='Enter Recipient Email'
                           value={emails[row.rid]?.email || ''}
                           onChange={(e) =>
                             handleChange(row.rid, 'email', e.target.value)

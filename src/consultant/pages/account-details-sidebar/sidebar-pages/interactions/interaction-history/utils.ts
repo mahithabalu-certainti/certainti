@@ -22,6 +22,7 @@ export interface InteractionHistoryData {
     project_code: string | number | null | undefined;
     interaction_rnumber: string;
     response_source: string | null;
+    interaction_source_name?: string | null;
     interaction_history: InteractionHistoryAction[];
   };
 }
@@ -50,24 +51,8 @@ export const transformInteractionHistoryData = (
     {
       items: [
         {
-          label: 'Type',
-          value: `${getValueOrDefault(nestedData?.response_source)} `,
-        },
-      ],
-    },
-    {
-      items: [
-        {
-          label: 'Project Code',
-          value: getValueOrDefault(nestedData?.project_code),
-        },
-      ],
-    },
-    {
-      items: [
-        {
-          label: 'Project Name',
-          value: getValueOrDefault(nestedData?.project_name),
+          label: 'Interaction Source',
+          value: `${getValueOrDefault(nestedData?.interaction_source_name)} `,
         },
       ],
     },

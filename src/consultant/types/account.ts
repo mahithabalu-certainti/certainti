@@ -271,6 +271,10 @@ export interface AccountFieldsTypes {
   modified_by: string;
   created_by: string;
   account_rid: string;
+  client_secret: string;
+  client_id: string;
+  tenant_id: string;
+  support_email: string;
 }
 
 export interface NewAccountData extends AccountFieldsTypes, AccountById {
@@ -463,6 +467,11 @@ export interface keyContactRolesApiResponse extends CommonApiResponse {
   };
 }
 
+export interface GlobalAccountListParams {
+  fiscalYear?: number | string;
+  globalFilters?: globalFilters;
+}
+
 export interface FormField {
   id: string;
   label: string;
@@ -506,7 +515,8 @@ export type ExportType =
   | 'interactions'
   | 'timesheet_project'
   | 'timesheet_project_resource'
-  | 'timesheet_project_task';
+  | 'timesheet_project_task'
+  | 'technical_summary';
 
 export type FinancialSummaryFlag = 'all' | 'rd_qualified';
 

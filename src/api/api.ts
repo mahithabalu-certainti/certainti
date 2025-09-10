@@ -41,6 +41,12 @@ const interactionServiceApi = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+const exInteractionServiceApi = axios.create({
+  baseURL:
+    import.meta.env.VITE_BASE_URL + import.meta.env.VITE_EXT_INTERACTION_URL,
+  headers: { 'Content-Type': 'application/json' },
+});
+
 const api = axios.create({
   baseURL: import.meta.env.VITE_BASE_URL,
   headers: {
@@ -54,6 +60,7 @@ const api = axios.create({
   userServiceApi,
   resourceServiceApi,
   interactionServiceApi,
+  exInteractionServiceApi,
   api,
 ].forEach((api) => {
   api.interceptors.request.use(
@@ -95,6 +102,7 @@ const processQueue = (error: unknown, token: string | null = null) => {
   userServiceApi,
   resourceServiceApi,
   interactionServiceApi,
+  exInteractionServiceApi,
   api,
 ].forEach((api) => {
   api.interceptors.response.use(
@@ -164,16 +172,23 @@ const processQueue = (error: unknown, token: string | null = null) => {
           processQueue(refreshError, null);
           isRefreshing = false;
           console.error('refreshError', refreshError);
-          // Show error toast
-          showToast('Session expired. Please login again.', 'error');
-          setTimeout(() => {
-            localStorage.removeItem('auth');
-            localStorage.removeItem('showAdminSidebar');
-            localStorage.removeItem('resetPassword');
-            if (window.location.pathname !== LOGIN) {
-              window.location.href = LOGIN;
-            }
-          }, 3000);
+          const message = (error?.response?.data as { message?: string })
+            ?.message;
+          if (message?.includes('Interaction')) {
+            localStorage.removeItem('temAuth');
+            localStorage.removeItem('otp_timeout');
+          } else {
+            // Show error toast
+            showToast('Session expired. Please login again.', 'error');
+            setTimeout(() => {
+              localStorage.removeItem('auth');
+              localStorage.removeItem('showAdminSidebar');
+              localStorage.removeItem('resetPassword');
+              if (window.location.pathname !== LOGIN) {
+                window.location.href = LOGIN;
+              }
+            }, 3000);
+          }
           return Promise.reject(refreshError);
         }
       } else if (error.response?.status === 403) {
@@ -205,5 +220,6 @@ export {
   userServiceApi,
   resourceServiceApi,
   interactionServiceApi,
+  exInteractionServiceApi,
   api,
 };

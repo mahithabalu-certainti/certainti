@@ -10,7 +10,7 @@ interface TextButtonProps {
   loading?: boolean;
   disabled?: boolean;
   hide?: boolean;
-  onClick?: () => void;
+  onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
 }
 const StyledButton = styled(Button)(() => {
   return {

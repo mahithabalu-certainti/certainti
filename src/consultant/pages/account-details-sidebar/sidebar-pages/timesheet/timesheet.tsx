@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   AllPermissions,
   useGetAllCountries,
@@ -20,7 +20,10 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { useTimesheetList } from '../../../../services/import';
 import { TimeSheetIcon } from '../../../../../assets';
-import { ListTable } from '../../../../../components/table';
+import {
+  ListTable,
+  ManageColumnsPopover,
+} from '../../../../../components/table';
 import { getTimesheetListColumns } from './columns';
 import TimesheetDetails from './timesheet-details';
 import { getTimesheetResourceTabFilterFields } from './timesheet-details-tab/resource-tab/resource-tab-filters';
@@ -29,6 +32,7 @@ import { useGetResourceType } from '../../../../services/resource-list';
 import { TimesheetProjectExportListURLParams } from '../../../../types/timesheet-projects';
 import { useFetchState } from '../../../../services/account';
 import { FilterValue } from '../../components/filter/filterType';
+import { ShowHideTableColumn } from '../../../../../components/table/types';
 
 interface TimeSheetProps {
   setExportType?: (type: ExportType) => void;
@@ -73,6 +77,15 @@ const Timesheet: React.FC<TimeSheetProps> = ({
   const [refreshTimesheet, setRefreshTimesheet] = useState<number>(Date.now());
   const [rowsPerPage, setRowsPerPage] = useState(100);
   const [timesheetList, setTimesheetList] = useState<TimeSheetList[]>([]);
+  const [columnAnchorEl, setColumnAnchorEl] =
+    React.useState<HTMLButtonElement | null>(null);
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const handleColumnVisibility = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setColumnAnchorEl(event.currentTarget);
+  };
 
   // hooks
   const navigate = useNavigate();
@@ -252,8 +265,9 @@ const Timesheet: React.FC<TimeSheetProps> = ({
     [statusOptions?.data?.data?.status]
   );
   // Variables
+  const minYear = 1950;
   const currentYear = new Date().getFullYear();
-  const fiscalYears = getFiscalYears(currentYear - 2000 + 1);
+  const fiscalYears = getFiscalYears(currentYear - minYear + 1);
   const timesheetFilterFields = getTimesheetFilterFields(
     fiscalYears,
     permissionMap
@@ -300,6 +314,52 @@ const Timesheet: React.FC<TimeSheetProps> = ({
     }
   };
 
+  const headerButtons = [
+    {
+      label: 'Show/Hide Fields',
+      variant: 'outlined' as const,
+      disabled: false,
+      onClick: handleColumnVisibility,
+      sx: { width: '125px', minWidth: '125px' },
+      hide: false,
+    },
+  ];
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
+  };
+
+  const modalId = isModalOpen
+    ? 'account-timesheet-list-column-visibility-popover'
+    : undefined;
+
+  const RestrictedColumns = [
+    {
+      id: 'r_number',
+      canHide: false,
+      canDrag: false,
+    },
+  ];
+
+  const [columnVisibility, setColumnVisibility] = useState<
+    Record<string, boolean>
+  >(Object.fromEntries(timesheetColumns.map((col) => [col.id, !col.hide])));
+
+  const [columnOrder, setColumnOrder] = useState(
+    timesheetColumns.map((col) => col.id)
+  );
+
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    const newVisibility = Object.fromEntries(
+      updatedColumns.map((col) => [col.id, !col.hide])
+    );
+    setColumnVisibility(newVisibility);
+    setColumnOrder(updatedColumns.map((col) => col.id));
+  };
+
+  const visibleColumns = columnOrder
+    .map((id) => timesheetColumns.find((col) => col.id === id)!)
+    .filter((col) => columnVisibility[col.id]);
+
   return (
     <div className='w-full pt-2 pl-2 pr-4'>
       <SectionTabPanel
@@ -343,6 +403,7 @@ const Timesheet: React.FC<TimeSheetProps> = ({
             title='Timesheet'
             count={totalItems}
             showItemCount={true}
+            buttons={headerButtons}
             titleIcon={
               <TimeSheetIcon
                 className='[&>path]:stroke-white w-[14px] h-[14px]'
@@ -353,9 +414,18 @@ const Timesheet: React.FC<TimeSheetProps> = ({
             bgType='circle'
           />
           <div className='border border-[#CBD6E2]'>
+            <ManageColumnsPopover
+              anchorEl={columnAnchorEl}
+              open={isModalOpen}
+              popoverId={modalId}
+              onClose={handlePopoverClose}
+              columns={timesheetColumns}
+              onColumnsChange={handleColumnsChange}
+              columnRestrictions={RestrictedColumns}
+            />
             <ListTable
               data={timesheetList}
-              columns={timesheetColumns}
+              columns={visibleColumns}
               getRowId={getRowId}
               hoverHighlight={false}
               tableStyle={{

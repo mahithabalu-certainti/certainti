@@ -10,7 +10,7 @@ export const getInteractionAttachmentListColumns = (
     id: 'question_rnumber',
     sortId: 'question_rnumber',
     label: 'Question Number',
-    width: 160,
+    width: 130,
     sticky: true,
     render: (row: InteractionAttachmentType) => row.question_rnumber || '-',
     sx: {
@@ -25,22 +25,22 @@ export const getInteractionAttachmentListColumns = (
   {
     id: 'name',
     sortId: 'name',
-    label: 'Name',
-    width: 140,
+    label: 'File Name',
+    width: 250,
     render: (row: InteractionAttachmentType) => row.name || '-',
   },
   {
     id: 'type',
     sortId: 'type',
     label: 'Type',
-    width: 140,
+    width: 60,
     render: (row: InteractionAttachmentType) => row.type || '-',
   },
   {
     id: 'size',
     sortId: 'size',
     label: 'Size',
-    width: 140,
+    width: 80,
     render: (row: InteractionAttachmentType) => row.size || '-',
   },
   {
@@ -54,7 +54,7 @@ export const getInteractionAttachmentListColumns = (
     id: 'uploaded_date',
     sortId: 'uploaded_date',
     label: 'Uploaded Date',
-    width: 160,
+    width: 180,
     render: (row: InteractionAttachmentType) =>
       formatDateToYYYYMMDDWithTime(row.uploaded_date) || '-',
   },
