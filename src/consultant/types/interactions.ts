@@ -23,6 +23,7 @@ export enum StatusTypeEnum {
   response_received = 'response received',
   resume = 'resume',
   sent = 'sent',
+  resent = 'resent',
 }
 
 export interface InteractionFormTableColumn {
@@ -399,4 +400,5 @@ export interface SendInteractionPayload {
   account_rid: string;
   interactions: InteractionItem[];
   customRecipient?: boolean;
+  is_interaction_followup?: boolean;
 }

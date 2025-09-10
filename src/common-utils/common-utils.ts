@@ -474,6 +474,7 @@ export const REGEX_PATTERNS = {
   MIN_3: /^.{3,}$/,
   MIN_5: /^.{5,}$/,
   MIN_4: /^.{4,}$/,
+  ALLOW_36: /^.{36}$/,
   POSITIVE_INTEGER_REGEX: /^(?:[1-9]|10)$/,
   MAX_AI_INTERACTIONS: /^(10|[1-9])$/,
   MIN_2: /^.{2,}$/,

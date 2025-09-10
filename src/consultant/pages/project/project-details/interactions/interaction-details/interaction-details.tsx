@@ -12,7 +12,10 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom';
-import { useInteractionDetails } from '../../../../../services/interactions/interactions-service';
+import {
+  useInteractionDetails,
+  useSendInteraction,
+} from '../../../../../services/interactions/interactions-service';
 import {
   applyHidePermission,
   formatDateToYYYYMMDDWithTime,
@@ -25,6 +28,7 @@ import { StatusTypeEnum } from '../../../../../types';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
 import { AllPermissions } from '../../../../../../common-service';
+import { useToast } from '../../../../../../hooks';
 
 interface InteractionDetailsProps {
   accountInActive: boolean;
@@ -44,7 +48,8 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   const interactionId = searchParams.get('interaction_id') || undefined;
 
   const { permission } = useSelector((state: RootState) => state.permission);
-
+  const sendInteraction = useSendInteraction();
+  const { successToast } = useToast();
   const { data, isLoading, error, refetch } = useInteractionDetails(
     accountId,
     interactionId
@@ -65,6 +70,12 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     StatusTypeEnum.cancelled,
     StatusTypeEnum.completed,
     StatusTypeEnum.response_received,
+  ].includes((data?.status_name || '').toLowerCase() as StatusTypeEnum);
+  const disableRemainderBtn = [
+    StatusTypeEnum.sent,
+    StatusTypeEnum.resent,
+    StatusTypeEnum.question_updated,
+    StatusTypeEnum.response_draft,
   ].includes((data?.status_name || '').toLowerCase() as StatusTypeEnum);
 
   const disableEditResBtn = [
@@ -116,7 +127,31 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
+  const handleRemainder = () => {
+    const interactions = [
+      {
+        interaction_rid: projectDetails?.rid || '',
+        project_fiscal_rid: projectDetails?.project_fiscal_rid || '',
+        email_info: {
+          email: '',
+          name: '',
+        },
+      },
+    ];
 
+    const payload = {
+      account_rid: projectDetails?.account_rid || '',
+      is_interaction_followup: true,
+      interactions,
+    };
+    sendInteraction.mutate(payload, {
+      onSuccess: (response) => {
+        successToast(response?.statusMessage);
+        // onSuccessRefetch();
+      },
+    });
+    return;
+  };
   const handleResponseHistory = () => {
     searchParams.set('history', 'response_histroy');
     navigate({ search: searchParams.toString() }, { replace: true });
@@ -130,6 +165,15 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       onClick: () => handleEdit(),
       sx: { width: '48px', minWidth: '48px' },
       hide: !interactionFieldsEditable,
+    },
+    {
+      label: 'Reminder',
+      variant: 'outlined' as const,
+      disabled: accountInActive || !disableRemainderBtn,
+      onClick: () => handleRemainder(),
+      sx: { width: '78px', minWidth: '78px' },
+      hide: false,
+      isLoading: sendInteraction.isPending,
     },
   ];
 
