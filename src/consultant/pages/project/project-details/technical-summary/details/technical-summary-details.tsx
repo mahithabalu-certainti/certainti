@@ -98,10 +98,10 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
       onSuccess: async () => {
         await refetchDetails();
         setIsEditing(false);
-        successToast('Technical summary context updated successfully');
+        successToast('Refinement prompt updated successfully');
       },
       onError: () => {
-        errorToast('Failed to update summary context. Please try again.');
+        errorToast('Failed to update refinement prompt. Please try again.');
       },
     });
   };

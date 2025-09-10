@@ -54,9 +54,6 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     accountId,
     interactionId
   );
-  // commented for if may future use
-  // const disableEditResBtn =
-  //   data?.status_name.toLowerCase() === StatusTypeEnum.response_received;
 
   const interactionFieldsEditable = useMemo(
     () =>
@@ -67,21 +64,18 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   );
 
   const disableInteractionEditBtn = [
-    StatusTypeEnum.cancelled,
-    StatusTypeEnum.completed,
+    StatusTypeEnum.sent,
+    StatusTypeEnum.response_draft,
     StatusTypeEnum.response_received,
   ].includes((data?.status_name || '').toLowerCase() as StatusTypeEnum);
+
   const disableRemainderBtn = [
     StatusTypeEnum.sent,
-    StatusTypeEnum.resent,
-    StatusTypeEnum.question_updated,
     StatusTypeEnum.response_draft,
   ].includes((data?.status_name || '').toLowerCase() as StatusTypeEnum);
 
   const disableEditResBtn = [
-    StatusTypeEnum.cancelled,
     StatusTypeEnum.draft,
-    StatusTypeEnum.completed,
     StatusTypeEnum.response_received,
   ].includes((data?.status_name || '').toLowerCase() as StatusTypeEnum);
 
@@ -127,11 +121,13 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
+
   const handleRemainder = () => {
     const interactions = [
       {
-        interaction_rid: projectDetails?.rid || '',
-        project_fiscal_rid: projectDetails?.project_fiscal_rid || '',
+        interaction_rid: data?.interaction_rid || interactionId || '',
+        project_fiscal_rid:
+          data?.project_fiscal_rid || projectDetails?.rid || projectid || '',
         email_info: {
           email: '',
           name: '',
@@ -140,7 +136,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     ];
 
     const payload = {
-      account_rid: projectDetails?.account_rid || '',
+      account_rid: data?.account_rid || accountId || '',
       is_interaction_followup: true,
       interactions,
     };

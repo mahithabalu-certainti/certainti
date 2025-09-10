@@ -53,9 +53,6 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     accountid,
     interactionId
   );
-  // Commented for future use
-  // const disableEditResBtn =
-  //   data?.status_name.toLowerCase() === StatusTypeEnum.cancelled;
 
   const interactionFieldsEditable = useMemo(
     () =>
@@ -66,23 +63,21 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   );
 
   const disableInteractionEditBtn = [
-    StatusTypeEnum.cancelled,
-    StatusTypeEnum.completed,
+    StatusTypeEnum.sent,
+    StatusTypeEnum.response_draft,
     StatusTypeEnum.response_received,
   ].includes((data?.status_name || '').toLowerCase() as StatusTypeEnum);
 
   const disableEditResBtn = [
-    StatusTypeEnum.cancelled,
     StatusTypeEnum.draft,
-    StatusTypeEnum.completed,
     StatusTypeEnum.response_received,
   ].includes((data?.status_name || '').toLowerCase() as StatusTypeEnum);
+
   const disableRemainderBtn = [
     StatusTypeEnum.sent,
-    StatusTypeEnum.resent,
-    StatusTypeEnum.question_updated,
     StatusTypeEnum.response_draft,
   ].includes((data?.status_name || '').toLowerCase() as StatusTypeEnum);
+
   //permission
   const interactionsViewEditFields = useMemo(
     () =>
@@ -117,7 +112,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   const handleReminderBtn = () => {
     const interactions = [
       {
-        interaction_rid: data?.interaction_rid || '',
+        interaction_rid: data?.interaction_rid || interactionId || '',
         project_fiscal_rid: data?.project_fiscal_rid || '',
         email_info: {
           email: '',
@@ -127,7 +122,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     ];
 
     const payload = {
-      account_rid: data?.account_rid || '',
+      account_rid: data?.account_rid || accountid || '',
       is_interaction_followup: true,
       interactions,
     };
