@@ -150,7 +150,7 @@ class ProjectGraphQlServices {
             graphqlData.fiscal_rid = data.project_fiscal_rid
             
             let fetchUpdatedProjectResponse : any = await this.projectIngestion.fetchProjectList
-            (checkAccountExists[0][0].r_number, accountData, {}, 0, 0, 2,[], false, {}, 'project_code', 'ASC',graphqlData,[])
+            (checkAccountExists[0][0].r_number, accountData, {}, data.global_fiscal_year, 0, 2,[], false, {}, 'project_code', 'ASC',graphqlData,[])
             
             if(fetchUpdatedProjectResponse.projects.length > 0) {
                 let data : any = fetchUpdatedProjectResponse.projects[0]
@@ -308,6 +308,7 @@ class ProjectGraphQlServices {
                             total_cost_subcon: d.total_cost_subcon,
                             total_cost_nonlabor: d.total_cost_nonlabor,
                             project_type_name: d.project_type_name,
+                            currency_symbol: d.currency_symbol,
                         }
                     })
                     }

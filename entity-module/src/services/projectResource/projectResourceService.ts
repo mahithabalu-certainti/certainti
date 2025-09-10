@@ -373,19 +373,19 @@ export class ProjectResourceService {
             transaction
           );
 
-          await this.projectResourceSchema.aggregatesProject(
-            accountNumber,
-            account_rid,
-            projectFiscalData.project_code,
-            transaction
-          );
+          // await this.projectResourceSchema.aggregatesProject(
+          //   accountNumber,
+          //   account_rid,
+          //   projectFiscalData.project_code,
+          //   transaction
+          // );
 
-          await this.projectResourceSchema.aggregatesProjectSummary(
-            accountNumber,
-            account_rid,
-            projectFiscalData.project_code,
-            transaction
-          );
+          // await this.projectResourceSchema.aggregatesProjectSummary(
+          //   accountNumber,
+          //   account_rid,
+          //   projectFiscalData.project_code,
+          //   transaction
+          // );
 
           await this.projectResourceSchema.aggregatesResourceFiscal(
             accountNumber,
@@ -419,11 +419,11 @@ export class ProjectResourceService {
             transaction
           );
 
-          await this.projectResourceSchema.aggregatesAccount(
-            accountNumber,
-            account_rid,
-            transaction
-          );
+          // await this.projectResourceSchema.aggregatesAccount(
+          //   accountNumber,
+          //   account_rid,
+          //   transaction
+          // );
 
           await transaction.commit();
         } else {

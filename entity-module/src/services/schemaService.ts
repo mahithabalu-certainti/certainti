@@ -42,7 +42,7 @@ import {
 } from "../models/resourceSkillHistory";
 import { KeyContact } from "../models/keyContactDetails";
 import AccountDetails from "../models/accountDetails";
-import { MAIN_SCHEMA_NAME, rawQueries } from "../utils/constants";
+import { MAIN_SCHEMA_NAME, primaryKeyContacts, rawQueries } from "../utils/constants";
 import {
   ResourceFiscalRegion,
   setupResourceFiscalRegionSeq,
@@ -3281,10 +3281,11 @@ class SchemaService {
       ].filter(Boolean);
 
       let keyContactMap: Record<string, string> = {};
+      let keyContactRoleMap: Record<string, string> = {};
 
       if (keyContactIds.length > 0) {
         const keyContactRows = await mainDdSequilze.query(
-          `SELECT rid, role_name FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE rid IN (:ids)`,
+          `SELECT rid, role_name, role_map FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE rid IN (:ids)`,
           {
             replacements: { ids: keyContactIds },
             type: "SELECT",
@@ -3294,6 +3295,9 @@ class SchemaService {
         keyContactMap = Object.fromEntries(
           keyContactRows.map((c: any) => [c.rid, c.role_name])
         );
+        keyContactRoleMap = Object.fromEntries(
+          keyContactRows.map((c: any) => [c.role_map, c.role_name])
+        );
       }
 
       const updatedProjects = projects.map((project) => {
@@ -3301,21 +3305,21 @@ class SchemaService {
 
         const enrichedKeyContacts = keyContacts.map((kc: any) => ({
           ...kc,
-          role_name: keyContactMap[kc.key_contact_role] || null,
+          role_name: keyContactMap[kc.key_contact_role] || null
         }));
-
+       
         const technicalConsultant = enrichedKeyContacts.find(
           (e: any) =>
-            e.role_name === "Client Project Technical Point of Contact" &&
+            e.role_name === keyContactRoleMap[primaryKeyContacts.technical_point_of_contact] &&
             e.is_primary_contact
         );
         const financialConsultant = enrichedKeyContacts.find(
           (e: any) =>
-            e.role_name === "Financial Consultant" && e.is_primary_contact
+            e.role_name === keyContactRoleMap[primaryKeyContacts.financial_consultant] && e.is_primary_contact
         );
         const pointOfContact = enrichedKeyContacts.find(
           (e: any) =>
-            e.role_name === "Project Point of Contact" && e.is_primary_contact
+            e.role_name === keyContactRoleMap[primaryKeyContacts.project_point_of_contact] && e.is_primary_contact
         );
 
         return {

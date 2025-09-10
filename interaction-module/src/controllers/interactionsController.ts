@@ -1,22 +1,30 @@
 import { Request, Response } from "express";
-import { HttpStatus, interactionSource, STATUS_MESSAGE } from "../utils/constants";
+import { HttpStatus, interactionFieldMappings, interactionSource, STATUS_MESSAGE, techSummaryFieldMappings } from "../utils/constants";
 import {
   deleteFromAzureBlob,
   errorLog,
+  formatToLocalTime,
   generateExcelBase64,
+  handleCustomResponse,
   handleErrorResponse,
   handleSuccessResponse,
+  isValidTimezone,
   successLog,
   uploadToAzureBlob,
   validateRequest,
 } from "../utils/helpers";
+import moment from "moment-timezone";
 import configurations from "../config/config";
 import {
   createInteractionSchema,
+  exportTechnicalSummarySchema,
   getInteractionStatusSchema,
+  listAllTechnicalSummarySchema,
+  listTechnicalSummarySchema,
   sendInteractionSchema,
   updateInteractionResponseSchema,
   updateInteractionSchema,
+  updateTechSummaryContextSchema,
 } from "../lib/joi/schemas/schema";
 
 // import Joi schemas and interaction services as needed
@@ -53,7 +61,7 @@ async function createInteraction(req: Request, res: Response): Promise<void> {
     );
     if (interaction.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
-      handleSuccessResponse(res, interaction.data);
+      handleCustomResponse(res, interaction.data,interaction.message);
       return;
     } else {
       errorLog(methodName, interaction.errorMessage);
@@ -108,7 +116,7 @@ async function updateInteraction(req: Request, res: Response): Promise<void> {
     );
     if (interaction.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
-      handleSuccessResponse(res, interaction.data);
+      handleCustomResponse(res, interaction.data, interaction.message);
       return;
     } else {
       errorLog(methodName, interaction.errorMessage);
@@ -264,6 +272,136 @@ async function getInteractionDetailsById(
     return;
   }
 }
+async function getTechnicalSummaryDetailsById(
+  req: Request,
+  res: Response
+): Promise<void> {
+  const methodName = "Get technical summary details";
+  try {
+    console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
+    const value = await validateRequest(req, listTechnicalSummarySchema, res, "GET");
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    if (!value) {
+      errorLog(
+        methodName,
+        "tech_summary_rid and account_rid are required in params"
+      );
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "interactionRid and accountId are required in params"
+      );
+      return;
+    }
+
+    const interactionDetails =
+      await interactionService.getTechnicalSummaryDetailsById(
+        value.tech_summary_rid,
+        value.account_rid
+      );
+    console.log(
+      `[${methodName}] Service response:`,
+      JSON.stringify(interactionDetails)
+    );
+    if (interactionDetails.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, interactionDetails.data);
+      return;
+    } else {
+      errorLog(methodName, interactionDetails.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        interactionDetails.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function updateTechSummaryContext(req: Request, res: Response): Promise<void> {
+  const methodName = "Update technical summary context";
+  try {
+    console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
+    const value = await validateRequest(req, updateTechSummaryContextSchema, res);
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    if (!value) {
+      errorLog(methodName, "Request body is empty");
+      return;
+    }
+    const interaction = await interactionService.updateTechSummaryContext(
+      value.summary_context,
+      value.tech_summary_rid,
+      value.account_rid,
+      userId
+    );
+    console.log(
+      `[${methodName}] Service response:`,
+      JSON.stringify(interaction)
+    );
+    if (interaction.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, interaction.data, interaction.message);
+      return;
+    } else {
+      errorLog(methodName, interaction.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        interaction.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+
+
+
 async function getInteractionQuestionsById(
   req: Request,
   res: Response
@@ -474,7 +612,7 @@ async function listAllInteractionPrjAcc (req : Request, res : Response) {
       );
       return;
     }
-    const result = await interactionService.listInteractionPrjAccount(data)
+    const result = await interactionService.listInteractionPrjAccount(data,userId)
     if(result.status == HttpStatus.SUCCESS) {
       return res.status(HttpStatus.SUCCESS).json({
         statusCode : HttpStatus.SUCCESS,
@@ -513,27 +651,64 @@ async function exportAllInteractions (req : Request, res : Response) {
       );
       return;
     }
-    const result = await interactionService.listInteractionPrjAccount(data)
-    if(result.status == HttpStatus.SUCCESS) {
-      const finalStructuredData = result.data.interactions.length < 1 ? [] : result.data.interactions.map(( d : any) => {
-       return {
-          "Interaction ID": d.r_number,
-          "Last Sent Date": d.last_resent_on === null ? '' : new Date(d.last_resent_on).toISOString().split('T')[0],
-          "Recipient Name": d.recipient_name,
-          "Age": d.interaction_age,
-          "Interaction Link": d.interaction_url,
-          "Recipient Email": d.recipient_email,
-          "Response Source": d.response_source,
-          "Last Reminder Date": d.last_reminder_on == null ? '' : new Date(d.last_reminder_on).toISOString().split('T')[0],
-          "Last Updated Date": d.modified_datetime == null ? '' : new Date(d.modified_datetime).toISOString().split('T')[0],
-          "Last Response Update": d.response_updated_on == null ? '' : new Date(d.response_updated_on).toISOString().split('T')[0],
-          "Response Date": d.response_submitted_on === null ? '' : new Date(d.response_submitted_on).toISOString().split('T')[0],
-          "Parent Interaction ID": d.parent_interaction_rid,
-          "Status": d.status_name,
-          "Type": d.interaction_type_name,
-          "Created By": d.created_user_name,
-          "Last Updated By": d.updated_user_name
+    const result = await interactionService.listInteractionPrjAccount(data,userId)
+    const fields = await interactionService.getAllowedExportFields(
+          userId,
+          "interactions_view_edit"
+        );
+      const allowedFieldSet = new Set<string>();
+      for (const field of fields) {
+        if (field.read) {
+          allowedFieldSet.add(field.field_name);
         }
+      }
+       const isValidTZ = data.timezone &&  isValidTimezone(data.timezone);
+       const formatDate = (date?: Date) =>
+        date
+          ? moment(date).tz(isValidTZ ? data.timezone : 'UTC').format('YYYY-MM-DD, hh:mm:ss A')
+          : null;
+
+    if(result.status == HttpStatus.SUCCESS) {
+      const finalStructuredData = result.data.interactions.length < 1 ? [] : result.data.interactions.map((d: any) => {
+        let resultMap: { [key: string]: any } = {
+          "r_number": d.r_number,
+          "project_code": d.project_code,
+          "interaction_age": d.interaction_age,
+          "fiscal_year": d.fiscal_year,
+          "status_name": d.status_name,
+          "recipient_name": d.recipient_name,
+          "recipient_email": d.recipient_email,
+          "last_resent_on": d.last_resent_on === null ? '' : formatDate(d.last_resent_on),
+          "last_reminder_on": d.last_reminder_on == null ? '' : formatDate(d.last_reminder_on),
+          "response_submitted_on": d.response_submitted_on === null ? '' : formatDate(d.response_submitted_on),
+          "response_updated_on": d.response_updated_on == null ? '' : formatDate(d.response_updated_on),
+          "attachment_count": d.attachment_count === 0 || d.attachment_count === "" ? null : d.attachment_count,
+          "interaction_url": d.interaction_url
+        ? {
+            text: "Link",
+            hyperlink: d.interaction_url,
+            style: {
+          fontColor: "1755E7",
+            }
+          }
+        : null,
+          "interaction_type_name": d.interaction_type_name,
+          "response_source_name": d.response_source_name,
+          "created_by": d.created_user_name,
+          "created_datetime":formatDate(d.created_datetime),
+          "modified_by": d.updated_user_name,
+          "modified_datetime": d.modified_datetime == null ? '' : formatDate(d.modified_datetime),
+        };
+
+        // Build exportRecord using allowed fields and resultMap
+        const exportRecord: Record<string, any> = {};
+        interactionFieldMappings.forEach(mapping => {
+          if (allowedFieldSet.has(mapping.permissionField)) {
+            exportRecord[mapping.exportField] = resultMap[mapping.dataField];
+          }
+        });
+
+        return exportRecord;
       });
 
       const base64Response = await generateExcelBase64(finalStructuredData, "Interactions")
@@ -568,7 +743,7 @@ async function listOutAllInteractionSummary (req : Request, res : Response) {
       );
       return;
     }
-    const result = await interactionService.fetchInteractionSummary(data)
+    const result = await interactionService.fetchInteractionSummary(data,userId);
     if(result.statusCodeValue == HttpStatus.SUCCESS_MESSAGE) {
       const finalData = {
         page : data.page,
@@ -622,28 +797,64 @@ async function exportAllInteractionSummary (req : Request, res : Response) {
       );
       return;
     }
-    const result = await interactionService.fetchInteractionSummary(data);
+    const result = await interactionService.fetchInteractionSummary(data,userId);
+     const fields = await interactionService.getAllowedExportFields(
+          userId,
+          "interactions_view_edit"
+        );
+      const allowedFieldSet = new Set<string>();
+      for (const field of fields) {
+        if (field.read) {
+          allowedFieldSet.add(field.field_name);
+        }
+      }
+       const isValidTZ = data.timezone &&  isValidTimezone(data.timezone);
+       const formatDate = (date?: Date) =>
+        date
+          ? moment(date).tz(isValidTZ ? data.timezone : 'UTC').format('YYYY-MM-DD, hh:mm:ss A')
+          : null;
     if(result.statusCodeValue == HttpStatus.SUCCESS_MESSAGE) {
       let structuredData = result.data.length < 1 ? [] : result.data.map(( d : any) => {
-        return {
-          "Interaction ID": d.r_number,
-          "Last Sent Date": d.last_resent_on === null ? '' : new Date(d.last_resent_on).toISOString().split('T')[0],
-          "Recipient Name": d.recipient_name,
-          "Age": d.interaction_age,
-          "Interaction Link": d.interaction_url,
-          "Recipient Email": d.recipient_email,
-          "Response Source": d.response_source,
-          "Last Reminder Date": d.last_reminder_on == null ? '' : new Date(d.last_reminder_on).toISOString().split('T')[0],
-          "Last Updated Date": d.modified_datetime == null ? '' : new Date(d.modified_datetime).toISOString().split('T')[0],
-          "Last Response Update": d.response_updated_on == null ? '' : new Date(d.response_updated_on).toISOString().split('T')[0],
-          "Response Date": d.response_submitted_on === null ? '' : new Date(d.response_submitted_on).toISOString().split('T')[0],
-          "Parent Interaction ID": d.parent_interaction_rid,
-          "Status": d.status_name,
-          "Type": d.interaction_type_name,
-          "Created By": d.created_user_name,
-          "Last Updated By": d.updated_user_name
+       let resultMap: { [key: string]: any }  = {
+          "r_number": d.r_number,
+          "account_name":d.account_name,
+          "project_code": d.project_code,
+          "interaction_age": d.interaction_age,
+          "fiscal_year": d.fiscal_year,
+          "status_name": d.status_name,
+          "recipient_name": d.recipient_name,
+          "recipient_email": d.recipient_email,
+          "last_sent_date": d.last_resent_on === null ? '' : formatDate(d.last_resent_on),
+          "last_reminder_date": d.last_reminder_on == null ? '' : formatDate(d.last_reminder_on),
+          "response_submitted_on": d.response_submitted_on === null ? '' : formatDate(d.response_submitted_on),
+          "response_updated_on": d.response_updated_on == null ? '' : formatDate(d.response_updated_on),
+          "attachment_count":d.attachment_count === 0 || d.attachment_count === "" ? null : d.attachment_count,
+          "interaction_url": d.interaction_url
+            ? {
+              text: "Link",
+              hyperlink: d.interaction_url,
+              style: {
+                fontColor: "1755E7",
+              }
+              }
+            : null,
+          "interaction_type_name": d.interaction_type_name,
+          "response_source_name": d.response_source_name,
+          "created_by": d.created_user_name,
+          "created_datetime": d.created_datetime == null ? '' : formatDate(d.created_datetime),
+          "modified_by": d.updated_user_name,
+          "modified_datetime": d.modified_datetime == null ? '' : formatDate(d.modified_datetime)
         }
+
+            const exportRecord: Record<string, any> = {};
+        interactionFieldMappings.forEach(mapping => {
+          if (allowedFieldSet.has(mapping.permissionField)) {
+            exportRecord[mapping.exportField] = resultMap[mapping.dataField];
+          }
         });
+        return exportRecord;
+        }
+      );
     const base64Response = await generateExcelBase64(structuredData, "Interactions")
     handleSuccessResponse(res, base64Response);
     return; 
@@ -791,7 +1002,8 @@ async function sendInteraction(req: Request, res: Response): Promise<void> {
      const interaction = await interactionService.sendInteraction(
        value.interactions,
        value.account_rid,
-       userId
+       userId,
+       value.is_interaction_followup
      );
     console.log(
       `[${methodName}] Service response:`,
@@ -916,6 +1128,161 @@ async function deleteAttachmentFromAzure(req: Request, res: Response): Promise<v
   }
 }
 
+async function listTechnicalSummary(req: Request, res: Response) {
+  const methodName = "listTechnicalSummary"
+  try {
+    console.log(`[${methodName}] Request received`);
+    const userId = req.headers["x-user-id"] as string;
+    const value = await validateRequest(req, listAllTechnicalSummarySchema, res, "GET");
+    console.log(`[${methodName}] userId:`, userId);
+    console.log(`[${methodName}] value:`, value);
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    if (!value) return;
+    let parsedFilters: Record<string, any> = {};
+    try {
+      parsedFilters = JSON.parse(value.filters);
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+
+    const page: number = parseInt(value.page, 10) || 1;
+    const limit: number = parseInt(value.limit, 10) || 10;
+    const result = await interactionService.listTechnicalSummary(value,page,limit,parsedFilters)
+    if(result.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : HttpStatus.SUCCESS_NOTIFICATION,
+        data : result.data
+      })
+    } else {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.dataNotFound,
+        data : result.data
+      })
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    console.log(`[${methodName}] Exception:`, error);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+async function exportTechnicalSummary(req: Request, res: Response) {
+  const methodName = "exportTechnicalSummary"
+  try {
+
+    console.log(`[${methodName}] Request received`);
+    const userId = req.headers["x-user-id"] as string;
+    const value = await validateRequest(req, exportTechnicalSummarySchema, res, "GET");
+    console.log(`[${methodName}] userId:`, userId);
+    console.log(`[${methodName}] value:`, value);
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    if (!value) return;
+    let parsedFilters: Record<string, any> = {};
+    try {
+      parsedFilters = JSON.parse(value.filters);
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+    const result = await interactionService.exportTechnicalSummary(value,parsedFilters)
+    const fields = await interactionService.getAllowedExportFields(
+          userId,
+          "projects_tech_summary_view_edit"
+        );
+      const allowedFieldSet = new Set<string>();
+      for (const field of fields) {
+        if (field.read) {
+          allowedFieldSet.add(field.field_name);
+        }
+      }
+     const isValidTZ = value.timezone &&  isValidTimezone(value.timezone);
+       const formatDate = (date?: Date) =>
+        date
+          ? moment(date).tz(isValidTZ ? value.timezone : 'UTC').format('YYYY-MM-DD, hh:mm:ss A')
+          : null;
+    if(result.statusCode === HttpStatus.SUCCESS) {
+         const finalStructuredData = result?.data?.techSummaryInfo.length < 1 ? [] : result?.data?.techSummaryInfo.map((d: any) => {
+        let resultMap: { [key: string]: any } = {
+          "r_number": d.r_number,
+          "project_code": d.project_code,
+          "fiscal_year": d.fiscal_year,
+          "status_name": d.status_name,
+          "version": d.version,
+          "summary_context": d.summary_context,
+          "technical_summary": d.technical_summary,
+          "created_by": d.created_user_name,
+          "created_datetime":formatDate(d.created_datetime),
+          "modified_by": d.modified_user_name,
+          "modified_datetime": d.modified_datetime == null ? '' : formatDate(d.modified_datetime),
+        };
+
+        // Build exportRecord using allowed fields and resultMap
+        const exportRecord: Record<string, any> = {};
+        techSummaryFieldMappings.forEach(mapping => {
+          if (allowedFieldSet.has(mapping.permissionField)) {
+            exportRecord[mapping.exportField] = resultMap[mapping.dataField];
+          }
+        });
+
+        return exportRecord;
+      });
+
+       const generateBase64Response = await generateExcelBase64(finalStructuredData, "Technical Summary")
+        handleSuccessResponse(res, generateBase64Response);
+    } else {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.dataNotFound,
+        data : result.data
+      })
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    console.log(`[${methodName}] Exception:`, error);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
 async function listInteractionHistory (req : Request, res : Response) {
   const methodName = "listInteractionHistory"
   try {
@@ -1127,7 +1494,7 @@ async function fetchResponseHistoryDetails (req : Request, res : Response) {
       if(result.statusCodeValue == HttpStatus.SUCCESS_MESSAGE) {
         let finalStructuredData = result.data.data.interaction_history.map((data : any) => ({
           "Action" : data.status_name,
-          "Date" : new Date(data.date).toISOString().split('T')[0]
+          "Date" : formatToLocalTime(data.date)
         }))
         const generateBase64Response = await generateExcelBase64(finalStructuredData, "Interaction-History")
         handleSuccessResponse(res, generateBase64Response);
@@ -1193,5 +1560,9 @@ export default {
   fetchResponseHistoryDetails,
   triggerAIAndPassResponse,
   exportInteractionHistory,
-  processKafkaMessages
+  processKafkaMessages,
+  listTechnicalSummary,
+  getTechnicalSummaryDetailsById,
+  updateTechSummaryContext,
+  exportTechnicalSummary
 };

@@ -1,80 +1,118 @@
-import { ALPHANUMERIC_CONDITIONS, filtersColumns, filtersColumnsForInteractionSummary, filterTypes, filterTypesForIntHistory, filterTypesForSummaryInteractions, interactionFlag, MAIN_SCHEMA_NAME, responseSortKeys, STATUS_MESSAGE } from "./constants"
+import { Sequelize } from "sequelize";
+import {
+  ALPHANUMERIC_CONDITIONS,
+  filtersColumns,
+  filtersColumnsForInteractionSummary,
+  filterTypes,
+  filterTypesForIntHistory,
+  filterTypesForSummaryInteractions,
+  interactionFlag,
+  MAIN_SCHEMA_NAME,
+  responseSortKeys,
+  STATUS_MESSAGE,
+} from "./constants";
 
 type filterType = {
-        [key : string] : {
-            [condition : string] : any
-        }
-}
+  [key: string]: {
+    [condition: string]: any;
+  };
+};
 
 export const fetchInteractionForProjectLevelQuery = (
-    account_rid : string, 
-    project_id : string, 
-    project_fiscal_rid : string,
-    fiscal_year : number,
-    sort : string,
-    sortBy : string,
-    filters : filterType,
-    page : number,
-    limit : number,
-    flag : string,
-    schemaName : string,
-    disablePagination : boolean
+  account_rid: string,
+  project_id: string,
+  project_fiscal_rid: string,
+  fiscal_year: number,
+  sort: string,
+  sortBy: string,
+  filters: filterType,
+  page: number,
+  limit: number,
+  flag: string,
+  schemaName: string,
+  disablePagination: boolean,
+  accessibleIds: string[] = [],
 ) => {
-    let offset = (page - 1 ) * limit
-    let pagination = `LIMIT ${limit} OFFSET ${offset}`
-    let filteredQueryArray : string[] = []
-    let filterQueryValues;
-    let sortValue : string;
-    let whereConditions;
-    let andConditions = ``;
-    if(disablePagination) pagination = ` `
-    else pagination
+  let offset = (page - 1) * limit;
+  let pagination = `LIMIT ${limit} OFFSET ${offset}`;
+  let filteredQueryArray: string[] = [];
+  let filterQueryValues;
+  let sortValue: string;
+  let whereConditions;
+  let andConditions = ``;
+  if (disablePagination) pagination = ` `;
+  else pagination;
 
-    if(flag == interactionFlag.account) {
-        let fiscalQuery = ``
-        if(fiscal_year === 0) fiscalQuery = ` `
-        else fiscalQuery = ` AND i.fiscal_year = ${fiscal_year}`
-        whereConditions = `
+  if (flag == interactionFlag.account) {
+    let fiscalQuery = ``;
+    if (fiscal_year === 0) fiscalQuery = ` `;
+    else fiscalQuery = ` AND i.fiscal_year = ${fiscal_year}`;
+    whereConditions = `
         i.account_rid = '${account_rid}' 
-        ${fiscalQuery}`
-    } else {
-        whereConditions = `
+        ${fiscalQuery}`;
+  } else {
+    whereConditions = `
         i.account_rid = '${account_rid}' 
         AND 
         i.project_fiscal_rid = '${project_fiscal_rid}'
         AND
         i.project_rid = '${project_id}'
-        AND
-        i.fiscal_year = ${fiscal_year}
-        `
-    }
-    let filteredData = filterForInteractions(filters, andConditions, filteredQueryArray, filterTypes, filtersColumns)
+        `;
+  }
+  if (accessibleIds.length > 0) {
+    whereConditions += ` AND pf.project_rid = ANY(ARRAY[${accessibleIds.map(id => `'${id}'`).join(",")}]::text[])`;     
+  }
+  let filteredData = filterForInteractions(
+    filters,
+    andConditions,
+    filteredQueryArray,
+    filterTypes,
+    filtersColumns
+  );
 
-    if(sort === filtersColumns.r_number) sortValue = `ORDER BY i.r_number ${sortBy}`
-    else if(sort === filtersColumns.iteration) sortValue = `ORDER BY i.interaction_iteration ${sortBy}`
-    else if(sort === filtersColumns.interaction_age) sortValue = `ORDER BY i.interaction_age ${sortBy}`
-    else if(sort === filtersColumns.recipient_name) sortValue = `ORDER BY i.recipient_name ${sortBy}`
-    else if(sort === filtersColumns.recipient_email) sortValue = `ORDER BY i.recipient_email ${sortBy}`
-    else if(sort === filtersColumns.last_sent_on) sortValue = `ORDER BY i.last_resent_on ${sortBy}`
-    else if(sort === filtersColumns.last_reminder_on) sortValue = `ORDER BY i.last_reminder_on ${sortBy}`
-    else if(sort === filtersColumns.response_submitted_on) sortValue = `ORDER BY i.response_submitted_on ${sortBy}`
-    else if(sort === filtersColumns.response_updated_on) sortValue = `ORDER BY i.response_updated_on ${sortBy}`
-    else if(sort === filtersColumns.attachment_count) sortValue = `ORDER BY i.attachment_count ${sortBy}`
-    else if(sort === filtersColumns.response_source) sortValue = `ORDER BY i.response_source ${sortBy}`
-    else if(sort === filtersColumns.created_datetime) sortValue = `ORDER BY i.created_datetime ${sortBy}`
-    else if(sort === filtersColumns.modified_datetime) sortValue = `ORDER BY i.modified_datetime ${sortBy}`
-    else if(sort === filtersColumns.project_code) sortValue = `ORDER BY i.project_code ${sortBy}`
-    else if(sort === filtersColumns.fiscal_year) sortValue = `ORDER BY i.fiscal_year ${sortBy}`
-    else sortValue = `ORDER BY i.r_number ASC`
+  if (sort === filtersColumns.r_number)
+    sortValue = `ORDER BY i.r_number ${sortBy}`;
+  else if (sort === filtersColumns.iteration)
+    sortValue = `ORDER BY i.interaction_iteration ${sortBy}`;
+  else if (sort === filtersColumns.interaction_age)
+    sortValue = `ORDER BY i.interaction_age ${sortBy}`;
+  else if (sort === filtersColumns.recipient_name)
+    sortValue = `ORDER BY i.recipient_name ${sortBy}`;
+  else if (sort === filtersColumns.recipient_email)
+    sortValue = `ORDER BY i.recipient_email ${sortBy}`;
+  else if (sort === filtersColumns.last_sent_on)
+    sortValue = `ORDER BY i.last_resent_on ${sortBy}`;
+  else if (sort === filtersColumns.last_reminder_on)
+    sortValue = `ORDER BY i.last_reminder_on ${sortBy}`;
+  else if (sort === filtersColumns.response_submitted_on)
+    sortValue = `ORDER BY i.response_submitted_on ${sortBy}`;
+  else if (sort === filtersColumns.response_updated_on)
+    sortValue = `ORDER BY i.response_updated_on ${sortBy}`;
+  else if (sort === filtersColumns.attachment_count)
+    sortValue = `ORDER BY i.attachment_count ${sortBy}`;
+  else if (sort === filtersColumns.response_source)
+    sortValue = `ORDER BY i.response_source ${sortBy}`;
+  else if (sort === filtersColumns.created_datetime)
+    sortValue = `ORDER BY i.created_datetime ${sortBy}`;
+  else if (sort === filtersColumns.modified_datetime)
+    sortValue = `ORDER BY i.modified_datetime ${sortBy}`;
+  else if (sort === filtersColumns.project_code)
+    sortValue = `ORDER BY pf.project_code ${sortBy}`;
+  else if (sort === filtersColumns.fiscal_year)
+    sortValue = `ORDER BY i.fiscal_year ${sortBy}`;
+  else if (sort === filtersColumns.parent_interaction_rid)
+    sortValue = `ORDER BY p.r_number ${sortBy}`;
+  else if (sort === filtersColumns.createdAt)
+    sortValue = `ORDER BY i.created_datetime ${sortBy}`;
+  else sortValue = `ORDER BY i.r_number ASC`;
 
-    if(filteredData?.filteredQueryArray.length! > 0) {
-        filterQueryValues = filteredQueryArray.join(' AND ')
-    } else {
-        filterQueryValues = ` `
-    }
+  if (filteredData?.filteredQueryArray.length! > 0) {
+    filterQueryValues = filteredQueryArray.join(" AND ");
+  } else {
+    filterQueryValues = ` `;
+  }
 
-    let query = 
-    `
+  let query = `
     WITH fetch_interaction AS (
         SELECT
             i.rid, i.r_number, i.interaction_iteration, COALESCE(i.interaction_age,0),
@@ -83,19 +121,20 @@ export const fetchInteractionForProjectLevelQuery = (
             i.response_submitted_on, i.response_source_rid, i.created_by, i.modified_by,
             i.created_datetime, i.modified_datetime, p.r_number AS parent_r_number,
             i.account_rid, i.project_rid, i.rid AS interaction_history, 
-            i.interaction_url, i.fiscal_year, i.project_fiscal_rid,
+            i.interaction_url,i.project_fiscal_rid,
             COUNT(i.rid) OVER() AS total_records, i.interaction_age,
             i.interaction_source_rid, i.interaction_type_rid, i.attachment_count,
-            pf.project_code
+            pf.project_code,pf.fiscal_year
 
             FROM
             ${schemaName}.interactions i
             LEFT JOIN ${schemaName}.interactions p ON p.rid = i.parent_interaction_rid
-            LEFT JOIN ${schemaName}.project pf ON pf.rid = i.project_rid
+            LEFT JOIN ${schemaName}.project_fiscal pf ON pf.rid = i.project_fiscal_rid
             WHERE
             ${whereConditions}
             ${filteredData?.andConditions}
             ${filterQueryValues}
+            ${sortValue}
     ),
     paginated_datas AS (
     SELECT * FROM fetch_interaction ${pagination}
@@ -131,91 +170,149 @@ export const fetchInteractionForProjectLevelQuery = (
         'interaction_source', i.interaction_source_rid,
         'attachment_count', i.attachment_count,
         'project_code', i.project_code
-        )${sortValue} NULLS LAST) AS interactions
+        ) ) AS interactions
 
         FROM
         paginated_datas i
-    `
+    `;
 
-    return query
-
-}
+  return query;
+};
 
 export const listAllInteractionSummary = (
-    page : number, limit : number, filters : filterType, globalFilters : any, fiscal_year : number, 
-    sort : string, sortBy : string
+  page: number,
+  limit: number,
+  filters: filterType,
+  globalFilters: any,
+  fiscal_year: number,
+  sort: string,
+  sortBy: string,
+  accessibleIds: string[] = [],
 ) => {
-    let offset = (page - 1) * limit
-    let pagination = `LIMIT ${limit} OFFSET ${offset}`
-    let filteredQueryArray : string[] = []
-    let andConditions = ``
-    let filterQueryValues;
-    let accountIdsArray : string[] = [];
-    let globalFiltersQueryConditions : string = ``
-    let fiscalYearQuery : string = ``
-    let whereKey : string = ``
-    let andConditionsForjoinsForTwo : string = ` `
-    let andConditionsForjoinsForThree : string = ` `
-    let sortValue
+  let offset = (page - 1) * limit;
+  let pagination = `LIMIT ${limit} OFFSET ${offset}`;
+  let filteredQueryArray: string[] = [];
+  let andConditions = ``;
+  let filterQueryValues;
+  let accountIdsArray: string[] = [];
+  let globalFiltersQueryConditions: string = ``;
+  let fiscalYearQuery: string = ``;
+  let whereKey: string = ``;
+  let andConditionsForjoinsForTwo: string = ` `;
+  let andConditionsForjoinsForThree: string = ` `;
+  let sortValue;
 
-    let filterDatas = filterForInteractions(filters, andConditions, filteredQueryArray, filterTypesForSummaryInteractions, filtersColumnsForInteractionSummary);
-    if(filterDatas?.filteredQueryArray?.length! > 0) {
-        filterQueryValues = filterDatas?.filteredQueryArray.join(' AND ')
-    } else {
-        filterQueryValues = ``
-    }
-    if(Object.keys(globalFilters).length > 0) {
-        accountIdsArray = globalFiltersForInteractionSummary(globalFilters)
-    }
-    if(accountIdsArray.length > 0) {
-        globalFiltersQueryConditions = ` i.account_rid IN (${accountIdsArray.map((d : any) => `'${d}'`).join(',')})`
-    }
+  let filterDatas = filterForInteractions(
+    filters,
+    andConditions,
+    filteredQueryArray,
+    filterTypesForSummaryInteractions,
+    filtersColumnsForInteractionSummary
+  );
+  if (filterDatas?.filteredQueryArray?.length! > 0) {
+    filterQueryValues = filterDatas?.filteredQueryArray.join(" AND ");
+  } else {
+    filterQueryValues = ``;
+  }
+  if (Object.keys(globalFilters).length > 0) {
+    accountIdsArray = globalFiltersForInteractionSummary(globalFilters);
+  }
+  if (accountIdsArray.length > 0) {
+    globalFiltersQueryConditions = ` i.account_rid IN (${accountIdsArray
+      .map((d: any) => `'${d}'`)
+      .join(",")})`;
+  }
+  const includeProjectFilter = accessibleIds.length > 0;
+  const accessibleProjectsCondition = includeProjectFilter
+    ? `pf.project_rid = ANY(ARRAY[${accessibleIds.map(id => `'${id}'`).join(",")}]::text[])`
+    : "1=1";
 
-    if(fiscal_year == 0) fiscalYearQuery = ``
-    else fiscalYearQuery = ` i.fiscal_year = ${fiscal_year}`
+  if (fiscal_year == 0) fiscalYearQuery = ``;
+  else fiscalYearQuery = ` pf.fiscal_year = ${fiscal_year}`;
 
-    if(globalFiltersQueryConditions !== '' || fiscalYearQuery !== '' || filterQueryValues !== '') whereKey = ` WHERE `
-    else whereKey = ``
-    
-    if(globalFiltersQueryConditions !== '' && fiscalYearQuery !== '' && filterQueryValues !== '') {
-        andConditionsForjoinsForTwo = ` AND `
-        andConditionsForjoinsForThree = ` AND `
-    }
-    else if(globalFiltersQueryConditions !== '' && fiscalYearQuery !== '') andConditionsForjoinsForTwo = ` AND `
-    else if(globalFiltersQueryConditions !== '' && filterQueryValues !== '') andConditionsForjoinsForThree = ` AND `
-    else if(fiscalYearQuery !== '' && filterQueryValues !== '' ) andConditionsForjoinsForThree = ` AND `
-    else {
-        andConditionsForjoinsForTwo = ``
-        andConditionsForjoinsForThree = `` 
-    }
+  if (
+    globalFiltersQueryConditions !== "" ||
+    fiscalYearQuery !== "" ||
+    filterQueryValues !== "" ||
+    accessibleProjectsCondition !== ""
+  )
+    whereKey = ` WHERE `;
+  else whereKey = ``;
 
-    if(sort === filtersColumnsForInteractionSummary.r_number) sortValue = `ORDER BY i.r_number ${sortBy}`
-    else if(sort === filtersColumnsForInteractionSummary.iteration) sortValue = `ORDER BY i.interaction_iteration ${sortBy}`
-    else if(sort === filtersColumnsForInteractionSummary.interaction_age) sortValue = `ORDER BY i.interaction_age ${sortBy}`
-    else if(sort === filtersColumnsForInteractionSummary.recipient_name) sortValue = `ORDER BY i.recipient_name ${sortBy}`
-    else if(sort === filtersColumnsForInteractionSummary.recipient_email) sortValue = `ORDER BY i.recipient_email ${sortBy}`
-    else if(sort === filtersColumnsForInteractionSummary.last_sent_on) sortValue = `ORDER BY i.last_resent_on ${sortBy}`
-    else if(sort === filtersColumnsForInteractionSummary.last_reminder_on) sortValue = `ORDER BY i.last_reminder_on ${sortBy}`
-    else if(sort === filtersColumnsForInteractionSummary.response_submitted_on) sortValue = `ORDER BY i.response_submitted_on ${sortBy}`
-    else if(sort === filtersColumnsForInteractionSummary.response_updated_on) sortValue = `ORDER BY i.response_updated_on ${sortBy}`
-    else if(sort === filtersColumnsForInteractionSummary.attachment_count) sortValue = `ORDER BY i.attachment_count ${sortBy}`
-    else if(sort === filtersColumnsForInteractionSummary.response_source) sortValue = `ORDER BY i.response_source ${sortBy}`
-    else if(sort === filtersColumnsForInteractionSummary.created_datetime) sortValue = `ORDER BY i.created_datetime ${sortBy}`
-    else if(sort === filtersColumnsForInteractionSummary.modified_datetime) sortValue = `ORDER BY i.modified_datetime ${sortBy}`
-    else if(sort === filtersColumnsForInteractionSummary.status_name) sortValue = ` ORDER BY i.status_name ${sortBy}`
-    else if(sort === filtersColumnsForInteractionSummary.interaction_type_name) sortValue = ` ORDER BY i.interaction_type_name ${sortBy}`
-    else if(sort === filtersColumnsForInteractionSummary.interaction_source_name) sortValue = ` ORDER BY i.interaction_source_name ${sortBy}`
-    else if(sort === filtersColumnsForInteractionSummary.created_user_name) sortValue = ` ORDER BY i.created_user_name ${sortBy}`
-    else if(sort === filtersColumnsForInteractionSummary.updated_user_name) sortValue = ` ORDER BY i.updated_user_name ${sortBy}`
-    else if(sort === filtersColumnsForInteractionSummary.project_code) sortValue = ` ORDER BY i.project_code ${sortBy}`
-    else if(sort === filtersColumnsForInteractionSummary.account_name) sortValue = ` ORDER BY i.account_name ${sortBy}`
-    else if(sort === filtersColumnsForInteractionSummary.fiscal_year) sortValue = ` ORDER BY i.fiscal_year ${sortBy}`
-    else if(sort === filtersColumnsForInteractionSummary.response_source_name) sortValue = ` ORDER BY i.response_source_name ${sortBy}`
-    else sortValue = `ORDER BY i.r_number ASC`
+  // Dynamically add "AND" between non-empty conditions
+  const conditions = [
+    accessibleProjectsCondition,
+    globalFiltersQueryConditions,
+    fiscalYearQuery,
+    filterQueryValues,
+  ].filter(Boolean);
 
+  // Helper to determine if "AND" is needed before each condition
+  const getAnd = (index: number) => (index > 0 ? " AND " : "");
 
-    let query =
-    `
+  // Build the joined conditions for the query
+  let joinedConditions = "";
+  conditions.forEach((cond, idx) => {
+    joinedConditions += getAnd(idx) + cond;
+  });
+
+  // Assign ANDs for joins based on the order of conditions
+  // (for backward compatibility with the rest of the query)
+  andConditionsForjoinsForTwo = conditions.length > 1 ? " AND " : "";
+  andConditionsForjoinsForThree = conditions.length > 2 ? " AND " : "";
+
+ 
+  if (sort === filtersColumnsForInteractionSummary.r_number)
+    sortValue = `ORDER BY i.r_number ${sortBy}`;
+  else if (sort === filtersColumnsForInteractionSummary.iteration)
+    sortValue = `ORDER BY i.interaction_iteration ${sortBy}`;
+  else if (sort === filtersColumnsForInteractionSummary.interaction_age)
+    sortValue = `ORDER BY i.interaction_age ${sortBy}`;
+  else if (sort === filtersColumnsForInteractionSummary.recipient_name)
+    sortValue = `ORDER BY i.recipient_name ${sortBy}`;
+  else if (sort === filtersColumnsForInteractionSummary.recipient_email)
+    sortValue = `ORDER BY i.recipient_email ${sortBy}`;
+  else if (sort === filtersColumnsForInteractionSummary.last_sent_on)
+    sortValue = `ORDER BY i.last_resent_on ${sortBy}`;
+  else if (sort === filtersColumnsForInteractionSummary.last_reminder_on)
+    sortValue = `ORDER BY i.last_reminder_on ${sortBy}`;
+  else if (sort === filtersColumnsForInteractionSummary.response_submitted_on)
+    sortValue = `ORDER BY i.response_submitted_on ${sortBy}`;
+  else if (sort === filtersColumnsForInteractionSummary.response_updated_on)
+    sortValue = `ORDER BY i.response_updated_on ${sortBy}`;
+  else if (sort === filtersColumnsForInteractionSummary.attachment_count)
+    sortValue = `ORDER BY i.attachment_count ${sortBy}`;
+  else if (sort === filtersColumnsForInteractionSummary.response_source)
+    sortValue = `ORDER BY i.response_source ${sortBy}`;
+  else if (sort === filtersColumnsForInteractionSummary.created_datetime)
+    sortValue = `ORDER BY i.created_datetime ${sortBy}`;
+  else if (sort === filtersColumnsForInteractionSummary.modified_datetime)
+    sortValue = `ORDER BY i.modified_datetime ${sortBy}`;
+  else if (sort === filtersColumnsForInteractionSummary.status_name)
+    sortValue = ` ORDER BY i.status_name ${sortBy}`;
+  else if (sort === filtersColumnsForInteractionSummary.interaction_type_name)
+    sortValue = ` ORDER BY i.interaction_type_name ${sortBy}`;
+  else if (sort === filtersColumnsForInteractionSummary.interaction_source_name)
+    sortValue = ` ORDER BY i.interaction_source_name ${sortBy}`;
+  else if (sort === filtersColumnsForInteractionSummary.created_user_name)
+    sortValue = ` ORDER BY i.created_user_name ${sortBy}`;
+  else if (sort === filtersColumnsForInteractionSummary.updated_user_name)
+    sortValue = ` ORDER BY i.updated_user_name ${sortBy}`;
+  else if (sort === filtersColumnsForInteractionSummary.project_code)
+    sortValue = ` ORDER BY i.project_code ${sortBy}`;
+  else if (sort === filtersColumnsForInteractionSummary.account_name)
+    sortValue = ` ORDER BY i.account_name ${sortBy}`;
+  else if (sort === filtersColumnsForInteractionSummary.fiscal_year)
+    sortValue = ` ORDER BY i.fiscal_year ${sortBy}`;
+  else if (sort === filtersColumnsForInteractionSummary.response_source_name)
+    sortValue = ` ORDER BY i.response_source_name ${sortBy}`;
+  else if (sort === filtersColumnsForInteractionSummary.parent_interaction_rid)
+    sortValue = ` ORDER BY parent_r_number ${sortBy}`;
+  else if (sort === filtersColumnsForInteractionSummary.createdAt)
+    sortValue = ` ORDER BY i.created_datetime ${sortBy}`;
+  else sortValue = `ORDER BY i.r_number ASC`;
+
+  let query = `
     WITH fetch_all_interactions AS 
     (SELECT i.interaction_rid AS rid, i.r_number, i.interaction_iteration, i.status_rid,
     s.status_name, i.recipient_name, i.recipient_email,
@@ -224,31 +321,27 @@ export const listAllInteractionSummary = (
     i.interaction_url, p.r_number AS parent_r_number, i.interaction_type_rid,
     it.interaction_type_name, ir.rid AS response_source_rid, ir.response_source_name,
     i.created_by, CONCAT(u.first_name, ' ', u.last_name) AS created_user_name,
-    CONCAT(uu.first_name, ' ', uu.last_name) AS updated_user_name,
-    i.created_datetime, i.modified_datetime, i.fiscal_year, i.account_rid, i.project_rid,
+    CASE WHEN uu.first_name IS NULL THEN i.modified_by ELSE CONCAT(uu.first_name, ' ', uu.last_name) END AS updated_user_name,
+    i.created_datetime, i.modified_datetime, i.account_rid, i.project_rid,
     i.interaction_source_rid, sn.interaction_source_name,
     i.project_fiscal_rid, COUNT(*) OVER() AS total_records, i.modified_by, i.interaction_age,
-    a.account_name, pf.project_code
+    a.account_name, pf.project_code, pf.fiscal_year
     FROM
     ${MAIN_SCHEMA_NAME}.interactions_summary i
     LEFT JOIN ${MAIN_SCHEMA_NAME}.interaction_type it ON it.rid = i.interaction_type_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.interaction_status s ON s.rid = i.status_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.user u ON u.rid = i.created_by
     LEFT JOIN ${MAIN_SCHEMA_NAME}.user uu ON uu.rid = i.modified_by
-    LEFT JOIN ${MAIN_SCHEMA_NAME}.interactions_summary p ON p.rid = i.parent_interaction_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.interactions_summary p ON p.interaction_rid = i.parent_interaction_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.interaction_source sn ON sn.rid = i.interaction_source_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.account a ON a.rid = i.account_rid
-    LEFT JOIN ${MAIN_SCHEMA_NAME}.project_summary pf ON pf.project_rid = i.project_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary pf ON pf.project_fiscal_rid = i.project_fiscal_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.interaction_response_source ir ON ir.rid = i.response_source_rid
     ${whereKey}
-    ${globalFiltersQueryConditions}
-    ${andConditionsForjoinsForTwo}
-    ${fiscalYearQuery}
-    ${andConditionsForjoinsForThree}
-    ${filterQueryValues}
+    ${joinedConditions}
     ),
     paginated_data AS (
-    SELECT * FROM fetch_all_interactions ${pagination}
+    SELECT * FROM fetch_all_interactions i ${sortValue} ${pagination}
     )
     SELECT 
         array_agg(jsonb_build_object(
@@ -287,110 +380,154 @@ export const listAllInteractionSummary = (
             'updated_user_name', i.updated_user_name,
             'attachment_count', i.attachment_count,
             'project_code', i.project_code
-        )${sortValue} NULLS LAST) AS interactions
+        )) AS interactions
 
         FROM
-        paginated_data i`
-    return query
-}
+        paginated_data i`;
+  return query;
+};
 
 const filterForInteractions = (
-    filters : filterType, andConditions : string,
-    filteredQueryArray : string[], filterTypes : any, filterColumns : Record<string, any>
-    ) => {
-        let filteredColumns : string | undefined;
-        if(Object.keys(filters).length > 0) {
-        for(let [key, conditions] of Object.entries(filters)) {
-            if(Object.keys(filterTypes).includes(key)) {
-                filteredColumns = filterColumns[key]
-                andConditions = ` AND `
+  filters: filterType,
+  andConditions: string,
+  filteredQueryArray: string[],
+  filterTypes: any,
+  filterColumns: Record<string, any>
+) => {
+  let filteredColumns: string | undefined;
+  if (Object.keys(filters).length > 0) {
+    for (let [key, conditions] of Object.entries(filters)) {
+      if (Object.keys(filterTypes).includes(key)) {
+        filteredColumns = filterColumns[key];
+        andConditions = ` AND `;
+      }
+      for (let [condition, values] of Object.entries(conditions)) {
+        switch (filterTypes[key]) {
+          case "string": {
+            let dynamicReference = ``;
+            if (filteredColumns == "project_code") dynamicReference = `pf`;
+            else if (filteredColumns == "account_name") dynamicReference = `a`;
+            else if (filteredColumns == "fiscal_year") dynamicReference = `pf`;
+            else if (filteredColumns == "parent_interaction_rid") {
+              dynamicReference = `p`;
+              filteredColumns = "r_number";
+            } else dynamicReference = `i`;
+            if (condition == ALPHANUMERIC_CONDITIONS.equals)
+              filteredQueryArray.push(
+                `LOWER(${dynamicReference}.${filteredColumns}) = LOWER('${values}')`
+              );
+            if (condition == ALPHANUMERIC_CONDITIONS.notEquals) {
+              filteredQueryArray.push(
+                `(LOWER(${dynamicReference}.${filteredColumns}) != LOWER('${values}') OR ${dynamicReference}.${filteredColumns} IS NULL)`
+              );
             }
-            for(let [condition, values] of Object.entries(conditions)) {
-                switch(filterTypes[key]) {
-                    case "string" : {
-                        let dynamicReference = ``
-                        if(filteredColumns == 'project_code') dynamicReference = `pf`
-                        else if(filteredColumns == 'account_name') dynamicReference = `a`
-                        else dynamicReference = `i`
-                        if(condition == ALPHANUMERIC_CONDITIONS.equals) 
-                            filteredQueryArray.push(`LOWER(${dynamicReference}.${filteredColumns}) = LOWER('${values}')`)
-                        if(condition == ALPHANUMERIC_CONDITIONS.notEquals)
-                            filteredQueryArray.push(`LOWER(${dynamicReference}.${filteredColumns}) != LOWER('${values}')`)
-                        if(condition == ALPHANUMERIC_CONDITIONS.isEmpty) 
-                            filteredQueryArray.push(`${dynamicReference}.${filteredColumns} IS NULL`)
-                        if(condition == ALPHANUMERIC_CONDITIONS.contains)
-                            filteredQueryArray.push(`${dynamicReference}.${filteredColumns} ILIKE '%${values}%'`)
-                        if(condition == ALPHANUMERIC_CONDITIONS.IN)
-                            filteredQueryArray.push(`${dynamicReference}.${filteredColumns} IN (${values.map((d : any) => `'${d}'`).join(',')})`)
-                        break;
-                    }
-                    case "number" : {
-                        if(condition == ALPHANUMERIC_CONDITIONS.equals) 
-                            filteredQueryArray.push(`i.${filteredColumns} = ${values}`)
-                        if(condition == ALPHANUMERIC_CONDITIONS.notEquals)
-                            filteredQueryArray.push(`i.${filteredColumns} != ${values}`)
-                        if(condition == ALPHANUMERIC_CONDITIONS.greater_than)
-                            filteredQueryArray.push(`i.${filteredColumns} > ${values}`)
-                        if(condition == ALPHANUMERIC_CONDITIONS.less_than) 
-                            filteredQueryArray.push(`i.${filteredColumns} < ${values}`)
-                        if(condition == ALPHANUMERIC_CONDITIONS.between)
-                            filteredQueryArray.push(`i.${filteredColumns} BETWEEN ${values.join(' AND ')}`)
-                        if(condition == ALPHANUMERIC_CONDITIONS.isEmpty) 
-                            filteredQueryArray.push(`i.${filteredColumns} IS NULL`)
-                        break;
-                    }
-                    case "datetime" : {
-                        if(condition == ALPHANUMERIC_CONDITIONS.equals) 
-                            filteredQueryArray.push(`DATE(i.${filteredColumns}) = '${values}'`)
-                        if(condition == ALPHANUMERIC_CONDITIONS.before) 
-                            filteredQueryArray.push(`DATE(i.${filteredColumns}) < '${values}'`)
-                        if(condition == ALPHANUMERIC_CONDITIONS.after) 
-                            filteredQueryArray.push(`DATE(i.${filteredColumns}) > '${values}'`)
-                        if(condition == ALPHANUMERIC_CONDITIONS.between) 
-                            filteredQueryArray.push(`DATE(i.${filteredColumns}) BETWEEN '${values.map((d : any) => `'${d}'`).join(' AND ')}'`)
-                        if(condition == ALPHANUMERIC_CONDITIONS.isEmpty)
-                            filteredQueryArray.push(`DATE(i.${filteredColumns}) IS NULL`)                    }
-                }
-            }
+            if (condition == ALPHANUMERIC_CONDITIONS.isEmpty)
+              filteredQueryArray.push(
+                `${dynamicReference}.${filteredColumns} IS NULL`
+              );
+            if (condition == ALPHANUMERIC_CONDITIONS.contains)
+              filteredQueryArray.push(
+                `${dynamicReference}.${filteredColumns} ILIKE '%${values}%'`
+              );
+            if (condition == ALPHANUMERIC_CONDITIONS.IN)
+              filteredQueryArray.push(
+                `${dynamicReference}.${filteredColumns} IN (${values
+                  .map((d: any) => `'${d}'`)
+                  .join(",")})`
+              );
+            break;
+          }
+          case "number": {
+            if (condition == ALPHANUMERIC_CONDITIONS.equals)
+              filteredQueryArray.push(`i.${filteredColumns} = ${values}`);
+            if (condition == ALPHANUMERIC_CONDITIONS.notEquals)
+              filteredQueryArray.push(`i.${filteredColumns} != ${values}`);
+            if (condition == ALPHANUMERIC_CONDITIONS.greater_than)
+              filteredQueryArray.push(`i.${filteredColumns} > ${values}`);
+            if (condition == ALPHANUMERIC_CONDITIONS.less_than)
+              filteredQueryArray.push(`i.${filteredColumns} < ${values}`);
+            if (condition == ALPHANUMERIC_CONDITIONS.between)
+              filteredQueryArray.push(
+                `i.${filteredColumns} BETWEEN ${values.join(" AND ")}`
+              );
+            if (condition == ALPHANUMERIC_CONDITIONS.isEmpty)
+              filteredQueryArray.push(`i.${filteredColumns} IS NULL`);
+            break;
+          }
+          case "datetime": {
+            if (condition == ALPHANUMERIC_CONDITIONS.equals)
+              filteredQueryArray.push(
+                `DATE(i.${filteredColumns}) = '${values}'`
+              );
+            if (condition == ALPHANUMERIC_CONDITIONS.before)
+              filteredQueryArray.push(
+                `DATE(i.${filteredColumns}) < '${values}'`
+              );
+            if (condition == ALPHANUMERIC_CONDITIONS.after)
+              filteredQueryArray.push(
+                `DATE(i.${filteredColumns}) > '${values}'`
+              );
+            if (condition == ALPHANUMERIC_CONDITIONS.between)
+              filteredQueryArray.push(
+                `DATE(i.${filteredColumns}) BETWEEN ${values
+                  .map((d: any) => `'${d}'`)
+                  .join(" AND ")}`
+              );
+            if (condition == ALPHANUMERIC_CONDITIONS.isEmpty)
+              filteredQueryArray.push(`DATE(i.${filteredColumns}) IS NULL`);
+          }
         }
-        return {
-            filteredQueryArray, andConditions
-        }
-    } else {
-        filteredQueryArray = []
-        andConditions = ` `
-        return {
-            filteredQueryArray, andConditions
-        }
+      }
     }
-}
+    return {
+      filteredQueryArray,
+      andConditions,
+    };
+  } else {
+    filteredQueryArray = [];
+    andConditions = ` `;
+    return {
+      filteredQueryArray,
+      andConditions,
+    };
+  }
+};
 
-const globalFiltersForInteractionSummary = (globalFilters : Record<string, string[]>) => {
-    let arrayOfIds : string[] = []
-    for(let [key, items] of Object.entries(globalFilters)) {
-        for(let item of items) {
-            arrayOfIds.push(item)
-        }
+const globalFiltersForInteractionSummary = (
+  globalFilters: Record<string, string[]>
+) => {
+  let arrayOfIds: string[] = [];
+  for (let [key, items] of Object.entries(globalFilters)) {
+    for (let item of items) {
+      arrayOfIds.push(item);
     }
-    return arrayOfIds;
-}
+  }
+  return arrayOfIds;
+};
 
-export const listResponseHistory = (interaction_rid : string, schemaName : string, page : number, limit : number, sort : string, sortBy : string) => {
-    let offset = (page - 1 ) * limit
-    let pagination = `LIMIT ${limit} OFFSET ${offset}`
-    let sortQuery : string = ``
+export const listResponseHistory = (
+  interaction_rid: string,
+  schemaName: string,
+  page: number,
+  limit: number,
+  sort: string,
+  sortBy: string
+) => {
+  let offset = (page - 1) * limit;
+  let pagination = `LIMIT ${limit} OFFSET ${offset}`;
+  let sortQuery: string = ``;
 
-    if(responseSortKeys.includes(sort.toLowerCase())) sortQuery = `ORDER BY i.${sort} ${sortBy}`
-    else sortQuery = `ORDER BY i.r_number ASC`
-    
-    let query = 
-    `
+  if (responseSortKeys.includes(sort.toLowerCase()))
+    sortQuery = `ORDER BY ${sort} ${sortBy}`;
+  else sortQuery = `ORDER BY r_number ASC`;
+
+  let query = `
     WITH fetch_interaction_response AS (
     SELECT 
     DISTINCT ON (r.interaction_version) 
     r.rid, i.r_number, r.response_by, r.response_on, r.response_email,
     r.interaction_response, i.interaction_source_rid,
-    r.response_source, r.interaction_version, r.interaction_rid, r.interaction_item_rid
+    r.response_source_rid, r.interaction_version, r.interaction_rid, r.interaction_item_rid
     FROM 
     ${schemaName}.interaction_response_history r
     LEFT JOIN ${schemaName}.interactions i ON i.rid = r.interaction_rid
@@ -403,7 +540,7 @@ export const listResponseHistory = (interaction_rid : string, schemaName : strin
     SELECT f.*, COUNT(f.*) OVER() AS total_records FROM fetch_interaction_response f
     ),
     paginated_data AS (
-    SELECT * FROM counted_datas ${pagination}
+    SELECT * FROM counted_datas   ${sortQuery}  ${pagination}
     )
     
     SELECT 
@@ -418,129 +555,169 @@ export const listResponseHistory = (interaction_rid : string, schemaName : strin
     'interaction_response', i.interaction_response,
     'interaction_source_rid', i.interaction_source_rid,
     'total_records', i.total_records,
-    'response_source', i.response_source,
+    'response_source_rid', i.response_source_rid,
     'interaction_version', i.interaction_version
     )${sortQuery} NULLS LAST) AS response_history
     FROM
-    paginated_data i`
-    return query
-}
+    paginated_data i`;
+  return query;
+};
 
-export const listInteractionHistory = (page : number, limit : number, sort : string, sortBy : string, filter : filterType, interactionRid : string, schemaName : string) => {
-    let offset = (page - 1 ) * limit
-    let pagination = `LIMIT ${limit} OFFSET ${offset}`
-    let filterQueryArray : string[]  = []
-    let sortValue : any = ``
-    let keyType;
-    let andConditions : string = ``
-    let filterQueryCombinedValues : string  = ``
+export const listInteractionHistory = (
+  page: number,
+  limit: number,
+  sort: string,
+  sortBy: string,
+  filter: filterType,
+  interactionRid: string,
+  schemaName: string
+) => {
+  let offset = (page - 1) * limit;
+  let pagination = `LIMIT ${limit} OFFSET ${offset}`;
+  let filterQueryArray: string[] = [];
+  let sortValue: any = ``;
+  let keyType;
+  let andConditions: string = ``;
+  let filterQueryCombinedValues: string = ``;
 
-    if(sort.toLowerCase() === "date") sortValue = `ORDER BY ih.created_datetime ${sortBy}`
-    else sortValue = `ORDER BY ih.created_datetime ASC`
+  if (sort.toLowerCase() === "date")
+    sortValue = `ORDER BY ih.created_datetime ${sortBy}`;
+  else sortValue = `ORDER BY ih.created_datetime ASC`;
 
-    if(Object.keys(filter).length > 0) {
-        for(let [key, condition] of Object.entries(filter)) {
-            if(Object.keys(filterTypesForIntHistory).includes(key)) {
-                keyType = filterTypesForIntHistory[key]
-                andConditions = ` AND `
+  if (Object.keys(filter).length > 0) {
+    for (let [key, condition] of Object.entries(filter)) {
+      if (Object.keys(filterTypesForIntHistory).includes(key)) {
+        keyType = filterTypesForIntHistory[key];
+        andConditions = ` AND `;
+      }
+      for (let [cond, values] of Object.entries(condition)) {
+        switch (keyType) {
+          case "string": {
+            if (cond === ALPHANUMERIC_CONDITIONS["equals"]) {
+              filterQueryArray.push(` ih.new_status_rid = '${values}'`);
+              break;
             }
-            for(let [cond, values] of Object.entries(condition)) {
-                switch(keyType) {
-                    case "string" : {
-                        if(cond === ALPHANUMERIC_CONDITIONS['equals']) {
-                            filterQueryArray.push(`ih.new_status_rid = '${values}'`)
-                            break;
-                        }
-                        if(cond === ALPHANUMERIC_CONDITIONS['notEquals']) {
-                            filterQueryArray.push(`ih.new_status_rid != '${values}'`)
-                            break;
-                        }
-                        if(cond === ALPHANUMERIC_CONDITIONS['IN']) {
-                            filterQueryArray.push(`ih.new_status_rid IN (${values.map((d : any) => `'${d}'`).join(',')})`)
-                            break;
-                        }
-                    }
-                    case "datetime" : {
-                        if(cond === ALPHANUMERIC_CONDITIONS['equals']) {
-                            filterQueryArray.push(`DATE(ih.created_datetime) = '${values}'`)
-                            break
-                        }
-                        if(cond === ALPHANUMERIC_CONDITIONS['before']) {
-                            filterQueryArray.push(`DATE(ih.created_datetime) < '${values}'`)
-                            break;
-                        }
-                        if(cond === ALPHANUMERIC_CONDITIONS['after']) {
-                            filterQueryArray.push(`DATE(ih.created_datetime) > '${values}'`)
-                            break;
-                        }
-                        if(cond === ALPHANUMERIC_CONDITIONS['between']) {
-                            filterQueryArray.push(`DATE(ih.created_datetime) BETWEEN ${values.map((d : any) => `'${d}'`).join(' AND ')}`)
-                            break;
-                        }
-                        if(cond === ALPHANUMERIC_CONDITIONS['isEmpty']) {
-                            filterQueryArray.push(`ih.created_datetime IS NULL`)
-                            break;
-                        }
-                    }
-                    default : 
-                        break;
-                }
+            if (cond === ALPHANUMERIC_CONDITIONS["notEquals"]) {
+              filterQueryArray.push(` ih.new_status_rid != '${values}'`);
+              break;
             }
+            if (cond === ALPHANUMERIC_CONDITIONS["IN"]) {
+              filterQueryArray.push(
+                ` ih.new_status_rid IN (${values
+                  .map((d: any) => `'${d}'`)
+                  .join(",")})`
+              );
+              break;
+            }
+          }
+          case "datetime": {
+            if (cond === ALPHANUMERIC_CONDITIONS["equals"]) {
+              filterQueryArray.push(` DATE(ih.created_datetime) = '${values}'`);
+              break;
+            }
+            if (cond === ALPHANUMERIC_CONDITIONS["before"]) {
+              filterQueryArray.push(` DATE(ih.created_datetime) < '${values}'`);
+              break;
+            }
+            if (cond === ALPHANUMERIC_CONDITIONS["after"]) {
+              filterQueryArray.push(` DATE(ih.created_datetime) > '${values}'`);
+              break;
+            }
+            if (cond === ALPHANUMERIC_CONDITIONS["between"]) {
+              filterQueryArray.push(
+                ` DATE(ih.created_datetime) BETWEEN ${values
+                  .map((d: any) => `'${d}'`)
+                  .join(" AND ")}`
+              );
+              break;
+            }
+            if (cond === ALPHANUMERIC_CONDITIONS["isEmpty"]) {
+              filterQueryArray.push(` ih.created_datetime IS NULL`);
+              break;
+            }
+          }
+          default:
+            break;
         }
-    } else {
-        filterQueryArray = []
-        andConditions = ` `
+      }
     }
+  }
 
-    if(filterQueryArray.length > 0) {
-        filterQueryCombinedValues = filterQueryArray.join('AND')
-    } else {
-        filterQueryCombinedValues = ` `
-    }
+  if (filterQueryArray.length > 0) {
+    filterQueryCombinedValues = filterQueryArray.join("AND");
+  }
 
-    let query = 
-    `WITH fetch_interaction_history AS (
-    SELECT 
-    i.r_number, ih.rid, ih.new_status_rid, ih.created_datetime,
-    i.response_source, p.project_code, p.project_name,
-    COUNT(*) OVER() AS total_records
-    FROM 
-    ${schemaName}.interaction_status_history ih
-    LEFT JOIN ${schemaName}.interactions i ON i.rid = ih.interaction_rid
-    LEFT JOIN ${schemaName}.project p ON p.rid = i.project_rid
-    WHERE
-    ih.interaction_rid = '${interactionRid}'
-    ${andConditions}
-    ${filterQueryCombinedValues}
-    GROUP BY 
-    i.r_number, p.project_name, p.project_code, i.response_source, ih.rid
-    ),
-    paginated_data AS (
-    SELECT * from fetch_interaction_history ${pagination})
+  let query = `
+      WITH base_interaction AS (
+        SELECT 
+          i.rid AS interaction_rid,
+          i.r_number,
+          i.response_source_rid,
+          i.interaction_source_rid,
+          p.project_code,
+          p.project_name
+        FROM ${schemaName}.interactions i
+        LEFT JOIN ${schemaName}.project p ON p.rid = i.project_rid
+        WHERE i.rid = '${interactionRid}'
+      ),
+  
+      filtered_history AS (
+        SELECT 
+          ih.rid,
+          ih.new_status_rid,
+          ih.created_datetime,
+          ih.interaction_rid,
+          COUNT(*) OVER() AS total_records
+        FROM ${schemaName}.interaction_status_history ih
+        WHERE ih.interaction_rid = '${interactionRid}'
+        ${andConditions}
+        ${filterQueryCombinedValues}
+        ${sortValue}
+      ),
+  
+      paginated_data AS (
+        SELECT * FROM filtered_history
+        ${pagination}
+      )
+  
+      SELECT 
+  bi.r_number AS interaction_rnumber,
+  bi.project_code,
+  bi.project_name,
+  bi.response_source_rid,
+  bi.interaction_source_rid,
+  COALESCE(
+    jsonb_agg(
+      jsonb_build_object(
+        'total_records', pd.total_records,
+        'interaction_history_rid', pd.rid,
+        'new_status_rid', pd.new_status_rid,
+        'date', pd.created_datetime
+      )
+      ORDER BY pd.created_datetime ASC NULLS LAST
+    ) FILTER (WHERE pd.rid IS NOT NULL),
+    '[]'::jsonb
+  ) AS interaction_history
+FROM base_interaction bi
+LEFT JOIN paginated_data pd ON pd.interaction_rid = bi.interaction_rid
+GROUP BY 
+  bi.r_number, bi.project_code, bi.project_name, 
+  bi.response_source_rid, bi.interaction_source_rid
+    `;
 
-    SELECT 
-    array_agg(jsonb_build_object(
-    'total_records', ih.total_records,
-    'interaction_rnumber', ih.r_number,
-    'project_code', ih.project_code, 
-    'project_name', ih.project_name,
-    'response_source', ih.response_source,
-    'interaction_history_rid', ih.rid,
-    'new_status_rid', ih.new_status_rid,
-    'date', ih.created_datetime
-    )${sortValue} NULLS LAST) AS interaction_history
-    FROM
-    paginated_data ih
-    `
-    return query;
-}
+  return query;
+};
 
-export const listAttachments = (page : number, limit : number, interaction_rid : string, schemaName : string) => {
-    let offset = (page - 1) * limit
-    let pagination = `LIMIT ${limit} OFFSET ${offset}`
+export const listAttachments = (
+  page: number,
+  limit: number,
+  interaction_rid: string,
+  schemaName: string
+) => {
+  let offset = (page - 1) * limit;
+  let pagination = `LIMIT ${limit} OFFSET ${offset}`;
 
-    let query =
-    `WITH fetch_attachments AS (
+  let query = `WITH fetch_attachments AS (
         SELECT 
             ia.rid, ii.question_seq_num AS r_number, ia.attachment_name,
             ia.attachment_type, ia.attachment_size,
@@ -574,14 +751,17 @@ export const listAttachments = (page : number, limit : number, interaction_rid :
     )) AS attachments
     FROM
     paginated_data i 
-    `
+    `;
 
-    return query;
-}
+  return query;
+};
 
-export const interactionResponseHistoryByVersion = (interaction_rid : string, version : number, schemaName : string) => {
-    let query =
-    `WITH fetch_rid_response_history AS (
+export const interactionResponseHistoryByVersion = (
+  interaction_rid: string,
+  version: number,
+  schemaName: string
+) => {
+  let query = `WITH fetch_rid_response_history AS (
         SELECT 
             irh.rid
         FROM 
@@ -650,7 +830,7 @@ export const interactionResponseHistoryByVersion = (interaction_rid : string, ve
         SELECT 
             i.r_number AS response_rnumber, p.project_name,
             ii.question_seq_num, ii.question, a.attachments, a.global_attachments,
-            a.interaction_response, a.response_on,
+            a.interaction_response, a.response_on,i.response_updated_on,
             i.response_submitted_on, i.rid AS interaction_rid,
             ii.rid AS interaction_item_rid, a.rid AS interaction_response_rid, a.interaction_version
         FROM
@@ -665,7 +845,7 @@ export const interactionResponseHistoryByVersion = (interaction_rid : string, ve
         GROUP BY
 		    a.rid, a.r_number, p.project_name,
             ii.question_seq_num, ii.question,
-            a.interaction_response, a.response_on,
+            a.interaction_response, a.response_on,i.response_updated_on,
             i.response_submitted_on, i.rid,
             ii.rid, a.rid, a.attachments, a.interaction_version, a.global_attachments
     )
@@ -678,6 +858,7 @@ export const interactionResponseHistoryByVersion = (interaction_rid : string, ve
     'response_id', i.response_rnumber,
     'project_name', i.project_name,
     'response_on', i.response_on,
+    'response_updated_on', i.response_updated_on,
     'response_submitted_on', i.response_submitted_on,
     'question_id', i.question_seq_num,
     'question', i.question,
@@ -687,36 +868,128 @@ export const interactionResponseHistoryByVersion = (interaction_rid : string, ve
     )ORDER BY i.question_seq_num ASC NULLS LAST) AS responses_history_details
     FROM
     fetch_interaction_questions i
-    `
-    return query;
-}
+    `;
+  return query;
+};
 
 export const fetchAllParentRNumber = () => {
-    let query =
-    `SELECT r_number
+  let query = `SELECT r_number
         FROM
            "${MAIN_SCHEMA_NAME}".account
         WHERE
            storage_type = '${STATUS_MESSAGE.separateDb}'
            AND
-           parent_account_rid IS NULL`
-    return query;
+           parent_account_rid IS NULL`;
+  return query;
+};
 
-}
-
-export const fetchProjectAttachmentsRids = (schemaName : string) => {
-    let query =
-    `
-    SELECT attach_to, account_rid FROM "${schemaName}".attachments where attachment_level = 'project' AND
+export const fetchProjectAttachmentsRids = (schemaName: string) => {
+  let query = `
+    SELECT attach_to AS project_fiscal_rid, account_rid FROM "${schemaName}".attachments where attachment_level = 'project' AND
     is_ai_processed = false
-    `
-    return query;
-}
+    `;
+  return query;
+};
 
-export const fetchProjectInteractionRid = (schemaName : string) => {
-    let query =
-    `
+export const fetchProjectInteractionRid = (schemaName: string) => {
+  let query = `
     SELECT account_rid, project_fiscal_rid FROM ${schemaName}.interactions WHERE is_ai_processed = false
-    `
-    return query;
-}
+    `;
+  return query;
+};
+
+export const checkTableExists = (schemaName: string, table: string) => {
+  return `SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_schema = '${schemaName}' AND table_name = '${table}')`;
+};
+
+export const fetchInteractionForSentResentStatus = async (
+  schemaName: string,
+  mainDb: Sequelize,
+  orgDb: Sequelize
+) => {
+  let fetchInteractionStatus: any = await mainDb.query(
+    `SELECT rid, status_name from ${MAIN_SCHEMA_NAME}.interaction_status WHERE LOWER(status_name) IN ('sent', 'resent')`
+  );
+  const mapInteractionStatus: Map<string, string> = new Map(
+    fetchInteractionStatus[0].map((d: any) => [d.rid, d.status_name])
+  );
+  const fetchAllInteractions: any = await orgDb.query(
+    `SELECT rid, status_rid FROM ${schemaName}.interactions`
+  );
+
+  let updatedResponse = fetchAllInteractions[0].map((d: any) => {
+    return {
+      ...d,
+      status_name:
+        mapInteractionStatus.get(d.status_rid) == undefined
+          ? null
+          : mapInteractionStatus.get(d.status_rid)?.toLowerCase(),
+    };
+  });
+  for (let data of updatedResponse) {
+    await updateInteractionAge(data, schemaName, orgDb, mainDb);
+  }
+};
+
+const updateInteractionAge = async (
+  data: any,
+  schemaName: string,
+  orgDb: Sequelize,
+  mainDb: Sequelize
+) => {
+  let interactions: any;
+  let dateTimeColumn: any;
+  console.log("statusName : ", data.status_name);
+  if (data.status_name === "sent") {
+    dateTimeColumn = `sent_on_datetime`;
+    interactions = await orgDb.query(
+      findDateDifferenceQuery(schemaName, data.status_rid, dateTimeColumn)
+    );
+    console.log("interactions ====> ", interactions[0]);
+    console.log("interactions ====> ", interactions[0].length);
+    if (interactions[0].length > 0) {
+      for (let i of interactions[0]) {
+        await orgDb.query(
+          updateInteractionForAgeQuery(schemaName, i.rid, i.age)
+        );
+        await mainDb.query(updateInteractionAgeSummary(i.rid, i.age));
+      }
+    }
+  } else if (data.status_name === "resent") {
+    dateTimeColumn = `last_resent_on`;
+    interactions = await orgDb.query(
+      findDateDifferenceQuery(schemaName, data.status_rid, dateTimeColumn)
+    );
+    if (interactions[0].length > 0) {
+      for (let i of interactions[0]) {
+        await orgDb.query(
+          updateInteractionForAgeQuery(schemaName, i.rid, i.age)
+        );
+      }
+    }
+  }
+};
+
+const findDateDifferenceQuery = (
+  schemaName: string,
+  rid: any,
+  dateTimeColumn: string
+) => {
+  return `SELECT COALESCE(DATE(NOW()) - DATE(i.${dateTimeColumn}), 0) AS age, i.rid
+            FROM ${schemaName}.interactions i
+            WHERE
+            i.status_rid = '${rid}'
+            `;
+};
+
+const updateInteractionForAgeQuery = (
+  schemaName: string,
+  rid: string,
+  age: number
+) => {
+  return `UPDATE ${schemaName}.interactions i SET interaction_age = ${age} WHERE i.rid = '${rid}'`;
+};
+
+const updateInteractionAgeSummary = (rid: string, age: number) => {
+  return `UPDATE ${MAIN_SCHEMA_NAME}.interactions_summary i SET interaction_age = ${age} WHERE i.interaction_rid = '${rid}'`;
+};

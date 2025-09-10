@@ -105,6 +105,15 @@ export function handleCustomResponse(
   return successResponse(res, constants.CONFLICT,'CONFIRMATION_POPUP', {requiresConfirmation},data);
 }
 
+export function handleCustomMessage(
+  res: Response,
+  statusCode: number,
+  message: string,
+  data?: any
+) {
+  return successResponse(res, statusCode, message, data);
+}
+
 export function handleErrorResponse(
   res: Response,
   statusCode: number,

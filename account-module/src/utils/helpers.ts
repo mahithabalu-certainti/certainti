@@ -233,7 +233,7 @@ export function getTableSchemaByEntity(entity: string): ColumnSchema[] {
       return [
         { column_name: 'project_id', data_type: 'String', required:true},
         { column_name: 'project_name', data_type: 'String' ,required:false},
-        { column_name: 'project_description', data_type: 'String',required:true },
+        { column_name: 'project_description', data_type: 'String',required:false },
         { column_name: 'resource_id', data_type: 'String' ,required:true},
         { column_name: 'resource_name', data_type: 'String',required:false },
         { column_name: 'resource_type', data_type: 'ENUM' ,required:false},

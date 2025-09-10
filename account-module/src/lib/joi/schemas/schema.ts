@@ -247,7 +247,7 @@ const listOrgAccountSchema = Joi.object({
   limit: Joi.string().optional()
     .pattern(/^[0-9]+$/)
     ,
- 
+ globalFilters: Joi.string().default("{}"),
   filters: Joi.string().default("{}"),
   sortBy: Joi.string().optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC")

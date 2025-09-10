@@ -123,6 +123,7 @@ type ProjectFiscalDetails {
     total_cost_subcon : String
     total_cost_nonlabor : String
     project_type_name : String
+    currency_symbol: String
   }
 
 type projectNewResponse {
@@ -209,7 +210,8 @@ input updateInlineProject {
     total_cost_subcon : String,
     total_cost_fte : String,
     total_effort : String,
-    total_cost : String
+    total_cost : String,
+    global_fiscal_year : Int!
 }
 
 type Mutation {
