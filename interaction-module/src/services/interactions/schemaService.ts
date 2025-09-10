@@ -2652,7 +2652,7 @@ class InteractionSchemaService {
       return {
         accountNumber: accountRnumber,
         accountId: account?.rid,
-        accountName: account.account_name,
+        accountName: account?.account_name,
       };
     } catch (err) {
       throw new Error("Error fetching account : " + (err as Error).message);
