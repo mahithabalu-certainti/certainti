@@ -110,11 +110,11 @@ export class InteractionService {
       }
       const isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(accountNumber, interactionData.project_fiscal_rid);
 
-      if(interactionStatus === statusAction.CREATE && isEmailRecipientAvailable)
+      if(interactionStatus === statusAction.DRAFT && isEmailRecipientAvailable)
       await this.checkAutoSendEnabled(accountNumber,interactionData,interaction.rid,userId);
        else
        {
-        if(!isEmailRecipientAvailable && interactionStatus === statusAction.CREATE)
+        if(!isEmailRecipientAvailable && interactionStatus === statusAction.DRAFT)
          return {
         statusCode: HttpStatus.SUCCESS,
         message: STATUS_MESSAGE.interactionCreatedButNoEmailRecipient,
@@ -181,20 +181,12 @@ export class InteractionService {
         throw new Error("Invalid account ID");
       }
     
-      let interactionStatus;
+      let interactionStatus;  
       if(interactionData.status_rid)
       {
           interactionStatus = await this.interactionSchemaService.getInteractionStatusById(
         interactionData.status_rid
       );
-       if(interactionStatus === statusAction.RESUME)
-      {
-        const prevStatus = await this.interactionSchemaService.getPreviousInteractionStatus(interactionData.status_rid, accountNumber);
-        if(prevStatus)
-        {
-          interactionData.status_rid = prevStatus;
-        }
-      }
       }   
       const updatedInteraction =
         await this.interactionSchemaService.updateInteraction(
@@ -223,10 +215,10 @@ export class InteractionService {
 
       await transaction.commit();
       const isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(accountNumber, interactionData.interaction_rid);
-      if(interactionStatus === statusAction.CREATE && isEmailRecipientAvailable)
+      if(interactionStatus === statusAction.DRAFT && isEmailRecipientAvailable)
       await this.checkAutoSendEnabled(accountNumber,interactionData,interactionData.interaction_rid,userId);
       else{
-        if(!isEmailRecipientAvailable && interactionStatus === statusAction.CREATE)
+        if(!isEmailRecipientAvailable && interactionStatus === statusAction.DRAFT)
         {
            return {
         statusCode: HttpStatus.SUCCESS,

@@ -2123,40 +2123,23 @@ class InteractionSchemaService {
         rawQueries.fetchUserEmail(userId)
       );
       const userEmailId = senderemailInfo[0]?.email ?? userId;
-      const interaction = await Interaction.findOne({
-        where: { rid: interactionRid },
-      });
+       const [statusArr]: any = await this.mainDbSequelize.query(
+        rawQueries.fetchInteractionStatusByType(status)
+      );
+      const statusRid =
+        Array.isArray(statusArr) && statusArr.length > 0
+          ? statusArr[0].rid
+          : null;
+
       const updateData: any = {
         recipient_email: emailInfo.email,
         recipient_name: emailInfo.name,
         sent_by_rid: userId,
         sent_by_mail_id: userEmailId,
         interaction_url: interactionLink,
+        sent_on_datetime : new Date(),
+        status_rid : statusRid
       };
-
-      if (interaction?.sent_on_datetime) {
-        updateData.last_resent_on = new Date();
-        const [statusArr]: any = await this.mainDbSequelize.query(
-          rawQueries.fetchInteractionStatusByType(statusAction.RESENT)
-        );
-        const statusRid =
-          Array.isArray(statusArr) && statusArr.length > 0
-            ? statusArr[0].rid
-            : null;
-        updateData.status_rid = statusRid;
-      } else {
-        updateData.sent_on_datetime = new Date();
-        updateData.last_resent_on = new Date();
-        const [statusArr]: any = await this.mainDbSequelize.query(
-          rawQueries.fetchInteractionStatusByType(status)
-        );
-        const statusRid =
-          Array.isArray(statusArr) && statusArr.length > 0
-            ? statusArr[0].rid
-            : null;
-        updateData.status_rid = statusRid;
-      }
-
       await Interaction.update(updateData, { where: { rid: interactionRid } });
       await InteractionSummary.update(updateData, {
         where: { interaction_rid: interactionRid },
