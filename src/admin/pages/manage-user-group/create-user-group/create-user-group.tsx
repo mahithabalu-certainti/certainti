@@ -91,7 +91,7 @@ export const CreateUserGroup: React.FC = () => {
   // UseStates
   const [accountAnchorEl, setAccountAnchorEl] =
     useState<HTMLButtonElement | null>(null);
-  const [tabs, setTabs] = useState<Tabs>(Tabs.FORM);
+  const [tabs, setTabs] = useState<Tabs>(Tabs.PROJECT);
   const [accountCollapse, setAccountCollapse] = useState<string[]>([]);
   const [selectAccountCount, setSelectAccountCount] = useState({
     parent: 0,
@@ -319,6 +319,7 @@ export const CreateUserGroup: React.FC = () => {
         limit: projectParams.limit,
         page: projectParams.page,
         group_type_rid: groupInformation.groupType,
+        isFromuserGroup: true,
         ...(isEditView && { group_rid: groupId as string }),
         filters: appliedFilters,
       });

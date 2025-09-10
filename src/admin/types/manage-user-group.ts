@@ -73,16 +73,78 @@ export interface UserGroupById {
 }
 
 export type ProjectListByAccounts = {
-  project_name: string;
-  account_rid: string;
-  has_access: boolean;
-  access_type: null | string;
-  project_rid: string;
   project_code: string;
-  fiscal_year: string;
-  classification_name: string;
-  project_type: string;
-  project_point_of_contact: string;
+  project_name: string | null;
+  account_name: string;
+  account_status_name: string;
+  project_rid: string;
+  modified_datetime: string | null;
+  assessment_status: string | null;
+  qre: string | null;
+  is_rd_qualified: boolean | null;
+  industry_name_other: string | null;
+  project_type_rid: string;
+  project_client_group: string | null;
+  project_group: string | null;
+  project_classification_rid: string;
+  project_classification_other: string | null;
+  project_type_name: string;
+  account_rid: string;
+  classification_name: string | null;
+  status_rid: string;
+  status_name: string;
+  project_point_of_contact: string | null;
+  technical_point_of_contact: string | null;
+  r_number: string;
+  program_name: string | null;
+  project_startdate: string | null; // ISO date string
+  project_enddate: string | null; // ISO date string
+  total_cost: string;
+  total_effort: string;
+  total_fte: number;
+  total_cost_fte: string;
+  total_subcon: number;
+  total_cost_subcon: string;
+  total_cost_nonlabor: string;
+  comments: string | null;
+  country_name: string | null;
+  currency_code: string;
+  currency_symbol: string;
+  region_name: string | null;
+  created_datetime: string; // ISO date string
+  ProjectFiscal: ProjectFiscal[];
+};
+export type ProjectFiscal = {
+  project_code: string;
+  project_group: string | null;
+  project_name: string | null;
+  project_type_name: string | null;
+  project_type_rid: string | null;
+  fiscal_year: number;
+  project_client_group: string | null;
+  project_classification_rid: string | null;
+  account_name: string;
+  qre: string | null;
+  classification_name: string | null;
+  project_classification_other: string | null;
+  total_effort: string | null;
+  total_cost: string | null;
+  total_cost_fte: string | null;
+  total_cost_subcon: string | null;
+  total_cost_nonlabor: string | null;
+  assessment_status: string | null;
+  created_datetime: string; // ISO date string
+  qre_final: number;
+  project_point_of_contact: string | null;
+  technical_point_of_contact: string | null;
+  comments: string | null;
+  modified_datetime: string | null; // ISO date string
+  project_rid: string;
+  project_fiscal_rid: string;
+  r_number: string;
+  account_rid: string;
+  currency_code: string;
+  currency_symbol: string;
 };
 
 export type ActiveUserForGroup = {
@@ -92,7 +154,7 @@ export type ActiveUserForGroup = {
   first_name: string;
   org_id: string;
   is_consultant_firm: boolean;
-  organization_name: string
+  organization_name: string;
 };
 
 export type UserGroupTypes = {

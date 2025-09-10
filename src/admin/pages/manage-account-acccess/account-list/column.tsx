@@ -63,7 +63,6 @@ export const manageAccountListColumns = (
   },
 ];
 
-
 export const getAvailableUserColumns = () => [
   {
     id: 'first_name',
