@@ -15,6 +15,7 @@ async function startServer() {
     // const { graphqlPath } = await initGraphQLServer(app);
     schedulerForTriggerAi()
     schdulerForSendEmailInfo()
+    
 
     app.listen(PORT, () => {
       // console.log(`Graphql Server ready at: ${graphqlPath}`);
