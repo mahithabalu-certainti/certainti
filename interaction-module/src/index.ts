@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config();
 import initExpressServer from "./servers/expressServer";
-import { schedulerForTriggerAi } from "./utils/cronScheduler";
+import { schdulerForSendEmailInfo, schedulerForTriggerAi } from "./utils/cronScheduler";
 import './services/cronJob/renewSubscriptions';
 // import initGraphQLServer from "./servers/graphqlServer";
 
@@ -14,6 +14,7 @@ async function startServer() {
     const { app } = await initExpressServer();
     // const { graphqlPath } = await initGraphQLServer(app);
     schedulerForTriggerAi()
+    schdulerForSendEmailInfo()
 
     app.listen(PORT, () => {
       // console.log(`Graphql Server ready at: ${graphqlPath}`);

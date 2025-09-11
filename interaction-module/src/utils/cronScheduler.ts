@@ -20,3 +20,15 @@ export const schedulerForTriggerAi = () => {
     })
     return task;
 }
+
+export const schdulerForSendEmailInfo = () => {
+    const scheduler = cron.schedule(process.env.SCHEDULER_EMAIL!, async () => {
+        try {
+            console.log("Scheduler started for sending emails : ", new Date().toISOString())
+            await interactionService.sendEmailInBatch()
+        } catch (error) {
+            console.error("Error in scheduled task:", error);
+        }
+    })
+    return scheduler
+}
