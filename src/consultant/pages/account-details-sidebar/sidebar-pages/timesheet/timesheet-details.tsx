@@ -266,6 +266,15 @@ const TimesheetDetails: React.FC<TimesheetDetailsProps> = ({
     }
   }, [searchParams]);
 
+  const headerButtons = [
+    {
+      label: 'Back To Timesheets',
+      variant: 'contained' as const,
+      onClick: () => handleBackClick(),
+      sx: { width: '130px', minWidth: '130px' },
+    },
+  ];
+
   return (
     <div className='border border-[#CBD6E2]'>
       <SectionHeader
@@ -278,9 +287,7 @@ const TimesheetDetails: React.FC<TimesheetDetailsProps> = ({
           />
         }
         className='rounded-tl-[2px] h-[40px] rounded-tr-[2px]'
-        showBackArrow={true}
-        onBackClick={handleBackClick}
-        buttons={[]}
+        buttons={headerButtons}
         iconBg='#34CFCA'
         bgType='react'
       />

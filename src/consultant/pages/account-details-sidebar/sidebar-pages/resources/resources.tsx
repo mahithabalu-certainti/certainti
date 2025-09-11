@@ -499,7 +499,31 @@ const Resource: React.FC<ResourceProps> = ({
     permission || [],
     AllPermissions.ATTACHMENT_CREATE
   );
-
+  const handleBackClick = () => {
+    setViewResourceList(!viewResourceList);
+    setShowBackArrow(!showBackArrow);
+    setShowFilter(false);
+    setCount(ResourceList?.count || 0);
+    // clear query params
+    searchParams.delete('res_id');
+    searchParams.delete('attachment_entity');
+    searchParams.delete('tab');
+    navigate(
+      {
+        pathname: location.pathname,
+        search: searchParams.toString(),
+      },
+      {
+        state: { ...location.state, activeKey: 'resources' },
+        replace: true,
+      }
+    );
+    setValue('');
+    setFilterVisibility(true);
+    setAppliedFilters({});
+    setSortFilterCount(0);
+    clearFilters('resource');
+  };
   const headerButtons = [
     {
       label: 'Add Attachment',
@@ -543,6 +567,14 @@ const Resource: React.FC<ResourceProps> = ({
       },
       hide: handleDownloadButtonEnable(),
     },
+    {
+      label: 'Back To Resources',
+      variant: 'outlined' as const,
+      onClick: handleBackClick,
+      sx: { ...BUTTON_STYLES, width: '125px', minWidth: '125px' },
+      hide: !value,
+      disabled: false,
+    },
   ];
 
   const handleEditResource = () => {
@@ -561,32 +593,6 @@ const Resource: React.FC<ResourceProps> = ({
         },
       }
     );
-  };
-
-  const handleBackClick = () => {
-    setViewResourceList(!viewResourceList);
-    setShowBackArrow(!showBackArrow);
-    setShowFilter(false);
-    setCount(ResourceList?.count || 0);
-    // clear query params
-    searchParams.delete('res_id');
-    searchParams.delete('attachment_entity');
-    searchParams.delete('tab');
-    navigate(
-      {
-        pathname: location.pathname,
-        search: searchParams.toString(),
-      },
-      {
-        state: { ...location.state, activeKey: 'resources' },
-        replace: true,
-      }
-    );
-    setValue('');
-    setFilterVisibility(true);
-    setAppliedFilters({});
-    setSortFilterCount(0);
-    clearFilters('resource');
   };
 
   const handleCreateResource = () => {

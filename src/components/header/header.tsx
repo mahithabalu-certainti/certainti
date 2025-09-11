@@ -45,6 +45,7 @@ interface HeaderProps {
   onSettingsClick?: () => void;
   variant?: 'main' | 'sub'; // To distinguish between main page and sub-page headers
   goBack?: () => void;
+  backBtnLabel?: string;
   isLoading?: boolean;
 }
 
@@ -69,6 +70,7 @@ export const PageHeader: React.FC<HeaderProps> = ({
   onSettingsClick,
   variant = 'main', // Default to main variant
   goBack,
+  backBtnLabel = 'Back',
   isLoading = false,
 }) => {
   return (
@@ -190,11 +192,12 @@ export const PageHeader: React.FC<HeaderProps> = ({
 
           {goBack && (
             <TextButton
-              label='Back'
+              label={backBtnLabel}
               onClick={goBack}
               sx={{
                 fontSize: '12px',
                 fontWeight: 400,
+                padding: '0 6px',
               }}
             />
           )}

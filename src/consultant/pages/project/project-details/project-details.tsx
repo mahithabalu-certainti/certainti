@@ -662,6 +662,7 @@ export const ProjectDetails = () => {
           showActions={false}
           showSettings={false}
           goBack={goBack}
+          backBtnLabel='Back To Projects'
           isLoading={isLoading}
         />
       </div>
@@ -669,7 +670,7 @@ export const ProjectDetails = () => {
         columns={projectDetails}
         loading={isLoading}
         error={isError}
-        singleLineView={true}
+        singleLineView={false}
       />
       <div className='flex flex-row flex-1 w-full'>
         <div

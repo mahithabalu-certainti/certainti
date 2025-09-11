@@ -355,6 +355,18 @@ export const ProjectResources = ({
       search: newParams.toString(),
     });
   };
+  const handleBackClick = () => {
+    setShowProjectResourceDetails(!showProjectResourceDetails);
+    setProjectResData(null);
+    setShowFilter(false);
+    // clear query params
+    searchParams.delete('pro_res_id');
+    searchParams.delete('page');
+    navigate({
+      pathname: location.pathname,
+      search: searchParams.toString(),
+    });
+  };
   const showUploads =
     searchParams.get('attachment_entity') === 'project_resource';
   const headerButtons = [
@@ -390,22 +402,17 @@ export const ProjectResources = ({
       sx: { ...BUTTON_STYLES, width: '125px', minWidth: '125px' },
       hide: viewDetails ? true : false,
     },
+    {
+      label: 'Back To Project Resources',
+      variant: 'outlined' as const,
+      disabled: false,
+      onClick: handleBackClick,
+      sx: { ...BUTTON_STYLES, width: '175px', minWidth: '175px' },
+      hide: viewDetails ? false : true,
+    },
   ];
   const handleFilter = () => {
     setShowFilter(!showFilter);
-  };
-
-  const handleBackClick = () => {
-    setShowProjectResourceDetails(!showProjectResourceDetails);
-    setProjectResData(null);
-    setShowFilter(false);
-    // clear query params
-    searchParams.delete('pro_res_id');
-    searchParams.delete('page');
-    navigate({
-      pathname: location.pathname,
-      search: searchParams.toString(),
-    });
   };
 
   const PFY = projectFiscalDate;
@@ -595,7 +602,7 @@ export const ProjectResources = ({
               value={
                 viewDetails ? 'project-resource-details' : 'projects-resources'
               }
-              title={'Project Resource'}
+              title={viewDetails ? 'Project Resource' : 'Project Resources'}
               titleIcon={
                 viewDetails ? (
                   <ResourcesIcon

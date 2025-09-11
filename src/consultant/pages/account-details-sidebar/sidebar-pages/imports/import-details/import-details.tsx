@@ -187,6 +187,14 @@ const ImportDetails: React.FC<ImportDetailsProps> = ({ handleBackClick }) => {
       key: 'imported_by',
     },
   ];
+  const headerButtons = [
+    {
+      label: 'Back To Imports',
+      variant: 'contained' as const,
+      onClick: () => handleBackClick(),
+      sx: { width: '125px', minWidth: '125px' },
+    },
+  ];
 
   const basicDetails = applyHidePermission(basicInfo, permissionMap);
   const auditDetails = applyHidePermission(auditInfo, permissionMap);
@@ -197,9 +205,7 @@ const ImportDetails: React.FC<ImportDetailsProps> = ({ handleBackClick }) => {
         title='Imports'
         subValue={data?.r_number}
         className='rounded-tl-[2px] h-[40px] rounded-tr-[2px]'
-        showBackArrow={true}
-        onBackClick={handleBackClick}
-        buttons={[]}
+        buttons={headerButtons}
         titleIcon={
           <ImportsIcon
             className='[&>path]:stroke-white'

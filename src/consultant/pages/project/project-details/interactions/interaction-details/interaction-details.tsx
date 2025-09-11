@@ -171,6 +171,12 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       hide: false,
       isLoading: sendInteraction.isPending,
     },
+    {
+      label: 'Back To Interactions',
+      variant: 'contained' as const,
+      onClick: () => handleBackClick(),
+      sx: { width: '140px', minWidth: '140px' },
+    },
   ];
 
   const basicInfo: DetailItem[] = [
@@ -280,8 +286,6 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
           }
           className='rounded-tl-[2px] h-[40px] rounded-tr-[2px]'
           buttons={headerButtons}
-          onBackClick={handleBackClick}
-          showBackArrow={true}
         />
         {isLoading ? (
           <DetailsSectionSkeleton className='p-0 m-0' />

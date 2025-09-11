@@ -333,6 +333,13 @@ const Interactions: React.FC<InteractionsProps> = ({
       sx: { width: '125px', minWidth: '125px' },
       hide: Boolean(interactionResponseId),
     },
+    {
+      label: 'Back To Interaction Details',
+      variant: 'contained' as const,
+      onClick: () => handleBackFromResponse(),
+      sx: { width: '175px', minWidth: '175px' },
+      hide: Boolean(!responseHistory),
+    },
   ];
 
   const handlePageChange = (newPage: number) => {
@@ -554,8 +561,6 @@ const Interactions: React.FC<InteractionsProps> = ({
             }
             count={viewResponseHistory ? count : totalItems}
             showItemCount={interactionResponseId ? false : true}
-            showBackArrow={viewResponseHistory}
-            onBackClick={handleBackFromResponse}
             buttons={headerButtons}
           />
           <div className='border border-[#CBD6E2]'>

@@ -32,7 +32,8 @@ export interface projectDetails {
   status_rid: string;
   project_startdate: string | null;
   project_enddate: string | null;
-
+  fiscal_start_date: string | null;
+  fiscal_end_date: string | null;
   total_fte_prj: number | null;
   total_fte_from_prj_res: number | null;
   total_fte_from_tasks: number | null;
@@ -44,6 +45,7 @@ export interface projectDetails {
   total_resources_prj: number | null;
   total_resources_from_prj_res: number | null;
   total_resources_from_tasks: number | null;
+  organistaion_name: string | null;
 
   total_effort_prj: number | null;
   total_effort_fte_prj: number | null;
@@ -157,56 +159,53 @@ export const transformProjectData = (
           value: project?.r_number || '-',
           className: `${status === 'active' ? 'text-[#199806]' : 'text-[#f44336]'}`,
         },
-        // {
-        //   label: 'Project Code',
-        //   value: project?.project_code || '-',
-        // },
-      ],
-    },
-    {
-      items: [
-        // {
-        //   label: 'Project ID',
-        //   value: project?.r_number || '-',
-        //   className: `${status === 'active' ? 'text-[#199806]' : 'text-[#f44336]'}`,
-        // },
-        {
-          label: 'Project Name',
-          value: project?.project_name || '-',
-        },
-      ],
-    },
-
-    {
-      items: [
-        // {
-        //   label: 'Name',
-        //   value: project?.project_name || '-',
-        // },
-        { label: 'Account Name', value: project?.account_name },
-      ],
-    },
-    {
-      items: [
-        {
-          label: 'Country / Currency',
-          value: `${project?.country_code || '-'} / ${project?.currency_name || '-'}`,
-        },
-      ],
-    },
-
-    {
-      items: [
         {
           label: 'Industry',
           value: project?.industry_name || project?.industry_rid_name || '-',
         },
-        // {
-        //   label: 'Status',
-        //   value:
-        //     project?.project_status.charAt(0).toUpperCase() +
-        //     project?.project_status.slice(1),
-        // },
+      ],
+    },
+    {
+      items: [
+        {
+          label: 'Project Name',
+          value: project?.project_name || '-',
+        },
+        {
+          label: 'Fiscal Start',
+          value: project?.fiscal_start_date || '-',
+        },
+      ],
+    },
+
+    {
+      items: [
+        { label: 'Account Name', value: project?.account_name },
+        {
+          label: 'Fiscal End',
+          value: project?.fiscal_end_date || '-',
+        },
+      ],
+    },
+    {
+      items: [
+        {
+          label: 'Country',
+          value: `${project?.country_code || '-'}`,
+        },
+        {
+          label: 'Business Name',
+          value: project?.organistaion_name || '-',
+        },
+      ],
+    },
+
+    {
+      items: [
+        {
+          label: ' Currency',
+          value: project?.currency_name || '-',
+        },
       ],
     },
   ];

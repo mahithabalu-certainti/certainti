@@ -794,6 +794,7 @@ export const AccountDetails = () => {
           showActions={false}
           showSettings={false}
           goBack={goBack}
+          backBtnLabel='Back To Accounts'
           isLoading={isPending}
         />
       </div>
@@ -801,7 +802,7 @@ export const AccountDetails = () => {
         columns={accountDetails}
         loading={isPending}
         error={isError}
-        singleLineView={true}
+        singleLineView={false}
       />
       <div className='flex flex-1 flex-row w-full'>
         <div

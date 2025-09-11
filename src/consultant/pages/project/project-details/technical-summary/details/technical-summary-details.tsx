@@ -150,6 +150,14 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
           sx: { width: '48px', minWidth: '48px' },
           hide: hideAdditionalSummaryText,
         },
+        {
+          label: 'Back To Technical Summary',
+          variant: 'outlined' as const,
+          disabled: false,
+          onClick: handleBackClick,
+          sx: { width: '178px', minWidth: '178px' },
+          hide: hideAdditionalSummaryText,
+        },
       ];
 
   const auditInfo: DetailItem[] = [
