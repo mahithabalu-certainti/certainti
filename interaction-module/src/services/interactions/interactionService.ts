@@ -1703,7 +1703,7 @@ export class InteractionService {
         }
         if (type === "interaction_questions") {
           const projectInfo = await this.interactionSchemaService.fetchProjectInfo(accountNumber, project_id);
-          const statusRid = await this.interactionSchemaService.getInteractionStatusByType(statusAction.CREATE);
+          const statusRid = await this.interactionSchemaService.getInteractionStatusByType(statusAction.DRAFT);
           const questionsWithActionType = Array.isArray(interaction_questions)
             ? interaction_questions.map((q: any) => ({ ...q, action_type: "add" }))
             : [];
@@ -1712,7 +1712,7 @@ export class InteractionService {
             account_rid: company_id,
             project_fiscal_rid: project_id,
             fiscal_year: projectInfo.fiscal_year,
-            status_rid: statusRid ?? statusAction.CREATE,
+            status_rid: statusRid ?? statusAction.DRAFT,
             project_rid: projectInfo?.project_rid,
             questions: questionsWithActionType,
             interaction_source_rid: interactionSource.AUTO,
