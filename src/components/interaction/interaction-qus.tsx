@@ -390,10 +390,10 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
             uploadFileMutation.isPending,
         },
         {
-          label: 'Submit',
+          label: 'Save',
           variant: 'contained' as const,
           onClick: () => handleSave(FlagTypeEnum.submit),
-          sx: { width: '70px', minWidth: '70px' },
+          sx: { width: '110px', minWidth: '110px' },
           loading: activeFlag === FlagTypeEnum.submit && isUpdateLoading,
           disabled:
             (activeFlag !== null && activeFlag !== FlagTypeEnum.submit) ||
