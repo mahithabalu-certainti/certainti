@@ -732,6 +732,7 @@ export class ProjectService {
       account_name: account.account_name,
       account_number: account.r_number,
       account_status: account.status,
+      organistaion_name : account.organisation_name,
       fiscal_start_date: fiscalStartDate,
       fiscal_end_date: fiscalEndDate,
     };
