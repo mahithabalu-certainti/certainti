@@ -410,6 +410,18 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             .map((f) => f.trim())
             .forEach((f) => {
               newData[f] = '';
+
+              // Also clear errors for these fields
+              setFormData((prevFormData) => {
+                if (!prevFormData) return prevFormData;
+
+                return prevFormData.map((section) => ({
+                  ...section,
+                  fields: section.fields.map((field) =>
+                    field.name === f ? { ...field, error: '' } : field
+                  ),
+                }));
+              });
             });
         });
       }
@@ -1091,6 +1103,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 fiscalYearsOptions={field.options || []}
                 onChange={(e) => handleChange(e.target.value)}
                 isError={!!field.error}
+                disabled={field.disabled}
               />
             </div>
           );
