@@ -429,7 +429,12 @@ export const useGetInteractionQuestions = (
       ),
     retry: 0,
     gcTime: 0,
-    enabled: !!authToken && !!userId && !!interactionId && !!accountId && !!projectFiscalRid,
+    enabled:
+      !!authToken &&
+      !!userId &&
+      !!interactionId &&
+      !!accountId &&
+      !!projectFiscalRid,
   });
 };
 
