@@ -735,6 +735,71 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
               )}
             </div>
           ))}
+          {/* Global Attachments Section */}
+          {(isEditing ? newGlobalAttachments : globalAttachments).length >
+            0 && (
+            <div className='p-3 border border-[#CBD6E2] mb-4'>
+              <div className='font-semibold text-sm mb-2'>Uploaded Files</div>
+              <div
+                className={`flex flex-col gap-1 ${
+                  (isEditing ? newGlobalAttachments : globalAttachments)
+                    .length > 2
+                    ? 'overflow-auto'
+                    : 'overflow-visible'
+                }`}
+              >
+                {(isEditing ? newGlobalAttachments : globalAttachments).map(
+                  (file, idx) => (
+                    <div
+                      key={idx}
+                      className='flex items-center justify-between border border-[#CBD6E2] bg-[#FFFBFA] rounded-[2px] p-2 px-3'
+                    >
+                      <div className='flex items-center gap-2'>
+                        <React.Suspense fallback={null}>
+                          <DocumentIcon className='w-6 h-6' />
+                        </React.Suspense>
+                        <div className='text-[14px] text-[#425A76] font-normal'>
+                          {file.fileName}.{file.fileType}
+                        </div>
+                      </div>
+                      {isEditing ? (
+                        removingGlobalIdx === idx &&
+                        deleteAttachment.isPending ? (
+                          <CircularProgress size={24} />
+                        ) : (
+                          <Tooltip title='Remove file' arrow placement='top'>
+                            <button
+                              onClick={() => removeGlobalAttachment(idx)}
+                              className='cursor-pointer p-[4px]'
+                              disabled={deleteAttachment.isPending}
+                            >
+                              <React.Suspense fallback={null}>
+                                <KeyContactRemoveIcon />
+                              </React.Suspense>
+                            </button>
+                          </Tooltip>
+                        )
+                      ) : (
+                        <button
+                          onClick={() => handleDownload(file.fileUrl)}
+                          className='p-1 border border-[#CBD6E2] rounded-[2px] cursor-pointer'
+                          style={{
+                            boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
+                            background:
+                              'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
+                          }}
+                        >
+                          <React.Suspense fallback={null}>
+                            <DownloadIcon />
+                          </React.Suspense>
+                        </button>
+                      )}
+                    </div>
+                  )
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
