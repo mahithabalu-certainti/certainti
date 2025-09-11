@@ -611,6 +611,61 @@ export class InteractionService {
     }
 
   }
+   async exportAccountInteractions(data : any,
+    filters: Record<string, any>
+    ) :  Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { accountInteractions: any,count: number };
+  }> {
+    try {
+        const { accountNumber } =
+        await this.interactionSchemaService.fetchValidAccountNumberById(
+          data.account_rid
+        );
+
+      if (!accountNumber) {
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: "Invalid account ID",
+        };
+      }
+      const response =
+        await this.interactionSchemaService.listAccountInteractions(
+          accountNumber,
+          data.account_rid,
+          0,
+          0,
+          filters,
+          data.sortBy,
+          data.sortOrder,
+          "download"
+        );
+
+      if (!response) {
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: "Invalid interaction ID",
+        };
+      }
+       return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          accountInteractions: response.accountInteractions,
+          count: response.count
+        },
+      };
+    }
+    catch (err) {
+      throw this.throwServiceError(err as Error);
+    }
+
+  }
+
 
   
    async exportTechnicalSummary(data : any,
@@ -973,8 +1028,8 @@ export class InteractionService {
     return senderEmailInfo;
   }
 
-  async generateInteractionLink(interactionRid: string, accountRid: string) {
-    return `${process.env.INTERACTION_URL}?acc=${accountRid}&int=${interactionRid}`;
+  async generateInteractionLink(interactionRid: string, accountRid: string,projectFiscalId:string) {
+    return `${process.env.INTERACTION_URL}?acc=${accountRid}&int=${interactionRid}&proj=${projectFiscalId}`;
   }
   async generateExcelBuffer(
     rid: string,
@@ -1978,7 +2033,8 @@ export class InteractionService {
         ]);
       const interactionLink = await this.generateInteractionLink(
         interaction_rid,
-        interactionInfo.accountInfo.account_rid
+        interactionInfo.accountInfo.account_rid,
+        project_fiscal_rid
       );
       const senderEmailInfo = await this.getSenderEmailInfo(accountNumber,interactionInfo.accountInfo.parent_account_rid);
       const excelBuffer = await this.generateExcelBuffer(

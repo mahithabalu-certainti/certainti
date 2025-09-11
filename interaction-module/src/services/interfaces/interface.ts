@@ -191,6 +191,12 @@ export interface IInteractionService {
     errorMessage?: string;
     data?: { techSummaryInfo: any , count: number};
   }>;
+  exportAccountInteractions(data: any, filters: Record<string, any>): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { accountInteractions: any , count: number};
+  }>;
   triggerAI(data : any) : Promise<{
     statusMessage : string,
     status : any,
