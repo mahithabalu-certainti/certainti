@@ -70,7 +70,7 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
   const [searchParams] = useSearchParams();
   const [currentPage, setCurrentPage] = useState(0);
   const [tabValue, setTabValue] = useState('');
-  const source = searchParams.get('source');
+  const sourceTab = searchParams.get('source_tab');
   const isOverViewEnable = !detailsTab[0].hide;
 
   useEffect(() => {
@@ -169,7 +169,7 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
       variant: 'contained' as const,
       onClick: () => handleBackClick(),
       sx: { width: '155px', minWidth: '155px' },
-      hide: source !== 'timesheet',
+      hide: sourceTab !== 'timesheet_project',
     },
   ];
 

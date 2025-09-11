@@ -66,7 +66,7 @@ import { TechnicalSummary } from './technical-summary';
 import { exportTechnicalSummary } from '../../../services/technical-summary/technical-summary-service';
 
 export const ProjectDetails = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
   const [projectDetails, setProjectDetails] = useState<any>([]);
   const defaultTab = searchParams.get('list') ?? 'projectDetails';
@@ -385,6 +385,21 @@ export const ProjectDetails = () => {
       hide: accountInActive || checkExport(),
     },
   ];
+ useEffect(() => {
+    const list = searchParams.get('list');
+    const source = searchParams.get('source');
+    const sourceTab = searchParams.get('source_tab');
+    const newParams = new URLSearchParams(searchParams);
+    if (list !== 'projectsTask' && source === 'timesheet') {
+      newParams.delete('source');
+      setSearchParams(newParams, { replace: true });
+    }
+    if (list !== 'projectDetails' && sourceTab === 'timesheet_project') {
+      newParams.delete('source_tab');
+      setSearchParams(newParams, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const handleEditAccount = () => {
     const projectID = projectData?.rid ?? '';

@@ -86,7 +86,7 @@ import {
 import { TimesheetProjectExportListURLParams } from '../../types/timesheet-projects';
 
 export const AccountDetails = () => {
-  const [searchParams] = useSearchParams();
+    const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -264,6 +264,19 @@ export const AccountDetails = () => {
       filters: {},
       fiscalYear: 0,
     });
+  useEffect(() => {
+    const list = searchParams.get('list');
+    const source = searchParams.get('source');
+    if (
+      list !== 'resources' &&
+      list !== 'projectsTask' &&
+      source === 'timesheet'
+    ) {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('source');
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const [exportType, setExportType] = useState<ExportType>('resource');
 

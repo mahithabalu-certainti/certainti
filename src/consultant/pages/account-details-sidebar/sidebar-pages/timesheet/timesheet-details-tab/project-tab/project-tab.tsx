@@ -148,6 +148,7 @@ const TimesheetProjectTab: React.FC<ProjectTabListProps> = ({
     });
     const queryParams = new URLSearchParams({
       accountID: project?.account_rid ?? '',
+      list:'projectDetails',
       source: 'timesheet',
       timesheet_id: searchParams.get('timesheet_id') ?? '',
       currency_rid: project?.currency_rid ?? '',
