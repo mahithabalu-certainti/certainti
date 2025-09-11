@@ -200,7 +200,7 @@ const Uploads: React.FC<UploadsProps> = ({
           onFormSubmit={handleSubmit}
           projectFiscalYear={projectFiscalYear}
         />
-        <div className='flex flex-col border-t border-[#cbd6e2] items-center justify-center gap-4 px-4 py-10'>
+        <div className='flex flex-col border-t border-[#cbd6e2] items-center justify-center gap-4 px-4 py-5'>
           <div
             onDrop={handleDrop}
             onDragOver={handleDragOver}
