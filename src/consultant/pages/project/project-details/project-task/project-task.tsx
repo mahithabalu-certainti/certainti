@@ -289,6 +289,13 @@ export const ProjectTask = ({
       sx: { ...BUTTON_STYLES, width: '125px', minWidth: '125px' },
       hide: viewDetails ? true : false,
     },
+    {
+      label: 'Back To Project Tasks',
+      variant: 'contained' as const,
+      onClick: () => handleBackClick(),
+      sx: { width: '155px', minWidth: '155px' },
+      hide: viewDetails ? false : true,
+    },
   ];
   const PFY = projectFiscalDate;
   const handleProjectTaskDetailEdit = () => {
@@ -523,7 +530,7 @@ export const ProjectTask = ({
       ) : (
         <>
           <SectionHeader
-            title={'Project Task'}
+            title={viewDetails ? 'Project Task' : 'Project Tasks'}
             titleIcon={
               viewDetails ? (
                 <ResourcesIcon
@@ -536,10 +543,8 @@ export const ProjectTask = ({
             }
             count={totalItems}
             showItemCount={!viewDetails}
-            showBackArrow={viewDetails ? true : false}
             buttons={headerButtons}
             subValue={resourceData?.r_number}
-            onBackClick={handleBackClick}
             iconBg={viewDetails ? '#7785ff' : ''}
           />
           <div className='border border-[#CBD6E2]'>

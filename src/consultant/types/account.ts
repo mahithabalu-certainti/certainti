@@ -222,6 +222,7 @@ export interface AccountById {
   rid: string;
   created_datetime: string;
   modified_datetime: string;
+  organisation_name: string;
   logo_url: string;
   parent_account: {
     account_name: string;

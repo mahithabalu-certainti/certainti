@@ -125,6 +125,12 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
       sx: { ...BUTTON_STYLES, width: '125px', minWidth: '125px' },
       hide: false,
     },
+    {
+      label: 'Back To Interactions',
+      variant: 'contained' as const,
+      onClick: () => handleBackClick(),
+      sx: { width: '140px', minWidth: '140px' },
+    },
   ];
 
   const [visibleColumns, setVisibleColumns] = useState<
@@ -159,8 +165,6 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
             />
           }
           className='rounded-tl-[2px] h-[40px] rounded-tr-[2px]'
-          onBackClick={handleBackClick}
-          showBackArrow={true}
           count={totalItems}
           showItemCount={true}
           buttons={headerButtons}

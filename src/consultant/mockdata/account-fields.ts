@@ -35,6 +35,7 @@ export const mockAccountDetails: AccountFieldsApiResponse = {
       business_details: 'something about the account',
       modified_datetime: '2024-03-19T10:30:00Z',
       created_datetime: '2024-03-18T15:45:00Z',
+      organisation_name: 'wipro',
       status_rid: '',
     },
     accountDetails: {
