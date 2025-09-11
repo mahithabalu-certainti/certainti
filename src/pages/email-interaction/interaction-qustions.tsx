@@ -541,7 +541,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                       value={editedAnswers[q.rid]}
                       onChange={(value) => handleAnswerChange(q.rid, value)}
                       theme='snow'
-                      className={`w-[97%] rounded-[2px] ${showOptionsPerQuestion[q.rid] ? '[&_.ql-toolbar]:block' : '[&_.ql-toolbar]:!hidden h-[55px] border-[#CBD6E2] border-t [&_.ql-container]:border-t [&_.ql-container]:border-[#CBD6E2]'} ${validationErrors[q.rid] ? 'border border-red-500 bg-[#FEF2F2]' : 'bg-white'}`}
+                      className={`rounded-[2px] ${showOptionsPerQuestion[q.rid] ? '[&_.ql-toolbar]:block' : '[&_.ql-toolbar]:!hidden h-[55px] border-[#CBD6E2] border-t [&_.ql-container]:border-t [&_.ql-container]:border-[#CBD6E2]'} ${validationErrors[q.rid] ? 'border border-red-500 bg-[#FEF2F2]' : 'bg-white'}`}
                       modules={{
                         toolbar: [
                           [{ header: [1, 2, 3, 4, 5, 6, false] }],
