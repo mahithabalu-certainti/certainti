@@ -7,6 +7,7 @@ import { ListTableColumn } from '../../../../../../../components/table/types';
 import { TimesheetProjectList } from '../../../../../../types/timesheet-projects';
 
 export const getProjectTabTableColumns = (
+  onClick: (row: TimesheetProjectList) => void,
   permissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<TimesheetProjectList>[] => [
   {
@@ -31,7 +32,21 @@ export const getProjectTabTableColumns = (
       const displayCode = row.fiscal_year
         ? `FY${row.fiscal_year} - ${row.project_code}`
         : row.project_code;
-      return displayCode;
+      const isClickable = row._level !== undefined && row._level === 1;
+      return isClickable ? (
+        <span
+          onClick={() => onClick(row)}
+          className={
+            row.fiscal_year
+              ? 'cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
+              : ''
+          }
+        >
+          {displayCode}
+        </span>
+      ) : (
+        displayCode
+      );
     },
   },
   {

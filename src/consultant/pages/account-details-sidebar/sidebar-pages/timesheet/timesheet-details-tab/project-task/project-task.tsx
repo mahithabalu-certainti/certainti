@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { useParams, useSearchParams } from 'react-router-dom';
+import {  useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { RootState } from '../../../../../../../store/store';
 import { ListTable } from '../../../../../../../components/table';
 import {
@@ -37,7 +37,8 @@ const TimesheetProjectTask: React.FC<ProjectTaskProps> = ({
   const [projectTaskList, setProjectTaskList] = useState<ProjectTaskListType[]>(
     []
   );
-
+  const navigate = useNavigate();
+  
   // hooks
   const { accountid } = useParams();
   const [searchParams] = useSearchParams();
@@ -116,7 +117,21 @@ const TimesheetProjectTask: React.FC<ProjectTaskProps> = ({
   };
 
   const totalItems = projectApiListData?.count || 0;
-  const projectTaskColumns = getProjectTaskColumns(permissionMap);
+   
+
+  const handleProjectTaskClick = (row: ProjectTaskListType) => { 
+    const newSearchParams = new URLSearchParams();
+    newSearchParams.set('accountID', row.account_rid);
+    newSearchParams.set('source', 'account');
+    newSearchParams.set('currency_rid', row.currency_rid);
+    newSearchParams.set('list', 'projectsTask');
+    newSearchParams.set('page', 'details');
+    newSearchParams.set('pro_task_id', row.rid);
+    navigate(
+      `/project/details/${row.project_fiscal_rid}?${newSearchParams.toString()}`
+    );
+  };
+  const projectTaskColumns = getProjectTaskColumns(handleProjectTaskClick, permissionMap);
   return (
     <div className='border border-[#CBD6E2]'>
       <ListTable
