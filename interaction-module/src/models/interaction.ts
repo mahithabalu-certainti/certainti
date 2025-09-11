@@ -81,6 +81,8 @@ export class Interaction
   public recipient_name?: string | null;
   public attachment_count?: number;
   public interaction_version?: number;
+  public account_interaction_rid?: string;
+  public type?: string;
 
   static initialize(
     sequelize: Sequelize,

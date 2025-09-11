@@ -16,11 +16,15 @@ import {
 import moment from "moment-timezone";
 import configurations from "../config/config";
 import {
+  createAccountInteractionSchema,
   createInteractionSchema,
   exportTechnicalSummarySchema,
   getInteractionStatusSchema,
+  listAccountInteractionSchema,
   listAllTechnicalSummarySchema,
+  listInteractionDetailsByIdSchema,
   listTechnicalSummarySchema,
+  sendAccountInteractionSchema,
   sendInteractionSchema,
   updateInteractionResponseSchema,
   updateInteractionSchema,
@@ -54,6 +58,131 @@ async function createInteraction(req: Request, res: Response): Promise<void> {
     const interaction = await interactionService.createInteraction(
       value,interactionSource.MANUAL,
       userId
+    );
+    console.log(
+      `[${methodName}] Service response:`,
+      JSON.stringify(interaction)
+    );
+    if (interaction.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, interaction.data,interaction.message);
+      return;
+    } else {
+      errorLog(methodName, interaction.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        interaction.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function createAccountInteraction(req: Request, res: Response): Promise<void> {
+  const methodName = "Create account interaction";
+  try {
+    console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
+    const value = await validateRequest(req, createAccountInteractionSchema, res);
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    if (!value) {
+      errorLog(methodName, "Request body is empty");
+      return;
+    }
+    const interaction = await interactionService.createAccountInteraction(
+      value,interactionSource.MANUAL,
+      userId
+    );
+    console.log(
+      `[${methodName}] Service response:`,
+      JSON.stringify(interaction)
+    );
+    if (interaction.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, interaction.data,interaction.message);
+      return;
+    } else {
+      errorLog(methodName, interaction.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        interaction.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function listAccountInteractions(req: Request, res: Response): Promise<void> {
+  const methodName = "List account interactions";
+  try {
+    console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
+    const value = await validateRequest(req, listAccountInteractionSchema, res,"GET");
+    console.log("value",value);
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    if (!value) {
+      errorLog(methodName, "Request body is empty");
+      return;
+    }
+    
+     const page: number = parseInt(value.page, 10) || 1;
+    const limit: number = parseInt(value.limit, 10) || 10;
+    let parsedFilters: Record<string, any> = {};
+     try {
+      parsedFilters = JSON.parse(value.filters);
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+    const interaction = await interactionService.listAccountInteractions(
+      value,
+      page,
+      limit,
+      parsedFilters
     );
     console.log(
       `[${methodName}] Service response:`,
@@ -211,6 +340,12 @@ async function getInteractionDetailsById(
   try {
     console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
     const { interactionRid, accountId } = req.params;
+    const value = await validateRequest(
+      req,
+      listInteractionDetailsByIdSchema,
+      res,
+      "GET"
+    );
     const userId = req.headers["x-user-id"] as string;
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
@@ -240,7 +375,8 @@ async function getInteractionDetailsById(
     const interactionDetails =
       await interactionService.getInteractionDetailsById(
         interactionRid,
-        accountId
+        accountId,
+        value.project_fiscal_rid
       );
     console.log(
       `[${methodName}] Service response:`,
@@ -409,6 +545,7 @@ async function getInteractionQuestionsById(
   const methodName = "Get interaction questions";
   try {
     const { interactionRid, accountId } = req.params;
+    const value = req.params
     const userId = req.headers["x-user-id"] as string;
 
     if (!userId) {
@@ -1036,6 +1173,62 @@ async function sendInteraction(req: Request, res: Response): Promise<void> {
   }
 }
 
+async function sendAccountInteraction(req: Request, res: Response): Promise<void> {
+  const methodName = "Send account interaction";
+  try {
+    console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
+    const value = await validateRequest(req, sendAccountInteractionSchema, res);
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    if (!value) {
+      errorLog(methodName, "Request body is empty");
+      return;
+    }
+     const interaction = await interactionService.sendAccountInteraction(
+       value.account_rid,
+       value.account_interaction_rid,
+       value.projects,
+       userId,
+     );
+    console.log(
+      `[${methodName}] Service response:`,
+      JSON.stringify(interaction)
+    );
+    if (interaction.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, interaction.data);
+      return;
+    } else {
+      errorLog(methodName, interaction.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        interaction.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
 async function uploadAttachmentToAzure(req: Request, res: Response): Promise<void> {
   const methodName = "Upload attachment to Azure";
   try {
@@ -1544,6 +1737,8 @@ export default {
   listResponseHistory,
   exportResponseHistory,
   createInteraction,
+  createAccountInteraction,
+  listAccountInteractions,
   updateInteraction,
   updateInteractionResponse,
   getInteractionStatus,
@@ -1564,5 +1759,6 @@ export default {
   listTechnicalSummary,
   getTechnicalSummaryDetailsById,
   updateTechSummaryContext,
-  exportTechnicalSummary
+  exportTechnicalSummary,
+  sendAccountInteraction
 };

@@ -1,7 +1,9 @@
 import { SchedulerExecutions } from "../../models/schedulerExecution";
 import {
+  ICreateAccountInteraction,
   ICreateInteraction,
   InteractionResponse,
+  IProject,
   IUpdateInteraction,
 } from "../../utils/types";
 
@@ -24,6 +26,24 @@ export interface IInteractionService {
     errorMessage?: string;
     data?: { interactions: any };
   }>;
+  createAccountInteraction(
+    interactionData: ICreateAccountInteraction,
+    interactionSource: string,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { interactions: any };
+  }>;
+
+   listAccountInteractions(data: any, page: number, limit: number, filters: Record<string, any>): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { accountInteractions: any , count: number};
+  }>;
+
   updateInteraction(
     interactionData: IUpdateInteraction,
     userId: string
@@ -85,7 +105,8 @@ export interface IInteractionService {
   }>;
   getInteractionDetailsById(
     interactionRid: string,
-    accountId: string
+    accountId: string,
+    projectFiscalRid: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -130,6 +151,19 @@ export interface IInteractionService {
     errorMessage?: string;
     data?: { interactionResponse: any };
   }>;
+  sendAccountInteraction(
+    accountId:string,
+    account_interaction_rid:string,
+    projects:IProject[],
+    userId: string,
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { interactionResponse: any };
+  }>;
+
+  
   fetchInteractionHistory(data: any): Promise<{
     statusCodeValue: string;
     data: any;

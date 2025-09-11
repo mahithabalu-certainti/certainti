@@ -23,6 +23,38 @@ const createInteractionSchema = Joi.object({
     .required(),
 });
 
+const createAccountInteractionSchema = Joi.object({
+  account_rid: Joi.string().pattern(uuidRegex).required(),
+
+  status_rid: Joi.string().required(),
+  questions: Joi.array()
+    .items(
+      Joi.object({
+        question: Joi.string().max(2000).required(),
+        notes: Joi.string().max(2000).allow(""),
+        is_mandatory: Joi.boolean().required(),
+        action_type: Joi.string().valid("add", "update", "delete").required(),
+      })
+    )
+    .min(1)
+    .required(),
+});
+const listAccountInteractionSchema = Joi.object({
+  account_rid: Joi.string().pattern(uuidRegex).required(),
+    page: Joi.string().optional()
+    .pattern(/^[0-9]+$/)
+  ,
+  limit: Joi.string().optional()
+    .pattern(/^[0-9]+$/)
+    ,
+  filters: Joi.string().default("{}"),
+  sort_by: Joi.string().optional(),
+  sort_order: Joi.string().valid("ASC", "DESC").default("ASC"),
+});
+
+
+
+
 const sendInteractionSchema = Joi.object({
   account_rid: Joi.string().pattern(uuidRegex).required(),
   is_interaction_followup: Joi.boolean().optional().default(false),
@@ -35,6 +67,21 @@ const sendInteractionSchema = Joi.object({
         email: Joi.string().email().optional().allow("",null),
         name: Joi.string().max(255).optional().allow("",null),
       }).required(),
+    })
+  )
+  .min(1)
+  .required(),
+});
+
+const sendAccountInteractionSchema = Joi.object({
+  account_rid: Joi.string().pattern(uuidRegex).required(),
+  account_interaction_rid: Joi.string().pattern(uuidRegex).required(),
+  projects: Joi.array()
+  .items(
+    Joi.object({
+      project_rid: Joi.string().pattern(uuidRegex).required(),
+      project_fiscal_rid:Joi.string().pattern(uuidRegex).required(),
+      fiscal_year: Joi.number().integer().min(1900).max(2100).required(),
     })
   )
   .min(1)
@@ -140,9 +187,15 @@ const exportTechnicalSummarySchema = Joi.object({
   timezone: Joi.string().optional()
 }); 
 
+const listInteractionDetailsByIdSchema = Joi.object({ 
+  project_fiscal_rid: Joi.string().pattern(uuidRegex).required().label("Project Fiscal Rid"),
+});
+
 
 export {
   createInteractionSchema,
+  createAccountInteractionSchema,
+  listAccountInteractionSchema,
   updateInteractionSchema,
   updateInteractionResponseSchema,
   listTechnicalSummarySchema,
@@ -150,5 +203,7 @@ export {
   sendInteractionSchema,
   updateTechSummaryContextSchema,
   listAllTechnicalSummarySchema,
-  exportTechnicalSummarySchema
+  exportTechnicalSummarySchema,
+  sendAccountInteractionSchema,
+  listInteractionDetailsByIdSchema
 };

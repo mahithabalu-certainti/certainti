@@ -483,6 +483,10 @@ export const rawQueries = {
       SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name = '${type}' AND status = 'active' LIMIT 1
     `;
   },
+  generate_rid()
+  {
+    return `SELECT '${ENV_PREFIX}' || gen_random_uuid() as rid`;
+  },
 
   fetchAllStatus(): string {
     return `
