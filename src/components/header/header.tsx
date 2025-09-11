@@ -198,6 +198,8 @@ export const PageHeader: React.FC<HeaderProps> = ({
                 fontSize: '12px',
                 fontWeight: 400,
                 padding: '0 6px',
+                width: 'auto',
+                textWrap: 'nowrap !important',
               }}
             />
           )}
