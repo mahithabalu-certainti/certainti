@@ -128,6 +128,9 @@ const TimesheetResourcesTab: React.FC<ProjectTabListProps> = ({
     newSearchParams.set('list', 'resources');
     newSearchParams.set('res_id', row.rid || '');
     newSearchParams.set('tab', 'details');
+    newSearchParams.set('source', 'timesheet');
+    const timesheetId = searchParams.get('timesheet_id');
+    if (timesheetId) newSearchParams.set('timesheet_id', timesheetId);
     navigate(
       `/account/details/${accountid}?${newSearchParams.toString()}`
     );
