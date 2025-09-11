@@ -3,7 +3,7 @@ import { ListTableColumn } from '../../../../../components/table/types';
 import { InteractionList } from '../../../../types';
 
 export const getInteractionListColumns = (
-  handleViewInteraction: (rid: string, rNumber: string) => void,
+  handleViewInteraction: (rid: string, rNumber: string, proFiscalRid: string) => void,
   handleViewInteractionHistory: (interactionHistory: string) => void,
   handleViewInteractionAttachmentCount: (
     interactionAttachmentCount: string | number,
@@ -31,7 +31,7 @@ export const getInteractionListColumns = (
     },
     render: (row: InteractionList) => (
       <span
-        onClick={() => handleViewInteraction(row.rid, row.r_number)}
+        onClick={() => handleViewInteraction(row.rid, row.r_number, row.project_fiscal_rid)}
         className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
       >
         {row.r_number}

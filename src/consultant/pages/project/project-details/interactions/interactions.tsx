@@ -375,10 +375,11 @@ const Interactions: React.FC<InteractionsProps> = ({
     setSelectedRows(selectedData);
   };
 
-  const handleViewInteraction = (rowId: string, rNumber: string) => {
+    const handleViewInteraction = (rowId: string, rNumber: string, proFiscalRid: string) => {
     if (rowId) {
       searchParams.set('interaction_id', rowId);
       searchParams.set('interaction_number', rNumber);
+      searchParams.set('project_fiscal_rid', proFiscalRid);
       navigate({ search: searchParams.toString() }, { replace: true });
       setSelectedRows([]);
       setCount(0);
@@ -420,6 +421,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       searchParams.delete('interaction_attachment_count');
       searchParams.delete('interaction_rid');
       searchParams.delete('interaction_number');
+      searchParams.delete('project_fiscal_rid');
       navigate({ search: searchParams.toString() }, { replace: true });
     }
   };

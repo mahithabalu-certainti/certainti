@@ -373,13 +373,14 @@ export const useGetInteractionResponeSources = () => {
 const fetchInteractionQuestions = async (
   accountId: string,
   interactionId: string,
+  projectFiscalRid: string,
   authToken: string,
   userId: string
 ): Promise<InteractionDetails> => {
   // Only send the provided headers, do not merge with defaults
   const response =
     await exInteractionServiceApi.get<InteractionDetailsResponse>(
-      `/api/interactions/detail/${accountId}/${interactionId}`,
+      `/api/interactions/detail/${accountId}/${interactionId}?project_fiscal_rid=${projectFiscalRid}`,
       {
         headers: {
           Authorization: `Bearer ${authToken}`,
@@ -407,21 +408,28 @@ const fetchInteractionQuestions = async (
 export const useGetInteractionQuestions = (
   accountId?: string,
   interactionId?: string,
+  projectFiscalRid?: string,
   authToken?: string,
   userId?: string
 ): UseQueryResult<InteractionDetails | undefined, Error> => {
   return useQuery<InteractionDetails | undefined, Error>({
-    queryKey: ['interaction-questions', accountId, interactionId],
+    queryKey: [
+      'interaction-questions',
+      accountId,
+      interactionId,
+      projectFiscalRid,
+    ],
     queryFn: () =>
       fetchInteractionQuestions(
         accountId!,
         interactionId!,
+        projectFiscalRid!,
         authToken!,
         userId!
       ),
     retry: 0,
     gcTime: 0,
-    enabled: !!authToken && !!userId && !!interactionId && !!accountId,
+    enabled: !!authToken && !!userId && !!interactionId && !!accountId && !!projectFiscalRid,
   });
 };
 
