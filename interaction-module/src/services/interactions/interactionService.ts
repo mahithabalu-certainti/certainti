@@ -935,102 +935,20 @@ export class InteractionService {
       const interactionResponse: any[] = [];
 
       for (const { interaction_rid, email_info, project_fiscal_rid } of interactions) {
-        // If emailInfo.email is empty, fetch POC email
-        let sendEmailInfo = email_info;
-        if (!email_info || !email_info?.email) {
-          sendEmailInfo = await this.interactionSchemaService.fetchEmailInfo(accountNumber, interaction_rid, project_fiscal_rid, accountRid);
-        }
-
-        if (!sendEmailInfo?.email || sendEmailInfo?.email == "") {
-          interactionResponse.push({
-            interaction_rid,
-            csvSent: false,
-            error: "No email info found"
-          });
-          continue;
-        }
-        console.log("Sending email to:", sendEmailInfo);
-
-        const [interactionItems, interactionInfo] =
-          await Promise.all([
-            this.interactionSchemaService.fetchInteractionQuestionsById(
-              accountNumber,
-              interaction_rid
-            ),
-            this.interactionSchemaService.fetchInteractionInfo(
-              interaction_rid,
-              accountNumber
-            ),
-          ]);
-        const interactionLink = await this.generateInteractionLink(
-          interaction_rid,
-          interactionInfo.accountInfo.account_rid
-        );
-        const senderEmailInfo = await this.getSenderEmailInfo(accountNumber,interactionInfo.accountInfo.parent_account_rid);
-        if(!senderEmailInfo)
-        { return {
-              statusCode: HttpStatus.FAILED,
-              message: HttpStatus.FAILED_MESSAGE,
-              errorMessage: "Invalid account ID",
-            };
-        }
-        const excelBuffer = await this.generateExcelBuffer(
-          interaction_rid,
-          interactionItems,
-          interactionInfo
-        );
-        const excelAttachment = {
-          filename: `interaction_${interaction_rid}.xlsx`,
-          content: Buffer.from(excelBuffer).toString("base64"),
-          contentType:
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        };
-       
-
-        // Send email
-        const emailResponse = await this.sendEmailWithAttachment(
-          sendEmailInfo,
-          interactionInfo.projectInfo,
-          interactionInfo.accountInfo,
-          excelAttachment,
-          interactionLink,
-          senderEmailInfo,
-          interaction_rid,
-          is_interaction_followup
-        );
-        if (emailResponse) {
-          if(!is_interaction_followup)
-          {
-             await this.interactionSchemaService.updateInteractionInfo(
-            accountNumber,
-            interaction_rid,
-            statusAction.SENT,
-            userId,
-            sendEmailInfo,
-            interactionLink
-          );
-
-          }
-          else
-          {
-             await this.interactionSchemaService.updateInteractionInfoForReminder(
-            accountNumber,
-            interaction_rid,
-            project_fiscal_rid,
-            statusAction.SENT,
-            userId,
-            sendEmailInfo,
-            interactionLink
-          );
-          }
-         
-        } else {
-          //need to add logic for sending toPS team
-        }
+        let data : any = {}
+        data.account_rid = accountRid
+        data.project_fiscal_rid = project_fiscal_rid,
+        data.account_rnumber = accountNumber,
+        data.interaction_rid = interaction_rid
+        data.user_rid = userId
+        data.email = email_info?.email === undefined ? null : email_info?.email
+        data.name = email_info?.name === undefined ? null : email_info.name
+        data.is_interaction_followup = is_interaction_followup
+        
+        await this.interactionSchemaService.insertEmailInfoDatas(data);
 
         interactionResponse.push({
           interactionRid: interaction_rid,
-          csvSent: !!emailResponse,
         });
       }
 
@@ -1044,6 +962,7 @@ export class InteractionService {
       throw this.throwServiceError(err as Error);
     }
   }
+
 
   async getSenderEmailInfo(accountNumber: string, parentAccountRid: string | null) {
     if (!parentAccountRid) {
@@ -1897,7 +1816,7 @@ export class InteractionService {
         }
         if (type === "interaction_questions") {
           const projectInfo = await this.interactionSchemaService.fetchProjectInfo(accountNumber, project_id);
-          const statusRid = await this.interactionSchemaService.getInteractionStatusByType(statusAction.CREATE);
+          const statusRid = await this.interactionSchemaService.getInteractionStatusByType(statusAction.DRAFT);
           const questionsWithActionType = Array.isArray(interaction_questions)
             ? interaction_questions.map((q: any) => ({ ...q, action_type: "add" }))
             : [];
@@ -1906,7 +1825,7 @@ export class InteractionService {
             account_rid: company_id,
             project_fiscal_rid: project_id,
             fiscal_year: projectInfo.fiscal_year,
-            status_rid: statusRid ?? statusAction.CREATE,
+            status_rid: statusRid ?? statusAction.DRAFT,
             project_rid: projectInfo?.project_rid,
             questions: questionsWithActionType,
             interaction_source_rid: interactionSource.AUTO,
@@ -2009,5 +1928,113 @@ export class InteractionService {
       }
       await this.triggerAI(payload)
     }
+  }
+
+  async sendEmailInBatch () {
+    const mainDb = await this.getMainDb();
+    let fetchEmailInfo : any = await mainDb.query(rawQueries.fetchEmailInfo);
+    console.log(`[BATCH EMAIL] Fetched ${fetchEmailInfo[0].length} unsent emails.`);
+
+    for(let data of fetchEmailInfo[0]) {
+      let email_info : {
+        email: string;
+        name: string | null;
+        ccEmails?: string[] | [];
+      } = {
+        email : data.email,
+        name : data.name,
+        ccEmails : []
+      }
+      let accountNumber = data.account_rnumber
+      let interaction_rid = data.interaction_rid
+      let is_interaction_followup = data.is_interaction_followup
+      let userId = data.user_rid
+      let project_fiscal_rid = data.project_fiscal_rid
+      let accountRid = data.account_rid
+
+      // If emailInfo.email is empty, fetch POC email
+      let sendEmailInfo = email_info;
+      if (!email_info || !email_info?.email) {
+        console.log(`[INFO] Fetched fallback email for interaction ${interaction_rid}: ${sendEmailInfo?.email}`);
+        sendEmailInfo = await this.interactionSchemaService.fetchEmailInfo(accountNumber, interaction_rid, project_fiscal_rid, accountRid);
+      }
+
+      if (!sendEmailInfo?.email || sendEmailInfo?.email == "") {
+        console.warn(`[SKIP] No email found for interaction ${interaction_rid}. Skipping.`);
+        continue;
+      }
+       console.log(`[SEND] Sending email to ${sendEmailInfo.email} for interaction ${interaction_rid}.`);
+
+      const [interactionItems, interactionInfo] =
+        await Promise.all([
+          this.interactionSchemaService.fetchInteractionQuestionsById(
+            accountNumber,
+            interaction_rid
+          ),
+          this.interactionSchemaService.fetchInteractionInfo(
+            interaction_rid,
+            accountNumber
+          ),
+        ]);
+      const interactionLink = await this.generateInteractionLink(
+        interaction_rid,
+        interactionInfo.accountInfo.account_rid
+      );
+      const senderEmailInfo = await this.getSenderEmailInfo(accountNumber,interactionInfo.accountInfo.parent_account_rid);
+      const excelBuffer = await this.generateExcelBuffer(
+        interaction_rid,
+        interactionItems,
+        interactionInfo
+      );
+      const excelAttachment = {
+        filename: `interaction_${interaction_rid}.xlsx`,
+        content: Buffer.from(excelBuffer).toString("base64"),
+        contentType:
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      };
+      // Send email
+      const emailResponse = await this.sendEmailWithAttachment(
+        sendEmailInfo,
+        interactionInfo.projectInfo,
+        interactionInfo.accountInfo,
+        excelAttachment,
+        interactionLink,
+        senderEmailInfo!,
+        interaction_rid,
+        is_interaction_followup
+      );
+      if (emailResponse) {
+        console.log(`[SUCCESS] Email sent for interaction ${interaction_rid}.`);
+        if(!is_interaction_followup)
+        {
+          await this.interactionSchemaService.updateInteractionInfo(
+          accountNumber,
+          interaction_rid,
+          statusAction.SENT,
+          userId,
+          sendEmailInfo,
+          interactionLink
+        );
+        }
+        else
+        {
+          await this.interactionSchemaService.updateInteractionInfoForReminder(
+          accountNumber,
+          interaction_rid,
+          project_fiscal_rid,
+          statusAction.SENT,
+          userId,
+          sendEmailInfo,
+          interactionLink
+        );
+        }
+        await this.interactionSchemaService.updateEmailSendFlag(interaction_rid)
+        
+      } else {
+        //need to add logic for sending toPS team
+        console.error(`[FAIL] Email failed to send for interaction ${interaction_rid}. Needs manual intervention.`);
+      }
+    }
+    console.log(`[BATCH EMAIL] Finished processing batch.`);
   }
 }

@@ -490,7 +490,8 @@ jobs:
           WEBHOOK_API_CLIENT_ID=b51b3194-95e2-4928-9dbd-2e8384b3fd58
           WEBHOOK_API_CLIENT_SECRET=ajy8Q~xjONlXXoCzkuIcHxQ0TaLA5hYiBav_5b1A
           WEBHOOK_API_TENANT_ID=b6734060-665c-4b7b-94e2-716458c1d933 # Replace with $MAIL_TENANT_ID
-          SCHEDULER_EXPRESSION="0 */12 * * *"        
+          SCHEDULER_EXPRESSION="0 */12 * * *"  
+          SCHEDULER_EMAIL="*/10 * * * *"     
           CLIENT_SECRET_ENCRYPTION_KEY="dnb8*_pdm(qsnsl&8928-029kn*4_kbz"
           CLIENT_SECRET_ENCRYPTION_LENGTH=16
           EOF
