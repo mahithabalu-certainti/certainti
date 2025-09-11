@@ -634,7 +634,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
             {(isEditing ? questionAttachments[q.rid] : q.attachments).length >
               0 && (
               <div
-                className={`flex flex-col gap-1 mt-1 ${isEditing ? 'w-[97.3%]' : 'w-full'} max-h-[85px] ${
+                className={`flex flex-col gap-1 mt-1 ${isEditing ? 'w-[96.5%]' : 'w-full'} max-h-[85px] ${
                   (isEditing ? questionAttachments[q.rid] : q.attachments)
                     .length > 2
                     ? 'overflow-auto'
@@ -705,70 +705,6 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
           <div className='font-semibold text-sm mb-2 pl-0.5'>
             Uploaded Files
           </div>
-          <div
-            className={`flex flex-col gap-1 max-h-[85px] ${
-              (isEditing ? newGlobalAttachments : globalAttachments).length > 2
-                ? 'overflow-auto'
-                : 'overflow-visible'
-            }`}
-          >
-            {(isEditing ? newGlobalAttachments : globalAttachments).map(
-              (file, idx) => (
-                <div
-                  key={idx}
-                  className='flex items-center justify-between border border-[#CBD6E2] bg-[#FFFBFA] rounded-[2px] p-2 px-3'
-                >
-                  <div className='flex items-center gap-2 w-[95%]'>
-                    <DocumentIcon className='w-6 h-6' />
-                    <div className='text-[14px] text-[#425A76] font-normal max-w-[90%]'>
-                      <TruncateWithTooltip
-                        text={`${file.fileName}${file.fileType}`}
-                        maxWidth={'100%'}
-                      >
-                        {file.fileName}
-                        {file.fileType}
-                      </TruncateWithTooltip>
-                    </div>
-                  </div>
-                  {isEditing ? (
-                    <Tooltip title='Remove file' arrow placement='top'>
-                      <button
-                        onClick={() => removeGlobalAttachment(idx)}
-                        className='cursor-pointer p-[4px]'
-                      >
-                        <KeyContactRemoveIcon />
-                      </button>
-                    </Tooltip>
-                  ) : (
-                    <button
-                      onClick={() => handleDownload(file.fileUrl)}
-                      className='p-1 border border-[#CBD6E2] rounded-[2px] cursor-pointer'
-                      style={{
-                        boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
-                        background:
-                          'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
-                      }}
-                    >
-                      <DownloadIcon />
-                    </button>
-                  )}
-                </div>
-              )
-            )}
-          </div>
-        </div>
-      )}
-
-      {!isEditing && responseDate && (
-        <div className='py-1 pr-4 w-full flex justify-end items-center gap-2 mb-5 text-[12px] text-[#425A76]'>
-          <span className='text-[#7D98B6]'>Response Received on:</span>
-          {formatDateToYYYYMMDDWithTime(responseDate)}
-        </div>
-      )}
-      {/* Global Attachments Section */}
-      {(isEditing ? newGlobalAttachments : globalAttachments).length > 0 && (
-        <div className='p-3 bg-[#F7F9FB] border-b border-[#CBD6E2]'>
-          <div className='font-semibold text-sm mb-2'>Uploaded Files</div>
           <div
             className={`flex flex-col gap-1 max-h-[85px] ${
               (isEditing ? newGlobalAttachments : globalAttachments).length > 2
