@@ -12,6 +12,7 @@ import {
 import { Interaction } from "../../models/interaction";
 import { ALPHANUMERIC_CONDITIONS, MAIN_SCHEMA_NAME, mainTableFilters, rawQueries, schedulerStatus, statusAction, techSummaryStatus } from "../../utils/constants";
 import { InteractionHistory } from "../../models/interactionHistory";
+import { SendEmailInfo } from "../../models/sendEmailInfo";
 
 class InteractionSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -2781,6 +2782,32 @@ class InteractionSchemaService {
       }, 
       attributes: ["rid"],
       raw : true,
+    })
+  }
+
+  async insertEmailInfoDatas (data : any) {
+    const {SendEmailInfo} = await this.interactionModelService.getModels("");
+    const insertedData = await SendEmailInfo.create({
+      interaction_rid : data.interaction_rid,
+      account_rid : data.account_rid,
+      account_rnumber : data.account_rnumber,
+      email : data.email,
+      name : data.name,
+      project_fiscal_rid : data.project_fiscal_rid,
+      user_rid : data.user_rid,
+      is_email_send : false
+    })
+    return insertedData
+  }
+
+  async updateEmailSendFlag (interaction_rid : string) {
+    await SendEmailInfo.update({
+      is_email_send : true
+    }, 
+    {
+      where : {
+      interaction_rid : interaction_rid
+    }
     })
   }
 

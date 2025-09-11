@@ -17,6 +17,7 @@ import { AiAssessmentAudit } from "../models/aiAssessmentAudit";
 import { SchedulerExecutions } from "../models/schedulerExecution";
 import { SchedulerTaskExecutions } from "../models/schedulerTaskExecution";
 import { WebhookEmailLog } from "../models/webhookEmailLog";
+import { SendEmailInfo } from "../models/sendEmailInfo";
 
 export class InteractionModelService {
   orgDbSequelize: Sequelize | null = null;
@@ -102,6 +103,7 @@ export class InteractionModelService {
     );
     const SchedulerExcecutionModel = SchedulerExecutions.initialize(mainDbSequelize, "")
     const SchedulerTaskExecutionModel = SchedulerTaskExecutions.initialize(mainDbSequelize, "")
+    const SendEmailInfoModel = SendEmailInfo.initialize(mainDbSequelize, "")
 
     const WebhookEmailLogModel = WebhookEmailLog.initialize(
       sequelize,
@@ -123,7 +125,8 @@ export class InteractionModelService {
       AiAssessmentQre: AiAssessmentQreModel,
       SchedulerExecution : SchedulerExcecutionModel,
       SchedulerTaskExecution : SchedulerTaskExecutionModel,
-      WebhookEmailLog: WebhookEmailLogModel
+      WebhookEmailLog: WebhookEmailLogModel,
+      SendEmailInfo : SendEmailInfoModel
     };
 
     this.modelCache.set(schemaName, models);

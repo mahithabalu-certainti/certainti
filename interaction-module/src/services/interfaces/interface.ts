@@ -167,7 +167,7 @@ export interface IInteractionService {
       userId: string,
       permission_name: string
     ): Promise<any[]>;
-  
+  sendEmailInBatch() : Promise<void>
 }
 
 export interface IWebHookService {
