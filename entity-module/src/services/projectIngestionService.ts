@@ -1569,8 +1569,6 @@ class ProjectIngestionService {
       if (fiscalYear) {
         whereFiscal.fiscal_year = fiscalYear;
       }
-      console.log("Project List api executed");
-
       
         projectData = await Project.findAll({
         where: whereProject,

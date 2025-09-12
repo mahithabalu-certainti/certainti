@@ -113,6 +113,15 @@ export interface IInteractionService {
     errorMessage?: string;
     data?: { interactionDetails: any };
   }>;
+  getAccountInteractionDetailsById(
+    interactionRid: string,
+    accountId: string,
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { interactionDetails: any };
+  }>;
    getTechnicalSummaryDetailsById(
     techSummaryId: string,
     accountId: string

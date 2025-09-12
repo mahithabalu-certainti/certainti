@@ -227,7 +227,7 @@ class InteractionSchemaService {
     try {
       const { Interaction ,InteractionItem,AccountInteraction} = await this.interactionModelService.getModels(accountNumber);
       const sendStatusRid = await this.getInteractionStatusByType(
-      statusAction.SENT
+      statusAction.DRAFT
     );
       // Generate interactionRid using raw query: select 'D001' || gen_random_uuid()
       let interactionRid: string;
@@ -239,7 +239,6 @@ class InteractionSchemaService {
         { type: QueryTypes.SELECT }
       );
       interactionRid = result?.rid;
-      console.log("Generated interactionRid:", interactionRid);
       if (Array.isArray(projectInfo) && projectInfo.length > 0) {
         const bulkData = projectInfo.map((proj) => ({
           rid: interactionRid, // same rid for all
@@ -259,6 +258,16 @@ class InteractionSchemaService {
         // Use bulkCreate for efficient insertion
         if (bulkData.length > 0) {
           await Interaction.bulkCreate(bulkData, { ignoreDuplicates: true });
+            // Bulk insert SendEmailInfo records after bulk Interaction creation
+            const sendEmailInfoData = projectInfo.map((proj) => ({
+            interaction_rid: interactionRid,
+            account_rid: accountId,
+            account_rnumber: accountNumber,
+            project_fiscal_rid: proj.project_fiscal_rid,
+            user_rid: userId,
+            is_email_send: false,
+            }));
+            await SendEmailInfo.bulkCreate(sendEmailInfoData);
         }
          console.log("Generated interactionRid:", interactionRid);
          console.log("Generated accountInteractionId:", accountInteractionId);
@@ -723,6 +732,10 @@ class InteractionSchemaService {
             disablePagination = true;
           }
       const { whereClause } = this.buildWhereClause(filters);
+       const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+          /\D/g,
+          ""
+        )}`;
       const [finalSortBy, finalSortOrder] = this.getSortParameters(sortBy, sortOrder);
       const { AccountInteraction } = await this.interactionModelService.getModels(accountNumber);
       if (!this.mainDbSequelize) {
@@ -739,6 +752,19 @@ class InteractionSchemaService {
         ...(disablePagination
           ? {}
           : { limit: limit, offset: offset }),
+        attributes: {
+          include: [
+        [
+                  // Subquery to count interactions for each AccountInteraction.rid
+                Sequelize.literal(`(
+          SELECT COUNT(*)
+          FROM "${schemaName}"."interactions" AS i
+          WHERE i.account_interaction_rid = "AccountInteractions"."rid"
+        )`),
+        'project_count'
+        ]
+          ]
+        }
       });
       // You can now use both technicalSummary (array) and count (number)
       if (accountInteractions.length === 0) {
@@ -774,7 +800,7 @@ class InteractionSchemaService {
           interaction_type_name: interactionTypeMap.get(d.interaction_type_rid) || null,
           modified_datetime: d.modified_datetime,
           sent_on_datetime: d.created_datetime,
-          project_count:d.project_count
+          project_count: d.dataValues.project_count,
         };
       });
       const applyFilters = (data: any[], conditions: any, value: any, field: any) => {
@@ -1266,6 +1292,67 @@ class InteractionSchemaService {
         global_attachments: globalAttachments,
         recipient_name: recipient_name || null,
         recipient_email: recipient_email || null,
+      };
+
+      return response;
+    }
+    return interactionDetails;
+  }
+
+   async fetchAccountInteractionDetailsById(
+    accountNumber: string,
+    interactionRid: string
+  ) {
+    const { AccountInteraction } = await this.interactionModelService.getModels(
+      accountNumber
+    );
+
+    let interactionDetails = await AccountInteraction.findOne({
+      where: {
+        rid: interactionRid
+      },
+    });
+    let interactionItems = await this.fetchAccountInteractionItems(
+      accountNumber,
+      interactionRid
+    );
+   
+
+    if (interactionDetails && interactionDetails.dataValues) {
+      const {
+        rid,
+        account_rid,
+        r_number,
+        interaction_type_rid,
+        status_rid,
+        modified_by,
+        created_by,
+        created_datetime,
+        sent_on_datetime
+      } = interactionDetails.dataValues;
+      const metainfo = await this.insertAdditionalInfo(
+        interactionDetails,
+        accountNumber
+      );
+      const userInfo = await this.insertUserDetails(
+        created_by ?? "",
+        modified_by ?? ""
+      );
+      const response: any = {
+        interaction_rid: rid,
+        account_rid,
+        r_number: r_number ?? "",
+        interaction_type: interaction_type_rid ?? "",
+        interaction_type_name: metainfo?.interaction_type_name ?? "",
+        status: status_rid ?? "",
+        status_name: metainfo?.interaction_status_name ?? "",
+        modified_by: userInfo.modified_name ?? modified_by,
+        created_by: userInfo.created_name ?? "",
+        created_datetime: created_datetime ?? null,
+        modified_datetime:
+          interactionDetails.dataValues.modified_datetime ?? null,
+        questions: interactionItems,
+        sent_on_datetime: sent_on_datetime ?? null
       };
 
       return response;
@@ -2068,6 +2155,41 @@ class InteractionSchemaService {
     }
   }
 
+  async fetchAccountInteractionItems(
+    accountNumber: string,
+    interactionRid: string
+  ) {
+    try {
+      const {
+        InteractionItem,
+      } = await this.interactionModelService.getModels(accountNumber);
+      // Convert Sequelize instances to plain objects
+
+      const items = await InteractionItem.findAll({
+        attributes: [
+          "rid",
+          "question_seq_num",
+          "question",
+          "notes",
+          "is_mandatory",
+        ],
+        order: [
+          ["question_seq_num", "ASC"],
+          ["created_datetime", "ASC"],
+        ],
+        where: { interaction_rid: interactionRid },
+      });
+      return items;
+    } catch (err) {
+      throw new Error(
+        "Error fetching interaction items: " + (err as Error).message
+      );
+    }
+  }
+
+
+
+  
   async fetchInteractionQuestionsById(
     accountNumber: string,
     interactionRid: string

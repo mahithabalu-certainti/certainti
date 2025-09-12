@@ -74,11 +74,7 @@ routes.get(
   checkUserStatusMiddleware("interactions_view_edit"),
   controller.interactionsController.listAccountInteractions
 );
-routes.get(
-  "/accountInterctions/details",
-  checkUserStatusMiddleware("interactions_view_edit"),
-  controller.interactionsController.listAccountInteractions
-);
+
 routes.get(
   "/accountInterctions/export",
   checkUserStatusMiddleware("interactions_view_edit"),

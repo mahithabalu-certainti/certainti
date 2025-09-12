@@ -37,6 +37,8 @@ import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constants";
   recipient_name?: string | null;
   attachment_count?: number;
   interaction_version?: number;
+  account_interaction_rid?: string;
+  type?: string;
 }
 
 export interface InteractionCreationAttributes
@@ -112,6 +114,8 @@ export class Interaction
         project_rid: { type: DataTypes.STRING(50), allowNull: false },
         fiscal_year: { type: DataTypes.INTEGER, allowNull: true },
         project_fiscal_rid: { type: DataTypes.STRING(50), allowNull: false },
+        account_interaction_rid: { type: DataTypes.STRING(50), allowNull: true },
+        type: { type: DataTypes.STRING(50), allowNull: true },
         interaction_source_rid: { type: DataTypes.STRING(255), allowNull: true },
         interaction_type_rid: { type: DataTypes.STRING(50), allowNull: true },
         template_rid: { type: DataTypes.STRING(50), allowNull: true },

@@ -777,6 +777,55 @@ export class InteractionService {
     }
   }
 
+  async getAccountInteractionDetailsById(
+    interactionRid: string,
+    accountRid: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { interactionDetails: any };
+  }> {
+    try {
+      const { accountNumber } =
+        await this.interactionSchemaService.fetchValidAccountNumberById(
+          accountRid
+        );
+
+      if (!accountNumber) {
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: "Invalid account ID",
+        };
+      }
+      const interactionDetails =
+        await this.interactionSchemaService.fetchAccountInteractionDetailsById(
+          accountNumber,
+          interactionRid
+        );
+
+      if (!interactionDetails) {
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: "Invalid interaction ID",
+        };
+      }
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          interactionDetails,
+        },
+      };
+    } catch (err) {
+      console.log("Error creatng resource", err);
+      throw this.throwServiceError(err as Error);
+    }
+  }
+
   async getTechnicalSummaryDetailsById(
     techSummaryId: string,
     accountRid: string

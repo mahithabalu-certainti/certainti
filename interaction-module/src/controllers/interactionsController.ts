@@ -467,13 +467,27 @@ async function getInteractionDetailsById(
       );
       return;
     }
+    let interactionDetails;
+   if(value.type === 'project')
+  {
+   interactionDetails =
+        await interactionService.getInteractionDetailsById(
+          interactionRid,
+          accountId,
+          value.project_fiscal_rid
+        );
+  }
+  else
 
-    const interactionDetails =
-      await interactionService.getInteractionDetailsById(
-        interactionRid,
-        accountId,
-        value.project_fiscal_rid
-      );
+  {
+   interactionDetails =
+        await interactionService.getAccountInteractionDetailsById(
+          interactionRid,
+          accountId
+        );
+  }
+
+   
     console.log(
       `[${methodName}] Service response:`,
       JSON.stringify(interactionDetails)
@@ -504,6 +518,8 @@ async function getInteractionDetailsById(
     return;
   }
 }
+
+
 async function getTechnicalSummaryDetailsById(
   req: Request,
   res: Response
