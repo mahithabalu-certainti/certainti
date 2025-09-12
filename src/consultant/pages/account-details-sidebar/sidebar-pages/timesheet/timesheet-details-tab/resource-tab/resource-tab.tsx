@@ -132,7 +132,8 @@ const TimesheetResourcesTab: React.FC<ProjectTabListProps> = ({
     const timesheetId = searchParams.get('timesheet_id');
     if (timesheetId) newSearchParams.set('timesheet_id', timesheetId);
     navigate(
-      `/account/details/${accountid}?${newSearchParams.toString()}`, {replace: true}
+      `/account/details/${accountid}?${newSearchParams.toString()}`,
+      { state: { activeKey: 'resources' }, replace: true }
     );
   };
 

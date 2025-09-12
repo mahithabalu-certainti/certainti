@@ -507,7 +507,7 @@ const Resource: React.FC<ResourceProps> = ({
       newSearchParams.set('list', 'timesheet');
       if (timesheetId) newSearchParams.set('timesheet_id', timesheetId);
       newSearchParams.set('tab', 'timesheet_project_resource');
-      navigate(`/account/details/${accountid}?${newSearchParams.toString()}`);
+      navigate(`/account/details/${accountid}?${newSearchParams.toString()}`, {replace:true});
     }else{ 
     setViewResourceList(!viewResourceList);
     setShowBackArrow(!showBackArrow);
@@ -522,10 +522,7 @@ const Resource: React.FC<ResourceProps> = ({
         pathname: location.pathname,
         search: searchParams.toString(),
       },
-      {
-        state: { ...location.state, activeKey: 'resources' },
-        replace: true,
-      }
+      { replace: true }
     );
     setValue('');
     setFilterVisibility(true);

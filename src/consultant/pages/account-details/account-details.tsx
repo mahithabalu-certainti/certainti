@@ -537,10 +537,10 @@ export const AccountDetails = () => {
   };
   // Set active key from location stat
   useEffect(() => {
-    if (location.state?.activeKey) {
-      setActiveKey(location.state.activeKey);
-    }
-  }, [location.state]);
+    const listParam = searchParams.get('list');
+    setActiveKey(location.state?.activeKey || listParam || 'details');
+  }, [location.state, searchParams]);
+
   const renderContent = () => {
     switch (activeKey) {
       case 'financial':
