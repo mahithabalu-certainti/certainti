@@ -502,7 +502,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       variant: 'contained' as const,
       onClick: () => handleBackFromResponse(),
       sx: { width: '175px', minWidth: '175px' },
-      hide: Boolean(!responseHistory),
+      hide: Boolean(!(sendInteraction || responseHistory)),
     },
   ];
   const interactionColumns = getInteractionListColumns(
@@ -635,7 +635,7 @@ const Interactions: React.FC<InteractionsProps> = ({
             }
             count={viewResponseHistory ? count : totalItems}
             showItemCount={interactionResponseId ? false : true}
-            showBackArrow={viewResponseHistory || Boolean(sendInteraction)}
+            showBackArrow={viewResponseHistory}
             onBackClick={handleBackFromResponse}
             buttons={headerButtons}
             iconBg={sendInteraction ? '#FFE7F1' : undefined}

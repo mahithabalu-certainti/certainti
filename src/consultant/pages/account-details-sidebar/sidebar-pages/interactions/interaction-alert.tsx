@@ -1,8 +1,11 @@
 import React from 'react';
-import { InteractionList } from '../../../../types';
+import {
+  AccountSendInteractionPayload,
+  InteractionList,
+} from '../../../../types';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useToast } from '../../../../../hooks';
-import { useSendInteraction } from '../../../../services/interactions/interactions-service';
+import { useAccountSendInteraction } from '../../../../services/interactions/interactions-service';
 import { CloseIcon } from '../../../../../assets';
 import TextButton from '../../../../../components/button/text-button';
 
@@ -24,7 +27,7 @@ const SendInteractionAlert: React.FC<SendInteractionModalProps> = ({
   const accountId = searchParams.get('accountID') || '';
   const { successToast } = useToast();
 
-  const sendInteraction = useSendInteraction();
+  const sendInteraction = useAccountSendInteraction();
 
   if (!isOpen) return null;
 
@@ -43,9 +46,11 @@ const SendInteractionAlert: React.FC<SendInteractionModalProps> = ({
       };
     });
 
-    const payload = {
+    const payload: AccountSendInteractionPayload = {
       account_rid: accountRid,
-      interactions,
+      account_interaction_rid: '',
+      projects: [{ fiscal_year: '', project_fiscal_rid: '', project_rid: '' }],
+      status_rid: '',
     };
     sendInteraction.mutate(payload, {
       onSuccess: (response) => {

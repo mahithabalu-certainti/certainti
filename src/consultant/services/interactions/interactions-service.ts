@@ -8,6 +8,7 @@ import {
   InteractionListURLParams,
   SendInteractionPayload,
   ExportInteractionResponse,
+  AccountSendInteractionPayload,
 } from '../../types';
 import { interactionServiceApi } from '../../../api/api';
 import { CommonApiResponse } from '../../../common-service';
@@ -292,6 +293,27 @@ export const sendInteraction = async (
 export const useSendInteraction = () => {
   return useMutation<CommonApiResponse, Error, SendInteractionPayload>({
     mutationFn: (body) => sendInteraction(body),
+  });
+};
+
+// Send interaction
+export const accountSendInteraction = async (
+  body: AccountSendInteractionPayload
+): Promise<CommonApiResponse> => {
+  try {
+    const { data } = await interactionServiceApi.post<CommonApiResponse>(
+      '/api/interactions/accountInterctions/send',
+      body
+    );
+    return data;
+  } catch (error) {
+    console.error('Error sending interaction:', error);
+    throw error;
+  }
+};
+export const useAccountSendInteraction = () => {
+  return useMutation<CommonApiResponse, Error, AccountSendInteractionPayload>({
+    mutationFn: (body) => accountSendInteraction(body),
   });
 };
 

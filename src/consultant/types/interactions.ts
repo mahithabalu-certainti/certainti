@@ -402,3 +402,16 @@ export interface SendInteractionPayload {
   customRecipient?: boolean;
   is_interaction_followup?: boolean;
 }
+
+
+export interface SendIntractionProject {
+  project_rid: string;
+  project_fiscal_rid: string;
+  fiscal_year: string;
+}
+export interface AccountSendInteractionPayload {
+  account_rid: string;
+  account_interaction_rid: string
+  status_rid: string;
+  projects: SendIntractionProject[];
+}
