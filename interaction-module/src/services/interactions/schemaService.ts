@@ -15,6 +15,7 @@ import { Interaction } from "../../models/interaction";
 import { ALPHANUMERIC_CONDITIONS, MAIN_SCHEMA_NAME, mainTableFilters, rawQueries, schedulerStatus, statusAction, techSummaryStatus } from "../../utils/constants";
 import { InteractionHistory } from "../../models/interactionHistory";
 import { SendEmailInfo } from "../../models/sendEmailInfo";
+import { decryptClientSecret } from "../../utils/helpers";
 
 class InteractionSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -2268,11 +2269,14 @@ class InteractionSchemaService {
          if (mainSenderEmailInfo && mainSenderEmailInfo.length > 0) {
            senderEmailInfo[0] = mainSenderEmailInfo[0].email;
          }
+         const clientSecret = mainSenderEmailInfo[0].client_secret;
+         const decryptedSecret = await decryptClientSecret(clientSecret);
+
          return {
             email: senderEmailInfo[0],
-            clientId: process.env.CLIENT_ID,
-            clientSecret: process.env.CLIENT_SECRET,
-            tenantId: process.env.TENANT_ID
+            clientId: mainSenderEmailInfo[0].client_id,
+            clientSecret: decryptedSecret,
+            tenantId: mainSenderEmailInfo[0].tenant_id
           }
       } else {
         

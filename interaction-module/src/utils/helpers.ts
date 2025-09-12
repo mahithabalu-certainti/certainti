@@ -256,11 +256,17 @@ export function formatToLocalTime(isoString: string): string {
   return `${year}-${month}-${day}, ${time}`;
 }
 
-export function decryptClientSecret(encryptedText: string): string {
+export async function decryptClientSecret(encryptedText: string): Promise<string> {
   const ENCRYPTION_KEY = process.env.CLIENT_SECRET_ENCRYPTION_KEY;
   
   if (!ENCRYPTION_KEY) {
     throw new Error('CLIENT_SECRET_ENCRYPTION_KEY is not set in environment');
+  };
+
+  const encryptClientSecret = await getSecret(ENCRYPTION_KEY);
+
+  if(!encryptClientSecret){
+    throw new Error("Invalid Client Encryption Key")
   }
 
   const [ivHex, encryptedHex] = encryptedText.split(":");
@@ -274,7 +280,7 @@ export function decryptClientSecret(encryptedText: string): string {
 
   const decipher = crypto.createDecipheriv(
     "aes-256-cbc",
-    Buffer.from(ENCRYPTION_KEY),
+    Buffer.from(encryptClientSecret),
     iv
   );
   let decrypted = decipher.update(encrypted);

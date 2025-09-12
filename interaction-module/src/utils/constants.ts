@@ -357,7 +357,7 @@ export const rawQueries = {
   },
   fetchGlobalSenderEmail() {
     return `
-    SELECT email FROM ${MAIN_SCHEMA_NAME}.organization_licenses LIMIT 1`;
+    SELECT * FROM ${MAIN_SCHEMA_NAME}.organization_licenses LIMIT 1`;
   },
   isEmailRecipientAvailable(projectFiscalRid: string, schemaName: string, statusRid: string) {
     return `
@@ -624,7 +624,12 @@ export const rawQueries = {
   },
   updateInteractionSummaryStatus(statusRid : string, interactionRid : string) {
     return `UPDATE ${MAIN_SCHEMA_NAME}.interactions_summary SET status_rid = '${statusRid}' WHERE interaction_rid = '${interactionRid}'`
-  }
+  },
+  fetchOrganizationSettings(): string {
+    return `
+      SELECT * from ${MAIN_SCHEMA_NAME}.organization_licenses
+    `;
+  },
 };
 
 export const filterTypesForSummaryInteractions : Record<string, any> = 

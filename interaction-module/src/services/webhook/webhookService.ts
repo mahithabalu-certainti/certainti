@@ -12,7 +12,7 @@ import { decryptClientSecret } from "../../utils/helpers";
 import { WebhookEmailLogAttributes } from "../../models/webhookEmailLog";
 
 export class WebHookService {
-  private graphClient: Client;
+  private graphClient: Client | null = null;
   private interactionModelService: InteractionModelService;
   private interactionSchemaService: InteractionSchemaService;
   private interactionService: InteractionService;
@@ -20,28 +20,11 @@ export class WebHookService {
   private logger: Logger;
 
   constructor(logger: Logger) {
-    const credential = new ClientSecretCredential(
-      process.env.TENANT_ID!,
-      process.env.CLIENT_ID!,
-      process.env.CLIENT_SECRET!
-    );
-
     this.logger = logger;
 
     this.interactionModelService = new InteractionModelService();
     this.interactionSchemaService = new InteractionSchemaService();
     this.interactionService = new InteractionService(logger);
-
-    this.graphClient = Client.initWithMiddleware({
-      authProvider: {
-        getAccessToken: async () => {
-          const token = await credential.getToken(
-            "https://graph.microsoft.com/.default"
-          );
-          return token.token;
-        },
-      },
-    });
   }
 
   async webhookHanlder(data: any): Promise<{
@@ -84,23 +67,21 @@ export class WebHookService {
 
         receivedEmail = email;
 
-        let graphClient: Client;
-
         if (subscription_created && email) {
-          const decryptedSecret = decryptClientSecret(client_secret);
-          graphClient = this.createGraphClient(
+          const decryptedSecret = await decryptClientSecret(client_secret);
+          this.graphClient = this.createGraphClient(
             tenant_id,
             client_id,
             decryptedSecret
           );
         } else {
-          graphClient = this.graphClient;
+          this.graphClient = await this.fetchCredentialsFromDb();
         }
 
         finalResult = await this.processNotification(
           notification,
           email,
-          graphClient
+          this.graphClient
         );
 
         mailProcessedResults = finalResult;
@@ -200,6 +181,21 @@ export class WebHookService {
 
           break;
         }
+      }
+
+      if(!this.graphClient){
+        await this.logWebhookEmailEvent({
+          schemaName: mailProcessedResults.accountNumber,
+          emailSubject: mailProcessedResults.subject,
+          emailSender: mailProcessedResults.from,
+          status: "FAILED",
+          errorMessage: "Invalid Graph Credentials",
+        });
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: "Invalid Graph Credentials",
+        };
       }
 
       if (!accountNumber) {
@@ -456,6 +452,41 @@ export class WebHookService {
     }
   }
 
+  async fetchCredentialsFromDb(){
+    const mainDbSequelize =
+    await this.interactionModelService.getMainSequelize();
+
+    const platformSettings: any = await mainDbSequelize.query(
+      rawQueries.fetchOrganizationSettings(),
+      {
+        type: "SELECT",
+      }
+    );
+
+    const tenantId = platformSettings[0]?.tenant_id;
+    const clientIdId = platformSettings[0]?.client_id;
+    const clientSecret = platformSettings[0]?.client_secret;
+
+    const decryptedSecret = await decryptClientSecret(clientSecret);
+
+    const credential = new ClientSecretCredential(
+      tenantId,
+      clientIdId,
+      decryptedSecret
+    );
+
+    return Client.initWithMiddleware({
+      authProvider: {
+        getAccessToken: async () => {
+          const token = await credential.getToken(
+            "https://graph.microsoft.com/.default"
+          );
+          return token.token;
+        },
+      },
+    });
+  }
+
   async fetchCredentialsBySubscriptionId(subscriptionId: string) {
     const mainDbSequelize =
       await this.interactionModelService.getMainSequelize();
@@ -658,53 +689,6 @@ export class WebHookService {
     });
 
     return interaction;
-  }
-
-  async createSubscription() {
-    try {
-      const expiration = new Date();
-      expiration.setMinutes(expiration.getMinutes() + 4230);
-
-      const response = await this.graphClient.api("/subscriptions").post({
-        changeType: "created",
-        notificationUrl: process.env.NOTIFICATION_URL,
-        resource: `users/${process.env.MONITORED_EMAIL}/mailFolders('Inbox')/messages`,
-        expirationDateTime: expiration.toISOString(),
-        clientState:
-          process.env.CLIENT_STATE || "custom_secret_validation_string",
-      });
-
-      if (response && response.id) {
-        this.logger.info(`Subscription created for : ${response.id}`);
-      }
-    } catch (err) {
-      this.logger.error(`Failed to create subscription`);
-    }
-  }
-
-  async renewSubscriptions() {
-    try {
-      const subscriptions = await this.graphClient.api("/subscriptions").get();
-
-      for (const sub of subscriptions.value) {
-        if (sub.resource.includes(process.env.MONITORED_EMAIL)) {
-          const expiration = new Date();
-          expiration.setMinutes(expiration.getMinutes() + 4230);
-
-          await this.graphClient.api(`/subscriptions/${sub.id}`).patch({
-            expirationDateTime: expiration.toISOString(),
-          });
-
-          this.logger.info(
-            `Renewed subscription ${sub.id} to ${expiration.toISOString()}`
-          );
-        }
-      }
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : JSON.stringify(err);
-      this.logger.info(`Error renewing subscriptions: ${errorMessage}`);
-    }
   }
 
   private async processNotification(
