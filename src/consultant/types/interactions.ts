@@ -145,7 +145,7 @@ export type InteractionList = {
   has_email_recipient: boolean;
   disableCheckBox?: boolean;
   account_name?: string | null;
-  project_count?: string
+  project_count?: string;
 };
 export type ResponseInteractionList = {
   rid: string;
@@ -415,7 +415,6 @@ export interface SendInteractionPayload {
   is_interaction_followup?: boolean;
 }
 
-
 export interface SendIntractionProject {
   project_rid: string;
   project_fiscal_rid: string;
@@ -423,6 +422,6 @@ export interface SendIntractionProject {
 }
 export interface AccountSendInteractionPayload {
   account_rid: string;
-  account_interaction_rid: string[]
+  account_interaction_rid: string[];
   projects: SendIntractionProject[];
 }
