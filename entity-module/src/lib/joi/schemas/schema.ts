@@ -2026,6 +2026,7 @@ const createProjectResourceSchema = Joi.object({
   project_fiscal_rid: Joi.string().pattern(uuidRegex).required(),
   account_rid: Joi.string().pattern(uuidRegex).required(),
   resource_code: Joi.string().min(3).max(50).required(),
+  user_preference: Joi.string().optional().allow(null).allow(""),
   assigned_skill_role_type_rid: Joi.string().pattern(uuidRegex).optional().allow(null).allow(""),
   skill_role_rid: Joi.string().pattern(uuidRegex).optional().allow(null).allow(""),
   skill_role_others: Joi.string().min(3).max(100).optional().allow("").allow(null),
@@ -2201,6 +2202,7 @@ const updateProjectResourceSchema = Joi.object({
   deductions: costFieldValidator('deductions'),
   
   description: Joi.string().max(2000).optional().allow("").allow(null),
+  user_preference: Joi.string().optional().allow(null).allow(""),
 });
 
 const exportListProjectResourceSchema = Joi.object({
@@ -2692,6 +2694,23 @@ const exportImportedAccountLevelProjectTasks = Joi.object({
     sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
 })
 
+const updateProjectResourceStatus = Joi.object({
+  rid: Joi.string().pattern(uuidRegex).required(),
+  action: Joi.string()
+    .valid("accept", "reject")
+    .required()
+    .messages({
+      "any.only": 'Action must be either "accept" or "reject"',
+      "any.required": "Action is required"
+    }),
+  accountId: Joi.string().max(255).required(),
+  resourceCode: Joi.string().max(255).required(),
+  type: Joi.string().valid("Anomaly", "Duplicate").required().messages({
+      "any.only": 'Type must be either "Anomaly" or "Duplicate"',
+      "any.required": "Type is required"
+    }),
+});
+
 export {
   listResourceSkillSchema,
   updateResourceSkillSchema,
@@ -2733,5 +2752,6 @@ export {
   importedAccountLevelProjectTasks,
   exportImportedAccountLevelProjects,
   exportImportedAccountLevelResources,
-  exportImportedAccountLevelProjectTasks
+  exportImportedAccountLevelProjectTasks,
+  updateProjectResourceStatus
 };

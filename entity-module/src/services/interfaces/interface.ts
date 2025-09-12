@@ -1,5 +1,6 @@
 import { Project } from "../../models/project";
 import {
+  IAnomalyStatus,
   ICreateAttachment,
   ICreateProject,
   ICreateProjectResource,
@@ -585,6 +586,12 @@ export interface IProjectResourceService {
     message: string;
     errorMessage?: string;
     data?: { resourceCodes: any };
+  }>;
+  handleAnomalyStatus(data: IAnomalyStatus, userId: string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { projectResource: any };
   }>;
 }
 
