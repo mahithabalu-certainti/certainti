@@ -24,6 +24,29 @@ export interface ICreateInteraction {
   status_action?: string;
 }
 
+export interface IProject {
+    project_rid: string;
+    project_fiscal_rid: string;
+    fiscal_year: number;
+}
+
+export interface ICreateAccountInteraction {
+  account_rid: string;
+  interaction_source_rid: string;
+  interaction_type_rid: string;
+  questions: {
+    rid?: string;
+    notes: string;
+    question: string;
+    response: string;
+    action_type: string;
+    question_seq_num?: string;
+  }[];
+  template_rid?: string;
+  status_rid: string;
+  created_by: string;
+}
+
 export interface IUpdateInteraction {
   interaction_rid: string;
   project_fiscal_rid: string;

@@ -748,7 +748,9 @@ export class ProjectService {
     sortBy: string = "created_datetime",
     sortOrder: string = "ASC",
     bothParentAndChild: boolean = false,
-    userId: string
+    userId: string,
+    apiSource:string ='Project',
+    accountInteractionId?:string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -777,6 +779,7 @@ export class ProjectService {
       const isPOCProfile =
         userProfileType?.profileName === "Project Point of Contact";
       let accessibleIds: string[] = [];
+      let accInteractionProjs: string[] = [];
 
       if (!isCustomGlobal) {
         accessibleIds = await this.getAccessibleProjectIds(
@@ -841,6 +844,14 @@ export class ProjectService {
         };
       }
 
+      if(apiSource === "interactionCount" && accountInteractionId){
+        accInteractionProjs = await this.getAccInteractionProjectIds(
+         accountInteractionId || '',
+         accountRNumber
+        );
+      }
+    
+
       const [finalSortBy, finalSortOrder] = this.getSortParameters(
         sortBy,
         sortOrder
@@ -872,7 +883,9 @@ export class ProjectService {
         finalMetaDataSortBy,
         finalMetaDataSortOrder,
         {},
-        accessibleIds
+        accessibleIds,
+        apiSource,
+        accInteractionProjs
       );
       projects = projects.slice(offset, page * limit)
 
@@ -1034,6 +1047,17 @@ export class ProjectService {
     } catch (err) {
       throw new Error("Error fetching project: " + (err as Error).message);
     }
+  }
+  async getAccInteractionProjectIds(accIntId:string,accountRNumber:string): Promise<string[]>
+  {
+    const orgDbSequlize = await initOrgSequelize();
+    const schemaName = `trd365_${accountRNumber.replace(/\D/g, "")}`;
+    const interactionProjects = await orgDbSequlize.query(rawQueries.getAccountInteractionProjects(schemaName, accIntId), {
+      replacements: { account_interaction_rid:accIntId },
+      type: "SELECT",
+    });
+    return interactionProjects.map((row: any) => row.project_fiscal_rid);
+
   }
   async getAccessibleProjectIds(
     userId: string,
