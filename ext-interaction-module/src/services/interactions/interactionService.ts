@@ -70,6 +70,7 @@ export class InteractionService {
     interactionRid: string,
     accountRid: string,
     userId: string,
+    projectFiscalRid: string,
     authToken: string
   ): Promise<{
     statusCode: number;
@@ -81,7 +82,7 @@ export class InteractionService {
       const newCustomJwtToken = await this.generateNewToken(authToken);
 
       const response = await axios.get(
-        `${INTERACTION_BASE_URL}/extInteractions/detail/${accountRid}/${interactionRid}`,
+        `${INTERACTION_BASE_URL}/extInteractions/detail/${accountRid}/${interactionRid}?project_fiscal_rid=${projectFiscalRid}&type=project`,
         {
           headers: {
             "x-user-id": userId,
