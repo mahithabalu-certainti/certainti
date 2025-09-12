@@ -103,6 +103,7 @@ class SchemaService {
       await this.createProjectTaskTimeLineTable(schemaName, sequelize);
       await this.createProjectTaskHistoryTable(schemaName, sequelize);
       await this.createInteractionTable(schemaName, sequelize);
+      await this.createAccountInteractionTable(schemaName, sequelize);
       await this.createInteractionItemTable(schemaName, sequelize);
       await this.createInteractionHistoryTable(schemaName, sequelize);
       await this.createInteractionResponseTable(schemaName, sequelize);
@@ -181,7 +182,7 @@ class SchemaService {
       CREATE TABLE IF NOT EXISTS "${schemaName}".ai_technical_summary (
         rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
         r_number varchar(20) UNIQUE DEFAULT (('ATS-'::text || lpad(nextval('"${schemaName}".ai_technical_summary_seq'::regclass)::text, 10, '0'::text))) NULL,
-        eid character varying(50),
+        eid character varying(120),
         created_by varchar(50) NOT NULL,
         modified_by varchar(50),
         created_datetime TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -1979,7 +1980,7 @@ private async createInteractionTable(
     CREATE TABLE IF NOT EXISTS "${schemaName}".interactions (
       rid VARCHAR(50)  DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
       r_number VARCHAR(20) UNIQUE DEFAULT 'INT-' || LPAD(nextval('"${schemaName}".interactions_seq')::TEXT, 10, '0'),
-      eid character varying(50),
+      eid character varying(120),
       created_by character varying(50) NOT NULL,
       modified_by character varying(50),
       created_datetime timestamp with time zone NOT NULL DEFAULT NOW(),
@@ -2135,7 +2136,7 @@ private async createInteractionTable(
       CREATE TABLE IF NOT EXISTS "${schemaName}".interaction_items (
         rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
         r_number VARCHAR(20) UNIQUE DEFAULT 'ITI-' || LPAD(nextval('"${schemaName}".interaction_item_seq')::TEXT, 10, '0'),
-        eid character varying(50),
+        eid character varying(120),
         created_by varchar(50) NOT NULL,
         modified_by varchar(50),
         created_datetime TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
@@ -2288,6 +2289,34 @@ private async createInteractionTable(
     await sequelize.query(`
      ALTER TABLE "${schemaName}".interaction_timeline ADD CONSTRAINT interaction_timeline_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
     ALTER TABLE "${schemaName}".interaction_timeline ADD CONSTRAINT interaction_timeline_entity_rid_fkey FOREIGN KEY (entity_rid,project_fiscal_rid) REFERENCES "${schemaName}".interactions(rid,project_fiscal_rid) ON UPDATE CASCADE;
+    `);
+  }
+
+   private async createAccountInteractionTable(schemaName: string, sequelize: any) {
+    await sequelize.query(`
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".account_interaction_seq START 1;
+    `);
+
+    await sequelize.query(`
+      CREATE TABLE "${schemaName}".account_interactions (
+        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        r_number varchar(20) UNIQUE DEFAULT (('AINT-'::text || lpad(nextval('"${schemaName}".account_interaction_seq'::regclass)::text, 10, '0'::text))) NULL,
+        eid VARCHAR(120),
+        created_by VARCHAR(50) NOT NULL,
+        modified_by VARCHAR(50),
+        created_datetime TIMESTAMP DEFAULT NOW(),
+        modified_datetime TIMESTAMP,
+        account_rid varchar(50) NOT NULL,
+        interaction_source_rid varchar(50) NOT NULL,
+        interaction_type_rid varchar(50) NOT NULL,
+        template_rid varchar(50),
+        status_rid varchar(50) NOT NULL,
+        sent_on_datetime timestamptz,
+      );
+    `);
+
+    await sequelize.query(`
+      ALTER TABLE "${schemaName}".account_interactions ADD CONSTRAINT account_interactions_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
     `);
   }
 
