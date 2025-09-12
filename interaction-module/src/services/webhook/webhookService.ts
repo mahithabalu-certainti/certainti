@@ -539,10 +539,6 @@ export class WebHookService {
       return 'Invalid Project Id';
     }
   
-    if (!projectName || typeof projectName !== 'string') {
-      return 'Invalid Project Name';
-    }
-  
     if (!projectCode || typeof projectCode !== 'string') {
       return 'Invalid Project Code';
     }
@@ -566,18 +562,20 @@ export class WebHookService {
         return 'Invalid Project ID';
       }
     
-      const [nameResult] = await orgDbSequelize.query(
-        `SELECT 1 FROM "${schemaName}".project_fiscal 
-         WHERE project_name = :projectName 
-         LIMIT 1;`,
-        {
-          type: "SELECT",
-          replacements: { projectName },
-        }
-      );
-    
-      if (!nameResult) {
-        return 'Invalid Project Name';
+      if (projectName && typeof projectName === 'string' && projectName.trim() !== ''){
+        const [nameResult] = await orgDbSequelize.query(
+          `SELECT 1 FROM "${schemaName}".project_fiscal 
+           WHERE project_name = :projectName 
+           LIMIT 1;`,
+          {
+            type: "SELECT",
+            replacements: { projectName },
+          }
+        );
+      
+        if (!nameResult) {
+          return 'Invalid Project Name';
+        } 
       }
     
       const [codeResult] = await orgDbSequelize.query(
@@ -1096,9 +1094,7 @@ export class WebHookService {
     if (array[2]?.[0] !== "Project ID" || !array[2]?.[1]) {
       errors.push("Missing or invalid 'Project ID' in row 3.");
     }
-    if (array[3]?.[0] !== "Project Name" || !array[3]?.[1]) {
-      errors.push("Missing or invalid 'Project Name' in row 4.");
-    }
+
     if (array[4]?.[0] !== "Project Code" || !array[4]?.[1]) {
       errors.push("Missing or invalid 'Project Code' in row 5.");
     }

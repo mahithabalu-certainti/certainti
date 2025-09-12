@@ -40,6 +40,7 @@ export interface IInteractionService {
     interactionRid: string,
     accountId: string,
     userId: string,
+    projectFiscalRid: string,
     authToken: string
   ): Promise<{
     statusCode: number;
