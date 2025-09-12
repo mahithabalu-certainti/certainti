@@ -304,6 +304,7 @@ class InteractionSchemaService {
       interactionData.created_by = userId;
       const item = {
         account_interaction_rid: interactionRid,
+        interaction_rid: interactionRid,
         type: type,
         ...question,
         ...interactionData,
