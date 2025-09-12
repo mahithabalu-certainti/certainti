@@ -3,6 +3,7 @@ import { ListTableColumn } from '../../../../../../../components/table/types';
 import { TimesheetResourceListType } from '../../../../../../types/timesheet-projects';
 
 export const getResourceTabTableColumns = (
+  onResourceIdClick?: (row: TimesheetResourceListType) => void,
   permissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<TimesheetResourceListType>[] => [
   {
@@ -23,6 +24,17 @@ export const getResourceTabTableColumns = (
       borderRight: '1px solid #CBD6E2 !important',
       borderBottom: '1px solid #CBD6E2 !important',
     },
+    render: (row: TimesheetResourceListType) =>
+      onResourceIdClick ? (
+        <span
+          onClick={() => onResourceIdClick(row)}
+          className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
+        >
+          {row.resource_code}
+        </span>
+      ) : (
+        row.resource_code
+      ),
   },
   {
     id: 'resource_name',

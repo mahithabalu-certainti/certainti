@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { useParams, useSearchParams } from 'react-router-dom';
+import {  generatePath, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { RootState } from '../../../../../../../store/store';
 import { ListTable } from '../../../../../../../components/table';
 import {
@@ -14,6 +14,7 @@ import { getProjectTaskColumns } from './columns';
 import { TimesheetProjectExportListURLParams } from '../../../../../../types/timesheet-projects';
 import { checkPermission } from '../../../../../../../common-utils';
 import { AccessRestricted } from '../../../../../../../components/account-restricted';
+import { PROJECT_DETAILS } from '../../../../../../../routes';
 
 interface ProjectTaskProps {
   documentRid: string;
@@ -37,7 +38,8 @@ const TimesheetProjectTask: React.FC<ProjectTaskProps> = ({
   const [projectTaskList, setProjectTaskList] = useState<ProjectTaskListType[]>(
     []
   );
-
+  const navigate = useNavigate();
+  
   // hooks
   const { accountid } = useParams();
   const [searchParams] = useSearchParams();
@@ -116,7 +118,26 @@ const TimesheetProjectTask: React.FC<ProjectTaskProps> = ({
   };
 
   const totalItems = projectApiListData?.count || 0;
-  const projectTaskColumns = getProjectTaskColumns(permissionMap);
+   
+
+  const handleProjectTaskClick = (row: ProjectTaskListType) => { 
+    const newSearchParams = new URLSearchParams();
+    newSearchParams.set('accountID', row.account_rid);
+    newSearchParams.set('currency_rid', row.currency_rid);
+    newSearchParams.set('list', 'projectsTask');
+    newSearchParams.set('page', 'details');
+    newSearchParams.set('pro_task_id', row.rid || '');
+    newSearchParams.set('source', 'timesheet');
+    const timesheetId = searchParams.get('timesheet_id');
+    if (timesheetId) newSearchParams.set('timesheet_id', timesheetId);
+    const path = generatePath(PROJECT_DETAILS, {
+      projectid: row.project_fiscal_rid,
+    });
+    navigate(
+      `${path}?${newSearchParams.toString()}`
+    );
+  };
+  const projectTaskColumns = getProjectTaskColumns(handleProjectTaskClick, permissionMap);
   return (
     <div className='border border-[#CBD6E2]'>
       <ListTable

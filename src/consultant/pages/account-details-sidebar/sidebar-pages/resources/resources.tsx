@@ -199,6 +199,7 @@ const Resource: React.FC<ResourceProps> = ({
   const [searchParams] = useSearchParams();
   const { accountid } = useParams();
   const resId = searchParams.get('res_id');
+  const source = searchParams.get('source');
 
   // Permission Mangement
   const isAccountResourceFieldsEditable = useMemo(
@@ -500,6 +501,14 @@ const Resource: React.FC<ResourceProps> = ({
     AllPermissions.ATTACHMENT_CREATE
   );
   const handleBackClick = () => {
+    if (source === 'timesheet') {
+      const timesheetId = searchParams.get('timesheet_id');
+      const newSearchParams = new URLSearchParams();
+      newSearchParams.set('list', 'timesheet');
+      if (timesheetId) newSearchParams.set('timesheet_id', timesheetId);
+      newSearchParams.set('tab', 'timesheet_project_resource');
+      navigate(`/account/details/${accountid}?${newSearchParams.toString()}`, {replace:true});
+    }else{ 
     setViewResourceList(!viewResourceList);
     setShowBackArrow(!showBackArrow);
     setShowFilter(false);
@@ -513,18 +522,16 @@ const Resource: React.FC<ResourceProps> = ({
         pathname: location.pathname,
         search: searchParams.toString(),
       },
-      {
-        state: { ...location.state, activeKey: 'resources' },
-        replace: true,
-      }
+      { replace: true }
     );
     setValue('');
     setFilterVisibility(true);
     setAppliedFilters({});
     setSortFilterCount(0);
     clearFilters('resource');
+  }
   };
-  const headerButtons = [
+  const headerButtons = [ 
     {
       label: 'Add Attachment',
       variant: 'outlined' as const,
@@ -568,7 +575,7 @@ const Resource: React.FC<ResourceProps> = ({
       hide: handleDownloadButtonEnable(),
     },
     {
-      label: 'Back To Resources',
+      label: source === 'timesheet' ? 'Back To Timesheet' : 'Back To Resources',
       variant: 'outlined' as const,
       onClick: handleBackClick,
       sx: { ...BUTTON_STYLES, width: '125px', minWidth: '125px' },

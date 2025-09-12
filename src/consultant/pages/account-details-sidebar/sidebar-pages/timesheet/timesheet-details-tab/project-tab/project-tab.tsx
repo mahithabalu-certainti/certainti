@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { generatePath, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { RootState } from '../../../../../../../store/store';
 import { ListTable } from '../../../../../../../components/table';
 import {
@@ -16,6 +16,7 @@ import {
 } from '../../../../../../types/timesheet-projects';
 import { AccessRestricted } from '../../../../../../../components/account-restricted';
 import { checkPermission } from '../../../../../../../common-utils';
+import { PROJECT_DETAILS } from '../../../../../../../routes';
 
 interface ProjectTabListProps {
   bothParentAndChild: boolean;
@@ -41,7 +42,7 @@ const TimesheetProjectTab: React.FC<ProjectTabListProps> = ({
   const [projectTabList, setProjectTabList] = useState<TimesheetProjectList[]>(
     []
   );
-
+  const navigate = useNavigate();
   const { accountid } = useParams();
   const [searchParams] = useSearchParams();
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
@@ -140,7 +141,23 @@ const TimesheetProjectTab: React.FC<ProjectTabListProps> = ({
   };
 
   const totalItems = projectApiListData?.count || 0;
-  const projectTabTableColumns = getProjectTabTableColumns(permissionMap);
+  
+  const handleViewProjectDetails = (project: TimesheetProjectList) => {
+    const path = generatePath(PROJECT_DETAILS, {
+      projectid: project?.project_fiscal_rid ?? '',
+    });
+    const queryParams = new URLSearchParams({
+      accountID: project?.account_rid ?? '',
+      list:'projectDetails',
+      source: 'timesheet',
+      timesheet_id: searchParams.get('timesheet_id') ?? '',
+      currency_rid: project?.currency_rid ?? '',
+      source_tab: 'timesheet_project',
+    });
+
+    navigate(`${path}?${queryParams.toString()}`);
+  };
+  const projectTabTableColumns = getProjectTabTableColumns(handleViewProjectDetails, permissionMap);
   return (
     <div className='border border-[#CBD6E2]'>
       <ListTable
@@ -150,7 +167,7 @@ const TimesheetProjectTab: React.FC<ProjectTabListProps> = ({
         hoverHighlight={false}
         tableStyle={{
           height: '100%',
-          maxHeight: 'calc(100vh - 290px)',
+          maxHeight: 'calc(100vh - 370px)',
           overflow: 'auto',
         }}
         stickyHeader={true}

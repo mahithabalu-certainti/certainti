@@ -187,7 +187,7 @@ export const ProjectTask = ({
   const taskId = searchParams.get('pro_task_id');
   const taskDetails = searchParams.get('page');
   const checkDetail = taskDetails === 'details' && taskId;
-
+  const source = searchParams.get('source');
   const viewDetails = !!checkDetail;
 
   const {
@@ -290,7 +290,7 @@ export const ProjectTask = ({
       hide: viewDetails ? true : false,
     },
     {
-      label: 'Back To Project Tasks',
+      label: source === 'timesheet' ? 'Back To Timesheet' : 'Back To Project Tasks',
       variant: 'contained' as const,
       onClick: () => handleBackClick(),
       sx: { width: '155px', minWidth: '155px' },
@@ -319,6 +319,15 @@ export const ProjectTask = ({
   };
 
   const handleBackClick = () => {
+    if (source === 'timesheet') {
+      const timesheetId = searchParams.get('timesheet_id');
+      const accountid = searchParams.get('accountID');
+      const newSearchParams = new URLSearchParams();
+      newSearchParams.set('list', 'timesheet');
+      if (timesheetId) newSearchParams.set('timesheet_id', timesheetId);
+      newSearchParams.set('tab', 'timesheet_project_task');
+      navigate(`/account/details/${accountid}?${newSearchParams.toString()}`);
+    }else{
     setShowProjectTaskDetails(!showProjectTaskDetails);
     setProjectResData(null);
     setShowFilter(false);
@@ -328,6 +337,7 @@ export const ProjectTask = ({
       pathname: location.pathname,
       search: searchParams.toString(),
     });
+  }
   };
   useEffect(() => {
     if (setExportType) {
