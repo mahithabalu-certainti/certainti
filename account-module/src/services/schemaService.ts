@@ -2386,23 +2386,7 @@ private async createInteractionTable(
     `);
   }
 
-  private async createEmailWebhookHistory(schemaName: string, sequelize: any){
-    await sequelize.query(`
-      CREATE TABLE "${schemaName}".webhook_email_history (
-        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
-        created_by varchar(50) NOT NULL,
-        created_datetime timestamp NOT NULL,
-        email_subject varchar(500) NOT NULL,
-        email_sender varchar(200) NOT NULL,
-        attachment_name varchar(255) NULL,
-        extracted_answers text NULL,
-        uploaded_time timestamp NOT NULL,
-        status varchar(20) NOT NULL,
-        error_message text NULL,
-        CONSTRAINT webhook_email_history_status_check CHECK (((status)::text = ANY ((ARRAY['SUCCESS'::character varying, 'FAILED'::character varying, 'MISSING_ATTACHMENT'::character varying, 'INVALID_FORMAT'::character varying, 'NO_MATCH_FOUND'::character varying])::text[])))
-      );  
-    `);
-  }
+
 
   async insertAccountDetails(
     account_number: string,
