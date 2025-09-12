@@ -26,7 +26,8 @@ export const statusAction = {
   CANCELLED: "Cancelled",
   ON_HOLD: "On Hold",
   RESUME: "Resume",
-  RESENT: "Resent"
+  RESENT: "Resent",
+  INQUEUE: "Inqueue"
 };
 
 export const techSummaryStatus = {
@@ -614,7 +615,16 @@ export const rawQueries = {
       WHERE u.rid = :userRid
       LIMIT 1
       `,
-  fetchEmailInfo: `SELECT * FROM ${MAIN_SCHEMA_NAME}.send_email_info WHERE is_email_send = false ORDER BY created_datetime ASC LIMIT 5`
+  fetchEmailInfo: `SELECT * FROM ${MAIN_SCHEMA_NAME}.send_email_info WHERE is_email_send = false ORDER BY created_datetime ASC LIMIT 5`,
+  updateInteractionStatus(schemaName : string, statusRid : string, interactionRid : string) {
+    return `UPDATE ${schemaName}.interactions SET status_rid = '${statusRid}' WHERE rid = '${interactionRid}'`
+  },
+  fetchInteractionQueueStatus() {
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE status_name ILIKE '%Inqueue%'`
+  },
+  updateInteractionSummaryStatus(statusRid : string, interactionRid : string) {
+    return `UPDATE ${MAIN_SCHEMA_NAME}.interactions_summary SET status_rid = '${statusRid}' WHERE interaction_rid = '${interactionRid}'`
+  }
 };
 
 export const filterTypesForSummaryInteractions : Record<string, any> = 
