@@ -103,6 +103,7 @@ class SchemaService {
       await this.createProjectTaskTimeLineTable(schemaName, sequelize);
       await this.createProjectTaskHistoryTable(schemaName, sequelize);
       await this.createInteractionTable(schemaName, sequelize);
+      await this.createAccountInteractionTable(schemaName, sequelize);
       await this.createInteractionItemTable(schemaName, sequelize);
       await this.createInteractionHistoryTable(schemaName, sequelize);
       await this.createInteractionResponseTable(schemaName, sequelize);
@@ -181,7 +182,7 @@ class SchemaService {
       CREATE TABLE IF NOT EXISTS "${schemaName}".ai_technical_summary (
         rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
         r_number varchar(20) UNIQUE DEFAULT (('ATS-'::text || lpad(nextval('"${schemaName}".ai_technical_summary_seq'::regclass)::text, 10, '0'::text))) NULL,
-        eid character varying(50),
+        eid character varying(120),
         created_by varchar(50) NOT NULL,
         modified_by varchar(50),
         created_datetime TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -1977,9 +1978,9 @@ private async createInteractionTable(
 
   await sequelize.query(`
     CREATE TABLE IF NOT EXISTS "${schemaName}".interactions (
-      rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+      rid VARCHAR(50)  DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
       r_number VARCHAR(20) UNIQUE DEFAULT 'INT-' || LPAD(nextval('"${schemaName}".interactions_seq')::TEXT, 10, '0'),
-      eid character varying(50),
+      eid character varying(120),
       created_by character varying(50) NOT NULL,
       modified_by character varying(50),
       created_datetime timestamp with time zone NOT NULL DEFAULT NOW(),
@@ -2013,7 +2014,7 @@ private async createInteractionTable(
       attachment_count integer,
       is_ai_processed boolean default false,
       interaction_version integer,
-      CONSTRAINT interactions_rid_unique UNIQUE (rid)
+      CONSTRAINT interactions_rid_unique UNIQUE (rid,project_fiscal_rid)
     );
   `);
 
@@ -2114,6 +2115,7 @@ private async createInteractionTable(
       modified_datetime TIMESTAMP WITH TIME ZONE,
       interaction_rid varchar(50) NOT NULL,
       interaction_item_rid varchar(50) NOT NULL,
+      project_fiscal_rid varchar(50),
       attribute_name VARCHAR(100) NOT NULL,
       old_value VARCHAR(2000),
       new_value VARCHAR(2000)
@@ -2121,7 +2123,7 @@ private async createInteractionTable(
     `);
 
     await sequelize.query(`
-      ALTER TABLE "${schemaName}".interaction_history ADD CONSTRAINT interaction_history_interaction_rid_fkey FOREIGN KEY (interaction_rid) REFERENCES "${schemaName}".interactions(rid) ON UPDATE CASCADE;
+      ALTER TABLE "${schemaName}".interaction_history ADD CONSTRAINT interaction_history_interaction_rid_fkey FOREIGN KEY (interaction_rid,project_fiscal_rid) REFERENCES "${schemaName}".interactions(rid,project_fiscal_rid) ON UPDATE CASCADE;
     `);
   }
   
@@ -2134,7 +2136,7 @@ private async createInteractionTable(
       CREATE TABLE IF NOT EXISTS "${schemaName}".interaction_items (
         rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
         r_number VARCHAR(20) UNIQUE DEFAULT 'ITI-' || LPAD(nextval('"${schemaName}".interaction_item_seq')::TEXT, 10, '0'),
-        eid character varying(50),
+        eid character varying(120),
         created_by varchar(50) NOT NULL,
         modified_by varchar(50),
         created_datetime TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
@@ -2156,7 +2158,7 @@ private async createInteractionTable(
         ALTER TABLE "${schemaName}".interaction_items ADD CONSTRAINT interaction_items_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
         ALTER TABLE "${schemaName}".interaction_items ADD CONSTRAINT interaction_items_project_rid_fkey FOREIGN KEY (project_rid) REFERENCES "${schemaName}".project(rid) ON UPDATE CASCADE;
         ALTER TABLE "${schemaName}".interaction_items ADD CONSTRAINT interaction_items_project_fiscal_rid_fkey FOREIGN KEY (project_fiscal_rid) REFERENCES "${schemaName}".project_fiscal(rid) ON UPDATE CASCADE;
-        ALTER TABLE "${schemaName}".interaction_items ADD CONSTRAINT interaction_items_interaction_rid_fkey FOREIGN KEY (interaction_rid) REFERENCES "${schemaName}".interactions(rid) ON UPDATE CASCADE;
+        ALTER TABLE "${schemaName}".interaction_items ADD CONSTRAINT interaction_items_interaction_rid_fkey FOREIGN KEY (interaction_rid,project_fiscal_rid) REFERENCES "${schemaName}".interactions(rid,project_fiscal_rid) ON UPDATE CASCADE;
     `);
     const fieldsToIndex = [
       "account_rid",
@@ -2187,6 +2189,7 @@ private async createInteractionTable(
         modified_by varchar(50),
         created_datetime TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
         modified_datetime TIMESTAMP WITH TIME ZONE,
+        project_fiscal_rid character varying(50),
         interaction_rid character varying(50) NOT NULL,
         interaction_item_rid character varying(50),
         interaction_response text,
@@ -2199,12 +2202,13 @@ private async createInteractionTable(
     `);
 
     await sequelize.query(`
-        ALTER TABLE "${schemaName}".interaction_response_history ADD CONSTRAINT interaction_rid_fkey FOREIGN KEY (interaction_rid) REFERENCES "${schemaName}".interactions(rid) ON UPDATE CASCADE;
+        ALTER TABLE "${schemaName}".interaction_response_history ADD CONSTRAINT interaction_rid_fkey FOREIGN KEY (interaction_rid,project_fiscal_rid) REFERENCES "${schemaName}".interactions(rid,project_fiscal_rid) ON UPDATE CASCADE;
         ALTER TABLE "${schemaName}".interaction_response_history ADD CONSTRAINT interaction_item_rid_fkey FOREIGN KEY (interaction_item_rid) REFERENCES "${schemaName}".interaction_items(rid) ON UPDATE CASCADE;
     `);
     const fieldsToIndex = [
       "interaction_rid",
       "interaction_item_rid",
+      "project_fiscal_rid",
     ];
 
     for (const field of fieldsToIndex) {
@@ -2216,24 +2220,6 @@ private async createInteractionTable(
     }
   }
 
-  private async createInteractionStatusHistoryTable(schemaName: string, sequelize: any)
-  {
-    await sequelize.query(`
-      CREATE TABLE IF NOT EXISTS "${schemaName}".interaction_status_history (
-        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
-        created_by varchar(50) NOT NULL,
-        created_datetime TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
-        interaction_rid character varying(50),
-        old_status_rid character varying(50),
-        new_status_rid character varying(50)
-      );
-    `);
-
-    await sequelize.query(`
-        ALTER TABLE "${schemaName}".interaction_status_history ADD CONSTRAINT interaction_rid_fkey FOREIGN KEY (interaction_rid) REFERENCES "${schemaName}".interactions(rid) ON UPDATE CASCADE;
-  
-    `);
-  }
   private async createInteractionAttachments(schemaName: string, sequelize: any)
   {
     await sequelize.query(`
@@ -2243,6 +2229,7 @@ private async createInteractionTable(
         modified_by varchar(50),
         created_datetime TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
         modified_datetime TIMESTAMP WITH TIME ZONE,
+        project_fiscal_rid character varying(50),
         interaction_rid character varying(50) NOT NULL,
         interaction_item_rid character varying(50),
         interaction_response_rid character varying(50),
@@ -2255,7 +2242,7 @@ private async createInteractionTable(
     `);
 
     await sequelize.query(`
-        ALTER TABLE "${schemaName}".interaction_attachments ADD CONSTRAINT interaction_rid_fkey FOREIGN KEY (interaction_rid) REFERENCES "${schemaName}".interactions(rid) ON UPDATE CASCADE;
+        ALTER TABLE "${schemaName}".interaction_attachments ADD CONSTRAINT interaction_rid_fkey FOREIGN KEY (interaction_rid,project_fiscal_rid) REFERENCES "${schemaName}".interactions(rid,project_fiscal_rid) ON UPDATE CASCADE;
          ALTER TABLE "${schemaName}".interaction_attachments ADD CONSTRAINT interaction_item_rid_fkey FOREIGN KEY (interaction_item_rid) REFERENCES "${schemaName}".interaction_items(rid) ON UPDATE CASCADE;
          ALTER TABLE "${schemaName}".interaction_attachments ADD CONSTRAINT interaction_response_rid_fkey FOREIGN KEY (interaction_response_rid) REFERENCES "${schemaName}".interaction_response_history(rid) ON UPDATE CASCADE;
 
@@ -2263,6 +2250,7 @@ private async createInteractionTable(
       const fieldsToIndex = [
       "interaction_rid",
       "interaction_item_rid",
+      "project_fiscal_rid",
     ];
 
     for (const field of fieldsToIndex) {
@@ -2289,6 +2277,7 @@ private async createInteractionTable(
       created_datetime TIMESTAMP DEFAULT NOW(),
       modified_datetime TIMESTAMP,
       account_rid varchar(50) NOT NULL,
+      project_fiscal_rid varchar(50),
       entity_rid varchar(50) NOT NULL,
       event_name varchar(100) NOT NULL,
       event_type varchar(100) NOT NULL,
@@ -2299,7 +2288,35 @@ private async createInteractionTable(
 
     await sequelize.query(`
      ALTER TABLE "${schemaName}".interaction_timeline ADD CONSTRAINT interaction_timeline_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
-    ALTER TABLE "${schemaName}".interaction_timeline ADD CONSTRAINT interaction_timeline_entity_rid_fkey FOREIGN KEY (entity_rid) REFERENCES "${schemaName}".interactions(rid) ON UPDATE CASCADE;
+    ALTER TABLE "${schemaName}".interaction_timeline ADD CONSTRAINT interaction_timeline_entity_rid_fkey FOREIGN KEY (entity_rid,project_fiscal_rid) REFERENCES "${schemaName}".interactions(rid,project_fiscal_rid) ON UPDATE CASCADE;
+    `);
+  }
+
+   private async createAccountInteractionTable(schemaName: string, sequelize: any) {
+    await sequelize.query(`
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".account_interaction_seq START 1;
+    `);
+
+    await sequelize.query(`
+      CREATE TABLE "${schemaName}".account_interactions (
+        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+        r_number varchar(20) UNIQUE DEFAULT (('AINT-'::text || lpad(nextval('"${schemaName}".account_interaction_seq'::regclass)::text, 10, '0'::text))) NULL,
+        eid VARCHAR(120),
+        created_by VARCHAR(50) NOT NULL,
+        modified_by VARCHAR(50),
+        created_datetime TIMESTAMP DEFAULT NOW(),
+        modified_datetime TIMESTAMP,
+        account_rid varchar(50) NOT NULL,
+        interaction_source_rid varchar(50) NOT NULL,
+        interaction_type_rid varchar(50) NOT NULL,
+        template_rid varchar(50),
+        status_rid varchar(50) NOT NULL,
+        sent_on_datetime timestamptz
+      );
+    `);
+
+    await sequelize.query(`
+      ALTER TABLE "${schemaName}".account_interactions ADD CONSTRAINT account_interactions_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
     `);
   }
 
@@ -2336,6 +2353,7 @@ private async createInteractionTable(
         email varchar(120) NOT NULL,
         account_rid varchar(50) NOT NULL,
         interaction_rid varchar(100) NOT NULL,
+        project_fiscal_rid varchar(50),
         otp varchar(100) NOT NULL,
         status varchar(20) NOT NULL,
         attempt_number int4 NOT NULL,
@@ -2345,8 +2363,8 @@ private async createInteractionTable(
     `);
 
     await sequelize.query(`
-     ALTER TABLE "${schemaName}".otp_entries_history ADD CONSTRAINT fk_otp_entries_history_account_rid FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON DELETE SET NULL;
-      ALTER TABLE "${schemaName}".otp_entries_history ADD CONSTRAINT fk_otp_entries_history_interaction_rid FOREIGN KEY (interaction_rid) REFERENCES "${schemaName}".interactions(rid) ON DELETE SET NULL;
+      ALTER TABLE "${schemaName}".otp_entries_history ADD CONSTRAINT fk_otp_entries_history_account_rid FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON DELETE SET NULL;
+      ALTER TABLE "${schemaName}".otp_entries_history ADD CONSTRAINT fk_otp_entries_history_interaction_rid FOREIGN KEY (interaction_rid,project_fiscal_rid) REFERENCES "${schemaName}".interactions(rid,project_fiscal_rid) ON DELETE SET NULL;
     `);
   }
 
