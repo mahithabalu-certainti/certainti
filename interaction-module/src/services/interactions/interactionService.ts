@@ -1027,6 +1027,8 @@ export class InteractionService {
     data?: { interactionResponse: any };
   }> {
     try {
+      const mainDb = await this.getMainDb()
+      const orgDb = await this.getOrgDb()
       const { accountNumber } = await this.interactionSchemaService.fetchValidAccountNumberById(accountRid);
       if (!accountNumber) {
         return {
@@ -1037,6 +1039,9 @@ export class InteractionService {
       }
 
       const interactionResponse: any[] = [];
+      const schemaName = rawQueries.fetchSchemaName(accountNumber)
+
+      const fetchInQueueStatus : any = await mainDb.query(rawQueries.fetchInteractionQueueStatus())
 
       for (const { interaction_rid, email_info, project_fiscal_rid } of interactions) {
         let data : any = {}
@@ -1050,7 +1055,8 @@ export class InteractionService {
         data.is_interaction_followup = is_interaction_followup
         
         await this.interactionSchemaService.insertEmailInfoDatas(data);
-
+        await orgDb.query(rawQueries.updateInteractionStatus(schemaName, fetchInQueueStatus[0][0].rid, interaction_rid))
+        await mainDb.query(rawQueries.updateInteractionSummaryStatus(fetchInQueueStatus[0][0].rid, interaction_rid))
         interactionResponse.push({
           interactionRid: interaction_rid,
         });
