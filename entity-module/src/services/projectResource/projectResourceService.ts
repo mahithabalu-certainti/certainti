@@ -1,9 +1,7 @@
 import { Op, Order, Sequelize } from "sequelize";
+import { HttpStatus, rawQueries } from "../../utils/constants";
 import {
-  HttpStatus,
-  rawQueries,
-} from "../../utils/constants";
-import {
+  IAnomalyStatus,
   ICreateProjectResource,
   IUpdateInlineProjectResource,
   IUpdateProjectResource,
@@ -14,15 +12,15 @@ import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import ProjectIngestionService from "../projectIngestionService";
 import { Logger } from "winston";
+import moment from "moment";
 
 export class ProjectResourceService {
   private projectResourceSchema: ProjectResourceSchemaService;
   private projectIngestion: ProjectIngestionService;
   private logger: Logger;
 
-
   constructor(logger: Logger) {
-    this.logger=logger;
+    this.logger = logger;
     this.projectResourceSchema = new ProjectResourceSchemaService();
     this.projectIngestion = new ProjectIngestionService(this.logger);
   }
@@ -39,8 +37,13 @@ export class ProjectResourceService {
     const dbInit = await this.projectResourceSchema.getSequelize();
     const transaction = await dbInit.transaction();
     try {
-      const { account_rid, project_fiscal_rid, resource_code, start_date, end_date } =
-        projectResourceData;
+      const {
+        account_rid,
+        project_fiscal_rid,
+        resource_code,
+        start_date,
+        end_date,
+      } = projectResourceData;
       const { accountNumber } =
         await this.projectResourceSchema.fetchValidAccountNumberById(
           account_rid
@@ -65,11 +68,11 @@ export class ProjectResourceService {
         };
       }
 
-      const projectFiscalData = await this.projectResourceSchema.validateProjectFiscalById(
-        accountNumber,
-        project_fiscal_rid
-      );
-
+      const projectFiscalData =
+        await this.projectResourceSchema.validateProjectFiscalById(
+          accountNumber,
+          project_fiscal_rid
+        );
 
       await this.projectResourceSchema.createProjectResourcesTable(
         accountNumber
@@ -89,36 +92,133 @@ export class ProjectResourceService {
             end_date
           );
 
-        if (!existsInProjectResource) {
-          const existsInResourceTable =
-            await this.projectResourceSchema.existsInResourceTable(
+        const statusMap =
+          await this.projectResourceSchema.getResourceStatuses();
+        const currencyThreshold =
+          await this.projectResourceSchema.getCurrencyThreshold(
+            projectResourceData.currency_rid
+          );
+
+        const isDuplicate =
+          await this.projectResourceSchema.findDuplicateProjectResource(
+            accountNumber,
+            projectResourceData,
+            resourceData,
+            statusMap
+          );
+
+        if (isDuplicate && projectResourceData.user_preference != "accept") {
+          return {
+            statusCode: HttpStatus.PROMPT,
+            message:
+              "Entered compensation details already exists for the resource. Would you like to create another compensation with same values",
+          };
+        }
+
+        let status = "Active";
+        if (
+          projectResourceData.total_hours_pro_res &&
+          Number(projectResourceData.total_hours_pro_res) > 3000
+        ) {
+          status = "Anomaly";
+        }
+
+        if (
+          projectResourceData.total_cost_pro_res !== undefined &&
+          currencyThreshold !== null &&
+          Number(projectResourceData.total_cost_pro_res) > currencyThreshold
+        ) {
+          status = "Anomaly";
+        }
+
+        const stausId = statusMap?.get(status) ?? "";
+
+        const projectResource =
+          await this.projectResourceSchema.insertIntoProjectResourceTable(
+            accountNumber,
+            projectFiscalData.project_code,
+            projectResourceData,
+            projectFiscalData.project_rid,
+            projectFiscalData.fiscal_year,
+            userId,
+            stausId,
+            transaction
+          );
+
+        if (projectResource) {
+          await this.projectResourceSchema.addProjectResourceTimeline(
+            accountNumber,
+            "create",
+            projectResourceData,
+            projectResource.rid,
+            userId,
+            transaction
+          );
+        }
+
+        if (status === "Anomaly") {
+          await transaction.commit();
+          return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.SUCCESS_MESSAGE,
+            data: {
+              projectResource: projectResourceData,
+            },
+          };
+        }
+
+        // if (!existsInProjectResource) {
+        const existsInResourceTable =
+          await this.projectResourceSchema.existsInResourceTable(
+            accountNumber,
+            account_rid,
+            resource_code,
+            transaction
+          );
+
+        // if (!existsInResourceTable) {
+        //   await this.projectResourceSchema.insertIntoResourceTable(
+        //     accountNumber,
+        //     account_rid,
+        //     userId,
+        //     projectResourceData,
+        //     transaction
+        //   );
+        // }
+
+        const existsInResourceFiscal =
+          await this.projectResourceSchema.existsInResourceFiscalTable(
+            accountNumber,
+            account_rid,
+            resource_code,
+            projectFiscalData.fiscal_year,
+            transaction
+          );
+
+        if (!existsInResourceFiscal) {
+          await this.projectResourceSchema.insertIntoResourceFiscalTable(
+            accountNumber,
+            account_rid,
+            userId,
+            projectResourceData,
+            projectFiscalData.fiscal_year,
+            transaction
+          );
+        }
+
+        if (projectResourceData.region_rid) {
+          const existsInResourceFiscalRegion =
+            await this.projectResourceSchema.existsInResourceFiscalRegionTable(
               accountNumber,
               account_rid,
               resource_code,
-              transaction
-            );
-
-          // if (!existsInResourceTable) {
-          //   await this.projectResourceSchema.insertIntoResourceTable(
-          //     accountNumber,
-          //     account_rid,
-          //     userId,
-          //     projectResourceData,
-          //     transaction
-          //   );
-          // }
-
-          const existsInResourceFiscal =
-            await this.projectResourceSchema.existsInResourceFiscalTable(
-              accountNumber,
-              account_rid,
-              resource_code,
+              projectResourceData.region_rid,
               projectFiscalData.fiscal_year,
               transaction
             );
 
-          if (!existsInResourceFiscal) {
-            await this.projectResourceSchema.insertIntoResourceFiscalTable(
+          if (!existsInResourceFiscalRegion) {
+            await this.projectResourceSchema.insertIntoResourceFiscalRegionTable(
               accountNumber,
               account_rid,
               userId,
@@ -127,166 +227,171 @@ export class ProjectResourceService {
               transaction
             );
           }
+        }
+        // else {
+        //   await this.projectResourceSchema.updateResourceFiscalTable(
+        //     accountNumber,
+        //     account_rid,
+        //     userId,
+        //     projectResourceData,
+        //     transaction
+        //   );
+        // }
 
-          if (projectResourceData.region_rid) {
-            const existsInResourceFiscalRegion =
-              await this.projectResourceSchema.existsInResourceFiscalRegionTable(
-                accountNumber,
-                account_rid,
-                resource_code,
-                projectResourceData.region_rid,
-                projectFiscalData.fiscal_year,
-                transaction
-              );
+        // project
+        // const existsInProjectFiscal =
+        //   await this.projectResourceSchema.existsInProjectFiscalTable(
+        //     accountNumber,
+        //     account_rid,
+        //     projectData.project_code,
+        //     fiscal_year,
+        //     transaction
+        //   );
+        // if (!existsInProjectFiscal) {
+        //   const createdProjectFiscal = await this.projectResourceSchema.insertProjectFiscalTable(
+        //     accountNumber,
+        //     account_rid,
+        //     projectData.project_code,
+        //     fiscal_year,
+        //     projectResourceData,
+        //     userId,
+        //     transaction
+        //   );
 
-            if (!existsInResourceFiscalRegion) {
-              await this.projectResourceSchema.insertIntoResourceFiscalRegionTable(
-                accountNumber,
-                account_rid,
-                userId,
-                projectResourceData,
-                projectFiscalData.fiscal_year,
-                transaction
-              );
-            }
-          }
-          // else {
-          //   await this.projectResourceSchema.updateResourceFiscalTable(
-          //     accountNumber,
-          //     account_rid,
-          //     userId,
-          //     projectResourceData,
-          //     transaction
-          //   );
-          // }
+        //   await this.projectResourceSchema.insertProjectFiscalSummaryTable(
+        //     accountNumber,
+        //     account_rid,
+        //     projectData.project_code,
+        //     fiscal_year,
+        //     projectResourceData,
+        //     userId,
+        //     createdProjectFiscal,
+        //     transaction
+        //   );
+        // }
 
-          // project
-          // const existsInProjectFiscal =
-          //   await this.projectResourceSchema.existsInProjectFiscalTable(
-          //     accountNumber,
-          //     account_rid,
-          //     projectData.project_code,
-          //     fiscal_year,
-          //     transaction
-          //   );
-          // if (!existsInProjectFiscal) {
-          //   const createdProjectFiscal = await this.projectResourceSchema.insertProjectFiscalTable(
-          //     accountNumber,
-          //     account_rid,
-          //     projectData.project_code,
-          //     fiscal_year,
-          //     projectResourceData,
-          //     userId,
-          //     transaction
-          //   );
+        if (projectResourceData.region_rid) {
+          const existsInProjectFiscalRegion =
+            await this.projectResourceSchema.existsInProjectFiscalRegionTable(
+              accountNumber,
+              account_rid,
+              projectResourceData.project_fiscal_rid,
+              projectFiscalData.fiscal_year,
+              projectResourceData.region_rid,
+              transaction
+            );
 
-          //   await this.projectResourceSchema.insertProjectFiscalSummaryTable(
-          //     accountNumber,
-          //     account_rid,
-          //     projectData.project_code,
-          //     fiscal_year,
-          //     projectResourceData,
-          //     userId,
-          //     createdProjectFiscal,
-          //     transaction
-          //   );
-          // }
-
-          if (projectResourceData.region_rid) {
-            const existsInProjectFiscalRegion =
-              await this.projectResourceSchema.existsInProjectFiscalRegionTable(
-                accountNumber,
-                account_rid,
-                projectResourceData.project_fiscal_rid,
-                projectFiscalData.fiscal_year,
-                projectResourceData.region_rid,
-                transaction
-              );
-
-            if (!existsInProjectFiscalRegion) {
-              await this.projectResourceSchema.insertProjectFiscalRegionTable(
-                accountNumber,
-                projectFiscalData.project_code,
-                projectResourceData,
-                resourceData,
-                projectFiscalData.fiscal_year,
-                userId,
-                transaction
-              );
-            }
-          }
-
-          // account fiscal
-          // const exisitInAccountFiscal = await this.projectResourceSchema.existsInAccountFiscalTable(
-          //   accountNumber,
-          //   account_rid,
-          //   fiscal_year,
-          //   transaction
-          // );
-          // if(!exisitInAccountFiscal){
-          //   await this.projectResourceSchema.insertIntoAccountFiscal(
-          //     accountNumber,
-          //     projectResourceData,
-          //     userId,
-          //     transaction
-          //   );
-          // };
-
-          if (projectResourceData.region_rid) {
-            const exisitInAccountFiscalRegion =
-              await this.projectResourceSchema.existsInAccountFiscalRegionTable(
-                accountNumber,
-                account_rid,
-                projectFiscalData.fiscal_year,
-                projectResourceData.region_rid,
-                transaction
-              );
-            if (!exisitInAccountFiscalRegion) {
-              await this.projectResourceSchema.insertIntoAccountFiscalRegion(
-                accountNumber,
-                projectResourceData,
-                resourceData,
-                projectFiscalData.fiscal_year,
-                projectResourceData.region_rid,
-                userId,
-                transaction
-              );
-            }
-          }
-
-          // project resource
-          const projectResource =
-            await this.projectResourceSchema.insertIntoProjectResourceTable(
+          if (!existsInProjectFiscalRegion) {
+            await this.projectResourceSchema.insertProjectFiscalRegionTable(
               accountNumber,
               projectFiscalData.project_code,
               projectResourceData,
-              projectFiscalData.project_rid,
+              resourceData,
               projectFiscalData.fiscal_year,
               userId,
               transaction
             );
+          }
+        }
 
-          const existsInProjectResourceFiscal =
-            await this.projectResourceSchema.existsInProjectResourceFiscalTable(
+        // account fiscal
+        // const exisitInAccountFiscal = await this.projectResourceSchema.existsInAccountFiscalTable(
+        //   accountNumber,
+        //   account_rid,
+        //   fiscal_year,
+        //   transaction
+        // );
+        // if(!exisitInAccountFiscal){
+        //   await this.projectResourceSchema.insertIntoAccountFiscal(
+        //     accountNumber,
+        //     projectResourceData,
+        //     userId,
+        //     transaction
+        //   );
+        // };
+
+        if (projectResourceData.region_rid) {
+          const exisitInAccountFiscalRegion =
+            await this.projectResourceSchema.existsInAccountFiscalRegionTable(
               accountNumber,
               account_rid,
               projectFiscalData.fiscal_year,
-              projectResourceData.project_fiscal_rid,
-              resourceData.rid || "",
-              projectResourceData.country_rid,
+              projectResourceData.region_rid,
               transaction
             );
-          if (!existsInProjectResourceFiscal) {
-            await this.projectResourceSchema.insertIntoProjectResourceFiscalTable(
+          if (!exisitInAccountFiscalRegion) {
+            await this.projectResourceSchema.insertIntoAccountFiscalRegion(
               accountNumber,
               projectResourceData,
-              projectFiscalData,
+              resourceData,
+              projectFiscalData.fiscal_year,
+              projectResourceData.region_rid,
+              userId,
+              transaction
+            );
+          }
+        }
+
+        // project resource
+
+        const existsInProjectResourceFiscal =
+          await this.projectResourceSchema.existsInProjectResourceFiscalTable(
+            accountNumber,
+            account_rid,
+            projectFiscalData.fiscal_year,
+            projectResourceData.project_fiscal_rid,
+            resourceData.rid || "",
+            projectResourceData.country_rid,
+            transaction
+          );
+        if (!existsInProjectResourceFiscal) {
+          await this.projectResourceSchema.insertIntoProjectResourceFiscalTable(
+            accountNumber,
+            projectResourceData,
+            projectFiscalData,
+            userId,
+            projectResource,
+            transaction
+          );
+        } else {
+          await this.projectResourceSchema.updateProjectResourceFiscalTable(
+            accountNumber,
+            projectResourceData,
+            projectFiscalData,
+            projectFiscalData.fiscal_year,
+            projectFiscalData.rid,
+            resourceData.rid || "",
+            userId,
+            transaction
+          );
+        }
+
+        if (projectResourceData.region_rid) {
+          const existsInProjectResourceFiscalRegion =
+            await this.projectResourceSchema.existsInProjectResourceFiscalRegionTable(
+              accountNumber,
+              account_rid,
+              projectFiscalData.fiscal_year,
+              projectFiscalData.rid,
+              resourceData.rid || "",
+              projectResourceData.country_rid || null,
+              projectResourceData.region_rid,
+              transaction
+            );
+
+          if (!existsInProjectResourceFiscalRegion) {
+            await this.projectResourceSchema.insertIntoProjectResourceFiscalRegionTable(
+              accountNumber,
+              projectResourceData,
+              projectFiscalData.project_rid,
+              projectFiscalData.project_code,
+              projectFiscalData.fiscal_year,
               userId,
               projectResource,
               transaction
             );
           } else {
-            await this.projectResourceSchema.updateProjectResourceFiscalTable(
+            await this.projectResourceSchema.updateProjectResourceFiscalRegionTable(
               accountNumber,
               projectResourceData,
               projectFiscalData,
@@ -297,143 +402,101 @@ export class ProjectResourceService {
               transaction
             );
           }
-
-          if (projectResourceData.region_rid) {
-            const existsInProjectResourceFiscalRegion =
-              await this.projectResourceSchema.existsInProjectResourceFiscalRegionTable(
-                accountNumber,
-                account_rid,
-                projectFiscalData.fiscal_year,
-                projectFiscalData.rid,
-                resourceData.rid || "",
-                projectResourceData.country_rid || null,
-                projectResourceData.region_rid,
-                transaction
-              );
-
-            if (!existsInProjectResourceFiscalRegion) {
-              await this.projectResourceSchema.insertIntoProjectResourceFiscalRegionTable(
-                accountNumber,
-                projectResourceData,
-                projectFiscalData.project_rid,
-                projectFiscalData.project_code,
-                projectFiscalData.fiscal_year,
-                userId,
-                projectResource,
-                transaction
-              );
-            } else {
-              await this.projectResourceSchema.updateProjectResourceFiscalRegionTable(
-                accountNumber,
-                projectResourceData,
-                projectFiscalData,
-                projectFiscalData.fiscal_year,
-                projectFiscalData.rid,
-                resourceData.rid || "",
-                userId,
-                transaction
-              );
-            }
-          }
-
-          if (projectResource) {
-            await this.projectResourceSchema.addProjectResourceTimeline(
-              accountNumber,
-              "create",
-              projectResourceData,
-              projectResource.rid,
-              userId,
-              transaction
-            );
-          }
-
-          await this.projectResourceSchema.aggregatesProjectFiscal(
-            accountNumber,
-            account_rid,
-            projectResourceData.project_fiscal_rid,
-            projectFiscalData.fiscal_year,
-            transaction
-          );
-
-          await this.projectResourceSchema.aggregatesProjectFiscalRegion(
-            accountNumber,
-            account_rid,
-            projectFiscalData.project_code,
-            projectFiscalData.rid,
-            projectFiscalData.fiscal_year,
-            transaction
-          );
-
-          await this.projectResourceSchema.aggregatesProjectFiscalSummary(
-            accountNumber,
-            account_rid,
-            projectFiscalData.rid,
-            projectFiscalData.project_code,
-            projectFiscalData.fiscal_year,
-            transaction
-          );
-
-          // await this.projectResourceSchema.aggregatesProject(
-          //   accountNumber,
-          //   account_rid,
-          //   projectFiscalData.project_code,
-          //   transaction
-          // );
-
-          // await this.projectResourceSchema.aggregatesProjectSummary(
-          //   accountNumber,
-          //   account_rid,
-          //   projectFiscalData.project_code,
-          //   transaction
-          // );
-
-          await this.projectResourceSchema.aggregatesResourceFiscal(
-            accountNumber,
-            account_rid,
-            projectResourceData.resource_code,
-            resourceData,
-            projectFiscalData.fiscal_year,
-            transaction
-          );
-
-          await this.projectResourceSchema.aggregatesResourceFiscalRegion(
-            accountNumber,
-            account_rid,
-            projectResourceData.resource_code,
-            resourceData,
-            projectFiscalData.fiscal_year,
-            transaction
-          );
-
-          await this.projectResourceSchema.aggregatesAccountFiscal(
-            accountNumber,
-            account_rid,
-            projectFiscalData.fiscal_year,
-            transaction
-          );
-
-          await this.projectResourceSchema.aggregatesAccountFiscalRegion(
-            accountNumber,
-            account_rid,
-            projectFiscalData.fiscal_year,
-            transaction
-          );
-
-          // await this.projectResourceSchema.aggregatesAccount(
-          //   accountNumber,
-          //   account_rid,
-          //   transaction
-          // );
-
-          await transaction.commit();
-        } else {
-          return {
-            statusCode: HttpStatus.FAILED,
-            message: HttpStatus.FAILED_MESSAGE,
-            errorMessage:
-              "Same Resource details already exist for the project in the account for the fiscal year",
-          };
         }
+
+        await this.projectResourceSchema.aggregatesProjectFiscal(
+          accountNumber,
+          account_rid,
+          projectResourceData.project_fiscal_rid,
+          projectFiscalData.fiscal_year,
+          statusMap,
+          transaction
+        );
+
+        await this.projectResourceSchema.aggregatesProjectFiscalRegion(
+          accountNumber,
+          account_rid,
+          projectFiscalData.project_code,
+          projectFiscalData.rid,
+          projectFiscalData.fiscal_year,
+          statusMap,
+          transaction
+        );
+
+        await this.projectResourceSchema.aggregatesProjectFiscalSummary(
+          accountNumber,
+          account_rid,
+          projectFiscalData.rid,
+          projectFiscalData.project_code,
+          projectFiscalData.fiscal_year,
+          statusMap,
+          transaction
+        );
+
+        // await this.projectResourceSchema.aggregatesProject(
+        //   accountNumber,
+        //   account_rid,
+        //   projectFiscalData.project_code,
+        //   transaction
+        // );
+
+        // await this.projectResourceSchema.aggregatesProjectSummary(
+        //   accountNumber,
+        //   account_rid,
+        //   projectFiscalData.project_code,
+        //   transaction
+        // );
+
+        await this.projectResourceSchema.aggregatesResourceFiscal(
+          accountNumber,
+          account_rid,
+          projectResourceData.resource_code,
+          resourceData,
+          projectFiscalData.fiscal_year,
+          statusMap,
+          transaction
+        );
+
+        await this.projectResourceSchema.aggregatesResourceFiscalRegion(
+          accountNumber,
+          account_rid,
+          projectResourceData.resource_code,
+          resourceData,
+          projectFiscalData.fiscal_year,
+          statusMap,
+          transaction
+        );
+
+        await this.projectResourceSchema.aggregatesAccountFiscal(
+          accountNumber,
+          account_rid,
+          projectFiscalData.fiscal_year,
+          transaction
+        );
+
+        await this.projectResourceSchema.aggregatesAccountFiscalRegion(
+          accountNumber,
+          account_rid,
+          projectFiscalData.fiscal_year,
+          transaction
+        );
+
+        // await this.projectResourceSchema.aggregatesAccount(
+        //   accountNumber,
+        //   account_rid,
+        //   transaction
+        // );
+
+        await transaction.commit();
+        // }
+        // else {
+        //   return {
+        //     statusCode: HttpStatus.FAILED,
+        //     message: HttpStatus.FAILED_MESSAGE,
+        //     errorMessage:
+        //       "Same Resource details already exist for the project in the account for the fiscal year",
+        //   };
+        // }
       }
 
       return {
@@ -473,10 +536,11 @@ export class ProjectResourceService {
         throw new Error("Invalid account ID");
       }
 
-      const projectData = await this.projectResourceSchema.validateProjectFiscalById(
-        validAccountNumber,
-        project_fiscal_rid
-      );
+      const projectData =
+        await this.projectResourceSchema.validateProjectFiscalById(
+          validAccountNumber,
+          project_fiscal_rid
+        );
 
       const resourceData =
         await this.projectResourceSchema.validateResourceByCode(
@@ -493,23 +557,45 @@ export class ProjectResourceService {
         };
       }
 
-      const isDuplicate =
-        await this.projectResourceSchema.validateProjectResource(
-          validAccountNumber,
-          projectResourceData,
-          projectData.fiscal_year,
-          projectData.project_code,          
-          resourceData
+      const statusMap = await this.projectResourceSchema.getResourceStatuses();
+      const currencyThreshold =
+        await this.projectResourceSchema.getCurrencyThreshold(
+          projectResourceData.currency_rid
         );
 
-      if (isDuplicate) {
+      const isDuplicate =
+        await this.projectResourceSchema.findDuplicateProjectResourceOnUpdate(
+          validAccountNumber,
+          projectResourceData,
+          resourceData,
+          statusMap
+        );
+
+      if (isDuplicate && projectResourceData.user_preference != "accept") {
         return {
-          statusCode: HttpStatus.FAILED,
-          message: HttpStatus.FAILED_MESSAGE,
-          errorMessage:
-            "Same Resource details already exist for the project in the account for the fiscal year",
+          statusCode: HttpStatus.PROMPT,
+          message:
+            "Entered compensation details already exists for the resource. Would you like to create another compensation with same values",
         };
       }
+
+      let status = "Active";
+      if (
+        projectResourceData.total_hours_pro_res &&
+        Number(projectResourceData.total_hours_pro_res) > 3000
+      ) {
+        status = "Anomaly";
+      }
+
+      if (
+        projectResourceData.total_cost_pro_res !== undefined &&
+        currencyThreshold !== null &&
+        Number(projectResourceData.total_cost_pro_res) > currencyThreshold
+      ) {
+        status = "Anomaly";
+      }
+
+      const stausId = statusMap?.get(status) ?? "";
 
       const existingProjectResource =
         await this.projectResourceSchema.fetchExistingProjectResource(
@@ -525,6 +611,7 @@ export class ProjectResourceService {
           userId,
           resourceData.rid || "",
           projectData,
+          stausId,
           transaction
         );
 
@@ -536,6 +623,7 @@ export class ProjectResourceService {
         userId,
         existingProjectResource,
         resourceData,
+        statusMap,
         transaction
       );
 
@@ -548,6 +636,7 @@ export class ProjectResourceService {
         userId,
         existingProjectResource,
         projectData.fiscal_year,
+        statusMap,
         transaction
       );
 
@@ -558,6 +647,7 @@ export class ProjectResourceService {
         projectData,
         resourceData,
         userId,
+        statusMap,
         transaction
       );
 
@@ -568,6 +658,7 @@ export class ProjectResourceService {
         existingProjectResource,
         projectData,
         userId,
+        statusMap,
         transaction
       );
 
@@ -578,6 +669,7 @@ export class ProjectResourceService {
         projectResourceData,
         projectData,
         resourceData,
+        statusMap,
         transaction
       );
 
@@ -587,6 +679,7 @@ export class ProjectResourceService {
         account_rid,
         projectResourceData,
         projectData,
+        statusMap,
         transaction
       );
 
@@ -618,6 +711,229 @@ export class ProjectResourceService {
     } catch (err) {
       console.log("Error updating project resource", err);
       await transaction.rollback();
+      throw this.throwServiceError(err as Error);
+    }
+  }
+
+  async handleAnomalyStatus(
+    data: IAnomalyStatus,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    data?: { projectResource: any };
+  }> {
+    const dbInit = await this.projectResourceSchema.getSequelize();
+    const transaction = await dbInit.transaction();
+
+    const { accountId, rid: projectResourceRid, action } = data;
+
+    try {
+      const { accountNumber } =
+        await this.projectResourceSchema.fetchValidAccountNumberById(accountId);
+
+      if (!accountNumber) {
+        throw new Error("Invalid account ID");
+      }
+
+      const projectResource =
+        await this.projectResourceSchema.fetchProjectResourceById(
+          accountNumber,
+          projectResourceRid
+        );
+
+      if (!projectResource) {
+        throw new Error("Project resource not found");
+      }
+
+      if (action === "accept") {
+        // 1. Update status to 'Active'
+        const statusMap: any =
+          await this.projectResourceSchema.getResourceStatuses();
+        const activeStatusId = statusMap.get("Active");
+
+        await this.projectResourceSchema.updateProjectResourceStatus(
+          accountNumber,
+          projectResourceRid,
+          activeStatusId,
+          userId,
+          transaction
+        );
+
+        await this.projectResourceSchema.addProjectResourceHistory(
+          accountNumber,
+          {
+            ...projectResource,
+            status_rid: activeStatusId,
+          },
+          projectResource,
+          projectResourceRid,
+          userId,
+          transaction
+        );
+
+        // 2. Fetch required data for aggregation
+        const {
+          account_rid,
+          project_fiscal_rid,
+          fiscal_year,
+          region_rid,
+          country_rid,
+          project_rid,
+        } = projectResource;
+
+        const resourceData =
+          await this.projectResourceSchema.validateResourceByCode(
+            accountNumber,
+            data.resourceCode,
+            account_rid
+          );
+
+        if (!resourceData) {
+          throw new Error("Invalid resource code");
+        }
+
+        const projectFiscalData =
+          await this.projectResourceSchema.validateProjectFiscalById(
+            accountNumber,
+            project_fiscal_rid
+          );
+
+        const startDate = projectResource.start_date
+          ? moment.utc(projectResource.start_date).format("YYYY-MM-DD")
+          : null;
+
+        const endDate = projectResource.end_date
+          ? moment.utc(projectResource.end_date).format("YYYY-MM-DD")
+          : null;
+
+        const updatedProjectResourceData = {
+          ...projectResource.dataValues,
+          resource_code: resourceData.resource_code,
+        };
+
+        // project resources
+        await this.updateFiscalTables(
+          accountNumber,
+          updatedProjectResourceData,
+          projectFiscalData,
+          userId,
+          projectResource,
+          resourceData,
+          statusMap,
+          transaction
+        );
+
+        // resources fiscal and region
+        await this.updateResourceFiscalRegion(
+          accountNumber,
+          account_rid,
+          updatedProjectResourceData,
+          resourceData,
+          userId,
+          projectResource,
+          projectFiscalData.fiscal_year,
+          statusMap,
+          transaction
+        );
+
+        // project fiscal region
+        await this.updateProjectFiscalRegion(
+          accountNumber,
+          updatedProjectResourceData,
+          projectFiscalData,
+          resourceData,
+          userId,
+          statusMap,
+          transaction
+        );
+
+        // account fiscal region
+        await this.updateAccountFiscalRegion(
+          accountNumber,
+          updatedProjectResourceData,
+          projectResource,
+          projectFiscalData,
+          userId,
+          statusMap,
+          transaction
+        );
+
+        // resources
+        await this.aggregateResource(
+          accountNumber,
+          account_rid,
+          updatedProjectResourceData,
+          projectFiscalData,
+          resourceData,
+          statusMap,
+          transaction
+        );
+
+        // projects
+        await this.aggregateProject(
+          accountNumber,
+          account_rid,
+          updatedProjectResourceData,
+          projectFiscalData,
+          statusMap,
+          transaction
+        );
+
+        // accounts
+        await this.aggregateAccount(
+          accountNumber,
+          account_rid,
+          projectFiscalData.fiscal_year,
+          transaction
+        );
+
+        await transaction.commit();
+
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          message: HttpStatus.SUCCESS_MESSAGE,
+          data: {
+            projectResource: {},
+          },
+        };
+      } else {
+        const statusMap: any =
+          await this.projectResourceSchema.getResourceStatuses();
+        const activeStatusId = statusMap.get("In-Active");
+
+        await this.projectResourceSchema.updateProjectResourceStatus(
+          accountNumber,
+          projectResourceRid,
+          activeStatusId,
+          userId,
+          transaction
+        );
+
+        await this.projectResourceSchema.addProjectResourceHistory(
+          accountNumber,
+          {
+            ...projectResource,
+            status_rid: activeStatusId,
+          },
+          projectResource,
+          projectResourceRid,
+          userId,
+          transaction
+        );
+
+        await transaction.commit();
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          message: HttpStatus.SUCCESS_MESSAGE,
+          data: {
+            projectResource: {},
+          },
+        };
+      }
+    } catch (err) {
+      await transaction.rollback();
+      console.log("Error handling accepted anomaly", err);
       throw this.throwServiceError(err as Error);
     }
   }
@@ -671,8 +987,8 @@ export class ProjectResourceService {
           sortBy,
           sortOrder
         );
-        projectResources = projectResources.slice(offset, page * limit)
-       
+      projectResources = projectResources.slice(offset, page * limit);
+
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -785,30 +1101,29 @@ export class ProjectResourceService {
           (attachment) => attachment.document_category_rid
         );
         const userIds = attachments.map((attachment) => attachment.created_by);
-        
+
         // Execute all queries in parallel
-        const [documentTypes, documentCategories, users] =
-          await Promise.all([
-            documentTypeIds.length > 0
-              ? sequelize.query(rawQueries.GET_DOCUMENT_TYPES, {
-                  replacements: { documentTypeIds },
-                  type: "SELECT",
-                })
-              : [],
-            documentCategoryIds.length > 0
-              ? sequelize.query(rawQueries.GET_DOCUMENT_CATEGORIES, {
-                  replacements: { documentCategoryIds },
-                  type: "SELECT",
-                })
-              : [],
-            userIds.length > 0
-              ? sequelize.query(rawQueries.GET_USERS, {
-                  replacements: { userIds },
-                  type: "SELECT",
-                })
-              : []
-          ]);
-          
+        const [documentTypes, documentCategories, users] = await Promise.all([
+          documentTypeIds.length > 0
+            ? sequelize.query(rawQueries.GET_DOCUMENT_TYPES, {
+                replacements: { documentTypeIds },
+                type: "SELECT",
+              })
+            : [],
+          documentCategoryIds.length > 0
+            ? sequelize.query(rawQueries.GET_DOCUMENT_CATEGORIES, {
+                replacements: { documentCategoryIds },
+                type: "SELECT",
+              })
+            : [],
+          userIds.length > 0
+            ? sequelize.query(rawQueries.GET_USERS, {
+                replacements: { userIds },
+                type: "SELECT",
+              })
+            : [],
+        ]);
+
         // Enhance attachments with related data
         mappedAttachments = attachments.map((attachment) => {
           const documentType = documentTypes.find(
@@ -829,8 +1144,8 @@ export class ProjectResourceService {
             uploaded_by: (uploadedBy as any)?.full_name || "",
             attached_to: attachedTo,
             size_in_mb: attachment.size_in_mb
-            ? `${attachment.size_in_mb} mb`
-            : "0 mb",
+              ? `${attachment.size_in_mb} mb`
+              : "0 mb",
           };
         });
       }
@@ -878,10 +1193,14 @@ export class ProjectResourceService {
         throw new Error("Invalid account ID");
       }
 
-      const projectData = await this.projectResourceSchema.validateProjectFiscalById(
-        validAccountNumber,
-        project_fiscal_rid
-      );
+      const statusMap: any =
+        await this.projectResourceSchema.getResourceStatuses();
+
+      const projectData =
+        await this.projectResourceSchema.validateProjectFiscalById(
+          validAccountNumber,
+          project_fiscal_rid
+        );
 
       let resourceData = null;
 
@@ -892,55 +1211,88 @@ export class ProjectResourceService {
           transaction
         );
 
-      if(!existingProjectResource){
-        return {
-          statusCode: HttpStatus.FAILED,
-          message: HttpStatus.FAILED_MESSAGE,
-          errorMessage: "Invalid project resource ID: project resource doesn't exists",
-        };
-      }
-
-      resourceData =
-        await this.projectResourceSchema.validateResourceById(
-          validAccountNumber,
-          existingProjectResource?.resource_rid,
-          account_rid
-        );
-
-        if(projectResourceData.resource_code){
-          resourceData = await this.projectResourceSchema.validateResourceByCode(
-            validAccountNumber,
-            projectResourceData.resource_code,
-            projectResourceData.account_rid
-          );
-        }
-
-        if (!resourceData) {
-          return {
-            statusCode: HttpStatus.FAILED,
-            message: HttpStatus.FAILED_MESSAGE,
-            errorMessage: "Invalid resource code: resource doesn't exists",
-          };
-        }
-
-      const isDuplicate =
-        await this.projectResourceSchema.validateProjectResourceInlineEdit(
-          validAccountNumber,
-          projectResourceData,
-          projectData.fiscal_year,
-          projectData.project_code,
-          existingProjectResource,
-          resourceData
-        );
-
-      if (isDuplicate) {
+      if (!existingProjectResource) {
         return {
           statusCode: HttpStatus.FAILED,
           message: HttpStatus.FAILED_MESSAGE,
           errorMessage:
-            "Same Resource details already exist for the project in the account for the fiscal year",
+            "Invalid project resource ID: project resource doesn't exists",
         };
       }
+
+      resourceData = await this.projectResourceSchema.validateResourceById(
+        validAccountNumber,
+        existingProjectResource?.resource_rid,
+        account_rid
+      );
+
+      if (projectResourceData.resource_code) {
+        resourceData = await this.projectResourceSchema.validateResourceByCode(
+          validAccountNumber,
+          projectResourceData.resource_code,
+          projectResourceData.account_rid
+        );
+      }
+
+      if (!resourceData) {
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: "Invalid resource code: resource doesn't exists",
+        };
+      }
+
+      const currencyThreshold =
+        await this.projectResourceSchema.getCurrencyThreshold(
+          existingProjectResource.currency_rid
+        );
+
+      const updatedProjectResourceInput: any = {
+        country_rid: projectResourceData.country_rid ?? existingProjectResource.country_rid,
+        currency_rid: existingProjectResource.currency_rid,
+        region_rid: projectResourceData.region_rid ?? existingProjectResource.region_rid,
+        start_date: existingProjectResource.start_date,
+        end_date: existingProjectResource.end_date,
+        total_hours_pro_res: projectResourceData.total_hours_pro_res ?? existingProjectResource.total_hours_pro_res,
+        total_cost_pro_res: projectResourceData.total_cost_pro_res ?? existingProjectResource.total_cost_pro_res,
+        deductions: existingProjectResource.deductions,
+        description: projectResourceData.description ?? existingProjectResource.description,
+        project_resource_rid: projectResourceData.project_resource_rid
+      }
+
+      const isDuplicate =
+        await this.projectResourceSchema.findDuplicateProjectResourceOnUpdate(
+          validAccountNumber,
+          updatedProjectResourceInput,
+          resourceData,
+          statusMap
+        );
+
+      if (isDuplicate) {
+        return {
+          statusCode: HttpStatus.PROMPT,
+          message:
+            "Entered compensation details already exists for the resource. Would you like to create another compensation with same values",
+        };
+      }
+
+      let status = "Active";
+      if (
+        projectResourceData.total_hours_pro_res &&
+        Number(projectResourceData.total_hours_pro_res) > 3000
+      ) {
+        status = "Anomaly";
+      }
+
+      if (
+        projectResourceData.total_cost_pro_res !== undefined &&
+        currencyThreshold !== null &&
+        Number(projectResourceData.total_cost_pro_res) > currencyThreshold
+      ) {
+        status = "Anomaly";
+      }
+
+      const stausId = statusMap?.get(status) ?? "";
 
       const updateProjectResource =
         await this.projectResourceSchema.updateInlineProjectResourceRecords(
@@ -949,6 +1301,7 @@ export class ProjectResourceService {
           userId,
           projectData,
           resourceData,
+          stausId,
           transaction
         );
 
@@ -971,6 +1324,7 @@ export class ProjectResourceService {
           userId,
           existingProjectResource,
           resourceData,
+          statusMap,
           transaction
         );
 
@@ -983,6 +1337,7 @@ export class ProjectResourceService {
           userId,
           existingProjectResource,
           projectData.fiscal_year,
+          statusMap,
           transaction
         );
 
@@ -993,6 +1348,7 @@ export class ProjectResourceService {
           projectData,
           resourceData,
           userId,
+          statusMap,
           transaction
         );
 
@@ -1003,6 +1359,7 @@ export class ProjectResourceService {
           existingProjectResource,
           projectData,
           userId,
+          statusMap,
           transaction
         );
 
@@ -1013,6 +1370,7 @@ export class ProjectResourceService {
           resourceUpdatePayload,
           projectData,
           resourceData,
+          statusMap,
           transaction
         );
 
@@ -1022,6 +1380,7 @@ export class ProjectResourceService {
           account_rid,
           resourceUpdatePayload,
           projectData,
+          statusMap,
           transaction
         );
 
@@ -1106,7 +1465,10 @@ export class ProjectResourceService {
     }
   }
 
-  async getResourceCodes(accountId: string, search: string | null): Promise<{
+  async getResourceCodes(
+    accountId: string,
+    search: string | null
+  ): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -1137,7 +1499,10 @@ export class ProjectResourceService {
     }
   }
 
-  async getAssignedResourceCodes(accountId: string, projectFiscalId: string): Promise<{
+  async getAssignedResourceCodes(
+    accountId: string,
+    projectFiscalId: string
+  ): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -1150,11 +1515,12 @@ export class ProjectResourceService {
       if (!accountNumber) {
         throw new Error("Invalid account ID");
       }
-      const resourceCodes = await this.projectResourceSchema.listAssignedResourceCodes(
-        accountNumber,
-        accountId,
-        projectFiscalId
-      );
+      const resourceCodes =
+        await this.projectResourceSchema.listAssignedResourceCodes(
+          accountNumber,
+          accountId,
+          projectFiscalId
+        );
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -1175,6 +1541,7 @@ export class ProjectResourceService {
     userId: string,
     existingProjectResource: any,
     resourceData: any,
+    statusMap: any,
     transaction: any
   ) {
     await this.projectResourceSchema.updateProjectResourceFiscalOnUpdateTable(
@@ -1185,6 +1552,7 @@ export class ProjectResourceService {
       userId,
       resourceData,
       existingProjectResource,
+      statusMap,
       transaction
     );
 
@@ -1197,6 +1565,7 @@ export class ProjectResourceService {
       resourceData,
       userId,
       existingProjectResource,
+      statusMap,
       transaction
     );
   }
@@ -1209,6 +1578,7 @@ export class ProjectResourceService {
     userId: string,
     existingProjectResource: any,
     fiscalYear: number,
+    statusMap: any,
     transaction: any
   ) {
     await this.projectResourceSchema.updateResourceFiscal(
@@ -1218,6 +1588,7 @@ export class ProjectResourceService {
       projectResourceData,
       resourceData,
       fiscalYear,
+      statusMap,
       transaction,
       existingProjectResource
     );
@@ -1242,6 +1613,7 @@ export class ProjectResourceService {
       projectResourceData,
       resourceData,
       fiscalYear,
+      statusMap,
       transaction,
       existingProjectResource
     );
@@ -1254,6 +1626,7 @@ export class ProjectResourceService {
     projectData: any,
     resourceData: any,
     userId: string,
+    statusMap: any,
     transaction: any
   ) {
     // if (projectResourceData.region_rid) {
@@ -1276,6 +1649,7 @@ export class ProjectResourceService {
       resourceData,
       projectData.fiscal_year,
       userId,
+      statusMap,
       transaction
     );
 
@@ -1297,6 +1671,7 @@ export class ProjectResourceService {
     existingProjectResource: any,
     projectData: any,
     userId: string,
+    statusMap: any,
     transaction: any
   ) {
     // if (projectResourceData.region_rid) {
@@ -1316,6 +1691,7 @@ export class ProjectResourceService {
       projectResourceData.region_rid || "",
       existingProjectResource.region_rid || "",
       userId,
+      statusMap,
       transaction
     );
 
@@ -1336,6 +1712,7 @@ export class ProjectResourceService {
     projectResourceData: any,
     projectData: any,
     resourceData: any,
+    statusMap: any,
     transaction: any
   ) {
     const { resource_code, region_rid } = projectResourceData;
@@ -1347,6 +1724,7 @@ export class ProjectResourceService {
       resource_code,
       resourceData,
       fiscal_year,
+      statusMap,
       transaction
     );
     await this.projectResourceSchema.aggregatesResourceFiscalRegion(
@@ -1355,6 +1733,7 @@ export class ProjectResourceService {
       resource_code,
       resourceData,
       fiscal_year,
+      statusMap,
       transaction
     );
   }
@@ -1364,6 +1743,7 @@ export class ProjectResourceService {
     account_rid: string,
     projectResourceData: any,
     projectData: any,
+    statusMap: any,
     transaction: any
   ) {
     const { project_code, fiscal_year, rid } = projectData;
@@ -1373,6 +1753,7 @@ export class ProjectResourceService {
       account_rid,
       projectResourceData.project_fiscal_rid,
       fiscal_year,
+      statusMap,
       transaction
     );
     await this.projectResourceSchema.aggregatesProjectFiscalRegion(
@@ -1381,6 +1762,7 @@ export class ProjectResourceService {
       project_code,
       rid,
       fiscal_year,
+      statusMap,
       transaction
     );
     // await this.projectResourceSchema.aggregatesProject(
@@ -1395,6 +1777,7 @@ export class ProjectResourceService {
       rid,
       project_code,
       fiscal_year,
+      statusMap,
       transaction
     );
     // await this.projectResourceSchema.aggregatesProjectSummary(
@@ -1514,10 +1897,7 @@ export class ProjectResourceService {
       "qre_final",
     ];
 
-    const enumFields = [
-      "country_rid",
-      "region_rid",
-    ];
+    const enumFields = ["country_rid", "region_rid"];
 
     const filterFields = this.getFilterFields();
 
@@ -1572,21 +1952,29 @@ export class ProjectResourceService {
   ): any {
     if (isNumberField) {
       if (fieldFilter.equals !== undefined) {
-        const value = String(fieldFilter.equals).includes('.') ? fieldFilter.equals : `${fieldFilter.equals}.00`;
+        const value = String(fieldFilter.equals).includes(".")
+          ? fieldFilter.equals
+          : `${fieldFilter.equals}.00`;
         return { [Op.eq]: value };
       }
       if (fieldFilter.not_equals !== undefined) {
-        const value = String(fieldFilter.not_equals).includes('.') ? fieldFilter.not_equals : `${fieldFilter.not_equals}.00`;
+        const value = String(fieldFilter.not_equals).includes(".")
+          ? fieldFilter.not_equals
+          : `${fieldFilter.not_equals}.00`;
         return {
           [Op.or]: [{ [Op.ne]: value }, { [Op.is]: null }],
         };
       }
       if (fieldFilter.less_than !== undefined) {
-        const value = String(fieldFilter.less_than).includes('.') ? fieldFilter.less_than : `${fieldFilter.less_than}.00`;
+        const value = String(fieldFilter.less_than).includes(".")
+          ? fieldFilter.less_than
+          : `${fieldFilter.less_than}.00`;
         return { [Op.lt]: value };
       }
       if (fieldFilter.greater_than !== undefined) {
-        const value = String(fieldFilter.greater_than).includes('.') ? fieldFilter.greater_than : `${fieldFilter.greater_than}.00`;
+        const value = String(fieldFilter.greater_than).includes(".")
+          ? fieldFilter.greater_than
+          : `${fieldFilter.greater_than}.00`;
         return { [Op.gt]: value };
       }
       if (
@@ -1594,8 +1982,12 @@ export class ProjectResourceService {
         Array.isArray(fieldFilter.between) &&
         fieldFilter.between.length === 2
       ) {
-        const value1 = String(fieldFilter.between[0]).includes('.') ? fieldFilter.between[0] : `${fieldFilter.between[0]}.00`;
-        const value2 = String(fieldFilter.between[1]).includes('.') ? fieldFilter.between[1] : `${fieldFilter.between[1]}.00`;
+        const value1 = String(fieldFilter.between[0]).includes(".")
+          ? fieldFilter.between[0]
+          : `${fieldFilter.between[0]}.00`;
+        const value2 = String(fieldFilter.between[1]).includes(".")
+          ? fieldFilter.between[1]
+          : `${fieldFilter.between[1]}.00`;
         return {
           [Op.between]: [value1, value2],
         };

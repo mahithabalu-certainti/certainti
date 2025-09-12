@@ -311,6 +311,7 @@ export interface ICreateProjectResource {
   resource_id: string;
   project_code: string;
   resource_code: string;
+  user_preference?: string;
   manager_name?: string;
   manager_ref_id?: string;
   assigned_skill_role_type_rid: string | null;
@@ -363,6 +364,7 @@ export interface IUpdateProjectResource {
   insurance?: number | null;
   description?: string | null;
   modified_by?: string;
+  user_preference?: string | null;
 }
 
 export interface IUpdateInlineProjectResource {
@@ -379,6 +381,7 @@ export interface IUpdateInlineProjectResource {
   description?: string | null;
   modified_by?: string;
   resource_rid?: string;
+  country_rid?: string | null;
 }
 
 export interface ICreateProjectTask {
@@ -416,4 +419,12 @@ export interface IUpdateProjectTask {
   comments?: string | null;
   created_by: string;
   modified_by?: string;
+}
+
+export interface IAnomalyStatus {
+  rid: string,
+  accountId: string,
+  action: "accept" | "reject",
+  resourceCode: string;
+  type: string
 }
