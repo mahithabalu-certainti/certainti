@@ -2386,6 +2386,8 @@ private async createInteractionTable(
     `);
   }
 
+
+
   async insertAccountDetails(
     account_number: string,
     accountData: IAccount,

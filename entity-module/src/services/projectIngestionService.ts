@@ -1570,6 +1570,7 @@ class ProjectIngestionService {
       if (fiscalYear) {
         whereFiscal.fiscal_year = fiscalYear;
       }
+
       
         projectData = await Project.findAll({
         where: whereProject,
