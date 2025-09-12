@@ -98,7 +98,8 @@ export const getTimesheetProjectTabFilterFields = (
       options: fiscalYears.map((y) => ({ option: y.label, value: y.value })),
       operatorOption: enumOptions,
       hide:
-        !permissionMap?.['fiscal_year']?.edit && !permissionMap?.['fiscal_year']?.read,
+        !permissionMap?.['fiscal_year']?.edit &&
+        !permissionMap?.['fiscal_year']?.read,
     },
     {
       name: 'Project Classification',

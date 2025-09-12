@@ -386,7 +386,7 @@ export const ProjectDetails = () => {
       hide: accountInActive || checkExport(),
     },
   ];
- useEffect(() => {
+  useEffect(() => {
     const list = searchParams.get('list');
     const source = searchParams.get('source');
     const sourceTab = searchParams.get('source_tab');
@@ -541,7 +541,7 @@ export const ProjectDetails = () => {
       navigate(`${ACCOUNT}/details/${accountID}?list=projects`);
     } else if (parent === 'project') {
       navigate(PROJECT);
-    }else{
+    } else {
       navigate(`${ACCOUNT}/details/${accountID}?list=projects`);
     }
   };
@@ -715,7 +715,7 @@ export const ProjectDetails = () => {
         </div>
         <div
           className='flex-1'
-          style={{ maxHeight: 'calc(100vh - 140px)', overflow: 'auto' }}
+          style={{ maxHeight: 'calc(100vh - 180px)', overflow: 'auto' }}
         >
           <Suspense fallback={null}>{renderContent()}</Suspense>
         </div>

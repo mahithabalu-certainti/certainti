@@ -590,7 +590,7 @@ const Interactions: React.FC<InteractionsProps> = ({
                   tableStyle={{
                     borderBottom: '1px solid #CBD6E2',
                     height: '100%',
-                    maxHeight: 'calc(100vh - 290px)',
+                    maxHeight: 'calc(100vh - 330px)',
                     overflow: 'auto',
                   }}
                   stickyHeader={true}

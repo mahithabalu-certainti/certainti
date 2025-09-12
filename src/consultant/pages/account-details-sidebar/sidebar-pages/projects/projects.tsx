@@ -653,7 +653,7 @@ const Projects: React.FC<ProjectsProps> = ({
               hoverHighlight={false}
               tableStyle={{
                 height: '100%',
-                maxHeight: 'calc(100vh - 290px)',
+                maxHeight: 'calc(100vh - 320px)',
                 overflow: 'auto',
               }}
               stickyHeader={true}

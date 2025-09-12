@@ -193,7 +193,7 @@ const InteractionHistory: React.FC<InteractionHistoryProps> = ({
             hoverHighlight={false}
             tableStyle={{
               height: '100%',
-              maxHeight: 'calc(100vh - 330px)',
+              maxHeight: 'calc(100vh - 360px)',
               overflow: 'auto',
             }}
             stickyHeader={true}

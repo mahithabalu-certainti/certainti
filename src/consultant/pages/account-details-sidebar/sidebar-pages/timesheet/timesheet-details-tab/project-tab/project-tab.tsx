@@ -1,7 +1,12 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { generatePath, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import {
+  generatePath,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 import { RootState } from '../../../../../../../store/store';
 import { ListTable } from '../../../../../../../components/table';
 import {
@@ -141,14 +146,14 @@ const TimesheetProjectTab: React.FC<ProjectTabListProps> = ({
   };
 
   const totalItems = projectApiListData?.count || 0;
-  
+
   const handleViewProjectDetails = (project: TimesheetProjectList) => {
     const path = generatePath(PROJECT_DETAILS, {
       projectid: project?.project_fiscal_rid ?? '',
     });
     const queryParams = new URLSearchParams({
       accountID: project?.account_rid ?? '',
-      list:'projectDetails',
+      list: 'projectDetails',
       source: 'timesheet',
       timesheet_id: searchParams.get('timesheet_id') ?? '',
       currency_rid: project?.currency_rid ?? '',
@@ -157,7 +162,10 @@ const TimesheetProjectTab: React.FC<ProjectTabListProps> = ({
 
     navigate(`${path}?${queryParams.toString()}`);
   };
-  const projectTabTableColumns = getProjectTabTableColumns(handleViewProjectDetails, permissionMap);
+  const projectTabTableColumns = getProjectTabTableColumns(
+    handleViewProjectDetails,
+    permissionMap
+  );
   return (
     <div className='border border-[#CBD6E2]'>
       <ListTable
@@ -167,7 +175,7 @@ const TimesheetProjectTab: React.FC<ProjectTabListProps> = ({
         hoverHighlight={false}
         tableStyle={{
           height: '100%',
-          maxHeight: 'calc(100vh - 370px)',
+          maxHeight: 'calc(100vh - 360px)',
           overflow: 'auto',
         }}
         stickyHeader={true}
