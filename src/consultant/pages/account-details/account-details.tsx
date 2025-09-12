@@ -86,7 +86,7 @@ import {
 import { TimesheetProjectExportListURLParams } from '../../types/timesheet-projects';
 
 export const AccountDetails = () => {
-  const [searchParams] = useSearchParams();
+    const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -264,6 +264,20 @@ export const AccountDetails = () => {
       filters: {},
       fiscalYear: 0,
     });
+  useEffect(() => {
+    const list = searchParams.get('list');
+    const tabParams = searchParams.get('tab');
+    const source = searchParams.get('source');
+    if (
+      tabParams !== 'details' &&
+      list !== 'projectsTask' &&
+      source === 'timesheet'
+    ) {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('source');
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const [exportType, setExportType] = useState<ExportType>('resource');
 
@@ -523,10 +537,10 @@ export const AccountDetails = () => {
   };
   // Set active key from location stat
   useEffect(() => {
-    if (location.state?.activeKey) {
-      setActiveKey(location.state.activeKey);
-    }
-  }, [location.state]);
+    const listParam = searchParams.get('list');
+    setActiveKey(location.state?.activeKey || listParam || 'details');
+  }, [location.state, searchParams]);
+
   const renderContent = () => {
     switch (activeKey) {
       case 'financial':
@@ -762,7 +776,7 @@ export const AccountDetails = () => {
   }, [disable, isFinancialHighlightsEnable]);
 
   const goBack = () => {
-    window.history.back();
+    navigate(ACCOUNT);
   };
 
   if (!accountIsEnable || !isAccountDetailsEnable) return <AccessRestricted />;
