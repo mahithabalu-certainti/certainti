@@ -879,6 +879,12 @@ export const rawQueries = {
       WHERE account_interaction_rid in (:account_interaction_rid)
     `;
   },
+  fetchAccountCurrencyRid (account_rid : string) {
+    return `SELECT currency_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${account_rid}'`
+  },
+  fetchActiveStatusRid (status : string) {
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name ILIKE '%${status}%'`
+  }
 };
 
 export const IMPORT_FILTER_COLUMNS: any = {

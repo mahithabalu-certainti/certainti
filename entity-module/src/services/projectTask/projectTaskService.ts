@@ -1,5 +1,5 @@
 import Decimal from "decimal.js";
-import { HttpStatus, MAIN_SCHEMA_NAME } from "../../utils/constants";
+import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries } from "../../utils/constants";
 import { IAnomalyStatus, ICreateProjectTask, IUpdateProjectTask } from "../../utils/types";
 import { ProjectTaskSchemaService } from "./schemaService";
 import { ProjectResourceSchemaService } from "../projectResource/schemaService";
@@ -144,7 +144,7 @@ export class ProjectInjestionTaskService {
           }
         }
       }
-      const getAccountCurrencyRid : any = await mainDbSequelize.query(`SELECT currency_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${account_rid}'`)
+      const getAccountCurrencyRid : any = await mainDbSequelize.query(rawQueries.fetchAccountCurrencyRid(account_rid))
       const costFields = {
         total_hours_pro_task,
         total_cost_pro_task
@@ -171,7 +171,7 @@ export class ProjectInjestionTaskService {
       const currencyThreshold = await getCurrencyThreshold(mainDbSequelize,getAccountCurrencyRid[0][0].currency_rid);
       let status = "Active";
       const statusMap = await getResourceStatuses(mainDbSequelize);
-      const activeId : any = await mainDbSequelize.query(`SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name ILIKE '%${status}%'`)
+      const activeId : any = await mainDbSequelize.query(rawQueries.fetchActiveStatusRid(status))
       const activeStatusId : any = statusMap?.get(status);
       const startDate = this.formatDateForDb(start_date as string);
       const endDate = this.formatDateForDb(end_date as string);
@@ -336,7 +336,7 @@ export class ProjectInjestionTaskService {
         }
       }
 
-      const getAccountCurrencyRid : any = await mainDbSequelize.query(`SELECT currency_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${account_rid}'`)
+      const getAccountCurrencyRid : any = await mainDbSequelize.query(rawQueries.fetchAccountCurrencyRid(account_rid))
       const costFields = {
         total_hours_pro_task,
         total_cost_pro_task
@@ -363,7 +363,7 @@ export class ProjectInjestionTaskService {
       const currencyThreshold = await getCurrencyThreshold(mainDbSequelize,getAccountCurrencyRid[0][0].currency_rid);
       let status = "Active";
       const statusMap = await getResourceStatuses(mainDbSequelize);
-      const activeId : any = await mainDbSequelize.query(`SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name ILIKE '%${status}%'`)
+      const activeId : any = await mainDbSequelize.query(rawQueries.fetchActiveStatusRid(status))
       const activeStatusId : any = statusMap?.get(status);
       const startDate = this.formatDateForDb(start_date as string);
       const endDate = this.formatDateForDb(end_date as string);
