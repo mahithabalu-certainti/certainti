@@ -186,7 +186,7 @@ export const getProjectTabTableColumns = (
       row.total_cost_subcon
         ? costDisplay(row.total_cost_subcon, row.currency_symbol)
         : '-',
-  }, 
+  },
   {
     id: 'total_cost_nonlabor',
     label: 'Non-Labor Cost',

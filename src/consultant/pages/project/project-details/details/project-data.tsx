@@ -130,15 +130,15 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
     projectDetails?.keyContact && projectDetails?.keyContact.length > 0;
 
   const handleBackClick = () => {
-      const timesheetId = searchParams.get('timesheet_id');
-      const sourceTab = searchParams.get('source_tab');
-      const accountid = searchParams.get('accountID');
-      const newSearchParams = new URLSearchParams();
-      newSearchParams.set('list', 'timesheet');
-      if (timesheetId) newSearchParams.set('timesheet_id', timesheetId); 
-      if (sourceTab) newSearchParams.set('tab', sourceTab);
-      navigate(`/account/details/${accountid}?${newSearchParams.toString()}`);
-  }
+    const timesheetId = searchParams.get('timesheet_id');
+    const sourceTab = searchParams.get('source_tab');
+    const accountid = searchParams.get('accountID');
+    const newSearchParams = new URLSearchParams();
+    newSearchParams.set('list', 'timesheet');
+    if (timesheetId) newSearchParams.set('timesheet_id', timesheetId);
+    if (sourceTab) newSearchParams.set('tab', sourceTab);
+    navigate(`/account/details/${accountid}?${newSearchParams.toString()}`);
+  };
   const headerButtons = [
     {
       label: 'Edit',
