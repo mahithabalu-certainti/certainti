@@ -338,63 +338,67 @@ const ImportFile: React.FC<ImportFileProps> = ({
           onChange={onChangeField}
         />
 
-        <div
-          className={`flex flex-col items-center justify-center gap-4 px-4 py-10 ${accountInActive ? 'opacity-50' : ''}`}
-          style={{ pointerEvents: accountInActive || loading ? 'none' : 'all' }}
-        >
+        <div className='flex flex-col border-t border-[#cbd6e2] items-center justify-center gap-4 px-4 py-5 mt-6'>
           <div
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            onClick={openFileDialog}
-            className={`h-[116px] w-[502px] border-[2px] border-dashed rounded-[8px] flex flex-col items-center justify-center gap-2  ${
-              message && message.type === 'error'
-                ? 'border-red-600 bg-[#FEF2F2] cursor-pointer'
-                : 'border-[#0176D3] bg-[#F4F6F9] cursor-pointer'
-            }`}
+            className={`flex flex-col items-center justify-center gap-4 px-4  ${accountInActive ? 'opacity-50' : ''}`}
+            style={{
+              pointerEvents: accountInActive || loading ? 'none' : 'all',
+            }}
           >
-            <UploadIcon alt='Upload Icon' className='w-[36px] h-[24px]' />
-            <div className='text-[14px] text-[#0B0B0B]'>
-              Drag your file or{' '}
-              <span
-                className='text-[#0176D3] underline'
-                onClick={(e) => {
-                  e.stopPropagation();
-                  openFileDialog();
-                }}
-              >
-                browse
-              </span>
-            </div>
-            <input
-              type='file'
-              accept='.csv, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-              className='hidden'
-              ref={fileInputRef}
-              onChange={handleFileSelect}
-              disabled={accountInActive}
-            />
-          </div>
-
-          {/* Reserved space for error messages to prevent button movement */}
-          <div className='w-[502px] max-w-[502px] mt-2 h-[20px]'>
-            {message && (
-              <div
-                className={`break-all text-sm ${
-                  message.type === 'error' ? 'text-red-600' : 'text-green-600'
-                }`}
-              >
-                {message.text}
+            <div
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onClick={openFileDialog}
+              className={`h-[116px] w-[502px] border-[2px] border-dashed rounded-[8px] flex flex-col items-center justify-center gap-2  ${
+                message && message.type === 'error'
+                  ? 'border-red-600 bg-[#FEF2F2] cursor-pointer'
+                  : 'border-[#0176D3] bg-[#F4F6F9] cursor-pointer'
+              }`}
+            >
+              <UploadIcon alt='Upload Icon' className='w-[36px] h-[24px]' />
+              <div className='text-[14px] text-[#0B0B0B]'>
+                Drag your file or{' '}
+                <span
+                  className='text-[#0176D3] underline'
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openFileDialog();
+                  }}
+                >
+                  browse
+                </span>
               </div>
-            )}
+              <input
+                type='file'
+                accept='.csv, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                className='hidden'
+                ref={fileInputRef}
+                onChange={handleFileSelect}
+                disabled={accountInActive}
+              />
+            </div>
+
+            {/* Reserved space for error messages to prevent button movement */}
+            <div className='w-[502px] max-w-[502px] mt-2 h-[20px]'>
+              {message && (
+                <div
+                  className={`break-all text-sm ${
+                    message.type === 'error' ? 'text-red-600' : 'text-green-600'
+                  }`}
+                >
+                  {message.text}
+                </div>
+              )}
+            </div>
+
+            <FileList
+              fileInputRef={fileInputRef}
+              selectedFiles={selectedFiles}
+              setSelectedFiles={setSelectedFiles}
+            />
+
+            {/* Button section with top border and reduced bottom spacing */}
           </div>
-
-          <FileList
-            fileInputRef={fileInputRef}
-            selectedFiles={selectedFiles}
-            setSelectedFiles={setSelectedFiles}
-          />
-
-          {/* Button section with top border and reduced bottom spacing */}
         </div>
       </div>
       <div className='border-t border-[#CBD6E2] flex w-full justify-end gap-4 mb-3 pt-3 pr-3'>

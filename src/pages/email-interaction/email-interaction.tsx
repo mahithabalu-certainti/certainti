@@ -23,6 +23,7 @@ const EmailInteraction: React.FC = () => {
   const parseToken = auth_token ? JSON.parse(auth_token) : '';
   const account_rid = searchParams.get('acc');
   const interaction_rid = searchParams.get('int');
+  const project_fiscal_rid = searchParams.get('proj');
   const checkEveryOtpValue = otp.every((digit) => digit !== '');
 
   // API Hooks
@@ -37,6 +38,7 @@ const EmailInteraction: React.FC = () => {
   } = useGetInteractionQuestions(
     account_rid as string,
     interaction_rid as string,
+    project_fiscal_rid as string,
     parseToken.auth_token as string,
     parseToken.email as string
   );
