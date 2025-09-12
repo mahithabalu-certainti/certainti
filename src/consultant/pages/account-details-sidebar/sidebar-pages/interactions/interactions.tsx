@@ -14,7 +14,7 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 import { ExportType, InteractionList, StatusTypeEnum } from '../../../../types';
-import { useInteractionList } from '../../../../services/interactions/interactions-service';
+import { useAccountInteractionList } from '../../../../services/interactions/interactions-service';
 import { INTERACTIONS_CREATE, INTERACTIONS_EDIT } from '../../../../../routes';
 import {
   ActionItem,
@@ -114,7 +114,6 @@ const Interactions: React.FC<InteractionsProps> = ({
   const [clearSelectedRows, setClearSelectedRows] = useState<boolean>(false);
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
-
   const isModalOpen = Boolean(columnAnchorEl);
   const handleColumnVisibility = (
     event: React.MouseEvent<HTMLButtonElement>
@@ -129,6 +128,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   );
   const newFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
   const sendInteraction = searchParams.get('send_intraction');
+  const viewProject = searchParams.get('view_proj');
   const interactionId = searchParams.get('interaction_id');
   const interactionNumber = searchParams.get('interaction_number') || '';
   const interactionHistoryId = searchParams.get('interaction_history_id');
@@ -152,26 +152,27 @@ const Interactions: React.FC<InteractionsProps> = ({
       fiscalYear: newFiscalYear,
       accountNumber: accountid ?? accountDetails?.accountDetails?.account_rid,
       bothParentAndChild: false,
+      apiSource: viewProject ? 'interactionCount' : 'interaction',
+      accountInteractionId: viewProject as string,
     },
-    Boolean(sendInteraction),
+    Boolean(sendInteraction || viewProject),
     refreshProject
   );
-  const { data, isLoading, isError } = useInteractionList(
+  const { data, isLoading, isError } = useAccountInteractionList(
     {
       page: currentPage + 1,
       limit: rowsPerPage,
-      sort: sortField,
-      sort_by: sortBy,
+      sort_order: sortBy,
+      sort_by: sortField,
       filters: appliedFilters,
       account_rid: accountid || '',
-      fiscal_year: newFiscalYear,
-      flag: 'account',
     },
     !viewDetails &&
       !viewInteractionHistory &&
       !viewInteractionAttachment &&
       !viewResponseHistory &&
-      !sendInteraction,
+      !sendInteraction &&
+      !viewProject,
     refreshInteractions
   );
   const totalItems = data?.count || 0;
@@ -286,7 +287,6 @@ const Interactions: React.FC<InteractionsProps> = ({
             ...item,
             disableCheckBox:
               !sendInteractionsEnable ||
-              !item.has_email_recipient ||
               status === StatusTypeEnum.sent ||
               status === StatusTypeEnum.response_draft ||
               status === StatusTypeEnum.response_received ||
@@ -319,7 +319,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   }, [sortField, appliedFilters, currentPage, rowsPerPage, sortBy]);
 
   const handleRefresh = () => {
-    if (sendInteraction) {
+    if (viewProject || sendInteraction) {
       setRefreshProject(Date.now());
     } else {
       setRefreshInteractions(Date.now());
@@ -405,6 +405,10 @@ const Interactions: React.FC<InteractionsProps> = ({
       setCount(0);
     }
   };
+  const viewProjectCount = (rowId: string) => {
+    searchParams.set('view_proj', rowId);
+    navigate({ search: searchParams.toString() }, { replace: true });
+  };
   const handleBackClick = () => {
     if (!interactionResponseId) {
       searchParams.delete('interaction_id');
@@ -417,9 +421,13 @@ const Interactions: React.FC<InteractionsProps> = ({
     }
   };
   const handleBackFromResponse = () => {
-    if (sendInteraction) {
+    if (viewProject) {
+      searchParams.delete('view_proj');
+      navigate({ search: searchParams.toString() }, { replace: true });
+    } else if (sendInteraction) {
       setSelectedRows([]);
       setSelectedTableIds([]);
+      localStorage.removeItem('selectedInteraction');
       searchParams.delete('send_intraction');
       navigate({ search: searchParams.toString() }, { replace: true });
     } else if (interactionResponseId) {
@@ -480,10 +488,15 @@ const Interactions: React.FC<InteractionsProps> = ({
         } else {
           searchParams.set('send_intraction', 'true');
           navigate({ search: searchParams.toString() }, { replace: true });
+          localStorage.setItem(
+            'selectedInteraction',
+            JSON.stringify(selectedRows.map((it) => it.rid))
+          );
         }
       },
       sx: { width: '120px', minWidth: '120px' },
-      hide: !sendInteractionsEnable || viewResponseHistory,
+      hide:
+        !sendInteractionsEnable || viewResponseHistory || Boolean(viewProject),
     },
     {
       label: 'New',
@@ -494,7 +507,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       hide:
         !createInteractionsEnable ||
         viewResponseHistory ||
-        Boolean(sendInteraction),
+        Boolean(sendInteraction || viewProject),
     },
     {
       label: 'Show/Hide Fields',
@@ -502,37 +515,46 @@ const Interactions: React.FC<InteractionsProps> = ({
       disabled: false,
       onClick: handleColumnVisibility,
       sx: { width: '125px', minWidth: '125px' },
-      hide: Boolean(interactionResponseId || sendInteraction),
+      hide: Boolean(interactionResponseId || sendInteraction || viewProject),
     },
     {
       label: 'Back To Interaction Details',
       variant: 'contained' as const,
       onClick: () => handleBackFromResponse(),
       sx: { width: '175px', minWidth: '175px' },
-      hide: Boolean(!(sendInteraction || responseHistory)),
+      hide: Boolean(!responseHistory || viewProject),
+    },
+    {
+      label: 'Back To Interaction',
+      variant: 'contained' as const,
+      onClick: () => handleBackFromResponse(),
+      sx: { px: 1 },
+      hide: Boolean(!(sendInteraction || viewProject)),
     },
   ];
   const interactionColumns = getInteractionListColumns(
     handleViewInteraction,
+    viewProjectCount,
     permissionMap
   );
-  const filterFields = sendInteraction
-    ? projectFilterFields(
-        memoizedClassification.map((item) => ({
-          label: item.option,
-          value: item.value,
-        })),
-        memoizedProjectTypes,
-        memoizedStatus,
-        projectPermissionMap
-      )
-    : !viewInteractionHistory
-      ? getInteractionFilterFields(
-          memoizedInteractionTypes,
-          memoizedInteractionStatus,
-          permissionMap
+  const filterFields =
+    sendInteraction || viewProject
+      ? projectFilterFields(
+          memoizedClassification.map((item) => ({
+            label: item.option,
+            value: item.value,
+          })),
+          memoizedProjectTypes,
+          memoizedStatus,
+          projectPermissionMap
         )
-      : getInteractionHistoryFilterFields(memoizedInteractionStatus);
+      : !viewInteractionHistory
+        ? getInteractionFilterFields(
+            memoizedInteractionTypes,
+            memoizedInteractionStatus,
+            permissionMap
+          )
+        : getInteractionHistoryFilterFields(memoizedInteractionStatus);
   const RestrictedColumns = [
     {
       id: 'r_number',
@@ -604,6 +626,7 @@ const Interactions: React.FC<InteractionsProps> = ({
           accountInActive={accountInActive}
           handleBackClick={handleBackClick}
           accountDetails={accountDetails}
+          isAccountIntraction
         />
       ) : viewInteractionHistory ? (
         <InteractionHistory
@@ -621,14 +644,14 @@ const Interactions: React.FC<InteractionsProps> = ({
         <>
           <SectionHeader
             title={
-              sendInteraction
+              sendInteraction || viewProject
                 ? 'Projects'
                 : viewResponseHistory
                   ? `Interaction Response History ${interactionNumber}`
                   : 'Interaction'
             }
             titleIcon={
-              sendInteraction ? (
+              sendInteraction || viewProject ? (
                 <ProjectsSideIcon
                   alt='project-header-icon'
                   className='[&>path]:stroke-[#E54787] w-[14px] h-[14px]'
@@ -640,15 +663,21 @@ const Interactions: React.FC<InteractionsProps> = ({
                 />
               )
             }
-            count={viewResponseHistory ? count : totalItems}
+            count={
+              sendInteraction || viewProject
+                ? projectTotalItems
+                : viewResponseHistory
+                  ? count
+                  : totalItems
+            }
             showItemCount={interactionResponseId ? false : true}
             showBackArrow={viewResponseHistory}
             onBackClick={handleBackFromResponse}
             buttons={headerButtons}
-            iconBg={sendInteraction ? '#FFE7F1' : undefined}
+            iconBg={sendInteraction || viewProject ? '#FFE7F1' : undefined}
           />
           <div className='border border-[#CBD6E2]'>
-            {sendInteraction ? (
+            {sendInteraction || viewProject ? (
               <ListTable
                 data={projectList as Project[]}
                 columns={projectColumns}
@@ -680,7 +709,7 @@ const Interactions: React.FC<InteractionsProps> = ({
                 sortBy={projectSortField}
                 sortOrder={projectSortOrder}
                 onSort={handleSort}
-                selectable={true}
+                selectable={Boolean(sendInteraction)}
                 onSelectionChange={(selectedIds) =>
                   handleselectedList(selectedIds)
                 }
@@ -741,6 +770,8 @@ const Interactions: React.FC<InteractionsProps> = ({
             isOpen={sendModalOpen}
             onClose={() => setSendModalOpen(false)}
             selectedRows={selectedRows}
+            selectedTableId={selectedTableId}
+            projectList={projectList}
             onSuccessRefetch={handleRefresh}
           />
         </>

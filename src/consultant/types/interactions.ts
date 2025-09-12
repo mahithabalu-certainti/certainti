@@ -145,6 +145,7 @@ export type InteractionList = {
   has_email_recipient: boolean;
   disableCheckBox?: boolean;
   account_name?: string | null;
+  project_count?: string
 };
 export type ResponseInteractionList = {
   rid: string;
@@ -196,6 +197,17 @@ export interface InteractionListResponse {
     limit: number;
     totalCount: number;
     interactions: InteractionList[];
+  };
+}
+export interface AccountInteractionListResponse {
+  statusCode: number;
+  statusMessage: string;
+  statusCodeValue?: string;
+  data: {
+    page: number;
+    limit: number;
+    totalCount: number;
+    accountInteractions: InteractionList[];
   };
 }
 export interface ExportInteractionResponse {
@@ -411,7 +423,6 @@ export interface SendIntractionProject {
 }
 export interface AccountSendInteractionPayload {
   account_rid: string;
-  account_interaction_rid: string
-  status_rid: string;
+  account_interaction_rid: string[]
   projects: SendIntractionProject[];
 }

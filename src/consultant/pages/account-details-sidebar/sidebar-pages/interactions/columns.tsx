@@ -13,6 +13,7 @@ export const getInteractionListColumns = (
     rNumber: string,
     proFiscalRid: string
   ) => void,
+  viewProjectCount: (rid: string) => void,
   permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<InteractionList>[] => [
   {
@@ -42,6 +43,25 @@ export const getInteractionListColumns = (
         {row.r_number}
       </span>
     ),
+  },
+  {
+    id: 'project_count',
+    sortId: 'project_count',
+    label: 'Project Count',
+    width: 140,
+    sortable: true,
+    // hide: !permissionMap?.['project_count']?.edit && !permissionMap?.['project_count']?.read,
+    render: (row: InteractionList) =>
+      row.project_count && Number(row.project_count) > 0 ? (
+        <span
+          onClick={() => row.project_count && viewProjectCount(row.rid)}
+          className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
+        >
+          {row.project_count}
+        </span>
+      ) : (
+        row.project_count || '0'
+      ),
   },
   {
     id: 'status_name',

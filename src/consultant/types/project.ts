@@ -15,6 +15,8 @@ export interface ProjectListParams {
   globalFilters?: globalFilters;
   timezone?: string;
   bothParentAndChild?: boolean;
+  apiSource?: string
+  accountInteractionId?: string
 }
 export enum Status {
   Active = 'active',

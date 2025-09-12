@@ -2,17 +2,21 @@ import React from 'react';
 import {
   AccountSendInteractionPayload,
   InteractionList,
+  SendIntractionProject,
 } from '../../../../types';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useToast } from '../../../../../hooks';
 import { useAccountSendInteraction } from '../../../../services/interactions/interactions-service';
 import { CloseIcon } from '../../../../../assets';
 import TextButton from '../../../../../components/button/text-button';
+import { Project } from '../../../../types/project';
 
 interface SendInteractionModalProps {
   isOpen: boolean;
   onClose: () => void;
   selectedRows: InteractionList[];
+  selectedTableId: string[];
+  projectList: Project[];
   onSuccessRefetch: () => void;
 }
 
@@ -20,6 +24,8 @@ const SendInteractionAlert: React.FC<SendInteractionModalProps> = ({
   isOpen,
   onClose,
   selectedRows,
+  selectedTableId,
+  projectList,
   onSuccessRefetch,
 }) => {
   const [searchParams] = useSearchParams();
@@ -32,33 +38,36 @@ const SendInteractionAlert: React.FC<SendInteractionModalProps> = ({
   if (!isOpen) return null;
 
   const handleSend = () => {
-    if (!selectedRows.length) return;
-    const accountRid = accountId || accountid || selectedRows[0].account_rid;
-
-    const interactions = selectedRows.map((row) => {
-      return {
-        interaction_rid: row.rid,
-        project_fiscal_rid: row.project_fiscal_rid || '',
-        email_info: {
-          email: '',
-          name: '',
-        },
+    const localData = localStorage.getItem('selectedInteraction');
+    if (selectedRows.length > 0 || localData) {
+      const accountRid = accountId || accountid;
+      const payload: AccountSendInteractionPayload = {
+        account_rid: accountRid as string,
+        account_interaction_rid:
+          selectedRows.length > 0
+            ? selectedRows.map((it) => it.rid)
+            : JSON.parse(localData as string),
+        projects: selectedTableId.map((id) => {
+          for (const project of projectList) {
+            const fiscal = project.ProjectFiscal.find((pf) => pf.rid === id);
+            if (fiscal) {
+              return {
+                project_fiscal_rid: fiscal.project_fiscal_rid,
+                fiscal_year: fiscal.fiscal_year.toString(),
+                project_rid: fiscal.project_rid,
+              };
+            }
+          }
+        }) as SendIntractionProject[],
       };
-    });
-
-    const payload: AccountSendInteractionPayload = {
-      account_rid: accountRid,
-      account_interaction_rid: '',
-      projects: [{ fiscal_year: '', project_fiscal_rid: '', project_rid: '' }],
-      status_rid: '',
-    };
-    sendInteraction.mutate(payload, {
-      onSuccess: (response) => {
-        successToast(response?.statusMessage);
-        onClose();
-        onSuccessRefetch();
-      },
-    });
+      sendInteraction.mutate(payload, {
+        onSuccess: (response) => {
+          successToast(response?.statusMessage);
+          onClose();
+          onSuccessRefetch();
+        },
+      });
+    }
   };
 
   return (
@@ -87,7 +96,7 @@ const SendInteractionAlert: React.FC<SendInteractionModalProps> = ({
             <TextButton
               label='No'
               onClick={onClose}
-              loading={sendInteraction.isPending}
+              disabled={sendInteraction.isPending}
               sx={{
                 width: '60px',
                 minWidth: '60px',
@@ -99,7 +108,7 @@ const SendInteractionAlert: React.FC<SendInteractionModalProps> = ({
             <TextButton
               label='Yes'
               onClick={handleSend}
-              disabled={sendInteraction.isPending}
+              loading={sendInteraction.isPending}
               sx={{
                 width: '60px',
                 minWidth: '60px',

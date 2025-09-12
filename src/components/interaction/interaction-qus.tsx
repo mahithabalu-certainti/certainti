@@ -60,6 +60,7 @@ interface InteractionQuesProps {
   formData?: Record<string, string>;
   className?: string;
   responseDate?: string;
+  isAccountIntraction?: boolean
 }
 
 const InteractionQuestions: React.FC<InteractionQuesProps> = ({
@@ -73,6 +74,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   formData,
   className,
   responseDate,
+  isAccountIntraction
 }) => {
   const { successToast, errorToast } = useToast();
   const [activeFlag, setActiveFlag] = useState<FlagTypeEnum | null>(null);
@@ -438,7 +440,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
           disabled: !isEditEnable,
           onClick: handleEditClick,
           sx: { width: '110px', minWidth: '110px' },
-          hide: !actionButtonEnable,
+          hide: !actionButtonEnable || isAccountIntraction,
         },
         {
           label: 'Response History',
@@ -631,7 +633,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
             )}
 
             {/* Question-specific attachments */}
-            {(isEditing ? questionAttachments[q.rid] : q.attachments).length >
+            {(isEditing ? questionAttachments[q.rid] : q.attachments)?.length >
               0 && (
               <div
                 className={`flex flex-col gap-1 mt-1 ${isEditing ? 'w-[96.5%]' : 'w-full'} max-h-[85px] ${
@@ -700,7 +702,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
       </div>
 
       {/* Global Attachments Section */}
-      {(isEditing ? newGlobalAttachments : globalAttachments).length > 0 && (
+      {(isEditing ? newGlobalAttachments : globalAttachments)?.length > 0 && (
         <div className='p-3 bg-[#F7F9FB] border-t border-[#CBD6E2]'>
           <div className='font-semibold text-sm mb-2 pl-0.5'>
             Uploaded Files

@@ -10,7 +10,7 @@ import DetailsSection, {
   DetailItem,
 } from '../../../../../../components/details-section/details';
 import {
-  useInteractionDetails,
+  useAccountInteractionDetails,
   useSendInteraction,
 } from '../../../../../services/interactions/interactions-service';
 import {
@@ -34,26 +34,26 @@ interface InteractionDetailsProps {
   accountInActive: boolean;
   handleBackClick: () => void;
   accountDetails?: accountDetailsProps;
+  isAccountIntraction?: boolean;
 }
 
 const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   accountInActive,
   handleBackClick,
   accountDetails,
+  isAccountIntraction,
 }) => {
   const navigate = useNavigate();
   const { accountid } = useParams();
   const [searchParams] = useSearchParams();
   const interactionId = searchParams.get('interaction_id') || undefined;
-  const projectFiscalRid = searchParams.get('project_fiscal_rid');
 
   const { permission } = useSelector((state: RootState) => state.permission);
   const sendInteraction = useSendInteraction();
   const { successToast } = useToast();
-  const { data, isLoading, error, refetch } = useInteractionDetails(
+  const { data, isLoading, error, refetch } = useAccountInteractionDetails(
     accountid,
-    interactionId,
-    projectFiscalRid as string
+    interactionId
   );
 
   const interactionFieldsEditable = useMemo(
@@ -286,11 +286,13 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
           </div>
         ) : (
           <>
-            <DetailsSection
-              title='Basic Information'
-              data={basicDetails}
-              customStyle='pt-0 mt-0'
-            />
+            {!isAccountIntraction && (
+              <DetailsSection
+                title='Basic Information'
+                data={basicDetails}
+                customStyle='pt-0 mt-0'
+              />
+            )}
             <DetailsSection
               title='Interaction Information'
               data={interactionDetails}
@@ -307,6 +309,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
           actionButtonEnable={interactionFieldsEditable}
           handleResponseHistory={handleResponseHistory}
           refetchDetails={refetch}
+          isAccountIntraction={isAccountIntraction}
           formData={{
             account_rid: accountid || data?.account_rid || '',
             project_rid: data?.project_rid || '',

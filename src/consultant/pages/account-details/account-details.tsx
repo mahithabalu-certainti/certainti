@@ -81,7 +81,7 @@ import {
 import DetailsSectionSkeleton from '../../../components/skeleton-component/detailsskeleton';
 import {
   exportInteractionsHistory,
-  exportInteractions,
+  exportAccountInteractions,
 } from '../../services/interactions/interactions-service';
 import { TimesheetProjectExportListURLParams } from '../../types/timesheet-projects';
 
@@ -378,7 +378,6 @@ export const AccountDetails = () => {
       } else {
         const projectInteractionExportPayload = {
           account_rid: accountid || '',
-          fiscal_year: convertedFiscalYear,
           page: interactionsParams?.page || 1,
           limit: interactionsParams?.limit || 100,
           sort: interactionsParams?.sortBy || 'action',
@@ -387,7 +386,7 @@ export const AccountDetails = () => {
           timezone: systemTimezone,
           flag: 'account',
         };
-        exportInteractions(projectInteractionExportPayload);
+        exportAccountInteractions(projectInteractionExportPayload);
         return;
       }
     } else {
