@@ -34,5 +34,10 @@ routes.put(
   checkUserStatusMiddleware("projects_task_view_edit"),
   controller.projectTaskController.updateProjectTask
 );
+routes.put(
+  "/status/update",
+  checkUserStatusMiddleware("projects_task_view_edit"),
+  controller.projectTaskController.anomalyStatusUpdate
+)
 
 export default routes;

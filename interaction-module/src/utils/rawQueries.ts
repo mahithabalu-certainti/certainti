@@ -340,6 +340,7 @@ export const listAllInteractionSummary = (
     ${whereKey}
     ${joinedConditions}
     ),
+    
     paginated_data AS (
     SELECT * FROM fetch_all_interactions i ${sortValue} ${pagination}
     )
