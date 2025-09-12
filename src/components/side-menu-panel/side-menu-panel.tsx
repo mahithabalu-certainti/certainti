@@ -36,17 +36,18 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
 
   // Initialize active key from URL parameters on mount
   useEffect(() => {
-    const listParam = searchParams.get('list') || 'details';
-    const subMenuParam = searchParams.get('subMenu') || '';
-    const currentActiveKey = subMenuParam || listParam;
-    setLocalActiveKey(currentActiveKey);
-  }, [searchParams]);
+    const listParam = searchParams.get('list');
+    const subMenuParam = searchParams.get('subMenu');
 
-  useEffect(() => {
-    if (activeKey) {
-      setLocalActiveKey(activeKey);
+    if (subMenuParam) {
+      // If there's a subMenu parameter, that's the active key
+      setLocalActiveKey(subMenuParam);
+    } else if (listParam) {
+      // If only list parameter exists, that's the active key
+      setLocalActiveKey(listParam);
     }
-  }, [activeKey]);
+  }, [searchParams]); 
+
   const { modules, menus } = useSelector(
     (state: RootState) => state.permission
   );
