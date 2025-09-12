@@ -101,8 +101,12 @@ export const useExportInteractions = () => {
   });
 };
 
-const getInteractionDetailsURL = (accountId: string, interactionId: string) => {
-  return `/api/interactions/detail/${accountId}/${interactionId}`;
+const getInteractionDetailsURL = (
+  accountId: string,
+  interactionId: string,
+  projectFiscalRid: string
+) => {
+  return `/api/interactions/detail/${accountId}/${interactionId}?project_fiscal_rid=${projectFiscalRid}`;
 };
 
 export const fetchInteractionList = async (
@@ -196,10 +200,11 @@ export const useGlobalInteractionList = (
 
 const fetchInteractionDetails = async (
   accountId: string,
-  interactionId: string
+  interactionId: string,
+  projectFiscalRid: string
 ): Promise<InteractionDetails> => {
   const response = await interactionServiceApi.get<InteractionDetailsResponse>(
-    getInteractionDetailsURL(accountId, interactionId)
+    getInteractionDetailsURL(accountId, interactionId, projectFiscalRid)
   );
 
   return response.data.data.interactionDetails;
@@ -207,14 +212,21 @@ const fetchInteractionDetails = async (
 
 export const useInteractionDetails = (
   accountId?: string,
-  interactionId?: string
+  interactionId?: string,
+  projectFiscalRid?: string
 ): UseQueryResult<InteractionDetails | undefined, Error> => {
   return useQuery<InteractionDetails | undefined, Error>({
-    queryKey: ['interaction-details', accountId, interactionId],
-    queryFn: () => fetchInteractionDetails(accountId!, interactionId!),
+    queryKey: [
+      'interaction-details',
+      accountId,
+      interactionId,
+      projectFiscalRid,
+    ],
+    queryFn: () =>
+      fetchInteractionDetails(accountId!, interactionId!, projectFiscalRid!),
     retry: 0,
     gcTime: 0,
-    enabled: !!interactionId && !!accountId,
+    enabled: !!interactionId && !!accountId && !!projectFiscalRid,
   });
 };
 

@@ -45,13 +45,15 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   const { accountid } = useParams();
   const [searchParams] = useSearchParams();
   const interactionId = searchParams.get('interaction_id') || undefined;
+  const projectFiscalRid = searchParams.get('project_fiscal_rid');
 
   const { permission } = useSelector((state: RootState) => state.permission);
   const sendInteraction = useSendInteraction();
   const { successToast } = useToast();
   const { data, isLoading, error, refetch } = useInteractionDetails(
     accountid,
-    interactionId
+    interactionId,
+    projectFiscalRid as string
   );
 
   const interactionFieldsEditable = useMemo(
