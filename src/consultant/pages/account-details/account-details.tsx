@@ -775,7 +775,7 @@ export const AccountDetails = () => {
   }, [disable, isFinancialHighlightsEnable]);
 
   const goBack = () => {
-    window.history.back();
+    navigate(ACCOUNT);
   };
 
   if (!accountIsEnable || !isAccountDetailsEnable) return <AccessRestricted />;

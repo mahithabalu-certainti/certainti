@@ -6,6 +6,7 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom';
+import { ACCOUNT, PROJECT } from '../../../../routes';
 import { InfoSection, PageHeader, SideMenuPanel } from '../../../../components';
 import {
   // ActivitiesIcon,
@@ -536,7 +537,13 @@ export const ProjectDetails = () => {
   };
 
   const goBack = () => {
-    window.history.back();
+    if (parent === 'account') {
+      navigate(`${ACCOUNT}/details/${accountID}?list=projects`);
+    } else if (parent === 'project') {
+      navigate(PROJECT);
+    }else{
+      navigate(`${ACCOUNT}/details/${accountID}?list=projects`);
+    }
   };
 
   const sideMenuItems = useMemo<MenuItem[]>(() => {
