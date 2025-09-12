@@ -870,7 +870,15 @@ export const rawQueries = {
       FROM ${schemaName}.resource_type 
       WHERE rid IN (:ids)
   `;
-  }
+  },
+  getAccountInteractionProjects(schemaName: string, account_rid: string){
+    return `
+      SELECT
+        project_fiscal_rid
+      FROM    ${schemaName}.interactions
+      WHERE account_interaction_rid in (:account_interaction_rid)
+    `;
+  },
 };
 
 export const IMPORT_FILTER_COLUMNS: any = {

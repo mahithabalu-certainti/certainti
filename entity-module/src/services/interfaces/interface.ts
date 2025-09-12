@@ -317,7 +317,8 @@ export interface IProjectService {
     sortOrder: string,
     bothParentAndChild: boolean,
     userId: string,
-    apiSource:string
+    apiSource:string,
+    accountInteractionId?:string
   ): Promise<{
     statusCode: number;
     message: string;

@@ -112,7 +112,7 @@ export class InteractionService {
   }
   async sendAccountInteraction(
     accountId: string,
-    accountInteractionId:string,
+    accountInteractionId:string[],
     projectId: IProject[],
     userId: string
   ): Promise<{
