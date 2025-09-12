@@ -773,7 +773,8 @@ export interface IImportListGraphqlServices {
 export interface IProjectTaskIngestionService {
   createProjectTask(
     projectTaskData: ICreateProjectTask,
-    userId: string
+    userId: string,
+    userPreference : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -782,7 +783,8 @@ export interface IProjectTaskIngestionService {
   }>;
   updateProjectTask(
     projectTaskData: IUpdateProjectTask,
-    userId: string
+    userId: string,
+    userPreference : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -795,6 +797,12 @@ export interface IProjectTaskIngestionService {
     errorMessage?: string;
     data?: { resourceCodes: any };
   }>;
+   handleAnomalyStatus(data: IAnomalyStatus,
+    userId: string) : Promise<{
+    statusCode: number;
+    message: string;
+    data?: { projectTask: any };
+  }>
 }
 export interface IProjectTaskService {
   listProjectTasks(

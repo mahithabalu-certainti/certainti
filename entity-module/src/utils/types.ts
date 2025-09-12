@@ -400,6 +400,7 @@ export interface ICreateProjectTask {
   comments?: string | null;
   created_by: string;
   modified_by?: string;
+  status_rid : string
 }
 
 export interface IUpdateProjectTask {
@@ -419,6 +420,7 @@ export interface IUpdateProjectTask {
   comments?: string | null;
   created_by: string;
   modified_by?: string;
+  status_rid : string
 }
 
 export interface IAnomalyStatus {
