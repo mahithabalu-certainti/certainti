@@ -365,7 +365,6 @@ const Interactions: React.FC<InteractionsProps> = ({
       accountId,
       source: 'account',
       account_name: accountDetails?.accountById?.account_name || '',
-      project_fiscal_rid: row.project_fiscal_rid || '',
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
@@ -394,12 +393,10 @@ const Interactions: React.FC<InteractionsProps> = ({
   const handleViewInteraction = (
     rowId: string,
     rNumber: string,
-    proFiscalRid: string
   ) => {
     if (rowId) {
       searchParams.set('interaction_id', rowId);
       searchParams.set('interaction_number', rNumber);
-      searchParams.set('project_fiscal_rid', proFiscalRid);
       navigate({ search: searchParams.toString() }, { replace: true });
       setSelectedRows([]);
       setClearSelectedRows((prev) => !prev);
@@ -417,7 +414,6 @@ const Interactions: React.FC<InteractionsProps> = ({
       searchParams.delete('interaction_attachment_count');
       searchParams.delete('interaction_rid');
       searchParams.delete('interaction_number');
-      searchParams.delete('project_fiscal_rid');
       navigate({ search: searchParams.toString() }, { replace: true });
     }
   };

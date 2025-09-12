@@ -11,7 +11,6 @@ export const getInteractionListColumns = (
   handleViewInteraction: (
     rid: string,
     rNumber: string,
-    proFiscalRid: string
   ) => void,
   viewProjectCount: (rid: string) => void,
   permissionMap: Record<string, { read: boolean; edit: boolean }>
@@ -36,7 +35,7 @@ export const getInteractionListColumns = (
     render: (row: InteractionList) => (
       <span
         onClick={() =>
-          handleViewInteraction(row.rid, row.r_number, row.project_fiscal_rid)
+          handleViewInteraction(row.rid, row.r_number)
         }
         className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
       >

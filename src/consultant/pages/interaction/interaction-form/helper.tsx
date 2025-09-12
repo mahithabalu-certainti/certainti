@@ -92,7 +92,7 @@ export const validateInteractionForm = (
       newErrors.accountName = 'Account Name is required';
       isValid = false;
     }
-    if (!formData.projectCode) {
+    if (!formData.projectCode && source === 'global') {
       newErrors.projectCode = 'Project Code is required';
       isValid = false;
     }

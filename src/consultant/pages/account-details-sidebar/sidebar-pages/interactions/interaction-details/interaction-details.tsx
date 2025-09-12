@@ -53,7 +53,8 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   const { successToast } = useToast();
   const { data, isLoading, error, refetch } = useAccountInteractionDetails(
     accountid,
-    interactionId
+    interactionId,
+    true
   );
 
   const interactionFieldsEditable = useMemo(

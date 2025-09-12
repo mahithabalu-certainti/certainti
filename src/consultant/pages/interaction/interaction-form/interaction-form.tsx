@@ -22,6 +22,8 @@ import {
 } from '../../../types';
 import { useToast } from '../../../../hooks';
 import {
+  useAccountCreateInteraction,
+  useAccountInteractionDetails,
   useCreateInteraction,
   useInteractionDetails,
   useUpdateInteractionDetails,
@@ -252,17 +254,27 @@ const InteractionForm = () => {
     }));
   };
 
-  const { data: interactionData, isLoading } = useInteractionDetails(
+  const { data: otherInteractionData, isLoading } = useInteractionDetails(
     accountId,
     interactionId,
     projectFiscalRid
   );
+  const accountInteraction = useAccountInteractionDetails(
+    accountId,
+    interactionId,
+    source == 'account'
+  );
+  const interactionData = otherInteractionData || accountInteraction.data;
+
   const createInteraction = useCreateInteraction();
+  const accountCreateInteraction = useAccountCreateInteraction();
   const updateInteraction = useUpdateInteractionDetails();
   const interactionStatus = useGetInteractionStatus();
 
   const commonSuccess =
-    createInteraction.isSuccess || updateInteraction.isSuccess;
+    createInteraction.isSuccess ||
+    accountCreateInteraction.isSuccess ||
+    updateInteraction.isSuccess;
 
   const { data: projectsData, isLoading: projectsLoading } = useAccountProjects(
     {
@@ -539,14 +551,32 @@ const InteractionForm = () => {
         },
       });
     } else {
-      createInteraction.mutate(payload, {
-        onError: () => {
-          setActiveFlag(null);
-        },
-        onSuccess: () => {
-          setActiveFlag(null);
-        },
-      });
+      if (source === 'account') {
+        accountCreateInteraction.mutate(
+          {
+            account_rid: payload.account_rid,
+            status_rid: payload.status_rid,
+            questions: payload.questions,
+          },
+          {
+            onError: () => {
+              setActiveFlag(null);
+            },
+            onSuccess: () => {
+              setActiveFlag(null);
+            },
+          }
+        );
+      } else {
+        createInteraction.mutate(payload, {
+          onError: () => {
+            setActiveFlag(null);
+          },
+          onSuccess: () => {
+            setActiveFlag(null);
+          },
+        });
+      }
     }
   };
 
@@ -558,6 +588,7 @@ const InteractionForm = () => {
 
   const formLoading =
     isLoading ||
+    accountInteraction.isLoading ||
     (projectsLoading && !isGlobalInteraction) ||
     interactionStatus.isLoading;
 
@@ -569,7 +600,7 @@ const InteractionForm = () => {
           <div className='w-[90%]'>
             {isEditView && (
               <>
-                {isLoading ? (
+                {isLoading || accountInteraction.isLoading ? (
                   <div className='ml-2'>
                     <SingleSkeleton width={150} height={12} />
                   </div>
@@ -594,7 +625,9 @@ const InteractionForm = () => {
             label='Save'
             loading={
               activeFlag === StatusActionEnum.Draft &&
-              (createInteraction.isPending || updateInteraction.isPending)
+              (createInteraction.isPending ||
+                accountCreateInteraction.isPending ||
+                updateInteraction.isPending)
             }
             disabled={
               activeFlag !== null && activeFlag !== StatusActionEnum.Draft
@@ -611,7 +644,9 @@ const InteractionForm = () => {
             label='Cancel'
             onClick={goBack}
             disabled={
-              createInteraction.isPending || updateInteraction.isPending
+              createInteraction.isPending ||
+              accountCreateInteraction.isPending ||
+              updateInteraction.isPending
             }
             sx={{
               width: '75px',
@@ -650,182 +685,221 @@ const InteractionForm = () => {
                   isLoading={isGlobalLoading}
                 />
               ) : (
-                <div
-                  style={{
-                    display: shouldHideField(
-                      'account_name',
-                      isEditView,
-                      permissionMap
-                    )
-                      ? 'none'
-                      : 'block',
-                  }}
-                >
-                  <label
-                    className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
-                    htmlFor='account_name'
+                <>
+                  <div
+                    style={{
+                      display: shouldHideField(
+                        'account_name',
+                        isEditView,
+                        permissionMap
+                      )
+                        ? 'none'
+                        : 'block',
+                    }}
                   >
-                    Account Name
-                  </label>
-                  <input
-                    type='text'
-                    name='account_name'
-                    placeholder='Enter Account Name'
-                    autoComplete='off'
-                    className='placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs'
-                    disabled={true}
-                    value={formData.accountName}
-                  />
-                </div>
+                    <label
+                      className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
+                      htmlFor='account_name'
+                    >
+                      Account Name
+                    </label>
+                    <input
+                      type='text'
+                      name='account_name'
+                      placeholder='Enter Account Name'
+                      autoComplete='off'
+                      className='placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs'
+                      disabled={true}
+                      value={formData.accountName}
+                    />
+                  </div>
+
+                  {source === 'account' && (
+                    <div
+                      style={{
+                        display:
+                          isEditView &&
+                          !shouldHideField('status', isEditView, permissionMap)
+                            ? 'block'
+                            : 'none',
+                      }}
+                    >
+                      <label
+                        className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
+                        htmlFor='status'
+                      >
+                        Status
+                      </label>
+                      <input
+                        type='text'
+                        name='status'
+                        placeholder='Choose status'
+                        autoComplete='off'
+                        className='placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs'
+                        disabled={true}
+                        value={formData.status}
+                      />
+                      {errors.status && (
+                        <span className='text-[12px] text-red-400 col-span-full'>
+                          {errors.status}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </>
               )}
             </div>
             <div
               className={`grid md:grid-cols-3 gap-x-4 gap-y-[2px] px-10 pt-1 mb-5`}
             >
-              {(!isProjectFields || isGlobalInteraction) && !isEditView ? (
-                <div className='w-full'>
-                  <ExpandCollapseDropdown
-                    label='Project Code'
-                    selectedValue={formData.projectCode}
-                    selectedLabel={
-                      formData.fiscalYear && formData.projectCode
-                        ? `FY${formData.fiscalYear} - ${formData.projectCode.split('_')[0]}`
-                        : ''
-                    }
-                    required={true}
-                    onChange={handleProjectChange}
-                    dropdownOptions={projectCodeList}
-                    placeholder='Choose Project Code'
-                    error={errors?.projectCode}
-                    expandAll={true}
-                    isLoading={projectsLoading && isGlobalInteraction}
-                  />
-                </div>
-              ) : (
-                <div
-                  style={{
-                    display: shouldHideField(
-                      'project_code',
-                      isEditView,
-                      permissionMap
-                    )
-                      ? 'none'
-                      : 'block',
-                  }}
-                >
-                  <label
-                    className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
-                    htmlFor='project_code'
-                  >
-                    Project Code
-                  </label>
-                  <input
-                    type='text'
-                    name='project_code'
-                    placeholder='Enter Project Code'
-                    autoComplete='off'
-                    className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${errors?.projectCode && 'border-red-500 disabled:!bg-[#FEF2F2] bg-[#FEF2F2]'}`}
-                    disabled={true}
-                    value={formData.projectCode}
-                  />
-                  {errors?.projectCode && (
-                    <span className='text-[12px] text-red-400 col-span-full'>
-                      {errors.projectCode}
-                    </span>
+              {isProjectFields && (
+                <>
+                  {(!isProjectFields || isGlobalInteraction) && !isEditView ? (
+                    <div className='w-full'>
+                      <ExpandCollapseDropdown
+                        label='Project Code'
+                        selectedValue={formData.projectCode}
+                        selectedLabel={
+                          formData.fiscalYear && formData.projectCode
+                            ? `FY${formData.fiscalYear} - ${formData.projectCode.split('_')[0]}`
+                            : ''
+                        }
+                        required={true}
+                        onChange={handleProjectChange}
+                        dropdownOptions={projectCodeList}
+                        placeholder='Choose Project Code'
+                        error={errors?.projectCode}
+                        expandAll={true}
+                        isLoading={projectsLoading && isGlobalInteraction}
+                      />
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        display: shouldHideField(
+                          'project_code',
+                          isEditView,
+                          permissionMap
+                        )
+                          ? 'none'
+                          : 'block',
+                      }}
+                    >
+                      <label
+                        className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
+                        htmlFor='project_code'
+                      >
+                        Project Code
+                      </label>
+                      <input
+                        type='text'
+                        name='project_code'
+                        placeholder='Enter Project Code'
+                        autoComplete='off'
+                        className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${errors?.projectCode && 'border-red-500 disabled:!bg-[#FEF2F2] bg-[#FEF2F2]'}`}
+                        disabled={true}
+                        value={formData.projectCode}
+                      />
+                      {errors?.projectCode && (
+                        <span className='text-[12px] text-red-400 col-span-full'>
+                          {errors.projectCode}
+                        </span>
+                      )}
+                    </div>
                   )}
-                </div>
+                  <div
+                    style={{
+                      display: shouldHideField(
+                        'project_name',
+                        isEditView,
+                        permissionMap
+                      )
+                        ? 'none'
+                        : 'block',
+                    }}
+                  >
+                    <label
+                      className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
+                      htmlFor='project_name'
+                    >
+                      Project Name
+                    </label>
+                    <input
+                      type='text'
+                      name='project_name'
+                      placeholder='-'
+                      autoComplete='off'
+                      className='placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs'
+                      disabled={true}
+                      value={formData.projectName}
+                    />
+                  </div>
+                  <div
+                    style={{
+                      display: shouldHideField(
+                        'fiscal_year',
+                        isEditView,
+                        permissionMap
+                      )
+                        ? 'none'
+                        : 'block',
+                    }}
+                  >
+                    <label
+                      className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
+                      htmlFor='fiscal_year'
+                    >
+                      Fiscal Year
+                    </label>
+                    <input
+                      type='text'
+                      name='fiscal_year'
+                      placeholder='-'
+                      autoComplete='off'
+                      className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${errors?.fiscalYear && 'border-red-500 disabled:!bg-[#FEF2F2] bg-[#FEF2F2]'}`}
+                      disabled={true}
+                      value={
+                        formData.fiscalYear ? `FY-${formData.fiscalYear}` : ''
+                      }
+                    />
+                    {errors?.fiscalYear && (
+                      <span className='text-[12px] text-red-400 col-span-full'>
+                        {errors.fiscalYear}
+                      </span>
+                    )}
+                  </div>
+                  <div
+                    style={{
+                      display:
+                        isEditView &&
+                        !shouldHideField('status', isEditView, permissionMap)
+                          ? 'block'
+                          : 'none',
+                    }}
+                  >
+                    <label
+                      className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
+                      htmlFor='status'
+                    >
+                      Status
+                    </label>
+                    <input
+                      type='text'
+                      name='status'
+                      placeholder='Choose status'
+                      autoComplete='off'
+                      className='placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs'
+                      disabled={true}
+                      value={formData.status}
+                    />
+                    {errors.status && (
+                      <span className='text-[12px] text-red-400 col-span-full'>
+                        {errors.status}
+                      </span>
+                    )}
+                  </div>
+                </>
               )}
-              <div
-                style={{
-                  display: shouldHideField(
-                    'project_name',
-                    isEditView,
-                    permissionMap
-                  )
-                    ? 'none'
-                    : 'block',
-                }}
-              >
-                <label
-                  className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
-                  htmlFor='project_name'
-                >
-                  Project Name
-                </label>
-                <input
-                  type='text'
-                  name='project_name'
-                  placeholder='-'
-                  autoComplete='off'
-                  className='placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs'
-                  disabled={true}
-                  value={formData.projectName}
-                />
-              </div>
-
-              <div
-                style={{
-                  display: shouldHideField(
-                    'fiscal_year',
-                    isEditView,
-                    permissionMap
-                  )
-                    ? 'none'
-                    : 'block',
-                }}
-              >
-                <label
-                  className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
-                  htmlFor='fiscal_year'
-                >
-                  Fiscal Year
-                </label>
-                <input
-                  type='text'
-                  name='fiscal_year'
-                  placeholder='-'
-                  autoComplete='off'
-                  className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${errors?.fiscalYear && 'border-red-500 disabled:!bg-[#FEF2F2] bg-[#FEF2F2]'}`}
-                  disabled={true}
-                  value={formData.fiscalYear ? `FY-${formData.fiscalYear}` : ''}
-                />
-                {errors?.fiscalYear && (
-                  <span className='text-[12px] text-red-400 col-span-full'>
-                    {errors.fiscalYear}
-                  </span>
-                )}
-              </div>
-
-              <div
-                style={{
-                  display:
-                    isEditView &&
-                    !shouldHideField('status', isEditView, permissionMap)
-                      ? 'block'
-                      : 'none',
-                }}
-              >
-                <label
-                  className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
-                  htmlFor='status'
-                >
-                  Status
-                </label>
-                <input
-                  type='text'
-                  name='status'
-                  placeholder='Choose status'
-                  autoComplete='off'
-                  className='placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs'
-                  disabled={true}
-                  value={formData.status}
-                />
-                {errors.status && (
-                  <span className='text-[12px] text-red-400 col-span-full'>
-                    {errors.status}
-                  </span>
-                )}
-              </div>
             </div>
 
             <div

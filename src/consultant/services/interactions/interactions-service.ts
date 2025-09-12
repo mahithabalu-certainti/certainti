@@ -313,14 +313,20 @@ const fetchAccountInteractionDetails = async (
 
 export const useAccountInteractionDetails = (
   accountId?: string,
-  interactionId?: string
+  interactionId?: string,
+  isEnable?: boolean
 ): UseQueryResult<InteractionDetails | undefined, Error> => {
   return useQuery<InteractionDetails | undefined, Error>({
-    queryKey: ['interaction-details', accountId, interactionId],
+    queryKey: [
+      'accoun-interaction-details',
+      accountId,
+      interactionId,
+      isEnable,
+    ],
     queryFn: () => fetchAccountInteractionDetails(accountId!, interactionId!),
     retry: 0,
     gcTime: 0,
-    enabled: !!interactionId && !!accountId,
+    enabled: !!interactionId && !!accountId && isEnable,
   });
 };
 
@@ -348,6 +354,29 @@ export const useCreateInteraction = () => {
   return useMutation<CommonApiResponse, Error, Partial<InteractionFormPayload>>(
     {
       mutationFn: (body) => createInteraction({ ...body }),
+    }
+  );
+};
+
+export const accountCreateInteraction = async (
+  body: Partial<InteractionFormPayload>
+): Promise<CommonApiResponse> => {
+  try {
+    const { data } = await interactionServiceApi.post<CommonApiResponse>(
+      '/api/interactions/accountInterctions/create',
+      body
+    );
+    return data;
+  } catch (error) {
+    console.error('Error create interaction:', error);
+    throw error;
+  }
+};
+
+export const useAccountCreateInteraction = () => {
+  return useMutation<CommonApiResponse, Error, Partial<InteractionFormPayload>>(
+    {
+      mutationFn: (body) => accountCreateInteraction({ ...body }),
     }
   );
 };
