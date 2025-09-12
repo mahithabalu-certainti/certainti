@@ -304,6 +304,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       accountId,
       source: 'account',
       account_name: accountDetails?.accountById?.account_name || '',
+      project_fiscal_rid: row.project_fiscal_rid || '',
     });
     navigate(`${path}?${queryParams.toString()}`);
   };

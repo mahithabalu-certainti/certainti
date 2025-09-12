@@ -120,6 +120,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       accountId,
       source: 'project',
       projectDetails: JSON.stringify(projectData),
+      project_fiscal_rid: data?.project_fiscal_rid || projectFiscalRid || '',
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
