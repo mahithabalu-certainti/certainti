@@ -266,9 +266,10 @@ export const AccountDetails = () => {
     });
   useEffect(() => {
     const list = searchParams.get('list');
+    const tabParams = searchParams.get('tab');
     const source = searchParams.get('source');
     if (
-      list !== 'resources' &&
+      tabParams !== 'details' &&
       list !== 'projectsTask' &&
       source === 'timesheet'
     ) {

@@ -186,24 +186,7 @@ export const getProjectTabTableColumns = (
       row.total_cost_subcon
         ? costDisplay(row.total_cost_subcon, row.currency_symbol)
         : '-',
-  },
-  {
-    id: 'total_cost_subcon',
-    label: 'SubCon Cost',
-    sortable: true,
-    hide:
-      !permissionMap?.['total_cost_nonlabor']?.read &&
-      !permissionMap?.['total_cost_nonlabor']?.edit,
-    sortId: 'total_cost_subcon',
-    width: 140,
-    sx: {
-      textAlign: 'right',
-    },
-    render: (row: TimesheetProjectList) =>
-      row.total_cost_subcon
-        ? costDisplay(row.total_cost_subcon, row.currency_symbol)
-        : '-',
-  },
+  }, 
   {
     id: 'total_cost_nonlabor',
     label: 'Non-Labor Cost',
