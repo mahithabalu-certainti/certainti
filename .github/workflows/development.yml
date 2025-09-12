@@ -238,6 +238,9 @@ jobs:
           LOG_LEVEL=debug
           NODE_ENV=DEVELOPMENT
           NODE_ENV_DB_PREFIX="D001-"
+          # AZURE_TENANT_ID=azure-tenant-id
+          # AZURE_CLIENT_ID=azure-client-id
+          # AZURE_CLIENT_SECRET=azure-client-secret
           AZURE_TENANT_ID="b6734060-665c-4b7b-94e2-716458c1d933"
           AZURE_CLIENT_ID="0d6c589d-aead-4576-9ff7-30b719c00046"
           AZURE_CLIENT_SECRET="3Sw8Q~8hP7QTX64ko~jj76KT4vePLznIfJTgUaA3"

@@ -323,7 +323,7 @@ export const rawQueries = {
     isAiProcessed: boolean
   ) {
     return `
-    UPDATE ${schemaName}.attachments SET is_ai_processed = ${isAiProcessed} WHERE entity_rid = '${rid}'`;
+    UPDATE ${schemaName}.attachments SET is_ai_processed = ${isAiProcessed} WHERE attach_to = '${rid}'`;
   },
   updateQreInfoSummary(rid: string, qrePercent: number) {
     return `
