@@ -87,9 +87,11 @@ export function errorLog(methodName: string, errorMessage?: string): void {
 
 export function handleSuccessResponse(
   res: Response,
-  data: any
+  data: any,
+  message?: string,
+  statusCode?: number
 ) {
-  return successResponse(res, HttpStatus.SUCCESS, HttpStatus.SUCCESS_MESSAGE, data, HttpStatus.SUCCESS_NOTIFICATION);
+  return successResponse(res, statusCode ? statusCode : HttpStatus.SUCCESS, message ? message : HttpStatus.SUCCESS_MESSAGE, data, HttpStatus.SUCCESS_NOTIFICATION);
 }
 
 export function handleErrorResponse(

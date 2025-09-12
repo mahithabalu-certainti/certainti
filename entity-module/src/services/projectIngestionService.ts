@@ -1482,6 +1482,7 @@ class ProjectIngestionService {
     finalMetaDataSortOrder: string,
     graphqlData: any,
     accessibleIds: string[],
+    apiSource: string,
     documentRid?: string
   ) {
     const { Project, ProjectFiscal, ProjectTimeline } = await this.getModels(accountNumber);
@@ -1551,6 +1552,10 @@ class ProjectIngestionService {
     let projectData: any;
     const fullOrder: any[] = [];
     let totalCount: number = 0;
+    const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+      /\D/g,
+      ""
+    )}`;
 
     if (graphqlData.type == "graphql") {
       whereProject = {
@@ -1564,7 +1569,11 @@ class ProjectIngestionService {
       if (fiscalYear) {
         whereFiscal.fiscal_year = fiscalYear;
       }
+<<<<<<< HEAD
 
+=======
+      
+>>>>>>> f8685a2b845067ca32733a2b501431d66c8abe97
         projectData = await Project.findAll({
         where: whereProject,
         subQuery: false,
@@ -1583,8 +1592,10 @@ class ProjectIngestionService {
             where: {
               account_rid: accountData.rid,
               ...whereFiscal,
+             
             },
-            include: documentRid ? [{
+            include: [
+              ...(documentRid ? [{
                 model: ProjectTimeline,
                 as: "ProjectTimelines",
                 required: true,
@@ -1597,7 +1608,10 @@ class ProjectIngestionService {
                   'document_rid',
                   'event_name',
                 ]
-            }] : [],
+              }] : []),
+              // KeyContact filter-only join (no data fetched)
+              
+            ],
             attributes: {
               include: [
                 ["rid", "project_fiscal_rid"],
@@ -1686,17 +1700,28 @@ class ProjectIngestionService {
             where: {
               account_rid: accountData.rid,
               ...whereFiscal,
+              ...(apiSource === "interaction"
+          ? {
+              [Op.and]: [
+                literal(`EXISTS (
+            SELECT 1 FROM "${schemaName}"."key_contact_details" kc
+            WHERE kc.entity_rid = "ProjectFiscal"."rid"
+              AND kc.include_in_communication = true
+                )`)
+              ]
+            }
+          : {}),
             },
             include: documentRid ? [{
-                model: ProjectTimeline,
-                as: "ProjectTimelines",
-                required: true,
-                where: {
-                    document_rid: documentRid,
-                },
-                attributes: [
-                  'rid',
-                  'entity_rid', // THIS IS CRUCIAL
+          model: ProjectTimeline,
+          as: "ProjectTimelines",
+          required: true,
+          where: {
+              document_rid: documentRid,
+          },
+          attributes: [
+            'rid',
+            'entity_rid', // THIS IS CRUCIAL
                   'document_rid',
                   'event_name',
                 ]

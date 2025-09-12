@@ -59,6 +59,28 @@ routes.put(
   checkUserStatusMiddleware("interactions_view_edit"),
   controller.interactionsController.updateTechSummaryContext
 );
+routes.post(
+  "/accountInterctions/create",
+  checkUserStatusMiddleware("interactions_view_edit"),
+  controller.interactionsController.createAccountInteraction
+);  
+routes.post(
+  "/accountInterctions/send",
+  checkUserStatusMiddleware("interactions_view_edit"),
+  controller.interactionsController.sendAccountInteraction
+); 
+routes.get(
+  "/accountInterctions/list",
+  checkUserStatusMiddleware("interactions_view_edit"),
+  controller.interactionsController.listAccountInteractions
+);
+
+routes.get(
+  "/accountInterctions/export",
+  checkUserStatusMiddleware("interactions_view_edit"),
+  controller.interactionsController.exportAccountInteractions
+);
+
 
 routes.get('/technicalSummary/export', checkUserStatusMiddleware("interactions_export"), controller.interactionsController.exportTechnicalSummary)
 routes.post('/list', checkUserStatusMiddleware("interactions_view_edit"), controller.interactionsController.listAllInteractionPrjAcc)

@@ -212,8 +212,35 @@ export class WebHookService {
         });
         this.sendMailWithAttachment(
           finalResult,
-          "",
-          null,
+          finalResult.attachments[0].fileName,
+          finalResult.attachments[0].file,
+          "Invalid account number",
+          finalResult.forwardEmail,
+          this.graphClient,
+          receivedEmail
+        );
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: "Invalid Account Number",
+        };
+      }
+
+      const { accountNumber: accountNumberByUser } = await this.interactionSchemaService.fetchValidAccountNumberByNumber(
+        accountNumber
+      );
+      if(!accountNumberByUser){
+        await this.logWebhookEmailEvent({
+          schemaName: mailProcessedResults.accountNumber,
+          emailSubject: mailProcessedResults.subject,
+          emailSender: mailProcessedResults.from,
+          status: "FAILED",
+          errorMessage: "Invalid Account Number",
+        });
+        this.sendMailWithAttachment(
+          finalResult,
+          finalResult.attachments[0].fileName,
+          finalResult.attachments[0].file,
           "Invalid account number",
           finalResult.forwardEmail,
           this.graphClient,
@@ -236,8 +263,8 @@ export class WebHookService {
         });
         this.sendMailWithAttachment(
           finalResult,
-          "",
-          null,
+          finalResult.attachments[0].fileName,
+          finalResult.attachments[0].file,
           "Invalid Interaction ID",
           finalResult.forwardEmail,
           this.graphClient,
@@ -265,8 +292,8 @@ export class WebHookService {
         });
         this.sendMailWithAttachment(
           finalResult,
-          "",
-          null,
+          finalResult.attachments[0].fileName,
+          finalResult.attachments[0].file,
           "Invalid Account ID",
           finalResult.forwardEmail,
           this.graphClient,
@@ -294,8 +321,8 @@ export class WebHookService {
         });
         this.sendMailWithAttachment(
           finalResult,
-          "",
-          null,
+          finalResult.attachments[0].fileName,
+          finalResult.attachments[0].file,
           "Invalid Interaction ID",
           finalResult.forwardEmail,
           this.graphClient,
@@ -323,8 +350,8 @@ export class WebHookService {
         });
         this.sendMailWithAttachment(
           finalResult,
-          "",
-          null,
+          finalResult.attachments[0].fileName,
+          finalResult.attachments[0].file,
           projectData,
           finalResult.forwardEmail,
           this.graphClient,
@@ -372,8 +399,8 @@ export class WebHookService {
         });
         this.sendMailWithAttachment(
           finalResult,
-          "",
-          null,
+          finalResult.attachments[0].fileName,
+          finalResult.attachments[0].file,
           "Invalid Question Number",
           finalResult.forwardEmail,
           this.graphClient,
@@ -509,15 +536,15 @@ export class WebHookService {
     }
   ): Promise<string | null> {
     if (!projectId || typeof projectId !== 'string') {
-      return 'Invalid or missing projectId';
+      return 'Invalid Project Id';
     }
   
     if (!projectName || typeof projectName !== 'string') {
-      return 'Invalid or missing projectName';
+      return 'Invalid Project Name';
     }
   
     if (!projectCode || typeof projectCode !== 'string') {
-      return 'Invalid or missing projectCode';
+      return 'Invalid Project Code';
     }
   
     try {
@@ -525,11 +552,53 @@ export class WebHookService {
 
       const schemaName =  `trd365_${accountNumber.replace(/\D/g, "")}`;
   
-      const [result] = await orgDbSequelize.query(
+      const [idResult] = await orgDbSequelize.query(
+        `SELECT 1 FROM "${schemaName}".project_fiscal 
+         WHERE r_number = :projectId 
+         LIMIT 1;`,
+        {
+          type: "SELECT",
+          replacements: { projectId },
+        }
+      );
+    
+      if (!idResult) {
+        return 'Invalid Project ID';
+      }
+    
+      const [nameResult] = await orgDbSequelize.query(
+        `SELECT 1 FROM "${schemaName}".project_fiscal 
+         WHERE project_name = :projectName 
+         LIMIT 1;`,
+        {
+          type: "SELECT",
+          replacements: { projectName },
+        }
+      );
+    
+      if (!nameResult) {
+        return 'Invalid Project Name';
+      }
+    
+      const [codeResult] = await orgDbSequelize.query(
+        `SELECT 1 FROM "${schemaName}".project_fiscal 
+         WHERE project_code = :projectCode 
+         LIMIT 1;`,
+        {
+          type: "SELECT",
+          replacements: { projectCode },
+        }
+      );
+    
+      if (!codeResult) {
+        return 'Invalid Project Code';
+      }
+
+      const [finalResult] = await orgDbSequelize.query(
         `SELECT 1 FROM "${schemaName}".project_fiscal 
          WHERE project_rid = :projectId 
-           OR project_name = :projectName 
-           OR project_code = :projectCode
+            OR project_name = :projectName 
+            OR project_code = :projectCode
          LIMIT 1;`,
         {
           type: "SELECT",
@@ -540,10 +609,11 @@ export class WebHookService {
           },
         }
       );
-  
-      if (!result) {
-        return 'No matching project found with the provided Project ID, name, or code.'
+    
+      if (!finalResult) {
+        return 'Invalid Project Details';
       }
+
     } catch (err) {
       return `Database error: ${(err as Error).message || err}`;
     }
@@ -796,11 +866,14 @@ export class WebHookService {
         const rows = await this.parseCsvBuffer(buffer);
         parsedData = rows;
 
-        if (this.validateCSV(rows)) {
+        const validationResult = this.validateCSV(rows);
+
+        if (validationResult.valid) {
           this.logger.info("Valid CSV:", att.name);
         } else {
+          const errorDetails = validationResult.errors.join(", ");
           shouldForward = true;
-          reason = "CSV validation failed";
+          reason = `CSV validation failed - ${errorDetails}`;
           this.logWebhookEmailEvent({
             schemaName: options.accountNumber,
             emailSubject: options.subject,
@@ -811,7 +884,7 @@ export class WebHookService {
         }
       } catch (err) {
         shouldForward = true;
-        reason = `CSV parse error: ${(err as Error).message}`;
+        reason = `CSV parse error - ${(err as Error).message}`;
         this.logWebhookEmailEvent({
           schemaName: options.accountNumber,
           emailSubject: options.subject,
@@ -851,11 +924,14 @@ export class WebHookService {
 
         parsedData = rows;
 
-        if (this.validateCSV(rows)) {
+        const validationResult = this.validateCSV(rows);
+
+        if (validationResult.valid) {
           this.logger.info("Valid XLSX:", att.name);
         } else {
           shouldForward = true;
-          reason = "XLSX validation failed";
+          const errorDetails = validationResult.errors.join("; ");
+          reason = `CSV validation failed - ${errorDetails}`;
           this.logWebhookEmailEvent({
             schemaName: options.accountNumber,
             emailSubject: options.subject,
@@ -866,7 +942,7 @@ export class WebHookService {
         }
       } catch (err) {
         shouldForward = true;
-        reason = `XLSX parse error: ${(err as Error).message}`;
+        reason = `XLSX parse error - ${(err as Error).message}`;
         this.logWebhookEmailEvent({
           schemaName: options.accountNumber,
           emailSubject: options.subject,
@@ -916,6 +992,8 @@ export class WebHookService {
     return {
       name: att.name,
       contentBytes: att.contentBytes,
+      file: buffer,
+      fileName,
       parsedData,
     };
   }
@@ -998,75 +1076,77 @@ export class WebHookService {
     });
   }
 
-  private validateCSV(array: string[][]): boolean {
-    if (!Array.isArray(array) || array.length < 5) return false;
-
-    // Check header rows
-    const headerChecks =
-      array?.[0]?.[0] === "Account ID" &&
-      !!array?.[0]?.[1] &&
-      array?.[1]?.[0] === "Interaction ID" &&
-      !!array?.[1]?.[1] &&
-      array?.[2]?.[0] === "Project ID" &&
-      !!array?.[2]?.[1] &&
-      array?.[3]?.[0] === "Project Name" &&
-      array?.[4]?.[0] === "Project Code" && 
-      !!array?.[4]?.[1];
-
-    if (!headerChecks) return false;
-
-    // Validate the column headers at index 4
-    const tableHeader = array[5];
-    if (
-      tableHeader?.[0] !== "Question No" ||
-      tableHeader?.[1] !== "Questions" ||
-      tableHeader?.[2] !== "Answers" ||
-      tableHeader?.[3] !== "Notes" ||
-      tableHeader?.[4] !== "Is Mandatory"
-    ) {
-      return false;
+  private validateCSV(array: string[][]): { valid: true } | { valid: false; errors: string[] } {
+    const errors: string[] = [];
+  
+    if (!Array.isArray(array) || array.length < 6) {
+      return {
+        valid: false,
+        errors: ["CSV has too few rows or is not an array."],
+      };
     }
-
-    const missingFields: Array<{ rowIndex: number; missing: string[] }> = [];
-
-    // Validate the data rows
+  
+    // Header Checks (Rows 0 to 4)
+    if (array[0]?.[0] !== "Account ID" || !array[0]?.[1]) {
+      errors.push("Missing or invalid 'Account ID' in row 1.");
+    }
+    if (array[1]?.[0] !== "Interaction ID" || !array[1]?.[1]) {
+      errors.push("Missing or invalid 'Interaction ID' in row 2.");
+    }
+    if (array[2]?.[0] !== "Project ID" || !array[2]?.[1]) {
+      errors.push("Missing or invalid 'Project ID' in row 3.");
+    }
+    if (array[3]?.[0] !== "Project Name" || !array[3]?.[1]) {
+      errors.push("Missing or invalid 'Project Name' in row 4.");
+    }
+    if (array[4]?.[0] !== "Project Code" || !array[4]?.[1]) {
+      errors.push("Missing or invalid 'Project Code' in row 5.");
+    }
+  
+    // Column Headers at index 5
+    const expectedHeaders = ["Question No", "Questions", "Answers", "Notes", "Is Mandatory"];
+    const tableHeader = array[5] || [];
+  
+    expectedHeaders.forEach((expected, index) => {
+      if (tableHeader[index] !== expected) {
+        errors.push(`Expected column "${expected}" at position ${index + 1} in header row (row 6).`);
+      }
+    });
+  
+    // Data rows validation
     for (let i = 6; i < array.length; i++) {
       const row = array[i];
-      const questionId = row?.[0];
-      const question = row?.[1];
-      const answer = row?.[2];
-      const notes = row?.[3];
-      const isMandatory = row?.[4]?.trim().toLowerCase();
-
-      const missing: string[] = [];
-
-      if (!questionId) missing.push("questionId");
-      if (!question) missing.push("question");
-      if (!answer) missing.push("answer");
-      if (!isMandatory) missing.push("isMandatory");
-
-      if (missing.length > 0) {
-        missingFields.push({
-          rowIndex: i + 1,
-          missing,
-        });
-      }
-
-      // If row is empty, skip
-      if (!question && !answer && !isMandatory) continue;
-
-      // If Is Mandatory is 'yes', answer must not be empty
+      if (!row) continue;
+  
+      const questionId = row[0];
+      const question = row[1];
+      const answer = row[2];
+      const notes = row[3];
+      const isMandatory = row[4]?.trim().toLowerCase();
+  
+      const rowErrors: string[] = [];
+  
+      if (!questionId) rowErrors.push("Question No");
+      if (!question) rowErrors.push("Questions");
+      if (!answer) rowErrors.push("Answers");
+      if (!isMandatory) rowErrors.push("Is Mandatory");
+  
+      // If Is Mandatory is 'yes', answer must be non-empty
       if (isMandatory === "yes" && !answer?.trim()) {
-        return false;
+        rowErrors.push("Answer is required because the question is mandatory");
+      }
+  
+      if (rowErrors.length > 0) {
+        errors.push(`Row ${i + 1} is missing: ${rowErrors.join(", ")}`);
       }
     }
-
-    if (missingFields.length > 0) {
-      return false;
+  
+    if (errors.length > 0) {
+      return { valid: false, errors };
     }
-
-    return true;
-  }
+  
+    return { valid: true };
+  }  
 
   private async sendMailWithAttachment(
     originalMessage: any,
@@ -1125,6 +1205,70 @@ export class WebHookService {
       const errorMessage =
         err instanceof Error ? err.message : JSON.stringify(err);
       this.logger.error(`sendMailWithAttachment error: ${errorMessage}`);
+    }
+  }
+
+  private createGraphClient(
+    tenantId: string,
+    clientId: string,
+    clientSecret: string
+  ): Client {
+    const credential = new ClientSecretCredential(
+      tenantId,
+      clientId,
+      clientSecret
+    );
+    return Client.initWithMiddleware({
+      authProvider: {
+        getAccessToken: async () => {
+          const token = await credential.getToken(
+            "https://graph.microsoft.com/.default"
+          );
+          return token.token;
+        },
+      },
+    });
+  }
+
+  async logWebhookEmailEvent({
+    schemaName,
+    emailSubject,
+    emailSender,
+    attachmentName = null,
+    extractedAnswers = null,
+    status,
+    errorMessage = null,
+    uploadedTime = new Date(),
+  }: {
+    schemaName: string;
+    emailSubject: string;
+    emailSender: string;
+    attachmentName?: string | null;
+    extractedAnswers?: string | null;
+    status: WebhookEmailLogAttributes["status"];
+    errorMessage?: string | null;
+    uploadedTime?: Date;
+  }) {
+    try {
+      const { WebhookEmailLog } = await this.interactionModelService.getModels(
+        schemaName
+      );
+
+      await WebhookEmailLog.create({
+        created_by: "SYSTEM",
+        created_datetime: new Date(),
+
+        email_subject: emailSubject,
+        email_sender: emailSender,
+        attachment_name: attachmentName,
+        extracted_answers: extractedAnswers,
+        uploaded_time: uploadedTime,
+
+        status,
+        error_message: errorMessage,
+      });
+    } catch (err) {
+      console.error("Failed to log webhook email event:", err);
     }
   }
 
