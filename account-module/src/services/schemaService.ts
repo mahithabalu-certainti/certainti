@@ -2197,7 +2197,7 @@ private async createInteractionTable(
         response_email character varying(255),
         response_by character varying(50),
         response_source_rid character varying(50),
-        interaction_version integer,
+        interaction_version integer
       );
     `);
 
@@ -2311,7 +2311,7 @@ private async createInteractionTable(
         interaction_type_rid varchar(50) NOT NULL,
         template_rid varchar(50),
         status_rid varchar(50) NOT NULL,
-        sent_on_datetime timestamptz,
+        sent_on_datetime timestamptz
       );
     `);
 
