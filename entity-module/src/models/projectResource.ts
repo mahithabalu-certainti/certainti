@@ -15,6 +15,7 @@ interface ProjectResourceAttributes {
   project_fiscal_rid: string;
   resource_rid: string;
   project_resource_code: string;
+  project_resource_role?: string | null;
   fiscal_year: number;
 
   start_date?: Date | null;
@@ -67,6 +68,7 @@ export class ProjectResource
   public resource_rid!: string;
   public fiscal_year!: number;
   public project_resource_code!: string;
+  public project_resource_role?: string | null;
 
   public start_date?: Date | null;
   public end_date?: Date | null;
@@ -123,6 +125,10 @@ export class ProjectResource
         project_resource_code: {
           type: DataTypes.STRING(100),
           allowNull: false,
+        },
+        project_resource_role: {
+          type: DataTypes.STRING(100),
+          allowNull: true,
         },
 
         start_date: { type: DataTypes.DATE },

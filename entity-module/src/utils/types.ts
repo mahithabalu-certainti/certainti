@@ -311,6 +311,7 @@ export interface ICreateProjectResource {
   resource_id: string;
   project_code: string;
   resource_code: string;
+  project_resource_role?: string;
   user_preference?: string;
   manager_name?: string;
   manager_ref_id?: string;
@@ -342,6 +343,7 @@ export interface IUpdateProjectResource {
   account_rid: string;
   resource_id: string;
   resource_code: string;
+  project_resource_role?: string;
   manager_name?: string;
   manager_ref_id?: string;
   assigned_skill_role_type_rid: string | null;
