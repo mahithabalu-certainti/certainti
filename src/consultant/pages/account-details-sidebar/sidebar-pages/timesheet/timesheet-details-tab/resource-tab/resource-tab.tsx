@@ -131,13 +131,16 @@ const TimesheetResourcesTab: React.FC<ProjectTabListProps> = ({
     newSearchParams.set('source', 'timesheet');
     const timesheetId = searchParams.get('timesheet_id');
     if (timesheetId) newSearchParams.set('timesheet_id', timesheetId);
-    navigate(
-      `/account/details/${accountid}?${newSearchParams.toString()}`,
-      { state: { activeKey: 'resources' }, replace: true }
-    );
+    navigate(`/account/details/${accountid}?${newSearchParams.toString()}`, {
+      state: { activeKey: 'resources' },
+      replace: true,
+    });
   };
 
-  const projectTabTableColumns = getResourceTabTableColumns(handleResourceClick, permissionMap);
+  const projectTabTableColumns = getResourceTabTableColumns(
+    handleResourceClick,
+    permissionMap
+  );
   return (
     <div className='border border-[#CBD6E2]'>
       <ListTable
@@ -148,7 +151,7 @@ const TimesheetResourcesTab: React.FC<ProjectTabListProps> = ({
         tableStyle={{
           borderBottom: '1px solid #CBD6E2',
           height: '100%',
-          maxHeight: 'calc(100vh - 410px)',
+          maxHeight: 'calc(100vh - 360px)',
           overflow: 'auto',
         }}
         stickyHeader={true}

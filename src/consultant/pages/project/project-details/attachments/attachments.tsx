@@ -465,7 +465,7 @@ const Attachments: React.FC<AttachmentsProps> = ({
               tableStyle={{
                 borderBottom: '1px solid #CBD6E2',
                 height: '100%',
-                maxHeight: 'calc(100vh - 370px)',
+                maxHeight: 'calc(100vh - 320px)',
                 overflow: 'auto',
               }}
               stickyHeader={true}

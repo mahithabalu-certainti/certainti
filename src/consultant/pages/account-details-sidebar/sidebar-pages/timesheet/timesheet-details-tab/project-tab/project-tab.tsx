@@ -175,7 +175,7 @@ const TimesheetProjectTab: React.FC<ProjectTabListProps> = ({
         hoverHighlight={false}
         tableStyle={{
           height: '100%',
-          maxHeight: 'calc(100vh - 410px)',
+          maxHeight: 'calc(100vh - 360px)',
           overflow: 'auto',
         }}
         stickyHeader={true}

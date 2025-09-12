@@ -1,7 +1,12 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
-import {  generatePath, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import {
+  generatePath,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 import { RootState } from '../../../../../../../store/store';
 import { ListTable } from '../../../../../../../components/table';
 import {
@@ -39,7 +44,7 @@ const TimesheetProjectTask: React.FC<ProjectTaskProps> = ({
     []
   );
   const navigate = useNavigate();
-  
+
   // hooks
   const { accountid } = useParams();
   const [searchParams] = useSearchParams();
@@ -118,9 +123,8 @@ const TimesheetProjectTask: React.FC<ProjectTaskProps> = ({
   };
 
   const totalItems = projectApiListData?.count || 0;
-   
 
-  const handleProjectTaskClick = (row: ProjectTaskListType) => { 
+  const handleProjectTaskClick = (row: ProjectTaskListType) => {
     const newSearchParams = new URLSearchParams();
     newSearchParams.set('accountID', row.account_rid);
     newSearchParams.set('currency_rid', row.currency_rid);
@@ -133,11 +137,12 @@ const TimesheetProjectTask: React.FC<ProjectTaskProps> = ({
     const path = generatePath(PROJECT_DETAILS, {
       projectid: row.project_fiscal_rid,
     });
-    navigate(
-      `${path}?${newSearchParams.toString()}`
-    );
+    navigate(`${path}?${newSearchParams.toString()}`);
   };
-  const projectTaskColumns = getProjectTaskColumns(handleProjectTaskClick, permissionMap);
+  const projectTaskColumns = getProjectTaskColumns(
+    handleProjectTaskClick,
+    permissionMap
+  );
   return (
     <div className='border border-[#CBD6E2]'>
       <ListTable
@@ -148,7 +153,7 @@ const TimesheetProjectTask: React.FC<ProjectTaskProps> = ({
         tableStyle={{
           borderBottom: '1px solid #CBD6E2',
           height: '100%',
-          maxHeight: 'calc(100vh - 410px)',
+          maxHeight: 'calc(100vh - 360px)',
           overflow: 'auto',
         }}
         stickyHeader={true}

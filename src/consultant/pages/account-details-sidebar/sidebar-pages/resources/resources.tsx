@@ -507,31 +507,33 @@ const Resource: React.FC<ResourceProps> = ({
       newSearchParams.set('list', 'timesheet');
       if (timesheetId) newSearchParams.set('timesheet_id', timesheetId);
       newSearchParams.set('tab', 'timesheet_project_resource');
-      navigate(`/account/details/${accountid}?${newSearchParams.toString()}`, {replace:true});
-    }else{ 
-    setViewResourceList(!viewResourceList);
-    setShowBackArrow(!showBackArrow);
-    setShowFilter(false);
-    setCount(ResourceList?.count || 0);
-    // clear query params
-    searchParams.delete('res_id');
-    searchParams.delete('attachment_entity');
-    searchParams.delete('tab');
-    navigate(
-      {
-        pathname: location.pathname,
-        search: searchParams.toString(),
-      },
-      { replace: true }
-    );
-    setValue('');
-    setFilterVisibility(true);
-    setAppliedFilters({});
-    setSortFilterCount(0);
-    clearFilters('resource');
-  }
+      navigate(`/account/details/${accountid}?${newSearchParams.toString()}`, {
+        replace: true,
+      });
+    } else {
+      setViewResourceList(!viewResourceList);
+      setShowBackArrow(!showBackArrow);
+      setShowFilter(false);
+      setCount(ResourceList?.count || 0);
+      // clear query params
+      searchParams.delete('res_id');
+      searchParams.delete('attachment_entity');
+      searchParams.delete('tab');
+      navigate(
+        {
+          pathname: location.pathname,
+          search: searchParams.toString(),
+        },
+        { replace: true }
+      );
+      setValue('');
+      setFilterVisibility(true);
+      setAppliedFilters({});
+      setSortFilterCount(0);
+      clearFilters('resource');
+    }
   };
-  const headerButtons = [ 
+  const headerButtons = [
     {
       label: 'Add Attachment',
       variant: 'outlined' as const,
@@ -982,7 +984,7 @@ const Resource: React.FC<ResourceProps> = ({
                   tableStyle={{
                     borderBottom: '1px solid #CBD6E2',
                     height: '100%',
-                    maxHeight: 'calc(100vh - 370px)',
+                    maxHeight: 'calc(100vh - 330px)',
                     overflow: 'auto',
                   }}
                   stickyHeader={true}
