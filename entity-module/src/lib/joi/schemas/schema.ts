@@ -2365,6 +2365,7 @@ const createProjectTaskSchema = Joi.object({
   .allow(null),
   
   comments: Joi.string().max(2000).optional().allow("").allow(null),
+  user_preference: Joi.string().max(2000).optional().allow("").allow(null),
 });
 
 const updateProjectTaskSchema = Joi.object({
@@ -2448,6 +2449,7 @@ const updateProjectTaskSchema = Joi.object({
   .allow(null),
   
   comments: Joi.string().max(2000).optional().allow("").allow(null),
+  user_preference : Joi.string().max(2000).optional().allow("").allow(null),
 });
 
 const listResourceCostSchemaForFinancialHighlights = Joi.object({

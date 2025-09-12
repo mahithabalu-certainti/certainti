@@ -2180,7 +2180,7 @@ class InteractionSchemaService {
           ["question_seq_num", "ASC"],
           ["created_datetime", "ASC"],
         ],
-        where: { interaction_rid: interactionRid },
+        where: { account_interaction_rid: interactionRid },
       });
       return items;
     } catch (err) {

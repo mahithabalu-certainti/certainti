@@ -28,6 +28,8 @@ interface ProjectTaskAttributes {
   total_cost_pro_task?: number | null;
 
   comments?: string | null;
+
+  status_rid : string;
 }
 
 type ProjectTaskCreationAttributes = Optional<ProjectTaskAttributes, "rid">;
@@ -63,6 +65,8 @@ export class ProjectTask
   public total_cost_pro_task?: number;
 
   public comments?: string;
+
+  public status_rid!: string;
 
   static initialize(sequelize: Sequelize, schema: string) {
     ProjectTask.init(
@@ -156,6 +160,10 @@ export class ProjectTask
           type: DataTypes.STRING(2000),
           allowNull: true,
         },
+        status_rid : {
+          type : DataTypes.STRING(50),
+          allowNull : true
+        }
       },
       {
         sequelize,

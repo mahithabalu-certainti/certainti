@@ -914,6 +914,7 @@ export class ProjectTaskMapper {
       currency_rid: projectTask.currency_rid || null,
 
       comments: projectTask.comments || null,
+      status_rid : projectTask.status_rid
     };
   }
   static mapToProjectTaskUpdate(
@@ -944,6 +945,7 @@ export class ProjectTaskMapper {
       currency_rid: projectTask.currency_rid || null,
 
       comments: projectTask.comments || null,
+      status_rid : projectTask.status_rid
     };
   }
 }

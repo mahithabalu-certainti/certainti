@@ -14,6 +14,7 @@ import {
   exportListProjectTasksSchema,
   listProjectTasksSchema,
   projectTaskByIdSchema,
+  updateProjectResourceStatus,
   updateProjectTaskSchema,
 } from "../lib/joi/schemas/schema";
 
@@ -27,6 +28,7 @@ async function createProjectTask(req: Request, res: Response): Promise<void> {
     const value = await validateRequest(req, createProjectTaskSchema, res);
 
     const userId = req.headers["x-user-id"] as string;
+    const userPreference = value.user_preference
 
     if (!userId) {
       handleErrorResponse(
@@ -43,7 +45,8 @@ async function createProjectTask(req: Request, res: Response): Promise<void> {
     }
     const projectResource = await projectTaskService.createProjectTask(
       value,
-      userId
+      userId,
+      userPreference
     );
     if (projectResource.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -276,6 +279,7 @@ async function updateProjectTask(req: Request, res: Response): Promise<void> {
     const value = await validateRequest(req, updateProjectTaskSchema, res);
 
     const userId = req.headers["x-user-id"] as string;
+    const userPreference = value.user_preference
 
     if (!userId) {
       handleErrorResponse(
@@ -292,7 +296,8 @@ async function updateProjectTask(req: Request, res: Response): Promise<void> {
     }
     const projectResource = await projectTaskService.updateProjectTask(
       value,
-      userId
+      userId,
+      userPreference
     );
     if (projectResource.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -356,11 +361,54 @@ async function assignedResourceCodes(req: Request, res: Response): Promise<void>
   }
 }
 
+async function anomalyStatusUpdate(req: Request, res: Response): Promise<void> {
+  const methodName = "Accept Anamoly";
+  try {
+    const value = await validateRequest(req, updateProjectResourceStatus, res);
+
+    if(!value){
+      return;
+    }
+
+    const userId = req.headers["x-user-id"] as string;
+
+    if (!userId) {
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    const result = await projectTaskService.handleAnomalyStatus(
+      value,
+      userId
+    );
+
+    if (result.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, result.data);
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
 export default {
   getProjectTasks,
   getProjectTaskById,
   exportAllProjectTasks,
   createProjectTask,
   updateProjectTask,
-  assignedResourceCodes
+  assignedResourceCodes,
+  anomalyStatusUpdate
 };
