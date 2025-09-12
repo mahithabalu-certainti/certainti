@@ -244,7 +244,7 @@ export class InteractionService {
         );
       }
       const isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(accountNumber, interactionData.project_fiscal_rid);
-
+      this.logger.info(`Is email recipient available: ${isEmailRecipientAvailable} for interaction: ${interaction.dataValues.rid} with project fiscal:${interactionData.project_fiscal_rid}`);
       if(interactionStatus === statusAction.DRAFT && isEmailRecipientAvailable)
       await this.checkAutoSendEnabled(accountNumber,interactionData,interaction.rid,userId);
        else
@@ -277,6 +277,7 @@ export class InteractionService {
   }
   async checkAutoSendEnabled(accountNumber: string, interactionData: ICreateInteraction, interactionId: string, userId: string) {
     const isEnabled = await this.interactionSchemaService.isAutoSendInteractionEnabled(accountNumber, interactionData, interactionId);
+    this.logger.info(`Auto-send is ${isEnabled ? "enabled" : "disabled"} for interaction ID: ${interactionId}`);
     if (isEnabled) {
       await this.sendInteraction([{ interaction_rid: interactionId,
         project_fiscal_rid: interactionData.project_fiscal_rid
@@ -1053,7 +1054,7 @@ export class InteractionService {
         data.email = email_info?.email === undefined ? null : email_info?.email
         data.name = email_info?.name === undefined ? null : email_info.name
         data.is_interaction_followup = is_interaction_followup
-        
+        this.logger.info("Email info to be sent:",JSON.stringify(data));
         await this.interactionSchemaService.insertEmailInfoDatas(data);
         await orgDb.query(rawQueries.updateInteractionStatus(schemaName, fetchInQueueStatus[0][0].rid, interaction_rid))
         await mainDb.query(rawQueries.updateInteractionSummaryStatus(fetchInQueueStatus[0][0].rid, interaction_rid))
