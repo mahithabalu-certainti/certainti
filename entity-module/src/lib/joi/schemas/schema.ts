@@ -638,6 +638,7 @@ const listResourceSchema = Joi.object({
     .allow(""),
   bothParentAndChild: Joi.boolean().optional().default(false),
   apiSource: Joi.string().optional().default("Project"),
+  accountInteractionId: Joi.string().optional().allow(null).allow("").default(""),
 });
 
 const exportListResourceSchema = Joi.object({

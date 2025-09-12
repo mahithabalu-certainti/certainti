@@ -1483,6 +1483,7 @@ class ProjectIngestionService {
     graphqlData: any,
     accessibleIds: string[],
     apiSource: string,
+    accountInteractionId: string[] = [],
     documentRid?: string
   ) {
     const { Project, ProjectFiscal, ProjectTimeline } = await this.getModels(accountNumber);
@@ -1696,6 +1697,7 @@ class ProjectIngestionService {
             where: {
               account_rid: accountData.rid,
               ...whereFiscal,
+              ...(apiSource === "interactionCount"  ? { rid: accountInteractionId } : {}),
               ...(apiSource === "interaction"
           ? {
               [Op.and]: [

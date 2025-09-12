@@ -194,7 +194,8 @@ async function projectList(req: Request, res: Response): Promise<void> {
       value.sortOrder,
       value.bothParentAndChild,
       userId,
-      value.apiSource
+      value.apiSource,
+      value?.accountInteractionId
     );
 
     if (project.statusCode === HttpStatus.SUCCESS) {
