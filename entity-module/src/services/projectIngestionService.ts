@@ -1570,7 +1570,11 @@ class ProjectIngestionService {
       if (fiscalYear) {
         whereFiscal.fiscal_year = fiscalYear;
       }
+<<<<<<< HEAD
+
+=======
       
+>>>>>>> f8685a2b845067ca32733a2b501431d66c8abe97
         projectData = await Project.findAll({
         where: whereProject,
         subQuery: false,

@@ -1272,6 +1272,70 @@ export class WebHookService {
     }
   }
 
+  private createGraphClient(
+    tenantId: string,
+    clientId: string,
+    clientSecret: string
+  ): Client {
+    const credential = new ClientSecretCredential(
+      tenantId,
+      clientId,
+      clientSecret
+    );
+    return Client.initWithMiddleware({
+      authProvider: {
+        getAccessToken: async () => {
+          const token = await credential.getToken(
+            "https://graph.microsoft.com/.default"
+          );
+          return token.token;
+        },
+      },
+    });
+  }
+
+  async logWebhookEmailEvent({
+    schemaName,
+    emailSubject,
+    emailSender,
+    attachmentName = null,
+    extractedAnswers = null,
+    status,
+    errorMessage = null,
+    uploadedTime = new Date(),
+  }: {
+    schemaName: string;
+    emailSubject: string;
+    emailSender: string;
+    attachmentName?: string | null;
+    extractedAnswers?: string | null;
+    status: WebhookEmailLogAttributes["status"];
+    errorMessage?: string | null;
+    uploadedTime?: Date;
+  }) {
+    try {
+      const { WebhookEmailLog } = await this.interactionModelService.getModels(
+        schemaName
+      );
+
+      await WebhookEmailLog.create({
+        created_by: "SYSTEM",
+        created_datetime: new Date(),
+
+        email_subject: emailSubject,
+        email_sender: emailSender,
+        attachment_name: attachmentName,
+        extracted_answers: extractedAnswers,
+        uploaded_time: uploadedTime,
+
+        status,
+        error_message: errorMessage,
+      });
+    } catch (err) {
+      console.error("Failed to log webhook email event:", err);
+    }
+  }
+
   /**
    * Formats an error response to be returned from service methods.
    *
