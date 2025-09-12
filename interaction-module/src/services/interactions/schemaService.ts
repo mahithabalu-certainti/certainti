@@ -218,7 +218,7 @@ class InteractionSchemaService {
   async sendAccountInteractions(    
     accountNumber:string,
     accountId: string,  
-    accountInteractionId:string,
+    accountInteractionId:string[],
     projectInfo: IProject[],
     userId:string,
     interactionSource:string,
@@ -239,22 +239,23 @@ class InteractionSchemaService {
         { type: QueryTypes.SELECT }
       );
       interactionRid = result?.rid;
-      if (Array.isArray(projectInfo) && projectInfo.length > 0) {
-        const bulkData = projectInfo.map((proj) => ({
-          rid: interactionRid, // same rid for all
-          project_rid: proj.project_rid,
-          project_fiscal_rid: proj.project_fiscal_rid,
-          interaction_type_rid: interactionType,
-          interaction_source_rid: interactionSource,
-          account_rid: accountId,
-          account_interaction_rid: accountInteractionId,
-          fiscal_year: proj.fiscal_year,
-          created_datetime: new Date(),
-          created_by: userId,
-          status_rid: sendStatusRid!,
-          type: 'Account'
-        }));
-        console.log("Bulk data prepared:", bulkData);
+      for(let i=0;i<accountInteractionId.length;i++)
+        {
+            if (Array.isArray(projectInfo) && projectInfo.length > 0) {
+            const bulkData = projectInfo.map((proj) => ({
+              rid: interactionRid, // same rid for all
+              project_rid: proj.project_rid,
+              project_fiscal_rid: proj.project_fiscal_rid,
+              interaction_type_rid: interactionType,
+              interaction_source_rid: interactionSource,
+              account_rid: accountId,
+              account_interaction_rid: accountInteractionId[i]!,
+              fiscal_year: proj.fiscal_year,
+              created_datetime: new Date(),
+              created_by: userId,
+              status_rid: sendStatusRid!,
+              type: 'Account'
+            }));
         // Use bulkCreate for efficient insertion
         if (bulkData.length > 0) {
           await Interaction.bulkCreate(bulkData, { ignoreDuplicates: true });
@@ -283,6 +284,7 @@ class InteractionSchemaService {
 
       console.log("Account model retrieved successfully");
     }
+     }
   }
       catch (error) {
       console.log(error); 

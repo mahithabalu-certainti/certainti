@@ -82,7 +82,10 @@ const sendInteractionSchema = Joi.object({
 
 const sendAccountInteractionSchema = Joi.object({
   account_rid: Joi.string().pattern(uuidRegex).required(),
-  account_interaction_rid: Joi.string().pattern(uuidRegex).required(),
+  account_interaction_rid: Joi.array()
+    .items(Joi.string())
+    .min(1)
+    .required(),
   projects: Joi.array()
   .items(
     Joi.object({

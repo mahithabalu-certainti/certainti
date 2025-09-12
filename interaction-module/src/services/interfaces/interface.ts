@@ -162,7 +162,7 @@ export interface IInteractionService {
   }>;
   sendAccountInteraction(
     accountId:string,
-    account_interaction_rid:string,
+    account_interaction_rid:string[],
     projects:IProject[],
     userId: string,
   ): Promise<{
