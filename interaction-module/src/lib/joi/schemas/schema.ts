@@ -25,6 +25,7 @@ const createInteractionSchema = Joi.object({
 
 const sendInteractionSchema = Joi.object({
   account_rid: Joi.string().pattern(uuidRegex).required(),
+  is_interaction_followup: Joi.boolean().optional().default(false),
   interactions: Joi.array()
   .items(
     Joi.object({
@@ -101,10 +102,53 @@ const updateInteractionResponseSchema = Joi.object({
     .required(),
 });
 
+
+const listTechnicalSummarySchema = Joi.object({
+  tech_summary_rid: Joi.string().pattern(uuidRegex).optional(),
+  account_rid: Joi.string().pattern(uuidRegex).optional(),
+  project_fiscal_rid: Joi.string().pattern(uuidRegex).required(),
+});
+
+const updateTechSummaryContextSchema = Joi.object({
+  tech_summary_rid: Joi.string().pattern(uuidRegex).required(),
+  account_rid: Joi.string().pattern(uuidRegex).required(),
+  project_fiscal_rid: Joi.string().pattern(uuidRegex).required(),
+  summary_context: Joi.string().required(),
+});
+
+const listAllTechnicalSummarySchema = Joi.object({
+  account_rid: Joi.string().pattern(uuidRegex).required(),
+  project_fiscal_rid: Joi.string().pattern(uuidRegex).required(),
+    page: Joi.string().optional()
+    .pattern(/^[0-9]+$/)
+  ,
+  limit: Joi.string().optional()
+    .pattern(/^[0-9]+$/)
+    ,
+  filters: Joi.string().default("{}"),
+  sortBy: Joi.string().optional(),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
+
+}); 
+
+const exportTechnicalSummarySchema = Joi.object({
+  account_rid: Joi.string().pattern(uuidRegex).required(),
+  project_fiscal_rid: Joi.string().pattern(uuidRegex).required(),
+  filters: Joi.string().default("{}"),
+  sortBy: Joi.string().optional(),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
+  timezone: Joi.string().optional()
+}); 
+
+
 export {
   createInteractionSchema,
   updateInteractionSchema,
   updateInteractionResponseSchema,
+  listTechnicalSummarySchema,
   getInteractionStatusSchema,
-  sendInteractionSchema
+  sendInteractionSchema,
+  updateTechSummaryContextSchema,
+  listAllTechnicalSummarySchema,
+  exportTechnicalSummarySchema
 };

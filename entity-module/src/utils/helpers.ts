@@ -9,7 +9,8 @@ import { BlobServiceClient } from '@azure/storage-blob';
 import { getSecret } from "./azureSecrets";
 import { Attachment } from "../models/attachments";
 import { ProjectTask } from "../models/projectTask";
-import SchemaService from "../services/schemaService";
+import crypto from 'crypto';
+
 function getLogger() {
   return configurations.getInstance().getLogger();
 }
@@ -968,6 +969,24 @@ export const validateAccountSettingRequest = (data : any) => {
   if(typeof data.autosend_interaction !== 'boolean') return STATUS_MESSAGE.autoSendMissing
   if(typeof data.max_ai_interactions !== 'number') return STATUS_MESSAGE.maxAiMissing
   if(typeof data.auto_access_rd !== 'boolean') return STATUS_MESSAGE.autoAccessmentMissing
+
+  if (data.support_email) {
+    if (typeof data.support_email !== 'string' || !data.support_email.trim()) {
+      return STATUS_MESSAGE.emailMissing;
+    }
+  
+    if (!data.tenant_id || typeof data.tenant_id !== 'string' || data.tenant_id.length !== 36) {
+      return STATUS_MESSAGE.tenantIdInvalidLength;
+    }
+  
+    if (!data.client_id || typeof data.client_id !== 'string' || data.client_id.length !== 36) {
+      return STATUS_MESSAGE.clientIdInvalidLength;
+    }
+  
+    if (!data.client_secret || typeof data.client_secret !== 'string' || data.client_secret.length < 20) {
+      return STATUS_MESSAGE.clientSecretTooShort;
+    }
+  }  
 }
 
 export const validateProjectSettingRequest = (data : any) => {
@@ -976,4 +995,17 @@ export const validateProjectSettingRequest = (data : any) => {
   if(!data.project_fiscal_rid) return STATUS_MESSAGE.fiscalIdMissing
   if(typeof data.autosend_interaction !== 'boolean') return STATUS_MESSAGE.autoSendMissing
   if(typeof data.max_ai_interactions !== 'number') return STATUS_MESSAGE.maxAiMissing
+}
+
+export function encryptClientSecret(text: string): string {
+  const ENCRYPTION_KEY = process.env.CLIENT_SECRET_ENCRYPTION_KEY!;
+  const IV_LENGTH = parseInt(process.env.CLIENT_SECRET_ENCRYPTION_LENGTH || '16', 10);
+
+  const iv = crypto.randomBytes(IV_LENGTH);
+  const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(ENCRYPTION_KEY), iv);
+  let encrypted = cipher.update(text);
+
+  encrypted = Buffer.concat([encrypted, cipher.final()]);
+
+  return iv.toString('hex') + ':' + encrypted.toString('hex');
 }

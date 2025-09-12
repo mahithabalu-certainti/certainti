@@ -1,3 +1,4 @@
+import { SchedulerExecutions } from "../../models/schedulerExecution";
 import {
   ICreateInteraction,
   InteractionResponse,
@@ -6,9 +7,9 @@ import {
 
 export interface IInteractionService {
   processKafkaMessage(data: any): Promise<void>;
-  listInteractionPrjAccount(data: any): Promise<any>;
+  listInteractionPrjAccount(data: any,userId: string): Promise<any>;
   fetchInteractionSummary(
-    data: any
+    data: any,userId: string
   ): Promise<{ statusCodeValue: string; data: any }>;
   listInteractionResponseHistory(
     data: any
@@ -32,6 +33,19 @@ export interface IInteractionService {
     errorMessage?: string;
     data?: { interactions: any };
   }>;
+   updateTechSummaryContext(
+    summaryContext:string,
+    techSummaryId: string,
+    accountId: string,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { interactions: any };
+  }>;
+
+  
   updateInteractionResponse(
     interactionData: InteractionResponse,
     userId: string
@@ -78,6 +92,17 @@ export interface IInteractionService {
     errorMessage?: string;
     data?: { interactionDetails: any };
   }>;
+   getTechnicalSummaryDetailsById(
+    techSummaryId: string,
+    accountId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { technicalSummaryDetails: any };
+  }>;
+
+  
   getInteractionQuestionsById(
     interactionRid: string,
     accountId: string
@@ -98,6 +123,7 @@ export interface IInteractionService {
     }[],
     accountId: string,
     userId: string,
+    is_interaction_followup?: boolean
   ): Promise<{
     statusCode: number;
     message: string;
@@ -119,12 +145,24 @@ export interface IInteractionService {
     statusCodeValue: string;
     data: any;
   }>;
+  listTechnicalSummary(data: any, page: number, limit: number, filters: Record<string, any>): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { techSummaryInfo: any , count: number};
+  }>;
+  exportTechnicalSummary(data: any, filters: Record<string, any>): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { techSummaryInfo: any , count: number};
+  }>;
   triggerAI(data : any) : Promise<{
     statusMessage : string,
     status : any,
     data : any
   }>
-  triggerAiFromScheduler() : Promise<void>
+  triggerAiFromScheduler(schedulerRecord : SchedulerExecutions) : Promise<void>
    getAllowedExportFields(
       userId: string,
       permission_name: string

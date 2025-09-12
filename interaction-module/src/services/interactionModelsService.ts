@@ -14,6 +14,9 @@ import { AiTechnicalSummary } from "../models/aiTechnicalSummary";
 import { AiAssessmentError } from "../models/aiAssessmentError";
 import { AiAssessmentQre } from "../models/aiAssessmentQre";
 import { AiAssessmentAudit } from "../models/aiAssessmentAudit";
+import { SchedulerExecutions } from "../models/schedulerExecution";
+import { SchedulerTaskExecutions } from "../models/schedulerTaskExecution";
+import { WebhookEmailLog } from "../models/webhookEmailLog";
 
 export class InteractionModelService {
   orgDbSequelize: Sequelize | null = null;
@@ -30,6 +33,9 @@ export class InteractionModelService {
       >;
       InteractionType: ReturnType<
         typeof InteractionType.initialize
+      >;
+      WebhookEmailLog: ReturnType<
+        typeof WebhookEmailLog.initialize
       >;
     }
   > = new Map();
@@ -94,6 +100,13 @@ export class InteractionModelService {
       sequelize,
       schemaName
     );
+    const SchedulerExcecutionModel = SchedulerExecutions.initialize(mainDbSequelize, "")
+    const SchedulerTaskExecutionModel = SchedulerTaskExecutions.initialize(mainDbSequelize, "")
+
+    const WebhookEmailLogModel = WebhookEmailLog.initialize(
+      sequelize,
+      schemaName
+    );
 
     const models = {
       Interaction: InteractionModel,
@@ -108,6 +121,9 @@ export class InteractionModelService {
       AiAssessmentAudit: AiAssessmentAuditModel,
       AiAssessmentError: AiAssessmentErrorResponseModel,
       AiAssessmentQre: AiAssessmentQreModel,
+      SchedulerExecution : SchedulerExcecutionModel,
+      SchedulerTaskExecution : SchedulerTaskExecutionModel,
+      WebhookEmailLog: WebhookEmailLogModel
     };
 
     this.modelCache.set(schemaName, models);

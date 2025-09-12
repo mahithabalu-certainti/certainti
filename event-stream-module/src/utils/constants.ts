@@ -63,7 +63,7 @@ export const rawQueries = {
     return `${MAIN_SCHEMA_NAME}_${r_number.replace("ACC-", "")}`;
   },
   insertAuditLogEntry(schemaName:string){
-    return `INSERT INTO ${schemaName}.ai_assessment_audit (transaction_id, account_rid, project_fiscal_rid,created_by) VALUES (?, ?, ?,?)`
+    return `INSERT INTO ${schemaName}.ai_assessment_audit (transaction_id, account_rid, project_fiscal_rid,created_by,ai_assessment_api_status) VALUES (?, ?, ?, ?, ?)`
   },
 
   

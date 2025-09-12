@@ -84,7 +84,8 @@ export class AIAssessmentService {
     company_id: string,
     project_id: string,
     input_text: string,
-    account_number: string
+    account_number: string,
+    ai_assessment_api_status:string
   ) {
     // Implementation for creating an audit log entry
     const mainDb = await this.getMainDb();
@@ -95,23 +96,20 @@ export class AIAssessmentService {
     let schemaName = rawQueries.fetchSchemaName(
       fetchParentAccount[0][0].r_number
     );
-
-    await orgDb?.transaction(async (transaction) => {
       await orgDb?.query(rawQueries.insertAuditLogEntry(schemaName), {
         replacements: [
           transaction_id,
           company_id,
           project_id,
           process.env.SYSTEM_USER_ID!,
+          ai_assessment_api_status
         ],
-        transaction,
       });
-    });
+    
   }
   async processKafkaMessage(message: any): Promise<void> {
     try {
-      this.logger.info("Processing Kafka message...", message);
-
+      this.logger.info("Processing Kafka message...", JSON.stringify(message));
       const parsedMessage =
         typeof message === "string" ? JSON.parse(message) : message;
 
@@ -142,14 +140,16 @@ export class AIAssessmentService {
            let callTriggerAi = await axios.post(process.env.TRIGGER_AI_URL!, payload, {
                 headers: headers
             });
-           await this.createAuditLogEntry(
+            this.logger.info(`Trigger AI Response: ${JSON.stringify(callTriggerAi.data)}`);
+             await this.createAuditLogEntry(
             transaction_id,
             company_id,
             id,
             input_text,
-            account_number
-          );
-          this.logger.info(`Trigger AI Response: ${JSON.stringify(callTriggerAi)}`);
+            account_number,
+            `${callTriggerAi?.data?.statusCode || ""} - ${callTriggerAi?.data?.statusMessage || ""}`
+            );
+          
         }
       } else {
         const transaction_id = uuidv4();
@@ -159,18 +159,20 @@ export class AIAssessmentService {
           let callTriggerAi = await axios.post(process.env.TRIGGER_AI_URL!, payload, {
                 headers: headers
           });
+           this.logger.info(`Trigger AI Response: ${JSON.stringify(callTriggerAi.data)}`);
          await this.createAuditLogEntry(
           transaction_id,
           company_id,
           project_id,
           input_text,
-          account_number
+          account_number,
+           `${callTriggerAi?.data?.statusCode || ""} - ${callTriggerAi?.data?.statusMessage || ""}`
         );
-         this.logger.info(`Trigger AI Response: ${JSON.stringify(callTriggerAi)}`);
+         
       }
     } catch (err) {
       console.log(err);
-      this.logger.error("Error processing Kafka message", err);
+      this.logger.error("Error processing Kafka message", JSON.stringify(err));
     }
   }
 }
