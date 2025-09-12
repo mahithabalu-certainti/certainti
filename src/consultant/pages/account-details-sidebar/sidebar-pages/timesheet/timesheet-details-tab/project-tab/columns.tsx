@@ -7,6 +7,7 @@ import { ListTableColumn } from '../../../../../../../components/table/types';
 import { TimesheetProjectList } from '../../../../../../types/timesheet-projects';
 
 export const getProjectTabTableColumns = (
+  onClick: (row: TimesheetProjectList) => void,
   permissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<TimesheetProjectList>[] => [
   {
@@ -31,7 +32,21 @@ export const getProjectTabTableColumns = (
       const displayCode = row.fiscal_year
         ? `FY${row.fiscal_year} - ${row.project_code}`
         : row.project_code;
-      return displayCode;
+      const isClickable = row._level !== undefined && row._level === 1;
+      return isClickable ? (
+        <span
+          onClick={() => onClick(row)}
+          className={
+            row.fiscal_year
+              ? 'cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
+              : ''
+          }
+        >
+          {displayCode}
+        </span>
+      ) : (
+        displayCode
+      );
     },
   },
   {
@@ -162,23 +177,6 @@ export const getProjectTabTableColumns = (
     hide:
       !permissionMap?.['total_cost_subcon']?.read &&
       !permissionMap?.['total_cost_subcon']?.edit,
-    sortId: 'total_cost_subcon',
-    width: 140,
-    sx: {
-      textAlign: 'right',
-    },
-    render: (row: TimesheetProjectList) =>
-      row.total_cost_subcon
-        ? costDisplay(row.total_cost_subcon, row.currency_symbol)
-        : '-',
-  },
-  {
-    id: 'total_cost_subcon',
-    label: 'SubCon Cost',
-    sortable: true,
-    hide:
-      !permissionMap?.['total_cost_nonlabor']?.read &&
-      !permissionMap?.['total_cost_nonlabor']?.edit,
     sortId: 'total_cost_subcon',
     width: 140,
     sx: {

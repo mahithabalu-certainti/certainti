@@ -365,6 +365,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       accountId,
       source: 'account',
       account_name: accountDetails?.accountById?.account_name || '',
+      project_fiscal_rid: row.project_fiscal_rid || '',
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
@@ -740,7 +741,7 @@ const Interactions: React.FC<InteractionsProps> = ({
                   tableStyle={{
                     borderBottom: '1px solid #CBD6E2',
                     height: '100%',
-                    maxHeight: 'calc(100vh - 290px)',
+                    maxHeight: 'calc(100vh - 330px)',
                     overflow: 'auto',
                   }}
                   stickyHeader={true}

@@ -107,6 +107,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       accountId,
       source: 'account',
       account_name: accountDetails?.accountById?.account_name || '',
+      project_fiscal_rid: data?.project_fiscal_rid || projectFiscalRid || '',
     });
     navigate(`${path}?${queryParams.toString()}`);
   };

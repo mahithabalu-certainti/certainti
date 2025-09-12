@@ -199,6 +199,7 @@ const Resource: React.FC<ResourceProps> = ({
   const [searchParams] = useSearchParams();
   const { accountid } = useParams();
   const resId = searchParams.get('res_id');
+  const source = searchParams.get('source');
 
   // Permission Mangement
   const isAccountResourceFieldsEditable = useMemo(
@@ -500,29 +501,37 @@ const Resource: React.FC<ResourceProps> = ({
     AllPermissions.ATTACHMENT_CREATE
   );
   const handleBackClick = () => {
-    setViewResourceList(!viewResourceList);
-    setShowBackArrow(!showBackArrow);
-    setShowFilter(false);
-    setCount(ResourceList?.count || 0);
-    // clear query params
-    searchParams.delete('res_id');
-    searchParams.delete('attachment_entity');
-    searchParams.delete('tab');
-    navigate(
-      {
-        pathname: location.pathname,
-        search: searchParams.toString(),
-      },
-      {
-        state: { ...location.state, activeKey: 'resources' },
+    if (source === 'timesheet') {
+      const timesheetId = searchParams.get('timesheet_id');
+      const newSearchParams = new URLSearchParams();
+      newSearchParams.set('list', 'timesheet');
+      if (timesheetId) newSearchParams.set('timesheet_id', timesheetId);
+      newSearchParams.set('tab', 'timesheet_project_resource');
+      navigate(`/account/details/${accountid}?${newSearchParams.toString()}`, {
         replace: true,
-      }
-    );
-    setValue('');
-    setFilterVisibility(true);
-    setAppliedFilters({});
-    setSortFilterCount(0);
-    clearFilters('resource');
+      });
+    } else {
+      setViewResourceList(!viewResourceList);
+      setShowBackArrow(!showBackArrow);
+      setShowFilter(false);
+      setCount(ResourceList?.count || 0);
+      // clear query params
+      searchParams.delete('res_id');
+      searchParams.delete('attachment_entity');
+      searchParams.delete('tab');
+      navigate(
+        {
+          pathname: location.pathname,
+          search: searchParams.toString(),
+        },
+        { replace: true }
+      );
+      setValue('');
+      setFilterVisibility(true);
+      setAppliedFilters({});
+      setSortFilterCount(0);
+      clearFilters('resource');
+    }
   };
   const headerButtons = [
     {
@@ -568,7 +577,7 @@ const Resource: React.FC<ResourceProps> = ({
       hide: handleDownloadButtonEnable(),
     },
     {
-      label: 'Back To Resources',
+      label: source === 'timesheet' ? 'Back To Timesheet' : 'Back To Resources',
       variant: 'outlined' as const,
       onClick: handleBackClick,
       sx: { ...BUTTON_STYLES, width: '125px', minWidth: '125px' },
@@ -975,7 +984,7 @@ const Resource: React.FC<ResourceProps> = ({
                   tableStyle={{
                     borderBottom: '1px solid #CBD6E2',
                     height: '100%',
-                    maxHeight: 'calc(100vh - 290px)',
+                    maxHeight: 'calc(100vh - 330px)',
                     overflow: 'auto',
                   }}
                   stickyHeader={true}
