@@ -364,7 +364,7 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
             tableStyle={{
               borderBottom: '1px solid #CBD6E2',
               height: '100%',
-              maxHeight: 'calc(100vh - 410px)',
+              maxHeight: 'calc(100vh - 490px)',
               overflow: 'auto',
             }}
             selectable={true}

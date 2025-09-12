@@ -825,7 +825,7 @@ export const AccountDetails = () => {
         </div>
         <div
           className='flex-1'
-          style={{ maxHeight: 'calc(100vh - 140px)', overflow: 'auto' }}
+          style={{ maxHeight: 'calc(100vh - 220px)', overflow: 'auto' }}
         >
           <Suspense fallback={null}>{renderContent()}</Suspense>
         </div>

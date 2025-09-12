@@ -133,7 +133,7 @@ const TimesheetResourcesTab: React.FC<ProjectTabListProps> = ({
         tableStyle={{
           borderBottom: '1px solid #CBD6E2',
           height: '100%',
-          maxHeight: 'calc(100vh - 290px)',
+          maxHeight: 'calc(100vh - 410px)',
           overflow: 'auto',
         }}
         stickyHeader={true}

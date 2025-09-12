@@ -975,7 +975,7 @@ const Resource: React.FC<ResourceProps> = ({
                   tableStyle={{
                     borderBottom: '1px solid #CBD6E2',
                     height: '100%',
-                    maxHeight: 'calc(100vh - 290px)',
+                    maxHeight: 'calc(100vh - 370px)',
                     overflow: 'auto',
                   }}
                   stickyHeader={true}
