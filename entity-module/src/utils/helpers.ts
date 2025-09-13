@@ -947,6 +947,11 @@ export const setInlineForProjectTask = (dbData : ProjectTask, requestData : any)
     newData.end_date = requestData.end_date != dbData.end_date ? requestData.end_date : dbData.end_date
     dataStorage = newData.end_date == '' ? `end_date = null` : `end_date = '${newData.end_date}'`
     newDataArray.push(dataStorage)
+  }
+  if(requestData.status_rid) {
+    newData.status_rid = requestData.status_rid != dbData.status_rid ? requestData.status_rid : dbData.status_rid
+    dataStorage = `status_rid = '${newData.status_rid}'`
+    newDataArray.push(dataStorage)
   }  
 
   if(newDataArray.length < 1) {
