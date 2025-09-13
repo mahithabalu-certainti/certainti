@@ -2015,6 +2015,8 @@ private async createInteractionTable(
       attachment_count integer,
       is_ai_processed boolean default false,
       interaction_version integer,
+      account_interaction_rid varchar(50),
+      type varchar(50),
       CONSTRAINT interactions_rid_unique UNIQUE (rid,project_fiscal_rid)
     );
   `);
@@ -2143,15 +2145,17 @@ private async createInteractionTable(
         created_datetime TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
         modified_datetime TIMESTAMP WITH TIME ZONE,
         account_rid character varying(50) NOT NULL,
-        project_rid character varying(50) NOT NULL,
-        fiscal_year character varying(50) NOT NULL,
-        project_fiscal_rid character varying(50) NOT NULL,
-        interaction_rid character varying(50) NOT NULL,
+        project_rid character varying(50),
+        fiscal_year character varying(50),
+        project_fiscal_rid character varying(50),
+        interaction_rid character varying(50),
         question_seq_num VARCHAR(20) UNIQUE DEFAULT 'QUE-' || LPAD(nextval('"${schemaName}".question_seq')::TEXT, 10, '0'),
         is_mandatory boolean DEFAULT false NOT NULL,
         question character varying(2000),
         notes character varying(2000),
-        is_attachment boolean
+        is_attachment boolean,
+        account_interaction_rid varchar(50),
+      type varchar(50)
       );
     `);
 
