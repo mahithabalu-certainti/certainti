@@ -1001,7 +1001,7 @@ export class ProjectInjestionTaskService {
           transaction
         );
 
-        await this.projectResourceSchema.addProjectResourceHistory(
+        await this.projectTaskSchema.addProjctTaskHistory(
           accountNumber,
           {
             ...projectTaskOld,
