@@ -848,7 +848,7 @@ export class ProjectInjestionTaskService {
     const transaction = await dbInit.transaction();
     const mainDbSequelize = await this.getMainDbSequelize();
 
-    const { accountId, rid: projectTaskRid, action } = data;
+    const { accountId, rid: projectTaskRid, action, type } = data;
 
     try {
       const { accountNumber } =
@@ -858,6 +858,10 @@ export class ProjectInjestionTaskService {
         throw new Error("Invalid account ID");
       }
 
+      let projectTaskStatus = "Active";
+      const statusMap: any =
+          await this.projectResourceSchema.getResourceStatuses();
+      const getAccountCurrencyRid : any = await mainDbSequelize.query(rawQueries.fetchAccountCurrencyRid(accountId))
       const projectTaskOld =
         await this.projectTaskSchema.fetchProjectTaskById(
           accountNumber,
@@ -868,17 +872,30 @@ export class ProjectInjestionTaskService {
         throw new Error("Project Task not found");
       }
 
+      if(type == 'Duplicate') {
+        const currencyThreshold = await getCurrencyThreshold(mainDbSequelize,getAccountCurrencyRid[0][0].currency_rid);
+         if (
+          projectTaskOld.total_hours_pro_task &&
+          Number(projectTaskOld.total_hours_pro_task) > 3000
+        ) {
+          projectTaskStatus = "Anomaly";
+        } else if (
+          (projectTaskOld?.total_cost_pro_task && currencyThreshold !== null && Number(projectTaskOld.total_cost_pro_task) > currencyThreshold)
+        ) {
+          projectTaskStatus = "Anomaly";
+        }
+      }
+
       if (action === "accept") {
         // 1. Update status to 'Active'
-        const statusMap: any =
-          await this.projectResourceSchema.getResourceStatuses();
-        const activeStatusId = statusMap.get("Active");
+        const taskStatus = statusMap.get(projectTaskStatus);
+        const activeStatusId = statusMap.get("Active")
         const activeId : any = await mainDbSequelize.query(`SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name ILIKE '%active%'`)
 
         await this.projectTaskSchema.updateProjectTaskStatus(
           accountNumber,
           projectTaskRid,
-          activeStatusId,
+          taskStatus,
           userId,
           transaction
         );
