@@ -27,6 +27,7 @@ import {
   getDateFormat,
 } from '../../../../../../common-utils';
 import { RESOURCE_CREATE } from '../../../../../../routes';
+import ConfirmationPopup from '../../../../../../common-utils/confirmation-popup';
 
 const ProjectTaskForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
@@ -42,7 +43,13 @@ const ProjectTaskForm: React.FC = () => {
   const projectPFY = queryParams.get('PFY');
   const projectCode = queryParams.get('projectCode');
   const createdNewResourceCode = queryParams.get('created_resource_code') || '';
-
+  const [confirmationState, setConfirmationState] = React.useState<{
+    isOpen: boolean;
+    message: string;
+    onConfirm: () => void;
+  }>({ isOpen: false, message: '', onConfirm: () => {} });
+  const [costResourceForceSuccess, setCostResourceForceSuccess] =
+    React.useState(false);
   const fiscalDate: FormFiscalDateType = projectPFY
     ? JSON.parse(projectPFY)
     : undefined;
@@ -77,7 +84,9 @@ const ProjectTaskForm: React.FC = () => {
     account_Id as string
   );
   const commonSuccess =
-    createProjectTask.isSuccess || updateProjectTask.isSuccess;
+    // createProjectTask.isSuccess ||
+    // updateProjectTask.isSuccess ||
+    costResourceForceSuccess;
   useEffect(() => {
     if (commonSuccess) {
       successToast(
@@ -125,15 +134,80 @@ const ProjectTaskForm: React.FC = () => {
         project_fiscal_rid: isEditView
           ? projectTaskDetailsData?.project_fiscal_rid
           : project_Id || undefined,
+        user_preference: confirmationState.message ? 'accept' : '',
       },
       project_task_rid,
       isEditView
     );
 
     if (isEditView) {
-      updateProjectTask.mutate(projectTaskData);
+      updateProjectTask.mutate(projectTaskData, {
+        onSuccess: (response) => {
+          if (response?.statusCode === 210) {
+            setConfirmationState({
+              isOpen: true,
+              message:
+                response.statusMessage ||
+                'Compensation details already exists for the resource',
+              onConfirm: () => {
+                const updatedFormValues = {
+                  ...projectTaskData,
+                  user_preference: 'accept',
+                };
+                updateProjectTask.mutate(updatedFormValues, {
+                  onSuccess: () => {
+                    setCostResourceForceSuccess(true);
+                  },
+                });
+                setConfirmationState((prev) => ({
+                  ...prev,
+                  isOpen: false,
+                  message: '',
+                }));
+              },
+            });
+          } else if (response?.statusCode === 200) {
+            setCostResourceForceSuccess(true);
+          }
+        },
+        onError: (error) => {
+          console.error('Update failed:', error);
+        },
+      });
     } else {
-      createProjectTask.mutate(projectTaskData);
+      createProjectTask.mutate(projectTaskData, {
+        onSuccess: (response) => {
+          if (response?.statusCode === 210) {
+            setConfirmationState({
+              isOpen: true,
+              message:
+                response.statusMessage ||
+                'Compensation details already exists for the resource',
+              onConfirm: () => {
+                const updatedFormValues = {
+                  ...projectTaskData,
+                  user_preference: 'accept',
+                };
+                createProjectTask.mutate(updatedFormValues, {
+                  onSuccess: () => {
+                    setCostResourceForceSuccess(true);
+                  },
+                });
+                setConfirmationState((prev) => ({
+                  ...prev,
+                  isOpen: false,
+                  message: '',
+                }));
+              },
+            });
+          } else if (response?.statusCode === 200) {
+            setCostResourceForceSuccess(true);
+          }
+        },
+        onError: (error) => {
+          console.error('Update failed:', error);
+        },
+      });
     }
   };
 
@@ -235,6 +309,27 @@ const ProjectTaskForm: React.FC = () => {
           onChange={onChangeField}
           keyStart='start_date'
           keyEnd='end_date'
+        />
+      </div>
+      <div>
+        <ConfirmationPopup
+          isOpen={confirmationState.isOpen}
+          message={confirmationState.message}
+          onConfirm={() => {
+            confirmationState.onConfirm();
+            setConfirmationState((prev) => ({
+              ...prev,
+              isOpen: false,
+              message: '',
+            }));
+          }}
+          onCancel={() => {
+            setConfirmationState((prev) => ({
+              ...prev,
+              isOpen: false,
+              message: '',
+            }));
+          }}
         />
       </div>
     </>
