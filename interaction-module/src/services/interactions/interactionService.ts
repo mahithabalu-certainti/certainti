@@ -1,5 +1,6 @@
 import { Logger } from "winston";
 import {
+  ICreateAccountInteraction,
   ICreateInteraction,
   InteractionResponse,
   IProject,
@@ -382,6 +383,72 @@ export class InteractionService {
         };
     }
   }
+
+  async updateAccountInteraction(
+    interactionData: ICreateAccountInteraction,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { interactions: any };
+  }> {
+    const dbInit = await this.interactionModelService.getSequelize();
+    const transaction = await dbInit.transaction();
+    try {
+      const { accountNumber } =
+        await this.interactionSchemaService.fetchValidAccountNumberById(
+          interactionData?.account_rid
+        );
+
+      if (!accountNumber) {
+        throw new Error("Invalid account ID");
+      }
+    
+      let interactionStatus;  
+      if(interactionData.status_rid)
+      {
+          interactionStatus = await this.interactionSchemaService.getInteractionStatusById(
+        interactionData.status_rid
+      );
+      }   
+      const updatedInteraction =
+        await this.interactionSchemaService.updateAccountInteraction(
+          accountNumber,
+          interactionData,
+          userId,
+          transaction
+        );
+      if (updatedInteraction && interactionData?.account_interaction_rid) {
+        await this.interactionSchemaService.addAccountInteractionItems(
+          accountNumber,
+          interactionData,
+          interactionData?.account_interaction_rid,
+          transaction,
+          userId
+        );
+      }
+
+      await transaction.commit();
+      
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: STATUS_MESSAGE.interactionUpdated,
+        data: {
+          interactions: null,
+        },
+      };
+    } catch (err) {
+      await transaction.rollback();
+      this.logger.error("Error updating interaction", err);
+       return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: STATUS_MESSAGE.interactionUpdateFailed,
+        };
+    }
+  }
+
 
 
   async updateTechSummaryContext(

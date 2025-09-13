@@ -27,6 +27,7 @@ import {
   listTechnicalSummarySchema,
   sendAccountInteractionSchema,
   sendInteractionSchema,
+  updateAccountInteractionSchema,
   updateInteractionResponseSchema,
   updateInteractionSchema,
   updateTechSummaryContextSchema,
@@ -311,6 +312,60 @@ async function exportAccountInteractions(req: Request, res: Response): Promise<v
   }
 }
 
+async function updateAccountInteraction(req: Request, res: Response): Promise<void> {
+  const methodName = "Update account interaction";
+  try {
+    console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
+    const value = await validateRequest(req, updateAccountInteractionSchema, res);
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    if (!value) {
+      errorLog(methodName, "Request body is empty");
+      return;
+    }
+    const interaction = await interactionService.updateAccountInteraction(
+      value,
+      userId
+    );
+    console.log(
+      `[${methodName}] Service response:`,
+      JSON.stringify(interaction)
+    );
+    if (interaction.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, interaction.data, interaction.message);
+      return;
+    } else {
+      errorLog(methodName, interaction.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        interaction.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
 async function updateInteraction(req: Request, res: Response): Promise<void> {
   const methodName = "Update interaction";
   try {
@@ -1873,5 +1928,6 @@ export default {
   getTechnicalSummaryDetailsById,
   updateTechSummaryContext,
   exportTechnicalSummary,
-  sendAccountInteraction
+  sendAccountInteraction,
+  updateAccountInteraction
 };
