@@ -22,7 +22,7 @@ const services = configurations.getInstance().getServices();
 const taskService = services.projectTaskServices;
 const projectTaskService = services.projectTaskInjestionServices;
 
-async function createProjectTask(req: Request, res: Response): Promise<void> {
+async function createProjectTask(req: Request, res: Response): Promise<any> {
   const methodName = "Create project task";
   try {
     const value = await validateRequest(req, createProjectTaskSchema, res);
@@ -52,7 +52,16 @@ async function createProjectTask(req: Request, res: Response): Promise<void> {
       successLog(methodName);
       handleSuccessResponse(res, projectResource.data);
       return;
-    } else {
+    } 
+    else if (projectResource.statusCode === HttpStatus.PROMPT) {
+      return res.status(HttpStatus.PROMPT).send({
+        statusCode : HttpStatus.PROMPT,
+        statusCodeValue : HttpStatus.PROMPT_MESSAGE,
+        statusMessage : projectResource.message,
+        data : projectResource.data
+      })
+    }
+    else {
       errorLog(methodName, projectResource.errorMessage);
       handleErrorResponse(
         res,
@@ -273,7 +282,7 @@ async function exportAllProjectTasks(
   }
 }
 
-async function updateProjectTask(req: Request, res: Response): Promise<void> {
+async function updateProjectTask(req: Request, res: Response): Promise<any> {
   const methodName = "Update project task";
   try {
     const value = await validateRequest(req, updateProjectTaskSchema, res);
@@ -303,7 +312,16 @@ async function updateProjectTask(req: Request, res: Response): Promise<void> {
       successLog(methodName);
       handleSuccessResponse(res, projectResource.data);
       return;
-    } else {
+    }
+    else if (projectResource.statusCode === HttpStatus.PROMPT) {
+      return res.status(HttpStatus.PROMPT).send({
+        statusCode : HttpStatus.PROMPT,
+        statusCodeValue : HttpStatus.PROMPT_MESSAGE,
+        statusMessage : projectResource.message,
+        data : projectResource.data
+      })
+    } 
+    else {
       errorLog(methodName, projectResource.errorMessage);
       handleErrorResponse(
         res,
