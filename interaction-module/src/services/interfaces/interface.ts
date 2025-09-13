@@ -53,6 +53,15 @@ export interface IInteractionService {
     errorMessage?: string;
     data?: { interactions: any };
   }>;
+   updateAccountInteraction(
+    interactionData: IUpdateInteraction,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { interactions: any };
+  }>;
    updateTechSummaryContext(
     summaryContext:string,
     techSummaryId: string,

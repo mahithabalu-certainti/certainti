@@ -45,6 +45,8 @@ export interface ICreateAccountInteraction {
   template_rid?: string;
   status_rid: string;
   created_by: string;
+  account_interaction_rid?: string;
+  modified_by?: string;
 }
 
 export interface IUpdateInteraction {

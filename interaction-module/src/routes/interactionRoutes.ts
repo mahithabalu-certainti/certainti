@@ -51,6 +51,11 @@ routes.get(
   checkUserStatusMiddleware("NA"),
   controller.interactionsController.getResponseSource
 );
+routes.put(
+  "/accountInterctions/update",
+  checkUserStatusMiddleware("interactions_view_edit"),
+  controller.interactionsController.updateAccountInteraction
+);
 
 routes.get('/technicalSummary/list', checkUserStatusMiddleware("interactions_view_edit"), controller.interactionsController.listTechnicalSummary)
 routes.get('/technicalSummary/details', checkUserStatusMiddleware("interactions_view_edit"), controller.interactionsController.getTechnicalSummaryDetailsById)
