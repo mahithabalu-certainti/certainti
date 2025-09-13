@@ -5,24 +5,11 @@ import fetch from "cross-fetch";
 
 import cron from "node-cron";
 import { initMainDbSequelize } from "../../config/mainDataSource";
-import { MAIN_SCHEMA_NAME } from "../../utils/constants";
+import { MAIN_SCHEMA_NAME, rawQueries } from "../../utils/constants";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { decryptClientSecret } from "../../utils/helpers";
 
 const HOURS_BEFORE_EXPIRY = 24;
-
-// Default credentials from environment (used in fallback only)
-const tenantId = process.env.TENANT_ID!;
-const clientId = process.env.CLIENT_ID!;
-const clientSecret = process.env.CLIENT_SECRET!;
-
-// Global Graph client (for fallback)
-const defaultCredential = new ClientSecretCredential(
-  tenantId,
-  clientId,
-  clientSecret
-);
-const defaultGraphClient = createMicrosoftGraphClient(defaultCredential);
 
 // -----------------------------
 // Graph Client Factory Function
@@ -122,7 +109,7 @@ async function renewExpiringSubscriptions() {
         if (credentialsValid) {
           console.log(`Checking subscription for account ${r_number}`);
 
-          const decryptedSecret = decryptClientSecret(client_secret);
+          const decryptedSecret = await decryptClientSecret(client_secret);
           // Initialize per-account graph client
           const accountCredential = new ClientSecretCredential(
             tenant_id,
@@ -185,6 +172,8 @@ async function renewExpiringSubscriptions() {
     }
   }
 
+  const fetchPlatformCredentials = await fetchPlatformSettings();
+  const defaultGraphClient = createMicrosoftGraphClient(fetchPlatformCredentials);
   const subscriptions = await getSubscriptions(defaultGraphClient);
   const now = new Date();
 
@@ -214,6 +203,31 @@ async function fetchAccountWithSubscription() {
   return accountRecords;
 }
 
+async function fetchPlatformSettings() {
+  const mainDbSequelize = await initMainDbSequelize();
+
+  const platformSettings: any = await mainDbSequelize.query(
+    rawQueries.fetchOrganizationSettings(),
+    {
+      type: "SELECT",
+    }
+  );
+
+  const tenantId = platformSettings[0]?.tenant_id;
+  const clientIdId = platformSettings[0]?.client_id;
+  const clientSecret = platformSettings[0]?.client_secret;
+
+  const decryptedSecret = await decryptClientSecret(clientSecret);
+
+  const accountCredential = new ClientSecretCredential(
+    tenantId,
+    clientIdId,
+    decryptedSecret
+  );
+
+  return accountCredential;
+}
+
 // -----------------------------
 // Cron Job (Runs every day at 2AM on even days)
 // -----------------------------
@@ -222,7 +236,7 @@ cron.schedule("0 2 * * *", async () => {
   const dayOfMonth = today.getDate();
   console.log("Inside cron trigger");
 
-  if (dayOfMonth % 2 !== 0) {
+  if (dayOfMonth % 2 === 0) {
     console.log(
       `[${today.toISOString()}] Running subscription renewal task`
     );

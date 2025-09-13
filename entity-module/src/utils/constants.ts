@@ -801,7 +801,7 @@ export const rawQueries = {
       ${whereParams}
       `;
       if(data.flag == UPDATE_FLAG.account && t == "account_details" && subscriptionId){
-        const encryptedSecretKey = encryptClientSecret(data.client_secret);
+        const encryptedSecretKey = await encryptClientSecret(data.client_secret);
         let query = `
         UPDATE ${schema}.${t}
         SET

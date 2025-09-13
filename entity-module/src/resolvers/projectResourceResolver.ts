@@ -27,7 +27,7 @@ export const projectResourceResolver: IResolvers = {
           return {
             statusCode: HttpStatus.NOT_FOUND,
             statusCodeValue: HttpStatus.NOT_FOUND_MESSAGE,
-            statusMessage: result.statusMessage,
+            statusMessage: result.errorMessage ? result.errorMessage : result.statusMessage,
             data: result.data,
           };
         }

@@ -1033,7 +1033,8 @@ class SchemaService {
         bonus NUMERIC(18, 2),
         insurance NUMERIC(18, 2),
         deductions NUMERIC(18, 2),
-        assigned_skill_role_type_rid varchar(50)
+        assigned_skill_role_type_rid varchar(50),
+        project_resource_role varchar(100) NULL
       );
     `);
 
