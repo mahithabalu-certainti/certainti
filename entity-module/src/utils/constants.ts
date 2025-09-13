@@ -884,7 +884,9 @@ export const rawQueries = {
   },
   fetchActiveStatusRid (status : string) {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name ILIKE '%${status}%'`
-  }
+  },
+  fetchResourceStatus:`
+  SELECT rid, resource_status_name FROM ${MAIN_SCHEMA_NAME}.resource_status WHERE rid IN (:projectTaskStatusId)`
 };
 
 export const IMPORT_FILTER_COLUMNS: any = {
