@@ -537,18 +537,23 @@ export class ProjectResourceSchemaService {
   ) {
     const { ProjectResource } = await this.getModels(accountNumber);
 
+    const normalizedRole = projectResourceData.project_resource_role?.trim().toLowerCase();
+
+    if (!normalizedRole) {
+      return null;
+    }
+
     const data = await ProjectResource.findOne({
       where: {
         resource_rid: resourceData.rid,
-        country_rid: projectResourceData.country_rid,
-        currency_rid: projectResourceData.currency_rid,
-        region_rid: projectResourceData.region_rid,
-        start_date: projectResourceData.start_date,
-        end_date: projectResourceData.end_date,
-        total_hours_pro_res: projectResourceData.total_hours_pro_res,
-        total_cost_pro_res: projectResourceData.total_cost_pro_res,
-        deductions: projectResourceData.deductions,
-        description: projectResourceData.description,
+        account_rid: projectResourceData.account_rid,
+        project_fiscal_rid: projectResourceData.project_fiscal_rid,
+        [Op.and]: [
+          Sequelize.where(
+            Sequelize.fn("LOWER", Sequelize.col("project_resource_role")),
+            normalizedRole
+          ),
+        ],
         status_rid: {
           [Op.in]: [
             statusMap?.get("Active"),
@@ -571,18 +576,23 @@ export class ProjectResourceSchemaService {
   ) {
     const { ProjectResource } = await this.getModels(accountNumber);
 
+    const normalizedRole = projectResourceData.project_resource_role?.trim().toLowerCase();
+
+    if (!normalizedRole) {
+      return null;
+    }
+
     const data = await ProjectResource.findOne({
       where: {
         resource_rid: resourceData.rid,
-        country_rid: projectResourceData.country_rid,
-        currency_rid: projectResourceData.currency_rid,
-        region_rid: projectResourceData.region_rid,
-        start_date: projectResourceData.start_date,
-        end_date: projectResourceData.end_date,
-        total_hours_pro_res: projectResourceData.total_hours_pro_res,
-        total_cost_pro_res: projectResourceData.total_cost_pro_res,
-        deductions: projectResourceData.deductions,
-        description: projectResourceData.description,
+        account_rid: projectResourceData.account_rid,
+        project_fiscal_rid: projectResourceData.project_fiscal_rid,
+        [Op.and]: [
+          Sequelize.where(
+            Sequelize.fn("LOWER", Sequelize.col("project_resource_role")),
+            normalizedRole
+          ),
+        ],
         status_rid: {
           [Op.in]: [
             statusMap?.get("Active"),
@@ -599,6 +609,42 @@ export class ProjectResourceSchemaService {
 
     return data;
   }
+
+  async getExistingEffortInProjectResource(
+  accountNumber: string,
+  projectResourceData: any,
+  resourceId: string
+): Promise<ProjectResource[]> {
+
+  const { ProjectResource } = await this.getModels(accountNumber);
+
+  const startDate = projectResourceData.start_date
+    ? moment.utc(projectResourceData.start_date)
+    : null;
+  const endDate = projectResourceData.end_date
+    ? moment.utc(projectResourceData.end_date)
+    : null;
+
+  const whereClause: any = {
+    project_fiscal_rid: projectResourceData.project_fiscal_rid,
+    account_rid: projectResourceData.account_rid,
+    resource_rid: resourceId,
+    [Op.and]: [
+      {
+        start_date: { [Op.lte]: endDate?.toDate() }, 
+      },
+      {
+        end_date: { [Op.gte]: startDate?.toDate() },
+      },
+    ],
+  };
+
+  const existingResources = await ProjectResource.findAll({
+    where: whereClause,
+  });
+
+  return existingResources;
+}
 
   async getCurrencyThreshold(
     currency_rid?: string | null
@@ -2082,6 +2128,7 @@ export class ProjectResourceSchemaService {
         bonus: projectResourceData.bonus || null,
         deductions: projectResourceData.deductions || null,
         insurance: projectResourceData.insurance || null,
+        project_resource_role: projectResourceData.project_resource_role || null
       },
       {
         transaction,
@@ -4826,7 +4873,8 @@ export class ProjectResourceSchemaService {
       {
         ...updateProjectData,
         assigned_skill_role_type_rid: updatedAssignedRoleId,
-        status_rid: stausId
+        status_rid: stausId,
+        project_resource_role: projectResourceData.project_resource_role ?? null
       },
       {
         where: {

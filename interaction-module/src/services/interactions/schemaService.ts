@@ -15,6 +15,7 @@ import { Interaction } from "../../models/interaction";
 import { ALPHANUMERIC_CONDITIONS, MAIN_SCHEMA_NAME, mainTableFilters, rawQueries, schedulerStatus, statusAction, techSummaryStatus } from "../../utils/constants";
 import { InteractionHistory } from "../../models/interactionHistory";
 import { SendEmailInfo } from "../../models/sendEmailInfo";
+import { decryptClientSecret } from "../../utils/helpers";
 
 class InteractionSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -190,6 +191,17 @@ class InteractionSchemaService {
               await this.handleDeleteQuestion(
                 InteractionItem,
                 InteractionHistory,
+                interactionRid,
+                question,
+                userId,
+                transaction
+              );
+              break;
+               case "edit":
+              await this.handleEditQuestionAccount(
+                InteractionItem,
+                InteractionHistory,
+                interactionData,
                 interactionRid,
                 question,
                 userId,
@@ -381,6 +393,64 @@ class InteractionSchemaService {
     console.log(`[addInteractionItems] Deleted question:`, question.rid);
   }
 
+  private async handleEditQuestionAccount(
+    InteractionItem: any,
+    InteractionHistory: any,
+    interactionData:  ICreateAccountInteraction,
+    interactionRid: string,
+    question: any,
+    userId: string,
+    transaction: Transaction
+  ) {
+    const existingData = await InteractionItem.findOne({
+      where: { interaction_rid: interactionRid, rid: question.rid },
+    });
+    await InteractionItem.update(
+      { ...question, ...interactionData },
+      {
+        where: { account_interaction_rid: interactionRid, rid: question.rid },
+        transaction,
+      }
+    );
+    await Promise.all([
+      InteractionHistory.create(
+        {
+          interaction_rid: interactionRid,
+          attribute_name: "question",
+          old_value: existingData?.dataValues?.question ?? "",
+          new_value: question?.question ?? "",
+          interaction_item_rid: question?.rid ?? "",
+          created_by: userId,
+        },
+        { transaction }
+      ),
+      InteractionHistory.create(
+        {
+          interaction_rid: interactionRid,
+          attribute_name: "notes",
+          old_value: existingData?.dataValues?.notes ?? "",
+          new_value: question?.notes ?? "",
+          interaction_item_rid: question?.rid ?? "",
+          created_by: userId,
+        },
+        { transaction }
+      ),
+      InteractionHistory.create(
+        {
+          interaction_rid: interactionRid,
+          attribute_name: "is_mandatory",
+          old_value: existingData?.dataValues?.is_mandatory ?? "",
+          new_value: question?.is_mandatory ?? "",
+          interaction_item_rid: question?.rid ?? "",
+          created_by: userId,
+        },
+        { transaction }
+      ),
+    ]);
+    console.log(`[addInteractionItems] Edited question:`, question.rid);
+  }
+
+  
   private async handleEditQuestion(
     InteractionItem: any,
     InteractionHistory: any,
@@ -632,6 +702,35 @@ class InteractionSchemaService {
 
     return updatedInteraction;
   }
+
+   async updateAccountInteraction(
+    accountNumber: string,
+    interactionData: ICreateAccountInteraction,
+    userId: string,
+    transaction: Transaction
+  ) {
+    const { AccountInteraction } =
+      await this.interactionModelService.getModels(accountNumber);
+
+    const updatedInteraction = await AccountInteraction.update(
+      {
+        ...interactionData,
+        modified_by: userId,
+        modified_datetime: new Date(),
+      },
+      {
+        where: {
+          rid: interactionData.account_interaction_rid,
+
+        },
+        transaction,
+      }
+    );
+
+    return updatedInteraction;
+  }
+
+  
 
   async getPreviousInteractionStatus(statusRid: string, accountNumber: string) {
     if (!this.orgDbSequelize) {
@@ -2268,11 +2367,14 @@ class InteractionSchemaService {
          if (mainSenderEmailInfo && mainSenderEmailInfo.length > 0) {
            senderEmailInfo[0] = mainSenderEmailInfo[0].email;
          }
+         const clientSecret = mainSenderEmailInfo[0].client_secret;
+         const decryptedSecret = await decryptClientSecret(clientSecret);
+
          return {
             email: senderEmailInfo[0],
-            clientId: process.env.CLIENT_ID,
-            clientSecret: process.env.CLIENT_SECRET,
-            tenantId: process.env.TENANT_ID
+            clientId: mainSenderEmailInfo[0].client_id,
+            clientSecret: decryptedSecret,
+            tenantId: mainSenderEmailInfo[0].tenant_id
           }
       } else {
         

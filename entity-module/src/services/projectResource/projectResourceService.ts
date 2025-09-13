@@ -1,5 +1,5 @@
 import { Op, Order, Sequelize } from "sequelize";
-import { HttpStatus, rawQueries } from "../../utils/constants";
+import { HttpStatus, STATUS_MESSAGE, rawQueries } from "../../utils/constants";
 import {
   IAnomalyStatus,
   ICreateProjectResource,
@@ -13,6 +13,8 @@ import { initOrgSequelize } from "../../config/orgDataSource";
 import ProjectIngestionService from "../projectIngestionService";
 import { Logger } from "winston";
 import moment from "moment";
+import Decimal from "decimal.js";
+import { ProjectResource } from "../../models/projectResource";
 
 export class ProjectResourceService {
   private projectResourceSchema: ProjectResourceSchemaService;
@@ -107,12 +109,72 @@ export class ProjectResourceService {
             statusMap
           );
 
-        if (isDuplicate && projectResourceData.user_preference != "accept") {
-          return {
-            statusCode: HttpStatus.PROMPT,
-            message:
-              "Entered compensation details already exists for the resource. Would you like to create another compensation with same values",
-          };
+          if (isDuplicate) {
+            return {
+              statusCode: HttpStatus.BAD_REQUEST,
+              message: HttpStatus.BAD_REQUEST_MESSAGE,
+              errorMessage: "Invalid resource role: resource role already exists"
+            };
+          }
+
+        const newEffort = new Decimal(projectResourceData.total_hours_pro_res || "0");
+
+        if (!newEffort.isZero() && !newEffort.isNaN()) {
+          if (start_date && end_date) {
+            const start = new Date(start_date);
+            const end = new Date(end_date);
+            const diffDays =
+              Math.floor(
+                (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
+              ) + 1;
+            const maxAllowedEffort = new Decimal(diffDays * 24);
+  
+            const existingTasks: ProjectResource[] =
+              await this.projectResourceSchema.getExistingEffortInProjectResource(
+                accountNumber,
+                projectResourceData,
+                resourceData.rid!
+              );
+            const validation = this.validatePerDayEffortLimit(
+              existingTasks,
+              newEffort,
+              start,
+              end
+            );
+            if (!validation.success) {
+              return {
+                statusCode: HttpStatus.BAD_REQUEST,
+                message: "Validation Error",
+                errorMessage: validation.errorMessage,
+              };
+            }
+  
+            const totalExistingEffort = existingTasks.reduce(
+              (sum: Decimal, task: ProjectResource) => {
+                const effort = new Decimal(task.total_hours_pro_res || "0");
+                return sum.plus(effort);
+              },
+              new Decimal(0)
+            );
+  
+            const totalEffort = totalExistingEffort.plus(newEffort);
+            if (totalEffort.gt(maxAllowedEffort)) {
+              return {
+                statusCode: HttpStatus.BAD_REQUEST,
+                message: "Validation Error",
+                errorMessage:
+                  "Effort cannot exceed the total hours in the duration",
+              };
+            }
+          } else if (start_date && !end_date) {
+            if (newEffort.gt(24)) {
+              return {
+                statusCode: HttpStatus.BAD_REQUEST,
+                message: "Validation Error",
+                errorMessage: "Effort cannot exceed 24 hours for the day",
+              };
+            }
+          }
         }
 
         let status = "Active";
@@ -513,6 +575,54 @@ export class ProjectResourceService {
     }
   }
 
+  private validatePerDayEffortLimit(
+    existingTasks: ProjectResource[],
+    newEffort: Decimal,
+    start: Date,
+    end: Date
+  ): { success: boolean; errorMessage?: string } {
+    const diffDays =
+      Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    const newTaskStart = start.getTime();
+  
+    const perDayEffort: Record<string, Decimal> = {};
+  
+    // Existing tasks
+    for (const task of existingTasks) {
+      if (task.start_date && task.end_date && task.total_hours_pro_res) {
+        const taskStart = new Date(task.start_date).getTime();
+        const taskEnd = new Date(task.end_date).getTime();
+        const taskEffort = new Decimal(task.total_hours_pro_res || "0");
+        const taskDays =
+          Math.floor((taskEnd - taskStart) / (1000 * 60 * 60 * 24)) + 1;
+        const perDay = taskEffort.div(taskDays);
+  
+        for (let d = 0; d < taskDays; d++) {
+          const day = new Date(taskStart + d * 24 * 60 * 60 * 1000);
+          const dayStr = day.toISOString().slice(0, 10);
+          perDayEffort[dayStr] = (perDayEffort[dayStr] || new Decimal(0)).plus(perDay);
+        }
+      }
+    }
+  
+    // New task
+    const newPerDay = newEffort.div(diffDays);
+    for (let d = 0; d < diffDays; d++) {
+      const day = new Date(newTaskStart + d * 24 * 60 * 60 * 1000);
+      const dayStr = day.toISOString().slice(0, 10);
+      perDayEffort[dayStr] = (perDayEffort[dayStr] || new Decimal(0)).plus(newPerDay);
+  
+      if (perDayEffort[dayStr].gt(24)) {
+        return {
+          success: false,
+          errorMessage: `Effort cannot exceed the total hours in the duration`,
+        };
+      }
+    }
+  
+    return { success: true };
+  }
+
   async updateProjectResource(
     projectResourceData: IUpdateProjectResource,
     userId: string
@@ -571,12 +681,60 @@ export class ProjectResourceService {
           statusMap
         );
 
-      if (isDuplicate && projectResourceData.user_preference != "accept") {
+      if (isDuplicate) {
         return {
-          statusCode: HttpStatus.PROMPT,
-          message:
-            "Entered compensation details already exists for the resource. Would you like to create another compensation with same values",
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: "Invalid resource role: resource role already exists"
         };
+      }
+
+      const newEffort = new Decimal(projectResourceData.total_hours_pro_res || "0");
+
+      if (!newEffort.isZero() && !newEffort.isNaN()) {
+        if (projectResourceData.start_date && projectResourceData.end_date) {
+          const start = new Date(projectResourceData.start_date);
+          const end = new Date(projectResourceData.end_date);
+          const diffDays =
+            Math.floor(
+              (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
+            ) + 1;
+          const maxAllowedEffort = new Decimal(diffDays * 24);
+
+          const existingTasks: ProjectResource[] =
+            await this.projectResourceSchema.getExistingEffortInProjectResource(
+              validAccountNumber,
+              projectResourceData,
+              resourceData.rid!
+            );
+
+          const filteredResources = existingTasks.filter(
+            (res) => res.rid !== projectResourceData.project_resource_rid 
+          );
+          
+          const validation = this.validatePerDayEffortLimit(
+            filteredResources,
+            newEffort,
+            start,
+            end
+          );
+
+          if (!validation.success) {
+            return {
+              statusCode: HttpStatus.BAD_REQUEST,
+              message: "Validation Error",
+              errorMessage: validation.errorMessage,
+            };
+          }
+        } else if (projectResourceData.start_date && !projectResourceData.end_date) {
+          if (newEffort.gt(24)) {
+            return {
+              statusCode: HttpStatus.BAD_REQUEST,
+              message: "Validation Error",
+              errorMessage: "Effort cannot exceed 24 hours for the day",
+            };
+          }
+        }
       }
 
       let status = "Active";
@@ -1260,21 +1418,82 @@ export class ProjectResourceService {
         project_resource_rid: projectResourceData.project_resource_rid
       }
 
-      const isDuplicate =
-        await this.projectResourceSchema.findDuplicateProjectResourceOnUpdate(
-          validAccountNumber,
-          updatedProjectResourceInput,
-          resourceData,
-          statusMap
-        );
+      const newEffort = new Decimal(projectResourceData.total_hours_pro_res || "0");
 
-      if (isDuplicate) {
-        return {
-          statusCode: HttpStatus.PROMPT,
-          message:
-            "Entered compensation details already exists for the resource. Would you like to create another compensation with same values",
-        };
+      if (!newEffort.isZero() && !newEffort.isNaN()) {
+        const startDate = existingProjectResource.start_date;
+        const endDate = existingProjectResource.end_date;
+        if (startDate && endDate) {
+          const start = new Date(startDate);
+          const end = new Date(endDate);
+          const diffDays =
+            Math.floor(
+              (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
+            ) + 1;
+          const maxAllowedEffort = new Decimal(diffDays * 24);
+
+          const updateProjectTaskInput = {
+            ...existingProjectResource,
+            account_rid: projectResourceData.account_rid,
+            start_date: existingProjectResource.start_date,
+            end_date: existingProjectResource.end_date,
+            resource_rid: resourceData.rid,
+            project_fiscal_rid: projectResourceData.project_fiscal_rid
+          }
+
+          const existingResource: ProjectResource[] =
+            await this.projectResourceSchema.getExistingEffortInProjectResource(
+              validAccountNumber,
+              updateProjectTaskInput,
+              resourceData.rid!
+            );
+
+          const filteredTasks = existingResource.filter(
+            (res) => res.rid !== projectResourceData.project_resource_rid 
+          );
+
+          const validation = this.validatePerDayEffortLimit(
+            filteredTasks,
+            newEffort,
+            start,
+            end
+          );
+
+          if (!validation.success) {
+            return {
+              statusCode: HttpStatus.BAD_REQUEST,
+              errorMessage : validation.errorMessage,
+              message: HttpStatus.BAD_REQUEST_MESSAGE,
+              data : null
+            };
+          }
+        } else if (startDate && !endDate) {
+          if (newEffort.gt(24)) {
+            return {
+              statusCode: HttpStatus.BAD_REQUEST,
+              message: HttpStatus.BAD_REQUEST_MESSAGE,
+              errorMessage: STATUS_MESSAGE.effort24HrsExceeded,
+              data: null,
+            };
+          }
+        }
       }
+
+      // const isDuplicate =
+      //   await this.projectResourceSchema.findDuplicateProjectResourceOnUpdate(
+      //     validAccountNumber,
+      //     updatedProjectResourceInput,
+      //     resourceData,
+      //     statusMap
+      //   );
+
+      // if (isDuplicate) {
+      //   return {
+      //     statusCode: HttpStatus.BAD_REQUEST,
+      //     message: HttpStatus.BAD_REQUEST_MESSAGE,
+      //     errorMessage: "Invalid resource role: resource role already exists"
+      //   };
+      // }
 
       let status = "Active";
       if (

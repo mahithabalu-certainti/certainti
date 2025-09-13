@@ -999,8 +999,14 @@ export const validateProjectSettingRequest = (data : any) => {
   if(typeof data.max_ai_interactions !== 'number') return STATUS_MESSAGE.maxAiMissing
 }
 
-export function encryptClientSecret(text: string): string {
-  const ENCRYPTION_KEY = process.env.CLIENT_SECRET_ENCRYPTION_KEY!;
+export async function encryptClientSecret(text: string): Promise<string> {
+  const encryptClientSecret = await getSecret(process.env.CLIENT_SECRET_ENCRYPTION_KEY!);
+
+  if(!encryptClientSecret){
+    throw new Error("Invalid Client Encryption Key")
+  }
+
+  const ENCRYPTION_KEY = encryptClientSecret!;
   const IV_LENGTH = parseInt(process.env.CLIENT_SECRET_ENCRYPTION_LENGTH || '16', 10);
 
   const iv = crypto.randomBytes(IV_LENGTH);

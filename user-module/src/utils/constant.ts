@@ -229,5 +229,6 @@ export const statusMessage = {
     orgNotFoundError: "No organization found with the given ID",  
     orgUpdated: "Organization updated successfully",
     orgRetrieved: "Organization settings retrieved successfully",
+    invaidCredentialsMessage: "Provided Azure credentials are invalid or unusable"
 }
 export const ENV_PREFIX = process.env.NODE_ENV_DB_PREFIX || 'D001-';

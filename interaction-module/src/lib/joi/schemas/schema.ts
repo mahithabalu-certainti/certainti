@@ -101,6 +101,25 @@ const getInteractionStatusSchema = Joi.object({
   status_scope: Joi.string().optional(),
   current_status: Joi.string().optional(),
 });
+
+
+const updateAccountInteractionSchema = Joi.object({
+  account_interaction_rid: Joi.string().pattern(uuidRegex).required(),
+  account_rid: Joi.string().pattern(uuidRegex).required(),
+   status_rid: Joi.string().required(),
+  questions: Joi.array()
+    .items(
+      Joi.object({
+        rid: Joi.string().pattern(uuidRegex).allow(null, ""),
+        question: Joi.string().max(2000).required(),
+        notes: Joi.string().max(2000).allow(""),
+        is_mandatory: Joi.boolean().required(),
+        action_type: Joi.string().valid("add", "edit", "delete").required(),
+      })
+    )
+    .min(1)
+    .required(),
+});
 const updateInteractionSchema = Joi.object({
   interaction_rid: Joi.string().pattern(uuidRegex).required(),
   account_rid: Joi.string().pattern(uuidRegex).required(),
@@ -217,5 +236,6 @@ export {
   listAllTechnicalSummarySchema,
   exportTechnicalSummarySchema,
   sendAccountInteractionSchema,
-  listInteractionDetailsByIdSchema
+  listInteractionDetailsByIdSchema,
+  updateAccountInteractionSchema
 };
