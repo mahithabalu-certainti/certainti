@@ -9,6 +9,7 @@ interface InteractionResponseHistoryAttributes {
   created_datetime?: Date;
   modified_datetime?: Date;
   interaction_rid: string;
+  project_fiscal_rid: string;
   interaction_item_rid?: string | null;
   response_on?: Date;
   response_email?: string;
@@ -44,6 +45,7 @@ export class InteractionResponseHistory
   public response_source_rid?: string;
   public interaction_response?: string;
   public interaction_version!: number;
+  public project_fiscal_rid!: string;
 
   static initialize(
     sequelize: Sequelize,
@@ -75,6 +77,7 @@ export class InteractionResponseHistory
         response_source_rid: { type: DataTypes.STRING(50), allowNull: true },
         interaction_response: { type: DataTypes.STRING(50), allowNull: true },
         interaction_version: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1 },
+        project_fiscal_rid: { type: DataTypes.STRING(50), allowNull: false },
       },
       {
         sequelize,

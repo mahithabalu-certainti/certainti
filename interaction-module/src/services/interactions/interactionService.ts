@@ -67,10 +67,10 @@ export class InteractionService {
 
       const {  intSource,intType } =
         await this.getInteractionStatusAndSource(interactionSource);
+      const status_rid = await this.interactionSchemaService.getActiveStatusRid();
       interactionData.interaction_source_rid = intSource || "";
       interactionData.interaction_type_rid = intType || "";
-      console.log("Creating interaction for account number:", accountNumber);
-
+      interactionData.status_rid = status_rid || "";
       const interaction =
         await this.interactionSchemaService.createAccountInteractions(
           accountNumber,
