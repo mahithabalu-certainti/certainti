@@ -993,7 +993,7 @@ export class ProjectInjestionTaskService {
           await this.projectResourceSchema.getResourceStatuses();
         const activeStatusId = statusMap.get("In-Active");
 
-        await this.projectResourceSchema.updateProjectResourceStatus(
+        await this.projectTaskSchema.updateProjectTaskStatus(
           accountNumber,
           projectTaskRid,
           activeStatusId,
