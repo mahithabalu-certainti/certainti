@@ -98,14 +98,14 @@ export class ProjectTaskService {
       });
 
       // ✅ Fetch and map related data
-      const { resourceTypeMap, currencyMap } = await this.fetchRelatedData(
+      const { resourceTypeMap, currencyMap, resourceStatusMap } = await this.fetchRelatedData(
         allTasks,
         mainSequelize
       );
 
       // ✅ Format all tasks
       let formattedTasks = allTasks.map((task) =>
-        this.formatTaskData(task, resourceTypeMap, currencyMap)
+        this.formatTaskData(task, resourceTypeMap, currencyMap, resourceStatusMap)
       );
 
       if (resourceFilter) {
@@ -211,14 +211,14 @@ export class ProjectTaskService {
       });
 
       // ✅ Fetch and map related data
-      const { resourceTypeMap, currencyMap } = await this.fetchRelatedData(
+      const { resourceTypeMap, currencyMap, resourceStatusMap } = await this.fetchRelatedData(
         allTasks,
         mainSequelize
       );
 
       // ✅ Format all tasks
       let formattedTasks = allTasks.map((task) =>
-        this.formatTaskData(task, resourceTypeMap, currencyMap)
+        this.formatTaskData(task, resourceTypeMap, currencyMap, resourceStatusMap)
       );
 
       if (resourceFilter) {
@@ -385,6 +385,19 @@ export class ProjectTaskService {
           type: "SELECT",
         })
       : [];
+    
+      const projectTaskStatusIds = allTasks
+      .map((task) => (task as any)?.status_rid)
+      .filter((statusRid) => statusRid)
+
+      const [resourceStatus] = await Promise.all([
+      projectTaskStatusIds.length
+        ? mainSequelize.query(rawQueries.fetchResourceStatus, {
+            replacements: { projectTaskStatusId: projectTaskStatusIds },
+            type: "SELECT",
+          })
+        : [],
+    ]);
 
     // Fetch currencies
     const currencyRids = allTasks
@@ -410,13 +423,20 @@ export class ProjectTaskService {
           currency.currency_symbol,
         ])
       ),
+      resourceStatusMap: new Map<string, string>(
+        resourceStatus.map((resourceStatus : any) => [
+          resourceStatus.rid,
+          resourceStatus.resource_status_name
+        ])
+      )
     };
   }
 
   formatTaskData(
     task: any,
     resourceTypeMap: Map<string, string>,
-    currencyMap: Map<string, string>
+    currencyMap: Map<string, string>,
+    resourceStatusMap : Map<string, string>
   ) {
     return {
       rid: task.rid,
@@ -449,6 +469,8 @@ export class ProjectTaskService {
       modified_by: task.modified_by,
       created_datetime: task.created_datetime,
       modified_datetime: task.modified_datetime,
+      status_rid : task.status_rid,
+      status_name : resourceStatusMap.get(task.status_rid) || null
     };
   }
 
@@ -465,6 +487,7 @@ export class ProjectTaskService {
       "comments",
       "created_datetime",
       "modified_datetime",
+      "status_name"
     ];
 
     const finalSortBy = validSortFields.includes(sortBy)
@@ -490,7 +513,24 @@ export class ProjectTaskService {
           : priorityMap[b.resource_type_name] -
               priorityMap[a.resource_type_name];
       });
-    } else if (
+    }
+    else if (finalSortBy === "status_name") {
+      const priorityMap: Record<string, number> = {
+        "Active": 1,
+        "Anomaly": 2,
+        "Duplicate": 3,
+        "In-Active" : 4
+      };
+
+      formattedTasks.sort((a, b) => {
+        return finalSortOrder === "ASC"
+          ? priorityMap[a.status_name] -
+              priorityMap[b.status_name]
+          : priorityMap[b.status_name] -
+              priorityMap[a.status_name];
+      });
+    } 
+    else if (
       finalSortBy === "total_hours_pro_task" ||
       finalSortBy === "total_cost_pro_task"
     ) {
@@ -686,7 +726,7 @@ export class ProjectTaskService {
         };
       }
 
-      const [resourceTypeData, currencyData] = await Promise.all([
+      const [resourceTypeData, currencyData, TaskStatusData] = await Promise.all([
         (task as any).dataValues.resource?.resource_type_rid
           ? mainSequelize.query(rawQueries.GET_RESOURCE_TYPES, {
               replacements: {
@@ -704,10 +744,19 @@ export class ProjectTaskService {
               type: "SELECT",
             })
           : Promise.resolve([]),
+        (task as any).dataValues.status_rid
+          ? mainSequelize.query(rawQueries.fetchResourceStatus, {
+              replacements: {
+                projectTaskStatusId: (task as any).dataValues.status_rid,
+              },
+              type: "SELECT",
+            })
+          : Promise.resolve([]),
       ]);
 
       const [resourceType] = resourceTypeData;
       const [currency] = currencyData;
+      const [taskStatus] = TaskStatusData
 
       const attachments = await this.fetchAttachmentsBytaskId(taskRid);
       let mappedAttachments = [];
@@ -818,6 +867,8 @@ export class ProjectTaskService {
         modified_datetime: taskWithUserDetails.dataValues.modified_datetime,
         created_by: taskWithUserDetails.created_name,
         modified_by: taskWithUserDetails.modified_name,
+        status_rid : taskWithUserDetails.dataValues.status_rid,
+        status_name : (taskStatus as any)?.resource_status_name
       };
 
       return {
@@ -1086,6 +1137,36 @@ export class ProjectTaskService {
             }
           });
           return; // Skip the default condition push at the end
+        case "status_rid":
+          Object.entries(filter).forEach(([op, val]) => {
+            if (val === undefined) return;
+            const nestedCondition: any = {};
+            switch (op.toLowerCase()) {
+              case "equals":
+                nestedCondition["status_rid"] = { [Op.eq]: val };
+                break;
+              case "not_equals":
+                nestedCondition["status_rid"] = {
+                  [Op.or]: [{ [Op.ne]: val }, { [Op.is]: null }],
+                };
+                break;
+              case "in":
+                nestedCondition["status_rid"] = {
+                  [Op.in]: Array.isArray(val) ? val : [val],
+                };
+                break;
+              case "is_empty":
+                nestedCondition["status_rid"] = {
+                  [Op.or]: [{ [Op.is]: null }, { [Op.eq]: "" }],
+                };
+                break;
+            }
+            if (Object.keys(nestedCondition).length > 0) {
+              whereClause[Op.and].push(nestedCondition);
+            }
+          });
+          break; // instead of return
+
         case "resource_code":
           // Process each operator in the filter object separately
           Object.entries(filter).forEach(([op, val]) => {
