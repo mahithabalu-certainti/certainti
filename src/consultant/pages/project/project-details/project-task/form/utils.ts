@@ -17,7 +17,6 @@ export const projectTaskPayloadData = (
     total_hours_pro_task: formData.total_hours_pro_task || null,
     total_cost_pro_task: formData.total_cost_pro_task || null,
     comments: formData.comments || null,
-    user_preference: '',
   };
 
   if (isEdit && project_task_rid) {

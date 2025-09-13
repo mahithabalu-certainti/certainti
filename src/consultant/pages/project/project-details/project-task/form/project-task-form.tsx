@@ -83,10 +83,7 @@ const ProjectTaskForm: React.FC = () => {
   const { data: projectResourceCodeOptions } = useGetProjectResourceCode(
     account_Id as string
   );
-  const commonSuccess =
-    // createProjectTask.isSuccess ||
-    // updateProjectTask.isSuccess ||
-    costResourceForceSuccess;
+  const commonSuccess = costResourceForceSuccess;
   useEffect(() => {
     if (commonSuccess) {
       successToast(
