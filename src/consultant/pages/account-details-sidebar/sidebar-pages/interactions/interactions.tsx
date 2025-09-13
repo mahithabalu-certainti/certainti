@@ -390,10 +390,7 @@ const Interactions: React.FC<InteractionsProps> = ({
     setSelectedRows(selectedData);
   };
 
-  const handleViewInteraction = (
-    rowId: string,
-    rNumber: string,
-  ) => {
+  const handleViewInteraction = (rowId: string, rNumber: string) => {
     if (rowId) {
       searchParams.set('interaction_id', rowId);
       searchParams.set('interaction_number', rNumber);

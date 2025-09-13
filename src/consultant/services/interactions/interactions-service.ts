@@ -65,11 +65,10 @@ export const exportAccountInteractions = async (
 ): Promise<void> => {
   try {
     const filename = 'account_interactions.xlsx';
-    const response =
-      await interactionServiceApi.get<ExportInteractionResponse>(
-        '/api/interactions/accountInterctions/export',
-        { params }
-      );
+    const response = await interactionServiceApi.get<ExportInteractionResponse>(
+      '/api/interactions/accountInterctions/export',
+      { params }
+    );
     const base64Data = response.data?.data;
 
     if (!base64Data) {
