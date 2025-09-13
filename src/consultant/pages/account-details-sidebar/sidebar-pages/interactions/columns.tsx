@@ -8,10 +8,7 @@ import { InteractionList } from '../../../../types';
 import { Project } from '../../../../types/project';
 
 export const getInteractionListColumns = (
-  handleViewInteraction: (
-    rid: string,
-    rNumber: string,
-  ) => void,
+  handleViewInteraction: (rid: string, rNumber: string) => void,
   viewProjectCount: (rid: string) => void,
   permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<InteractionList>[] => [
@@ -34,9 +31,7 @@ export const getInteractionListColumns = (
     },
     render: (row: InteractionList) => (
       <span
-        onClick={() =>
-          handleViewInteraction(row.rid, row.r_number)
-        }
+        onClick={() => handleViewInteraction(row.rid, row.r_number)}
         className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
       >
         {row.r_number}
@@ -61,6 +56,16 @@ export const getInteractionListColumns = (
       ) : (
         row.project_count || '0'
       ),
+  },
+  {
+    id: 'interaction_type_name',
+    sortId: 'interaction_type_name',
+    label: 'Type',
+    width: 80,
+    sortable: true,
+    hide:
+      !permissionMap?.['interaction_type_name']?.edit &&
+      !permissionMap?.['interaction_type_name']?.read,
   },
   {
     id: 'status_name',
@@ -104,16 +109,6 @@ export const getInteractionListColumns = (
       !permissionMap?.['created_datetime']?.read,
     render: (row: InteractionList) =>
       formatDateToYYYYMMDDWithTime(row.created_datetime),
-  },
-  {
-    id: 'interaction_type_name',
-    sortId: 'interaction_type_name',
-    label: 'Type',
-    width: 80,
-    sortable: true,
-    hide:
-      !permissionMap?.['interaction_type_name']?.edit &&
-      !permissionMap?.['interaction_type_name']?.read,
   },
   {
     id: 'modified_datetime',

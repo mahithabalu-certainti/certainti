@@ -392,13 +392,8 @@ export const AccountDetails = () => {
       } else {
         const projectInteractionExportPayload = {
           account_rid: accountid || '',
-          page: interactionsParams?.page || 1,
-          limit: interactionsParams?.limit || 100,
-          sort: interactionsParams?.sortBy || 'action',
           sort_by: interactionsParams?.sortOrder || 'ASC',
           filters: interactionsParams?.filters || {},
-          timezone: systemTimezone,
-          flag: 'account',
         };
         exportAccountInteractions(projectInteractionExportPayload);
         return;

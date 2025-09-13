@@ -447,7 +447,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
           variant: 'outlined' as const,
           onClick: () => handleResponseHistory?.(),
           sx: { width: '130px', minWidth: '130px' },
-          hide: !actionButtonEnable,
+          hide: !actionButtonEnable || isAccountIntraction,
         },
       ];
 

@@ -53,6 +53,16 @@ export const getInteractionFilterFields = (
         !permissionMap?.['r_number']?.read,
     },
     {
+      name: 'Type',
+      value: 'interaction_type_rid',
+      type: 'enum',
+      options: interactionTypes,
+      operatorOption: enumOptions,
+      hide:
+        !permissionMap?.['interaction_type_name']?.edit &&
+        !permissionMap?.['interaction_type_name']?.read,
+    },
+    {
       name: 'Status',
       value: 'status_rid',
       type: 'enum',
@@ -87,16 +97,6 @@ export const getInteractionFilterFields = (
       hide:
         !permissionMap?.['created_datetime']?.edit &&
         !permissionMap?.['created_datetime']?.read,
-    },
-    {
-      name: 'Type',
-      value: 'interaction_type_rid',
-      type: 'enum',
-      options: interactionTypes,
-      operatorOption: enumOptions,
-      hide:
-        !permissionMap?.['interaction_type_name']?.edit &&
-        !permissionMap?.['interaction_type_name']?.read,
     },
     {
       name: 'Last Updated Date',

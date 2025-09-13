@@ -24,6 +24,7 @@ import { useToast } from '../../../../hooks';
 import {
   useAccountCreateInteraction,
   useAccountInteractionDetails,
+  useAccountInteractionUpdate,
   useCreateInteraction,
   useInteractionDetails,
   useUpdateInteractionDetails,
@@ -132,6 +133,7 @@ const InteractionForm = () => {
   const accountName = searchParams.get('account_name');
   const isProjectFields = source !== 'account';
   const isGlobalInteraction = source === 'global';
+  const isAccountFields = source === 'account';
 
   const newFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
@@ -202,7 +204,7 @@ const InteractionForm = () => {
       } catch (error) {
         console.error('Error parsing projectDetails', error);
       }
-    } else if (source === 'account') {
+    } else if (isAccountFields) {
       setFormData((prev) => ({
         ...prev,
         accountName: accountName || '',
@@ -269,12 +271,14 @@ const InteractionForm = () => {
   const createInteraction = useCreateInteraction();
   const accountCreateInteraction = useAccountCreateInteraction();
   const updateInteraction = useUpdateInteractionDetails();
+  const updateAccountInteraction = useAccountInteractionUpdate();
   const interactionStatus = useGetInteractionStatus();
 
   const commonSuccess =
     createInteraction.isSuccess ||
     accountCreateInteraction.isSuccess ||
-    updateInteraction.isSuccess;
+    updateInteraction.isSuccess ||
+    updateAccountInteraction.isSuccess;
 
   const { data: projectsData, isLoading: projectsLoading } = useAccountProjects(
     {
@@ -542,16 +546,35 @@ const InteractionForm = () => {
     setActiveFlag(saveFlag);
 
     if (isEditView && interactionData) {
-      updateInteraction.mutate(payload, {
-        onError: () => {
-          setActiveFlag(null);
-        },
-        onSuccess: () => {
-          setActiveFlag(null);
-        },
-      });
+      if (isAccountFields) {
+        updateAccountInteraction.mutate(
+          {
+            account_rid: payload.account_rid,
+            status_rid: payload.status_rid,
+            questions: payload.questions,
+            account_interaction_rid: interactionId,
+          },
+          {
+            onError: () => {
+              setActiveFlag(null);
+            },
+            onSuccess: () => {
+              setActiveFlag(null);
+            },
+          }
+        );
+      } else {
+        updateInteraction.mutate(payload, {
+          onError: () => {
+            setActiveFlag(null);
+          },
+          onSuccess: () => {
+            setActiveFlag(null);
+          },
+        });
+      }
     } else {
-      if (source === 'account') {
+      if (isAccountFields) {
         accountCreateInteraction.mutate(
           {
             account_rid: payload.account_rid,
@@ -627,7 +650,8 @@ const InteractionForm = () => {
               activeFlag === StatusActionEnum.Draft &&
               (createInteraction.isPending ||
                 accountCreateInteraction.isPending ||
-                updateInteraction.isPending)
+                updateInteraction.isPending ||
+                updateAccountInteraction.isPending)
             }
             disabled={
               activeFlag !== null && activeFlag !== StatusActionEnum.Draft
@@ -646,7 +670,8 @@ const InteractionForm = () => {
             disabled={
               createInteraction.isPending ||
               accountCreateInteraction.isPending ||
-              updateInteraction.isPending
+              updateInteraction.isPending ||
+              updateAccountInteraction.isPending
             }
             sx={{
               width: '75px',
@@ -714,7 +739,7 @@ const InteractionForm = () => {
                     />
                   </div>
 
-                  {source === 'account' && (
+                  {isAccountFields && (
                     <div
                       style={{
                         display:

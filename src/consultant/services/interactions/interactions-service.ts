@@ -61,14 +61,14 @@ export const exportInteractions = async (
   }
 };
 export const exportAccountInteractions = async (
-  params: InteractionListURLParams
+  params: Record<string, unknown>
 ): Promise<void> => {
   try {
     const filename = 'account_interactions.xlsx';
     const response =
-      await interactionServiceApi.post<ExportInteractionResponse>(
+      await interactionServiceApi.get<ExportInteractionResponse>(
         '/api/interactions/accountInterctions/export',
-        params
+        { params }
       );
     const base64Data = response.data?.data;
 
@@ -404,6 +404,29 @@ export const useUpdateInteractionDetails = () => {
   return useMutation<CommonApiResponse, Error, Partial<InteractionFormPayload>>(
     {
       mutationFn: (body) => updateInteractionDetails({ ...body }),
+    }
+  );
+};
+
+export const updateAccountInteractionDetails = async (
+  body: Partial<InteractionFormPayload>
+): Promise<CommonApiResponse> => {
+  try {
+    const { data } = await interactionServiceApi.put<CommonApiResponse>(
+      '/api/accountInterctions/update',
+      body
+    );
+    return data;
+  } catch (error) {
+    console.error('Error updating interaction details:', error);
+    throw error;
+  }
+};
+
+export const useAccountInteractionUpdate = () => {
+  return useMutation<CommonApiResponse, Error, Partial<InteractionFormPayload>>(
+    {
+      mutationFn: (body) => updateAccountInteractionDetails({ ...body }),
     }
   );
 };

@@ -89,6 +89,7 @@ export type InteractionFormPayload = {
   interaction_type_rid?: string;
   parent_interaction_rid?: string;
   questions: InteractionQuestionPayload[];
+  account_interaction_rid?: string
 };
 
 export interface InteractionQuestionErrors {
