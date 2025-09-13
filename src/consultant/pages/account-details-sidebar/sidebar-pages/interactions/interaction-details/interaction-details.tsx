@@ -34,14 +34,14 @@ interface InteractionDetailsProps {
   accountInActive: boolean;
   handleBackClick: () => void;
   accountDetails?: accountDetailsProps;
-  isAccountIntraction?: boolean;
+  isAccountInteraction?: boolean;
 }
 
 const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   accountInActive,
   handleBackClick,
   accountDetails,
-  isAccountIntraction,
+  isAccountInteraction,
 }) => {
   const navigate = useNavigate();
   const { accountid } = useParams();
@@ -288,7 +288,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
           </div>
         ) : (
           <>
-            {!isAccountIntraction && (
+            {!isAccountInteraction && (
               <DetailsSection
                 title='Basic Information'
                 data={basicDetails}
@@ -311,7 +311,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
           actionButtonEnable={interactionFieldsEditable}
           handleResponseHistory={handleResponseHistory}
           refetchDetails={refetch}
-          isAccountIntraction={isAccountIntraction}
+          isAccountInteraction={isAccountInteraction}
           formData={{
             account_rid: accountid || data?.account_rid || '',
             project_rid: data?.project_rid || '',

@@ -620,7 +620,7 @@ const Interactions: React.FC<InteractionsProps> = ({
           accountInActive={accountInActive}
           handleBackClick={handleBackClick}
           accountDetails={accountDetails}
-          isAccountIntraction
+          isAccountInteraction
         />
       ) : viewInteractionHistory ? (
         <InteractionHistory

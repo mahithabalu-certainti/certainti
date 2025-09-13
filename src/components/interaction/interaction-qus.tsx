@@ -60,7 +60,7 @@ interface InteractionQuesProps {
   formData?: Record<string, string>;
   className?: string;
   responseDate?: string;
-  isAccountIntraction?: boolean;
+  isAccountInteraction?: boolean;
 }
 
 const InteractionQuestions: React.FC<InteractionQuesProps> = ({
@@ -74,7 +74,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   formData,
   className,
   responseDate,
-  isAccountIntraction,
+  isAccountInteraction,
 }) => {
   const { successToast, errorToast } = useToast();
   const [activeFlag, setActiveFlag] = useState<FlagTypeEnum | null>(null);
@@ -440,14 +440,14 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
           disabled: !isEditEnable,
           onClick: handleEditClick,
           sx: { width: '110px', minWidth: '110px' },
-          hide: !actionButtonEnable || isAccountIntraction,
+          hide: !actionButtonEnable || isAccountInteraction,
         },
         {
           label: 'Response History',
           variant: 'outlined' as const,
           onClick: () => handleResponseHistory?.(),
           sx: { width: '130px', minWidth: '130px' },
-          hide: !actionButtonEnable || isAccountIntraction,
+          hide: !actionButtonEnable || isAccountInteraction,
         },
       ];
 
