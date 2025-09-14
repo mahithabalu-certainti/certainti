@@ -653,8 +653,8 @@ export class InteractionService {
           page,
           limit,
           filters,
-          data.sortBy,
-          data.sortOrder,
+          data.sort_by,
+          data.sort_order,
           "list"
         );
 
@@ -707,8 +707,8 @@ export class InteractionService {
           0,
           0,
           filters,
-          data.sortBy,
-          data.sortOrder,
+          data.sort_by,
+          data.sort_order,
           "download"
         );
 

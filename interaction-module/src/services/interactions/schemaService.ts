@@ -919,6 +919,8 @@ class InteractionSchemaService {
       const offset = (page - 1) * limit;
         let modifiedByFilter;
       let modifiedByConditions;
+      let createdByFilter;
+      let createdByConditions;
       let totalResults: number = 0;
       let disablePagination = false;
       if(type === "download")
@@ -936,7 +938,11 @@ class InteractionSchemaService {
         modifiedByFilter = filters.modified_by;
         modifiedByConditions = detectConditions(modifiedByFilter);
       }
-       ["modified_by"].forEach(key => {
+       if (filters?.created_user_name) {
+        createdByFilter = filters.created_user_name;
+        createdByConditions = detectConditions(createdByFilter);
+      }
+       ["modified_by","created_by"].forEach(key => {
         if (filters[key]) {
           disablePagination = true;
           delete filters[key];
@@ -945,11 +951,12 @@ class InteractionSchemaService {
       if (mainTableFilters[sortBy] !== undefined) {
             disablePagination = true;
           }
-      const { whereClause } = this.buildWhereClause(filters);
-       const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+      const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
           /\D/g,
           ""
         )}`;
+      const { whereClause } = this.buildWhereClause(filters, schemaName);
+
       const [finalSortBy, finalSortOrder] = this.getSortParameters(sortBy, sortOrder);
       const { AccountInteraction } = await this.interactionModelService.getModels(accountNumber);
       if (!this.mainDbSequelize) {
@@ -1034,7 +1041,9 @@ class InteractionSchemaService {
         }
       };
       if (modifiedByConditions != null && modifiedByConditions != undefined)
-        finalData = applyFilters(finalData, modifiedByConditions, modifiedByFilter, "modified_user_name");
+        finalData = applyFilters(finalData, modifiedByConditions, modifiedByFilter, "modified_by");
+        if (createdByConditions != null && createdByConditions != undefined)
+        finalData = applyFilters(finalData, createdByConditions, createdByFilter, "created_by");
       if (mainTableFilters[sortBy] != undefined && sortBy.toLowerCase() == 'asc') {
         finalData = finalData.sort((a: any, b: any) => {
           if (!a?.[sortBy]) return 1;
@@ -1212,7 +1221,7 @@ class InteractionSchemaService {
     }
   }
 
-   private buildWhereClause(filters: Record<string, any>): {
+   private buildWhereClause(filters: Record<string, any>, schemaName?: string): {
     whereClause: Record<string, any>;
   } {
     let whereClause: Record<string, any> = {};
@@ -1226,6 +1235,7 @@ class InteractionSchemaService {
         'created_datetime': (value: any) => this.processDateFilter('created_datetime', value, whereClause),
         'modified_datetime': (value: any) => this.processDateFilter('modified_datetime', value, whereClause),
         'status_rid': (value: any) => this.processTextFilter('status_rid', value, whereClause),
+        'project_count': (value: any) => this.processProjectCountFilter(value, whereClause, schemaName ?? ""),
       };
       Object.keys(filters).forEach(key => {
         
@@ -1255,9 +1265,11 @@ class InteractionSchemaService {
       "created_by",
       "modified_datetime",     
        "version",
-      "status"
+      "status",
+      "project_count",
+      "created_user_name",
+      "modified_user_name",
     ];
-
     if (!validSortColumns.includes(sortBy)) {
       sortBy = "created_datetime";
     }
@@ -1389,6 +1401,61 @@ class InteractionSchemaService {
       }
     }
   }
+
+  private processProjectCountFilter(value: any, whereClause: Record<string, any>, schemaName: string): void {
+  const conditions: any[] = [];
+  
+  if (typeof value === 'number') {
+    conditions.push(this.createProjectCountCondition('=', value,schemaName));
+  } else if (value && typeof value === 'object') {
+    if ('equals' in value) {
+      conditions.push(this.createProjectCountCondition('=', value.equals,schemaName));
+    }
+    if ('not_equals' in value) {
+      conditions.push(this.createProjectCountCondition('!=', value.not_equals,schemaName));
+    }
+    if ('greater_than' in value) {
+      conditions.push(this.createProjectCountCondition('>', value.greater_than,schemaName));
+    }
+    if ('less_than' in value) {
+      conditions.push(this.createProjectCountCondition('<', value.less_than,schemaName));
+    }
+    if ('between' in value && Array.isArray(value.between) && value.between.length === 2) {
+      conditions.push({
+        [Op.and]: [
+          this.createProjectCountCondition('>=', value.between[0],schemaName),
+          this.createProjectCountCondition('<=', value.between[1],schemaName),
+        ]
+      });
+    }
+    if ('is_empty' in value) {
+      conditions.push(
+        value.is_empty
+          ? this.createProjectCountCondition('=', 0, schemaName)
+          : this.createProjectCountCondition('>', 0, schemaName)
+      );
+    }
+  }
+
+  if (conditions.length > 0) {
+    if (!whereClause[Op.and as any]) {  // Type assertion for Op.and
+      whereClause[Op.and as any] = [];
+    }
+    (whereClause[Op.and as any] as any[]).push(...conditions);
+  }
+}
+
+private createProjectCountCondition(operator: string, value: number,schemaName: string): any {
+  return {
+    [Op.and as any]: [  // Type assertion for Op.and
+      Sequelize.literal(`(
+        SELECT COUNT(*)
+          FROM "${schemaName}"."interactions" AS i
+          WHERE i.account_interaction_rid = "AccountInteractions"."rid"
+      ) ${operator} ${value}`)
+    ]
+  };
+}
   async fetchTechnicalSummaryDetailsById(
     accountNumber: string,
     techSummaryId: string
