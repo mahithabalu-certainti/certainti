@@ -1724,18 +1724,28 @@ class ProjectIngestionService {
                   'document_rid',
                   'event_name',
                 ]
-            }] : [],
-            attributes: {
-              include: [
-                ["rid", "project_fiscal_rid"],
-                ["total_fte_prj", "total_fte"],
-                ["total_effort_prj", "total_effort"],
-                ["total_cost_prj", "total_cost"],
-                ["total_cost_fte_prj", "total_cost_fte"],
-                ["total_cost_subcon_prj", "total_cost_subcon"],
-                ["total_cost_nonlabor_prj", "total_cost_nonlabor"],
-              ],
-            },
+        }] : [],
+        attributes: {
+          include: [
+            [Sequelize.col("rid"), "project_fiscal_rid"],
+            [Sequelize.col("total_fte_prj"), "total_fte"],
+            [Sequelize.col("total_effort_prj"), "total_effort"],
+            [Sequelize.col("total_cost_prj"), "total_cost"],
+            [Sequelize.col("total_cost_fte_prj"), "total_cost_fte"],
+            [Sequelize.col("total_cost_subcon_prj"), "total_cost_subcon"],
+            [Sequelize.col("total_cost_nonlabor_prj"), "total_cost_nonlabor"],
+            ...(apiSource === "interaction"
+          ? [[
+              Sequelize.literal(`EXISTS (
+            SELECT 1 FROM "${schemaName}"."interactions" i 
+            WHERE i.project_fiscal_rid = "ProjectFiscal"."rid"
+              AND i.account_interaction_rid IN (${accountInteractionId.map((id: string) => `'${id}'`).join(",")})
+              )`),
+              "isInteractionMapped"
+            ] as [any, string]]
+          : []),
+          ] as (string | [string | ReturnType<typeof Sequelize.fn> | ReturnType<typeof Sequelize.col> | ReturnType<typeof Sequelize.literal>, string])[],
+        },
           },
         ],
       });
