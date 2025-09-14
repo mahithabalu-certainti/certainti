@@ -245,6 +245,29 @@ export const getProjectTaskColumns = (
       row.total_hours_pro_task ? valueDisplay(row.total_hours_pro_task) : '-',
   },
   {
+    id: 'status_name',
+    sortId: 'status_name',
+    label: 'Status',
+    width: 130,
+    sortable: true,
+    // hide:
+    //   !permissionMapTaskTableColumn?.['status_rid']?.edit &&
+    //   !permissionMapTaskTableColumn?.['status_rid']?.read,
+    render: (row: ProjectTaskListType) => (
+      <span
+        className={`${
+          row.status_name === 'Active'
+            ? 'text-[#199806]'
+            : row.status_name === 'In-Active'
+              ? 'text-[#f44336] '
+              : ''
+        }`}
+      >
+        {row.status_name || '-'}
+      </span>
+    ),
+  },
+  {
     id: 'comments',
     label: 'Comments',
     editId: 'comments',
