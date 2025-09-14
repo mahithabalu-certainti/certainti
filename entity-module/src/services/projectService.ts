@@ -850,7 +850,11 @@ export class ProjectService {
          accountRNumber
         );
       }
-    
+      else if( apiSource === "interaction" && accountInteractionId){
+        {
+          accInteractionProjs = accountInteractionId.split(',');
+        }
+      }
 
       const [finalSortBy, finalSortOrder] = this.getSortParameters(
         sortBy,

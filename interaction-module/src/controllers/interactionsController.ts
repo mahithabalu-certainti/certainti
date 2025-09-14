@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { HttpStatus, interactionFieldMappings, interactionSource, STATUS_MESSAGE, techSummaryFieldMappings } from "../utils/constants";
+import { accountInteractionFieldMappings, HttpStatus, interactionFieldMappings, interactionSource, STATUS_MESSAGE, techSummaryFieldMappings } from "../utils/constants";
 import {
   deleteFromAzureBlob,
   errorLog,
@@ -269,6 +269,9 @@ async function exportAccountInteractions(req: Request, res: Response): Promise<v
          const finalStructuredData = result?.data?.accountInteractions.length < 1 ? [] : result?.data?.accountInteractions.map((d: any) => {
         let resultMap: { [key: string]: any } = {
           "r_number": d.r_number,
+          "project_count": d.project_count,
+          "interaction_type": d.interaction_type_name,
+          "status_name": d.status_name,
           "created_by": d.created_user_name,
           "created_datetime":formatDate(d.created_datetime),
           "modified_by": d.modified_user_name,
@@ -278,7 +281,7 @@ async function exportAccountInteractions(req: Request, res: Response): Promise<v
 
         // Build exportRecord using allowed fields and resultMap
         const exportRecord: Record<string, any> = {};
-        techSummaryFieldMappings.forEach(mapping => {
+        accountInteractionFieldMappings.forEach(mapping => {
           if (allowedFieldSet.has(mapping.permissionField)) {
             exportRecord[mapping.exportField] = resultMap[mapping.dataField];
           }
@@ -287,7 +290,7 @@ async function exportAccountInteractions(req: Request, res: Response): Promise<v
         return exportRecord;
       });
 
-       const generateBase64Response = await generateExcelBase64(finalStructuredData, "Technical Summary")
+       const generateBase64Response = await generateExcelBase64(finalStructuredData, "Account Interactions")
         handleSuccessResponse(res, generateBase64Response);}
         else {
       errorLog(methodName, result.errorMessage);
