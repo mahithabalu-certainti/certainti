@@ -45,11 +45,7 @@ class SchemaService {
       const sequelize = await initOrgSequelize();
       const schema_name = `trd365_${account_number.replace(/\D/g, "")}`;
       await sequelize.createSchema(schema_name, {});
-      await sequelize.query(`GRANT USAGE ON SCHEMA ${schema_name} TO readonly_user;`);
-      await sequelize.query(`GRANT SELECT ON ALL TABLES IN SCHEMA ${schema_name} TO readonly_user;`);
-      await sequelize.query(`GRANT SELECT ON ALL SEQUENCES IN SCHEMA ${schema_name} TO readonly_user;`);
-      await sequelize.query(`ALTER DEFAULT PRIVILEGES IN SCHEMA ${schema_name} GRANT SELECT ON TABLES TO readonly_user;`);
-      await sequelize.query(`ALTER DEFAULT PRIVILEGES IN SCHEMA ${schema_name} GRANT SELECT ON SEQUENCES TO readonly_user;`);
+      await this.grantAllReadOnlyAccessToSchema(schema_name, sequelize);  
       await this.createAccountTables(account_number);
     } catch (err) {
       console.log(err);
@@ -127,6 +123,15 @@ class SchemaService {
       console.log("Table createng err", Err);
     }
   }
+
+  async grantAllReadOnlyAccessToSchema(schema_name: string, sequelize: Sequelize) 
+    {
+       await sequelize.query(`GRANT USAGE ON SCHEMA ${schema_name} TO readonly_user;`);
+      await sequelize.query(`GRANT SELECT ON ALL TABLES IN SCHEMA ${schema_name} TO readonly_user;`);
+      await sequelize.query(`GRANT SELECT ON ALL SEQUENCES IN SCHEMA ${schema_name} TO readonly_user;`);
+      await sequelize.query(`ALTER DEFAULT PRIVILEGES IN SCHEMA ${schema_name} GRANT SELECT ON TABLES TO readonly_user;`);
+      await sequelize.query(`ALTER DEFAULT PRIVILEGES IN SCHEMA ${schema_name} GRANT SELECT ON SEQUENCES TO readonly_user;`);
+    }
 
    private async  createQRETracker( schemaName: string,
     sequelize: Sequelize) {
