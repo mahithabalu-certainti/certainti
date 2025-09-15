@@ -179,8 +179,7 @@ class SchemaService {
          interaction_question_error_message JSON,
           qre_error_message JSON,
           technical_summary_error_message JSON,
-          data_ingestion_error_message JSON,
-         ai_assessment_api_status text 
+          data_ingestion_error_message JSON
       );
     `);
      await sequelize.query(`
