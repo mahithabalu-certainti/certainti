@@ -397,6 +397,8 @@ export default class ImportGraphqlServices {
         finalMetaDataSortOrder,
         {},
         accessibleIds,
+        "timesheet",
+        [],
         documentRid
       );
 
