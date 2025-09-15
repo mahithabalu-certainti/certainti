@@ -400,7 +400,7 @@ const Timesheet: React.FC<TimeSheetProps> = ({
       ) : (
         <>
           <SectionHeader
-            title='Timesheet'
+            title='Timesheets'
             count={totalItems}
             showItemCount={true}
             buttons={headerButtons}
