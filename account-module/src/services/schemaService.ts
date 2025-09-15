@@ -174,6 +174,12 @@ class SchemaService {
          is_qre_processed BOOLEAN NOT NULL DEFAULT FALSE,
          is_tech_summary_processed BOOLEAN NOT NULL DEFAULT FALSE,
          is_interaction_question_processed BOOLEAN NOT NULL DEFAULT FALSE,
+         data_ingestion BOOLEAN NOT NULL DEFAULT FALSE,
+         ai_assessment_api_status text ,
+         interaction_question_error_message JSON,
+         qre_error_message JSON,
+         technical_summary_error_message JSON,
+         data_ingestion_error_message JSON,
          ai_assessment_api_status text 
       );
     `);
@@ -2347,6 +2353,7 @@ private async createInteractionTable(
         account_rid text NOT NULL,
         interaction_rid text NOT NULL,
         otp varchar(100) NOT NULL,
+        project_fiscal_rid varchar(50),
         is_verified bool DEFAULT false NOT NULL,
         expires_at timestamptz NOT NULL,
         otp_attempt_count numeric NULL,
