@@ -139,6 +139,7 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
     if (sourceTab) newSearchParams.set('tab', sourceTab);
     navigate(`/account/details/${accountid}?${newSearchParams.toString()}`);
   };
+
   const headerButtons = [
     {
       label: 'Edit',
@@ -160,6 +161,7 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
       label: 'Trigger AI',
       variant: 'outlined' as const,
       loading: triggerAIMutation.isPending,
+      disabled: accountInActive,
       onClick: () => handleTriggerAI(),
       sx: { ...BUTTON_STYLES, width: '96px', minWidth: '96px' },
       hide: !TriggerAIEnable,

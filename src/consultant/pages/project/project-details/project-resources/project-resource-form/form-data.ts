@@ -99,14 +99,14 @@ export const ProjectResourceFormData = (
           createTextField('project_resource_role', 'Project Resource Role', {
             placeholder: 'Enter Project Resource Role',
             required: false,
-            // disabled:
-            //   isEditView &&
-            //   permissionMap?.['project_resource_role']?.read &&
-            //   !permissionMap?.['project_resource_role']?.edit,
-            // hide:
-            //   isEditView &&
-            //   !permissionMap?.['project_resource_role']?.read &&
-            //   !permissionMap?.['project_resource_role']?.edit,
+            disabled:
+              isEditView &&
+              permissionMap?.['project_resource_role']?.read &&
+              !permissionMap?.['project_resource_role']?.edit,
+            hide:
+              isEditView &&
+              !permissionMap?.['project_resource_role']?.read &&
+              !permissionMap?.['project_resource_role']?.edit,
           }),
         ],
       },

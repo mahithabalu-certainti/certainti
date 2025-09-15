@@ -978,7 +978,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             className={
               'placeholder-custom-color placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ' +
               isError +
-              fieldDisabled
+              fieldDisabled +
+              (field.disabled
+                ? ' truncate overflow-hidden text-ellipsis whitespace-nowrap'
+                : '')
             }
             disabled={field.disabled}
             onChange={(e) => {

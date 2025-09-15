@@ -722,7 +722,7 @@ export const AccountDetails = () => {
         icon: ChecklistIcon,
       },
       {
-        name: 'Timesheet',
+        name: 'Timesheets',
         key: 'timesheet',
         id: AllMenus.TIMESHEETS,
         disabled: disable,

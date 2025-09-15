@@ -133,11 +133,11 @@ export const ManageUserDetails: React.FC = () => {
           )}
 
           <TextButton
-            label='Back'
+            label='Back To Users'
             onClick={goBack}
             sx={{
-              width: '49px',
-              minWidth: '49px',
+              width: '100px',
+              minWidth: '100px',
               fontWeight: 400,
               fontSize: '13px',
             }}

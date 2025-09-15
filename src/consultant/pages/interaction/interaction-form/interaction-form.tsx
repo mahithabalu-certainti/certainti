@@ -733,7 +733,7 @@ const InteractionForm = () => {
                       name='account_name'
                       placeholder='Enter Account Name'
                       autoComplete='off'
-                      className='placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs'
+                      className='placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] truncate overflow-hidden text-ellipsis whitespace-nowrap outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs'
                       disabled={true}
                       value={formData.accountName}
                     />
@@ -821,7 +821,7 @@ const InteractionForm = () => {
                         name='project_code'
                         placeholder='Enter Project Code'
                         autoComplete='off'
-                        className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${errors?.projectCode && 'border-red-500 disabled:!bg-[#FEF2F2] bg-[#FEF2F2]'}`}
+                        className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] truncate overflow-hidden text-ellipsis whitespace-nowrap outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${errors?.projectCode && 'border-red-500 disabled:!bg-[#FEF2F2] bg-[#FEF2F2]'}`}
                         disabled={true}
                         value={formData.projectCode}
                       />
@@ -854,7 +854,7 @@ const InteractionForm = () => {
                       name='project_name'
                       placeholder='-'
                       autoComplete='off'
-                      className='placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs'
+                      className='placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] truncate overflow-hidden text-ellipsis whitespace-nowrap outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs'
                       disabled={true}
                       value={formData.projectName}
                     />

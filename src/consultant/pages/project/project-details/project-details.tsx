@@ -182,7 +182,6 @@ export const ProjectDetails = () => {
   const accountInActive =
     data?.data?.project?.account_status?.toLowerCase() !== 'active';
   const projectInActive = data?.data?.project.status_name === 'In-Active';
-
   useEffect(() => {
     if (data?.data) {
       const project = data.data.project;
@@ -446,7 +445,7 @@ export const ProjectDetails = () => {
       case 'projectDetails':
         return (
           <ProjectDetailsData
-            accountInActive={accountInActive}
+            accountInActive={accountInActive || projectInActive}
             projectDetails={{
               ...projectData!,
               attachment: data?.data?.attachment || [],
@@ -570,7 +569,7 @@ export const ProjectDetails = () => {
         icon: ResourcesIcon,
       },
       {
-        name: 'Projects Task',
+        name: 'Project Tasks',
         key: 'projectsTask',
         id: AllModules.PROJECT_TASK,
         disabled: false,

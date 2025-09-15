@@ -163,7 +163,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       loading: sendInteraction.isPending,
     },
     {
-      label: 'Back To Inteactions',
+      label: 'Back To Interactions',
       variant: 'contained' as const,
       onClick: () => handleBackClick(),
       sx: { width: '140px', minWidth: '140px' },
