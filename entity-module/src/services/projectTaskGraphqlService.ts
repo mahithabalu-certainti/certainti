@@ -253,7 +253,7 @@ export default class ProjectTaskGraphqlServies {
               accountNumber,
               data,
               checkForExistingData[0][0],
-              activeId,
+              activeId[0][0].rid,
               activeStatusId
             );
 
@@ -301,6 +301,7 @@ export default class ProjectTaskGraphqlServies {
               modified_by: latestData.modified_by,
               created_datetime: latestData.created_datetime,
               modified_datetime: latestData.modified_datetime,
+              status_name : latestData.status_name
             };
             return {
               statusCode: HttpStatus.SUCCESS,
