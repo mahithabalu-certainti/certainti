@@ -493,7 +493,7 @@ jobs:
           WEBHOOK_API_CLIENT_SECRET=webhook-api-client-secret
           WEBHOOK_API_TENANT_ID=$MAIL_TENANT_ID
           SCHEDULER_EXPRESSION="0 */12 * * *"  
-          SCHEDULER_EMAIL="*/10 * * * *"     
+          SCHEDULER_EMAIL="*/2 * * * *"    
           CLIENT_SECRET_ENCRYPTION_KEY=client-secret-encryption-key
           CLIENT_SECRET_ENCRYPTION_LENGTH=16
           EOF

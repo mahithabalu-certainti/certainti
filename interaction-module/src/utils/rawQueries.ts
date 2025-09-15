@@ -946,8 +946,6 @@ const updateInteractionAge = async (
     interactions = await orgDb.query(
       findDateDifferenceQuery(schemaName, data.status_rid, dateTimeColumn)
     );
-    console.log("interactions ====> ", interactions[0]);
-    console.log("interactions ====> ", interactions[0].length);
     if (interactions[0].length > 0) {
       for (let i of interactions[0]) {
         await orgDb.query(
