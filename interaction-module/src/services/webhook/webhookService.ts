@@ -366,13 +366,20 @@ export class WebHookService {
       );
 
       const unmatchedSeqNums: string[] = [];
+      const unmatchedQuestion: string[] = [];
 
       for (const answer of answers) {
         const questionSeqNum = answer?.questionSeqId || ""; // Adjust key if needed
+        const question = answer?.question || "";
 
         const matchingItem = interactionItem.find(
           (item: any) =>
             item.question_seq_num?.toString() === questionSeqNum?.toString()
+        );
+
+        const matchingQuestion = interactionItem.find(
+          (item: any) =>
+            item.question_seq_num?.toString() === question?.toString()
         );
 
         if (matchingItem) {
@@ -381,6 +388,15 @@ export class WebHookService {
           unmatchedSeqNums.push(questionSeqNum);
           this.logger.warn(
             `No matching interaction item found for question_seq_num: ${questionSeqNum}`
+          );
+        }
+
+        if (matchingQuestion) {
+          answer.rid = matchingQuestion.rid;
+        } else {
+          unmatchedQuestion.push(questionSeqNum);
+          this.logger.warn(
+            `No matching interaction item found for Question: ${questionSeqNum}`
           );
         }
       }
@@ -407,7 +423,31 @@ export class WebHookService {
           message: HttpStatus.BAD_REQUEST_MESSAGE,
           errorMessage: "Invalid Question Number",
         };
-      }      
+      }
+      
+      if (unmatchedQuestion.length > 0) {
+        await this.logWebhookEmailEvent({
+          schemaName: mailProcessedResults.accountNumber,
+          emailSubject: mailProcessedResults.subject,
+          emailSender: mailProcessedResults.from,
+          status: "FAILED",
+          errorMessage: "Invalid Question",
+        });
+        this.sendMailWithAttachment(
+          finalResult,
+          finalResult.attachments[0].fileName,
+          finalResult.attachments[0].file,
+          "Invalid Question",
+          finalResult.forwardEmail,
+          this.graphClient,
+          receivedEmail
+        );
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: "Invalid Question",
+        };
+      }
 
       const responsSource: any = await this.fetchResponseSource();
 
@@ -1156,7 +1196,7 @@ export class WebHookService {
           toRecipients: [
             {
               emailAddress: {
-                address: forwardTo,
+                address: "nithish.m@certainti.ai",
               },
             },
           ],
