@@ -39,7 +39,6 @@ const numberOptions: { option: string; value: string }[] = [
 
 export const getInteractionFilterFields = (
   interactionTypes: { option: string; value: string }[],
-  interactionStatus: { option: string; value: string }[],
   permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => {
   return [
@@ -70,15 +69,6 @@ export const getInteractionFilterFields = (
       hide:
         !permissionMap?.['interaction_type_name']?.edit &&
         !permissionMap?.['interaction_type_name']?.read,
-    },
-    {
-      name: 'Status',
-      value: 'status_rid',
-      type: 'enum',
-      options: interactionStatus,
-      operatorOption: enumOptions,
-      hide:
-        !permissionMap?.['status']?.edit && !permissionMap?.['status']?.read,
     },
     {
       name: 'Created By',

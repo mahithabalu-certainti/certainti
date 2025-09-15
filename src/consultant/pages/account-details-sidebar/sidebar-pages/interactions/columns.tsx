@@ -70,15 +70,6 @@ export const getInteractionListColumns = (
       !permissionMap?.['interaction_type_name']?.read,
   },
   {
-    id: 'status_name',
-    sortId: 'status_name',
-    label: 'Status',
-    width: 140,
-    sortable: true,
-    hide: !permissionMap?.['status']?.edit && !permissionMap?.['status']?.read,
-    render: (row: InteractionList) => row.status_name || '-',
-  },
-  {
     id: 'created_user_name',
     sortId: 'created_user_name',
     label: 'Created By',

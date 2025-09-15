@@ -56,6 +56,7 @@ import {
   AllPermissions,
   ExpandCollapseSelectOptions,
   useGetInteractionStatus,
+  useGetStatus,
   // useGetInteractionStatusById,
 } from '../../../../common-service';
 import { RootState } from '../../../../store/store';
@@ -270,6 +271,7 @@ const InteractionForm = () => {
 
   const createInteraction = useCreateInteraction();
   const accountCreateInteraction = useAccountCreateInteraction();
+  const accountStatusOptions = useGetStatus();
   const updateInteraction = useUpdateInteractionDetails();
   const updateAccountInteraction = useAccountInteractionUpdate();
   const interactionStatus = useGetInteractionStatus();
@@ -550,7 +552,6 @@ const InteractionForm = () => {
         updateAccountInteraction.mutate(
           {
             account_rid: payload.account_rid,
-            status_rid: payload.status_rid,
             questions: payload.questions,
             account_interaction_rid: interactionId,
           },
@@ -578,7 +579,9 @@ const InteractionForm = () => {
         accountCreateInteraction.mutate(
           {
             account_rid: payload.account_rid,
-            status_rid: payload.status_rid,
+            status_rid: accountStatusOptions.data?.data.status.find(
+              (option) => option.status.toLowerCase() === 'active'
+            )?.rid,
             questions: payload.questions,
           },
           {
@@ -710,68 +713,33 @@ const InteractionForm = () => {
                   isLoading={isGlobalLoading}
                 />
               ) : (
-                <>
-                  <div
-                    style={{
-                      display: shouldHideField(
-                        'account_name',
-                        isEditView,
-                        permissionMap
-                      )
-                        ? 'none'
-                        : 'block',
-                    }}
+                <div
+                  style={{
+                    display: shouldHideField(
+                      'account_name',
+                      isEditView,
+                      permissionMap
+                    )
+                      ? 'none'
+                      : 'block',
+                  }}
+                >
+                  <label
+                    className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
+                    htmlFor='account_name'
                   >
-                    <label
-                      className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
-                      htmlFor='account_name'
-                    >
-                      Account Name
-                    </label>
-                    <input
-                      type='text'
-                      name='account_name'
-                      placeholder='Enter Account Name'
-                      autoComplete='off'
-                      className='placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] truncate overflow-hidden text-ellipsis whitespace-nowrap outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs'
-                      disabled={true}
-                      value={formData.accountName}
-                    />
-                  </div>
-
-                  {isAccountFields && (
-                    <div
-                      style={{
-                        display:
-                          isEditView &&
-                          !shouldHideField('status', isEditView, permissionMap)
-                            ? 'block'
-                            : 'none',
-                      }}
-                    >
-                      <label
-                        className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
-                        htmlFor='status'
-                      >
-                        Status
-                      </label>
-                      <input
-                        type='text'
-                        name='status'
-                        placeholder='Choose status'
-                        autoComplete='off'
-                        className='placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs'
-                        disabled={true}
-                        value={formData.status}
-                      />
-                      {errors.status && (
-                        <span className='text-[12px] text-red-400 col-span-full'>
-                          {errors.status}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </>
+                    Account Name
+                  </label>
+                  <input
+                    type='text'
+                    name='account_name'
+                    placeholder='Enter Account Name'
+                    autoComplete='off'
+                    className='placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] truncate overflow-hidden text-ellipsis whitespace-nowrap outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs'
+                    disabled={true}
+                    value={formData.accountName}
+                  />
+                </div>
               )}
             </div>
             <div
