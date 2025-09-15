@@ -560,11 +560,7 @@ const Interactions: React.FC<InteractionsProps> = ({
           projectPermissionMap
         )
       : !viewInteractionHistory
-        ? getInteractionFilterFields(
-            memoizedInteractionTypes,
-            memoizedInteractionStatus,
-            permissionMap
-          )
+        ? getInteractionFilterFields(memoizedInteractionTypes, permissionMap)
         : getInteractionHistoryFilterFields(memoizedInteractionStatus);
   const RestrictedColumns = [
     {

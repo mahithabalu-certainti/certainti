@@ -39,7 +39,6 @@ const numberOptions: { option: string; value: string }[] = [
 
 export const getInteractionFilterFields = (
   interactionTypes: { option: string; value: string }[],
-  interactionStatus: { option: string; value: string }[],
   permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => {
   return [
