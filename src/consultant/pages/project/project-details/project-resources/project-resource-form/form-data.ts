@@ -96,18 +96,17 @@ export const ProjectResourceFormData = (
               !permissionMap?.['resource_code']?.read &&
               !permissionMap?.['resource_code']?.edit,
           }),
-          createSelectField('status_rid', 'Resource Status', {
-            options: resourceStatusOptions,
-            placeholder: 'Choose Resource Status',
+          createTextField('project_resource_role', 'Project Resource Role', {
+            placeholder: 'Enter Project Resource Role',
             required: false,
             disabled:
               isEditView &&
-              permissionMap?.['status_rid']?.read &&
-              !permissionMap?.['status_rid']?.edit,
+              permissionMap?.['project_resource_role']?.read &&
+              !permissionMap?.['project_resource_role']?.edit,
             hide:
               isEditView &&
-              !permissionMap?.['status_rid']?.read &&
-              !permissionMap?.['status_rid']?.edit,
+              !permissionMap?.['project_resource_role']?.read &&
+              !permissionMap?.['project_resource_role']?.edit,
           }),
         ],
       },

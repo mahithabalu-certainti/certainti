@@ -35,6 +35,7 @@ export type ProjectResourcesListType = {
   region_rid?: string;
   currency_rid?: string | null;
   start_date?: string | null;
+  status_name?: string | null;
   end_date?: string | null;
   total_hours_pro_res?: string;
   total_cost_pro_res?: string;
@@ -200,6 +201,7 @@ export interface ProjectResourceNewPayload {
   skill_role_rid?: string | null;
   skill_role_others?: string | null;
   status_rid?: string | null;
+  project_resource_role?: string | null;
   country_rid?: string | null;
   region_rid?: string | null;
   currency_rid?: string | null;
@@ -258,3 +260,15 @@ export interface ProjectResourceRowItem {
   _level: number;
   _type: 'parent' | 'child' | string;
 }
+export interface ProjectResourceStatusApiResponse extends CommonApiResponse {
+  data: {
+    updateStatus: number[];
+  };
+}
+export type ProjectResourceStatusPayload = {
+  rid: string;
+  accountId: string;
+  action: string;
+  resourceCode: string;
+  type: string;
+};
