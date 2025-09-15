@@ -1482,7 +1482,7 @@ class ProjectIngestionService {
     finalMetaDataSortOrder: string,
     graphqlData: any,
     accessibleIds: string[],
-    apiSource: string,
+    apiSource: string ="project",
     accountInteractionId: string[] = [],
     documentRid?: string
   ) {

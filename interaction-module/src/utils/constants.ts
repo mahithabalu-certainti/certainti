@@ -305,9 +305,9 @@ export const rawQueries = {
     return `
     SELECT rid, project_name,project_code,r_number,fiscal_year,project_rid FROM ${schemaName}.project_fiscal WHERE rid = '${rid}'`;
   },
-  fetchProjectsByAccount(accountRid: string, schemaName: string) {
+  fetchProjectsByAccount(accountRid: string, schemaName: string,status_rid:string) {
     return `
-    SELECT rid, project_rid FROM ${schemaName}.project_fiscal WHERE account_rid = '${accountRid}'`;
+    SELECT rid, project_rid FROM ${schemaName}.project_fiscal WHERE account_rid = '${accountRid}' and status_rid='${status_rid}'`;
   },
   updateQreInfo(rid: string, schemaName: string, qrePercent: number) {
     return `
