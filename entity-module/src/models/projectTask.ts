@@ -30,6 +30,7 @@ interface ProjectTaskAttributes {
   comments?: string | null;
 
   status_rid : string;
+  project_resource_rid : string | undefined | null
 }
 
 type ProjectTaskCreationAttributes = Optional<ProjectTaskAttributes, "rid">;
@@ -67,6 +68,8 @@ export class ProjectTask
   public comments?: string;
 
   public status_rid!: string;
+
+  public project_resource_rid! : string
 
   static initialize(sequelize: Sequelize, schema: string) {
     ProjectTask.init(
@@ -161,6 +164,10 @@ export class ProjectTask
           allowNull: true,
         },
         status_rid : {
+          type : DataTypes.STRING(50),
+          allowNull : true
+        },
+        project_resource_rid : {
           type : DataTypes.STRING(50),
           allowNull : true
         }

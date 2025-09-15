@@ -43,6 +43,8 @@ interface ProjectResourceAttributes {
   deductions?: number | null;
 
   description?: string | null;
+  total_hours_from_tasks? : number | null,
+  total_cost_from_tasks? : number | null
 }
 
 type ProjectResourceCreationAttributes = Optional<
@@ -95,6 +97,8 @@ export class ProjectResource
   public bonus?: number | null;
 
   public description?: string | null;
+  public total_hours_from_tasks? : number | null
+  public total_cost_from_tasks? : number | null;
 
   static initialize(sequelize: Sequelize, schema: string) {
     ProjectResource.init(
@@ -177,6 +181,14 @@ export class ProjectResource
           type: DataTypes.STRING(2000),
           allowNull: true,
         },
+        total_hours_from_tasks : {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+        },
+        total_cost_from_tasks : {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+        }
       },
       {
         sequelize,
