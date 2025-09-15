@@ -562,7 +562,6 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                           [{ indent: '-1' }, { indent: '+1' }],
                           [{ direction: 'rtl' }],
                           [{ align: [] }],
-                          ['clean'],
                         ],
                       }}
                       formats={[
@@ -582,7 +581,6 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                         'indent',
                         'direction',
                         'align',
-                        'clean',
                       ]}
                     />
                     {validationErrors[q.rid] && (
