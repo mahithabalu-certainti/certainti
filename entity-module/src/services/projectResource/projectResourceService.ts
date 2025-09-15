@@ -113,7 +113,7 @@ export class ProjectResourceService {
             return {
               statusCode: HttpStatus.BAD_REQUEST,
               message: HttpStatus.BAD_REQUEST_MESSAGE,
-              errorMessage: "Invalid resource role: resource role already exists"
+              errorMessage: "Resource role already exists"
             };
           }
 
@@ -685,7 +685,7 @@ export class ProjectResourceService {
         return {
           statusCode: HttpStatus.BAD_REQUEST,
           message: HttpStatus.BAD_REQUEST_MESSAGE,
-          errorMessage: "Invalid resource role: resource role already exists"
+          errorMessage: "Resource role already exists"
         };
       }
 

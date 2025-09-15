@@ -2589,17 +2589,19 @@ export class ProjectResourceSchemaService {
 
     if (newFiscalRecord) {
       // Update existing fiscal record
-      await ProjectResourceFiscal.update(
-        {
-          ...baseData,
-          total_hours_pro_res: newAggregates.total_effort,
-          total_cost_pro_res: newAggregates.total_cost,
-        },
-        {
-          where: { rid: newFiscalRecord.rid },
-          transaction,
-        }
-      );
+      if(newAggregates){
+        await ProjectResourceFiscal.update(
+          {
+            ...baseData,
+            total_hours_pro_res: newAggregates.total_effort,
+            total_cost_pro_res: newAggregates.total_cost,
+          },
+          {
+            where: { rid: newFiscalRecord.rid },
+            transaction,
+          }
+        );
+      }
     } else {
       // Create new fiscal record
       const resource = await Resources.findOne({
@@ -4774,22 +4776,24 @@ export class ProjectResourceSchemaService {
     });
 
     if (newFiscalRecord) {
-      await ResourcesFiscal.update(
-        {
-          resource_code: projectResourceData.resource_code,
-          account_rid: accountId,
-          resource_rid: resource?.rid ?? "",
-          total_effort_for_year_project_resource_level:
-            newAggregates.total_effort,
-          total_cost_for_year_project_resource_level: newAggregates.total_cost,
-          modified_by: userId,
-          modified_datetime: new Date(),
-        },
-        {
-          where: { rid: newFiscalRecord.rid },
-          transaction,
-        }
-      );
+      if(newAggregates){
+        await ResourcesFiscal.update(
+          {
+            resource_code: projectResourceData.resource_code,
+            account_rid: accountId,
+            resource_rid: resource?.rid ?? "",
+            total_effort_for_year_project_resource_level:
+              newAggregates.total_effort,
+            total_cost_for_year_project_resource_level: newAggregates.total_cost,
+            modified_by: userId,
+            modified_datetime: new Date(),
+          },
+          {
+            where: { rid: newFiscalRecord.rid },
+            transaction,
+          }
+        );
+      }
     } else {
       if (newAggregates) {
         await ResourcesFiscal.create(
@@ -5095,7 +5099,7 @@ export class ProjectResourceSchemaService {
 
       if (projectResource.status_rid) {
         const statusResult: any = await this.mainDbSequelize?.query(
-          `SELECT status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid = :id`,
+          `SELECT resource_status_name FROM ${MAIN_SCHEMA_NAME}.resource_status WHERE rid = :id`,
           {
             replacements: { id: projectResource.status_rid },
             type: "SELECT",
@@ -5103,7 +5107,7 @@ export class ProjectResourceSchemaService {
         );
 
         const status = statusResult[0];
-        projectResource.status_name = status?.status_name;
+        projectResource.status_name = status?.resource_status_name;
       } else {
         projectResource.status_name = null;
       }
