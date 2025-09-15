@@ -66,6 +66,7 @@ export class ProjectMapper {
     projectId: string,
     startDate: moment.Moment | null,
     endDate: moment.Moment | null,
+    accountSettings: any,
     userId: string
   ) {
     return {
@@ -90,7 +91,7 @@ export class ProjectMapper {
 
       max_ai_interaction: DEFAULT_PROJECT_DETAILS.maxAiInteraction,
       expiry_duration: null,
-      auto_access_rd: data.auto_access_rd ?? false,
+      auto_access_rd: accountSettings[0]?.auto_access_rd ?? data.auto_access_rd ?? false,
 
       status_rid: data.status_rid,
       project_startdate: startDate?.toDate() || null,
@@ -102,7 +103,7 @@ export class ProjectMapper {
       project_classification_rid: data.project_classification_rid || null,
       project_classification_other: data.project_classification_other || null,
 
-      auto_send_ai_interaction: data.auto_send_ai_interaction,
+      auto_send_ai_interaction: accountSettings[0]?.autosend_interaction ?? data.auto_send_ai_interaction,
 
       total_fte_prj: data.total_fte || null,
       total_subcon_prj: data.total_subcon || null,
