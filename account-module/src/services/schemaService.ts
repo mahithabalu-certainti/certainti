@@ -164,7 +164,12 @@ class SchemaService {
          is_qre_processed BOOLEAN NOT NULL DEFAULT FALSE,
          is_tech_summary_processed BOOLEAN NOT NULL DEFAULT FALSE,
          is_interaction_question_processed BOOLEAN NOT NULL DEFAULT FALSE,
-         ai_assessment_api_status text 
+         data_ingestion BOOLEAN NOT NULL DEFAULT FALSE,
+         ai_assessment_api_status text ,
+         interaction_question_error_message JSON,
+          qre_error_message JSON,
+          technical_summary_error_message JSON,
+          data_ingestion_error_message JSON
       );
     `);
      await sequelize.query(`
@@ -2155,7 +2160,7 @@ private async createInteractionTable(
         notes character varying(2000),
         is_attachment boolean,
         account_interaction_rid varchar(50),
-      type varchar(50)
+        type varchar(50)
       );
     `);
 
@@ -2336,6 +2341,7 @@ private async createInteractionTable(
         email varchar(120) NOT NULL,
         account_rid text NOT NULL,
         interaction_rid text NOT NULL,
+        project_fiscal_rid varchar(50),
         otp varchar(100) NOT NULL,
         is_verified bool DEFAULT false NOT NULL,
         expires_at timestamptz NOT NULL,

@@ -934,15 +934,15 @@ class InteractionSchemaService {
         }
         return null;
       };
-      if (filters?.modified_by) {
-        modifiedByFilter = filters.modified_by;
+      if (filters?.modified_user_name) {
+        modifiedByFilter = filters.modified_user_name;
         modifiedByConditions = detectConditions(modifiedByFilter);
       }
        if (filters?.created_user_name) {
         createdByFilter = filters.created_user_name;
         createdByConditions = detectConditions(createdByFilter);
       }
-       ["modified_by","created_by"].forEach(key => {
+       ["created_user_name","modified_user_name"].forEach(key => {
         if (filters[key]) {
           disablePagination = true;
           delete filters[key];
@@ -1041,9 +1041,9 @@ class InteractionSchemaService {
         }
       };
       if (modifiedByConditions != null && modifiedByConditions != undefined)
-        finalData = applyFilters(finalData, modifiedByConditions, modifiedByFilter, "modified_by");
+        finalData = applyFilters(finalData, modifiedByConditions, modifiedByFilter, "modified_user_name");
         if (createdByConditions != null && createdByConditions != undefined)
-        finalData = applyFilters(finalData, createdByConditions, createdByFilter, "created_by");
+        finalData = applyFilters(finalData, createdByConditions, createdByFilter, "created_user_name");
       if (mainTableFilters[sortBy] != undefined && sortBy.toLowerCase() == 'asc') {
         finalData = finalData.sort((a: any, b: any) => {
           if (!a?.[sortBy]) return 1;
@@ -1262,13 +1262,10 @@ class InteractionSchemaService {
     const validSortColumns = [
       "r_number",
       "created_datetime",
-      "created_by",
       "modified_datetime",     
        "version",
       "status",
-      "project_count",
-      "created_user_name",
-      "modified_user_name",
+      "project_count"
     ];
     if (!validSortColumns.includes(sortBy)) {
       sortBy = "created_datetime";
