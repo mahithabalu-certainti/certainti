@@ -5224,6 +5224,7 @@ export class ProjectResourceSchemaService {
       "resource_role",
       "resource_name",
       "resource_type_rid",
+      "status_name"
     ].includes(sortBy);
     const dbOrder =
       isDbField && sortBy && sortOrder
@@ -5311,6 +5312,7 @@ export class ProjectResourceSchemaService {
       "resource_role",
       "resource_name",
       "resource_type_rid",
+      "status_name"
     ].includes(sortBy);
     const dbOrder =
       isDbField && sortBy && sortOrder
@@ -5331,6 +5333,10 @@ export class ProjectResourceSchemaService {
         projectResource
       );
       projectResource = await this.insertResourceCode(
+        accountNumber,
+        projectResource
+      );
+      projectResource = await this.resourceStatusType(
         accountNumber,
         projectResource
       );
@@ -5366,6 +5372,7 @@ export class ProjectResourceSchemaService {
       resource_designation: "Designation",
       qre_percent: "QRE %",
       qre_final: "QRE",
+      status_rid: "Status",
       description: "Comments",
       // "r_number": "Project Resource ID",
     };
@@ -5383,6 +5390,7 @@ export class ProjectResourceSchemaService {
         total_cost_pro_res: resource.total_cost_pro_res || "-",
         qre_percent: resource.qre_percent || "-",
         qre_final: resource.qre_final || "-",
+        status_rid: resource.status_name || "-",
         description: resource.description || "-",
         // "r_number": resource.project_resource_code || "-",
       };
@@ -5730,6 +5738,7 @@ export class ProjectResourceSchemaService {
       "resource_name",
       "resource_role",
       "resource_type_rid",
+      "status_name"
     ];
 
     const matchFilter = (record: any, key: string, filter: any): boolean => {
