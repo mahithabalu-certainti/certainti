@@ -48,7 +48,7 @@ import {
   useAccountProjects,
   useGetProjectType,
 } from '../../../../services/project';
-import { Project } from '../../../../types/project';
+import { Project, ProjectFiscalSummary } from '../../../../types/project';
 import { useFetchClassification } from '../../../../services/account';
 import SendInteractionAlert from './interaction-alert';
 
@@ -92,7 +92,9 @@ const Interactions: React.FC<InteractionsProps> = ({
     Date.now()
   );
   const [refreshProject, setRefreshProject] = useState<number>(Date.now());
-  const [selectedTableId, setSelectedTableIds] = useState<string[]>([]);
+  const [selectedTableId, setSelectedTableIds] = useState<
+    ProjectFiscalSummary[]
+  >([]);
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [projectPage, setProjectPage] = useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = useState(100);
@@ -153,7 +155,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       accountNumber: accountid ?? accountDetails?.accountDetails?.account_rid,
       bothParentAndChild: false,
       apiSource: viewProject ? 'interactionCount' : 'interaction',
-      accountInteractionId: viewProject as string,
+      accountInteractionId: (viewProject || sendInteraction) as string,
     },
     Boolean(sendInteraction || viewProject),
     refreshProject
@@ -274,7 +276,22 @@ const Interactions: React.FC<InteractionsProps> = ({
 
   useEffect(() => {
     if (allProject.data?.projects) {
-      setProjectList(allProject.data?.projects || []);
+      setProjectList(
+        allProject.data?.projects.map((it) => {
+          return {
+            ...it,
+            disableCheckBox: it.ProjectFiscal.find(
+              (item) => item.isInteractionMapped
+            ),
+            ProjectFiscal: it.ProjectFiscal.map((item) => {
+              return {
+                ...item,
+                disableCheckBox: item.isInteractionMapped,
+              };
+            }),
+          };
+        }) || []
+      );
     }
   }, [allProject.data?.projects]);
   useEffect(() => {
@@ -480,7 +497,7 @@ const Interactions: React.FC<InteractionsProps> = ({
         if (sendInteraction) {
           setSendModalOpen(true);
         } else {
-          searchParams.set('send_intraction', 'true');
+          searchParams.set('send_intraction', selectedRows[0].rid);
           navigate({ search: searchParams.toString() }, { replace: true });
           localStorage.setItem(
             'selectedInteraction',
@@ -587,7 +604,14 @@ const Interactions: React.FC<InteractionsProps> = ({
   };
 
   const handleselectedList = (id: string[]) => {
-    const childIds = id.filter((_, index) => index % 2 === 0);
+    const childIds: ProjectFiscalSummary[] = [];
+    projectList.forEach((it) => {
+      it.ProjectFiscal.forEach((item) => {
+        if (id.includes(item.rid)) {
+          childIds.push(item);
+        }
+      });
+    });
     setSelectedTableIds(childIds);
   };
 
@@ -756,6 +780,8 @@ const Interactions: React.FC<InteractionsProps> = ({
                   sortOrder={sortBy}
                   onSort={handleSortRequest}
                   clearSelectedRows={clearSelectedRows}
+                  disabledSelect={selectedRows.length > 0}
+                  hideHeaderSelect
                 />
               </>
             )}
@@ -763,9 +789,7 @@ const Interactions: React.FC<InteractionsProps> = ({
           <SendInteractionAlert
             isOpen={sendModalOpen}
             onClose={() => setSendModalOpen(false)}
-            selectedRows={selectedRows}
             selectedTableId={selectedTableId}
-            projectList={projectList}
             onSuccessRefetch={handleRefresh}
           />
         </>

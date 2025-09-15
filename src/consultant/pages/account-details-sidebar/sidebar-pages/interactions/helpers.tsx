@@ -53,6 +53,15 @@ export const getInteractionFilterFields = (
         !permissionMap?.['r_number']?.read,
     },
     {
+      name: 'Project Count',
+      value: 'project_count',
+      type: 'number',
+      operatorOption: numberOptions,
+      hide:
+        !permissionMap?.['project_count']?.edit &&
+        !permissionMap?.['project_count']?.read,
+    },
+    {
       name: 'Type',
       value: 'interaction_type_rid',
       type: 'enum',

@@ -44,7 +44,9 @@ export const getInteractionListColumns = (
     label: 'Project Count',
     width: 140,
     sortable: true,
-    // hide: !permissionMap?.['project_count']?.edit && !permissionMap?.['project_count']?.read,
+    hide:
+      !permissionMap?.['project_count']?.edit &&
+      !permissionMap?.['project_count']?.read,
     render: (row: InteractionList) =>
       row.project_count && Number(row.project_count) > 0 ? (
         <span
