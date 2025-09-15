@@ -379,7 +379,7 @@ export class WebHookService {
 
         const matchingQuestion = interactionItem.find(
           (item: any) =>
-            item.question_seq_num?.toString() === question?.toString()
+            item.question?.toString() === question?.toString()
         );
 
         if (matchingItem) {
@@ -1148,7 +1148,7 @@ export class WebHookService {
   
       if (!questionId) rowErrors.push("Question No");
       if (!question) rowErrors.push("Questions");
-      if (!answer) rowErrors.push("Answers");
+      // if (!answer) rowErrors.push("Answers");
       if (!isMandatory) rowErrors.push("Is Mandatory");
   
       // If Is Mandatory is 'yes', answer must be non-empty
