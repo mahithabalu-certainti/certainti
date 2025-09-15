@@ -491,7 +491,7 @@ jobs:
           JWT_EXPIRY='1h'
           WEBHOOK_API_CLIENT_ID=b51b3194-95e2-4928-9dbd-2e8384b3fd58
           WEBHOOK_API_CLIENT_SECRET=webhook-api-client-secret
-          WEBHOOK_API_TENANT_ID=$MAIL_TENANT_ID # Replace with b6734060-665c-4b7b-94e2-716458c1d933
+          WEBHOOK_API_TENANT_ID=$MAIL_TENANT_ID
           SCHEDULER_EXPRESSION="0 */12 * * *"  
           SCHEDULER_EMAIL="*/10 * * * *"     
           CLIENT_SECRET_ENCRYPTION_KEY=client-secret-encryption-key
