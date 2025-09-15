@@ -480,7 +480,7 @@ jobs:
           TRIGGER_AI_URL=https://platform-demo.certainti.ai/thinkrd365_triggerai
           NODE_ENV_DB_PREFIX="D001-"
           INTERACTION_URL="https://thinkrd365-development.certainti.ai/ext/interaction"
-          KAFKA_BROKER="10.204.3.4:9092"
+          KAFKA_BROKER=${{ secrets.DEVELOPMENT_KAFKA_BROKER }}
           KAFKA_CONSUMER_GROUP="ai_assessment_request"
           KAFKA_AI_RESPONSE_TRIGGER_TOPIC="ai_assessment_response"
           KAFKA_AI_REQUEST_TRIGGER_TOPIC = "ai_assessment_request"
@@ -751,7 +751,7 @@ jobs:
           TRIGGER_AI_URL=https://platform-demo.certainti.ai/thinkrd365_triggerai
           NODE_ENV_DB_PREFIX="D001-"
           INTERACTION_URL="https://thinkrd365-development.certainti.ai/ext/interaction"
-          KAFKA_BROKER="10.204.3.4:9092"
+          KAFKA_BROKER=${{ secrets.DEVELOPMENT_KAFKA_BROKER }}
           KAFKA_CONSUMER_GROUP="ai_assessment_response"
           KAFKA_AI_RESPONSE_TRIGGER_TOPIC="ai_assessment_response"
           KAFKA_AI_REQUEST_TRIGGER_TOPIC = "ai_assessment_request"
