@@ -60,7 +60,7 @@ export const NODE_ENV = {
   DEV: "DEV",
   PROD: "PRODUCTION",
 };
-
+export const sendEmailCount = 10
 export const OTP_EXPIRY_MINUTES = 10;
 export const MAX_RESEND_ATTEMPTS = 3;
 
@@ -71,7 +71,7 @@ export const filtersColumns : Record<string, string> =
     interaction_age : "interaction_age",
     recipient_name : "recipient_name",
     recipient_email : "recipient_email",
-    last_resent_on : "last_resent_on",
+    last_resent_on : "sent_on_datetime",
     last_reminder_on : "last_reminder_on",
     response_submitted_on : "response_submitted_on",
     response_updated_on : "response_updated_on",
@@ -620,7 +620,7 @@ export const rawQueries = {
       WHERE u.rid = :userRid
       LIMIT 1
       `,
-  fetchEmailInfo: `SELECT * FROM ${MAIN_SCHEMA_NAME}.send_email_info WHERE is_email_send = false ORDER BY created_datetime ASC LIMIT 5`,
+  fetchEmailInfo: `SELECT * FROM ${MAIN_SCHEMA_NAME}.send_email_info WHERE is_email_send = false ORDER BY created_datetime ASC LIMIT ${sendEmailCount}`,
   updateInteractionStatus(schemaName : string, statusRid : string, interactionRid : string) {
     return `UPDATE ${schemaName}.interactions SET status_rid = '${statusRid}' WHERE rid = '${interactionRid}'`
   },
@@ -673,7 +673,7 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     interaction_age : "interaction_age",
     recipient_name : "recipient_name",
     recipient_email : "recipient_email",
-    last_resent_on : "last_resent_on",
+    last_resent_on : "sent_on_datetime",
     last_reminder_on : "last_reminder_on",
     response_submitted_on : "response_submitted_on",
     response_updated_on : "response_updated_on",
