@@ -107,6 +107,22 @@ export const ProjectResourceFormData = (
               isEditView &&
               !permissionMap?.['project_resource_role']?.read &&
               !permissionMap?.['project_resource_role']?.edit,
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MIN_ORG_NAME_LEGNTH,
+                errorMessage:
+                  'Business Name must be more than 6 characters long',
+              },
+              {
+                regex: REGEX_PATTERNS.MAX_125,
+                errorMessage: 'Maximum length exceeded.',
+              },
+              {
+                regex: REGEX_PATTERNS.ACCOUNT_NAME,
+                errorMessage:
+                  "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes (') and commas (,)",
+              },
+            ],
           }),
         ],
       },
