@@ -106,7 +106,6 @@ const getInteractionStatusSchema = Joi.object({
 const updateAccountInteractionSchema = Joi.object({
   account_interaction_rid: Joi.string().pattern(uuidRegex).required(),
   account_rid: Joi.string().pattern(uuidRegex).required(),
-   status_rid: Joi.string().required(),
   questions: Joi.array()
     .items(
       Joi.object({

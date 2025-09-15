@@ -81,7 +81,7 @@ export const fetchInteractionForProjectLevelQuery = (
   else if (sort === filtersColumns.recipient_email)
     sortValue = `ORDER BY i.recipient_email ${sortBy}`;
   else if (sort === filtersColumns.last_sent_on)
-    sortValue = `ORDER BY i.last_resent_on ${sortBy}`;
+    sortValue = `ORDER BY i.sent_on_datetime ${sortBy}`;
   else if (sort === filtersColumns.last_reminder_on)
     sortValue = `ORDER BY i.last_reminder_on ${sortBy}`;
   else if (sort === filtersColumns.response_submitted_on)
@@ -117,7 +117,7 @@ export const fetchInteractionForProjectLevelQuery = (
         SELECT
             i.rid, i.r_number, i.interaction_iteration, COALESCE(i.interaction_age,0),
             i.status_rid, i.recipient_name, i.recipient_email,
-            i.last_resent_on, i.last_reminder_on, i.response_updated_on,
+            i.sent_on_datetime, i.last_reminder_on, i.response_updated_on,
             i.response_submitted_on, i.response_source_rid, i.created_by, i.modified_by,
             i.created_datetime, i.modified_datetime, p.r_number AS parent_r_number,
             i.account_rid, i.project_rid, i.rid AS interaction_history, 
@@ -149,7 +149,7 @@ export const fetchInteractionForProjectLevelQuery = (
         'status', i.status_rid,
         'recipient_name', i.recipient_name,
         'recipient_email', i.recipient_email,
-        'last_resent_on', i.last_resent_on,
+        'last_resent_on', i.sent_on_datetime,
         'last_reminder_on', i.last_reminder_on,
         'response_updated_on', i.response_updated_on,
         'response_submitted_on', i.response_submitted_on,
@@ -273,7 +273,7 @@ export const listAllInteractionSummary = (
   else if (sort === filtersColumnsForInteractionSummary.recipient_email)
     sortValue = `ORDER BY i.recipient_email ${sortBy}`;
   else if (sort === filtersColumnsForInteractionSummary.last_sent_on)
-    sortValue = `ORDER BY i.last_resent_on ${sortBy}`;
+    sortValue = `ORDER BY i.sent_on_datetime ${sortBy}`;
   else if (sort === filtersColumnsForInteractionSummary.last_reminder_on)
     sortValue = `ORDER BY i.last_reminder_on ${sortBy}`;
   else if (sort === filtersColumnsForInteractionSummary.response_submitted_on)
@@ -316,7 +316,7 @@ export const listAllInteractionSummary = (
     WITH fetch_all_interactions AS 
     (SELECT i.interaction_rid AS rid, i.r_number, i.interaction_iteration, i.status_rid,
     s.status_name, i.recipient_name, i.recipient_email,
-    i.last_resent_on, i.last_reminder_on, i.response_submitted_on,
+    i.sent_on_datetime, i.last_reminder_on, i.response_submitted_on,
     i.response_updated_on, i.attachment_count, i.rid AS interaction_history,
     i.interaction_url, p.r_number AS parent_r_number, i.interaction_type_rid,
     it.interaction_type_name, ir.rid AS response_source_rid, ir.response_source_name,
@@ -353,7 +353,7 @@ export const listAllInteractionSummary = (
             'status_rid', i.status_rid,
             'recipient_name', i.recipient_name,
             'recipient_email', i.recipient_email,
-            'last_resent_on', i.last_resent_on,
+            'last_resent_on', i.sent_on_datetime,
             'last_reminder_on', i.last_reminder_on,
             'response_updated_on', i.response_updated_on,
             'response_submitted_on', i.response_submitted_on,
