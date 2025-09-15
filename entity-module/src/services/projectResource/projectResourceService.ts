@@ -2116,7 +2116,7 @@ export class ProjectResourceService {
       "qre_final",
     ];
 
-    const enumFields = ["country_rid", "region_rid"];
+    const enumFields = ["country_rid", "region_rid", "status_rid"];
 
     const filterFields = this.getFilterFields();
 
@@ -2159,6 +2159,7 @@ export class ProjectResourceService {
         clientField: "project_resource_code",
         dbField: "project_resource_code",
       },
+      { clientField: "status_rid", dbField: "status_rid" },
     ];
 
     return projectFilterFields;
