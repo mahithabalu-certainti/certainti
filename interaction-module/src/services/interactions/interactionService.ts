@@ -1121,7 +1121,7 @@ export class InteractionService {
         data.email = email_info?.email === undefined ? null : email_info?.email
         data.name = email_info?.name === undefined ? null : email_info.name
         data.is_interaction_followup = is_interaction_followup
-        this.logger.info("Email info to be sent:",JSON.stringify(data));
+        this.logger.info(`Email info to be sent: ${JSON.stringify(data)}`);
         await this.interactionSchemaService.insertEmailInfoDatas(data);
         await orgDb.query(rawQueries.updateInteractionStatus(schemaName, fetchInQueueStatus[0][0].rid, interaction_rid))
         await mainDb.query(rawQueries.updateInteractionSummaryStatus(fetchInQueueStatus[0][0].rid, interaction_rid))
@@ -1896,7 +1896,8 @@ export class InteractionService {
           this.orgDbSequelize = await initOrgSequelize();
         }
         const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
-        const [projects]: any[] = await this.orgDbSequelize.query(rawQueries.fetchProjectsByAccount(req.data[0].account_rid, schemaName));
+        const status_rid = await this.interactionSchemaService.getActiveStatusRid();
+        const [projects]: any[] = await this.orgDbSequelize.query(rawQueries.fetchProjectsByAccount(req.data[0].account_rid, schemaName,status_rid!));
         const projectIds = Array.isArray(projects) ? projects.map((p: any) => p.rid) : [];
         payload.project_id = projectIds;
       } else {
