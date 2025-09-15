@@ -1572,6 +1572,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         global_attachments: globalAttachments,
         recipient_name: recipient_name || null,
         recipient_email: recipient_email || null,
+        hasEmailRecipient: metainfo?.hasEmailRecipient || false
       };
 
       return response;
@@ -1768,6 +1769,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       let interaction_type: any = null;
       let interaction_status: any = null;
       let project_info: any = null;
+      let hasEmailRecipient: boolean = false;
 
       if (interactionDetails?.dataValues?.interaction_type_rid) {
         const result = await this.mainDbSequelize.query(
@@ -1807,14 +1809,22 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         );
         project_info =
           Array.isArray(result) && result.length > 0 ? result[0] : null;
-      }
+      
 
+      const [activeStatus]: any[] = await this.mainDbSequelize.query(
+                  rawQueries.fetchActiveStatusByType("Active"),
+                  { type: "SELECT" }
+                );
+      const [emailInfoResult]: any = await this.orgDbSequelize.query(rawQueries.isEmailRecipientAvailable(interactionDetails?.dataValues?.project_fiscal_rid, schemaName, activeStatus?.rid));
+      hasEmailRecipient = emailInfoResult[0]?.recipient_available ?? false;
+              }
       return {
         interaction_type_name: interaction_type?.interaction_type_name || null,
         interaction_status_name: interaction_status?.status_name || null,
         project_code: project_info?.project_code || null,
         project_name: project_info?.project_name || null,
         fiscal_year: project_info?.fiscal_year || null,
+        hasEmailRecipient:hasEmailRecipient
       };
 
       //return interactionDetails;
