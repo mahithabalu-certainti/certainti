@@ -97,6 +97,7 @@ export interface InteractionDetailsResponse {
   response_updated_on: Date | null;
   recipient_name: string | null;
   recipient_email: string | null;
+  hasEmailRecipient: boolean | false;
 }
 export interface InteractionResponse {
   interaction_rid: string;
