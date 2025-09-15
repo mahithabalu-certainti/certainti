@@ -603,6 +603,7 @@ export class ProjectResourceMapper {
         projectResource.cost_project_resource_level || null,
 
       description: projectResource.description || null,
+      project_resource_role : projectResource.project_resource_role
     };
   }
 
@@ -839,6 +840,7 @@ export class ProjectResourceMapper {
       insurance: projectResource.insurance || null,
 
       description: projectResource.description || null,
+      project_resource_role : projectResource.project_resource_role
     };
   }
 
@@ -914,7 +916,8 @@ export class ProjectTaskMapper {
       currency_rid: projectTask.currency_rid || null,
 
       comments: projectTask.comments || null,
-      status_rid : projectTask.status_rid
+      status_rid : projectTask.status_rid,
+      project_resource_rid : projectTask.project_resource_rid
     };
   }
   static mapToProjectTaskUpdate(
@@ -945,7 +948,8 @@ export class ProjectTaskMapper {
       currency_rid: projectTask.currency_rid || null,
 
       comments: projectTask.comments || null,
-      status_rid : projectTask.status_rid
+      status_rid : projectTask.status_rid,
+      project_resource_rid : projectTask.project_resource_rid
     };
   }
 }

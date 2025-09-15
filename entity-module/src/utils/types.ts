@@ -311,7 +311,7 @@ export interface ICreateProjectResource {
   resource_id: string;
   project_code: string;
   resource_code: string;
-  project_resource_role?: string;
+  project_resource_role?: string | null | undefined;
   user_preference?: string;
   manager_name?: string;
   manager_ref_id?: string;
@@ -402,7 +402,8 @@ export interface ICreateProjectTask {
   comments?: string | null;
   created_by: string;
   modified_by?: string;
-  status_rid : string
+  status_rid : string;
+  project_resource_rid? : string
 }
 
 export interface IUpdateProjectTask {
@@ -423,6 +424,7 @@ export interface IUpdateProjectTask {
   created_by: string;
   modified_by?: string;
   status_rid : string
+  project_resource_rid? : string
 }
 
 export interface IAnomalyStatus {

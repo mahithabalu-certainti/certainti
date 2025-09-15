@@ -886,7 +886,14 @@ export const rawQueries = {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name ILIKE '%${status}%'`
   },
   fetchResourceStatus:`
-  SELECT rid, resource_status_name FROM ${MAIN_SCHEMA_NAME}.resource_status WHERE rid IN (:projectTaskStatusId)`
+  SELECT rid, resource_status_name FROM ${MAIN_SCHEMA_NAME}.resource_status WHERE rid IN (:projectTaskStatusId)`,
+  checkResCodeExistsInPrjRes (schemaName : string, resource_rid : string | undefined, account_rid : string, project_fiscal_rid : string) {
+    return `SELECT * FROM ${schemaName}.project_resource WHERE resource_rid = '${resource_rid}' AND account_rid = '${account_rid}' AND project_fiscal_rid = '${project_fiscal_rid}'`
+  },
+  updateProjectResRoleInPrjRes (schemaName : string, role : string | null | undefined, projectResRid : string) {
+    return `
+    UPDATE ${schemaName}.project_resource SET project_resource_role = '${role}' WHERE rid = '${projectResRid}'`
+  }
 };
 
 export const IMPORT_FILTER_COLUMNS: any = {

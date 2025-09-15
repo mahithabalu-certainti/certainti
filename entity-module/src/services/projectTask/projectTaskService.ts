@@ -1,6 +1,6 @@
 import Decimal from "decimal.js";
 import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries } from "../../utils/constants";
-import { IAnomalyStatus, ICreateProjectTask, IUpdateProjectTask } from "../../utils/types";
+import { IAnomalyStatus, ICreateProjectResource, ICreateProjectTask, IUpdateProjectTask } from "../../utils/types";
 import { ProjectTaskSchemaService } from "./schemaService";
 import { ProjectResourceSchemaService } from "../projectResource/schemaService";
 import { Resources } from "../../models/resource";
@@ -11,11 +11,13 @@ import { Sequelize } from "sequelize";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import moment from "moment";
+import { ProjectResource } from "../../models/projectResource";
 
 export class ProjectInjestionTaskService {
   projectTaskSchema: ProjectTaskSchemaService;
   private projectResourceSchema: ProjectResourceSchemaService;
   private mainDbSequelize: Sequelize | null = null;
+  private orgDbSequelize : Sequelize | null = null;
 
   constructor() {
     this.projectTaskSchema = new ProjectTaskSchemaService();
@@ -45,6 +47,13 @@ export class ProjectInjestionTaskService {
       return this.mainDbSequelize;
     }
 
+    private async getOrgDbSequelize(): Promise<Sequelize> {
+      if (!this.orgDbSequelize) {
+        this.orgDbSequelize = await initOrgSequelize();
+      }
+      return this.orgDbSequelize;
+    }
+
   async createProjectTask(
     projectTaskData: ICreateProjectTask,
     userId: string,
@@ -58,6 +67,8 @@ export class ProjectInjestionTaskService {
     const dbInit = await this.projectTaskSchema.getSequelize();
     const transaction = await dbInit.transaction();
     const mainDbSequelize = await this.getMainDbSequelize();
+    const orgDbSequelize = await this.getOrgDbSequelize()
+    let projectResourceResult : string | undefined = ""
     try {
       const {
         start_date,
@@ -144,6 +155,41 @@ export class ProjectInjestionTaskService {
           }
         }
       }
+      let status = "Active";
+      const statusMap = await getResourceStatuses(mainDbSequelize);
+      const activeStatusId : any = statusMap?.get(status);
+      const activeId : any = await mainDbSequelize.query(rawQueries.fetchActiveStatusRid(status))
+
+      const schemaName = rawQueries.fetchSchemaName(accountNumber)
+      const findResourceAlreadyInPrjResource : any = await orgDbSequelize.query(rawQueries.checkResCodeExistsInPrjRes(schemaName, resourceData.rid, account_rid, project_fiscal_rid));
+      if(findResourceAlreadyInPrjResource[0].length > 0) {
+        if(findResourceAlreadyInPrjResource[0][0].project_resource_role == null) {
+          await orgDbSequelize.query(rawQueries.updateProjectResRoleInPrjRes(schemaName, resourceData.resource_role, findResourceAlreadyInPrjResource[0][0].rid))
+          projectResourceResult = findResourceAlreadyInPrjResource[0][0].rid
+        } else {
+          projectResourceResult = findResourceAlreadyInPrjResource[0][0].rid
+        }
+      } else {
+          let projectResourceData : any = {
+          account_rid : account_rid,
+          project_fiscal_rid : project_fiscal_rid,
+          resource_id : resourceData.rid,
+          project_code : projectData.project_code,
+          resource_code : resourceData.resource_code,
+          project_resource_role : resourceData.resource_role,
+          assigned_skill_role_type_rid: null,
+          skill_role_rid: null,
+          skill_role_others: null,
+          status_rid : activeStatusId,
+          fiscal_year : projectData.fiscal_year,
+          created_by : userId,
+          country_rid : null
+        }
+        const prjResresult = await this.projectResourceSchema.addProjectResources(accountNumber, projectResourceData, projectData, userId)
+        if(prjResresult) {
+          projectResourceResult = prjResresult.dataValues.rid
+        }
+      }
       const getAccountCurrencyRid : any = await mainDbSequelize.query(rawQueries.fetchAccountCurrencyRid(account_rid))
       const costFields = {
         total_hours_pro_task,
@@ -169,10 +215,7 @@ export class ProjectInjestionTaskService {
               
       // Get currency threshold
       const currencyThreshold = await getCurrencyThreshold(mainDbSequelize,getAccountCurrencyRid[0][0].currency_rid);
-      let status = "Active";
-      const statusMap = await getResourceStatuses(mainDbSequelize);
-      const activeId : any = await mainDbSequelize.query(rawQueries.fetchActiveStatusRid(status))
-      const activeStatusId : any = statusMap?.get(status);
+      
       const startDate = this.formatDateForDb(start_date as string);
       const endDate = this.formatDateForDb(end_date as string);
 
@@ -199,6 +242,7 @@ export class ProjectInjestionTaskService {
       projectTaskData.status_rid = statusRid
       projectTaskData.total_cost_pro_task = costValues['total_cost_pro_task']
       projectTaskData.total_hours_pro_task = costValues['total_hours_pro_task']
+      projectTaskData.project_resource_rid = projectResourceResult
       // Proceed to insert
       const newTask = await this.projectTaskSchema.addProjectTask(
         accountNumber,
@@ -258,6 +302,8 @@ export class ProjectInjestionTaskService {
     const dbInit = await this.projectTaskSchema.getSequelize();
     const transaction = await dbInit.transaction();
     const mainDbSequelize = await this.getMainDbSequelize();
+    const orgDbSequelize = await this.getOrgDbSequelize();
+    let projectResourceResult : string | undefined = ""
 
     try {
       const {
@@ -336,6 +382,42 @@ export class ProjectInjestionTaskService {
         }
       }
 
+      let status = "Active";
+      const statusMap = await getResourceStatuses(mainDbSequelize);
+      const activeId : any = await mainDbSequelize.query(rawQueries.fetchActiveStatusRid(status))
+      const activeStatusId : any = statusMap?.get(status);
+
+      const schemaName = rawQueries.fetchSchemaName(accountNumber)
+      const findResourceAlreadyInPrjResource : any = await orgDbSequelize.query(rawQueries.checkResCodeExistsInPrjRes(schemaName, resourceData.rid, account_rid, project_fiscal_rid));
+      if(findResourceAlreadyInPrjResource[0].length > 0) {
+        if(findResourceAlreadyInPrjResource[0][0].project_resource_role == null) {
+          await orgDbSequelize.query(rawQueries.updateProjectResRoleInPrjRes(schemaName, resourceData.resource_role, findResourceAlreadyInPrjResource[0][0].rid))
+          projectResourceResult = findResourceAlreadyInPrjResource[0][0].rid
+        } else {
+          projectResourceResult = findResourceAlreadyInPrjResource[0][0].rid
+        }
+      } else {
+          let projectResourceData : any = {
+          account_rid : account_rid,
+          project_fiscal_rid : project_fiscal_rid,
+          resource_id : resourceData.rid,
+          project_code : projectData.project_code,
+          resource_code : resourceData.resource_code,
+          project_resource_role : resourceData.resource_role,
+          assigned_skill_role_type_rid: null,
+          skill_role_rid: null,
+          skill_role_others: null,
+          status_rid : activeStatusId,
+          fiscal_year : projectData.fiscal_year,
+          created_by : userId,
+          country_rid : null
+        }
+        const prjResresult = await this.projectResourceSchema.addProjectResources(accountNumber, projectResourceData, projectData, userId)
+        if(prjResresult) {
+          projectResourceResult = prjResresult.dataValues.rid
+        }
+      }
+
       const getAccountCurrencyRid : any = await mainDbSequelize.query(rawQueries.fetchAccountCurrencyRid(account_rid))
       const costFields = {
         total_hours_pro_task,
@@ -361,10 +443,6 @@ export class ProjectInjestionTaskService {
               
       // Get currency threshold
       const currencyThreshold = await getCurrencyThreshold(mainDbSequelize,getAccountCurrencyRid[0][0].currency_rid);
-      let status = "Active";
-      const statusMap = await getResourceStatuses(mainDbSequelize);
-      const activeId : any = await mainDbSequelize.query(rawQueries.fetchActiveStatusRid(status))
-      const activeStatusId : any = statusMap?.get(status);
       const startDate = this.formatDateForDb(start_date as string);
       const endDate = this.formatDateForDb(end_date as string);
 
@@ -391,6 +469,7 @@ export class ProjectInjestionTaskService {
       projectTaskData.status_rid = statusRid
       projectTaskData.total_cost_pro_task = costValues['total_cost_pro_task']
       projectTaskData.total_hours_pro_task = costValues['total_hours_pro_task']
+      projectTaskData.project_resource_rid = projectResourceResult
       // Proceed to update
       const updatedTask = await this.projectTaskSchema.updateProjectTask(
         accountNumber,
