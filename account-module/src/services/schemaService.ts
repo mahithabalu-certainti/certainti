@@ -45,6 +45,11 @@ class SchemaService {
       const sequelize = await initOrgSequelize();
       const schema_name = `trd365_${account_number.replace(/\D/g, "")}`;
       await sequelize.createSchema(schema_name, {});
+      await sequelize.query(`GRANT USAGE ON SCHEMA ${schema_name} TO readonly_user;`);
+      await sequelize.query(`GRANT SELECT ON ALL TABLES IN SCHEMA ${schema_name} TO readonly_user;`);
+      await sequelize.query(`GRANT SELECT ON ALL SEQUENCES IN SCHEMA ${schema_name} TO readonly_user;`);
+      await sequelize.query(`ALTER DEFAULT PRIVILEGES IN SCHEMA ${schema_name} GRANT SELECT ON TABLES TO readonly_user;`);
+      await sequelize.query(`ALTER DEFAULT PRIVILEGES IN SCHEMA ${schema_name} GRANT SELECT ON SEQUENCES TO readonly_user;`);
       await this.createAccountTables(account_number);
     } catch (err) {
       console.log(err);
@@ -164,12 +169,7 @@ class SchemaService {
          is_qre_processed BOOLEAN NOT NULL DEFAULT FALSE,
          is_tech_summary_processed BOOLEAN NOT NULL DEFAULT FALSE,
          is_interaction_question_processed BOOLEAN NOT NULL DEFAULT FALSE,
-         data_ingestion BOOLEAN NOT NULL DEFAULT FALSE,
-         ai_assessment_api_status text ,
-         interaction_question_error_message JSON,
-          qre_error_message JSON,
-          technical_summary_error_message JSON,
-          data_ingestion_error_message JSON
+         ai_assessment_api_status text 
       );
     `);
      await sequelize.query(`
@@ -2341,7 +2341,6 @@ private async createInteractionTable(
         email varchar(120) NOT NULL,
         account_rid text NOT NULL,
         interaction_rid text NOT NULL,
-        project_fiscal_rid varchar(50),
         otp varchar(100) NOT NULL,
         is_verified bool DEFAULT false NOT NULL,
         expires_at timestamptz NOT NULL,
