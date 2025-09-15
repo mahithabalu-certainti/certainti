@@ -3538,7 +3538,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       name : data.name,
       project_fiscal_rid : data.project_fiscal_rid,
       user_rid : data.user_rid,
-      is_email_send : false
+      is_email_send : false,
+      is_interaction_followup : data?.is_interaction_followup || false,
     })
     return insertedData
   }
