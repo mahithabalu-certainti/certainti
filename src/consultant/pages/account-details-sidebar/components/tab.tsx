@@ -409,14 +409,16 @@ const TabPanel: React.FC<TabProps> = ({
         memoizedCountry,
         regionData,
         // memoizedResourceType,
-        permissionProjectResourcesMap
+        permissionProjectResourcesMap,
+        memoizedResourceStatus
       );
     if (value === 'project-task')
       return projectTaskFilterFields(
         memoizedResourceCode,
         memoizedResourceType,
         permissionMapTaskTableColumn,
-        fiscalDatesArg
+        fiscalDatesArg,
+        memoizedResourceStatus
       );
     if (value === 'attachments')
       return getAttachmentsFilterFields(fieldOptions, attachmentPermissionMap);

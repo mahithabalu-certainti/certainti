@@ -69,11 +69,13 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     StatusTypeEnum.sent,
     StatusTypeEnum.response_draft,
     StatusTypeEnum.response_received,
+    StatusTypeEnum.inqueue,
   ].includes((data?.status_name || '').toLowerCase() as StatusTypeEnum);
 
   const disableEditResBtn = [
     StatusTypeEnum.draft,
     StatusTypeEnum.response_received,
+    StatusTypeEnum.inqueue,
   ].includes((data?.status_name || '').toLowerCase() as StatusTypeEnum);
 
   const disableRemainderBtn = [

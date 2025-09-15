@@ -9,7 +9,8 @@ import { FormType } from '../../../../../types';
 export const settingsFormFields = (
   permissionMap?: Record<string, { read: boolean; edit: boolean }>,
   emailRequried?: boolean,
-  idRequired?: boolean
+  idRequired?: boolean,
+  isIDEnabled?: boolean
 ): FormType[] => {
   return [
     {
@@ -83,6 +84,7 @@ export const settingsFormFields = (
           required: idRequired,
           placeholder: 'Enter Email',
           onChange: true,
+          hide: !isIDEnabled,
           // disabled:
           //   permissionMap?.['support_email']?.read &&
           //   !permissionMap?.['support_email']?.edit,
@@ -95,6 +97,7 @@ export const settingsFormFields = (
         createTextField('tenant_id', 'Tenant ID', {
           required: emailRequried,
           placeholder: 'Enter Tenant ID',
+          hide: !isIDEnabled,
           onChange: true,
           // disabled:
           //   permissionMap?.['tenant_id']?.read &&
@@ -109,6 +112,7 @@ export const settingsFormFields = (
           required: emailRequried,
           placeholder: 'Enter Client ID',
           onChange: true,
+          hide: !isIDEnabled,
           // disabled:
           //   permissionMap?.['client_id']?.read &&
           //   !permissionMap?.['client_id']?.edit,
@@ -123,6 +127,7 @@ export const settingsFormFields = (
           required: emailRequried,
           placeholder: 'Enter Client Secret',
           onChange: true,
+          hide: !isIDEnabled,
           // disabled:
           //   permissionMap?.['client_secret']?.read &&
           //   !permissionMap?.['client_secret']?.edit,

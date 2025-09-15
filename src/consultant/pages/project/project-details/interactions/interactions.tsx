@@ -237,6 +237,7 @@ const Interactions: React.FC<InteractionsProps> = ({
               status === StatusTypeEnum.sent ||
               status === StatusTypeEnum.response_draft ||
               status === StatusTypeEnum.response_received ||
+              status === StatusTypeEnum.inqueue ||
               status === '',
           };
         }) || [];
@@ -448,6 +449,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       StatusTypeEnum.sent,
       StatusTypeEnum.response_draft,
       StatusTypeEnum.response_received,
+      StatusTypeEnum.inqueue,
     ].includes(status);
   };
 
