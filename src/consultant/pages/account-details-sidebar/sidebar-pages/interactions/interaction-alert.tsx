@@ -1,36 +1,29 @@
 import React from 'react';
-import {
-  AccountSendInteractionPayload,
-  InteractionList,
-  SendIntractionProject,
-} from '../../../../types';
+import { AccountSendInteractionPayload } from '../../../../types';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useToast } from '../../../../../hooks';
 import { useAccountSendInteraction } from '../../../../services/interactions/interactions-service';
 import { CloseIcon } from '../../../../../assets';
 import TextButton from '../../../../../components/button/text-button';
-import { Project } from '../../../../types/project';
+import { ProjectFiscalSummary } from '../../../../types/project';
 
 interface SendInteractionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  selectedRows: InteractionList[];
-  selectedTableId: string[];
-  projectList: Project[];
+  selectedTableId: ProjectFiscalSummary[];
   onSuccessRefetch: () => void;
 }
 
 const SendInteractionAlert: React.FC<SendInteractionModalProps> = ({
   isOpen,
   onClose,
-  selectedRows,
   selectedTableId,
-  projectList,
   onSuccessRefetch,
 }) => {
   const [searchParams] = useSearchParams();
   const { accountid } = useParams();
   const accountId = searchParams.get('accountID') || '';
+  const isSendInteraction = searchParams.get('send_intraction');
   const { successToast } = useToast();
 
   const sendInteraction = useAccountSendInteraction();
@@ -38,27 +31,18 @@ const SendInteractionAlert: React.FC<SendInteractionModalProps> = ({
   if (!isOpen) return null;
 
   const handleSend = () => {
-    const localData = localStorage.getItem('selectedInteraction');
-    if (selectedRows.length > 0 || localData) {
+    if (isSendInteraction) {
       const accountRid = accountId || accountid;
       const payload: AccountSendInteractionPayload = {
         account_rid: accountRid as string,
-        account_interaction_rid:
-          selectedRows.length > 0
-            ? selectedRows.map((it) => it.rid)
-            : JSON.parse(localData as string),
-        projects: selectedTableId.map((id) => {
-          for (const project of projectList) {
-            const fiscal = project.ProjectFiscal.find((pf) => pf.rid === id);
-            if (fiscal) {
-              return {
-                project_fiscal_rid: fiscal.project_fiscal_rid,
-                fiscal_year: fiscal.fiscal_year.toString(),
-                project_rid: fiscal.project_rid,
-              };
-            }
-          }
-        }) as SendIntractionProject[],
+        account_interaction_rid: [isSendInteraction],
+        projects: selectedTableId.map((it) => {
+          return {
+            fiscal_year: it.fiscal_year.toString(),
+            project_fiscal_rid: it.project_fiscal_rid,
+            project_rid: it.project_rid,
+          };
+        }),
       };
       sendInteraction.mutate(payload, {
         onSuccess: (response) => {

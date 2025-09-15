@@ -103,6 +103,7 @@ const ListTable = <T extends RowData>({
   unCheckedToggleTooltip,
   toggleClick,
   clearSelectedRows = false,
+  disabledSelect,
 }: ListTableProps<T>) => {
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [editingCells, setEditingCells] = useState<MultipleEditingCells>({});
@@ -202,9 +203,10 @@ const ListTable = <T extends RowData>({
   // handle Row Select
   const handleRowSelect = (
     rowId: string,
-    row: T & { _level: number; _type: string }
+    row: T & { _level: number; _type: string },
+    disabledSelect?: boolean
   ) => {
-    if (row.disableCheckBox) {
+    if (row.disableCheckBox || disabledSelect) {
       return;
     }
     const newSelected = new Set(selectedRows);
@@ -1080,7 +1082,10 @@ const ListTable = <T extends RowData>({
                   return !nextRow || nextRow._level < rowLevel;
                 };
                 const hideRow = row.hide ?? false;
-
+                const isChecked = selectedRows.has(rowId);
+                const conditionallyDisabled = isChecked
+                  ? undefined
+                  : disabledSelect;
                 return (
                   <React.Fragment key={`${rowId}-${i}`}>
                     <TableRow
@@ -1129,17 +1134,26 @@ const ListTable = <T extends RowData>({
                           }}
                         >
                           <Box
-                            className={`flex items-center justify-center !h-[32px] !w-[31px] ${row.disableCheckBox ? 'bg-gray-100' : ''}`}
+                            className={`flex items-center justify-center !h-[32px] !w-[31px] ${row.disableCheckBox || conditionallyDisabled ? 'bg-gray-100' : ''}`}
                           >
                             <Checkbox
                               size='small'
-                              checked={selectedRows.has(rowId)}
-                              onChange={() => handleRowSelect(rowId, row)}
+                              checked={isChecked}
+                              onChange={() =>
+                                handleRowSelect(
+                                  rowId,
+                                  row,
+                                  conditionallyDisabled
+                                )
+                              }
                               inputProps={{
                                 'aria-label': `select row ${rowId}`,
                               }}
                               disableRipple
-                              disabled={Boolean(row.disableCheckBox)}
+                              disabled={
+                                Boolean(row.disableCheckBox) ||
+                                conditionallyDisabled
+                              }
                               sx={{
                                 color: '#CBD6E2',
                                 '&.Mui-checked': {
