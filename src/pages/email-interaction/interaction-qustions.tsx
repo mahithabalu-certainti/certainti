@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { CircularProgress, SxProps, Tooltip } from '@mui/material';
 import { Theme } from '@emotion/react';
-import ReactQuill from 'react-quill';
+import ReactQuill, { Quill } from 'react-quill';
 import { Attachment, InteractionQuestion } from '../../consultant/types';
 import TextButton from '../../components/button/text-button';
 import {
@@ -63,6 +63,13 @@ enum FlagTypeEnum {
   draft = 'draft',
   submit = 'submit',
 }
+
+const Font = Quill.import('formats/font');
+const Size = Quill.import('formats/size');
+Size.whitelist = ['small', 'medium', 'large', 'huge'];
+Font.whitelist = ['sans-serif', 'serif', 'monospace'];
+Quill.register(Font, true);
+Quill.register(Size, true);
 
 const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   questions,
@@ -545,8 +552,8 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
                       modules={{
                         toolbar: [
                           [{ header: [1, 2, 3, 4, 5, 6, false] }],
-                          [{ font: [] }],
-                          [{ size: ['small', false, 'large', 'huge'] }],
+                          [{ font: Font.whitelist }],
+                          [{ size: Size.whitelist }],
                           ['bold', 'italic', 'underline', 'strike'],
                           [{ color: [] }, { background: [] }],
                           [{ script: 'sub' }, { script: 'super' }],
