@@ -412,7 +412,7 @@ export const updateAccountInteractionDetails = async (
 ): Promise<CommonApiResponse> => {
   try {
     const { data } = await interactionServiceApi.put<CommonApiResponse>(
-      '/api/accountInterctions/update',
+      '/api/interactions/accountInterctions/update',
       body
     );
     return data;
