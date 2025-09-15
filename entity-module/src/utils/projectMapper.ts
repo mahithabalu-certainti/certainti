@@ -603,7 +603,9 @@ export class ProjectResourceMapper {
         projectResource.cost_project_resource_level || null,
 
       description: projectResource.description || null,
-      project_resource_role : projectResource.project_resource_role
+      project_resource_role : projectResource.project_resource_role,
+      total_hours_from_tasks: projectResource.total_hours_from_tasks || null,
+      total_cost_from_tasks: projectResource.total_cost_from_tasks || null,
     };
   }
 
@@ -840,7 +842,9 @@ export class ProjectResourceMapper {
       insurance: projectResource.insurance || null,
 
       description: projectResource.description || null,
-      project_resource_role : projectResource.project_resource_role
+      project_resource_role : projectResource.project_resource_role,
+      total_hours_from_tasks: projectResource.total_hours_from_tasks || null,
+      total_cost_from_tasks: projectResource.total_cost_from_tasks || null,
     };
   }
 

@@ -336,6 +336,8 @@ export interface ICreateProjectResource {
   description?: string | null;
   created_by: string;
   modified_by?: string;
+  total_hours_from_tasks? : number | null,
+  total_cost_from_tasks? : number | null,
 }
 export interface IUpdateProjectResource {
   project_resource_rid: string;
@@ -367,6 +369,8 @@ export interface IUpdateProjectResource {
   description?: string | null;
   modified_by?: string;
   user_preference?: string | null;
+  total_hours_from_tasks? : number | null,
+  total_cost_from_tasks? : number | null,
 }
 
 export interface IUpdateInlineProjectResource {
