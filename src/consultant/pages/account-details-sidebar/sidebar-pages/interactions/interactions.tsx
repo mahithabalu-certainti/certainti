@@ -434,11 +434,13 @@ const Interactions: React.FC<InteractionsProps> = ({
   };
   const handleBackFromResponse = () => {
     if (viewProject) {
+      setAppliedFilters({});
       searchParams.delete('view_proj');
       navigate({ search: searchParams.toString() }, { replace: true });
     } else if (sendInteraction) {
       setSelectedRows([]);
       setSelectedTableIds([]);
+      setAppliedFilters({});
       localStorage.removeItem('selectedInteraction');
       searchParams.delete('send_intraction');
       navigate({ search: searchParams.toString() }, { replace: true });
@@ -452,13 +454,7 @@ const Interactions: React.FC<InteractionsProps> = ({
     }
   };
   const disableInteractionEditBtn = (row: InteractionList): boolean => {
-    const status = (row.status_name || '').toLowerCase() as StatusTypeEnum;
-    return [
-      StatusTypeEnum.sent,
-      StatusTypeEnum.response_draft,
-      StatusTypeEnum.response_received,
-      StatusTypeEnum.inqueue,
-    ].includes(status);
+    return Number(row.project_count ?? 0) > 0;
   };
   const actionButtons: ActionItem<InteractionList>[] = [
     {

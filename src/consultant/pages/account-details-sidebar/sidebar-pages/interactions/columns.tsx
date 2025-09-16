@@ -89,7 +89,7 @@ export const getInteractionListColumns = (
     hide:
       !permissionMap?.['modified_by']?.edit &&
       !permissionMap?.['modified_by']?.read,
-    render: (row: InteractionList) => row.updated_user_name || '-',
+    render: (row: InteractionList) => row.modified_user_name || '-',
   },
   {
     id: 'created_datetime',
