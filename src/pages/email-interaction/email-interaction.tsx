@@ -51,6 +51,7 @@ const EmailInteraction: React.FC = () => {
       localStorage.removeItem('otp_timeout');
       localStorage.removeItem('temAuth');
       localStorage.setItem('intractionId', interaction_rid);
+      setOtp(['', '', '', '', '', '']);
     }
   }, [interaction_rid, intractionId]);
   useEffect(() => {
@@ -146,6 +147,8 @@ const EmailInteraction: React.FC = () => {
         },
         {
           onSuccess: async () => {
+            localStorage.removeItem('temAuth');
+            localStorage.setItem('intractionId', interaction_rid);
             const timeNow = Date.now();
             localStorage.setItem('otp_timeout', JSON.stringify(timeNow));
             setTimer(timeNow);

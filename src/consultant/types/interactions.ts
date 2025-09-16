@@ -148,6 +148,7 @@ export type InteractionList = {
   disableCheckBox?: boolean;
   account_name?: string | null;
   project_count?: string;
+  modified_user_name?: string;
 };
 export type ResponseInteractionList = {
   rid: string;
@@ -208,7 +209,7 @@ export interface AccountInteractionListResponse {
   data: {
     page: number;
     limit: number;
-    totalCount: number;
+    count: number;
     accountInteractions: InteractionList[];
   };
 }

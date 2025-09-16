@@ -434,11 +434,13 @@ const Interactions: React.FC<InteractionsProps> = ({
   };
   const handleBackFromResponse = () => {
     if (viewProject) {
+      setAppliedFilters({});
       searchParams.delete('view_proj');
       navigate({ search: searchParams.toString() }, { replace: true });
     } else if (sendInteraction) {
       setSelectedRows([]);
       setSelectedTableIds([]);
+      setAppliedFilters({});
       localStorage.removeItem('selectedInteraction');
       searchParams.delete('send_intraction');
       navigate({ search: searchParams.toString() }, { replace: true });
