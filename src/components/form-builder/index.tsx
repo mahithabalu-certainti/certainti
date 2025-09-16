@@ -1351,6 +1351,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               options={field.options || []}
               disableClearable
               freeSolo
+              forcePopupIcon={true}
               popupIcon={<ArrowDropDownIcon />}
               slotProps={{ paper: { style: { fontSize } } }}
               onChange={(_e, newValue) => {

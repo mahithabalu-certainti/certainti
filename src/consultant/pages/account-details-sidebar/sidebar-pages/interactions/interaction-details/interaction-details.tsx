@@ -23,7 +23,6 @@ import { Typography } from '@mui/material';
 import SectionHeader from '../../../../../../components/details-section/section-header';
 import { accountDetailsProps } from '../../../../account-details/utils';
 import { InteractionQuestions } from '../../../../../../components';
-import { getInteractionStatusColor } from '../helpers';
 import { StatusTypeEnum } from '../../../../../types';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
@@ -69,11 +68,13 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     StatusTypeEnum.sent,
     StatusTypeEnum.response_draft,
     StatusTypeEnum.response_received,
+    StatusTypeEnum.inqueue,
   ].includes((data?.status_name || '').toLowerCase() as StatusTypeEnum);
 
   const disableEditResBtn = [
     StatusTypeEnum.draft,
     StatusTypeEnum.response_received,
+    StatusTypeEnum.inqueue,
   ].includes((data?.status_name || '').toLowerCase() as StatusTypeEnum);
 
   const disableRemainderBtn = [
@@ -159,7 +160,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       disabled: accountInActive || !disableRemainderBtn,
       onClick: () => handleReminderBtn(),
       sx: { width: '78px', minWidth: '78px' },
-      hide: false,
+      hide: true,
       loading: sendInteraction.isPending,
     },
     {
@@ -194,27 +195,28 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       value: data?.interaction_type_name,
       key: 'interaction_type_name',
     },
-    {
-      label: 'Interaction Status',
-      value: (
-        <span
-          className={`font-semibold ${getInteractionStatusColor(data?.status_name)}`}
-        >
-          {data?.status_name}
-        </span>
-      ),
-      key: 'status',
-    },
-    {
-      label: 'Response Updated By',
-      value: data?.response_updated_by,
-      key: 'response_updated_by',
-    },
-    {
-      label: 'Response Received On',
-      value: formatDateToYYYYMMDDWithTime(data?.response_updated_on) || '-',
-      key: 'response_updated_on',
-    },
+    //might be added in future if required
+    // {
+    //   label: 'Interaction Status',
+    //   value: (
+    //     <span
+    //       className={`font-semibold ${getInteractionStatusColor(data?.status_name)}`}
+    //     >
+    //       {data?.status_name}
+    //     </span>
+    //   ),
+    //   key: 'status',
+    // },
+    // {
+    //   label: 'Response Updated By',
+    //   value: data?.response_updated_by,
+    //   key: 'response_updated_by',
+    // },
+    // {
+    //   label: 'Response Received On',
+    //   value: formatDateToYYYYMMDDWithTime(data?.response_updated_on) || '-',
+    //   key: 'response_updated_on',
+    // },
   ];
 
   const auditInfo: DetailItem[] = [
@@ -238,16 +240,17 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       value: data?.created_by,
       key: 'created_by',
     },
-    {
-      label: 'Updated On',
-      value: formatDateToYYYYMMDDWithTime(data?.modified_datetime),
-      key: 'modified_datetime',
-    },
-    {
-      label: 'Updated By',
-      value: data?.modified_by,
-      key: 'modified_by',
-    },
+    //might be added in future if required
+    // {
+    //   label: 'Updated On',
+    //   value: formatDateToYYYYMMDDWithTime(data?.modified_datetime),
+    //   key: 'modified_datetime',
+    // },
+    // {
+    //   label: 'Updated By',
+    //   value: data?.modified_by,
+    //   key: 'modified_by',
+    // },
   ];
 
   const basicDetails = applyHidePermission(basicInfo, permissionMap);

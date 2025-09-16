@@ -756,8 +756,8 @@ export const AccountDetails = () => {
         name: 'Configuration',
         key: 'configuration',
         id: AllMenus.CONFIGURATION,
-        disabled: disable,
-        hide: disable,
+        disabled: false,
+        hide: false,
         icon: ConfigIcon,
         subMenu: [
           {
@@ -772,8 +772,8 @@ export const AccountDetails = () => {
             name: 'Settings',
             key: 'settings',
             id: AllMenus.ACCOUNT_SETTINGS,
-            disabled: disable,
-            hide: disable,
+            disabled: false,
+            hide: false,
             icon: SettingIcon,
           },
         ],

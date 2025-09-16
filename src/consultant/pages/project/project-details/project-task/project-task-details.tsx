@@ -122,6 +122,11 @@ const ProjectTaskDetails: React.FC<ResourceDetailsProps> = ({
       label: 'Resource Role',
       value: projectTaskData.resource_role,
     },
+    {
+      key: 'status_action',
+      label: 'Status Name',
+      value: projectTaskData.status_name,
+    },
   ];
 
   const projectDetails: DetailItem[] = [

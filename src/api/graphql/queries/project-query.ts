@@ -221,6 +221,8 @@ export const UPDATE_PROJECT_RESOURCE = gql`
         resource_type_name
         assigned_skill_role
         project_fiscal_rid
+        status_rid
+        status_name
       }
     }
   }
@@ -267,6 +269,8 @@ export const UPDATE_PROJECT_TASK = gql`
         created_by
         modified_by
         rid
+        status_rid
+        status_name
       }
     }
   }

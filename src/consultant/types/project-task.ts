@@ -106,6 +106,7 @@ export interface ProjectTaskDetailsType {
   currency_name: string;
   total_cost_pro_task: string;
   total_hours_pro_task: string;
+  status_name: string;
 }
 
 export interface Attachment {

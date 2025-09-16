@@ -115,7 +115,11 @@ const ProjectResourceDetails: React.FC<ResourceDetailsProps> = ({
       value: resourceData.resource_code,
       key: 'resource_code',
     },
-    { label: 'Status', value: resourceData.status_name, key: 'status_rid' },
+    {
+      key: 'status_action',
+      label: 'Status',
+      value: resourceData.status_name,
+    },
   ];
   const locationInfo: DetailItem[] = [
     { label: 'Country', value: resourceData.country_name, key: 'country_rid' },

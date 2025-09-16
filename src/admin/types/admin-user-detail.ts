@@ -73,6 +73,9 @@ export type ManageSetting = {
   auto_send_interaction: boolean;
   auto_access_rd: false;
   email: string;
+  tenant_id: string;
+  client_id: string;
+  client_secret: string;
 };
 export type ConfigureManageSettingApiResponse = {
   statusCode: number;
