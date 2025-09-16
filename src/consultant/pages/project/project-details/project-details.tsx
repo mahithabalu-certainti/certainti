@@ -181,7 +181,8 @@ export const ProjectDetails = () => {
 
   const accountInActive =
     data?.data?.project?.account_status?.toLowerCase() !== 'active';
-  const projectInActive = data?.data?.project.status_name === 'In-Active';
+  const projectInActive =
+    data?.data?.project?.status_name?.toLowerCase() === 'in-active';
   useEffect(() => {
     if (data?.data) {
       const project = data.data.project;
@@ -202,9 +203,9 @@ export const ProjectDetails = () => {
     setFiscalDate(bounds);
   };
 
-  const isAttachmentViewEnable = checkPermission(
+  const isAttachmentExportEnable = checkPermission(
     permission,
-    AllPermissions.ATTACHMENT_VIEW_EDIT
+    AllPermissions.ATTACHMENT_EXPORT
   );
   const isFinancialHighlightsEnable = checkPermission(
     menus,
@@ -242,7 +243,7 @@ export const ProjectDetails = () => {
     }
 
     if (list === 'attachments') {
-      return !isAttachmentViewEnable;
+      return !isAttachmentExportEnable;
     } else if (list === 'projectsTask') {
       return !isTaskExportViewEnable;
     } else if (list === 'financial' && tab === 'resource_cost') {

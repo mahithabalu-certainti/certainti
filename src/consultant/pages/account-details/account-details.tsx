@@ -121,6 +121,15 @@ export const AccountDetails = () => {
     permission,
     AllPermissions.ACCOUNT_RESOURCES_EXPORT
   );
+  const isResourceCostExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_RESOURCES_COST_EXPORT
+  );
+  const isResourceSkillExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_RESOURCES_SKILL_EXPORT
+  );
+
   const isProjectExportEnable = checkPermission(
     permission,
     AllPermissions.PROJECTS_EXPORT
@@ -133,9 +142,9 @@ export const AccountDetails = () => {
     permission,
     AllPermissions.PROJECTS_TASK_EXPORT
   );
-  const isAttachmentViewEnable = checkPermission(
+  const isAttachmentExportEnable = checkPermission(
     permission,
-    AllPermissions.ATTACHMENT_VIEW_EDIT
+    AllPermissions.ATTACHMENT_EXPORT
   );
 
   const isImportExportEnable = checkPermission(
@@ -474,12 +483,18 @@ export const AccountDetails = () => {
       return true;
     }
 
-    if (list === 'resources') {
+    if (list === 'resources' && !tab) {
       return !isResourcesExportEnable;
+    } else if (list === 'resources' && tab === 'cost') {
+      return !isResourceCostExportEnable;
+    } else if (list === 'resources' && tab === 'skill') {
+      return !isResourceSkillExportEnable;
+    } else if (list === 'resources' && tab === 'attachments') {
+      return !isAttachmentExportEnable;
     } else if (list === 'projects') {
       return !isProjectExportEnable;
     } else if (list === 'attachments') {
-      return !isAttachmentViewEnable;
+      return !isAttachmentExportEnable;
     } else if (list === 'imports') {
       return !isImportExportEnable;
     } else if (list === 'financial' && tab === 'resource_cost') {
