@@ -160,9 +160,9 @@ export const transformProjectData = (
           className: `${status === 'active' ? 'text-[#199806]' : 'text-[#f44336]'}`,
         },
         {
-          label: 'Business Name',
-          value: project?.organistaion_name || '-',
-        },
+          label: 'Industry',
+          value: project?.industry_name || project?.industry_rid_name || '-',
+        }, 
         {
           label: 'Project Effort (Hours)',
           value: project?.total_effort?.toString() || '-',
@@ -176,8 +176,8 @@ export const transformProjectData = (
           value: project?.project_name || '-',
         },
         {
-          label: 'Industry',
-          value: project?.industry_name || project?.industry_rid_name || '-',
+          label: 'Business Name',
+          value: project?.organistaion_name || '-',
         }, 
         {
           label: 'Project Cost',

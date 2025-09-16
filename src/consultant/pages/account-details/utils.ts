@@ -140,12 +140,11 @@ export const transformAccountData = (
             !permissionMap?.['account_name']?.edit,
         },
         {
-          label: 'Fiscal Start',
-          value: accountDetails?.fiscal_start_date || '-',
-          // className: `${status === 'active' ? 'text-[#199806]' : 'text-[#f44336]'}`,
+          label: 'Business Name',
+          value: getValueOrDefault(account?.organisation_name),
           hide:
-            !permissionMap?.['fiscal_start_date']?.read &&
-            !permissionMap?.['fiscal_start_date']?.edit,
+            !permissionMap?.['organisation_name']?.read &&
+            !permissionMap?.['organisation_name']?.edit,
         },
       ],
     },
@@ -159,13 +158,13 @@ export const transformAccountData = (
             !permissionMap?.['parent_account_rid']?.edit,
         },
         {
-          label: 'Fiscal End',
-          value: accountDetails?.fiscal_end_date || '-',
+          label: 'Fiscal Start',
+          value: accountDetails?.fiscal_start_date || '-',
           // className: `${status === 'active' ? 'text-[#199806]' : 'text-[#f44336]'}`,
           hide:
-            !permissionMap?.['fiscal_end_date']?.read &&
-            !permissionMap?.['fiscal_end_date']?.edit,
-        },
+            !permissionMap?.['fiscal_start_date']?.read &&
+            !permissionMap?.['fiscal_start_date']?.edit,
+        }, 
       ],
     },
     {
@@ -178,12 +177,13 @@ export const transformAccountData = (
             !permissionMap?.['country_rid']?.edit,
         },
         {
-          label: 'Business Name',
-          value: getValueOrDefault(account?.organisation_name),
+          label: 'Fiscal End',
+          value: accountDetails?.fiscal_end_date || '-',
+          // className: `${status === 'active' ? 'text-[#199806]' : 'text-[#f44336]'}`,
           hide:
-            !permissionMap?.['organisation_name']?.read &&
-            !permissionMap?.['organisation_name']?.edit,
-        },
+            !permissionMap?.['fiscal_end_date']?.read &&
+            !permissionMap?.['fiscal_end_date']?.edit,
+        }, 
       ],
     },
     {
