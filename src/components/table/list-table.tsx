@@ -1119,7 +1119,11 @@ const ListTable = <T extends RowData>({
                       {/* Row checkbox */}
                       {selectable && (
                         <Tooltip
-                          title={String(row.checkBoxMessage) || ''}
+                          title={
+                            Boolean(row.checkBoxMessage)
+                              ? String(row.checkBoxMessage)
+                              : ''
+                          }
                           disableHoverListener={!row.disableCheckBox}
                           arrow
                           placement='right'
