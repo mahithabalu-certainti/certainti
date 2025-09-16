@@ -843,7 +843,7 @@ export const interactionResponseHistoryByVersion = (
             AND
 			a.interaction_version = ${version}
         GROUP BY
-		    a.rid, a.r_number, p.project_name,
+		    a.rid, a.r_number, p.project_name,i.r_number,
             ii.question_seq_num, ii.question,
             a.interaction_response, a.response_on,i.response_updated_on,
             i.response_submitted_on, i.rid,

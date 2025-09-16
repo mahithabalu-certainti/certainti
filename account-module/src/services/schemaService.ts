@@ -2170,7 +2170,9 @@ private async createInteractionTable(
         notes character varying(2000),
         is_attachment boolean,
         account_interaction_rid varchar(50),
-        type varchar(50)
+        type varchar(50),
+        CONSTRAINT interaction_items_interaction_rid_project_fiscal_rid_fkey FOREIGN KEY (interaction_rid, project_fiscal_rid)
+          REFERENCES "${schemaName}".interactions(rid, project_fiscal_rid) ON UPDATE CASCADE
       );
     `);
 
@@ -2178,22 +2180,33 @@ private async createInteractionTable(
         ALTER TABLE "${schemaName}".interaction_items ADD CONSTRAINT interaction_items_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
         ALTER TABLE "${schemaName}".interaction_items ADD CONSTRAINT interaction_items_project_rid_fkey FOREIGN KEY (project_rid) REFERENCES "${schemaName}".project(rid) ON UPDATE CASCADE;
         ALTER TABLE "${schemaName}".interaction_items ADD CONSTRAINT interaction_items_project_fiscal_rid_fkey FOREIGN KEY (project_fiscal_rid) REFERENCES "${schemaName}".project_fiscal(rid) ON UPDATE CASCADE;
-        ALTER TABLE "${schemaName}".interaction_items ADD CONSTRAINT interaction_items_interaction_rid_fkey FOREIGN KEY (interaction_rid,project_fiscal_rid) REFERENCES "${schemaName}".interactions(rid,project_fiscal_rid) ON UPDATE CASCADE;
     `);
-    const fieldsToIndex = [
+  const singleFieldIndexes = [
       "account_rid",
       "project_rid",
       "fiscal_year",
-      "project_fiscal_rid",
-      "interaction_rid",
+    ];
+    const compositeFieldIndexes = [
+      ["interaction_rid", "project_fiscal_rid"],
     ];
 
-    for (const field of fieldsToIndex) {
+    // Create single-field indexes dynamically
+    for (const field of singleFieldIndexes) {
       const indexName = `${schemaName}_interaction_items_${field}_idx`;
       await sequelize.query(`
       CREATE INDEX IF NOT EXISTS "${indexName}"
       ON "${schemaName}"."interaction_items"("${field}");
-    `);
+      `);
+    }
+
+    // Create composite indexes dynamically
+    for (const fields of compositeFieldIndexes) {
+      const indexName = `${schemaName}_interaction_items_${fields.join("_")}_idx`;
+      const columns = fields.map(f => `"${f}"`).join(", ");
+      await sequelize.query(`
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."interaction_items"(${columns});
+      `);
     }
   }
 
@@ -2209,7 +2222,7 @@ private async createInteractionTable(
         modified_by varchar(50),
         created_datetime TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
         modified_datetime TIMESTAMP WITH TIME ZONE,
-        project_fiscal_rid character varying(50),
+        project_fiscal_rid character varying(50) NOT NULL,
         interaction_rid character varying(50) NOT NULL,
         interaction_item_rid character varying(50),
         interaction_response text,
@@ -2225,18 +2238,16 @@ private async createInteractionTable(
         ALTER TABLE "${schemaName}".interaction_response_history ADD CONSTRAINT interaction_rid_fkey FOREIGN KEY (interaction_rid,project_fiscal_rid) REFERENCES "${schemaName}".interactions(rid,project_fiscal_rid) ON UPDATE CASCADE;
         ALTER TABLE "${schemaName}".interaction_response_history ADD CONSTRAINT interaction_item_rid_fkey FOREIGN KEY (interaction_item_rid) REFERENCES "${schemaName}".interaction_items(rid) ON UPDATE CASCADE;
     `);
-    const fieldsToIndex = [
-      "interaction_rid",
-      "interaction_item_rid",
-      "project_fiscal_rid",
+     const compositeFieldIndexes = [
+      ["interaction_rid", "project_fiscal_rid","interaction_item_rid"],
     ];
-
-    for (const field of fieldsToIndex) {
-      const indexName = `${schemaName}_interaction_response_history_${field}_idx`;
+     for (const fields of compositeFieldIndexes) {
+      const indexName = `${schemaName}_interaction_response_history_${fields.join("_")}_idx`;
+      const columns = fields.map(f => `"${f}"`).join(", ");
       await sequelize.query(`
       CREATE INDEX IF NOT EXISTS "${indexName}"
-      ON "${schemaName}"."interaction_response_history"("${field}");
-    `);
+      ON "${schemaName}"."interaction_response_history"(${columns});
+      `);
     }
   }
 
@@ -2249,7 +2260,7 @@ private async createInteractionTable(
         modified_by varchar(50),
         created_datetime TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
         modified_datetime TIMESTAMP WITH TIME ZONE,
-        project_fiscal_rid character varying(50),
+        project_fiscal_rid character varying(50) NOT NULL,
         interaction_rid character varying(50) NOT NULL,
         interaction_item_rid character varying(50),
         interaction_response_rid character varying(50),
@@ -2257,28 +2268,27 @@ private async createInteractionTable(
         attachment_type character varying(50) NOT NULL,
         attachment_size numeric(10,2) NOT NULL,
         attachment_url character varying(1000) NOT NULL,
-        interaction_version integer
+        interaction_version integer,
+        CONSTRAINT interaction_attachments_interaction_rid_project_fiscal_rid_fkey FOREIGN KEY (interaction_rid, project_fiscal_rid)
+          REFERENCES "${schemaName}".interactions(rid, project_fiscal_rid) ON UPDATE CASCADE
       );
     `);
 
     await sequelize.query(`
-        ALTER TABLE "${schemaName}".interaction_attachments ADD CONSTRAINT interaction_rid_fkey FOREIGN KEY (interaction_rid,project_fiscal_rid) REFERENCES "${schemaName}".interactions(rid,project_fiscal_rid) ON UPDATE CASCADE;
          ALTER TABLE "${schemaName}".interaction_attachments ADD CONSTRAINT interaction_item_rid_fkey FOREIGN KEY (interaction_item_rid) REFERENCES "${schemaName}".interaction_items(rid) ON UPDATE CASCADE;
          ALTER TABLE "${schemaName}".interaction_attachments ADD CONSTRAINT interaction_response_rid_fkey FOREIGN KEY (interaction_response_rid) REFERENCES "${schemaName}".interaction_response_history(rid) ON UPDATE CASCADE;
 
     `);
-      const fieldsToIndex = [
-      "interaction_rid",
-      "interaction_item_rid",
-      "project_fiscal_rid",
+            const compositeFieldIndexes = [
+      ["interaction_rid", "project_fiscal_rid","interaction_item_rid"],
     ];
-
-    for (const field of fieldsToIndex) {
-      const indexName = `${schemaName}_interaction_attachments_${field}_idx`;
+     for (const fields of compositeFieldIndexes) {
+      const indexName = `${schemaName}_interaction_attachments_${fields.join("_")}_idx`;
+      const columns = fields.map(f => `"${f}"`).join(", ");
       await sequelize.query(`
       CREATE INDEX IF NOT EXISTS "${indexName}"
-      ON "${schemaName}"."interaction_attachments"("${field}");
-    `);
+      ON "${schemaName}"."interaction_attachments"(${columns});
+      `);
     }
     
   }
