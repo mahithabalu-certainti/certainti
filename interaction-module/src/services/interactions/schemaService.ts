@@ -2260,7 +2260,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
   async updateAttachmentCount(
     accountNumber: string,
     interactionRid: string,
-    interactionVersion: number
+    interactionVersion: number,
+    projectFiscalRid: string
   ) {
     const { Interaction, InteractionSummary, InteractionAttachment } =
       await this.interactionModelService.getModels(accountNumber);
@@ -2269,6 +2270,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       where: {
         interaction_rid: interactionRid,
         interaction_version: interactionVersion,
+        project_fiscal_rid:projectFiscalRid
       },
     });
 
