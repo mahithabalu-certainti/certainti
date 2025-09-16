@@ -603,9 +603,9 @@ export const ProjectResources = ({
       },
     });
   };
-  // const hideStatusAction =
-  //   !permissionMap?.['status_action']?.edit &&
-  //   !permissionMap?.['status_action']?.read;
+  const hideStatusAction =
+    !permissionMap?.['status_action']?.edit &&
+    !permissionMap?.['status_action']?.read;
 
   const getConditionMenuItems = (row: ProjectResourcesListType) => {
     let statusLabel = '';
@@ -733,10 +733,10 @@ export const ProjectResources = ({
                     actionWidth={60}
                     actionDisplayMode='dropdown'
                     conditionMenuItems={
-                      // !hideStatusAction
-                      (row: ProjectResourcesListType) =>
-                        getConditionMenuItems(row)
-                      // : undefined
+                      !hideStatusAction
+                        ? (row: ProjectResourcesListType) =>
+                            getConditionMenuItems(row)
+                        : undefined
                     }
                     loading={isLoading}
                     error={error ? 'Failed to load projects' : undefined}
