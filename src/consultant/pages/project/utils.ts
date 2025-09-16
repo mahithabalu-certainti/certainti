@@ -162,6 +162,10 @@ export const transformProjectData = (
         {
           label: 'Industry',
           value: project?.industry_name || project?.industry_rid_name || '-',
+        }, 
+        {
+          label: 'Project Effort (Hours)',
+          value: project?.total_effort?.toString() || '-',
         },
       ],
     },
@@ -172,8 +176,12 @@ export const transformProjectData = (
           value: project?.project_name || '-',
         },
         {
-          label: 'Fiscal Start',
-          value: project?.fiscal_start_date || '-',
+          label: 'Business Name',
+          value: project?.organistaion_name || '-',
+        }, 
+        {
+          label: 'Project Cost',
+          value: project?.total_cost?.toString() || '-',
         },
       ],
     },
@@ -182,8 +190,12 @@ export const transformProjectData = (
       items: [
         { label: 'Account Name', value: project?.account_name },
         {
-          label: 'Fiscal End',
-          value: project?.fiscal_end_date || '-',
+          label: 'Fiscal Start',
+          value: project?.fiscal_start_date || '-',
+        }, 
+        {
+          label: 'FTE Cost',
+          value: project?.total_cost_fte?.toString() || '-',
         },
       ],
     },
@@ -193,9 +205,13 @@ export const transformProjectData = (
           label: 'Country',
           value: `${project?.country_code || '-'}`,
         },
-        {
-          label: 'Business Name',
-          value: project?.organistaion_name || '-',
+         {
+          label: 'Fiscal End',
+          value: project?.fiscal_end_date || '-',
+        }, 
+         {
+          label: 'SubCon Cost',
+          value: project?.total_cost_subcon?.toString() || '-',
         },
       ],
     },
@@ -205,6 +221,14 @@ export const transformProjectData = (
         {
           label: ' Currency',
           value: project?.currency_name || '-',
+        },
+        {
+          label: ' QRE',
+          value: project?.qre_final?.toString() || '-',
+        },
+         {
+          label: 'Non-Labor Cost',
+          value: project?.total_cost_nonlabor?.toString() || '-',
         },
       ],
     },
