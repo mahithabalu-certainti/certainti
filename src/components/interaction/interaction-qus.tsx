@@ -407,20 +407,20 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   const buttons: SectionHeaderButton[] = isEditing
     ? [
         {
-          label: 'Save as Draft',
+          label: 'Draft',
           variant: 'contained' as const,
           onClick: () => handleSave(FlagTypeEnum.draft),
-          sx: { width: '110px', minWidth: '110px' },
+          sx: { width: '60px', minWidth: '60px' },
           loading: activeFlag === FlagTypeEnum.draft && isUpdateLoading,
           disabled:
             (activeFlag !== null && activeFlag !== FlagTypeEnum.draft) ||
             uploadFileMutation.isPending,
         },
         {
-          label: 'Save',
+          label: 'Submit',
           variant: 'contained' as const,
           onClick: () => handleSave(FlagTypeEnum.submit),
-          sx: { width: '60px', minWidth: '60px' },
+          sx: { width: '64px', minWidth: '64px' },
           loading: activeFlag === FlagTypeEnum.submit && isUpdateLoading,
           disabled:
             (activeFlag !== null && activeFlag !== FlagTypeEnum.submit) ||

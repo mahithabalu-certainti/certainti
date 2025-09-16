@@ -43,7 +43,7 @@ const EmailInteraction: React.FC = () => {
     parseToken.email as string
   );
   const disableEditResBtn =
-    questions?.status_name.toLowerCase() === StatusTypeEnum.response_received;
+    questions?.status_name?.toLowerCase() === StatusTypeEnum.response_received;
 
   useEffect(() => {
     // clear old session when open new link
@@ -100,6 +100,16 @@ const EmailInteraction: React.FC = () => {
     }
   }, [reSendOtp.data]);
 
+  // Auto-focus first input when timeout is set
+  useEffect(() => {
+    if (timeout) {
+      const firstInput = document.getElementById('otp-0') as HTMLInputElement;
+      if (firstInput) {
+        firstInput.focus();
+      }
+    }
+  }, [timeout]);
+
   const handleChange = (value: string, index: number) => {
     if (/^\d?$/.test(value)) {
       const newOtp = [...otp];
@@ -155,6 +165,8 @@ const EmailInteraction: React.FC = () => {
     }
   };
 
+  const isOtpSent = Boolean(timeout);
+
   return (
     <div className={isAuthentic ? '' : 'bg-[#f4f4f4]'}>
       <header className='w-full flex items-center px-10 py-4 bg-[#2D3E4F] shadow-sm'>
@@ -194,8 +206,9 @@ const EmailInteraction: React.FC = () => {
                 OTP verification
               </h2>
               <p className='text-gray-500 text-sm mb-6'>
-                Please enter the OTP(One-Time Password) sent to your registered
-                email/phone number to complete your verification
+                {isOtpSent
+                  ? 'Please enter the OTP(One-Time Password) sent to your registered email to complete your verification'
+                  : 'Please click the Send OTP button to get the One Time Password (OTP) to your registered email'}
               </p>
 
               {/* OTP Input Fields */}
@@ -228,6 +241,14 @@ const EmailInteraction: React.FC = () => {
                             setOtp(newOtp);
                           }
                         }
+                      }
+                      // Submit on Enter
+                      if (
+                        e.key === 'Enter' &&
+                        checkEveryOtpValue &&
+                        !verifyOtp.isPending
+                      ) {
+                        validateOtp();
                       }
                     }}
                     onPaste={(e) => {
