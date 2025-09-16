@@ -65,9 +65,9 @@ export const exportAccountInteractions = async (
 ): Promise<void> => {
   try {
     const filename = 'account_interactions.xlsx';
+    const queryParams = buildQueryString(params);
     const response = await interactionServiceApi.get<ExportInteractionResponse>(
-      '/api/interactions/accountInterctions/export',
-      { params }
+      `/api/interactions/accountInterctions/export?${queryParams}`
     );
     const base64Data = response.data?.data;
 
@@ -191,7 +191,7 @@ export const fetchAccountInteractionList = async (
     );
   return {
     interactions: data.data.accountInteractions,
-    count: data.data.totalCount,
+    count: data.data.count,
   };
 };
 

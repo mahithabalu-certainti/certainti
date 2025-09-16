@@ -81,7 +81,7 @@ export const getInteractionFilterFields = (
     },
     {
       name: 'Last Updated By',
-      value: 'updated_user_name',
+      value: 'modified_user_name',
       type: 'text',
       operatorOption: textOptions,
       hide:
