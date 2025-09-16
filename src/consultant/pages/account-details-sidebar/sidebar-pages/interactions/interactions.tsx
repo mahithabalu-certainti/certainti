@@ -454,13 +454,7 @@ const Interactions: React.FC<InteractionsProps> = ({
     }
   };
   const disableInteractionEditBtn = (row: InteractionList): boolean => {
-    const status = (row.status_name || '').toLowerCase() as StatusTypeEnum;
-    return [
-      StatusTypeEnum.sent,
-      StatusTypeEnum.response_draft,
-      StatusTypeEnum.response_received,
-      StatusTypeEnum.inqueue,
-    ].includes(status);
+    return Number(row.project_count ?? 0) > 0;
   };
   const actionButtons: ActionItem<InteractionList>[] = [
     {
