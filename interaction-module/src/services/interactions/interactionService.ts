@@ -546,7 +546,8 @@ export class InteractionService {
         this.interactionSchemaService.updateAttachmentCount(
           accountNumber,
           interactionData.interaction_rid,
-          updatedInteractionResponse.interactionVersion
+          updatedInteractionResponse.interactionVersion,
+          interactionData.project_fiscal_rid
         )
       );
       await Promise.all(parallelTasks);
@@ -1718,12 +1719,16 @@ export class InteractionService {
         project_name: responseData.project_name,
       //  response_source: mapResponseSource.get(responseData.response_source_rid) || null,
         interaction_source_name: sourceMap.get(responseData.interaction_source_rid) || null,
-        interaction_history: sortedData.map((d: any) => ({
-          rid: d.interaction_history_rid,
-          status_rid: d.new_status_rid,
-          status_name: d.status_name,
-          date: d.date
-        }))
+        interaction_history: sortedData.map((d: any) => {
+          let isoDate = new Date(d.date).toISOString()
+          let formattedDate = isoDate.replace("Z", "+00:00")
+          return {
+            rid: d.interaction_history_rid,
+            status_rid: d.new_status_rid,
+            status_name: d.status_name,
+            date: formattedDate
+          }
+        })
       };
 
       return {
@@ -2208,7 +2213,7 @@ export class InteractionService {
           interactionLink
         );
         }
-        await this.interactionSchemaService.updateEmailSendFlag(interaction_rid)
+        await this.interactionSchemaService.updateEmailSendFlag(interaction_rid,project_fiscal_rid)
         
       } else {
         //need to add logic for sending toPS team

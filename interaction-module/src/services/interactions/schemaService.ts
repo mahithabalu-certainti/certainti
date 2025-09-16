@@ -60,33 +60,7 @@ class InteractionSchemaService {
       const { Interaction } = await this.interactionModelService.getModels(
         accountNumber
       );
-
-      // Find both parent interaction and max interaction iteration in one query
-      const interactions = await Interaction.findAll({
-        where: {
-          account_rid: interactionData.account_rid,
-          project_fiscal_rid: interactionData.project_fiscal_rid,
-        },
-        order: [["created_datetime", "DESC"]],
-      });
-      const maxIteration = interactions.reduce(
-        (max, curr) => Math.max(max, curr.interaction_iteration ?? 0),
-        0
-      );
-
-      const interactionExists =
-        interactions.length > 0 ? interactions[0] : null;
-
-      if (interactionExists) {
-        // Find parent interaction (first one created)
-        const parentInteraction =
-          interactions.length > 0
-            ? interactions[interactions.length - 1]
-            : null;
-        interactionData.parent_interaction_rid = parentInteraction?.rid || null;
-      }
-      interactionData.interaction_iteration = (maxIteration ?? 0) + 1;
-
+      
       const interaction = await Interaction.create(interactionData, {
         transaction,
       });
@@ -1005,7 +979,7 @@ class InteractionSchemaService {
       let createdMap: Map<string, string> = new Map(fetchCreatedByUsers[0].map((user: any) => [user.rid, `${user.first_name} ${user.last_name}`]));
       let modifiedMap: Map<string, string> = new Map(fetchModifiedByUsers[0].map((user: any) => [user.rid, `${user.first_name} ${user.last_name}`]));
       let statusMap: Map<string, string> = new Map(fetchStatusInfo[0].map((status: any) => [status.rid, status.name]));
-      let interactionTypeMap: Map<string, string> = new Map(fetchInteractionTypeInfo[0].map((type: any) => [type.rid, type.name]));
+      let interactionTypeMap: Map<string, string> = new Map(fetchInteractionTypeInfo[0].map((type: any) => [type.rid, type.interaction_type_name]));
       let finalData = accountInteractions == null ? [] : accountInteractions.map((d: any) => {
         return {
           rid: d.rid,
@@ -1572,6 +1546,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         global_attachments: globalAttachments,
         recipient_name: recipient_name || null,
         recipient_email: recipient_email || null,
+        hasEmailRecipient: metainfo?.hasEmailRecipient || false
       };
 
       return response;
@@ -1768,6 +1743,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       let interaction_type: any = null;
       let interaction_status: any = null;
       let project_info: any = null;
+      let hasEmailRecipient: boolean = false;
 
       if (interactionDetails?.dataValues?.interaction_type_rid) {
         const result = await this.mainDbSequelize.query(
@@ -1807,14 +1783,22 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         );
         project_info =
           Array.isArray(result) && result.length > 0 ? result[0] : null;
-      }
+      
 
+      const [activeStatus]: any[] = await this.mainDbSequelize.query(
+                  rawQueries.fetchActiveStatusByType("Active"),
+                  { type: "SELECT" }
+                );
+      const [emailInfoResult]: any = await this.orgDbSequelize.query(rawQueries.isEmailRecipientAvailable(interactionDetails?.dataValues?.project_fiscal_rid, schemaName, activeStatus?.rid));
+      hasEmailRecipient = emailInfoResult[0]?.recipient_available ?? false;
+              }
       return {
         interaction_type_name: interaction_type?.interaction_type_name || null,
         interaction_status_name: interaction_status?.status_name || null,
         project_code: project_info?.project_code || null,
         project_name: project_info?.project_name || null,
         fiscal_year: project_info?.fiscal_year || null,
+        hasEmailRecipient:hasEmailRecipient
       };
 
       //return interactionDetails;
@@ -2098,7 +2082,9 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       const latestResponse = await InteractionResponseHistory.max(
         "interaction_version",
         {
-          where: { interaction_rid: responseData.interaction_rid },
+          where: { interaction_rid: responseData.interaction_rid,
+            project_fiscal_rid: responseData.project_fiscal_rid
+           },
         }
       );
       if (latestResponse !== null && latestResponse !== undefined) {
@@ -2250,7 +2236,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
   async updateAttachmentCount(
     accountNumber: string,
     interactionRid: string,
-    interactionVersion: number
+    interactionVersion: number,
+    projectFiscalRid: string
   ) {
     const { Interaction, InteractionSummary, InteractionAttachment } =
       await this.interactionModelService.getModels(accountNumber);
@@ -2259,6 +2246,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       where: {
         interaction_rid: interactionRid,
         interaction_version: interactionVersion,
+        project_fiscal_rid:projectFiscalRid
       },
     });
 
@@ -3544,13 +3532,14 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     return insertedData
   }
 
-  async updateEmailSendFlag (interaction_rid : string) {
+  async updateEmailSendFlag (interaction_rid : string,project_fiscal_rid:string) {
     await SendEmailInfo.update({
       is_email_send : true
     }, 
     {
       where : {
-      interaction_rid : interaction_rid
+      interaction_rid : interaction_rid,
+      project_fiscal_rid : project_fiscal_rid
     }
     })
   }
