@@ -266,6 +266,11 @@ const Attachments: React.FC<AttachmentsProps> = ({
     AllPermissions.ATTACHMENT_VIEW_EDIT
   );
 
+  const isAttachmentExportEnable = checkPermission(
+    permission,
+    AllPermissions.ATTACHMENT_EXPORT
+  );
+
   const fieldOptions = {
     fiscalYears: fiscalYears,
     docCategories: memoizedDocumentCategories,
@@ -281,12 +286,27 @@ const Attachments: React.FC<AttachmentsProps> = ({
     }
   };
 
+  const handleDownload = (documentUrl: string) => {
+    if (!documentUrl) return;
+
+    const link = document.createElement('a');
+    link.href = documentUrl;
+    link.download = '';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  console.log(isAttachmentExportEnable);
+
   const attachmentColumns = getAttachmentTableColumns(
     fiscalYears,
     memoizedDocumentCategories,
     memoizedDocumentTypes,
     handleDocumentCategory,
+    handleDownload,
     permissionMap,
+    isAttachmentExportEnable,
     categoryTypes.isLoading
   );
 
@@ -443,6 +463,7 @@ const Attachments: React.FC<AttachmentsProps> = ({
             }
             headerButtons={headerButtons}
             iconBg='#D8E9FF'
+            bgType='circle'
           />
           <div className='border border-[#CBD6E2]'>
             <ManageColumnsPopover

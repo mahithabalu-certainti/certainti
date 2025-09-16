@@ -234,6 +234,11 @@ const Attachments: React.FC<AttachmentsProps> = ({
     AllPermissions.ATTACHMENT_CREATE
   );
 
+  const isAttachmentExportEnable = checkPermission(
+    permission,
+    AllPermissions.ATTACHMENT_EXPORT
+  );
+
   const headerButtons = [
     {
       label: 'Upload file',
@@ -283,6 +288,17 @@ const Attachments: React.FC<AttachmentsProps> = ({
     }
   };
 
+  const handleDownload = (documentUrl: string) => {
+    if (!documentUrl) return;
+
+    const link = document.createElement('a');
+    link.href = documentUrl;
+    link.download = '';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const attachmentsFilterFields = getAttachmentsFilterFields(
     fieldOptions,
     permissionMap
@@ -293,7 +309,9 @@ const Attachments: React.FC<AttachmentsProps> = ({
     memoizedDocumentCategories,
     memoizedDocumentTypes,
     handleDocumentCategory,
+    handleDownload,
     permissionMap,
+    isAttachmentExportEnable,
     categoryTypes.isLoading,
     accountOrProjectInActive
   );
@@ -445,6 +463,8 @@ const Attachments: React.FC<AttachmentsProps> = ({
                 className='[&>path]:stroke-[#4B9BFF]'
               />
             }
+            iconBg='#D8E9FF'
+            bgType='circle'
             headerButtons={headerButtons}
           />
           <div className='border border-[#CBD6E2]'>

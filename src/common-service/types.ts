@@ -209,6 +209,7 @@ export enum AllPermissions {
   ACCOUNT_ATTACHMENT_OVERVIEW = 'account_attachments_overview',
   ACCOUNT_ATTACHMENT_TIMELINE = 'account_attachments_timeline',
   ATTACHMENT_VIEW_EDIT = 'attachments_view_edit',
+  ATTACHMENT_EXPORT = 'attachments_export',
   ACCOUNT_IMPORTS_OVERVIEW = 'account_imports_overview',
   ACCOUNT_IMPORTS_TIMELINE = 'account_imports_timeline',
   ACCOUNT_TIMESHEET_OVERVIEW = 'account_timesheet_overview',
