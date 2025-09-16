@@ -24,7 +24,7 @@ export enum StatusTypeEnum {
   resume = 'resume',
   sent = 'sent',
   resent = 'resent',
-  inqueue = 'inqueue',
+  inqueue = 'in-queue',
 }
 
 export interface InteractionFormTableColumn {
