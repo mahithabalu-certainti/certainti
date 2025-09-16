@@ -997,7 +997,7 @@ class InteractionSchemaService {
       let createdByIds: any[] = [...new Set(accountInteractions.map((user: any) => user.created_by))];
       let modifiedByIds: any[] = [...new Set(accountInteractions.map((user: any) => user.modified_by))];
       let statusIds: any[] = [...new Set(accountInteractions.map((user: any) => user.status_rid))];
-      let interactionTypeIds: any[] = [...new Set(accountInteractions.map((user: any) => user.interaction_type_rid))];
+      let interactionTypeIds: any[] = [...new Set(accountInteractions.map((user: any) => user.interaction_type))];
       let fetchCreatedByUsers = await this.mainDbSequelize.query(rawQueries.fetchUser(createdByIds));
       let fetchModifiedByUsers = await this.mainDbSequelize.query(rawQueries.fetchUser(modifiedByIds));
       let fetchStatusInfo = await this.mainDbSequelize.query(rawQueries.fetchStatus(statusIds));
