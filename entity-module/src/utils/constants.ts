@@ -889,7 +889,11 @@ export const rawQueries = {
   SELECT rid, resource_status_name FROM ${MAIN_SCHEMA_NAME}.resource_status WHERE rid IN (:projectTaskStatusId)`,
   checkResCodeExistsInPrjRes (schemaName : string, resource_rid : string | undefined, account_rid : string, project_fiscal_rid : string) {
     return `SELECT * FROM ${schemaName}.project_resource WHERE resource_rid = '${resource_rid}' AND account_rid = '${account_rid}' AND project_fiscal_rid = '${project_fiscal_rid}'`
-  }
+  },
+   fetchActiveStatus() {
+    return `
+    SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name = 'Active' limit 1`;
+  },
 };
 
 export const IMPORT_FILTER_COLUMNS: any = {
