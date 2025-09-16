@@ -154,7 +154,7 @@ const InteractionAttachment: React.FC<InteractionAttachmentProps> = ({
             hoverHighlight={false}
             tableStyle={{
               height: '100%',
-              maxHeight: 'calc(100vh - 320px)',
+              maxHeight: 'calc(100vh - 360px)',
               overflow: 'auto',
             }}
             stickyHeader={true}
