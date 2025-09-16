@@ -300,11 +300,14 @@ class ProjectIngestionService {
       ? moment.utc(projectData.project_enddate, "YYYY-MM-DD")
       : null;
 
+    const accountSettings: any = await this.fetchAccountDetailsById(accountNumber, projectData.account_id);  
+
     const baseData = ProjectMapper.mapToProjectFiscalModel(
       projectData,
       projectId,
       startDate,
       endDate,
+      accountSettings,
       userId
     );
 
@@ -330,11 +333,14 @@ class ProjectIngestionService {
       ? moment.utc(projectData.project_enddate, "YYYY-MM-DD")
       : null;
 
+    const accountSettings: any = this.fetchAccountDetailsById(accountNumber, projectData.account_id);
+
     const baseData = ProjectMapper.mapToProjectFiscalModel(
       projectData,
       projectId,
       startDate,
       endDate,
+      accountSettings,
       userId
     );
 

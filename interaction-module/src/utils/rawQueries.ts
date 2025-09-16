@@ -643,6 +643,7 @@ export const listInteractionHistory = (
       }
     }
   }
+  
 
   if (filterQueryArray.length > 0) {
     filterQueryCombinedValues = filterQueryArray.join("AND");
