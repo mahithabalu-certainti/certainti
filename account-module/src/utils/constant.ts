@@ -11,6 +11,7 @@ export const HttpStatus = {
   FORBIDDEN_MESSAGE: "Forbidden",
   FAILED_MESSAGE: "Failed",
   UNAUTHORIZED_MESSAGE: "Unauthorized",
+  
 };
 export const MAIN_SCHEMA_NAME = "trd365"
 
