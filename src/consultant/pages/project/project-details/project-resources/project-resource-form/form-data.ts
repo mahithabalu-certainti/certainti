@@ -13,6 +13,7 @@ import {
   createTextField,
   PROJECT_RESOURCE_REGEX,
   REGEX_PATTERNS,
+  RESOURCE_REGEX,
   // REGEX_PATTERNS,
 } from '../../../../../../common-utils';
 
@@ -109,18 +110,17 @@ export const ProjectResourceFormData = (
               !permissionMap?.['project_resource_role']?.edit,
             errorHandling: [
               {
-                regex: REGEX_PATTERNS.MIN_ORG_NAME_LEGNTH,
-                errorMessage:
-                  'Business Name must be more than 6 characters long',
+                regex: REGEX_PATTERNS.MIN_3,
+                errorMessage: 'Please enter more than 2 characters.',
               },
               {
-                regex: REGEX_PATTERNS.MAX_125,
-                errorMessage: 'Maximum length exceeded.',
+                regex: REGEX_PATTERNS.MAX_64,
+                errorMessage: 'Max length exceeded.',
               },
               {
-                regex: REGEX_PATTERNS.ACCOUNT_NAME,
+                regex: RESOURCE_REGEX.ROLE,
                 errorMessage:
-                  "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes (') and commas (,)",
+                  'Allows only letters, Apostrophe, spaces, hyphens, and Periods.',
               },
             ],
           }),
