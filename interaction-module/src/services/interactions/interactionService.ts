@@ -546,7 +546,8 @@ export class InteractionService {
         this.interactionSchemaService.updateAttachmentCount(
           accountNumber,
           interactionData.interaction_rid,
-          updatedInteractionResponse.interactionVersion
+          updatedInteractionResponse.interactionVersion,
+          interactionData.project_fiscal_rid
         )
       );
       await Promise.all(parallelTasks);
