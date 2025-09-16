@@ -27,7 +27,7 @@ export const statusAction = {
   ON_HOLD: "On Hold",
   RESUME: "Resume",
   RESENT: "Resent",
-  INQUEUE: "Inqueue"
+  INQUEUE: "In-Queue"
 };
 
 export const techSummaryStatus = {
@@ -625,7 +625,7 @@ export const rawQueries = {
     return `UPDATE ${schemaName}.interactions SET status_rid = '${statusRid}' WHERE rid = '${interactionRid}'`
   },
   fetchInteractionQueueStatus() {
-    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE status_name ILIKE '%Inqueue%'`
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE status_name ILIKE '%In-Queue%'`
   },
   updateInteractionSummaryStatus(statusRid : string, interactionRid : string) {
     return `UPDATE ${MAIN_SCHEMA_NAME}.interactions_summary SET status_rid = '${statusRid}' WHERE interaction_rid = '${interactionRid}'`

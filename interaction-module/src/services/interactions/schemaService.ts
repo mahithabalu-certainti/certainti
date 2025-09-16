@@ -997,7 +997,7 @@ class InteractionSchemaService {
       let createdByIds: any[] = [...new Set(accountInteractions.map((user: any) => user.created_by))];
       let modifiedByIds: any[] = [...new Set(accountInteractions.map((user: any) => user.modified_by))];
       let statusIds: any[] = [...new Set(accountInteractions.map((user: any) => user.status_rid))];
-      let interactionTypeIds: any[] = [...new Set(accountInteractions.map((user: any) => user.interaction_type_rid))];
+      let interactionTypeIds: any[] = [...new Set(accountInteractions.map((user: any) => user.interaction_type))];
       let fetchCreatedByUsers = await this.mainDbSequelize.query(rawQueries.fetchUser(createdByIds));
       let fetchModifiedByUsers = await this.mainDbSequelize.query(rawQueries.fetchUser(modifiedByIds));
       let fetchStatusInfo = await this.mainDbSequelize.query(rawQueries.fetchStatus(statusIds));
@@ -2260,7 +2260,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
   async updateAttachmentCount(
     accountNumber: string,
     interactionRid: string,
-    interactionVersion: number
+    interactionVersion: number,
+    projectFiscalRid: string
   ) {
     const { Interaction, InteractionSummary, InteractionAttachment } =
       await this.interactionModelService.getModels(accountNumber);
@@ -2269,6 +2270,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       where: {
         interaction_rid: interactionRid,
         interaction_version: interactionVersion,
+        project_fiscal_rid:projectFiscalRid
       },
     });
 
