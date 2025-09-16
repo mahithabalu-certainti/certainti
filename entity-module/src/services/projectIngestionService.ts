@@ -20,7 +20,7 @@ import { ProjectHistory } from "../models/projectHistory";
 import currency from "currency.js";
 import { isValidTimezone } from "../utils/valideTimeChecker";
 import { Logger } from "winston";
-import { MAIN_SCHEMA_NAME } from "../utils/constants";
+import { MAIN_SCHEMA_NAME, rawQueries } from "../utils/constants";
 import {
   ProjectFiscalRegion,
   ProjectFiscalRegionAttributes,
@@ -1493,7 +1493,7 @@ class ProjectIngestionService {
     documentRid?: string
   ) {
     const { Project, ProjectFiscal, ProjectTimeline } = await this.getModels(accountNumber);
-
+    
     const parentLevelFields = [
       "project_name",
       "industry_name",
@@ -1639,6 +1639,12 @@ class ProjectIngestionService {
       whereFiscal = {
         account_rid: accountData.rid,
       };
+       if(apiSource === "interaction"){
+        const [activeId] : any[] = await this.mainDbSequelize!.query(rawQueries.fetchActiveStatus(),{type:"SELECT"})
+        whereFiscal.status_rid = activeId.rid
+        whereProject.status_rid = activeId.rid
+      }
+
       
       for (const key in filters) {
         const dbField = fiscalFieldMap[key];
@@ -1773,6 +1779,18 @@ class ProjectIngestionService {
           where: {
             account_rid: accountData.rid,
             ...whereFiscal,
+              ...(apiSource === "interactionCount"  ? { rid: accountInteractionId } : {}),
+              ...(apiSource === "interaction"
+          ? {
+              [Op.and]: [
+                literal(`EXISTS (
+            SELECT 1 FROM "${schemaName}"."key_contact_details" kc
+            WHERE kc.entity_rid = "ProjectFiscal"."rid"
+              AND kc.include_in_communication = true
+                )`)
+              ]
+            }
+          : {}),
           },
         },
       ],
