@@ -2082,7 +2082,9 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       const latestResponse = await InteractionResponseHistory.max(
         "interaction_version",
         {
-          where: { interaction_rid: responseData.interaction_rid },
+          where: { interaction_rid: responseData.interaction_rid,
+            project_fiscal_rid: responseData.project_fiscal_rid
+           },
         }
       );
       if (latestResponse !== null && latestResponse !== undefined) {
@@ -3530,13 +3532,14 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     return insertedData
   }
 
-  async updateEmailSendFlag (interaction_rid : string) {
+  async updateEmailSendFlag (interaction_rid : string,project_fiscal_rid:string) {
     await SendEmailInfo.update({
       is_email_send : true
     }, 
     {
       where : {
-      interaction_rid : interaction_rid
+      interaction_rid : interaction_rid,
+      project_fiscal_rid : project_fiscal_rid
     }
     })
   }

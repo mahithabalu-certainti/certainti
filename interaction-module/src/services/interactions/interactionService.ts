@@ -2213,7 +2213,7 @@ export class InteractionService {
           interactionLink
         );
         }
-        await this.interactionSchemaService.updateEmailSendFlag(interaction_rid)
+        await this.interactionSchemaService.updateEmailSendFlag(interaction_rid,project_fiscal_rid)
         
       } else {
         //need to add logic for sending toPS team
