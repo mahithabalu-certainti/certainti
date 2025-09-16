@@ -43,7 +43,7 @@ const EmailInteraction: React.FC = () => {
     parseToken.email as string
   );
   const disableEditResBtn =
-    questions?.status_name.toLowerCase() === StatusTypeEnum.response_received;
+    questions?.status_name?.toLowerCase() === StatusTypeEnum.response_received;
 
   useEffect(() => {
     // clear old session when open new link
@@ -99,6 +99,16 @@ const EmailInteraction: React.FC = () => {
       setTimer(600);
     }
   }, [reSendOtp.data]);
+
+  // Auto-focus first input when timeout is set
+  useEffect(() => {
+    if (timeout) {
+      const firstInput = document.getElementById('otp-0') as HTMLInputElement;
+      if (firstInput) {
+        firstInput.focus();
+      }
+    }
+  }, [timeout]);
 
   const handleChange = (value: string, index: number) => {
     if (/^\d?$/.test(value)) {
@@ -228,6 +238,14 @@ const EmailInteraction: React.FC = () => {
                             setOtp(newOtp);
                           }
                         }
+                      }
+                      // Submit on Enter
+                      if (
+                        e.key === 'Enter' &&
+                        checkEveryOtpValue &&
+                        !verifyOtp.isPending
+                      ) {
+                        validateOtp();
                       }
                     }}
                     onPaste={(e) => {

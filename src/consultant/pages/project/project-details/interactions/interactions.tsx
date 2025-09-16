@@ -224,21 +224,36 @@ const Interactions: React.FC<InteractionsProps> = ({
     [interactionResSources.data?.data.responseSource]
   );
 
+  const getDisableReason = (hasEmailRecipient: boolean, status: string) => {
+    if (!sendInteractionsEnable)
+      return 'Sending interactions permission is currently disabled. Please contact your administrator.';
+    if (!hasEmailRecipient)
+      return 'Key Contact is not available for this interaction';
+    if (status === StatusTypeEnum.sent)
+      return 'This interaction has already been sent';
+    if (status === StatusTypeEnum.response_draft)
+      return 'This interaction is currently in draft response stage';
+    if (status === StatusTypeEnum.response_received)
+      return 'A response has already been received for this interaction';
+    if (status === StatusTypeEnum.inqueue)
+      return 'This interaction is currently queued for sending';
+    if (status === '') return 'Interaction status is invalid or undefined';
+    return '';
+  };
+
   useEffect(() => {
     if (data) {
       const updatedInteractions =
         data.interactions?.map((item) => {
           const status = (item.status_name || '').toLowerCase();
+          const checkBoxMessage = getDisableReason(
+            item.has_email_recipient,
+            status
+          );
           return {
             ...item,
-            disableCheckBox:
-              !sendInteractionsEnable ||
-              !item.has_email_recipient ||
-              status === StatusTypeEnum.sent ||
-              status === StatusTypeEnum.response_draft ||
-              status === StatusTypeEnum.response_received ||
-              status === StatusTypeEnum.inqueue ||
-              status === '',
+            disableCheckBox: !!checkBoxMessage,
+            checkBoxMessage,
           };
         }) || [];
 

@@ -1118,51 +1118,58 @@ const ListTable = <T extends RowData>({
                     >
                       {/* Row checkbox */}
                       {selectable && (
-                        <TableCell
-                          sx={{
-                            position: 'sticky',
-                            left: 0,
-                            background:
-                              expandable && isExpanded ? '#ECECEC' : '#fff',
-                            zIndex: 7,
-                            width: '32px',
-                            maxWidth: '32px',
-                            minWidth: '32px',
-                            padding: '0px !important',
-                            borderRight: '1px solid #CBD6E2 !important',
-                            borderBottom: '1px solid #CBD6E2 !important',
-                          }}
+                        <Tooltip
+                          title={String(row.checkBoxMessage) || ''}
+                          disableHoverListener={!row.disableCheckBox}
+                          arrow
+                          placement='right'
                         >
-                          <Box
-                            className={`flex items-center justify-center !h-[32px] !w-[31px] ${row.disableCheckBox || conditionallyDisabled ? 'bg-gray-100' : ''}`}
+                          <TableCell
+                            sx={{
+                              position: 'sticky',
+                              left: 0,
+                              background:
+                                expandable && isExpanded ? '#ECECEC' : '#fff',
+                              zIndex: 7,
+                              width: '32px',
+                              maxWidth: '32px',
+                              minWidth: '32px',
+                              padding: '0px !important',
+                              borderRight: '1px solid #CBD6E2 !important',
+                              borderBottom: '1px solid #CBD6E2 !important',
+                            }}
                           >
-                            <Checkbox
-                              size='small'
-                              checked={isChecked}
-                              onChange={() =>
-                                handleRowSelect(
-                                  rowId,
-                                  row,
+                            <Box
+                              className={`flex items-center justify-center !h-[32px] !w-[31px] ${row.disableCheckBox || conditionallyDisabled ? 'bg-gray-100' : ''}`}
+                            >
+                              <Checkbox
+                                size='small'
+                                checked={isChecked}
+                                onChange={() =>
+                                  handleRowSelect(
+                                    rowId,
+                                    row,
+                                    conditionallyDisabled
+                                  )
+                                }
+                                inputProps={{
+                                  'aria-label': `select row ${rowId}`,
+                                }}
+                                disableRipple
+                                disabled={
+                                  Boolean(row.disableCheckBox) ||
                                   conditionallyDisabled
-                                )
-                              }
-                              inputProps={{
-                                'aria-label': `select row ${rowId}`,
-                              }}
-                              disableRipple
-                              disabled={
-                                Boolean(row.disableCheckBox) ||
-                                conditionallyDisabled
-                              }
-                              sx={{
-                                color: '#CBD6E2',
-                                '&.Mui-checked': {
-                                  color: '#1755E7',
-                                },
-                              }}
-                            />
-                          </Box>
-                        </TableCell>
+                                }
+                                sx={{
+                                  color: '#CBD6E2',
+                                  '&.Mui-checked': {
+                                    color: '#1755E7',
+                                  },
+                                }}
+                              />
+                            </Box>
+                          </TableCell>
+                        </Tooltip>
                       )}
 
                       {/* Data cells */}

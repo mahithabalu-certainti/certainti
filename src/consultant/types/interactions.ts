@@ -146,6 +146,7 @@ export type InteractionList = {
   attachment_count: number | null;
   has_email_recipient: boolean;
   disableCheckBox?: boolean;
+  checkBoxMessage?: string;
   account_name?: string | null;
   project_count?: string;
 };
