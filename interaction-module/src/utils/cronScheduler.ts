@@ -5,11 +5,13 @@ import InteractionSchemaService from '../services/interactions/schemaService';
 const services = Configurations.getInstance().getServices();
 const interactionService = services.interactionService
 const interactionSchemaService = new InteractionSchemaService()
+import { getSecret } from "./azureSecrets";
 
 let isJobRunning = false
 
-export const schedulerForTriggerAi = () => {
-    const task = cron.schedule(process.env.SCHEDULER_EXPRESSION!, async () => {
+export const schedulerForTriggerAi = async () => {
+    const schdulerExpression = await getSecret(process.env.SCHEDULER_EXPRESSION as string) || `0 0 * * *`;
+    const task = cron.schedule(schdulerExpression, async () => {
         if(isJobRunning) {
             console.log("Skipped at:", new Date().toISOString(), "— previous job still running");
             return;
@@ -31,8 +33,9 @@ export const schedulerForTriggerAi = () => {
     return task;
 }
 
-export const schdulerForSendEmailInfo = () => {
-    const scheduler = cron.schedule(process.env.SCHEDULER_EMAIL!, async () => {
+export const schdulerForSendEmailInfo = async () => {
+    const schdulerExpression = await getSecret(process.env.SCHEDULER_EMAIL as string) || `0 30 9 * * *`;
+    const scheduler = cron.schedule(schdulerExpression, async () => {
         try {
             console.log("Scheduler started for sending emails : ", new Date().toISOString())
             await interactionService.sendEmailInBatch()
