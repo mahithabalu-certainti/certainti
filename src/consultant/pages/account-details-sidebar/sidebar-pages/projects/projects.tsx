@@ -446,15 +446,23 @@ const Projects: React.FC<ProjectsProps> = ({
     [Classification.data?.data.projectClassifications]
   );
 
-  const projectColumns = getProjectColumns(
-    handleProject,
-    memoizedProjectTypes,
-    memoizedClassification,
-    handleEdit,
-    permissionMap,
-    accountInActive
+  const projectColumns = useMemo(
+    () =>
+      getProjectColumns(
+        handleProject,
+        memoizedProjectTypes,
+        memoizedClassification,
+        handleEdit,
+        permissionMap,
+        accountInActive
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [accountInActive]
   );
-
+  useEffect(() => {
+    const updatedColumns = projectColumns.filter((col) => !col.hide);
+    setVisibleColumns(updatedColumns);
+  }, [accountInActive, projectColumns]);
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
     // Save the old state to revert if needed
     const previousProject = [...projectList];
