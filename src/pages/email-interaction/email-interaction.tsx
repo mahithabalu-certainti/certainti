@@ -23,6 +23,7 @@ const EmailInteraction: React.FC = () => {
   const parseToken = auth_token ? JSON.parse(auth_token) : '';
   const account_rid = searchParams.get('acc');
   const interaction_rid = searchParams.get('int');
+  const project_fiscal_rid = searchParams.get('proj');
   const checkEveryOtpValue = otp.every((digit) => digit !== '');
 
   // API Hooks
@@ -37,11 +38,12 @@ const EmailInteraction: React.FC = () => {
   } = useGetInteractionQuestions(
     account_rid as string,
     interaction_rid as string,
+    project_fiscal_rid as string,
     parseToken.auth_token as string,
     parseToken.email as string
   );
   const disableEditResBtn =
-    questions?.status_name.toLowerCase() === StatusTypeEnum.response_received;
+    questions?.status_name?.toLowerCase() === StatusTypeEnum.response_received;
 
   useEffect(() => {
     // clear old session when open new link
@@ -49,6 +51,7 @@ const EmailInteraction: React.FC = () => {
       localStorage.removeItem('otp_timeout');
       localStorage.removeItem('temAuth');
       localStorage.setItem('intractionId', interaction_rid);
+      setOtp(['', '', '', '', '', '']);
     }
   }, [interaction_rid, intractionId]);
   useEffect(() => {
@@ -98,6 +101,16 @@ const EmailInteraction: React.FC = () => {
     }
   }, [reSendOtp.data]);
 
+  // Auto-focus first input when timeout is set
+  useEffect(() => {
+    if (timeout) {
+      const firstInput = document.getElementById('otp-0') as HTMLInputElement;
+      if (firstInput) {
+        firstInput.focus();
+      }
+    }
+  }, [timeout]);
+
   const handleChange = (value: string, index: number) => {
     if (/^\d?$/.test(value)) {
       const newOtp = [...otp];
@@ -144,6 +157,8 @@ const EmailInteraction: React.FC = () => {
         },
         {
           onSuccess: async () => {
+            localStorage.removeItem('temAuth');
+            localStorage.setItem('intractionId', interaction_rid);
             const timeNow = Date.now();
             localStorage.setItem('otp_timeout', JSON.stringify(timeNow));
             setTimer(timeNow);
@@ -152,6 +167,8 @@ const EmailInteraction: React.FC = () => {
       );
     }
   };
+
+  const isOtpSent = Boolean(timeout);
 
   return (
     <div className={isAuthentic ? '' : 'bg-[#f4f4f4]'}>
@@ -192,8 +209,9 @@ const EmailInteraction: React.FC = () => {
                 OTP verification
               </h2>
               <p className='text-gray-500 text-sm mb-6'>
-                Please enter the OTP(One-Time Password) sent to your registered
-                email/phone number to complete your verification
+                {isOtpSent
+                  ? 'Please enter the OTP(One-Time Password) sent to your registered email to complete your verification'
+                  : 'Please click the Send OTP button to get the One Time Password (OTP) to your registered email'}
               </p>
 
               {/* OTP Input Fields */}
@@ -226,6 +244,14 @@ const EmailInteraction: React.FC = () => {
                             setOtp(newOtp);
                           }
                         }
+                      }
+                      // Submit on Enter
+                      if (
+                        e.key === 'Enter' &&
+                        checkEveryOtpValue &&
+                        !verifyOtp.isPending
+                      ) {
+                        validateOtp();
                       }
                     }}
                     onPaste={(e) => {

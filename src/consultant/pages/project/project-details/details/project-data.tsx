@@ -70,7 +70,7 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
   const [searchParams] = useSearchParams();
   const [currentPage, setCurrentPage] = useState(0);
   const [tabValue, setTabValue] = useState('');
-
+  const sourceTab = searchParams.get('source_tab');
   const isOverViewEnable = !detailsTab[0].hide;
 
   useEffect(() => {
@@ -128,6 +128,18 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
 
   const isKeyContactAvailable =
     projectDetails?.keyContact && projectDetails?.keyContact.length > 0;
+
+  const handleBackClick = () => {
+    const timesheetId = searchParams.get('timesheet_id');
+    const sourceTab = searchParams.get('source_tab');
+    const accountid = searchParams.get('accountID');
+    const newSearchParams = new URLSearchParams();
+    newSearchParams.set('list', 'timesheet');
+    if (timesheetId) newSearchParams.set('timesheet_id', timesheetId);
+    if (sourceTab) newSearchParams.set('tab', sourceTab);
+    navigate(`/account/details/${accountid}?${newSearchParams.toString()}`);
+  };
+
   const headerButtons = [
     {
       label: 'Edit',
@@ -149,9 +161,17 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
       label: 'Trigger AI',
       variant: 'outlined' as const,
       loading: triggerAIMutation.isPending,
+      disabled: accountInActive,
       onClick: () => handleTriggerAI(),
       sx: { ...BUTTON_STYLES, width: '96px', minWidth: '96px' },
       hide: !TriggerAIEnable,
+    },
+    {
+      label: 'Back To Timesheet',
+      variant: 'contained' as const,
+      onClick: () => handleBackClick(),
+      sx: { width: '155px', minWidth: '155px' },
+      hide: sourceTab !== 'timesheet_project',
     },
   ];
 

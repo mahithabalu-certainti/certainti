@@ -1,7 +1,6 @@
 import React from 'react';
 import { SxProps } from '@mui/material';
 import { Theme } from '@emotion/react';
-import { LeftArrowIcon } from '../../assets';
 import TextButton from '../button/text-button';
 
 interface SectionHeaderButton {
@@ -37,8 +36,6 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
   count = 0,
   buttons = [],
   onViewToggle,
-  showBackArrow = false,
-  onBackClick,
   subValue,
   showItemCount = false,
   className,
@@ -59,14 +56,14 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
     >
       <div className='h-full flex items-center justify-between gap-4 py-1 px-3'>
         <div className='flex items-center gap-1'>
-          {showBackArrow && (
+          {/* {showBackArrow && (
             <div
               className='cursor-pointer w-[24px] h-[24px] flex justify-center items-center -ml-2'
               onClick={onBackClick}
             >
               <LeftArrowIcon className='h-[12px]' alt='leftArrowIcon' />
             </div>
-          )}
+          )} */}
 
           {iconBg ? (
             <div

@@ -24,6 +24,7 @@ export enum StatusTypeEnum {
   resume = 'resume',
   sent = 'sent',
   resent = 'resent',
+  inqueue = 'in-queue',
 }
 
 export interface InteractionFormTableColumn {
@@ -89,6 +90,7 @@ export type InteractionFormPayload = {
   interaction_type_rid?: string;
   parent_interaction_rid?: string;
   questions: InteractionQuestionPayload[];
+  account_interaction_rid?: string;
 };
 
 export interface InteractionQuestionErrors {
@@ -144,7 +146,10 @@ export type InteractionList = {
   attachment_count: number | null;
   has_email_recipient: boolean;
   disableCheckBox?: boolean;
+  checkBoxMessage?: string;
   account_name?: string | null;
+  project_count?: string;
+  modified_user_name?: string;
 };
 export type ResponseInteractionList = {
   rid: string;
@@ -196,6 +201,17 @@ export interface InteractionListResponse {
     limit: number;
     totalCount: number;
     interactions: InteractionList[];
+  };
+}
+export interface AccountInteractionListResponse {
+  statusCode: number;
+  statusMessage: string;
+  statusCodeValue?: string;
+  data: {
+    page: number;
+    limit: number;
+    count: number;
+    accountInteractions: InteractionList[];
   };
 }
 export interface ExportInteractionResponse {
@@ -401,4 +417,15 @@ export interface SendInteractionPayload {
   interactions: InteractionItem[];
   customRecipient?: boolean;
   is_interaction_followup?: boolean;
+}
+
+export interface SendIntractionProject {
+  project_rid: string;
+  project_fiscal_rid: string;
+  fiscal_year: string;
+}
+export interface AccountSendInteractionPayload {
+  account_rid: string;
+  account_interaction_rid: string[];
+  projects: SendIntractionProject[];
 }

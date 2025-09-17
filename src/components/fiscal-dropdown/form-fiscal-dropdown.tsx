@@ -17,6 +17,7 @@ interface Props {
   fiscalYear: string;
   fiscalYearsOptions: FiscalYearOption[];
   isError?: boolean;
+  disabled?: boolean;
   onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
 }
 
@@ -25,6 +26,7 @@ const FormFiscalYearDropdown = ({
   fiscalYearsOptions,
   onChange,
   isError,
+  disabled = false,
 }: Props) => {
   const currentYear = new Date().getFullYear();
   const years = fiscalYearsOptions.map((fy) => Number(fy.value));
@@ -99,32 +101,31 @@ const FormFiscalYearDropdown = ({
     >
       <button
         type='button'
-        onClick={() => setOpen((prev) => !prev)}
-        className={`text-[#2D3E4F] text-[13px] font-normal focus:border-[#60A5FA] w-full px-3 h-[32px] flex justify-between items-center cursor-pointer rounded-[2px] border ${
-          isError
-            ? ' border-red-500 bg-[#FEF2F2]'
-            : 'border-[#CBD6E2] bg-white '
-        } focus:bg-white`}
+        onClick={() => !disabled && setOpen((prev) => !prev)}
+        disabled={disabled}
+        className={`text-[#2D3E4F] text-[13px] font-normal focus:border-[#60A5FA] w-full px-3 h-[32px] flex justify-between items-center rounded-[2px] border ${
+          disabled ? 'cursor-default bg-[#f3f4f6]' : 'cursor-pointer'
+        } ${isError ? ' border-red-500 bg-[#FEF2F2]' : 'border-[#CBD6E2]'}`}
         aria-haspopup='true'
         aria-expanded={open}
       >
         <span
-          className={`${
-            !fiscalYear && 'text-[#7D98B6]'
+          className={`${!fiscalYear && 'text-[#7D98B6]'} ${
+            disabled && 'text-gray-400'
           } text-[13px] font-normal`}
         >
-          {selectedLabel}
+          {fiscalYear ? selectedLabel : 'FY-Year'}
         </span>
         <ArrowDownDisabledIcon
           alt='dropdown arrow'
           className={`transition-transform duration-300 ${
             open ? 'rotate-180' : ''
-          }`}
+          } ${disabled ? 'opacity-50' : ''}`}
           style={{ width: 15, height: 15 }}
         />
       </button>
       <Suspense fallback={null}>
-        {open && (
+        {open && !disabled && (
           <div className='absolute right-0 mt-1 w-full p-5 bg-white border border-[#CBD6E2] rounded-[2px] h-[185px]'>
             {yearsInDecade.length > 0 && (
               <div className='flex items-center justify-between text-[#425A76]'>

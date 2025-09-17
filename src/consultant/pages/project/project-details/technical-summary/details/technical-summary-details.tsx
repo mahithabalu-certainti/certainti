@@ -98,10 +98,10 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
       onSuccess: async () => {
         await refetchDetails();
         setIsEditing(false);
-        successToast('Technical summary context updated successfully');
+        successToast('Refinement prompt updated successfully');
       },
       onError: () => {
-        errorToast('Failed to update summary context. Please try again.');
+        errorToast('Failed to update refinement prompt. Please try again.');
       },
     });
   };
@@ -148,6 +148,14 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
           disabled: accountInActive || disabledAdditionalSummaryText,
           onClick: () => setIsEditing(true),
           sx: { width: '48px', minWidth: '48px' },
+          hide: hideAdditionalSummaryText,
+        },
+        {
+          label: 'Back To Technical Summary',
+          variant: 'outlined' as const,
+          disabled: false,
+          onClick: handleBackClick,
+          sx: { width: '178px', minWidth: '178px' },
           hide: hideAdditionalSummaryText,
         },
       ];

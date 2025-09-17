@@ -294,13 +294,13 @@ const AccountList = () => {
           {accountId && !type && (
             <div className='flex-end'>
               <TextButton
-                label='Back'
+                label='Back To Account Access'
                 onClick={handleBackAccount}
                 sx={{
                   ...BUTTON_STYLES,
-                  width: '74px',
-                  minWidth: '74px',
-                  maxWidth: '74px',
+                  width: '170px',
+                  minWidth: '170px',
+                  maxWidth: '170px',
                 }}
               />
             </div>

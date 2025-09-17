@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { SxProps, Tooltip } from '@mui/material';
 import { Theme } from '@emotion/react';
-import ReactQuill from 'react-quill';
+import ReactQuill, { Quill } from 'react-quill';
+
 import { Attachment, InteractionQuestion } from '../../consultant/types';
 import TextButton from '../button/text-button';
 import {
@@ -9,6 +10,7 @@ import {
   DownloadIcon,
   KeyContactRemoveIcon,
   DocumentIcon,
+  EditTextIcon,
 } from '../../assets';
 import { formatDateToYYYYMMDDWithTime } from '../../common-utils';
 import {
@@ -59,7 +61,15 @@ interface InteractionQuesProps {
   formData?: Record<string, string>;
   className?: string;
   responseDate?: string;
+  isAccountInteraction?: boolean;
 }
+
+const Font = Quill.import('formats/font');
+const Size = Quill.import('formats/size');
+Size.whitelist = ['small', 'medium', 'large', 'huge'];
+Font.whitelist = ['sans-serif', 'serif', 'monospace'];
+Quill.register(Font, true);
+Quill.register(Size, true);
 
 const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   questions,
@@ -72,6 +82,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   formData,
   className,
   responseDate,
+  isAccountInteraction,
 }) => {
   const { successToast, errorToast } = useToast();
   const [activeFlag, setActiveFlag] = useState<FlagTypeEnum | null>(null);
@@ -85,6 +96,10 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
       {} as Record<string, string>
     )
   );
+
+  const [showOptionsPerQuestion, setShowOptionsPerQuestion] = useState<
+    Record<string, boolean>
+  >({});
 
   const [newGlobalAttachments, setNewGlobalAttachments] = useState<
     Attachment[]
@@ -136,6 +151,18 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
 
     setValidationErrors({});
   }, [questions, globalAttachments]);
+
+  useEffect(() => {
+    // Initialize all toolbars as hidden
+    const initialToolbarState = questions.reduce(
+      (acc, q) => {
+        acc[q.rid] = false;
+        return acc;
+      },
+      {} as Record<string, boolean>
+    );
+    setShowOptionsPerQuestion(initialToolbarState);
+  }, [questions, isEditing]);
 
   const handleEditClick = () => {
     setIsEditing(true);
@@ -380,20 +407,20 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   const buttons: SectionHeaderButton[] = isEditing
     ? [
         {
-          label: 'Save as Draft',
+          label: 'Draft',
           variant: 'contained' as const,
           onClick: () => handleSave(FlagTypeEnum.draft),
-          sx: { width: '110px', minWidth: '110px' },
+          sx: { width: '60px', minWidth: '60px' },
           loading: activeFlag === FlagTypeEnum.draft && isUpdateLoading,
           disabled:
             (activeFlag !== null && activeFlag !== FlagTypeEnum.draft) ||
             uploadFileMutation.isPending,
         },
         {
-          label: 'Save & Submit',
+          label: 'Submit',
           variant: 'contained' as const,
           onClick: () => handleSave(FlagTypeEnum.submit),
-          sx: { width: '110px', minWidth: '110px' },
+          sx: { width: '64px', minWidth: '64px' },
           loading: activeFlag === FlagTypeEnum.submit && isUpdateLoading,
           disabled:
             (activeFlag !== null && activeFlag !== FlagTypeEnum.submit) ||
@@ -421,16 +448,23 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
           disabled: !isEditEnable,
           onClick: handleEditClick,
           sx: { width: '110px', minWidth: '110px' },
-          hide: !actionButtonEnable,
+          hide: !actionButtonEnable || isAccountInteraction,
         },
         {
           label: 'Response History',
           variant: 'outlined' as const,
           onClick: () => handleResponseHistory?.(),
           sx: { width: '130px', minWidth: '130px' },
-          hide: !actionButtonEnable,
+          hide: !actionButtonEnable || isAccountInteraction,
         },
       ];
+
+  const toggleQuestionOptions = (questionId: string) => {
+    setShowOptionsPerQuestion((prev) => ({
+      ...prev,
+      [questionId]: !prev[questionId],
+    }));
+  };
 
   return (
     <div
@@ -467,64 +501,6 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
         </div>
       </div>
 
-      {/* Global Attachments Section */}
-      {(isEditing ? newGlobalAttachments : globalAttachments).length > 0 && (
-        <div className='p-3 bg-[#F7F9FB] border-b border-[#CBD6E2]'>
-          <div className='font-semibold text-sm mb-2'>Uploaded Files</div>
-          <div
-            className={`flex flex-col gap-1 max-h-[85px] ${
-              (isEditing ? newGlobalAttachments : globalAttachments).length > 2
-                ? 'overflow-auto'
-                : 'overflow-visible'
-            }`}
-          >
-            {(isEditing ? newGlobalAttachments : globalAttachments).map(
-              (file, idx) => (
-                <div
-                  key={idx}
-                  className='flex items-center justify-between border border-[#CBD6E2] bg-[#FFFBFA] rounded-[2px] p-2 px-3'
-                >
-                  <div className='flex items-center gap-2 w-[95%]'>
-                    <DocumentIcon className='w-6 h-6' />
-                    <div className='text-[14px] text-[#425A76] font-normal max-w-[90%]'>
-                      <TruncateWithTooltip
-                        text={`${file.fileName}${file.fileType}`}
-                        maxWidth={'100%'}
-                      >
-                        {file.fileName}
-                        {file.fileType}
-                      </TruncateWithTooltip>
-                    </div>
-                  </div>
-                  {isEditing ? (
-                    <Tooltip title='Remove file' arrow placement='top'>
-                      <button
-                        onClick={() => removeGlobalAttachment(idx)}
-                        className='cursor-pointer p-[4px]'
-                      >
-                        <KeyContactRemoveIcon />
-                      </button>
-                    </Tooltip>
-                  ) : (
-                    <button
-                      onClick={() => handleDownload(file.fileUrl)}
-                      className='p-1 border border-[#CBD6E2] rounded-[2px] cursor-pointer'
-                      style={{
-                        boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
-                        background:
-                          'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
-                      }}
-                    >
-                      <DownloadIcon />
-                    </button>
-                  )}
-                </div>
-              )
-            )}
-          </div>
-        </div>
-      )}
-
       {/* Questions */}
       <div>
         {questions.map((q, index) => (
@@ -538,85 +514,84 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
             </div>
 
             {isEditing ? (
-              <div className='mt-2 relative'>
-                <div
-                  id={`toolbar-${q.rid}`}
-                  className='flex flex-wrap items-center gap-1'
-                >
-                  <select className='ql-header' defaultValue=''>
-                    <option value='1'></option>
-                    <option value='2'></option>
-                    <option value='3'></option>
-                    <option value='4'></option>
-                    <option value='5'></option>
-                    <option value='6'></option>
-                    <option value=''></option>
-                  </select>
-                  <select className='ql-font'></select>
-                  <select className='ql-size'></select>
-                  <button className='ql-bold'></button>
-                  <button className='ql-italic'></button>
-                  <button className='ql-underline'></button>
-                  <button className='ql-strike'></button>
-                  <button
-                    type='button'
-                    onClick={() =>
-                      questionFileInputRefs.current[q.rid]?.click()
-                    }
-                    className='ml-2 flex items-center'
-                  >
-                    <AttachmentsSideIcon className='w-4 h-2.5 attachment-icon' />
-                  </button>
-                  <select className='ql-color'></select>
-                  <select className='ql-background'></select>
-                  <button className='ql-script' value='sub'></button>
-                  <button className='ql-script' value='super'></button>
-                  <button className='ql-blockquote'></button>
-                  <button className='ql-list' value='ordered'></button>
-                  <button className='ql-list' value='bullet'></button>
-                  <button className='ql-indent' value='-1'></button>
-                  <button className='ql-indent' value='+1'></button>
-                  <button className='ql-direction' value='rtl'></button>
-                  <select className='ql-align'></select>
-                  <button className='ql-clean'></button>
+              <div className='flex items-start gap-2.5 mt-2 relative'>
+                <div className='w-full'>
+                  <ReactQuill
+                    value={editedAnswers[q.rid]}
+                    onChange={(value) => handleAnswerChange(q.rid, value)}
+                    theme='snow'
+                    className={`rounded-[2px] ${showOptionsPerQuestion[q.rid] ? '[&_.ql-toolbar]:block' : '[&_.ql-toolbar]:!hidden h-[55px] border-[#CBD6E2] border-t [&_.ql-container]:border-t [&_.ql-container]:border-[#CBD6E2]'} ${validationErrors[q.rid] ? 'border border-red-500 bg-[#FEF2F2]' : 'bg-white'}`}
+                    modules={{
+                      toolbar: [
+                        [{ header: [1, 2, 3, 4, 5, 6, false] }],
+                        [{ font: Font.whitelist }],
+                        [{ size: Size.whitelist }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        [{ color: [] }, { background: [] }],
+                        [{ script: 'sub' }, { script: 'super' }],
+                        ['blockquote', 'code-block'],
+                        [{ list: 'ordered' }, { list: 'bullet' }],
+                        [{ indent: '-1' }, { indent: '+1' }],
+                        [{ direction: 'rtl' }],
+                        [{ align: [] }],
+                      ],
+                    }}
+                    formats={[
+                      'header',
+                      'font',
+                      'size',
+                      'bold',
+                      'italic',
+                      'underline',
+                      'strike',
+                      'color',
+                      'background',
+                      'script',
+                      'blockquote',
+                      'list',
+                      'bullet',
+                      'indent',
+                      'direction',
+                      'align',
+                    ]}
+                  />
+                  {validationErrors[q.rid] && (
+                    <div className='text-red-500 text-sm mt-1'>
+                      This question is mandatory
+                    </div>
+                  )}
                 </div>
 
-                <ReactQuill
-                  value={editedAnswers[q.rid]}
-                  onChange={(value) => handleAnswerChange(q.rid, value)}
-                  theme='snow'
-                  className={`rounded-[2px] ${validationErrors[q.rid] ? 'border border-red-500 bg-[#FEF2F2]' : 'bg-white'}`}
-                  modules={{
-                    toolbar: {
-                      container: `#toolbar-${q.rid}`,
-                    },
-                  }}
-                  formats={[
-                    'header',
-                    'font',
-                    'size',
-                    'bold',
-                    'italic',
-                    'underline',
-                    'strike',
-                    'color',
-                    'background',
-                    'script',
-                    'blockquote',
-                    'list',
-                    'bullet',
-                    'indent',
-                    'direction',
-                    'align',
-                    'clean',
-                  ]}
-                />
-
-                {validationErrors[q.rid] && (
-                  <div className='text-red-500 text-sm mt-1'>
-                    This question is mandatory
-                  </div>
-                )}
+                <div className={`flex flex-col justify-center gap-2`}>
+                  <Tooltip title='Add Attachment' arrow placement='top'>
+                    <button
+                      type='button'
+                      onClick={() =>
+                        questionFileInputRefs.current[q.rid]?.click()
+                      }
+                      className='flex border border-[#CBD6E2] w-[24px] h-[24px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer mx-auto'
+                    >
+                      <AttachmentsSideIcon className='w-3.5 h-3.5' />
+                    </button>
+                  </Tooltip>
+                  <Tooltip
+                    title={
+                      showOptionsPerQuestion[q.rid]
+                        ? 'Hide Options'
+                        : 'Show Options'
+                    }
+                    arrow
+                    placement='top'
+                  >
+                    <button
+                      type='button'
+                      onClick={() => toggleQuestionOptions(q.rid)}
+                      className='flex border border-[#CBD6E2] w-[24px] h-[24px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer mx-auto'
+                    >
+                      <EditTextIcon className='w-4.5 h-4.5' />
+                    </button>
+                  </Tooltip>
+                </div>
 
                 {/* Hidden File Input */}
                 <input
@@ -664,10 +639,10 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
             )}
 
             {/* Question-specific attachments */}
-            {(isEditing ? questionAttachments[q.rid] : q.attachments).length >
+            {(isEditing ? questionAttachments[q.rid] : q.attachments)?.length >
               0 && (
               <div
-                className={`flex flex-col gap-1 mt-1 max-h-[85px] ${
+                className={`flex flex-col gap-1 mt-1 ${isEditing ? 'w-[96.5%]' : 'w-full'} max-h-[85px] ${
                   (isEditing ? questionAttachments[q.rid] : q.attachments)
                     .length > 2
                     ? 'overflow-auto'
@@ -732,10 +707,63 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
         ))}
       </div>
 
-      {!isEditing && responseDate && (
-        <div className='py-1 pr-4 w-full flex justify-end items-center gap-2 mb-5 text-[12px] text-[#425A76]'>
-          <span className='text-[#7D98B6]'>Response Received on:</span>
-          {formatDateToYYYYMMDDWithTime(responseDate)}
+      {/* Global Attachments Section */}
+      {(isEditing ? newGlobalAttachments : globalAttachments)?.length > 0 && (
+        <div className='p-3 bg-[#F7F9FB] border-t border-[#CBD6E2]'>
+          <div className='font-semibold text-sm mb-2 pl-0.5'>
+            Uploaded Files
+          </div>
+          <div
+            className={`flex flex-col gap-1 max-h-[85px] ${
+              (isEditing ? newGlobalAttachments : globalAttachments).length > 2
+                ? 'overflow-auto'
+                : 'overflow-visible'
+            }`}
+          >
+            {(isEditing ? newGlobalAttachments : globalAttachments).map(
+              (file, idx) => (
+                <div
+                  key={idx}
+                  className='flex items-center justify-between border border-[#CBD6E2] bg-[#FFFBFA] rounded-[2px] p-2 px-3'
+                >
+                  <div className='flex items-center gap-2 w-[95%]'>
+                    <DocumentIcon className='w-6 h-6' />
+                    <div className='text-[14px] text-[#425A76] font-normal max-w-[90%]'>
+                      <TruncateWithTooltip
+                        text={`${file.fileName}${file.fileType}`}
+                        maxWidth={'100%'}
+                      >
+                        {file.fileName}
+                        {file.fileType}
+                      </TruncateWithTooltip>
+                    </div>
+                  </div>
+                  {isEditing ? (
+                    <Tooltip title='Remove file' arrow placement='top'>
+                      <button
+                        onClick={() => removeGlobalAttachment(idx)}
+                        className='cursor-pointer p-[4px]'
+                      >
+                        <KeyContactRemoveIcon />
+                      </button>
+                    </Tooltip>
+                  ) : (
+                    <button
+                      onClick={() => handleDownload(file.fileUrl)}
+                      className='p-1 border border-[#CBD6E2] rounded-[2px] cursor-pointer'
+                      style={{
+                        boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
+                        background:
+                          'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
+                      }}
+                    >
+                      <DownloadIcon />
+                    </button>
+                  )}
+                </div>
+              )
+            )}
+          </div>
         </div>
       )}
     </div>

@@ -10,7 +10,7 @@ import DetailsSection, {
   DetailItem,
 } from '../../../../../../components/details-section/details';
 import {
-  useInteractionDetails,
+  useAccountInteractionDetails,
   useSendInteraction,
 } from '../../../../../services/interactions/interactions-service';
 import {
@@ -23,7 +23,6 @@ import { Typography } from '@mui/material';
 import SectionHeader from '../../../../../../components/details-section/section-header';
 import { accountDetailsProps } from '../../../../account-details/utils';
 import { InteractionQuestions } from '../../../../../../components';
-import { getInteractionStatusColor } from '../helpers';
 import { StatusTypeEnum } from '../../../../../types';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
@@ -34,12 +33,14 @@ interface InteractionDetailsProps {
   accountInActive: boolean;
   handleBackClick: () => void;
   accountDetails?: accountDetailsProps;
+  isAccountInteraction?: boolean;
 }
 
 const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   accountInActive,
   handleBackClick,
   accountDetails,
+  isAccountInteraction,
 }) => {
   const navigate = useNavigate();
   const { accountid } = useParams();
@@ -49,13 +50,11 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   const { permission } = useSelector((state: RootState) => state.permission);
   const sendInteraction = useSendInteraction();
   const { successToast } = useToast();
-  const { data, isLoading, error, refetch } = useInteractionDetails(
+  const { data, isLoading, error, refetch } = useAccountInteractionDetails(
     accountid,
-    interactionId
+    interactionId,
+    true
   );
-  // Commented for future use
-  // const disableEditResBtn =
-  //   data?.status_name.toLowerCase() === StatusTypeEnum.cancelled;
 
   const interactionFieldsEditable = useMemo(
     () =>
@@ -66,23 +65,23 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   );
 
   const disableInteractionEditBtn = [
-    StatusTypeEnum.cancelled,
-    StatusTypeEnum.completed,
+    StatusTypeEnum.sent,
+    StatusTypeEnum.response_draft,
     StatusTypeEnum.response_received,
+    StatusTypeEnum.inqueue,
   ].includes((data?.status_name || '').toLowerCase() as StatusTypeEnum);
 
   const disableEditResBtn = [
-    StatusTypeEnum.cancelled,
     StatusTypeEnum.draft,
-    StatusTypeEnum.completed,
     StatusTypeEnum.response_received,
+    StatusTypeEnum.inqueue,
   ].includes((data?.status_name || '').toLowerCase() as StatusTypeEnum);
+
   const disableRemainderBtn = [
     StatusTypeEnum.sent,
-    StatusTypeEnum.resent,
-    StatusTypeEnum.question_updated,
     StatusTypeEnum.response_draft,
   ].includes((data?.status_name || '').toLowerCase() as StatusTypeEnum);
+
   //permission
   const interactionsViewEditFields = useMemo(
     () =>
@@ -110,6 +109,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       accountId,
       source: 'account',
       account_name: accountDetails?.accountById?.account_name || '',
+      project_fiscal_rid: data?.project_fiscal_rid || '',
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
@@ -117,7 +117,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   const handleReminderBtn = () => {
     const interactions = [
       {
-        interaction_rid: data?.interaction_rid || '',
+        interaction_rid: data?.interaction_rid || interactionId || '',
         project_fiscal_rid: data?.project_fiscal_rid || '',
         email_info: {
           email: '',
@@ -127,7 +127,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     ];
 
     const payload = {
-      account_rid: data?.account_rid || '',
+      account_rid: data?.account_rid || accountid || '',
       is_interaction_followup: true,
       interactions,
     };
@@ -160,8 +160,14 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       disabled: accountInActive || !disableRemainderBtn,
       onClick: () => handleReminderBtn(),
       sx: { width: '78px', minWidth: '78px' },
-      hide: false,
+      hide: true,
       loading: sendInteraction.isPending,
+    },
+    {
+      label: 'Back To Interactions',
+      variant: 'contained' as const,
+      onClick: () => handleBackClick(),
+      sx: { width: '140px', minWidth: '140px' },
     },
   ];
 
@@ -189,27 +195,28 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       value: data?.interaction_type_name,
       key: 'interaction_type_name',
     },
-    {
-      label: 'Interaction Status',
-      value: (
-        <span
-          className={`font-semibold ${getInteractionStatusColor(data?.status_name)}`}
-        >
-          {data?.status_name}
-        </span>
-      ),
-      key: 'status',
-    },
-    {
-      label: 'Response Updated By',
-      value: data?.response_updated_by,
-      key: 'response_updated_by',
-    },
-    {
-      label: 'Response Received On',
-      value: formatDateToYYYYMMDDWithTime(data?.response_updated_on) || '-',
-      key: 'response_updated_on',
-    },
+    //might be added in future if required
+    // {
+    //   label: 'Interaction Status',
+    //   value: (
+    //     <span
+    //       className={`font-semibold ${getInteractionStatusColor(data?.status_name)}`}
+    //     >
+    //       {data?.status_name}
+    //     </span>
+    //   ),
+    //   key: 'status',
+    // },
+    // {
+    //   label: 'Response Updated By',
+    //   value: data?.response_updated_by,
+    //   key: 'response_updated_by',
+    // },
+    // {
+    //   label: 'Response Received On',
+    //   value: formatDateToYYYYMMDDWithTime(data?.response_updated_on) || '-',
+    //   key: 'response_updated_on',
+    // },
   ];
 
   const auditInfo: DetailItem[] = [
@@ -233,16 +240,17 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       value: data?.created_by,
       key: 'created_by',
     },
-    {
-      label: 'Updated On',
-      value: formatDateToYYYYMMDDWithTime(data?.modified_datetime),
-      key: 'modified_datetime',
-    },
-    {
-      label: 'Updated By',
-      value: data?.modified_by,
-      key: 'modified_by',
-    },
+    //might be added in future if required
+    // {
+    //   label: 'Updated On',
+    //   value: formatDateToYYYYMMDDWithTime(data?.modified_datetime),
+    //   key: 'modified_datetime',
+    // },
+    // {
+    //   label: 'Updated By',
+    //   value: data?.modified_by,
+    //   key: 'modified_by',
+    // },
   ];
 
   const basicDetails = applyHidePermission(basicInfo, permissionMap);
@@ -272,8 +280,6 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
           }
           className='rounded-tl-[2px] h-[40px] rounded-tr-[2px]'
           buttons={headerButtons}
-          onBackClick={handleBackClick}
-          showBackArrow={true}
         />
         {isLoading ? (
           <DetailsSectionSkeleton className='p-0 m-0' />
@@ -285,11 +291,13 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
           </div>
         ) : (
           <>
-            <DetailsSection
-              title='Basic Information'
-              data={basicDetails}
-              customStyle='pt-0 mt-0'
-            />
+            {!isAccountInteraction && (
+              <DetailsSection
+                title='Basic Information'
+                data={basicDetails}
+                customStyle='pt-0 mt-0'
+              />
+            )}
             <DetailsSection
               title='Interaction Information'
               data={interactionDetails}
@@ -306,6 +314,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
           actionButtonEnable={interactionFieldsEditable}
           handleResponseHistory={handleResponseHistory}
           refetchDetails={refetch}
+          isAccountInteraction={isAccountInteraction}
           formData={{
             account_rid: accountid || data?.account_rid || '',
             project_rid: data?.project_rid || '',

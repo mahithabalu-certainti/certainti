@@ -1,4 +1,5 @@
 import { FieldConfig } from '../../../../account-details-sidebar/components/filter/filterType';
+import { fiscalOptions } from '../../../../account-details-sidebar/sidebar-pages/projects/utils';
 
 const requiredFieldFilterOptionsForEnum: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
@@ -11,7 +12,8 @@ export const projectResourceFilterFields = (
   memoizedCountry: { option: string; value: string }[],
   region: { option: string; value: string }[],
   // resourceTypeOptions: { option: string; value: string }[], /* It may use in future, based on client confirmation */
-  resourcepermissionMap?: Record<string, { read: boolean; edit: boolean }>
+  resourcepermissionMap?: Record<string, { read: boolean; edit: boolean }>,
+  memoizedResourceStatus?: { option: string; value: string }[]
 ): FieldConfig[] => [
   {
     name: 'Resource Code',
@@ -107,6 +109,16 @@ export const projectResourceFilterFields = (
     hide:
       !resourcepermissionMap?.['qre_final']?.read &&
       !resourcepermissionMap?.['qre_final']?.edit,
+  },
+  {
+    name: 'Status',
+    value: 'status_rid',
+    type: 'enum',
+    options: memoizedResourceStatus,
+    operatorOption: fiscalOptions,
+    hide:
+      !resourcepermissionMap?.['status_action']?.read &&
+      !resourcepermissionMap?.['status_action']?.edit,
   },
   {
     name: 'Comments',

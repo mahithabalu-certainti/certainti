@@ -60,8 +60,6 @@ export const hasFormValuesChanged = (
   interactionData: InteractionDetails | undefined
 ): boolean => {
   if (!interactionData) return true;
-  const statusChanged =
-    formData.status && formData.status !== interactionData.status;
 
   const getNormalizedQuestions = (questions: InteractionFormQuestion[]) =>
     questions.map((q) => ({
@@ -77,7 +75,7 @@ export const hasFormValuesChanged = (
     JSON.stringify(getNormalizedQuestions(formData.questions)) !==
     JSON.stringify(getNormalizedQuestions(interactionData.questions));
 
-  return statusChanged || questionsChanged;
+  return questionsChanged;
 };
 
 export const validateInteractionForm = (
@@ -94,7 +92,7 @@ export const validateInteractionForm = (
       newErrors.accountName = 'Account Name is required';
       isValid = false;
     }
-    if (!formData.projectCode) {
+    if (!formData.projectCode && source === 'global') {
       newErrors.projectCode = 'Project Code is required';
       isValid = false;
     }

@@ -8,6 +8,8 @@ import {
   InteractionListURLParams,
   SendInteractionPayload,
   ExportInteractionResponse,
+  AccountSendInteractionPayload,
+  AccountInteractionListResponse,
 } from '../../types';
 import { interactionServiceApi } from '../../../api/api';
 import { CommonApiResponse } from '../../../common-service';
@@ -19,6 +21,7 @@ import {
   getGlobalInteractionListUrl,
   getGlobalInteractionExportUrl,
 } from '../urls/interactions-url';
+import { buildQueryString } from '../../../admin/service';
 
 export const exportInteractions = async (
   params: InteractionListURLParams
@@ -30,6 +33,42 @@ export const exportInteractions = async (
         getInteractionExportUrl(),
         params
       );
+    const base64Data = response.data?.data;
+
+    if (!base64Data) {
+      console.error('No base64 data found in the response.');
+      return;
+    }
+
+    const binary = atob(base64Data);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+
+    const blob = new Blob([bytes], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Export failed:', error);
+  }
+};
+export const exportAccountInteractions = async (
+  params: Record<string, unknown>
+): Promise<void> => {
+  try {
+    const filename = 'account_interactions.xlsx';
+    const queryParams = buildQueryString(params);
+    const response = await interactionServiceApi.get<ExportInteractionResponse>(
+      `/api/interactions/accountInterctions/export?${queryParams}`
+    );
     const base64Data = response.data?.data;
 
     if (!base64Data) {
@@ -101,8 +140,12 @@ export const useExportInteractions = () => {
   });
 };
 
-const getInteractionDetailsURL = (accountId: string, interactionId: string) => {
-  return `/api/interactions/detail/${accountId}/${interactionId}`;
+const getInteractionDetailsURL = (
+  accountId: string,
+  interactionId: string,
+  projectFiscalRid: string
+) => {
+  return `/api/interactions/detail/${accountId}/${interactionId}?project_fiscal_rid=${projectFiscalRid}`;
 };
 
 export const fetchInteractionList = async (
@@ -136,6 +179,36 @@ export const useInteractionList = (
       params.fiscal_year !== undefined &&
       params.fiscal_year !== null &&
       !!shouldFetchList,
+  });
+};
+
+export const fetchAccountInteractionList = async (
+  params: Record<string, unknown>
+): Promise<{ interactions: InteractionList[]; count: number }> => {
+  const { data } =
+    await interactionServiceApi.get<AccountInteractionListResponse>(
+      `/api/interactions/accountInterctions/list?${buildQueryString(params)}`
+    );
+  return {
+    interactions: data.data.accountInteractions,
+    count: data.data.count,
+  };
+};
+
+export const useAccountInteractionList = (
+  params: Record<string, unknown>,
+  shouldFetchList: boolean,
+  refreshInteractions?: number
+): UseQueryResult<
+  { interactions: InteractionList[]; count: number },
+  Error
+> => {
+  return useQuery<{ interactions: InteractionList[]; count: number }, Error>({
+    queryKey: ['account-interaction-list', params, refreshInteractions],
+    queryFn: () => fetchAccountInteractionList(params),
+    retry: 0,
+    gcTime: 0,
+    enabled: !!params.account_rid && !!shouldFetchList,
   });
 };
 
@@ -196,10 +269,11 @@ export const useGlobalInteractionList = (
 
 const fetchInteractionDetails = async (
   accountId: string,
-  interactionId: string
+  interactionId: string,
+  projectFiscalRid: string
 ): Promise<InteractionDetails> => {
   const response = await interactionServiceApi.get<InteractionDetailsResponse>(
-    getInteractionDetailsURL(accountId, interactionId)
+    getInteractionDetailsURL(accountId, interactionId, projectFiscalRid)
   );
 
   return response.data.data.interactionDetails;
@@ -207,14 +281,51 @@ const fetchInteractionDetails = async (
 
 export const useInteractionDetails = (
   accountId?: string,
-  interactionId?: string
+  interactionId?: string,
+  projectFiscalRid?: string
 ): UseQueryResult<InteractionDetails | undefined, Error> => {
   return useQuery<InteractionDetails | undefined, Error>({
-    queryKey: ['interaction-details', accountId, interactionId],
-    queryFn: () => fetchInteractionDetails(accountId!, interactionId!),
+    queryKey: [
+      'interaction-details',
+      accountId,
+      interactionId,
+      projectFiscalRid,
+    ],
+    queryFn: () =>
+      fetchInteractionDetails(accountId!, interactionId!, projectFiscalRid!),
     retry: 0,
     gcTime: 0,
-    enabled: !!interactionId && !!accountId,
+    enabled: !!interactionId && !!accountId && !!projectFiscalRid,
+  });
+};
+
+const fetchAccountInteractionDetails = async (
+  accountId: string,
+  interactionId: string
+): Promise<InteractionDetails> => {
+  const response = await interactionServiceApi.get<InteractionDetailsResponse>(
+    `/api/interactions/detail/${accountId}/${interactionId}?type=account`
+  );
+
+  return response.data.data.interactionDetails;
+};
+
+export const useAccountInteractionDetails = (
+  accountId?: string,
+  interactionId?: string,
+  isEnable?: boolean
+): UseQueryResult<InteractionDetails | undefined, Error> => {
+  return useQuery<InteractionDetails | undefined, Error>({
+    queryKey: [
+      'accoun-interaction-details',
+      accountId,
+      interactionId,
+      isEnable,
+    ],
+    queryFn: () => fetchAccountInteractionDetails(accountId!, interactionId!),
+    retry: 0,
+    gcTime: 0,
+    enabled: !!interactionId && !!accountId && isEnable,
   });
 };
 
@@ -246,6 +357,29 @@ export const useCreateInteraction = () => {
   );
 };
 
+export const accountCreateInteraction = async (
+  body: Partial<InteractionFormPayload>
+): Promise<CommonApiResponse> => {
+  try {
+    const { data } = await interactionServiceApi.post<CommonApiResponse>(
+      '/api/interactions/accountInterctions/create',
+      body
+    );
+    return data;
+  } catch (error) {
+    console.error('Error create interaction:', error);
+    throw error;
+  }
+};
+
+export const useAccountCreateInteraction = () => {
+  return useMutation<CommonApiResponse, Error, Partial<InteractionFormPayload>>(
+    {
+      mutationFn: (body) => accountCreateInteraction({ ...body }),
+    }
+  );
+};
+
 export const getUpdateInteractionUrl = (): string => {
   return `/api/interactions/update`;
 };
@@ -273,6 +407,29 @@ export const useUpdateInteractionDetails = () => {
   );
 };
 
+export const updateAccountInteractionDetails = async (
+  body: Partial<InteractionFormPayload>
+): Promise<CommonApiResponse> => {
+  try {
+    const { data } = await interactionServiceApi.put<CommonApiResponse>(
+      '/api/interactions/accountInterctions/update',
+      body
+    );
+    return data;
+  } catch (error) {
+    console.error('Error updating interaction details:', error);
+    throw error;
+  }
+};
+
+export const useAccountInteractionUpdate = () => {
+  return useMutation<CommonApiResponse, Error, Partial<InteractionFormPayload>>(
+    {
+      mutationFn: (body) => updateAccountInteractionDetails({ ...body }),
+    }
+  );
+};
+
 // Send interaction
 export const sendInteraction = async (
   body: SendInteractionPayload
@@ -292,6 +449,27 @@ export const sendInteraction = async (
 export const useSendInteraction = () => {
   return useMutation<CommonApiResponse, Error, SendInteractionPayload>({
     mutationFn: (body) => sendInteraction(body),
+  });
+};
+
+// Send interaction
+export const accountSendInteraction = async (
+  body: AccountSendInteractionPayload
+): Promise<CommonApiResponse> => {
+  try {
+    const { data } = await interactionServiceApi.post<CommonApiResponse>(
+      '/api/interactions/accountInterctions/send',
+      body
+    );
+    return data;
+  } catch (error) {
+    console.error('Error sending interaction:', error);
+    throw error;
+  }
+};
+export const useAccountSendInteraction = () => {
+  return useMutation<CommonApiResponse, Error, AccountSendInteractionPayload>({
+    mutationFn: (body) => accountSendInteraction(body),
   });
 };
 

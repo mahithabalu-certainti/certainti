@@ -1,11 +1,17 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useMemo, useState } from 'react';
 import TabPanel from '../../../account-details-sidebar/components/tab';
-import { CreateResourceIcon, ResourcesIcon } from '../../../../../assets';
+import {
+  AcceptIcon,
+  CreateResourceIcon,
+  RejectIcon,
+  ResourcesIcon,
+} from '../../../../../assets';
 import { useSelector } from 'react-redux';
 import {
   useProjectTaskDetail,
   useProjectTask,
+  useUpdateProjectTaskStatus,
 } from '../../../../services/project/project-task-service';
 import { PROJECT_TASK, PROJECT_TASK_EDIT } from '../../../../../routes';
 
@@ -30,6 +36,7 @@ import ProjectTaskDetails from './project-task-details';
 import {
   ExportType,
   FormFiscalDateType,
+  ProjectResourcesListType,
   SelectOption,
 } from '../../../../types';
 import {
@@ -171,7 +178,7 @@ export const ProjectTask = ({
     return map;
   }, [projectViewEditFields]);
 
-  const { data, isLoading, error } = useProjectTask(
+  const { data, isLoading, error, refetch } = useProjectTask(
     {
       page: currentPage + 1,
       limit: rowsPerPage,
@@ -187,7 +194,7 @@ export const ProjectTask = ({
   const taskId = searchParams.get('pro_task_id');
   const taskDetails = searchParams.get('page');
   const checkDetail = taskDetails === 'details' && taskId;
-
+  const source = searchParams.get('source');
   const viewDetails = !!checkDetail;
 
   const {
@@ -199,7 +206,8 @@ export const ProjectTask = ({
     accountID || '',
     refreshTaskDetailPageTrigger
   );
-
+  const { successToast } = useToast();
+  const updateStatusAccept = useUpdateProjectTaskStatus();
   const totalItems = data?.count || 0;
   useEffect(() => {
     if (data) {
@@ -289,6 +297,14 @@ export const ProjectTask = ({
       sx: { ...BUTTON_STYLES, width: '125px', minWidth: '125px' },
       hide: viewDetails ? true : false,
     },
+    {
+      label:
+        source === 'timesheet' ? 'Back To Timesheet' : 'Back To Project Tasks',
+      variant: 'contained' as const,
+      onClick: () => handleBackClick(),
+      sx: { width: '155px', minWidth: '155px' },
+      hide: viewDetails ? false : true,
+    },
   ];
   const PFY = projectFiscalDate;
   const handleProjectTaskDetailEdit = () => {
@@ -312,15 +328,25 @@ export const ProjectTask = ({
   };
 
   const handleBackClick = () => {
-    setShowProjectTaskDetails(!showProjectTaskDetails);
-    setProjectResData(null);
-    setShowFilter(false);
-    searchParams.delete('pro_task_id');
-    searchParams.delete('page');
-    navigate({
-      pathname: location.pathname,
-      search: searchParams.toString(),
-    });
+    if (source === 'timesheet') {
+      const timesheetId = searchParams.get('timesheet_id');
+      const accountid = searchParams.get('accountID');
+      const newSearchParams = new URLSearchParams();
+      newSearchParams.set('list', 'timesheet');
+      if (timesheetId) newSearchParams.set('timesheet_id', timesheetId);
+      newSearchParams.set('tab', 'timesheet_project_task');
+      navigate(`/account/details/${accountid}?${newSearchParams.toString()}`);
+    } else {
+      setShowProjectTaskDetails(!showProjectTaskDetails);
+      setProjectResData(null);
+      setShowFilter(false);
+      searchParams.delete('pro_task_id');
+      searchParams.delete('page');
+      navigate({
+        pathname: location.pathname,
+        search: searchParams.toString(),
+      });
+    }
   };
   useEffect(() => {
     if (setExportType) {
@@ -492,6 +518,72 @@ export const ProjectTask = ({
     .map((id) => projectTaskColumns.find((col) => col.id === id)!)
     .filter((col) => columnVisibility[col.id]);
   if (!projectTaskIsEnable) return <AccessRestricted />;
+  const handleAccept = (row: ProjectResourcesListType) => {
+    const payload = {
+      rid: row?.rid || '',
+      accountId: accountData?.accountID || '',
+      action: 'accept',
+      type: row?.status_name || '',
+      resourceCode: row?.resource_code,
+    };
+    updateStatusAccept.mutate(payload, {
+      onSuccess: (data) => {
+        successToast(data?.statusMessage || 'Status updated successfully');
+        refetch();
+      },
+    });
+  };
+
+  const handleReject = (row: ProjectResourcesListType) => {
+    const payload = {
+      rid: row?.rid || '',
+      accountId: accountData?.accountID || '',
+      action: 'reject',
+      type: row?.status_name || '',
+      resourceCode: row?.resource_code,
+    };
+    updateStatusAccept.mutate(payload, {
+      onSuccess: (data) => {
+        successToast(data?.statusMessage || 'Status updated successfully');
+        refetch();
+      },
+    });
+  };
+
+  const hideStatusAction =
+    !permissionMapTaskTableColumn?.['status_action']?.edit &&
+    !permissionMapTaskTableColumn?.['status_action']?.read;
+
+  const getConditionMenuItems = (row: ProjectResourcesListType) => {
+    let statusLabel = '';
+    switch (row.status_name) {
+      case 'Duplicate':
+        statusLabel = 'Duplicate';
+        break;
+      case 'Anomaly':
+        statusLabel = 'Anomaly';
+        break;
+      default:
+        return [];
+    }
+
+    return [
+      {
+        label: statusLabel ? `Accept ${statusLabel}` : 'Accept',
+        onClick: handleAccept,
+        icon: AcceptIcon,
+        className:
+          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer h-[24px] bg-[#3EA72F1A] hover:bg-[#3EA72F] hover:text-[#fff]',
+      },
+      {
+        label: statusLabel ? `Reject ${statusLabel}` : 'Reject',
+        onClick: handleReject,
+        icon: RejectIcon,
+        className:
+          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer h-[24px] bg-[#FF3C031A] hover:bg-[#FF3C03] hover:text-[#fff]',
+      },
+    ];
+  };
 
   return (
     <div className='w-full pt-2 pb-2 pl-2 pr-4'>
@@ -523,7 +615,7 @@ export const ProjectTask = ({
       ) : (
         <>
           <SectionHeader
-            title={'Project Task'}
+            title={viewDetails ? 'Project Task' : 'Project Tasks'}
             titleIcon={
               viewDetails ? (
                 <ResourcesIcon
@@ -536,10 +628,8 @@ export const ProjectTask = ({
             }
             count={totalItems}
             showItemCount={!viewDetails}
-            showBackArrow={viewDetails ? true : false}
             buttons={headerButtons}
             subValue={resourceData?.r_number}
-            onBackClick={handleBackClick}
             iconBg={viewDetails ? '#7785ff' : ''}
           />
           <div className='border border-[#CBD6E2]'>
@@ -571,13 +661,19 @@ export const ProjectTask = ({
                   hoverHighlight={false}
                   tableStyle={{
                     height: '100%',
-                    maxHeight: 'calc(100vh - 290px)',
+                    maxHeight: 'calc(100vh - 360px)',
                     overflow: 'auto',
                   }}
                   stickyHeader={true}
                   stickyColumnsCount={1}
                   actionWidth={60}
                   actionDisplayMode='dropdown'
+                  conditionMenuItems={
+                    !hideStatusAction
+                      ? (row: ProjectResourcesListType) =>
+                          getConditionMenuItems(row)
+                      : undefined
+                  }
                   loading={isLoading}
                   error={error ? 'Failed to load projects' : undefined}
                   rowsPerPageOptions={[25, 50, 100]}

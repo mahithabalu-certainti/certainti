@@ -400,7 +400,7 @@ const Timesheet: React.FC<TimeSheetProps> = ({
       ) : (
         <>
           <SectionHeader
-            title='Timesheet'
+            title='Timesheets'
             count={totalItems}
             showItemCount={true}
             buttons={headerButtons}
@@ -431,7 +431,7 @@ const Timesheet: React.FC<TimeSheetProps> = ({
               tableStyle={{
                 borderBottom: '1px solid #CBD6E2',
                 height: '100%',
-                maxHeight: 'calc(100vh - 290px)',
+                maxHeight: 'calc(100vh - 320px)',
                 overflow: 'auto',
               }}
               stickyHeader={true}

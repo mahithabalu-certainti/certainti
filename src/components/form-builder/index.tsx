@@ -410,6 +410,18 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             .map((f) => f.trim())
             .forEach((f) => {
               newData[f] = '';
+
+              // Also clear errors for these fields
+              setFormData((prevFormData) => {
+                if (!prevFormData) return prevFormData;
+
+                return prevFormData.map((section) => ({
+                  ...section,
+                  fields: section.fields.map((field) =>
+                    field.name === f ? { ...field, error: '' } : field
+                  ),
+                }));
+              });
             });
         });
       }
@@ -966,7 +978,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             className={
               'placeholder-custom-color placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ' +
               isError +
-              fieldDisabled
+              fieldDisabled +
+              (field.disabled
+                ? ' truncate overflow-hidden text-ellipsis whitespace-nowrap'
+                : '')
             }
             disabled={field.disabled}
             onChange={(e) => {
@@ -1091,6 +1106,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 fiscalYearsOptions={field.options || []}
                 onChange={(e) => handleChange(e.target.value)}
                 isError={!!field.error}
+                disabled={field.disabled}
               />
             </div>
           );
@@ -1335,6 +1351,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               options={field.options || []}
               disableClearable
               freeSolo
+              forcePopupIcon={true}
               popupIcon={<ArrowDropDownIcon />}
               slotProps={{ paper: { style: { fontSize } } }}
               onChange={(_e, newValue) => {

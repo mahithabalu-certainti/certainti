@@ -48,7 +48,9 @@ const Settings: React.FC<SettingsProps> = ({
   const { data, isLoading, refetch } = useFetchAccountFields(
     accountid as string
   );
+
   const accountDetails = data?.data?.accountDetails;
+  const disable = data?.data?.accountById?.is_parent;
 
   // Permission Management
   const { permission } = useSelector((state: RootState) => state.permission);
@@ -153,6 +155,13 @@ const Settings: React.FC<SettingsProps> = ({
         setIsFormSaving(false);
         refetch();
       },
+      onError: (error) => {
+        console.error('Update failed:', error);
+        setIsFormSaving(false);
+      },
+      onSettled: () => {
+        setIsFormSaving(false);
+      },
     });
   };
 
@@ -194,7 +203,12 @@ const Settings: React.FC<SettingsProps> = ({
       >
         <FormBuilder
           key={JSON.stringify(accountDetails)}
-          data={settingsFormFields(permissionMap, emailRequried, idRequried)}
+          data={settingsFormFields(
+            permissionMap,
+            emailRequried,
+            idRequried,
+            disable
+          )}
           formRef={formRef}
           outData={handleFormSubmit}
           values={formValues}

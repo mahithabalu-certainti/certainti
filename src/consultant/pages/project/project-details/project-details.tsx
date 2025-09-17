@@ -6,6 +6,7 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom';
+import { ACCOUNT, PROJECT } from '../../../../routes';
 import { InfoSection, PageHeader, SideMenuPanel } from '../../../../components';
 import {
   // ActivitiesIcon,
@@ -66,7 +67,7 @@ import { TechnicalSummary } from './technical-summary';
 import { exportTechnicalSummary } from '../../../services/technical-summary/technical-summary-service';
 
 export const ProjectDetails = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
   const [projectDetails, setProjectDetails] = useState<any>([]);
   const defaultTab = searchParams.get('list') ?? 'projectDetails';
@@ -180,8 +181,8 @@ export const ProjectDetails = () => {
 
   const accountInActive =
     data?.data?.project?.account_status?.toLowerCase() !== 'active';
-  const projectInActive = data?.data?.project.status_name === 'In-Active';
-
+  const projectInActive =
+    data?.data?.project?.status_name?.toLowerCase() === 'in-active';
   useEffect(() => {
     if (data?.data) {
       const project = data.data.project;
@@ -202,9 +203,9 @@ export const ProjectDetails = () => {
     setFiscalDate(bounds);
   };
 
-  const isAttachmentViewEnable = checkPermission(
+  const isAttachmentExportEnable = checkPermission(
     permission,
-    AllPermissions.ATTACHMENT_VIEW_EDIT
+    AllPermissions.ATTACHMENT_EXPORT
   );
   const isFinancialHighlightsEnable = checkPermission(
     menus,
@@ -242,7 +243,7 @@ export const ProjectDetails = () => {
     }
 
     if (list === 'attachments') {
-      return !isAttachmentViewEnable;
+      return !isAttachmentExportEnable;
     } else if (list === 'projectsTask') {
       return !isTaskExportViewEnable;
     } else if (list === 'financial' && tab === 'resource_cost') {
@@ -385,6 +386,21 @@ export const ProjectDetails = () => {
       hide: accountInActive || checkExport(),
     },
   ];
+  useEffect(() => {
+    const list = searchParams.get('list');
+    const source = searchParams.get('source');
+    const sourceTab = searchParams.get('source_tab');
+    const newParams = new URLSearchParams(searchParams);
+    if (list !== 'projectsTask' && source === 'timesheet') {
+      newParams.delete('source');
+      setSearchParams(newParams, { replace: true });
+    }
+    if (list !== 'projectDetails' && sourceTab === 'timesheet_project') {
+      newParams.delete('source_tab');
+      setSearchParams(newParams, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const handleEditAccount = () => {
     const projectID = projectData?.rid ?? '';
@@ -430,7 +446,7 @@ export const ProjectDetails = () => {
       case 'projectDetails':
         return (
           <ProjectDetailsData
-            accountInActive={accountInActive}
+            accountInActive={accountInActive || projectInActive}
             projectDetails={{
               ...projectData!,
               attachment: data?.data?.attachment || [],
@@ -521,7 +537,13 @@ export const ProjectDetails = () => {
   };
 
   const goBack = () => {
-    window.history.back();
+    if (parent === 'account') {
+      navigate(`${ACCOUNT}/details/${accountID}?list=projects`);
+    } else if (parent === 'project') {
+      navigate(PROJECT);
+    } else {
+      navigate(`${ACCOUNT}/details/${accountID}?list=projects`);
+    }
   };
 
   const sideMenuItems = useMemo<MenuItem[]>(() => {
@@ -548,7 +570,7 @@ export const ProjectDetails = () => {
         icon: ResourcesIcon,
       },
       {
-        name: 'Projects Task',
+        name: 'Project Tasks',
         key: 'projectsTask',
         id: AllModules.PROJECT_TASK,
         disabled: false,
@@ -662,6 +684,7 @@ export const ProjectDetails = () => {
           showActions={false}
           showSettings={false}
           goBack={goBack}
+          backBtnLabel='Back To Projects'
           isLoading={isLoading}
         />
       </div>
@@ -669,7 +692,7 @@ export const ProjectDetails = () => {
         columns={projectDetails}
         loading={isLoading}
         error={isError}
-        singleLineView={true}
+        singleLineView={false}
       />
       <div className='flex flex-row flex-1 w-full'>
         <div
@@ -692,7 +715,7 @@ export const ProjectDetails = () => {
         </div>
         <div
           className='flex-1'
-          style={{ maxHeight: 'calc(100vh - 140px)', overflow: 'auto' }}
+          style={{ maxHeight: 'calc(100vh - 180px)', overflow: 'auto' }}
         >
           <Suspense fallback={null}>{renderContent()}</Suspense>
         </div>

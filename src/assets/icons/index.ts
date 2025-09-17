@@ -116,6 +116,7 @@ const icons = {
   pdfIcon: () => import('./pdf-icon.svg?react'),
   adminSetting: () => import('./admin-setting.svg?react'),
   documentIcon: () => import('./doc-attachments.svg?react'),
+  editTextIcon: () => import('./edit-text-icon.svg?react'),
 };
 
 function createLazySvgIcon(name: keyof typeof icons) {
@@ -239,3 +240,4 @@ export const InteractionDetailIcon = createLazySvgIcon('interactionDetailIcon');
 export const PdfIcon = createLazySvgIcon('pdfIcon');
 export const AdminSettingIcon = createLazySvgIcon('adminSetting');
 export const DocumentIcon = createLazySvgIcon('documentIcon');
+export const EditTextIcon = createLazySvgIcon('editTextIcon');

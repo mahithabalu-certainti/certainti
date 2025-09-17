@@ -6,8 +6,9 @@ import {
 import { FormType } from '../../../consultant/types';
 
 export const ConfigureSettingsFormFields = (
-  permissionMap?: Record<string, { read: boolean; edit: boolean }>
-  //   emailRequried?: boolean
+  permissionMap?: Record<string, { read: boolean; edit: boolean }>,
+  emailRequried?: boolean,
+  idRequired?: boolean
 ): FormType[] => {
   return [
     {
@@ -15,7 +16,7 @@ export const ConfigureSettingsFormFields = (
       fillType: 'half',
       fields: [
         createTextField('email', 'Email', {
-          required: false,
+          required: idRequired,
           placeholder: 'Enter email',
           disabled:
             permissionMap?.['blended_rate_fte']?.read &&
@@ -26,6 +27,45 @@ export const ConfigureSettingsFormFields = (
           //   regex: REGEX_PATTERNS.BLENDED_NUMBER,
           //   regexErrorMessage:
           //     'Only positive numbers allowed, up to 3 digits and 2 decimal places',
+        }),
+        createTextField('tenant_id', 'Tenant ID', {
+          required: emailRequried,
+          placeholder: 'Enter Tenant ID',
+          // disabled:
+          //   permissionMap?.['tenant_id']?.read &&
+          //   !permissionMap?.['tenant_id']?.edit,
+          // hide:
+          //   !permissionMap?.['tenant_id']?.read &&
+          //   !permissionMap?.['tenant_id']?.edit,
+          // regex: REGEX_PATTERNS.BLENDED_NUMBER,
+          // regexErrorMessage:
+          //   'Only positive numbers allowed, up to 3 digits and 2 decimal places',
+        }),
+        createTextField('client_id', 'Client ID', {
+          required: emailRequried,
+          placeholder: 'Enter Client ID',
+          // disabled:
+          //   permissionMap?.['client_id']?.read &&
+          //   !permissionMap?.['client_id']?.edit,
+          // hide:
+          //   !permissionMap?.['client_id']?.read &&
+          //   !permissionMap?.['client_id']?.edit,
+          // regex: REGEX_PATTERNS.BLENDED_NUMBER,
+          // regexErrorMessage:
+          //   'Only positive numbers allowed, up to 3 digits and 2 decimal places',
+        }),
+        createTextField('client_secret', 'Client Secret', {
+          required: emailRequried,
+          placeholder: 'Enter Client Secret',
+          // disabled:
+          //   permissionMap?.['client_secret']?.read &&
+          //   !permissionMap?.['client_secret']?.edit,
+          // hide:
+          //   !permissionMap?.['client_secret']?.read &&
+          //   !permissionMap?.['client_secret']?.edit,
+          // regex: REGEX_PATTERNS.BLENDED_NUMBER,
+          // regexErrorMessage:
+          //   'Only positive numbers allowed, up to 3 digits and 2 decimal places',
         }),
         createRadioField('auto_assessment', 'Auto Assessment', {
           required: false,
@@ -47,59 +87,6 @@ export const ConfigureSettingsFormFields = (
             !permissionMap?.['auto_send_interaction']?.read &&
             !permissionMap?.['auto_send_interaction']?.edit,
         }),
-        // createTextField('support_email', 'Email', {
-        //   required: false,
-        //   placeholder: 'Enter Email',
-        //   onChange: true,
-        //   // disabled:
-        //   //   permissionMap?.['support_email']?.read &&
-        //   //   !permissionMap?.['support_email']?.edit,
-        //   // hide:
-        //   //   !permissionMap?.['support_email']?.read &&
-        //   //   !permissionMap?.['support_email']?.edit,
-        //   // regex: REGEX_PATTERNS.BLENDED_NUMBER,
-        //   // regexErrorMessage:
-        //   //   'Only positive numbers allowed, up to 3 digits and 2 decimal places',
-        // }),
-        // createTextField('tenant_id', 'Tenant ID', {
-        //   required: emailRequried,
-        //   placeholder: 'Enter Tenant ID',
-        //   // disabled:
-        //   //   permissionMap?.['tenant_id']?.read &&
-        //   //   !permissionMap?.['tenant_id']?.edit,
-        //   // hide:
-        //   //   !permissionMap?.['tenant_id']?.read &&
-        //   //   !permissionMap?.['tenant_id']?.edit,
-        //   // regex: REGEX_PATTERNS.BLENDED_NUMBER,
-        //   // regexErrorMessage:
-        //   //   'Only positive numbers allowed, up to 3 digits and 2 decimal places',
-        // }),
-        // createTextField('client_id', 'Client ID', {
-        //   required: emailRequried,
-        //   placeholder: 'Enter Client ID',
-        //   // disabled:
-        //   //   permissionMap?.['client_id']?.read &&
-        //   //   !permissionMap?.['client_id']?.edit,
-        //   // hide:
-        //   //   !permissionMap?.['client_id']?.read &&
-        //   //   !permissionMap?.['client_id']?.edit,
-        //   // regex: REGEX_PATTERNS.BLENDED_NUMBER,
-        //   // regexErrorMessage:
-        //   //   'Only positive numbers allowed, up to 3 digits and 2 decimal places',
-        // }),
-        // createTextField('client_secret', 'Client Secret', {
-        //   required: emailRequried,
-        //   placeholder: 'Enter Client Secret',
-        //   // disabled:
-        //   //   permissionMap?.['client_secret']?.read &&
-        //   //   !permissionMap?.['client_secret']?.edit,
-        //   // hide:
-        //   //   !permissionMap?.['client_secret']?.read &&
-        //   //   !permissionMap?.['client_secret']?.edit,
-        //   // regex: REGEX_PATTERNS.BLENDED_NUMBER,
-        //   // regexErrorMessage:
-        //   //   'Only positive numbers allowed, up to 3 digits and 2 decimal places',
-        // }),
       ],
     },
   ];

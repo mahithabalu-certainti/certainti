@@ -46,7 +46,8 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
       // If only list parameter exists, that's the active key
       setLocalActiveKey(listParam);
     }
-  }, []); // Empty dependency array - only run on mount
+  }, [searchParams]);
+
   const { modules, menus } = useSelector(
     (state: RootState) => state.permission
   );

@@ -61,7 +61,8 @@ const Details: React.FC<DetailsProps> = ({
   const [detailsTab, setDetailsTab] = useState(detailsTabs);
   const navigate = useNavigate();
   const [tabValue, setTabValue] = useState('');
-
+  const accountInActive =
+    accountDetails?.accountById?.status.status_name === 'inactive';
   const { permission } = useSelector((state: RootState) => state?.permission);
   const TriggerAIEnable = checkPermission(
     permission,
@@ -153,6 +154,7 @@ const Details: React.FC<DetailsProps> = ({
       label: 'Trigger AI',
       variant: 'outlined' as const,
       onClick: () => handleTriggerAI(),
+      disabled: accountInActive,
       loading: triggerAIMutation.isPending,
       sx: { ...BUTTON_STYLES, width: '96px', minWidth: '96px' },
       hide: !TriggerAIEnable,

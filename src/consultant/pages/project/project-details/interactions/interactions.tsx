@@ -224,22 +224,36 @@ const Interactions: React.FC<InteractionsProps> = ({
     [interactionResSources.data?.data.responseSource]
   );
 
+  const getDisableReason = (hasEmailRecipient: boolean, status: string) => {
+    if (!sendInteractionsEnable)
+      return 'Sending interactions permission is currently disabled. Please contact your administrator.';
+    if (!hasEmailRecipient)
+      return 'Key Contact is not available for this interaction';
+    if (status === StatusTypeEnum.sent)
+      return 'This interaction has already been sent';
+    if (status === StatusTypeEnum.response_draft)
+      return 'This interaction is currently in draft response stage';
+    if (status === StatusTypeEnum.response_received)
+      return 'A response has already been received for this interaction';
+    if (status === StatusTypeEnum.inqueue)
+      return 'This interaction is currently queued for sending';
+    if (status === '') return 'Interaction status is invalid or undefined';
+    return '';
+  };
+
   useEffect(() => {
     if (data) {
       const updatedInteractions =
         data.interactions?.map((item) => {
           const status = (item.status_name || '').toLowerCase();
+          const checkBoxMessage = getDisableReason(
+            item.has_email_recipient,
+            status
+          );
           return {
             ...item,
-            disableCheckBox:
-              !sendInteractionsEnable ||
-              !item.has_email_recipient ||
-              status === StatusTypeEnum.draft ||
-              status === StatusTypeEnum.cancelled ||
-              status === StatusTypeEnum.response_received ||
-              status === StatusTypeEnum.completed ||
-              status === StatusTypeEnum.on_hold ||
-              status === '',
+            disableCheckBox: !!checkBoxMessage,
+            checkBoxMessage,
           };
         }) || [];
 
@@ -315,6 +329,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       accountId,
       source: 'project',
       projectDetails: JSON.stringify(projectData),
+      project_fiscal_rid: row.project_fiscal_rid || '',
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
@@ -344,6 +359,13 @@ const Interactions: React.FC<InteractionsProps> = ({
       sx: { width: '125px', minWidth: '125px' },
       hide: Boolean(interactionResponseId),
     },
+    {
+      label: 'Back To Interaction Details',
+      variant: 'contained' as const,
+      onClick: () => handleBackFromResponse(),
+      sx: { width: '175px', minWidth: '175px' },
+      hide: Boolean(!viewResponseHistory),
+    },
   ];
 
   const handlePageChange = (newPage: number) => {
@@ -370,10 +392,15 @@ const Interactions: React.FC<InteractionsProps> = ({
     setSelectedRows(selectedData);
   };
 
-  const handleViewInteraction = (rowId: string, rNumber: string) => {
+  const handleViewInteraction = (
+    rowId: string,
+    rNumber: string,
+    proFiscalRid: string
+  ) => {
     if (rowId) {
       searchParams.set('interaction_id', rowId);
       searchParams.set('interaction_number', rNumber);
+      searchParams.set('project_fiscal_rid', proFiscalRid);
       navigate({ search: searchParams.toString() }, { replace: true });
       setSelectedRows([]);
       setCount(0);
@@ -415,6 +442,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       searchParams.delete('interaction_attachment_count');
       searchParams.delete('interaction_rid');
       searchParams.delete('interaction_number');
+      searchParams.delete('project_fiscal_rid');
       navigate({ search: searchParams.toString() }, { replace: true });
     }
   };
@@ -433,9 +461,10 @@ const Interactions: React.FC<InteractionsProps> = ({
   const disableInteractionEditBtn = (row: InteractionList): boolean => {
     const status = (row.status_name || '').toLowerCase() as StatusTypeEnum;
     return [
-      StatusTypeEnum.cancelled,
-      StatusTypeEnum.completed,
+      StatusTypeEnum.sent,
+      StatusTypeEnum.response_draft,
       StatusTypeEnum.response_received,
+      StatusTypeEnum.inqueue,
     ].includes(status);
   };
 
@@ -556,7 +585,7 @@ const Interactions: React.FC<InteractionsProps> = ({
             title={
               viewResponseHistory
                 ? `Interaction Response History ${interactionNumber}`
-                : 'Interaction'
+                : 'Interactions'
             }
             titleIcon={
               <InteractionDetailIcon
@@ -566,8 +595,6 @@ const Interactions: React.FC<InteractionsProps> = ({
             }
             count={viewResponseHistory ? count : totalItems}
             showItemCount={interactionResponseId ? false : true}
-            showBackArrow={viewResponseHistory}
-            onBackClick={handleBackFromResponse}
             buttons={headerButtons}
           />
           <div className='border border-[#CBD6E2]'>
@@ -590,7 +617,7 @@ const Interactions: React.FC<InteractionsProps> = ({
                   tableStyle={{
                     borderBottom: '1px solid #CBD6E2',
                     height: '100%',
-                    maxHeight: 'calc(100vh - 290px)',
+                    maxHeight: 'calc(100vh - 360px)',
                     overflow: 'auto',
                   }}
                   stickyHeader={true}

@@ -81,12 +81,12 @@ import {
 import DetailsSectionSkeleton from '../../../components/skeleton-component/detailsskeleton';
 import {
   exportInteractionsHistory,
-  exportInteractions,
+  exportAccountInteractions,
 } from '../../services/interactions/interactions-service';
 import { TimesheetProjectExportListURLParams } from '../../types/timesheet-projects';
 
 export const AccountDetails = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -121,6 +121,15 @@ export const AccountDetails = () => {
     permission,
     AllPermissions.ACCOUNT_RESOURCES_EXPORT
   );
+  const isResourceCostExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_RESOURCES_COST_EXPORT
+  );
+  const isResourceSkillExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_RESOURCES_SKILL_EXPORT
+  );
+
   const isProjectExportEnable = checkPermission(
     permission,
     AllPermissions.PROJECTS_EXPORT
@@ -133,9 +142,9 @@ export const AccountDetails = () => {
     permission,
     AllPermissions.PROJECTS_TASK_EXPORT
   );
-  const isAttachmentViewEnable = checkPermission(
+  const isAttachmentExportEnable = checkPermission(
     permission,
-    AllPermissions.ATTACHMENT_VIEW_EDIT
+    AllPermissions.ATTACHMENT_EXPORT
   );
 
   const isImportExportEnable = checkPermission(
@@ -264,6 +273,20 @@ export const AccountDetails = () => {
       filters: {},
       fiscalYear: 0,
     });
+  useEffect(() => {
+    const list = searchParams.get('list');
+    const tabParams = searchParams.get('tab');
+    const source = searchParams.get('source');
+    if (
+      tabParams !== 'details' &&
+      list !== 'projectsTask' &&
+      source === 'timesheet'
+    ) {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('source');
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const [exportType, setExportType] = useState<ExportType>('resource');
 
@@ -378,16 +401,10 @@ export const AccountDetails = () => {
       } else {
         const projectInteractionExportPayload = {
           account_rid: accountid || '',
-          fiscal_year: convertedFiscalYear,
-          page: interactionsParams?.page || 1,
-          limit: interactionsParams?.limit || 100,
-          sort: interactionsParams?.sortBy || 'action',
           sort_by: interactionsParams?.sortOrder || 'ASC',
           filters: interactionsParams?.filters || {},
-          timezone: systemTimezone,
-          flag: 'account',
         };
-        exportInteractions(projectInteractionExportPayload);
+        exportAccountInteractions(projectInteractionExportPayload);
         return;
       }
     } else {
@@ -466,12 +483,18 @@ export const AccountDetails = () => {
       return true;
     }
 
-    if (list === 'resources') {
+    if (list === 'resources' && !tab) {
       return !isResourcesExportEnable;
+    } else if (list === 'resources' && tab === 'cost') {
+      return !isResourceCostExportEnable;
+    } else if (list === 'resources' && tab === 'skill') {
+      return !isResourceSkillExportEnable;
+    } else if (list === 'resources' && tab === 'attachments') {
+      return !isAttachmentExportEnable;
     } else if (list === 'projects') {
       return !isProjectExportEnable;
     } else if (list === 'attachments') {
-      return !isAttachmentViewEnable;
+      return !isAttachmentExportEnable;
     } else if (list === 'imports') {
       return !isImportExportEnable;
     } else if (list === 'financial' && tab === 'resource_cost') {
@@ -523,10 +546,10 @@ export const AccountDetails = () => {
   };
   // Set active key from location stat
   useEffect(() => {
-    if (location.state?.activeKey) {
-      setActiveKey(location.state.activeKey);
-    }
-  }, [location.state]);
+    const listParam = searchParams.get('list');
+    setActiveKey(location.state?.activeKey || listParam || 'details');
+  }, [location.state, searchParams]);
+
   const renderContent = () => {
     switch (activeKey) {
       case 'financial':
@@ -714,7 +737,7 @@ export const AccountDetails = () => {
         icon: ChecklistIcon,
       },
       {
-        name: 'Timesheet',
+        name: 'Timesheets',
         key: 'timesheet',
         id: AllMenus.TIMESHEETS,
         disabled: disable,
@@ -733,8 +756,8 @@ export const AccountDetails = () => {
         name: 'Configuration',
         key: 'configuration',
         id: AllMenus.CONFIGURATION,
-        disabled: disable,
-        hide: disable,
+        disabled: false,
+        hide: false,
         icon: ConfigIcon,
         subMenu: [
           {
@@ -749,8 +772,8 @@ export const AccountDetails = () => {
             name: 'Settings',
             key: 'settings',
             id: AllMenus.ACCOUNT_SETTINGS,
-            disabled: disable,
-            hide: disable,
+            disabled: false,
+            hide: false,
             icon: SettingIcon,
           },
         ],
@@ -762,7 +785,7 @@ export const AccountDetails = () => {
   }, [disable, isFinancialHighlightsEnable]);
 
   const goBack = () => {
-    window.history.back();
+    navigate(ACCOUNT);
   };
 
   if (!accountIsEnable || !isAccountDetailsEnable) return <AccessRestricted />;
@@ -794,6 +817,7 @@ export const AccountDetails = () => {
           showActions={false}
           showSettings={false}
           goBack={goBack}
+          backBtnLabel='Back To Accounts'
           isLoading={isPending}
         />
       </div>
@@ -801,7 +825,7 @@ export const AccountDetails = () => {
         columns={accountDetails}
         loading={isPending}
         error={isError}
-        singleLineView={true}
+        singleLineView={false}
       />
       <div className='flex flex-1 flex-row w-full'>
         <div
@@ -824,7 +848,7 @@ export const AccountDetails = () => {
         </div>
         <div
           className='flex-1'
-          style={{ maxHeight: 'calc(100vh - 140px)', overflow: 'auto' }}
+          style={{ maxHeight: 'calc(100vh - 180px)', overflow: 'auto' }}
         >
           <Suspense fallback={null}>{renderContent()}</Suspense>
         </div>

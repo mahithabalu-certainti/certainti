@@ -1,6 +1,9 @@
 import { FormFiscalDateType } from '../../../../../types';
 import { FieldConfig } from '../../../../account-details-sidebar/components/filter/filterType';
-import { numberOptions } from '../../../../account-details-sidebar/sidebar-pages/projects/utils';
+import {
+  fiscalOptions,
+  numberOptions,
+} from '../../../../account-details-sidebar/sidebar-pages/projects/utils';
 const requiredFieldFilterOptionsForText: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
   { option: 'Not Equals', value: 'not_equals' },
@@ -19,7 +22,8 @@ export const projectTaskFilterFields = (
     string,
     { read: boolean; edit: boolean }
   >,
-  fiscalDatesArg?: FormFiscalDateType
+  fiscalDatesArg?: FormFiscalDateType,
+  memoizedResourceStatus?: { option: string; value: string }[]
 ): FieldConfig[] => [
   {
     name: 'Resource Code',
@@ -98,6 +102,16 @@ export const projectTaskFilterFields = (
     hide:
       !permissionMapTaskTableColumn?.['total_hours_pro_task']?.read &&
       !permissionMapTaskTableColumn?.['total_hours_pro_task']?.edit,
+  },
+  {
+    name: 'Status',
+    value: 'status_rid',
+    type: 'enum',
+    options: memoizedResourceStatus,
+    operatorOption: fiscalOptions,
+    hide:
+      !permissionMapTaskTableColumn?.['status_action']?.read &&
+      !permissionMapTaskTableColumn?.['status_action']?.edit,
   },
   {
     name: 'Comments',
