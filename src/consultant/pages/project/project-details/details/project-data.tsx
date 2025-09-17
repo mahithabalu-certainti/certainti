@@ -3,19 +3,13 @@ import { DetailsIcon, DetailsKeyContactErrorIcon } from '../../../../../assets';
 import TabPanel from './tab';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import ProjectOverview from './project-overview';
-import {
-  NewProjectData,
-  ProjectTriggerAIPayload,
-} from '../../../../types/project';
+import { NewProjectData } from '../../../../types/project';
 import {
   AllMenus,
   AllPermissions,
   Permissions,
 } from '../../../../../common-service';
 import { Box } from '@mui/material';
-import { ProjectTriggerAI } from '../../../../services/project';
-import { useToast } from '../../../../../hooks';
-import { checkPermission } from '../../../../../common-utils';
 
 const BUTTON_STYLES = {
   height: '26px !important',
@@ -99,32 +93,6 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
 
     navigate(`/project/edit/${projectDetails?.rid}?${queryParams.toString()}`);
   };
-  const { successToast } = useToast();
-  const triggerAIMutation = ProjectTriggerAI();
-  const handleTriggerAI = () => {
-    const payload: ProjectTriggerAIPayload = {
-      data: [
-        {
-          account_rid: projectDetails?.account_rid || '',
-          project_fiscal_rid: projectDetails?.rid ? [projectDetails.rid] : [],
-        },
-      ],
-      type: 'project',
-    };
-    triggerAIMutation.mutate(payload, {
-      onSuccess: (res) => {
-        successToast(res.statusMessage);
-      },
-      onError: (err) => {
-        console.log(err);
-      },
-    });
-  };
-
-  const TriggerAIEnable = checkPermission(
-    permission,
-    AllPermissions.TRIGGER_AI_ASSESSMENT
-  );
 
   const isKeyContactAvailable =
     projectDetails?.keyContact && projectDetails?.keyContact.length > 0;
@@ -156,15 +124,6 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
       sx: { ...BUTTON_STYLES, width: '96px', minWidth: '96px' },
       // hide: !projectDownloadIsEnable,
       hide: true,
-    },
-    {
-      label: 'Trigger AI',
-      variant: 'outlined' as const,
-      loading: triggerAIMutation.isPending,
-      disabled: accountInActive,
-      onClick: () => handleTriggerAI(),
-      sx: { ...BUTTON_STYLES, width: '96px', minWidth: '96px' },
-      hide: !TriggerAIEnable,
     },
     {
       label: 'Back To Timesheet',

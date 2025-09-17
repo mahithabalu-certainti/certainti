@@ -4,7 +4,10 @@ import {
   fiscalOptions,
   numberOptions,
 } from '../../../../account-details-sidebar/sidebar-pages/projects/utils';
-const requiredFieldFilterOptionsForText: { option: string; value: string }[] = [
+export const requiredFieldFilterOptionsForText: {
+  option: string;
+  value: string;
+}[] = [
   { option: 'Equals', value: 'equals' },
   { option: 'Not Equals', value: 'not_equals' },
   { option: 'Contains', value: 'contains' },
@@ -58,12 +61,12 @@ export const projectTaskFilterFields = (
   },
 
   {
-    name: 'Resource Role',
-    value: 'resource_role',
+    name: 'Project Resource Role',
+    value: 'project_resource_role',
     type: 'text',
     hide:
-      !permissionMapTaskTableColumn?.['resource_role']?.read &&
-      !permissionMapTaskTableColumn?.['resource_role']?.edit,
+      !permissionMapTaskTableColumn?.['project_resource_role']?.read &&
+      !permissionMapTaskTableColumn?.['project_resource_role']?.edit,
   },
   {
     name: 'Start Date',

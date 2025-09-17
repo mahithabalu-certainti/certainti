@@ -24,10 +24,13 @@ import {
   TechSummaryIcon,
   ConfigIcon,
 } from '../../../../assets';
-import { useProjectDetail } from '../../../services/project';
+import { useProjectDetail, ProjectTriggerAI } from '../../../services/project';
 import { transformProjectData } from '../utils';
 import ProjectDetailsData from './details/project-data';
-import { NewProjectData } from '../../../types/project';
+import {
+  NewProjectData,
+  ProjectTriggerAIPayload,
+} from '../../../types/project';
 import {
   ExportType,
   FiscalDates,
@@ -65,6 +68,8 @@ import {
 } from '../../../services/interactions/interactions-service';
 import { TechnicalSummary } from './technical-summary';
 import { exportTechnicalSummary } from '../../../services/technical-summary/technical-summary-service';
+import { BUTTON_STYLES } from '../../../../admin/pages/manage-user-detail/styles';
+import { useToast } from '../../../../hooks';
 
 export const ProjectDetails = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -433,6 +438,33 @@ export const ProjectDetails = () => {
     }
   }, [location.state]);
 
+  const { successToast } = useToast();
+  const triggerAIMutation = ProjectTriggerAI();
+  const handleTriggerAI = () => {
+    const payload: ProjectTriggerAIPayload = {
+      data: [
+        {
+          account_rid: projectData?.account_rid || '',
+          project_fiscal_rid: projectData?.rid ? [projectData.rid] : [],
+        },
+      ],
+      type: 'project',
+    };
+    triggerAIMutation.mutate(payload, {
+      onSuccess: (res) => {
+        successToast(res.statusMessage);
+      },
+      onError: (err) => {
+        console.log(err);
+      },
+    });
+  };
+
+  const TriggerAIEnable = checkPermission(
+    permission,
+    AllPermissions.TRIGGER_AI_ASSESSMENT
+  );
+
   const renderContent = () => {
     switch (activeKey) {
       case 'financial':
@@ -670,6 +702,16 @@ export const ProjectDetails = () => {
           title={data?.data?.project?.project_code}
           totalRecords={5}
           actionItems={menuItems}
+          headerButtons={[
+            {
+              label: 'RD Assessment',
+              onClick: handleTriggerAI,
+              disabled: accountInActive,
+              loading: triggerAIMutation.isPending,
+              sx: { ...BUTTON_STYLES, width: '115px', minWidth: '115px' },
+              hide: !TriggerAIEnable,
+            },
+          ]}
           primaryButton={
             isProjectFieldsEditable
               ? {

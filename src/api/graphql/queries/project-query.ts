@@ -223,6 +223,7 @@ export const UPDATE_PROJECT_RESOURCE = gql`
         project_fiscal_rid
         status_rid
         status_name
+        project_resource_role
       }
     }
   }
@@ -252,7 +253,7 @@ export const UPDATE_PROJECT_TASK = gql`
         resource_type_rid
         resource_type_name
         designation
-        resource_role
+        project_resource_role
         status_rid
         country_rid
         country_name

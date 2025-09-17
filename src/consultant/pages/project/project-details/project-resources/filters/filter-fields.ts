@@ -1,5 +1,6 @@
 import { FieldConfig } from '../../../../account-details-sidebar/components/filter/filterType';
 import { fiscalOptions } from '../../../../account-details-sidebar/sidebar-pages/projects/utils';
+import { requiredFieldFilterOptionsForText } from '../../project-task/filters/filter-fields';
 
 const requiredFieldFilterOptionsForEnum: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
@@ -79,6 +80,14 @@ export const projectResourceFilterFields = (
   // },
 
   {
+    name: 'Project Resource Role',
+    value: 'project_resource_role',
+    type: 'text',
+    hide:
+      !resourcepermissionMap?.['project_resource_role']?.read &&
+      !resourcepermissionMap?.['project_resource_role']?.edit,
+  },
+  {
     name: 'Effort Hours',
     value: 'total_hours_pro_res',
     type: 'number',
@@ -129,16 +138,16 @@ export const projectResourceFilterFields = (
       !resourcepermissionMap?.['description']?.edit,
   },
   // It may use in future, based on client confirmation
-  //   {
-  //     name: 'Resource ID',
-  //     value: 'r_number',
-  //     type: 'text',
-  //     required: true,
-  //     filterOptions: requiredFieldFilterOptionsForText,
-  //     // hide:
-  //     //   !resourcepermissionMap?.['r_number']?.read &&
-  //     //   !resourcepermissionMap?.['r_number']?.edit,
-  //   },
+  {
+    name: 'Project Resource ID',
+    value: 'r_number',
+    type: 'text',
+    required: true,
+    filterOptions: requiredFieldFilterOptionsForText,
+    hide:
+      !resourcepermissionMap?.['r_number']?.read &&
+      !resourcepermissionMap?.['r_number']?.edit,
+  },
   {
     name: 'Sort Options',
     value: 'sort_options',
