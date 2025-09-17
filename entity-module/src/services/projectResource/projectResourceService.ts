@@ -2076,6 +2076,8 @@ export class ProjectResourceService {
       "qre_final",
       "description",
       "project_resource_code",
+      "project_resource_role",
+      "r_number"
     ];
 
     if (!validSortColumns.includes(sortBy)) {
@@ -2160,6 +2162,8 @@ export class ProjectResourceService {
         dbField: "project_resource_code",
       },
       { clientField: "status_rid", dbField: "status_rid" },
+      { clientField: "project_resource_role", dbField: "project_resource_role" },
+      { clientField: "r_number", dbField: "r_number" },
     ];
 
     return projectFilterFields;
