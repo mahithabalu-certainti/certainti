@@ -119,7 +119,7 @@ export const fetchInteractionForProjectLevelQuery = (
             i.status_rid, i.recipient_name, i.recipient_email,
             i.sent_on_datetime, i.last_reminder_on, i.response_updated_on,
             i.response_submitted_on, i.response_source_rid, i.created_by, i.modified_by,
-            i.created_datetime, i.modified_datetime, p.r_number AS parent_r_number,
+            i.created_datetime, i.modified_datetime,
             i.account_rid, i.project_rid, i.rid AS interaction_history, 
             i.interaction_url,i.project_fiscal_rid,
             COUNT(i.rid) OVER() AS total_records, i.interaction_age,
@@ -128,7 +128,6 @@ export const fetchInteractionForProjectLevelQuery = (
 
             FROM
             ${schemaName}.interactions i
-            LEFT JOIN ${schemaName}.interactions p ON p.rid = i.parent_interaction_rid
             LEFT JOIN ${schemaName}.project_fiscal pf ON pf.rid = i.project_fiscal_rid
             WHERE
             ${whereConditions}
@@ -158,7 +157,6 @@ export const fetchInteractionForProjectLevelQuery = (
         'modified_by', i.modified_by,
         'created_datetime', i.created_datetime,
         'modified_datetime', i.modified_datetime,
-        'parent_interaction_rid', i.parent_r_number,
         'account_rid', i.account_rid,
         'project_rid', i.project_rid,
         'project_fiscal_rid', i.project_fiscal_rid,
@@ -845,7 +843,7 @@ export const interactionResponseHistoryByVersion = (
             AND
 			a.interaction_version = ${version}
         GROUP BY
-		    a.rid, a.r_number, p.project_name,
+		    a.rid, a.r_number, p.project_name,i.r_number,
             ii.question_seq_num, ii.question,
             a.interaction_response, a.response_on,i.response_updated_on,
             i.response_submitted_on, i.rid,

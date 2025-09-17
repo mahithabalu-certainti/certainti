@@ -60,33 +60,7 @@ class InteractionSchemaService {
       const { Interaction } = await this.interactionModelService.getModels(
         accountNumber
       );
-
-      // Find both parent interaction and max interaction iteration in one query
-      const interactions = await Interaction.findAll({
-        where: {
-          account_rid: interactionData.account_rid,
-          project_fiscal_rid: interactionData.project_fiscal_rid,
-        },
-        order: [["created_datetime", "DESC"]],
-      });
-      const maxIteration = interactions.reduce(
-        (max, curr) => Math.max(max, curr.interaction_iteration ?? 0),
-        0
-      );
-
-      const interactionExists =
-        interactions.length > 0 ? interactions[0] : null;
-
-      if (interactionExists) {
-        // Find parent interaction (first one created)
-        const parentInteraction =
-          interactions.length > 0
-            ? interactions[interactions.length - 1]
-            : null;
-        interactionData.parent_interaction_rid = parentInteraction?.rid || null;
-      }
-      interactionData.interaction_iteration = (maxIteration ?? 0) + 1;
-
+      
       const interaction = await Interaction.create(interactionData, {
         transaction,
       });
@@ -997,7 +971,7 @@ class InteractionSchemaService {
       let createdByIds: any[] = [...new Set(accountInteractions.map((user: any) => user.created_by))];
       let modifiedByIds: any[] = [...new Set(accountInteractions.map((user: any) => user.modified_by))];
       let statusIds: any[] = [...new Set(accountInteractions.map((user: any) => user.status_rid))];
-      let interactionTypeIds: any[] = [...new Set(accountInteractions.map((user: any) => user.interaction_type))];
+      let interactionTypeIds: any[] = [...new Set(accountInteractions.map((user: any) => user.interaction_type_rid))];
       let fetchCreatedByUsers = await this.mainDbSequelize.query(rawQueries.fetchUser(createdByIds));
       let fetchModifiedByUsers = await this.mainDbSequelize.query(rawQueries.fetchUser(modifiedByIds));
       let fetchStatusInfo = await this.mainDbSequelize.query(rawQueries.fetchStatus(statusIds));
@@ -1005,7 +979,7 @@ class InteractionSchemaService {
       let createdMap: Map<string, string> = new Map(fetchCreatedByUsers[0].map((user: any) => [user.rid, `${user.first_name} ${user.last_name}`]));
       let modifiedMap: Map<string, string> = new Map(fetchModifiedByUsers[0].map((user: any) => [user.rid, `${user.first_name} ${user.last_name}`]));
       let statusMap: Map<string, string> = new Map(fetchStatusInfo[0].map((status: any) => [status.rid, status.name]));
-      let interactionTypeMap: Map<string, string> = new Map(fetchInteractionTypeInfo[0].map((type: any) => [type.rid, type.name]));
+      let interactionTypeMap: Map<string, string> = new Map(fetchInteractionTypeInfo[0].map((type: any) => [type.rid, type.interaction_type_name]));
       let finalData = accountInteractions == null ? [] : accountInteractions.map((d: any) => {
         return {
           rid: d.rid,
@@ -2108,7 +2082,9 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       const latestResponse = await InteractionResponseHistory.max(
         "interaction_version",
         {
-          where: { interaction_rid: responseData.interaction_rid },
+          where: { interaction_rid: responseData.interaction_rid,
+            project_fiscal_rid: responseData.project_fiscal_rid
+           },
         }
       );
       if (latestResponse !== null && latestResponse !== undefined) {
@@ -3556,13 +3532,14 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     return insertedData
   }
 
-  async updateEmailSendFlag (interaction_rid : string) {
+  async updateEmailSendFlag (interaction_rid : string,project_fiscal_rid:string) {
     await SendEmailInfo.update({
       is_email_send : true
     }, 
     {
       where : {
-      interaction_rid : interaction_rid
+      interaction_rid : interaction_rid,
+      project_fiscal_rid : project_fiscal_rid
     }
     })
   }
