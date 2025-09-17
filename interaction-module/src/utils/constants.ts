@@ -480,7 +480,7 @@ export const rawQueries = {
   },
   fetchAccountDetailsById(schemaName: string): string {
     return `
-      SELECT rid, support_email, tenant_id, client_id, client_secret, subscription_created from ${schemaName}.account_details
+      SELECT rid, account_name, support_email, tenant_id, client_id, client_secret, subscription_created from ${schemaName}.account_details
       WHERE account_rid = :accountId
     `;
   },
@@ -640,6 +640,9 @@ export const rawQueries = {
       SELECT * from ${MAIN_SCHEMA_NAME}.organization_licenses
     `;
   },
+  fetchAccountRnumber (account_rid : string) {
+    return `SELECT r_number FROM ${MAIN_SCHEMA_NAME}.account where rid = '${account_rid}'`
+  }
 };
 
 export const filterTypesForSummaryInteractions : Record<string, any> = 

@@ -1524,13 +1524,16 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       );
       const response: InteractionDetailsResponse = {
         interaction_rid: rid,
+        r_number: r_number ?? "",
         project_name: metainfo?.project_name ?? "",
+        account_name : metainfo?.account_name ?? "",
+        account_rnumber : metainfo?.account_rnumber ?? "",
         project_code: metainfo?.project_code ?? "",
+        project_rnumber : metainfo?.project_rnumber ?? "",
         account_rid,
         project_rid,
         fiscal_year: metainfo?.fiscal_year ?? "",
         project_fiscal_rid,
-        r_number: r_number ?? "",
         interaction_type: interaction_type_rid ?? "",
         interaction_type_name: metainfo?.interaction_type_name ?? "",
         status: status_rid ?? "",
@@ -1745,6 +1748,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       let project_info: any = null;
       let hasEmailRecipient: boolean = false;
 
+      console.log("Interaction Details :  ", interactionDetails)
+
       if (interactionDetails?.dataValues?.interaction_type_rid) {
         const result = await this.mainDbSequelize.query(
           `SELECT rid, interaction_type_name FROM ${MAIN_SCHEMA_NAME}.interaction_type WHERE rid = :id`,
@@ -1792,12 +1797,23 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       const [emailInfoResult]: any = await this.orgDbSequelize.query(rawQueries.isEmailRecipientAvailable(interactionDetails?.dataValues?.project_fiscal_rid, schemaName, activeStatus?.rid));
       hasEmailRecipient = emailInfoResult[0]?.recipient_available ?? false;
               }
+      const schemaName = rawQueries.fetchSchemaName(accountNumber)
+      const account_details : any = await this.orgDbSequelize.query(
+        rawQueries.fetchAccountDetailsById(schemaName), 
+      {
+        replacements: { accountId : interactionDetails.dataValues.account_rid },
+        type : "SELECT"}
+      )
+      const accountRnumber : any = await this.mainDbSequelize.query(rawQueries.fetchAccountRnumber(interactionDetails.dataValues.account_rid))
       return {
         interaction_type_name: interaction_type?.interaction_type_name || null,
         interaction_status_name: interaction_status?.status_name || null,
         project_code: project_info?.project_code || null,
         project_name: project_info?.project_name || null,
+        project_rnumber : project_info?.r_number || null,
         fiscal_year: project_info?.fiscal_year || null,
+        account_name : account_details[0].account_name,
+        account_rnumber : accountRnumber[0][0].r_number,
         hasEmailRecipient:hasEmailRecipient
       };
 
