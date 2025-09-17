@@ -1644,7 +1644,6 @@ class ProjectIngestionService {
         whereFiscal.status_rid = activeId.rid
         whereProject.status_rid = activeId.rid
       }
-
       
       for (const key in filters) {
         const dbField = fiscalFieldMap[key];
