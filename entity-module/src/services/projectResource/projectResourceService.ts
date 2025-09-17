@@ -1104,7 +1104,8 @@ export class ProjectResourceService {
     limit: number,
     filters: Record<string, string>,
     sortBy: string,
-    sortOrder: string
+    sortOrder: string,
+    search : string,
   ): Promise<{
     statusCode: number;
     message: string;
@@ -1129,7 +1130,7 @@ export class ProjectResourceService {
       const order: Order = [[finalSortBy, finalSortOrder]];
 
       // construct filters
-      const { whereClause } = this.buildWhereClause(filters);
+      const { whereClause } = this.buildWhereClause(filters, search);
 
       let { data: projectResources, count } =
         await this.projectResourceSchema.listProjectResourceSchema(
@@ -1168,7 +1169,8 @@ export class ProjectResourceService {
     filters: Record<string, string>,
     sortBy: string,
     sortOrder: string,
-    userId: string
+    userId: string,
+    search : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -1191,7 +1193,7 @@ export class ProjectResourceService {
       const order: Order = [[finalSortBy, finalSortOrder]];
 
       // construct filters
-      const { whereClause } = this.buildWhereClause(filters);
+      const { whereClause } = this.buildWhereClause(filters, search);
 
       const projectResources =
         await this.projectResourceSchema.exportProjectResourceSchema(
@@ -2086,15 +2088,27 @@ export class ProjectResourceService {
     return [sortBy, sortOrder];
   }
 
-  buildWhereClause(filters: Record<string, any>): {
+  buildWhereClause(filters: Record<string, any>, search: string): {
     whereClause: Record<string, any>;
   } {
-    let whereClause: Record<string, any> = {};
-
-    whereClause = this.applyFilters(filters, whereClause);
-
-    return { whereClause };
+    const whereClause: any = {
+      [Op.and]: [],
+    };
+    if (search) {
+      whereClause[Op.and].push({
+        [Op.or]: [
+          { "$project_resource_resource.resource_name$": { [Op.iLike]: `%${search}%` } },
+          { "$project_resource_resource.resource_code$": { [Op.iLike]: `%${search}%` } },
+        ],
+      });
+    }
+    const filterConditions = this.applyFilters(filters, {});
+    if (Object.keys(filterConditions).length > 0) {
+      whereClause[Op.and].push(filterConditions);
+    }
+    return { whereClause: whereClause[Op.and].length ? whereClause : {} };
   }
+
 
   private applyFilters(
     filters: Record<string, any>,

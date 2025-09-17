@@ -561,7 +561,8 @@ export interface IProjectResourceService {
     limit: number,
     filters: Record<string, string>,
     sortBy: string,
-    sortOrder: string
+    sortOrder: string,
+    search : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -575,7 +576,8 @@ export interface IProjectResourceService {
     filters: Record<string, string>,
     sortBy: string,
     sortOrder: string,
-    userId: string
+    userId: string,
+    search : string
   ): Promise<{
     statusCode: number;
     message: string;

@@ -5204,7 +5204,7 @@ export class ProjectResourceSchemaService {
     sortBy: string,
     sortOrder: string
   ) {
-    const { ProjectResource } = await this.getModels(accountNumber);
+    const { ProjectResource, Resources } = await this.getModels(accountNumber);
 
     const whereFilters: any = {
       account_rid: accountId,
@@ -5238,12 +5238,28 @@ export class ProjectResourceSchemaService {
       where: {
         ...whereFilters,
       },
+      include: [
+          {
+            model: Resources,
+            attributes: [],
+            required: false,
+            as: "project_resource_resource",
+          }
+        ]
     });
 
     let totalCount = await ProjectResource.count({
       where: {
         ...whereFilters,
       },
+       include: [
+        {
+          model: Resources,
+          attributes: [],
+          required: false,
+          as: "project_resource_resource",
+        },
+      ],
     });
 
     if (projectResource && projectResource.length > 0) {
