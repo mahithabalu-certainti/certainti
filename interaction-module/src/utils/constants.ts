@@ -641,7 +641,7 @@ export const rawQueries = {
     `;
   },
   fetchAccountRnumber (account_rid : string) {
-    return `SELECT r_number FROM ${MAIN_SCHEMA_NAME}.account where rid = '${account_rid}'`
+    return `SELECT account_name , r_number FROM ${MAIN_SCHEMA_NAME}.account where rid = '${account_rid}'`
   }
 };
 
