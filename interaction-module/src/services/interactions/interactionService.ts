@@ -247,7 +247,7 @@ export class InteractionService {
       const isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(accountNumber, interactionData.project_fiscal_rid);
       this.logger.info(`Is email recipient available: ${isEmailRecipientAvailable} for interaction: ${interaction.dataValues.rid} with project fiscal:${interactionData.project_fiscal_rid}`);
       if(interactionStatus === statusAction.DRAFT && isEmailRecipientAvailable)
-      await this.checkAutoSendEnabled(accountNumber,interactionData,interaction.rid,userId);
+      await this.checkAutoSendEnabled(accountNumber,interactionData,interaction.rid,userId,interactionData?.account_rid);
        else
        {
         if(!isEmailRecipientAvailable && interactionStatus === statusAction.DRAFT)
@@ -276,48 +276,78 @@ export class InteractionService {
         };
     }
   }
-  async checkAutoSendEnabled(accountNumber: string, interactionData: ICreateInteraction, interactionId: string, userId: string) {
+  async checkAutoSendEnabled(accountNumber: string, interactionData: ICreateInteraction, interactionId: string, userId: string, accountRid: string) {
     const isEnabled = await this.interactionSchemaService.isAutoSendInteractionEnabled(accountNumber, interactionData, interactionId);
     this.logger.info(`Auto-send is ${isEnabled ? "enabled" : "disabled"} for interaction ID: ${interactionId}`);
     if (isEnabled) {
        const projectInfo = await this.interactionSchemaService.fetchProjectInfo(accountNumber, interactionData.project_fiscal_rid);
+       const accountInfo = await this.interactionSchemaService.fetchAccountInfo(accountRid, accountNumber);
       const { AutoSendInteractionAudit } = await this.interactionModelService.getModels(accountNumber);
-      const ismaxInteractionsSent = await this.checkMaxQuarterlyInteractions(AutoSendInteractionAudit, interactionData.project_fiscal_rid, projectInfo.max_ai_interaction);
+      const ismaxInteractionsSent = await this.checkMaxQuarterlyInteractions(AutoSendInteractionAudit, interactionData.project_fiscal_rid, projectInfo.max_ai_interaction,accountInfo);
       if (!ismaxInteractionsSent) return;
       await this.sendInteraction([{ interaction_rid: interactionId,
         project_fiscal_rid: interactionData.project_fiscal_rid
-       }], interactionData.account_rid, userId, false);
+       }], interactionData.account_rid, userId, false,'Auto-Send');
     }
   }
    async  checkMaxQuarterlyInteractions(
     AiSendInteraction: any,
     projectFiscalRid: string,
-    maxInteractions: number
+    maxInteractions: number,
+    accountInfo: { fiscal_start_date: string; fiscal_end_date: string }
   ) {
     const now = new Date();
-    let year = now.getFullYear();
-    const month = now.getMonth(); // 0-based
-    // Fiscal year starts in April
-    // Q1: Apr-Jun, Q2: Jul-Sep, Q3: Oct-Dec, Q4: Jan-Mar (next year)
-    let quarter, quarterStart, quarterEnd;
-    if (month >= 3 && month <= 5) { // Apr-Jun
-      quarter = 1;
-      quarterStart = new Date(year, 3, 1); // April 1
-      quarterEnd = new Date(year, 6, 0, 23, 59, 59, 999); // June 30
-    } else if (month >= 6 && month <= 8) { // Jul-Sep
-      quarter = 2;
-      quarterStart = new Date(year, 6, 1); // July 1
-      quarterEnd = new Date(year, 9, 0, 23, 59, 59, 999); // Sep 30
-    } else if (month >= 9 && month <= 11) { // Oct-Dec
-      quarter = 3;
-      quarterStart = new Date(year, 9, 1); // Oct 1
-      quarterEnd = new Date(year, 12, 0, 23, 59, 59, 999); // Dec 31
-    } else { // Jan-Mar
-      quarter = 4;
-      // For Jan-Mar, fiscal year is previous year
-      year = year - 1;
-      quarterStart = new Date(year + 1, 0, 1); // Jan 1
-      quarterEnd = new Date(year + 1, 3, 0, 23, 59, 59, 999); // Mar 31
+    // Parse fiscal start and end month/day
+    // Format: MM/DD (e.g., "01/12" for Jan 12)
+    function parseFiscalDate(dateStr: string, year: number): Date {
+      const [mmRaw, ddRaw] = dateStr.split("/");
+      const mm = mmRaw !== undefined ? Number(mmRaw) : undefined;
+      const dd = ddRaw !== undefined ? Number(ddRaw) : undefined;
+      if (
+        mm === undefined || dd === undefined ||
+        isNaN(mm) || isNaN(dd) ||
+        mm < 1 || mm > 12 || dd < 1 || dd > 31
+      ) {
+        throw new Error(`Invalid fiscal date format: ${dateStr}`);
+      }
+      return new Date(year, mm - 1, dd);
+    }
+    // Get fiscal year for current date
+    let fiscalStart = parseFiscalDate(accountInfo.fiscal_start_date, now.getFullYear());
+    let fiscalEnd = parseFiscalDate(accountInfo.fiscal_end_date, now.getFullYear());
+    if (now < fiscalStart) {
+      fiscalStart = parseFiscalDate(accountInfo.fiscal_start_date, now.getFullYear() - 1);
+      fiscalEnd = parseFiscalDate(accountInfo.fiscal_end_date, now.getFullYear());
+    }
+    // Calculate quarters (start on 1st, end on last day of 3rd month)
+    const quarters = [];
+    let qStart = new Date(fiscalStart);
+    for (let i = 0; i < 4; i++) {
+      // Quarter start: always 1st of the month
+      const start = new Date(qStart.getFullYear(), qStart.getMonth(), 1);
+      // Quarter end: last day of the third month
+      const end = new Date(qStart.getFullYear(), qStart.getMonth() + 3, 0);
+      quarters.push({ start, end });
+      // Next quarter starts on the 1st of the next third month
+      qStart = new Date(qStart.getFullYear(), qStart.getMonth() + 3, 1);
+    }
+  console.log(`Fiscal Year Start: ${fiscalStart.toISOString()}, End: ${fiscalEnd.toISOString()}`);
+  console.log("Calculated Quarters new:",quarters);  
+    // Find current quarter
+    let quarterStart, quarterEnd;
+    for (const q of quarters) {
+      if (now >= q.start && now <= q.end) {
+        quarterStart = q.start;
+        quarterEnd = new Date(q.end.getFullYear(), q.end.getMonth(), q.end.getDate(), 23, 59, 59, 999);
+        console.log(`Current quarter: Start = ${quarterStart.toISOString()}, End = ${quarterEnd.toISOString()}`);
+        break;
+      }
+    }
+    if (!quarterStart || !quarterEnd) {
+      // Fallback: use fiscal year start/end
+      quarterStart = fiscalStart;
+      quarterEnd = fiscalEnd;
+      console.log(`Fallback to fiscal year: Start = ${quarterStart.toISOString()}, End = ${quarterEnd.toISOString()}`);
     }
     const sentCount = await AiSendInteraction.count({
       where: {
@@ -402,7 +432,7 @@ export class InteractionService {
       await transaction.commit();
       const isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(accountNumber, interactionData.interaction_rid);
       if(interactionStatus === statusAction.DRAFT && isEmailRecipientAvailable)
-      await this.checkAutoSendEnabled(accountNumber,interactionData,interactionData.interaction_rid,userId);
+      await this.checkAutoSendEnabled(accountNumber,interactionData,interactionData.interaction_rid,userId, interactionData?.account_rid);
       else{
         if(!isEmailRecipientAvailable && interactionStatus === statusAction.DRAFT)
         {
@@ -423,6 +453,7 @@ export class InteractionService {
         },
       };
     } catch (err) {
+      console.log("Error updating resource", err);
       await transaction.rollback();
       this.logger.error("Error updating interaction", err);
        return {
@@ -1137,7 +1168,8 @@ export class InteractionService {
     }[],
     accountRid: string,
     userId: string,
-    is_interaction_followup: boolean
+    is_interaction_followup: boolean,
+    type: string = interactionSource.MANUAL
   ): Promise<{
     statusCode: number;
     message: string;
@@ -1173,7 +1205,10 @@ export class InteractionService {
         data.is_interaction_followup = is_interaction_followup
         this.logger.info(`Email info to be sent: ${JSON.stringify(data)}`);
         await this.interactionSchemaService.insertEmailInfoDatas(data);
-        await this.interactionSchemaService.createAutoSendInteractionEntry(accountNumber, interaction_rid, project_fiscal_rid, email_info);
+        if(type === 'Auto-Send')
+        {
+          await this.interactionSchemaService.createAutoSendInteractionEntry(accountNumber, interaction_rid, project_fiscal_rid, email_info);
+        }
         await orgDb.query(rawQueries.updateInteractionStatus(schemaName, fetchInQueueStatus[0][0].rid, interaction_rid))
         await mainDb.query(rawQueries.updateInteractionSummaryStatus(fetchInQueueStatus[0][0].rid, interaction_rid))
         interactionResponse.push({

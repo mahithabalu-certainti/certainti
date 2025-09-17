@@ -3166,6 +3166,29 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       throw new Error("Error updating QRE percent: " + (err as Error).message);
     }
   }
+   async fetchAccountInfo(accountRid: string, accountNumber: string) {
+    try {
+      if (!this.orgDbSequelize) {
+        this.orgDbSequelize = await this.interactionModelService.getSequelize();
+      }
+      const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+        /\D/g,
+        ""
+      )}`;
+
+      const [accountInfo]: any[] = await this.orgDbSequelize.query(
+        rawQueries.fetchAccountDetailsInfo(accountRid, schemaName),
+        { type: "SELECT" }
+      );
+
+      return accountInfo;
+    } catch (err) {
+      throw new Error("Error fetching account info: " + (err as Error).message);
+    }
+  }
+   
+
+  
   async updateAIProcessed(
     accountNumber: string,
     projectFiscalRid: string,

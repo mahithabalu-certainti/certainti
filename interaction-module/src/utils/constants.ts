@@ -338,6 +338,11 @@ export const rawQueries = {
     return `
     SELECT rid, account_name,r_number,parent_account_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`;
   },
+   fetchAccountDetailsInfo(rid: string,schemaName: string) {
+    return `
+    SELECT rid, fiscal_start_date,fiscal_end_date FROM ${schemaName}.account_details WHERE account_rid = '${rid}'`;
+  },
+  
   fetchPreviousInteractionStatus(statusRid: string, schemaName: string) {
     return `
     SELECT old_status_rid FROM ${schemaName}.interaction_status_history WHERE new_status_rid = '${statusRid}' ORDER BY created_datetime DESC LIMIT 1`;
