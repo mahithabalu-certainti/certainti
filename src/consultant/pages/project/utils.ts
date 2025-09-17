@@ -1,3 +1,5 @@
+import { costDisplay } from "../../../common-utils";
+
 interface ProjectResponse {
   project: projectDetails;
 }
@@ -180,8 +182,8 @@ export const transformProjectData = (
           value: project?.organistaion_name || '-',
         }, 
         {
-          label: 'Project Cost',
-          value: project?.total_cost?.toString() || '-',
+          label: 'Project Cost', 
+          value: project?.total_cost ? costDisplay(project?.total_cost, project?.currency_symbol) : '-',
         },
       ],
     },
@@ -195,7 +197,7 @@ export const transformProjectData = (
         }, 
         {
           label: 'FTE Cost',
-          value: project?.total_cost_fte?.toString() || '-',
+          value: project?.total_cost_fte ? costDisplay(project?.total_cost_fte, project?.currency_symbol) : '-',
         },
       ],
     },
@@ -211,7 +213,7 @@ export const transformProjectData = (
         }, 
          {
           label: 'SubCon Cost',
-          value: project?.total_cost_subcon?.toString() || '-',
+          value: project?.total_cost_subcon ? costDisplay(project?.total_cost_subcon, project?.currency_symbol) : '-',
         },
       ],
     },
@@ -228,7 +230,7 @@ export const transformProjectData = (
         },
          {
           label: 'Non-Labor Cost',
-          value: project?.total_cost_nonlabor?.toString() || '-',
+          value: project?.total_cost_nonlabor ? costDisplay(project?.total_cost_nonlabor, project?.currency_symbol) : '-',
         },
       ],
     },
