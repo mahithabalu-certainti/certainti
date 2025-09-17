@@ -89,6 +89,10 @@ const ImportFile: React.FC<ImportFileProps> = ({
 
   const showError = (text: string) => {
     setMessage({ type: 'error', text });
+    setSelectedFiles([]);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const ACCEPTED_FILE_TYPES = [
@@ -379,10 +383,10 @@ const ImportFile: React.FC<ImportFileProps> = ({
             </div>
 
             {/* Reserved space for error messages to prevent button movement */}
-            <div className='w-[502px] max-w-[502px] mt-2 h-[20px]'>
+            <div className='w-[502px] max-w-[502px] mt-2'>
               {message && (
                 <div
-                  className={`break-all text-sm ${
+                  className={`text-sm ${
                     message.type === 'error' ? 'text-red-600' : 'text-green-600'
                   }`}
                 >

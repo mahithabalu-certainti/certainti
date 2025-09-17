@@ -343,12 +343,12 @@ const Projects: React.FC<ProjectsProps> = ({
       hide: !projectCreateIsEnable,
     },
     {
-      label: 'Trigger AI',
+      label: 'RD Assessment',
       variant: 'outlined' as const,
       disabled: accountInActive || selectedTableId.length === 0,
       onClick: () => handleTriggerAIBtn(),
       loading: triggerAIMutation.isPending,
-      sx: { ...BUTTON_STYLES, width: '80px', minWidth: '80px' },
+      sx: { ...BUTTON_STYLES, width: '115px', minWidth: '115px' },
       hide: !TriggerAIEnable,
     },
     {
