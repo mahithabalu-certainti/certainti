@@ -187,9 +187,35 @@ export class ProjectInjestionTaskService {
           total_hours_from_tasks : projectTaskData.total_hours_pro_task,
           total_cost_from_tasks : projectTaskData.total_cost_pro_task
           }
-          console.log("projectResourceData ===> ", projectResourceData)
           await this.projectResourceSchema.updateProjectResourceRecords(accountNumber, projectResourceData, userId, resourceData.rid!, projectData, activeStatusId, transaction)
           projectResourceResult = findResourceAlreadyInPrjResource[0][0].rid
+        } else if(findResourceAlreadyInPrjResource[0][0].project_resource_role !== resourceData.resource_role){
+            let projectResourceData : any = {
+            account_rid : account_rid,
+            project_fiscal_rid : project_fiscal_rid,
+            resource_id : resourceData.rid,
+            project_code : projectData.project_code,
+            resource_code : resourceData.resource_code,
+            project_resource_role : resourceData.resource_role,
+            assigned_skill_role_type_rid: null,
+            skill_role_rid: null,
+            skill_role_others: null,
+            status_rid : activeStatusId,
+            fiscal_year : projectData.fiscal_year,
+            created_by : userId,
+            country_rid : null,
+            start_date : projectTaskData.start_date,
+            end_date : projectTaskData.end_date,
+            comments : projectTaskData.comments,
+            total_hours_from_tasks : projectTaskData.total_hours_pro_task,
+            total_cost_from_tasks : projectTaskData.total_cost_pro_task,
+            currency_rid : projectTaskData.currency_rid,
+            region_rid : projectTaskData.region_rid,
+            }
+            const prjResresult = await this.projectResourceSchema.addProjectResources(accountNumber, projectResourceData, projectData, userId)
+            if(prjResresult) {
+              projectResourceResult = prjResresult.dataValues.rid
+            }
         } else {
           projectResourceResult = findResourceAlreadyInPrjResource[0][0].rid
         }
