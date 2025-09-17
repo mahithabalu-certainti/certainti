@@ -1747,11 +1747,6 @@ class ProjectIngestionService {
       whereFiscal = {
         account_rid: accountData.rid,
       };
-       if(apiSource === "interaction"){
-        const [activeId] : any[] = await this.mainDbSequelize!.query(rawQueries.fetchActiveStatus(),{type:"SELECT"})
-        whereFiscal.status_rid = activeId.rid
-        whereProject.status_rid = activeId.rid
-      }
       
       for (const key in filters) {
         const dbField = fiscalFieldMap[key];
@@ -1818,17 +1813,6 @@ class ProjectIngestionService {
               account_rid: accountData.rid,
               ...whereFiscal,
               ...(apiSource === "interactionCount"  ? { rid: accountInteractionId } : {}),
-              ...(apiSource === "interaction"
-          ? {
-              [Op.and]: [
-                literal(`EXISTS (
-            SELECT 1 FROM "${schemaName}"."key_contact_details" kc
-            WHERE kc.entity_rid = "ProjectFiscal"."rid"
-              AND kc.include_in_communication = true
-                )`)
-              ]
-            }
-          : {}),
             },
             include: documentRid ? [{
           model: ProjectTimeline,
@@ -1854,15 +1838,25 @@ class ProjectIngestionService {
             [Sequelize.col("total_cost_subcon_prj"), "total_cost_subcon"],
             [Sequelize.col("total_cost_nonlabor_prj"), "total_cost_nonlabor"],
             ...(apiSource === "interaction"
-          ? [[
-              Sequelize.literal(`EXISTS (
-            SELECT 1 FROM "${schemaName}"."interactions" i 
-            WHERE i.project_fiscal_rid = "ProjectFiscal"."rid"
-              AND i.account_interaction_rid IN (${accountInteractionId.map((id: string) => `'${id}'`).join(",")})
-              )`),
-              "isInteractionMapped"
-            ] as [any, string]]
-          : []),
+              ? [
+                  [
+                    Sequelize.literal(`EXISTS (
+                      SELECT 1 FROM "${schemaName}"."interactions" i 
+                      WHERE i.project_fiscal_rid = "ProjectFiscal"."rid"
+                        AND i.account_interaction_rid IN (${accountInteractionId.map((id: string) => `'${id}'`).join(",")})
+                    )`),
+                    "isInteractionMapped"
+                  ] as [any, string],
+                  [
+                    Sequelize.literal(`EXISTS (
+                      SELECT 1 FROM "${schemaName}"."key_contact_details" kc
+                      WHERE kc.entity_rid = "ProjectFiscal"."rid"
+                        AND kc.include_in_communication = true
+                    )`),
+                    "isKeyContactIncluded"
+                  ] as [any, string]
+                ]
+              : []),
           ] as (string | [string | ReturnType<typeof Sequelize.fn> | ReturnType<typeof Sequelize.col> | ReturnType<typeof Sequelize.literal>, string])[],
         },
           },
