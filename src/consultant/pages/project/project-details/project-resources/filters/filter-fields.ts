@@ -144,9 +144,9 @@ export const projectResourceFilterFields = (
     type: 'text',
     required: true,
     filterOptions: requiredFieldFilterOptionsForText,
-    // hide:
-    //   !resourcepermissionMap?.['r_number']?.read &&
-    //   !resourcepermissionMap?.['r_number']?.edit,
+    hide:
+      !resourcepermissionMap?.['r_number']?.read &&
+      !resourcepermissionMap?.['r_number']?.edit,
   },
   {
     name: 'Sort Options',
