@@ -438,3 +438,9 @@ export interface IAnomalyStatus {
   resourceCode: string;
   type: string
 }
+
+export interface IUpdateQrePecentAdjustment {
+  rid: string,
+  accountId: string,
+  rd_percent_potential_ai: number;
+}

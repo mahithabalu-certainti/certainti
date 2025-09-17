@@ -34,6 +34,11 @@ routes.post(
   checkUserStatusMiddleware("projects_create"),
   controller.projectController.createProject
 );
+routes.post(
+  "/qreAdjustment",
+  checkUserStatusMiddleware("projects_view_edit"),
+  controller.projectController.updateQreAdjutment
+);
 routes.put(
   "/update",
   checkUserStatusMiddleware("projects_view_edit"),

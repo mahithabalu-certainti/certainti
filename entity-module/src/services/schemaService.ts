@@ -46,10 +46,8 @@ import { MAIN_SCHEMA_NAME, primaryKeyContacts, rawQueries } from "../utils/const
 import {
   ResourceFiscalRegion,
   setupResourceFiscalRegionSeq,
-} from "../models/resourceFiscalRegion";
-import { ProjectResource } from "../models/projectResource";
-import { ProjectResourceFiscal } from "../models/projectResourceFiscal";
-import { ProjectResourceFiscalRegion } from "../models/projectResourceFiscalRegion";
+} from "../models/resourceFiscalRegion"
+import { ProjectFiscal } from "../models/projectFiscal";
 
 // import { Skill } from "../models/skill";
 class SchemaService {
@@ -4093,6 +4091,64 @@ class SchemaService {
       );
     }
   }
+
+  async updateQreAdjustmentCalculation(
+    accountNumber: string,
+    projectFiscalId: string,
+    qreAdjustment: number,
+    userId: string
+  ) {
+    const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+    const sequelize = await initOrgSequelize();
+  
+    const projectFiscalData: any = await sequelize.query(
+      rawQueries.fetchProjectFiscalById(schemaName,projectFiscalId ),
+      {
+        type: QueryTypes.SELECT,
+      }
+    );
+  
+    if (!projectFiscalData && projectFiscalData.length === 0) {
+      throw new Error("Invalid Project Id");
+    };
+
+    const projectFiscalDetails = projectFiscalData[0];
+  
+    const existingPercent = projectFiscalDetails.rd_percent_potential_ai ?? 0;
+
+    if(existingPercent && existingPercent > 0){
+      const netQre = qreAdjustment + existingPercent;
+  
+      const totalCost = projectFiscalDetails.total_cost_prj ?? 0;
+      const totalFteCost = projectFiscalDetails.total_cost_fte_prj ?? 0;
+      const totalSubconCost = projectFiscalDetails.total_cost_subcon_prj ?? 0;
+      const totalNonlaborCost = projectFiscalDetails.total_cost_nonlabor_prj ?? 0;
+    
+      const qreFinalCost = totalCost / netQre;
+      const qreFteCost = totalFteCost / netQre;
+      const qreSubconCost = totalSubconCost / netQre;
+      const qreNonlaborCost = totalNonlaborCost / netQre;
+
+      await sequelize.query(
+        rawQueries.updateProjectFiscalQre(schemaName, 
+          {
+            rd_percent_adjustment: qreAdjustment,
+            rd_percent_final: netQre,
+            qre_final: qreFinalCost,
+            qre_fte: qreFteCost,
+            qre_subcon: qreSubconCost,
+            qre_nonlabor: qreNonlaborCost,
+            modified_by: userId,
+            modified_datetime: new Date(),
+            rid: projectFiscalId
+          }
+        ),
+        {
+          type: QueryTypes.SELECT,
+        }
+      );
+    }
+  }  
 }
 
 export default SchemaService;

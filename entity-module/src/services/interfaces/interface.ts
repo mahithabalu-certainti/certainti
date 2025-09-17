@@ -11,6 +11,7 @@ import {
   IUpdateProject,
   IUpdateProjectResource,
   IUpdateProjectTask,
+  IUpdateQrePecentAdjustment,
   IUpdateResource,
   IUpdateResourceCost,
   IUpdateResourceSkill,
@@ -379,6 +380,15 @@ export interface IProjectService {
     message: string;
     errorMessage?: string;
     data?: { projects: any; count: number };
+  }>;
+  updateQrePercentAdjustment(
+    data: IUpdateQrePecentAdjustment,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: any;
   }>;
 }
 
