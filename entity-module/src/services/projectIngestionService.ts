@@ -404,12 +404,12 @@ class ProjectIngestionService {
         value: JSON.stringify(payload),
       };
       const producer = await this.getProducer();
-      // const sendResult = await producer.send({
-      //   topic,
-      //   messages: [message],
-      // });
-      // Check if the message was processed successfully
-    //  console.log("Send result to topic", sendResult);
+       const sendResult = await producer.send({
+         topic,
+         messages: [message],
+       });
+    //   Check if the message was processed successfully
+     console.log("Send result to topic", sendResult);
       return {
         statusMessage: "AI Assessment Initiated",
         status: "success",
