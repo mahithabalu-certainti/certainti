@@ -11,11 +11,6 @@ import { AllMenus, AllPermissions } from '../../../../../common-service';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import DetailsSectionSkeleton from '../../../../../components/skeleton-component/detailsskeleton';
-import { ProjectTriggerAI } from '../../../../services/project';
-import { ProjectTriggerAIPayload } from '../../../../types/project';
-import { useToast } from '../../../../../hooks';
-import { checkPermission } from '../../../../../common-utils';
-// import { checkPermission } from '../../../../../common-utils';
 
 const BUTTON_STYLES = {
   height: '26px !important',
@@ -61,13 +56,7 @@ const Details: React.FC<DetailsProps> = ({
   const [detailsTab, setDetailsTab] = useState(detailsTabs);
   const navigate = useNavigate();
   const [tabValue, setTabValue] = useState('');
-  const accountInActive =
-    accountDetails?.accountById?.status.status_name === 'inactive';
   const { permission } = useSelector((state: RootState) => state?.permission);
-  const TriggerAIEnable = checkPermission(
-    permission,
-    AllPermissions.TRIGGER_AI_ASSESSMENT
-  );
 
   const isAccountDetailActivityEnable = false;
 
@@ -99,28 +88,6 @@ const Details: React.FC<DetailsProps> = ({
     const accountId = accountDetails?.accountById?.rid || '';
     navigate(ACCOUNT + '/edit/' + accountId);
   };
-  const { successToast } = useToast();
-  const triggerAIMutation = ProjectTriggerAI();
-  const handleTriggerAI = () => {
-    const accountId = accountDetails?.accountById?.rid || '';
-    const payload: ProjectTriggerAIPayload = {
-      data: [
-        {
-          account_rid: accountId,
-          project_fiscal_rid: [],
-        },
-      ],
-      type: 'account',
-    };
-    triggerAIMutation.mutate(payload, {
-      onSuccess: (res) => {
-        successToast(res.statusMessage);
-      },
-      onError: (err) => {
-        console.log(err);
-      },
-    });
-  };
 
   const menuActivity = [
     {
@@ -149,15 +116,6 @@ const Details: React.FC<DetailsProps> = ({
       onClick: handleEdit,
       sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
       hide: !isAccountEditEnable,
-    },
-    {
-      label: 'Trigger AI',
-      variant: 'outlined' as const,
-      onClick: () => handleTriggerAI(),
-      disabled: accountInActive,
-      loading: triggerAIMutation.isPending,
-      sx: { ...BUTTON_STYLES, width: '96px', minWidth: '96px' },
-      hide: !TriggerAIEnable,
     },
   ];
 
@@ -208,7 +166,7 @@ const Details: React.FC<DetailsProps> = ({
                       label={button.label}
                       // variant={button.variant}
                       onClick={button.onClick}
-                      loading={button.loading}
+                      // loading={button.loading}
                       aria-label={button.label}
                       sx={button.sx}
                       disabled={button.disabled}
