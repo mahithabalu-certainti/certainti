@@ -19,3 +19,4 @@ EXPOSE 5006
 RUN npm install ts-node
 CMD ["npx", "ts-node", "src/index.ts"]
 
+
