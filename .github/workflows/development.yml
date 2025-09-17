@@ -130,7 +130,6 @@ jobs:
           EMAIL_WEBHOOK_URL='https://development-thinkrd365-api-management.azure-api.net/interactionService/api/email/webhook'
           CLIENT_SECRET_ENCRYPTION_KEY='client-secret-encryption-key'
           CLIENT_SECRET_ENCRYPTION_LENGTH=16
-
           EOF
           echo "$ENV_FILE file created successfully!"
           ls -la
@@ -486,11 +485,11 @@ jobs:
           KAFKA_AI_REQUEST_TRIGGER_TOPIC = "ai_assessment_request"
           SYSTEM_USER_ID = "D001-477aac5d-3d92-4420-8e65-4153af4f3aed"
           JWT_EXPIRY='1h'
-          WEBHOOK_API_CLIENT_ID=b51b3194-95e2-4928-9dbd-2e8384b3fd58
+          WEBHOOK_API_CLIENT_ID=webhook-api-client-id
           WEBHOOK_API_CLIENT_SECRET=webhook-api-client-secret
           WEBHOOK_API_TENANT_ID=$MAIL_TENANT_ID
-          SCHEDULER_EXPRESSION="0 */2 * * *"  
-          SCHEDULER_EMAIL="*/2 * * * *"    
+          SCHEDULER_EXPRESSION=scheduler-expression 
+          SCHEDULER_EMAIL=scheduler-email     
           CLIENT_SECRET_ENCRYPTION_KEY=client-secret-encryption-key
           CLIENT_SECRET_ENCRYPTION_LENGTH=16
           EOF
@@ -649,7 +648,6 @@ jobs:
             # Update only the ext-interaction-module image tag
             echo "Updating docker-compose.yml..."
             sed -i '/ext-interaction-module:/,/image:/ s|image:.*|image: '"${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}"'/ext-interaction-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
-            # sed -i 's|image:.*ext-interaction-module:.*|image: ${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}/ext-interaction-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
             echo "Docker Compose updated successfully!"
 
             # Verify the change
