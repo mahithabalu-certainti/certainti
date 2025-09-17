@@ -39,10 +39,9 @@ import { FilterState } from '../../../../consultant/types/account-filter';
 import { checkPermission } from '../../../../common-utils';
 import { AccessRestricted } from '../../../../components/account-restricted';
 import { MANAGE_ACCOUNT_ACCESS } from '../../../../routes';
-import { useGetUserGroupTypes } from '../../../service';
+import { useGetUserGroupTypes, useManageUserRole } from '../../../service';
 import { ListTable } from '../../../../components/table';
 import { getAvailableUserColumns } from './column';
-import { UserListParams } from '../../../types/manage-user';
 
 const AccountList = () => {
   const [page, setPage] = useState<number>(1);
@@ -55,9 +54,11 @@ const AccountList = () => {
     sortBy: 'account_name',
     sortOrder: 'ASC',
   });
-  const [userParams, setUserParams] = useState<UserListParams>({
+  const [userParams, setUserParams] = useState<Record<string, unknown>>({
     page: 1,
     limit: 100,
+    sortBy: 'user_name',
+    sortOrder: 'ASC',
   });
 
   useEffect(() => {
@@ -68,6 +69,14 @@ const AccountList = () => {
       );
     }
   }, []);
+  useEffect(() => {
+    setUserParams((prev) => ({
+      ...prev,
+      page: 1,
+      filters: appliedFilters,
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appliedFilters]);
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const [columnAnchorEl, setColumnAnchorEl] =
@@ -123,7 +132,12 @@ const AccountList = () => {
   const type = username ? 'USER' : groupname ? 'GROUP' : '';
 
   const projectListAccess = useUpdateProjectAccesseDetails();
-  const availableUsers = useUserGroupList({ page: 1, count: 10 });
+  const availableUsers = useUserGroupList(
+    accountId as string,
+    groupId as string,
+    userParams
+  );
+  const userRoles = useManageUserRole();
   const totalUsers = availableUsers?.data?.data.count || 0;
   const commonSuccess = projectListAccess.isSuccess;
   const [addedProjects, setAddedProjects] = useState<{
@@ -213,6 +227,14 @@ const AccountList = () => {
       })) || [],
     [allUserGroupTypes.data?.data.groupTypes]
   );
+  const memoizeRole = useMemo(
+    () =>
+      userRoles.data?.data.roles.map((role) => ({
+        label: role.business_teams,
+        value: role.business_teams,
+      })) || [],
+    [userRoles.data?.data.roles]
+  );
   const accountFilterFields = getManageAccountFilterFields(
     allCountries,
     allIndustries,
@@ -225,7 +247,7 @@ const AccountList = () => {
     if (!accountname) {
       return accountFilterFields;
     } else if (groupId) {
-      return getUserListFilterFields();
+      return getUserListFilterFields(memoizeRole);
     } else if (type === 'GROUP' || type === 'USER') {
       return projectFilterFeilds;
     } else if (tabIndex === '0') {
@@ -316,6 +338,8 @@ const AccountList = () => {
               className='h-[12px] cursor-pointer'
               alt='leftArrowIcon'
               onClick={() => {
+                setAppliedFilters({});
+                clearFilters();
                 searchParams.delete('groupid');
                 navigate(
                   { search: searchParams.toString() },
@@ -339,16 +363,18 @@ const AccountList = () => {
         </div>
         <div className='flex items-center gap-3'>
           <div className='flex gap-1 relative'>
-            <button
-              aria-describedby={modalId}
-              className={`w-[120px] h-[24px] mt-1 text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative border border-[#CBD6E2] px-0 py-0 normal-case ${isModalOpen ? 'bg-[#F3F3F3]' : 'bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'} hover:text-[#425A76] transition-colors duration-150`}
-              style={{
-                boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
-              }}
-              onClick={handleColumnVisibility}
-            >
-              Show/Hide Fields
-            </button>
+            {!groupId && (
+              <button
+                aria-describedby={modalId}
+                className={`w-[120px] h-[24px] mt-1 text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative border border-[#CBD6E2] px-0 py-0 normal-case ${isModalOpen ? 'bg-[#F3F3F3]' : 'bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'} hover:text-[#425A76] transition-colors duration-150`}
+                style={{
+                  boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
+                }}
+                onClick={handleColumnVisibility}
+              >
+                Show/Hide Fields
+              </button>
+            )}
             <button
               className={`w-[64px] h-[24px] text-[13px] mt-[5px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative `}
               onClick={handleFilterModal}
@@ -411,8 +437,12 @@ const AccountList = () => {
         <div className='border border-[#CBD6E2]'>
           <ManageAccountTable
             appliedFilters={appliedFilters}
-            tableParams={tableParams}
-            setTableParams={setTableParams}
+            tableParams={groupId ? userParams : tableParams}
+            setTableParams={
+              groupId
+                ? (data) => setUserParams(data as Record<string, unknown>)
+                : (data) => setTableParams(data)
+            }
             setAppliedFilters={setAppliedFilters}
             setColumnAnchorEl={setColumnAnchorEl}
             columnAnchorEl={columnAnchorEl}
@@ -448,8 +478,8 @@ const AccountList = () => {
             selectable={false}
             actionWidth={60}
             rowsPerPageOptions={[25, 50, 100]}
-            rowsPerPage={userParams.limit}
-            currentPage={(userParams.page ?? 1) - 1}
+            rowsPerPage={userParams.limit as number}
+            currentPage={Number(userParams.page ?? 1) - 1}
             totalItems={totalUsers}
             onPageChange={userPageChange}
             onRowsPerPageChange={userRowsPerPageChange}

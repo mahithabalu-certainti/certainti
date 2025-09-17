@@ -10,7 +10,7 @@ const textfieldOptions: { label: string; value: string }[] = [
   { label: 'Not Equals', value: 'not_equals' },
 ];
 
-const fiscalOptions: { label: string; value: string }[] = [
+const enumOperator: { label: string; value: string }[] = [
   { label: 'Equals', value: 'equals' },
   { label: 'Not-Equals', value: 'not_equals' },
   { label: 'In', value: 'in' },
@@ -28,7 +28,9 @@ const fiscalYearOption = fiscalYears.map((year) => ({
   value: year.value,
 }));
 
-export const getUserGroupFilterFields = (): FieldConfig[] => [
+export const getUserGroupFilterFields = (
+  roleOptions: FilterSelectOption[]
+): FieldConfig[] => [
   {
     label: 'Username',
     name: 'first_name',
@@ -40,6 +42,13 @@ export const getUserGroupFilterFields = (): FieldConfig[] => [
     name: 'email',
     type: 'text',
     operatorOption: textfieldOptions,
+  },
+  {
+    label: 'Role Name',
+    name: 'role_name',
+    type: 'enumSelect',
+    options: roleOptions,
+    operatorOption: enumOperator,
   },
   {
     label: 'Organisation Name',
@@ -76,7 +85,7 @@ export const getProjectFilterFields = (
     name: 'fiscal_year',
     type: 'enumSelect',
     options: fiscalYearOption,
-    operatorOption: fiscalOptions,
+    operatorOption: enumOperator,
   },
   {
     label: 'Classification',
@@ -90,7 +99,7 @@ export const getProjectFilterFields = (
     name: 'project_type_rid',
     type: 'enumSelect',
     options: projectTypeOptions,
-    operatorOption: fiscalOptions,
+    operatorOption: enumOperator,
   },
   {
     label: 'Project Point of Contact',

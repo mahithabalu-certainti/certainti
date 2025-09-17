@@ -40,6 +40,7 @@ import {
   useGetUserGroupDetails,
   useGetUserGroupTypes,
   useGetUsersByAccount,
+  useManageUserRole,
   useUpdateUserGroup,
 } from '../../../service';
 import { RootState, useAppDispatch } from '../../../../store/store';
@@ -91,7 +92,7 @@ export const CreateUserGroup: React.FC = () => {
   // UseStates
   const [accountAnchorEl, setAccountAnchorEl] =
     useState<HTMLButtonElement | null>(null);
-  const [tabs, setTabs] = useState<Tabs>(Tabs.PROJECT);
+  const [tabs, setTabs] = useState<Tabs>(Tabs.FORM);
   const [accountCollapse, setAccountCollapse] = useState<string[]>([]);
   const [selectAccountCount, setSelectAccountCount] = useState({
     parent: 0,
@@ -156,6 +157,7 @@ export const CreateUserGroup: React.FC = () => {
   const userGroupDetails = useGetUserGroupDetails(groupId as string);
   const classification = useFetchClassification();
   const projectTypeOptions = useGetProjectType();
+  const userRoles = useManageUserRole();
 
   // Variables
   const tabOrder = [Tabs.FORM, Tabs.USER, Tabs.PROJECT];
@@ -208,9 +210,17 @@ export const CreateUserGroup: React.FC = () => {
       })) || [],
     [projectTypeOptions?.data?.data?.projectType]
   );
+  const memoizeRole = useMemo(
+    () =>
+      userRoles.data?.data.roles.map((role) => ({
+        label: role.business_teams,
+        value: role.business_teams,
+      })) || [],
+    [userRoles.data?.data.roles]
+  );
   const userGroupFilterFields =
     tabs === Tabs.USER
-      ? getUserGroupFilterFields()
+      ? getUserGroupFilterFields(memoizeRole)
       : getProjectFilterFields(memoizedClassification, memoizedProjectTypes);
   const groupTypeNotCustom = currentGroupType?.type !== 'CUSTOM';
   const prefixGroupName = 'G-';

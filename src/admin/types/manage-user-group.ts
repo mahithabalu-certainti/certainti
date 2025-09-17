@@ -113,6 +113,7 @@ export type ProjectListByAccounts = {
   region_name: string | null;
   created_datetime: string; // ISO date string
   ProjectFiscal: ProjectFiscal[];
+  fiscal_year?: number
 };
 export type ProjectFiscal = {
   project_code: string;

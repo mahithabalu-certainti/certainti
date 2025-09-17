@@ -57,15 +57,16 @@ export const manageUserGroupColumns = (
     label: 'Number of Users',
     width: '25%',
     sortable: true,
-    render: (row: ManageAccountsGroupList) => {
-      return (
+    render: (row: ManageAccountsGroupList) =>
+      row.user_count && Number(row.user_count) > 0 ? (
         <span
-          onClick={() => viewUserList(row.rid)}
+          onClick={() => row.user_count && viewUserList(row.rid)}
           className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
         >
           {row.user_count}
         </span>
-      );
-    },
+      ) : (
+        row.user_count || '0'
+      ),
   },
 ];

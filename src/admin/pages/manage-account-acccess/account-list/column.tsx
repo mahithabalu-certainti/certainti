@@ -77,6 +77,12 @@ export const getAvailableUserColumns = () => [
     sortable: false,
   },
   {
+    id: 'role_name',
+    sortId: 'role_name',
+    label: 'Role Name',
+    sortable: false,
+  },
+  {
     id: 'organization_name',
     sortId: 'organization_name',
     label: 'Organisation Name',

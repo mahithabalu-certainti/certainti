@@ -181,7 +181,10 @@ export const ManageAccountUserGroupTable: React.FC<UserTableProps> = ({
     );
   };
   const viewUserList = (id: string) => {
+    setAppliedFilters({});
+    clearFilters();
     searchParams.set('groupid', id);
+    searchParams.set('tabIndex', '1');
     navigate({ search: searchParams.toString() }, { replace: true });
   };
   const projectColumns = manageUserGroupColumns(

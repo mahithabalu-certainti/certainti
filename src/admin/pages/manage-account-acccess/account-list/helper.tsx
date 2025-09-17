@@ -9,6 +9,12 @@ import {
 } from '../../../../consultant/types/account-filter';
 import { textfieldOptions } from '../../manage-profile';
 
+const enumOperator: { label: string; value: string }[] = [
+  { label: 'Equals', value: 'equals' },
+  { label: 'Not Equals', value: 'not_equals' },
+  { label: 'In', value: 'in' },
+];
+
 export const getManageAccountFilterFields = (
   countryOptions: FilterSelectOption[],
   industryOptions: FilterSelectOption[],
@@ -94,7 +100,9 @@ export const getManageProjectListFilterFields = (): FieldConfig[] => [
   },
 ];
 
-export const getUserListFilterFields = (): FieldConfig[] => [
+export const getUserListFilterFields = (
+  roleOptions: FilterSelectOption[]
+): FieldConfig[] => [
   {
     label: 'Username',
     name: 'first_name',
@@ -106,6 +114,13 @@ export const getUserListFilterFields = (): FieldConfig[] => [
     name: 'email',
     type: 'text',
     operatorOption: textfieldOptions,
+  },
+  {
+    label: 'Role Name',
+    name: 'role_name',
+    type: 'enumSelect',
+    options: roleOptions,
+    operatorOption: enumOperator,
   },
   {
     label: 'Organisation Name',
