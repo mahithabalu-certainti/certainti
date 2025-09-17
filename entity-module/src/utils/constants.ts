@@ -889,7 +889,7 @@ export const rawQueries = {
   fetchResourceStatus:`
   SELECT rid, resource_status_name FROM ${MAIN_SCHEMA_NAME}.resource_status WHERE rid IN (:projectTaskStatusId)`,
   checkResCodeExistsInPrjRes (schemaName : string, resource_rid : string | undefined, account_rid : string, project_fiscal_rid : string) {
-    return `SELECT * FROM ${schemaName}.project_resource WHERE resource_rid = '${resource_rid}' AND account_rid = '${account_rid}' AND project_fiscal_rid = '${project_fiscal_rid}'`
+    return `SELECT * FROM ${schemaName}.project_resource WHERE resource_rid = '${resource_rid}' AND account_rid = '${account_rid}' AND project_fiscal_rid = '${project_fiscal_rid}' ORDER BY created_datetime DESC`
   },
    fetchActiveStatus() {
     return `
