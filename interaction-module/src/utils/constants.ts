@@ -303,7 +303,7 @@ export const rawQueries = {
   },
   fetchProjectInfo(rid: string, schemaName: string) {
     return `
-    SELECT rid, project_name,project_code,r_number,fiscal_year,project_rid FROM ${schemaName}.project_fiscal WHERE rid = '${rid}'`;
+    SELECT rid, project_name,project_code,r_number,fiscal_year,project_rid,max_ai_interaction FROM ${schemaName}.project_fiscal WHERE rid = '${rid}'`;
   },
   fetchProjectsByAccount(accountRid: string, schemaName: string,status_rid:string) {
     return `

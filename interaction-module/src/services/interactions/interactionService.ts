@@ -9,7 +9,7 @@ import {
 import InteractionSchemaService from "./schemaService";
 import { InteractionModelService } from "../interactionModelsService";
 import { ALPHANUMERIC_CONDITIONS, HttpStatus, mainTableFilters, rawQueries,statusAction, constants, interactionType, STATUS_MESSAGE, interactionFlag, MAIN_SCHEMA_NAME, schedulerStatus, interactionTaskName ,interactionSource} from "../../utils/constants";
-import { Sequelize } from "sequelize";
+import { Op, Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { checkTableExists, fetchAllParentRNumber, fetchInteractionForProjectLevelQuery, fetchInteractionForSentResentStatus, fetchProjectAttachmentsRids, fetchProjectInteractionRid, interactionResponseHistoryByVersion, listAllInteractionSummary, listAttachments, listInteractionHistory, listResponseHistory } from "../../utils/rawQueries";
@@ -280,10 +280,59 @@ export class InteractionService {
     const isEnabled = await this.interactionSchemaService.isAutoSendInteractionEnabled(accountNumber, interactionData, interactionId);
     this.logger.info(`Auto-send is ${isEnabled ? "enabled" : "disabled"} for interaction ID: ${interactionId}`);
     if (isEnabled) {
+       const projectInfo = await this.interactionSchemaService.fetchProjectInfo(accountNumber, interactionData.project_fiscal_rid);
+      const { AutoSendInteractionAudit } = await this.interactionModelService.getModels(accountNumber);
+      const ismaxInteractionsSent = await this.checkMaxQuarterlyInteractions(AutoSendInteractionAudit, interactionData.project_fiscal_rid, projectInfo.max_ai_interaction);
+      if (!ismaxInteractionsSent) return;
       await this.sendInteraction([{ interaction_rid: interactionId,
         project_fiscal_rid: interactionData.project_fiscal_rid
-       }], interactionData.account_rid, userId,false);
+       }], interactionData.account_rid, userId, false);
     }
+  }
+   async  checkMaxQuarterlyInteractions(
+    AiSendInteraction: any,
+    projectFiscalRid: string,
+    maxInteractions: number
+  ) {
+    const now = new Date();
+    let year = now.getFullYear();
+    const month = now.getMonth(); // 0-based
+    // Fiscal year starts in April
+    // Q1: Apr-Jun, Q2: Jul-Sep, Q3: Oct-Dec, Q4: Jan-Mar (next year)
+    let quarter, quarterStart, quarterEnd;
+    if (month >= 3 && month <= 5) { // Apr-Jun
+      quarter = 1;
+      quarterStart = new Date(year, 3, 1); // April 1
+      quarterEnd = new Date(year, 6, 0, 23, 59, 59, 999); // June 30
+    } else if (month >= 6 && month <= 8) { // Jul-Sep
+      quarter = 2;
+      quarterStart = new Date(year, 6, 1); // July 1
+      quarterEnd = new Date(year, 9, 0, 23, 59, 59, 999); // Sep 30
+    } else if (month >= 9 && month <= 11) { // Oct-Dec
+      quarter = 3;
+      quarterStart = new Date(year, 9, 1); // Oct 1
+      quarterEnd = new Date(year, 12, 0, 23, 59, 59, 999); // Dec 31
+    } else { // Jan-Mar
+      quarter = 4;
+      // For Jan-Mar, fiscal year is previous year
+      year = year - 1;
+      quarterStart = new Date(year + 1, 0, 1); // Jan 1
+      quarterEnd = new Date(year + 1, 3, 0, 23, 59, 59, 999); // Mar 31
+    }
+    const sentCount = await AiSendInteraction.count({
+      where: {
+        project_fiscal_rid: projectFiscalRid,
+        created_datetime: {
+          [Op.between]: [quarterStart, quarterEnd]
+        }
+      }
+    });
+    this.logger.info(`Sent count for the current quarter: ${sentCount}`);
+    if (sentCount >= maxInteractions) {
+      this.logger.info(`Max interactions sent for quarter (${sentCount}) reached for project_fiscal_rid: ${projectFiscalRid}`);
+      return false;
+    }
+    return true;
   }
   async getInteractionStatusAndSource(interactionSource: string) {
 
@@ -1124,6 +1173,7 @@ export class InteractionService {
         data.is_interaction_followup = is_interaction_followup
         this.logger.info(`Email info to be sent: ${JSON.stringify(data)}`);
         await this.interactionSchemaService.insertEmailInfoDatas(data);
+        await this.interactionSchemaService.createAutoSendInteractionEntry(accountNumber, interaction_rid, project_fiscal_rid, email_info);
         await orgDb.query(rawQueries.updateInteractionStatus(schemaName, fetchInQueueStatus[0][0].rid, interaction_rid))
         await mainDb.query(rawQueries.updateInteractionSummaryStatus(fetchInQueueStatus[0][0].rid, interaction_rid))
         interactionResponse.push({
