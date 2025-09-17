@@ -546,7 +546,8 @@ export class InteractionService {
         this.interactionSchemaService.updateAttachmentCount(
           accountNumber,
           interactionData.interaction_rid,
-          updatedInteractionResponse.interactionVersion
+          updatedInteractionResponse.interactionVersion,
+          interactionData.project_fiscal_rid
         )
       );
       await Promise.all(parallelTasks);
@@ -1718,12 +1719,16 @@ export class InteractionService {
         project_name: responseData.project_name,
       //  response_source: mapResponseSource.get(responseData.response_source_rid) || null,
         interaction_source_name: sourceMap.get(responseData.interaction_source_rid) || null,
-        interaction_history: sortedData.map((d: any) => ({
-          rid: d.interaction_history_rid,
-          status_rid: d.new_status_rid,
-          status_name: d.status_name,
-          date: d.date
-        }))
+        interaction_history: sortedData.map((d: any) => {
+          let isoDate = new Date(d.date).toISOString()
+          let formattedDate = isoDate.replace("Z", "+00:00")
+          return {
+            rid: d.interaction_history_rid,
+            status_rid: d.new_status_rid,
+            status_name: d.status_name,
+            date: formattedDate
+          }
+        })
       };
 
       return {
@@ -2039,50 +2044,61 @@ export class InteractionService {
   async triggerAiFromScheduler (schedulerRecord : SchedulerExecutions) {
     const mainDb = await this.getMainDb()
     const orgDb = await this.getOrgDb()
-    this.logger.info("AI Trigger Scheduler started")
-    let fetchAllParentsAccountsRnumber : any = await mainDb.query(rawQueries.fetchAllParentRNumber())
-    for(let account of fetchAllParentsAccountsRnumber[0]) {
-      let schemaName = rawQueries.fetchSchemaName(account.r_number);
-      let verifyTableExistsForAttachments : any = await orgDb.query(checkTableExists(schemaName, "attachments"))
-      let verifyTableExistsForInteractions : any = await orgDb.query(checkTableExists(schemaName, "interactions"))
-      if(verifyTableExistsForInteractions[0][0].exists === true) {
-        try {
-          const isRecordExists = await this.interactionSchemaService.findTaskRecordExists(schedulerRecord.rid, interactionTaskName.interactionAge)
-          if(isRecordExists == null) {
-            await this.interactionSchemaService.createSchedulerTaskRecords(schedulerRecord.rid, interactionTaskName.interactionAge)
+    try {
+      this.logger.info("AI Trigger Scheduler started")
+      let fetchAllParentsAccountsRnumber : any = await mainDb.query(rawQueries.fetchAllParentRNumber())
+      for(let account of fetchAllParentsAccountsRnumber[0]) {
+        let schemaName = rawQueries.fetchSchemaName(account.r_number);
+        console.log("SchemaName : ", schemaName)
+        let verifyTableExistsForAttachments : any = await orgDb.query(checkTableExists(schemaName, "attachments"))
+        let verifyTableExistsForInteractions : any = await orgDb.query(checkTableExists(schemaName, "interactions"))
+        if(verifyTableExistsForInteractions[0][0].exists === true) {
+          console.log("verifyTableExistsForInteractions : ", true)
+          // try {
+          //   const isRecordExists = await this.interactionSchemaService.findTaskRecordExists(schedulerRecord.rid, interactionTaskName.interactionAge)
+          //   if(isRecordExists == null) {
+          //     await this.interactionSchemaService.createSchedulerTaskRecords(schedulerRecord.rid, interactionTaskName.interactionAge)
+          //   }
+          //   await fetchInteractionForSentResentStatus(schemaName, mainDb, orgDb)
+          // } catch (error : any) {
+          //   await this.interactionSchemaService.updateSchedulerTaskRecords(schedulerRecord.rid, interactionTaskName.interactionAge, schedulerStatus.Failed, error.message)
+          // }
+          try {
+            const isRecordExists = await this.interactionSchemaService.findTaskRecordExists(schedulerRecord.rid, interactionTaskName.interaction)
+            if(isRecordExists == null) {
+              await this.interactionSchemaService.createSchedulerTaskRecords(schedulerRecord.rid, interactionTaskName.interaction)
+            }
+            let fetchProjectIdsFromInteractions : any = await orgDb.query(fetchProjectInteractionRid(schemaName))
+            await this.createPayloadForTriggerAi(fetchProjectIdsFromInteractions[0])
+          } catch (error : any) {
+            await this.interactionSchemaService.updateSchedulerTaskRecords(schedulerRecord.rid, interactionTaskName.interaction, schedulerStatus.Failed, error.message)
           }
-          await fetchInteractionForSentResentStatus(schemaName, mainDb, orgDb)
-        } catch (error : any) {
-          await this.interactionSchemaService.updateSchedulerTaskRecords(schedulerRecord.rid, interactionTaskName.interactionAge, schedulerStatus.Failed, error.message)
         }
-        try {
-          const isRecordExists = await this.interactionSchemaService.findTaskRecordExists(schedulerRecord.rid, interactionTaskName.interaction)
-          if(isRecordExists == null) {
-            await this.interactionSchemaService.createSchedulerTaskRecords(schedulerRecord.rid, interactionTaskName.interaction)
+        if(verifyTableExistsForAttachments[0][0].exists == true) {
+          try {
+            console.log("verifyTableExistsForAttachments : ", true)
+            const isRecordExists = await this.interactionSchemaService.findTaskRecordExists(schedulerRecord.rid, interactionTaskName.attachments)
+            if(isRecordExists == null) {
+              await this.interactionSchemaService.createSchedulerTaskRecords(schedulerRecord.rid, interactionTaskName.attachments)
+            }
+            let fetchProjectIdsFromAttachments : any = await orgDb.query(fetchProjectAttachmentsRids(schemaName))
+            await this.createPayloadForTriggerAi(fetchProjectIdsFromAttachments[0])
+          } catch (error : any) {
+            await this.interactionSchemaService.updateSchedulerTaskRecords(schedulerRecord.rid, interactionTaskName.attachments, schedulerStatus.Failed, error.message)
           }
-          let fetchProjectIdsFromInteractions : any = await orgDb.query(fetchProjectInteractionRid(schemaName))
-          await this.createPayloadForTriggerAi(fetchProjectIdsFromInteractions[0])
-        } catch (error : any) {
-          await this.interactionSchemaService.updateSchedulerTaskRecords(schedulerRecord.rid, interactionTaskName.interaction, schedulerStatus.Failed, error.message)
         }
       }
-      if(verifyTableExistsForAttachments[0][0].exists == true) {
-        try {
-          const isRecordExists = await this.interactionSchemaService.findTaskRecordExists(schedulerRecord.rid, interactionTaskName.attachments)
-          if(isRecordExists == null) {
-            await this.interactionSchemaService.createSchedulerTaskRecords(schedulerRecord.rid, interactionTaskName.attachments)
-          }
-          let fetchProjectIdsFromAttachments : any = await orgDb.query(fetchProjectAttachmentsRids(schemaName))
-          await this.createPayloadForTriggerAi(fetchProjectIdsFromAttachments[0])
-        } catch (error : any) {
-          await this.interactionSchemaService.updateSchedulerTaskRecords(schedulerRecord.rid, interactionTaskName.attachments, schedulerStatus.Failed, error.message)
-        }
-      }
+      await this.interactionSchemaService.updateSchedulerTaskRecords(schedulerRecord.rid, interactionTaskName.attachments, schedulerStatus.Success, '')
+      await this.interactionSchemaService.updateSchedulerTaskRecords(schedulerRecord.rid, interactionTaskName.interaction, schedulerStatus.Success, '')
+      await this.interactionSchemaService.updateSchedulerTaskRecords(schedulerRecord.rid, interactionTaskName.interactionAge, schedulerStatus.Success, '')
+      await this.interactionSchemaService.updateSchedulerRecords(schedulerRecord.rid, schedulerStatus.Success)
+    } catch (error : any) {
+      console.log("Scheduler facing error : ", error)
+      await this.interactionSchemaService.updateSchedulerTaskRecords(schedulerRecord.rid, interactionTaskName.attachments, schedulerStatus.Failed, error.message)
+      await this.interactionSchemaService.updateSchedulerTaskRecords(schedulerRecord.rid, interactionTaskName.interaction, schedulerStatus.Failed, error.message)
+      await this.interactionSchemaService.updateSchedulerTaskRecords(schedulerRecord.rid, interactionTaskName.interactionAge, schedulerStatus.Failed, error.message)
+      await this.interactionSchemaService.updateSchedulerRecords(schedulerRecord.rid, schedulerStatus.Failed)
     }
-    await this.interactionSchemaService.updateSchedulerTaskRecords(schedulerRecord.rid, interactionTaskName.attachments, schedulerStatus.Success, '')
-    await this.interactionSchemaService.updateSchedulerTaskRecords(schedulerRecord.rid, interactionTaskName.interaction, schedulerStatus.Success, '')
-    await this.interactionSchemaService.updateSchedulerTaskRecords(schedulerRecord.rid, interactionTaskName.interactionAge, schedulerStatus.Success, '')
-    await this.interactionSchemaService.updateSchedulerRecords(schedulerRecord.rid, schedulerStatus.Success)
   }
 
   async createPayloadForTriggerAi (data : any) {
@@ -2105,6 +2121,7 @@ export class InteractionService {
         data : Array.from(mappingData.values()),
         type : "project"
       }
+      console.log("Payload to Send : ", payload)
       await this.triggerAI(payload)
     }
   }
@@ -2208,7 +2225,7 @@ export class InteractionService {
           interactionLink
         );
         }
-        await this.interactionSchemaService.updateEmailSendFlag(interaction_rid)
+        await this.interactionSchemaService.updateEmailSendFlag(interaction_rid,project_fiscal_rid)
         
       } else {
         //need to add logic for sending toPS team

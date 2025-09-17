@@ -57,11 +57,11 @@ routes.put(
   controller.interactionsController.updateAccountInteraction
 );
 
-routes.get('/technicalSummary/list', checkUserStatusMiddleware("interactions_view_edit"), controller.interactionsController.listTechnicalSummary)
-routes.get('/technicalSummary/details', checkUserStatusMiddleware("interactions_view_edit"), controller.interactionsController.getTechnicalSummaryDetailsById)
+routes.get('/technicalSummary/list', checkUserStatusMiddleware("projects_tech_summary_view_edit"), controller.interactionsController.listTechnicalSummary)
+routes.get('/technicalSummary/details', checkUserStatusMiddleware("projects_tech_summary_view_edit"), controller.interactionsController.getTechnicalSummaryDetailsById)
 routes.put(
   "/technicalSummary/update",
-  checkUserStatusMiddleware("interactions_view_edit"),
+  checkUserStatusMiddleware("projects_tech_summary_view_edit"),
   controller.interactionsController.updateTechSummaryContext
 );
 routes.post(
@@ -87,7 +87,7 @@ routes.get(
 );
 
 
-routes.get('/technicalSummary/export', checkUserStatusMiddleware("interactions_export"), controller.interactionsController.exportTechnicalSummary)
+routes.get('/technicalSummary/export', checkUserStatusMiddleware("projects_tech_summary_export"), controller.interactionsController.exportTechnicalSummary)
 routes.post('/list', checkUserStatusMiddleware("interactions_view_edit"), controller.interactionsController.listAllInteractionPrjAcc)
 routes.post('/export', checkUserStatusMiddleware("interactions_export"), controller.interactionsController.exportAllInteractions)
 routes.post('/globalList', checkUserStatusMiddleware("interactions_view_edit"), controller.interactionsController.listOutAllInteractionSummary)

@@ -266,11 +266,11 @@ export class ProjectTaskSchemaService {
       resourceData
     );
 
-    const createdProjectResource = await ProjectTask.create(baseData, {
+    const createdProjectTask = await ProjectTask.create(baseData, {
       transaction,
     });
 
-    return createdProjectResource;
+    return createdProjectTask;
   }
 
   async updateProjectTask(
@@ -303,7 +303,7 @@ export class ProjectTaskSchemaService {
       resourceData
     );
 
-    const updatedProjectResource = await ProjectTask.update({
+    const updatedProjectTask = await ProjectTask.update({
       ...baseData,
       region_rid: resourceData.region_rid
     }, {
@@ -313,7 +313,7 @@ export class ProjectTaskSchemaService {
       transaction,
     });
 
-    return updatedProjectResource;
+    return updatedProjectTask;
   }
 
   async addProjectTaskTimeline(

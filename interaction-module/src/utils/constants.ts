@@ -27,7 +27,7 @@ export const statusAction = {
   ON_HOLD: "On Hold",
   RESUME: "Resume",
   RESENT: "Resent",
-  INQUEUE: "Inqueue"
+  INQUEUE: "In-Queue"
 };
 
 export const techSummaryStatus = {
@@ -60,7 +60,7 @@ export const NODE_ENV = {
   DEV: "DEV",
   PROD: "PRODUCTION",
 };
-
+export const sendEmailCount = 10
 export const OTP_EXPIRY_MINUTES = 10;
 export const MAX_RESEND_ATTEMPTS = 3;
 
@@ -71,7 +71,7 @@ export const filtersColumns : Record<string, string> =
     interaction_age : "interaction_age",
     recipient_name : "recipient_name",
     recipient_email : "recipient_email",
-    last_resent_on : "last_resent_on",
+    last_resent_on : "sent_on_datetime",
     last_reminder_on : "last_reminder_on",
     response_submitted_on : "response_submitted_on",
     response_updated_on : "response_updated_on",
@@ -369,7 +369,7 @@ export const rawQueries = {
     SELECT EXISTS (
       SELECT 1
       FROM ${schemaName}.key_contact_details
-      WHERE entity_type = 'Project'
+      WHERE lower(entity_type) = 'project'
         AND include_in_communication IS true
         AND entity_rid = '${projectFiscalRid}'
         AND status_rid = '${statusRid}'
@@ -378,7 +378,7 @@ export const rawQueries = {
   },
   fetchInteractionRecipient(projectFiscalRid: string, statusRid: string, schemaName: string) {
     return `
-    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE entity_type = 'Project' and include_in_communication is true and entity_rid = '${projectFiscalRid}' and status_rid = '${statusRid}'`;
+    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE lower(entity_type) = 'project' and include_in_communication is true and entity_rid = '${projectFiscalRid}' and status_rid = '${statusRid}'`;
   },
   fetchInteractionRecipientProject(
     projectFiscalRid: string,
@@ -386,11 +386,11 @@ export const rawQueries = {
     schemaName: string
   ) {
     return `
-    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE entity_type = 'Project' and interaction_cc_recipient is true and entity_rid = '${projectFiscalRid}' and status_rid = '${statusRid}'`;
+    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE lower(entity_type) = 'project' and interaction_cc_recipient is true and entity_rid = '${projectFiscalRid}' and status_rid = '${statusRid}'`;
   },
   fetchInteractionRecipientAccount(accountRid: string,statusRid:string,schemaName: string) {
     return `
-    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE entity_type = 'Account' and interaction_cc_recipient is true and entity_rid = '${accountRid}' and status_rid = '${statusRid}'`;
+    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE lower(entity_type) = 'account' and interaction_cc_recipient is true and entity_rid = '${accountRid}' and status_rid = '${statusRid}'`;
   },
   fetchisAutoSendEnabled(projectFiscalRid: string, schemaName: string) {
     return `
@@ -620,12 +620,12 @@ export const rawQueries = {
       WHERE u.rid = :userRid
       LIMIT 1
       `,
-  fetchEmailInfo: `SELECT * FROM ${MAIN_SCHEMA_NAME}.send_email_info WHERE is_email_send = false ORDER BY created_datetime ASC LIMIT 5`,
+  fetchEmailInfo: `SELECT * FROM ${MAIN_SCHEMA_NAME}.send_email_info WHERE is_email_send = false ORDER BY created_datetime ASC LIMIT ${sendEmailCount}`,
   updateInteractionStatus(schemaName : string, statusRid : string, interactionRid : string) {
     return `UPDATE ${schemaName}.interactions SET status_rid = '${statusRid}' WHERE rid = '${interactionRid}'`
   },
   fetchInteractionQueueStatus() {
-    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE status_name ILIKE '%Inqueue%'`
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE status_name ILIKE '%In-Queue%'`
   },
   updateInteractionSummaryStatus(statusRid : string, interactionRid : string) {
     return `UPDATE ${MAIN_SCHEMA_NAME}.interactions_summary SET status_rid = '${statusRid}' WHERE interaction_rid = '${interactionRid}'`
@@ -673,7 +673,7 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     interaction_age : "interaction_age",
     recipient_name : "recipient_name",
     recipient_email : "recipient_email",
-    last_resent_on : "last_resent_on",
+    last_resent_on : "sent_on_datetime",
     last_reminder_on : "last_reminder_on",
     response_submitted_on : "response_submitted_on",
     response_updated_on : "response_updated_on",
@@ -768,5 +768,4 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     interactionAge : "interaction_age",
     interaction : "interactions",
     attachments : "attachments"
-    
   }
