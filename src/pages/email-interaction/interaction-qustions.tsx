@@ -19,6 +19,8 @@ import {
   useUploadAttachment,
 } from '../../common-service';
 import { useToast } from '../../hooks';
+import { InfoSection } from '../../components';
+import { DisplayColumn, transformInteractionData } from './ultils';
 
 interface SectionHeaderButton {
   label: string;
@@ -44,7 +46,14 @@ const ALLOWED_FILE_TYPES = [
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024;
 const MAX_FILES_LIMIT = 10;
-
+export interface HeaderData {
+  interactionId: string;
+  projectId: string;
+  projectName: string;
+  accountName: string;
+  accountId: string;
+  projectCode: string;
+}
 interface InteractionQuesProps {
   questions: InteractionQuestion[];
   globalAttachments: Attachment[];
@@ -58,6 +67,7 @@ interface InteractionQuesProps {
     email: string;
   };
   isEditEnable?: boolean;
+  headerData?: HeaderData;
 }
 enum FlagTypeEnum {
   draft = 'draft',
@@ -81,9 +91,11 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   createdBy,
   parseToken,
   isEditEnable,
+  headerData,
 }) => {
+  console.log('questions', formData);
   const { successToast, errorToast } = useToast();
-  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [isEditing, setIsEditing] = useState<boolean>(true);
   const [activeFlag, setActiveFlag] = useState<FlagTypeEnum | null>(null);
   const [validationErrors, setValidationErrors] = useState<
     Record<string, boolean>
@@ -133,6 +145,9 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   const uploadFileMutation = useUploadAttachment();
   const updateInteractionQusResponse = useUpdateInteractionQuestion();
   const deleteAttachment = useDeleteAttachment();
+  const [headerIntertaction, setHeaderInteraction] = useState<DisplayColumn[]>(
+    []
+  );
 
   useEffect(() => {
     // Initialize all toolbars as hidden
@@ -145,40 +160,44 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
     );
     setShowOptionsPerQuestion(initialToolbarState);
   }, [questions, isEditing]);
-
+  useEffect(() => {
+    setHeaderInteraction(
+      headerData ? transformInteractionData(headerData) : []
+    );
+  }, [headerData]);
   const handleEditClick = () => {
     setIsEditing(true);
     setValidationErrors({});
   };
-  const handleCancel = () => {
-    setIsEditing(false);
-    setValidationErrors({});
+  // const handleCancel = () => {
+  //   setIsEditing(false);
+  //   setValidationErrors({});
 
-    // revert answers
-    setEditedAnswers(
-      questions.reduce(
-        (acc, q) => {
-          acc[q.rid] = q.response || '';
-          return acc;
-        },
-        {} as Record<string, string>
-      )
-    );
+  //   // revert answers
+  //   setEditedAnswers(
+  //     questions.reduce(
+  //       (acc, q) => {
+  //         acc[q.rid] = q.response || '';
+  //         return acc;
+  //       },
+  //       {} as Record<string, string>
+  //     )
+  //   );
 
-    // revert global attachments
-    setNewGlobalAttachments(globalAttachments || []);
+  //   // revert global attachments
+  //   setNewGlobalAttachments(globalAttachments || []);
 
-    // revert question attachments
-    setQuestionAttachments(
-      questions.reduce(
-        (acc, q) => {
-          acc[q.rid] = q.attachments || [];
-          return acc;
-        },
-        {} as Record<string, Attachment[]>
-      )
-    );
-  };
+  //   // revert question attachments
+  //   setQuestionAttachments(
+  //     questions.reduce(
+  //       (acc, q) => {
+  //         acc[q.rid] = q.attachments || [];
+  //         return acc;
+  //       },
+  //       {} as Record<string, Attachment[]>
+  //     )
+  //   );
+  // };
   const sanitizeQuillValue = (value: string) => {
     const trimmed = value.replace(/<(.|\n)*?>/g, '').trim();
     return trimmed ? value : '';
@@ -232,7 +251,6 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
     updateInteractionQusResponse.mutate(finalPayload, {
       onSuccess: async () => {
         await refetchDeetails?.();
-        setIsEditing(false);
         setValidationErrors({});
         setActiveFlag(null);
         successToast(
@@ -465,13 +483,13 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
           sx: { width: '100px', minWidth: '100px' },
           disabled: isUpdateLoading || uploadFileMutation.isPending,
         },
-        {
-          label: 'Cancel',
-          variant: 'outlined' as const,
-          onClick: handleCancel,
-          sx: { width: '75px', minWidth: '75px' },
-          disabled: isUpdateLoading || uploadFileMutation.isPending,
-        },
+        // {
+        //   label: 'Cancel',
+        //   variant: 'outlined' as const,
+        //   onClick: handleCancel,
+        //   sx: { width: '75px', minWidth: '75px' },
+        //   disabled: isUpdateLoading || uploadFileMutation.isPending,
+        // },
       ]
     : [
         {
@@ -512,6 +530,11 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
       <div
         className={`my-3 border border-[#CBD6E2] rounded-[2px] ${isUpdateLoading ? 'pointer-events-none' : ''}`}
       >
+        <InfoSection
+          columns={headerIntertaction}
+          loading={isLoading}
+          singleLineView={false}
+        />
         <div className='flex items-center justify-between px-3.5 border-b border-[#CBD6E2] min-h-[40px] max-h-[40px]'>
           <div className='text-[14px] text-[#2D3E4F] font-semibold'>
             Interaction Question
