@@ -9,8 +9,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowDownDisabledIcon,
   ArrowDownIcon,
-  ManageUserIcon,
-  NewFilterIcon,
+  ManageUserIcon
 } from '../../../../assets/icons';
 import TextButton from '../../../../components/button/text-button';
 import {
@@ -24,7 +23,6 @@ import {
 import { ListTable } from '../../../../components/table';
 import {
   ActiveUserForGroup,
-  FilterType,
   GroupByIdAccount,
   GroupByIdProjects,
   GroupByIdUsers,
@@ -40,7 +38,6 @@ import {
   useGetUserGroupDetails,
   useGetUserGroupTypes,
   useGetUsersByAccount,
-  useManageUserRole,
   useUpdateUserGroup,
 } from '../../../service';
 import { RootState, useAppDispatch } from '../../../../store/store';
@@ -50,10 +47,6 @@ import { useToast } from '../../../../hooks';
 import { MANAGE_USER_GROUP } from '../../../../routes';
 import { UserListParams } from '../../../types/manage-user';
 import { AllPermissions } from '../../../../common-service';
-import { FilterModal } from '../../../../components';
-import { getProjectFilterFields, getUserGroupFilterFields } from './helpers';
-import { useFetchClassification } from '../../../../consultant/services/account';
-import { useGetProjectType } from '../../../../consultant/services/project';
 
 const HEADER_STYLES = {
   adminPermission:
@@ -121,10 +114,6 @@ export const CreateUserGroup: React.FC = () => {
     page: 1,
     limit: 100,
   });
-  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
-  const [appliedFilters, setAppliedFilters] = useState<
-    Record<string, FilterType>
-  >({});
 
   // Redux store
   const { accounts, loading } = useSelector(
@@ -155,15 +144,11 @@ export const CreateUserGroup: React.FC = () => {
   const availableProjects = useGetprojectByAccount();
   const allUserGroupTypes = useGetUserGroupTypes({ type: 'All' });
   const userGroupDetails = useGetUserGroupDetails(groupId as string);
-  const classification = useFetchClassification();
-  const projectTypeOptions = useGetProjectType();
-  const userRoles = useManageUserRole();
 
   // Variables
   const tabOrder = [Tabs.FORM, Tabs.USER, Tabs.PROJECT];
   const currentIndex = tabOrder.indexOf(tabs);
   const isAccountModalOpen = Boolean(accountAnchorEl);
-  const isFilterOpen = Boolean(anchorEl);
   const accountId = 'Accounts-popover';
   const userGroupData = userGroupDetails.data?.data?.userGroupById;
   const isEditView = Boolean(groupId);
@@ -194,34 +179,6 @@ export const CreateUserGroup: React.FC = () => {
   const currentGroupType = allUserGroupTypes.data?.data.groupTypes.find(
     (item) => item.rid === groupInformation.groupType
   );
-  const memoizedClassification = useMemo(
-    () =>
-      classification.data?.data.projectClassifications.map((data) => ({
-        label: data.classification_name,
-        value: data.classification_name,
-      })) || [],
-    [classification.data?.data.projectClassifications]
-  );
-  const memoizedProjectTypes = useMemo(
-    () =>
-      projectTypeOptions?.data?.data?.projectType.map((item) => ({
-        label: item.project_type_name,
-        value: item.rid,
-      })) || [],
-    [projectTypeOptions?.data?.data?.projectType]
-  );
-  const memoizeRole = useMemo(
-    () =>
-      userRoles.data?.data.roles.map((role) => ({
-        label: role.business_teams,
-        value: role.business_teams,
-      })) || [],
-    [userRoles.data?.data.roles]
-  );
-  const userGroupFilterFields =
-    tabs === Tabs.USER
-      ? getUserGroupFilterFields(memoizeRole)
-      : getProjectFilterFields(memoizedClassification, memoizedProjectTypes);
   const groupTypeNotCustom = currentGroupType?.type !== 'CUSTOM';
   const prefixGroupName = 'G-';
   const isGroupNameDisabled =
@@ -316,7 +273,6 @@ export const CreateUserGroup: React.FC = () => {
         page: userParams.page as number,
         group_type_rid: groupInformation.groupType,
         ...(isEditView && { group_rid: groupId as string }),
-        filters: appliedFilters,
       });
     }
     if (tabs === Tabs.PROJECT) {
@@ -329,13 +285,11 @@ export const CreateUserGroup: React.FC = () => {
         limit: projectParams.limit,
         page: projectParams.page,
         group_type_rid: groupInformation.groupType,
-        isFromuserGroup: true,
         ...(isEditView && { group_rid: groupId as string }),
-        filters: appliedFilters,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appliedFilters, tabs, projectParams.page, projectParams.limit]);
+  }, [tabs, projectParams.page, projectParams.limit]);
 
   // Functions
   const handleAccountsModal = useCallback(
@@ -356,7 +310,6 @@ export const CreateUserGroup: React.FC = () => {
     if (currentIndex === 0) {
       window.history.back();
     } else {
-      setAppliedFilters({});
       setTabs(tabOrder[currentIndex - 1]);
     }
   };
@@ -517,11 +470,9 @@ export const CreateUserGroup: React.FC = () => {
       setGroupInformationError(newErrors);
       if (Object.values(newErrors).every((val) => val === '')) {
         // If No errors
-        setAppliedFilters({});
         setTabs(Tabs.USER);
       }
     } else if (tabs === Tabs.USER) {
-      setAppliedFilters({});
       setTabs(Tabs.PROJECT);
     } else if (tabs === Tabs.PROJECT) {
       const commonData = {
@@ -562,12 +513,6 @@ export const CreateUserGroup: React.FC = () => {
         createUserGroup.mutate(constructDataForCreate);
       }
     }
-  };
-  const handleFilterModal = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-  const handleCloseFilter = () => {
-    setAnchorEl(null);
   };
 
   return (
@@ -627,40 +572,6 @@ export const CreateUserGroup: React.FC = () => {
         {tabs === Tabs.USER && 'Available User'}
         {tabs === Tabs.PROJECT && 'Available Projects'}
       </div>
-
-      {(tabs === Tabs.USER || tabs === Tabs.PROJECT) && (
-        <div className='flex px-10 py-1 justify-end'>
-          <button
-            aria-describedby='user-group'
-            className={`w-[64px] h-[24px] text-[13px] mt-[5px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
-            ${isFilterOpen || (appliedFilters && Object.keys(appliedFilters).length > 0) ? 'bg-[#F3F3F3]' : ''}`}
-            onClick={handleFilterModal}
-          >
-            <NewFilterIcon alt='filter-icon' />
-            Filter
-            {appliedFilters && Object.keys(appliedFilters).length > 0 ? (
-              <div className='absolute -top-[5px] -right-2 w-4 h-4 flex items-center justify-center text-xs'>
-                <span className='absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0'></span>
-                <span className='w-4 h-4 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>
-                  {appliedFilters ? Object.keys(appliedFilters).length : 0}
-                </span>
-              </div>
-            ) : null}
-          </button>
-          <Suspense fallback={null}>
-            <FilterModal
-              isOpen={isFilterOpen}
-              filterAnchorEl={anchorEl}
-              filterId='user-group'
-              filterFields={userGroupFilterFields}
-              setAppliedFilters={setAppliedFilters}
-              setPage={(page) => setUserParams({ ...userParams, page })}
-              handleCloseFilter={handleCloseFilter}
-              carryFilterData={false}
-            />
-          </Suspense>
-        </div>
-      )}
 
       <div className='flex flex-row w-full items-end gap-4 px-10 py-1'>
         {tabs === Tabs.FORM && (

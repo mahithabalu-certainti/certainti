@@ -1,6 +1,6 @@
 import { formatDateToYYYYMMDDWithTime } from '../../../../common-utils';
 import { ListTableColumn } from '../../../../components/table/types';
-import { ProjectListByAccounts, UserGroupList } from '../../../types';
+import { UserGroupList } from '../../../types';
 
 export const getUserGroupColumns = (
   prefixGroupName: string,
@@ -123,12 +123,6 @@ export const getAvailableUserColumns = () => [
     sortable: false,
   },
   {
-    id: 'role_name',
-    sortId: 'role_name',
-    label: 'Role Name',
-    sortable: false,
-  },
-  {
     id: 'organization_name',
     sortId: 'organization_name',
     label: 'Organisation Name',
@@ -154,33 +148,5 @@ export const getAvailableProjectsColumns = () => [
     sortId: 'project_code',
     label: 'Project Code',
     sortable: false,
-  },
-  {
-    id: 'fiscal_year',
-    sortId: 'fiscal_year',
-    label: 'Fiscal Year',
-    sortable: false,
-    render: (row: ProjectListByAccounts) => {
-      const displayYear = row.fiscal_year ? `FY-${row.fiscal_year}` : '-';
-      return <span>{displayYear}</span>;
-    },
-  },
-  {
-    id: 'classification_name',
-    sortId: 'classification_name',
-    label: 'Classification',
-    sortable: false,
-  },
-  {
-    id: 'project_type_name',
-    sortId: 'project_type_name',
-    label: 'Type',
-    sortable: false,
-  },
-  {
-    id: 'project_point_of_contact',
-    sortId: 'project_point_of_contact',
-    label: 'Project Point of Contact',
-    sortable: false,
-  },
+  }
 ];
