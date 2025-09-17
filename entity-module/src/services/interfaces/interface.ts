@@ -381,15 +381,6 @@ export interface IProjectService {
     errorMessage?: string;
     data?: { projects: any; count: number };
   }>;
-  updateQrePercentAdjustment(
-    data: IUpdateQrePecentAdjustment,
-    userId: string
-  ): Promise<{
-    statusCode: number;
-    message: string;
-    errorMessage?: string;
-    data?: any;
-  }>;
 }
 
 export interface IResourceGraphQlServices {

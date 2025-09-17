@@ -441,6 +441,6 @@ export interface IAnomalyStatus {
 
 export interface IUpdateQrePecentAdjustment {
   rid: string,
-  accountId: string,
+  account_rid: string,
   rd_percent_potential_ai: number;
 }

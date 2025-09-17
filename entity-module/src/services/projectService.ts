@@ -1771,9 +1771,9 @@ export class ProjectService {
     data?: any;
   }> {
     try {
-      const { accountId, rid, rd_percent_potential_ai } = data;
+      const { account_rid, rid, rd_percent_potential_ai } = data;
 
-      const accountData = await this.schemaService.fetchAccountById(accountId);
+      const accountData = await this.schemaService.fetchAccountById(account_rid);
 
       if (!accountData) {
         throw new Error("Error creating project: Invalid account ID");

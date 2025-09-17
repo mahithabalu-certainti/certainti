@@ -146,7 +146,8 @@ export const STATUS_MESSAGE = {
   tenantIdInvalidLength: 'Tenant ID must be a valid UUID (36 characters).',
   clientIdInvalidLength: 'Client ID must be a valid UUID (36 characters).',
   clientSecretTooShort: 'Client Secret is too short or invalid.',
-  invalidCredentials: 'Provided Azure credentials are invalid or unusable'
+  invalidCredentials: 'Provided Azure credentials are invalid or unusable',
+  rdpercentPotentialmissing: "RD Percent Potential AI is missing",
 };
 
 export const TYPES = {

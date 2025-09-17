@@ -4124,10 +4124,10 @@ class SchemaService {
       const totalSubconCost = projectFiscalDetails.total_cost_subcon_prj ?? 0;
       const totalNonlaborCost = projectFiscalDetails.total_cost_nonlabor_prj ?? 0;
     
-      const qreFinalCost = totalCost / netQre;
-      const qreFteCost = totalFteCost / netQre;
-      const qreSubconCost = totalSubconCost / netQre;
-      const qreNonlaborCost = totalNonlaborCost / netQre;
+      const qreFinalCost = totalCost * (netQre / 100);
+      const qreFteCost = totalFteCost * (netQre / 100);
+      const qreSubconCost = totalSubconCost * (netQre / 100);
+      const qreNonlaborCost = totalNonlaborCost * (netQre / 100);
 
       await sequelize.query(
         rawQueries.updateProjectFiscalQre(schemaName, 

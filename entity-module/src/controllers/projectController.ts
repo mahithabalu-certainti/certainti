@@ -496,55 +496,6 @@ async function projectClassification(req: Request, res: Response): Promise<void>
   }
 }
 
-async function updateQreAdjutment(req: Request, res: Response): Promise<void> {
-  const methodName = "Update QRE Adjustment";
-  try {
-    const value = await validateRequest(req, updateQreAdjutmentSchema, res);
-
-    const userId = req.headers["x-user-id"] as string;
-
-    if (!userId) {
-      handleErrorResponse(
-        res,
-        HttpStatus.BAD_REQUEST,
-        HttpStatus.BAD_REQUEST_MESSAGE,
-        "User ID is required in headers"
-      );
-      return;
-    }
-
-    if (!value) {
-      return;
-    }
-
-    const projectClassifications = await services.projectServices.updateQrePercentAdjustment(value, userId);
-    if (projectClassifications.statusCode === HttpStatus.SUCCESS) {
-      successLog(methodName);
-      handleSuccessResponse(res, projectClassifications.data);
-      return;
-    } else {
-      errorLog(methodName, projectClassifications.errorMessage);
-      handleErrorResponse(
-        res,
-        HttpStatus.BAD_REQUEST,
-        HttpStatus.BAD_REQUEST_MESSAGE,
-        projectClassifications.message
-      );
-      return;
-    }
-  } catch (err) {
-    const error = err as Error;
-    errorLog(methodName, error.message);
-    handleErrorResponse(
-      res,
-      HttpStatus.FAILED,
-      HttpStatus.FAILED_MESSAGE,
-      error.message
-    );
-    return;
-  }
-}
-
 export default {
   createProject,
   updateProject,
@@ -553,6 +504,5 @@ export default {
   allProjectList,
   projectClassification,
   exportProjectList,
-  exportAllProjectList,
-  updateQreAdjutment
+  exportAllProjectList
 };
