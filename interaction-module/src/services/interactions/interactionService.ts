@@ -330,9 +330,7 @@ export class InteractionService {
       quarters.push({ start, end });
       // Next quarter starts on the 1st of the next third month
       qStart = new Date(qStart.getFullYear(), qStart.getMonth() + 3, 1);
-    }
-  console.log(`Fiscal Year Start: ${fiscalStart.toISOString()}, End: ${fiscalEnd.toISOString()}`);
-  console.log("Calculated Quarters new:",quarters);  
+    } 
     // Find current quarter
     let quarterStart, quarterEnd;
     for (const q of quarters) {
