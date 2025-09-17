@@ -222,6 +222,7 @@ export interface AccountById {
   rid: string;
   created_datetime: string;
   modified_datetime: string;
+  organisation_name: string;
   logo_url: string;
   parent_account: {
     account_name: string;
@@ -271,6 +272,10 @@ export interface AccountFieldsTypes {
   modified_by: string;
   created_by: string;
   account_rid: string;
+  client_secret: string;
+  client_id: string;
+  tenant_id: string;
+  support_email: string;
 }
 
 export interface NewAccountData extends AccountFieldsTypes, AccountById {
@@ -511,7 +516,8 @@ export type ExportType =
   | 'interactions'
   | 'timesheet_project'
   | 'timesheet_project_resource'
-  | 'timesheet_project_task';
+  | 'timesheet_project_task'
+  | 'technical_summary';
 
 export type FinancialSummaryFlag = 'all' | 'rd_qualified';
 

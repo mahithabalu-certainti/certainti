@@ -173,6 +173,11 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
     AllPermissions.ATTACHMENT_VIEW_EDIT
   );
 
+  const isAttachmentExportEnable = checkPermission(
+    permission,
+    AllPermissions.ATTACHMENT_EXPORT
+  );
+
   const handleSortRequest = (property: string, sortOrder: 'asc' | 'desc') => {
     const apiOrder = sortOrder.toUpperCase() as 'ASC' | 'DESC';
     setOrder(apiOrder);
@@ -183,12 +188,25 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
     setCurrentCategory(rid);
   };
 
+  const handleDownload = (documentUrl: string) => {
+    if (!documentUrl) return;
+
+    const link = document.createElement('a');
+    link.href = documentUrl;
+    link.download = '';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const attachmentColumns = getAttachmentTableColumns(
     fiscalYears,
     memoizedDocumentCategories,
     memoizedDocumentTypes,
     handleDocumentCategory,
+    handleDownload,
     permissionMap,
+    isAttachmentExportEnable,
     categoryTypes.isLoading,
     accountInActive
   );
@@ -322,7 +340,7 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
         tableStyle={{
           borderBottom: '1px solid #CBD6E2',
           height: '100%',
-          maxHeight: 'calc(100vh - 410px)',
+          maxHeight: 'calc(100vh - 450px)',
           overflow: 'auto',
         }}
         stickyHeader={true}

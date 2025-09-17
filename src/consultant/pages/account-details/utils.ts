@@ -107,6 +107,7 @@ export const transformAccountData = (
   permissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): DisplayColumn[] => {
   const account = data?.accountById;
+  const accountDetails = data?.accountDetails;
   const status = account?.status?.status_name?.toLowerCase();
 
   return [
@@ -120,6 +121,13 @@ export const transformAccountData = (
             !permissionMap?.['r_number']?.read &&
             !permissionMap?.['r_number']?.edit,
         },
+        {
+          label: 'Industry',
+          value: getValueOrDefault(account?.industry_rid_name),
+          hide:
+            !permissionMap?.['industry_rid']?.read &&
+            !permissionMap?.['industry_rid']?.edit,
+        },
       ],
     },
     {
@@ -130,6 +138,13 @@ export const transformAccountData = (
           hide:
             !permissionMap?.['account_name']?.read &&
             !permissionMap?.['account_name']?.edit,
+        },
+        {
+          label: 'Business Name',
+          value: getValueOrDefault(account?.organisation_name),
+          hide:
+            !permissionMap?.['organisation_name']?.read &&
+            !permissionMap?.['organisation_name']?.edit,
         },
       ],
     },
@@ -142,27 +157,43 @@ export const transformAccountData = (
             !permissionMap?.['parent_account_rid']?.read &&
             !permissionMap?.['parent_account_rid']?.edit,
         },
+        {
+          label: 'Fiscal Start',
+          value: accountDetails?.fiscal_start_date || '-',
+          // className: `${status === 'active' ? 'text-[#199806]' : 'text-[#f44336]'}`,
+          hide:
+            !permissionMap?.['fiscal_start_date']?.read &&
+            !permissionMap?.['fiscal_start_date']?.edit,
+        }, 
       ],
     },
     {
       items: [
         {
-          label: 'Country / Currency',
-          value: `${getValueOrDefault(account?.country?.country_code)} / ${getValueOrDefault(account?.currency?.currency_code)}`,
+          label: 'Country',
+          value: `${getValueOrDefault(account?.country?.country_code)}`,
           hide:
             !permissionMap?.['country_rid']?.read &&
             !permissionMap?.['country_rid']?.edit,
         },
+        {
+          label: 'Fiscal End',
+          value: accountDetails?.fiscal_end_date || '-',
+          // className: `${status === 'active' ? 'text-[#199806]' : 'text-[#f44336]'}`,
+          hide:
+            !permissionMap?.['fiscal_end_date']?.read &&
+            !permissionMap?.['fiscal_end_date']?.edit,
+        }, 
       ],
     },
     {
       items: [
         {
-          label: 'Industry',
-          value: getValueOrDefault(account?.industry_rid_name),
+          label: ' Currency',
+          value: getValueOrDefault(account?.currency?.currency_code),
           hide:
-            !permissionMap?.['industry_rid']?.read &&
-            !permissionMap?.['industry_rid']?.edit,
+            !permissionMap?.['currency_rid']?.read &&
+            !permissionMap?.['currency_rid']?.edit,
         },
       ],
     },

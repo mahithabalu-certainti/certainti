@@ -74,7 +74,7 @@ const InfoSection: React.FC<InfoSectionProps> = ({
 
   return (
     <Box
-      className={`flex flex-col gap-3 px-4 py-2 border-b border-[#CBD6E2] bg-white max-h-[80px] min-h-[40px] ${className}`}
+      className={`flex flex-col gap-3 px-4 py-2 border-b border-[#CBD6E2] bg-white max-h-[${singleLineView ? '80px' : '160px'}] min-h-[${singleLineView ? '40px' : '80px'}] ${className}`}
     >
       {loading ? (
         <>

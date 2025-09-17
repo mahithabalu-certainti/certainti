@@ -61,6 +61,11 @@ export const Attachments: React.FC = () => {
     AllPermissions.ATTACHMENT_VIEW_EDIT
   );
 
+  const isAttachmentExportEnable = checkPermission(
+    permission,
+    AllPermissions.ATTACHMENT_EXPORT
+  );
+
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
 
   const handleFilterModal = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -180,6 +185,7 @@ export const Attachments: React.FC = () => {
     {
       label: 'Export',
       onClick: () => handleExport(),
+      hide: !isAttachmentExportEnable,
     },
   ];
 

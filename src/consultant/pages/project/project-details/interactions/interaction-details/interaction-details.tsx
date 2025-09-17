@@ -12,7 +12,10 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom';
-import { useInteractionDetails } from '../../../../../services/interactions/interactions-service';
+import {
+  useInteractionDetails,
+  useSendInteraction,
+} from '../../../../../services/interactions/interactions-service';
 import {
   applyHidePermission,
   formatDateToYYYYMMDDWithTime,
@@ -25,6 +28,7 @@ import { StatusTypeEnum } from '../../../../../types';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
 import { AllPermissions } from '../../../../../../common-service';
+import { useToast } from '../../../../../../hooks';
 
 interface InteractionDetailsProps {
   accountInActive: boolean;
@@ -42,16 +46,16 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   const [searchParams] = useSearchParams();
   const accountId = searchParams.get('accountID') || '';
   const interactionId = searchParams.get('interaction_id') || undefined;
+  const projectFiscalRid = searchParams.get('project_fiscal_rid');
 
   const { permission } = useSelector((state: RootState) => state.permission);
-
+  const sendInteraction = useSendInteraction();
+  const { successToast } = useToast();
   const { data, isLoading, error, refetch } = useInteractionDetails(
     accountId,
-    interactionId
+    interactionId,
+    projectFiscalRid as string
   );
-  // commented for if may future use
-  // const disableEditResBtn =
-  //   data?.status_name.toLowerCase() === StatusTypeEnum.response_received;
 
   const interactionFieldsEditable = useMemo(
     () =>
@@ -62,16 +66,21 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   );
 
   const disableInteractionEditBtn = [
-    StatusTypeEnum.cancelled,
-    StatusTypeEnum.completed,
+    StatusTypeEnum.sent,
+    StatusTypeEnum.response_draft,
     StatusTypeEnum.response_received,
+    StatusTypeEnum.inqueue,
+  ].includes((data?.status_name || '').toLowerCase() as StatusTypeEnum);
+
+  const disableRemainderBtn = [
+    StatusTypeEnum.sent,
+    StatusTypeEnum.response_draft,
   ].includes((data?.status_name || '').toLowerCase() as StatusTypeEnum);
 
   const disableEditResBtn = [
-    StatusTypeEnum.cancelled,
     StatusTypeEnum.draft,
-    StatusTypeEnum.completed,
     StatusTypeEnum.response_received,
+    StatusTypeEnum.inqueue,
   ].includes((data?.status_name || '').toLowerCase() as StatusTypeEnum);
 
   //permission
@@ -113,10 +122,37 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       accountId,
       source: 'project',
       projectDetails: JSON.stringify(projectData),
+      project_fiscal_rid: data?.project_fiscal_rid || projectFiscalRid || '',
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
 
+  const handleRemainder = () => {
+    const interactions = [
+      {
+        interaction_rid: data?.interaction_rid || interactionId || '',
+        project_fiscal_rid:
+          data?.project_fiscal_rid || projectDetails?.rid || projectid || '',
+        email_info: {
+          email: '',
+          name: '',
+        },
+      },
+    ];
+
+    const payload = {
+      account_rid: data?.account_rid || accountId || '',
+      is_interaction_followup: true,
+      interactions,
+    };
+    sendInteraction.mutate(payload, {
+      onSuccess: (response) => {
+        successToast(response?.statusMessage);
+        // onSuccessRefetch();
+      },
+    });
+    return;
+  };
   const handleResponseHistory = () => {
     searchParams.set('history', 'response_histroy');
     navigate({ search: searchParams.toString() }, { replace: true });
@@ -130,6 +166,21 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       onClick: () => handleEdit(),
       sx: { width: '48px', minWidth: '48px' },
       hide: !interactionFieldsEditable,
+    },
+    {
+      label: 'Reminder',
+      variant: 'outlined' as const,
+      disabled: accountInActive || !disableRemainderBtn,
+      onClick: () => handleRemainder(),
+      sx: { width: '78px', minWidth: '78px' },
+      hide: false,
+      isLoading: sendInteraction.isPending,
+    },
+    {
+      label: 'Back To Interactions',
+      variant: 'contained' as const,
+      onClick: () => handleBackClick(),
+      sx: { width: '140px', minWidth: '140px' },
     },
   ];
 
@@ -240,8 +291,6 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
           }
           className='rounded-tl-[2px] h-[40px] rounded-tr-[2px]'
           buttons={headerButtons}
-          onBackClick={handleBackClick}
-          showBackArrow={true}
         />
         {isLoading ? (
           <DetailsSectionSkeleton className='p-0 m-0' />

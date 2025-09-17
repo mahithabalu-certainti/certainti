@@ -1,11 +1,11 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Box } from '@mui/material';
 import { settingsFormFields } from './helper';
 import { FormBuilder } from '../../../../../../components';
 import { useToast } from '../../../../../../hooks';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
-import { AllPermissions } from '../../../../../../common-service';
+import { AllPermissions, OnChange } from '../../../../../../common-service';
 import { useParams } from 'react-router-dom';
 import dayjs from 'dayjs';
 import { useAccountUpdateSettings } from '../../../../../services/settings';
@@ -41,13 +41,16 @@ const Settings: React.FC<SettingsProps> = ({
 }) => {
   const { successToast } = useToast();
   const updateSettings = useAccountUpdateSettings();
-
+  const [emailRequried, setEmailRequried] = useState<boolean>(false);
+  const [idRequried, setIdRequried] = useState<boolean>(false);
   const { accountid } = useParams();
 
   const { data, isLoading, refetch } = useFetchAccountFields(
     accountid as string
   );
+
   const accountDetails = data?.data?.accountDetails;
+  const disable = data?.data?.accountById?.is_parent;
 
   // Permission Management
   const { permission } = useSelector((state: RootState) => state.permission);
@@ -109,9 +112,23 @@ const Settings: React.FC<SettingsProps> = ({
       auto_send_ai_interaction: accountDetails.autosend_interaction
         ? 'Yes'
         : 'No',
+      support_email: accountDetails.support_email || '',
+      tenant_id: accountDetails.tenant_id || '',
+      client_id: accountDetails.client_id || '',
+      client_secret: accountDetails.client_secret || '',
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountDetails]);
+  useEffect(() => {
+    if (!formValues) return;
+    setEmailRequried(!!formValues.support_email);
+    const hasAnyIdValue =
+      !!formValues.client_secret ||
+      !!formValues.tenant_id ||
+      !!formValues.client_id;
+
+    setIdRequried(hasAnyIdValue);
+  }, [formValues]);
 
   const handleFormSubmit = (data: object) => {
     const formData = data as FormValues;
@@ -126,6 +143,10 @@ const Settings: React.FC<SettingsProps> = ({
       auto_access_rd: formData.auto_assessment === 'Yes',
       blended_rate_fte: formData.blended_rate_fte,
       blended_rate_subcon: formData.blended_rate_subcon,
+      support_email: formData.support_email,
+      tenant_id: formData.tenant_id,
+      client_id: formData.client_id,
+      client_secret: formData.client_secret,
     };
     setIsFormSaving(true);
     updateSettings.mutate(payload, {
@@ -134,9 +155,30 @@ const Settings: React.FC<SettingsProps> = ({
         setIsFormSaving(false);
         refetch();
       },
+      onError: (error) => {
+        console.error('Update failed:', error);
+        setIsFormSaving(false);
+      },
+      onSettled: () => {
+        setIsFormSaving(false);
+      },
     });
   };
 
+  const onChangeField = (data: OnChange) => {
+    if (data.fieldName === 'support_email') {
+      const hasValue = !!data.fieldValue;
+      setEmailRequried(hasValue);
+    }
+    if (['client_secret', 'tenant_id', 'client_id'].includes(data.fieldName)) {
+      const hasAnyValue =
+        !!(data.fieldName === 'client_secret' && data.fieldValue) ||
+        !!(data.fieldName === 'tenant_id' && data.fieldValue) ||
+        !!(data.fieldName === 'client_id' && data.fieldValue);
+
+      setIdRequried(hasAnyValue);
+    }
+  };
   if (isLoading) {
     return <SkeletonForm />;
   }
@@ -161,10 +203,16 @@ const Settings: React.FC<SettingsProps> = ({
       >
         <FormBuilder
           key={JSON.stringify(accountDetails)}
-          data={settingsFormFields(permissionMap)}
+          data={settingsFormFields(
+            permissionMap,
+            emailRequried,
+            idRequried,
+            disable
+          )}
           formRef={formRef}
           outData={handleFormSubmit}
           values={formValues}
+          onChange={onChangeField}
         />
       </Box>
     </div>

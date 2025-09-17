@@ -301,6 +301,29 @@ export const getProjectResourcesColumns = (
       !permissionMap?.['qre_final']?.edit,
   },
   {
+    id: 'status_name',
+    sortId: 'status_name',
+    label: 'Status',
+    width: 130,
+    sortable: true,
+    hide:
+      !permissionMap?.['status_rid']?.edit &&
+      !permissionMap?.['status_rid']?.read,
+    render: (row: ProjectResourcesListType) => (
+      <span
+        className={`${
+          row.status_name === 'Active'
+            ? 'text-[#199806]'
+            : row.status_name === 'In-Active'
+              ? 'text-[#f44336] '
+              : ''
+        }`}
+      >
+        {row.status_name || '-'}
+      </span>
+    ),
+  },
+  {
     id: 'description',
     label: 'Comments',
     sortable: true,

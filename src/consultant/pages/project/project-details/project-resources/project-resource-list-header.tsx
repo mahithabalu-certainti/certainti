@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { SxProps } from '@mui/material';
 import React from 'react';
-import { LeftArrowIcon } from '../../../../../assets';
 import TextButton from '../../../../../components/button/text-button';
 import { Theme } from '@emotion/react';
 interface ProjectResourceTableHeaderProps {
@@ -32,8 +31,6 @@ const ProjectResourceTableHeader: React.FC<ProjectResourceTableHeaderProps> = ({
   headerButtons = [],
   toggleViewMode,
   count,
-  showBackArrow = false,
-  onBackClick,
   value,
   projectResourceNumber,
   iconBg,
@@ -43,14 +40,14 @@ const ProjectResourceTableHeader: React.FC<ProjectResourceTableHeaderProps> = ({
     <div className='border-t border-[1px] border-b-0 border-[#CBD6E2] rounded-tl-[2px] h-[40px] rounded-tr-[2px]'>
       <div className='h-full flex items-center justify-between gap-4 py-1 px-3'>
         <div className='flex items-center gap-1'>
-          {showBackArrow && (
+          {/* {showBackArrow && (
             <div
               className='cursor-pointer w-[24px] h-[24px] flex justify-center items-center -ml-2'
               onClick={onBackClick}
             >
               <LeftArrowIcon />
             </div>
-          )}
+          )} */}
           {titleIcon && (
             <div
               className={`w-[24px] h-[24px] flex items-center justify-center ${bgType === 'circle' ? 'rounded-full' : 'rounded-[4px]'}`}

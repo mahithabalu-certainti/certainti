@@ -46,7 +46,8 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
       // If only list parameter exists, that's the active key
       setLocalActiveKey(listParam);
     }
-  }, []); // Empty dependency array - only run on mount
+  }, [searchParams]);
+
   const { modules, menus } = useSelector(
     (state: RootState) => state.permission
   );
@@ -121,6 +122,7 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
     searchParams.delete('interaction_attachment_count');
     searchParams.delete('history');
     searchParams.delete('upload');
+    searchParams.delete('technical_summary_id');
     //For project resource and task
     searchParams.delete('page');
     searchParams.delete('pro_res_id');

@@ -16,6 +16,8 @@ import {
   ProjectTaskInput,
   createProjectTaskApiResponse,
   ProjectTaskDetailsApiResponse,
+  ProjectTaskStatusApiResponse,
+  ProjectTaskStatusPayload,
 } from '../../types/project-task';
 import {
   DetailURL,
@@ -262,4 +264,32 @@ export const exportProjectTaskData = async (
   } catch (error) {
     console.error('Export failed:', error);
   }
+};
+
+export const useUpdateProjectTaskStatus = (
+  options?: UseMutationOptions<
+    Partial<ProjectTaskStatusApiResponse>,
+    Error,
+    Partial<ProjectTaskStatusPayload>
+  >
+): UseMutationResult<
+  Partial<ProjectTaskStatusApiResponse>,
+  Error,
+  Partial<ProjectTaskStatusPayload>
+> => {
+  return useMutation({
+    mutationKey: ['update-projecttask-accept-status'],
+    mutationFn: async (payload) => {
+      // const res = await api.put(
+      //   `${baseUrl}` + '/api/project_task/status/update',
+      //   payload
+      // );
+      const res = await resourceServiceApi.put(
+        'api/project_tasks/status/update',
+        payload
+      );
+      return res.data;
+    },
+    ...options,
+  });
 };

@@ -69,6 +69,7 @@ const icons = {
   manageProfile: () => import('./manage-profile.svg?react'),
   manageSettings: () => import('./manage-settings.svg?react'),
   manageUser: () => import('./manage-user.svg?react'),
+  manageConfigSetting: () => import('./manage-config-setting.svg?react'),
   manageUserAccess: () => import('./manage-user-access.svg?react'),
   managerUser: () => import('./manager-user.svg?react'),
   menuArrowRight: () => import('./menu-arrow-right.svg?react'),
@@ -115,6 +116,7 @@ const icons = {
   pdfIcon: () => import('./pdf-icon.svg?react'),
   adminSetting: () => import('./admin-setting.svg?react'),
   documentIcon: () => import('./doc-attachments.svg?react'),
+  editTextIcon: () => import('./edit-text-icon.svg?react'),
 };
 
 function createLazySvgIcon(name: keyof typeof icons) {
@@ -193,6 +195,7 @@ export const ManageProfileIcon = createLazySvgIcon('manageProfile');
 export const ManageSettingsIcon = createLazySvgIcon('manageSettings');
 export const ManageUserAccessIcon = createLazySvgIcon('manageUserAccess');
 export const ManageUserIcon = createLazySvgIcon('manageUser');
+export const ManageConfigSettingIcon = createLazySvgIcon('manageConfigSetting');
 export const ManagerUserIcon = createLazySvgIcon('managerUser');
 export const MenuArrowRight = createLazySvgIcon('menuArrowRight');
 export const MenuArrowRightHover = createLazySvgIcon('menuArrowRightHover');
@@ -237,3 +240,4 @@ export const InteractionDetailIcon = createLazySvgIcon('interactionDetailIcon');
 export const PdfIcon = createLazySvgIcon('pdfIcon');
 export const AdminSettingIcon = createLazySvgIcon('adminSetting');
 export const DocumentIcon = createLazySvgIcon('documentIcon');
+export const EditTextIcon = createLazySvgIcon('editTextIcon');

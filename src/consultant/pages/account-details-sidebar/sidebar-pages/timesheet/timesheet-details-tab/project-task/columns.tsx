@@ -7,6 +7,7 @@ import { ListTableColumn } from '../../../../../../../components/table/types';
 import { ProjectTaskListType } from '../../../../../../types/project-task';
 
 export const getProjectTaskColumns = (
+  onClick: (row: ProjectTaskListType) => void,
   permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<ProjectTaskListType>[] => {
   return [
@@ -29,6 +30,14 @@ export const getProjectTaskColumns = (
       hide:
         !permissionMap?.['resource_code']?.read &&
         !permissionMap?.['resource_code']?.edit,
+      render: (row: ProjectTaskListType) => (
+        <span
+          className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
+          onClick={() => onClick(row)}
+        >
+          {row.resource_code}
+        </span>
+      ),
     },
     {
       id: 'resource_name',

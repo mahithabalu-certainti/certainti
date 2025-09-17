@@ -17,7 +17,10 @@ import {
   ListTable,
   ManageColumnsPopover,
 } from '../../../../../components/table';
-import { reshapeGlobalFilter } from '../../../../../common-utils';
+import {
+  checkPermission,
+  reshapeGlobalFilter,
+} from '../../../../../common-utils';
 import { FilterState } from '../../../../types';
 import {
   FieldOptionType,
@@ -133,6 +136,11 @@ export const AttachmentTable: React.FC<IAttachmentTableProps> = ({
     [permission]
   );
 
+  const isAttachmentExportEnable = checkPermission(
+    permission,
+    AllPermissions.ATTACHMENT_EXPORT
+  );
+
   const permissionMap = useMemo(() => {
     const map: Record<string, { read: boolean; edit: boolean }> = {};
     attachmentViewEditFields.forEach((item) => {
@@ -147,12 +155,25 @@ export const AttachmentTable: React.FC<IAttachmentTableProps> = ({
     setCurrentCategory(rid);
   };
 
+  const handleDownload = (documentUrl: string) => {
+    if (!documentUrl) return;
+
+    const link = document.createElement('a');
+    link.href = documentUrl;
+    link.download = '';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const attachmentsColumns = getAttachmentTableColumns(
     fieldOptions.fiscalYears,
     fieldOptions.docCategories,
     fieldOptions.docTypes,
     handleDocumentCategory,
+    handleDownload,
     permissionMap,
+    isAttachmentExportEnable,
     fieldOptions?.docTypesLoading
   );
 

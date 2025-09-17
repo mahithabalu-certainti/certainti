@@ -3,7 +3,11 @@ import { ListTableColumn } from '../../../../../components/table/types';
 import { InteractionList } from '../../../../types';
 
 export const getInteractionListColumns = (
-  handleViewInteraction: (rid: string, rNumber: string) => void,
+  handleViewInteraction: (
+    rid: string,
+    rNumber: string,
+    proFiscalRid: string
+  ) => void,
   handleViewInteractionHistory: (interactionHistory: string) => void,
   handleViewInteractionAttachmentCount: (
     interactionAttachmentCount: string | number,
@@ -16,7 +20,7 @@ export const getInteractionListColumns = (
     id: 'r_number',
     sortId: 'r_number',
     label: 'Interaction ID',
-    width: 160,
+    width: 130,
     sortable: true,
     sticky: true,
     hide:
@@ -31,7 +35,9 @@ export const getInteractionListColumns = (
     },
     render: (row: InteractionList) => (
       <span
-        onClick={() => handleViewInteraction(row.rid, row.r_number)}
+        onClick={() =>
+          handleViewInteraction(row.rid, row.r_number, row.project_fiscal_rid)
+        }
         className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
       >
         {row.r_number}
@@ -53,7 +59,7 @@ export const getInteractionListColumns = (
     id: 'interaction_age',
     sortId: 'interaction_age',
     label: 'Age (Days)',
-    width: 120,
+    width: 103,
     sortable: true,
     sx: { textAlign: 'right' },
     hide:
@@ -73,7 +79,7 @@ export const getInteractionListColumns = (
     id: 'recipient_name',
     sortId: 'recipient_name',
     label: 'Recipient Name',
-    width: 180,
+    width: 160,
     sortable: true,
     hide:
       !permissionMap?.['recipient_name']?.edit &&
@@ -84,7 +90,7 @@ export const getInteractionListColumns = (
     id: 'recipient_email',
     sortId: 'recipient_email',
     label: 'Recipient Email',
-    width: 220,
+    width: 200,
     sortable: true,
     hide:
       !permissionMap?.['recipient_email']?.edit &&
@@ -107,7 +113,7 @@ export const getInteractionListColumns = (
     id: 'last_reminder_on',
     sortId: 'last_reminder_on',
     label: 'Last Reminder Date',
-    width: 200,
+    width: 180,
     sortable: true,
     hide:
       !permissionMap?.['last_reminder_on']?.edit &&
@@ -133,7 +139,7 @@ export const getInteractionListColumns = (
     id: 'response_updated_on',
     sortId: 'response_updated_on',
     label: 'Last Response Update',
-    width: 200,
+    width: 180,
     sortable: true,
     hide:
       !permissionMap?.['response_updated_on']?.edit &&
@@ -146,7 +152,7 @@ export const getInteractionListColumns = (
     id: 'attachment_count',
     sortId: 'attachment_count',
     label: 'Number of Attachments',
-    width: 200,
+    width: 185,
     sortable: true,
     sx: { textAlign: 'right' },
     render: (row: InteractionList) =>
@@ -175,7 +181,7 @@ export const getInteractionListColumns = (
     id: 'interaction_history',
     sortId: 'interaction_history',
     label: 'Interaction History',
-    width: 200,
+    width: 135,
     sortable: false,
     hide:
       !permissionMap?.['interaction_history']?.edit &&
@@ -196,7 +202,7 @@ export const getInteractionListColumns = (
     id: 'interaction_url',
     sortId: 'interaction_url',
     label: 'Interaction Link',
-    width: 140,
+    width: 115,
     sortable: false,
     hide:
       !permissionMap?.['interaction_url']?.edit &&
@@ -216,20 +222,10 @@ export const getInteractionListColumns = (
       ),
   },
   {
-    id: 'parent_interaction_rid',
-    sortId: 'parent_interaction_rid',
-    label: 'Parent Interaction ID',
-    width: 200,
-    sortable: true,
-    hide:
-      !permissionMap?.['parent_interaction_rid']?.edit &&
-      !permissionMap?.['parent_interaction_rid']?.read,
-  },
-  {
     id: 'interaction_type_name',
     sortId: 'interaction_type_name',
     label: 'Type',
-    width: 140,
+    width: 80,
     sortable: true,
     hide:
       !permissionMap?.['interaction_type_name']?.edit &&
@@ -239,7 +235,7 @@ export const getInteractionListColumns = (
     id: 'response_source_name',
     sortId: 'response_source_name',
     label: 'Response Source',
-    width: 180,
+    width: 200,
     sortable: true,
     hide:
       !permissionMap?.['response_source_name']?.edit &&
@@ -260,7 +256,7 @@ export const getInteractionListColumns = (
     id: 'created_datetime',
     sortId: 'created_datetime',
     label: 'Created Date',
-    width: 200,
+    width: 180,
     sortable: true,
     hide:
       !permissionMap?.['created_datetime']?.edit &&
@@ -272,7 +268,7 @@ export const getInteractionListColumns = (
     id: 'updated_user_name',
     sortId: 'updated_user_name',
     label: 'Last Updated By',
-    width: 180,
+    width: 160,
     sortable: true,
     hide:
       !permissionMap?.['modified_by']?.edit &&
@@ -283,7 +279,7 @@ export const getInteractionListColumns = (
     id: 'modified_datetime',
     sortId: 'modified_datetime',
     label: 'Last Updated Date',
-    width: 200,
+    width: 180,
     sortable: true,
     hide:
       !permissionMap?.['modified_datetime']?.edit &&

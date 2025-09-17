@@ -13,6 +13,7 @@ import {
   createTextField,
   PROJECT_RESOURCE_REGEX,
   REGEX_PATTERNS,
+  RESOURCE_REGEX,
   // REGEX_PATTERNS,
 } from '../../../../../../common-utils';
 
@@ -96,18 +97,32 @@ export const ProjectResourceFormData = (
               !permissionMap?.['resource_code']?.read &&
               !permissionMap?.['resource_code']?.edit,
           }),
-          createSelectField('status_rid', 'Resource Status', {
-            options: resourceStatusOptions,
-            placeholder: 'Choose Resource Status',
+          createTextField('project_resource_role', 'Project Resource Role', {
+            placeholder: 'Enter Project Resource Role',
             required: false,
             disabled:
               isEditView &&
-              permissionMap?.['status_rid']?.read &&
-              !permissionMap?.['status_rid']?.edit,
+              permissionMap?.['project_resource_role']?.read &&
+              !permissionMap?.['project_resource_role']?.edit,
             hide:
               isEditView &&
-              !permissionMap?.['status_rid']?.read &&
-              !permissionMap?.['status_rid']?.edit,
+              !permissionMap?.['project_resource_role']?.read &&
+              !permissionMap?.['project_resource_role']?.edit,
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MIN_3,
+                errorMessage: 'Please enter more than 2 characters.',
+              },
+              {
+                regex: REGEX_PATTERNS.MAX_64,
+                errorMessage: 'Max length exceeded.',
+              },
+              {
+                regex: RESOURCE_REGEX.ROLE,
+                errorMessage:
+                  'Allows only letters, Apostrophe, spaces, hyphens, and Periods.',
+              },
+            ],
           }),
         ],
       },

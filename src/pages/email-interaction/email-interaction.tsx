@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { certaintiLogo } from '../../assets/images';
 import InteractionQuestions from './interaction-qustions';
 import { CircularProgress } from '@mui/material';
@@ -16,8 +16,6 @@ const EmailInteraction: React.FC = () => {
   const [otp, setOtp] = useState<string[]>(['', '', '', '', '', '']);
   const [timer, setTimer] = useState(0);
   const [isAuthentic, setIsAuthentic] = useState(false);
-  const [currentIntractionId, setCurrentIntractionId] = useState('');
-  const isGenerateOtpCall = useRef(false);
 
   const timeout = localStorage.getItem('otp_timeout');
   const auth_token = localStorage.getItem('temAuth');
@@ -25,10 +23,12 @@ const EmailInteraction: React.FC = () => {
   const parseToken = auth_token ? JSON.parse(auth_token) : '';
   const account_rid = searchParams.get('acc');
   const interaction_rid = searchParams.get('int');
+  const project_fiscal_rid = searchParams.get('proj');
   const checkEveryOtpValue = otp.every((digit) => digit !== '');
 
   // API Hooks
   const { mutate, isPending, data } = usePostGenerateOtp();
+
   const reSendOtp = usePostReSendOtp();
   const verifyOtp = usePostVerifyOtp();
   const {
@@ -38,11 +38,12 @@ const EmailInteraction: React.FC = () => {
   } = useGetInteractionQuestions(
     account_rid as string,
     interaction_rid as string,
+    project_fiscal_rid as string,
     parseToken.auth_token as string,
     parseToken.email as string
   );
   const disableEditResBtn =
-    questions?.status_name.toLowerCase() === StatusTypeEnum.response_received;
+    questions?.status_name?.toLowerCase() === StatusTypeEnum.response_received;
 
   useEffect(() => {
     // clear old session when open new link
@@ -50,44 +51,16 @@ const EmailInteraction: React.FC = () => {
       localStorage.removeItem('otp_timeout');
       localStorage.removeItem('temAuth');
       localStorage.setItem('intractionId', interaction_rid);
-      setCurrentIntractionId(interaction_rid);
+      setOtp(['', '', '', '', '', '']);
     }
   }, [interaction_rid, intractionId]);
   useEffect(() => {
-    // clear authentication when enter interaction
-    if (questions?.questions && questions.questions.length > 0) {
-      localStorage.removeItem('auth');
-    }
-  }, [questions]);
-  useEffect(() => {
-    if (
-      account_rid &&
-      interaction_rid &&
-      !timeout &&
-      !isGenerateOtpCall.current
-    ) {
-      const payload = {
-        interaction_rid,
-        account_rid,
-      };
-      isGenerateOtpCall.current = true;
-      mutate(payload);
-    }
-
     if (auth_token) {
       setIsAuthentic(true);
     } else {
       setIsAuthentic(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timeout, account_rid, interaction_rid, currentIntractionId, auth_token]);
-  useEffect(() => {
-    if (data && !timeout) {
-      const timeNow = Date.now();
-      localStorage.setItem('otp_timeout', JSON.stringify(timeNow));
-      setTimer(timeNow);
-    }
-  }, [data, timeout]);
+  }, [auth_token]);
   useEffect(() => {
     if (timeout) {
       const startTime = JSON.parse(timeout);
@@ -95,6 +68,8 @@ const EmailInteraction: React.FC = () => {
       const elapsedSeconds = Math.floor((currentTime - startTime) / 1000);
       const remainingTime = Math.max(600 - elapsedSeconds, 0); // 600 seconds = 10 minutes
       setTimer(remainingTime);
+    } else {
+      setTimer(0);
     }
   }, [timeout]);
   useEffect(() => {
@@ -125,6 +100,16 @@ const EmailInteraction: React.FC = () => {
       setTimer(600);
     }
   }, [reSendOtp.data]);
+
+  // Auto-focus first input when timeout is set
+  useEffect(() => {
+    if (timeout) {
+      const firstInput = document.getElementById('otp-0') as HTMLInputElement;
+      if (firstInput) {
+        firstInput.focus();
+      }
+    }
+  }, [timeout]);
 
   const handleChange = (value: string, index: number) => {
     if (/^\d?$/.test(value)) {
@@ -163,6 +148,27 @@ const EmailInteraction: React.FC = () => {
       }
     );
   };
+  const sendOtp = () => {
+    if (account_rid && interaction_rid) {
+      mutate(
+        {
+          interaction_rid,
+          account_rid,
+        },
+        {
+          onSuccess: async () => {
+            localStorage.removeItem('temAuth');
+            localStorage.setItem('intractionId', interaction_rid);
+            const timeNow = Date.now();
+            localStorage.setItem('otp_timeout', JSON.stringify(timeNow));
+            setTimer(timeNow);
+          },
+        }
+      );
+    }
+  };
+
+  const isOtpSent = Boolean(timeout);
 
   return (
     <div className={isAuthentic ? '' : 'bg-[#f4f4f4]'}>
@@ -203,8 +209,9 @@ const EmailInteraction: React.FC = () => {
                 OTP verification
               </h2>
               <p className='text-gray-500 text-sm mb-6'>
-                Please enter the OTP(One-Time Password) sent to your registered
-                email/phone number to complete your verification
+                {isOtpSent
+                  ? 'Please enter the OTP(One-Time Password) sent to your registered email to complete your verification'
+                  : 'Please click the Send OTP button to get the One Time Password (OTP) to your registered email'}
               </p>
 
               {/* OTP Input Fields */}
@@ -237,6 +244,14 @@ const EmailInteraction: React.FC = () => {
                             setOtp(newOtp);
                           }
                         }
+                      }
+                      // Submit on Enter
+                      if (
+                        e.key === 'Enter' &&
+                        checkEveryOtpValue &&
+                        !verifyOtp.isPending
+                      ) {
+                        validateOtp();
                       }
                     }}
                     onPaste={(e) => {
@@ -278,12 +293,12 @@ const EmailInteraction: React.FC = () => {
                   Didn’t get the code?{' '}
                   <button
                     className={`text-[#F16137] hover:underline transition ${
-                      timer > 0
+                      timer > 0 || !timeout
                         ? 'cursor-not-allowed opacity-50'
                         : 'cursor-pointer'
                     }`}
                     onClick={resetTimer}
-                    disabled={timer > 0}
+                    disabled={timer > 0 || !timeout}
                   >
                     Resend
                   </button>
@@ -291,21 +306,31 @@ const EmailInteraction: React.FC = () => {
               </div>
 
               {/* Buttons */}
-              <button
-                className={`w-full py-2 rounded-sm transition ${
-                  checkEveryOtpValue
-                    ? 'bg-[#F16137] text-white hover:bg-[#e4572e] cursor-pointer'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                }`}
-                onClick={validateOtp}
-                disabled={!checkEveryOtpValue || verifyOtp.isPending}
-              >
-                {verifyOtp.isPending ? (
-                  <CircularProgress sx={{ color: 'white' }} size={16} />
-                ) : (
-                  'Verify'
-                )}
-              </button>
+              {timeout ? (
+                <button
+                  className={`w-full py-2 rounded-sm transition ${
+                    checkEveryOtpValue
+                      ? 'bg-[#F16137] text-white hover:bg-[#e4572e] cursor-pointer'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
+                  onClick={validateOtp}
+                  disabled={!checkEveryOtpValue || verifyOtp.isPending}
+                >
+                  {verifyOtp.isPending ? (
+                    <CircularProgress sx={{ color: 'white' }} size={16} />
+                  ) : (
+                    'Verify'
+                  )}
+                </button>
+              ) : (
+                <button
+                  className={`w-full py-2 rounded-sm transition bg-[#F16137] text-white hover:bg-[#e4572e] cursor-pointer`}
+                  onClick={sendOtp}
+                  disabled={isPending}
+                >
+                  Send OTP
+                </button>
+              )}
             </div>
           </div>
         ))}

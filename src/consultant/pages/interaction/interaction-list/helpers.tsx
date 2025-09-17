@@ -10,13 +10,6 @@ const textOptions = [
   { option: 'Contains', value: 'contains' },
 ];
 
-const nonReqTextOptions = [
-  { option: 'Equals', value: 'equals' },
-  { option: 'Not-Equals', value: 'not_equals' },
-  { option: 'Contains', value: 'contains' },
-  { option: 'Is-Empty', value: 'is_empty' },
-];
-
 const enumOptions = [
   { option: 'Equals', value: 'equals' },
   { option: 'Not Equals', value: 'not_equals' },
@@ -157,15 +150,6 @@ export const getInteractionFilterFields = (
       hide:
         !permissionMap?.['attachment_count']?.edit &&
         !permissionMap?.['attachment_count']?.read,
-    },
-    {
-      name: 'Parent Interaction ID',
-      value: 'parent_interaction_rid',
-      type: 'text',
-      operatorOption: nonReqTextOptions,
-      hide:
-        !permissionMap?.['parent_interaction_rid']?.edit &&
-        !permissionMap?.['parent_interaction_rid']?.read,
     },
     {
       name: 'Type',

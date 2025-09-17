@@ -584,8 +584,7 @@ export const getProjectColumns = (
     hide:
       !permissionMap?.['qre_final']?.read &&
       !permissionMap?.['qre_final']?.edit,
-    render: (row: Project) =>
-      row.qre_final ? costDisplay(row.qre_final, row.currency_symbol) : '-',
+    render: (row: Project) => (row.qre_final ? row.qre_final : '-'),
   },
   {
     id: 'qre',

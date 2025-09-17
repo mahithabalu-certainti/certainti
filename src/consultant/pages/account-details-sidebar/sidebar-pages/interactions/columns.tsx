@@ -1,22 +1,22 @@
-import { formatDateToYYYYMMDDWithTime } from '../../../../../common-utils';
+import {
+  costDisplay,
+  formatDateToYYYYMMDDWithTime,
+  valueDisplay,
+} from '../../../../../common-utils';
 import { ListTableColumn } from '../../../../../components/table/types';
 import { InteractionList } from '../../../../types';
+import { Project } from '../../../../types/project';
 
 export const getInteractionListColumns = (
   handleViewInteraction: (rid: string, rNumber: string) => void,
-  handleViewInteractionHistory: (interactionHistory: string) => void,
-  handleViewInteractionAttachmentCount: (
-    interactionAttachmentCount: string | number,
-    rid: string,
-    rNumber: string
-  ) => void,
+  viewProjectCount: (rid: string) => void,
   permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<InteractionList>[] => [
   {
     id: 'r_number',
     sortId: 'r_number',
     label: 'Interaction ID',
-    width: 160,
+    width: 130,
     sortable: true,
     sticky: true,
     hide:
@@ -39,233 +39,35 @@ export const getInteractionListColumns = (
     ),
   },
   {
-    id: 'project_code',
-    sortId: 'project_code',
-    label: 'Project Code',
+    id: 'project_count',
+    sortId: 'project_count',
+    label: 'Project Count',
     width: 140,
     sortable: true,
     hide:
-      !permissionMap?.['project_code']?.edit &&
-      !permissionMap?.['project_code']?.read,
-  },
-  // {
-  //   id: 'interaction_iteration',
-  //   sortId: 'interaction_iteration',
-  //   label: 'Iteration',
-  //   width: 120,
-  //   sortable: true,
-  //   sx: { textAlign: 'right' },
-  //   hide:
-  //     !permissionMap?.['interaction_iteration']?.edit &&
-  //     !permissionMap?.['interaction_iteration']?.read,
-  // },
-  {
-    id: 'interaction_age',
-    sortId: 'interaction_age',
-    label: 'Age (Days)',
-    width: 120,
-    sortable: true,
-    sx: { textAlign: 'right' },
-    hide:
-      !permissionMap?.['interaction_age']?.edit &&
-      !permissionMap?.['interaction_age']?.read,
-  },
-  {
-    id: 'fiscal_year',
-    sortId: 'fiscal_year',
-    label: 'Fiscal Year',
-    width: 140,
-    sortable: true,
+      !permissionMap?.['project_count']?.edit &&
+      !permissionMap?.['project_count']?.read,
     render: (row: InteractionList) =>
-      row.fiscal_year ? `FY-${row.fiscal_year}` : '-',
-    hide:
-      !permissionMap?.['fiscal_year']?.edit &&
-      !permissionMap?.['fiscal_year']?.read,
-  },
-  {
-    id: 'status_name',
-    sortId: 'status_name',
-    label: 'Status',
-    width: 140,
-    sortable: true,
-    hide: !permissionMap?.['status']?.edit && !permissionMap?.['status']?.read,
-    render: (row: InteractionList) => row.status_name || '-',
-  },
-  {
-    id: 'recipient_name',
-    sortId: 'recipient_name',
-    label: 'Recipient Name',
-    width: 180,
-    sortable: true,
-    hide:
-      !permissionMap?.['recipient_name']?.edit &&
-      !permissionMap?.['recipient_name']?.read,
-    render: (row: InteractionList) => row.recipient_name || '-',
-  },
-  {
-    id: 'recipient_email',
-    sortId: 'recipient_email',
-    label: 'Recipient Email',
-    width: 220,
-    sortable: true,
-    hide:
-      !permissionMap?.['recipient_email']?.edit &&
-      !permissionMap?.['recipient_email']?.read,
-    render: (row: InteractionList) => row.recipient_email || '-',
-  },
-  {
-    id: 'last_resent_on',
-    sortId: 'last_resent_on',
-    label: 'Last Sent Date',
-    width: 180,
-    sortable: true,
-    hide:
-      !permissionMap?.['last_resent_on']?.edit &&
-      !permissionMap?.['last_resent_on']?.read,
-    render: (row: InteractionList) =>
-      row.last_resent_on && formatDateToYYYYMMDDWithTime(row.last_resent_on),
-  },
-  {
-    id: 'last_reminder_on',
-    sortId: 'last_reminder_on',
-    label: 'Last Reminder Date',
-    width: 200,
-    sortable: true,
-    hide:
-      !permissionMap?.['last_reminder_on']?.edit &&
-      !permissionMap?.['last_reminder_on']?.read,
-    render: (row: InteractionList) =>
-      row.last_reminder_on &&
-      formatDateToYYYYMMDDWithTime(row.last_reminder_on),
-  },
-  {
-    id: 'response_submitted_on',
-    sortId: 'response_submitted_on',
-    label: 'Response Date',
-    width: 180,
-    sortable: true,
-    hide:
-      !permissionMap?.['response_submitted_on']?.edit &&
-      !permissionMap?.['response_submitted_on']?.read,
-    render: (row: InteractionList) =>
-      row.response_submitted_on &&
-      formatDateToYYYYMMDDWithTime(row.response_submitted_on),
-  },
-  {
-    id: 'response_updated_on',
-    sortId: 'response_updated_on',
-    label: 'Last Response Update',
-    width: 200,
-    sortable: true,
-    hide:
-      !permissionMap?.['response_updated_on']?.edit &&
-      !permissionMap?.['response_updated_on']?.read,
-    render: (row: InteractionList) =>
-      row.response_updated_on &&
-      formatDateToYYYYMMDDWithTime(row.response_updated_on),
-  },
-  {
-    id: 'attachment_count',
-    sortId: 'attachment_count',
-    label: 'Number of Attachments',
-    width: 200,
-    sortable: true,
-    sx: { textAlign: 'right' },
-    render: (row: InteractionList) =>
-      row.attachment_count ? (
+      row.project_count && Number(row.project_count) > 0 ? (
         <span
-          onClick={() =>
-            row.attachment_count &&
-            handleViewInteractionAttachmentCount(
-              row.attachment_count,
-              row.rid,
-              row.r_number
-            )
-          }
+          onClick={() => row.project_count && viewProjectCount(row.rid)}
           className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
         >
-          {row.attachment_count}
+          {row.project_count}
         </span>
       ) : (
-        '-'
+        row.project_count || '0'
       ),
-    hide:
-      !permissionMap?.['attachment_count']?.edit &&
-      !permissionMap?.['attachment_count']?.read,
-  },
-  {
-    id: 'interaction_history',
-    sortId: 'interaction_history',
-    label: 'Interaction History',
-    width: 200,
-    sortable: false,
-    hide:
-      !permissionMap?.['interaction_history']?.edit &&
-      !permissionMap?.['interaction_history']?.read,
-    render: (row: InteractionList) =>
-      row.interaction_history ? (
-        <span
-          onClick={() => handleViewInteractionHistory(row.interaction_history)}
-          className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
-        >
-          View
-        </span>
-      ) : (
-        '-'
-      ),
-  },
-  {
-    id: 'interaction_url',
-    sortId: 'interaction_url',
-    label: 'Interaction Link',
-    width: 140,
-    sortable: false,
-    hide:
-      !permissionMap?.['interaction_url']?.edit &&
-      !permissionMap?.['interaction_url']?.read,
-    render: (row: InteractionList) =>
-      row.interaction_url ? (
-        <span
-          onClick={() =>
-            row.interaction_url && window.open(row.interaction_url, '_blank')
-          }
-          className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
-        >
-          Link
-        </span>
-      ) : (
-        '-'
-      ),
-  },
-  {
-    id: 'parent_interaction_rid',
-    sortId: 'parent_interaction_rid',
-    label: 'Parent Interaction ID',
-    width: 200,
-    sortable: true,
-    hide:
-      !permissionMap?.['parent_interaction_rid']?.edit &&
-      !permissionMap?.['parent_interaction_rid']?.read,
   },
   {
     id: 'interaction_type_name',
     sortId: 'interaction_type_name',
     label: 'Type',
-    width: 140,
+    width: 80,
     sortable: true,
     hide:
       !permissionMap?.['interaction_type_name']?.edit &&
       !permissionMap?.['interaction_type_name']?.read,
-  },
-  {
-    id: 'response_source_name',
-    sortId: 'response_source_name',
-    label: 'Response Source',
-    width: 180,
-    sortable: true,
-    hide:
-      !permissionMap?.['response_source_name']?.edit &&
-      !permissionMap?.['response_source_name']?.read,
   },
   {
     id: 'created_user_name',
@@ -279,10 +81,21 @@ export const getInteractionListColumns = (
     render: (row: InteractionList) => row.created_user_name || '-',
   },
   {
+    id: 'modified_user_name',
+    sortId: 'modified_user_name',
+    label: 'Last Updated By',
+    width: 160,
+    sortable: true,
+    hide:
+      !permissionMap?.['modified_by']?.edit &&
+      !permissionMap?.['modified_by']?.read,
+    render: (row: InteractionList) => row.modified_user_name || '-',
+  },
+  {
     id: 'created_datetime',
     sortId: 'created_datetime',
     label: 'Created Date',
-    width: 200,
+    width: 180,
     sortable: true,
     hide:
       !permissionMap?.['created_datetime']?.edit &&
@@ -291,26 +104,339 @@ export const getInteractionListColumns = (
       formatDateToYYYYMMDDWithTime(row.created_datetime),
   },
   {
-    id: 'updated_user_name',
-    sortId: 'updated_user_name',
-    label: 'Last Updated By',
-    width: 180,
-    sortable: true,
-    hide:
-      !permissionMap?.['modified_by']?.edit &&
-      !permissionMap?.['modified_by']?.read,
-    render: (row: InteractionList) => row.updated_user_name || '-',
-  },
-  {
     id: 'modified_datetime',
     sortId: 'modified_datetime',
     label: 'Last Updated Date',
-    width: 200,
+    width: 180,
     sortable: true,
     hide:
       !permissionMap?.['modified_datetime']?.edit &&
       !permissionMap?.['modified_datetime']?.read,
     render: (row: InteractionList) =>
       formatDateToYYYYMMDDWithTime(row.modified_datetime),
+  },
+  {
+    id: 'sent_on_datetime',
+    sortId: 'sent_on_datetime',
+    label: 'Last Sent Date',
+    width: 180,
+    sortable: true,
+    hide:
+      !permissionMap?.['sent_on_datetime']?.edit &&
+      !permissionMap?.['sent_on_datetime']?.read,
+    render: (row: InteractionList) =>
+      row.last_resent_on && formatDateToYYYYMMDDWithTime(row.last_resent_on),
+  },
+];
+
+export const getProjectColumns = (
+  permissionMap: Record<string, { read: boolean; edit: boolean }>
+): ListTableColumn<Project>[] => [
+  {
+    id: 'project_code',
+    editId: 'project_code',
+    label: 'Project Code',
+    sortable: true,
+    sortId: 'project_code',
+    width: 260,
+    sticky: true,
+    hide:
+      !permissionMap?.['project_code']?.read &&
+      !permissionMap?.['project_code']?.edit,
+    sx: {
+      position: 'sticky',
+      left: 0,
+      background: '#fff',
+      zIndex: 10,
+      borderRight: '1px solid #CBD6E2 !important',
+      borderBottom: '1px solid #CBD6E2 !important',
+    },
+    render: (row: Project) => {
+      const displayCode = row.fiscal_year
+        ? `FY${row.fiscal_year} - ${row.project_code}`
+        : row.project_code;
+      const isClickable = row._level !== undefined && row._level === 1;
+      return isClickable ? (
+        <span className={row.fiscal_year ? '!text-[#1755E7]' : ''}>
+          {displayCode}
+        </span>
+      ) : (
+        displayCode
+      );
+    },
+  },
+  {
+    id: 'project_name',
+    editId: 'project_name',
+    label: 'Name',
+    sortable: true,
+    sortId: 'project_name',
+    width: 160,
+    hide:
+      !permissionMap?.['project_name']?.read &&
+      !permissionMap?.['project_name']?.edit,
+  },
+  {
+    id: 'project_type_name',
+    editId: 'project_type_rid',
+    label: 'Project Type',
+    sortable: true,
+    sortId: 'project_type_rid',
+    width: 160,
+    hide:
+      !permissionMap?.['project_type_rid']?.read &&
+      !permissionMap?.['project_type_rid']?.edit,
+  },
+  {
+    id: 'fiscal_year',
+    editId: 'fiscal_year',
+    label: 'Fiscal Year',
+    sortable: true,
+    hide:
+      !permissionMap?.['fiscal_year']?.read &&
+      !permissionMap?.['fiscal_year']?.edit,
+    sortId: 'fiscal_year',
+    width: 130,
+    sx: {
+      textAlign: 'left',
+    },
+    render: (row: Project) => {
+      const displayYear = row.fiscal_year ? `FY-${row.fiscal_year}` : '-';
+      return <span>{displayYear}</span>;
+    },
+  },
+  {
+    id: 'classification_name',
+    editId: 'project_classification_rid',
+    label: 'Project Classification',
+    sortable: true,
+    sortId: 'classification_name',
+    hide:
+      !permissionMap?.['project_classification_rid']?.read &&
+      !permissionMap?.['project_classification_rid']?.edit,
+    width: 170,
+    render: (row: Project) =>
+      row.project_classification_other
+        ? `${row.classification_name} - ${row.project_classification_other}`
+        : row.classification_name,
+  },
+  {
+    id: 'project_client_group',
+    editId: 'project_client_group',
+    label: 'Customer Group',
+    sortable: true,
+    sortId: 'project_client_group',
+    width: 160,
+    hide:
+      !permissionMap?.['project_client_group']?.read &&
+      !permissionMap?.['project_client_group']?.edit,
+  },
+  {
+    id: 'project_group',
+    editId: 'project_group',
+    label: 'Project Group',
+    sortable: true,
+    sortId: 'project_group',
+    hide:
+      !permissionMap?.['project_group']?.read &&
+      !permissionMap?.['project_group']?.edit,
+    width: 160,
+  },
+  {
+    id: 'total_effort',
+    editId: 'total_effort',
+    label: 'Project Effort (Hours)',
+    sortable: true,
+    sortId: 'total_effort',
+    width: 170,
+    hide:
+      !permissionMap?.['total_effort']?.read &&
+      !permissionMap?.['total_effort']?.edit,
+    conditionallyEdit: [
+      {
+        key: 'total_effort',
+        matchValue: [null, '0.00'],
+      },
+    ],
+    sx: {
+      textAlign: 'right',
+    },
+    render: (row: Project) =>
+      row.total_effort ? valueDisplay(row.total_effort) : '-',
+  },
+  {
+    id: 'total_cost',
+    editId: 'total_cost',
+    label: 'Project Cost',
+    sortable: true,
+    sortId: 'total_cost',
+    width: 130,
+    hide:
+      !permissionMap?.['total_cost']?.read &&
+      !permissionMap?.['total_cost']?.edit,
+    sx: {
+      textAlign: 'right',
+    },
+    render: (row: Project) =>
+      row.total_cost ? costDisplay(row.total_cost, row.currency_symbol) : '-',
+  },
+  {
+    id: 'total_cost_fte',
+    editId: 'total_cost_fte',
+    label: 'FTE Cost',
+    sortable: true,
+    sortId: 'total_cost_fte',
+    width: 140,
+    hide:
+      !permissionMap?.['total_cost_fte']?.read &&
+      !permissionMap?.['total_cost_fte']?.edit,
+    sx: {
+      textAlign: 'right',
+    },
+    render: (row: Project) =>
+      row.total_cost_fte
+        ? costDisplay(row.total_cost_fte, row.currency_symbol)
+        : '-',
+  },
+  {
+    id: 'total_cost_subcon',
+    editId: 'total_cost_subcon',
+    label: 'SubCon Cost',
+    sortable: true,
+    sortId: 'total_cost_subcon',
+    width: 140,
+    hide:
+      !permissionMap?.['total_cost_subcon']?.read &&
+      !permissionMap?.['total_cost_subcon']?.edit,
+    sx: {
+      textAlign: 'right',
+    },
+    render: (row: Project) =>
+      row.total_cost_subcon
+        ? costDisplay(row.total_cost_subcon, row.currency_symbol)
+        : '-',
+  },
+  {
+    id: 'total_cost_nonlabor',
+    editId: 'total_cost_nonlabor',
+    label: 'Non-Labor Cost',
+    sortable: true,
+    hide:
+      !permissionMap?.['total_cost_nonlabor']?.read &&
+      !permissionMap?.['total_cost_nonlabor']?.edit,
+    sortId: 'total_cost_nonlabor',
+    width: 140,
+    sx: {
+      textAlign: 'right',
+    },
+    render: (row: Project) =>
+      row.total_cost_nonlabor
+        ? costDisplay(row.total_cost_nonlabor, row.currency_symbol)
+        : '-',
+  },
+  {
+    id: 'project_point_of_contact',
+    label: 'Project Point of Contact',
+    sortable: true,
+    sortId: 'project_point_of_contact',
+    width: 200,
+    hide:
+      !permissionMap?.['key_contacts']?.read &&
+      !permissionMap?.['key_contacts']?.edit,
+    render: (row: Project & { _level?: number }) => {
+      return (
+        <span>
+          {row.project_point_of_contact ? row.project_point_of_contact : '-'}
+        </span>
+      );
+    },
+  },
+  {
+    id: 'technical_point_of_contact',
+    label: 'Technical Point of Contact',
+    sortable: true,
+    sortId: 'technical_point_of_contact',
+    width: 210,
+    hide:
+      !permissionMap?.['key_contacts']?.read &&
+      !permissionMap?.['key_contacts']?.edit,
+    render: (row: Project & { _level?: number }) => {
+      return (
+        <span>
+          {row.technical_point_of_contact
+            ? row.technical_point_of_contact
+            : '-'}
+        </span>
+      );
+    },
+  },
+  {
+    id: 'assessment_status',
+    label: 'Assessment Status',
+    sortable: true,
+    sortId: 'assessment_status',
+    width: 180,
+    hide:
+      !permissionMap?.['assessment_status']?.read &&
+      !permissionMap?.['assessment_status']?.edit,
+  },
+  {
+    id: 'qre_final',
+    label: 'QRE %',
+    sortable: true,
+    sortId: 'qre_final',
+    width: 130,
+    sx: {
+      textAlign: 'right',
+    },
+    hide:
+      !permissionMap?.['qre_final']?.read &&
+      !permissionMap?.['qre_final']?.edit,
+    render: (row: Project) => (row.qre_final ? row.qre_final : '-'),
+  },
+  {
+    id: 'qre',
+    label: 'QRE',
+    sortable: true,
+    sortId: 'qre',
+    width: 130,
+    sx: {
+      textAlign: 'right',
+    },
+    hide: !permissionMap?.['qre']?.read && !permissionMap?.['qre']?.edit,
+    render: (row: Project) => (row.qre ? row.qre : '-'),
+  },
+  {
+    id: 'comments',
+    editId: 'comments',
+    label: 'Comments',
+    sortable: true,
+    sortId: 'comments',
+    width: 200,
+    hide:
+      !permissionMap?.['comments']?.read && !permissionMap?.['comments']?.edit,
+  },
+  {
+    id: 'modified_datetime',
+    label: 'Last Modified',
+    sortable: true,
+    sortId: 'modified_datetime',
+    width: 190,
+    hide:
+      !permissionMap?.['modified_datetime']?.read &&
+      !permissionMap?.['modified_datetime']?.edit,
+    render: (row: Project) =>
+      row.modified_datetime
+        ? formatDateToYYYYMMDDWithTime(row.modified_datetime)
+        : '-',
+  },
+  {
+    id: 'r_number',
+    label: 'Project ID',
+    sortable: true,
+    sortId: 'r_number',
+    width: 140,
+    hide:
+      !permissionMap?.['r_number']?.read && !permissionMap?.['r_number']?.edit,
   },
 ];

@@ -32,7 +32,8 @@ export interface projectDetails {
   status_rid: string;
   project_startdate: string | null;
   project_enddate: string | null;
-
+  fiscal_start_date: string | null;
+  fiscal_end_date: string | null;
   total_fte_prj: number | null;
   total_fte_from_prj_res: number | null;
   total_fte_from_tasks: number | null;
@@ -44,6 +45,7 @@ export interface projectDetails {
   total_resources_prj: number | null;
   total_resources_from_prj_res: number | null;
   total_resources_from_tasks: number | null;
+  organistaion_name: string | null;
 
   total_effort_prj: number | null;
   total_effort_fte_prj: number | null;
@@ -157,40 +159,59 @@ export const transformProjectData = (
           value: project?.r_number || '-',
           className: `${status === 'active' ? 'text-[#199806]' : 'text-[#f44336]'}`,
         },
-        // {
-        //   label: 'Project Code',
-        //   value: project?.project_code || '-',
-        // },
+        {
+          label: 'Industry',
+          value: project?.industry_name || project?.industry_rid_name || '-',
+        }, 
+        {
+          label: 'Project Effort (Hours)',
+          value: project?.total_effort?.toString() || '-',
+        },
       ],
     },
     {
       items: [
-        // {
-        //   label: 'Project ID',
-        //   value: project?.r_number || '-',
-        //   className: `${status === 'active' ? 'text-[#199806]' : 'text-[#f44336]'}`,
-        // },
         {
           label: 'Project Name',
           value: project?.project_name || '-',
         },
+        {
+          label: 'Business Name',
+          value: project?.organistaion_name || '-',
+        }, 
+        {
+          label: 'Project Cost',
+          value: project?.total_cost?.toString() || '-',
+        },
       ],
     },
 
     {
       items: [
-        // {
-        //   label: 'Name',
-        //   value: project?.project_name || '-',
-        // },
         { label: 'Account Name', value: project?.account_name },
+        {
+          label: 'Fiscal Start',
+          value: project?.fiscal_start_date || '-',
+        }, 
+        {
+          label: 'FTE Cost',
+          value: project?.total_cost_fte?.toString() || '-',
+        },
       ],
     },
     {
       items: [
         {
-          label: 'Country / Currency',
-          value: `${project?.country_code || '-'} / ${project?.currency_name || '-'}`,
+          label: 'Country',
+          value: `${project?.country_code || '-'}`,
+        },
+         {
+          label: 'Fiscal End',
+          value: project?.fiscal_end_date || '-',
+        }, 
+         {
+          label: 'SubCon Cost',
+          value: project?.total_cost_subcon?.toString() || '-',
         },
       ],
     },
@@ -198,15 +219,17 @@ export const transformProjectData = (
     {
       items: [
         {
-          label: 'Industry',
-          value: project?.industry_name || project?.industry_rid_name || '-',
+          label: ' Currency',
+          value: project?.currency_name || '-',
         },
-        // {
-        //   label: 'Status',
-        //   value:
-        //     project?.project_status.charAt(0).toUpperCase() +
-        //     project?.project_status.slice(1),
-        // },
+        {
+          label: ' QRE',
+          value: project?.qre_final?.toString() || '-',
+        },
+         {
+          label: 'Non-Labor Cost',
+          value: project?.total_cost_nonlabor?.toString() || '-',
+        },
       ],
     },
   ];

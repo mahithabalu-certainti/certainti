@@ -7,6 +7,7 @@ import { ListTableColumn } from '../../../../../../../components/table/types';
 import { TimesheetProjectList } from '../../../../../../types/timesheet-projects';
 
 export const getProjectTabTableColumns = (
+  onClick: (row: TimesheetProjectList) => void,
   permissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<TimesheetProjectList>[] => [
   {
@@ -31,7 +32,21 @@ export const getProjectTabTableColumns = (
       const displayCode = row.fiscal_year
         ? `FY${row.fiscal_year} - ${row.project_code}`
         : row.project_code;
-      return displayCode;
+      const isClickable = row._level !== undefined && row._level === 1;
+      return isClickable ? (
+        <span
+          onClick={() => onClick(row)}
+          className={
+            row.fiscal_year
+              ? 'cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
+              : ''
+          }
+        >
+          {displayCode}
+        </span>
+      ) : (
+        displayCode
+      );
     },
   },
   {
@@ -173,23 +188,6 @@ export const getProjectTabTableColumns = (
         : '-',
   },
   {
-    id: 'total_cost_subcon',
-    label: 'SubCon Cost',
-    sortable: true,
-    hide:
-      !permissionMap?.['total_cost_nonlabor']?.read &&
-      !permissionMap?.['total_cost_nonlabor']?.edit,
-    sortId: 'total_cost_subcon',
-    width: 140,
-    sx: {
-      textAlign: 'right',
-    },
-    render: (row: TimesheetProjectList) =>
-      row.total_cost_subcon
-        ? costDisplay(row.total_cost_subcon, row.currency_symbol)
-        : '-',
-  },
-  {
     id: 'total_cost_nonlabor',
     label: 'Non-Labor Cost',
     sortable: true,
@@ -228,8 +226,7 @@ export const getProjectTabTableColumns = (
     hide:
       !permissionMap?.['qre_final']?.read &&
       !permissionMap?.['qre_final']?.edit,
-    render: (row: TimesheetProjectList) =>
-      row.qre_final ? costDisplay(row.qre, row.currency_symbol) : '-',
+    render: (row: TimesheetProjectList) => (row.qre ? row.qre : '-'),
   },
   {
     id: 'qre_final',

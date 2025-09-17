@@ -41,6 +41,7 @@ export const mockTimesheetProjectTask: ProjectTaskApiResponse = {
         resource_type_name: '',
         resource_type_rid: '',
         status_rid: '',
+        status_name: '',
       },
     ],
     totalCount: 1,

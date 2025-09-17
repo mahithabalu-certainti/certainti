@@ -15,6 +15,8 @@ export interface ProjectListParams {
   globalFilters?: globalFilters;
   timezone?: string;
   bothParentAndChild?: boolean;
+  apiSource?: string;
+  accountInteractionId?: string;
 }
 export enum Status {
   Active = 'active',
@@ -232,6 +234,7 @@ export type ProjectFiscalSummary = {
   created_datetime: string;
   project_fiscal_rid: string;
   rid: string;
+  isInteractionMapped?: boolean;
 };
 
 export type FiscalYearType = {

@@ -148,7 +148,7 @@ const Configuration: React.FC = () => {
       disabled: false,
       onClick: handleColumnVisibility,
       sx: { width: '125px', minWidth: '125px' },
-      hide: false,
+      hide: list !== 'users',
     },
   ];
 
