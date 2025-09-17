@@ -9,7 +9,7 @@ import {
 import InteractionSchemaService from "./schemaService";
 import { InteractionModelService } from "../interactionModelsService";
 import { ALPHANUMERIC_CONDITIONS, HttpStatus, mainTableFilters, rawQueries,statusAction, constants, interactionType, STATUS_MESSAGE, interactionFlag, MAIN_SCHEMA_NAME, schedulerStatus, interactionTaskName ,interactionSource} from "../../utils/constants";
-import { Sequelize } from "sequelize";
+import { Op, Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { checkTableExists, fetchAllParentRNumber, fetchInteractionForProjectLevelQuery, fetchInteractionForSentResentStatus, fetchProjectAttachmentsRids, fetchProjectInteractionRid, interactionResponseHistoryByVersion, listAllInteractionSummary, listAttachments, listInteractionHistory, listResponseHistory } from "../../utils/rawQueries";
@@ -247,7 +247,7 @@ export class InteractionService {
       const isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(accountNumber, interactionData.project_fiscal_rid);
       this.logger.info(`Is email recipient available: ${isEmailRecipientAvailable} for interaction: ${interaction.dataValues.rid} with project fiscal:${interactionData.project_fiscal_rid}`);
       if(interactionStatus === statusAction.DRAFT && isEmailRecipientAvailable)
-      await this.checkAutoSendEnabled(accountNumber,interactionData,interaction.rid,userId);
+      await this.checkAutoSendEnabled(accountNumber,interactionData,interaction.rid,userId,interactionData?.account_rid);
        else
        {
         if(!isEmailRecipientAvailable && interactionStatus === statusAction.DRAFT)
@@ -276,14 +276,91 @@ export class InteractionService {
         };
     }
   }
-  async checkAutoSendEnabled(accountNumber: string, interactionData: ICreateInteraction, interactionId: string, userId: string) {
+  async checkAutoSendEnabled(accountNumber: string, interactionData: ICreateInteraction, interactionId: string, userId: string, accountRid: string) {
     const isEnabled = await this.interactionSchemaService.isAutoSendInteractionEnabled(accountNumber, interactionData, interactionId);
     this.logger.info(`Auto-send is ${isEnabled ? "enabled" : "disabled"} for interaction ID: ${interactionId}`);
     if (isEnabled) {
+       const projectInfo = await this.interactionSchemaService.fetchProjectInfo(accountNumber, interactionData.project_fiscal_rid);
+       const accountInfo = await this.interactionSchemaService.fetchAccountInfo(accountRid, accountNumber);
+      const { AutoSendInteractionAudit } = await this.interactionModelService.getModels(accountNumber);
+      const ismaxInteractionsSent = await this.checkMaxQuarterlyInteractions(AutoSendInteractionAudit, interactionData.project_fiscal_rid, projectInfo.max_ai_interaction,accountInfo);
+      if (!ismaxInteractionsSent) return;
       await this.sendInteraction([{ interaction_rid: interactionId,
         project_fiscal_rid: interactionData.project_fiscal_rid
-       }], interactionData.account_rid, userId,false);
+       }], interactionData.account_rid, userId, false,'Auto-Send');
     }
+  }
+   async  checkMaxQuarterlyInteractions(
+    AiSendInteraction: any,
+    projectFiscalRid: string,
+    maxInteractions: number,
+    accountInfo: { fiscal_start_date: string; fiscal_end_date: string }
+  ) {
+    const now = new Date();
+    // Parse fiscal start and end month/day
+    // Format: MM/DD (e.g., "01/12" for Jan 12)
+    function parseFiscalDate(dateStr: string, year: number): Date {
+      const [mmRaw, ddRaw] = dateStr.split("/");
+      const mm = mmRaw !== undefined ? Number(mmRaw) : undefined;
+      const dd = ddRaw !== undefined ? Number(ddRaw) : undefined;
+      if (
+        mm === undefined || dd === undefined ||
+        isNaN(mm) || isNaN(dd) ||
+        mm < 1 || mm > 12 || dd < 1 || dd > 31
+      ) {
+        throw new Error(`Invalid fiscal date format: ${dateStr}`);
+      }
+      return new Date(year, mm - 1, dd);
+    }
+    // Get fiscal year for current date
+    let fiscalStart = parseFiscalDate(accountInfo.fiscal_start_date, now.getFullYear());
+    let fiscalEnd = parseFiscalDate(accountInfo.fiscal_end_date, now.getFullYear());
+    if (now < fiscalStart) {
+      fiscalStart = parseFiscalDate(accountInfo.fiscal_start_date, now.getFullYear() - 1);
+      fiscalEnd = parseFiscalDate(accountInfo.fiscal_end_date, now.getFullYear());
+    }
+    // Calculate quarters (start on 1st, end on last day of 3rd month)
+    const quarters = [];
+    let qStart = new Date(fiscalStart);
+    for (let i = 0; i < 4; i++) {
+      // Quarter start: always 1st of the month
+      const start = new Date(qStart.getFullYear(), qStart.getMonth(), 1);
+      // Quarter end: last day of the third month
+      const end = new Date(qStart.getFullYear(), qStart.getMonth() + 3, 0);
+      quarters.push({ start, end });
+      // Next quarter starts on the 1st of the next third month
+      qStart = new Date(qStart.getFullYear(), qStart.getMonth() + 3, 1);
+    } 
+    // Find current quarter
+    let quarterStart, quarterEnd;
+    for (const q of quarters) {
+      if (now >= q.start && now <= q.end) {
+        quarterStart = q.start;
+        quarterEnd = new Date(q.end.getFullYear(), q.end.getMonth(), q.end.getDate(), 23, 59, 59, 999);
+        console.log(`Current quarter: Start = ${quarterStart.toISOString()}, End = ${quarterEnd.toISOString()}`);
+        break;
+      }
+    }
+    if (!quarterStart || !quarterEnd) {
+      // Fallback: use fiscal year start/end
+      quarterStart = fiscalStart;
+      quarterEnd = fiscalEnd;
+      console.log(`Fallback to fiscal year: Start = ${quarterStart.toISOString()}, End = ${quarterEnd.toISOString()}`);
+    }
+    const sentCount = await AiSendInteraction.count({
+      where: {
+        project_fiscal_rid: projectFiscalRid,
+        created_datetime: {
+          [Op.between]: [quarterStart, quarterEnd]
+        }
+      }
+    });
+    this.logger.info(`Sent count for the current quarter: ${sentCount}`);
+    if (sentCount >= maxInteractions) {
+      this.logger.info(`Max interactions sent for quarter (${sentCount}) reached for project_fiscal_rid: ${projectFiscalRid}`);
+      return false;
+    }
+    return true;
   }
   async getInteractionStatusAndSource(interactionSource: string) {
 
@@ -353,7 +430,7 @@ export class InteractionService {
       await transaction.commit();
       const isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(accountNumber, interactionData.interaction_rid);
       if(interactionStatus === statusAction.DRAFT && isEmailRecipientAvailable)
-      await this.checkAutoSendEnabled(accountNumber,interactionData,interactionData.interaction_rid,userId);
+      await this.checkAutoSendEnabled(accountNumber,interactionData,interactionData.interaction_rid,userId, interactionData?.account_rid);
       else{
         if(!isEmailRecipientAvailable && interactionStatus === statusAction.DRAFT)
         {
@@ -374,6 +451,7 @@ export class InteractionService {
         },
       };
     } catch (err) {
+      console.log("Error updating resource", err);
       await transaction.rollback();
       this.logger.error("Error updating interaction", err);
        return {
@@ -1088,7 +1166,8 @@ export class InteractionService {
     }[],
     accountRid: string,
     userId: string,
-    is_interaction_followup: boolean
+    is_interaction_followup: boolean,
+    type: string = interactionSource.MANUAL
   ): Promise<{
     statusCode: number;
     message: string;
@@ -1124,6 +1203,10 @@ export class InteractionService {
         data.is_interaction_followup = is_interaction_followup
         this.logger.info(`Email info to be sent: ${JSON.stringify(data)}`);
         await this.interactionSchemaService.insertEmailInfoDatas(data);
+        if(type === 'Auto-Send')
+        {
+          await this.interactionSchemaService.createAutoSendInteractionEntry(accountNumber, interaction_rid, project_fiscal_rid, email_info);
+        }
         await orgDb.query(rawQueries.updateInteractionStatus(schemaName, fetchInQueueStatus[0][0].rid, interaction_rid))
         await mainDb.query(rawQueries.updateInteractionSummaryStatus(fetchInQueueStatus[0][0].rid, interaction_rid))
         interactionResponse.push({
@@ -1409,7 +1492,8 @@ export class InteractionService {
       data.flag, 
       schemaName,
       disablePagination,
-      accessibleIds
+      accessibleIds,
+      data.search
     ))
     let hasEmailRecipient = false;
      if(data.flag == interactionFlag.project)
@@ -1576,7 +1660,7 @@ export class InteractionService {
         }
       }
     const result : any = await mainDb.query(listAllInteractionSummary(data.page, data.limit, 
-      data.filters, data.globalFilters, data.fiscal_year, data.sort, data.sort_by,accessibleIds
+      data.filters, data.globalFilters, data.fiscal_year, data.sort, data.sort_by,accessibleIds, data.search
     ))
     if(result[0][0].interactions != null) {
       return {
@@ -2054,15 +2138,15 @@ export class InteractionService {
         let verifyTableExistsForInteractions : any = await orgDb.query(checkTableExists(schemaName, "interactions"))
         if(verifyTableExistsForInteractions[0][0].exists === true) {
           console.log("verifyTableExistsForInteractions : ", true)
-          // try {
-          //   const isRecordExists = await this.interactionSchemaService.findTaskRecordExists(schedulerRecord.rid, interactionTaskName.interactionAge)
-          //   if(isRecordExists == null) {
-          //     await this.interactionSchemaService.createSchedulerTaskRecords(schedulerRecord.rid, interactionTaskName.interactionAge)
-          //   }
-          //   await fetchInteractionForSentResentStatus(schemaName, mainDb, orgDb)
-          // } catch (error : any) {
-          //   await this.interactionSchemaService.updateSchedulerTaskRecords(schedulerRecord.rid, interactionTaskName.interactionAge, schedulerStatus.Failed, error.message)
-          // }
+          try {
+            const isRecordExists = await this.interactionSchemaService.findTaskRecordExists(schedulerRecord.rid, interactionTaskName.interactionAge)
+            if(isRecordExists == null) {
+              await this.interactionSchemaService.createSchedulerTaskRecords(schedulerRecord.rid, interactionTaskName.interactionAge)
+            }
+            await fetchInteractionForSentResentStatus(schemaName, mainDb, orgDb)
+          } catch (error : any) {
+            await this.interactionSchemaService.updateSchedulerTaskRecords(schedulerRecord.rid, interactionTaskName.interactionAge, schedulerStatus.Failed, error.message)
+          }
           try {
             const isRecordExists = await this.interactionSchemaService.findTaskRecordExists(schedulerRecord.rid, interactionTaskName.interaction)
             if(isRecordExists == null) {
