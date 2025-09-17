@@ -1409,7 +1409,8 @@ export class InteractionService {
       data.flag, 
       schemaName,
       disablePagination,
-      accessibleIds
+      accessibleIds,
+      data.search
     ))
     let hasEmailRecipient = false;
      if(data.flag == interactionFlag.project)
@@ -1576,7 +1577,7 @@ export class InteractionService {
         }
       }
     const result : any = await mainDb.query(listAllInteractionSummary(data.page, data.limit, 
-      data.filters, data.globalFilters, data.fiscal_year, data.sort, data.sort_by,accessibleIds
+      data.filters, data.globalFilters, data.fiscal_year, data.sort, data.sort_by,accessibleIds, data.search
     ))
     if(result[0][0].interactions != null) {
       return {
@@ -2054,15 +2055,15 @@ export class InteractionService {
         let verifyTableExistsForInteractions : any = await orgDb.query(checkTableExists(schemaName, "interactions"))
         if(verifyTableExistsForInteractions[0][0].exists === true) {
           console.log("verifyTableExistsForInteractions : ", true)
-          // try {
-          //   const isRecordExists = await this.interactionSchemaService.findTaskRecordExists(schedulerRecord.rid, interactionTaskName.interactionAge)
-          //   if(isRecordExists == null) {
-          //     await this.interactionSchemaService.createSchedulerTaskRecords(schedulerRecord.rid, interactionTaskName.interactionAge)
-          //   }
-          //   await fetchInteractionForSentResentStatus(schemaName, mainDb, orgDb)
-          // } catch (error : any) {
-          //   await this.interactionSchemaService.updateSchedulerTaskRecords(schedulerRecord.rid, interactionTaskName.interactionAge, schedulerStatus.Failed, error.message)
-          // }
+          try {
+            const isRecordExists = await this.interactionSchemaService.findTaskRecordExists(schedulerRecord.rid, interactionTaskName.interactionAge)
+            if(isRecordExists == null) {
+              await this.interactionSchemaService.createSchedulerTaskRecords(schedulerRecord.rid, interactionTaskName.interactionAge)
+            }
+            await fetchInteractionForSentResentStatus(schemaName, mainDb, orgDb)
+          } catch (error : any) {
+            await this.interactionSchemaService.updateSchedulerTaskRecords(schedulerRecord.rid, interactionTaskName.interactionAge, schedulerStatus.Failed, error.message)
+          }
           try {
             const isRecordExists = await this.interactionSchemaService.findTaskRecordExists(schedulerRecord.rid, interactionTaskName.interaction)
             if(isRecordExists == null) {

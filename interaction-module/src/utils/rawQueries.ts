@@ -32,6 +32,7 @@ export const fetchInteractionForProjectLevelQuery = (
   schemaName: string,
   disablePagination: boolean,
   accessibleIds: string[] = [],
+  search : string
 ) => {
   let offset = (page - 1) * limit;
   let pagination = `LIMIT ${limit} OFFSET ${offset}`;
@@ -40,8 +41,12 @@ export const fetchInteractionForProjectLevelQuery = (
   let sortValue: string;
   let whereConditions;
   let andConditions = ``;
+  let searchValue;
   if (disablePagination) pagination = ` `;
   else pagination;
+
+  if(search) searchValue = `%${search}%`
+  else searchValue = `%%`
 
   if (flag == interactionFlag.account) {
     let fiscalQuery = ``;
@@ -130,6 +135,8 @@ export const fetchInteractionForProjectLevelQuery = (
             ${schemaName}.interactions i
             LEFT JOIN ${schemaName}.project_fiscal pf ON pf.rid = i.project_fiscal_rid
             WHERE
+            (i.r_number ILIKE '${searchValue}' OR i.recipient_name ILIKE '${searchValue}' OR i.recipient_email ILIKE '${searchValue}')
+            AND
             ${whereConditions}
             ${filteredData?.andConditions}
             ${filterQueryValues}
@@ -186,6 +193,7 @@ export const listAllInteractionSummary = (
   sort: string,
   sortBy: string,
   accessibleIds: string[] = [],
+  search : string
 ) => {
   let offset = (page - 1) * limit;
   let pagination = `LIMIT ${limit} OFFSET ${offset}`;
@@ -199,6 +207,7 @@ export const listAllInteractionSummary = (
   let andConditionsForjoinsForTwo: string = ` `;
   let andConditionsForjoinsForThree: string = ` `;
   let sortValue;
+  let searchValue : string
 
   let filterDatas = filterForInteractions(
     filters,
@@ -227,6 +236,9 @@ export const listAllInteractionSummary = (
 
   if (fiscal_year == 0) fiscalYearQuery = ``;
   else fiscalYearQuery = ` pf.fiscal_year = ${fiscal_year}`;
+  
+  if(search) searchValue = `%${search}%`
+  else searchValue = `%%`
 
   if (
     globalFiltersQueryConditions !== "" ||
@@ -335,7 +347,9 @@ export const listAllInteractionSummary = (
     LEFT JOIN ${MAIN_SCHEMA_NAME}.account a ON a.rid = i.account_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary pf ON pf.project_fiscal_rid = i.project_fiscal_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.interaction_response_source ir ON ir.rid = i.response_source_rid
-    ${whereKey}
+    WHERE
+    (i.r_number ILIKE '${searchValue}' OR i.recipient_name ILIKE '${searchValue}' OR i.recipient_email ILIKE '${searchValue}')
+    AND
     ${joinedConditions}
     ),
     

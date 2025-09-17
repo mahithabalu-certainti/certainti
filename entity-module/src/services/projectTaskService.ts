@@ -17,6 +17,7 @@ import { ProjectFiscal } from "../models/projectFiscal";
 import currency from "currency.js";
 import Decimal from "decimal.js";
 import { ProjectTaskTimeline } from "../models/projectTaskTimeline";
+import { ProjectResource } from "../models/projectResource";
 
 export class ProjectTaskService {
   schemaService: SchemaService;
@@ -94,6 +95,14 @@ export class ProjectTaskService {
             required: false,
             as: "resource",
           },
+          {
+            model : models.ProjectResourceModel,
+            attributes : [
+              "project_resource_role"
+            ],
+            required : false,
+            as : "project_resource"
+          }
         ],
       });
 
@@ -326,6 +335,7 @@ export class ProjectTaskService {
     const ResourceModel = Resources.initialize(sequelize, schemaName);
     const ProjectTaskModel = ProjectTask.initialize(sequelize, schemaName);
     const ProjectTaskTimelineModel = ProjectTaskTimeline.initialize(sequelize, schemaName);
+    const ProjectResourceModel = ProjectResource.initialize(sequelize, schemaName)
 
     // Define associations
     ProjectTaskModel.belongsTo(AccountDetailsModel, {
@@ -346,6 +356,12 @@ export class ProjectTaskService {
       as: "resource",
     });
 
+    ProjectTaskModel.belongsTo(ProjectResourceModel, {
+      foreignKey : "project_resource_rid",
+      targetKey : "rid",
+      as : "project_resource"
+    })
+
     return {
       sequelize,
       models: {
@@ -355,6 +371,7 @@ export class ProjectTaskService {
         ResourceModel,
         ProjectTaskModel,
         ProjectTaskTimelineModel,
+        ProjectResourceModel
       },
     };
   }
@@ -470,7 +487,8 @@ export class ProjectTaskService {
       created_datetime: task.created_datetime,
       modified_datetime: task.modified_datetime,
       status_rid : task.status_rid,
-      status_name : resourceStatusMap.get(task.status_rid) || null
+      status_name : resourceStatusMap.get(task.status_rid) || null,
+      project_resource_role : task.project_resource?.project_resource_role || null
     };
   }
 
@@ -480,14 +498,14 @@ export class ProjectTaskService {
       "r_number",
       "resource_name",
       "resource_type",
-      "resource_role",
       "start_date",
       "total_cost_pro_task",
       "total_hours_pro_task",
       "comments",
       "created_datetime",
       "modified_datetime",
-      "status_name"
+      "status_name",
+      "project_resource_role"
     ];
 
     const finalSortBy = validSortFields.includes(sortBy)
@@ -554,6 +572,21 @@ export class ProjectTaskService {
       formattedTasks.sort((a, b) => {
         const aName = a.resource_code;
         const bName = b.resource_code;
+
+        if (finalSortOrder === "ASC") {
+          if (!aName && bName) return 1;
+          if (aName && !bName) return -1;
+          return aName?.localeCompare(bName ?? "") ?? 0;
+        } else {
+          if (!aName && bName) return -1;
+          if (aName && !bName) return 1;
+          return bName?.localeCompare(aName ?? "") ?? 0;
+        }
+      });
+    } else if (finalSortBy === "project_resource_role") {
+      formattedTasks.sort((a, b) => {
+        const aName = a.project_resource_role;
+        const bName = b.project_resource_role;
 
         if (finalSortOrder === "ASC") {
           if (!aName && bName) return 1;
@@ -987,23 +1020,23 @@ export class ProjectTaskService {
               break;
           }
           break;
-        case "resource_role":
+        case "project_resource_role":
           switch (operator.toLowerCase()) {
             case "equals":
-              condition["$resource.resource_role$"] = { [Op.iLike]: value };
+              condition["$project_resource.project_resource_role$"] = { [Op.iLike]: value };
               break;
             case "not_equals":
-              condition["$resource.resource_role$"] = {
+              condition["$project_resource.project_resource_role$"] = {
                 [Op.or]: [{ [Op.notILike]: value }, { [Op.is]: null }],
               };
               break;
             case "contains":
-              condition["$resource.resource_role$"] = {
+              condition["$project_resource.project_resource_role$"] = {
                 [Op.iLike]: `%${value}%`,
               };
               break;
             case "is_empty":
-              condition["$resource.resource_role$"] = {
+              condition["$project_resource.project_resource_role$"] = {
                 [Op.or]: [{ [Op.is]: null }, { [Op.eq]: "" }],
               };
               break;
