@@ -87,14 +87,14 @@ export const getProjectTaskColumns = (
       !permissionMapTaskTableColumn?.['resource_type_name']?.edit,
   },
   {
-    id: 'resource_role',
-    label: 'Resource Role',
+    id: 'project_resource_role',
+    label: 'Project Resource Role',
     sortable: true,
-    sortId: 'resource_role',
-    width: 160,
+    sortId: 'project_resource_role',
+    width: 200,
     hide:
-      !permissionMapTaskTableColumn?.['resource_role']?.read &&
-      !permissionMapTaskTableColumn?.['resource_role']?.edit,
+      !permissionMapTaskTableColumn?.['project_resource_role']?.read &&
+      !permissionMapTaskTableColumn?.['project_resource_role']?.edit,
   },
   {
     id: 'start_date',

@@ -2,6 +2,7 @@ import {
   costDisplay,
   PROJECT_RESOURCE_REGEX,
   REGEX_PATTERNS,
+  RESOURCE_REGEX,
   valueDisplay,
 } from '../../../../../../common-utils';
 import {
@@ -190,31 +191,39 @@ export const getProjectResourcesColumns = (
   //   sortId: 'resource_orgname',
   //   width: '180px',
   // },
-  // {
-  //   id: 'resource_role',
-  //   label: 'Resource Role',
-  //   sortable: true,
-  //   sortId: 'resource_role',
-  //   width: '150px',
-  //   editable:
-  //     permissionMap?.['resource_role']?.read &&
-  //     permissionMap?.['resource_role']?.edit,
-  //   hide:
-  //     !permissionMap?.['resource_role']?.read &&
-  //     !permissionMap?.['resource_role']?.edit,
-  //   field: {
-  //     type: 'text',
-  //     required: false,
-  //     placeholder: 'Enter Resource Role',
-  //     validation: [
-  //       {
-  //         regex: PROJECT_RESOURCE_REGEX.ROLE,
-  //         errorMessage:
-  //           "Please enter 2–64 characters using only letters, spaces, apostrophes ('), or hyphens (-). Numbers, symbols, or consecutive special characters are not allowed.",
-  //       },
-  //     ],
-  //   },
-  // },
+  {
+    id: 'project_resource_role',
+    label: 'Project Resource Role',
+    sortable: true,
+    sortId: 'project_resource_role',
+    width: '200px',
+    editable:
+      permissionMap?.['project_resource_role']?.read &&
+      permissionMap?.['project_resource_role']?.edit,
+    hide:
+      !permissionMap?.['project_resource_role']?.read &&
+      !permissionMap?.['project_resource_role']?.edit,
+    field: {
+      type: 'text',
+      required: false,
+      placeholder: 'Enter Resource Role',
+      validation: [
+        {
+          regex: REGEX_PATTERNS.MIN_3,
+          errorMessage: 'Please enter more than 2 characters.',
+        },
+        {
+          regex: REGEX_PATTERNS.MAX_64,
+          errorMessage: 'Max length exceeded.',
+        },
+        {
+          regex: RESOURCE_REGEX.ROLE,
+          errorMessage:
+            'Allows only letters, Apostrophe, spaces, hyphens, and Periods.',
+        },
+      ],
+    },
+  },
 
   {
     id: 'total_hours_pro_res',
@@ -348,11 +357,13 @@ export const getProjectResourcesColumns = (
       ],
     },
   },
-  // {
-  //   id: 'r_number',
-  //   label: 'Project Resource ID',
-  //   sortable: true,
-  //   sortId: 'r_number',
-  //   width: '180px',
-  // },
+  {
+    id: 'r_number',
+    label: 'Project Resource ID',
+    sortable: true,
+    sortId: 'r_number',
+    width: '180px',
+    hide:
+      !permissionMap?.['r_number']?.read && !permissionMap?.['r-number']?.edit,
+  },
 ];

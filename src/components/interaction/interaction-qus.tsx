@@ -407,10 +407,10 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   const buttons: SectionHeaderButton[] = isEditing
     ? [
         {
-          label: 'Draft',
+          label: 'Save as Draft',
           variant: 'contained' as const,
           onClick: () => handleSave(FlagTypeEnum.draft),
-          sx: { width: '60px', minWidth: '60px' },
+          sx: { width: '110px', minWidth: '110px' },
           loading: activeFlag === FlagTypeEnum.draft && isUpdateLoading,
           disabled:
             (activeFlag !== null && activeFlag !== FlagTypeEnum.draft) ||

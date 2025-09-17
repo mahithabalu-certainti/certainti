@@ -9,11 +9,21 @@ import {
 import { ActionsDropdown } from '../actions-dropdown';
 import TextButton from '../button/text-button';
 import { ActionsDropdownItem } from '../../common-utils';
-import { Skeleton } from '@mui/material';
+import { Skeleton, SxProps } from '@mui/material';
+import { Theme } from '@emotion/react';
 
 const DEFAULT_BUTTON_STYLES = {
   height: '24px',
 };
+
+interface HeaderButton {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  sx?: SxProps<Theme>;
+  loading?: boolean;
+  hide?: boolean;
+}
 
 interface HeaderProps {
   title: string;
@@ -22,6 +32,7 @@ interface HeaderProps {
   totalRecords?: number;
   icon?: React.ReactNode;
   actionItems?: ActionsDropdownItem[];
+  headerButtons?: HeaderButton[];
   primaryButton?: {
     label: string;
     onClick: () => void;
@@ -56,6 +67,7 @@ export const PageHeader: React.FC<HeaderProps> = ({
   totalRecords,
   icon,
   actionItems = [],
+  headerButtons = [],
   primaryButton,
   showFilter = false,
   showRefresh = false,
@@ -125,6 +137,24 @@ export const PageHeader: React.FC<HeaderProps> = ({
               <ActionsDropdown actions={actionItems} sx={{ fontWeight: 400 }} />
             )}
           </Suspense>
+
+          {headerButtons.map((button, index) => {
+            if (button.hide) return null;
+            return (
+              <TextButton
+                key={index}
+                label={button.label}
+                onClick={button.onClick}
+                disabled={button.disabled}
+                loading={button.loading}
+                sx={{
+                  ...DEFAULT_BUTTON_STYLES,
+                  ...customStyles.button,
+                  ...button.sx,
+                }}
+              />
+            );
+          })}
 
           {primaryButton && (
             <TextButton
