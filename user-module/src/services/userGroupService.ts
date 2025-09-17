@@ -14,6 +14,7 @@ import { UserGroupType } from "../models/userGroupTypesModel";
 import { UserGroupAccountMapping } from "../models/userGroupAccountMappingModel";
 import UserService from "./userService";
 import { getUserGroupUserCount } from "../utils/rawQueries";
+import { BusinessTeams } from "../models/businessTeamModel";
 
 
 
@@ -568,7 +569,7 @@ async getActiveUsersForGrouping(
           as: "status",
           where: { status_description: "active" },
           attributes: [],
-        },
+        },    
       ],
       order,
     });
@@ -698,7 +699,7 @@ async getActiveUsersForUpdate(
     const { rows: allActiveUsers, count: totalCount } = await User.findAndCountAll({
       where: basewhereClause,
       attributes: ["rid", "email", "status_rid", "first_name", "org_id", 
-        "is_consultant_firm",
+        "is_consultant_firm", "role_rid",
       [
     Sequelize.literal(`(
       CASE
@@ -711,7 +712,7 @@ async getActiveUsersForUpdate(
       END
     )`),
     "organization_name"
-  ]],
+  ], [Sequelize.col("business_teams.business_teams"), "role_name"]],
       include: [
         {
           model: Status,
@@ -719,6 +720,11 @@ async getActiveUsersForUpdate(
           where: { status_description: "active" },
           attributes: [],
         },
+        {
+          model: BusinessTeams, 
+          as: "business_teams",
+          attributes: [],
+        }
       ],
       order
     });
@@ -3161,6 +3167,247 @@ async getUserGroupType(type: string): Promise<{
   }
 }
 
+async getUserGroupUsers(
+  accountId: string,
+  userGroupId: string,
+  validatedData: any,
+  filters: any = {}
+): Promise<{
+  statusCode: number;
+  message: string;
+  errorMessage?: string;
+  data?: { users: any[]; count: number };
+}> {
+  try {
+    const sequelize = await initSequelize();
+    const {
+      page = 1,
+      limit = 10,
+      sortBy = "user_name",
+      sortOrder = "ASC"
+    } = validatedData;
+
+    const offset = (page - 1) * limit;
+
+    // Step 1: Validate account
+    const [accountResult] = await sequelize.query(
+      constants.SQL_GET_ACCOUNT.replace("{whereClause}", "rid = :account_rid"),
+      {
+        replacements: { account_rid: accountId },
+        type: constants.SELECT,
+      }
+    ) as Array<{ rid: string; is_parent: string; parent_account_rid: string }>;
+
+    if (!accountResult) {
+      return {
+        statusCode: constants.BAD_REQUEST,
+        message: constants.BAD_REQUEST_MESSAGE,
+        errorMessage: "Invalid account_rid provided.",
+      };
+    }
+
+    // Step 2: Validate user group access
+    const groupResult = await UserGroup.findOne({
+      where: { rid: userGroupId },
+      include: [
+        {
+          model: UserGroupAccountMapping,
+          as: "usergroupaccount",
+          required: false,
+          where: { account_rid: accountId }
+        },
+        {
+          model: UserGroupType,
+          as: "usergrouptype",
+          required: true,
+          where: {
+            [Op.or]: [
+              { type: "DEFAULT" },
+              { type: { [Op.ne]: "DEFAULT" } }
+            ]
+          }
+        }
+      ]
+    });
+
+    if (!groupResult) {
+      return {
+        statusCode: constants.NOT_FOUND,
+        message: constants.NOT_FOUND_MESSAGE,
+        errorMessage: "User group not found or not accessible by this account.",
+      };
+    }
+
+    // Step 3: Build WHERE clause from filters
+    const replacements: Record<string, any> = {
+      group_rid: userGroupId
+    };
+
+    const whereClause = this.buildUserFilterWhereClause(filters, replacements);
+
+    // Step 4: Get total count with filters
+    const countResult = await sequelize.query(
+      `
+      SELECT 
+        COUNT(*) as count
+      FROM "${MAIN_SCHEMA_NAME}".user_group_mapping AS ugm
+      JOIN "${MAIN_SCHEMA_NAME}".user AS u ON u.rid = ugm.user_rid
+      LEFT JOIN "${MAIN_SCHEMA_NAME}".business_teams AS bt ON u.role_rid = bt.rid
+      WHERE ugm.group_rid = :group_rid
+      ${whereClause}
+      `,
+      {
+        replacements,
+        type: constants.SELECT,
+      }
+    );
+
+    const totalUsers = parseInt((countResult[0] as any).count, 10) || 0;
+
+    if (totalUsers === 0) {
+      return {
+        statusCode: constants.SUCCESS,
+        message: constants.SUCCESS_MESSAGE,
+        data: { users: [], count: 0 },
+      };
+    }
+
+    // Step 5: Fetch users with filters, sort, pagination
+    let orderByClause = "u.first_name ASC"; // default
+    const sanitizedSortOrder = ["ASC", "DESC"].includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : "ASC";
+
+    if (sortBy === "user_name") {
+      orderByClause = `(u.first_name || ' ' || u.last_name) ${sanitizedSortOrder}`;
+    } else if (["first_name", "last_name", "email", "created_datetime"].includes(sortBy)) {
+      orderByClause = `u.${sortBy} ${sanitizedSortOrder}`;
+    } else if(sortBy === "role_name"){
+      orderByClause = `bt.business_teams ${sanitizedSortOrder}`;
+    } else if(sortBy === "organization_name"){
+      orderByClause = `(
+        CASE
+          WHEN u.is_consultant_firm = TRUE THEN u.org_id
+          ELSE (
+            SELECT a.account_name 
+            FROM "${MAIN_SCHEMA_NAME}".account AS a 
+            WHERE a.rid = u.org_id
+          )
+        END
+      ) ${sanitizedSortOrder}`;
+    }
+
+    const users = await sequelize.query(
+      `
+      SELECT 
+        u.rid, 
+        u.first_name, 
+        u.last_name, 
+        u.email, 
+        u.created_datetime, 
+        u.role_rid, 
+        u.org_id,
+        u.is_consultant_firm,
+        (
+          CASE
+            WHEN u.is_consultant_firm = TRUE THEN u.org_id
+            ELSE (
+              SELECT a.account_name 
+              FROM "${MAIN_SCHEMA_NAME}".account AS a 
+              WHERE a.rid = u.org_id
+            )
+          END
+        ) AS organization_name,
+        bt.business_teams AS role_name
+      FROM "${MAIN_SCHEMA_NAME}".user_group_mapping AS ugm
+      JOIN "${MAIN_SCHEMA_NAME}".user AS u ON u.rid = ugm.user_rid
+      LEFT JOIN "${MAIN_SCHEMA_NAME}".business_teams AS bt ON u.role_rid = bt.rid
+      WHERE ugm.group_rid = :group_rid
+      ${whereClause}
+      ORDER BY ${orderByClause}
+      LIMIT :limit OFFSET :offset
+      `,
+      {
+        replacements: {
+          ...replacements,
+          limit,
+          offset
+        },
+        type: constants.SELECT,
+      }
+    );        
+
+    return {
+      statusCode: constants.SUCCESS,
+      message: constants.SUCCESS_MESSAGE,
+      data: { users, count: totalUsers },
+    };
+
+  } catch (err) {
+    console.error("Error in getUserGroupUsers:", err);
+    return this.throwServiceError(err as Error);
+  }
+}
+
+// utils/sqlFilterBuilder.ts (or any appropriate file)
+
+buildUserFilterWhereClause(
+  filters: Record<string, any>,
+  replacements: Record<string, any>
+): string {
+  const filterConditions: string[] = [];
+
+  // Supported fields and their SQL expressions
+  const fieldSqlMap: Record<string, string> = {
+    user_name: `(u.first_name || ' ' || u.last_name)`,
+    email: `u.email`,
+    role_name: `bt.business_teams`,
+    organization_name: `(
+      CASE
+        WHEN u.is_consultant_firm = TRUE THEN u.org_id
+        ELSE (
+          SELECT a.account_name 
+          FROM "${MAIN_SCHEMA_NAME}".account AS a 
+          WHERE a.rid = u.org_id
+        )
+      END
+    )`
+  };
+
+  // Builds each individual condition
+  const buildFilterClause = (columnSql: string, operation: string, value: any, key: string): string => {
+    switch (operation) {
+      case "equals":
+        replacements[key] = value;
+        return `${columnSql} = :${key}`;
+      case "not_equals":
+        replacements[key] = value;
+        return `${columnSql} != :${key}`;
+      case "contains":
+        replacements[key] = `%${value}%`;
+        return `${columnSql} ILIKE :${key}`;
+      case "not_contains":
+        replacements[key] = `%${value}%`;
+        return `${columnSql} NOT ILIKE :${key}`;
+      case "is_empty":
+        return `${columnSql} IS NULL OR ${columnSql} = ''`;
+      default:
+        return "";
+    }
+  };
+
+  Object.entries(filters).forEach(([field, condition], index) => {
+    const columnSql = fieldSqlMap[field];
+    if (!columnSql || !condition || typeof condition !== "object" || Array.isArray(condition)) return;
+
+    const op = Object.keys(condition)[0];
+    const value = (condition as Record<string, any>)[op];
+    const key = `${field}_${op}_${index}`;
+
+    const clause = buildFilterClause(columnSql, op, value, key);
+    if (clause) filterConditions.push(clause);
+  });
+
+  return filterConditions.length ? `AND ${filterConditions.join(" AND ")}` : "";
+}
 
 
 private buildSQLConditions(filters: Record<string, any>): string | null {

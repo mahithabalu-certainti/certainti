@@ -19,9 +19,8 @@ import {
   getAccountGroups,
   assignEntityAccessToAccount,
   assignEntityAccessToProject,
-  getUserGroupType
-
-
+  getUserGroupType,
+  listUserGroupUser
 } from "./userGroupController";
 import { listSettings, updateSettings } from "./settingsController";
 
@@ -60,7 +59,8 @@ const controller = {
     getProjectOfAccounts,
     assignEntityAccessToAccount,
     assignEntityAccessToProject,
-    getUserGroupType
+    getUserGroupType,
+    listUserGroupUser
   },
   settingsController:{
     updateSettings,
