@@ -480,7 +480,7 @@ export const rawQueries = {
   },
   fetchAccountDetailsById(schemaName: string): string {
     return `
-      SELECT rid, account_name, support_email, tenant_id, client_id, client_secret, subscription_created from ${schemaName}.account_details
+      SELECT rid, support_email, tenant_id, client_id, client_secret, subscription_created from ${schemaName}.account_details
       WHERE account_rid = :accountId
     `;
   },
