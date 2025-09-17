@@ -17,7 +17,7 @@ export const transformInteractionData = (data: HeaderData): DisplayColumn[] => {
           value: interaction?.accountName || '-',
         },
         {
-          label: 'project ID',
+          label: 'Project ID',
           value: interaction?.projectId || '-',
         },
       ],
