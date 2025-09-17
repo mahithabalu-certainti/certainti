@@ -476,6 +476,15 @@ const editProfilePermissionsSchema = Joi.object({
   })
 });
 
+const listUserGroupUserSchema = Joi.object({
+  page: Joi.string().pattern(/^[0-9]+$/).default("1"),
+  limit: Joi.string().pattern(/^[0-9]+$/).default("10"),
+  filters: Joi.string().default("{}"),
+  sortBy: Joi.string().default("first_name"),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC")
+});
+
+
 export { createUserSchema, updateUserSchema, enterpriseUserSchema,
    userDetailsUpdateSchema, userReqSchema, listUserSchema, listUserByIdSchema, 
    exportUserSchema, userPermissionByIdSchema, createProfileSchema, 
@@ -484,4 +493,4 @@ export { createUserSchema, updateUserSchema, enterpriseUserSchema,
   createUserGroupSchema,updateUserGroupSchema,listUserGroupSchema,
 listActiveUserGroupSchema,assignUserToAccountSchema,assignUserToProjectSchema,
 listProjectUserGroupSchema,listAccountUserSchema,exportUserGroupSchema ,
-listProjectOfAccountSchema,listUserGroupTypeSchema};
+listProjectOfAccountSchema,listUserGroupTypeSchema, listUserGroupUserSchema};
