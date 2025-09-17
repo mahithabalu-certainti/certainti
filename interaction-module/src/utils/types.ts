@@ -78,7 +78,10 @@ export interface InteractionDetailsResponse {
   account_rid: string;
   project_rid: string;
   project_name: string;
+  account_name : string;
+  account_rnumber : string;
   project_code: string;
+  project_rnumber : string;
   interaction_rid:string
   fiscal_year: number;
   project_fiscal_rid: string;
