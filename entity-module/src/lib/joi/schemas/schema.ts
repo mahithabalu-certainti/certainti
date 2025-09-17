@@ -2716,6 +2716,12 @@ const updateProjectResourceStatus = Joi.object({
     }),
 });
 
+const updateQreAdjutmentSchema = Joi.object({
+  rid: Joi.string().pattern(uuidRegex).required(),
+  accountId: Joi.string().pattern(uuidRegex).required(),
+  rd_percent_potential_ai: Joi.number().required()
+});
+
 export {
   listResourceSkillSchema,
   updateResourceSkillSchema,
@@ -2758,5 +2764,6 @@ export {
   exportImportedAccountLevelProjects,
   exportImportedAccountLevelResources,
   exportImportedAccountLevelProjectTasks,
-  updateProjectResourceStatus
+  updateProjectResourceStatus,
+  updateQreAdjutmentSchema
 };

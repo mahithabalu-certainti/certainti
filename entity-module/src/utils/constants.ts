@@ -146,7 +146,8 @@ export const STATUS_MESSAGE = {
   tenantIdInvalidLength: 'Tenant ID must be a valid UUID (36 characters).',
   clientIdInvalidLength: 'Client ID must be a valid UUID (36 characters).',
   clientSecretTooShort: 'Client Secret is too short or invalid.',
-  invalidCredentials: 'Provided Azure credentials are invalid or unusable'
+  invalidCredentials: 'Provided Azure credentials are invalid or unusable',
+  rdpercentPotentialmissing: "RD Percent Potential AI is missing",
 };
 
 export const TYPES = {
@@ -895,6 +896,25 @@ export const rawQueries = {
     return `
     SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name = 'Active' limit 1`;
   },
+  fetchProjectFiscalById(schemaName : string, projectFiscalId : string){
+    return `SELECT * FROM ${schemaName}.project_fiscal WHERE rid = '${projectFiscalId}'`
+  },
+  updateProjectFiscalQre(schemaName: string, data: any){
+    return `
+    UPDATE ${schemaName}.project_fiscal
+    SET 
+      rd_percent_adjustment = ${data.rd_percent_adjustment},
+      rd_percent_final = ${data.rd_percent_final},
+      qre_final = ${data.qre_final},
+      qre_fte = ${data.qre_fte},
+      qre_subcon = ${data.qre_subcon},
+      qre_nonlabor = ${data.qre_nonlabor},
+      modified_by = '${data.modified_by}',
+      modified_datetime = '${new Date().toISOString()}'
+    WHERE
+      rid = '${data.rid}'
+    `
+  }
 };
 
 export const IMPORT_FILTER_COLUMNS: any = {

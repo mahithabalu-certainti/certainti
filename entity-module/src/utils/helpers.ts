@@ -144,6 +144,12 @@ export const validateProjectRequest = (data : any) => {
   if(!data.project_fiscal_rid) return STATUS_MESSAGE.fiscalIdMissing
 }
 
+export const validateProjectQreUpdateRequest = (data : any) => {
+  if(!data.account_rid) return STATUS_MESSAGE.accountIdMissing
+  if(!data.rid) return STATUS_MESSAGE.projectIdMissing
+  if(!data.rd_percent_potential_ai) return STATUS_MESSAGE.rdpercentPotentialmissing
+}
+
 export const validateResourceRequest = (data : any) => {
   if(!data.account_rid) return STATUS_MESSAGE.accountIdMissing
   if(!data.resource_rid) return STATUS_MESSAGE.resourceIdMissing

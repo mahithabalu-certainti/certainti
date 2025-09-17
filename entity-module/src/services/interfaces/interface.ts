@@ -11,6 +11,7 @@ import {
   IUpdateProject,
   IUpdateProjectResource,
   IUpdateProjectTask,
+  IUpdateQrePecentAdjustment,
   IUpdateResource,
   IUpdateResourceCost,
   IUpdateResourceSkill,
