@@ -1,4 +1,4 @@
-import { constants, MAIN_SCHEMA_NAME } from "../utils/constant";
+import { constants, MAIN_SCHEMA_NAME, rawQuery } from "../utils/constant";
 import { UserGroup } from "../models/userGroupModel";
 import { where, fn, col, Op, WhereOptions, literal,QueryTypes, Sequelize  } from "sequelize";
 import { UserGroupMapping } from "../models/userGroupMappingModel";
@@ -3246,16 +3246,12 @@ async getUserGroupUsers(
     const whereClause = this.buildUserFilterWhereClause(filters, replacements);
 
     // Step 4: Get total count with filters
+    const countQuery = await rawQuery.fetchUserByGroupCount({
+      whereClause,
+    });
+
     const countResult = await sequelize.query(
-      `
-      SELECT 
-        COUNT(*) as count
-      FROM "${MAIN_SCHEMA_NAME}".user_group_mapping AS ugm
-      JOIN "${MAIN_SCHEMA_NAME}".user AS u ON u.rid = ugm.user_rid
-      LEFT JOIN "${MAIN_SCHEMA_NAME}".business_teams AS bt ON u.role_rid = bt.rid
-      WHERE ugm.group_rid = :group_rid
-      ${whereClause}
-      `,
+      countQuery,
       {
         replacements,
         type: constants.SELECT,
@@ -3295,36 +3291,13 @@ async getUserGroupUsers(
       ) ${sanitizedSortOrder}`;
     }
 
+    const query = rawQuery.fetchUsersByGroup({
+      whereClause,
+      orderByClause,
+    });
+
     const users = await sequelize.query(
-      `
-      SELECT 
-        u.rid, 
-        u.first_name, 
-        u.last_name, 
-        u.email, 
-        u.created_datetime, 
-        u.role_rid, 
-        u.org_id,
-        u.is_consultant_firm,
-        (
-          CASE
-            WHEN u.is_consultant_firm = TRUE THEN u.org_id
-            ELSE (
-              SELECT a.account_name 
-              FROM "${MAIN_SCHEMA_NAME}".account AS a 
-              WHERE a.rid = u.org_id
-            )
-          END
-        ) AS organization_name,
-        bt.business_teams AS role_name
-      FROM "${MAIN_SCHEMA_NAME}".user_group_mapping AS ugm
-      JOIN "${MAIN_SCHEMA_NAME}".user AS u ON u.rid = ugm.user_rid
-      LEFT JOIN "${MAIN_SCHEMA_NAME}".business_teams AS bt ON u.role_rid = bt.rid
-      WHERE ugm.group_rid = :group_rid
-      ${whereClause}
-      ORDER BY ${orderByClause}
-      LIMIT :limit OFFSET :offset
-      `,
+      query,
       {
         replacements: {
           ...replacements,
