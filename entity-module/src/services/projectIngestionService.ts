@@ -353,7 +353,7 @@ class ProjectIngestionService {
         }
   
         const [account]: any[] = await this.mainDbSequelize.query(
-          `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
+          rawQueries.fetchAccountById,
           {
             replacements: { rid: accountId },
             type: "SELECT",
@@ -364,7 +364,7 @@ class ProjectIngestionService {
   
         if (account?.storage_type === "store_in_parent") {
           const [accountData]: any[] = await this.mainDbSequelize.query(
-            `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
+           rawQueries.fetchAccountById,
             {
               replacements: { rid: account?.parent_account_rid },
               type: "SELECT",
@@ -395,9 +395,8 @@ class ProjectIngestionService {
       };
     
         payload.company_id = req.data[0].account_rid;
-        payload.project_id = req.data[0].project_fiscal_rid;
-      
-      console.log("Triggering AI with payload:", payload);
+        payload.project_id = req.data[0].project_fiscal_rid; 
+        this.logger.info(`Triggering AI with payload: ${JSON.stringify(payload)}`);
 
       const topic = process.env.KAFKA_AI_REQUEST_TRIGGER_TOPIC || "ai_assessment_request";
       const message = {
@@ -409,14 +408,13 @@ class ProjectIngestionService {
          messages: [message],
        });
     //   Check if the message was processed successfully
-     console.log("Send result to topic", sendResult);
+    this.logger.info(`Message sent to topic ${topic}: ${JSON.stringify(sendResult)}`);
       return {
         statusMessage: "AI Assessment Initiated",
         status: "success",
         data: null
       };
     } catch (error) {
-      console.log(error)
       this.logger.error("Error in triggerAI", error);
       return {
         statusMessage: "Failed to process AI request",

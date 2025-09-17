@@ -657,6 +657,7 @@ export const rawQueries = {
   findResourceByCode(schemaName: string, resource_code: string) {
     return `SELECT rid FROM ${schemaName}.resources WHERE resource_code = '${resource_code}'`;
   },
+  fetchAccountById:  `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
   GET_ACCOUNT_ACCESS: `
 (
   (
