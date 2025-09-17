@@ -31,12 +31,14 @@ import { ProjectResourceFiscal } from "../models/projectResourceFiscal";
 import { ProjectResourceFiscalRegion } from "../models/projectResourceFiscalRegion";
 import AccountDetails from "../models/accountDetails";
 import SchemaService from "./schemaService";
+import { Kafka, Producer } from "kafkajs";
 
 class ProjectIngestionService {
   private orgDbSequelize: Sequelize | null = null;
   private mainDbSequelize: Sequelize | null = null;
   keyContactService: KeyContactService;
   private logger: Logger;
+  private producer!: Producer;
 
   private modelCache: Map<
     string,
@@ -310,11 +312,117 @@ class ProjectIngestionService {
       accountSettings,
       userId
     );
-
-    return ProjectFiscal.create({
+    const response = await ProjectFiscal.create({
       ...baseData,
       default_metric_type: "project",
     });
+    if(accountSettings[0]?.auto_access_rd === true)
+      {
+        //console.log triger the ai
+        const req = {
+          data: [
+        {
+          account_rid: projectData.account_id,
+          project_fiscal_rid: [response.rid],
+        },
+          ],
+          type: "project",
+        };
+      await this.triggerAI(req);
+
+      }
+
+    return response;
+  }
+   private async getProducer(): Promise<Producer> {
+    if (!this.producer) {
+      const kafka = new Kafka({
+        clientId: "my-app",
+        brokers: [process.env.KAFKA_BROKER || "kafka:9092"],
+      });
+      this.producer = kafka.producer();
+      await this.producer.connect();
+    }
+    return this.producer;
+  }
+
+   async fetchValidAccountNumberById(accountId: string) {
+      try {
+        if (!this.mainDbSequelize) {
+          this.mainDbSequelize = await this.getMainSequelize();
+        }
+  
+        const [account]: any[] = await this.mainDbSequelize.query(
+          rawQueries.fetchAccountById,
+          {
+            replacements: { rid: accountId },
+            type: "SELECT",
+          }
+        );
+  
+        let accountRnumber = account?.r_number;
+  
+        if (account?.storage_type === "store_in_parent") {
+          const [accountData]: any[] = await this.mainDbSequelize.query(
+           rawQueries.fetchAccountById,
+            {
+              replacements: { rid: account?.parent_account_rid },
+              type: "SELECT",
+            }
+          );
+          accountRnumber = accountData?.r_number;
+        }
+  
+        return {
+          accountNumber: accountRnumber,
+          accountId: account?.rid,
+          accountName: account?.account_name,
+        };
+      } catch (err) {
+        throw new Error("Error fetching account : " + (err as Error).message);
+      }
+    }
+  async triggerAI(req: any) {
+    try {
+      let payload: {
+        company_id?: any;
+        input_text: string;
+        model_type: string;
+        project_id?: any;
+      } = {
+        input_text: "This is some text to be processed by the AI.",
+        model_type: "NA"
+      };
+    
+        payload.company_id = req.data[0].account_rid;
+        payload.project_id = req.data[0].project_fiscal_rid; 
+        this.logger.info(`Triggering AI with payload: ${JSON.stringify(payload)}`);
+
+      const topic = process.env.KAFKA_AI_REQUEST_TRIGGER_TOPIC || "ai_assessment_request";
+      const message = {
+        value: JSON.stringify(payload),
+      };
+      const producer = await this.getProducer();
+       const sendResult = await producer.send({
+         topic,
+         messages: [message],
+       });
+    //   Check if the message was processed successfully
+    this.logger.info(`Message sent to topic ${topic}: ${JSON.stringify(sendResult)}`);
+      return {
+        statusMessage: "AI Assessment Initiated",
+        status: "success",
+        data: null
+      };
+    } catch (error) {
+      this.logger.error("Error in triggerAI", error);
+      return {
+        statusMessage: "Failed to process AI request",
+        status: "error",
+        data: null,
+        errorMessage: error instanceof Error ? error.message : String(error)
+      };
+    }
   }
 
   async addProjectFiscalRegion(
