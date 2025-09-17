@@ -1473,14 +1473,15 @@ class SchemaService {
         project_resource_code varchar(50) NOT NULL,
         resource_rid varchar(50) NOT NULL,
         fiscal_year int4 NOT NULL,
-        start_date timestamptz NULL,
-        end_date timestamptz NULL,
+        start_date date NULL,
+        end_date date NULL,
         country_rid varchar(50) NULL,
         region_rid varchar(50) NULL,
         currency_rid varchar(50) NULL,
         total_hours_pro_task numeric(18, 2) NULL,
         total_cost_pro_task numeric(18, 2) NULL,
         "comments" varchar(2000) NULL,
+        project_resource_rid varchar(50) NOT NULL,
         CONSTRAINT project_task_r_number_key UNIQUE (r_number)
       );
     `);
@@ -1490,6 +1491,7 @@ class SchemaService {
       ALTER TABLE "${schemaName}".project_task ADD CONSTRAINT project_task_project_fiscal_rid_fkey FOREIGN KEY (project_fiscal_rid) REFERENCES "${schemaName}".project_fiscal(rid) ON UPDATE CASCADE;
       ALTER TABLE "${schemaName}".project_task ADD CONSTRAINT project_task_resource_rid_fkey FOREIGN KEY (resource_rid) REFERENCES "${schemaName}".resources(rid) ON UPDATE CASCADE;
       ALTER TABLE "${schemaName}".project_task ADD CONSTRAINT project_task_project_rid_fkey FOREIGN KEY (project_rid) REFERENCES "${schemaName}".project(rid) ON UPDATE CASCADE;
+      ALTER TABLE "${schemaName}".project_task ADD CONSTRAINT project_task_project_resource_rid_fkey FOREIGN KEY (project_resource_rid) REFERENCES "${schemaName}".project_resource(rid) ON UPDATE CASCADE;
     `);
   }
 
