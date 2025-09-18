@@ -84,6 +84,16 @@ export interface IInteractionService {
     errorMessage?: string;
     data?: { interactions: any };
   }>;
+  
+  getInteractionLevel(
+    statusScope?: string,
+    currentStatus?: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { interactionLevel: any };
+  }>;
 
   getInteractionStatus(
     statusScope?: string,

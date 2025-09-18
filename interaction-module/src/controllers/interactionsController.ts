@@ -835,6 +835,39 @@ async function getInteractionTypes(req: Request, res: Response): Promise<void> {
   }
 }
 
+async function getInteractionLevel(
+  req: Request,
+  res: Response
+): Promise<void> {
+  const methodName = "Get interaction level";
+  try {
+    const interactionLevel = await interactionService.getInteractionLevel();
+    if (interactionLevel.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, interactionLevel.data);
+      return;
+    } else {
+      errorLog(methodName, interactionLevel.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        interactionLevel.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
 async function getInteractionSource(
   req: Request,
   res: Response
@@ -1860,6 +1893,7 @@ export default {
   getInteractionStatus,
   getInteractionTypes,
   getInteractionSource,
+  getInteractionLevel,
   getResponseSource,
   getInteractionDetailsById,
   getInteractionQuestionsById,
