@@ -2640,6 +2640,10 @@ private async createInteractionTable(
         if (Array.isArray(users) && users.length > 0) {
           users[0].is_send_interaction = isSubscriptionCreated;
         }
+      }else{
+        if (Array.isArray(users) && users.length > 0) {
+          users[0].is_send_interaction = false;
+        }
       }
 
       return users;
