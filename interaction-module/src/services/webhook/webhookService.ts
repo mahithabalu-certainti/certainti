@@ -74,10 +74,14 @@ export class WebHookService {
             client_id,
             decryptedSecret
           );
-        } else {
-          this.graphClient = await this.fetchCredentialsFromDb();
+        }else{
+          return {
+            statusCode: HttpStatus.SUCCESS,
+            message: HttpStatus.BAD_REQUEST_MESSAGE,
+            errorMessage: "Invalid Graph Connections",
+          };
         }
-
+        
         finalResult = await this.processNotification(
           notification,
           email,

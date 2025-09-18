@@ -625,6 +625,7 @@ jobs:
           CUSTOM_JWT_AUDIENCE=custom-jwt-audience
           CUSTOM_JWT_ISSUER=custom-jwt-issuer
           JWT_EXPIRY='1h'
+          CLIENT_SECRET_ENCRYPTION_KEY=client-secret-encryption-key
           EOF
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
