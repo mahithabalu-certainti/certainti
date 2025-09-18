@@ -2064,6 +2064,22 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
 
     return interactionSource;
   }
+   async getInteractionLevel() {
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize =
+        await this.interactionModelService.getMainSequelize();
+    }
+
+    const interactionLevel = await this.mainDbSequelize.query(
+      `Select rid, interaction_level_name from ${MAIN_SCHEMA_NAME}.interaction_level WHERE status = 'active' order by interaction_level_name ASC`,
+      {
+        type: "SELECT",
+      }
+    );
+
+    return interactionLevel;
+  
+  }
   async getResponseSource() {
     if (!this.mainDbSequelize) {
       this.mainDbSequelize =
