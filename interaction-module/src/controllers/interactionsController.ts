@@ -23,9 +23,7 @@ import {
   getInteractionStatusSchema,
   listAccountInteractionSchema,
   listAllTechnicalSummarySchema,
-  listInteractionDetailsByIdSchema,
   listTechnicalSummarySchema,
-  sendAccountInteractionSchema,
   sendInteractionSchema,
   updateAccountInteractionSchema,
   updateInteractionResponseSchema,
@@ -494,12 +492,6 @@ async function getInteractionDetailsById(
   try {
     console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
     const { interactionRid, accountId } = req.params;
-    const value = await validateRequest(
-      req,
-      listInteractionDetailsByIdSchema,
-      res,
-      "GET"
-    );
     const userId = req.headers["x-user-id"] as string;
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
@@ -526,24 +518,12 @@ async function getInteractionDetailsById(
       return;
     }
     let interactionDetails;
-   if(value.type === 'project')
-  {
    interactionDetails =
         await interactionService.getInteractionDetailsById(
           interactionRid,
-          accountId,
-          value.project_fiscal_rid
-        );
-  }
-  else
-
-  {
-   interactionDetails =
-        await interactionService.getAccountInteractionDetailsById(
-          interactionRid,
           accountId
         );
-  }
+ 
 
    
     console.log(

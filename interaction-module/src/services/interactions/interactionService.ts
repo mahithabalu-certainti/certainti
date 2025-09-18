@@ -811,8 +811,7 @@ export class InteractionService {
   
   async getInteractionDetailsById(
     interactionRid: string,
-    accountRid: string,
-    projectFiscalRid:string
+    accountRid: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -835,8 +834,7 @@ export class InteractionService {
       const interactionDetails =
         await this.interactionSchemaService.fetchInteractionDetailsById(
           accountNumber,
-          interactionRid,
-          projectFiscalRid
+          interactionRid
         );
 
       if (!interactionDetails) {
@@ -855,7 +853,7 @@ export class InteractionService {
         },
       };
     } catch (err) {
-      console.log("Error creatng resource", err);
+      console.log("Error fetching interaction details", err);
       throw this.throwServiceError(err as Error);
     }
   }
@@ -1193,9 +1191,19 @@ export class InteractionService {
     return senderEmailInfo;
   }
 
-  async generateInteractionLink(interactionRid: string, accountRid: string,projectFiscalId:string) {
-    return `${process.env.INTERACTION_URL}?acc=${accountRid}&int=${interactionRid}&proj=${projectFiscalId}`;
+  async generateInteractionLink(
+    interactionRid: string,
+    accountRid: string,
+    projectFiscalId: string,
+    interactionLevel: string
+  ) {
+    if (interactionLevel === "Account") {
+      return `${process.env.INTERACTION_URL}?acc=${accountRid}&int=${interactionRid}`;
+    } else {
+      return `${process.env.INTERACTION_URL}?acc=${accountRid}&int=${interactionRid}&proj=${projectFiscalId}`;
+    }
   }
+
   async generateExcelBuffer(
     rid: string,
     interactionItems: any[],
@@ -2195,12 +2203,21 @@ export class InteractionService {
       let userId = data.user_rid
       let project_fiscal_rid = data.project_fiscal_rid
       let accountRid = data.account_rid
+      let interactionLevel = data.interaction_level
 
       // If emailInfo.email is empty, fetch POC email
       let sendEmailInfo = email_info;
       if (!email_info || !email_info?.email) {
         console.log(`[INFO] Fetched fallback email for interaction ${interaction_rid}: ${sendEmailInfo?.email}`);
-        sendEmailInfo = await this.interactionSchemaService.fetchEmailInfo(accountNumber, interaction_rid, project_fiscal_rid, accountRid);
+        if(interactionLevel === 'Account')
+        {
+          sendEmailInfo = await this.interactionSchemaService.fetchEmailInfo(accountNumber, interaction_rid, project_fiscal_rid, accountRid);
+        }
+        else
+        {
+          sendEmailInfo = await this.interactionSchemaService.fetchEmailInfoForAccount(accountNumber, accountRid);
+        }
+        
       }
 
       if (!sendEmailInfo?.email || sendEmailInfo?.email == "") {
@@ -2223,7 +2240,8 @@ export class InteractionService {
       const interactionLink = await this.generateInteractionLink(
         interaction_rid,
         interactionInfo.accountInfo.account_rid,
-        project_fiscal_rid
+        project_fiscal_rid,
+        interactionLevel
       );
       const senderEmailInfo = await this.getSenderEmailInfo(accountNumber,interactionInfo.accountInfo.parent_account_rid);
       const excelBuffer = await this.generateExcelBuffer(

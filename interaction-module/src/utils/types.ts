@@ -95,6 +95,8 @@ export interface InteractionDetailsResponse {
   r_number: string;
   interaction_type: string;
   interaction_type_name: string;
+  interaction_level_rid: string | null;
+  interaction_level_name: string | null;
   status: string;
   status_name: string;
   modified_by: string;
