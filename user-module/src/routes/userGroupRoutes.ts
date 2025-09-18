@@ -20,6 +20,7 @@ routes.post("/listUsers", checkUserStatusMiddleware("NA"), controller.userGroupC
 //user group access
 routes.get("/account/:accountid/users", checkUserStatusMiddleware("NA"), controller.userGroupController.getAccountUsers);
 routes.get("/account/:accountid/groups", checkUserStatusMiddleware("NA"), controller.userGroupController.getAccountGroups);
+routes.get("/users/:accountid/:userGroupId", checkUserStatusMiddleware("NA"), controller.userGroupController.listUserGroupUser);
 routes.get("/project/users", checkUserStatusMiddleware("NA"), controller.userGroupController.getProjectUsers);
 routes.post("/projects-of-accounts", checkUserStatusMiddleware("NA"), controller.userGroupController.getProjectOfAccounts);
 routes.post("/assign-access-to-account", checkUserStatusMiddleware("manage_account_access_view_edit"), controller.userGroupController.assignEntityAccessToAccount);

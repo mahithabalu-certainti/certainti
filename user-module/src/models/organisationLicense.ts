@@ -9,13 +9,22 @@ interface OrganizationLicensesAttributes {
   modified_datetime?: Date;
   created_by?: string;
   modified_by?: string;
+  auto_send_interaction?: boolean;
+  auto_access_rd?: boolean;
+  email?: string;
+  tenant_id?: string;
+  client_id?: string;
+  client_secret?: string;
 }
 
 interface OrganizationLicensesCreationAttributes
   extends Optional<OrganizationLicensesAttributes, "rid"> {}
 
 export class OrganizationLicenses
-  extends Model<OrganizationLicensesAttributes, OrganizationLicensesCreationAttributes>
+  extends Model<
+    OrganizationLicensesAttributes,
+    OrganizationLicensesCreationAttributes
+  >
   implements OrganizationLicensesAttributes
 {
   public rid!: string;
@@ -28,13 +37,21 @@ export class OrganizationLicenses
   public readonly modified_datetime!: Date;
   public created_by?: string;
   public modified_by?: string;
+  public auto_send_interaction?: boolean;
+  public auto_access_rd?: boolean;
+  public email?: string;
+  public tenant_id?: string;
+  public client_id?: string;
+  public client_secret?: string;
 
   static initialize(sequelize: Sequelize) {
     OrganizationLicenses.init(
       {
         rid: {
           type: DataTypes.STRING(50),
-          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
+          defaultValue: Sequelize.literal(
+            `'${ENV_PREFIX}' || gen_random_uuid()`
+          ),
           primaryKey: true,
         },
         created_by: {
@@ -67,14 +84,37 @@ export class OrganizationLicenses
           type: DataTypes.TEXT,
           allowNull: false,
         },
-        
+        auto_send_interaction: {
+          type: DataTypes.BOOLEAN,
+          allowNull: true,
+        },
+        auto_access_rd: {
+          type: DataTypes.BOOLEAN,
+          allowNull: true,
+        },
+        email: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+        tenant_id: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+        client_id: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+        client_secret: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        }
       },
       {
         sequelize,
         modelName: "OrganizationLicenses",
         tableName: "organization_licenses",
         timestamps: false,
-        schema : `${MAIN_SCHEMA_NAME}`
+        schema: `${MAIN_SCHEMA_NAME}`,
       }
     );
   }

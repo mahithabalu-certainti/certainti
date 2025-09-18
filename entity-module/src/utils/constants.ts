@@ -1,4 +1,5 @@
 import { Sequelize } from "sequelize";
+import { encryptClientSecret } from "./helpers";
 export const HttpStatus = {
   SUCCESS: 200,
   BAD_REQUEST: 400,
@@ -140,6 +141,15 @@ export const STATUS_MESSAGE = {
   accountSummaryHighlightsSuccess: "Financial Summary fetched successfully",
   effortExceeded: "Effort cannot exceed the total hours in the duration",
   effort24HrsExceeded: "Effort cannot exceed 24 hours for the day",
+  startDateLessThanEndDate: "Start date must be less than end date",
+  emailMissing: 'Support Email is missing or invalid.',
+  tenantIdInvalidLength: 'Tenant ID must be a valid UUID (36 characters).',
+  clientIdInvalidLength: 'Client ID must be a valid UUID (36 characters).',
+  clientSecretTooShort: 'Client Secret is too short or invalid.',
+  invalidCredentials: 'Provided Azure credentials are invalid or unusable',
+  rdpercentPotentialmissing: "RD Percent Potential AI is missing",
+  resCodePrjTaskSuccess : "ResourceCode for ProjectTask fetched successfully",
+  resCodeNotFound : "No ResourceCode found"
 };
 
 export const TYPES = {
@@ -168,6 +178,11 @@ export const rawQueries = {
       LEFT JOIN fetch_account_details ad ON ad.parent_account_rid = a.rid
       WHERE a.rid = ad.parent_account_rid`;
     }
+  },
+  async fetchAccountDetailsByRid(
+    accountRid: string) {
+    return `
+            SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`;
   },
   findProject(schemaName: string, projectRid: string, accountRid: string) {
     return `
@@ -645,6 +660,7 @@ export const rawQueries = {
   findResourceByCode(schemaName: string, resource_code: string) {
     return `SELECT rid FROM ${schemaName}.resources WHERE resource_code = '${resource_code}'`;
   },
+  fetchAccountById:  `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
   GET_ACCOUNT_ACCESS: `
 (
   (
@@ -724,7 +740,9 @@ export const rawQueries = {
     schemaName: string,
     data: any,
     orgDb: Sequelize,
-    mainDb: Sequelize
+    mainDb: Sequelize,
+    parentAccountID: string,
+    subscriptionId?: string
   ) {
     let tableName: string[];
     let whereParams: string = ``;
@@ -786,6 +804,26 @@ export const rawQueries = {
       ${setValues}
       ${whereParams}
       `;
+      if(data.flag == UPDATE_FLAG.account && t == "account_details" && subscriptionId){
+        const encryptedSecretKey = await encryptClientSecret(data.client_secret);
+        let query = `
+        UPDATE ${schema}.${t}
+        SET
+        support_email = '${data.support_email}',
+        tenant_id = '${data.tenant_id}',
+        client_id = '${data.client_id}',
+        client_secret = '${encryptedSecretKey}',
+        subscription_created = true
+        WHERE account_rid = '${parentAccountID}'
+        `;
+
+        const subscriptionQuery = `
+          UPDATE ${MAIN_SCHEMA_NAME}.account set subscription_id = '${subscriptionId}'
+          WHERE rid = '${parentAccountID}'
+        `
+        await dbConnection.query(query);
+        await mainDb.query(subscriptionQuery);
+      }
       await dbConnection.query(query);
     }
     return HttpStatus.SUCCESS_MESSAGE;
@@ -828,6 +866,57 @@ export const rawQueries = {
       effective_metric_type IS NULL
     `;
   },
+  fetchResourceTypeById(schemaName: string){
+    return `
+      SELECT 
+        rid AS resource_type_rid, 
+        resource_type_name 
+      FROM ${schemaName}.resource_type 
+      WHERE rid IN (:ids)
+  `;
+  },
+  getAccountInteractionProjects(schemaName: string, account_rid: string){
+    return `
+      SELECT
+        project_fiscal_rid
+      FROM    ${schemaName}.interactions
+      WHERE account_interaction_rid in (:account_interaction_rid)
+    `;
+  },
+  fetchAccountCurrencyRid (account_rid : string) {
+    return `SELECT currency_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${account_rid}'`
+  },
+  fetchActiveStatusRid (status : string) {
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name ILIKE '%${status}%'`
+  },
+  fetchResourceStatus:`
+  SELECT rid, resource_status_name FROM ${MAIN_SCHEMA_NAME}.resource_status WHERE rid IN (:projectTaskStatusId)`,
+  checkResCodeExistsInPrjRes (schemaName : string, project_resource_rid : string,) {
+    return `SELECT * FROM ${schemaName}.project_resource WHERE rid = '${project_resource_rid}'`
+  },
+   fetchActiveStatus() {
+    return `
+    SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name = 'Active' limit 1`;
+  },
+  fetchProjectFiscalById(schemaName : string, projectFiscalId : string){
+    return `SELECT * FROM ${schemaName}.project_fiscal WHERE rid = '${projectFiscalId}'`
+  },
+  updateProjectFiscalQre(schemaName: string, data: any){
+    return `
+    UPDATE ${schemaName}.project_fiscal
+    SET 
+      rd_percent_adjustment = ${data.rd_percent_adjustment},
+      rd_percent_final = ${data.rd_percent_final},
+      qre_final = ${data.qre_final},
+      qre_fte = ${data.qre_fte},
+      qre_subcon = ${data.qre_subcon},
+      qre_nonlabor = ${data.qre_nonlabor},
+      modified_by = '${data.modified_by}',
+      modified_datetime = '${new Date().toISOString()}'
+    WHERE
+      rid = '${data.rid}'
+    `
+  }
 };
 
 export const IMPORT_FILTER_COLUMNS: any = {
@@ -899,3 +988,27 @@ export const SUMMARY_HIGHLIGHTS_TYPE_FLAG = {
   statewise: "state",
   summary: "summary",
 };
+
+export const primaryKeyContacts = {
+  "technical_point_of_contact": "technical_point_of_contact",
+  "financial_consultant": "financial_consultant",
+  "project_point_of_contact": "project_point_of_contact"
+};
+
+
+export const IMPORT_FIELD_MAPPINGS_FOR_EXPORT = [
+    { permissionField: 'r_number', exportField: 'Import ID', dataField: 'r_number' },
+    { permissionField: 'file_name', exportField: 'File Name', dataField: 'file_name' },
+    { permissionField: 'format', exportField: 'Format', dataField: 'format' },
+    { permissionField: 'size', exportField: 'Size', dataField: 'size' },
+    { permissionField: 'fiscal', exportField: 'Fiscal Year', dataField: 'fiscal' },
+    { permissionField: 'entity', exportField: 'Entity', dataField: 'entity' },
+    { permissionField: 'total_records', exportField: 'Total Records', dataField: 'total_records' },
+    { permissionField: 'records_loaded_successfully', exportField: 'Records Loaded Successfully', dataField: 'records_loaded_successfully' },
+    { permissionField: 'records_with_warning', exportField: 'Records with Warning', dataField: 'records_with_warning' },
+    { permissionField: 'records_failed_to_load', exportField: 'Records Failed to Load', dataField: 'records_failed_to_load' },
+    { permissionField: 'status', exportField: 'Status', dataField: 'status' },
+    { permissionField: 'status_descriptions', exportField: 'Status Description', dataField: 'status_description' },
+    { permissionField: 'imported_by', exportField: 'Imported By', dataField: 'imported_by' },
+    { permissionField: 'imported_on', exportField: 'Imported On', dataField: 'imported_on', formatter: (value: any) => new Date(value).toISOString().slice(0, 10) }
+];

@@ -233,7 +233,7 @@ export function getTableSchemaByEntity(entity: string): ColumnSchema[] {
       return [
         { column_name: 'project_id', data_type: 'String', required:true},
         { column_name: 'project_name', data_type: 'String' ,required:false},
-        { column_name: 'project_description', data_type: 'String',required:true },
+        { column_name: 'project_description', data_type: 'String',required:false },
         { column_name: 'resource_id', data_type: 'String' ,required:true},
         { column_name: 'resource_name', data_type: 'String',required:false },
         { column_name: 'resource_type', data_type: 'ENUM' ,required:false},
@@ -435,8 +435,6 @@ export const validateInlineEditPayload = (data : any) => {
         setKeyData.key_contact_role = d.key_contact_role !== dbData.key_contact_role ? d.key_contact_role : dbData.key_contact_role
       if(typeof d.is_primary_contact == 'boolean')
         setKeyData.is_primary_contact = d.is_primary_contact !== dbData.is_primary_contact ? d.is_primary_contact : dbData.is_primary_contact
-      if(typeof d.include_in_communication == 'boolean')
-        setKeyData.include_in_communication = d.include_in_communication !== dbData.include_in_communication ? d.include_in_communication : dbData.include_in_communication
       if(typeof d.interaction_cc_recipient == 'boolean')
         setKeyData.interaction_cc_recipient = d.interaction_cc_recipient !== dbData.interaction_cc_recipient ? d.interaction_cc_recipient : dbData.interaction_cc_recipient
       if(d.status_rid)
@@ -519,7 +517,6 @@ export const validateInlineEditPayload = (data : any) => {
     let key_contact_email
     let key_contact_role
     let is_primary_contact
-    let include_in_communication
     let interaction_cc_recipient
     let status_rid
     let modified_by
@@ -553,11 +550,6 @@ export const validateInlineEditPayload = (data : any) => {
                 is_primary_contact = setDataResult.is_primary_contact
                 let primary = `is_primary_contact = ${is_primary_contact}`
                 updatedKeyData.push(primary)
-            }
-            if (setDataResult.include_in_communication != undefined) {
-                include_in_communication = setDataResult.include_in_communication
-                let communication = `include_in_communication = ${include_in_communication}`
-                updatedKeyData.push(communication)
             }
             if (setDataResult.interaction_cc_recipient !== undefined) {
                 interaction_cc_recipient = setDataResult.interaction_cc_recipient

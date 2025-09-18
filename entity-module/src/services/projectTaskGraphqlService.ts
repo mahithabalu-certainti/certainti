@@ -13,6 +13,7 @@ import { ProjectInjestionTaskService } from "./projectTask/projectTaskService";
 import Decimal from "decimal.js";
 import { ProjectTask } from "../models/projectTask";
 import { ProjectResourceSchemaService } from "./projectResource/schemaService";
+import { getCurrencyThreshold, getResourceStatuses } from "./resourceCostService";
 
 const services = Configurations.getInstance().getServices();
 const projectTaskService = services.projectTaskServices;
@@ -30,6 +31,8 @@ export default class ProjectTaskGraphqlServies {
   }
 
   async updateInlineGraphqlDetails(data: any) {
+    let total_hours_pro_task;
+    let total_cost_pro_task;
     const orgSequelize = await initOrgSequelize();
     const mainSequelize = await initMainDbSequelize();
 
@@ -77,6 +80,47 @@ export default class ProjectTaskGraphqlServies {
             };
           }
         }
+        if(data.total_hours_pro_task) total_hours_pro_task = data.total_hours_pro_task
+        if(data.start_date && data.end_date) {
+          const newStartDate = new Date(data.start_date);
+          const newEndDate = new Date(data.end_date);
+          if(newStartDate > newEndDate) {
+            return {
+              statusCode: HttpStatus.BAD_REQUEST,
+              statusMessage: STATUS_MESSAGE.startDateLessThanEndDate,
+              data: null,
+            };
+          }
+        } 
+        if(data.start_date && !data.end_date) {
+          data.start_date = new Date(data.start_date).toISOString().split('T')[0];
+          if(checkForExistingData[0][0].end_date) {
+            const existingEndDate = new Date(checkForExistingData[0][0].end_date);
+            const newStartDate = new Date(data.start_date);
+            if(newStartDate > existingEndDate) {
+              return {
+                statusCode: HttpStatus.BAD_REQUEST,
+                statusMessage: STATUS_MESSAGE.startDateLessThanEndDate,
+                data: null,
+              };
+            }
+          }
+        }
+        if(data.end_date && !data.start_date) {
+          data.end_date = new Date(data.end_date).toISOString().split('T')[0];
+          if(checkForExistingData[0][0].start_date) {
+            const existingStartDate = new Date(checkForExistingData[0][0].start_date);
+            const newEndDate = new Date(data.end_date);
+            if(newEndDate < existingStartDate) {
+              return {
+                statusCode: HttpStatus.BAD_REQUEST,
+                statusMessage: STATUS_MESSAGE.startDateLessThanEndDate,
+                data: null,
+              };
+            }
+          }
+        }
+        
 
         const newEffort = new Decimal(data.total_hours_pro_task || "0");
 
@@ -135,6 +179,45 @@ export default class ProjectTaskGraphqlServies {
         }
       }
 
+        const getAccountCurrencyRid : any = await mainSequelize.query(`SELECT currency_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${data.account_rid}'`)
+        const costFields = {
+          total_hours_pro_task,
+          total_cost_pro_task
+        };
+        const costValues : any = Object.entries(costFields).reduce(
+          (acc, [key, value]) => {
+            // Normalize empty string to null
+            if (value === null || value === undefined) {
+              acc[key] = null;
+            } else {
+              try {
+                // Convert valid string/number to Decimal
+                acc[key] = new Decimal(value).toString();
+              } catch (error) {
+                throw new Error(`Invalid number format for ${key}: ${value}`);
+              }
+            }
+            return acc;
+          },
+          {} as Record<string, string | null>
+        );
+                
+        // Get currency threshold
+        const currencyThreshold = await getCurrencyThreshold(mainSequelize,getAccountCurrencyRid[0][0].currency_rid);
+        let status = "Active";
+        const statusMap = await getResourceStatuses(mainSequelize);
+        const activeId : any = await mainSequelize.query(`SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name ILIKE '%${status}%'`)
+        const activeStatusId : any = statusMap?.get(status);
+
+        if (data.total_hours_pro_task!== undefined && Number(data.total_hours_pro_task) > 3000) {
+            status = "Anomaly";
+          } else if (
+            (data.total_cost_pro_task !== undefined && currencyThreshold !== null && Number(data.total_cost_pro_task) > currencyThreshold)) {
+            status = "Anomaly";
+          }
+        const statusRid : any = statusMap?.get(status);
+        if(statusRid !== undefined || statusRid !== null) data.status_rid = statusRid
+        else data.status_rid = checkForExistingData[0][0].status_rid
         let getSetData = setInlineForProjectTask(
           checkForExistingData[0][0],
           data
@@ -146,6 +229,7 @@ export default class ProjectTaskGraphqlServies {
             data: null,
           };
         } else {
+          data.status_rid = statusRid
           const updatedProjectTask = await orgSequelize.query(
             rawQueries.updateProjectTaskQuery(schemaName, getSetData, data)
           );
@@ -168,7 +252,9 @@ export default class ProjectTaskGraphqlServies {
             await this.projectTaskInjestionService.runAggregationAfterInlineUpdate(
               accountNumber,
               data,
-              checkForExistingData[0][0]
+              checkForExistingData[0][0],
+              activeId[0][0].rid,
+              activeStatusId
             );
 
             await projectTaskSchemaService.addProjctTaskHistoryForInline(
@@ -215,6 +301,7 @@ export default class ProjectTaskGraphqlServies {
               modified_by: latestData.modified_by,
               created_datetime: latestData.created_datetime,
               modified_datetime: latestData.modified_datetime,
+              status_name : latestData.status_name
             };
             return {
               statusCode: HttpStatus.SUCCESS,

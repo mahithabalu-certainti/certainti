@@ -18,6 +18,7 @@ key_contact_email: String,
 key_contact_role: String,
 is_primary_contact: Boolean,
 include_in_communication: Boolean,
+interaction_cc_recipient: Boolean,
 status_rid: String,
 role_name: String,
 status_name: String
@@ -122,6 +123,7 @@ type ProjectFiscalDetails {
     total_cost_subcon : String
     total_cost_nonlabor : String
     project_type_name : String
+    currency_symbol: String
   }
 
 type projectNewResponse {
@@ -182,12 +184,36 @@ type projectNewResponse {
     ProjectFiscal : [ProjectFiscalDetails]
 }
 
+type projectQreAdjustmentResponse {
+    rid: String
+    r_number: String
+    eid: String
+    created_datetime: Date
+    modified_datetime: Date
+    created_by: String
+    modified_by: String
+    project_code: String
+    rd_percent_potential_ai: String
+    rd_percent_adjustment: String
+    rd_percent_final: String
+    qre_fte: String
+    qre_subcon: String
+    qre_nonlabor: String
+    qre_final: String
+}
 
 type UpdateProjectResponse {
     statusCode : Int,
     statusCodeValue : String,
     statusMessage : String,
     data : projectNewResponse
+}
+
+type UpdateProjectQreResponse {
+    statusCode : Int,
+    statusCodeValue : String,
+    statusMessage : String,
+    data : projectQreAdjustmentResponse
 }
 
 input updateInlineProject {
@@ -208,10 +234,18 @@ input updateInlineProject {
     total_cost_subcon : String,
     total_cost_fte : String,
     total_effort : String,
-    total_cost : String
+    total_cost : String,
+    global_fiscal_year : Int!
 }
+
+input QreAdjustmentInput {
+  account_rid : String!,
+  rid: String!
+  rd_percent_potential_ai: Float!    
+} 
 
 type Mutation {
     updateSpecificProjectDetails (data : updateInlineProject) : UpdateProjectResponse
+    updateQreAdjustment(data: QreAdjustmentInput!): UpdateProjectQreResponse
 }
 `

@@ -107,6 +107,10 @@ export const constants = {
       ps.project_code,
       ps.account_rid,
       acc.account_name,
+      ps.project_point_of_contact,
+      ps.project_classification_rid,
+      pc.classification_name,
+      pt.project_type_name,
       CASE 
         WHEN uga.rid IS NOT NULL AND uga.access_type != 'EXCLUDE' THEN true
         ELSE false
@@ -115,6 +119,8 @@ export const constants = {
     FROM ${MAIN_SCHEMA_NAME}.project_summary ps
      LEFT JOIN ${MAIN_SCHEMA_NAME}.account acc
       ON acc.rid = ps.account_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc ON pc.rid = ps.project_classification_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.project_type pt ON pt.rid = ps.project_type_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.user_group_entity_access uga 
       ON uga.entity_rid = ps.project_rid 
       AND uga.entity_type = 'PROJECT'
@@ -125,6 +131,10 @@ export const constants = {
   `,
   SQL_GET_ALL_PROJECTS_OF_ACCOUNT_COUNT : `SELECT COUNT(DISTINCT ps.project_rid) as total_count
       FROM ${MAIN_SCHEMA_NAME}.project_summary ps
+       LEFT JOIN ${MAIN_SCHEMA_NAME}.account acc
+      ON acc.rid = ps.account_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc ON pc.rid = ps.project_classification_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.project_type pt ON pt.rid = ps.project_type_rid
       WHERE {whereClauses}`,
   SQL_GET_PROJECTS_COUNT : `SELECT COUNT(*) as total_count
     FROM ${MAIN_SCHEMA_NAME}.project_summary ps
@@ -212,7 +222,66 @@ export const rawQuery = {
     WHERE
     u.rid = '${user_rid}'
     `
+  },
+  fetchUsersByGroup({
+    whereClause = '',
+    orderByClause = '',
+  }: {
+    whereClause?: string,
+    orderByClause?: string,
+  }) {
+    return `
+      SELECT 
+        u.rid, 
+        u.first_name, 
+        u.last_name, 
+        u.email, 
+        u.created_datetime, 
+        u.role_rid, 
+        u.org_id,
+        u.is_consultant_firm,
+        (
+          CASE
+            WHEN u.is_consultant_firm = TRUE THEN u.org_id
+            ELSE (
+              SELECT a.account_name 
+              FROM "${MAIN_SCHEMA_NAME}".account AS a 
+              WHERE a.rid = u.org_id
+            )
+          END
+        ) AS organization_name,
+        bt.business_teams AS role_name
+      FROM "${MAIN_SCHEMA_NAME}".user_group_mapping AS ugm
+      JOIN "${MAIN_SCHEMA_NAME}".user AS u ON u.rid = ugm.user_rid
+      LEFT JOIN "${MAIN_SCHEMA_NAME}".business_teams AS bt ON u.role_rid = bt.rid
+      WHERE ugm.group_rid = :group_rid
+      ${whereClause}
+      ORDER BY ${orderByClause}
+      LIMIT :limit OFFSET :offset
+    `;
+  },
+  fetchUserByGroupCount({
+    whereClause = '',
+  }: {
+    whereClause?: string,
+  }){
+    return `
+      SELECT 
+        COUNT(*) as count
+      FROM "${MAIN_SCHEMA_NAME}".user_group_mapping AS ugm
+      JOIN "${MAIN_SCHEMA_NAME}".user AS u ON u.rid = ugm.user_rid
+      LEFT JOIN "${MAIN_SCHEMA_NAME}".business_teams AS bt ON u.role_rid = bt.rid
+      WHERE ugm.group_rid = :group_rid
+      ${whereClause}
+    `
   }
 }
 
+export const statusMessage = {
+    orgNotFound: "Organization not found",
+    orgNotFoundError: "No organization found with the given ID",  
+    orgUpdated: "Organization updated successfully",
+    orgRetrieved: "Organization settings retrieved successfully",
+    invaidCredentialsMessage: "Provided Azure credentials are invalid or unusable"
+}
 export const ENV_PREFIX = process.env.NODE_ENV_DB_PREFIX || 'D001-';

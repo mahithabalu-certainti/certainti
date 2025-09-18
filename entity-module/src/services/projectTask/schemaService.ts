@@ -20,7 +20,7 @@ import {
   setupProjectTaskTimelineSeq,
 } from "../../models/projectTaskTimeline";
 import { ProjectResource } from "../../models/projectResource";
-import { MAIN_SCHEMA_NAME } from "../../utils/constants";
+import { MAIN_SCHEMA_NAME, rawQueries } from "../../utils/constants";
 import { ProjectFiscalRegion } from "../../models/projectFiscalRegion";
 import { Project } from "../../models/project";
 import { AccountFiscal } from "../../models/accountFiscal";
@@ -266,11 +266,11 @@ export class ProjectTaskSchemaService {
       resourceData
     );
 
-    const createdProjectResource = await ProjectTask.create(baseData, {
+    const createdProjectTask = await ProjectTask.create(baseData, {
       transaction,
     });
 
-    return createdProjectResource;
+    return createdProjectTask;
   }
 
   async updateProjectTask(
@@ -303,7 +303,7 @@ export class ProjectTaskSchemaService {
       resourceData
     );
 
-    const updatedProjectResource = await ProjectTask.update({
+    const updatedProjectTask = await ProjectTask.update({
       ...baseData,
       region_rid: resourceData.region_rid
     }, {
@@ -313,7 +313,7 @@ export class ProjectTaskSchemaService {
       transaction,
     });
 
-    return updatedProjectResource;
+    return updatedProjectTask;
   }
 
   async addProjectTaskTimeline(
@@ -378,7 +378,7 @@ export class ProjectTaskSchemaService {
 
   async addProjctTaskHistory(
     accountNumber: string,
-    newProjectTaskData: ICreateProjectTask,
+    newProjectTaskData: any,
     existingProjectTaskData: any,
     projectTaskId: string,
     userId: string,
@@ -409,12 +409,11 @@ export class ProjectTaskSchemaService {
         if (newValue == null && oldValue == null) return false;
 
         // Handle numeric comparison with fixed precision
-        if (!isNaN(newValue) && !isNaN(oldValue)) {
-          const roundedNew = Number(parseFloat(newValue).toFixed(2));
-          const roundedOld = Number(parseFloat(oldValue).toFixed(2));
-          return roundedNew !== roundedOld;
-        }
-
+        if (!isNaN(Number(newValue)) && !isNaN(Number(oldValue))) {
+        const roundedNew = Number(Number(newValue).toFixed(2));
+        const roundedOld = Number(Number(oldValue).toFixed(2));
+        return roundedNew !== roundedOld;
+      }
         // Fallback to string comparison
         return String(newValue ?? "") !== String(oldValue ?? "");
       })
@@ -525,19 +524,21 @@ export class ProjectTaskSchemaService {
     fiscalYear: number,
     resourceId: string,
     userId: string,
+    activeStatusId : string,
+    activeId : string,
     transaction: Transaction
   ) {
     // project resources
-    await this.addProjectResource(
-      accountNumber,
-      projectTaskData,
-      projectData,
-      resourceData,
-      fiscalYear,
-      resourceId,
-      userId,
-      transaction
-    );
+    // await this.addProjectResource(
+    //   accountNumber,
+    //   projectTaskData,
+    //   projectData,
+    //   resourceData,
+    //   fiscalYear,
+    //   resourceId,
+    //   userId,
+    //   transaction
+    // );
     await this.aggregateProjectResourceFiscal(
       accountNumber,
       projectTaskData,
@@ -545,6 +546,7 @@ export class ProjectTaskSchemaService {
       fiscalYear,
       resourceId,
       userId,
+      activeStatusId,
       transaction
     );
     await this.aggregateProjectResourceFiscalRegion(
@@ -554,6 +556,7 @@ export class ProjectTaskSchemaService {
       fiscalYear,
       resourceId,
       userId,
+      activeStatusId,
       transaction
     );
 
@@ -565,6 +568,7 @@ export class ProjectTaskSchemaService {
       fiscalYear,
       resourceId,
       userId,
+      activeStatusId,
       transaction
     );
     await this.aggregateResourceFiscalRegion(
@@ -574,6 +578,7 @@ export class ProjectTaskSchemaService {
       fiscalYear,
       resourceId,
       userId,
+      activeStatusId,
       transaction
     );
 
@@ -582,6 +587,7 @@ export class ProjectTaskSchemaService {
       accountNumber,
       projectTaskData,
       fiscalYear,
+      activeStatusId,
       transaction
     );
     await this.aggregateProjectFiscalRegion(
@@ -591,6 +597,7 @@ export class ProjectTaskSchemaService {
       fiscalYear,
       resourceId,
       userId,
+      activeStatusId,
       transaction
     );
     // await this.aggregateProject(
@@ -605,6 +612,7 @@ export class ProjectTaskSchemaService {
       accountNumber,
       projectTaskData.account_rid,
       fiscalYear,
+      activeId,
       transaction
     );
     await this.aggregatesAccountFiscalRegion(
@@ -612,6 +620,7 @@ export class ProjectTaskSchemaService {
       projectTaskData.account_rid,
       fiscalYear,
       resourceId,
+      activeId,
       transaction
     );
   }
@@ -672,6 +681,7 @@ export class ProjectTaskSchemaService {
     fiscalYear: number,
     resourceId: string,
     userId: string,
+    activeStatusId : string,
     transaction: Transaction
   ) {
     const { ProjectTask, ProjectResourceFiscal } = await this.getModels(
@@ -702,6 +712,7 @@ export class ProjectTaskSchemaService {
         account_rid,
         resource_rid: resourceId,
         fiscal_year: fiscalYear,
+        status_rid : activeStatusId
       },
       group: ["fiscal_year"],
       raw: true,
@@ -756,6 +767,7 @@ export class ProjectTaskSchemaService {
     fiscalYear: number,
     resourceId: string,
     userId: string,
+    activeStatusId : string,
     transaction: Transaction
   ) {
     const { ProjectTask, ProjectResourceFiscalRegion } = await this.getModels(
@@ -799,6 +811,7 @@ export class ProjectTaskSchemaService {
         resource_rid: resourceId,
         fiscal_year: fiscalYear,
         region_rid,
+        status_rid : activeStatusId
       },
       group: ["fiscal_year", "region_rid"],
       raw: true,
@@ -856,6 +869,7 @@ export class ProjectTaskSchemaService {
     fiscalYear: number,
     resourceId: string,
     userId: string,
+    activeStatusId : string,
     transaction: Transaction
   ) {
     const { ProjectTask, ResourceFiscal } = await this.getModels(accountNumber);
@@ -885,6 +899,7 @@ export class ProjectTaskSchemaService {
         account_rid,
         resource_rid: resourceId,
         fiscal_year: fiscalYear,
+        status_rid : activeStatusId
       },
       group: ["fiscal_year", "resource_rid", "account_rid"],
       raw: true,
@@ -935,6 +950,7 @@ export class ProjectTaskSchemaService {
     fiscalYear: number,
     resourceId: string,
     userId: string,
+    activeStatusId : string,
     transaction: Transaction
   ) {
     const { ProjectTask, ResourceFiscalRegion } = await this.getModels(
@@ -979,6 +995,7 @@ export class ProjectTaskSchemaService {
         resource_rid: resourceId,
         fiscal_year: fiscalYear,
         region_rid: region_rid,
+        status_rid : activeStatusId
       },
       group: ["fiscal_year", "resource_rid", "account_rid", "region_rid"],
       raw: true,
@@ -1028,6 +1045,7 @@ export class ProjectTaskSchemaService {
     accountNumber: string,
     projectTaskData: ICreateProjectTask | IUpdateProjectTask,
     fiscalYear: number,
+    activeStatusId : string,
     transaction: Transaction
   ) {
     const { ProjectTask, ProjectFiscal, Resources } = await this.getModels(
@@ -1059,6 +1077,7 @@ export class ProjectTaskSchemaService {
         account_rid,
         fiscal_year: fiscalYear,
         project_fiscal_rid,
+        status_rid : activeStatusId
       },
       group: ["fiscal_year", "account_rid", "project_fiscal_rid"],
       raw: true,
@@ -1095,6 +1114,7 @@ export class ProjectTaskSchemaService {
         account_rid,
         fiscal_year: fiscalYear,
         project_fiscal_rid,
+        status_rid : activeStatusId
       },
       group: ["resource.resource_type_rid"],
       raw: true,
@@ -1156,6 +1176,7 @@ export class ProjectTaskSchemaService {
     fiscalYear: number,
     resourceId: string,
     userId: string,
+    activeStatusId : string,
     transaction: Transaction
   ) {
     const { ProjectTask, ProjectFiscalRegion, Resources } =
@@ -1199,6 +1220,7 @@ export class ProjectTaskSchemaService {
         fiscal_year: fiscalYear,
         project_fiscal_rid,
         region_rid,
+        status_rid : activeStatusId
       },
       group: ["fiscal_year", "account_rid", "project_fiscal_rid", "region_rid"],
       raw: true,
@@ -1477,6 +1499,7 @@ export class ProjectTaskSchemaService {
     accountNumber: string,
     account_rid: string,
     fiscalYear: number,
+    activeId : string,
     transaction: Transaction
   ) {
     const { ProjectFiscal, AccountFiscal } = await this.getModels(
@@ -1543,6 +1566,7 @@ export class ProjectTaskSchemaService {
       where: {
         account_rid,
         fiscal_year: fiscalYear,
+        status_rid : activeId
       },
       raw: true,
       transaction,
@@ -1588,6 +1612,7 @@ export class ProjectTaskSchemaService {
     account_rid: string,
     fiscalYear: number,
     resourceId: string,
+    activeId : string,
     transaction: Transaction
   ) {
     const { ProjectFiscalRegion, AccountFiscalRegion } = await this.getModels(
@@ -1700,6 +1725,7 @@ export class ProjectTaskSchemaService {
           account_rid,
           fiscal_year: fiscalYear,
           region_rid,
+          status_rid : activeId
         },
         raw: true,
         transaction,
@@ -1744,19 +1770,21 @@ export class ProjectTaskSchemaService {
     resourceId: string,
     projectData: ProjectFiscal,
     userId: string,
+    activeStatusId : string,
+    activeId : string,
     transaction: Transaction
   ){
     // project resource
-    await this.addProjectResource(
-      accountNumber,
-      projectTaskData,
-      projectData,
-      resourceData,
-      fiscalYear,
-      resourceId,
-      userId,
-      transaction
-    );
+    // await this.addProjectResource(
+    //   accountNumber,
+    //   projectTaskData,
+    //   projectData,
+    //   resourceData,
+    //   fiscalYear,
+    //   resourceId,
+    //   userId,
+    //   transaction
+    // );
     await this.aggregateProjectResourceFiscalOnUpdate(
       accountNumber,
       projectTaskData,
@@ -1764,6 +1792,7 @@ export class ProjectTaskSchemaService {
       fiscalYear,
       resourceId,
       userId,
+      activeStatusId,
       transaction
     );
     await this.aggregateProjectResourceFiscalRegionOnUpdate(
@@ -1773,6 +1802,8 @@ export class ProjectTaskSchemaService {
       fiscalYear,
       resourceId,
       userId,
+      activeStatusId,
+      activeId,
       transaction
     );
 
@@ -1785,6 +1816,7 @@ export class ProjectTaskSchemaService {
       resourceData,
       fiscalYear,
       userId,
+      activeStatusId,
       transaction
     );
     await this.aggregateResourceFiscalRegionOnUpdate(
@@ -1795,6 +1827,7 @@ export class ProjectTaskSchemaService {
       resourceData,
       fiscalYear,
       userId,
+      activeStatusId,
       transaction
     );
 
@@ -1803,6 +1836,7 @@ export class ProjectTaskSchemaService {
       accountNumber,
       projectTaskData,
       fiscalYear,
+      activeStatusId,
       transaction,
     );
     await this.aggregateProjectFiscalRegionOnUpdate(
@@ -1813,6 +1847,7 @@ export class ProjectTaskSchemaService {
       resourceId,
       resourceData,
       userId,
+      activeStatusId,
       transaction
     );
 
@@ -1821,6 +1856,7 @@ export class ProjectTaskSchemaService {
       accountNumber,
       projectTaskData.account_rid,
       fiscalYear,
+      activeId,
       transaction
     );
     await this.aggregateAccountFiscalRegionOnUpdate(
@@ -1831,6 +1867,7 @@ export class ProjectTaskSchemaService {
       resourceId,
       resourceData,
       userId,
+      activeStatusId,
       transaction
     );
   }
@@ -1842,6 +1879,7 @@ export class ProjectTaskSchemaService {
     fiscalYear: number,
     resourceId: string,
     userId: string,
+    activeStatusId : string,
     transaction: Transaction
   ){
     const { ProjectTask, ProjectResourceFiscal } = await this.getModels(accountNumber);
@@ -1878,7 +1916,8 @@ export class ProjectTaskSchemaService {
           project_fiscal_rid: oldGroupKey.project_fiscal_rid,
           account_rid: oldGroupKey.account_rid,
           fiscal_year: oldGroupKey.fiscal_year,
-          resource_rid: oldGroupKey.resource_rid
+          resource_rid: oldGroupKey.resource_rid,
+          status_rid : activeStatusId
         },
         transaction
       });
@@ -1963,7 +2002,8 @@ export class ProjectTaskSchemaService {
         project_fiscal_rid: newGroupKey.project_fiscal_rid,
         account_rid: newGroupKey.account_rid,
         fiscal_year: newGroupKey.fiscal_year,
-        resource_rid: newGroupKey.resource_rid
+        resource_rid: newGroupKey.resource_rid,
+        status_rid : activeStatusId
       },
       transaction
     });
@@ -1992,6 +2032,8 @@ export class ProjectTaskSchemaService {
     fiscalYear: number,
     resourceId: string,
     userId: string,
+    activeStatusId : string,
+    activeId : string,
     transaction: Transaction
   ) {
     const {
@@ -2024,7 +2066,7 @@ export class ProjectTaskSchemaService {
       account_rid: projectTaskData.account_rid,
       fiscal_year: fiscalYear,
       resource_rid: resourceId,
-      region_rid: newRegionRid
+      region_rid: newRegionRid,
     };
   
     const oldGroupKey = {
@@ -2032,7 +2074,7 @@ export class ProjectTaskSchemaService {
       account_rid: existingProjectTask.account_rid,
       fiscal_year: existingProjectTask.fiscal_year,
       resource_rid: existingProjectTask.resource_rid,
-      region_rid: oldRegionRid
+      region_rid: oldRegionRid,
     };
   
     const isGroupChanged = (
@@ -2050,7 +2092,10 @@ export class ProjectTaskSchemaService {
           [Sequelize.fn('SUM', Sequelize.col('total_cost_pro_task')), 'totalCost'],
           [Sequelize.fn('SUM', Sequelize.col('total_hours_pro_task')), 'totalEffort']
         ],
-        where: oldGroupKey,
+        where: {
+          ...oldGroupKey,
+          status_rid : activeStatusId
+        },
         transaction
       });
   
@@ -2058,13 +2103,19 @@ export class ProjectTaskSchemaService {
       const oldEffort = parseFloat(oldAggregate[0].get('totalEffort') as string) || 0;
   
       const remainingTasks = await ProjectTask.count({
-        where: oldGroupKey,
+        where: {
+          ...oldGroupKey,
+          status_rid : activeStatusId
+        },
         transaction
       });
   
       if (oldCost === 0 && oldEffort === 0 && remainingTasks === 0) {
         await ProjectResourceFiscalRegion.destroy({
-          where: oldGroupKey,
+          where: {
+            ...oldGroupKey,
+            status_rid : activeId
+          },
           transaction
         });
       } else {
@@ -2076,7 +2127,10 @@ export class ProjectTaskSchemaService {
             modified_datetime: new Date()
           },
           {
-            where: oldGroupKey,
+            where: {
+              ...oldGroupKey,
+              status_rid : activeId
+            },
             transaction
           }
         );
@@ -2085,7 +2139,10 @@ export class ProjectTaskSchemaService {
   
     // Step 2: Ensure new group exists
     const existingNewGroup = await ProjectResourceFiscalRegion.findOne({
-      where: newGroupKey,
+      where: {
+        ...newGroupKey,
+        status_rid : activeId
+      },
       transaction
     });
   
@@ -2109,7 +2166,10 @@ export class ProjectTaskSchemaService {
         [Sequelize.fn('SUM', Sequelize.col('total_cost_pro_task')), 'totalCost'],
         [Sequelize.fn('SUM', Sequelize.col('total_hours_pro_task')), 'totalEffort']
       ],
-      where: newGroupKey,
+      where: {
+        ...newGroupKey,
+        status_rid : activeStatusId
+      },
       transaction
     });
   
@@ -2124,7 +2184,10 @@ export class ProjectTaskSchemaService {
         modified_datetime: new Date()
       },
       {
-        where: newGroupKey,
+        where: {
+          ...newGroupKey,
+          status_rid : activeId
+        },
         transaction
       }
     );
@@ -2138,6 +2201,7 @@ export class ProjectTaskSchemaService {
     resourceData: Resources,
     fiscalYear: number,
     userId: string,
+    activeStatusId : string,
     transaction: Transaction
   ) {
     const {
@@ -2173,7 +2237,8 @@ export class ProjectTaskSchemaService {
         where: {
           account_rid: oldGroupKey.account_rid,
           resource_rid: oldGroupKey.resource_rid,
-          fiscal_year: fiscalYear
+          fiscal_year: fiscalYear,
+          status_rid : activeStatusId
         },
         transaction
       });
@@ -2184,7 +2249,8 @@ export class ProjectTaskSchemaService {
       const taskCount = await ProjectTask.count({
         where: {
           account_rid: oldGroupKey.account_rid,
-          resource_rid: oldGroupKey.resource_rid
+          resource_rid: oldGroupKey.resource_rid,
+          status_rid : activeStatusId
         },
         transaction
       });
@@ -2237,7 +2303,8 @@ export class ProjectTaskSchemaService {
       where: {
         account_rid: newGroupKey.account_rid,
         resource_rid: newGroupKey.resource_rid,
-        fiscal_year: fiscalYear
+        fiscal_year: fiscalYear,
+        status_rid : activeStatusId
       },
       transaction
     });
@@ -2267,6 +2334,7 @@ export class ProjectTaskSchemaService {
     resourceData: Resources, // passed from calling context to avoid re-fetch,
     fiscalYear: number,
     userId: string,
+    activeStatusId : string,
     transaction: Transaction
   ) {
     const {
@@ -2318,7 +2386,10 @@ export class ProjectTaskSchemaService {
           [Sequelize.fn('SUM', Sequelize.col('total_cost_pro_task')), 'totalCost'],
           [Sequelize.fn('SUM', Sequelize.col('total_hours_pro_task')), 'totalEffort']
         ],
-        where: oldGroupKey,
+        where: {
+          ...oldGroupKey,
+          status_rid : activeStatusId
+        },
         transaction
       });
   
@@ -2326,7 +2397,10 @@ export class ProjectTaskSchemaService {
       const oldEffort = parseFloat(oldAggregate[0].get('totalEffort') as string) || 0;
   
       const taskCount = await ProjectTask.count({
-        where: oldGroupKey,
+        where: {
+          ...oldGroupKey,
+          status_rid : activeStatusId
+        },
         transaction
       });
   
@@ -2394,7 +2468,10 @@ export class ProjectTaskSchemaService {
         [Sequelize.fn('SUM', Sequelize.col('total_cost_pro_task')), 'totalCost'],
         [Sequelize.fn('SUM', Sequelize.col('total_hours_pro_task')), 'totalEffort']
       ],
-      where: newGroupKey,
+      where: {
+        ...newGroupKey,
+        status_rid : activeStatusId
+      },
       transaction
     });
   
@@ -2428,6 +2505,7 @@ export class ProjectTaskSchemaService {
     resourceId: string,
     resourceData: Resources,
     userId: string,
+    activeStatusId : string,
     transaction: Transaction
   ) {
     const {
@@ -2477,7 +2555,10 @@ export class ProjectTaskSchemaService {
           [Sequelize.fn('SUM', Sequelize.col('total_cost_pro_task')), 'totalCost'],
           [Sequelize.fn('SUM', Sequelize.col('total_hours_pro_task')), 'totalEffort']
         ],
-        where: oldGroupKey,
+        where: {
+          ...oldGroupKey,
+          status_rid : activeStatusId
+        },
         transaction
       });
     
@@ -2504,7 +2585,10 @@ export class ProjectTaskSchemaService {
             required: true
           }
         ],
-        where: oldGroupKey,
+        where: {
+          ...oldGroupKey,
+          status_rid : activeStatusId
+        },
         group: ["resource.resource_type_rid"],
         raw: true,
         transaction
@@ -2601,7 +2685,10 @@ export class ProjectTaskSchemaService {
           required: true
         }
       ],
-      where: newGroupKey,
+      where: {
+        ...newGroupKey,
+        status_rid : activeStatusId
+      },
       group: ["resource.resource_type_rid"],
       raw: true,
       transaction
@@ -2633,7 +2720,10 @@ export class ProjectTaskSchemaService {
         [Sequelize.fn('SUM', Sequelize.col('total_cost_pro_task')), 'totalCost'],
         [Sequelize.fn('SUM', Sequelize.col('total_hours_pro_task')), 'totalEffort']
       ],
-      where: newGroupKey,
+      where: {
+        ...newGroupKey,
+        status_rid : activeStatusId
+      },
       transaction
     });
   
@@ -2666,6 +2756,7 @@ export class ProjectTaskSchemaService {
     resourceId: string,
     resourceData: Resources,
     userId: string,
+    activeStatusId : string,
     transaction: Transaction
   ) {
     const {
@@ -2711,7 +2802,10 @@ export class ProjectTaskSchemaService {
           [Sequelize.fn('SUM', Sequelize.col('total_cost_pro_task')), 'totalCost'],
           [Sequelize.fn('SUM', Sequelize.col('total_hours_pro_task')), 'totalEffort']
         ],
-        where: oldGroupKey,
+        where: {
+          ...oldGroupKey,
+          status_rid : activeStatusId
+        },
         transaction
       });
     
@@ -2719,7 +2813,10 @@ export class ProjectTaskSchemaService {
       const oldEffort = parseFloat(oldAggregate[0].get('totalEffort') as string) || 0;
     
       const taskCount = await ProjectTask.count({
-        where: oldGroupKey,
+        where: {
+          ...oldGroupKey,
+          status_rid : activeStatusId
+        },
         transaction
       });
     
@@ -2738,7 +2835,10 @@ export class ProjectTaskSchemaService {
             required: true
           }
         ],
-        where: oldGroupKey,
+        where: {
+          ...oldGroupKey,
+          status_rid : activeStatusId
+        },
         group: ["resource.resource_type_rid"],
         raw: true,
         transaction
@@ -2821,7 +2921,10 @@ export class ProjectTaskSchemaService {
           required: true
         }
       ],
-      where: newGroupKey,
+      where: {
+        ...newGroupKey,
+        status_rid : activeStatusId
+      },
       group: ["resource.resource_type_rid"],
       raw: true,
       transaction
@@ -2854,7 +2957,10 @@ export class ProjectTaskSchemaService {
         [Sequelize.fn('SUM', Sequelize.col('total_cost_pro_task')), 'totalCost'],
         [Sequelize.fn('SUM', Sequelize.col('total_hours_pro_task')), 'totalEffort']
       ],
-      where: newGroupKey,
+      where: {
+        ...newGroupKey,
+        status_rid : activeStatusId
+      },
       transaction
     });
   
@@ -2916,4 +3022,142 @@ export class ProjectTaskSchemaService {
 
     return projectTaskData;
   }
+
+  async listAssignedResourceCodes(accountNumber: string, accountId: string, projectFiscalId: string){
+    const { Resources, ProjectTask } = await this.getModels(accountNumber);
+
+    const assignedResources = await ProjectTask.findAll({
+      attributes: ["resource_rid"],
+      where: {
+        project_fiscal_rid: projectFiscalId,
+        account_rid: accountId,
+      },
+    });
+
+    const resourceRids = assignedResources.map((res: any) => res.resource_rid);
+
+    if (resourceRids.length === 0) {
+      return [];
+    }
+
+    let resourceCodes = await Resources.findAll({
+      attributes: ["rid", "resource_code", "resource_type_rid"],
+      where: {
+        rid: resourceRids,
+      },
+      order: [["resource_code", "ASC"]]
+    });
+
+    if (resourceCodes && resourceCodes.length > 0) {
+      resourceCodes = await this.insertResourceTypeName(resourceCodes);
+    }
+
+    return resourceCodes;
+  }
+
+  async insertResourceTypeName(resourceCodes: any[]) {
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.getMainSequelize();
+    }
+  
+    // Step 1: Extract unique resource_type_rids
+    const uniqueTypeIds = [
+      ...new Set(
+        resourceCodes
+          .map((res) => res.resource_type_rid)
+          .filter((id) => id !== null && id !== undefined)
+      ),
+    ];
+  
+    if (uniqueTypeIds.length === 0) return resourceCodes;
+  
+    // Step 2: Query resource_type table for names
+    const query = rawQueries.fetchResourceTypeById(MAIN_SCHEMA_NAME);
+    const typeResult: any[] = await this.mainDbSequelize.query(
+      query,
+      {
+        replacements: { ids: uniqueTypeIds },
+        type: "SELECT",
+      }
+    );
+  
+    // Step 3: Build lookup map
+    const typeMap = new Map<string, string>();
+    for (const type of typeResult) {
+      typeMap.set(type.resource_type_rid, type.resource_type_name);
+    }
+  
+    // Step 4: Enrich resourceCodes with resource_type_name
+    const enriched = resourceCodes.map((resource) => {
+      const typeName = typeMap.get(resource.resource_type_rid) || null;
+      return {
+        ...(resource.dataValues ?? resource),
+        resource_type_name: typeName,
+      };
+    });
+  
+    return enriched;
+  } 
+
+  async findDuplicateTask (accountNumber : string, 
+    resource_rid : string | undefined, start_date : Date | null, end_date : Date | null, 
+    statusMap : Map<string, string> | null,
+    comments : string | null | undefined, account_rid : string, project_fiscal_rid : string, costValues : any) {
+    const { ProjectTask } = await this.getModels(accountNumber);
+    const existingCost = await ProjectTask.findOne({
+        where: {
+          resource_rid : resource_rid,
+          start_date : start_date,
+          end_date : end_date,
+          ...costValues,
+          status_rid: { 
+            [Op.in]: [
+              statusMap?.get('Active'), 
+              statusMap?.get('Anomaly'), 
+              statusMap?.get('Duplicate')
+            ].filter(Boolean) as string[]
+          },
+          comments : comments,
+          account_rid : account_rid,
+          project_fiscal_rid : project_fiscal_rid
+        },
+      });
+      return existingCost;
+    }
+
+    async fetchProjectTaskById(
+    accountNumber: string,
+    projectTaskId: string
+  ) {
+    const { ProjectTask } = await this.getModels(accountNumber);
+
+    const projectTaskData = await ProjectTask.findOne({
+      where: {
+        rid: projectTaskId,
+      },
+    });
+
+    return projectTaskData;
+  }
+    async updateProjectTaskStatus(
+      accountNumber: string,
+      projectTaskId: string,
+      statusId: string,
+      userId: string,
+      transaction: Transaction
+    ) {
+      const { ProjectTask } = await this.getModels(accountNumber);
+      const sequelize = await this.getSequelize();
+  
+      await ProjectTask.update({
+        status_rid: statusId,
+        modified_by: userId,
+        modified_datetime: new Date(),
+      }, {
+        where: {
+          rid: projectTaskId
+        },
+        transaction,
+      })
+    }
 }
