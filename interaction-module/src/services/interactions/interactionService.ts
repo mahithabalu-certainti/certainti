@@ -1361,7 +1361,7 @@ export class InteractionService {
     this.logger.info("Interact method called.");
     // Implementation here
   }
-  async listInteractionPrjAccount(data : any,userId : string) : Promise<any>{
+  async listInteractionPrjAccount(data : any,userId : string,apiType:string) : Promise<any>{
     const mainDb = await this.getMainDb()
     const orgDb = await this.getOrgDb()
       const userGroupType = await this.interactionSchemaService.getUserGroupType(userId);
@@ -1446,6 +1446,7 @@ export class InteractionService {
     if (mainTableFilters[data.sort] !== undefined) {
       disablePagination = true;
     }
+    if(apiType === 'export') disablePagination = true
     
     const result : any = await orgDb.query(fetchInteractionForProjectLevelQuery(
       data.account_rid, 
