@@ -132,6 +132,7 @@ export interface IInteractionService {
     errorMessage?: string;
     data?: { interactionDetails: any };
   }>;
+  
   getAccountInteractionDetailsById(
     interactionRid: string,
     accountId: string,
