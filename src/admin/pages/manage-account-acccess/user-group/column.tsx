@@ -11,7 +11,7 @@ export const manageUserGroupColumns = (
     editId: 'group_name',
     sortId: 'group_name',
     label: 'Group Names',
-    width: '33.3%',
+    width: '35%',
     sortable: true,
     sticky: true,
     sx: {
@@ -48,15 +48,18 @@ export const manageUserGroupColumns = (
     id: 'group_type_name',
     sortId: 'group_type_name',
     label: 'Group Type',
-    width: '33.3%',
+    width: '35%',
     sortable: true,
   },
   {
     id: 'user_count',
     sortId: 'user_count',
     label: 'Number of Users',
-    width: '25%',
+    width: '15%',
     sortable: true,
+    sx: {
+      textAlign: 'right',
+    },
     render: (row: ManageAccountsGroupList) =>
       row.user_count && Number(row.user_count) > 0 ? (
         <span

@@ -42,6 +42,7 @@ import { MANAGE_ACCOUNT_ACCESS } from '../../../../routes';
 import { useGetUserGroupTypes, useManageUserRole } from '../../../service';
 import { ListTable } from '../../../../components/table';
 import { getAvailableUserColumns } from './column';
+import { SortDirection } from '../../../../components/table/types';
 
 const AccountList = () => {
   const [page, setPage] = useState<number>(1);
@@ -257,6 +258,15 @@ const AccountList = () => {
     }
   };
 
+  const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
+    const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
+    setUserParams((prev) => ({
+      ...prev,
+      sortBy,
+      sortOrder: apiOrder,
+    }));
+  };
+
   const filtercolumn = getFilterFields();
   const manageaccountIsEnable = checkPermission(
     modules,
@@ -333,40 +343,40 @@ const AccountList = () => {
 
       <div className='flex items-center justify-between h-[42px] min-h-[42px] max-h-[42px] px-4'>
         <div className='flex items-center gap-4'>
-          {groupId && (
-            <LeftArrowIcon
-              className='h-[12px] cursor-pointer'
-              alt='leftArrowIcon'
-              onClick={() => {
-                setAppliedFilters({});
-                clearFilters();
-                searchParams.delete('groupid');
-                navigate(
-                  { search: searchParams.toString() },
-                  { replace: true }
-                );
-              }}
-            />
-          )}
           <div className='flex flex-col'>
             <div className='font-bold text-[14px] leading-[32px] text-[#2D3E4F]'>
               {groupId ? 'All Users' : 'All Accounts'}
             </div>
-            {(accountname || groupId) && (
+            {accountname && !groupId && (
               <div className='font-semibold text-[#7D98B6] text-[12px] -mt-2'>
-                {groupId
-                  ? 'Group name'
-                  : `${accountname}  ${name ? ` > ${name}` : ''}`}
+                {`${accountname}  ${name ? ` > ${name}` : ''}`}
               </div>
             )}
           </div>
         </div>
         <div className='flex items-center gap-3'>
           <div className='flex gap-1 relative'>
-            {!groupId && (
+            {groupId ? (
+              <TextButton
+                label='Back To Groups'
+                onClick={() => {
+                  setAppliedFilters({});
+                  clearFilters();
+                  searchParams.delete('groupid');
+                  navigate(
+                    { search: searchParams.toString() },
+                    { replace: true }
+                  );
+                }}
+                sx={{
+                  ...BUTTON_STYLES,
+                  px: 1,
+                }}
+              />
+            ) : (
               <button
                 aria-describedby={modalId}
-                className={`w-[120px] h-[24px] mt-1 text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative border border-[#CBD6E2] px-0 py-0 normal-case ${isModalOpen ? 'bg-[#F3F3F3]' : 'bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'} hover:text-[#425A76] transition-colors duration-150`}
+                className={`w-[120px] h-[24px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative border border-[#CBD6E2] px-0 py-0 normal-case ${isModalOpen ? 'bg-[#F3F3F3]' : 'bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'} hover:text-[#425A76] transition-colors duration-150`}
                 style={{
                   boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
                 }}
@@ -375,8 +385,9 @@ const AccountList = () => {
                 Show/Hide Fields
               </button>
             )}
+
             <button
-              className={`w-[64px] h-[24px] text-[13px] mt-[5px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative `}
+              className={`w-[64px] h-[24px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative `}
               onClick={handleFilterModal}
             >
               <NewFilterIcon alt='filter-icon' />
@@ -485,6 +496,9 @@ const AccountList = () => {
             onRowsPerPageChange={userRowsPerPageChange}
             stickyHeader
             loading={availableUsers.isPending}
+            sortBy={userParams.sortBy as string}
+            sortOrder={userParams.sortOrder as SortDirection}
+            onSort={handleSort}
           />
         </div>
       )}
