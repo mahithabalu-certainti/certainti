@@ -7,7 +7,7 @@ import {
   successLog,
   validateRequest,
 } from "../utils/helpers";
-import { HttpStatus } from "../utils/constants";
+import { HttpStatus, STATUS_MESSAGE } from "../utils/constants";
 import configurations from "../config/config";
 import {
   createProjectTaskSchema,
@@ -420,6 +420,40 @@ async function anomalyStatusUpdate(req: Request, res: Response): Promise<void> {
     );
   }
 }
+async function fetchReCodeForPrjTask (req : Request, res : Response) : Promise<any> {
+  const methodName = "fetchReCodeForPrjTask"
+  try {
+    const data = req.body;
+    if(!data.account_rid) {
+      handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, STATUS_MESSAGE.accountNoFound)
+    }
+    const result = await projectTaskService.listResourceCodeForProjectTask(data)
+    if(result.statusCode == HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.resCodePrjTaskSuccess,
+        data : result.data
+      })
+    } else {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.resCodeNotFound,
+        data : result.data
+      })
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
 
 export default {
   getProjectTasks,
@@ -428,5 +462,6 @@ export default {
   createProjectTask,
   updateProjectTask,
   assignedResourceCodes,
-  anomalyStatusUpdate
+  anomalyStatusUpdate,
+  fetchReCodeForPrjTask
 };

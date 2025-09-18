@@ -806,6 +806,7 @@ export interface IProjectTaskIngestionService {
     message: string;
     data?: { projectTask: any };
   }>
+  listResourceCodeForProjectTask(data : any) : Promise<any>
 }
 export interface IProjectTaskService {
   listProjectTasks(

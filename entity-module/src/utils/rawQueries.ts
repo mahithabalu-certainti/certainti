@@ -1811,3 +1811,24 @@ export const fetchProjectQueryByPrjId = (account_rid : string, schemaName : stri
     `
     return query
 }
+
+export const fetchResCodeWithPrjResRole = (schemaName : string, search : string, statusId : string, accountId : string) => {
+    let searchValue : string = ``
+
+    if(search) searchValue = `%${search}%`
+    else searchValue = `%%`
+
+    let query = `
+    SELECT ps.rid, r.resource_code, ps.project_resource_role
+    FROM
+    ${schemaName}.project_resource ps
+    LEFT JOIN ${schemaName}.resources r ON r.rid = ps.resource_rid
+    WHERE
+    ps.account_rid = '${accountId}'
+    AND
+    (r.resource_code ILIKE '${searchValue}' OR ps.project_resource_role ILIKE '${searchValue}')
+    AND
+    r.status_rid = '${statusId}'
+    `
+    return query;
+  }

@@ -12,6 +12,7 @@ import { initOrgSequelize } from "../../config/orgDataSource";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import moment from "moment";
 import { ProjectResource } from "../../models/projectResource";
+import { fetchResCodeWithPrjResRole } from "../../utils/rawQueries";
 
 export class ProjectInjestionTaskService {
   projectTaskSchema: ProjectTaskSchemaService;
@@ -68,7 +69,7 @@ export class ProjectInjestionTaskService {
     const transaction = await dbInit.transaction();
     const mainDbSequelize = await this.getMainDbSequelize();
     const orgDbSequelize = await this.getOrgDbSequelize()
-    let projectResourceResult : string | undefined = ""
+    let projectResourceResult : string
     try {
       const {
         start_date,
@@ -78,7 +79,8 @@ export class ProjectInjestionTaskService {
         project_fiscal_rid,
         account_rid,
         resource_code,
-        comments
+        comments,
+        project_resource_rid
       } = projectTaskData;
 
       const validationResult = await this.validateProjectTaskInputs({
@@ -161,91 +163,10 @@ export class ProjectInjestionTaskService {
       const activeId : any = await mainDbSequelize.query(rawQueries.fetchActiveStatusRid(status))
 
       const schemaName = rawQueries.fetchSchemaName(accountNumber)
-      const findResourceAlreadyInPrjResource : any = await orgDbSequelize.query(rawQueries.checkResCodeExistsInPrjRes(schemaName, resourceData.rid, account_rid, project_fiscal_rid));
+      const findResourceAlreadyInPrjResource : any = await orgDbSequelize.query(rawQueries.checkResCodeExistsInPrjRes(schemaName, project_resource_rid));
       if(findResourceAlreadyInPrjResource[0].length > 0) {
-        if(findResourceAlreadyInPrjResource[0][0].project_resource_role == null) {
-          let projectResourceData : any = {
-          account_rid : account_rid,
-          project_fiscal_rid : project_fiscal_rid,
-          resource_id : resourceData.rid,
-          project_code : projectData.project_code,
-          resource_code : resourceData.resource_code,
-          project_resource_role : resourceData.resource_role,
-          assigned_skill_role_type_rid: null,
-          skill_role_rid: null,
-          skill_role_others: null,
-          status_rid : activeStatusId,
-          fiscal_year : projectData.fiscal_year,
-          created_by : userId,
-          country_rid : projectTaskData.country_rid,
-          currency_rid : projectTaskData.currency_rid,
-          region_rid : projectTaskData.region_rid,
-          project_resource_rid : findResourceAlreadyInPrjResource[0][0].rid,
-          start_date : projectTaskData.start_date,
-          end_date : projectTaskData.end_date,
-          comments : projectTaskData.comments,
-          total_hours_from_tasks : projectTaskData.total_hours_pro_task,
-          total_cost_from_tasks : projectTaskData.total_cost_pro_task
-          }
-          await this.projectResourceSchema.updateProjectResourceRecords(accountNumber, projectResourceData, userId, resourceData.rid!, projectData, activeStatusId, transaction)
-          projectResourceResult = findResourceAlreadyInPrjResource[0][0].rid
-        } else if(findResourceAlreadyInPrjResource[0][0].project_resource_role !== resourceData.resource_role){
-            let projectResourceData : any = {
-            account_rid : account_rid,
-            project_fiscal_rid : project_fiscal_rid,
-            resource_id : resourceData.rid,
-            project_code : projectData.project_code,
-            resource_code : resourceData.resource_code,
-            project_resource_role : resourceData.resource_role,
-            assigned_skill_role_type_rid: null,
-            skill_role_rid: null,
-            skill_role_others: null,
-            status_rid : activeStatusId,
-            fiscal_year : projectData.fiscal_year,
-            created_by : userId,
-            country_rid : null,
-            start_date : projectTaskData.start_date,
-            end_date : projectTaskData.end_date,
-            comments : projectTaskData.comments,
-            total_hours_from_tasks : projectTaskData.total_hours_pro_task,
-            total_cost_from_tasks : projectTaskData.total_cost_pro_task,
-            currency_rid : projectTaskData.currency_rid,
-            region_rid : projectTaskData.region_rid,
-            }
-            const prjResresult = await this.projectResourceSchema.addProjectResources(accountNumber, projectResourceData, projectData, userId)
-            if(prjResresult) {
-              projectResourceResult = prjResresult.dataValues.rid
-            }
-        } else {
-          projectResourceResult = findResourceAlreadyInPrjResource[0][0].rid
-        }
-      } else {
-          let projectResourceData : any = {
-          account_rid : account_rid,
-          project_fiscal_rid : project_fiscal_rid,
-          resource_id : resourceData.rid,
-          project_code : projectData.project_code,
-          resource_code : resourceData.resource_code,
-          project_resource_role : resourceData.resource_role,
-          assigned_skill_role_type_rid: null,
-          skill_role_rid: null,
-          skill_role_others: null,
-          status_rid : activeStatusId,
-          fiscal_year : projectData.fiscal_year,
-          created_by : userId,
-          country_rid : null,
-          start_date : projectTaskData.start_date,
-          end_date : projectTaskData.end_date,
-          comments : projectTaskData.comments,
-          total_hours_from_tasks : projectTaskData.total_hours_pro_task,
-          total_cost_from_tasks : projectTaskData.total_cost_pro_task,
-          currency_rid : projectTaskData.currency_rid,
-          region_rid : projectTaskData.region_rid,
-        }
-        const prjResresult = await this.projectResourceSchema.addProjectResources(accountNumber, projectResourceData, projectData, userId)
-        if(prjResresult) {
-          projectResourceResult = prjResresult.dataValues.rid
-        }
+        projectResourceResult = findResourceAlreadyInPrjResource[0][0].rid
+        
       }
       const getAccountCurrencyRid : any = await mainDbSequelize.query(rawQueries.fetchAccountCurrencyRid(account_rid))
       const costFields = {
@@ -299,7 +220,7 @@ export class ProjectInjestionTaskService {
       projectTaskData.status_rid = statusRid
       projectTaskData.total_cost_pro_task = costValues['total_cost_pro_task']
       projectTaskData.total_hours_pro_task = costValues['total_hours_pro_task']
-      projectTaskData.project_resource_rid = projectResourceResult
+      projectTaskData.project_resource_rid = projectResourceResult!
       // Proceed to insert
       const newTask = await this.projectTaskSchema.addProjectTask(
         accountNumber,
@@ -372,7 +293,8 @@ export class ProjectInjestionTaskService {
         project_task_rid,
         account_rid,
         resource_code,
-        comments
+        comments,
+        project_resource_rid
       } = projectTaskData;
 
       const validationResult = await this.validateProjectTaskUpdateInputs({
@@ -445,67 +367,10 @@ export class ProjectInjestionTaskService {
       const activeStatusId : any = statusMap?.get(status);
 
       const schemaName = rawQueries.fetchSchemaName(accountNumber)
-      const findResourceAlreadyInPrjResource : any = await orgDbSequelize.query(rawQueries.checkResCodeExistsInPrjRes(schemaName, resourceData.rid, account_rid, project_fiscal_rid));
+      const findResourceAlreadyInPrjResource : any = await orgDbSequelize.query(rawQueries.checkResCodeExistsInPrjRes(schemaName,project_resource_rid));
       if(findResourceAlreadyInPrjResource[0].length > 0) {
-        if(findResourceAlreadyInPrjResource[0][0].project_resource_role == null) {
-          let projectResourceData : any = {
-          account_rid : account_rid,
-          project_fiscal_rid : project_fiscal_rid,
-          resource_id : resourceData.rid,
-          project_code : projectData.project_code,
-          resource_code : resourceData.resource_code,
-          project_resource_role : resourceData.resource_role,
-          assigned_skill_role_type_rid: null,
-          skill_role_rid: null,
-          skill_role_others: null,
-          status_rid : activeStatusId,
-          fiscal_year : projectData.fiscal_year,
-          created_by : userId,
-          country_rid : projectTaskData.country_rid,
-          currency_rid : projectTaskData.currency_rid,
-          region_rid : projectTaskData.region_rid,
-          project_resource_rid : findResourceAlreadyInPrjResource[0][0].rid,
-          start_date : projectTaskData.start_date,
-          end_date : projectTaskData.end_date,
-          comments : projectTaskData.comments,
-          total_hours_from_tasks : projectTaskData.total_hours_pro_task,
-          total_cost_from_tasks : projectTaskData.total_cost_pro_task
-          }
-          console.log("projectResourceData ===> ", projectResourceData)
-          await this.projectResourceSchema.updateProjectResourceRecords(accountNumber, projectResourceData, userId, resourceData.rid!, projectData, activeStatusId, transaction)
-          projectResourceResult = findResourceAlreadyInPrjResource[0][0].rid
-        } else {
           projectResourceResult = findResourceAlreadyInPrjResource[0][0].rid
         }
-      } else {
-          let projectResourceData : any = {
-          account_rid : account_rid,
-          project_fiscal_rid : project_fiscal_rid,
-          resource_id : resourceData.rid,
-          project_code : projectData.project_code,
-          resource_code : resourceData.resource_code,
-          project_resource_role : resourceData.resource_role,
-          assigned_skill_role_type_rid: null,
-          skill_role_rid: null,
-          skill_role_others: null,
-          status_rid : activeStatusId,
-          fiscal_year : projectData.fiscal_year,
-          created_by : userId,
-          country_rid : null,
-          currency_rid : projectTaskData.currency_rid,
-          region_rid : projectTaskData.region_rid,
-          start_date : projectTaskData.start_date,
-          end_date : projectTaskData.end_date,
-          comments : projectTaskData.comments,
-          total_hours_from_tasks : projectTaskData.total_hours_pro_task,
-          total_cost_from_tasks : projectTaskData.total_cost_pro_task
-        }
-        const prjResresult = await this.projectResourceSchema.addProjectResources(accountNumber, projectResourceData, projectData, userId)
-        if(prjResresult) {
-          projectResourceResult = prjResresult.dataValues.rid
-        }
-      }
-
       const getAccountCurrencyRid : any = await mainDbSequelize.query(rawQueries.fetchAccountCurrencyRid(account_rid))
       const costFields = {
         total_hours_pro_task,
@@ -557,7 +422,7 @@ export class ProjectInjestionTaskService {
       projectTaskData.status_rid = statusRid
       projectTaskData.total_cost_pro_task = costValues['total_cost_pro_task']
       projectTaskData.total_hours_pro_task = costValues['total_hours_pro_task']
-      projectTaskData.project_resource_rid = projectResourceResult
+      projectTaskData.project_resource_rid = projectResourceResult!
       // Proceed to update
       const updatedTask = await this.projectTaskSchema.updateProjectTask(
         accountNumber,
@@ -1194,6 +1059,34 @@ export class ProjectInjestionTaskService {
       await transaction.rollback();
       console.log("Error handling accepted anomaly", err);
       throw this.throwServiceError(err as Error);
+    }
+  }
+  async listResourceCodeForProjectTask (data : any) : Promise<any> {
+    const orgDb = await this.getOrgDbSequelize()
+    const mainDb = await this.getMainDbSequelize()
+
+    const parentRnumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+    const schemaName = rawQueries.fetchSchemaName(parentRnumber[0][0].r_number)
+    let status = "Active";
+    const activeId : any = await mainDb.query(rawQueries.fetchActiveStatusRid(status))
+    const result : any = await orgDb.query(fetchResCodeWithPrjResRole(schemaName, data.search, activeId[0][0].rid, data.account_rid))
+    if(result[0].length > 0) {
+      const finalResult = result[0].map((data : any) => {
+        return {
+          rid : data.rid,
+          resource_code : data.resource_code,
+          project_resource_role : data.project_resource_role
+        }
+      })
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        data : finalResult
+      };
+    } else {
+      return {
+        statusCode : HttpStatus.NOT_FOUND,
+        data : []
+      }
     }
   }
 
