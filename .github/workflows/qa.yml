@@ -113,7 +113,7 @@ jobs:
           AZURE_B2C_CLIENT_ID=$API_CLIENT_ID
           AZURE_B2C_TENANT_ID=$API_TENANT_ID
           AZURE_SCOPE=https://graph.microsoft.com/.default
-          AZURE_STORAGE_CONNECTION_STRING = "storage-account-connection-string"
+          AZURE_STORAGE_CONNECTION_STRING="storage-account-connection-string"
           MAINDB_NAME=main-database-name
           MAINDB_PASSWORD=main-db-admin-password
           MAINDB_USERNAME=main-db-admin-username
@@ -229,7 +229,7 @@ jobs:
           cat <<EOF > $ENV_FILE
           SERVER_PORT=5001
           KEY_VAULT_URI=$KEY_VAULT_URI
-          AZURE_STORAGE_CONNECTION_STRING = "storage-account-connection-string"
+          AZURE_STORAGE_CONNECTION_STRING="storage-account-connection-string"
           MAINDB_NAME=main-database-name
           MAINDB_PASSWORD=main-db-admin-password
           MAINDB_USERNAME=main-db-admin-username
@@ -353,11 +353,11 @@ jobs:
           LOG_LEVEL=debug
           NODE_ENV=QA
           NODE_ENV_DB_PREFIX="U001-"
-          AZURE_STORAGE_CONNECTION_STRING = "storage-account-connection-string"
+          AZURE_STORAGE_CONNECTION_STRING="storage-account-connection-string"
           EMAIL_WEBHOOK_URL='https://qa-thinkrd365-api-management.azure-api.net/interactionService/api/email/webhook'
           CLIENT_SECRET_ENCRYPTION_KEY=client-secret-encryption-key
           CLIENT_SECRET_ENCRYPTION_LENGTH=16
-          KAFKA_BROKER=${{ secrets.DEVELOPMENT_KAFKA_BROKER }}
+          KAFKA_BROKER=${{ secrets.QA_KAFKA_BROKER }}
           KAFKA_AI_REQUEST_TRIGGER_TOPIC = "ai_assessment_request"
           EOF
           echo "$ENV_FILE file created successfully!"
@@ -461,7 +461,7 @@ jobs:
           SERVER_PORT=5007
           KEY_VAULT_URI=$KEY_VAULT_URI
           AZURE_SCOPE=https://graph.microsoft.com/.default
-          AZURE_STORAGE_CONNECTION_STRING = "storage-account-connection-string"
+          AZURE_STORAGE_CONNECTION_STRING="storage-account-connection-string"
           MAINDB_NAME=main-database-name
           MAINDB_PASSWORD=main-db-admin-password
           MAINDB_USERNAME=main-db-admin-username
@@ -650,7 +650,7 @@ jobs:
           
             # Update only the ext-interaction-module image tag
             echo "Updating docker-compose.yml..."
-            sed -i '/ext-interaction-module:/,/image:/ s|image:.*|image: '"${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}"'/ext-interaction-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
+            sed -i '/ext-interaction-module:/,/image:/ s|image:.*|image: '"${{ secrets.QA_ACR_LOGIN_SERVER }}"'/ext-interaction-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
             echo "Docker Compose updated successfully!"
 
             # Verify the change
@@ -732,7 +732,7 @@ jobs:
           SERVER_PORT=5009
           KEY_VAULT_URI=$KEY_VAULT_URI
           AZURE_SCOPE=https://graph.microsoft.com/.default
-          AZURE_STORAGE_CONNECTION_STRING = "storage-account-connection-string"
+          AZURE_STORAGE_CONNECTION_STRING="storage-account-connection-string"
           MAINDB_NAME=main-database-name
           MAINDB_PASSWORD=main-db-admin-password
           MAINDB_USERNAME=main-db-admin-username

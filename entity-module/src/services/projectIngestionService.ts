@@ -1598,7 +1598,8 @@ class ProjectIngestionService {
     accessibleIds: string[],
     apiSource: string ="project",
     accountInteractionId: string[] = [],
-    documentRid?: string
+    documentRid?: string,
+    searchClause : Record<symbol, any>= {},
   ) {
     const { Project, ProjectFiscal, ProjectTimeline } = await this.getModels(accountNumber);
     
@@ -1704,6 +1705,7 @@ class ProjectIngestionService {
             where: {
               account_rid: accountData.rid,
               ...whereFiscal,
+              ...searchClause
              
             },
             include: [
@@ -1809,6 +1811,7 @@ class ProjectIngestionService {
             required: !!documentRid,
             where: {
               account_rid: accountData.rid,
+              ...searchClause,
               ...whereFiscal,
               ...(apiSource === "interactionCount"  ? { rid: accountInteractionId } : {}),
             },
@@ -1877,6 +1880,7 @@ class ProjectIngestionService {
           required: !!documentRid,
           where: {
             account_rid: accountData.rid,
+            ...searchClause,
             ...whereFiscal,
               ...(apiSource === "interactionCount"  ? { rid: accountInteractionId } : {}),
               ...(apiSource === "interaction"
@@ -1924,6 +1928,9 @@ class ProjectIngestionService {
       projects = projectData;
 
       totalCount = count;
+      if(searchClause[Op.or] && searchClause[Op.or].length > 0) {
+        projects = projects.filter((val: any) => val.ProjectFiscal.length > 0);
+      }
       if (projects && projects.length > 0 && !bothParentAndChild) {
         projects = projects.filter((val: any) => val.ProjectFiscal.length > 0);
         if (totalCount > projects.length) {
@@ -1964,7 +1971,8 @@ class ProjectIngestionService {
     timezone: string,
     userId: string,
     accessibleIds: string[],
-    documentRid?: string
+    documentRid?: string,
+    searchClause : Record<symbol, any>= {}
   ) {
     const { Project, ProjectFiscal, ProjectTimeline } = await this.getModels(accountNumber);
 
@@ -2086,6 +2094,7 @@ class ProjectIngestionService {
           where: {
             account_rid: accountData.rid,
             ...whereFiscal,
+            ...searchClause
           },
           include: documentRid ? [{
                 model: ProjectTimeline,

@@ -866,7 +866,7 @@ export class ProjectService {
       const [finalMetaDataSortBy, finalMetaDataSortOrder] =
         this.getMetaDataSortParameters(sortBy, sortOrder);
 
-      const { whereClause } = this.buildWhereClause(
+      const { whereClause, searchClause } = this.buildWhereClause(
         filters,
         search,
         false,
@@ -892,7 +892,9 @@ export class ProjectService {
         {},
         accessibleIds,
         apiSource,
-        accInteractionProjs
+        accInteractionProjs,
+        "",
+        searchClause
       );
       projects = projects.slice(offset, page * limit);
 
@@ -1020,7 +1022,7 @@ export class ProjectService {
       const [finalMetaDataSortBy, finalMetaDataSortOrder] =
         this.getMetaDataSortParameters(sortBy, sortOrder);
 
-      const { whereClause } = this.buildWhereClause(
+      const { whereClause, searchClause } = this.buildWhereClause(
         filters,
         search,
         false,
@@ -1042,7 +1044,9 @@ export class ProjectService {
           finalMetaDataSortOrder,
           timezone,
           userId,
-          accessibleIds
+          accessibleIds,
+          "",
+          searchClause
         );
 
       return {
@@ -1979,11 +1983,13 @@ export class ProjectService {
     isParent: boolean = false
   ): {
     whereClause: Record<string, any>;
+    searchClause : Record<string, any>;
   } {
     let whereClause: Record<string, any> = {};
+    let searchClause : Record<string, any> = {};
 
     if (search) {
-      whereClause = this.buildSearchCondition(
+      searchClause = this.buildSearchCondition(
         search,
         whereClause,
         isAllProject
@@ -1997,7 +2003,7 @@ export class ProjectService {
       isParent
     );
 
-    return { whereClause };
+    return { whereClause, searchClause };
   }
 
   private buildSearchCondition(
@@ -2006,8 +2012,8 @@ export class ProjectService {
     isAllProject: boolean
   ): Record<string, any> {
     const searchCondition = [
-      { industry: { [Op.iLike]: `%${search}%` } },
-      { r_number: { [Op.iLike]: `%${search}%` } },
+      { project_code: { [Op.iLike]: `%${search}%` } },
+      { project_name: { [Op.iLike]: `%${search}%` } },
     ];
 
     let AllProjectsearchCondition = null;
