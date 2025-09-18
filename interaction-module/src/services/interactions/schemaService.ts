@@ -53,14 +53,15 @@ class InteractionSchemaService {
   async createInteractions(
     accountNumber: string,
     interactionData: ICreateInteraction,
-    transaction: Transaction
+    transaction: Transaction,
+    intLevel :string
   ) {
     // Implementation for creating interactions in the database
     try {
       const { Interaction } = await this.interactionModelService.getModels(
         accountNumber
       );
-      const interactionLevel = await this.getInteractionLevelByType('Project');
+      const interactionLevel = await this.getInteractionLevelByType(intLevel);
       interactionData.interaction_level_rid = interactionLevel!;
       const interaction = await Interaction.create(interactionData, {
         transaction,
@@ -2030,7 +2031,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     }
 
     const interactionLevel = await this.mainDbSequelize.query(
-      `Select  interaction_level_name from ${MAIN_SCHEMA_NAME}.interaction_level WHERE interaction_level_name = :type limit 1`,
+      `Select rid, interaction_level_name from ${MAIN_SCHEMA_NAME}.interaction_level WHERE interaction_level_name = :type limit 1`,
       {
         replacements: { type },
         type: "SELECT",
