@@ -7,7 +7,6 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom';
-import { ResourceProfileIcon } from '../../../../../assets';
 import { RESOURCE, RESOURCE_CREATE } from '../../../../../routes';
 import { RootState } from '../../../../../store/store';
 import {
@@ -29,6 +28,7 @@ import {
 import { ResourceList } from '../../../../types/resource';
 import {
   AllMenus,
+  AllModules,
   AllPermissions,
   Permissions,
   useGetAllCountries,
@@ -37,13 +37,18 @@ import {
   useGetStatus,
 } from '../../../../../common-service';
 import { checkPermission, getFiscalYears } from '../../../../../common-utils';
-import { ListTable } from '../../../../../components/table';
+import {
+  ListTable,
+  ManageColumnsPopover,
+} from '../../../../../components/table';
 import { clearFilters } from '../../components/filter/utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import {
   CellEditData,
   FieldChangeEvent,
   FieldChangeValue,
+  ListTableColumn,
+  ShowHideTableColumn,
 } from '../../../../../components/table/types';
 import { useFetchState } from '../../../../services/account';
 import { resourceClient } from '../../../../../api/graphql/clients/client';
@@ -51,6 +56,7 @@ import { useToast } from '../../../../../hooks';
 import Uploads from '../../../../../components/Attachments/upload';
 import { ExportType, SelectOption } from '../../../../types';
 import { FilterValue } from '../../components/filter/filterType';
+import { ResourcesIcon } from '../../../../../assets';
 
 const BUTTON_STYLES = {
   height: '24px !important',
@@ -78,7 +84,7 @@ export interface TabMenus {
   label: string;
   value: string;
   hide: boolean;
-  id: AllPermissions;
+  id: AllModules | AllPermissions;
 }
 
 const resourceTabs: ResourceTabs[] = [
@@ -167,12 +173,23 @@ const Resource: React.FC<ResourceProps> = ({
   const [attachmentsOrder, setAttachmentsOrder] = useState<'ASC' | 'DESC'>(
     'ASC'
   );
+
   const [attachmentsOrderBy, setAttachmentsOrderBy] =
     useState<string>('document_name');
   const [currentCategory, setCurrentCategory] = useState<string>('');
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [currentCountry, setCurrentCountry] = useState<string>('');
   const [resourcesList, setResourcesList] = useState<ResourceList[]>([]);
+  const [columnAnchorEl, setColumnAnchorEl] =
+    React.useState<HTMLButtonElement | null>(null);
+  const isModalOpen = Boolean(columnAnchorEl);
+
+  const handleColumnVisibility = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setColumnAnchorEl(event.currentTarget);
+  };
+
   const [updateResource] = useMutation(UPDATE_RESOURCE, {
     client: resourceClient,
   });
@@ -182,6 +199,7 @@ const Resource: React.FC<ResourceProps> = ({
   const [searchParams] = useSearchParams();
   const { accountid } = useParams();
   const resId = searchParams.get('res_id');
+  const source = searchParams.get('source');
 
   // Permission Mangement
   const isAccountResourceFieldsEditable = useMemo(
@@ -482,7 +500,39 @@ const Resource: React.FC<ResourceProps> = ({
     permission || [],
     AllPermissions.ATTACHMENT_CREATE
   );
-
+  const handleBackClick = () => {
+    if (source === 'timesheet') {
+      const timesheetId = searchParams.get('timesheet_id');
+      const newSearchParams = new URLSearchParams();
+      newSearchParams.set('list', 'timesheet');
+      if (timesheetId) newSearchParams.set('timesheet_id', timesheetId);
+      newSearchParams.set('tab', 'timesheet_project_resource');
+      navigate(`/account/details/${accountid}?${newSearchParams.toString()}`, {
+        replace: true,
+      });
+    } else {
+      setViewResourceList(!viewResourceList);
+      setShowBackArrow(!showBackArrow);
+      setShowFilter(false);
+      setCount(ResourceList?.count || 0);
+      // clear query params
+      searchParams.delete('res_id');
+      searchParams.delete('attachment_entity');
+      searchParams.delete('tab');
+      navigate(
+        {
+          pathname: location.pathname,
+          search: searchParams.toString(),
+        },
+        { replace: true }
+      );
+      setValue('');
+      setFilterVisibility(true);
+      setAppliedFilters({});
+      setSortFilterCount(0);
+      clearFilters('resource');
+    }
+  };
   const headerButtons = [
     {
       label: 'Add Attachment',
@@ -507,6 +557,14 @@ const Resource: React.FC<ResourceProps> = ({
           : handleCreateButtonEnable(),
     },
     {
+      label: 'Show/Hide Fields',
+      variant: 'outlined' as const,
+      onClick: handleColumnVisibility,
+      sx: { ...BUTTON_STYLES, width: '125px', minWidth: '125px' },
+      hide: value === 'details',
+      disabled: false,
+    },
+    {
       label: 'Download',
       variant: 'outlined' as const,
       onClick: () => console.log('Download'),
@@ -517,6 +575,14 @@ const Resource: React.FC<ResourceProps> = ({
         display: 'none',
       },
       hide: handleDownloadButtonEnable(),
+    },
+    {
+      label: source === 'timesheet' ? 'Back To Timesheet' : 'Back To Resources',
+      variant: 'outlined' as const,
+      onClick: handleBackClick,
+      sx: { ...BUTTON_STYLES, width: '125px', minWidth: '125px' },
+      hide: !value,
+      disabled: false,
     },
   ];
 
@@ -536,32 +602,6 @@ const Resource: React.FC<ResourceProps> = ({
         },
       }
     );
-  };
-
-  const handleBackClick = () => {
-    setViewResourceList(!viewResourceList);
-    setShowBackArrow(!showBackArrow);
-    setShowFilter(false);
-    setCount(ResourceList?.count || 0);
-    // clear query params
-    searchParams.delete('res_id');
-    searchParams.delete('attachment_entity');
-    searchParams.delete('tab');
-    navigate(
-      {
-        pathname: location.pathname,
-        search: searchParams.toString(),
-      },
-      {
-        state: { ...location.state, activeKey: 'resources' },
-        replace: true,
-      }
-    );
-    setValue('');
-    setFilterVisibility(true);
-    setAppliedFilters({});
-    setSortFilterCount(0);
-    clearFilters('resource');
   };
 
   const handleCreateResource = () => {
@@ -771,8 +811,9 @@ const Resource: React.FC<ResourceProps> = ({
       setResourcesList(previousResourceList);
     }
   };
-
-  const fiscalYears = getFiscalYears(20);
+  const minYear = 1950;
+  const currentYear = new Date().getFullYear();
+  const fiscalYears = getFiscalYears(currentYear - minYear + 1);
   const allDocumentInfo = useGetAllDocumentInfo();
   const categoryTypes = useGetDocumentCategoryType(currentCategory);
 
@@ -805,6 +846,34 @@ const Resource: React.FC<ResourceProps> = ({
     docCategories: memoizedDocumentCategories,
     docTypes: memoizedDocumentTypes,
   };
+
+  const RestrictedColumns = [
+    {
+      id: 'resource_code',
+      canHide: false,
+      canDrag: false,
+    },
+  ];
+
+  const [visibleColumns, setVisibleColumns] = useState<
+    ListTableColumn<ResourceList>[]
+  >(resourceColumns.filter((col) => !col.hide));
+
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    setVisibleColumns(
+      updatedColumns.filter(
+        (col) => !col.hide
+      ) as ListTableColumn<ResourceList>[]
+    );
+  };
+
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
+  };
+
+  const modalId = isModalOpen
+    ? 'interaction-column-visibility-popover'
+    : undefined;
 
   return (
     <div className='w-full py-2 pl-2 pr-4'>
@@ -846,10 +915,17 @@ const Resource: React.FC<ResourceProps> = ({
               title='Resources'
               count={count}
               resourceNumber={resourceData?.r_number ?? resourceNumber}
-              titleIcon={<ResourceProfileIcon alt='resource header icon' />}
+              titleIcon={
+                <ResourcesIcon
+                  alt='resource header icon'
+                  className='[&>path]:stroke-white w-[14px] h-[14px]'
+                />
+              }
               headerButtons={headerButtons}
               showBackArrow={showBackArrow}
               onBackClick={handleBackClick}
+              iconBg='#7785ff'
+              bgType={showBackArrow ? 'react' : 'circle'}
             />
 
             {!viewResourceList && value && (
@@ -885,19 +961,30 @@ const Resource: React.FC<ResourceProps> = ({
                 setCount={setCount}
                 resourceInActive={resourceInActive}
                 setResourceInActive={setResourceInActive}
+                setColumnAnchorEl={setColumnAnchorEl}
+                columnAnchorEl={columnAnchorEl}
               />
             )}
             {viewResourceList && !value && (
               <div className='border border-[#CBD6E2]'>
+                <ManageColumnsPopover
+                  anchorEl={columnAnchorEl}
+                  open={isModalOpen}
+                  popoverId={modalId}
+                  onClose={handlePopoverClose}
+                  columns={resourceColumns}
+                  onColumnsChange={handleColumnsChange}
+                  columnRestrictions={RestrictedColumns}
+                />
                 <ListTable
                   data={resourcesList}
-                  columns={resourceColumns}
+                  columns={visibleColumns}
                   getRowId={getRowId}
                   hoverHighlight={false}
                   tableStyle={{
                     borderBottom: '1px solid #CBD6E2',
                     height: '100%',
-                    maxHeight: 'calc(100vh - 290px)',
+                    maxHeight: 'calc(100vh - 330px)',
                     overflow: 'auto',
                   }}
                   stickyHeader={true}

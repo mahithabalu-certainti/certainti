@@ -91,9 +91,13 @@ const TruncateWithTooltip = ({
         }}
       >
         {copied ? (
-          <TickIcon alt='tick-icon' className='w-3.5 h-3.5' />
+          <Suspense fallback={null}>
+            <TickIcon alt='tick-icon' className='w-3.5 h-3.5' />
+          </Suspense>
         ) : (
-          <CopyIcon alt='copy-icon' className='w-3.5 h-3.5' />
+          <Suspense fallback={null}>
+            <CopyIcon alt='copy-icon' className='w-3.5 h-3.5' />
+          </Suspense>
         )}
       </IconButton>
     </div>
@@ -109,13 +113,14 @@ const TruncateWithTooltip = ({
 
   return alwaysShowTooltip || isOverflowing ? (
     <Tooltip
-      title={<Suspense fallback={null}>{tooltipContent}</Suspense>}
+      title={tooltipContent}
       arrow
       placement={placement}
       componentsProps={{
         tooltip: {
           sx: {
             maxWidth: tooltipMaxWidth,
+            mr: 1,
           },
         },
       }}

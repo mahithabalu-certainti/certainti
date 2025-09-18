@@ -102,6 +102,8 @@ const ListTable = <T extends RowData>({
   checkedToggleTooltip,
   unCheckedToggleTooltip,
   toggleClick,
+  clearSelectedRows = false,
+  disabledSelect,
 }: ListTableProps<T>) => {
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [editingCells, setEditingCells] = useState<MultipleEditingCells>({});
@@ -183,7 +185,9 @@ const ListTable = <T extends RowData>({
     grandchildrenKey,
     getRowId,
   ]);
-
+  useEffect(() => {
+    setSelectedRows(new Set());
+  }, [clearSelectedRows]);
   // Handle row expansion
   const toggleRowExpansion = (rowId: string, level: number = 0) => {
     setExpandedRows((prev) => ({
@@ -199,8 +203,12 @@ const ListTable = <T extends RowData>({
   // handle Row Select
   const handleRowSelect = (
     rowId: string,
-    row: T & { _level: number; _type: string }
+    row: T & { _level: number; _type: string },
+    disabledSelect?: boolean
   ) => {
+    if (row.disableCheckBox || disabledSelect) {
+      return;
+    }
     const newSelected = new Set(selectedRows);
 
     // Function to get all child IDs recursively
@@ -288,7 +296,9 @@ const ListTable = <T extends RowData>({
   //handle SelectAll
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
-      const allIds = new Set(flattenedData.map(getRowId));
+      const allIds = new Set(
+        flattenedData.filter((row) => !row.disableCheckBox).map(getRowId)
+      );
       setSelectedRows(allIds);
       onSelectionChange?.(Array.from(allIds));
     } else {
@@ -828,6 +838,10 @@ const ListTable = <T extends RowData>({
     );
   };
 
+  const selectableRowsCount = useMemo(() => {
+    return flattenedData.filter((row) => !row.disableCheckBox).length;
+  }, [flattenedData]);
+
   const isEditingAnyCell = Object.keys(editingCells).length > 0;
 
   return (
@@ -890,14 +904,14 @@ const ListTable = <T extends RowData>({
                         size='small'
                         indeterminate={
                           selectedRows.size > 0 &&
-                          selectedRows.size < flattenedData.length
+                          selectedRows.size < selectableRowsCount
                         }
                         checked={
-                          flattenedData.length > 0 &&
-                          selectedRows.size === flattenedData.length
+                          selectableRowsCount > 0 &&
+                          selectedRows.size === selectableRowsCount
                         }
                         onChange={handleSelectAll}
-                        disabled={flattenedData.length === 0 || loading}
+                        disabled={selectableRowsCount === 0 || loading}
                         inputProps={{ 'aria-label': 'select all rows' }}
                         disableRipple
                         sx={{
@@ -1068,7 +1082,10 @@ const ListTable = <T extends RowData>({
                   return !nextRow || nextRow._level < rowLevel;
                 };
                 const hideRow = row.hide ?? false;
-
+                const isChecked = selectedRows.has(rowId);
+                const conditionallyDisabled = isChecked
+                  ? undefined
+                  : disabledSelect;
                 return (
                   <React.Fragment key={`${rowId}-${i}`}>
                     <TableRow
@@ -1101,39 +1118,62 @@ const ListTable = <T extends RowData>({
                     >
                       {/* Row checkbox */}
                       {selectable && (
-                        <TableCell
-                          sx={{
-                            position: 'sticky',
-                            left: 0,
-                            background:
-                              expandable && isExpanded ? '#ECECEC' : '#fff',
-                            zIndex: 7,
-                            width: '32px',
-                            maxWidth: '32px',
-                            minWidth: '32px',
-                            padding: '0px !important',
-                            borderRight: '1px solid #CBD6E2 !important',
-                            borderBottom: '1px solid #CBD6E2 !important',
-                          }}
+                        <Tooltip
+                          title={
+                            Boolean(row.checkBoxMessage)
+                              ? String(row.checkBoxMessage)
+                              : ''
+                          }
+                          disableHoverListener={!row.disableCheckBox}
+                          arrow
+                          placement='right'
                         >
-                          <Box className='flex items-center justify-center !h-[32px] !w-[32px]'>
-                            <Checkbox
-                              size='small'
-                              checked={selectedRows.has(rowId)}
-                              onChange={() => handleRowSelect(rowId, row)}
-                              inputProps={{
-                                'aria-label': `select row ${rowId}`,
-                              }}
-                              disableRipple
-                              sx={{
-                                color: '#CBD6E2',
-                                '&.Mui-checked': {
-                                  color: '#1755E7',
-                                },
-                              }}
-                            />
-                          </Box>
-                        </TableCell>
+                          <TableCell
+                            sx={{
+                              position: 'sticky',
+                              left: 0,
+                              background:
+                                expandable && isExpanded ? '#ECECEC' : '#fff',
+                              zIndex: 7,
+                              width: '32px',
+                              maxWidth: '32px',
+                              minWidth: '32px',
+                              padding: '0px !important',
+                              borderRight: '1px solid #CBD6E2 !important',
+                              borderBottom: '1px solid #CBD6E2 !important',
+                            }}
+                          >
+                            <Box
+                              className={`flex items-center justify-center !h-[32px] !w-[31px] ${row.disableCheckBox || conditionallyDisabled ? 'bg-gray-100' : ''}`}
+                            >
+                              <Checkbox
+                                size='small'
+                                checked={isChecked}
+                                onChange={() =>
+                                  handleRowSelect(
+                                    rowId,
+                                    row,
+                                    conditionallyDisabled
+                                  )
+                                }
+                                inputProps={{
+                                  'aria-label': `select row ${rowId}`,
+                                }}
+                                disableRipple
+                                disabled={
+                                  Boolean(row.disableCheckBox) ||
+                                  conditionallyDisabled
+                                }
+                                sx={{
+                                  color: '#CBD6E2',
+                                  '&.Mui-checked': {
+                                    color: '#1755E7',
+                                  },
+                                }}
+                              />
+                            </Box>
+                          </TableCell>
+                        </Tooltip>
                       )}
 
                       {/* Data cells */}
@@ -1297,33 +1337,63 @@ const ListTable = <T extends RowData>({
                                     </React.Suspense>
                                   </div>
                                 )}
-                                <TruncateWithTooltip
-                                  maxWidth={Number(column.width)}
-                                  className={
-                                    component === 'account' &&
-                                    rowLevel === 0 &&
-                                    expandable &&
-                                    isFirstDataColumn
-                                      ? `inline-flex items-center rounded-[4px] !text-[14px] px-2 h-[26px] !font-semibold cursor-pointer group-hover:underline`
-                                      : ''
-                                  }
-                                  style={
-                                    component === 'account' &&
-                                    rowLevel === 0 &&
-                                    expandable &&
-                                    isFirstDataColumn
-                                      ? {
-                                          background: `linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)), ${row?.bgColor}`,
-                                          color: row?.color as
-                                            | string
-                                            | undefined,
-                                        }
-                                      : undefined
-                                  }
-                                >
-                                  {displayValue as React.ReactNode}
-                                </TruncateWithTooltip>
-
+                                {component === 'timesheet-project' ? (
+                                  // For timesheet-project -> show only first column on parent row, all columns for child rows
+                                  (rowLevel > 0 || isFirstDataColumn) && (
+                                    <TruncateWithTooltip
+                                      maxWidth={Number(column.width)}
+                                      className={
+                                        rowLevel === 0 &&
+                                        expandable &&
+                                        isFirstDataColumn
+                                          ? `inline-flex items-center rounded-[4px] !text-[14px] px-2 h-[26px] !font-semibold cursor-pointer group-hover:underline`
+                                          : ''
+                                      }
+                                      style={
+                                        rowLevel === 0 &&
+                                        expandable &&
+                                        isFirstDataColumn
+                                          ? {
+                                              background: `linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)), ${row?.bgColor}`,
+                                              color: row?.color as
+                                                | string
+                                                | undefined,
+                                            }
+                                          : undefined
+                                      }
+                                    >
+                                      {displayValue as React.ReactNode}
+                                    </TruncateWithTooltip>
+                                  )
+                                ) : (
+                                  // For account (or others) -> show normally (your previous logic)
+                                  <TruncateWithTooltip
+                                    maxWidth={Number(column.width)}
+                                    className={
+                                      component === 'account' &&
+                                      rowLevel === 0 &&
+                                      expandable &&
+                                      isFirstDataColumn
+                                        ? `inline-flex items-center rounded-[4px] !text-[14px] px-2 h-[26px] !font-semibold cursor-pointer group-hover:underline`
+                                        : ''
+                                    }
+                                    style={
+                                      component === 'account' &&
+                                      rowLevel === 0 &&
+                                      expandable &&
+                                      isFirstDataColumn
+                                        ? {
+                                            background: `linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)), ${row?.bgColor}`,
+                                            color: row?.color as
+                                              | string
+                                              | undefined,
+                                          }
+                                        : undefined
+                                    }
+                                  >
+                                    {displayValue as React.ReactNode}
+                                  </TruncateWithTooltip>
+                                )}
                                 {isEditableCell && (
                                   <button
                                     className='edit-pencil-icon absolute -right-1.5 top-1/2 cursor-pointer transform -translate-y-1/2 w-6 h-[28px] flex items-center justify-center bg-[#f5f7fa]'
@@ -1477,7 +1547,9 @@ const ListTable = <T extends RowData>({
                                         component === 'global-project'
                                           ? row.account_status_name ===
                                             'In-Active'
-                                          : item.disabled,
+                                          : typeof item.disabled === 'function'
+                                            ? item.disabled(row)
+                                            : item.disabled,
                                       onClick: () => item.onClick(row),
                                     }))}
                                   />

@@ -17,6 +17,8 @@ import {
   getProjectListManageAccessUrl,
 } from '../urls';
 import { useMutation } from '@tanstack/react-query';
+import { ActiveUserForGroupApiResponse } from '../../types';
+import { buildQueryString } from '../helpers';
 
 export const fetchManageuserList = async (
   params: ManageUserListParms,
@@ -86,7 +88,7 @@ export const useManageAccountAccessUserList = (
 export const useManageAccountAccessGroupList = (
   params: ManageUserListParms,
   accountId: string,
-  refreshProfileTrigger?: number
+  refreshProfileTrigger?: number,
 ) => {
   return useQuery<ManageAccountGroupListApiResponse, Error>({
     queryKey: ['manageAccountGroup', params, refreshProfileTrigger],
@@ -116,6 +118,31 @@ export const useManageProjectAccessList = (
     gcTime: 0,
     retry: 0,
     enabled: !!accountId && !!entityId,
+  });
+};
+
+export const fetchUserGroupList = async (
+  accountId: string,
+  groupId: string,
+  params?: Record<string, unknown>
+) => {
+  const response = await userServiceApi.get<ActiveUserForGroupApiResponse>(
+    `/api/user_group/users/${accountId}/${groupId}?${buildQueryString(params ?? {})}`
+  );
+  return response.data;
+};
+export const useUserGroupList = (
+  accountId: string,
+  groupId: string,
+  params?: Record<string, unknown>
+) => {
+  return useQuery<ActiveUserForGroupApiResponse, Error>({
+    queryKey: ['useUserGroupList', params, accountId, groupId],
+    queryFn: () => fetchUserGroupList(accountId, groupId, params),
+    staleTime: 0,
+    gcTime: 0,
+    retry: 0,
+    enabled: Boolean(accountId) && Boolean(groupId),
   });
 };
 

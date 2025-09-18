@@ -1,6 +1,6 @@
-import { ProjectAccordionResponse } from '../types/project';
+import { TimesheetProjectTableListResponse } from '../types/timesheet-projects';
 
-export const ManageProjectsMockData: ProjectAccordionResponse = {
+export const ManageProjectsMockData: TimesheetProjectTableListResponse = {
   statusCode: 200,
   statusCodeValue: 'Success',
   statusMessage: '',
@@ -9,7 +9,7 @@ export const ManageProjectsMockData: ProjectAccordionResponse = {
       {
         rid: '8087694d-b28a-40db-a871-39479243e61e',
         project_code: 'PRC460',
-        project_name: null,
+        project_name: 'Test Project',
         account_name: 'acc-123',
         account_id: '139de5b6-2489-461e-a381-26109a21885c',
         project_rid: '8087694d-b28a-40db-a871-39479243e61e',
@@ -18,7 +18,7 @@ export const ManageProjectsMockData: ProjectAccordionResponse = {
         qre: null,
         is_rd_qualified: false,
         industry_name_other: null,
-        project_type: 'Fixed',
+        project_type_name: 'Fixed',
         project_client_group: null,
         project_group: null,
         project_classification_rid: null,
@@ -74,6 +74,6 @@ export const ManageProjectsMockData: ProjectAccordionResponse = {
         project_classification_other: null,
       },
     ],
-    count: 1,
+    totalCount: 1,
   },
 };

@@ -20,6 +20,7 @@ import {
   SettingIcon,
   TimeSheetIcon,
   ConfigIcon,
+  InteractionsIcon,
 } from '../../../assets';
 import { InfoSection, PageHeader, SideMenuPanel } from '../../../components';
 import { ACCOUNT } from '../../../routes';
@@ -37,6 +38,7 @@ import {
   Resources,
   Timesheet,
   Configuration,
+  Interactions,
 } from '../account-details-sidebar';
 import {
   accountDetailsProps,
@@ -59,20 +61,37 @@ import {
   ProjectFinancialProjectExportParams,
   ProjectFinancialResourceExportParams,
 } from '../../types';
-import { exportProjectData } from '../../services/project';
-import { ProjectListParams } from '../../types/project';
+import { exportProjectData, ProjectTriggerAI } from '../../services/project';
+import {
+  ProjectListParams,
+  ProjectTriggerAIPayload,
+} from '../../types/project';
 import { exportAttachmentsData } from '../../services/attachments/attachments-service';
 import { AttachmentsListExportParams } from '../../types/attachment';
-import { exportImportsData } from '../../services/import';
+import {
+  exportImportsData,
+  exportTimesheetData,
+  exportTimesheetProjectData,
+  exportTimesheetResourceData,
+  exportTimesheetTaskData,
+} from '../../services/import';
+
 import { ImportsListURLParams } from '../../types/imports';
 import {
   exportFinancialProjectCost,
   exportFinancialResourceCost,
 } from '../../services/financial/financial-service';
 import DetailsSectionSkeleton from '../../../components/skeleton-component/detailsskeleton';
+import {
+  exportInteractionsHistory,
+  exportAccountInteractions,
+} from '../../services/interactions/interactions-service';
+import { TimesheetProjectExportListURLParams } from '../../types/timesheet-projects';
+import { BUTTON_STYLES } from '../../../admin/pages/manage-user-detail/styles';
+import { useToast } from '../../../hooks';
 
 export const AccountDetails = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -83,11 +102,19 @@ export const AccountDetails = () => {
   const { menus, modules, permission } = useSelector(
     (state: RootState) => state.permission
   );
+  const TriggerAIEnable = checkPermission(
+    permission,
+    AllPermissions.TRIGGER_AI_ASSESSMENT
+  );
 
   const { filters, fiscalYear } = useSelector<RootState, AccountState>(
     (state: RootState) => state.account
   );
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
+  const interactionHistoryId = searchParams.get('interaction_history_id');
+  const interactionId = searchParams.get('interaction_id');
+  const interactionRID = searchParams.get('interaction_rid');
+  const interactionsView = !!interactionId || !!interactionRID;
 
   // Permission Mangement
   const accountIsEnable = checkPermission(modules, AllModules.ACCOUNTS);
@@ -99,32 +126,44 @@ export const AccountDetails = () => {
     menus,
     AllMenus.FINANCIAL_HIGHLIGHTS
   );
-
-  // const isAccountDetailsDownloadEnable = checkPermission(
-  //   permission,
-  //   AllPermissions.ACCOUNT_DETAILS_DOWNLOAD
-  // );
-  // const isAccountExportEnable = checkPermission(
-  //   permission,
-  //   AllPermissions.ACCOUNT_EXPORT
-  // );
   const isResourcesExportEnable = checkPermission(
     permission,
     AllPermissions.ACCOUNT_RESOURCES_EXPORT
   );
+  const isResourceCostExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_RESOURCES_COST_EXPORT
+  );
+  const isResourceSkillExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_RESOURCES_SKILL_EXPORT
+  );
+
   const isProjectExportEnable = checkPermission(
     permission,
     AllPermissions.PROJECTS_EXPORT
   );
-
-  const isAttachmentViewEnable = checkPermission(
+  const isProjectResourceExportViewEnable = checkPermission(
     permission,
-    AllPermissions.ATTACHMENT_VIEW_EDIT
+    AllPermissions.PROJECTS_RESOURCES_EXPORT
+  );
+  const isProjectTaskExportViewEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECTS_TASK_EXPORT
+  );
+  const isAttachmentExportEnable = checkPermission(
+    permission,
+    AllPermissions.ATTACHMENT_EXPORT
   );
 
   const isImportExportEnable = checkPermission(
     permission,
     AllPermissions.IMPORTS_EXPORT
+  );
+
+  const isInteractionsExportEnable = checkPermission(
+    permission,
+    AllPermissions.INTERACTIONS_EXPORT
   );
 
   const isFinancialResourceCostExportEnable = checkPermission(
@@ -135,6 +174,11 @@ export const AccountDetails = () => {
   const isFinancialProjectCostExportEnable = checkPermission(
     permission,
     AllPermissions.ACCOUNT_FINANCIAL_PROJECT_COST_EXPORT
+  );
+
+  const isTimesheetExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_TIMESHEET_EXPORT
   );
 
   const isAccountFieldsEditable = useMemo(
@@ -154,6 +198,7 @@ export const AccountDetails = () => {
   const [refreshAccountDetails, setRefreshAccountDetails] = useState<number>(
     Date.now()
   );
+  const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   const [tableParams, setTableParams] = useState<ExportModule>({
     sortBy: 'created_datetime',
@@ -188,6 +233,41 @@ export const AccountDetails = () => {
     account_rid: accountid || '',
   });
 
+  const [interactionsParams, setInteractionsParams] =
+    useState<AttachmentsListExportParams>({
+      sortBy: 'status_name',
+      sortOrder: 'ASC',
+      filters: {},
+      page: 1,
+      limit: 100,
+    });
+  const [timesheetProjectParams, setTimesheetProjectParams] =
+    useState<TimesheetProjectExportListURLParams>({
+      sortBy: 'project_code',
+      sortOrder: 'ASC',
+      filters: {},
+      fiscalYear: convertedFiscalYear,
+      account_rid: accountid || '',
+      bothParentAndChild: toggleEnabled,
+      documentRid: '',
+    });
+  const [timesheetResourceParams, setTimesheetResourceParams] =
+    useState<TimesheetProjectExportListURLParams>({
+      sortBy: 'project_code',
+      sortOrder: 'ASC',
+      filters: {},
+      account_rid: accountid || '',
+      documentRid: '',
+    });
+  const [timesheetTaskParams, setTimesheetTaskParams] =
+    useState<TimesheetProjectExportListURLParams>({
+      sortBy: 'project_code',
+      sortOrder: 'ASC',
+      filters: {},
+      account_rid: accountid || '',
+      documentRid: '',
+    });
+
   const [financialResCostParams, setFinancialResCostParams] =
     useState<ProjectFinancialResourceExportParams>({
       sortBy: 'project_code',
@@ -202,16 +282,36 @@ export const AccountDetails = () => {
       filters: {},
       fiscalYear: 0,
     });
+  useEffect(() => {
+    const list = searchParams.get('list');
+    const tabParams = searchParams.get('tab');
+    const source = searchParams.get('source');
+    if (
+      tabParams !== 'details' &&
+      list !== 'projectsTask' &&
+      source === 'timesheet'
+    ) {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('source');
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const [exportType, setExportType] = useState<ExportType>('resource');
 
   const handleExport = (exportType: ExportType) => {
+    const tab = searchParams.get('tab');
     if (
       searchParams.get('list') !== 'resources' &&
       searchParams.get('list') !== 'projects' &&
       searchParams.get('list') !== 'attachments' &&
       searchParams.get('list') !== 'imports' &&
-      searchParams.get('list') !== 'financial'
+      searchParams.get('list') !== 'financial' &&
+      searchParams.get('list') !== 'timesheet' &&
+      searchParams.get('list') !== 'interactions' &&
+      searchParams.get('tab') !== 'timesheet_project' &&
+      searchParams.get('tab') !== 'timesheet_project_resource' &&
+      searchParams.get('tab') !== 'timesheet_project_task'
     ) {
       return;
     }
@@ -268,6 +368,20 @@ export const AccountDetails = () => {
       });
     } else if (exportType === 'imports') {
       exportImportsData(importsParams);
+    } else if (exportType === 'timesheet' && !tab) {
+      exportTimesheetData({
+        ...importsParams,
+        filters: {
+          ...importsParams.filters,
+          entity: { equals: 'project_task' },
+        },
+      });
+    } else if (exportType === 'timesheet_project') {
+      exportTimesheetProjectData(timesheetProjectParams);
+    } else if (exportType === 'timesheet_project_resource') {
+      exportTimesheetResourceData(timesheetResourceParams);
+    } else if (exportType === 'timesheet_project_task') {
+      exportTimesheetTaskData(timesheetTaskParams);
     } else if (exportType === 'financial_resource_cost') {
       exportFinancialResourceCost({
         ...financialResCostParams,
@@ -278,6 +392,30 @@ export const AccountDetails = () => {
         ...financialProjectCostParams,
         ...financialProjectPayload,
       });
+    } else if (exportType === 'interactions') {
+      if (interactionHistoryId) {
+        const projectInteractionHistoryExportPayload = {
+          account_rid: accountid || '',
+          interaction_rid: interactionHistoryId,
+          page: interactionsParams?.page || 1,
+          limit: interactionsParams?.limit || 100,
+          sort: interactionsParams.sortBy || 'status_name',
+          sort_by: interactionsParams?.sortOrder || 'ASC',
+          filters: interactionsParams?.filters || {},
+          timezone: systemTimezone,
+          flag: 'account',
+        };
+        exportInteractionsHistory(projectInteractionHistoryExportPayload);
+        return;
+      } else {
+        const projectInteractionExportPayload = {
+          account_rid: accountid || '',
+          sort_by: interactionsParams?.sortOrder || 'ASC',
+          filters: interactionsParams?.filters || {},
+        };
+        exportAccountInteractions(projectInteractionExportPayload);
+        return;
+      }
     } else {
       exportData(exportType, exportPayload);
     }
@@ -354,20 +492,35 @@ export const AccountDetails = () => {
       return true;
     }
 
-    if (list === 'resources') {
+    if (list === 'resources' && !tab) {
       return !isResourcesExportEnable;
+    } else if (list === 'resources' && tab === 'cost') {
+      return !isResourceCostExportEnable;
+    } else if (list === 'resources' && tab === 'skill') {
+      return !isResourceSkillExportEnable;
+    } else if (list === 'resources' && tab === 'attachments') {
+      return !isAttachmentExportEnable;
     } else if (list === 'projects') {
       return !isProjectExportEnable;
     } else if (list === 'attachments') {
-      return !isAttachmentViewEnable;
+      return !isAttachmentExportEnable;
     } else if (list === 'imports') {
       return !isImportExportEnable;
     } else if (list === 'financial' && tab === 'resource_cost') {
       return !isFinancialResourceCostExportEnable;
     } else if (list === 'financial' && tab === 'project_cost') {
       return !isFinancialProjectCostExportEnable;
+    } else if (list === 'timesheet' && !tab) {
+      return !isTimesheetExportEnable;
+    } else if (list === 'interactions' && !interactionsView) {
+      return !isInteractionsExportEnable;
+    } else if (list === 'timesheet' && tab === 'timesheet_project') {
+      return !isProjectExportEnable;
+    } else if (list === 'timesheet' && tab === 'timesheet_project_resource') {
+      return !isProjectResourceExportViewEnable;
+    } else if (list === 'timesheet' && tab === 'timesheet_project_task') {
+      return !isProjectTaskExportViewEnable;
     } else {
-      // return !isAccountExportEnable;
       return true;
     }
   };
@@ -402,10 +555,32 @@ export const AccountDetails = () => {
   };
   // Set active key from location stat
   useEffect(() => {
-    if (location.state?.activeKey) {
-      setActiveKey(location.state.activeKey);
-    }
-  }, [location.state]);
+    const listParam = searchParams.get('list');
+    setActiveKey(location.state?.activeKey || listParam || 'details');
+  }, [location.state, searchParams]);
+
+  const { successToast } = useToast();
+  const triggerAIMutation = ProjectTriggerAI();
+  const handleTriggerAI = () => {
+    const accountId = data?.data?.accountById?.rid || '';
+    const payload: ProjectTriggerAIPayload = {
+      data: [
+        {
+          account_rid: accountId,
+          project_fiscal_rid: [],
+        },
+      ],
+      type: 'account',
+    };
+    triggerAIMutation.mutate(payload, {
+      onSuccess: (res) => {
+        successToast(res.statusMessage);
+      },
+      onError: (err) => {
+        console.log(err);
+      },
+    });
+  };
 
   const renderContent = () => {
     switch (activeKey) {
@@ -460,6 +635,15 @@ export const AccountDetails = () => {
             setToggleEnabled={setToggleEnabled}
           />
         );
+      case 'interactions':
+        return (
+          <Interactions
+            accountInActive={accountInActive}
+            accountDetails={{ ...data?.data } as accountDetailsProps}
+            setExportType={setExportType}
+            setInteractionsParams={setInteractionsParams}
+          />
+        );
       case 'cases':
         return <Cases />;
       case 'activities':
@@ -469,7 +653,15 @@ export const AccountDetails = () => {
       case 'checklist':
         return <Checklist />;
       case 'timesheet':
-        return <Timesheet />;
+        return (
+          <Timesheet
+            setExportType={setExportType}
+            setTimesheetParams={setImportsParams}
+            setTimesheetProjectParams={setTimesheetProjectParams}
+            setTimesheetResourceParams={setTimesheetResourceParams}
+            setTimesheetTaskParams={setTimesheetTaskParams}
+          />
+        );
       case 'imports':
         return (
           <Import
@@ -502,6 +694,7 @@ export const AccountDetails = () => {
         key: 'financial',
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: disable,
+        hide: disable,
         icon: FinancialIcon,
       },
       {
@@ -516,6 +709,7 @@ export const AccountDetails = () => {
         key: 'resources',
         id: AllModules.RESOURCES,
         disabled: disable,
+        hide: disable,
         icon: ResourcesIcon,
       },
       {
@@ -523,13 +717,23 @@ export const AccountDetails = () => {
         key: 'projects',
         id: AllMenus.PROJECTS,
         disabled: disable,
+        hide: disable,
         icon: ProjectsSideIcon,
+      },
+      {
+        name: 'Interactions',
+        key: 'interactions',
+        id: AllModules.INTERACTIONS,
+        disabled: disable,
+        hide: disable,
+        icon: InteractionsIcon,
       },
       {
         name: 'Cases',
         key: 'cases',
         id: AllMenus.CASES,
         disabled: disable,
+        hide: disable,
         icon: CasesIcon,
       },
       {
@@ -537,6 +741,7 @@ export const AccountDetails = () => {
         key: 'activities',
         id: AllModules.ACTIVITIES,
         disabled: disable,
+        hide: disable,
         icon: ActivitiesIcon,
       },
       {
@@ -544,6 +749,7 @@ export const AccountDetails = () => {
         key: 'notes',
         id: AllMenus.NOTES,
         disabled: disable,
+        hide: disable,
         icon: NotesSideIcon,
       },
       {
@@ -551,6 +757,7 @@ export const AccountDetails = () => {
         key: 'attachments',
         id: AllMenus.ATTACHMENTS,
         disabled: disable,
+        hide: disable,
         icon: AttachmentsSideIcon,
       },
       {
@@ -558,13 +765,15 @@ export const AccountDetails = () => {
         key: 'checklist',
         id: AllMenus.CHECKLISTS,
         disabled: disable,
+        hide: disable,
         icon: ChecklistIcon,
       },
       {
-        name: 'Timesheet',
+        name: 'Timesheets',
         key: 'timesheet',
         id: AllMenus.TIMESHEETS,
         disabled: disable,
+        hide: disable,
         icon: TimeSheetIcon,
       },
       {
@@ -572,13 +781,15 @@ export const AccountDetails = () => {
         key: 'imports',
         id: AllMenus.IMPORTS,
         disabled: disable,
+        hide: disable,
         icon: ImportsIcon,
       },
       {
         name: 'Configuration',
         key: 'configuration',
         id: AllMenus.CONFIGURATION,
-        disabled: disable,
+        disabled: false,
+        hide: false,
         icon: ConfigIcon,
         subMenu: [
           {
@@ -586,13 +797,15 @@ export const AccountDetails = () => {
             key: 'users',
             id: AllMenus.MANAGE_ACCOUNT_ACCESS,
             disabled: disable,
+            hide: disable,
             icon: ResourcesIcon,
           },
           {
             name: 'Settings',
             key: 'settings',
             id: AllMenus.ACCOUNT_SETTINGS,
-            disabled: disable,
+            disabled: false,
+            hide: false,
             icon: SettingIcon,
           },
         ],
@@ -604,7 +817,7 @@ export const AccountDetails = () => {
   }, [disable, isFinancialHighlightsEnable]);
 
   const goBack = () => {
-    window.history.back();
+    navigate(ACCOUNT);
   };
 
   if (!accountIsEnable || !isAccountDetailsEnable) return <AccessRestricted />;
@@ -623,6 +836,16 @@ export const AccountDetails = () => {
           title={data?.data?.accountById?.account_name ?? ''}
           totalRecords={5}
           actionItems={menuItems}
+          headerButtons={[
+            {
+              label: 'RD Assessment',
+              onClick: handleTriggerAI,
+              disabled: accountInActive,
+              loading: triggerAIMutation.isPending,
+              sx: { ...BUTTON_STYLES, width: '115px', minWidth: '115px' },
+              hide: !TriggerAIEnable,
+            },
+          ]}
           primaryButton={
             isAccountFieldsEditable
               ? {
@@ -636,13 +859,15 @@ export const AccountDetails = () => {
           showActions={false}
           showSettings={false}
           goBack={goBack}
+          backBtnLabel='Back To Accounts'
+          isLoading={isPending}
         />
       </div>
       <InfoSection
         columns={accountDetails}
         loading={isPending}
         error={isError}
-        singleLineView={true}
+        singleLineView={false}
       />
       <div className='flex flex-1 flex-row w-full'>
         <div
@@ -660,11 +885,12 @@ export const AccountDetails = () => {
             showBackIcon={true}
             isCollapsed={isCollapsed}
             onToggleCollapse={() => setIsCollapsed((prev) => !prev)}
+            isLoading={isPending}
           />
         </div>
         <div
           className='flex-1'
-          style={{ maxHeight: 'calc(100vh - 140px)', overflow: 'auto' }}
+          style={{ maxHeight: 'calc(100vh - 180px)', overflow: 'auto' }}
         >
           <Suspense fallback={null}>{renderContent()}</Suspense>
         </div>

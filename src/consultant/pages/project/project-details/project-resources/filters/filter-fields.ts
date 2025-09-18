@@ -1,4 +1,6 @@
 import { FieldConfig } from '../../../../account-details-sidebar/components/filter/filterType';
+import { fiscalOptions } from '../../../../account-details-sidebar/sidebar-pages/projects/utils';
+import { requiredFieldFilterOptionsForText } from '../../project-task/filters/filter-fields';
 
 const requiredFieldFilterOptionsForEnum: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
@@ -11,7 +13,8 @@ export const projectResourceFilterFields = (
   memoizedCountry: { option: string; value: string }[],
   region: { option: string; value: string }[],
   // resourceTypeOptions: { option: string; value: string }[], /* It may use in future, based on client confirmation */
-  resourcepermissionMap?: Record<string, { read: boolean; edit: boolean }>
+  resourcepermissionMap?: Record<string, { read: boolean; edit: boolean }>,
+  memoizedResourceStatus?: { option: string; value: string }[]
 ): FieldConfig[] => [
   {
     name: 'Resource Code',
@@ -77,6 +80,14 @@ export const projectResourceFilterFields = (
   // },
 
   {
+    name: 'Project Resource Role',
+    value: 'project_resource_role',
+    type: 'text',
+    hide:
+      !resourcepermissionMap?.['project_resource_role']?.read &&
+      !resourcepermissionMap?.['project_resource_role']?.edit,
+  },
+  {
     name: 'Effort Hours',
     value: 'total_hours_pro_res',
     type: 'number',
@@ -109,6 +120,16 @@ export const projectResourceFilterFields = (
       !resourcepermissionMap?.['qre_final']?.edit,
   },
   {
+    name: 'Status',
+    value: 'status_rid',
+    type: 'enum',
+    options: memoizedResourceStatus,
+    operatorOption: fiscalOptions,
+    hide:
+      !resourcepermissionMap?.['status_action']?.read &&
+      !resourcepermissionMap?.['status_action']?.edit,
+  },
+  {
     name: 'Comments',
     value: 'description',
     type: 'text',
@@ -117,16 +138,16 @@ export const projectResourceFilterFields = (
       !resourcepermissionMap?.['description']?.edit,
   },
   // It may use in future, based on client confirmation
-  //   {
-  //     name: 'Resource ID',
-  //     value: 'r_number',
-  //     type: 'text',
-  //     required: true,
-  //     filterOptions: requiredFieldFilterOptionsForText,
-  //     // hide:
-  //     //   !resourcepermissionMap?.['r_number']?.read &&
-  //     //   !resourcepermissionMap?.['r_number']?.edit,
-  //   },
+  {
+    name: 'Project Resource ID',
+    value: 'r_number',
+    type: 'text',
+    required: true,
+    filterOptions: requiredFieldFilterOptionsForText,
+    hide:
+      !resourcepermissionMap?.['r_number']?.read &&
+      !resourcepermissionMap?.['r_number']?.edit,
+  },
   {
     name: 'Sort Options',
     value: 'sort_options',

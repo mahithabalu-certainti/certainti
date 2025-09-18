@@ -1,12 +1,8 @@
 import { useSearchParams } from 'react-router-dom';
-import {
-  ComingSoon,
-  RealatedListDetailsIcon,
-  ResourceProfileIcon,
-} from '../../../../../assets';
+import { ComingSoon, DetailsIcon, ResourcesIcon } from '../../../../../assets';
 import { Settings } from './settings';
 import { SectionTabPanel } from '../../../../../components';
-import { useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   AllMenus,
   AllModules,
@@ -50,12 +46,21 @@ const Configuration: React.FC = () => {
   const [reFetchData, setReFetchData] = useState<number>(Date.now());
   const [count, setCount] = useState<number>(0);
 
+  const [columnAnchorEl, setColumnAnchorEl] =
+    React.useState<HTMLButtonElement | null>(null);
+
   const list = searchParams.get('subMenu');
   const tabParam = searchParams.get('tab');
 
   const { permission, modules } = useSelector(
     (state: RootState) => state.permission
   );
+
+  const handleColumnVisibility = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setColumnAnchorEl(event.currentTarget);
+  };
 
   const accessPageIsEnable = checkPermission(
     modules,
@@ -94,6 +99,8 @@ const Configuration: React.FC = () => {
               limit: 100,
               entity_type: '',
             }}
+            setColumnAnchorEl={setColumnAnchorEl}
+            columnAnchorEl={columnAnchorEl}
           />
         );
       case 'settings':
@@ -116,12 +123,17 @@ const Configuration: React.FC = () => {
   const getTitleIcon = () => {
     switch (list) {
       case 'users':
-        return <ResourceProfileIcon alt='users-header-icon' />;
+        return (
+          <ResourcesIcon
+            alt='resource header icon'
+            className='[&>path]:stroke-white w-[14px] h-[14px]'
+          />
+        );
       case 'settings':
         return (
-          <RealatedListDetailsIcon
+          <DetailsIcon
             alt='settings-header-icon'
-            className='w-7 h-7'
+            className='[&>path]:stroke-[#294F98] w-[14px] h-[14px]'
           />
         );
       default:
@@ -137,6 +149,14 @@ const Configuration: React.FC = () => {
       hide: list === 'users',
       disabled: isSaveDisable,
       loading: isFormSaving,
+    },
+    {
+      label: 'Show/Hide Fields',
+      variant: 'outlined' as const,
+      disabled: false,
+      onClick: handleColumnVisibility,
+      sx: { width: '125px', minWidth: '125px' },
+      hide: list !== 'users',
     },
   ];
 
@@ -182,6 +202,8 @@ const Configuration: React.FC = () => {
         count={count}
         showItemCount={list !== 'settings'}
         hideSection={hideSection}
+        iconBg={list === 'users' ? '#7785ff' : '#D7E5FF'}
+        bgType='circle'
       />
       {renderContent()}
     </div>

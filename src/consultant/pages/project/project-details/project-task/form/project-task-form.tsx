@@ -1,9 +1,13 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useMemo } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { EditIcon, CreateResourceIcon } from '../../../../../../assets';
 import { useToast } from '../../../../../../hooks';
-import { AllPermissions, Layout } from '../../../../../../common-service';
+import {
+  AllPermissions,
+  Layout,
+  OnChange,
+} from '../../../../../../common-service';
 import { FormFiscalDateType, SelectResourceOption } from '../../../../../types';
 import TextButton from '../../../../../../components/button/text-button';
 import { FormBuilder } from '../../../../../../components';
@@ -22,17 +26,30 @@ import {
   formatDateToYYYYMMDDWithTime,
   getDateFormat,
 } from '../../../../../../common-utils';
+import { RESOURCE_CREATE } from '../../../../../../routes';
+import ConfirmationPopup from '../../../../../../common-utils/confirmation-popup';
 
 const ProjectTaskForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
   const { successToast } = useToast();
   const location = useLocation();
+  const navigate = useNavigate();
   const { taskId } = useParams();
   const queryParams = new URLSearchParams(location.search);
   const account_Id = queryParams.get('account_Id');
+  const account_name = queryParams.get('account_name');
+  const account_number = queryParams.get('account_number');
   const project_Id = queryParams.get('project_Id');
   const projectPFY = queryParams.get('PFY');
   const projectCode = queryParams.get('projectCode');
+  const createdNewResourceCode = queryParams.get('created_resource_code') || '';
+  const [confirmationState, setConfirmationState] = React.useState<{
+    isOpen: boolean;
+    message: string;
+    onConfirm: () => void;
+  }>({ isOpen: false, message: '', onConfirm: () => {} });
+  const [costResourceForceSuccess, setCostResourceForceSuccess] =
+    React.useState(false);
   const fiscalDate: FormFiscalDateType = projectPFY
     ? JSON.parse(projectPFY)
     : undefined;
@@ -66,8 +83,7 @@ const ProjectTaskForm: React.FC = () => {
   const { data: projectResourceCodeOptions } = useGetProjectResourceCode(
     account_Id as string
   );
-  const commonSuccess =
-    createProjectTask.isSuccess || updateProjectTask.isSuccess;
+  const commonSuccess = costResourceForceSuccess;
   useEffect(() => {
     if (commonSuccess) {
       successToast(
@@ -98,7 +114,7 @@ const ProjectTaskForm: React.FC = () => {
   const memoizedProjectResourceCode: SelectResourceOption[] = useMemo(
     () =>
       projectResourceCodeOptions?.data?.resourceCodes.map((item) => ({
-        label: item.resource_code,
+        label: `${item.resource_code} ${item.resource_name ? `(${item.resource_name})` : ''}`,
         value: item.resource_code,
         resource_type_rid: item.resource_type_rid,
         resource_type_name: item.resource_type_name,
@@ -115,15 +131,103 @@ const ProjectTaskForm: React.FC = () => {
         project_fiscal_rid: isEditView
           ? projectTaskDetailsData?.project_fiscal_rid
           : project_Id || undefined,
+        user_preference: confirmationState.message ? 'accept' : '',
       },
       project_task_rid,
       isEditView
     );
 
     if (isEditView) {
-      updateProjectTask.mutate(projectTaskData);
+      updateProjectTask.mutate(projectTaskData, {
+        onSuccess: (response) => {
+          if (response?.statusCode === 210) {
+            setConfirmationState({
+              isOpen: true,
+              message:
+                response.statusMessage ||
+                'Compensation details already exists for the resource',
+              onConfirm: () => {
+                const updatedFormValues = {
+                  ...projectTaskData,
+                  user_preference: 'accept',
+                };
+                updateProjectTask.mutate(updatedFormValues, {
+                  onSuccess: () => {
+                    setCostResourceForceSuccess(true);
+                  },
+                });
+                setConfirmationState((prev) => ({
+                  ...prev,
+                  isOpen: false,
+                  message: '',
+                }));
+              },
+            });
+          } else if (response?.statusCode === 200) {
+            setCostResourceForceSuccess(true);
+          }
+        },
+        onError: (error) => {
+          console.error('Update failed:', error);
+        },
+      });
     } else {
-      createProjectTask.mutate(projectTaskData);
+      createProjectTask.mutate(projectTaskData, {
+        onSuccess: (response) => {
+          if (response?.statusCode === 210) {
+            setConfirmationState({
+              isOpen: true,
+              message:
+                response.statusMessage ||
+                'Compensation details already exists for the resource',
+              onConfirm: () => {
+                const updatedFormValues = {
+                  ...projectTaskData,
+                  user_preference: 'accept',
+                };
+                createProjectTask.mutate(updatedFormValues, {
+                  onSuccess: () => {
+                    setCostResourceForceSuccess(true);
+                  },
+                });
+                setConfirmationState((prev) => ({
+                  ...prev,
+                  isOpen: false,
+                  message: '',
+                }));
+              },
+            });
+          } else if (response?.statusCode === 200) {
+            setCostResourceForceSuccess(true);
+          }
+        },
+        onError: (error) => {
+          console.error('Update failed:', error);
+        },
+      });
+    }
+  };
+
+  const handleCreateNewResource = (resCode?: string) => {
+    const queryParams = new URLSearchParams({
+      account_id: account_Id || '',
+      account_name: account_name || '',
+      acc_number: account_number || '',
+      new_res_code: resCode || '',
+    });
+    navigate(`${RESOURCE_CREATE}?${queryParams.toString()}`, {
+      state: { from: location },
+    });
+  };
+
+  const onChangeField = (data: OnChange) => {
+    if (data.fieldName === 'resource_code') {
+      const selectedResource = memoizedProjectResourceCode.find(
+        (option) => String(option.value) === String(data.fieldValue)
+      );
+      if (!selectedResource) {
+        handleCreateNewResource(data.fieldValue as string);
+      }
     }
   };
 
@@ -132,7 +236,11 @@ const ProjectTaskForm: React.FC = () => {
   };
 
   const goBack = () => {
-    window.history.back();
+    if (createdNewResourceCode) {
+      navigate(-2);
+    } else {
+      window.history.back();
+    }
   };
 
   return (
@@ -188,14 +296,37 @@ const ProjectTaskForm: React.FC = () => {
           values={
             isEditView && projectTaskDetailsData
               ? { ...projectTaskDetailsData }
-              : undefined
+              : !isEditView
+                ? { resource_code: createdNewResourceCode }
+                : {}
           }
           outData={submitData}
           formRef={formRef}
           layout={Layout.TYPE_1}
-          onChange={() => console.log('onChange')}
+          onChange={onChangeField}
           keyStart='start_date'
           keyEnd='end_date'
+        />
+      </div>
+      <div>
+        <ConfirmationPopup
+          isOpen={confirmationState.isOpen}
+          message={confirmationState.message}
+          onConfirm={() => {
+            confirmationState.onConfirm();
+            setConfirmationState((prev) => ({
+              ...prev,
+              isOpen: false,
+              message: '',
+            }));
+          }}
+          onCancel={() => {
+            setConfirmationState((prev) => ({
+              ...prev,
+              isOpen: false,
+              message: '',
+            }));
+          }}
         />
       </div>
     </>
