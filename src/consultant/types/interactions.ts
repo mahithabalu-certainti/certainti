@@ -184,6 +184,7 @@ export interface InteractionListURLParams {
   isGlobal?: boolean;
   flag?: string;
   attachment_count?: number | string | null;
+  search?: string;
 }
 
 export interface ResponseListURLParams {
