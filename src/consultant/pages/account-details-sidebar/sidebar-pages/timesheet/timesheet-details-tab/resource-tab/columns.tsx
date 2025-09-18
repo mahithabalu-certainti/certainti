@@ -147,13 +147,10 @@ export const getResourceTabTableColumns = (
     label: 'Status',
     sortable: true,
     sortId: 'status_name',
-    width: 150,
-    sx: {
-      textAlign: 'right',
-    },
+    width: 150, 
     hide:
-      !permissionMap?.['status_name']?.read &&
-      !permissionMap?.['status_name']?.edit,
+      !permissionMap?.['status_rid']?.read &&
+      !permissionMap?.['status_rid']?.edit,
     render: (row: TimesheetResourceListType) => (
       <span
         className={`${
