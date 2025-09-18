@@ -8,7 +8,6 @@ interface InteractionAttachmentAttributes {
   created_datetime?: Date;
   modified_datetime?: Date;
   interaction_rid: string;
-  project_fiscal_rid: string;
   interaction_response_rid?:string | null;
   interaction_version?:number;
   interaction_item_rid?: string | null;
@@ -35,7 +34,6 @@ export class InteractionAttachment extends Model<InteractionAttachmentAttributes
   public attachment_type?: string;
   public attachment_size?: number;
   public attachment_url!: string;
-  public project_fiscal_rid!: string;
   
 
   static initialize(sequelize: Sequelize, schemaName: string = MAIN_SCHEMA_NAME) {
@@ -51,7 +49,6 @@ export class InteractionAttachment extends Model<InteractionAttachmentAttributes
         created_datetime: { type: DataTypes.DATE, allowNull: true, defaultValue: DataTypes.NOW },
         modified_datetime: { type: DataTypes.DATE, allowNull: true },
         interaction_rid: { type: DataTypes.STRING(50), allowNull: false },
-        project_fiscal_rid: { type: DataTypes.STRING(50), allowNull: false },
         interaction_response_rid: { type: DataTypes.STRING(50), allowNull: true },
         interaction_item_rid: { type: DataTypes.TEXT, allowNull: true },
         interaction_version: { type: DataTypes.INTEGER, allowNull: false },
