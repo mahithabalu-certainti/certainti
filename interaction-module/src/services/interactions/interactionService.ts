@@ -74,7 +74,7 @@ export class InteractionService {
       interactionData.interaction_type_rid = intType || "";
       if(intLevel === 'Account')
       {
-       return await this.createInteraction(interactionData,accountNumber,userId); 
+       return await this.createInteraction(interactionData,accountNumber,userId,intLevel); 
       }
       else
       {
@@ -113,7 +113,8 @@ export class InteractionService {
   async createInteraction(
     interactionData: ICreateInteraction,
     interactionSource: string,
-    userId: string
+    userId: string,
+    intLevel:string = 'Project'
   ): Promise<{
     statusCode: number;
     message: string;
@@ -142,7 +143,8 @@ export class InteractionService {
         await this.interactionSchemaService.createInteractions(
           accountNumber,
           interactionData,
-          transaction
+          transaction,
+          intLevel
         );
       if (interaction) {
         await this.interactionSchemaService.addInteractionItems(
