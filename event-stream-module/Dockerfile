@@ -19,5 +19,3 @@ COPY --from=build /app /app
 EXPOSE 5009
 RUN npm install ts-node
 CMD ["npx", "ts-node", "src/index.ts"]
-
-
