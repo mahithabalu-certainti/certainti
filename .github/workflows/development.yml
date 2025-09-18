@@ -478,7 +478,7 @@ jobs:
           SUPPORT_EMAIL=support@certainti.ai
           LOG_LEVEL=debug
           NODE_ENV=DEVELOPMENT
-          TRIGGER_AI_URL=https://platform-demo.certainti.ai/thinkrd365_triggerai
+          TRIGGER_AI_URL=${{ secrets.DEVELOPMENT_TRIGGER_AI_URL}
           NODE_ENV_DB_PREFIX="D001-"
           INTERACTION_URL="https://thinkrd365-development.certainti.ai/ext/interaction"
           KAFKA_BROKER=${{ secrets.DEVELOPMENT_KAFKA_BROKER }}
@@ -749,7 +749,7 @@ jobs:
           SUPPORT_EMAIL=support@certainti.ai
           LOG_LEVEL=debug
           NODE_ENV=DEVELOPMENT
-          TRIGGER_AI_URL=https://platform-demo.certainti.ai/thinkrd365_triggerai
+          TRIGGER_AI_URL=${{ secrets.DEVELOPMENT_TRIGGER_AI_URL}
           NODE_ENV_DB_PREFIX="D001-"
           INTERACTION_URL="https://thinkrd365-development.certainti.ai/ext/interaction"
           KAFKA_BROKER=${{ secrets.DEVELOPMENT_KAFKA_BROKER }}
