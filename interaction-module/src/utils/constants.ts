@@ -321,9 +321,27 @@ export const rawQueries = {
     return `
     SELECT rid, project_rid FROM ${schemaName}.project_fiscal WHERE account_rid = '${accountRid}' and status_rid='${status_rid}'`;
   },
-  updateQreInfo(rid: string, schemaName: string, qrePercent: number) {
+  updateQreInfo(rid: string, schemaName: string, qrePercent: number, data: any) {
     return `
-    UPDATE ${schemaName}.project_fiscal SET rd_percent_potenial = ${qrePercent} WHERE rid = '${rid}'`;
+      UPDATE ${schemaName}.project_fiscal
+      SET
+        rd_percent_potential_ai = ${qrePercent},
+        rd_percent_potential_ai_updated = ${qrePercent},
+        rd_percent_final = ${data.netQre},
+        qre_final = ${data.qreFinalCost},
+        qre_fte = ${data.qreFteCost},
+        qre_subcon = ${data.qreSubconCost},
+        qre_nonlabor = ${data.qreNonlaborCost}
+      WHERE rid = '${rid}'
+    `;
+  },
+  updateQreInfoLocked(rid: string, schemaName: string, qrePercent: number) {
+    return `
+      UPDATE ${schemaName}.project_fiscal
+      SET
+        rd_percent_potential_ai_updated = ${qrePercent}
+      WHERE rid = '${rid}'
+    `;
   },
   updateAIProcessedFlag(
     rid: string,
@@ -342,9 +360,24 @@ export const rawQueries = {
     return `
     UPDATE ${schemaName}.attachments SET is_ai_processed = ${isAiProcessed} WHERE attach_to = '${rid}'`;
   },
-  updateQreInfoSummary(rid: string, qrePercent: number) {
+  updateQreInfoSummary(rid: string, qrePercent: number, data: any) {
     return `
-    UPDATE ${MAIN_SCHEMA_NAME}.project_fiscal_summary SET rd_percent_potenial = ${qrePercent} WHERE project_fiscal_rid = '${rid}'`;
+    UPDATE ${MAIN_SCHEMA_NAME}.project_fiscal_summary 
+    SET 
+      rd_percent_potential_ai = ${qrePercent},
+      rd_percent_potential_ai_updated = ${qrePercent},
+      rd_percent_final = ${data.netQre},
+      qre_final = ${data.qreFinalCost},
+      qre_fte = ${data.qreFteCost},
+      qre_subcon = ${data.qreSubconCost},
+      qre_nonlabor = ${data.qreNonlaborCost}
+    WHERE project_fiscal_rid = '${rid}'`;
+  },
+  updateQreInfoSummarLocked(rid: string, qrePercent: number) {
+    return `
+    UPDATE ${MAIN_SCHEMA_NAME}.project_fiscal_summary 
+    SET rd_percent_potential_ai_updated = ${qrePercent}
+    WHERE project_fiscal_rid = '${rid}'`;
   },
   fetchAccountInfo(rid: string) {
     return `
@@ -389,6 +422,18 @@ export const rawQueries = {
       WHERE lower(entity_type) = 'project'
         AND include_in_communication IS true
         AND entity_rid = '${projectFiscalRid}'
+        AND status_rid = '${statusRid}'
+    ) AS recipient_available
+  `;
+  },
+  isEmailRecipientAvailableFrAccount(accountRid: string, schemaName: string, statusRid: string) {
+    return `
+    SELECT EXISTS (
+      SELECT 1
+      FROM ${schemaName}.key_contact_details
+      WHERE lower(entity_type) = 'account'
+        AND interaction_cc_recipient IS true
+        AND entity_rid = '${accountRid}'
         AND status_rid = '${statusRid}'
     ) AS recipient_available
   `;
@@ -521,6 +566,10 @@ export const rawQueries = {
     let ids = statusIds.map((d: any) => `'${d}'`);
     return `
     SELECT rid, status_name as name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid IN (${ids})`;
+  },
+  fetchProjectFiscal(projectFiscalId: string, schemaName: string) {
+    return `
+    SELECT * FROM ${schemaName}.project_fiscal WHERE rid = '${projectFiscalId}'`;
   },
   GET_ACCOUNT_ACCESS: `
 (

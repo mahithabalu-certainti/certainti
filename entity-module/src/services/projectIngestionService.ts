@@ -1796,8 +1796,6 @@ class ProjectIngestionService {
     }
       projectData = await Project.findAll({
         where: whereProject,
-        // offset,
-        // limit,
         subQuery: false,
         order: fullOrder,
         attributes: {

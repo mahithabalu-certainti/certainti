@@ -5232,8 +5232,6 @@ export class ProjectResourceSchemaService {
         : order;
 
     let projectResource = await ProjectResource.findAll({
-      // offset,
-      // limit,
       order: dbOrder,
       where: {
         ...whereFilters,
