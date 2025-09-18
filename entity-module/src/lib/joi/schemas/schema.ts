@@ -2366,6 +2366,7 @@ const createProjectTaskSchema = Joi.object({
   
   comments: Joi.string().max(2000).optional().allow("").allow(null),
   user_preference: Joi.string().max(2000).optional().allow("").allow(null),
+  project_resource_rid: Joi.string().pattern(uuidRegex).required(),
 });
 
 const updateProjectTaskSchema = Joi.object({
@@ -2450,6 +2451,7 @@ const updateProjectTaskSchema = Joi.object({
   
   comments: Joi.string().max(2000).optional().allow("").allow(null),
   user_preference : Joi.string().max(2000).optional().allow("").allow(null),
+  project_resource_rid: Joi.string().pattern(uuidRegex).required(),
 });
 
 const listResourceCostSchemaForFinancialHighlights = Joi.object({
@@ -2716,6 +2718,12 @@ const updateProjectResourceStatus = Joi.object({
     }),
 });
 
+const updateQreAdjutmentSchema = Joi.object({
+  rid: Joi.string().pattern(uuidRegex).required(),
+  accountId: Joi.string().pattern(uuidRegex).required(),
+  rd_percent_potential_ai: Joi.number().required()
+});
+
 export {
   listResourceSkillSchema,
   updateResourceSkillSchema,
@@ -2758,5 +2766,6 @@ export {
   exportImportedAccountLevelProjects,
   exportImportedAccountLevelResources,
   exportImportedAccountLevelProjectTasks,
-  updateProjectResourceStatus
+  updateProjectResourceStatus,
+  updateQreAdjutmentSchema
 };

@@ -6,16 +6,19 @@ import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries, STATUS_MESSAGE } from "../uti
 import { setPrjFiscalData, setProject, setProjectFiscalSummary } from "../utils/helpers";
 import ProjectIngestionService from "./projectIngestionService";
 import { IUpdateProject } from "../utils/types";
+import { ProjectService } from "./projectService";
 
 const services = Configurations.getInstance().getServices();
 const projectService = services.projectServices;
 
 class ProjectGraphQlServices {
     private projectIngestion: ProjectIngestionService;
+    private projectService: ProjectService;
     private logger: Logger;
     constructor(logger: Logger) {
         this.logger = logger;
         this.projectIngestion = new ProjectIngestionService(this.logger);
+        this.projectService = new ProjectService(this.logger);
     }
 
     async inLineEditProject (data : any) {
@@ -326,6 +329,25 @@ class ProjectGraphQlServices {
             }
             }
         }
+    }
+
+    async updateProjectQreAdjustment(data : any){
+       const result = await this.projectService.updateQrePercentAdjustment(data, data.userId);
+       if(result.statusCode === HttpStatus.SUCCESS){
+        const projectDetails = await this.projectService.projectById(data.account_rid,data.rid);
+        if(projectDetails.statusCode === HttpStatus.SUCCESS){
+            return {
+                statusCode : HttpStatus.SUCCESS,
+                statusMessage : STATUS_MESSAGE.projectUpdateSuccess,
+                data: projectDetails.data?.project
+            }
+        }
+       }else{
+        return {
+            statusCode : HttpStatus.BAD_REQUEST,
+            statusMessage : result.errorMessage,
+        }
+       }
     }
 }
 

@@ -69,7 +69,8 @@ export default class ImportGraphqlServices {
     sortBy: string,
     account_rid: string,
     filters: Record<string, any>,
-    fiscal_year: number
+    fiscal_year: number,
+    search : string
   ) {
     const orgSequelize = await this.getOrgSequelize();
     const mainSequelize = await this.getMainDbSequelize();
@@ -96,7 +97,8 @@ export default class ImportGraphqlServices {
         filters,
         schemaName,
         disablePagination,
-        fiscal_year
+        fiscal_year,
+        search
       )
     );
     if (result[0].length > 0) {

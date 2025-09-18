@@ -39,5 +39,10 @@ routes.put(
   checkUserStatusMiddleware("projects_task_view_edit"),
   controller.projectTaskController.anomalyStatusUpdate
 )
+routes.post(
+  "/resourceCodes",
+  checkUserStatusMiddleware("NA"),
+  controller.projectTaskController.fetchReCodeForPrjTask
+)
 
 export default routes;

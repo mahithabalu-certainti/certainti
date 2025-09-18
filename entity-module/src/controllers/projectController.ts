@@ -13,6 +13,7 @@ import {
   exportListResourceSchema,
   listResourceSchema,
   updateProjectSchema,
+  updateQreAdjutmentSchema,
 } from "../lib/joi/schemas/schema";
 import configurations from "../config/config";
 
