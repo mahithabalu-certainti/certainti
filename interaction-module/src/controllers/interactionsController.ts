@@ -979,6 +979,7 @@ async function exportAllInteractions (req : Request, res : Response) {
       const finalStructuredData = result.data.interactions.length < 1 ? [] : result.data.interactions.map((d: any) => {
         let resultMap: { [key: string]: any } = {
           "r_number": d.r_number,
+          "interaction_level_name":d.interaction_level_name,
           "project_code": d.project_code,
           "interaction_age": d.interaction_age,
           "fiscal_year": d.fiscal_year,
@@ -1343,62 +1344,6 @@ async function sendInteraction(req: Request, res: Response): Promise<void> {
   }
 }
 
-async function sendAccountInteraction(req: Request, res: Response): Promise<void> {
-  const methodName = "Send account interaction";
-  try {
-    console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
-    const value = await validateRequest(req, sendAccountInteractionSchema, res);
-    const userId = req.headers["x-user-id"] as string;
-    if (!userId) {
-      errorLog(methodName, "User ID is required in headers");
-      handleErrorResponse(
-        res,
-        HttpStatus.BAD_REQUEST,
-        HttpStatus.BAD_REQUEST_MESSAGE,
-        "User ID is required in headers"
-      );
-      return;
-    }
-    if (!value) {
-      errorLog(methodName, "Request body is empty");
-      return;
-    }
-     const interaction = await interactionService.sendAccountInteraction(
-       value.account_rid,
-       value.account_interaction_rid,
-       value.projects,
-       userId,
-     );
-    console.log(
-      `[${methodName}] Service response:`,
-      JSON.stringify(interaction)
-    );
-    if (interaction.statusCode === HttpStatus.SUCCESS) {
-      successLog(methodName);
-      handleSuccessResponse(res, interaction.data);
-      return;
-    } else {
-      errorLog(methodName, interaction.errorMessage);
-      handleErrorResponse(
-        res,
-        HttpStatus.BAD_REQUEST,
-        HttpStatus.BAD_REQUEST_MESSAGE,
-        interaction.errorMessage
-      );
-      return;
-    }
-  } catch (err) {
-    const error = err as Error;
-    errorLog(methodName, error.message);
-    handleErrorResponse(
-      res,
-      HttpStatus.BAD_REQUEST,
-      HttpStatus.BAD_REQUEST_MESSAGE,
-      error.message
-    );
-    return;
-  }
-}
 async function uploadAttachmentToAzure(req: Request, res: Response): Promise<void> {
   const methodName = "Upload attachment to Azure";
   try {
@@ -1931,6 +1876,5 @@ export default {
   getTechnicalSummaryDetailsById,
   updateTechSummaryContext,
   exportTechnicalSummary,
-  sendAccountInteraction,
   updateAccountInteraction
 };

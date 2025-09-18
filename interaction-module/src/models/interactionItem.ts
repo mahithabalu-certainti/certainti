@@ -12,10 +12,10 @@ export interface InteractionItemAttributes {
   account_rid: string;
   project_rid: string;
   fiscal_year: number;
-  project_fiscal_rid: string;
+  project_fiscal_rid?: string;
   interaction_rid?: string;
   account_interaction_rid?: string;
-  type?: string;
+  interaction_level_rid: string;
   question_seq_num?: string;
   is_mandatory: boolean;
   question: string;
@@ -42,10 +42,9 @@ export class InteractionItem
   public account_rid!: string;
   public project_rid!: string;
   public fiscal_year!: number;
-  public project_fiscal_rid!: string;
+  public project_fiscal_rid?: string;
   public interaction_rid?: string;
-  public account_interaction_rid?: string;
-  public type?: string;
+  public interaction_level_rid!: string;
   public question_seq_num?: string;
   public is_mandatory!: boolean;
   public question!: string;
@@ -83,8 +82,7 @@ export class InteractionItem
         fiscal_year: { type: DataTypes.INTEGER, allowNull: true },
         project_fiscal_rid: { type: DataTypes.STRING(50), allowNull: true },
         interaction_rid: { type: DataTypes.STRING(50), allowNull: true },
-        account_interaction_rid: { type: DataTypes.STRING(50), allowNull: true },
-        type: { type: DataTypes.STRING(20), allowNull: true },
+        interaction_level_rid: { type: DataTypes.STRING(20), allowNull: true },
         question_seq_num: { type: DataTypes.STRING(50), allowNull: true },
         is_mandatory: { type: DataTypes.BOOLEAN, allowNull: true },
         question: { type: DataTypes.TEXT, allowNull: true },

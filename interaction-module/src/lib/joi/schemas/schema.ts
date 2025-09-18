@@ -9,7 +9,6 @@ const createInteractionSchema = Joi.object({
   project_fiscal_rid: Joi.string().pattern(uuidRegex).required(),
   fiscal_year: Joi.number().integer().min(1900).max(2100).required(),
   status_rid: Joi.string().required(),
-  parent_interaction_rid: Joi.string().allow(null, ""),
   questions: Joi.array()
     .items(
       Joi.object({
@@ -25,7 +24,17 @@ const createInteractionSchema = Joi.object({
 
 const createAccountInteractionSchema = Joi.object({
   account_rid: Joi.string().pattern(uuidRegex).required(),
-
+  interaction_level_rid: Joi.string().pattern(uuidRegex).required(),
+  trigger_send: Joi.boolean().optional().default(false),
+  projects: Joi.array()
+    .items(
+      Joi.object({
+        project_rid: Joi.string().pattern(uuidRegex).required(),
+        project_fiscal_rid: Joi.string().pattern(uuidRegex).required(),
+        fiscal_year: Joi.number().integer().min(1900).max(2100).required(),
+      })
+    )
+    .optional(),
   status_rid: Joi.string().required(),
   questions: Joi.array()
     .items(
@@ -82,10 +91,7 @@ const sendInteractionSchema = Joi.object({
 
 const sendAccountInteractionSchema = Joi.object({
   account_rid: Joi.string().pattern(uuidRegex).required(),
-  account_interaction_rid: Joi.array()
-    .items(Joi.string())
-    .min(1)
-    .required(),
+  type:Joi.string().valid("Account","Project").optional().default("Account"),
   projects: Joi.array()
   .items(
     Joi.object({
