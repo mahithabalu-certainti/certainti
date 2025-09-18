@@ -2071,7 +2071,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     }
 
     const interactionLevel = await this.mainDbSequelize.query(
-      `Select rid, interaction_level_name from ${MAIN_SCHEMA_NAME}.interaction_level WHERE status = 'active' order by interaction_level_name ASC`,
+      rawQueries.fetchAllInteractionLevels(),
       {
         type: "SELECT",
       }
