@@ -1,8 +1,5 @@
 import { costDisplay } from '../../../common-utils';
 
-interface ProjectResponse {
-  project: projectDetails;
-}
 export interface projectDetails {
   rid: string;
   r_number: string;
@@ -139,10 +136,16 @@ export interface projectDetails {
   modified_name: string;
 
   industry_rid_name?: string;
+}
 
-  ai_estimated_qre?: string;
-  adjustment_factor?: string;
-  net_qre?: string;
+export interface ProjectQreAdjustmentResponse {
+  rd_percent_potential_ai: string | null;
+  rd_percent_adjustment: string | null;
+  rd_percent_final: string | null;
+  qre_fte: string | null;
+  qre_subcon: string | null;
+  qre_nonlabor: string | null;
+  qre_final: string | null;
 }
 
 interface DisplayColumn {
@@ -158,12 +161,12 @@ interface DisplayColumn {
 }
 
 export const transformProjectData = (
-  data: ProjectResponse
+  project: projectDetails
 ): DisplayColumn[] => {
-  const project = data?.project || data;
   const status = project?.status_name?.toLowerCase() || 'active';
   const currencySymbol = project?.currency_symbol;
-  const adjustmentFactor = project?.adjustment_factor;
+  const aiEstimatedQre = project?.rd_percent_potential_ai;
+  const adjustmentFactor = project?.rd_percent_adjustment;
 
   return [
     {
@@ -184,10 +187,8 @@ export const transformProjectData = (
             : '-',
         },
         {
-          label: 'AI-estimated QRE',
-          value: project?.ai_estimated_qre
-            ? `${project.ai_estimated_qre}%`
-            : '-',
+          label: 'AI-Estimated QRE',
+          value: aiEstimatedQre ? `${aiEstimatedQre}%` : '-',
         },
       ],
     },
@@ -211,7 +212,7 @@ export const transformProjectData = (
           label: 'Adjustment Factor',
           key: 'adjustment_factor',
           value: adjustmentFactor ? `${adjustmentFactor}%` : '',
-          editable: true,
+          editable: aiEstimatedQre ? true : false,
         },
       ],
     },
@@ -230,7 +231,9 @@ export const transformProjectData = (
         },
         {
           label: 'Net QRE',
-          value: project?.net_qre ? `${project?.net_qre}%` : '-',
+          value: project?.rd_percent_final
+            ? `${project.rd_percent_final}%`
+            : '-',
         },
       ],
     },
@@ -269,4 +272,22 @@ export const transformProjectData = (
       ],
     },
   ];
+};
+
+export const mergeAdjustmentResponse = (
+  project: projectDetails,
+  adjustmentResponse: ProjectQreAdjustmentResponse
+) => {
+  if (!adjustmentResponse) return project;
+
+  return {
+    ...project,
+    rd_percent_potential_ai: adjustmentResponse.rd_percent_potential_ai,
+    rd_percent_adjustment: adjustmentResponse.rd_percent_adjustment,
+    rd_percent_final: adjustmentResponse.rd_percent_final,
+    qre_fte: adjustmentResponse.qre_fte,
+    qre_subcon: adjustmentResponse.qre_subcon,
+    qre_nonlabor: adjustmentResponse.qre_nonlabor,
+    qre_final: adjustmentResponse.qre_final,
+  };
 };

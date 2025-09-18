@@ -310,7 +310,7 @@ export const ProjectInfoSection: React.FC<ProjectInfoSectionProps> = ({
                           text={String(item.value)}
                           className={`font-medium text-[14px] text-[#2D3E4F] ${item.className}`}
                         >
-                          {renderValue(item, item.value)}
+                          {renderValue(item, item.value) || '-'}
                         </TruncateWithTooltip>
                       )}
                     </Grid>

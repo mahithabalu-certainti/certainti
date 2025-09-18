@@ -25,7 +25,11 @@ import {
   ConfigIcon,
 } from '../../../../assets';
 import { useProjectDetail, ProjectTriggerAI } from '../../../services/project';
-import { transformProjectData } from '../utils';
+import {
+  mergeAdjustmentResponse,
+  projectDetails,
+  transformProjectData,
+} from '../utils';
 import ProjectDetailsData from './details/project-data';
 import {
   NewProjectData,
@@ -71,6 +75,9 @@ import { exportTechnicalSummary } from '../../../services/technical-summary/tech
 import { BUTTON_STYLES } from '../../../../admin/pages/manage-user-detail/styles';
 import { useToast } from '../../../../hooks';
 import { ProjectInfoSection } from './project-info-section';
+import { resourceClient } from '../../../../api/graphql/clients/client';
+import { UPDATE_QRE_ADJUSTMENT } from '../../../../api/graphql/queries/project-query';
+import { useMutation } from '@apollo/client';
 
 export const ProjectDetails = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -177,6 +184,10 @@ export const ProjectDetails = () => {
     projectID || ''
   );
 
+  const [updateQreAdjustment] = useMutation(UPDATE_QRE_ADJUSTMENT, {
+    client: resourceClient,
+  });
+
   const accountInActive =
     data?.data?.project?.account_status?.toLowerCase() !== 'active';
   const projectInActive =
@@ -184,7 +195,7 @@ export const ProjectDetails = () => {
   useEffect(() => {
     if (data?.data) {
       const project = data.data.project;
-      setProjectDetails(transformProjectData(data.data));
+      setProjectDetails(transformProjectData(project));
       setProjectData(project);
       handleGetFiscalYear(project?.fiscal_year, {
         startDate: project?.fiscal_start_date || '',
@@ -193,11 +204,29 @@ export const ProjectDetails = () => {
     }
   }, [data]);
 
-  const handleAdjustmentFactorChange = async (newValue: string) => {
-    await new Promise((resolve) => setTimeout(resolve, 3000));
-    console.log('Adjustment factor changed', newValue);
-  };
+  const handleAdjustmentFactor = async (newValue: string) => {
+    const payload = {
+      account_rid: accountID,
+      rid: projectID,
+      rd_percent_potential_ai: Number(newValue),
+    };
+    try {
+      const res = await updateQreAdjustment({
+        variables: { data: payload },
+      });
+      const result = res.data?.updateQreAdjustment?.data;
+      const updatedProject = mergeAdjustmentResponse(
+        projectData as unknown as projectDetails,
+        result
+      );
 
+      setProjectData(updatedProject as unknown as NewProjectData);
+      setProjectDetails(transformProjectData(updatedProject as projectDetails));
+    } catch (err) {
+      console.log(err);
+    }
+  };
+  console.log(projectDetails);
   const handleGetFiscalYear = (
     year: string,
     accountFiscalDates: FiscalDates
@@ -731,7 +760,7 @@ export const ProjectDetails = () => {
       <ProjectInfoSection
         columns={projectDetails}
         loading={isLoading}
-        onAdjustmentFactorChange={handleAdjustmentFactorChange}
+        onAdjustmentFactorChange={handleAdjustmentFactor}
       />
       <div className='flex flex-row flex-1 w-full'>
         <div

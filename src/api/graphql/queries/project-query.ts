@@ -276,3 +276,30 @@ export const UPDATE_PROJECT_TASK = gql`
     }
   }
 `;
+
+export const UPDATE_QRE_ADJUSTMENT = gql`
+  mutation UpdateQreAdjustment($data: QreAdjustmentInput!) {
+    updateQreAdjustment(data: $data) {
+      statusCode
+      statusCodeValue
+      statusMessage
+      data {
+        rid
+        r_number
+        eid
+        created_datetime
+        modified_datetime
+        created_by
+        modified_by
+        project_code
+        rd_percent_potential_ai
+        rd_percent_adjustment
+        rd_percent_final
+        qre_fte
+        qre_subcon
+        qre_nonlabor
+        qre_final
+      }
+    }
+  }
+`;

@@ -490,7 +490,9 @@ const Interactions: React.FC<InteractionsProps> = ({
       disabled:
         (sendInteraction
           ? selectedTableId.length === 0
-          : selectedRows.length === 0) || accountInActive,
+          : selectedRows.length === 0) ||
+        accountInActive ||
+        !accountDetails?.accountDetails?.is_send_interaction,
       onClick: () => {
         if (sendInteraction) {
           setSendModalOpen(true);
