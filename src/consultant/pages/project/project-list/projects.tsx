@@ -280,7 +280,6 @@ export const Projects: React.FC = () => {
             initialSearchText={searchText}
             onSearch={(value) => {
               setSearchText(value);
-              console.log('Search triggered for:', value);
             }}
             placeholder='Search'
             disabled={false}
@@ -348,6 +347,7 @@ export const Projects: React.FC = () => {
           dropdownOptions={dropdownOptions}
           setColumnAnchorEl={setColumnAnchorEl}
           columnAnchorEl={columnAnchorEl}
+          searchValue={searchText}
         />
       </div>
     </div>
