@@ -2604,19 +2604,44 @@ private async createInteractionTable(
     );
   }
 
-  async fetchAccountDetails(account_number: string, account_rid: string) {
+  async fetchAccountDetails(account_number: string, account_rid: string, parentAccountId: string) {
     const schemaName = `trd365_${account_number.replace(/\D/g, "")}`;
     try {
       const query = `
         SELECT * FROM "${schemaName}".account_details WHERE account_rid = :account_rid
       `;
 
+      const parentAccountQuery = `
+        SELECT * FROM "${schemaName}".account_details WHERE account_rid = :account_rid
+      `;
+
       const sequelize = await initOrgSequelize();
 
-      const users = await sequelize.query(query, {
+      const users: any = await sequelize.query(query, {
         replacements: { account_rid },
         type: "SELECT",
       });
+
+      const fetchParentAccount: any = await sequelize.query(parentAccountQuery, {
+        replacements: { account_rid: parentAccountId },
+        type: "SELECT",
+      });
+
+      if(fetchParentAccount && fetchParentAccount.length > 0){
+        const parentDetails = fetchParentAccount[0];
+        
+        const isSubscriptionCreated = Boolean(
+          parentDetails.subscription_created &&
+          parentDetails.tenant_id &&
+          parentDetails.client_id &&
+          parentDetails.client_secret
+        );
+      
+        if (Array.isArray(users) && users.length > 0) {
+          users[0].is_send_interaction = isSubscriptionCreated;
+        }
+      }
+
       return users;
     } catch (err) {
       console.log("Errr ", err);
