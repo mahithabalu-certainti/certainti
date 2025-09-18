@@ -562,7 +562,8 @@ export interface IProjectResourceService {
     limit: number,
     filters: Record<string, string>,
     sortBy: string,
-    sortOrder: string
+    sortOrder: string,
+    search : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -576,7 +577,8 @@ export interface IProjectResourceService {
     filters: Record<string, string>,
     sortBy: string,
     sortOrder: string,
-    userId: string
+    userId: string,
+    search : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -614,7 +616,8 @@ export interface IImportListGraphqlServices {
     sortBy: string,
     account_rid: string,
     filters: any,
-    fiscal_year: number
+    fiscal_year: number,
+    search : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -804,6 +807,7 @@ export interface IProjectTaskIngestionService {
     message: string;
     data?: { projectTask: any };
   }>
+  listResourceCodeForProjectTask(data : any) : Promise<any>
 }
 export interface IProjectTaskService {
   listProjectTasks(

@@ -407,7 +407,7 @@ export interface ICreateProjectTask {
   created_by: string;
   modified_by?: string;
   status_rid : string;
-  project_resource_rid? : string
+  project_resource_rid : string
 }
 
 export interface IUpdateProjectTask {
@@ -428,7 +428,7 @@ export interface IUpdateProjectTask {
   created_by: string;
   modified_by?: string;
   status_rid : string
-  project_resource_rid? : string
+  project_resource_rid : string
 }
 
 export interface IAnomalyStatus {

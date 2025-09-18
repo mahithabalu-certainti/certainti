@@ -582,7 +582,7 @@ export class ResourceService {
     const searchCondition = {
       [Op.or]: [
         { resource_name: { [Op.iLike]: `%${search}%` } },
-        { r_number: { [Op.iLike]: `%${search}%` } },
+        { resource_code: { [Op.iLike]: `%${search}%` } },
       ],
     };
 
