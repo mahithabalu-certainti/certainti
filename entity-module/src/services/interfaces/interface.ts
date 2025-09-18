@@ -616,7 +616,8 @@ export interface IImportListGraphqlServices {
     sortBy: string,
     account_rid: string,
     filters: any,
-    fiscal_year: number
+    fiscal_year: number,
+    search : string
   ): Promise<{
     statusCode: number;
     message: string;
