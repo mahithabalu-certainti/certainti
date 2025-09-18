@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { LeftArrowIcon, NewFilterIcon, UserIcon } from '../../../../assets';
+import { NewFilterIcon, UserIcon } from '../../../../assets';
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { ManageAccountTable } from './table';
 import { ProjectListParams } from '../../../../consultant/types/project';
