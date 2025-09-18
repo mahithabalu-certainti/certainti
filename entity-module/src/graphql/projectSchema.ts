@@ -184,12 +184,36 @@ type projectNewResponse {
     ProjectFiscal : [ProjectFiscalDetails]
 }
 
+type projectQreAdjustmentResponse {
+    rid: String
+    r_number: String
+    eid: String
+    created_datetime: Date
+    modified_datetime: Date
+    created_by: String
+    modified_by: String
+    project_code: String
+    rd_percent_potential_ai: String
+    rd_percent_adjustment: String
+    rd_percent_final: String
+    qre_fte: String
+    qre_subcon: String
+    qre_nonlabor: String
+    qre_final: String
+}
 
 type UpdateProjectResponse {
     statusCode : Int,
     statusCodeValue : String,
     statusMessage : String,
     data : projectNewResponse
+}
+
+type UpdateProjectQreResponse {
+    statusCode : Int,
+    statusCodeValue : String,
+    statusMessage : String,
+    data : projectQreAdjustmentResponse
 }
 
 input updateInlineProject {
@@ -214,7 +238,14 @@ input updateInlineProject {
     global_fiscal_year : Int!
 }
 
+input QreAdjustmentInput {
+  account_rid : String!,
+  rid: String!
+  rd_percent_potential_ai: Float!    
+} 
+
 type Mutation {
     updateSpecificProjectDetails (data : updateInlineProject) : UpdateProjectResponse
+    updateQreAdjustment(data: QreAdjustmentInput!): UpdateProjectQreResponse
 }
 `

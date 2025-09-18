@@ -1524,13 +1524,16 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       );
       const response: InteractionDetailsResponse = {
         interaction_rid: rid,
+        r_number: r_number ?? "",
         project_name: metainfo?.project_name ?? "",
+        account_name : metainfo?.account_name ?? "",
+        account_rnumber : metainfo?.account_rnumber ?? "",
         project_code: metainfo?.project_code ?? "",
+        project_rnumber : metainfo?.project_rnumber ?? "",
         account_rid,
         project_rid,
         fiscal_year: metainfo?.fiscal_year ?? "",
         project_fiscal_rid,
-        r_number: r_number ?? "",
         interaction_type: interaction_type_rid ?? "",
         interaction_type_name: metainfo?.interaction_type_name ?? "",
         status: status_rid ?? "",
@@ -1792,12 +1795,16 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       const [emailInfoResult]: any = await this.orgDbSequelize.query(rawQueries.isEmailRecipientAvailable(interactionDetails?.dataValues?.project_fiscal_rid, schemaName, activeStatus?.rid));
       hasEmailRecipient = emailInfoResult[0]?.recipient_available ?? false;
               }
+      const accountDetails : any = await this.mainDbSequelize.query(rawQueries.fetchAccountRnumber(interactionDetails.dataValues.account_rid))
       return {
         interaction_type_name: interaction_type?.interaction_type_name || null,
         interaction_status_name: interaction_status?.status_name || null,
         project_code: project_info?.project_code || null,
         project_name: project_info?.project_name || null,
+        project_rnumber : project_info?.r_number || null,
         fiscal_year: project_info?.fiscal_year || null,
+        account_name : accountDetails[0][0].account_name,
+        account_rnumber : accountDetails[0][0].r_number,
         hasEmailRecipient:hasEmailRecipient
       };
 
@@ -3166,6 +3173,29 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       throw new Error("Error updating QRE percent: " + (err as Error).message);
     }
   }
+   async fetchAccountInfo(accountRid: string, accountNumber: string) {
+    try {
+      if (!this.orgDbSequelize) {
+        this.orgDbSequelize = await this.interactionModelService.getSequelize();
+      }
+      const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+        /\D/g,
+        ""
+      )}`;
+
+      const [accountInfo]: any[] = await this.orgDbSequelize.query(
+        rawQueries.fetchAccountDetailsInfo(accountRid, schemaName),
+        { type: "SELECT" }
+      );
+
+      return accountInfo;
+    } catch (err) {
+      throw new Error("Error fetching account info: " + (err as Error).message);
+    }
+  }
+   
+
+  
   async updateAIProcessed(
     accountNumber: string,
     projectFiscalRid: string,
@@ -3530,6 +3560,15 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       is_interaction_followup : data?.is_interaction_followup || false,
     })
     return insertedData
+  }
+
+  async createAutoSendInteractionEntry(accountNumber: string, interaction_rid: string, project_fiscal_rid: string, email_info: any) {
+    const { AutoSendInteractionAudit } = await this.interactionModelService.getModels(accountNumber);
+    const createdEntry = await AutoSendInteractionAudit.create({
+      project_fiscal_rid: project_fiscal_rid,
+      
+    });
+    return createdEntry;
   }
 
   async updateEmailSendFlag (interaction_rid : string,project_fiscal_rid:string) {

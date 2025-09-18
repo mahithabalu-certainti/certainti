@@ -5390,6 +5390,8 @@ export class ProjectResourceSchemaService {
       qre_final: "QRE",
       status_rid: "Status",
       description: "Comments",
+      project_resource_role: "Project Resource Role",
+      r_number: "Project Resource ID"
       // "r_number": "Project Resource ID",
     };
     let exportData = projectResource.map((resource: any) => {
@@ -5402,13 +5404,14 @@ export class ProjectResourceSchemaService {
         fiscal_year: resource.fiscal_year || "-",
         resource_type_rid: resource?.resource_type_name || "-",
         resource_role: resource.resource_role || "-",
+        project_resource_role: resource.project_resource_role || "-",
         total_hours_pro_res: resource.total_hours_pro_res || "-",
         total_cost_pro_res: resource.total_cost_pro_res || "-",
         qre_percent: resource.qre_percent || "-",
         qre_final: resource.qre_final || "-",
         status_rid: resource.status_name || "-",
         description: resource.description || "-",
-        // "r_number": resource.project_resource_code || "-",
+        r_number: resource.r_number || "-",
       };
       for (const [field, value] of Object.entries(resultMap)) {
         if (allowedFieldSet.has(field)) {

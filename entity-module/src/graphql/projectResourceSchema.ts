@@ -50,6 +50,7 @@ export const projectResourceSchema = gql`
     status_name: String
     resource_type_name: String
     assigned_skill_role: String
+    project_resource_role: String
   }
 
   type ProjectRessourceResponse {
@@ -72,6 +73,7 @@ export const projectResourceSchema = gql`
     total_hours_pro_res: String
     total_cost_pro_res: String
     description: String
+    project_resource_role: String
   }
 
   type Mutation {

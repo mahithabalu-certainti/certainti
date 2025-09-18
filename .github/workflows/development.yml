@@ -357,6 +357,8 @@ jobs:
           EMAIL_WEBHOOK_URL='https://development-thinkrd365-api-management.azure-api.net/interactionService/api/email/webhook'
           CLIENT_SECRET_ENCRYPTION_KEY=client-secret-encryption-key
           CLIENT_SECRET_ENCRYPTION_LENGTH=16
+          KAFKA_BROKER=${{ secrets.DEVELOPMENT_KAFKA_BROKER }}
+          KAFKA_AI_REQUEST_TRIGGER_TOPIC = "ai_assessment_request"
           EOF
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM

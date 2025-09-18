@@ -303,7 +303,7 @@ export const rawQueries = {
   },
   fetchProjectInfo(rid: string, schemaName: string) {
     return `
-    SELECT rid, project_name,project_code,r_number,fiscal_year,project_rid FROM ${schemaName}.project_fiscal WHERE rid = '${rid}'`;
+    SELECT rid, project_name,project_code,r_number,fiscal_year,project_rid,max_ai_interaction FROM ${schemaName}.project_fiscal WHERE rid = '${rid}'`;
   },
   fetchProjectsByAccount(accountRid: string, schemaName: string,status_rid:string) {
     return `
@@ -338,6 +338,11 @@ export const rawQueries = {
     return `
     SELECT rid, account_name,r_number,parent_account_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`;
   },
+   fetchAccountDetailsInfo(rid: string,schemaName: string) {
+    return `
+    SELECT rid, fiscal_start_date,fiscal_end_date FROM ${schemaName}.account_details WHERE account_rid = '${rid}'`;
+  },
+  
   fetchPreviousInteractionStatus(statusRid: string, schemaName: string) {
     return `
     SELECT old_status_rid FROM ${schemaName}.interaction_status_history WHERE new_status_rid = '${statusRid}' ORDER BY created_datetime DESC LIMIT 1`;
@@ -635,6 +640,9 @@ export const rawQueries = {
       SELECT * from ${MAIN_SCHEMA_NAME}.organization_licenses
     `;
   },
+  fetchAccountRnumber (account_rid : string) {
+    return `SELECT account_name , r_number FROM ${MAIN_SCHEMA_NAME}.account where rid = '${account_rid}'`
+  }
 };
 
 export const filterTypesForSummaryInteractions : Record<string, any> = 
