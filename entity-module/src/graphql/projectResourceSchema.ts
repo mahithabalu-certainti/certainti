@@ -24,21 +24,21 @@ export const projectResourceSchema = gql`
     designation: String
     resource_role: String
     assigned_skill_role_type_rid: String
-    total_hours_pro_res: Float
-    total_cost_pro_res: Float
+    total_hours_pro_res: String
+    total_cost_pro_res: String
     status_rid: String
     country_rid: String
     region_rid: String
     currency_rid: String
     resource_orgname: String
-    effort_project_resource_level: Float
-    cost_project_resource_level: Float
-    qre_final: Float
-    qre_percent: Float
-    salary: Float
-    bonus: Float
-    insurance: Float
-    deductions: Float
+    effort_project_resource_level: String
+    cost_project_resource_level: String
+    qre_final: String
+    qre_percent: String
+    salary: String
+    bonus: String
+    insurance: String
+    deductions: String
     description: String
     country_name: String
     country_code: String
@@ -50,6 +50,7 @@ export const projectResourceSchema = gql`
     status_name: String
     resource_type_name: String
     assigned_skill_role: String
+    project_resource_role: String
   }
 
   type ProjectRessourceResponse {
@@ -72,6 +73,7 @@ export const projectResourceSchema = gql`
     total_hours_pro_res: String
     total_cost_pro_res: String
     description: String
+    project_resource_role: String
   }
 
   type Mutation {

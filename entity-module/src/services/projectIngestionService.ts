@@ -20,7 +20,7 @@ import { ProjectHistory } from "../models/projectHistory";
 import currency from "currency.js";
 import { isValidTimezone } from "../utils/valideTimeChecker";
 import { Logger } from "winston";
-import { MAIN_SCHEMA_NAME } from "../utils/constants";
+import { MAIN_SCHEMA_NAME, rawQueries } from "../utils/constants";
 import {
   ProjectFiscalRegion,
   ProjectFiscalRegionAttributes,
@@ -31,12 +31,14 @@ import { ProjectResourceFiscal } from "../models/projectResourceFiscal";
 import { ProjectResourceFiscalRegion } from "../models/projectResourceFiscalRegion";
 import AccountDetails from "../models/accountDetails";
 import SchemaService from "./schemaService";
+import { Kafka, Producer } from "kafkajs";
 
 class ProjectIngestionService {
   private orgDbSequelize: Sequelize | null = null;
   private mainDbSequelize: Sequelize | null = null;
   keyContactService: KeyContactService;
   private logger: Logger;
+  private producer!: Producer;
 
   private modelCache: Map<
     string,
@@ -126,6 +128,12 @@ class ProjectIngestionService {
       sequelize,
       schemaName
     );
+
+    ProjectFiscalModel.hasMany(ProjectTimelineModel, {
+      foreignKey: "entity_rid",
+      sourceKey: "rid",
+      as: "ProjectTimelines",
+    });
 
     AccountFiscalModel.belongsTo(AccountDetailsModel, {
       foreignKey: "account_rid",
@@ -294,18 +302,127 @@ class ProjectIngestionService {
       ? moment.utc(projectData.project_enddate, "YYYY-MM-DD")
       : null;
 
+    const accountSettings: any = await this.fetchAccountDetailsById(accountNumber, projectData.account_id);  
+
     const baseData = ProjectMapper.mapToProjectFiscalModel(
       projectData,
       projectId,
       startDate,
       endDate,
+      accountSettings,
       userId
     );
-
-    return ProjectFiscal.create({
+    const response = await ProjectFiscal.create({
       ...baseData,
       default_metric_type: "project",
     });
+    if(accountSettings[0]?.auto_access_rd === true)
+      {
+        //console.log triger the ai
+        const req = {
+          data: [
+        {
+          account_rid: projectData.account_id,
+          project_fiscal_rid: [response.rid],
+        },
+          ],
+          type: "project",
+        };
+      await this.triggerAI(req);
+
+      }
+
+    return response;
+  }
+   private async getProducer(): Promise<Producer> {
+    if (!this.producer) {
+      const kafka = new Kafka({
+        clientId: "my-app",
+        brokers: [process.env.KAFKA_BROKER || "kafka:9092"],
+      });
+      this.producer = kafka.producer();
+      await this.producer.connect();
+    }
+    return this.producer;
+  }
+
+   async fetchValidAccountNumberById(accountId: string) {
+      try {
+        if (!this.mainDbSequelize) {
+          this.mainDbSequelize = await this.getMainSequelize();
+        }
+  
+        const [account]: any[] = await this.mainDbSequelize.query(
+          rawQueries.fetchAccountById,
+          {
+            replacements: { rid: accountId },
+            type: "SELECT",
+          }
+        );
+  
+        let accountRnumber = account?.r_number;
+  
+        if (account?.storage_type === "store_in_parent") {
+          const [accountData]: any[] = await this.mainDbSequelize.query(
+           rawQueries.fetchAccountById,
+            {
+              replacements: { rid: account?.parent_account_rid },
+              type: "SELECT",
+            }
+          );
+          accountRnumber = accountData?.r_number;
+        }
+  
+        return {
+          accountNumber: accountRnumber,
+          accountId: account?.rid,
+          accountName: account?.account_name,
+        };
+      } catch (err) {
+        throw new Error("Error fetching account : " + (err as Error).message);
+      }
+    }
+  async triggerAI(req: any) {
+    try {
+      let payload: {
+        company_id?: any;
+        input_text: string;
+        model_type: string;
+        project_id?: any;
+      } = {
+        input_text: "This is some text to be processed by the AI.",
+        model_type: "NA"
+      };
+    
+        payload.company_id = req.data[0].account_rid;
+        payload.project_id = req.data[0].project_fiscal_rid; 
+        this.logger.info(`Triggering AI with payload: ${JSON.stringify(payload)}`);
+
+      const topic = process.env.KAFKA_AI_REQUEST_TRIGGER_TOPIC || "ai_assessment_request";
+      const message = {
+        value: JSON.stringify(payload),
+      };
+      const producer = await this.getProducer();
+       const sendResult = await producer.send({
+         topic,
+         messages: [message],
+       });
+    //   Check if the message was processed successfully
+    this.logger.info(`Message sent to topic ${topic}: ${JSON.stringify(sendResult)}`);
+      return {
+        statusMessage: "AI Assessment Initiated",
+        status: "success",
+        data: null
+      };
+    } catch (error) {
+      this.logger.error("Error in triggerAI", error);
+      return {
+        statusMessage: "Failed to process AI request",
+        status: "error",
+        data: null,
+        errorMessage: error instanceof Error ? error.message : String(error)
+      };
+    }
   }
 
   async addProjectFiscalRegion(
@@ -324,11 +441,14 @@ class ProjectIngestionService {
       ? moment.utc(projectData.project_enddate, "YYYY-MM-DD")
       : null;
 
+    const accountSettings: any = this.fetchAccountDetailsById(accountNumber, projectData.account_id);
+
     const baseData = ProjectMapper.mapToProjectFiscalModel(
       projectData,
       projectId,
       startDate,
       endDate,
+      accountSettings,
       userId
     );
 
@@ -375,68 +495,23 @@ class ProjectIngestionService {
     const aggregates = await ProjectFiscal.findOne({
       attributes: [
         "project_code",
-        [
-          Sequelize.fn("SUM", Sequelize.literal("COALESCE(total_cost_prj, 0)")),
-          "total_cost_prj",
-        ],
-        [
-          Sequelize.fn(
-            "SUM",
-            Sequelize.literal("COALESCE(total_effort_prj, 0)")
-          ),
-          "total_effort_prj",
-        ],
-        [
-          Sequelize.fn("SUM", Sequelize.literal("COALESCE(total_fte_prj, 0)")),
-          "total_fte_prj",
-        ],
-        [
-          Sequelize.fn(
-            "SUM",
-            Sequelize.literal("COALESCE(total_subcon_prj, 0)")
-          ),
-          "total_subcon_prj",
-        ],
-        [
-          Sequelize.fn(
-            "SUM",
-            Sequelize.literal("COALESCE(total_effort_fte_prj, 0)")
-          ),
-          "total_effort_fte_prj",
-        ],
-        [
-          Sequelize.fn(
-            "SUM",
-            Sequelize.literal("COALESCE(total_effort_subcon_prj, 0)")
-          ),
-          "total_effort_subcon_prj",
-        ],
-        [
-          Sequelize.fn(
-            "SUM",
-            Sequelize.literal("COALESCE(total_cost_fte_prj, 0)")
-          ),
-          "total_cost_fte_prj",
-        ],
-        [
-          Sequelize.fn(
-            "SUM",
-            Sequelize.literal("COALESCE(total_cost_subcon_prj, 0)")
-          ),
-          "total_cost_subcon_prj",
-        ],
-        [
-          Sequelize.fn(
-            "SUM",
-            Sequelize.literal("COALESCE(total_cost_nonlabor_prj, 0)")
-          ),
-          "total_cost_nonlabor_prj",
-        ],
+        [Sequelize.fn("SUM", Sequelize.col("total_cost_prj")), "total_cost_prj"],
+        [Sequelize.fn("SUM", Sequelize.col("total_effort_prj")), "total_effort_prj"],
+        [Sequelize.fn("SUM", Sequelize.col("total_fte_prj")), "total_fte_prj"],
+        [Sequelize.fn("SUM", Sequelize.col("total_subcon_prj")), "total_subcon_prj"],
+        [Sequelize.fn("SUM", Sequelize.col("total_effort_fte_prj")), "total_effort_fte_prj"],
+        [Sequelize.fn("SUM", Sequelize.col("total_effort_subcon_prj")), "total_effort_subcon_prj"],
+        [Sequelize.fn("SUM", Sequelize.col("total_cost_fte_prj")), "total_cost_fte_prj"],
+        [Sequelize.fn("SUM", Sequelize.col("total_cost_subcon_prj")), "total_cost_subcon_prj"],
+        [Sequelize.fn("SUM", Sequelize.col("total_cost_nonlabor_prj")), "total_cost_nonlabor_prj"],
       ],
-      where: { project_code: projectCode, account_rid: accountId },
+      where: {
+        project_code: projectCode,
+        account_rid: accountId,
+      },
       group: ["project_code"],
       raw: true,
-    });
+    });    
 
     if (!aggregates) return;
 
@@ -609,7 +684,7 @@ class ProjectIngestionService {
   ) {
     const { ProjectSummary } = await this.getModels(accountNumber);
 
-    const { technicalConsultant, projectPointOfContact,projectPointOfContactEmail } =
+    const { technicalConsultant, projectPointOfContact,projectPointOfContactEmail,isEmailRecipient } =
       await this.keyContactService.calculateKeyContactDetails(
         keyContacts,
         this.mainDbSequelize
@@ -622,7 +697,8 @@ class ProjectIngestionService {
       endDate,
       technicalConsultant,
       projectPointOfContact,
-      projectPointOfContactEmail
+      projectPointOfContactEmail,
+      isEmailRecipient
     );
 
     return await ProjectSummary.create(summaryData);
@@ -638,7 +714,7 @@ class ProjectIngestionService {
   ) {
     const { ProjectFiscalSummary } = await this.getModels(accountNumber);
 
-    const { technicalConsultant, projectPointOfContact } =
+    const { technicalConsultant, projectPointOfContact,isEmailRecipient } =
       await this.keyContactService.calculateKeyContactDetails(
         keyContacts,
         this.mainDbSequelize
@@ -659,7 +735,9 @@ class ProjectIngestionService {
       endDate,
       technicalConsultant,
       projectPointOfContact,
-      projectFiscalId
+      isEmailRecipient,
+      projectFiscalId,
+     
     );
 
     await ProjectFiscalSummary.create(summaryData);
@@ -1448,7 +1526,7 @@ class ProjectIngestionService {
       accountNumber
     );
 
-    const { technicalConsultant, projectPointOfContact } =
+    const { technicalConsultant, projectPointOfContact, projectPointOfContactEmail, isEmailRecipient } =
       await this.keyContactService.calculateKeyContactDetails(
         projectData.key_contacts,
         this.mainDbSequelize
@@ -1466,7 +1544,9 @@ class ProjectIngestionService {
       startDate,
       endDate,
       technicalConsultant,
-      projectPointOfContact
+      projectPointOfContact,
+      projectPointOfContactEmail,
+      isEmailRecipient
     );
 
     await ProjectFiscalSummary.update(baseData, {
@@ -1515,10 +1595,13 @@ class ProjectIngestionService {
     finalMetaDataSortBy: string,
     finalMetaDataSortOrder: string,
     graphqlData: any,
-    accessibleIds: string[]
+    accessibleIds: string[],
+    apiSource: string ="project",
+    accountInteractionId: string[] = [],
+    documentRid?: string
   ) {
-    const { Project, ProjectFiscal } = await this.getModels(accountNumber);
-
+    const { Project, ProjectFiscal, ProjectTimeline } = await this.getModels(accountNumber);
+    
     const parentLevelFields = [
       "project_name",
       "industry_name",
@@ -1584,6 +1667,11 @@ class ProjectIngestionService {
     let projectData: any;
     const fullOrder: any[] = [];
     let totalCount: number = 0;
+    const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+      /\D/g,
+      ""
+    )}`;
+
     if (graphqlData.type == "graphql") {
       whereProject = {
         account_rid: accountData.rid,
@@ -1593,7 +1681,11 @@ class ProjectIngestionService {
       whereFiscal = {
         account_rid: accountData.rid,
       };
+      if (fiscalYear) {
+        whereFiscal.fiscal_year = fiscalYear;
+      }
 
+      
         projectData = await Project.findAll({
         where: whereProject,
         subQuery: false,
@@ -1608,11 +1700,30 @@ class ProjectIngestionService {
           {
             model: ProjectFiscal,
             as: "ProjectFiscal",
-            required: false,
+            required: !!documentRid,
             where: {
               account_rid: accountData.rid,
               ...whereFiscal,
+             
             },
+            include: [
+              ...(documentRid ? [{
+                model: ProjectTimeline,
+                as: "ProjectTimelines",
+                required: true,
+                where: {
+                    document_rid: documentRid,
+                },
+                attributes: [
+                  'rid',
+                  'entity_rid', // THIS IS CRUCIAL
+                  'document_rid',
+                  'event_name',
+                ]
+              }] : []),
+              // KeyContact filter-only join (no data fetched)
+              
+            ],
             attributes: {
               include: [
                 ["rid", "project_fiscal_rid"],
@@ -1665,7 +1776,7 @@ class ProjectIngestionService {
       } else {
         if (field === "created_datetime") {
           fullOrder.push([
-            Sequelize.literal(`"Project"."project_code" ${nullsHandled}`),
+            Sequelize.literal(`"Project"."project_code" ASC NULLS LAST`),
           ]);
         } else {
           fullOrder.push([
@@ -1695,22 +1806,57 @@ class ProjectIngestionService {
           {
             model: ProjectFiscal,
             as: "ProjectFiscal",
-            required: false,
+            required: !!documentRid,
             where: {
               account_rid: accountData.rid,
               ...whereFiscal,
+              ...(apiSource === "interactionCount"  ? { rid: accountInteractionId } : {}),
             },
-            attributes: {
-              include: [
-                ["rid", "project_fiscal_rid"],
-                ["total_fte_prj", "total_fte"],
-                ["total_effort_prj", "total_effort"],
-                ["total_cost_prj", "total_cost"],
-                ["total_cost_fte_prj", "total_cost_fte"],
-                ["total_cost_subcon_prj", "total_cost_subcon"],
-                ["total_cost_nonlabor_prj", "total_cost_nonlabor"],
-              ],
-            },
+            include: documentRid ? [{
+          model: ProjectTimeline,
+          as: "ProjectTimelines",
+          required: true,
+          where: {
+              document_rid: documentRid,
+          },
+          attributes: [
+            'rid',
+            'entity_rid', // THIS IS CRUCIAL
+                  'document_rid',
+                  'event_name',
+                ]
+        }] : [],
+        attributes: {
+          include: [
+            [Sequelize.col("rid"), "project_fiscal_rid"],
+            [Sequelize.col("total_fte_prj"), "total_fte"],
+            [Sequelize.col("total_effort_prj"), "total_effort"],
+            [Sequelize.col("total_cost_prj"), "total_cost"],
+            [Sequelize.col("total_cost_fte_prj"), "total_cost_fte"],
+            [Sequelize.col("total_cost_subcon_prj"), "total_cost_subcon"],
+            [Sequelize.col("total_cost_nonlabor_prj"), "total_cost_nonlabor"],
+            ...(apiSource === "interaction"
+              ? [
+                  [
+                    Sequelize.literal(`EXISTS (
+                      SELECT 1 FROM "${schemaName}"."interactions" i 
+                      WHERE i.project_fiscal_rid = "ProjectFiscal"."rid"
+                        AND i.account_interaction_rid IN (${accountInteractionId.map((id: string) => `'${id}'`).join(",")})
+                    )`),
+                    "isInteractionMapped"
+                  ] as [any, string],
+                  [
+                    Sequelize.literal(`EXISTS (
+                      SELECT 1 FROM "${schemaName}"."key_contact_details" kc
+                      WHERE kc.entity_rid = "ProjectFiscal"."rid"
+                        AND kc.include_in_communication = true
+                    )`),
+                    "isKeyContactIncluded"
+                  ] as [any, string]
+                ]
+              : []),
+          ] as (string | [string | ReturnType<typeof Sequelize.fn> | ReturnType<typeof Sequelize.col> | ReturnType<typeof Sequelize.literal>, string])[],
+        },
           },
         ],
       });
@@ -1728,16 +1874,28 @@ class ProjectIngestionService {
         {
           model: ProjectFiscal,
           as: "ProjectFiscal",
-          required: false,
+          required: !!documentRid,
           where: {
             account_rid: accountData.rid,
             ...whereFiscal,
+              ...(apiSource === "interactionCount"  ? { rid: accountInteractionId } : {}),
+              ...(apiSource === "interaction"
+          ? {
+              [Op.and]: [
+                literal(`EXISTS (
+            SELECT 1 FROM "${schemaName}"."key_contact_details" kc
+            WHERE kc.entity_rid = "ProjectFiscal"."rid"
+              AND kc.include_in_communication = true
+                )`)
+              ]
+            }
+          : {}),
           },
         },
       ],
       distinct: true,
     });
-
+    
     if (this.mainDbSequelize) {
       let projectData = await this.enrichKeyContactsManually(
         projects,
@@ -1805,9 +1963,10 @@ class ProjectIngestionService {
     finalMetaDataSortOrder: string,
     timezone: string,
     userId: string,
-    accessibleIds: string[]
+    accessibleIds: string[],
+    documentRid?: string
   ) {
-    const { Project, ProjectFiscal } = await this.getModels(accountNumber);
+    const { Project, ProjectFiscal, ProjectTimeline } = await this.getModels(accountNumber);
 
     const parentLevelFields = [
       "project_name",
@@ -1923,11 +2082,25 @@ class ProjectIngestionService {
         {
           model: ProjectFiscal,
           as: "ProjectFiscal",
-          required: false,
+          required: !!documentRid,
           where: {
             account_rid: accountData.rid,
             ...whereFiscal,
           },
+          include: documentRid ? [{
+                model: ProjectTimeline,
+                as: "ProjectTimelines",
+                required: true,
+                where: {
+                    document_rid: documentRid,
+                },
+                attributes: [
+                  'rid',
+                  'entity_rid', // THIS IS CRUCIAL
+                  'document_rid',
+                  'event_name',
+                ]
+            }] : [],
           attributes: [
             "rid",
             "r_number",

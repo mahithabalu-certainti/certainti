@@ -9,7 +9,8 @@ import { BlobServiceClient } from '@azure/storage-blob';
 import { getSecret } from "./azureSecrets";
 import { Attachment } from "../models/attachments";
 import { ProjectTask } from "../models/projectTask";
-import SchemaService from "../services/schemaService";
+import crypto from 'crypto';
+
 function getLogger() {
   return configurations.getInstance().getLogger();
 }
@@ -86,9 +87,11 @@ export function errorLog(methodName: string, errorMessage?: string): void {
 
 export function handleSuccessResponse(
   res: Response,
-  data: any
+  data: any,
+  message?: string,
+  statusCode?: number
 ) {
-  return successResponse(res, HttpStatus.SUCCESS, HttpStatus.SUCCESS_MESSAGE, data, HttpStatus.SUCCESS_NOTIFICATION);
+  return successResponse(res, statusCode ? statusCode : HttpStatus.SUCCESS, message ? message : HttpStatus.SUCCESS_MESSAGE, data, HttpStatus.SUCCESS_NOTIFICATION);
 }
 
 export function handleErrorResponse(
@@ -139,6 +142,12 @@ export const validateProjectRequest = (data : any) => {
   if(!data.account_rid) return STATUS_MESSAGE.accountIdMissing
   if(!data.project_rid) return STATUS_MESSAGE.projectIdMissing
   if(!data.project_fiscal_rid) return STATUS_MESSAGE.fiscalIdMissing
+}
+
+export const validateProjectQreUpdateRequest = (data : any) => {
+  if(!data.account_rid) return STATUS_MESSAGE.accountIdMissing
+  if(!data.rid) return STATUS_MESSAGE.projectIdMissing
+  if(!data.rd_percent_potential_ai) return STATUS_MESSAGE.rdpercentPotentialmissing
 }
 
 export const validateResourceRequest = (data : any) => {
@@ -935,6 +944,21 @@ export const setInlineForProjectTask = (dbData : ProjectTask, requestData : any)
     dataStorage = `comments = '${newData.comments.replace(/'/g, "''")}'`
     newDataArray.push(dataStorage)
   }
+  if(requestData.start_date != undefined) {
+    newData.start_date = requestData.start_date != dbData.start_date ? requestData.start_date : dbData.start_date
+    dataStorage = newData.start_date == '' ? `start_date = null` : `start_date = '${newData.start_date}'`
+    newDataArray.push(dataStorage)
+  }
+  if(requestData.end_date != undefined) {
+    newData.end_date = requestData.end_date != dbData.end_date ? requestData.end_date : dbData.end_date
+    dataStorage = newData.end_date == '' ? `end_date = null` : `end_date = '${newData.end_date}'`
+    newDataArray.push(dataStorage)
+  }
+  if(requestData.status_rid) {
+    newData.status_rid = requestData.status_rid != dbData.status_rid ? requestData.status_rid : dbData.status_rid
+    dataStorage = `status_rid = '${newData.status_rid}'`
+    newDataArray.push(dataStorage)
+  }  
 
   if(newDataArray.length < 1) {
     return {
@@ -958,6 +982,24 @@ export const validateAccountSettingRequest = (data : any) => {
   if(typeof data.autosend_interaction !== 'boolean') return STATUS_MESSAGE.autoSendMissing
   if(typeof data.max_ai_interactions !== 'number') return STATUS_MESSAGE.maxAiMissing
   if(typeof data.auto_access_rd !== 'boolean') return STATUS_MESSAGE.autoAccessmentMissing
+
+  if (data.support_email) {
+    if (typeof data.support_email !== 'string' || !data.support_email.trim()) {
+      return STATUS_MESSAGE.emailMissing;
+    }
+  
+    if (!data.tenant_id || typeof data.tenant_id !== 'string' || data.tenant_id.length !== 36) {
+      return STATUS_MESSAGE.tenantIdInvalidLength;
+    }
+  
+    if (!data.client_id || typeof data.client_id !== 'string' || data.client_id.length !== 36) {
+      return STATUS_MESSAGE.clientIdInvalidLength;
+    }
+  
+    if (!data.client_secret || typeof data.client_secret !== 'string' || data.client_secret.length < 20) {
+      return STATUS_MESSAGE.clientSecretTooShort;
+    }
+  }  
 }
 
 export const validateProjectSettingRequest = (data : any) => {
@@ -966,4 +1008,23 @@ export const validateProjectSettingRequest = (data : any) => {
   if(!data.project_fiscal_rid) return STATUS_MESSAGE.fiscalIdMissing
   if(typeof data.autosend_interaction !== 'boolean') return STATUS_MESSAGE.autoSendMissing
   if(typeof data.max_ai_interactions !== 'number') return STATUS_MESSAGE.maxAiMissing
+}
+
+export async function encryptClientSecret(text: string): Promise<string> {
+  const encryptClientSecret = await getSecret(process.env.CLIENT_SECRET_ENCRYPTION_KEY!);
+
+  if(!encryptClientSecret){
+    throw new Error("Invalid Client Encryption Key")
+  }
+
+  const ENCRYPTION_KEY = encryptClientSecret!;
+  const IV_LENGTH = parseInt(process.env.CLIENT_SECRET_ENCRYPTION_LENGTH || '16', 10);
+
+  const iv = crypto.randomBytes(IV_LENGTH);
+  const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(ENCRYPTION_KEY), iv);
+  let encrypted = cipher.update(text);
+
+  encrypted = Buffer.concat([encrypted, cipher.final()]);
+
+  return iv.toString('hex') + ':' + encrypted.toString('hex');
 }

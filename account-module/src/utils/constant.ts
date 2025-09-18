@@ -11,6 +11,7 @@ export const HttpStatus = {
   FORBIDDEN_MESSAGE: "Forbidden",
   FAILED_MESSAGE: "Failed",
   UNAUTHORIZED_MESSAGE: "Unauthorized",
+  
 };
 export const MAIN_SCHEMA_NAME = "trd365"
 
@@ -239,3 +240,9 @@ export const DEFAULT_ACCOUNT_DETAILS = {
   fiscalEnd : "03/31",
   maxAiInteraction : 5
 }
+
+export const primaryKeyContacts = {
+  "finance_lead": "finance_lead",
+  "finance_executive": "finance_executive",
+  "professional_services_consultant": "professional_services_consultant"
+};

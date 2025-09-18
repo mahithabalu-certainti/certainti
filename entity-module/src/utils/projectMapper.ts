@@ -66,6 +66,7 @@ export class ProjectMapper {
     projectId: string,
     startDate: moment.Moment | null,
     endDate: moment.Moment | null,
+    accountSettings: any,
     userId: string
   ) {
     return {
@@ -90,7 +91,7 @@ export class ProjectMapper {
 
       max_ai_interaction: DEFAULT_PROJECT_DETAILS.maxAiInteraction,
       expiry_duration: null,
-      auto_access_rd: data.auto_access_rd ?? false,
+      auto_access_rd: accountSettings[0]?.auto_access_rd ?? data.auto_access_rd ?? false,
 
       status_rid: data.status_rid,
       project_startdate: startDate?.toDate() || null,
@@ -102,7 +103,7 @@ export class ProjectMapper {
       project_classification_rid: data.project_classification_rid || null,
       project_classification_other: data.project_classification_other || null,
 
-      auto_send_ai_interaction: data.auto_send_ai_interaction,
+      auto_send_ai_interaction: accountSettings[0]?.autosend_interaction ?? data.auto_send_ai_interaction,
 
       total_fte_prj: data.total_fte || null,
       total_subcon_prj: data.total_subcon || null,
@@ -195,7 +196,8 @@ export class ProjectMapper {
     endDate: moment.Moment | null,
     technicalConsultant: string | null,
     projectPointOfContact: string | null,
-    projectPointOfContactEmail: string | null
+    projectPointOfContactEmail: string | null,
+    isEmailRecipient:boolean
   ) {
     return {
       project_code: projectData.project_code,
@@ -256,6 +258,7 @@ export class ProjectMapper {
       project_point_of_contact: projectPointOfContact,
       technical_point_of_contact: technicalConsultant,
       project_point_of_contact_email: projectPointOfContactEmail,
+      is_interaction_recipient:isEmailRecipient
     };
   }
 
@@ -267,6 +270,7 @@ export class ProjectMapper {
     endDate: moment.Moment | null,
     technicalConsultant: string | null,
     projectPointOfContact: string | null,
+    isEmailRecipient:boolean, 
     projectFiscalId: string
   ) {
     return {
@@ -385,6 +389,7 @@ export class ProjectMapper {
 
       project_point_of_contact: projectPointOfContact,
       technical_point_of_contact: technicalConsultant,
+      is_interaction_recipient: isEmailRecipient
     };
   }
 
@@ -498,7 +503,9 @@ export class ProjectMapper {
     startDate: moment.Moment | null,
     endDate: moment.Moment | null,
     technicalConsultant: string | null,
-    projectPointOfContact: string | null
+    projectPointOfContact: string | null,
+    projectPointOfContactEmail: string | null,
+    isEmailRecipient: boolean | false
   ) {
     return {
       project_code: projectData.project_code,
@@ -548,6 +555,8 @@ export class ProjectMapper {
 
       technical_point_of_contact: technicalConsultant,
       project_point_of_contact: projectPointOfContact,
+      project_point_of_contact_email: projectPointOfContactEmail,
+      is_interaction_recipient: isEmailRecipient,
     };
   }
 }
@@ -595,6 +604,9 @@ export class ProjectResourceMapper {
         projectResource.cost_project_resource_level || null,
 
       description: projectResource.description || null,
+      project_resource_role : projectResource.project_resource_role,
+      total_hours_from_tasks: projectResource.total_hours_from_tasks || null,
+      total_cost_from_tasks: projectResource.total_cost_from_tasks || null,
     };
   }
 
@@ -831,6 +843,9 @@ export class ProjectResourceMapper {
       insurance: projectResource.insurance || null,
 
       description: projectResource.description || null,
+      project_resource_role : projectResource.project_resource_role,
+      total_hours_from_tasks: projectResource.total_hours_from_tasks || null,
+      total_cost_from_tasks: projectResource.total_cost_from_tasks || null,
     };
   }
 
@@ -906,6 +921,8 @@ export class ProjectTaskMapper {
       currency_rid: projectTask.currency_rid || null,
 
       comments: projectTask.comments || null,
+      status_rid : projectTask.status_rid,
+      project_resource_rid : projectTask.project_resource_rid
     };
   }
   static mapToProjectTaskUpdate(
@@ -936,6 +953,8 @@ export class ProjectTaskMapper {
       currency_rid: projectTask.currency_rid || null,
 
       comments: projectTask.comments || null,
+      status_rid : projectTask.status_rid,
+      project_resource_rid : projectTask.project_resource_rid
     };
   }
 }

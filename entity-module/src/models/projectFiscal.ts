@@ -537,7 +537,7 @@ export class ProjectFiscal
       foreignKey: "account_rid",
       targetKey: "account_rid",
       as: "project_fiscal_account"
-    })
+    });
 
     return ProjectFiscal;
   }
