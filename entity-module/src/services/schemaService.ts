@@ -2780,80 +2780,83 @@ class SchemaService {
       const allProjectFields = [
         "project_code",
         "project_name",
-        "fiscal_year",
-        "account_name",
-        "industry_name_other",
-        "project_type_rid",
-        "project_client_group",
-        "project_group",
-        "classification_name",
-        "status_rid",
-        "project_point_of_contact",
-        "technical_point_of_contact",
-        "r_number",
-        "project_number",
-        "program_name",
-        "project_startdate",
-        "project_enddate",
-        "is_rd_qualified",
-        "qre",
-        "total_cost",
-        "total_effort",
-        "total_fte",
-        "total_cost_fte",
-        "total_subcon",
-        "total_cost_subcon",
-        "total_cost_nonlabor",
-        "assessment_status",
-        "comments",
-        "country_name",
-        "currency_code",
-        "region_name",
-        "financial_consultant",
-        "modified_datetime",
+        // "fiscal_year",
+        // "account_name",
+        // "industry_name_other",
+        // "project_type_rid",
+        // "project_client_group",
+        // "project_group",
+        // "classification_name",
+        // "status_rid",
+        // "project_point_of_contact",
+        // "technical_point_of_contact",
+        // "r_number",
+        // "project_number",
+        // "program_name",
+        // "project_startdate",
+        // "project_enddate",
+        // "is_rd_qualified",
+        // "qre",
+        // "total_cost",
+        // "total_effort",
+        // "total_fte",
+        // "total_cost_fte",
+        // "total_subcon",
+        // "total_cost_subcon",
+        // "total_cost_nonlabor",
+        // "assessment_status",
+        // "comments",
+        // "country_name",
+        // "currency_code",
+        // "region_name",
+        // "financial_consultant",
+        // "modified_datetime",
       ];
 
       const searchFieldAliasMap: Record<string, string> = {
-        r_number: `${tablePrefix}.r_number`,
-        comments: `${tablePrefix}.comments`,
-        region_name: "st.state_name",
-        industry_name_other: `COALESCE(ind.industry_name, ${tablePrefix}.industry_name)`,
-        status_rid: `CAST(${tablePrefix}.status_rid AS TEXT)`,
-        project_type_name: `CAST(pt.project_type_name AS TEXT)`,
-        fiscal_year: `CAST(pfs.fiscal_year AS TEXT)`,
-        is_rd_qualified: `CAST(ps.is_rd_qualified AS TEXT)`,
-        project_startdate: `CAST(${tablePrefix}.project_startdate AS TEXT)`,
-        project_enddate: `CAST(${tablePrefix}.project_enddate AS TEXT)`,
-        total_cost: `CAST(${tablePrefix}.total_cost AS TEXT)`,
-        total_effort: `CAST(${tablePrefix}.total_effort AS TEXT)`,
-        total_fte: `CAST(${tablePrefix}.total_fte AS TEXT)`,
-        total_fte_cost: `CAST(${tablePrefix}.total_cost_fte AS TEXT)`,
-        total_sub_con: `CAST(${tablePrefix}.total_subcon AS TEXT)`,
-        total_sub_con_cost: `CAST(${tablePrefix}.total_cost_subcon AS TEXT)`,
-        total_non_labor_cost: `CAST(${tablePrefix}.total_cost_nonlabor AS TEXT)`,
-        qre: `CAST(ps.qre AS TEXT)`,
+        project_code: `${tablePrefix}.project_code`,
+        project_name: `${tablePrefix}.project_name`,
+        // r_number: `${tablePrefix}.r_number`,
+        // comments: `${tablePrefix}.comments`,
+        // region_name: "st.state_name",
+        // industry_name_other: `COALESCE(ind.industry_name, ${tablePrefix}.industry_name)`,
+        // status_rid: `CAST(${tablePrefix}.status_rid AS TEXT)`,
+        // project_type_name: `CAST(pt.project_type_name AS TEXT)`,
+        // fiscal_year: `CAST(pfs.fiscal_year AS TEXT)`,
+        // is_rd_qualified: `CAST(ps.is_rd_qualified AS TEXT)`,
+        // project_startdate: `CAST(${tablePrefix}.project_startdate AS TEXT)`,
+        // project_enddate: `CAST(${tablePrefix}.project_enddate AS TEXT)`,
+        // total_cost: `CAST(${tablePrefix}.total_cost AS TEXT)`,
+        // total_effort: `CAST(${tablePrefix}.total_effort AS TEXT)`,
+        // total_fte: `CAST(${tablePrefix}.total_fte AS TEXT)`,
+        // total_fte_cost: `CAST(${tablePrefix}.total_cost_fte AS TEXT)`,
+        // total_sub_con: `CAST(${tablePrefix}.total_subcon AS TEXT)`,
+        // total_sub_con_cost: `CAST(${tablePrefix}.total_cost_subcon AS TEXT)`,
+        // total_non_labor_cost: `CAST(${tablePrefix}.total_cost_nonlabor AS TEXT)`,
+        // qre: `CAST(ps.qre AS TEXT)`,
       };
 
       const searchConditions: string[] = [];
 
       for (const field of allProjectFields) {
         const qualifiedField = searchFieldAliasMap[field] || field;
+        console.log()
         searchConditions.push(`${qualifiedField} ILIKE ?`);
         replacements.push(`%${search}%`);
       }
 
-      if (numericSearch) {
-        searchConditions.push(
-          `${tablePrefix}.total_cost = ?`,
-          `${tablePrefix}.total_effort = ?`,
-          `ps.fiscal_year = ?`
-        );
-        replacements.push(
-          parseFloat(search),
-          parseFloat(search),
-          parseFloat(search)
-        );
-      }
+      // if (numericSearch) {
+      //   searchConditions.push(
+      //     `${tablePrefix}.total_cost = ?`,
+      //     `${tablePrefix}.total_effort = ?`,
+      //     `ps.fiscal_year = ?`
+      //   );
+      //   replacements.push(
+      //     parseFloat(search),
+      //     parseFloat(search),
+      //     parseFloat(search)
+      //   );
+      // }
 
       conditions.push(`(${searchConditions.join(" OR ")})`);
     }
