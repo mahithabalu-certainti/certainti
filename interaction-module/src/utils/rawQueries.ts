@@ -128,7 +128,7 @@ export const fetchInteractionForProjectLevelQuery = (
             i.account_rid, i.project_rid, i.rid AS interaction_history, 
             i.interaction_url,i.project_fiscal_rid,
             COUNT(i.rid) OVER() AS total_records, i.interaction_age,
-            i.interaction_source_rid, i.interaction_type_rid, i.attachment_count,
+            i.interaction_source_rid, i.interaction_type_rid, i.attachment_count,i.interaction_level_rid,
             pf.project_code,pf.fiscal_year
 
             FROM
@@ -173,6 +173,7 @@ export const fetchInteractionForProjectLevelQuery = (
         'total_records', i.total_records,
         'interaction_type', i.interaction_type_rid,
         'interaction_source', i.interaction_source_rid,
+        'interaction_level', i.interaction_level_rid,
         'attachment_count', i.attachment_count,
         'project_code', i.project_code
         ) ) AS interactions

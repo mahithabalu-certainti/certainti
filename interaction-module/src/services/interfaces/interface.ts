@@ -169,17 +169,6 @@ export interface IInteractionService {
     errorMessage?: string;
     data?: { interactionResponse: any };
   }>;
-  sendAccountInteraction(
-    accountId:string,
-    account_interaction_rid:string[],
-    projects:IProject[],
-    userId: string,
-  ): Promise<{
-    statusCode: number;
-    message: string;
-    errorMessage?: string;
-    data?: { interactionResponse: any };
-  }>;
 
   
   fetchInteractionHistory(data: any): Promise<{
