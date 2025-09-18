@@ -242,7 +242,7 @@ const AssignUsers: React.FC<AssignUserProps> = ({
         hoverHighlight={false}
         tableStyle={{
           height: '100%',
-          maxHeight: 'calc(100vh - 400px)',
+          maxHeight: 'calc(100vh - 420px)',
           overflow: 'auto',
           paddingTop: '2px',
         }}

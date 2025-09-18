@@ -7,7 +7,7 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 import { ACCOUNT, PROJECT } from '../../../../routes';
-import { InfoSection, PageHeader, SideMenuPanel } from '../../../../components';
+import { PageHeader, SideMenuPanel } from '../../../../components';
 import {
   // ActivitiesIcon,
   AttachmentsSideIcon,
@@ -70,6 +70,7 @@ import { TechnicalSummary } from './technical-summary';
 import { exportTechnicalSummary } from '../../../services/technical-summary/technical-summary-service';
 import { BUTTON_STYLES } from '../../../../admin/pages/manage-user-detail/styles';
 import { useToast } from '../../../../hooks';
+import { ProjectInfoSection } from './project-info-section';
 
 export const ProjectDetails = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -81,9 +82,6 @@ export const ProjectDetails = () => {
   // const [fiscalYear, setFiscalYear] = useState<FiscalYearType | undefined>();
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [exportType, setExportType] = useState<ExportType>('attachments');
-  const [refreshProjectDetails, setRefreshProjectDetails] = useState<number>(
-    Date.now()
-  );
   const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const [interactionsParams, setInteractionsParams] =
     useState<AttachmentsListExportParams>({
@@ -165,10 +163,6 @@ export const ProjectDetails = () => {
     }
   }, [searchParams]);
 
-  const onRefreshClick = () => {
-    setRefreshProjectDetails(Date.now());
-  };
-
   const { projectid: projectID } = useParams();
   const accountID = searchParams.get('accountID') || '';
   const parent = searchParams.get('source');
@@ -178,10 +172,9 @@ export const ProjectDetails = () => {
   const interactionsView = !!interactionId || !!interactionRID;
   const technicalSummaryId = searchParams.get('technical_summary_id');
 
-  const { data, isLoading, isError } = useProjectDetail(
+  const { data, isLoading, isError, refetch } = useProjectDetail(
     accountID,
-    projectID || '',
-    refreshProjectDetails
+    projectID || ''
   );
 
   const accountInActive =
@@ -199,6 +192,11 @@ export const ProjectDetails = () => {
       });
     }
   }, [data]);
+
+  const handleAdjustmentFactorChange = async (newValue: string) => {
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+    console.log('Adjustment factor changed', newValue);
+  };
 
   const handleGetFiscalYear = (
     year: string,
@@ -551,7 +549,7 @@ export const ProjectDetails = () => {
             accountOrProjectInActive={accountInActive || projectInActive}
             setExportType={setExportType}
             setAttachmentParams={setAttachmentParams}
-            refetchProjectDetails={onRefreshClick}
+            refetchProjectDetails={refetch}
             projectFiscalYear={projectData?.fiscal_year}
           />
         );
@@ -730,11 +728,10 @@ export const ProjectDetails = () => {
           isLoading={isLoading}
         />
       </div>
-      <InfoSection
+      <ProjectInfoSection
         columns={projectDetails}
         loading={isLoading}
-        error={isError}
-        singleLineView={false}
+        onAdjustmentFactorChange={handleAdjustmentFactorChange}
       />
       <div className='flex flex-row flex-1 w-full'>
         <div
@@ -757,7 +754,7 @@ export const ProjectDetails = () => {
         </div>
         <div
           className='flex-1'
-          style={{ maxHeight: 'calc(100vh - 180px)', overflow: 'auto' }}
+          style={{ maxHeight: 'calc(100vh - 240px)', overflow: 'auto' }}
         >
           <Suspense fallback={null}>{renderContent()}</Suspense>
         </div>

@@ -220,7 +220,7 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
   const renderSkeletonItem = () => {
     return (
       <ul className='overflow-y-auto'>
-        {Array.from({ length: 12 }).map((_, index) => (
+        {Array.from({ length: 10 }).map((_, index) => (
           <li className='min-h-[32px] mb-1.5 pr-2' key={index}>
             <div
               className={`w-full flex items-center text-[14px] gap-2 text-left

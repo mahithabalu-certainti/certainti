@@ -1,4 +1,4 @@
-import { costDisplay } from "../../../common-utils";
+import { costDisplay } from '../../../common-utils';
 
 interface ProjectResponse {
   project: projectDetails;
@@ -139,20 +139,32 @@ export interface projectDetails {
   modified_name: string;
 
   industry_rid_name?: string;
+
+  ai_estimated_qre?: string;
+  adjustment_factor?: string;
+  net_qre?: string;
 }
 
 interface DisplayColumn {
   items: Array<{
     label: string;
-    value: string;
+    key?: string;
+    value: string | React.ReactNode;
     className?: string;
+    hide?: boolean;
+    editable?: boolean;
+    onSave?: (value: string) => void;
   }>;
 }
+
 export const transformProjectData = (
   data: ProjectResponse
 ): DisplayColumn[] => {
-  const project = data?.project;
-  const status = project?.status_name.toLowerCase();
+  const project = data?.project || data;
+  const status = project?.status_name?.toLowerCase() || 'active';
+  const currencySymbol = project?.currency_symbol;
+  const adjustmentFactor = project?.adjustment_factor;
+
   return [
     {
       items: [
@@ -164,10 +176,18 @@ export const transformProjectData = (
         {
           label: 'Industry',
           value: project?.industry_name || project?.industry_rid_name || '-',
-        }, 
+        },
         {
-          label: 'Project Effort (Hours)',
-          value: project?.total_effort?.toString() || '-',
+          label: 'FTE Cost',
+          value: project?.total_cost_fte
+            ? costDisplay(project.total_cost_fte, currencySymbol)
+            : '-',
+        },
+        {
+          label: 'AI-estimated QRE',
+          value: project?.ai_estimated_qre
+            ? `${project.ai_estimated_qre}%`
+            : '-',
         },
       ],
     },
@@ -180,24 +200,37 @@ export const transformProjectData = (
         {
           label: 'Business Name',
           value: project?.organistaion_name || '-',
-        }, 
+        },
         {
-          label: 'Project Cost', 
-          value: project?.total_cost ? costDisplay(project?.total_cost, project?.currency_symbol) : '-',
+          label: 'SubCon Cost',
+          value: project?.total_cost_subcon
+            ? costDisplay(project.total_cost_subcon, currencySymbol)
+            : '-',
+        },
+        {
+          label: 'Adjustment Factor',
+          key: 'adjustment_factor',
+          value: adjustmentFactor ? `${adjustmentFactor}%` : '',
+          editable: true,
         },
       ],
     },
-
     {
       items: [
-        { label: 'Account Name', value: project?.account_name },
+        { label: 'Account Name', value: project?.account_name || '-' },
         {
           label: 'Fiscal Start',
           value: project?.fiscal_start_date || '-',
-        }, 
+        },
         {
-          label: 'FTE Cost',
-          value: project?.total_cost_fte ? costDisplay(project?.total_cost_fte, project?.currency_symbol) : '-',
+          label: 'Non-Labor Cost',
+          value: project?.total_cost_nonlabor
+            ? costDisplay(project.total_cost_nonlabor, currencySymbol)
+            : '-',
+        },
+        {
+          label: 'Net QRE',
+          value: project?.net_qre ? `${project?.net_qre}%` : '-',
         },
       ],
     },
@@ -207,30 +240,31 @@ export const transformProjectData = (
           label: 'Country',
           value: `${project?.country_code || '-'}`,
         },
-         {
+        {
           label: 'Fiscal End',
           value: project?.fiscal_end_date || '-',
-        }, 
-         {
-          label: 'SubCon Cost',
-          value: project?.total_cost_subcon ? costDisplay(project?.total_cost_subcon, project?.currency_symbol) : '-',
+        },
+        {
+          label: 'Project Cost',
+          value: project?.total_cost
+            ? costDisplay(project.total_cost, currencySymbol)
+            : '-',
         },
       ],
     },
-
     {
       items: [
         {
-          label: ' Currency',
+          label: 'Currency',
           value: project?.currency_name || '-',
         },
         {
-          label: ' QRE',
-          value: project?.qre_final?.toString() || '-',
+          label: 'Project Effort (Hours)',
+          value: project?.total_effort?.toString() || '-',
         },
-         {
-          label: 'Non-Labor Cost',
-          value: project?.total_cost_nonlabor ? costDisplay(project?.total_cost_nonlabor, project?.currency_symbol) : '-',
+        {
+          label: 'QRE Cost',
+          value: costDisplay(project?.qre_final, currencySymbol),
         },
       ],
     },
