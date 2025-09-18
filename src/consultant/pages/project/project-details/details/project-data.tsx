@@ -1,8 +1,5 @@
 import { useEffect, useState } from 'react';
-import {
-  DetailsKeyContactErrorIcon,
-  ProjectsBook,
-} from '../../../../../assets';
+import { DetailsIcon, DetailsKeyContactErrorIcon } from '../../../../../assets';
 import TabPanel from './tab';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import ProjectOverview from './project-overview';
@@ -29,6 +26,8 @@ interface ProjectsDataProps {
   detailsError: boolean;
   projectDownloadIsEnable?: boolean;
   projectEditIsEnable?: boolean;
+  iconBg?: string;
+  bgType?: 'circle' | 'react';
 }
 export interface DetailsTabs {
   id: AllPermissions | AllMenus;
@@ -65,7 +64,7 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
   const [searchParams] = useSearchParams();
   const [currentPage, setCurrentPage] = useState(0);
   const [tabValue, setTabValue] = useState('');
-
+  const sourceTab = searchParams.get('source_tab');
   const isOverViewEnable = !detailsTab[0].hide;
 
   useEffect(() => {
@@ -97,6 +96,18 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
 
   const isKeyContactAvailable =
     projectDetails?.keyContact && projectDetails?.keyContact.length > 0;
+
+  const handleBackClick = () => {
+    const timesheetId = searchParams.get('timesheet_id');
+    const sourceTab = searchParams.get('source_tab');
+    const accountid = searchParams.get('accountID');
+    const newSearchParams = new URLSearchParams();
+    newSearchParams.set('list', 'timesheet');
+    if (timesheetId) newSearchParams.set('timesheet_id', timesheetId);
+    if (sourceTab) newSearchParams.set('tab', sourceTab);
+    navigate(`/account/details/${accountid}?${newSearchParams.toString()}`);
+  };
+
   const headerButtons = [
     {
       label: 'Edit',
@@ -113,6 +124,13 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
       sx: { ...BUTTON_STYLES, width: '96px', minWidth: '96px' },
       // hide: !projectDownloadIsEnable,
       hide: true,
+    },
+    {
+      label: 'Back To Timesheet',
+      variant: 'contained' as const,
+      onClick: () => handleBackClick(),
+      sx: { width: '155px', minWidth: '155px' },
+      hide: sourceTab !== 'timesheet_project',
     },
   ];
 
@@ -156,7 +174,10 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
           <ProjectOverview
             title='Projects'
             titleIcon={
-              <ProjectsBook alt='project-header-icon' className='w-6 h-6' />
+              <DetailsIcon
+                alt='project-header-icon'
+                className='[&>path]:stroke-white'
+              />
             }
             headerButtons={headerButtons}
             projectDetails={projectDetails}
@@ -164,6 +185,8 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
             detailsError={detailsError}
             isKeyContactAvailable={isKeyContactAvailable}
             permission={permission}
+            iconBg='#AF78FF'
+            bgType='circle'
           />
         )}
       </Box>

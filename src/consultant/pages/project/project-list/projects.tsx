@@ -26,10 +26,14 @@ import {
   useGetProjectType,
 } from '../../../services/project';
 import { useFetchClassification } from '../../../services/account';
-// import { Switch } from '@mui/material'; // Commented for it may use in future
+// import { Switch } from '@mui/material';
+import TextButton from '../../../../components/button/text-button';
+import { PROJECT_CREATE } from '../../../../routes';
+import { useNavigate } from 'react-router-dom';
 
 export const Projects: React.FC = () => {
-  // const [toggleEnabled, setToggleEnabled] = useState(false); // Commented for it may use in future
+  // const [toggleEnabled, setToggleEnabled] = useState(false);
+  const navigate = useNavigate();
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
   const [page, setPage] = useState<number>(1);
   const [totalCount, setTotalCount] = useState<number>(0);
@@ -43,6 +47,8 @@ export const Projects: React.FC = () => {
   const [refreshProjectsTrigger, setRefreshProjectsTrigger] =
     useState<number>();
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
+  const [columnAnchorEl, setColumnAnchorEl] =
+    React.useState<HTMLButtonElement | null>(null);
   const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   const onRefreshClick = () => {
@@ -136,6 +142,9 @@ export const Projects: React.FC = () => {
   const statusOptions = useGetStatus();
   const projectTypeOptions = useGetProjectType();
 
+  const isModalOpen = Boolean(columnAnchorEl);
+  const modalId = isModalOpen ? 'project-column-visibility-popover' : undefined;
+
   const memoizedClassification = useMemo(
     () =>
       Classification.data?.data.projectClassifications.map((data) => ({
@@ -187,19 +196,28 @@ export const Projects: React.FC = () => {
     memoizedStatus,
     projectPermissionMap
   );
+
   // Commented for it may use in future
   // const handleToggleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
   //   if (setToggleEnabled) {
   //     setToggleEnabled(event.target.checked);
   //   }
   // };
-
+  const handleNewProjectCLick = () => {
+    navigate(`${PROJECT_CREATE}?type=global`);
+  };
   const dropdownOptions = {
     classification: Classification?.data,
     projectType: projectTypeOptions?.data,
   };
 
   if (!projectIsEnable || !isProjectViewEnable) return <AccessRestricted />;
+
+  const handleColumnVisibility = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setColumnAnchorEl(event.currentTarget);
+  };
 
   return (
     <div className='flex flex-col w-full  h-full'>
@@ -221,6 +239,13 @@ export const Projects: React.FC = () => {
           </div>
         </div>
         <div className='flex gap-3 justify-center items-center'>
+          <div>
+            <TextButton
+              label='New'
+              onClick={() => handleNewProjectCLick()}
+              // sx={ ...BUTTON_STYLES, width: '48px', minWidth: '48px' }
+            />
+          </div>
           <ActionsDropdown actions={menuItems} />
           <div
             className='flex items-center justify-center border border-[#CBD6E2] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] w-[24px] h-[23px] cursor-pointer'
@@ -248,7 +273,17 @@ export const Projects: React.FC = () => {
             color='success'
           />
         </div> */}
-        <div className='relative'>
+        <div className='flex gap-1 relative'>
+          <button
+            aria-describedby={modalId}
+            className={`w-[120px] h-[24px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative border border-[#CBD6E2] px-0 py-0 normal-case ${isModalOpen ? 'bg-[#F3F3F3]' : 'bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'} hover:text-[#425A76] transition-colors duration-150`}
+            style={{
+              boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
+            }}
+            onClick={handleColumnVisibility}
+          >
+            Show/Hide Fields
+          </button>
           <button
             aria-describedby={filterId}
             className={`w-[64px] h-[26px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
@@ -258,7 +293,7 @@ export const Projects: React.FC = () => {
             <NewFilterIcon alt='filter-icon' />
             Filter
             {(appliedFilters && Object.keys(appliedFilters).length > 0) ||
-              sortFilterCount > 0 ? (
+            sortFilterCount > 0 ? (
               <div className='absolute -top-[5px] -right-2 w-4 h-4 flex items-center justify-center text-xs'>
                 <span className='absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0'></span>
                 <span className='w-4 h-4 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>
@@ -299,6 +334,8 @@ export const Projects: React.FC = () => {
           refreshProjectsTrigger={refreshProjectsTrigger}
           // toggleEnabled={toggleEnabled} // Commented for it may use in future
           dropdownOptions={dropdownOptions}
+          setColumnAnchorEl={setColumnAnchorEl}
+          columnAnchorEl={columnAnchorEl}
         />
       </div>
     </div>

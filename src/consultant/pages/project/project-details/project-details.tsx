@@ -6,6 +6,7 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom';
+import { ACCOUNT, PROJECT } from '../../../../routes';
 import { InfoSection, PageHeader, SideMenuPanel } from '../../../../components';
 import {
   // ActivitiesIcon,
@@ -23,16 +24,20 @@ import {
   TechSummaryIcon,
   ConfigIcon,
 } from '../../../../assets';
-import { useProjectDetail } from '../../../services/project';
+import { useProjectDetail, ProjectTriggerAI } from '../../../services/project';
 import { transformProjectData } from '../utils';
 import ProjectDetailsData from './details/project-data';
-import { NewProjectData } from '../../../types/project';
+import {
+  NewProjectData,
+  ProjectTriggerAIPayload,
+} from '../../../types/project';
 import {
   ExportType,
   FiscalDates,
   FormFiscalDateType,
   MenuItem,
   ProjectFinancialResourceExportParams,
+  TechnicalSummaryExportListParams,
 } from '../../../types';
 import {
   AllMenus,
@@ -55,10 +60,19 @@ import { Configuration } from './configuration';
 import { Financial } from './financial-highlights';
 import { exportFinancialResourceCost } from '../../../services/financial/financial-service';
 import { exportProjectResoure } from '../../../services/project-resources/project-resource-service';
+import { Interactions } from './interactions';
 import DetailsSectionSkeleton from '../../../../components/skeleton-component/detailsskeleton';
+import {
+  exportInteractions,
+  exportInteractionsHistory,
+} from '../../../services/interactions/interactions-service';
+import { TechnicalSummary } from './technical-summary';
+import { exportTechnicalSummary } from '../../../services/technical-summary/technical-summary-service';
+import { BUTTON_STYLES } from '../../../../admin/pages/manage-user-detail/styles';
+import { useToast } from '../../../../hooks';
 
 export const ProjectDetails = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
   const [projectDetails, setProjectDetails] = useState<any>([]);
   const defaultTab = searchParams.get('list') ?? 'projectDetails';
@@ -70,6 +84,16 @@ export const ProjectDetails = () => {
   const [refreshProjectDetails, setRefreshProjectDetails] = useState<number>(
     Date.now()
   );
+  const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const [interactionsParams, setInteractionsParams] =
+    useState<AttachmentsListExportParams>({
+      sortBy: '',
+      sortOrder: 'ASC',
+      filters: {},
+      page: 1,
+      limit: 100,
+    });
+
   const [attachmentParams, setAttachmentParams] =
     useState<AttachmentsListExportParams>({
       sortBy: 'document_name',
@@ -91,6 +115,12 @@ export const ProjectDetails = () => {
   const [projectResourceParams, setProjectResourceParams] =
     useState<AttachmentsListExportParams>({
       sortBy: 'resource_code',
+      sortOrder: 'ASC',
+      filters: {},
+    });
+  const [technicalSummaryParams, setTechnicalSummaryParams] =
+    useState<TechnicalSummaryExportListParams>({
+      sortBy: 'r_number',
       sortOrder: 'ASC',
       filters: {},
     });
@@ -142,6 +172,12 @@ export const ProjectDetails = () => {
   const { projectid: projectID } = useParams();
   const accountID = searchParams.get('accountID') || '';
   const parent = searchParams.get('source');
+  const interactionHistoryId = searchParams.get('interaction_history_id');
+  const interactionId = searchParams.get('interaction_id');
+  const interactionRID = searchParams.get('interaction_rid');
+  const interactionsView = !!interactionId || !!interactionRID;
+  const technicalSummaryId = searchParams.get('technical_summary_id');
+
   const { data, isLoading, isError } = useProjectDetail(
     accountID,
     projectID || '',
@@ -150,8 +186,8 @@ export const ProjectDetails = () => {
 
   const accountInActive =
     data?.data?.project?.account_status?.toLowerCase() !== 'active';
-  const projectInActive = data?.data?.project.status_name === 'In-Active';
-
+  const projectInActive =
+    data?.data?.project?.status_name?.toLowerCase() === 'in-active';
   useEffect(() => {
     if (data?.data) {
       const project = data.data.project;
@@ -172,9 +208,9 @@ export const ProjectDetails = () => {
     setFiscalDate(bounds);
   };
 
-  const isAttachmentViewEnable = checkPermission(
+  const isAttachmentExportEnable = checkPermission(
     permission,
-    AllPermissions.ATTACHMENT_VIEW_EDIT
+    AllPermissions.ATTACHMENT_EXPORT
   );
   const isFinancialHighlightsEnable = checkPermission(
     menus,
@@ -192,6 +228,16 @@ export const ProjectDetails = () => {
     permission,
     AllPermissions.PROJECTS_TASK_EXPORT
   );
+
+  const isInteractionsExportEnable = checkPermission(
+    permission,
+    AllPermissions.INTERACTIONS_EXPORT
+  );
+
+  const technicalSummaryExportEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECT_TECHNICAL_SUMMARY_EXPORT
+  );
   const checkExport = () => {
     const list = searchParams.get('list');
     const tab = searchParams.get('tab');
@@ -202,13 +248,17 @@ export const ProjectDetails = () => {
     }
 
     if (list === 'attachments') {
-      return !isAttachmentViewEnable;
+      return !isAttachmentExportEnable;
     } else if (list === 'projectsTask') {
       return !isTaskExportViewEnable;
     } else if (list === 'financial' && tab === 'resource_cost') {
       return !isFinancialResourceCostExportEnable;
     } else if (list === 'projectResources') {
       return !isResourceExportViewEnable;
+    } else if (list === 'interactions' && !interactionsView) {
+      return !isInteractionsExportEnable;
+    } else if (list === 'technicalSummary' && !technicalSummaryId) {
+      return !technicalSummaryExportEnable;
     } else {
       return true;
     }
@@ -232,7 +282,9 @@ export const ProjectDetails = () => {
       list !== 'attachments' &&
       list !== 'financial' &&
       list !== 'projectResources' &&
-      list !== 'projectsTask'
+      list !== 'projectsTask' &&
+      list !== 'interactions' &&
+      list !== 'technicalSummary'
     ) {
       return;
     }
@@ -265,6 +317,19 @@ export const ProjectDetails = () => {
       return;
     }
 
+    if (list === 'technicalSummary' && exportType === 'technical_summary') {
+      const technicalSummaryPayload = {
+        account_rid: accountID,
+        project_fiscal_rid: projectID,
+        timezone: systemTimezone,
+      };
+      exportTechnicalSummary({
+        ...technicalSummaryParams,
+        ...technicalSummaryPayload,
+      });
+      return;
+    }
+
     if (list === 'projectsTask' && exportType === 'projectTask') {
       const projectTaskExportPayload = {
         accountRid: accountID,
@@ -275,6 +340,39 @@ export const ProjectDetails = () => {
         ...projectTaskParams,
       });
       return;
+    }
+    if (list === 'interactions') {
+      if (interactionHistoryId) {
+        const projectInteractionHistoryExportPayload = {
+          account_rid: accountID || '',
+          interaction_rid: interactionHistoryId,
+          page: interactionsParams?.page || 1,
+          limit: interactionsParams?.limit || 100,
+          sort: interactionsParams.sortBy || 'status_name',
+          sort_by: interactionsParams?.sortOrder || 'ASC',
+          filters: interactionsParams?.filters || {},
+          timezone: systemTimezone,
+          flag: 'project',
+        };
+        exportInteractionsHistory(projectInteractionHistoryExportPayload);
+        return;
+      } else {
+        const projectInteractionExportPayload = {
+          account_rid: accountID || '',
+          project_rid: data?.data?.project?.project_rid || '',
+          project_fiscal_rid: projectID || '',
+          fiscal_year: projectData?.fiscal_year,
+          page: interactionsParams?.page || 1,
+          limit: interactionsParams?.limit || 100,
+          sort: interactionsParams?.sortBy || 'r_number',
+          sort_by: interactionsParams?.sortOrder || 'ASC',
+          filters: interactionsParams?.filters || {},
+          timezone: systemTimezone,
+          flag: 'project',
+        };
+        exportInteractions(projectInteractionExportPayload);
+        return;
+      }
     }
 
     return;
@@ -293,6 +391,21 @@ export const ProjectDetails = () => {
       hide: accountInActive || checkExport(),
     },
   ];
+  useEffect(() => {
+    const list = searchParams.get('list');
+    const source = searchParams.get('source');
+    const sourceTab = searchParams.get('source_tab');
+    const newParams = new URLSearchParams(searchParams);
+    if (list !== 'projectsTask' && source === 'timesheet') {
+      newParams.delete('source');
+      setSearchParams(newParams, { replace: true });
+    }
+    if (list !== 'projectDetails' && sourceTab === 'timesheet_project') {
+      newParams.delete('source_tab');
+      setSearchParams(newParams, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const handleEditAccount = () => {
     const projectID = projectData?.rid ?? '';
@@ -325,6 +438,33 @@ export const ProjectDetails = () => {
     }
   }, [location.state]);
 
+  const { successToast } = useToast();
+  const triggerAIMutation = ProjectTriggerAI();
+  const handleTriggerAI = () => {
+    const payload: ProjectTriggerAIPayload = {
+      data: [
+        {
+          account_rid: projectData?.account_rid || '',
+          project_fiscal_rid: projectData?.rid ? [projectData.rid] : [],
+        },
+      ],
+      type: 'project',
+    };
+    triggerAIMutation.mutate(payload, {
+      onSuccess: (res) => {
+        successToast(res.statusMessage);
+      },
+      onError: (err) => {
+        console.log(err);
+      },
+    });
+  };
+
+  const TriggerAIEnable = checkPermission(
+    permission,
+    AllPermissions.TRIGGER_AI_ASSESSMENT
+  );
+
   const renderContent = () => {
     switch (activeKey) {
       case 'financial':
@@ -338,7 +478,7 @@ export const ProjectDetails = () => {
       case 'projectDetails':
         return (
           <ProjectDetailsData
-            accountInActive={accountInActive}
+            accountInActive={accountInActive || projectInActive}
             projectDetails={{
               ...projectData!,
               attachment: data?.data?.attachment || [],
@@ -355,7 +495,11 @@ export const ProjectDetails = () => {
           <ProjectResources
             accountOrProjectInActive={accountInActive || projectInActive}
             projectID={projectID}
-            accountID={accountID}
+            accountData={{
+              accountID: accountID,
+              accountName: projectData?.account_name || '',
+              accountNumber: projectData?.account_number || '',
+            }}
             projectFiscalDate={fiscalDate}
             setExportType={setExportType}
             setAttachmentParams={setProjectResourceParams}
@@ -367,7 +511,11 @@ export const ProjectDetails = () => {
           <ProjectTask
             accountOrProjectInActive={accountInActive || projectInActive}
             projectID={projectID}
-            accountID={accountID}
+            accountData={{
+              accountID: accountID,
+              accountName: projectData?.account_name || '',
+              accountNumber: projectData?.account_number || '',
+            }}
             projectFiscalDate={fiscalDate}
             setExportType={setExportType}
             setProjectTaskParams={setProjectTaskParams}
@@ -376,9 +524,21 @@ export const ProjectDetails = () => {
         );
 
       case 'interactions':
-        return <NotFound />;
+        return (
+          <Interactions
+            accountInActive={accountInActive || projectInActive}
+            projectDetails={projectData}
+            setInteractionsParams={setInteractionsParams}
+          />
+        );
       case 'technicalSummary':
-        return <NotFound />;
+        return (
+          <TechnicalSummary
+            accountInActive={accountInActive || projectInActive}
+            setExportType={setExportType}
+            setTechnicalSummaryParams={setTechnicalSummaryParams}
+          />
+        );
       case 'cases':
         return <NotFound />;
       case 'activities':
@@ -392,6 +552,7 @@ export const ProjectDetails = () => {
             setExportType={setExportType}
             setAttachmentParams={setAttachmentParams}
             refetchProjectDetails={onRefreshClick}
+            projectFiscalYear={projectData?.fiscal_year}
           />
         );
       case 'checklists':
@@ -408,7 +569,13 @@ export const ProjectDetails = () => {
   };
 
   const goBack = () => {
-    window.history.back();
+    if (parent === 'account') {
+      navigate(`${ACCOUNT}/details/${accountID}?list=projects`);
+    } else if (parent === 'project') {
+      navigate(PROJECT);
+    } else {
+      navigate(`${ACCOUNT}/details/${accountID}?list=projects`);
+    }
   };
 
   const sideMenuItems = useMemo<MenuItem[]>(() => {
@@ -435,7 +602,7 @@ export const ProjectDetails = () => {
         icon: ResourcesIcon,
       },
       {
-        name: 'Projects Task',
+        name: 'Project Tasks',
         key: 'projectsTask',
         id: AllModules.PROJECT_TASK,
         disabled: false,
@@ -444,7 +611,7 @@ export const ProjectDetails = () => {
       {
         name: 'Interactions',
         key: 'interactions',
-        id: AllModules.PROJECT_INTERACTIONS,
+        id: AllModules.INTERACTIONS,
         disabled: false,
         icon: InteractionsIcon,
       },
@@ -535,6 +702,16 @@ export const ProjectDetails = () => {
           title={data?.data?.project?.project_code}
           totalRecords={5}
           actionItems={menuItems}
+          headerButtons={[
+            {
+              label: 'RD Assessment',
+              onClick: handleTriggerAI,
+              disabled: accountInActive,
+              loading: triggerAIMutation.isPending,
+              sx: { ...BUTTON_STYLES, width: '115px', minWidth: '115px' },
+              hide: !TriggerAIEnable,
+            },
+          ]}
           primaryButton={
             isProjectFieldsEditable
               ? {
@@ -549,13 +726,15 @@ export const ProjectDetails = () => {
           showActions={false}
           showSettings={false}
           goBack={goBack}
+          backBtnLabel='Back To Projects'
+          isLoading={isLoading}
         />
       </div>
       <InfoSection
         columns={projectDetails}
         loading={isLoading}
         error={isError}
-        singleLineView={true}
+        singleLineView={false}
       />
       <div className='flex flex-row flex-1 w-full'>
         <div
@@ -573,11 +752,12 @@ export const ProjectDetails = () => {
             showBackIcon={true}
             isCollapsed={isCollapsed}
             onToggleCollapse={() => setIsCollapsed((prev) => !prev)}
+            isLoading={isLoading}
           />
         </div>
         <div
           className='flex-1'
-          style={{ maxHeight: 'calc(100vh - 140px)', overflow: 'auto' }}
+          style={{ maxHeight: 'calc(100vh - 180px)', overflow: 'auto' }}
         >
           <Suspense fallback={null}>{renderContent()}</Suspense>
         </div>

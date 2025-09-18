@@ -20,6 +20,8 @@ interface Props {
   isGlobal?: boolean;
   className?: string;
   placeholder?: string;
+  position?: 'first' | 'last';
+  disabled?: boolean;
 }
 
 const FiscalYearDropdown = ({
@@ -29,6 +31,8 @@ const FiscalYearDropdown = ({
   onChange,
   className = '',
   placeholder = 'FY-All',
+  position,
+  disabled,
 }: Props) => {
   const currentYear = new Date().getFullYear();
   const years = fiscalYearsOptions.map((fy) => Number(fy.value));
@@ -115,9 +119,10 @@ const FiscalYearDropdown = ({
         onClick={() => setOpen((prev) => !prev)}
         className={`${open || Number(selectedYear) ? 'bg-[#FFFFFF26]' : 'bg-transparent'}
           ${className ? 'text-[#425A76] font-semibold' : 'text-white'}
-         text-[13px] font-normal w-[107px] min-w-[107px] px-3 h-[25px] flex justify-center items-center gap-1.5 cursor-pointer focus:outline-none rounded-[2px] hover:bg-[#FFFFFF33] hover:rounded-xs whitespace-nowrap`}
+         text-[13px] font-normal w-[107px] min-w-[107px] px-3 h-[25px] flex justify-center items-center gap-1.5 cursor-pointer focus:outline-none rounded-[2px] hover:bg-[#FFFFFF33] hover:rounded-xs whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed`}
         aria-haspopup='true'
         aria-expanded={open}
+        disabled={disabled}
       >
         {selectedLabel}
         <ArrowDownIcon
@@ -135,7 +140,7 @@ const FiscalYearDropdown = ({
       <Suspense fallback={null}>
         {open && (
           <div
-            className='absolute right-0 mt-1 w-[261px] min-w-[261px] max-w-[261px] p-5 bg-white border border-[#CBD6E2] rounded-[8px] h-[204px]'
+            className={`absolute right-0 mt-1 w-[261px] min-w-[261px] max-w-[261px] p-5 bg-white border border-[#CBD6E2] rounded-[8px] h-[204px] ${position === 'first' ? 'left-0' : 'right-0'}`}
             style={{ borderColor: '#CBD6E2' }}
           >
             <div className='flex items-center justify-between text-[#425A76]'>

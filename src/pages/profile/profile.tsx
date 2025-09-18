@@ -6,7 +6,7 @@ import { checkPermission } from '../../common-utils';
 import { AccessRestricted } from '../../components/account-restricted';
 import { UserDetailComponent } from '../../components';
 import TextButton from '../../components/button/text-button';
-import { AccountHomeIcon, RealatedListDetailsIcon } from '../../assets';
+import { AccountHomeIcon, DetailsIcon } from '../../assets';
 import { useManageUserDetail } from '../../admin/service/manage-user-detail/manage-user-detail-service';
 
 export const Profile: React.FC = () => {
@@ -64,8 +64,11 @@ export const Profile: React.FC = () => {
       <div className='flex flex-col gap-0 border border-[#CBD6E2] rounded-[2px]'>
         <div className='flex items-center justify-between gap-4 h-[38px] py-1 px-2'>
           <div className='flex items-center gap-2'>
-            <div>
-              <RealatedListDetailsIcon alt='details' className='w-6 h-6' />
+            <div className='w-[24px] h-[24px] flex items-center justify-center rounded-full bg-[#D7E5FF]'>
+              <DetailsIcon
+                alt='details'
+                className='[&>path]:stroke-[#294F98] w-[14px] h-[14px]'
+              />
             </div>
             <div className='text-[13px] text-[#2D3E4F] font-semibold'>
               Details

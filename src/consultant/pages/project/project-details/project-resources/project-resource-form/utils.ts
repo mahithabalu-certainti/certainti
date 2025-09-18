@@ -22,6 +22,7 @@ export const projectResourcesPayloadData = (
       ? formData.skill_role_others
       : null,
     status_rid: formData.status_rid || null,
+    project_resource_role: formData.project_resource_role || null,
     country_rid: formData.country_rid || null,
     region_rid: formData.region_rid || null,
     currency_rid: formData.currency_rid || null,

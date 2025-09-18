@@ -64,6 +64,8 @@ export interface AttachmentsListExportParams {
   attachmentLevel?: string;
   entityId?: string;
   accountRid?: string;
+  page?: number;
+  limit?: number;
 }
 
 export interface AttachmentUploadPayload {

@@ -10,7 +10,6 @@ import DetailsSection, {
   DetailItem,
 } from '../../../../../../components/details-section/details';
 import SectionHeader from '../../../../../../components/details-section/section-header';
-import { ImportDetailsIcon } from '../../../../../../assets';
 import {
   applyHidePermission,
   formatDateToYYYYMMDDWithTime,
@@ -19,6 +18,7 @@ import { FailureType, ImportEntityType } from '../../../../../types/imports';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
 import { AllPermissions } from '../../../../../../common-service';
+import { ImportsIcon } from '../../../../../../assets';
 
 interface ImportDetailsProps {
   handleBackClick: () => void;
@@ -187,6 +187,14 @@ const ImportDetails: React.FC<ImportDetailsProps> = ({ handleBackClick }) => {
       key: 'imported_by',
     },
   ];
+  const headerButtons = [
+    {
+      label: 'Back To Imports',
+      variant: 'contained' as const,
+      onClick: () => handleBackClick(),
+      sx: { width: '125px', minWidth: '125px' },
+    },
+  ];
 
   const basicDetails = applyHidePermission(basicInfo, permissionMap);
   const auditDetails = applyHidePermission(auditInfo, permissionMap);
@@ -196,16 +204,16 @@ const ImportDetails: React.FC<ImportDetailsProps> = ({ handleBackClick }) => {
       <SectionHeader
         title='Imports'
         subValue={data?.r_number}
+        className='rounded-tl-[2px] h-[40px] rounded-tr-[2px]'
+        buttons={headerButtons}
         titleIcon={
-          <ImportDetailsIcon
-            alt='import-header-icon'
-            className='bg-[#FF73C3] h-[23px] w-[23px] p-1 rounded-[2px]'
+          <ImportsIcon
+            className='[&>path]:stroke-white'
+            alt='Imports-header-icon'
           />
         }
-        className='rounded-tl-[2px] h-[40px] rounded-tr-[2px]'
-        showBackArrow={true}
-        onBackClick={handleBackClick}
-        buttons={[]}
+        iconBg='#ff73c3'
+        bgType='react'
       />
       {isLoading ? (
         <DetailsSectionSkeleton className='p-0 m-0' />

@@ -35,6 +35,7 @@ export const mockAccountDetails: AccountFieldsApiResponse = {
       business_details: 'something about the account',
       modified_datetime: '2024-03-19T10:30:00Z',
       created_datetime: '2024-03-18T15:45:00Z',
+      organisation_name: 'wipro',
       status_rid: '',
     },
     accountDetails: {
@@ -58,6 +59,10 @@ export const mockAccountDetails: AccountFieldsApiResponse = {
       project_manager: 'Karthick',
       auto_access_rd: false,
       data_storage: Storagetype.SeperateDB,
+      client_secret: '4e5f9d9a-d94f-4605-8144-ea2b16a2672d',
+      client_id: 'e0bd9c7f-4793-4a48-90b8-dc43009bb857',
+      tenant_id: '9a2f5c3e-1b74-4b91-bfc1-cb9a8e7725e7',
+      support_email: 'https://example.com',
       keyContacts: [
         {
           key_contact_id: 'KEY002',

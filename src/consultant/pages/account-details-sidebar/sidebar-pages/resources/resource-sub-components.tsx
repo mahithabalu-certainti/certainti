@@ -54,6 +54,10 @@ interface SubcomponentProps {
   refreshAttachments?: number;
   resourceInActive: boolean;
   setResourceInActive: (value: boolean) => void;
+  columnAnchorEl: HTMLButtonElement | null;
+  setColumnAnchorEl: React.Dispatch<
+    React.SetStateAction<HTMLButtonElement | null>
+  >;
 }
 
 const ResourceSubComponents: React.FC<SubcomponentProps> = ({
@@ -90,6 +94,8 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
   refreshAttachments,
   resourceInActive,
   setResourceInActive,
+  columnAnchorEl,
+  setColumnAnchorEl,
 }) => {
   // Permission Mangement
   const isResourceViewEnable = checkPermission(
@@ -258,6 +264,8 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
                   ?.resource_type_name as ResourceTypeEnum
               }
               resourceInActive={resourceInActive}
+              setColumnAnchorEl={setColumnAnchorEl}
+              columnAnchorEl={columnAnchorEl}
             />
           </Box>
         )}
@@ -280,6 +288,8 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
               refreshSkillTrigger={refreshSkillTrigger}
               setCount={setCount}
               resourceInActive={resourceInActive}
+              setColumnAnchorEl={setColumnAnchorEl}
+              columnAnchorEl={columnAnchorEl}
             />
           </Box>
         )}
@@ -299,6 +309,8 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
               refreshAttachments={refreshAttachments}
               setCount={setCount}
               resourceInActive={resourceInActive}
+              setColumnAnchorEl={setColumnAnchorEl}
+              columnAnchorEl={columnAnchorEl}
             />
           </Box>
         )}

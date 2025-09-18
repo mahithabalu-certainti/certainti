@@ -129,3 +129,11 @@ export const USER_DETAIL_URL = getUserDetailUrl(
 export const getUserProfileListURL = (): string => {
   return `/api/user/list/profiles`;
 };
+
+export const getConfigureSettingUrl = () => {
+  return `/api/admin_settings/list`;
+};
+
+export const updateCOnfigureSettingUrl = () => {
+  return `/api/admin_settings/update`;
+};

@@ -16,6 +16,10 @@ interface UserTabProps {
   >;
   disabled?: boolean;
   hide?: boolean;
+  columnAnchorEl: HTMLButtonElement | null;
+  setColumnAnchorEl: React.Dispatch<
+    React.SetStateAction<HTMLButtonElement | null>
+  >;
 }
 
 const UserTab: React.FC<UserTabProps> = ({
@@ -25,6 +29,8 @@ const UserTab: React.FC<UserTabProps> = ({
   setAppliedFilters,
   disabled,
   hide,
+  columnAnchorEl,
+  setColumnAnchorEl,
 }) => {
   const [searchParams] = useSearchParams();
   const accountList = searchParams.get('accountList');
@@ -43,6 +49,8 @@ const UserTab: React.FC<UserTabProps> = ({
                     setAppliedFilters={setAppliedFilters}
                     disabled={disabled}
                     hide={hide}
+                    setColumnAnchorEl={setColumnAnchorEl}
+                    columnAnchorEl={columnAnchorEl}
                   />
                 ),
               },
@@ -54,6 +62,8 @@ const UserTab: React.FC<UserTabProps> = ({
                     setAppliedFilters={setAppliedFilters}
                     disabled={disabled}
                     hide={hide}
+                    setColumnAnchorEl={setColumnAnchorEl}
+                    columnAnchorEl={columnAnchorEl}
                   />
                 ),
               },

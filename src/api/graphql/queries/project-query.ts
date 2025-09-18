@@ -71,6 +71,7 @@ export const UPDATE_PROJECT = gql`
           modified_by
           created_datetime
           modified_datetime
+          currency_symbol
           project_rid
           project_code
           industry_rid
@@ -220,6 +221,9 @@ export const UPDATE_PROJECT_RESOURCE = gql`
         resource_type_name
         assigned_skill_role
         project_fiscal_rid
+        status_rid
+        status_name
+        project_resource_role
       }
     }
   }
@@ -249,7 +253,7 @@ export const UPDATE_PROJECT_TASK = gql`
         resource_type_rid
         resource_type_name
         designation
-        resource_role
+        project_resource_role
         status_rid
         country_rid
         country_name
@@ -266,6 +270,8 @@ export const UPDATE_PROJECT_TASK = gql`
         created_by
         modified_by
         rid
+        status_rid
+        status_name
       }
     }
   }

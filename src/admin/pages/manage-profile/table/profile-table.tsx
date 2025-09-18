@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ListTable } from '../../../../components/table';
+import { ListTable, ManageColumnsPopover } from '../../../../components/table';
 import {
   FilterCondition,
   Profiles,
@@ -14,6 +14,8 @@ import {
   ActionItem,
   CellEditData,
   FieldChangeValue,
+  ListTableColumn,
+  ShowHideTableColumn,
 } from '../../../../components/table/types';
 import { DeleteIcon, EditIcon } from '../../../../assets';
 import { useMutation } from '@apollo/client';
@@ -32,6 +34,10 @@ interface IUserTableProps {
   setTableParams: React.Dispatch<React.SetStateAction<UserListParams>>;
   onSelectionChange: (selectedIds: string[]) => void;
   refreshProfileTrigger?: number;
+  columnAnchorEl: HTMLButtonElement | null;
+  setColumnAnchorEl: React.Dispatch<
+    React.SetStateAction<HTMLButtonElement | null>
+  >;
 }
 
 export const ProfileTable: React.FC<IUserTableProps> = ({
@@ -42,6 +48,8 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
   setTableParams,
   onSelectionChange,
   refreshProfileTrigger,
+  columnAnchorEl,
+  setColumnAnchorEl,
 }) => {
   const navigate = useNavigate();
   const { errorToast } = useToast();
@@ -200,36 +208,76 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
 
   const profileColumns = getProfileColumns(permissionMap);
 
+  const RestrictedColumns = [
+    {
+      id: 'profile_name',
+      canHide: false,
+      canDrag: false,
+    },
+  ];
+
+  const [visibleColumns, setVisibleColumns] = useState<
+    ListTableColumn<ManageProfileList>[]
+  >(profileColumns.filter((col) => !col.hide));
+
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    setVisibleColumns(
+      updatedColumns.filter(
+        (col) => !col.hide
+      ) as ListTableColumn<ManageProfileList>[]
+    );
+  };
+
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
+  };
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const modalId = isModalOpen
+    ? 'interaction-column-visibility-popover'
+    : undefined;
+
   return (
-    <ListTable
-      data={(profileList || []) as ManageProfileList[]}
-      columns={profileColumns}
-      getRowId={getRowId}
-      hoverHighlight={false}
-      tableStyle={{
-        height: '100%',
-        maxHeight: 'calc(100vh - 195px)',
-        overflow: 'auto',
-      }}
-      stickyHeader={true}
-      stickyColumnsCount={2}
-      selectable={true}
-      onSelectionChange={onSelectionChange}
-      actionWidth={60}
-      actionDisplayMode='dropdown'
-      actionMenuItems={actionButtons}
-      loading={isLoading}
-      error={isError ? 'Failed to load profiles' : undefined}
-      rowsPerPageOptions={[25, 50, 100]}
-      rowsPerPage={tableParams.limit}
-      currentPage={(tableParams.page ?? 1) - 1}
-      totalItems={totalItems}
-      onPageChange={handlePageChange}
-      onRowsPerPageChange={handleRowsPerPageChange}
-      sortBy={tableParams.sortBy}
-      sortOrder={tableParams.sortOrder}
-      onSort={handleSort}
-      onCellEdit={handleCellEdit}
-    />
+    <>
+      <ManageColumnsPopover
+        anchorEl={columnAnchorEl}
+        open={isModalOpen}
+        popoverId={modalId}
+        onClose={handlePopoverClose}
+        columns={profileColumns}
+        onColumnsChange={handleColumnsChange}
+        columnRestrictions={RestrictedColumns}
+      />
+      <ListTable
+        data={(profileList || []) as ManageProfileList[]}
+        columns={visibleColumns}
+        getRowId={getRowId}
+        hoverHighlight={false}
+        tableStyle={{
+          height: '100%',
+          maxHeight: 'calc(100vh - 195px)',
+          overflow: 'auto',
+        }}
+        stickyHeader={true}
+        stickyColumnsCount={2}
+        selectable={true}
+        onSelectionChange={onSelectionChange}
+        actionWidth={60}
+        actionDisplayMode='dropdown'
+        actionMenuItems={actionButtons}
+        loading={isLoading}
+        error={isError ? 'Failed to load profiles' : undefined}
+        rowsPerPageOptions={[25, 50, 100]}
+        rowsPerPage={tableParams.limit}
+        currentPage={(tableParams.page ?? 1) - 1}
+        totalItems={totalItems}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+        sortBy={tableParams.sortBy}
+        sortOrder={tableParams.sortOrder}
+        onSort={handleSort}
+        onCellEdit={handleCellEdit}
+      />
+    </>
   );
 };

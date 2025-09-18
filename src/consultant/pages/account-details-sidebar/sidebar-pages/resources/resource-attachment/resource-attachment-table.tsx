@@ -3,7 +3,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAttachmentList } from '../../../../../services/attachments/attachments-service';
 import { AttachmentList } from '../../../../../types/attachment';
-import { ListTable } from '../../../../../../components/table';
+import {
+  ListTable,
+  ManageColumnsPopover,
+} from '../../../../../../components/table';
 import { useParams } from 'react-router-dom';
 import {
   AllModules,
@@ -24,6 +27,8 @@ import {
   CellEditData,
   FieldChangeEvent,
   FieldChangeValue,
+  ListTableColumn,
+  ShowHideTableColumn,
 } from '../../../../../../components/table/types';
 import { RootState } from '../../../../../../store/store';
 import { useSelector } from 'react-redux';
@@ -43,6 +48,10 @@ interface ResourceSkillTableProps {
   setCount?: (count: number) => void;
   resourceInActive?: boolean;
   accountDetails?: Record<string, any>;
+  columnAnchorEl: HTMLButtonElement | null;
+  setColumnAnchorEl: React.Dispatch<
+    React.SetStateAction<HTMLButtonElement | null>
+  >;
 }
 const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
   appliedFilters,
@@ -56,6 +65,8 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
   refreshAttachments,
   accountDetails,
   setCount,
+  columnAnchorEl,
+  setColumnAnchorEl,
 }) => {
   const { errorToast } = useToast();
   const { accountid } = useParams();
@@ -102,7 +113,9 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
     }
   }, [data]);
 
-  const fiscalYears = getFiscalYears(20);
+  const minYear = 1950;
+  const currentYear = new Date().getFullYear();
+  const fiscalYears = getFiscalYears(currentYear - minYear + 1);
   const allDocumentInfo = useGetAllDocumentInfo();
   const categoryTypes = useGetDocumentCategoryType(currentCategory);
   const accountInActive =
@@ -160,6 +173,11 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
     AllPermissions.ATTACHMENT_VIEW_EDIT
   );
 
+  const isAttachmentExportEnable = checkPermission(
+    permission,
+    AllPermissions.ATTACHMENT_EXPORT
+  );
+
   const handleSortRequest = (property: string, sortOrder: 'asc' | 'desc') => {
     const apiOrder = sortOrder.toUpperCase() as 'ASC' | 'DESC';
     setOrder(apiOrder);
@@ -170,12 +188,25 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
     setCurrentCategory(rid);
   };
 
+  const handleDownload = (documentUrl: string) => {
+    if (!documentUrl) return;
+
+    const link = document.createElement('a');
+    link.href = documentUrl;
+    link.download = '';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const attachmentColumns = getAttachmentTableColumns(
     fiscalYears,
     memoizedDocumentCategories,
     memoizedDocumentTypes,
     handleDocumentCategory,
+    handleDownload,
     permissionMap,
+    isAttachmentExportEnable,
     categoryTypes.isLoading,
     accountInActive
   );
@@ -259,19 +290,57 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
     }
   };
 
+  const RestrictedColumns = [
+    {
+      id: 'document_name',
+      canHide: false,
+      canDrag: false,
+    },
+  ];
+
+  const [visibleColumns, setVisibleColumns] = useState<
+    ListTableColumn<AttachmentList>[]
+  >(attachmentColumns.filter((col) => !col.hide));
+
   if (!attachmentEnable || !isAttachmentViewEnable) return <AccessRestricted />;
+
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    setVisibleColumns(
+      updatedColumns.filter(
+        (col) => !col.hide
+      ) as ListTableColumn<AttachmentList>[]
+    );
+  };
+
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
+  };
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const modalId = isModalOpen
+    ? 'interaction-column-visibility-popover'
+    : undefined;
 
   return (
     <div>
+      <ManageColumnsPopover
+        anchorEl={columnAnchorEl}
+        open={isModalOpen}
+        popoverId={modalId}
+        onClose={handlePopoverClose}
+        columns={attachmentColumns}
+        onColumnsChange={handleColumnsChange}
+        columnRestrictions={RestrictedColumns}
+      />
       <ListTable
         data={attachmentList}
-        columns={attachmentColumns}
+        columns={visibleColumns}
         getRowId={getRowId}
         hoverHighlight={false}
         tableStyle={{
           borderBottom: '1px solid #CBD6E2',
           height: '100%',
-          maxHeight: 'calc(100vh - 410px)',
+          maxHeight: 'calc(100vh - 450px)',
           overflow: 'auto',
         }}
         stickyHeader={true}

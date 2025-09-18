@@ -68,3 +68,20 @@ export type ManageUserDetailApiResponse = {
     users: User;
   };
 };
+export type ManageSetting = {
+  rid: string;
+  auto_send_interaction: boolean;
+  auto_access_rd: false;
+  email: string;
+  tenant_id: string;
+  client_id: string;
+  client_secret: string;
+};
+export type ConfigureManageSettingApiResponse = {
+  statusCode: number;
+  statusCodeValue: StatusCodeValue;
+  statusMessage: string;
+  data: {
+    settings: ManageSetting;
+  };
+};
