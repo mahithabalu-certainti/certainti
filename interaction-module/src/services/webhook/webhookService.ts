@@ -458,8 +458,8 @@ export class WebHookService {
       const updateResponeObj = {
         interaction_rid: interaction.rid,
         account_rid: interaction.account_rid,
-        project_rid: interaction.project_rid,
-        project_fiscal_rid: interaction.project_fiscal_rid,
+        project_rid: interaction.project_rid || "",
+        project_fiscal_rid: interaction.project_fiscal_rid || "",
         status_action: "RESPONSE_RECEIVED",
         response_source: "Email Reply",
         parent_interaction_rid: null,

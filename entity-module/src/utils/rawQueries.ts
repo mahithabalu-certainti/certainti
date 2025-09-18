@@ -6,39 +6,27 @@ type filterType = {
 }
 
 
-export const listAllImportedDatasQuery = (page : number, limit : number, sort : string, sortBy : string, account_rid : string, filters : filterType, schemaName : string, disablePagination : boolean, fiscal_year : number) => {
+export const listAllImportedDatasQuery = (page : number, limit : number, sort : string, sortBy : string, account_rid : string, filters : filterType, schemaName : string, disablePagination : boolean, fiscal_year : number, search : string) => {
     let offset = (page - 1 ) * limit;
     let pagination = disablePagination ? `` : `LIMIT ${limit} OFFSET ${offset}`;
     let filterArray = []
     let filterValues = ``
     let filteredFinalValues = ``
     let sortValue;
-    let where = ``
     let keyColumns;
     let alias = `a`
     let and = ``
+    let searchValue : string = ``
 
     let fiscalYearQuery = ``
     if(fiscal_year == 0) {
         fiscalYearQuery = ` `
     } else {
-        fiscalYearQuery = `a.fiscal_year = ${fiscal_year}`
+        fiscalYearQuery = `AND a.fiscal_year = ${fiscal_year}`
     }
 
-    if(Object.keys(filters).length != 0 || fiscal_year !== 0) {
-        where = ` WHERE `
-        if(Object.keys(filters).length != 0 && fiscal_year !== 0) {
-            and = ` AND `
-        }
-        else if(Object.keys(filters).length != 0 && fiscal_year == 0) {
-            and = ` `
-        } 
-        else if(Object.keys(filters).length == 0 && fiscal_year != 0) {
-            and = ` `
-        }
-    } else {
-        where = ` `
-    }
+    if(search) searchValue = `%${search}%`
+    else searchValue = `%%`
 
     if (sort === 'r_number') sortValue = `a.r_number ${sortBy}`;
     else if (sort === 'file_name') sortValue = `a.document_name ${sortBy}`;
@@ -67,6 +55,7 @@ export const listAllImportedDatasQuery = (page : number, limit : number, sort : 
     for(let [key, conditions] of Object.entries(filters)) {
         if(Object.keys(IMPORT_FILTER_COLUMNS).includes(key)) {
             keyColumns = IMPORT_FILTER_COLUMNS[key]
+            and = ` AND `
         }
         for(let [cond, values] of Object.entries(conditions)) {
             switch (cond) {
@@ -175,6 +164,7 @@ export const listAllImportedDatasQuery = (page : number, limit : number, sort : 
     }
     } else {
         filterArray = []
+        and = ` `
     }
 
     if(filterArray.length < 1) {
@@ -200,8 +190,10 @@ export const listAllImportedDatasQuery = (page : number, limit : number, sort : 
     counted_and_filtered_datas AS (
     SELECT COUNT(*) OVER() AS total_count, a.* 
     FROM all_datas a 
-    ${where} 
-    ${fiscalYearQuery} ${and}
+    WHERE
+    (a.document_name ILIKE '${searchValue}' OR a.document_status ILIKE '${searchValue}' OR a.r_number ILIKE '${searchValue}' OR a.entity_type ILIKE '${searchValue}')
+    ${fiscalYearQuery}
+    ${and}
     ${filteredFinalValues}
     ),
 
@@ -1811,3 +1803,24 @@ export const fetchProjectQueryByPrjId = (account_rid : string, schemaName : stri
     `
     return query
 }
+
+export const fetchResCodeWithPrjResRole = (schemaName : string, search : string, statusId : string, accountId : string) => {
+    let searchValue : string = ``
+
+    if(search) searchValue = `%${search}%`
+    else searchValue = `%%`
+
+    let query = `
+    SELECT ps.rid, r.resource_code, ps.project_resource_role
+    FROM
+    ${schemaName}.project_resource ps
+    LEFT JOIN ${schemaName}.resources r ON r.rid = ps.resource_rid
+    WHERE
+    ps.account_rid = '${accountId}'
+    AND
+    (r.resource_code ILIKE '${searchValue}' OR ps.project_resource_role ILIKE '${searchValue}')
+    AND
+    r.status_rid = '${statusId}'
+    `
+    return query;
+  }

@@ -22,6 +22,10 @@ export interface ICreateInteraction {
   created_by: string;
   modified_by?: string;
   status_action?: string;
+  interaction_level_rid:string;
+  interaction_level?:string;
+  projects?:IProject[];
+  trigger_send?: boolean
 }
 
 export interface IProject {
@@ -72,6 +76,9 @@ export interface IUpdateInteraction {
   created_by: string;
   modified_by?: string;
   status_action?: string;
+  interaction_level?:string;
+  interaction_level_rid:string
+  trigger_send?: boolean
 }
 
 export interface InteractionDetailsResponse {
