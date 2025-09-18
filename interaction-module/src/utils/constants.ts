@@ -275,6 +275,9 @@ export const rawQueries = {
     return `
     SELECT rid, interaction_level_name FROM ${MAIN_SCHEMA_NAME}.interaction_level WHERE rid IN (${ids})`;
   },
+  fetchAllInteractionLevels() {
+    return `Select rid, interaction_level_name from ${MAIN_SCHEMA_NAME}.interaction_level WHERE status = 'active' order by interaction_level_name ASC`;
+  },
   fetchInteractionSource(data: any) {
     let ids = data.map((d: any) => `'${d}'`);
     return `

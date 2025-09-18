@@ -1046,6 +1046,28 @@ export class InteractionService {
       throw this.throwServiceError(err as Error);
     }
   }
+  
+   async getInteractionLevel(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { interactionLevel: any };
+  }> {
+    try {
+      const interactionLevel =
+        await this.interactionSchemaService.getInteractionLevel();
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          interactionLevel,
+        },
+      };
+    } catch (err) {
+      throw this.throwServiceError(err as Error);
+    }
+  }
 
   async getInteractionSource(): Promise<{
     statusCode: number;
