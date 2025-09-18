@@ -932,7 +932,7 @@ async function listAllInteractionPrjAcc (req : Request, res : Response) {
       );
       return;
     }
-    const result = await interactionService.listInteractionPrjAccount(data,userId)
+    const result = await interactionService.listInteractionPrjAccount(data,userId,"list")
     if(result.status == HttpStatus.SUCCESS) {
       return res.status(HttpStatus.SUCCESS).json({
         statusCode : HttpStatus.SUCCESS,
@@ -971,7 +971,7 @@ async function exportAllInteractions (req : Request, res : Response) {
       );
       return;
     }
-    const result = await interactionService.listInteractionPrjAccount(data,userId)
+    const result = await interactionService.listInteractionPrjAccount(data,userId,"export")
     const fields = await interactionService.getAllowedExportFields(
           userId,
           "interactions_view_edit"
