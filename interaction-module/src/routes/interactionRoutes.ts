@@ -41,6 +41,7 @@ routes.get(
   checkUserStatusMiddleware("NA"),
   controller.interactionsController.getInteractionTypes
 );
+
 routes.get(
   "/interactionLevel",
   checkUserStatusMiddleware("NA"),
