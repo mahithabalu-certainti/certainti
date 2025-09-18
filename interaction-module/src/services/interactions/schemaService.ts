@@ -36,7 +36,6 @@ class InteractionSchemaService {
       const { AccountInteraction } = await this.interactionModelService.getModels(
         accountNumber
       );
-      console.log("AccountInteraction model retrieved successfully");
 
       const interaction = await AccountInteraction.create(interactionData, {
         transaction,
@@ -53,14 +52,15 @@ class InteractionSchemaService {
   async createInteractions(
     accountNumber: string,
     interactionData: ICreateInteraction,
-    transaction: Transaction
+    transaction: Transaction,
+    intLevel :string
   ) {
     // Implementation for creating interactions in the database
     try {
       const { Interaction } = await this.interactionModelService.getModels(
         accountNumber
       );
-      const interactionLevel = await this.getInteractionLevelByType('Project');
+      const interactionLevel = await this.getInteractionLevelByType(intLevel);
       interactionData.interaction_level_rid = interactionLevel!;
       const interaction = await Interaction.create(interactionData, {
         transaction,
@@ -1468,8 +1468,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
 
   async fetchInteractionDetailsById(
     accountNumber: string,
-    interactionRid: string,
-    projectFiscalRid : string
+    interactionRid: string
   ) {
     const { Interaction } = await this.interactionModelService.getModels(
       accountNumber
@@ -1477,21 +1476,18 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
 
     let interactionDetails = await Interaction.findOne({
       where: {
-        rid: interactionRid,
-        project_fiscal_rid: projectFiscalRid
+        rid: interactionRid
       },
     });
     let interactionItems = await this.fetchInteractionItems(
       accountNumber,
       interactionRid,
-      interactionDetails?.dataValues.interaction_version || 1,
-      projectFiscalRid
+      interactionDetails?.dataValues.interaction_version || 1
     );
     const globalAttachments = await this.fetchGlobalAttachmentsByInteractionRid(
       accountNumber,
       interactionRid,
-      interactionDetails?.dataValues.interaction_version || 1,
-      projectFiscalRid
+      interactionDetails?.dataValues.interaction_version || 1
     );
 
     if (interactionDetails && interactionDetails.dataValues) {
@@ -1510,6 +1506,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         response_updated_on,
         recipient_name,
         recipient_email,
+        interaction_level_rid,
       } = interactionDetails.dataValues;
       const metainfo = await this.insertAdditionalInfo(
         interactionDetails,
@@ -1533,13 +1530,15 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         project_fiscal_rid: project_fiscal_rid ?? "",
         interaction_type: interaction_type_rid ?? "",
         interaction_type_name: metainfo?.interaction_type_name ?? "",
+        interaction_level_rid: interaction_level_rid ?? '',
+        interaction_level_name: metainfo?.interaction_level_name ?? '',
         status: status_rid ?? "",
         status_name: metainfo?.interaction_status_name ?? "",
         modified_by: userInfo.modified_name ?? modified_by,
         created_by: userInfo.created_name ?? "",
         created_datetime: created_datetime ?? null,
         modified_datetime:
-          interactionDetails.dataValues.modified_datetime ?? null,
+        interactionDetails.dataValues.modified_datetime ?? null,
         questions: interactionItems,
         response_updated_by: response_updated_by ?? null,
         response_updated_on: response_updated_on ?? null,
@@ -1742,6 +1741,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
 
       let interaction_type: any = null;
       let interaction_status: any = null;
+      let interaction_level:any = null
       let project_info: any = null;
       let hasEmailRecipient: boolean = false;
 
@@ -1758,6 +1758,19 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         interaction_type =
           Array.isArray(result) && result.length > 0 ? result[0] : null;
       }
+       if (interactionDetails?.dataValues?.interaction_level_rid) {
+        const result = await this.mainDbSequelize.query(
+          `SELECT rid, interaction_level_name FROM ${MAIN_SCHEMA_NAME}.interaction_level WHERE rid = :id`,
+          {
+            replacements: {
+              id: interactionDetails.dataValues.interaction_level_rid,
+            },
+            type: "SELECT",
+          }
+        );
+        interaction_level =
+          Array.isArray(result) && result.length > 0 ? result[0] : null;
+      }
       if (interactionDetails?.dataValues?.status_rid) {
         const result = await this.mainDbSequelize.query(
           `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE rid = :id`,
@@ -1769,7 +1782,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         interaction_status =
           Array.isArray(result) && result.length > 0 ? result[0] : null;
       }
-      if (interactionDetails?.dataValues?.project_fiscal_rid) {
+      if (interactionDetails?.dataValues?.project_fiscal_rid && interaction_level?.interaction_level_name === 'Project') {
         const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
           /\D/g,
           ""
@@ -1791,11 +1804,25 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
                 );
       const [emailInfoResult]: any = await this.orgDbSequelize.query(rawQueries.isEmailRecipientAvailable(interactionDetails?.dataValues?.project_fiscal_rid, schemaName, activeStatus?.rid));
       hasEmailRecipient = emailInfoResult[0]?.recipient_available ?? false;
-              }
+        }
+      if(interaction_level?.interaction_level_name === 'Account')
+      {
+         const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+          /\D/g,
+          ""
+        )}`;
+         const [activeStatus]: any[] = await this.mainDbSequelize.query(
+                  rawQueries.fetchActiveStatusByType("Active"),
+                  { type: "SELECT" }
+                );
+          const [emailInfoResult]: any = await this.orgDbSequelize.query(rawQueries.isEmailRecipientAvailableFrAccount(interactionDetails?.dataValues?.account_rid, schemaName, activeStatus?.rid));
+          hasEmailRecipient = emailInfoResult[0]?.recipient_available ?? false;
+      }
       const accountDetails : any = await this.mainDbSequelize.query(rawQueries.fetchAccountRnumber(interactionDetails.dataValues.account_rid))
       return {
         interaction_type_name: interaction_type?.interaction_type_name || null,
         interaction_status_name: interaction_status?.status_name || null,
+        interaction_level_name:interaction_level?.interaction_level_name || null, 
         project_code: project_info?.project_code || null,
         project_name: project_info?.project_name || null,
         project_rnumber : project_info?.r_number || null,
@@ -2003,7 +2030,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     }
 
     const interactionLevel = await this.mainDbSequelize.query(
-      `Select  interaction_level_name from ${MAIN_SCHEMA_NAME}.interaction_level WHERE interaction_level_name = :type limit 1`,
+      `Select rid, interaction_level_name from ${MAIN_SCHEMA_NAME}.interaction_level WHERE interaction_level_name = :type limit 1`,
       {
         replacements: { type },
         type: "SELECT",
@@ -2379,8 +2406,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
   async fetchGlobalAttachmentsByInteractionRid(
     accountNumber: string,
     interactionRid: string,
-    interaction_version: number,
-    projectFiscalRid: string
+    interaction_version: number
   ) {
     try {
       const { InteractionAttachment } =
@@ -2420,8 +2446,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
   async fetchInteractionItems(
     accountNumber: string,
     interactionRid: string,
-    interactionVersion: number,
-    projectFiscalRid : string
+    interactionVersion: number
   ) {
     try {
       const {
@@ -2657,7 +2682,6 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           type: "SELECT",
         }
       );
-      console.log("activeStatus", statusArr);
       const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
         /\D/g,
         ""
@@ -2711,7 +2735,41 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       throw new Error("Error fetching POC email: " + (err as Error).message);
     }
   }
+  async fetchEmailInfoForAccount(
+    accountNumber: string,
+    accountRid: string
+  ) {
+    try {
+      if (!this.orgDbSequelize) {
+        this.orgDbSequelize = await this.interactionModelService.getSequelize();
+      }
+      if(!this.mainDbSequelize) {
+        this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
+      }
+      const [statusArr]: any[] = await this.mainDbSequelize.query(
+        rawQueries.fetchActiveStatusByType('Active'),
+        {
+          type: "SELECT",
+        }
+      );
+      const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+        /\D/g,
+        ""
+      )}`;
+      const [interactionRecipients]: any[] =
+        await this.orgDbSequelize.query(
+          rawQueries.fetchInteractionRecipientAccount(accountRid,statusArr.rid ,schemaName),
+          { type: "SELECT" }
+        );
 
+      return {
+        name: interactionRecipients?.key_contact_name ?? null,
+        email: interactionRecipients?.key_contact_email ?? null,
+      };
+    } catch (err) {
+      throw new Error("Error fetching POC email: " + (err as Error).message);
+    }
+  }
   async getUserGroupType(userRid: string): Promise<string | null> {
     const mainDbSequelize = await initMainDbSequelize();
 
@@ -3127,7 +3185,6 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         rawQueries.fetchAllStatus(),
         { type: "SELECT" }
       );
-      console.log("activeStatus", activeStatus);
 
       const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
         /\D/g,

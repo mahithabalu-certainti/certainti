@@ -9,7 +9,7 @@ import {
 
 export interface IInteractionService {
   processKafkaMessage(data: any): Promise<void>;
-  listInteractionPrjAccount(data: any,userId: string): Promise<any>;
+  listInteractionPrjAccount(data: any,userId: string,apiType: string): Promise<any>;
   fetchInteractionSummary(
     data: any,userId: string
   ): Promise<{ statusCodeValue: string; data: any }>;
@@ -124,8 +124,7 @@ export interface IInteractionService {
   }>;
   getInteractionDetailsById(
     interactionRid: string,
-    accountId: string,
-    projectFiscalRid: string
+    accountId: string
   ): Promise<{
     statusCode: number;
     message: string;
