@@ -3330,15 +3330,53 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         /\D/g,
         ""
       )}`;
+
+      const projectFiscalData: any[] = await this.orgDbSequelize.query(
+        rawQueries.fetchProjectFiscal(projectFiscalRid, schemaName),
+        { type: "SELECT" } // Correct type for SELECT
+      );
+      
+      // Step 2: Safely get qreAdjustment
+      const qreAdjustment = projectFiscalData[0]?.rd_percent_adjustment ?? 0;
+
+      const netQre = qreAdjustment + qrePercent;
+  
+      const totalCost = projectFiscalData[0]?.total_cost_prj ?? 0;
+      const totalFteCost = projectFiscalData[0]?.total_cost_fte_prj ?? 0;
+      const totalSubconCost = projectFiscalData[0]?.total_cost_subcon_prj ?? 0;
+      const totalNonlaborCost = projectFiscalData[0]?.total_cost_nonlabor_prj ?? 0;
+    
+      const qreFinalCost = totalCost * (netQre / 100);
+      const qreFteCost = totalFteCost * (netQre / 100);
+      const qreSubconCost = totalSubconCost * (netQre / 100);
+      const qreNonlaborCost = totalNonlaborCost * (netQre / 100);
+
+      const shouldUseStandardUpdate = qreAdjustment === null || qreAdjustment === undefined;
+      
+      const finalQreUpdateQuery = shouldUseStandardUpdate
+        ? rawQueries.updateQreInfo(projectFiscalRid, schemaName, qrePercent, {
+          qreFinalCost,
+          qreFteCost,
+          qreSubconCost,
+          qreNonlaborCost,
+          netQre
+        })
+        : rawQueries.updateQreInfoLocked(projectFiscalRid, schemaName, qrePercent);
+
+      const finalQreSummaryUpdateQuery = shouldUseStandardUpdate
+        ? rawQueries.updateQreInfoSummary(projectFiscalRid, qrePercent, {
+          qreFinalCost,
+          qreFteCost,
+          qreSubconCost,
+          qreNonlaborCost,
+          netQre
+        })
+        : rawQueries.updateQreInfoSummarLocked(projectFiscalRid, qrePercent);
+      
+      // Step 4: Run both updates in parallel
       await Promise.all([
-        this.orgDbSequelize.query(
-          rawQueries.updateQreInfo(projectFiscalRid, schemaName, qrePercent),
-          { type: "UPDATE" }
-        ),
-        this.mainDbSequelize.query(
-          rawQueries.updateQreInfoSummary(projectFiscalRid, qrePercent),
-          { type: "UPDATE" }
-        ),
+        this.orgDbSequelize.query(finalQreUpdateQuery, { type: "UPDATE" }),
+        this.mainDbSequelize.query(finalQreSummaryUpdateQuery, { type: "UPDATE" }),
       ]);
 
       // Fetch project info after updates
