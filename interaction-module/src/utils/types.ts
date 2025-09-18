@@ -22,6 +22,10 @@ export interface ICreateInteraction {
   created_by: string;
   modified_by?: string;
   status_action?: string;
+  interaction_level_rid:string;
+  interaction_level?:string;
+  projects?:IProject[];
+  trigger_send?: boolean
 }
 
 export interface IProject {
@@ -72,19 +76,27 @@ export interface IUpdateInteraction {
   created_by: string;
   modified_by?: string;
   status_action?: string;
+  interaction_level?:string;
+  interaction_level_rid:string
+  trigger_send?: boolean
 }
 
 export interface InteractionDetailsResponse {
   account_rid: string;
   project_rid: string;
   project_name: string;
+  account_name : string;
+  account_rnumber : string;
   project_code: string;
+  project_rnumber : string;
   interaction_rid:string
   fiscal_year: number;
   project_fiscal_rid: string;
   r_number: string;
   interaction_type: string;
   interaction_type_name: string;
+  interaction_level_rid: string | null;
+  interaction_level_name: string | null;
   status: string;
   status_name: string;
   modified_by: string;

@@ -85,6 +85,7 @@ export const filtersColumns : Record<string, string> =
     project_code : "project_code",
     fiscal_year : "fiscal_year",
     response_source_rid : "response_source_rid",
+    interaction_level_rid:"interaction_level_rid",
     parent_interaction_rid : "parent_interaction_rid",
     createdAt : "createdAt"
   }
@@ -110,6 +111,7 @@ export const filtersColumns : Record<string, string> =
     fiscal_year : "number",
     response_source_rid : "string",
     parent_interaction_rid:"string",
+    interaction_level_rid:"string",
     createdAt:"datetime",
   }
 
@@ -138,6 +140,7 @@ export const mainTableFilters : Record<any, any> = {
   interaction_source_name : "interaction_source_name",
   status_name : "status_name",
   response_source_name : "response_source_name",
+  interaction_level_name:"interaction_level_name",
   modified_by: "modified_by",
   modified_user_name:"modified_user_name"
 }
@@ -227,6 +230,7 @@ export const STATUS_MESSAGE = {
   interactionCreated:"Interaction created successfully",
   interactionUpdated:"Interaction updated successfully",
   techSummarycontextUpdated:"Technical summary context updated successfully",
+  projectRequired:"Atleast one project is required to create interaction",
 };
 
 export const rawQueries = {
@@ -265,6 +269,14 @@ export const rawQueries = {
     let ids = data.map((d: any) => `'${d}'`);
     return `
     SELECT rid, interaction_type_name FROM ${MAIN_SCHEMA_NAME}.interaction_type WHERE rid IN (${ids})`;
+  },
+  fetchInteractionLevel(data: any) {
+    let ids = data.map((d: any) => `'${d}'`);
+    return `
+    SELECT rid, interaction_level_name FROM ${MAIN_SCHEMA_NAME}.interaction_level WHERE rid IN (${ids})`;
+  },
+  fetchAllInteractionLevels() {
+    return `Select rid, interaction_level_name from ${MAIN_SCHEMA_NAME}.interaction_level WHERE status = 'active' order by interaction_level_name ASC`;
   },
   fetchInteractionSource(data: any) {
     let ids = data.map((d: any) => `'${d}'`);
@@ -311,7 +323,7 @@ export const rawQueries = {
   },
   updateQreInfo(rid: string, schemaName: string, qrePercent: number) {
     return `
-    UPDATE ${schemaName}.project_fiscal SET qre_final = ${qrePercent} WHERE rid = '${rid}'`;
+    UPDATE ${schemaName}.project_fiscal SET rd_percent_potenial = ${qrePercent} WHERE rid = '${rid}'`;
   },
   updateAIProcessedFlag(
     rid: string,
@@ -332,7 +344,7 @@ export const rawQueries = {
   },
   updateQreInfoSummary(rid: string, qrePercent: number) {
     return `
-    UPDATE ${MAIN_SCHEMA_NAME}.project_fiscal_summary SET qre_final = ${qrePercent} WHERE project_fiscal_rid = '${rid}'`;
+    UPDATE ${MAIN_SCHEMA_NAME}.project_fiscal_summary SET rd_percent_potenial = ${qrePercent} WHERE project_fiscal_rid = '${rid}'`;
   },
   fetchAccountInfo(rid: string) {
     return `
@@ -377,6 +389,18 @@ export const rawQueries = {
       WHERE lower(entity_type) = 'project'
         AND include_in_communication IS true
         AND entity_rid = '${projectFiscalRid}'
+        AND status_rid = '${statusRid}'
+    ) AS recipient_available
+  `;
+  },
+  isEmailRecipientAvailableFrAccount(accountRid: string, schemaName: string, statusRid: string) {
+    return `
+    SELECT EXISTS (
+      SELECT 1
+      FROM ${schemaName}.key_contact_details
+      WHERE lower(entity_type) = 'account'
+        AND interaction_cc_recipient IS true
+        AND entity_rid = '${accountRid}'
         AND status_rid = '${statusRid}'
     ) AS recipient_available
   `;
@@ -640,6 +664,9 @@ export const rawQueries = {
       SELECT * from ${MAIN_SCHEMA_NAME}.organization_licenses
     `;
   },
+  fetchAccountRnumber (account_rid : string) {
+    return `SELECT account_name , r_number FROM ${MAIN_SCHEMA_NAME}.account where rid = '${account_rid}'`
+  }
 };
 
 export const filterTypesForSummaryInteractions : Record<string, any> = 
@@ -720,6 +747,7 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
   export const interactionFieldMappings = [
      { permissionField: 'account_name', exportField: 'Account Name', dataField: 'account_name' },
     { permissionField: 'r_number', exportField: 'Interaction ID', dataField: 'r_number' },
+     { permissionField: 'interaction_level_name', exportField: 'Interaction Level', dataField: 'interaction_level_name' },
     { permissionField: 'project_code', exportField: 'Project Code', dataField: 'project_code' },
     { permissionField: 'interaction_age', exportField: 'Age (Days)', dataField: 'interaction_age' },
     { permissionField: 'fiscal_year', exportField: 'Fiscal Year', dataField: 'fiscal_year' },

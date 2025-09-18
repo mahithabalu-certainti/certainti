@@ -937,7 +937,8 @@ export class ProjectTaskService {
     if (search) {
       whereClause[Op.and].push({
         [Op.or]: [
-          { resource_name: { [Op.iLike]: `%${search}%` } },
+          { "$resource.resource_name$": { [Op.iLike]: `%${search}%` } },
+          { "$resource.resource_code$": { [Op.iLike]: `%${search}%` } },
           { r_number: { [Op.iLike]: `%${search}%` } },
           { comments: { [Op.iLike]: `%${search}%` } },
         ],

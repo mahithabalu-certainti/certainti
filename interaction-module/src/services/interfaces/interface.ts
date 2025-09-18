@@ -84,6 +84,16 @@ export interface IInteractionService {
     errorMessage?: string;
     data?: { interactions: any };
   }>;
+  
+  getInteractionLevel(
+    statusScope?: string,
+    currentStatus?: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { interactionLevel: any };
+  }>;
 
   getInteractionStatus(
     statusScope?: string,
@@ -114,8 +124,7 @@ export interface IInteractionService {
   }>;
   getInteractionDetailsById(
     interactionRid: string,
-    accountId: string,
-    projectFiscalRid: string
+    accountId: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -163,17 +172,6 @@ export interface IInteractionService {
     accountId: string,
     userId: string,
     is_interaction_followup?: boolean
-  ): Promise<{
-    statusCode: number;
-    message: string;
-    errorMessage?: string;
-    data?: { interactionResponse: any };
-  }>;
-  sendAccountInteraction(
-    accountId:string,
-    account_interaction_rid:string[],
-    projects:IProject[],
-    userId: string,
   ): Promise<{
     statusCode: number;
     message: string;

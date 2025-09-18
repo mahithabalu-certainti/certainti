@@ -41,6 +41,12 @@ routes.get(
   checkUserStatusMiddleware("NA"),
   controller.interactionsController.getInteractionTypes
 );
+
+routes.get(
+  "/interactionLevel",
+  checkUserStatusMiddleware("NA"),
+  controller.interactionsController.getInteractionLevel
+);
 routes.get(
   "/interactionSource",
   checkUserStatusMiddleware("NA"),
@@ -69,22 +75,6 @@ routes.post(
   checkUserStatusMiddleware("interactions_view_edit"),
   controller.interactionsController.createAccountInteraction
 );  
-routes.post(
-  "/accountInterctions/send",
-  checkUserStatusMiddleware("interactions_view_edit"),
-  controller.interactionsController.sendAccountInteraction
-); 
-routes.get(
-  "/accountInterctions/list",
-  checkUserStatusMiddleware("interactions_view_edit"),
-  controller.interactionsController.listAccountInteractions
-);
-
-routes.get(
-  "/accountInterctions/export",
-  checkUserStatusMiddleware("interactions_view_edit"),
-  controller.interactionsController.exportAccountInteractions
-);
 
 
 routes.get('/technicalSummary/export', checkUserStatusMiddleware("projects_tech_summary_export"), controller.interactionsController.exportTechnicalSummary)

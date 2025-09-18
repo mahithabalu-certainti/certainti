@@ -127,7 +127,6 @@ async function getInteractionDetailsById(
         interactionRid,
         accountId,
         userId,
-        value.project_fiscal_rid,
         authToken
       );
     console.log(

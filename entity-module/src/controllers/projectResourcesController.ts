@@ -179,7 +179,8 @@ async function listProjectResource(req: Request, res: Response): Promise<void> {
         limitNum,
         parsedFilters,
         value.sortBy,
-        value.sortOrder
+        value.sortOrder,
+        value.search
       );
 
     if (projectResourceDetails.statusCode === HttpStatus.SUCCESS) {
@@ -314,7 +315,8 @@ async function exportProjectResource(
         parsedFilters,
         value.sortBy,
         value.sortOrder,
-        userId
+        userId,
+        value.search
       );
 
     if (projectResourceDetails.statusCode === HttpStatus.SUCCESS) {

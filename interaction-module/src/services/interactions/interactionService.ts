@@ -51,10 +51,10 @@ export class InteractionService {
     errorMessage?: string;
     data?: { interactions: any };
   }> {
-    const dbInit = await this.interactionModelService.getSequelize();
-    const transaction = await dbInit.transaction();
     console.log("Transaction started for createAccountInteraction");
     try {
+    const dbInit = await this.interactionModelService.getSequelize();
+    const transaction = await dbInit.transaction();
       interactionData.created_by = userId;
       const { accountNumber } =
         await this.interactionSchemaService.fetchValidAccountNumberById(
@@ -67,105 +67,39 @@ export class InteractionService {
 
       const {  intSource,intType } =
         await this.getInteractionStatusAndSource(interactionSource);
-      const status_rid = await this.interactionSchemaService.getActiveStatusRid();
+      const intLevel = await this.interactionSchemaService.getInteractionLevelByRid(
+        interactionData?.interaction_level_rid!
+      );
       interactionData.interaction_source_rid = intSource || "";
       interactionData.interaction_type_rid = intType || "";
-      interactionData.status_rid = status_rid || "";
-      const interaction =
-        await this.interactionSchemaService.createAccountInteractions(
+      if(intLevel === 'Account')
+      {
+       return await this.createInteraction(interactionData,accountNumber,userId); 
+      }
+      else
+      {
+        if (interactionData.projects === undefined || interactionData.projects.length === 0) {
+          return {
+            statusCode: HttpStatus.FAILED,
+            message: STATUS_MESSAGE.projectRequired,
+            data: { interactions: null},
+      };
+    }
+        
+        this.interactionSchemaService.createBulkInteractions(
           accountNumber,
           interactionData,
-          transaction
-        );
-        console.log("Interaction created successfully", interaction?.rid);
-      if (interaction) {
-         await this.interactionSchemaService.addAccountInteractionItems(
-           accountNumber,
-           interactionData,
-           interaction.rid,
-           transaction,
-           userId
-         );
-        console.log("Interaction created successfully", interaction.rid);
-     
-      }
-      await transaction.commit();
-     
-     
-    
-      return {
-        statusCode: HttpStatus.SUCCESS,
-        message: STATUS_MESSAGE.interactionCreated,
-        data: {
-          interactions: interaction,
-        },
-      };
-    } catch (err) {
-      console.log("Error creating resource", err);
-      await transaction.rollback();
-     this.logger.error("Error creating interaction", err);
-       return {
-          statusCode: HttpStatus.FAILED,
-          message: HttpStatus.FAILED_MESSAGE,
-          errorMessage: STATUS_MESSAGE.interactionFailed,
-        };
-    }
-  }
-  async sendAccountInteraction(
-    accountId: string,
-    accountInteractionId:string[],
-    projectId: IProject[],
-    userId: string
-  ): Promise<{
-    statusCode: number;
-    message: string;
-    errorMessage?: string;
-    data?: { interactionResponse: any };
-  }> {
-    const dbInit = await this.interactionModelService.getSequelize();
-    const transaction = await dbInit.transaction();
-    console.log("Transaction started for createAccountInteraction");
-    try {
-     
-      const { accountNumber } =
-        await this.interactionSchemaService.fetchValidAccountNumberById(
-          accountId
-        );
-
-      if (!accountNumber) {
-        throw new Error("Invalid account ID");
-      }
-
-      console.log("Creating interaction for account number:", accountNumber);
-       const {  intSource,intType } =
-        await this.getInteractionStatusAndSource(interactionSource.MANUAL);
-
-      const interaction =
-        await this.interactionSchemaService.sendAccountInteractions(
-          accountNumber,
-          accountId,
-          accountInteractionId,
-          projectId,
           userId,
-          intSource!,intType
-        );
-        console.log("Interaction created successfully");
-   
-      await transaction.commit();
-     
-     
-    
+          intLevel!
+        )
+      }
       return {
         statusCode: HttpStatus.SUCCESS,
         message: STATUS_MESSAGE.interactionCreated,
-        data: {
-          interactionResponse: interaction,
-        },
+        data: { interactions: null },
       };
     } catch (err) {
-      console.log("Error creating resource", err);
-      await transaction.rollback();
-     this.logger.error("Error creating interaction", err);
+     this.logger.error(`Error creating interaction", ${err}`);
        return {
           statusCode: HttpStatus.FAILED,
           message: HttpStatus.FAILED_MESSAGE,
@@ -173,6 +107,7 @@ export class InteractionService {
         };
     }
   }
+  
 
   
   async createInteraction(
@@ -734,6 +669,7 @@ export class InteractionService {
           filters,
           data.sort_by,
           data.sort_order,
+          data.interaction_level,
           "list"
         );
 
@@ -875,8 +811,7 @@ export class InteractionService {
   
   async getInteractionDetailsById(
     interactionRid: string,
-    accountRid: string,
-    projectFiscalRid:string
+    accountRid: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -899,8 +834,7 @@ export class InteractionService {
       const interactionDetails =
         await this.interactionSchemaService.fetchInteractionDetailsById(
           accountNumber,
-          interactionRid,
-          projectFiscalRid
+          interactionRid
         );
 
       if (!interactionDetails) {
@@ -919,7 +853,7 @@ export class InteractionService {
         },
       };
     } catch (err) {
-      console.log("Error creatng resource", err);
+      console.log("Error fetching interaction details", err);
       throw this.throwServiceError(err as Error);
     }
   }
@@ -1110,6 +1044,28 @@ export class InteractionService {
       throw this.throwServiceError(err as Error);
     }
   }
+  
+   async getInteractionLevel(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { interactionLevel: any };
+  }> {
+    try {
+      const interactionLevel =
+        await this.interactionSchemaService.getInteractionLevel();
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          interactionLevel,
+        },
+      };
+    } catch (err) {
+      throw this.throwServiceError(err as Error);
+    }
+  }
 
   async getInteractionSource(): Promise<{
     statusCode: number;
@@ -1235,9 +1191,19 @@ export class InteractionService {
     return senderEmailInfo;
   }
 
-  async generateInteractionLink(interactionRid: string, accountRid: string,projectFiscalId:string) {
-    return `${process.env.INTERACTION_URL}?acc=${accountRid}&int=${interactionRid}&proj=${projectFiscalId}`;
+  async generateInteractionLink(
+    interactionRid: string,
+    accountRid: string,
+    projectFiscalId: string,
+    interactionLevel: string
+  ) {
+    if (interactionLevel === "Account") {
+      return `${process.env.INTERACTION_URL}?acc=${accountRid}&int=${interactionRid}`;
+    } else {
+      return `${process.env.INTERACTION_URL}?acc=${accountRid}&int=${interactionRid}&proj=${projectFiscalId}`;
+    }
   }
+
   async generateExcelBuffer(
     rid: string,
     interactionItems: any[],
@@ -1509,6 +1475,7 @@ export class InteractionService {
     if(result[0][0].interactions != null) {
       let statusIds : any[] = [...new Set(result[0][0].interactions.map((d : any) => d.status))]
       let typeIds : any[] = [...new Set(result[0][0].interactions.map((d : any) => d.interaction_type))]
+      let interactionLevelIds : any[] = [...new Set(result[0][0].interactions.map((d : any) => d.interaction_level))]
       let sourceIds : any[] = [...new Set(result[0][0].interactions.map((d : any)=> d.interaction_source))]
       let responseSourceIds : any[] = [...new Set(result[0][0].interactions.map((d : any)=> d.response_source))]
       let createdByIds : any[] = [...new Set(result[0][0].interactions.map((user : any) => user.created_by))]
@@ -1516,6 +1483,7 @@ export class InteractionService {
       let projectFiscalIds : any[] = [...new Set(result[0][0].interactions.map((project : any) => project.project_fiscal_rid))]
       let fetchStatus = await mainDb.query(rawQueries.fetchInteractionStatus(statusIds))
       let fetchTypes = await mainDb.query(rawQueries.fetchInteractionTypes(typeIds))
+      let fetchLevelIds = await mainDb.query(rawQueries.fetchInteractionLevel(interactionLevelIds))
       let fetchSource = await mainDb.query(rawQueries.fetchInteractionSource(sourceIds))
       let fetchResponseSource = await mainDb.query(rawQueries.fetchInteractionResponseSource(responseSourceIds))
       let fetchCreatedByUsers = await mainDb.query(rawQueries.fetchUser(createdByIds))
@@ -1528,6 +1496,7 @@ export class InteractionService {
 
       let statusMap : Map<string, string> = new Map(fetchStatus[0].map((status : any) => [status.rid, status.status_name]))
       let typeMap : Map<string, string> = new Map(fetchTypes[0].map((types : any) => [types.rid, types.interaction_type_name]))
+      let levelMap : Map<string, string> = new Map(fetchLevelIds[0].map((level : any) => [level.rid, level.interaction_level_name]))
       let sourceMap : Map<string, string> = new Map(fetchSource[0].map((source : any) => [source.rid, source.interaction_source_name]))
       let responseSourceMap : Map<string, string> = new Map(fetchResponseSource[0].map((source : any) => [source.rid, source.response_source_name]))
       let createdMap : Map<string, string> = new Map(fetchCreatedByUsers[0].map((user : any) => [user.rid, `${user.first_name} ${user.last_name}`]))
@@ -1545,6 +1514,8 @@ export class InteractionService {
           interaction_type_name: typeMap.get(d.interaction_type),
           interaction_source_rid: d.interaction_source,
           interaction_source_name: sourceMap.get(d.interaction_source),
+          interaction_level_rid: d.interaction_level,
+          interaction_level_name: levelMap.get(d.interaction_level),
           response_source_rid: d.response_source,
           response_source_name : responseSourceMap.get(d.response_source) == undefined ? null : responseSourceMap.get(d.response_source),
           created_by: d.created_by,
@@ -2099,6 +2070,7 @@ export class InteractionService {
             interaction_source_rid: interactionSource.AUTO,
             interaction_type_rid: interactionType.RD,
             created_by: process.env.SYSTEM_USER_ID!,
+            interaction_level_rid:'Project'
           };
           await this.createInteraction(interactionData, interactionSource.AUTO, process.env.SYSTEM_USER_ID!);
           await this.interactionSchemaService.updateInteractionStatus(accountNumber, parsedMessage)
@@ -2231,12 +2203,21 @@ export class InteractionService {
       let userId = data.user_rid
       let project_fiscal_rid = data.project_fiscal_rid
       let accountRid = data.account_rid
+      let interactionLevel = data.interaction_level
 
       // If emailInfo.email is empty, fetch POC email
       let sendEmailInfo = email_info;
       if (!email_info || !email_info?.email) {
         console.log(`[INFO] Fetched fallback email for interaction ${interaction_rid}: ${sendEmailInfo?.email}`);
-        sendEmailInfo = await this.interactionSchemaService.fetchEmailInfo(accountNumber, interaction_rid, project_fiscal_rid, accountRid);
+        if(interactionLevel === 'Account')
+        {
+          sendEmailInfo = await this.interactionSchemaService.fetchEmailInfo(accountNumber, interaction_rid, project_fiscal_rid, accountRid);
+        }
+        else
+        {
+          sendEmailInfo = await this.interactionSchemaService.fetchEmailInfoForAccount(accountNumber, accountRid);
+        }
+        
       }
 
       if (!sendEmailInfo?.email || sendEmailInfo?.email == "") {
@@ -2259,7 +2240,8 @@ export class InteractionService {
       const interactionLink = await this.generateInteractionLink(
         interaction_rid,
         interactionInfo.accountInfo.account_rid,
-        project_fiscal_rid
+        project_fiscal_rid,
+        interactionLevel
       );
       const senderEmailInfo = await this.getSenderEmailInfo(accountNumber,interactionInfo.accountInfo.parent_account_rid);
       const excelBuffer = await this.generateExcelBuffer(
@@ -2309,7 +2291,7 @@ export class InteractionService {
           interactionLink
         );
         }
-        await this.interactionSchemaService.updateEmailSendFlag(interaction_rid,project_fiscal_rid)
+        await this.interactionSchemaService.updateEmailSendFlag(interaction_rid)
         
       } else {
         //need to add logic for sending toPS team

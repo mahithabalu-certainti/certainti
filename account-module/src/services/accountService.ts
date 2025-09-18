@@ -1629,7 +1629,8 @@ class AccountService {
         await Promise.all([
           this.schemaService.fetchAccountDetails(
             accountNumber,
-            accountById?.rid || ""
+            accountById?.rid || "",
+            accountById?.parent_account_rid || ""
           ),
           this.schemaService.fetchKeyContacts(
             accountById?.rid || "",
