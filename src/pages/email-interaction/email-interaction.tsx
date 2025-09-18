@@ -169,6 +169,14 @@ const EmailInteraction: React.FC = () => {
   };
 
   const isOtpSent = Boolean(timeout);
+  const headerData = {
+    interactionId: questions?.r_number || '',
+    projectId: questions?.project_rnumber || '',
+    projectName: questions?.project_name || '',
+    accountName: questions?.account_name || '',
+    accountId: questions?.account_rnumber || '',
+    projectCode: questions?.project_code || '',
+  };
 
   return (
     <div className={isAuthentic ? '' : 'bg-[#f4f4f4]'}>
@@ -198,6 +206,7 @@ const EmailInteraction: React.FC = () => {
                   project_fiscal_rid: questions?.project_fiscal_rid || '',
                   interaction_rid: questions?.interaction_rid || '',
                 }}
+                headerData={headerData}
               />
             )}
           </div>
