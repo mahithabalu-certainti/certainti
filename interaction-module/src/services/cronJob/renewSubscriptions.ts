@@ -127,9 +127,9 @@ async function renewExpiringSubscriptions() {
             const hoursToExpire =
               (expiry.getTime() - now.getTime()) / (1000 * 60 * 60);
 
-            if (
-              sub.id === currentSubId 
-            ) {
+            // if (
+            //   sub.id === currentSubId 
+            // ) {
               console.log(
                 `Renewing subscription ${
                   sub.id
@@ -161,7 +161,7 @@ async function renewExpiringSubscriptions() {
                   `⚠️ Failed to renew subscription for account ${r_number}`
                 );
               }
-            }
+            // }
           }
         } else {
           console.warn(
@@ -172,24 +172,24 @@ async function renewExpiringSubscriptions() {
     }
   }
 
-  const fetchPlatformCredentials = await fetchPlatformSettings();
-  const defaultGraphClient = createMicrosoftGraphClient(fetchPlatformCredentials);
-  const subscriptions = await getSubscriptions(defaultGraphClient);
-  const now = new Date();
+  // const fetchPlatformCredentials = await fetchPlatformSettings();
+  // const defaultGraphClient = createMicrosoftGraphClient(fetchPlatformCredentials);
+  // const subscriptions = await getSubscriptions(defaultGraphClient);
+  // const now = new Date();
 
-  for (const sub of subscriptions) {
-    const expiry = new Date(sub.expirationDateTime);
-    const hoursToExpire = (expiry.getTime() - now.getTime()) / (1000 * 60 * 60);
+  // for (const sub of subscriptions) {
+  //   const expiry = new Date(sub.expirationDateTime);
+  //   const hoursToExpire = (expiry.getTime() - now.getTime()) / (1000 * 60 * 60);
 
-    if (hoursToExpire < HOURS_BEFORE_EXPIRY) {
-      console.log(
-        `Renewing global subscription ${
-          sub.id
-        } (expires in ${hoursToExpire.toFixed(1)} hrs)`
-      );
-      await renewSubscription(sub, defaultGraphClient);
-    }
-  }
+  //   if (hoursToExpire < HOURS_BEFORE_EXPIRY) {
+  //     console.log(
+  //       `Renewing global subscription ${
+  //         sub.id
+  //       } (expires in ${hoursToExpire.toFixed(1)} hrs)`
+  //     );
+  //     await renewSubscription(sub, defaultGraphClient);
+  //   }
+  // }
 }
 
 // -----------------------------
@@ -234,7 +234,6 @@ async function fetchPlatformSettings() {
 cron.schedule("0 2 * * *", async () => {
   const today = new Date();
   const dayOfMonth = today.getDate();
-  console.log("Inside cron trigger");
 
   if (dayOfMonth % 2 === 0) {
     console.log(
