@@ -36,7 +36,6 @@ class InteractionSchemaService {
       const { AccountInteraction } = await this.interactionModelService.getModels(
         accountNumber
       );
-      console.log("AccountInteraction model retrieved successfully");
 
       const interaction = await AccountInteraction.create(interactionData, {
         transaction,
@@ -3186,7 +3185,6 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         rawQueries.fetchAllStatus(),
         { type: "SELECT" }
       );
-      console.log("activeStatus", activeStatus);
 
       const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
         /\D/g,
