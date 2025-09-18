@@ -221,10 +221,7 @@ const exportTechnicalSummarySchema = Joi.object({
   timezone: Joi.string().optional()
 }); 
 
-const listInteractionDetailsByIdSchema = Joi.object({ 
-  project_fiscal_rid: Joi.string().pattern(uuidRegex).optional().label("Project Fiscal Rid"),
-  type: Joi.string().valid("account", "project").default('project').label("Type"),
-});
+
 
 
 export {
@@ -241,6 +238,5 @@ export {
   listAllTechnicalSummarySchema,
   exportTechnicalSummarySchema,
   sendAccountInteractionSchema,
-  listInteractionDetailsByIdSchema,
   updateAccountInteractionSchema
 };

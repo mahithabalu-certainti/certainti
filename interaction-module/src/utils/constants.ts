@@ -393,6 +393,18 @@ export const rawQueries = {
     ) AS recipient_available
   `;
   },
+  isEmailRecipientAvailableFrAccount(accountRid: string, schemaName: string, statusRid: string) {
+    return `
+    SELECT EXISTS (
+      SELECT 1
+      FROM ${schemaName}.key_contact_details
+      WHERE lower(entity_type) = 'account'
+        AND interaction_cc_recipient IS true
+        AND entity_rid = '${accountRid}'
+        AND status_rid = '${statusRid}'
+    ) AS recipient_available
+  `;
+  },
   fetchInteractionRecipient(projectFiscalRid: string, statusRid: string, schemaName: string) {
     return `
     SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE lower(entity_type) = 'project' and include_in_communication is true and entity_rid = '${projectFiscalRid}' and status_rid = '${statusRid}'`;

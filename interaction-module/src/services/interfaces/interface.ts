@@ -124,8 +124,7 @@ export interface IInteractionService {
   }>;
   getInteractionDetailsById(
     interactionRid: string,
-    accountId: string,
-    projectFiscalRid: string
+    accountId: string
   ): Promise<{
     statusCode: number;
     message: string;
