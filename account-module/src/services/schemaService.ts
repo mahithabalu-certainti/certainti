@@ -1481,6 +1481,7 @@ class SchemaService {
         total_cost_pro_task numeric(18, 2) NULL,
         "comments" varchar(2000) NULL,
         project_resource_rid varchar(50) NOT NULL,
+        status_rid varchar(50) NOT NULL,
         CONSTRAINT project_task_r_number_key UNIQUE (r_number)
       );
     `);

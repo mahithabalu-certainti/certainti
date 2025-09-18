@@ -649,6 +649,9 @@ export const rawQueries = {
       SELECT * from ${MAIN_SCHEMA_NAME}.organization_licenses
     `;
   },
+  fetchAccountRnumber (account_rid : string) {
+    return `SELECT account_name , r_number FROM ${MAIN_SCHEMA_NAME}.account where rid = '${account_rid}'`
+  }
 };
 
 export const filterTypesForSummaryInteractions : Record<string, any> = 

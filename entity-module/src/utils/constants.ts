@@ -146,7 +146,10 @@ export const STATUS_MESSAGE = {
   tenantIdInvalidLength: 'Tenant ID must be a valid UUID (36 characters).',
   clientIdInvalidLength: 'Client ID must be a valid UUID (36 characters).',
   clientSecretTooShort: 'Client Secret is too short or invalid.',
-  invalidCredentials: 'Provided Azure credentials are invalid or unusable'
+  invalidCredentials: 'Provided Azure credentials are invalid or unusable',
+  rdpercentPotentialmissing: "RD Percent Potential AI is missing",
+  resCodePrjTaskSuccess : "ResourceCode for ProjectTask fetched successfully",
+  resCodeNotFound : "No ResourceCode found"
 };
 
 export const TYPES = {
@@ -888,13 +891,32 @@ export const rawQueries = {
   },
   fetchResourceStatus:`
   SELECT rid, resource_status_name FROM ${MAIN_SCHEMA_NAME}.resource_status WHERE rid IN (:projectTaskStatusId)`,
-  checkResCodeExistsInPrjRes (schemaName : string, resource_rid : string | undefined, account_rid : string, project_fiscal_rid : string) {
-    return `SELECT * FROM ${schemaName}.project_resource WHERE resource_rid = '${resource_rid}' AND account_rid = '${account_rid}' AND project_fiscal_rid = '${project_fiscal_rid}' ORDER BY created_datetime DESC`
+  checkResCodeExistsInPrjRes (schemaName : string, project_resource_rid : string,) {
+    return `SELECT * FROM ${schemaName}.project_resource WHERE rid = '${project_resource_rid}'`
   },
    fetchActiveStatus() {
     return `
     SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name = 'Active' limit 1`;
   },
+  fetchProjectFiscalById(schemaName : string, projectFiscalId : string){
+    return `SELECT * FROM ${schemaName}.project_fiscal WHERE rid = '${projectFiscalId}'`
+  },
+  updateProjectFiscalQre(schemaName: string, data: any){
+    return `
+    UPDATE ${schemaName}.project_fiscal
+    SET 
+      rd_percent_adjustment = ${data.rd_percent_adjustment},
+      rd_percent_final = ${data.rd_percent_final},
+      qre_final = ${data.qre_final},
+      qre_fte = ${data.qre_fte},
+      qre_subcon = ${data.qre_subcon},
+      qre_nonlabor = ${data.qre_nonlabor},
+      modified_by = '${data.modified_by}',
+      modified_datetime = '${new Date().toISOString()}'
+    WHERE
+      rid = '${data.rid}'
+    `
+  }
 };
 
 export const IMPORT_FILTER_COLUMNS: any = {

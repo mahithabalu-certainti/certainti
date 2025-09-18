@@ -9,7 +9,11 @@ import {
   primaryKeyContacts,
   rawQueries,
 } from "../utils/constants";
-import { ICreateProject, IUpdateProject } from "../utils/types";
+import {
+  ICreateProject,
+  IUpdateProject,
+  IUpdateQrePecentAdjustment,
+} from "../utils/types";
 import SchemaService from "./schemaService";
 import {
   ProjectTimeline,
@@ -732,7 +736,7 @@ export class ProjectService {
       account_name: account.account_name,
       account_number: account.r_number,
       account_status: account.status,
-      organistaion_name : account.organisation_name,
+      organistaion_name: account.organisation_name,
       fiscal_start_date: fiscalStartDate,
       fiscal_end_date: fiscalEndDate,
     };
@@ -749,8 +753,8 @@ export class ProjectService {
     sortOrder: string = "ASC",
     bothParentAndChild: boolean = false,
     userId: string,
-    apiSource:string ='Project',
-    accountInteractionId?:string
+    apiSource: string = "Project",
+    accountInteractionId?: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -844,15 +848,14 @@ export class ProjectService {
         };
       }
 
-      if(apiSource === "interactionCount" && accountInteractionId){
+      if (apiSource === "interactionCount" && accountInteractionId) {
         accInteractionProjs = await this.getAccInteractionProjectIds(
-         accountInteractionId || '',
-         accountRNumber
+          accountInteractionId || "",
+          accountRNumber
         );
-      }
-      else if( apiSource === "interaction" && accountInteractionId){
+      } else if (apiSource === "interaction" && accountInteractionId) {
         {
-          accInteractionProjs = accountInteractionId.split(',');
+          accInteractionProjs = accountInteractionId.split(",");
         }
       }
 
@@ -891,7 +894,7 @@ export class ProjectService {
         apiSource,
         accInteractionProjs
       );
-      projects = projects.slice(offset, page * limit)
+      projects = projects.slice(offset, page * limit);
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -1052,16 +1055,20 @@ export class ProjectService {
       throw new Error("Error fetching project: " + (err as Error).message);
     }
   }
-  async getAccInteractionProjectIds(accIntId:string,accountRNumber:string): Promise<string[]>
-  {
+  async getAccInteractionProjectIds(
+    accIntId: string,
+    accountRNumber: string
+  ): Promise<string[]> {
     const orgDbSequlize = await initOrgSequelize();
     const schemaName = `trd365_${accountRNumber.replace(/\D/g, "")}`;
-    const interactionProjects = await orgDbSequlize.query(rawQueries.getAccountInteractionProjects(schemaName, accIntId), {
-      replacements: { account_interaction_rid:accIntId },
-      type: "SELECT",
-    });
+    const interactionProjects = await orgDbSequlize.query(
+      rawQueries.getAccountInteractionProjects(schemaName, accIntId),
+      {
+        replacements: { account_interaction_rid: accIntId },
+        type: "SELECT",
+      }
+    );
     return interactionProjects.map((row: any) => row.project_fiscal_rid);
-
   }
   async getAccessibleProjectIds(
     userId: string,
@@ -1754,6 +1761,70 @@ export class ProjectService {
     }
   }
 
+  async updateQrePercentAdjustment(
+    data: IUpdateQrePecentAdjustment,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: any;
+  }> {
+    try {
+      const { account_rid, rid, rd_percent_potential_ai } = data;
+
+      const accountData = await this.schemaService.fetchAccountById(account_rid);
+
+      if (!accountData) {
+        throw new Error("Error creating project: Invalid account ID");
+      }
+
+      if (accountData.status !== "active") {
+        throw new Error(
+          "Project creation failed: The selected account is inactive. Please choose an active account."
+        );
+      }
+
+      let accountNumber = accountData.r_number;
+
+      if (
+        accountData.parent_account_rid === null ||
+        accountData.parent_account_rid === ""
+      ) {
+        throw new Error("Error creating project: Invalid account ID");
+      }
+
+      if (accountData.storage_type === "store_in_parent") {
+        accountNumber = await this.schemaService.fetchParentAccount(
+          accountData.parent_account_rid
+        );
+      }
+
+      const isExists = await this.schemaService.checkIfSchemaExists(
+        accountNumber
+      );
+
+      if (!isExists) {
+        throw new Error("Invalid account ID: schema doesn't exists");
+      }
+
+      await this.schemaService.updateQreAdjustmentCalculation(
+        accountNumber,
+        rid,
+        rd_percent_potential_ai,
+        userId
+      );
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {},
+      };
+    } catch (err) {
+      return this.throwServiceError(err as Error);
+    }
+  }
+
   async calculateKeyContactDetails(keyContacts: any[], mainDbSequlize: any) {
     let technicalConsultant = "-";
     let financialConsultant = "-";
@@ -1791,17 +1862,20 @@ export class ProjectService {
 
       const technicalContact = enrichedKeyContacts.find(
         (e: any) =>
-          e.role_name === keyContactRoleMap[primaryKeyContacts.technical_point_of_contact] &&
+          e.role_name ===
+            keyContactRoleMap[primaryKeyContacts.technical_point_of_contact] &&
           e.is_primary_contact
       );
       const financialContact = enrichedKeyContacts.find(
         (e: any) =>
-          e.role_name === keyContactRoleMap[primaryKeyContacts.financial_consultant] &&
-           e.is_primary_contact
+          e.role_name ===
+            keyContactRoleMap[primaryKeyContacts.financial_consultant] &&
+          e.is_primary_contact
       );
       const pointOfContact = enrichedKeyContacts.find(
         (e: any) =>
-          e.role_name === keyContactRoleMap[primaryKeyContacts.project_point_of_contact] &&
+          e.role_name ===
+            keyContactRoleMap[primaryKeyContacts.project_point_of_contact] &&
           e.is_primary_contact
       );
 
