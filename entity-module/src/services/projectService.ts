@@ -898,8 +898,6 @@ export class ProjectService {
       );
       projects = projects.slice(offset, page * limit);
 
-      projects = projects.slice(offset, page * limit)
-
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
