@@ -18,7 +18,6 @@ import {
   InteractionFormQuestion,
   InteractionFormTableColumn,
   InteractionQuestionErrors,
-  StatusActionEnum,
   StatusTypeEnum,
 } from '../../../types';
 import { useToast } from '../../../../hooks';
@@ -78,7 +77,8 @@ const AccountInteractionForm = () => {
     useState<HTMLButtonElement | null>(null);
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [tab, setTab] = useState<number>(1);
-  const [activeFlag, setActiveFlag] = useState<StatusActionEnum | null>(null);
+  const [saveAndSendLoading, setSaveAndSendLoading] = useState<boolean>(false);
+  const [saveLoading, setSaveLoading] = useState<boolean>(false);
   const [formData, setFormData] = useState<InteractionFormData>({
     accountName: '',
     projectCode: '',
@@ -348,29 +348,46 @@ const AccountInteractionForm = () => {
     setErrors(validationErrors);
     return isValid;
   };
-  const handleSubmit = (saveFlag: StatusActionEnum, trigger_send?: Boolean) => {
+  const handleSubmit = (trigger_send?: Boolean) => {
     if (!validateForm()) {
       return;
     }
+
+    // Set loading state based on action
+    if (trigger_send) {
+      setSaveAndSendLoading(true);
+    } else {
+      setSaveLoading(true);
+    }
+
     if (isAccountLevel) {
-      createInteraction(saveFlag, trigger_send);
+      createInteraction(trigger_send);
     } else {
       if (tab === 2) {
         if (selectedTableId.length === 0) {
           errorToast('Please select atleast one Project!');
+          // Reset loading state on error
+          if (trigger_send) {
+            setSaveAndSendLoading(false);
+          } else {
+            setSaveLoading(false);
+          }
         } else {
-          createInteraction(saveFlag, trigger_send);
+          createInteraction(trigger_send);
         }
       } else {
         //If project Level
         setTab(2);
+        // Reset loading state when just changing tabs
+        if (trigger_send) {
+          setSaveAndSendLoading(false);
+        } else {
+          setSaveLoading(false);
+        }
       }
     }
   };
-  const createInteraction = (
-    saveFlag: StatusActionEnum,
-    trigger_send?: Boolean
-  ) => {
+  const createInteraction = (trigger_send?: Boolean) => {
     const draftStatus = statusOptions.find(
       (option) => option.label.toLowerCase() === StatusTypeEnum.draft
     );
@@ -380,8 +397,6 @@ const AccountInteractionForm = () => {
       false,
       draftStatus?.value || ''
     );
-
-    setActiveFlag(saveFlag);
 
     accountCreateInteraction.mutate(
       {
@@ -402,10 +417,14 @@ const AccountInteractionForm = () => {
       },
       {
         onError: () => {
-          setActiveFlag(null);
+          // Reset loading states on error
+          setSaveAndSendLoading(false);
+          setSaveLoading(false);
         },
         onSuccess: () => {
-          setActiveFlag(null);
+          // Reset loading states on success
+          setSaveAndSendLoading(false);
+          setSaveLoading(false);
           window.history.back();
         },
       }
@@ -477,9 +496,9 @@ const AccountInteractionForm = () => {
           {tab === 2 && (
             <TextButton
               label='Save and Send'
-              loading={accountCreateInteraction.isPending}
-              disabled={accountCreateInteraction.isPending}
-              onClick={() => handleSubmit(StatusActionEnum.Draft, true)}
+              loading={saveAndSendLoading}
+              disabled={saveAndSendLoading || saveLoading}
+              onClick={() => handleSubmit(true)}
               sx={{
                 width: '120px',
                 fontSize: '13px',
@@ -489,14 +508,9 @@ const AccountInteractionForm = () => {
           )}
           <TextButton
             label={isAccountLevel ? 'Save' : tab === 2 ? 'Save' : 'Next'}
-            loading={
-              activeFlag === StatusActionEnum.Draft &&
-              accountCreateInteraction.isPending
-            }
-            disabled={
-              activeFlag !== null && activeFlag !== StatusActionEnum.Draft
-            }
-            onClick={() => handleSubmit(StatusActionEnum.Draft)}
+            loading={saveLoading}
+            disabled={saveAndSendLoading || saveLoading}
+            onClick={() => handleSubmit()}
             sx={{
               width: '64px',
               minWidth: '64px',
@@ -507,7 +521,7 @@ const AccountInteractionForm = () => {
           <TextButton
             label={tab === 1 ? 'Cancel' : 'Back'}
             onClick={goBack}
-            disabled={accountCreateInteraction.isPending}
+            disabled={saveAndSendLoading || saveLoading}
             sx={{
               width: '75px',
               minWidth: '75px',
