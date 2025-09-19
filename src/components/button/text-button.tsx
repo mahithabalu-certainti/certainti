@@ -9,7 +9,8 @@ interface TextButtonProps {
   color?: ButtonOwnProps['color'];
   loading?: boolean;
   disabled?: boolean;
-  onClick?: () => void;
+  hide?: boolean;
+  onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
 }
 const StyledButton = styled(Button)(() => {
   return {
@@ -29,7 +30,8 @@ const StyledButton = styled(Button)(() => {
   };
 });
 
-const TextButton: React.FC<TextButtonProps> = ({ label, ...rest }) => {
+const TextButton: React.FC<TextButtonProps> = ({ label, hide, ...rest }) => {
+  if (hide) return null;
   return <StyledButton {...rest}>{label}</StyledButton>;
 };
 

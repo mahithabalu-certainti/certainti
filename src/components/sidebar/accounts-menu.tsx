@@ -7,7 +7,6 @@ import {
   NotesIcon,
   ProjectsIcon,
   SettingsIcon,
-  SurveyIcon,
   TimeLineIcon,
 } from '../../assets';
 import { MenuOption } from '../../common-service';
@@ -62,14 +61,15 @@ export const accountNavItems: INavItem[] = [
     type: 'link',
     matchLink: '',
   },
-  {
-    id: MenuOption.SURVEY,
-    icon: SurveyIcon,
-    name: 'Survey',
-    link: NOT_FOUND,
-    type: 'link',
-    matchLink: '',
-  },
+  // Global Interactions removed as of now will be added in future if required
+  // {
+  //   id: MenuOption.INTERACTIONS,
+  //   icon: InteractionDetailIcon,
+  //   name: 'Interactions',
+  //   link: INTERACTIONS,
+  //   type: 'link',
+  //   matchLink: INTERACTIONS,
+  // },
   {
     id: MenuOption.NOTES,
     icon: NotesIcon,

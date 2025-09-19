@@ -49,6 +49,7 @@ export const ProjectTaskFormData = (
             options: memoizedProjectResourceCode,
             required: true,
             onChange: true,
+            showCreateBtn: true,
             placeholder: 'Choose Resource Code',
             disabled:
               isEditView &&
@@ -99,6 +100,7 @@ export const ProjectTaskFormData = (
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             placeholder: 'Enter Cost',
+            formatCostValue: true,
             disabled:
               isEditView &&
               permissionMapTaskForm?.['total_cost_pro_task']?.read &&

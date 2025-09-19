@@ -13,6 +13,8 @@ import {
   ProjectResourcesListParams,
   ProjectResourceDetailsApiResponse,
   ProjectResourceNewPayload,
+  ProjectResourceStatusApiResponse,
+  ProjectResourceStatusPayload,
 } from '../../types/project-resources';
 import {
   DetailURL,
@@ -178,4 +180,27 @@ export const exportProjectResoure = async (
   } catch (error) {
     console.error('Export failed:', error);
   }
+};
+export const useUpdateProjectResourceStatus = (
+  options?: UseMutationOptions<
+    Partial<ProjectResourceStatusApiResponse>,
+    Error,
+    Partial<ProjectResourceStatusPayload>
+  >
+): UseMutationResult<
+  Partial<ProjectResourceStatusApiResponse>,
+  Error,
+  Partial<ProjectResourceStatusPayload>
+> => {
+  return useMutation({
+    mutationKey: ['update-projectresource-accept-status'],
+    mutationFn: async (payload) => {
+      const res = await api.put(
+        `${baseUrl}` + '/api/project_resources/status/update',
+        payload
+      );
+      return res.data;
+    },
+    ...options,
+  });
 };

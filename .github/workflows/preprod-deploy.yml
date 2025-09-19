@@ -56,13 +56,16 @@ jobs:
           echo "VITE_AUTHORITY=$AUTHORITY" >> $ENV_FILE
           echo "VITE_KNOWN_AUTHORITIES=$KNOWN_AUTHORITIES" >> $ENV_FILE
           echo "VITE_RESET_PW_AUTHORITY=$PASSWORD_RESET_AUTHORITY" >> $ENV_FILE
-          echo "VITE_REDIRECT_URL=https://thinkrd365-preprod.certainti.ai/login" >> $ENV_FILE
-          echo "VITE_POST_LOGOUT_REDIRECT_URL=https://thinkrd365-preprod.certainti.ai/login" >> $ENV_FILE
           echo "VITE_BASE_URL=https://preprod-thinkrd365-api-management.azure-api.net" >> $ENV_FILE
           echo "VITE_USER_URL=/userService" >> $ENV_FILE
           echo "VITE_ACCOUNT_URL=/accountService" >> $ENV_FILE
           echo "VITE_RESOURCE_URL=/entityService" >> $ENV_FILE 
           echo "VITE_ORGANIZATION=TRD365" >> $ENV_FILE
+          echo "VITE_REDIRECT_URL=https://thinkrd365-preprod.certainti.ai/login" >> $ENV_FILE
+          echo "VITE_POST_LOGOUT_REDIRECT_URL=https://thinkrd365-preprod.certainti.ai/login" >> $ENV_FILE
+          echo "VITE_PASSWORD_CHANGE_REDIRECT_URL=https://thinkrd365-preprod.certainti.ai" >> $ENV_FILE
+          echo "VITE_INTERACTION_URL=/interactionService" >> $ENV_FILE
+          echo "VITE_EXT_INTERACTION_URL=/extinteractionService" >> $ENV_FILE
           echo "$ENV_FILE file created successfully!"
           
           echo "STATIC_WEB_APP_API_KEY=$STATIC_WEB_APP_API_KEY" >> $GITHUB_ENV

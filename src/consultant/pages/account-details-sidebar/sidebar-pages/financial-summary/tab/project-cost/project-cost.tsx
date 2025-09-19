@@ -1,5 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ListTable } from '../../../../../../../components/table';
+import {
+  ListTable,
+  ManageColumnsPopover,
+} from '../../../../../../../components/table';
 
 import { getFinancialProjectCostColumns } from './columns';
 import { accountDetailsProps } from '../../../../../account-details/utils';
@@ -16,6 +19,10 @@ import {
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../../store/store';
 import { AllPermissions } from '../../../../../../../common-service';
+import {
+  ListTableColumn,
+  ShowHideTableColumn,
+} from '../../../../../../../components/table/types';
 
 interface FinancialProjectCostProps {
   accountDetails?: accountDetailsProps;
@@ -29,6 +36,10 @@ interface FinancialProjectCostProps {
     params: ProjectFinancialProjectExportParams
   ) => void;
   setExportType?: (type: ExportType) => void;
+  columnAnchorEl: HTMLButtonElement | null;
+  setColumnAnchorEl: React.Dispatch<
+    React.SetStateAction<HTMLButtonElement | null>
+  >;
 }
 
 const FinancialProjectCost: React.FC<FinancialProjectCostProps> = ({
@@ -39,6 +50,8 @@ const FinancialProjectCost: React.FC<FinancialProjectCostProps> = ({
   setCount,
   setFinancialProjectCostParams,
   setExportType,
+  columnAnchorEl,
+  setColumnAnchorEl,
 }) => {
   const { accountid } = useParams();
   const [projectCostList, setProjectCostList] = useState<
@@ -141,35 +154,75 @@ const FinancialProjectCost: React.FC<FinancialProjectCostProps> = ({
   const financialProjectCostColumns =
     getFinancialProjectCostColumns(permissionMap);
 
+  const RestrictedColumns = [
+    {
+      id: 'project_code',
+      canHide: false,
+      canDrag: false,
+    },
+  ];
+
+  const [visibleColumns, setVisibleColumns] = useState<
+    ListTableColumn<FinancialProjectCostList>[]
+  >(financialProjectCostColumns.filter((col) => !col.hide));
+
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    setVisibleColumns(
+      updatedColumns.filter(
+        (col) => !col.hide
+      ) as ListTableColumn<FinancialProjectCostList>[]
+    );
+  };
+
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
+  };
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const modalId = isModalOpen
+    ? 'interaction-column-visibility-popover'
+    : undefined;
+
   return (
-    <ListTable
-      data={projectCostList || []}
-      columns={financialProjectCostColumns}
-      getRowId={getRowId}
-      hoverHighlight={false}
-      tableStyle={{
-        borderBottom: '1px solid #CBD6E2',
-        height: '100%',
-        maxHeight: 'calc(100vh - 410px)',
-        overflow: 'auto',
-      }}
-      stickyHeader={true}
-      stickyColumnsCount={1}
-      selectable={false}
-      actionWidth={80}
-      actionDisplayMode='dropdown'
-      loading={isLoading}
-      error={error ? 'Failed to load resource cost data' : undefined}
-      totalItems={projectCostData?.count ?? 0}
-      rowsPerPageOptions={[25, 50, 100]}
-      sortBy={tableParams.sortBy}
-      sortOrder={tableParams.sortOrder}
-      rowsPerPage={tableParams.limit}
-      currentPage={(tableParams.page ?? 1) - 1}
-      onPageChange={handlePageChange}
-      onRowsPerPageChange={handleRowsPerPageChange}
-      onSort={handleSort}
-    />
+    <>
+      <ManageColumnsPopover
+        anchorEl={columnAnchorEl}
+        open={isModalOpen}
+        popoverId={modalId}
+        onClose={handlePopoverClose}
+        columns={financialProjectCostColumns}
+        onColumnsChange={handleColumnsChange}
+        columnRestrictions={RestrictedColumns}
+      />
+      <ListTable
+        data={projectCostList || []}
+        columns={visibleColumns}
+        getRowId={getRowId}
+        hoverHighlight={false}
+        tableStyle={{
+          borderBottom: '1px solid #CBD6E2',
+          height: '100%',
+          maxHeight: 'calc(100vh - 370px)',
+          overflow: 'auto',
+        }}
+        stickyHeader={true}
+        stickyColumnsCount={1}
+        selectable={false}
+        actionWidth={80}
+        actionDisplayMode='dropdown'
+        loading={isLoading}
+        error={error ? 'Failed to load resource cost data' : undefined}
+        totalItems={projectCostData?.count ?? 0}
+        rowsPerPageOptions={[25, 50, 100]}
+        sortBy={tableParams.sortBy}
+        sortOrder={tableParams.sortOrder}
+        rowsPerPage={tableParams.limit}
+        currentPage={(tableParams.page ?? 1) - 1}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+        onSort={handleSort}
+      />
+    </>
   );
 };
 

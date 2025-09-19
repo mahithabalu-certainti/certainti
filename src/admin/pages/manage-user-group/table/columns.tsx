@@ -148,5 +148,5 @@ export const getAvailableProjectsColumns = () => [
     sortId: 'project_code',
     label: 'Project Code',
     sortable: false,
-  },
+  }
 ];

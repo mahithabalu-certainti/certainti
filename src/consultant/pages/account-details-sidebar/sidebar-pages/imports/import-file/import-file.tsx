@@ -1,16 +1,17 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useToast } from '../../../../../../hooks';
 import {
+  OnChange,
   UploadImportPayload,
   useGetImportEntityTypes,
 } from '../../../../../../common-service';
 import { uploadImportFile } from '../../../../../services/import';
-import { ImportIcon, UploadIcon } from '../../../../../../assets';
+import { ImportsIcon, UploadIcon } from '../../../../../../assets';
 import SectionHeader from '../../../../../../components/details-section/section-header';
-import {
-  ButtonDropdown,
-  GlobalFiscalYearDropdown,
-} from '../../../../../../components';
+import { FormBuilder, FileList } from '../../../../../../components';
+import TextButton from '../../../../../../components/button/text-button';
+import { FormType } from '../../../../../types';
+import { createSelectField } from '../../../../../../common-utils';
 
 interface ImportFileProps {
   accountNo?: string | undefined;
@@ -29,6 +30,7 @@ const ImportFile: React.FC<ImportFileProps> = ({
   onUploadSuccess,
   handleShowUpload,
 }) => {
+  const formRef = useRef<HTMLFormElement>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [message, setMessage] = useState<{
     type: 'error' | 'success';
@@ -40,6 +42,9 @@ const ImportFile: React.FC<ImportFileProps> = ({
   const [entityType, setEntityType] = useState<string>('');
   const [fiscalYear, setFiscalYear] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
+
+  const { successToast, errorToast } = useToast();
+  const entityTypes = useGetImportEntityTypes();
 
   useEffect(() => {
     if (
@@ -53,8 +58,11 @@ const ImportFile: React.FC<ImportFileProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entityType, fiscalYear, selectedFiles]);
 
-  const { successToast, errorToast } = useToast();
-  const entityTypes = useGetImportEntityTypes();
+  useEffect(() => {
+    if (entityType === 'Resource' || entityType === 'Resource Skill') {
+      setFiscalYear('');
+    }
+  }, [entityType]);
 
   const entityOptions = useMemo(
     () =>
@@ -67,8 +75,9 @@ const ImportFile: React.FC<ImportFileProps> = ({
 
   const currentYear = new Date().getFullYear();
 
+  const minYear = 1950;
   const fiscalYearsOptions: { label: string; value: string }[] = Array.from(
-    { length: currentYear - 2000 + 1 },
+    { length: currentYear - minYear + 1 },
     (_, index) => {
       const year = currentYear - index;
       return {
@@ -77,18 +86,15 @@ const ImportFile: React.FC<ImportFileProps> = ({
       };
     }
   );
-  const handleFiscalYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value;
-    setFiscalYear(value);
-  };
 
   const showError = (text: string) => {
     setMessage({ type: 'error', text });
+    setSelectedFiles([]);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
-  const showSuccess = (text: string) => {
-    setMessage({ type: 'success', text });
-  };
   const ACCEPTED_FILE_TYPES = [
     'text/csv',
     'application/vnd.ms-excel', // .xls
@@ -99,39 +105,48 @@ const ImportFile: React.FC<ImportFileProps> = ({
     if (!files) return [];
 
     const validFiles: File[] = [];
+    let hasError = false;
 
     for (const file of Array.from(files)) {
+      if (/\s/.test(file.name)) {
+        showError(
+          `"${file.name}" is invalid. File name must not contain spaces.`
+        );
+        hasError = true;
+        continue;
+      }
+
       const isAcceptedType =
         ACCEPTED_FILE_TYPES.includes(file.type) ||
         /\.(csv|xls|xlsx)$/i.test(file.name);
 
       if (!isAcceptedType) {
         showError(`"${file.name}" is not a valid CSV or Excel file.`);
+        hasError = true;
         continue;
       }
 
       if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
         showError(`"${file.name}" exceeds the 50MB limit.`);
+        hasError = true;
         continue;
       }
 
       validFiles.push(file);
     }
 
+    if (!hasError && validFiles.length > 0) {
+      setMessage(null);
+    }
+
     return validFiles;
   };
 
+  const handleExternalSubmit = () => {
+    formRef.current?.requestSubmit();
+  };
+
   const handleSubmit = async () => {
-    if (!entityType) {
-      showError('Please select an Entity Type.');
-      return;
-    }
-
-    if (!fiscalYear) {
-      showError('Please select a Fiscal Year.');
-      return;
-    }
-
     if (selectedFiles.length === 0) {
       showError('Please select a file before submitting.');
       return;
@@ -151,18 +166,25 @@ const ImportFile: React.FC<ImportFileProps> = ({
     }
 
     try {
+      const currentYear = new Date().getFullYear();
+
       const payload: UploadImportPayload = {
         entity_type: entityType,
-        file: selectedFiles[0],
-        fiscal_year: fiscalYear,
+        file: file,
+        fiscal_year:
+          entityType === 'Resource' || entityType === 'Resource Skill'
+            ? currentYear.toString()
+            : fiscalYear,
         account_rid: accountId,
         related_to: 'account',
         related_to_rid: accountId,
         uploaded_by_user_rid: userId,
         account_r_number: accountNo,
       };
+
       setLoading(true);
       const response = await uploadImportFile(payload);
+
       if (
         response?.data.statusCode === 201 ||
         response?.data.statusCode === 200
@@ -204,7 +226,24 @@ const ImportFile: React.FC<ImportFileProps> = ({
     const validFiles = validateFiles(e.target.files);
     if (validFiles.length > 0) {
       setSelectedFiles(validFiles);
-      showSuccess(`File "${validFiles[0].name}" added successfully.`);
+    }
+  };
+
+  const onChangeField = (params: OnChange) => {
+    const { fieldName, fieldValue } = params;
+
+    if (fieldName === 'entity_type') {
+      const stringValue = fieldValue?.toString() || '';
+      setEntityType(stringValue);
+
+      if (stringValue === 'Resource' || stringValue === 'Resource Skill') {
+        setFiscalYear('');
+      }
+    }
+
+    if (fieldName === 'fiscal_year') {
+      const stringValue = fieldValue?.toString() || '';
+      setFiscalYear(stringValue);
     }
   };
 
@@ -214,7 +253,6 @@ const ImportFile: React.FC<ImportFileProps> = ({
 
     if (validFiles.length > 0) {
       setSelectedFiles((prevFiles) => [...prevFiles, ...validFiles]);
-      showSuccess(`File "${validFiles[0].name}" added successfully.`);
     }
   };
 
@@ -225,111 +263,161 @@ const ImportFile: React.FC<ImportFileProps> = ({
   const openFileDialog = () => {
     fileInputRef.current?.click();
   };
+
   const goBack = () => {
     handleShowUpload();
   };
 
-  const headerButtons = [
-    {
-      label: 'Cancel',
-      variant: 'outlined' as const,
-      disabled: false,
-      onClick: () => goBack(),
-      sx: { width: '75px', minWidth: '75px' },
-    },
-    {
-      label: 'Save',
-      variant: 'outlined' as const,
-      disabled: accountInActive,
-      loading: loading,
-      onClick: () => handleSubmit(),
-      sx: { width: '64px', minWidth: '64px' },
-    },
-  ];
+  // const headerButtons = [
+  //   {
+  //     label: 'Cancel',
+  //     variant: 'outlined' as const,
+  //     disabled: false,
+  //     onClick: () => goBack(),
+  //     sx: { width: '75px', minWidth: '75px' },
+  //   },
+  //   {
+  //     label: 'Upload',
+  //     variant: 'outlined' as const,
+  //     disabled: accountInActive,
+  //     loading: loading,
+  //     onClick: () => handleSubmit(),
+  //     sx: { width: '75px', minWidth: '75px' },
+  //   },
+  // ];
+
+  const formConfig: FormType[] = useMemo(
+    () => [
+      {
+        sectionName: 'Import Details',
+        fillType: 'half',
+        fields: [
+          createSelectField('entity_type', 'Entity Type', {
+            required: true,
+            options: entityOptions,
+            placeholder: 'Select Type',
+            onChange: true,
+            resetDependsFields: ['fiscal_year'],
+          }),
+          createSelectField('fiscal_year', 'Fiscal Year', {
+            required:
+              entityType === 'Resource' || entityType === 'Resource Skill'
+                ? false
+                : true,
+            options: fiscalYearsOptions,
+            placeholder: 'FY-Year',
+            disabled:
+              entityType === 'Resource' || entityType === 'Resource Skill',
+            onChange: true,
+            isFiscalYear: true,
+          }),
+        ],
+      },
+    ],
+    [entityOptions, fiscalYearsOptions, entityType]
+  );
 
   return (
     <div className='h-auto border border-[#CBD6E2] flex flex-col rounded-tr-[2px] rounded-tl-[2px] '>
       <SectionHeader
         title='Imports'
-        titleIcon={<ImportIcon alt='Imports-upload-icon' />}
+        titleIcon={
+          <ImportsIcon
+            className='[&>path]:stroke-white'
+            alt='Imports-header-icon'
+          />
+        }
+        iconBg='#af78ff'
+        bgType='circle'
         className='border-b border-[#CBD6E2] h-[40px]'
-        buttons={headerButtons}
+        // buttons={headerButtons}
       />
-      <div className='h-[38px] py-1 px-2 border-b border-[#CBD6E2] flex items-center gap-6'>
-        <div className='flex items-center gap-2'>
-          <label className='font-normal text-[14px] text-[#2D3E4F]'>
-            Entity Type
-            <span className='text-red-500 ml-1'>*</span>
-          </label>
-          <ButtonDropdown
-            label='Select Type'
-            options={entityOptions}
-            disabled={entityTypes.isPending}
-            selectedValue={entityType}
-            onSelect={(value) => setEntityType(value)}
-          />
-        </div>
-        <div className='flex items-center gap-2'>
-          <label className='font-normal text-[14px] text-[#2D3E4F]'>
-            Fiscal Year
-            <span className='text-red-500 ml-1'>*</span>
-          </label>
-          <GlobalFiscalYearDropdown
-            fiscalYear={fiscalYear}
-            fiscalYearsOptions={fiscalYearsOptions}
-            onChange={handleFiscalYearChange}
-            placeholder='FY-Year'
-            className='text-[#425A76] text-[13px] font-semibold border border-[#CBD6E2] shadow-[0px_1px_2px_0px_rgba(42,54,71,0.05)] bg-gradient-to-b from-[#FFFFFF] to-[#E4E6E7]'
-          />
+      <div style={{ pointerEvents: loading ? 'none' : 'all' }}>
+        <FormBuilder
+          loading={false}
+          data={formConfig}
+          values={{}}
+          outData={handleSubmit}
+          formRef={formRef}
+          onChange={onChangeField}
+        />
+
+        <div className='flex flex-col border-t border-[#cbd6e2] items-center justify-center gap-4 px-4 py-5 mt-6'>
+          <div
+            className={`flex flex-col items-center justify-center gap-4 px-4  ${accountInActive ? 'opacity-50' : ''}`}
+            style={{
+              pointerEvents: accountInActive || loading ? 'none' : 'all',
+            }}
+          >
+            <div
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onClick={openFileDialog}
+              className={`h-[116px] w-[502px] border-[2px] border-dashed rounded-[8px] flex flex-col items-center justify-center gap-2  ${
+                message && message.type === 'error'
+                  ? 'border-red-600 bg-[#FEF2F2] cursor-pointer'
+                  : 'border-[#0176D3] bg-[#F4F6F9] cursor-pointer'
+              }`}
+            >
+              <UploadIcon alt='Upload Icon' className='w-[36px] h-[24px]' />
+              <div className='text-[14px] text-[#0B0B0B]'>
+                Drag your file or{' '}
+                <span
+                  className='text-[#0176D3] underline'
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openFileDialog();
+                  }}
+                >
+                  browse
+                </span>
+              </div>
+              <input
+                type='file'
+                accept='.csv, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                className='hidden'
+                ref={fileInputRef}
+                onChange={handleFileSelect}
+                disabled={accountInActive}
+              />
+            </div>
+
+            {/* Reserved space for error messages to prevent button movement */}
+            <div className='w-[502px] max-w-[502px] mt-2'>
+              {message && (
+                <div
+                  className={`text-sm ${
+                    message.type === 'error' ? 'text-red-600' : 'text-green-600'
+                  }`}
+                >
+                  {message.text}
+                </div>
+              )}
+            </div>
+
+            <FileList
+              fileInputRef={fileInputRef}
+              selectedFiles={selectedFiles}
+              setSelectedFiles={setSelectedFiles}
+            />
+
+            {/* Button section with top border and reduced bottom spacing */}
+          </div>
         </div>
       </div>
-
-      <div
-        className={`flex flex-col items-center justify-center gap-4 px-4 py-10 ${accountInActive ? 'opacity-50' : ''}`}
-        style={{ pointerEvents: accountInActive || loading ? 'none' : 'all' }}
-      >
-        <div
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
-          onClick={openFileDialog}
-          className={`h-[116px] w-[502px] border-[2px] border-dashed rounded-[8px] flex flex-col items-center justify-center gap-2  ${
-            message && message.type === 'error'
-              ? 'border-red-600 bg-[#FEF2F2] cursor-pointer'
-              : 'border-[#0176D3] bg-[#F4F6F9] cursor-pointer'
-          }`}
-        >
-          <UploadIcon alt='Upload Icon' className='w-[36px] h-[24px]' />
-          <div className='text-[14px] text-[#0B0B0B]'>
-            Drag your file(s) or{' '}
-            <span
-              className='text-[#0176D3] underline'
-              onClick={(e) => {
-                e.stopPropagation();
-                openFileDialog();
-              }}
-            >
-              browse
-            </span>
-          </div>
-          <input
-            type='file'
-            accept='.csv, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            className='hidden'
-            ref={fileInputRef}
-            onChange={handleFileSelect}
-            disabled={accountInActive}
-          />
-        </div>
-
-        {message && (
-          <div
-            className={`w-[502px] max-w-[502px] mt-2 break-all text-sm ${
-              message.type === 'error' ? 'text-red-600' : 'text-green-600'
-            }`}
-          >
-            {message.text}
-          </div>
-        )}
+      <div className='border-t border-[#CBD6E2] flex w-full justify-end gap-4 mb-3 pt-3 pr-3'>
+        <TextButton
+          label='Cancel'
+          onClick={goBack}
+          disabled={false}
+          sx={{ width: '75px', minWidth: '75px' }}
+        />
+        <TextButton
+          label='Upload'
+          onClick={handleExternalSubmit}
+          disabled={accountInActive}
+          sx={{ width: '75px', minWidth: '75px' }}
+        />
       </div>
     </div>
   );

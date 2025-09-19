@@ -1,14 +1,23 @@
-import { useQuery, UseQueryResult } from '@tanstack/react-query';
+import { useMutation, useQuery, UseQueryResult } from '@tanstack/react-query';
 import {
   GetProjectTypeApiResponse,
   Project,
   ProjectAccordionResponse,
   // ProjectList,
   ProjectListParams,
-  // ProjectListResponse,
+  ProjectTriggerAIPayload,
 } from '../../types/project';
-import { accountServiceApi, resourceServiceApi } from '../../../api/api';
-import { ProjectExportListURL, ProjectListURL } from '../urls';
+import {
+  accountServiceApi,
+  interactionServiceApi,
+  resourceServiceApi,
+} from '../../../api/api';
+import {
+  ProjectExportListURL,
+  ProjectListURL,
+  ProjectTriggerAIUrl,
+} from '../urls';
+import { CommonApiResponse } from '../../../common-service';
 
 export const fetchProjects = async (
   params: ProjectListParams
@@ -126,5 +135,30 @@ export const useGetProjectType = () => {
     gcTime: Infinity, // Never delete from cache
     refetchOnMount: false, // Don't refetch on component mount
     refetchOnReconnect: false, // Don't refetch on reconnect
+  });
+};
+
+export const TriggerInteraction = async (
+  body: Partial<ProjectTriggerAIPayload>
+): Promise<CommonApiResponse> => {
+  try {
+    const { data } = await interactionServiceApi.post<CommonApiResponse>(
+      ProjectTriggerAIUrl(),
+      body
+    );
+    return data;
+  } catch (error) {
+    console.error('Error create interaction:', error);
+    throw error;
+  }
+};
+
+export const ProjectTriggerAI = () => {
+  return useMutation<
+    CommonApiResponse,
+    Error,
+    Partial<ProjectTriggerAIPayload>
+  >({
+    mutationFn: (body) => TriggerInteraction({ ...body }),
   });
 };

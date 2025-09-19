@@ -11,6 +11,7 @@ import {
   CurrencyApiResponse,
   FinancialStateProps,
   FinancialStatesApiResponse,
+  GlobalAccountListParams,
   GlobalAccountListResponse,
   IndustrysApiResponse,
   keyContactRolesApiResponse,
@@ -26,6 +27,7 @@ import {
   CurrencyUrl,
   getAccountExportUrl,
   getKeyContactRolesUrl,
+  GloablAcconuntsListURL,
   GlobalAccountUrl,
   IndustryUrl,
   ParentAccountUrl,
@@ -199,5 +201,31 @@ export const useKeyContactRoles = (entityType: string) => {
     queryFn: () => fetchKeyContactRoles(entityType),
     retry: 0,
     enabled: !!entityType,
+  });
+};
+
+// Global account list
+export const fetchGlobalAccountList = async (
+  params: GlobalAccountListParams
+): Promise<{ accounts: AccountList[]; count: number }> => {
+  const response = await accountServiceApi.get<GlobalAccountListResponse>(
+    GloablAcconuntsListURL(params)
+  );
+  return {
+    accounts: response.data.data.gloablAcconunt,
+    count: response.data.data.count,
+  };
+};
+
+export const useGlobalAccountsList = (
+  params: GlobalAccountListParams,
+  fetchAccount: boolean
+): UseQueryResult<{ accounts: AccountList[]; count: number }, Error> => {
+  return useQuery<{ accounts: AccountList[]; count: number }, Error>({
+    queryKey: ['global-accounts-list', params],
+    queryFn: () => fetchGlobalAccountList(params),
+    retry: 0,
+    gcTime: 0,
+    enabled: !!fetchAccount,
   });
 };
