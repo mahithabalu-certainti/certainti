@@ -2791,7 +2791,6 @@ class SchemaService {
 
       for (const field of allProjectFields) {
         const qualifiedField = searchFieldAliasMap[field] || field;
-        console.log()
         searchConditions.push(`${qualifiedField} ILIKE ?`);
         replacements.push(`%${search}%`);
       }

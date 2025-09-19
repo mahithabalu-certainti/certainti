@@ -106,6 +106,7 @@ export interface ProjectFiscalSummaryAttributes {
   blended_rate_subcon?: number | null;
 
   rd_percent_potential_ai?: number | null;
+  rd_percent_potential_ai_updated?: number | null;
   rd_percent_adjustment?: number | null;
   rd_percent_final?: number | null;
 
@@ -243,6 +244,7 @@ export class ProjectFiscalSummary
   public blended_rate_subcon?: number | null;
 
   public rd_percent_potential_ai?: number | null;
+  public rd_percent_potential_ai_updated?: number | null;
   public rd_percent_adjustment?: number | null;
   public rd_percent_final?: number | null;
 
@@ -459,6 +461,7 @@ export class ProjectFiscalSummary
 
         // R&D & QRE
         rd_percent_potential_ai: DataTypes.DECIMAL(18, 2),
+        rd_percent_potential_ai_updated: DataTypes.DECIMAL(18, 2),
         rd_percent_adjustment: DataTypes.DECIMAL(18, 2),
         rd_percent_final: DataTypes.DECIMAL(18, 2),
         qre_fte: DataTypes.DECIMAL(18, 2),
