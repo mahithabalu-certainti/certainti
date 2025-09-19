@@ -96,7 +96,7 @@ const FormFiscalYearDropdown = ({
 
   return (
     <div
-      className='relative inline-block text-left font-medium z-50 w-full'
+      className='relative inline-block text-left font-medium w-full'
       ref={dropdownRef}
     >
       <button
