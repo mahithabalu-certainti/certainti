@@ -400,7 +400,6 @@ export default class ImportGraphqlServices {
         {},
         accessibleIds,
         "timesheet",
-        [],
         documentRid
       );
 
