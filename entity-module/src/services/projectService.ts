@@ -1128,7 +1128,7 @@ export class ProjectService {
       type: "SELECT",
     });
 
-    return results.map((row: any) => row.project_rid);
+    return results.map((row: any) => row.project_fiscal_rid);
   }
 
   async allProjectList(
