@@ -599,7 +599,6 @@ const Interactions: React.FC<InteractionsProps> = ({
                   sortOrder={sortBy}
                   onSort={handleSortRequest}
                   clearSelectedRows={clearSelectedRows}
-                  disabledSelect={selectedRows.length > 0}
                 />
               </>
             )}
