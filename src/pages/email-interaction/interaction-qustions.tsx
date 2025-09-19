@@ -148,7 +148,16 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   const [headerIntertaction, setHeaderInteraction] = useState<DisplayColumn[]>(
     []
   );
+  const [disbleAllAction, setDisbleAllAction] = useState<boolean>(false);
 
+  useEffect(() => {
+    if (removingGlobalIdx !== null) {
+      const newAttachments = [...newGlobalAttachments];
+      newAttachments.splice(removingGlobalIdx, 1);
+      setNewGlobalAttachments(newAttachments);
+      setRemovingGlobalIdx(null);
+    }
+  }, [removingGlobalIdx]);
   useEffect(() => {
     // Initialize all toolbars as hidden
     const initialToolbarState = questions.reduce(
@@ -253,6 +262,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
         await refetchDeetails?.();
         setValidationErrors({});
         setActiveFlag(null);
+        setDisbleAllAction(flag === FlagTypeEnum.draft ? false : true);
         successToast(
           flag === FlagTypeEnum.draft
             ? 'Draft saved successfully'
@@ -463,6 +473,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
           sx: { width: '110px', minWidth: '110px' },
           loading: activeFlag === FlagTypeEnum.draft && isUpdateLoading,
           disabled:
+            disbleAllAction ||
             (activeFlag !== null && activeFlag !== FlagTypeEnum.draft) ||
             uploadFileMutation.isPending,
         },
@@ -473,6 +484,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
           sx: { width: '64px', minWidth: '64px' },
           loading: activeFlag === FlagTypeEnum.submit && isUpdateLoading,
           disabled:
+            disbleAllAction ||
             (activeFlag !== null && activeFlag !== FlagTypeEnum.submit) ||
             uploadFileMutation.isPending,
         },
@@ -481,7 +493,8 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
           variant: 'outlined' as const,
           onClick: () => globalFileInputRef.current?.click(),
           sx: { width: '100px', minWidth: '100px' },
-          disabled: isUpdateLoading || uploadFileMutation.isPending,
+          disabled:
+            disbleAllAction || isUpdateLoading || uploadFileMutation.isPending,
         },
         // {
         //   label: 'Cancel',

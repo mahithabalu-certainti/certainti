@@ -78,7 +78,6 @@ const ResourceForm: React.FC = () => {
   const { successToast } = useToast();
   const location = useLocation();
   const fromLocation = location.state?.from;
-  console.log(fromLocation);
   const { resourcesid } = useParams();
   const { state } = location;
   const navigate = useNavigate();
