@@ -3655,7 +3655,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       user_rid : data.user_rid,
       is_email_send : false,
       is_interaction_followup : data?.is_interaction_followup || false,
-      interaction_level:  'Project',
+      interaction_level: data.interaction_level || 'Project',
     })
     return insertedData
   }
