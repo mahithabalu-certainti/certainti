@@ -1749,6 +1749,7 @@ class ProjectIngestionService {
       whereFiscal = {
         account_rid: accountData.rid,
       };
+      
       if(apiSource === "interaction"){
         const [activeId] : any[] = await this.mainDbSequelize!.query(rawQueries.fetchActiveStatus(),{type:"SELECT"})
         whereFiscal.status_rid = activeId.rid
