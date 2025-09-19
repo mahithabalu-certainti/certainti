@@ -761,6 +761,7 @@ class SchemaService {
 
       -- R&D + QRE
       rd_percent_potential_ai DECIMAL(18,2),
+      rd_percent_potential_ai_updated DECIMAL(18, 2) NULL, 
       rd_percent_adjustment DECIMAL(18,2),
       rd_percent_final DECIMAL(18,2),
       qre_fte DECIMAL(18,2),
@@ -911,6 +912,7 @@ class SchemaService {
         blended_rate_fte numeric(18, 2) NULL,
         blended_rate_subcon numeric(18, 2) NULL,
         rd_percent_potential_ai numeric(18, 2) NULL,
+        rd_percent_potential_ai_updated numeric(18, 2) NULL, 
         rd_percent_adjustment numeric(18, 2) NULL,
         rd_percent_final numeric(18, 2) NULL,
         qre_fte numeric(18, 2) NULL,
