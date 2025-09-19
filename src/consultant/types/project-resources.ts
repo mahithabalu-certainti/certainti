@@ -152,6 +152,9 @@ export interface ProjectResourceCodeResponse extends CommonApiResponse {
     resourceCodes: ProjectResourceCodeData[];
   };
 }
+export interface ProjectResourceTaskCodeResponse extends CommonApiResponse {
+  data: ProjectResourceTaskCodeData[];
+}
 
 interface ProjectResourceCodeData {
   resource_type_rid?: string;
@@ -159,6 +162,12 @@ interface ProjectResourceCodeData {
   rid: string;
   resource_code: string;
   resource_name: string;
+}
+interface ProjectResourceTaskCodeData {
+  rid: string;
+  resource_code: string;
+  // resource_name: string;
+  project_resource_role: string;
 }
 // skill type
 export interface PRSkillSubTypeResponse extends CommonApiResponse {

@@ -45,21 +45,25 @@ export const ProjectTaskFormData = (
           !permissionMapTaskForm?.['resource_code']?.read &&
           !permissionMapTaskForm?.['resource_code']?.edit,
         fields: [
-          createAutoCompleteField('resource_code', 'Project Resource Code', {
-            options: memoizedProjectResourceCode,
-            required: true,
-            onChange: true,
-            showCreateBtn: true,
-            placeholder: 'Choose Resource Code',
-            disabled:
-              isEditView &&
-              permissionMapTaskForm?.['resource_code']?.read &&
-              !permissionMapTaskForm?.['resource_code']?.edit,
-            hide:
-              isEditView &&
-              !permissionMapTaskForm?.['resource_code']?.read &&
-              !permissionMapTaskForm?.['resource_code']?.edit,
-          }),
+          createAutoCompleteField(
+            'project_resource_rid',
+            'Project Resource Code',
+            {
+              options: memoizedProjectResourceCode,
+              required: true,
+              onChange: true,
+              showCreateBtn: true,
+              placeholder: 'Choose Resource Code',
+              disabled:
+                isEditView &&
+                permissionMapTaskForm?.['resource_code']?.read &&
+                !permissionMapTaskForm?.['resource_code']?.edit,
+              hide:
+                isEditView &&
+                !permissionMapTaskForm?.['resource_code']?.read &&
+                !permissionMapTaskForm?.['resource_code']?.edit,
+            }
+          ),
         ],
       },
 

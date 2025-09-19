@@ -194,6 +194,7 @@ export interface ProjectTaskInput {
   total_cost_pro_task: string | null;
   comments: string | null;
   user_preference: string;
+  project_resource_rid: string;
 }
 //create task api response,
 export interface createProjectTaskApiResponse {
