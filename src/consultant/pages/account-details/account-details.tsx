@@ -61,8 +61,11 @@ import {
   ProjectFinancialProjectExportParams,
   ProjectFinancialResourceExportParams,
 } from '../../types';
-import { exportProjectData } from '../../services/project';
-import { ProjectListParams } from '../../types/project';
+import { exportProjectData, ProjectTriggerAI } from '../../services/project';
+import {
+  ProjectListParams,
+  ProjectTriggerAIPayload,
+} from '../../types/project';
 import { exportAttachmentsData } from '../../services/attachments/attachments-service';
 import { AttachmentsListExportParams } from '../../types/attachment';
 import {
@@ -84,6 +87,8 @@ import {
   exportAccountInteractions,
 } from '../../services/interactions/interactions-service';
 import { TimesheetProjectExportListURLParams } from '../../types/timesheet-projects';
+import { BUTTON_STYLES } from '../../../admin/pages/manage-user-detail/styles';
+import { useToast } from '../../../hooks';
 
 export const AccountDetails = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -96,6 +101,10 @@ export const AccountDetails = () => {
   const { accountid } = useParams();
   const { menus, modules, permission } = useSelector(
     (state: RootState) => state.permission
+  );
+  const TriggerAIEnable = checkPermission(
+    permission,
+    AllPermissions.TRIGGER_AI_ASSESSMENT
   );
 
   const { filters, fiscalYear } = useSelector<RootState, AccountState>(
@@ -550,6 +559,29 @@ export const AccountDetails = () => {
     setActiveKey(location.state?.activeKey || listParam || 'details');
   }, [location.state, searchParams]);
 
+  const { successToast } = useToast();
+  const triggerAIMutation = ProjectTriggerAI();
+  const handleTriggerAI = () => {
+    const accountId = data?.data?.accountById?.rid || '';
+    const payload: ProjectTriggerAIPayload = {
+      data: [
+        {
+          account_rid: accountId,
+          project_fiscal_rid: [],
+        },
+      ],
+      type: 'account',
+    };
+    triggerAIMutation.mutate(payload, {
+      onSuccess: (res) => {
+        successToast(res.statusMessage);
+      },
+      onError: (err) => {
+        console.log(err);
+      },
+    });
+  };
+
   const renderContent = () => {
     switch (activeKey) {
       case 'financial':
@@ -804,6 +836,16 @@ export const AccountDetails = () => {
           title={data?.data?.accountById?.account_name ?? ''}
           totalRecords={5}
           actionItems={menuItems}
+          headerButtons={[
+            {
+              label: 'RD Assessment',
+              onClick: handleTriggerAI,
+              disabled: accountInActive,
+              loading: triggerAIMutation.isPending,
+              sx: { ...BUTTON_STYLES, width: '115px', minWidth: '115px' },
+              hide: !TriggerAIEnable,
+            },
+          ]}
           primaryButton={
             isAccountFieldsEditable
               ? {

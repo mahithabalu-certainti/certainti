@@ -1,21 +1,25 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { NewFilterIcon, UserIcon } from '../../../../assets';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { ManageAccountTable } from './table';
 import { ProjectListParams } from '../../../../consultant/types/project';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import UserTab from './tab';
 import { BUTTON_STYLES } from '../../manage-user-detail/styles';
 import TextButton from '../../../../components/button/text-button';
-import { useUpdateProjectAccesseDetails } from '../../../service/manage-account-access/manage-account-service';
+import {
+  useUpdateProjectAccesseDetails,
+  useUserGroupList,
+} from '../../../service/manage-account-access/manage-account-service';
 import { useToast } from '../../../../hooks';
-import { FilterType } from '../../../types';
+import { ActiveUserForGroup, FilterType } from '../../../types';
 import { FilterModal } from '../../../../components';
 import {
   getManageAccountFilterFields,
   getManageGroupListFilterFields,
   getManageProjectListFilterFields,
   getManageUserListFilterFields,
+  getUserListFilterFields,
 } from './helper';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
@@ -35,7 +39,10 @@ import { FilterState } from '../../../../consultant/types/account-filter';
 import { checkPermission } from '../../../../common-utils';
 import { AccessRestricted } from '../../../../components/account-restricted';
 import { MANAGE_ACCOUNT_ACCESS } from '../../../../routes';
-import { useGetUserGroupTypes } from '../../../service';
+import { useGetUserGroupTypes, useManageUserRole } from '../../../service';
+import { ListTable } from '../../../../components/table';
+import { getAvailableUserColumns } from './column';
+import { SortDirection } from '../../../../components/table/types';
 import SearchBar from '../../../../components/search/search-bar';
 
 const AccountList = () => {
@@ -49,6 +56,13 @@ const AccountList = () => {
     sortBy: 'account_name',
     sortOrder: 'ASC',
   });
+  const [userParams, setUserParams] = useState<Record<string, unknown>>({
+    page: 1,
+    limit: 100,
+    sortBy: 'user_name',
+    sortOrder: 'ASC',
+  });
+
   const [searchText, setSearchText] = useState<string>('');
   useEffect(() => {
     const saved = getStoredFilters();
@@ -58,6 +72,14 @@ const AccountList = () => {
       );
     }
   }, []);
+  useEffect(() => {
+    setUserParams((prev) => ({
+      ...prev,
+      page: 1,
+      filters: appliedFilters,
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appliedFilters]);
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const [columnAnchorEl, setColumnAnchorEl] =
@@ -88,16 +110,38 @@ const AccountList = () => {
   const handleFilterModal = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
+  const userPageChange = (newPage: number) => {
+    setUserParams((prev) => ({
+      ...prev,
+      page: newPage + 1,
+    }));
+  };
+  const userRowsPerPageChange = (newLimit: number) => {
+    setUserParams((prev) => ({
+      ...prev,
+      limit: newLimit,
+      page: 1,
+    }));
+  };
+
   const accountList = searchParams.get('accountList');
   const accountId = searchParams.get('accountid');
   const accountname = searchParams.get('accountname');
   const username = searchParams.get('username');
   const groupname = searchParams.get('groupname');
   const tabIndex = searchParams.get('tabIndex');
+  const groupId = searchParams.get('groupid');
   const name = username || groupname || '';
   const type = username ? 'USER' : groupname ? 'GROUP' : '';
 
   const projectListAccess = useUpdateProjectAccesseDetails();
+  const availableUsers = useUserGroupList(
+    accountId as string,
+    groupId as string,
+    userParams
+  );
+  const userRoles = useManageUserRole();
+  const totalUsers = availableUsers?.data?.data.count || 0;
   const commonSuccess = projectListAccess.isSuccess;
   const [addedProjects, setAddedProjects] = useState<{
     [rid: string]: boolean;
@@ -186,6 +230,14 @@ const AccountList = () => {
       })) || [],
     [allUserGroupTypes.data?.data.groupTypes]
   );
+  const memoizeRole = useMemo(
+    () =>
+      userRoles.data?.data.roles.map((role) => ({
+        label: role.business_teams,
+        value: role.business_teams,
+      })) || [],
+    [userRoles.data?.data.roles]
+  );
   const accountFilterFields = getManageAccountFilterFields(
     allCountries,
     allIndustries,
@@ -197,6 +249,8 @@ const AccountList = () => {
   const getFilterFields = () => {
     if (!accountname) {
       return accountFilterFields;
+    } else if (groupId) {
+      return getUserListFilterFields(memoizeRole);
     } else if (type === 'GROUP' || type === 'USER') {
       return projectFilterFeilds;
     } else if (tabIndex === '0') {
@@ -204,6 +258,15 @@ const AccountList = () => {
     } else if (tabIndex === '1') {
       return groupFilterFeilds;
     }
+  };
+
+  const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
+    const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
+    setUserParams((prev) => ({
+      ...prev,
+      sortBy,
+      sortOrder: apiOrder,
+    }));
   };
 
   const filtercolumn = getFilterFields();
@@ -229,6 +292,7 @@ const AccountList = () => {
     });
     return map;
   }, [userViewEdit]);
+  const getRowId = (row: ActiveUserForGroup) => row.rid;
 
   const disabled =
     permissionMapListView?.['assign']?.read &&
@@ -280,38 +344,50 @@ const AccountList = () => {
       </div>
 
       <div className='flex items-center justify-between h-[42px] min-h-[42px] max-h-[42px] px-4'>
-        <div className='flex flex-col'>
-          <div className='font-bold text-[14px] leading-[32px] text-[#2D3E4F]'>
-            All Accounts
-          </div>
-          {accountname && (
-            <div className='font-semibold text-[#7D98B6] text-[12px] -mt-2'>
-              {` ${accountname}  ${name ? ` > ${name}` : ''}`}
+        <div className='flex items-center gap-4'>
+          <div className='flex flex-col'>
+            <div className='font-bold text-[14px] leading-[32px] text-[#2D3E4F]'>
+              {groupId ? 'All Users' : 'All Accounts'}
             </div>
-          )}
+            {accountname && !groupId && (
+              <div className='font-semibold text-[#7D98B6] text-[12px] -mt-2'>
+                {`${accountname}  ${name ? ` > ${name}` : ''}`}
+              </div>
+            )}
+          </div>
         </div>
         <div className='flex items-center gap-3'>
           <div className='flex gap-1 relative'>
-            <SearchBar
-              initialSearchText={searchText}
-              onSearch={(value) => {
-                setSearchText(value);
-                console.log('Search triggered for:', value);
-              }}
-              placeholder='Search'
-              disabled={false}
-              hide={false}
-            />
-            <button
-              aria-describedby={modalId}
-              className={`w-[120px] h-[24px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative border border-[#CBD6E2] px-0 py-0 normal-case ${isModalOpen ? 'bg-[#F3F3F3]' : 'bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'} hover:text-[#425A76] transition-colors duration-150`}
-              style={{
-                boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
-              }}
-              onClick={handleColumnVisibility}
-            >
-              Show/Hide Fields
-            </button>
+            {groupId ? (
+              <TextButton
+                label='Back To Groups'
+                onClick={() => {
+                  setAppliedFilters({});
+                  clearFilters();
+                  searchParams.delete('groupid');
+                  navigate(
+                    { search: searchParams.toString() },
+                    { replace: true }
+                  );
+                }}
+                sx={{
+                  ...BUTTON_STYLES,
+                  px: 1,
+                }}
+              />
+            ) : (
+              <button
+                aria-describedby={modalId}
+                className={`w-[120px] h-[24px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative border border-[#CBD6E2] px-0 py-0 normal-case ${isModalOpen ? 'bg-[#F3F3F3]' : 'bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'} hover:text-[#425A76] transition-colors duration-150`}
+                style={{
+                  boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
+                }}
+                onClick={handleColumnVisibility}
+              >
+                Show/Hide Fields
+              </button>
+            )}
+
             <button
               className={`w-[64px] h-[24px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative `}
               onClick={handleFilterModal}
@@ -370,20 +446,23 @@ const AccountList = () => {
           )}
         </div>
       </div>
-
       {!accountId && (
         <div className='border border-[#CBD6E2]'>
           <ManageAccountTable
             appliedFilters={appliedFilters}
-            tableParams={tableParams}
-            setTableParams={setTableParams}
+            tableParams={groupId ? userParams : tableParams}
+            setTableParams={
+              groupId
+                ? (data) => setUserParams(data as Record<string, unknown>)
+                : (data) => setTableParams(data)
+            }
             setAppliedFilters={setAppliedFilters}
             setColumnAnchorEl={setColumnAnchorEl}
             columnAnchorEl={columnAnchorEl}
           />
         </div>
       )}
-      {accountId && (
+      {accountId && !groupId && (
         <div>
           <UserTab
             type={type}
@@ -394,6 +473,34 @@ const AccountList = () => {
             hide={hide}
             setColumnAnchorEl={setColumnAnchorEl}
             columnAnchorEl={columnAnchorEl}
+          />
+        </div>
+      )}
+      {groupId && (
+        <div className='border-t border-[#CBD6E2]'>
+          <ListTable
+            data={availableUsers.data?.data.users || []}
+            columns={getAvailableUserColumns()}
+            getRowId={getRowId}
+            hoverHighlight={false}
+            tableStyle={{
+              height: '100%',
+              maxHeight: 'calc(100vh - 195px)',
+              overflow: 'auto',
+            }}
+            selectable={false}
+            actionWidth={60}
+            rowsPerPageOptions={[25, 50, 100]}
+            rowsPerPage={userParams.limit as number}
+            currentPage={Number(userParams.page ?? 1) - 1}
+            totalItems={totalUsers}
+            onPageChange={userPageChange}
+            onRowsPerPageChange={userRowsPerPageChange}
+            stickyHeader
+            loading={availableUsers.isPending}
+            sortBy={userParams.sortBy as string}
+            sortOrder={userParams.sortOrder as SortDirection}
+            onSort={handleSort}
           />
         </div>
       )}

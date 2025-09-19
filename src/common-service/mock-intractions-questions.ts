@@ -17,6 +17,8 @@ export const mockIntractionsQuestions: InteractionDetails = {
   created_by: 'admin001',
   created_datetime: '2025-08-30T10:15:00Z',
   modified_datetime: '2025-08-31T14:45:00Z',
+  account_rnumber: 'ACC-789',
+  project_rnumber: 'PROJ-456',
   questions: [
     {
       rid: 'Q-001',

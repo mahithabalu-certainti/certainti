@@ -277,6 +277,8 @@ export interface InteractionDetails {
   account_name: string | null;
   response_updated_by: string | null;
   response_updated_on: string | null;
+  account_rnumber: string;
+  project_rnumber: string;
 }
 
 export interface InteractionDetailsResponse {
