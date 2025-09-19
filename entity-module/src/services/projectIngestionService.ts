@@ -1597,7 +1597,6 @@ class ProjectIngestionService {
     graphqlData: any,
     accessibleIds: string[],
     apiSource: string ="project",
-    accountInteractionId: string[] = [],
     documentRid?: string,
     searchClause : Record<symbol, any>= {},
   ) {
@@ -1878,19 +1877,7 @@ class ProjectIngestionService {
           where: {
             account_rid: accountData.rid,
             ...searchClause,
-            ...whereFiscal,
-              ...(apiSource === "interactionCount"  ? { rid: accountInteractionId } : {}),
-              ...(apiSource === "interaction"
-          ? {
-              [Op.and]: [
-                literal(`EXISTS (
-            SELECT 1 FROM "${schemaName}"."key_contact_details" kc
-            WHERE kc.entity_rid = "ProjectFiscal"."rid"
-              AND kc.include_in_communication = true
-                )`)
-              ]
-            }
-          : {}),
+            ...whereFiscal
           },
         },
       ],
