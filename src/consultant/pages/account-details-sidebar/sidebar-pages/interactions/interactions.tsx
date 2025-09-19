@@ -632,7 +632,9 @@ const Interactions: React.FC<InteractionsProps> = ({
         setSortFilterCount={setSortFilterCount}
         showRefresh={!viewDetails}
         onRefreshClick={handleRefresh}
-        showSearch={viewDetails ? false : true}
+        showSearch={
+          viewResponseHistory || (!viewDetails && !viewInteractionHistory)
+        }
         searchDisabled={false}
         searchPlaceholder='Search'
         onSearch={(text) => console.log('Searching for:', text)}
