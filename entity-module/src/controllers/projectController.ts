@@ -11,6 +11,7 @@ import {
 import {
   createProjectSchema,
   exportListResourceSchema,
+  listAllResourceSchema,
   listResourceSchema,
   updateProjectSchema,
 } from "../lib/joi/schemas/schema";
@@ -292,7 +293,7 @@ async function exportProjectList(req: Request, res: Response): Promise<void> {
 async function allProjectList(req: Request, res: Response): Promise<void> {
   const methodName = "All Project List";
   try {
-    const value = await validateRequest(req, listResourceSchema, res, "GET");
+    const value = await validateRequest(req, listAllResourceSchema, res, "POST");
 
     const userId = req.headers["x-user-id"] as string;
 
@@ -315,10 +316,10 @@ async function allProjectList(req: Request, res: Response): Promise<void> {
 
     try {
       if (value.filters) {
-        parsedFilters = JSON.parse(value.filters);
+        parsedFilters = value.filters;
       }
       if (value.globalFilters) {
-        parsedGlobalFilters = JSON.parse(value.globalFilters);
+        parsedGlobalFilters = value.globalFilters;
       }
     } catch (error) {
       errorLog(
@@ -327,8 +328,8 @@ async function allProjectList(req: Request, res: Response): Promise<void> {
       );
     }
 
-    const pageNum: number = parseInt(value.page, 10) || 1;
-    const limitNum: number = parseInt(value.limit, 10) || 100;
+    const pageNum: number = value.page || 1;
+    const limitNum: number = value.limit || 100;
 
     const project = await projectService.allProjectList(
       value.fiscalYear !== "" && value.fiscalYear !== null
@@ -342,7 +343,9 @@ async function allProjectList(req: Request, res: Response): Promise<void> {
       value.sortOrder,
       parsedGlobalFilters,
       userId,
-      value.bothParentAndChild
+      value.bothParentAndChild,
+      value.isFromuserGroup,
+      value.accountRid
     );
 
     if (project.statusCode === HttpStatus.SUCCESS) {

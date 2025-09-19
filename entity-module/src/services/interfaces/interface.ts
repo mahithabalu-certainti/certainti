@@ -332,7 +332,9 @@ export interface IProjectService {
     sortOrder: string,
     globalFilters: Record<string, string[]>,
     userId: string,
-    bothParentAndChild: boolean
+    bothParentAndChild: boolean,
+    isFromuserGroup?: boolean,
+    accountRid?: string[]
   ): Promise<{
     statusCode: number;
     message: string;

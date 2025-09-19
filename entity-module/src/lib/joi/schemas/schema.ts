@@ -614,6 +614,33 @@ const updateResourceSchema = Joi.object({
   comments: Joi.string().optional().allow("").allow(null),
 });
 
+const listAllResourceSchema = Joi.object({
+  page: Joi.number()
+    .default(1),
+  limit: Joi.number()
+    .default(100),
+  fiscalYear: Joi.number().min(1000).max(9999).optional().allow(0).messages({
+    "number.base": "Fiscal year must be a number",
+    "number.min": "Fiscal year must be a 4-digit number",
+    "number.max": "Fiscal year must be a 4-digit number",
+    "any.required": "Fiscal year is required",
+  }),
+  search: Joi.string().max(255).optional(),
+    filters: Joi.object().default({}),
+  globalFilters: Joi.object().default({}),
+  sortBy: Joi.string().default("created_datetime").optional().allow(""),
+  sortOrder: Joi.string()
+    .valid("ASC", "DESC")
+    .default("DESC")
+    .optional()
+    .allow(""),
+  bothParentAndChild: Joi.boolean().optional().default(false),
+  isFromuserGroup: Joi.boolean().optional().default(false),
+    accountRid: Joi.alternatives().try(
+    Joi.string().allow('', null),
+    Joi.array().items(Joi.string())
+  ).optional(),
+});
 const listResourceSchema = Joi.object({
   page: Joi.string()
     .pattern(/^[0-9]+$/)
@@ -637,6 +664,11 @@ const listResourceSchema = Joi.object({
     .optional()
     .allow(""),
   bothParentAndChild: Joi.boolean().optional().default(false),
+  isFromuserGroup: Joi.boolean().optional().default(false),
+    accountRid: Joi.alternatives().try(
+    Joi.string().allow('', null),
+    Joi.array().items(Joi.string())
+  ).optional(),
 });
 
 const exportListResourceSchema = Joi.object({
@@ -2703,6 +2735,7 @@ export {
   createResourcesSchema,
   updateResourceSchema,
   listResourceSchema,
+  listAllResourceSchema,
   exportResourceSchema,
   exportResourceCostSchema,
   exportResourceSkillSchema,
