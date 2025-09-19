@@ -13,6 +13,7 @@ interface SendInteractionModalProps {
   onClose: () => void;
   selectedRows: InteractionList[];
   onSuccessRefetch: () => void;
+  interaction_level: 'Account' | 'Project';
 }
 
 const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
@@ -20,6 +21,7 @@ const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
   onClose,
   selectedRows,
   onSuccessRefetch,
+  interaction_level,
 }) => {
   const [searchParams] = useSearchParams();
   const { accountid } = useParams();
@@ -116,6 +118,7 @@ const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
     if (!showEmailFields) {
       const interactions = selectedRows.map((row) => ({
         interaction_rid: row.rid,
+        interaction_level: interaction_level,
         project_fiscal_rid: row.project_fiscal_rid || '',
         email_info: {
           email: '',
@@ -142,6 +145,7 @@ const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
         const { email, name } = emails[row.rid] || {};
         return {
           interaction_rid: row.rid,
+          interaction_level: interaction_level,
           project_fiscal_rid: row.project_fiscal_rid || '',
           email_info: {
             email: email.trim() || '',

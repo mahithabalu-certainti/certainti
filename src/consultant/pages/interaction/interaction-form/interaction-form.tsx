@@ -24,7 +24,6 @@ import { useToast } from '../../../../hooks';
 import {
   useAccountCreateInteraction,
   useAccountInteractionDetails,
-  useAccountInteractionUpdate,
   useCreateInteraction,
   useInteractionDetails,
   useUpdateInteractionDetails,
@@ -55,6 +54,7 @@ import SkeletonForm from '../../../../components/form-builder/skeleton-form';
 import {
   AllPermissions,
   ExpandCollapseSelectOptions,
+  useGetInteractionLevel,
   useGetInteractionStatus,
   useGetStatus,
   // useGetInteractionStatusById,
@@ -273,14 +273,13 @@ const InteractionForm = () => {
   const accountCreateInteraction = useAccountCreateInteraction();
   const accountStatusOptions = useGetStatus();
   const updateInteraction = useUpdateInteractionDetails();
-  const updateAccountInteraction = useAccountInteractionUpdate();
   const interactionStatus = useGetInteractionStatus();
+  const getInteractionLevel = useGetInteractionLevel();
 
   const commonSuccess =
     createInteraction.isSuccess ||
     accountCreateInteraction.isSuccess ||
-    updateInteraction.isSuccess ||
-    updateAccountInteraction.isSuccess;
+    updateInteraction.isSuccess;
 
   const { data: projectsData, isLoading: projectsLoading } = useAccountProjects(
     {
@@ -549,11 +548,17 @@ const InteractionForm = () => {
 
     if (isEditView && interactionData) {
       if (isAccountFields) {
-        updateAccountInteraction.mutate(
+        updateInteraction.mutate(
           {
             account_rid: payload.account_rid,
+            status_rid: payload.status_rid,
             questions: payload.questions,
-            account_interaction_rid: interactionId,
+            interaction_rid: payload.interaction_rid,
+            interaction_level_rid:
+              getInteractionLevel.data?.data.interactionLevel.find(
+                (it) =>
+                  it.interaction_level_name.toLocaleLowerCase() === 'account'
+              )?.rid,
           },
           {
             onError: () => {
@@ -565,14 +570,29 @@ const InteractionForm = () => {
           }
         );
       } else {
-        updateInteraction.mutate(payload, {
-          onError: () => {
-            setActiveFlag(null);
+        updateInteraction.mutate(
+          {
+            account_rid: payload.account_rid,
+            project_rid: payload.project_rid,
+            project_fiscal_rid: payload.project_fiscal_rid,
+            status_rid: payload.status_rid,
+            questions: payload.questions,
+            interaction_rid: payload.interaction_rid,
+            interaction_level_rid:
+              getInteractionLevel.data?.data.interactionLevel.find(
+                (it) =>
+                  it.interaction_level_name.toLocaleLowerCase() === 'project'
+              )?.rid,
           },
-          onSuccess: () => {
-            setActiveFlag(null);
-          },
-        });
+          {
+            onError: () => {
+              setActiveFlag(null);
+            },
+            onSuccess: () => {
+              setActiveFlag(null);
+            },
+          }
+        );
       }
     } else {
       if (isAccountFields) {
@@ -653,8 +673,7 @@ const InteractionForm = () => {
               activeFlag === StatusActionEnum.Draft &&
               (createInteraction.isPending ||
                 accountCreateInteraction.isPending ||
-                updateInteraction.isPending ||
-                updateAccountInteraction.isPending)
+                updateInteraction.isPending)
             }
             disabled={
               activeFlag !== null && activeFlag !== StatusActionEnum.Draft
@@ -673,8 +692,7 @@ const InteractionForm = () => {
             disabled={
               createInteraction.isPending ||
               accountCreateInteraction.isPending ||
-              updateInteraction.isPending ||
-              updateAccountInteraction.isPending
+              updateInteraction.isPending
             }
             sx={{
               width: '75px',
