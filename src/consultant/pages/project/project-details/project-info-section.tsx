@@ -45,21 +45,32 @@ export const ProjectInfoSection: React.FC<ProjectInfoSectionProps> = ({
   const [adjustmentValue, setAdjustmentValue] = useState<string>('');
   const [originalValue, setOriginalValue] = useState<string>('');
   const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [aiEstimatedQre, setAiEstimatedQre] = useState<number>(0);
 
   useEffect(() => {
     if (isEditing || isSaving) return;
 
+    let adjustment = '';
+    let aiQre = 0;
+
     for (const column of columns) {
       for (const item of column.items) {
         if (item.key === 'adjustment_factor') {
-          const value =
+          adjustment =
             typeof item.value === 'string' ? item.value.replace('%', '') : '';
-          setAdjustmentValue(value);
-          setOriginalValue(value);
-          break;
+        }
+        if (item.key === 'ai_estimated_qre') {
+          aiQre =
+            typeof item.value === 'string'
+              ? Number(item.value.replace('%', '')) || 0
+              : 0;
         }
       }
     }
+
+    setAdjustmentValue(adjustment);
+    setOriginalValue(adjustment);
+    setAiEstimatedQre(aiQre);
   }, [columns, isEditing, isSaving]);
 
   const handleAdjustmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -68,11 +79,19 @@ export const ProjectInfoSection: React.FC<ProjectInfoSectionProps> = ({
       setAdjustmentValue('');
       return;
     }
-    let num = Number(value);
-    if (num > 99) num = 99;
-    if (num < -99) num = -99;
 
-    setAdjustmentValue(num.toString());
+    // Allow only numbers with up to 2 decimals
+    if (/^-?\d+(\.\d{0,2})?$/.test(value)) {
+      let num = Number(value);
+
+      const maxAllowed = 100 - aiEstimatedQre;
+      const minAllowed = -100;
+
+      if (num > maxAllowed) num = maxAllowed;
+      if (num < minAllowed) num = minAllowed;
+
+      setAdjustmentValue(num.toString());
+    }
   };
 
   const handleSaveAdjustment = async () => {

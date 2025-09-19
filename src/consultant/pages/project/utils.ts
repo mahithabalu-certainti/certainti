@@ -189,6 +189,7 @@ export const transformProjectData = (
         {
           label: 'AI-Estimated QRE',
           value: aiEstimatedQre ? `${aiEstimatedQre}%` : '-',
+          key: 'ai_estimated_qre',
         },
       ],
     },
