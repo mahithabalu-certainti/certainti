@@ -153,7 +153,6 @@ const Attachments: React.FC<AttachmentsProps> = ({
   };
   const onRefreshClick = () => {
     setRefreshAttachments(Date.now());
-    refetchProjectDetails();
   };
 
   const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
@@ -457,7 +456,10 @@ const Attachments: React.FC<AttachmentsProps> = ({
         <Uploads
           accountId={accountID}
           attachID={projectid}
-          onUploadSuccess={onRefreshClick}
+          onUploadSuccess={() => {
+            onRefreshClick();
+            refetchProjectDetails();
+          }}
           projectFiscalYear={projectFiscalYear}
         />
       ) : (
@@ -494,7 +496,7 @@ const Attachments: React.FC<AttachmentsProps> = ({
               tableStyle={{
                 borderBottom: '1px solid #CBD6E2',
                 height: '100%',
-                maxHeight: 'calc(100vh - 360px)',
+                maxHeight: 'calc(100vh - 380px)',
                 overflow: 'auto',
               }}
               stickyHeader={true}

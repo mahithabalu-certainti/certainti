@@ -175,6 +175,10 @@ export const getProjectColumns = (
     hide:
       !permissionMap?.['project_name']?.read &&
       !permissionMap?.['project_name']?.edit,
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      return isChild ? row.project_name : '-';
+    },
   },
   {
     id: 'project_type_name',
@@ -186,6 +190,10 @@ export const getProjectColumns = (
     hide:
       !permissionMap?.['project_type_rid']?.read &&
       !permissionMap?.['project_type_rid']?.edit,
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      return isChild ? row.project_type_name : '-';
+    },
   },
   {
     id: 'fiscal_year',
@@ -201,6 +209,8 @@ export const getProjectColumns = (
       textAlign: 'left',
     },
     render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      if (!isChild) return '-';
       const displayYear = row.fiscal_year ? `FY-${row.fiscal_year}` : '-';
       return <span>{displayYear}</span>;
     },
@@ -215,10 +225,13 @@ export const getProjectColumns = (
       !permissionMap?.['project_classification_rid']?.read &&
       !permissionMap?.['project_classification_rid']?.edit,
     width: 170,
-    render: (row: Project) =>
-      row.project_classification_other
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      if (!isChild) return '-';
+      return row.project_classification_other
         ? `${row.classification_name} - ${row.project_classification_other}`
-        : row.classification_name,
+        : row.classification_name;
+    },
   },
   {
     id: 'project_client_group',
@@ -230,6 +243,10 @@ export const getProjectColumns = (
     hide:
       !permissionMap?.['project_client_group']?.read &&
       !permissionMap?.['project_client_group']?.edit,
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      return isChild ? row.project_client_group : '-';
+    },
   },
   {
     id: 'project_group',
@@ -241,6 +258,10 @@ export const getProjectColumns = (
       !permissionMap?.['project_group']?.read &&
       !permissionMap?.['project_group']?.edit,
     width: 160,
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      return isChild ? row.project_group : '-';
+    },
   },
   {
     id: 'total_effort',

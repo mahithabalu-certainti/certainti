@@ -164,7 +164,7 @@ export const transformAccountData = (
           hide:
             !permissionMap?.['fiscal_start_date']?.read &&
             !permissionMap?.['fiscal_start_date']?.edit,
-        }, 
+        },
       ],
     },
     {
@@ -183,7 +183,7 @@ export const transformAccountData = (
           hide:
             !permissionMap?.['fiscal_end_date']?.read &&
             !permissionMap?.['fiscal_end_date']?.edit,
-        }, 
+        },
       ],
     },
     {
@@ -358,6 +358,7 @@ export interface accountByDetailsProps {
   blended_rate_subcon: string;
   data_residency: string;
   website: string;
+  is_send_interaction: boolean;
   project_manager: string;
   keyContacts: KeyContactProps[];
   business_details: string;
