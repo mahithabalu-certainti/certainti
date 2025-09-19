@@ -46,6 +46,7 @@ export const mockAccountDetails: AccountFieldsApiResponse = {
       created_by: 'admin456',
       max_ai_interactions: 3,
       autosend_interaction: true,
+      is_send_interaction: true,
       fiscal_start_date: '01/01/2023',
       fiscal_end_date: '31/12/2023',
       blended_rate_fte: '100',
