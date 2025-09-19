@@ -385,7 +385,7 @@ export const rawQueries = {
   },
    fetchAccountDetailsInfo(rid: string,schemaName: string) {
     return `
-    SELECT rid, fiscal_start_date,fiscal_end_date FROM ${schemaName}.account_details WHERE account_rid = '${rid}'`;
+    SELECT rid, fiscal_start_date,fiscal_end_date,autosend_interaction FROM ${schemaName}.account_details WHERE account_rid = '${rid}'`;
   },
   
   fetchPreviousInteractionStatus(statusRid: string, schemaName: string) {
@@ -408,7 +408,7 @@ export const rawQueries = {
   },
   fetchInteractionSenderEmail(schemaName: string, accountRid: string) {
     return `
-    SELECT support_email FROM ${schemaName}.account_details WHERE account_rid = '${accountRid}'  and  subscription_created is true  and support_email is not null LIMIT 1`;
+    SELECT support_email,client_id,client_secret,tenant_id FROM ${schemaName}.account_details WHERE account_rid = '${accountRid}'  and  subscription_created is true  and support_email is not null LIMIT 1`;
   },
   fetchGlobalSenderEmail() {
     return `
