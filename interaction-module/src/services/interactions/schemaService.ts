@@ -3103,6 +3103,14 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           ""
         )}`;
 
+        const [accountInfo]: any[] = await this.orgDbSequelize.query(
+          rawQueries.fetchAccountDetailsInfo(interactionDetails.account_rid, schemaName),  
+          { type: "SELECT" }
+        );
+        if(accountInfo?.autosend_interaction){
+          return true;
+        }
+
         // Fetch project info
         const [projectInfo]: any[] = await this.orgDbSequelize.query(
           rawQueries.fetchisAutoSendEnabled(
