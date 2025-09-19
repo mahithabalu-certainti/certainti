@@ -80,6 +80,8 @@ export class ProjectResourceService {
         accountNumber
       );
 
+      let projectResource =  null;
+
       if (projectFiscalData) {
         const existsInProjectResource =
           await this.projectResourceSchema.existsInProjectResourceTable(
@@ -195,7 +197,7 @@ export class ProjectResourceService {
 
         const stausId = statusMap?.get(status) ?? "";
 
-        const projectResource =
+        projectResource =
           await this.projectResourceSchema.insertIntoProjectResourceTable(
             accountNumber,
             projectFiscalData.project_code,
@@ -565,7 +567,7 @@ export class ProjectResourceService {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
-          projectResource: projectResourceData,
+          projectResource: projectResource,
         },
       };
     } catch (err) {
