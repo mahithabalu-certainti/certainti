@@ -323,13 +323,19 @@ class AccountService {
           parent.hasAccountAccess = true;
           return parent;
         });
-      }
+      };
 
       // Optimize count query
-      const totalCount = await this.getOptimizedCount(
+      let totalCount = await this.getOptimizedCount(
         repository,
         parentWhereClause
       );
+
+      if(search){
+        updatedAccount.data = updatedAccount.data.filter((val: any) => val.child_accounts.length > 0);
+        updatedAccount.total = updatedAccount.data.length;
+        totalCount = updatedAccount.data.length;
+      }
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -2012,14 +2018,14 @@ class AccountService {
       [Op.or]: [
         { account_name: { [Op.iLike]: `%${search}%` } },
         { r_number: { [Op.iLike]: `%${search}%` } },
-        { industry: { [Op.iLike]: `%${search}%` } },
-        { status: { [Op.iLike]: `%${search}%` } },
-        { eid: { [Op.iLike]: `%${search}%` } }, // Added Account ID search
-        { "$country.country_name$": { [Op.iLike]: `%${search}%` } },
-        { "$currency.currency_code$": { [Op.iLike]: `%${search}%` } },
-        ...(isNaN(parseInt(search))
-          ? []
-          : [{ annual_revenue: { [Op.eq]: parseInt(search) } }]),
+        // { industry: { [Op.iLike]: `%${search}%` } },
+        // { status: { [Op.iLike]: `%${search}%` } },
+        // { eid: { [Op.iLike]: `%${search}%` } }, // Added Account ID search
+        // { "$country.country_name$": { [Op.iLike]: `%${search}%` } },
+        // { "$currency.currency_code$": { [Op.iLike]: `%${search}%` } },
+        // ...(isNaN(parseInt(search))
+        //   ? []
+        //   : [{ annual_revenue: { [Op.eq]: parseInt(search) } }]),
       ],
     };
 
