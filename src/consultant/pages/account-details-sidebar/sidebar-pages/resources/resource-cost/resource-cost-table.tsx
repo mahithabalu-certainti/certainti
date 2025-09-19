@@ -174,7 +174,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
   }, [costViewEditFields]);
 
   const attachmentCreateEnable = checkPermission(
-    permission || [],
+    permission,
     AllPermissions.ATTACHMENT_CREATE
   );
 
@@ -304,17 +304,31 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
 
   const getRowId = (row: ResourceCostList) => row?.rid || '';
 
-  const resourceCostColumns = getResourceCostColumns(
-    memoizedCurrency,
-    isFullTime,
-    permissionMap,
-    accountInActive,
-    handleAttachmentClick,
-    resourceInActive,
-    attachmentCreateEnable,
-    handleGetFiscalYear,
-    fiscalDate
+  const resourceCostColumns = useMemo(
+    () =>
+      getResourceCostColumns(
+        memoizedCurrency,
+        isFullTime,
+        permissionMap,
+        accountInActive,
+        handleAttachmentClick,
+        resourceInActive,
+        attachmentCreateEnable,
+        handleGetFiscalYear,
+        fiscalDate
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [accountInActive, resourceInActive]
   );
+
+  const [visibleColumns, setVisibleColumns] = useState<
+    ListTableColumn<ResourceCostList>[]
+  >(resourceCostColumns.filter((col) => !col.hide));
+
+  useEffect(() => {
+    const updatedColumns = resourceCostColumns.filter((col) => !col.hide);
+    setVisibleColumns(updatedColumns);
+  }, [accountInActive, resourceInActive, resourceCostColumns]);
 
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
     const previousCostList = [...resourceCostList];
@@ -406,10 +420,6 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
   const hideStatusAction =
     !permissionMap?.['status_action']?.edit &&
     !permissionMap?.['status_action']?.read;
-
-  const [visibleColumns, setVisibleColumns] = useState<
-    ListTableColumn<ResourceCostList>[]
-  >(resourceCostColumns.filter((col) => !col.hide));
 
   const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
     setVisibleColumns(

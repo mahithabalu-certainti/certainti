@@ -232,19 +232,38 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
     setSelectedRowId(rowId);
   };
 
-  const resourceSkillColumns = getResourceSkillColumns(
-    memoizedSkillLevels,
-    memoizedSkillType,
-    memoizedSkillSubType,
-    handleSkillType,
-    skillTypeLoading,
-    subTypeLoading,
-    permissionMap,
-    accountInActive,
-    handleAttachmentClick,
-    resourceInActive,
-    attachmentCreateEnable
+  const resourceSkillColumns = useMemo(
+    () =>
+      getResourceSkillColumns(
+        memoizedSkillLevels,
+        memoizedSkillType,
+        memoizedSkillSubType,
+        handleSkillType,
+        skillTypeLoading,
+        subTypeLoading,
+        permissionMap,
+        accountInActive,
+        handleAttachmentClick,
+        resourceInActive,
+        attachmentCreateEnable
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [accountInActive, memoizedSkillSubType, resourceInActive]
   );
+
+  const [visibleColumns, setVisibleColumns] = useState<
+    ListTableColumn<ResourceSkillList>[]
+  >(resourceSkillColumns.filter((col) => !col.hide));
+
+  useEffect(() => {
+    const updatedColumns = resourceSkillColumns.filter((col) => !col.hide);
+    setVisibleColumns(updatedColumns);
+  }, [
+    accountInActive,
+    resourceInActive,
+    memoizedSkillSubType,
+    resourceSkillColumns,
+  ]);
 
   const handleFieldChange = async (event: FieldChangeEvent) => {
     if (event.columnId === 'skill_type_name' && event.value) {
@@ -317,10 +336,6 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
 
   const showUploads =
     searchParams.get('attachment_entity') === 'resource_skill';
-
-  const [visibleColumns, setVisibleColumns] = useState<
-    ListTableColumn<ResourceSkillList>[]
-  >(resourceSkillColumns.filter((col) => !col.hide));
 
   const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
     setVisibleColumns(
