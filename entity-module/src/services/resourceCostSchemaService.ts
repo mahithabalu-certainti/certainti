@@ -1609,8 +1609,8 @@ async executeQueriesForFinancialHighlights(
 
     return `
       AND (
-        rc.r_number ILIKE :searchTerm 
-        OR r.resource_full_name ILIKE :searchTerm
+        r.resource_code ILIKE :searchTerm 
+        OR r.resource_name ILIKE :searchTerm
       )
     `;
   }
