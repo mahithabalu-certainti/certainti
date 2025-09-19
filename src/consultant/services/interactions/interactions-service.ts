@@ -8,8 +8,7 @@ import {
   InteractionListURLParams,
   SendInteractionPayload,
   ExportInteractionResponse,
-  AccountSendInteractionPayload,
-  AccountInteractionListResponse,
+  AccountSendInteractionPayload
 } from '../../types';
 import { interactionServiceApi } from '../../../api/api';
 import { CommonApiResponse } from '../../../common-service';
@@ -21,7 +20,6 @@ import {
   getGlobalInteractionListUrl,
   getGlobalInteractionExportUrl,
 } from '../urls/interactions-url';
-import { buildQueryString } from '../../../admin/service';
 
 export const exportInteractions = async (
   params: InteractionListURLParams
@@ -65,10 +63,11 @@ export const exportAccountInteractions = async (
 ): Promise<void> => {
   try {
     const filename = 'account_interactions.xlsx';
-    const queryParams = buildQueryString(params);
-    const response = await interactionServiceApi.get<ExportInteractionResponse>(
-      `/api/interactions/accountInterctions/export?${queryParams}`
-    );
+    const response =
+      await interactionServiceApi.post<ExportInteractionResponse>(
+        `/api/interactions/export`,
+        params
+      );
     const base64Data = response.data?.data;
 
     if (!base64Data) {
@@ -182,36 +181,6 @@ export const useInteractionList = (
   });
 };
 
-export const fetchAccountInteractionList = async (
-  params: Record<string, unknown>
-): Promise<{ interactions: InteractionList[]; count: number }> => {
-  const { data } =
-    await interactionServiceApi.get<AccountInteractionListResponse>(
-      `/api/interactions/accountInterctions/list?${buildQueryString(params)}`
-    );
-  return {
-    interactions: data.data.accountInteractions,
-    count: data.data.count,
-  };
-};
-
-export const useAccountInteractionList = (
-  params: Record<string, unknown>,
-  shouldFetchList: boolean,
-  refreshInteractions?: number
-): UseQueryResult<
-  { interactions: InteractionList[]; count: number },
-  Error
-> => {
-  return useQuery<{ interactions: InteractionList[]; count: number }, Error>({
-    queryKey: ['account-interaction-list', params, refreshInteractions],
-    queryFn: () => fetchAccountInteractionList(params),
-    retry: 0,
-    gcTime: 0,
-    enabled: !!params.account_rid && !!shouldFetchList,
-  });
-};
-
 export const useGetAllInteractionList = (
   params: InteractionListURLParams,
   refreshTrigger?: number
@@ -304,7 +273,7 @@ const fetchAccountInteractionDetails = async (
   interactionId: string
 ): Promise<InteractionDetails> => {
   const response = await interactionServiceApi.get<InteractionDetailsResponse>(
-    `/api/interactions/detail/${accountId}/${interactionId}?type=account`
+    `/api/interactions/detail/${accountId}/${interactionId}`
   );
 
   return response.data.data.interactionDetails;
@@ -403,29 +372,6 @@ export const useUpdateInteractionDetails = () => {
   return useMutation<CommonApiResponse, Error, Partial<InteractionFormPayload>>(
     {
       mutationFn: (body) => updateInteractionDetails({ ...body }),
-    }
-  );
-};
-
-export const updateAccountInteractionDetails = async (
-  body: Partial<InteractionFormPayload>
-): Promise<CommonApiResponse> => {
-  try {
-    const { data } = await interactionServiceApi.put<CommonApiResponse>(
-      '/api/interactions/accountInterctions/update',
-      body
-    );
-    return data;
-  } catch (error) {
-    console.error('Error updating interaction details:', error);
-    throw error;
-  }
-};
-
-export const useAccountInteractionUpdate = () => {
-  return useMutation<CommonApiResponse, Error, Partial<InteractionFormPayload>>(
-    {
-      mutationFn: (body) => updateAccountInteractionDetails({ ...body }),
     }
   );
 };

@@ -14,6 +14,7 @@ import {
   GetAllCountriesApiResponse,
   GetCurrentUserRoleApiResponse,
   GetImportEntityTypeApiResponse,
+  GetInteractionLevelApiResponse,
   GetInteractionResponeSourcesApiResponse,
   GetInteractionStatusApiResponse,
   GetInteractionTypesApiResponse,
@@ -293,6 +294,32 @@ export const useGetInteractionStatus = () => {
   return useQuery<GetInteractionStatusApiResponse, Error>({
     queryKey: ['interaction-status'],
     queryFn: () => fetchInteractionStatus(),
+    retry: 0,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  });
+};
+
+export const fetchInteractionLevel =
+  async (): Promise<GetInteractionLevelApiResponse> => {
+    try {
+      const { data } =
+        await interactionServiceApi.get<GetInteractionLevelApiResponse>(
+          '/api/interactions/interactionLevel'
+        );
+      return data;
+    } catch (error) {
+      console.error('Error fetching interaction status:', error);
+      throw error;
+    }
+  };
+
+export const useGetInteractionLevel = () => {
+  return useQuery<GetInteractionLevelApiResponse, Error>({
+    queryKey: ['interaction-level'],
+    queryFn: () => fetchInteractionLevel(),
     retry: 0,
     staleTime: Infinity,
     gcTime: Infinity,
