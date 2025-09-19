@@ -459,6 +459,7 @@ const Projects: React.FC<ProjectsProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [accountInActive]
   );
+
   const [visibleColumns, setVisibleColumns] = useState<
     ListTableColumn<Project>[]
   >(projectColumns.filter((col) => !col.hide));
@@ -467,6 +468,7 @@ const Projects: React.FC<ProjectsProps> = ({
     const updatedColumns = projectColumns.filter((col) => !col.hide);
     setVisibleColumns(updatedColumns);
   }, [accountInActive, projectColumns]);
+
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
     // Save the old state to revert if needed
     const previousProject = [...projectList];

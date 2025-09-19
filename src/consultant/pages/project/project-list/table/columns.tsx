@@ -211,7 +211,7 @@ export const getAllProjectListColumns = (
       placeholder: 'Choose Classification',
       options: projectClassificationOption,
       getFieldData: (rowData: DependencyRowData) => {
-        return String(rowData.project_classification_rid);
+        return String(rowData.project_classification_rid || '');
       },
       dependencies: [
         {

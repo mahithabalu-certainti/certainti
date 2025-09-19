@@ -315,8 +315,8 @@ export const getResourceColumns = (
       // Enable onChange callback to fetch regions
       onChange: true,
       getFieldData: (rowData: DependencyRowData) => {
-        onCountryClick(String(rowData.country_rid));
-        return String(rowData.country_rid);
+        onCountryClick(String(rowData.country_rid || ''));
+        return String(rowData.country_rid || '');
       },
       dependencies: [
         {
@@ -349,7 +349,7 @@ export const getResourceColumns = (
       options: regionOptions,
       loading: regionLoading,
       getFieldData: (rowData: DependencyRowData) => {
-        return String(rowData.region_rid);
+        return String(rowData.region_rid || '');
       },
       dependencies: [
         {

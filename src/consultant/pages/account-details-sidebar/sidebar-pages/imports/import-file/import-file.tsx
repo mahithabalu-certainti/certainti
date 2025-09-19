@@ -110,7 +110,7 @@ const ImportFile: React.FC<ImportFileProps> = ({
     for (const file of Array.from(files)) {
       if (/\s/.test(file.name)) {
         showError(
-          `"${file.name}" is invalid. Filename must not contain spaces.`
+          `"${file.name}" is invalid. File name must not contain spaces.`
         );
         hasError = true;
         continue;

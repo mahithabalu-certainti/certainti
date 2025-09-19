@@ -50,7 +50,7 @@ const Settings: React.FC<SettingsProps> = ({
   );
 
   const accountDetails = data?.data?.accountDetails;
-  const disable = data?.data?.accountById?.is_parent;
+  const isParentAccount = data?.data?.accountById?.is_parent;
 
   // Permission Management
   const { permission } = useSelector((state: RootState) => state.permission);
@@ -138,11 +138,17 @@ const Settings: React.FC<SettingsProps> = ({
       flag: 'account',
       fiscal_start_date: formData.fiscal_start_date,
       fiscal_end_date: formData.fiscal_end_date,
-      max_ai_interactions: Number(formData.max_interaction_follow_up) || 0,
-      autosend_interaction: formData.auto_send_ai_interaction === 'Yes',
-      auto_access_rd: formData.auto_assessment === 'Yes',
-      blended_rate_fte: formData.blended_rate_fte,
-      blended_rate_subcon: formData.blended_rate_subcon,
+      max_ai_interactions: isParentAccount
+        ? 5
+        : Number(formData.max_interaction_follow_up) || 0,
+      autosend_interaction: isParentAccount
+        ? false
+        : formData.auto_send_ai_interaction === 'Yes',
+      auto_access_rd: isParentAccount
+        ? false
+        : formData.auto_assessment === 'Yes',
+      blended_rate_fte: isParentAccount ? '' : formData.blended_rate_fte,
+      blended_rate_subcon: isParentAccount ? '' : formData.blended_rate_subcon,
       support_email: formData.support_email,
       tenant_id: formData.tenant_id,
       client_id: formData.client_id,
@@ -207,7 +213,7 @@ const Settings: React.FC<SettingsProps> = ({
             permissionMap,
             emailRequried,
             idRequried,
-            disable
+            isParentAccount
           )}
           formRef={formRef}
           outData={handleFormSubmit}
