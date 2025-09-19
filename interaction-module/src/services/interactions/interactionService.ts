@@ -1829,7 +1829,7 @@ export class InteractionService {
     let fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
     let schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number);
 
-    const result : any = await orgDb.query(listAttachments(data.page, data.limit, data.interaction_rid, schemaName))
+    const result : any = await orgDb.query(listAttachments(data.page, data.limit, data.interaction_rid, schemaName, data.search))
     if(result[0][0].attachments !== null) {
       let responseData = result[0][0].attachments
       const createdByIds = [...new Set(responseData.map((d : any) => d.created_by))]

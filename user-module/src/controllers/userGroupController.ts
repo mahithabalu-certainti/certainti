@@ -248,7 +248,7 @@ async function getAccountUsers(req: Request, res: Response): Promise<void> {
       validatedData.entity_type,validatedData.page,validatedData.limit,
       validatedData.sortBy,
       validatedData.sortOrder,
-      parsedFilters);
+      parsedFilters, validatedData.search)
 
     if (account.statusCode === constants.SUCCESS) {
       successLog(methodName);
@@ -434,7 +434,7 @@ async function getAccountGroups(req: Request, res: Response): Promise<void> {
       );
     }
     
-    const account = await services.userGroupService.getAccountGroups(req.params.accountid,validatedData.page,validatedData.limit,validatedData.sortBy,validatedData.sortOrder,parsedFilters);
+    const account = await services.userGroupService.getAccountGroups(req.params.accountid,validatedData.page,validatedData.limit,validatedData.sortBy,validatedData.sortOrder,parsedFilters, validatedData.search);
 
     if (account.statusCode === constants.SUCCESS) {
       successLog(methodName);
@@ -502,6 +502,7 @@ async function listUserGroup(req: Request, res: Response): Promise<void> {
       userId,
       validatedData.sortBy,
       validatedData.sortOrder,
+      validatedData.search
     );
     
     if (result.statusCode === constants.SUCCESS) {
@@ -567,7 +568,8 @@ async function exportUserGroup(req: Request, res: Response): Promise<void> {
       validatedData.sortBy,
       validatedData.sortOrder,
       validatedData.timezone,
-      userId
+      userId,
+      validatedData.search
 
     );
     

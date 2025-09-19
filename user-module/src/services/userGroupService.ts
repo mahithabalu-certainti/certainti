@@ -805,6 +805,7 @@ async getAccountUsers(
   sortBy: string = "first_name",
   sortOrder: string = "ASC",
   filters: Record<string, any> = {},
+  search? : string
 ): Promise<{
   statusCode: number;
   message: string;
@@ -860,10 +861,35 @@ async getAccountUsers(
     const sortField = allowedSortFields.includes(sortBy || '') ? sortBy : 'first_name';
     const sortDirection = ['asc', 'desc'].includes(sortOrder.toLowerCase()) ? sortOrder.toUpperCase() : 'ASC';
     order.push([sortField, sortDirection]);
+    const fields = ["first_name", "email"];
+    const searchConditions = {
+      [Op.or]: [
+        ...fields.map(field => ({
+          [field]: { [Op.iLike]: `%${search || ''}%` }
+        })),
+        Sequelize.where(
+          Sequelize.literal(`(
+            CASE
+              WHEN "User"."is_consultant_firm" = true THEN "User"."org_id"
+              ELSE (
+                SELECT account_name
+                FROM ${MAIN_SCHEMA_NAME}.account
+                WHERE account.rid = "User".org_id
+              )
+            END
+          )`),
+          { [Op.iLike]: `%${search || ''}%` }
+        )
+      ]
+    };
+
 
     // Step 4: Fetch users
    const { rows: users, count } = await User.findAndCountAll({
-      where: basewhereClause,
+      where: {
+        ...basewhereClause,
+        ...searchConditions
+      },
       attributes: ["rid", "email", "status_rid", "first_name", "org_id", "is_consultant_firm",
         [Sequelize.literal(`(
         CASE
@@ -1026,6 +1052,7 @@ async getAccountGroups(
   sortBy: string = "first_name", 
   sortOrder: string = "ASC",
   filters: Record<string, any> = {},
+  search? : string
 ): Promise<{
   statusCode: number;
   message: string;
@@ -1061,6 +1088,14 @@ async getAccountGroups(
     }
     const offset = (page - 1) * limit;
     const {whereClause} = this.buildWhereClause(filters);
+    const fields = ["group_name"];
+    const searchConditions = {
+      [Op.or]: [
+        ...fields.map(field => ({
+          [field]: { [Op.iLike]: `%${search || ''}%` }
+        })),
+      ]
+    };
     const order: any[] = [];
     const allowedSortFields = ['group_name', 'user_count'];
     const sortField = allowedSortFields.includes(sortBy || '') ? sortBy : 'group_name';
@@ -1087,7 +1122,10 @@ async getAccountGroups(
             "user_count"
         ]
       ],
-      where:whereClause,
+      where:{
+        ...whereClause,
+        ...searchConditions
+      },
       include: [
         {
         model: UserGroupType,
@@ -1104,7 +1142,10 @@ async getAccountGroups(
 
   // 2. Get mapped groups for this account
   const mappedGroups = await UserGroup.findAll({
-    where:whereClause,
+    where:{
+        ...whereClause,
+        ...searchConditions
+      },
     attributes: [
       "rid",
       "group_name",
@@ -1635,7 +1676,8 @@ private createUserCountCondition(operator: string, value: number): any {
     filters: Record<string, string>,
     userRid: string,
     sortBy: string,
-    sortOrder: string
+    sortOrder: string,
+    search? : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -1691,6 +1733,14 @@ private createUserCountCondition(operator: string, value: number): any {
     if (!user.is_consultant_firm) {
       basewhereClause.rid = Array.from(groupRidSet); // merged rid list
     }
+    const fields = ["group_name"];
+    const searchConditions = {
+      [Op.or]: [
+        ...fields.map(field => ({
+          [field]: { [Op.iLike]: `%${search || ''}%` }
+        })),
+      ]
+    };
 
     let orderArray;
     if (finalSortBy === 'created_by') {
@@ -1717,6 +1767,7 @@ private createUserCountCondition(operator: string, value: number): any {
       where: {
         ...whereClause,
         ...basewhereClause,
+        ...searchConditions
       },
       include: includeClause,
       distinct: true,
@@ -1726,6 +1777,7 @@ private createUserCountCondition(operator: string, value: number): any {
       where: {
         ...whereClause,
         ...basewhereClause,
+        ...searchConditions
       },
       order: orderArray,
       limit,
@@ -1777,7 +1829,8 @@ private createUserCountCondition(operator: string, value: number): any {
     sortBy: string,
     sortOrder: string,
     timezone:string,
-    userId: string
+    userId: string,
+    search? : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -1810,9 +1863,20 @@ private createUserCountCondition(operator: string, value: number): any {
           allowedFieldSet.add(field.field_name);
         }
       }
+      const fields = ["group_name"];
+      const searchConditions = {
+        [Op.or]: [
+          ...fields.map(field => ({
+            [field]: { [Op.iLike]: `%${search || ''}%` }
+          })),
+        ]
+      };
       const userGroup = await UserGroup.findAll(
         {
-          where: whereClause,
+          where: {
+            ...whereClause,
+            ...searchConditions
+          },
           order: orderArray,
           attributes: {
            include: [
@@ -3466,6 +3530,6 @@ private buildSQLConditions(filters: Record<string, any>): string | null {
 
   return conditions.length > 0 ? conditions.join(' AND ') : null;
 }
-  
+ 
 }
 export default UserGroupService
