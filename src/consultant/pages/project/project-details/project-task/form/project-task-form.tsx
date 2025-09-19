@@ -19,14 +19,14 @@ import {
 } from '../../../../../services/project/project-task-service';
 import { projectTaskPayloadData } from './utils';
 import { ProjectTaskInput } from '../../../../../types/project-task';
-import { useGetProjectResourceCode } from '../../../../../services/project-resources/project-resources-form-service';
+import { useGetProjectResourceTaskCode } from '../../../../../services/project-resources/project-resources-form-service';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
 import {
   formatDateToYYYYMMDDWithTime,
   getDateFormat,
 } from '../../../../../../common-utils';
-import { RESOURCE_CREATE } from '../../../../../../routes';
+import { PROJECT_RESOURCE_CREATE } from '../../../../../../routes';
 import ConfirmationPopup from '../../../../../../common-utils/confirmation-popup';
 
 const ProjectTaskForm: React.FC = () => {
@@ -42,6 +42,7 @@ const ProjectTaskForm: React.FC = () => {
   const project_Id = queryParams.get('project_Id');
   const projectPFY = queryParams.get('PFY');
   const projectCode = queryParams.get('projectCode');
+  const currency_rid = queryParams.get('currency_rid');
   const createdNewResourceCode = queryParams.get('created_resource_code') || '';
   const [confirmationState, setConfirmationState] = React.useState<{
     isOpen: boolean;
@@ -50,6 +51,8 @@ const ProjectTaskForm: React.FC = () => {
   }>({ isOpen: false, message: '', onConfirm: () => {} });
   const [costResourceForceSuccess, setCostResourceForceSuccess] =
     React.useState(false);
+  const [currentResourceCode, setCurrentResourceCode] =
+    React.useState<string>('');
   const fiscalDate: FormFiscalDateType = projectPFY
     ? JSON.parse(projectPFY)
     : undefined;
@@ -80,9 +83,12 @@ const ProjectTaskForm: React.FC = () => {
   const createProjectTask = useCreateProjectTask();
   const updateProjectTask = useUpdateProjectTask();
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
-  const { data: projectResourceCodeOptions } = useGetProjectResourceCode(
-    account_Id as string
-  );
+  const payload = {
+    account_rid: account_Id || undefined,
+    search: '',
+  };
+  const { data: projectResourceCodeOptions } =
+    useGetProjectResourceTaskCode(payload);
   const commonSuccess = costResourceForceSuccess;
   useEffect(() => {
     if (commonSuccess) {
@@ -110,18 +116,14 @@ const ProjectTaskForm: React.FC = () => {
     });
     return map;
   }, [projectViewEditFields]);
-
   const memoizedProjectResourceCode: SelectResourceOption[] = useMemo(
     () =>
-      projectResourceCodeOptions?.data?.resourceCodes.map((item) => ({
-        label: `${item.resource_code} ${item.resource_name ? `(${item.resource_name})` : ''}`,
-        value: item.resource_code,
-        resource_type_rid: item.resource_type_rid,
-        resource_type_name: item.resource_type_name,
+      projectResourceCodeOptions?.data?.map((item, index) => ({
+        label: `${item.resource_code} ${index + 1} ${item.project_resource_role ? `(${item.project_resource_role}) ${index + 1}` : ''}`,
+        value: `${item.rid}`,
       })) || [],
-    [projectResourceCodeOptions?.data?.resourceCodes]
+    [projectResourceCodeOptions?.data]
   );
-
   const submitData = (formValues: Partial<ProjectTaskInput>) => {
     const project_task_rid = isEditView ? (taskId as string) : '';
     const projectTaskData = projectTaskPayloadData(
@@ -134,7 +136,8 @@ const ProjectTaskForm: React.FC = () => {
         user_preference: confirmationState.message ? 'accept' : '',
       },
       project_task_rid,
-      isEditView
+      isEditView,
+      currentResourceCode
     );
 
     if (isEditView) {
@@ -208,25 +211,32 @@ const ProjectTaskForm: React.FC = () => {
     }
   };
 
-  const handleCreateNewResource = (resCode?: string) => {
+  const handleCreateNewProjectResource = (resCode?: string) => {
     const queryParams = new URLSearchParams({
-      account_id: account_Id || '',
+      account_Id: account_Id || '',
+      project_Id: project_Id || '',
       account_name: account_name || '',
-      acc_number: account_number || '',
-      new_res_code: resCode || '',
+      account_number: account_number || '',
+      PFY: JSON.stringify(projectPFY),
+      source: 'createProjectResource',
+      currency_rid: currency_rid ?? '',
+      projectCode: projectCode ?? '',
+      new_project_res_name: resCode || '',
     });
-    navigate(`${RESOURCE_CREATE}?${queryParams.toString()}`, {
+    navigate(`${PROJECT_RESOURCE_CREATE}?${queryParams.toString()}`, {
       state: { from: location },
     });
   };
 
   const onChangeField = (data: OnChange) => {
-    if (data.fieldName === 'resource_code') {
-      const selectedResource = memoizedProjectResourceCode.find(
-        (option) => String(option.value) === String(data.fieldValue)
+    if (data.fieldName === 'project_resource_rid') {
+      const selectedResource = projectResourceCodeOptions?.data?.find(
+        (item) => String(item.rid) === String(data.fieldValue)
       );
-      if (!selectedResource) {
-        handleCreateNewResource(data.fieldValue as string);
+      if (selectedResource) {
+        setCurrentResourceCode(selectedResource.resource_code);
+      } else {
+        handleCreateNewProjectResource(data.fieldValue as string);
       }
     }
   };

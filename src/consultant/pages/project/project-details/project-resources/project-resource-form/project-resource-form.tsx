@@ -76,10 +76,11 @@ const ProjectResourceForm: React.FC = () => {
   const projectCode = searchParams.get('projectCode');
   const createdNewResourceCode =
     searchParams.get('created_resource_code') || '';
+  const project_resource_role = searchParams.get('new_project_res_name') || '';
   const fiscalDate: FormFiscalDateType = projectPFY
     ? JSON.parse(projectPFY)
     : undefined;
-
+  const fromLocation = location.state?.from;
   const getProjectResource = useProjectResourceDetail(
     account_Id as string,
     resourceId as string
@@ -250,7 +251,22 @@ const ProjectResourceForm: React.FC = () => {
     if (isEditView) {
       updateProjectResource.mutate(projectResourceFormData);
     } else {
-      createProjectResource.mutate(projectResourceFormData);
+      createProjectResource.mutate(projectResourceFormData, {
+        onSuccess: (res) => {
+          if (project_resource_role) {
+            const params = new URLSearchParams(fromLocation?.search);
+            // params.set(
+            //   'created_resource_code',
+            //   res.data.resource.resource_code || ''
+            // );
+            navigate(fromLocation?.pathname + '?' + params.toString(), {
+              replace: true,
+            });
+          } else {
+            navigate(-1);
+          }
+        },
+      });
     }
   };
 
@@ -485,6 +501,7 @@ const ProjectResourceForm: React.FC = () => {
                     currency_rid: currency_rid,
                     status_rid: defaultActiveValue,
                     resource_code: createdNewResourceCode,
+                    project_resource_role: project_resource_role,
                   }
                 : {}
           }

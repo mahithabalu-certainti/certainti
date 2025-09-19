@@ -459,6 +459,10 @@ const Projects: React.FC<ProjectsProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [accountInActive]
   );
+  const [visibleColumns, setVisibleColumns] = useState<
+    ListTableColumn<Project>[]
+  >(projectColumns.filter((col) => !col.hide));
+
   useEffect(() => {
     const updatedColumns = projectColumns.filter((col) => !col.hide);
     setVisibleColumns(updatedColumns);
@@ -588,11 +592,6 @@ const Projects: React.FC<ProjectsProps> = ({
       canDrag: false,
     },
   ];
-
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const [visibleColumns, setVisibleColumns] = useState<
-    ListTableColumn<Project>[]
-  >(projectColumns.filter((col) => !col.hide));
 
   const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
     setVisibleColumns(

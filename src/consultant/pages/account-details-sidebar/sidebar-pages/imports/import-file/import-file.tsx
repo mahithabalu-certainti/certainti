@@ -417,6 +417,7 @@ const ImportFile: React.FC<ImportFileProps> = ({
           onClick={handleExternalSubmit}
           disabled={accountInActive}
           sx={{ width: '75px', minWidth: '75px' }}
+          loading={loading}
         />
       </div>
     </div>
