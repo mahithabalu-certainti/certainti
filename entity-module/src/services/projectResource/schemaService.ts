@@ -536,37 +536,40 @@ export class ProjectResourceSchemaService {
     statusMap: any
   ) {
     const { ProjectResource } = await this.getModels(accountNumber);
-
+  
     const normalizedRole = projectResourceData.project_resource_role?.trim().toLowerCase();
-
-    if (!normalizedRole) {
-      return null;
-    }
-
-    const data = await ProjectResource.findOne({
-      where: {
-        resource_rid: resourceData.rid,
-        account_rid: projectResourceData.account_rid,
-        project_fiscal_rid: projectResourceData.project_fiscal_rid,
-        [Op.and]: [
-          Sequelize.where(
-            Sequelize.fn("LOWER", Sequelize.col("project_resource_role")),
-            normalizedRole
-          ),
-        ],
-        status_rid: {
-          [Op.in]: [
-            statusMap?.get("Active"),
-            statusMap?.get("Anomaly"),
-            statusMap?.get("Duplicate"),
-            null,
-          ].filter(Boolean) as string[],
-        },
+  
+    const whereClause: any = {
+      resource_rid: resourceData.rid,
+      account_rid: projectResourceData.account_rid,
+      project_fiscal_rid: projectResourceData.project_fiscal_rid,
+      status_rid: {
+        [Op.in]: [
+          statusMap?.get("Active"),
+          statusMap?.get("Anomaly"),
+          statusMap?.get("Duplicate"),
+          null,
+        ].filter(Boolean) as string[],
       },
-    });
-
+    };
+  
+    if (normalizedRole !== undefined && normalizedRole !== null && normalizedRole.trim() !== null) {
+      whereClause[Op.and] = [
+        Sequelize.where(
+          Sequelize.fn("LOWER", Sequelize.col("project_resource_role")),
+          normalizedRole
+        ),
+      ];
+    } else {
+      whereClause.project_resource_role = {
+        [Op.is]: null,
+      };
+    }
+  
+    const data = await ProjectResource.findOne({ where: whereClause });
+  
     return data;
-  }
+  }  
 
   async findDuplicateProjectResourceOnUpdate(
     accountNumber: string,
@@ -575,40 +578,45 @@ export class ProjectResourceSchemaService {
     statusMap: any
   ) {
     const { ProjectResource } = await this.getModels(accountNumber);
-
+  
     const normalizedRole = projectResourceData.project_resource_role?.trim().toLowerCase();
-
-    if (!normalizedRole) {
-      return null;
-    }
-
-    const data = await ProjectResource.findOne({
-      where: {
-        resource_rid: resourceData.rid,
-        account_rid: projectResourceData.account_rid,
-        project_fiscal_rid: projectResourceData.project_fiscal_rid,
-        [Op.and]: [
-          Sequelize.where(
-            Sequelize.fn("LOWER", Sequelize.col("project_resource_role")),
-            normalizedRole
-          ),
-        ],
-        status_rid: {
-          [Op.in]: [
-            statusMap?.get("Active"),
-            statusMap?.get("Anomaly"),
-            statusMap?.get("Duplicate"),
-            null,
-          ].filter(Boolean) as string[],
-        },
-        rid: {
-          [Op.ne]: projectResourceData.project_resource_rid, 
-        },
+  
+    const whereClause: any = {
+      resource_rid: resourceData.rid,
+      account_rid: projectResourceData.account_rid,
+      project_fiscal_rid: projectResourceData.project_fiscal_rid,
+      status_rid: {
+        [Op.in]: [
+          statusMap?.get("Active"),
+          statusMap?.get("Anomaly"),
+          statusMap?.get("Duplicate"),
+          null,
+        ].filter(Boolean) as string[],
       },
-    });
-
+      rid: {
+        [Op.ne]: projectResourceData.project_resource_rid,
+      },
+    };
+  
+    if (normalizedRole !== undefined && normalizedRole !== null && normalizedRole.trim() !== "") {
+      // Compare non-null role using LOWER
+      whereClause[Op.and] = [
+        Sequelize.where(
+          Sequelize.fn("LOWER", Sequelize.col("project_resource_role")),
+          normalizedRole
+        ),
+      ];
+    } else {
+      // Compare NULL role using IS NULL
+      whereClause.project_resource_role = {
+        [Op.is]: null,
+      };
+    }
+  
+    const data = await ProjectResource.findOne({ where: whereClause });
+  
     return data;
-  }
+  }  
 
   async getExistingEffortInProjectResource(
   accountNumber: string,
