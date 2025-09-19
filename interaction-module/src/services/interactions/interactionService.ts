@@ -1327,6 +1327,7 @@ export class InteractionService {
       });
       return emailResponse;
     } catch (error) {
+      this.logger.error(`Error sending email: ${error}`);
       return emailResponse;
     }
   }
