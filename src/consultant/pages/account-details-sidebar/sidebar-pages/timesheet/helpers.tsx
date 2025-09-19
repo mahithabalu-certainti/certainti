@@ -75,6 +75,14 @@ export const getTimesheetFilterFields = (
       hide: !permissionMap?.['size']?.edit && !permissionMap?.['size']?.read,
     },
     {
+      name: 'Status',
+      value: 'status',
+      type: 'text',
+      operatorOption: textOptions,
+      hide:
+        !permissionMap?.['status']?.edit && !permissionMap?.['status']?.read,
+    },
+    {
       name: 'Fiscal Year',
       value: 'fiscal',
       type: 'enum',
@@ -118,15 +126,7 @@ export const getTimesheetFilterFields = (
       hide:
         !permissionMap?.['records_failed_to_load']?.edit &&
         !permissionMap?.['records_failed_to_load']?.read,
-    },
-    {
-      name: 'Status',
-      value: 'status',
-      type: 'text',
-      operatorOption: textOptions,
-      hide:
-        !permissionMap?.['status']?.edit && !permissionMap?.['status']?.read,
-    },
+    }, 
     {
       name: 'Status Description',
       value: 'status_description',

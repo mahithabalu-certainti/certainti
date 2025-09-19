@@ -210,7 +210,7 @@ export const getProjectColumns = (
       placeholder: 'Choose Classification',
       options: memoizedClassification,
       getFieldData: (rowData: DependencyRowData) => {
-        return String(rowData.project_classification_rid);
+        return String(rowData.project_classification_rid || '');
       },
       dependencies: [
         {

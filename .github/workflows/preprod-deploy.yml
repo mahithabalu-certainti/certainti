@@ -63,7 +63,7 @@ jobs:
           echo "VITE_ORGANIZATION=TRD365" >> $ENV_FILE
           echo "VITE_REDIRECT_URL=https://thinkrd365-preprod.certainti.ai/login" >> $ENV_FILE
           echo "VITE_POST_LOGOUT_REDIRECT_URL=https://thinkrd365-preprod.certainti.ai/login" >> $ENV_FILE
-          
+          echo "VITE_PASSWORD_CHANGE_REDIRECT_URL=https://thinkrd365-preprod.certainti.ai" >> $ENV_FILE
           echo "VITE_INTERACTION_URL=/interactionService" >> $ENV_FILE
           echo "VITE_EXT_INTERACTION_URL=/extinteractionService" >> $ENV_FILE
           echo "$ENV_FILE file created successfully!"

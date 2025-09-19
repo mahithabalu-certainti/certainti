@@ -271,8 +271,8 @@ export const getAttachmentTableColumns = (
       onChange: true,
       resetDependentFields: ['document_type'],
       getFieldData: (rowData: DependencyRowData) => {
-        handleDocumentCategory(String(rowData.document_category_rid));
-        return String(rowData.document_category_rid);
+        handleDocumentCategory(String(rowData.document_category_rid || ''));
+        return String(rowData.document_category_rid || '');
       },
       dependencies: [
         {
@@ -386,7 +386,7 @@ export const getAttachmentTableColumns = (
       loading: typeLoading,
       options: docTypes,
       getFieldData: (rowData: DependencyRowData) => {
-        return String(rowData.document_type_rid);
+        return String(rowData.document_type_rid || '');
       },
       dependencies: [
         {
