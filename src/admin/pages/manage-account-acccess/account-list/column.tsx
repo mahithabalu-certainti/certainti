@@ -62,3 +62,30 @@ export const manageAccountListColumns = (
     sortable: true,
   },
 ];
+
+export const getAvailableUserColumns = () => [
+  {
+    id: 'first_name',
+    sortId: 'first_name',
+    label: 'Username',
+    sortable: true,
+  },
+  {
+    id: 'email',
+    sortId: 'email',
+    label: 'Email Address',
+    sortable: true,
+  },
+  {
+    id: 'role_name',
+    sortId: 'role_name',
+    label: 'Role Name',
+    sortable: true,
+  },
+  {
+    id: 'organization_name',
+    sortId: 'organization_name',
+    label: 'Organisation Name',
+    sortable: true,
+  },
+];

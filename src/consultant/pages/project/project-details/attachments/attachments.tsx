@@ -303,17 +303,30 @@ const Attachments: React.FC<AttachmentsProps> = ({
     permissionMap
   );
 
-  const attachmentColumns = getAttachmentTableColumns(
-    fiscalYears,
-    memoizedDocumentCategories,
-    memoizedDocumentTypes,
-    handleDocumentCategory,
-    handleDownload,
-    permissionMap,
-    isAttachmentExportEnable,
-    categoryTypes.isLoading,
-    accountOrProjectInActive
+  const attachmentColumns = useMemo(
+    () =>
+      getAttachmentTableColumns(
+        fiscalYears,
+        memoizedDocumentCategories,
+        memoizedDocumentTypes,
+        handleDocumentCategory,
+        handleDownload,
+        permissionMap,
+        isAttachmentExportEnable,
+        categoryTypes.isLoading,
+        accountOrProjectInActive
+      ),
+    [accountOrProjectInActive, memoizedDocumentTypes]
   );
+
+  const [visibleColumns, setVisibleColumns] = useState<
+    ListTableColumn<AttachmentList>[]
+  >(attachmentColumns.filter((col) => !col.hide));
+
+  useEffect(() => {
+    const updatedColumns = attachmentColumns.filter((col) => !col.hide);
+    setVisibleColumns(updatedColumns);
+  }, [accountOrProjectInActive, memoizedDocumentTypes, attachmentColumns]);
 
   const handleFieldChange = async (event: FieldChangeEvent) => {
     if (event.columnId === 'document_category' && event.value) {
@@ -401,10 +414,6 @@ const Attachments: React.FC<AttachmentsProps> = ({
       canDrag: false,
     },
   ];
-
-  const [visibleColumns, setVisibleColumns] = useState<
-    ListTableColumn<AttachmentList>[]
-  >(attachmentColumns.filter((col) => !col.hide));
 
   if (!attachmentEnable || !isAttachmentViewEnable) return <AccessRestricted />;
 

@@ -9,7 +9,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowDownDisabledIcon,
   ArrowDownIcon,
-  ManageUserIcon,
+  ManageUserIcon
 } from '../../../../assets/icons';
 import TextButton from '../../../../components/button/text-button';
 import {
@@ -221,33 +221,6 @@ export const CreateUserGroup: React.FC = () => {
     setSelectAccountCount({ parent: parentCount, child: childCount });
   }, [selectedAccounts, accounts]);
   useEffect(() => {
-    // trigger when page change
-    if (tabs === Tabs.USER) {
-      availableUsers.mutate({
-        is_consultant_only_group: groupInformation.isConsultantOnly,
-        account_rid: selectedAccounts,
-        limit: userParams.limit as number,
-        page: userParams.page as number,
-        group_type_rid: groupInformation.groupType,
-        ...(isEditView && { group_rid: groupId as string }),
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userParams.page, userParams.limit, tabs]);
-  useEffect(() => {
-    // trigger when page change
-    if (tabs === Tabs.PROJECT) {
-      availableProjects.mutate({
-        account_rid: selectedAccounts,
-        limit: projectParams.limit,
-        page: projectParams.page,
-        group_type_rid: groupInformation.groupType,
-        ...(isEditView && { group_rid: groupId as string }),
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projectParams.page, projectParams.limit, tabs]);
-  useEffect(() => {
     if (isEditView && userGroupData) {
       const {
         group_name,
@@ -287,6 +260,36 @@ export const CreateUserGroup: React.FC = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [createUserGroup.isSuccess, updateUserGroup.isSuccess]);
+  useEffect(() => {
+    if (tabs === Tabs.USER) {
+      setUserParams((prev) => ({
+        ...prev,
+        page: 1,
+      }));
+      availableUsers.mutate({
+        is_consultant_only_group: groupInformation.isConsultantOnly,
+        account_rid: selectedAccounts,
+        limit: userParams.limit as number,
+        page: userParams.page as number,
+        group_type_rid: groupInformation.groupType,
+        ...(isEditView && { group_rid: groupId as string }),
+      });
+    }
+    if (tabs === Tabs.PROJECT) {
+      setProjectParams((prev) => ({
+        ...prev,
+        page: 1,
+      }));
+      availableProjects.mutate({
+        account_rid: selectedAccounts,
+        limit: projectParams.limit,
+        page: projectParams.page,
+        group_type_rid: groupInformation.groupType,
+        ...(isEditView && { group_rid: groupId as string }),
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabs, projectParams.page, projectParams.limit]);
 
   // Functions
   const handleAccountsModal = useCallback(
@@ -569,6 +572,7 @@ export const CreateUserGroup: React.FC = () => {
         {tabs === Tabs.USER && 'Available User'}
         {tabs === Tabs.PROJECT && 'Available Projects'}
       </div>
+
       <div className='flex flex-row w-full items-end gap-4 px-10 py-1'>
         {tabs === Tabs.FORM && (
           <div className='w-full flex flex-col gap-2'>
@@ -838,7 +842,7 @@ export const CreateUserGroup: React.FC = () => {
                     overflow: 'auto',
                   }}
                   selectable={false}
-                  actionWidth={60}
+                  actionWidth={100}
                   actionDisplayMode='toggle'
                   rowsPerPageOptions={[25, 50, 100]}
                   rowsPerPage={projectParams.limit}

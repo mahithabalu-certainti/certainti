@@ -711,17 +711,31 @@ const Resource: React.FC<ResourceProps> = ({
     setCurrentCountry(country);
   };
 
-  const resourceColumns = getResourceColumns(
-    memoizedStatus,
-    memoizedResourceType,
-    countryOptions,
-    regionOptions,
-    handleCountry,
-    region.isPending,
-    permissionMap,
-    handleResourceClick,
-    accountInActive
+  const resourceColumns = useMemo(
+    () =>
+      getResourceColumns(
+        memoizedStatus,
+        memoizedResourceType,
+        countryOptions,
+        regionOptions,
+        handleCountry,
+        region.isPending,
+        permissionMap,
+        handleResourceClick,
+        accountInActive
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [accountInActive, regionOptions]
   );
+
+  const [visibleColumns, setVisibleColumns] = useState<
+    ListTableColumn<ResourceList>[]
+  >(resourceColumns.filter((col) => !col.hide));
+
+  useEffect(() => {
+    const updatedColumns = resourceColumns.filter((col) => !col.hide);
+    setVisibleColumns(updatedColumns);
+  }, [accountInActive, regionOptions, resourceColumns]);
 
   const onRefreshClick = () => {
     if (value === 'cost') {
@@ -854,10 +868,6 @@ const Resource: React.FC<ResourceProps> = ({
       canDrag: false,
     },
   ];
-
-  const [visibleColumns, setVisibleColumns] = useState<
-    ListTableColumn<ResourceList>[]
-  >(resourceColumns.filter((col) => !col.hide));
 
   const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
     setVisibleColumns(
