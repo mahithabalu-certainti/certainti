@@ -174,7 +174,9 @@ const ProjectResourceForm: React.FC = () => {
       );
       setShowSkillRoleOthersField(false);
       setIsResourceType(false);
-      goBack();
+      if (isEditView) {
+        goBack();
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [commonSuccess, isEditView]);
@@ -255,15 +257,15 @@ const ProjectResourceForm: React.FC = () => {
         onSuccess: (res) => {
           if (project_resource_role) {
             const params = new URLSearchParams(fromLocation?.search);
-            // params.set(
-            //   'created_resource_code',
-            //   res.data.resource.resource_code || ''
-            // );
+            params.set(
+              'created_resource_code',
+              res?.data?.projectResource?.rid || ''
+            );
             navigate(fromLocation?.pathname + '?' + params.toString(), {
               replace: true,
             });
           } else {
-            navigate(-1);
+            goBack();
           }
         },
       });
@@ -452,12 +454,12 @@ const ProjectResourceForm: React.FC = () => {
           {isEditView ? (
             <EditIcon
               alt='projrct-resource-icon'
-              className='h-6 w-6 bg-[#7D98B6] p-1.5 border-box rounded'
+              className='h-8 w-8 mt-1.5 bg-[#7D98B6] p-2 border-box rounded'
             />
           ) : (
             <CreateResourceIcon
               alt='projrct-resource-icon'
-              className='h-6 w-6 bg-[#7D98B6] p-1.5 border-box rounded'
+              className='h-8 w-8 [&>path:first-child]:fill-[#7D98B6] mt-1.5 border-box rounded'
             />
           )}
 

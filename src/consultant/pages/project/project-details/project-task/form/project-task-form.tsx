@@ -100,6 +100,13 @@ const ProjectTaskForm: React.FC = () => {
       goBack();
     }
   }, [commonSuccess, isEditView]);
+
+  useEffect(() => {
+    if (isEditView) {
+      setCurrentResourceCode(projectTaskDetailsData?.resource_code || '');
+    }
+  }, [isEditView, projectTaskDetailsData?.resource_code]);
+
   // Permission Mangement
   const { permission } = useSelector((state: RootState) => state.permission);
   const projectViewEditFields = useMemo(
@@ -109,6 +116,7 @@ const ProjectTaskForm: React.FC = () => {
       )?.fields ?? [],
     [permission]
   );
+
   const permissionMapTaskForm = useMemo(() => {
     const map: Record<string, { read: boolean; edit: boolean }> = {};
     projectViewEditFields.forEach((item) => {
@@ -116,14 +124,25 @@ const ProjectTaskForm: React.FC = () => {
     });
     return map;
   }, [projectViewEditFields]);
+
   const memoizedProjectResourceCode: SelectResourceOption[] = useMemo(
     () =>
-      projectResourceCodeOptions?.data?.map((item, index) => ({
-        label: `${item.resource_code} ${index + 1} ${item.project_resource_role ? `(${item.project_resource_role}) ${index + 1}` : ''}`,
+      projectResourceCodeOptions?.data?.map((item) => ({
+        label: `${item.resource_code}${item.project_resource_role ? ` (${item.project_resource_role})` : ''}`,
         value: `${item.rid}`,
       })) || [],
     [projectResourceCodeOptions?.data]
   );
+
+  useEffect(() => {
+    if (createdNewResourceCode) {
+      const selectedResource = projectResourceCodeOptions?.data?.find(
+        (item) => String(item.rid) === String(createdNewResourceCode)
+      );
+      setCurrentResourceCode(selectedResource?.resource_code || '');
+    }
+  }, [createdNewResourceCode, projectResourceCodeOptions?.data]);
+
   const submitData = (formValues: Partial<ProjectTaskInput>) => {
     const project_task_rid = isEditView ? (taskId as string) : '';
     const projectTaskData = projectTaskPayloadData(
@@ -260,12 +279,12 @@ const ProjectTaskForm: React.FC = () => {
           {isEditView ? (
             <EditIcon
               alt='projrct-resource-icon'
-              className='h-6 w-6 bg-[#7D98B6] p-1.5 border-box rounded'
+              className='h-8 w-8 mt-1.5 bg-[#7D98B6] p-2 border-box rounded'
             />
           ) : (
             <CreateResourceIcon
               alt='projrct-resource-icon'
-              className='h-6 w-6 bg-[#7D98B6] p-1.5 border-box rounded'
+              className='h-8 w-8 [&>path:first-child]:fill-[#7D98B6] mt-1.5 border-box rounded'
             />
           )}
 
@@ -307,7 +326,7 @@ const ProjectTaskForm: React.FC = () => {
             isEditView && projectTaskDetailsData
               ? { ...projectTaskDetailsData }
               : !isEditView
-                ? { resource_code: createdNewResourceCode }
+                ? { project_resource_rid: createdNewResourceCode }
                 : {}
           }
           outData={submitData}
