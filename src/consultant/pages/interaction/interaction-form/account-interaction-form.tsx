@@ -250,7 +250,6 @@ const AccountInteractionForm = () => {
   useEffect(() => {
     if (commonSuccess) {
       successToast('Interaction created successfully');
-      goBack();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [commonSuccess]);
