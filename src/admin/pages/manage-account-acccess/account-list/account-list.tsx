@@ -43,7 +43,7 @@ import { useGetUserGroupTypes, useManageUserRole } from '../../../service';
 import { ListTable } from '../../../../components/table';
 import { getAvailableUserColumns } from './column';
 import { SortDirection } from '../../../../components/table/types';
-import SearchBar from '../../../../components/search/search-bar';
+// import SearchBar from '../../../../components/search/search-bar';
 
 const AccountList = () => {
   const [page, setPage] = useState<number>(1);
@@ -63,7 +63,7 @@ const AccountList = () => {
     sortOrder: 'ASC',
   });
 
-  const [searchText, setSearchText] = useState<string>('');
+  // const [searchText, setSearchText] = useState<string>('');
   useEffect(() => {
     const saved = getStoredFilters();
     if (saved) {

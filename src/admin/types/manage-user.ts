@@ -42,6 +42,7 @@ export interface UserListParams {
   exportKey?: string;
   timezone?: string;
   entity_type?: string;
+  searchTerm?: string;
 }
 
 // User Profile Type

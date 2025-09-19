@@ -64,6 +64,7 @@ const Financial: React.FC<ProjectFinancialProps> = ({
   const [currentCountry, setCurrentCountry] = useState<string>('');
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
+  const [searchText, setSearchText] = useState('');
 
   const handleColumnVisibility = (
     event: React.MouseEvent<HTMLButtonElement>
@@ -198,8 +199,7 @@ const Financial: React.FC<ProjectFinancialProps> = ({
         onRefreshClick={handleRefresh}
         onFilterChange={handleFilterChange}
         showSearch={tabParam === 'resource_cost'}
-        onSearch={(text) => console.log('Searching for:', text)}
-        onSearchTextChange={(text) => console.log('Typing:', text)}
+        onSearch={(text) => setSearchText(text)}
       />
       <SectionHeader
         title='Financial Summary'
@@ -235,6 +235,7 @@ const Financial: React.FC<ProjectFinancialProps> = ({
             setExportType={setExportType}
             setColumnAnchorEl={setColumnAnchorEl}
             columnAnchorEl={columnAnchorEl}
+            searchValue={searchText}
           />
         )}
       </div>

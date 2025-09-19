@@ -37,7 +37,9 @@ export const ProjectListURL = ({
   if (accountInteractionId) {
     searchParams.set('accountInteractionId', accountInteractionId);
   }
-  searchParams.set('search', search || ' ');
+  if (search) {
+    searchParams.set('search', search);
+  }
   const queryString = searchParams.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 };

@@ -140,6 +140,7 @@ export const ProjectResources = ({
   const [updateProjectResourceMutation] = useMutation(UPDATE_PROJECT_RESOURCE, {
     client: resourceClient,
   });
+  const [searchText, setSearchText] = useState('');
 
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
@@ -164,6 +165,7 @@ export const ProjectResources = ({
       fiscalYear: convertedFiscalYear,
       accountNumber: accountID,
       projectid: projectID,
+      search: searchText,
     },
     undefined,
     refreshProjectsTrigger
@@ -209,6 +211,7 @@ export const ProjectResources = ({
     projectResData?.account_rid as string,
     projectResData?.rid as string,
     detailrefecth as number
+    // searchText as string
   );
   // const resourceData = resourceDetails?.data?.projectResource;
   const resourceData = useMemo(() => {
@@ -662,8 +665,7 @@ export const ProjectResources = ({
         projectResourceAccountID={accountID}
         projectResourceProjectID={projectID}
         showSearch={viewDetails ? false : true}
-        onSearch={(text) => console.log('Searching for:', text)}
-        onSearchTextChange={(text) => console.log('Typing:', text)}
+        onSearch={(text) => setSearchText(text)}
       />
       <>
         {showUploads ? (
