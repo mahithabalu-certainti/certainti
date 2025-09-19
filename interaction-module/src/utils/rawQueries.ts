@@ -727,10 +727,14 @@ export const listAttachments = (
   page: number,
   limit: number,
   interaction_rid: string,
-  schemaName: string
+  schemaName: string,
+  search : string
 ) => {
   let offset = (page - 1) * limit;
   let pagination = `LIMIT ${limit} OFFSET ${offset}`;
+  let searchValue : string = ``
+  if(search) searchValue = `%${search}%`
+  else searchValue = `%%`
 
   let query = `WITH fetch_attachments AS (
         SELECT 
@@ -741,12 +745,14 @@ export const listAttachments = (
             ia.interaction_version
         FROM
         ${schemaName}.interaction_attachments ia
-		LEFT JOIN ${schemaName}.interaction_items ii ON ii.rid = ia.interaction_item_rid
+		    LEFT JOIN ${schemaName}.interaction_items ii ON ii.rid = ia.interaction_item_rid
         LEFT JOIN ${schemaName}.interactions i ON ia.interaction_rid = i.rid
         WHERE
         ia.interaction_rid = '${interaction_rid}'
         AND
         ia.interaction_version = i.interaction_version
+        AND
+        (ia.attachment_name ILIKE '${searchValue}' OR ii.question_seq_num ILIKE '${searchValue}')
     ),
     paginated_data AS (
     SELECT * FROM fetch_attachments ${pagination}

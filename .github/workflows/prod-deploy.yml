@@ -131,6 +131,7 @@ jobs:
           CLIENT_SECRET_ENCRYPTION_KEY='client-secret-encryption-key'
           CLIENT_SECRET_ENCRYPTION_LENGTH=16
           EOF
+          
           echo "$ENV_FILE file created successfully!"
           ls -la
       - name: Copy .env file to VM

@@ -113,7 +113,7 @@ jobs:
           AZURE_B2C_CLIENT_ID=$API_CLIENT_ID
           AZURE_B2C_TENANT_ID=$API_TENANT_ID
           AZURE_SCOPE=https://graph.microsoft.com/.default
-          AZURE_STORAGE_CONNECTION_STRING = "storage-account-connection-string"
+          AZURE_STORAGE_CONNECTION_STRING="storage-account-connection-string"
           MAINDB_NAME=main-database-name
           MAINDB_PASSWORD=main-db-admin-password
           MAINDB_USERNAME=main-db-admin-username
@@ -130,7 +130,8 @@ jobs:
           EMAIL_WEBHOOK_URL='https://preprod-thinkrd365-api-management.azure-api.net/interactionService/api/email/webhook'
           CLIENT_SECRET_ENCRYPTION_KEY='client-secret-encryption-key'
           CLIENT_SECRET_ENCRYPTION_LENGTH=16
-          EOF        
+          EOF
+
           echo "$ENV_FILE file created successfully!"
           ls -la
       - name: Copy .env file to VM
@@ -229,7 +230,7 @@ jobs:
           cat <<EOF > $ENV_FILE
           SERVER_PORT=5001
           KEY_VAULT_URI=$KEY_VAULT_URI
-          AZURE_STORAGE_CONNECTION_STRING = "storage-account-connection-string"
+          AZURE_STORAGE_CONNECTION_STRING="storage-account-connection-string"
           MAINDB_NAME=main-database-name
           MAINDB_PASSWORD=main-db-admin-password
           MAINDB_USERNAME=main-db-admin-username
@@ -353,7 +354,7 @@ jobs:
           LOG_LEVEL=debug
           NODE_ENV=PREPROD
           NODE_ENV_DB_PREFIX="S001-"
-          AZURE_STORAGE_CONNECTION_STRING = "storage-account-connection-string"
+          AZURE_STORAGE_CONNECTION_STRING="storage-account-connection-string"
           EMAIL_WEBHOOK_URL='https://preprod-thinkrd365-api-management.azure-api.net/interactionService/api/email/webhook'
           CLIENT_SECRET_ENCRYPTION_KEY=client-secret-encryption-key
           CLIENT_SECRET_ENCRYPTION_LENGTH=16
@@ -461,7 +462,7 @@ jobs:
           SERVER_PORT=5007
           KEY_VAULT_URI=$KEY_VAULT_URI
           AZURE_SCOPE=https://graph.microsoft.com/.default
-          AZURE_STORAGE_CONNECTION_STRING = "storage-account-connection-string"
+          AZURE_STORAGE_CONNECTION_STRING="storage-account-connection-string"
           MAINDB_NAME=main-database-name
           MAINDB_PASSWORD=main-db-admin-password
           MAINDB_USERNAME=main-db-admin-username
@@ -732,7 +733,7 @@ jobs:
           SERVER_PORT=5009
           KEY_VAULT_URI=$KEY_VAULT_URI
           AZURE_SCOPE=https://graph.microsoft.com/.default
-          AZURE_STORAGE_CONNECTION_STRING = "storage-account-connection-string"
+          AZURE_STORAGE_CONNECTION_STRING="storage-account-connection-string"
           MAINDB_NAME=main-database-name
           MAINDB_PASSWORD=main-db-admin-password
           MAINDB_USERNAME=main-db-admin-username

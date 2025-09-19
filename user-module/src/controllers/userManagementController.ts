@@ -123,7 +123,8 @@ async function userProfiles(req: Request, res: Response): Promise<void> {
       limitNum,
       parsedFilters,
       value.sortBy,
-      value.sortOrder
+      value.sortOrder,
+      value.search
     );
 
     if (profilesList.statusCode === constants.SUCCESS) {
