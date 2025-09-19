@@ -297,18 +297,30 @@ const Attachments: React.FC<AttachmentsProps> = ({
     document.body.removeChild(link);
   };
 
-  console.log(isAttachmentExportEnable);
-
-  const attachmentColumns = getAttachmentTableColumns(
-    fiscalYears,
-    memoizedDocumentCategories,
-    memoizedDocumentTypes,
-    handleDocumentCategory,
-    handleDownload,
-    permissionMap,
-    isAttachmentExportEnable,
-    categoryTypes.isLoading
+  const attachmentColumns = useMemo(
+    () =>
+      getAttachmentTableColumns(
+        fiscalYears,
+        memoizedDocumentCategories,
+        memoizedDocumentTypes,
+        handleDocumentCategory,
+        handleDownload,
+        permissionMap,
+        isAttachmentExportEnable,
+        categoryTypes.isLoading
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [memoizedDocumentTypes]
   );
+
+  const [visibleColumns, setVisibleColumns] = useState<
+    ListTableColumn<AttachmentList>[]
+  >(attachmentColumns.filter((col) => !col.hide));
+
+  useEffect(() => {
+    const updatedColumns = attachmentColumns.filter((col) => !col.hide);
+    setVisibleColumns(updatedColumns);
+  }, [memoizedDocumentTypes, attachmentColumns]);
 
   const handleFieldChange = async (event: FieldChangeEvent) => {
     if (event.columnId === 'document_category' && event.value) {
@@ -401,10 +413,6 @@ const Attachments: React.FC<AttachmentsProps> = ({
       canDrag: false,
     },
   ];
-
-  const [visibleColumns, setVisibleColumns] = useState<
-    ListTableColumn<AttachmentList>[]
-  >(attachmentColumns.filter((col) => !col.hide));
 
   const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
     setVisibleColumns(

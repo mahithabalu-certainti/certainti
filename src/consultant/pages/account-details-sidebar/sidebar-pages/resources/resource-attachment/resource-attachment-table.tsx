@@ -199,17 +199,31 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
     document.body.removeChild(link);
   };
 
-  const attachmentColumns = getAttachmentTableColumns(
-    fiscalYears,
-    memoizedDocumentCategories,
-    memoizedDocumentTypes,
-    handleDocumentCategory,
-    handleDownload,
-    permissionMap,
-    isAttachmentExportEnable,
-    categoryTypes.isLoading,
-    accountInActive
+  const attachmentColumns = useMemo(
+    () =>
+      getAttachmentTableColumns(
+        fiscalYears,
+        memoizedDocumentCategories,
+        memoizedDocumentTypes,
+        handleDocumentCategory,
+        handleDownload,
+        permissionMap,
+        isAttachmentExportEnable,
+        categoryTypes.isLoading,
+        accountInActive
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [accountInActive, memoizedDocumentTypes]
   );
+
+  const [visibleColumns, setVisibleColumns] = useState<
+    ListTableColumn<AttachmentList>[]
+  >(attachmentColumns.filter((col) => !col.hide));
+
+  useEffect(() => {
+    const updatedColumns = attachmentColumns.filter((col) => !col.hide);
+    setVisibleColumns(updatedColumns);
+  }, [accountInActive, memoizedDocumentTypes, attachmentColumns]);
 
   const handleFieldChange = async (event: FieldChangeEvent) => {
     if (event.columnId === 'document_category' && event.value) {
@@ -297,10 +311,6 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
       canDrag: false,
     },
   ];
-
-  const [visibleColumns, setVisibleColumns] = useState<
-    ListTableColumn<AttachmentList>[]
-  >(attachmentColumns.filter((col) => !col.hide));
 
   if (!attachmentEnable || !isAttachmentViewEnable) return <AccessRestricted />;
 

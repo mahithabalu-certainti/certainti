@@ -119,8 +119,8 @@ export const getProjectResourcesColumns = (
       placeholder: 'Choose Country',
       resetDependentFields: ['region_name'],
       getFieldData: (rowData: DependencyRowData) => {
-        handleCountry(String(rowData.country_rid));
-        return String(rowData.country_rid);
+        handleCountry(String(rowData.country_rid || ''));
+        return String(rowData.country_rid || '');
       },
       dependencies: [
         {
@@ -153,7 +153,7 @@ export const getProjectResourcesColumns = (
       loading: regionLoading,
       options: memoizedState,
       getFieldData: (rowData: DependencyRowData) => {
-        return String(rowData.region_rid);
+        return String(rowData.region_rid || '');
       },
       dependencies: [
         {

@@ -183,13 +183,27 @@ export const UserTable: React.FC<IUserTableProps> = ({
     }));
   };
 
-  const userColumns = getUserColumns(
-    handleView,
-    profileOptions,
-    roleOptions,
-    memoizedStatus,
-    permissionMap
+  const userColumns = useMemo(
+    () =>
+      getUserColumns(
+        handleView,
+        profileOptions,
+        roleOptions,
+        memoizedStatus,
+        permissionMap
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [profileOptions, roleOptions, memoizedStatus]
   );
+
+  const [visibleColumns, setVisibleColumns] = useState<
+    ListTableColumn<ManageUser>[]
+  >(userColumns.filter((col) => !col.hide));
+
+  useEffect(() => {
+    const updatedColumns = userColumns.filter((col) => !col.hide);
+    setVisibleColumns(updatedColumns);
+  }, [profileOptions, roleOptions, memoizedStatus, userColumns]);
 
   const actionButtons: ActionItem<ManageUser>[] = [
     {
@@ -259,10 +273,6 @@ export const UserTable: React.FC<IUserTableProps> = ({
       canDrag: false,
     },
   ];
-
-  const [visibleColumns, setVisibleColumns] = useState<
-    ListTableColumn<ManageUser>[]
-  >(userColumns.filter((col) => !col.hide));
 
   const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
     setVisibleColumns(
