@@ -1,6 +1,7 @@
 import { resourceServiceApi } from '../../../api/api';
 import {
   ProjectResourceCodeResponse,
+  ProjectResourceTaskCodeResponse,
   PRSkillSubTypeResponse,
   RoleSkillResponse,
 } from '../../types/project-resources';
@@ -15,6 +16,23 @@ export const useGetProjectResourceCode = (accountId: string) => {
       return fetchProjectResourceCode(accountId);
     },
     enabled: !!accountId,
+    retry: 0,
+    gcTime: 0, // Never delete from cache
+    refetchOnMount: true, // Don't refetch on component mount
+    refetchOnReconnect: true, // Don't refetch on reconnect
+  });
+};
+export const useGetProjectResourceTaskCode = (payload: {
+  account_rid?: string;
+  search?: string;
+}) => {
+  return useQuery<ProjectResourceTaskCodeResponse, Error>({
+    queryKey: ['getProjectResourceCode', payload],
+    queryFn: () => {
+      if (!payload.account_rid) throw new Error('Missing accountId');
+      return fetchProjectResourceTaskCode(payload);
+    },
+    // enabled: !!payload.account_rid,
     retry: 0,
     gcTime: 0, // Never delete from cache
     refetchOnMount: true, // Don't refetch on component mount
@@ -57,6 +75,22 @@ export const fetchProjectResourceCode = async (
     throw error;
   }
 };
+export const fetchProjectResourceTaskCode = async (payload: {
+  account_rid?: string;
+  search?: string;
+}): Promise<ProjectResourceTaskCodeResponse> => {
+  try {
+    const { data } =
+      await resourceServiceApi.post<ProjectResourceTaskCodeResponse>(
+        getProjectResourceTaskCodeUrl(),
+        payload
+      );
+    return data;
+  } catch (error) {
+    console.error('Error fetching resource type:', error);
+    throw error;
+  }
+};
 export const fetchAppliedProjectResourceCode = async (
   accountId: string,
   projectId: string,
@@ -75,6 +109,9 @@ export const fetchAppliedProjectResourceCode = async (
 
 export const getProjectResourceCodeUrl = (accountId: string): string => {
   return `/api/project_resources/resourcecodes/${accountId}`;
+};
+export const getProjectResourceTaskCodeUrl = (): string => {
+  return `/api/project_tasks/resourcecodes/`;
 };
 export const getAppliedProjectResourceCodeUrl = (
   accountId: string,

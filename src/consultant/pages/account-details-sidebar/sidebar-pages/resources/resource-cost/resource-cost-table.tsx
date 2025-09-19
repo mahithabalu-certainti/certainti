@@ -318,7 +318,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
         fiscalDate
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [accountInActive, resourceInActive]
+    [accountInActive, fiscalDate, resourceInActive]
   );
 
   const [visibleColumns, setVisibleColumns] = useState<
@@ -328,7 +328,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
   useEffect(() => {
     const updatedColumns = resourceCostColumns.filter((col) => !col.hide);
     setVisibleColumns(updatedColumns);
-  }, [accountInActive, resourceInActive, resourceCostColumns]);
+  }, [accountInActive, fiscalDate, resourceInActive, resourceCostColumns]);
 
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
     const previousCostList = [...resourceCostList];
