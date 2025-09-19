@@ -184,7 +184,7 @@ export class InteractionService {
       const isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(accountNumber, interactionData.project_fiscal_rid);
       this.logger.info(`Is email recipient available: ${isEmailRecipientAvailable} for interaction: ${interaction.dataValues.rid} with project fiscal:${interactionData.project_fiscal_rid}`);
       if(interactionStatus === statusAction.DRAFT && isEmailRecipientAvailable)
-      await this.checkAutoSendEnabled(accountNumber,interactionData,interaction.rid,userId,interactionData?.account_rid);
+      await this.checkAutoSendEnabled(accountNumber,interactionData,interaction.rid,userId,interactionData?.account_rid,intLevel);
        else
        {
         if(!isEmailRecipientAvailable && interactionStatus === statusAction.DRAFT)
@@ -213,7 +213,7 @@ export class InteractionService {
         };
     }
   }
-  async checkAutoSendEnabled(accountNumber: string, interactionData: ICreateInteraction, interactionId: string, userId: string, accountRid: string) {
+  async checkAutoSendEnabled(accountNumber: string, interactionData: ICreateInteraction, interactionId: string, userId: string, accountRid: string, interactionLevel:string) {
     const isEnabled = await this.interactionSchemaService.isAutoSendInteractionEnabled(accountNumber, interactionData, interactionId);
     this.logger.info(`Auto-send is ${isEnabled ? "enabled" : "disabled"} for interaction ID: ${interactionId}`);
     if (isEnabled) {
@@ -223,7 +223,7 @@ export class InteractionService {
       const ismaxInteractionsSent = await this.checkMaxQuarterlyInteractions(AutoSendInteractionAudit, interactionData.project_fiscal_rid, projectInfo.max_ai_interaction,accountInfo);
       if (!ismaxInteractionsSent) return;
       await this.sendInteraction([{ interaction_rid: interactionId,
-        project_fiscal_rid: interactionData.project_fiscal_rid
+        project_fiscal_rid: interactionData.project_fiscal_rid,interaction_level:interactionLevel
        }], interactionData.account_rid, userId, false,'Auto-Send');
     }
   }
@@ -366,20 +366,20 @@ export class InteractionService {
 
       await transaction.commit();
       const isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(accountNumber, interactionData.interaction_rid);
-      if(interactionStatus === statusAction.DRAFT && isEmailRecipientAvailable)
-      await this.checkAutoSendEnabled(accountNumber,interactionData,interactionData.interaction_rid,userId, interactionData?.account_rid);
-      else{
-        if(!isEmailRecipientAvailable && interactionStatus === statusAction.DRAFT)
-        {
-           return {
-        statusCode: HttpStatus.SUCCESS,
-        message: STATUS_MESSAGE.interactionCreatedButNoEmailRecipient,
-        data: {
-          interactions: null,
-        },
-      };
-        }
-      }
+    //   if(interactionStatus === statusAction.DRAFT && isEmailRecipientAvailable)
+    // //  await this.checkAutoSendEnabled(accountNumber,interactionData,interactionData.interaction_rid,userId, interactionData?.account_rid);
+    //   else{
+    //     if(!isEmailRecipientAvailable && interactionStatus === statusAction.DRAFT)
+    //     {
+    //        return {
+    //     statusCode: HttpStatus.SUCCESS,
+    //     message: STATUS_MESSAGE.interactionCreatedButNoEmailRecipient,
+    //     data: {
+    //       interactions: null,
+    //     },
+    //   };
+    //     }
+    //   }
       return {
         statusCode: HttpStatus.SUCCESS,
         message: STATUS_MESSAGE.interactionUpdated,
@@ -1120,6 +1120,7 @@ export class InteractionService {
         name: string | null;
         ccEmails?: string[] | [];
       };
+      interaction_level: string;
       project_fiscal_rid: string;
     }[],
     accountRid: string,
@@ -1149,7 +1150,7 @@ export class InteractionService {
 
       const fetchInQueueStatus : any = await mainDb.query(rawQueries.fetchInteractionQueueStatus())
 
-      for (const { interaction_rid, email_info, project_fiscal_rid } of interactions) {
+      for (const { interaction_rid, email_info, project_fiscal_rid, interaction_level } of interactions) {
         let data : any = {}
         data.account_rid = accountRid
         data.project_fiscal_rid = project_fiscal_rid,
@@ -1159,6 +1160,7 @@ export class InteractionService {
         data.email = email_info?.email === undefined ? null : email_info?.email
         data.name = email_info?.name === undefined ? null : email_info.name
         data.is_interaction_followup = is_interaction_followup
+        data.interaction_level = interaction_level
         this.logger.info(`Email info to be sent: ${JSON.stringify(data)}`);
         await this.interactionSchemaService.insertEmailInfoDatas(data);
         if(type === 'Auto-Send')

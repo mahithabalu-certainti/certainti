@@ -112,6 +112,7 @@ class SchemaService {
       await this.createInteractionTimeline(schemaName, sequelize);
       await this.createAIAssesmentAudit(schemaName, sequelize);
       await this.createQRETracker(schemaName, sequelize);
+      await this.createAutoSendInteractionAudit(schemaName, sequelize);
 
       await this.createOtpEntries(schemaName, sequelize);
       await this.createOtpEntriesHistory(schemaName, sequelize);
@@ -2310,6 +2311,35 @@ private async createInteractionTable(
     ALTER TABLE "${schemaName}".interaction_timeline ADD CONSTRAINT interaction_timeline_entity_rid_fkey FOREIGN KEY (entity_rid) REFERENCES "${schemaName}".interactions(rid) ON UPDATE CASCADE;
     `);
   }
+
+  private async  createAutoSendInteractionAudit(schemaName:string, sequelize:any) {
+     await sequelize.query(`
+       CREATE TABLE IF NOT EXISTS "${schemaName}".autosend_interaction_audit
+      (
+          rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+          project_fiscal_rid character varying(50) NOT NULL,
+          created_datetime timestamp with time zone DEFAULT now(),
+          created_by character varying(50),
+          CONSTRAINT ai_send_interaction_pkey PRIMARY KEY (rid)
+      )
+    `);
+      await sequelize.query(`
+        ALTER TABLE "${schemaName}".autosend_interaction_audit ADD CONSTRAINT project_fiscal_rid_fkey FOREIGN KEY (project_fiscal_rid) REFERENCES "${schemaName}".project_fiscal(rid) ON UPDATE CASCADE;
+      `);
+
+      const fieldsToIndex = [
+        "project_fiscal_rid"
+      ];
+
+    for (const field of fieldsToIndex) {
+      const indexName = `${schemaName}_autosend_interaction_audit_${field}_idx`;
+      await sequelize.query(`
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."autosend_interaction_audit"("${field}");
+    `);
+    }
+ 
+}
 
 
   private async createOtpEntries(schemaName: string, sequelize: any) {
