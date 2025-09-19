@@ -2321,8 +2321,7 @@ private async createInteractionTable(
           rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
           project_fiscal_rid character varying(50) NOT NULL,
           created_datetime timestamp with time zone DEFAULT now(),
-          created_by character varying(50),
-          CONSTRAINT ai_send_interaction_pkey PRIMARY KEY (rid)
+          created_by character varying(50)
       )
     `);
       await sequelize.query(`
