@@ -4055,8 +4055,10 @@ class SchemaService {
   
     const existingPercent = projectFiscalDetails.rd_percent_potential_ai ?? 0;
 
-    if(existingPercent && existingPercent > 0){
-      const netQre = qreAdjustment + existingPercent;
+    const parsedPercent = parseFloat(existingPercent);
+
+    if(!isNaN(parsedPercent) && parsedPercent > 0) {
+      const netQre = qreAdjustment + parseFloat(existingPercent);
   
       const totalCost = projectFiscalDetails.total_cost_prj ?? 0;
       const totalFteCost = projectFiscalDetails.total_cost_fte_prj ?? 0;
