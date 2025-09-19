@@ -244,6 +244,7 @@ jobs:
           AZURE_TENANT_ID=${{ secrets.CERTAINTI_AZURE_TENANT_ID }}
           AZURE_CLIENT_ID=${{secrets.CERTAINTI_AZURE_CLIENT_ID}}
           AZURE_CLIENT_SECRET=${{secrets.CERTAINTI_AZURE_CLIENT_SECRET}}
+          CLIENT_SECRET_ENCRYPTION_KEY=client-secret-encryption-key
           EOF
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM
