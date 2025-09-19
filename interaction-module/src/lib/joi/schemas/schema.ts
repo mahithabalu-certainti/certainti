@@ -128,12 +128,12 @@ const updateAccountInteractionSchema = Joi.object({
 });
 const updateInteractionSchema = Joi.object({
   interaction_rid: Joi.string().pattern(uuidRegex).required(),
+  interaction_level_rid: Joi.string().pattern(uuidRegex).required(),
   account_rid: Joi.string().pattern(uuidRegex).required(),
-  project_rid: Joi.string().pattern(uuidRegex).required(),
-  project_fiscal_rid: Joi.string().pattern(uuidRegex).required(),
-  fiscal_year: Joi.number().integer().min(1900).max(2100).required(),
+  project_rid: Joi.string().pattern(uuidRegex).optional(),
+  project_fiscal_rid: Joi.string().pattern(uuidRegex).optional(),
+  fiscal_year: Joi.number().integer().min(1900).max(2100).optional(),
   status_rid: Joi.string().required(),
-  parent_interaction_rid: Joi.string().allow(null, ""),
   questions: Joi.array()
     .items(
       Joi.object({
