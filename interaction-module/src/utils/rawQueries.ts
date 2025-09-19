@@ -151,7 +151,6 @@ export const fetchInteractionForProjectLevelQuery = (
                 ) THEN true 
                 ELSE false 
             END AS has_account_recipient
-
             FROM
             ${schemaName}.interactions i
             LEFT JOIN ${schemaName}.project_fiscal pf ON pf.rid = i.project_fiscal_rid
