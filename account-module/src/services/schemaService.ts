@@ -9,7 +9,7 @@ import {
   R_NUMBER_PREFIX,
   rawQueries,
 } from "../utils/constant";
-import { getTableSchemaByEntity } from "../utils/helpers";
+import { decryptClientSecret, getTableSchemaByEntity } from "../utils/helpers";
 import {
   IAccount,
   IUpdateAccount,
@@ -2321,8 +2321,7 @@ private async createInteractionTable(
           rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
           project_fiscal_rid character varying(50) NOT NULL,
           created_datetime timestamp with time zone DEFAULT now(),
-          created_by character varying(50),
-          CONSTRAINT ai_send_interaction_pkey PRIMARY KEY (rid)
+          created_by character varying(50)
       )
     `);
       await sequelize.query(`
@@ -2675,6 +2674,11 @@ private async createInteractionTable(
         }
       }else{
         if (Array.isArray(users) && users.length > 0) {
+          const clientSecret = users[0]?.client_secret;
+          if(clientSecret){
+            const decryptedSecret = await decryptClientSecret(clientSecret);
+            users[0].client_secret = decryptedSecret;
+          }
           users[0].is_send_interaction = false;
         }
       }
