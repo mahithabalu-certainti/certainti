@@ -562,7 +562,7 @@ const Interactions: React.FC<InteractionsProps> = ({
         setSortFilterCount={setSortFilterCount}
         showRefresh={!viewDetails}
         onRefreshClick={handleRefresh}
-        showSearch={viewDetails ? false : true}
+        showSearch={viewDetails && !viewResponseHistory ? false : true}
         onSearch={(text) => setSearchText(text)}
       />
       {viewDetails && !viewResponseHistory ? (
@@ -583,6 +583,7 @@ const Interactions: React.FC<InteractionsProps> = ({
         <InteractionAttachment
           handleBackClick={handleBackClick}
           refresh={refreshInteractions}
+          searchValue={searchText}
         />
       ) : (
         <>
@@ -651,6 +652,7 @@ const Interactions: React.FC<InteractionsProps> = ({
                 setCount={setCount}
                 setColumnAnchorEl={setColumnAnchorEl}
                 columnAnchorEl={columnAnchorEl}
+                searchValue={searchText}
               />
             )}
             <SendInteractionModal

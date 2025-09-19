@@ -38,6 +38,7 @@ interface FinancialResourceCostProps {
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
   >;
+  searchValue?: string;
 }
 
 const ResourceCost: React.FC<FinancialResourceCostProps> = ({
@@ -51,6 +52,7 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
   fiscalyear,
   columnAnchorEl,
   setColumnAnchorEl,
+  searchValue,
 }) => {
   const { accountid } = useParams();
   const accountNumber = accountDetails?.accountById?.r_number;
@@ -66,6 +68,7 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
       page: currentPage + 1,
       limit: 100,
       filters: appliedFilters,
+      search: searchValue,
     });
   const { permission } = useSelector((state: RootState) => state.permission);
 
@@ -97,8 +100,9 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
       ...prev,
       page: currentPage + 1,
       filters: appliedFilters,
+      search: searchValue,
     }));
-  }, [currentPage, appliedFilters]);
+  }, [currentPage, appliedFilters, searchValue]);
 
   useEffect(() => {
     if (setExportType) {

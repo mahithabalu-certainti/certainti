@@ -342,7 +342,7 @@ export interface InteractionAttachmentListParams {
   sortBy?: string;
   sortOrder?: SortOrder;
   filters?: Filters;
-  searchTerm?: string;
+  search?: string;
   exportKey?: string;
   timezone?: string;
   entity_type?: string;

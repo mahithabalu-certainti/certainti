@@ -209,7 +209,7 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
               </div>
             ))}
           {showSearch && (
-            <Box className='mr-2'>
+            <Box className={filterVisibility ? 'mr-2' : ''}>
               <SearchBar
                 initialSearchText={searchText}
                 onSearch={(value) => {
