@@ -657,7 +657,8 @@ class UserManagementService {
     limit: number = 10,
     filters: Record<string, any> = {},
     sortBy: string = "created_datetime",
-    sortOrder: string = "ASC"
+    sortOrder: string = "ASC",
+    search? : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -680,9 +681,21 @@ class UserManagementService {
       // Build where clause for filtering
       const { whereClause, includeClause } = this.buildWhereClause(filters);
 
+      const fields = ["profile_name", "profile_description"];
+      const searchConditions = {
+        [Op.or]: [
+          // normal fields
+          ...fields.map(field => ({
+            [field]: { [Op.iLike]: `%${search || ''}%` }
+          })),
+        ],
+      };
       // Get total count for pagination
       const totalCount = await Profile.count({
-        where: whereClause,
+        where: {
+          ...whereClause,
+          ...searchConditions
+        },
         include: includeClause,
         distinct: true, // Add this line to handle LEFT JOINs correctly
       });
@@ -698,7 +711,10 @@ class UserManagementService {
       }
       // Get profiles with pagination, filtering and sorting
       const profiles = await Profile.findAll({
-        where: whereClause,
+        where: {
+          ...whereClause,
+          ...searchConditions
+        },
         order: orderArray,
         limit,
         offset,
