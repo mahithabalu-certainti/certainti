@@ -1692,7 +1692,7 @@ class ProjectIngestionService {
       } else {
         if (field === "created_datetime") {
           fullOrder.push([
-            Sequelize.literal(`"Project"."project_code" ${nullsHandled}`),
+            Sequelize.literal(`"Project"."project_code" ASC NULLS LAST`),
           ]);
         } else {
           fullOrder.push([
@@ -1710,8 +1710,6 @@ class ProjectIngestionService {
     }
       projectData = await Project.findAll({
         where: whereProject,
-        // offset,
-        // limit,
         subQuery: false,
         order: fullOrder,
         attributes: {
@@ -1809,12 +1807,12 @@ class ProjectIngestionService {
       projects = projectData;
 
       totalCount = count;
-      if (projects && projects.length > 0 && !bothParentAndChild) {
-        projects = projects.filter((val: any) => val.ProjectFiscal.length > 0);
-        if (totalCount > projects.length) {
-          totalCount = projects.length;
-        }
-      }
+      // if (projects && projects.length > 0 && !bothParentAndChild) {
+      //   projects = projects.filter((val: any) => val.ProjectFiscal.length > 0);
+      //   if (totalCount > projects.length) {
+      //     totalCount = projects.length;
+      //   }
+      // }
 
       if (isChildOnlyFilter && bothParentAndChild) {
         projects = projects.filter((val: any) => val.ProjectFiscal.length > 0);

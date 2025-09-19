@@ -671,8 +671,9 @@ export class ProjectResourceService {
           sortBy,
           sortOrder
         );
-        projectResources = projectResources.slice(offset, page * limit)
-       
+
+      projectResources = projectResources.slice(offset, page * limit)
+
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -1383,12 +1384,12 @@ export class ProjectResourceService {
       fiscal_year,
       transaction
     );
-    await this.projectResourceSchema.aggregatesProject(
-      accountNumber,
-      account_rid,
-      project_code,
-      transaction
-    );
+    // await this.projectResourceSchema.aggregatesProject(
+    //   accountNumber,
+    //   account_rid,
+    //   project_code,
+    //   transaction
+    // );
     await this.projectResourceSchema.aggregatesProjectFiscalSummary(
       accountNumber,
       account_rid,
@@ -1397,12 +1398,12 @@ export class ProjectResourceService {
       fiscal_year,
       transaction
     );
-    await this.projectResourceSchema.aggregatesProjectSummary(
-      accountNumber,
-      account_rid,
-      project_code,
-      transaction
-    );
+    // await this.projectResourceSchema.aggregatesProjectSummary(
+    //   accountNumber,
+    //   account_rid,
+    //   project_code,
+    //   transaction
+    // );
   }
 
   private async aggregateAccount(
@@ -1423,11 +1424,11 @@ export class ProjectResourceService {
       fiscal_year,
       transaction
     );
-    await this.projectResourceSchema.aggregatesAccount(
-      accountNumber,
-      account_rid,
-      transaction
-    );
+    // await this.projectResourceSchema.aggregatesAccount(
+    //   accountNumber,
+    //   account_rid,
+    //   transaction
+    // );
   }
 
   private async recordTimelineAndHistory(
