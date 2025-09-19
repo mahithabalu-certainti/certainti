@@ -309,9 +309,7 @@ class InteractionSchemaService {
     if (interactionRid) {
       interactionData.created_by = userId;
       const item = {
-        account_interaction_rid: interactionRid,
         interaction_rid: interactionRid,
-        type: type,
         ...question,
         ...interactionData,
         created_by: userId, // Ensure created_by is always userId
@@ -3105,6 +3103,14 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           ""
         )}`;
 
+        const [accountInfo]: any[] = await this.orgDbSequelize.query(
+          rawQueries.fetchAccountDetailsInfo(interactionDetails.account_rid, schemaName),  
+          { type: "SELECT" }
+        );
+        if(accountInfo?.autosend_interaction){
+          return true;
+        }
+
         // Fetch project info
         const [projectInfo]: any[] = await this.orgDbSequelize.query(
           rawQueries.fetchisAutoSendEnabled(
@@ -3693,7 +3699,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       user_rid : data.user_rid,
       is_email_send : false,
       is_interaction_followup : data?.is_interaction_followup || false,
-      interaction_level:  'Project',
+      interaction_level: data.interaction_level || 'Project',
     })
     return insertedData
   }
