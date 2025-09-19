@@ -190,23 +190,7 @@ export class ProjectResourceFiscal
         modelName: "ProjectResource",
         tableName: "project_resource_fiscal",
         schema,
-        timestamps: false,
-        validate: {
-          bothDatesOrNeither() {
-            const hasEffectiveDate =
-              this.resource_effective_from_date !== null &&
-              this.resource_effective_from_date !== undefined;
-            const hasEndDate =
-              this.resource_end_date !== null &&
-              this.resource_end_date !== undefined;
-
-            if (hasEffectiveDate !== hasEndDate) {
-              throw new Error(
-                "Both resource start date and end date must be provided together, or neither should be provided"
-              );
-            }
-          },
-        },
+        timestamps: false
       }
     );
     return ProjectResourceFiscal;

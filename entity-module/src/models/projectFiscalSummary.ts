@@ -106,6 +106,7 @@ export interface ProjectFiscalSummaryAttributes {
   blended_rate_subcon?: number | null;
 
   rd_percent_potential_ai?: number | null;
+  rd_percent_potential_ai_updated?: number | null;
   rd_percent_adjustment?: number | null;
   rd_percent_final?: number | null;
 
@@ -129,6 +130,7 @@ export interface ProjectFiscalSummaryAttributes {
 
   project_point_of_contact?: string | null;
   technical_point_of_contact?: string | null;
+  is_interaction_recipient:boolean | false;
 }
 interface ProjectFiscalSummaryCreationAttributes
   extends Optional<ProjectFiscalSummaryAttributes, "rid"> {}
@@ -242,6 +244,7 @@ export class ProjectFiscalSummary
   public blended_rate_subcon?: number | null;
 
   public rd_percent_potential_ai?: number | null;
+  public rd_percent_potential_ai_updated?: number | null;
   public rd_percent_adjustment?: number | null;
   public rd_percent_final?: number | null;
 
@@ -265,6 +268,7 @@ export class ProjectFiscalSummary
 
   public comments?: string | null;
   public project_description?: string | null;
+  public is_interaction_recipient!: boolean | false;
 
   static initialize(sequelize: Sequelize, schemaName: string) {
     ProjectFiscalSummary.init(
@@ -457,6 +461,7 @@ export class ProjectFiscalSummary
 
         // R&D & QRE
         rd_percent_potential_ai: DataTypes.DECIMAL(18, 2),
+        rd_percent_potential_ai_updated: DataTypes.DECIMAL(18, 2),
         rd_percent_adjustment: DataTypes.DECIMAL(18, 2),
         rd_percent_final: DataTypes.DECIMAL(18, 2),
         qre_fte: DataTypes.DECIMAL(18, 2),
@@ -496,6 +501,10 @@ export class ProjectFiscalSummary
         },
         comments: {
           type: DataTypes.STRING(2000),
+          allowNull: true,
+        },
+        is_interaction_recipient: {
+          type: DataTypes.BOOLEAN,
           allowNull: true,
         },
       },

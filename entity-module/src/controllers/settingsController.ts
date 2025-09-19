@@ -33,6 +33,9 @@ const settingController = async (req : Request, res : Response) => {
         if(result.statusCode == HttpStatus.SUCCESS) {
             handleErrorResponse(res, HttpStatus.SUCCESS, HttpStatus.SUCCESS_MESSAGE, result.statusMessage)
             return;
+        }else{
+            handleErrorResponse(res, result.statusCode, HttpStatus.BAD_REQUEST_MESSAGE, result.statusMessage)
+            return;
         }
     } catch (error : any) {
         handleErrorResponse(res, HttpStatus.FAILED, HttpStatus.FAILED_MESSAGE, error.message)
