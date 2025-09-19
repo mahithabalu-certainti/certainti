@@ -9,7 +9,6 @@ const createInteractionSchema = Joi.object({
   project_fiscal_rid: Joi.string().pattern(uuidRegex).required(),
   fiscal_year: Joi.number().integer().min(1900).max(2100).required(),
   status_rid: Joi.string().required(),
-  parent_interaction_rid: Joi.string().allow(null, ""),
   questions: Joi.array()
     .items(
       Joi.object({
@@ -23,6 +22,55 @@ const createInteractionSchema = Joi.object({
     .required(),
 });
 
+const createAccountInteractionSchema = Joi.object({
+  account_rid: Joi.string().pattern(uuidRegex).required(),
+  interaction_level_rid: Joi.string().pattern(uuidRegex).required(),
+  trigger_send: Joi.boolean().optional().default(false),
+  projects: Joi.array()
+    .items(
+      Joi.object({
+        project_rid: Joi.string().pattern(uuidRegex).required(),
+        project_fiscal_rid: Joi.string().pattern(uuidRegex).required(),
+        fiscal_year: Joi.number().integer().min(1900).max(2100).required(),
+      })
+    )
+    .optional(),
+  status_rid: Joi.string().required(),
+  questions: Joi.array()
+    .items(
+      Joi.object({
+        question: Joi.string().max(2000).required(),
+        notes: Joi.string().max(2000).allow(""),
+        is_mandatory: Joi.boolean().required(),
+        action_type: Joi.string().valid("add", "update", "delete").required(),
+      })
+    )
+    .min(1)
+    .required(),
+});
+const listAccountInteractionSchema = Joi.object({
+  account_rid: Joi.string().pattern(uuidRegex).required(),
+    page: Joi.string().optional()
+    .pattern(/^[0-9]+$/)
+  ,
+  limit: Joi.string().optional()
+    .pattern(/^[0-9]+$/)
+    ,
+  filters: Joi.string().default("{}"),
+  sort_by: Joi.string().optional(),
+  sort_order: Joi.string().valid("ASC", "DESC").default("ASC"),
+});
+
+const exportAccountInteractionSchema = Joi.object({
+  account_rid: Joi.string().pattern(uuidRegex).required(),
+  filters: Joi.string().default("{}"),
+  sort_by: Joi.string().optional(),
+  sort_order: Joi.string().valid("ASC", "DESC").default("ASC"),
+});
+
+
+
+
 const sendInteractionSchema = Joi.object({
   account_rid: Joi.string().pattern(uuidRegex).required(),
   is_interaction_followup: Joi.boolean().optional().default(false),
@@ -30,7 +78,8 @@ const sendInteractionSchema = Joi.object({
   .items(
     Joi.object({
       interaction_rid: Joi.string().pattern(uuidRegex).required(),
-      project_fiscal_rid:Joi.string().pattern(uuidRegex).required(),
+      project_fiscal_rid:Joi.string().pattern(uuidRegex).optional(),
+      interaction_level:Joi.string().optional().default("Project"),
       email_info: Joi.object({
         email: Joi.string().email().optional().allow("",null),
         name: Joi.string().max(255).optional().allow("",null),
@@ -40,18 +89,51 @@ const sendInteractionSchema = Joi.object({
   .min(1)
   .required(),
 });
+
+const sendAccountInteractionSchema = Joi.object({
+  account_rid: Joi.string().pattern(uuidRegex).required(),
+  type:Joi.string().valid("Account","Project").optional().default("Account"),
+  projects: Joi.array()
+  .items(
+    Joi.object({
+      project_rid: Joi.string().pattern(uuidRegex).required(),
+      project_fiscal_rid:Joi.string().pattern(uuidRegex).required(),
+      fiscal_year: Joi.number().integer().min(1900).max(2100).required(),
+    })
+  )
+  .min(1)
+  .required(),
+});
 const getInteractionStatusSchema = Joi.object({
   status_scope: Joi.string().optional(),
   current_status: Joi.string().optional(),
 });
+
+
+const updateAccountInteractionSchema = Joi.object({
+  account_interaction_rid: Joi.string().pattern(uuidRegex).required(),
+  account_rid: Joi.string().pattern(uuidRegex).required(),
+  questions: Joi.array()
+    .items(
+      Joi.object({
+        rid: Joi.string().pattern(uuidRegex).allow(null, ""),
+        question: Joi.string().max(2000).required(),
+        notes: Joi.string().max(2000).allow(""),
+        is_mandatory: Joi.boolean().required(),
+        action_type: Joi.string().valid("add", "edit", "delete").required(),
+      })
+    )
+    .min(1)
+    .required(),
+});
 const updateInteractionSchema = Joi.object({
   interaction_rid: Joi.string().pattern(uuidRegex).required(),
+  interaction_level_rid: Joi.string().pattern(uuidRegex).required(),
   account_rid: Joi.string().pattern(uuidRegex).required(),
-  project_rid: Joi.string().pattern(uuidRegex).required(),
-  project_fiscal_rid: Joi.string().pattern(uuidRegex).required(),
-  fiscal_year: Joi.number().integer().min(1900).max(2100).required(),
+  project_rid: Joi.string().pattern(uuidRegex).optional(),
+  project_fiscal_rid: Joi.string().pattern(uuidRegex).optional(),
+  fiscal_year: Joi.number().integer().min(1900).max(2100).optional(),
   status_rid: Joi.string().required(),
-  parent_interaction_rid: Joi.string().allow(null, ""),
   questions: Joi.array()
     .items(
       Joi.object({
@@ -141,8 +223,13 @@ const exportTechnicalSummarySchema = Joi.object({
 }); 
 
 
+
+
 export {
   createInteractionSchema,
+  createAccountInteractionSchema,
+  listAccountInteractionSchema,
+  exportAccountInteractionSchema,
   updateInteractionSchema,
   updateInteractionResponseSchema,
   listTechnicalSummarySchema,
@@ -150,5 +237,7 @@ export {
   sendInteractionSchema,
   updateTechSummaryContextSchema,
   listAllTechnicalSummarySchema,
-  exportTechnicalSummarySchema
+  exportTechnicalSummarySchema,
+  sendAccountInteractionSchema,
+  updateAccountInteractionSchema
 };

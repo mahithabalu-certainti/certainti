@@ -69,7 +69,8 @@ export default class ImportGraphqlServices {
     sortBy: string,
     account_rid: string,
     filters: Record<string, any>,
-    fiscal_year: number
+    fiscal_year: number,
+    search : string
   ) {
     const orgSequelize = await this.getOrgSequelize();
     const mainSequelize = await this.getMainDbSequelize();
@@ -96,7 +97,8 @@ export default class ImportGraphqlServices {
         filters,
         schemaName,
         disablePagination,
-        fiscal_year
+        fiscal_year,
+        search
       )
     );
     if (result[0].length > 0) {
@@ -397,6 +399,8 @@ export default class ImportGraphqlServices {
         finalMetaDataSortOrder,
         {},
         accessibleIds,
+        "timesheet",
+        [],
         documentRid
       );
 
@@ -846,7 +850,7 @@ async exportAccountLevelImportedProjects(
       });
 
       // ✅ Fetch and map related data
-      const { resourceTypeMap, currencyMap } =
+      const { resourceTypeMap, currencyMap, resourceStatusMap } =
         await this.projectTaskService.fetchRelatedData(allTasks, mainSequelize);
 
       // ✅ Format all tasks
@@ -854,7 +858,8 @@ async exportAccountLevelImportedProjects(
         this.projectTaskService.formatTaskData(
           task,
           resourceTypeMap,
-          currencyMap
+          currencyMap,
+          resourceStatusMap
         )
       );
 
@@ -982,7 +987,7 @@ async exportAccountLevelImportedProjects(
       });
 
       // ✅ Fetch and map related data
-      const { resourceTypeMap, currencyMap } =
+      const { resourceTypeMap, currencyMap, resourceStatusMap } =
         await this.projectTaskService.fetchRelatedData(allTasks, mainSequelize);
 
       // ✅ Format all tasks
@@ -990,7 +995,8 @@ async exportAccountLevelImportedProjects(
         this.projectTaskService.formatTaskData(
           task,
           resourceTypeMap,
-          currencyMap
+          currencyMap,
+          resourceStatusMap
         )
       );
 

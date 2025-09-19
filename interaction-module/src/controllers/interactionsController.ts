@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { HttpStatus, interactionFieldMappings, interactionSource, STATUS_MESSAGE, techSummaryFieldMappings } from "../utils/constants";
+import { accountInteractionFieldMappings, HttpStatus, interactionFieldMappings, interactionSource, STATUS_MESSAGE, techSummaryFieldMappings } from "../utils/constants";
 import {
   deleteFromAzureBlob,
   errorLog,
@@ -16,12 +16,16 @@ import {
 import moment from "moment-timezone";
 import configurations from "../config/config";
 import {
+  createAccountInteractionSchema,
   createInteractionSchema,
+  exportAccountInteractionSchema,
   exportTechnicalSummarySchema,
   getInteractionStatusSchema,
+  listAccountInteractionSchema,
   listAllTechnicalSummarySchema,
   listTechnicalSummarySchema,
   sendInteractionSchema,
+  updateAccountInteractionSchema,
   updateInteractionResponseSchema,
   updateInteractionSchema,
   updateTechSummaryContextSchema,
@@ -86,6 +90,283 @@ async function createInteraction(req: Request, res: Response): Promise<void> {
   }
 }
 
+async function createAccountInteraction(req: Request, res: Response): Promise<void> {
+  const methodName = "Create account interaction";
+  try {
+    console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
+    const value = await validateRequest(req, createAccountInteractionSchema, res);
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    if (!value) {
+      errorLog(methodName, "Request body is empty");
+      return;
+    }
+    const interaction = await interactionService.createAccountInteraction(
+      value,interactionSource.MANUAL,
+      userId
+    );
+    console.log(
+      `[${methodName}] Service response:`,
+      JSON.stringify(interaction)
+    );
+    if (interaction.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, interaction.data,interaction.message);
+      return;
+    } else {
+      errorLog(methodName, interaction.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        interaction.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function listAccountInteractions(req: Request, res: Response): Promise<void> {
+  const methodName = "List account interactions";
+  try {
+    console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
+    const value = await validateRequest(req, listAccountInteractionSchema, res,"GET");
+    console.log("value",value);
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    if (!value) {
+      errorLog(methodName, "Request body is empty");
+      return;
+    }
+    
+     const page: number = parseInt(value.page, 10) || 1;
+    const limit: number = parseInt(value.limit, 10) || 10;
+    let parsedFilters: Record<string, any> = {};
+     try {
+      parsedFilters = JSON.parse(value.filters);
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+    const interaction = await interactionService.listAccountInteractions(
+      value,
+      page,
+      limit,
+      parsedFilters
+    );
+    console.log(
+      `[${methodName}] Service response:`,
+      JSON.stringify(interaction)
+    );
+    if (interaction.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, interaction.data,interaction.message);
+      return;
+    } else {
+      errorLog(methodName, interaction.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        interaction.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function exportAccountInteractions(req: Request, res: Response): Promise<void> {
+  const methodName = "Export account interactions";
+  try {
+    console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
+    const value = await validateRequest(req, exportAccountInteractionSchema, res,"GET");
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    if (!value) {
+      errorLog(methodName, "Request body is empty");
+      return;
+    }
+    let parsedFilters: Record<string, any> = {};
+     try {
+      parsedFilters = JSON.parse(value.filters);
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+    const result = await interactionService.exportAccountInteractions(
+      value,
+      parsedFilters
+    );
+      const fields = await interactionService.getAllowedExportFields(
+          userId,
+          "interactions_view_edit"
+        );
+      const allowedFieldSet = new Set<string>();
+      for (const field of fields) {
+        if (field.read) {
+          allowedFieldSet.add(field.field_name);
+        }
+      }
+     const isValidTZ = value.timezone &&  isValidTimezone(value.timezone);
+       const formatDate = (date?: Date) =>
+        date
+          ? moment(date).tz(isValidTZ ? value.timezone : 'UTC').format('YYYY-MM-DD, hh:mm:ss A')
+          : null;
+    if(result.statusCode === HttpStatus.SUCCESS) {
+         const finalStructuredData = result?.data?.accountInteractions.length < 1 ? [] : result?.data?.accountInteractions.map((d: any) => {
+        let resultMap: { [key: string]: any } = {
+          "r_number": d.r_number,
+          "project_count": d.project_count,
+          "interaction_type": d.interaction_type_name,
+          "status_name": d.status_name,
+          "created_by": d.created_user_name,
+          "created_datetime":formatDate(d.created_datetime),
+          "modified_by": d.modified_user_name,
+          "modified_datetime": d.modified_datetime == null ? '' : formatDate(d.modified_datetime),
+          "sent_on_datetime": d.sent_on_datetime == null ? '' : formatDate(d.sent_on_datetime),
+        };
+
+        // Build exportRecord using allowed fields and resultMap
+        const exportRecord: Record<string, any> = {};
+        accountInteractionFieldMappings.forEach(mapping => {
+          if (allowedFieldSet.has(mapping.permissionField)) {
+            exportRecord[mapping.exportField] = resultMap[mapping.dataField];
+          }
+        });
+
+        return exportRecord;
+      });
+
+       const generateBase64Response = await generateExcelBase64(finalStructuredData, "Account Interactions")
+        handleSuccessResponse(res, generateBase64Response);}
+        else {
+      errorLog(methodName, result.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        result.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function updateAccountInteraction(req: Request, res: Response): Promise<void> {
+  const methodName = "Update account interaction";
+  try {
+    console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
+    const value = await validateRequest(req, updateAccountInteractionSchema, res);
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    if (!value) {
+      errorLog(methodName, "Request body is empty");
+      return;
+    }
+    const interaction = await interactionService.updateAccountInteraction(
+      value,
+      userId
+    );
+    console.log(
+      `[${methodName}] Service response:`,
+      JSON.stringify(interaction)
+    );
+    if (interaction.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, interaction.data, interaction.message);
+      return;
+    } else {
+      errorLog(methodName, interaction.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        interaction.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
 async function updateInteraction(req: Request, res: Response): Promise<void> {
   const methodName = "Update interaction";
   try {
@@ -236,12 +517,15 @@ async function getInteractionDetailsById(
       );
       return;
     }
+    let interactionDetails;
+   interactionDetails =
+        await interactionService.getInteractionDetailsById(
+          interactionRid,
+          accountId
+        );
+ 
 
-    const interactionDetails =
-      await interactionService.getInteractionDetailsById(
-        interactionRid,
-        accountId
-      );
+   
     console.log(
       `[${methodName}] Service response:`,
       JSON.stringify(interactionDetails)
@@ -272,6 +556,8 @@ async function getInteractionDetailsById(
     return;
   }
 }
+
+
 async function getTechnicalSummaryDetailsById(
   req: Request,
   res: Response
@@ -409,6 +695,7 @@ async function getInteractionQuestionsById(
   const methodName = "Get interaction questions";
   try {
     const { interactionRid, accountId } = req.params;
+    const value = req.params
     const userId = req.headers["x-user-id"] as string;
 
     if (!userId) {
@@ -528,6 +815,39 @@ async function getInteractionTypes(req: Request, res: Response): Promise<void> {
   }
 }
 
+async function getInteractionLevel(
+  req: Request,
+  res: Response
+): Promise<void> {
+  const methodName = "Get interaction level";
+  try {
+    const interactionLevel = await interactionService.getInteractionLevel();
+    if (interactionLevel.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, interactionLevel.data);
+      return;
+    } else {
+      errorLog(methodName, interactionLevel.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        interactionLevel.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
 async function getInteractionSource(
   req: Request,
   res: Response
@@ -612,7 +932,7 @@ async function listAllInteractionPrjAcc (req : Request, res : Response) {
       );
       return;
     }
-    const result = await interactionService.listInteractionPrjAccount(data,userId)
+    const result = await interactionService.listInteractionPrjAccount(data,userId,"list")
     if(result.status == HttpStatus.SUCCESS) {
       return res.status(HttpStatus.SUCCESS).json({
         statusCode : HttpStatus.SUCCESS,
@@ -651,7 +971,7 @@ async function exportAllInteractions (req : Request, res : Response) {
       );
       return;
     }
-    const result = await interactionService.listInteractionPrjAccount(data,userId)
+    const result = await interactionService.listInteractionPrjAccount(data,userId,"export")
     const fields = await interactionService.getAllowedExportFields(
           userId,
           "interactions_view_edit"
@@ -672,6 +992,7 @@ async function exportAllInteractions (req : Request, res : Response) {
       const finalStructuredData = result.data.interactions.length < 1 ? [] : result.data.interactions.map((d: any) => {
         let resultMap: { [key: string]: any } = {
           "r_number": d.r_number,
+          "interaction_level_name":d.interaction_level_name,
           "project_code": d.project_code,
           "interaction_age": d.interaction_age,
           "fiscal_year": d.fiscal_year,
@@ -1544,11 +1865,15 @@ export default {
   listResponseHistory,
   exportResponseHistory,
   createInteraction,
+  createAccountInteraction,
+  listAccountInteractions,
+  exportAccountInteractions,
   updateInteraction,
   updateInteractionResponse,
   getInteractionStatus,
   getInteractionTypes,
   getInteractionSource,
+  getInteractionLevel,
   getResponseSource,
   getInteractionDetailsById,
   getInteractionQuestionsById,
@@ -1564,5 +1889,6 @@ export default {
   listTechnicalSummary,
   getTechnicalSummaryDetailsById,
   updateTechSummaryContext,
-  exportTechnicalSummary
+  exportTechnicalSummary,
+  updateAccountInteraction
 };

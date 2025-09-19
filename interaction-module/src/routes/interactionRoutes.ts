@@ -41,6 +41,12 @@ routes.get(
   checkUserStatusMiddleware("NA"),
   controller.interactionsController.getInteractionTypes
 );
+
+routes.get(
+  "/interactionLevel",
+  checkUserStatusMiddleware("NA"),
+  controller.interactionsController.getInteractionLevel
+);
 routes.get(
   "/interactionSource",
   checkUserStatusMiddleware("NA"),
@@ -51,16 +57,27 @@ routes.get(
   checkUserStatusMiddleware("NA"),
   controller.interactionsController.getResponseSource
 );
-
-routes.get('/technicalSummary/list', checkUserStatusMiddleware("interactions_view_edit"), controller.interactionsController.listTechnicalSummary)
-routes.get('/technicalSummary/details', checkUserStatusMiddleware("interactions_view_edit"), controller.interactionsController.getTechnicalSummaryDetailsById)
 routes.put(
-  "/technicalSummary/update",
+  "/accountInterctions/update",
   checkUserStatusMiddleware("interactions_view_edit"),
-  controller.interactionsController.updateTechSummaryContext
+  controller.interactionsController.updateAccountInteraction
 );
 
-routes.get('/technicalSummary/export', checkUserStatusMiddleware("interactions_export"), controller.interactionsController.exportTechnicalSummary)
+routes.get('/technicalSummary/list', checkUserStatusMiddleware("projects_tech_summary_view_edit"), controller.interactionsController.listTechnicalSummary)
+routes.get('/technicalSummary/details', checkUserStatusMiddleware("projects_tech_summary_view_edit"), controller.interactionsController.getTechnicalSummaryDetailsById)
+routes.put(
+  "/technicalSummary/update",
+  checkUserStatusMiddleware("projects_tech_summary_view_edit"),
+  controller.interactionsController.updateTechSummaryContext
+);
+routes.post(
+  "/accountInterctions/create",
+  checkUserStatusMiddleware("interactions_view_edit"),
+  controller.interactionsController.createAccountInteraction
+);  
+
+
+routes.get('/technicalSummary/export', checkUserStatusMiddleware("projects_tech_summary_export"), controller.interactionsController.exportTechnicalSummary)
 routes.post('/list', checkUserStatusMiddleware("interactions_view_edit"), controller.interactionsController.listAllInteractionPrjAcc)
 routes.post('/export', checkUserStatusMiddleware("interactions_export"), controller.interactionsController.exportAllInteractions)
 routes.post('/globalList', checkUserStatusMiddleware("interactions_view_edit"), controller.interactionsController.listOutAllInteractionSummary)

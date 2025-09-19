@@ -32,6 +32,7 @@ export const fetchInteractionForProjectLevelQuery = (
   schemaName: string,
   disablePagination: boolean,
   accessibleIds: string[] = [],
+  search : string
 ) => {
   let offset = (page - 1) * limit;
   let pagination = `LIMIT ${limit} OFFSET ${offset}`;
@@ -40,8 +41,12 @@ export const fetchInteractionForProjectLevelQuery = (
   let sortValue: string;
   let whereConditions;
   let andConditions = ``;
+  let searchValue;
   if (disablePagination) pagination = ` `;
   else pagination;
+
+  if(search) searchValue = `%${search}%`
+  else searchValue = `%%`
 
   if (flag == interactionFlag.account) {
     let fiscalQuery = ``;
@@ -81,7 +86,7 @@ export const fetchInteractionForProjectLevelQuery = (
   else if (sort === filtersColumns.recipient_email)
     sortValue = `ORDER BY i.recipient_email ${sortBy}`;
   else if (sort === filtersColumns.last_sent_on)
-    sortValue = `ORDER BY i.last_resent_on ${sortBy}`;
+    sortValue = `ORDER BY i.sent_on_datetime ${sortBy}`;
   else if (sort === filtersColumns.last_reminder_on)
     sortValue = `ORDER BY i.last_reminder_on ${sortBy}`;
   else if (sort === filtersColumns.response_submitted_on)
@@ -117,20 +122,21 @@ export const fetchInteractionForProjectLevelQuery = (
         SELECT
             i.rid, i.r_number, i.interaction_iteration, COALESCE(i.interaction_age,0),
             i.status_rid, i.recipient_name, i.recipient_email,
-            i.last_resent_on, i.last_reminder_on, i.response_updated_on,
+            i.sent_on_datetime, i.last_reminder_on, i.response_updated_on,
             i.response_submitted_on, i.response_source_rid, i.created_by, i.modified_by,
-            i.created_datetime, i.modified_datetime, p.r_number AS parent_r_number,
+            i.created_datetime, i.modified_datetime,
             i.account_rid, i.project_rid, i.rid AS interaction_history, 
             i.interaction_url,i.project_fiscal_rid,
             COUNT(i.rid) OVER() AS total_records, i.interaction_age,
-            i.interaction_source_rid, i.interaction_type_rid, i.attachment_count,
+            i.interaction_source_rid, i.interaction_type_rid, i.attachment_count,i.interaction_level_rid,
             pf.project_code,pf.fiscal_year
 
             FROM
             ${schemaName}.interactions i
-            LEFT JOIN ${schemaName}.interactions p ON p.rid = i.parent_interaction_rid
             LEFT JOIN ${schemaName}.project_fiscal pf ON pf.rid = i.project_fiscal_rid
             WHERE
+            (i.r_number ILIKE '${searchValue}' OR i.recipient_name ILIKE '${searchValue}' OR i.recipient_email ILIKE '${searchValue}')
+            AND
             ${whereConditions}
             ${filteredData?.andConditions}
             ${filterQueryValues}
@@ -149,7 +155,7 @@ export const fetchInteractionForProjectLevelQuery = (
         'status', i.status_rid,
         'recipient_name', i.recipient_name,
         'recipient_email', i.recipient_email,
-        'last_resent_on', i.last_resent_on,
+        'last_resent_on', i.sent_on_datetime,
         'last_reminder_on', i.last_reminder_on,
         'response_updated_on', i.response_updated_on,
         'response_submitted_on', i.response_submitted_on,
@@ -158,7 +164,6 @@ export const fetchInteractionForProjectLevelQuery = (
         'modified_by', i.modified_by,
         'created_datetime', i.created_datetime,
         'modified_datetime', i.modified_datetime,
-        'parent_interaction_rid', i.parent_r_number,
         'account_rid', i.account_rid,
         'project_rid', i.project_rid,
         'project_fiscal_rid', i.project_fiscal_rid,
@@ -168,6 +173,7 @@ export const fetchInteractionForProjectLevelQuery = (
         'total_records', i.total_records,
         'interaction_type', i.interaction_type_rid,
         'interaction_source', i.interaction_source_rid,
+        'interaction_level', i.interaction_level_rid,
         'attachment_count', i.attachment_count,
         'project_code', i.project_code
         ) ) AS interactions
@@ -188,6 +194,7 @@ export const listAllInteractionSummary = (
   sort: string,
   sortBy: string,
   accessibleIds: string[] = [],
+  search : string
 ) => {
   let offset = (page - 1) * limit;
   let pagination = `LIMIT ${limit} OFFSET ${offset}`;
@@ -201,6 +208,7 @@ export const listAllInteractionSummary = (
   let andConditionsForjoinsForTwo: string = ` `;
   let andConditionsForjoinsForThree: string = ` `;
   let sortValue;
+  let searchValue : string
 
   let filterDatas = filterForInteractions(
     filters,
@@ -229,6 +237,9 @@ export const listAllInteractionSummary = (
 
   if (fiscal_year == 0) fiscalYearQuery = ``;
   else fiscalYearQuery = ` pf.fiscal_year = ${fiscal_year}`;
+  
+  if(search) searchValue = `%${search}%`
+  else searchValue = `%%`
 
   if (
     globalFiltersQueryConditions !== "" ||
@@ -273,7 +284,7 @@ export const listAllInteractionSummary = (
   else if (sort === filtersColumnsForInteractionSummary.recipient_email)
     sortValue = `ORDER BY i.recipient_email ${sortBy}`;
   else if (sort === filtersColumnsForInteractionSummary.last_sent_on)
-    sortValue = `ORDER BY i.last_resent_on ${sortBy}`;
+    sortValue = `ORDER BY i.sent_on_datetime ${sortBy}`;
   else if (sort === filtersColumnsForInteractionSummary.last_reminder_on)
     sortValue = `ORDER BY i.last_reminder_on ${sortBy}`;
   else if (sort === filtersColumnsForInteractionSummary.response_submitted_on)
@@ -316,7 +327,7 @@ export const listAllInteractionSummary = (
     WITH fetch_all_interactions AS 
     (SELECT i.interaction_rid AS rid, i.r_number, i.interaction_iteration, i.status_rid,
     s.status_name, i.recipient_name, i.recipient_email,
-    i.last_resent_on, i.last_reminder_on, i.response_submitted_on,
+    i.sent_on_datetime, i.last_reminder_on, i.response_submitted_on,
     i.response_updated_on, i.attachment_count, i.rid AS interaction_history,
     i.interaction_url, p.r_number AS parent_r_number, i.interaction_type_rid,
     it.interaction_type_name, ir.rid AS response_source_rid, ir.response_source_name,
@@ -337,9 +348,12 @@ export const listAllInteractionSummary = (
     LEFT JOIN ${MAIN_SCHEMA_NAME}.account a ON a.rid = i.account_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary pf ON pf.project_fiscal_rid = i.project_fiscal_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.interaction_response_source ir ON ir.rid = i.response_source_rid
-    ${whereKey}
+    WHERE
+    (i.r_number ILIKE '${searchValue}' OR i.recipient_name ILIKE '${searchValue}' OR i.recipient_email ILIKE '${searchValue}')
+    AND
     ${joinedConditions}
     ),
+    
     paginated_data AS (
     SELECT * FROM fetch_all_interactions i ${sortValue} ${pagination}
     )
@@ -352,7 +366,7 @@ export const listAllInteractionSummary = (
             'status_rid', i.status_rid,
             'recipient_name', i.recipient_name,
             'recipient_email', i.recipient_email,
-            'last_resent_on', i.last_resent_on,
+            'last_resent_on', i.sent_on_datetime,
             'last_reminder_on', i.last_reminder_on,
             'response_updated_on', i.response_updated_on,
             'response_submitted_on', i.response_submitted_on,
@@ -642,6 +656,7 @@ export const listInteractionHistory = (
       }
     }
   }
+  
 
   if (filterQueryArray.length > 0) {
     filterQueryCombinedValues = filterQueryArray.join("AND");
@@ -843,7 +858,7 @@ export const interactionResponseHistoryByVersion = (
             AND
 			a.interaction_version = ${version}
         GROUP BY
-		    a.rid, a.r_number, p.project_name,
+		    a.rid, a.r_number, p.project_name,i.r_number,
             ii.question_seq_num, ii.question,
             a.interaction_response, a.response_on,i.response_updated_on,
             i.response_submitted_on, i.rid,
@@ -945,8 +960,6 @@ const updateInteractionAge = async (
     interactions = await orgDb.query(
       findDateDifferenceQuery(schemaName, data.status_rid, dateTimeColumn)
     );
-    console.log("interactions ====> ", interactions[0]);
-    console.log("interactions ====> ", interactions[0].length);
     if (interactions[0].length > 0) {
       for (let i of interactions[0]) {
         await orgDb.query(

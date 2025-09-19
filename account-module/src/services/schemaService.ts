@@ -45,6 +45,7 @@ class SchemaService {
       const sequelize = await initOrgSequelize();
       const schema_name = `trd365_${account_number.replace(/\D/g, "")}`;
       await sequelize.createSchema(schema_name, {});
+      await this.grantAllReadOnlyAccessToSchema(schema_name, sequelize);  
       await this.createAccountTables(account_number);
     } catch (err) {
       console.log(err);
@@ -111,6 +112,7 @@ class SchemaService {
       await this.createInteractionTimeline(schemaName, sequelize);
       await this.createAIAssesmentAudit(schemaName, sequelize);
       await this.createQRETracker(schemaName, sequelize);
+      await this.createAutoSendInteractionAudit(schemaName, sequelize);
 
       await this.createOtpEntries(schemaName, sequelize);
       await this.createOtpEntriesHistory(schemaName, sequelize);
@@ -121,6 +123,15 @@ class SchemaService {
       console.log("Table createng err", Err);
     }
   }
+
+  async grantAllReadOnlyAccessToSchema(schema_name: string, sequelize: Sequelize) 
+    {
+       await sequelize.query(`GRANT USAGE ON SCHEMA ${schema_name} TO readonly_user;`);
+      await sequelize.query(`GRANT SELECT ON ALL TABLES IN SCHEMA ${schema_name} TO readonly_user;`);
+      await sequelize.query(`GRANT SELECT ON ALL SEQUENCES IN SCHEMA ${schema_name} TO readonly_user;`);
+      await sequelize.query(`ALTER DEFAULT PRIVILEGES IN SCHEMA ${schema_name} GRANT SELECT ON TABLES TO readonly_user;`);
+      await sequelize.query(`ALTER DEFAULT PRIVILEGES IN SCHEMA ${schema_name} GRANT SELECT ON SEQUENCES TO readonly_user;`);
+    }
 
    private async  createQRETracker( schemaName: string,
     sequelize: Sequelize) {
@@ -163,7 +174,12 @@ class SchemaService {
          is_qre_processed BOOLEAN NOT NULL DEFAULT FALSE,
          is_tech_summary_processed BOOLEAN NOT NULL DEFAULT FALSE,
          is_interaction_question_processed BOOLEAN NOT NULL DEFAULT FALSE,
-         ai_assessment_api_status text 
+         data_ingestion BOOLEAN NOT NULL DEFAULT FALSE,
+         ai_assessment_api_status text ,
+         interaction_question_error_message JSON,
+          qre_error_message JSON,
+          technical_summary_error_message JSON,
+          data_ingestion_error_message JSON
       );
     `);
      await sequelize.query(`
@@ -181,7 +197,7 @@ class SchemaService {
       CREATE TABLE IF NOT EXISTS "${schemaName}".ai_technical_summary (
         rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
         r_number varchar(20) UNIQUE DEFAULT (('ATS-'::text || lpad(nextval('"${schemaName}".ai_technical_summary_seq'::regclass)::text, 10, '0'::text))) NULL,
-        eid character varying(50),
+        eid character varying(120),
         created_by varchar(50) NOT NULL,
         modified_by varchar(50),
         created_datetime TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -1032,7 +1048,8 @@ class SchemaService {
         bonus NUMERIC(18, 2),
         insurance NUMERIC(18, 2),
         deductions NUMERIC(18, 2),
-        assigned_skill_role_type_rid varchar(50)
+        assigned_skill_role_type_rid varchar(50),
+        project_resource_role varchar(100) NULL
       );
     `);
 
@@ -1456,14 +1473,16 @@ class SchemaService {
         project_resource_code varchar(50) NOT NULL,
         resource_rid varchar(50) NOT NULL,
         fiscal_year int4 NOT NULL,
-        start_date timestamptz NULL,
-        end_date timestamptz NULL,
+        start_date date NULL,
+        end_date date NULL,
         country_rid varchar(50) NULL,
         region_rid varchar(50) NULL,
         currency_rid varchar(50) NULL,
         total_hours_pro_task numeric(18, 2) NULL,
         total_cost_pro_task numeric(18, 2) NULL,
         "comments" varchar(2000) NULL,
+        project_resource_rid varchar(50) NOT NULL,
+        status_rid varchar(50) NOT NULL,
         CONSTRAINT project_task_r_number_key UNIQUE (r_number)
       );
     `);
@@ -1473,6 +1492,7 @@ class SchemaService {
       ALTER TABLE "${schemaName}".project_task ADD CONSTRAINT project_task_project_fiscal_rid_fkey FOREIGN KEY (project_fiscal_rid) REFERENCES "${schemaName}".project_fiscal(rid) ON UPDATE CASCADE;
       ALTER TABLE "${schemaName}".project_task ADD CONSTRAINT project_task_resource_rid_fkey FOREIGN KEY (resource_rid) REFERENCES "${schemaName}".resources(rid) ON UPDATE CASCADE;
       ALTER TABLE "${schemaName}".project_task ADD CONSTRAINT project_task_project_rid_fkey FOREIGN KEY (project_rid) REFERENCES "${schemaName}".project(rid) ON UPDATE CASCADE;
+      ALTER TABLE "${schemaName}".project_task ADD CONSTRAINT project_task_project_resource_rid_fkey FOREIGN KEY (project_resource_rid) REFERENCES "${schemaName}".project_resource(rid) ON UPDATE CASCADE;
     `);
   }
 
@@ -1977,17 +1997,17 @@ private async createInteractionTable(
 
   await sequelize.query(`
     CREATE TABLE IF NOT EXISTS "${schemaName}".interactions (
-      rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+      rid VARCHAR(50)  DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
       r_number VARCHAR(20) UNIQUE DEFAULT 'INT-' || LPAD(nextval('"${schemaName}".interactions_seq')::TEXT, 10, '0'),
-      eid character varying(50),
+      eid character varying(120),
       created_by character varying(50) NOT NULL,
       modified_by character varying(50),
       created_datetime timestamp with time zone NOT NULL DEFAULT NOW(),
       modified_datetime timestamp with time zone,
       account_rid character varying(50) NOT NULL,
-      project_rid character varying(50) NOT NULL,
-      project_fiscal_rid character varying(50) NOT NULL,
-      fiscal_year integer NOT NULL,
+      project_rid character varying(50),
+      project_fiscal_rid character varying(50),
+      fiscal_year integer,
       interaction_source_rid character varying(255) NOT NULL,
       interaction_type_rid character varying(50) NOT NULL,
       template_rid character varying(50),
@@ -2013,6 +2033,7 @@ private async createInteractionTable(
       attachment_count integer,
       is_ai_processed boolean default false,
       interaction_version integer,
+      interaction_level_rid varchar(50),
       CONSTRAINT interactions_rid_unique UNIQUE (rid)
     );
   `);
@@ -2021,11 +2042,12 @@ private async createInteractionTable(
       "account_rid",
       "project_rid",
       "fiscal_year",
-      "project_fiscal_rid"
+      "project_fiscal_rid",
+      "interaction_level_rid"
     ];
 
     for (const field of fieldsToIndex) {
-      const indexName = `${schemaName}_interaction_items_${field}_idx`;
+      const indexName = `${schemaName}_interactions_${field}_idx`;
       await sequelize.query(`
       CREATE INDEX IF NOT EXISTS "${indexName}"
       ON "${schemaName}"."interactions"("${field}");
@@ -2114,6 +2136,7 @@ private async createInteractionTable(
       modified_datetime TIMESTAMP WITH TIME ZONE,
       interaction_rid varchar(50) NOT NULL,
       interaction_item_rid varchar(50) NOT NULL,
+      project_fiscal_rid varchar(50),
       attribute_name VARCHAR(100) NOT NULL,
       old_value VARCHAR(2000),
       new_value VARCHAR(2000)
@@ -2134,44 +2157,47 @@ private async createInteractionTable(
       CREATE TABLE IF NOT EXISTS "${schemaName}".interaction_items (
         rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
         r_number VARCHAR(20) UNIQUE DEFAULT 'ITI-' || LPAD(nextval('"${schemaName}".interaction_item_seq')::TEXT, 10, '0'),
-        eid character varying(50),
+        eid character varying(120),
         created_by varchar(50) NOT NULL,
         modified_by varchar(50),
         created_datetime TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
         modified_datetime TIMESTAMP WITH TIME ZONE,
         account_rid character varying(50) NOT NULL,
-        project_rid character varying(50) NOT NULL,
-        fiscal_year character varying(50) NOT NULL,
-        project_fiscal_rid character varying(50) NOT NULL,
-        interaction_rid character varying(50) NOT NULL,
+        project_rid character varying(50),
+        fiscal_year character varying(50),
+        project_fiscal_rid character varying(50),
+        interaction_rid character varying(50),
         question_seq_num VARCHAR(20) UNIQUE DEFAULT 'QUE-' || LPAD(nextval('"${schemaName}".question_seq')::TEXT, 10, '0'),
         is_mandatory boolean DEFAULT false NOT NULL,
         question character varying(2000),
         notes character varying(2000),
-        is_attachment boolean
+        is_attachment boolean,
+        account_interaction_rid varchar(50),
+        interaction_level_rid varchar(50)
       );
     `);
 
     await sequelize.query(`
         ALTER TABLE "${schemaName}".interaction_items ADD CONSTRAINT interaction_items_account_rid_fkey FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON UPDATE CASCADE;
         ALTER TABLE "${schemaName}".interaction_items ADD CONSTRAINT interaction_items_project_rid_fkey FOREIGN KEY (project_rid) REFERENCES "${schemaName}".project(rid) ON UPDATE CASCADE;
-        ALTER TABLE "${schemaName}".interaction_items ADD CONSTRAINT interaction_items_project_fiscal_rid_fkey FOREIGN KEY (project_fiscal_rid) REFERENCES "${schemaName}".project_fiscal(rid) ON UPDATE CASCADE;
         ALTER TABLE "${schemaName}".interaction_items ADD CONSTRAINT interaction_items_interaction_rid_fkey FOREIGN KEY (interaction_rid) REFERENCES "${schemaName}".interactions(rid) ON UPDATE CASCADE;
+        ALTER TABLE "${schemaName}".interaction_items ADD CONSTRAINT interaction_items_project_fiscal_rid_fkey FOREIGN KEY (project_fiscal_rid) REFERENCES "${schemaName}".project_fiscal(rid) ON UPDATE CASCADE;
     `);
-    const fieldsToIndex = [
+  const singleFieldIndexes = [
       "account_rid",
       "project_rid",
       "fiscal_year",
-      "project_fiscal_rid",
       "interaction_rid",
+      "project_fiscal_rid"
     ];
 
-    for (const field of fieldsToIndex) {
+    // Create single-field indexes dynamically
+    for (const field of singleFieldIndexes) {
       const indexName = `${schemaName}_interaction_items_${field}_idx`;
       await sequelize.query(`
       CREATE INDEX IF NOT EXISTS "${indexName}"
       ON "${schemaName}"."interaction_items"("${field}");
-    `);
+      `);
     }
   }
 
@@ -2202,9 +2228,9 @@ private async createInteractionTable(
         ALTER TABLE "${schemaName}".interaction_response_history ADD CONSTRAINT interaction_rid_fkey FOREIGN KEY (interaction_rid) REFERENCES "${schemaName}".interactions(rid) ON UPDATE CASCADE;
         ALTER TABLE "${schemaName}".interaction_response_history ADD CONSTRAINT interaction_item_rid_fkey FOREIGN KEY (interaction_item_rid) REFERENCES "${schemaName}".interaction_items(rid) ON UPDATE CASCADE;
     `);
-    const fieldsToIndex = [
+         const fieldsToIndex = [
       "interaction_rid",
-      "interaction_item_rid",
+      "interaction_item_rid"
     ];
 
     for (const field of fieldsToIndex) {
@@ -2216,24 +2242,6 @@ private async createInteractionTable(
     }
   }
 
-  private async createInteractionStatusHistoryTable(schemaName: string, sequelize: any)
-  {
-    await sequelize.query(`
-      CREATE TABLE IF NOT EXISTS "${schemaName}".interaction_status_history (
-        rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
-        created_by varchar(50) NOT NULL,
-        created_datetime TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
-        interaction_rid character varying(50),
-        old_status_rid character varying(50),
-        new_status_rid character varying(50)
-      );
-    `);
-
-    await sequelize.query(`
-        ALTER TABLE "${schemaName}".interaction_status_history ADD CONSTRAINT interaction_rid_fkey FOREIGN KEY (interaction_rid) REFERENCES "${schemaName}".interactions(rid) ON UPDATE CASCADE;
-  
-    `);
-  }
   private async createInteractionAttachments(schemaName: string, sequelize: any)
   {
     await sequelize.query(`
@@ -2256,13 +2264,14 @@ private async createInteractionTable(
 
     await sequelize.query(`
         ALTER TABLE "${schemaName}".interaction_attachments ADD CONSTRAINT interaction_rid_fkey FOREIGN KEY (interaction_rid) REFERENCES "${schemaName}".interactions(rid) ON UPDATE CASCADE;
-         ALTER TABLE "${schemaName}".interaction_attachments ADD CONSTRAINT interaction_item_rid_fkey FOREIGN KEY (interaction_item_rid) REFERENCES "${schemaName}".interaction_items(rid) ON UPDATE CASCADE;
-         ALTER TABLE "${schemaName}".interaction_attachments ADD CONSTRAINT interaction_response_rid_fkey FOREIGN KEY (interaction_response_rid) REFERENCES "${schemaName}".interaction_response_history(rid) ON UPDATE CASCADE;
+        ALTER TABLE "${schemaName}".interaction_attachments ADD CONSTRAINT interaction_item_rid_fkey FOREIGN KEY (interaction_item_rid) REFERENCES "${schemaName}".interaction_items(rid) ON UPDATE CASCADE;
+        ALTER TABLE "${schemaName}".interaction_attachments ADD CONSTRAINT interaction_response_rid_fkey FOREIGN KEY (interaction_response_rid) REFERENCES "${schemaName}".interaction_response_history(rid) ON UPDATE CASCADE;
 
     `);
-      const fieldsToIndex = [
+          const fieldsToIndex = [
       "interaction_rid",
       "interaction_item_rid",
+      "interaction_response_rid"
     ];
 
     for (const field of fieldsToIndex) {
@@ -2303,6 +2312,36 @@ private async createInteractionTable(
     `);
   }
 
+  private async  createAutoSendInteractionAudit(schemaName:string, sequelize:any) {
+     await sequelize.query(`
+       CREATE TABLE IF NOT EXISTS "${schemaName}".autosend_interaction_audit
+      (
+          rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+          project_fiscal_rid character varying(50) NOT NULL,
+          created_datetime timestamp with time zone DEFAULT now(),
+          created_by character varying(50),
+          CONSTRAINT ai_send_interaction_pkey PRIMARY KEY (rid)
+      )
+    `);
+      await sequelize.query(`
+        ALTER TABLE "${schemaName}".autosend_interaction_audit ADD CONSTRAINT project_fiscal_rid_fkey FOREIGN KEY (project_fiscal_rid) REFERENCES "${schemaName}".project_fiscal(rid) ON UPDATE CASCADE;
+      `);
+
+      const fieldsToIndex = [
+        "project_fiscal_rid"
+      ];
+
+    for (const field of fieldsToIndex) {
+      const indexName = `${schemaName}_autosend_interaction_audit_${field}_idx`;
+      await sequelize.query(`
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."autosend_interaction_audit"("${field}");
+    `);
+    }
+ 
+}
+
+
   private async createOtpEntries(schemaName: string, sequelize: any) {
     await sequelize.query(`
       CREATE TABLE "${schemaName}".otp_entries (
@@ -2314,6 +2353,7 @@ private async createInteractionTable(
         email varchar(120) NOT NULL,
         account_rid text NOT NULL,
         interaction_rid text NOT NULL,
+        project_fiscal_rid varchar(50),
         otp varchar(100) NOT NULL,
         is_verified bool DEFAULT false NOT NULL,
         expires_at timestamptz NOT NULL,
@@ -2336,6 +2376,7 @@ private async createInteractionTable(
         email varchar(120) NOT NULL,
         account_rid varchar(50) NOT NULL,
         interaction_rid varchar(100) NOT NULL,
+        project_fiscal_rid varchar(50),
         otp varchar(100) NOT NULL,
         status varchar(20) NOT NULL,
         attempt_number int4 NOT NULL,
@@ -2345,8 +2386,8 @@ private async createInteractionTable(
     `);
 
     await sequelize.query(`
-     ALTER TABLE "${schemaName}".otp_entries_history ADD CONSTRAINT fk_otp_entries_history_account_rid FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON DELETE SET NULL;
-      ALTER TABLE "${schemaName}".otp_entries_history ADD CONSTRAINT fk_otp_entries_history_interaction_rid FOREIGN KEY (interaction_rid) REFERENCES "${schemaName}".interactions(rid) ON DELETE SET NULL;
+      ALTER TABLE "${schemaName}".otp_entries_history ADD CONSTRAINT fk_otp_entries_history_account_rid FOREIGN KEY (account_rid) REFERENCES "${schemaName}".account_details(account_rid) ON DELETE SET NULL;
+      ALTER TABLE "${schemaName}".otp_entries_history ADD CONSTRAINT fk_otp_entries_history_interaction_rid FOREIGN KEY (interaction_rid,project_fiscal_rid) REFERENCES "${schemaName}".interactions(rid,project_fiscal_rid) ON DELETE SET NULL;
     `);
   }
 
@@ -2367,6 +2408,8 @@ private async createInteractionTable(
       );  
     `);
   }
+
+
 
   async insertAccountDetails(
     account_number: string,
@@ -2592,19 +2635,48 @@ private async createInteractionTable(
     );
   }
 
-  async fetchAccountDetails(account_number: string, account_rid: string) {
+  async fetchAccountDetails(account_number: string, account_rid: string, parentAccountId: string) {
     const schemaName = `trd365_${account_number.replace(/\D/g, "")}`;
     try {
       const query = `
         SELECT * FROM "${schemaName}".account_details WHERE account_rid = :account_rid
       `;
 
+      const parentAccountQuery = `
+        SELECT * FROM "${schemaName}".account_details WHERE account_rid = :account_rid
+      `;
+
       const sequelize = await initOrgSequelize();
 
-      const users = await sequelize.query(query, {
+      const users: any = await sequelize.query(query, {
         replacements: { account_rid },
         type: "SELECT",
       });
+
+      const fetchParentAccount: any = await sequelize.query(parentAccountQuery, {
+        replacements: { account_rid: parentAccountId },
+        type: "SELECT",
+      });
+
+      if(fetchParentAccount && fetchParentAccount.length > 0){
+        const parentDetails = fetchParentAccount[0];
+        
+        const isSubscriptionCreated = Boolean(
+          parentDetails.subscription_created &&
+          parentDetails.tenant_id &&
+          parentDetails.client_id &&
+          parentDetails.client_secret
+        );
+      
+        if (Array.isArray(users) && users.length > 0) {
+          users[0].is_send_interaction = isSubscriptionCreated;
+        }
+      }else{
+        if (Array.isArray(users) && users.length > 0) {
+          users[0].is_send_interaction = false;
+        }
+      }
+
       return users;
     } catch (err) {
       console.log("Errr ", err);

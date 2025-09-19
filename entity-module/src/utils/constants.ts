@@ -146,7 +146,10 @@ export const STATUS_MESSAGE = {
   tenantIdInvalidLength: 'Tenant ID must be a valid UUID (36 characters).',
   clientIdInvalidLength: 'Client ID must be a valid UUID (36 characters).',
   clientSecretTooShort: 'Client Secret is too short or invalid.',
-  invalidCredentials: 'Provided Azure credentials are invalid or unusable'
+  invalidCredentials: 'Provided Azure credentials are invalid or unusable',
+  rdpercentPotentialmissing: "RD Percent Potential AI is missing",
+  resCodePrjTaskSuccess : "ResourceCode for ProjectTask fetched successfully",
+  resCodeNotFound : "No ResourceCode found"
 };
 
 export const TYPES = {
@@ -657,6 +660,7 @@ export const rawQueries = {
   findResourceByCode(schemaName: string, resource_code: string) {
     return `SELECT rid FROM ${schemaName}.resources WHERE resource_code = '${resource_code}'`;
   },
+  fetchAccountById:  `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
   GET_ACCOUNT_ACCESS: `
 (
   (
@@ -801,7 +805,7 @@ export const rawQueries = {
       ${whereParams}
       `;
       if(data.flag == UPDATE_FLAG.account && t == "account_details" && subscriptionId){
-        const encryptedSecretKey = encryptClientSecret(data.client_secret);
+        const encryptedSecretKey = await encryptClientSecret(data.client_secret);
         let query = `
         UPDATE ${schema}.${t}
         SET
@@ -870,6 +874,48 @@ export const rawQueries = {
       FROM ${schemaName}.resource_type 
       WHERE rid IN (:ids)
   `;
+  },
+  getAccountInteractionProjects(schemaName: string, account_rid: string){
+    return `
+      SELECT
+        project_fiscal_rid
+      FROM    ${schemaName}.interactions
+      WHERE account_interaction_rid in (:account_interaction_rid)
+    `;
+  },
+  fetchAccountCurrencyRid (account_rid : string) {
+    return `SELECT currency_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${account_rid}'`
+  },
+  fetchActiveStatusRid (status : string) {
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name ILIKE '%${status}%'`
+  },
+  fetchResourceStatus:`
+  SELECT rid, resource_status_name FROM ${MAIN_SCHEMA_NAME}.resource_status WHERE rid IN (:projectTaskStatusId)`,
+  checkResCodeExistsInPrjRes (schemaName : string, project_resource_rid : string,) {
+    return `SELECT * FROM ${schemaName}.project_resource WHERE rid = '${project_resource_rid}'`
+  },
+   fetchActiveStatus() {
+    return `
+    SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name = 'Active' limit 1`;
+  },
+  fetchProjectFiscalById(schemaName : string, projectFiscalId : string){
+    return `SELECT * FROM ${schemaName}.project_fiscal WHERE rid = '${projectFiscalId}'`
+  },
+  updateProjectFiscalQre(schemaName: string, data: any){
+    return `
+    UPDATE ${schemaName}.project_fiscal
+    SET 
+      rd_percent_adjustment = ${data.rd_percent_adjustment},
+      rd_percent_final = ${data.rd_percent_final},
+      qre_final = ${data.qre_final},
+      qre_fte = ${data.qre_fte},
+      qre_subcon = ${data.qre_subcon},
+      qre_nonlabor = ${data.qre_nonlabor},
+      modified_by = '${data.modified_by}',
+      modified_datetime = '${new Date().toISOString()}'
+    WHERE
+      rid = '${data.rid}'
+    `
   }
 };
 

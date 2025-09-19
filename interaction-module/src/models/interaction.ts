@@ -10,9 +10,9 @@ import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constants";
   created_datetime?: Date;
   modified_datetime?: Date;
   account_rid: string;
-  project_rid: string;
+  project_rid?: string;
   fiscal_year: number;
-  project_fiscal_rid: string;
+  project_fiscal_rid?: string;
   interaction_source_rid: string;
   interaction_type_rid: string;
   template_rid?: string;
@@ -37,6 +37,7 @@ import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constants";
   recipient_name?: string | null;
   attachment_count?: number;
   interaction_version?: number;
+  interaction_level_rid: string;
 }
 
 export interface InteractionCreationAttributes
@@ -56,7 +57,7 @@ export class Interaction
   public account_rid!: string;
   public project_rid!: string;
   public fiscal_year!: number;
-  public project_fiscal_rid!: string;
+  public project_fiscal_rid?: string;
   public interaction_source_rid!: string;
   public interaction_type_rid!: string;
   public template_rid?: string;
@@ -81,6 +82,7 @@ export class Interaction
   public recipient_name?: string | null;
   public attachment_count?: number;
   public interaction_version?: number;
+  public interaction_level_rid!: string;
 
   static initialize(
     sequelize: Sequelize,
@@ -107,9 +109,10 @@ export class Interaction
         created_datetime: { type: DataTypes.DATE, allowNull: false , defaultValue: DataTypes.NOW},
         modified_datetime: { type: DataTypes.DATE, allowNull: true },
         account_rid: { type: DataTypes.STRING(50), allowNull: false },
-        project_rid: { type: DataTypes.STRING(50), allowNull: false },
+        project_rid: { type: DataTypes.STRING(50), allowNull: true },
         fiscal_year: { type: DataTypes.INTEGER, allowNull: true },
-        project_fiscal_rid: { type: DataTypes.STRING(50), allowNull: false },
+        project_fiscal_rid: { type: DataTypes.STRING(50), allowNull: true},
+        interaction_level_rid: { type: DataTypes.STRING(50), allowNull: true },
         interaction_source_rid: { type: DataTypes.STRING(255), allowNull: true },
         interaction_type_rid: { type: DataTypes.STRING(50), allowNull: true },
         template_rid: { type: DataTypes.STRING(50), allowNull: true },

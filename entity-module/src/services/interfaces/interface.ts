@@ -1,5 +1,6 @@
 import { Project } from "../../models/project";
 import {
+  IAnomalyStatus,
   ICreateAttachment,
   ICreateProject,
   ICreateProjectResource,
@@ -10,6 +11,7 @@ import {
   IUpdateProject,
   IUpdateProjectResource,
   IUpdateProjectTask,
+  IUpdateQrePecentAdjustment,
   IUpdateResource,
   IUpdateResourceCost,
   IUpdateResourceSkill,
@@ -315,7 +317,9 @@ export interface IProjectService {
     sortBy: string,
     sortOrder: string,
     bothParentAndChild: boolean,
-    userId: string
+    userId: string,
+    apiSource:string,
+    accountInteractionId?:string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -560,7 +564,8 @@ export interface IProjectResourceService {
     limit: number,
     filters: Record<string, string>,
     sortBy: string,
-    sortOrder: string
+    sortOrder: string,
+    search : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -574,7 +579,8 @@ export interface IProjectResourceService {
     filters: Record<string, string>,
     sortBy: string,
     sortOrder: string,
-    userId: string
+    userId: string,
+    search : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -586,6 +592,12 @@ export interface IProjectResourceService {
     message: string;
     errorMessage?: string;
     data?: { resourceCodes: any };
+  }>;
+  handleAnomalyStatus(data: IAnomalyStatus, userId: string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { projectResource: any };
   }>;
 }
 
@@ -606,7 +618,8 @@ export interface IImportListGraphqlServices {
     sortBy: string,
     account_rid: string,
     filters: any,
-    fiscal_year: number
+    fiscal_year: number,
+    search : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -766,7 +779,8 @@ export interface IImportListGraphqlServices {
 export interface IProjectTaskIngestionService {
   createProjectTask(
     projectTaskData: ICreateProjectTask,
-    userId: string
+    userId: string,
+    userPreference : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -775,7 +789,8 @@ export interface IProjectTaskIngestionService {
   }>;
   updateProjectTask(
     projectTaskData: IUpdateProjectTask,
-    userId: string
+    userId: string,
+    userPreference : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -788,6 +803,13 @@ export interface IProjectTaskIngestionService {
     errorMessage?: string;
     data?: { resourceCodes: any };
   }>;
+   handleAnomalyStatus(data: IAnomalyStatus,
+    userId: string) : Promise<{
+    statusCode: number;
+    message: string;
+    data?: { projectTask: any };
+  }>
+  listResourceCodeForProjectTask(data : any) : Promise<any>
 }
 export interface IProjectTaskService {
   listProjectTasks(

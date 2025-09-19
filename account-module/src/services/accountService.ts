@@ -16,37 +16,16 @@ import { States } from "../models/stateModel";
 import currency from "currency.js";
 import { Status } from "../models/statusModel";
 import { initSequelize } from "../config/maindbDataSource";
-import { ClientSecretCredential } from "@azure/identity";
-import { Client } from "@microsoft/microsoft-graph-client";
-import { generateSecurePassword } from "../utils/generatePassword";
 
 const { Account, Country, Currency, Industry } = models;
 
 class AccountService {
   private accountRepository: typeof Account | null;
   private schemaService: SchemaService;
-  private graphClient: Client;
 
   constructor() {
     this.accountRepository = null;
     this.schemaService = new SchemaService();
-
-    const credential = new ClientSecretCredential(
-      process.env.AZURE_TENANT_ID!,
-      process.env.AZURE_CLIENT_ID!,
-      process.env.AZURE_CLIENT_SECRET!
-    );
-
-    this.graphClient = Client.initWithMiddleware({
-      authProvider: {
-        getAccessToken: async () => {
-          const token = await credential.getToken(
-            "https://graph.microsoft.com/.default"
-          );
-          return token.token;
-        },
-      },
-    });
   }
 
   /**
@@ -1650,7 +1629,8 @@ class AccountService {
         await Promise.all([
           this.schemaService.fetchAccountDetails(
             accountNumber,
-            accountById?.rid || ""
+            accountById?.rid || "",
+            accountById?.parent_account_rid || ""
           ),
           this.schemaService.fetchKeyContacts(
             accountById?.rid || "",
@@ -2431,54 +2411,6 @@ class AccountService {
       childWhereClause,
     };
   }
-
-  private async waitForMailbox(userId: string): Promise<boolean> {
-    const maxRetries = 10;
-    const delayMs = 30000;
-  
-    for (let i = 0; i < maxRetries; i++) {
-      try {
-        await this.graphClient.api(`/users/${userId}/mailFolders/inbox`).get();
-        return true;
-      } catch (err: any) {
-        console.log(`⏳ Waiting for mailbox to be ready... (${i + 1}/${maxRetries})`);
-        await new Promise((res) => setTimeout(res, delayMs));
-      }
-    }
-  
-    return false;
-  }
-
-  private async getExchangeSkuId(): Promise<string> {
-    const response = await this.graphClient.api("/subscribedSkus").get();
-    const sku = response.value.find(
-      (s: any) => s.skuPartNumber === "ENTERPRISEPACK" 
-    );
-    if (!sku) throw new Error("Microsoft 365 license not found");
-    return sku.skuId;
-  }
-
-  // private async createEmailSubscription(email: string) {
-  //   try {
-  //     const expiration = new Date();
-  //     expiration.setMinutes(expiration.getMinutes() + 4230);
-
-  //     const response = await this.graphClient.api("/subscriptions").post({
-  //       changeType: "created",
-  //       notificationUrl: process.env.NOTIFICATION_URL,
-  //       resource: `users/${email}/mailFolders('Inbox')/messages`,
-  //       expirationDateTime: expiration.toISOString(),
-  //       clientState:
-  //         process.env.CLIENT_STATE || "custom_secret_validation_string",
-  //     });
-
-  //     if (response && response.id) {
-  //       console.log("Subscription created:", response.id);
-  //     }
-  //   } catch (err) {
-  //     console.error("Failed to create subscription:", err);
-  //   }
-  // }
 
   private applyAccountIDFilterForGlobalList(
     globalFilters: Record<string, string[]>

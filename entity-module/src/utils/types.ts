@@ -311,6 +311,8 @@ export interface ICreateProjectResource {
   resource_id: string;
   project_code: string;
   resource_code: string;
+  project_resource_role?: string | null | undefined;
+  user_preference?: string;
   manager_name?: string;
   manager_ref_id?: string;
   assigned_skill_role_type_rid: string | null;
@@ -334,6 +336,8 @@ export interface ICreateProjectResource {
   description?: string | null;
   created_by: string;
   modified_by?: string;
+  total_hours_from_tasks? : number | null,
+  total_cost_from_tasks? : number | null,
 }
 export interface IUpdateProjectResource {
   project_resource_rid: string;
@@ -341,6 +345,7 @@ export interface IUpdateProjectResource {
   account_rid: string;
   resource_id: string;
   resource_code: string;
+  project_resource_role?: string;
   manager_name?: string;
   manager_ref_id?: string;
   assigned_skill_role_type_rid: string | null;
@@ -363,6 +368,9 @@ export interface IUpdateProjectResource {
   insurance?: number | null;
   description?: string | null;
   modified_by?: string;
+  user_preference?: string | null;
+  total_hours_from_tasks? : number | null,
+  total_cost_from_tasks? : number | null,
 }
 
 export interface IUpdateInlineProjectResource {
@@ -379,6 +387,7 @@ export interface IUpdateInlineProjectResource {
   description?: string | null;
   modified_by?: string;
   resource_rid?: string;
+  country_rid?: string | null;
 }
 
 export interface ICreateProjectTask {
@@ -397,6 +406,8 @@ export interface ICreateProjectTask {
   comments?: string | null;
   created_by: string;
   modified_by?: string;
+  status_rid : string;
+  project_resource_rid : string
 }
 
 export interface IUpdateProjectTask {
@@ -416,4 +427,20 @@ export interface IUpdateProjectTask {
   comments?: string | null;
   created_by: string;
   modified_by?: string;
+  status_rid : string
+  project_resource_rid : string
+}
+
+export interface IAnomalyStatus {
+  rid: string,
+  accountId: string,
+  action: "accept" | "reject",
+  resourceCode: string;
+  type: string
+}
+
+export interface IUpdateQrePecentAdjustment {
+  rid: string,
+  account_rid: string,
+  rd_percent_potential_ai: number;
 }

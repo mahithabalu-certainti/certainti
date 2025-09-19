@@ -8,7 +8,7 @@ import {
   validateRequest,
 } from "../utils/helpers";
 import configurations from "../config/config";
-import { updateInteractionResponseSchema } from "../lib/joi/schemas/schema";
+import { listInteractionDetailsByIdSchema, updateInteractionResponseSchema } from "../lib/joi/schemas/schema";
 
 const services = configurations.getInstance().getServices();
 const interactionService = services.interactionService;
@@ -87,6 +87,13 @@ async function getInteractionDetailsById(
     console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
     const { interactionRid, accountId } = req.params;
     
+    const value = await validateRequest(
+      req,
+      listInteractionDetailsByIdSchema,
+      res,
+      "GET"
+    );
+
     const authToken = req.headers['authorization'] as string;
 
     const userId = req.headers["x-user-id"] as string;

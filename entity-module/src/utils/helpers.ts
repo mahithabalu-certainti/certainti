@@ -87,9 +87,11 @@ export function errorLog(methodName: string, errorMessage?: string): void {
 
 export function handleSuccessResponse(
   res: Response,
-  data: any
+  data: any,
+  message?: string,
+  statusCode?: number
 ) {
-  return successResponse(res, HttpStatus.SUCCESS, HttpStatus.SUCCESS_MESSAGE, data, HttpStatus.SUCCESS_NOTIFICATION);
+  return successResponse(res, statusCode ? statusCode : HttpStatus.SUCCESS, message ? message : HttpStatus.SUCCESS_MESSAGE, data, HttpStatus.SUCCESS_NOTIFICATION);
 }
 
 export function handleErrorResponse(
@@ -140,6 +142,12 @@ export const validateProjectRequest = (data : any) => {
   if(!data.account_rid) return STATUS_MESSAGE.accountIdMissing
   if(!data.project_rid) return STATUS_MESSAGE.projectIdMissing
   if(!data.project_fiscal_rid) return STATUS_MESSAGE.fiscalIdMissing
+}
+
+export const validateProjectQreUpdateRequest = (data : any) => {
+  if(!data.account_rid) return STATUS_MESSAGE.accountIdMissing
+  if(!data.rid) return STATUS_MESSAGE.projectIdMissing
+  if(!data.rd_percent_potential_ai) return STATUS_MESSAGE.rdpercentPotentialmissing
 }
 
 export const validateResourceRequest = (data : any) => {
@@ -945,6 +953,11 @@ export const setInlineForProjectTask = (dbData : ProjectTask, requestData : any)
     newData.end_date = requestData.end_date != dbData.end_date ? requestData.end_date : dbData.end_date
     dataStorage = newData.end_date == '' ? `end_date = null` : `end_date = '${newData.end_date}'`
     newDataArray.push(dataStorage)
+  }
+  if(requestData.status_rid) {
+    newData.status_rid = requestData.status_rid != dbData.status_rid ? requestData.status_rid : dbData.status_rid
+    dataStorage = `status_rid = '${newData.status_rid}'`
+    newDataArray.push(dataStorage)
   }  
 
   if(newDataArray.length < 1) {
@@ -997,8 +1010,14 @@ export const validateProjectSettingRequest = (data : any) => {
   if(typeof data.max_ai_interactions !== 'number') return STATUS_MESSAGE.maxAiMissing
 }
 
-export function encryptClientSecret(text: string): string {
-  const ENCRYPTION_KEY = process.env.CLIENT_SECRET_ENCRYPTION_KEY!;
+export async function encryptClientSecret(text: string): Promise<string> {
+  const encryptClientSecret = await getSecret(process.env.CLIENT_SECRET_ENCRYPTION_KEY!);
+
+  if(!encryptClientSecret){
+    throw new Error("Invalid Client Encryption Key")
+  }
+
+  const ENCRYPTION_KEY = encryptClientSecret!;
   const IV_LENGTH = parseInt(process.env.CLIENT_SECRET_ENCRYPTION_LENGTH || '16', 10);
 
   const iv = crypto.randomBytes(IV_LENGTH);

@@ -74,7 +74,7 @@ export class InteractionResponseHistory
         response_by: { type: DataTypes.STRING(50), allowNull: true },
         response_source_rid: { type: DataTypes.STRING(50), allowNull: true },
         interaction_response: { type: DataTypes.STRING(50), allowNull: true },
-        interaction_version: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1 },
+        interaction_version: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1 }
       },
       {
         sequelize,

@@ -1,4 +1,3 @@
-import moment from "moment";
 import { Interaction } from "../../models/interaction";
 import {
   HttpStatus,

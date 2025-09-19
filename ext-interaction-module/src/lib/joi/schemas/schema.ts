@@ -54,4 +54,10 @@ const updateInteractionResponseSchema = Joi.object({
     .required(),
 });
 
-export { generateOtpSchema, verifyOtpSchema, updateInteractionResponseSchema };
+const listInteractionDetailsByIdSchema = Joi.object({ 
+  project_fiscal_rid: Joi.string().pattern(uuidRegex).optional().label("Project Fiscal Rid"),
+  type: Joi.string().valid("account", "project").default('project').label("Type"),
+});
+
+
+export { generateOtpSchema, verifyOtpSchema, updateInteractionResponseSchema, listInteractionDetailsByIdSchema };

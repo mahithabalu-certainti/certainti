@@ -26,7 +26,8 @@ export const statusAction = {
   CANCELLED: "Cancelled",
   ON_HOLD: "On Hold",
   RESUME: "Resume",
-  RESENT: "Resent"
+  RESENT: "Resent",
+  INQUEUE: "In-Queue"
 };
 
 export const techSummaryStatus = {
@@ -59,7 +60,7 @@ export const NODE_ENV = {
   DEV: "DEV",
   PROD: "PRODUCTION",
 };
-
+export const sendEmailCount = 10
 export const OTP_EXPIRY_MINUTES = 10;
 export const MAX_RESEND_ATTEMPTS = 3;
 
@@ -70,7 +71,7 @@ export const filtersColumns : Record<string, string> =
     interaction_age : "interaction_age",
     recipient_name : "recipient_name",
     recipient_email : "recipient_email",
-    last_resent_on : "last_resent_on",
+    last_resent_on : "sent_on_datetime",
     last_reminder_on : "last_reminder_on",
     response_submitted_on : "response_submitted_on",
     response_updated_on : "response_updated_on",
@@ -84,6 +85,7 @@ export const filtersColumns : Record<string, string> =
     project_code : "project_code",
     fiscal_year : "fiscal_year",
     response_source_rid : "response_source_rid",
+    interaction_level_rid:"interaction_level_rid",
     parent_interaction_rid : "parent_interaction_rid",
     createdAt : "createdAt"
   }
@@ -109,6 +111,7 @@ export const filtersColumns : Record<string, string> =
     fiscal_year : "number",
     response_source_rid : "string",
     parent_interaction_rid:"string",
+    interaction_level_rid:"string",
     createdAt:"datetime",
   }
 
@@ -137,6 +140,7 @@ export const mainTableFilters : Record<any, any> = {
   interaction_source_name : "interaction_source_name",
   status_name : "status_name",
   response_source_name : "response_source_name",
+  interaction_level_name:"interaction_level_name",
   modified_by: "modified_by",
   modified_user_name:"modified_user_name"
 }
@@ -226,6 +230,7 @@ export const STATUS_MESSAGE = {
   interactionCreated:"Interaction created successfully",
   interactionUpdated:"Interaction updated successfully",
   techSummarycontextUpdated:"Technical summary context updated successfully",
+  projectRequired:"Atleast one project is required to create interaction",
 };
 
 export const rawQueries = {
@@ -265,6 +270,14 @@ export const rawQueries = {
     return `
     SELECT rid, interaction_type_name FROM ${MAIN_SCHEMA_NAME}.interaction_type WHERE rid IN (${ids})`;
   },
+  fetchInteractionLevel(data: any) {
+    let ids = data.map((d: any) => `'${d}'`);
+    return `
+    SELECT rid, interaction_level_name FROM ${MAIN_SCHEMA_NAME}.interaction_level WHERE rid IN (${ids})`;
+  },
+  fetchAllInteractionLevels() {
+    return `Select rid, interaction_level_name from ${MAIN_SCHEMA_NAME}.interaction_level WHERE status = 'active' order by interaction_level_name ASC`;
+  },
   fetchInteractionSource(data: any) {
     let ids = data.map((d: any) => `'${d}'`);
     return `
@@ -287,6 +300,11 @@ export const rawQueries = {
     return `
     SELECT rid, status_name  FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE rid IN (${ids})`;
   },
+
+  fetchActiveStatus() {
+    return `
+    SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name = 'Active' limit 1`;
+  },
   fetchInteractionStatusByType(type: string) {
     return `
     SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE status_name = '${type}'`;
@@ -297,15 +315,33 @@ export const rawQueries = {
   },
   fetchProjectInfo(rid: string, schemaName: string) {
     return `
-    SELECT rid, project_name,project_code,r_number,fiscal_year,project_rid FROM ${schemaName}.project_fiscal WHERE rid = '${rid}'`;
+    SELECT rid, project_name,project_code,r_number,fiscal_year,project_rid,max_ai_interaction FROM ${schemaName}.project_fiscal WHERE rid = '${rid}'`;
   },
-  fetchProjectsByAccount(accountRid: string, schemaName: string) {
+  fetchProjectsByAccount(accountRid: string, schemaName: string,status_rid:string) {
     return `
-    SELECT rid, project_rid FROM ${schemaName}.project_fiscal WHERE account_rid = '${accountRid}'`;
+    SELECT rid, project_rid FROM ${schemaName}.project_fiscal WHERE account_rid = '${accountRid}' and status_rid='${status_rid}'`;
   },
-  updateQreInfo(rid: string, schemaName: string, qrePercent: number) {
+  updateQreInfo(rid: string, schemaName: string, qrePercent: number, data: any) {
     return `
-    UPDATE ${schemaName}.project_fiscal SET qre_final = ${qrePercent} WHERE rid = '${rid}'`;
+      UPDATE ${schemaName}.project_fiscal
+      SET
+        rd_percent_potential_ai = ${qrePercent},
+        rd_percent_potential_ai_updated = ${qrePercent},
+        rd_percent_final = ${data.netQre},
+        qre_final = ${data.qreFinalCost},
+        qre_fte = ${data.qreFteCost},
+        qre_subcon = ${data.qreSubconCost},
+        qre_nonlabor = ${data.qreNonlaborCost}
+      WHERE rid = '${rid}'
+    `;
+  },
+  updateQreInfoLocked(rid: string, schemaName: string, qrePercent: number) {
+    return `
+      UPDATE ${schemaName}.project_fiscal
+      SET
+        rd_percent_potential_ai_updated = ${qrePercent}
+      WHERE rid = '${rid}'
+    `;
   },
   updateAIProcessedFlag(
     rid: string,
@@ -322,16 +358,36 @@ export const rawQueries = {
     isAiProcessed: boolean
   ) {
     return `
-    UPDATE ${schemaName}.attachments SET is_ai_processed = ${isAiProcessed} WHERE entity_rid = '${rid}'`;
+    UPDATE ${schemaName}.attachments SET is_ai_processed = ${isAiProcessed} WHERE attach_to = '${rid}'`;
   },
-  updateQreInfoSummary(rid: string, qrePercent: number) {
+  updateQreInfoSummary(rid: string, qrePercent: number, data: any) {
     return `
-    UPDATE ${MAIN_SCHEMA_NAME}.project_fiscal_summary SET qre_final = ${qrePercent} WHERE project_fiscal_rid = '${rid}'`;
+    UPDATE ${MAIN_SCHEMA_NAME}.project_fiscal_summary 
+    SET 
+      rd_percent_potential_ai = ${qrePercent},
+      rd_percent_potential_ai_updated = ${qrePercent},
+      rd_percent_final = ${data.netQre},
+      qre_final = ${data.qreFinalCost},
+      qre_fte = ${data.qreFteCost},
+      qre_subcon = ${data.qreSubconCost},
+      qre_nonlabor = ${data.qreNonlaborCost}
+    WHERE project_fiscal_rid = '${rid}'`;
+  },
+  updateQreInfoSummarLocked(rid: string, qrePercent: number) {
+    return `
+    UPDATE ${MAIN_SCHEMA_NAME}.project_fiscal_summary 
+    SET rd_percent_potential_ai_updated = ${qrePercent}
+    WHERE project_fiscal_rid = '${rid}'`;
   },
   fetchAccountInfo(rid: string) {
     return `
     SELECT rid, account_name,r_number,parent_account_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${rid}'`;
   },
+   fetchAccountDetailsInfo(rid: string,schemaName: string) {
+    return `
+    SELECT rid, fiscal_start_date,fiscal_end_date,autosend_interaction FROM ${schemaName}.account_details WHERE account_rid = '${rid}'`;
+  },
+  
   fetchPreviousInteractionStatus(statusRid: string, schemaName: string) {
     return `
     SELECT old_status_rid FROM ${schemaName}.interaction_status_history WHERE new_status_rid = '${statusRid}' ORDER BY created_datetime DESC LIMIT 1`;
@@ -352,27 +408,39 @@ export const rawQueries = {
   },
   fetchInteractionSenderEmail(schemaName: string, accountRid: string) {
     return `
-    SELECT support_email FROM ${schemaName}.account_details WHERE account_rid = '${accountRid}'  and  subscription_created is true  and support_email is not null LIMIT 1`;
+    SELECT support_email,client_id,client_secret,tenant_id FROM ${schemaName}.account_details WHERE account_rid = '${accountRid}'  and  subscription_created is true  and support_email is not null LIMIT 1`;
   },
   fetchGlobalSenderEmail() {
     return `
-    SELECT email FROM ${MAIN_SCHEMA_NAME}.organization_licenses LIMIT 1`;
+    SELECT * FROM ${MAIN_SCHEMA_NAME}.organization_licenses LIMIT 1`;
   },
   isEmailRecipientAvailable(projectFiscalRid: string, schemaName: string, statusRid: string) {
     return `
     SELECT EXISTS (
       SELECT 1
       FROM ${schemaName}.key_contact_details
-      WHERE entity_type = 'Project'
+      WHERE lower(entity_type) = 'project'
         AND include_in_communication IS true
         AND entity_rid = '${projectFiscalRid}'
         AND status_rid = '${statusRid}'
     ) AS recipient_available
   `;
   },
+  isEmailRecipientAvailableFrAccount(accountRid: string, schemaName: string, statusRid: string) {
+    return `
+    SELECT EXISTS (
+      SELECT 1
+      FROM ${schemaName}.key_contact_details
+      WHERE lower(entity_type) = 'account'
+        AND interaction_cc_recipient IS true
+        AND entity_rid = '${accountRid}'
+        AND status_rid = '${statusRid}'
+    ) AS recipient_available
+  `;
+  },
   fetchInteractionRecipient(projectFiscalRid: string, statusRid: string, schemaName: string) {
     return `
-    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE entity_type = 'Project' and include_in_communication is true and entity_rid = '${projectFiscalRid}' and status_rid = '${statusRid}'`;
+    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE lower(entity_type) = 'project' and include_in_communication is true and entity_rid = '${projectFiscalRid}' and status_rid = '${statusRid}'`;
   },
   fetchInteractionRecipientProject(
     projectFiscalRid: string,
@@ -380,11 +448,11 @@ export const rawQueries = {
     schemaName: string
   ) {
     return `
-    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE entity_type = 'Project' and interaction_cc_recipient is true and entity_rid = '${projectFiscalRid}' and status_rid = '${statusRid}'`;
+    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE lower(entity_type) = 'project' and interaction_cc_recipient is true and entity_rid = '${projectFiscalRid}' and status_rid = '${statusRid}'`;
   },
   fetchInteractionRecipientAccount(accountRid: string,statusRid:string,schemaName: string) {
     return `
-    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE entity_type = 'Account' and interaction_cc_recipient is true and entity_rid = '${accountRid}' and status_rid = '${statusRid}'`;
+    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE lower(entity_type) = 'account' and interaction_cc_recipient is true and entity_rid = '${accountRid}' and status_rid = '${statusRid}'`;
   },
   fetchisAutoSendEnabled(projectFiscalRid: string, schemaName: string) {
     return `
@@ -483,6 +551,10 @@ export const rawQueries = {
       SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name = '${type}' AND status = 'active' LIMIT 1
     `;
   },
+  generate_rid()
+  {
+    return `SELECT '${ENV_PREFIX}' || gen_random_uuid() as rid`;
+  },
 
   fetchAllStatus(): string {
     return `
@@ -494,6 +566,10 @@ export const rawQueries = {
     let ids = statusIds.map((d: any) => `'${d}'`);
     return `
     SELECT rid, status_name as name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid IN (${ids})`;
+  },
+  fetchProjectFiscal(projectFiscalId: string, schemaName: string) {
+    return `
+    SELECT * FROM ${schemaName}.project_fiscal WHERE rid = '${projectFiscalId}'`;
   },
   GET_ACCOUNT_ACCESS: `
 (
@@ -610,6 +686,24 @@ export const rawQueries = {
       WHERE u.rid = :userRid
       LIMIT 1
       `,
+  fetchEmailInfo: `SELECT * FROM ${MAIN_SCHEMA_NAME}.send_email_info WHERE is_email_send = false ORDER BY created_datetime ASC LIMIT ${sendEmailCount}`,
+  updateInteractionStatus(schemaName : string, statusRid : string, interactionRid : string) {
+    return `UPDATE ${schemaName}.interactions SET status_rid = '${statusRid}' WHERE rid = '${interactionRid}'`
+  },
+  fetchInteractionQueueStatus() {
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE status_name ILIKE '%In-Queue%'`
+  },
+  updateInteractionSummaryStatus(statusRid : string, interactionRid : string) {
+    return `UPDATE ${MAIN_SCHEMA_NAME}.interactions_summary SET status_rid = '${statusRid}' WHERE interaction_rid = '${interactionRid}'`
+  },
+  fetchOrganizationSettings(): string {
+    return `
+      SELECT * from ${MAIN_SCHEMA_NAME}.organization_licenses
+    `;
+  },
+  fetchAccountRnumber (account_rid : string) {
+    return `SELECT account_name , r_number FROM ${MAIN_SCHEMA_NAME}.account where rid = '${account_rid}'`
+  }
 };
 
 export const filterTypesForSummaryInteractions : Record<string, any> = 
@@ -648,7 +742,7 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     interaction_age : "interaction_age",
     recipient_name : "recipient_name",
     recipient_email : "recipient_email",
-    last_resent_on : "last_resent_on",
+    last_resent_on : "sent_on_datetime",
     last_reminder_on : "last_reminder_on",
     response_submitted_on : "response_submitted_on",
     response_updated_on : "response_updated_on",
@@ -690,6 +784,7 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
   export const interactionFieldMappings = [
      { permissionField: 'account_name', exportField: 'Account Name', dataField: 'account_name' },
     { permissionField: 'r_number', exportField: 'Interaction ID', dataField: 'r_number' },
+     { permissionField: 'interaction_level_name', exportField: 'Interaction Level', dataField: 'interaction_level_name' },
     { permissionField: 'project_code', exportField: 'Project Code', dataField: 'project_code' },
     { permissionField: 'interaction_age', exportField: 'Age (Days)', dataField: 'interaction_age' },
     { permissionField: 'fiscal_year', exportField: 'Fiscal Year', dataField: 'fiscal_year' },
@@ -707,6 +802,17 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     { permissionField: 'created_by', exportField: 'Created By', dataField: 'created_by' },
     { permissionField: 'created_datetime', exportField: 'Created Date', dataField: 'created_datetime' },
     { permissionField: 'modified_by', exportField: 'Last Updated By', dataField: 'modified_by' },
+    { permissionField: 'modified_datetime', exportField: 'Last Updated Date', dataField: 'modified_datetime' }
+  ];
+
+   export const accountInteractionFieldMappings = [
+    { permissionField: 'r_number', exportField: 'Interaction ID', dataField: 'r_number' },
+    { permissionField: 'project_count', exportField: 'Project Count', dataField: 'project_count' },
+    { permissionField: 'interaction_type_name', exportField: 'Type', dataField: 'interaction_type_name' },
+    { permissionField: 'status', exportField: 'Status', dataField: 'status_name' },
+    { permissionField: 'created_by', exportField: 'Created By', dataField: 'created_by' },
+    { permissionField: 'modified_by', exportField: 'Last Updated By', dataField: 'modified_by' },
+    { permissionField: 'created_datetime', exportField: 'Created Date', dataField: 'created_datetime' },
     { permissionField: 'modified_datetime', exportField: 'Last Updated Date', dataField: 'modified_datetime' }
   ];
 
@@ -732,5 +838,4 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     interactionAge : "interaction_age",
     interaction : "interactions",
     attachments : "attachments"
-    
   }

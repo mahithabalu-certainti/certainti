@@ -46,10 +46,8 @@ import { MAIN_SCHEMA_NAME, primaryKeyContacts, rawQueries } from "../utils/const
 import {
   ResourceFiscalRegion,
   setupResourceFiscalRegionSeq,
-} from "../models/resourceFiscalRegion";
-import { ProjectResource } from "../models/projectResource";
-import { ProjectResourceFiscal } from "../models/projectResourceFiscal";
-import { ProjectResourceFiscalRegion } from "../models/projectResourceFiscalRegion";
+} from "../models/resourceFiscalRegion"
+import { ProjectFiscal } from "../models/projectFiscal";
 
 // import { Skill } from "../models/skill";
 class SchemaService {
@@ -2781,82 +2779,22 @@ class SchemaService {
 
       const allProjectFields = [
         "project_code",
-        "project_name",
-        "fiscal_year",
-        "account_name",
-        "industry_name_other",
-        "project_type_rid",
-        "project_client_group",
-        "project_group",
-        "classification_name",
-        "status_rid",
-        "project_point_of_contact",
-        "technical_point_of_contact",
-        "r_number",
-        "project_number",
-        "program_name",
-        "project_startdate",
-        "project_enddate",
-        "is_rd_qualified",
-        "qre",
-        "total_cost",
-        "total_effort",
-        "total_fte",
-        "total_cost_fte",
-        "total_subcon",
-        "total_cost_subcon",
-        "total_cost_nonlabor",
-        "assessment_status",
-        "comments",
-        "country_name",
-        "currency_code",
-        "region_name",
-        "financial_consultant",
-        "modified_datetime",
+        "project_name"
       ];
 
       const searchFieldAliasMap: Record<string, string> = {
-        r_number: `${tablePrefix}.r_number`,
-        comments: `${tablePrefix}.comments`,
-        region_name: "st.state_name",
-        industry_name_other: `COALESCE(ind.industry_name, ${tablePrefix}.industry_name)`,
-        status_rid: `CAST(${tablePrefix}.status_rid AS TEXT)`,
-        project_type_name: `CAST(pt.project_type_name AS TEXT)`,
-        fiscal_year: `CAST(pfs.fiscal_year AS TEXT)`,
-        is_rd_qualified: `CAST(ps.is_rd_qualified AS TEXT)`,
-        project_startdate: `CAST(${tablePrefix}.project_startdate AS TEXT)`,
-        project_enddate: `CAST(${tablePrefix}.project_enddate AS TEXT)`,
-        total_cost: `CAST(${tablePrefix}.total_cost AS TEXT)`,
-        total_effort: `CAST(${tablePrefix}.total_effort AS TEXT)`,
-        total_fte: `CAST(${tablePrefix}.total_fte AS TEXT)`,
-        total_fte_cost: `CAST(${tablePrefix}.total_cost_fte AS TEXT)`,
-        total_sub_con: `CAST(${tablePrefix}.total_subcon AS TEXT)`,
-        total_sub_con_cost: `CAST(${tablePrefix}.total_cost_subcon AS TEXT)`,
-        total_non_labor_cost: `CAST(${tablePrefix}.total_cost_nonlabor AS TEXT)`,
-        qre: `CAST(ps.qre AS TEXT)`,
+        project_code: `${tablePrefix}.project_code`,
+        project_name: `${tablePrefix}.project_name`
       };
 
       const searchConditions: string[] = [];
 
       for (const field of allProjectFields) {
         const qualifiedField = searchFieldAliasMap[field] || field;
+        console.log()
         searchConditions.push(`${qualifiedField} ILIKE ?`);
         replacements.push(`%${search}%`);
       }
-
-      if (numericSearch) {
-        searchConditions.push(
-          `${tablePrefix}.total_cost = ?`,
-          `${tablePrefix}.total_effort = ?`,
-          `ps.fiscal_year = ?`
-        );
-        replacements.push(
-          parseFloat(search),
-          parseFloat(search),
-          parseFloat(search)
-        );
-      }
-
       conditions.push(`(${searchConditions.join(" OR ")})`);
     }
 
@@ -4093,6 +4031,64 @@ class SchemaService {
       );
     }
   }
+
+  async updateQreAdjustmentCalculation(
+    accountNumber: string,
+    projectFiscalId: string,
+    qreAdjustment: number,
+    userId: string
+  ) {
+    const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+    const sequelize = await initOrgSequelize();
+  
+    const projectFiscalData: any = await sequelize.query(
+      rawQueries.fetchProjectFiscalById(schemaName,projectFiscalId ),
+      {
+        type: QueryTypes.SELECT,
+      }
+    );
+  
+    if (!projectFiscalData && projectFiscalData.length === 0) {
+      throw new Error("Invalid Project Id");
+    };
+
+    const projectFiscalDetails = projectFiscalData[0];
+  
+    const existingPercent = projectFiscalDetails.rd_percent_potential_ai ?? 0;
+
+    if(existingPercent && existingPercent > 0){
+      const netQre = qreAdjustment + existingPercent;
+  
+      const totalCost = projectFiscalDetails.total_cost_prj ?? 0;
+      const totalFteCost = projectFiscalDetails.total_cost_fte_prj ?? 0;
+      const totalSubconCost = projectFiscalDetails.total_cost_subcon_prj ?? 0;
+      const totalNonlaborCost = projectFiscalDetails.total_cost_nonlabor_prj ?? 0;
+    
+      const qreFinalCost = totalCost * (netQre / 100);
+      const qreFteCost = totalFteCost * (netQre / 100);
+      const qreSubconCost = totalSubconCost * (netQre / 100);
+      const qreNonlaborCost = totalNonlaborCost * (netQre / 100);
+
+      await sequelize.query(
+        rawQueries.updateProjectFiscalQre(schemaName, 
+          {
+            rd_percent_adjustment: qreAdjustment,
+            rd_percent_final: netQre,
+            qre_final: qreFinalCost,
+            qre_fte: qreFteCost,
+            qre_subcon: qreSubconCost,
+            qre_nonlabor: qreNonlaborCost,
+            modified_by: userId,
+            modified_datetime: new Date(),
+            rid: projectFiscalId
+          }
+        ),
+        {
+          type: QueryTypes.SELECT,
+        }
+      );
+    }
+  }  
 }
 
 export default SchemaService;
