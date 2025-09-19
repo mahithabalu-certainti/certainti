@@ -278,7 +278,7 @@ class InteractionSchemaService {
           await batchInsert(InteractionItem, interactionItemsBulk);
         }
 
-        if (!interactionData.trigger_send) {
+        if (interactionData.trigger_send) {
           // Bulk insert SendEmailInfo
           const sendEmailInfoData = prepareSendEmailInfoData(createdInteractions, interactionData.projects);
           await batchInsert(SendEmailInfo, sendEmailInfoData);

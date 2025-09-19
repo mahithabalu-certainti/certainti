@@ -753,8 +753,7 @@ export class ProjectService {
     sortOrder: string = "ASC",
     bothParentAndChild: boolean = false,
     userId: string,
-    apiSource: string = "Project",
-    accountInteractionId?: string
+    apiSource: string = "Project"
   ): Promise<{
     statusCode: number;
     message: string;
@@ -848,17 +847,6 @@ export class ProjectService {
         };
       }
 
-      if (apiSource === "interactionCount" && accountInteractionId) {
-        accInteractionProjs = await this.getAccInteractionProjectIds(
-          accountInteractionId || "",
-          accountRNumber
-        );
-      } else if (apiSource === "interaction" && accountInteractionId) {
-        {
-          accInteractionProjs = accountInteractionId.split(",");
-        }
-      }
-
       const [finalSortBy, finalSortOrder] = this.getSortParameters(
         sortBy,
         sortOrder
@@ -892,7 +880,6 @@ export class ProjectService {
         {},
         accessibleIds,
         apiSource,
-        accInteractionProjs,
         "",
         searchClause
       );
