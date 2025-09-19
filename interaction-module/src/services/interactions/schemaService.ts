@@ -3107,6 +3107,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           rawQueries.fetchAccountDetailsInfo(interactionDetails.account_rid, schemaName),  
           { type: "SELECT" }
         );
+        
         if(accountInfo?.autosend_interaction){
           return true;
         }
