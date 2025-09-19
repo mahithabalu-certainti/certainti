@@ -183,7 +183,7 @@ export class InteractionService {
       }
       const isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(accountNumber, interactionData.project_fiscal_rid);
       this.logger.info(`Is email recipient available: ${isEmailRecipientAvailable} for interaction: ${interaction.dataValues.rid} with project fiscal:${interactionData.project_fiscal_rid}`);
-      if(interactionStatus === statusAction.DRAFT && isEmailRecipientAvailable)
+      if((interactionStatus === statusAction.DRAFT && isEmailRecipientAvailable) || interactionData.trigger_send)
       await this.checkAutoSendEnabled(accountNumber,interactionData,interaction.rid,userId,interactionData?.account_rid,intLevel);
        else
        {
@@ -214,7 +214,14 @@ export class InteractionService {
     }
   }
   async checkAutoSendEnabled(accountNumber: string, interactionData: ICreateInteraction, interactionId: string, userId: string, accountRid: string, interactionLevel:string) {
-    const isEnabled = await this.interactionSchemaService.isAutoSendInteractionEnabled(accountNumber, interactionData, interactionId);
+    if(interactionData?.trigger_send){
+       await this.sendInteraction([{ interaction_rid: interactionId,
+        project_fiscal_rid: interactionData.project_fiscal_rid,interaction_level:interactionLevel
+       }], interactionData.account_rid, userId, false,'Manual-Send');
+
+    }
+    else{
+    const isEnabled = await this.interactionSchemaService.isAutoSendInteractionEnabled(accountNumber, interactionData);
     this.logger.info(`Auto-send is ${isEnabled ? "enabled" : "disabled"} for interaction ID: ${interactionId}`);
     if (isEnabled) {
        const projectInfo = await this.interactionSchemaService.fetchProjectInfo(accountNumber, interactionData.project_fiscal_rid);
@@ -226,6 +233,7 @@ export class InteractionService {
         project_fiscal_rid: interactionData.project_fiscal_rid,interaction_level:interactionLevel
        }], interactionData.account_rid, userId, false,'Auto-Send');
     }
+  }
   }
    async  checkMaxQuarterlyInteractions(
     AiSendInteraction: any,
