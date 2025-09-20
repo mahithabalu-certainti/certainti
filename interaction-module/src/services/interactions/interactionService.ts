@@ -183,7 +183,7 @@ export class InteractionService {
       }
       const isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(accountNumber, interactionData.project_fiscal_rid);
       this.logger.info(`Is email recipient available: ${isEmailRecipientAvailable} for interaction: ${interaction.dataValues.rid} with project fiscal:${interactionData.project_fiscal_rid}`);
-      if(interactionStatus === statusAction.DRAFT && isEmailRecipientAvailable)
+      if((interactionStatus === statusAction.DRAFT && isEmailRecipientAvailable) || interactionData.trigger_send)
       await this.checkAutoSendEnabled(accountNumber,interactionData,interaction.rid,userId,interactionData?.account_rid,intLevel);
        else
        {
@@ -214,7 +214,14 @@ export class InteractionService {
     }
   }
   async checkAutoSendEnabled(accountNumber: string, interactionData: ICreateInteraction, interactionId: string, userId: string, accountRid: string, interactionLevel:string) {
-    const isEnabled = await this.interactionSchemaService.isAutoSendInteractionEnabled(accountNumber, interactionData, interactionId);
+    if(interactionData?.trigger_send){
+       await this.sendInteraction([{ interaction_rid: interactionId,
+        project_fiscal_rid: interactionData.project_fiscal_rid,interaction_level:interactionLevel
+       }], interactionData.account_rid, userId, false,'Manual-Send');
+
+    }
+    else{
+    const isEnabled = await this.interactionSchemaService.isAutoSendInteractionEnabled(accountNumber, interactionData);
     this.logger.info(`Auto-send is ${isEnabled ? "enabled" : "disabled"} for interaction ID: ${interactionId}`);
     if (isEnabled) {
        const projectInfo = await this.interactionSchemaService.fetchProjectInfo(accountNumber, interactionData.project_fiscal_rid);
@@ -226,6 +233,7 @@ export class InteractionService {
         project_fiscal_rid: interactionData.project_fiscal_rid,interaction_level:interactionLevel
        }], interactionData.account_rid, userId, false,'Auto-Send');
     }
+  }
   }
    async  checkMaxQuarterlyInteractions(
     AiSendInteraction: any,
@@ -1450,6 +1458,10 @@ export class InteractionService {
       disablePagination = true;
     }
     if(apiType === 'export') disablePagination = true
+    const [activeStatus]: any[] = await mainDb.query(
+              rawQueries.fetchActiveStatusByType("Active"),
+              { type: "SELECT" }
+            );
     
     const result : any = await orgDb.query(fetchInteractionForProjectLevelQuery(
       data.account_rid, 
@@ -1465,19 +1477,10 @@ export class InteractionService {
       schemaName,
       disablePagination,
       accessibleIds,
-      data.search
+      data.search,
+      activeStatus?.rid
     ))
     let hasEmailRecipient = false;
-     if(data.flag == interactionFlag.project)
-     {
-      
-       const [activeStatus]: any[] = await mainDb.query(
-              rawQueries.fetchActiveStatusByType("Active"),
-              { type: "SELECT" }
-            );
-      const [emailInfoResult]: any = await orgDb.query(rawQueries.isEmailRecipientAvailable(data.project_fiscal_rid, schemaName, activeStatus?.rid));
-      hasEmailRecipient = emailInfoResult[0]?.recipient_available ?? false;
-     }
     if(result[0][0].interactions != null) {
       let statusIds : any[] = [...new Set(result[0][0].interactions.map((d : any) => d.status))]
       let typeIds : any[] = [...new Set(result[0][0].interactions.map((d : any) => d.interaction_type))]
@@ -1496,9 +1499,6 @@ export class InteractionService {
       let fetchModifiedByUsers = await mainDb.query(rawQueries.fetchUser(modifiedByIds))
       let isEmailRecipient : any;
       let recipientMap : Map<string, boolean>;
-      if(data.flag === interactionFlag.account) {
-         isEmailRecipient = await mainDb.query(rawQueries.fetchInteractionRecipientSummary(projectFiscalIds, schemaName))
-      }
 
       let statusMap : Map<string, string> = new Map(fetchStatus[0].map((status : any) => [status.rid, status.status_name]))
       let typeMap : Map<string, string> = new Map(fetchTypes[0].map((types : any) => [types.rid, types.interaction_type_name]))
@@ -1507,11 +1507,15 @@ export class InteractionService {
       let responseSourceMap : Map<string, string> = new Map(fetchResponseSource[0].map((source : any) => [source.rid, source.response_source_name]))
       let createdMap : Map<string, string> = new Map(fetchCreatedByUsers[0].map((user : any) => [user.rid, `${user.first_name} ${user.last_name}`]))
       let modifiedMap : Map<string, string> = new Map(fetchModifiedByUsers[0].map((user : any) => [user.rid, `${user.first_name} ${user.last_name}`]))
-        if(data.flag === interactionFlag.account) {
-          recipientMap = new Map(isEmailRecipient[0].map((item : any) => [item.project_fiscal_rid, item.is_interaction_recipient]))
-
-        }
       let finalData = result[0][0].interactions == null ? [] : result[0][0].interactions.map((d : any) => {
+      if(levelMap.get(d.interaction_level) === 'Account')
+        {
+          hasEmailRecipient =d.has_account_recipient;
+        }
+      else
+        {
+            hasEmailRecipient = d.has_email_recipient;
+        }
         return {
           ...d,
           status_rid: d.status,
@@ -1528,9 +1532,7 @@ export class InteractionService {
           created_user_name: createdMap.get(d.created_by) || null,
           modified_by: d.modified_by,
           updated_user_name: modifiedMap.get(d.modified_by) == undefined ? d.modified_by : modifiedMap.get(d.modified_by),
-          has_email_recipient: data.flag === interactionFlag.account
-            ? recipientMap.get(d.project_fiscal_rid) || false
-            : hasEmailRecipient
+          has_email_recipient: hasEmailRecipient
         }
       })
       const applyFilters = (data : any[], conditions : any, value : any, field : any) => {
@@ -1568,8 +1570,17 @@ export class InteractionService {
           return b[data.sort].localeCompare(a[data.sort])
         })
       }
+      
       totalResults = disablePagination ? finalData.length : finalData[0].total_records
-      let finalPaginatedData = disablePagination ? finalData.slice((data.page - 1) * data.limit, data.page * data.limit) : finalData
+      let finalPaginatedData : any[] = []
+       if(apiType === "export") 
+        {
+          finalPaginatedData = finalData;
+        }
+        else
+        {
+           finalPaginatedData = disablePagination ? finalData.slice((data.page - 1) * data.limit, data.page * data.limit) : finalData
+        }
       let organizedData = {
         page : data.page,
         limit : data.limit,

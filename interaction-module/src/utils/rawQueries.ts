@@ -32,7 +32,8 @@ export const fetchInteractionForProjectLevelQuery = (
   schemaName: string,
   disablePagination: boolean,
   accessibleIds: string[] = [],
-  search : string
+  search : string,
+  activeStatusId : string
 ) => {
   let offset = (page - 1) * limit;
   let pagination = `LIMIT ${limit} OFFSET ${offset}`;
@@ -129,7 +130,27 @@ export const fetchInteractionForProjectLevelQuery = (
             i.interaction_url,i.project_fiscal_rid,
             COUNT(i.rid) OVER() AS total_records, i.interaction_age,
             i.interaction_source_rid, i.interaction_type_rid, i.attachment_count,i.interaction_level_rid,
-            pf.project_code,pf.fiscal_year
+            pf.project_code,pf.fiscal_year,
+            CASE 
+                WHEN EXISTS (
+                    SELECT 1 FROM ${schemaName}.key_contact_details kcd 
+                    WHERE kcd.entity_rid = i.project_fiscal_rid 
+                    AND LOWER(kcd.entity_type) = 'project' 
+                    AND kcd.include_in_communication = true 
+                    AND kcd.status_rid = '${activeStatusId}'
+                ) THEN true 
+                ELSE false 
+            END AS has_email_recipient,
+            CASE 
+                WHEN EXISTS (
+                    SELECT 1 FROM ${schemaName}.key_contact_details kcd 
+                    WHERE kcd.entity_rid = i.account_rid 
+                    AND LOWER(kcd.entity_type) = 'account' 
+                    AND kcd.interaction_cc_recipient = true 
+                    AND kcd.status_rid = '${activeStatusId}'
+                ) THEN true 
+                ELSE false 
+            END AS has_account_recipient
 
             FROM
             ${schemaName}.interactions i
@@ -175,7 +196,9 @@ export const fetchInteractionForProjectLevelQuery = (
         'interaction_source', i.interaction_source_rid,
         'interaction_level', i.interaction_level_rid,
         'attachment_count', i.attachment_count,
-        'project_code', i.project_code
+        'project_code', i.project_code,
+        'has_email_recipient', i.has_email_recipient,
+        'has_account_recipient', i.has_account_recipient
         ) ) AS interactions
 
         FROM
