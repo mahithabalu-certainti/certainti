@@ -78,7 +78,7 @@ const sendInteractionSchema = Joi.object({
   .items(
     Joi.object({
       interaction_rid: Joi.string().pattern(uuidRegex).required(),
-      project_fiscal_rid:Joi.string().pattern(uuidRegex).optional(),
+      project_fiscal_rid:Joi.string().pattern(uuidRegex).optional().allow(null,""),
       interaction_level:Joi.string().optional().default("Project"),
       email_info: Joi.object({
         email: Joi.string().email().optional().allow("",null),
