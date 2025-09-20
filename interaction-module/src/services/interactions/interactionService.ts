@@ -1298,7 +1298,8 @@ export class InteractionService {
     interactionLink: string,
     senderEmailInfo: {email:string,clientId:string, tenantId:string,clientSecret:string},
     interactionRid:string,
-    is_interaction_followup: boolean
+    is_interaction_followup: boolean,
+    interactionLevel:string
   ) {
     let emailResponse = false;
     try {
@@ -1307,7 +1308,8 @@ export class InteractionService {
         projectInfo,
         accountInfo,
         interactionLink,
-        interactionRid
+        interactionRid,
+        interactionLevel
       );
       if(is_interaction_followup)
       {
@@ -1316,7 +1318,8 @@ export class InteractionService {
         projectInfo,
         accountInfo,
         interactionLink,
-        interactionRid
+        interactionRid,
+        interactionLevel
       );
       }
       //fetch sender email info
@@ -2281,7 +2284,8 @@ export class InteractionService {
         interactionLink,
         senderEmailInfo!,
         interaction_rid,
-        is_interaction_followup
+        is_interaction_followup,
+        interactionLevel
       );
       if (emailResponse) {
         console.log(`[SUCCESS] Email sent for interaction ${interaction_rid}.`);
