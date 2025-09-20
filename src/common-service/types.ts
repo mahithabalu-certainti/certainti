@@ -420,6 +420,16 @@ export interface GetInteractionStatusApiResponse extends CommonApiResponse {
     interactionStatus: InteractionStatusItem[];
   };
 }
+export interface InteractionlevelItem {
+  rid: string;
+  interaction_level_name: string;
+}
+
+export interface GetInteractionLevelApiResponse extends CommonApiResponse {
+  data: {
+    interactionLevel: InteractionlevelItem[];
+  };
+}
 
 export interface InteractionTypeItem {
   rid: string;

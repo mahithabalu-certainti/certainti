@@ -107,6 +107,10 @@ export const getAllProjectListColumns = (
       !permissionMap?.['project_name']?.edit,
     sortId: 'project_name',
     width: 160,
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      return isChild ? row.project_name : '-';
+    },
     field: {
       type: 'text',
       required: false,
@@ -142,6 +146,10 @@ export const getAllProjectListColumns = (
       !permissionMap?.['project_type_rid']?.edit,
     sortId: 'project_type_name',
     width: 160,
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      return isChild ? row.project_type_name : '-';
+    },
     field: {
       type: 'select',
       required: true,
@@ -159,6 +167,10 @@ export const getAllProjectListColumns = (
     hide:
       !permissionMap?.['account_name']?.read &&
       !permissionMap?.['account_name']?.edit,
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      return isChild ? row.account_name : '-';
+    },
   },
   {
     id: 'fiscal_year',
@@ -177,6 +189,8 @@ export const getAllProjectListColumns = (
       textAlign: 'left',
     },
     render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      if (!isChild) return '-';
       const displayYear = row.fiscal_year ? `FY-${row.fiscal_year}` : '-';
       return <span>{displayYear}</span>;
     },
@@ -201,10 +215,13 @@ export const getAllProjectListColumns = (
       !permissionMap?.['project_classification_rid']?.edit,
     sortId: 'classification_name',
     width: 170,
-    render: (row: Project) =>
-      row.project_classification_other
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      if (!isChild) return '-';
+      return row.project_classification_other
         ? `${row.classification_name} - ${row.project_classification_other}`
-        : row.classification_name,
+        : row.classification_name;
+    },
     field: {
       type: 'select',
       required: false,
@@ -267,6 +284,10 @@ export const getAllProjectListColumns = (
       !permissionMap?.['project_client_group']?.edit,
     sortId: 'project_client_group',
     width: 160,
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      return isChild ? row.project_client_group : '-';
+    },
     field: {
       type: 'text',
       required: false,
@@ -302,6 +323,10 @@ export const getAllProjectListColumns = (
       !permissionMap?.['project_group']?.edit,
     sortId: 'project_group',
     width: 160,
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      return isChild ? row.project_group : '-';
+    },
     field: {
       type: 'text',
       required: false,

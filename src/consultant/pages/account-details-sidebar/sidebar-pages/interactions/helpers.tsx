@@ -1,6 +1,5 @@
-import { FilterSelectOption } from '../../../../types/account-filter';
 import { FieldConfig } from '../../../account-details-sidebar/components/filter/filterType';
-import { fiscalOptions, fiscalYearOption } from '../projects/utils';
+import { fiscalYearOption } from '../projects/utils';
 
 const textOptions = [
   { option: 'Equals', value: 'equals' },
@@ -21,24 +20,11 @@ const dateOptions = [
   { option: 'Between', value: 'between' },
 ];
 
-const nonMadatoryOptions: { option: string; value: string }[] = [
-  { option: 'Equals', value: 'equals' },
-  { option: 'Not-Equals', value: 'not_equals' },
-  { option: 'Contains', value: 'contains' },
-  { option: 'Is-Empty', value: 'is_empty' },
-];
-
-const numberOptions: { option: string; value: string }[] = [
-  { option: 'Equals', value: 'equals' },
-  { option: 'Not-Equals', value: 'not_equals' },
-  { option: 'Less-Than', value: 'less_than' },
-  { option: 'Greater-Than', value: 'greater_than' },
-  { option: 'Between', value: 'between' },
-  { option: 'Is-Empty', value: 'is_empty' },
-];
-
 export const getInteractionFilterFields = (
   interactionTypes: { option: string; value: string }[],
+  interactionResponseSources: { option: string; value: string }[],
+  interactionStatus: { option: string; value: string }[],
+  InteractionLevel: { option: string; value: string }[],
   permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => {
   return [
@@ -52,13 +38,105 @@ export const getInteractionFilterFields = (
         !permissionMap?.['r_number']?.read,
     },
     {
-      name: 'Project Count',
-      value: 'project_count',
-      type: 'number',
-      operatorOption: numberOptions,
+      name: 'Project Code',
+      value: 'project_code',
+      type: 'text',
+      operatorOption: textOptions,
       hide:
-        !permissionMap?.['project_count']?.edit &&
-        !permissionMap?.['project_count']?.read,
+        !permissionMap?.['project_code']?.edit &&
+        !permissionMap?.['project_code']?.read,
+    },
+    {
+      name: 'Interaction Level',
+      value: 'interaction_level_rid',
+      type: 'enum',
+      options: InteractionLevel,
+      operatorOption: enumOptions,
+    },
+    {
+      name: 'Fiscal year',
+      value: 'fiscal_year',
+      type: 'enum',
+      options: fiscalYearOption,
+      operatorOption: enumOptions,
+      hide:
+        !permissionMap?.['fiscal_year']?.edit &&
+        !permissionMap?.['fiscal_year']?.read,
+    },
+    {
+      name: 'Age (Days)',
+      value: 'interaction_age',
+      type: 'number',
+      hide:
+        !permissionMap?.['interaction_age']?.edit &&
+        !permissionMap?.['interaction_age']?.read,
+    },
+    {
+      name: 'Status',
+      value: 'status_rid',
+      type: 'enum',
+      options: interactionStatus,
+      operatorOption: enumOptions,
+      hide:
+        !permissionMap?.['status']?.edit && !permissionMap?.['status']?.read,
+    },
+    {
+      name: 'Recipient Name',
+      value: 'recipient_name',
+      type: 'text',
+      operatorOption: textOptions,
+      hide:
+        !permissionMap?.['recipient_name']?.edit &&
+        !permissionMap?.['recipient_name']?.read,
+    },
+    {
+      name: 'Recipient Email',
+      value: 'recipient_email',
+      type: 'text',
+      operatorOption: textOptions,
+      hide:
+        !permissionMap?.['recipient_email']?.edit &&
+        !permissionMap?.['recipient_email']?.read,
+    },
+    {
+      name: 'Last Sent Date',
+      value: 'last_resent_on',
+      type: 'date',
+      hide:
+        !permissionMap?.['last_resent_on']?.edit &&
+        !permissionMap?.['last_resent_on']?.read,
+    },
+    {
+      name: 'Last Reminder Date',
+      value: 'last_reminder_on',
+      type: 'date',
+      hide:
+        !permissionMap?.['last_reminder_on']?.edit &&
+        !permissionMap?.['last_reminder_on']?.read,
+    },
+    {
+      name: 'Response Date',
+      value: 'response_submitted_on',
+      type: 'date',
+      hide:
+        !permissionMap?.['response_submitted_on']?.edit &&
+        !permissionMap?.['response_submitted_on']?.read,
+    },
+    {
+      name: 'Last Response Update',
+      value: 'response_updated_on',
+      type: 'date',
+      hide:
+        !permissionMap?.['response_updated_on']?.edit &&
+        !permissionMap?.['response_updated_on']?.read,
+    },
+    {
+      name: 'Number of Attachments',
+      value: 'attachment_count',
+      type: 'number',
+      hide:
+        !permissionMap?.['attachment_count']?.edit &&
+        !permissionMap?.['attachment_count']?.read,
     },
     {
       name: 'Type',
@@ -71,6 +149,16 @@ export const getInteractionFilterFields = (
         !permissionMap?.['interaction_type_name']?.read,
     },
     {
+      name: 'Response Source',
+      value: 'response_source_rid',
+      type: 'enum',
+      options: interactionResponseSources,
+      operatorOption: enumOptions,
+      hide:
+        !permissionMap?.['response_source_name']?.edit &&
+        !permissionMap?.['response_source_name']?.read,
+    },
+    {
       name: 'Created By',
       value: 'created_user_name',
       type: 'text',
@@ -78,15 +166,6 @@ export const getInteractionFilterFields = (
       hide:
         !permissionMap?.['created_by']?.edit &&
         !permissionMap?.['created_by']?.read,
-    },
-    {
-      name: 'Last Updated By',
-      value: 'modified_user_name',
-      type: 'text',
-      operatorOption: textOptions,
-      hide:
-        !permissionMap?.['modified_by']?.edit &&
-        !permissionMap?.['modified_by']?.read,
     },
     {
       name: 'Created Date',
@@ -98,6 +177,15 @@ export const getInteractionFilterFields = (
         !permissionMap?.['created_datetime']?.read,
     },
     {
+      name: 'Last Updated By',
+      value: 'updated_user_name',
+      type: 'text',
+      operatorOption: textOptions,
+      hide:
+        !permissionMap?.['modified_by']?.edit &&
+        !permissionMap?.['modified_by']?.read,
+    },
+    {
       name: 'Last Updated Date',
       value: 'modified_datetime',
       type: 'date',
@@ -105,208 +193,14 @@ export const getInteractionFilterFields = (
         !permissionMap?.['modified_datetime']?.edit &&
         !permissionMap?.['modified_datetime']?.read,
     },
+    {
+      name: 'Sort Options',
+      value: 'sort_options',
+      type: 'system-sort',
+      options: [{ value: 'createdAt_desc', option: 'Recently Created' }],
+    },
   ];
 };
-
-export const projectFilterFields = (
-  classificationOption: FilterSelectOption[],
-  projectTypeOptions: { option: string; value: string }[],
-  statusOptions: { option: string; value: string }[],
-  projectPermissionMap?: Record<string, { read: boolean; edit: boolean }>
-): FieldConfig[] => [
-  {
-    name: 'Project Code',
-    value: 'project_code',
-    type: 'text',
-    operatorOption: textOptions,
-    hide:
-      !projectPermissionMap?.['project_code']?.read &&
-      !projectPermissionMap?.['project_code']?.edit,
-  },
-  {
-    name: 'Name',
-    value: 'project_name',
-    type: 'text',
-    operatorOption: nonMadatoryOptions,
-    hide:
-      !projectPermissionMap?.['project_name']?.read &&
-      !projectPermissionMap?.['project_name']?.edit,
-  },
-  {
-    name: 'Project Type',
-    value: 'project_type_rid',
-    type: 'enum',
-    options: projectTypeOptions,
-    operatorOption: fiscalOptions,
-    hide:
-      !projectPermissionMap?.['project_type_rid']?.read &&
-      !projectPermissionMap?.['project_type_rid']?.edit,
-  },
-  {
-    name: 'Fiscal Year',
-    value: 'fiscal_year',
-    type: 'enum',
-    options: fiscalYearOption,
-    operatorOption: fiscalOptions,
-    hide:
-      !projectPermissionMap?.['fiscal_year']?.read &&
-      !projectPermissionMap?.['fiscal_year']?.edit,
-  },
-  {
-    name: 'Project Classification',
-    value: 'classification_name',
-    type: 'enum',
-    options: classificationOption.map((item) => ({
-      option: item.label,
-      value: item.value,
-    })),
-    operatorOption: enumOptions,
-    hide:
-      !projectPermissionMap?.['project_classification_rid']?.read &&
-      !projectPermissionMap?.['project_classification_rid']?.edit,
-  },
-  {
-    name: 'Customer Group',
-    value: 'project_client_group',
-    type: 'text',
-    operatorOption: nonMadatoryOptions,
-    hide:
-      !projectPermissionMap?.['project_client_group']?.read &&
-      !projectPermissionMap?.['project_client_group']?.edit,
-  },
-  {
-    name: 'Project Group',
-    value: 'project_group',
-    type: 'text',
-    operatorOption: nonMadatoryOptions,
-    hide:
-      !projectPermissionMap?.['project_group']?.read &&
-      !projectPermissionMap?.['project_group']?.edit,
-  },
-  {
-    name: 'Project Effort (Hours)',
-    value: 'total_effort',
-    type: 'number',
-    operatorOption: numberOptions,
-    hide:
-      !projectPermissionMap?.['total_effort']?.read &&
-      !projectPermissionMap?.['total_effort']?.edit,
-  },
-  {
-    name: 'Project Cost',
-    value: 'total_cost',
-    type: 'number',
-    operatorOption: numberOptions,
-    hide:
-      !projectPermissionMap?.['total_cost']?.read &&
-      !projectPermissionMap?.['total_cost']?.edit,
-  },
-  {
-    name: 'FTE Cost',
-    value: 'total_cost_fte',
-    type: 'number',
-    operatorOption: numberOptions,
-    hide:
-      !projectPermissionMap?.['total_cost_fte']?.read &&
-      !projectPermissionMap?.['total_cost_fte']?.edit,
-  },
-  {
-    name: 'SubCon Cost',
-    value: 'total_cost_subcon',
-    type: 'number',
-    operatorOption: numberOptions,
-    hide:
-      !projectPermissionMap?.['total_cost_subcon']?.read &&
-      !projectPermissionMap?.['total_cost_subcon']?.edit,
-  },
-  {
-    name: 'Non-Labor Cost',
-    value: 'total_cost_nonlabor',
-    type: 'number',
-    operatorOption: numberOptions,
-    hide:
-      !projectPermissionMap?.['total_cost_nonlabor']?.read &&
-      !projectPermissionMap?.['total_cost_nonlabor']?.edit,
-  },
-  {
-    name: 'Assessment Status',
-    value: 'assessment_status',
-    type: 'enum',
-    options: statusOptions,
-    operatorOption: enumOptions,
-    hide:
-      !projectPermissionMap?.['assessment_status']?.read &&
-      !projectPermissionMap?.['assessment_status']?.edit,
-  },
-  {
-    name: 'QRE %',
-    value: 'qre',
-    type: 'number',
-    operatorOption: numberOptions,
-    hide:
-      !projectPermissionMap?.['qre']?.read &&
-      !projectPermissionMap?.['qre']?.edit,
-  },
-  {
-    name: 'QRE',
-    value: 'qre_final',
-    type: 'number',
-    operatorOption: numberOptions,
-    hide:
-      !projectPermissionMap?.['qre_final']?.read &&
-      !projectPermissionMap?.['qre_final']?.edit,
-  },
-  {
-    name: 'Project Point of Contact',
-    value: 'project_point_of_contact',
-    type: 'text',
-    operatorOption: nonMadatoryOptions,
-    hide:
-      !projectPermissionMap?.['project_point_of_contact']?.read &&
-      !projectPermissionMap?.['project_point_of_contact']?.edit,
-  },
-  {
-    name: 'Technical Point of Contact',
-    value: 'technical_point_of_contact',
-    type: 'text',
-    operatorOption: nonMadatoryOptions,
-    hide:
-      !projectPermissionMap?.['technical_point_of_contact']?.read &&
-      !projectPermissionMap?.['technical_point_of_contact']?.edit,
-  },
-  {
-    name: 'Comments',
-    value: 'comments',
-    type: 'text',
-    operatorOption: nonMadatoryOptions,
-    hide:
-      !projectPermissionMap?.['comments']?.read &&
-      !projectPermissionMap?.['comments']?.edit,
-  },
-  {
-    name: 'Last Modified',
-    value: 'modified_datetime',
-    type: 'date',
-    hide:
-      !projectPermissionMap?.['modified_datetime']?.read &&
-      !projectPermissionMap?.['modified_datetime']?.edit,
-  },
-  {
-    name: 'Project ID',
-    value: 'r_number',
-    type: 'text',
-    operatorOption: textOptions,
-    hide:
-      !projectPermissionMap?.['r_number']?.read &&
-      !projectPermissionMap?.['r_number']?.edit,
-  },
-  {
-    name: 'Sort Options',
-    value: 'sort_options',
-    type: 'system-sort',
-    options: [{ value: 'created_datetime_desc', option: 'Recently Created' }],
-  },
-];
 
 export const getInteractionStatusColor = (status?: string): string => {
   switch (status) {

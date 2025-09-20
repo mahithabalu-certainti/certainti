@@ -37,7 +37,7 @@ import HistoryTable from './response-history/history-table';
 import { InteractionAttachment } from './interaction-attachment';
 import { getInteractionHistoryFilterFields } from './interaction-history/helper';
 import { AttachmentsListExportParams } from '../../../../types/attachment';
-import { checkPermission } from '../../../../../common-utils';
+import { checkPermission, getDisableReason } from '../../../../../common-utils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import { AccessRestricted } from '../../../../../components/account-restricted';
@@ -224,23 +224,6 @@ const Interactions: React.FC<InteractionsProps> = ({
     [interactionResSources.data?.data.responseSource]
   );
 
-  const getDisableReason = (hasEmailRecipient: boolean, status: string) => {
-    if (!sendInteractionsEnable)
-      return 'Sending interactions permission is currently disabled. Please contact your administrator.';
-    if (!hasEmailRecipient)
-      return 'Key Contact is not available for this interaction';
-    if (status === StatusTypeEnum.sent)
-      return 'This interaction has already been sent';
-    if (status === StatusTypeEnum.response_draft)
-      return 'This interaction is currently in draft response stage';
-    if (status === StatusTypeEnum.response_received)
-      return 'A response has already been received for this interaction';
-    if (status === StatusTypeEnum.inqueue)
-      return 'This interaction is currently queued for sending';
-    if (status === '') return 'Interaction status is invalid or undefined';
-    return '';
-  };
-
   useEffect(() => {
     if (data) {
       const updatedInteractions =
@@ -248,7 +231,8 @@ const Interactions: React.FC<InteractionsProps> = ({
           const status = (item.status_name || '').toLowerCase();
           const checkBoxMessage = getDisableReason(
             item.has_email_recipient,
-            status
+            status,
+            sendInteractionsEnable
           );
           return {
             ...item,
@@ -617,7 +601,7 @@ const Interactions: React.FC<InteractionsProps> = ({
                   tableStyle={{
                     borderBottom: '1px solid #CBD6E2',
                     height: '100%',
-                    maxHeight: 'calc(100vh - 360px)',
+                    maxHeight: 'calc(100vh - 380px)',
                     overflow: 'auto',
                   }}
                   stickyHeader={true}
@@ -653,6 +637,7 @@ const Interactions: React.FC<InteractionsProps> = ({
               onClose={() => setSendModalOpen(false)}
               selectedRows={selectedRows}
               onSuccessRefetch={handleRefresh}
+              interaction_level='Project'
             />
           </div>
         </>
