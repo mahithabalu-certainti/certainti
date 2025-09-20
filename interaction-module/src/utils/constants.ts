@@ -782,12 +782,11 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
   ]
 
   export const interactionFieldMappings = [
-     { permissionField: 'account_name', exportField: 'Account Name', dataField: 'account_name' },
     { permissionField: 'r_number', exportField: 'Interaction ID', dataField: 'r_number' },
-     { permissionField: 'interaction_level_name', exportField: 'Interaction Level', dataField: 'interaction_level_name' },
     { permissionField: 'project_code', exportField: 'Project Code', dataField: 'project_code' },
-    { permissionField: 'interaction_age', exportField: 'Age (Days)', dataField: 'interaction_age' },
-    { permissionField: 'fiscal_year', exportField: 'Fiscal Year', dataField: 'fiscal_year' },
+     { permissionField: 'interaction_level_name', exportField: 'Interaction Level', dataField: 'interaction_level_name' },
+       { permissionField: 'fiscal_year', exportField: 'Fiscal Year', dataField: 'fiscal_year' },
+     { permissionField: 'interaction_age', exportField: 'Age (Days)', dataField: 'interaction_age' },
     { permissionField: 'status', exportField: 'Status', dataField: 'status_name' },
     { permissionField: 'recipient_name', exportField: 'Recipient Name', dataField: 'recipient_name' },
     { permissionField: 'recipient_email', exportField: 'Recipient Email', dataField: 'recipient_email' },
