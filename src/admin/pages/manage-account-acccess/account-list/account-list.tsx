@@ -232,7 +232,7 @@ const AccountList = () => {
     () =>
       userRoles.data?.data.roles.map((role) => ({
         label: role.business_teams,
-        value: role.business_teams,
+        value: role.rid,
       })) || [],
     [userRoles.data?.data.roles]
   );
