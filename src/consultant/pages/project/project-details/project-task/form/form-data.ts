@@ -47,7 +47,7 @@ export const ProjectTaskFormData = (
         fields: [
           createAutoCompleteField(
             'project_resource_rid',
-            'Project Resource Role',
+            'Project Resource Code',
             {
               options: memoizedProjectResourceCode,
               required: true,
