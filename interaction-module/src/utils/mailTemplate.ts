@@ -7,17 +7,45 @@ function interactionMailTemplate(
   account: { account_name: string;},
   interactionLink: string,
   interactionRid: string,
+  interactionLevel: string ='Project',
 ): { message: IEmailMessage } {
+  const subject =
+    interactionLevel === "Project"
+      ? `Interaction Invitation: R&D Credits Claims Process for ${project.project_name || ""} (${project.project_code || ""})${project.fiscalYear ? " - FY " + project.fiscalYear : ""}`
+      : `Interaction Invitation: R&D Credits Claims Process for ${account.account_name || ""}`;
+
   const emailMessage = {
     message: {
-      subject: `Interaction Invitation: R&D Credits Claims Process for ${project.project_name || ""} (${project.project_code}) - FY ${project.fiscalYear}`,
+      subject,
       body: {
         contentType: "HTML",
-        content: `
+        content:
+          interactionLevel === "Project"
+            ? `
           <p>Dear ${recipient.name || ""},</p>
           <p>Greetings For The Day!</p>
           <p>
-            We are conducting a interaction(Interaction Ref Id: ${interactionRid || null}) for R&D Credits Claims Process for ${account.account_name || ""} FY ${project.fiscalYear} for the project <strong>${project.project_name || ""}</strong> (Project Code: <strong>${project.project_code || ""}</strong>).
+            We are conducting an interaction (Interaction Ref Id: ${interactionRid || null}) for R&D Credits Claims Process for ${account.account_name || ""}${project.fiscalYear ? " FY " + project.fiscalYear : ""} for the project <strong>${project.project_name || ""}</strong> (Project Code: <strong>${project.project_code || ""}</strong>).
+          </p>
+          <p>Please take a moment to complete the interaction using one of the following options:</p>
+          <ol>
+            <li>
+              <strong>Click on this <a href="${interactionLink}" style="color: #0073e6;">Link</a> to complete the interaction.</strong>
+              <br>
+              If you are not able to access the above link due to security restrictions, please use option #2.
+            </li>
+            <li>
+              Fill the answers in the attached excel template and simply reply back to this email.
+            </li>
+          </ol>
+          <p>Your responses are invaluable to us and will contribute significantly to our efforts. Upon completion, submit the interaction, and your responses will be securely forwarded to us for further processing.</p>
+          <p>Thank you,<br><strong>Think R&D Team</strong><br>Powered by Certainiti.ai</p>
+        `
+            : `
+          <p>Dear ${recipient.name || ""},</p>
+          <p>Greetings For The Day!</p>
+          <p>
+            We are conducting an interaction (Interaction Ref Id: ${interactionRid || null}) for R&D Credits Claims Process for <strong>${account.account_name || ""}</strong>.
           </p>
           <p>Please take a moment to complete the interaction using one of the following options:</p>
           <ol>
@@ -57,20 +85,47 @@ function interactionReminderMailTemplate(
   account: { account_name: string;},
   interactionLink: string,
   interactionRid: string,
+  interactionLevel: string ='Project',
 ): { message: IEmailMessage } {
+  const subject =
+    interactionLevel === "Project"
+      ? `Reminder: R&D Credits Claims Process Interaction for ${project.project_name || ""} (${project.project_code || ""})${project.fiscalYear ? " - FY " + project.fiscalYear : ""}`
+      : `Reminder: R&D Credits Claims Process Interaction for ${account.account_name || ""}`;
+
   const emailMessage = {
     message: {
-      subject: `Interaction Invitation: R&D Credits Claims Process for ${project.project_name || ""} (${project.project_code}) - FY ${project.fiscalYear}`,
+      subject,
       body: {
         contentType: "HTML",
-        content: `
+        content:
+          interactionLevel === "Project"
+            ? `
           <p>Dear ${recipient.name || ""},</p>
           <p>Greetings For The Day!</p>
           <p>
-          This is a gentle reminder regarding the R&D Credits Claims Process interaction(Interaction Ref Id: ${interactionRid || null}) for the project <strong>${project.project_name || ""}</strong> (Project Code: <strong>${project.project_code || ""}</strong>).
-      
+          This is a gentle reminder regarding the R&D Credits Claims Process interaction (Interaction Ref Id: ${interactionRid || null}) for the project <strong>${project.project_name || ""}</strong> (Project Code: <strong>${project.project_code || ""}</strong>).
           </p>
-          <p>Your input is greatly appreciated and important to our process. If you haven't had the chance to complete the survey yet, please use one of the following options:</p>
+          <p>Your input is greatly appreciated and important to our process. If you haven't had the chance to complete the interaction yet, please use one of the following options:</p>
+          <ol>
+            <li>
+              <strong>Click on this <a href="${interactionLink}" style="color: #0073e6;">Link</a> to complete the interaction.</strong>
+              <br>
+              If you are not able to access the above link due to security restrictions, please use option #2.
+            </li>
+            <li>
+              Fill the answers in the attached excel template and simply reply back to this email.
+            </li>
+          </ol>
+          <p>We value your cooperation, and your responses will significantly contribute to our efforts. Please let us know if you need any assistance or have any questions. Thank you again for your time and support.</p>
+          <p>Thank you,<br><strong>Think R&D Team</strong><br>Powered by Certainiti.ai</p>
+        `
+            : `
+          <p>Dear ${recipient.name || ""},</p>
+          <p>Greetings For The Day!</p>
+          <p>
+          This is a gentle reminder regarding the R&D Credits Claims Process interaction (Interaction Ref Id: ${interactionRid || null}) for <strong>${account.account_name || ""}</strong>.
+          </p>
+          <p>Your input is greatly appreciated and important to our process. If you haven't had the chance to complete the interaction yet, please use one of the following options:</p>
           <ol>
             <li>
               <strong>Click on this <a href="${interactionLink}" style="color: #0073e6;">Link</a> to complete the interaction.</strong>
