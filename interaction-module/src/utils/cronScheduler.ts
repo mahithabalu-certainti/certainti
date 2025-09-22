@@ -41,6 +41,7 @@ export const schdulerForSendEmailInfo = async () => {
             await interactionService.sendEmailInBatch()
         } catch (error) {
             console.error("Error in scheduled task:", error);
+            
         }
     })
     return scheduler

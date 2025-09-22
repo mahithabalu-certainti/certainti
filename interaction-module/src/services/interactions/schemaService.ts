@@ -3806,6 +3806,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       is_email_send : false,
       is_interaction_followup : data?.is_interaction_followup || false,
       interaction_level: data.interaction_level || 'Project',
+      email_sent_at : null
     })
     return insertedData
   }
@@ -3821,7 +3822,9 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
 
   async updateEmailSendFlag (interaction_rid : string) {
     await SendEmailInfo.update({
-      is_email_send : true
+      is_email_send : true,
+      email_sent_at : new Date().toISOString(),
+      modified_datetime : new Date()
     }, 
     {
       where : {
