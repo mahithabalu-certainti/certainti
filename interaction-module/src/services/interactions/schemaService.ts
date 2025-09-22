@@ -918,6 +918,7 @@ class InteractionSchemaService {
         accountNumber: accountRnumber,
         accountId: account?.rid,
         accountName: account.account_name,
+        parentAccountId: account?.parent_account_rid
       };
     } catch (err) {
       throw new Error("Error fetching account : " + (err as Error).message);
@@ -3828,6 +3829,41 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       interaction_rid : interaction_rid
     }
     })
+  }
+
+  async fetchAccountDetails(account_number: string, account_rid: string, parentAccountId: string) {
+    const schemaName = `trd365_${account_number.replace(/\D/g, "")}`;
+    try {
+
+      const parentAccountQuery = `
+        SELECT * FROM "${schemaName}".account_details WHERE account_rid = :account_rid
+      `;
+
+      const sequelize = await initOrgSequelize();
+
+      const fetchParentAccount: any = await sequelize.query(parentAccountQuery, {
+        replacements: { account_rid: parentAccountId },
+        type: "SELECT",
+      });
+
+      if(fetchParentAccount && fetchParentAccount.length > 0){
+        const parentDetails = fetchParentAccount[0];
+        
+        const isSubscriptionCreated = Boolean(
+          parentDetails.subscription_created &&
+          parentDetails.tenant_id &&
+          parentDetails.client_id &&
+          parentDetails.client_secret
+        );
+      
+        return isSubscriptionCreated;
+      }
+
+      return false;
+    } catch (err) {
+      console.log("Errr ", err);
+      throw new Error("Error retrieving account details");
+    }
   }
 
 }
