@@ -226,7 +226,7 @@ export const ProjectDetails = () => {
       console.log(err);
     }
   };
-  console.log(projectDetails);
+
   const handleGetFiscalYear = (
     year: string,
     accountFiscalDates: FiscalDates

@@ -261,7 +261,27 @@ const AccountInteractionForm = () => {
   }, [getInteractionLevel.data?.data]);
   useEffect(() => {
     if (projectData.data?.projects) {
-      setProjectList(projectData.data?.projects || []);
+      const updatedProjectList =
+        projectData.data.projects.map((project) => {
+          const updatedFiscal =
+            project.ProjectFiscal?.map((item) => {
+              const checkBoxMessage = !item?.isKeyContactIncluded
+                ? 'Key Contact is not available or inactive for this interaction'
+                : '';
+              return {
+                ...item,
+                disableCheckBox: !item?.isKeyContactIncluded,
+                checkBoxMessage,
+              };
+            }) || [];
+
+          return {
+            ...project,
+            ProjectFiscal: updatedFiscal,
+          };
+        }) || [];
+
+      setProjectList(updatedProjectList);
     }
   }, [projectData.data?.projects]);
 
@@ -348,7 +368,7 @@ const AccountInteractionForm = () => {
     setErrors(validationErrors);
     return isValid;
   };
-  const handleSubmit = (trigger_send?: Boolean) => {
+  const handleSubmit = (trigger_send?: boolean) => {
     if (!validateForm()) {
       return;
     }
@@ -387,7 +407,7 @@ const AccountInteractionForm = () => {
       }
     }
   };
-  const createInteraction = (trigger_send?: Boolean) => {
+  const createInteraction = (trigger_send?: boolean) => {
     const draftStatus = statusOptions.find(
       (option) => option.label.toLowerCase() === StatusTypeEnum.draft
     );
@@ -523,8 +543,7 @@ const AccountInteractionForm = () => {
             onClick={goBack}
             disabled={saveAndSendLoading || saveLoading}
             sx={{
-              width: '75px',
-              minWidth: '75px',
+              padding: '0px 6px',
               fontSize: '12px',
               fontWeight: 400,
             }}
@@ -621,6 +640,10 @@ const AccountInteractionForm = () => {
                         sx={{
                           height: '32px',
                           fontSize: '13px',
+                          borderRadius: '2px',
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#d1d5db',
+                          },
                           '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                             border: '2px solid #60A5FA',
                           },
@@ -750,7 +773,7 @@ const AccountInteractionForm = () => {
                                 position: 'relative',
                                 p: 0,
                               }}
-                              className={`${(!question.is_editable && false) || shouldDisableField('interaction_questions', false, permissionMap) ? 'bg-[#f3f4f6] cursor-default' : ''}`}
+                              className={`${!question.is_editable || shouldDisableField('interaction_questions', false, permissionMap) ? 'bg-[#f3f4f6] cursor-default' : ''}`}
                             >
                               {questionTableColumns
                                 .filter((col) => !col.hide)
@@ -1046,7 +1069,7 @@ const AccountInteractionForm = () => {
                   hoverHighlight={false}
                   tableStyle={{
                     height: '100%',
-                    maxHeight: 'calc(100vh - 320px)',
+                    maxHeight: 'calc(100vh - 205px)',
                     overflow: 'auto',
                   }}
                   stickyHeader={true}

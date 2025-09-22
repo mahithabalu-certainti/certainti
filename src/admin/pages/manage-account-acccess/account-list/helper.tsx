@@ -105,7 +105,7 @@ export const getUserListFilterFields = (
 ): FieldConfig[] => [
   {
     label: 'Username',
-    name: 'first_name',
+    name: 'user_name',
     type: 'text',
     operatorOption: textfieldOptions,
   },

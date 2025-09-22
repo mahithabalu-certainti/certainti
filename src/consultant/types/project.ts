@@ -236,6 +236,7 @@ export type ProjectFiscalSummary = {
   project_fiscal_rid: string;
   rid: string;
   isInteractionMapped?: boolean;
+  isKeyContactIncluded?: boolean;
 };
 
 export type FiscalYearType = {
