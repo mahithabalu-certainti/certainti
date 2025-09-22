@@ -716,6 +716,7 @@ class SchemaService {
       -- Non-labor & Resources
       total_nonlabor_prj DECIMAL(18,2),
       total_nonlabor_from_prj_res DECIMAL(18,2),
+      total_nonlabor_from_tasks INTEGER,
       total_resources_prj INTEGER,
       total_resources_from_prj_res INTEGER,
       total_resources_from_tasks INTEGER,
@@ -942,6 +943,7 @@ class SchemaService {
         "comments" varchar(2000) NULL,
         project_description varchar(2000) NULL,
         project_fiscal_rid varchar(50) NOT NULL,
+        total_nonlabor_from_tasks INTEGER,
         CONSTRAINT project_fiscal_region_r_number_key UNIQUE (r_number)
       );`);
 
