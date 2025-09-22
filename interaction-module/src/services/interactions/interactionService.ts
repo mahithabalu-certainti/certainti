@@ -65,16 +65,12 @@ export class InteractionService {
         throw new Error("Invalid account ID");
       }
 
-      const {  intSource,intType } =
-        await this.getInteractionStatusAndSource(interactionSource);
       const intLevel = await this.interactionSchemaService.getInteractionLevelByRid(
         interactionData?.interaction_level_rid!
       );
-      interactionData.interaction_source_rid = intSource || "";
-      interactionData.interaction_type_rid = intType || "";
       if(intLevel === 'Account')
       {
-       return await this.createInteraction(interactionData,accountNumber,userId,intLevel); 
+       return await this.createInteraction(interactionData,interactionSource,userId,intLevel); 
       }
       else
       {
@@ -1753,15 +1749,16 @@ export class InteractionService {
     // Step 1: Extract response & source RIDs from the base interaction (not from history)
     const responseSourceIds = [responseData.response_source_rid].filter(Boolean);
     const sourceTypeIds = [responseData.interaction_source_rid].filter(Boolean);
+    let sourceMap: Map<string, string> = new Map();
 
     // Step 2: Fetch response source & interaction source names
-
+    if(sourceTypeIds.length > 0) {
     //const fetchResponseSources: any = await mainDb.query(rawQueries.fetchInteractionResponseSource(responseSourceIds));
     const fetchSourceTypes: any = await mainDb.query(rawQueries.fetchInteractionSource(sourceTypeIds));
 
    // const mapResponseSource = new Map(fetchResponseSources[0].map((d: any) => [d.rid, d.response_source_name]));
-    const sourceMap = new Map(fetchSourceTypes[0].map((d: any) => [d.rid, d.interaction_source_name]));
-
+     sourceMap = new Map(fetchSourceTypes[0].map((d: any) => [d.rid, d.interaction_source_name]));
+    }
     if (responseData.interaction_history.length !== 0) {
       // Step 3: Process status IDs from history
       const statusIds = [...new Set(responseData.interaction_history.map((d: any) => d.new_status_rid))];
