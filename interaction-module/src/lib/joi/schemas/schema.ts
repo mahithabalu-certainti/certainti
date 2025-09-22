@@ -61,16 +61,6 @@ const listAccountInteractionSchema = Joi.object({
   sort_order: Joi.string().valid("ASC", "DESC").default("ASC"),
 });
 
-const exportAccountInteractionSchema = Joi.object({
-  account_rid: Joi.string().pattern(uuidRegex).required(),
-  filters: Joi.string().default("{}"),
-  sort_by: Joi.string().optional(),
-  sort_order: Joi.string().valid("ASC", "DESC").default("ASC"),
-});
-
-
-
-
 const sendInteractionSchema = Joi.object({
   account_rid: Joi.string().pattern(uuidRegex).required(),
   is_interaction_followup: Joi.boolean().optional().default(false),
@@ -228,7 +218,6 @@ export {
   createInteractionSchema,
   createAccountInteractionSchema,
   listAccountInteractionSchema,
-  exportAccountInteractionSchema,
   updateInteractionSchema,
   updateInteractionResponseSchema,
   listTechnicalSummarySchema,

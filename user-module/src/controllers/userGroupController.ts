@@ -839,7 +839,8 @@ async function listUserGroupUser(req: Request, res: Response): Promise<void> {
       accountid,
       userGroupId,
       validatedData,
-      parsedFilters
+      parsedFilters,
+      validatedData.search
     );
     if (groupTypes.statusCode === constants.SUCCESS) {
       successLog(methodName);

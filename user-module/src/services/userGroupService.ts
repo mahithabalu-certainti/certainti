@@ -3235,7 +3235,8 @@ async getUserGroupUsers(
   accountId: string,
   userGroupId: string,
   validatedData: any,
-  filters: any = {}
+  filters: any = {},
+  search : string
 ): Promise<{
   statusCode: number;
   message: string;
@@ -3248,7 +3249,8 @@ async getUserGroupUsers(
       page = 1,
       limit = 10,
       sortBy = "user_name",
-      sortOrder = "ASC"
+      sortOrder = "ASC",
+      search
     } = validatedData;
 
     const offset = (page - 1) * limit;
@@ -3312,6 +3314,7 @@ async getUserGroupUsers(
     // Step 4: Get total count with filters
     const countQuery = await rawQuery.fetchUserByGroupCount({
       whereClause,
+      search
     });
 
     const countResult = await sequelize.query(
@@ -3358,6 +3361,7 @@ async getUserGroupUsers(
     const query = rawQuery.fetchUsersByGroup({
       whereClause,
       orderByClause,
+      search
     });
 
     const users = await sequelize.query(
@@ -3394,9 +3398,9 @@ buildUserFilterWhereClause(
 
   // Supported fields and their SQL expressions
   const fieldSqlMap: Record<string, string> = {
-    user_name: `(u.first_name || ' ' || u.last_name)`,
+    user_name: `(LOWER(u.first_name ))`,
     email: `u.email`,
-    role_name: `bt.business_teams`,
+    role_name: `u.role_rid`,
     organization_name: `(
       CASE
         WHEN u.is_consultant_firm = TRUE THEN u.org_id
@@ -3426,6 +3430,8 @@ buildUserFilterWhereClause(
         return `${columnSql} NOT ILIKE :${key}`;
       case "is_empty":
         return `${columnSql} IS NULL OR ${columnSql} = ''`;
+      case "in":
+        return `${columnSql} IN (${value.map((d : any) => `'${d}'`)})`
       default:
         return "";
     }

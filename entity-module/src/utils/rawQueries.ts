@@ -177,13 +177,22 @@ export const listAllImportedDatasQuery = (page : number, limit : number, sort : 
     WITH all_datas AS (
     SELECT i.rid, i.r_number, i.document_name, d.document_format, i.document_rid,
     d.document_size,i.entity_type, i.total_records,i.fiscal_year,
-    ((COALESCE(i.total_staging_processed, 0) - COALESCE(i.target_load_error_records_count, 0))) AS records_loaded_successfully,
+    CASE WHEN 
+        i.target_load_end_timestamp IS NOT NULL
+        THEN ((COALESCE(i.total_staging_processed, 0) - COALESCE(i.target_load_error_records_count, 0)))
+        ELSE 0
+        END AS records_loaded_successfully,
     CASE WHEN 
         i.target_load_end_timestamp IS NOT NULL 
         THEN (COALESCE(i.target_load_error_records_count,0) + (COALESCE(i.total_records, 0) - COALESCE(i.total_staging_processed,0)))
         ELSE 0
         END AS records_failed_to_load,
-    i.total_staging_warning_count,d.document_status, i.uploaded_datetime, i.uploaded_by_user_rid,
+    CASE WHEN
+        i.target_load_end_timestamp IS NOT NULL
+        THEN i.total_staging_warning_count
+        ELSE 0
+        END AS total_staging_warning_count,
+    d.document_status, i.uploaded_datetime, i.uploaded_by_user_rid,
     i.upload_failure_reason, d.document_url
     FROM ${schemaName}.import i
     LEFT JOIN ${schemaName}.account_details a ON a.account_rid = i.account_rid
