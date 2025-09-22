@@ -61,16 +61,6 @@ const listAccountInteractionSchema = Joi.object({
   sort_order: Joi.string().valid("ASC", "DESC").default("ASC"),
 });
 
-const exportAccountInteractionSchema = Joi.object({
-  account_rid: Joi.string().pattern(uuidRegex).required(),
-  filters: Joi.string().default("{}"),
-  sort_by: Joi.string().optional(),
-  sort_order: Joi.string().valid("ASC", "DESC").default("ASC"),
-});
-
-
-
-
 const sendInteractionSchema = Joi.object({
   account_rid: Joi.string().pattern(uuidRegex).required(),
   is_interaction_followup: Joi.boolean().optional().default(false),
@@ -78,7 +68,7 @@ const sendInteractionSchema = Joi.object({
   .items(
     Joi.object({
       interaction_rid: Joi.string().pattern(uuidRegex).required(),
-      project_fiscal_rid:Joi.string().pattern(uuidRegex).optional(),
+      project_fiscal_rid:Joi.string().pattern(uuidRegex).optional().allow(null,""),
       interaction_level:Joi.string().optional().default("Project"),
       email_info: Joi.object({
         email: Joi.string().email().optional().allow("",null),
@@ -151,12 +141,11 @@ const updateInteractionSchema = Joi.object({
 const updateInteractionResponseSchema = Joi.object({
   interaction_rid: Joi.string().pattern(uuidRegex).required(),
   account_rid: Joi.string().pattern(uuidRegex).required(),
-  project_rid: Joi.string().pattern(uuidRegex).required(),
-  project_fiscal_rid: Joi.string().pattern(uuidRegex).required(),
+  project_rid: Joi.string().pattern(uuidRegex).optional().allow(null, ""),
+  project_fiscal_rid: Joi.string().pattern(uuidRegex).required().allow(null, ""),
   status_action: Joi.string().required(),
   response_source: Joi.string().optional().default("Manual"),
-  parent_interaction_rid: Joi.string().allow(null, ""),
-   attachments: Joi.array().items(
+  attachments: Joi.array().items(
           Joi.object({
             fileName: Joi.string().max(255).required(),
             fileSize: Joi.number().required(),
@@ -229,7 +218,6 @@ export {
   createInteractionSchema,
   createAccountInteractionSchema,
   listAccountInteractionSchema,
-  exportAccountInteractionSchema,
   updateInteractionSchema,
   updateInteractionResponseSchema,
   listTechnicalSummarySchema,

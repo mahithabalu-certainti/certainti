@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { accountInteractionFieldMappings, HttpStatus, interactionFieldMappings, interactionSource, STATUS_MESSAGE, techSummaryFieldMappings } from "../utils/constants";
+import {  accountinteractionFieldMappings, HttpStatus, interactionFieldMappings, interactionSource, STATUS_MESSAGE, techSummaryFieldMappings } from "../utils/constants";
 import {
   deleteFromAzureBlob,
   errorLog,
@@ -18,7 +18,6 @@ import configurations from "../config/config";
 import {
   createAccountInteractionSchema,
   createInteractionSchema,
-  exportAccountInteractionSchema,
   exportTechnicalSummarySchema,
   getInteractionStatusSchema,
   listAccountInteractionSchema,
@@ -215,103 +214,6 @@ async function listAccountInteractions(req: Request, res: Response): Promise<voi
   }
 }
 
-async function exportAccountInteractions(req: Request, res: Response): Promise<void> {
-  const methodName = "Export account interactions";
-  try {
-    console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
-    const value = await validateRequest(req, exportAccountInteractionSchema, res,"GET");
-    const userId = req.headers["x-user-id"] as string;
-    if (!userId) {
-      errorLog(methodName, "User ID is required in headers");
-      handleErrorResponse(
-        res,
-        HttpStatus.BAD_REQUEST,
-        HttpStatus.BAD_REQUEST_MESSAGE,
-        "User ID is required in headers"
-      );
-      return;
-    }
-    if (!value) {
-      errorLog(methodName, "Request body is empty");
-      return;
-    }
-    let parsedFilters: Record<string, any> = {};
-     try {
-      parsedFilters = JSON.parse(value.filters);
-    } catch (error) {
-      errorLog(
-        methodName,
-        "Invalid filters format. Must be a valid JSON object."
-      );
-    }
-    const result = await interactionService.exportAccountInteractions(
-      value,
-      parsedFilters
-    );
-      const fields = await interactionService.getAllowedExportFields(
-          userId,
-          "interactions_view_edit"
-        );
-      const allowedFieldSet = new Set<string>();
-      for (const field of fields) {
-        if (field.read) {
-          allowedFieldSet.add(field.field_name);
-        }
-      }
-     const isValidTZ = value.timezone &&  isValidTimezone(value.timezone);
-       const formatDate = (date?: Date) =>
-        date
-          ? moment(date).tz(isValidTZ ? value.timezone : 'UTC').format('YYYY-MM-DD, hh:mm:ss A')
-          : null;
-    if(result.statusCode === HttpStatus.SUCCESS) {
-         const finalStructuredData = result?.data?.accountInteractions.length < 1 ? [] : result?.data?.accountInteractions.map((d: any) => {
-        let resultMap: { [key: string]: any } = {
-          "r_number": d.r_number,
-          "project_count": d.project_count,
-          "interaction_type": d.interaction_type_name,
-          "status_name": d.status_name,
-          "created_by": d.created_user_name,
-          "created_datetime":formatDate(d.created_datetime),
-          "modified_by": d.modified_user_name,
-          "modified_datetime": d.modified_datetime == null ? '' : formatDate(d.modified_datetime),
-          "sent_on_datetime": d.sent_on_datetime == null ? '' : formatDate(d.sent_on_datetime),
-        };
-
-        // Build exportRecord using allowed fields and resultMap
-        const exportRecord: Record<string, any> = {};
-        accountInteractionFieldMappings.forEach(mapping => {
-          if (allowedFieldSet.has(mapping.permissionField)) {
-            exportRecord[mapping.exportField] = resultMap[mapping.dataField];
-          }
-        });
-
-        return exportRecord;
-      });
-
-       const generateBase64Response = await generateExcelBase64(finalStructuredData, "Account Interactions")
-        handleSuccessResponse(res, generateBase64Response);}
-        else {
-      errorLog(methodName, result.errorMessage);
-      handleErrorResponse(
-        res,
-        HttpStatus.BAD_REQUEST,
-        HttpStatus.BAD_REQUEST_MESSAGE,
-        result.errorMessage
-      );
-      return;
-    }
-  } catch (err) {
-    const error = err as Error;
-    errorLog(methodName, error.message);
-    handleErrorResponse(
-      res,
-      HttpStatus.BAD_REQUEST,
-      HttpStatus.BAD_REQUEST_MESSAGE,
-      error.message
-    );
-    return;
-  }
-}
 
 async function updateAccountInteraction(req: Request, res: Response): Promise<void> {
   const methodName = "Update account interaction";
@@ -1023,11 +925,22 @@ async function exportAllInteractions (req : Request, res : Response) {
 
         // Build exportRecord using allowed fields and resultMap
         const exportRecord: Record<string, any> = {};
-        interactionFieldMappings.forEach(mapping => {
+        if(data.flag === 'account')
+        {
+          accountinteractionFieldMappings.forEach(mapping => {
+          if (allowedFieldSet.has(mapping.permissionField)) {
+            exportRecord[mapping.exportField] = resultMap[mapping.dataField];
+          }
+          });
+        }
+        else
+        {
+          interactionFieldMappings.forEach(mapping => {
           if (allowedFieldSet.has(mapping.permissionField)) {
             exportRecord[mapping.exportField] = resultMap[mapping.dataField];
           }
         });
+        }
 
         return exportRecord;
       });
@@ -1867,7 +1780,6 @@ export default {
   createInteraction,
   createAccountInteraction,
   listAccountInteractions,
-  exportAccountInteractions,
   updateInteraction,
   updateInteractionResponse,
   getInteractionStatus,

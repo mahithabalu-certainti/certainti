@@ -32,7 +32,8 @@ export const fetchInteractionForProjectLevelQuery = (
   schemaName: string,
   disablePagination: boolean,
   accessibleIds: string[] = [],
-  search : string
+  search : string,
+  activeStatusId : string
 ) => {
   let offset = (page - 1) * limit;
   let pagination = `LIMIT ${limit} OFFSET ${offset}`;
@@ -121,7 +122,18 @@ export const fetchInteractionForProjectLevelQuery = (
     WITH fetch_interaction AS (
         SELECT
             i.rid, i.r_number, i.interaction_iteration, COALESCE(i.interaction_age,0),
-            i.status_rid, i.recipient_name, i.recipient_email,
+            i.status_rid,
+           CASE 
+            WHEN i.recipient_name IS NULL OR i.recipient_name = '' 
+            THEN kcd.key_contact_name 
+            ELSE i.recipient_name 
+        END AS recipient_name,
+
+        CASE 
+            WHEN i.recipient_email IS NULL OR i.recipient_email = '' 
+            THEN kcd.key_contact_email 
+            ELSE i.recipient_email 
+        END AS recipient_email, 
             i.sent_on_datetime, i.last_reminder_on, i.response_updated_on,
             i.response_submitted_on, i.response_source_rid, i.created_by, i.modified_by,
             i.created_datetime, i.modified_datetime,
@@ -129,11 +141,48 @@ export const fetchInteractionForProjectLevelQuery = (
             i.interaction_url,i.project_fiscal_rid,
             COUNT(i.rid) OVER() AS total_records, i.interaction_age,
             i.interaction_source_rid, i.interaction_type_rid, i.attachment_count,i.interaction_level_rid,
-            pf.project_code,pf.fiscal_year
-
+            pf.project_code,pf.fiscal_year,
+            CASE 
+                WHEN EXISTS (
+                    SELECT 1 FROM ${schemaName}.key_contact_details kcd 
+                    WHERE kcd.entity_rid = i.project_fiscal_rid 
+                    AND LOWER(kcd.entity_type) = 'project' 
+                    AND kcd.include_in_communication = true 
+                    AND kcd.status_rid = '${activeStatusId}'
+                ) THEN true 
+                ELSE false 
+            END AS has_email_recipient,
+            CASE 
+                WHEN EXISTS (
+                    SELECT 1 FROM ${schemaName}.key_contact_details kcd 
+                    WHERE kcd.entity_rid = i.account_rid 
+                    AND LOWER(kcd.entity_type) = 'account' 
+                    AND kcd.include_in_communication = true 
+                    AND kcd.status_rid = '${activeStatusId}'
+                ) THEN true 
+                ELSE false 
+            END AS has_account_recipient
             FROM
             ${schemaName}.interactions i
             LEFT JOIN ${schemaName}.project_fiscal pf ON pf.rid = i.project_fiscal_rid
+            LEFT JOIN LATERAL (
+    SELECT kcd.key_contact_name, kcd.key_contact_email
+    FROM ${schemaName}.key_contact_details kcd
+    WHERE (
+        -- If project_fiscal_rid is present, only use project
+        (i.project_fiscal_rid IS NOT NULL
+         AND kcd.entity_rid = i.project_fiscal_rid
+         AND LOWER(kcd.entity_type) = 'project'
+         AND kcd.include_in_communication = true)
+        OR
+        (i.project_fiscal_rid IS NULL
+         AND kcd.entity_rid = i.account_rid
+         AND LOWER(kcd.entity_type) = 'account'
+         AND kcd.include_in_communication = true)
+    )
+    AND kcd.status_rid = '${activeStatusId}'
+    LIMIT 1
+) kcd ON true
             WHERE
             (i.r_number ILIKE '${searchValue}' OR i.recipient_name ILIKE '${searchValue}' OR i.recipient_email ILIKE '${searchValue}')
             AND
@@ -175,7 +224,9 @@ export const fetchInteractionForProjectLevelQuery = (
         'interaction_source', i.interaction_source_rid,
         'interaction_level', i.interaction_level_rid,
         'attachment_count', i.attachment_count,
-        'project_code', i.project_code
+        'project_code', i.project_code,
+        'has_email_recipient', i.has_email_recipient,
+        'has_account_recipient', i.has_account_recipient
         ) ) AS interactions
 
         FROM

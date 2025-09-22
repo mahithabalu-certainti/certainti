@@ -277,8 +277,23 @@ class InteractionSchemaService {
           const interactionItemsBulk = prepareInteractionItems(createdInteractions, interactionData.questions);
           await batchInsert(InteractionItem, interactionItemsBulk);
         }
-
-        if (interactionData.trigger_send) {
+        let autoSendAccess:boolean = false;
+        if(!interactionData.trigger_send)
+        {
+           const globalInteractionAccess = await this.checkGlobalAutoSendAccess();
+           if(globalInteractionAccess) {
+            autoSendAccess = true;
+           }
+           else
+           {
+            const accountInteraction = await this.checkAccountAutoSendAccess(accountNumber, interactionData.account_rid);
+            if(accountInteraction) {
+              autoSendAccess = true;
+            }
+           }
+        }
+       
+        if (interactionData.trigger_send || autoSendAccess) {
           // Bulk insert SendEmailInfo
           const sendEmailInfoData = prepareSendEmailInfoData(createdInteractions, interactionData.projects);
           await batchInsert(SendEmailInfo, sendEmailInfoData);
@@ -289,6 +304,41 @@ class InteractionSchemaService {
             { status_rid: inqueueStatusRid! },
             { where: { rid: createdInteractions.map(i => i.rid) } }
           );
+        }
+        else
+        {
+          // Check project auto-send access and collect enabled projects
+          const enabledProjects: IProject[] = [];
+          const enabledInteractions: any[] = [];
+          
+          for (let i = 0; i < interactionData.projects.length; i++) {
+            const project = interactionData.projects[i];
+            if (!project) continue; // Skip if project is undefined
+            
+            const isEnabled = await this.checkProjectAutoSendAccess(accountNumber, project.project_fiscal_rid);
+            
+            if (isEnabled) {
+              enabledProjects.push(project);
+              // Find corresponding interaction for this project
+              const correspondingInteraction = createdInteractions[i];
+              if (correspondingInteraction) {
+                enabledInteractions.push(correspondingInteraction);
+              }
+            }
+          }
+
+          // Bulk insert SendEmailInfo for enabled projects only
+          if (enabledProjects.length > 0 && enabledInteractions.length > 0) {
+            const sendEmailInfoData = prepareSendEmailInfoData(enabledInteractions, enabledProjects);
+            await batchInsert(SendEmailInfo, sendEmailInfoData);
+
+            // Bulk update Interaction status to INQUEUE for enabled projects only
+            const inqueueStatusRid = await this.getInteractionStatusByType(statusAction.INQUEUE);
+            await Interaction.update(
+              { status_rid: inqueueStatusRid! },
+              { where: { rid: enabledInteractions.map(i => i.rid) } }
+            );
+          }
         }
       }
     } catch (error) {
@@ -868,6 +918,7 @@ class InteractionSchemaService {
         accountNumber: accountRnumber,
         accountId: account?.rid,
         accountName: account.account_name,
+        parentAccountId: account?.parent_account_rid
       };
     } catch (err) {
       throw new Error("Error fetching account : " + (err as Error).message);
@@ -2626,34 +2677,15 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       )}`;
       const [senderEmailInfo]: any[] = await this.orgDbSequelize.query(
         rawQueries.fetchInteractionSenderEmail(schemaName, parentAccountId)
-      );
-      if (!senderEmailInfo[0]) {
-         if (!this.mainDbSequelize) {
-           this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
-         }
-         const [mainSenderEmailInfo]: any[] = await this.mainDbSequelize.query(
-           rawQueries.fetchGlobalSenderEmail()
-         );
-         if (mainSenderEmailInfo && mainSenderEmailInfo.length > 0) {
-           senderEmailInfo[0] = mainSenderEmailInfo[0].email;
-         }
-         const clientSecret = mainSenderEmailInfo[0].client_secret;
-         const decryptedSecret = await decryptClientSecret(clientSecret);
-
-         return {
-            email: senderEmailInfo[0],
-            clientId: mainSenderEmailInfo[0].client_id,
-            clientSecret: decryptedSecret,
-            tenantId: mainSenderEmailInfo[0].tenant_id
-          }
-      } else {
-        
-          return {
-            email: senderEmailInfo[0].support_email,
-            clientId: senderEmailInfo[0].client_id,
-            clientSecret: senderEmailInfo[0].client_secret,
-            tenantId: senderEmailInfo[0].tenant_id,
-          }
+      ); 
+      const clientSecret = senderEmailInfo[0].client_secret;
+      const decryptedSecret = await decryptClientSecret(clientSecret);
+      
+      return {
+        email: senderEmailInfo[0].support_email,
+        clientId: senderEmailInfo[0].client_id,
+        clientSecret: decryptedSecret,
+        tenantId: senderEmailInfo[0].tenant_id,
       }
     } catch (err) {
       throw new Error(
@@ -2759,10 +2791,26 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           rawQueries.fetchInteractionRecipientAccount(accountRid,statusArr.rid ,schemaName),
           { type: "SELECT" }
         );
+        const interactionCCRecipientsAccount: any[] =
+        await this.orgDbSequelize.query(
+          rawQueries.fetchInteractionRecipientAccount(accountRid,statusArr.rid ,schemaName),
+          { type: "SELECT" }
+        );
+
+    
+      const ccEmails = [
+        ...interactionCCRecipientsAccount
+          .map((rec) => rec.key_contact_email)
+          .filter(Boolean),
+      ].filter((email, idx, arr) => email && arr.indexOf(email) === idx);
+
+      // Remove duplicates
+      const uniqueCCEmails = Array.from(new Set(ccEmails));
 
       return {
         name: interactionRecipients?.key_contact_name ?? null,
         email: interactionRecipients?.key_contact_email ?? null,
+        ccEmails: uniqueCCEmails ?? [],
       };
     } catch (err) {
       throw new Error("Error fetching POC email: " + (err as Error).message);
@@ -3076,11 +3124,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     }
   }
 
-  async isAutoSendInteractionEnabled(
-    accountNumber: string,
-    interactionDetails: any,
-    interactionRid: string
-  ) {
+  async checkGlobalAutoSendAccess() {
     try {
       if (!this.mainDbSequelize) {
         this.mainDbSequelize =
@@ -3090,38 +3134,97 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         rawQueries.fetchGlobalAutoSendAccess(),
         { type: "SELECT" }
       );
-      console.log("globalInteractionAccess", globalInteractionAccess);
-      if (globalInteractionAccess?.auto_send_interaction) {
-        return true;
-      } else {
-        if (!this.orgDbSequelize) {
-          this.orgDbSequelize =
-            await this.interactionModelService.getSequelize();
-        }
-        const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+      return globalInteractionAccess?.auto_send_interaction ?? false;
+    } catch (err) {
+      throw new Error(
+        "Error checking global auto-send interaction access: " +
+          (err as Error).message
+      );
+    } 
+  }
+
+  async checkAccountAutoSendAccess( accountNumber: string,
+    accountRid: string) {
+    try {
+      if (!this.orgDbSequelize) {
+        this.orgDbSequelize =
+          await this.interactionModelService.getMainSequelize();
+      }
+      const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
           /\D/g,
           ""
         )}`;
-
-        const [accountInfo]: any[] = await this.orgDbSequelize.query(
-          rawQueries.fetchAccountDetailsInfo(interactionDetails.account_rid, schemaName),  
+       const [accountInfo]: any[] = await this.orgDbSequelize.query(
+          rawQueries.fetchAccountDetailsInfo(accountRid, schemaName),  
           { type: "SELECT" }
         );
-        
-        if(accountInfo?.autosend_interaction){
-          return true;
-        }
+      return accountInfo?.auto_send_interaction ?? false;
+    } catch (err) {
+      throw new Error(
+        "Error checking global auto-send interaction access: " +
+          (err as Error).message
+      );
+    } 
+  }
 
-        // Fetch project info
-        const [projectInfo]: any[] = await this.orgDbSequelize.query(
+  async checkProjectAutoSendAccess( accountNumber: string,
+    project_fiscal_rid: string) {
+    try {
+      if (!this.orgDbSequelize) {
+        this.orgDbSequelize =
+          await this.interactionModelService.getMainSequelize();
+      }
+      const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+          /\D/g,
+          ""
+        )}`;
+       const [projectInfo]: any[] = await this.orgDbSequelize.query(
           rawQueries.fetchisAutoSendEnabled(
-            interactionDetails.project_fiscal_rid,
+            project_fiscal_rid,
             schemaName
           ),
           { type: "SELECT" }
         );
+      return projectInfo?.auto_send_ai_interaction ?? false;
+    } catch (err) {
+      throw new Error(
+        "Error checking global auto-send interaction access: " +
+          (err as Error).message
+      );
+    } 
+  }
 
-        return projectInfo?.auto_send_ai_interaction ?? false;
+  async isAutoSendInteractionEnabled(
+    accountNumber: string,
+    interactionDetails: any
+  ) {
+    try {
+      if (!this.mainDbSequelize) {
+        this.mainDbSequelize =
+          await this.interactionModelService.getMainSequelize();
+      }
+      const globalInteractionAccess = await this.checkGlobalAutoSendAccess();
+      if (globalInteractionAccess) {
+        return true;
+      } else {
+        
+        const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+          /\D/g,
+          ""
+        )}`;
+        const accountInteraction = await this.checkAccountAutoSendAccess(accountNumber, interactionDetails.account_rid);
+        if(accountInteraction){
+          return true;
+        }
+        
+        const projectInteraction = await this.checkProjectAutoSendAccess(accountNumber, interactionDetails.project_fiscal_rid);
+        if(projectInteraction){
+          return true;
+        }
+
+        // Fetch project info
+       
+        return false;
       }
     } catch (err) {
       throw new Error(
@@ -3415,7 +3518,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       const qreSubconCost = totalSubconCost * (netQre / 100);
       const qreNonlaborCost = totalNonlaborCost * (netQre / 100);
 
-      const shouldUseStandardUpdate = qreAdjustment === null || qreAdjustment === undefined;
+      const shouldUseStandardUpdate = qreAdjustment === null || qreAdjustment === undefined || qreAdjustment === 0;
       
       const finalQreUpdateQuery = shouldUseStandardUpdate
         ? rawQueries.updateQreInfo(projectFiscalRid, schemaName, qrePercent, {
@@ -3701,6 +3804,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       is_email_send : false,
       is_interaction_followup : data?.is_interaction_followup || false,
       interaction_level: data.interaction_level || 'Project',
+      email_sent_at : null
     })
     return insertedData
   }
@@ -3716,13 +3820,46 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
 
   async updateEmailSendFlag (interaction_rid : string) {
     await SendEmailInfo.update({
-      is_email_send : true
+      is_email_send : true,
+      email_sent_at : new Date().toISOString(),
+      modified_datetime : new Date()
     }, 
     {
       where : {
       interaction_rid : interaction_rid
     }
     })
+  }
+
+  async fetchAccountDetails(account_number: string, account_rid: string, parentAccountId: string) {
+    const schemaName = `trd365_${account_number.replace(/\D/g, "")}`;
+    try {
+
+      const sequelize = await initOrgSequelize();
+
+      const fetchParentAccount: any = await sequelize.query(rawQueries.fetchInteractionSenderEmail(schemaName, parentAccountId), {
+        replacements: { account_rid: parentAccountId },
+        type: "SELECT",
+      });
+
+      if(fetchParentAccount && fetchParentAccount.length > 0){
+        const parentDetails = fetchParentAccount[0];
+        
+        const isSubscriptionCreated = Boolean(
+          parentDetails.subscription_created &&
+          parentDetails.tenant_id &&
+          parentDetails.client_id &&
+          parentDetails.client_secret
+        );
+      
+        return isSubscriptionCreated;
+      }
+
+      return false;
+    } catch (err) {
+      console.log("Errr ", err);
+      throw new Error("Error retrieving account details");
+    }
   }
 
 }

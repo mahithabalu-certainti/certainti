@@ -701,6 +701,7 @@ export class ProjectTaskService {
     const ProjectFiscalModel = ProjectFiscal.initialize(sequelize, schemaName);
     const ResourceModel = Resources.initialize(sequelize, schemaName);
     const ProjectTaskModel = ProjectTask.initialize(sequelize, schemaName);
+    const ProjectResoureModel = ProjectResource.initialize(sequelize, schemaName)
 
       // Define associations
       ProjectTaskModel.belongsTo(AccountDetailsModel, {
@@ -720,6 +721,12 @@ export class ProjectTaskService {
         targetKey: "rid",
         as: "resource",
       });
+
+      ProjectTaskModel.belongsTo(ProjectResoureModel, {
+        foreignKey : "project_resource_rid",
+        targetKey : "rid",
+        as: "project_resource"
+      })
 
       const task = await ProjectTaskModel.findOne({
         where: { rid: taskRid },
@@ -748,6 +755,12 @@ export class ProjectTaskService {
             required: false,
             as: "resource",
           },
+          {
+            model: ProjectResoureModel,
+            attributes: ["project_resource_role"],
+            required: false,
+            as: "project_resource",
+          }
         ],
       });
 
@@ -901,7 +914,8 @@ export class ProjectTaskService {
         created_by: taskWithUserDetails.created_name,
         modified_by: taskWithUserDetails.modified_name,
         status_rid : taskWithUserDetails.dataValues.status_rid,
-        status_name : (taskStatus as any)?.resource_status_name
+        status_name : (taskStatus as any)?.resource_status_name,
+        project_resource_role : taskWithUserDetails.dataValues.project_resource.project_resource_role
       };
 
       return {
