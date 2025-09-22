@@ -2676,34 +2676,14 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       )}`;
       const [senderEmailInfo]: any[] = await this.orgDbSequelize.query(
         rawQueries.fetchInteractionSenderEmail(schemaName, parentAccountId)
-      );
-      if (!senderEmailInfo[0]) {
-         if (!this.mainDbSequelize) {
-           this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
-         }
-         const [mainSenderEmailInfo]: any[] = await this.mainDbSequelize.query(
-           rawQueries.fetchGlobalSenderEmail()
-         );
-         if (mainSenderEmailInfo && mainSenderEmailInfo.length > 0) {
-           senderEmailInfo[0] = mainSenderEmailInfo[0].email;
-         }
-         const clientSecret = mainSenderEmailInfo[0].client_secret;
-         const decryptedSecret = await decryptClientSecret(clientSecret);
-
-         return {
-            email: senderEmailInfo[0],
-            clientId: mainSenderEmailInfo[0].client_id,
-            clientSecret: decryptedSecret,
-            tenantId: mainSenderEmailInfo[0].tenant_id
-          }
-      } else {
-        
-          return {
-            email: senderEmailInfo[0].support_email,
-            clientId: senderEmailInfo[0].client_id,
-            clientSecret: senderEmailInfo[0].client_secret,
-            tenantId: senderEmailInfo[0].tenant_id,
-          }
+      ); 
+      const clientSecret = senderEmailInfo[0].client_secret;
+      const decryptedSecret = await decryptClientSecret(clientSecret);
+      return {
+        email: senderEmailInfo[0].support_email,
+        clientId: senderEmailInfo[0].client_id,
+        clientSecret: decryptedSecret,
+        tenantId: senderEmailInfo[0].tenant_id,
       }
     } catch (err) {
       throw new Error(
