@@ -51,7 +51,6 @@ export class InteractionService {
     errorMessage?: string;
     data?: { interactions: any };
   }> {
-    console.log("Transaction started for createAccountInteraction");
     try {
     const dbInit = await this.interactionModelService.getSequelize();
     const transaction = await dbInit.transaction();
