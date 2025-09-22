@@ -106,7 +106,7 @@ export const ProjectTask = ({
   const { errorToast } = useToast();
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [projectsTabs] = useState(projectTabs);
-  const [, setSortFilterCount] = useState<number>(0);
+  const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, string | number | boolean>
   >({});
@@ -600,7 +600,7 @@ export const ProjectTask = ({
         showRefresh={filterShow}
         onRefreshClick={onRefreshClick}
         handleSorting={handleSorting}
-        sortFilterCount={0}
+        sortFilterCount={sortFilterCount}
         setSortFilterCount={setSortFilterCount}
         projectResourceAccountID={accountID}
         projectResourceProjectID={projectID}
