@@ -178,7 +178,7 @@ export const fetchInteractionForProjectLevelQuery = (
         (i.project_fiscal_rid IS NULL
          AND kcd.entity_rid = i.account_rid
          AND LOWER(kcd.entity_type) = 'account'
-         AND kcd.include_in_communication = true)
+         AND kcd.interaction_cc_recipient = true)
     )
     AND kcd.status_rid = '${activeStatusId}'
     LIMIT 1

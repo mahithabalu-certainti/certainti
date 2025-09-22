@@ -235,7 +235,7 @@ const updateAccountSchema = Joi.object({
           'boolean.base': 'Interaction CC Recipient  must be a boolean value (true or false)',
           'any.required': 'Interaction CC Recipient is required',
         }),
-         include_in_communication: Joi.boolean().optional().allow(null,""),
+         include_in_communication: Joi.boolean().optional().allow(null,"").default(false),
         action_type: Joi.string().valid('add', 'edit','delete').required()
       })
     )
