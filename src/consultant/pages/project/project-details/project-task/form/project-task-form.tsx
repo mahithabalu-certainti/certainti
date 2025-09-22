@@ -24,7 +24,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
 import {
   formatDateToYYYYMMDDWithTime,
-  getDateFormat,
+  getDateFormatD,
 } from '../../../../../../common-utils';
 import { PROJECT_RESOURCE_CREATE } from '../../../../../../routes';
 import ConfirmationPopup from '../../../../../../common-utils/confirmation-popup';
@@ -65,8 +65,8 @@ const ProjectTaskForm: React.FC = () => {
     () => ({
       ...projectTask?.data,
       ...(projectTask?.data && {
-        start_date: getDateFormat(projectTask?.data.start_date),
-        end_date: getDateFormat(projectTask?.data.end_date),
+        start_date: getDateFormatD(projectTask?.data.start_date),
+        end_date: getDateFormatD(projectTask?.data.end_date),
         created_datetime:
           formatDateToYYYYMMDDWithTime(projectTask?.data.created_datetime) ||
           '-',

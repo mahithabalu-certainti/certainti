@@ -1,4 +1,4 @@
-import { REGEX_PATTERNS } from '../../../../../../common-utils';
+import { getDateFormat, REGEX_PATTERNS } from '../../../../../../common-utils';
 import TextButton from '../../../../../../components/button/text-button';
 import {
   DependencyRowData,
@@ -6,8 +6,7 @@ import {
   ListTableColumn,
 } from '../../../../../../components/table/types';
 import { OthersEnum } from '../../../../../types';
-import { ResourceSkillList } from '../../../../../types/resource-skill';
-import { dateFormatToYYYYMMDD } from '../utils';
+import { ResourceSkillList } from '../../../../../types/resource-skill'; 
 
 export const getResourceSkillColumns = (
   skillLevelOptions: ListOption[],
@@ -30,7 +29,7 @@ export const getResourceSkillColumns = (
     width: 160,
     sortable: true,
     render: (row: ResourceSkillList) => (
-      <span>{dateFormatToYYYYMMDD(row.start_date as string) || '-'}</span>
+      <span>{getDateFormat(row.start_date as string) || '-'}</span>
     ),
     sticky: true,
     sx: {

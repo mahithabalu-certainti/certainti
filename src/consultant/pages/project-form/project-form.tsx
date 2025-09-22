@@ -36,7 +36,7 @@ import {
 import { useGetProjectType, useProjectDetail } from '../../services/project';
 import {
   checkPermission,
-  getDateFormatM,
+  getDateFormatD,
   removeFormatCostValue,
 } from '../../../common-utils';
 import { FormData, newKeyContactFields } from './form-data';
@@ -208,10 +208,10 @@ const ProjectForm: React.FC = () => {
           : 'No',
         auto_access_rd: account?.auto_access_rd ? 'Yes' : 'No',
         project_enddate: account?.project_enddate
-          ? getDateFormatM(account.project_enddate)
+          ? getDateFormatD(account.project_enddate)
           : '',
         project_startdate: account?.project_startdate
-          ? getDateFormatM(account.project_startdate)
+          ? getDateFormatD(account.project_startdate)
           : '',
         created_on: formatDateToYYYYMMDDWithTime(account?.created_datetime),
         updated_on: account?.modified_datetime

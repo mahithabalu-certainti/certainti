@@ -680,13 +680,13 @@ export const getDateTimeFormat = (date?: string) => {
   return dayjs.utc(date).local().format('MMM-DD-YYYY hh:mm:ss A').toUpperCase();
 };
 
-export const getDateFormatM = (date?: string) => {
+export const getDateFormatD = (date?: string) => {
   if (!date) return '';
-  return dayjs(date).format('YYYY-MM-DD'); // For future ref.
+  return dayjs(date).format('YYYY-MM-DD');  
 };
 export const getDateFormat = (date?: string) => {
   if (!date) return '';
-  return dayjs(date).format('YYYY-MMM-DD').toUpperCase();
+  return dayjs(date).format('YYYY-MMM-DD');
 };
 export const STATUS_OPTIONS: SelectOption[] = [
   { label: 'Active', value: 'active' },
@@ -983,3 +983,23 @@ export const getDisableReason = (
   if (status === '') return 'Interaction status is invalid or undefined';
   return '';
 };
+
+// export const formatMonth = (dateStr: string): string => {
+export const formatMonthDay = (dateStr: string): string => {
+  if (!dateStr) return "";
+
+  // Split MM/DD
+  const [month, day] = dateStr.split("/");
+
+  // Month names
+  const months = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+  ];
+
+  const monthIndex = parseInt(month, 10) - 1; // convert to 0-based
+  const monthName = months[monthIndex] || "";
+
+  return `${monthName}/${day}`;
+};
+
