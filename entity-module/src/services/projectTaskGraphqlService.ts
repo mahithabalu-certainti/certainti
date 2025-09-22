@@ -301,7 +301,8 @@ export default class ProjectTaskGraphqlServies {
               modified_by: latestData.modified_by,
               created_datetime: latestData.created_datetime,
               modified_datetime: latestData.modified_datetime,
-              status_name : latestData.status_name
+              status_name : latestData.status_name,
+              project_resource_role : latestData.project_resource_role
             };
             return {
               statusCode: HttpStatus.SUCCESS,

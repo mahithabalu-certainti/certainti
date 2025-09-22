@@ -1808,7 +1808,7 @@ export const fetchProjectQueryByPrjId = (account_rid : string, schemaName : stri
     return query
 }
 
-export const fetchResCodeWithPrjResRole = (schemaName : string, search : string, statusId : string, accountId : string) => {
+export const fetchResCodeWithPrjResRole = (schemaName : string, search : string, statusId : string, accountId : string, project_fiscal_rid : string) => {
     let searchValue : string = ``
 
     if(search) searchValue = `%${search}%`
@@ -1825,6 +1825,8 @@ export const fetchResCodeWithPrjResRole = (schemaName : string, search : string,
     (r.resource_code ILIKE '${searchValue}' OR ps.project_resource_role ILIKE '${searchValue}')
     AND
     r.status_rid = '${statusId}'
+    AND
+    ps.project_fiscal_rid = '${project_fiscal_rid}'
     `
     return query;
   }

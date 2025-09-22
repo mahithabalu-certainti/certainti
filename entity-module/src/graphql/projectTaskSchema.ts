@@ -36,7 +36,8 @@ export const projectTaskSchema = gql`
       modified_datetime: String
       created_by: String,
       modified_by: String,
-      status_name : String
+      status_name : String,
+      project_resource_role : String
   }
 
   type ProjectTaskResponse {
