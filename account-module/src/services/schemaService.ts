@@ -2800,6 +2800,7 @@ private async createInteractionTable(
               status_rid = :status_rid,
               is_primary_contact = :is_primary_contact,
               interaction_cc_recipient = :interaction_cc_recipient,
+              include_in_communication = :include_in_communication,
               modified_by = :modified_by
             WHERE entity_rid = :account_rid
             AND rid = :key_contact_id
@@ -2816,6 +2817,7 @@ private async createInteractionTable(
             is_primary_contact: keyContactDetails.is_primary_contact,
             interaction_cc_recipient:
               keyContactDetails.interaction_cc_recipient,
+            include_in_communication: keyContactDetails.include_in_communication,
             modified_by: userId,
           },
         }
@@ -2838,12 +2840,12 @@ private async createInteractionTable(
         `INSERT INTO "${schemaName}"."key_contact_details" (
          entity_rid, key_contact_name, 
           key_contact_email, key_contact_role, status_rid, 
-          is_primary_contact, interaction_cc_recipient,
+          is_primary_contact, interaction_cc_recipient, include_in_communication,
           created_by, modified_by, entity_type
         ) VALUES (
           :account_rid, :key_contact_name, 
           :key_contact_email, :key_contact_role_rid, :status_rid, 
-          :is_primary_contact, :interaction_cc_recipient,
+          :is_primary_contact, :interaction_cc_recipient, :include_in_communication,
           :created_by, :modified_by, 'Account'
         );`,
         {
@@ -2856,6 +2858,7 @@ private async createInteractionTable(
             is_primary_contact: keyContactDetails.is_primary_contact,
             interaction_cc_recipient:
               keyContactDetails.interaction_cc_recipient,
+            include_in_communication: keyContactDetails.include_in_communication,
             created_by: userId,
             modified_by: userId,
           },

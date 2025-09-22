@@ -233,7 +233,7 @@ const createResourcesSchema = Joi.object({
     .pattern(uuidRegex, "valid UUID")
     .required(),
   resource_code: Joi.string()
-    .pattern(/^[A-Za-z][A-Za-z0-9\-_]{2,49}$/)
+    .pattern(/^[A-Za-z0-9][A-Za-z0-9\-_]{2,49}$/)
     .required()
     .messages({
       'string.base': 'Resource Code must be a string.',
@@ -428,7 +428,7 @@ const updateResourceSchema = Joi.object({
     .required(),
   account_number: Joi.string().max(50).required(),
   resource_code: Joi.string()
-    .pattern(/^[A-Za-z][A-Za-z0-9\-_]{2,49}$/)
+    .pattern(/^[A-Za-z0-9][A-Za-z0-9\-_]{2,49}$/)
     .required()
     .messages({
       'string.base': 'Resource Code must be a string.',
@@ -1415,7 +1415,7 @@ const createProjectSchema = Joi.object({
         "string.max": "Key Contact Email cannot exceed 254 characters.",
         "string.pattern.base": "Key Contact Email must follow the format: localpart@domain.tld, with a valid TLD (2–63 characters)."
       }),
-      key_contact_role: Joi.string().pattern(uuidRegex, "valid UUID").optional().allow(null),
+      key_contact_role: Joi.string().pattern(uuidRegex, "valid UUID").optional().allow(null,""),
       is_primary_contact: Joi.boolean().valid(true, false).optional().allow(null),
       interaction_cc_recipient: Joi.boolean()
         .optional()
@@ -1664,7 +1664,7 @@ const updateProjectSchema = Joi.object({
           "string.max": "Key Contact Email cannot exceed 254 characters.",
           "string.pattern.base": "Key Contact Email must follow the format: localpart@domain.tld, with a valid TLD (2–63 characters)."
         }),
-        key_contact_role: Joi.string().pattern(uuidRegex, "valid UUID").optional().allow(null),
+        key_contact_role: Joi.string().pattern(uuidRegex, "valid UUID").optional().allow(null,""),
         is_primary_contact: Joi.boolean().valid(true, false).optional().allow(null),
         interaction_cc_recipient: Joi.boolean()
         .optional()

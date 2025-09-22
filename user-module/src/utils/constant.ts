@@ -226,10 +226,15 @@ export const rawQuery = {
   fetchUsersByGroup({
     whereClause = '',
     orderByClause = '',
+    search = ''
   }: {
     whereClause?: string,
     orderByClause?: string,
+    search : string
   }) {
+    let searchValue : string = ``
+    if(search) searchValue = `%${search}%`
+    else searchValue = `%%`
     return `
       SELECT 
         u.rid, 
@@ -254,7 +259,10 @@ export const rawQuery = {
       FROM "${MAIN_SCHEMA_NAME}".user_group_mapping AS ugm
       JOIN "${MAIN_SCHEMA_NAME}".user AS u ON u.rid = ugm.user_rid
       LEFT JOIN "${MAIN_SCHEMA_NAME}".business_teams AS bt ON u.role_rid = bt.rid
-      WHERE ugm.group_rid = :group_rid
+      WHERE 
+      ugm.group_rid = :group_rid
+      AND
+      (u.first_name ILIKE '${searchValue}' OR u.email ILIKE '${searchValue}')
       ${whereClause}
       ORDER BY ${orderByClause}
       LIMIT :limit OFFSET :offset
@@ -262,9 +270,14 @@ export const rawQuery = {
   },
   fetchUserByGroupCount({
     whereClause = '',
+    search = ''
   }: {
     whereClause?: string,
+    search? : string
   }){
+    let searchValue : string = ``
+    if(search) searchValue = `%${search}%`
+    else searchValue = `%%`
     return `
       SELECT 
         COUNT(*) as count
@@ -272,6 +285,8 @@ export const rawQuery = {
       JOIN "${MAIN_SCHEMA_NAME}".user AS u ON u.rid = ugm.user_rid
       LEFT JOIN "${MAIN_SCHEMA_NAME}".business_teams AS bt ON u.role_rid = bt.rid
       WHERE ugm.group_rid = :group_rid
+      AND
+      (u.first_name ILIKE '${searchValue}' OR u.email ILIKE '${searchValue}')
       ${whereClause}
     `
   }
