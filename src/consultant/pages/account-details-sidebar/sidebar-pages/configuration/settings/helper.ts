@@ -89,8 +89,6 @@ export const settingsFormFields = (
           // hide:
           //   !permissionMap?.['tenant_id']?.read &&
           //   !permissionMap?.['tenant_id']?.edit,
-          regex: REGEX_PATTERNS.ALLOW_36,
-          regexErrorMessage: 'Tenant ID must be exactly 36 characters long',
         }),
         createTextField('client_id', 'Client ID', {
           required: emailRequried,
@@ -103,9 +101,6 @@ export const settingsFormFields = (
           // hide:
           //   !permissionMap?.['client_id']?.read &&
           //   !permissionMap?.['client_id']?.edit,
-          // regex: REGEX_PATTERNS.BLENDED_NUMBER,
-          regex: REGEX_PATTERNS.ALLOW_36,
-          regexErrorMessage: 'Client ID must be exactly 36 characters long',
         }),
         createTextField('client_secret', 'Client Secret', {
           required: emailRequried,
@@ -118,8 +113,6 @@ export const settingsFormFields = (
           // hide:
           //   !permissionMap?.['client_secret']?.read &&
           //   !permissionMap?.['client_secret']?.edit,
-          regex: REGEX_PATTERNS.ALLOW_36,
-          regexErrorMessage: 'Client Secret must be exactly 36 characters long',
         }),
         createRadioField('auto_assessment', 'Auto Assessment', {
           required: false,

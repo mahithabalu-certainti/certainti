@@ -53,7 +53,7 @@ export const ProjectTaskFormData = (
               required: true,
               onChange: true,
               showCreateBtn: true,
-              placeholder: 'Choose Resource Code',
+              placeholder: 'Choose Project Resource Code',
               disabled:
                 isEditView &&
                 permissionMapTaskForm?.['resource_code']?.read &&

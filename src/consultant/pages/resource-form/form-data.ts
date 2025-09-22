@@ -155,9 +155,10 @@ export const ResourceFormData = (
                 errorMessage: 'Max length exceeded',
               },
               {
-                regex: REGEX_PATTERNS.NO_LEADING_SPECIAL_REGEX,
+                regex:
+                  REGEX_PATTERNS.NO_LEADING_SPECIAL_REGEX_FOR_RESOURCE_CODE,
                 errorMessage:
-                  'Cannot start with a number, hyphen, or underscore.',
+                  'Cannot start with a space, hyphen, or underscore.',
               },
               {
                 regex: REGEX_PATTERNS.ALLOWED_CHARS_REGEX,
