@@ -276,6 +276,7 @@ export interface AccountFieldsTypes {
   client_id: string;
   tenant_id: string;
   support_email: string;
+  is_send_interaction: boolean;
 }
 
 export interface NewAccountData extends AccountFieldsTypes, AccountById {

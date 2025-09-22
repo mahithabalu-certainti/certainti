@@ -60,7 +60,6 @@ import Uploads from '../../../../../components/Attachments/upload';
 const BUTTON_STYLES = {
   height: '24px !important',
   fontSize: '13px',
-  fontWeight: 600,
 };
 
 const projectTabs: ResourceTabs[] = [
@@ -315,7 +314,7 @@ export const ProjectResources = ({
       setSortOrder(defaultSortOrder);
       setSortField(defaultSortField);
     } else {
-      // setSortFilterCount(1);
+      setSortFilterCount(1);
       setSortOrder(apiOrder);
       setSortField(sortBy);
     }
@@ -725,7 +724,7 @@ export const ProjectResources = ({
                     hoverHighlight={false}
                     tableStyle={{
                       height: '100%',
-                      maxHeight: 'calc(100vh - 360px)',
+                      maxHeight: 'calc(100vh - 380px)',
                       overflow: 'auto',
                     }}
                     stickyHeader={true}

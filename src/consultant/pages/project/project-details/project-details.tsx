@@ -7,7 +7,7 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 import { ACCOUNT, PROJECT } from '../../../../routes';
-import { InfoSection, PageHeader, SideMenuPanel } from '../../../../components';
+import { PageHeader, SideMenuPanel } from '../../../../components';
 import {
   // ActivitiesIcon,
   AttachmentsSideIcon,
@@ -25,7 +25,11 @@ import {
   ConfigIcon,
 } from '../../../../assets';
 import { useProjectDetail, ProjectTriggerAI } from '../../../services/project';
-import { transformProjectData } from '../utils';
+import {
+  mergeAdjustmentResponse,
+  projectDetails,
+  transformProjectData,
+} from '../utils';
 import ProjectDetailsData from './details/project-data';
 import {
   NewProjectData,
@@ -70,6 +74,10 @@ import { TechnicalSummary } from './technical-summary';
 import { exportTechnicalSummary } from '../../../services/technical-summary/technical-summary-service';
 import { BUTTON_STYLES } from '../../../../admin/pages/manage-user-detail/styles';
 import { useToast } from '../../../../hooks';
+import { ProjectInfoSection } from './project-info-section';
+import { resourceClient } from '../../../../api/graphql/clients/client';
+import { UPDATE_QRE_ADJUSTMENT } from '../../../../api/graphql/queries/project-query';
+import { useMutation } from '@apollo/client';
 
 export const ProjectDetails = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -81,9 +89,6 @@ export const ProjectDetails = () => {
   // const [fiscalYear, setFiscalYear] = useState<FiscalYearType | undefined>();
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [exportType, setExportType] = useState<ExportType>('attachments');
-  const [refreshProjectDetails, setRefreshProjectDetails] = useState<number>(
-    Date.now()
-  );
   const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const [interactionsParams, setInteractionsParams] =
     useState<AttachmentsListExportParams>({
@@ -165,10 +170,6 @@ export const ProjectDetails = () => {
     }
   }, [searchParams]);
 
-  const onRefreshClick = () => {
-    setRefreshProjectDetails(Date.now());
-  };
-
   const { projectid: projectID } = useParams();
   const accountID = searchParams.get('accountID') || '';
   const parent = searchParams.get('source');
@@ -178,11 +179,14 @@ export const ProjectDetails = () => {
   const interactionsView = !!interactionId || !!interactionRID;
   const technicalSummaryId = searchParams.get('technical_summary_id');
 
-  const { data, isLoading, isError } = useProjectDetail(
+  const { data, isLoading, isError, refetch } = useProjectDetail(
     accountID,
-    projectID || '',
-    refreshProjectDetails
+    projectID || ''
   );
+
+  const [updateQreAdjustment] = useMutation(UPDATE_QRE_ADJUSTMENT, {
+    client: resourceClient,
+  });
 
   const accountInActive =
     data?.data?.project?.account_status?.toLowerCase() !== 'active';
@@ -191,7 +195,7 @@ export const ProjectDetails = () => {
   useEffect(() => {
     if (data?.data) {
       const project = data.data.project;
-      setProjectDetails(transformProjectData(data.data));
+      setProjectDetails(transformProjectData(project));
       setProjectData(project);
       handleGetFiscalYear(project?.fiscal_year, {
         startDate: project?.fiscal_start_date || '',
@@ -199,6 +203,29 @@ export const ProjectDetails = () => {
       });
     }
   }, [data]);
+
+  const handleAdjustmentFactor = async (newValue: string) => {
+    const payload = {
+      account_rid: accountID,
+      rid: projectID,
+      rd_percent_potential_ai: Number(newValue),
+    };
+    try {
+      const res = await updateQreAdjustment({
+        variables: { data: payload },
+      });
+      const result = res.data?.updateQreAdjustment?.data;
+      const updatedProject = mergeAdjustmentResponse(
+        projectData as unknown as projectDetails,
+        result
+      );
+
+      setProjectData(updatedProject as unknown as NewProjectData);
+      setProjectDetails(transformProjectData(updatedProject as projectDetails));
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
   const handleGetFiscalYear = (
     year: string,
@@ -551,7 +578,7 @@ export const ProjectDetails = () => {
             accountOrProjectInActive={accountInActive || projectInActive}
             setExportType={setExportType}
             setAttachmentParams={setAttachmentParams}
-            refetchProjectDetails={onRefreshClick}
+            refetchProjectDetails={refetch}
             projectFiscalYear={projectData?.fiscal_year}
           />
         );
@@ -730,11 +757,10 @@ export const ProjectDetails = () => {
           isLoading={isLoading}
         />
       </div>
-      <InfoSection
+      <ProjectInfoSection
         columns={projectDetails}
         loading={isLoading}
-        error={isError}
-        singleLineView={false}
+        onAdjustmentFactorChange={handleAdjustmentFactor}
       />
       <div className='flex flex-row flex-1 w-full'>
         <div
@@ -757,7 +783,7 @@ export const ProjectDetails = () => {
         </div>
         <div
           className='flex-1'
-          style={{ maxHeight: 'calc(100vh - 180px)', overflow: 'auto' }}
+          style={{ maxHeight: 'calc(100vh - 240px)', overflow: 'auto' }}
         >
           <Suspense fallback={null}>{renderContent()}</Suspense>
         </div>

@@ -173,9 +173,11 @@ export type Project = {
   assessment_status: string | null;
   qre: string | null;
   qre_final?: string | null;
+  rd_percent_potential_ai: string | null;
   is_rd_qualified: boolean;
   industry_name_other: string | null;
   project_type: string;
+  project_type_name: string;
   project_client_group: string | null;
   project_group: string | null;
   project_classification_rid: string | null;
@@ -235,6 +237,7 @@ export type ProjectFiscalSummary = {
   project_fiscal_rid: string;
   rid: string;
   isInteractionMapped?: boolean;
+  isKeyContactIncluded?: boolean;
 };
 
 export type FiscalYearType = {

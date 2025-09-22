@@ -76,10 +76,11 @@ const ProjectResourceForm: React.FC = () => {
   const projectCode = searchParams.get('projectCode');
   const createdNewResourceCode =
     searchParams.get('created_resource_code') || '';
+  const newProjectResource = searchParams.get('new_project_res_name') || '';
   const fiscalDate: FormFiscalDateType = projectPFY
     ? JSON.parse(projectPFY)
     : undefined;
-
+  const fromLocation = location.state?.from;
   const getProjectResource = useProjectResourceDetail(
     account_Id as string,
     resourceId as string
@@ -173,7 +174,9 @@ const ProjectResourceForm: React.FC = () => {
       );
       setShowSkillRoleOthersField(false);
       setIsResourceType(false);
-      goBack();
+      if (isEditView) {
+        goBack();
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [commonSuccess, isEditView]);
@@ -250,7 +253,22 @@ const ProjectResourceForm: React.FC = () => {
     if (isEditView) {
       updateProjectResource.mutate(projectResourceFormData);
     } else {
-      createProjectResource.mutate(projectResourceFormData);
+      createProjectResource.mutate(projectResourceFormData, {
+        onSuccess: (res) => {
+          if (newProjectResource) {
+            const params = new URLSearchParams(fromLocation?.search);
+            params.set(
+              'created_resource_code',
+              res?.data?.projectResource?.rid || ''
+            );
+            navigate(fromLocation?.pathname + '?' + params.toString(), {
+              replace: true,
+            });
+          } else {
+            goBack();
+          }
+        },
+      });
     }
   };
 
@@ -281,7 +299,7 @@ const ProjectResourceForm: React.FC = () => {
       new_res_code: resCode || '',
     });
     navigate(`${RESOURCE_CREATE}?${queryParams.toString()}`, {
-      state: { from: location },
+      state: { from: location, subLocation: fromLocation },
     });
   };
 
@@ -436,12 +454,12 @@ const ProjectResourceForm: React.FC = () => {
           {isEditView ? (
             <EditIcon
               alt='projrct-resource-icon'
-              className='h-6 w-6 bg-[#7D98B6] p-1.5 border-box rounded'
+              className='h-8 w-8 mt-1.5 bg-[#7D98B6] p-2 border-box rounded'
             />
           ) : (
             <CreateResourceIcon
               alt='projrct-resource-icon'
-              className='h-6 w-6 bg-[#7D98B6] p-1.5 border-box rounded'
+              className='h-8 w-8 [&>path:first-child]:fill-[#7D98B6] mt-1.5 border-box rounded'
             />
           )}
 

@@ -14,6 +14,7 @@ import {
   GetAllCountriesApiResponse,
   GetCurrentUserRoleApiResponse,
   GetImportEntityTypeApiResponse,
+  GetInteractionLevelApiResponse,
   GetInteractionResponeSourcesApiResponse,
   GetInteractionStatusApiResponse,
   GetInteractionTypesApiResponse,
@@ -301,6 +302,32 @@ export const useGetInteractionStatus = () => {
   });
 };
 
+export const fetchInteractionLevel =
+  async (): Promise<GetInteractionLevelApiResponse> => {
+    try {
+      const { data } =
+        await interactionServiceApi.get<GetInteractionLevelApiResponse>(
+          '/api/interactions/interactionLevel'
+        );
+      return data;
+    } catch (error) {
+      console.error('Error fetching interaction status:', error);
+      throw error;
+    }
+  };
+
+export const useGetInteractionLevel = () => {
+  return useQuery<GetInteractionLevelApiResponse, Error>({
+    queryKey: ['interaction-level'],
+    queryFn: () => fetchInteractionLevel(),
+    retry: 0,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  });
+};
+
 export const useGetInteractionStatusById = (statusId: string) => {
   return useQuery<GetInteractionStatusApiResponse, Error>({
     queryKey: ['gat-interaction-status-by-id'],
@@ -373,14 +400,13 @@ export const useGetInteractionResponeSources = () => {
 const fetchInteractionQuestions = async (
   accountId: string,
   interactionId: string,
-  projectFiscalRid: string,
   authToken: string,
   userId: string
 ): Promise<InteractionDetails> => {
   // Only send the provided headers, do not merge with defaults
   const response =
     await exInteractionServiceApi.get<InteractionDetailsResponse>(
-      `/api/interactions/detail/${accountId}/${interactionId}?project_fiscal_rid=${projectFiscalRid}`,
+      `/api/interactions/detail/${accountId}/${interactionId}`,
       {
         headers: {
           Authorization: `Bearer ${authToken}`,
@@ -423,18 +449,12 @@ export const useGetInteractionQuestions = (
       fetchInteractionQuestions(
         accountId!,
         interactionId!,
-        projectFiscalRid!,
         authToken!,
         userId!
       ),
     retry: 0,
     gcTime: 0,
-    enabled:
-      !!authToken &&
-      !!userId &&
-      !!interactionId &&
-      !!accountId &&
-      !!projectFiscalRid,
+    enabled: !!authToken && !!userId && !!interactionId && !!accountId,
   });
 };
 

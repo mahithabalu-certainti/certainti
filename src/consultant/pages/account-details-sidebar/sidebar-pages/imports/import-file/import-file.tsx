@@ -225,7 +225,7 @@ const ImportFile: React.FC<ImportFileProps> = ({
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const validFiles = validateFiles(e.target.files);
     if (validFiles.length > 0) {
-      setSelectedFiles(validFiles);
+      setSelectedFiles([validFiles[0]]);
     }
   };
 
@@ -249,10 +249,10 @@ const ImportFile: React.FC<ImportFileProps> = ({
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
+    if (selectedFiles.length > 0) return;
     const validFiles = validateFiles(e.dataTransfer.files);
-
     if (validFiles.length > 0) {
-      setSelectedFiles((prevFiles) => [...prevFiles, ...validFiles]);
+      setSelectedFiles([validFiles[0]]);
     }
   };
 
@@ -261,7 +261,9 @@ const ImportFile: React.FC<ImportFileProps> = ({
   };
 
   const openFileDialog = () => {
-    fileInputRef.current?.click();
+    if (selectedFiles.length === 0) {
+      fileInputRef.current?.click();
+    }
   };
 
   const goBack = () => {
@@ -353,11 +355,13 @@ const ImportFile: React.FC<ImportFileProps> = ({
               onDrop={handleDrop}
               onDragOver={handleDragOver}
               onClick={openFileDialog}
-              className={`h-[116px] w-[502px] border-[2px] border-dashed rounded-[8px] flex flex-col items-center justify-center gap-2  ${
-                message && message.type === 'error'
-                  ? 'border-red-600 bg-[#FEF2F2] cursor-pointer'
-                  : 'border-[#0176D3] bg-[#F4F6F9] cursor-pointer'
-              }`}
+              className={`h-[116px] w-[502px] border-[2px] border-dashed rounded-[8px] flex flex-col items-center justify-center gap-2
+                ${selectedFiles.length > 0 ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                ${message?.type === 'error' ? 'border-red-600 bg-[#FEF2F2]' : 'border-[#0176D3] bg-[#F4F6F9]'}
+              `}
+              style={{
+                pointerEvents: selectedFiles.length > 0 ? 'none' : 'all',
+              }}
             >
               <UploadIcon alt='Upload Icon' className='w-[36px] h-[24px]' />
               <div className='text-[14px] text-[#0B0B0B]'>
@@ -417,6 +421,7 @@ const ImportFile: React.FC<ImportFileProps> = ({
           onClick={handleExternalSubmit}
           disabled={accountInActive}
           sx={{ width: '75px', minWidth: '75px' }}
+          loading={loading}
         />
       </div>
     </div>

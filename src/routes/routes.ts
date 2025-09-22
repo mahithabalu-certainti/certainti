@@ -77,6 +77,7 @@ export const INTERACTIONS_CREATE = `${INTERACTIONS_BASE}/create`;
 export const INTERACTIONS_EDIT = `${INTERACTIONS_BASE}/edit/:interactionId`;
 export const GLOBAL_INTERACTIONS_CREATE = `${INTERACTIONS}/create`;
 export const GLOBAL_INTERACTIONS_EDIT = `${INTERACTIONS}/edit/:interactionId`;
+export const ACCOUNT_INTERACTIONS_CREATE = `${INTERACTIONS_BASE}/account-create`;
 
 // ATTACHMENT ROUTES
 export const ATTACHMENTS = '/attachments';

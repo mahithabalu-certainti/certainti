@@ -78,7 +78,7 @@ const ResourceForm: React.FC = () => {
   const { successToast } = useToast();
   const location = useLocation();
   const fromLocation = location.state?.from;
-  console.log(fromLocation);
+  const subLocation = location.state?.subLocation;
   const { resourcesid } = useParams();
   const { state } = location;
   const navigate = useNavigate();
@@ -776,6 +776,7 @@ const ResourceForm: React.FC = () => {
               );
               navigate(fromLocation?.pathname + '?' + params.toString(), {
                 replace: true,
+                state: { from: subLocation },
               });
             } else {
               navigate(-1);
@@ -1027,12 +1028,12 @@ const ResourceForm: React.FC = () => {
                     string,
                     string | number | boolean | string[] | null
                   >)
-                : !isEditView &&
-                    newResourceCode &&
-                    !state?.cost &&
-                    !state?.skill
-                  ? { resource_code: newResourceCode }
-                  : undefined
+                : // : !isEditView &&
+                  //     newResourceCode &&
+                  //     !state?.cost &&
+                  //     !state?.skill
+                  //   ? { resource_code: newResourceCode }
+                  undefined
           }
           outData={handleSubmit}
           formRef={formRef}

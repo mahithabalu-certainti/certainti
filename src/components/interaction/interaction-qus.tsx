@@ -61,7 +61,6 @@ interface InteractionQuesProps {
   formData?: Record<string, string>;
   className?: string;
   responseDate?: string;
-  isAccountInteraction?: boolean;
 }
 
 const Font = Quill.import('formats/font');
@@ -82,7 +81,6 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   formData,
   className,
   responseDate,
-  isAccountInteraction,
 }) => {
   const { successToast, errorToast } = useToast();
   const [activeFlag, setActiveFlag] = useState<FlagTypeEnum | null>(null);
@@ -448,14 +446,14 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
           disabled: !isEditEnable,
           onClick: handleEditClick,
           sx: { width: '110px', minWidth: '110px' },
-          hide: !actionButtonEnable || isAccountInteraction,
+          hide: !actionButtonEnable,
         },
         {
           label: 'Response History',
           variant: 'outlined' as const,
           onClick: () => handleResponseHistory?.(),
           sx: { width: '130px', minWidth: '130px' },
-          hide: !actionButtonEnable || isAccountInteraction,
+          hide: !actionButtonEnable,
         },
       ];
 

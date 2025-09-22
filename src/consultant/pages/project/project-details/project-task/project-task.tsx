@@ -57,7 +57,6 @@ import SectionHeader from '../../../../../components/details-section/section-hea
 const BUTTON_STYLES = {
   height: '24px !important',
   fontSize: '13px',
-  fontWeight: 600,
 };
 
 export interface ProjectsTabs {
@@ -106,7 +105,7 @@ export const ProjectTask = ({
   const { errorToast } = useToast();
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [projectsTabs] = useState(projectTabs);
-  const [, setSortFilterCount] = useState<number>(0);
+  const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, string | number | boolean>
   >({});
@@ -120,7 +119,7 @@ export const ProjectTask = ({
   const [searchParams] = useSearchParams();
   const accountID =
     accountData?.accountID || searchParams.get('accountID') || '';
-
+  const currency_rid = searchParams.get('currency_rid') || '';
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
 
@@ -367,6 +366,7 @@ export const ProjectTask = ({
       project_Id,
       account_name: accountData?.accountName || '',
       account_number: accountData?.accountNumber || '',
+      currency_rid: currency_rid ?? '',
       PFY: JSON.stringify(PFY),
       projectCode: projectCode ?? '',
       source: 'createProjectTask',
@@ -599,7 +599,7 @@ export const ProjectTask = ({
         showRefresh={filterShow}
         onRefreshClick={onRefreshClick}
         handleSorting={handleSorting}
-        sortFilterCount={0}
+        sortFilterCount={sortFilterCount}
         setSortFilterCount={setSortFilterCount}
         projectResourceAccountID={accountID}
         projectResourceProjectID={projectID}
@@ -661,7 +661,7 @@ export const ProjectTask = ({
                   hoverHighlight={false}
                   tableStyle={{
                     height: '100%',
-                    maxHeight: 'calc(100vh - 360px)',
+                    maxHeight: 'calc(100vh - 380px)',
                     overflow: 'auto',
                   }}
                   stickyHeader={true}

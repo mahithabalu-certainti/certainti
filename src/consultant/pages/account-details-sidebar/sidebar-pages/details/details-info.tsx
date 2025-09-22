@@ -201,6 +201,7 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
       keyContactRole: contact.role_name,
       keyContactEmail: contact.key_contact_email,
       isPrimaryContact: contact.is_primary_contact,
+      includeInCommnunications: contact.include_in_communication,
       interactionccRecipient: contact.interaction_cc_recipient,
       keyContactStatus: contact?.status_name,
     }));
@@ -277,7 +278,7 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
           title='Key Contacts List'
           data={keyContactsList || []}
           ccAvailable={true}
-          communicationAvailable={false}
+          communicationAvailable={true}
         />
       )}
       <DetailsSection title='Account Settings' data={accountSettingsDetails} />
