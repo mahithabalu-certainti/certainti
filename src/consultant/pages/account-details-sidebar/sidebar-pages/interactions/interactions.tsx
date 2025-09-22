@@ -198,7 +198,7 @@ const Interactions: React.FC<InteractionsProps> = ({
         option: status.interaction_level_name,
         value: status.rid,
       })) || [],
-    [interactionStatus.data?.data.interactionStatus]
+    [interactionLevel.data?.data.interactionLevel]
   );
   const memoizedInteractionTypes = useMemo(
     () =>
@@ -410,7 +410,10 @@ const Interactions: React.FC<InteractionsProps> = ({
     {
       label: 'Send Interaction',
       variant: 'outlined' as const,
-      disabled: selectedRows.length === 0 || accountInActive,
+      disabled:
+        selectedRows.length === 0 ||
+        accountInActive ||
+        !accountDetails?.accountDetails?.is_send_interaction,
       onClick: () => setSendModalOpen(true),
       sx: { width: '120px', minWidth: '120px' },
       hide: !sendInteractionsEnable || viewResponseHistory,

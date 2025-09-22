@@ -199,13 +199,12 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     );
 
     if (!keyContactSection) return;
-    const isFromProject = formData?.find((item) => item.from === 'project');
-    const fieldsPerRow = newContactLength ?? 8;
+    const fieldsPerRow = newContactLength ?? 9;
     const rowCount = Math.ceil(keyContactSection.fields.length / fieldsPerRow);
 
     for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
       const baseIndex = rowIndex * fieldsPerRow;
-      const statusIndex = isFromProject ? 7 : 6;
+      const statusIndex = 7;
       const nameField = keyContactSection.fields[baseIndex];
       const roleField = keyContactSection.fields[baseIndex + 1];
       const emailField = keyContactSection.fields[baseIndex + 2];
@@ -276,7 +275,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   }, [constructFormData, formData]);
 
   const handleRemoveKeyContactRow = (rowIndexToRemove: number) => {
-    const fieldsPerRow = newContactLength ?? 8;
+    const fieldsPerRow = newContactLength ?? 9;
 
     setFormData((prevFormData) => {
       if (!prevFormData) return prevFormData;
@@ -348,8 +347,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   };
 
   const handleAddKeyContact = () => {
-    const isFromProject = formData?.find((item) => item.from === 'project');
-    const fieldsPerRow = newContactLength ?? 8;
+    const fieldsPerRow = newContactLength ?? 9;
     // Update constructFormData with default values for the new row
     setConstructFormData((prevData) => {
       if (!prevData) return prevData;
@@ -365,9 +363,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       newData[`key_contact_rid_${newRowIndex}`] = '';
       newData[`is_primary_contact_${newRowIndex}`] = 'no';
       newData[`interaction_cc_recipient_${newRowIndex}`] = 'no';
-      if (isFromProject) {
-        newData[`include_in_communication_${newRowIndex}`] = 'no';
-      }
+      newData[`include_in_communication_${newRowIndex}`] = 'no';
       newData[`key_contact_status_${newRowIndex}`] = 'active';
       newData[`button_${newRowIndex}`] = '';
 
