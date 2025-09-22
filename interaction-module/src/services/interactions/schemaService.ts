@@ -2678,12 +2678,12 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       const [senderEmailInfo]: any[] = await this.orgDbSequelize.query(
         rawQueries.fetchInteractionSenderEmail(schemaName, parentAccountId)
       ); 
-      const clientSecret = senderEmailInfo[0].client_secret;
+      const clientSecret = senderEmailInfo[0]?.client_secret;
       const decryptedSecret = await decryptClientSecret(clientSecret);
       
       return {
         email: senderEmailInfo[0].support_email,
-        clientId: senderEmailInfo[0].client_id,
+        clientId: senderEmailInfo[0]?.client_id,
         clientSecret: decryptedSecret,
         tenantId: senderEmailInfo[0].tenant_id,
       }
