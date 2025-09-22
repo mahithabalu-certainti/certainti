@@ -15,6 +15,7 @@ export interface SendEmailInfoAttributes {
   modified_datetime?: Date;
   is_interaction_followup?: boolean;
   interaction_level: string;
+  email_sent_at : string | null
 }
 
 export interface SendEmailInfoCreationAttributes
@@ -37,6 +38,7 @@ export class SendEmailInfo
   public modified_datetime?: Date;
   public is_interaction_followup?: boolean;
   public interaction_level!: string;
+  public email_sent_at! : string | null
 
   static initialize(
     sequelize: Sequelize,
@@ -61,6 +63,7 @@ export class SendEmailInfo
         modified_datetime: { type: DataTypes.DATE, allowNull: true },
         is_interaction_followup:{ type: DataTypes.BOOLEAN, allowNull: true},
         interaction_level: { type: DataTypes.STRING(100), allowNull: false },
+        email_sent_at: { type: DataTypes.STRING, allowNull: true },
       },
       {
         sequelize,

@@ -408,7 +408,7 @@ export const rawQueries = {
   },
   fetchInteractionSenderEmail(schemaName: string, accountRid: string) {
     return `
-    SELECT support_email,client_id,client_secret,tenant_id FROM ${schemaName}.account_details WHERE account_rid = '${accountRid}'  and  subscription_created is true  and support_email is not null LIMIT 1`;
+    SELECT support_email,client_id,client_secret,tenant_id, subscription_created FROM ${schemaName}.account_details WHERE account_rid = '${accountRid}'  and  subscription_created is true  and support_email is not null LIMIT 1`;
   },
   fetchGlobalSenderEmail() {
     return `
