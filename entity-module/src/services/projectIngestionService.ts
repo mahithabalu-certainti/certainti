@@ -410,7 +410,7 @@ class ProjectIngestionService {
     //   Check if the message was processed successfully
     this.logger.info(`Message sent to topic ${topic}: ${JSON.stringify(sendResult)}`);
       return {
-        statusMessage: "AI Assessment Initiated",
+        statusMessage: "RD Assessment Initiated",
         status: "success",
         data: null
       };

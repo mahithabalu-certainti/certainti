@@ -51,7 +51,6 @@ export class InteractionService {
     errorMessage?: string;
     data?: { interactions: any };
   }> {
-    console.log("Transaction started for createAccountInteraction");
     try {
     const dbInit = await this.interactionModelService.getSequelize();
     const transaction = await dbInit.transaction();
@@ -79,8 +78,12 @@ export class InteractionService {
             statusCode: HttpStatus.FAILED,
             message: STATUS_MESSAGE.projectRequired,
             data: { interactions: null},
-      };
-    }
+          };
+        }
+        const {  intSource,intType } =
+        await this.getInteractionStatusAndSource(interactionSource);
+      interactionData.interaction_source_rid = intSource || "";
+      interactionData.interaction_type_rid = intType || "";
         
         this.interactionSchemaService.createBulkInteractions(
           accountNumber,
@@ -1995,7 +1998,7 @@ export class InteractionService {
       // Check if the message was processed successfully
       console.log("Send result to topic", sendResult);
       return {
-        statusMessage: "AI Assessment Initiated",
+        statusMessage: "RD Assessment Initiated",
         status: "success",
         data: null
       };
