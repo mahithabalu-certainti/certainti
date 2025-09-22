@@ -501,6 +501,7 @@ export const REGEX_PATTERNS = {
   NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX:
     /^(?!^[ &'.,-])(?!(.*[ &'.,-]$))/,
   NO_LEADING_SPECIAL_REGEX: /^[a-zA-Z]/,
+  NO_LEADING_SPECIAL_REGEX_FOR_RESOURCE_CODE: /^[a-zA-Z0-9]/,
   ALLOWED_CHARS_REGEX: /^[a-zA-Z0-9_-]+$/,
   NO_CONSECUTIVE_SPECIALS_REGEX_FOR_ORG_NAME: /^(?!.*[-_]{2}).+$/,
   NO_TRAILING_SPECIAL_REGEX: /[^-_]$/,
@@ -955,19 +956,23 @@ export const removeFormatCostValue = (value: string): string => {
   return value.replace(/,/g, '');
 };
 
-  export const getDisableReason = (hasEmailRecipient: boolean, status: string, sendInteractionsEnable?: boolean) => {
-    if (!sendInteractionsEnable)
-      return 'Sending interactions permission is currently disabled. Please contact your administrator.';
-    if (!hasEmailRecipient)
-      return 'Key Contact is not available for this interaction';
-    if (status === StatusTypeEnum.sent)
-      return 'This interaction has already been sent';
-    if (status === StatusTypeEnum.response_draft)
-      return 'This interaction is currently in draft response stage';
-    if (status === StatusTypeEnum.response_received)
-      return 'A response has already been received for this interaction';
-    if (status === StatusTypeEnum.inqueue)
-      return 'This interaction is currently queued for sending';
-    if (status === '') return 'Interaction status is invalid or undefined';
-    return '';
-  };
+export const getDisableReason = (
+  hasEmailRecipient: boolean,
+  status: string,
+  sendInteractionsEnable?: boolean
+) => {
+  if (!sendInteractionsEnable)
+    return 'Sending interactions permission is currently disabled. Please contact your administrator.';
+  if (!hasEmailRecipient)
+    return 'Key Contact is not available or inactive for this interaction';
+  if (status === StatusTypeEnum.sent)
+    return 'This interaction has already been sent';
+  if (status === StatusTypeEnum.response_draft)
+    return 'This interaction is currently in draft response stage';
+  if (status === StatusTypeEnum.response_received)
+    return 'A response has already been received for this interaction';
+  if (status === StatusTypeEnum.inqueue)
+    return 'This interaction is currently queued for sending';
+  if (status === '') return 'Interaction status is invalid or undefined';
+  return '';
+};

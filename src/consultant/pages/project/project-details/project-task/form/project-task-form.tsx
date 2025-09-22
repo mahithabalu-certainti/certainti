@@ -86,6 +86,7 @@ const ProjectTaskForm: React.FC = () => {
   const payload = {
     account_rid: account_Id || undefined,
     search: '',
+    project_fiscal_rid: project_Id || undefined,
   };
   const { data: projectResourceCodeOptions } =
     useGetProjectResourceTaskCode(payload);

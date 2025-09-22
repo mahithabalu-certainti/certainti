@@ -169,24 +169,6 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     },
   ];
 
-  const basicInfo: DetailItem[] = [
-    {
-      label: 'Project Code',
-      value: data?.project_code,
-      key: 'project_code',
-    },
-    {
-      label: 'Project Name',
-      value: data?.project_name,
-      key: 'project_name',
-    },
-    {
-      label: 'Fiscal Year',
-      value: data?.fiscal_year,
-      key: 'fiscal_year',
-    },
-  ];
-
   const InteractionInfo: DetailItem[] = [
     {
       label: 'Interaction Type',
@@ -251,7 +233,6 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     // },
   ];
 
-  const basicDetails = applyHidePermission(basicInfo, permissionMap);
   const interactionDetails = applyHidePermission(
     InteractionInfo,
     permissionMap
@@ -289,11 +270,6 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
           </div>
         ) : (
           <>
-            <DetailsSection
-              title='Basic Information'
-              data={basicDetails}
-              customStyle='pt-0 mt-0'
-            />
             <DetailsSection
               title='Interaction Information'
               data={interactionDetails}

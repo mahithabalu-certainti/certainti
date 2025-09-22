@@ -61,7 +61,6 @@ import { ResourcesIcon } from '../../../../../assets';
 const BUTTON_STYLES = {
   height: '24px !important',
   fontSize: '13px',
-  fontWeight: 600,
   borderRadius: '2px',
 };
 

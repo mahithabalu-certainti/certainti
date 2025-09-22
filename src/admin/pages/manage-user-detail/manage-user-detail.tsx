@@ -124,7 +124,6 @@ export const ManageUserDetails: React.FC = () => {
               sx={{
                 ...BUTTON_STYLES,
                 fontSize: '13px',
-                fontWeight: 400,
                 width: '91px',
                 minWidth: '91px',
               }}
@@ -171,7 +170,6 @@ export const ManageUserDetails: React.FC = () => {
                   sx={{
                     ...BUTTON_STYLES,
                     fontSize: '13px',
-                    fontWeight: 600,
                     width: button.width,
                     minWidth: button.width,
                     maxWidth: button.width,

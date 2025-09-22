@@ -75,7 +75,6 @@ export const ExtendedPermission: React.FC = () => {
               sx={{
                 width: '45px',
                 minWidth: '45px',
-                fontWeight: 700,
                 fontSize: '13px',
                 height: '20px',
               }}
