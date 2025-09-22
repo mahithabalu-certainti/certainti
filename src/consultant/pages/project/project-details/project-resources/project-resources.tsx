@@ -315,7 +315,7 @@ export const ProjectResources = ({
       setSortOrder(defaultSortOrder);
       setSortField(defaultSortField);
     } else {
-      // setSortFilterCount(1);
+      setSortFilterCount(1);
       setSortOrder(apiOrder);
       setSortField(sortBy);
     }
