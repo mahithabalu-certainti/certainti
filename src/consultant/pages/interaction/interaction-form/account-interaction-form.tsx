@@ -501,8 +501,6 @@ const AccountInteractionForm = () => {
     setFilterAnchorEl(event.currentTarget);
   };
 
-  console.log('projectList', projectList);
-
   return (
     <div>
       <div className='h-[50px] flex items-center justify-between px-10 sticky top-0 z-10 bg-white'>
