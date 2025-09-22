@@ -225,7 +225,7 @@ export const STATUS_MESSAGE = {
   interactionFailed:"Interaction Creation Failed",
   interactionUpdateFailed:"Interaction Update Failed",
   responseUpdateFailed:"Interaction Response Update Failed",
-  assessmentInitiated : "AI Assessment Initiated",
+  assessmentInitiated : "RD Assessment Initiated",
   interactionCreatedButNoEmailRecipient:"Auto send skipped as no email recipient found",
   interactionCreated:"Interaction created successfully",
   interactionUpdated:"Interaction updated successfully",
