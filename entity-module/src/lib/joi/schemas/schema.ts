@@ -233,7 +233,7 @@ const createResourcesSchema = Joi.object({
     .pattern(uuidRegex, "valid UUID")
     .required(),
   resource_code: Joi.string()
-    .pattern(/^[A-Za-z][A-Za-z0-9\-_]{2,49}$/)
+    .pattern(/^[A-Za-z0-9][A-Za-z0-9\-_]{2,49}$/)
     .required()
     .messages({
       'string.base': 'Resource Code must be a string.',
@@ -428,7 +428,7 @@ const updateResourceSchema = Joi.object({
     .required(),
   account_number: Joi.string().max(50).required(),
   resource_code: Joi.string()
-    .pattern(/^[A-Za-z][A-Za-z0-9\-_]{2,49}$/)
+    .pattern(/^[A-Za-z0-9][A-Za-z0-9\-_]{2,49}$/)
     .required()
     .messages({
       'string.base': 'Resource Code must be a string.',
