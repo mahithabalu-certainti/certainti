@@ -1069,7 +1069,7 @@ export class ProjectInjestionTaskService {
     const schemaName = rawQueries.fetchSchemaName(parentRnumber[0][0].r_number)
     let status = "Active";
     const activeId : any = await mainDb.query(rawQueries.fetchActiveStatusRid(status))
-    const result : any = await orgDb.query(fetchResCodeWithPrjResRole(schemaName, data.search, activeId[0][0].rid, data.account_rid))
+    const result : any = await orgDb.query(fetchResCodeWithPrjResRole(schemaName, data.search, activeId[0][0].rid, data.account_rid, data.project_fiscal_rid))
     if(result[0].length > 0) {
       const finalResult = result[0].map((data : any) => {
         return {
