@@ -2679,6 +2679,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       ); 
       const clientSecret = senderEmailInfo[0].client_secret;
       const decryptedSecret = await decryptClientSecret(clientSecret);
+      
       return {
         email: senderEmailInfo[0].support_email,
         clientId: senderEmailInfo[0].client_id,
