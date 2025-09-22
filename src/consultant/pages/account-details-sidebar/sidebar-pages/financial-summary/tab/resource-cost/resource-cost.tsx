@@ -79,6 +79,7 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
       sortBy: tableParams.sortBy,
       sortOrder: tableParams.sortOrder,
       filters: tableParams.filters,
+      search: tableParams.search,
       accountRid: accountid,
       accountNumber: accountDetails?.accountById?.r_number,
       fiscalYear: Number(fiscalyear) || 0,

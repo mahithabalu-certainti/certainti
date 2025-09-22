@@ -44,6 +44,7 @@ const Configuration: React.FC = () => {
   const [count, setCount] = useState<number>(0);
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
+  const [seachText, setSearchText] = useState('');
 
   const list = searchParams.get('subMenu');
   const tabParam = searchParams.get('tab');
@@ -93,6 +94,7 @@ const Configuration: React.FC = () => {
             }}
             setColumnAnchorEl={setColumnAnchorEl}
             columnAnchorEl={columnAnchorEl}
+            searchValue={seachText}
           />
         );
       case 'settings':
@@ -189,8 +191,7 @@ const Configuration: React.FC = () => {
         showSearch={list === 'users' ? true : false}
         searchDisabled={false}
         searchPlaceholder='Search'
-        onSearch={(text) => console.log('Searching for:', text)}
-        onSearchTextChange={(text) => console.log('Typing:', text)}
+        onSearch={(text) => setSearchText(text)}
       />
       <SectionHeader
         title={list ? list.charAt(0).toUpperCase() + list.slice(1) : ''}

@@ -372,6 +372,7 @@ export interface AccountListURLParams {
   filters?: object;
   globalFilters?: globalFilters;
   fiscalYear?: string;
+  searchValue?: string;
 }
 
 export interface globalFilters {

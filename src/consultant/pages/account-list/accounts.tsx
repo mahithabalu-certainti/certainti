@@ -284,7 +284,6 @@ export const Accounts: React.FC = () => {
           initialSearchText={searchText}
           onSearch={(value) => {
             setSearchText(value);
-            console.log('Search triggered for:', value);
           }}
           placeholder='Search'
           disabled={false}
@@ -363,6 +362,7 @@ export const Accounts: React.FC = () => {
           setColumnAnchorEl={setColumnAnchorEl}
           columnAnchorEl={columnAnchorEl}
           expandChild={expandChild}
+          searchValue={searchText}
         />
       </div>
     </div>

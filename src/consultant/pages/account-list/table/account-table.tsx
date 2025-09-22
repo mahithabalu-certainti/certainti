@@ -43,6 +43,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
   expandChild,
   setColumnAnchorEl,
   columnAnchorEl,
+  searchValue,
 }) => {
   const navigate = useNavigate();
   const { errorToast } = useToast();
@@ -66,6 +67,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
       filters: appliedFilters,
       globalFilters: reshapeGlobalFilter(filters as FilterState),
       fiscalYear,
+      searchValue,
     },
     refreshAccountTrigger
   );

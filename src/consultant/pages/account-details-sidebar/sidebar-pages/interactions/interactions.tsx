@@ -112,6 +112,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   const { permission, modules } = useSelector(
     (state: RootState) => state.permission
   );
+  const [searchText, setSearchText] = useState('');
   const newFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
   const interactionId = searchParams.get('interaction_id');
   const interactionNumber = searchParams.get('interaction_number') || '';
@@ -135,6 +136,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       filters: appliedFilters,
       account_rid: accountid || '',
       fiscal_year: newFiscalYear,
+      search: searchText,
       flag: 'account',
     },
     !viewDetails &&
@@ -198,7 +200,7 @@ const Interactions: React.FC<InteractionsProps> = ({
         option: status.interaction_level_name,
         value: status.rid,
       })) || [],
-    [interactionStatus.data?.data.interactionStatus]
+    [interactionLevel.data?.data.interactionLevel]
   );
   const memoizedInteractionTypes = useMemo(
     () =>
@@ -517,8 +519,7 @@ const Interactions: React.FC<InteractionsProps> = ({
         }
         searchDisabled={false}
         searchPlaceholder='Search'
-        onSearch={(text) => console.log('Searching for:', text)}
-        onSearchTextChange={(text) => console.log('Typing:', text)}
+        onSearch={(text) => setSearchText(text)}
       />
       {viewDetails && !viewResponseHistory ? (
         <InteractionDetails
@@ -537,6 +538,7 @@ const Interactions: React.FC<InteractionsProps> = ({
         <InteractionAttachment
           handleBackClick={handleBackClick}
           refresh={refreshInteractions}
+          searchValue={searchText}
         />
       ) : (
         <>
@@ -564,6 +566,7 @@ const Interactions: React.FC<InteractionsProps> = ({
                 setCount={setCount}
                 setColumnAnchorEl={setColumnAnchorEl}
                 columnAnchorEl={columnAnchorEl}
+                searchValue={searchText}
               />
             ) : (
               <>

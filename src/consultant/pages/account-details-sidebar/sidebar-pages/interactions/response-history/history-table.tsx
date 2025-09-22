@@ -29,12 +29,14 @@ interface HistoryTableProps {
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
   >;
+  searchValue?: string;
 }
 
 const HistoryTable: React.FC<HistoryTableProps> = ({
   setCount,
   columnAnchorEl,
   setColumnAnchorEl,
+  searchValue,
 }) => {
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = useState(100);
@@ -81,6 +83,7 @@ const HistoryTable: React.FC<HistoryTableProps> = ({
       sort: sortField,
       sort_by: sortBy,
       fiscal_year: 2023,
+      search: searchValue,
       account_rid: accountid,
       interaction_rid: interactionId,
     },

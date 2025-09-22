@@ -238,7 +238,15 @@ export const Attachments: React.FC = () => {
             initialSearchText={searchText}
             onSearch={(value) => {
               setSearchText(value);
-              console.log('Search triggered for:', value);
+              setTableParams((prevParams) => {
+                const newParams = { ...prevParams };
+                if (value) {
+                  newParams.search = value;
+                } else {
+                  delete newParams.search;
+                }
+                return newParams;
+              });
             }}
             placeholder='Search'
             disabled={false}
@@ -301,6 +309,7 @@ export const Attachments: React.FC = () => {
           setCurrentCategory={setCurrentCategory}
           setColumnAnchorEl={setColumnAnchorEl}
           columnAnchorEl={columnAnchorEl}
+          searchValue={searchText}
         />
       </div>
     </div>
