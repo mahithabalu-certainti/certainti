@@ -57,7 +57,6 @@ import SectionHeader from '../../../../../components/details-section/section-hea
 const BUTTON_STYLES = {
   height: '24px !important',
   fontSize: '13px',
-  fontWeight: 600,
 };
 
 export interface ProjectsTabs {
