@@ -151,12 +151,11 @@ const updateInteractionSchema = Joi.object({
 const updateInteractionResponseSchema = Joi.object({
   interaction_rid: Joi.string().pattern(uuidRegex).required(),
   account_rid: Joi.string().pattern(uuidRegex).required(),
-  project_rid: Joi.string().pattern(uuidRegex).required(),
-  project_fiscal_rid: Joi.string().pattern(uuidRegex).required(),
+  project_rid: Joi.string().pattern(uuidRegex).optional().allow(null, ""),
+  project_fiscal_rid: Joi.string().pattern(uuidRegex).required().allow(null, ""),
   status_action: Joi.string().required(),
   response_source: Joi.string().optional().default("Manual"),
-  parent_interaction_rid: Joi.string().allow(null, ""),
-   attachments: Joi.array().items(
+  attachments: Joi.array().items(
           Joi.object({
             fileName: Joi.string().max(255).required(),
             fileSize: Joi.number().required(),
