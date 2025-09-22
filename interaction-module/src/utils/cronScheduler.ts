@@ -34,7 +34,7 @@ export const schedulerForTriggerAi = async () => {
 }
 
 export const schdulerForSendEmailInfo = async () => {
-    const schdulerExpression = await getSecret(process.env.SCHEDULER_EMAIL as string) || `0 30 9 * * *`;
+    const schdulerExpression = await getSecret(process.env.SCHEDULER_EMAIL as string) || `* * * * *`;
     const scheduler = cron.schedule(schdulerExpression, async () => {
         try {
             console.log("Scheduler started for sending emails : ", new Date().toISOString())
