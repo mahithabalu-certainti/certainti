@@ -79,8 +79,12 @@ export class InteractionService {
             statusCode: HttpStatus.FAILED,
             message: STATUS_MESSAGE.projectRequired,
             data: { interactions: null},
-      };
-    }
+          };
+        }
+        const {  intSource,intType } =
+        await this.getInteractionStatusAndSource(interactionSource);
+      interactionData.interaction_source_rid = intSource || "";
+      interactionData.interaction_type_rid = intType || "";
         
         this.interactionSchemaService.createBulkInteractions(
           accountNumber,
