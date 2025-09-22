@@ -26,6 +26,7 @@ import {
   InputType,
   ParentChildSelectOption,
   SelectOption,
+  StatusTypeEnum,
   YesNo,
 } from '../consultant/types';
 import { PermissionState } from '../store/type';
@@ -953,3 +954,20 @@ export const formatCostValue = (value: string): string => {
 export const removeFormatCostValue = (value: string): string => {
   return value.replace(/,/g, '');
 };
+
+  export const getDisableReason = (hasEmailRecipient: boolean, status: string, sendInteractionsEnable?: boolean) => {
+    if (!sendInteractionsEnable)
+      return 'Sending interactions permission is currently disabled. Please contact your administrator.';
+    if (!hasEmailRecipient)
+      return 'Key Contact is not available for this interaction';
+    if (status === StatusTypeEnum.sent)
+      return 'This interaction has already been sent';
+    if (status === StatusTypeEnum.response_draft)
+      return 'This interaction is currently in draft response stage';
+    if (status === StatusTypeEnum.response_received)
+      return 'A response has already been received for this interaction';
+    if (status === StatusTypeEnum.inqueue)
+      return 'This interaction is currently queued for sending';
+    if (status === '') return 'Interaction status is invalid or undefined';
+    return '';
+  };

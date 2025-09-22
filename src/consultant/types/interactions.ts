@@ -91,6 +91,9 @@ export type InteractionFormPayload = {
   parent_interaction_rid?: string;
   questions: InteractionQuestionPayload[];
   account_interaction_rid?: string;
+  trigger_send?: boolean;
+  interaction_level_rid?: string;
+  projects?: SendIntractionProject[];
 };
 
 export interface InteractionQuestionErrors {

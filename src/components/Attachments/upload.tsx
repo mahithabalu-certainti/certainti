@@ -180,7 +180,7 @@ const Uploads: React.FC<UploadsProps> = ({
   };
 
   return (
-    <div className='h-auto border border-[#CBD6E2] flex flex-col'>
+    <div className='h-auto border border-[#CBD6E2] flex flex-col mb-3'>
       <div className='h-[38px] py-1 px-2 border-b border-[#CBD6E2] flex items-center justify-between'>
         <div className='flex items-center gap-1'>
           <div className='w-[24px] h-[24px] flex items-center justify-center bg-[#D8E9FF] rounded-full'>

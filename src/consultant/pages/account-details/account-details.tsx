@@ -412,6 +412,10 @@ export const AccountDetails = () => {
           account_rid: accountid || '',
           sort_by: interactionsParams?.sortOrder || 'ASC',
           filters: interactionsParams?.filters || {},
+          fiscal_year: convertedFiscalYear,
+          flag: 'account',
+          sort: 'r_number',
+          page: 1,
         };
         exportAccountInteractions(projectInteractionExportPayload);
         return;

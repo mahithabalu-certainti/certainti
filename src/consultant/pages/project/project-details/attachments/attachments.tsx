@@ -155,7 +155,6 @@ const Attachments: React.FC<AttachmentsProps> = ({
   };
   const onRefreshClick = () => {
     setRefreshAttachments(Date.now());
-    refetchProjectDetails();
   };
 
   const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
@@ -306,17 +305,30 @@ const Attachments: React.FC<AttachmentsProps> = ({
     permissionMap
   );
 
-  const attachmentColumns = getAttachmentTableColumns(
-    fiscalYears,
-    memoizedDocumentCategories,
-    memoizedDocumentTypes,
-    handleDocumentCategory,
-    handleDownload,
-    permissionMap,
-    isAttachmentExportEnable,
-    categoryTypes.isLoading,
-    accountOrProjectInActive
+  const attachmentColumns = useMemo(
+    () =>
+      getAttachmentTableColumns(
+        fiscalYears,
+        memoizedDocumentCategories,
+        memoizedDocumentTypes,
+        handleDocumentCategory,
+        handleDownload,
+        permissionMap,
+        isAttachmentExportEnable,
+        categoryTypes.isLoading,
+        accountOrProjectInActive
+      ),
+    [accountOrProjectInActive, memoizedDocumentTypes]
   );
+
+  const [visibleColumns, setVisibleColumns] = useState<
+    ListTableColumn<AttachmentList>[]
+  >(attachmentColumns.filter((col) => !col.hide));
+
+  useEffect(() => {
+    const updatedColumns = attachmentColumns.filter((col) => !col.hide);
+    setVisibleColumns(updatedColumns);
+  }, [accountOrProjectInActive, memoizedDocumentTypes, attachmentColumns]);
 
   const handleFieldChange = async (event: FieldChangeEvent) => {
     if (event.columnId === 'document_category' && event.value) {
@@ -405,10 +417,6 @@ const Attachments: React.FC<AttachmentsProps> = ({
     },
   ];
 
-  const [visibleColumns, setVisibleColumns] = useState<
-    ListTableColumn<AttachmentList>[]
-  >(attachmentColumns.filter((col) => !col.hide));
-
   if (!attachmentEnable || !isAttachmentViewEnable) return <AccessRestricted />;
 
   const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
@@ -452,7 +460,10 @@ const Attachments: React.FC<AttachmentsProps> = ({
         <Uploads
           accountId={accountID}
           attachID={projectid}
-          onUploadSuccess={onRefreshClick}
+          onUploadSuccess={() => {
+            onRefreshClick();
+            refetchProjectDetails();
+          }}
           projectFiscalYear={projectFiscalYear}
         />
       ) : (
@@ -489,7 +500,7 @@ const Attachments: React.FC<AttachmentsProps> = ({
               tableStyle={{
                 borderBottom: '1px solid #CBD6E2',
                 height: '100%',
-                maxHeight: 'calc(100vh - 360px)',
+                maxHeight: 'calc(100vh - 380px)',
                 overflow: 'auto',
               }}
               stickyHeader={true}

@@ -121,7 +121,7 @@ export const ProjectTask = ({
   const [searchParams] = useSearchParams();
   const accountID =
     accountData?.accountID || searchParams.get('accountID') || '';
-
+  const currency_rid = searchParams.get('currency_rid') || '';
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
 
@@ -369,6 +369,7 @@ export const ProjectTask = ({
       project_Id,
       account_name: accountData?.accountName || '',
       account_number: accountData?.accountNumber || '',
+      currency_rid: currency_rid ?? '',
       PFY: JSON.stringify(PFY),
       projectCode: projectCode ?? '',
       source: 'createProjectTask',
@@ -665,7 +666,7 @@ export const ProjectTask = ({
                   hoverHighlight={false}
                   tableStyle={{
                     height: '100%',
-                    maxHeight: 'calc(100vh - 360px)',
+                    maxHeight: 'calc(100vh - 380px)',
                     overflow: 'auto',
                   }}
                   stickyHeader={true}

@@ -54,6 +54,7 @@ import {
   GLOBAL_INTERACTIONS_EDIT,
   GLOBAL_INTERACTIONS_CREATE,
   MANAGE_SETTINGS,
+  ACCOUNT_INTERACTIONS_CREATE,
 } from './routes';
 import { RootState } from './store/store';
 import ProjectTaskForm from './consultant/pages/project/project-details/project-task/form/project-task-form';
@@ -135,6 +136,13 @@ const InteractionForm = lazy(
     import('./consultant/pages/interaction/interaction-form/interaction-form')
 );
 
+const AccountInteractionForm = lazy(
+  () =>
+    import(
+      './consultant/pages/interaction/interaction-form/account-interaction-form'
+    )
+);
+
 const Interaction = lazy(
   () => import('./consultant/pages/interaction/interaction-list/interaction')
 );
@@ -210,6 +218,10 @@ export const App: React.FC<IApp> = ({ instance }) => {
                 <Route
                   path={INTERACTIONS_CREATE}
                   element={<InteractionForm />}
+                />
+                <Route
+                  path={ACCOUNT_INTERACTIONS_CREATE}
+                  element={<AccountInteractionForm />}
                 />
                 <Route
                   path={GLOBAL_INTERACTIONS_CREATE}

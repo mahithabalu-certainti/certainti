@@ -177,6 +177,7 @@ export type Project = {
   is_rd_qualified: boolean;
   industry_name_other: string | null;
   project_type: string;
+  project_type_name: string;
   project_client_group: string | null;
   project_group: string | null;
   project_classification_rid: string | null;

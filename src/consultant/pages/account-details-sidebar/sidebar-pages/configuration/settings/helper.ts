@@ -10,7 +10,7 @@ export const settingsFormFields = (
   permissionMap?: Record<string, { read: boolean; edit: boolean }>,
   emailRequried?: boolean,
   idRequired?: boolean,
-  isIDEnabled?: boolean
+  isParentAccount?: boolean
 ): FormType[] => {
   return [
     {
@@ -24,8 +24,9 @@ export const settingsFormFields = (
             permissionMap?.['blended_rate_fte']?.read &&
             !permissionMap?.['blended_rate_fte']?.edit,
           hide:
-            !permissionMap?.['blended_rate_fte']?.read &&
-            !permissionMap?.['blended_rate_fte']?.edit,
+            isParentAccount ||
+            (!permissionMap?.['blended_rate_fte']?.read &&
+              !permissionMap?.['blended_rate_fte']?.edit),
           regex: REGEX_PATTERNS.BLENDED_NUMBER,
           regexErrorMessage:
             'Only positive numbers allowed, up to 3 digits and 2 decimal places',
@@ -37,8 +38,9 @@ export const settingsFormFields = (
             permissionMap?.['blended_rate_subcon']?.read &&
             !permissionMap?.['blended_rate_subcon']?.edit,
           hide:
-            !permissionMap?.['blended_rate_subcon']?.read &&
-            !permissionMap?.['blended_rate_subcon']?.edit,
+            isParentAccount ||
+            (!permissionMap?.['blended_rate_subcon']?.read &&
+              !permissionMap?.['blended_rate_subcon']?.edit),
           regex: REGEX_PATTERNS.BLENDED_NUMBER,
           regexErrorMessage:
             'Only positive numbers allowed, up to 3 digits and 2 decimal places',
@@ -53,8 +55,9 @@ export const settingsFormFields = (
               permissionMap?.['max_interaction_follow_up']?.read &&
               !permissionMap?.['max_interaction_follow_up']?.edit,
             hide:
-              !permissionMap?.['max_interaction_follow_up']?.read &&
-              !permissionMap?.['max_interaction_follow_up']?.edit,
+              isParentAccount ||
+              (!permissionMap?.['max_interaction_follow_up']?.read &&
+                !permissionMap?.['max_interaction_follow_up']?.edit),
             regex: REGEX_PATTERNS.MAX_AI_INTERACTIONS,
             regexErrorMessage:
               'Max Interaction Follow Up must be between 1 and 10',
@@ -65,7 +68,7 @@ export const settingsFormFields = (
           required: idRequired,
           placeholder: 'Enter Email',
           onChange: true,
-          hide: !isIDEnabled,
+          hide: !isParentAccount,
           // disabled:
           //   permissionMap?.['support_email']?.read &&
           //   !permissionMap?.['support_email']?.edit,
@@ -78,7 +81,7 @@ export const settingsFormFields = (
         createTextField('tenant_id', 'Tenant ID', {
           required: emailRequried,
           placeholder: 'Enter Tenant ID',
-          hide: !isIDEnabled,
+          hide: !isParentAccount,
           onChange: true,
           // disabled:
           //   permissionMap?.['tenant_id']?.read &&
@@ -93,7 +96,7 @@ export const settingsFormFields = (
           required: emailRequried,
           placeholder: 'Enter Client ID',
           onChange: true,
-          hide: !isIDEnabled,
+          hide: !isParentAccount,
           // disabled:
           //   permissionMap?.['client_id']?.read &&
           //   !permissionMap?.['client_id']?.edit,
@@ -108,7 +111,7 @@ export const settingsFormFields = (
           required: emailRequried,
           placeholder: 'Enter Client Secret',
           onChange: true,
-          hide: !isIDEnabled,
+          hide: !isParentAccount,
           // disabled:
           //   permissionMap?.['client_secret']?.read &&
           //   !permissionMap?.['client_secret']?.edit,
@@ -125,8 +128,9 @@ export const settingsFormFields = (
             permissionMap?.['auto_assessment']?.read &&
             !permissionMap?.['auto_assessment']?.edit,
           hide:
-            !permissionMap?.['auto_assessment']?.read &&
-            !permissionMap?.['auto_assessment']?.edit,
+            isParentAccount ||
+            (!permissionMap?.['auto_assessment']?.read &&
+              !permissionMap?.['auto_assessment']?.edit),
         }),
         createRadioField('auto_send_ai_interaction', 'Auto Send Interaction', {
           required: true,
@@ -135,8 +139,9 @@ export const settingsFormFields = (
             permissionMap?.['auto_send_interaction']?.read &&
             !permissionMap?.['auto_send_interaction']?.edit,
           hide:
-            !permissionMap?.['auto_send_interaction']?.read &&
-            !permissionMap?.['auto_send_interaction']?.edit,
+            isParentAccount ||
+            (!permissionMap?.['auto_send_interaction']?.read &&
+              !permissionMap?.['auto_send_interaction']?.edit),
         }),
       ],
     },

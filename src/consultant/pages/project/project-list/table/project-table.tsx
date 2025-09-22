@@ -234,13 +234,27 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
     [dropdownOptions?.projectType?.data?.projectType]
   );
 
-  const projectColumns = getAllProjectListColumns(
-    handleAccountName,
-    memoizedProjectTypes,
-    memoizedClassification,
-    handleEdit,
-    permissionMap
+  const projectColumns = useMemo(
+    () =>
+      getAllProjectListColumns(
+        handleAccountName,
+        memoizedProjectTypes,
+        memoizedClassification,
+        handleEdit,
+        permissionMap
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [memoizedProjectTypes, memoizedClassification]
   );
+
+  const [visibleColumns, setVisibleColumns] = useState<
+    ListTableColumn<Project>[]
+  >(projectColumns.filter((col) => !col.hide));
+
+  useEffect(() => {
+    const updatedColumns = projectColumns.filter((col) => !col.hide);
+    setVisibleColumns(updatedColumns);
+  }, [memoizedProjectTypes, memoizedClassification, projectColumns]);
 
   const actionButtons: ActionItem<Project>[] = [
     {
@@ -390,10 +404,6 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
       canDrag: false,
     },
   ];
-
-  const [visibleColumns, setVisibleColumns] = useState<
-    ListTableColumn<Project>[]
-  >(projectColumns.filter((col) => !col.hide));
 
   const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
     setVisibleColumns(

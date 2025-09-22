@@ -211,7 +211,7 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
         hoverHighlight={false}
         tableStyle={{
           height: '100%',
-          maxHeight: 'calc(100vh - 400px)',
+          maxHeight: 'calc(100vh - 420px)',
           overflow: 'auto',
         }}
         stickyHeader={true}

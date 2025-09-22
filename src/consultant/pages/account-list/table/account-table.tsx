@@ -155,13 +155,26 @@ const AccountTable: React.FC<Record<string, any>> = ({
     setOrder(direction);
   };
 
-  const accountColumns = getAccountColumns(
-    handleAccountNameClick,
-    countryOptions,
-    industryOptions,
-    handleEdit,
-    permissionMap
+  const accountColumns = useMemo(
+    () =>
+      getAccountColumns(
+        handleAccountNameClick,
+        countryOptions,
+        industryOptions,
+        handleEdit,
+        permissionMap
+      ),
+    [countryOptions, industryOptions]
   );
+
+  const [visibleColumns, setVisibleColumns] = useState<
+    ListTableColumn<AccountList>[]
+  >(accountColumns.filter((col) => !col.hide));
+
+  useEffect(() => {
+    const updatedColumns = accountColumns.filter((col) => !col.hide);
+    setVisibleColumns(updatedColumns);
+  }, [countryOptions, industryOptions, accountColumns]);
 
   const isSkeletonLoading = loading || colorCodes.isLoading;
 
@@ -285,10 +298,6 @@ const AccountTable: React.FC<Record<string, any>> = ({
       setAccountsList(previousAccounts);
     }
   };
-
-  const [visibleColumns, setVisibleColumns] = useState<
-    ListTableColumn<AccountList>[]
-  >(accountColumns.filter((col) => !col.hide));
 
   const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
     setVisibleColumns(
