@@ -66,8 +66,8 @@ export const getResourceColumns = (
           errorMessage: 'Max length exceeded',
         },
         {
-          regex: REGEX_PATTERNS.NO_LEADING_SPECIAL_REGEX,
-          errorMessage: 'Cannot start with a number, hyphen, or underscore.',
+          regex: REGEX_PATTERNS.NO_LEADING_SPECIAL_REGEX_FOR_RESOURCE_CODE,
+          errorMessage: 'Cannot start with a space, hyphen, or underscore.',
         },
         {
           regex: REGEX_PATTERNS.ALLOWED_CHARS_REGEX,
