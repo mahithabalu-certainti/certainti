@@ -15,6 +15,7 @@ export interface AccountFiscalRegionAttributes {
   total_projects: number | null;
   total_fte?: number | null;
   total_subcon?: number | null;
+  total_nonlabor?: number | null;
   total_project_hours_fte?: number | null;
   total_project_hours_subcon?: number | null;
   total_project_hours?: number | null;
@@ -93,6 +94,7 @@ export class AccountFiscalRegion
   public total_projects!: number | null;
   public total_fte?: number | null;
   public total_subcon?: number | null;
+  public total_nonlabor?: number | null;
 
   public total_project_hours_fte?: number | null;
   public total_project_hours_subcon?: number | null;
@@ -213,6 +215,10 @@ export class AccountFiscalRegion
           allowNull: true,
         },
         total_subcon: {
+          type: DataTypes.INTEGER,
+          allowNull: true,
+        },
+        total_nonlabor: {
           type: DataTypes.INTEGER,
           allowNull: true,
         },
