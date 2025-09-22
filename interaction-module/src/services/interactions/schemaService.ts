@@ -3520,7 +3520,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       const qreSubconCost = totalSubconCost * (netQre / 100);
       const qreNonlaborCost = totalNonlaborCost * (netQre / 100);
 
-      const shouldUseStandardUpdate = qreAdjustment === null || qreAdjustment === undefined;
+      const shouldUseStandardUpdate = qreAdjustment === null || qreAdjustment === undefined || qreAdjustment === 0;
       
       const finalQreUpdateQuery = shouldUseStandardUpdate
         ? rawQueries.updateQreInfo(projectFiscalRid, schemaName, qrePercent, {
