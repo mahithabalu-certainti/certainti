@@ -704,63 +704,7 @@ export class InteractionService {
     }
 
   }
-   async exportAccountInteractions(data : any,
-    filters: Record<string, any>
-    ) :  Promise<{
-    statusCode: number;
-    message: string;
-    errorMessage?: string;
-    data?: { accountInteractions: any,count: number };
-  }> {
-    try {
-        const { accountNumber } =
-        await this.interactionSchemaService.fetchValidAccountNumberById(
-          data.account_rid
-        );
 
-      if (!accountNumber) {
-        return {
-          statusCode: HttpStatus.FAILED,
-          message: HttpStatus.FAILED_MESSAGE,
-          errorMessage: "Invalid account ID",
-        };
-      }
-      const response =
-        await this.interactionSchemaService.listAccountInteractions(
-          accountNumber,
-          data.account_rid,
-          0,
-          0,
-          filters,
-          data.sort_by,
-          data.sort_order,
-          "download"
-        );
-
-      if (!response) {
-        return {
-          statusCode: HttpStatus.FAILED,
-          message: HttpStatus.FAILED_MESSAGE,
-          errorMessage: "Invalid interaction ID",
-        };
-      }
-       return {
-        statusCode: HttpStatus.SUCCESS,
-        message: HttpStatus.SUCCESS_MESSAGE,
-        data: {
-          accountInteractions: response.accountInteractions,
-          count: response.count
-        },
-      };
-    }
-    catch (err) {
-      throw this.throwServiceError(err as Error);
-    }
-
-  }
-
-
-  
    async exportTechnicalSummary(data : any,
     filters: Record<string, any>
     ) :  Promise<{
@@ -1523,6 +1467,8 @@ export class InteractionService {
           ...d,
           status_rid: d.status,
           status_name: d.status == '' || d.status == null ? null : statusMap.get(d.status),
+          recipient_name: d.recipient_name == '' || d.recipient_name == null ? null : d.recipient_name,
+          recipient_email: d.recipient_email == '' || d.recipient_email == null ? null : d.recipient_email,
           interaction_type_rid: d.interaction_type,
           interaction_type_name: typeMap.get(d.interaction_type),
           interaction_source_rid: d.interaction_source,

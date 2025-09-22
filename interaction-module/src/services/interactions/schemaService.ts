@@ -2791,10 +2791,26 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           rawQueries.fetchInteractionRecipientAccount(accountRid,statusArr.rid ,schemaName),
           { type: "SELECT" }
         );
+        const interactionCCRecipientsAccount: any[] =
+        await this.orgDbSequelize.query(
+          rawQueries.fetchInteractionRecipientAccount(accountRid,statusArr.rid ,schemaName),
+          { type: "SELECT" }
+        );
+
+    
+      const ccEmails = [
+        ...interactionCCRecipientsAccount
+          .map((rec) => rec.key_contact_email)
+          .filter(Boolean),
+      ].filter((email, idx, arr) => email && arr.indexOf(email) === idx);
+
+      // Remove duplicates
+      const uniqueCCEmails = Array.from(new Set(ccEmails));
 
       return {
         name: interactionRecipients?.key_contact_name ?? null,
         email: interactionRecipients?.key_contact_email ?? null,
+        ccEmails: uniqueCCEmails ?? [],
       };
     } catch (err) {
       throw new Error("Error fetching POC email: " + (err as Error).message);
