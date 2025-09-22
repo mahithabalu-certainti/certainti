@@ -3819,13 +3819,9 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     const schemaName = `trd365_${account_number.replace(/\D/g, "")}`;
     try {
 
-      const parentAccountQuery = `
-        SELECT * FROM "${schemaName}".account_details WHERE account_rid = :account_rid
-      `;
-
       const sequelize = await initOrgSequelize();
 
-      const fetchParentAccount: any = await sequelize.query(parentAccountQuery, {
+      const fetchParentAccount: any = await sequelize.query(rawQueries.fetchInteractionSenderEmail(schemaName, parentAccountId), {
         replacements: { account_rid: parentAccountId },
         type: "SELECT",
       });
