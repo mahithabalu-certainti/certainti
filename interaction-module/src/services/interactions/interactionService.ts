@@ -181,7 +181,16 @@ export class InteractionService {
           interactionData.status_rid
         );
       }
-      const isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(accountNumber, interactionData.project_fiscal_rid);
+      let isEmailRecipientAvailable = false;
+      if(intLevel === 'Account')
+      {
+        isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(accountNumber, interactionData.project_fiscal_rid);
+      }
+      else
+      {
+        isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(accountNumber, interactionData.project_fiscal_rid);
+      }
+     
       this.logger.info(`Is email recipient available: ${isEmailRecipientAvailable} for interaction: ${interaction.dataValues.rid} with project fiscal:${interactionData.project_fiscal_rid}`);
       if((interactionStatus === statusAction.DRAFT && isEmailRecipientAvailable) || interactionData.trigger_send)
       await this.checkAutoSendEnabled(accountNumber,interactionData,interaction.rid,userId,interactionData?.account_rid,intLevel, parentAccountId);
@@ -204,6 +213,7 @@ export class InteractionService {
         },
       };
     } catch (err) {
+       this.logger.error(`Error creating interaction, ${err}`);
       await transaction.rollback();
      this.logger.error("Error creating interaction", err);
        return {
