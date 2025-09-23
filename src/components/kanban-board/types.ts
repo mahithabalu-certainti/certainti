@@ -1,53 +1,47 @@
-import type React from 'react';
 export interface Task {
   id: string;
   title: string;
-  completed?: boolean;
-  disabled?: boolean;
-  hidden?: boolean;
-  createdAt?: Date;
+  description?: string;
+  status: 'Done' | 'High' | 'Complete';
+  assignee: {
+    name: string;
+    initials: string;
+    color: string;
+  };
+  commentCount: number;
+  createdAt: Date;
 }
 
-export interface Board {
+export interface KanbanColumn {
   id: string;
-  title: string;
-  color: string;
+  name: string;
   tasks: Task[];
-  maxItems?: number;
-  disabled?: boolean;
-  hidden?: boolean;
-  allowCreateTask?: boolean;
-  allowTaskInteraction?: boolean;
+  taskCount: number;
 }
 
-export interface DropdownOption {
-  id: string;
-  label: string;
-  icon?: React.ReactNode;
-  action: () => void;
-  disabled?: boolean;
-  hidden?: boolean;
-  variant?: 'default' | 'danger';
+export interface KanbanBoardProps {
+  data: KanbanColumn[];
+  isCreateTaskDisabled?: boolean;
+  isCreateTaskHide?: boolean;
+  isCreateKanbanDisabled?: boolean;
+  isCreateKanbanHide?: boolean;
+  showCommentCount?: boolean;
+  showTaskCount?: boolean;
+  showProfileIndicator?: boolean;
 }
 
-export interface KanbanConfig {
-  allowCreateBoard?: boolean;
-  allowDeleteBoard?: boolean;
-  allowSwapBoards?: boolean;
-  allowCreateTask?: boolean;
-  allowTaskMovement?: boolean;
-  allowTaskDelete?: boolean;
-  maxBoardsLimit?: number;
-  customDropdownOptions?: DropdownOption[];
+export interface TaskCardProps {
+  task: Task;
+  showCommentCount: boolean;
+  showProfileIndicator: boolean;
 }
 
-export interface KanbanProps {
-  boards: Board[];
-  onBoardsChange: (boards: Board[]) => void;
-  config?: KanbanConfig;
-  className?: string;
+export interface KanbanColumnProps {
+  column: KanbanColumn;
+  showTaskCount: boolean;
+  showCommentCount: boolean;
+  showProfileIndicator: boolean;
+  isCreateTaskDisabled: boolean;
+  isCreateTaskHide: boolean;
+  onAddTask: (columnId: string) => void;
 }
-
-export type ActiveItem =
-  | { type: 'task'; task: Task; boardId: string }
-  | { type: 'board'; board: Board; boardId: string };
