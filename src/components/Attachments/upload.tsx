@@ -218,7 +218,10 @@ const Uploads: React.FC<UploadsProps> = ({
             }}
           >
             <UploadIcon alt='Upload Icon' className='w-[36px] h-[24px]' />
-            <div className='text-[14px] text-[#0B0B0B]' style={{ whiteSpace: 'nowrap' }}>
+            <div
+              className='text-[14px] text-[#0B0B0B]'
+              style={{ whiteSpace: 'nowrap' }}
+            >
               Drag your file or{' '}
               <span
                 className='text-[#0176D3] underline'
