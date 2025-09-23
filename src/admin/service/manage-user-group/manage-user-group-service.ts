@@ -14,6 +14,7 @@ import {
   UserGroupUpdateDetails,
 } from '../../types';
 import { buildQueryString, generateFile } from '../helpers';
+import { mockProjectListByAccounts } from '../../mockdata/project-list-by-accounts';
 
 export const fetchManageUserGroupList = async (params: UserListParams = {}) => {
   const queryParams = {
@@ -106,12 +107,14 @@ export const useGetUsersByAccount = () => {
   });
 };
 
-export const fetchProjectsByAccount = async (body: UserGroupParam) => {
-  const response = await userServiceApi.post<ProjectListByAccountsApiResponse>(
-    `/api/user_group/projects-of-accounts`,
-    body
-  );
-  return response.data;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const fetchProjectsByAccount = async (_body: UserGroupParam) => {
+  // const response = await userServiceApi.post<ProjectListByAccountsApiResponse>(
+  //   `/api/user_group/projects-of-accounts`,
+  //   body
+  // );
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+  return mockProjectListByAccounts;
 };
 
 export const useGetprojectByAccount = () => {
