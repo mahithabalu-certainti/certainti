@@ -4,9 +4,7 @@ import {
   REGEX_PATTERNS,
   valueDisplay,
 } from '../../../../common-utils';
-import {
-  ListTableColumn,
-} from '../../../../components/table/types';
+import { ListTableColumn } from '../../../../components/table/types';
 import {
   InteractionDetails,
   InteractionFormData,

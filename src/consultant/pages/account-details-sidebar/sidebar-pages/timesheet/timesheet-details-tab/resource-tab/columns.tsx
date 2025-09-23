@@ -147,7 +147,7 @@ export const getResourceTabTableColumns = (
     label: 'Status',
     sortable: true,
     sortId: 'status_name',
-    width: 150, 
+    width: 150,
     hide:
       !permissionMap?.['status_rid']?.read &&
       !permissionMap?.['status_rid']?.edit,

@@ -88,7 +88,7 @@ export const useManageAccountAccessUserList = (
 export const useManageAccountAccessGroupList = (
   params: ManageUserListParms,
   accountId: string,
-  refreshProfileTrigger?: number,
+  refreshProfileTrigger?: number
 ) => {
   return useQuery<ManageAccountGroupListApiResponse, Error>({
     queryKey: ['manageAccountGroup', params, refreshProfileTrigger],
