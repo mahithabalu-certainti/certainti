@@ -152,6 +152,7 @@ const Uploads: React.FC<UploadsProps> = ({
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setMessage(null);
     const validFiles = validateFiles(e.target.files);
     if (validFiles.length > 0) {
       setSelectedFiles([validFiles[0]]);
@@ -161,6 +162,7 @@ const Uploads: React.FC<UploadsProps> = ({
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     if (selectedFiles.length > 0) return;
+    setMessage(null);
     const validFiles = validateFiles(e.dataTransfer.files);
     if (validFiles.length > 0) {
       setSelectedFiles([validFiles[0]]);
@@ -216,7 +218,7 @@ const Uploads: React.FC<UploadsProps> = ({
             }}
           >
             <UploadIcon alt='Upload Icon' className='w-[36px] h-[24px]' />
-            <div className='text-[14px] text-[#0B0B0B]'>
+            <div className='text-[14px] text-[#0B0B0B]' style={{ whiteSpace: 'nowrap' }}>
               Drag your file or{' '}
               <span
                 className='text-[#0176D3] underline'
@@ -242,7 +244,7 @@ const Uploads: React.FC<UploadsProps> = ({
           <div className='w-[502px] max-w-[502px] mt-2 h-[20px]'>
             {message && (
               <div
-                className={`break-all text-sm ${
+                className={`text-sm ${
                   message.type === 'error' ? 'text-red-600' : 'text-green-600'
                 }`}
               >
