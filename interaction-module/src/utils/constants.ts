@@ -60,7 +60,7 @@ export const NODE_ENV = {
   DEV: "DEV",
   PROD: "PRODUCTION",
 };
-export const sendEmailCount = 10
+export const sendEmailCount = 25
 export const OTP_EXPIRY_MINUTES = 10;
 export const MAX_RESEND_ATTEMPTS = 3;
 
