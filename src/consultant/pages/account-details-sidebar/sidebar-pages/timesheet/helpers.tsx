@@ -126,7 +126,7 @@ export const getTimesheetFilterFields = (
       hide:
         !permissionMap?.['records_failed_to_load']?.edit &&
         !permissionMap?.['records_failed_to_load']?.read,
-    }, 
+    },
     {
       name: 'Status Description',
       value: 'status_description',

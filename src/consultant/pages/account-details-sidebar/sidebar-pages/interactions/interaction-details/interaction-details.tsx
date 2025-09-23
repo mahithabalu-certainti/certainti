@@ -132,7 +132,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     sendInteraction.mutate(payload, {
       onSuccess: (response) => {
         successToast(response?.statusMessage);
-        // refetch();
+        refetch();
       },
     });
     return;
@@ -158,7 +158,6 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       disabled: accountInActive || !disableRemainderBtn,
       onClick: () => handleReminderBtn(),
       sx: { width: '78px', minWidth: '78px' },
-      hide: true,
       loading: sendInteraction.isPending,
     },
     {

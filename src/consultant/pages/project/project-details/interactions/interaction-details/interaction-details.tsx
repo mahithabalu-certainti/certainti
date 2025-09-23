@@ -148,7 +148,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     sendInteraction.mutate(payload, {
       onSuccess: (response) => {
         successToast(response?.statusMessage);
-        // onSuccessRefetch();
+        refetch();
       },
     });
     return;
