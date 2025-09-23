@@ -55,7 +55,7 @@ export class InteractionService {
     const dbInit = await this.interactionModelService.getSequelize();
     const transaction = await dbInit.transaction();
       interactionData.created_by = userId;
-      const { accountNumber } =
+      const { accountNumber, parentAccountId } =
         await this.interactionSchemaService.fetchValidAccountNumberById(
           interactionData.account_rid
         );
@@ -89,6 +89,7 @@ export class InteractionService {
           accountNumber,
           interactionData,
           userId,
+          parentAccountId,
           intLevel!
         )
       }
@@ -180,7 +181,16 @@ export class InteractionService {
           interactionData.status_rid
         );
       }
-      const isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(accountNumber, interactionData.project_fiscal_rid);
+      let isEmailRecipientAvailable = false;
+      if(intLevel === 'Account')
+      {
+        isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(accountNumber, interactionData.project_fiscal_rid);
+      }
+      else
+      {
+        isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(accountNumber, interactionData.project_fiscal_rid);
+      }
+     
       this.logger.info(`Is email recipient available: ${isEmailRecipientAvailable} for interaction: ${interaction.dataValues.rid} with project fiscal:${interactionData.project_fiscal_rid}`);
       if((interactionStatus === statusAction.DRAFT && isEmailRecipientAvailable) || interactionData.trigger_send)
       await this.checkAutoSendEnabled(accountNumber,interactionData,interaction.rid,userId,interactionData?.account_rid,intLevel, parentAccountId);
@@ -203,6 +213,7 @@ export class InteractionService {
         },
       };
     } catch (err) {
+       this.logger.error(`Error creating interaction, ${err}`);
       await transaction.rollback();
      this.logger.error("Error creating interaction", err);
        return {
@@ -213,7 +224,8 @@ export class InteractionService {
     }
   }
   async checkAutoSendEnabled(accountNumber: string, interactionData: ICreateInteraction, interactionId: string, userId: string, accountRid: string, interactionLevel:string, parentAccountId: string) {
-    if(interactionData?.trigger_send){
+    const isParensettingsConfigured = await this.interactionSchemaService.fetchAccountDetails(accountNumber, parentAccountId);
+    if(interactionData?.trigger_send && isParensettingsConfigured){
        await this.sendInteraction([{ interaction_rid: interactionId,
         project_fiscal_rid: interactionData.project_fiscal_rid,interaction_level:interactionLevel
        }], interactionData.account_rid, userId, false,'Manual-Send');
@@ -221,7 +233,6 @@ export class InteractionService {
     }
     else{
     const isEnabled = await this.interactionSchemaService.isAutoSendInteractionEnabled(accountNumber, interactionData);
-    const isParensettingsConfigured = await this.interactionSchemaService.fetchAccountDetails(accountNumber, accountRid, parentAccountId);
     this.logger.info(`Auto-send is ${isEnabled ? "enabled" : "disabled"} for interaction ID: ${interactionId}`);
     if (isEnabled && isParensettingsConfigured) {
        const projectInfo = await this.interactionSchemaService.fetchProjectInfo(accountNumber, interactionData.project_fiscal_rid);
