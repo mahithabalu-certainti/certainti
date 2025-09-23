@@ -571,6 +571,12 @@ export const rawQueries = {
     return `
     SELECT * FROM ${schemaName}.project_fiscal WHERE rid = '${projectFiscalId}'`;
   },
+  fetchInteractionDetailsById(schemaName: string, interactionId: string): string {
+    return `
+      SELECT rid, interaction_level_rid from ${schemaName}.interactions
+      WHERE rid = '${interactionId}'
+    `;
+  },
   GET_ACCOUNT_ACCESS: `
 (
   (
