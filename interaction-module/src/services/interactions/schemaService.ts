@@ -3124,6 +3124,42 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     }
   }
 
+   async isEmailRecipientAvailableForAccount
+  (     
+    accountNumber: string,  
+    accountRid: string
+  ): Promise<boolean> {
+    try {
+      if (!this.orgDbSequelize) {     
+        this.orgDbSequelize = await this.interactionModelService.getSequelize();
+      }
+      if(!this.mainDbSequelize)
+      {
+        this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
+      }
+      const [activeStatus]: any[] = await this.mainDbSequelize.query(
+        rawQueries.fetchActiveStatusByType("Active"),
+        { type: "SELECT" }
+      );
+
+       const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+          /\D/g,
+          ""
+        )}`;
+      const [recipientInfo]: any[] = await this.orgDbSequelize.query(
+        rawQueries.fetchInteractionRecipientAccount(accountRid, activeStatus.rid, schemaName),
+        { type: "SELECT" }
+      );
+
+      return !!(recipientInfo && recipientInfo.key_contact_email);
+    } catch (err) {
+      throw new Error(
+        "Error checking email recipient availability: " +
+          (err as Error).message
+      );
+    }
+  }
+
   async checkGlobalAutoSendAccess() {
     try {
       if (!this.mainDbSequelize) {
