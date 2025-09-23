@@ -207,6 +207,7 @@ class InteractionSchemaService {
     accountNumber: string,
     interactionData: ICreateInteraction,
     userId: string,
+    parentAccountId: string,
     interactionLevel: string
   ) {
     try {
@@ -293,7 +294,8 @@ class InteractionSchemaService {
            }
         }
        
-        if (interactionData.trigger_send || autoSendAccess) {
+        const isParensettingsConfigured = await this.fetchAccountDetails(accountNumber, parentAccountId);
+        if (isParensettingsConfigured && (interactionData.trigger_send || autoSendAccess)) {
           // Bulk insert SendEmailInfo
           const sendEmailInfoData = prepareSendEmailInfoData(createdInteractions, interactionData.projects);
           await batchInsert(SendEmailInfo, sendEmailInfoData);
@@ -328,7 +330,7 @@ class InteractionSchemaService {
           }
 
           // Bulk insert SendEmailInfo for enabled projects only
-          if (enabledProjects.length > 0 && enabledInteractions.length > 0) {
+          if (enabledProjects.length > 0 && enabledInteractions.length > 0 && isParensettingsConfigured) {
             const sendEmailInfoData = prepareSendEmailInfoData(enabledInteractions, enabledProjects);
             await batchInsert(SendEmailInfo, sendEmailInfoData);
 
@@ -3831,7 +3833,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     })
   }
 
-  async fetchAccountDetails(account_number: string, account_rid: string, parentAccountId: string) {
+  async fetchAccountDetails(account_number: string, parentAccountId: string) {
     const schemaName = `trd365_${account_number.replace(/\D/g, "")}`;
     try {
 
