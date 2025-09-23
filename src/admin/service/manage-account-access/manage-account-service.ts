@@ -88,7 +88,7 @@ export const useManageAccountAccessUserList = (
 export const useManageAccountAccessGroupList = (
   params: ManageUserListParms,
   accountId: string,
-  refreshProfileTrigger?: number,
+  refreshProfileTrigger?: number
 ) => {
   return useQuery<ManageAccountGroupListApiResponse, Error>({
     queryKey: ['manageAccountGroup', params, refreshProfileTrigger],
@@ -126,6 +126,7 @@ export const fetchUserGroupList = async (
   groupId: string,
   params?: Record<string, unknown>
 ) => {
+  console.log('params', params);
   const response = await userServiceApi.get<ActiveUserForGroupApiResponse>(
     `/api/user_group/users/${accountId}/${groupId}?${buildQueryString(params ?? {})}`
   );

@@ -43,6 +43,7 @@ import { useGetUserGroupTypes, useManageUserRole } from '../../../service';
 import { ListTable } from '../../../../components/table';
 import { getAvailableUserColumns } from './column';
 import { SortDirection } from '../../../../components/table/types';
+import SearchBar from '../../../../components/search/search-bar';
 // import SearchBar from '../../../../components/search/search-bar';
 
 const AccountList = () => {
@@ -50,6 +51,7 @@ const AccountList = () => {
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, FilterType>
   >({});
+  const [searchText, setSearchText] = useState<string>('');
   const [tableParams, setTableParams] = useState<ProjectListParams>({
     page: page,
     limit: 100,
@@ -358,6 +360,15 @@ const AccountList = () => {
         </div>
         <div className='flex items-center gap-3'>
           <div className='flex gap-1 relative'>
+            <SearchBar
+              initialSearchText={searchText}
+              onSearch={(value) => {
+                setSearchText(value);
+              }}
+              placeholder='Search'
+              disabled={false}
+              hide={false}
+            />
             {groupId ? (
               <TextButton
                 label='Back To Groups'
