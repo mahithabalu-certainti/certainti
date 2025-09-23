@@ -213,7 +213,6 @@ export class InteractionService {
         },
       };
     } catch (err) {
-      console.log("Error creating interaction", err);
        this.logger.error(`Error creating interaction, ${err}`);
       await transaction.rollback();
      this.logger.error("Error creating interaction", err);
