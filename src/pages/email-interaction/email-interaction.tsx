@@ -176,6 +176,7 @@ const EmailInteraction: React.FC = () => {
     accountName: questions?.account_name || '',
     accountId: questions?.account_rnumber || '',
     projectCode: questions?.project_code || '',
+    statusName: questions?.status_name || '',
   };
 
   return (
