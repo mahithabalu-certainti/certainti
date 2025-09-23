@@ -27,13 +27,13 @@ export const fetchManageuserList = async (
   if (!accountId) {
     throw new Error('User ID is missing from URL');
   }
-
+  console.log(params);
   const queryParams = {
     sortBy: params.sortBy || 'createdAt',
     sortOrder: params.sortOrder || 'DESC',
     entity_type: params.entity_type || 'Account',
     ...(params.filters && { filters: params.filters }),
-    ...(params.searchTerm && { search: params.searchTerm }),
+    ...(params.search && { search: params.search }),
   };
 
   const url = getManageUserListUrl(accountId, queryParams);
@@ -53,7 +53,7 @@ export const fetchManageGroupList = async (
     sortOrder: params.sortOrder || 'DESC',
     entity_type: params.entity_type || 'Account',
     ...(params.filters && { filters: params.filters }),
-    ...(params.searchTerm && { search: params.searchTerm }),
+    ...(params.search && { search: params.search }),
   };
 
   const url = getManageGroupListUrl(accountId, queryParams);

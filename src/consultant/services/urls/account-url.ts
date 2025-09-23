@@ -19,7 +19,7 @@ export const AccountListURL = ({
   filters,
   globalFilters,
   fiscalYear,
-  searchValue,
+  search,
 }: AccountListURLParams): string => {
   const baseUrl = '/api/accounts/list';
   const searchParams = new URLSearchParams();
@@ -35,7 +35,7 @@ export const AccountListURL = ({
     searchParams.set('globalFilters', JSON.stringify(globalFilters));
   }
   if (fiscalYear) searchParams.set('fiscalYear', fiscalYear);
-  if (searchValue) searchParams.set('search', searchValue);
+  if (search) searchParams.set('search', search);
 
   const queryString = searchParams.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;

@@ -65,7 +65,6 @@ const AccountList = () => {
     sortOrder: 'ASC',
   });
 
-  // const [searchText, setSearchText] = useState<string>('');
   useEffect(() => {
     const saved = getStoredFilters();
     if (saved) {
@@ -79,9 +78,10 @@ const AccountList = () => {
       ...prev,
       page: 1,
       filters: appliedFilters,
+      search: searchText,
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appliedFilters]);
+  }, [appliedFilters, searchText]);
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const [columnAnchorEl, setColumnAnchorEl] =
@@ -470,6 +470,7 @@ const AccountList = () => {
             setAppliedFilters={setAppliedFilters}
             setColumnAnchorEl={setColumnAnchorEl}
             columnAnchorEl={columnAnchorEl}
+            searchValue={searchText}
           />
         </div>
       )}
@@ -484,6 +485,7 @@ const AccountList = () => {
             hide={hide}
             setColumnAnchorEl={setColumnAnchorEl}
             columnAnchorEl={columnAnchorEl}
+            searchValue={searchText}
           />
         </div>
       )}
