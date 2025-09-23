@@ -2684,15 +2684,13 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       const decryptedSecret = await decryptClientSecret(clientSecret);
       
       return {
-        email: senderEmailInfo[0].support_email,
+        email: senderEmailInfo[0]?.support_email,
         clientId: senderEmailInfo[0]?.client_id,
         clientSecret: decryptedSecret,
-        tenantId: senderEmailInfo[0].tenant_id,
+        tenantId: senderEmailInfo[0]?.tenant_id,
       }
     } catch (err) {
-      throw new Error(
-        "Error fetching sender email info: " + (err as Error).message
-      );
+        console.error(err);
     }
   }
   async fetchEmailInfo(
@@ -3119,6 +3117,42 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       return !!(recipientInfo && recipientInfo.key_contact_email);
     } catch (err) {       
         
+      throw new Error(
+        "Error checking email recipient availability: " +
+          (err as Error).message
+      );
+    }
+  }
+
+   async isEmailRecipientAvailableForAccount
+  (     
+    accountNumber: string,  
+    accountRid: string
+  ): Promise<boolean> {
+    try {
+      if (!this.orgDbSequelize) {     
+        this.orgDbSequelize = await this.interactionModelService.getSequelize();
+      }
+      if(!this.mainDbSequelize)
+      {
+        this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
+      }
+      const [activeStatus]: any[] = await this.mainDbSequelize.query(
+        rawQueries.fetchActiveStatusByType("Active"),
+        { type: "SELECT" }
+      );
+
+       const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+          /\D/g,
+          ""
+        )}`;
+      const [recipientInfo]: any[] = await this.orgDbSequelize.query(
+        rawQueries.fetchInteractionRecipientAccount(accountRid, activeStatus.rid, schemaName),
+        { type: "SELECT" }
+      );
+
+      return !!(recipientInfo && recipientInfo.key_contact_email);
+    } catch (err) {
       throw new Error(
         "Error checking email recipient availability: " +
           (err as Error).message
