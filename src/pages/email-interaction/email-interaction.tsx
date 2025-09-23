@@ -184,7 +184,7 @@ const EmailInteraction: React.FC = () => {
       <header className='w-full flex items-center px-10 py-4 bg-[#2D3E4F] shadow-sm'>
         <img src={certaintiLogo} alt='Logo' className='h-[16px]' />
       </header>
-      {(isPending || reSendOtp.isPending || isLoading) && (
+      {isLoading && (
         <div className='flex-1 flex justify-center items-center w-full min-h-[calc(100vh-48px)]'>
           <CircularProgress />
         </div>
@@ -318,27 +318,35 @@ const EmailInteraction: React.FC = () => {
               {/* Buttons */}
               {timeout ? (
                 <button
-                  className={`w-full py-2 rounded-sm transition ${
+                  className={`w-full h-[34px] flex items-center justify-center rounded-sm transition ${
                     checkEveryOtpValue
                       ? 'bg-[#F16137] text-white hover:bg-[#e4572e] cursor-pointer'
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   }`}
                   onClick={validateOtp}
-                  disabled={!checkEveryOtpValue || verifyOtp.isPending}
+                  disabled={
+                    !checkEveryOtpValue ||
+                    verifyOtp.isPending ||
+                    reSendOtp.isPending
+                  }
                 >
-                  {verifyOtp.isPending ? (
-                    <CircularProgress sx={{ color: 'white' }} size={16} />
+                  {verifyOtp.isPending || reSendOtp.isPending ? (
+                    <CircularProgress sx={{ color: 'white' }} size={20} />
                   ) : (
                     'Verify'
                   )}
                 </button>
               ) : (
                 <button
-                  className={`w-full py-2 rounded-sm transition bg-[#F16137] text-white hover:bg-[#e4572e] cursor-pointer`}
+                  className={`w-full h-[34px] flex items-center justify-center rounded-sm transition bg-[#F16137] text-white hover:bg-[#e4572e] cursor-pointer`}
                   onClick={sendOtp}
                   disabled={isPending}
                 >
-                  Send OTP
+                  {isPending ? (
+                    <CircularProgress sx={{ color: 'white' }} size={20} />
+                  ) : (
+                    'Send OTP'
+                  )}
                 </button>
               )}
             </div>
