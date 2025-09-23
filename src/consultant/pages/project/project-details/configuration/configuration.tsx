@@ -43,7 +43,7 @@ const Configuration: React.FC = () => {
   const [count, setCount] = useState<number>(0);
 
   const [columnAnchorEl, setColumnAnchorEl] =
-    React.useState<HTMLButtonElement | null>(null);
+    useState<HTMLButtonElement | null>(null);
 
   const list = searchParams.get('subMenu');
   const tabParam = searchParams.get('tab');
