@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   GetProjectTypeApiResponse,
   Project,
+  ProjectFiscalSummary,
   // ProjectList,
   ProjectListParams,
 } from '../../../../types/project';
@@ -15,11 +16,19 @@ import {
   ActionItem,
   CellEditData,
   FieldChangeValue,
+  ListTableColumn,
+  ShowHideTableColumn,
 } from '../../../../../components/table/types';
 import { EditIcon } from '../../../../../assets';
-import { reshapeGlobalFilter } from '../../../../../common-utils';
+import {
+  REGEX_PATTERNS,
+  reshapeGlobalFilter,
+} from '../../../../../common-utils';
 import { ClassificationApiResponse, FilterState } from '../../../../types';
-import { ListTable } from '../../../../../components/table';
+import {
+  ListTable,
+  ManageColumnsPopover,
+} from '../../../../../components/table';
 import { useMutation } from '@apollo/client';
 import { UPDATE_PROJECT } from '../../../../../api/graphql/queries/project-query';
 import { resourceClient } from '../../../../../api/graphql/clients/client';
@@ -39,6 +48,10 @@ interface IProjectTableProps {
     classification: ClassificationApiResponse | undefined;
     projectType: GetProjectTypeApiResponse | undefined;
   };
+  columnAnchorEl: HTMLButtonElement | null;
+  setColumnAnchorEl: React.Dispatch<
+    React.SetStateAction<HTMLButtonElement | null>
+  >;
 }
 
 export const ProjectTable: React.FC<IProjectTableProps> = ({
@@ -49,8 +62,10 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
   setTableParams,
   setTotalCount,
   refreshProjectsTrigger,
-  toggleEnabled,
+  // toggleEnabled, // Commented for it may use in future
   dropdownOptions,
+  setColumnAnchorEl,
+  columnAnchorEl,
 }) => {
   const navigate = useNavigate();
   const { errorToast } = useToast();
@@ -93,7 +108,11 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
   }, [appliedFilters, fiscalYear, filters]);
 
   const { data, isLoading, isError } = useAllProjects(
-    { ...tableParams, bothParentAndChild: toggleEnabled },
+    {
+      ...tableParams,
+      bothParentAndChild: false,
+      // bothParentAndChild: toggleEnabled // Commented for it may use in future
+    },
     refreshProjectsTrigger
   );
   const totalItems = data?.count || 0;
@@ -138,6 +157,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
       accountID,
       projectID,
       source: 'project',
+      type: 'global',
     });
 
     navigate(
@@ -211,13 +231,27 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
     [dropdownOptions?.projectType?.data?.projectType]
   );
 
-  const projectColumns = getAllProjectListColumns(
-    handleAccountName,
-    memoizedProjectTypes,
-    memoizedClassification,
-    handleEdit,
-    permissionMap
+  const projectColumns = useMemo(
+    () =>
+      getAllProjectListColumns(
+        handleAccountName,
+        memoizedProjectTypes,
+        memoizedClassification,
+        handleEdit,
+        permissionMap
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [memoizedProjectTypes, memoizedClassification]
   );
+
+  const [visibleColumns, setVisibleColumns] = useState<
+    ListTableColumn<Project>[]
+  >(projectColumns.filter((col) => !col.hide));
+
+  useEffect(() => {
+    const updatedColumns = projectColumns.filter((col) => !col.hide);
+    setVisibleColumns(updatedColumns);
+  }, [memoizedProjectTypes, memoizedClassification, projectColumns]);
 
   const actionButtons: ActionItem<Project>[] = [
     {
@@ -267,6 +301,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
         account_rid: parentProject.account_rid,
         project_rid: childFiscal.project_rid,
         project_fiscal_rid: childFiscal.project_fiscal_rid,
+        global_fiscal_year: convertedFiscalYear || 0,
       }
     );
 
@@ -281,6 +316,46 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
       updateData['project_classification_other'] = '';
     }
 
+    // Calculate total_cost if any cost field is updated
+    const isCostFieldUpdated = updates.some(
+      (item) =>
+        item.columnId === 'total_cost_fte' ||
+        item.columnId === 'total_cost_subcon' ||
+        item.columnId === 'total_cost_nonlabor'
+    );
+
+    if (isCostFieldUpdated) {
+      // Get current values from childFiscal or updateData
+      const fteCost =
+        updateData['total_cost_fte'] ?? childFiscal.total_cost_fte ?? 0;
+      const subconCost =
+        updateData['total_cost_subcon'] ?? childFiscal.total_cost_subcon ?? 0;
+      const nonLaborCost =
+        updateData['total_cost_nonlabor'] ??
+        childFiscal.total_cost_nonlabor ??
+        0;
+
+      // Convert to numbers and ensure they are valid
+      const fteCostNum = parseFloat(fteCost as string) || 0;
+      const subconCostNum = parseFloat(subconCost as string) || 0;
+      const nonLaborCostNum = parseFloat(nonLaborCost as string) || 0;
+
+      // Calculate total_cost
+      const totalCost = fteCostNum + subconCostNum + nonLaborCostNum;
+
+      // Validate total_cost
+      const totalCostString = totalCost.toFixed(2);
+      if (!REGEX_PATTERNS.EFFORTS_NUMBER.test(totalCostString)) {
+        errorToast(
+          'Invalid total cost calculated. Must be a positive number with up to 16 digits and 2 decimal places.'
+        );
+        return;
+      }
+
+      // Add total_cost to updateData
+      updateData['total_cost'] = totalCostString;
+    }
+
     try {
       const res = await updateProjectMutation({
         variables: { data: updateData },
@@ -293,7 +368,17 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
 
         const newProjects = allProjectList.map((project) => {
           if (project.project_rid === updatedParentData.project_rid) {
-            return updatedParentData;
+            return {
+              ...project,
+              ...updatedParentData,
+              ProjectFiscal: project.ProjectFiscal.map((fiscal) => {
+                const updatedFiscal = updatedParentData.ProjectFiscal?.find(
+                  (data: ProjectFiscalSummary) =>
+                    data.project_fiscal_rid === fiscal.project_fiscal_rid
+                );
+                return updatedFiscal ? { ...fiscal, ...updatedFiscal } : fiscal;
+              }),
+            };
           }
           return project;
         });
@@ -309,42 +394,76 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
     }
   };
 
+  const RestrictedColumns = [
+    {
+      id: 'project_code',
+      canHide: false,
+      canDrag: false,
+    },
+  ];
+
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    setVisibleColumns(
+      updatedColumns.filter((col) => !col.hide) as ListTableColumn<Project>[]
+    );
+  };
+
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
+  };
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const modalId = isModalOpen ? 'project-column-visibility-popover' : undefined;
+
   return (
-    <ListTable
-      data={allProjectList as Project[]}
-      columns={projectColumns}
-      getRowId={getRowId}
-      hoverHighlight={false}
-      tableStyle={{
-        height: '100%',
-        maxHeight: 'calc(100vh - 180px)',
-        overflow: 'auto',
-      }}
-      stickyHeader={true}
-      stickyColumnsCount={2}
-      selectable={true}
-      expandAllParent={true}
-      expandable={true}
-      childrenKey='ProjectFiscal'
-      maxNestingLevel={2}
-      editDisableLevel={[0]}
-      onSelectionChange={(selectedIds) => console.log('Selected:', selectedIds)}
-      actionWidth={60}
-      actionDisplayMode='dropdown'
-      actionMenuItems={actionButtons}
-      loading={isLoading}
-      error={isError ? 'Failed to load projects' : undefined}
-      rowsPerPageOptions={[25, 50, 100]}
-      rowsPerPage={tableParams.limit}
-      currentPage={(tableParams.page ?? 1) - 1}
-      totalItems={totalItems}
-      onPageChange={handlePageChange}
-      onRowsPerPageChange={handleRowsPerPageChange}
-      sortBy={tableParams.sortBy}
-      sortOrder={tableParams.sortOrder}
-      onSort={handleSort}
-      component='global-project'
-      onCellEdit={handleCellEdit}
-    />
+    <div className='border-t border-[#CBD6E2] h-full'>
+      <ManageColumnsPopover
+        anchorEl={columnAnchorEl}
+        open={isModalOpen}
+        popoverId={modalId}
+        onClose={handlePopoverClose}
+        columns={projectColumns}
+        onColumnsChange={handleColumnsChange}
+        columnRestrictions={RestrictedColumns}
+      />
+      <ListTable
+        data={allProjectList as Project[]}
+        columns={visibleColumns}
+        getRowId={getRowId}
+        hoverHighlight={false}
+        tableStyle={{
+          height: '100%',
+          maxHeight: 'calc(100vh - 180px)',
+          overflow: 'auto',
+        }}
+        stickyHeader={true}
+        stickyColumnsCount={2}
+        selectable={true}
+        expandAllParent={true}
+        expandable={true}
+        childrenKey='ProjectFiscal'
+        maxNestingLevel={2}
+        editDisableLevel={[0]}
+        onSelectionChange={(selectedIds) =>
+          console.log('Selected:', selectedIds)
+        }
+        actionWidth={60}
+        actionDisplayMode='dropdown'
+        actionMenuItems={actionButtons}
+        loading={isLoading}
+        error={isError ? 'Failed to load projects' : undefined}
+        rowsPerPageOptions={[25, 50, 100]}
+        rowsPerPage={tableParams.limit}
+        currentPage={(tableParams.page ?? 1) - 1}
+        totalItems={totalItems}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+        sortBy={tableParams.sortBy}
+        sortOrder={tableParams.sortOrder}
+        onSort={handleSort}
+        component='global-project'
+        onCellEdit={handleCellEdit}
+      />
+    </div>
   );
 };

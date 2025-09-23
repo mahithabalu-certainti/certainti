@@ -39,6 +39,7 @@ interface ProjectOverviewProps {
   headerButtons: {
     label: string;
     variant: 'text' | 'outlined' | 'contained';
+    loading?: boolean;
     onClick: () => void;
     sx?: SxProps<Theme>;
     disabled?: boolean;
@@ -52,6 +53,8 @@ interface ProjectOverviewProps {
   detailsError?: boolean;
   isKeyContactAvailable?: boolean;
   permission: Permissions[];
+  iconBg?: string;
+  bgType?: 'circle' | 'react';
 }
 
 const ProjectOverview: React.FC<ProjectOverviewProps> = ({
@@ -64,8 +67,9 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
   projectDetails,
   isDetailsLoading,
   detailsError,
-  isKeyContactAvailable,
   permission,
+  iconBg,
+  bgType,
 }) => {
   const projectViewEditFields = useMemo(
     () =>
@@ -187,6 +191,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
       keyContactEmail: contact.key_contact_email,
       isPrimaryContact: contact.is_primary_contact,
       includeInCommnunications: contact.include_in_communication,
+      interactionccRecipient: contact.interaction_cc_recipient,
       keyContactStatus: contact.status_name,
     }));
   const financialInfo: DetailItem[] = [
@@ -282,7 +287,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
   const description: DetailItem[] = [
     {
       key: 'project_description',
-      label: 'description',
+      label: 'Description',
       value: projectDetails?.project_description,
     },
   ];
@@ -310,11 +315,22 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
               <LeftArrowIcon alt='leftArrowIcon' />
             </div>
           )}
-          {titleIcon && (
-            <div className='text-[13px] text-[#2D3E4F] font-semibold'>
+
+          {iconBg ? (
+            <div
+              className={`w-[24px] h-[24px] flex items-center justify-center ${bgType === 'circle' ? 'rounded-full' : 'rounded-[4px]'}`}
+              style={{ backgroundColor: iconBg }}
+            >
               {titleIcon}
             </div>
+          ) : (
+            titleIcon && (
+              <div className='w-[24px] h-[24px] flex items-center justify-center'>
+                {titleIcon}
+              </div>
+            )
           )}
+
           <h1 className='text-[14px] font-medium text-[#2D3E4F]'>{title}</h1>
         </div>
 
@@ -326,6 +342,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
                 <TextButton
                   key={`header-button-${index}`}
                   label={button.label}
+                  loading={button.loading}
                   onClick={
                     button.label.toLowerCase() === 'view'
                       ? toggleViewMode
@@ -373,10 +390,12 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
             title='Location and Currency Information'
             data={locationInfoDetails as DetailItem[]}
           />
-          {isKeyContactAvailable && keyContactsList && !keycontactVisable && (
+          {!keycontactVisable && (
             <KeyContactSection
               title='Key Contacts List'
               data={keyContactsList || []}
+              ccAvailable={true}
+              communicationAvailable={true}
             />
           )}
           <DetailsSection

@@ -1,5 +1,5 @@
+import { DownloadIcon } from '../../../../../assets';
 import { formatDateToYYYYMMDDWithTime } from '../../../../../common-utils';
-import TextButton from '../../../../../components/button/text-button';
 import { ListTableColumn } from '../../../../../components/table/types';
 import { ImportsList } from '../../../../types/imports';
 
@@ -29,7 +29,7 @@ export const getImportsListColumns = (
     render: (row: ImportsList) => (
       <span
         onClick={() => handleDocument(row.rid)}
-        className='cursor-pointer no-underline hover:underline hover:text-[#1755E7]'
+        className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
       >
         {row.r_number}
       </span>
@@ -60,6 +60,14 @@ export const getImportsListColumns = (
     width: 140,
     sortable: true,
     hide: !permissionMap?.['size']?.edit && !permissionMap?.['size']?.read,
+  },
+  {
+    id: 'status',
+    sortId: 'status',
+    label: 'Status',
+    width: 140,
+    sortable: true,
+    hide: !permissionMap?.['status']?.edit && !permissionMap?.['status']?.read,
   },
   {
     id: 'fiscal',
@@ -132,14 +140,6 @@ export const getImportsListColumns = (
     },
   },
   {
-    id: 'status',
-    sortId: 'status',
-    label: 'Status',
-    width: 140,
-    sortable: true,
-    hide: !permissionMap?.['status']?.edit && !permissionMap?.['status']?.read,
-  },
-  {
     id: 'status_descriptions',
     sortId: 'status_descriptions',
     label: 'Status Description',
@@ -181,14 +181,15 @@ export const getImportsListColumns = (
     id: 'download',
     sortId: 'download',
     label: 'Download',
-    width: 110,
+    width: 80,
     hide: !isImportExportEnable,
     render: (row: ImportsList) => (
-      <TextButton
-        label='Download'
-        sx={{ width: '80px', minWidth: '80px', maxWidth: '80px', ml: 1 }}
+      <button
+        className='flex border border-[#CBD6E2] w-[24px] h-[24px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer mx-auto'
         onClick={() => handleDownload(row.document_url)}
-      />
+      >
+        <DownloadIcon alt='download-icon' className='h-4' />
+      </button>
     ),
   },
 ];

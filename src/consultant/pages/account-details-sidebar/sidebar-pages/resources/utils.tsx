@@ -41,7 +41,7 @@ export const getCostFilterFields = (
     name: 'Effective Date',
     value: 'effective_from',
     type: 'date',
-    minDate: new Date('2000-01-01'),
+    minDate: new Date('1950-01-01'),
     maxDate: new Date(),
     hide:
       !resourceCostpermissionMap?.['effective_from']?.read &&
@@ -51,7 +51,7 @@ export const getCostFilterFields = (
     name: 'End Date',
     value: 'end_date',
     type: 'date',
-    minDate: new Date('2000-01-01'),
+    minDate: new Date('1950-01-01'),
     maxDate: new Date(),
     hide:
       !resourceCostpermissionMap?.['end_date']?.read &&
@@ -368,7 +368,9 @@ export const getInitialStateForField = (
     case 'textCostAndSkill':
       return { textCostAndSkill: { option: 'equals', value: '' } };
     case 'number':
-      return { number: { option: 'equals', value: { from: '', to: '' } } };
+      return {
+        number: { option: 'greater_than', value: { from: '', to: '' } },
+      };
     case 'date':
       return { date: { option: 'equals', value: { from: '', to: '' } } };
     case 'enum':

@@ -36,6 +36,17 @@ const resourceServiceApi = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+const interactionServiceApi = axios.create({
+  baseURL: import.meta.env.VITE_BASE_URL + import.meta.env.VITE_INTERACTION_URL,
+  headers: { 'Content-Type': 'application/json' },
+});
+
+const exInteractionServiceApi = axios.create({
+  baseURL:
+    import.meta.env.VITE_BASE_URL + import.meta.env.VITE_EXT_INTERACTION_URL,
+  headers: { 'Content-Type': 'application/json' },
+});
+
 const api = axios.create({
   baseURL: import.meta.env.VITE_BASE_URL,
   headers: {
@@ -44,7 +55,14 @@ const api = axios.create({
 });
 
 // Apply interceptors to both services
-[accountServiceApi, userServiceApi, resourceServiceApi, api].forEach((api) => {
+[
+  accountServiceApi,
+  userServiceApi,
+  resourceServiceApi,
+  interactionServiceApi,
+  exInteractionServiceApi,
+  api,
+].forEach((api) => {
   api.interceptors.request.use(
     (config) => {
       const auth = localStorage.getItem('auth');
@@ -79,7 +97,14 @@ const processQueue = (error: unknown, token: string | null = null) => {
 };
 
 // Modify the response interceptor
-[accountServiceApi, userServiceApi, resourceServiceApi, api].forEach((api) => {
+[
+  accountServiceApi,
+  userServiceApi,
+  resourceServiceApi,
+  interactionServiceApi,
+  exInteractionServiceApi,
+  api,
+].forEach((api) => {
   api.interceptors.response.use(
     (response: AxiosResponse) => {
       return response;
@@ -147,16 +172,23 @@ const processQueue = (error: unknown, token: string | null = null) => {
           processQueue(refreshError, null);
           isRefreshing = false;
           console.error('refreshError', refreshError);
-          // Show error toast
-          showToast('Session expired. Please login again.', 'error');
-          setTimeout(() => {
-            localStorage.removeItem('auth');
-            localStorage.removeItem('showAdminSidebar');
-            localStorage.removeItem('resetPassword');
-            if (window.location.pathname !== LOGIN) {
-              window.location.href = LOGIN;
-            }
-          }, 3000);
+          const message = (error?.response?.data as { message?: string })
+            ?.message;
+          if (message?.includes('Interaction')) {
+            localStorage.removeItem('temAuth');
+            localStorage.removeItem('otp_timeout');
+          } else {
+            // Show error toast
+            showToast('Session expired. Please login again.', 'error');
+            setTimeout(() => {
+              localStorage.removeItem('auth');
+              localStorage.removeItem('showAdminSidebar');
+              localStorage.removeItem('resetPassword');
+              if (window.location.pathname !== LOGIN) {
+                window.location.href = LOGIN;
+              }
+            }, 3000);
+          }
           return Promise.reject(refreshError);
         }
       } else if (error.response?.status === 403) {
@@ -183,4 +215,11 @@ const processQueue = (error: unknown, token: string | null = null) => {
   );
 });
 
-export { accountServiceApi, userServiceApi, resourceServiceApi, api };
+export {
+  accountServiceApi,
+  userServiceApi,
+  resourceServiceApi,
+  interactionServiceApi,
+  exInteractionServiceApi,
+  api,
+};

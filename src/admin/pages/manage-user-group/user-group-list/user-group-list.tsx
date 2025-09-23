@@ -1,4 +1,4 @@
-import { Suspense, useMemo, useState } from 'react';
+import React, { Suspense, useMemo, useState } from 'react';
 import { NewFilterIcon, RefreshIcon, ManageUserIcon } from '../../../../assets';
 import TextButton from '../../../../components/button/text-button';
 import { useNavigate } from 'react-router-dom';
@@ -18,7 +18,6 @@ import { AllPermissions } from '../../../../common-service';
 const BUTTON_STYLES = {
   height: '24px',
   fontSize: '13px',
-  fontWeight: 600,
 };
 
 export const UserGroupList: React.FC = () => {
@@ -44,6 +43,12 @@ export const UserGroupList: React.FC = () => {
   const [refreshUserGroupTrigger, setRefreshUserGroupTrigger] =
     useState<number>();
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
+
+  const [columnAnchorEl, setColumnAnchorEl] =
+    React.useState<HTMLButtonElement | null>(null);
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const modalId = isModalOpen ? 'user-group-visibility-popover' : undefined;
 
   // Permission Mangement
   const { permission } = useSelector((state: RootState) => state.permission);
@@ -135,6 +140,12 @@ export const UserGroupList: React.FC = () => {
     }
   };
 
+  const handleColumnVisibility = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setColumnAnchorEl(event.currentTarget);
+  };
+
   return (
     <div className='flex flex-col h-full w-full'>
       {/* Header Section */}
@@ -182,7 +193,17 @@ export const UserGroupList: React.FC = () => {
           All Groups
         </div>
         <div className='flex items-center gap-3'>
-          <div className='relative h-[32px]'>
+          <div className='flex gap-1 relative'>
+            <button
+              aria-describedby={modalId}
+              className={`w-[120px] h-[24px] mt-1 text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1  rounded-[2px] relative border border-[#CBD6E2] px-0 py-0 normal-case ${isModalOpen ? 'bg-[#F3F3F3]' : 'bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'} hover:text-[#425A76] transition-colors duration-150`}
+              style={{
+                boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
+              }}
+              onClick={handleColumnVisibility}
+            >
+              Show/Hide Fields
+            </button>
             <button
               aria-describedby={filterId}
               className={`w-[64px] h-[24px] text-[13px] mt-[5px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
@@ -243,6 +264,8 @@ export const UserGroupList: React.FC = () => {
             onSelectionChange={() => {}}
             isProfileEditEnable={isManageUserGroupFieldsEditable}
             refreshUserGroupTrigger={refreshUserGroupTrigger}
+            setColumnAnchorEl={setColumnAnchorEl}
+            columnAnchorEl={columnAnchorEl}
           />
         </Suspense>
       </div>

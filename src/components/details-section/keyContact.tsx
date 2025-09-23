@@ -24,13 +24,14 @@ const KeyContactSection: React.FC<{
   title: string;
   data: KeyContact[];
   ccAvailable?: boolean;
-}> = ({ title, data, ccAvailable = false }) => (
+  communicationAvailable?: boolean;
+}> = ({ title, data, ccAvailable = false, communicationAvailable = false }) => (
   <div>
     <div className='flex items-center align-middle px-6 h-[30px] border-t border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
       {title}
     </div>
-    <TableContainer sx={{ overflowX: 'auto' }}>
-      <Table>
+    <TableContainer sx={{ overflowX: 'auto', maxHeight: '150px' }}>
+      <Table stickyHeader>
         <TableHead
           sx={{
             '& .MuiTableCell-root': {
@@ -45,11 +46,15 @@ const KeyContactSection: React.FC<{
         >
           <TableRow>
             {[
-              { label: 'Key Contact Name', fixedWidth: 200 },
+              { label: 'Key Contact Name', fixedWidth: 200, sticky: true },
               { label: 'Key Contact Role', fixedWidth: 250 },
               { label: 'Key Contact Email', fixedWidth: 200 },
               { label: 'Is Primary Contact?', fixedWidth: 160 },
-              { label: 'Interaction Recipient?', fixedWidth: 200 },
+              {
+                label: 'Interaction Recipient?',
+                fixedWidth: 200,
+                hide: !communicationAvailable,
+              },
               {
                 label: 'Interaction CC Recipient?',
                 fixedWidth: 200,
@@ -68,6 +73,15 @@ const KeyContactSection: React.FC<{
                   minWidth: col.fixedWidth || 160,
                   maxWidth: col.fixedWidth || 160,
                   display: col.hide ? 'none' : 'table-cell',
+                  ...(col.sticky && {
+                    textAlign: 'left',
+                    position: 'sticky',
+                    left: 0,
+                    background: '#fff',
+                    zIndex: 10,
+                    borderRight: '1px solid #CBD6E2 !important',
+                    borderBottom: '1px solid #CBD6E2 !important',
+                  }),
                 }}
               >
                 {col.label}
@@ -93,7 +107,7 @@ const KeyContactSection: React.FC<{
                 colSpan={ccAvailable ? 9 : 8}
                 sx={{ textAlign: 'center', py: 1 }}
               >
-                Key contact information is not available
+                No key contacts added
               </TableCell>
             </TableRow>
           ) : (
@@ -107,6 +121,13 @@ const KeyContactSection: React.FC<{
                     width: '200px',
                     minWidth: '200px',
                     maxWidth: '200px',
+                    textAlign: 'left',
+                    position: 'sticky',
+                    left: 0,
+                    background: '#fff',
+                    zIndex: 6,
+                    borderRight: '1px solid #CBD6E2 !important',
+                    borderBottom: '1px solid #CBD6E2 !important',
                   }}
                 >
                   <TruncateWithTooltip
@@ -163,21 +184,23 @@ const KeyContactSection: React.FC<{
                 >
                   {field.isPrimaryContact ? 'Yes' : 'No'}
                 </TableCell>
-                <TableCell
-                  sx={{
-                    height: '28px',
-                    padding: '0px 8px',
-                    width: '200px',
-                    minWidth: '200px',
-                    maxWidth: '200px',
-                  }}
-                >
-                  {field.includeInCommnunications === true
-                    ? 'Yes'
-                    : field.includeInCommnunications === false
-                      ? 'No'
-                      : '-'}
-                </TableCell>
+                {communicationAvailable && (
+                  <TableCell
+                    sx={{
+                      height: '28px',
+                      padding: '0px 8px',
+                      width: '200px',
+                      minWidth: '200px',
+                      maxWidth: '200px',
+                    }}
+                  >
+                    {field.includeInCommnunications === true
+                      ? 'Yes'
+                      : field.includeInCommnunications === false
+                        ? 'No'
+                        : 'No'}
+                  </TableCell>
+                )}
                 {ccAvailable && (
                   <TableCell
                     sx={{
@@ -192,7 +215,7 @@ const KeyContactSection: React.FC<{
                       ? 'Yes'
                       : field.interactionccRecipient === false
                         ? 'No'
-                        : '-'}
+                        : 'No'}
                   </TableCell>
                 )}
                 <TableCell

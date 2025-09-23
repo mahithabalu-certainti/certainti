@@ -11,6 +11,7 @@ import {
   CurrencyApiResponse,
   FinancialStateProps,
   FinancialStatesApiResponse,
+  GlobalAccountListParams,
   GlobalAccountListResponse,
   IndustrysApiResponse,
   keyContactRolesApiResponse,
@@ -26,6 +27,7 @@ import {
   CurrencyUrl,
   getAccountExportUrl,
   getKeyContactRolesUrl,
+  GloablAcconuntsListURL,
   GlobalAccountUrl,
   IndustryUrl,
   ParentAccountUrl,
@@ -58,21 +60,32 @@ export const fetchGlobalAccounts = async (): Promise<{
 
 export const fetchAccounts = async (
   params: AccountListURLParams = {}
-): Promise<{ accounts: AccountList[]; count: number }> => {
+): Promise<{ accounts: AccountList[]; count: number; totalResult: number }> => {
   const response = await accountServiceApi.get<AccountListResponse>(
     AccountListURL(params)
   );
   return {
     accounts: response.data.data.account.data,
-    count: response.data.data.account.total,
+    count: response?.data?.data?.count,
+    totalResult: response?.data?.data?.account?.total,
   };
 };
 
 export const useAccounts = (
   params: AccountListURLParams = {},
   refreshAccountTrigger?: number
-): UseQueryResult<{ accounts: AccountList[]; count: number }, Error> => {
-  return useQuery<{ accounts: AccountList[]; count: number }, Error>({
+): UseQueryResult<
+  {
+    accounts: AccountList[];
+    count: number;
+    totalResult: number;
+  },
+  Error
+> => {
+  return useQuery<
+    { accounts: AccountList[]; count: number; totalResult: number },
+    Error
+  >({
     queryKey: ['accounts', params, refreshAccountTrigger],
     queryFn: () => fetchAccounts(params),
     retry: 0,
@@ -188,5 +201,31 @@ export const useKeyContactRoles = (entityType: string) => {
     queryFn: () => fetchKeyContactRoles(entityType),
     retry: 0,
     enabled: !!entityType,
+  });
+};
+
+// Global account list
+export const fetchGlobalAccountList = async (
+  params: GlobalAccountListParams
+): Promise<{ accounts: AccountList[]; count: number }> => {
+  const response = await accountServiceApi.get<GlobalAccountListResponse>(
+    GloablAcconuntsListURL(params)
+  );
+  return {
+    accounts: response.data.data.gloablAcconunt,
+    count: response.data.data.count,
+  };
+};
+
+export const useGlobalAccountsList = (
+  params: GlobalAccountListParams,
+  fetchAccount: boolean
+): UseQueryResult<{ accounts: AccountList[]; count: number }, Error> => {
+  return useQuery<{ accounts: AccountList[]; count: number }, Error>({
+    queryKey: ['global-accounts-list', params],
+    queryFn: () => fetchGlobalAccountList(params),
+    retry: 0,
+    gcTime: 0,
+    enabled: !!fetchAccount,
   });
 };

@@ -62,7 +62,7 @@ export const getAllProjectListColumns = (
           onClick={() => onClick(row)}
           className={
             row.fiscal_year
-              ? 'cursor-pointer no-underline hover:underline hover:text-[#1755E7]'
+              ? 'cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
               : ''
           }
         >
@@ -92,7 +92,7 @@ export const getAllProjectListColumns = (
         },
       ],
     },
-    conditionallyEdit: { key: 'account_status_name', matchValue: 'Active' },
+    conditionallyEdit: [{ key: 'account_status_name', matchValue: ['Active'] }],
   },
   {
     id: 'project_name',
@@ -107,6 +107,10 @@ export const getAllProjectListColumns = (
       !permissionMap?.['project_name']?.edit,
     sortId: 'project_name',
     width: 160,
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      return isChild ? row.project_name : '-';
+    },
     field: {
       type: 'text',
       required: false,
@@ -127,7 +131,7 @@ export const getAllProjectListColumns = (
         },
       ],
     },
-    conditionallyEdit: { key: 'account_status_name', matchValue: 'Active' },
+    conditionallyEdit: [{ key: 'account_status_name', matchValue: ['Active'] }],
   },
   {
     id: 'project_type_name',
@@ -142,13 +146,17 @@ export const getAllProjectListColumns = (
       !permissionMap?.['project_type_rid']?.edit,
     sortId: 'project_type_name',
     width: 160,
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      return isChild ? row.project_type_name : '-';
+    },
     field: {
       type: 'select',
       required: true,
       placeholder: '',
       options: projectTypeOption,
     },
-    conditionallyEdit: { key: 'account_status_name', matchValue: 'Active' },
+    conditionallyEdit: [{ key: 'account_status_name', matchValue: ['Active'] }],
   },
   {
     id: 'account_name',
@@ -159,6 +167,10 @@ export const getAllProjectListColumns = (
     hide:
       !permissionMap?.['account_name']?.read &&
       !permissionMap?.['account_name']?.edit,
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      return isChild ? row.account_name : '-';
+    },
   },
   {
     id: 'fiscal_year',
@@ -177,6 +189,8 @@ export const getAllProjectListColumns = (
       textAlign: 'left',
     },
     render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      if (!isChild) return '-';
       const displayYear = row.fiscal_year ? `FY-${row.fiscal_year}` : '-';
       return <span>{displayYear}</span>;
     },
@@ -186,7 +200,7 @@ export const getAllProjectListColumns = (
       placeholder: '',
       options: fiscalYears,
     },
-    conditionallyEdit: { key: 'account_status_name', matchValue: 'Active' },
+    conditionallyEdit: [{ key: 'account_status_name', matchValue: ['Active'] }],
   },
   {
     id: 'classification_name',
@@ -201,17 +215,20 @@ export const getAllProjectListColumns = (
       !permissionMap?.['project_classification_rid']?.edit,
     sortId: 'classification_name',
     width: 170,
-    render: (row: Project) =>
-      row.project_classification_other
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      if (!isChild) return '-';
+      return row.project_classification_other
         ? `${row.classification_name} - ${row.project_classification_other}`
-        : row.classification_name,
+        : row.classification_name;
+    },
     field: {
       type: 'select',
       required: false,
       placeholder: 'Choose Classification',
       options: projectClassificationOption,
       getFieldData: (rowData: DependencyRowData) => {
-        return String(rowData.project_classification_rid);
+        return String(rowData.project_classification_rid || '');
       },
       dependencies: [
         {
@@ -252,7 +269,7 @@ export const getAllProjectListColumns = (
         },
       ],
     },
-    conditionallyEdit: { key: 'account_status_name', matchValue: 'Active' },
+    conditionallyEdit: [{ key: 'account_status_name', matchValue: ['Active'] }],
   },
   {
     id: 'project_client_group',
@@ -267,6 +284,10 @@ export const getAllProjectListColumns = (
       !permissionMap?.['project_client_group']?.edit,
     sortId: 'project_client_group',
     width: 160,
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      return isChild ? row.project_client_group : '-';
+    },
     field: {
       type: 'text',
       required: false,
@@ -287,7 +308,7 @@ export const getAllProjectListColumns = (
         },
       ],
     },
-    conditionallyEdit: { key: 'account_status_name', matchValue: 'Active' },
+    conditionallyEdit: [{ key: 'account_status_name', matchValue: ['Active'] }],
   },
   {
     id: 'project_group',
@@ -302,6 +323,10 @@ export const getAllProjectListColumns = (
       !permissionMap?.['project_group']?.edit,
     sortId: 'project_group',
     width: 160,
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      return isChild ? row.project_group : '-';
+    },
     field: {
       type: 'text',
       required: false,
@@ -322,7 +347,7 @@ export const getAllProjectListColumns = (
         },
       ],
     },
-    conditionallyEdit: { key: 'account_status_name', matchValue: 'Active' },
+    conditionallyEdit: [{ key: 'account_status_name', matchValue: ['Active'] }],
   },
   {
     id: 'total_effort',
@@ -354,7 +379,13 @@ export const getAllProjectListColumns = (
         },
       ],
     },
-    conditionallyEdit: { key: 'account_status_name', matchValue: 'Active' },
+    conditionallyEdit: [
+      { key: 'account_status_name', matchValue: ['Active'] },
+      {
+        key: 'total_effort',
+        matchValue: [null, '0.00'],
+      },
+    ],
   },
   {
     id: 'total_cost',
@@ -386,7 +417,13 @@ export const getAllProjectListColumns = (
         },
       ],
     },
-    conditionallyEdit: { key: 'account_status_name', matchValue: 'Active' },
+    conditionallyEdit: [
+      { key: 'account_status_name', matchValue: ['Active'] },
+      {
+        key: 'total_cost',
+        matchValue: [null, '0.00'],
+      },
+    ],
   },
   {
     id: 'total_cost_fte',
@@ -420,7 +457,7 @@ export const getAllProjectListColumns = (
         },
       ],
     },
-    conditionallyEdit: { key: 'account_status_name', matchValue: 'Active' },
+    conditionallyEdit: [{ key: 'account_status_name', matchValue: ['Active'] }],
   },
   {
     id: 'total_cost_subcon',
@@ -454,7 +491,7 @@ export const getAllProjectListColumns = (
         },
       ],
     },
-    conditionallyEdit: { key: 'account_status_name', matchValue: 'Active' },
+    conditionallyEdit: [{ key: 'account_status_name', matchValue: ['Active'] }],
   },
   {
     id: 'total_cost_nonlabor',
@@ -488,7 +525,7 @@ export const getAllProjectListColumns = (
         },
       ],
     },
-    conditionallyEdit: { key: 'account_status_name', matchValue: 'Active' },
+    conditionallyEdit: [{ key: 'account_status_name', matchValue: ['Active'] }],
   },
   {
     id: 'assessment_status',
@@ -501,10 +538,10 @@ export const getAllProjectListColumns = (
       !permissionMap?.['assessment_status']?.edit,
   },
   {
-    id: 'qre_final',
+    id: 'rd_percent_potential_ai',
     label: 'QRE %',
     sortable: true,
-    sortId: 'qre_final',
+    sortId: 'rd_percent_potential_ai',
     width: 130,
     sx: {
       textAlign: 'right',
@@ -513,7 +550,7 @@ export const getAllProjectListColumns = (
       !permissionMap?.['qre_final']?.read &&
       !permissionMap?.['qre_final']?.edit,
     render: (row: Project) =>
-      row.qre_final ? costDisplay(row.qre_final, row.currency_symbol) : '-',
+      row.rd_percent_potential_ai ? row.rd_percent_potential_ai : '-',
   },
   {
     id: 'qre',
@@ -611,7 +648,7 @@ export const getAllProjectListColumns = (
         },
       ],
     },
-    conditionallyEdit: { key: 'account_status_name', matchValue: 'Active' },
+    conditionallyEdit: [{ key: 'account_status_name', matchValue: 'Active' }],
   },
   {
     id: 'modified_datetime',

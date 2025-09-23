@@ -149,6 +149,7 @@ export const AccountForm: React.FC = () => {
       const fileType = getMimeTypeFromExtension(logoName);
       setLogo({ name: logoName, type: fileType } as File);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account, logoName]);
 
   const statusOptions = useGetStatus();
@@ -237,7 +238,13 @@ export const AccountForm: React.FC = () => {
       setCurrentCountry(accountData.country_rid);
     }
   }, [accountData.country_rid]);
-
+  useEffect(() => {
+    if (accountData.is_parent === YesNo.Yes) {
+      setDataResidency([]);
+    } else {
+      setDataResidency(DATA_STORAGE_OPTIONS);
+    }
+  }, [accountData.is_parent]);
   const memoizedContry: SelectOption[] = useMemo(
     () =>
       allCountries.data?.data.country.map((country) => ({
@@ -324,6 +331,7 @@ export const AccountForm: React.FC = () => {
         !keyContactRoles.isPending &&
         !statusOptions.isPending
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     getAccount.isPending,
     keyContactRoles.isPending,
@@ -395,11 +403,7 @@ export const AccountForm: React.FC = () => {
     }
     if (data.fieldName === 'is_parent') {
       if (data.fieldValue === YesNo.Yes) {
-        setDataResidency(
-          DATA_STORAGE_OPTIONS.filter(
-            (item) => item.value !== 'store_in_parent'
-          )
-        );
+        setDataResidency([]);
         setIsParentAccountRequired(false);
       } else {
         setDataResidency(DATA_STORAGE_OPTIONS);
@@ -528,8 +532,8 @@ export const AccountForm: React.FC = () => {
             onChange={onChangeField}
             layout={Layout.TYPE_1}
             logo={logo}
-            keyContactHeaders={defaultKeyContactHeaders}
             newContactLength={9}
+            keyContactHeaders={defaultKeyContactHeaders}
             highlight={highlight}
           />
         )}

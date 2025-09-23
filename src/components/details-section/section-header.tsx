@@ -1,13 +1,12 @@
 import React from 'react';
 import { SxProps } from '@mui/material';
 import { Theme } from '@emotion/react';
-import { LeftArrowIcon } from '../../assets';
 import TextButton from '../button/text-button';
 
 interface SectionHeaderButton {
   label: string;
   variant: 'text' | 'outlined' | 'contained';
-  onClick: () => void;
+  onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
   sx?: SxProps<Theme>;
   hide?: boolean;
   disabled?: boolean;
@@ -26,6 +25,8 @@ interface SectionHeaderProps {
   subValue?: string;
   showItemCount?: boolean;
   className?: string;
+  iconBg?: string;
+  bgType?: 'circle' | 'react';
 }
 
 const SectionHeader: React.FC<SectionHeaderProps> = ({
@@ -35,11 +36,11 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
   count = 0,
   buttons = [],
   onViewToggle,
-  showBackArrow = false,
-  onBackClick,
   subValue,
   showItemCount = false,
   className,
+  iconBg,
+  bgType,
 }) => {
   if (hideSection) {
     return null;
@@ -55,19 +56,28 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
     >
       <div className='h-full flex items-center justify-between gap-4 py-1 px-3'>
         <div className='flex items-center gap-1'>
-          {showBackArrow && (
+          {/* {showBackArrow && (
             <div
               className='cursor-pointer w-[24px] h-[24px] flex justify-center items-center -ml-2'
               onClick={onBackClick}
             >
               <LeftArrowIcon className='h-[12px]' alt='leftArrowIcon' />
             </div>
-          )}
+          )} */}
 
-          {titleIcon && (
-            <div className='w-[24px] h-[24px] flex items-center justify-center'>
+          {iconBg ? (
+            <div
+              className={`w-[24px] h-[24px] flex items-center justify-center ${bgType === 'circle' ? 'rounded-full' : 'rounded-[4px]'}`}
+              style={{ backgroundColor: iconBg }}
+            >
               {titleIcon}
             </div>
+          ) : (
+            titleIcon && (
+              <div className='w-[24px] h-[24px] flex items-center justify-center'>
+                {titleIcon}
+              </div>
+            )
           )}
 
           <div>

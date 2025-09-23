@@ -9,7 +9,8 @@ interface TextButtonProps {
   color?: ButtonOwnProps['color'];
   loading?: boolean;
   disabled?: boolean;
-  onClick?: () => void;
+  hide?: boolean;
+  onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
 }
 const StyledButton = styled(Button)(() => {
   return {
@@ -20,7 +21,7 @@ const StyledButton = styled(Button)(() => {
     background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
     textTransform: 'none',
     fontSize: '13px',
-    fontWeight: 600,
+    fontWeight: 400,
     padding: '0px',
     borderRadius: '2px',
     '&:hover': {
@@ -29,7 +30,8 @@ const StyledButton = styled(Button)(() => {
   };
 });
 
-const TextButton: React.FC<TextButtonProps> = ({ label, ...rest }) => {
+const TextButton: React.FC<TextButtonProps> = ({ label, hide, ...rest }) => {
+  if (hide) return null;
   return <StyledButton {...rest}>{label}</StyledButton>;
 };
 

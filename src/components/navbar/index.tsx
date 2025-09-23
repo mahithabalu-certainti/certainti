@@ -1,7 +1,7 @@
 import { BrowserAuthError, PublicClientApplication } from '@azure/msal-browser';
 import {
   AppBar,
-  Badge,
+  // Badge,
   Box,
   debounce,
   IconButton,
@@ -21,13 +21,13 @@ import React, {
 import { useDispatch, useSelector } from 'react-redux';
 import {
   AccountsIcon,
+  AdminSettingIcon,
   BurgerMenuIcon,
   ChevronDownIcon,
   GlobeIcon,
   MenuIcon,
-  NotificationIcon,
-  PhoneIcon,
-  SettingsIcon,
+  // NotificationIcon,
+  // PhoneIcon,
 } from '../../assets';
 import { AllPermissions } from '../../common-service';
 import { useAuthHook, useToast } from '../../hooks';
@@ -195,12 +195,12 @@ export const Navbar: React.FC<NavbarProps> = ({
     setSearchAnchor(null);
   };
 
-  const handleNotificationOpen = useCallback(
-    (event: React.MouseEvent<HTMLElement>) => {
-      setNotificationAnchor(event.currentTarget);
-    },
-    []
-  );
+  // const handleNotificationOpen = useCallback(
+  //   (event: React.MouseEvent<HTMLElement>) => {
+  //     setNotificationAnchor(event.currentTarget);
+  //   },
+  //   []
+  // );
 
   const changePassword = useCallback(async () => {
     handleMenuClose();
@@ -375,14 +375,14 @@ export const Navbar: React.FC<NavbarProps> = ({
         open={isMobileMenuOpen}
         onClose={handleMobileMenuClose}
       >
-        <MenuItem>
+        {/* <MenuItem>
           <IconButton size='large' color='inherit'>
             <Badge badgeContent={4} color='error'>
               <NotificationIcon alt='notification' />
             </Badge>
           </IconButton>
           <p>Messages</p>
-        </MenuItem>
+        </MenuItem> */}
         <MenuItem onClick={handleProfileMenuOpen}>
           <IconButton
             size='large'
@@ -436,7 +436,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <button
                         aria-describedby={globalFilterId}
                         onClick={handleGlobalFilterModal}
-                        className={`${isGlobalModalOpen || isFilterApplied ? 'bg-[#FFFFFF26]' : 'bg-transparent'} w-[85px] min-w-[85px] px-3 h-[25px] flex justify-center items-center gap-1.5 mr-2 cursor-pointer focus:outline-none rounded-[2px] hover:bg-[#FFFFFF33] hover:rounded-xs whitespace-nowrap`}
+                        className={`${isGlobalModalOpen || isFilterApplied ? 'bg-[#FFFFFF26]' : 'bg-transparent'} w-[110px] min-w-[110px] px-3 h-[25px] flex justify-center items-center gap-1.5 mr-2 cursor-pointer focus:outline-none rounded-[2px] hover:bg-[#FFFFFF33] hover:rounded-xs whitespace-nowrap`}
                       >
                         <div className='relative'>
                           <GlobeIcon
@@ -450,7 +450,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                           )}
                         </div>
                         <span className='text-[13px] font-normal text-white'>
-                          Global
+                          Accounts ({isFilterApplied ? filters.length : 0})
                         </span>
                       </button>
                       <GlobalFilterModal
@@ -472,10 +472,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <div className='border-l border-[#FFFFFF4D] ml-1 mr-2 h-6' />
               </>
             )}
-            <IconButton size='large' color='inherit'>
+            {/* <IconButton size='large' color='inherit'>
               <PhoneIcon alt='phone' className='h-[20px] w-[20px]' />
-            </IconButton>
-            <IconButton
+            </IconButton> */}
+            {/* <IconButton
               size='large'
               aria-label='notification'
               aria-haspopup='true'
@@ -487,7 +487,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 alt='notification'
                 className='h-[22px] w-[22px]'
               />
-            </IconButton>
+            </IconButton> */}
             {isAdminEnable && (
               <Tooltip
                 title={`${isAnyApiWasLoading ? 'Loading...' : `Switch to ${showAdminSidebar ? 'Consultant' : 'Admin'}`}`}
@@ -500,8 +500,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                     onClick={debounce(switchSideBarMenus, 300)}
                     disabled={isAnyApiWasLoading}
                   >
-                    <SettingsIcon
-                      alt='settings'
+                    <AdminSettingIcon
+                      alt='admin-settings'
                       className='h-[20px] w-[20px]'
                     />
                   </IconButton>

@@ -38,7 +38,7 @@ export const getResourceColumns = (
       onResourceIdClick ? (
         <span
           onClick={() => onResourceIdClick(row)}
-          className='cursor-pointer no-underline hover:underline hover:text-[#1755E7]'
+          className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
         >
           {row.resource_code}
         </span>
@@ -66,8 +66,8 @@ export const getResourceColumns = (
           errorMessage: 'Max length exceeded',
         },
         {
-          regex: REGEX_PATTERNS.NO_LEADING_SPECIAL_REGEX,
-          errorMessage: 'Cannot start with a number, hyphen, or underscore.',
+          regex: REGEX_PATTERNS.NO_LEADING_SPECIAL_REGEX_FOR_RESOURCE_CODE,
+          errorMessage: 'Cannot start with a space, hyphen, or underscore.',
         },
         {
           regex: REGEX_PATTERNS.ALLOWED_CHARS_REGEX,
@@ -315,8 +315,8 @@ export const getResourceColumns = (
       // Enable onChange callback to fetch regions
       onChange: true,
       getFieldData: (rowData: DependencyRowData) => {
-        onCountryClick(String(rowData.country_rid));
-        return String(rowData.country_rid);
+        onCountryClick(String(rowData.country_rid || ''));
+        return String(rowData.country_rid || '');
       },
       dependencies: [
         {
@@ -349,7 +349,7 @@ export const getResourceColumns = (
       options: regionOptions,
       loading: regionLoading,
       getFieldData: (rowData: DependencyRowData) => {
-        return String(rowData.region_rid);
+        return String(rowData.region_rid || '');
       },
       dependencies: [
         {

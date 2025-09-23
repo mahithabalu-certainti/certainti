@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ListTable } from '../../../../components/table';
+import { ListTable, ManageColumnsPopover } from '../../../../components/table';
 import { FilterCondition, UserListParams } from '../../../types/manage-user';
 import { getUserGroupColumns } from './columns';
 import { UserGroupList } from '../../../types';
@@ -9,6 +9,8 @@ import {
   ActionItem,
   CellEditData,
   FieldChangeValue,
+  ListTableColumn,
+  ShowHideTableColumn,
 } from '../../../../components/table/types';
 import { EditIcon } from '../../../../assets';
 import { useMutation } from '@apollo/client';
@@ -27,6 +29,10 @@ interface IUserTableProps {
   setTableParams: React.Dispatch<React.SetStateAction<UserListParams>>;
   onSelectionChange: (selectedIds: string[]) => void;
   refreshUserGroupTrigger?: number;
+  columnAnchorEl: HTMLButtonElement | null;
+  setColumnAnchorEl: React.Dispatch<
+    React.SetStateAction<HTMLButtonElement | null>
+  >;
 }
 
 export const UserGroupTable: React.FC<IUserTableProps> = ({
@@ -36,6 +42,8 @@ export const UserGroupTable: React.FC<IUserTableProps> = ({
   setTableParams,
   onSelectionChange,
   refreshUserGroupTrigger,
+  columnAnchorEl,
+  setColumnAnchorEl,
 }) => {
   const navigate = useNavigate();
   const { errorToast } = useToast();
@@ -182,36 +190,80 @@ export const UserGroupTable: React.FC<IUserTableProps> = ({
     }
   };
 
+  const RestrictedColumns = [
+    {
+      id: 'group_name',
+      canHide: false,
+      canDrag: false,
+    },
+  ];
+
+  const [visibleColumns, setVisibleColumns] = useState<
+    ListTableColumn<UserGroupList>[]
+  >(
+    getUserGroupColumns(prefixGroupName, permissionMap).filter(
+      (col) => !col.hide
+    )
+  );
+
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    setVisibleColumns(
+      updatedColumns.filter(
+        (col) => !col.hide
+      ) as ListTableColumn<UserGroupList>[]
+    );
+  };
+
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
+  };
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const modalId = isModalOpen
+    ? 'interaction-column-visibility-popover'
+    : undefined;
+
   return (
-    <ListTable
-      data={(userGroupList || []) as UserGroupList[]}
-      columns={getUserGroupColumns(prefixGroupName, permissionMap)}
-      getRowId={getRowId}
-      hoverHighlight={false}
-      tableStyle={{
-        height: '100%',
-        maxHeight: 'calc(100vh - 195px)',
-        overflow: 'auto',
-      }}
-      stickyHeader={true}
-      stickyColumnsCount={2}
-      selectable={false}
-      onSelectionChange={onSelectionChange}
-      actionWidth={60}
-      actionDisplayMode='dropdown'
-      actionMenuItems={actionButtons}
-      loading={isPending}
-      error={isError ? 'Failed to load User Groups' : undefined}
-      rowsPerPageOptions={[25, 50, 100]}
-      rowsPerPage={tableParams.limit}
-      currentPage={(tableParams.page ?? 1) - 1}
-      totalItems={totalItems}
-      onPageChange={handlePageChange}
-      onRowsPerPageChange={handleRowsPerPageChange}
-      sortBy={tableParams.sortBy}
-      sortOrder={tableParams.sortOrder}
-      onSort={handleSort}
-      onCellEdit={handleCellEdit}
-    />
+    <>
+      <ManageColumnsPopover
+        anchorEl={columnAnchorEl}
+        open={isModalOpen}
+        popoverId={modalId}
+        onClose={handlePopoverClose}
+        columns={getUserGroupColumns(prefixGroupName, permissionMap)}
+        onColumnsChange={handleColumnsChange}
+        columnRestrictions={RestrictedColumns}
+      />
+      <ListTable
+        data={(userGroupList || []) as UserGroupList[]}
+        columns={visibleColumns}
+        getRowId={getRowId}
+        hoverHighlight={false}
+        tableStyle={{
+          height: '100%',
+          maxHeight: 'calc(100vh - 195px)',
+          overflow: 'auto',
+        }}
+        stickyHeader={true}
+        stickyColumnsCount={2}
+        selectable={false}
+        onSelectionChange={onSelectionChange}
+        actionWidth={60}
+        actionDisplayMode='dropdown'
+        actionMenuItems={actionButtons}
+        loading={isPending}
+        error={isError ? 'Failed to load User Groups' : undefined}
+        rowsPerPageOptions={[25, 50, 100]}
+        rowsPerPage={tableParams.limit}
+        currentPage={(tableParams.page ?? 1) - 1}
+        totalItems={totalItems}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+        sortBy={tableParams.sortBy}
+        sortOrder={tableParams.sortOrder}
+        onSort={handleSort}
+        onCellEdit={handleCellEdit}
+      />
+    </>
   );
 };

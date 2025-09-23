@@ -1,4 +1,4 @@
-import { Suspense, useMemo, useState } from 'react';
+import React, { Suspense, useMemo, useState } from 'react';
 import { NewFilterIcon, UserIcon, RefreshIcon } from '../../../../assets';
 import TextButton from '../../../../components/button/text-button';
 import { useNavigate } from 'react-router-dom';
@@ -19,7 +19,6 @@ import { AccessRestricted } from '../../../../components/account-restricted';
 const BUTTON_STYLES = {
   height: '24px',
   fontSize: '13px',
-  fontWeight: 600,
 };
 
 export const ProfileList: React.FC = () => {
@@ -45,6 +44,10 @@ export const ProfileList: React.FC = () => {
     Date.now()
   );
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
+  const [columnAnchorEl, setColumnAnchorEl] =
+    React.useState<HTMLButtonElement | null>(null);
+  const isModalOpen = Boolean(columnAnchorEl);
+  const modalId = isModalOpen ? 'account-column-visibility-popover' : undefined;
 
   const onRefreshClick = () => {
     setRefreshProfileTrigger(Date.now());
@@ -145,6 +148,12 @@ export const ProfileList: React.FC = () => {
   const profileFilterFields = getManageProfileFilterFields(permissionMap);
   if (!isProfileEnable || !isProfileViewEnable) return <AccessRestricted />;
 
+  const handleColumnVisibility = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setColumnAnchorEl(event.currentTarget);
+  };
+
   return (
     <div className='flex flex-col h-full w-full'>
       {/* Header Section */}
@@ -191,8 +200,8 @@ export const ProfileList: React.FC = () => {
         <div className='font-bold text-[14px] leading-[32px] text-[#2D3E4F]'>
           All Profiles
         </div>
-        <div className='flex items-center gap-3'>
-          <div className='relative h-[32px]'>
+        <div className='flex items-center gap-0'>
+          <div className='flex gap-1 relative'>
             <button
               aria-describedby={filterId}
               className={`w-[64px] h-[24px] text-[13px] mt-[5px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
@@ -211,6 +220,16 @@ export const ProfileList: React.FC = () => {
                   </span>
                 </div>
               ) : null}
+            </button>
+            <button
+              aria-describedby={modalId}
+              className={`w-[120px] h-[24px] mt-[3px] mr-[7px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 rounded-[2px] relative border border-[#CBD6E2] px-0 py-0 normal-case ${isModalOpen ? 'bg-[#F3F3F3]' : 'bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'} hover:text-[#425A76] transition-colors duration-150`}
+              style={{
+                boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
+              }}
+              onClick={handleColumnVisibility}
+            >
+              Show/Hide Fields
             </button>
             <Suspense fallback={null}>
               <FilterModal
@@ -252,6 +271,8 @@ export const ProfileList: React.FC = () => {
             isProfileViewEnable={isProfileViewEnable}
             isProfileDeleteEnable={isProfileDeleteEnable}
             refreshProfileTrigger={refreshProfileTrigger}
+            setColumnAnchorEl={setColumnAnchorEl}
+            columnAnchorEl={columnAnchorEl}
           />
         </Suspense>
       </div>

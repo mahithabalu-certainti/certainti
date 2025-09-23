@@ -1,5 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useLocation, useParams, useSearchParams } from 'react-router-dom';
+import {
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 import { EditIcon, CreateResourceIcon } from '../../../../../../assets';
 import { useToast } from '../../../../../../hooks';
 import {
@@ -39,6 +44,7 @@ import { projectResourcesPayloadData } from './utils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
 import { formatDateToYYYYMMDDWithTime } from '../../../../../../common-utils';
+import { RESOURCE_CREATE } from '../../../../../../routes';
 
 const ProjectResourceForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
@@ -58,17 +64,23 @@ const ProjectResourceForm: React.FC = () => {
     deductions: '',
   });
   const { resourceId } = useParams();
+  const navigate = useNavigate();
 
   const [searchParams] = useSearchParams();
   const account_Id = searchParams.get('account_Id');
+  const account_name = searchParams.get('account_name');
+  const account_number = searchParams.get('account_number');
   const project_Id = searchParams.get('project_Id');
   const currency_rid = searchParams.get('currency_rid');
   const projectPFY = searchParams.get('PFY');
   const projectCode = searchParams.get('projectCode');
+  const createdNewResourceCode =
+    searchParams.get('created_resource_code') || '';
+  const newProjectResource = searchParams.get('new_project_res_name') || '';
   const fiscalDate: FormFiscalDateType = projectPFY
     ? JSON.parse(projectPFY)
     : undefined;
-
+  const fromLocation = location.state?.from;
   const getProjectResource = useProjectResourceDetail(
     account_Id as string,
     resourceId as string
@@ -162,7 +174,9 @@ const ProjectResourceForm: React.FC = () => {
       );
       setShowSkillRoleOthersField(false);
       setIsResourceType(false);
-      goBack();
+      if (isEditView) {
+        goBack();
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [commonSuccess, isEditView]);
@@ -170,7 +184,7 @@ const ProjectResourceForm: React.FC = () => {
   const memoizedProjectResourceCode: SelectResourceOption[] = useMemo(
     () =>
       projectResourceCodeOptions?.data?.resourceCodes.map((item) => ({
-        label: item.resource_code,
+        label: `${item.resource_code} ${item.resource_name ? `(${item.resource_name})` : ''}`,
         value: item.resource_code,
         resource_type_rid: item.resource_type_rid,
         resource_type_name: item.resource_type_name,
@@ -239,7 +253,22 @@ const ProjectResourceForm: React.FC = () => {
     if (isEditView) {
       updateProjectResource.mutate(projectResourceFormData);
     } else {
-      createProjectResource.mutate(projectResourceFormData);
+      createProjectResource.mutate(projectResourceFormData, {
+        onSuccess: (res) => {
+          if (newProjectResource) {
+            const params = new URLSearchParams(fromLocation?.search);
+            params.set(
+              'created_resource_code',
+              res?.data?.projectResource?.rid || ''
+            );
+            navigate(fromLocation?.pathname + '?' + params.toString(), {
+              replace: true,
+            });
+          } else {
+            goBack();
+          }
+        },
+      });
     }
   };
 
@@ -248,14 +277,31 @@ const ProjectResourceForm: React.FC = () => {
   };
 
   const goBack = () => {
-    window.history.back();
+    if (createdNewResourceCode) {
+      navigate(-2);
+    } else {
+      window.history.back();
+    }
   };
+
   const defaultActiveValue = useMemo(() => {
     const activeOption = memoizedStatus.find(
       (option) => option.label.toLowerCase() === 'active'
     );
     return activeOption?.value || '';
   }, [memoizedStatus]);
+
+  const handleCreateNewResource = (resCode?: string) => {
+    const queryParams = new URLSearchParams({
+      account_id: account_Id || '',
+      account_name: account_name || '',
+      acc_number: account_number || '',
+      new_res_code: resCode || '',
+    });
+    navigate(`${RESOURCE_CREATE}?${queryParams.toString()}`, {
+      state: { from: location, subLocation: fromLocation },
+    });
+  };
 
   const onChangeField = (data: OnChange) => {
     if (data.fieldName === 'country_rid') {
@@ -265,11 +311,14 @@ const ProjectResourceForm: React.FC = () => {
       const selectedResource = memoizedProjectResourceCode.find(
         (option) => String(option.value) === String(data.fieldValue)
       );
-
-      setIsResourceType(
-        selectedResource?.resource_type_name?.toLowerCase() ===
-          ResourceType.full_time
-      );
+      if (selectedResource) {
+        setIsResourceType(
+          selectedResource?.resource_type_name?.toLowerCase() ===
+            ResourceType.full_time
+        );
+      } else {
+        handleCreateNewResource(data.fieldValue as string);
+      }
     }
 
     if (data.fieldName === 'assigned_skill_role_type_rid') {
@@ -405,12 +454,12 @@ const ProjectResourceForm: React.FC = () => {
           {isEditView ? (
             <EditIcon
               alt='projrct-resource-icon'
-              className='h-6 w-6 bg-[#7D98B6] p-1.5 border-box rounded'
+              className='h-8 w-8 mt-1.5 bg-[#7D98B6] p-2 border-box rounded'
             />
           ) : (
             <CreateResourceIcon
               alt='projrct-resource-icon'
-              className='h-6 w-6 bg-[#7D98B6] p-1.5 border-box rounded'
+              className='h-8 w-8 [&>path:first-child]:fill-[#7D98B6] mt-1.5 border-box rounded'
             />
           )}
 
@@ -449,7 +498,13 @@ const ProjectResourceForm: React.FC = () => {
           values={
             isEditView && projectResourceData
               ? { ...projectResourceData }
-              : { currency_rid: currency_rid, status_rid: defaultActiveValue }
+              : !isEditView
+                ? {
+                    currency_rid: currency_rid,
+                    status_rid: defaultActiveValue,
+                    resource_code: createdNewResourceCode,
+                  }
+                : {}
           }
           outData={submitData}
           formRef={formRef}
@@ -457,6 +512,7 @@ const ProjectResourceForm: React.FC = () => {
           onChange={onChangeField}
           keyStart='start_date'
           keyEnd='end_date'
+          isFrom='project_resource'
         />
       </div>
     </>

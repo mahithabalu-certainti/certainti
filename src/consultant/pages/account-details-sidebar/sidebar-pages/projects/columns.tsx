@@ -71,7 +71,7 @@ export const getProjectColumns = (
           onClick={() => onClick(row)}
           className={
             row.fiscal_year
-              ? 'cursor-pointer no-underline hover:underline hover:text-[#1755E7]'
+              ? 'cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
               : ''
           }
         >
@@ -116,6 +116,10 @@ export const getProjectColumns = (
     hide:
       !permissionMap?.['project_name']?.read &&
       !permissionMap?.['project_name']?.edit,
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      return isChild ? row.project_name : '-';
+    },
     field: {
       type: 'text',
       required: false,
@@ -151,6 +155,10 @@ export const getProjectColumns = (
     hide:
       !permissionMap?.['project_type_rid']?.read &&
       !permissionMap?.['project_type_rid']?.edit,
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      return isChild ? row.project_type_name : '-';
+    },
     field: {
       type: 'select',
       required: true,
@@ -176,6 +184,8 @@ export const getProjectColumns = (
       textAlign: 'left',
     },
     render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      if (!isChild) return '-';
       const displayYear = row.fiscal_year ? `FY-${row.fiscal_year}` : '-';
       return <span>{displayYear}</span>;
     },
@@ -200,17 +210,20 @@ export const getProjectColumns = (
       !permissionMap?.['project_classification_rid']?.read &&
       !permissionMap?.['project_classification_rid']?.edit,
     width: 170,
-    render: (row: Project) =>
-      row.project_classification_other
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      if (!isChild) return '-';
+      return row.project_classification_other
         ? `${row.classification_name} - ${row.project_classification_other}`
-        : row.classification_name,
+        : row.classification_name;
+    },
     field: {
       type: 'select',
       required: false,
       placeholder: 'Choose Classification',
       options: memoizedClassification,
       getFieldData: (rowData: DependencyRowData) => {
-        return String(rowData.project_classification_rid);
+        return String(rowData.project_classification_rid || '');
       },
       dependencies: [
         {
@@ -265,6 +278,10 @@ export const getProjectColumns = (
     hide:
       !permissionMap?.['project_client_group']?.read &&
       !permissionMap?.['project_client_group']?.edit,
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      return isChild ? row.project_client_group : '-';
+    },
     field: {
       type: 'text',
       required: false,
@@ -300,6 +317,10 @@ export const getProjectColumns = (
       !permissionMap?.['project_group']?.read &&
       !permissionMap?.['project_group']?.edit,
     width: 160,
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      return isChild ? row.project_group : '-';
+    },
     field: {
       type: 'text',
       required: false,
@@ -335,6 +356,12 @@ export const getProjectColumns = (
     hide:
       !permissionMap?.['total_effort']?.read &&
       !permissionMap?.['total_effort']?.edit,
+    conditionallyEdit: [
+      {
+        key: 'total_effort',
+        matchValue: [null, '0.00'],
+      },
+    ],
     sx: {
       textAlign: 'right',
     },
@@ -370,6 +397,12 @@ export const getProjectColumns = (
     sx: {
       textAlign: 'right',
     },
+    conditionallyEdit: [
+      {
+        key: 'total_cost',
+        matchValue: [null, '0.00'],
+      },
+    ],
     render: (row: Project) =>
       row.total_cost ? costDisplay(row.total_cost, row.currency_symbol) : '-',
     field: {
@@ -458,14 +491,13 @@ export const getProjectColumns = (
     editId: 'total_cost_nonlabor',
     label: 'Non-Labor Cost',
     sortable: true,
-    sortId: 'total_cost_nonlabor',
     editable:
       permissionMap?.['total_cost_nonlabor']?.read &&
-      permissionMap?.['total_cost_nonlabor']?.edit &&
-      !accountInActive,
+      permissionMap?.['total_cost_nonlabor']?.edit,
     hide:
       !permissionMap?.['total_cost_nonlabor']?.read &&
       !permissionMap?.['total_cost_nonlabor']?.edit,
+    sortId: 'total_cost_nonlabor',
     width: 140,
     sx: {
       textAlign: 'right',
@@ -486,43 +518,6 @@ export const getProjectColumns = (
         },
       ],
     },
-  },
-  {
-    id: 'assessment_status',
-    label: 'Assessment Status',
-    sortable: true,
-    sortId: 'assessment_status',
-    width: 180,
-    hide:
-      !permissionMap?.['assessment_status']?.read &&
-      !permissionMap?.['assessment_status']?.edit,
-  },
-  {
-    id: 'qre_final',
-    label: 'QRE %',
-    sortable: true,
-    sortId: 'qre_final',
-    width: 130,
-    sx: {
-      textAlign: 'right',
-    },
-    hide:
-      !permissionMap?.['qre_final']?.read &&
-      !permissionMap?.['qre_final']?.edit,
-    render: (row: Project) =>
-      row.qre_final ? costDisplay(row.qre_final, row.currency_symbol) : '-',
-  },
-  {
-    id: 'qre',
-    label: 'QRE',
-    sortable: true,
-    sortId: 'qre',
-    width: 130,
-    sx: {
-      textAlign: 'right',
-    },
-    hide: !permissionMap?.['qre']?.read && !permissionMap?.['qre']?.edit,
-    render: (row: Project) => (row.qre ? row.qre : '-'),
   },
   {
     id: 'project_point_of_contact',
@@ -549,7 +544,9 @@ export const getProjectColumns = (
           {row.project_point_of_contact}
         </div>
       ) : (
-        <span>{row.project_point_of_contact}</span>
+        <span>
+          {row.project_point_of_contact ? row.project_point_of_contact : '-'}
+        </span>
       );
     },
   },
@@ -578,9 +575,50 @@ export const getProjectColumns = (
           {row.technical_point_of_contact}
         </div>
       ) : (
-        <span>{row.technical_point_of_contact}</span>
+        <span>
+          {row.technical_point_of_contact
+            ? row.technical_point_of_contact
+            : '-'}
+        </span>
       );
     },
+  },
+  {
+    id: 'assessment_status',
+    label: 'Assessment Status',
+    sortable: true,
+    sortId: 'assessment_status',
+    width: 180,
+    hide:
+      !permissionMap?.['assessment_status']?.read &&
+      !permissionMap?.['assessment_status']?.edit,
+  },
+  {
+    id: 'rd_percent_potential_ai',
+    label: 'QRE %',
+    sortable: true,
+    sortId: 'rd_percent_potential_ai',
+    width: 130,
+    sx: {
+      textAlign: 'right',
+    },
+    hide:
+      !permissionMap?.['qre_final']?.read &&
+      !permissionMap?.['qre_final']?.edit,
+    render: (row: Project) =>
+      row.rd_percent_potential_ai ? row.rd_percent_potential_ai : '-',
+  },
+  {
+    id: 'qre',
+    label: 'QRE',
+    sortable: true,
+    sortId: 'qre',
+    width: 130,
+    sx: {
+      textAlign: 'right',
+    },
+    hide: !permissionMap?.['qre']?.read && !permissionMap?.['qre']?.edit,
+    render: (row: Project) => (row.qre ? row.qre : '-'),
   },
   {
     id: 'comments',

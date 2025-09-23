@@ -15,6 +15,8 @@ export interface ProjectListParams {
   globalFilters?: globalFilters;
   timezone?: string;
   bothParentAndChild?: boolean;
+  apiSource?: string;
+  accountInteractionId?: string;
 }
 export enum Status {
   Active = 'active',
@@ -27,12 +29,14 @@ export interface KeyContacts {
   key_contact_email: string;
   key_contact_role: string;
   is_primary_contact: boolean;
-  include_in_communication: boolean;
+  include_in_communication?: boolean;
+  interaction_cc_recipient?: boolean;
   status_name?: string;
   status_rid: string;
   action_type?: string;
   key_contact_status?: Status;
   role_name?: string;
+  rid?: string;
 }
 export interface NewProjectData {
   showOthersField?: boolean;
@@ -169,9 +173,11 @@ export type Project = {
   assessment_status: string | null;
   qre: string | null;
   qre_final?: string | null;
+  rd_percent_potential_ai: string | null;
   is_rd_qualified: boolean;
   industry_name_other: string | null;
   project_type: string;
+  project_type_name: string;
   project_client_group: string | null;
   project_group: string | null;
   project_classification_rid: string | null;
@@ -230,10 +236,26 @@ export type ProjectFiscalSummary = {
   created_datetime: string;
   project_fiscal_rid: string;
   rid: string;
+  isInteractionMapped?: boolean;
+  isKeyContactIncluded?: boolean;
 };
 
 export type FiscalYearType = {
   year?: number;
   startDate?: string;
   endDate?: string;
+};
+
+export type ProjectTiggerAIResponse = {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+};
+interface ProjectItem {
+  account_rid: string;
+  project_fiscal_rid: string[];
+}
+export type ProjectTriggerAIPayload = {
+  data: ProjectItem[];
+  type: string;
 };

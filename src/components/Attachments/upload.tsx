@@ -1,16 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Attachment, UploadIcon } from '../../assets';
+import { AttachmentsSideIcon, UploadIcon } from '../../assets';
 import TextButton from '../button/text-button';
 import { useToast } from '../../hooks';
 import { attachmentFileUpload } from '../../consultant/services/attachments/attachments-service';
 import AttachmentForm from './attachment-from';
 import { AttachmentUploadPayload } from '../../consultant/types/attachment';
+import { FileList } from '../file-list';
 interface UploadsProps {
   accountId: string | undefined | null;
   attachID: string | undefined | null;
   accountInActive?: boolean;
   onUploadSuccess?: () => void;
+  projectFiscalYear?: number | string;
 }
 
 const MAX_FILE_SIZE_MB = 100;
@@ -32,6 +34,7 @@ const Uploads: React.FC<UploadsProps> = ({
   accountId,
   accountInActive,
   onUploadSuccess,
+  projectFiscalYear,
 }) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [message, setMessage] = useState<{
@@ -55,10 +58,6 @@ const Uploads: React.FC<UploadsProps> = ({
 
   const showError = (text: string) => {
     setMessage({ type: 'error', text });
-  };
-
-  const showSuccess = (text: string) => {
-    setMessage({ type: 'success', text });
   };
 
   const validateFiles = (files: FileList | null): File[] => {
@@ -155,18 +154,16 @@ const Uploads: React.FC<UploadsProps> = ({
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const validFiles = validateFiles(e.target.files);
     if (validFiles.length > 0) {
-      setSelectedFiles(validFiles);
-      showSuccess(`File "${validFiles[0].name}" added successfully.`);
+      setSelectedFiles([validFiles[0]]);
     }
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
+    if (selectedFiles.length > 0) return;
     const validFiles = validateFiles(e.dataTransfer.files);
-
     if (validFiles.length > 0) {
-      setSelectedFiles((prevFiles) => [...prevFiles, ...validFiles]);
-      showSuccess(`File "${validFiles[0].name}" added successfully.`);
+      setSelectedFiles([validFiles[0]]);
     }
   };
 
@@ -175,7 +172,9 @@ const Uploads: React.FC<UploadsProps> = ({
   };
 
   const openFileDialog = () => {
-    fileInputRef.current?.click();
+    if (selectedFiles.length === 0) {
+      fileInputRef.current?.click();
+    }
   };
 
   const handleExternalSubmit = () => {
@@ -183,55 +182,42 @@ const Uploads: React.FC<UploadsProps> = ({
   };
 
   return (
-    <div className='h-auto border border-[#CBD6E2] flex flex-col'>
+    <div className='h-auto border border-[#CBD6E2] flex flex-col mb-3'>
       <div className='h-[38px] py-1 px-2 border-b border-[#CBD6E2] flex items-center justify-between'>
         <div className='flex items-center gap-1'>
-          <Attachment alt='Import Icon' className='w-6 h-6' />
+          <div className='w-[24px] h-[24px] flex items-center justify-center bg-[#D8E9FF] rounded-full'>
+            <AttachmentsSideIcon
+              alt='Import Icon'
+              className='[&>path]:stroke-[#4B9BFF]'
+            />
+          </div>
           <span className='text-[13px] text-[#2D3E4F] font-semibold'>
             Attachments
           </span>
         </div>
-        <div className='flex gap-2'>
-          <TextButton
-            label='Cancel'
-            onClick={goBack}
-            sx={{
-              width: '75px',
-              minWidth: '75px',
-              fontWeight: 400,
-              fontSize: '13px',
-            }}
-          />
-          <TextButton
-            label='Save'
-            loading={loading}
-            onClick={handleExternalSubmit}
-            disabled={loading}
-            sx={{
-              width: '64px',
-              minWidth: '64px',
-              fontWeight: 400,
-              fontSize: '13px',
-            }}
-          />
-        </div>
       </div>
       <div style={{ pointerEvents: loading ? 'none' : 'all' }}>
-        <AttachmentForm formRef={formRef} onFormSubmit={handleSubmit} />
-        <div className='flex flex-col border-t border-[#cbd6e2] items-center justify-center gap-4 px-4 py-10'>
+        <AttachmentForm
+          formRef={formRef}
+          onFormSubmit={handleSubmit}
+          projectFiscalYear={projectFiscalYear}
+        />
+        <div className='flex flex-col border-t border-[#cbd6e2] items-center justify-center gap-4 px-4 py-5'>
           <div
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onClick={openFileDialog}
-            className={`h-[116px] w-[502px] border-[2px] border-dashed rounded-[8px] flex flex-col items-center justify-center gap-2  ${
-              message && message.type === 'error'
-                ? 'border-red-600 bg-[#FEF2F2] cursor-pointer'
-                : 'border-[#0176D3] bg-[#F4F6F9] cursor-pointer'
-            }`}
+            className={`h-[116px] w-[502px] border-[2px] border-dashed rounded-[8px] flex flex-col items-center justify-center gap-2
+              ${selectedFiles.length > 0 ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+              ${message?.type === 'error' ? 'border-red-600 bg-[#FEF2F2]' : 'border-[#0176D3] bg-[#F4F6F9]'}
+            `}
+            style={{
+              pointerEvents: selectedFiles.length > 0 ? 'none' : 'all',
+            }}
           >
             <UploadIcon alt='Upload Icon' className='w-[36px] h-[24px]' />
             <div className='text-[14px] text-[#0B0B0B]'>
-              Drag your file(s) or{' '}
+              Drag your file or{' '}
               <span
                 className='text-[#0176D3] underline'
                 onClick={(e) => {
@@ -252,16 +238,49 @@ const Uploads: React.FC<UploadsProps> = ({
             />
           </div>
 
-          {message && (
-            <div
-              className={`w-[502px] max-w-[502px] mt-2 break-all text-sm ${
-                message.type === 'error' ? 'text-red-600' : 'text-green-600'
-              }`}
-            >
-              {message.text}
-            </div>
-          )}
+          {/* Reserved space for error messages to prevent button movement */}
+          <div className='w-[502px] max-w-[502px] mt-2 h-[20px]'>
+            {message && (
+              <div
+                className={`break-all text-sm ${
+                  message.type === 'error' ? 'text-red-600' : 'text-green-600'
+                }`}
+              >
+                {message.text}
+              </div>
+            )}
+          </div>
+
+          <FileList
+            fileInputRef={fileInputRef}
+            selectedFiles={selectedFiles}
+            setSelectedFiles={setSelectedFiles}
+          />
         </div>
+      </div>
+      <div className='border-t border-[#CBD6E2] flex w-full justify-end gap-4 mb-3 pt-3 pr-3'>
+        <TextButton
+          label='Cancel'
+          onClick={goBack}
+          sx={{
+            width: '75px',
+            minWidth: '75px',
+            fontWeight: 400,
+            fontSize: '13px',
+          }}
+        />
+        <TextButton
+          label='Upload'
+          loading={loading}
+          onClick={handleExternalSubmit}
+          disabled={loading}
+          sx={{
+            width: '75px',
+            minWidth: '75px',
+            fontWeight: 400,
+            fontSize: '13px',
+          }}
+        />
       </div>
     </div>
   );

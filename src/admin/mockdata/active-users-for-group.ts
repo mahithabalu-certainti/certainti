@@ -13,6 +13,7 @@ export const mockActiveUsersForGroup: ActiveUserForGroupApiResponse = {
         first_name: 'Arun',
         org_id: 'RESDEV',
         is_consultant_firm: true,
+        organization_name: '',
       },
       {
         rid: 'D001-caace427-6365-469d-b8e5-d6322da67d40',
@@ -21,6 +22,7 @@ export const mockActiveUsersForGroup: ActiveUserForGroupApiResponse = {
         first_name: 'Dhivya',
         org_id: 'RESDEV',
         is_consultant_firm: true,
+        organization_name: '',
       },
       {
         rid: 'D001-747a5ba0-efaa-4987-beec-45b8a181e349',
@@ -29,6 +31,7 @@ export const mockActiveUsersForGroup: ActiveUserForGroupApiResponse = {
         first_name: 'James',
         org_id: 'RESDEV',
         is_consultant_firm: true,
+        organization_name: '',
       },
       {
         rid: 'D001-d110ac51-a827-4f9b-ad0b-012d97912b16',
@@ -37,6 +40,7 @@ export const mockActiveUsersForGroup: ActiveUserForGroupApiResponse = {
         first_name: 'Manikandan',
         org_id: 'RESDEV',
         is_consultant_firm: true,
+        organization_name: '',
       },
       {
         rid: 'D001-184ced56-d030-4e67-b7ab-84b7e8ffcdd7',
@@ -45,6 +49,7 @@ export const mockActiveUsersForGroup: ActiveUserForGroupApiResponse = {
         first_name: 'Mohamed',
         org_id: 'RESDEV',
         is_consultant_firm: true,
+        organization_name: '',
       },
       {
         rid: 'D001-7ba653e1-4b1d-45fe-9767-5c295bdfcdb8',
@@ -53,6 +58,7 @@ export const mockActiveUsersForGroup: ActiveUserForGroupApiResponse = {
         first_name: 'Prabhu',
         org_id: 'RESDEV',
         is_consultant_firm: true,
+        organization_name: '',
       },
       {
         rid: 'D001-8218735c-c059-41ac-b645-51f06edc654e',
@@ -61,6 +67,7 @@ export const mockActiveUsersForGroup: ActiveUserForGroupApiResponse = {
         first_name: 'Ram Kumars',
         org_id: 'RESDEV',
         is_consultant_firm: true,
+        organization_name: '',
       },
       {
         rid: 'D001-0a8b42e1-a942-4f05-90fc-87f90b028214',
@@ -69,6 +76,7 @@ export const mockActiveUsersForGroup: ActiveUserForGroupApiResponse = {
         first_name: 'Sam',
         org_id: 'RESDEV',
         is_consultant_firm: true,
+        organization_name: '',
       },
       {
         rid: 'D001-f6b4cc2e-86b1-4d7a-8850-343426dac707',
@@ -77,6 +85,7 @@ export const mockActiveUsersForGroup: ActiveUserForGroupApiResponse = {
         first_name: 'Satheeshkumar',
         org_id: 'RESDEV',
         is_consultant_firm: true,
+        organization_name: '',
       },
       {
         rid: 'D001-09c06141-8832-472f-9a88-74cd917a45bb',
@@ -85,6 +94,7 @@ export const mockActiveUsersForGroup: ActiveUserForGroupApiResponse = {
         first_name: 'Super User',
         org_id: 'RESDEV',
         is_consultant_firm: true,
+        organization_name: '',
       },
       {
         rid: 'D001-1621c497-de6c-46e9-bd9f-a95bbe412c7a',
@@ -93,6 +103,7 @@ export const mockActiveUsersForGroup: ActiveUserForGroupApiResponse = {
         first_name: 'Testing',
         org_id: 'RESDEV',
         is_consultant_firm: true,
+        organization_name: '',
       },
       {
         rid: 'D001-3d9a7c79-aba5-4b33-b657-80b1422a1e14',
@@ -101,6 +112,7 @@ export const mockActiveUsersForGroup: ActiveUserForGroupApiResponse = {
         first_name: 'venkat',
         org_id: 'RESDEV',
         is_consultant_firm: true,
+        organization_name: '',
       },
       {
         rid: 'D001-103bf6b6-bf12-4d59-bc94-af5b048d89cb',
@@ -109,6 +121,7 @@ export const mockActiveUsersForGroup: ActiveUserForGroupApiResponse = {
         first_name: 'Vignesh',
         org_id: 'RESDEV',
         is_consultant_firm: true,
+        organization_name: '',
       },
       {
         rid: 'D001-1682d813-3f67-4874-b7a9-5c3b24d8c529',
@@ -117,6 +130,7 @@ export const mockActiveUsersForGroup: ActiveUserForGroupApiResponse = {
         first_name: 'Vishnu',
         org_id: 'RESDEV',
         is_consultant_firm: true,
+        organization_name: '',
       },
       {
         rid: 'D001-6f8a9a05-6f8f-4e01-a1ad-06569f43be77',
@@ -125,6 +139,7 @@ export const mockActiveUsersForGroup: ActiveUserForGroupApiResponse = {
         first_name: 'Yogeshkumar',
         org_id: 'RESDEV',
         is_consultant_firm: true,
+        organization_name: '',
       },
     ],
     count: 10,

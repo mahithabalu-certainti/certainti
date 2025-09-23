@@ -222,6 +222,7 @@ export interface AccountById {
   rid: string;
   created_datetime: string;
   modified_datetime: string;
+  organisation_name: string;
   logo_url: string;
   parent_account: {
     account_name: string;
@@ -241,7 +242,7 @@ export interface KeyContacts {
   key_contact_email: string;
   key_contact_role: string;
   is_primary_contact: boolean;
-  include_in_communication: boolean;
+  include_in_communication?: boolean;
   interaction_cc_recipient?: boolean;
   status_name?: string;
   status_rid: string;
@@ -271,6 +272,11 @@ export interface AccountFieldsTypes {
   modified_by: string;
   created_by: string;
   account_rid: string;
+  client_secret: string;
+  client_id: string;
+  tenant_id: string;
+  support_email: string;
+  is_send_interaction: boolean;
 }
 
 export interface NewAccountData extends AccountFieldsTypes, AccountById {
@@ -329,6 +335,7 @@ export type AccountListResponse = {
     account: {
       data: AccountList[];
       total: number;
+      totaltotalResult?: number;
     };
     count: number;
   };
@@ -462,6 +469,11 @@ export interface keyContactRolesApiResponse extends CommonApiResponse {
   };
 }
 
+export interface GlobalAccountListParams {
+  fiscalYear?: number | string;
+  globalFilters?: globalFilters;
+}
+
 export interface FormField {
   id: string;
   label: string;
@@ -500,7 +512,13 @@ export type ExportType =
   | 'resource_attachments'
   | 'resource_attachments'
   | 'projectTask'
-  | 'project_resource';
+  | 'project_resource'
+  | 'timesheet'
+  | 'interactions'
+  | 'timesheet_project'
+  | 'timesheet_project_resource'
+  | 'timesheet_project_task'
+  | 'technical_summary';
 
 export type FinancialSummaryFlag = 'all' | 'rd_qualified';
 

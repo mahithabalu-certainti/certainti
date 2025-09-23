@@ -1,10 +1,7 @@
 import { Box } from '@mui/material';
 import { useEffect, useState } from 'react';
 import OverviewTimelineTab from '../../components/overview-tab/overview-timeline-tab';
-import {
-  DetailsKeyContactErrorIcon,
-  RealatedListDetailsIcon,
-} from '../../../../../assets';
+import { DetailsIcon, DetailsKeyContactErrorIcon } from '../../../../../assets';
 import TextButton from '../../../../../components/button/text-button';
 import DetailsInfo from './details-info';
 import { accountDetailsProps } from '../../../account-details/utils';
@@ -14,7 +11,6 @@ import { AllMenus, AllPermissions } from '../../../../../common-service';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import DetailsSectionSkeleton from '../../../../../components/skeleton-component/detailsskeleton';
-// import { checkPermission } from '../../../../../common-utils';
 
 const BUTTON_STYLES = {
   height: '26px !important',
@@ -60,13 +56,7 @@ const Details: React.FC<DetailsProps> = ({
   const [detailsTab, setDetailsTab] = useState(detailsTabs);
   const navigate = useNavigate();
   const [tabValue, setTabValue] = useState('');
-
   const { permission } = useSelector((state: RootState) => state?.permission);
-  // Functionality will be implemented later
-  // const isAccountDetailActivityEnable = checkPermission(
-  //   permission,
-  //   AllPermissions.ACCOUNT_DETAILS_ADD_ACTIVITY
-  // );
 
   const isAccountDetailActivityEnable = false;
 
@@ -157,9 +147,12 @@ const Details: React.FC<DetailsProps> = ({
           <div className='flex flex-col gap-0 border border-[#CBD6E2] rounded-[2px]'>
             <Box className='flex items-center justify-between gap-4 h-[38px] py-1 px-2'>
               <Box className='flex items-center gap-2'>
-                <Box>
-                  <RealatedListDetailsIcon alt='details' className='w-6 h-6' />
-                </Box>
+                <div className='w-[24px] h-[24px] flex items-center justify-center rounded-full bg-[#D7E5FF]'>
+                  <DetailsIcon
+                    alt='details'
+                    className='[&>path]:stroke-[#294F98] w-[14px] h-[14px]'
+                  />
+                </div>
                 <Box className='text-[13px] text-[#2D3E4F] font-semibold'>
                   Details
                 </Box>
@@ -173,6 +166,7 @@ const Details: React.FC<DetailsProps> = ({
                       label={button.label}
                       // variant={button.variant}
                       onClick={button.onClick}
+                      // loading={button.loading}
                       aria-label={button.label}
                       sx={button.sx}
                       disabled={button.disabled}

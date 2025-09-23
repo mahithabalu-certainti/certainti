@@ -2,6 +2,7 @@ import {
   costDisplay,
   PROJECT_RESOURCE_REGEX,
   REGEX_PATTERNS,
+  RESOURCE_REGEX,
   valueDisplay,
 } from '../../../../../../common-utils';
 import {
@@ -63,7 +64,7 @@ export const getProjectResourcesColumns = (
     },
     render: (row: ProjectResourcesListType) => (
       <span
-        className='cursor-pointer hover:!text-blue-600 hover:underline'
+        className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
         onClick={() => onClick(row)}
       >
         {row.resource_code}
@@ -118,8 +119,8 @@ export const getProjectResourcesColumns = (
       placeholder: 'Choose Country',
       resetDependentFields: ['region_name'],
       getFieldData: (rowData: DependencyRowData) => {
-        handleCountry(String(rowData.country_rid));
-        return String(rowData.country_rid);
+        handleCountry(String(rowData.country_rid || ''));
+        return String(rowData.country_rid || '');
       },
       dependencies: [
         {
@@ -152,7 +153,7 @@ export const getProjectResourcesColumns = (
       loading: regionLoading,
       options: memoizedState,
       getFieldData: (rowData: DependencyRowData) => {
-        return String(rowData.region_rid);
+        return String(rowData.region_rid || '');
       },
       dependencies: [
         {
@@ -190,31 +191,39 @@ export const getProjectResourcesColumns = (
   //   sortId: 'resource_orgname',
   //   width: '180px',
   // },
-  // {
-  //   id: 'resource_role',
-  //   label: 'Resource Role',
-  //   sortable: true,
-  //   sortId: 'resource_role',
-  //   width: '150px',
-  //   editable:
-  //     permissionMap?.['resource_role']?.read &&
-  //     permissionMap?.['resource_role']?.edit,
-  //   hide:
-  //     !permissionMap?.['resource_role']?.read &&
-  //     !permissionMap?.['resource_role']?.edit,
-  //   field: {
-  //     type: 'text',
-  //     required: false,
-  //     placeholder: 'Enter Resource Role',
-  //     validation: [
-  //       {
-  //         regex: PROJECT_RESOURCE_REGEX.ROLE,
-  //         errorMessage:
-  //           "Please enter 2–64 characters using only letters, spaces, apostrophes ('), or hyphens (-). Numbers, symbols, or consecutive special characters are not allowed.",
-  //       },
-  //     ],
-  //   },
-  // },
+  {
+    id: 'project_resource_role',
+    label: 'Project Resource Role',
+    sortable: true,
+    sortId: 'project_resource_role',
+    width: '200px',
+    editable:
+      permissionMap?.['project_resource_role']?.read &&
+      permissionMap?.['project_resource_role']?.edit,
+    hide:
+      !permissionMap?.['project_resource_role']?.read &&
+      !permissionMap?.['project_resource_role']?.edit,
+    field: {
+      type: 'text',
+      required: false,
+      placeholder: 'Enter Resource Role',
+      validation: [
+        {
+          regex: REGEX_PATTERNS.MIN_3,
+          errorMessage: 'Please enter more than 2 characters.',
+        },
+        {
+          regex: REGEX_PATTERNS.MAX_64,
+          errorMessage: 'Max length exceeded.',
+        },
+        {
+          regex: RESOURCE_REGEX.ROLE,
+          errorMessage:
+            'Allows only letters, Apostrophe, spaces, hyphens, and Periods.',
+        },
+      ],
+    },
+  },
 
   {
     id: 'total_hours_pro_res',
@@ -301,6 +310,29 @@ export const getProjectResourcesColumns = (
       !permissionMap?.['qre_final']?.edit,
   },
   {
+    id: 'status_name',
+    sortId: 'status_name',
+    label: 'Status',
+    width: 130,
+    sortable: true,
+    hide:
+      !permissionMap?.['status_rid']?.edit &&
+      !permissionMap?.['status_rid']?.read,
+    render: (row: ProjectResourcesListType) => (
+      <span
+        className={`${
+          row.status_name === 'Active'
+            ? 'text-[#199806]'
+            : row.status_name === 'In-Active'
+              ? 'text-[#f44336] '
+              : ''
+        }`}
+      >
+        {row.status_name || '-'}
+      </span>
+    ),
+  },
+  {
     id: 'description',
     label: 'Comments',
     sortable: true,
@@ -325,11 +357,13 @@ export const getProjectResourcesColumns = (
       ],
     },
   },
-  // {
-  //   id: 'r_number',
-  //   label: 'Project Resource ID',
-  //   sortable: true,
-  //   sortId: 'r_number',
-  //   width: '180px',
-  // },
+  {
+    id: 'r_number',
+    label: 'Project Resource ID',
+    sortable: true,
+    sortId: 'r_number',
+    width: '180px',
+    hide:
+      !permissionMap?.['r_number']?.read && !permissionMap?.['r-number']?.edit,
+  },
 ];

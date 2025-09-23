@@ -7,15 +7,17 @@ import {
   useGetDocumentCategoryType,
 } from '../../../../../common-service';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   AttachmentList,
   AttachmentsListExportParams,
 } from '../../../../types/attachment';
 import { useAttachmentList } from '../../../../services/attachments/attachments-service';
 import ResourceTableHeader from '../../../account-details-sidebar/sidebar-pages/resources/resource-table-header';
-import { Attachment } from '../../../../../assets';
-import { ListTable } from '../../../../../components/table';
+import {
+  ListTable,
+  ManageColumnsPopover,
+} from '../../../../../components/table';
 import { SectionTabPanel } from '../../../../../components';
 import { ExportType, SelectOption } from '../../../../types';
 import Uploads from '../../../../../components/Attachments/upload';
@@ -28,6 +30,8 @@ import {
   CellEditData,
   FieldChangeEvent,
   FieldChangeValue,
+  ListTableColumn,
+  ShowHideTableColumn,
 } from '../../../../../components/table/types';
 import { ATTACHMENT_UPDATE } from '../../../../../api/graphql/queries/attachment-query';
 import { useMutation } from '@apollo/client';
@@ -37,6 +41,8 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import { FilterValue } from '../../../account-details-sidebar/components/filter/filterType';
 import { AccessRestricted } from '../../../../../components/account-restricted';
+import { AttachmentsSideIcon } from '../../../../../assets';
+import { BUTTON_STYLES } from '../../../../../admin/pages/manage-user-detail/styles';
 
 const AttachmentTabs: ResourceTabs[] = [
   {
@@ -58,6 +64,7 @@ interface AttachmentsProps {
   >;
   accountOrProjectInActive: boolean;
   refetchProjectDetails: () => void;
+  projectFiscalYear?: number | string;
 }
 
 const Attachments: React.FC<AttachmentsProps> = ({
@@ -65,6 +72,7 @@ const Attachments: React.FC<AttachmentsProps> = ({
   setAttachmentParams,
   accountOrProjectInActive,
   refetchProjectDetails,
+  projectFiscalYear,
 }) => {
   const { errorToast } = useToast();
   const [searchParams] = useSearchParams();
@@ -89,6 +97,15 @@ const Attachments: React.FC<AttachmentsProps> = ({
     (state: RootState) => state.permission
   );
   const [currentCategory, setCurrentCategory] = useState<string>('');
+  const [columnAnchorEl, setColumnAnchorEl] =
+    React.useState<HTMLButtonElement | null>(null);
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const handleColumnVisibility = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setColumnAnchorEl(event.currentTarget);
+  };
   const [updateAttachment] = useMutation(ATTACHMENT_UPDATE, {
     client: resourceClient,
   });
@@ -136,7 +153,6 @@ const Attachments: React.FC<AttachmentsProps> = ({
   };
   const onRefreshClick = () => {
     setRefreshAttachments(Date.now());
-    refetchProjectDetails();
   };
 
   const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
@@ -179,7 +195,9 @@ const Attachments: React.FC<AttachmentsProps> = ({
     AllPermissions.ATTACHMENT_VIEW_EDIT
   );
 
-  const fiscalYears = getFiscalYears(20);
+  const minYear = 1950;
+  const currentYear = new Date().getFullYear();
+  const fiscalYears = getFiscalYears(currentYear - minYear + 1);
   const allDocumentInfo = useGetAllDocumentInfo();
   const categoryTypes = useGetDocumentCategoryType(currentCategory);
 
@@ -215,6 +233,11 @@ const Attachments: React.FC<AttachmentsProps> = ({
     AllPermissions.ATTACHMENT_CREATE
   );
 
+  const isAttachmentExportEnable = checkPermission(
+    permission,
+    AllPermissions.ATTACHMENT_EXPORT
+  );
+
   const headerButtons = [
     {
       label: 'Upload file',
@@ -223,6 +246,14 @@ const Attachments: React.FC<AttachmentsProps> = ({
       onClick: () => handleOpen(),
       sx: { width: '90px', minWidth: '90px' },
       hide: !attachmentCreateEnable,
+    },
+    {
+      label: 'Show/Hide Fields',
+      variant: 'outlined' as const,
+      disabled: false,
+      onClick: handleColumnVisibility,
+      sx: { ...BUTTON_STYLES, width: '125px', minWidth: '125px' },
+      hide: false,
     },
   ];
 
@@ -256,20 +287,46 @@ const Attachments: React.FC<AttachmentsProps> = ({
     }
   };
 
+  const handleDownload = (documentUrl: string) => {
+    if (!documentUrl) return;
+
+    const link = document.createElement('a');
+    link.href = documentUrl;
+    link.download = '';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const attachmentsFilterFields = getAttachmentsFilterFields(
     fieldOptions,
     permissionMap
   );
 
-  const attachmentColumns = getAttachmentTableColumns(
-    fiscalYears,
-    memoizedDocumentCategories,
-    memoizedDocumentTypes,
-    handleDocumentCategory,
-    permissionMap,
-    categoryTypes.isLoading,
-    accountOrProjectInActive
+  const attachmentColumns = useMemo(
+    () =>
+      getAttachmentTableColumns(
+        fiscalYears,
+        memoizedDocumentCategories,
+        memoizedDocumentTypes,
+        handleDocumentCategory,
+        handleDownload,
+        permissionMap,
+        isAttachmentExportEnable,
+        categoryTypes.isLoading,
+        accountOrProjectInActive
+      ),
+    [accountOrProjectInActive, memoizedDocumentTypes]
   );
+
+  const [visibleColumns, setVisibleColumns] = useState<
+    ListTableColumn<AttachmentList>[]
+  >(attachmentColumns.filter((col) => !col.hide));
+
+  useEffect(() => {
+    const updatedColumns = attachmentColumns.filter((col) => !col.hide);
+    setVisibleColumns(updatedColumns);
+  }, [accountOrProjectInActive, memoizedDocumentTypes, attachmentColumns]);
 
   const handleFieldChange = async (event: FieldChangeEvent) => {
     if (event.columnId === 'document_category' && event.value) {
@@ -350,7 +407,31 @@ const Attachments: React.FC<AttachmentsProps> = ({
     }
   };
 
+  const RestrictedColumns = [
+    {
+      id: 'document_name',
+      canHide: false,
+      canDrag: false,
+    },
+  ];
+
   if (!attachmentEnable || !isAttachmentViewEnable) return <AccessRestricted />;
+
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    setVisibleColumns(
+      updatedColumns.filter(
+        (col) => !col.hide
+      ) as ListTableColumn<AttachmentList>[]
+    );
+  };
+
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
+  };
+
+  const modalId = isModalOpen
+    ? 'project-attachment-list-column-visibility-popover'
+    : undefined;
 
   return (
     <div className='w-full pt-2 pl-2 pr-4'>
@@ -375,7 +456,11 @@ const Attachments: React.FC<AttachmentsProps> = ({
         <Uploads
           accountId={accountID}
           attachID={projectid}
-          onUploadSuccess={onRefreshClick}
+          onUploadSuccess={() => {
+            onRefreshClick();
+            refetchProjectDetails();
+          }}
+          projectFiscalYear={projectFiscalYear}
         />
       ) : (
         <>
@@ -383,19 +468,35 @@ const Attachments: React.FC<AttachmentsProps> = ({
             value={'attachments'}
             title='Attachments'
             count={totalItems}
-            titleIcon={<Attachment alt='attachment-header-icon' />}
+            titleIcon={
+              <AttachmentsSideIcon
+                alt='attachment-header-icon'
+                className='[&>path]:stroke-[#4B9BFF]'
+              />
+            }
+            iconBg='#D8E9FF'
+            bgType='circle'
             headerButtons={headerButtons}
           />
           <div className='border border-[#CBD6E2]'>
+            <ManageColumnsPopover
+              anchorEl={columnAnchorEl}
+              open={isModalOpen}
+              popoverId={modalId}
+              onClose={handlePopoverClose}
+              columns={attachmentColumns}
+              onColumnsChange={handleColumnsChange}
+              columnRestrictions={RestrictedColumns}
+            />
             <ListTable
               data={attachmentList}
-              columns={attachmentColumns}
+              columns={visibleColumns}
               getRowId={getRowId}
               hoverHighlight={false}
               tableStyle={{
                 borderBottom: '1px solid #CBD6E2',
                 height: '100%',
-                maxHeight: 'calc(100vh - 290px)',
+                maxHeight: 'calc(100vh - 380px)',
                 overflow: 'auto',
               }}
               stickyHeader={true}

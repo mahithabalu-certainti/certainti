@@ -24,7 +24,9 @@ import {
   FiscalDates,
   FormFiscalDateType,
   InputType,
+  ParentChildSelectOption,
   SelectOption,
+  StatusTypeEnum,
   YesNo,
 } from '../consultant/types';
 import { PermissionState } from '../store/type';
@@ -47,7 +49,9 @@ export const createTextField = (
     hide?: boolean;
     defaultValue?: string;
     errorHandling?: ErrorHandling[];
+    resetDependsFields?: string[];
     clearValue?: Record<string, string>;
+    formatCostValue?: boolean;
     lengthRequired?: {
       key: string;
       minMatchedValue: RegExp;
@@ -74,6 +78,8 @@ export const createTextField = (
   errorHandling: options.errorHandling,
   clearValue: options.clearValue,
   defaultValue: options.defaultValue,
+  resetDependsFields: options.resetDependsFields,
+  formatCostValue: options.formatCostValue,
 });
 
 export const createPhoneInputField = (
@@ -175,6 +181,46 @@ export const createRadioField = (
   clearValue: options.clearValue,
 });
 
+export const createSelectChildField = (
+  name: string,
+  label: string,
+  others: {
+    expandOptions: ParentChildSelectOption[];
+    expandedAll?: boolean;
+    required: boolean;
+    width?: string;
+    placeholder?: string;
+    disabled?: boolean;
+    clearValue?: Record<string, string>;
+    onChange?: boolean;
+    isLoading?: boolean;
+    hide?: boolean;
+    resetDependsFields?: string[];
+    defaultValue?: string;
+    assignDefaultValue?: boolean;
+    dependantLabel?: string;
+    isFiscalYear?: boolean;
+  }
+): FieldType => ({
+  type: 'expandselect',
+  name,
+  label,
+  required: others.required,
+  expandOptions: others.expandOptions,
+  width: others.width,
+  disabled: others.disabled,
+  placeholder: others.placeholder,
+  clearValue: others.clearValue,
+  onChange: others.onChange,
+  isLoading: others.isLoading,
+  hide: others.hide,
+  defaultValue: others.defaultValue,
+  resetDependsFields: others.resetDependsFields,
+  assignDefaultValue: others.assignDefaultValue,
+  dependantLabel: others.dependantLabel,
+  isFiscalYear: others.isFiscalYear,
+  expandedAll: others.expandedAll,
+});
 export const createSelectField = (
   name: string,
   label: string,
@@ -231,6 +277,7 @@ export const createAutoCompleteField = (
     defaultValue?: string;
     assignDefaultValue?: boolean;
     dependantLabel?: string;
+    showCreateBtn?: boolean;
   }
 ): FieldType => ({
   type: 'autocomplete',
@@ -249,6 +296,7 @@ export const createAutoCompleteField = (
   resetDependsFields: others.resetDependsFields,
   assignDefaultValue: others.assignDefaultValue,
   dependantLabel: others.dependantLabel,
+  showCreateBtn: others.showCreateBtn,
 });
 
 export const createButton = (
@@ -427,6 +475,7 @@ export const REGEX_PATTERNS = {
   MIN_3: /^.{3,}$/,
   MIN_5: /^.{5,}$/,
   MIN_4: /^.{4,}$/,
+  ALLOW_36: /^.{36}$/,
   POSITIVE_INTEGER_REGEX: /^(?:[1-9]|10)$/,
   MAX_AI_INTERACTIONS: /^(10|[1-9])$/,
   MIN_2: /^.{2,}$/,
@@ -452,6 +501,7 @@ export const REGEX_PATTERNS = {
   NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX:
     /^(?!^[ &'.,-])(?!(.*[ &'.,-]$))/,
   NO_LEADING_SPECIAL_REGEX: /^[a-zA-Z]/,
+  NO_LEADING_SPECIAL_REGEX_FOR_RESOURCE_CODE: /^[a-zA-Z0-9]/,
   ALLOWED_CHARS_REGEX: /^[a-zA-Z0-9_-]+$/,
   NO_CONSECUTIVE_SPECIALS_REGEX_FOR_ORG_NAME: /^(?!.*[-_]{2}).+$/,
   NO_TRAILING_SPECIAL_REGEX: /[^-_]$/,
@@ -589,11 +639,14 @@ export const ALLOWED_COUNTRIES: AllowedCountry[] = [
   'au',
   'fr',
 ];
-
-export const fiscalYears = Array.from({ length: 26 }, (_, i) => {
-  const year = new Date().getFullYear() - i;
-  return { value: year.toString(), label: `FY-${year}` };
-});
+const currentYear = new Date().getFullYear();
+export const fiscalYears = Array.from(
+  { length: currentYear - 1950 + 1 },
+  (_, i) => {
+    const year = currentYear - i;
+    return { value: year.toString(), label: `FY-${year}` };
+  }
+);
 
 export const checkError = (data: CheckError[]) => {
   return data.some((value) => value.isError === true);
@@ -776,8 +829,6 @@ export const getFiscalDateBounds = (
   year: string,
   accountFiscalDates: FiscalDates
 ): FormFiscalDateType => {
-  const today = new Date();
-  const currentYear = today.getFullYear();
   const fiscalYear = Number(year);
 
   const [startMonthStr, startDayStr] = accountFiscalDates.startDate.split('/');
@@ -788,31 +839,40 @@ export const getFiscalDateBounds = (
   const endMonth = Number(endMonthStr);
   const endDay = Number(endDayStr);
 
+  // Check if fiscal year spans across two calendar years
   const isYearSpanning =
     endMonth < startMonth || (endMonth === startMonth && endDay < startDay);
 
-  const endDateYear = isYearSpanning ? fiscalYear + 1 : fiscalYear;
+  // Decide which year the range belongs to
+  let startYear: number;
+  let endYear: number;
+
+  if (isYearSpanning) {
+    // FY 2024 with Apr–Mar → Apr 2023 to Mar 2024
+    startYear = fiscalYear - 1;
+    endYear = fiscalYear;
+  } else {
+    // FY 2024 with Jan–Dec → Jan 2023 to Dec 2023
+    startYear = fiscalYear - 1;
+    endYear = fiscalYear - 1;
+  }
 
   const startDateMin = getFiscalParseDateFromMMDD(
     accountFiscalDates.startDate,
-    fiscalYear
+    startYear
   );
   const accountEndDate = getFiscalParseDateFromMMDD(
     accountFiscalDates.endDate,
-    endDateYear
+    endYear
   );
 
+  const today = new Date();
   let endDateMax: Date;
+
   if (!startDateMin || !accountEndDate) {
     endDateMax = today;
   } else {
-    if (fiscalYear === currentYear) {
-      endDateMax = today > accountEndDate ? accountEndDate : accountEndDate;
-    } else if (fiscalYear < currentYear) {
-      endDateMax = accountEndDate;
-    } else {
-      endDateMax = accountEndDate;
-    }
+    endDateMax = accountEndDate;
   }
 
   const startDateMax = new Date(endDateMax);
@@ -824,4 +884,95 @@ export const getFiscalDateBounds = (
     startMax: startDateMax,
     endMax: endDateMax,
   };
+};
+// For future referance
+// export const getFiscalDateBounds = (
+//   year: string,
+//   accountFiscalDates: FiscalDates
+// ): FormFiscalDateType => {
+//   const today = new Date();
+//   const currentYear = today.getFullYear();
+//   const fiscalYear = Number(year);
+
+//   const [startMonthStr, startDayStr] = accountFiscalDates.startDate.split('/');
+//   const [endMonthStr, endDayStr] = accountFiscalDates.endDate.split('/');
+
+//   const startMonth = Number(startMonthStr);
+//   const startDay = Number(startDayStr);
+//   const endMonth = Number(endMonthStr);
+//   const endDay = Number(endDayStr);
+
+//   const isYearSpanning =
+//     endMonth < startMonth || (endMonth === startMonth && endDay < startDay);
+
+//   const endDateYear = isYearSpanning ? fiscalYear + 1 : fiscalYear;
+
+//   const startDateMin = getFiscalParseDateFromMMDD(
+//     accountFiscalDates.startDate,
+//     fiscalYear
+//   );
+//   const accountEndDate = getFiscalParseDateFromMMDD(
+//     accountFiscalDates.endDate,
+//     endDateYear
+//   );
+
+//   let endDateMax: Date;
+//   if (!startDateMin || !accountEndDate) {
+//     endDateMax = today;
+//   } else {
+//     if (fiscalYear === currentYear) {
+//       endDateMax = today > accountEndDate ? accountEndDate : accountEndDate;
+//     } else if (fiscalYear < currentYear) {
+//       endDateMax = accountEndDate;
+//     } else {
+//       endDateMax = accountEndDate;
+//     }
+//   }
+
+//   const startDateMax = new Date(endDateMax);
+//   startDateMax.setDate(endDateMax.getDate() - 1);
+
+//   return {
+//     year: fiscalYear,
+//     startMin: startDateMin,
+//     startMax: startDateMax,
+//     endMax: endDateMax,
+//   };
+// };
+
+export const formatCostValue = (value: string): string => {
+  if (value === null || value === undefined) return '';
+
+  const costStr = String(value);
+  const [whole, decimal] = costStr.split('.');
+  const formattedWhole = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const formattedCost =
+    decimal !== undefined ? `${formattedWhole}.${decimal}` : formattedWhole;
+
+  return `${formattedCost}`;
+};
+
+export const removeFormatCostValue = (value: string): string => {
+  return value.replace(/,/g, '');
+};
+
+export const getDisableReason = (
+  hasEmailRecipient: boolean,
+  status: string,
+  sendInteractionsEnable?: boolean
+) => {
+  if (!sendInteractionsEnable)
+    return 'Sending interactions permission is currently disabled. Please contact your administrator.';
+  if (!hasEmailRecipient)
+    return 'Key Contact is not available or inactive for this interaction';
+  if (status === StatusTypeEnum.sent)
+    return 'This interaction has already been sent';
+  if (status === StatusTypeEnum.response_draft)
+    return 'This interaction is currently in draft response stage';
+  if (status === StatusTypeEnum.response_received)
+    return 'A response has already been received for this interaction';
+  if (status === StatusTypeEnum.inqueue)
+    return 'This interaction is currently queued for sending';
+  if (status === '') return 'Interaction status is invalid or undefined';
+  return '';
 };

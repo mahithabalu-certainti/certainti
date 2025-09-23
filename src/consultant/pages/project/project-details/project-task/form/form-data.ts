@@ -45,20 +45,25 @@ export const ProjectTaskFormData = (
           !permissionMapTaskForm?.['resource_code']?.read &&
           !permissionMapTaskForm?.['resource_code']?.edit,
         fields: [
-          createAutoCompleteField('resource_code', 'Project Resource Code', {
-            options: memoizedProjectResourceCode,
-            required: true,
-            onChange: true,
-            placeholder: 'Choose Resource Code',
-            disabled:
-              isEditView &&
-              permissionMapTaskForm?.['resource_code']?.read &&
-              !permissionMapTaskForm?.['resource_code']?.edit,
-            hide:
-              isEditView &&
-              !permissionMapTaskForm?.['resource_code']?.read &&
-              !permissionMapTaskForm?.['resource_code']?.edit,
-          }),
+          createAutoCompleteField(
+            'project_resource_rid',
+            'Project Resource Code',
+            {
+              options: memoizedProjectResourceCode,
+              required: true,
+              onChange: true,
+              showCreateBtn: true,
+              placeholder: 'Choose Project Resource Code',
+              disabled:
+                isEditView &&
+                permissionMapTaskForm?.['resource_code']?.read &&
+                !permissionMapTaskForm?.['resource_code']?.edit,
+              hide:
+                isEditView &&
+                !permissionMapTaskForm?.['resource_code']?.read &&
+                !permissionMapTaskForm?.['resource_code']?.edit,
+            }
+          ),
         ],
       },
 
@@ -99,6 +104,7 @@ export const ProjectTaskFormData = (
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             placeholder: 'Enter Cost',
+            formatCostValue: true,
             disabled:
               isEditView &&
               permissionMapTaskForm?.['total_cost_pro_task']?.read &&

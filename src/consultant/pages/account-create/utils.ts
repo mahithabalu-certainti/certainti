@@ -106,10 +106,10 @@ export const keyContactsTransformPayload = (
       if (contact.rid && !retainedRids.has(contact.rid)) {
         keyContacts.push({
           rid: contact.rid,
-          include_in_communication: contact.include_in_communication,
-          interaction_cc_recipient: contact.interaction_cc_recipient,
+          include_in_communication: contact.include_in_communication || false,
+          interaction_cc_recipient: contact.interaction_cc_recipient || false,
           status_rid: contact.status_rid,
-          is_primary_contact: contact.is_primary_contact,
+          is_primary_contact: contact.is_primary_contact || false,
           key_contact_name: contact.key_contact_name,
           key_contact_email: contact.key_contact_email,
           key_contact_role: contact.key_contact_role,

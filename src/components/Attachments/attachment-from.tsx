@@ -13,11 +13,13 @@ import { AttachmentUploadPayload } from '../../consultant/types/attachment';
 interface AttachmentFormProps {
   onFormSubmit: (data: Partial<AttachmentUploadPayload>) => void;
   formRef: React.RefObject<HTMLFormElement>;
+  projectFiscalYear?: number | string;
 }
 
 export const AttachmentForm: React.FC<AttachmentFormProps> = ({
   onFormSubmit,
   formRef,
+  projectFiscalYear,
 }) => {
   const [currentCategory, setCurrentCategory] = useState<string>('');
   const [showCategoryOthersField, setShowCategoryOthersField] =
@@ -26,7 +28,9 @@ export const AttachmentForm: React.FC<AttachmentFormProps> = ({
     useState<boolean>(false);
   const allDocumentInfo = useGetAllDocumentInfo();
   const categoryTypes = useGetDocumentCategoryType(currentCategory);
-  const fiscalYears = getFiscalYears(20);
+  const minYear = 1950;
+  const currentYear = new Date().getFullYear();
+  const fiscalYears = getFiscalYears(currentYear - minYear + 1);
 
   const memoizedDocumentTypes: SelectOption[] = useMemo(
     () =>
@@ -86,7 +90,8 @@ export const AttachmentForm: React.FC<AttachmentFormProps> = ({
     memoizedDocumentTypes,
     categoryTypes.isLoading,
     showCategoryOthersField,
-    showTypeOthersField
+    showTypeOthersField,
+    projectFiscalYear
   );
 
   return (
@@ -94,7 +99,9 @@ export const AttachmentForm: React.FC<AttachmentFormProps> = ({
       <FormBuilder
         loading={false}
         data={formConfig}
-        values={{}}
+        values={
+          projectFiscalYear ? { fiscal_year: String(projectFiscalYear) } : {}
+        }
         outData={submitData}
         formRef={formRef}
         onChange={onChangeField}

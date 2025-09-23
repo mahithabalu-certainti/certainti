@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { KeyContacts, KeyContactsUpdate, SelectOption } from '../../types';
 import { NewProjectData } from '../../types/project';
 const parseNullableNumber = (value: unknown): number | null => {
@@ -28,6 +27,7 @@ interface KeyContactTypes {
   key_contact_role?: string;
   is_primary_contact?: boolean | null;
   include_in_communication?: boolean;
+  interaction_cc_recipient?: boolean;
   status_rid: string;
   role_name?: string;
   status_name?: string;
@@ -56,6 +56,8 @@ export const transformKeyContactsFromAPI = (
       : 'no';
     formData[`include_in_communication_${index}`] =
       contact.include_in_communication ? 'yes' : 'no';
+    formData[`interaction_cc_recipient_${index}`] =
+      contact.interaction_cc_recipient ? 'yes' : 'no';
     formData[`key_contact_status_${index}`] =
       getStatusLabelById(contact.status_rid) || 'active';
   });
@@ -109,6 +111,8 @@ export const keyContactsTransformPayload = (
         is_primary_contact: formData[`is_primary_contact_${index}`] === 'yes',
         include_in_communication:
           formData[`include_in_communication_${index}`] === 'yes',
+        interaction_cc_recipient:
+          formData[`interaction_cc_recipient_${index}`] === 'yes',
         status_rid:
           getStatusIdByLabel(formData[`key_contact_status_${index}`] || '') ||
           defaultActiveValue,
@@ -125,9 +129,10 @@ export const keyContactsTransformPayload = (
       if (contact.rid && !retainedRids.has(contact.rid)) {
         keyContacts.push({
           rid: contact.rid,
-          include_in_communication: contact.include_in_communication,
+          include_in_communication: contact.include_in_communication || false,
+          interaction_cc_recipient: contact.interaction_cc_recipient || false,
           status_rid: contact.status_rid,
-          is_primary_contact: contact.is_primary_contact,
+          is_primary_contact: contact.is_primary_contact || false,
           key_contact_name: contact.key_contact_name,
           key_contact_email: contact.key_contact_email,
           key_contact_role: contact.key_contact_role,
@@ -150,7 +155,7 @@ export const transformFormData = (
   showClassifyOthersField?: boolean
 ): Partial<NewProjectData> => {
   const data: Partial<NewProjectData> = {
-    account_id: formData.account_id,
+    account_id: formData.account_rid,
     project_id: formData.project_id,
     account_number: formData.account_number,
     project_code: formData.project_code,

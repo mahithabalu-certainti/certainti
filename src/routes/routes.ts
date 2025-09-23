@@ -2,6 +2,7 @@ export const MAIN_ROUTE = '/';
 
 export const LOGIN = '/login';
 export const PROFILE = '/profile';
+export const EMAIL_INTERACTION = '/ext/interaction';
 
 export const MANAGE_USER = '/manage-user';
 export const MANAGE_USER_ACCESS = '/manage-user-access';
@@ -67,6 +68,17 @@ export const PROJECT_TASK_EDIT = `${PROJECT_TASK}/edit/:taskId`;
 export const PROJECT_RESOURCE = '/project/resource';
 export const PROJECT_RESOURCE_CREATE = `${PROJECT_RESOURCE}/create`;
 export const PROJECT_RESOURCE_EDIT = `${PROJECT_RESOURCE}/edit/:resourceId`;
+
+// Interaction route
+export const INTERACTIONS = '/interactions';
+export const INTERACTIONS_DETAILS = '/interactions/details/:projectid';
+export const INTERACTIONS_BASE = `/:module/interactions`;
+export const INTERACTIONS_CREATE = `${INTERACTIONS_BASE}/create`;
+export const INTERACTIONS_EDIT = `${INTERACTIONS_BASE}/edit/:interactionId`;
+export const GLOBAL_INTERACTIONS_CREATE = `${INTERACTIONS}/create`;
+export const GLOBAL_INTERACTIONS_EDIT = `${INTERACTIONS}/edit/:interactionId`;
+export const ACCOUNT_INTERACTIONS_CREATE = `${INTERACTIONS_BASE}/account-create`;
+
 // ATTACHMENT ROUTES
 export const ATTACHMENTS = '/attachments';
 

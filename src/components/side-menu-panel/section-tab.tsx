@@ -39,10 +39,10 @@ interface TabPanelProps {
 
   showRefresh?: boolean;
   onRefreshClick?: () => void;
+  showToggle?: boolean;
   toggleEnabled?: boolean;
   setToggleEnabled?: (val: boolean) => void;
   onFilterChange?: (fieldName: string, value: FilterValue) => void;
-
   hideTabPanel?: boolean;
 
   allYears?: SelectOption[];
@@ -69,6 +69,7 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
 
   showRefresh,
   onRefreshClick,
+  showToggle,
   toggleEnabled,
   setToggleEnabled,
   onFilterChange,
@@ -179,19 +180,20 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
         )}
 
         <Box className='flex items-center'>
-          {tabValue === 'account_projects_view_overview' && (
-            <div className='flex items-center gap-2'>
-              <span className='font-semibold text-[13px] text-[#425A76]'>
-                Include Parent
-              </span>
-              <Switch
-                checked={toggleEnabled}
-                onChange={handleToggleChange}
-                size='small'
-                color='success'
-              />
-            </div>
-          )}
+          {tabValue === 'account_projects_view_overview' ||
+            (showToggle && (
+              <div className='flex items-center gap-2'>
+                <span className='font-semibold text-[13px] text-[#425A76]'>
+                  Include Parent
+                </span>
+                <Switch
+                  checked={toggleEnabled}
+                  onChange={handleToggleChange}
+                  size='small'
+                  color='success'
+                />
+              </div>
+            ))}
 
           {filterVisibility && contextKey !== 'details' && (
             <>
@@ -230,16 +232,15 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
                   />
                 </Suspense>
               </Box>
-
-              {showRefresh && (
-                <button
-                  className='flex border border-[#CBD6E2] ml-2 w-[24px] h-[24px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer'
-                  onClick={onRefreshClick}
-                >
-                  <RefreshIcon alt='refresh-icon' className='h-4' />
-                </button>
-              )}
             </>
+          )}
+          {showRefresh && (
+            <button
+              className='flex border border-[#CBD6E2] ml-2 w-[24px] h-[24px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer'
+              onClick={onRefreshClick}
+            >
+              <RefreshIcon alt='refresh-icon' className='h-4' />
+            </button>
           )}
           {showFiscalYear && allYears?.length && (
             <GlobalFiscalYearDropdown

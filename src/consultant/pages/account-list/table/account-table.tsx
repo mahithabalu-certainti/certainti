@@ -1,10 +1,10 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { generatePath, useNavigate } from 'react-router-dom';
 import { reshapeGlobalFilter } from '../../../../common-utils';
-import { ListTable } from '../../../../components/table';
+import { ListTable, ManageColumnsPopover } from '../../../../components/table';
 import { ACCOUNT, ACCOUNT_DETAILS } from '../../../../routes';
 import { RootState } from '../../../../store/store';
 import { useAccounts, useFetchColorCodes } from '../../../services/account';
@@ -17,6 +17,8 @@ import {
   ActionItem,
   CellEditData,
   FieldChangeValue,
+  ListTableColumn,
+  ShowHideTableColumn,
 } from '../../../../components/table/types';
 import { DeleteIcon, EditIcon } from '../../../../assets';
 import { useMutation } from '@apollo/client';
@@ -38,6 +40,9 @@ const AccountTable: React.FC<Record<string, any>> = ({
   refreshAccountTrigger,
   countryOptions,
   industryOptions,
+  expandChild,
+  setColumnAnchorEl,
+  columnAnchorEl,
 }) => {
   const navigate = useNavigate();
   const { errorToast } = useToast();
@@ -85,7 +90,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
 
   useEffect(() => {
     if (data) {
-      setTotalCount(data.count || 0);
+      setTotalCount(data?.totalResult || 0);
     }
   }, [data]);
 
@@ -150,13 +155,26 @@ const AccountTable: React.FC<Record<string, any>> = ({
     setOrder(direction);
   };
 
-  const accountColumns = getAccountColumns(
-    handleAccountNameClick,
-    countryOptions,
-    industryOptions,
-    handleEdit,
-    permissionMap
+  const accountColumns = useMemo(
+    () =>
+      getAccountColumns(
+        handleAccountNameClick,
+        countryOptions,
+        industryOptions,
+        handleEdit,
+        permissionMap
+      ),
+    [countryOptions, industryOptions]
   );
+
+  const [visibleColumns, setVisibleColumns] = useState<
+    ListTableColumn<AccountList>[]
+  >(accountColumns.filter((col) => !col.hide));
+
+  useEffect(() => {
+    const updatedColumns = accountColumns.filter((col) => !col.hide);
+    setVisibleColumns(updatedColumns);
+  }, [countryOptions, industryOptions, accountColumns]);
 
   const isSkeletonLoading = loading || colorCodes.isLoading;
 
@@ -281,11 +299,45 @@ const AccountTable: React.FC<Record<string, any>> = ({
     }
   };
 
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    setVisibleColumns(
+      updatedColumns.filter(
+        (col) => !col.hide
+      ) as ListTableColumn<AccountList>[]
+    );
+  };
+
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
+  };
+
+  const RestrictedColumns = [
+    {
+      id: 'account_name',
+      canHide: false,
+      canDrag: false,
+      // tooltip: 'Account name cannot be hidden or dragged',
+    },
+  ];
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const modalId = isModalOpen ? 'account-column-visibility-popover' : undefined;
+
   return (
     <div className='border-t border-[#CBD6E2] h-full'>
+      {/* Column Visibility Popover */}
+      <ManageColumnsPopover
+        anchorEl={columnAnchorEl}
+        open={isModalOpen}
+        popoverId={modalId}
+        onClose={handlePopoverClose}
+        columns={accountColumns}
+        onColumnsChange={handleColumnsChange}
+        columnRestrictions={RestrictedColumns}
+      />
       <ListTable
         data={accountsList || []}
-        columns={accountColumns}
+        columns={visibleColumns}
         getRowId={getRowId}
         component={'account'}
         hoverHighlight={true}
@@ -296,7 +348,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
         }}
         //Expansion
         expandAllParent={true}
-        expandAllChild={false}
+        expandAllChild={expandChild}
         expandable={true}
         childrenKey='child_accounts'
         grandchildrenKey='projects_by_fiscal_year'

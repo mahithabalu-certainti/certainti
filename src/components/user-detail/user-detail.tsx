@@ -74,7 +74,7 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
     },
     {
       key: 'org_rid',
-      label: 'Org Name',
+      label: 'Business Name',
       value: getValueOrDefault(data?.org_name) || '-',
     },
   ];

@@ -200,7 +200,7 @@ export const Summary: React.FC<Summary> = ({ fiscalYear, accountDetails }) => {
         </div>
         <ListTable
           data={resourceMetric}
-          columns={getResourceMetricColumns(permissionMap, currencySymbol)}
+          columns={getResourceMetricColumns(permissionMap)}
           getRowId={getResourceMetricRowId}
           hoverHighlight={false}
           tableStyle={{

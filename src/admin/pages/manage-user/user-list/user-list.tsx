@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ManageUserIcon,
@@ -32,7 +32,6 @@ import { FilterState } from '../../../../consultant/types/account-filter';
 const BUTTON_STYLES = {
   height: '24px',
   fontSize: '13px',
-  fontWeight: 600,
 };
 
 const UserList: React.FC = () => {
@@ -49,7 +48,12 @@ const UserList: React.FC = () => {
   });
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [refreshUserTrigger, setRefreshUserTrigger] = useState<number>();
+  const [columnAnchorEl, setColumnAnchorEl] =
+    React.useState<HTMLButtonElement | null>(null);
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const modalId = isModalOpen ? 'account-column-visibility-popover' : undefined;
 
   const onRefreshClick = () => {
     setRefreshUserTrigger(Date.now());
@@ -249,6 +253,12 @@ const UserList: React.FC = () => {
     }
   };
 
+  const handleColumnVisibility = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setColumnAnchorEl(event.currentTarget);
+  };
+
   if (!userIsEnable || !isUserViewAllEnable) return <AccessRestricted />;
 
   return (
@@ -296,7 +306,17 @@ const UserList: React.FC = () => {
           All Users
         </div>
         <div className='flex items-center gap-3'>
-          <div className='relative h-[32px]'>
+          <div className='flex gap-1 relative'>
+            <button
+              aria-describedby={modalId}
+              className={`w-[120px] h-[24px] mt-1 text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 rounded-[2px] relative border border-[#CBD6E2] px-0 py-0 normal-case ${isModalOpen ? 'bg-[#F3F3F3]' : 'bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'} hover:text-[#425A76] transition-colors duration-150`}
+              style={{
+                boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
+              }}
+              onClick={handleColumnVisibility}
+            >
+              Show/Hide Fields
+            </button>
             <button
               aria-describedby={filterId}
               className={`w-[64px] h-[24px] text-[13px] mt-[4px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
@@ -366,6 +386,8 @@ const UserList: React.FC = () => {
           refreshUserTrigger={refreshUserTrigger}
           profileOptions={profileOptions}
           roleOptions={roleOptions}
+          setColumnAnchorEl={setColumnAnchorEl}
+          columnAnchorEl={columnAnchorEl}
         />
       </div>
     </div>

@@ -2,11 +2,18 @@ import {
   industryOperator,
   keyOptions,
 } from '../../../../consultant/pages/account-list/helpers';
+import { SelectOption } from '../../../../consultant/types';
 import {
   FieldConfig,
   FilterSelectOption,
 } from '../../../../consultant/types/account-filter';
 import { textfieldOptions } from '../../manage-profile';
+
+const enumOperator: { label: string; value: string }[] = [
+  { label: 'Equals', value: 'equals' },
+  { label: 'Not Equals', value: 'not_equals' },
+  { label: 'In', value: 'in' },
+];
 
 export const getManageAccountFilterFields = (
   countryOptions: FilterSelectOption[],
@@ -56,12 +63,21 @@ export const getManageUserListFilterFields = (): FieldConfig[] => [
     operatorOption: textfieldOptions,
   },
 ];
-export const getManageGroupListFilterFields = (): FieldConfig[] => [
+export const getManageGroupListFilterFields = (
+  allGroupTypes: SelectOption[]
+): FieldConfig[] => [
   {
     label: 'Group Name',
     name: 'group_name',
     type: 'text',
     operatorOption: textfieldOptions,
+  },
+  {
+    label: 'Group Type',
+    name: 'group_type',
+    type: 'enumSelect',
+    operatorOption: industryOperator,
+    options: allGroupTypes,
   },
   {
     label: 'Number of Users',
@@ -81,5 +97,35 @@ export const getManageProjectListFilterFields = (): FieldConfig[] => [
     name: 'project_name',
     type: 'text',
     operatorOption: keyOptions,
+  },
+];
+
+export const getUserListFilterFields = (
+  roleOptions: FilterSelectOption[]
+): FieldConfig[] => [
+  {
+    label: 'Username',
+    name: 'user_name',
+    type: 'text',
+    operatorOption: textfieldOptions,
+  },
+  {
+    label: 'Email Address',
+    name: 'email',
+    type: 'text',
+    operatorOption: textfieldOptions,
+  },
+  {
+    label: 'Role Name',
+    name: 'role_name',
+    type: 'enumSelect',
+    options: roleOptions,
+    operatorOption: enumOperator,
+  },
+  {
+    label: 'Organisation Name',
+    name: 'organization_name',
+    type: 'text',
+    operatorOption: textfieldOptions,
   },
 ];

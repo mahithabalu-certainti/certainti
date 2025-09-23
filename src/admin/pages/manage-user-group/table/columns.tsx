@@ -18,7 +18,7 @@ export const getUserGroupColumns = (
     hide:
       !permissionMap?.['group_name']?.read &&
       !permissionMap?.['group_name']?.edit,
-    conditionallyEdit: { key: 'usergroup_type', matchValue: 'CUSTOM' },
+    conditionallyEdit: [{ key: 'usergroup_type', matchValue: 'CUSTOM' }],
     field: {
       type: 'text',
       required: true,
@@ -148,5 +148,5 @@ export const getAvailableProjectsColumns = () => [
     sortId: 'project_code',
     label: 'Project Code',
     sortable: false,
-  },
+  }
 ];
