@@ -2684,15 +2684,13 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       const decryptedSecret = await decryptClientSecret(clientSecret);
       
       return {
-        email: senderEmailInfo[0].support_email,
+        email: senderEmailInfo[0]?.support_email,
         clientId: senderEmailInfo[0]?.client_id,
         clientSecret: decryptedSecret,
-        tenantId: senderEmailInfo[0].tenant_id,
+        tenantId: senderEmailInfo[0]?.tenant_id,
       }
     } catch (err) {
-      throw new Error(
-        "Error fetching sender email info: " + (err as Error).message
-      );
+        console.error(err);
     }
   }
   async fetchEmailInfo(
