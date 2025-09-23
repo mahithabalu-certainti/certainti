@@ -8,7 +8,7 @@ import {
   InteractionListURLParams,
   SendInteractionPayload,
   ExportInteractionResponse,
-  AccountSendInteractionPayload
+  AccountSendInteractionPayload,
 } from '../../types';
 import { interactionServiceApi } from '../../../api/api';
 import { CommonApiResponse } from '../../../common-service';
