@@ -1412,6 +1412,24 @@ export class ProjectResourceService {
         };
       }
 
+      if (projectResourceData.project_resource_role) {
+        const isDuplicate =
+        await this.projectResourceSchema.findDuplicateProjectResourceOnUpdate(
+          validAccountNumber,
+          projectResourceData,
+          resourceData,
+          statusMap
+        );
+        
+      if (isDuplicate) {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: "Resource role already exists"
+        };
+      }
+      }
+
       const currencyThreshold =
         await this.projectResourceSchema.getCurrencyThreshold(
           existingProjectResource.currency_rid
