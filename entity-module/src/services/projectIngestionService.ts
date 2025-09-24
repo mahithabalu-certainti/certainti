@@ -1769,10 +1769,10 @@ class ProjectIngestionService {
       whereProject = {
         account_rid: accountData.rid,
         ...(bothParentAndChild ? parentFilters : {}),
-        ...(accessibleIds.length > 0 ? { rid: accessibleIds } : {}),
       };
       whereFiscal = {
         account_rid: accountData.rid,
+         ...(accessibleIds.length > 0 ? { rid: accessibleIds } : {}),
       };
       let activeStatusId = "";
       if(apiSource === "interaction"){
