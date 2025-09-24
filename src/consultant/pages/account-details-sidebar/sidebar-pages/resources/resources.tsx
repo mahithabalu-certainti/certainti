@@ -916,6 +916,7 @@ const Resource: React.FC<ResourceProps> = ({
         handleFilterChange={handleCategory}
         showSearch={value === 'details' ? false : true}
         searchDisabled={false}
+        searchHidden={value === 'cost' || value === 'skill' ? true : false}
         searchPlaceholder='Search'
         onSearch={(text) => setSearchText(text)}
       />

@@ -27,6 +27,7 @@ export interface ImportsListURLParams {
   filters?: object;
   fiscal_year?: number | string;
   account_rid: string;
+  search?: string;
 }
 
 export interface ImportListResponse {

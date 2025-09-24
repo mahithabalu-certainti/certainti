@@ -65,9 +65,9 @@ const AccountTable: React.FC<Record<string, any>> = ({
       sortBy: orderBy,
       sortOrder: apiOrder,
       filters: appliedFilters,
+      search: searchValue,
       globalFilters: reshapeGlobalFilter(filters as FilterState),
       fiscalYear,
-      searchValue,
     },
     refreshAccountTrigger
   );

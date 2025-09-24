@@ -65,6 +65,7 @@ const Imports: React.FC<ImportsProps> = ({
   const [sortField, setSortField] = useState<string>('r_number');
   const [importsList, setImportsList] = useState<ImportsList[]>([]);
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
+  const [searchText, setSearchText] = useState('');
 
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
     (state: RootState) => state.account
@@ -123,6 +124,7 @@ const Imports: React.FC<ImportsProps> = ({
       filters: appliedFilters,
       account_rid: accountid || '',
       fiscal_year: convertedFiscalYear,
+      search: searchText,
     },
     !viewDetails,
     refreshImports
@@ -150,6 +152,7 @@ const Imports: React.FC<ImportsProps> = ({
       filters: appliedFilters,
       account_rid: accountid || '',
       fiscal_year: convertedFiscalYear,
+      search: searchText,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -159,6 +162,7 @@ const Imports: React.FC<ImportsProps> = ({
     currentPage,
     rowsPerPage,
     convertedFiscalYear,
+    searchText,
   ]);
 
   const handleFilter = () => {
@@ -323,8 +327,7 @@ const Imports: React.FC<ImportsProps> = ({
         showSearch={viewDetails ? false : true}
         searchDisabled={false}
         searchPlaceholder='Search'
-        onSearch={(text) => console.log('Searching for:', text)}
-        onSearchTextChange={(text) => console.log('Typing:', text)}
+        onSearch={(text) => setSearchText(text)}
       />
       {showUploads ? (
         <ImportFile

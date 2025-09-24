@@ -13,7 +13,7 @@ const SearchBar: React.FC<SearchBarProps> = React.memo(
   ({
     initialSearchText = '',
     onSearch,
-    placeholder = 'Search...',
+    placeholder = 'Search',
     disabled = false,
     hide = false,
   }) => {
