@@ -99,14 +99,23 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
   }, [projectViewEditFields]);
 
   useEffect(() => {
-    setTableParams((prev) => ({
-      ...prev,
-      page: 1,
-      filters: appliedFilters,
-      fiscalYear: convertedFiscalYear,
-      globalFilters: reshapeGlobalFilter(filters as FilterState),
-      search: searchValue,
-    }));
+    setTableParams((prev) => {
+      const newParams: Partial<ProjectListParams> = {
+        ...prev,
+        page: 1,
+        filters: appliedFilters,
+        fiscalYear: convertedFiscalYear,
+        globalFilters: reshapeGlobalFilter(filters as FilterState),
+      };
+
+      if (searchValue) {
+        newParams.search = searchValue;
+      } else {
+        delete newParams.search;
+      }
+
+      return newParams as ProjectListParams;
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appliedFilters, fiscalYear, filters, searchValue]);
 
