@@ -984,20 +984,16 @@ export const getDisableReason = (
   return '';
 };
 
-// export const formatMonth = (dateStr: string): string => {
 export const formatMonthDay = (dateStr: string): string => {
   if (!dateStr) return "";
-
-  // Split MM/DD
   const [month, day] = dateStr.split("/");
 
-  // Month names
   const months = [
     "Jan", "Feb", "Mar", "Apr", "May", "Jun",
     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
   ];
 
-  const monthIndex = parseInt(month, 10) - 1; // convert to 0-based
+  const monthIndex = parseInt(month, 10) - 1; 
   const monthName = months[monthIndex] || "";
 
   return `${monthName}/${day}`;
