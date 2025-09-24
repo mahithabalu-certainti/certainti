@@ -1774,11 +1774,12 @@ class ProjectIngestionService {
       whereFiscal = {
         account_rid: accountData.rid,
       };
-      
+      let activeStatusId = "";
       if(apiSource === "interaction"){
         const [activeId] : any[] = await this.mainDbSequelize!.query(rawQueries.fetchActiveStatus(),{type:"SELECT"})
         whereFiscal.status_rid = activeId.rid
         whereProject.status_rid = activeId.rid
+        activeStatusId = activeId.rid;
       }
       
       for (const key in filters) {
@@ -1875,6 +1876,7 @@ class ProjectIngestionService {
                       SELECT 1 FROM "${schemaName}"."key_contact_details" kc
                       WHERE kc.entity_rid = "ProjectFiscal"."rid"
                         AND kc.include_in_communication = true
+                        AND kc.status_rid = '${activeStatusId}'
                     )`),
                     "isKeyContactIncluded"
                   ] as [any, string]

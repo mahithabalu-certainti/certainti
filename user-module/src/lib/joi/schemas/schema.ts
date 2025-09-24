@@ -484,7 +484,8 @@ const listUserGroupUserSchema = Joi.object({
   limit: Joi.string().pattern(/^[0-9]+$/).default("10"),
   filters: Joi.string().default("{}"),
   sortBy: Joi.string().default("first_name"),
-  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC")
+  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
+  search: Joi.string().max(255).optional().allow(""),
 });
 
 

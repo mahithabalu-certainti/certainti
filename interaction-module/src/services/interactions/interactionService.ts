@@ -55,7 +55,7 @@ export class InteractionService {
     const dbInit = await this.interactionModelService.getSequelize();
     const transaction = await dbInit.transaction();
       interactionData.created_by = userId;
-      const { accountNumber } =
+      const { accountNumber, parentAccountId } =
         await this.interactionSchemaService.fetchValidAccountNumberById(
           interactionData.account_rid
         );
@@ -89,6 +89,7 @@ export class InteractionService {
           accountNumber,
           interactionData,
           userId,
+          parentAccountId,
           intLevel!
         )
       }
@@ -124,7 +125,7 @@ export class InteractionService {
     const transaction = await dbInit.transaction();
     try {
       interactionData.created_by = userId;
-      const { accountNumber } =
+      const { accountNumber, parentAccountId } =
         await this.interactionSchemaService.fetchValidAccountNumberById(
           interactionData.account_rid
         );
@@ -180,10 +181,19 @@ export class InteractionService {
           interactionData.status_rid
         );
       }
-      const isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(accountNumber, interactionData.project_fiscal_rid);
+      let isEmailRecipientAvailable = false;
+      if(intLevel === 'Account')
+      {
+        isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(accountNumber, interactionData.project_fiscal_rid);
+      }
+      else
+      {
+        isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(accountNumber, interactionData.project_fiscal_rid);
+      }
+     
       this.logger.info(`Is email recipient available: ${isEmailRecipientAvailable} for interaction: ${interaction.dataValues.rid} with project fiscal:${interactionData.project_fiscal_rid}`);
       if((interactionStatus === statusAction.DRAFT && isEmailRecipientAvailable) || interactionData.trigger_send)
-      await this.checkAutoSendEnabled(accountNumber,interactionData,interaction.rid,userId,interactionData?.account_rid,intLevel);
+      await this.checkAutoSendEnabled(accountNumber,interactionData,interaction.rid,userId,interactionData?.account_rid,intLevel, parentAccountId);
        else
        {
         if(!isEmailRecipientAvailable && interactionStatus === statusAction.DRAFT)
@@ -203,6 +213,7 @@ export class InteractionService {
         },
       };
     } catch (err) {
+       this.logger.error(`Error creating interaction, ${err}`);
       await transaction.rollback();
      this.logger.error("Error creating interaction", err);
        return {
@@ -212,8 +223,9 @@ export class InteractionService {
         };
     }
   }
-  async checkAutoSendEnabled(accountNumber: string, interactionData: ICreateInteraction, interactionId: string, userId: string, accountRid: string, interactionLevel:string) {
-    if(interactionData?.trigger_send){
+  async checkAutoSendEnabled(accountNumber: string, interactionData: ICreateInteraction, interactionId: string, userId: string, accountRid: string, interactionLevel:string, parentAccountId: string) {
+    const isParensettingsConfigured = await this.interactionSchemaService.fetchAccountDetails(accountNumber, parentAccountId);
+    if(interactionData?.trigger_send && isParensettingsConfigured){
        await this.sendInteraction([{ interaction_rid: interactionId,
         project_fiscal_rid: interactionData.project_fiscal_rid,interaction_level:interactionLevel
        }], interactionData.account_rid, userId, false,'Manual-Send');
@@ -222,7 +234,7 @@ export class InteractionService {
     else{
     const isEnabled = await this.interactionSchemaService.isAutoSendInteractionEnabled(accountNumber, interactionData);
     this.logger.info(`Auto-send is ${isEnabled ? "enabled" : "disabled"} for interaction ID: ${interactionId}`);
-    if (isEnabled) {
+    if (isEnabled && isParensettingsConfigured) {
        const projectInfo = await this.interactionSchemaService.fetchProjectInfo(accountNumber, interactionData.project_fiscal_rid);
        const accountInfo = await this.interactionSchemaService.fetchAccountInfo(accountRid, accountNumber);
       const { AutoSendInteractionAudit } = await this.interactionModelService.getModels(accountNumber);
@@ -703,63 +715,7 @@ export class InteractionService {
     }
 
   }
-   async exportAccountInteractions(data : any,
-    filters: Record<string, any>
-    ) :  Promise<{
-    statusCode: number;
-    message: string;
-    errorMessage?: string;
-    data?: { accountInteractions: any,count: number };
-  }> {
-    try {
-        const { accountNumber } =
-        await this.interactionSchemaService.fetchValidAccountNumberById(
-          data.account_rid
-        );
 
-      if (!accountNumber) {
-        return {
-          statusCode: HttpStatus.FAILED,
-          message: HttpStatus.FAILED_MESSAGE,
-          errorMessage: "Invalid account ID",
-        };
-      }
-      const response =
-        await this.interactionSchemaService.listAccountInteractions(
-          accountNumber,
-          data.account_rid,
-          0,
-          0,
-          filters,
-          data.sort_by,
-          data.sort_order,
-          "download"
-        );
-
-      if (!response) {
-        return {
-          statusCode: HttpStatus.FAILED,
-          message: HttpStatus.FAILED_MESSAGE,
-          errorMessage: "Invalid interaction ID",
-        };
-      }
-       return {
-        statusCode: HttpStatus.SUCCESS,
-        message: HttpStatus.SUCCESS_MESSAGE,
-        data: {
-          accountInteractions: response.accountInteractions,
-          count: response.count
-        },
-      };
-    }
-    catch (err) {
-      throw this.throwServiceError(err as Error);
-    }
-
-  }
-
-
-  
    async exportTechnicalSummary(data : any,
     filters: Record<string, any>
     ) :  Promise<{
@@ -1522,6 +1478,8 @@ export class InteractionService {
           ...d,
           status_rid: d.status,
           status_name: d.status == '' || d.status == null ? null : statusMap.get(d.status),
+          recipient_name: d.recipient_name == '' || d.recipient_name == null ? null : d.recipient_name,
+          recipient_email: d.recipient_email == '' || d.recipient_email == null ? null : d.recipient_email,
           interaction_type_rid: d.interaction_type,
           interaction_type_name: typeMap.get(d.interaction_type),
           interaction_source_rid: d.interaction_source,

@@ -207,6 +207,7 @@ class InteractionSchemaService {
     accountNumber: string,
     interactionData: ICreateInteraction,
     userId: string,
+    parentAccountId: string,
     interactionLevel: string
   ) {
     try {
@@ -293,7 +294,8 @@ class InteractionSchemaService {
            }
         }
        
-        if (interactionData.trigger_send || autoSendAccess) {
+        const isParensettingsConfigured = await this.fetchAccountDetails(accountNumber, parentAccountId);
+        if (isParensettingsConfigured && (interactionData.trigger_send || autoSendAccess)) {
           // Bulk insert SendEmailInfo
           const sendEmailInfoData = prepareSendEmailInfoData(createdInteractions, interactionData.projects);
           await batchInsert(SendEmailInfo, sendEmailInfoData);
@@ -328,7 +330,7 @@ class InteractionSchemaService {
           }
 
           // Bulk insert SendEmailInfo for enabled projects only
-          if (enabledProjects.length > 0 && enabledInteractions.length > 0) {
+          if (enabledProjects.length > 0 && enabledInteractions.length > 0 && isParensettingsConfigured) {
             const sendEmailInfoData = prepareSendEmailInfoData(enabledInteractions, enabledProjects);
             await batchInsert(SendEmailInfo, sendEmailInfoData);
 
@@ -918,6 +920,7 @@ class InteractionSchemaService {
         accountNumber: accountRnumber,
         accountId: account?.rid,
         accountName: account.account_name,
+        parentAccountId: account?.parent_account_rid
       };
     } catch (err) {
       throw new Error("Error fetching account : " + (err as Error).message);
@@ -2677,19 +2680,17 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       const [senderEmailInfo]: any[] = await this.orgDbSequelize.query(
         rawQueries.fetchInteractionSenderEmail(schemaName, parentAccountId)
       ); 
-      const clientSecret = senderEmailInfo[0].client_secret;
+      const clientSecret = senderEmailInfo[0]?.client_secret;
       const decryptedSecret = await decryptClientSecret(clientSecret);
       
       return {
-        email: senderEmailInfo[0].support_email,
-        clientId: senderEmailInfo[0].client_id,
+        email: senderEmailInfo[0]?.support_email,
+        clientId: senderEmailInfo[0]?.client_id,
         clientSecret: decryptedSecret,
-        tenantId: senderEmailInfo[0].tenant_id,
+        tenantId: senderEmailInfo[0]?.tenant_id,
       }
     } catch (err) {
-      throw new Error(
-        "Error fetching sender email info: " + (err as Error).message
-      );
+        console.error(err);
     }
   }
   async fetchEmailInfo(
@@ -2790,10 +2791,26 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           rawQueries.fetchInteractionRecipientAccount(accountRid,statusArr.rid ,schemaName),
           { type: "SELECT" }
         );
+        const interactionCCRecipientsAccount: any[] =
+        await this.orgDbSequelize.query(
+          rawQueries.fetchInteractionRecipientAccount(accountRid,statusArr.rid ,schemaName),
+          { type: "SELECT" }
+        );
+
+    
+      const ccEmails = [
+        ...interactionCCRecipientsAccount
+          .map((rec) => rec.key_contact_email)
+          .filter(Boolean),
+      ].filter((email, idx, arr) => email && arr.indexOf(email) === idx);
+
+      // Remove duplicates
+      const uniqueCCEmails = Array.from(new Set(ccEmails));
 
       return {
         name: interactionRecipients?.key_contact_name ?? null,
         email: interactionRecipients?.key_contact_email ?? null,
+        ccEmails: uniqueCCEmails ?? [],
       };
     } catch (err) {
       throw new Error("Error fetching POC email: " + (err as Error).message);
@@ -3100,6 +3117,42 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       return !!(recipientInfo && recipientInfo.key_contact_email);
     } catch (err) {       
         
+      throw new Error(
+        "Error checking email recipient availability: " +
+          (err as Error).message
+      );
+    }
+  }
+
+   async isEmailRecipientAvailableForAccount
+  (     
+    accountNumber: string,  
+    accountRid: string
+  ): Promise<boolean> {
+    try {
+      if (!this.orgDbSequelize) {     
+        this.orgDbSequelize = await this.interactionModelService.getSequelize();
+      }
+      if(!this.mainDbSequelize)
+      {
+        this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
+      }
+      const [activeStatus]: any[] = await this.mainDbSequelize.query(
+        rawQueries.fetchActiveStatusByType("Active"),
+        { type: "SELECT" }
+      );
+
+       const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+          /\D/g,
+          ""
+        )}`;
+      const [recipientInfo]: any[] = await this.orgDbSequelize.query(
+        rawQueries.fetchInteractionRecipientAccount(accountRid, activeStatus.rid, schemaName),
+        { type: "SELECT" }
+      );
+
+      return !!(recipientInfo && recipientInfo.key_contact_email);
+    } catch (err) {
       throw new Error(
         "Error checking email recipient availability: " +
           (err as Error).message
@@ -3812,6 +3865,37 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       interaction_rid : interaction_rid
     }
     })
+  }
+
+  async fetchAccountDetails(account_number: string, parentAccountId: string) {
+    const schemaName = `trd365_${account_number.replace(/\D/g, "")}`;
+    try {
+
+      const sequelize = await initOrgSequelize();
+
+      const fetchParentAccount: any = await sequelize.query(rawQueries.fetchInteractionSenderEmail(schemaName, parentAccountId), {
+        replacements: { account_rid: parentAccountId },
+        type: "SELECT",
+      });
+
+      if(fetchParentAccount && fetchParentAccount.length > 0){
+        const parentDetails = fetchParentAccount[0];
+        
+        const isSubscriptionCreated = Boolean(
+          parentDetails.subscription_created &&
+          parentDetails.tenant_id &&
+          parentDetails.client_id &&
+          parentDetails.client_secret
+        );
+      
+        return isSubscriptionCreated;
+      }
+
+      return false;
+    } catch (err) {
+      console.log("Errr ", err);
+      throw new Error("Error retrieving account details");
+    }
   }
 
 }

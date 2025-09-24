@@ -60,7 +60,7 @@ export const NODE_ENV = {
   DEV: "DEV",
   PROD: "PRODUCTION",
 };
-export const sendEmailCount = 10
+export const sendEmailCount = 25
 export const OTP_EXPIRY_MINUTES = 10;
 export const MAX_RESEND_ATTEMPTS = 3;
 
@@ -408,7 +408,7 @@ export const rawQueries = {
   },
   fetchInteractionSenderEmail(schemaName: string, accountRid: string) {
     return `
-    SELECT support_email,client_id,client_secret,tenant_id FROM ${schemaName}.account_details WHERE account_rid = '${accountRid}'  and  subscription_created is true  and support_email is not null LIMIT 1`;
+    SELECT support_email,client_id,client_secret,tenant_id, subscription_created FROM ${schemaName}.account_details WHERE account_rid = '${accountRid}'  and  subscription_created is true  and support_email is not null LIMIT 1`;
   },
   fetchGlobalSenderEmail() {
     return `
@@ -452,7 +452,7 @@ export const rawQueries = {
   },
   fetchInteractionRecipientAccount(accountRid: string,statusRid:string,schemaName: string) {
     return `
-    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE lower(entity_type) = 'account' and interaction_cc_recipient is true and entity_rid = '${accountRid}' and status_rid = '${statusRid}'`;
+    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE lower(entity_type) = 'account' and include_in_communication is true and entity_rid = '${accountRid}' and status_rid = '${statusRid}'`;
   },
   fetchisAutoSendEnabled(projectFiscalRid: string, schemaName: string) {
     return `
@@ -570,6 +570,12 @@ export const rawQueries = {
   fetchProjectFiscal(projectFiscalId: string, schemaName: string) {
     return `
     SELECT * FROM ${schemaName}.project_fiscal WHERE rid = '${projectFiscalId}'`;
+  },
+  fetchInteractionDetailsById(schemaName: string, interactionId: string): string {
+    return `
+      SELECT rid, interaction_level_rid from ${schemaName}.interactions
+      WHERE rid = '${interactionId}'
+    `;
   },
   GET_ACCOUNT_ACCESS: `
 (
@@ -783,9 +789,6 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
 
   export const interactionFieldMappings = [
     { permissionField: 'r_number', exportField: 'Interaction ID', dataField: 'r_number' },
-    { permissionField: 'project_code', exportField: 'Project Code', dataField: 'project_code' },
-     { permissionField: 'interaction_level_name', exportField: 'Interaction Level', dataField: 'interaction_level_name' },
-       { permissionField: 'fiscal_year', exportField: 'Fiscal Year', dataField: 'fiscal_year' },
      { permissionField: 'interaction_age', exportField: 'Age (Days)', dataField: 'interaction_age' },
     { permissionField: 'status', exportField: 'Status', dataField: 'status_name' },
     { permissionField: 'recipient_name', exportField: 'Recipient Name', dataField: 'recipient_name' },
@@ -804,14 +807,26 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     { permissionField: 'modified_datetime', exportField: 'Last Updated Date', dataField: 'modified_datetime' }
   ];
 
-   export const accountInteractionFieldMappings = [
+   export const accountinteractionFieldMappings = [
     { permissionField: 'r_number', exportField: 'Interaction ID', dataField: 'r_number' },
-    { permissionField: 'project_count', exportField: 'Project Count', dataField: 'project_count' },
-    { permissionField: 'interaction_type_name', exportField: 'Type', dataField: 'interaction_type_name' },
+    { permissionField: 'project_code', exportField: 'Project Code', dataField: 'project_code' },
+     { permissionField: 'interaction_level_name', exportField: 'Interaction Level', dataField: 'interaction_level_name' },
+       { permissionField: 'fiscal_year', exportField: 'Fiscal Year', dataField: 'fiscal_year' },
+     { permissionField: 'interaction_age', exportField: 'Age (Days)', dataField: 'interaction_age' },
     { permissionField: 'status', exportField: 'Status', dataField: 'status_name' },
+    { permissionField: 'recipient_name', exportField: 'Recipient Name', dataField: 'recipient_name' },
+    { permissionField: 'recipient_email', exportField: 'Recipient Email', dataField: 'recipient_email' },
+    { permissionField: 'last_resent_on', exportField: 'Last Sent Date', dataField: 'last_resent_on' },
+    { permissionField: 'last_reminder_on', exportField: 'Last Reminder Date', dataField: 'last_reminder_on' },
+    { permissionField: 'response_submitted_on', exportField: 'Response Date', dataField: 'response_submitted_on' },
+    { permissionField: 'response_updated_on', exportField: 'Last Response Update', dataField: 'response_updated_on' },
+    { permissionField: 'attachment_count', exportField: 'Attachments', dataField: 'attachment_count' },
+    { permissionField: 'interaction_url', exportField: 'Interaction Link', dataField: 'interaction_url' },
+    { permissionField: 'interaction_type_name', exportField: 'Type', dataField: 'interaction_type_name' },
+    { permissionField: 'response_source_name', exportField: 'Response Source', dataField: 'response_source_name' },
     { permissionField: 'created_by', exportField: 'Created By', dataField: 'created_by' },
-    { permissionField: 'modified_by', exportField: 'Last Updated By', dataField: 'modified_by' },
     { permissionField: 'created_datetime', exportField: 'Created Date', dataField: 'created_datetime' },
+    { permissionField: 'modified_by', exportField: 'Last Updated By', dataField: 'modified_by' },
     { permissionField: 'modified_datetime', exportField: 'Last Updated Date', dataField: 'modified_datetime' }
   ];
 
