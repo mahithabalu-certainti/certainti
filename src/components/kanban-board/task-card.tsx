@@ -9,26 +9,26 @@ const TaskCard: React.FC<TaskCardProps> = ({
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Done':
-        return 'bg-teal-600 text-white';
+        return 'bg-teal-400 text-white';
       case 'High':
-        return 'bg-red-500 text-white';
+        return 'bg-red-400 text-white';
       case 'Complete':
-        return 'bg-gray-500 text-white';
+        return 'bg-gray-400 text-white';
       default:
         return 'bg-gray-300 text-gray-800';
     }
   };
 
   return (
-    <div className='bg-slate-700 border border-slate-600 rounded-lg p-4 mb-3 hover:bg-slate-600 transition-colors duration-200'>
-      <div className='flex items-start gap-3 mb-3'>
+    <div className='bg-white border border-slate-200 rounded-lg p-3 mb-2 hover:bg-slate-50 transition-colors duration-200'>
+      <div className='flex items-start gap-3 mb-2'>
         <div className='w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0'></div>
-        <h3 className='text-white text-[13px] font-medium leading-relaxed'>
+        <h3 className='text-slate-800 text-[13px] font-medium leading-relaxed'>
           {task.title}
         </h3>
       </div>
 
-      <div className='flex items-center gap-2 mb-3'>
+      <div className='flex items-center gap-2 mb-2'>
         <span
           className={`px-2 py-1 rounded-md text-[13px] font-medium ${getStatusColor('Done')}`}
         >

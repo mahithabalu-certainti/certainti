@@ -168,7 +168,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
   return (
     <div className='bg-[#f5f5f5] rounded-lg p-4 w-80 flex-shrink-0'>
       <div
-        className='bg-slate-700 border border-slate-600 rounded-lg p-4 mb-4 flex items-center justify-between group'
+        className='bg-white border border-slate-200 rounded-lg p-3 mb-2 flex items-center justify-between group'
         onMouseEnter={() => setIsHoveringHeader(true)}
         onMouseLeave={() => setIsHoveringHeader(false)}
       >
@@ -181,15 +181,15 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
               onChange={(e) => setColumnName(e.target.value)}
               onKeyDown={handleColumnNameKeyPress}
               onBlur={handleSaveColumnName}
-              className='bg-slate-600 text-white text-[13px] font-semibold px-2 py-1 rounded border border-slate-500 focus:border-blue-500 focus:outline-none min-w-0'
+              className='bg-white text-slate-800 text-[13px] font-semibold px-2 py-1 rounded border border-slate-300 focus:border-blue-500 focus:outline-none min-w-0'
             />
           ) : (
-            <h2 className='text-white text-[13px] font-semibold'>
+            <h2 className='text-slate-800 text-[13px] font-semibold'>
               {column.name}
             </h2>
           )}
           {showTaskCount && (
-            <span className='bg-slate-600 text-white px-2 py-1 rounded-full text-[13px]'>
+            <span className='bg-slate-100 text-slate-600 px-2 py-1 rounded-full text-[13px]'>
               {column.taskCount}
             </span>
           )}
@@ -199,23 +199,26 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
           <button
             onClick={() => setIsAddingTaskAtTop(true)}
             disabled={isCreateTaskDisabled}
-            className={`opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 rounded hover:bg-slate-600 ${
+            className={`opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 rounded hover:bg-slate-100 ${
               isCreateTaskDisabled ? 'cursor-not-allowed' : 'cursor-pointer'
             }`}
             title='Add Task'
           >
-            <AddIcon size={16} className='text-slate-300 hover:text-white' />
+            <AddIcon
+              size={16}
+              className='text-slate-500 hover:text-slate-700'
+            />
           </button>
 
           <div className='relative' ref={dropdownRef}>
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className='opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 rounded hover:bg-slate-600 cursor-pointer'
+              className='opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 rounded hover:bg-slate-100 cursor-pointer'
               title='More options'
             >
               <ArrowDownIcon
                 size={16}
-                className='text-slate-300 hover:text-white'
+                className='text-slate-500 hover:text-slate-700'
               />
             </button>
 
@@ -240,7 +243,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
       </div>
 
       {isAddingTaskAtTop && (
-        <div className='mb-3'>
+        <div className='mb-2'>
           <input
             ref={inputRef}
             type='text'
@@ -252,13 +255,13 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
                 setIsAddingTaskAtTop(false);
               }
             }}
-            placeholder='Enter task name...'
-            className='w-full p-3 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-blue-500 focus:outline-none text-[13px] placeholder-slate-400'
+            placeholder='Enter task name'
+            className='w-full p-3 bg-white text-slate-800 rounded-lg border border-slate-300 focus:border-blue-500 focus:outline-none text-[13px] placeholder-slate-500'
           />
         </div>
       )}
 
-      <div className='space-y-3 mb-4'>
+      <div className='space-y-2 mb-2'>
         {column.tasks.map((task) => (
           <TaskCard
             key={task.id}
@@ -270,7 +273,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
       </div>
 
       {isAddingTaskAtBottom && (
-        <div className='mb-3'>
+        <div className='mb-2'>
           <input
             ref={bottomInputRef}
             type='text'
@@ -282,8 +285,8 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
                 setIsAddingTaskAtBottom(false);
               }
             }}
-            placeholder='Enter task name...'
-            className='w-full p-3 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-blue-500 focus:outline-none text-[13px] placeholder-slate-400'
+            placeholder='Enter task name'
+            className='w-full p-3 bg-white text-slate-800 rounded-lg border border-slate-300 focus:border-blue-500 focus:outline-none text-[13px] placeholder-slate-500'
           />
         </div>
       )}
@@ -295,12 +298,12 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
           data-column-id={column.id}
           className={`w-full flex items-center gap-2 p-3 rounded-lg border-2 border-dashed transition-colors duration-200 ${
             isCreateTaskDisabled
-              ? 'border-slate-600 text-slate-500 cursor-not-allowed'
-              : 'border-slate-600 text-slate-400 hover:border-slate-500 hover:text-slate-300'
+              ? 'border-slate-300 text-slate-400 cursor-not-allowed'
+              : 'border-slate-300 text-slate-500 hover:border-slate-400 hover:text-slate-600'
           }`}
         >
           <AddIcon size={18} />
-          <span className='text-[13px] font-medium'>Add task</span>
+          <span className='text-[13px] font-medium'>Add Task</span>
         </button>
       )}
     </div>
