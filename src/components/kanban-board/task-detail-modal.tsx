@@ -45,17 +45,9 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
 
   return (
     <>
-      {/* Backdrop */}
-      <div
-        className={`fixed inset-0 bg-black bg-opacity-50 transition-opacity duration-300 z-40 ${
-          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}
-        onClick={onClose}
-      />
-
       {/* Modal */}
       <div
-        className={`fixed top-0 right-0 h-full w-96 bg-white text-gray-900 shadow-2xl transform transition-transform duration-300 ease-in-out z-50 overflow-y-auto ${
+        className={`absolute top-0 right-0 h-full w-96 bg-white text-gray-900 shadow-2xl transform transition-transform duration-300 ease-in-out z-50 overflow-y-auto ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >

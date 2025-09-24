@@ -123,7 +123,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   };
 
   return (
-    <div className='min-h-screen p-4'>
+    <div className='min-h-screen p-4 relative'>
       <div className='max-w-full overflow-x-auto'>
         <div className='flex items-start gap-6 pb-6'>
           {columns.map((column) => (
