@@ -1072,6 +1072,7 @@ export class ProjectTaskSchemaService {
           ),
           "total_cost",
         ],
+        [Sequelize.fn("COUNT", Sequelize.col("rid")), "count"],
       ],
       where: {
         account_rid,
@@ -1101,6 +1102,7 @@ export class ProjectTaskSchemaService {
           ),
           "total_cost",
         ],
+        [Sequelize.fn("COUNT", Sequelize.col("ProjectTask.rid")), "count"],
       ],
       include: [
         {
@@ -1121,11 +1123,19 @@ export class ProjectTaskSchemaService {
       transaction,
     });
 
+    if (!totalAggregate) return;
+
+    if (!totalAggregate || totalAggregate.length === 0) return;
+
     // Initialize
     let total_effort_fte_from_tasks = null;
     let total_cost_fte_from_tasks = null;
     let total_effort_subcon_from_tasks = null;
     let total_cost_subcon_from_tasks = null;
+
+    let total_fte_from_tasks = 0;
+    let total_subcon_from_tasks= 0;
+    let total_nonlabor_from_tasks = 0;
 
     for (const row of byTypeAggregates) {
       const resourceTypeId = row.resource_type_rid;
@@ -1139,9 +1149,13 @@ export class ProjectTaskSchemaService {
       if (typeName === "full-time") {
         total_effort_fte_from_tasks = row.total_effort;
         total_cost_fte_from_tasks = row.total_cost;
+        total_fte_from_tasks =  Number(row.count || 0);
       } else if (typeName === "sub con") {
         total_effort_subcon_from_tasks = row.total_effort;
         total_cost_subcon_from_tasks = row.total_cost;
+        total_subcon_from_tasks = Number(row.count || 0);
+      } else if (typeName === "non-labor") {
+        total_nonlabor_from_tasks = Number(row.count || 0)
       }
     }
 
@@ -1156,6 +1170,9 @@ export class ProjectTaskSchemaService {
           total_cost_subcon_from_tasks,
           total_effort_fte_from_tasks,
           total_effort_subcon_from_tasks,
+          total_fte_from_tasks : total_fte_from_tasks,
+          total_subcon_from_tasks : total_subcon_from_tasks,
+          total_nonlabor_from_tasks : total_nonlabor_from_tasks
         },
         {
           where: {
@@ -1214,6 +1231,7 @@ export class ProjectTaskSchemaService {
           ),
           "total_cost",
         ],
+        [Sequelize.fn("COUNT", Sequelize.col("rid")), "count"],
       ],
       where: {
         account_rid,
@@ -1244,6 +1262,7 @@ export class ProjectTaskSchemaService {
           ),
           "total_cost",
         ],
+        [Sequelize.fn("COUNT", Sequelize.col("ProjectTask.rid")), "count"],
       ],
       include: [
         {
@@ -1269,6 +1288,10 @@ export class ProjectTaskSchemaService {
     let total_cost_fte_from_tasks: number | null = 0;
     let total_effort_subcon_from_tasks: number | null = 0;
     let total_cost_subcon_from_tasks: number | null = 0;
+    
+    let total_fte_from_tasks = 0;
+    let total_subcon_from_tasks= 0;
+    let total_nonlabor_from_tasks = 0;
 
     for (const row of byTypeAggregates) {
       const resourceTypeId = row.resource_type_rid;
@@ -1284,9 +1307,13 @@ export class ProjectTaskSchemaService {
       if (typeName === "full-time") {
         total_effort_fte_from_tasks += effort;
         total_cost_fte_from_tasks += cost;
+        total_fte_from_tasks = Number(row.count || 0)
       } else if (typeName === "sub con") {
         total_effort_subcon_from_tasks += effort;
         total_cost_subcon_from_tasks += cost;
+        total_subcon_from_tasks = Number(row.count || 0)
+      } else if (typeName === "non-labor") {
+        total_nonlabor_from_tasks = Number(row.count || 0)
       }
     }
 
@@ -1343,6 +1370,9 @@ export class ProjectTaskSchemaService {
             project_client_group: projectData.project_client_group || null,
             project_description: projectData.project_description || null,
             status_rid: projectData.status_rid || "",
+            total_fte_from_tasks : total_fte_from_tasks,
+            total_subcon_from_tasks : total_subcon_from_tasks,
+            total_nonlabor_from_tasks : total_nonlabor_from_tasks
           },
           { transaction }
         );
@@ -1356,6 +1386,9 @@ export class ProjectTaskSchemaService {
             total_cost_subcon_from_tasks,
             total_effort_fte_from_tasks,
             total_effort_subcon_from_tasks,
+            total_fte_from_tasks : total_fte_from_tasks,
+            total_subcon_from_tasks : total_subcon_from_tasks,
+            total_nonlabor_from_tasks : total_nonlabor_from_tasks
           },
           {
             where: {

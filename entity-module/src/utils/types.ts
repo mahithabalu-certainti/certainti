@@ -188,6 +188,7 @@ export interface ICreateProject {
   total_cost?: number | null;
   total_fte?: number;
   total_subcon?: number;
+  total_nonlabor?: number;
   total_cost_nonlabor?: number | null;
   total_effort_fte?: number | null;
   total_effort_subcon?: number | null;
@@ -246,6 +247,7 @@ export interface IUpdateProject {
   total_cost?: number | null;
   total_fte?: number;
   total_subcon?: number;
+  total_nonlabor?: number;
   total_cost_nonlabor?: number | null;
   total_effort_fte?: number | null;
   total_effort_subcon?: number | null;

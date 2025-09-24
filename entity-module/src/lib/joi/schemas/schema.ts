@@ -1320,6 +1320,7 @@ const createProjectSchema = Joi.object({
   .allow(null),
   total_fte: Joi.number().greater(0).optional().allow(null),
   total_subcon: Joi.number().greater(0).optional().allow(null),
+  total_nonlabor: Joi.number().greater(0).optional().allow(null),
   total_cost_nonlabor: Joi.string()
   .pattern(decimal18_2Regex)
   .messages({
@@ -1559,6 +1560,7 @@ const updateProjectSchema = Joi.object({
 
   total_fte: Joi.number().greater(0).optional().allow(null),
   total_subcon: Joi.number().greater(0).optional().allow(null),
+  total_nonlabor: Joi.number().greater(0).optional().allow(null),
   
   total_effort_fte: Joi.string()
   .pattern(decimal18_2Regex)
