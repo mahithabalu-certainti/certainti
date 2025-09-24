@@ -705,7 +705,7 @@ export const rawQueries = {
             SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access uea
             WHERE uea.user_rid = ? 
             AND uea.entity_type = 'PROJECT'
-            AND uea.entity_rid = ps.project_rid
+            AND uea.entity_rid = ps.project_fiscal_rid
             AND uea.access_type = 'INCLUDE'
           )
           OR EXISTS (
@@ -714,7 +714,7 @@ export const rawQueries = {
               ON ugea.group_rid = ugm.group_rid
             WHERE ugm.user_rid = ?
             AND ugea.entity_type = 'PROJECT'
-            AND ugea.entity_rid = ps.project_rid
+            AND ugea.entity_rid = ps.project_fiscal_rid
             AND ugea.access_type = 'INCLUDE'
           )
         )
@@ -722,7 +722,7 @@ export const rawQueries = {
           SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access uea
           WHERE uea.user_rid = ? 
           AND uea.entity_type = 'PROJECT'
-          AND uea.entity_rid = ps.project_rid
+          AND uea.entity_rid = ps.project_fiscal_rid
           AND uea.access_type = 'EXCLUDE'
         )
         AND NOT EXISTS (
@@ -731,7 +731,7 @@ export const rawQueries = {
             ON ugea.group_rid = ugm.group_rid
           WHERE ugm.user_rid = ?
           AND ugea.entity_type = 'PROJECT'
-          AND ugea.entity_rid = ps.project_rid
+          AND ugea.entity_rid = ps.project_fiscal_rid
           AND ugea.access_type = 'EXCLUDE'
         )
       )
