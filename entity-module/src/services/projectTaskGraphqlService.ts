@@ -81,6 +81,10 @@ export default class ProjectTaskGraphqlServies {
           }
         }
         if(data.total_hours_pro_task) total_hours_pro_task = data.total_hours_pro_task
+        else total_hours_pro_task = checkForExistingData[0][0].total_hours_pro_task
+
+        if(data.total_cost_pro_task) total_cost_pro_task = data.total_cost_pro_task
+        else total_cost_pro_task = checkForExistingData[0][0].total_cost_pro_task
         if(data.start_date && data.end_date) {
           const newStartDate = new Date(data.start_date);
           const newEndDate = new Date(data.end_date);
@@ -209,12 +213,13 @@ export default class ProjectTaskGraphqlServies {
         const activeId : any = await mainSequelize.query(`SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name ILIKE '%${status}%'`)
         const activeStatusId : any = statusMap?.get(status);
 
-        if (data.total_hours_pro_task!== undefined && Number(data.total_hours_pro_task) > 3000) {
+        if (total_hours_pro_task != null && Number(total_hours_pro_task) > 3000) {
             status = "Anomaly";
-          } else if (
-            (data.total_cost_pro_task !== undefined && currencyThreshold !== null && Number(data.total_cost_pro_task) > currencyThreshold)) {
-            status = "Anomaly";
-          }
+        } 
+        else if (
+          (total_cost_pro_task !== null && currencyThreshold !== null && Number(total_cost_pro_task) > currencyThreshold)) {
+          status = "Anomaly";
+        }
         const statusRid : any = statusMap?.get(status);
         if(statusRid !== undefined || statusRid !== null) data.status_rid = statusRid
         else data.status_rid = checkForExistingData[0][0].status_rid
