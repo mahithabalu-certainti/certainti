@@ -199,13 +199,12 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     );
 
     if (!keyContactSection) return;
-    const isFromProject = formData?.find((item) => item.from === 'project');
-    const fieldsPerRow = newContactLength ?? 8;
+    const fieldsPerRow = newContactLength ?? 9;
     const rowCount = Math.ceil(keyContactSection.fields.length / fieldsPerRow);
 
     for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
       const baseIndex = rowIndex * fieldsPerRow;
-      const statusIndex = isFromProject ? 7 : 6;
+      const statusIndex = 7;
       const nameField = keyContactSection.fields[baseIndex];
       const roleField = keyContactSection.fields[baseIndex + 1];
       const emailField = keyContactSection.fields[baseIndex + 2];
@@ -276,7 +275,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   }, [constructFormData, formData]);
 
   const handleRemoveKeyContactRow = (rowIndexToRemove: number) => {
-    const fieldsPerRow = newContactLength ?? 8;
+    const fieldsPerRow = newContactLength ?? 9;
 
     setFormData((prevFormData) => {
       if (!prevFormData) return prevFormData;
@@ -348,8 +347,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   };
 
   const handleAddKeyContact = () => {
-    const isFromProject = formData?.find((item) => item.from === 'project');
-    const fieldsPerRow = newContactLength ?? 8;
+    const fieldsPerRow = newContactLength ?? 9;
     // Update constructFormData with default values for the new row
     setConstructFormData((prevData) => {
       if (!prevData) return prevData;
@@ -365,9 +363,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       newData[`key_contact_rid_${newRowIndex}`] = '';
       newData[`is_primary_contact_${newRowIndex}`] = 'no';
       newData[`interaction_cc_recipient_${newRowIndex}`] = 'no';
-      if (isFromProject) {
-        newData[`include_in_communication_${newRowIndex}`] = 'no';
-      }
+      newData[`include_in_communication_${newRowIndex}`] = 'no';
       newData[`key_contact_status_${newRowIndex}`] = 'active';
       newData[`button_${newRowIndex}`] = '';
 
@@ -381,7 +377,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     const fieldValue = (constructFormData[field.name] as string) || '';
     const fieldDisabled = field.disabled ? ' bg-gray-100' : '';
 
-    const handleChange = (value: FieldTypes, countryCode?: FieldTypes) => {
+    const handleChange = (
+      value: FieldTypes,
+      countryCode?: FieldTypes,
+      isCreate: boolean = false
+    ) => {
       const newData = {
         ...constructFormData,
         [field.name]: value,
@@ -857,7 +857,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       }
 
       if (field.onChange && onChange) {
-        onChange({ fieldName: field.name, fieldValue: value });
+        onChange({
+          fieldName: field.name,
+          fieldValue: value,
+          isCreate: isCreate,
+        });
       }
 
       setFormData((prevFormData) => {
@@ -1357,11 +1361,16 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               onChange={(_e, newValue) => {
                 if (typeof newValue === 'string') {
                   handleChange(newValue || '');
+                } else if (newValue && newValue?.isCreate) {
+                  handleChange(newValue.value || '', '', true);
                 } else if (newValue) {
                   handleChange(newValue.value || '');
                 } else {
                   handleChange('');
                 }
+              }}
+              onInputChange={() => {
+                handleChange('');
               }}
               filterOptions={(options, params) => {
                 const filtered = autoCompleteFilter(options, params);
@@ -1390,10 +1399,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               }}
               disabled={field.disabled}
               value={
-                field.options?.find((opt) => opt.value === fieldValue) || {
-                  label: '',
-                  value: '',
-                }
+                field.options?.find((opt) => opt.value === fieldValue) || ''
               }
               size='small'
               sx={{
@@ -1401,6 +1407,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 fontSize: '13px',
                 '&.MuiAutocomplete-root .MuiOutlinedInput-root': {
                   height: '32px',
+                  background: field.error ? '#FEF2F2' : 'transparent',
                 },
                 '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                   border: '2px solid #60A5FA',

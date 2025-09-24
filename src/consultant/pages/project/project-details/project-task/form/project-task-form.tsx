@@ -86,6 +86,7 @@ const ProjectTaskForm: React.FC = () => {
   const payload = {
     account_rid: account_Id || undefined,
     search: '',
+    project_fiscal_rid: project_Id || undefined,
   };
   const { data: projectResourceCodeOptions } =
     useGetProjectResourceTaskCode(payload);
@@ -254,7 +255,7 @@ const ProjectTaskForm: React.FC = () => {
       );
       if (selectedResource) {
         setCurrentResourceCode(selectedResource.resource_code);
-      } else {
+      } else if (!selectedResource && data.isCreate) {
         handleCreateNewProjectResource(data.fieldValue as string);
       }
     }

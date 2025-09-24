@@ -132,7 +132,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     sendInteraction.mutate(payload, {
       onSuccess: (response) => {
         successToast(response?.statusMessage);
-        // refetch();
+        refetch();
       },
     });
     return;
@@ -158,7 +158,6 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       disabled: accountInActive || !disableRemainderBtn,
       onClick: () => handleReminderBtn(),
       sx: { width: '78px', minWidth: '78px' },
-      hide: true,
       loading: sendInteraction.isPending,
     },
     {
@@ -166,24 +165,6 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       variant: 'contained' as const,
       onClick: () => handleBackClick(),
       sx: { width: '140px', minWidth: '140px' },
-    },
-  ];
-
-  const basicInfo: DetailItem[] = [
-    {
-      label: 'Project Code',
-      value: data?.project_code,
-      key: 'project_code',
-    },
-    {
-      label: 'Project Name',
-      value: data?.project_name,
-      key: 'project_name',
-    },
-    {
-      label: 'Fiscal Year',
-      value: data?.fiscal_year,
-      key: 'fiscal_year',
     },
   ];
 
@@ -251,7 +232,6 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     // },
   ];
 
-  const basicDetails = applyHidePermission(basicInfo, permissionMap);
   const interactionDetails = applyHidePermission(
     InteractionInfo,
     permissionMap
@@ -289,11 +269,6 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
           </div>
         ) : (
           <>
-            <DetailsSection
-              title='Basic Information'
-              data={basicDetails}
-              customStyle='pt-0 mt-0'
-            />
             <DetailsSection
               title='Interaction Information'
               data={interactionDetails}

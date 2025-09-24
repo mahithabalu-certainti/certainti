@@ -60,7 +60,6 @@ import Uploads from '../../../../../components/Attachments/upload';
 const BUTTON_STYLES = {
   height: '24px !important',
   fontSize: '13px',
-  fontWeight: 600,
 };
 
 const projectTabs: ResourceTabs[] = [
@@ -318,7 +317,7 @@ export const ProjectResources = ({
       setSortOrder(defaultSortOrder);
       setSortField(defaultSortField);
     } else {
-      // setSortFilterCount(1);
+      setSortFilterCount(1);
       setSortOrder(apiOrder);
       setSortField(sortBy);
     }

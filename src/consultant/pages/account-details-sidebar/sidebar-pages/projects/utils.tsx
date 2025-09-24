@@ -203,7 +203,7 @@ export const projectFilterFields = (
   },
   {
     name: 'QRE %',
-    value: 'qre',
+    value: 'rd_percent_potential_ai',
     type: 'number',
     operatorOption: numberOptions,
     hide:

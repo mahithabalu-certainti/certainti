@@ -847,7 +847,7 @@ export const AccountDetails = () => {
               disabled: accountInActive,
               loading: triggerAIMutation.isPending,
               sx: { ...BUTTON_STYLES, width: '115px', minWidth: '115px' },
-              hide: !TriggerAIEnable,
+              hide: disable || !TriggerAIEnable,
             },
           ]}
           primaryButton={

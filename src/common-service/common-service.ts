@@ -400,14 +400,13 @@ export const useGetInteractionResponeSources = () => {
 const fetchInteractionQuestions = async (
   accountId: string,
   interactionId: string,
-  projectFiscalRid: string,
   authToken: string,
   userId: string
 ): Promise<InteractionDetails> => {
   // Only send the provided headers, do not merge with defaults
   const response =
     await exInteractionServiceApi.get<InteractionDetailsResponse>(
-      `/api/interactions/detail/${accountId}/${interactionId}?project_fiscal_rid=${projectFiscalRid}`,
+      `/api/interactions/detail/${accountId}/${interactionId}`,
       {
         headers: {
           Authorization: `Bearer ${authToken}`,
@@ -450,18 +449,12 @@ export const useGetInteractionQuestions = (
       fetchInteractionQuestions(
         accountId!,
         interactionId!,
-        projectFiscalRid!,
         authToken!,
         userId!
       ),
     retry: 0,
     gcTime: 0,
-    enabled:
-      !!authToken &&
-      !!userId &&
-      !!interactionId &&
-      !!accountId &&
-      !!projectFiscalRid,
+    enabled: !!authToken && !!userId && !!interactionId && !!accountId,
   });
 };
 

@@ -538,10 +538,10 @@ export const getAllProjectListColumns = (
       !permissionMap?.['assessment_status']?.edit,
   },
   {
-    id: 'qre_final',
+    id: 'rd_percent_potential_ai',
     label: 'QRE %',
     sortable: true,
-    sortId: 'qre_final',
+    sortId: 'rd_percent_potential_ai',
     width: 130,
     sx: {
       textAlign: 'right',
@@ -549,7 +549,8 @@ export const getAllProjectListColumns = (
     hide:
       !permissionMap?.['qre_final']?.read &&
       !permissionMap?.['qre_final']?.edit,
-    render: (row: Project) => (row.qre_final ? row.qre_final : '-'),
+    render: (row: Project) =>
+      row.rd_percent_potential_ai ? row.rd_percent_potential_ai : '-',
   },
   {
     id: 'qre',

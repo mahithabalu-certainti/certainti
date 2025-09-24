@@ -76,7 +76,7 @@ const ProjectResourceForm: React.FC = () => {
   const projectCode = searchParams.get('projectCode');
   const createdNewResourceCode =
     searchParams.get('created_resource_code') || '';
-  const project_resource_role = searchParams.get('new_project_res_name') || '';
+  const newProjectResource = searchParams.get('new_project_res_name') || '';
   const fiscalDate: FormFiscalDateType = projectPFY
     ? JSON.parse(projectPFY)
     : undefined;
@@ -184,7 +184,7 @@ const ProjectResourceForm: React.FC = () => {
   const memoizedProjectResourceCode: SelectResourceOption[] = useMemo(
     () =>
       projectResourceCodeOptions?.data?.resourceCodes.map((item) => ({
-        label: `${item.resource_code} ${item.resource_name ? `(${item.resource_name})` : ''}`,
+        label: `${item.resource_code}${item.resource_name ? ` (${item.resource_name})` : ''}`,
         value: item.resource_code,
         resource_type_rid: item.resource_type_rid,
         resource_type_name: item.resource_type_name,
@@ -255,7 +255,7 @@ const ProjectResourceForm: React.FC = () => {
     } else {
       createProjectResource.mutate(projectResourceFormData, {
         onSuccess: (res) => {
-          if (project_resource_role) {
+          if (newProjectResource) {
             const params = new URLSearchParams(fromLocation?.search);
             params.set(
               'created_resource_code',
@@ -299,7 +299,7 @@ const ProjectResourceForm: React.FC = () => {
       new_res_code: resCode || '',
     });
     navigate(`${RESOURCE_CREATE}?${queryParams.toString()}`, {
-      state: { from: location },
+      state: { from: location, subLocation: fromLocation },
     });
   };
 
@@ -316,7 +316,7 @@ const ProjectResourceForm: React.FC = () => {
           selectedResource?.resource_type_name?.toLowerCase() ===
             ResourceType.full_time
         );
-      } else {
+      } else if (!selectedResource && data.isCreate) {
         handleCreateNewResource(data.fieldValue as string);
       }
     }
@@ -503,7 +503,6 @@ const ProjectResourceForm: React.FC = () => {
                     currency_rid: currency_rid,
                     status_rid: defaultActiveValue,
                     resource_code: createdNewResourceCode,
-                    project_resource_role: project_resource_role,
                   }
                 : {}
           }

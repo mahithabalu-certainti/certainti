@@ -236,7 +236,7 @@ const AccountList = () => {
     () =>
       userRoles.data?.data.roles.map((role) => ({
         label: role.business_teams,
-        value: role.business_teams,
+        value: role.rid,
       })) || [],
     [userRoles.data?.data.roles]
   );
@@ -389,7 +389,7 @@ const AccountList = () => {
             ) : (
               <button
                 aria-describedby={modalId}
-                className={`w-[120px] h-[24px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative border border-[#CBD6E2] px-0 py-0 normal-case ${isModalOpen ? 'bg-[#F3F3F3]' : 'bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'} hover:text-[#425A76] transition-colors duration-150`}
+                className={`w-[120px] h-[24px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 rounded-[2px] relative border border-[#CBD6E2] px-0 py-0 normal-case ${isModalOpen ? 'bg-[#F3F3F3]' : 'bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'} hover:text-[#425A76] transition-colors duration-150`}
                 style={{
                   boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
                 }}
