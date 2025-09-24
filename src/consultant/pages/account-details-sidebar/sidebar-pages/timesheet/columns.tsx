@@ -130,7 +130,7 @@ export const getTimesheetListColumns = (
     sx: {
       textAlign: 'right',
     },
-  }, 
+  },
   {
     id: 'status_descriptions',
     sortId: 'status_descriptions',

@@ -9,7 +9,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowDownDisabledIcon,
   ArrowDownIcon,
-  ManageUserIcon
+  ManageUserIcon,
 } from '../../../../assets/icons';
 import TextButton from '../../../../components/button/text-button';
 import {
