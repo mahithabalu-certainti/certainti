@@ -43,5 +43,11 @@ export interface KanbanColumnProps {
   showProfileIndicator: boolean;
   isCreateTaskDisabled: boolean;
   isCreateTaskHide: boolean;
-  onAddTask: (columnId: string) => void;
+  onAddTask: (
+    columnId: string,
+    task?: Task,
+    position?: 'top' | 'bottom'
+  ) => void;
+  onRenameColumn?: (columnId: string, newName: string) => void;
+  onDeleteColumn?: (columnId: string) => void;
 }

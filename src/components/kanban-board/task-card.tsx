@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import { TaskCardProps } from './types';
 
 const TaskCard: React.FC<TaskCardProps> = ({
@@ -58,7 +58,6 @@ const TaskCard: React.FC<TaskCardProps> = ({
 
         {showCommentCount && (
           <div className='flex items-center gap-1 text-gray-400'>
-            {/* <MessageCircle size={16} /> */}
             <span className='text-[13px]'>{task.commentCount}</span>
           </div>
         )}

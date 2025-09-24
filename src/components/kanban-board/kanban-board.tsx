@@ -1,7 +1,14 @@
-import React, { useState } from 'react';
-import { KanbanBoardProps, KanbanColumn as KanbanColumnType } from './types';
+'use client';
+import type React from 'react';
+import { useState } from 'react';
+
+import {
+  KanbanBoardProps,
+  KanbanColumn as KanbanColumnType,
+  Task,
+} from './types';
 import KanbanColumn from './kanban-column';
-import TextButton from '../button/text-button';
+import { AddIcon } from '../../assets';
 
 const KanbanBoard: React.FC<KanbanBoardProps> = ({
   data,
@@ -12,57 +19,79 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   showProfileIndicator = true,
 }) => {
   const [columns, setColumns] = useState<KanbanColumnType[]>(data);
-  const [showAddTaskModal, setShowAddTaskModal] = useState(false);
-  const [selectedColumnId, setSelectedColumnId] = useState<string>('');
-  const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [modalPosition, setModalPosition] = useState({ top: 0, left: 0 });
+  const [isCreatingSection, setIsCreatingSection] = useState(false);
+  const [newSectionName, setNewSectionName] = useState('');
 
-  const handleAddTask = (columnId: string) => {
-    setSelectedColumnId(columnId);
-    // Get the button position to show modal nearby
-    const button = document.querySelector(
-      `[data-column-id="${columnId}"]`
-    ) as HTMLElement;
-    if (button) {
-      const rect = button.getBoundingClientRect();
-      setModalPosition({
-        top: rect.bottom + window.scrollY + 8,
-        left: rect.left + window.scrollX,
-      });
-    }
-    setShowAddTaskModal(true);
-  };
-
-  const handleCreateTask = () => {
-    if (newTaskTitle.trim() && selectedColumnId) {
-      const newTask = {
-        id: Date.now().toString(),
-        title: newTaskTitle,
-        status: 'High' as const,
-        assignee: {
-          name: 'New User',
-          initials: 'NU',
-          color: '#8B5CF6',
-        },
-        commentCount: 0,
-        createdAt: new Date(),
-      };
-
+  const handleAddTask = (
+    columnId: string,
+    task?: Task,
+    position: 'top' | 'bottom' = 'bottom'
+  ) => {
+    if (task) {
+      // Direct task creation (from inline input)
       setColumns(
         columns.map((column) =>
-          column.id === selectedColumnId
+          column.id === columnId
             ? {
                 ...column,
-                tasks: [...column.tasks, newTask],
+                tasks:
+                  position === 'top'
+                    ? [task, ...column.tasks]
+                    : [...column.tasks, task],
                 taskCount: column.taskCount + 1,
               }
             : column
         )
       );
+    }
+  };
 
-      setNewTaskTitle('');
-      setShowAddTaskModal(false);
-      setSelectedColumnId('');
+  const handleRenameColumn = (columnId: string, newName: string) => {
+    setColumns(
+      columns.map((column) =>
+        column.id === columnId
+          ? {
+              ...column,
+              name: newName,
+            }
+          : column
+      )
+    );
+  };
+
+  const handleDeleteColumn = (columnId: string) => {
+    setColumns(columns.filter((column) => column.id !== columnId));
+  };
+
+  const handleAddSection = () => {
+    setIsCreatingSection(true);
+    setNewSectionName('');
+  };
+
+  const handleCreateSection = () => {
+    if (newSectionName.trim()) {
+      const newColumn: KanbanColumnType = {
+        id: `column-${Date.now()}`,
+        name: newSectionName.trim(),
+        tasks: [],
+        taskCount: 0,
+      };
+      setColumns([...columns, newColumn]);
+      setIsCreatingSection(false);
+      setNewSectionName('');
+    }
+  };
+
+  const handleCancelCreateSection = () => {
+    setIsCreatingSection(false);
+    setNewSectionName('');
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleCreateSection();
+    } else if (e.key === 'Escape') {
+      handleCancelCreateSection();
     }
   };
 
@@ -80,52 +109,41 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
               isCreateTaskDisabled={isCreateTaskDisabled}
               isCreateTaskHide={isCreateTaskHide}
               onAddTask={handleAddTask}
+              onRenameColumn={handleRenameColumn}
+              onDeleteColumn={handleDeleteColumn}
             />
           ))}
-        </div>
-      </div>
 
-      {/* Add Task Modal */}
-      {showAddTaskModal && (
-        <div
-          className='absolute z-50'
-          style={{
-            top: `${modalPosition.top}px`,
-            left: `${modalPosition.left}px`,
-          }}
-        >
-          <div className='bg-slate-800 p-4 rounded-lg w-80 shadow-lg border border-slate-600'>
-            <h3 className='text-white text-[13px] font-semibold mb-3'>
-              Add New Task
-            </h3>
-            <textarea
-              value={newTaskTitle}
-              onChange={(e) => setNewTaskTitle(e.target.value)}
-              placeholder='Enter Task name...'
-              rows={2}
-              className='w-full p-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-blue-500 focus:outline-none mb-3 resize-none text-[13px]'
-              autoFocus
-            />
-            <div className='flex gap-2'>
-              <TextButton
-                label='Add Task'
-                onClick={handleCreateTask}
-                sx={{ flex: 1 }}
-              />
-              <TextButton
-                label='Cancel'
-                onClick={() => {
-                  setShowAddTaskModal(false);
-                  setNewTaskTitle('');
-                  setSelectedColumnId('');
-                }}
-                sx={{ flex: 1 }}
-                color='inherit'
-              />
-            </div>
+          <div className='flex-shrink-0 w-80'>
+            {isCreatingSection ? (
+              <div className='bg-[#f5f5f5] rounded-lg p-4'>
+                <div className='bg-slate-700 border border-slate-600 rounded-lg p-4 mb-4'>
+                  <input
+                    type='text'
+                    value={newSectionName}
+                    onChange={(e) => setNewSectionName(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    onBlur={handleCancelCreateSection}
+                    placeholder='Enter section name'
+                    className='w-full bg-slate-600 text-white text-[13px] font-semibold px-2 py-1 rounded border border-slate-500 focus:border-blue-500 focus:outline-none'
+                    autoFocus
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className='bg-[#f5f5f5] rounded-lg p-4'>
+                <button
+                  onClick={handleAddSection}
+                  className='w-full bg-slate-700 border border-slate-600 rounded-lg p-4 mb-4 transition-colors duration-200 flex items-center justify-center gap-2 text-slate-300 hover:text-white hover:bg-slate-600'
+                >
+                  <AddIcon className='w-4 h-[26px]' />
+                  <span className='text-[13px] font-semibold'>Add Section</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };
