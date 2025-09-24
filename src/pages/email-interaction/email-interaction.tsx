@@ -318,7 +318,7 @@ const EmailInteraction: React.FC = () => {
               {/* Buttons */}
               {timeout ? (
                 <button
-                  className={`w-full h-[34px] flex items-center justify-center rounded-sm transition ${
+                  className={`w-full h-[36px] flex items-center justify-center rounded-sm transition ${
                     checkEveryOtpValue
                       ? 'bg-[#F16137] text-white hover:bg-[#e4572e] cursor-pointer'
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
@@ -331,19 +331,35 @@ const EmailInteraction: React.FC = () => {
                   }
                 >
                   {verifyOtp.isPending || reSendOtp.isPending ? (
-                    <CircularProgress sx={{ color: 'white' }} size={20} />
+                    <span
+                      className='loader'
+                      style={
+                        {
+                          '--c1': checkEveryOtpValue ? '#fff' : '#6b7280',
+                          '--c2': checkEveryOtpValue ? '#ccc' : '#9ca3af',
+                        } as React.CSSProperties
+                      }
+                    />
                   ) : (
                     'Verify'
                   )}
                 </button>
               ) : (
                 <button
-                  className={`w-full h-[34px] flex items-center justify-center rounded-sm transition bg-[#F16137] text-white hover:bg-[#e4572e] cursor-pointer`}
+                  className={`w-full h-[36px] flex items-center justify-center rounded-sm transition bg-[#F16137] text-white hover:bg-[#e4572e] cursor-pointer`}
                   onClick={sendOtp}
                   disabled={isPending}
                 >
                   {isPending ? (
-                    <CircularProgress sx={{ color: 'white' }} size={20} />
+                    <span
+                      className='loader'
+                      style={
+                        {
+                          '--c1': '#fff',
+                          '--c2': '#ccc',
+                        } as React.CSSProperties
+                      }
+                    />
                   ) : (
                     'Send OTP'
                   )}

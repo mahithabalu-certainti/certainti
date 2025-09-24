@@ -258,6 +258,7 @@ export type FieldTypes = string | string[] | dayjs.Dayjs | null | File;
 export interface OnChange {
   fieldName: string;
   fieldValue: FieldTypes;
+  isCreate?: boolean;
 }
 
 export enum UserRoles {
