@@ -297,6 +297,8 @@ export const ProjectResources = ({
     const queryParams = new URLSearchParams({
       account_Id: row?.account_rid || '',
       project_Id: row?.project_fiscal_rid || '',
+      account_name: accountData?.accountName || '',
+      account_number: accountData?.accountNumber || '',
       PFY: PFY ? JSON.stringify(PFY) : '',
       projectCode: projectCode ?? '',
       source: 'editProjectResource',
