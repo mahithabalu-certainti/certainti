@@ -1346,6 +1346,9 @@ export class ProjectResourceService {
         region_rid,
       } = projectResourceData;
 
+      let total_cost_pro_res_new
+      let total_hours_pro_res_new
+
       const { accountNumber: validAccountNumber } =
         await this.projectResourceSchema.fetchValidAccountNumberById(
           account_rid
@@ -1381,6 +1384,11 @@ export class ProjectResourceService {
             "Invalid project resource ID: project resource doesn't exists",
         };
       }
+      if(total_cost_pro_res) total_cost_pro_res_new = total_cost_pro_res
+      else total_cost_pro_res_new = existingProjectResource.total_cost_pro_res
+
+      if(total_hours_pro_res) total_hours_pro_res_new = total_hours_pro_res
+      else total_hours_pro_res_new = existingProjectResource.total_hours_pro_res
 
       resourceData = await this.projectResourceSchema.validateResourceById(
         validAccountNumber,
@@ -1501,16 +1509,16 @@ export class ProjectResourceService {
 
       let status = "Active";
       if (
-        projectResourceData.total_hours_pro_res &&
-        Number(projectResourceData.total_hours_pro_res) > 3000
+        total_hours_pro_res_new &&
+        Number(total_hours_pro_res_new) > 3000
       ) {
         status = "Anomaly";
       }
 
       if (
-        projectResourceData.total_cost_pro_res !== undefined &&
+        total_cost_pro_res_new &&
         currencyThreshold !== null &&
-        Number(projectResourceData.total_cost_pro_res) > currencyThreshold
+        Number(total_cost_pro_res_new) > currencyThreshold
       ) {
         status = "Anomaly";
       }
