@@ -6,6 +6,7 @@ import { Op, QueryTypes, Sequelize, Transaction, UUIDV4 } from "sequelize";
 import {
   ICreateAccountInteraction,
   ICreateInteraction,
+  ICreateTemplateInteraction,
   InteractionDetailsResponse,
   InteractionResponse,
   IProject,
@@ -394,6 +395,147 @@ class InteractionSchemaService {
       console.log(`[addInteractionItems] Added question:`, item);
     }
   }
+
+   private async handleAddQuestionTemplate(
+    InteractionTemplate: any,
+    interactionData: ICreateTemplateInteraction,
+    interactionRid: string,
+    question: any,
+    userId: string,
+    type: string
+  ) {
+    if (interactionRid) {
+      interactionData.created_by = userId;
+      const item = {
+        ...question,
+        ...interactionData,
+        created_by: userId, // Ensure created_by is always userId
+      };
+      await InteractionTemplate.create(item);
+      console.log(`[addInteractionItems] Added question:`, item);
+    }
+  }
+
+  private async handleDeleteQuestionTemplate(
+    InteractionTemplateQuestions: any,
+    InteractionHistory: any,
+    interactionRid: string,
+    question: any,
+    userId: string,
+    transaction: Transaction
+  ) {
+    const existingData = await InteractionTemplateQuestions.findOne({
+      where: { template_rid: interactionRid, rid: question.rid },
+    });
+    await Promise.all([
+      InteractionHistory.create(
+        {
+          interaction_rid: interactionRid,
+          attribute_name: "question",
+          old_value: existingData?.dataValues?.question ?? "",
+          new_value: "",
+          interaction_item_rid: question?.rid ?? "",
+          created_by: userId,
+        },
+        { transaction }
+      ),
+      InteractionHistory.create(
+        {
+          interaction_rid: interactionRid,
+          attribute_name: "notes",
+          old_value: existingData?.dataValues?.notes ?? "",
+          new_value: "",
+          interaction_item_rid: question?.rid ?? "",
+          created_by: userId,
+        },
+        { transaction }
+      ),
+      InteractionHistory.create(
+        {
+          interaction_rid: interactionRid,
+          attribute_name: "is_mandatory",
+          old_value: existingData?.dataValues?.is_mandatory ?? "",
+          new_value: "",
+          interaction_item_rid: question?.rid ?? "",
+          created_by: userId,
+        },
+        { transaction }
+      ),
+    ]);
+    await InteractionTemplateQuestions.destroy({
+      where: { interaction_rid: interactionRid, rid: question.rid },
+      transaction,
+    });
+    await InteractionHistory.create(
+      {
+        interaction_rid: interactionRid,
+        attribute_name: "question",
+        old_value: existingData?.dataValues?.question ?? "",
+        new_value: "",
+        interaction_item_rid: question?.rid ?? "",
+        created_by: userId,
+      },
+      { transaction }
+    );
+    console.log(`[addInteractionItems] Deleted question:`, question.rid);
+  }
+   private async handleEditQuestionTemplate(
+    InteractionTemplateQuestions: any,
+    InteractionHistory: any,
+    interactionData: ICreateTemplateInteraction,
+    interactionRid: string,
+    question: any,
+    userId: string,
+    transaction: Transaction
+  ) {
+    const existingData = await InteractionTemplateQuestions.findOne({
+      where: { template_rid: interactionRid, rid: question.rid },
+    });
+    await InteractionTemplateQuestions.update(
+      { ...question, ...interactionData },
+      {
+        where: { template_rid: interactionRid, rid: question.rid },
+        transaction,
+      }
+    );
+    await Promise.all([
+      InteractionHistory.create(
+        {
+          interaction_rid: interactionRid,
+          attribute_name: "question",
+          old_value: existingData?.dataValues?.question ?? "",
+          new_value: question?.question ?? "",
+          interaction_item_rid: question?.rid ?? "",
+          created_by: userId,
+        },
+        { transaction }
+      ),
+      InteractionHistory.create(
+        {
+          interaction_rid: interactionRid,
+          attribute_name: "notes",
+          old_value: existingData?.dataValues?.notes ?? "",
+          new_value: question?.notes ?? "",
+          interaction_item_rid: question?.rid ?? "",
+          created_by: userId,
+        },
+        { transaction }
+      ),
+      InteractionHistory.create(
+        {
+          interaction_rid: interactionRid,
+          attribute_name: "is_mandatory",
+          old_value: existingData?.dataValues?.is_mandatory ?? "",
+          new_value: question?.is_mandatory ?? "",
+          interaction_item_rid: question?.rid ?? "",
+          created_by: userId,
+        },
+        { transaction }
+      ),
+    ]);
+    console.log(`[addInteractionItems] Edited question:`, question.rid);
+  }
+
 
 
   
@@ -3895,6 +4037,322 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     } catch (err) {
       console.log("Errr ", err);
       throw new Error("Error retrieving account details");
+    }
+  }
+
+  async createInteractionTemplate(
+    interactionData: ICreateTemplateInteraction
+  ) {
+    // Implementation for creating interactions in the database
+    try {
+      const { InteractionTemplate } = await this.interactionModelService.getModels("");
+      // const interactionLevel = await this.getInteractionLevelByType(intLevel);
+      // interactionData.interaction_level_rid = interactionLevel!;
+      const interaction = await InteractionTemplate.create(interactionData);;
+
+      return interaction;
+    } catch (error) {
+      console.log(error);
+      throw new Error("Error creating interaction: " + error);
+    }
+  }
+
+  async listInteractionTemplates(
+  page: number = 1,
+  limit: number = 100,
+  filters: Record<string, string>,
+  sortBy: string = "created_datetime",
+  sortOrder: string = "ASC",
+  type: string = "list"
+) {
+  try {
+    const offset = (page - 1) * limit;
+      let modifiedByFilter;
+    let modifiedByConditions;
+    let totalResults: number = 0;
+    let disablePagination = false;
+    if(type === "download")
+      {
+        disablePagination = true
+      }
+      const detectConditions = (filters: any) => {
+      if (!filters) return null;
+      for (let conditions of Object.values(ALPHANUMERIC_CONDITIONS)) {
+        if (Object.keys(filters).includes(conditions)) return conditions;
+      }
+      return null;
+    };
+    if (filters?.modified_by) {
+      modifiedByFilter = filters.modified_by;
+      modifiedByConditions = detectConditions(modifiedByFilter);
+    }
+      ["modified_by"].forEach(key => {
+      if (filters[key]) {
+        disablePagination = true;
+        delete filters[key];
+      }
+    });
+    if (mainTableFilters[sortBy] !== undefined) {
+          disablePagination = true;
+        }
+    const { whereClause } = this.buildWhereClause(filters);
+    const [finalSortBy, finalSortOrder] = this.getSortParameters(sortBy, sortOrder);
+    const { InteractionTemplate } = await this.interactionModelService.getModels("");
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
+    }
+
+    // Fetch technical summaries and count
+    const { rows: interactionTemplates, count } = await InteractionTemplate.findAndCountAll({
+      where: whereClause,
+      order: [[finalSortBy, finalSortOrder]],
+      ...(disablePagination
+        ? {}
+        : { limit: limit, offset: offset }),
+    });
+    // You can now use both interactionTemplates (array) and count (number)
+    if (interactionTemplates.length === 0) {
+      return {
+        interactionTemplates: [],
+        count: 0
+      };
+    }
+    let createdByIds: any[] = [...new Set(interactionTemplates.map((user: any) => user.created_by))];
+    let modifiedByIds: any[] = [...new Set(interactionTemplates.map((user: any) => user.modified_by))];
+    let statusIds: any[] = [...new Set(interactionTemplates.map((user: any) => user.status_rid))];
+    let fetchCreatedByUsers = await this.mainDbSequelize.query(rawQueries.fetchUser(createdByIds));
+    let fetchModifiedByUsers = await this.mainDbSequelize.query(rawQueries.fetchUser(modifiedByIds));
+    let fetchStatusInfo = await this.mainDbSequelize.query(rawQueries.fetchStatus(statusIds));
+    let createdMap: Map<string, string> = new Map(fetchCreatedByUsers[0].map((user: any) => [user.rid, `${user.first_name} ${user.last_name}`]));
+    let modifiedMap: Map<string, string> = new Map(fetchModifiedByUsers[0].map((user: any) => [user.rid, `${user.first_name} ${user.last_name}`]));
+    let statusMap: Map<string, string> = new Map(fetchStatusInfo[0].map((status: any) => [status.rid, status.name]));
+    let finalData = interactionTemplates == null ? [] : interactionTemplates.map((d: any) => {
+      return {
+        rid: d.rid,
+        r_number: d.r_number,
+        interaction_type_rid: d.interaction_type_rid,
+        interaction_type_name: d.interaction_type_name,
+        interaction_level_rid: d.interaction_level_rid,
+        interaction_level_name: d.interaction_level_name,
+        status_rid: d.status_rid,
+        created_by: d.created_by,
+        created_user_name: createdMap.get(d.created_by) || null,
+        modified_by: d.modified_by,
+        modified_user_name: modifiedMap.get(d.modified_by) || null,
+        created_datetime: d.created_datetime,
+        modified_datetime: d.modified_datetime
+      };
+    });
+    const applyFilters = (data: any[], conditions: any, value: any, field: any) => {
+      if (!conditions || !field) return data;
+      const val = value[conditions];
+      switch (conditions) {
+        case ALPHANUMERIC_CONDITIONS.equals:
+          return data.filter((d: any) => d[field]?.toLowerCase() === val?.toLowerCase());
+        case ALPHANUMERIC_CONDITIONS.notEquals:
+          return data.filter((d: any) => d[field]?.toLowerCase() != val?.toLowerCase());
+        case ALPHANUMERIC_CONDITIONS.contains:
+          return data.filter((d: any) => d[field]?.toLowerCase().includes(val?.toLowerCase()));
+        case ALPHANUMERIC_CONDITIONS.isEmpty:
+          return data.filter((d: any) => d[field] == null);
+        default:
+          return data;
+      }
+    };
+    if (modifiedByConditions != null && modifiedByConditions != undefined)
+      finalData = applyFilters(finalData, modifiedByConditions, modifiedByFilter, "modified_user_name");
+    if (mainTableFilters[sortBy] != undefined && sortBy.toLowerCase() == 'asc') {
+      finalData = finalData.sort((a: any, b: any) => {
+        if (!a?.[sortBy]) return 1;
+        if (!b?.[sortBy]) return -1;
+        return a[sortBy].localeCompare(b[sortBy]);
+      });
+    } else if (mainTableFilters[sortBy] != undefined && sortBy.toLowerCase() == 'desc') {
+      finalData = finalData.sort((a: any, b: any) => {
+        if (!b?.[sortBy]) return 1;
+        if (!a?.[sortBy]) return -1;
+        return b[sortBy].localeCompare(a[sortBy]);
+      });
+    }
+    totalResults = disablePagination ? finalData.length : count;
+    let finalPaginatedData = [];
+    if(type === "download") 
+      {
+        finalPaginatedData = finalData;
+      }
+      else
+      {
+          finalPaginatedData = disablePagination ? finalData.slice((page - 1) * limit, page * limit) : finalData;
+      }
+    return {
+      interactionTemplates: finalPaginatedData,
+      count: totalResults
+    };
+  } catch (err) {
+    console.log(err);
+    throw new Error("Error listing interaction templates: " + (err as Error).message);
+  }
+  }
+  
+  async updateInteractionTemplate(
+    interactionData: ICreateTemplateInteraction,
+    userId: string,
+    transaction: Transaction
+  ) {
+    const { InteractionTemplate } =
+      await this.interactionModelService.getModels("");
+
+    const updatedInteraction = await InteractionTemplate.update(
+      {
+        ...interactionData,
+        modified_by: userId,
+        modified_datetime: new Date(),
+      },
+      {
+        where: {
+          rid: interactionData.template_rid
+        },
+        transaction,
+      }
+    );
+
+    return updatedInteraction;
+  }
+  async addInteractionTemplateQuestions(
+    interactionData: ICreateTemplateInteraction,
+    interactionRid: string,
+    transaction: Transaction,
+    userId: string
+  ) {
+    try {
+       const { InteractionTemplateItem } = await this.interactionModelService.getModels("");
+
+
+      if (Array.isArray(interactionData.questions)) {
+        for (const question of interactionData.questions) {
+          switch (question.action_type) {
+            case "add":
+              await this.handleAddQuestionTemplate(
+                InteractionTemplateItem,
+                interactionData,
+                interactionRid,
+                question,
+                userId,
+                'Project',
+              );
+              break;
+            case "delete":
+              await this.handleDeleteQuestionTemplate(
+                InteractionTemplateItem,
+                InteractionHistory,
+                interactionRid,
+                question,
+                userId,
+                transaction
+              );
+              break;
+            case "edit":
+              await this.handleEditQuestionTemplate(
+                InteractionTemplateItem,
+                InteractionHistory,
+                interactionData,
+                interactionRid,
+                question,
+                userId,
+                transaction
+              );
+              break;
+            default:
+              console.warn(
+                `[addInteractionItems] Unknown action_type:`,
+                question.action_type
+              );
+          }
+        }
+      } else {
+        console.warn(`[addInteractionItems] No questions to process.`);
+      }
+    } catch (error) {
+      console.error("[addInteractionItems] Error:", error);
+      throw new Error(
+        "Error creating interaction: " + (error as Error).message
+      );
+    }
+  }
+  async fetchInteractionTemplateDetailsById(
+  interactionRid: string
+) {
+  if (!this.mainDbSequelize) {
+    this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
+  }
+
+  const [interactionDetailsResult] = await this.mainDbSequelize.query(rawQueries.fetchInteractionTemplates, {
+    replacements: { interactionRid },
+    type: "SELECT"
+  }) as [any[], any];
+
+  if (!interactionDetailsResult || interactionDetailsResult.length === 0) {
+    return null;
+  }
+
+  const interactionDetails = interactionDetailsResult as any;
+
+  let interactionItems = await this.fetchInteractionTemplateItems(
+    interactionRid
+  );
+
+   const userInfo = await this.insertUserDetails(
+     interactionDetails.created_by ?? "",
+     interactionDetails.modified_by ?? ""
+   );
+
+  const response: any = {
+    template_rid: interactionDetails?.rid,
+    r_number: interactionDetails.r_number ?? "",
+    interaction_type: interactionDetails.interaction_type_rid ?? "",
+    interaction_type_name: interactionDetails.interaction_type_name ?? "",
+    interaction_level_rid: interactionDetails.interaction_level_rid ?? '',
+    interaction_level_name: interactionDetails.interaction_level_name ?? '',
+    status_rid: interactionDetails.status_rid ?? "",
+    status_name: interactionDetails.status_name ?? "",
+    modified_by: userInfo.modified_name ?? interactionDetails.modified_by,
+    created_by: userInfo.created_name ?? interactionDetails.created_by,
+    created_datetime: interactionDetails.created_datetime ?? null,
+    modified_datetime: interactionDetails.modified_datetime ?? null,
+    questions: interactionItems
+  };
+
+  return response;
+  }
+  async fetchInteractionTemplateItems(
+    interactionRid: string,
+  ) {
+    try {
+      const {
+        InteractionTemplateItem,
+      } = await this.interactionModelService.getModels("");
+      // Convert Sequelize instances to plain objects
+
+      const items = await InteractionTemplateItem.findAll({
+        attributes: [
+          "rid",
+          "question_seq_num",
+          "question",
+          "notes",
+          "is_mandatory",
+        ],
+        order: [
+          ["question_seq_num", "ASC"],
+          ["created_datetime", "ASC"],
+        ],
+        where: { template_rid: interactionRid},
+      });
+      const plainItems = items.map((item) => item.get({ plain: true }));
+      return items;
+    } catch (err) {
+      throw new Error(
+        "Error fetching interaction items: " + (err as Error).message
+      );
     }
   }
 

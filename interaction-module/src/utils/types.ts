@@ -142,3 +142,21 @@ export interface IEmailMessage {
   };
   toRecipients: { emailAddress: { address: string } }[];
 }
+
+export interface ICreateTemplateInteraction {
+  interaction_type_rid: string;
+  template_rid?: string;
+  status_rid: string;
+  created_by: string;
+  modified_by?: string;
+  interaction_level_rid:string;
+  questions: {
+    rid?: string;
+    notes: string;
+    question: string;
+    response: string;
+    action_type: string;
+    question_seq_num?: string;
+  }[];
+
+}
