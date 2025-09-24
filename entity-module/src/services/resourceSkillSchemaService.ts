@@ -403,7 +403,7 @@ async exportResoucreSkill(
         "resource_code": rs.resource_code || "-",
         "resource_name": rs.resource_name || "-",
         "resource_type_rid": rs.resource_type || "-",
-        "start_date": rs.start_date || "-",
+        "start_date": rs.start_date ? moment(rs.start_date).format('YYYY-MMM-DD') : "-",
         "skill_type_rid": rs.skill_type_name || "-",
         "skill_subtype_rid": rs.skill_subtype_name || "-",
         "skill_level_rid": rs.skill_level_name || "-",

@@ -1442,9 +1442,9 @@ export class ProjectService {
             ? timezone && isValidTimezone(timezone)
               ? moment(project.modified_datetime)
                   .tz(timezone)
-                  .format("YYYY-MM-DD, hh:mm:ss A")
+                  .format("YYYY-MMM-DD, hh:mm:ss A")
               : moment(project.modified_datetime).format(
-                  "YYYY-MM-DD, hh:mm:ss A"
+                  "YYYY-MMM-DD, hh:mm:ss A"
                 )
             : "-",
           "Project ID": project.r_number || "-",
@@ -1510,9 +1510,9 @@ export class ProjectService {
                 ? timezone && isValidTimezone(timezone)
                   ? moment(fiscal.modified_datetime)
                       .tz(timezone)
-                      .format("YYYY-MM-DD, hh:mm:ss A")
+                      .format("YYYY-MMM-DD, hh:mm:ss A")
                   : moment(fiscal.modified_datetime).format(
-                      "YYYY-MM-DD, hh:mm:ss A"
+                      "YYYY-MMM-DD, hh:mm:ss A"
                     )
                 : "-",
               "Project ID": fiscal.r_number || "-",

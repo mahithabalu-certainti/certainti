@@ -1,5 +1,6 @@
 import { Op, Order, QueryTypes, Sequelize, col, fn, literal, where } from "sequelize";
 import { initOrgSequelize } from "../config/orgDataSource";
+import "moment-timezone";
 import { Project } from "../models/project";
 import { ProjectFiscal } from "../models/projectFiscal";
 import {
@@ -31,7 +32,7 @@ import { ProjectResourceFiscal } from "../models/projectResourceFiscal";
 import { ProjectResourceFiscalRegion } from "../models/projectResourceFiscalRegion";
 import AccountDetails from "../models/accountDetails";
 import SchemaService from "./schemaService";
-import { Kafka, Producer } from "kafkajs";
+import { Kafka, Producer } from "kafkajs";  
 
 class ProjectIngestionService {
   private orgDbSequelize: Sequelize | null = null;
@@ -2302,8 +2303,8 @@ class ProjectIngestionService {
           ? timezone && isValidTimezone(timezone)
             ? moment(project.modified_datetime)
                 .tz(timezone)
-                .format("YYYY-MM-DD, hh:mm:ss A")
-            : moment(project.modified_datetime).format("YYYY-MM-DD, hh:mm:ss A")
+                .format("YYYY-MMM-DD, hh:mm:ss A")
+            : moment(project.modified_datetime).format("YYYY-MMM-DD, hh:mm:ss A")
           : "-",
         "Project ID": project.r_number || "-",
       };
@@ -2341,8 +2342,8 @@ class ProjectIngestionService {
         "Comments": fiscal.comments || "-",
         "Last Modified": fiscal.modified_datetime
           ? timezone && isValidTimezone(timezone)
-            ? moment(fiscal.modified_datetime).tz(timezone).format('YYYY-MM-DD, hh:mm:ss A')
-            : moment(fiscal.modified_datetime).format('YYYY-MM-DD, hh:mm:ss A')
+            ? moment(fiscal.modified_datetime).tz(timezone).format('YYYY-MMM-DD, hh:mm:ss A')
+            : moment(fiscal.modified_datetime).format('YYYY-MMM-DD, hh:mm:ss A')
           : '-',
         "Project ID": fiscal.r_number || "-",
       };
