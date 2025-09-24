@@ -28,15 +28,13 @@ import {
   GroupByIdAccount,
   GroupByIdProjects,
   GroupByIdUsers,
-  ProjectListByAccounts,
   UserGroupDetails,
   UserGroupDetailsCommon,
 } from '../../../types';
-import { getAvailableProjectsColumns, getAvailableUserColumns } from '../table';
+import { getAvailableUserColumns, getProjectColumns } from '../table';
 import { AccountList, SelectOption, YesNo } from '../../../../consultant/types';
 import {
   useCreateUserGroup,
-  useGetprojectByAccount,
   useGetUserGroupDetails,
   useGetUserGroupTypes,
   useGetUsersByAccount,
@@ -49,11 +47,15 @@ import { fetchAccountsThunk } from '../../../../store/slices';
 import { useToast } from '../../../../hooks';
 import { MANAGE_USER_GROUP } from '../../../../routes';
 import { UserListParams } from '../../../types/manage-user';
-import { AllPermissions } from '../../../../common-service';
+import { AllPermissions, useGetStatus } from '../../../../common-service';
 import { FilterModal } from '../../../../components';
 import { getProjectFilterFields, getUserGroupFilterFields } from './helpers';
 import { useFetchClassification } from '../../../../consultant/services/account';
-import { useGetProjectType } from '../../../../consultant/services/project';
+import {
+  useAllProjects,
+  useGetProjectType,
+} from '../../../../consultant/services/project';
+import { Project } from '../../../../consultant/types/project';
 
 const HEADER_STYLES = {
   adminPermission:
@@ -116,15 +118,20 @@ export const CreateUserGroup: React.FC = () => {
   const [projectParams, setProjectParams] = useState<UserListParams>({
     page: 1,
     limit: 100,
+    sortBy: 'project_code',
+    sortOrder: 'ASC',
   });
   const [userParams, setUserParams] = useState<UserListParams>({
     page: 1,
     limit: 100,
+    sortBy: 'first_name',
+    sortOrder: 'ASC',
   });
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, FilterType>
   >({});
+  const [allProjectList, setAllProjectList] = useState<Project[]>([]);
 
   // Redux store
   const { accounts, loading } = useSelector(
@@ -147,17 +154,24 @@ export const CreateUserGroup: React.FC = () => {
     });
     return map;
   }, [userGroupViewEditFields]);
+  const projectViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
 
   // API Hooks
   const createUserGroup = useCreateUserGroup();
   const updateUserGroup = useUpdateUserGroup();
   const availableUsers = useGetUsersByAccount();
-  const availableProjects = useGetprojectByAccount();
   const allUserGroupTypes = useGetUserGroupTypes({ type: 'All' });
   const userGroupDetails = useGetUserGroupDetails(groupId as string);
   const classification = useFetchClassification();
   const projectTypeOptions = useGetProjectType();
   const userRoles = useManageUserRole();
+  const allProjects = useAllProjects();
+  const accountStatusOptions = useGetStatus();
 
   // Variables
   const tabOrder = [Tabs.FORM, Tabs.USER, Tabs.PROJECT];
@@ -167,7 +181,7 @@ export const CreateUserGroup: React.FC = () => {
   const accountId = 'Accounts-popover';
   const userGroupData = userGroupDetails.data?.data?.userGroupById;
   const isEditView = Boolean(groupId);
-  const totalProjects = availableProjects?.data?.data.totalCount || 0;
+  const totalItems = allProjects.data?.count || 0;
   const totalUsers = availableUsers?.data?.data.count || 0;
   const commonSkeleton = (
     <Skeleton variant='rounded' width='100%' height={32} />
@@ -214,14 +228,35 @@ export const CreateUserGroup: React.FC = () => {
     () =>
       userRoles.data?.data.roles.map((role) => ({
         label: role.business_teams,
-        value: role.business_teams,
+        value: role.rid,
       })) || [],
     [userRoles.data?.data.roles]
   );
+  const memoizedStatus = useMemo(
+    () =>
+      accountStatusOptions?.data?.data?.status.map((status) => ({
+        label: status.status_name,
+        value: status.rid,
+      })) || [],
+    [accountStatusOptions?.data?.data?.status]
+  );
+  const projectPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    projectViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [projectViewEditFields]);
+
   const userGroupFilterFields =
     tabs === Tabs.USER
       ? getUserGroupFilterFields(memoizeRole)
-      : getProjectFilterFields(memoizedClassification, memoizedProjectTypes);
+      : getProjectFilterFields(
+          memoizedClassification,
+          memoizedProjectTypes,
+          memoizedStatus,
+          projectPermissionMap
+        );
   const groupTypeNotCustom = currentGroupType?.type !== 'CUSTOM';
   const prefixGroupName = 'G-';
   const isGroupNameDisabled =
@@ -243,11 +278,10 @@ export const CreateUserGroup: React.FC = () => {
     if (!isEditView) {
       //When create select all project by default
       setAddedProjects(
-        availableProjects.data?.data.projects.map((item) => item.project_rid) ||
-          []
+        allProjects.data?.projects.map((item) => item.project_rid) || []
       );
     }
-  }, [availableProjects.data?.data.projects, isEditView]);
+  }, [allProjects.data?.projects, isEditView]);
   useEffect(() => {
     let parentCount = 0;
     let childCount = 0;
@@ -314,6 +348,8 @@ export const CreateUserGroup: React.FC = () => {
         account_rid: selectedAccounts,
         limit: userParams.limit as number,
         page: userParams.page as number,
+        sortBy: userParams.sortBy as string,
+        sortOrder: userParams.sortOrder as string,
         group_type_rid: groupInformation.groupType,
         ...(isEditView && { group_rid: groupId as string }),
         filters: appliedFilters,
@@ -324,18 +360,46 @@ export const CreateUserGroup: React.FC = () => {
         ...prev,
         page: 1,
       }));
-      availableProjects.mutate({
-        account_rid: selectedAccounts,
-        limit: projectParams.limit,
-        page: projectParams.page,
-        group_type_rid: groupInformation.groupType,
-        isFromuserGroup: true,
-        ...(isEditView && { group_rid: groupId as string }),
+      allProjects.mutate({
+        limit: projectParams.limit as number,
+        page: 1 as number,
+        sortBy: projectParams.sortBy as string,
+        sortOrder: projectParams.sortOrder as string,
+        bothParentAndChild: false,
         filters: appliedFilters,
+        isFromuserGroup: true,
+        accountRid: selectedAccounts,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appliedFilters, tabs, projectParams.page, projectParams.limit]);
+  }, [
+    appliedFilters,
+    tabs,
+    projectParams.page,
+    projectParams.limit,
+    userParams.page,
+    userParams.limit,
+    projectParams.sortBy,
+    projectParams.sortOrder,
+    userParams.sortBy,
+    userParams.sortOrder,
+  ]);
+  useEffect(() => {
+    if (allProjects.data?.projects) {
+      // Add account_status_name to each ProjectFiscal item
+      setAllProjectList(
+        allProjects.data?.projects.map((project) => ({
+          ...project,
+          ProjectFiscal:
+            project.ProjectFiscal?.map((fiscal) => ({
+              ...fiscal,
+              account_status_name: project.account_status_name,
+            })) || [],
+        }))
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allProjects.data?.projects]);
 
   // Functions
   const handleAccountsModal = useCallback(
@@ -403,19 +467,6 @@ export const CreateUserGroup: React.FC = () => {
       [name]: '',
     }));
   };
-  const projectPageChange = (newPage: number) => {
-    setProjectParams((prev) => ({
-      ...prev,
-      page: newPage + 1,
-    }));
-  };
-  const projectRowsPerPageChange = (newLimit: number) => {
-    setProjectParams((prev) => ({
-      ...prev,
-      limit: newLimit,
-      page: 1,
-    }));
-  };
   const userPageChange = (newPage: number) => {
     setUserParams((prev) => ({
       ...prev,
@@ -430,7 +481,12 @@ export const CreateUserGroup: React.FC = () => {
     }));
   };
   const getRowId = (row: ActiveUserForGroup) => row.rid;
-  const getProjectRowId = (row: ProjectListByAccounts) => row.project_rid;
+  const getProjectRowId = (row: Project) => {
+    if (row._level === 1 && 'project_fiscal_rid' in row) {
+      return row.project_fiscal_rid || '';
+    }
+    return row.project_rid || '';
+  };
   const validateGroupName = (value: string) => {
     // Check for empty value
     if (!value.trim()) {
@@ -568,6 +624,39 @@ export const CreateUserGroup: React.FC = () => {
   };
   const handleCloseFilter = () => {
     setAnchorEl(null);
+  };
+  const handlePageChange = (newPage: number) => {
+    setProjectParams((prev) => ({
+      ...prev,
+      page: newPage + 1,
+    }));
+  };
+  const handleRowsPerPageChange = (newLimit: number) => {
+    setProjectParams((prev) => ({
+      ...prev,
+      limit: newLimit,
+      page: 1,
+    }));
+  };
+  const handleSort = (
+    sortBy: string,
+    sortOrder: 'asc' | 'desc',
+    type: 'project' | 'user'
+  ) => {
+    const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
+    if (type === 'project') {
+      setProjectParams((prev) => ({
+        ...prev,
+        sortBy,
+        sortOrder: apiOrder,
+      }));
+    } else {
+      setUserParams((prev) => ({
+        ...prev,
+        sortBy,
+        sortOrder: apiOrder,
+      }));
+    }
   };
 
   return (
@@ -911,6 +1000,12 @@ export const CreateUserGroup: React.FC = () => {
                 loading={availableUsers.isPending}
                 checkedToggleTooltip='Added'
                 unCheckedToggleTooltip='Removed'
+                toggleLevel={0}
+                sortBy={userParams.sortBy}
+                sortOrder={userParams.sortOrder}
+                onSort={(sortBy, sortOrder) =>
+                  handleSort(sortBy, sortOrder, 'user')
+                }
               />
             </Suspense>
           </div>
@@ -920,32 +1015,46 @@ export const CreateUserGroup: React.FC = () => {
             <div className='w-full border border-solid border-[#CBD6E2]'>
               <Suspense fallback={null}>
                 <ListTable
-                  data={availableProjects.data?.data.projects || []}
-                  stickyHeader
-                  columns={getAvailableProjectsColumns()}
+                  data={allProjectList as Project[]}
+                  columns={getProjectColumns(projectPermissionMap)}
                   getRowId={getProjectRowId}
                   hoverHighlight={false}
                   tableStyle={{
                     height: '100%',
-                    maxHeight: 'calc(100vh - 195px)',
+                    maxHeight: 'calc(100vh - 240px)',
                     overflow: 'auto',
                   }}
-                  selectable={false}
+                  stickyHeader={true}
+                  stickyColumnsCount={2}
+                  expandAllParent={true}
+                  expandable={true}
+                  childrenKey='ProjectFiscal'
+                  maxNestingLevel={2}
                   actionWidth={100}
                   actionDisplayMode='toggle'
+                  loading={allProjects.isPending}
+                  error={
+                    allProjects.isError ? 'Failed to load projects' : undefined
+                  }
                   rowsPerPageOptions={[25, 50, 100]}
                   rowsPerPage={projectParams.limit}
                   currentPage={(projectParams.page ?? 1) - 1}
-                  totalItems={totalProjects}
-                  onPageChange={projectPageChange}
-                  onRowsPerPageChange={projectRowsPerPageChange}
+                  totalItems={totalItems}
+                  onPageChange={handlePageChange}
+                  onRowsPerPageChange={handleRowsPerPageChange}
+                  sortBy={projectParams.sortBy}
+                  sortOrder={projectParams.sortOrder}
+                  onSort={(sortBy, sortOrder) =>
+                    handleSort(sortBy, sortOrder, 'project')
+                  }
+                  component='global-project'
+                  checkedToggleTooltip='Inclusion'
+                  unCheckedToggleTooltip='Exclusion'
                   actionColumnName='Exclusion / Inclusion'
                   toggleClick={toggleProjects}
                   toggleData={addedProjects}
                   disabledToggle={groupTypeNotCustom}
-                  loading={availableProjects.isPending}
-                  checkedToggleTooltip='Inclusion'
-                  unCheckedToggleTooltip='Exclusion'
+                  toggleLevel={1}
                 />
               </Suspense>
             </div>

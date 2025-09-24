@@ -5,7 +5,6 @@ import { getUserGroupListUrl } from '../urls';
 import {
   ActiveUserForGroupApiResponse,
   FetchUsersByAccountBody,
-  ProjectListByAccountsApiResponse,
   UserGroupApiResponse,
   UserGroupDetails,
   UserGroupDetailsApiResponse,
@@ -14,7 +13,6 @@ import {
   UserGroupUpdateDetails,
 } from '../../types';
 import { buildQueryString, generateFile } from '../helpers';
-import { mockProjectListByAccounts } from '../../mockdata/project-list-by-accounts';
 
 export const fetchManageUserGroupList = async (params: UserListParams = {}) => {
   const queryParams = {
@@ -104,22 +102,6 @@ export const useGetUsersByAccount = () => {
     FetchUsersByAccountBody
   >({
     mutationFn: (body) => fetchUsersByAccount(body),
-  });
-};
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const fetchProjectsByAccount = async (_body: UserGroupParam) => {
-  // const response = await userServiceApi.post<ProjectListByAccountsApiResponse>(
-  //   `/api/user_group/projects-of-accounts`,
-  //   body
-  // );
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-  return mockProjectListByAccounts;
-};
-
-export const useGetprojectByAccount = () => {
-  return useMutation<ProjectListByAccountsApiResponse, Error, UserGroupParam>({
-    mutationFn: (body) => fetchProjectsByAccount(body),
   });
 };
 
