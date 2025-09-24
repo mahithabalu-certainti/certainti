@@ -44,7 +44,6 @@ import { ListTable } from '../../../../components/table';
 import { getAvailableUserColumns } from './column';
 import { SortDirection } from '../../../../components/table/types';
 import SearchBar from '../../../../components/search/search-bar';
-// import SearchBar from '../../../../components/search/search-bar';
 
 const AccountList = () => {
   const [page, setPage] = useState<number>(1);
