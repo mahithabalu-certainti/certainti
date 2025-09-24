@@ -41,16 +41,16 @@ const WorkBreakDown = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  const headerButtons = [
-    {
-      label: 'Edit',
-      variant: 'contained' as const,
-      onClick: () => console.log('clicked'),
-      hide: false,
-      disabled: false,
-      loading: false,
-    },
-  ];
+  // const headerButtons = [
+  //   {
+  //     label: 'Edit',
+  //     variant: 'contained' as const,
+  //     onClick: () => console.log('clicked'),
+  //     hide: false,
+  //     disabled: false,
+  //     loading: false,
+  //   },
+  // ];
 
   const getTitleIcon = () => {
     return <ActionItemsIcon alt='action-items-icon' />;
@@ -82,14 +82,14 @@ const WorkBreakDown = () => {
         handleSorting={() => {}}
         sortFilterCount={0}
         setSortFilterCount={() => {}}
-        showRefresh={true}
+        showRefresh={false}
         // onRefreshClick={onRefreshClick}
         // hideTabPanel={hideSection}
       />
       <SectionHeader
         title={'Action Items'}
         titleIcon={getTitleIcon()}
-        buttons={headerButtons}
+        buttons={[]}
         count={0}
         showItemCount={false}
         hideSection={false}
