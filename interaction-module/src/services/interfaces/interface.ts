@@ -2,6 +2,7 @@ import { SchedulerExecutions } from "../../models/schedulerExecution";
 import {
   ICreateAccountInteraction,
   ICreateInteraction,
+  ICreateTemplateInteraction,
   InteractionResponse,
   IProject,
   IUpdateInteraction,
@@ -36,7 +37,38 @@ export interface IInteractionService {
     errorMessage?: string;
     data?: { interactions: any };
   }>;
-
+   createInteractionTemplate(
+    interactionData: ICreateTemplateInteraction,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { interactions: any };
+  }>;
+    getInteractionTemplateDetailsById(
+    templateRid: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { interactionDetails: any };
+  }>;
+   updateInteractionTemplate(
+    interactionData: ICreateTemplateInteraction,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { interactions: any };
+  }>;
+   listInteractionTemplates(data: any,userId: string, filters: Record<string, any>): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { interactionTemplates: any , count: number};
+  }>;
    listAccountInteractions(data: any, page: number, limit: number, filters: Record<string, any>): Promise<{
     statusCode: number;
     message: string;
