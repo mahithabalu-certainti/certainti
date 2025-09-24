@@ -377,7 +377,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     const fieldValue = (constructFormData[field.name] as string) || '';
     const fieldDisabled = field.disabled ? ' bg-gray-100' : '';
 
-    const handleChange = (value: FieldTypes, countryCode?: FieldTypes) => {
+    const handleChange = (
+      value: FieldTypes,
+      countryCode?: FieldTypes,
+      isCreate: boolean = false
+    ) => {
       const newData = {
         ...constructFormData,
         [field.name]: value,
@@ -853,7 +857,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       }
 
       if (field.onChange && onChange) {
-        onChange({ fieldName: field.name, fieldValue: value });
+        onChange({
+          fieldName: field.name,
+          fieldValue: value,
+          isCreate: isCreate,
+        });
       }
 
       setFormData((prevFormData) => {
@@ -1353,11 +1361,16 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               onChange={(_e, newValue) => {
                 if (typeof newValue === 'string') {
                   handleChange(newValue || '');
+                } else if (newValue && newValue?.isCreate) {
+                  handleChange(newValue.value || '', '', true);
                 } else if (newValue) {
                   handleChange(newValue.value || '');
                 } else {
                   handleChange('');
                 }
+              }}
+              onInputChange={() => {
+                handleChange('');
               }}
               filterOptions={(options, params) => {
                 const filtered = autoCompleteFilter(options, params);
@@ -1386,10 +1399,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               }}
               disabled={field.disabled}
               value={
-                field.options?.find((opt) => opt.value === fieldValue) || {
-                  label: '',
-                  value: '',
-                }
+                field.options?.find((opt) => opt.value === fieldValue) || ''
               }
               size='small'
               sx={{
@@ -1397,6 +1407,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 fontSize: '13px',
                 '&.MuiAutocomplete-root .MuiOutlinedInput-root': {
                   height: '32px',
+                  background: field.error ? '#FEF2F2' : 'transparent',
                 },
                 '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                   border: '2px solid #60A5FA',

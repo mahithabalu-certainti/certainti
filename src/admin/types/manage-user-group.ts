@@ -15,13 +15,6 @@ export interface UserGroupTypesApiResponse extends CommonApiResponse {
   };
 }
 
-export interface ProjectListByAccountsApiResponse extends CommonApiResponse {
-  data: {
-    projects: ProjectListByAccounts[];
-    totalCount: number;
-  };
-}
-
 export interface ActiveUserForGroupApiResponse extends CommonApiResponse {
   data: {
     users: ActiveUserForGroup[];
@@ -72,49 +65,6 @@ export interface UserGroupById {
   projects: GroupByIdProjects[];
 }
 
-export type ProjectListByAccounts = {
-  project_code: string;
-  project_name: string | null;
-  account_name: string;
-  account_status_name: string;
-  project_rid: string;
-  modified_datetime: string | null;
-  assessment_status: string | null;
-  qre: string | null;
-  is_rd_qualified: boolean | null;
-  industry_name_other: string | null;
-  project_type_rid: string;
-  project_client_group: string | null;
-  project_group: string | null;
-  project_classification_rid: string;
-  project_classification_other: string | null;
-  project_type_name: string;
-  account_rid: string;
-  classification_name: string | null;
-  status_rid: string;
-  status_name: string;
-  project_point_of_contact: string | null;
-  technical_point_of_contact: string | null;
-  r_number: string;
-  program_name: string | null;
-  project_startdate: string | null; // ISO date string
-  project_enddate: string | null; // ISO date string
-  total_cost: string;
-  total_effort: string;
-  total_fte: number;
-  total_cost_fte: string;
-  total_subcon: number;
-  total_cost_subcon: string;
-  total_cost_nonlabor: string;
-  comments: string | null;
-  country_name: string | null;
-  currency_code: string;
-  currency_symbol: string;
-  region_name: string | null;
-  created_datetime: string; // ISO date string
-  ProjectFiscal: ProjectFiscal[];
-  fiscal_year?: number
-};
 export type ProjectFiscal = {
   project_code: string;
   project_group: string | null;
@@ -235,4 +185,6 @@ export interface FetchUsersByAccountBody {
   group_type_rid?: string;
   group_rid?: string;
   filters?: Record<string, FilterType>;
+  sortBy?: string;
+  sortOrder?: string;
 }

@@ -213,6 +213,7 @@ const ProjectForm: React.FC = () => {
         project_startdate: account?.project_startdate
           ? getDateFormat(account.project_startdate)
           : '',
+        total_nonlabor: account?.total_nonlabor_prj,
         created_on: formatDateToYYYYMMDDWithTime(account?.created_datetime),
         updated_on: account?.modified_datetime
           ? formatDateToYYYYMMDDWithTime(account?.modified_datetime || '-')
