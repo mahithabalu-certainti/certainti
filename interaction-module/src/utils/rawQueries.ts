@@ -33,7 +33,9 @@ export const fetchInteractionForProjectLevelQuery = (
   disablePagination: boolean,
   accessibleIds: string[] = [],
   search : string,
-  activeStatusId : string
+  activeStatusId : string,
+  reminderFlag : boolean,
+  reminderFiltersIds : string[]
 ) => {
   let offset = (page - 1) * limit;
   let pagination = `LIMIT ${limit} OFFSET ${offset}`;
@@ -43,6 +45,7 @@ export const fetchInteractionForProjectLevelQuery = (
   let whereConditions;
   let andConditions = ``;
   let searchValue;
+  let reminderFilter : string = ``
   if (disablePagination) pagination = ` `;
   else pagination;
 
@@ -68,6 +71,10 @@ export const fetchInteractionForProjectLevelQuery = (
   if (accessibleIds.length > 0) {
     whereConditions += ` AND pf.project_rid = ANY(ARRAY[${accessibleIds.map(id => `'${id}'`).join(",")}]::text[])`;     
   }
+  if(reminderFlag && reminderFiltersIds != undefined) {
+    reminderFilter = `AND i.status_rid IN (${reminderFiltersIds.map((d : any) => `'${d}'`).join(',')})`
+  }
+
   let filteredData = filterForInteractions(
     filters,
     andConditions,
@@ -187,6 +194,7 @@ export const fetchInteractionForProjectLevelQuery = (
             (i.r_number ILIKE '${searchValue}' OR i.recipient_name ILIKE '${searchValue}' OR i.recipient_email ILIKE '${searchValue}')
             AND
             ${whereConditions}
+            ${reminderFilter}
             ${filteredData?.andConditions}
             ${filterQueryValues}
             ${sortValue}
@@ -1063,3 +1071,12 @@ const updateInteractionForAgeQuery = (
 const updateInteractionAgeSummary = (rid: string, age: number) => {
   return `UPDATE ${MAIN_SCHEMA_NAME}.interactions_summary i SET interaction_age = ${age} WHERE i.interaction_rid = '${rid}'`;
 };
+
+export const fetchStatusIdsForReminderList = () => {
+  return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE (status_name ILIKE '%${interactionStatus.SENT}%' OR status_name ILIKE '%${interactionStatus.RESPONSE_DRAFT}%')`
+}
+
+const interactionStatus = {
+  SENT : "sent",
+  RESPONSE_DRAFT : "response_draft"
+}

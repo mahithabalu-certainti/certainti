@@ -12,7 +12,7 @@ import { ALPHANUMERIC_CONDITIONS, HttpStatus, mainTableFilters, rawQueries,statu
 import { Op, Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
-import { checkTableExists, fetchAllParentRNumber, fetchInteractionForProjectLevelQuery, fetchInteractionForSentResentStatus, fetchProjectAttachmentsRids, fetchProjectInteractionRid, interactionResponseHistoryByVersion, listAllInteractionSummary, listAttachments, listInteractionHistory, listResponseHistory } from "../../utils/rawQueries";
+import { checkTableExists, fetchAllParentRNumber, fetchInteractionForProjectLevelQuery, fetchInteractionForSentResentStatus, fetchProjectAttachmentsRids, fetchProjectInteractionRid, fetchStatusIdsForReminderList, interactionResponseHistoryByVersion, listAllInteractionSummary, listAttachments, listInteractionHistory, listResponseHistory } from "../../utils/rawQueries";
 import { generateSasUrl } from "../../utils/blob";
 import { interactionMailTemplate, interactionReminderMailTemplate } from "../../utils/mailTemplate";
 import { sendEmailWithAttachment } from "../emailService";
@@ -226,9 +226,9 @@ export class InteractionService {
   async checkAutoSendEnabled(accountNumber: string, interactionData: ICreateInteraction, interactionId: string, userId: string, accountRid: string, interactionLevel:string, parentAccountId: string) {
     const isParensettingsConfigured = await this.interactionSchemaService.fetchAccountDetails(accountNumber, parentAccountId);
     if(interactionData?.trigger_send && isParensettingsConfigured){
-       await this.sendInteraction([{ interaction_rid: interactionId,
+       await this.sendInteraction([{ account_rid : interactionData.account_rid, interaction_rid: interactionId,
         project_fiscal_rid: interactionData.project_fiscal_rid,interaction_level:interactionLevel
-       }], interactionData.account_rid, userId, false,'Manual-Send');
+       }], userId, false,'Manual-Send');
 
     }
     else{
@@ -240,9 +240,9 @@ export class InteractionService {
       const { AutoSendInteractionAudit } = await this.interactionModelService.getModels(accountNumber);
       const ismaxInteractionsSent = await this.checkMaxQuarterlyInteractions(AutoSendInteractionAudit, interactionData.project_fiscal_rid, projectInfo.max_ai_interaction,accountInfo);
       if (!ismaxInteractionsSent) return;
-      await this.sendInteraction([{ interaction_rid: interactionId,
+      await this.sendInteraction([{ account_rid : interactionData.account_rid, interaction_rid: interactionId,
         project_fiscal_rid: interactionData.project_fiscal_rid,interaction_level:interactionLevel
-       }], interactionData.account_rid, userId, false,'Auto-Send');
+       }], userId, false,'Auto-Send');
     }
   }
   }
@@ -1077,6 +1077,7 @@ export class InteractionService {
   }
   async sendInteraction(
    interactions: {
+      account_rid: string,
       interaction_rid: string;
       email_info?: {
         email: string;
@@ -1086,7 +1087,6 @@ export class InteractionService {
       interaction_level: string;
       project_fiscal_rid: string;
     }[],
-    accountRid: string,
     userId: string,
     is_interaction_followup: boolean,
     type: string = interactionSource.MANUAL
@@ -1099,23 +1099,22 @@ export class InteractionService {
     try {
       const mainDb = await this.getMainDb()
       const orgDb = await this.getOrgDb()
-      const { accountNumber } = await this.interactionSchemaService.fetchValidAccountNumberById(accountRid);
-      if (!accountNumber) {
-        return {
-          statusCode: HttpStatus.FAILED,
-          message: HttpStatus.FAILED_MESSAGE,
-          errorMessage: "Invalid account ID",
-        };
-      }
-
-      const interactionResponse: any[] = [];
-      const schemaName = rawQueries.fetchSchemaName(accountNumber)
-
       const fetchInQueueStatus : any = await mainDb.query(rawQueries.fetchInteractionQueueStatus())
+      const interactionResponse: any[] = [];
 
-      for (const { interaction_rid, email_info, project_fiscal_rid, interaction_level } of interactions) {
+      for (const { interaction_rid, email_info, project_fiscal_rid, interaction_level, account_rid } of interactions) {
+
+        const { accountNumber } = await this.interactionSchemaService.fetchValidAccountNumberById(account_rid);
+        if (!accountNumber) {
+          return {
+            statusCode: HttpStatus.FAILED,
+            message: HttpStatus.FAILED_MESSAGE,
+            errorMessage: "Invalid account ID",
+          };
+        }
+      const schemaName = rawQueries.fetchSchemaName(accountNumber)
         let data : any = {}
-        data.account_rid = accountRid
+        data.account_rid = account_rid
         data.project_fiscal_rid = project_fiscal_rid,
         data.account_rnumber = accountNumber,
         data.interaction_rid = interaction_rid
@@ -1330,7 +1329,7 @@ export class InteractionService {
     this.logger.info("Interact method called.");
     // Implementation here
   }
-  async listInteractionPrjAccount(data : any,userId : string,apiType:string) : Promise<any>{
+  async listInteractionPrjAccount(data : any,userId : string,apiType:string, reminderSpecificList : boolean, statusIdsForReminderList : string[]) : Promise<any>{
     const mainDb = await this.getMainDb()
     const orgDb = await this.getOrgDb()
       const userGroupType = await this.interactionSchemaService.getUserGroupType(userId);
@@ -1342,6 +1341,15 @@ export class InteractionService {
       const isPOCProfile =
         userProfileType?.profileName === "Project Point of Contact";
       let accessibleIds: string[] = [];
+      let reminderFlag : boolean
+      let reminderIds : string[]
+      if(reminderSpecificList) {
+        reminderFlag = true
+        reminderIds = statusIdsForReminderList
+      } else {
+        reminderFlag = false
+        reminderIds = []
+      }
       if (!isCustomGlobal) {
         accessibleIds = await this.interactionSchemaService.getAccessibleProjectIds(
           userId,
@@ -1436,7 +1444,9 @@ export class InteractionService {
       disablePagination,
       accessibleIds,
       data.search,
-      activeStatus?.rid
+      activeStatus?.rid,
+      reminderFlag,
+      reminderIds
     ))
     let hasEmailRecipient = false;
     if(result[0][0].interactions != null) {
@@ -2278,5 +2288,12 @@ export class InteractionService {
       }
     }
     console.log(`[BATCH EMAIL] Finished processing batch.`);
+  }
+  async fetchStatusIdsForReminder () {
+    const mainDb = await this.getMainDb()
+    const result : any = await mainDb.query(fetchStatusIdsForReminderList());
+    if(result[0].length > 0) {
+      return result[0].map((d : any) => d.rid)
+    }
   }
 }
