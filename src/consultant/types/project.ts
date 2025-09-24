@@ -46,6 +46,7 @@ export interface NewProjectData {
   r_number?: string;
   account_name: string;
   industry_rid_name?: string;
+  total_nonlabor: string | null;
   start_date?: string | null;
   end_date?: string | null;
   classification?: string | null;
