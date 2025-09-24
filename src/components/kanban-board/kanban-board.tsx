@@ -1,7 +1,6 @@
 'use client';
 import type React from 'react';
 import { useState } from 'react';
-
 import {
   KanbanBoardProps,
   KanbanColumn as KanbanColumnType,
@@ -9,6 +8,7 @@ import {
 } from './types';
 import KanbanColumn from './kanban-column';
 import { AddIcon } from '../../assets';
+import TaskDetailModal from './task-detail-modal';
 
 const KanbanBoard: React.FC<KanbanBoardProps> = ({
   data,
@@ -21,6 +21,8 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   const [columns, setColumns] = useState<KanbanColumnType[]>(data);
   const [isCreatingSection, setIsCreatingSection] = useState(false);
   const [newSectionName, setNewSectionName] = useState('');
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleAddTask = (
     columnId: string,
@@ -28,7 +30,6 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
     position: 'top' | 'bottom' = 'bottom'
   ) => {
     if (task) {
-      // Direct task creation (from inline input)
       setColumns(
         columns.map((column) =>
           column.id === columnId
@@ -44,6 +45,32 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
         )
       );
     }
+  };
+
+  const handleTaskEdit = (taskId: string, updatedTask: Partial<Task>) => {
+    setColumns(
+      columns.map((column) => ({
+        ...column,
+        tasks: column.tasks.map((task) =>
+          task.id === taskId ? { ...task, ...updatedTask } : task
+        ),
+      }))
+    );
+
+    // Update selected task if it's the one being edited
+    if (selectedTask && selectedTask.id === taskId) {
+      setSelectedTask({ ...selectedTask, ...updatedTask });
+    }
+  };
+
+  const handleTaskClick = (task: Task) => {
+    setSelectedTask(task);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedTask(null);
   };
 
   const handleRenameColumn = (columnId: string, newName: string) => {
@@ -111,6 +138,8 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
               onAddTask={handleAddTask}
               onRenameColumn={handleRenameColumn}
               onDeleteColumn={handleDeleteColumn}
+              onTaskEdit={handleTaskEdit}
+              onTaskClick={handleTaskClick}
             />
           ))}
 
@@ -144,6 +173,14 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Task Detail Modal */}
+      <TaskDetailModal
+        task={selectedTask}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onTaskUpdate={handleTaskEdit}
+      />
     </div>
   );
 };

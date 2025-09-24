@@ -10,6 +10,9 @@ export interface Task {
   };
   commentCount: number;
   createdAt: Date;
+  dueDate?: Date;
+  priority?: 'Low' | 'Medium' | 'High';
+  project?: string;
 }
 
 export interface KanbanColumn {
@@ -34,6 +37,8 @@ export interface TaskCardProps {
   task: Task;
   showCommentCount: boolean;
   showProfileIndicator: boolean;
+  onTaskEdit: (taskId: string, updatedTask: Partial<Task>) => void;
+  onTaskClick: (task: Task) => void;
 }
 
 export interface KanbanColumnProps {
@@ -50,4 +55,13 @@ export interface KanbanColumnProps {
   ) => void;
   onRenameColumn?: (columnId: string, newName: string) => void;
   onDeleteColumn?: (columnId: string) => void;
+  onTaskEdit: (taskId: string, updatedTask: Partial<Task>) => void;
+  onTaskClick: (task: Task) => void;
+}
+
+export interface TaskDetailModalProps {
+  task: Task | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onTaskUpdate: (taskId: string, updatedTask: Partial<Task>) => void;
 }

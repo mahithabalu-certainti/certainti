@@ -1,9 +1,9 @@
 'use client';
 import type React from 'react';
 import { useState, useRef, useEffect } from 'react';
-import TaskCard from './task-card';
 import { KanbanColumnProps } from './types';
 import { AddIcon, ArrowDownIcon } from '../../assets';
+import TaskCard from './task-card';
 
 const KanbanColumn: React.FC<KanbanColumnProps> = ({
   column,
@@ -15,6 +15,8 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
   onAddTask,
   onRenameColumn,
   onDeleteColumn,
+  onTaskEdit,
+  onTaskClick,
 }) => {
   const [isAddingTaskAtTop, setIsAddingTaskAtTop] = useState(false);
   const [isAddingTaskAtBottom, setIsAddingTaskAtBottom] = useState(false);
@@ -84,6 +86,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
         },
         commentCount: 0,
         createdAt: new Date(),
+        priority: 'Medium' as const,
       };
 
       onAddTask(column.id, newTask, 'top');
@@ -105,6 +108,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
         },
         commentCount: 0,
         createdAt: new Date(),
+        priority: 'Medium' as const,
       };
 
       onAddTask(column.id, newTask, 'bottom');
@@ -144,7 +148,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
     ) {
       onRenameColumn(column.id, columnName.trim());
     } else {
-      setColumnName(column.name); // Reset if no change or empty
+      setColumnName(column.name);
     }
     setIsRenamingColumn(false);
   };
@@ -268,6 +272,8 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
             task={task}
             showCommentCount={showCommentCount}
             showProfileIndicator={showProfileIndicator}
+            onTaskEdit={onTaskEdit}
+            onTaskClick={onTaskClick}
           />
         ))}
       </div>

@@ -101,18 +101,7 @@ const WorkBreakDown = () => {
       />
 
       <div className='border border-t-0 border-[#CBD6E2]'>
-        {tabParam === 'milestone' && (
-          <KanbanBoard
-            data={mockKanbanData}
-            isCreateTaskDisabled={false}
-            isCreateTaskHide={false}
-            isCreateKanbanDisabled={false}
-            isCreateKanbanHide={false}
-            showCommentCount={true}
-            showTaskCount={true}
-            showProfileIndicator={true}
-          />
-        )}
+        {tabParam === 'milestone' && <KanbanBoard data={mockKanbanData} />}
         {tabParam === 'case_task' && (
           <div className='flex items-center justify-center h-full'>
             <ComingSoon alt='comingSoon' />
