@@ -537,7 +537,8 @@ async getActiveUsersForGrouping(
     }
     if (filters && typeof filters === 'object' && Object.keys(filters).length > 0) {
       const { whereClause } = this.buildWhereClause(filters);
-      if (whereClause && Object.keys(whereClause).length > 0) {
+      const hasConditions = Object.keys(whereClause).length > 0 || Object.getOwnPropertySymbols(whereClause).length > 0;
+      if (whereClause && hasConditions) {
         Object.assign(basewhereClause, whereClause);
       }
     }
@@ -684,7 +685,8 @@ async getActiveUsersForUpdate(
     }
      if (filters && typeof filters === 'object' && Object.keys(filters).length > 0) {
       const { whereClause } = this.buildWhereClause(filters);
-      if (whereClause && Object.keys(whereClause).length > 0) {
+      const hasConditions = Object.keys(whereClause).length > 0 || Object.getOwnPropertySymbols(whereClause).length > 0;
+      if (whereClause && hasConditions) {
         Object.assign(basewhereClause, whereClause);
       }
     }
@@ -849,7 +851,9 @@ async getAccountUsers(
     // Step 2: Apply filters if any
     if (filters) {
       const { whereClause } = this.buildWhereClause(filters);
-      if (Object.keys(whereClause).length > 0) {
+      // Check for both regular keys and symbol keys (like Op.and)
+      const hasConditions = Object.keys(whereClause).length > 0 || Object.getOwnPropertySymbols(whereClause).length > 0;
+      if (hasConditions) {
         Object.assign(basewhereClause, whereClause);
       }
     }
@@ -1230,6 +1234,7 @@ async getAccountGroups(
     if (filters) {
       const filterProcessors: Record<string, Function> = {
         'group_name': (value: any) => this.processTextFilter('group_name', value, whereClause),
+        'role_rid': (value: any) => this.processTextFilter('role_rid', value, whereClause),
         'first_name': (value: any) => this.processTextFilter('first_name', value, whereClause),
         'email': (value: any) => this.processTextFilter('email', value, whereClause),
         'group_type': (value: any) => this.processTextFilter('group_type_rid', value, whereClause),
@@ -1238,7 +1243,7 @@ async getAccountGroups(
         'modified_datetime': (value: any) => this.processDateFilter('modified_datetime', value, whereClause),
         'created_by': (value: any) => this.processRelationFilter('created_by', value, whereClause, includeClause),
         'user_count': (value: any) => this.processUserCountFilter(value, whereClause),
-        'organization_name': (value: any) => this.processOrganisationNameFilter( value, whereClause), // Added organisation filter
+        'organization_name': (value: any) => this.processOrganisationNameFilter('org_id', value, whereClause), // Added organisation filter
       };
       Object.keys(filters).forEach(key => {
         
@@ -1407,18 +1412,25 @@ private createUserCountCondition(operator: string, value: number): any {
     }
   }
 
-  private processOrganisationNameFilter(whereClause: Record<string | symbol, any>, value: any): void {
+  private processOrganisationNameFilter(field: string, value: any, whereClause: Record<string | symbol, any>): void {
+    
     // Handles computed field 'organization_name' (from account/account_name or org_id)
     if (typeof value === 'string') {
-      whereClause[Op.or] = [
-        Sequelize.where(
-          Sequelize.fn('LOWER',
-            Sequelize.literal(`CASE WHEN "User"."is_consultant_firm" = true THEN "User"."org_id" ELSE (SELECT account_name FROM ${MAIN_SCHEMA_NAME}.account WHERE account.rid = "User".org_id) END`)
-          ),
-          value.toLowerCase()
-        )
-      ];
-    } else if (typeof value === 'object') {
+      // For simple string, add to existing AND conditions
+      const condition = Sequelize.where(
+        Sequelize.fn('LOWER',
+          Sequelize.literal(`CASE WHEN "User"."is_consultant_firm" = true THEN "User"."org_id" ELSE (SELECT account_name FROM ${MAIN_SCHEMA_NAME}.account WHERE account.rid = "User".org_id) END`)
+        ),
+        Op.iLike,
+        `%${value.toLowerCase()}%`
+      );
+      
+      if (!(whereClause as any)[Op.and]) {
+        (whereClause as any)[Op.and] = [];
+      }
+      (whereClause as any)[Op.and].push(condition);
+      
+    } else if (typeof value === 'object' && value !== null) {
       const conditions: any[] = [];
       if (value.equals !== undefined) {
         conditions.push(
@@ -1426,6 +1438,7 @@ private createUserCountCondition(operator: string, value: number): any {
             Sequelize.fn('LOWER',
               Sequelize.literal(`CASE WHEN "User"."is_consultant_firm" = true THEN "User"."org_id" ELSE (SELECT account_name FROM ${MAIN_SCHEMA_NAME}.account WHERE account.rid = "User".org_id) END`)
             ),
+            Op.eq,
             value.equals.toLowerCase()
           )
         );
@@ -1436,24 +1449,24 @@ private createUserCountCondition(operator: string, value: number): any {
             Sequelize.fn('LOWER',
               Sequelize.literal(`CASE WHEN "User"."is_consultant_firm" = true THEN "User"."org_id" ELSE (SELECT account_name FROM ${MAIN_SCHEMA_NAME}.account WHERE account.rid = "User".org_id) END`)
             ),
-            '!=',
+            Op.ne,
             value.not_equals.toLowerCase()
           )
         );
       }
       if (value.contains !== undefined) {
-        conditions.push(
-          Sequelize.where(
-            Sequelize.literal(`CASE WHEN "User"."is_consultant_firm" = true THEN "User"."org_id" ELSE (SELECT account_name FROM ${MAIN_SCHEMA_NAME}.account WHERE account.rid = "User".org_id) END`),
-            { [Op.iLike]: `%${value.contains}%` }
-          )
+        const containsCondition = Sequelize.where(
+          Sequelize.literal(`CASE WHEN "User"."is_consultant_firm" = true THEN "User"."org_id" ELSE (SELECT account_name FROM ${MAIN_SCHEMA_NAME}.account WHERE account.rid = "User".org_id) END`),
+          Op.iLike,
+          `%${value.contains.toLowerCase()}%`
         );
+        conditions.push(containsCondition);
       }
       if (Array.isArray(value.in) && value.in.length > 0) {
         conditions.push(
           Sequelize.where(
             Sequelize.literal(`CASE WHEN "User"."is_consultant_firm" = true THEN "User"."org_id" ELSE (SELECT account_name FROM ${MAIN_SCHEMA_NAME}.account WHERE account.rid = "User".org_id) END`),
-            { [Op.in]: value.in.map((v: string) => v) }
+            { [Op.in]: value.in.map((v: string) => v.toLowerCase()) }
           )
         );
       }
@@ -1475,7 +1488,10 @@ private createUserCountCondition(operator: string, value: number): any {
         }
       }
       if (conditions.length > 0) {
-        whereClause[Op.and] = (whereClause[Op.and] || []).concat(conditions);
+        if (!(whereClause as any)[Op.and]) {
+          (whereClause as any)[Op.and] = [];
+        }
+        (whereClause as any)[Op.and] = ((whereClause as any)[Op.and] as any[]).concat(conditions);
       }
     }
   }
