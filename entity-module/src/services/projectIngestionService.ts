@@ -970,9 +970,9 @@ class ProjectIngestionService {
         total_projects: aggregates.total_projects,
         total_project_cost: aggregates.total_cost_prj,
         total_project_hours: aggregates.total_effort_prj,
-        total_fte: aggregates.total_fte_prj,
-        total_subcon: aggregates.total_subcon_prj,
-        total_nonlabor : aggregates.total_nonlabor_prj,
+        total_fte: Number(aggregates.total_fte_prj || 0),
+        total_subcon: Number(aggregates.total_subcon_prj || 0),
+        total_nonlabor : Number(aggregates.total_nonlabor_prj || 0),
         total_project_hours_fte: aggregates.total_effort_fte_prj,
         total_project_hours_subcon: aggregates.total_effort_subcon_prj,
         total_project_cost_fte: aggregates.total_cost_fte_prj,
@@ -1020,24 +1020,19 @@ class ProjectIngestionService {
           "total_cost_prj",
         ],
         [
-          Sequelize.fn(
-            "SUM",
-            Sequelize.literal("COALESCE(total_fte_prj, 0)")
-          ),
-          "total_fte_prj",
-        ],
+          Sequelize.cast(Sequelize.fn("SUM",Sequelize.literal("COALESCE(total_fte_prj, 0)")), "INTEGER"), "total_fte_prj"],
         [
-          Sequelize.fn(
+          Sequelize.cast(Sequelize.fn(
             "SUM",
             Sequelize.literal("COALESCE(total_subcon_prj, 0)")
-          ),
+          ), "INTEGER"),
           "total_subcon_prj",
         ],
         [
-          Sequelize.fn(
+          Sequelize.cast(Sequelize.fn(
             "SUM",
             Sequelize.literal("COALESCE(total_nonlabor_prj, 0)")
-          ),
+          ), "INTEGER"),
           "total_nonlabor_prj",
         ],
         [
@@ -1260,6 +1255,7 @@ class ProjectIngestionService {
       total_effort_prj: effective_effort,
       total_fte_prj: effective_total_fte,
       total_subcon_prj: effective_total_subcon,
+      total_nonlabor_prj: effective_total_nonlabor,
       total_effort_fte_prj: effective_fte_effort,
       total_effort_subcon_prj: effective_subcon_effort,
       total_cost_fte_prj: effective_fte_cost,
@@ -1284,6 +1280,7 @@ class ProjectIngestionService {
         effective_fte_cost,
         effective_subcon_cost,
         effective_nonlabor_cost,
+        effective_total_nonlabor
       },
       {
         where: {
@@ -1352,8 +1349,9 @@ class ProjectIngestionService {
       attributes: [
         [Sequelize.fn("SUM", Sequelize.col("total_cost_prj")), "effective_cost"],
         [Sequelize.fn("SUM", Sequelize.col("total_effort_prj")), "effective_effort"],
-        [Sequelize.fn("SUM", Sequelize.col("total_fte_prj")), "effective_total_fte"],
-        [Sequelize.fn("SUM", Sequelize.col("total_subcon_prj")), "effective_total_subcon"],
+        [Sequelize.cast(Sequelize.fn("SUM", Sequelize.col("total_fte_prj")), "INTEGER"), "effective_total_fte"],
+        [Sequelize.cast(Sequelize.fn("SUM", Sequelize.col("total_subcon_prj")), "INTEGER"), "effective_total_subcon"],
+        [Sequelize.cast(Sequelize.fn("SUM", Sequelize.col("total_nonlabor_prj")), "INTEGER"), "effective_total_nonlabor"],
         [Sequelize.fn("SUM", Sequelize.col("total_effort_fte_prj")), "effective_fte_effort"],
         [Sequelize.fn("SUM", Sequelize.col("total_effort_subcon_prj")), "effective_subcon_effort"],
         [Sequelize.fn("SUM", Sequelize.col("total_cost_fte_prj")), "effective_fte_cost"],
