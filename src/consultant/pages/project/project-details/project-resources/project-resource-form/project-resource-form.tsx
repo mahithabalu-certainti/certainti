@@ -184,7 +184,7 @@ const ProjectResourceForm: React.FC = () => {
   const memoizedProjectResourceCode: SelectResourceOption[] = useMemo(
     () =>
       projectResourceCodeOptions?.data?.resourceCodes.map((item) => ({
-        label: `${item.resource_code} ${item.resource_name ? `(${item.resource_name})` : ''}`,
+        label: `${item.resource_code}${item.resource_name ? ` (${item.resource_name})` : ''}`,
         value: item.resource_code,
         resource_type_rid: item.resource_type_rid,
         resource_type_name: item.resource_type_name,
@@ -316,7 +316,7 @@ const ProjectResourceForm: React.FC = () => {
           selectedResource?.resource_type_name?.toLowerCase() ===
             ResourceType.full_time
         );
-      } else {
+      } else if (!selectedResource && data.isCreate) {
         handleCreateNewResource(data.fieldValue as string);
       }
     }

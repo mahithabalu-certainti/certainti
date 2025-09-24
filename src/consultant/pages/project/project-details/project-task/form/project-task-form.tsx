@@ -255,7 +255,7 @@ const ProjectTaskForm: React.FC = () => {
       );
       if (selectedResource) {
         setCurrentResourceCode(selectedResource.resource_code);
-      } else {
+      } else if (!selectedResource && data.isCreate) {
         handleCreateNewProjectResource(data.fieldValue as string);
       }
     }
