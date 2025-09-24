@@ -104,6 +104,7 @@ const ListTable = <T extends RowData>({
   toggleClick,
   clearSelectedRows = false,
   disabledSelect,
+  toggleLevel,
 }: ListTableProps<T>) => {
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [editingCells, setEditingCells] = useState<MultipleEditingCells>({});
@@ -1086,6 +1087,7 @@ const ListTable = <T extends RowData>({
                 const conditionallyDisabled = isChecked
                   ? undefined
                   : disabledSelect;
+
                 return (
                   <React.Fragment key={`${rowId}-${i}`}>
                     <TableRow
@@ -1573,31 +1575,33 @@ const ListTable = <T extends RowData>({
                               expandable && isExpanded ? '#ECECEC' : '#fff',
                           }}
                         >
-                          <div className='text-center'>
-                            <Tooltip
-                              title={
-                                toggleData?.includes(rowId)
-                                  ? checkedToggleTooltip
-                                  : unCheckedToggleTooltip
-                              }
-                              arrow
-                              placement='top'
-                            >
-                              <Switch
-                                size='small'
-                                color={
-                                  row.isColorEnabled ? 'warning' : 'success'
+                          {rowLevel === toggleLevel && (
+                            <div className='text-center'>
+                              <Tooltip
+                                title={
+                                  toggleData?.includes(rowId)
+                                    ? checkedToggleTooltip
+                                    : unCheckedToggleTooltip
                                 }
-                                onChange={(_e, checked) =>
-                                  toggleClick && toggleClick(rowId, checked)
-                                }
-                                checked={toggleData?.includes(rowId)}
-                                disabled={Boolean(
-                                  disabledToggle || row?.isDisabledToggle
-                                )}
-                              />
-                            </Tooltip>
-                          </div>
+                                arrow
+                                placement='top'
+                              >
+                                <Switch
+                                  size='small'
+                                  color={
+                                    row.isColorEnabled ? 'warning' : 'success'
+                                  }
+                                  onChange={(_e, checked) =>
+                                    toggleClick && toggleClick(rowId, checked)
+                                  }
+                                  checked={toggleData?.includes(rowId)}
+                                  disabled={Boolean(
+                                    disabledToggle || row?.isDisabledToggle
+                                  )}
+                                />
+                              </Tooltip>
+                            </div>
+                          )}
                         </TableCell>
                       )}
                     </TableRow>

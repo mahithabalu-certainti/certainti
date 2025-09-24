@@ -5,7 +5,6 @@ import { getUserGroupListUrl } from '../urls';
 import {
   ActiveUserForGroupApiResponse,
   FetchUsersByAccountBody,
-  ProjectListByAccountsApiResponse,
   UserGroupApiResponse,
   UserGroupDetails,
   UserGroupDetailsApiResponse,
@@ -104,20 +103,6 @@ export const useGetUsersByAccount = () => {
     FetchUsersByAccountBody
   >({
     mutationFn: (body) => fetchUsersByAccount(body),
-  });
-};
-
-export const fetchProjectsByAccount = async (body: UserGroupParam) => {
-  const response = await userServiceApi.post<ProjectListByAccountsApiResponse>(
-    `/api/user_group/projects-of-accounts`,
-    body
-  );
-  return response.data;
-};
-
-export const useGetprojectByAccount = () => {
-  return useMutation<ProjectListByAccountsApiResponse, Error, UserGroupParam>({
-    mutationFn: (body) => fetchProjectsByAccount(body),
   });
 };
 
