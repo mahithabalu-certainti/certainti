@@ -1,5 +1,6 @@
 import { Sequelize } from "sequelize";
 import { encryptClientSecret } from "./helpers";
+import moment from "moment";
 export const HttpStatus = {
   SUCCESS: 200,
   BAD_REQUEST: 400,
@@ -1010,5 +1011,5 @@ export const IMPORT_FIELD_MAPPINGS_FOR_EXPORT = [
     { permissionField: 'status', exportField: 'Status', dataField: 'status' },
     { permissionField: 'status_descriptions', exportField: 'Status Description', dataField: 'status_description' },
     { permissionField: 'imported_by', exportField: 'Imported By', dataField: 'imported_by' },
-    { permissionField: 'imported_on', exportField: 'Imported On', dataField: 'imported_on', formatter: (value: any) => new Date(value).toISOString().slice(0, 10) }
+    { permissionField: 'imported_on', exportField: 'Imported On', dataField: 'imported_on', formatter: (value: any) =>  moment(value).format("YYYY-MMM-DD, hh:mm:ss A") }
 ];
