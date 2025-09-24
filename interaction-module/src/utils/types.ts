@@ -146,6 +146,7 @@ export interface IEmailMessage {
 export interface ICreateTemplateInteraction {
   interaction_type_rid: string;
   template_rid?: string;
+  template_name: string;
   status_rid: string;
   created_by: string;
   modified_by?: string;

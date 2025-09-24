@@ -9,7 +9,7 @@ interface InteractionTemplateAttributes {
   modified_by?: string;
   created_datetime?: Date;
   modified_datetime?: Date;
-  template_rid?: string;
+  template_name: string;
   interaction_type_rid: string;
   interaction_level_rid?: string;
   status_rid: string;
@@ -29,7 +29,7 @@ export class InteractionTemplate
   public modified_by?: string;
   public created_datetime?: Date;
   public modified_datetime?: Date;
-  public template_rid?: string;
+  public template_name!: string;
   public interaction_type_rid!: string;
   public interaction_level_rid?: string;
   public status_rid!: string;
@@ -66,7 +66,7 @@ export class InteractionTemplate
           defaultValue: DataTypes.NOW 
         },
         modified_datetime: { type: DataTypes.DATE, allowNull: true },
-        template_rid: { type: DataTypes.STRING(50), allowNull: true },
+        template_name: { type: DataTypes.STRING(50), allowNull: true },
         interaction_type_rid: { type: DataTypes.STRING(50), allowNull: false },
         interaction_level_rid: { type: DataTypes.STRING(50), allowNull: true },
         status_rid: { type: DataTypes.STRING(50), allowNull: false },

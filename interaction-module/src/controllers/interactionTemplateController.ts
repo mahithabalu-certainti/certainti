@@ -14,6 +14,7 @@ import {
   validateRequest,
 } from "../utils/helpers";
 import moment from "moment-timezone";
+import ExcelJS from "exceljs";
 import configurations from "../config/config";
 import {
   createInteractionTemplateSchema,
@@ -264,6 +265,80 @@ async function getInteractionTemplateDetailsById(
     return;
   }
 }
+async function exportInteractionTemplate(req : Request, res : Response) {
+  try {
+    const methodName = "exportAllInteractions"
+    console.log(`[${methodName}] Request received`,JSON.stringify(req.body));
+     const data = req.body
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const result = await interactionService.getInteractionTemplateDetailsById(data.template_rid!);
+    const isValidTZ = data.timezone &&  isValidTimezone(data.timezone);
+    const formatDate = (date?: Date) =>
+        date
+          ? moment(date).tz(isValidTZ ? data.timezone : 'UTC').format('YYYY-MM-DD, hh:mm:ss A')
+          : null;
+    const response = result.data?.interactionDetails;
+    if(result.statusCode == HttpStatus.SUCCESS) {
+
+       const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("Interaction");
+      const headerRows = [
+      ["Template ID", response?.r_number ?? ""],
+      ["Interaction Name", response?.interaction_name ?? ""],
+      ["Interaction Type", response?.interaction_type_name ?? ""],
+      ["Interaction Level", response?.interaction_level_name ?? ""],
+      ["Status", response?.status_name ?? ""],
+      ["Created By", response?.created_by ?? ""],
+    ];
+    headerRows.forEach((row, idx) => {
+      worksheet.addRow(row);
+      worksheet.getRow(idx + 1).getCell(1).font = { bold: true };
+    });
+     worksheet.addRow(["Question No","Questions", "Notes", "Is Mandatory"]);
+     worksheet.getRow(7).eachCell((cell) => {
+      cell.font = { bold: true };
+    });
+     worksheet.columns = [
+      { key: "question no", width: 15 },
+      { key: "question", width: 50 },
+      { key: "notes", width: 30 },
+      { key: "is_mandatory", width: 15 },
+    ];
+      response.questions.forEach((item: any) => {
+      const plain = item.get ? item.get({ plain: true }) : item;
+      const row = worksheet.addRow({
+        "question no": plain.question_seq_num,
+        "question": plain.question,
+        "notes": "",
+        "is_mandatory": plain.is_mandatory ? "Yes" : "No",
+      });
+    });
+    const excelBuffer = await workbook.xlsx.writeBuffer();
+    //await workbook.xlsx.writeFile('Profile_Permissions.xlsx');
+        handleSuccessResponse(res, Buffer.from(excelBuffer).toString("base64"));
+        return; 
+    } else {
+        return res.status(HttpStatus.SUCCESS).json({
+          statusCode : HttpStatus.SUCCESS,
+          statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+          statusMessage : STATUS_MESSAGE.dataNotFound,
+          data : null
+        })
+      }
+  } catch (error : any) {
+    handleErrorResponse(res, HttpStatus.FAILED, HttpStatus.FAILED_MESSAGE, error.message)
+  }
+}
 
 
 
@@ -272,5 +347,6 @@ export default {
   createInteractionTemplate,
   listInteractionTemplates,
   updateInteractionTemplate,
-  getInteractionTemplateDetailsById
+  getInteractionTemplateDetailsById,
+  exportInteractionTemplate
 };

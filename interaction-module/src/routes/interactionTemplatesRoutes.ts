@@ -24,4 +24,5 @@ routes.get(
   controller.interactionTemplateController.getInteractionTemplateDetailsById
 );
 routes.post('/list', checkUserStatusMiddleware("NA"), controller.interactionTemplateController.listInteractionTemplates)
+routes.post('/export', checkUserStatusMiddleware("NA"), controller.interactionTemplateController.exportInteractionTemplate)
 export default routes;
