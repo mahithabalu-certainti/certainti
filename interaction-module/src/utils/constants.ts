@@ -87,7 +87,23 @@ export const filtersColumns : Record<string, string> =
     response_source_rid : "response_source_rid",
     interaction_level_rid:"interaction_level_rid",
     parent_interaction_rid : "parent_interaction_rid",
-    createdAt : "createdAt"
+    createdAt : "createdAt",
+    template_name : "template_name"
+  }
+
+  export const templatefiltersColumns : Record<string, string> =
+  {
+    r_number : "r_number",
+    created_user_name:"created_user_name",
+    modified_user_name:"modified_user_name",
+    created_datetime : "created_datetime",
+    modified_datetime : "modified_datetime",
+    status_rid : "status_rid",
+    interaction_type_rid : "interaction_type_rid",
+    interaction_level_rid:"interaction_level_rid",
+    parent_interaction_rid : "parent_interaction_rid",
+    createdAt : "createdAt",
+    template_name : "template_name"
   }
 
   export const filterTypes : Record<string, any> = 
@@ -113,6 +129,9 @@ export const filtersColumns : Record<string, string> =
     parent_interaction_rid:"string",
     interaction_level_rid:"string",
     createdAt:"datetime",
+    template_name : "string",
+    created_user_name : "string",
+    modified_user_name : "string"
   }
 
   export const ALPHANUMERIC_CONDITIONS : Record <string, string> = {
