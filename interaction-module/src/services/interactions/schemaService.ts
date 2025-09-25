@@ -14,7 +14,6 @@ import {
 } from "../../utils/types";
 import { Interaction } from "../../models/interaction";
 import { ALPHANUMERIC_CONDITIONS, MAIN_SCHEMA_NAME, mainTableFilters, rawQueries, schedulerStatus, statusAction, techSummaryStatus } from "../../utils/constants";
-import { InteractionHistory } from "../../models/interactionHistory";
 import { SendEmailInfo } from "../../models/sendEmailInfo";
 import { decryptClientSecret } from "../../utils/helpers";
 
@@ -418,7 +417,6 @@ class InteractionSchemaService {
 
   private async handleDeleteQuestionTemplate(
     InteractionTemplateQuestions: any,
-    InteractionHistory: any,
     interactionRid: string,
     question: any,
     userId: string,
@@ -427,61 +425,14 @@ class InteractionSchemaService {
     const existingData = await InteractionTemplateQuestions.findOne({
       where: { template_rid: interactionRid, rid: question.rid },
     });
-    await Promise.all([
-      InteractionHistory.create(
-        {
-          interaction_rid: interactionRid,
-          attribute_name: "question",
-          old_value: existingData?.dataValues?.question ?? "",
-          new_value: "",
-          interaction_item_rid: question?.rid ?? "",
-          created_by: userId,
-        },
-        { transaction }
-      ),
-      InteractionHistory.create(
-        {
-          interaction_rid: interactionRid,
-          attribute_name: "notes",
-          old_value: existingData?.dataValues?.notes ?? "",
-          new_value: "",
-          interaction_item_rid: question?.rid ?? "",
-          created_by: userId,
-        },
-        { transaction }
-      ),
-      InteractionHistory.create(
-        {
-          interaction_rid: interactionRid,
-          attribute_name: "is_mandatory",
-          old_value: existingData?.dataValues?.is_mandatory ?? "",
-          new_value: "",
-          interaction_item_rid: question?.rid ?? "",
-          created_by: userId,
-        },
-        { transaction }
-      ),
-    ]);
     await InteractionTemplateQuestions.destroy({
       where: { interaction_rid: interactionRid, rid: question.rid },
       transaction,
     });
-    await InteractionHistory.create(
-      {
-        interaction_rid: interactionRid,
-        attribute_name: "question",
-        old_value: existingData?.dataValues?.question ?? "",
-        new_value: "",
-        interaction_item_rid: question?.rid ?? "",
-        created_by: userId,
-      },
-      { transaction }
-    );
     console.log(`[addInteractionItems] Deleted question:`, question.rid);
   }
    private async handleEditQuestionTemplate(
     InteractionTemplateQuestions: any,
-    InteractionHistory: any,
     interactionData: ICreateTemplateInteraction,
     interactionRid: string,
     question: any,
@@ -498,47 +449,8 @@ class InteractionSchemaService {
         transaction,
       }
     );
-    await Promise.all([
-      InteractionHistory.create(
-        {
-          interaction_rid: interactionRid,
-          attribute_name: "question",
-          old_value: existingData?.dataValues?.question ?? "",
-          new_value: question?.question ?? "",
-          interaction_item_rid: question?.rid ?? "",
-          created_by: userId,
-        },
-        { transaction }
-      ),
-      InteractionHistory.create(
-        {
-          interaction_rid: interactionRid,
-          attribute_name: "notes",
-          old_value: existingData?.dataValues?.notes ?? "",
-          new_value: question?.notes ?? "",
-          interaction_item_rid: question?.rid ?? "",
-          created_by: userId,
-        },
-        { transaction }
-      ),
-      InteractionHistory.create(
-        {
-          interaction_rid: interactionRid,
-          attribute_name: "is_mandatory",
-          old_value: existingData?.dataValues?.is_mandatory ?? "",
-          new_value: question?.is_mandatory ?? "",
-          interaction_item_rid: question?.rid ?? "",
-          created_by: userId,
-        },
-        { transaction }
-      ),
-    ]);
     console.log(`[addInteractionItems] Edited question:`, question.rid);
   }
-
-
-
-  
 
   private async handleDeleteQuestion(
     InteractionItem: any,
@@ -1700,6 +1612,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         recipient_name,
         recipient_email,
         interaction_level_rid,
+        fiscal_year
       } = interactionDetails.dataValues;
       const metainfo = await this.insertAdditionalInfo(
         interactionDetails,
@@ -1709,6 +1622,11 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         created_by ?? "",
         modified_by ?? ""
       );
+      const fiscalYear =
+        metainfo?.interaction_level_name === "Project"
+          ? metainfo?.fiscal_year ?? ""
+          : fiscal_year ?? "";
+
       const response: InteractionDetailsResponse = {
         interaction_rid: rid,
         r_number: r_number ?? "",
@@ -1719,7 +1637,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         project_rnumber : metainfo?.project_rnumber ?? "",
         account_rid,
         project_rid: project_rid ?? "",
-        fiscal_year: metainfo?.fiscal_year ?? "",
+        fiscal_year: fiscalYear,
         project_fiscal_rid: project_fiscal_rid ?? "",
         interaction_type: interaction_type_rid ?? "",
         interaction_type_name: metainfo?.interaction_type_name ?? "",
@@ -3343,7 +3261,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           rawQueries.fetchAccountDetailsInfo(accountRid, schemaName),  
           { type: "SELECT" }
         );
-      return accountInfo?.auto_send_interaction ?? false;
+      return accountInfo?.autosend_interaction ?? false;
     } catch (err) {
       throw new Error(
         "Error checking global auto-send interaction access: " +
@@ -4251,7 +4169,6 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
             case "delete":
               await this.handleDeleteQuestionTemplate(
                 InteractionTemplateItem,
-                InteractionHistory,
                 interactionRid,
                 question,
                 userId,
@@ -4261,7 +4178,6 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
             case "edit":
               await this.handleEditQuestionTemplate(
                 InteractionTemplateItem,
-                InteractionHistory,
                 interactionData,
                 interactionRid,
                 question,

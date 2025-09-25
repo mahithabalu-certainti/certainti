@@ -10,7 +10,7 @@ import {
 
 export interface IInteractionService {
   processKafkaMessage(data: any): Promise<void>;
-  listInteractionPrjAccount(data: any,userId: string,apiType: string): Promise<any>;
+  listInteractionPrjAccount(data: any,userId: string,apiType: string, reminderSpecificList : boolean, statusIdsForReminderList : string[]): Promise<any>;
   fetchInteractionSummary(
     data: any,userId: string
   ): Promise<{ statusCodeValue: string; data: any }>;
@@ -202,7 +202,7 @@ export interface IInteractionService {
         name: string | null;
       };
     }[],
-    accountId: string,
+    accountRid : string,
     userId: string,
     is_interaction_followup?: boolean
   ): Promise<{
@@ -251,6 +251,7 @@ export interface IInteractionService {
       permission_name: string
     ): Promise<any[]>;
   sendEmailInBatch() : Promise<void>
+  fetchStatusIdsForReminder() : Promise<any>
 }
 
 export interface IWebHookService {
