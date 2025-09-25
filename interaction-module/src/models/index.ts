@@ -3,10 +3,12 @@ import { initMainDbSequelize } from "../config/mainDataSource";
 
 import { InteractionStatus } from "./interactionStatus";
 import { InteractionType } from "./interactionType";
+import { InteractionTemplate } from "./interactionTemplate";
 
 export const models = {
   InteractionStatus,
-  InteractionType
+  InteractionType,
+  InteractionTemplate
 };
 
 export async function initModels() {

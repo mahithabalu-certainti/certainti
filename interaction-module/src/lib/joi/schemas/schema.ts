@@ -22,6 +22,22 @@ const createInteractionSchema = Joi.object({
     .required(),
 });
 
+const createInteractionTemplateSchema = Joi.object({
+  status_rid: Joi.string().required(),
+  interaction_level_rid: Joi.string().pattern(uuidRegex).required(),
+  questions: Joi.array()
+    .items(
+      Joi.object({
+        question: Joi.string().max(2000).required(),
+        notes: Joi.string().max(2000).allow(""),
+        is_mandatory: Joi.boolean().required(),
+        action_type: Joi.string().valid("add", "update", "delete").required(),
+      })
+    )
+    .min(1)
+    .required(),
+});
+
 const createAccountInteractionSchema = Joi.object({
   account_rid: Joi.string().pattern(uuidRegex).required(),
   interaction_level_rid: Joi.string().pattern(uuidRegex).required(),
@@ -211,6 +227,34 @@ const exportTechnicalSummarySchema = Joi.object({
   timezone: Joi.string().optional()
 }); 
 
+const listInteractionTemplatesSchema = Joi.object({
+  page: Joi.number().optional()
+  ,
+  limit: Joi.number().optional()
+    ,
+  filters: Joi.object().default("{}"),
+  sortBy: Joi.string().optional(),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
+}); 
+const updateInteractionTemplateSchema = Joi.object({
+  template_rid: Joi.string().pattern(uuidRegex).required(),
+  interaction_level_rid: Joi.string().pattern(uuidRegex).required(),
+  status_rid: Joi.string().required(),
+  questions: Joi.array()
+    .items(
+      Joi.object({
+        rid: Joi.string().pattern(uuidRegex).allow(null, ""),
+        question: Joi.string().max(2000).required(),
+        notes: Joi.string().max(2000).allow(""),
+        is_mandatory: Joi.boolean().required(),
+        action_type: Joi.string().valid("add", "edit", "delete").required(),
+      })
+    )
+    .min(1)
+    .required(),
+});
+
+
 
 
 
@@ -227,5 +271,8 @@ export {
   listAllTechnicalSummarySchema,
   exportTechnicalSummarySchema,
   sendAccountInteractionSchema,
-  updateAccountInteractionSchema
+  updateAccountInteractionSchema,
+  createInteractionTemplateSchema,
+  listInteractionTemplatesSchema,
+  updateInteractionTemplateSchema,
 };

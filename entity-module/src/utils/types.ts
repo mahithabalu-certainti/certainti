@@ -390,6 +390,7 @@ export interface IUpdateInlineProjectResource {
   modified_by?: string;
   resource_rid?: string;
   country_rid?: string | null;
+  project_resource_role? : string | null
 }
 
 export interface ICreateProjectTask {

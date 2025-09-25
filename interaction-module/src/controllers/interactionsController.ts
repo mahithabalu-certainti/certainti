@@ -834,7 +834,7 @@ async function listAllInteractionPrjAcc (req : Request, res : Response) {
       );
       return;
     }
-    const result = await interactionService.listInteractionPrjAccount(data,userId,"list")
+    const result = await interactionService.listInteractionPrjAccount(data,userId,"list", false, [])
     if(result.status == HttpStatus.SUCCESS) {
       return res.status(HttpStatus.SUCCESS).json({
         statusCode : HttpStatus.SUCCESS,
@@ -873,7 +873,7 @@ async function exportAllInteractions (req : Request, res : Response) {
       );
       return;
     }
-    const result = await interactionService.listInteractionPrjAccount(data,userId,"export")
+    const result = await interactionService.listInteractionPrjAccount(data,userId,"export", false, [])
     const fields = await interactionService.getAllowedExportFields(
           userId,
           "interactions_view_edit"
@@ -1768,6 +1768,56 @@ async function fetchResponseHistoryDetails (req : Request, res : Response) {
     }
   }
 
+  async function fetchInteractionListForReminder (req : Request, res : Response) {
+    const methodName = "fetchInteractionListForReminder"
+    try {
+      console.log(`[${methodName}] Request received`);
+      const userId = req.headers["x-user-id"] as string;
+      let data = req.body;
+      console.log(`[${methodName}] userId:`, userId);
+      if (!userId) {
+        errorLog(methodName, "User ID is required in headers");
+        handleErrorResponse(
+          res,
+          HttpStatus.BAD_REQUEST,
+          HttpStatus.BAD_REQUEST_MESSAGE,
+          "User ID is required in headers"
+        );
+        return;
+      }
+      const statusIdsForReminder = await interactionService.fetchStatusIdsForReminder()
+      if(statusIdsForReminder != undefined) {
+        const result = await interactionService.listInteractionPrjAccount(data, userId, "list", data.reminder_specific_list, statusIdsForReminder)
+        if(result.status == HttpStatus.SUCCESS) {
+          return res.status(HttpStatus.SUCCESS).json({
+            statusCode : HttpStatus.SUCCESS,
+            statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+            statusMessage : STATUS_MESSAGE.interactionFetchedSuccess,
+            data : result.data
+          })
+        } else {
+            return res.status(HttpStatus.SUCCESS).json({
+              statusCode : HttpStatus.SUCCESS,
+              statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+              statusMessage : STATUS_MESSAGE.dataNotFound,
+              data : result.data
+            })
+          }
+        } else {
+          return res.status(HttpStatus.SUCCESS).json({
+              statusCode : HttpStatus.SUCCESS,
+              statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+              statusMessage : STATUS_MESSAGE.dataNotFound,
+              data : []
+            })
+        }
+    } catch (err) {
+      const error = err as Error;
+      errorLog(methodName, error.message);
+      console.log(`[${methodName}] Exception:`, error);
+    }
+  }
+
 
 
 export default {
@@ -1802,5 +1852,6 @@ export default {
   getTechnicalSummaryDetailsById,
   updateTechSummaryContext,
   exportTechnicalSummary,
-  updateAccountInteraction
+  updateAccountInteraction,
+  fetchInteractionListForReminder
 };

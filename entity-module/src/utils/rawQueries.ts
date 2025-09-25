@@ -1836,6 +1836,7 @@ export const fetchResCodeWithPrjResRole = (schemaName : string, search : string,
     r.status_rid = '${statusId}'
     AND
     ps.project_fiscal_rid = '${project_fiscal_rid}'
+    ORDER BY r.resource_code ASC
     `
     return query;
   }
