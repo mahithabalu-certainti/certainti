@@ -2057,6 +2057,7 @@ export class ProjectService {
       "qualified_research_expenditure",
       "qre",
       "qre_final",
+      "rd_percent_final"
     ];
     const dateFields = [
       "project_startdate",
@@ -2354,6 +2355,7 @@ export class ProjectService {
       { clientField: "total_cost_nonlabor", dbField: "total_cost_nonlabor" },
       { clientField: "comments", dbField: "comments" },
       { clientField: "qre_final", dbField: "qre_final" },
+      { clientField: "rd_percent_final", dbField: "rd_percent_final" },
       {
         clientField: "qualified_research_expenditure",
         dbField: "qualified_research_expenditure",

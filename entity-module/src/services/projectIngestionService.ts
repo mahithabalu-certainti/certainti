@@ -1646,6 +1646,7 @@ class ProjectIngestionService {
       project_type_rid: "project_type_rid",
       project_name: "project_name",
       project_code: "project_code",
+      rd_percent_final: "rd_percent_final",
     };
 
     const childOnlyFilters = ["fiscal_year", "project_code"];
@@ -2006,6 +2007,7 @@ class ProjectIngestionService {
       project_type_rid: "project_type_rid",
       project_name: "project_name",
       project_code: "project_code",
+      rd_percent_final: "rd_percent_final"
     };
 
     const childOnlyFilters = ["fiscal_year", "project_code"];
