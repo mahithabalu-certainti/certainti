@@ -53,3 +53,8 @@ Thumbs.db
 #env
 .env
 del.yml
+
+terraform.*
+.terraform*
+.terraform/*
+*.tfvars
