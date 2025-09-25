@@ -241,6 +241,7 @@ const listInteractionTemplatesSchema = Joi.object({
 const updateInteractionTemplateSchema = Joi.object({
   template_rid: Joi.string().pattern(uuidRegex).required(),
   interaction_level_rid: Joi.string().pattern(uuidRegex).required(),
+  template_name:Joi.string().max(255).required(),
   status_rid: Joi.string().required(),
   questions: Joi.array()
     .items(

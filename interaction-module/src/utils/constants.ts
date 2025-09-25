@@ -102,7 +102,7 @@ export const filtersColumns : Record<string, string> =
     interaction_type_rid : "interaction_type_rid",
     interaction_level_rid:"interaction_level_rid",
     parent_interaction_rid : "parent_interaction_rid",
-    createdAt : "createdAt",
+    createdAt : "created_datetime",
     template_name : "template_name"
   }
 

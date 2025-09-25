@@ -408,6 +408,7 @@ class InteractionSchemaService {
       const item = {
         ...question,
         ...interactionData,
+        template_rid: interactionRid,
         created_by: userId, // Ensure created_by is always userId
       };
       await InteractionTemplate.create(item);
@@ -2241,7 +2242,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     transaction: Transaction
   ) {
     try {
-      const { InteractionResponseHistory, InteractionAttachment, Interaction } =
+      const { InteractionResponseHistory, InteractionAttachment, Interaction ,AiAssessmentEventTracker} =
         await this.interactionModelService.getModels(accountNumber);
       if (!this.mainDbSequelize) {
         this.mainDbSequelize =
@@ -2397,7 +2398,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           //check for auto trigger ai
           isAutoTriggerEnabled = await this.isAutoTriggerEnabled(
             accountNumber,
-            responseData.project_fiscal_rid
+            responseData.project_fiscal_rid,
+            AiAssessmentEventTracker
           );
           console.log("isAutoTriggerEnabled", isAutoTriggerEnabled);
         }
@@ -3338,7 +3340,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
 
   async isAutoTriggerEnabled(
     accountNumber: string,
-    project_fiscal_rid: string
+    project_fiscal_rid: string,
+    AiAssessmentEventTracker: any
   ) {
     try {
       if (!this.mainDbSequelize) {
@@ -3349,9 +3352,14 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         rawQueries.fetchGlobalAutoSendAccess(),
         { type: "SELECT" }
       );
-      console.log("globalAccess", globalAccess);
-
-      if (globalAccess?.auto_access_rd) {
+      const responseReceivedEvent = await AiAssessmentEventTracker.findOne({
+        where: {
+          is_active:true,
+          event_name: 'response_received'
+        }
+      });
+     
+      if (globalAccess?.auto_access_rd && responseReceivedEvent.event_name) {
         return true;
       } else {
         if (!this.orgDbSequelize) {
@@ -3368,8 +3376,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           rawQueries.fetchisAutoTriggerEnabled(project_fiscal_rid, schemaName),
           { type: "SELECT" }
         );
-
-        return projectInfo?.auto_access_rd ?? false;
+        return (projectInfo?.auto_access_rd ?? false) && !!responseReceivedEvent.event_name;
       }
     } catch (err) {
       throw new Error(
@@ -4231,6 +4238,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
 
   const response: any = {
     template_rid: interactionDetails?.rid,
+    template_name: interactionDetails?.template_name ?? "",
     r_number: interactionDetails.r_number ?? "",
     interaction_type: interactionDetails.interaction_type_rid ?? "",
     interaction_type_name: interactionDetails.interaction_type_name ?? "",
