@@ -35,7 +35,12 @@ const SearchBar: React.FC<SearchBarProps> = React.memo(
         <input
           type='text'
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => {
+            setText(e.target.value);
+            if (e.target.value === '') {
+              onSearch('');
+            }
+          }}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           disabled={disabled}
