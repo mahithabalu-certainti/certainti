@@ -45,9 +45,9 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
 
   return (
     <>
-      {/* Modal */}
+      {/* Modal: 20px top offset while staying docked to bottom */}
       <div
-        className={`absolute top-0 right-0 h-full w-96 bg-white text-gray-900 shadow-2xl transform transition-transform duration-300 ease-in-out z-50 overflow-y-auto ${
+        className={`fixed top-8.5 bottom-0 right-0 w-96 bg-white text-gray-900 shadow-2xl transform transition-transform duration-300 ease-in-out z-50 overflow-y-auto ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
