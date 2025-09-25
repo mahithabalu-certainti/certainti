@@ -25,6 +25,7 @@ const createInteractionSchema = Joi.object({
 const createInteractionTemplateSchema = Joi.object({
   status_rid: Joi.string().required(),
   interaction_level_rid: Joi.string().pattern(uuidRegex).required(),
+  interaction_name:Joi.string().max(255).required(),
   questions: Joi.array()
     .items(
       Joi.object({
@@ -228,12 +229,12 @@ const exportTechnicalSummarySchema = Joi.object({
 }); 
 
 const listInteractionTemplatesSchema = Joi.object({
-  page: Joi.number().optional()
-  ,
-  limit: Joi.number().optional()
-    ,
+  page: Joi.number().optional(),
+  limit: Joi.number().optional(),
   filters: Joi.object().default("{}"),
   sortBy: Joi.string().optional(),
+  apiSource: Joi.string().optional(),
+  templateType: Joi.string().optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
 }); 
 const updateInteractionTemplateSchema = Joi.object({
