@@ -5383,7 +5383,7 @@ export class ProjectResourceSchemaService {
         allowedFieldSet.add(field.field_name);
       }
     }
-    allowedFieldSet.add("resource_name");
+
     const labelMap: Record<string, string> = {
       resource_code: "Resource Code",
       resource_name: "Resource Name",
