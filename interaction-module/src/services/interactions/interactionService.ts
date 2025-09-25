@@ -2386,7 +2386,7 @@ export class InteractionService {
     errorMessage?: string;
     data?: { interactions: any };
   }> {
-    const dbInit = await this.interactionModelService.getSequelize();
+    const dbInit = await this.interactionModelService.getMainSequelize();
     const transaction = await dbInit.transaction();
     try {
        
