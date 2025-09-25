@@ -2347,161 +2347,33 @@ export class InteractionService {
         };
     }
   }
-  async listInteractionTemplates1(data : any,
-  page: number, limit: number, filters: Record<string, any>
-  ) :  Promise<{
-  statusCode: number;
-  message: string;
-  errorMessage?: string;
-  data?: { interactionTemplates: any,count: number };
-}> {
-  try {
-      const { accountNumber } =
-      await this.interactionSchemaService.fetchValidAccountNumberById(
-        data.account_rid
-      );
-
-    if (!accountNumber) {
-      return {
-        statusCode: HttpStatus.FAILED,
-        message: HttpStatus.FAILED_MESSAGE,
-        errorMessage: "Invalid account ID",
-      };
-    }
-    const interactionTemplates =
-      await this.interactionSchemaService.listInteractionTemplates(
-        page,
-        limit,
-        filters,
-        data.sortBy,
-        data.sortOrder,
-        "list"
-      );
-
-    if (!interactionTemplates) {
-      return {
-        statusCode: HttpStatus.FAILED,
-        message: HttpStatus.FAILED_MESSAGE,
-        errorMessage: "Invalid interaction ID",
-      };
-    }
-
-      return {
-      statusCode: HttpStatus.SUCCESS,
-      message: HttpStatus.SUCCESS_MESSAGE,
-      data: {
-        interactionTemplates: interactionTemplates.interactionTemplates,
-        count: interactionTemplates.count
-      },
-    };
-  }
-  catch (err) {
-    throw this.throwServiceError(err as Error);
-  }
-
-  }
 
   async listInteractionTemplates(data : any,userId : string,filters:any) : Promise<any>{
     const mainDb = await this.getMainDb()
-    let apiType = 'list'
-
+   
     //let fetchParentAccount : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb))
-    let schemaName = MAIN_SCHEMA_NAME
-    let createdByFilter;
-    let createdByConditions;
-    let modifiedByFilter;
-    let modifiedByConditions;
-    let sourceFilter;
-    let sourceConditions;
-    let filterKeyName;
-    let disablePagination : boolean = false
+  
     let totalResults : number = 0
 
-    const detectConditions = (filters : any) => {
-      if(!filters) return null
-      for(let conditions of Object.values(ALPHANUMERIC_CONDITIONS)) {
-        if(Object.keys(filters).includes(conditions)) return conditions
-      }
-      return null
-    }
-    if(data.filters?.created_user_name) {
-      createdByFilter = data.filters.created_user_name
-      createdByConditions = detectConditions(createdByFilter)
-    }
-    if(data.filters?.updated_user_name) {
-      modifiedByFilter = data.filters.updated_user_name
-      modifiedByConditions = detectConditions(modifiedByFilter)
-    }
-    if(data.filters?.interaction_source_name) {
-      sourceFilter = data.filters.interaction_source_name
-      sourceConditions = detectConditions(sourceFilter)
-    }
-
-    ["created_user_name", "updated_user_name", "interaction_source_name"].forEach(key => {
-      if(data.filters[key]) {
-        disablePagination = true
-        delete data.filters[key]
-      }
-    })
-    if (mainTableFilters[data.sort] !== undefined) {
-      disablePagination = true;
-    }
-    if(apiType === 'export') disablePagination = true
-    const [activeStatus]: any[] = await mainDb.query(
-              rawQueries.fetchActiveStatusByType("Active"),
-              { type: "SELECT" }
-            );
-
     const result : any = await mainDb.query(fetchInteractionTemplates(
-      data.sort,
-      data.sort_by,
+      data.sortBy,
+      data.sortOrder,
       data.filters,
       data.page, 
       data.limit,
-      disablePagination,
       data.search
     ))
-    let hasEmailRecipient = false;
     if(result[0][0].interactions != null) {
-  
-      let createdByIds : any[] = [...new Set(result[0][0].interactions.map((user : any) => user.created_by))]
-      let modifiedByIds : any[] = [...new Set(result[0][0].interactions.map((user : any) => user.modified_by))]
-    //  let createdMap : Map<string, string> = new Map(fetchCreatedByUsers[0].map((user : any) => [user.rid, `${user.first_name} ${user.last_name}`]))
-      //let modifiedMap : Map<string, string> = new Map(fetchModifiedByUsers[0].map((user : any) => [user.rid, `${user.first_name} ${user.last_name}`]))
-      let finalData = result[0][0].interactions == null ? [] : result[0][0].interactions.map((d : any) => {
-        return {
-          ...d,
-          status_rid: d.status,
-          status_name: d.status_name,
-          interaction_type_rid: d.interaction_type,
-          interaction_type_name: d.interaction_type_name,
-          interaction_level_rid: d.interaction_level,
-          interaction_level_name: d.interaction_level_name,
-          created_by: d.created_by,
-       //   created_user_name: createdMap.get(d.created_by) || null,
-          modified_by: d.modified_by,
-        //  updated_user_name: modifiedMap.get(d.modified_by) == undefined ? d.modified_by : modifiedMap.get(d.modified_by),
-        }
-      })
-    
-      totalResults = disablePagination ? finalData.length : finalData[0].total_records
-      let finalPaginatedData : any[] = []
-       if(apiType === "export") 
-        {
-          finalPaginatedData = finalData;
-        }
-        else
-        {
-           finalPaginatedData = disablePagination ? finalData.slice((data.page - 1) * data.limit, data.page * data.limit) : finalData
-        }
+      let finalData = result[0][0].interactions == null ? [] : result[0][0].interactions
+      totalResults = finalData[0].total_records
       let organizedData = {
         page : data.page,
         limit : data.limit,
         totalCount : totalResults,
-        interactions : finalPaginatedData
+        interactions : finalData
       }
       return {
-        status : HttpStatus.SUCCESS,
+        statusCode : HttpStatus.SUCCESS,
         data : organizedData
       }
     }
