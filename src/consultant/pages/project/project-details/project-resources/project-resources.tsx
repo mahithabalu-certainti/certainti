@@ -322,6 +322,12 @@ export const ProjectResources = ({
     }
   };
 
+  const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
+    const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
+    setSortOrder(apiOrder);
+    setSortField(sortBy);
+  };
+
   useEffect(() => {
     const page = searchParams.get('page');
     if (page === 'details' && resID) {
@@ -749,7 +755,7 @@ export const ProjectResources = ({
                     onRowsPerPageChange={setRowsPerPage}
                     sortBy={sortField}
                     sortOrder={sortOrder}
-                    onSort={handleSorting}
+                    onSort={handleSort}
                     selectable={false}
                     onSelectionChange={(selectedIds: unknown) =>
                       console.log('Selected:', selectedIds)
