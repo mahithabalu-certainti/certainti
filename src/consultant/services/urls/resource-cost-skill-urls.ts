@@ -21,6 +21,7 @@ const returnURL = (url: string, params: Record<string, any>): string => {
     accountNumber,
     fiscalYear,
     resourceRid,
+    search,
   } = params;
   const searchParams = new URLSearchParams();
 
@@ -39,6 +40,9 @@ const returnURL = (url: string, params: Record<string, any>): string => {
   // Only add filters if the object has properties
   if (filters && Object.keys(filters).length > 0) {
     searchParams.set('filters', JSON.stringify(filters));
+  }
+  if (search) {
+    searchParams.set('search', search);
   }
 
   return `${baseUrl}/${url}?${searchParams.toString()}`;
@@ -70,6 +74,7 @@ export const costListURL = ({
   accountNumber,
   fiscalYear,
   resourceRid,
+  search,
 }: ResourceCostListParams): string => {
   return returnURL(resourceCostUrl, {
     page,
@@ -80,6 +85,7 @@ export const costListURL = ({
     accountNumber,
     fiscalYear,
     resourceRid,
+    search,
   });
 };
 
@@ -110,6 +116,7 @@ export const skillListURL = ({
   filters,
   accountNumber,
   resourceRid,
+  search,
 }: ResourceSkillListParams): string => {
   return returnURL(resourceSkillUrl, {
     page,
@@ -119,6 +126,7 @@ export const skillListURL = ({
     filters,
     accountNumber,
     resourceRid,
+    search,
   });
 };
 export const ExportResourceCostUrl = ({

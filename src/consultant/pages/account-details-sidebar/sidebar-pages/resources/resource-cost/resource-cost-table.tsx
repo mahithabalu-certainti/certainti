@@ -60,6 +60,7 @@ interface ResourceCostTableProps {
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
   >;
+  searchValue?: string;
 }
 
 const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
@@ -80,6 +81,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
   resourceInActive,
   columnAnchorEl,
   setColumnAnchorEl,
+  searchValue,
 }) => {
   const navigate = useNavigate();
   const { accountid } = useParams();
@@ -125,6 +127,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
       sortBy: costorderBy,
       sortOrder: apiOrder,
       filters: appliedFilters,
+      search: searchValue,
       accountNumber: accountDetails?.data?.accountById?.r_number,
       fiscalYear,
       resourceRid,

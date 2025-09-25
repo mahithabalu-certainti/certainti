@@ -93,6 +93,8 @@ const Interactions: React.FC<InteractionsProps> = ({
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
 
+  const [searchText, setSearchText] = useState('');
+
   const isModalOpen = Boolean(columnAnchorEl);
   const handleColumnVisibility = (
     event: React.MouseEvent<HTMLButtonElement>
@@ -149,6 +151,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       fiscal_year: fiscalYear,
       account_rid: accountId,
       flag: 'project',
+      search: searchText,
     },
     !viewDetails && !viewInteractionHistory && !viewInteractionAttachment,
     refreshInteractions
@@ -543,6 +546,10 @@ const Interactions: React.FC<InteractionsProps> = ({
         setSortFilterCount={setSortFilterCount}
         showRefresh={!viewDetails}
         onRefreshClick={handleRefresh}
+        showSearch={
+          viewResponseHistory || (!viewDetails && !viewInteractionHistory)
+        }
+        onSearch={(text) => setSearchText(text)}
       />
       {viewDetails && !viewResponseHistory ? (
         <InteractionDetails
@@ -562,6 +569,7 @@ const Interactions: React.FC<InteractionsProps> = ({
         <InteractionAttachment
           handleBackClick={handleBackClick}
           refresh={refreshInteractions}
+          searchValue={searchText}
         />
       ) : (
         <>
@@ -630,6 +638,7 @@ const Interactions: React.FC<InteractionsProps> = ({
                 setCount={setCount}
                 setColumnAnchorEl={setColumnAnchorEl}
                 columnAnchorEl={columnAnchorEl}
+                searchValue={searchText}
               />
             )}
             <SendInteractionModal

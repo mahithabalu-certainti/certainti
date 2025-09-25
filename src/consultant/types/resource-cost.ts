@@ -10,6 +10,7 @@ export interface ResourceCostListParams {
   fiscalYear?: string | number;
   id?: string;
   resourceRid?: string;
+  search?: string;
 }
 
 export type ResourceCostList = {

@@ -99,6 +99,7 @@ const Attachments: React.FC<AttachmentsProps> = ({
   const [currentCategory, setCurrentCategory] = useState<string>('');
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
+  const [searchText, setSearchText] = useState('');
 
   const isModalOpen = Boolean(columnAnchorEl);
   const handleColumnVisibility = (
@@ -125,6 +126,7 @@ const Attachments: React.FC<AttachmentsProps> = ({
       accountRid: accountID || '',
       entityId: projectid || '',
       fiscalYear: convertedFiscalYear,
+      search: searchText,
     },
     refreshAttachments
   );
@@ -451,6 +453,8 @@ const Attachments: React.FC<AttachmentsProps> = ({
         showRefresh={showUploads ? false : true}
         onRefreshClick={onRefreshClick}
         onFilterChange={handleCategory}
+        showSearch={showUploads ? false : true}
+        onSearch={(text) => setSearchText(text)}
       />
       {showUploads ? (
         <Uploads

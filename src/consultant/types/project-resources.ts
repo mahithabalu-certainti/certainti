@@ -15,6 +15,7 @@ export interface ProjectResourcesListParams {
   fiscalYear?: string | number;
   id?: string;
   projectid?: string;
+  search?: string;
 }
 
 export type ProjectResourcesListType = {

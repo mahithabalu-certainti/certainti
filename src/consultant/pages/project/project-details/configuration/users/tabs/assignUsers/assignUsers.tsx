@@ -31,6 +31,7 @@ interface AssignUserProps {
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
   >;
+  searchValue?: string;
 }
 
 const AssignUsers: React.FC<AssignUserProps> = ({
@@ -39,6 +40,7 @@ const AssignUsers: React.FC<AssignUserProps> = ({
   setCount,
   columnAnchorEl,
   setColumnAnchorEl,
+  searchValue,
 }) => {
   const { projectid } = useParams();
   const [searchParams] = useSearchParams();
@@ -51,6 +53,7 @@ const AssignUsers: React.FC<AssignUserProps> = ({
     page: filterParams.page + 1,
     limit: 100,
     filters: filterParams.filters,
+    search: searchValue,
   });
   const [assignUserList, setAssignUserList] = useState<ConfigAssignUserList[]>(
     []
@@ -101,8 +104,9 @@ const AssignUsers: React.FC<AssignUserProps> = ({
       ...prev,
       page: 1,
       filters: filterParams.filters,
+      search: searchValue,
     }));
-  }, [filterParams.filters]);
+  }, [filterParams.filters, searchValue]);
 
   useEffect(() => {
     if (data?.users?.length) {

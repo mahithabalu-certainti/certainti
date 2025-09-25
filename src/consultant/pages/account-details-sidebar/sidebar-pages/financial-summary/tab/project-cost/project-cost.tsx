@@ -40,6 +40,7 @@ interface FinancialProjectCostProps {
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
   >;
+  searchValue?: string;
 }
 
 const FinancialProjectCost: React.FC<FinancialProjectCostProps> = ({
@@ -52,6 +53,7 @@ const FinancialProjectCost: React.FC<FinancialProjectCostProps> = ({
   setExportType,
   columnAnchorEl,
   setColumnAnchorEl,
+  searchValue,
 }) => {
   const { accountid } = useParams();
   const [projectCostList, setProjectCostList] = useState<
@@ -63,6 +65,7 @@ const FinancialProjectCost: React.FC<FinancialProjectCostProps> = ({
     page: currentPage + 1,
     limit: 100,
     filters: appliedFilters,
+    search: searchValue,
   });
 
   const {
@@ -111,8 +114,9 @@ const FinancialProjectCost: React.FC<FinancialProjectCostProps> = ({
       ...prev,
       page: currentPage + 1,
       filters: appliedFilters,
+      search: searchValue,
     }));
-  }, [currentPage, appliedFilters]);
+  }, [currentPage, appliedFilters, searchValue]);
 
   useEffect(() => {
     if (setExportType) {

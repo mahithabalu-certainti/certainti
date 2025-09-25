@@ -187,6 +187,7 @@ export interface InteractionListURLParams {
   isGlobal?: boolean;
   flag?: string;
   attachment_count?: number | string | null;
+  search?: string;
 }
 
 export interface ResponseListURLParams {
@@ -344,7 +345,7 @@ export interface InteractionAttachmentListParams {
   sortBy?: string;
   sortOrder?: SortOrder;
   filters?: Filters;
-  searchTerm?: string;
+  search?: string;
   exportKey?: string;
   timezone?: string;
   entity_type?: string;

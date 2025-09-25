@@ -16,6 +16,7 @@ export interface ProjectListParams {
   timezone?: string;
   bothParentAndChild?: boolean;
   apiSource?: string;
+  search?: string;
   accountInteractionId?: string;
 }
 export enum Status {
