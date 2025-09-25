@@ -2391,25 +2391,49 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
 
       if (responseData.questions && Array.isArray(responseData.questions)) {
         for (const question of responseData.questions) {
-          const created = await InteractionResponseHistory.create(
-            {
+          const existing = await InteractionResponseHistory.findOne({
+            where: {
               interaction_rid: responseData.interaction_rid,
-              interaction_version: interactionVersion,
               interaction_item_rid: question.rid,
+            },
+            transaction,
+          });
+
+          let created = null;
+
+          if (existing) {
+            // Update existing response
+            await existing.update({
               interaction_response: question.response,
-              created_by: userId,
-              response_email: userEmailId,
               response_by: resonseBy,
               response_on: new Date(),
+              response_email: userEmailId,
               response_source_rid: responseData.response_source_rid,
-            },
-            { transaction }
-          );
+              modified_by: userId, 
+              modified_datetime: new Date(), 
+            }, { transaction });
+          } else {
+            created = await InteractionResponseHistory.create(
+              {
+                interaction_rid: responseData.interaction_rid,
+                interaction_version: interactionVersion,
+                interaction_item_rid: question.rid,
+                interaction_response: question.response,
+                created_by: userId,
+                response_email: userEmailId,
+                response_by: resonseBy,
+                response_on: new Date(),
+                response_source_rid: responseData.response_source_rid,
+              },
+              { transaction }
+            );
+          }
+
           for (const attachment of question.attachments) {
             await InteractionAttachment.create(
               {
                 interaction_rid: responseData.interaction_rid,
-                interaction_response_rid: created.rid,
+                interaction_response_rid: created?.rid || "",
                 interaction_version: interactionVersion,
                 interaction_item_rid: question.rid,
                 attachment_url: attachment.fileUrl,
