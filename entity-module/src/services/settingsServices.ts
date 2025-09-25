@@ -120,6 +120,12 @@ export default class SettingService {
             data.client_secret,
             data.support_email
           );
+          if(subscriptionId === null){
+            return {
+              statusCode: HttpStatus.BAD_REQUEST,
+              statusMessage: `Subscription already exists for ${data.support_email}`,
+            }
+          }
         } catch (err) {
           return {
             statusCode: HttpStatus.BAD_REQUEST,
@@ -188,6 +194,18 @@ export default class SettingService {
   ) {
     try {
       const graphClient = this.getGraphClient(tenantId, clientId, clientSecret);
+
+      const existingSubscriptions = await graphClient.api('/subscriptions').get();
+
+      const resourceToCheck = `/users/${supportEmail}/mailFolders('Inbox')/messages`;
+
+      const alreadySubscribed = existingSubscriptions.value?.some(
+        (sub: any) => sub.resource === resourceToCheck
+      );
+
+      if (alreadySubscribed) {
+        return null;
+      }
 
       const subscription = await graphClient.api("/subscriptions").post({
         changeType: "created,updated",
