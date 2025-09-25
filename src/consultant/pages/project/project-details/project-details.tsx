@@ -78,6 +78,7 @@ import { ProjectInfoSection } from './project-info-section';
 import { resourceClient } from '../../../../api/graphql/clients/client';
 import { UPDATE_QRE_ADJUSTMENT } from '../../../../api/graphql/queries/project-query';
 import { useMutation } from '@apollo/client';
+import { ProjectQreAdjustmentResponse } from '../utils';
 
 export const ProjectDetails = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -203,6 +204,15 @@ export const ProjectDetails = () => {
       });
     }
   }, [data]);
+
+  const handleQreAdjustmentUpdated = (result: ProjectQreAdjustmentResponse) => {
+    const updatedProject = mergeAdjustmentResponse(
+      projectData as unknown as projectDetails,
+      result
+    );
+    setProjectData(updatedProject as unknown as NewProjectData);
+    setProjectDetails(transformProjectData(updatedProject as projectDetails));
+  };
 
   const handleAdjustmentFactor = async (newValue: string) => {
     const payload = {
@@ -501,6 +511,7 @@ export const ProjectDetails = () => {
             projectDetails={projectData}
             setExportType={setExportType}
             setResCostExportParams={setFinancialResCostParams}
+            onQreAdjustmentUpdated={handleQreAdjustmentUpdated}
           />
         );
       case 'projectDetails':
