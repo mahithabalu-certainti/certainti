@@ -3343,7 +3343,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           rawQueries.fetchAccountDetailsInfo(accountRid, schemaName),  
           { type: "SELECT" }
         );
-      return accountInfo?.auto_send_interaction ?? false;
+      return accountInfo?.autosend_interaction ?? false;
     } catch (err) {
       throw new Error(
         "Error checking global auto-send interaction access: " +
