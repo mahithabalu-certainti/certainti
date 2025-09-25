@@ -2338,14 +2338,17 @@ export class InteractionService {
   
     let totalResults : number = 0
 
-    const result : any = await mainDb.query(fetchInteractionTemplates(
-      data.sortBy,
-      data.sortOrder,
-      data.filters,
-      data.page, 
-      data.limit,
-      data.search
-    ))
+    const result : any = await mainDb.query(await fetchInteractionTemplates(
+        data.sortBy,
+        data.sortOrder,
+        data.filters,
+        data.page,
+        data.limit,
+        data.search,
+        data.apiSource,
+        data.templateType,
+        mainDb
+      ))
     if(result[0][0].interactions != null) {
       let finalData = result[0][0].interactions == null ? [] : result[0][0].interactions
       totalResults = finalData[0].total_records
