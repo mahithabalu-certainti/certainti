@@ -185,7 +185,7 @@ export class InteractionService {
       let isEmailRecipientAvailable = false;
       if(intLevel === 'Account')
       {
-        isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(accountNumber, interactionData.project_fiscal_rid);
+        isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailableForAccount(accountNumber, interactionData.account_rid);
       }
       else
       {
@@ -226,6 +226,7 @@ export class InteractionService {
   }
   async checkAutoSendEnabled(accountNumber: string, interactionData: ICreateInteraction, interactionId: string, userId: string, accountRid: string, interactionLevel:string, parentAccountId: string) {
     const isParensettingsConfigured = await this.interactionSchemaService.fetchAccountDetails(accountNumber, parentAccountId);
+    this.logger.info(`Auto-send: ${interactionData?.trigger_send ? "enabled" : "disabled"}, Parent settings: ${isParensettingsConfigured ? "enabled" : "disabled"} for interaction ID: ${interactionId}`);
     if(interactionData?.trigger_send && isParensettingsConfigured){
        await this.sendInteraction([{ interaction_rid: interactionId,
         project_fiscal_rid: interactionData.project_fiscal_rid,interaction_level:interactionLevel
@@ -234,7 +235,7 @@ export class InteractionService {
     }
     else{
     const isEnabled = await this.interactionSchemaService.isAutoSendInteractionEnabled(accountNumber, interactionData);
-    this.logger.info(`Auto-send is ${isEnabled ? "enabled" : "disabled"} for interaction ID: ${interactionId}`);
+    this.logger.info(`Auto-send: ${isEnabled ? "enabled" : "disabled"}, Parent settings: ${isParensettingsConfigured ? "enabled" : "disabled"} for interaction ID: ${interactionId}`);
     if (isEnabled && isParensettingsConfigured) {
        const projectInfo = await this.interactionSchemaService.fetchProjectInfo(accountNumber, interactionData.project_fiscal_rid);
        const accountInfo = await this.interactionSchemaService.fetchAccountInfo(accountRid, accountNumber);
@@ -2356,14 +2357,17 @@ export class InteractionService {
   
     let totalResults : number = 0
 
-    const result : any = await mainDb.query(fetchInteractionTemplates(
-      data.sortBy,
-      data.sortOrder,
-      data.filters,
-      data.page, 
-      data.limit,
-      data.search
-    ))
+    const result : any = await mainDb.query(await fetchInteractionTemplates(
+        data.sortBy,
+        data.sortOrder,
+        data.filters,
+        data.page,
+        data.limit,
+        data.search,
+        data.apiSource,
+        data.templateType,
+        mainDb
+      ))
     if(result[0][0].interactions != null) {
       let finalData = result[0][0].interactions == null ? [] : result[0][0].interactions
       totalResults = finalData[0].total_records
@@ -2400,7 +2404,7 @@ export class InteractionService {
     errorMessage?: string;
     data?: { interactions: any };
   }> {
-    const dbInit = await this.interactionModelService.getSequelize();
+    const dbInit = await this.interactionModelService.getMainSequelize();
     const transaction = await dbInit.transaction();
     try {
        

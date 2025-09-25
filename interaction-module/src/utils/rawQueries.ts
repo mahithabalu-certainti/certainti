@@ -8,6 +8,7 @@ import {
   filterTypesForSummaryInteractions,
   interactionFlag,
   MAIN_SCHEMA_NAME,
+  rawQueries,
   responseSortKeys,
   STATUS_MESSAGE,
   templatefiltersColumns,
@@ -245,13 +246,16 @@ export const fetchInteractionForProjectLevelQuery = (
   return query;
 };
 
-export const fetchInteractionTemplates = (
+export const fetchInteractionTemplates = async (
   sort: string,
   sortBy: string,
   filters: filterType,
   page: number,
   limit: number,
   search : string,
+  apiSource : string,
+  templateType : string,
+  mainDb:Sequelize
 ) => {
   let offset = (page - 1) * limit;
   let pagination = `LIMIT ${limit} OFFSET ${offset}`;
@@ -259,11 +263,21 @@ export const fetchInteractionTemplates = (
   let filterQueryValues;
   let sortValue: string;
   let andConditions = ``;
+  let interactionLLevelCondition = ``;
   let searchValue;
 
 
   if(search) searchValue = `%${search}%`
   else searchValue = `%%`
+  if(apiSource === 'interaction' && templateType) {
+    pagination = ``;
+    let [fetchInteractionStatus]: any[] = await mainDb.query(
+   rawQueries.fetchInteractionLevelRidByName(templateType)
+  );
+  let interactionLevelId = fetchInteractionStatus[0]?.rid;
+   interactionLLevelCondition = ` AND i.interaction_level_rid = '${interactionLevelId}' `
+  }
+
 
   let filteredData = filterForInteractionTemplates(
     filters,
@@ -322,7 +336,7 @@ export const fetchInteractionTemplates = (
             LEFT JOIN ${MAIN_SCHEMA_NAME}.user um ON um.rid = i.modified_by
             WHERE
             (i.r_number ILIKE '${searchValue}')
-           
+            ${interactionLLevelCondition}
             ${filteredData?.andConditions}
             ${filterQueryValues}
             ${sortValue}
