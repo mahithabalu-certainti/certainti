@@ -187,7 +187,7 @@ export const transformProjectData = (
             : '-',
         },
         {
-          label: 'AI-Estimated QRE',
+          label: 'QRE Percent Potential',
           value: aiEstimatedQre ? `${aiEstimatedQre}%` : '-',
           key: 'ai_estimated_qre',
         },
@@ -210,7 +210,7 @@ export const transformProjectData = (
             : '-',
         },
         {
-          label: 'Adjustment Factor',
+          label: 'QRE Percent Adjustment',
           key: 'adjustment_factor',
           value: adjustmentFactor ? `${adjustmentFactor}%` : '',
           editable: aiEstimatedQre ? true : false,
@@ -231,7 +231,7 @@ export const transformProjectData = (
             : '-',
         },
         {
-          label: 'Net QRE',
+          label: 'QRE Percent Final',
           value: project?.rd_percent_final
             ? `${project.rd_percent_final}%`
             : '-',
@@ -254,6 +254,10 @@ export const transformProjectData = (
             ? costDisplay(project.total_cost, currencySymbol)
             : '-',
         },
+        {
+          label: 'QRE Final',
+          value: costDisplay(project?.qre_final, currencySymbol),
+        },
       ],
     },
     {
@@ -263,12 +267,12 @@ export const transformProjectData = (
           value: project?.currency_name || '-',
         },
         {
-          label: 'Project Effort (Hours)',
-          value: project?.total_effort?.toString() || '-',
+          label: '',
+          value: '',
         },
         {
-          label: 'QRE Cost',
-          value: costDisplay(project?.qre_final, currencySymbol),
+          label: 'Project Effort (Hours)',
+          value: project?.total_effort?.toString() || '-',
         },
       ],
     },
