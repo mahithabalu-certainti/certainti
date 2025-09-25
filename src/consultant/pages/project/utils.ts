@@ -157,6 +157,7 @@ interface DisplayColumn {
     hide?: boolean;
     editable?: boolean;
     onSave?: (value: string) => void;
+    showHyphenForEmptyValue?: boolean;
   }>;
 }
 
@@ -269,6 +270,7 @@ export const transformProjectData = (
         {
           label: '',
           value: '',
+          showHyphenForEmptyValue: false,
         },
         {
           label: 'Project Effort (Hours)',
