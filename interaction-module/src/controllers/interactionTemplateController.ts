@@ -85,7 +85,7 @@ async function listInteractionTemplates(req: Request, res: Response) {
   try {
     console.log(`[${methodName}] Request received`);
     const userId = req.headers["x-user-id"] as string;
-    const value = await validateRequest(req, listInteractionTemplatesSchema, res, "GET");
+    const value = await validateRequest(req, listInteractionTemplatesSchema, res, "POST");
     console.log(`[${methodName}] userId:`, userId);
     console.log(`[${methodName}] value:`, value);
     if (!userId) {
@@ -109,9 +109,8 @@ async function listInteractionTemplates(req: Request, res: Response) {
       );
     }
 
-    const page: number = value.page || 1;
-    const limit: number = value.limit || 10;
     const result = await interactionService.listInteractionTemplates(value,userId,parsedFilters)
+    console.log(`[${methodName}] Service response:`, JSON.stringify(result));
     if(result.statusCode === HttpStatus.SUCCESS) {
       return res.status(HttpStatus.SUCCESS).json({
         statusCode : HttpStatus.SUCCESS,

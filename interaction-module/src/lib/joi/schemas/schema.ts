@@ -228,13 +228,11 @@ const exportTechnicalSummarySchema = Joi.object({
 }); 
 
 const listInteractionTemplatesSchema = Joi.object({
-  page: Joi.string().optional()
-    .pattern(/^[0-9]+$/)
+  page: Joi.number().optional()
   ,
-  limit: Joi.string().optional()
-    .pattern(/^[0-9]+$/)
+  limit: Joi.number().optional()
     ,
-  filters: Joi.string().default("{}"),
+  filters: Joi.object().default("{}"),
   sortBy: Joi.string().optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
 }); 
