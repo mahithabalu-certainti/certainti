@@ -17,89 +17,92 @@ async function listFinancialHighlightsAccounts (req : Request, res : Response) {
             let resourceMetricArray = []
             let detailsMetricArray = []
             let claimJurisdictionArray = []
+
             resourceMetricArray.push({
                 rid : uuid(),
                 metric : result.data.resource_metrics.metric,
-                fte : result.data.resource_metrics.fte,
-                subcon : result.data.resource_metrics.subcon,
-                nonlabor: result.data.resource_metrics?.nonlabor == undefined ? 0 : result.data.resource_metrics.nonlabor
-                
-            })
+                fte : result.data.resource_metrics.fte == undefined ? "0" : Number(result.data.resource_metrics.fte).toFixed(0),
+                subcon : result.data.resource_metrics.subcon == undefined ? "0" : Number(result.data.resource_metrics.subcon).toFixed(0),
+                nonlabor: result.data.resource_metrics?.nonlabor == undefined ? "0" : Number(result.data.resource_metrics.nonlabor).toFixed(0)
+              })
+
             detailsMetricArray.push({
                 rid : uuid(),
                 metric_name : result.data.fte_hours.metric_name,
                 permission : result.data.fte_hours.permission,
-                project_level : result.data.fte_hours.project_level,
-                project_resource_level : result.data.fte_hours.project_resource_level,
-                project_task_level : result.data.fte_hours.project_task_level
+                project_level : Number(result.data.fte_hours.project_level).toFixed(2),
+                project_resource_level : Number(result.data.fte_hours.project_resource_level).toFixed(2),
+                project_task_level : Number(result.data.fte_hours.project_task_level).toFixed(2)
             })
             detailsMetricArray.push({
                 rid : uuid(),
                 metric_name : result.data.fte_cost.metric_name,
                 permission : result.data.fte_cost.permission,
-                project_level : result.data.fte_cost.project_level,
-                project_resource_level : result.data.fte_cost.project_resource_level,
-                project_task_level : result.data.fte_cost.project_task_level
+                project_level : Number(result.data.fte_cost.project_level).toFixed(2),
+                project_resource_level : Number(result.data.fte_cost.project_resource_level).toFixed(2),
+                project_task_level : Number(result.data.fte_cost.project_task_level).toFixed(2)
             })
             detailsMetricArray.push({
                 rid : uuid(),
                 metric_name : result.data.subcon_hours.metric_name,
                 permission : result.data.subcon_hours.permission,
-                project_level : result.data.subcon_hours.project_level,
-                project_resource_level : result.data.subcon_hours.project_resource_level,
-                project_task_level : result.data.subcon_hours.project_task_level
+                project_level : Number(result.data.subcon_hours.project_level).toFixed(2),
+                project_resource_level : Number(result.data.subcon_hours.project_resource_level).toFixed(2),
+                project_task_level : Number(result.data.subcon_hours.project_task_level).toFixed(2)
             })
             detailsMetricArray.push({
                 rid : uuid(),
                 metric_name : result.data.subcon_cost.metric_name,
                 permission : result.data.subcon_cost.permission,
-                project_level : result.data.subcon_cost.project_level,
-                project_resource_level : result.data.subcon_cost.project_resource_level,
-                project_task_level : result.data.subcon_cost.project_task_level
+                project_level : Number(result.data.subcon_cost.project_level).toFixed(2),
+                project_resource_level : Number(result.data.subcon_cost.project_resource_level).toFixed(2),
+                project_task_level : Number(result.data.subcon_cost.project_task_level).toFixed(2)
             })
             detailsMetricArray.push({
                 rid : uuid(),
                 metric_name : result.data.nonlabor_cost.metric_name,
                 permission : result.data.nonlabor_cost.permission,
-                project_level : result.data.nonlabor_cost.project_level,
-                project_resource_level : result.data.nonlabor_cost.project_resource_level
+                project_level : Number(result.data.nonlabor_cost.project_level).toFixed(2),
+                project_resource_level : Number(result.data.nonlabor_cost.project_resource_level).toFixed(2)
             })
+
             claimJurisdictionArray.push({
                 rid : uuid(),
                 name : result.data.federal.name,
-                rd_credits_fte : result.data.federal.rd_credits_fte,
-                rd_credits_subcon : result.data.federal.rd_credits_subcon,
-                rd_credits_nonlabor : result.data.federal.rd_credits_nonlabor,
-                rd_credits_total : result.data.federal.rd_credits_total
+                rd_credits_fte : Number(result.data.federal.rd_credits_fte).toFixed(2),
+                rd_credits_subcon : Number(result.data.federal.rd_credits_subcon).toFixed(2),
+                rd_credits_nonlabor : Number(result.data.federal.rd_credits_nonlabor).toFixed(2),
+                rd_credits_total : Number(result.data.federal.rd_credits_total).toFixed(2)
             })
             claimJurisdictionArray.push({
                 rid : uuid(),
                 name : result.data.state_wise.name,
-                rd_credits_fte : result.data.state_wise.rd_credits_fte,
-                rd_credits_subcon : result.data.state_wise.rd_credits_subcon,
-                rd_credits_nonlabor : result.data.state_wise.rd_credits_nonlabor,
-                rd_credits_total : result.data.state_wise.rd_credits_total
+                rd_credits_fte : Number(result.data.state_wise.rd_credits_fte).toFixed(2),
+                rd_credits_subcon : Number(result.data.state_wise.rd_credits_subcon).toFixed(2),
+                rd_credits_nonlabor : Number(result.data.state_wise.rd_credits_nonlabor).toFixed(2),
+                rd_credits_total : Number(result.data.state_wise.rd_credits_total).toFixed(2)
             })
             claimJurisdictionArray.push({
                 rid : uuid(),
                 name : result.data.grand_total.name,
-                rd_credits_fte : result.data.grand_total.rd_credits_fte,
-                rd_credits_subcon : result.data.grand_total.rd_credits_subcon,
-                rd_credits_nonlabor : result.data.grand_total.rd_credits_nonlabor,
-                rd_credits_total : result.data.grand_total.rd_credits_total
+                rd_credits_fte : Number(result.data.grand_total.rd_credits_fte).toFixed(2),
+                rd_credits_subcon : Number(result.data.grand_total.rd_credits_subcon).toFixed(2),
+                rd_credits_nonlabor : Number(result.data.grand_total.rd_credits_nonlabor).toFixed(2),
+                rd_credits_total : Number(result.data.grand_total.rd_credits_total).toFixed(2)
             })
+
             let finalData = {
                 account_rid : data.account_rid,
                 fiscal_year : data.fiscal_year,
-                rd_eligible_projects :  result.data.resource_metrics.total_projects_rd_credits,
+                rd_eligible_projects : result.data.resource_metrics.total_projects_rd_credits,
                 resource_metrics : resourceMetricArray,
                 detailed_metrics : detailsMetricArray,
                 claim_jurisdiction : claimJurisdictionArray
             }
+
             handleSuccessResponse(res, finalData)
             return;
-        }
-        else {
+        } else {
             handleSuccessResponse(res, null)
             return;
         }
@@ -123,92 +126,95 @@ async function listFinancialHighlightsProjects (req : Request, res : Response) {
             resourceMetricArray.push({
                 rid : uuid(),
                 metric : result.data.resource_metrics.metric,
-                fte : result.data.resource_metrics.fte,
-                subcon : result.data.resource_metrics.subcon,
-                nonlabor : result.data.resource_metrics.nonlabor
+                fte : Number(result.data.resource_metrics.fte).toFixed(0),
+                subcon : Number(result.data.resource_metrics.subcon).toFixed(0),
+                nonlabor : Number(result.data.resource_metrics.nonlabor).toFixed(0)
             })
             detailsMetricArray.push({
                 rid : uuid(),
                 metric_name : result.data.fte_hours.metric_name,
                 permission : result.data.fte_hours.permission,
-                project_level : result.data.fte_hours.project_level,
-                project_resource_level : result.data.fte_hours.project_resource_level,
-                project_task_level : result.data.fte_hours.project_task_level
+                project_level : Number(result.data.fte_hours.project_level).toFixed(2),
+                project_resource_level : Number(result.data.fte_hours.project_resource_level).toFixed(2),
+                project_task_level : Number(result.data.fte_hours.project_task_level).toFixed(2)
             })
             detailsMetricArray.push({
                 rid : uuid(),
                 metric_name : result.data.fte_cost.metric_name,
                 permission : result.data.fte_cost.permission,
-                project_level : result.data.fte_cost.project_level,
-                project_resource_level : result.data.fte_cost.project_resource_level,
-                project_task_level : result.data.fte_cost.project_task_level
+                project_level : Number(result.data.fte_cost.project_level).toFixed(2),
+                project_resource_level : Number(result.data.fte_cost.project_resource_level).toFixed(2),
+                project_task_level : Number(result.data.fte_cost.project_task_level).toFixed(2)
             })
             detailsMetricArray.push({
                 rid : uuid(),
                 metric_name : result.data.subcon_hours.metric_name,
                 permission : result.data.subcon_hours.permission,
-                project_level : result.data.subcon_hours.project_level,
-                project_resource_level : result.data.subcon_hours.project_resource_level,
-                project_task_level : result.data.subcon_hours.project_task_level
+                project_level : Number(result.data.subcon_hours.project_level).toFixed(2),
+                project_resource_level : Number(result.data.subcon_hours.project_resource_level).toFixed(2),
+                project_task_level : Number(result.data.subcon_hours.project_task_level).toFixed(2)
             })
             detailsMetricArray.push({
                 rid : uuid(),
                 metric_name : result.data.subcon_cost.metric_name,
                 permission : result.data.subcon_cost.permission,
-                project_level : result.data.subcon_cost.project_level,
-                project_resource_level : result.data.subcon_cost.project_resource_level,
-                project_task_level : result.data.subcon_cost.project_task_level
+                project_level : Number(result.data.subcon_cost.project_level).toFixed(2),
+                project_resource_level : Number(result.data.subcon_cost.project_resource_level).toFixed(2),
+                project_task_level : Number(result.data.subcon_cost.project_task_level).toFixed(2)
             })
             detailsMetricArray.push({
                 rid : uuid(),
                 metric_name : result.data.nonlabor_cost.metric_name,
                 permission : result.data.nonlabor_cost.permission,
-                project_level : result.data.nonlabor_cost.project_level,
-                project_resource_level : result.data.nonlabor_cost.project_resource_level
+                project_level : Number(result.data.nonlabor_cost.project_level).toFixed(2),
+                project_resource_level : Number(result.data.nonlabor_cost.project_resource_level).toFixed(2)
             })
             rdCreditsArray.push({
                 rid : uuid(),
                 name : result.data.rd_credits.name,
-                rd_credits_fte : result.data.rd_credits.rd_credits_fte,
-                rd_credits_subcon : result.data.rd_credits.rd_credits_subcon,
-                rd_credits_nonlabor : result.data.rd_credits.rd_credits_nonlabor,
-                rd_credits_total : result.data.rd_credits.rd_credits_total
+                rd_credits_fte : Number(result.data.rd_credits.rd_credits_fte).toFixed(2),
+                rd_credits_subcon : Number(result.data.rd_credits.rd_credits_subcon).toFixed(2),
+                rd_credits_nonlabor : Number(result.data.rd_credits.rd_credits_nonlabor).toFixed(2),
+                rd_credits_total : Number(result.data.rd_credits.rd_credits_total).toFixed(2)
             })
             qreArray.push({
                 rid : uuid(),
                 name : result.data.qre.name,
-                qre_fte : result.data.qre.qre_fte,
-                qre_subcon : result.data.qre.qre_subcon,
-                qre_nonlabor : result.data.qre.qre_nonlabor,
-                qre_final : result.data.qre.qre_final
+                qre_fte : Number(result.data.qre.qre_fte).toFixed(2),
+                qre_subcon : Number(result.data.qre.qre_subcon).toFixed(2),
+                qre_nonlabor : Number(result.data.qre.qre_nonlabor).toFixed(2),
+                qre_final : Number(result.data.qre.qre_final).toFixed(2)
             })
             rdPercentArray.push({
                 rid : uuid(),
                 name : result.data.rd_percent.name,
-                rd_percent_potential : result.data.rd_percent.rd_percent_potential,
-                rd_percent_adjustment : result.data.rd_percent.rd_percent_adjustment,
-                rd_percent_final : result.data.rd_percent.rd_percent_final
+                rd_percent_potential : Number(result.data.rd_percent.rd_percent_potential).toFixed(2),
+                rd_percent_adjustment : Number(result.data.rd_percent.rd_percent_adjustment).toFixed(2),
+                rd_percent_final : Number(result.data.rd_percent.rd_percent_final).toFixed(2)
             })
             claimJurisdictionArray.push({
-                rid : uuid(),
-                name : result.data.federal.name,
-                claim_rd_credits_fte : result.data.federal.rd_credits_fte,
-                claim_rd_credits_subcon : result.data.federal.rd_credits_subcon,
-                claim_rd_credits_nonlabor : result.data.federal.rd_credits_nonlabor,
-            })
+              rid : uuid(),
+              name : result.data.federal.name,
+              claim_rd_credits_fte : Number(result.data.federal.rd_credits_fte).toFixed(2),
+              claim_rd_credits_subcon : Number(result.data.federal.rd_credits_subcon).toFixed(2),
+              claim_rd_credits_nonlabor : Number(result.data.federal.rd_credits_nonlabor).toFixed(2),
+              claim_rd_credits_total : result.data.federal.rd_credits_total
+          })
             claimJurisdictionArray.push({
                 rid : uuid(),
                 name : result.data.state_wise.name,
-                claim_rd_credits_fte : result.data.state_wise.rd_credits_fte,
-                claim_rd_credits_subcon : result.data.state_wise.rd_credits_subcon,
-                claim_rd_credits_nonlabor : result.data.state_wise.rd_credits_nonlabor
+                claim_rd_credits_fte : Number(result.data.state_wise.rd_credits_fte).toFixed(2),
+                claim_rd_credits_subcon : Number(result.data.state_wise.rd_credits_subcon).toFixed(2),
+                claim_rd_credits_nonlabor : Number(result.data.state_wise.rd_credits_nonlabor).toFixed(2),
+                claim_rd_credits_total : result.data.state_wise.rd_credits_total
             })
             claimJurisdictionArray.push({
                 rid : uuid(),
                 name : result.data.grand_total.name,
-                claim_rd_credits_fte : result.data.grand_total.rd_credits_fte,
-                claim_rd_credits_subcon : result.data.grand_total.rd_credits_subcon,
-                claim_rd_credits_nonlabor : result.data.grand_total.rd_credits_nonlabor
+                claim_rd_credits_fte : Number(result.data.grand_total.rd_credits_fte).toFixed(2),
+                claim_rd_credits_subcon : Number(result.data.grand_total.rd_credits_subcon).toFixed(2),
+                claim_rd_credits_nonlabor : Number(result.data.grand_total.rd_credits_nonlabor).toFixed(2),
+                claim_rd_credits_total : result.data.grand_total.rd_credits_total
             })
             let finalData = {
                 account_rid : data.account_rid,

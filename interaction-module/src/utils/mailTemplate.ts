@@ -40,6 +40,8 @@ function interactionMailTemplate(
           </ol>
           <p>Your responses are invaluable to us and will contribute significantly to our efforts. Upon completion, submit the interaction, and your responses will be securely forwarded to us for further processing.</p>
           <p>Thank you,<br><strong>Think R&D Team</strong><br>Powered by Certainiti.ai</p>
+
+          <p style="color: #888; font-size: 0.9em;"><em>📌 Please do not delete or modify the subject or content of this email while replying. This helps us track and process your responses accurately.</em></p>
         `
             : `
           <p>Dear ${recipient.name || ""},</p>
@@ -60,6 +62,8 @@ function interactionMailTemplate(
           </ol>
           <p>Your responses are invaluable to us and will contribute significantly to our efforts. Upon completion, submit the interaction, and your responses will be securely forwarded to us for further processing.</p>
           <p>Thank you,<br><strong>Think R&D Team</strong><br>Powered by Certainiti.ai</p>
+
+          <p style="color: #888; font-size: 0.9em;"><em>📌 Please do not delete or modify the subject or content of this email while replying. This helps us track and process your responses accurately.</em></p>
         `,
       },
       toRecipients: [
