@@ -1700,6 +1700,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         recipient_name,
         recipient_email,
         interaction_level_rid,
+        fiscal_year
       } = interactionDetails.dataValues;
       const metainfo = await this.insertAdditionalInfo(
         interactionDetails,
@@ -1709,6 +1710,11 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         created_by ?? "",
         modified_by ?? ""
       );
+      const fiscalYear =
+        metainfo?.interaction_level_name === "Project"
+          ? metainfo?.fiscal_year ?? ""
+          : fiscal_year ?? "";
+
       const response: InteractionDetailsResponse = {
         interaction_rid: rid,
         r_number: r_number ?? "",
@@ -1719,7 +1725,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         project_rnumber : metainfo?.project_rnumber ?? "",
         account_rid,
         project_rid: project_rid ?? "",
-        fiscal_year: metainfo?.fiscal_year ?? "",
+        fiscal_year: fiscalYear,
         project_fiscal_rid: project_fiscal_rid ?? "",
         interaction_type: interaction_type_rid ?? "",
         interaction_type_name: metainfo?.interaction_type_name ?? "",

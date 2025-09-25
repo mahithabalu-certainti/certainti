@@ -43,12 +43,13 @@ const createAccountInteractionSchema = Joi.object({
   account_rid: Joi.string().pattern(uuidRegex).required(),
   interaction_level_rid: Joi.string().pattern(uuidRegex).required(),
   trigger_send: Joi.boolean().optional().default(false),
+  fiscal_year: Joi.number().integer().optional(),
   projects: Joi.array()
     .items(
       Joi.object({
         project_rid: Joi.string().pattern(uuidRegex).required(),
         project_fiscal_rid: Joi.string().pattern(uuidRegex).required(),
-        fiscal_year: Joi.number().integer().min(1900).max(2100).required(),
+        fiscal_year: Joi.number().integer().min(1900).required(),
       })
     )
     .optional(),
