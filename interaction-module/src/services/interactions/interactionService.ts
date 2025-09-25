@@ -1108,9 +1108,11 @@ export class InteractionService {
           errorMessage: "Invalid account ID",
         };
       }
-      const schemaName = rawQueries.fetchSchemaName(accountNumber)
-      const fetchInQueueStatus : any = await mainDb.query(rawQueries.fetchInteractionQueueStatus())
+
       const interactionResponse: any[] = [];
+      const schemaName = rawQueries.fetchSchemaName(accountNumber)
+
+      const fetchInQueueStatus : any = await mainDb.query(rawQueries.fetchInteractionQueueStatus())
 
       for (const { interaction_rid, email_info, project_fiscal_rid, interaction_level } of interactions) {
         let data : any = {}
