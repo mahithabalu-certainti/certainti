@@ -102,7 +102,7 @@ export const filtersColumns : Record<string, string> =
     interaction_type_rid : "interaction_type_rid",
     interaction_level_rid:"interaction_level_rid",
     parent_interaction_rid : "parent_interaction_rid",
-    createdAt : "created_datetime",
+    createdAt : "createdAt",
     template_name : "template_name"
   }
 
@@ -600,10 +600,12 @@ export const rawQueries = {
       WHERE rid = '${interactionId}'
     `;
   },
+  fetchParentAccountforEmail : `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
   fetchInteractionTemplates :  `
     SELECT 
         it.rid,
         it.r_number,
+        it.template_name,
         it.interaction_type_rid,
         itype.interaction_type_name,
         it.interaction_level_rid,
