@@ -10,7 +10,6 @@ export const MANAGE_ACCOUNT_ACCESS = '/manage-account-access';
 export const MANAGE_SETTINGS = '/manage-settings';
 export const MANAGE_GEO_BASED_RULE = '/manage-geo-based-rule';
 export const IMPORT_TEMPLATES = '/import-templates';
-export const INTERACTION_TEMPLATES = '/interaction-templates';
 export const EMAIL_TEMPLATES = '/email-templates';
 export const SURVEY_TEMPLATES = '/survey-templates';
 export const TASK_TEMPLATES = '/task-templates';
@@ -32,6 +31,11 @@ export const MANAGE_PROFILE_VIEW = `${MANAGE_PROFILE}/view/:profileId`;
 export const MANAGE_USER_GROUP = `${ADMIN}/manage-user-group`;
 export const MANAGE_USER_GROUP_CREATE = `${MANAGE_USER_GROUP}/create`;
 export const MANAGE_USER_GROUP_EDIT = `${MANAGE_USER_GROUP}/edit/:groupId`;
+
+/** ADMIN TEMPLATES ROUTES */
+export const INTERACTION_TEMPLATES = `${ADMIN}/interaction-templates`;
+export const INTERACTION_TEMPLATES_CREATE = `${INTERACTION_TEMPLATES}/create`;
+export const INTERACTION_TEMPLATES_EDIT = `${INTERACTION_TEMPLATES}/edit/:templateId`;
 
 /** ACCOUNT ROUTES */
 export const ACCOUNT = '/account';
