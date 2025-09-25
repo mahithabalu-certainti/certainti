@@ -13,7 +13,7 @@ import { ALPHANUMERIC_CONDITIONS, HttpStatus, mainTableFilters, rawQueries,statu
 import { Op, Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
-import { checkTableExists, fetchAllParentRNumber, fetchInteractionForProjectLevelQuery, fetchInteractionForSentResentStatus, fetchInteractionTemplates, fetchProjectAttachmentsRids, fetchProjectInteractionRid, interactionResponseHistoryByVersion, listAllInteractionSummary, listAttachments, listInteractionHistory, listResponseHistory } from "../../utils/rawQueries";
+import { checkTableExists, fetchAllParentRNumber, fetchInteractionForProjectLevelQuery, fetchInteractionForSentResentStatus, fetchProjectAttachmentsRids, fetchProjectInteractionRid, fetchStatusIdsForReminderList, interactionResponseHistoryByVersion, listAllInteractionSummary, listAttachments, listInteractionHistory, listResponseHistory, fetchInteractionTemplates } from "../../utils/rawQueries";
 import { generateSasUrl } from "../../utils/blob";
 import { interactionMailTemplate, interactionReminderMailTemplate } from "../../utils/mailTemplate";
 import { sendEmailWithAttachment } from "../emailService";
@@ -1331,7 +1331,7 @@ export class InteractionService {
     this.logger.info("Interact method called.");
     // Implementation here
   }
-  async listInteractionPrjAccount(data : any,userId : string,apiType:string) : Promise<any>{
+  async listInteractionPrjAccount(data : any,userId : string,apiType:string, reminderSpecificList : boolean, statusIdsForReminderList : string[]) : Promise<any>{
     const mainDb = await this.getMainDb()
     const orgDb = await this.getOrgDb()
       const userGroupType = await this.interactionSchemaService.getUserGroupType(userId);
@@ -1343,6 +1343,15 @@ export class InteractionService {
       const isPOCProfile =
         userProfileType?.profileName === "Project Point of Contact";
       let accessibleIds: string[] = [];
+      let reminderFlag : boolean
+      let reminderIds : string[]
+      if(reminderSpecificList) {
+        reminderFlag = true
+        reminderIds = statusIdsForReminderList
+      } else {
+        reminderFlag = false
+        reminderIds = []
+      }
       if (!isCustomGlobal) {
         accessibleIds = await this.interactionSchemaService.getAccessibleProjectIds(
           userId,
@@ -1437,7 +1446,9 @@ export class InteractionService {
       disablePagination,
       accessibleIds,
       data.search,
-      activeStatus?.rid
+      activeStatus?.rid,
+      reminderFlag,
+      reminderIds
     ))
     let hasEmailRecipient = false;
     if(result[0][0].interactions != null) {
@@ -2279,6 +2290,13 @@ export class InteractionService {
       }
     }
     console.log(`[BATCH EMAIL] Finished processing batch.`);
+  }
+  async fetchStatusIdsForReminder () {
+    const mainDb = await this.getMainDb()
+    const result : any = await mainDb.query(fetchStatusIdsForReminderList());
+    if(result[0].length > 0) {
+      return result[0].map((d : any) => d.rid)
+    }
   }
 
   //code for interaction templates
