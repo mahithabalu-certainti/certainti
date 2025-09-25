@@ -315,10 +315,16 @@ export const ProjectResources = ({
       setSortOrder(defaultSortOrder);
       setSortField(defaultSortField);
     } else {
-      // setSortFilterCount(1);
+      setSortFilterCount(1);
       setSortOrder(apiOrder);
       setSortField(sortBy);
     }
+  };
+
+  const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
+    const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
+    setSortOrder(apiOrder);
+    setSortField(sortBy);
   };
 
   useEffect(() => {
@@ -748,7 +754,7 @@ export const ProjectResources = ({
                     onRowsPerPageChange={setRowsPerPage}
                     sortBy={sortField}
                     sortOrder={sortOrder}
-                    onSort={handleSorting}
+                    onSort={handleSort}
                     selectable={false}
                     onSelectionChange={(selectedIds: unknown) =>
                       console.log('Selected:', selectedIds)
