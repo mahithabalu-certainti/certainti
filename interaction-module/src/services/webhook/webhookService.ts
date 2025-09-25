@@ -39,10 +39,11 @@ export class WebHookService {
       let mailProcessedResults = null;
       let finalResult = null;
       let receivedEmail = null;
+      let messageId = null;
 
       for (const notification of notifications) {
         const subscriptionId = notification.subscriptionId;
-        const messageId = notification.resourceData?.id;
+        messageId = notification.resourceData?.id;
 
         if (!messageId) {
           continue;
@@ -335,7 +336,7 @@ export class WebHookService {
         };
       }
 
-      const projectData = await this.validateProjectData(validAccountNumber , {
+      const projectData = await this.validateProjectData(validAccountNumber , finalResult.interactionLevel, {
         projectId,
         projectName,
         projectCode,
@@ -481,6 +482,8 @@ export class WebHookService {
         status: "SUCCESS",
       });
 
+      this.processedMessageIds.delete(messageId);
+
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -600,6 +603,7 @@ export class WebHookService {
 
   async validateProjectData(
     accountNumber: string,
+    interactionLevel: string,
     {
       projectId,
       projectName,
@@ -610,6 +614,10 @@ export class WebHookService {
       projectCode: string | null;
     }
   ): Promise<string | null> {
+    if(interactionLevel !== 'Project'){
+      return null;
+    };
+
     if (!projectId || typeof projectId !== 'string') {
       return 'Invalid Project Id';
     }
@@ -767,8 +775,9 @@ export class WebHookService {
     let interactionIdFomBody: string = "";
     let FORWARD_EMAIL: string | null = null;
     let accountRNumber = "";
+    let interactionLevel = "";
 
-    const match = htmlBodyContent.match(/\(Interaction Ref Id:\s*(D001-[a-f0-9\-]+)\s*\)/i);
+    const match = htmlBodyContent.match(/\(Interaction Ref Id:\s*((?:D001|U001|S001|P001)-[a-f0-9\-]+)\s*\)/i);
     if (match && match[1]) {
       interactionIdFomBody = match[1];
       const globalInteraction: any = await this.fetchGlobalInteractions(
@@ -785,6 +794,8 @@ export class WebHookService {
         globalInteraction[0].account_rid
       );
       FORWARD_EMAIL = keyContactsEmail;
+
+      interactionLevel = await this.fetchInteractionLevel(accountNumber, interactionIdFomBody);
     } else {
       return {
         success: false,
@@ -819,6 +830,7 @@ export class WebHookService {
       const result = await this.processAttachment(
         att,
         message,
+        interactionLevel,
         FORWARD_EMAIL,
         graphClient,
         {
@@ -849,6 +861,7 @@ export class WebHookService {
       forwardEmail: FORWARD_EMAIL,
       originlMessage: message,
       interactionId: interactionIdFomBody,
+      interactionLevel,
       success: true,
     };
   }
@@ -856,6 +869,7 @@ export class WebHookService {
   private async processAttachment(
     att: any,
     message: any,
+    interactionLevel: string,
     forwardEmail: string | null,
     graphClient: Client,
     options: {
@@ -892,7 +906,7 @@ export class WebHookService {
         const rows = await this.parseCsvBuffer(buffer);
         parsedData = rows;
 
-        const validationResult = this.validateCSV(rows);
+        const validationResult = this.validateCSV(rows, interactionLevel);
 
         if (validationResult.valid) {
           this.logger.info("Valid CSV:", att.name);
@@ -950,7 +964,7 @@ export class WebHookService {
 
         parsedData = rows;
 
-        const validationResult = this.validateCSV(rows);
+        const validationResult = this.validateCSV(rows, interactionLevel);
 
         if (validationResult.valid) {
           this.logger.info("Valid XLSX:", att.name);
@@ -1088,6 +1102,33 @@ export class WebHookService {
     return targetContact?.key_contact_email || null;
   }
 
+  private async fetchInteractionLevel(accountNumber: string, interactionId: string){
+    const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+
+    const orgDbSequelize = await this.interactionModelService.getSequelize();
+    const mainDbSequelize =
+      await this.interactionModelService.getMainSequelize();
+
+    const interactionDetails: any = await orgDbSequelize.query(
+      rawQueries.fetchInteractionDetailsById(schemaName, interactionId),
+      {
+        type: "SELECT",
+      }
+    );
+
+    if(interactionDetails && interactionDetails.length > 0){
+      const interactionLevelId = interactionDetails[0]?.interaction_level_rid ?? null;
+      const result: any = await mainDbSequelize.query(rawQueries.fetchInteractionLevel([interactionLevelId]), {
+        type: "SELECT",
+      });
+
+      if(result && result.length > 0){
+        return result[0]?.interaction_level_name ?? null;
+      }
+    }
+    return null;
+  }
+
   private parseCsvBuffer(buffer: Buffer): Promise<string[][]> {
     return new Promise((resolve, reject) => {
       const rows: string[][] = [];
@@ -1102,7 +1143,7 @@ export class WebHookService {
     });
   }
 
-  private validateCSV(array: string[][]): { valid: true } | { valid: false; errors: string[] } {
+  private validateCSV(array: string[][], interactionLevel: string): { valid: true } | { valid: false; errors: string[] } {
     const errors: string[] = [];
   
     if (!Array.isArray(array) || array.length < 6) {
@@ -1119,11 +1160,11 @@ export class WebHookService {
     if (array[1]?.[0] !== "Interaction ID" || !array[1]?.[1]) {
       errors.push("Missing or invalid 'Interaction ID' in row 2.");
     }
-    if (array[2]?.[0] !== "Project ID" || !array[2]?.[1]) {
+    if ((array[2]?.[0] !== "Project ID" || !array[2]?.[1]) && interactionLevel === 'Project') {
       errors.push("Missing or invalid 'Project ID' in row 3.");
     }
 
-    if (array[4]?.[0] !== "Project Code" || !array[4]?.[1]) {
+    if ((array[4]?.[0] !== "Project Code" || !array[4]?.[1]) && interactionLevel === 'Project') {
       errors.push("Missing or invalid 'Project Code' in row 5.");
     }
   

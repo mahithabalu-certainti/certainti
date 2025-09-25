@@ -278,7 +278,10 @@ export class ProjectTaskService {
                 exportRecord['Role'] = task.resource_role || "-";
               }
               if (allowedFieldSet.has('start_date')) {
-                exportRecord['Task Date'] = moment(task.start_date).format("YYYY-MM-DD") || "-";
+                exportRecord['Start Date'] = task.start_date ? moment(task.start_date).format("YYYY-MMM-DD") : "-";
+              }
+              if (allowedFieldSet.has('end_date')) {
+                exportRecord['End Date'] = task.end_date ? moment(task.end_date).format("YYYY-MMM-DD") : "-";
               }
               if (allowedFieldSet.has('total_cost_pro_task')) {
                 exportRecord['Cost'] = await this.formatNumberForExport(

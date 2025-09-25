@@ -2,6 +2,7 @@ import { Logger } from "winston";
 import {
   ICreateAccountInteraction,
   ICreateInteraction,
+  ICreateTemplateInteraction,
   InteractionResponse,
   IProject,
   IUpdateInteraction,
@@ -12,7 +13,7 @@ import { ALPHANUMERIC_CONDITIONS, HttpStatus, mainTableFilters, rawQueries,statu
 import { Op, Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
-import { checkTableExists, fetchAllParentRNumber, fetchInteractionForProjectLevelQuery, fetchInteractionForSentResentStatus, fetchProjectAttachmentsRids, fetchProjectInteractionRid, interactionResponseHistoryByVersion, listAllInteractionSummary, listAttachments, listInteractionHistory, listResponseHistory } from "../../utils/rawQueries";
+import { checkTableExists, fetchAllParentRNumber, fetchInteractionForProjectLevelQuery, fetchInteractionForSentResentStatus, fetchProjectAttachmentsRids, fetchProjectInteractionRid, fetchStatusIdsForReminderList, interactionResponseHistoryByVersion, listAllInteractionSummary, listAttachments, listInteractionHistory, listResponseHistory, fetchInteractionTemplates } from "../../utils/rawQueries";
 import { generateSasUrl } from "../../utils/blob";
 import { interactionMailTemplate, interactionReminderMailTemplate } from "../../utils/mailTemplate";
 import { sendEmailWithAttachment } from "../emailService";
@@ -55,7 +56,7 @@ export class InteractionService {
     const dbInit = await this.interactionModelService.getSequelize();
     const transaction = await dbInit.transaction();
       interactionData.created_by = userId;
-      const { accountNumber } =
+      const { accountNumber, parentAccountId } =
         await this.interactionSchemaService.fetchValidAccountNumberById(
           interactionData.account_rid
         );
@@ -89,6 +90,7 @@ export class InteractionService {
           accountNumber,
           interactionData,
           userId,
+          parentAccountId,
           intLevel!
         )
       }
@@ -180,7 +182,16 @@ export class InteractionService {
           interactionData.status_rid
         );
       }
-      const isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(accountNumber, interactionData.project_fiscal_rid);
+      let isEmailRecipientAvailable = false;
+      if(intLevel === 'Account')
+      {
+        isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(accountNumber, interactionData.project_fiscal_rid);
+      }
+      else
+      {
+        isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(accountNumber, interactionData.project_fiscal_rid);
+      }
+     
       this.logger.info(`Is email recipient available: ${isEmailRecipientAvailable} for interaction: ${interaction.dataValues.rid} with project fiscal:${interactionData.project_fiscal_rid}`);
       if((interactionStatus === statusAction.DRAFT && isEmailRecipientAvailable) || interactionData.trigger_send)
       await this.checkAutoSendEnabled(accountNumber,interactionData,interaction.rid,userId,interactionData?.account_rid,intLevel, parentAccountId);
@@ -203,6 +214,7 @@ export class InteractionService {
         },
       };
     } catch (err) {
+       this.logger.error(`Error creating interaction, ${err}`);
       await transaction.rollback();
      this.logger.error("Error creating interaction", err);
        return {
@@ -213,7 +225,8 @@ export class InteractionService {
     }
   }
   async checkAutoSendEnabled(accountNumber: string, interactionData: ICreateInteraction, interactionId: string, userId: string, accountRid: string, interactionLevel:string, parentAccountId: string) {
-    if(interactionData?.trigger_send){
+    const isParensettingsConfigured = await this.interactionSchemaService.fetchAccountDetails(accountNumber, parentAccountId);
+    if(interactionData?.trigger_send && isParensettingsConfigured){
        await this.sendInteraction([{ interaction_rid: interactionId,
         project_fiscal_rid: interactionData.project_fiscal_rid,interaction_level:interactionLevel
        }], interactionData.account_rid, userId, false,'Manual-Send');
@@ -221,7 +234,6 @@ export class InteractionService {
     }
     else{
     const isEnabled = await this.interactionSchemaService.isAutoSendInteractionEnabled(accountNumber, interactionData);
-    const isParensettingsConfigured = await this.interactionSchemaService.fetchAccountDetails(accountNumber, accountRid, parentAccountId);
     this.logger.info(`Auto-send is ${isEnabled ? "enabled" : "disabled"} for interaction ID: ${interactionId}`);
     if (isEnabled && isParensettingsConfigured) {
        const projectInfo = await this.interactionSchemaService.fetchProjectInfo(accountNumber, interactionData.project_fiscal_rid);
@@ -1319,7 +1331,7 @@ export class InteractionService {
     this.logger.info("Interact method called.");
     // Implementation here
   }
-  async listInteractionPrjAccount(data : any,userId : string,apiType:string) : Promise<any>{
+  async listInteractionPrjAccount(data : any,userId : string,apiType:string, reminderSpecificList : boolean, statusIdsForReminderList : string[]) : Promise<any>{
     const mainDb = await this.getMainDb()
     const orgDb = await this.getOrgDb()
       const userGroupType = await this.interactionSchemaService.getUserGroupType(userId);
@@ -1331,6 +1343,15 @@ export class InteractionService {
       const isPOCProfile =
         userProfileType?.profileName === "Project Point of Contact";
       let accessibleIds: string[] = [];
+      let reminderFlag : boolean
+      let reminderIds : string[]
+      if(reminderSpecificList) {
+        reminderFlag = true
+        reminderIds = statusIdsForReminderList
+      } else {
+        reminderFlag = false
+        reminderIds = []
+      }
       if (!isCustomGlobal) {
         accessibleIds = await this.interactionSchemaService.getAccessibleProjectIds(
           userId,
@@ -1425,7 +1446,9 @@ export class InteractionService {
       disablePagination,
       accessibleIds,
       data.search,
-      activeStatus?.rid
+      activeStatus?.rid,
+      reminderFlag,
+      reminderIds
     ))
     let hasEmailRecipient = false;
     if(result[0][0].interactions != null) {
@@ -2267,5 +2290,188 @@ export class InteractionService {
       }
     }
     console.log(`[BATCH EMAIL] Finished processing batch.`);
+  }
+  async fetchStatusIdsForReminder () {
+    const mainDb = await this.getMainDb()
+    const result : any = await mainDb.query(fetchStatusIdsForReminderList());
+    if(result[0].length > 0) {
+      return result[0].map((d : any) => d.rid)
+    }
+  }
+
+  //code for interaction templates
+  async createInteractionTemplate(
+    interactionData: ICreateTemplateInteraction,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { interactions: any };
+  }> {
+    const dbInit = await this.interactionModelService.getSequelize();
+    const transaction = await dbInit.transaction();
+    try {
+      interactionData.created_by = userId;
+     
+      const {  intSource,intType } =
+        await this.getInteractionStatusAndSource("manual");
+      interactionData.interaction_type_rid = intType || "";
+
+      const templateInteraction =
+        await this.interactionSchemaService.createInteractionTemplate(
+          interactionData
+        );
+       if (templateInteraction) {
+        await this.interactionSchemaService.addInteractionTemplateQuestions(
+          interactionData,
+          templateInteraction.rid,
+          transaction,
+          userId
+        );
+      }
+    
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: STATUS_MESSAGE.interactionCreated,
+        data: {
+          interactions: templateInteraction,
+        },
+      };
+    } catch (err) {
+       console.log("Error creating resource", err);
+       this.logger.error(`Error creating interaction, ${err}`);
+       return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: STATUS_MESSAGE.interactionFailed,
+        };
+    }
+  }
+
+  async listInteractionTemplates(data : any,userId : string,filters:any) : Promise<any>{
+    const mainDb = await this.getMainDb()
+   
+    //let fetchParentAccount : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb))
+  
+    let totalResults : number = 0
+
+    const result : any = await mainDb.query(fetchInteractionTemplates(
+      data.sortBy,
+      data.sortOrder,
+      data.filters,
+      data.page, 
+      data.limit,
+      data.search
+    ))
+    if(result[0][0].interactions != null) {
+      let finalData = result[0][0].interactions == null ? [] : result[0][0].interactions
+      totalResults = finalData[0].total_records
+      let organizedData = {
+        page : data.page,
+        limit : data.limit,
+        totalCount : totalResults,
+        interactions : finalData
+      }
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        data : organizedData
+      }
+    }
+    else {
+      let organizedData = {
+        page : data.page,
+        limit : data.limit,
+        totalCount : 0,
+        interactions : []
+      }
+      return {
+        status : HttpStatus.NOT_FOUND,
+        data : organizedData
+      }
+    }
+  }
+  async updateInteractionTemplate(
+    interactionData: ICreateTemplateInteraction,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { interactions: any };
+  }> {
+    const dbInit = await this.interactionModelService.getSequelize();
+    const transaction = await dbInit.transaction();
+    try {
+       
+      const updatedInteraction =
+        await this.interactionSchemaService.updateInteractionTemplate(
+          interactionData,
+          userId,
+          transaction
+        );
+      if (updatedInteraction) {
+        await this.interactionSchemaService.addInteractionTemplateQuestions(
+          interactionData,
+          interactionData.template_rid!,
+          transaction,
+          userId
+        );
+      }
+
+      await transaction.commit();
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: STATUS_MESSAGE.interactionUpdated,
+        data: {
+          interactions: null,
+        },
+      };
+    } catch (err) {
+      console.log("Error updating resource", err);
+      await transaction.rollback();
+      this.logger.error("Error updating interaction", err);
+       return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: STATUS_MESSAGE.interactionUpdateFailed,
+        };
+    }
+  }
+   
+  async getInteractionTemplateDetailsById(
+    templateRid: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { interactionDetails: any };
+  }> {
+    try {
+  
+      const interactionDetails =
+        await this.interactionSchemaService.fetchInteractionTemplateDetailsById(
+          templateRid
+        );
+
+      if (!interactionDetails) {
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: "Invalid interaction ID",
+        };
+      }
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          interactionDetails,
+        },
+      };
+    } catch (err) {
+      console.log("Error fetching interaction details", err);
+      throw this.throwServiceError(err as Error);
+    }
   }
 }

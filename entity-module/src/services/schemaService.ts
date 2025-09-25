@@ -1994,7 +1994,7 @@ class SchemaService {
       `;
       const includeProjectFilter = accessibleIds.length > 0;
       const accessibleProjectsCondition = includeProjectFilter
-        ? `ps.project_rid = ANY(ARRAY[?]::text[])`
+        ? `pfs.project_fiscal_rid = ANY(ARRAY[?]::text[])`
         : "1=1";
 
       // 5. Get project IDs first - Modified to include all projects when bothParentAndChild is true
