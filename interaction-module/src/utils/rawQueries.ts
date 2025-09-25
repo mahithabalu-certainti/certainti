@@ -244,6 +244,103 @@ export const fetchInteractionForProjectLevelQuery = (
   return query;
 };
 
+export const fetchInteractionTemplates = (
+  sort: string,
+  sortBy: string,
+  filters: filterType,
+  page: number,
+  limit: number,
+  disablePagination: boolean = true,
+  search : string,
+) => {
+  let offset = (page - 1) * limit;
+  let pagination = `LIMIT ${limit} OFFSET ${offset}`;
+  let filteredQueryArray: string[] = [];
+  let filterQueryValues;
+  let sortValue: string;
+  let whereConditions;
+  let andConditions = ``;
+  let searchValue;
+  if (disablePagination) pagination = ` `;
+  else pagination;
+
+  if(search) searchValue = `%${search}%`
+  else searchValue = `%%`
+
+  let filteredData = filterForInteractions(
+    filters,
+    andConditions,
+    filteredQueryArray,
+    filterTypes,
+    filtersColumns
+  );
+
+  if (sort === filtersColumns.r_number)
+    sortValue = `ORDER BY i.r_number ${sortBy}`;
+  else if (sort === filtersColumns.created_datetime)
+    sortValue = `ORDER BY i.created_datetime ${sortBy}`;
+  else if (sort === filtersColumns.modified_datetime)
+    sortValue = `ORDER BY i.modified_datetime ${sortBy}`;
+  else if (sort === filtersColumns.createdAt)
+    sortValue = `ORDER BY i.created_datetime ${sortBy}`;
+  else sortValue = `ORDER BY i.r_number ASC`;
+
+  if (filteredData?.filteredQueryArray.length! > 0) {
+    filterQueryValues = filteredQueryArray.join(" AND ");
+  } else {
+    filterQueryValues = ` `;
+  }
+
+  let query = `
+    WITH fetch_interaction_templates AS (
+        SELECT
+            i.rid, i.r_number,
+            i.status_rid,s.status_name,
+            i.created_by, i.modified_by,
+            i.created_datetime, i.modified_datetime,
+            COUNT(i.rid) OVER() AS total_records,
+            i.interaction_type_rid,it.interaction_type_name,
+            i.interaction_level_rid,il.interaction_level_name
+
+            FROM
+            ${MAIN_SCHEMA_NAME}.interaction_templates i
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.interaction_level il ON il.rid = i.interaction_level_rid
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.interaction_type it ON it.rid = i.interaction_type_rid
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.status s ON s.rid = i.status_rid
+            WHERE
+            (i.r_number ILIKE '${searchValue}')
+           
+            ${filteredData?.andConditions}
+            ${filterQueryValues}
+            ${sortValue}
+    ),
+    paginated_datas AS (
+    SELECT * FROM fetch_interaction_templates
+    
+    )
+        SELECT 
+        array_agg(jsonb_build_object(
+        'rid', i.rid,
+        'r_number', i.r_number,
+        'status', i.status_rid,
+        'status_name', i.status_name,
+        'created_by', i.created_by,
+        'modified_by', i.modified_by,
+        'created_datetime', i.created_datetime,
+        'modified_datetime', i.modified_datetime,
+        'interaction_type', i.interaction_type_rid,
+        'interaction_type_name', i.interaction_type_name,
+        'interaction_level', i.interaction_level_rid,
+        'interaction_level_name', i.interaction_level_name
+        ) ) AS interactions
+
+        FROM
+        paginated_datas i
+    `;
+
+  return query;
+};
+
 export const listAllInteractionSummary = (
   page: number,
   limit: number,
