@@ -78,11 +78,11 @@ const listAccountInteractionSchema = Joi.object({
 });
 
 const sendInteractionSchema = Joi.object({
+  account_rid: Joi.string().pattern(uuidRegex).required(),
   is_interaction_followup: Joi.boolean().optional().default(false),
   interactions: Joi.array()
   .items(
     Joi.object({
-      account_rid: Joi.string().pattern(uuidRegex).required(),
       interaction_rid: Joi.string().pattern(uuidRegex).required(),
       project_fiscal_rid:Joi.string().pattern(uuidRegex).optional().allow(null,""),
       interaction_level:Joi.string().optional().default("Project"),

@@ -194,7 +194,6 @@ export interface IInteractionService {
   }>;
   sendInteraction(
     interactions: {
-      account_rid : string,
       interaction_rid: string;
       project_fiscal_rid: string;
       interaction_level: string;
@@ -203,6 +202,7 @@ export interface IInteractionService {
         name: string | null;
       };
     }[],
+    accountId : string,
     userId: string,
     is_interaction_followup?: boolean
   ): Promise<{
