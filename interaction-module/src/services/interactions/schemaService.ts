@@ -974,7 +974,7 @@ class InteractionSchemaService {
       return {
         accountNumber: accountRnumber,
         accountId: account?.rid,
-        accountName: account.account_name,
+        accountName: account?.account_name,
         parentAccountId: account?.parent_account_rid
       };
     } catch (err) {

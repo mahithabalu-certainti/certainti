@@ -292,8 +292,6 @@ export const fetchInteractionTemplates = async (
     sortValue = `ORDER BY i.created_datetime ${sortBy}`;
   else if (sort === templatefiltersColumns.modified_datetime)
     sortValue = `ORDER BY i.modified_datetime ${sortBy}`;
-  else if (sort === templatefiltersColumns.createdAt)
-    sortValue = `ORDER BY i.createdAt ${sortBy}`;
   else if (sort === templatefiltersColumns.interaction_type_rid)
     sortValue = `ORDER BY it.interaction_type_name ${sortBy}`;
   else if (sort === templatefiltersColumns.interaction_level_rid)
@@ -306,6 +304,8 @@ export const fetchInteractionTemplates = async (
     sortValue = `ORDER BY created_user_name ${sortBy}`;
   else if (sort === templatefiltersColumns.modified_user_name)
     sortValue = `ORDER BY modified_username ${sortBy}`;
+  else if (sort === templatefiltersColumns.createdAt)
+    sortValue = `ORDER BY created_datetime ${sortBy}`;
   else sortValue = `ORDER BY i.r_number ASC`;
 
   if (filteredData?.filteredQueryArray.length! > 0) {
@@ -689,7 +689,7 @@ const filterForInteractionTemplates = (
             break;
           }
           case "datetime": {
-            const datetimeCondition = buildDatetimeFilterCondition(condition, values, filteredColumns!);
+            const datetimeCondition = buildDatetimeFilterConditionTemplates(condition, values, filteredColumns!);
             if (datetimeCondition) {
               filteredQueryArray.push(datetimeCondition);
             }
@@ -1303,6 +1303,34 @@ const buildDatetimeFilterCondition = (
       return `${columnRef} > '${values}'`;
     case ALPHANUMERIC_CONDITIONS.between:
       return `${columnRef} BETWEEN ${values.map((d: any) => `'${d}'`).join(" AND ")}`;
+    case ALPHANUMERIC_CONDITIONS.isEmpty:
+      return `${columnRef} IS NULL`;
+    default:
+      return '';
+  }
+};
+
+const buildDatetimeFilterConditionTemplates = (
+  condition: string,
+  values: any,
+  filteredColumns: string,
+  tableAlias: string = 'i'
+): string => {
+  const columnRef = `DATE(${tableAlias}.${filteredColumns})`;
+  
+  switch (condition) {
+    case ALPHANUMERIC_CONDITIONS.equals:
+      return `${columnRef} = '${values}'`;
+    case ALPHANUMERIC_CONDITIONS.before:
+      return `${columnRef} < '${values}'`;
+    case ALPHANUMERIC_CONDITIONS.after:
+      return `${columnRef} > '${values}'`;
+    case ALPHANUMERIC_CONDITIONS.between:
+      // values should be an object: { from: string, to: string }
+      if (values && typeof values === 'object' && values.from && values.to) {
+      return `${columnRef} BETWEEN '${values.from}' AND '${values.to}'`;
+      }
+      return '';
     case ALPHANUMERIC_CONDITIONS.isEmpty:
       return `${columnRef} IS NULL`;
     default:
