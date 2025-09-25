@@ -1925,6 +1925,7 @@ export class ProjectService {
       "modified_datetime",
       "assessment_status",
       "qre_final",
+      "rd_percent_final"
     ];
 
     if (!validSortColumns.includes(sortBy)) {
