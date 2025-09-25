@@ -238,6 +238,7 @@ const listInteractionTemplatesSchema = Joi.object({
   templateType: Joi.string().optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
 }); 
+
 const updateInteractionTemplateSchema = Joi.object({
   template_rid: Joi.string().pattern(uuidRegex).required(),
   interaction_level_rid: Joi.string().pattern(uuidRegex).required(),
