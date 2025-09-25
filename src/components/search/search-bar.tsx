@@ -39,7 +39,7 @@ const SearchBar: React.FC<SearchBarProps> = React.memo(
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           disabled={disabled}
-          className='flex-1 sm:text-sm pl-1 pr-2 h-full outline-none bg-white'
+          className='flex-1 text-[12px] placeholder:text-[12px] pl-1 pr-2 h-full outline-none bg-white'
         />
         <button
           onClick={() => !disabled && onSearch(text)}
