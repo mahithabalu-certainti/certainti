@@ -102,7 +102,7 @@ export const filtersColumns : Record<string, string> =
     interaction_type_rid : "interaction_type_rid",
     interaction_level_rid:"interaction_level_rid",
     parent_interaction_rid : "parent_interaction_rid",
-    createdAt : "createdAt",
+    createdAt : "created_datetime",
     template_name : "template_name"
   }
 
@@ -493,6 +493,10 @@ export const rawQueries = {
   fetchInteractionType(type: string) {
     return `
     SELECT rid FROM ${MAIN_SCHEMA_NAME}.interaction_type WHERE interaction_type_name = '${type}' LIMIT 1`;
+  },
+   fetchInteractionLevelRidByName(type: string) {
+    return `
+    SELECT rid FROM ${MAIN_SCHEMA_NAME}.interaction_level WHERE interaction_level_name = '${type}' LIMIT 1`;
   },
   fetchAllParentRNumber() {
     let query = `SELECT r_number FROM ${MAIN_SCHEMA_NAME}.account WHERE storage_type = '${STATUS_MESSAGE.separateDb}' AND parent_account_rid IS NULL
