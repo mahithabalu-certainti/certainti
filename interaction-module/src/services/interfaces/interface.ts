@@ -202,7 +202,7 @@ export interface IInteractionService {
         name: string | null;
       };
     }[],
-    accountId : string,
+    accountRid : string,
     userId: string,
     is_interaction_followup?: boolean
   ): Promise<{

@@ -227,7 +227,7 @@ export class InteractionService {
   async checkAutoSendEnabled(accountNumber: string, interactionData: ICreateInteraction, interactionId: string, userId: string, accountRid: string, interactionLevel:string, parentAccountId: string) {
     const isParensettingsConfigured = await this.interactionSchemaService.fetchAccountDetails(accountNumber, parentAccountId);
     if(interactionData?.trigger_send && isParensettingsConfigured){
-       await this.sendInteraction([{interaction_rid: interactionId,
+       await this.sendInteraction([{ interaction_rid: interactionId,
         project_fiscal_rid: interactionData.project_fiscal_rid,interaction_level:interactionLevel
        }], interactionData.account_rid, userId, false,'Manual-Send');
 
@@ -241,7 +241,7 @@ export class InteractionService {
       const { AutoSendInteractionAudit } = await this.interactionModelService.getModels(accountNumber);
       const ismaxInteractionsSent = await this.checkMaxQuarterlyInteractions(AutoSendInteractionAudit, interactionData.project_fiscal_rid, projectInfo.max_ai_interaction,accountInfo);
       if (!ismaxInteractionsSent) return;
-      await this.sendInteraction([{interaction_rid: interactionId,
+      await this.sendInteraction([{ interaction_rid: interactionId,
         project_fiscal_rid: interactionData.project_fiscal_rid,interaction_level:interactionLevel
        }], interactionData.account_rid, userId, false,'Auto-Send');
     }
@@ -1087,7 +1087,7 @@ export class InteractionService {
       interaction_level: string;
       project_fiscal_rid: string;
     }[],
-    accountId: string,
+    accountRid: string,
     userId: string,
     is_interaction_followup: boolean,
     type: string = interactionSource.MANUAL
@@ -1100,7 +1100,7 @@ export class InteractionService {
     try {
       const mainDb = await this.getMainDb()
       const orgDb = await this.getOrgDb()
-      const { accountNumber } = await this.interactionSchemaService.fetchValidAccountNumberById(accountId);
+      const { accountNumber } = await this.interactionSchemaService.fetchValidAccountNumberById(accountRid);
         if (!accountNumber) {
           return {
             statusCode: HttpStatus.FAILED,
@@ -1114,7 +1114,7 @@ export class InteractionService {
 
       for (const { interaction_rid, email_info, project_fiscal_rid, interaction_level } of interactions) {
         let data : any = {}
-        data.account_rid = accountId
+        data.account_rid = accountRid
         data.project_fiscal_rid = project_fiscal_rid,
         data.account_rnumber = accountNumber,
         data.interaction_rid = interaction_rid
