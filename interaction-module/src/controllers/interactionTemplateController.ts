@@ -293,7 +293,7 @@ async function exportInteractionTemplate(req : Request, res : Response) {
       const worksheet = workbook.addWorksheet("Interaction");
       const headerRows = [
       ["Template ID", response?.r_number ?? ""],
-      ["Interaction Name", response?.interaction_name ?? ""],
+      ["Template Name", response?.template_name ?? ""],
       ["Interaction Type", response?.interaction_type_name ?? ""],
       ["Interaction Level", response?.interaction_level_name ?? ""],
       ["Status", response?.status_name ?? ""],

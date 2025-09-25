@@ -4,11 +4,13 @@ import { initMainDbSequelize } from "../config/mainDataSource";
 import { InteractionStatus } from "./interactionStatus";
 import { InteractionType } from "./interactionType";
 import { InteractionTemplate } from "./interactionTemplate";
+import { AiAssessmentEventTracker } from "./aiAssessmentEventTracker";
 
 export const models = {
   InteractionStatus,
   InteractionType,
-  InteractionTemplate
+  InteractionTemplate,
+  AiAssessmentEventTracker
 };
 
 export async function initModels() {
