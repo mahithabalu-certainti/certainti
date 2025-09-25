@@ -2,6 +2,7 @@ import { Logger } from "winston";
 import {
   ICreateAccountInteraction,
   ICreateInteraction,
+  ICreateTemplateInteraction,
   InteractionResponse,
   IProject,
   IUpdateInteraction,
@@ -12,7 +13,7 @@ import { ALPHANUMERIC_CONDITIONS, HttpStatus, mainTableFilters, rawQueries,statu
 import { Op, Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
-import { checkTableExists, fetchAllParentRNumber, fetchInteractionForProjectLevelQuery, fetchInteractionForSentResentStatus, fetchProjectAttachmentsRids, fetchProjectInteractionRid, interactionResponseHistoryByVersion, listAllInteractionSummary, listAttachments, listInteractionHistory, listResponseHistory } from "../../utils/rawQueries";
+import { checkTableExists, fetchAllParentRNumber, fetchInteractionForProjectLevelQuery, fetchInteractionForSentResentStatus, fetchInteractionTemplates, fetchProjectAttachmentsRids, fetchProjectInteractionRid, interactionResponseHistoryByVersion, listAllInteractionSummary, listAttachments, listInteractionHistory, listResponseHistory } from "../../utils/rawQueries";
 import { generateSasUrl } from "../../utils/blob";
 import { interactionMailTemplate, interactionReminderMailTemplate } from "../../utils/mailTemplate";
 import { sendEmailWithAttachment } from "../emailService";
@@ -2278,5 +2279,181 @@ export class InteractionService {
       }
     }
     console.log(`[BATCH EMAIL] Finished processing batch.`);
+  }
+
+  //code for interaction templates
+  async createInteractionTemplate(
+    interactionData: ICreateTemplateInteraction,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { interactions: any };
+  }> {
+    const dbInit = await this.interactionModelService.getSequelize();
+    const transaction = await dbInit.transaction();
+    try {
+      interactionData.created_by = userId;
+     
+      const {  intSource,intType } =
+        await this.getInteractionStatusAndSource("manual");
+      interactionData.interaction_type_rid = intType || "";
+
+      const templateInteraction =
+        await this.interactionSchemaService.createInteractionTemplate(
+          interactionData
+        );
+       if (templateInteraction) {
+        await this.interactionSchemaService.addInteractionTemplateQuestions(
+          interactionData,
+          templateInteraction.rid,
+          transaction,
+          userId
+        );
+      }
+    
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: STATUS_MESSAGE.interactionCreated,
+        data: {
+          interactions: templateInteraction,
+        },
+      };
+    } catch (err) {
+       console.log("Error creating resource", err);
+       this.logger.error(`Error creating interaction, ${err}`);
+       return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: STATUS_MESSAGE.interactionFailed,
+        };
+    }
+  }
+
+  async listInteractionTemplates(data : any,userId : string,filters:any) : Promise<any>{
+    const mainDb = await this.getMainDb()
+   
+    //let fetchParentAccount : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb))
+  
+    let totalResults : number = 0
+
+    const result : any = await mainDb.query(fetchInteractionTemplates(
+      data.sortBy,
+      data.sortOrder,
+      data.filters,
+      data.page, 
+      data.limit,
+      data.search
+    ))
+    if(result[0][0].interactions != null) {
+      let finalData = result[0][0].interactions == null ? [] : result[0][0].interactions
+      totalResults = finalData[0].total_records
+      let organizedData = {
+        page : data.page,
+        limit : data.limit,
+        totalCount : totalResults,
+        interactions : finalData
+      }
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        data : organizedData
+      }
+    }
+    else {
+      let organizedData = {
+        page : data.page,
+        limit : data.limit,
+        totalCount : 0,
+        interactions : []
+      }
+      return {
+        status : HttpStatus.NOT_FOUND,
+        data : organizedData
+      }
+    }
+  }
+  async updateInteractionTemplate(
+    interactionData: ICreateTemplateInteraction,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { interactions: any };
+  }> {
+    const dbInit = await this.interactionModelService.getSequelize();
+    const transaction = await dbInit.transaction();
+    try {
+       
+      const updatedInteraction =
+        await this.interactionSchemaService.updateInteractionTemplate(
+          interactionData,
+          userId,
+          transaction
+        );
+      if (updatedInteraction) {
+        await this.interactionSchemaService.addInteractionTemplateQuestions(
+          interactionData,
+          interactionData.template_rid!,
+          transaction,
+          userId
+        );
+      }
+
+      await transaction.commit();
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: STATUS_MESSAGE.interactionUpdated,
+        data: {
+          interactions: null,
+        },
+      };
+    } catch (err) {
+      console.log("Error updating resource", err);
+      await transaction.rollback();
+      this.logger.error("Error updating interaction", err);
+       return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: STATUS_MESSAGE.interactionUpdateFailed,
+        };
+    }
+  }
+   
+  async getInteractionTemplateDetailsById(
+    templateRid: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { interactionDetails: any };
+  }> {
+    try {
+  
+      const interactionDetails =
+        await this.interactionSchemaService.fetchInteractionTemplateDetailsById(
+          templateRid
+        );
+
+      if (!interactionDetails) {
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: "Invalid interaction ID",
+        };
+      }
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          interactionDetails,
+        },
+      };
+    } catch (err) {
+      console.log("Error fetching interaction details", err);
+      throw this.throwServiceError(err as Error);
+    }
   }
 }
