@@ -680,7 +680,7 @@ export const getDateTimeFormat = (date?: string) => {
   return dayjs.utc(date).local().format('MMM-DD-YYYY hh:mm:ss A').toUpperCase();
 };
 
-export const getDateFormatD = (date?: string) => {
+export const getDateFormatYYYYMMDD = (date?: string) => {
   if (!date) return '';
   return dayjs(date).format('YYYY-MM-DD');  
 };
