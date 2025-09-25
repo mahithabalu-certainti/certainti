@@ -27,7 +27,6 @@ export const fetchManageuserList = async (
   if (!accountId) {
     throw new Error('User ID is missing from URL');
   }
-  console.log(params);
   const queryParams = {
     sortBy: params.sortBy || 'createdAt',
     sortOrder: params.sortOrder || 'DESC',
@@ -104,7 +103,6 @@ export const useManageProjectAccessList = (
   params: ManageUserListParms,
   refreshProfileTrigger?: number
 ) => {
-  console.log('useManageProjectAccessList', accountId, entityId, params);
   return useQuery<ManageAccountProjectListApiResponse, Error>({
     queryKey: [
       'manageProjectAccessList',
@@ -126,7 +124,6 @@ export const fetchUserGroupList = async (
   groupId: string,
   params?: Record<string, unknown>
 ) => {
-  console.log('params', params);
   const response = await userServiceApi.get<ActiveUserForGroupApiResponse>(
     `/api/user_group/users/${accountId}/${groupId}?${buildQueryString(params ?? {})}`
   );
