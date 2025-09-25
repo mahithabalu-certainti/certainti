@@ -573,7 +573,7 @@ export class ProjectResourceSchemaService {
 
   async findDuplicateProjectResourceOnUpdate(
     accountNumber: string,
-    projectResourceData: IUpdateProjectResource,
+    projectResourceData: IUpdateProjectResource | IUpdateInlineProjectResource,
     resourceData: any,
     statusMap: any
   ) {

@@ -3147,7 +3147,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         rawQueries.fetchUserEmail(userId)
       );
       const userEmailId = senderemailInfo[0]?.email ?? userId;
-       const [statusArr]: any = await this.mainDbSequelize.query(
+      const [statusArr]: any = await this.mainDbSequelize.query(
         rawQueries.fetchInteractionStatusByType(status)
       );
       const statusRid =
@@ -3199,10 +3199,17 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       const interaction = await Interaction.findOne({
         where: { rid: interactionRid },
       });
+      const [statusArr]: any = await this.mainDbSequelize.query(
+        rawQueries.fetchInteractionStatusByType(status)
+      );
+      const statusRid =
+        Array.isArray(statusArr) && statusArr.length > 0
+          ? statusArr[0].rid
+          : null;
       const updateData: any = {
         last_reminder_on: new Date(),
         last_reminder_by: userEmailId,
-       
+        status_rid : statusRid
       };
 
       if (!interaction?.sent_on_datetime || interaction?.sent_on_datetime === null) {
