@@ -2,7 +2,7 @@ import { InteractionModelService } from "../interactionModelsService";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import dayjs from "dayjs";
 import { initMainDbSequelize } from "../../config/mainDataSource";
-import { Op, QueryTypes, Sequelize, Transaction, UUIDV4 } from "sequelize";
+import { col, fn, Op, QueryTypes, Sequelize, Transaction, UUIDV4, where } from "sequelize";
 import {
   ICreateAccountInteraction,
   ICreateInteraction,
@@ -13,7 +13,7 @@ import {
   IUpdateInteraction,
 } from "../../utils/types";
 import { Interaction } from "../../models/interaction";
-import { ALPHANUMERIC_CONDITIONS, MAIN_SCHEMA_NAME, mainTableFilters, rawQueries, schedulerStatus, statusAction, techSummaryStatus } from "../../utils/constants";
+import { ALPHANUMERIC_CONDITIONS, HttpStatus, MAIN_SCHEMA_NAME, mainTableFilters, rawQueries, schedulerStatus, statusAction, techSummaryStatus } from "../../utils/constants";
 import { SendEmailInfo } from "../../models/sendEmailInfo";
 import { decryptClientSecret } from "../../utils/helpers";
 
@@ -423,11 +423,8 @@ class InteractionSchemaService {
     userId: string,
     transaction: Transaction
   ) {
-    const existingData = await InteractionTemplateQuestions.findOne({
-      where: { template_rid: interactionRid, rid: question.rid },
-    });
     await InteractionTemplateQuestions.destroy({
-      where: { interaction_rid: interactionRid, rid: question.rid },
+      where: { template_rid: interactionRid, rid: question.rid },
       transaction,
     });
     console.log(`[addInteractionItems] Deleted question:`, question.rid);
@@ -4049,16 +4046,46 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     // Implementation for creating interactions in the database
     try {
       const { InteractionTemplate } = await this.interactionModelService.getModels("");
-      // const interactionLevel = await this.getInteractionLevelByType(intLevel);
-      // interactionData.interaction_level_rid = interactionLevel!;
-      const interaction = await InteractionTemplate.create(interactionData);;
+      
+      const isUnique = await this.checkIsTemplateUnique(interactionData.template_name,InteractionTemplate);
+      if (!isUnique) {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: `An template with the name "${interactionData.template_name}" already exists. Please choose a different name.`,
+        };
+      }
+      else
+      {
+        const interaction = await InteractionTemplate.create(interactionData);
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          message: HttpStatus.SUCCESS_MESSAGE,
+          data: { interaction },
+        };
+      }
 
-      return interaction;
+     
     } catch (error) {
       console.log(error);
       throw new Error("Error creating interaction: " + error);
     }
   }
+
+  private async checkIsTemplateUnique(
+    template_name: string,
+    InteractionTemplate: any
+  ): Promise<boolean> {
+    const response = await InteractionTemplate.findOne({
+      where: where(
+        fn("LOWER", col("template_name")),
+        Op.eq,
+        template_name.toLowerCase()
+      ),
+    });
+    return !response;
+  }
+
 
   async listInteractionTemplates(
   page: number = 1,
@@ -4204,8 +4231,28 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
   ) {
     const { InteractionTemplate } =
       await this.interactionModelService.getModels("");
-
-    const updatedInteraction = await InteractionTemplate.update(
+const existingTemplate = await InteractionTemplate.findOne({
+        where: {
+          [Op.and]: [
+            where(
+              fn("LOWER", col("template_name")),
+              Op.eq,
+              interactionData.template_name.toLowerCase()
+            ),
+            { rid: { [Op.ne]: interactionData.template_rid } },
+          ],
+        },
+      });
+       if (existingTemplate) {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: `An account with the template name "${interactionData.template_name}" already exists. Please choose a different name.`,
+        };
+      }
+      else
+      {
+        const updatedInteraction = await InteractionTemplate.update(
       {
         ...interactionData,
         modified_by: userId,
@@ -4218,8 +4265,12 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         transaction,
       }
     );
-
-    return updatedInteraction;
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          message: HttpStatus.SUCCESS_MESSAGE,
+          data: { interaction: updatedInteraction },
+        };
+      }
   }
   async addInteractionTemplateQuestions(
     interactionData: ICreateTemplateInteraction,

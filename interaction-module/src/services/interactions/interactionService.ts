@@ -2323,22 +2323,31 @@ export class InteractionService {
         await this.interactionSchemaService.createInteractionTemplate(
           interactionData
         );
-       if (templateInteraction) {
+       if (templateInteraction.statusCode === HttpStatus.SUCCESS) {
         await this.interactionSchemaService.addInteractionTemplateQuestions(
           interactionData,
-          templateInteraction.rid,
+          templateInteraction?.data?.interaction?.rid!,
           transaction,
           userId
         );
-      }
-    
-      return {
+         return {
         statusCode: HttpStatus.SUCCESS,
         message: STATUS_MESSAGE.interactionCreated,
         data: {
           interactions: templateInteraction,
         },
       };
+      }
+      else
+      {
+         return {
+        statusCode: templateInteraction.statusCode,
+        message: templateInteraction.message,
+        data: {interactions: null},
+      };
+      }
+    
+     
     } catch (err) {
        console.log("Error creating resource", err);
        this.logger.error(`Error creating interaction, ${err}`);
@@ -2414,23 +2423,31 @@ export class InteractionService {
           userId,
           transaction
         );
-      if (updatedInteraction) {
+      if (updatedInteraction.statusCode === HttpStatus.SUCCESS) {
         await this.interactionSchemaService.addInteractionTemplateQuestions(
           interactionData,
           interactionData.template_rid!,
           transaction,
           userId
         );
-      }
-
-      await transaction.commit();
-      return {
+        await transaction.commit();
+         return {
         statusCode: HttpStatus.SUCCESS,
         message: STATUS_MESSAGE.interactionUpdated,
         data: {
           interactions: null,
         },
       };
+      }
+      else{
+        await transaction.rollback();
+        return {
+          statusCode: updatedInteraction.statusCode,
+          message: updatedInteraction.message,
+          data: {interactions: null},
+        };
+      } 
+     
     } catch (err) {
       console.log("Error updating resource", err);
       await transaction.rollback();
