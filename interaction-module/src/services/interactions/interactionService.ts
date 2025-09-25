@@ -1101,7 +1101,7 @@ export class InteractionService {
     try {
       const mainDb = await this.getMainDb()
       const orgDb = await this.getOrgDb()
-      const { accountNumber } = await this.interactionSchemaService.fetchValidAccountNumberById(accountRid);
+      const { accountNumber } = await this.interactionSchemaService.fetchValidAccountNumberByIdForEmail(accountRid);
       if (!accountNumber) {
         return {
           statusCode: HttpStatus.FAILED,

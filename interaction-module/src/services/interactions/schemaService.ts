@@ -981,6 +981,45 @@ class InteractionSchemaService {
       throw new Error("Error fetching account : " + (err as Error).message);
     }
   }
+
+  async fetchValidAccountNumberByIdForEmail(accountId: string) {
+    try {
+      if (!this.mainDbSequelize) {
+        this.mainDbSequelize =
+          await this.interactionModelService.getMainSequelize();
+      }
+
+      const [account]: any[] = await this.mainDbSequelize.query(
+        rawQueries.fetchParentAccountforEmail,
+        {
+          replacements: { rid: accountId },
+          type: "SELECT",
+        }
+      );
+
+      let accountRnumber = account?.r_number;
+
+      if (account?.is_parent) {
+        const [accountData]: any[] = await this.mainDbSequelize.query(
+          rawQueries.fetchParentAccountforEmail,
+          {
+            replacements: { rid: account?.parent_account_rid },
+            type: "SELECT",
+          }
+        );
+        accountRnumber = accountData?.r_number;
+      }
+
+      return {
+        accountNumber: accountRnumber,
+        accountId: account?.rid,
+        accountName: account?.account_name,
+        parentAccountId: account?.parent_account_rid
+      };
+    } catch (err) {
+      throw new Error("Error fetching account : " + (err as Error).message);
+    }
+  }
    async listAccountInteractions(
     accountNumber: string,
     accountRid: string,

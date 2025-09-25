@@ -600,6 +600,7 @@ export const rawQueries = {
       WHERE rid = '${interactionId}'
     `;
   },
+  fetchParentAccountforEmail : `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
   fetchInteractionTemplates :  `
     SELECT 
         it.rid,
