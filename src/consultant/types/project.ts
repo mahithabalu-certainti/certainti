@@ -39,6 +39,9 @@ export interface KeyContacts {
   rid?: string;
 }
 export interface NewProjectData {
+  rd_percent_potential_ai: string;
+  rd_percent_adjustment: string;
+  rd_percent_final: string;
   showOthersField?: boolean;
   account_id?: string;
   status_rid: string;

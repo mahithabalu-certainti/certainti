@@ -222,6 +222,7 @@ export const ProjectDetails = () => {
 
       setProjectData(updatedProject as unknown as NewProjectData);
       setProjectDetails(transformProjectData(updatedProject as projectDetails));
+      refetch();
     } catch (err) {
       console.log(err);
     }

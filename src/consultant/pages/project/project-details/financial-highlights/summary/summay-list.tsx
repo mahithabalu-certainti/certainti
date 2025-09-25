@@ -95,6 +95,21 @@ const SummayListTable: React.FC<FinancialSummaryProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
+  useEffect(() => {
+    if (projectDetails) {
+      const newRdPercent: SummaryRdPercent[] = [
+        {
+          rid: 'rd_percent_summary',
+          name: 'RD Percent Summary',
+          rd_percent_potential: projectDetails.rd_percent_potential_ai || '-',
+          rd_percent_adjustment: projectDetails.rd_percent_adjustment || '-',
+          rd_percent_final: projectDetails.rd_percent_final || '-',
+        },
+      ];
+      setRdPercent(newRdPercent);
+    }
+  }, [projectDetails]);
+
   const getResourceMetricRowId = (row: SummaryResourceMetric) => row.rid;
   const getDetailedMetricRowId = (row: SummaryDetailedMetric) => row.rid;
   const getRdPercentRowId = (row: SummaryRdPercent) => row.rid;
