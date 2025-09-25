@@ -1101,13 +1101,13 @@ export class InteractionService {
       const mainDb = await this.getMainDb()
       const orgDb = await this.getOrgDb()
       const { accountNumber } = await this.interactionSchemaService.fetchValidAccountNumberById(accountRid);
-        if (!accountNumber) {
-          return {
-            statusCode: HttpStatus.FAILED,
-            message: HttpStatus.FAILED_MESSAGE,
-            errorMessage: "Invalid account ID",
-          };
-        }
+      if (!accountNumber) {
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: "Invalid account ID",
+        };
+      }
       const schemaName = rawQueries.fetchSchemaName(accountNumber)
       const fetchInQueueStatus : any = await mainDb.query(rawQueries.fetchInteractionQueueStatus())
       const interactionResponse: any[] = [];
