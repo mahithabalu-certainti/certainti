@@ -324,6 +324,7 @@ export const fetchInteractionTemplates = async (
             COUNT(i.rid) OVER() AS total_records,
             i.interaction_type_rid,it.interaction_type_name,
             i.interaction_level_rid,il.interaction_level_name,
+            i.template_name,
             uc.first_name || ' ' || uc.last_name AS created_user_name,
             um.first_name || ' ' || um.last_name AS modified_user_name
 
@@ -361,7 +362,8 @@ export const fetchInteractionTemplates = async (
         'interaction_level_name', i.interaction_level_name,
         'total_records', i.total_records,
         'created_user_name', i.created_user_name,
-        'modified_user_name', i.modified_user_name
+        'modified_user_name', i.modified_user_name,
+        'template_name', i.template_name
         ) ) AS interactions
 
         FROM

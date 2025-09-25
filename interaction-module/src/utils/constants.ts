@@ -604,6 +604,7 @@ export const rawQueries = {
     SELECT 
         it.rid,
         it.r_number,
+        it.template_name,
         it.interaction_type_rid,
         itype.interaction_type_name,
         it.interaction_level_rid,
