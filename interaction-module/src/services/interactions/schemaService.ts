@@ -974,7 +974,46 @@ class InteractionSchemaService {
       return {
         accountNumber: accountRnumber,
         accountId: account?.rid,
-        accountName: account.account_name,
+        accountName: account?.account_name,
+        parentAccountId: account?.parent_account_rid
+      };
+    } catch (err) {
+      throw new Error("Error fetching account : " + (err as Error).message);
+    }
+  }
+
+  async fetchValidAccountNumberByIdForEmail(accountId: string) {
+    try {
+      if (!this.mainDbSequelize) {
+        this.mainDbSequelize =
+          await this.interactionModelService.getMainSequelize();
+      }
+
+      const [account]: any[] = await this.mainDbSequelize.query(
+        rawQueries.fetchParentAccountforEmail,
+        {
+          replacements: { rid: accountId },
+          type: "SELECT",
+        }
+      );
+
+      let accountRnumber = account?.r_number;
+
+      if (account?.is_parent) {
+        const [accountData]: any[] = await this.mainDbSequelize.query(
+          rawQueries.fetchParentAccountforEmail,
+          {
+            replacements: { rid: account?.parent_account_rid },
+            type: "SELECT",
+          }
+        );
+        accountRnumber = accountData?.r_number;
+      }
+
+      return {
+        accountNumber: accountRnumber,
+        accountId: account?.rid,
+        accountName: account?.account_name,
         parentAccountId: account?.parent_account_rid
       };
     } catch (err) {
@@ -1655,8 +1694,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         response_updated_by: response_updated_by ?? null,
         response_updated_on: response_updated_on ?? null,
         global_attachments: globalAttachments,
-        recipient_name: recipient_name || null,
-        recipient_email: recipient_email || null,
+        recipient_name: recipient_name || metainfo?.recipient_name || null,
+        recipient_email: recipient_email || metainfo?.recipient_email || null,
         hasEmailRecipient: metainfo?.hasEmailRecipient || false
       };
 
@@ -1856,6 +1895,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       let interaction_level:any = null
       let project_info: any = null;
       let hasEmailRecipient: boolean = false;
+      let recipient_name: string | null = null;
+      let recipient_email: string | null = null;
 
       if (interactionDetails?.dataValues?.interaction_type_rid) {
         const result = await this.mainDbSequelize.query(
@@ -1870,7 +1911,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         interaction_type =
           Array.isArray(result) && result.length > 0 ? result[0] : null;
       }
-       if (interactionDetails?.dataValues?.interaction_level_rid) {
+      if (interactionDetails?.dataValues?.interaction_level_rid) {
         const result = await this.mainDbSequelize.query(
           `SELECT rid, interaction_level_name FROM ${MAIN_SCHEMA_NAME}.interaction_level WHERE rid = :id`,
           {
@@ -1914,8 +1955,22 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
                   rawQueries.fetchActiveStatusByType("Active"),
                   { type: "SELECT" }
                 );
-      const [emailInfoResult]: any = await this.orgDbSequelize.query(rawQueries.isEmailRecipientAvailable(interactionDetails?.dataValues?.project_fiscal_rid, schemaName, activeStatus?.rid));
-      hasEmailRecipient = emailInfoResult[0]?.recipient_available ?? false;
+       const [emailRecipients]: any[] = await this.orgDbSequelize.query(
+            rawQueries.fetchInteractionRecipient(
+              interactionDetails?.project_fiscal_rid,
+              activeStatus?.rid,
+              schemaName
+            )
+            );
+            if (emailRecipients && emailRecipients.length > 0 && emailRecipients[0]?.key_contact_email) {
+            hasEmailRecipient = true;
+            recipient_name = emailRecipients[0]?.key_contact_name || null;
+            recipient_email = emailRecipients[0]?.key_contact_email || null;
+            } else {
+            hasEmailRecipient = false;
+            recipient_name = null;
+            recipient_email = null;
+            }
         }
       if(interaction_level?.interaction_level_name === 'Account')
       {
@@ -1927,8 +1982,22 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
                   rawQueries.fetchActiveStatusByType("Active"),
                   { type: "SELECT" }
                 );
-          const [emailInfoResult]: any = await this.orgDbSequelize.query(rawQueries.isEmailRecipientAvailableFrAccount(interactionDetails?.dataValues?.account_rid, schemaName, activeStatus?.rid));
-          hasEmailRecipient = emailInfoResult[0]?.recipient_available ?? false;
+         const [emailRecipients]: any[] = await this.orgDbSequelize.query(
+            rawQueries.fetchInteractionRecipientAccount(
+              interactionDetails?.dataValues?.account_rid,
+              activeStatus?.rid,
+              schemaName
+            )
+            );
+            if (emailRecipients && emailRecipients.length > 0 && emailRecipients[0]?.key_contact_email) {
+            hasEmailRecipient = true;
+            recipient_name = emailRecipients[0]?.key_contact_name || null;
+            recipient_email = emailRecipients[0]?.key_contact_email || null;
+            } else {
+            hasEmailRecipient = false;
+            recipient_name = null;
+            recipient_email = null;
+            }
       }
       const accountDetails : any = await this.mainDbSequelize.query(rawQueries.fetchAccountRnumber(interactionDetails.dataValues.account_rid))
       return {
@@ -1941,7 +2010,9 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         fiscal_year: project_info?.fiscal_year || null,
         account_name : accountDetails[0][0].account_name,
         account_rnumber : accountDetails[0][0].r_number,
-        hasEmailRecipient:hasEmailRecipient
+        hasEmailRecipient:hasEmailRecipient,
+        recipient_email:recipient_email,
+        recipient_name:recipient_name
       };
 
       //return interactionDetails;

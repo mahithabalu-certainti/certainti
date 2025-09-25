@@ -292,8 +292,6 @@ export const fetchInteractionTemplates = async (
     sortValue = `ORDER BY i.created_datetime ${sortBy}`;
   else if (sort === templatefiltersColumns.modified_datetime)
     sortValue = `ORDER BY i.modified_datetime ${sortBy}`;
-  else if (sort === templatefiltersColumns.createdAt)
-    sortValue = `ORDER BY i.createdAt ${sortBy}`;
   else if (sort === templatefiltersColumns.interaction_type_rid)
     sortValue = `ORDER BY it.interaction_type_name ${sortBy}`;
   else if (sort === templatefiltersColumns.interaction_level_rid)
@@ -306,6 +304,8 @@ export const fetchInteractionTemplates = async (
     sortValue = `ORDER BY created_user_name ${sortBy}`;
   else if (sort === templatefiltersColumns.modified_user_name)
     sortValue = `ORDER BY modified_username ${sortBy}`;
+  else if (sort === templatefiltersColumns.createdAt)
+    sortValue = `ORDER BY created_datetime ${sortBy}`;
   else sortValue = `ORDER BY i.r_number ASC`;
 
   if (filteredData?.filteredQueryArray.length! > 0) {
@@ -324,6 +324,7 @@ export const fetchInteractionTemplates = async (
             COUNT(i.rid) OVER() AS total_records,
             i.interaction_type_rid,it.interaction_type_name,
             i.interaction_level_rid,il.interaction_level_name,
+            i.template_name,
             uc.first_name || ' ' || uc.last_name AS created_user_name,
             um.first_name || ' ' || um.last_name AS modified_user_name
 
@@ -361,7 +362,8 @@ export const fetchInteractionTemplates = async (
         'interaction_level_name', i.interaction_level_name,
         'total_records', i.total_records,
         'created_user_name', i.created_user_name,
-        'modified_user_name', i.modified_user_name
+        'modified_user_name', i.modified_user_name,
+        'template_name', i.template_name
         ) ) AS interactions
 
         FROM
@@ -687,7 +689,7 @@ const filterForInteractionTemplates = (
             break;
           }
           case "datetime": {
-            const datetimeCondition = buildDatetimeFilterCondition(condition, values, filteredColumns!);
+            const datetimeCondition = buildDatetimeFilterConditionTemplates(condition, values, filteredColumns!);
             if (datetimeCondition) {
               filteredQueryArray.push(datetimeCondition);
             }
@@ -1217,12 +1219,12 @@ const updateInteractionAgeSummary = (rid: string, age: number) => {
 };
 
 export const fetchStatusIdsForReminderList = () => {
-  return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE (status_name ILIKE '%${interactionStatus.SENT}%' OR status_name ILIKE '%${interactionStatus.RESPONSE_DRAFT}%')`
+  return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE (LOWER(status_name) = '${interactionStatus.SENT}' OR LOWER(status_name) = '${interactionStatus.RESPONSE_DRAFT}')`
 }
 
 const interactionStatus = {
   SENT : "sent",
-  RESPONSE_DRAFT : "response_draft"
+  RESPONSE_DRAFT : "response draft"
 }
 // Utility function for handling numeric filter conditions
 const buildNumericFilterCondition = (
@@ -1301,6 +1303,34 @@ const buildDatetimeFilterCondition = (
       return `${columnRef} > '${values}'`;
     case ALPHANUMERIC_CONDITIONS.between:
       return `${columnRef} BETWEEN ${values.map((d: any) => `'${d}'`).join(" AND ")}`;
+    case ALPHANUMERIC_CONDITIONS.isEmpty:
+      return `${columnRef} IS NULL`;
+    default:
+      return '';
+  }
+};
+
+const buildDatetimeFilterConditionTemplates = (
+  condition: string,
+  values: any,
+  filteredColumns: string,
+  tableAlias: string = 'i'
+): string => {
+  const columnRef = `DATE(${tableAlias}.${filteredColumns})`;
+  
+  switch (condition) {
+    case ALPHANUMERIC_CONDITIONS.equals:
+      return `${columnRef} = '${values}'`;
+    case ALPHANUMERIC_CONDITIONS.before:
+      return `${columnRef} < '${values}'`;
+    case ALPHANUMERIC_CONDITIONS.after:
+      return `${columnRef} > '${values}'`;
+    case ALPHANUMERIC_CONDITIONS.between:
+      // values should be an object: { from: string, to: string }
+      if (values && typeof values === 'object' && values.from && values.to) {
+      return `${columnRef} BETWEEN '${values.from}' AND '${values.to}'`;
+      }
+      return '';
     case ALPHANUMERIC_CONDITIONS.isEmpty:
       return `${columnRef} IS NULL`;
     default:
