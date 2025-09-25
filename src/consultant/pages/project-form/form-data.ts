@@ -625,6 +625,7 @@ export const FormData = (
             regexErrorMessage:
               'Total FTE Count must be a positive integer with up to 9 digits',
             placeholder: 'Enter Total FTE Count',
+            formatCostValue: true,
             disabled:
               isEditView &&
               permissionMap?.['total_fte']?.read &&
@@ -639,6 +640,7 @@ export const FormData = (
             regexErrorMessage:
               'Total Sub Con Count must be a positive integer with up to 9 digits',
             placeholder: 'Enter Total Sub Con Count',
+            formatCostValue: true,
             disabled:
               isEditView &&
               permissionMap?.['total_subcon']?.read &&
@@ -653,6 +655,7 @@ export const FormData = (
             regexErrorMessage:
               'Total Non Labor Count must be a positive integer with up to 9 digits',
             placeholder: 'Enter Total Non Labor Count',
+            formatCostValue: true,
             // disabled:
             //   isEditView &&
             //   permissionMap?.['total_subcon']?.read &&
@@ -670,6 +673,7 @@ export const FormData = (
             placeholder: 'Enter Total FTE Effort',
             onChange: true,
             resetDependsFields: ['total_effort'],
+            formatCostValue: true,
             disabled:
               isEditView &&
               permissionMap?.['total_effort_fte']?.read &&
@@ -685,6 +689,7 @@ export const FormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             placeholder: 'Enter Total Sub Con Effort',
             onChange: true,
+            formatCostValue: true,
             resetDependsFields: ['total_effort'],
             disabled:
               isEditView &&
@@ -701,6 +706,7 @@ export const FormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             placeholder: 'Enter Total Effort In Hrs',
             onChange: true,
+            formatCostValue: true,
             defaultValue: totalEffort || '',
             disabled:
               (isEditView &&

@@ -1,4 +1,4 @@
-import { costDisplay } from '../../../common-utils';
+import { costDisplay, valueDisplay } from '../../../common-utils';
 
 export interface projectDetails {
   rid: string;
@@ -264,7 +264,7 @@ export const transformProjectData = (
         },
         {
           label: 'Project Effort (Hours)',
-          value: project?.total_effort?.toString() || '-',
+          value: valueDisplay(project?.total_effort?.toString()) || '-',
         },
         {
           label: 'QRE Cost',
