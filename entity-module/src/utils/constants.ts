@@ -804,7 +804,7 @@ export const rawQueries = {
       ${setValues}
       ${whereParams}
       `;
-      if(data.flag == UPDATE_FLAG.account && t == "account_details" && subscriptionId){
+      if(data.flag == UPDATE_FLAG.account && t == "account_details"){
         const encryptedSecretKey = await encryptClientSecret(data.client_secret);
         let query = `
         UPDATE ${schema}.${t}
@@ -827,6 +827,17 @@ export const rawQueries = {
       await dbConnection.query(query);
     }
     return HttpStatus.SUCCESS_MESSAGE;
+  },
+  async fetchSettings(
+    schemaName: string,
+    orgDb: Sequelize,
+    parentAccountID: string,
+  ){
+    const query =  `SELECT rid, support_email, tenant_id, client_id, client_secret, subscription_created from ${schemaName}.account_details WHERE account_rid = '${parentAccountID}'`;
+    const accountSettigs = await orgDb.query(query, {
+      type: "SELECT"
+    });
+    return accountSettigs;
   },
   fetchStates(stateIds: string[], country_rid: string) {
     let formattedStateIds = stateIds.map((id: string) => `'${id}'`).join(",");

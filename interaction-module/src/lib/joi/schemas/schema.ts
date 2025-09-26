@@ -115,6 +115,7 @@ const sendAccountInteractionSchema = Joi.object({
 const getInteractionStatusSchema = Joi.object({
   status_scope: Joi.string().optional(),
   current_status: Joi.string().optional(),
+  reminder_specific_list : Joi.boolean().optional(),
 });
 
 

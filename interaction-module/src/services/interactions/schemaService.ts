@@ -16,6 +16,7 @@ import { Interaction } from "../../models/interaction";
 import { ALPHANUMERIC_CONDITIONS, HttpStatus, MAIN_SCHEMA_NAME, mainTableFilters, rawQueries, schedulerStatus, statusAction, techSummaryStatus } from "../../utils/constants";
 import { SendEmailInfo } from "../../models/sendEmailInfo";
 import { decryptClientSecret } from "../../utils/helpers";
+import { fetchStatusIdsForReminderList } from "../../utils/rawQueries";
 
 class InteractionSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -2077,13 +2078,14 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     };
   }
 
-  async getInteractionStatus(status_scope?: string, currentStatus?: string) {
+  async getInteractionStatus(status_scope?: string, currentStatus?: string, reminderFlag? : boolean) {
     if (!this.mainDbSequelize) {
       this.mainDbSequelize =
         await this.interactionModelService.getMainSequelize();
     }
     let whereClause =
       "status = 'active' AND (status_type IS NULL OR status_type = 'UI')";
+    let interactionStatus : any
     if (currentStatus) {
       // Fetch status_name for the given status_rid (currentStatus)
       const [statusResult]: any[] = await this.mainDbSequelize.query(
@@ -2097,12 +2099,21 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         whereClause += " OR status_type = 'CONDITIONAL'";
       }
     }
-    const interactionStatus = await this.mainDbSequelize.query(
+    if(reminderFlag) {
+      interactionStatus = await this.mainDbSequelize.query(
+        fetchStatusIdsForReminderList(),
+        {
+          type : "SELECT"
+        }
+      )
+    } else {
+        interactionStatus = await this.mainDbSequelize.query(
       rawQueries.fetchInteractionStatusList(whereClause),
       {
         type: "SELECT",
       }
     );
+    }
 
     return interactionStatus;
   }
