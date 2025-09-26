@@ -225,6 +225,16 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       key: 'response_updated_by',
     },
     {
+      label: 'Recipient Name',
+      value: data?.recipient_name,
+      key: 'recipient_name',
+    },
+    {
+      label: 'Recipient email',
+      value: data?.recipient_email,
+      key: 'recipient_email',
+    },
+    {
       label: 'Response Received On',
       value: formatDateToYYYYMMDDWithTime(data?.response_updated_on) || '-',
       key: 'response_updated_on',
