@@ -296,6 +296,8 @@ const InteractionForm = () => {
   const interactionData = otherInteractionData || accountInteraction.data;
   const isAccountInteractionLevel =
     interactionData?.interaction_level_name?.toLocaleLowerCase() === 'account';
+  const isProjectInteractionLevel =
+    interactionData?.interaction_level_name?.toLocaleLowerCase() === 'project';
 
   const createInteraction = useCreateInteraction();
   const accountCreateInteraction = useAccountCreateInteraction();
@@ -418,17 +420,15 @@ const InteractionForm = () => {
   }, [commonSuccess, isEditView]);
 
   useEffect(() => {
-    if (
-      memoizedInteractionLevel.length > 0 &&
-      interactionData?.interaction_level_name
-    ) {
+    if (memoizedInteractionLevel.length > 0) {
       interactionTemplates.mutate(
         {
           sortBy: 'template_name',
           sortOrder: 'ASC',
           apiSource: 'interaction',
-          templateType:
-            isAccountInteractionLevel && isAccountFields
+          templateType: isProjectInteractionLevel
+            ? 'Project'
+            : isAccountFields
               ? 'Account'
               : 'Project',
           filters: {},
@@ -448,7 +448,7 @@ const InteractionForm = () => {
         }
       );
     }
-  }, [memoizedInteractionLevel, isAccountInteractionLevel, isAccountFields]);
+  }, [memoizedInteractionLevel, isAccountFields, isProjectInteractionLevel]);
   useEffect(() => {
     if (interactionTemplateDetails.data) {
       setFormData((prev) => ({
@@ -462,7 +462,6 @@ const InteractionForm = () => {
                 is_mandatory: qus.is_mandatory ?? false,
                 notes: qus.notes.trim() || '',
                 is_editable: qus.is_editable ?? true,
-                rid: qus.rid,
               }))
             : [
                 {
@@ -652,16 +651,7 @@ const InteractionForm = () => {
           {
             account_rid: payload.account_rid,
             status_rid: payload.status_rid,
-            // If choose any template then pass type 'add'
-            questions: payload.questions.map((it) => {
-              if (
-                it.action_type === QuestionUpdate.Edit &&
-                currentTemplate.value
-              ) {
-                return { ...it, action_type: QuestionUpdate.Add };
-              }
-              return it;
-            }),
+            questions: payload.questions,
             interaction_rid: payload.interaction_rid,
             interaction_level_rid:
               getInteractionLevel.data?.data.interactionLevel.find(
@@ -686,16 +676,7 @@ const InteractionForm = () => {
             project_rid: payload.project_rid,
             project_fiscal_rid: payload.project_fiscal_rid,
             status_rid: payload.status_rid,
-            // If choose any template then pass type 'add'
-            questions: payload.questions.map((it) => {
-              if (
-                it.action_type === QuestionUpdate.Edit &&
-                currentTemplate.value
-              ) {
-                return { ...it, action_type: QuestionUpdate.Add };
-              }
-              return it;
-            }),
+            questions: payload.questions,
             interaction_rid: payload.interaction_rid,
             interaction_level_rid:
               getInteractionLevel.data?.data.interactionLevel.find(
@@ -832,17 +813,22 @@ const InteractionForm = () => {
               },
             }}
             onChange={(_e, newValue) => {
-              setConfirmationState({
-                isOpen: true,
-                message:
-                  'The current questions will be deleted, are you sure you want to continue?',
-                onConfirm: () => {
-                  setCurrentTemplate(newValue);
-                },
-                onCancel: () => {
-                  setCurrentTemplate(currentTemplate);
-                },
-              });
+              if (isEditView || currentTemplate.value) {
+                //If template already choose
+                setConfirmationState({
+                  isOpen: true,
+                  message:
+                    'The current questions will be deleted, are you sure you want to continue?',
+                  onConfirm: () => {
+                    setCurrentTemplate(newValue);
+                  },
+                  onCancel: () => {
+                    setCurrentTemplate(currentTemplate);
+                  },
+                });
+              } else {
+                setCurrentTemplate(newValue);
+              }
             }}
             value={currentTemplate}
             renderInput={(params) => (

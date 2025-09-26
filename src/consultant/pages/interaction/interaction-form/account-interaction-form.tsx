@@ -284,14 +284,7 @@ const AccountInteractionForm = () => {
         projectData.data.projects.map((project) => {
           const updatedFiscal =
             project.ProjectFiscal?.map((item) => {
-              const checkBoxMessage = !item?.isKeyContactIncluded
-                ? 'Key Contact is not available or inactive for this interaction'
-                : '';
-              return {
-                ...item,
-                disableCheckBox: !item?.isKeyContactIncluded,
-                checkBoxMessage,
-              };
+              return item;
             }) || [];
 
           return {
@@ -387,7 +380,6 @@ const AccountInteractionForm = () => {
                 is_mandatory: qus.is_mandatory ?? false,
                 notes: qus.notes.trim() || '',
                 is_editable: qus.is_editable ?? true,
-                rid: qus.rid,
               }))
             : [
                 {
@@ -535,7 +527,6 @@ const AccountInteractionForm = () => {
       false,
       draftStatus?.value || ''
     );
-
     accountCreateInteraction.mutate(
       {
         account_rid: payload.account_rid,
@@ -682,17 +673,22 @@ const AccountInteractionForm = () => {
                   },
                 }}
                 onChange={(_e, newValue) => {
-                  setConfirmationState({
-                    isOpen: true,
-                    message:
-                      'The current questions will be deleted, are you sure you want to continue?',
-                    onConfirm: () => {
-                      setCurrentTemplate(newValue);
-                    },
-                    onCancel: () => {
-                      setCurrentTemplate(currentTemplate);
-                    },
-                  });
+                  if (currentTemplate.value) {
+                    //If template already choose
+                    setConfirmationState({
+                      isOpen: true,
+                      message:
+                        'The current questions will be deleted, are you sure you want to continue?',
+                      onConfirm: () => {
+                        setCurrentTemplate(newValue);
+                      },
+                      onCancel: () => {
+                        setCurrentTemplate(currentTemplate);
+                      },
+                    });
+                  } else {
+                    setCurrentTemplate(newValue);
+                  }
                 }}
                 value={currentTemplate}
                 renderInput={(params) => (
