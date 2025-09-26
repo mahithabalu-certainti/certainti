@@ -929,6 +929,20 @@ export class WebHookService {
         parsedData = rows;
 
         const validationResult = this.validateCSV(rows, interactionLevel);
+        if(validationResult.answerValidation){
+          const errorDetails = validationResult.errors?.join(", ");
+          reason = `CSV validation failed - ${errorDetails}`;
+          await this.sendMailWithAttachment(
+            message,
+            att.name,
+            buffer,
+            reason,
+            forwardEmail,
+            graphClient,
+            email
+          );
+          this.logger.error(`Forwarding file "${att.name}" due to: ${reason}`);
+        }
 
         if (validationResult.valid) {
           this.logger.info("Valid CSV:", att.name);
@@ -1175,7 +1189,7 @@ export class WebHookService {
   private validateCSV(
     array: string[][],
     interactionLevel: string
-  ): { valid: true } | { valid: false; errors: string[] } {
+  ): { valid: true, answerValidation?: boolean, errors?: string[] } | { valid: false; errors: string[], answerValidation?: boolean } {
     const errors: string[] = [];
 
     if (!Array.isArray(array) || array.length < 6) {
@@ -1232,6 +1246,7 @@ export class WebHookService {
 
     let answeredRowsCount = 0;
     let mandatoryQuestionsCount = 0;
+    let answerValidation = false;
 
     for (let i = 0; i < totalRows; i++) {
       const row = dataRows[i];
@@ -1258,8 +1273,13 @@ export class WebHookService {
         );
       }
 
+      if (isMandatory === "yes" && !answer?.trim()) {
+        answerValidation = true;
+        rowErrors.push("Answer is required because the question is mandatory");
+      }
+
       // Skip empty-answer rows (in multiple row case)
-      if (totalRows > 1 && !hasAnswer) continue;
+      // if (totalRows > 1 && !hasAnswer) continue;
 
       // For answered rows, validate required fields
       if (!questionId) rowErrors.push("Question No");
@@ -1278,10 +1298,10 @@ export class WebHookService {
     }
 
     if (errors.length > 0) {
-      return { valid: false, errors };
+      return { valid: answerValidation ? true : false, errors, answerValidation };
     }
 
-    return { valid: true };
+    return { valid: true, answerValidation: false };
   }
 
   private async sendMailWithAttachment(
