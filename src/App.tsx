@@ -55,6 +55,9 @@ import {
   GLOBAL_INTERACTIONS_CREATE,
   MANAGE_SETTINGS,
   ACCOUNT_INTERACTIONS_CREATE,
+  INTERACTION_TEMPLATES,
+  INTERACTION_TEMPLATES_CREATE,
+  INTERACTION_TEMPLATES_EDIT,
 } from './routes';
 import { RootState } from './store/store';
 import ProjectTaskForm from './consultant/pages/project/project-details/project-task/form/project-task-form';
@@ -147,6 +150,17 @@ const Interaction = lazy(
   () => import('./consultant/pages/interaction/interaction-list/interaction')
 );
 
+const InteractionTemplates = lazy(
+  () =>
+    import(
+      './admin/pages/interaction-templates/templates-list/interaction-templates-list'
+    )
+);
+const InteractionTemplateForm = lazy(
+  () =>
+    import('./admin/pages/interaction-templates/create-template/template-form')
+);
+
 // Loading component for Suspense fallback
 const Loading = () => (
   <div className='flex h-screen w-full items-center justify-center'>
@@ -233,6 +247,18 @@ export const App: React.FC<IApp> = ({ instance }) => {
                   element={<InteractionForm />}
                 />
                 <Route path={ATTACHMENTS} element={<Attachments />} />
+                <Route
+                  path={INTERACTION_TEMPLATES}
+                  element={<InteractionTemplates />}
+                />
+                <Route
+                  path={INTERACTION_TEMPLATES_CREATE}
+                  element={<InteractionTemplateForm />}
+                />
+                <Route
+                  path={INTERACTION_TEMPLATES_EDIT}
+                  element={<InteractionTemplateForm />}
+                />
                 {/* Page not found */}
                 <Route path={NOT_MATCH} element={<NotFound />} />
               </Route>
