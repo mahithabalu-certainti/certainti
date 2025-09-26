@@ -179,7 +179,7 @@ export interface IInteractionService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { technicalSummaryDetails: any };
+    data?: any;
   }>;
 
   

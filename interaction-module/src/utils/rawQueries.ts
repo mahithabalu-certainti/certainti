@@ -150,7 +150,11 @@ export const fetchInteractionForProjectLevelQuery = (
             i.interaction_url,i.project_fiscal_rid,
             COUNT(i.rid) OVER() AS total_records, i.interaction_age,
             i.interaction_source_rid, i.interaction_type_rid, i.attachment_count,i.interaction_level_rid,
-            pf.project_code,pf.fiscal_year,
+            pf.project_code,
+            CASE 
+                WHEN i.project_fiscal_rid IS NULL THEN i.fiscal_year
+                ELSE pf.fiscal_year
+            END AS fiscal_year,
             CASE 
                 WHEN EXISTS (
                     SELECT 1 FROM ${schemaName}.key_contact_details kcd 
