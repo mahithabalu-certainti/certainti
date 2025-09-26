@@ -120,6 +120,7 @@ export const ProjectTaskFormData = (
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             placeholder: 'Enter Effort',
+            formatCostValue: true, 
             disabled:
               isEditView &&
               permissionMapTaskForm?.['total_hours_pro_task']?.read &&

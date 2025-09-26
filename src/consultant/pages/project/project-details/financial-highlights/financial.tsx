@@ -9,6 +9,7 @@ import { FinancialIcon } from '../../../../../assets';
 import SummayListTable from './summary/summay-list';
 import ResourceCost from './resource-cost/resource-cost';
 import { NewProjectData } from '../../../../types/project';
+import { ProjectQreAdjustmentResponse } from '../../utils';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getProjectFinancialResCostFields } from './helpers';
 import { useFetchState } from '../../../../services/account';
@@ -44,12 +45,14 @@ interface ProjectFinancialProps {
     params: ProjectFinancialResourceExportParams
   ) => void;
   setExportType: (type: ExportType) => void;
+  onQreAdjustmentUpdated?: (data: ProjectQreAdjustmentResponse) => void;
 }
 
 const Financial: React.FC<ProjectFinancialProps> = ({
   projectDetails,
   setExportType,
   setResCostExportParams,
+  onQreAdjustmentUpdated,
 }) => {
   const navigate = useNavigate();
   const [appliedFilters, setAppliedFilters] = useState<
@@ -222,7 +225,10 @@ const Financial: React.FC<ProjectFinancialProps> = ({
         }`}
       >
         {tabParam === 'summary' && isSummaryViewEnable && (
-          <SummayListTable projectDetails={projectDetails} />
+          <SummayListTable
+            projectDetails={projectDetails}
+            onQreAdjustmentUpdated={onQreAdjustmentUpdated}
+          />
         )}
         {tabParam === 'resource_cost' && isResourceCostViewEnable && (
           <ResourceCost

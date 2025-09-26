@@ -537,6 +537,7 @@ export const ResourceFormData = (
           createTextField('effort_in_hrs', 'Effort In Hrs', {
             required: true,
             placeholder: 'Enter Effort In Hrs',
+            formatCostValue: true,
             disabled:
               isEditView &&
               resourceCostPermissionMap?.['effort_in_hrs']?.read &&
