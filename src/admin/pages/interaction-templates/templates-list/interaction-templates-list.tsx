@@ -10,7 +10,7 @@ import {
   NewFilterIcon,
   RefreshIcon,
 } from '../../../../assets';
-import { FilterModal } from '../../../../components';
+import { ActionsDropdown, FilterModal } from '../../../../components';
 import TextButton from '../../../../components/button/text-button';
 import { getTemplateFilterFields } from './helpers';
 import { TemplateTable } from './table/templates-table';
@@ -28,6 +28,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { checkPermission } from '../../../../common-utils';
 import { AccessRestricted } from '../../../../components/account-restricted';
+import { ExportInteractionAllTemplateList } from '../../../service/interaction-template/template-service';
 
 const InteractionTemplates: React.FC = () => {
   const navigate = useNavigate();
@@ -65,6 +66,10 @@ const InteractionTemplates: React.FC = () => {
   const isTemplateViewAllEnable = checkPermission(
     permission,
     AllPermissions.INTERACTION_TEMPLATES_VIEW_EDIT
+  );
+  const isTemplateExportEnable = checkPermission(
+    permission,
+    AllPermissions.INTERACTION_TEMPLATES_EXPORT
   );
 
   const templateViewEditFields = useMemo(
@@ -152,6 +157,18 @@ const InteractionTemplates: React.FC = () => {
     [interactionLevel.data?.data.interactionLevel]
   );
 
+  const MENU_ITEMS = [
+    {
+      label: 'Export',
+      onClick: () =>
+        ExportInteractionAllTemplateList({
+          ...tableParams,
+          filters: appliedFilters,
+        }),
+      hide: !isTemplateExportEnable,
+    },
+  ];
+
   const templateFilterfields = getTemplateFilterFields(
     memoizedInteractionTypes,
     memoizedInteractionLevel,
@@ -197,6 +214,7 @@ const InteractionTemplates: React.FC = () => {
           </div>
         </div>
         <div className='flex gap-3 justify-center items-center'>
+          <ActionsDropdown actions={MENU_ITEMS} />
           <button
             className='flex border border-[#CBD6E2] rounded-[2px] w-[24px] h-[23px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer'
             onClick={onRefreshClick}

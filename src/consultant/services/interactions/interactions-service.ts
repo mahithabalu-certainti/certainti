@@ -9,6 +9,8 @@ import {
   SendInteractionPayload,
   ExportInteractionResponse,
   AccountSendInteractionPayload,
+  InteractionTemplatePayload,
+  InteractionTemplateList,
 } from '../../types';
 import { interactionServiceApi } from '../../../api/api';
 import { CommonApiResponse } from '../../../common-service';
@@ -332,6 +334,27 @@ export const useAccountInteractionDetails = (
   });
 };
 
+const fetchInteractionTemplateDetails = async (
+  interactionId: string
+): Promise<InteractionDetails> => {
+  const response = await interactionServiceApi.get<InteractionDetailsResponse>(
+    `/api/interactionTemplates/detail/${interactionId}`
+  );
+
+  return response.data.data.interactionDetails;
+};
+export const useGetInteractionTemplateDetails = (
+  interactionId: string
+): UseQueryResult<InteractionDetails | undefined, Error> => {
+  return useQuery<InteractionDetails | undefined, Error>({
+    queryKey: ['interaction-template-details', interactionId],
+    queryFn: () => fetchInteractionTemplateDetails(interactionId),
+    retry: 0,
+    gcTime: 0,
+    enabled: !!interactionId,
+  });
+};
+
 // Create & Edit
 export const getCreateInteractionUrl = (): string => {
   return `/api/interactions/new`;
@@ -490,4 +513,31 @@ export const exportGlobalInteractions = async (
   } catch (error) {
     console.error('Export failed:', error);
   }
+};
+
+export const getInteractionTemplate = async (
+  body: InteractionTemplatePayload
+): Promise<{ interactions: InteractionTemplateList[]; count: number }> => {
+  try {
+    const { data } = await interactionServiceApi.post<{
+      data: {
+        interactions: InteractionTemplateList[];
+        count: number;
+      };
+    }>('/api/interactionTemplates/list', body);
+    return data.data;
+  } catch (error) {
+    console.error('Error updating interaction details:', error);
+    throw error;
+  }
+};
+
+export const useGetInteractionTemplate = () => {
+  return useMutation<
+    { interactions: InteractionTemplateList[]; count: number },
+    Error,
+    InteractionTemplatePayload
+  >({
+    mutationFn: (body) => getInteractionTemplate({ ...body }),
+  });
 };
