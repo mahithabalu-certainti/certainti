@@ -19,6 +19,7 @@ import {
   getInteractionListUrl,
   getGlobalInteractionListUrl,
   getGlobalInteractionExportUrl,
+  getInteractionListRemainderUrl,
 } from '../urls/interactions-url';
 
 export const exportInteractions = async (
@@ -159,6 +160,18 @@ export const fetchInteractionList = async (
     count: data.data.totalCount,
   };
 };
+export const fetchInteractionListRemainder = async (
+  params: InteractionListURLParams
+): Promise<{ interactions: InteractionList[]; count: number }> => {
+  const { data } = await interactionServiceApi.post<InteractionListResponse>(
+    getInteractionListRemainderUrl(),
+    params
+  );
+  return {
+    interactions: data.data.interactions,
+    count: data.data.totalCount,
+  };
+};
 
 export const useInteractionList = (
   params: InteractionListURLParams,
@@ -178,6 +191,27 @@ export const useInteractionList = (
       params.fiscal_year !== undefined &&
       params.fiscal_year !== null &&
       !!shouldFetchList,
+  });
+};
+export const useInteractionListModel = (
+  params: InteractionListURLParams,
+  shouldFetchList: boolean,
+  refreshInteractions?: number
+): UseQueryResult<
+  { interactions: InteractionList[]; count: number },
+  Error
+> => {
+  return useQuery<{ interactions: InteractionList[]; count: number }, Error>({
+    queryKey: ['interaction-list', params, refreshInteractions],
+    queryFn: () => fetchInteractionListRemainder(params),
+    retry: 0,
+    gcTime: 0,
+    enabled:
+      !!params.account_rid &&
+      params.fiscal_year !== undefined &&
+      params.fiscal_year !== null &&
+      !!shouldFetchList &&
+      params.reminder_specific_list,
   });
 };
 

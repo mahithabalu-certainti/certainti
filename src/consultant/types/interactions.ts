@@ -187,6 +187,7 @@ export interface InteractionListURLParams {
   isGlobal?: boolean;
   flag?: string;
   attachment_count?: number | string | null;
+  reminder_specific_list?: boolean;
 }
 
 export interface ResponseListURLParams {
