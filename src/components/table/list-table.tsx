@@ -1129,7 +1129,8 @@ const ListTable = <T extends RowData>({
                       {selectable && (
                         <Tooltip
                           title={
-                            row.checkBoxMessage
+                            // eslint-disable-next-line no-extra-boolean-cast
+                            Boolean(row.checkBoxMessage)
                               ? String(row.checkBoxMessage)
                               : ''
                           }
