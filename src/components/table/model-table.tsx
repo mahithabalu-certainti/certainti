@@ -11,6 +11,7 @@ import { FieldConfig } from '../../consultant/pages/account-details-sidebar/comp
 interface TableModalProps {
   title: string;
   contextKey: string;
+  emptyMessage?: string;
   sortFilterCount?: number;
   isOpen: boolean;
   onClose: () => void;
@@ -34,6 +35,7 @@ interface TableModalProps {
 const TableModal: React.FC<TableModalProps> = ({
   title,
   contextKey,
+  emptyMessage,
   sortFilterCount = 0,
   isOpen,
   onClose,
@@ -214,6 +216,7 @@ const TableModal: React.FC<TableModalProps> = ({
               sortOrder={tableParms.sort_by}
               onSort={handleSortRequest}
               clearSelectedRows={clearSelectedRows}
+              emptyMessege={emptyMessage}
             />
           </div>
         </div>

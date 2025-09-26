@@ -104,6 +104,7 @@ const ListTable = <T extends RowData>({
   toggleClick,
   clearSelectedRows = false,
   disabledSelect,
+  emptyMessege = 'No data available',
 }: ListTableProps<T>) => {
   actionWidth = 50;
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
@@ -1106,7 +1107,7 @@ const ListTable = <T extends RowData>({
                   }
                   align='center'
                 >
-                  <Typography>No data available</Typography>
+                  <Typography>{emptyMessege}</Typography>
                 </TableCell>
               </TableRow>
             )}

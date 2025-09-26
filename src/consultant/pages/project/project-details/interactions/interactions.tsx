@@ -793,6 +793,7 @@ const Interactions: React.FC<InteractionsProps> = ({
               filterVisibility={modelShowFilter}
               showFilter={true}
               filterMenu={modelFIlterFields}
+              emptyMessage='No interaction available to send reminder'
             />
           </div>
         </>

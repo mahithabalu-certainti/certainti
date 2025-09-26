@@ -262,6 +262,7 @@ export interface ListTableProps<T extends RowData> {
   showEmptyRow?: boolean;
   clearSelectedRows?: boolean;
   disabledSelect?: boolean;
+  emptyMessege?: string;
 }
 
 export interface EditingCell {
