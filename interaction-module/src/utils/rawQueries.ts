@@ -1223,7 +1223,7 @@ const updateInteractionAgeSummary = (rid: string, age: number) => {
 };
 
 export const fetchStatusIdsForReminderList = () => {
-  return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE (LOWER(status_name) = '${interactionStatus.SENT}' OR LOWER(status_name) = '${interactionStatus.RESPONSE_DRAFT}')`
+  return `SELECT rid, status_name,status_type FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE (LOWER(status_name) = '${interactionStatus.SENT}' OR LOWER(status_name) = '${interactionStatus.RESPONSE_DRAFT}')`
 }
 
 const interactionStatus = {
