@@ -1901,6 +1901,7 @@ class SchemaService {
         fiscal_year: { parent: "", child: "fiscal_year" },
         qre_final: { parent: "", child: "qre_final" },
         qre: { parent: "qre", child: "qre" },
+        rd_percent_final : {parent : "", child  : "rd_percent_final"},
         assessment_status: {
           parent: "assessment_status",
           child: "assessment_status",
@@ -1913,7 +1914,7 @@ class SchemaService {
         child: sort.sortCol,
       };
       const isChildOnlySort =
-        sort.sortCol === "fiscal_year" || sort.sortCol === "qre_final";
+        sort.sortCol === "fiscal_year" || sort.sortCol === "qre_final" || sort.sortCol === "rd_percent_final";
 
       const parentSortClause =
         bothParentAndChild && sortConfig.parent
@@ -2090,7 +2091,8 @@ class SchemaService {
         pfs.r_number, 
         pfs.account_rid,
         COALESCE(curr.currency_code,acc_curr.currency_code,usd_curr.currency_code) as currency_code,
-        COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol
+        COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol,
+        pfs.rd_percent_final
       FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs
       INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = pfs.account_rid 
       LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc ON pc.rid = pfs.project_classification_rid
@@ -2735,6 +2737,8 @@ class SchemaService {
       assessment_status: `${tablePrefix}.assessment_status`,
       project_point_of_contact: `${tablePrefix}.project_point_of_contact`,
       technical_point_of_contact: `${tablePrefix}.technical_point_of_contact`,
+      rd_percent_final: `pfs.rd_percent_final`,
+      qre_final : `pfs.qre_final`
       // financial_consultant: `${tablePrefix}.financial_consultant`,
     };
 
@@ -2747,7 +2751,8 @@ class SchemaService {
       `${fieldAliasMap.total_cost_subcon}`,
       `${fieldAliasMap.total_cost_nonlabor}`,
       "qre",
-      "qre_final",
+      `pfs.qre_final`,
+      `pfs.rd_percent_final`
     ];
     const dateFields = [
       "project_startdate",

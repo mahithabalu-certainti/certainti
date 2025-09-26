@@ -1590,7 +1590,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       return {
         rid: techSummaryDetails.dataValues.rid,
         r_number: techSummaryDetails.dataValues.r_number,
-        technical_summary: techSummaryDetails.dataValues.technical_summary,
+        technical_summary: JSON.parse(techSummaryDetails.dataValues.technical_summary!),
         version: techSummaryDetails.dataValues.version,
         status_rid: techSummaryDetails.dataValues.status_rid,
         status_name: statusInfo?.status_name || null,
