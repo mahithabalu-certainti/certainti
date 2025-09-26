@@ -404,7 +404,7 @@ export const rawQueries = {
   },
    fetchAccountDetailsInfo(rid: string,schemaName: string) {
     return `
-    SELECT rid, fiscal_start_date,fiscal_end_date,autosend_interaction FROM ${schemaName}.account_details WHERE account_rid = '${rid}'`;
+    SELECT rid, fiscal_start_date,fiscal_end_date,autosend_interaction,max_ai_interactions FROM ${schemaName}.account_details WHERE account_rid = '${rid}'`;
   },
   
   fetchPreviousInteractionStatus(statusRid: string, schemaName: string) {
