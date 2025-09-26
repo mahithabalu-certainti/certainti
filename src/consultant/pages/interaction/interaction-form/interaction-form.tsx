@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import {
+  Autocomplete,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
+  TextField,
   Tooltip,
 } from '@mui/material';
 import { Project } from '../../../types/project';
@@ -17,6 +19,7 @@ import {
   InteractionFormQuestion,
   InteractionFormTableColumn,
   InteractionQuestionErrors,
+  InteractionTemplateList,
   StatusActionEnum,
   StatusTypeEnum,
 } from '../../../types';
@@ -25,12 +28,15 @@ import {
   useAccountCreateInteraction,
   useAccountInteractionDetails,
   useCreateInteraction,
+  useGetInteractionTemplate,
+  useGetInteractionTemplateDetails,
   useInteractionDetails,
   useUpdateInteractionDetails,
 } from '../../../services/interactions/interactions-service';
 import { useAccountProjects } from '../../../services/project';
 import {
   formatDateToYYYYMMDDWithTime,
+  getFiscalYears,
   reshapeGlobalFilter,
 } from '../../../../common-utils';
 import {
@@ -63,6 +69,11 @@ import { RootState } from '../../../../store/store';
 import { useSelector } from 'react-redux';
 import { ExpandCollapseDropdown } from '../../../../components';
 import { useGlobalAccountsList } from '../../../services/account';
+import FormFiscalYearDropdown from '../../../../components/fiscal-dropdown/form-fiscal-dropdown';
+import { DATE_CONFIG } from '../../resource-form/form-data';
+import { ArrowDropDownIcon } from '@mui/x-date-pickers/icons';
+import { ListOption } from '../../../../components/table/types';
+import ConfirmationPopup from '../../../../common-utils/confirmation-popup';
 
 const InteractionForm = () => {
   const { interactionId } = useParams();
@@ -103,6 +114,19 @@ const InteractionForm = () => {
   });
   const [errors, setErrors] = useState<InteractionFormErrors>({});
   const [currentAccountId, setCurrentAccountId] = useState<string>('');
+  const [interactionTemplate, setInteractionTemplate] = useState<ListOption[]>(
+    []
+  );
+  const [currentTemplate, setCurrentTemplate] = useState<ListOption>({
+    label: 'Choose Template',
+    value: '',
+  });
+  const [confirmationState, setConfirmationState] = React.useState<{
+    isOpen: boolean;
+    message: string;
+    onConfirm: () => void;
+    onCancel: () => void;
+  }>({ isOpen: false, message: '', onConfirm: () => {}, onCancel: () => {} });
 
   const { fiscalYear, filters } = useSelector(
     (state: RootState) => state.account
@@ -267,7 +291,12 @@ const InteractionForm = () => {
     interactionId,
     source == 'account'
   );
+
   const interactionData = otherInteractionData || accountInteraction.data;
+  const isAccountInteractionLevel =
+    interactionData?.interaction_level_name?.toLocaleLowerCase() === 'account';
+  const isProjectInteractionLevel =
+    interactionData?.interaction_level_name?.toLocaleLowerCase() === 'project';
 
   const createInteraction = useCreateInteraction();
   const accountCreateInteraction = useAccountCreateInteraction();
@@ -275,6 +304,10 @@ const InteractionForm = () => {
   const updateInteraction = useUpdateInteractionDetails();
   const interactionStatus = useGetInteractionStatus();
   const getInteractionLevel = useGetInteractionLevel();
+  const interactionTemplates = useGetInteractionTemplate();
+  const interactionTemplateDetails = useGetInteractionTemplateDetails(
+    currentTemplate.value as string
+  );
 
   const commonSuccess =
     createInteraction.isSuccess ||
@@ -301,6 +334,16 @@ const InteractionForm = () => {
         disable: !status.status_type,
       })) || [],
     [interactionStatus.data?.data.interactionStatus]
+  );
+  const memoizedInteractionLevel = useMemo(
+    () =>
+      getInteractionLevel.data?.data.interactionLevel
+        .filter((it) => it.interaction_level_name.toLowerCase() !== 'all')
+        .map((status) => ({
+          option: status.interaction_level_name,
+          value: status.rid,
+        })) || [],
+    [getInteractionLevel.data?.data.interactionLevel]
   );
 
   useEffect(() => {
@@ -358,13 +401,11 @@ const InteractionForm = () => {
     isEditView,
     accountName,
   ]);
-
   useEffect(() => {
     if (projectsData) {
       setProjectList(projectsData.projects);
     }
   }, [projectsData]);
-
   useEffect(() => {
     if (commonSuccess) {
       successToast(
@@ -376,6 +417,63 @@ const InteractionForm = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [commonSuccess, isEditView]);
+
+  useEffect(() => {
+    if (memoizedInteractionLevel.length > 0) {
+      interactionTemplates.mutate(
+        {
+          sortBy: 'template_name',
+          sortOrder: 'ASC',
+          apiSource: 'interaction',
+          templateType: isProjectInteractionLevel
+            ? 'Project'
+            : isAccountFields
+              ? 'Account'
+              : 'Project',
+          filters: {},
+        },
+        {
+          onSuccess: (res: {
+            interactions: InteractionTemplateList[];
+            count: number;
+          }) => {
+            setInteractionTemplate(
+              res.interactions.map((it, i) => ({
+                label: it.template_name || i.toString(),
+                value: it.rid,
+              }))
+            );
+          },
+        }
+      );
+    }
+  }, [memoizedInteractionLevel, isAccountFields, isProjectInteractionLevel]);
+  useEffect(() => {
+    if (interactionTemplateDetails.data) {
+      setFormData((prev) => ({
+        ...prev,
+        questions:
+          interactionTemplateDetails?.data?.questions &&
+          interactionTemplateDetails.data.questions.length > 0
+            ? interactionTemplateDetails.data.questions.map((qus, index) => ({
+                question_seq_num: qus.question_seq_num || `Q00-${index + 1}`,
+                question: qus.question.trim() || '',
+                is_mandatory: qus.is_mandatory ?? false,
+                notes: qus.notes.trim() || '',
+                is_editable: qus.is_editable ?? true,
+              }))
+            : [
+                {
+                  question_seq_num: 'SNO_1',
+                  question: '',
+                  is_mandatory: false,
+                  is_editable: true,
+                  notes: '',
+                },
+              ],
+      }));
+    }
+  }, [interactionTemplateDetails.data]);
 
   const projectCodeList: ExpandCollapseSelectOptions[] = useMemo(() => {
     if (!projectsData) return [];
@@ -559,6 +657,7 @@ const InteractionForm = () => {
                 (it) =>
                   it.interaction_level_name.toLocaleLowerCase() === 'account'
               )?.rid,
+            fiscal_year: formData.fiscalYear,
           },
           {
             onError: () => {
@@ -667,6 +766,89 @@ const InteractionForm = () => {
           </div>
         </div>
         <div className='flex gap-3'>
+          <Autocomplete
+            disableClearable
+            forcePopupIcon
+            popupIcon={<ArrowDropDownIcon />}
+            slotProps={{ paper: { style: { fontSize: '0.7rem' } } }}
+            options={interactionTemplate}
+            size='small'
+            sx={{
+              height: '24px',
+              fontSize: '13px',
+              width: '160px',
+              '&.MuiAutocomplete-root .MuiOutlinedInput-root': {
+                height: '24px',
+                background: 'transparent',
+              },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                border: '2px solid #60A5FA',
+              },
+              '& .MuiOutlinedInput-root': {
+                '&.Mui-focused': {
+                  boxShadow: 'none',
+                },
+              },
+              '.MuiSelect-select': {
+                padding: '6px 6px',
+                color: 'black',
+              },
+              '&.Mui-disabled': {
+                backgroundColor: '#f3f4f6',
+              },
+              '& .MuiOutlinedInput-notchedOutline': {
+                border: '1px solid #CBD6E2',
+                borderRadius: '2px',
+              },
+              '&:hover .MuiOutlinedInput-notchedOutline': {
+                border: '1px solid #CBD6E2',
+              },
+              '& svg': {
+                color: '#7D98B6',
+              },
+              '& .MuiInputBase-input::placeholder': {
+                color: '#7D98B6',
+                opacity: 1,
+              },
+            }}
+            onChange={(_e, newValue) => {
+              if (isEditView || currentTemplate.value) {
+                //If template already choose
+                setConfirmationState({
+                  isOpen: true,
+                  message:
+                    'The current questions will be deleted, are you sure you want to continue?',
+                  onConfirm: () => {
+                    setCurrentTemplate(newValue);
+                  },
+                  onCancel: () => {
+                    setCurrentTemplate(currentTemplate);
+                  },
+                });
+              } else {
+                setCurrentTemplate(newValue);
+              }
+            }}
+            value={currentTemplate}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                variant='outlined'
+                size='small'
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 0,
+                    fontSize: '0.8rem',
+                  },
+                  '& .MuiInputBase-input::placeholder': {
+                    color: '#7D98B6',
+                    opacity: 1,
+                  },
+                }}
+                placeholder='Choose Template'
+              />
+            )}
+          />
           <TextButton
             label='Save'
             loading={
@@ -757,6 +939,43 @@ const InteractionForm = () => {
                     disabled={true}
                     value={formData.accountName}
                   />
+                </div>
+              )}
+              {isAccountInteractionLevel && isAccountFields && (
+                <div>
+                  <label
+                    className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
+                    htmlFor='account_name'
+                  >
+                    Fiscal Year
+                    <span className='text-red-500 text-[16px]'>*</span>
+                  </label>
+                  <FormFiscalYearDropdown
+                    fiscalYear={String(formData.fiscalYear)}
+                    fiscalYearsOptions={getFiscalYears(
+                      DATE_CONFIG.COST_FISCAL_YEARS_RANGE
+                    )}
+                    isError={!!errors.fiscalYear}
+                    onChange={(e) => {
+                      setFormData((prev) => {
+                        return {
+                          ...prev,
+                          fiscalYear: Number(e.target.value),
+                        };
+                      });
+                      setErrors((prev) => {
+                        return {
+                          ...prev,
+                          fiscalYear: '',
+                        };
+                      });
+                    }}
+                  />
+                  {errors?.fiscalYear && (
+                    <span className='text-[12px] text-red-400 col-span-full'>
+                      {errors.fiscalYear}
+                    </span>
+                  )}
                 </div>
               )}
             </div>
@@ -1310,6 +1529,26 @@ const InteractionForm = () => {
           </form>
         )}
       </div>
+      <ConfirmationPopup
+        isOpen={confirmationState.isOpen}
+        message={confirmationState.message}
+        onConfirm={() => {
+          confirmationState.onConfirm();
+          setConfirmationState((prev) => ({
+            ...prev,
+            isOpen: false,
+            message: '',
+          }));
+        }}
+        onCancel={() => {
+          confirmationState.onCancel();
+          setConfirmationState((prev) => ({
+            ...prev,
+            isOpen: false,
+            message: '',
+          }));
+        }}
+      />
     </div>
   );
 };
