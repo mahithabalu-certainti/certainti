@@ -2370,7 +2370,7 @@ export class InteractionService {
     }
   }
 
-  async listInteractionTemplates(data : any,userId : string,filters:any) : Promise<any>{
+  async listInteractionTemplates(data : any,userId : string,filters:any,apiType:string) : Promise<any>{
     const mainDb = await this.getMainDb()
    
     //let fetchParentAccount : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb))
@@ -2386,7 +2386,8 @@ export class InteractionService {
         data.search,
         data.apiSource,
         data.templateType,
-        mainDb
+        mainDb,
+        apiType
       ))
     if(result[0][0].interactions != null) {
       let finalData = result[0][0].interactions == null ? [] : result[0][0].interactions
