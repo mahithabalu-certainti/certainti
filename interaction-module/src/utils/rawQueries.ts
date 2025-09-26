@@ -259,7 +259,8 @@ export const fetchInteractionTemplates = async (
   search : string,
   apiSource : string,
   templateType : string,
-  mainDb:Sequelize
+  mainDb:Sequelize,
+  apitype : string
 ) => {
   let offset = (page - 1) * limit;
   let pagination = `LIMIT ${limit} OFFSET ${offset}`;
@@ -280,6 +281,9 @@ export const fetchInteractionTemplates = async (
   );
   let interactionLevelId = fetchInteractionStatus[0]?.rid;
    interactionLLevelCondition = ` AND i.interaction_level_rid = '${interactionLevelId}' `
+  }
+  if (apitype === "export") {
+    pagination = ``;
   }
 
 
