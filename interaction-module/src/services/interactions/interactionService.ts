@@ -881,7 +881,7 @@ export class InteractionService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { technicalSummaryDetails: any };
+    data?: any;
   }> {
     try {
       const { accountNumber } =
@@ -913,9 +913,8 @@ export class InteractionService {
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
-        data: {
-          technicalSummaryDetails: techSummaryDetails,
-        },
+        data: techSummaryDetails,
+        
       };
     } catch (err) {
       console.log("Error creatng resource", err);
