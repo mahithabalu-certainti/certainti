@@ -1671,6 +1671,7 @@ class ProjectIngestionService {
       project_type_rid: "project_type_rid",
       project_name: "project_name",
       project_code: "project_code",
+      rd_percent_final: "rd_percent_final",
     };
 
     const childOnlyFilters = ["fiscal_year", "project_code"];
@@ -1811,10 +1812,29 @@ class ProjectIngestionService {
           fullOrder.push([
             Sequelize.literal(`"Project"."project_code" ASC NULLS LAST`),
           ]);
-        } else {
           fullOrder.push([
+          Sequelize.literal(`"ProjectFiscal"."fiscal_year" ASC`),
+          ]);
+        } else {
+          if(field === "project_code" && sortDirection === 'ASC') {
+            fullOrder.push([
             Sequelize.literal(`"Project"."project_code" ASC NULLS LAST`),
           ]);
+          fullOrder.push([
+          Sequelize.literal(`"ProjectFiscal"."fiscal_year" ASC`),
+          ]);
+          } else if(field === "project_code" && sortDirection === 'DESC') {
+            fullOrder.push([
+            Sequelize.literal(`"Project"."project_code" DESC NULLS LAST`),
+          ]);
+          fullOrder.push([
+          Sequelize.literal(`"ProjectFiscal"."fiscal_year" DESC`),
+          ]);
+          } else {
+            fullOrder.push([
+            Sequelize.literal(`"Project"."${field}" ${nullsHandled}`),
+          ]);
+          }
         }
       }
 
@@ -2031,6 +2051,7 @@ class ProjectIngestionService {
       project_type_rid: "project_type_rid",
       project_name: "project_name",
       project_code: "project_code",
+      rd_percent_final: "rd_percent_final"
     };
 
     const childOnlyFilters = ["fiscal_year", "project_code"];
