@@ -295,7 +295,7 @@ export enum MenuOption {
   MANAGE_SETTINGS = 'manage_settings',
   MANAGE_GEO_BASED_RULE = 'manage_geo-based_rule',
   IMPORT_TEMPLATE = 'import_template',
-  INTERACTION_TEMPLATE = 'interaction_templates',
+  INTERACTION_TEMPLATE = 'interaction_template',
   EMAIL_TEMPLATE = 'email_template',
   SURVEY_TEMPLATE = 'survey_template',
   TASK_TEMPLATE = 'task_template',
