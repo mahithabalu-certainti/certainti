@@ -1,16 +1,13 @@
 import { Request, Response } from "express";
-import {  accountinteractionFieldMappings, HttpStatus, interactionFieldMappings, interactionSource, STATUS_MESSAGE, techSummaryFieldMappings } from "../utils/constants";
+import {  HttpStatus,STATUS_MESSAGE, techSummaryFieldMappings, templateFieldMappings } from "../utils/constants";
 import {
-  deleteFromAzureBlob,
   errorLog,
-  formatToLocalTime,
   generateExcelBase64,
   handleCustomResponse,
   handleErrorResponse,
   handleSuccessResponse,
   isValidTimezone,
   successLog,
-  uploadToAzureBlob,
   validateRequest,
 } from "../utils/helpers";
 import moment from "moment-timezone";
@@ -109,7 +106,7 @@ async function listInteractionTemplates(req: Request, res: Response) {
       );
     }
 
-    const result = await interactionService.listInteractionTemplates(value,userId,parsedFilters)
+    const result = await interactionService.listInteractionTemplates(value,userId,parsedFilters,"list")
     console.log(`[${methodName}] Service response:`, JSON.stringify(result));
     if(result.statusCode === HttpStatus.SUCCESS) {
       return res.status(HttpStatus.SUCCESS).json({
@@ -281,6 +278,13 @@ async function exportInteractionTemplate(req : Request, res : Response) {
       return;
     }
     const result = await interactionService.getInteractionTemplateDetailsById(data.template_rid!);
+    const allowedFieldsForExport = await interactionService.getAllowedExportFields(userId,"interaction_templates_view_edit");
+      const allowedFieldSet = new Set<string>();
+      for (const field of allowedFieldsForExport) {
+        if (field.read) {
+          allowedFieldSet.add(field.field_name);
+        }
+      }
     const isValidTZ = data.timezone &&  isValidTimezone(data.timezone);
     const formatDate = (date?: Date) =>
         date
@@ -291,20 +295,36 @@ async function exportInteractionTemplate(req : Request, res : Response) {
 
        const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet("Interaction");
-      const headerRows = [
-      ["Template ID", response?.r_number ?? ""],
-      ["Template Name", response?.template_name ?? ""],
-      ["Interaction Type", response?.interaction_type_name ?? ""],
-      ["Interaction Level", response?.interaction_level_name ?? ""],
-      ["Status", response?.status_name ?? ""],
-      ["Created By", response?.created_by ?? ""],
-    ];
-    headerRows.forEach((row, idx) => {
-      worksheet.addRow(row);
-      worksheet.getRow(idx + 1).getCell(1).font = { bold: true };
-    });
+      // Define mapping of field keys to labels and their corresponding values from response
+      const fieldMappings: Record<string, { label: string; value: any }> = {
+        r_number: { label: "Template ID", value: response?.r_number },
+        template_name: { label: "Template Name", value: response?.template_name },
+        interaction_type_rid: { label: "Interaction Type", value: response?.interaction_type_name },
+        interaction_level_rid: { label: "Interaction Level", value: response?.interaction_level_name },
+        status_rid: { label: "Status", value: response?.status_name },
+        created_by: { label: "Created By", value: response?.created_user_name || response?.created_by },
+        created_datetime: { label: "Created Date", value: formatDate(response?.created_datetime) },
+      };
+
+      // Dynamically build header rows based on allowedFieldSet and fieldMappings
+      const headerRows: [string, string][] = [];
+      Object.keys(fieldMappings).forEach((field) => {
+        if (allowedFieldSet.has(field)) {
+          const mapping = fieldMappings[field];
+          if (mapping) {
+            headerRows.push([mapping.label, String(mapping.value ?? "")]);
+          }
+        }
+      });
+
+      headerRows.forEach((row, idx) => {
+        worksheet.addRow(row);
+        worksheet.getRow(idx + 1).getCell(1).font = { bold: true };
+      });
+     // headerSheet.addRow(headers);
+    if(allowedFieldSet.has('questions')){
      worksheet.addRow(["Question No","Questions", "Notes", "Is Mandatory"]);
-     worksheet.getRow(7).eachCell((cell) => {
+     worksheet.getRow(8).eachCell((cell) => {
       cell.font = { bold: true };
     });
      worksheet.columns = [
@@ -322,8 +342,8 @@ async function exportInteractionTemplate(req : Request, res : Response) {
         "is_mandatory": plain.is_mandatory ? "Yes" : "No",
       });
     });
+    }
     const excelBuffer = await workbook.xlsx.writeBuffer();
-    //await workbook.xlsx.writeFile('Profile_Permissions.xlsx');
         handleSuccessResponse(res, Buffer.from(excelBuffer).toString("base64"));
         return; 
     } else {
@@ -339,6 +359,101 @@ async function exportInteractionTemplate(req : Request, res : Response) {
   }
 }
 
+async function exportAllInteractionTemplates(req: Request, res: Response) {
+  const methodName = "listInteractionTemplate"
+  try {
+    console.log(`[${methodName}] Request received`);
+    const userId = req.headers["x-user-id"] as string;
+    const value = await validateRequest(req, listInteractionTemplatesSchema, res, "POST");
+    console.log(`[${methodName}] userId:`, userId);
+    console.log(`[${methodName}] value:`, value);
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    if (!value) return;
+    let parsedFilters: Record<string, any> = {};
+    try {
+      parsedFilters = value.filters;
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+
+    const result = await interactionService.listInteractionTemplates(value,userId,parsedFilters,"export")
+    console.log(result?.data)
+    const fields = await interactionService.getAllowedExportFields(
+             userId,
+             "interaction_templates_view_edit"
+           );
+    const allowedFieldSet = new Set<string>();
+         for (const field of fields) {
+           if (field.read) {
+             allowedFieldSet.add(field.field_name);
+           }
+         }
+    const isValidTZ = value.timezone &&  isValidTimezone(value.timezone);
+    const formatDate = (date?: Date) =>
+           date
+             ? moment(date).tz(isValidTZ ? value.timezone : 'UTC').format('YYYY-MM-DD, hh:mm:ss A')
+             : null;
+    if(result.statusCode === HttpStatus.SUCCESS) {
+        const finalStructuredData = result.data?.interactions.length < 1 ? [] : result.data?.interactions.map((d: any) => {
+        let resultMap: { [key: string]: any } = {
+          "r_number": d.r_number,
+          "template_name":d.template_name,
+          "status_name": d.status_name,
+          "interaction_level_name": d.interaction_level_name,
+          "interaction_type_name": d.interaction_type_name,
+          "response_source_name": d.response_source_name,
+          "created_by": d.created_user_name,
+          "created_datetime":formatDate(d.created_datetime),
+          "modified_by": d.updated_user_name,
+          "modified_datetime": d.modified_datetime == null ? '' : formatDate(d.modified_datetime),
+        };
+
+        // Build exportRecord using allowed fields and resultMap
+        const exportRecord: Record<string, any> = {};
+         templateFieldMappings.forEach(mapping => {
+          if (allowedFieldSet.has(mapping.permissionField)) {
+            exportRecord[mapping.exportField] = resultMap[mapping.dataField];
+          }
+        });
+  
+        return exportRecord;
+      });
+       const base64Response = await generateExcelBase64(finalStructuredData, "Template_Interactions");
+      handleSuccessResponse(res, base64Response);
+    } else {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.dataNotFound,
+        data : result.data
+      })
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    console.log(`[${methodName}] Exception:`, error);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
 
 
 
@@ -347,5 +462,6 @@ export default {
   listInteractionTemplates,
   updateInteractionTemplate,
   getInteractionTemplateDetailsById,
-  exportInteractionTemplate
+  exportInteractionTemplate,
+  exportAllInteractionTemplates
 };

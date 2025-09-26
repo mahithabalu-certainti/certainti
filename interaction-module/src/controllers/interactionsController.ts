@@ -658,7 +658,7 @@ async function getInteractionStatus(
   const methodName = "Get resource roles";
   try {
     const value = await validateRequest(req, getInteractionStatusSchema, res,"GET");
-    const interactionStatus = await interactionService.getInteractionStatus(value.status_scope,value.current_status);
+    const interactionStatus = await interactionService.getInteractionStatus(value.status_scope,value.current_status, value.reminder_specific_list);
     if (interactionStatus.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, interactionStatus.data);

@@ -150,7 +150,11 @@ export const fetchInteractionForProjectLevelQuery = (
             i.interaction_url,i.project_fiscal_rid,
             COUNT(i.rid) OVER() AS total_records, i.interaction_age,
             i.interaction_source_rid, i.interaction_type_rid, i.attachment_count,i.interaction_level_rid,
-            pf.project_code,pf.fiscal_year,
+            pf.project_code,
+            CASE 
+                WHEN i.project_fiscal_rid IS NULL THEN i.fiscal_year
+                ELSE pf.fiscal_year
+            END AS fiscal_year,
             CASE 
                 WHEN EXISTS (
                     SELECT 1 FROM ${schemaName}.key_contact_details kcd 
@@ -255,7 +259,8 @@ export const fetchInteractionTemplates = async (
   search : string,
   apiSource : string,
   templateType : string,
-  mainDb:Sequelize
+  mainDb:Sequelize,
+  apitype : string
 ) => {
   let offset = (page - 1) * limit;
   let pagination = `LIMIT ${limit} OFFSET ${offset}`;
@@ -276,6 +281,9 @@ export const fetchInteractionTemplates = async (
   );
   let interactionLevelId = fetchInteractionStatus[0]?.rid;
    interactionLLevelCondition = ` AND i.interaction_level_rid = '${interactionLevelId}' `
+  }
+  if (apitype === "export") {
+    pagination = ``;
   }
 
 
@@ -1219,7 +1227,7 @@ const updateInteractionAgeSummary = (rid: string, age: number) => {
 };
 
 export const fetchStatusIdsForReminderList = () => {
-  return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE (LOWER(status_name) = '${interactionStatus.SENT}' OR LOWER(status_name) = '${interactionStatus.RESPONSE_DRAFT}')`
+  return `SELECT rid, status_name,status_type FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE (LOWER(status_name) = '${interactionStatus.SENT}' OR LOWER(status_name) = '${interactionStatus.RESPONSE_DRAFT}')`
 }
 
 const interactionStatus = {

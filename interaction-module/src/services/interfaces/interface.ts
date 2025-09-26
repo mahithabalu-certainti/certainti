@@ -63,11 +63,11 @@ export interface IInteractionService {
     errorMessage?: string;
     data?: { interactions: any };
   }>;
-   listInteractionTemplates(data: any,userId: string, filters: Record<string, any>): Promise<{
+   listInteractionTemplates(data: any,userId: string, filters: Record<string, any>,apitype:string): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { interactionTemplates: any , count: number};
+    data?: { interactions: any , count: number};
   }>;
    listAccountInteractions(data: any, page: number, limit: number, filters: Record<string, any>): Promise<{
     statusCode: number;
@@ -129,7 +129,8 @@ export interface IInteractionService {
 
   getInteractionStatus(
     statusScope?: string,
-    currentStatus?: string
+    currentStatus?: string,
+    reminderFlag? : boolean
   ): Promise<{
     statusCode: number;
     message: string;

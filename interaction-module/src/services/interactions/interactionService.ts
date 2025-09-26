@@ -236,11 +236,20 @@ export class InteractionService {
     else{
     const isEnabled = await this.interactionSchemaService.isAutoSendInteractionEnabled(accountNumber, interactionData);
     this.logger.info(`Auto-send: ${isEnabled ? "enabled" : "disabled"}, Parent settings: ${isParensettingsConfigured ? "enabled" : "disabled"} for interaction ID: ${interactionId}`);
+    let maxInteractions = 0;
+    let accountInfo = null;
     if (isEnabled && isParensettingsConfigured) {
-       const projectInfo = await this.interactionSchemaService.fetchProjectInfo(accountNumber, interactionData.project_fiscal_rid);
-       const accountInfo = await this.interactionSchemaService.fetchAccountInfo(accountRid, accountNumber);
+      if(interactionLevel === 'Account') {
+         accountInfo = await this.interactionSchemaService.fetchAccountInfo(accountRid, accountNumber);
+         maxInteractions = accountInfo?.max_ai_interactions || 0;
+      }
+      else
+      {
+        const projectInfo = await this.interactionSchemaService.fetchProjectInfo(accountNumber, interactionData.project_fiscal_rid);
+        maxInteractions = projectInfo?.max_ai_interaction || 0;
+      }  
       const { AutoSendInteractionAudit } = await this.interactionModelService.getModels(accountNumber);
-      const ismaxInteractionsSent = await this.checkMaxQuarterlyInteractions(AutoSendInteractionAudit, interactionData.project_fiscal_rid, projectInfo.max_ai_interaction,accountInfo);
+      const ismaxInteractionsSent = await this.checkMaxQuarterlyInteractions(AutoSendInteractionAudit, interactionData.project_fiscal_rid, maxInteractions, accountInfo);
       if (!ismaxInteractionsSent) return;
       await this.sendInteraction([{ interaction_rid: interactionId,
         project_fiscal_rid: interactionData.project_fiscal_rid,interaction_level:interactionLevel
@@ -967,7 +976,7 @@ export class InteractionService {
     }
   }
 
-  async getInteractionStatus(status_scope?: string,currentStatus?: string): Promise<{
+  async getInteractionStatus(status_scope?: string,currentStatus?: string, reminderFlag? : boolean): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -975,7 +984,7 @@ export class InteractionService {
   }> {
     try {
       const interactionStatus =
-        await this.interactionSchemaService.getInteractionStatus(status_scope,currentStatus);
+        await this.interactionSchemaService.getInteractionStatus(status_scope,currentStatus, reminderFlag);
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -1100,7 +1109,7 @@ export class InteractionService {
     try {
       const mainDb = await this.getMainDb()
       const orgDb = await this.getOrgDb()
-      const { accountNumber } = await this.interactionSchemaService.fetchValidAccountNumberByIdForEmail(accountRid);
+      const { accountNumber } = await this.interactionSchemaService.fetchValidAccountNumberById(accountRid);
       if (!accountNumber) {
         return {
           statusCode: HttpStatus.FAILED,
@@ -1150,13 +1159,17 @@ export class InteractionService {
   }
 
 
-  async getSenderEmailInfo(accountNumber: string, parentAccountRid: string | null) {
+  async getSenderEmailInfo( parentAccountRid: string | null,accountRid: string){
     if (!parentAccountRid) {
       return null;
     }
+     const { accountNumber } = await this.interactionSchemaService.fetchValidAccountNumberByIdForEmail(accountRid);
+      if (!accountNumber) {
+        return null
+      }
     // Fetch sender email info from the database or another service
     const senderEmailInfo = await this.interactionSchemaService.fetchSenderEmailInfoByAccountId(accountNumber, parentAccountRid);
-    return senderEmailInfo;
+    return senderEmailInfo ?? null;
   }
 
   async generateInteractionLink(
@@ -2233,7 +2246,7 @@ export class InteractionService {
         project_fiscal_rid,
         interactionLevel
       );
-      const senderEmailInfo = await this.getSenderEmailInfo(accountNumber,interactionInfo.accountInfo.parent_account_rid);
+      const senderEmailInfo = await this.getSenderEmailInfo(interactionInfo.accountInfo.parent_account_rid, interactionInfo.accountInfo.account_rid);
       const excelBuffer = await this.generateExcelBuffer(
         interaction_rid,
         interactionItems,
@@ -2322,24 +2335,32 @@ export class InteractionService {
         await this.interactionSchemaService.createInteractionTemplate(
           interactionData
         );
-       if (templateInteraction) {
+       if (templateInteraction.statusCode === HttpStatus.SUCCESS) {
         await this.interactionSchemaService.addInteractionTemplateQuestions(
           interactionData,
-          templateInteraction.rid,
+          templateInteraction?.data?.interaction?.rid!,
           transaction,
           userId
         );
-      }
-    
-      return {
+         return {
         statusCode: HttpStatus.SUCCESS,
         message: STATUS_MESSAGE.interactionCreated,
         data: {
           interactions: templateInteraction,
         },
       };
+      }
+      else
+      {
+         return {
+        statusCode: templateInteraction.statusCode,
+        message: templateInteraction.message,
+        errorMessage: templateInteraction.errorMessage!,
+      };
+      }
+    
+     
     } catch (err) {
-       console.log("Error creating resource", err);
        this.logger.error(`Error creating interaction, ${err}`);
        return {
           statusCode: HttpStatus.FAILED,
@@ -2349,7 +2370,7 @@ export class InteractionService {
     }
   }
 
-  async listInteractionTemplates(data : any,userId : string,filters:any) : Promise<any>{
+  async listInteractionTemplates(data : any,userId : string,filters:any,apiType:string) : Promise<any>{
     const mainDb = await this.getMainDb()
    
     //let fetchParentAccount : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb))
@@ -2365,7 +2386,8 @@ export class InteractionService {
         data.search,
         data.apiSource,
         data.templateType,
-        mainDb
+        mainDb,
+        apiType
       ))
     if(result[0][0].interactions != null) {
       let finalData = result[0][0].interactions == null ? [] : result[0][0].interactions
@@ -2413,23 +2435,31 @@ export class InteractionService {
           userId,
           transaction
         );
-      if (updatedInteraction) {
+      if (updatedInteraction.statusCode === HttpStatus.SUCCESS) {
         await this.interactionSchemaService.addInteractionTemplateQuestions(
           interactionData,
           interactionData.template_rid!,
           transaction,
           userId
         );
-      }
-
-      await transaction.commit();
-      return {
+        await transaction.commit();
+         return {
         statusCode: HttpStatus.SUCCESS,
         message: STATUS_MESSAGE.interactionUpdated,
         data: {
           interactions: null,
         },
       };
+      }
+      else{
+        await transaction.rollback();
+        return {
+          statusCode: updatedInteraction.statusCode,
+          message: updatedInteraction.message,
+          errorMessage: updatedInteraction.errorMessage!,
+        };
+      } 
+     
     } catch (err) {
       console.log("Error updating resource", err);
       await transaction.rollback();
