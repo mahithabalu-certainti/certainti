@@ -225,7 +225,7 @@ export class InteractionService {
     }
   }
   async checkAutoSendEnabled(accountNumber: string, interactionData: ICreateInteraction, interactionId: string, userId: string, accountRid: string, interactionLevel:string, parentAccountId: string) {
-    const isParensettingsConfigured = await this.interactionSchemaService.fetchAccountDetails(accountNumber, parentAccountId);
+    const isParensettingsConfigured = await this.interactionSchemaService.fetchAccountDetails(accountNumber, parentAccountId,accountRid);
     this.logger.info(`Auto-send: ${interactionData?.trigger_send ? "enabled" : "disabled"}, Parent settings: ${isParensettingsConfigured ? "enabled" : "disabled"} for interaction ID: ${interactionId}`);
     if(interactionData?.trigger_send && isParensettingsConfigured){
        await this.sendInteraction([{ interaction_rid: interactionId,

@@ -295,7 +295,7 @@ class InteractionSchemaService {
            }
         }
        
-        const isParensettingsConfigured = await this.fetchAccountDetails(accountNumber, parentAccountId);
+        const isParensettingsConfigured = await this.fetchAccountDetails(accountNumber, parentAccountId,interactionData.account_rid);
         if (isParensettingsConfigured && (interactionData.trigger_send || autoSendAccess)) {
           // Bulk insert SendEmailInfo
           const sendEmailInfoData = prepareSendEmailInfoData(createdInteractions, interactionData.projects);
@@ -997,7 +997,7 @@ class InteractionSchemaService {
 
       let accountRnumber = account?.r_number;
 
-      if (account?.is_parent) {
+      if (!account?.is_parent) {
         const [accountData]: any[] = await this.mainDbSequelize.query(
           rawQueries.fetchParentAccountforEmail,
           {
@@ -4044,14 +4044,16 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     })
   }
 
-  async fetchAccountDetails(account_number: string, parentAccountId: string) {
-    const schemaName = `trd365_${account_number.replace(/\D/g, "")}`;
+  async fetchAccountDetails(account_number: string, parentAccountId: string, accountRid: string) {
+    const {accountNumber} = await this.fetchValidAccountNumberByIdForEmail(accountRid);
+  
+    const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
     try {
 
       const sequelize = await initOrgSequelize();
 
       const fetchParentAccount: any = await sequelize.query(rawQueries.fetchInteractionSenderEmail(schemaName, parentAccountId), {
-        replacements: { account_rid: parentAccountId },
+        replacements: { account_rid: accountRid },
         type: "SELECT",
       });
 

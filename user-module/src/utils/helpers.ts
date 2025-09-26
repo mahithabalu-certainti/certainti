@@ -113,7 +113,7 @@ export function handleCustomMessage(
   message: string,
   data?: any
 ) {
-  return successResponse(res, statusCode, message, data);
+  return successResponse(res, statusCode, message, data, message);
 }
 
 export function handleErrorResponse(
