@@ -40,7 +40,8 @@ const requiredDateOptions: { label: string; value: string }[] = [
 export const getTemplateFilterFields = (
   interactionTypes: FilterSelectOption[],
   interactionLevels: FilterSelectOption[],
-  statusOptions: FilterSelectOption[]
+  statusOptions: FilterSelectOption[],
+  permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => {
   return [
     {
@@ -48,12 +49,18 @@ export const getTemplateFilterFields = (
       name: 'r_number',
       type: 'text',
       operatorOption: textfieldOptions,
+      hide:
+        !permissionMap?.['r_number']?.read &&
+        !permissionMap?.['r_number']?.edit,
     },
     {
       label: 'Template Name',
       name: 'template_name',
       type: 'text',
       operatorOption: textfieldOptions,
+      hide:
+        !permissionMap?.['template_name']?.read &&
+        !permissionMap?.['template_name']?.edit,
     },
     {
       label: 'Interaction Level',
@@ -61,6 +68,9 @@ export const getTemplateFilterFields = (
       type: 'enumSelect',
       options: interactionLevels,
       operatorOption: enumOperator,
+      hide:
+        !permissionMap?.['interaction_level_rid']?.read &&
+        !permissionMap?.['interaction_level_rid']?.edit,
     },
     {
       label: 'Interaction Type',
@@ -68,30 +78,45 @@ export const getTemplateFilterFields = (
       type: 'enumSelect',
       options: interactionTypes,
       operatorOption: enumOperator,
+      hide:
+        !permissionMap?.['interaction_type_rid']?.read &&
+        !permissionMap?.['interaction_type_rid']?.edit,
     },
     {
       label: 'Created By',
       name: 'created_user_name',
       type: 'text',
       operatorOption: textfieldOptions,
+      hide:
+        !permissionMap?.['created_by']?.read &&
+        !permissionMap?.['created_by']?.edit,
     },
     {
       label: 'Created On',
       name: 'created_datetime',
       type: 'date',
       operatorOption: requiredDateOptions,
+      hide:
+        !permissionMap?.['created_datetime']?.read &&
+        !permissionMap?.['created_datetime']?.edit,
     },
     {
       label: 'Updated By',
       name: 'modified_user_name',
       type: 'text',
       operatorOption: nonReqTextfieldOptions,
+      hide:
+        !permissionMap?.['modified_by']?.read &&
+        !permissionMap?.['modified_by']?.edit,
     },
     {
       label: 'Updated On',
       name: 'modified_datetime',
       type: 'date',
       operatorOption: dateOptions,
+      hide:
+        !permissionMap?.['modified_datetime']?.read &&
+        !permissionMap?.['modified_datetime']?.edit,
     },
     {
       label: 'Status',
@@ -99,6 +124,9 @@ export const getTemplateFilterFields = (
       type: 'enumSelect',
       options: statusOptions,
       operatorOption: enumOperator,
+      hide:
+        !permissionMap?.['status_rid']?.read &&
+        !permissionMap?.['status_rid']?.edit,
     },
     {
       label: 'Sort Options',

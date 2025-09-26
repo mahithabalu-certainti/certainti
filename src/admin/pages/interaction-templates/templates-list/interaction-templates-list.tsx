@@ -67,6 +67,22 @@ const InteractionTemplates: React.FC = () => {
     AllPermissions.INTERACTION_TEMPLATES_VIEW_EDIT
   );
 
+  const templateViewEditFields = useMemo(
+    () =>
+      permission.find(
+        (item) => item.name === AllPermissions.INTERACTION_TEMPLATES_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    templateViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [templateViewEditFields]);
+
   const isModalOpen = Boolean(columnAnchorEl);
   const modalId = isModalOpen ? 'account-column-visibility-popover' : undefined;
 
@@ -139,7 +155,8 @@ const InteractionTemplates: React.FC = () => {
   const templateFilterfields = getTemplateFilterFields(
     memoizedInteractionTypes,
     memoizedInteractionLevel,
-    statusOptions
+    statusOptions,
+    permissionMap
   );
 
   useEffect(() => {
