@@ -1566,10 +1566,16 @@ export class InteractionService {
         {
            finalPaginatedData = disablePagination ? finalData.slice((data.page - 1) * data.limit, data.page * data.limit) : finalData
         }
+      const keyContactDetails = result[0][0].interactions !== null ? result[0][0].interactions : null
       let organizedData = {
         page : data.page,
         limit : data.limit,
         totalCount : totalResults,
+        keyContact : keyContactDetails != null && data.flag == interactionFlag.account ? 
+        {
+          key_contact_name : result[0][0].interactions[0].key_contact_name,
+          key_contact_email : result[0][0].interactions[0].key_contact_email
+        } : {},
         interactions : finalPaginatedData
       }
       return {
