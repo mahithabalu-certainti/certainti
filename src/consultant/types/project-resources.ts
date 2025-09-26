@@ -69,6 +69,7 @@ export interface ProjectResourceDetailsType {
   resource_rid: string;
   fiscal_year: number;
   project_resource_code: string;
+  project_resource_role: string;
   project_code: string;
   start_date: string | null;
   end_date: string | null;
