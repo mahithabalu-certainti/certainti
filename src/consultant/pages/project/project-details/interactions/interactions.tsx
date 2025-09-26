@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   AllModules,
@@ -5,6 +6,7 @@ import {
   OverviewTabs,
   useGetInteractionResponeSources,
   useGetInteractionStatus,
+  useGetInteractionStatusByRemainer,
   useGetInteractionTypes,
 } from '../../../../../common-service';
 import { EditIcon, InteractionDetailIcon } from '../../../../../assets';
@@ -15,7 +17,11 @@ import {
   ManageColumnsPopover,
 } from '../../../../../components/table';
 import { InteractionList, StatusTypeEnum } from '../../../../types';
-import { useInteractionList } from '../../../../services/interactions/interactions-service';
+import {
+  useInteractionList,
+  useInteractionListModel,
+  useSendInteraction,
+} from '../../../../services/interactions/interactions-service';
 import {
   generatePath,
   useNavigate,
@@ -23,7 +29,10 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 import { getInteractionListColumns } from './columns';
-import { getInteractionFilterFields } from './helpers';
+import {
+  getInteractionFilterFields,
+  getProjectInteractionFilterFields,
+} from './helpers';
 import InteractionDetails from './interaction-details/interaction-details';
 import { InteractionHistory } from './interaction-history';
 import {
@@ -41,6 +50,9 @@ import { checkPermission, getDisableReason } from '../../../../../common-utils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import { AccessRestricted } from '../../../../../components/account-restricted';
+import TableModal from '../../../../../components/table/model-table';
+import { useToast } from '../../../../../hooks';
+import { getProjectInteractionListModelColumns } from './modelColumns';
 
 const InteractionsTabs: OverviewTabs[] = [
   {
@@ -55,7 +67,13 @@ const InteractionsTabs: OverviewTabs[] = [
   //   disable: true,
   // },
 ];
-
+export interface ModelTableParams {
+  page: number;
+  limit: number;
+  sort: string;
+  sort_by: 'ASC' | 'DESC'; // restrict to only ASC or DESC
+  filter: Record<string, any>; // or a stricter type if you know filter shape
+}
 interface InteractionsProps {
   accountInActive: boolean;
   projectDetails: NewProjectData | null;
@@ -92,7 +110,17 @@ const Interactions: React.FC<InteractionsProps> = ({
   const [clearSelectedRows, setClearSelectedRows] = useState<boolean>(false);
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
-
+  const [modelShowFilter, setModelShowFilter] = useState<boolean>(false);
+  const [refreshModelInteractions, setRefreshModelInteractions] =
+    useState<number>(Date.now());
+  const [reminderModalOpen, setReminderModalOpen] = useState(false);
+  const [modelTableParms, setModdelTableParms] = useState<ModelTableParams>({
+    page: 0,
+    limit: 100,
+    sort: 'r_number',
+    sort_by: 'ASC',
+    filter: {},
+  });
   const [searchText, setSearchText] = useState('');
 
   const isModalOpen = Boolean(columnAnchorEl);
@@ -101,7 +129,8 @@ const Interactions: React.FC<InteractionsProps> = ({
   ) => {
     setColumnAnchorEl(event.currentTarget);
   };
-
+  const { successToast } = useToast();
+  const sendInteraction = useSendInteraction();
   const interactionId = searchParams.get('interaction_id');
   const interactionNumber = searchParams.get('interaction_number') || '';
   const interactionHistoryId = searchParams.get('interaction_history_id');
@@ -156,10 +185,47 @@ const Interactions: React.FC<InteractionsProps> = ({
     !viewDetails && !viewInteractionHistory && !viewInteractionAttachment,
     refreshInteractions
   );
+
+  const {
+    data: modelTableData,
+    isLoading: isModelDataLoading,
+    isError: isModelDataError,
+  } = useInteractionListModel(
+    {
+      page: modelTableParms.page,
+      limit: modelTableParms.limit,
+      sort: modelTableParms.sort,
+      sort_by: modelTableParms.sort_by,
+      filters: modelTableParms.filter,
+      fiscal_year: fiscalYear,
+      account_rid: accountId,
+      flag: 'account',
+      reminder_specific_list: true,
+    },
+    reminderModalOpen,
+    refreshModelInteractions
+  );
+
+  useEffect(() => {
+    if (reminderModalOpen) {
+      console.log(
+        'modelTableData',
+
+        isModelDataError
+      );
+    }
+  }, [
+    reminderModalOpen,
+    modelTableData,
+    isModelDataLoading,
+    isModelDataError,
+    modelTableParms,
+  ]);
   const totalItems = data?.count || 0;
   const interactionTypes = useGetInteractionTypes();
   const interactionResSources = useGetInteractionResponeSources();
   const interactionStatus = useGetInteractionStatus();
+  const interactionStatusRemainder = useGetInteractionStatusByRemainer(true);
 
   // Permissions
   const interactionsEnable = checkPermission(modules, AllModules.INTERACTIONS);
@@ -207,6 +273,14 @@ const Interactions: React.FC<InteractionsProps> = ({
         value: status.rid,
       })) || [],
     [interactionStatus.data?.data.interactionStatus]
+  );
+  const memoizedInteractionStatusReminder = useMemo(
+    () =>
+      interactionStatusRemainder.data?.data.interactionStatus.map((status) => ({
+        option: status.status_name,
+        value: status.rid,
+      })) || [],
+    [interactionStatusRemainder.data?.data.interactionStatus]
   );
 
   const memoizedInteractionTypes = useMemo(
@@ -274,7 +348,9 @@ const Interactions: React.FC<InteractionsProps> = ({
   const handleRefresh = () => {
     setRefreshInteractions(Date.now());
   };
-
+  const handleRefreshModel = () => {
+    setRefreshModelInteractions(Date.now());
+  };
   const handleFilter = () => {
     setShowFilter(!showFilter);
   };
@@ -322,6 +398,14 @@ const Interactions: React.FC<InteractionsProps> = ({
   };
 
   const headerButtons = [
+    {
+      label: 'Reminder',
+      variant: 'outlined' as const,
+      disabled: accountInActive || interactionList.length === 0,
+      onClick: () => setReminderModalOpen(true),
+      sx: { width: '80px', minWidth: '80px' },
+      hide: viewResponseHistory,
+    },
     {
       label: 'Send Interaction',
       variant: 'outlined' as const,
@@ -378,7 +462,9 @@ const Interactions: React.FC<InteractionsProps> = ({
     );
     setSelectedRows(selectedData);
   };
-
+  const handleModelFilter = () => {
+    setModelShowFilter(!modelShowFilter);
+  };
   const handleViewInteraction = (
     rowId: string,
     rNumber: string,
@@ -445,6 +531,10 @@ const Interactions: React.FC<InteractionsProps> = ({
     }
   };
 
+  const interactionModelColumn = getProjectInteractionListModelColumns(
+    // handleViewInteraction,
+    permissionMap
+  );
   const disableInteractionEditBtn = (row: InteractionList): boolean => {
     const status = (row.status_name || '').toLowerCase() as StatusTypeEnum;
     return [
@@ -469,7 +559,48 @@ const Interactions: React.FC<InteractionsProps> = ({
       },
     },
   ];
+  const handleReminderBtn = (data: InteractionList[]) => {
+    const interactions = data.map((item) => ({
+      interaction_rid: item.rid || '',
+      // interaction_level: 'Account',
+      project_fiscal_rid: item.project_fiscal_rid || '',
+      email_info: {
+        name: '',
+        email: '',
+      },
+    }));
 
+    const payload = {
+      account_rid: accountId || '',
+      is_interaction_followup: true,
+      interactions,
+    };
+
+    sendInteraction.mutate(payload, {
+      onSuccess: (response) => {
+        successToast(response?.statusMessage);
+        setReminderModalOpen(false);
+        setModdelTableParms({
+          page: 0,
+          limit: 100,
+          sort: 'r_number',
+          sort_by: 'ASC',
+          filter: {},
+        });
+        // refetch();
+      },
+    });
+  };
+  const handleClose = () => {
+    setReminderModalOpen(false);
+    setModdelTableParms({
+      page: 0,
+      limit: 100,
+      sort: 'r_number',
+      sort_by: 'ASC',
+      filter: {},
+    });
+  };
   const getRowId = (row: InteractionList) => row.rid;
   const interactionColumns = getInteractionListColumns(
     handleViewInteraction,
@@ -486,7 +617,10 @@ const Interactions: React.FC<InteractionsProps> = ({
         permissionMap
       )
     : getInteractionHistoryFilterFields(memoizedInteractionStatus);
-
+  const modelFIlterFields = getProjectInteractionFilterFields(
+    memoizedInteractionStatusReminder,
+    permissionMap
+  );
   const RestrictedColumns = [
     {
       id: 'r_number',
@@ -647,6 +781,28 @@ const Interactions: React.FC<InteractionsProps> = ({
               selectedRows={selectedRows}
               onSuccessRefetch={handleRefresh}
               interaction_level='Project'
+            />
+            <TableModal
+              title='Reminder Interaction'
+              contextKey='project-interactions'
+              isOpen={reminderModalOpen}
+              onClose={handleClose}
+              data={modelTableData?.interactions}
+              loading={isModelDataLoading}
+              isError={isModelDataError}
+              visibleColumns={interactionModelColumn}
+              totalCount={modelTableData?.count || 0}
+              tableParms={modelTableParms}
+              setTableParms={setModdelTableParms}
+              handleSend={handleReminderBtn}
+              handleFilter={handleModelFilter}
+              onRefreshClick={handleRefreshModel}
+              saveBtnLoading={sendInteraction.isPending}
+              showRefresh={true}
+              filterVisibility={modelShowFilter}
+              showFilter={true}
+              filterMenu={modelFIlterFields}
+              emptyMessage='No interaction available to send reminder'
             />
           </div>
         </>

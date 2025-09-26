@@ -227,19 +227,32 @@ export const postMailIntractionOtp = async (
 };
 
 //Interactions
-export const getInteractionStatusUrl = (statusId?: string): string => {
-  return statusId
-    ? `/api/interactions/interactionStatus?current_status=${statusId}`
-    : `/api/interactions/interactionStatus`;
+export const getInteractionStatusUrl = (
+  statusId?: string,
+  reminder_specific_list?: boolean
+): string => {
+  const params = new URLSearchParams();
+
+  if (statusId) {
+    params.append('current_status', statusId);
+  }
+
+  if (reminder_specific_list) {
+    params.append('reminder_specific_list', 'true');
+  }
+
+  const query = params.toString();
+  return `/api/interactions/interactionStatus${query ? `?${query}` : ''}`;
 };
 
 export const fetchInteractionStatus = async (
-  statusId?: string
+  statusId?: string,
+  reminder_specific_list?: boolean
 ): Promise<GetInteractionStatusApiResponse> => {
   try {
     const { data } =
       await interactionServiceApi.get<GetInteractionStatusApiResponse>(
-        getInteractionStatusUrl(statusId)
+        getInteractionStatusUrl(statusId, reminder_specific_list)
       );
     return data;
   } catch (error) {
@@ -334,6 +347,16 @@ export const useGetInteractionStatusById = (statusId: string) => {
     queryFn: () => fetchInteractionStatus(statusId),
     retry: 0,
     enabled: !!statusId,
+  });
+};
+export const useGetInteractionStatusByRemainer = (
+  reminder_specific_list?: boolean
+) => {
+  return useQuery<GetInteractionStatusApiResponse, Error>({
+    queryKey: ['gat-interaction-status-by-id'],
+    queryFn: () => fetchInteractionStatus('', reminder_specific_list),
+    retry: 0,
+    enabled: !!reminder_specific_list,
   });
 };
 
