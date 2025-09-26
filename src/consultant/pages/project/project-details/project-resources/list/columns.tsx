@@ -71,32 +71,16 @@ export const getProjectResourcesColumns = (
       </span>
     ),
   },
-  // {
-  //   id: 'resource_name',
-  //   editId: 'resource_name',
-  //   label: 'Resource Name',
-  //   sortable: true,
-  //   sortId: 'resource_name',
-  //   width: '180px',
-  //   editable:
-  //     permissionMap?.['resource_name']?.read &&
-  //     permissionMap?.['resource_name']?.edit,
-  //   hide:
-  //     !permissionMap?.['resource_name']?.read &&
-  //     !permissionMap?.['resource_name']?.edit,
-  //   field: {
-  //     type: 'text',
-  //     required: false,
-  //     placeholder: 'Enter Resource Name',
-  //     validation: [
-  //       {
-  //         regex: PROJECT_RESOURCE_REGEX.RESOURCE_NAME,
-  //         errorMessage:
-  //           "Please enter 2–64 characters using only letters, spaces, apostrophes ('), or hyphens (-). Numbers, symbols, or consecutive special characters are not allowed.",
-  //       },
-  //     ],
-  //   },
-  // },
+  {
+    id: 'resource_name',
+    label: 'Resource Name',
+    sortable: true,
+    sortId: 'resource_name',
+    width: '180px', 
+    hide:
+      !permissionMap?.['resource_name']?.read &&
+      !permissionMap?.['resource_name']?.edit, 
+  },
   {
     id: 'country_name',
     label: 'Resource Country',
