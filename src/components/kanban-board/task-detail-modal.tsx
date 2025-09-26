@@ -81,12 +81,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
         </div>
 
         {/* Content */}
-        <div className='p-4 space-y-6'>
-          {/* Task visibility notice */}
-          <div className='text-sm text-gray-500'>
-            This task is visible to everyone in My workspace.
-          </div>
-
+        <div className='p-4 space-y-5'>
           {/* Task Title */}
           <div>
             {isEditing ? (
