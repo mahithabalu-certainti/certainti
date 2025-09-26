@@ -976,7 +976,7 @@ export class InteractionService {
     }
   }
 
-  async getInteractionStatus(status_scope?: string,currentStatus?: string): Promise<{
+  async getInteractionStatus(status_scope?: string,currentStatus?: string, reminderFlag? : boolean): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -984,7 +984,7 @@ export class InteractionService {
   }> {
     try {
       const interactionStatus =
-        await this.interactionSchemaService.getInteractionStatus(status_scope,currentStatus);
+        await this.interactionSchemaService.getInteractionStatus(status_scope,currentStatus, reminderFlag);
 
       return {
         statusCode: HttpStatus.SUCCESS,

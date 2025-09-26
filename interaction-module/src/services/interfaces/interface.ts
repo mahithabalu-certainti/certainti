@@ -129,7 +129,8 @@ export interface IInteractionService {
 
   getInteractionStatus(
     statusScope?: string,
-    currentStatus?: string
+    currentStatus?: string,
+    reminderFlag? : boolean
   ): Promise<{
     statusCode: number;
     message: string;
