@@ -856,6 +856,17 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     { permissionField: 'modified_by', exportField: 'Last Updated By', dataField: 'modified_by' },
     { permissionField: 'modified_datetime', exportField: 'Last Updated Date', dataField: 'modified_datetime' }
   ];
+    export const templateFieldMappings = [
+    { permissionField: 'r_number', exportField: 'Template ID', dataField: 'r_number' },
+    { permissionField: 'template_name', exportField: 'Template Name', dataField: 'template_name' },
+    { permissionField: 'interaction_level_name', exportField: 'Interaction Level', dataField: 'interaction_level_name' },
+    { permissionField: 'interaction_type_name', exportField: 'Type', dataField: 'interaction_type_name' },
+    { permissionField: 'created_by', exportField: 'Created By', dataField: 'created_by' },
+    { permissionField: 'created_datetime', exportField: 'Created On', dataField: 'created_datetime' },
+    { permissionField: 'modified_by', exportField: 'Updated By', dataField: 'modified_by' },
+    { permissionField: 'modified_datetime', exportField: 'Updated On', dataField: 'modified_datetime' },
+    { permissionField: 'status', exportField: 'Status', dataField: 'status_name' },
+  ];
 
    export const accountinteractionFieldMappings = [
     { permissionField: 'r_number', exportField: 'Interaction ID', dataField: 'r_number' },
