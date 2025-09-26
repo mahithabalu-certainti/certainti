@@ -172,6 +172,7 @@ const Resource: React.FC<ResourceProps> = ({
   const [attachmentsOrder, setAttachmentsOrder] = useState<'ASC' | 'DESC'>(
     'ASC'
   );
+  const [searchText, setSearchText] = useState('');
 
   const [attachmentsOrderBy, setAttachmentsOrderBy] =
     useState<string>('document_name');
@@ -270,12 +271,13 @@ const Resource: React.FC<ResourceProps> = ({
     error,
   } = useResourceList(
     {
-      page: currentPage + 1, // API expects 1-based index
+      page: currentPage + 1,
       limit: rowsPerPage,
       accountNumber: accountDetails?.data?.accountById.r_number,
       sortBy: sortField,
       sortOrder: sortOrder,
       filters: appliedFilters,
+      search: searchText,
     },
     isResourceViewAllEnable && value === '',
     refreshTrigger
@@ -912,6 +914,11 @@ const Resource: React.FC<ResourceProps> = ({
         setSortFilterCount={setSortFilterCount}
         fieldOptions={fieldOptions}
         handleFilterChange={handleCategory}
+        showSearch={value === 'details' ? false : true}
+        searchDisabled={false}
+        searchHidden={value === 'cost' || value === 'skill' ? true : false}
+        searchPlaceholder='Search'
+        onSearch={(text) => setSearchText(text)}
       />
       {showUploads ? (
         <Uploads accountId={accountid} attachID={resId} />
@@ -972,6 +979,7 @@ const Resource: React.FC<ResourceProps> = ({
                 setResourceInActive={setResourceInActive}
                 setColumnAnchorEl={setColumnAnchorEl}
                 columnAnchorEl={columnAnchorEl}
+                searchValue={searchText}
               />
             )}
             {viewResourceList && !value && (

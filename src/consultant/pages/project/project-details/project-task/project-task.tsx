@@ -116,6 +116,7 @@ export const ProjectTask = ({
   const [, setProjectResData] = useState<ProjectTaskListType | null>(null);
   const [showProjectTaskDetails, setShowProjectTaskDetails] =
     useState<boolean>(false);
+  const [searchText, setSearchText] = useState('');
   const [searchParams] = useSearchParams();
   const accountID =
     accountData?.accountID || searchParams.get('accountID') || '';
@@ -186,6 +187,7 @@ export const ProjectTask = ({
       filters: appliedFilters,
       accountRid: accountID,
       projectRid: projectID,
+      search: searchText,
     },
     undefined,
     refreshProjectsTrigger
@@ -612,6 +614,8 @@ export const ProjectTask = ({
         projectResourceProjectID={projectID}
         permissionMapTaskTableColumn={permissionMapTaskTableColumn}
         fiscalDatesArg={fiscalDatesArg}
+        showSearch={viewDetails ? false : true}
+        onSearch={(text) => setSearchText(text)}
       />
       {showUploads ? (
         <Uploads

@@ -32,7 +32,7 @@ export const fetchManageUserList = async (params: UserListParams = {}) => {
     sortOrder: params.sortOrder || 'DESC',
     filters: params.filters || {},
     ...(params.filters && { filters: params.filters }),
-    ...(params.searchTerm && { search: params.searchTerm }),
+    ...(params.search && { search: params.search }),
   };
 
   const url = getUserListUrl(queryParams);

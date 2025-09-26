@@ -43,6 +43,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
   expandChild,
   setColumnAnchorEl,
   columnAnchorEl,
+  searchValue,
 }) => {
   const navigate = useNavigate();
   const { errorToast } = useToast();
@@ -64,6 +65,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
       sortBy: orderBy,
       sortOrder: apiOrder,
       filters: appliedFilters,
+      search: searchValue,
       globalFilters: reshapeGlobalFilter(filters as FilterState),
       fiscalYear,
     },

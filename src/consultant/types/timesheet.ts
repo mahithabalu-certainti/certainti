@@ -28,6 +28,7 @@ export interface TimeSheetListURLParams {
   fiscal_year?: number | string;
   account_rid: string;
   documentRid?: string;
+  search?: string;
 }
 
 export interface TImesheetListResponse {

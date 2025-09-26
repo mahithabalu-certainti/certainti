@@ -43,12 +43,14 @@ import { useGetUserGroupTypes, useManageUserRole } from '../../../service';
 import { ListTable } from '../../../../components/table';
 import { getAvailableUserColumns } from './column';
 import { SortDirection } from '../../../../components/table/types';
+import SearchBar from '../../../../components/search/search-bar';
 
 const AccountList = () => {
   const [page, setPage] = useState<number>(1);
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, FilterType>
   >({});
+  const [searchText, setSearchText] = useState<string>('');
   const [tableParams, setTableParams] = useState<ProjectListParams>({
     page: page,
     limit: 100,
@@ -75,9 +77,10 @@ const AccountList = () => {
       ...prev,
       page: 1,
       filters: appliedFilters,
+      search: searchText,
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appliedFilters]);
+  }, [appliedFilters, searchText]);
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const [columnAnchorEl, setColumnAnchorEl] =
@@ -356,6 +359,15 @@ const AccountList = () => {
         </div>
         <div className='flex items-center gap-3'>
           <div className='flex gap-1 relative'>
+            <SearchBar
+              initialSearchText={searchText}
+              onSearch={(value) => {
+                setSearchText(value);
+              }}
+              placeholder='Search'
+              disabled={false}
+              hide={false}
+            />
             {groupId ? (
               <TextButton
                 label='Back To Groups'
@@ -457,6 +469,7 @@ const AccountList = () => {
             setAppliedFilters={setAppliedFilters}
             setColumnAnchorEl={setColumnAnchorEl}
             columnAnchorEl={columnAnchorEl}
+            searchValue={searchText}
           />
         </div>
       )}
@@ -471,6 +484,7 @@ const AccountList = () => {
             hide={hide}
             setColumnAnchorEl={setColumnAnchorEl}
             columnAnchorEl={columnAnchorEl}
+            searchValue={searchText}
           />
         </div>
       )}

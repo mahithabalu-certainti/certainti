@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import {
   createButton,
   createDateField,
-  createEmptyField,
   createImgButton,
   createRadioField,
   createSelectChildField,
@@ -651,12 +650,21 @@ export const FormData = (
               !permissionMap?.['total_subcon']?.read &&
               !permissionMap?.['total_subcon']?.edit,
           }),
-          createEmptyField('', '', {
-            name: 'emptyData',
-            label: '',
-            type: '',
-            required: false,
+          createTextField('total_nonlabor', 'Total Non Labor Count', {
+            regex: REGEX_PATTERNS.EFFORTS_INTEGER_9,
+            regexErrorMessage:
+              'Total Non Labor Count must be a positive integer with up to 9 digits',
+            placeholder: 'Enter Total Non Labor Count',
+            // disabled:
+            //   isEditView &&
+            //   permissionMap?.['total_subcon']?.read &&
+            //   !permissionMap?.['total_subcon']?.edit,
+            // hide:
+            //   isEditView &&
+            //   !permissionMap?.['total_subcon']?.read &&
+            //   !permissionMap?.['total_subcon']?.edit,
           }),
+
           createTextField('total_effort_fte', 'Total FTE Effort', {
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             regexErrorMessage:
