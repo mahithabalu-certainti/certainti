@@ -18,6 +18,10 @@ import {
 } from '../../../../service/interaction-template/template-service';
 import { generatePath, useNavigate } from 'react-router-dom';
 import { INTERACTION_TEMPLATES_EDIT } from '../../../../../routes';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../store/store';
+import { checkPermission } from '../../../../../common-utils';
+import { AllPermissions } from '../../../../../common-service';
 
 interface ITemplateTableProps {
   appliedFilters: Record<string, FilterCondition>;
@@ -54,6 +58,40 @@ export const TemplateTable: React.FC<ITemplateTableProps> = ({
       setTemplateList(data?.interactions || []);
     }
   }, [data?.interactions]);
+
+  // Permission
+  const { permission } = useSelector((state: RootState) => state.permission);
+
+  const isTemplateExportEnable = checkPermission(
+    permission,
+    AllPermissions.INTERACTION_TEMPLATES_EXPORT
+  );
+
+  const templateViewEditFields = useMemo(
+    () =>
+      permission.find(
+        (item) => item.name === AllPermissions.INTERACTION_TEMPLATES_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    templateViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [templateViewEditFields]);
+
+  const templateFieldsEditable = useMemo(
+    () =>
+      permission
+        .find(
+          (item) => item.name === AllPermissions.INTERACTION_TEMPLATES_VIEW_EDIT
+        )
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
 
   const handleDownload = (row: InteractionTemplateList) => {
     ExportInteractionTemplate(row.rid, row.template_name);
@@ -93,7 +131,13 @@ export const TemplateTable: React.FC<ITemplateTableProps> = ({
   };
 
   const templateColumns = useMemo(
-    () => getInteractionTemplateColumns(handleDownload),
+    () =>
+      getInteractionTemplateColumns(
+        handleDownload,
+        permissionMap,
+        isTemplateExportEnable
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 
@@ -111,7 +155,7 @@ export const TemplateTable: React.FC<ITemplateTableProps> = ({
       label: 'Edit',
       onClick: (row) => handleEdit(row),
       icon: EditIcon,
-      hide: false,
+      hide: !templateFieldsEditable,
       iconStyle: {
         filter:
           'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',

@@ -89,6 +89,38 @@ export const getQuestionTableColumns = (
   },
 ];
 
+export const shouldHideField = (
+  fieldName: string,
+  isEditView: boolean,
+  permissionMap: Record<string, { read: boolean; edit: boolean }>
+): boolean => {
+  if (!permissionMap || !permissionMap[fieldName]) {
+    return false;
+  }
+
+  const fieldPermissions = permissionMap[fieldName];
+  if (isEditView) {
+    return !fieldPermissions.read && !fieldPermissions.edit;
+  }
+  return false;
+};
+
+export const shouldDisableField = (
+  fieldName: string,
+  isEditView: boolean,
+  permissionMap: Record<string, { read: boolean; edit: boolean }>
+): boolean => {
+  if (!permissionMap || !permissionMap[fieldName]) {
+    return false;
+  }
+
+  const fieldPermissions = permissionMap[fieldName];
+  if (isEditView) {
+    return fieldPermissions.read && !fieldPermissions.edit;
+  }
+  return false;
+};
+
 export const validateTemplateForm = (
   formData: TemplateFormData
 ): { isValid: boolean; errors: TemplateFormErrors } => {
@@ -108,9 +140,11 @@ export const validateTemplateForm = (
     } else if (!REGEX_PATTERNS.MAX_64.test(formData.templateName)) {
       newErrors.templateName = 'Template Name must not exceed 64 characters';
       isValid = false;
-    } else if (!REGEX_PATTERNS.NAME_REGEX.test(formData.templateName)) {
+    } else if (
+      !REGEX_PATTERNS.TEMPLATE_NAME_REGEX.test(formData.templateName)
+    ) {
       newErrors.templateName =
-        "Template Name must contain only letters, spaces, apostrophes(') and hyphens(-).";
+        "Template Name must contain only letters, numbers, spaces, apostrophes('), and hyphens(-).";
       isValid = false;
     }
   }

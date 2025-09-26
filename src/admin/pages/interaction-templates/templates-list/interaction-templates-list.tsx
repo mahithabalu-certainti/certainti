@@ -18,10 +18,16 @@ import { useNavigate } from 'react-router-dom';
 import { INTERACTION_TEMPLATES_CREATE } from '../../../../routes';
 import { TemplateListParams } from '../../../types';
 import {
+  AllModules,
+  AllPermissions,
   useGetInteractionLevel,
   useGetInteractionTypes,
   useGetStatus,
 } from '../../../../common-service';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../store/store';
+import { checkPermission } from '../../../../common-utils';
+import { AccessRestricted } from '../../../../components/account-restricted';
 
 const InteractionTemplates: React.FC = () => {
   const navigate = useNavigate();
@@ -43,6 +49,23 @@ const InteractionTemplates: React.FC = () => {
   const handleFilterModal = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
+
+  // Permission
+  const { modules, permission } = useSelector(
+    (state: RootState) => state.permission
+  );
+  const isInteractionTemplatesEnable = checkPermission(
+    modules,
+    AllModules.INTERACTION_TEMPLATES
+  );
+  const isTemplateCreateEnable = checkPermission(
+    permission,
+    AllPermissions.INTERACTION_TEMPLATES_CREATE
+  );
+  const isTemplateViewAllEnable = checkPermission(
+    permission,
+    AllPermissions.INTERACTION_TEMPLATES_VIEW_EDIT
+  );
 
   const isModalOpen = Boolean(columnAnchorEl);
   const modalId = isModalOpen ? 'account-column-visibility-popover' : undefined;
@@ -134,6 +157,9 @@ const InteractionTemplates: React.FC = () => {
     setColumnAnchorEl(event.currentTarget);
   };
 
+  if (!isInteractionTemplatesEnable || !isTemplateViewAllEnable)
+    return <AccessRestricted />;
+
   return (
     <div className='flex flex-col w-full h-full'>
       <div className='flex items-center justify-between w-full h-[55px] min-h-[50px] border-b border-[#CBD6E2] px-4'>
@@ -162,6 +188,7 @@ const InteractionTemplates: React.FC = () => {
           </button>
           <TextButton
             label='Create Template'
+            hide={!isTemplateCreateEnable}
             onClick={() => navigate(INTERACTION_TEMPLATES_CREATE)}
             sx={{
               width: '120px',

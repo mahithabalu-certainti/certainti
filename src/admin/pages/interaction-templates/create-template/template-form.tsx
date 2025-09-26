@@ -14,6 +14,7 @@ import { useParams } from 'react-router-dom';
 import TextButton from '../../../../components/button/text-button';
 import { useToast } from '../../../../hooks';
 import {
+  AllPermissions,
   useGetInteractionLevel,
   useGetStatus,
 } from '../../../../common-service';
@@ -26,6 +27,8 @@ import {
   getQuestionTableColumns,
   TemplateFormTableColumn,
   TemplateQuestionErrors,
+  shouldHideField,
+  shouldDisableField,
 } from './helper';
 import {
   ErrorInfoIcon,
@@ -41,6 +44,8 @@ import {
   useUpdateInteractionTemplateDetails,
 } from '../../../service/interaction-template/template-service';
 import { formatDateToYYYYMMDDWithTime } from '../../../../common-utils';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../store/store';
 
 const TemplateForm: React.FC = () => {
   const { successToast } = useToast();
@@ -67,6 +72,25 @@ const TemplateForm: React.FC = () => {
   const [errors, setErrors] = useState<TemplateFormErrors>({});
 
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
+
+  // Permission
+  const { permission } = useSelector((state: RootState) => state.permission);
+
+  const templateViewEditFields = useMemo(
+    () =>
+      permission.find(
+        (item) => item.name === AllPermissions.INTERACTION_TEMPLATES_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    templateViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [templateViewEditFields]);
 
   const templateStatus = useGetStatus();
   const interactionLevel = useGetInteractionLevel();
@@ -316,7 +340,17 @@ const TemplateForm: React.FC = () => {
             </div>
 
             <div className='grid md:grid-cols-3 gap-x-4 gap-y-[2px] px-10 pt-4'>
-              <div>
+              <div
+                style={{
+                  display: shouldHideField(
+                    'template_name',
+                    isEditView,
+                    permissionMap
+                  )
+                    ? 'none'
+                    : 'block',
+                }}
+              >
                 <label
                   className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
                   htmlFor='template_name'
@@ -332,6 +366,11 @@ const TemplateForm: React.FC = () => {
                   onChange={(e) =>
                     handleInputChange('templateName', e.target.value)
                   }
+                  disabled={shouldDisableField(
+                    'template_name',
+                    isEditView,
+                    permissionMap
+                  )}
                   autoComplete='off'
                   className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] truncate overflow-hidden text-ellipsis whitespace-nowrap outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${errors?.templateName ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
                   value={formData.templateName}
@@ -343,7 +382,17 @@ const TemplateForm: React.FC = () => {
                 )}
               </div>
 
-              <div>
+              <div
+                style={{
+                  display: shouldHideField(
+                    'interaction_level_rid',
+                    isEditView,
+                    permissionMap
+                  )
+                    ? 'none'
+                    : 'block',
+                }}
+              >
                 <label
                   className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
                   htmlFor='interaction_level'
@@ -362,6 +411,11 @@ const TemplateForm: React.FC = () => {
                   required
                   fullWidth
                   size='small'
+                  disabled={shouldDisableField(
+                    'interaction_level_rid',
+                    isEditView,
+                    permissionMap
+                  )}
                   className={`custom-select-no-arrow sm:text-sm ${
                     formData.interactionLevel === ''
                       ? 'text-[#7D98B6]'
@@ -446,7 +500,17 @@ const TemplateForm: React.FC = () => {
                 )}
               </div>
 
-              <div>
+              <div
+                style={{
+                  display: shouldHideField(
+                    'status_rid',
+                    isEditView,
+                    permissionMap
+                  )
+                    ? 'none'
+                    : 'block',
+                }}
+              >
                 <label
                   className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
                   htmlFor='status'
@@ -463,6 +527,11 @@ const TemplateForm: React.FC = () => {
                   required
                   fullWidth
                   size='small'
+                  disabled={shouldDisableField(
+                    'status_rid',
+                    isEditView,
+                    permissionMap
+                  )}
                   className={`custom-select-no-arrow sm:text-sm ${
                     formData.status === '' ? 'text-[#7D98B6]' : 'text-black'
                   } ${errors?.status ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
@@ -545,7 +614,14 @@ const TemplateForm: React.FC = () => {
               </div>
             </div>
 
-            <div className='w-full mb-5 mt-5'>
+            <div
+              className='w-full mb-5 mt-5'
+              style={{
+                display: shouldHideField('questions', isEditView, permissionMap)
+                  ? 'none'
+                  : 'block',
+              }}
+            >
               <div
                 className={`border capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-10`}
               >
@@ -621,22 +697,20 @@ const TemplateForm: React.FC = () => {
                             position: 'relative',
                             p: 0,
                           }}
-                          // className={`${shouldDisableField('interaction_questions', isEditView, permissionMap) ? 'bg-[#f3f4f6] cursor-default' : ''}`}
+                          className={`${shouldDisableField('questions', isEditView, permissionMap) ? 'bg-[#f3f4f6] cursor-default' : ''}`}
                         >
                           {questionTableColumns
                             .filter((col) => !col.hide)
                             .map((col: TemplateFormTableColumn) => {
-                              // const permissionDisabled = shouldDisableField(
-                              //   'interaction_questions',
-                              //   isEditView,
-                              //   permissionMap
-                              // );
+                              const permissionDisabled = shouldDisableField(
+                                'questions',
+                                isEditView,
+                                permissionMap
+                              );
                               const isDisabled =
-                                // permissionDisabled ||
-                                col.disabled;
+                                permissionDisabled || col.disabled;
                               const isBtnDisabled =
-                                // permissionDisabled ||
-                                col.disabled;
+                                permissionDisabled || col.disabled;
                               const error =
                                 errors.questions?.[index]?.[
                                   col.name as keyof TemplateQuestionErrors
@@ -835,6 +909,11 @@ const TemplateForm: React.FC = () => {
                   className='flex items-center cursor-pointer gap-1 bg-[#EAF0F5] h-[30px] rounded-[2px] color-[#2D3E4F] px-2 text-[12px] font-semibold disabled:bg-gray-100 disabled:opacity-75 disabled:cursor-default'
                   type='button'
                   onClick={handleAddQuestion}
+                  disabled={shouldDisableField(
+                    'questions',
+                    isEditView,
+                    permissionMap
+                  )}
                 >
                   <span>
                     <React.Suspense fallback={null}>
@@ -857,32 +936,52 @@ const TemplateForm: React.FC = () => {
                   {
                     label: 'Record ID',
                     value: formData.rid,
-                    hide: !isEditView,
+                    hide: shouldHideField('rid', isEditView, permissionMap),
                   },
                   {
                     label: 'Created On',
                     value: formData.created_on,
-                    hide: !isEditView,
+                    hide: shouldHideField(
+                      'created_datetime',
+                      isEditView,
+                      permissionMap
+                    ),
                   },
                   {
                     label: 'Created By',
                     value: formData.created_by,
-                    hide: !isEditView,
+                    hide: shouldHideField(
+                      'created_by',
+                      isEditView,
+                      permissionMap
+                    ),
                   },
                   {
                     label: 'Template ID',
                     value: formData.template_rid,
-                    hide: !isEditView,
+                    hide: shouldHideField(
+                      'r_number',
+                      isEditView,
+                      permissionMap
+                    ),
                   },
                   {
                     label: 'Updated On',
                     value: formData.updated_on,
-                    hide: !isEditView,
+                    hide: shouldHideField(
+                      'modified_datetime',
+                      isEditView,
+                      permissionMap
+                    ),
                   },
                   {
                     label: 'Updated By',
                     value: formData.updated_by,
-                    hide: !isEditView,
+                    hide: shouldHideField(
+                      'modified_by',
+                      isEditView,
+                      permissionMap
+                    ),
                   },
                 ]
                   .filter((field) => !field.hide)
