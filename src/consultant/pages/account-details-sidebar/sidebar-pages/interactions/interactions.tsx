@@ -589,7 +589,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   const handlePopoverClose = () => {
     setColumnAnchorEl(null);
   };
-  const handleReminderBtn = (data: any[]) => {
+  const handleReminderBtn = (data: InteractionList[]) => {
     // Map your input array into interactions
     const interactions = data.map((item) => ({
       interaction_rid: item.rid || '',

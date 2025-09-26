@@ -556,7 +556,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       },
     },
   ];
-  const handleReminderBtn = (data: any[]) => {
+  const handleReminderBtn = (data: InteractionList[]) => {
     const interactions = data.map((item) => ({
       interaction_rid: item.rid || '',
       // interaction_level: 'Account',
