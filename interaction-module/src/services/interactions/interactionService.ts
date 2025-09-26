@@ -1109,7 +1109,7 @@ export class InteractionService {
     try {
       const mainDb = await this.getMainDb()
       const orgDb = await this.getOrgDb()
-      const { accountNumber } = await this.interactionSchemaService.fetchValidAccountNumberByIdForEmail(accountRid);
+      const { accountNumber } = await this.interactionSchemaService.fetchValidAccountNumberById(accountRid);
       if (!accountNumber) {
         return {
           statusCode: HttpStatus.FAILED,
@@ -1159,13 +1159,17 @@ export class InteractionService {
   }
 
 
-  async getSenderEmailInfo(accountNumber: string, parentAccountRid: string | null) {
+  async getSenderEmailInfo( parentAccountRid: string | null,accountRid: string): Promise<{email:string,clientId:string, tenantId:string,clientSecret:string} | null> {
     if (!parentAccountRid) {
       return null;
     }
+     const { accountNumber } = await this.interactionSchemaService.fetchValidAccountNumberByIdForEmail(accountRid);
+      if (!accountNumber) {
+        return null
+      }
     // Fetch sender email info from the database or another service
     const senderEmailInfo = await this.interactionSchemaService.fetchSenderEmailInfoByAccountId(accountNumber, parentAccountRid);
-    return senderEmailInfo;
+    return senderEmailInfo ?? null;
   }
 
   async generateInteractionLink(
@@ -2242,7 +2246,7 @@ export class InteractionService {
         project_fiscal_rid,
         interactionLevel
       );
-      const senderEmailInfo = await this.getSenderEmailInfo(accountNumber,interactionInfo.accountInfo.parent_account_rid);
+      const senderEmailInfo = await this.getSenderEmailInfo(interactionInfo.accountInfo.parent_account_rid, interactionInfo.accountInfo.account_rid);
       const excelBuffer = await this.generateExcelBuffer(
         interaction_rid,
         interactionItems,
