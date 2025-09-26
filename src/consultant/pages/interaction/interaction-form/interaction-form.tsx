@@ -20,7 +20,6 @@ import {
   InteractionFormTableColumn,
   InteractionQuestionErrors,
   InteractionTemplateList,
-  QuestionUpdate,
   StatusActionEnum,
   StatusTypeEnum,
 } from '../../../types';
