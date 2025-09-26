@@ -451,7 +451,10 @@ const ProjectResourceForm: React.FC = () => {
   );
 
   const isFormLoading =
-    allCountries.isLoading || currency.isLoading || resCodeLoading;
+    allCountries.isLoading ||
+    currency.isLoading ||
+    resCodeLoading ||
+    getProjectResource.isLoading;
 
   return (
     <>

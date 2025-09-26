@@ -87,7 +87,8 @@ export const hasFormValuesChanged = (
 
 export const validateInteractionForm = (
   formData: InteractionFormData,
-  source: string | null
+  source: string | null,
+  isAccountOnly?: boolean
 ): { isValid: boolean; errors: InteractionFormErrors } => {
   let isValid = true;
   const newErrors: InteractionFormErrors = {};
@@ -101,6 +102,10 @@ export const validateInteractionForm = (
     }
     if (!formData.projectCode && source === 'global') {
       newErrors.projectCode = 'Project Code is required';
+      isValid = false;
+    }
+    if (!formData.fiscalYear && source === 'account' && isAccountOnly) {
+      newErrors.fiscalYear = 'Fiscalyear is required';
       isValid = false;
     }
   }
