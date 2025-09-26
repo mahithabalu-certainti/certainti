@@ -1159,7 +1159,7 @@ export class InteractionService {
   }
 
 
-  async getSenderEmailInfo( parentAccountRid: string | null,accountRid: string): Promise<{email:string,clientId:string, tenantId:string,clientSecret:string} | null> {
+  async getSenderEmailInfo( parentAccountRid: string | null,accountRid: string){
     if (!parentAccountRid) {
       return null;
     }
