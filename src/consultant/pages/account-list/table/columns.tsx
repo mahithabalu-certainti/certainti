@@ -180,6 +180,8 @@ export const getAccountColumns = (
     hide:
       !permissionMap?.['total_projects']?.read &&
       !permissionMap?.['total_projects']?.edit,
+    render: (row: AccountList) =>
+      row.total_projects ? formatNumberWithCommas(row.total_projects) : '-',
   },
   {
     id: 'total_project_hours',
