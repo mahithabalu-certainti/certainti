@@ -152,7 +152,11 @@ const getInteractionDetailsURL = (
 
 export const fetchInteractionList = async (
   params: InteractionListURLParams
-): Promise<{ interactions: InteractionList[]; count: number }> => {
+): Promise<{
+  interactions: InteractionList[];
+  count: number;
+  recipients: { name: string; email: string };
+}> => {
   const { data } = await interactionServiceApi.post<InteractionListResponse>(
     getInteractionListUrl(),
     params
@@ -160,6 +164,7 @@ export const fetchInteractionList = async (
   return {
     interactions: data.data.interactions,
     count: data.data.totalCount,
+    recipients: { name: 'Siva', email: 'siva@gmail.com' },
   };
 };
 export const fetchInteractionListRemainder = async (
@@ -180,10 +185,21 @@ export const useInteractionList = (
   shouldFetchList: boolean,
   refreshInteractions?: number
 ): UseQueryResult<
-  { interactions: InteractionList[]; count: number },
+  {
+    interactions: InteractionList[];
+    count: number;
+    recipients: { name: string; email: string };
+  },
   Error
 > => {
-  return useQuery<{ interactions: InteractionList[]; count: number }, Error>({
+  return useQuery<
+    {
+      interactions: InteractionList[];
+      count: number;
+      recipients: { name: string; email: string };
+    },
+    Error
+  >({
     queryKey: ['interaction-list', params, refreshInteractions],
     queryFn: () => fetchInteractionList(params),
     retry: 0,

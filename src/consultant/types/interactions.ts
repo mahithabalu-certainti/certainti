@@ -310,8 +310,8 @@ export interface InteractionDetails {
   response_updated_on: string | null;
   account_rnumber: string;
   project_rnumber: string;
-  recipient_email?: string
-  interaction_level_name?: string
+  recipient_email?: string;
+  interaction_level_name?: string;
 }
 
 export interface InteractionDetailsResponse {
@@ -464,4 +464,8 @@ export interface AccountSendInteractionPayload {
   account_rid: string;
   account_interaction_rid: string[];
   projects: SendIntractionProject[];
+}
+export interface IRecipient {
+  name: string;
+  email: string;
 }

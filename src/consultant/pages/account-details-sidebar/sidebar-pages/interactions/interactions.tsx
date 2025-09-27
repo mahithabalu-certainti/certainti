@@ -307,7 +307,10 @@ const Interactions: React.FC<InteractionsProps> = ({
             checkBoxMessage,
           };
         }) || [];
-
+      localStorage.setItem(
+        'currentRecipients',
+        JSON.stringify(data.recipients)
+      );
       setInteractionList(updatedInteractions);
       setSelectedRows([]);
       setClearSelectedRows((prev) => !prev);
