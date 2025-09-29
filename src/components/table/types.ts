@@ -143,7 +143,7 @@ export type ListTableColumn<T> = {
   editId?: string;
   sortable?: boolean;
   sticky?: boolean;
-  sx?: React.CSSProperties;
+  sx?: React.CSSProperties | ((row?: T) => React.CSSProperties);
   editable?: boolean;
   hide?: boolean;
   render?: (row: T) => React.ReactNode;
