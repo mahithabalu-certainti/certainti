@@ -3172,25 +3172,58 @@ export class ProjectTaskSchemaService {
 
     return projectTaskData;
   }
-    async updateProjectTaskStatus(
-      accountNumber: string,
-      projectTaskId: string,
-      statusId: string,
-      userId: string,
-      transaction: Transaction
-    ) {
-      const { ProjectTask } = await this.getModels(accountNumber);
-      const sequelize = await this.getSequelize();
-  
-      await ProjectTask.update({
-        status_rid: statusId,
-        modified_by: userId,
-        modified_datetime: new Date(),
-      }, {
-        where: {
-          rid: projectTaskId
-        },
-        transaction,
-      })
+    
+  async updateProjectTaskStatus(
+    accountNumber: string,
+    projectTaskId: string,
+    statusId: string,
+    userId: string,
+    transaction: Transaction
+  ) {
+    const { ProjectTask } = await this.getModels(accountNumber);
+    const sequelize = await this.getSequelize();
+
+    await ProjectTask.update({
+      status_rid: statusId,
+      modified_by: userId,
+      modified_datetime: new Date(),
+    }, {
+      where: {
+        rid: projectTaskId
+      },
+      transaction,
+    })
+  }
+
+  async fetchProjectTaskTypes(){
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.getMainSequelize();
     }
+
+    const query = rawQueries.fetchProjecTaskType();
+    const result: any[] = await this.mainDbSequelize.query(
+      query,
+      {
+        type: "SELECT"
+      }
+    );
+
+    return result;
+  }
+
+  async fetchProjectTaskClassification(){
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.getMainSequelize();
+    }
+
+    const query = rawQueries.fetchProjetClassificationQuery();
+    const result: any[] = await this.mainDbSequelize.query(
+      query,
+      {
+        type: "SELECT"
+      }
+    );
+
+    return result;
+  }
 }

@@ -959,6 +959,26 @@ export const setInlineForProjectTask = (dbData : ProjectTask, requestData : any)
     dataStorage = `status_rid = '${newData.status_rid}'`
     newDataArray.push(dataStorage)
   }  
+  if(requestData.task_name != undefined){
+    newData.task_name = requestData.task_name
+    dataStorage = `task_name = '${newData.task_name}'`
+    newDataArray.push(dataStorage)
+  }
+  if(requestData.task_description != undefined){
+    newData.task_description = requestData.task_description
+    dataStorage = `task_description = '${newData.task_description}'`
+    newDataArray.push(dataStorage)
+  }
+  if(requestData.task_classification_rid != undefined){
+    newData.task_classification_rid = requestData.task_classification_rid
+    dataStorage = `task_classification_rid = '${newData.task_classification_rid}'`
+    newDataArray.push(dataStorage)
+  }
+  if(requestData.task_type_rid != undefined){
+    newData.task_type_rid = requestData.task_type_rid
+    dataStorage = `task_type_rid = '${newData.task_type_rid}'`
+    newDataArray.push(dataStorage)
+  } 
 
   if(newDataArray.length < 1) {
     return {

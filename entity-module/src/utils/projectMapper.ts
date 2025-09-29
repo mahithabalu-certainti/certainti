@@ -925,7 +925,12 @@ export class ProjectTaskMapper {
 
       comments: projectTask.comments || null,
       status_rid : projectTask.status_rid,
-      project_resource_rid : projectTask.project_resource_rid
+      project_resource_rid : projectTask.project_resource_rid,
+
+      task_name: projectTask.task_name || null,
+      task_description: projectTask.task_description || null,
+      task_type_rid: projectTask.task_type_rid || null,
+      task_classification_rid: projectTask.task_classification_rid || null
     };
   }
   static mapToProjectTaskUpdate(
@@ -957,7 +962,12 @@ export class ProjectTaskMapper {
 
       comments: projectTask.comments || null,
       status_rid : projectTask.status_rid,
-      project_resource_rid : projectTask.project_resource_rid
+      project_resource_rid : projectTask.project_resource_rid,
+
+      task_name: projectTask.task_name || null,
+      task_description: projectTask.task_description || null,
+      task_type_rid: projectTask.task_type_rid || null,
+      task_classification_rid: projectTask.task_classification_rid || null
     };
   }
 }
