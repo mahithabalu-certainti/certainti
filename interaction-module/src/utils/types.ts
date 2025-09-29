@@ -25,7 +25,13 @@ export interface ICreateInteraction {
   interaction_level_rid:string;
   interaction_level?:string;
   projects?:IProject[];
-  trigger_send?: boolean
+  trigger_send?: boolean;
+  email_info? : {
+    email : any,
+    name : any
+  }
+  recipient_name? : any,
+  recipient_email? : any
 }
 
 export interface IProject {
@@ -51,6 +57,10 @@ export interface ICreateAccountInteraction {
   created_by: string;
   account_interaction_rid?: string;
   modified_by?: string;
+  email_info? : {
+    email : any,
+    name : any
+  }
 }
 
 export interface IUpdateInteraction {
@@ -78,7 +88,13 @@ export interface IUpdateInteraction {
   status_action?: string;
   interaction_level?:string;
   interaction_level_rid:string
-  trigger_send?: boolean
+  trigger_send?: boolean;
+  email_info? : {
+    email : any,
+    name : any
+  }
+  recipient_name? : any,
+  recipient_email? : any
 }
 
 export interface InteractionDetailsResponse {
