@@ -57,6 +57,10 @@ export interface ICreateAccountInteraction {
   created_by: string;
   account_interaction_rid?: string;
   modified_by?: string;
+  email_info? : {
+    email : any,
+    name : any
+  }
 }
 
 export interface IUpdateInteraction {
@@ -85,7 +89,7 @@ export interface IUpdateInteraction {
   interaction_level?:string;
   interaction_level_rid:string
   trigger_send?: boolean;
-   email_info? : {
+  email_info? : {
     email : any,
     name : any
   }
