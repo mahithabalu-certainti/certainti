@@ -3461,8 +3461,11 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           event_name: 'response_received'
         }
       });
-     
-      if (globalAccess?.auto_access_rd && responseReceivedEvent.event_name) {
+
+     if(!responseReceivedEvent || !responseReceivedEvent?.event_name){
+      return false;
+     }
+      if (globalAccess?.auto_access_rd && (responseReceivedEvent && responseReceivedEvent?.event_name)) {
         return true;
       } else {
         if (!this.orgDbSequelize) {

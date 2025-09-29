@@ -1235,6 +1235,7 @@ async function sendInteraction(req: Request, res: Response): Promise<void> {
     }
      const interaction = await interactionService.sendInteraction(
        value.interactions,
+       value.email_info,
        value.account_rid,
        userId,
        value.is_interaction_followup

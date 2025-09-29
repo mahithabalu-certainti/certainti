@@ -318,7 +318,7 @@ export const fetchInteractionTemplates = async (
   else if (sort === templatefiltersColumns.created_user_name)
     sortValue = `ORDER BY created_user_name ${sortBy}`;
   else if (sort === templatefiltersColumns.modified_user_name)
-    sortValue = `ORDER BY modified_username ${sortBy}`;
+    sortValue = `ORDER BY modified_user_name ${sortBy}`;
   else if (sort === templatefiltersColumns.createdAt)
     sortValue = `ORDER BY created_datetime ${sortBy}`;
   else sortValue = `ORDER BY i.r_number ASC`;

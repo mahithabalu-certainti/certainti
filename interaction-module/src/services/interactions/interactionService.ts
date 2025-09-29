@@ -230,7 +230,7 @@ export class InteractionService {
     if(interactionData?.trigger_send && isParensettingsConfigured){
        await this.sendInteraction([{ interaction_rid: interactionId,
         project_fiscal_rid: interactionData.project_fiscal_rid,interaction_level:interactionLevel
-       }], interactionData.account_rid, userId, false,'Manual-Send');
+       }],{"email": null, "name": null}, interactionData.account_rid, userId, false,'Manual-Send');
 
     }
     else{
@@ -253,7 +253,7 @@ export class InteractionService {
       if (!ismaxInteractionsSent) return;
       await this.sendInteraction([{ interaction_rid: interactionId,
         project_fiscal_rid: interactionData.project_fiscal_rid,interaction_level:interactionLevel
-       }], interactionData.account_rid, userId, false,'Auto-Send');
+       }],{"email":null, "name": null}, interactionData.account_rid, userId, false,'Auto-Send');
     }
   }
   }
@@ -604,6 +604,7 @@ export class InteractionService {
         },
       };
     } catch (err) {
+      this.logger.error(`Error updating interaction response, ${err}`);
       await transaction.rollback();
       return {
           statusCode: HttpStatus.FAILED,
@@ -1088,14 +1089,14 @@ export class InteractionService {
   async sendInteraction(
    interactions: {
       interaction_rid: string;
-      email_info?: {
-        email: string;
-        name: string | null;
-        ccEmails?: string[] | [];
-      };
       interaction_level: string;
       project_fiscal_rid: string;
     }[],
+    email_info: {
+        email: string | null;
+        name: string | null;
+        ccEmails?: string[] | [];
+      },
     accountRid: string,
     userId: string,
     is_interaction_followup: boolean,
@@ -1111,11 +1112,11 @@ export class InteractionService {
       const orgDb = await this.getOrgDb()
       const { accountNumber } = await this.interactionSchemaService.fetchValidAccountNumberById(accountRid);
       if (!accountNumber) {
-        return {
-          statusCode: HttpStatus.FAILED,
-          message: HttpStatus.FAILED_MESSAGE,
-          errorMessage: "Invalid account ID",
-        };
+        // return {
+        //   statusCode: HttpStatus.FAILED,
+        //   message: HttpStatus.FAILED_MESSAGE,
+        //   errorMessage: "Invalid account ID",
+        // };
       }
 
       const interactionResponse: any[] = [];
@@ -1123,7 +1124,7 @@ export class InteractionService {
 
       const fetchInQueueStatus : any = await mainDb.query(rawQueries.fetchInteractionQueueStatus())
 
-      for (const { interaction_rid, email_info, project_fiscal_rid, interaction_level } of interactions) {
+      for (const { interaction_rid, project_fiscal_rid, interaction_level } of interactions) {
         let data : any = {}
         data.account_rid = accountRid
         data.project_fiscal_rid = project_fiscal_rid,
