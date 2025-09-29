@@ -349,7 +349,7 @@ export const useGetInteractionStatusById = (statusId: string) => {
     enabled: !!statusId,
   });
 };
-export const useGetInteractionStatusByRemainer = (
+export const useGetInteractionStatusByReminder = (
   reminder_specific_list?: boolean
 ) => {
   return useQuery<GetInteractionStatusApiResponse, Error>({

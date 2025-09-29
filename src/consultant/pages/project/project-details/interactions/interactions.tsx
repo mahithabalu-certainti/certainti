@@ -6,7 +6,7 @@ import {
   OverviewTabs,
   useGetInteractionResponeSources,
   useGetInteractionStatus,
-  useGetInteractionStatusByRemainer,
+  useGetInteractionStatusByReminder,
   useGetInteractionTypes,
 } from '../../../../../common-service';
 import { EditIcon, InteractionDetailIcon } from '../../../../../assets';
@@ -222,7 +222,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   const interactionTypes = useGetInteractionTypes();
   const interactionResSources = useGetInteractionResponeSources();
   const interactionStatus = useGetInteractionStatus();
-  const interactionStatusRemainder = useGetInteractionStatusByRemainer(true);
+  const interactionStatusRemainder = useGetInteractionStatusByReminder(true);
 
   // Permissions
   const interactionsEnable = checkPermission(modules, AllModules.INTERACTIONS);
