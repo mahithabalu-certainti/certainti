@@ -370,6 +370,7 @@ export const getAllProjectListColumns = (
     field: {
       type: 'text',
       required: false,
+      formatCostNumber: true,
       placeholder: 'Enter Project Effort',
       validation: [
         {
@@ -408,6 +409,7 @@ export const getAllProjectListColumns = (
     field: {
       type: 'text',
       required: false,
+      formatCostNumber: true,
       placeholder: 'Enter Project Cost',
       validation: [
         {
@@ -448,6 +450,7 @@ export const getAllProjectListColumns = (
     field: {
       type: 'text',
       required: false,
+      formatCostNumber: true,
       placeholder: 'Enter FTE Cost',
       validation: [
         {
@@ -482,6 +485,7 @@ export const getAllProjectListColumns = (
     field: {
       type: 'text',
       required: false,
+      formatCostNumber: true,
       placeholder: 'Enter Sub Con Cost',
       validation: [
         {
@@ -516,6 +520,7 @@ export const getAllProjectListColumns = (
     field: {
       type: 'text',
       required: false,
+      formatCostNumber: true,
       placeholder: 'Enter Non Labor Cost',
       validation: [
         {
