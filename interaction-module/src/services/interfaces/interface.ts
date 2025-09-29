@@ -198,11 +198,11 @@ export interface IInteractionService {
       interaction_rid: string;
       project_fiscal_rid: string;
       interaction_level: string;
-      email_info: {
+    }[],
+    email_info: {
         email: string;
         name: string | null;
-      };
-    }[],
+      },
     accountRid : string,
     userId: string,
     is_interaction_followup?: boolean

@@ -48,6 +48,8 @@ export const fetchInteractionForProjectLevelQuery = (
   let andConditions = ``;
   let searchValue;
   let reminderFilter : string = ``
+  let accountLevelkeyContactQuery : string = ``
+  let aggregatedQuery : string = `` 
   if (disablePagination) pagination = ` `;
   else pagination;
 
@@ -61,6 +63,10 @@ export const fetchInteractionForProjectLevelQuery = (
     whereConditions = `
         i.account_rid = '${account_rid}' 
         ${fiscalQuery}`;
+    accountLevelkeyContactQuery = `kcd.key_contact_name, kcd.key_contact_email,`
+    aggregatedQuery = `
+        ,'key_contact_name', i.key_contact_name,
+        'key_contact_email', i.key_contact_email`
   } else {
     whereConditions = `
         i.account_rid = '${account_rid}' 
@@ -95,7 +101,7 @@ export const fetchInteractionForProjectLevelQuery = (
     sortValue = `ORDER BY i.recipient_name ${sortBy}`;
   else if (sort === filtersColumns.recipient_email)
     sortValue = `ORDER BY i.recipient_email ${sortBy}`;
-  else if (sort === filtersColumns.last_sent_on)
+  else if (sort === filtersColumns.sent_on_datetime)
     sortValue = `ORDER BY i.sent_on_datetime ${sortBy}`;
   else if (sort === filtersColumns.last_reminder_on)
     sortValue = `ORDER BY i.last_reminder_on ${sortBy}`;
@@ -131,7 +137,7 @@ export const fetchInteractionForProjectLevelQuery = (
     WITH fetch_interaction AS (
         SELECT
             i.rid, i.r_number, i.interaction_iteration, COALESCE(i.interaction_age,0),
-            i.status_rid,
+            i.status_rid, ${accountLevelkeyContactQuery}
            CASE 
             WHEN i.recipient_name IS NULL OR i.recipient_name = '' 
             THEN kcd.key_contact_name 
@@ -241,6 +247,7 @@ export const fetchInteractionForProjectLevelQuery = (
         'project_code', i.project_code,
         'has_email_recipient', i.has_email_recipient,
         'has_account_recipient', i.has_account_recipient
+        ${aggregatedQuery}
         ) ) AS interactions
 
         FROM
@@ -311,7 +318,7 @@ export const fetchInteractionTemplates = async (
   else if (sort === templatefiltersColumns.created_user_name)
     sortValue = `ORDER BY created_user_name ${sortBy}`;
   else if (sort === templatefiltersColumns.modified_user_name)
-    sortValue = `ORDER BY modified_username ${sortBy}`;
+    sortValue = `ORDER BY modified_user_name ${sortBy}`;
   else if (sort === templatefiltersColumns.createdAt)
     sortValue = `ORDER BY created_datetime ${sortBy}`;
   else sortValue = `ORDER BY i.r_number ASC`;
