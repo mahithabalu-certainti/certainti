@@ -101,7 +101,7 @@ export const fetchInteractionForProjectLevelQuery = (
     sortValue = `ORDER BY i.recipient_name ${sortBy}`;
   else if (sort === filtersColumns.recipient_email)
     sortValue = `ORDER BY i.recipient_email ${sortBy}`;
-  else if (sort === filtersColumns.last_sent_on)
+  else if (sort === filtersColumns.sent_on_datetime)
     sortValue = `ORDER BY i.sent_on_datetime ${sortBy}`;
   else if (sort === filtersColumns.last_reminder_on)
     sortValue = `ORDER BY i.last_reminder_on ${sortBy}`;

@@ -4025,9 +4025,11 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     return insertedData
   }
 
-  async createAutoSendInteractionEntry(accountNumber: string, interaction_rid: string, project_fiscal_rid: string, email_info: any) {
+  async createAutoSendInteractionEntry(accountNumber: string, interaction_rid: string, project_fiscal_rid: string, email_info: any, account_rid: string, interaction_level: string) {
     const { AutoSendInteractionAudit } = await this.interactionModelService.getModels(accountNumber);
     const createdEntry = await AutoSendInteractionAudit.create({
+      interaction_level: interaction_level,
+      account_rid: account_rid,
       project_fiscal_rid: project_fiscal_rid,
       
     });
