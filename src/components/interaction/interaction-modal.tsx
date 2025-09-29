@@ -151,8 +151,7 @@ const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
         {!showEmailFields && (
           <div className='mt-4'>
             <h3 className='text-[16px] font-bold text-[#2D3E4F] text-center text-sm mb-8'>
-              Do you want to add external email addresses to notify additional
-              recipients for this interaction?
+              Do you want to add external email address to notify alternate recipient for this interaction?
             </h3>
             <div className='flex gap-3 justify-end'>
               <TextButton
