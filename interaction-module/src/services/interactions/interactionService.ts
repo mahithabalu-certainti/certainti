@@ -155,7 +155,7 @@ export class InteractionService {
           transaction,
           userId
         );
-        console.log("Interaction created successfully", interaction.rid);
+       this.logger.info(`Interaction created successfully, ${interaction.rid}`);
         await this.interactionSchemaService.addInteractionSummary(
           accountNumber,
           interactionData,
