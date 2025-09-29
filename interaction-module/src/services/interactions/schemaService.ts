@@ -63,6 +63,8 @@ class InteractionSchemaService {
       );
       const interactionLevel = await this.getInteractionLevelByType(intLevel);
       interactionData.interaction_level_rid = interactionLevel!;
+      interactionData.recipient_name = interactionData.email_info?.name || null
+      interactionData.recipient_email = interactionData.email_info?.email || null
       const interaction = await Interaction.create(interactionData, {
         transaction,
       });
@@ -864,6 +866,8 @@ class InteractionSchemaService {
         ...interactionData,
         modified_by: userId,
         modified_datetime: new Date(),
+        recipient_name : interactionData.email_info?.name,
+        recipient_email : interactionData.email_info?.email
       },
       {
         where: {
