@@ -1198,6 +1198,8 @@ export class InteractionService {
 
       for (const { interaction_rid, project_fiscal_rid, interaction_level } of interactions) {
         let data : any = {}
+        let email : string;
+        let name : string;
         data.account_rid = accountRid
         data.project_fiscal_rid = project_fiscal_rid,
         data.account_rnumber = accountNumber,
@@ -1214,14 +1216,30 @@ export class InteractionService {
           await this.interactionSchemaService.createAutoSendInteractionEntry(accountNumber, interaction_rid, project_fiscal_rid, email_info,accountRid,interaction_level);
         }
         console.log("Interaction queued for sending:", interaction_rid, fetchInQueueStatus[0][0].rid);
-        if(data.email !== undefined && data.name !== undefined) {
-          await orgDb.query(rawQueries.updateInteractionStatusAndResEmailName(schemaName, fetchInQueueStatus[0][0].rid, interaction_rid, data.email, data.name))
-          await mainDb.query(rawQueries.updateInteractionSummaryStatusAndResEmailName(fetchInQueueStatus[0][0].rid, interaction_rid, data.name, data.email))
-        } else {
-          await orgDb.query(rawQueries.updateInteractionStatus(schemaName, fetchInQueueStatus[0][0].rid, interaction_rid))
-          await mainDb.query(rawQueries.updateInteractionSummaryStatus(fetchInQueueStatus[0][0].rid, interaction_rid))
+        if(interaction_level.toLowerCase() === 'account') {
+          if(data.email !== undefined && data.name !== undefined) {
+            email = data.email;
+            name = data.name;
+        } 
+        else {
+          const fetchResNameEmail : any = await orgDb.query(rawQueries.fetchKeyContactForInteraction(schemaName, data.account_rid))
+          email = fetchResNameEmail[0][0].key_contact_email
+          name = fetchResNameEmail[0][0].key_contact_name
         }
-        
+        await orgDb.query(rawQueries.updateInteractionStatusAndResEmailName(schemaName, fetchInQueueStatus[0][0].rid, interaction_rid, email, name))
+        await mainDb.query(rawQueries.updateInteractionSummaryStatusAndResEmailName(fetchInQueueStatus[0][0].rid, interaction_rid, name, email))
+        } else {
+          if(data.email !== undefined && data.name !== undefined) {
+            email = data.email;
+            name = data.name;
+        } else {
+          const fetchResNameEmail : any = await orgDb.query(rawQueries.fetchKeyContactForInteraction(schemaName, project_fiscal_rid))
+          email = fetchResNameEmail[0][0].key_contact_email
+          name = fetchResNameEmail[0][0].key_contact_name
+        }
+        await orgDb.query(rawQueries.updateInteractionStatusAndResEmailName(schemaName, fetchInQueueStatus[0][0].rid, interaction_rid, email, name))
+        await mainDb.query(rawQueries.updateInteractionSummaryStatusAndResEmailName(fetchInQueueStatus[0][0].rid, interaction_rid, name, email))
+        }
         interactionResponse.push({
           interactionRid: interaction_rid,
         });
