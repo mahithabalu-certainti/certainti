@@ -604,6 +604,7 @@ export class InteractionService {
         },
       };
     } catch (err) {
+      this.logger.error(`Error updating interaction response, ${err}`);
       await transaction.rollback();
       return {
           statusCode: HttpStatus.FAILED,
