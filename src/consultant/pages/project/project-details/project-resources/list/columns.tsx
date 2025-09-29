@@ -230,6 +230,7 @@ export const getProjectResourcesColumns = (
     field: {
       type: 'text',
       required: false,
+      formatCostNumber: true,
       placeholder: 'Enter an effort',
       validation: [
         {
@@ -265,6 +266,7 @@ export const getProjectResourcesColumns = (
       type: 'text',
       required: false,
       placeholder: 'Enter Cost',
+      formatCostNumber: true,
       validation: [
         {
           regex: PROJECT_RESOURCE_REGEX.COST_REGEX,
