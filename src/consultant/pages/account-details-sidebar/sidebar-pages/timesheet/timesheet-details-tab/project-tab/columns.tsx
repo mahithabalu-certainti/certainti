@@ -216,7 +216,7 @@ export const getProjectTabTableColumns = (
   },
   {
     id: 'rd_percent_final',
-    label: 'QRE %',
+    label: 'QRE Percent Final',
     sortable: true,
     sortId: 'rd_percent_final',
     width: 130,
@@ -231,7 +231,7 @@ export const getProjectTabTableColumns = (
   },
   {
     id: 'qre_final',
-    label: 'QRE',
+    label: 'QRE Final',
     sortable: true,
     sortId: 'qre_final',
     width: 130,

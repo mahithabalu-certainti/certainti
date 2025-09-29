@@ -76,10 +76,10 @@ export const getProjectResourcesColumns = (
     label: 'Resource Name',
     sortable: true,
     sortId: 'resource_name',
-    width: '180px', 
+    width: '180px',
     hide:
       !permissionMap?.['resource_name']?.read &&
-      !permissionMap?.['resource_name']?.edit, 
+      !permissionMap?.['resource_name']?.edit,
   },
   {
     id: 'country_name',
@@ -275,7 +275,7 @@ export const getProjectResourcesColumns = (
   },
   {
     id: 'qre_percent',
-    label: 'QRE %',
+    label: 'QRE Percent Final',
     sortable: true,
     sortId: 'qre_percent',
     width: '150px',
@@ -285,7 +285,7 @@ export const getProjectResourcesColumns = (
   },
   {
     id: 'qre_final',
-    label: 'QRE',
+    label: 'QRE Final',
     sortable: true,
     sortId: 'qre_final',
     width: '150px',
