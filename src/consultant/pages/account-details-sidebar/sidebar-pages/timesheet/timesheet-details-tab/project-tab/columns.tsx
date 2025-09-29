@@ -215,10 +215,10 @@ export const getProjectTabTableColumns = (
       !permissionMap?.['assessment_status']?.edit,
   },
   {
-    id: 'qre',
+    id: 'rd_percent_final',
     label: 'QRE %',
     sortable: true,
-    sortId: 'qre',
+    sortId: 'rd_percent_final',
     width: 130,
     sx: {
       textAlign: 'right',
@@ -226,7 +226,8 @@ export const getProjectTabTableColumns = (
     hide:
       !permissionMap?.['qre_final']?.read &&
       !permissionMap?.['qre_final']?.edit,
-    render: (row: TimesheetProjectList) => (row.qre ? row.qre : '-'),
+    render: (row: TimesheetProjectList) =>
+      row.qre ? row.rd_percent_final : '-',
   },
   {
     id: 'qre_final',
