@@ -2319,7 +2319,9 @@ private async createInteractionTable(
        CREATE TABLE IF NOT EXISTS "${schemaName}".autosend_interaction_audit
       (
           rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
-          project_fiscal_rid character varying(50) NOT NULL,
+          project_fiscal_rid character varying(50),
+          account_rid character varying(50),
+          interaction_level character varying(50),
           created_datetime timestamp with time zone DEFAULT now(),
           created_by character varying(50)
       )
