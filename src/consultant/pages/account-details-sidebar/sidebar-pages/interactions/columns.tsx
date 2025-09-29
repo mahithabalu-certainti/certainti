@@ -25,14 +25,14 @@ export const getInteractionListColumns = (
     sticky: true,
     hide:
       !permissionMap?.['r_number']?.edit && !permissionMap?.['r_number']?.read,
-    sx: (row) => ({
+    sx: {
       position: 'sticky',
       left: 32,
-      background: row?.has_email_recipient ? '#fff' : '#f4ecec !important',
+      background: '#fff',
       zIndex: 10,
       borderRight: '1px solid #CBD6E2',
       borderBottom: '1px solid #CBD6E2 !important',
-    }),
+    },
     render: (row: InteractionList) => (
       <span
         onClick={() =>
