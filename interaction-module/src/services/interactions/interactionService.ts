@@ -251,7 +251,7 @@ export class InteractionService {
               interaction_level: interactionLevel,
             },
           ],
-          { email: null, name: null },
+          { email: interactionData.email_info?.email || null, name: interactionData.email_info?.name || null },
           interactionData.account_rid,
           userId,
           false,
@@ -296,7 +296,7 @@ export class InteractionService {
                 interaction_level: interactionLevel,
               },
             ],
-            { email: null, name: null },
+            { email: interactionData.email_info?.email || null, name: interactionData.email_info?.name || null },
             interactionData.account_rid,
             userId,
             false,
@@ -395,7 +395,7 @@ export class InteractionService {
     });
     }  
     this.logger.info(`Sent count for the current quarter: ${sentCount}`);
-    if (sentCount >= maxInteractions) {
+    if (sentCount > maxInteractions) {
       this.logger.info(`Max interactions sent for quarter (${sentCount}) reached for project_fiscal_rid: ${projectFiscalRid}`);
       return false;
     }
@@ -1211,11 +1211,17 @@ export class InteractionService {
         await this.interactionSchemaService.insertEmailInfoDatas(data);
         if(type === 'Auto-Send')
         {
-          await this.interactionSchemaService.createAutoSendInteractionEntry(accountNumber, interaction_rid, project_fiscal_rid, email_info,interaction_level,accountRid);
+          await this.interactionSchemaService.createAutoSendInteractionEntry(accountNumber, interaction_rid, project_fiscal_rid, email_info,accountRid,interaction_level);
         }
         console.log("Interaction queued for sending:", interaction_rid, fetchInQueueStatus[0][0].rid);
-        await orgDb.query(rawQueries.updateInteractionStatus(schemaName, fetchInQueueStatus[0][0].rid, interaction_rid))
-        await mainDb.query(rawQueries.updateInteractionSummaryStatus(fetchInQueueStatus[0][0].rid, interaction_rid))
+        if(data.email !== undefined && data.name !== undefined) {
+          await orgDb.query(rawQueries.updateInteractionStatusAndResEmailName(schemaName, fetchInQueueStatus[0][0].rid, interaction_rid, data.email, data.name))
+          await mainDb.query(rawQueries.updateInteractionSummaryStatusAndResEmailName(fetchInQueueStatus[0][0].rid, interaction_rid, data.name, data.email))
+        } else {
+          await orgDb.query(rawQueries.updateInteractionStatus(schemaName, fetchInQueueStatus[0][0].rid, interaction_rid))
+          await mainDb.query(rawQueries.updateInteractionSummaryStatus(fetchInQueueStatus[0][0].rid, interaction_rid))
+        }
+        
         interactionResponse.push({
           interactionRid: interaction_rid,
         });

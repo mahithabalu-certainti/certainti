@@ -3020,7 +3020,7 @@ class ProjectIngestionService {
       raw: true,
     });
     const contactInteractionMap: Record<string, any[]> = {};
-    if(apiSource === "Project") {
+    if(apiSource.toLowerCase() === "interaction") {
       let interactionKeyContact : any[] = []
       if(allFiscalIdsForInteractions.length > 0) {
         let schemaName = rawQueries.fetchSchemaName(accountNumber)
