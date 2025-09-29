@@ -208,6 +208,7 @@ export interface InteractionListURLParams {
   flag?: string;
   attachment_count?: number | string | null;
   search?: string;
+  reminder_specific_list?: boolean;
 }
 
 export interface InteractionTemplatePayload {
@@ -310,8 +311,8 @@ export interface InteractionDetails {
   response_updated_on: string | null;
   account_rnumber: string;
   project_rnumber: string;
-  recipient_email?: string
-  interaction_level_name?: string
+  recipient_email?: string;
+  interaction_level_name?: string;
 }
 
 export interface InteractionDetailsResponse {
