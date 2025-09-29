@@ -846,6 +846,14 @@ const ListTable = <T extends RowData>({
 
   const isEditingAnyCell = Object.keys(editingCells).length > 0;
 
+  const filterOutBackground = (
+    sx: React.CSSProperties & { bgcolor?: string }
+  ) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { background, backgroundColor, bgcolor, ...rest } = sx;
+    return rest;
+  };
+
   return (
     <>
       <TableContainer
@@ -974,7 +982,9 @@ const ListTable = <T extends RowData>({
                       width: column.width || 160,
                       minWidth: column.width || 160,
                       maxWidth: column.width || 160,
-                      ...(column.sx || {}),
+                      ...(typeof column.sx === 'function'
+                        ? filterOutBackground(column.sx())
+                        : column.sx || {}),
                       left:
                         selectable &&
                         actionMenuItems?.length > 0 &&
@@ -999,7 +1009,9 @@ const ListTable = <T extends RowData>({
                       width: column.width || 160,
                       minWidth: column.width || 160,
                       maxWidth: column.width || 160,
-                      ...(column.sx || {}),
+                      ...(typeof column.sx === 'function'
+                        ? filterOutBackground(column.sx())
+                        : column.sx || {}),
                       left:
                         selectable &&
                         actionMenuItems?.length > 0 &&
@@ -1400,7 +1412,9 @@ const ListTable = <T extends RowData>({
                               width: column.width || 160,
                               minWidth: column.width || 160,
                               maxWidth: column.width || 160,
-                              ...(column.sx || {}),
+                              ...(typeof column.sx === 'function'
+                                ? column.sx(row)
+                                : column.sx || {}),
                               zIndex: column.sticky ? 6 : 'auto',
                               left:
                                 selectable &&
@@ -1434,7 +1448,10 @@ const ListTable = <T extends RowData>({
                               background:
                                 !isEditing && expandable && isExpanded
                                   ? '#ECECEC'
-                                  : '#fff',
+                                  : (typeof column.sx === 'function'
+                                      ? column.sx(row)?.background
+                                      : (column.sx as React.CSSProperties)
+                                          ?.background) || '#fff',
                             }}
                             className={`${
                               hoverHighlight &&

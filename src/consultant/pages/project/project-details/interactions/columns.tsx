@@ -25,14 +25,14 @@ export const getInteractionListColumns = (
     sticky: true,
     hide:
       !permissionMap?.['r_number']?.edit && !permissionMap?.['r_number']?.read,
-    sx: {
+    sx: (row) => ({
       position: 'sticky',
       left: 32,
-      background: '#fff',
+      background: row?.has_email_recipient ? '#fff' : '#f4ecec !important',
       zIndex: 10,
       borderRight: '1px solid #CBD6E2',
       borderBottom: '1px solid #CBD6E2 !important',
-    },
+    }),
     render: (row: InteractionList) => (
       <span
         onClick={() =>
@@ -81,6 +81,9 @@ export const getInteractionListColumns = (
     label: 'Recipient Name',
     width: 160,
     sortable: true,
+    sx: (row) => ({
+      background: row?.has_email_recipient ? '#fff' : '#f4ecec !important',
+    }),
     hide:
       !permissionMap?.['recipient_name']?.edit &&
       !permissionMap?.['recipient_name']?.read,
@@ -92,6 +95,9 @@ export const getInteractionListColumns = (
     label: 'Recipient Email',
     width: 200,
     sortable: true,
+    sx: (row) => ({
+      background: row?.has_email_recipient ? '#fff' : '#f4ecec !important',
+    }),
     hide:
       !permissionMap?.['recipient_email']?.edit &&
       !permissionMap?.['recipient_email']?.read,
