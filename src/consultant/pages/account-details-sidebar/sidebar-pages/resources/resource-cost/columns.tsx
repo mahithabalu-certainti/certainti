@@ -214,8 +214,9 @@ export const getResourceCostColumns = (
       !permissionMap?.['effort_in_hrs']?.edit &&
       !permissionMap?.['effort_in_hrs']?.read,
     field: {
-      type: 'number',
+      type: 'text',
       required: true,
+      formatCostNumber: true,
       placeholder: 'Enter Effort In Hrs',
       validation: [
         {
@@ -246,8 +247,9 @@ export const getResourceCostColumns = (
       !accountInActive,
     hide: !permissionMap?.['salary']?.edit && !permissionMap?.['salary']?.read,
     field: {
-      type: 'number',
+      type: 'text',
       required: false,
+      formatCostNumber: true,
       placeholder: 'Enter Salary',
       validation: [
         {
@@ -287,8 +289,9 @@ export const getResourceCostColumns = (
       !permissionMap?.['resource_cost']?.edit &&
       !permissionMap?.['resource_cost']?.read,
     field: {
-      type: 'number',
+      type: 'text',
       required: !isFullTime,
+      formatCostNumber: true,
       placeholder: 'Enter Cost',
       validation: [
         {
@@ -327,8 +330,9 @@ export const getResourceCostColumns = (
       !accountInActive,
     hide: !permissionMap?.['bonus']?.edit && !permissionMap?.['bonus']?.read,
     field: {
-      type: 'number',
+      type: 'text',
       required: false,
+      formatCostNumber: true,
       placeholder: 'Enter Bonus',
       validation: [
         {
@@ -361,8 +365,9 @@ export const getResourceCostColumns = (
       !permissionMap?.['insurance']?.edit &&
       !permissionMap?.['insurance']?.read,
     field: {
-      type: 'number',
+      type: 'text',
       required: false,
+      formatCostNumber: true,
       placeholder: 'Enter Insurance',
       validation: [
         {
@@ -394,8 +399,9 @@ export const getResourceCostColumns = (
       !permissionMap?.['deductions']?.edit &&
       !permissionMap?.['deductions']?.read,
     field: {
-      type: 'number',
+      type: 'text',
       required: false,
+      formatCostNumber: true,
       placeholder: 'Enter Deductions',
       validation: [
         {
