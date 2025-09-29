@@ -10,6 +10,16 @@ routes.get(
   controller.projectTaskController.getProjectTasks
 );
 routes.get(
+  "/type",
+  checkUserStatusMiddleware("NA"),
+  controller.projectTaskController.fetchProjectTaskTypes
+);
+routes.get(
+  "/classification",
+  checkUserStatusMiddleware("NA"),
+  controller.projectTaskController.fetchProjectTaskClassification
+);
+routes.get(
   "/list/export",
   checkUserStatusMiddleware("projects_task_export"),
   controller.projectTaskController.exportAllProjectTasks

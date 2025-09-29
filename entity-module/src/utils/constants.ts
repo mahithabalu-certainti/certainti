@@ -649,6 +649,12 @@ export const rawQueries = {
   GET_STATUSES: `
   SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid IN (:statusRid)
   `,
+  GET_TASK_TYPES: `
+  SELECT rid, project_task_type_name FROM ${MAIN_SCHEMA_NAME}.project_task_type WHERE rid IN (:taskTypeRid)
+  `,
+  GET_TASK_CLASSIFICATION: `
+  SELECT rid, classification_name FROM ${MAIN_SCHEMA_NAME}.project_task_classification WHERE rid IN (:taskClassificationRids)
+  `,
   fetchUserDetailsById(userId: string) {
     return `SELECT CONCAT(first_name, ' ', last_name) AS imported_by FROM ${MAIN_SCHEMA_NAME}.user WHERE rid = '${userId}'`;
   },
@@ -928,7 +934,13 @@ export const rawQueries = {
     WHERE
       rid = '${data.rid}'
     `
-  }
+  },
+  fetchProjecTaskType(){
+    return `SELECT * FROM ${MAIN_SCHEMA_NAME}.project_task_type`
+  },
+  fetchProjetClassificationQuery(){
+    return `SELECT * FROM ${MAIN_SCHEMA_NAME}.project_task_classification`
+  },
 };
 
 export const IMPORT_FILTER_COLUMNS: any = {
