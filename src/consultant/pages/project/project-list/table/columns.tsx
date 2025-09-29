@@ -547,11 +547,11 @@ export const getAllProjectListColumns = (
       !permissionMap?.['assessment_status']?.edit,
   },
   {
-    id: 'rd_percent_potential_ai',
-    label: 'QRE %',
+    id: 'rd_percent_final',
+    label: 'QRE Percent Final',
     sortable: true,
-    sortId: 'rd_percent_potential_ai',
-    width: 130,
+    sortId: 'rd_percent_final',
+    width: 150,
     sx: {
       textAlign: 'right',
     },
@@ -560,14 +560,14 @@ export const getAllProjectListColumns = (
       !permissionMap?.['qre_final']?.edit,
     render: (row: Project) => {
       const isChild = row._level !== undefined && row._level === 1;
-      return isChild ? row.rd_percent_potential_ai : '-';
+      return isChild ? row.rd_percent_final : '-';
     },
   },
   {
-    id: 'qre',
-    label: 'QRE',
+    id: 'qre_final',
+    label: 'QRE Final',
     sortable: true,
-    sortId: 'qre',
+    sortId: 'qre_final',
     width: 130,
     hide: !permissionMap?.['qre']?.read && !permissionMap?.['qre']?.edit,
     sx: {
@@ -575,7 +575,7 @@ export const getAllProjectListColumns = (
     },
     render: (row: Project) => {
       const isChild = row._level !== undefined && row._level === 1;
-      return isChild ? row.qre : '-';
+      return isChild ? row.qre_final : '-';
     },
   },
   {

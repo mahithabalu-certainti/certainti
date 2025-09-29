@@ -230,7 +230,7 @@ export const getAccountColumns = (
   {
     id: 'qualifying_project_qre_fed',
     sortId: 'qualifying_project_qre_fed',
-    label: 'QRE',
+    label: 'QRE Final',
     width: 140,
     sortable: true,
     hide:
