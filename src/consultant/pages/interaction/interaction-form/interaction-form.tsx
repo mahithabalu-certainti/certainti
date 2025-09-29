@@ -559,6 +559,17 @@ const InteractionForm = () => {
         questions: updatedQuestions,
       };
     });
+
+    setErrors((prev) => {
+      if (!prev.questions) return prev;
+      const newQuestionErrors = [...prev.questions];
+      // Remove the error for the deleted question
+      newQuestionErrors.splice(index, 1);
+      return {
+        ...prev,
+        questions: newQuestionErrors,
+      };
+    });
   };
   const handleQuestionChange = (
     index: number,

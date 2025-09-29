@@ -105,7 +105,7 @@ export const getInteractionListColumns = (
   },
   {
     id: 'last_resent_on',
-    sortId: 'last_resent_on',
+    sortId: 'sent_on_datetime',
     label: 'Last Sent Date',
     width: 180,
     sortable: true,

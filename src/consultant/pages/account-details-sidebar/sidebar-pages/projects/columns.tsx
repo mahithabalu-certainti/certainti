@@ -544,9 +544,7 @@ export const getProjectColumns = (
           {row.project_point_of_contact}
         </div>
       ) : (
-        <span>
-          {row.project_point_of_contact ? row.project_point_of_contact : '-'}
-        </span>
+        '-'
       );
     },
   },
@@ -575,11 +573,7 @@ export const getProjectColumns = (
           {row.technical_point_of_contact}
         </div>
       ) : (
-        <span>
-          {row.technical_point_of_contact
-            ? row.technical_point_of_contact
-            : '-'}
-        </span>
+        '-'
       );
     },
   },
@@ -592,9 +586,13 @@ export const getProjectColumns = (
     hide:
       !permissionMap?.['assessment_status']?.read &&
       !permissionMap?.['assessment_status']?.edit,
+    render: (row: Project & { _level?: number }) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      return isChild ? row.assessment_status : '-';
+    },
   },
   {
-    id: 'rd_percent_potential_ai',
+    id: 'rd_percent_final',
     label: 'QRE %',
     sortable: true,
     sortId: 'rd_percent_final',
@@ -603,13 +601,17 @@ export const getProjectColumns = (
       textAlign: 'right',
     },
     hide:
-      !permissionMap?.['rd_percent_final']?.read &&
-      !permissionMap?.['rd_percent_final']?.edit,
-    render: (row: Project) =>
-      row.rd_percent_final ? row.rd_percent_final : '-',
+      !permissionMap?.['qre_final']?.read &&
+      !permissionMap?.['qre_final']?.edit,
+
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      return isChild ? row.rd_percent_final : '-';
+    },
   },
+
   {
-    id: 'qre',
+    id: 'qre_final',
     label: 'QRE',
     sortable: true,
     sortId: 'qre_final',
@@ -617,10 +619,11 @@ export const getProjectColumns = (
     sx: {
       textAlign: 'right',
     },
-    hide:
-      !permissionMap?.['qre_final']?.read &&
-      !permissionMap?.['qre_final']?.edit,
-    render: (row: Project) => (row.qre_final ? row.qre_final : '-'),
+    hide: !permissionMap?.['qre']?.read && !permissionMap?.['qre']?.edit,
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      return isChild ? row.qre_final : '-';
+    },
   },
   {
     id: 'comments',
@@ -635,6 +638,10 @@ export const getProjectColumns = (
       !accountInActive,
     hide:
       !permissionMap?.['comments']?.read && !permissionMap?.['comments']?.edit,
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      return isChild ? row.comments : '-';
+    },
     field: {
       type: 'textarea',
       required: false,
@@ -656,10 +663,12 @@ export const getProjectColumns = (
     hide:
       !permissionMap?.['modified_datetime']?.read &&
       !permissionMap?.['modified_datetime']?.edit,
-    render: (row: Project) =>
-      row.modified_datetime
-        ? formatDateToYYYYMMDDWithTime(row.modified_datetime)
-        : '-',
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      return isChild
+        ? formatDateToYYYYMMDDWithTime(row.modified_datetime) || '-'
+        : '-';
+    },
   },
   {
     id: 'r_number',
