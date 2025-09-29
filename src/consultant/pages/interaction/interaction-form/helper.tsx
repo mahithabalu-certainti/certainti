@@ -97,15 +97,15 @@ export const validateInteractionForm = (
   // Validate project fields when source is account
   if (source === 'account' || source === 'global') {
     if (!formData.accountName && source === 'global') {
-      newErrors.accountName = 'Account Name is required';
+      newErrors.accountName = 'Field is required';
       isValid = false;
     }
     if (!formData.projectCode && source === 'global') {
-      newErrors.projectCode = 'Project Code is required';
+      newErrors.projectCode = 'Field is required';
       isValid = false;
     }
     if (!formData.fiscalYear && source === 'account' && isAccountOnly) {
-      newErrors.fiscalYear = 'Fiscalyear is required';
+      newErrors.fiscalYear = 'Field is required';
       isValid = false;
     }
   }
@@ -115,7 +115,7 @@ export const validateInteractionForm = (
     const currentQuestionErrors: InteractionQuestionErrors = {};
 
     if (!question.question.trim()) {
-      currentQuestionErrors.question = 'Interaction Questions is required';
+      currentQuestionErrors.question = 'Field is required';
       isValid = false;
     }
 
