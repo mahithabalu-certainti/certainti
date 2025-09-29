@@ -597,7 +597,22 @@ export const getProjectColumns = (
     id: 'rd_percent_potential_ai',
     label: 'QRE %',
     sortable: true,
-    sortId: 'rd_percent_potential_ai',
+    sortId: 'rd_percent_final',
+    width: 130,
+    sx: {
+      textAlign: 'right',
+    },
+    hide:
+      !permissionMap?.['rd_percent_final']?.read &&
+      !permissionMap?.['rd_percent_final']?.edit,
+    render: (row: Project) =>
+      row.rd_percent_final ? row.rd_percent_final : '-',
+  },
+  {
+    id: 'qre',
+    label: 'QRE',
+    sortable: true,
+    sortId: 'qre_final',
     width: 130,
     sx: {
       textAlign: 'right',
@@ -605,20 +620,7 @@ export const getProjectColumns = (
     hide:
       !permissionMap?.['qre_final']?.read &&
       !permissionMap?.['qre_final']?.edit,
-    render: (row: Project) =>
-      row.rd_percent_potential_ai ? row.rd_percent_potential_ai : '-',
-  },
-  {
-    id: 'qre',
-    label: 'QRE',
-    sortable: true,
-    sortId: 'qre',
-    width: 130,
-    sx: {
-      textAlign: 'right',
-    },
-    hide: !permissionMap?.['qre']?.read && !permissionMap?.['qre']?.edit,
-    render: (row: Project) => (row.qre ? row.qre : '-'),
+    render: (row: Project) => (row.qre_final ? row.qre_final : '-'),
   },
   {
     id: 'comments',

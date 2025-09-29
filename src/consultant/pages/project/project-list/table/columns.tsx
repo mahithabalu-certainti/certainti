@@ -541,28 +541,30 @@ export const getAllProjectListColumns = (
     id: 'rd_percent_potential_ai',
     label: 'QRE %',
     sortable: true,
-    sortId: 'rd_percent_potential_ai',
+    sortId: 'rd_percent_final',
     width: 130,
     sx: {
       textAlign: 'right',
     },
     hide:
-      !permissionMap?.['qre_final']?.read &&
-      !permissionMap?.['qre_final']?.edit,
+      !permissionMap?.['rd_percent_final']?.read &&
+      !permissionMap?.['rd_percent_final']?.edit,
     render: (row: Project) =>
-      row.rd_percent_potential_ai ? row.rd_percent_potential_ai : '-',
+      row.rd_percent_final ? row.rd_percent_final : '-',
   },
   {
     id: 'qre',
     label: 'QRE',
     sortable: true,
-    sortId: 'qre',
+    sortId: 'qre_final',
     width: 130,
-    hide: !permissionMap?.['qre']?.read && !permissionMap?.['qre']?.edit,
+    hide:
+      !permissionMap?.['qre_final']?.read &&
+      !permissionMap?.['qre_final']?.edit,
     sx: {
       textAlign: 'right',
     },
-    render: (row: Project) => (row.qre ? row.qre : '-'),
+    render: (row: Project) => (row.qre_final ? row.qre_final : '-'),
   },
   {
     id: 'project_point_of_contact',

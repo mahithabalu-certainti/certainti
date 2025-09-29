@@ -67,7 +67,7 @@ export const projectResourceFilterFields = (
   //   hide:
   //     !resourcepermissionMap?.['resource_type_rid']?.read &&
   //     !resourcepermissionMap?.['resource_type_rid']?.edit,
-  // }, 
+  // },
   {
     name: 'Project Resource Role',
     value: 'project_resource_role',
@@ -94,11 +94,11 @@ export const projectResourceFilterFields = (
   },
   {
     name: 'QRE %',
-    value: 'qre_percent',
+    value: 'rd_percent_final',
     type: 'text',
     hide:
-      !resourcepermissionMap?.['qre_percent']?.read &&
-      !resourcepermissionMap?.['qre_percent']?.edit,
+      !resourcepermissionMap?.['rd_percent_final']?.read &&
+      !resourcepermissionMap?.['rd_percent_final']?.edit,
   },
   {
     name: 'QRE',

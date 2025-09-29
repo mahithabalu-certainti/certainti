@@ -153,12 +153,12 @@ export const getAllProjectFilterFields = (
   },
   {
     name: 'QRE %',
-    value: 'rd_percent_potential_ai',
+    value: 'rd_percent_final',
     type: 'number',
     operatorOption: numberOptions,
     hide:
-      !projectPermissionMap?.['qre']?.read &&
-      !projectPermissionMap?.['qre']?.edit,
+      !projectPermissionMap?.['rd_percent_final']?.read &&
+      !projectPermissionMap?.['rd_percent_final']?.edit,
   },
   {
     name: 'QRE',
