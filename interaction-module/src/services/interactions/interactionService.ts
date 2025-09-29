@@ -395,7 +395,7 @@ export class InteractionService {
     });
     }  
     this.logger.info(`Sent count for the current quarter: ${sentCount}`);
-    if (sentCount >= maxInteractions) {
+    if (sentCount > maxInteractions) {
       this.logger.info(`Max interactions sent for quarter (${sentCount}) reached for project_fiscal_rid: ${projectFiscalRid}`);
       return false;
     }
@@ -1211,7 +1211,7 @@ export class InteractionService {
         await this.interactionSchemaService.insertEmailInfoDatas(data);
         if(type === 'Auto-Send')
         {
-          await this.interactionSchemaService.createAutoSendInteractionEntry(accountNumber, interaction_rid, project_fiscal_rid, email_info,interaction_level,accountRid);
+          await this.interactionSchemaService.createAutoSendInteractionEntry(accountNumber, interaction_rid, project_fiscal_rid, email_info,accountRid,interaction_level);
         }
         console.log("Interaction queued for sending:", interaction_rid, fetchInQueueStatus[0][0].rid);
         if(data.email !== undefined && data.name !== undefined) {
