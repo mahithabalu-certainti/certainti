@@ -748,11 +748,17 @@ export const rawQueries = {
   updateInteractionStatus(schemaName : string, statusRid : string, interactionRid : string) {
     return `UPDATE ${schemaName}.interactions SET status_rid = '${statusRid}' WHERE rid = '${interactionRid}'`
   },
+  updateInteractionStatusAndResEmailName(schemaName : string, statusRid : string, interactionRid : string, email : string, name : string) {
+    return `UPDATE ${schemaName}.interactions SET status_rid = '${statusRid}', recipient_name = '${name}', recipient_email = '${email}' WHERE rid = '${interactionRid}'`
+  },
   fetchInteractionQueueStatus() {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE status_name ILIKE '%In-Queue%'`
   },
   updateInteractionSummaryStatus(statusRid : string, interactionRid : string) {
     return `UPDATE ${MAIN_SCHEMA_NAME}.interactions_summary SET status_rid = '${statusRid}' WHERE interaction_rid = '${interactionRid}'`
+  },
+  updateInteractionSummaryStatusAndResEmailName(statusRid : string, interactionRid : string, name : string, email : string) {
+    return `UPDATE ${MAIN_SCHEMA_NAME}.interactions_summary SET status_rid = '${statusRid}', recipient_name = '${name}', recipient_email = '${email}' WHERE interaction_rid = '${interactionRid}'`
   },
   fetchOrganizationSettings(): string {
     return `
