@@ -97,15 +97,15 @@ export const validateInteractionForm = (
   // Validate project fields when source is account
   if (source === 'account' || source === 'global') {
     if (!formData.accountName && source === 'global') {
-      newErrors.accountName = 'Account Name is required';
+      newErrors.accountName = 'Field is required';
       isValid = false;
     }
     if (!formData.projectCode && source === 'global') {
-      newErrors.projectCode = 'Project Code is required';
+      newErrors.projectCode = 'Field is required';
       isValid = false;
     }
     if (!formData.fiscalYear && source === 'account' && isAccountOnly) {
-      newErrors.fiscalYear = 'Fiscalyear is required';
+      newErrors.fiscalYear = 'Field is required';
       isValid = false;
     }
   }
@@ -115,7 +115,7 @@ export const validateInteractionForm = (
     const currentQuestionErrors: InteractionQuestionErrors = {};
 
     if (!question.question.trim()) {
-      currentQuestionErrors.question = 'Interaction Questions is required';
+      currentQuestionErrors.question = 'Field is required';
       isValid = false;
     }
 
@@ -344,6 +344,10 @@ export const getProjectColumns = (
     hide:
       !permissionMap?.['project_name']?.read &&
       !permissionMap?.['project_name']?.edit,
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      return isChild ? row.project_name : '-';
+    },
   },
   {
     id: 'project_type_name',
@@ -355,6 +359,10 @@ export const getProjectColumns = (
     hide:
       !permissionMap?.['project_type_rid']?.read &&
       !permissionMap?.['project_type_rid']?.edit,
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      return isChild ? row.project_type_name : '-';
+    },
   },
   {
     id: 'fiscal_year',
@@ -370,6 +378,8 @@ export const getProjectColumns = (
       textAlign: 'left',
     },
     render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      if (!isChild) return '-';
       const displayYear = row.fiscal_year ? `FY-${row.fiscal_year}` : '-';
       return <span>{displayYear}</span>;
     },
@@ -384,10 +394,13 @@ export const getProjectColumns = (
       !permissionMap?.['project_classification_rid']?.read &&
       !permissionMap?.['project_classification_rid']?.edit,
     width: 170,
-    render: (row: Project) =>
-      row.project_classification_other
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      if (!isChild) return '-';
+      return row.project_classification_other
         ? `${row.classification_name} - ${row.project_classification_other}`
-        : row.classification_name,
+        : row.classification_name;
+    },
   },
   {
     id: 'project_client_group',
@@ -399,6 +412,10 @@ export const getProjectColumns = (
     hide:
       !permissionMap?.['project_client_group']?.read &&
       !permissionMap?.['project_client_group']?.edit,
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      return isChild ? row.project_client_group : '-';
+    },
   },
   {
     id: 'project_group',
@@ -410,6 +427,10 @@ export const getProjectColumns = (
       !permissionMap?.['project_group']?.read &&
       !permissionMap?.['project_group']?.edit,
     width: 160,
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      return isChild ? row.project_group : '-';
+    },
   },
   {
     id: 'total_effort',
@@ -513,11 +534,8 @@ export const getProjectColumns = (
       !permissionMap?.['key_contacts']?.read &&
       !permissionMap?.['key_contacts']?.edit,
     render: (row: Project & { _level?: number }) => {
-      return (
-        <span>
-          {row.project_point_of_contact ? row.project_point_of_contact : '-'}
-        </span>
-      );
+      const isChild = row._level !== undefined && row._level === 1;
+      return isChild ? row.project_point_of_contact : '-';
     },
   },
   {
@@ -530,13 +548,8 @@ export const getProjectColumns = (
       !permissionMap?.['key_contacts']?.read &&
       !permissionMap?.['key_contacts']?.edit,
     render: (row: Project & { _level?: number }) => {
-      return (
-        <span>
-          {row.technical_point_of_contact
-            ? row.technical_point_of_contact
-            : '-'}
-        </span>
-      );
+      const isChild = row._level !== undefined && row._level === 1;
+      return isChild ? row.technical_point_of_contact : '-';
     },
   },
   {
@@ -548,6 +561,10 @@ export const getProjectColumns = (
     hide:
       !permissionMap?.['assessment_status']?.read &&
       !permissionMap?.['assessment_status']?.edit,
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      return isChild ? row.assessment_status : '-';
+    },
   },
   {
     id: 'qre_final',
@@ -561,7 +578,10 @@ export const getProjectColumns = (
     hide:
       !permissionMap?.['qre_final']?.read &&
       !permissionMap?.['qre_final']?.edit,
-    render: (row: Project) => (row.qre_final ? row.qre_final : '-'),
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      return isChild ? row.qre_final : '-';
+    },
   },
   {
     id: 'qre',
@@ -573,7 +593,10 @@ export const getProjectColumns = (
       textAlign: 'right',
     },
     hide: !permissionMap?.['qre']?.read && !permissionMap?.['qre']?.edit,
-    render: (row: Project) => (row.qre ? row.qre : '-'),
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      return isChild ? row.qre : '-';
+    },
   },
   {
     id: 'comments',
@@ -584,6 +607,10 @@ export const getProjectColumns = (
     width: 200,
     hide:
       !permissionMap?.['comments']?.read && !permissionMap?.['comments']?.edit,
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      return isChild ? row.comments || '-' : '-';
+    },
   },
   {
     id: 'modified_datetime',
@@ -594,10 +621,12 @@ export const getProjectColumns = (
     hide:
       !permissionMap?.['modified_datetime']?.read &&
       !permissionMap?.['modified_datetime']?.edit,
-    render: (row: Project) =>
-      row.modified_datetime
-        ? formatDateToYYYYMMDDWithTime(row.modified_datetime)
-        : '-',
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      return isChild
+        ? formatDateToYYYYMMDDWithTime(row.modified_datetime) || '-'
+        : '-';
+    },
   },
   {
     id: 'r_number',

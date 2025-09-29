@@ -130,7 +130,7 @@ export const validateTemplateForm = (
 
   // Validate required fields
   if (!formData.templateName.trim()) {
-    newErrors.templateName = 'Template Name is required';
+    newErrors.templateName = 'Field is required';
     isValid = false;
   } else {
     if (!REGEX_PATTERNS.MIN_3.test(formData.templateName)) {
@@ -150,12 +150,12 @@ export const validateTemplateForm = (
   }
 
   if (!formData.interactionLevel) {
-    newErrors.interactionLevel = 'Interaction Level is required';
+    newErrors.interactionLevel = 'Field is required';
     isValid = false;
   }
 
   if (!formData.status) {
-    newErrors.status = 'Status is required';
+    newErrors.status = 'Field is required';
     isValid = false;
   }
 
@@ -164,7 +164,7 @@ export const validateTemplateForm = (
     const currentQuestionErrors: TemplateQuestionErrors = {};
 
     if (!question.question.trim()) {
-      currentQuestionErrors.question = 'Interaction Question is required';
+      currentQuestionErrors.question = 'Field is required';
       isValid = false;
     }
 
