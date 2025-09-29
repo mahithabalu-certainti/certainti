@@ -20,6 +20,10 @@ const createInteractionSchema = Joi.object({
     )
     .min(1)
     .required(),
+  email_info: Joi.object({
+    email: Joi.string().email().optional(),
+    name: Joi.string().optional()
+  }).optional()
 });
 
 const createInteractionTemplateSchema = Joi.object({
@@ -65,6 +69,10 @@ const createAccountInteractionSchema = Joi.object({
     )
     .min(1)
     .required(),
+  email_info : Joi.object({
+    email : Joi.string().email().optional(),
+    name : Joi.string().optional()
+  }).optional()
 });
 const listAccountInteractionSchema = Joi.object({
   account_rid: Joi.string().pattern(uuidRegex).required(),
@@ -155,6 +163,10 @@ const updateInteractionSchema = Joi.object({
     )
     .min(1)
     .required(),
+  email_info : Joi.object({
+    email : Joi.string().email().optional(),
+    name : Joi.string().optional()
+  }).optional()
 });
 
 const updateInteractionResponseSchema = Joi.object({
