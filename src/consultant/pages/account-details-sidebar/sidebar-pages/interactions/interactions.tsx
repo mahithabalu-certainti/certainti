@@ -7,7 +7,7 @@ import {
   useGetInteractionLevel,
   useGetInteractionResponeSources,
   useGetInteractionStatus,
-  useGetInteractionStatusByRemainer,
+  useGetInteractionStatusByReminder,
   useGetInteractionTypes,
 } from '../../../../../common-service';
 import {
@@ -212,7 +212,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   const totalItems = data?.count || 0;
   const interactionTypes = useGetInteractionTypes();
   const interactionStatus = useGetInteractionStatus();
-  const interactionStatusRemainder = useGetInteractionStatusByRemainer(true);
+  const interactionStatusRemainder = useGetInteractionStatusByReminder(true);
   const interactionLevel = useGetInteractionLevel();
   const interactionResSources = useGetInteractionResponeSources();
 
