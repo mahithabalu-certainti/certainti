@@ -231,7 +231,7 @@ async function fetchPlatformSettings() {
 // -----------------------------
 // Cron Job (Runs every day at 2AM on even days)
 // -----------------------------
-cron.schedule("0 2 * * *", async () => {
+cron.schedule("0 10 * * *", async () => {
   const today = new Date();
   const dayOfMonth = today.getDate();
 
