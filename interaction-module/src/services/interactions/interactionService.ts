@@ -1214,8 +1214,14 @@ export class InteractionService {
           await this.interactionSchemaService.createAutoSendInteractionEntry(accountNumber, interaction_rid, project_fiscal_rid, email_info,accountRid,interaction_level);
         }
         console.log("Interaction queued for sending:", interaction_rid, fetchInQueueStatus[0][0].rid);
-        await orgDb.query(rawQueries.updateInteractionStatus(schemaName, fetchInQueueStatus[0][0].rid, interaction_rid))
-        await mainDb.query(rawQueries.updateInteractionSummaryStatus(fetchInQueueStatus[0][0].rid, interaction_rid))
+        if(data.email !== undefined && data.name !== undefined) {
+          await orgDb.query(rawQueries.updateInteractionStatusAndResEmailName(schemaName, fetchInQueueStatus[0][0].rid, interaction_rid, data.email, data.name))
+          await mainDb.query(rawQueries.updateInteractionSummaryStatusAndResEmailName(fetchInQueueStatus[0][0].rid, interaction_rid, data.name, data.email))
+        } else {
+          await orgDb.query(rawQueries.updateInteractionStatus(schemaName, fetchInQueueStatus[0][0].rid, interaction_rid))
+          await mainDb.query(rawQueries.updateInteractionSummaryStatus(fetchInQueueStatus[0][0].rid, interaction_rid))
+        }
+        
         interactionResponse.push({
           interactionRid: interaction_rid,
         });
