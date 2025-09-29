@@ -219,7 +219,7 @@ export const getProjectTabTableColumns = (
     label: 'QRE Percent Final',
     sortable: true,
     sortId: 'rd_percent_final',
-    width: 130,
+    width: 150,
     sx: {
       textAlign: 'right',
     },
