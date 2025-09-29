@@ -132,7 +132,7 @@ export const STATUS_MESSAGE = {
   importsNoFound: "No imports found",
   importUpdatedSuccess: "Import updated successfully",
   projectTaskNotFound: "Project Task not found",
-  settingsUpdatedSuccess: "Operation updated successfully",
+  settingsUpdatedSuccess: "Settings updated successfully",
   userIdMissingInHeader: "User-ID missing in headers",
   fiscalStartDateMissing: "Fiscal Startdate missing",
   fiscalEndDateMissing: "Fiscal Enddate missing",

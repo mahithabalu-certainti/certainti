@@ -1934,7 +1934,8 @@ class ProjectIngestionService {
     if (this.mainDbSequelize) {
       let projectData = await this.enrichKeyContactsManually(
         projects,
-        accountNumber
+        accountNumber,
+        apiSource
       );
 
       projectData = await this.keyContacts.insertKeyRole(
@@ -1957,6 +1958,7 @@ class ProjectIngestionService {
         rawFilters
       );
       projects = projectData;
+
 
       totalCount = count;
       if(searchClause[Op.or] && searchClause[Op.or].length > 0) {
@@ -2191,7 +2193,8 @@ class ProjectIngestionService {
     if (this.mainDbSequelize) {
       let projectData = await this.enrichKeyContactsManually(
         projects,
-        accountNumber
+        accountNumber,
+        ""
       );
 
       projectData.forEach((e) => {
@@ -2995,7 +2998,7 @@ class ProjectIngestionService {
     return finalData;
   }
 
-  async enrichKeyContactsManually(projects: any[], accountNumber: string) {
+  async enrichKeyContactsManually(projects: any[], accountNumber: string, apiSource : string) {
     const { KeyContact } = await this.getModels(accountNumber);
 
     const allProjectIds = projects.map((p) => p.rid);
@@ -3005,6 +3008,9 @@ class ProjectIngestionService {
 
     const allIds = [...new Set([...allProjectIds, ...allFiscalIds])];
     if (allIds.length === 0) return projects;
+    
+    const allFiscalIdsForInteractions = [...new Set([...allFiscalIds])]
+
 
     // Fetch key_contact records where reference_id is in allIds
     const keyContacts: any[] = await KeyContact.findAll({
@@ -3013,6 +3019,24 @@ class ProjectIngestionService {
       },
       raw: true,
     });
+    const contactInteractionMap: Record<string, any[]> = {};
+    if(apiSource.toLowerCase() === "interaction") {
+      let interactionKeyContact : any[] = []
+      if(allFiscalIdsForInteractions.length > 0) {
+        let schemaName = rawQueries.fetchSchemaName(accountNumber)
+          interactionKeyContact = await KeyContact.findAll({
+          where : {
+            entity_rid : allFiscalIdsForInteractions,
+            include_in_communication : true
+          }, raw : true
+        })
+      }
+      for (const kc of interactionKeyContact) {
+        const refId = kc.entity_rid;
+        if (!contactInteractionMap[refId]) contactInteractionMap[refId] = [];
+        contactInteractionMap[refId].push(kc);
+      }
+    }
 
     // Group keyContacts by reference_id
     const contactMap: Record<string, any[]> = {};
@@ -3031,6 +3055,7 @@ class ProjectIngestionService {
         (fiscal: any) => ({
           ...(typeof fiscal.toJSON === "function" ? fiscal.toJSON() : fiscal),
           keyContact: contactMap[fiscal.rid] || [],
+          interactionKeyRecipients : contactInteractionMap[fiscal.rid] || []
         })
       );
 

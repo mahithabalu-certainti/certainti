@@ -71,7 +71,8 @@ export const filtersColumns : Record<string, string> =
     interaction_age : "interaction_age",
     recipient_name : "recipient_name",
     recipient_email : "recipient_email",
-    last_resent_on : "sent_on_datetime",
+    last_resent_on : "last_resent_on",
+    sent_on_datetime : "sent_on_datetime",
     last_reminder_on : "last_reminder_on",
     response_submitted_on : "response_submitted_on",
     response_updated_on : "response_updated_on",
@@ -121,6 +122,7 @@ export const filtersColumns : Record<string, string> =
     response_source : "string",
     created_datetime : "datetime",
     modified_datetime : "datetime",
+    sent_on_datetime : "datetime",
     status_rid : "string",
     interaction_type_rid : "string",
     project_code : "string",
@@ -746,11 +748,17 @@ export const rawQueries = {
   updateInteractionStatus(schemaName : string, statusRid : string, interactionRid : string) {
     return `UPDATE ${schemaName}.interactions SET status_rid = '${statusRid}' WHERE rid = '${interactionRid}'`
   },
+  updateInteractionStatusAndResEmailName(schemaName : string, statusRid : string, interactionRid : string, email : string, name : string) {
+    return `UPDATE ${schemaName}.interactions SET status_rid = '${statusRid}', recipient_name = '${name}', recipient_email = '${email}' WHERE rid = '${interactionRid}'`
+  },
   fetchInteractionQueueStatus() {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE status_name ILIKE '%In-Queue%'`
   },
   updateInteractionSummaryStatus(statusRid : string, interactionRid : string) {
     return `UPDATE ${MAIN_SCHEMA_NAME}.interactions_summary SET status_rid = '${statusRid}' WHERE interaction_rid = '${interactionRid}'`
+  },
+  updateInteractionSummaryStatusAndResEmailName(statusRid : string, interactionRid : string, name : string, email : string) {
+    return `UPDATE ${MAIN_SCHEMA_NAME}.interactions_summary SET status_rid = '${statusRid}', recipient_name = '${name}', recipient_email = '${email}' WHERE interaction_rid = '${interactionRid}'`
   },
   fetchOrganizationSettings(): string {
     return `

@@ -155,7 +155,7 @@ export class InteractionService {
           transaction,
           userId
         );
-        console.log("Interaction created successfully", interaction.rid);
+       this.logger.info(`Interaction created successfully, ${interaction.rid}`);
         await this.interactionSchemaService.addInteractionSummary(
           accountNumber,
           interactionData,
@@ -224,44 +224,97 @@ export class InteractionService {
         };
     }
   }
-  async checkAutoSendEnabled(accountNumber: string, interactionData: ICreateInteraction, interactionId: string, userId: string, accountRid: string, interactionLevel:string, parentAccountId: string) {
-    const isParensettingsConfigured = await this.interactionSchemaService.fetchAccountDetails(accountNumber, parentAccountId);
-    this.logger.info(`Auto-send: ${interactionData?.trigger_send ? "enabled" : "disabled"}, Parent settings: ${isParensettingsConfigured ? "enabled" : "disabled"} for interaction ID: ${interactionId}`);
-    if(interactionData?.trigger_send && isParensettingsConfigured){
-       await this.sendInteraction([{ interaction_rid: interactionId,
-        project_fiscal_rid: interactionData.project_fiscal_rid,interaction_level:interactionLevel
-       }], interactionData.account_rid, userId, false,'Manual-Send');
-
-    }
-    else{
-    const isEnabled = await this.interactionSchemaService.isAutoSendInteractionEnabled(accountNumber, interactionData);
-    this.logger.info(`Auto-send: ${isEnabled ? "enabled" : "disabled"}, Parent settings: ${isParensettingsConfigured ? "enabled" : "disabled"} for interaction ID: ${interactionId}`);
-    let maxInteractions = 0;
-    let accountInfo = null;
-    if (isEnabled && isParensettingsConfigured) {
-      if(interactionLevel === 'Account') {
-         accountInfo = await this.interactionSchemaService.fetchAccountInfo(accountRid, accountNumber);
-         maxInteractions = accountInfo?.max_ai_interactions || 0;
+  async checkAutoSendEnabled(
+    accountNumber: string,
+    interactionData: ICreateInteraction,
+    interactionId: string,
+    userId: string,
+    accountRid: string,
+    interactionLevel: string,
+    parentAccountId: string
+  ) {
+    try {
+      const isParensettingsConfigured = await this.interactionSchemaService.fetchAccountDetails(
+        accountNumber,
+        parentAccountId,
+        accountRid
+      );
+      this.logger.info(
+        `Auto-send: ${interactionData?.trigger_send ? "enabled" : "disabled"}, Parent settings: ${isParensettingsConfigured ? "enabled" : "disabled"} for interaction ID: ${interactionId}`
+      );
+      if (interactionData?.trigger_send && isParensettingsConfigured) {
+        await this.sendInteraction(
+          [
+            {
+              interaction_rid: interactionId,
+              project_fiscal_rid: interactionData.project_fiscal_rid,
+              interaction_level: interactionLevel,
+            },
+          ],
+          { email: interactionData.email_info?.email || null, name: interactionData.email_info?.name || null },
+          interactionData.account_rid,
+          userId,
+          false,
+          "Manual-Send"
+        );
+      } else {
+        const isEnabled = await this.interactionSchemaService.isAutoSendInteractionEnabled(
+          accountNumber,
+          interactionData
+        );
+        this.logger.info(
+          `Auto-send: ${isEnabled ? "enabled" : "disabled"}, Parent settings: ${isParensettingsConfigured ? "enabled" : "disabled"} for interaction ID: ${interactionId}`
+        );
+        let maxInteractions = 0;
+        let accountInfo = null;
+        if (isEnabled && isParensettingsConfigured) {
+          accountInfo = await this.interactionSchemaService.fetchAccountInfo(accountRid, accountNumber);
+          if (interactionLevel === "Account") {
+            maxInteractions = accountInfo?.max_ai_interactions || 0;
+          } else {
+            const projectInfo = await this.interactionSchemaService.fetchProjectInfo(
+              accountNumber,
+              interactionData.project_fiscal_rid
+            );
+            maxInteractions = projectInfo?.max_ai_interaction || 0;
+          }
+          const { AutoSendInteractionAudit } = await this.interactionModelService.getModels(accountNumber);
+          const ismaxInteractionsSent = await this.checkMaxQuarterlyInteractions(
+            AutoSendInteractionAudit,
+            interactionData.project_fiscal_rid,
+            maxInteractions,
+            accountInfo,
+            interactionLevel,
+            interactionData.account_rid
+          );
+          if (!ismaxInteractionsSent) return;
+          await this.sendInteraction(
+            [
+              {
+                interaction_rid: interactionId,
+                project_fiscal_rid: interactionData.project_fiscal_rid,
+                interaction_level: interactionLevel,
+              },
+            ],
+            { email: interactionData.email_info?.email || null, name: interactionData.email_info?.name || null },
+            interactionData.account_rid,
+            userId,
+            false,
+            "Auto-Send"
+          );
+        }
       }
-      else
-      {
-        const projectInfo = await this.interactionSchemaService.fetchProjectInfo(accountNumber, interactionData.project_fiscal_rid);
-        maxInteractions = projectInfo?.max_ai_interaction || 0;
-      }  
-      const { AutoSendInteractionAudit } = await this.interactionModelService.getModels(accountNumber);
-      const ismaxInteractionsSent = await this.checkMaxQuarterlyInteractions(AutoSendInteractionAudit, interactionData.project_fiscal_rid, maxInteractions, accountInfo);
-      if (!ismaxInteractionsSent) return;
-      await this.sendInteraction([{ interaction_rid: interactionId,
-        project_fiscal_rid: interactionData.project_fiscal_rid,interaction_level:interactionLevel
-       }], interactionData.account_rid, userId, false,'Auto-Send');
+    } catch (err) {
+      this.logger.error(`Error in checkAutoSendEnabled: ${err}`);
     }
-  }
   }
    async  checkMaxQuarterlyInteractions(
     AiSendInteraction: any,
     projectFiscalRid: string,
     maxInteractions: number,
-    accountInfo: { fiscal_start_date: string; fiscal_end_date: string }
+    accountInfo: { fiscal_start_date: string; fiscal_end_date: string },
+    interactionLevel: string,
+    accountRid: string
   ) {
     const now = new Date();
     // Parse fiscal start and end month/day
@@ -314,16 +367,35 @@ export class InteractionService {
       quarterEnd = fiscalEnd;
       console.log(`Fallback to fiscal year: Start = ${quarterStart.toISOString()}, End = ${quarterEnd.toISOString()}`);
     }
-    const sentCount = await AiSendInteraction.count({
+    let sentCount = 0;
+    if(interactionLevel === 'Account')
+    {
+      sentCount = await AiSendInteraction.count({
       where: {
-        project_fiscal_rid: projectFiscalRid,
+        account_rid: accountRid,
+        project_fiscal_rid: null,
+        interaction_level: 'Account',
         created_datetime: {
           [Op.between]: [quarterStart, quarterEnd]
         }
       }
     });
+
+    }
+    else
+    {
+      sentCount = await AiSendInteraction.count({
+      where: {
+        project_fiscal_rid: projectFiscalRid,
+        interaction_level:"Project",
+        created_datetime: {
+          [Op.between]: [quarterStart, quarterEnd]
+        }
+      }
+    });
+    }  
     this.logger.info(`Sent count for the current quarter: ${sentCount}`);
-    if (sentCount >= maxInteractions) {
+    if (sentCount > maxInteractions) {
       this.logger.info(`Max interactions sent for quarter (${sentCount}) reached for project_fiscal_rid: ${projectFiscalRid}`);
       return false;
     }
@@ -604,6 +676,7 @@ export class InteractionService {
         },
       };
     } catch (err) {
+      this.logger.error(`Error updating interaction response, ${err}`);
       await transaction.rollback();
       return {
           statusCode: HttpStatus.FAILED,
@@ -1088,14 +1161,14 @@ export class InteractionService {
   async sendInteraction(
    interactions: {
       interaction_rid: string;
-      email_info?: {
-        email: string;
-        name: string | null;
-        ccEmails?: string[] | [];
-      };
       interaction_level: string;
       project_fiscal_rid: string;
     }[],
+    email_info: {
+        email: string | null;
+        name: string | null;
+        ccEmails?: string[] | [];
+      },
     accountRid: string,
     userId: string,
     is_interaction_followup: boolean,
@@ -1111,11 +1184,11 @@ export class InteractionService {
       const orgDb = await this.getOrgDb()
       const { accountNumber } = await this.interactionSchemaService.fetchValidAccountNumberById(accountRid);
       if (!accountNumber) {
-        return {
-          statusCode: HttpStatus.FAILED,
-          message: HttpStatus.FAILED_MESSAGE,
-          errorMessage: "Invalid account ID",
-        };
+        // return {
+        //   statusCode: HttpStatus.FAILED,
+        //   message: HttpStatus.FAILED_MESSAGE,
+        //   errorMessage: "Invalid account ID",
+        // };
       }
 
       const interactionResponse: any[] = [];
@@ -1123,7 +1196,7 @@ export class InteractionService {
 
       const fetchInQueueStatus : any = await mainDb.query(rawQueries.fetchInteractionQueueStatus())
 
-      for (const { interaction_rid, email_info, project_fiscal_rid, interaction_level } of interactions) {
+      for (const { interaction_rid, project_fiscal_rid, interaction_level } of interactions) {
         let data : any = {}
         data.account_rid = accountRid
         data.project_fiscal_rid = project_fiscal_rid,
@@ -1138,10 +1211,17 @@ export class InteractionService {
         await this.interactionSchemaService.insertEmailInfoDatas(data);
         if(type === 'Auto-Send')
         {
-          await this.interactionSchemaService.createAutoSendInteractionEntry(accountNumber, interaction_rid, project_fiscal_rid, email_info);
+          await this.interactionSchemaService.createAutoSendInteractionEntry(accountNumber, interaction_rid, project_fiscal_rid, email_info,accountRid,interaction_level);
         }
-        await orgDb.query(rawQueries.updateInteractionStatus(schemaName, fetchInQueueStatus[0][0].rid, interaction_rid))
-        await mainDb.query(rawQueries.updateInteractionSummaryStatus(fetchInQueueStatus[0][0].rid, interaction_rid))
+        console.log("Interaction queued for sending:", interaction_rid, fetchInQueueStatus[0][0].rid);
+        if(data.email !== undefined && data.name !== undefined) {
+          await orgDb.query(rawQueries.updateInteractionStatusAndResEmailName(schemaName, fetchInQueueStatus[0][0].rid, interaction_rid, data.email, data.name))
+          await mainDb.query(rawQueries.updateInteractionSummaryStatusAndResEmailName(fetchInQueueStatus[0][0].rid, interaction_rid, data.name, data.email))
+        } else {
+          await orgDb.query(rawQueries.updateInteractionStatus(schemaName, fetchInQueueStatus[0][0].rid, interaction_rid))
+          await mainDb.query(rawQueries.updateInteractionSummaryStatus(fetchInQueueStatus[0][0].rid, interaction_rid))
+        }
+        
         interactionResponse.push({
           interactionRid: interaction_rid,
         });
@@ -1566,10 +1646,16 @@ export class InteractionService {
         {
            finalPaginatedData = disablePagination ? finalData.slice((data.page - 1) * data.limit, data.page * data.limit) : finalData
         }
+      const keyContactDetails = result[0][0].interactions !== null ? result[0][0].interactions : null
       let organizedData = {
         page : data.page,
         limit : data.limit,
         totalCount : totalResults,
+        keyContact : keyContactDetails != null && data.flag == interactionFlag.account ? 
+        {
+          key_contact_name : result[0][0].interactions[0].key_contact_name,
+          key_contact_email : result[0][0].interactions[0].key_contact_email
+        } : {},
         interactions : finalPaginatedData
       }
       return {
