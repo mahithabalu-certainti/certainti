@@ -1217,7 +1217,7 @@ export class InteractionService {
         }
         console.log("Interaction queued for sending:", interaction_rid, fetchInQueueStatus[0][0].rid);
         if(interaction_level.toLowerCase() === 'account') {
-          if(data.email !== undefined && data.name !== undefined) {
+          if((data.email !== "" || data.email !== null) && (data.name !== "" || data.name !== null)) {
             email = data.email;
             name = data.name;
         } 
@@ -1229,7 +1229,7 @@ export class InteractionService {
         await orgDb.query(rawQueries.updateInteractionStatusAndResEmailName(schemaName, fetchInQueueStatus[0][0].rid, interaction_rid, email, name))
         await mainDb.query(rawQueries.updateInteractionSummaryStatusAndResEmailName(fetchInQueueStatus[0][0].rid, interaction_rid, name, email))
         } else {
-          if(data.email !== undefined && data.name !== undefined) {
+          if((data.email !== "" || data.email !== null) && (data.name !== "" || data.name !== null)) {
             email = data.email;
             name = data.name;
         } else {
