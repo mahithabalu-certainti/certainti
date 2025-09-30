@@ -475,6 +475,10 @@ export const rawQueries = {
     return `
     SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE lower(entity_type) = 'account' and include_in_communication is true and entity_rid = '${accountRid}' and status_rid = '${statusRid}'`;
   },
+  fetchRemainderEmailInfo(interactionRid: string, schemaName: string) {
+    return `
+    SELECT recipient_name, recipient_email FROM ${schemaName}.interactions WHERE rid = '${interactionRid}' `
+  },
   fetchisAutoSendEnabled(projectFiscalRid: string, schemaName: string) {
     return `
     SELECT auto_send_ai_interaction FROM ${schemaName}.project_fiscal WHERE rid = '${projectFiscalRid}' LIMIT 1`;

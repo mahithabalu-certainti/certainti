@@ -2639,8 +2639,21 @@ private async createInteractionTable(
   }
 
   async fetchAccountDetails(account_number: string, account_rid: string, parentAccountId: string,isParentAccount: boolean) {
-    const schemaName = `trd365_${account_number.replace(/\D/g, "")}`;
+    let schemaName = `trd365_${account_number.replace(/\D/g, "")}`;
     try {
+      if(!isParentAccount)
+      {
+         const parentRnumber = `
+        SELECT * FROM "${MAIN_SCHEMA_NAME}".account WHERE rid = :parentAccountId
+      `;
+        const mainSequelize = await initSequelize();
+        const [parentAccount]: any[] = await mainSequelize.query(parentRnumber, {
+          replacements: { parentAccountId },
+          type: "SELECT",
+        });
+        schemaName = `trd365_${parentAccount.r_number.replace(/\D/g, "")}`;
+      }
+
       const query = `
         SELECT * FROM "${schemaName}".account_details WHERE account_rid = :account_rid
       `;
@@ -2652,10 +2665,9 @@ private async createInteractionTable(
       const sequelize = await initOrgSequelize();
 
       const users: any = await sequelize.query(query, {
-        replacements: { account_rid },
+        replacements: { account_rid :!isParentAccount ? parentAccountId : account_rid },
         type: "SELECT",
       });
-      if(!isParentAccount) return users;
       const fetchParentAccount: any = await sequelize.query(parentAccountQuery, {
         replacements: { account_rid: parentAccountId },
         type: "SELECT",
@@ -2684,6 +2696,18 @@ private async createInteractionTable(
           users[0].is_send_interaction = false;
         }
       }
+      if(!isParentAccount)
+        {
+          if (Array.isArray(users) && users.length > 0) {
+
+            users[0].subscription_created = false;
+            users[0].tenant_id = "";
+            users[0].client_id = "";
+            users[0].client_secret = "";
+            users[0].support_email = "";
+          }
+          
+        }
 
       return users;
     } catch (err) {
