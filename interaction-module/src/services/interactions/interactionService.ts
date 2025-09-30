@@ -468,7 +468,7 @@ export class InteractionService {
           transaction
         );
       }
-
+      await transaction.commit();
       if(interactionStatus === statusAction.RESPONSE_RECEIVED) {
         const fetchInteractionDetails : any = await this.interactionSchemaService.fetchInteractionDetailsById(accountNumber, interactionData.interaction_rid)
         if(fetchInteractionDetails) {
@@ -557,9 +557,6 @@ export class InteractionService {
         }
       }
     }
-      
-
-      await transaction.commit();
       const isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(accountNumber, interactionData.interaction_rid);
     //   if(interactionStatus === statusAction.DRAFT && isEmailRecipientAvailable)
     // //  await this.checkAutoSendEnabled(accountNumber,interactionData,interactionData.interaction_rid,userId, interactionData?.account_rid);
