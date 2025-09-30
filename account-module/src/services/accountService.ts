@@ -1636,7 +1636,8 @@ class AccountService {
           this.schemaService.fetchAccountDetails(
             accountNumber,
             accountById?.rid || "",
-            accountById?.parent_account_rid || ""
+            accountById?.parent_account_rid || "",
+            accountById?.is_parent || false
           ),
           this.schemaService.fetchKeyContacts(
             accountById?.rid || "",

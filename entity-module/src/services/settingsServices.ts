@@ -140,7 +140,7 @@ export default class SettingService {
           parentAccountID
         );
 
-        if(fetchExistingSettings && fetchExistingSettings.length > 0){
+        if(fetchExistingSettings && fetchExistingSettings.length > 0 && fetchParent[0][0]?.is_parent){
           const settingsData = fetchExistingSettings[0];
           const {
             support_email: supportEmail,
@@ -172,7 +172,8 @@ export default class SettingService {
         orgDb,
         mainDb,
         parentAccountID,
-        subscriptionId
+        subscriptionId,
+        fetchParent[0][0]?.is_parent
       );
 
       return {
