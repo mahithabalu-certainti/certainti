@@ -2881,7 +2881,9 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     accountNumber: string,
     interactionRid: string,
     projectFiscalRid: string,
-    accountRid: string
+    accountRid: string,
+    emailInfo:any,
+    isRemainder?: boolean
   ) {
     try {
       if (!this.orgDbSequelize) {
@@ -2907,12 +2909,36 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           ccEmails: [],
         };
       }
+      let keyContactName =null;
+      let keyContactEmail =null;
+      if ((!emailInfo || !emailInfo?.email) && !isRemainder) {  
       const [interactionRecipients]: any[] = await this.orgDbSequelize.query(
         rawQueries.fetchInteractionRecipient(projectFiscalRid, statusArr.rid, schemaName),
         {
           type: "SELECT",
         }
       );
+      keyContactName = interactionRecipients[0]?.key_contact_name ?? null;
+      keyContactEmail = interactionRecipients[0]?.key_contact_email ?? null;
+    }
+    else
+    {
+      if(isRemainder)
+        {
+          const [remainderRecipients]: any[] =  await this.orgDbSequelize.query(  
+            rawQueries.fetchRemainderEmailInfo(interactionRid? interactionRid : '', schemaName),
+            { type: "SELECT" }
+          );
+          keyContactName = remainderRecipients[0]?.recipient_name ?? emailInfo?.name;
+          keyContactEmail = remainderRecipients[0]?.recipient_email ?? emailInfo?.email;
+        }
+        else
+        {
+          keyContactName = emailInfo?.name;
+          keyContactEmail = emailInfo?.email;
+        }
+      
+    }
 
       const interactionCCRecipients: any[] = await this.orgDbSequelize.query(
         rawQueries.fetchInteractionRecipientProject(
@@ -2941,8 +2967,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       // Remove duplicates
       const uniqueCCEmails = Array.from(new Set(ccEmails));
       return {
-        name: interactionRecipients?.key_contact_name ?? null,
-        email: interactionRecipients?.key_contact_email ?? null,
+        name: keyContactName ?? null,
+        email: keyContactEmail ?? null,
         ccEmails: uniqueCCEmails ?? [],
       };
     } catch (err) {
@@ -2951,7 +2977,10 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
   }
   async fetchEmailInfoForAccount(
     accountNumber: string,
-    accountRid: string
+    accountRid: string,
+    emailInfo:any,
+    isRemainder?: boolean,
+    interactionRid?: string
   ) {
     try {
       if (!this.orgDbSequelize) {
@@ -2970,11 +2999,35 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         /\D/g,
         ""
       )}`;
+      let keyContactName ="";
+      let keyContactEmail ="";
+       if ((!emailInfo || !emailInfo?.email) && !isRemainder) {
       const [interactionRecipients]: any[] =
         await this.orgDbSequelize.query(
           rawQueries.fetchInteractionRecipientAccount(accountRid,statusArr.rid ,schemaName),
           { type: "SELECT" }
         );
+        keyContactName = interactionRecipients[0]?.key_contact_name ?? null;
+        keyContactEmail = interactionRecipients[0]?.key_contact_email ?? null;
+      }
+      else
+      {
+        if(isRemainder)
+        {
+          const [remainderRecipients]: any[] =  await this.orgDbSequelize.query(  
+            rawQueries.fetchRemainderEmailInfo(interactionRid? interactionRid : '', schemaName),
+            { type: "SELECT" }
+          );
+          keyContactName = remainderRecipients[0]?.recipient_name ?? emailInfo?.name;
+          keyContactEmail = remainderRecipients[0]?.recipient_email ?? emailInfo?.email;
+        }
+        else
+        {
+           keyContactName = emailInfo?.name;
+           keyContactEmail = emailInfo?.email;
+        }
+      }
+      
         const interactionCCRecipientsAccount: any[] =
         await this.orgDbSequelize.query(
           rawQueries.fetchInteractionRecipientAccount(accountRid,statusArr.rid ,schemaName),
@@ -2992,8 +3045,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       const uniqueCCEmails = Array.from(new Set(ccEmails));
 
       return {
-        name: interactionRecipients?.key_contact_name ?? null,
-        email: interactionRecipients?.key_contact_email ?? null,
+        name: keyContactName ?? null,
+        email: keyContactEmail ?? null,
         ccEmails: uniqueCCEmails ?? [],
       };
     } catch (err) {

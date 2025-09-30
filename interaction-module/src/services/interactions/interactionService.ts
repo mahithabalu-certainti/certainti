@@ -425,7 +425,7 @@ export class InteractionService {
     const dbInit = await this.interactionModelService.getSequelize();
     const transaction = await dbInit.transaction();
     try {
-      const { accountNumber } =
+      const { accountNumber, parentAccountId } =
         await this.interactionSchemaService.fetchValidAccountNumberById(
           interactionData?.account_rid
         );
@@ -465,23 +465,28 @@ export class InteractionService {
           transaction
         );
       }
-
       await transaction.commit();
-      const isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(accountNumber, interactionData.interaction_rid);
-    //   if(interactionStatus === statusAction.DRAFT && isEmailRecipientAvailable)
-    // //  await this.checkAutoSendEnabled(accountNumber,interactionData,interactionData.interaction_rid,userId, interactionData?.account_rid);
-    //   else{
-    //     if(!isEmailRecipientAvailable && interactionStatus === statusAction.DRAFT)
-    //     {
-    //        return {
-    //     statusCode: HttpStatus.SUCCESS,
-    //     message: STATUS_MESSAGE.interactionCreatedButNoEmailRecipient,
-    //     data: {
-    //       interactions: null,
-    //     },
-    //   };
-    //     }
-    //   }
+      if(interactionData.trigger_send === true) {
+         const intLevel = await this.interactionSchemaService.getInteractionLevelByRid(
+          interactionData?.interaction_level_rid!
+        );
+        const isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(accountNumber, interactionData.interaction_rid);
+        if(interactionStatus === statusAction.DRAFT && isEmailRecipientAvailable) {
+            await this.checkAutoSendEnabled(accountNumber, interactionData, interactionData.interaction_rid, userId, interactionData.account_rid, intLevel!, parentAccountId);
+        }
+        else{
+          if(!isEmailRecipientAvailable && interactionStatus === statusAction.DRAFT)
+          {
+            return {
+              statusCode: HttpStatus.SUCCESS,
+              message: STATUS_MESSAGE.interactionCreatedButNoEmailRecipient,
+              data: {
+                interactions: null,
+              },
+            };
+          }
+        }
+      }
       return {
         statusCode: HttpStatus.SUCCESS,
         message: STATUS_MESSAGE.interactionUpdated,
@@ -1222,9 +1227,19 @@ export class InteractionService {
             name = data.name;
         } 
         else {
-          const fetchResNameEmail : any = await orgDb.query(rawQueries.fetchKeyContactForInteraction(schemaName, data.account_rid))
-          email = fetchResNameEmail[0][0].key_contact_email
-          name = fetchResNameEmail[0][0].key_contact_name
+          if(is_interaction_followup)
+          {
+            const fetchResNameEmail : any = await orgDb.query(rawQueries.fetchRemainderEmailInfo( data.interaction_rid,schemaName))
+          email = fetchResNameEmail[0][0].recipient_email
+          name = fetchResNameEmail[0][0].recipient_name
+          }
+          else
+          {
+            const fetchResNameEmail : any = await orgDb.query(rawQueries.fetchKeyContactForInteraction(schemaName, data.account_rid))
+            email = fetchResNameEmail[0][0].key_contact_email
+            name = fetchResNameEmail[0][0].key_contact_name
+          }
+          
         }
         await orgDb.query(rawQueries.updateInteractionStatusAndResEmailName(schemaName, fetchInQueueStatus[0][0].rid, interaction_rid, email, name))
         await mainDb.query(rawQueries.updateInteractionSummaryStatusAndResEmailName(fetchInQueueStatus[0][0].rid, interaction_rid, name, email))
@@ -1233,9 +1248,21 @@ export class InteractionService {
             email = data.email;
             name = data.name;
         } else {
-          const fetchResNameEmail : any = await orgDb.query(rawQueries.fetchKeyContactForInteraction(schemaName, project_fiscal_rid))
+          if(is_interaction_followup)
+          {
+            const fetchResNameEmail : any = await orgDb.query(rawQueries.fetchRemainderEmailInfo( data.interaction_rid,schemaName))
+          email = fetchResNameEmail[0][0].recipient_email
+          name = fetchResNameEmail[0][0].recipient_name
+
+          }
+          else
+          {
+             const fetchResNameEmail : any = await orgDb.query(rawQueries.fetchKeyContactForInteraction(schemaName, project_fiscal_rid))
           email = fetchResNameEmail[0][0].key_contact_email
           name = fetchResNameEmail[0][0].key_contact_name
+
+          }
+         
         }
         await orgDb.query(rawQueries.updateInteractionStatusAndResEmailName(schemaName, fetchInQueueStatus[0][0].rid, interaction_rid, email, name))
         await mainDb.query(rawQueries.updateInteractionSummaryStatusAndResEmailName(fetchInQueueStatus[0][0].rid, interaction_rid, name, email))
@@ -2314,18 +2341,21 @@ export class InteractionService {
 
       // If emailInfo.email is empty, fetch POC email
       let sendEmailInfo = email_info;
-      if (!email_info || !email_info?.email) {
+     
         console.log(`[INFO] Fetched fallback email for interaction ${interaction_rid}: ${sendEmailInfo?.email}`);
         if(interactionLevel === 'Account')
         {
-           sendEmailInfo = await this.interactionSchemaService.fetchEmailInfoForAccount(accountNumber, accountRid);
+           sendEmailInfo = await this.interactionSchemaService.fetchEmailInfoForAccount(accountNumber, accountRid,email_info,is_interaction_followup,data.interaction_rid);
         }
         else
         {
-            sendEmailInfo = await this.interactionSchemaService.fetchEmailInfo(accountNumber, interaction_rid, project_fiscal_rid, accountRid);
-        }
-        
+            sendEmailInfo = await this.interactionSchemaService.fetchEmailInfo(accountNumber, interaction_rid, project_fiscal_rid, accountRid,email_info,is_interaction_followup);
+         if (!sendEmailInfo?.email || sendEmailInfo?.email == "") {
+        console.warn(`[SKIP] No email found for interaction ${interaction_rid}. Skipping.`);
+        continue;
       }
+          }
+        
 
       if (!sendEmailInfo?.email || sendEmailInfo?.email == "") {
         console.warn(`[SKIP] No email found for interaction ${interaction_rid}. Skipping.`);
