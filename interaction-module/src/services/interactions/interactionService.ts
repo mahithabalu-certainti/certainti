@@ -1226,8 +1226,8 @@ export class InteractionService {
           {
 
             const fetchResNameEmail : any = await orgDb.query(rawQueries.fetchRemainderEmailInfo( data.interaction_rid,schemaName))
-          email = fetchResNameEmail[0][0].key_contact_email
-          name = fetchResNameEmail[0][0].key_contact_name
+          email = fetchResNameEmail[0][0].recipient_email
+          name = fetchResNameEmail[0][0].recipient_name
           }
           else
           {
@@ -1247,8 +1247,8 @@ export class InteractionService {
           if(is_interaction_followup)
           {
             const fetchResNameEmail : any = await orgDb.query(rawQueries.fetchRemainderEmailInfo( data.interaction_rid,schemaName))
-          email = fetchResNameEmail[0][0].key_contact_email
-          name = fetchResNameEmail[0][0].key_contact_name
+          email = fetchResNameEmail[0][0].recipient_email
+          name = fetchResNameEmail[0][0].recipient_name
 
           }
           else
