@@ -279,11 +279,11 @@ export const getProjectResourcesColumns = (
     id: 'qre_percent',
     label: 'QRE Percent Final',
     sortable: true,
-    sortId: 'qre_percent',
+    sortId: 'rd_percent_final',
     width: '150px',
     hide:
-      !permissionMap?.['qre_percent']?.read &&
-      !permissionMap?.['qre_percent']?.edit,
+      !permissionMap?.['rd_percent_final']?.read &&
+      !permissionMap?.['rd_percent_final']?.edit,
   },
   {
     id: 'qre_final',

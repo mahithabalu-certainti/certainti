@@ -242,7 +242,15 @@ export type ProjectFiscalSummary = {
   rid: string;
   isInteractionMapped?: boolean;
   isKeyContactIncluded?: boolean;
+  interactionKeyRecipients?: InteractionKeyRecipients[];
 };
+
+interface InteractionKeyRecipients {
+  rid: string
+  key_contact_name: string
+  key_contact_email: string
+  is_primary_contact: boolean
+}
 
 export type FiscalYearType = {
   year?: number;

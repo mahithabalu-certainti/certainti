@@ -23,6 +23,7 @@ import {
   getGlobalInteractionExportUrl,
   getInteractionListRemainderUrl,
 } from '../urls/interactions-url';
+import { InteractionKeyContacts } from '../../types/interactions';
 
 export const exportInteractions = async (
   params: InteractionListURLParams
@@ -152,7 +153,11 @@ const getInteractionDetailsURL = (
 
 export const fetchInteractionList = async (
   params: InteractionListURLParams
-): Promise<{ interactions: InteractionList[]; count: number }> => {
+): Promise<{
+  interactions: InteractionList[];
+  count: number;
+  keyContact: InteractionKeyContacts;
+}> => {
   const { data } = await interactionServiceApi.post<InteractionListResponse>(
     getInteractionListUrl(),
     params
@@ -160,6 +165,7 @@ export const fetchInteractionList = async (
   return {
     interactions: data.data.interactions,
     count: data.data.totalCount,
+    keyContact: data.data.keyContact,
   };
 };
 export const fetchInteractionListRemainder = async (
@@ -180,10 +186,21 @@ export const useInteractionList = (
   shouldFetchList: boolean,
   refreshInteractions?: number
 ): UseQueryResult<
-  { interactions: InteractionList[]; count: number },
+  {
+    interactions: InteractionList[];
+    count: number;
+    keyContact: InteractionKeyContacts;
+  },
   Error
 > => {
-  return useQuery<{ interactions: InteractionList[]; count: number }, Error>({
+  return useQuery<
+    {
+      interactions: InteractionList[];
+      count: number;
+      keyContact: InteractionKeyContacts;
+    },
+    Error
+  >({
     queryKey: ['interaction-list', params, refreshInteractions],
     queryFn: () => fetchInteractionList(params),
     retry: 0,
