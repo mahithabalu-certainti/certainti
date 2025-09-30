@@ -76,7 +76,7 @@ jobs:
 
       - name: Cleanup old Docker tags in ACR (keep latest 10)
         run: |
-          ACR_NAME=${{ secrets.DEVELOPMENT_ACR_NAME }}
+          ACR_NAME=${{ secrets.PREPROD_ACR_NAME }}
           REPO_NAME="user-module"
           KEEP_LATEST=10
 
@@ -226,7 +226,7 @@ jobs:
 
       - name: Cleanup old Docker tags in ACR (keep latest 10)
         run: |
-          ACR_NAME=${{ secrets.DEVELOPMENT_ACR_NAME }}
+          ACR_NAME=${{ secrets.PREPROD_ACR_NAME }}
           REPO_NAME="account-module"
           KEEP_LATEST=10
 
@@ -360,7 +360,7 @@ jobs:
         working-directory: entity-module
       - name: Cleanup old Docker tags in ACR (keep latest 10)
         run: |
-          ACR_NAME=${{ secrets.DEVELOPMENT_ACR_NAME }}
+          ACR_NAME=${{ secrets.PREPROD_ACR_NAME }}
           REPO_NAME="entity-module"
           KEEP_LATEST=10
 
@@ -496,7 +496,7 @@ jobs:
 
       - name: Cleanup old Docker tags in ACR (keep latest 10)
         run: |
-          ACR_NAME=${{ secrets.DEVELOPMENT_ACR_NAME }}
+          ACR_NAME=${{ secrets.PREPROD_ACR_NAME }}
           REPO_NAME="interaction-module"
           KEEP_LATEST=10
 
@@ -655,7 +655,7 @@ jobs:
 
       - name: Cleanup old Docker tags in ACR (keep latest 10)
         run: |
-          ACR_NAME=${{ secrets.DEVELOPMENT_ACR_NAME }}
+          ACR_NAME=${{ secrets.PREPROD_ACR_NAME }}
           REPO_NAME="ext-interaction-module"
           KEEP_LATEST=10
 
@@ -808,7 +808,7 @@ jobs:
 
       - name: Cleanup old Docker tags in ACR (keep latest 10)
         run: |
-          ACR_NAME=${{ secrets.DEVELOPMENT_ACR_NAME }}
+          ACR_NAME=${{ secrets.PREPROD_ACR_NAME }}
           REPO_NAME="event-stream-module"
           KEEP_LATEST=10
 
