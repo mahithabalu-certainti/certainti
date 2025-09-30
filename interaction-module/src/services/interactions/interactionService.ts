@@ -425,7 +425,7 @@ export class InteractionService {
     const dbInit = await this.interactionModelService.getSequelize();
     const transaction = await dbInit.transaction();
     try {
-      const { accountNumber } =
+      const { accountNumber, parentAccountId } =
         await this.interactionSchemaService.fetchValidAccountNumberById(
           interactionData?.account_rid
         );
@@ -465,23 +465,25 @@ export class InteractionService {
           transaction
         );
       }
-
       await transaction.commit();
-      const isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(accountNumber, interactionData.interaction_rid);
-    //   if(interactionStatus === statusAction.DRAFT && isEmailRecipientAvailable)
-    // //  await this.checkAutoSendEnabled(accountNumber,interactionData,interactionData.interaction_rid,userId, interactionData?.account_rid);
-    //   else{
-    //     if(!isEmailRecipientAvailable && interactionStatus === statusAction.DRAFT)
-    //     {
-    //        return {
-    //     statusCode: HttpStatus.SUCCESS,
-    //     message: STATUS_MESSAGE.interactionCreatedButNoEmailRecipient,
-    //     data: {
-    //       interactions: null,
-    //     },
-    //   };
-    //     }
-    //   }
+      if(interactionData.trigger_send === true) {
+        const isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(accountNumber, interactionData.interaction_rid);
+        if(interactionStatus === statusAction.DRAFT && isEmailRecipientAvailable) {
+            await this.checkAutoSendEnabled(accountNumber, interactionData, interactionData.interaction_rid, userId, interactionData.account_rid, interactionData.interaction_level_name!, parentAccountId);
+        }
+        else{
+          if(!isEmailRecipientAvailable && interactionStatus === statusAction.DRAFT)
+          {
+            return {
+              statusCode: HttpStatus.SUCCESS,
+              message: STATUS_MESSAGE.interactionCreatedButNoEmailRecipient,
+              data: {
+                interactions: null,
+              },
+            };
+          }
+        }
+      }
       return {
         statusCode: HttpStatus.SUCCESS,
         message: STATUS_MESSAGE.interactionUpdated,

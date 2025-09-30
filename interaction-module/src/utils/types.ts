@@ -86,7 +86,7 @@ export interface IUpdateInteraction {
   created_by: string;
   modified_by?: string;
   status_action?: string;
-  interaction_level?:string;
+  interaction_level_name?:string;
   interaction_level_rid:string
   trigger_send?: boolean;
   email_info? : {
