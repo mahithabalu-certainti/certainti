@@ -73,6 +73,27 @@ jobs:
       - name: Push Docker Image to ACR
         run: docker push ${{ secrets.PREPROD_ACR_LOGIN_SERVER }}/user-module:${{ env.IMAGE_TAG }}
         working-directory: user-module
+
+      - name: Cleanup old Docker tags in ACR (keep latest 10)
+        run: |
+          ACR_NAME=${{ secrets.PREPROD_ACR_NAME }}
+          REPO_NAME="user-module"
+          KEEP_LATEST=10
+
+          echo "Cleaning up old tags for $REPO_NAME (keeping latest $KEEP_LATEST)..."
+
+          # List tags sorted by last update descending and skip the latest $KEEP_LATEST
+          tags_to_delete=$(az acr repository show-tags --name "$ACR_NAME" --repository "$REPO_NAME" --orderby time_desc --output tsv | tail -n +$((KEEP_LATEST + 1)))
+
+          if [ -z "$tags_to_delete" ]; then
+            echo "No old tags to delete."
+          else
+            for tag in $tags_to_delete; do
+              echo "Deleting $REPO_NAME:$tag"
+              az acr repository delete --name "$ACR_NAME" --image "$REPO_NAME:$tag" --yes
+            done
+          fi
+
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
@@ -202,6 +223,27 @@ jobs:
       - name: Push Docker Image to ACR
         run: docker push ${{ secrets.PREPROD_ACR_LOGIN_SERVER }}/account-module:${{ env.IMAGE_TAG }}
         working-directory: account-module
+
+      - name: Cleanup old Docker tags in ACR (keep latest 10)
+        run: |
+          ACR_NAME=${{ secrets.PREPROD_ACR_NAME }}
+          REPO_NAME="account-module"
+          KEEP_LATEST=10
+
+          echo "Cleaning up old tags for $REPO_NAME (keeping latest $KEEP_LATEST)..."
+
+          # List tags sorted by last update descending and skip the latest $KEEP_LATEST
+          tags_to_delete=$(az acr repository show-tags --name "$ACR_NAME" --repository "$REPO_NAME" --orderby time_desc --output tsv | tail -n +$((KEEP_LATEST + 1)))
+
+          if [ -z "$tags_to_delete" ]; then
+            echo "No old tags to delete."
+          else
+            for tag in $tags_to_delete; do
+              echo "Deleting $REPO_NAME:$tag"
+              az acr repository delete --name "$ACR_NAME" --image "$REPO_NAME:$tag" --yes
+            done
+          fi
+
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
@@ -316,6 +358,26 @@ jobs:
       - name: Push Docker Image to ACR
         run: docker push ${{ secrets.PREPROD_ACR_LOGIN_SERVER }}/entity-module:${{ env.IMAGE_TAG }}
         working-directory: entity-module
+      - name: Cleanup old Docker tags in ACR (keep latest 10)
+        run: |
+          ACR_NAME=${{ secrets.PREPROD_ACR_NAME }}
+          REPO_NAME="entity-module"
+          KEEP_LATEST=10
+
+          echo "Cleaning up old tags for $REPO_NAME (keeping latest $KEEP_LATEST)..."
+
+          # List tags sorted by last update descending and skip the latest $KEEP_LATEST
+          tags_to_delete=$(az acr repository show-tags --name "$ACR_NAME" --repository "$REPO_NAME" --orderby time_desc --output tsv | tail -n +$((KEEP_LATEST + 1)))
+
+          if [ -z "$tags_to_delete" ]; then
+            echo "No old tags to delete."
+          else
+            for tag in $tags_to_delete; do
+              echo "Deleting $REPO_NAME:$tag"
+              az acr repository delete --name "$ACR_NAME" --image "$REPO_NAME:$tag" --yes
+            done
+          fi
+
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
@@ -431,6 +493,26 @@ jobs:
       - name: Push Docker Image to ACR
         run: docker push ${{ secrets.PREPROD_ACR_LOGIN_SERVER }}/interaction-module:${{ env.IMAGE_TAG }}
         working-directory: interaction-module
+
+      - name: Cleanup old Docker tags in ACR (keep latest 10)
+        run: |
+          ACR_NAME=${{ secrets.PREPROD_ACR_NAME }}
+          REPO_NAME="interaction-module"
+          KEEP_LATEST=10
+
+          echo "Cleaning up old tags for $REPO_NAME (keeping latest $KEEP_LATEST)..."
+
+          # List tags sorted by last update descending and skip the latest $KEEP_LATEST
+          tags_to_delete=$(az acr repository show-tags --name "$ACR_NAME" --repository "$REPO_NAME" --orderby time_desc --output tsv | tail -n +$((KEEP_LATEST + 1)))
+
+          if [ -z "$tags_to_delete" ]; then
+            echo "No old tags to delete."
+          else
+            for tag in $tags_to_delete; do
+              echo "Deleting $REPO_NAME:$tag"
+              az acr repository delete --name "$ACR_NAME" --image "$REPO_NAME:$tag" --yes
+            done
+          fi
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
@@ -570,6 +652,27 @@ jobs:
       - name: Push Docker Image to ACR
         run: docker push ${{ secrets.PREPROD_ACR_LOGIN_SERVER }}/ext-interaction-module:${{ env.IMAGE_TAG }}
         working-directory: ext-interaction-module
+
+      - name: Cleanup old Docker tags in ACR (keep latest 10)
+        run: |
+          ACR_NAME=${{ secrets.PREPROD_ACR_NAME }}
+          REPO_NAME="ext-interaction-module"
+          KEEP_LATEST=10
+
+          echo "Cleaning up old tags for $REPO_NAME (keeping latest $KEEP_LATEST)..."
+
+          # List tags sorted by last update descending and skip the latest $KEEP_LATEST
+          tags_to_delete=$(az acr repository show-tags --name "$ACR_NAME" --repository "$REPO_NAME" --orderby time_desc --output tsv | tail -n +$((KEEP_LATEST + 1)))
+
+          if [ -z "$tags_to_delete" ]; then
+            echo "No old tags to delete."
+          else
+            for tag in $tags_to_delete; do
+              echo "Deleting $REPO_NAME:$tag"
+              az acr repository delete --name "$ACR_NAME" --image "$REPO_NAME:$tag" --yes
+            done
+          fi
+
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
@@ -702,6 +805,27 @@ jobs:
       - name: Push Docker Image to ACR
         run: docker push ${{ secrets.PREPROD_ACR_LOGIN_SERVER }}/event-stream-module:${{ env.IMAGE_TAG }}
         working-directory: event-stream-module
+
+      - name: Cleanup old Docker tags in ACR (keep latest 10)
+        run: |
+          ACR_NAME=${{ secrets.PREPROD_ACR_NAME }}
+          REPO_NAME="event-stream-module"
+          KEEP_LATEST=10
+
+          echo "Cleaning up old tags for $REPO_NAME (keeping latest $KEEP_LATEST)..."
+
+          # List tags sorted by last update descending and skip the latest $KEEP_LATEST
+          tags_to_delete=$(az acr repository show-tags --name "$ACR_NAME" --repository "$REPO_NAME" --orderby time_desc --output tsv | tail -n +$((KEEP_LATEST + 1)))
+
+          if [ -z "$tags_to_delete" ]; then
+            echo "No old tags to delete."
+          else
+            for tag in $tags_to_delete; do
+              echo "Deleting $REPO_NAME:$tag"
+              az acr repository delete --name "$ACR_NAME" --image "$REPO_NAME:$tag" --yes
+            done
+          fi
+          
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
