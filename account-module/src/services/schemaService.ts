@@ -2704,6 +2704,7 @@ private async createInteractionTable(
             users[0].tenant_id = "";
             users[0].client_id = "";
             users[0].client_secret = "";
+            users[0].support_email = "";
           }
           
         }
