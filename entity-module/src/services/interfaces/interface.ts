@@ -808,7 +808,19 @@ export interface IProjectTaskIngestionService {
     message: string;
     data?: { projectTask: any };
   }>
-  listResourceCodeForProjectTask(data : any) : Promise<any>
+  listResourceCodeForProjectTask(data : any) : Promise<any>;
+  listProjectTaskTypes() : Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { projectTaskTypes: any };
+  }>;
+  listProjectTaskClassification(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { projectTaskClassification: any };
+  }>;
 }
 export interface IProjectTaskService {
   listProjectTasks(

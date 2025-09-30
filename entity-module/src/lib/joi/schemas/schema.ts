@@ -2401,6 +2401,11 @@ const createProjectTaskSchema = Joi.object({
   comments: Joi.string().max(2000).optional().allow("").allow(null),
   user_preference: Joi.string().max(2000).optional().allow("").allow(null),
   project_resource_rid: Joi.string().pattern(uuidRegex).required(),
+
+  task_name: Joi.string().optional().allow("").allow(null),
+  task_description: Joi.string().max(2000).optional().allow("").allow(null),
+  task_type_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
+  task_classification_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
 });
 
 const updateProjectTaskSchema = Joi.object({
@@ -2486,6 +2491,11 @@ const updateProjectTaskSchema = Joi.object({
   comments: Joi.string().max(2000).optional().allow("").allow(null),
   user_preference : Joi.string().max(2000).optional().allow("").allow(null),
   project_resource_rid: Joi.string().pattern(uuidRegex).required(),
+
+  task_name: Joi.string().optional().allow("").allow(null),
+  task_description: Joi.string().max(2000).optional().allow("").allow(null),
+  task_type_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
+  task_classification_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
 });
 
 const listResourceCostSchemaForFinancialHighlights = Joi.object({

@@ -107,14 +107,14 @@ export class ProjectTaskService {
       });
 
       // ✅ Fetch and map related data
-      const { resourceTypeMap, currencyMap, resourceStatusMap } = await this.fetchRelatedData(
+      const { resourceTypeMap, currencyMap, resourceStatusMap, taskTypeMap, taskClassificationsMap } = await this.fetchRelatedData(
         allTasks,
         mainSequelize
       );
 
       // ✅ Format all tasks
       let formattedTasks = allTasks.map((task) =>
-        this.formatTaskData(task, resourceTypeMap, currencyMap, resourceStatusMap)
+        this.formatTaskData(task, resourceTypeMap, currencyMap, resourceStatusMap, taskTypeMap, taskClassificationsMap)
       );
 
       if (resourceFilter) {
@@ -220,14 +220,14 @@ export class ProjectTaskService {
       });
 
       // ✅ Fetch and map related data
-      const { resourceTypeMap, currencyMap, resourceStatusMap } = await this.fetchRelatedData(
+      const { resourceTypeMap, currencyMap, resourceStatusMap, taskTypeMap, taskClassificationsMap } = await this.fetchRelatedData(
         allTasks,
         mainSequelize
       );
 
       // ✅ Format all tasks
       let formattedTasks = allTasks.map((task) =>
-        this.formatTaskData(task, resourceTypeMap, currencyMap, resourceStatusMap)
+        this.formatTaskData(task, resourceTypeMap, currencyMap, resourceStatusMap, taskTypeMap, taskClassificationsMap)
       );
 
       if (resourceFilter) {
@@ -267,6 +267,15 @@ export class ProjectTaskService {
               // Only add fields that are in the allowedFieldSet
               if (allowedFieldSet.has('resource_code')) {
                 exportRecord['Resource Code'] = task.resource_code || "-";
+              }
+              if (allowedFieldSet.has('task_name')) {
+                exportRecord['Task Name'] = task.task_name || "-";
+              }
+              if (allowedFieldSet.has('task_type_rid')) {
+                exportRecord['Task Type'] = task.task_type_name || "-";
+              }
+              if (allowedFieldSet.has('task_classification_rid')) {
+                exportRecord['Task Classification'] = task.task_classification_name || "-";
               }
               if (allowedFieldSet.has('resource_name')) {
                 exportRecord['Resource Name'] = task.resource_name || "-";
@@ -433,6 +442,34 @@ export class ProjectTaskService {
         : [],
     ]);
 
+    // Fetch task type
+    const taskTypeRids = allTasks
+      .map((task) => (task as any)?.task_type_rid)
+      .filter((rid) => rid);
+
+    const [taskTypes] = await Promise.all([
+      taskTypeRids.length
+        ? mainSequelize.query(rawQueries.GET_TASK_TYPES, {
+            replacements: { taskTypeRid: taskTypeRids },
+            type: "SELECT",
+          })
+        : [],
+    ]);
+
+    // Fetch task classification
+    const taskClassificationRids = allTasks
+      .map((task) => (task as any)?.task_classification_rid)
+      .filter((rid) => rid);
+
+    const [taskClassifications] = await Promise.all([
+      taskClassificationRids.length
+        ? mainSequelize.query(rawQueries.GET_TASK_CLASSIFICATION, {
+            replacements: { taskClassificationRids },
+            type: "SELECT",
+          })
+        : [],
+    ]);
+
     return {
       resourceTypeMap: new Map<string, string>(
         resourceTypes.map((type: any) => [type.rid, type.resource_type_name])
@@ -448,7 +485,19 @@ export class ProjectTaskService {
           resourceStatus.rid,
           resourceStatus.resource_status_name
         ])
-      )
+      ),
+      taskTypeMap: new Map<string, string>(
+        taskTypes.map((type: any) => [
+          type.rid,
+          type.project_task_type_name,
+        ])
+      ),
+      taskClassificationsMap: new Map<string, string>(
+        taskClassifications.map((type: any) => [
+          type.rid,
+          type.classification_name,
+        ])
+      ),
     };
   }
 
@@ -456,7 +505,9 @@ export class ProjectTaskService {
     task: any,
     resourceTypeMap: Map<string, string>,
     currencyMap: Map<string, string>,
-    resourceStatusMap : Map<string, string>
+    resourceStatusMap : Map<string, string>,
+    taskTypeMap: Map<string, string>,
+    taskClassificationMap: Map<string, string>,
   ) {
     return {
       rid: task.rid,
@@ -491,7 +542,13 @@ export class ProjectTaskService {
       modified_datetime: task.modified_datetime,
       status_rid : task.status_rid,
       status_name : resourceStatusMap.get(task.status_rid) || null,
-      project_resource_role : task.project_resource?.project_resource_role || null
+      project_resource_role : task.project_resource?.project_resource_role || null,
+      task_name: task.task_name || null,
+      task_description: task.task_description || null,
+      task_classification_rid: task.task_classification_rid || null,
+      task_classification_name: taskClassificationMap.get(task.task_classification_rid) || null,
+      task_type_rid: task.task_type_rid || null,
+      task_type_name: taskTypeMap.get(task.task_type_rid) || null,
     };
   }
 
@@ -508,7 +565,11 @@ export class ProjectTaskService {
       "created_datetime",
       "modified_datetime",
       "status_name",
-      "project_resource_role"
+      "project_resource_role",
+      "task_type_name",
+      "task_classification_name",
+      "task_name",
+      "task_description"
     ];
 
     const finalSortBy = validSortFields.includes(sortBy)
@@ -616,7 +677,42 @@ export class ProjectTaskService {
           return bName?.localeCompare(aName ?? "") ?? 0;
         }
       });
-    } else {
+    } 
+    else if (finalSortBy === "task_type_name") {
+      formattedTasks.sort((a, b) => {
+        const isANull = a.task_type_name === null || a.task_type_name === undefined;
+        const isBNull = b.task_type_name === null || b.task_type_name === undefined;
+      
+        if (isANull && isBNull) return 0;       
+        if (isANull) return 1;                  
+        if (isBNull) return -1;                 
+      
+        const nameA = a.task_type_name;
+        const nameB = b.task_type_name;
+      
+        return finalSortOrder === "ASC"
+          ? nameA.localeCompare(nameB)
+          : nameB.localeCompare(nameA);
+      });      
+    } 
+    else if(finalSortBy === "task_classification_name"){
+      formattedTasks.sort((a, b) => {
+        const isANull = a.task_classification_name === null || a.task_classification_name === undefined;
+        const isBNull = b.task_classification_name === null || b.task_classification_name === undefined;
+      
+        if (isANull && isBNull) return 0;       
+        if (isANull) return 1;                  
+        if (isBNull) return -1;                 
+      
+        const nameA = a.task_classification_name;
+        const nameB = b.task_classification_name;
+      
+        return finalSortOrder === "ASC"
+          ? nameA.localeCompare(nameB)
+          : nameB.localeCompare(nameA);
+      });    
+    }
+    else {
       formattedTasks.sort((a, b) => {
         const aVal = a[finalSortBy as keyof typeof a];
         const bVal = b[finalSortBy as keyof typeof b];
@@ -775,7 +871,7 @@ export class ProjectTaskService {
         };
       }
 
-      const [resourceTypeData, currencyData, TaskStatusData] = await Promise.all([
+      const [resourceTypeData, currencyData, TaskStatusData, taskTyepData, taskClassificationData] = await Promise.all([
         (task as any).dataValues.resource?.resource_type_rid
           ? mainSequelize.query(rawQueries.GET_RESOURCE_TYPES, {
               replacements: {
@@ -801,11 +897,29 @@ export class ProjectTaskService {
               type: "SELECT",
             })
           : Promise.resolve([]),
+        (task as any).dataValues.task_type_rid
+        ? mainSequelize.query(rawQueries.GET_TASK_TYPES, {
+            replacements: {
+              taskTypeRid: (task as any).dataValues.task_type_rid,
+            },
+            type: "SELECT",
+          })
+        : Promise.resolve([]),
+        (task as any).dataValues.task_classification_rid
+        ? mainSequelize.query(rawQueries.GET_TASK_CLASSIFICATION, {
+            replacements: {
+              taskClassificationRids: (task as any).dataValues.task_classification_rid,
+            },
+            type: "SELECT",
+          })
+        : Promise.resolve([]),
       ]);
 
       const [resourceType] = resourceTypeData;
       const [currency] = currencyData;
-      const [taskStatus] = TaskStatusData
+      const [taskStatus] = TaskStatusData;
+      const [taskTypes] = taskTyepData; 
+      const [taskClassification] = taskClassificationData;
 
       const attachments = await this.fetchAttachmentsBytaskId(taskRid);
       let mappedAttachments = [];
@@ -918,7 +1032,13 @@ export class ProjectTaskService {
         modified_by: taskWithUserDetails.modified_name,
         status_rid : taskWithUserDetails.dataValues.status_rid,
         status_name : (taskStatus as any)?.resource_status_name,
-        project_resource_role : taskWithUserDetails.dataValues.project_resource.project_resource_role
+        project_resource_role : taskWithUserDetails.dataValues.project_resource.project_resource_role,
+        task_name: taskWithUserDetails.dataValues.task_name ?? null,
+        task_description: taskWithUserDetails.dataValues.task_description ?? null,
+        task_type_rid: taskWithUserDetails.dataValues.task_type_rid ?? null,
+        task_classification_rid: taskWithUserDetails.dataValues.task_classification_rid ?? null,
+        task_type_name: (taskTypes as any)?.project_task_type_name ?? null,
+        task_classification_name: (taskClassification as any)?.classification_name ?? null,
       };
 
       return {
@@ -1252,6 +1372,108 @@ export class ProjectTaskService {
             }
           });
           return; // Skip the default condition push at the end
+
+        case "task_name":
+          switch (operator.toLowerCase()) {
+            case "equals":
+              condition[field] = { [Op.iLike]: value };
+              break;
+            case "not_equals":
+              condition[field] = {
+                [Op.or]: [{ [Op.notILike]: value }, { [Op.is]: null }],
+              };
+              break;
+            case "contains":
+              condition[field] = { [Op.iLike]: `%${value}%` };
+              break;
+            case "is_empty":
+              condition[field] = {
+                [Op.or]: [{ [Op.is]: null }, { [Op.eq]: "" }],
+              };
+              break;
+          }
+          break;
+
+        case "task_description":
+          switch (operator.toLowerCase()) {
+            case "equals":
+              condition[field] = { [Op.iLike]: value };
+              break;
+            case "not_equals":
+              condition[field] = {
+                [Op.or]: [{ [Op.notILike]: value }, { [Op.is]: null }],
+              };
+              break;
+            case "contains":
+              condition[field] = { [Op.iLike]: `%${value}%` };
+              break;
+            case "is_empty":
+              condition[field] = {
+                [Op.or]: [{ [Op.is]: null }, { [Op.eq]: "" }],
+              };
+              break;
+          }
+          break;
+
+        case "task_type_rid":
+          Object.entries(filter).forEach(([op, val]) => {
+            if (val === undefined) return;
+            const nestedCondition: any = {};
+            switch (op.toLowerCase()) {
+              case "equals":
+                nestedCondition["task_type_rid"] = { [Op.eq]: val };
+                break;
+              case "not_equals":
+                nestedCondition["task_type_rid"] = {
+                  [Op.or]: [{ [Op.ne]: val }, { [Op.is]: null }],
+                };
+                break;
+              case "in":
+                nestedCondition["task_type_rid"] = {
+                  [Op.in]: Array.isArray(val) ? val : [val],
+                };
+                break;
+              case "is_empty":
+                nestedCondition["task_type_rid"] = {
+                  [Op.or]: [{ [Op.is]: null }, { [Op.eq]: "" }],
+                };
+                break;
+            }
+            if (Object.keys(nestedCondition).length > 0) {
+              whereClause[Op.and].push(nestedCondition);
+            }
+          });
+          break;
+
+        case "task_classification_rid":
+          Object.entries(filter).forEach(([op, val]) => {
+            if (val === undefined) return;
+            const nestedCondition: any = {};
+            switch (op.toLowerCase()) {
+              case "equals":
+                nestedCondition["task_classification_rid"] = { [Op.eq]: val };
+                break;
+              case "not_equals":
+                nestedCondition["task_classification_rid"] = {
+                  [Op.or]: [{ [Op.ne]: val }, { [Op.is]: null }],
+                };
+                break;
+              case "in":
+                nestedCondition["task_classification_rid"] = {
+                  [Op.in]: Array.isArray(val) ? val : [val],
+                };
+                break;
+              case "is_empty":
+                nestedCondition["task_classification_rid"] = {
+                  [Op.or]: [{ [Op.is]: null }, { [Op.eq]: "" }],
+                };
+                break;
+            }
+            if (Object.keys(nestedCondition).length > 0) {
+              whereClause[Op.and].push(nestedCondition);
+            }
+          });
+          break;
 
         default:
           console.log(`Unhandled filter field: ${field}`);
