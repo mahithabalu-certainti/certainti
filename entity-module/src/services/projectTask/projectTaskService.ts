@@ -1015,7 +1015,7 @@ export class ProjectInjestionTaskService {
 
       return {
           statusCode: HttpStatus.SUCCESS,
-          message: HttpStatus.SUCCESS_MESSAGE,
+          message: "Anomaly accepted successfully",
           data: {
             projectTask : {},
           },
@@ -1049,7 +1049,7 @@ export class ProjectInjestionTaskService {
         await transaction.commit();
         return {
           statusCode: HttpStatus.SUCCESS,
-          message: HttpStatus.SUCCESS_MESSAGE,
+          message: "Anomaly rejected successfully",
           data: {
             projectTask : {},
           },
