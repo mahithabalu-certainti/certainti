@@ -2696,6 +2696,17 @@ private async createInteractionTable(
           users[0].is_send_interaction = false;
         }
       }
+      if(!isParentAccount)
+        {
+          if (Array.isArray(users) && users.length > 0) {
+
+            users[0].subscription_created = false;
+            users[0].tenant_id = "";
+            users[0].client_id = "";
+            users[0].client_secret = "";
+          }
+          
+        }
 
       return users;
     } catch (err) {
