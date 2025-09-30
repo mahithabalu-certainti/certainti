@@ -202,8 +202,8 @@ export const projectFilterFields = (
       !projectPermissionMap?.['assessment_status']?.edit,
   },
   {
-    name: 'QRE %',
-    value: 'rd_percent_potential_ai',
+    name: 'QRE Percent Final',
+    value: 'rd_percent_final',
     type: 'number',
     operatorOption: numberOptions,
     hide:
@@ -211,7 +211,7 @@ export const projectFilterFields = (
       !projectPermissionMap?.['qre']?.edit,
   },
   {
-    name: 'QRE',
+    name: 'QRE Final',
     value: 'qre_final',
     type: 'number',
     operatorOption: numberOptions,

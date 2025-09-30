@@ -120,7 +120,7 @@ const TableModal: React.FC<TableModalProps> = ({
       style={{ zIndex: 999 }}
     >
       <div
-        className='bg-white flex flex-col justify-between rounded-lg shadow-lg  w-[900px] p-5'
+        className='bg-white flex flex-col justify-between rounded-lg shadow-lg  w-[60%] p-5'
         style={{ minHeight: 'calc(100vh - 200px)' }}
       >
         <div className='flex justify-between items-center pb-1 border-b border-[#CBD6E2]'>

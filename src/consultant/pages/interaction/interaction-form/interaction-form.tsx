@@ -558,22 +558,35 @@ const InteractionForm = () => {
   };
 
   const handleRemoveQuestion = (index: number) => {
-    setFormData((prev) => {
-      const updatedQuestions = prev.questions.filter((_, i) => i !== index);
+    const updatedQuestions = [...formData.questions];
+    updatedQuestions.splice(index, 1);
 
-      if (updatedQuestions.length === 0) {
-        updatedQuestions.push({
-          question_seq_num: 'SNO_1',
-          question: '',
-          is_mandatory: false,
-          is_editable: true,
-          notes: '',
-        });
-      }
+    // If this was the last question, add a new empty one
+    if (updatedQuestions.length === 0) {
+      updatedQuestions.push({
+        question_seq_num: 'SNO_1',
+        question: '',
+        is_mandatory: false,
+        is_editable: true,
+        notes: '',
+      });
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      questions: updatedQuestions,
+    }));
+
+    // Clear errors for the removed question and reindex remaining errors
+    setErrors((prev) => {
+      if (!prev.questions) return prev;
+
+      const newQuestionErrors = [...prev.questions];
+      newQuestionErrors.splice(index, 1);
 
       return {
         ...prev,
-        questions: updatedQuestions,
+        questions: newQuestionErrors,
       };
     });
   };
