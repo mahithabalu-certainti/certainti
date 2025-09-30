@@ -17,6 +17,7 @@ import {
   TableHead,
   TableRow,
 } from '@mui/material';
+import { getPreviewProjectListColumn } from './helper';
 
 interface IPreviewDialogProps {
   previewDialog: boolean;
@@ -252,38 +253,7 @@ export const PreviewDialog: React.FC<IPreviewDialogProps> = ({
             <div className='border-t border-l border-[#CBD6E2] mt-4'>
               <ListTable
                 data={memoizedProject}
-                columns={[
-                  {
-                    id: 'project_code',
-                    sortId: 'project_code',
-                    label: 'Project Code',
-                    sortable: false,
-                  },
-                  {
-                    id: 'project_name',
-                    sortId: 'project_name',
-                    label: 'Project Name',
-                    sortable: false,
-                  },
-                  {
-                    id: 'fiscal_year',
-                    sortId: 'fiscal_year',
-                    label: 'Fiscal year',
-                    sortable: false,
-                  },
-                  {
-                    id: 'key_contact_name',
-                    sortId: 'key_contact_name',
-                    label: 'Key Contact Name',
-                    sortable: false,
-                  },
-                  {
-                    id: 'key_contact_email',
-                    sortId: 'key_contact_email',
-                    label: 'Key Contact Email',
-                    sortable: false,
-                  },
-                ]}
+                columns={getPreviewProjectListColumn()}
                 getRowId={(row: ProjectFiscalSummary) => row.rid}
                 hoverHighlight={false}
                 tableStyle={{
