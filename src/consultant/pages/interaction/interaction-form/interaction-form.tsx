@@ -657,7 +657,7 @@ const InteractionForm = () => {
             )?.rid,
           fiscal_year: formData.fiscalYear,
           trigger_send: !!trigger_send,
-          ...(recipiants && { recipiants: recipiants }),
+          ...(recipiants?.email && { email_info: recipiants }),
         },
         {
           onError: () => {
@@ -683,7 +683,7 @@ const InteractionForm = () => {
                 it.interaction_level_name.toLocaleLowerCase() === 'project'
             )?.rid,
           trigger_send: !!trigger_send,
-          ...(recipiants && { recipiants: recipiants }),
+          ...(recipiants?.email && { email_info: recipiants }),
         },
         {
           onError: () => {
@@ -715,7 +715,7 @@ const InteractionForm = () => {
       {
         ...payload,
         trigger_send: !!trigger_send,
-        ...(recipiants && { recipiants: recipiants }),
+        ...(recipiants?.email && { email_info: recipiants }),
       },
       {
         onError: () => {
@@ -1570,12 +1570,13 @@ const InteractionForm = () => {
       />
       <PreviewDialog
         previewDialog={previewDialog}
-        questions={formData.questions}
+        formData={formData}
         createLoading={
           createInteraction.isPending || updateInteraction.isPending
         }
         recipiants={recipiants}
         setPreviewDialog={setPreviewDialog}
+        isAccountLevel={isAccountInteractionLevel}
         saveAndSendComplete={(recipiants) => {
           if (isEditView && interactionData) {
             updateInteractionComplete(true, recipiants);

@@ -233,6 +233,7 @@ export interface InteractionListResponse {
     limit: number;
     totalCount: number;
     interactions: InteractionList[];
+    keyContact: InteractionKeyContacts;
   };
 }
 export interface AccountInteractionListResponse {
@@ -468,4 +469,8 @@ export interface AccountSendInteractionPayload {
 export interface IRecipient {
   name: string;
   email: string;
+}
+export interface InteractionKeyContacts {
+  key_contact_email: string;
+  key_contact_name: string;
 }

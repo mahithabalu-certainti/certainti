@@ -314,7 +314,13 @@ const Interactions: React.FC<InteractionsProps> = ({
             checkBoxMessage,
           };
         }) || [];
-
+      localStorage.setItem(
+        'currentRecipients',
+        JSON.stringify({
+          name: data?.keyContact?.key_contact_name || '',
+          email: data?.keyContact?.key_contact_email || '',
+        })
+      );
       setInteractionList(updatedInteractions);
       setSelectedRows([]);
       setClearSelectedRows((prev) => !prev);

@@ -544,7 +544,7 @@ const AccountInteractionForm = () => {
         }),
         questions: payload.questions,
         ...(isAccountLevel && { fiscal_year: formData.fiscalYear }),
-        ...(recipiants && { recipiants: recipiants }),
+        ...(recipiants?.email && { email_info: recipiants }),
       },
       {
         onError: () => {
@@ -559,7 +559,11 @@ const AccountInteractionForm = () => {
   };
   const saveAndSend = () => {
     if (validateForm()) {
-      setPreviewDialog(true);
+      if (tab === 2 && selectedTableId.length === 0) {
+        errorToast('Please select atleast one Project!');
+      } else {
+        setPreviewDialog(true);
+      }
     }
   };
   const goBack = () => {
@@ -852,7 +856,10 @@ const AccountInteractionForm = () => {
                             color: '#7D98B6',
                           },
                         }}
-                        onChange={(e) => setInteractionLevel(e.target.value)}
+                        onChange={(e) => {
+                          setInteractionLevel(e.target.value);
+                          setSelectedTableIds([]); //clear selected
+                        }}
                       >
                         {memoizedInteractionLevel.map((it, i) => {
                           return (
@@ -1369,10 +1376,12 @@ const AccountInteractionForm = () => {
       </div>
       <PreviewDialog
         previewDialog={previewDialog}
-        questions={formData.questions}
+        formData={formData}
         createLoading={accountCreateInteraction.isPending}
         setPreviewDialog={setPreviewDialog}
         recipiants={recipiants}
+        selectedTableId={selectedTableId}
+        isAccountLevel={isAccountLevel}
         saveAndSendComplete={(recipiants) => {
           createInteraction(true, recipiants);
         }}

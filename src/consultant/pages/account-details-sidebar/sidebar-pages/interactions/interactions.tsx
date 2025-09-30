@@ -309,7 +309,10 @@ const Interactions: React.FC<InteractionsProps> = ({
         }) || [];
       localStorage.setItem(
         'currentRecipients',
-        JSON.stringify(data.recipients)
+        JSON.stringify({
+          name: data?.keyContact?.key_contact_name || '',
+          email: data?.keyContact?.key_contact_email || '',
+        })
       );
       setInteractionList(updatedInteractions);
       setSelectedRows([]);

@@ -23,6 +23,7 @@ import {
   getGlobalInteractionExportUrl,
   getInteractionListRemainderUrl,
 } from '../urls/interactions-url';
+import { InteractionKeyContacts } from '../../types/interactions';
 
 export const exportInteractions = async (
   params: InteractionListURLParams
@@ -155,7 +156,7 @@ export const fetchInteractionList = async (
 ): Promise<{
   interactions: InteractionList[];
   count: number;
-  recipients: { name: string; email: string };
+  keyContact: InteractionKeyContacts;
 }> => {
   const { data } = await interactionServiceApi.post<InteractionListResponse>(
     getInteractionListUrl(),
@@ -164,7 +165,7 @@ export const fetchInteractionList = async (
   return {
     interactions: data.data.interactions,
     count: data.data.totalCount,
-    recipients: { name: 'Siva', email: 'siva@gmail.com' },
+    keyContact: data.data.keyContact,
   };
 };
 export const fetchInteractionListRemainder = async (
@@ -188,7 +189,7 @@ export const useInteractionList = (
   {
     interactions: InteractionList[];
     count: number;
-    recipients: { name: string; email: string };
+    keyContact: InteractionKeyContacts;
   },
   Error
 > => {
@@ -196,7 +197,7 @@ export const useInteractionList = (
     {
       interactions: InteractionList[];
       count: number;
-      recipients: { name: string; email: string };
+      keyContact: InteractionKeyContacts;
     },
     Error
   >({

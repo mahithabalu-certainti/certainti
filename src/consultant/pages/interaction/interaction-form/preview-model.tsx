@@ -4,23 +4,38 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import TextButton from '../../../../components/button/text-button';
-import { InteractionFormQuestion, IRecipient } from '../../../types';
+import { InteractionFormData, IRecipient } from '../../../types';
 import { REGEX_PATTERNS } from '../../../../common-utils';
+import { TruncateWithTooltip } from '../../../../components';
+import { ProjectFiscalSummary } from '../../../types/project';
+import { ListTable } from '../../../../components/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+} from '@mui/material';
 
 interface IPreviewDialogProps {
   previewDialog: boolean;
-  questions: InteractionFormQuestion[];
+  formData: InteractionFormData;
   createLoading: boolean;
   recipiants: IRecipient;
+  isAccountLevel?: boolean;
+  selectedTableId?: ProjectFiscalSummary[];
   setPreviewDialog: React.Dispatch<React.SetStateAction<boolean>>;
   saveAndSendComplete: (data: IRecipient) => void;
 }
 
 export const PreviewDialog: React.FC<IPreviewDialogProps> = ({
   previewDialog,
-  questions,
+  formData,
   createLoading,
   recipiants,
+  selectedTableId,
+  isAccountLevel,
   setPreviewDialog,
   saveAndSendComplete,
 }) => {
@@ -84,6 +99,19 @@ export const PreviewDialog: React.FC<IPreviewDialogProps> = ({
     }
   };
 
+  const memoizedProject = React.useMemo(
+    () =>
+      selectedTableId?.map((data) => ({
+        ...data,
+        key_contact_email:
+          data.interactionKeyRecipients?.[0]?.key_contact_email,
+        key_contact_name: data.interactionKeyRecipients?.[0]?.key_contact_name,
+      })) || [],
+    [selectedTableId]
+  );
+
+  const interactionLevel = isAccountLevel ? 'Account' : 'Project';
+
   return (
     <React.Fragment>
       <Dialog
@@ -100,57 +128,215 @@ export const PreviewDialog: React.FC<IPreviewDialogProps> = ({
           Preview
         </DialogTitle>
         <DialogContent dividers>
-          <div className='border border-[#CBD6E2] min-h-[40px]'>
-            <div className='px-4 py-2 text-[14px] text-[#2D3E4F] font-semibold border-b border-[#CBD6E2]'>
-              Interaction Question
-            </div>
-            <div>
-              {questions.map((q, index) => (
-                <div key={index} className='p-2'>
-                  <div className='font-medium text-[14px] text-[#2D3E4F]'>
-                    <span className='font-bold'>
-                      {q.question_seq_num || `Q00${index + 1}`}
-                      {q.is_mandatory && (
-                        <span className='text-red-500 ml-1'>*</span>
-                      )}
-                    </span>{' '}
-                    - {q.question}
-                  </div>
-
-                  <div
-                    className={`
-            mt-1 border border-[#CBD6E2] rounded-[2px] py-2 px-3 min-h-10
-            text-[14px] text-[#425A76] font-normal bg-[#FFFBFA]
-          `}
-                    dangerouslySetInnerHTML={{ __html: '' }}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className='border border-[#CBD6E2] mt-4'>
+          <div className='border border-[#CBD6E2] mb-4'>
             <div className='flex items-center align-middle px-3 h-[30px] border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
-              Interaction Information
+              Basic Information
             </div>
-            <div className={`grid grid-cols-4 gap-x-2 items-center`}>
-              <div className='font-semibold text-[13px] text-[#425A76] p-3'>
-                Recipient Name
+            <div className='grid grid-cols-4 gap-x-2 items-center'>
+              <div className='font-semibold text-[13px] text-[#425A76] px-3 py-1'>
+                Account Name
               </div>
-              <div className='font-medium text-[13px] min-w-0 p-3'>
-                {recipiants.name}
+              <div className='font-medium text-[13px] min-w-0 px-3 py-1'>
+                <TruncateWithTooltip
+                  text={formData.accountName}
+                  maxWidth='100%'
+                  className='truncate inline-block max-w-full'
+                  enableCopy={false}
+                  tooltipMaxWidth='50vw'
+                >
+                  {formData.accountName}
+                </TruncateWithTooltip>
               </div>
-              <div className='font-semibold text-[13px] text-[#425A76] p-3'>
-                Recipient email
+              <div className='font-semibold text-[13px] text-[#425A76] px-3 py-1'>
+                Interaction Level
               </div>
-              <div className='font-medium text-[13px] min-w-0 p-3'>
-                {recipiants.email}
+              <div className='font-medium text-[13px] min-w-0 px-3 py-1'>
+                <TruncateWithTooltip
+                  text={interactionLevel}
+                  maxWidth='100%'
+                  className='truncate inline-block max-w-full'
+                  enableCopy={false}
+                  tooltipMaxWidth={'50vw'}
+                >
+                  {interactionLevel}
+                </TruncateWithTooltip>
               </div>
+              {isAccountLevel && (
+                <>
+                  <div className='font-semibold text-[13px] text-[#425A76] px-3 py-1'>
+                    Fiscal Year
+                  </div>
+                  <div className='font-medium text-[13px] min-w-0 px-3 py-1'>
+                    <TruncateWithTooltip
+                      text={String(formData.fiscalYear)}
+                      maxWidth='100%'
+                      className='truncate inline-block max-w-full'
+                      enableCopy={false}
+                      tooltipMaxWidth={'50vw'}
+                    >
+                      {formData.fiscalYear}
+                    </TruncateWithTooltip>
+                  </div>
+                </>
+              )}
             </div>
           </div>
+          <div className='border-t border-[#CBD6E2] min-h-[40px]'>
+            <TableContainer sx={{ overflowX: 'auto' }}>
+              <Table className='border-l border-[#CBD6E2]'>
+                <TableHead
+                  sx={{
+                    '& .MuiTableCell-root': {
+                      fontWeight: 700,
+                      fontSize: '13px',
+                      color: '#2A2A2A',
+                      padding: '0px 8px',
+                      height: '29px',
+                      boxSizing: 'border-box',
+                    },
+                  }}
+                >
+                  <TableRow sx={{ height: 29 }}>
+                    <TableCell
+                      style={{
+                        width: '20%',
+                        textAlign: 'left',
+                        textWrap: 'nowrap',
+                      }}
+                    >
+                      Question No.
+                    </TableCell>
+                    <TableCell
+                      style={{
+                        width: '80%',
+                        textAlign: 'left',
+                        textWrap: 'nowrap',
+                      }}
+                    >
+                      Interaction Questions
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {formData.questions.map((question, index) => (
+                    <TableRow key={index}>
+                      <TableCell
+                        style={{
+                          width: '20%',
+                          textAlign: 'left',
+                          padding: 10,
+                        }}
+                      >
+                        {question.rid ? question.question_seq_num : '-'}
+                      </TableCell>
+                      <TableCell
+                        style={{
+                          width: '80%',
+                          textAlign: 'left',
+                          padding: 10,
+                        }}
+                      >
+                        {question.is_mandatory && (
+                          <span className='text-red-500 text-[16px]'>*</span>
+                        )}
+                        {question.question}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </div>
+
+          {selectedTableId && selectedTableId.length > 0 ? (
+            <div className='border-t border-l border-[#CBD6E2] mt-4'>
+              <ListTable
+                data={memoizedProject}
+                columns={[
+                  {
+                    id: 'project_code',
+                    sortId: 'project_code',
+                    label: 'Project Code',
+                    sortable: false,
+                  },
+                  {
+                    id: 'project_name',
+                    sortId: 'project_name',
+                    label: 'Project Name',
+                    sortable: false,
+                  },
+                  {
+                    id: 'fiscal_year',
+                    sortId: 'fiscal_year',
+                    label: 'Fiscal year',
+                    sortable: false,
+                  },
+                  {
+                    id: 'key_contact_name',
+                    sortId: 'key_contact_name',
+                    label: 'Key Contact Name',
+                    sortable: false,
+                  },
+                  {
+                    id: 'key_contact_email',
+                    sortId: 'key_contact_email',
+                    label: 'Key Contact Email',
+                    sortable: false,
+                  },
+                ]}
+                getRowId={(row: ProjectFiscalSummary) => row.rid}
+                hoverHighlight={false}
+                tableStyle={{
+                  height: '100%',
+                  maxHeight: 'calc(100vh - 195px)',
+                  overflow: 'auto',
+                }}
+                selectable={false}
+                actionWidth={60}
+              />
+            </div>
+          ) : (
+            <div className='border border-[#CBD6E2] mt-4'>
+              {' '}
+              <div className='flex items-center align-middle px-3 h-[30px] border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
+                Interaction Information
+              </div>
+              <div className='grid grid-cols-4 gap-x-2 items-center'>
+                <div className='font-semibold text-[13px] text-[#425A76] p-3'>
+                  Key Contact Name
+                </div>
+                <div className='font-medium text-[13px] min-w-0 p-3'>
+                  <TruncateWithTooltip
+                    text={recipiants.name}
+                    maxWidth='100%'
+                    className='truncate inline-block max-w-full'
+                    enableCopy={false}
+                    tooltipMaxWidth={'50vw'}
+                  >
+                    {recipiants.name || '-'}
+                  </TruncateWithTooltip>
+                </div>
+                <div className='font-semibold text-[13px] text-[#425A76] p-3'>
+                  Key Contact Email
+                </div>
+                <div className='font-medium text-[13px] min-w-0 p-3'>
+                  <TruncateWithTooltip
+                    text={recipiants.email}
+                    maxWidth='100%'
+                    className='truncate inline-block max-w-full'
+                    enableCopy={false}
+                    tooltipMaxWidth={'50vw'}
+                  >
+                    {recipiants.email || '-'}
+                  </TruncateWithTooltip>
+                </div>
+              </div>
+            </div>
+          )}
           {enableRecipiants ? (
             <div className='border border-[#CBD6E2] mt-4'>
               <div className='flex items-center align-middle px-3 h-[30px] border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
-                Add Recipient
+                Alternate Recipient
               </div>
               <div className={`grid grid-cols-4 gap-x-2 items-start`}>
                 <div className='font-semibold text-[13px] text-[#425A76] p-3'>
@@ -190,9 +376,9 @@ export const PreviewDialog: React.FC<IPreviewDialogProps> = ({
           ) : (
             <div className='text-right mt-2'>
               <TextButton
-                label='Add Recipient'
+                label='Add Alternate Recipient'
                 sx={{
-                  width: '120px',
+                  width: '160px',
                   fontSize: '13px',
                   fontWeight: 400,
                 }}
