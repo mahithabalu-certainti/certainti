@@ -1102,9 +1102,9 @@ export class ProjectService {
     }
 
     const query = `
-    SELECT DISTINCT ps.project_rid
-    FROM ${MAIN_SCHEMA_NAME}.project_summary AS ps
-    LEFT JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary AS pfs ON ps.project_rid = pfs.project_rid
+    SELECT DISTINCT ps.project_fiscal_rid
+    FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary AS ps
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary AS pfs ON ps.project_fiscal_rid = pfs.project_fiscal_rid
     ${accessControlWhere}
   `;
 
@@ -1113,7 +1113,7 @@ export class ProjectService {
       type: "SELECT",
     });
 
-    return results.map((row: any) => row.project_rid);
+    return results.map((row: any) => row.project_fiscal_rid);
   }
 
   async allProjectList(
@@ -1126,7 +1126,9 @@ export class ProjectService {
     sortOrder: string = "ASC",
     globalFilters: Record<string, string[]> = {},
     userId: string,
-    bothParentAndChild: boolean
+    bothParentAndChild: boolean,
+    isFromUserGroup: boolean = false,
+    accountRid: string[] = []
   ): Promise<{
     statusCode: number;
     message: string;
@@ -1199,6 +1201,10 @@ export class ProjectService {
 
       const appliedAccountNumber =
         await this.schemaService.computeGlobalAccountFilter(globalFilters);
+      if (isFromUserGroup && accountRid.length > 0)
+        {
+         appliedAccountNumber.push(...accountRid);
+        }
 
       const { finalResult: allProjectList, totalCount } =
         await this.schemaService.fetchAllProjects(
@@ -1436,9 +1442,9 @@ export class ProjectService {
             ? timezone && isValidTimezone(timezone)
               ? moment(project.modified_datetime)
                   .tz(timezone)
-                  .format("YYYY-MM-DD, hh:mm:ss A")
+                  .format("YYYY-MMM-DD, hh:mm:ss A")
               : moment(project.modified_datetime).format(
-                  "YYYY-MM-DD, hh:mm:ss A"
+                  "YYYY-MMM-DD, hh:mm:ss A"
                 )
             : "-",
           "Project ID": project.r_number || "-",
@@ -1504,9 +1510,9 @@ export class ProjectService {
                 ? timezone && isValidTimezone(timezone)
                   ? moment(fiscal.modified_datetime)
                       .tz(timezone)
-                      .format("YYYY-MM-DD, hh:mm:ss A")
+                      .format("YYYY-MMM-DD, hh:mm:ss A")
                   : moment(fiscal.modified_datetime).format(
-                      "YYYY-MM-DD, hh:mm:ss A"
+                      "YYYY-MMM-DD, hh:mm:ss A"
                     )
                 : "-",
               "Project ID": fiscal.r_number || "-",

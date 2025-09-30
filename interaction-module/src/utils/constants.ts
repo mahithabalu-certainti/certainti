@@ -774,6 +774,19 @@ export const rawQueries = {
   },
   fetchKeyContactForInteraction(schemaName : string, id : string) {
     return `SELECT key_contact_name, key_contact_email FROM ${schemaName}.key_contact_details where entity_rid = '${id}' AND include_in_communication = TRUE`
+  },
+  fetchProfServConsultantDetails (schemaName : string, accountRid : string, keyContactRoleId : string) {
+    return `SELECT * FROM ${schemaName}.key_contact_details WHERE entity_rid = '${accountRid}' AND key_contact_role = '${keyContactRoleId}'`
+  },
+  fetchProfServConsultantRid () {
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE role_name = '${keyContactRoleName.professionalServiceConsultant}'`
+  },
+  fetchProjectDetails (schemaName : string, projectFiscalRid : string) {
+    return `SELECT project_name, project_code, fiscal_year FROM ${schemaName}.project_fiscal
+    WHERE rid = '${projectFiscalRid}'`
+  },
+  fetchInteractionLevelById (interactionLevelRid : string) {
+    return `SELECT * FROM ${MAIN_SCHEMA_NAME}.interaction_level WHERE rid = '${interactionLevelRid}'`
   }
 };
 
@@ -928,4 +941,8 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     interactionAge : "interaction_age",
     interaction : "interactions",
     attachments : "attachments"
+  }
+
+  export const keyContactRoleName = {
+    professionalServiceConsultant : "Professional Services Consultant"
   }

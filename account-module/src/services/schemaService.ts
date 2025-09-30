@@ -392,6 +392,7 @@ class SchemaService {
         total_projects integer,
         total_fte integer,
         total_subcon integer,
+        total_nonlabor integer,
         total_project_hours_fte numeric(18,2),
         total_project_hours_subcon numeric(18,2),
         total_project_hours numeric(18,2),
@@ -487,6 +488,7 @@ class SchemaService {
         total_projects integer NULL,
         total_fte integer NULL,
         total_subcon integer NULL,
+        total_nonlabor integer NULL,
         total_project_hours_fte numeric(18, 2) NULL,
         total_project_hours_subcon numeric(18, 2) NULL,
         total_project_hours numeric(18, 2) NULL,
@@ -581,6 +583,7 @@ class SchemaService {
       total_cost NUMERIC(18, 2),
       total_fte INTEGER,
       total_subcon INTEGER,
+      total_nonlabor INTEGER,
 
       total_effort_fte NUMERIC(18, 2),
       total_effort_subcon NUMERIC(18, 2),
@@ -716,6 +719,7 @@ class SchemaService {
       -- Non-labor & Resources
       total_nonlabor_prj DECIMAL(18,2),
       total_nonlabor_from_prj_res DECIMAL(18,2),
+      total_nonlabor_from_tasks INTEGER,
       total_resources_prj INTEGER,
       total_resources_from_prj_res INTEGER,
       total_resources_from_tasks INTEGER,
@@ -942,6 +946,7 @@ class SchemaService {
         "comments" varchar(2000) NULL,
         project_description varchar(2000) NULL,
         project_fiscal_rid varchar(50) NOT NULL,
+        total_nonlabor_from_tasks INTEGER,
         CONSTRAINT project_fiscal_region_r_number_key UNIQUE (r_number)
       );`);
 

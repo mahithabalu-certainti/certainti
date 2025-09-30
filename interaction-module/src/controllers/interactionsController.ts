@@ -887,7 +887,7 @@ async function exportAllInteractions (req : Request, res : Response) {
        const isValidTZ = data.timezone &&  isValidTimezone(data.timezone);
        const formatDate = (date?: Date) =>
         date
-          ? moment(date).tz(isValidTZ ? data.timezone : 'UTC').format('YYYY-MM-DD, hh:mm:ss A')
+          ? moment(date).tz(isValidTZ ? data.timezone : 'UTC').format('YYYY-MMM-DD, hh:mm:ss A')
           : null;
 
     if(result.status == HttpStatus.SUCCESS) {
@@ -1466,7 +1466,7 @@ async function exportTechnicalSummary(req: Request, res: Response) {
      const isValidTZ = value.timezone &&  isValidTimezone(value.timezone);
        const formatDate = (date?: Date) =>
         date
-          ? moment(date).tz(isValidTZ ? value.timezone : 'UTC').format('YYYY-MM-DD, hh:mm:ss A')
+          ? moment(date).tz(isValidTZ ? value.timezone : 'UTC').format('YYYY-MMM-DD, hh:mm:ss A')
           : null;
     if(result.statusCode === HttpStatus.SUCCESS) {
          const finalStructuredData = result?.data?.techSummaryInfo.length < 1 ? [] : result?.data?.techSummaryInfo.map((d: any) => {

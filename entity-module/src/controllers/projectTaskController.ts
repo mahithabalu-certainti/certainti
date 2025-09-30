@@ -426,6 +426,7 @@ async function anomalyStatusUpdate(req: Request, res: Response): Promise<void> {
     );
   }
 }
+
 async function fetchReCodeForPrjTask (req : Request, res : Response) : Promise<any> {
   const methodName = "fetchReCodeForPrjTask"
   try {
@@ -461,6 +462,88 @@ async function fetchReCodeForPrjTask (req : Request, res : Response) : Promise<a
   }
 }
 
+async function fetchProjectTaskTypes (req : Request, res : Response) : Promise<any> {
+  const methodName = "Project Task Type"
+  try {
+    const userId = req.headers["x-user-id"] as string;
+
+    if (!userId) {
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    const result = await projectTaskService.listProjectTaskTypes()
+    if(result.statusCode == HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        data : result.data
+      })
+    } else {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        data : result.data
+      })
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
+async function fetchProjectTaskClassification (req : Request, res : Response) : Promise<any> {
+  const methodName = "Project Task Type"
+  try {
+    const userId = req.headers["x-user-id"] as string;
+
+    if (!userId) {
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    const result = await projectTaskService.listProjectTaskClassification()
+    if(result.statusCode == HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        data : result.data
+      })
+    } else {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        data : result.data
+      })
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
 export default {
   getProjectTasks,
   getProjectTaskById,
@@ -469,5 +552,7 @@ export default {
   updateProjectTask,
   assignedResourceCodes,
   anomalyStatusUpdate,
-  fetchReCodeForPrjTask
+  fetchReCodeForPrjTask,
+  fetchProjectTaskTypes,
+  fetchProjectTaskClassification
 };

@@ -1,5 +1,6 @@
 import { Sequelize } from "sequelize";
 import { encryptClientSecret } from "./helpers";
+import moment from "moment";
 export const HttpStatus = {
   SUCCESS: 200,
   BAD_REQUEST: 400,
@@ -648,6 +649,12 @@ export const rawQueries = {
   GET_STATUSES: `
   SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid IN (:statusRid)
   `,
+  GET_TASK_TYPES: `
+  SELECT rid, project_task_type_name FROM ${MAIN_SCHEMA_NAME}.project_task_type WHERE rid IN (:taskTypeRid)
+  `,
+  GET_TASK_CLASSIFICATION: `
+  SELECT rid, classification_name FROM ${MAIN_SCHEMA_NAME}.project_task_classification WHERE rid IN (:taskClassificationRids)
+  `,
   fetchUserDetailsById(userId: string) {
     return `SELECT CONCAT(first_name, ' ', last_name) AS imported_by FROM ${MAIN_SCHEMA_NAME}.user WHERE rid = '${userId}'`;
   },
@@ -705,7 +712,7 @@ export const rawQueries = {
             SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access uea
             WHERE uea.user_rid = ? 
             AND uea.entity_type = 'PROJECT'
-            AND uea.entity_rid = ps.project_rid
+            AND uea.entity_rid = ps.project_fiscal_rid
             AND uea.access_type = 'INCLUDE'
           )
           OR EXISTS (
@@ -714,7 +721,7 @@ export const rawQueries = {
               ON ugea.group_rid = ugm.group_rid
             WHERE ugm.user_rid = ?
             AND ugea.entity_type = 'PROJECT'
-            AND ugea.entity_rid = ps.project_rid
+            AND ugea.entity_rid = ps.project_fiscal_rid
             AND ugea.access_type = 'INCLUDE'
           )
         )
@@ -722,7 +729,7 @@ export const rawQueries = {
           SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access uea
           WHERE uea.user_rid = ? 
           AND uea.entity_type = 'PROJECT'
-          AND uea.entity_rid = ps.project_rid
+          AND uea.entity_rid = ps.project_fiscal_rid
           AND uea.access_type = 'EXCLUDE'
         )
         AND NOT EXISTS (
@@ -731,7 +738,7 @@ export const rawQueries = {
             ON ugea.group_rid = ugm.group_rid
           WHERE ugm.user_rid = ?
           AND ugea.entity_type = 'PROJECT'
-          AND ugea.entity_rid = ps.project_rid
+          AND ugea.entity_rid = ps.project_fiscal_rid
           AND ugea.access_type = 'EXCLUDE'
         )
       )
@@ -928,7 +935,13 @@ export const rawQueries = {
     WHERE
       rid = '${data.rid}'
     `
-  }
+  },
+  fetchProjecTaskType(){
+    return `SELECT * FROM ${MAIN_SCHEMA_NAME}.project_task_type`
+  },
+  fetchProjetClassificationQuery(){
+    return `SELECT * FROM ${MAIN_SCHEMA_NAME}.project_task_classification`
+  },
 };
 
 export const IMPORT_FILTER_COLUMNS: any = {
@@ -1022,5 +1035,5 @@ export const IMPORT_FIELD_MAPPINGS_FOR_EXPORT = [
     { permissionField: 'status', exportField: 'Status', dataField: 'status' },
     { permissionField: 'status_descriptions', exportField: 'Status Description', dataField: 'status_description' },
     { permissionField: 'imported_by', exportField: 'Imported By', dataField: 'imported_by' },
-    { permissionField: 'imported_on', exportField: 'Imported On', dataField: 'imported_on', formatter: (value: any) => new Date(value).toISOString().slice(0, 10) }
+    { permissionField: 'imported_on', exportField: 'Imported On', dataField: 'imported_on', formatter: (value: any) =>  moment(value).format("YYYY-MMM-DD, hh:mm:ss A") }
 ];
