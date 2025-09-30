@@ -477,7 +477,7 @@ export const rawQueries = {
   },
   fetchRemainderEmailInfo(interactionRid: string, schemaName: string) {
     return `
-    SELECT recipient_name, recipient_email FROM ${schemaName}.interactions WHERE interaction_rid = '${interactionRid}' `
+    SELECT recipient_name, recipient_email FROM ${schemaName}.interactions WHERE rid = '${interactionRid}' `
   },
   fetchisAutoSendEnabled(projectFiscalRid: string, schemaName: string) {
     return `
