@@ -9,6 +9,7 @@ const createInteractionSchema = Joi.object({
   project_fiscal_rid: Joi.string().pattern(uuidRegex).required(),
   fiscal_year: Joi.number().integer().min(1900).max(2100).required(),
   status_rid: Joi.string().required(),
+  trigger_send: Joi.boolean().optional().default(false),
   questions: Joi.array()
     .items(
       Joi.object({
@@ -130,6 +131,7 @@ const getInteractionStatusSchema = Joi.object({
 const updateAccountInteractionSchema = Joi.object({
   account_interaction_rid: Joi.string().pattern(uuidRegex).required(),
   account_rid: Joi.string().pattern(uuidRegex).required(),
+  trigger_send: Joi.boolean().optional().default(false),
   questions: Joi.array()
     .items(
       Joi.object({
@@ -170,7 +172,9 @@ const updateInteractionSchema = Joi.object({
   email_info : Joi.object({
     email: Joi.string().email().optional().allow("",null),
     name: Joi.string().max(255).optional().allow("",null),
-  }).optional()
+  }).optional(),
+  trigger_send: Joi.boolean().optional().default(false),
+  interaction_level_name : Joi.string().max(255).optional()
 });
 
 const updateInteractionResponseSchema = Joi.object({
