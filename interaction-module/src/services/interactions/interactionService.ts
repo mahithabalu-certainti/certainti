@@ -467,9 +467,12 @@ export class InteractionService {
       }
       await transaction.commit();
       if(interactionData.trigger_send === true) {
+         const intLevel = await this.interactionSchemaService.getInteractionLevelByRid(
+          interactionData?.interaction_level_rid!
+        );
         const isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(accountNumber, interactionData.interaction_rid);
         if(interactionStatus === statusAction.DRAFT && isEmailRecipientAvailable) {
-            await this.checkAutoSendEnabled(accountNumber, interactionData, interactionData.interaction_rid, userId, interactionData.account_rid, interactionData.interaction_level_name!, parentAccountId);
+            await this.checkAutoSendEnabled(accountNumber, interactionData, interactionData.interaction_rid, userId, interactionData.account_rid, intLevel!, parentAccountId);
         }
         else{
           if(!isEmailRecipientAvailable && interactionStatus === statusAction.DRAFT)

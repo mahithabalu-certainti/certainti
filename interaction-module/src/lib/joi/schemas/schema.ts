@@ -173,8 +173,7 @@ const updateInteractionSchema = Joi.object({
     email: Joi.string().email().optional().allow("",null),
     name: Joi.string().max(255).optional().allow("",null),
   }).optional(),
-  trigger_send: Joi.boolean().optional().default(false),
-  interaction_level_name : Joi.string().max(255).optional()
+  trigger_send: Joi.boolean().optional().default(false)
 });
 
 const updateInteractionResponseSchema = Joi.object({
