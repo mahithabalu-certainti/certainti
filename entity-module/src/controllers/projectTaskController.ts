@@ -407,7 +407,13 @@ async function anomalyStatusUpdate(req: Request, res: Response): Promise<void> {
 
     if (result.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
-      handleSuccessResponse(res, result.data);
+      res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.message || '', 
+        data: result.data,
+      });
+      return;
     }
   } catch (err) {
     const error = err as Error;

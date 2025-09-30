@@ -2404,8 +2404,23 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         }
       }
 
+      const [statusData]: any = await this.mainDbSequelize.query(
+        rawQueries.fetchInteractionStatusByType(statusAction.RESPONSE_DRAFT)
+      );
+
       if (responseData.questions && Array.isArray(responseData.questions)) {
         for (const question of responseData.questions) {
+          const draftStatusid = statusData[0]?.rid;
+
+          const isExisting = await Interaction.findOne({
+            where: {
+              rid: responseData.interaction_rid,
+              status_rid: {
+                [Op.ne]: draftStatusid
+              }
+            }
+          });
+
           const existing = await InteractionResponseHistory.findOne({
             where: {
               interaction_rid: responseData.interaction_rid,
@@ -2416,7 +2431,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
 
           let created = null;
 
-          if (existing) {
+          if (existing && isExisting) {
             // Update existing response
             await existing.update({
               interaction_response: question.response,
