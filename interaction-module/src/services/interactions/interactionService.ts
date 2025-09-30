@@ -428,7 +428,7 @@ export class InteractionService {
     const orgDbSequelize = await this.getOrgDb();
     const transaction = await dbInit.transaction();
     try {
-      const { accountNumber, accountName } =
+      const { accountNumber, parentAccountId, accountName } =
         await this.interactionSchemaService.fetchValidAccountNumberById(
           interactionData?.account_rid
         );
@@ -469,6 +469,27 @@ export class InteractionService {
         );
       }
       await transaction.commit();
+      if(interactionData.trigger_send === true) {
+         const intLevel = await this.interactionSchemaService.getInteractionLevelByRid(
+          interactionData?.interaction_level_rid!
+        );
+        const isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(accountNumber, interactionData.interaction_rid);
+        if(interactionStatus === statusAction.DRAFT && isEmailRecipientAvailable) {
+            await this.checkAutoSendEnabled(accountNumber, interactionData, interactionData.interaction_rid, userId, interactionData.account_rid, intLevel!, parentAccountId);
+        }
+        else{
+          if(!isEmailRecipientAvailable && interactionStatus === statusAction.DRAFT)
+          {
+            return {
+              statusCode: HttpStatus.SUCCESS,
+              message: STATUS_MESSAGE.interactionCreatedButNoEmailRecipient,
+              data: {
+                interactions: null,
+              },
+            };
+          }
+        }
+      }
       if(interactionStatus === statusAction.RESPONSE_RECEIVED) {
         const fetchInteractionDetails : any = await this.interactionSchemaService.fetchInteractionDetailsById(accountNumber, interactionData.interaction_rid)
         if(fetchInteractionDetails) {
@@ -557,21 +578,6 @@ export class InteractionService {
         }
       }
     }
-      const isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(accountNumber, interactionData.interaction_rid);
-    //   if(interactionStatus === statusAction.DRAFT && isEmailRecipientAvailable)
-    // //  await this.checkAutoSendEnabled(accountNumber,interactionData,interactionData.interaction_rid,userId, interactionData?.account_rid);
-    //   else{
-    //     if(!isEmailRecipientAvailable && interactionStatus === statusAction.DRAFT)
-    //     {
-    //        return {
-    //     statusCode: HttpStatus.SUCCESS,
-    //     message: STATUS_MESSAGE.interactionCreatedButNoEmailRecipient,
-    //     data: {
-    //       interactions: null,
-    //     },
-    //   };
-    //     }
-    //   }
       return {
         statusCode: HttpStatus.SUCCESS,
         message: STATUS_MESSAGE.interactionUpdated,
