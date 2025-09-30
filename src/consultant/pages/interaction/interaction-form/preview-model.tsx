@@ -237,10 +237,10 @@ export const PreviewDialog: React.FC<IPreviewDialogProps> = ({
                           padding: 10,
                         }}
                       >
+                        {question.question}
                         {question.is_mandatory && (
                           <span className='text-red-500 text-[16px]'>*</span>
                         )}
-                        {question.question}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -311,6 +311,7 @@ export const PreviewDialog: React.FC<IPreviewDialogProps> = ({
               <div className={`grid grid-cols-4 gap-x-2 items-start`}>
                 <div className='font-semibold text-[13px] text-[#425A76] p-3'>
                   Recipient Name
+                  <span className='text-red-500 text-[16px]'>*</span>
                 </div>
                 <div className='font-medium text-[13px] min-w-0 p-3'>
                   <input
@@ -319,14 +320,15 @@ export const PreviewDialog: React.FC<IPreviewDialogProps> = ({
                     className={`placeholder-custom-color placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[28px] border border-[#CBD6E2] rounded-xs ${errors.name ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
                     onChange={updateRecipiants}
                     value={externalRecipiants.name}
-                    placeholder='e.g John'
+                    placeholder='Enter Recipient Name'
                   />
                   <span className='text-[12px] text-red-400 col-span-full'>
                     {errors.name}
                   </span>
                 </div>
                 <div className='font-semibold text-[13px] text-[#425A76] p-3'>
-                  Recipient email
+                  Recipient Email
+                  <span className='text-red-500 text-[16px]'>*</span>
                 </div>
                 <div className='font-medium text-[13px] min-w-0 p-3'>
                   <input
@@ -335,7 +337,7 @@ export const PreviewDialog: React.FC<IPreviewDialogProps> = ({
                     className={`placeholder-custom-color placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[28px] border border-[#CBD6E2] rounded-xs ${errors.email ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
                     onChange={updateRecipiants}
                     value={externalRecipiants.email}
-                    placeholder='e.g johan@mail.com'
+                    placeholder='Enter Recipient Email'
                   />
                   <span className='text-[12px] text-red-400 col-span-full'>
                     {errors.email}
