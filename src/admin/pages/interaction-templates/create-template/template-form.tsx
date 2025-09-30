@@ -231,17 +231,36 @@ const TemplateForm: React.FC = () => {
   };
 
   const handleRemoveQuestion = (index: number) => {
-    if (formData.questions.length === 1) {
-      return; // Don't remove the last question
-    }
-
     const updatedQuestions = [...formData.questions];
     updatedQuestions.splice(index, 1);
+
+    // If this was the last question, add a new empty one
+    if (updatedQuestions.length === 0) {
+      updatedQuestions.push({
+        question_seq_num: 'SNO_1',
+        question: '',
+        is_mandatory: false,
+        notes: '',
+      });
+    }
 
     setFormData((prev) => ({
       ...prev,
       questions: updatedQuestions,
     }));
+
+    // Clear errors for the removed question and reindex remaining errors
+    setErrors((prev) => {
+      if (!prev.questions) return prev;
+
+      const newQuestionErrors = [...prev.questions];
+      newQuestionErrors.splice(index, 1);
+
+      return {
+        ...prev,
+        questions: newQuestionErrors,
+      };
+    });
   };
 
   const validateForm = (): boolean => {
