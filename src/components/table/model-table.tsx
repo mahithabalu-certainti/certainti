@@ -117,7 +117,7 @@ const TableModal: React.FC<TableModalProps> = ({
   return (
     <div
       className='fixed inset-0 flex items-center justify-center bg-black/50'
-      style={{ zIndex: 9999 }}
+      style={{ zIndex: 999 }}
     >
       <div
         className='bg-white flex flex-col justify-between rounded-lg shadow-lg  w-[60%] p-5'

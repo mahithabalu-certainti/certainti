@@ -62,8 +62,7 @@ const fetchTechnicalSummaryDetails = async (
         project_fiscal_rid,
       })
     );
-
-  return response.data.data.technicalSummaryDetails;
+  return response.data.data;
 };
 
 export const useTechnicalSummaryDetails = (

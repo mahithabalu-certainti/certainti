@@ -50,7 +50,7 @@ const InteractionTemplates: React.FC = () => {
   const handleFilterModal = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
-
+  const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   // Permission
   const { modules, permission } = useSelector(
     (state: RootState) => state.permission
@@ -164,6 +164,7 @@ const InteractionTemplates: React.FC = () => {
         ExportInteractionAllTemplateList({
           ...tableParams,
           filters: appliedFilters,
+          timezone: systemTimezone,
         }),
       hide: !isTemplateExportEnable,
     },

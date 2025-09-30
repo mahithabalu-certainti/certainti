@@ -593,7 +593,7 @@ const Interactions: React.FC<InteractionsProps> = ({
     // Map your input array into interactions
     const interactions = data.map((item) => ({
       interaction_rid: item.rid || '',
-      // interaction_level: 'Account',
+      interaction_level: 'Account',
       project_fiscal_rid: item.project_fiscal_rid || '',
     }));
 

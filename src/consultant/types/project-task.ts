@@ -195,6 +195,10 @@ export interface ProjectTaskInput {
   comments: string | null;
   user_preference: string;
   project_resource_rid: string;
+  task_description: string | null;
+  task_classification_rid: string | null;
+  task_type_rid: string | null;
+  task_name: string | null;
 }
 //create task api response,
 export interface createProjectTaskApiResponse {
