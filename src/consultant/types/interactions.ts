@@ -443,15 +443,16 @@ export interface UploadInteractionAttachmentResponse {
 export interface InteractionItem {
   interaction_rid: string;
   project_fiscal_rid: string;
-  email_info: {
-    email: string;
-    name: string;
-  };
+  interaction_level?: string;
 }
 
 export interface SendInteractionPayload {
   account_rid: string;
   interactions: InteractionItem[];
+  email_info: {
+    email: string;
+    name: string;
+  };
   customRecipient?: boolean;
   is_interaction_followup?: boolean;
 }

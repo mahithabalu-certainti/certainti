@@ -7,7 +7,7 @@ import {
   useGetInteractionLevel,
   useGetInteractionResponeSources,
   useGetInteractionStatus,
-  useGetInteractionStatusByRemainer,
+  useGetInteractionStatusByReminder,
   useGetInteractionTypes,
 } from '../../../../../common-service';
 import {
@@ -210,7 +210,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   const totalItems = data?.count || 0;
   const interactionTypes = useGetInteractionTypes();
   const interactionStatus = useGetInteractionStatus();
-  const interactionStatusRemainder = useGetInteractionStatusByRemainer(true);
+  const interactionStatusRemainder = useGetInteractionStatusByReminder(true);
   const interactionLevel = useGetInteractionLevel();
   const interactionResSources = useGetInteractionResponeSources();
 
@@ -601,16 +601,16 @@ const Interactions: React.FC<InteractionsProps> = ({
       interaction_rid: item.rid || '',
       // interaction_level: 'Account',
       project_fiscal_rid: item.project_fiscal_rid || '',
-      email_info: {
-        name: '',
-        email: '',
-      },
     }));
 
     const payload = {
       account_rid: accountid || '',
       is_interaction_followup: true,
       interactions,
+      email_info: {
+        name: '',
+        email: '',
+      },
     };
 
     sendInteraction.mutate(payload, {

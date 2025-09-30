@@ -133,10 +133,6 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
         interaction_rid: data?.interaction_rid || interactionId || '',
         project_fiscal_rid:
           data?.project_fiscal_rid || projectDetails?.rid || projectid || '',
-        email_info: {
-          email: '',
-          name: '',
-        },
       },
     ];
 
@@ -144,6 +140,10 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       account_rid: data?.account_rid || accountId || '',
       is_interaction_followup: true,
       interactions,
+      email_info: {
+        email: '',
+        name: '',
+      },
     };
     sendInteraction.mutate(payload, {
       onSuccess: (response) => {

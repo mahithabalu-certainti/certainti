@@ -533,15 +533,19 @@ export const getAllProjectListColumns = (
     sortable: true,
     sortId: 'assessment_status',
     width: 180,
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      return isChild ? row.assessment_status : '-';
+    },
     hide:
       !permissionMap?.['assessment_status']?.read &&
       !permissionMap?.['assessment_status']?.edit,
   },
   {
-    id: 'rd_percent_potential_ai',
+    id: 'rd_percent_final',
     label: 'QRE %',
     sortable: true,
-    sortId: 'rd_percent_potential_ai',
+    sortId: 'rd_percent_final',
     width: 130,
     sx: {
       textAlign: 'right',
@@ -549,20 +553,25 @@ export const getAllProjectListColumns = (
     hide:
       !permissionMap?.['qre_final']?.read &&
       !permissionMap?.['qre_final']?.edit,
-    render: (row: Project) =>
-      row.rd_percent_potential_ai ? row.rd_percent_potential_ai : '-',
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      return isChild ? row.rd_percent_final : '-';
+    },
   },
   {
-    id: 'qre',
+    id: 'qre_final',
     label: 'QRE',
     sortable: true,
-    sortId: 'qre',
+    sortId: 'qre_final',
     width: 130,
     hide: !permissionMap?.['qre']?.read && !permissionMap?.['qre']?.edit,
     sx: {
       textAlign: 'right',
     },
-    render: (row: Project) => (row.qre ? row.qre : '-'),
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      return isChild ? row.qre_final : '-';
+    },
   },
   {
     id: 'project_point_of_contact',
@@ -589,7 +598,7 @@ export const getAllProjectListColumns = (
           {row.project_point_of_contact}
         </div>
       ) : (
-        <span>{row.project_point_of_contact}</span>
+        '-'
       );
     },
   },
@@ -622,7 +631,7 @@ export const getAllProjectListColumns = (
           {row.technical_point_of_contact}
         </div>
       ) : (
-        <span>{row.technical_point_of_contact}</span>
+        '-'
       );
     },
   },
@@ -635,6 +644,10 @@ export const getAllProjectListColumns = (
       permissionMap?.['comments']?.read && permissionMap?.['comments']?.edit,
     hide:
       !permissionMap?.['comments']?.read && !permissionMap?.['comments']?.edit,
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      return isChild ? row.comments : '-';
+    },
     sortId: 'comments',
     width: 200,
     field: {
@@ -659,10 +672,12 @@ export const getAllProjectListColumns = (
     hide:
       !permissionMap?.['modified_datetime']?.read &&
       !permissionMap?.['modified_datetime']?.edit,
-    render: (row: Project) =>
-      row.modified_datetime
-        ? formatDateToYYYYMMDDWithTime(row.modified_datetime)
-        : '-',
+    render: (row: Project) => {
+      const isChild = row._level !== undefined && row._level === 1;
+      return isChild
+        ? formatDateToYYYYMMDDWithTime(row.modified_datetime) || '-'
+        : '-';
+    },
   },
   {
     id: 'r_number',

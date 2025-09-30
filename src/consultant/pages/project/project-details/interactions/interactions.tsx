@@ -6,7 +6,7 @@ import {
   OverviewTabs,
   useGetInteractionResponeSources,
   useGetInteractionStatus,
-  useGetInteractionStatusByRemainer,
+  useGetInteractionStatusByReminder,
   useGetInteractionTypes,
 } from '../../../../../common-service';
 import { EditIcon, InteractionDetailIcon } from '../../../../../assets';
@@ -222,7 +222,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   const interactionTypes = useGetInteractionTypes();
   const interactionResSources = useGetInteractionResponeSources();
   const interactionStatus = useGetInteractionStatus();
-  const interactionStatusRemainder = useGetInteractionStatusByRemainer(true);
+  const interactionStatusRemainder = useGetInteractionStatusByReminder(true);
 
   // Permissions
   const interactionsEnable = checkPermission(modules, AllModules.INTERACTIONS);
@@ -567,16 +567,16 @@ const Interactions: React.FC<InteractionsProps> = ({
       interaction_rid: item.rid || '',
       // interaction_level: 'Account',
       project_fiscal_rid: item.project_fiscal_rid || '',
-      email_info: {
-        name: '',
-        email: '',
-      },
     }));
 
     const payload = {
       account_rid: accountId || '',
       is_interaction_followup: true,
       interactions,
+      email_info: {
+        name: '',
+        email: '',
+      },
     };
 
     sendInteraction.mutate(payload, {
