@@ -2638,7 +2638,7 @@ private async createInteractionTable(
     );
   }
 
-  async fetchAccountDetails(account_number: string, account_rid: string, parentAccountId: string) {
+  async fetchAccountDetails(account_number: string, account_rid: string, parentAccountId: string,isParentAccount: boolean) {
     const schemaName = `trd365_${account_number.replace(/\D/g, "")}`;
     try {
       const query = `
@@ -2655,7 +2655,7 @@ private async createInteractionTable(
         replacements: { account_rid },
         type: "SELECT",
       });
-
+      if(!isParentAccount) return users;
       const fetchParentAccount: any = await sequelize.query(parentAccountQuery, {
         replacements: { account_rid: parentAccountId },
         type: "SELECT",
