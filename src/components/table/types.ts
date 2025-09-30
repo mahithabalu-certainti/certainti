@@ -105,6 +105,7 @@ export interface TableField {
   renderValue?: boolean;
   disabled?: boolean;
   placeholder?: string;
+  formatCostNumber?: boolean;
   prefix?: string;
   prefixRegex?: RegExp;
   options?: ListOption[];
