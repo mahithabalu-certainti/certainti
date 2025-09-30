@@ -767,6 +767,9 @@ export const rawQueries = {
   },
   fetchAccountRnumber (account_rid : string) {
     return `SELECT account_name , r_number FROM ${MAIN_SCHEMA_NAME}.account where rid = '${account_rid}'`
+  },
+  fetchKeyContactForInteraction(schemaName : string, id : string) {
+    return `SELECT key_contact_name, key_contact_email FROM ${schemaName}.key_contact_details where entity_rid = '${id}' AND include_in_communication = TRUE`
   }
 };
 
