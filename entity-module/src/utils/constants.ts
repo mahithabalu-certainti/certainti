@@ -164,16 +164,16 @@ export const rawQueries = {
     mainSequelize: Sequelize
   ): Promise<any> {
     let checkIsSeparateDb: any = await mainSequelize.query(
-      `SELECT rid, r_number, account_name, storage_type FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`
+      `SELECT rid, r_number, account_name, storage_type,is_parent FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`
     );
     if (checkIsSeparateDb[0][0].storage_type == STATUS_MESSAGE.separateDb) {
-      return `SELECT rid, r_number, account_name, storage_type FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`;
+      return `SELECT rid, r_number, account_name, storage_type,is_parent FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`;
     } else {
       return `
       with fetch_account_details AS (
-      SELECT rid, r_number, parent_account_rid FROM ${MAIN_SCHEMA_NAME}.account where rid = '${accountRid}'
+      SELECT rid, r_number, parent_account_rid,is_parent FROM ${MAIN_SCHEMA_NAME}.account where rid = '${accountRid}'
       )
-      SELECT a.rid, a.r_number, a.account_name, a.is_parent 
+      SELECT a.rid, a.r_number, a.account_name, ad.is_parent 
       FROM ${MAIN_SCHEMA_NAME}.account a
       LEFT JOIN fetch_account_details ad ON ad.parent_account_rid = a.rid
       WHERE a.rid = ad.parent_account_rid`;
@@ -742,7 +742,8 @@ export const rawQueries = {
     orgDb: Sequelize,
     mainDb: Sequelize,
     parentAccountID: string,
-    subscriptionId?: string
+    subscriptionId?: string,
+    isParentAccount: boolean = false,
   ) {
     let tableName: string[];
     let whereParams: string = ``;
@@ -804,7 +805,7 @@ export const rawQueries = {
       ${setValues}
       ${whereParams}
       `;
-      if(data.flag == UPDATE_FLAG.account && t == "account_details"){
+      if(data.flag == UPDATE_FLAG.account && t == "account_details" && isParentAccount){
         const encryptedSecretKey = await encryptClientSecret(data.client_secret);
         let query = `
         UPDATE ${schema}.${t}
