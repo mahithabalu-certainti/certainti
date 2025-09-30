@@ -2404,8 +2404,23 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         }
       }
 
+      const [statusData]: any = await this.mainDbSequelize.query(
+        rawQueries.fetchInteractionStatusByType(statusAction.RESPONSE_DRAFT)
+      );
+
       if (responseData.questions && Array.isArray(responseData.questions)) {
         for (const question of responseData.questions) {
+          const draftStatusid = statusData[0]?.rid;
+
+          const isExisting = await Interaction.findOne({
+            where: {
+              rid: responseData.interaction_rid,
+              status_rid: {
+                [Op.ne]: draftStatusid
+              }
+            }
+          });
+
           const existing = await InteractionResponseHistory.findOne({
             where: {
               interaction_rid: responseData.interaction_rid,
@@ -2416,7 +2431,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
 
           let created = null;
 
-          if (existing) {
+          if (existing && isExisting) {
             // Update existing response
             await existing.update({
               interaction_response: question.response,
@@ -2866,7 +2881,9 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     accountNumber: string,
     interactionRid: string,
     projectFiscalRid: string,
-    accountRid: string
+    accountRid: string,
+    emailInfo:any,
+    isRemainder?: boolean
   ) {
     try {
       if (!this.orgDbSequelize) {
@@ -2892,12 +2909,36 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           ccEmails: [],
         };
       }
+      let keyContactName =null;
+      let keyContactEmail =null;
+      if ((!emailInfo || !emailInfo?.email) && !isRemainder) {  
       const [interactionRecipients]: any[] = await this.orgDbSequelize.query(
         rawQueries.fetchInteractionRecipient(projectFiscalRid, statusArr.rid, schemaName),
         {
           type: "SELECT",
         }
       );
+      keyContactName = interactionRecipients?.key_contact_name ?? null;
+      keyContactEmail = interactionRecipients?.key_contact_email ?? null;
+    }
+    else
+    {
+      if(isRemainder)
+        {
+          const [remainderRecipients]: any[] =  await this.orgDbSequelize.query(  
+            rawQueries.fetchRemainderEmailInfo(interactionRid? interactionRid : '', schemaName),
+            { type: "SELECT" }
+          );
+          keyContactName = remainderRecipients?.recipient_name ?? emailInfo?.name;
+          keyContactEmail = remainderRecipients?.recipient_email ?? emailInfo?.email;
+        }
+        else
+        {
+          keyContactName = emailInfo?.name;
+          keyContactEmail = emailInfo?.email;
+        }
+      
+    }
 
       const interactionCCRecipients: any[] = await this.orgDbSequelize.query(
         rawQueries.fetchInteractionRecipientProject(
@@ -2926,8 +2967,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       // Remove duplicates
       const uniqueCCEmails = Array.from(new Set(ccEmails));
       return {
-        name: interactionRecipients?.key_contact_name ?? null,
-        email: interactionRecipients?.key_contact_email ?? null,
+        name: keyContactName ?? null,
+        email: keyContactEmail ?? null,
         ccEmails: uniqueCCEmails ?? [],
       };
     } catch (err) {
@@ -2936,7 +2977,10 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
   }
   async fetchEmailInfoForAccount(
     accountNumber: string,
-    accountRid: string
+    accountRid: string,
+    emailInfo:any,
+    isRemainder?: boolean,
+    interactionRid?: string
   ) {
     try {
       if (!this.orgDbSequelize) {
@@ -2955,11 +2999,35 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         /\D/g,
         ""
       )}`;
+      let keyContactName ="";
+      let keyContactEmail ="";
+       if ((!emailInfo || !emailInfo?.email) && !isRemainder) {
       const [interactionRecipients]: any[] =
         await this.orgDbSequelize.query(
           rawQueries.fetchInteractionRecipientAccount(accountRid,statusArr.rid ,schemaName),
           { type: "SELECT" }
         );
+        keyContactName = interactionRecipients?.key_contact_name ?? null;
+        keyContactEmail = interactionRecipients?.key_contact_email ?? null;
+      }
+      else
+      {
+        if(isRemainder)
+        {
+          const [remainderRecipients]: any[] =  await this.orgDbSequelize.query(  
+            rawQueries.fetchRemainderEmailInfo(interactionRid? interactionRid : '', schemaName),
+            { type: "SELECT" }
+          );
+          keyContactName = remainderRecipients?.recipient_name ?? emailInfo?.name;
+          keyContactEmail = remainderRecipients?.recipient_email ?? emailInfo?.email;
+        }
+        else
+        {
+           keyContactName = emailInfo?.name;
+           keyContactEmail = emailInfo?.email;
+        }
+      }
+      
         const interactionCCRecipientsAccount: any[] =
         await this.orgDbSequelize.query(
           rawQueries.fetchInteractionRecipientAccount(accountRid,statusArr.rid ,schemaName),
@@ -2977,8 +3045,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       const uniqueCCEmails = Array.from(new Set(ccEmails));
 
       return {
-        name: interactionRecipients?.key_contact_name ?? null,
-        email: interactionRecipients?.key_contact_email ?? null,
+        name: keyContactName ?? null,
+        email: keyContactEmail ?? null,
         ccEmails: uniqueCCEmails ?? [],
       };
     } catch (err) {
