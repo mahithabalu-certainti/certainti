@@ -655,7 +655,6 @@ export const FormData = (
             regexErrorMessage:
               'Total Non Labor Count must be a positive integer with up to 9 digits',
             placeholder: 'Enter Total Non Labor Count',
-            formatCostValue: true,
             // disabled:
             //   isEditView &&
             //   permissionMap?.['total_subcon']?.read &&

@@ -1,4 +1,4 @@
-import { costDisplay, valueDisplay} from '../../../common-utils';
+import { costDisplay, valueDisplay } from '../../../common-utils';
 
 export interface projectDetails {
   rid: string;
