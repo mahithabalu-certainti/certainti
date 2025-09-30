@@ -158,6 +158,7 @@ export enum AllModules {
   IMPORTS = 'imports',
   MANAGE_ACCOUNT_ACCESS = 'manage_account_access',
   INTERACTIONS = 'interactions',
+  INTERACTION_TEMPLATES = 'interaction_templates',
 }
 
 export enum AllPermissions {
@@ -169,6 +170,9 @@ export enum AllPermissions {
   USER_GROUP_CREATE = 'user_group_create',
   USER_DELETE = 'user_delete',
   PROFILE_CREATE = 'profile_create',
+  INTERACTION_TEMPLATES_CREATE = 'interaction_templates_create',
+  INTERACTION_TEMPLATES_VIEW_EDIT = 'interaction_templates_view_edit',
+  INTERACTION_TEMPLATES_EXPORT = 'interaction_templates_export',
   PROJECTS_TASK_CREATE = 'projects_task_create',
   ACCOUNT_RESOURCES_COST_CREATE = 'account_resources_cost_create',
   ACCOUNT_RESOURCES_SKILL_CREATE = 'account_resources_skill_create',

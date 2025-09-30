@@ -117,6 +117,16 @@ const ProjectResourceDetails: React.FC<ResourceDetailsProps> = ({
       key: 'resource_code',
     },
     {
+      label: 'Resource Name',
+      value: resourceData.resource_name,
+      key: 'resource_name',
+    },
+    {
+      label: 'Resource Role',
+      value: resourceData.project_resource_role,
+      key: 'project_resource_role',
+    },
+    {
       key: 'status_action',
       label: 'Status',
       value: resourceData.status_name,

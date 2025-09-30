@@ -116,6 +116,7 @@ export const ProjectTask = ({
   const [, setProjectResData] = useState<ProjectTaskListType | null>(null);
   const [showProjectTaskDetails, setShowProjectTaskDetails] =
     useState<boolean>(false);
+  const [searchText, setSearchText] = useState('');
   const [searchParams] = useSearchParams();
   const accountID =
     accountData?.accountID || searchParams.get('accountID') || '';
@@ -186,6 +187,7 @@ export const ProjectTask = ({
       filters: appliedFilters,
       accountRid: accountID,
       projectRid: projectID,
+      search: searchText,
     },
     undefined,
     refreshProjectsTrigger
@@ -228,6 +230,11 @@ export const ProjectTask = ({
       setSortOrder(apiOrder);
       setSortField(sortBy);
     }
+  };
+  const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
+    const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
+    setSortOrder(apiOrder);
+    setSortField(sortBy);
   };
 
   useEffect(() => {
@@ -311,9 +318,10 @@ export const ProjectTask = ({
       const path = resourceData?.rid
         ? PROJECT_TASK_EDIT.replace(':taskId', resourceData.rid)
         : PROJECT_TASK_EDIT;
+      const project_Id = projectID ?? '';
       const queryParams = new URLSearchParams({
-        account_Id: resourceData?.account_rid || '',
-        project_Id: resourceData?.project_rid || '',
+        account_Id: resourceData?.account_rid || accountID || '',
+        project_Id,
         PFY: PFY ? JSON.stringify(PFY) : '',
         source: 'editProjectTask',
         projectCode: projectCode ?? '',
@@ -378,9 +386,10 @@ export const ProjectTask = ({
     const path = row?.rid
       ? PROJECT_TASK_EDIT.replace(':taskId', row.rid)
       : PROJECT_TASK_EDIT;
+    const project_Id = projectID ?? '';
     const queryParams = new URLSearchParams({
-      account_Id: row?.account_rid || '',
-      project_Id: row?.project_rid || '',
+      account_Id: row?.account_rid || accountID || '',
+      project_Id,
       PFY: PFY ? JSON.stringify(PFY) : '',
       projectCode: projectCode ?? '',
       source: 'editProjectTask',
@@ -605,6 +614,8 @@ export const ProjectTask = ({
         projectResourceProjectID={projectID}
         permissionMapTaskTableColumn={permissionMapTaskTableColumn}
         fiscalDatesArg={fiscalDatesArg}
+        showSearch={viewDetails ? false : true}
+        onSearch={(text) => setSearchText(text)}
       />
       {showUploads ? (
         <Uploads
@@ -684,7 +695,7 @@ export const ProjectTask = ({
                   onRowsPerPageChange={setRowsPerPage}
                   sortBy={sortField}
                   sortOrder={sortOrder}
-                  onSort={handleSorting}
+                  onSort={handleSort}
                   selectable={false}
                   onSelectionChange={(selectedIds: unknown) =>
                     console.log('Selected:', selectedIds)

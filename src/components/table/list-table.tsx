@@ -48,6 +48,7 @@ import {
   ChildAccountIcon,
   EditIcon,
   ErrorInfoIcon,
+  GearIcon,
 } from '../../assets';
 import './table.css';
 
@@ -96,7 +97,6 @@ const ListTable = <T extends RowData>({
   expandAllParent = false,
   expandAllChild = false,
   showEmptyRow = true,
-  actionColumnName,
   toggleData,
   disabledToggle,
   checkedToggleTooltip,
@@ -105,7 +105,9 @@ const ListTable = <T extends RowData>({
   clearSelectedRows = false,
   disabledSelect,
   toggleLevel,
+  emptyMessege = 'No data available',
 }: ListTableProps<T>) => {
+  actionWidth = 50;
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [editingCells, setEditingCells] = useState<MultipleEditingCells>({});
   const [isSaving, setIsSaving] = useState(false);
@@ -929,7 +931,37 @@ const ListTable = <T extends RowData>({
                   )}
                 </TableCell>
               )}
-
+              {(actionDisplayMode === 'toggle' ||
+                (actionMenuItems?.length > 0 && isAvailableAction)) && (
+                <TableCell
+                  sx={{
+                    width: actionWidth,
+                    minWidth: actionWidth,
+                    maxWidth: actionWidth,
+                    textAlign: 'center',
+                    position: 'sticky',
+                    left: selectable ? '32px' : 0,
+                    backgroundColor: '#fff',
+                    zIndex: 11,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      height: '28px',
+                      width: '100%',
+                      position: 'sticky',
+                      left: '32px',
+                      backgroundColor: '#fff',
+                      zIndex: 11,
+                    }}
+                  >
+                    <GearIcon className='w-4 h-4' />
+                  </Box>
+                </TableCell>
+              )}
               {visibleColumns.map((column) =>
                 column.sortable ? (
                   <TableSortHeader
@@ -944,7 +976,20 @@ const ListTable = <T extends RowData>({
                       minWidth: column.width || 160,
                       maxWidth: column.width || 160,
                       ...(column.sx || {}),
-                      left: selectable ? '32px' : 0,
+                      left:
+                        selectable &&
+                        actionMenuItems?.length > 0 &&
+                        isAvailableAction
+                          ? '82px'
+                          : selectable &&
+                              actionMenuItems?.length < 1 &&
+                              !isAvailableAction
+                            ? '32px'
+                            : !selectable &&
+                                actionMenuItems?.length > 0 &&
+                                isAvailableAction
+                              ? '50px'
+                              : '0px',
                       textAlign: 'left',
                     }}
                   />
@@ -956,7 +1001,20 @@ const ListTable = <T extends RowData>({
                       minWidth: column.width || 160,
                       maxWidth: column.width || 160,
                       ...(column.sx || {}),
-                      left: selectable ? '32px' : 0,
+                      left:
+                        selectable &&
+                        actionMenuItems?.length > 0 &&
+                        isAvailableAction
+                          ? '82px'
+                          : selectable &&
+                              actionMenuItems?.length < 1 &&
+                              !isAvailableAction
+                            ? '32px'
+                            : !selectable &&
+                                actionMenuItems?.length > 0 &&
+                                isAvailableAction
+                              ? '50px'
+                              : '0px',
                       textAlign: 'left',
                     }}
                   >
@@ -975,20 +1033,6 @@ const ListTable = <T extends RowData>({
                   }}
                 >
                   Status Action
-                </TableCell>
-              )}
-
-              {(actionDisplayMode === 'toggle' ||
-                (actionMenuItems?.length > 0 && isAvailableAction)) && (
-                <TableCell
-                  sx={{
-                    width: actionWidth,
-                    minWidth: actionWidth,
-                    maxWidth: actionWidth,
-                    textAlign: 'center',
-                  }}
-                >
-                  {actionColumnName || 'Action'}
                 </TableCell>
               )}
             </TableRow>
@@ -1064,7 +1108,7 @@ const ListTable = <T extends RowData>({
                   }
                   align='center'
                 >
-                  <Typography>No data available</Typography>
+                  <Typography>{emptyMessege}</Typography>
                 </TableCell>
               </TableRow>
             )}
@@ -1122,6 +1166,7 @@ const ListTable = <T extends RowData>({
                       {selectable && (
                         <Tooltip
                           title={
+                            // eslint-disable-next-line no-extra-boolean-cast
                             Boolean(row.checkBoxMessage)
                               ? String(row.checkBoxMessage)
                               : ''
@@ -1177,7 +1222,135 @@ const ListTable = <T extends RowData>({
                           </TableCell>
                         </Tooltip>
                       )}
-
+                      {/* Action column moved to beginning */}
+                      {actionMenuItems &&
+                        actionMenuItems.length > 0 &&
+                        isAvailableAction && (
+                          <TableCell
+                            sx={{
+                              padding: '0px !important',
+                              whiteSpace: 'nowrap',
+                              width: actionWidth,
+                              minWidth: actionWidth,
+                              maxWidth: actionWidth,
+                              height: '32px !important',
+                              minHeight: '32px !important',
+                              maxHeight: '32px !important',
+                              background:
+                                expandable && isExpanded ? '#ECECEC' : '#fff',
+                              position: 'sticky',
+                              left: selectable ? '32px' : 0,
+                              zIndex: 7,
+                            }}
+                          >
+                            {editDisableLevel?.includes(row._level) ? (
+                              <span className='w-full flex items-center justify-center'>
+                                -
+                              </span>
+                            ) : (
+                              <>
+                                {actionDisplayMode === 'icon' && (
+                                  <Box className='w-full inline-flex items-center justify-center gap-2'>
+                                    {actionMenuItems.map((item, index) => {
+                                      if (item.hide) return null;
+                                      return (
+                                        <Tooltip
+                                          key={index}
+                                          title={`Click to ${item.label.toLowerCase()}`}
+                                          slotProps={{
+                                            tooltip: {
+                                              sx: {
+                                                backgroundColor: '#fff',
+                                                color: 'rgba(0, 0, 0, 0.87)',
+                                                boxShadow: 2,
+                                                borderRadius: '4px',
+                                              },
+                                            },
+                                          }}
+                                        >
+                                          <IconButton
+                                            size='small'
+                                            onClick={() => item.onClick(row)}
+                                          >
+                                            {item.icon && (
+                                              <item.icon
+                                                alt='actionIcon'
+                                                className='w-4 h-4'
+                                                style={item.iconStyle}
+                                              />
+                                            )}
+                                          </IconButton>
+                                        </Tooltip>
+                                      );
+                                    })}
+                                  </Box>
+                                )}
+                                {actionDisplayMode === 'dropdown' && (
+                                  <TableActionButton
+                                    actions={actionMenuItems.map((item) => ({
+                                      ...item,
+                                      disabled:
+                                        component === 'global-project'
+                                          ? row.account_status_name ===
+                                            'In-Active'
+                                          : typeof item.disabled === 'function'
+                                            ? item.disabled(row)
+                                            : item.disabled,
+                                      onClick: () => item.onClick(row),
+                                    }))}
+                                  />
+                                )}
+                              </>
+                            )}
+                          </TableCell>
+                        )}
+                      {actionDisplayMode === 'toggle' && (
+                        <TableCell
+                          sx={{
+                            padding: '0px !important',
+                            whiteSpace: 'nowrap',
+                            width: actionWidth,
+                            minWidth: actionWidth,
+                            maxWidth: actionWidth,
+                            height: '32px !important',
+                            minHeight: '32px !important',
+                            maxHeight: '32px !important',
+                            background:
+                              expandable && isExpanded ? '#ECECEC' : '#fff',
+                            position: 'sticky',
+                            left: selectable ? '32px' : 0,
+                            zIndex: 7,
+                          }}
+                        >
+                          {rowLevel === toggleLevel && (
+                            <div className='text-center'>
+                              <Tooltip
+                                title={
+                                  toggleData?.includes(rowId)
+                                    ? checkedToggleTooltip
+                                    : unCheckedToggleTooltip
+                                }
+                                arrow
+                                placement='top'
+                              >
+                                <Switch
+                                  size='small'
+                                  color={
+                                    row.isColorEnabled ? 'warning' : 'success'
+                                  }
+                                  onChange={(_e, checked) =>
+                                    toggleClick && toggleClick(rowId, checked)
+                                  }
+                                  checked={toggleData?.includes(rowId)}
+                                  disabled={Boolean(
+                                    disabledToggle || row?.isDisabledToggle
+                                  )}
+                                />
+                              </Tooltip>
+                            </div>
+                          )}
+                        </TableCell>
+                      )}
                       {/* Data cells */}
                       {visibleColumns.map((column) => {
                         const cellKey = `${rowId}-${column.id}`;
@@ -1233,7 +1406,20 @@ const ListTable = <T extends RowData>({
                               maxWidth: column.width || 160,
                               ...(column.sx || {}),
                               zIndex: column.sticky ? 6 : 'auto',
-                              left: selectable ? '32px' : 0,
+                              left:
+                                selectable &&
+                                actionMenuItems?.length > 0 &&
+                                isAvailableAction
+                                  ? '82px'
+                                  : selectable &&
+                                      actionMenuItems?.length < 1 &&
+                                      !isAvailableAction
+                                    ? '32px'
+                                    : !selectable &&
+                                        actionMenuItems?.length > 0 &&
+                                        isAvailableAction
+                                      ? '50px'
+                                      : '0px',
                               padding: isEditing
                                 ? '0px 0px !important'
                                 : '0px 8px !important',
@@ -1477,130 +1663,6 @@ const ListTable = <T extends RowData>({
                             >
                               -
                             </Typography>
-                          )}
-                        </TableCell>
-                      )}
-
-                      {/* Action buttons */}
-                      {actionMenuItems &&
-                        actionMenuItems.length > 0 &&
-                        isAvailableAction && (
-                          <TableCell
-                            sx={{
-                              padding: '0px !important',
-                              whiteSpace: 'nowrap',
-                              width: actionWidth,
-                              minWidth: actionWidth,
-                              maxWidth: actionWidth,
-                              height: '32px !important',
-                              minHeight: '32px !important',
-                              maxHeight: '32px !important',
-                              background:
-                                expandable && isExpanded ? '#ECECEC' : '#fff',
-                            }}
-                          >
-                            {editDisableLevel?.includes(row._level) ? (
-                              <span className='w-full flex items-center justify-center'>
-                                -
-                              </span>
-                            ) : (
-                              <>
-                                {actionDisplayMode === 'icon' && (
-                                  <Box className='w-full inline-flex items-center justify-center gap-2'>
-                                    {actionMenuItems.map((item, index) => {
-                                      if (item.hide) return null;
-                                      return (
-                                        <Tooltip
-                                          key={index}
-                                          title={`Click to ${item.label.toLowerCase()}`}
-                                          slotProps={{
-                                            tooltip: {
-                                              sx: {
-                                                backgroundColor: '#fff',
-                                                color: 'rgba(0, 0, 0, 0.87)',
-                                                boxShadow: 2,
-                                                borderRadius: '4px',
-                                              },
-                                            },
-                                          }}
-                                        >
-                                          <IconButton
-                                            size='small'
-                                            onClick={() => item.onClick(row)}
-                                          >
-                                            {item.icon && (
-                                              <item.icon
-                                                alt='actionIcon'
-                                                className='w-4 h-4'
-                                                style={item.iconStyle}
-                                              />
-                                            )}
-                                          </IconButton>
-                                        </Tooltip>
-                                      );
-                                    })}
-                                  </Box>
-                                )}
-                                {actionDisplayMode === 'dropdown' && (
-                                  <TableActionButton
-                                    actions={actionMenuItems.map((item) => ({
-                                      ...item,
-                                      disabled:
-                                        component === 'global-project'
-                                          ? row.account_status_name ===
-                                            'In-Active'
-                                          : typeof item.disabled === 'function'
-                                            ? item.disabled(row)
-                                            : item.disabled,
-                                      onClick: () => item.onClick(row),
-                                    }))}
-                                  />
-                                )}
-                              </>
-                            )}
-                          </TableCell>
-                        )}
-                      {actionDisplayMode === 'toggle' && (
-                        <TableCell
-                          sx={{
-                            padding: '0px !important',
-                            whiteSpace: 'nowrap',
-                            width: actionWidth,
-                            minWidth: actionWidth,
-                            maxWidth: actionWidth,
-                            height: '32px !important',
-                            minHeight: '32px !important',
-                            maxHeight: '32px !important',
-                            background:
-                              expandable && isExpanded ? '#ECECEC' : '#fff',
-                          }}
-                        >
-                          {rowLevel === toggleLevel && (
-                            <div className='text-center'>
-                              <Tooltip
-                                title={
-                                  toggleData?.includes(rowId)
-                                    ? checkedToggleTooltip
-                                    : unCheckedToggleTooltip
-                                }
-                                arrow
-                                placement='top'
-                              >
-                                <Switch
-                                  size='small'
-                                  color={
-                                    row.isColorEnabled ? 'warning' : 'success'
-                                  }
-                                  onChange={(_e, checked) =>
-                                    toggleClick && toggleClick(rowId, checked)
-                                  }
-                                  checked={toggleData?.includes(rowId)}
-                                  disabled={Boolean(
-                                    disabledToggle || row?.isDisabledToggle
-                                  )}
-                                />
-                              </Tooltip>
-                            </div>
                           )}
                         </TableCell>
                       )}

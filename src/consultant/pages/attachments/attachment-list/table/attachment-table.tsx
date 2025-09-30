@@ -46,6 +46,7 @@ interface IAttachmentTableProps {
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
   >;
+  searchValue?: string;
 }
 
 export const AttachmentTable: React.FC<IAttachmentTableProps> = ({
@@ -58,6 +59,7 @@ export const AttachmentTable: React.FC<IAttachmentTableProps> = ({
   setCurrentCategory,
   setColumnAnchorEl,
   columnAnchorEl,
+  searchValue,
 }) => {
   const { errorToast } = useToast();
   const { fiscalYear, filters } = useSelector<
@@ -86,6 +88,7 @@ export const AttachmentTable: React.FC<IAttachmentTableProps> = ({
       filters: appliedFilters,
       fiscalYear: newFiscalYear,
       globalFilters: reshapeGlobalFilter(filters as FilterState),
+      search: searchValue,
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appliedFilters, fiscalYear, filters]);

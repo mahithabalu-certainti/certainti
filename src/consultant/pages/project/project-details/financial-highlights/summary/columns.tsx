@@ -9,6 +9,13 @@ import {
   SummaryResourceMetric,
 } from '../../../../../types';
 
+const percentDisplay = (value: string | number | null | undefined): string => {
+  if (value === null || value === undefined || value === '' || value === '-')
+    return '-';
+  const s = String(value).trim();
+  return s.endsWith('%') ? s : `${s}%`;
+};
+
 export const getResourceMetricColumns = (
   permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<SummaryResourceMetric>[] => [
@@ -168,6 +175,7 @@ export const getRdPercentColumns = (
     hide:
       !permissionMap?.['rd_percent_potential']?.edit &&
       !permissionMap?.['rd_percent_potential']?.read,
+    render: (row: SummaryRdPercent) => percentDisplay(row.rd_percent_potential),
   },
   {
     id: 'rd_percent_adjustment',
@@ -178,9 +186,31 @@ export const getRdPercentColumns = (
     sx: {
       textAlign: 'right',
     },
+    editable: true,
+    field: {
+      type: 'number',
+      placeholder: '',
+      dependencies: [
+        {
+          dependsOn: 'rd_percent_potential',
+          condition: (value) => !value || value === '-' || value === '',
+          action: 'disabled',
+          message: 'Enter QRE Percent Potential',
+        },
+      ],
+      validation: [
+        {
+          regex: /^(?:-?\d{1,2}(?:\.\d{1,2})?|100(?:\.0{1,2})?)$/,
+          errorMessage: 'Enter a valid percentage between -99.99 and 100',
+        },
+      ],
+      required: false,
+    },
     hide:
       !permissionMap?.['rd_percent_adjustment']?.edit &&
       !permissionMap?.['rd_percent_adjustment']?.read,
+    render: (row: SummaryRdPercent) =>
+      percentDisplay(row.rd_percent_adjustment),
   },
   {
     id: 'rd_percent_final',
@@ -194,6 +224,7 @@ export const getRdPercentColumns = (
     hide:
       !permissionMap?.['rd_percent_final']?.edit &&
       !permissionMap?.['rd_percent_final']?.read,
+    render: (row: SummaryRdPercent) => percentDisplay(row.rd_percent_final),
   },
 ];
 

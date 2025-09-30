@@ -10,6 +10,7 @@ export interface ResourceSkillListParams {
   accountNumber?: string;
   rid?: string;
   resourceRid?: string;
+  search?: string;
 }
 
 enum skillLevel {

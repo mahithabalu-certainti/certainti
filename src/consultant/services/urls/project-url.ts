@@ -12,6 +12,7 @@ export const ProjectListURL = ({
   bothParentAndChild,
   apiSource,
   accountInteractionId,
+  search,
 }: ProjectListParams): string => {
   const baseUrl = `/api/project/list${accountNumber ? `/${accountNumber}` : ''}`;
   const searchParams = new URLSearchParams();
@@ -35,6 +36,9 @@ export const ProjectListURL = ({
   }
   if (accountInteractionId) {
     searchParams.set('accountInteractionId', accountInteractionId);
+  }
+  if (search) {
+    searchParams.set('search', search);
   }
   const queryString = searchParams.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;

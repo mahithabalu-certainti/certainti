@@ -225,7 +225,9 @@ const Filter: React.FC<FilterComponentProps> = ({
     }
     const formattedFilters = formatFilterForApi(filterStates);
     setAppliedFilters(formattedFilters);
-    setCurrentPage(0);
+    if (setCurrentPage) {
+      setCurrentPage(0);
+    }
     storeFilters(filterStates, value || 'resource');
   };
 

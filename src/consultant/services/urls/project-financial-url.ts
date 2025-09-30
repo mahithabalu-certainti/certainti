@@ -13,6 +13,7 @@ export const ProjectFinancialResourceCostURL = ({
   accountNumber,
   projectRid,
   accountRid,
+  search,
 }: ProjectFinancialResourceListParams) => {
   const baseUrl = `/api/resource_cost/financialHighlights/list/${projectRid ? 'project' : 'account'}`;
   const searchParams = new URLSearchParams();
@@ -36,6 +37,10 @@ export const ProjectFinancialResourceCostURL = ({
   // Only add filters if the object has properties
   if (filters && Object.keys(filters).length > 0) {
     searchParams.set('filters', JSON.stringify(filters));
+  }
+
+  if (search) {
+    searchParams.set('search', search);
   }
 
   return `${baseUrl}?${searchParams.toString()}`;

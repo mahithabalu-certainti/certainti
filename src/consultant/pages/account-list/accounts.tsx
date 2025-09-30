@@ -34,6 +34,7 @@ import {
   getStoredFilters,
 } from '../../../components/filter-component/utils';
 import { FilterState } from '../../types/account-filter';
+import SearchBar from '../../../components/search/search-bar';
 
 const BUTTON_STYLES = {
   height: '24px',
@@ -52,6 +53,7 @@ export const Accounts: React.FC = () => {
   const [refreshAccountTrigger, setRefreshAccountTrigger] = useState<number>();
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
+  const [searchText, setSearchText] = useState<string>('');
 
   const { fiscalYear, filters } = useSelector<
     RootState,
@@ -276,7 +278,16 @@ export const Accounts: React.FC = () => {
         </div>
       </div>
 
-      <div className='flex items-center justify-end gap-2 h-[34px] min-h-[34px] px-4'>
+      <div className='flex items-center justify-end gap-1 h-[34px] min-h-[34px] px-4'>
+        <SearchBar
+          initialSearchText={searchText}
+          onSearch={(value) => {
+            setSearchText(value);
+          }}
+          placeholder='Search'
+          disabled={false}
+          hide={false}
+        />
         <TextButton
           label={expandChild ? 'Collapse' : 'Expand All'}
           onClick={() => setExpandChild(!expandChild)}
@@ -350,6 +361,7 @@ export const Accounts: React.FC = () => {
           setColumnAnchorEl={setColumnAnchorEl}
           columnAnchorEl={columnAnchorEl}
           expandChild={expandChild}
+          searchValue={searchText}
         />
       </div>
     </div>

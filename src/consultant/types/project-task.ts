@@ -22,6 +22,7 @@ export interface ProjectResourcesListParams {
   // id?: string;
   accountRid?: string;
   projectRid?: string;
+  search?: string;
 }
 
 export type ProjectTaskListType = {

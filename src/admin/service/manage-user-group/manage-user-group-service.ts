@@ -21,6 +21,7 @@ export const fetchManageUserGroupList = async (params: UserListParams = {}) => {
     sortBy: params.sortBy || 'createdAt',
     sortOrder: params.sortOrder || 'DESC',
     filters: params.filters || {},
+    search: params.search || '',
     ...(params.filters && { filters: params.filters }),
     ...(params.searchTerm && { search: params.searchTerm }),
   };

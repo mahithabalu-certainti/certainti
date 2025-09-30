@@ -45,6 +45,7 @@ const Configuration: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [reFetchData, setReFetchData] = useState<number>(Date.now());
   const [count, setCount] = useState<number>(0);
+  const [searchText, setSearchText] = useState('');
 
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
@@ -101,6 +102,7 @@ const Configuration: React.FC = () => {
             }}
             setColumnAnchorEl={setColumnAnchorEl}
             columnAnchorEl={columnAnchorEl}
+            searchValue={searchText}
           />
         );
       case 'settings':
@@ -194,6 +196,8 @@ const Configuration: React.FC = () => {
         showRefresh={list !== 'settings'}
         onRefreshClick={onRefreshClick}
         hideTabPanel={hideSection}
+        showSearch={list === 'users' ? true : false}
+        onSearch={(text) => setSearchText(text)}
       />
       <SectionHeader
         title={list ? list.charAt(0).toUpperCase() + list.slice(1) : ''}

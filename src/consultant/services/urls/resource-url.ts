@@ -15,6 +15,7 @@ export const ResourceListURL = ({
   filters,
   limit,
   accountNumber,
+  search,
 }: ResourceListURLParams) => {
   const searchParams = new URLSearchParams();
 
@@ -26,6 +27,7 @@ export const ResourceListURL = ({
   if (filters && Object.keys(filters).length > 0) {
     searchParams.set('filters', JSON.stringify(filters));
   }
+  if (search) searchParams.set('search', search);
 
   return `${baseUrl}/api/resources/list/${accountNumber}/?${searchParams.toString()}`;
 };

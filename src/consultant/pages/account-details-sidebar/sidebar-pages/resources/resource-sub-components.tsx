@@ -58,6 +58,7 @@ interface SubcomponentProps {
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
   >;
+  searchValue?: string;
 }
 
 const ResourceSubComponents: React.FC<SubcomponentProps> = ({
@@ -96,6 +97,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
   setResourceInActive,
   columnAnchorEl,
   setColumnAnchorEl,
+  searchValue,
 }) => {
   // Permission Mangement
   const isResourceViewEnable = checkPermission(
@@ -266,6 +268,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
               resourceInActive={resourceInActive}
               setColumnAnchorEl={setColumnAnchorEl}
               columnAnchorEl={columnAnchorEl}
+              searchValue={searchValue}
             />
           </Box>
         )}
@@ -290,6 +293,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
               resourceInActive={resourceInActive}
               setColumnAnchorEl={setColumnAnchorEl}
               columnAnchorEl={columnAnchorEl}
+              searchValue={searchValue}
             />
           </Box>
         )}
@@ -311,6 +315,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
               resourceInActive={resourceInActive}
               setColumnAnchorEl={setColumnAnchorEl}
               columnAnchorEl={columnAnchorEl}
+              searchValue={searchValue}
             />
           </Box>
         )}

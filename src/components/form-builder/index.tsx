@@ -1399,7 +1399,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               }}
               disabled={field.disabled}
               value={
-                field.options?.find((opt) => opt.value === fieldValue) || ''
+                (field.options?.find((opt) => opt.value === fieldValue) ||
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  null) as any
               }
               size='small'
               sx={{
@@ -1409,9 +1411,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   height: '32px',
                   background: field.error ? '#FEF2F2' : 'transparent',
                 },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  border: '2px solid #60A5FA',
-                },
+                '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline':
+                  {
+                    border: '2px solid #60A5FA',
+                  },
                 '& .MuiOutlinedInput-root': {
                   '&.Mui-focused': {
                     boxShadow: 'none',
