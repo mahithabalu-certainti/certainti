@@ -651,7 +651,9 @@ jobs:
         working-directory: ext-interaction-module
       - name: Push Docker Image to ACR
         run: docker push ${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}/ext-interaction-module:${{ env.IMAGE_TAG }}
-        working-directory: ext-interaction-module      - name: Cleanup old Docker tags in ACR (keep latest 10)
+        working-directory: ext-interaction-module      
+      
+      - name: Cleanup old Docker tags in ACR (keep latest 10)
         run: |
           ACR_NAME=${{ secrets.DEVELOPMENT_ACR_NAME }}
           REPO_NAME="ext-interaction-module"
