@@ -2903,8 +2903,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           type: "SELECT",
         }
       );
-      keyContactName = interactionRecipients[0]?.key_contact_name ?? null;
-      keyContactEmail = interactionRecipients[0]?.key_contact_email ?? null;
+      keyContactName = interactionRecipients?.key_contact_name ?? null;
+      keyContactEmail = interactionRecipients?.key_contact_email ?? null;
     }
     else
     {
@@ -2914,8 +2914,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
             rawQueries.fetchRemainderEmailInfo(interactionRid? interactionRid : '', schemaName),
             { type: "SELECT" }
           );
-          keyContactName = remainderRecipients[0]?.recipient_name ?? emailInfo?.name;
-          keyContactEmail = remainderRecipients[0]?.recipient_email ?? emailInfo?.email;
+          keyContactName = remainderRecipients?.recipient_name ?? emailInfo?.name;
+          keyContactEmail = remainderRecipients?.recipient_email ?? emailInfo?.email;
         }
         else
         {
@@ -2992,8 +2992,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           rawQueries.fetchInteractionRecipientAccount(accountRid,statusArr.rid ,schemaName),
           { type: "SELECT" }
         );
-        keyContactName = interactionRecipients[0]?.key_contact_name ?? null;
-        keyContactEmail = interactionRecipients[0]?.key_contact_email ?? null;
+        keyContactName = interactionRecipients?.key_contact_name ?? null;
+        keyContactEmail = interactionRecipients?.key_contact_email ?? null;
       }
       else
       {
@@ -3003,8 +3003,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
             rawQueries.fetchRemainderEmailInfo(interactionRid? interactionRid : '', schemaName),
             { type: "SELECT" }
           );
-          keyContactName = remainderRecipients[0]?.recipient_name ?? emailInfo?.name;
-          keyContactEmail = remainderRecipients[0]?.recipient_email ?? emailInfo?.email;
+          keyContactName = remainderRecipients?.recipient_name ?? emailInfo?.name;
+          keyContactEmail = remainderRecipients?.recipient_email ?? emailInfo?.email;
         }
         else
         {
