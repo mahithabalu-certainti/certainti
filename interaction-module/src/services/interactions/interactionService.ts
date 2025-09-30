@@ -3,6 +3,7 @@ import {
   ICreateAccountInteraction,
   ICreateInteraction,
   ICreateTemplateInteraction,
+  IEmailMessage,
   InteractionResponse,
   IProject,
   IUpdateInteraction,
@@ -15,7 +16,7 @@ import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { checkTableExists, fetchAllParentRNumber, fetchInteractionForProjectLevelQuery, fetchInteractionForSentResentStatus, fetchProjectAttachmentsRids, fetchProjectInteractionRid, fetchStatusIdsForReminderList, interactionResponseHistoryByVersion, listAllInteractionSummary, listAttachments, listInteractionHistory, listResponseHistory, fetchInteractionTemplates } from "../../utils/rawQueries";
 import { generateSasUrl } from "../../utils/blob";
-import { interactionMailTemplate, interactionReminderMailTemplate } from "../../utils/mailTemplate";
+import { interactionMailTemplate, interactionReminderMailTemplate, interactionResponseReceivedTemplate } from "../../utils/mailTemplate";
 import { sendEmailWithAttachment } from "../emailService";
 import ExcelJS from 'exceljs';
 import axios from 'axios'
@@ -423,9 +424,11 @@ export class InteractionService {
     data?: { interactions: any };
   }> {
     const dbInit = await this.interactionModelService.getSequelize();
+    const mainDbSequelize = await this.getMainDb();
+    const orgDbSequelize = await this.getOrgDb();
     const transaction = await dbInit.transaction();
     try {
-      const { accountNumber } =
+      const { accountNumber, accountName } =
         await this.interactionSchemaService.fetchValidAccountNumberById(
           interactionData?.account_rid
         );
@@ -465,6 +468,96 @@ export class InteractionService {
           transaction
         );
       }
+
+      if(interactionStatus === statusAction.RESPONSE_RECEIVED) {
+        const fetchInteractionDetails : any = await this.interactionSchemaService.fetchInteractionDetailsById(accountNumber, interactionData.interaction_rid)
+        if(fetchInteractionDetails) {
+          const professionalServiceConsultantRid : any = await mainDbSequelize.query(rawQueries.fetchProfServConsultantRid())
+        if(professionalServiceConsultantRid[0].length > 0) {
+          let schemaName = rawQueries.fetchSchemaName(accountNumber)
+          const fetchProfSerConsultantId : any = await orgDbSequelize.query(rawQueries.fetchProfServConsultantDetails(schemaName, interactionData.account_rid, professionalServiceConsultantRid[0][0].rid))
+          if(fetchProfSerConsultantId[0][0] !== null) {
+            const interactionLevel : any = await mainDbSequelize.query(rawQueries.fetchInteractionLevelById(interactionData.interaction_level_rid))
+            const [interactionItems, interactionInfo] =
+              await Promise.all([
+                this.interactionSchemaService.fetchInteractionQuestionsById(
+                  accountNumber,
+                  interactionData.interaction_rid
+                ),
+                this.interactionSchemaService.fetchInteractionInfo(
+                  interactionData.interaction_rid,
+                  accountNumber
+                ),
+              ]);
+            const senderEmailInfo = await this.getSenderEmailInfo(interactionInfo.accountInfo.parent_account_rid, interactionInfo.accountInfo.account_rid);
+            const interactionLink = await this.generateInteractionLink(
+              interactionData.interaction_rid,
+              interactionInfo.accountInfo.account_rid,
+              interactionData.project_fiscal_rid,
+              interactionLevel[0][0].interaction_level_name
+            );
+            const excelBuffer = await this.generateExcelBuffer(
+              interactionData.interaction_rid,
+              interactionItems,
+              interactionInfo
+            );
+            const excelAttachment = {
+              filename: `interaction_${interactionData.interaction_rid}.xlsx`,
+              content: Buffer.from(excelBuffer).toString("base64"),
+              contentType:
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            };
+            let project;
+            let account;
+            let recipient;
+            if(interactionLevel[0][0].interaction_level_name === "Project") {
+              const fetchProjectDetails : any = await orgDbSequelize.query(rawQueries.fetchProjectDetails(schemaName, interactionData.project_fiscal_rid))
+              project = {
+                project_id : fetchProjectDetails[0][0].rid,
+                project_name : fetchProjectDetails[0][0].project_name,
+                project_code : fetchProjectDetails[0][0].project_code,
+                fiscalYear : fetchProjectDetails[0][0].fiscal_year
+              }
+              account = {
+                account_name : accountName
+              }
+              recipient = {
+              name : fetchInteractionDetails.recipient_name,
+              email : fetchInteractionDetails.recipient_email
+            }
+            } 
+            else {
+              recipient = {
+                name : fetchInteractionDetails.recipient_name,
+                email : fetchInteractionDetails.recipient_email
+              }
+              account = {
+                account_name : accountName
+              }
+              project = {
+                project_id : '',
+                project_name : '',
+                project_code : '',
+                fiscalYear : 0
+              }
+            }
+            const sendEmailResult = await this.sendEmailWithAttachment(
+              recipient,
+              project,
+              account,
+              excelAttachment,
+              interactionLink,
+              senderEmailInfo!,
+              interactionData.interaction_rid,
+              false,
+              interactionLevel[0][0].interaction_level_name,
+              true
+            )
+          }
+        }
+      }
+    }
+      
 
       await transaction.commit();
       const isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(accountNumber, interactionData.interaction_rid);
@@ -1366,7 +1459,8 @@ export class InteractionService {
     senderEmailInfo: {email:string,clientId:string, tenantId:string,clientSecret:string},
     interactionRid:string,
     is_interaction_followup: boolean,
-    interactionLevel:string
+    interactionLevel:string,
+    isResponseReceived : boolean
   ) {
     let emailResponse = false;
     try {
@@ -1389,8 +1483,16 @@ export class InteractionService {
         interactionLevel
       );
       }
+      if(isResponseReceived) {
+        emailContent = interactionResponseReceivedTemplate(
+        emailInfo,
+        projectInfo,
+        accountInfo,
+        interactionRid,
+        interactionLevel
+      );
+      }
       //fetch sender email info
-      
       emailResponse = await sendEmailWithAttachment({
         message: emailContent.message,
         attachments: [
@@ -2372,7 +2474,8 @@ export class InteractionService {
         senderEmailInfo!,
         interaction_rid,
         is_interaction_followup,
-        interactionLevel
+        interactionLevel,
+        false
       );
       if (emailResponse) {
         console.log(`[SUCCESS] Email sent for interaction ${interaction_rid}.`);
