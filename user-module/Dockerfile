@@ -22,3 +22,5 @@ RUN npm install ts-node
 CMD ["npx", "ts-node", "src/index.ts"]
 
 
+
+
