@@ -1052,7 +1052,7 @@ export class ProjectResourceService {
 
         return {
           statusCode: HttpStatus.SUCCESS,
-          message: HttpStatus.SUCCESS_MESSAGE,
+          message: "Anomaly accepted successfully",
           data: {
             projectResource: {},
           },
@@ -1085,7 +1085,7 @@ export class ProjectResourceService {
         await transaction.commit();
         return {
           statusCode: HttpStatus.SUCCESS,
-          message: HttpStatus.SUCCESS_MESSAGE,
+          message: "Anomaly rejected successfully",
           data: {
             projectResource: {},
           },

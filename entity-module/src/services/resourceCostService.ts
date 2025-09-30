@@ -1399,7 +1399,7 @@ async acceptResourceCostStatus(id: string, accountNumber: string, action: string
 
     return {
       statusCode: HttpStatus.SUCCESS,
-      message: HttpStatus.SUCCESS_MESSAGE,
+      message: action === "accept" ? "Anomaly accepted successfully" : "Anomaly rejected successfully",
       data: {
         updateStatus,
       },
