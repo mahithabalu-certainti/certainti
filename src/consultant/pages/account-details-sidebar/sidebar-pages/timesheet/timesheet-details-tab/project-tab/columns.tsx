@@ -216,10 +216,10 @@ export const getProjectTabTableColumns = (
   },
   {
     id: 'rd_percent_final',
-    label: 'QRE %',
+    label: 'QRE Percent Final',
     sortable: true,
     sortId: 'rd_percent_final',
-    width: 130,
+    width: 150,
     sx: {
       textAlign: 'right',
     },
@@ -227,11 +227,11 @@ export const getProjectTabTableColumns = (
       !permissionMap?.['qre_final']?.read &&
       !permissionMap?.['qre_final']?.edit,
     render: (row: TimesheetProjectList) =>
-      row.qre ? row.rd_percent_final : '-',
+      row.rd_percent_final ? row.rd_percent_final : '-',
   },
   {
     id: 'qre_final',
-    label: 'QRE',
+    label: 'QRE Final',
     sortable: true,
     sortId: 'qre_final',
     width: 130,
@@ -239,7 +239,8 @@ export const getProjectTabTableColumns = (
     sx: {
       textAlign: 'right',
     },
-    render: (row: TimesheetProjectList) => (row.qre ? row.qre_final : '-'),
+    render: (row: TimesheetProjectList) =>
+      row.qre_final ? row.qre_final : '-',
   },
   {
     id: 'project_point_of_contact',

@@ -370,6 +370,7 @@ export const getAllProjectListColumns = (
     field: {
       type: 'text',
       required: false,
+      formatCostNumber: true,
       placeholder: 'Enter Project Effort',
       validation: [
         {
@@ -408,6 +409,7 @@ export const getAllProjectListColumns = (
     field: {
       type: 'text',
       required: false,
+      formatCostNumber: true,
       placeholder: 'Enter Project Cost',
       validation: [
         {
@@ -448,6 +450,7 @@ export const getAllProjectListColumns = (
     field: {
       type: 'text',
       required: false,
+      formatCostNumber: true,
       placeholder: 'Enter FTE Cost',
       validation: [
         {
@@ -482,6 +485,7 @@ export const getAllProjectListColumns = (
     field: {
       type: 'text',
       required: false,
+      formatCostNumber: true,
       placeholder: 'Enter Sub Con Cost',
       validation: [
         {
@@ -516,6 +520,7 @@ export const getAllProjectListColumns = (
     field: {
       type: 'text',
       required: false,
+      formatCostNumber: true,
       placeholder: 'Enter Non Labor Cost',
       validation: [
         {
@@ -543,10 +548,10 @@ export const getAllProjectListColumns = (
   },
   {
     id: 'rd_percent_final',
-    label: 'QRE %',
+    label: 'QRE Percent Final',
     sortable: true,
     sortId: 'rd_percent_final',
-    width: 130,
+    width: 150,
     sx: {
       textAlign: 'right',
     },
@@ -560,7 +565,7 @@ export const getAllProjectListColumns = (
   },
   {
     id: 'qre_final',
-    label: 'QRE',
+    label: 'QRE Final',
     sortable: true,
     sortId: 'qre_final',
     width: 130,

@@ -184,7 +184,7 @@ export const getTimesheetProjectTabFilterFields = (
         !permissionMap?.['assessment_status']?.read,
     },
     {
-      name: 'QRE %',
+      name: 'QRE Percent Final',
       value: 'rd_percent_final',
       type: 'number',
       operatorOption: numberOptions,
@@ -193,7 +193,7 @@ export const getTimesheetProjectTabFilterFields = (
         !permissionMap?.['rd_percent_final']?.read,
     },
     {
-      name: 'QRE',
+      name: 'QRE Final',
       value: 'qre_final',
       type: 'number',
       operatorOption: numberOptions,

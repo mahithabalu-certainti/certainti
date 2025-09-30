@@ -568,10 +568,10 @@ export const getProjectColumns = (
   },
   {
     id: 'rd_percent_final',
-    label: 'QRE %',
+    label: 'QRE Percent Final',
     sortable: true,
     sortId: 'rd_percent_final',
-    width: 130,
+    width: 150,
     sx: {
       textAlign: 'right',
     },
@@ -585,7 +585,7 @@ export const getProjectColumns = (
   },
   {
     id: 'qre_final',
-    label: 'QRE',
+    label: 'QRE Final',
     sortable: true,
     sortId: 'qre_final',
     width: 130,
