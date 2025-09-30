@@ -2987,7 +2987,6 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       let keyContactName ="";
       let keyContactEmail ="";
        if ((!emailInfo || !emailInfo?.email) && !isRemainder) {
-        console.log("isRemainder", isRemainder);  
       const [interactionRecipients]: any[] =
         await this.orgDbSequelize.query(
           rawQueries.fetchInteractionRecipientAccount(accountRid,statusArr.rid ,schemaName),
@@ -2995,13 +2994,9 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         );
         keyContactName = interactionRecipients[0]?.key_contact_name ?? null;
         keyContactEmail = interactionRecipients[0]?.key_contact_email ?? null;
-        
-      //throw new Error("Error fetching POC email1: " + keyContactEmail);
       }
       else
       {
-        console.log("isRemainder", isRemainder);
-
         if(isRemainder)
         {
           const [remainderRecipients]: any[] =  await this.orgDbSequelize.query(  
@@ -3010,15 +3005,11 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           );
           keyContactName = remainderRecipients[0]?.recipient_name ?? emailInfo?.name;
           keyContactEmail = remainderRecipients[0]?.recipient_email ?? emailInfo?.email;
-          console.log("remainderRecipients", remainderRecipients);
-          console.log("keyContactEmail", keyContactEmail);
-          //throw new Error("Error fetching POC email2: " + keyContactEmail);
         }
         else
         {
            keyContactName = emailInfo?.name;
            keyContactEmail = emailInfo?.email;
-           //throw new Error("Error fetching POC email3: " + keyContactEmail);
         }
       }
       
