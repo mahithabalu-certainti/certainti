@@ -597,9 +597,10 @@ const Interactions: React.FC<InteractionsProps> = ({
   };
   const handleReminderBtn = (data: InteractionList[]) => {
     // Map your input array into interactions
+
     const interactions = data.map((item) => ({
       interaction_rid: item.rid || '',
-      interaction_level: 'Account',
+      interaction_level: item.interaction_level_name || '',
       project_fiscal_rid: item.project_fiscal_rid || '',
     }));
 
@@ -612,7 +613,6 @@ const Interactions: React.FC<InteractionsProps> = ({
         email: '',
       },
     };
-
     sendInteraction.mutate(payload, {
       onSuccess: (response) => {
         successToast(response?.statusMessage);

@@ -16,7 +16,8 @@ export const getInteractionTemplateExportUrl = () =>
 
 export const ExportInteractionTemplate = async (
   templateId: string,
-  templateName: string
+  templateName: string,
+  timezone: string
 ): Promise<void> => {
   try {
     const filename = `${templateName ? templateName + '_' : ''}template.xlsx`;
@@ -25,6 +26,7 @@ export const ExportInteractionTemplate = async (
         getInteractionTemplateExportUrl(),
         {
           template_rid: templateId,
+          timezone,
         }
       );
     const base64Data = response.data?.data;
