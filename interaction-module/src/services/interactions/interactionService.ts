@@ -1251,6 +1251,11 @@ export class InteractionService {
         await mainDb.query(rawQueries.updateInteractionSummaryStatusAndResEmailName(fetchInQueueStatus[0][0].rid, interaction_rid, name, email))
         }
       }
+      else
+      {
+        await orgDb.query(rawQueries.updateInteractionStatus(schemaName, fetchInQueueStatus[0][0].rid, interaction_rid))
+        await mainDb.query(rawQueries.updateInteractionSummaryStatus(fetchInQueueStatus[0][0].rid, interaction_rid))
+      }
         interactionResponse.push({
           interactionRid: interaction_rid,
         });
