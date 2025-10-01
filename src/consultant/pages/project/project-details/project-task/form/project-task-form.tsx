@@ -19,7 +19,10 @@ import {
 } from '../../../../../services/project/project-task-service';
 import { projectTaskPayloadData } from './utils';
 import { ProjectTaskInput } from '../../../../../types/project-task';
-import { useGetProjectResourceTaskCode } from '../../../../../services/project-resources/project-resources-form-service';
+import {
+  useGetProjectResourceTaskCode,
+  useGetProjectResourceTaskType,
+} from '../../../../../services/project-resources/project-resources-form-service';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
 import {
@@ -93,6 +96,14 @@ const ProjectTaskForm: React.FC = () => {
 
   const { data: projectResourceCodeOptions, isLoading: resCodeLoading } =
     useGetProjectResourceTaskCode(payload);
+  const type = 'type';
+  const { data: projectResourceTypeOptions, isLoading: taskTypeLoading } =
+    useGetProjectResourceTaskType(type);
+  const classification = 'classification';
+  const {
+    data: projectResourceClassificationOptions,
+    isLoading: classificationLoading,
+  } = useGetProjectResourceTaskType(classification);
   const commonSuccess = costResourceForceSuccess;
   useEffect(() => {
     if (commonSuccess) {
@@ -137,7 +148,24 @@ const ProjectTaskForm: React.FC = () => {
       })) || [],
     [projectResourceCodeOptions?.data]
   );
-
+  const memoizedProjectResourceType: SelectResourceOption[] = useMemo(
+    () =>
+      projectResourceTypeOptions?.data?.projectTaskTypes?.map((item) => ({
+        label: item.project_task_type_name,
+        value: item.rid,
+      })) || [],
+    [projectResourceTypeOptions?.data?.projectTaskTypes]
+  );
+  const memoizedProjectResourceClassification: SelectResourceOption[] = useMemo(
+    () =>
+      projectResourceClassificationOptions?.data?.projectTaskClassification?.map(
+        (item) => ({
+          label: item.classification_name ?? '',
+          value: item.rid,
+        })
+      ) || [],
+    [projectResourceClassificationOptions?.data?.projectTaskClassification]
+  );
   useEffect(() => {
     if (createdNewResourceCode) {
       const selectedResource = projectResourceCodeOptions?.data?.find(
@@ -276,10 +304,13 @@ const ProjectTaskForm: React.FC = () => {
     }
   };
 
-  const isFormLoading = resCodeLoading;
+  const isFormLoading =
+    resCodeLoading || taskTypeLoading || classificationLoading;
 
   const formConfig = ProjectTaskFormData(
     memoizedProjectResourceCode,
+    memoizedProjectResourceType,
+    memoizedProjectResourceClassification,
     isEditView,
     fiscalDate,
     permissionMapTaskForm

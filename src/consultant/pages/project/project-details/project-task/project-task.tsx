@@ -38,6 +38,7 @@ import {
   FormFiscalDateType,
   ProjectResourcesListType,
   SelectOption,
+  SelectResourceOption,
 } from '../../../../types';
 import {
   CellEditData,
@@ -48,7 +49,10 @@ import { useToast } from '../../../../../hooks';
 import { useMutation } from '@apollo/client';
 import { UPDATE_PROJECT_TASK } from '../../../../../api/graphql/queries/project-query';
 import { taskClient } from '../../../../../api/graphql/clients/client';
-import { useGetProjectResourceCode } from '../../../../services/project-resources/project-resources-form-service';
+import {
+  useGetProjectResourceCode,
+  useGetProjectResourceTaskType,
+} from '../../../../services/project-resources/project-resources-form-service';
 import { checkPermission } from '../../../../../common-utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import Uploads from '../../../../../components/Attachments/upload';
@@ -215,7 +219,31 @@ export const ProjectTask = ({
       setProjectTaskList(data?.projectTask || []);
     }
   }, [data]);
+  const type = 'type';
+  const { data: projectResourceTypeOptions } =
+    useGetProjectResourceTaskType(type);
+  const classification = 'classification';
+  const { data: projectResourceClassificationOptions } =
+    useGetProjectResourceTaskType(classification);
 
+  const memoizedProjectResourceType: SelectResourceOption[] = useMemo(
+    () =>
+      projectResourceTypeOptions?.data?.projectTaskTypes?.map((item) => ({
+        label: item.project_task_type_name,
+        value: item.rid,
+      })) || [],
+    [projectResourceTypeOptions?.data?.projectTaskTypes]
+  );
+  const memoizedProjectResourceClassification: SelectResourceOption[] = useMemo(
+    () =>
+      projectResourceClassificationOptions?.data?.projectTaskClassification?.map(
+        (item) => ({
+          label: item.classification_name ?? '',
+          value: item.rid,
+        })
+      ) || [],
+    [projectResourceClassificationOptions?.data?.projectTaskClassification]
+  );
   const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
     const defaultSortField = 'resource_code';
     const defaultSortOrder = 'ASC';
@@ -437,6 +465,8 @@ export const ProjectTask = ({
   const projectTaskColumns = getProjectTaskColumns(
     handleProjectTaskClick,
     memoizedProjectResourceCode,
+    memoizedProjectResourceType,
+    memoizedProjectResourceClassification,
     permissionMapTaskTableColumn,
     accountOrProjectInActive,
     fiscalDatesArg
