@@ -849,7 +849,7 @@ async exportAccountLevelImportedProjects(
       });
 
       // ✅ Fetch and map related data
-      const { resourceTypeMap, currencyMap, resourceStatusMap } =
+      const { resourceTypeMap, currencyMap, resourceStatusMap, taskTypeMap, taskClassificationsMap } =
         await this.projectTaskService.fetchRelatedData(allTasks, mainSequelize);
 
       // ✅ Format all tasks
@@ -858,7 +858,9 @@ async exportAccountLevelImportedProjects(
           task,
           resourceTypeMap,
           currencyMap,
-          resourceStatusMap
+          resourceStatusMap,
+          taskTypeMap,
+          taskClassificationsMap
         )
       );
 
@@ -986,7 +988,7 @@ async exportAccountLevelImportedProjects(
       });
 
       // ✅ Fetch and map related data
-      const { resourceTypeMap, currencyMap, resourceStatusMap } =
+      const { resourceTypeMap, currencyMap, resourceStatusMap, taskTypeMap, taskClassificationsMap } =
         await this.projectTaskService.fetchRelatedData(allTasks, mainSequelize);
 
       // ✅ Format all tasks
@@ -995,7 +997,9 @@ async exportAccountLevelImportedProjects(
           task,
           resourceTypeMap,
           currencyMap,
-          resourceStatusMap
+          resourceStatusMap,
+          taskTypeMap,
+          taskClassificationsMap
         )
       );
 

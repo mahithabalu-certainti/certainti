@@ -959,6 +959,26 @@ export const setInlineForProjectTask = (dbData : ProjectTask, requestData : any)
     dataStorage = `status_rid = '${newData.status_rid}'`
     newDataArray.push(dataStorage)
   }  
+  if(requestData.task_name != undefined){
+    newData.task_name = requestData.task_name
+    dataStorage = `task_name = '${newData.task_name}'`
+    newDataArray.push(dataStorage)
+  }
+  if(requestData.task_description != undefined){
+    newData.task_description = requestData.task_description
+    dataStorage = `task_description = '${newData.task_description}'`
+    newDataArray.push(dataStorage)
+  }
+  if(requestData.task_classification_rid != undefined){
+    newData.task_classification_rid = requestData.task_classification_rid
+    dataStorage = `task_classification_rid = '${newData.task_classification_rid}'`
+    newDataArray.push(dataStorage)
+  }
+  if(requestData.task_type_rid != undefined){
+    newData.task_type_rid = requestData.task_type_rid
+    dataStorage = `task_type_rid = '${newData.task_type_rid}'`
+    newDataArray.push(dataStorage)
+  } 
 
   if(newDataArray.length < 1) {
     return {
@@ -1027,4 +1047,37 @@ export async function encryptClientSecret(text: string): Promise<string> {
   encrypted = Buffer.concat([encrypted, cipher.final()]);
 
   return iv.toString('hex') + ':' + encrypted.toString('hex');
+}
+
+export async function decryptClientSecret(encryptedText: string): Promise<string> {
+  const ENCRYPTION_KEY = process.env.CLIENT_SECRET_ENCRYPTION_KEY;
+  
+  if (!ENCRYPTION_KEY) {
+    throw new Error('CLIENT_SECRET_ENCRYPTION_KEY is not set in environment');
+  };
+
+  const encryptClientSecret = await getSecret(ENCRYPTION_KEY);
+
+  if(!encryptClientSecret){
+    throw new Error("Invalid Client Encryption Key")
+  }
+
+  const [ivHex, encryptedHex] = encryptedText.split(":");
+
+  if (!ivHex || !encryptedHex) {
+    throw new Error('Invalid encrypted text format. Expected format "iv:encrypted"');
+  }
+
+  const iv = Buffer.from(ivHex, "hex");
+  const encrypted = Buffer.from(encryptedHex, "hex");
+
+  const decipher = crypto.createDecipheriv(
+    "aes-256-cbc",
+    Buffer.from(encryptClientSecret),
+    iv
+  );
+  let decrypted = decipher.update(encrypted);
+  decrypted = Buffer.concat([decrypted, decipher.final()]);
+
+  return decrypted.toString();
 }

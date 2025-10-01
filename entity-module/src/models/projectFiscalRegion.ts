@@ -59,6 +59,7 @@ export interface ProjectFiscalRegionAttributes {
 
   total_nonlabor_prj?: number | null;
   total_nonlabor_from_prj_res?: number | null;
+  total_nonlabor_from_tasks?: number | null;
 
   total_resources_prj?: number | null;
   total_resources_from_prj_res?: number | null;
@@ -204,6 +205,7 @@ export class ProjectFiscalRegion
 
   public total_nonlabor_prj?: number | null;
   public total_nonlabor_from_prj_res?: number | null;
+  public total_nonlabor_from_tasks?: number | null;
 
   public total_resources_prj?: number | null;
   public total_resources_from_prj_res?: number | null;
@@ -427,6 +429,7 @@ export class ProjectFiscalRegion
         total_subcon_prj: DataTypes.INTEGER,
         total_subcon_from_prj_res: DataTypes.INTEGER,
         total_subcon_from_tasks: DataTypes.INTEGER,
+        total_nonlabor_from_tasks : DataTypes.INTEGER,
 
         // Non-labor & Resources
         total_nonlabor_prj: DataTypes.DECIMAL(18, 2),

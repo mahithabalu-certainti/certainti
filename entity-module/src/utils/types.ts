@@ -188,6 +188,7 @@ export interface ICreateProject {
   total_cost?: number | null;
   total_fte?: number;
   total_subcon?: number;
+  total_nonlabor?: number;
   total_cost_nonlabor?: number | null;
   total_effort_fte?: number | null;
   total_effort_subcon?: number | null;
@@ -246,6 +247,7 @@ export interface IUpdateProject {
   total_cost?: number | null;
   total_fte?: number;
   total_subcon?: number;
+  total_nonlabor?: number;
   total_cost_nonlabor?: number | null;
   total_effort_fte?: number | null;
   total_effort_subcon?: number | null;
@@ -388,6 +390,7 @@ export interface IUpdateInlineProjectResource {
   modified_by?: string;
   resource_rid?: string;
   country_rid?: string | null;
+  project_resource_role? : string | null
 }
 
 export interface ICreateProjectTask {
@@ -407,7 +410,11 @@ export interface ICreateProjectTask {
   created_by: string;
   modified_by?: string;
   status_rid : string;
-  project_resource_rid : string
+  project_resource_rid : string;
+  task_name?: string;
+  task_description?: string;
+  task_type_rid?: string;
+  task_classification_rid?: string;
 }
 
 export interface IUpdateProjectTask {
@@ -428,7 +435,11 @@ export interface IUpdateProjectTask {
   created_by: string;
   modified_by?: string;
   status_rid : string
-  project_resource_rid : string
+  project_resource_rid : string;
+  task_name?: string;
+  task_description?: string;
+  task_type_rid?: string;
+  task_classification_rid?: string;
 }
 
 export interface IAnomalyStatus {

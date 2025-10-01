@@ -40,6 +40,8 @@ function interactionMailTemplate(
           </ol>
           <p>Your responses are invaluable to us and will contribute significantly to our efforts. Upon completion, submit the interaction, and your responses will be securely forwarded to us for further processing.</p>
           <p>Thank you,<br><strong>Think R&D Team</strong><br>Powered by Certainiti.ai</p>
+
+          <p style="color: #888; font-size: 0.9em;"><em>📌 Please do not delete or modify the subject or content of this email while replying. This helps us track and process your responses accurately.</em></p>
         `
             : `
           <p>Dear ${recipient.name || ""},</p>
@@ -60,6 +62,8 @@ function interactionMailTemplate(
           </ol>
           <p>Your responses are invaluable to us and will contribute significantly to our efforts. Upon completion, submit the interaction, and your responses will be securely forwarded to us for further processing.</p>
           <p>Thank you,<br><strong>Think R&D Team</strong><br>Powered by Certainiti.ai</p>
+
+          <p style="color: #888; font-size: 0.9em;"><em>📌 Please do not delete or modify the subject or content of this email while replying. This helps us track and process your responses accurately.</em></p>
         `,
       },
       toRecipients: [
@@ -206,4 +210,65 @@ function otpMailTemplate(otp: string, email: string): { message: IEmailMessage }
   return emailMessage;
 }
 
-export { otpMailTemplate,interactionMailTemplate,interactionReminderMailTemplate };
+function interactionResponseReceivedTemplate(
+  recipient: { name: string | null; email: string; ccEmails?: string[] | [] },
+  project: { project_name: string; project_code: string; fiscalYear: number },
+  account: { account_name: string },
+  interactionRid: string,
+  interactionLevel: string = "Project"
+): { message: IEmailMessage } {
+  const subject =
+    interactionLevel === "Project"
+      ? `Interaction Response Received: ${project.project_name || ""} (${project.project_code || ""})${project.fiscalYear ? " - FY " + project.fiscalYear : ""}`
+      : `Interaction Response Received: ${account.account_name || ""}`;
+
+  const emailMessage = {
+    message: {
+      subject,
+      body: {
+        contentType: "HTML",
+        content:
+          interactionLevel === "Project"
+            ? `
+          <p>Dear ${recipient.name || ""},</p>
+          <p>Greetings!</p>
+          <p>
+            This is to inform you that a response has been <strong>successfully received</strong> for the interaction (Interaction Ref Id: ${interactionRid || null}) 
+            related to the R&D Credits Claims Process for <strong>${account.account_name || ""}</strong> ${project.fiscalYear ? "(FY " + project.fiscalYear + ")" : ""}, 
+            under the project <strong>${project.project_name || ""}</strong> (Project Code: <strong>${project.project_code || ""}</strong>).
+          </p>
+          <p>You may now review the submitted responses in the system for further processing.</p>
+          <p>Thank you,<br><strong>Think R&D Team</strong><br>Powered by Certainiti.ai</p>
+        `
+            : `
+          <p>Dear ${recipient.name || ""},</p>
+          <p>Greetings!</p>
+          <p>
+            This is to inform you that a response has been <strong>successfully received</strong> for the interaction (Interaction Ref Id: ${interactionRid || null}) 
+            related to the R&D Credits Claims Process for <strong>${account.account_name || ""}</strong>.
+          </p>
+          <p>You may now review the submitted responses in the system for further processing.</p>
+          <p>Thank you,<br><strong>Think R&D Team</strong><br>Powered by Certainiti.ai</p>
+        `,
+      },
+      toRecipients: [
+        {
+          emailAddress: {
+            address: recipient.email,
+          },
+        },
+      ],
+      ccRecipients:
+        recipient.ccEmails && recipient.ccEmails.length > 0
+          ? recipient.ccEmails.map((email) => ({
+              emailAddress: { address: email },
+            }))
+          : [],
+    },
+  };
+
+  return emailMessage;
+}
+
+
+export { otpMailTemplate,interactionMailTemplate,interactionReminderMailTemplate, interactionResponseReceivedTemplate };

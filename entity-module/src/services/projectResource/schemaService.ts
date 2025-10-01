@@ -573,7 +573,7 @@ export class ProjectResourceSchemaService {
 
   async findDuplicateProjectResourceOnUpdate(
     accountNumber: string,
-    projectResourceData: IUpdateProjectResource,
+    projectResourceData: IUpdateProjectResource | IUpdateInlineProjectResource,
     resourceData: any,
     statusMap: any
   ) {
@@ -5181,16 +5181,18 @@ export class ProjectResourceSchemaService {
       // Fetch the resource code for the given rid
       const resource = await Resources.findOne({
         where: { rid: resourceRid },
-        attributes: ["resource_code"],
+        attributes: ["resource_code", "resource_name"],
         raw: true,
       });
 
       const resourceCode = resource?.resource_code || null;
+      const resourceName = resource?.resource_name || null;
 
       // Enrich and return the project resource object
       return {
         ...(projectResource.dataValues ?? projectResource),
         resource_code: resourceCode,
+        resource_name: resourceName
       };
     } catch (err) {
       throw new Error(
@@ -5381,9 +5383,10 @@ export class ProjectResourceSchemaService {
         allowedFieldSet.add(field.field_name);
       }
     }
+
     const labelMap: Record<string, string> = {
       resource_code: "Resource Code",
-      resource_name: "Name",
+      resource_name: "Resource Name",
       country_rid: "Resource Country",
       region_rid: "Resource Region",
       fiscal_year: "Fiscal Year",

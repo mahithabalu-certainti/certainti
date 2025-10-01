@@ -1,5 +1,6 @@
 import { Sequelize } from "sequelize";
 import { encryptClientSecret } from "./helpers";
+import moment from "moment";
 export const HttpStatus = {
   SUCCESS: 200,
   BAD_REQUEST: 400,
@@ -131,7 +132,7 @@ export const STATUS_MESSAGE = {
   importsNoFound: "No imports found",
   importUpdatedSuccess: "Import updated successfully",
   projectTaskNotFound: "Project Task not found",
-  settingsUpdatedSuccess: "Operation updated successfully",
+  settingsUpdatedSuccess: "Settings updated successfully",
   userIdMissingInHeader: "User-ID missing in headers",
   fiscalStartDateMissing: "Fiscal Startdate missing",
   fiscalEndDateMissing: "Fiscal Enddate missing",
@@ -164,16 +165,16 @@ export const rawQueries = {
     mainSequelize: Sequelize
   ): Promise<any> {
     let checkIsSeparateDb: any = await mainSequelize.query(
-      `SELECT rid, r_number, account_name, storage_type FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`
+      `SELECT rid, r_number, account_name, storage_type,is_parent FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`
     );
     if (checkIsSeparateDb[0][0].storage_type == STATUS_MESSAGE.separateDb) {
-      return `SELECT rid, r_number, account_name, storage_type FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`;
+      return `SELECT rid, r_number, account_name, storage_type,is_parent FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`;
     } else {
       return `
       with fetch_account_details AS (
-      SELECT rid, r_number, parent_account_rid FROM ${MAIN_SCHEMA_NAME}.account where rid = '${accountRid}'
+      SELECT rid, r_number, parent_account_rid,is_parent FROM ${MAIN_SCHEMA_NAME}.account where rid = '${accountRid}'
       )
-      SELECT a.rid, a.r_number, a.account_name, a.is_parent 
+      SELECT a.rid, a.r_number, a.account_name, ad.is_parent 
       FROM ${MAIN_SCHEMA_NAME}.account a
       LEFT JOIN fetch_account_details ad ON ad.parent_account_rid = a.rid
       WHERE a.rid = ad.parent_account_rid`;
@@ -648,6 +649,12 @@ export const rawQueries = {
   GET_STATUSES: `
   SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid IN (:statusRid)
   `,
+  GET_TASK_TYPES: `
+  SELECT rid, project_task_type_name FROM ${MAIN_SCHEMA_NAME}.project_task_type WHERE rid IN (:taskTypeRid)
+  `,
+  GET_TASK_CLASSIFICATION: `
+  SELECT rid, classification_name FROM ${MAIN_SCHEMA_NAME}.project_task_classification WHERE rid IN (:taskClassificationRids)
+  `,
   fetchUserDetailsById(userId: string) {
     return `SELECT CONCAT(first_name, ' ', last_name) AS imported_by FROM ${MAIN_SCHEMA_NAME}.user WHERE rid = '${userId}'`;
   },
@@ -705,7 +712,7 @@ export const rawQueries = {
             SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access uea
             WHERE uea.user_rid = ? 
             AND uea.entity_type = 'PROJECT'
-            AND uea.entity_rid = ps.project_rid
+            AND uea.entity_rid = ps.project_fiscal_rid
             AND uea.access_type = 'INCLUDE'
           )
           OR EXISTS (
@@ -714,7 +721,7 @@ export const rawQueries = {
               ON ugea.group_rid = ugm.group_rid
             WHERE ugm.user_rid = ?
             AND ugea.entity_type = 'PROJECT'
-            AND ugea.entity_rid = ps.project_rid
+            AND ugea.entity_rid = ps.project_fiscal_rid
             AND ugea.access_type = 'INCLUDE'
           )
         )
@@ -722,7 +729,7 @@ export const rawQueries = {
           SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access uea
           WHERE uea.user_rid = ? 
           AND uea.entity_type = 'PROJECT'
-          AND uea.entity_rid = ps.project_rid
+          AND uea.entity_rid = ps.project_fiscal_rid
           AND uea.access_type = 'EXCLUDE'
         )
         AND NOT EXISTS (
@@ -731,7 +738,7 @@ export const rawQueries = {
             ON ugea.group_rid = ugm.group_rid
           WHERE ugm.user_rid = ?
           AND ugea.entity_type = 'PROJECT'
-          AND ugea.entity_rid = ps.project_rid
+          AND ugea.entity_rid = ps.project_fiscal_rid
           AND ugea.access_type = 'EXCLUDE'
         )
       )
@@ -742,7 +749,8 @@ export const rawQueries = {
     orgDb: Sequelize,
     mainDb: Sequelize,
     parentAccountID: string,
-    subscriptionId?: string
+    subscriptionId?: string,
+    isParentAccount: boolean = false,
   ) {
     let tableName: string[];
     let whereParams: string = ``;
@@ -804,7 +812,7 @@ export const rawQueries = {
       ${setValues}
       ${whereParams}
       `;
-      if(data.flag == UPDATE_FLAG.account && t == "account_details" && subscriptionId){
+      if(data.flag == UPDATE_FLAG.account && t == "account_details" && isParentAccount){
         const encryptedSecretKey = await encryptClientSecret(data.client_secret);
         let query = `
         UPDATE ${schema}.${t}
@@ -827,6 +835,17 @@ export const rawQueries = {
       await dbConnection.query(query);
     }
     return HttpStatus.SUCCESS_MESSAGE;
+  },
+  async fetchSettings(
+    schemaName: string,
+    orgDb: Sequelize,
+    parentAccountID: string,
+  ){
+    const query =  `SELECT rid, support_email, tenant_id, client_id, client_secret, subscription_created from ${schemaName}.account_details WHERE account_rid = '${parentAccountID}'`;
+    const accountSettigs = await orgDb.query(query, {
+      type: "SELECT"
+    });
+    return accountSettigs;
   },
   fetchStates(stateIds: string[], country_rid: string) {
     let formattedStateIds = stateIds.map((id: string) => `'${id}'`).join(",");
@@ -916,7 +935,13 @@ export const rawQueries = {
     WHERE
       rid = '${data.rid}'
     `
-  }
+  },
+  fetchProjecTaskType(){
+    return `SELECT * FROM ${MAIN_SCHEMA_NAME}.project_task_type`
+  },
+  fetchProjetClassificationQuery(){
+    return `SELECT * FROM ${MAIN_SCHEMA_NAME}.project_task_classification`
+  },
 };
 
 export const IMPORT_FILTER_COLUMNS: any = {
@@ -1010,5 +1035,5 @@ export const IMPORT_FIELD_MAPPINGS_FOR_EXPORT = [
     { permissionField: 'status', exportField: 'Status', dataField: 'status' },
     { permissionField: 'status_descriptions', exportField: 'Status Description', dataField: 'status_description' },
     { permissionField: 'imported_by', exportField: 'Imported By', dataField: 'imported_by' },
-    { permissionField: 'imported_on', exportField: 'Imported On', dataField: 'imported_on', formatter: (value: any) => new Date(value).toISOString().slice(0, 10) }
+    { permissionField: 'imported_on', exportField: 'Imported On', dataField: 'imported_on', formatter: (value: any) =>  moment(value).format("YYYY-MMM-DD, hh:mm:ss A") }
 ];

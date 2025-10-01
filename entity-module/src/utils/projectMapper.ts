@@ -107,7 +107,7 @@ export class ProjectMapper {
 
       total_fte_prj: data.total_fte || null,
       total_subcon_prj: data.total_subcon || null,
-      total_nonlabor_prj: null,
+      total_nonlabor_prj: data.total_nonlabor || null,
       total_effort_prj: data.total_effort || null,
       total_cost_prj: data.total_cost || null,
 
@@ -239,6 +239,7 @@ export class ProjectMapper {
 
       total_fte: projectData.total_fte || null,
       total_subcon: projectData.total_subcon || null,
+      total_nonlabor: projectData.total_nonlabor || null,
 
       total_cost_fte: projectData.total_cost_fte || null,
       total_cost_subcon: projectData.total_cost_subcon || null,
@@ -316,7 +317,7 @@ export class ProjectMapper {
 
       total_fte_prj: projectData.total_fte || null,
       total_subcon_prj: projectData.total_subcon || null,
-      total_nonlabor_prj: null,
+      total_nonlabor_prj: projectData.total_nonlabor || null,
       total_effort_prj: projectData.total_effort || null,
 
       total_effort_fte_prj: projectData.total_effort_fte || null,
@@ -400,8 +401,9 @@ export class ProjectMapper {
       blended_rate_fte: fiscalData.blended_rate_fte,
       blended_rate_subcon: fiscalData.blended_rate_subcon,
 
-      total_fte: fiscalData.total_fte,
-      total_subcon: fiscalData.total_subcon,
+      total_fte: Number(fiscalData.total_fte || 0),
+      total_subcon: Number(fiscalData.total_subcon || 0),
+      total_nonlabor: Number(fiscalData.total_nonlabor || 0),
 
       total_project_hours_fte: fiscalData.total_effort_fte,
       total_project_hours_subcon: fiscalData.total_effort_subcon,
@@ -478,6 +480,7 @@ export class ProjectMapper {
 
       total_fte_prj: data.total_fte || 0,
       total_subcon_prj: data.total_subcon || 0,
+      total_nonlabor_prj: data.total_nonlabor || 0,
       total_effort_prj: data.total_effort || null,
       total_cost_prj: data.total_cost || null,
       total_effort_fte_prj: data.total_effort_fte || null,
@@ -922,7 +925,12 @@ export class ProjectTaskMapper {
 
       comments: projectTask.comments || null,
       status_rid : projectTask.status_rid,
-      project_resource_rid : projectTask.project_resource_rid
+      project_resource_rid : projectTask.project_resource_rid,
+
+      task_name: projectTask.task_name || null,
+      task_description: projectTask.task_description || null,
+      task_type_rid: projectTask.task_type_rid || null,
+      task_classification_rid: projectTask.task_classification_rid || null
     };
   }
   static mapToProjectTaskUpdate(
@@ -954,7 +962,12 @@ export class ProjectTaskMapper {
 
       comments: projectTask.comments || null,
       status_rid : projectTask.status_rid,
-      project_resource_rid : projectTask.project_resource_rid
+      project_resource_rid : projectTask.project_resource_rid,
+
+      task_name: projectTask.task_name || null,
+      task_description: projectTask.task_description || null,
+      task_type_rid: projectTask.task_type_rid || null,
+      task_classification_rid: projectTask.task_classification_rid || null
     };
   }
 }

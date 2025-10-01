@@ -11,6 +11,7 @@ import ProjectIngestionService from "./projectIngestionService";
 import { Logger } from "winston";
 import { ClientSecretCredential } from "@azure/identity";
 import { Client } from "@microsoft/microsoft-graph-client";
+import { decryptClientSecret } from "../utils/helpers";
 export default class SettingService {
   private mainDbSequelize: Sequelize | null = null;
   private orgDbSequelize: Sequelize | null = null;
@@ -120,10 +121,47 @@ export default class SettingService {
             data.client_secret,
             data.support_email
           );
+          if(subscriptionId === null){
+            return {
+              statusCode: HttpStatus.BAD_REQUEST,
+              statusMessage: `Subscription already exists for ${data.support_email}`,
+            }
+          }
         } catch (err) {
           return {
             statusCode: HttpStatus.BAD_REQUEST,
             statusMessage: STATUS_MESSAGE.invalidCredentials,
+          }
+        }
+      }else{
+        const fetchExistingSettings: any = await rawQueries.fetchSettings(
+          schemaName,
+          orgDb,
+          parentAccountID
+        );
+
+        if(fetchExistingSettings && fetchExistingSettings.length > 0 && fetchParent[0][0]?.is_parent){
+          const settingsData = fetchExistingSettings[0];
+          const {
+            support_email: supportEmail,
+            tenant_id: tenantId,
+            client_id: clientId,
+            client_secret: clientSecret,
+          } = settingsData;
+
+          let descyptedSecret = "";
+
+          if(clientSecret){
+            descyptedSecret = await decryptClientSecret(clientSecret);
+          }
+
+          if (supportEmail && tenantId && clientId && descyptedSecret) {
+            await this.removeExistingSubscription(
+              tenantId,
+              clientId,
+              descyptedSecret,
+              supportEmail
+            );
           }
         }
       }
@@ -134,7 +172,8 @@ export default class SettingService {
         orgDb,
         mainDb,
         parentAccountID,
-        subscriptionId
+        subscriptionId,
+        fetchParent[0][0]?.is_parent
       );
 
       return {
@@ -189,13 +228,26 @@ export default class SettingService {
     try {
       const graphClient = this.getGraphClient(tenantId, clientId, clientSecret);
 
+      const existingSubscriptions = await graphClient.api('/subscriptions').get();
+
+      const resourceToCheck = `/users/${supportEmail}/mailFolders('Inbox')/messages`;
+
+      const alreadySubscribed = existingSubscriptions.value?.some(
+        (sub: any) => sub.resource === resourceToCheck
+      );
+
+      if (alreadySubscribed) {
+        return null;
+      }
+
+      const expiration = new Date();
+      expiration.setMinutes(expiration.getMinutes() + 4230);
+
       const subscription = await graphClient.api("/subscriptions").post({
         changeType: "created,updated",
         notificationUrl: process.env.EMAIL_WEBHOOK_URL,
         resource: `/users/${supportEmail}/mailFolders('Inbox')/messages`,
-        expirationDateTime: new Date(
-          Date.now() + 3600 * 1000 * 24
-        ).toISOString(),
+        expirationDateTime: expiration.toISOString(),
         clientState: "yourCustomValidationString",
       });
 
@@ -205,4 +257,37 @@ export default class SettingService {
       throw new Error("Invalid credentials or failed to create subscription.");
     }
   }
+
+  private async removeExistingSubscription(
+    tenantId: string,
+    clientId: string,
+    clientSecret: string,
+    supportEmail: string
+  ): Promise<void> {
+    const graphClient = this.getGraphClient(tenantId, clientId, clientSecret);
+  
+    try {
+      const existingSubscriptions = await graphClient.api('/subscriptions').get();
+  
+      const resourceToCheck = `/users/${supportEmail}/mailFolders('Inbox')/messages`;
+  
+      const matchingSubscriptions = existingSubscriptions.value?.filter(
+        (sub: any) => sub.resource === resourceToCheck || sub.resource === `users/${supportEmail}/mailFolders('Inbox')/messages`
+      ) || [];
+  
+      if (matchingSubscriptions.length === 0) {
+        return;
+      }
+  
+      for (const sub of matchingSubscriptions) {
+        try {
+          await graphClient.api(`/subscriptions/${sub.id}`).delete();
+        } catch (deleteErr) {
+          console.log(`Failed to delete subscription ${sub.id}`)
+        }
+      }
+    } catch (err) {
+      throw err; 
+    }
+  }  
 }

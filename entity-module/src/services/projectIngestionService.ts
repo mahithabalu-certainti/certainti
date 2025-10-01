@@ -1,5 +1,6 @@
 import { Op, Order, QueryTypes, Sequelize, col, fn, literal, where } from "sequelize";
 import { initOrgSequelize } from "../config/orgDataSource";
+import "moment-timezone";
 import { Project } from "../models/project";
 import { ProjectFiscal } from "../models/projectFiscal";
 import {
@@ -31,7 +32,7 @@ import { ProjectResourceFiscal } from "../models/projectResourceFiscal";
 import { ProjectResourceFiscalRegion } from "../models/projectResourceFiscalRegion";
 import AccountDetails from "../models/accountDetails";
 import SchemaService from "./schemaService";
-import { Kafka, Producer } from "kafkajs";
+import { Kafka, Producer } from "kafkajs";  
 
 class ProjectIngestionService {
   private orgDbSequelize: Sequelize | null = null;
@@ -499,6 +500,7 @@ class ProjectIngestionService {
         [Sequelize.fn("SUM", Sequelize.col("total_effort_prj")), "total_effort_prj"],
         [Sequelize.fn("SUM", Sequelize.col("total_fte_prj")), "total_fte_prj"],
         [Sequelize.fn("SUM", Sequelize.col("total_subcon_prj")), "total_subcon_prj"],
+        [Sequelize.fn("SUM", Sequelize.col("total_nonlabor_prj")), "total_nonlabor_prj"],
         [Sequelize.fn("SUM", Sequelize.col("total_effort_fte_prj")), "total_effort_fte_prj"],
         [Sequelize.fn("SUM", Sequelize.col("total_effort_subcon_prj")), "total_effort_subcon_prj"],
         [Sequelize.fn("SUM", Sequelize.col("total_cost_fte_prj")), "total_cost_fte_prj"],
@@ -520,8 +522,9 @@ class ProjectIngestionService {
       {
         total_cost: aggregates.total_cost_prj,
         total_effort: aggregates.total_effort_prj,
-        total_fte: aggregates.total_fte_prj,
-        total_subcon: aggregates.total_subcon_prj,
+        total_fte: Number(aggregates.total_fte_prj || 0),
+        total_subcon: Number(aggregates.total_subcon_prj || 0),
+        total_nonlabor: Number(aggregates.total_nonlabor_prj || 0),
         total_effort_fte: aggregates.total_effort_fte_prj,
         total_effort_subcon: aggregates.total_effort_subcon_prj,
         total_cost_fte: aggregates.total_cost_fte_prj,
@@ -571,6 +574,13 @@ class ProjectIngestionService {
         [
           Sequelize.fn(
             "SUM",
+            Sequelize.literal("COALESCE(total_nonlabor_prj, 0)")
+          ),
+          "total_nonlabor_prj",
+        ],
+        [
+          Sequelize.fn(
+            "SUM",
             Sequelize.literal("COALESCE(total_cost_fte_prj, 0)")
           ),
           "total_cost_fte_prj",
@@ -602,8 +612,9 @@ class ProjectIngestionService {
       {
         total_cost: aggregates.total_cost_prj,
         total_effort: aggregates.total_effort_prj,
-        total_fte: aggregates.total_fte_prj,
-        total_subcon: aggregates.total_subcon_prj,
+        total_fte: Number(aggregates.total_fte_prj || 0),
+        total_subcon: Number(aggregates.total_subcon_prj || 0),
+        total_nonlabor: Number(aggregates.total_nonlabor_prj || 0),
         total_cost_fte: aggregates.total_cost_fte_prj,
         total_cost_subcon: aggregates.total_cost_subcon_prj,
         total_cost_nonlabor: aggregates.total_cost_nonlabor_prj,
@@ -904,6 +915,13 @@ class ProjectIngestionService {
         [
           Sequelize.fn(
             "SUM",
+            Sequelize.literal("COALESCE(total_nonlabor_prj, 0)")
+          ),
+          "total_nonlabor_prj",
+        ],
+        [
+          Sequelize.fn(
+            "SUM",
             Sequelize.literal("COALESCE(total_effort_fte_prj, 0)")
           ),
           "total_effort_fte_prj",
@@ -953,8 +971,9 @@ class ProjectIngestionService {
         total_projects: aggregates.total_projects,
         total_project_cost: aggregates.total_cost_prj,
         total_project_hours: aggregates.total_effort_prj,
-        total_fte: aggregates.total_fte_prj,
-        total_subcon: aggregates.total_subcon_prj,
+        total_fte: Number(aggregates.total_fte_prj || 0),
+        total_subcon: Number(aggregates.total_subcon_prj || 0),
+        total_nonlabor : Number(aggregates.total_nonlabor_prj || 0),
         total_project_hours_fte: aggregates.total_effort_fte_prj,
         total_project_hours_subcon: aggregates.total_effort_subcon_prj,
         total_project_cost_fte: aggregates.total_cost_fte_prj,
@@ -1002,18 +1021,20 @@ class ProjectIngestionService {
           "total_cost_prj",
         ],
         [
-          Sequelize.fn(
-            "SUM",
-            Sequelize.literal("COALESCE(total_fte_prj, 0)")
-          ),
-          "total_fte_prj",
-        ],
+          Sequelize.cast(Sequelize.fn("SUM",Sequelize.literal("COALESCE(total_fte_prj, 0)")), "INTEGER"), "total_fte_prj"],
         [
-          Sequelize.fn(
+          Sequelize.cast(Sequelize.fn(
             "SUM",
             Sequelize.literal("COALESCE(total_subcon_prj, 0)")
-          ),
+          ), "INTEGER"),
           "total_subcon_prj",
+        ],
+        [
+          Sequelize.cast(Sequelize.fn(
+            "SUM",
+            Sequelize.literal("COALESCE(total_nonlabor_prj, 0)")
+          ), "INTEGER"),
+          "total_nonlabor_prj",
         ],
         [
           Sequelize.fn(
@@ -1070,6 +1091,7 @@ class ProjectIngestionService {
         total_project_hours: aggregates.total_effort_prj,
         total_fte: aggregates.total_fte_prj,
         total_subcon: aggregates.total_subcon_prj,
+        total_nonlabor: aggregates.total_nonlabor_prj,
         total_project_hours_fte: aggregates.total_effort_fte_prj,
         total_project_hours_subcon: aggregates.total_effort_subcon_prj,
         total_project_cost_fte: aggregates.total_cost_fte_prj,
@@ -1234,6 +1256,7 @@ class ProjectIngestionService {
       total_effort_prj: effective_effort,
       total_fte_prj: effective_total_fte,
       total_subcon_prj: effective_total_subcon,
+      total_nonlabor_prj: effective_total_nonlabor,
       total_effort_fte_prj: effective_fte_effort,
       total_effort_subcon_prj: effective_subcon_effort,
       total_cost_fte_prj: effective_fte_cost,
@@ -1258,6 +1281,7 @@ class ProjectIngestionService {
         effective_fte_cost,
         effective_subcon_cost,
         effective_nonlabor_cost,
+        effective_total_nonlabor
       },
       {
         where: {
@@ -1326,8 +1350,9 @@ class ProjectIngestionService {
       attributes: [
         [Sequelize.fn("SUM", Sequelize.col("total_cost_prj")), "effective_cost"],
         [Sequelize.fn("SUM", Sequelize.col("total_effort_prj")), "effective_effort"],
-        [Sequelize.fn("SUM", Sequelize.col("total_fte_prj")), "effective_total_fte"],
-        [Sequelize.fn("SUM", Sequelize.col("total_subcon_prj")), "effective_total_subcon"],
+        [Sequelize.cast(Sequelize.fn("SUM", Sequelize.col("total_fte_prj")), "INTEGER"), "effective_total_fte"],
+        [Sequelize.cast(Sequelize.fn("SUM", Sequelize.col("total_subcon_prj")), "INTEGER"), "effective_total_subcon"],
+        [Sequelize.cast(Sequelize.fn("SUM", Sequelize.col("total_nonlabor_prj")), "INTEGER"), "effective_total_nonlabor"],
         [Sequelize.fn("SUM", Sequelize.col("total_effort_fte_prj")), "effective_fte_effort"],
         [Sequelize.fn("SUM", Sequelize.col("total_effort_subcon_prj")), "effective_subcon_effort"],
         [Sequelize.fn("SUM", Sequelize.col("total_cost_fte_prj")), "effective_fte_cost"],
@@ -1646,6 +1671,7 @@ class ProjectIngestionService {
       project_type_rid: "project_type_rid",
       project_name: "project_name",
       project_code: "project_code",
+      rd_percent_final: "rd_percent_final",
     };
 
     const childOnlyFilters = ["fiscal_year", "project_code"];
@@ -1743,10 +1769,10 @@ class ProjectIngestionService {
       whereProject = {
         account_rid: accountData.rid,
         ...(bothParentAndChild ? parentFilters : {}),
-        ...(accessibleIds.length > 0 ? { rid: accessibleIds } : {}),
       };
       whereFiscal = {
         account_rid: accountData.rid,
+         ...(accessibleIds.length > 0 ? { rid: accessibleIds } : {}),
       };
       let activeStatusId = "";
       if(apiSource === "interaction"){
@@ -1786,10 +1812,29 @@ class ProjectIngestionService {
           fullOrder.push([
             Sequelize.literal(`"Project"."project_code" ASC NULLS LAST`),
           ]);
-        } else {
           fullOrder.push([
+          Sequelize.literal(`"ProjectFiscal"."fiscal_year" ASC`),
+          ]);
+        } else {
+          if(field === "project_code" && sortDirection === 'ASC') {
+            fullOrder.push([
             Sequelize.literal(`"Project"."project_code" ASC NULLS LAST`),
           ]);
+          fullOrder.push([
+          Sequelize.literal(`"ProjectFiscal"."fiscal_year" ASC`),
+          ]);
+          } else if(field === "project_code" && sortDirection === 'DESC') {
+            fullOrder.push([
+            Sequelize.literal(`"Project"."project_code" DESC NULLS LAST`),
+          ]);
+          fullOrder.push([
+          Sequelize.literal(`"ProjectFiscal"."fiscal_year" DESC`),
+          ]);
+          } else {
+            fullOrder.push([
+            Sequelize.literal(`"Project"."${field}" ${nullsHandled}`),
+          ]);
+          }
         }
       }
 
@@ -1889,7 +1934,8 @@ class ProjectIngestionService {
     if (this.mainDbSequelize) {
       let projectData = await this.enrichKeyContactsManually(
         projects,
-        accountNumber
+        accountNumber,
+        apiSource
       );
 
       projectData = await this.keyContacts.insertKeyRole(
@@ -1912,6 +1958,7 @@ class ProjectIngestionService {
         rawFilters
       );
       projects = projectData;
+
 
       totalCount = count;
       if(searchClause[Op.or] && searchClause[Op.or].length > 0) {
@@ -2006,6 +2053,7 @@ class ProjectIngestionService {
       project_type_rid: "project_type_rid",
       project_name: "project_name",
       project_code: "project_code",
+      rd_percent_final: "rd_percent_final"
     };
 
     const childOnlyFilters = ["fiscal_year", "project_code"];
@@ -2145,7 +2193,8 @@ class ProjectIngestionService {
     if (this.mainDbSequelize) {
       let projectData = await this.enrichKeyContactsManually(
         projects,
-        accountNumber
+        accountNumber,
+        ""
       );
 
       projectData.forEach((e) => {
@@ -2278,8 +2327,8 @@ class ProjectIngestionService {
           ? timezone && isValidTimezone(timezone)
             ? moment(project.modified_datetime)
                 .tz(timezone)
-                .format("YYYY-MM-DD, hh:mm:ss A")
-            : moment(project.modified_datetime).format("YYYY-MM-DD, hh:mm:ss A")
+                .format("YYYY-MMM-DD, hh:mm:ss A")
+            : moment(project.modified_datetime).format("YYYY-MMM-DD, hh:mm:ss A")
           : "-",
         "Project ID": project.r_number || "-",
       };
@@ -2317,8 +2366,8 @@ class ProjectIngestionService {
         "Comments": fiscal.comments || "-",
         "Last Modified": fiscal.modified_datetime
           ? timezone && isValidTimezone(timezone)
-            ? moment(fiscal.modified_datetime).tz(timezone).format('YYYY-MM-DD, hh:mm:ss A')
-            : moment(fiscal.modified_datetime).format('YYYY-MM-DD, hh:mm:ss A')
+            ? moment(fiscal.modified_datetime).tz(timezone).format('YYYY-MMM-DD, hh:mm:ss A')
+            : moment(fiscal.modified_datetime).format('YYYY-MMM-DD, hh:mm:ss A')
           : '-',
         "Project ID": fiscal.r_number || "-",
       };
@@ -2949,7 +2998,7 @@ class ProjectIngestionService {
     return finalData;
   }
 
-  async enrichKeyContactsManually(projects: any[], accountNumber: string) {
+  async enrichKeyContactsManually(projects: any[], accountNumber: string, apiSource : string) {
     const { KeyContact } = await this.getModels(accountNumber);
 
     const allProjectIds = projects.map((p) => p.rid);
@@ -2959,6 +3008,9 @@ class ProjectIngestionService {
 
     const allIds = [...new Set([...allProjectIds, ...allFiscalIds])];
     if (allIds.length === 0) return projects;
+    
+    const allFiscalIdsForInteractions = [...new Set([...allFiscalIds])]
+
 
     // Fetch key_contact records where reference_id is in allIds
     const keyContacts: any[] = await KeyContact.findAll({
@@ -2967,6 +3019,24 @@ class ProjectIngestionService {
       },
       raw: true,
     });
+    const contactInteractionMap: Record<string, any[]> = {};
+    if(apiSource.toLowerCase() === "interaction") {
+      let interactionKeyContact : any[] = []
+      if(allFiscalIdsForInteractions.length > 0) {
+        let schemaName = rawQueries.fetchSchemaName(accountNumber)
+          interactionKeyContact = await KeyContact.findAll({
+          where : {
+            entity_rid : allFiscalIdsForInteractions,
+            include_in_communication : true
+          }, raw : true
+        })
+      }
+      for (const kc of interactionKeyContact) {
+        const refId = kc.entity_rid;
+        if (!contactInteractionMap[refId]) contactInteractionMap[refId] = [];
+        contactInteractionMap[refId].push(kc);
+      }
+    }
 
     // Group keyContacts by reference_id
     const contactMap: Record<string, any[]> = {};
@@ -2985,6 +3055,7 @@ class ProjectIngestionService {
         (fiscal: any) => ({
           ...(typeof fiscal.toJSON === "function" ? fiscal.toJSON() : fiscal),
           keyContact: contactMap[fiscal.rid] || [],
+          interactionKeyRecipients : contactInteractionMap[fiscal.rid] || []
         })
       );
 

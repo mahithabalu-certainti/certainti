@@ -39,10 +39,11 @@ export class WebHookService {
       let mailProcessedResults = null;
       let finalResult = null;
       let receivedEmail = null;
+      let messageId = null;
 
       for (const notification of notifications) {
         const subscriptionId = notification.subscriptionId;
-        const messageId = notification.resourceData?.id;
+        messageId = notification.resourceData?.id;
 
         if (!messageId) {
           continue;
@@ -74,14 +75,14 @@ export class WebHookService {
             client_id,
             decryptedSecret
           );
-        }else{
+        } else {
           return {
             statusCode: HttpStatus.SUCCESS,
             message: HttpStatus.BAD_REQUEST_MESSAGE,
             errorMessage: "Invalid Graph Connections",
           };
         }
-        
+
         finalResult = await this.processNotification(
           notification,
           email,
@@ -130,7 +131,7 @@ export class WebHookService {
       let projectCode: string | null = null;
       let accountNumberById = finalResult.accountNumber;
 
-      const answers: {
+      let answers: {
         rid: string;
         notes: string;
         question: string;
@@ -187,7 +188,11 @@ export class WebHookService {
         }
       }
 
-      if(!this.graphClient){
+      if(answers && answers.length > 0){
+        answers = answers.filter((val) => val.response.trim() != "" && val.response != null)
+      }
+
+      if (!this.graphClient) {
         await this.logWebhookEmailEvent({
           schemaName: mailProcessedResults.accountNumber,
           emailSubject: mailProcessedResults.subject,
@@ -226,10 +231,11 @@ export class WebHookService {
         };
       }
 
-      const { accountNumber: accountNumberByUser } = await this.interactionSchemaService.fetchValidAccountNumberByNumber(
-        accountNumber
-      );
-      if(!accountNumberByUser){
+      const { accountNumber: accountNumberByUser } =
+        await this.interactionSchemaService.fetchValidAccountNumberByNumber(
+          accountNumber
+        );
+      if (!accountNumberByUser) {
         await this.logWebhookEmailEvent({
           schemaName: mailProcessedResults.accountNumber,
           emailSubject: mailProcessedResults.subject,
@@ -282,7 +288,7 @@ export class WebHookService {
           accountNumberById
         );
 
-      if(!validAccountNumber){
+      if (!validAccountNumber) {
         await this.logWebhookEmailEvent({
           schemaName: mailProcessedResults.accountNumber,
           emailSubject: mailProcessedResults.subject,
@@ -335,12 +341,16 @@ export class WebHookService {
         };
       }
 
-      const projectData = await this.validateProjectData(validAccountNumber , {
-        projectId,
-        projectName,
-        projectCode,
-      });
-      if(projectData !== null){
+      const projectData = await this.validateProjectData(
+        validAccountNumber,
+        finalResult.interactionLevel,
+        {
+          projectId,
+          projectName,
+          projectCode,
+        }
+      );
+      if (projectData !== null) {
         await this.logWebhookEmailEvent({
           schemaName: mailProcessedResults.accountNumber,
           emailSubject: mailProcessedResults.subject,
@@ -382,8 +392,7 @@ export class WebHookService {
         );
 
         const matchingQuestion = interactionItem.find(
-          (item: any) =>
-            item.question?.toString() === question?.toString()
+          (item: any) => item.question?.toString() === question?.toString()
         );
 
         if (matchingItem) {
@@ -428,7 +437,7 @@ export class WebHookService {
           errorMessage: "Invalid Question Number",
         };
       }
-      
+
       if (unmatchedQuestion.length > 0) {
         await this.logWebhookEmailEvent({
           schemaName: mailProcessedResults.accountNumber,
@@ -481,6 +490,8 @@ export class WebHookService {
         status: "SUCCESS",
       });
 
+      this.processedMessageIds.delete(messageId);
+
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -496,9 +507,9 @@ export class WebHookService {
     }
   }
 
-  async fetchCredentialsFromDb(){
+  async fetchCredentialsFromDb() {
     const mainDbSequelize =
-    await this.interactionModelService.getMainSequelize();
+      await this.interactionModelService.getMainSequelize();
 
     const platformSettings: any = await mainDbSequelize.query(
       rawQueries.fetchOrganizationSettings(),
@@ -547,9 +558,11 @@ export class WebHookService {
 
     const accountNumber = accountData[0]?.r_number;
     const accountId = accountData[0]?.rid;
-    const schemaName = accountNumber ? `trd365_${accountNumber.replace(/\D/g, "")}` : null;
+    const schemaName = accountNumber
+      ? `trd365_${accountNumber.replace(/\D/g, "")}`
+      : null;
 
-    if(!schemaName){
+    if (!schemaName) {
       const platformSettings: any = await mainDbSequelize.query(
         rawQueries.fetchPlatformSettings(),
         {
@@ -564,7 +577,7 @@ export class WebHookService {
         client_id: null,
         client_secret: null,
         subscription_created: null,
-      }
+      };
     }
 
     const orgDbSequelize = await this.interactionModelService.getSequelize();
@@ -579,7 +592,7 @@ export class WebHookService {
     );
     let accountEmail = accountDetails[0].support_email ?? null;
 
-    if(!accountEmail){
+    if (!accountEmail) {
       const platformSettings: any = await mainDbSequelize.query(
         rawQueries.fetchPlatformSettings(),
         {
@@ -600,6 +613,7 @@ export class WebHookService {
 
   async validateProjectData(
     accountNumber: string,
+    interactionLevel: string,
     {
       projectId,
       projectName,
@@ -610,19 +624,23 @@ export class WebHookService {
       projectCode: string | null;
     }
   ): Promise<string | null> {
-    if (!projectId || typeof projectId !== 'string') {
-      return 'Invalid Project Id';
+    if (interactionLevel !== "Project") {
+      return null;
     }
-  
-    if (!projectCode || typeof projectCode !== 'string') {
-      return 'Invalid Project Code';
+
+    if (!projectId || typeof projectId !== "string") {
+      return "Invalid Project Id";
     }
-  
+
+    if (!projectCode || typeof projectCode !== "string") {
+      return "Invalid Project Code";
+    }
+
     try {
       const orgDbSequelize = await this.interactionModelService.getSequelize();
 
-      const schemaName =  `trd365_${accountNumber.replace(/\D/g, "")}`;
-  
+      const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+
       const [idResult] = await orgDbSequelize.query(
         `SELECT 1 FROM "${schemaName}".project_fiscal 
          WHERE r_number = :projectId 
@@ -632,12 +650,16 @@ export class WebHookService {
           replacements: { projectId },
         }
       );
-    
+
       if (!idResult) {
-        return 'Invalid Project ID';
+        return "Invalid Project ID";
       }
-    
-      if (projectName && typeof projectName === 'string' && projectName.trim() !== ''){
+
+      if (
+        projectName &&
+        typeof projectName === "string" &&
+        projectName.trim() !== ""
+      ) {
         const [nameResult] = await orgDbSequelize.query(
           `SELECT 1 FROM "${schemaName}".project_fiscal 
            WHERE project_name = :projectName 
@@ -647,12 +669,12 @@ export class WebHookService {
             replacements: { projectName },
           }
         );
-      
+
         if (!nameResult) {
-          return 'Invalid Project Name';
-        } 
+          return "Invalid Project Name";
+        }
       }
-    
+
       const [codeResult] = await orgDbSequelize.query(
         `SELECT 1 FROM "${schemaName}".project_fiscal 
          WHERE project_code = :projectCode 
@@ -662,9 +684,9 @@ export class WebHookService {
           replacements: { projectCode },
         }
       );
-    
+
       if (!codeResult) {
-        return 'Invalid Project Code';
+        return "Invalid Project Code";
       }
 
       const [finalResult] = await orgDbSequelize.query(
@@ -682,19 +704,22 @@ export class WebHookService {
           },
         }
       );
-    
-      if (!finalResult) {
-        return 'Invalid Project Details';
-      }
 
+      if (!finalResult) {
+        return "Invalid Project Details";
+      }
     } catch (err) {
       return `Database error: ${(err as Error).message || err}`;
     }
-  
-    return null;
-  }  
 
-  async fetchInteractionById(accountNumber: string, interactionCode: string, interactionId: string) {
+    return null;
+  }
+
+  async fetchInteractionById(
+    accountNumber: string,
+    interactionCode: string,
+    interactionId: string
+  ) {
     const { Interaction } = await this.interactionModelService.getModels(
       accountNumber
     );
@@ -702,7 +727,7 @@ export class WebHookService {
     const interaction = await Interaction.findOne({
       where: {
         r_number: interactionCode,
-        rid: interactionId
+        rid: interactionId,
       },
     });
 
@@ -767,8 +792,11 @@ export class WebHookService {
     let interactionIdFomBody: string = "";
     let FORWARD_EMAIL: string | null = null;
     let accountRNumber = "";
+    let interactionLevel = "";
 
-    const match = htmlBodyContent.match(/\(Interaction Ref Id:\s*(D001-[a-f0-9\-]+)\s*\)/i);
+    const match = htmlBodyContent.match(
+      /\(Interaction Ref Id:\s*((?:D001|U001|S001|P001)-[a-f0-9\-]+)\s*\)/i
+    );
     if (match && match[1]) {
       interactionIdFomBody = match[1];
       const globalInteraction: any = await this.fetchGlobalInteractions(
@@ -785,6 +813,11 @@ export class WebHookService {
         globalInteraction[0].account_rid
       );
       FORWARD_EMAIL = keyContactsEmail;
+
+      interactionLevel = await this.fetchInteractionLevel(
+        accountNumber,
+        interactionIdFomBody
+      );
     } else {
       return {
         success: false,
@@ -811,7 +844,7 @@ export class WebHookService {
         errorMessage: "No PDF attachment found in the email.",
       });
       return {
-        success: false
+        success: false,
       };
     }
 
@@ -819,12 +852,13 @@ export class WebHookService {
       const result = await this.processAttachment(
         att,
         message,
+        interactionLevel,
         FORWARD_EMAIL,
         graphClient,
         {
           accountNumber: accountRNumber,
           subject: subject,
-          sender: message.from.emailAddress.address
+          sender: message.from.emailAddress.address,
         },
         email
       );
@@ -835,9 +869,9 @@ export class WebHookService {
 
     await graphClient
       .api(
-        `/users/${encodeURIComponent(
-          email
-        )}/messages/${encodeURIComponent(messageId)}`
+        `/users/${encodeURIComponent(email)}/messages/${encodeURIComponent(
+          messageId
+        )}`
       )
       .update({ isRead: true });
 
@@ -849,6 +883,7 @@ export class WebHookService {
       forwardEmail: FORWARD_EMAIL,
       originlMessage: message,
       interactionId: interactionIdFomBody,
+      interactionLevel,
       success: true,
     };
   }
@@ -856,6 +891,7 @@ export class WebHookService {
   private async processAttachment(
     att: any,
     message: any,
+    interactionLevel: string,
     forwardEmail: string | null,
     graphClient: Client,
     options: {
@@ -892,7 +928,21 @@ export class WebHookService {
         const rows = await this.parseCsvBuffer(buffer);
         parsedData = rows;
 
-        const validationResult = this.validateCSV(rows);
+        const validationResult = this.validateCSV(rows, interactionLevel);
+        if(validationResult.answerValidation){
+          const errorDetails = validationResult.errors?.join(", ");
+          reason = `CSV validation failed - ${errorDetails}`;
+          await this.sendMailWithAttachment(
+            message,
+            att.name,
+            buffer,
+            reason,
+            forwardEmail,
+            graphClient,
+            email
+          );
+          this.logger.error(`Forwarding file "${att.name}" due to: ${reason}`);
+        }
 
         if (validationResult.valid) {
           this.logger.info("Valid CSV:", att.name);
@@ -950,7 +1000,7 @@ export class WebHookService {
 
         parsedData = rows;
 
-        const validationResult = this.validateCSV(rows);
+        const validationResult = this.validateCSV(rows, interactionLevel);
 
         if (validationResult.valid) {
           this.logger.info("Valid XLSX:", att.name);
@@ -1088,6 +1138,40 @@ export class WebHookService {
     return targetContact?.key_contact_email || null;
   }
 
+  private async fetchInteractionLevel(
+    accountNumber: string,
+    interactionId: string
+  ) {
+    const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+
+    const orgDbSequelize = await this.interactionModelService.getSequelize();
+    const mainDbSequelize =
+      await this.interactionModelService.getMainSequelize();
+
+    const interactionDetails: any = await orgDbSequelize.query(
+      rawQueries.fetchInteractionDetailsById(schemaName, interactionId),
+      {
+        type: "SELECT",
+      }
+    );
+
+    if (interactionDetails && interactionDetails.length > 0) {
+      const interactionLevelId =
+        interactionDetails[0]?.interaction_level_rid ?? null;
+      const result: any = await mainDbSequelize.query(
+        rawQueries.fetchInteractionLevel([interactionLevelId]),
+        {
+          type: "SELECT",
+        }
+      );
+
+      if (result && result.length > 0) {
+        return result[0]?.interaction_level_name ?? null;
+      }
+    }
+    return null;
+  }
+
   private parseCsvBuffer(buffer: Buffer): Promise<string[][]> {
     return new Promise((resolve, reject) => {
       const rows: string[][] = [];
@@ -1102,16 +1186,19 @@ export class WebHookService {
     });
   }
 
-  private validateCSV(array: string[][]): { valid: true } | { valid: false; errors: string[] } {
+  private validateCSV(
+    array: string[][],
+    interactionLevel: string
+  ): { valid: true, answerValidation?: boolean, errors?: string[] } | { valid: false; errors: string[], answerValidation?: boolean } {
     const errors: string[] = [];
-  
+
     if (!Array.isArray(array) || array.length < 6) {
       return {
         valid: false,
         errors: ["CSV has too few rows or is not an array."],
       };
     }
-  
+
     // Header Checks (Rows 0 to 4)
     if (array[0]?.[0] !== "Account ID" || !array[0]?.[1]) {
       errors.push("Missing or invalid 'Account ID' in row 1.");
@@ -1119,58 +1206,103 @@ export class WebHookService {
     if (array[1]?.[0] !== "Interaction ID" || !array[1]?.[1]) {
       errors.push("Missing or invalid 'Interaction ID' in row 2.");
     }
-    if (array[2]?.[0] !== "Project ID" || !array[2]?.[1]) {
+    if (
+      (array[2]?.[0] !== "Project ID" || !array[2]?.[1]) &&
+      interactionLevel === "Project"
+    ) {
       errors.push("Missing or invalid 'Project ID' in row 3.");
     }
 
-    if (array[4]?.[0] !== "Project Code" || !array[4]?.[1]) {
+    if (
+      (array[4]?.[0] !== "Project Code" || !array[4]?.[1]) &&
+      interactionLevel === "Project"
+    ) {
       errors.push("Missing or invalid 'Project Code' in row 5.");
     }
-  
+
     // Column Headers at index 5
-    const expectedHeaders = ["Question No", "Questions", "Answers", "Notes", "Is Mandatory"];
+    const expectedHeaders = [
+      "Question No",
+      "Questions",
+      "Answers",
+      "Notes",
+      "Is Mandatory",
+    ];
     const tableHeader = array[5] || [];
-  
+
     expectedHeaders.forEach((expected, index) => {
       if (tableHeader[index] !== expected) {
-        errors.push(`Expected column "${expected}" at position ${index + 1} in header row (row 6).`);
+        errors.push(
+          `Expected column "${expected}" at position ${
+            index + 1
+          } in header row (row 6).`
+        );
       }
     });
-  
+
     // Data rows validation
-    for (let i = 6; i < array.length; i++) {
-      const row = array[i];
+    const dataRows = array.slice(6);
+    const totalRows = dataRows.length;
+
+    let answeredRowsCount = 0;
+    let mandatoryQuestionsCount = 0;
+    let answerValidation = false;
+
+    for (let i = 0; i < totalRows; i++) {
+      const row = dataRows[i];
       if (!row) continue;
-  
+
       const questionId = row[0];
       const question = row[1];
-      const answer = row[2];
+      const answer = row[2]?.trim();
       const notes = row[3];
       const isMandatory = row[4]?.trim().toLowerCase();
-  
+
       const rowErrors: string[] = [];
-  
-      if (!questionId) rowErrors.push("Question No");
-      if (!question) rowErrors.push("Questions");
-      // if (!answer) rowErrors.push("Answers");
-      if (!isMandatory) rowErrors.push("Is Mandatory");
-  
-      // If Is Mandatory is 'yes', answer must be non-empty
+
+      // Count answered rows
+      const hasAnswer = !!answer;
+      if (hasAnswer) answeredRowsCount++;
+
+      if (isMandatory === "yes") mandatoryQuestionsCount++;
+
+      // Special case: only one row
+      if (totalRows === 1 && isMandatory === "yes" && !hasAnswer) {
+        rowErrors.push(
+          "Answer is required because the question is mandatory"
+        );
+      }
+
       if (isMandatory === "yes" && !answer?.trim()) {
+        answerValidation = true;
         rowErrors.push("Answer is required because the question is mandatory");
       }
-  
+
+      // Skip empty-answer rows (in multiple row case)
+      // if (totalRows > 1 && !hasAnswer) continue;
+
+      // For answered rows, validate required fields
+      if (!questionId) rowErrors.push("Question No");
+      if (!question) rowErrors.push("Questions");
+      if (!isMandatory) rowErrors.push("Is Mandatory");
+
       if (rowErrors.length > 0) {
-        errors.push(`Row ${i + 1} is missing: ${rowErrors.join(", ")}`);
+        errors.push(`Row ${i + 7} is missing: ${rowErrors.join(", ")}`);
       }
     }
-  
-    if (errors.length > 0) {
-      return { valid: false, errors };
+
+    if (answeredRowsCount === 0 && mandatoryQuestionsCount > 0) {
+      errors.push(
+        "No answers provided. At least one answered row is required."
+      );
     }
-  
-    return { valid: true };
-  }  
+
+    if (errors.length > 0) {
+      return { valid: answerValidation ? true : false, errors, answerValidation };
+    }
+
+    return { valid: true, answerValidation: false };
+  }
 
   private async sendMailWithAttachment(
     originalMessage: any,

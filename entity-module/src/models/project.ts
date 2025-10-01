@@ -41,6 +41,7 @@ export interface ProjectAttributes {
   total_cost?: number | null;
   total_fte?: number | null;
   total_subcon?: number | null;
+  total_nonlabor?: number | null;
 
   total_effort_fte?: number | null;
   total_effort_subcon?: number | null;
@@ -111,6 +112,7 @@ export class Project
   public total_cost?: number | null;
   public total_fte?: number | null;
   public total_subcon?: number | null;
+  public total_nonlabor?: number | null;
 
   public total_effort_fte?: number | null;
   public total_effort_subcon?: number | null;
@@ -246,6 +248,7 @@ export class Project
 
         total_fte: DataTypes.INTEGER,
         total_subcon: DataTypes.INTEGER,
+        total_nonlabor: DataTypes.INTEGER,
         total_effort: DataTypes.DECIMAL(18, 2),
         total_cost: DataTypes.DECIMAL(18, 2),
         total_effort_fte: DataTypes.DECIMAL(18, 2),

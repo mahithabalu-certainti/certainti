@@ -4,7 +4,7 @@ import { checkUserStatusMiddleware } from "../middlewares/authMiddleware";
 
 const routes: Router = Router();
 
-routes.get(
+routes.post(
   "/list",
   checkUserStatusMiddleware("projects_view_edit"),
   controller.projectController.allProjectList

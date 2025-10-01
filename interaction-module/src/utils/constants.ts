@@ -71,7 +71,8 @@ export const filtersColumns : Record<string, string> =
     interaction_age : "interaction_age",
     recipient_name : "recipient_name",
     recipient_email : "recipient_email",
-    last_resent_on : "sent_on_datetime",
+    last_resent_on : "last_resent_on",
+    sent_on_datetime : "sent_on_datetime",
     last_reminder_on : "last_reminder_on",
     response_submitted_on : "response_submitted_on",
     response_updated_on : "response_updated_on",
@@ -87,7 +88,23 @@ export const filtersColumns : Record<string, string> =
     response_source_rid : "response_source_rid",
     interaction_level_rid:"interaction_level_rid",
     parent_interaction_rid : "parent_interaction_rid",
-    createdAt : "createdAt"
+    createdAt : "createdAt",
+    template_name : "template_name"
+  }
+
+  export const templatefiltersColumns : Record<string, string> =
+  {
+    r_number : "r_number",
+    created_user_name:"created_user_name",
+    modified_user_name:"modified_user_name",
+    created_datetime : "created_datetime",
+    modified_datetime : "modified_datetime",
+    status_rid : "status_rid",
+    interaction_type_rid : "interaction_type_rid",
+    interaction_level_rid:"interaction_level_rid",
+    parent_interaction_rid : "parent_interaction_rid",
+    createdAt : "createdAt",
+    template_name : "template_name"
   }
 
   export const filterTypes : Record<string, any> = 
@@ -105,6 +122,7 @@ export const filtersColumns : Record<string, string> =
     response_source : "string",
     created_datetime : "datetime",
     modified_datetime : "datetime",
+    sent_on_datetime : "datetime",
     status_rid : "string",
     interaction_type_rid : "string",
     project_code : "string",
@@ -113,6 +131,9 @@ export const filtersColumns : Record<string, string> =
     parent_interaction_rid:"string",
     interaction_level_rid:"string",
     createdAt:"datetime",
+    template_name : "string",
+    created_user_name : "string",
+    modified_user_name : "string"
   }
 
   export const ALPHANUMERIC_CONDITIONS : Record <string, string> = {
@@ -385,7 +406,7 @@ export const rawQueries = {
   },
    fetchAccountDetailsInfo(rid: string,schemaName: string) {
     return `
-    SELECT rid, fiscal_start_date,fiscal_end_date,autosend_interaction FROM ${schemaName}.account_details WHERE account_rid = '${rid}'`;
+    SELECT rid, fiscal_start_date,fiscal_end_date,autosend_interaction,max_ai_interactions FROM ${schemaName}.account_details WHERE account_rid = '${rid}'`;
   },
   
   fetchPreviousInteractionStatus(statusRid: string, schemaName: string) {
@@ -454,6 +475,10 @@ export const rawQueries = {
     return `
     SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE lower(entity_type) = 'account' and include_in_communication is true and entity_rid = '${accountRid}' and status_rid = '${statusRid}'`;
   },
+  fetchRemainderEmailInfo(interactionRid: string, schemaName: string) {
+    return `
+    SELECT recipient_name, recipient_email FROM ${schemaName}.interactions WHERE rid = '${interactionRid}' `
+  },
   fetchisAutoSendEnabled(projectFiscalRid: string, schemaName: string) {
     return `
     SELECT auto_send_ai_interaction FROM ${schemaName}.project_fiscal WHERE rid = '${projectFiscalRid}' LIMIT 1`;
@@ -474,6 +499,10 @@ export const rawQueries = {
   fetchInteractionType(type: string) {
     return `
     SELECT rid FROM ${MAIN_SCHEMA_NAME}.interaction_type WHERE interaction_type_name = '${type}' LIMIT 1`;
+  },
+   fetchInteractionLevelRidByName(type: string) {
+    return `
+    SELECT rid FROM ${MAIN_SCHEMA_NAME}.interaction_level WHERE interaction_level_name = '${type}' LIMIT 1`;
   },
   fetchAllParentRNumber() {
     let query = `SELECT r_number FROM ${MAIN_SCHEMA_NAME}.account WHERE storage_type = '${STATUS_MESSAGE.separateDb}' AND parent_account_rid IS NULL
@@ -571,6 +600,39 @@ export const rawQueries = {
     return `
     SELECT * FROM ${schemaName}.project_fiscal WHERE rid = '${projectFiscalId}'`;
   },
+  fetchInteractionDetailsById(schemaName: string, interactionId: string): string {
+    return `
+      SELECT rid, interaction_level_rid from ${schemaName}.interactions
+      WHERE rid = '${interactionId}'
+    `;
+  },
+  fetchParentAccountforEmail : `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
+  fetchInteractionTemplates :  `
+    SELECT 
+        it.rid,
+        it.r_number,
+        it.template_name,
+        it.interaction_type_rid,
+        itype.interaction_type_name,
+        it.interaction_level_rid,
+        il.interaction_level_name,
+        it.status_rid,
+        s.status_name AS status_name,
+        it.created_by,
+        it.modified_by,
+        it.created_datetime,
+        it.modified_datetime
+    FROM 
+        trd365.interaction_templates it
+    LEFT JOIN 
+        trd365.interaction_level il ON it.interaction_level_rid = il.rid
+    LEFT JOIN 
+        trd365.status s ON it.status_rid = s.rid
+     LEFT JOIN 
+        trd365.interaction_type itype ON it.interaction_type_rid = itype.rid
+    WHERE 
+        it.rid = :interactionRid;
+  `,
   GET_ACCOUNT_ACCESS: `
 (
   (
@@ -690,11 +752,17 @@ export const rawQueries = {
   updateInteractionStatus(schemaName : string, statusRid : string, interactionRid : string) {
     return `UPDATE ${schemaName}.interactions SET status_rid = '${statusRid}' WHERE rid = '${interactionRid}'`
   },
+  updateInteractionStatusAndResEmailName(schemaName : string, statusRid : string, interactionRid : string, email : string, name : string) {
+    return `UPDATE ${schemaName}.interactions SET status_rid = '${statusRid}', recipient_name = '${name}', recipient_email = '${email}' WHERE rid = '${interactionRid}'`
+  },
   fetchInteractionQueueStatus() {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE status_name ILIKE '%In-Queue%'`
   },
   updateInteractionSummaryStatus(statusRid : string, interactionRid : string) {
     return `UPDATE ${MAIN_SCHEMA_NAME}.interactions_summary SET status_rid = '${statusRid}' WHERE interaction_rid = '${interactionRid}'`
+  },
+  updateInteractionSummaryStatusAndResEmailName(statusRid : string, interactionRid : string, name : string, email : string) {
+    return `UPDATE ${MAIN_SCHEMA_NAME}.interactions_summary SET status_rid = '${statusRid}', recipient_name = '${name}', recipient_email = '${email}' WHERE interaction_rid = '${interactionRid}'`
   },
   fetchOrganizationSettings(): string {
     return `
@@ -703,6 +771,22 @@ export const rawQueries = {
   },
   fetchAccountRnumber (account_rid : string) {
     return `SELECT account_name , r_number FROM ${MAIN_SCHEMA_NAME}.account where rid = '${account_rid}'`
+  },
+  fetchKeyContactForInteraction(schemaName : string, id : string) {
+    return `SELECT key_contact_name, key_contact_email FROM ${schemaName}.key_contact_details where entity_rid = '${id}' AND include_in_communication = TRUE`
+  },
+  fetchProfServConsultantDetails (schemaName : string, accountRid : string, keyContactRoleId : string) {
+    return `SELECT * FROM ${schemaName}.key_contact_details WHERE entity_rid = '${accountRid}' AND key_contact_role = '${keyContactRoleId}'`
+  },
+  fetchProfServConsultantRid () {
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE role_name = '${keyContactRoleName.professionalServiceConsultant}'`
+  },
+  fetchProjectDetails (schemaName : string, projectFiscalRid : string) {
+    return `SELECT project_name, project_code, fiscal_year FROM ${schemaName}.project_fiscal
+    WHERE rid = '${projectFiscalRid}'`
+  },
+  fetchInteractionLevelById (interactionLevelRid : string) {
+    return `SELECT * FROM ${MAIN_SCHEMA_NAME}.interaction_level WHERE rid = '${interactionLevelRid}'`
   }
 };
 
@@ -800,6 +884,17 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     { permissionField: 'modified_by', exportField: 'Last Updated By', dataField: 'modified_by' },
     { permissionField: 'modified_datetime', exportField: 'Last Updated Date', dataField: 'modified_datetime' }
   ];
+    export const templateFieldMappings = [
+    { permissionField: 'r_number', exportField: 'Template ID', dataField: 'r_number' },
+    { permissionField: 'template_name', exportField: 'Template Name', dataField: 'template_name' },
+    { permissionField: 'interaction_level_name', exportField: 'Interaction Level', dataField: 'interaction_level_name' },
+    { permissionField: 'interaction_type_name', exportField: 'Type', dataField: 'interaction_type_name' },
+    { permissionField: 'created_by', exportField: 'Created By', dataField: 'created_by' },
+    { permissionField: 'created_datetime', exportField: 'Created On', dataField: 'created_datetime' },
+    { permissionField: 'modified_by', exportField: 'Updated By', dataField: 'modified_by' },
+    { permissionField: 'modified_datetime', exportField: 'Updated On', dataField: 'modified_datetime' },
+    { permissionField: 'status', exportField: 'Status', dataField: 'status_name' },
+  ];
 
    export const accountinteractionFieldMappings = [
     { permissionField: 'r_number', exportField: 'Interaction ID', dataField: 'r_number' },
@@ -846,4 +941,8 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     interactionAge : "interaction_age",
     interaction : "interactions",
     attachments : "attachments"
+  }
+
+  export const keyContactRoleName = {
+    professionalServiceConsultant : "Professional Services Consultant"
   }
