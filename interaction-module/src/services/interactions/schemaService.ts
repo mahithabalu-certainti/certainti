@@ -2405,19 +2405,17 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       }
 
       const [statusData]: any = await this.mainDbSequelize.query(
-        rawQueries.fetchInteractionStatusByType(statusAction.RESPONSE_DRAFT)
+        rawQueries.fetchInteractionStatusByType(statusAction.RESPONSE_RECEIVED)
       );
 
       if (responseData.questions && Array.isArray(responseData.questions)) {
         for (const question of responseData.questions) {
-          const draftStatusid = statusData[0]?.rid;
+          const recievedStatusid = statusData[0]?.rid;
 
           const isExisting = await Interaction.findOne({
             where: {
               rid: responseData.interaction_rid,
-              status_rid: {
-                [Op.ne]: draftStatusid
-              }
+              status_rid: recievedStatusid
             }
           });
 
