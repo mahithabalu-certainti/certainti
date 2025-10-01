@@ -189,14 +189,20 @@ const Interactions: React.FC<InteractionsProps> = ({
     isError: isModelDataError,
   } = useInteractionListModel(
     {
-      page: modelTableParms.page,
+      page: modelTableParms.page + 1,
       limit: modelTableParms.limit,
       sort: modelTableParms.sort,
       sort_by: modelTableParms.sort_by,
       filters: modelTableParms.filter,
       fiscal_year: fiscalYear,
       account_rid: accountId,
-      flag: 'account',
+      flag: 'project',
+      project_rid: projectDetails?.project_rid || '',
+      project_fiscal_rid:
+        projectDetails?.project_fiscal_rid ||
+        projectid ||
+        projectDetails?.rid ||
+        '',
       reminder_specific_list: true,
     },
     reminderModalOpen,
@@ -565,7 +571,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   const handleReminderBtn = (data: InteractionList[]) => {
     const interactions = data.map((item) => ({
       interaction_rid: item.rid || '',
-      // interaction_level: 'Account',
+      interaction_level: item.interaction_level_name || '',
       project_fiscal_rid: item.project_fiscal_rid || '',
     }));
 

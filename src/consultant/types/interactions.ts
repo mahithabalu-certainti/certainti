@@ -153,6 +153,7 @@ export type InteractionList = {
   account_name?: string | null;
   project_count?: string;
   modified_user_name?: string;
+  interaction_level_name?: string;
 };
 
 export type InteractionTemplateList = {

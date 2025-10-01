@@ -236,6 +236,7 @@ const TableModal: React.FC<TableModalProps> = ({
             label='Send'
             onClick={() => handleSend(selectedRows)}
             loading={saveBtnLoading}
+            disabled={selectedRows.length === 0}
             sx={{
               width: '64px',
               minWidth: '64px',
