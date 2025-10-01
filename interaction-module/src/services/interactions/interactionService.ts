@@ -1221,24 +1221,17 @@ export class InteractionService {
           await this.interactionSchemaService.createAutoSendInteractionEntry(accountNumber, interaction_rid, project_fiscal_rid, email_info,accountRid,interaction_level);
         }
         console.log("Interaction queued for sending:", interaction_rid, fetchInQueueStatus[0][0].rid);
+        if(!is_interaction_followup){
         if(interaction_level.toLowerCase() === 'account') {
           if((data.email !== "" || data.email !== null) && (data.name !== "" || data.name !== null)) {
             email = data.email;
             name = data.name;
         } 
         else {
-          if(is_interaction_followup)
-          {
-            const fetchResNameEmail : any = await orgDb.query(rawQueries.fetchRemainderEmailInfo( data.interaction_rid,schemaName))
-          email = fetchResNameEmail[0][0].recipient_email
-          name = fetchResNameEmail[0][0].recipient_name
-          }
-          else
-          {
+        
             const fetchResNameEmail : any = await orgDb.query(rawQueries.fetchKeyContactForInteraction(schemaName, data.account_rid))
             email = fetchResNameEmail[0][0].key_contact_email
             name = fetchResNameEmail[0][0].key_contact_name
-          }
           
         }
         await orgDb.query(rawQueries.updateInteractionStatusAndResEmailName(schemaName, fetchInQueueStatus[0][0].rid, interaction_rid, email, name))
@@ -1248,25 +1241,16 @@ export class InteractionService {
             email = data.email;
             name = data.name;
         } else {
-          if(is_interaction_followup)
-          {
-            const fetchResNameEmail : any = await orgDb.query(rawQueries.fetchRemainderEmailInfo( data.interaction_rid,schemaName))
-          email = fetchResNameEmail[0][0].recipient_email
-          name = fetchResNameEmail[0][0].recipient_name
-
-          }
-          else
-          {
+          
              const fetchResNameEmail : any = await orgDb.query(rawQueries.fetchKeyContactForInteraction(schemaName, project_fiscal_rid))
           email = fetchResNameEmail[0][0].key_contact_email
           name = fetchResNameEmail[0][0].key_contact_name
-
-          }
          
         }
         await orgDb.query(rawQueries.updateInteractionStatusAndResEmailName(schemaName, fetchInQueueStatus[0][0].rid, interaction_rid, email, name))
         await mainDb.query(rawQueries.updateInteractionSummaryStatusAndResEmailName(fetchInQueueStatus[0][0].rid, interaction_rid, name, email))
         }
+      }
         interactionResponse.push({
           interactionRid: interaction_rid,
         });
