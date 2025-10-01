@@ -253,6 +253,7 @@ export const getProjectTaskColumns = (
     field: {
       type: 'text',
       required: false,
+      formatCostNumber: true,
       placeholder: 'Enter Cost',
       validation: [
         {
@@ -286,6 +287,7 @@ export const getProjectTaskColumns = (
       !permissionMapTaskTableColumn?.['total_hours_pro_task']?.edit,
     field: {
       type: 'text',
+      formatCostNumber: true,
       required: false,
       placeholder: 'Enter an effort',
       validation: [
