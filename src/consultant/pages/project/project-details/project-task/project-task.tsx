@@ -220,13 +220,11 @@ export const ProjectTask = ({
     }
   }, [data]);
   const type = 'type';
-  const { data: projectResourceTypeOptions, isLoading: taskTypeLoading } =
+  const { data: projectResourceTypeOptions } =
     useGetProjectResourceTaskType(type);
   const classification = 'classification';
-  const {
-    data: projectResourceClassificationOptions,
-    isLoading: classificationLoading,
-  } = useGetProjectResourceTaskType(classification);
+  const { data: projectResourceClassificationOptions } =
+    useGetProjectResourceTaskType(classification);
 
   const memoizedProjectResourceType: SelectResourceOption[] = useMemo(
     () =>
@@ -717,9 +715,7 @@ export const ProjectTask = ({
                           getConditionMenuItems(row)
                       : undefined
                   }
-                  loading={
-                    isLoading || taskTypeLoading || classificationLoading
-                  }
+                  loading={isLoading}
                   error={error ? 'Failed to load projects' : undefined}
                   rowsPerPageOptions={[25, 50, 100]}
                   rowsPerPage={rowsPerPage}
