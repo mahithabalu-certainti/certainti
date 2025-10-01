@@ -260,6 +260,7 @@ const listInteractionTemplatesSchema = Joi.object({
   timezone: Joi.string().optional()
 }); 
 
+
 const updateInteractionTemplateSchema = Joi.object({
   template_rid: Joi.string().pattern(uuidRegex).required(),
   interaction_level_rid: Joi.string().pattern(uuidRegex).required(),
