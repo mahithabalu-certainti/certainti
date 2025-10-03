@@ -12,7 +12,7 @@ import configurations from "../config/config";
 import { exportListNotesSummarySchema, listNotesSummarySchema, createNotesSchema, exportListNotesSchema, listNotesSchema } from "../lib/joi/schemas/schema";
 
 const services = configurations.getInstance().getServices();
-const attachmentService = services.notesService;
+const notesService = services.notesService;
 
 async function createNotes(req: Request, res: Response): Promise<void> {
   const methodName = "create notes";
@@ -42,7 +42,7 @@ async function createNotes(req: Request, res: Response): Promise<void> {
       );
       return;
     }
-    const attachment = await attachmentService.createNotes(value, userId, req.file);
+    const attachment = await notesService.createNotes(value, userId, req.file);
 
     if (attachment.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -105,7 +105,7 @@ async function getAllNotes(req: Request, res: Response): Promise<void> {
         value.filters = {};
       }
     }
-    const attachments = await attachmentService.getNotes(userId,value.attachmentLevel,value.entityId,value.accountRid,value.page,value.limit,value.search,value.filters,value.sortBy,value.sortOrder,value.fiscalYear, {});
+    const attachments = await notesService.getNotes(userId,value.attachmentLevel,value.entityId,value.accountRid,value.page,value.limit,value.search,value.filters,value.sortBy,value.sortOrder,value.fiscalYear, {});
 
     if (attachments.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -162,7 +162,7 @@ async function exportAllNotes(req: Request, res: Response): Promise<void> {
         value.filters = {};
       }
     }
-    const attachments = await attachmentService.exportNotes(userId,value.attachmentLevel,value.entityId,value.accountRid,value.search,value.filters,value.sortBy,value.sortOrder,value.fiscalYear, {});
+    const attachments = await notesService.exportNotes(userId,value.attachmentLevel,value.entityId,value.accountRid,value.search,value.filters,value.sortBy,value.sortOrder,value.fiscalYear, {});
 
     if (attachments.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -219,7 +219,7 @@ async function exportAllNotes(req: Request, res: Response): Promise<void> {
         value.filters = {};
       }
     }
-    const attachments = await attachmentService.getNotesSummary(userId,value.page,value.limit,value.search,value.filters,value.globalFilters,value.sortBy,value.sortOrder,value.fiscalYear);
+    const attachments = await notesService.getNotesSummary(userId,value.page,value.limit,value.search,value.filters,value.globalFilters,value.sortBy,value.sortOrder,value.fiscalYear);
 
     if (attachments.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -276,7 +276,7 @@ async function exportAllNotes(req: Request, res: Response): Promise<void> {
         value.filters = {};
       }
     }
-    const attachments = await attachmentService.exportNotesSummary(userId,value.search,value.filters,value.globalFilters,value.sortBy,value.sortOrder,value.fiscalYear);
+    const attachments = await notesService.exportNotesSummary(userId,value.search,value.filters,value.globalFilters,value.sortBy,value.sortOrder,value.fiscalYear);
 
     if (attachments.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
