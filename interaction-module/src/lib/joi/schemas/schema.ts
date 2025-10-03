@@ -257,7 +257,9 @@ const listInteractionTemplatesSchema = Joi.object({
   apiSource: Joi.string().optional(),
   templateType: Joi.string().optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
+  timezone: Joi.string().optional()
 }); 
+
 
 const updateInteractionTemplateSchema = Joi.object({
   template_rid: Joi.string().pattern(uuidRegex).required(),

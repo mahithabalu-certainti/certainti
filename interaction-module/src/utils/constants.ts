@@ -893,7 +893,7 @@ export const filterTypesForSummaryInteractions : Record<string, any> =
     { permissionField: 'created_datetime', exportField: 'Created On', dataField: 'created_datetime' },
     { permissionField: 'modified_by', exportField: 'Updated By', dataField: 'modified_by' },
     { permissionField: 'modified_datetime', exportField: 'Updated On', dataField: 'modified_datetime' },
-    { permissionField: 'status', exportField: 'Status', dataField: 'status_name' },
+    { permissionField: 'status_name', exportField: 'Status', dataField: 'status_name' },
   ];
 
    export const accountinteractionFieldMappings = [
