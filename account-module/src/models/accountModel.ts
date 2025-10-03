@@ -7,6 +7,7 @@ import { ENV_PREFIX, MAIN_SCHEMA_NAME} from "../utils/constant";
 import { AccountFileDropConfig } from "./accountFileDropConfigModel";
 import { States } from "./stateModel";
 import { Status } from "./statusModel";
+import { AccountFiscalSummary } from "./accountFiscalSummaryModel";
 interface AccountAttributes {
   rid: string;
   eid?: string;
@@ -322,6 +323,11 @@ export class Account
     Account.belongsTo(AccountFileDropConfig, {
       foreignKey: "file_drop_config_id",
       as: "file_drop_config",
+    });
+    
+    Account.hasMany(AccountFiscalSummary, {
+      foreignKey: "account_rid",
+      as: "projects_by_fiscal_year",
     });
   }
 }
