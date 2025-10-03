@@ -13,6 +13,7 @@ import importRoutes from './importRoutes'
 import settingRoutes from '../routes/settingsRoutes'
 import financialRoutes from '../routes/financialHighlightsRoutes'
 import timesheetRoutes from './timesheetRoutes'
+import templateRoutes from './templateRoute'
 
 const routes: Router = Router();
 
@@ -46,5 +47,6 @@ routes.use('/settings', settingRoutes)
 routes.use('/financialHighlight', financialRoutes)
 routes.use('/timesheet', timesheetRoutes)
 routes.use('/notes', notesRoutes)
+routes.use('/template', templateRoutes)
 
 export default routes;
