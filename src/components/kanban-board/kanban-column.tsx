@@ -1,9 +1,14 @@
 'use client';
 import type React from 'react';
 import { useState, useRef, useEffect } from 'react';
-import { KanbanColumnProps } from './types';
-import { AddIcon, ArrowDownIcon } from '../../assets';
+import { useDroppable } from '@dnd-kit/core';
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import type { KanbanColumnProps, Task } from './types';
 import TaskCard from './task-card';
+import { AddIcon } from '../../assets';
 
 const KanbanColumn: React.FC<KanbanColumnProps> = ({
   column,
@@ -18,129 +23,82 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
   onTaskEdit,
   onTaskClick,
 }) => {
-  const [isAddingTaskAtTop, setIsAddingTaskAtTop] = useState(false);
-  const [isAddingTaskAtBottom, setIsAddingTaskAtBottom] = useState(false);
+  const [isCreatingTask, setIsCreatingTask] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [newBottomTaskTitle, setNewBottomTaskTitle] = useState('');
-  const [, setIsHoveringHeader] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isRenamingColumn, setIsRenamingColumn] = useState(false);
   const [columnName, setColumnName] = useState(column.name);
+  const [showMenu, setShowMenu] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const bottomInputRef = useRef<HTMLInputElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const columnNameRef = useRef<HTMLInputElement>(null);
+  const columnInputRef = useRef<HTMLInputElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const { setNodeRef } = useDroppable({
+    id: column.id,
+  });
+
+  const taskIds = column.tasks.map((task) => task.id);
 
   useEffect(() => {
-    if (isAddingTaskAtTop && inputRef.current) {
+    if (isCreatingTask && inputRef.current) {
       inputRef.current.focus();
     }
-  }, [isAddingTaskAtTop]);
+  }, [isCreatingTask]);
 
   useEffect(() => {
-    if (isAddingTaskAtBottom && bottomInputRef.current) {
-      bottomInputRef.current.focus();
-    }
-  }, [isAddingTaskAtBottom]);
-
-  useEffect(() => {
-    if (isRenamingColumn && columnNameRef.current) {
-      columnNameRef.current.focus();
-      columnNameRef.current.select();
+    if (isRenamingColumn && columnInputRef.current) {
+      columnInputRef.current.focus();
+      columnInputRef.current.select();
     }
   }, [isRenamingColumn]);
 
   useEffect(() => {
-    setColumnName(column.name);
-  }, [column.name]);
-
-  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsDropdownOpen(false);
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
       }
     };
 
-    if (isDropdownOpen) {
+    if (showMenu) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isDropdownOpen]);
+  }, [showMenu]);
 
-  const handleAddTaskAtTop = () => {
+  const handleAddTask = () => {
     if (newTaskTitle.trim()) {
-      const newTask = {
-        id: Date.now().toString(),
-        title: newTaskTitle,
-        status: 'High' as const,
+      const newTask: Task = {
+        id: `task-${Date.now()}`,
+        title: newTaskTitle.trim(),
+        status: 'To Do',
         assignee: {
-          name: 'New User',
-          initials: 'NU',
-          color: '#8B5CF6',
+          name: 'Unassigned',
+          initials: 'U',
+          color: '#94a3b8',
         },
         commentCount: 0,
         createdAt: new Date(),
-        priority: 'Medium' as const,
+        priority: 'Medium',
       };
-
-      onAddTask(column.id, newTask, 'top');
-      setNewTaskTitle('');
-      setIsAddingTaskAtTop(false);
-    }
-  };
-
-  const handleAddTaskAtBottom = () => {
-    if (newBottomTaskTitle.trim()) {
-      const newTask = {
-        id: Date.now().toString(),
-        title: newBottomTaskTitle,
-        status: 'High' as const,
-        assignee: {
-          name: 'New User',
-          initials: 'NU',
-          color: '#8B5CF6',
-        },
-        commentCount: 0,
-        createdAt: new Date(),
-        priority: 'Medium' as const,
-      };
-
       onAddTask(column.id, newTask, 'bottom');
-      setNewBottomTaskTitle('');
-      setIsAddingTaskAtBottom(false);
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleAddTaskAtTop();
-    } else if (e.key === 'Escape') {
-      setIsAddingTaskAtTop(false);
       setNewTaskTitle('');
+      setIsCreatingTask(false);
     }
   };
 
-  const handleBottomKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      handleAddTaskAtBottom();
+      handleAddTask();
     } else if (e.key === 'Escape') {
-      setIsAddingTaskAtBottom(false);
-      setNewBottomTaskTitle('');
+      setNewTaskTitle('');
+      setIsCreatingTask(false);
     }
   };
 
   const handleRenameColumn = () => {
-    setIsRenamingColumn(true);
-    setIsDropdownOpen(false);
-  };
-
-  const handleSaveColumnName = () => {
     if (
       columnName.trim() &&
       columnName.trim() !== column.name &&
@@ -151,11 +109,12 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
       setColumnName(column.name);
     }
     setIsRenamingColumn(false);
+    setShowMenu(false);
   };
 
-  const handleColumnNameKeyPress = (e: React.KeyboardEvent) => {
+  const handleColumnKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      handleSaveColumnName();
+      handleRenameColumn();
     } else if (e.key === 'Escape') {
       setColumnName(column.name);
       setIsRenamingColumn(false);
@@ -166,152 +125,121 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
     if (onDeleteColumn) {
       onDeleteColumn(column.id);
     }
-    setIsDropdownOpen(false);
+    setShowMenu(false);
   };
 
   return (
-    <div className='bg-[#f5f5f5] rounded-lg p-4 w-80 flex-shrink-0'>
+    <div className='flex-shrink-0 w-80'>
       <div
-        className='bg-white border border-slate-200 rounded-lg p-3 mb-2 flex items-center justify-between group'
-        onMouseEnter={() => setIsHoveringHeader(true)}
-        onMouseLeave={() => setIsHoveringHeader(false)}
+        className='bg-[#f5f5f5] rounded-lg p-4'
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       >
-        <div className='flex items-center gap-2'>
-          {isRenamingColumn ? (
-            <input
-              ref={columnNameRef}
-              type='text'
-              value={columnName}
-              onChange={(e) => setColumnName(e.target.value)}
-              onKeyDown={handleColumnNameKeyPress}
-              onBlur={handleSaveColumnName}
-              className='bg-white text-slate-800 text-[13px] font-semibold px-2 py-1 rounded border border-slate-300 focus:border-blue-500 focus:outline-none min-w-0'
-            />
-          ) : (
-            <h2 className='text-slate-800 text-[13px] font-semibold'>
-              {column.name}
-            </h2>
-          )}
-          {showTaskCount && (
-            <span className='bg-slate-100 text-slate-600 px-2 py-1 rounded-full text-[13px]'>
-              {column.taskCount}
-            </span>
-          )}
-        </div>
-
-        <div className='flex items-center gap-1'>
-          <button
-            onClick={() => setIsAddingTaskAtTop(true)}
-            disabled={isCreateTaskDisabled}
-            className={`opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 rounded hover:bg-slate-100 ${
-              isCreateTaskDisabled ? 'cursor-not-allowed' : 'cursor-pointer'
-            }`}
-            title='Add Task'
-          >
-            <AddIcon
-              size={16}
-              className='text-slate-500 hover:text-slate-700'
-            />
-          </button>
-
-          <div className='relative' ref={dropdownRef}>
-            <button
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className='opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 rounded hover:bg-slate-100 cursor-pointer'
-              title='More options'
-            >
-              <ArrowDownIcon
-                size={16}
-                className='text-slate-500 hover:text-slate-700'
-              />
-            </button>
-
-            {isDropdownOpen && (
-              <div className='absolute right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-10 min-w-[140px]'>
-                <button
-                  onClick={handleRenameColumn}
-                  className='w-full text-left px-3 py-2 text-[13px] text-slate-700 hover:bg-slate-100 transition-colors'
-                >
-                  Rename Section
-                </button>
-                <button
-                  onClick={handleDeleteColumn}
-                  className='w-full text-left px-3 py-2 text-[13px] text-red-600 hover:bg-red-50 transition-colors'
-                >
-                  Delete Section
-                </button>
-              </div>
-            )}
+        {/* Column Header */}
+        <div className='bg-white border border-slate-200 rounded-lg p-4 mb-4'>
+          <div className='flex items-center justify-between'>
+            <div className='flex items-center gap-2 flex-1'>
+              {isRenamingColumn ? (
+                <input
+                  ref={columnInputRef}
+                  type='text'
+                  value={columnName}
+                  onChange={(e) => setColumnName(e.target.value)}
+                  onKeyDown={handleColumnKeyDown}
+                  onBlur={handleRenameColumn}
+                  className='flex-1 bg-white text-slate-800 text-[13px] font-semibold px-2 py-1 rounded border border-slate-300 focus:border-blue-500 focus:outline-none'
+                />
+              ) : (
+                <>
+                  <h2 className='text-slate-800 text-[13px] font-semibold'>
+                    {column.name}
+                  </h2>
+                  {showTaskCount && (
+                    <span className='text-slate-500 text-[13px]'>
+                      {column.taskCount}
+                    </span>
+                  )}
+                </>
+              )}
+            </div>
+            <div className='relative' ref={menuRef}>
+              <button
+                onClick={() => setShowMenu(!showMenu)}
+                className='p-1 hover:bg-slate-200 rounded transition-colors'
+              >
+                <AddIcon size={16} />
+              </button>
+              {showMenu && (
+                <div className='absolute right-0 top-8 bg-white border border-slate-200 rounded-lg shadow-lg z-10 min-w-[150px]'>
+                  <button
+                    onClick={() => {
+                      setIsRenamingColumn(true);
+                      setShowMenu(false);
+                    }}
+                    className='w-full text-left px-4 py-2 text-sm hover:bg-slate-100 transition-colors'
+                  >
+                    Rename
+                  </button>
+                  <button
+                    onClick={handleDeleteColumn}
+                    className='w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-slate-100 transition-colors'
+                  >
+                    Delete
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
+
+        <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
+          <div ref={setNodeRef} className='space-y-2 mb-4 min-h-[100px]'>
+            {column.tasks.map((task) => (
+              <TaskCard
+                key={task.id}
+                task={task}
+                showCommentCount={showCommentCount}
+                showProfileIndicator={showProfileIndicator}
+                onTaskEdit={onTaskEdit}
+                onTaskClick={onTaskClick}
+              />
+            ))}
+          </div>
+        </SortableContext>
+
+        {/* Add Task */}
+        {!isCreateTaskHide && (isHovered || isCreatingTask) && (
+          <>
+            {isCreatingTask ? (
+              <div className='bg-white border border-slate-200 rounded-lg p-3'>
+                <input
+                  ref={inputRef}
+                  type='text'
+                  value={newTaskTitle}
+                  onChange={(e) => setNewTaskTitle(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  onBlur={() => {
+                    if (!newTaskTitle.trim()) {
+                      setIsCreatingTask(false);
+                    }
+                  }}
+                  placeholder='Task name'
+                  className='w-full bg-white text-slate-800 text-[13px] font-medium px-2 py-1 rounded border border-slate-300 focus:border-blue-500 focus:outline-none'
+                />
+              </div>
+            ) : (
+              <button
+                onClick={() => setIsCreatingTask(true)}
+                disabled={isCreateTaskDisabled}
+                className='w-full bg-white border border-slate-200 rounded-lg p-3 transition-colors duration-200 flex items-center gap-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed'
+              >
+                <AddIcon className='w-4 h-[18px]' />
+                <span className='text-[13px] font-medium'>Add task</span>
+              </button>
+            )}
+          </>
+        )}
       </div>
-
-      {isAddingTaskAtTop && (
-        <div className='mb-2'>
-          <input
-            ref={inputRef}
-            type='text'
-            value={newTaskTitle}
-            onChange={(e) => setNewTaskTitle(e.target.value)}
-            onKeyDown={handleKeyPress}
-            onBlur={() => {
-              if (!newTaskTitle.trim()) {
-                setIsAddingTaskAtTop(false);
-              }
-            }}
-            placeholder='Enter task name'
-            className='w-full p-3 bg-white text-slate-800 rounded-lg border border-slate-300 focus:border-blue-500 focus:outline-none text-[13px] placeholder-slate-500'
-          />
-        </div>
-      )}
-
-      <div className='space-y-2 mb-2'>
-        {column.tasks.map((task) => (
-          <TaskCard
-            key={task.id}
-            task={task}
-            showCommentCount={showCommentCount}
-            showProfileIndicator={showProfileIndicator}
-            onTaskEdit={onTaskEdit}
-            onTaskClick={onTaskClick}
-          />
-        ))}
-      </div>
-
-      {isAddingTaskAtBottom && (
-        <div className='mb-2'>
-          <input
-            ref={bottomInputRef}
-            type='text'
-            value={newBottomTaskTitle}
-            onChange={(e) => setNewBottomTaskTitle(e.target.value)}
-            onKeyDown={handleBottomKeyPress}
-            onBlur={() => {
-              if (!newBottomTaskTitle.trim()) {
-                setIsAddingTaskAtBottom(false);
-              }
-            }}
-            placeholder='Enter task name'
-            className='w-full p-3 bg-white text-slate-800 rounded-lg border border-slate-300 focus:border-blue-500 focus:outline-none text-[13px] placeholder-slate-500'
-          />
-        </div>
-      )}
-
-      {!isCreateTaskHide && (
-        <button
-          onClick={() => setIsAddingTaskAtBottom(true)}
-          disabled={isCreateTaskDisabled}
-          data-column-id={column.id}
-          className={`w-full flex items-center gap-2 p-3 rounded-lg border-2 border-dashed transition-colors duration-200 ${
-            isCreateTaskDisabled
-              ? 'border-slate-300 text-slate-400 cursor-not-allowed'
-              : 'border-slate-300 text-slate-500 hover:border-slate-400 hover:text-slate-600'
-          }`}
-        >
-          <AddIcon size={18} />
-          <span className='text-[13px] font-medium'>Add Task</span>
-        </button>
-      )}
     </div>
   );
 };

@@ -2,7 +2,7 @@ export interface Task {
   id: string;
   title: string;
   description?: string;
-  status: 'Done' | 'High' | 'Complete';
+  status: 'Done' | 'In Progress' | 'To Do';
   assignee: {
     name: string;
     initials: string;
@@ -11,7 +11,7 @@ export interface Task {
   commentCount: number;
   createdAt: Date;
   dueDate?: Date;
-  priority?: 'Low' | 'Medium' | 'High';
+  priority: 'Low' | 'Medium' | 'High';
   project?: string;
 }
 

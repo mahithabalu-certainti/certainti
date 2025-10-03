@@ -1,5 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { TaskDetailModalProps } from './types';
+'use client';
+
+import type React from 'react';
+import { useState, useEffect } from 'react';
+import type { TaskDetailModalProps } from './types';
 import {
   CalendarIcon,
   CloseIcon,
@@ -178,7 +181,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                   <span className='text-sm'>Status</span>
                 </div>
                 <span className='text-xs bg-yellow-500 text-white px-2 py-1 rounded font-medium'>
-                  {task.status === 'High' ? 'At risk' : task.status}
+                  {task.status}
                 </span>
               </div>
             </div>
