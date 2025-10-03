@@ -233,6 +233,8 @@ class InteractionSchemaService {
           created_by: userId,
           status_rid: interactionData.status_rid,
           interaction_level_rid: interactionData.interaction_level_rid,
+          recipient_name : interactionData.email_info?.name,
+          recipient_email : interactionData.email_info?.email
         }));
 
       // Utility: Bulk create with chunking
