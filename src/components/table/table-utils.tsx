@@ -337,7 +337,7 @@ export const renderFields = <T extends RowData>({
                   newValue ? dayjs(newValue).format('YYYY-MM-DD') : ''
                 );
               }}
-              format='YYYY-MM-DD'
+              format='YYYY-MMM-DD'
               disabled={isFieldDisabled}
               minDate={dateConstraints.minDate || undefined}
               maxDate={dateConstraints.maxDate || undefined}

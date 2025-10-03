@@ -127,7 +127,7 @@ export const NewDateFilterControl: React.FC<{
                 minDate={dayjs(sixYearsAgo)}
                 value={dayjs(state.date?.value.from, 'YYYY-MM-DD')}
                 disabled={disableInput}
-                format='YYYY-MM-DD'
+                format='YYYY-MMM-DD'
                 onChange={(newValue) => {
                   onValueChange(
                     'from',
@@ -189,7 +189,7 @@ export const NewDateFilterControl: React.FC<{
               sx={{ mt: 1 }}
               value={dayjs(state.date?.value.to, 'YYYY-MM-DD')}
               disabled={disableInput}
-              format='YYYY-MM-DD'
+              format='YYYY-MMM-DD'
               onChange={(newValue) => {
                 onValueChange(
                   'to',

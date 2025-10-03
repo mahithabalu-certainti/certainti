@@ -1562,13 +1562,13 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
               className={
-                'placeholder:text-[13px] placeholder:text-[#425A76] placeholder:font-medium border border-[#CBD6E2]' +
+                'placeholder:text-[13px] placeholder:text-[#425A76] placeholder:border border-[#CBD6E2]' +
                 isError +
                 fieldDisabled
               }
               minDate={customMinDate || dayjs('1950-01-01')}
               maxDate={customMaxDate}
-              value={dayjs(fieldValue, 'YYYY-MM-DD')}
+              value={fieldValue ? dayjs(fieldValue, 'YYYY-MM-DD') : null}
               disabled={field.disabled}
               format='YYYY-MMM-DD'
               referenceDate={
@@ -1597,7 +1597,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 ),
                 clearIcon: () => (
                   <CloseIcon alt='calendar' className='w-2.5 h-2.5' />
-                ),
+                ), 
               }}
               slotProps={{
                 field: { clearable: !field.disabled },
@@ -1615,7 +1615,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     },
                   },
                 },
-                textField: {
+                textField: { 
                   fullWidth: true,
                   size: 'small',
                   disabled: field.disabled,
@@ -1633,16 +1633,16 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                         fontSize: '13px',
                         lineHeight: '21px',
                         pl: '11px',
-                        '& ::placeholder': {
-                          color: '#7D98B6 !important',
-                        },
+                        // '& ::placeholder': {
+                        //   color: '#7D98B6 !important',
+                        // },
                         color: 'black !important',
                         WebkitTextFillColor: 'black !important',
 
-                        '&[value="YYYY-MM-DD"]': {
-                          color: '#7D98B6 !important',
-                          WebkitTextFillColor: '#7D98B6 !important',
-                        },
+                        // '&[value="YYYY-MM-DD"]': {
+                        //   color: '#7D98B6 !important',
+                        //   WebkitTextFillColor: '#7D98B6 !important',
+                        // },
                       },
                       '&:hover .MuiOutlinedInput-notchedOutline': {
                         border: '1px solid #CBD6E2', // match default
@@ -1661,10 +1661,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   placeholder: field.placeholder,
                   error: !!field.error,
                   // onBlur: (event) => {
-                  //   //For cache typed data
+                  //   For cache typed data
                   //   const value = event.target.value;
                   //   if (value !== 'YYYY-MM-DD') {
-                  //     //For Avoid default data
+                  //    For Avoid default data
                   //     handleChange(value);
                   //   }
                   // },
@@ -1685,7 +1685,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               }
               value={dayjs(fieldValue, 'MM/DD')}
               disabled={field.disabled}
-              format='MM/DD'
+              format='MMM/DD'
               views={['month', 'day']}
               open={false}
               onChange={(newValue) => {
