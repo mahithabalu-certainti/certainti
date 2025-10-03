@@ -1570,7 +1570,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               maxDate={customMaxDate}
               value={dayjs(fieldValue, 'YYYY-MM-DD')}
               disabled={field.disabled}
-              format='YYYY-MM-DD'
+              format='YYYY-MMM-DD'
               referenceDate={
                 customMaxDate ? dayjs(customMinDate) : dayjs(customMaxDate)
               }
