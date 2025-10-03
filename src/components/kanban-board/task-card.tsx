@@ -5,7 +5,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { TaskCardProps } from './types';
-import { EditIcon } from '../../assets';
+import { EditTaskIcon } from '../../assets';
 
 const TaskCard: React.FC<TaskCardProps> = ({
   task,
@@ -163,9 +163,9 @@ const TaskCard: React.FC<TaskCardProps> = ({
       {isHovered && !isEditing && (
         <button
           onClick={handleEditClick}
-          className='absolute top-2 right-2 p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-gray-200 rounded'
+          className='absolute top-2 right-2 p-2.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-gray-200 rounded'
         >
-          <EditIcon size={12} className='text-gray-500 hover:text-gray-700' />
+          <EditTaskIcon className='fill-black' />
         </button>
       )}
 
@@ -188,7 +188,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
         )}
       </div>
 
-      <div className='flex items-center gap-2 mb-2'>
+      <div className='flex items-center gap-1 mb-3'>
         {/* Status Badge */}
         {isEditingStatus ? (
           <select
@@ -197,7 +197,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
             onChange={handleStatusChange}
             onBlur={handleStatusBlur}
             onClick={(e) => e.stopPropagation()}
-            className='px-2 py-1 rounded-md text-[13px] font-medium border border-slate-300 focus:border-blue-500 focus:outline-none bg-white'
+            className='px-2 py-0.5 mt-1 rounded-md text-[13px] font-medium border border-slate-300 focus:border-blue-500 focus:outline-none bg-white'
           >
             <option value='To Do'>To Do</option>
             <option value='In Progress'>In Progress</option>
@@ -206,7 +206,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
         ) : (
           <button
             onClick={handleStatusClick}
-            className={`px-2 py-1 rounded-md text-[13px] font-medium ${getStatusColor(task.status)} hover:opacity-80 transition-opacity`}
+            className={`px-2 py-0.5 mt-1 rounded-md text-[13px] font-medium ${getStatusColor(task.status)} hover:opacity-80 transition-opacity cursor-pointer`}
           >
             {task.status}
           </button>
@@ -220,7 +220,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
             onChange={handlePriorityChange}
             onBlur={handlePriorityBlur}
             onClick={(e) => e.stopPropagation()}
-            className='px-2 py-1 rounded-md text-[13px] font-medium border border-slate-300 focus:border-blue-500 focus:outline-none bg-white'
+            className='px-2 mt-1 py-0.5 rounded-md text-[13px] font-medium border border-slate-300 focus:border-blue-500 focus:outline-none bg-white'
           >
             <option value='Low'>Low</option>
             <option value='Medium'>Medium</option>
@@ -229,7 +229,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
         ) : (
           <button
             onClick={handlePriorityClick}
-            className={`px-2 py-1 rounded-md text-[13px] font-medium ${getPriorityColor(task.priority)} hover:opacity-80 transition-opacity`}
+            className={`px-2 py-0.5 mt-1 rounded-md text-[13px] font-medium ${getPriorityColor(task.priority)} hover:opacity-80 transition-opacity cursor-pointer`}
           >
             {task.priority}
           </button>
@@ -239,7 +239,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
       <div className='flex items-center justify-between'>
         {showProfileIndicator && (
           <div
-            className='w-6 h-6 rounded-full flex items-center justify-center text-white text-[11px] font-semibold'
+            className='w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-semibold pt-0.5'
             style={{ backgroundColor: task.assignee.color }}
           >
             {task.assignee.initials}

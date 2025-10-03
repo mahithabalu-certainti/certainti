@@ -28,7 +28,6 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
   const [isRenamingColumn, setIsRenamingColumn] = useState(false);
   const [columnName, setColumnName] = useState(column.name);
   const [showMenu, setShowMenu] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const columnInputRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -132,11 +131,9 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
     <div className='flex-shrink-0 w-80'>
       <div
         className='bg-[#f5f5f5] rounded-lg p-4'
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
       >
         {/* Column Header */}
-        <div className='bg-white border border-slate-200 rounded-lg p-4 mb-4'>
+        <div className='bg-white border border-slate-200 rounded-lg p-4 mb-4 shadow-md'>
           <div className='flex items-center justify-between'>
             <div className='flex items-center gap-2 flex-1'>
               {isRenamingColumn ? (
@@ -155,7 +152,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
                     {column.name}
                   </h2>
                   {showTaskCount && (
-                    <span className='text-slate-500 text-[13px]'>
+                    <span className='text-slate-500 text-[13px] cursor-pointer'>
                       {column.taskCount}
                     </span>
                   )}
@@ -165,7 +162,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
             <div className='relative' ref={menuRef}>
               <button
                 onClick={() => setShowMenu(!showMenu)}
-                className='p-1 hover:bg-slate-200 rounded transition-colors'
+                className='p-1 hover:bg-slate-200 rounded transition-colors cursor-pointer'
               >
                 <AddIcon size={16} />
               </button>
@@ -176,13 +173,13 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
                       setIsRenamingColumn(true);
                       setShowMenu(false);
                     }}
-                    className='w-full text-left px-4 py-2 text-sm hover:bg-slate-100 transition-colors'
+                    className='w-full text-left px-4 py-2 text-[13px] hover:bg-slate-100 transition-colors'
                   >
                     Rename
                   </button>
                   <button
                     onClick={handleDeleteColumn}
-                    className='w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-slate-100 transition-colors'
+                    className='w-full text-left px-4 py-2 text-[13px] text-red-600 hover:bg-slate-100 transition-colors'
                   >
                     Delete
                   </button>
@@ -208,7 +205,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
         </SortableContext>
 
         {/* Add Task */}
-        {!isCreateTaskHide && (isHovered || isCreatingTask) && (
+        {!isCreateTaskHide && (
           <>
             {isCreatingTask ? (
               <div className='bg-white border border-slate-200 rounded-lg p-3'>
@@ -231,7 +228,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
               <button
                 onClick={() => setIsCreatingTask(true)}
                 disabled={isCreateTaskDisabled}
-                className='w-full bg-white border border-slate-200 rounded-lg p-3 transition-colors duration-200 flex items-center gap-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed'
+                className='w-full bg-white border border-slate-200 rounded-lg p-3 transition-colors duration-200 flex items-center gap-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer'
               >
                 <AddIcon className='w-4 h-[18px]' />
                 <span className='text-[13px] font-medium'>Add task</span>
