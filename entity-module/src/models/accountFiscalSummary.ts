@@ -61,6 +61,7 @@ export interface AccountFiscalSummaryAttributes {
   total_project_task_cost?: number | null;
   total_project_task_cost_fte?: number | null;
   total_project_task_cost_subcon?: number | null;
+  total_nonlabor?: number | null;
 
   created_datetime: Date;
   modified_datetime?: Date;
@@ -144,6 +145,7 @@ export class AccountFiscalSummary
   public total_project_task_cost?: number | null;
   public total_project_task_cost_fte?: number | null;
   public total_project_task_cost_subcon?: number | null;
+  public total_nonlabor?: number | null;
 
   public created_datetime!: Date;
   public modified_datetime?: Date;
@@ -338,6 +340,10 @@ export class AccountFiscalSummary
         total_project_task_cost: DataTypes.DECIMAL(18, 2),
         total_project_task_cost_fte: DataTypes.DECIMAL(18, 2),
         total_project_task_cost_subcon: DataTypes.DECIMAL(18, 2),
+          total_nonlabor: {
+          type: DataTypes.INTEGER,
+          allowNull: true,
+        },
       },
       {
              sequelize,

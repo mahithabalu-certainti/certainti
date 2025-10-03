@@ -8,7 +8,7 @@ import {
 } from "sequelize";
 import { HttpStatus, primaryKeyContacts, rawQueries } from "../utils/constant";
 import { IAccount, IUpdateAccount, AccountAttributes } from "../utils/types";
-import { getTableSchemaByEntity, uploadToAzureBlob } from "../utils/helpers";
+import { errorLog, getTableSchemaByEntity, logMessage, uploadToAzureBlob } from "../utils/helpers";
 import SchemaService from "./schemaService";
 import { models } from "../models";
 import Decimal from "decimal.js";
@@ -80,6 +80,7 @@ class AccountService {
           (acc) => acc.id
         );
         if (accessibleAccountIds.length === 0) {
+          logMessage("No accessible accounts found for user: " + userId);
           return {
             statusCode: HttpStatus.SUCCESS,
             message: "No accessible accounts found",
@@ -338,6 +339,7 @@ class AccountService {
         },
       };
     } catch (err) {
+      errorLog("accountList", err instanceof Error ? err.message : String(err));
       return this.throwServiceError(err as Error);
     }
   }
@@ -776,16 +778,7 @@ class AccountService {
         );
       });
       // Get full account data only for the needed records
-      let updatedAccount = await this.schemaService.insertFiscalInfoOnly(
-        parentAccounts,
-        filters,
-        0,
-        0,
-        finalSortBy,
-        finalSortOrder,
-        "download",
-        fiscalYear
-      );
+       let updatedAccount = { data: parentAccounts,total:0 };
       if (!isCustomGlobal) {
         updatedAccount.data = updatedAccount.data.map((parent: any) => {
           if (parentIdsOnlyThroughChildren.includes(parent.rid)) {
