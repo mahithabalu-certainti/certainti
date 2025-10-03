@@ -57,11 +57,13 @@ const TableModal: React.FC<TableModalProps> = ({
 }) => {
   const [selectedRows, setSelectedRows] = useState<any[]>([]);
   const [clearSelectedRows, setClearSelectedRows] = useState<boolean>(false);
-  const handleClose = () => {
-    onClose();
-  };
 
   const [appliedFilters, setAppliedFilters] = useState<any>({});
+  const handleClose = () => {
+    onClose();
+    setAppliedFilters({});
+    localStorage.removeItem(contextKey);
+  };
   const [filterAnchorEl, setFilterAnchorEl] =
     useState<HTMLButtonElement | null>(null);
   const isFilterOpen = Boolean(filterAnchorEl);

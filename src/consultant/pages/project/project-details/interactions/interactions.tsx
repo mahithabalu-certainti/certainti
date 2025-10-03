@@ -162,7 +162,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   };
   const fiscalYear = Number(projectDetails?.fiscal_year);
 
-  const { data, isLoading, isError } = useInteractionList(
+  const { data, isLoading, isError, refetch } = useInteractionList(
     {
       page: currentPage + 1,
       limit: rowsPerPage,
@@ -596,7 +596,7 @@ const Interactions: React.FC<InteractionsProps> = ({
           sort_by: 'ASC',
           filter: {},
         });
-        // refetch();
+        refetch();
       },
     });
   };
