@@ -2006,6 +2006,7 @@ export class InteractionService {
           question : d.question,
           response : d.response,
           response_on : d.response_on,
+          is_mandatory : d.is_mandatory,
           attachments : await Promise.all(d.attachments.filter((f : any) =>f.file_url !== null).map(async (da : any) => {
               return {
               fileName : da.file_name,
