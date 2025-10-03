@@ -33,6 +33,7 @@ import { ProjectResourceFiscalRegion } from "../models/projectResourceFiscalRegi
 import AccountDetails from "../models/accountDetails";
 import SchemaService from "./schemaService";
 import { Kafka, Producer } from "kafkajs";  
+import { AccountFiscalSummary } from "../models/accountFiscalSummary";
 
 class ProjectIngestionService {
   private orgDbSequelize: Sequelize | null = null;
@@ -104,6 +105,10 @@ class ProjectIngestionService {
     const AccountFiscalModel = await AccountFiscal.initialize(
       sequelize,
       schemaName
+    );
+    const AccountFiscalSummaryModel = await AccountFiscalSummary.initialize(
+       mainDbSequelize,
+      ""
     );
     const AccountFiscalRegionModel = await AccountFiscalRegion.initialize(
       sequelize,
@@ -187,6 +192,7 @@ class ProjectIngestionService {
       ProjectResourceFiscal: ProjectResourceFiscalModel,
       ProjectResourceFiscalRegion: ProjectResourceFiscalRegionModel,
       AccountDetails: AccountDetailsModel,
+      AccountFiscalSummary: AccountFiscalSummaryModel,
     };
     this.modelCache.set(schemaName, models);
     return models;
@@ -755,7 +761,7 @@ class ProjectIngestionService {
   }
 
   async addAccountFiscal(accountNumber: string, projectData: ICreateProject) {
-    const { AccountFiscal } = await this.getModels(accountNumber);
+    const { AccountFiscal,AccountFiscalSummary } = await this.getModels(accountNumber);
 
     const accountFiscalData = ProjectMapper.mapToAccountFiscal(projectData);
 
@@ -776,14 +782,26 @@ class ProjectIngestionService {
     });
 
     if (!existingFiscal) {
-      await AccountFiscal.create({
+      console.log("Creating new AccountFiscal record");
+      let accountFiscal = await AccountFiscal.create({
         ...accountFiscalData,
         total_projects: 1,
         account_rid,
         fiscal_year,
         created_datetime: new Date(),
       });
+      await AccountFiscalSummary.create({
+        ...accountFiscalData,
+        r_number: accountFiscal.dataValues.r_number,
+        total_projects: 1,
+        account_rid,
+        fiscal_year,
+        created_datetime: new Date(),
+      });
+
+
     } else {
+       console.log("Updating existing AccountFiscal record");
       await this.updateAccountFiscalAggregatesFromFiscal(
         accountNumber,
         projectData
@@ -872,7 +890,7 @@ class ProjectIngestionService {
     accountNumber: string,
     projectData: ICreateProject
   ) {
-    const { ProjectFiscal, AccountFiscal } = await this.getModels(
+    const { ProjectFiscal, AccountFiscal, AccountFiscalSummary } = await this.getModels(
       accountNumber
     );
 
@@ -967,6 +985,28 @@ class ProjectIngestionService {
 
     // 2. Update Account fiscal table with aggregated totals
     await AccountFiscal.update(
+      {
+        total_projects: aggregates.total_projects,
+        total_project_cost: aggregates.total_cost_prj,
+        total_project_hours: aggregates.total_effort_prj,
+        total_fte: Number(aggregates.total_fte_prj || 0),
+        total_subcon: Number(aggregates.total_subcon_prj || 0),
+        total_nonlabor : Number(aggregates.total_nonlabor_prj || 0),
+        total_project_hours_fte: aggregates.total_effort_fte_prj,
+        total_project_hours_subcon: aggregates.total_effort_subcon_prj,
+        total_project_cost_fte: aggregates.total_cost_fte_prj,
+        total_project_cost_subcon: aggregates.total_cost_subcon_prj,
+        total_project_cost_nonlabor: aggregates.total_cost_nonlabor_prj,
+      },
+      {
+        where: {
+          account_rid: projectData.account_id,
+          fiscal_year: projectData.fiscal_year,
+        },
+      }
+    );
+
+    await AccountFiscalSummary.update(
       {
         total_projects: aggregates.total_projects,
         total_project_cost: aggregates.total_cost_prj,
