@@ -9,25 +9,25 @@ import {
   FilterTypes,
   OverviewTabs,
 } from '../../../../../common-service';
+import { ExportType, NotesList, NotesListURLParams } from '../../../../types';
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import { useNotesList } from '../../../../services/notes/notes-service';
-import {
-  ListTable,
-  ManageColumnsPopover,
-} from '../../../../../components/table';
-import SectionHeader from '../../../../../components/details-section/section-header';
-import { NotesSideIcon } from '../../../../../assets';
-import { SectionTabPanel } from '../../../../../components';
-import { ShowHideTableColumn } from '../../../../../components/table/types';
-import { ExportType, NotesList, NotesListURLParams } from '../../../../types';
+import { NOTES_CREATE, NOTES_EDIT } from '../../../../../routes';
 import {
   getNotesFilterFields,
   getNotesTableColumns,
 } from '../../../notes/helpers';
-import { NOTES_CREATE, NOTES_EDIT } from '../../../../../routes';
+import { ShowHideTableColumn } from '../../../../../components/table/types';
+import { SectionTabPanel } from '../../../../../components';
 import NotesDetails from './notes-details';
+import SectionHeader from '../../../../../components/details-section/section-header';
+import { NotesSideIcon } from '../../../../../assets';
+import {
+  ListTable,
+  ManageColumnsPopover,
+} from '../../../../../components/table';
 
 const NotesTabs: OverviewTabs[] = [
   {
@@ -54,8 +54,9 @@ const Notes: React.FC<NotesProps> = ({
   setNotesParams,
   accountInActive,
 }) => {
-  const { accountid } = useParams();
   const [searchParams] = useSearchParams();
+  const { projectid: projectID } = useParams();
+  const accountId = searchParams.get('accountID') || '';
   const navigate = useNavigate();
   const [appliedFilters, setAppliedFilters] = useState<FilterTypes>({});
   const [showFilter, setShowFilter] = useState<boolean>(false);
@@ -93,9 +94,9 @@ const Notes: React.FC<NotesProps> = ({
       sortBy: sortField,
       sortOrder: sortOrder,
       filters: appliedFilters,
-      noteLevel: 'account',
-      accountRid: accountid || '',
-      entityId: accountid || '',
+      noteLevel: 'project',
+      accountRid: accountId || '',
+      entityId: projectID || '',
       search: searchText,
       fiscalYear: convertedFiscalYear,
     },
@@ -156,28 +157,26 @@ const Notes: React.FC<NotesProps> = ({
   };
 
   const handleCreate = () => {
-    const accountId = accountid ?? '';
     const path = generatePath(NOTES_CREATE, {
-      module: 'account',
+      module: 'project',
     });
     const queryParams = new URLSearchParams({
       accountId,
-      entityLevel: 'account',
-      entityId: accountId,
+      entityLevel: 'project',
+      entityId: projectID || '',
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
 
   const handleEdit = (row: NotesList) => {
-    const accountId = accountid ?? '';
     const path = generatePath(NOTES_EDIT, {
-      module: 'account',
+      module: 'project',
       noteId: row.rid,
     });
     const queryParams = new URLSearchParams({
       accountId,
-      entityLevel: 'account',
-      entityId: accountId,
+      entityLevel: 'project',
+      entityId: projectID || '',
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
@@ -243,7 +242,7 @@ const Notes: React.FC<NotesProps> = ({
   };
 
   const modalId = isModalOpen
-    ? 'account-notes-list-column-visibility-popover'
+    ? 'project-notes-list-column-visibility-popover'
     : undefined;
 
   const RestrictedColumns = [
@@ -332,7 +331,7 @@ const Notes: React.FC<NotesProps> = ({
               tableStyle={{
                 borderBottom: '1px solid #CBD6E2',
                 height: '100%',
-                maxHeight: 'calc(100vh - 320px)',
+                maxHeight: 'calc(100vh - 380px)',
                 overflow: 'auto',
               }}
               stickyHeader={true}

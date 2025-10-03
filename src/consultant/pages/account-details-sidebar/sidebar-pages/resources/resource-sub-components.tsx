@@ -21,6 +21,7 @@ import ResourceAttachmentsTable from './resource-attachment/resource-attachment-
 import { AttachmentList } from '../../../../types/attachment';
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
+import ResourceNotesList from './resource-notes/resource-notes-list';
 
 interface SubcomponentProps {
   tabMenus: TabMenus[];
@@ -52,6 +53,7 @@ interface SubcomponentProps {
   attachmentsOrderBy: string;
   setAttachmentsOrderBy: (field: keyof AttachmentList) => void;
   refreshAttachments?: number;
+  refreshNotes?: number;
   resourceInActive: boolean;
   setResourceInActive: (value: boolean) => void;
   columnAnchorEl: HTMLButtonElement | null;
@@ -93,6 +95,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
   attachmentsOrderBy,
   setAttachmentsOrderBy,
   refreshAttachments,
+  refreshNotes,
   resourceInActive,
   setResourceInActive,
   columnAnchorEl,
@@ -311,6 +314,28 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
               orderBy={attachmentsOrderBy}
               setOrderBy={setAttachmentsOrderBy}
               refreshAttachments={refreshAttachments}
+              setCount={setCount}
+              resourceInActive={resourceInActive}
+              setColumnAnchorEl={setColumnAnchorEl}
+              columnAnchorEl={columnAnchorEl}
+              searchValue={searchValue}
+            />
+          </Box>
+        )}
+        {value === 'notes' && (
+          <Box sx={{ width: '100%', overflowX: 'auto' }}>
+            <ResourceNotesList
+              accountDetails={accountDetails}
+              fiscalYear={fiscalYearValue}
+              appliedFilters={appliedFilters}
+              resourceRid={resourceId}
+              setCurrentPage={setCurrentPage}
+              currentPage={currentPage}
+              order={attachmentsOrder}
+              setOrder={setAttachmentsOrder}
+              orderBy={attachmentsOrderBy}
+              setOrderBy={setAttachmentsOrderBy}
+              refreshNotes={refreshNotes}
               setCount={setCount}
               resourceInActive={resourceInActive}
               setColumnAnchorEl={setColumnAnchorEl}

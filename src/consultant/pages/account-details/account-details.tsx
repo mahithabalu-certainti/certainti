@@ -58,6 +58,7 @@ import {
   AccountFieldsApiResponse,
   ExportType,
   MenuItem,
+  NotesListURLParams,
   ProjectFinancialProjectExportParams,
   ProjectFinancialResourceExportParams,
 } from '../../types';
@@ -282,6 +283,16 @@ export const AccountDetails = () => {
       filters: {},
       fiscalYear: 0,
     });
+
+  const [notesParams, setNotesParams] = useState<NotesListURLParams>({
+    page: 1,
+    limit: 100,
+    sortBy: 'r_number',
+    sortOrder: 'ASC',
+    filters: {},
+    fiscalYear: convertedFiscalYear,
+  });
+
   useEffect(() => {
     const list = searchParams.get('list');
     const tabParams = searchParams.get('tab');
@@ -305,6 +316,7 @@ export const AccountDetails = () => {
       searchParams.get('list') !== 'resources' &&
       searchParams.get('list') !== 'projects' &&
       searchParams.get('list') !== 'attachments' &&
+      searchParams.get('list') !== 'notes' &&
       searchParams.get('list') !== 'imports' &&
       searchParams.get('list') !== 'financial' &&
       searchParams.get('list') !== 'timesheet' &&
@@ -343,6 +355,16 @@ export const AccountDetails = () => {
       }),
     };
 
+    const notesPayload = {
+      accountRid: accountid || rNumber,
+      entityId: exportType === 'notes' ? accountid || rNumber : resourceRid,
+      attachmentLevel: exportType === 'notes' ? 'account' : 'resource',
+      ...(exportType === 'resource_notes' && {
+        fiscalYear: convertedFiscalYear,
+        filters: filter,
+      }),
+    };
+
     const financialPayload = {
       accountNumber: accountDetailsForEdit?.accountById?.r_number,
       accountRid: accountid,
@@ -366,6 +388,8 @@ export const AccountDetails = () => {
         ...attachmentParams,
         ...attachmentPayload,
       });
+    } else if (exportType === 'notes' || exportType === 'resource_notes') {
+      console.log('notes export clicked', { ...notesParams, notesPayload });
     } else if (exportType === 'imports') {
       exportImportsData(importsParams);
     } else if (exportType === 'timesheet' && !tab) {
@@ -508,6 +532,8 @@ export const AccountDetails = () => {
       return !isProjectExportEnable;
     } else if (list === 'attachments') {
       return !isAttachmentExportEnable;
+    } else if (list === 'notes') {
+      return false;
     } else if (list === 'imports') {
       return !isImportExportEnable;
     } else if (list === 'financial' && tab === 'resource_cost') {
@@ -653,7 +679,13 @@ export const AccountDetails = () => {
       case 'activities':
         return <Activities />;
       case 'notes':
-        return <Notes />;
+        return (
+          <Notes
+            setExportType={setExportType}
+            accountInActive={accountInActive}
+            setNotesParams={setNotesParams}
+          />
+        );
       case 'checklist':
         return <Checklist />;
       case 'timesheet':

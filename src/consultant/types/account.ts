@@ -511,7 +511,6 @@ export type ExportType =
   | 'financial_resource_cost'
   | 'financial_project_cost'
   | 'resource_attachments'
-  | 'resource_attachments'
   | 'projectTask'
   | 'project_resource'
   | 'timesheet'
@@ -519,7 +518,9 @@ export type ExportType =
   | 'timesheet_project'
   | 'timesheet_project_resource'
   | 'timesheet_project_task'
-  | 'technical_summary';
+  | 'technical_summary'
+  | 'resource_notes'
+  | 'notes';
 
 export type FinancialSummaryFlag = 'all' | 'rd_qualified';
 

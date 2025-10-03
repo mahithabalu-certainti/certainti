@@ -59,6 +59,9 @@ import {
   INTERACTION_TEMPLATES,
   INTERACTION_TEMPLATES_CREATE,
   INTERACTION_TEMPLATES_EDIT,
+  NOTES,
+  NOTES_CREATE,
+  NOTES_EDIT,
 } from './routes';
 import { RootState } from './store/store';
 import ProjectTaskForm from './consultant/pages/project/project-details/project-task/form/project-task-form';
@@ -162,6 +165,11 @@ const InteractionTemplateForm = lazy(
     import('./admin/pages/interaction-templates/create-template/template-form')
 );
 
+const Notes = lazy(() => import('./consultant/pages/notes/notes-list/notes'));
+const NotesForm = lazy(
+  () => import('./consultant/pages/notes/notes-form/notes-form')
+);
+
 // Loading component for Suspense fallback
 const Loading = () => (
   <div className='flex h-screen w-full items-center justify-center'>
@@ -207,8 +215,14 @@ export const App: React.FC<IApp> = ({ instance }) => {
                   <Route path={PROJECT_EDIT} element={<ProjectForm />} />
                   <Route path={RESOURCE_CREATE} element={<ResourceForm />} />
                   <Route path={RESOURCE_EDIT} element={<ResourceForm />} />
-                  <Route path={RESOURCECOST_CREATE} element={<ResourceForm />} />
-                  <Route path={RESOURCESKILL_CREATE} element={<ResourceForm />} />
+                  <Route
+                    path={RESOURCECOST_CREATE}
+                    element={<ResourceForm />}
+                  />
+                  <Route
+                    path={RESOURCESKILL_CREATE}
+                    element={<ResourceForm />}
+                  />
                   <Route path={RESOURCECOST_EDIT} element={<ResourceForm />} />
                   <Route path={RESOURCESKILL_EDIT} element={<ResourceForm />} />
                   <Route path={RESOURCE} element={<Resource />} />
@@ -217,7 +231,10 @@ export const App: React.FC<IApp> = ({ instance }) => {
                     path={PROJECT_TASK_CREATE}
                     element={<ProjectTaskForm />}
                   />
-                  <Route path={PROJECT_TASK_EDIT} element={<ProjectTaskForm />} />
+                  <Route
+                    path={PROJECT_TASK_EDIT}
+                    element={<ProjectTaskForm />}
+                  />
                   <Route
                     path={PROJECT_RESOURCE_CREATE}
                     element={<ProjectResourceForm />}
@@ -243,12 +260,18 @@ export const App: React.FC<IApp> = ({ instance }) => {
                     path={GLOBAL_INTERACTIONS_CREATE}
                     element={<InteractionForm />}
                   />
-                  <Route path={INTERACTIONS_EDIT} element={<InteractionForm />} />
+                  <Route
+                    path={INTERACTIONS_EDIT}
+                    element={<InteractionForm />}
+                  />
                   <Route
                     path={GLOBAL_INTERACTIONS_EDIT}
                     element={<InteractionForm />}
                   />
                   <Route path={ATTACHMENTS} element={<Attachments />} />
+                  <Route path={NOTES} element={<Notes />} />
+                  <Route path={NOTES_CREATE} element={<NotesForm />} />
+                  <Route path={NOTES_EDIT} element={<NotesForm />} />
                   <Route
                     path={INTERACTION_TEMPLATES}
                     element={<InteractionTemplates />}
@@ -293,7 +316,10 @@ export const App: React.FC<IApp> = ({ instance }) => {
                     path={MANAGE_PROFILE_CREATE}
                     element={<CreateProfile />}
                   />
-                  <Route path={MANAGE_PROFILE_EDIT} element={<CreateProfile />} />
+                  <Route
+                    path={MANAGE_PROFILE_EDIT}
+                    element={<CreateProfile />}
+                  />
                   <Route path={MANAGE_USER_GROUP} element={<UserGroupList />} />
                   <Route
                     path={MANAGE_USER_GROUP_CREATE}

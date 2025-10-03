@@ -121,6 +121,13 @@ const tabs: TabMenus[] = [
     hide: false,
     id: AllPermissions.ATTACHMENT_VIEW_EDIT,
   },
+  {
+    label: 'Notes',
+    value: 'notes',
+    hide: false,
+    // id: AllPermissions.NOTES_VIEW_EDIT,
+    id: AllPermissions.ATTACHMENT_VIEW_EDIT,
+  },
 ];
 
 const Resource: React.FC<ResourceProps> = ({
@@ -169,6 +176,7 @@ const Resource: React.FC<ResourceProps> = ({
   const [refreshAttachments, setRefreshAttachments] = useState<number>(
     Date.now()
   );
+  const [refreshNotes, setRefreshNotes] = useState<number>(Date.now());
   const [attachmentsOrder, setAttachmentsOrder] = useState<'ASC' | 'DESC'>(
     'ASC'
   );
@@ -482,6 +490,8 @@ const Resource: React.FC<ResourceProps> = ({
       return !isResourceSkillCreateEnable;
     } else if (value === 'attachments') {
       return true;
+    } else if (value === 'notes') {
+      return true;
     }
     return accountInActive;
   };
@@ -745,6 +755,8 @@ const Resource: React.FC<ResourceProps> = ({
       setRefreshSkillTrigger(Date.now()); // Toggle the refreshTrigger to force re-fetch
     } else if (value === 'attachments') {
       setRefreshAttachments(Date.now());
+    } else if (value === 'notes') {
+      setRefreshNotes(Date.now());
     } else {
       setRefreshTrigger(Date.now()); // Toggle the refreshTrigger to force re-fetch
     }
@@ -974,6 +986,7 @@ const Resource: React.FC<ResourceProps> = ({
                 attachmentsOrderBy={attachmentsOrderBy}
                 setAttachmentsOrderBy={setAttachmentsOrderBy}
                 refreshAttachments={refreshAttachments}
+                refreshNotes={refreshNotes}
                 setCount={setCount}
                 resourceInActive={resourceInActive}
                 setResourceInActive={setResourceInActive}
