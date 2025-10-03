@@ -16,6 +16,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Tooltip,
 } from '@mui/material';
 import { getPreviewProjectListColumn } from './helper';
 
@@ -112,11 +113,16 @@ export const PreviewDialog: React.FC<IPreviewDialogProps> = ({
   );
 
   const interactionLevel = isAccountLevel ? 'Account' : 'Project';
+  const isProjectAvailable = selectedTableId && selectedTableId.length > 0;
+  const isDisabledSaveAndSend = isProjectAvailable
+    ? false
+    : enableRecipiants
+      ? false
+      : !recipiants.email;
 
   return (
     <React.Fragment>
       <Dialog
-        onClose={() => setPreviewDialog(false)}
         aria-labelledby='customized-dialog-title'
         open={previewDialog}
         maxWidth='md'
@@ -249,7 +255,7 @@ export const PreviewDialog: React.FC<IPreviewDialogProps> = ({
             </TableContainer>
           </div>
 
-          {selectedTableId && selectedTableId.length > 0 ? (
+          {isProjectAvailable ? (
             <div className='border-t border-l border-[#CBD6E2] mt-4'>
               <ListTable
                 data={memoizedProject}
@@ -374,16 +380,26 @@ export const PreviewDialog: React.FC<IPreviewDialogProps> = ({
             }
             disabled={createLoading}
           />
-          <TextButton
-            label='Save and Send'
-            sx={{
-              width: '120px',
-              fontSize: '13px',
-              fontWeight: 400,
-            }}
-            loading={createLoading}
-            onClick={send}
-          />
+          <Tooltip
+            title='Key contact Information missing'
+            arrow
+            placement='bottom'
+            disableHoverListener={!isDisabledSaveAndSend}
+          >
+            <span>
+              <TextButton
+                label='Save and Send'
+                sx={{
+                  width: '120px',
+                  fontSize: '13px',
+                  fontWeight: 400,
+                }}
+                loading={createLoading}
+                onClick={send}
+                disabled={isDisabledSaveAndSend}
+              />
+            </span>
+          </Tooltip>
         </DialogActions>
       </Dialog>
     </React.Fragment>

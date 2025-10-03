@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { Suspense, useEffect, useState } from 'react';
-import { CloseIcon, RefreshIcon, ResourceFilterIcon } from '../../assets';
+import { RefreshIcon, ResourceFilterIcon } from '../../assets';
 import TextButton from '../button/text-button';
 import ListTable from './list-table';
 import { ModelTableParams } from '../../consultant/pages/account-details-sidebar/sidebar-pages/interactions/interactions';
@@ -129,14 +129,6 @@ const TableModal: React.FC<TableModalProps> = ({
       >
         <div className='flex justify-between items-center pb-1 border-b border-[#CBD6E2]'>
           <h2 className='text-[16px] font-bold text-[#2D3E4F]'>{title}</h2>
-          <button
-            onClick={handleClose}
-            className='cursor-pointer hover:bg-gray-200 p-2 rounded-full'
-          >
-            <React.Suspense fallback={null}>
-              <CloseIcon />
-            </React.Suspense>
-          </button>
         </div>
         <div className='flex-1'>
           <div className='flex gap-1.5 mt-1.5  justify-end'>
