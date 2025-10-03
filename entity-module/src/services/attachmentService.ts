@@ -1383,6 +1383,7 @@ async exportAttachmentSummary(
 
     const { whereClause } = this.buildRawWhereClause(filters, search);
     if (typeof globalFilters === 'string') globalFilters = JSON.parse(globalFilters);
+    whereClause[Op.and] = whereClause[Op.and] || [];
 
     
       if (globalFilters && Object.keys(globalFilters).length > 0) {

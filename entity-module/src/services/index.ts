@@ -16,7 +16,8 @@ import {
   IProjectTaskGraphqlServices,
   ISettingsServices,
   IFinancialHighlights,
-  IProjectTaskIngestionService
+  IProjectTaskIngestionService,
+  INotesService
 } from "./interfaces/interface";
 import { ProjectService } from "./projectService";
 import ResourceCostService from "./resourceCostService";
@@ -26,6 +27,7 @@ import { AttachmentService } from "./attachmentService";
 import { ProjectResourceService } from "./projectResource/projectResourceService";
 import { ProjectTaskService } from "./projectTaskService";
 import { ProjectInjestionTaskService } from "./projectTask/projectTaskService";
+import { NotesService } from "./notes/notesService";
 
 interface IServiceContainer {
   resourceCostServices: IResourceCostService;
@@ -50,6 +52,7 @@ class Services implements IServiceContainer {
   private _projectTaskGraphqlServices? : IProjectTaskGraphqlServices;
   private _settingService? : ISettingsServices;
   private _financialHighlightServices? : IFinancialHighlights
+  notesService : INotesService;
 
   constructor(
     logger: Logger,
@@ -58,6 +61,7 @@ class Services implements IServiceContainer {
     resourceSkillServices: IResourceSkillService = new ResourceSkillService(),
     projectResourceServices: IProjectResourceService = new ProjectResourceService(logger),
     projectTaskInjestionServices: IProjectTaskIngestionService = new ProjectInjestionTaskService(),
+    notesService : INotesService = new NotesService(logger)
   ) {
     try {
       this.logger = logger;
@@ -69,6 +73,7 @@ class Services implements IServiceContainer {
       this.projectResourceServices = projectResourceServices;
       this.projectTaskServices = new ProjectTaskService(this.logger);
       this.projectTaskInjestionServices = projectTaskInjestionServices;
+      this.notesService = notesService
     } catch (error) {
       console.log("Error initializing service: ", error);
       throw new Error("Service Initialization failed!");
