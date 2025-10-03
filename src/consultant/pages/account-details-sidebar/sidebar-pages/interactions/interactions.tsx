@@ -158,7 +158,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   const viewResponseHistory = !!responseHistory;
   const { successToast } = useToast();
   const sendInteraction = useSendInteraction();
-  const { data, isLoading, isError } = useInteractionList(
+  const { data, isLoading, isError, refetch } = useInteractionList(
     {
       page: currentPage + 1,
       limit: rowsPerPage,
@@ -175,7 +175,6 @@ const Interactions: React.FC<InteractionsProps> = ({
       !viewResponseHistory,
     refreshInteractions
   );
-
   const {
     data: modelTableData,
     isLoading: isModelDataLoading,
@@ -624,7 +623,7 @@ const Interactions: React.FC<InteractionsProps> = ({
           sort_by: 'ASC',
           filter: {},
         });
-        // refetch();
+        refetch();
       },
     });
   };
