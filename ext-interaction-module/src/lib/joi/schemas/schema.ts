@@ -17,8 +17,8 @@ const verifyOtpSchema = Joi.object({
 const updateInteractionResponseSchema = Joi.object({
   interaction_rid: Joi.string().pattern(uuidRegex).required(),
   account_rid: Joi.string().pattern(uuidRegex).required(),
-  project_rid: Joi.string().pattern(uuidRegex).required(),
-  project_fiscal_rid: Joi.string().pattern(uuidRegex).required(),
+  project_rid: Joi.string().pattern(uuidRegex).optional().allow(null, ""),
+  project_fiscal_rid: Joi.string().pattern(uuidRegex).optional().allow(null, ""),
   status_action: Joi.string().required(),
   response_source: Joi.string().optional().default("Manual"),
   parent_interaction_rid: Joi.string().allow(null, ""),

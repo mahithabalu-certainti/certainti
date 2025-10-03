@@ -1052,7 +1052,7 @@ export class ProjectResourceService {
 
         return {
           statusCode: HttpStatus.SUCCESS,
-          message: HttpStatus.SUCCESS_MESSAGE,
+          message: "Anomaly accepted successfully",
           data: {
             projectResource: {},
           },
@@ -1085,7 +1085,7 @@ export class ProjectResourceService {
         await transaction.commit();
         return {
           statusCode: HttpStatus.SUCCESS,
-          message: HttpStatus.SUCCESS_MESSAGE,
+          message: "Anomaly rejected successfully",
           data: {
             projectResource: {},
           },
@@ -1346,6 +1346,9 @@ export class ProjectResourceService {
         region_rid,
       } = projectResourceData;
 
+      let total_cost_pro_res_new
+      let total_hours_pro_res_new
+
       const { accountNumber: validAccountNumber } =
         await this.projectResourceSchema.fetchValidAccountNumberById(
           account_rid
@@ -1381,6 +1384,11 @@ export class ProjectResourceService {
             "Invalid project resource ID: project resource doesn't exists",
         };
       }
+      if(total_cost_pro_res) total_cost_pro_res_new = total_cost_pro_res
+      else total_cost_pro_res_new = existingProjectResource.total_cost_pro_res
+
+      if(total_hours_pro_res) total_hours_pro_res_new = total_hours_pro_res
+      else total_hours_pro_res_new = existingProjectResource.total_hours_pro_res
 
       resourceData = await this.projectResourceSchema.validateResourceById(
         validAccountNumber,
@@ -1402,6 +1410,24 @@ export class ProjectResourceService {
           message: HttpStatus.FAILED_MESSAGE,
           errorMessage: "Invalid resource code: resource doesn't exists",
         };
+      }
+
+      if (projectResourceData.project_resource_role) {
+        const isDuplicate =
+        await this.projectResourceSchema.findDuplicateProjectResourceOnUpdate(
+          validAccountNumber,
+          projectResourceData,
+          resourceData,
+          statusMap
+        );
+        
+      if (isDuplicate) {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: "Resource role already exists"
+        };
+      }
       }
 
       const currencyThreshold =
@@ -1501,16 +1527,16 @@ export class ProjectResourceService {
 
       let status = "Active";
       if (
-        projectResourceData.total_hours_pro_res &&
-        Number(projectResourceData.total_hours_pro_res) > 3000
+        total_hours_pro_res_new &&
+        Number(total_hours_pro_res_new) > 3000
       ) {
         status = "Anomaly";
       }
 
       if (
-        projectResourceData.total_cost_pro_res !== undefined &&
+        total_cost_pro_res_new &&
         currencyThreshold !== null &&
-        Number(projectResourceData.total_cost_pro_res) > currencyThreshold
+        Number(total_cost_pro_res_new) > currencyThreshold
       ) {
         status = "Anomaly";
       }

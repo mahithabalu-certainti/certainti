@@ -8,8 +8,10 @@ import {
   filterTypesForSummaryInteractions,
   interactionFlag,
   MAIN_SCHEMA_NAME,
+  rawQueries,
   responseSortKeys,
   STATUS_MESSAGE,
+  templatefiltersColumns,
 } from "./constants";
 
 type filterType = {
@@ -33,7 +35,9 @@ export const fetchInteractionForProjectLevelQuery = (
   disablePagination: boolean,
   accessibleIds: string[] = [],
   search : string,
-  activeStatusId : string
+  activeStatusId : string,
+  reminderFlag : boolean,
+  reminderFiltersIds : string[]
 ) => {
   let offset = (page - 1) * limit;
   let pagination = `LIMIT ${limit} OFFSET ${offset}`;
@@ -43,6 +47,9 @@ export const fetchInteractionForProjectLevelQuery = (
   let whereConditions;
   let andConditions = ``;
   let searchValue;
+  let reminderFilter : string = ``
+  let accountLevelkeyContactQuery : string = ``
+  let aggregatedQuery : string = `` 
   if (disablePagination) pagination = ` `;
   else pagination;
 
@@ -56,6 +63,10 @@ export const fetchInteractionForProjectLevelQuery = (
     whereConditions = `
         i.account_rid = '${account_rid}' 
         ${fiscalQuery}`;
+    accountLevelkeyContactQuery = `kcd.key_contact_name, kcd.key_contact_email,`
+    aggregatedQuery = `
+        ,'key_contact_name', i.key_contact_name,
+        'key_contact_email', i.key_contact_email`
   } else {
     whereConditions = `
         i.account_rid = '${account_rid}' 
@@ -68,6 +79,10 @@ export const fetchInteractionForProjectLevelQuery = (
   if (accessibleIds.length > 0) {
     whereConditions += ` AND pf.project_rid = ANY(ARRAY[${accessibleIds.map(id => `'${id}'`).join(",")}]::text[])`;     
   }
+  if(reminderFlag && reminderFiltersIds != undefined) {
+    reminderFilter = `AND i.status_rid IN (${reminderFiltersIds.map((d : any) => `'${d}'`).join(',')})`
+  }
+
   let filteredData = filterForInteractions(
     filters,
     andConditions,
@@ -86,7 +101,7 @@ export const fetchInteractionForProjectLevelQuery = (
     sortValue = `ORDER BY i.recipient_name ${sortBy}`;
   else if (sort === filtersColumns.recipient_email)
     sortValue = `ORDER BY i.recipient_email ${sortBy}`;
-  else if (sort === filtersColumns.last_sent_on)
+  else if (sort === filtersColumns.sent_on_datetime)
     sortValue = `ORDER BY i.sent_on_datetime ${sortBy}`;
   else if (sort === filtersColumns.last_reminder_on)
     sortValue = `ORDER BY i.last_reminder_on ${sortBy}`;
@@ -122,7 +137,7 @@ export const fetchInteractionForProjectLevelQuery = (
     WITH fetch_interaction AS (
         SELECT
             i.rid, i.r_number, i.interaction_iteration, COALESCE(i.interaction_age,0),
-            i.status_rid,
+            i.status_rid, ${accountLevelkeyContactQuery}
            CASE 
             WHEN i.recipient_name IS NULL OR i.recipient_name = '' 
             THEN kcd.key_contact_name 
@@ -141,7 +156,11 @@ export const fetchInteractionForProjectLevelQuery = (
             i.interaction_url,i.project_fiscal_rid,
             COUNT(i.rid) OVER() AS total_records, i.interaction_age,
             i.interaction_source_rid, i.interaction_type_rid, i.attachment_count,i.interaction_level_rid,
-            pf.project_code,pf.fiscal_year,
+            pf.project_code,
+            CASE 
+                WHEN i.project_fiscal_rid IS NULL THEN i.fiscal_year
+                ELSE pf.fiscal_year
+            END AS fiscal_year,
             CASE 
                 WHEN EXISTS (
                     SELECT 1 FROM ${schemaName}.key_contact_details kcd 
@@ -187,6 +206,7 @@ export const fetchInteractionForProjectLevelQuery = (
             (i.r_number ILIKE '${searchValue}' OR i.recipient_name ILIKE '${searchValue}' OR i.recipient_email ILIKE '${searchValue}')
             AND
             ${whereConditions}
+            ${reminderFilter}
             ${filteredData?.andConditions}
             ${filterQueryValues}
             ${sortValue}
@@ -227,6 +247,138 @@ export const fetchInteractionForProjectLevelQuery = (
         'project_code', i.project_code,
         'has_email_recipient', i.has_email_recipient,
         'has_account_recipient', i.has_account_recipient
+        ${aggregatedQuery}
+        ) ) AS interactions
+
+        FROM
+        paginated_datas i
+    `;
+
+  return query;
+};
+
+export const fetchInteractionTemplates = async (
+  sort: string,
+  sortBy: string,
+  filters: filterType,
+  page: number,
+  limit: number,
+  search : string,
+  apiSource : string,
+  templateType : string,
+  mainDb:Sequelize,
+  apitype : string
+) => {
+  let offset = (page - 1) * limit;
+  let pagination = `LIMIT ${limit} OFFSET ${offset}`;
+  let filteredQueryArray: string[] = [];
+  let filterQueryValues;
+  let sortValue: string;
+  let andConditions = ``;
+  let interactionLLevelCondition = ``;
+  let searchValue;
+
+
+  if(search) searchValue = `%${search}%`
+  else searchValue = `%%`
+  if(apiSource === 'interaction' && templateType) {
+    pagination = ``;
+    let [fetchInteractionStatus]: any[] = await mainDb.query(
+   rawQueries.fetchInteractionLevelRidByName(templateType)
+  );
+  let interactionLevelId = fetchInteractionStatus[0]?.rid;
+   interactionLLevelCondition = ` AND i.interaction_level_rid = '${interactionLevelId}' `
+  }
+  if (apitype === "export") {
+    pagination = ``;
+  }
+
+
+  let filteredData = filterForInteractionTemplates(
+    filters,
+    andConditions,
+    filteredQueryArray,
+    filterTypes,
+    templatefiltersColumns
+  );
+  if (sort === templatefiltersColumns.r_number)
+    sortValue = `ORDER BY i.r_number ${sortBy}`;
+  else if (sort === templatefiltersColumns.created_datetime)
+    sortValue = `ORDER BY i.created_datetime ${sortBy}`;
+  else if (sort === templatefiltersColumns.modified_datetime)
+    sortValue = `ORDER BY i.modified_datetime ${sortBy}`;
+  else if (sort === templatefiltersColumns.interaction_type_rid)
+    sortValue = `ORDER BY it.interaction_type_name ${sortBy}`;
+  else if (sort === templatefiltersColumns.interaction_level_rid)
+    sortValue = `ORDER BY il.interaction_level_name ${sortBy}`;
+  else if (sort === templatefiltersColumns.template_name)
+    sortValue = `ORDER BY i.template_name ${sortBy}`;
+  else if (sort === templatefiltersColumns.status_rid)
+    sortValue = `ORDER BY s.status_name ${sortBy}`;
+  else if (sort === templatefiltersColumns.created_user_name)
+    sortValue = `ORDER BY created_user_name ${sortBy}`;
+  else if (sort === templatefiltersColumns.modified_user_name)
+    sortValue = `ORDER BY modified_user_name ${sortBy}`;
+  else if (sort === templatefiltersColumns.createdAt)
+    sortValue = `ORDER BY created_datetime ${sortBy}`;
+  else sortValue = `ORDER BY i.r_number ASC`;
+
+  if (filteredData?.filteredQueryArray.length! > 0) {
+    filterQueryValues = filteredQueryArray.join(" AND ");
+  } else {
+    filterQueryValues = ` `;
+  }
+
+  let query = `
+    WITH fetch_interaction_templates AS (
+        SELECT
+            i.rid, i.r_number,
+            i.status_rid,s.status_name,
+            i.created_by, i.modified_by,
+            i.created_datetime, i.modified_datetime,
+            COUNT(i.rid) OVER() AS total_records,
+            i.interaction_type_rid,it.interaction_type_name,
+            i.interaction_level_rid,il.interaction_level_name,
+            i.template_name,
+            uc.first_name || ' ' || uc.last_name AS created_user_name,
+            um.first_name || ' ' || um.last_name AS modified_user_name
+
+            FROM
+            ${MAIN_SCHEMA_NAME}.interaction_templates i
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.interaction_level il ON il.rid = i.interaction_level_rid
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.interaction_type it ON it.rid = i.interaction_type_rid
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.status s ON s.rid = i.status_rid
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.user uc ON uc.rid = i.created_by
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.user um ON um.rid = i.modified_by
+            WHERE
+            (i.r_number ILIKE '${searchValue}')
+            ${interactionLLevelCondition}
+            ${filteredData?.andConditions}
+            ${filterQueryValues}
+            ${sortValue}
+    ),
+    paginated_datas AS (
+    SELECT * FROM fetch_interaction_templates ${pagination}
+    
+    )
+        SELECT 
+        array_agg(jsonb_build_object(
+        'rid', i.rid,
+        'r_number', i.r_number,
+        'status', i.status_rid,
+        'status_name', i.status_name,
+        'created_by', i.created_by,
+        'modified_by', i.modified_by,
+        'created_datetime', i.created_datetime,
+        'modified_datetime', i.modified_datetime,
+        'interaction_type', i.interaction_type_rid,
+        'interaction_type_name', i.interaction_type_name,
+        'interaction_level', i.interaction_level_rid,
+        'interaction_level_name', i.interaction_level_name,
+        'total_records', i.total_records,
+        'created_user_name', i.created_user_name,
+        'modified_user_name', i.modified_user_name,
+        'template_name', i.template_name
         ) ) AS interactions
 
         FROM
@@ -477,69 +629,86 @@ const filterForInteractions = (
               dynamicReference = `p`;
               filteredColumns = "r_number";
             } else dynamicReference = `i`;
-            if (condition == ALPHANUMERIC_CONDITIONS.equals)
-              filteredQueryArray.push(
-                `LOWER(${dynamicReference}.${filteredColumns}) = LOWER('${values}')`
-              );
-            if (condition == ALPHANUMERIC_CONDITIONS.notEquals) {
-              filteredQueryArray.push(
-                `(LOWER(${dynamicReference}.${filteredColumns}) != LOWER('${values}') OR ${dynamicReference}.${filteredColumns} IS NULL)`
-              );
+            
+            const stringCondition = buildStringFilterCondition(condition, values, filteredColumns!, dynamicReference);
+            if (stringCondition) {
+              filteredQueryArray.push(stringCondition);
             }
-            if (condition == ALPHANUMERIC_CONDITIONS.isEmpty)
-              filteredQueryArray.push(
-                `${dynamicReference}.${filteredColumns} IS NULL`
-              );
-            if (condition == ALPHANUMERIC_CONDITIONS.contains)
-              filteredQueryArray.push(
-                `${dynamicReference}.${filteredColumns} ILIKE '%${values}%'`
-              );
-            if (condition == ALPHANUMERIC_CONDITIONS.IN)
-              filteredQueryArray.push(
-                `${dynamicReference}.${filteredColumns} IN (${values
-                  .map((d: any) => `'${d}'`)
-                  .join(",")})`
-              );
             break;
           }
           case "number": {
-            if (condition == ALPHANUMERIC_CONDITIONS.equals)
-              filteredQueryArray.push(`i.${filteredColumns} = ${values}`);
-            if (condition == ALPHANUMERIC_CONDITIONS.notEquals)
-              filteredQueryArray.push(`i.${filteredColumns} != ${values}`);
-            if (condition == ALPHANUMERIC_CONDITIONS.greater_than)
-              filteredQueryArray.push(`i.${filteredColumns} > ${values}`);
-            if (condition == ALPHANUMERIC_CONDITIONS.less_than)
-              filteredQueryArray.push(`i.${filteredColumns} < ${values}`);
-            if (condition == ALPHANUMERIC_CONDITIONS.between)
-              filteredQueryArray.push(
-                `i.${filteredColumns} BETWEEN ${values.join(" AND ")}`
-              );
-            if (condition == ALPHANUMERIC_CONDITIONS.isEmpty)
-              filteredQueryArray.push(`i.${filteredColumns} IS NULL`);
+            const numericCondition = buildNumericFilterCondition(condition, values, filteredColumns!);
+            if (numericCondition) {
+              filteredQueryArray.push(numericCondition);
+            }
             break;
           }
           case "datetime": {
-            if (condition == ALPHANUMERIC_CONDITIONS.equals)
-              filteredQueryArray.push(
-                `DATE(i.${filteredColumns}) = '${values}'`
-              );
-            if (condition == ALPHANUMERIC_CONDITIONS.before)
-              filteredQueryArray.push(
-                `DATE(i.${filteredColumns}) < '${values}'`
-              );
-            if (condition == ALPHANUMERIC_CONDITIONS.after)
-              filteredQueryArray.push(
-                `DATE(i.${filteredColumns}) > '${values}'`
-              );
-            if (condition == ALPHANUMERIC_CONDITIONS.between)
-              filteredQueryArray.push(
-                `DATE(i.${filteredColumns}) BETWEEN ${values
-                  .map((d: any) => `'${d}'`)
-                  .join(" AND ")}`
-              );
-            if (condition == ALPHANUMERIC_CONDITIONS.isEmpty)
-              filteredQueryArray.push(`DATE(i.${filteredColumns}) IS NULL`);
+            const datetimeCondition = buildDatetimeFilterCondition(condition, values, filteredColumns!);
+            if (datetimeCondition) {
+              filteredQueryArray.push(datetimeCondition);
+            }
+            break;
+          }
+        }
+      }
+    }
+    return {
+      filteredQueryArray,
+      andConditions,
+    };
+  } else {
+    filteredQueryArray = [];
+    andConditions = ` `;
+    return {
+      filteredQueryArray,
+      andConditions,
+    };
+  }
+};
+
+const filterForInteractionTemplates = (
+  filters: filterType,
+  andConditions: string,
+  filteredQueryArray: string[],
+  filterTypes: any,
+  filterColumns: Record<string, any>
+) => {
+  let filteredColumns: string | undefined;
+  if (Object.keys(filters).length > 0) {
+    for (let [key, conditions] of Object.entries(filters)) {
+      if (Object.keys(filterTypes).includes(key)) {
+        filteredColumns = filterColumns[key];
+        andConditions = ` AND `;
+      }
+      for (let [condition, values] of Object.entries(conditions)) {
+        switch (filterTypes[key]) {
+          case "string": {
+            let dynamicReference = ``;
+            if (filteredColumns == "created_by") dynamicReference = `uc`;
+            else if (filteredColumns == "modified_by") dynamicReference = `um`;
+            else if (filteredColumns == "created_user_name") dynamicReference = ``;
+            else dynamicReference = `i`;
+            
+            const stringCondition = buildStringFilterCondition(condition, values, filteredColumns!, dynamicReference);
+            if (stringCondition) {
+              filteredQueryArray.push(stringCondition);
+            }
+            break;
+          }
+          case "number": {
+            const numericCondition = buildNumericFilterCondition(condition, values, filteredColumns!);
+            if (numericCondition) {
+              filteredQueryArray.push(numericCondition);
+            }
+            break;
+          }
+          case "datetime": {
+            const datetimeCondition = buildDatetimeFilterConditionTemplates(condition, values, filteredColumns!);
+            if (datetimeCondition) {
+              filteredQueryArray.push(datetimeCondition);
+            }
+            break;
           }
         }
       }
@@ -904,7 +1073,8 @@ export const interactionResponseHistoryByVersion = (
             ii.question_seq_num, ii.question, a.attachments, a.global_attachments,
             a.interaction_response, a.response_on,i.response_updated_on,
             i.response_submitted_on, i.rid AS interaction_rid,
-            ii.rid AS interaction_item_rid, a.rid AS interaction_response_rid, a.interaction_version
+            ii.rid AS interaction_item_rid, a.rid AS interaction_response_rid, a.interaction_version,
+            ii.is_mandatory
         FROM
         ${schemaName}.interactions i
         LEFT JOIN ${schemaName}.project p ON p.rid = i.project_rid AND p.account_rid = i.account_rid
@@ -919,7 +1089,8 @@ export const interactionResponseHistoryByVersion = (
             ii.question_seq_num, ii.question,
             a.interaction_response, a.response_on,i.response_updated_on,
             i.response_submitted_on, i.rid,
-            ii.rid, a.rid, a.attachments, a.interaction_version, a.global_attachments
+            ii.rid, a.rid, a.attachments, a.interaction_version, a.global_attachments,
+            ii.is_mandatory
     )
     
     SELECT 
@@ -935,6 +1106,7 @@ export const interactionResponseHistoryByVersion = (
     'question_id', i.question_seq_num,
     'question', i.question,
     'response', i.interaction_response,
+    'is_mandatory', i.is_mandatory,
     'attachments', i.attachments,
     'global_attachments', i.global_attachments
     )ORDER BY i.question_seq_num ASC NULLS LAST) AS responses_history_details
@@ -1062,4 +1234,134 @@ const updateInteractionForAgeQuery = (
 
 const updateInteractionAgeSummary = (rid: string, age: number) => {
   return `UPDATE ${MAIN_SCHEMA_NAME}.interactions_summary i SET interaction_age = ${age} WHERE i.interaction_rid = '${rid}'`;
+};
+
+export const fetchStatusIdsForReminderList = () => {
+  return `SELECT rid, status_name,status_type FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE (LOWER(status_name) = '${interactionStatus.SENT}' OR LOWER(status_name) = '${interactionStatus.RESPONSE_DRAFT}')`
+}
+
+const interactionStatus = {
+  SENT : "sent",
+  RESPONSE_DRAFT : "response draft"
+}
+// Utility function for handling numeric filter conditions
+const buildNumericFilterCondition = (
+  condition: string,
+  values: any,
+  filteredColumns: string,
+  tableAlias: string = 'i'
+): string => {
+  const columnRef = `${tableAlias}.${filteredColumns}`;
+  
+  switch (condition) {
+    case ALPHANUMERIC_CONDITIONS.equals:
+      if(filteredColumns === 'fiscal_year') {
+        return `CASE WHEN i.project_fiscal_rid IS NULL THEN i.fiscal_year ELSE pf.fiscal_year END = ${values}`;
+      } else {
+        return `${columnRef} = ${values}`;
+      }
+    case ALPHANUMERIC_CONDITIONS.notEquals:
+      if(filteredColumns === 'fiscal_year') {
+        return `CASE WHEN i.project_fiscal_rid IS NULL THEN i.fiscal_year ELSE pf.fiscal_year END != ${values}`
+      } else {
+        return `${columnRef} != ${values}`;
+      }
+    case ALPHANUMERIC_CONDITIONS.greater_than:
+      return `${columnRef} > ${values}`;
+    case ALPHANUMERIC_CONDITIONS.less_than:
+      return `${columnRef} < ${values}`;
+    case ALPHANUMERIC_CONDITIONS.between:
+      return `${columnRef} BETWEEN ${values.join(" AND ")}`;
+    case ALPHANUMERIC_CONDITIONS.isEmpty:
+      return `${columnRef} IS NULL`;
+    case ALPHANUMERIC_CONDITIONS.IN :
+      return `CASE WHEN i.project_fiscal_rid IS NULL THEN i.fiscal_year ELSE pf.fiscal_year END IN (${values.map((d : any) => `${d}`)})`
+    default:
+      return '';
+  }
+};
+
+// Utility function for handling string filter conditions
+const buildStringFilterCondition = (
+  condition: string,
+  values: any,
+  filteredColumns: string,
+  dynamicReference: string
+): string => {
+  let columnRef = `${dynamicReference}.${filteredColumns}`;
+  
+  // Handle computed user name fields
+  if (filteredColumns === 'created_user_name') {
+    columnRef = `(uc.first_name || ' ' || uc.last_name)`;
+  } else if (filteredColumns === 'modified_user_name') {
+    columnRef = `(um.first_name || ' ' || um.last_name)`;
+  }
+  
+  switch (condition) {
+    case ALPHANUMERIC_CONDITIONS.equals:
+      return `LOWER(${columnRef}) = LOWER('${values}')`;
+    case ALPHANUMERIC_CONDITIONS.notEquals:
+      return `(LOWER(${columnRef}) != LOWER('${values}') OR ${columnRef} IS NULL)`;
+    case ALPHANUMERIC_CONDITIONS.isEmpty:
+      return `${columnRef} IS NULL`;
+    case ALPHANUMERIC_CONDITIONS.contains:
+      return `${columnRef} ILIKE '%${values}%'`;
+    case ALPHANUMERIC_CONDITIONS.IN:
+      return `${columnRef} IN (${values.map((d: any) => `'${d}'`).join(",")})`;
+    default:
+      return '';
+  }
+};
+
+// Utility function for handling datetime filter conditions
+const buildDatetimeFilterCondition = (
+  condition: string,
+  values: any,
+  filteredColumns: string,
+  tableAlias: string = 'i'
+): string => {
+  const columnRef = `DATE(${tableAlias}.${filteredColumns})`;
+  
+  switch (condition) {
+    case ALPHANUMERIC_CONDITIONS.equals:
+      return `${columnRef} = '${values}'`;
+    case ALPHANUMERIC_CONDITIONS.before:
+      return `${columnRef} < '${values}'`;
+    case ALPHANUMERIC_CONDITIONS.after:
+      return `${columnRef} > '${values}'`;
+    case ALPHANUMERIC_CONDITIONS.between:
+      return `${columnRef} BETWEEN ${values.map((d: any) => `'${d}'`).join(" AND ")}`;
+    case ALPHANUMERIC_CONDITIONS.isEmpty:
+      return `${columnRef} IS NULL`;
+    default:
+      return '';
+  }
+};
+
+const buildDatetimeFilterConditionTemplates = (
+  condition: string,
+  values: any,
+  filteredColumns: string,
+  tableAlias: string = 'i'
+): string => {
+  const columnRef = `DATE(${tableAlias}.${filteredColumns})`;
+  
+  switch (condition) {
+    case ALPHANUMERIC_CONDITIONS.equals:
+      return `${columnRef} = '${values}'`;
+    case ALPHANUMERIC_CONDITIONS.before:
+      return `${columnRef} < '${values}'`;
+    case ALPHANUMERIC_CONDITIONS.after:
+      return `${columnRef} > '${values}'`;
+    case ALPHANUMERIC_CONDITIONS.between:
+      // values should be an object: { from: string, to: string }
+      if (values && typeof values === 'object' && values.from && values.to) {
+      return `${columnRef} BETWEEN '${values.from}' AND '${values.to}'`;
+      }
+      return '';
+    case ALPHANUMERIC_CONDITIONS.isEmpty:
+      return `${columnRef} IS NULL`;
+    default:
+      return '';
+  }
 };

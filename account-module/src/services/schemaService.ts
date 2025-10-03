@@ -2319,7 +2319,9 @@ private async createInteractionTable(
        CREATE TABLE IF NOT EXISTS "${schemaName}".autosend_interaction_audit
       (
           rid VARCHAR(50) PRIMARY KEY DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
-          project_fiscal_rid character varying(50) NOT NULL,
+          project_fiscal_rid character varying(50),
+          account_rid character varying(50),
+          interaction_level character varying(50),
           created_datetime timestamp with time zone DEFAULT now(),
           created_by character varying(50)
       )
@@ -2636,9 +2638,11 @@ private async createInteractionTable(
     );
   }
 
-  async fetchAccountDetails(account_number: string, account_rid: string, parentAccountId: string) {
-    const schemaName = `trd365_${account_number.replace(/\D/g, "")}`;
+  async fetchAccountDetails(account_number: string, account_rid: string, parentAccountId: string,isParentAccount: boolean) {
+    let schemaName = `trd365_${account_number.replace(/\D/g, "")}`;
     try {
+     
+
       const query = `
         SELECT * FROM "${schemaName}".account_details WHERE account_rid = :account_rid
       `;
@@ -2650,16 +2654,57 @@ private async createInteractionTable(
       const sequelize = await initOrgSequelize();
 
       const users: any = await sequelize.query(query, {
-        replacements: { account_rid },
+        replacements: { account_rid  },
         type: "SELECT",
       });
-
       const fetchParentAccount: any = await sequelize.query(parentAccountQuery, {
         replacements: { account_rid: parentAccountId },
         type: "SELECT",
       });
-
-      if(fetchParentAccount && fetchParentAccount.length > 0){
+       if(!isParentAccount)
+      {
+         const parentRnumber = `
+        SELECT * FROM "${MAIN_SCHEMA_NAME}".account WHERE rid = :parentAccountId
+      `;
+        const mainSequelize = await initSequelize();
+        const [parentAccountInfo]: any[] = await mainSequelize.query(parentRnumber, {
+          replacements: { parentAccountId },
+          type: "SELECT",
+        });
+        let schemaNameParent = `trd365_${parentAccountInfo.r_number.replace(/\D/g, "")}`;
+          const parentquery = `
+        SELECT * FROM "${schemaNameParent}".account_details WHERE account_rid = :parentAccountId
+      `;
+          const parentSubscriptioninfo: any = await sequelize.query(parentquery, {
+        replacements: { parentAccountId },
+        type: "SELECT",
+      });
+      if(parentSubscriptioninfo && parentSubscriptioninfo.length > 0)
+      {
+        console.log("parentSubscriptioninfo",parentSubscriptioninfo);
+         const parentDetails = parentSubscriptioninfo[0];
+        
+        const isSubscriptionCreated = Boolean(
+          parentDetails.subscription_created &&
+          parentDetails.tenant_id &&
+          parentDetails.client_id &&
+          parentDetails.client_secret
+        );
+          if (Array.isArray(users) && users.length > 0) {
+          users[0].is_send_interaction = isSubscriptionCreated;
+        }
+      }else{
+        if (Array.isArray(users) && users.length > 0) {
+          const clientSecret = users[0]?.client_secret;
+          if(clientSecret){
+            const decryptedSecret = await decryptClientSecret(clientSecret);
+            users[0].client_secret = decryptedSecret;
+          }
+          users[0].is_send_interaction = false;
+        }
+      }
+      }else{
+        if(fetchParentAccount && fetchParentAccount.length > 0){
         const parentDetails = fetchParentAccount[0];
         
         const isSubscriptionCreated = Boolean(
@@ -2682,6 +2727,19 @@ private async createInteractionTable(
           users[0].is_send_interaction = false;
         }
       }
+      }
+      if(!isParentAccount)
+        {
+          if (Array.isArray(users) && users.length > 0) {
+
+            users[0].subscription_created = false;
+            users[0].tenant_id = "";
+            users[0].client_id = "";
+            users[0].client_secret = "";
+            users[0].support_email = "";
+          }
+          
+        }
 
       return users;
     } catch (err) {

@@ -20,6 +20,9 @@ import { WebhookEmailLog } from "../models/webhookEmailLog";
 import { AccountInteractions } from "../models/accountInteractions";
 import { SendEmailInfo } from "../models/sendEmailInfo";
 import { AutoSendInteractionAudit } from "../models/autoSendInteractionAudit";
+import { InteractionTemplate } from "../models/interactionTemplate";
+import { InteractionTemplateItem } from "../models/interactionTemplateItems";
+import { AiAssessmentEventTracker } from "../models/aiAssessmentEventTracker";
 
 export class InteractionModelService {
   orgDbSequelize: Sequelize | null = null;
@@ -85,6 +88,18 @@ export class InteractionModelService {
       sequelize,
       schemaName
     );
+    const InteractionTemplateModel = InteractionTemplate.initialize(
+      mainDbSequelize,
+      ""
+    );
+    const InteractionTemplateItemModel = InteractionTemplateItem.initialize(
+      mainDbSequelize,
+      ""
+    );
+    const AiAssessmentEventTrackerModel = AiAssessmentEventTracker.initialize(
+      mainDbSequelize,
+      ""
+    );
     const InteractionSummaryModel = InteractionSummary.initialize(
       mainDbSequelize,
       ""
@@ -132,7 +147,10 @@ export class InteractionModelService {
       WebhookEmailLog: WebhookEmailLogModel,
       AccountInteraction : AccountInteractionModel,
       SendEmailInfo : SendEmailInfoModel,
-      AutoSendInteractionAudit: AutoSendInteractionAuditModel
+      AutoSendInteractionAudit: AutoSendInteractionAuditModel,
+      InteractionTemplate: InteractionTemplateModel,
+      InteractionTemplateItem: InteractionTemplateItemModel,
+      AiAssessmentEventTracker: AiAssessmentEventTrackerModel
     };
 
     this.modelCache.set(schemaName, models);

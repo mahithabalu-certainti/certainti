@@ -2,6 +2,7 @@ import { SchedulerExecutions } from "../../models/schedulerExecution";
 import {
   ICreateAccountInteraction,
   ICreateInteraction,
+  ICreateTemplateInteraction,
   InteractionResponse,
   IProject,
   IUpdateInteraction,
@@ -9,7 +10,7 @@ import {
 
 export interface IInteractionService {
   processKafkaMessage(data: any): Promise<void>;
-  listInteractionPrjAccount(data: any,userId: string,apiType: string): Promise<any>;
+  listInteractionPrjAccount(data: any,userId: string,apiType: string, reminderSpecificList : boolean, statusIdsForReminderList : string[]): Promise<any>;
   fetchInteractionSummary(
     data: any,userId: string
   ): Promise<{ statusCodeValue: string; data: any }>;
@@ -36,7 +37,38 @@ export interface IInteractionService {
     errorMessage?: string;
     data?: { interactions: any };
   }>;
-
+   createInteractionTemplate(
+    interactionData: ICreateTemplateInteraction,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { interactions: any };
+  }>;
+    getInteractionTemplateDetailsById(
+    templateRid: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { interactionDetails: any };
+  }>;
+   updateInteractionTemplate(
+    interactionData: ICreateTemplateInteraction,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { interactions: any };
+  }>;
+   listInteractionTemplates(data: any,userId: string, filters: Record<string, any>,apitype:string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { interactions: any , count: number};
+  }>;
    listAccountInteractions(data: any, page: number, limit: number, filters: Record<string, any>): Promise<{
     statusCode: number;
     message: string;
@@ -97,7 +129,8 @@ export interface IInteractionService {
 
   getInteractionStatus(
     statusScope?: string,
-    currentStatus?: string
+    currentStatus?: string,
+    reminderFlag? : boolean
   ): Promise<{
     statusCode: number;
     message: string;
@@ -147,7 +180,7 @@ export interface IInteractionService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { technicalSummaryDetails: any };
+    data?: any;
   }>;
 
   
@@ -165,12 +198,12 @@ export interface IInteractionService {
       interaction_rid: string;
       project_fiscal_rid: string;
       interaction_level: string;
-      email_info: {
+    }[],
+    email_info: {
         email: string;
         name: string | null;
-      };
-    }[],
-    accountId: string,
+      },
+    accountRid : string,
     userId: string,
     is_interaction_followup?: boolean
   ): Promise<{
@@ -219,6 +252,7 @@ export interface IInteractionService {
       permission_name: string
     ): Promise<any[]>;
   sendEmailInBatch() : Promise<void>
+  fetchStatusIdsForReminder() : Promise<any>
 }
 
 export interface IWebHookService {

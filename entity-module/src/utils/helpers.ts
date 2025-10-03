@@ -1028,3 +1028,36 @@ export async function encryptClientSecret(text: string): Promise<string> {
 
   return iv.toString('hex') + ':' + encrypted.toString('hex');
 }
+
+export async function decryptClientSecret(encryptedText: string): Promise<string> {
+  const ENCRYPTION_KEY = process.env.CLIENT_SECRET_ENCRYPTION_KEY;
+  
+  if (!ENCRYPTION_KEY) {
+    throw new Error('CLIENT_SECRET_ENCRYPTION_KEY is not set in environment');
+  };
+
+  const encryptClientSecret = await getSecret(ENCRYPTION_KEY);
+
+  if(!encryptClientSecret){
+    throw new Error("Invalid Client Encryption Key")
+  }
+
+  const [ivHex, encryptedHex] = encryptedText.split(":");
+
+  if (!ivHex || !encryptedHex) {
+    throw new Error('Invalid encrypted text format. Expected format "iv:encrypted"');
+  }
+
+  const iv = Buffer.from(ivHex, "hex");
+  const encrypted = Buffer.from(encryptedHex, "hex");
+
+  const decipher = crypto.createDecipheriv(
+    "aes-256-cbc",
+    Buffer.from(encryptClientSecret),
+    iv
+  );
+  let decrypted = decipher.update(encrypted);
+  decrypted = Buffer.concat([decrypted, decipher.final()]);
+
+  return decrypted.toString();
+}

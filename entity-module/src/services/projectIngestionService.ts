@@ -1646,6 +1646,7 @@ class ProjectIngestionService {
       project_type_rid: "project_type_rid",
       project_name: "project_name",
       project_code: "project_code",
+      rd_percent_final: "rd_percent_final",
     };
 
     const childOnlyFilters = ["fiscal_year", "project_code"];
@@ -1786,10 +1787,29 @@ class ProjectIngestionService {
           fullOrder.push([
             Sequelize.literal(`"Project"."project_code" ASC NULLS LAST`),
           ]);
-        } else {
           fullOrder.push([
+          Sequelize.literal(`"ProjectFiscal"."fiscal_year" ASC`),
+          ]);
+        } else {
+          if(field === "project_code" && sortDirection === 'ASC') {
+            fullOrder.push([
             Sequelize.literal(`"Project"."project_code" ASC NULLS LAST`),
           ]);
+          fullOrder.push([
+          Sequelize.literal(`"ProjectFiscal"."fiscal_year" ASC`),
+          ]);
+          } else if(field === "project_code" && sortDirection === 'DESC') {
+            fullOrder.push([
+            Sequelize.literal(`"Project"."project_code" DESC NULLS LAST`),
+          ]);
+          fullOrder.push([
+          Sequelize.literal(`"ProjectFiscal"."fiscal_year" DESC`),
+          ]);
+          } else {
+            fullOrder.push([
+            Sequelize.literal(`"Project"."${field}" ${nullsHandled}`),
+          ]);
+          }
         }
       }
 
@@ -1889,7 +1909,8 @@ class ProjectIngestionService {
     if (this.mainDbSequelize) {
       let projectData = await this.enrichKeyContactsManually(
         projects,
-        accountNumber
+        accountNumber,
+        apiSource
       );
 
       projectData = await this.keyContacts.insertKeyRole(
@@ -1912,6 +1933,7 @@ class ProjectIngestionService {
         rawFilters
       );
       projects = projectData;
+
 
       totalCount = count;
       if(searchClause[Op.or] && searchClause[Op.or].length > 0) {
@@ -2006,6 +2028,7 @@ class ProjectIngestionService {
       project_type_rid: "project_type_rid",
       project_name: "project_name",
       project_code: "project_code",
+      rd_percent_final: "rd_percent_final"
     };
 
     const childOnlyFilters = ["fiscal_year", "project_code"];
@@ -2145,7 +2168,8 @@ class ProjectIngestionService {
     if (this.mainDbSequelize) {
       let projectData = await this.enrichKeyContactsManually(
         projects,
-        accountNumber
+        accountNumber,
+        ""
       );
 
       projectData.forEach((e) => {
@@ -2949,7 +2973,7 @@ class ProjectIngestionService {
     return finalData;
   }
 
-  async enrichKeyContactsManually(projects: any[], accountNumber: string) {
+  async enrichKeyContactsManually(projects: any[], accountNumber: string, apiSource : string) {
     const { KeyContact } = await this.getModels(accountNumber);
 
     const allProjectIds = projects.map((p) => p.rid);
@@ -2959,6 +2983,9 @@ class ProjectIngestionService {
 
     const allIds = [...new Set([...allProjectIds, ...allFiscalIds])];
     if (allIds.length === 0) return projects;
+    
+    const allFiscalIdsForInteractions = [...new Set([...allFiscalIds])]
+
 
     // Fetch key_contact records where reference_id is in allIds
     const keyContacts: any[] = await KeyContact.findAll({
@@ -2967,6 +2994,24 @@ class ProjectIngestionService {
       },
       raw: true,
     });
+    const contactInteractionMap: Record<string, any[]> = {};
+    if(apiSource.toLowerCase() === "interaction") {
+      let interactionKeyContact : any[] = []
+      if(allFiscalIdsForInteractions.length > 0) {
+        let schemaName = rawQueries.fetchSchemaName(accountNumber)
+          interactionKeyContact = await KeyContact.findAll({
+          where : {
+            entity_rid : allFiscalIdsForInteractions,
+            include_in_communication : true
+          }, raw : true
+        })
+      }
+      for (const kc of interactionKeyContact) {
+        const refId = kc.entity_rid;
+        if (!contactInteractionMap[refId]) contactInteractionMap[refId] = [];
+        contactInteractionMap[refId].push(kc);
+      }
+    }
 
     // Group keyContacts by reference_id
     const contactMap: Record<string, any[]> = {};
@@ -2985,6 +3030,7 @@ class ProjectIngestionService {
         (fiscal: any) => ({
           ...(typeof fiscal.toJSON === "function" ? fiscal.toJSON() : fiscal),
           keyContact: contactMap[fiscal.rid] || [],
+          interactionKeyRecipients : contactInteractionMap[fiscal.rid] || []
         })
       );
 

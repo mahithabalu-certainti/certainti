@@ -2,20 +2,21 @@ import { InteractionModelService } from "../interactionModelsService";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import dayjs from "dayjs";
 import { initMainDbSequelize } from "../../config/mainDataSource";
-import { Op, QueryTypes, Sequelize, Transaction, UUIDV4 } from "sequelize";
+import { col, fn, Op, QueryTypes, Sequelize, Transaction, UUIDV4, where } from "sequelize";
 import {
   ICreateAccountInteraction,
   ICreateInteraction,
+  ICreateTemplateInteraction,
   InteractionDetailsResponse,
   InteractionResponse,
   IProject,
   IUpdateInteraction,
 } from "../../utils/types";
 import { Interaction } from "../../models/interaction";
-import { ALPHANUMERIC_CONDITIONS, MAIN_SCHEMA_NAME, mainTableFilters, rawQueries, schedulerStatus, statusAction, techSummaryStatus } from "../../utils/constants";
-import { InteractionHistory } from "../../models/interactionHistory";
+import { ALPHANUMERIC_CONDITIONS, HttpStatus, MAIN_SCHEMA_NAME, mainTableFilters, rawQueries, schedulerStatus, statusAction, techSummaryStatus } from "../../utils/constants";
 import { SendEmailInfo } from "../../models/sendEmailInfo";
 import { decryptClientSecret } from "../../utils/helpers";
+import { fetchStatusIdsForReminderList } from "../../utils/rawQueries";
 
 class InteractionSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -62,6 +63,8 @@ class InteractionSchemaService {
       );
       const interactionLevel = await this.getInteractionLevelByType(intLevel);
       interactionData.interaction_level_rid = interactionLevel!;
+      interactionData.recipient_name = interactionData.email_info?.name || null
+      interactionData.recipient_email = interactionData.email_info?.email || null
       const interaction = await Interaction.create(interactionData, {
         transaction,
       });
@@ -207,6 +210,7 @@ class InteractionSchemaService {
     accountNumber: string,
     interactionData: ICreateInteraction,
     userId: string,
+    parentAccountId: string,
     interactionLevel: string
   ) {
     try {
@@ -229,6 +233,8 @@ class InteractionSchemaService {
           created_by: userId,
           status_rid: interactionData.status_rid,
           interaction_level_rid: interactionData.interaction_level_rid,
+          recipient_name : interactionData.email_info?.name,
+          recipient_email : interactionData.email_info?.email
         }));
 
       // Utility: Bulk create with chunking
@@ -293,7 +299,8 @@ class InteractionSchemaService {
            }
         }
        
-        if (interactionData.trigger_send || autoSendAccess) {
+        const isParensettingsConfigured = await this.fetchAccountDetails(accountNumber, parentAccountId,interactionData.account_rid);
+        if (isParensettingsConfigured && (interactionData.trigger_send || autoSendAccess)) {
           // Bulk insert SendEmailInfo
           const sendEmailInfoData = prepareSendEmailInfoData(createdInteractions, interactionData.projects);
           await batchInsert(SendEmailInfo, sendEmailInfoData);
@@ -328,7 +335,7 @@ class InteractionSchemaService {
           }
 
           // Bulk insert SendEmailInfo for enabled projects only
-          if (enabledProjects.length > 0 && enabledInteractions.length > 0) {
+          if (enabledProjects.length > 0 && enabledInteractions.length > 0 && isParensettingsConfigured) {
             const sendEmailInfoData = prepareSendEmailInfoData(enabledInteractions, enabledProjects);
             await batchInsert(SendEmailInfo, sendEmailInfoData);
 
@@ -393,8 +400,60 @@ class InteractionSchemaService {
     }
   }
 
+   private async handleAddQuestionTemplate(
+    InteractionTemplate: any,
+    interactionData: ICreateTemplateInteraction,
+    interactionRid: string,
+    question: any,
+    userId: string,
+    type: string
+  ) {
+    if (interactionRid) {
+      interactionData.created_by = userId;
+      const item = {
+        ...question,
+        ...interactionData,
+        template_rid: interactionRid,
+        created_by: userId, // Ensure created_by is always userId
+      };
+      await InteractionTemplate.create(item);
+      console.log(`[addInteractionItems] Added question:`, item);
+    }
+  }
 
-  
+  private async handleDeleteQuestionTemplate(
+    InteractionTemplateQuestions: any,
+    interactionRid: string,
+    question: any,
+    userId: string,
+    transaction: Transaction
+  ) {
+    await InteractionTemplateQuestions.destroy({
+      where: { template_rid: interactionRid, rid: question.rid },
+      transaction,
+    });
+    console.log(`[addInteractionItems] Deleted question:`, question.rid);
+  }
+   private async handleEditQuestionTemplate(
+    InteractionTemplateQuestions: any,
+    interactionData: ICreateTemplateInteraction,
+    interactionRid: string,
+    question: any,
+    userId: string,
+    transaction: Transaction
+  ) {
+    const existingData = await InteractionTemplateQuestions.findOne({
+      where: { template_rid: interactionRid, rid: question.rid },
+    });
+    await InteractionTemplateQuestions.update(
+      { ...question, ...interactionData },
+      {
+        where: { template_rid: interactionRid, rid: question.rid },
+        transaction,
+      }
+    );
+    console.log(`[addInteractionItems] Edited question:`, question.rid);
+  }
 
   private async handleDeleteQuestion(
     InteractionItem: any,
@@ -809,6 +868,8 @@ class InteractionSchemaService {
         ...interactionData,
         modified_by: userId,
         modified_datetime: new Date(),
+        recipient_name : interactionData.email_info?.name,
+        recipient_email : interactionData.email_info?.email
       },
       {
         where: {
@@ -917,7 +978,46 @@ class InteractionSchemaService {
       return {
         accountNumber: accountRnumber,
         accountId: account?.rid,
-        accountName: account.account_name,
+        accountName: account?.account_name,
+        parentAccountId: account?.parent_account_rid
+      };
+    } catch (err) {
+      throw new Error("Error fetching account : " + (err as Error).message);
+    }
+  }
+
+  async fetchValidAccountNumberByIdForEmail(accountId: string) {
+    try {
+      if (!this.mainDbSequelize) {
+        this.mainDbSequelize =
+          await this.interactionModelService.getMainSequelize();
+      }
+
+      const [account]: any[] = await this.mainDbSequelize.query(
+        rawQueries.fetchParentAccountforEmail,
+        {
+          replacements: { rid: accountId },
+          type: "SELECT",
+        }
+      );
+
+      let accountRnumber = account?.r_number;
+
+      if (!account?.is_parent) {
+        const [accountData]: any[] = await this.mainDbSequelize.query(
+          rawQueries.fetchParentAccountforEmail,
+          {
+            replacements: { rid: account?.parent_account_rid },
+            type: "SELECT",
+          }
+        );
+        accountRnumber = accountData?.r_number;
+      }
+
+      return {
+        accountNumber: accountRnumber,
+        accountId: account?.rid,
+        accountName: account?.account_name,
         parentAccountId: account?.parent_account_rid
       };
     } catch (err) {
@@ -1497,7 +1597,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       return {
         rid: techSummaryDetails.dataValues.rid,
         r_number: techSummaryDetails.dataValues.r_number,
-        technical_summary: techSummaryDetails.dataValues.technical_summary,
+        technical_summary: JSON.parse(techSummaryDetails.dataValues.technical_summary!),
         version: techSummaryDetails.dataValues.version,
         status_rid: techSummaryDetails.dataValues.status_rid,
         status_name: statusInfo?.status_name || null,
@@ -1556,6 +1656,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         recipient_name,
         recipient_email,
         interaction_level_rid,
+        fiscal_year
       } = interactionDetails.dataValues;
       const metainfo = await this.insertAdditionalInfo(
         interactionDetails,
@@ -1565,6 +1666,11 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         created_by ?? "",
         modified_by ?? ""
       );
+      const fiscalYear =
+        metainfo?.interaction_level_name === "Project"
+          ? metainfo?.fiscal_year ?? ""
+          : fiscal_year ?? "";
+
       const response: InteractionDetailsResponse = {
         interaction_rid: rid,
         r_number: r_number ?? "",
@@ -1575,7 +1681,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         project_rnumber : metainfo?.project_rnumber ?? "",
         account_rid,
         project_rid: project_rid ?? "",
-        fiscal_year: metainfo?.fiscal_year ?? "",
+        fiscal_year: fiscalYear,
         project_fiscal_rid: project_fiscal_rid ?? "",
         interaction_type: interaction_type_rid ?? "",
         interaction_type_name: metainfo?.interaction_type_name ?? "",
@@ -1592,8 +1698,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         response_updated_by: response_updated_by ?? null,
         response_updated_on: response_updated_on ?? null,
         global_attachments: globalAttachments,
-        recipient_name: recipient_name || null,
-        recipient_email: recipient_email || null,
+        recipient_name: recipient_name || metainfo?.recipient_name || null,
+        recipient_email: recipient_email || metainfo?.recipient_email || null,
         hasEmailRecipient: metainfo?.hasEmailRecipient || false
       };
 
@@ -1793,6 +1899,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       let interaction_level:any = null
       let project_info: any = null;
       let hasEmailRecipient: boolean = false;
+      let recipient_name: string | null = null;
+      let recipient_email: string | null = null;
 
       if (interactionDetails?.dataValues?.interaction_type_rid) {
         const result = await this.mainDbSequelize.query(
@@ -1807,7 +1915,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         interaction_type =
           Array.isArray(result) && result.length > 0 ? result[0] : null;
       }
-       if (interactionDetails?.dataValues?.interaction_level_rid) {
+      if (interactionDetails?.dataValues?.interaction_level_rid) {
         const result = await this.mainDbSequelize.query(
           `SELECT rid, interaction_level_name FROM ${MAIN_SCHEMA_NAME}.interaction_level WHERE rid = :id`,
           {
@@ -1851,8 +1959,22 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
                   rawQueries.fetchActiveStatusByType("Active"),
                   { type: "SELECT" }
                 );
-      const [emailInfoResult]: any = await this.orgDbSequelize.query(rawQueries.isEmailRecipientAvailable(interactionDetails?.dataValues?.project_fiscal_rid, schemaName, activeStatus?.rid));
-      hasEmailRecipient = emailInfoResult[0]?.recipient_available ?? false;
+       const [emailRecipients]: any[] = await this.orgDbSequelize.query(
+            rawQueries.fetchInteractionRecipient(
+              interactionDetails?.project_fiscal_rid,
+              activeStatus?.rid,
+              schemaName
+            )
+            );
+            if (emailRecipients && emailRecipients.length > 0 && emailRecipients[0]?.key_contact_email) {
+            hasEmailRecipient = true;
+            recipient_name = emailRecipients[0]?.key_contact_name || null;
+            recipient_email = emailRecipients[0]?.key_contact_email || null;
+            } else {
+            hasEmailRecipient = false;
+            recipient_name = null;
+            recipient_email = null;
+            }
         }
       if(interaction_level?.interaction_level_name === 'Account')
       {
@@ -1864,8 +1986,22 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
                   rawQueries.fetchActiveStatusByType("Active"),
                   { type: "SELECT" }
                 );
-          const [emailInfoResult]: any = await this.orgDbSequelize.query(rawQueries.isEmailRecipientAvailableFrAccount(interactionDetails?.dataValues?.account_rid, schemaName, activeStatus?.rid));
-          hasEmailRecipient = emailInfoResult[0]?.recipient_available ?? false;
+         const [emailRecipients]: any[] = await this.orgDbSequelize.query(
+            rawQueries.fetchInteractionRecipientAccount(
+              interactionDetails?.dataValues?.account_rid,
+              activeStatus?.rid,
+              schemaName
+            )
+            );
+            if (emailRecipients && emailRecipients.length > 0 && emailRecipients[0]?.key_contact_email) {
+            hasEmailRecipient = true;
+            recipient_name = emailRecipients[0]?.key_contact_name || null;
+            recipient_email = emailRecipients[0]?.key_contact_email || null;
+            } else {
+            hasEmailRecipient = false;
+            recipient_name = null;
+            recipient_email = null;
+            }
       }
       const accountDetails : any = await this.mainDbSequelize.query(rawQueries.fetchAccountRnumber(interactionDetails.dataValues.account_rid))
       return {
@@ -1878,7 +2014,9 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         fiscal_year: project_info?.fiscal_year || null,
         account_name : accountDetails[0][0].account_name,
         account_rnumber : accountDetails[0][0].r_number,
-        hasEmailRecipient:hasEmailRecipient
+        hasEmailRecipient:hasEmailRecipient,
+        recipient_email:recipient_email,
+        recipient_name:recipient_name
       };
 
       //return interactionDetails;
@@ -1946,13 +2084,14 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     };
   }
 
-  async getInteractionStatus(status_scope?: string, currentStatus?: string) {
+  async getInteractionStatus(status_scope?: string, currentStatus?: string, reminderFlag? : boolean) {
     if (!this.mainDbSequelize) {
       this.mainDbSequelize =
         await this.interactionModelService.getMainSequelize();
     }
     let whereClause =
       "status = 'active' AND (status_type IS NULL OR status_type = 'UI')";
+    let interactionStatus : any
     if (currentStatus) {
       // Fetch status_name for the given status_rid (currentStatus)
       const [statusResult]: any[] = await this.mainDbSequelize.query(
@@ -1966,12 +2105,21 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         whereClause += " OR status_type = 'CONDITIONAL'";
       }
     }
-    const interactionStatus = await this.mainDbSequelize.query(
+    if(reminderFlag) {
+      interactionStatus = await this.mainDbSequelize.query(
+        fetchStatusIdsForReminderList(),
+        {
+          type : "SELECT"
+        }
+      )
+    } else {
+        interactionStatus = await this.mainDbSequelize.query(
       rawQueries.fetchInteractionStatusList(whereClause),
       {
         type: "SELECT",
       }
     );
+    }
 
     return interactionStatus;
   }
@@ -2179,7 +2327,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     transaction: Transaction
   ) {
     try {
-      const { InteractionResponseHistory, InteractionAttachment, Interaction } =
+      const { InteractionResponseHistory, InteractionAttachment, Interaction ,AiAssessmentEventTracker} =
         await this.interactionModelService.getModels(accountNumber);
       if (!this.mainDbSequelize) {
         this.mainDbSequelize =
@@ -2258,27 +2406,64 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         }
       }
 
+      const [statusData]: any = await this.mainDbSequelize.query(
+        rawQueries.fetchInteractionStatusByType(statusAction.RESPONSE_RECEIVED)
+      );
+
       if (responseData.questions && Array.isArray(responseData.questions)) {
         for (const question of responseData.questions) {
-          const created = await InteractionResponseHistory.create(
-            {
+          const recievedStatusid = statusData[0]?.rid;
+
+          const isExisting = await Interaction.findOne({
+            where: {
+              rid: responseData.interaction_rid,
+              status_rid: recievedStatusid
+            }
+          });
+
+          const existing = await InteractionResponseHistory.findOne({
+            where: {
               interaction_rid: responseData.interaction_rid,
-              interaction_version: interactionVersion,
               interaction_item_rid: question.rid,
+            },
+            transaction,
+          });
+
+          let created = null;
+
+          if (existing && isExisting) {
+            // Update existing response
+            await existing.update({
               interaction_response: question.response,
-              created_by: userId,
-              response_email: userEmailId,
               response_by: resonseBy,
               response_on: new Date(),
+              response_email: userEmailId,
               response_source_rid: responseData.response_source_rid,
-            },
-            { transaction }
-          );
+              modified_by: userId, 
+              modified_datetime: new Date(), 
+            }, { transaction });
+          } else {
+            created = await InteractionResponseHistory.create(
+              {
+                interaction_rid: responseData.interaction_rid,
+                interaction_version: interactionVersion,
+                interaction_item_rid: question.rid,
+                interaction_response: question.response,
+                created_by: userId,
+                response_email: userEmailId,
+                response_by: resonseBy,
+                response_on: new Date(),
+                response_source_rid: responseData.response_source_rid,
+              },
+              { transaction }
+            );
+          }
+
           for (const attachment of question.attachments) {
             await InteractionAttachment.create(
               {
                 interaction_rid: responseData.interaction_rid,
-                interaction_response_rid: created.rid,
+                interaction_response_rid: created?.rid || "",
                 interaction_version: interactionVersion,
                 interaction_item_rid: question.rid,
                 attachment_url: attachment.fileUrl,
@@ -2335,7 +2520,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           //check for auto trigger ai
           isAutoTriggerEnabled = await this.isAutoTriggerEnabled(
             accountNumber,
-            responseData.project_fiscal_rid
+            responseData.project_fiscal_rid,
+            AiAssessmentEventTracker
           );
           console.log("isAutoTriggerEnabled", isAutoTriggerEnabled);
         }
@@ -2678,26 +2864,26 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       const [senderEmailInfo]: any[] = await this.orgDbSequelize.query(
         rawQueries.fetchInteractionSenderEmail(schemaName, parentAccountId)
       ); 
-      const clientSecret = senderEmailInfo[0].client_secret;
+      const clientSecret = senderEmailInfo[0]?.client_secret;
       const decryptedSecret = await decryptClientSecret(clientSecret);
       
       return {
-        email: senderEmailInfo[0].support_email,
-        clientId: senderEmailInfo[0].client_id,
+        email: senderEmailInfo[0]?.support_email,
+        clientId: senderEmailInfo[0]?.client_id,
         clientSecret: decryptedSecret,
-        tenantId: senderEmailInfo[0].tenant_id,
+        tenantId: senderEmailInfo[0]?.tenant_id,
       }
     } catch (err) {
-      throw new Error(
-        "Error fetching sender email info: " + (err as Error).message
-      );
+        console.error(err);
     }
   }
   async fetchEmailInfo(
     accountNumber: string,
     interactionRid: string,
     projectFiscalRid: string,
-    accountRid: string
+    accountRid: string,
+    emailInfo:any,
+    isRemainder?: boolean
   ) {
     try {
       if (!this.orgDbSequelize) {
@@ -2723,12 +2909,36 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           ccEmails: [],
         };
       }
+      let keyContactName =null;
+      let keyContactEmail =null;
+      if ((!emailInfo || !emailInfo?.email) && !isRemainder) {  
       const [interactionRecipients]: any[] = await this.orgDbSequelize.query(
         rawQueries.fetchInteractionRecipient(projectFiscalRid, statusArr.rid, schemaName),
         {
           type: "SELECT",
         }
       );
+      keyContactName = interactionRecipients?.key_contact_name ?? null;
+      keyContactEmail = interactionRecipients?.key_contact_email ?? null;
+    }
+    else
+    {
+      if(isRemainder)
+        {
+          const [remainderRecipients]: any[] =  await this.orgDbSequelize.query(  
+            rawQueries.fetchRemainderEmailInfo(interactionRid? interactionRid : '', schemaName),
+            { type: "SELECT" }
+          );
+          keyContactName = remainderRecipients?.recipient_name ?? emailInfo?.name;
+          keyContactEmail = remainderRecipients?.recipient_email ?? emailInfo?.email;
+        }
+        else
+        {
+          keyContactName = emailInfo?.name;
+          keyContactEmail = emailInfo?.email;
+        }
+      
+    }
 
       const interactionCCRecipients: any[] = await this.orgDbSequelize.query(
         rawQueries.fetchInteractionRecipientProject(
@@ -2757,8 +2967,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       // Remove duplicates
       const uniqueCCEmails = Array.from(new Set(ccEmails));
       return {
-        name: interactionRecipients?.key_contact_name ?? null,
-        email: interactionRecipients?.key_contact_email ?? null,
+        name: keyContactName ?? null,
+        email: keyContactEmail ?? null,
         ccEmails: uniqueCCEmails ?? [],
       };
     } catch (err) {
@@ -2767,7 +2977,10 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
   }
   async fetchEmailInfoForAccount(
     accountNumber: string,
-    accountRid: string
+    accountRid: string,
+    emailInfo:any,
+    isRemainder?: boolean,
+    interactionRid?: string
   ) {
     try {
       if (!this.orgDbSequelize) {
@@ -2786,11 +2999,35 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         /\D/g,
         ""
       )}`;
+      let keyContactName ="";
+      let keyContactEmail ="";
+       if ((!emailInfo || !emailInfo?.email) && !isRemainder) {
       const [interactionRecipients]: any[] =
         await this.orgDbSequelize.query(
           rawQueries.fetchInteractionRecipientAccount(accountRid,statusArr.rid ,schemaName),
           { type: "SELECT" }
         );
+        keyContactName = interactionRecipients?.key_contact_name ?? null;
+        keyContactEmail = interactionRecipients?.key_contact_email ?? null;
+      }
+      else
+      {
+        if(isRemainder)
+        {
+          const [remainderRecipients]: any[] =  await this.orgDbSequelize.query(  
+            rawQueries.fetchRemainderEmailInfo(interactionRid? interactionRid : '', schemaName),
+            { type: "SELECT" }
+          );
+          keyContactName = remainderRecipients?.recipient_name ?? emailInfo?.name;
+          keyContactEmail = remainderRecipients?.recipient_email ?? emailInfo?.email;
+        }
+        else
+        {
+           keyContactName = emailInfo?.name;
+           keyContactEmail = emailInfo?.email;
+        }
+      }
+      
         const interactionCCRecipientsAccount: any[] =
         await this.orgDbSequelize.query(
           rawQueries.fetchInteractionRecipientAccount(accountRid,statusArr.rid ,schemaName),
@@ -2808,8 +3045,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       const uniqueCCEmails = Array.from(new Set(ccEmails));
 
       return {
-        name: interactionRecipients?.key_contact_name ?? null,
-        email: interactionRecipients?.key_contact_email ?? null,
+        name: keyContactName ?? null,
+        email: keyContactEmail ?? null,
         ccEmails: uniqueCCEmails ?? [],
       };
     } catch (err) {
@@ -3005,7 +3242,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         rawQueries.fetchUserEmail(userId)
       );
       const userEmailId = senderemailInfo[0]?.email ?? userId;
-       const [statusArr]: any = await this.mainDbSequelize.query(
+      const [statusArr]: any = await this.mainDbSequelize.query(
         rawQueries.fetchInteractionStatusByType(status)
       );
       const statusRid =
@@ -3057,10 +3294,17 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       const interaction = await Interaction.findOne({
         where: { rid: interactionRid },
       });
+      const [statusArr]: any = await this.mainDbSequelize.query(
+        rawQueries.fetchInteractionStatusByType(status)
+      );
+      const statusRid =
+        Array.isArray(statusArr) && statusArr.length > 0
+          ? statusArr[0].rid
+          : null;
       const updateData: any = {
         last_reminder_on: new Date(),
         last_reminder_by: userEmailId,
-       
+        status_rid : statusRid
       };
 
       if (!interaction?.sent_on_datetime || interaction?.sent_on_datetime === null) {
@@ -3124,6 +3368,42 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     }
   }
 
+   async isEmailRecipientAvailableForAccount
+  (     
+    accountNumber: string,  
+    accountRid: string
+  ): Promise<boolean> {
+    try {
+      if (!this.orgDbSequelize) {     
+        this.orgDbSequelize = await this.interactionModelService.getSequelize();
+      }
+      if(!this.mainDbSequelize)
+      {
+        this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
+      }
+      const [activeStatus]: any[] = await this.mainDbSequelize.query(
+        rawQueries.fetchActiveStatusByType("Active"),
+        { type: "SELECT" }
+      );
+
+       const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+          /\D/g,
+          ""
+        )}`;
+      const [recipientInfo]: any[] = await this.orgDbSequelize.query(
+        rawQueries.fetchInteractionRecipientAccount(accountRid, activeStatus.rid, schemaName),
+        { type: "SELECT" }
+      );
+
+      return !!(recipientInfo && recipientInfo.key_contact_email);
+    } catch (err) {
+      throw new Error(
+        "Error checking email recipient availability: " +
+          (err as Error).message
+      );
+    }
+  }
+
   async checkGlobalAutoSendAccess() {
     try {
       if (!this.mainDbSequelize) {
@@ -3158,7 +3438,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           rawQueries.fetchAccountDetailsInfo(accountRid, schemaName),  
           { type: "SELECT" }
         );
-      return accountInfo?.auto_send_interaction ?? false;
+      return accountInfo?.autosend_interaction ?? false;
     } catch (err) {
       throw new Error(
         "Error checking global auto-send interaction access: " +
@@ -3235,7 +3515,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
 
   async isAutoTriggerEnabled(
     accountNumber: string,
-    project_fiscal_rid: string
+    project_fiscal_rid: string,
+    AiAssessmentEventTracker: any
   ) {
     try {
       if (!this.mainDbSequelize) {
@@ -3246,9 +3527,17 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         rawQueries.fetchGlobalAutoSendAccess(),
         { type: "SELECT" }
       );
-      console.log("globalAccess", globalAccess);
+      const responseReceivedEvent = await AiAssessmentEventTracker.findOne({
+        where: {
+          is_active:true,
+          event_name: 'response_received'
+        }
+      });
 
-      if (globalAccess?.auto_access_rd) {
+     if(!responseReceivedEvent || !responseReceivedEvent?.event_name){
+      return false;
+     }
+      if (globalAccess?.auto_access_rd && (responseReceivedEvent && responseReceivedEvent?.event_name)) {
         return true;
       } else {
         if (!this.orgDbSequelize) {
@@ -3265,8 +3554,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           rawQueries.fetchisAutoTriggerEnabled(project_fiscal_rid, schemaName),
           { type: "SELECT" }
         );
-
-        return projectInfo?.auto_access_rd ?? false;
+        return (projectInfo?.auto_access_rd ?? false) && !!responseReceivedEvent.event_name;
       }
     } catch (err) {
       throw new Error(
@@ -3809,9 +4097,11 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     return insertedData
   }
 
-  async createAutoSendInteractionEntry(accountNumber: string, interaction_rid: string, project_fiscal_rid: string, email_info: any) {
+  async createAutoSendInteractionEntry(accountNumber: string, interaction_rid: string, project_fiscal_rid: string, email_info: any, account_rid: string, interaction_level: string) {
     const { AutoSendInteractionAudit } = await this.interactionModelService.getModels(accountNumber);
     const createdEntry = await AutoSendInteractionAudit.create({
+      interaction_level: interaction_level,
+      account_rid: account_rid,
       project_fiscal_rid: project_fiscal_rid,
       
     });
@@ -3831,14 +4121,16 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     })
   }
 
-  async fetchAccountDetails(account_number: string, account_rid: string, parentAccountId: string) {
-    const schemaName = `trd365_${account_number.replace(/\D/g, "")}`;
+  async fetchAccountDetails(account_number: string, parentAccountId: string, accountRid: string) {
+    const {accountNumber} = await this.fetchValidAccountNumberByIdForEmail(accountRid);
+  
+    const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
     try {
 
       const sequelize = await initOrgSequelize();
 
       const fetchParentAccount: any = await sequelize.query(rawQueries.fetchInteractionSenderEmail(schemaName, parentAccountId), {
-        replacements: { account_rid: parentAccountId },
+        replacements: { account_rid: accountRid },
         type: "SELECT",
       });
 
@@ -3859,6 +4151,375 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     } catch (err) {
       console.log("Errr ", err);
       throw new Error("Error retrieving account details");
+    }
+  }
+
+  async createInteractionTemplate(
+    interactionData: ICreateTemplateInteraction
+  ) {
+    // Implementation for creating interactions in the database
+    try {
+      const { InteractionTemplate } = await this.interactionModelService.getModels("");
+      
+      const isUnique = await this.checkIsTemplateUnique(interactionData.template_name,InteractionTemplate);
+      if (!isUnique) {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: `An template with the name "${interactionData.template_name}" already exists. Please choose a different name.`,
+        };
+      }
+      else
+      {
+        const interaction = await InteractionTemplate.create(interactionData);
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          message: HttpStatus.SUCCESS_MESSAGE,
+          data: { interaction },
+        };
+      }
+
+     
+    } catch (error) {
+      console.log(error);
+      throw new Error("Error creating interaction: " + error);
+    }
+  }
+
+  private async checkIsTemplateUnique(
+    template_name: string,
+    InteractionTemplate: any
+  ): Promise<boolean> {
+    const response = await InteractionTemplate.findOne({
+      where: where(
+        fn("LOWER", col("template_name")),
+        Op.eq,
+        template_name.toLowerCase()
+      ),
+    });
+    return !response;
+  }
+
+
+  async listInteractionTemplates(
+  page: number = 1,
+  limit: number = 100,
+  filters: Record<string, string>,
+  sortBy: string = "created_datetime",
+  sortOrder: string = "ASC",
+  type: string = "list"
+) {
+  try {
+    const offset = (page - 1) * limit;
+      let modifiedByFilter;
+    let modifiedByConditions;
+    let totalResults: number = 0;
+    let disablePagination = false;
+    if(type === "download")
+      {
+        disablePagination = true
+      }
+      const detectConditions = (filters: any) => {
+      if (!filters) return null;
+      for (let conditions of Object.values(ALPHANUMERIC_CONDITIONS)) {
+        if (Object.keys(filters).includes(conditions)) return conditions;
+      }
+      return null;
+    };
+    if (filters?.modified_by) {
+      modifiedByFilter = filters.modified_by;
+      modifiedByConditions = detectConditions(modifiedByFilter);
+    }
+      ["modified_by"].forEach(key => {
+      if (filters[key]) {
+        disablePagination = true;
+        delete filters[key];
+      }
+    });
+    if (mainTableFilters[sortBy] !== undefined) {
+          disablePagination = true;
+        }
+    const { whereClause } = this.buildWhereClause(filters);
+    const [finalSortBy, finalSortOrder] = this.getSortParameters(sortBy, sortOrder);
+    const { InteractionTemplate } = await this.interactionModelService.getModels("");
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
+    }
+
+    // Fetch technical summaries and count
+    const { rows: interactionTemplates, count } = await InteractionTemplate.findAndCountAll({
+      where: whereClause,
+      order: [[finalSortBy, finalSortOrder]],
+      ...(disablePagination
+        ? {}
+        : { limit: limit, offset: offset }),
+    });
+    // You can now use both interactionTemplates (array) and count (number)
+    if (interactionTemplates.length === 0) {
+      return {
+        interactionTemplates: [],
+        count: 0
+      };
+    }
+    let createdByIds: any[] = [...new Set(interactionTemplates.map((user: any) => user.created_by))];
+    let modifiedByIds: any[] = [...new Set(interactionTemplates.map((user: any) => user.modified_by))];
+    let statusIds: any[] = [...new Set(interactionTemplates.map((user: any) => user.status_rid))];
+    let fetchCreatedByUsers = await this.mainDbSequelize.query(rawQueries.fetchUser(createdByIds));
+    let fetchModifiedByUsers = await this.mainDbSequelize.query(rawQueries.fetchUser(modifiedByIds));
+    let fetchStatusInfo = await this.mainDbSequelize.query(rawQueries.fetchStatus(statusIds));
+    let createdMap: Map<string, string> = new Map(fetchCreatedByUsers[0].map((user: any) => [user.rid, `${user.first_name} ${user.last_name}`]));
+    let modifiedMap: Map<string, string> = new Map(fetchModifiedByUsers[0].map((user: any) => [user.rid, `${user.first_name} ${user.last_name}`]));
+    let statusMap: Map<string, string> = new Map(fetchStatusInfo[0].map((status: any) => [status.rid, status.name]));
+    let finalData = interactionTemplates == null ? [] : interactionTemplates.map((d: any) => {
+      return {
+        rid: d.rid,
+        r_number: d.r_number,
+        interaction_type_rid: d.interaction_type_rid,
+        interaction_type_name: d.interaction_type_name,
+        interaction_level_rid: d.interaction_level_rid,
+        interaction_level_name: d.interaction_level_name,
+        status_rid: d.status_rid,
+        created_by: d.created_by,
+        created_user_name: createdMap.get(d.created_by) || null,
+        modified_by: d.modified_by,
+        modified_user_name: modifiedMap.get(d.modified_by) || null,
+        created_datetime: d.created_datetime,
+        modified_datetime: d.modified_datetime
+      };
+    });
+    const applyFilters = (data: any[], conditions: any, value: any, field: any) => {
+      if (!conditions || !field) return data;
+      const val = value[conditions];
+      switch (conditions) {
+        case ALPHANUMERIC_CONDITIONS.equals:
+          return data.filter((d: any) => d[field]?.toLowerCase() === val?.toLowerCase());
+        case ALPHANUMERIC_CONDITIONS.notEquals:
+          return data.filter((d: any) => d[field]?.toLowerCase() != val?.toLowerCase());
+        case ALPHANUMERIC_CONDITIONS.contains:
+          return data.filter((d: any) => d[field]?.toLowerCase().includes(val?.toLowerCase()));
+        case ALPHANUMERIC_CONDITIONS.isEmpty:
+          return data.filter((d: any) => d[field] == null);
+        default:
+          return data;
+      }
+    };
+    if (modifiedByConditions != null && modifiedByConditions != undefined)
+      finalData = applyFilters(finalData, modifiedByConditions, modifiedByFilter, "modified_user_name");
+    if (mainTableFilters[sortBy] != undefined && sortBy.toLowerCase() == 'asc') {
+      finalData = finalData.sort((a: any, b: any) => {
+        if (!a?.[sortBy]) return 1;
+        if (!b?.[sortBy]) return -1;
+        return a[sortBy].localeCompare(b[sortBy]);
+      });
+    } else if (mainTableFilters[sortBy] != undefined && sortBy.toLowerCase() == 'desc') {
+      finalData = finalData.sort((a: any, b: any) => {
+        if (!b?.[sortBy]) return 1;
+        if (!a?.[sortBy]) return -1;
+        return b[sortBy].localeCompare(a[sortBy]);
+      });
+    }
+    totalResults = disablePagination ? finalData.length : count;
+    let finalPaginatedData = [];
+    if(type === "download") 
+      {
+        finalPaginatedData = finalData;
+      }
+      else
+      {
+          finalPaginatedData = disablePagination ? finalData.slice((page - 1) * limit, page * limit) : finalData;
+      }
+    return {
+      interactionTemplates: finalPaginatedData,
+      count: totalResults
+    };
+  } catch (err) {
+    console.log(err);
+    throw new Error("Error listing interaction templates: " + (err as Error).message);
+  }
+  }
+  
+  async updateInteractionTemplate(
+    interactionData: ICreateTemplateInteraction,
+    userId: string,
+    transaction: Transaction
+  ) {
+    const { InteractionTemplate } =
+      await this.interactionModelService.getModels("");
+const existingTemplate = await InteractionTemplate.findOne({
+        where: {
+          [Op.and]: [
+            where(
+              fn("LOWER", col("template_name")),
+              Op.eq,
+              interactionData.template_name.toLowerCase()
+            ),
+            { rid: { [Op.ne]: interactionData.template_rid } },
+          ],
+        },
+      });
+       if (existingTemplate) {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: `An account with the template name "${interactionData.template_name}" already exists. Please choose a different name.`,
+        };
+      }
+      else
+      {
+        const updatedInteraction = await InteractionTemplate.update(
+      {
+        ...interactionData,
+        modified_by: userId,
+        modified_datetime: new Date(),
+      },
+      {
+        where: {
+          rid: interactionData.template_rid
+        },
+        transaction,
+      }
+    );
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          message: HttpStatus.SUCCESS_MESSAGE,
+          data: { interaction: updatedInteraction },
+        };
+      }
+  }
+  async addInteractionTemplateQuestions(
+    interactionData: ICreateTemplateInteraction,
+    interactionRid: string,
+    transaction: Transaction,
+    userId: string
+  ) {
+    try {
+       const { InteractionTemplateItem } = await this.interactionModelService.getModels("");
+
+
+      if (Array.isArray(interactionData.questions)) {
+        for (const question of interactionData.questions) {
+          switch (question.action_type) {
+            case "add":
+              await this.handleAddQuestionTemplate(
+                InteractionTemplateItem,
+                interactionData,
+                interactionRid,
+                question,
+                userId,
+                'Project',
+              );
+              break;
+            case "delete":
+              await this.handleDeleteQuestionTemplate(
+                InteractionTemplateItem,
+                interactionRid,
+                question,
+                userId,
+                transaction
+              );
+              break;
+            case "edit":
+              await this.handleEditQuestionTemplate(
+                InteractionTemplateItem,
+                interactionData,
+                interactionRid,
+                question,
+                userId,
+                transaction
+              );
+              break;
+            default:
+              console.warn(
+                `[addInteractionItems] Unknown action_type:`,
+                question.action_type
+              );
+          }
+        }
+      } else {
+        console.warn(`[addInteractionItems] No questions to process.`);
+      }
+    } catch (error) {
+      console.error("[addInteractionItems] Error:", error);
+      throw new Error(
+        "Error creating interaction: " + (error as Error).message
+      );
+    }
+  }
+  async fetchInteractionTemplateDetailsById(
+  interactionRid: string
+) {
+  if (!this.mainDbSequelize) {
+    this.mainDbSequelize = await this.interactionModelService.getMainSequelize();
+  }
+
+  const [interactionDetailsResult] = await this.mainDbSequelize.query(rawQueries.fetchInteractionTemplates, {
+    replacements: { interactionRid },
+    type: "SELECT"
+  }) as [any[], any];
+
+  if (!interactionDetailsResult || interactionDetailsResult.length === 0) {
+    return null;
+  }
+
+  const interactionDetails = interactionDetailsResult as any;
+
+  let interactionItems = await this.fetchInteractionTemplateItems(
+    interactionRid
+  );
+
+   const userInfo = await this.insertUserDetails(
+     interactionDetails.created_by ?? "",
+     interactionDetails.modified_by ?? ""
+   );
+
+  const response: any = {
+    template_rid: interactionDetails?.rid,
+    template_name: interactionDetails?.template_name ?? "",
+    r_number: interactionDetails.r_number ?? "",
+    interaction_type: interactionDetails.interaction_type_rid ?? "",
+    interaction_type_name: interactionDetails.interaction_type_name ?? "",
+    interaction_level_rid: interactionDetails.interaction_level_rid ?? '',
+    interaction_level_name: interactionDetails.interaction_level_name ?? '',
+    status_rid: interactionDetails.status_rid ?? "",
+    status_name: interactionDetails.status_name ?? "",
+    modified_by: userInfo.modified_name ?? interactionDetails.modified_by,
+    created_by: userInfo.created_name ?? interactionDetails.created_by,
+    created_datetime: interactionDetails.created_datetime ?? null,
+    modified_datetime: interactionDetails.modified_datetime ?? null,
+    questions: interactionItems
+  };
+
+  return response;
+  }
+  async fetchInteractionTemplateItems(
+    interactionRid: string,
+  ) {
+    try {
+      const {
+        InteractionTemplateItem,
+      } = await this.interactionModelService.getModels("");
+      // Convert Sequelize instances to plain objects
+
+      const items = await InteractionTemplateItem.findAll({
+        attributes: [
+          "rid",
+          "question_seq_num",
+          "question",
+          "notes",
+          "is_mandatory",
+        ],
+        order: [
+          ["question_seq_num", "ASC"],
+          ["created_datetime", "ASC"],
+        ],
+        where: { template_rid: interactionRid},
+      });
+      const plainItems = items.map((item) => item.get({ plain: true }));
+      return items;
+    } catch (err) {
+      throw new Error(
+        "Error fetching interaction items: " + (err as Error).message
+      );
     }
   }
 

@@ -89,6 +89,7 @@ routes.post('/attachments', checkUserStatusMiddleware("interactions_view_edit"),
 routes.post('/responseHistory/details', checkUserStatusMiddleware('interactions_view_edit'), controller.interactionsController.fetchResponseHistoryDetails)
 routes.post('/triggerAi', checkUserStatusMiddleware("trigger_ai_assessment"), controller.interactionsController.triggerAIAndPassResponse)
 routes.post('/history/export', checkUserStatusMiddleware("interactions_export"), controller.interactionsController.exportInteractionHistory)
+routes.post('/list/reminder', checkUserStatusMiddleware("interactions_view_edit"), controller.interactionsController.fetchInteractionListForReminder)
 const upload = multer(); // You can configure storage if needed
 
 routes.post(
