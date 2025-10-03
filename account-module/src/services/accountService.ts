@@ -239,7 +239,14 @@ class AccountService {
             ...childWhereClause,
           },
           include: this.buildChildIncludes(),
-          order,
+          order: [
+            ...order,
+            [
+              { model: AccountFiscalSummary, as: "projects_by_fiscal_year" },
+              "fiscal_year",
+              "DESC"
+            ]
+          ],
           attributes: [
             "rid",
             "account_name",
@@ -333,7 +340,7 @@ class AccountService {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
-          account: {data: parentAccounts},
+          account: {data: updatedAccount.data},
           count: !hasKeyContactFilter ? totalCount : updatedAccount?.total,
       //count: updatedAccount.total
         },
@@ -466,7 +473,7 @@ class AccountService {
         as: "projects_by_fiscal_year",
         attributes: [
           "rid",
-          "fiscal_year",
+          [Sequelize.literal("'FY-' || fiscal_year"), "fiscal_year"],
           "account_rid",
           "total_projects",
           "total_project_hours",
@@ -550,7 +557,7 @@ class AccountService {
     errorMessage?: string;
     data?: { account: any };
   }> {
-    try {
+     try {
       const repository = this.getAccountRepository();
       const userGroupType = await this.schemaService.getUserGroupType(userId);
       const isCustomGlobal = userGroupType === "DEFAULT";
@@ -564,6 +571,7 @@ class AccountService {
           (acc) => acc.id
         );
         if (accessibleAccountIds.length === 0) {
+          logMessage("No accessible accounts found for user: " + userId);
           return {
             statusCode: HttpStatus.SUCCESS,
             message: "No accessible accounts found",
@@ -639,6 +647,9 @@ class AccountService {
         "qualifying_project_qre_fed",
         "qualifying_project_rd_credits_fed",
         "industry_name_other",
+        "professional_services_consultant",
+        "finance_lead",
+        "finance_executive",
       ];
       const baseFields = [
         "rid",
@@ -655,14 +666,7 @@ class AccountService {
       const order = this.buildOrderClause(
         finalSortBy,
         finalSortOrder,
-        [
-          "country",
-          "currency",
-          "industry",
-          "professional_services_consultant",
-          "finance_executive",
-          "finance_lead",
-        ],
+        ["country", "currency", "industry"],
         [
           "total_projects",
           "total_project_cost",
@@ -671,9 +675,6 @@ class AccountService {
           "qualifying_project_qre_fed",
           "qualifying_project_rd_credits_fed",
           "total_projects_rd_credits",
-          "professional_services_consultant",
-          "finance_lead",
-          "finance_executive",
         ]
       );
 
@@ -717,7 +718,14 @@ class AccountService {
             ...childWhereClause,
           },
           include: this.buildChildIncludes(),
-          order,
+          order: [
+            ...order,
+            [
+              { model: AccountFiscalSummary, as: "projects_by_fiscal_year" },
+              "fiscal_year",
+              "DESC"
+            ]
+          ],
           attributes: [
             "rid",
             "account_name",
@@ -742,11 +750,6 @@ class AccountService {
 
         // Set USD currency for child accounts
         this.setDefaultCurrency(childAccounts, usdCurrency);
-      } else {
-        // If no parent accounts found, set empty child_accounts array
-        parentAccounts.forEach((account: any) => {
-          account.setDataValue("child_accounts", []);
-        });
       }
 
       // Group child accounts by parent - optimized with Map
@@ -777,10 +780,9 @@ class AccountService {
           childAccountsByParent.get(account.rid) || []
         );
       });
-      // Get full account data only for the needed records
-       let updatedAccount = { data: parentAccounts,total:0 };
+      let updatedAccount = { data: parentAccounts,total:0 };
       if (!isCustomGlobal) {
-        updatedAccount.data = updatedAccount.data.map((parent: any) => {
+        updatedAccount.data = parentAccounts.map((parent: any) => {
           if (parentIdsOnlyThroughChildren.includes(parent.rid)) {
             restrictedFields.forEach((field) => {
               parent[field] = null;
@@ -900,7 +902,8 @@ class AccountService {
       };
       const exportDetails: Record<string, string>[] = [];
 
-      cleanedUsers.forEach((account: any) => {
+      cleanedUsers.forEach((accounts: any) => {
+        const account = accounts.dataValues;
         const currency_symbol = account?.currency?.currency_symbol;
         const baseRow = {
           "Account Name": account?.account_name || "-",
