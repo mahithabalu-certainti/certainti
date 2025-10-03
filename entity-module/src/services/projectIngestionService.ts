@@ -1013,7 +1013,7 @@ class ProjectIngestionService {
         total_project_hours: aggregates.total_effort_prj,
         total_fte: Number(aggregates.total_fte_prj || 0),
         total_subcon: Number(aggregates.total_subcon_prj || 0),
-      //  total_nonlabor : Number(aggregates.total_nonlabor_prj || 0),
+        total_nonlabor : Number(aggregates.total_nonlabor_prj || 0),
         total_project_hours_fte: aggregates.total_effort_fte_prj,
         total_project_hours_subcon: aggregates.total_effort_subcon_prj,
         total_project_cost_fte: aggregates.total_cost_fte_prj,
