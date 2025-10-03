@@ -1252,9 +1252,17 @@ const buildNumericFilterCondition = (
   
   switch (condition) {
     case ALPHANUMERIC_CONDITIONS.equals:
-      return `${columnRef} = ${values}`;
+      if(filteredColumns === 'fiscal_year') {
+        return `CASE WHEN i.project_fiscal_rid IS NULL THEN i.fiscal_year ELSE pf.fiscal_year END = ${values}`;
+      } else {
+        return `${columnRef} = ${values}`;
+      }
     case ALPHANUMERIC_CONDITIONS.notEquals:
-      return `${columnRef} != ${values}`;
+      if(filteredColumns === 'fiscal_year') {
+        return `CASE WHEN i.project_fiscal_rid IS NULL THEN i.fiscal_year ELSE pf.fiscal_year END != ${values}`
+      } else {
+        return `${columnRef} != ${values}`;
+      }
     case ALPHANUMERIC_CONDITIONS.greater_than:
       return `${columnRef} > ${values}`;
     case ALPHANUMERIC_CONDITIONS.less_than:
@@ -1263,6 +1271,8 @@ const buildNumericFilterCondition = (
       return `${columnRef} BETWEEN ${values.join(" AND ")}`;
     case ALPHANUMERIC_CONDITIONS.isEmpty:
       return `${columnRef} IS NULL`;
+    case ALPHANUMERIC_CONDITIONS.IN :
+      return `CASE WHEN i.project_fiscal_rid IS NULL THEN i.fiscal_year ELSE pf.fiscal_year END IN (${values.map((d : any) => `${d}`)})`
     default:
       return '';
   }
