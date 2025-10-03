@@ -15,6 +15,7 @@ import { ResourceStatus } from "./resourceStatus";
 import { ResourceType } from "./resourceType";
 import { ProjectType } from "./projectType";
 import { SkillLevel } from "./skillLevel";
+import { AccountFiscalSummary } from "./accountFiscalSummaryModel";
 
 export const models: {
   Account: typeof Account;
@@ -33,6 +34,7 @@ export const models: {
   SkillLevel: typeof SkillLevel;
   AccountFileDropConfig: typeof AccountFileDropConfig;
   ProjectSummary: typeof ProjectSummary;
+  AccountFiscalSummary: typeof AccountFiscalSummary;
 } = {
   Account: Account,
   Currency: Currency,
@@ -49,7 +51,8 @@ export const models: {
   ProjectType:  ProjectType,
   SkillLevel:  SkillLevel,
   AccountFileDropConfig: AccountFileDropConfig,
-  ProjectSummary: ProjectSummary
+  ProjectSummary: ProjectSummary,
+  AccountFiscalSummary: AccountFiscalSummary
 };
 
 export async function initModels() {
@@ -69,6 +72,7 @@ export async function initModels() {
     ResourceStatus.initialize(sequelize);
     DatabaseConnection.initialize(sequelize);
     AccountFileDropConfig.initialize(sequelize);
+    AccountFiscalSummary.initialize(sequelize); // Initialize before Account
     Account.initialize(sequelize);
     ProjectSummary.initialize(sequelize);
     //await sequelize.sync({ force: false });
@@ -91,5 +95,6 @@ export const modelExports = {
   ResourceStatus,
   ResourceType,
   ProjectType,
-  SkillLevel
+  SkillLevel,
+  AccountFiscalSummary
 };

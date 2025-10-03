@@ -17,7 +17,7 @@ import currency from "currency.js";
 import { Status } from "../models/statusModel";
 import { initSequelize } from "../config/maindbDataSource";
 
-const { Account, Country, Currency, Industry } = models;
+const { Account, Country, Currency, Industry, AccountFiscalSummary } = models;
 
 class AccountService {
   private accountRepository: typeof Account | null;
@@ -293,21 +293,9 @@ class AccountService {
           childAccountsByParent.get(account.rid) || []
         );
       });
-
-      // Get full account data only for the needed records
-      let updatedAccount = await this.schemaService.insertFiscalInfoOnly(
-        parentAccounts,
-        filters,
-        limit,
-        offset,
-        finalSortBy,
-        finalSortOrder,
-        "create",
-        fiscalYear
-      );
-
+      let updatedAccount = { data: parentAccounts,total:0 };
       if (!isCustomGlobal) {
-        updatedAccount.data = updatedAccount.data.map((parent: any) => {
+        updatedAccount.data = parentAccounts.map((parent: any) => {
           if (parentIdsOnlyThroughChildren.includes(parent.rid)) {
             restrictedFields.forEach((field) => {
               parent[field] = null;
@@ -323,7 +311,11 @@ class AccountService {
           parent.hasAccountAccess = true;
           return parent;
         });
-      };
+      }
+
+     
+
+   
 
       // Optimize count query
       let totalCount = await this.getOptimizedCount(
@@ -336,13 +328,13 @@ class AccountService {
         updatedAccount.total = updatedAccount.data.length;
         totalCount = updatedAccount.data.length;
       }
-
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
-          account: updatedAccount,
+          account: {data: parentAccounts},
           count: !hasKeyContactFilter ? totalCount : updatedAccount?.total,
+      //count: updatedAccount.total
         },
       };
     } catch (err) {
@@ -438,7 +430,7 @@ class AccountService {
     ];
   }
 
-  private buildChildIncludes() {
+  private buildChildIncludes(): any[] {
     return [
       {
         model: Country,
@@ -467,6 +459,23 @@ class AccountService {
         attributes: ["status_name"],
         required: true,
       },
+      {
+        model: AccountFiscalSummary,
+        as: "projects_by_fiscal_year",
+        attributes: [
+          "rid",
+          "fiscal_year",
+          "account_rid",
+          "total_projects",
+          "total_project_hours",
+          "total_project_cost",
+          "qualifying_project_hours_fed",
+          "qualifying_project_qre_fed",
+          "qualifying_project_rd_credits_fed",
+          "total_projects_rd_credits"
+        ],
+        required: false,
+      }
     ];
   }
 
