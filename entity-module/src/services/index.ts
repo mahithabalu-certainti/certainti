@@ -16,7 +16,8 @@ import {
   IProjectTaskGraphqlServices,
   ISettingsServices,
   IFinancialHighlights,
-  IProjectTaskIngestionService
+  IProjectTaskIngestionService,
+  ITemplates
 } from "./interfaces/interface";
 import { ProjectService } from "./projectService";
 import ResourceCostService from "./resourceCostService";
@@ -26,6 +27,7 @@ import { AttachmentService } from "./attachmentService";
 import { ProjectResourceService } from "./projectResource/projectResourceService";
 import { ProjectTaskService } from "./projectTaskService";
 import { ProjectInjestionTaskService } from "./projectTask/projectTaskService";
+import { TemplateService } from "./templates/templateService";
 
 interface IServiceContainer {
   resourceCostServices: IResourceCostService;
@@ -41,6 +43,8 @@ class Services implements IServiceContainer {
   projectResourceServices: IProjectResourceService;
   projectTaskServices: IProjectTaskService;
   projectTaskInjestionServices: IProjectTaskIngestionService;
+  templateServices: ITemplates;
+
   private logger: Logger;
   private _resourceGraphQlServices? : IResourceGraphQlServices;
   private _resourceCostGraphQlServices? : IResourceCostGraphQlService;
@@ -58,6 +62,7 @@ class Services implements IServiceContainer {
     resourceSkillServices: IResourceSkillService = new ResourceSkillService(),
     projectResourceServices: IProjectResourceService = new ProjectResourceService(logger),
     projectTaskInjestionServices: IProjectTaskIngestionService = new ProjectInjestionTaskService(),
+    templateServices:  ITemplates = new TemplateService()
   ) {
     try {
       this.logger = logger;
@@ -69,6 +74,7 @@ class Services implements IServiceContainer {
       this.projectResourceServices = projectResourceServices;
       this.projectTaskServices = new ProjectTaskService(this.logger);
       this.projectTaskInjestionServices = projectTaskInjestionServices;
+      this.templateServices = templateServices;
     } catch (error) {
       console.log("Error initializing service: ", error);
       throw new Error("Service Initialization failed!");
