@@ -924,3 +924,22 @@ exportListAccountLevelProjectCostFinancialHighlights(
 }>
 fetchRegions(data : any) : Promise <any>
 }
+
+export interface ITemplates {
+  uploadTemplate(
+    file: Express.Multer.File,
+    templateId: string,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: any;
+  }>;
+  listTemplates(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: any;
+  }>;
+}
