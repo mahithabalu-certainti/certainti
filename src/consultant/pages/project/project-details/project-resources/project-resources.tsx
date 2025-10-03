@@ -297,6 +297,8 @@ export const ProjectResources = ({
     const queryParams = new URLSearchParams({
       account_Id: row?.account_rid || '',
       project_Id: row?.project_fiscal_rid || '',
+      account_name: accountData?.accountName || '',
+      account_number: accountData?.accountNumber || '',
       PFY: PFY ? JSON.stringify(PFY) : '',
       projectCode: projectCode ?? '',
       source: 'editProjectResource',
@@ -318,6 +320,12 @@ export const ProjectResources = ({
       setSortOrder(apiOrder);
       setSortField(sortBy);
     }
+  };
+
+  const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
+    const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
+    setSortOrder(apiOrder);
+    setSortField(sortBy);
   };
 
   useEffect(() => {
@@ -747,7 +755,7 @@ export const ProjectResources = ({
                     onRowsPerPageChange={setRowsPerPage}
                     sortBy={sortField}
                     sortOrder={sortOrder}
-                    onSort={handleSorting}
+                    onSort={handleSort}
                     selectable={false}
                     onSelectionChange={(selectedIds: unknown) =>
                       console.log('Selected:', selectedIds)

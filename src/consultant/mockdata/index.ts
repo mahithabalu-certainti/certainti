@@ -6,3 +6,4 @@ export * from './currency-list';
 export * from './parent-account-list';
 export * from './state-list';
 export * from './timesheet-project-task';
+export * from './interaction-template';

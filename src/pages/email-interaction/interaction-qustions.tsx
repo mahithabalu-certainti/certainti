@@ -2,7 +2,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { CircularProgress, SxProps, Tooltip } from '@mui/material';
 import { Theme } from '@emotion/react';
 import ReactQuill, { Quill } from 'react-quill';
-import { Attachment, InteractionQuestion } from '../../consultant/types';
+import {
+  Attachment,
+  InteractionQuestion,
+  StatusTypeEnum,
+} from '../../consultant/types';
 import TextButton from '../../components/button/text-button';
 import {
   AttachmentsSideIcon,
@@ -53,6 +57,8 @@ export interface HeaderData {
   accountName: string;
   accountId: string;
   projectCode: string;
+  statusName: string;
+  fiscal_year: string;
 }
 interface InteractionQuesProps {
   questions: InteractionQuestion[];
@@ -68,6 +74,7 @@ interface InteractionQuesProps {
   };
   isEditEnable?: boolean;
   headerData?: HeaderData;
+  isAccountlevel?: boolean
 }
 enum FlagTypeEnum {
   draft = 'draft',
@@ -85,15 +92,15 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   questions,
   globalAttachments,
   isLoading = false,
-  actionButtonEnable,
+  // actionButtonEnable,
   refetchDeetails,
   formData,
   createdBy,
   parseToken,
-  isEditEnable,
+  // isEditEnable,
   headerData,
+  isAccountlevel
 }) => {
-  console.log('questions', formData);
   const { successToast, errorToast } = useToast();
   const [isEditing, setIsEditing] = useState<boolean>(true);
   const [activeFlag, setActiveFlag] = useState<FlagTypeEnum | null>(null);
@@ -148,7 +155,8 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   const [headerIntertaction, setHeaderInteraction] = useState<DisplayColumn[]>(
     []
   );
-  const [disbleAllAction, setDisbleAllAction] = useState<boolean>(false);
+
+  const [disableAllAction, setDisableAllAction] = useState<boolean>(false);
 
   useEffect(() => {
     if (removingGlobalIdx !== null) {
@@ -157,6 +165,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
       setNewGlobalAttachments(newAttachments);
       setRemovingGlobalIdx(null);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [removingGlobalIdx]);
   useEffect(() => {
     // Initialize all toolbars as hidden
@@ -171,13 +180,23 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   }, [questions, isEditing]);
   useEffect(() => {
     setHeaderInteraction(
-      headerData ? transformInteractionData(headerData) : []
+      headerData ? transformInteractionData(headerData, isAccountlevel) : []
+    );
+    setIsEditing(
+      headerData?.statusName?.toLowerCase() === StatusTypeEnum.response_received
+        ? false
+        : true
+    );
+    setDisableAllAction(
+      headerData?.statusName?.toLowerCase() === StatusTypeEnum.response_received
+        ? true
+        : false
     );
   }, [headerData]);
-  const handleEditClick = () => {
-    setIsEditing(true);
-    setValidationErrors({});
-  };
+  // const handleEditClick = () => {
+  //   setIsEditing(true);
+  //   setValidationErrors({});
+  // };
   // const handleCancel = () => {
   //   setIsEditing(false);
   //   setValidationErrors({});
@@ -262,7 +281,8 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
         await refetchDeetails?.();
         setValidationErrors({});
         setActiveFlag(null);
-        setDisbleAllAction(flag === FlagTypeEnum.draft ? false : true);
+        setDisableAllAction(flag === FlagTypeEnum.draft ? false : true);
+        setIsEditing(flag === FlagTypeEnum.draft ? true : false);
         successToast(
           flag === FlagTypeEnum.draft
             ? 'Draft saved successfully'
@@ -464,56 +484,55 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   };
 
   const isUpdateLoading = updateInteractionQusResponse.isPending || isLoading;
-  const buttons: SectionHeaderButton[] = isEditing
-    ? [
-        {
-          label: 'Save as Draft',
-          variant: 'contained' as const,
-          onClick: () => handleSave(FlagTypeEnum.draft),
-          sx: { width: '110px', minWidth: '110px' },
-          loading: activeFlag === FlagTypeEnum.draft && isUpdateLoading,
-          disabled:
-            disbleAllAction ||
-            (activeFlag !== null && activeFlag !== FlagTypeEnum.draft) ||
-            uploadFileMutation.isPending,
-        },
-        {
-          label: 'Submit',
-          variant: 'contained' as const,
-          onClick: () => handleSave(FlagTypeEnum.submit),
-          sx: { width: '64px', minWidth: '64px' },
-          loading: activeFlag === FlagTypeEnum.submit && isUpdateLoading,
-          disabled:
-            disbleAllAction ||
-            (activeFlag !== null && activeFlag !== FlagTypeEnum.submit) ||
-            uploadFileMutation.isPending,
-        },
-        {
-          label: 'Upload Files',
-          variant: 'outlined' as const,
-          onClick: () => globalFileInputRef.current?.click(),
-          sx: { width: '100px', minWidth: '100px' },
-          disabled:
-            disbleAllAction || isUpdateLoading || uploadFileMutation.isPending,
-        },
-        // {
-        //   label: 'Cancel',
-        //   variant: 'outlined' as const,
-        //   onClick: handleCancel,
-        //   sx: { width: '75px', minWidth: '75px' },
-        //   disabled: isUpdateLoading || uploadFileMutation.isPending,
-        // },
-      ]
-    : [
-        {
-          label: 'Edit',
-          variant: 'outlined' as const,
-          onClick: handleEditClick,
-          sx: { width: '60px' },
-          hide: !actionButtonEnable,
-          disabled: !isEditEnable,
-        },
-      ];
+  const buttons: SectionHeaderButton[] = [
+    {
+      label: 'Save as Draft',
+      variant: 'contained' as const,
+      onClick: () => handleSave(FlagTypeEnum.draft),
+      sx: { width: '110px', minWidth: '110px' },
+      loading: activeFlag === FlagTypeEnum.draft && isUpdateLoading,
+      disabled:
+        disableAllAction ||
+        (activeFlag !== null && activeFlag !== FlagTypeEnum.draft) ||
+        uploadFileMutation.isPending,
+    },
+    {
+      label: 'Submit',
+      variant: 'contained' as const,
+      onClick: () => handleSave(FlagTypeEnum.submit),
+      sx: { width: '64px', minWidth: '64px' },
+      loading: activeFlag === FlagTypeEnum.submit && isUpdateLoading,
+      disabled:
+        disableAllAction ||
+        (activeFlag !== null && activeFlag !== FlagTypeEnum.submit) ||
+        uploadFileMutation.isPending,
+    },
+    {
+      label: 'Upload Files',
+      variant: 'outlined' as const,
+      onClick: () => globalFileInputRef.current?.click(),
+      sx: { width: '100px', minWidth: '100px' },
+      disabled:
+        disableAllAction || isUpdateLoading || uploadFileMutation.isPending,
+    },
+    // {
+    //   label: 'Cancel',
+    //   variant: 'outlined' as const,
+    //   onClick: handleCancel,
+    //   sx: { width: '75px', minWidth: '75px' },
+    //   disabled: isUpdateLoading || uploadFileMutation.isPending,
+    // },
+  ];
+  // : [
+  //     {
+  //       label: 'Edit',
+  //       variant: 'outlined' as const,
+  //       onClick: handleEditClick,
+  //       sx: { width: '60px' },
+  //       hide: !actionButtonEnable,
+  //       disabled: !isEditEnable,
+  //     },
+  //   ];
 
   return (
     <>

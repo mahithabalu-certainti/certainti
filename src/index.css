@@ -7,36 +7,39 @@
 }
 
 .loader {
+  --c1: #f16137; /* default orange */
+  --c2: #ffcfc1;
   width: 12px;
   aspect-ratio: 1;
   border-radius: 50%;
   animation: l5 1s infinite linear alternate;
   margin: 8px 0;
 }
+
 @keyframes l5 {
   0% {
     box-shadow:
-      20px 0 #f16137,
-      -20px 0 #ffcfc1;
-    background: #f16137;
+      20px 0 var(--c1),
+      -20px 0 var(--c2);
+    background: var(--c1);
   }
   33% {
     box-shadow:
-      20px 0 #f16137,
-      -20px 0 #ffcfc1;
-    background: #ffcfc1;
+      20px 0 var(--c1),
+      -20px 0 var(--c2);
+    background: var(--c2);
   }
   66% {
     box-shadow:
-      20px 0 #ffcfc1,
-      -20px 0 #f16137;
-    background: #ffcfc1;
+      20px 0 var(--c2),
+      -20px 0 var(--c1);
+    background: var(--c2);
   }
   100% {
     box-shadow:
-      20px 0 #ffcfc1,
-      -20px 0 #f16137;
-    background: #f16137;
+      20px 0 var(--c2),
+      -20px 0 var(--c1);
+    background: var(--c1);
   }
 }
 
@@ -123,4 +126,16 @@
 
 .ql-size-huge {
   font-size: 2.5rem;
+}
+
+/* markdown */
+.markdown p {
+  line-height: 25px;
+}
+.markdown ol > li,
+.markdown ul > li {
+  margin: 5px 10px;
+}
+.markdown a {
+  color: #1755e7;
 }

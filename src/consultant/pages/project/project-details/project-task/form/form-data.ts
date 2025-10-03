@@ -72,7 +72,7 @@ export const ProjectTaskFormData = (
         fillType: 'half',
         fields: [
           createDateField('start_date', 'Start Date', {
-            required: false,
+            required: true,
             minDate: fiscalDate?.startMin,
             maxDate: fiscalDate?.startMax,
             disableFutureDates: true,
@@ -86,7 +86,7 @@ export const ProjectTaskFormData = (
               !permissionMapTaskForm?.['start_date']?.edit,
           }),
           createDateField('end_date', 'End Date', {
-            required: false,
+            required: true,
             minDate: fiscalDate?.startMin,
             maxDate: fiscalDate?.endMax,
             disabled:
@@ -120,6 +120,7 @@ export const ProjectTaskFormData = (
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             placeholder: 'Enter Effort',
+            formatCostValue: true, 
             disabled:
               isEditView &&
               permissionMapTaskForm?.['total_hours_pro_task']?.read &&

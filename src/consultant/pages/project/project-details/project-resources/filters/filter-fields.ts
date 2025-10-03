@@ -27,15 +27,14 @@ export const projectResourceFilterFields = (
       !resourcepermissionMap?.['resource_code']?.read &&
       !resourcepermissionMap?.['resource_code']?.edit,
   },
-  // It may use in future, based on client confirmation
-  // {
-  //   name: 'Resource Name',
-  //   value: 'resource_name',
-  //   type: 'text',
-  //   hide:
-  //     !resourcepermissionMap?.['resource_name']?.read &&
-  //     !resourcepermissionMap?.['resource_name']?.edit,
-  // },
+  {
+    name: 'Resource Name',
+    value: 'resource_name',
+    type: 'text',
+    hide:
+      !resourcepermissionMap?.['resource_name']?.read &&
+      !resourcepermissionMap?.['resource_name']?.edit,
+  },
   {
     name: 'Resource Country',
     value: 'country_rid',
@@ -69,16 +68,6 @@ export const projectResourceFilterFields = (
   //     !resourcepermissionMap?.['resource_type_rid']?.read &&
   //     !resourcepermissionMap?.['resource_type_rid']?.edit,
   // },
-
-  // {
-  //   name: 'Resource Role',
-  //   value: 'resource_role',
-  //   type: 'text',
-  //   hide:
-  //     !resourcepermissionMap?.['resource_role']?.read &&
-  //     !resourcepermissionMap?.['resource_role']?.edit,
-  // },
-
   {
     name: 'Project Resource Role',
     value: 'project_resource_role',
@@ -104,15 +93,15 @@ export const projectResourceFilterFields = (
       !resourcepermissionMap?.['total_cost_pro_res']?.edit,
   },
   {
-    name: 'QRE %',
+    name: 'QRE Percent Final',
     value: 'qre_percent',
     type: 'text',
     hide:
-      !resourcepermissionMap?.['qre_percent']?.read &&
-      !resourcepermissionMap?.['qre_percent']?.edit,
+      !resourcepermissionMap?.['rd_percent_final']?.read &&
+      !resourcepermissionMap?.['rd_percent_final']?.edit,
   },
   {
-    name: 'QRE',
+    name: 'QRE Final',
     value: 'qre_final',
     type: 'text',
     hide:

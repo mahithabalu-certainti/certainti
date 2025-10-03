@@ -8,6 +8,7 @@ import {
   costDisplay,
   getDateFormat,
   formatDateToYYYYMMDDWithTime,
+  valueDisplay,
 } from '../../../../../../common-utils';
 import { AllPermissions, Permissions } from '../../../../../../common-service';
 import DetailsSectionSkeleton from '../../../../../../components/skeleton-component/detailsskeleton';
@@ -116,6 +117,16 @@ const ProjectResourceDetails: React.FC<ResourceDetailsProps> = ({
       key: 'resource_code',
     },
     {
+      label: 'Resource Name',
+      value: resourceData.resource_name,
+      key: 'resource_name',
+    },
+    {
+      label: 'Resource Role',
+      value: resourceData.project_resource_role,
+      key: 'project_resource_role',
+    },
+    {
       key: 'status_action',
       label: 'Status',
       value: resourceData.status_name,
@@ -143,7 +154,7 @@ const ProjectResourceDetails: React.FC<ResourceDetailsProps> = ({
     },
     {
       label: 'Effort',
-      value: resourceData.total_hours_pro_res,
+      value: valueDisplay(resourceData.total_hours_pro_res),
       key: 'total_hours_pro_res',
     },
     {
