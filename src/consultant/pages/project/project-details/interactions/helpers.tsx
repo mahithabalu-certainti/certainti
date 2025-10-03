@@ -240,7 +240,7 @@ export const getProjectInteractionFilterFields = (
     },
     {
       name: 'Last Sent Date',
-      value: 'last_resent_on',
+      value: 'sent_on_datetime',
       type: 'date',
       hide:
         !permissionMap?.['last_resent_on']?.edit &&
