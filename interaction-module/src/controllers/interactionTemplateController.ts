@@ -416,7 +416,7 @@ async function exportAllInteractionTemplates(req: Request, res: Response) {
           "response_source_name": d.response_source_name,
           "created_by": d.created_user_name,
           "created_datetime":formatDate(d.created_datetime),
-          "modified_by": d.updated_user_name,
+          "modified_by": d.modified_user_name,
           "modified_datetime": d.modified_datetime == null ? '' : formatDate(d.modified_datetime),
         };
 
