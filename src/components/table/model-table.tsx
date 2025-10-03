@@ -58,7 +58,9 @@ const TableModal: React.FC<TableModalProps> = ({
   const [selectedRows, setSelectedRows] = useState<any[]>([]);
   const [clearSelectedRows, setClearSelectedRows] = useState<boolean>(false);
 
-  const [appliedFilters, setAppliedFilters] = useState<any>({});
+  const [appliedFilters, setAppliedFilters] = useState<
+    Record<string, string | number | boolean | string[]>
+  >({});
   const handleClose = () => {
     onClose();
     setAppliedFilters({});
