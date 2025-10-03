@@ -19,7 +19,10 @@ import {
 } from '../../../../../services/project/project-task-service';
 import { projectTaskPayloadData } from './utils';
 import { ProjectTaskInput } from '../../../../../types/project-task';
-import { useGetProjectResourceTaskCode } from '../../../../../services/project-resources/project-resources-form-service';
+import {
+  useGetProjectResourceTaskCode,
+  useGetProjectResourceTaskType,
+} from '../../../../../services/project-resources/project-resources-form-service';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
 import {
@@ -28,6 +31,7 @@ import {
 } from '../../../../../../common-utils';
 import { PROJECT_RESOURCE_CREATE } from '../../../../../../routes';
 import ConfirmationPopup from '../../../../../../common-utils/confirmation-popup';
+import SkeletonForm from '../../../../../../components/form-builder/skeleton-form';
 
 const ProjectTaskForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
@@ -44,6 +48,7 @@ const ProjectTaskForm: React.FC = () => {
   const projectCode = queryParams.get('projectCode');
   const currency_rid = queryParams.get('currency_rid');
   const createdNewResourceCode = queryParams.get('created_resource_code') || '';
+  const pathCount = queryParams.get('path_count') || '';
   const [confirmationState, setConfirmationState] = React.useState<{
     isOpen: boolean;
     message: string;
@@ -88,8 +93,17 @@ const ProjectTaskForm: React.FC = () => {
     search: '',
     project_fiscal_rid: project_Id || undefined,
   };
-  const { data: projectResourceCodeOptions } =
+
+  const { data: projectResourceCodeOptions, isLoading: resCodeLoading } =
     useGetProjectResourceTaskCode(payload);
+  const type = 'type';
+  const { data: projectResourceTypeOptions, isLoading: taskTypeLoading } =
+    useGetProjectResourceTaskType(type);
+  const classification = 'classification';
+  const {
+    data: projectResourceClassificationOptions,
+    isLoading: classificationLoading,
+  } = useGetProjectResourceTaskType(classification);
   const commonSuccess = costResourceForceSuccess;
   useEffect(() => {
     if (commonSuccess) {
@@ -130,11 +144,28 @@ const ProjectTaskForm: React.FC = () => {
     () =>
       projectResourceCodeOptions?.data?.map((item) => ({
         label: `${item.resource_code}${item.project_resource_role ? ` (${item.project_resource_role})` : ''}`,
-        value: `${item.rid}`,
+        value: item.rid,
       })) || [],
     [projectResourceCodeOptions?.data]
   );
-
+  const memoizedProjectResourceType: SelectResourceOption[] = useMemo(
+    () =>
+      projectResourceTypeOptions?.data?.projectTaskTypes?.map((item) => ({
+        label: item.project_task_type_name,
+        value: item.rid,
+      })) || [],
+    [projectResourceTypeOptions?.data?.projectTaskTypes]
+  );
+  const memoizedProjectResourceClassification: SelectResourceOption[] = useMemo(
+    () =>
+      projectResourceClassificationOptions?.data?.projectTaskClassification?.map(
+        (item) => ({
+          label: item.classification_name ?? '',
+          value: item.rid,
+        })
+      ) || [],
+    [projectResourceClassificationOptions?.data?.projectTaskClassification]
+  );
   useEffect(() => {
     if (createdNewResourceCode) {
       const selectedResource = projectResourceCodeOptions?.data?.find(
@@ -267,11 +298,23 @@ const ProjectTaskForm: React.FC = () => {
 
   const goBack = () => {
     if (createdNewResourceCode) {
-      navigate(-2);
+      navigate(pathCount ? -3 : -2);
     } else {
       window.history.back();
     }
   };
+
+  const isFormLoading =
+    resCodeLoading || taskTypeLoading || classificationLoading;
+
+  const formConfig = ProjectTaskFormData(
+    memoizedProjectResourceCode,
+    memoizedProjectResourceType,
+    memoizedProjectResourceClassification,
+    isEditView,
+    fiscalDate,
+    permissionMapTaskForm
+  );
 
   return (
     <>
@@ -316,27 +359,26 @@ const ProjectTaskForm: React.FC = () => {
         </div>
       </div>
       <div className='pb-4'>
-        <FormBuilder
-          data={ProjectTaskFormData(
-            memoizedProjectResourceCode,
-            isEditView,
-            fiscalDate,
-            permissionMapTaskForm
-          )}
-          values={
-            isEditView && projectTaskDetailsData
-              ? { ...projectTaskDetailsData }
-              : !isEditView
-                ? { project_resource_rid: createdNewResourceCode }
-                : {}
-          }
-          outData={submitData}
-          formRef={formRef}
-          layout={Layout.TYPE_1}
-          onChange={onChangeField}
-          keyStart='start_date'
-          keyEnd='end_date'
-        />
+        {isFormLoading ? (
+          <SkeletonForm />
+        ) : (
+          <FormBuilder
+            data={formConfig}
+            values={
+              isEditView && projectTaskDetailsData
+                ? { ...projectTaskDetailsData }
+                : !isEditView
+                  ? { project_resource_rid: createdNewResourceCode }
+                  : {}
+            }
+            outData={submitData}
+            formRef={formRef}
+            layout={Layout.TYPE_1}
+            onChange={onChangeField}
+            keyStart='start_date'
+            keyEnd='end_date'
+          />
+        )}
       </div>
       <div>
         <ConfirmationPopup

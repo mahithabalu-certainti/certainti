@@ -58,7 +58,7 @@ export interface ManageUserListParms {
   limit?: number;
   access_type?: string;
   filters?: object;
-  searchTerm?: string;
+  search?: string;
 }
 export interface ManageAccountUserListApiResponse extends CommonApiResponse {
   data: {

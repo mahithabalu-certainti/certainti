@@ -16,6 +16,7 @@ export interface ProjectListParams {
   timezone?: string;
   bothParentAndChild?: boolean;
   apiSource?: string;
+  search?: string;
   accountInteractionId?: string;
 }
 export enum Status {
@@ -39,6 +40,9 @@ export interface KeyContacts {
   rid?: string;
 }
 export interface NewProjectData {
+  rd_percent_potential_ai: string;
+  rd_percent_adjustment: string;
+  rd_percent_final: string;
   showOthersField?: boolean;
   account_id?: string;
   status_rid: string;
@@ -210,6 +214,7 @@ export type Project = {
   ProjectFiscal: ProjectFiscalSummary[];
   _level?: number;
   currency_rid?: string;
+  rd_percent_final?: string;
 };
 export type ProjectFiscalSummary = {
   account_status_name?: string;

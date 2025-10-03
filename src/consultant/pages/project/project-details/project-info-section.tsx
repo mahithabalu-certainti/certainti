@@ -20,6 +20,7 @@ interface ProjectInfoItem {
   hide?: boolean;
   editable?: boolean;
   onSave?: (value: string) => void;
+  showHyphenForEmptyValue?: boolean;
 }
 
 interface InfoSectionColumn {
@@ -329,7 +330,9 @@ export const ProjectInfoSection: React.FC<ProjectInfoSectionProps> = ({
                           text={String(item.value)}
                           className={`font-medium text-[14px] text-[#2D3E4F] ${item.className}`}
                         >
-                          {renderValue(item, item.value) || '-'}
+                          {item.showHyphenForEmptyValue === false
+                            ? renderValue(item, item.value)
+                            : renderValue(item, item.value) || '-'}
                         </TruncateWithTooltip>
                       )}
                     </Grid>

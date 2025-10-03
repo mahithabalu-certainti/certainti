@@ -22,6 +22,8 @@ export const formatDateToYMD = (dateString: string): string => {
 export const getProjectTaskColumns = (
   onClick: (row: ProjectTaskListType) => void,
   memoizedProjectResourceCode: SelectOption[],
+  TaskTypeOptions: SelectOption[],
+  classificationOptions: SelectOption[],
   permissionMapTaskTableColumn: Record<
     string,
     { read: boolean; edit: boolean }
@@ -77,6 +79,16 @@ export const getProjectTaskColumns = (
       !permissionMapTaskTableColumn?.['resource_name']?.edit,
   },
   {
+    id: 'task_name',
+    label: 'Task Name',
+    sortable: true,
+    sortId: 'task_name',
+    width: 160,
+    // hide:
+    //   !permissionMapTaskTableColumn?.['resource_name']?.read &&
+    //   !permissionMapTaskTableColumn?.['resource_name']?.edit,
+  },
+  {
     id: 'resource_type_name',
     label: 'Resource Type',
     sortable: true,
@@ -95,6 +107,49 @@ export const getProjectTaskColumns = (
     hide:
       !permissionMapTaskTableColumn?.['project_resource_role']?.read &&
       !permissionMapTaskTableColumn?.['project_resource_role']?.edit,
+  },
+  {
+    id: 'task_type_name',
+    editId: 'task_type_rid',
+    sortId: 'task_type_name',
+    label: 'Task Type',
+    width: 140,
+    sortable: true,
+    // editable:
+    //   permissionMap?.['resource_type_rid']?.edit &&
+    //   permissionMap?.['resource_type_rid']?.read &&
+    //   !accountInActive,
+    // hide:
+    //   !permissionMap?.['resource_type_rid']?.edit &&
+    //   !permissionMap?.['resource_type_rid']?.read,
+    field: {
+      type: 'select',
+      required: true,
+      placeholder: '',
+      options: TaskTypeOptions,
+    },
+  },
+  {
+    id: 'task_classification_name',
+    editId: 'task_classification_rid',
+    sortId: 'task_classification_name',
+    label: 'Classification  Type',
+    width: 180,
+    sortable: true,
+    // editable:
+    //   permissionMap?.['resource_type_rid']?.edit &&
+    //   permissionMap?.['resource_type_rid']?.read &&
+    //   !accountInActive,
+    // hide:
+    //   !permissionMap?.['resource_type_rid']?.edit &&
+    //   !permissionMap?.['resource_type_rid']?.read,
+    field: {
+      type: 'select',
+      required: true,
+      placeholder: '',
+      options: classificationOptions,
+      resetDependentFields: ['resource_orgname'],
+    },
   },
   {
     id: 'start_date',
@@ -198,6 +253,7 @@ export const getProjectTaskColumns = (
     field: {
       type: 'text',
       required: false,
+      formatCostNumber: true,
       placeholder: 'Enter Cost',
       validation: [
         {
@@ -231,6 +287,7 @@ export const getProjectTaskColumns = (
       !permissionMapTaskTableColumn?.['total_hours_pro_task']?.edit,
     field: {
       type: 'text',
+      formatCostNumber: true,
       required: false,
       placeholder: 'Enter an effort',
       validation: [

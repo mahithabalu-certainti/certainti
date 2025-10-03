@@ -54,6 +54,7 @@ interface ResourceSkillTableProps {
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
   >;
+  searchValue?: string;
 }
 const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   appliedFilters,
@@ -71,6 +72,7 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   resourceInActive,
   columnAnchorEl,
   setColumnAnchorEl,
+  searchValue,
 }) => {
   const navigate = useNavigate();
   const { accountid } = useParams();
@@ -101,6 +103,7 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
       sortBy: skillOrderBy,
       sortOrder: apiOrder,
       filters: appliedFilters,
+      search: searchValue,
       accountNumber: accountDetails?.data?.accountById?.r_number,
       resourceRid,
     },

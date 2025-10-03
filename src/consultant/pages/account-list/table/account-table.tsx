@@ -17,7 +17,6 @@ import {
   ActionItem,
   CellEditData,
   FieldChangeValue,
-  ListTableColumn,
   ShowHideTableColumn,
 } from '../../../../components/table/types';
 import { DeleteIcon, EditIcon } from '../../../../assets';
@@ -43,6 +42,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
   expandChild,
   setColumnAnchorEl,
   columnAnchorEl,
+  searchValue,
 }) => {
   const navigate = useNavigate();
   const { errorToast } = useToast();
@@ -64,6 +64,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
       sortBy: orderBy,
       sortOrder: apiOrder,
       filters: appliedFilters,
+      search: searchValue,
       globalFilters: reshapeGlobalFilter(filters as FilterState),
       fiscalYear,
     },
@@ -166,15 +167,6 @@ const AccountTable: React.FC<Record<string, any>> = ({
       ),
     [countryOptions, industryOptions]
   );
-
-  const [visibleColumns, setVisibleColumns] = useState<
-    ListTableColumn<AccountList>[]
-  >(accountColumns.filter((col) => !col.hide));
-
-  useEffect(() => {
-    const updatedColumns = accountColumns.filter((col) => !col.hide);
-    setVisibleColumns(updatedColumns);
-  }, [countryOptions, industryOptions, accountColumns]);
 
   const isSkeletonLoading = loading || colorCodes.isLoading;
 
@@ -299,14 +291,6 @@ const AccountTable: React.FC<Record<string, any>> = ({
     }
   };
 
-  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
-    setVisibleColumns(
-      updatedColumns.filter(
-        (col) => !col.hide
-      ) as ListTableColumn<AccountList>[]
-    );
-  };
-
   const handlePopoverClose = () => {
     setColumnAnchorEl(null);
   };
@@ -322,6 +306,25 @@ const AccountTable: React.FC<Record<string, any>> = ({
 
   const isModalOpen = Boolean(columnAnchorEl);
   const modalId = isModalOpen ? 'account-column-visibility-popover' : undefined;
+
+  const [columnVisibility, setColumnVisibility] = useState<
+    Record<string, boolean>
+  >(Object.fromEntries(accountColumns.map((col) => [col.id, !col.hide])));
+  const [columnOrder, setColumnOrder] = useState(
+    accountColumns.map((col) => col.id)
+  );
+
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    const newVisibility = Object.fromEntries(
+      updatedColumns.map((col) => [col.id, !col.hide])
+    );
+    setColumnVisibility(newVisibility);
+    setColumnOrder(updatedColumns.map((col) => col.id));
+  };
+
+  const visibleColumns = columnOrder
+    .map((id) => accountColumns.find((col) => col.id === id)!)
+    .filter((col) => columnVisibility[col.id]);
 
   return (
     <div className='border-t border-[#CBD6E2] h-full'>

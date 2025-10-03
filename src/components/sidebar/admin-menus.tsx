@@ -12,7 +12,6 @@ import {
   ManagerUserIcon,
   ManageSettingsIcon,
   ManageUserAccessIcon,
-  SurveyTemplateIcon,
   TaskTemplateIcon,
 } from '../../assets';
 import { MenuOption } from '../../common-service';
@@ -28,7 +27,6 @@ import {
   MANAGE_PROFILE,
   MANAGE_SETTINGS,
   MANAGE_USER_GROUP,
-  SURVEY_TEMPLATES,
   TASK_TEMPLATES,
 } from '../../routes';
 
@@ -115,13 +113,14 @@ export const sideNavAdminItems: AdminNavItem[] = [
         link: EMAIL_TEMPLATES,
         matchLink: EMAIL_TEMPLATES,
       },
-      {
-        id: MenuOption.SURVEY_TEMPLATE,
-        name: 'Survey templates',
-        icon: SurveyTemplateIcon,
-        link: SURVEY_TEMPLATES,
-        matchLink: SURVEY_TEMPLATES,
-      },
+      // Commented for it may use in future
+      // {
+      //   id: MenuOption.SURVEY_TEMPLATE,
+      //   name: 'Survey templates',
+      //   icon: SurveyTemplateIcon,
+      //   link: SURVEY_TEMPLATES,
+      //   matchLink: SURVEY_TEMPLATES,
+      // },
       {
         id: MenuOption.TASK_TEMPLATE,
         name: 'Task templates',

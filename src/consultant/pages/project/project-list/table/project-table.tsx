@@ -52,6 +52,7 @@ interface IProjectTableProps {
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
   >;
+  searchValue: string;
 }
 
 export const ProjectTable: React.FC<IProjectTableProps> = ({
@@ -66,6 +67,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
   dropdownOptions,
   setColumnAnchorEl,
   columnAnchorEl,
+  searchValue,
 }) => {
   const navigate = useNavigate();
   const { errorToast } = useToast();
@@ -97,15 +99,25 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
   }, [projectViewEditFields]);
 
   useEffect(() => {
-    setTableParams((prev) => ({
-      ...prev,
-      page: 1,
-      filters: appliedFilters,
-      fiscalYear: convertedFiscalYear,
-      globalFilters: reshapeGlobalFilter(filters as FilterState),
-    }));
+    setTableParams((prev) => {
+      const newParams: Partial<ProjectListParams> = {
+        ...prev,
+        page: 1,
+        filters: appliedFilters,
+        fiscalYear: convertedFiscalYear,
+        globalFilters: reshapeGlobalFilter(filters as FilterState),
+      };
+
+      if (searchValue) {
+        newParams.search = searchValue;
+      } else {
+        delete newParams.search;
+      }
+
+      return newParams as ProjectListParams;
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appliedFilters, fiscalYear, filters]);
+  }, [appliedFilters, fiscalYear, filters, searchValue]);
 
   const { data, isPending, isError, mutate } = useAllProjects();
   const totalItems = data?.count || 0;

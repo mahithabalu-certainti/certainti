@@ -58,6 +58,7 @@ import ConfirmationPopup from '../../../common-utils/confirmation-popup.tsx';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../store/store.ts';
 import { getFiscalDateBounds } from '../../../common-utils/common-utils.ts';
+import SkeletonForm from '../../../components/form-builder/skeleton-form.tsx';
 
 const ResourceForm: React.FC = () => {
   // Refs
@@ -933,6 +934,14 @@ const ResourceForm: React.FC = () => {
     resourceSKillPermissionMap
   );
 
+  const isFormLoading =
+    allCountries.isLoading ||
+    currency.isLoading ||
+    statusOptions.isLoading ||
+    skillLevelOptions.isLoading ||
+    resourceTypeOptions.isLoading ||
+    resourceStatusOptions.isLoading;
+
   return (
     <div className='resource-form-container'>
       <div className='h-[50px] border-box flex justify-between items-center border-b-2 border-gray-200 px-10 sticky top-0 z-10 bg-white'>
@@ -1007,41 +1016,47 @@ const ResourceForm: React.FC = () => {
         </div>
       </div>
       <div className={`${isEditView ? 'pb-10' : 'pb-4'}`}>
-        <FormBuilder
-          data={formConfig}
-          loading={allCountries.isLoading}
-          values={
-            isEditView &&
-            isSuccess &&
-            !state?.cost &&
-            !state?.skill &&
-            (resourceDetails as unknown as Record<
-              string,
-              string | number | boolean | string[] | null
-            >)
-              ? (resourceDetails as unknown as Record<
-                  string,
-                  string | number | boolean | string[] | null
-                >)
-              : state?.cost || state?.skill
-                ? (formValues as unknown as Record<
+        {isFormLoading ? (
+          <SkeletonForm />
+        ) : (
+          <FormBuilder
+            data={formConfig}
+            loading={false}
+            values={
+              isEditView &&
+              isSuccess &&
+              !state?.cost &&
+              !state?.skill &&
+              (resourceDetails as unknown as Record<
+                string,
+                string | number | boolean | string[] | null
+              >)
+                ? (resourceDetails as unknown as Record<
                     string,
                     string | number | boolean | string[] | null
                   >)
-                : // : !isEditView &&
-                  //     newResourceCode &&
-                  //     !state?.cost &&
-                  //     !state?.skill
-                  //   ? { resource_code: newResourceCode }
-                  undefined
-          }
-          outData={handleSubmit}
-          formRef={formRef}
-          onChange={onChangeField}
-          layout={Layout.TYPE_1}
-          keyStart={state?.cost ? 'financial_start_date' : 'resource_startdate'}
-          keyEnd={state?.cost ? 'financial_end_date' : 'resource_enddate'}
-        />
+                : state?.cost || state?.skill
+                  ? (formValues as unknown as Record<
+                      string,
+                      string | number | boolean | string[] | null
+                    >)
+                  : // : !isEditView &&
+                    //     newResourceCode &&
+                    //     !state?.cost &&
+                    //     !state?.skill
+                    //   ? { resource_code: newResourceCode }
+                    undefined
+            }
+            outData={handleSubmit}
+            formRef={formRef}
+            onChange={onChangeField}
+            layout={Layout.TYPE_1}
+            keyStart={
+              state?.cost ? 'financial_start_date' : 'resource_startdate'
+            }
+            keyEnd={state?.cost ? 'financial_end_date' : 'resource_enddate'}
+          />
+        )}
       </div>
       <ConfirmationPopup
         isOpen={confirmationState.isOpen}

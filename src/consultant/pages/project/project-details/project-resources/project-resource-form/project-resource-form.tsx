@@ -45,6 +45,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
 import { formatDateToYYYYMMDDWithTime } from '../../../../../../common-utils';
 import { RESOURCE_CREATE } from '../../../../../../routes';
+import SkeletonForm from '../../../../../../components/form-builder/skeleton-form';
 
 const ProjectResourceForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
@@ -147,9 +148,8 @@ const ProjectResourceForm: React.FC = () => {
     return map;
   }, [projectViewEditFields]);
 
-  const { data: projectResourceCodeOptions } = useGetProjectResourceCode(
-    account_Id as string
-  );
+  const { data: projectResourceCodeOptions, isLoading: resCodeLoading } =
+    useGetProjectResourceCode(account_Id as string);
   // const projectResourceTypeOptions = useGetResourceType();
   const projectResourceSkillTypeOptions = useGetProjectResourceSkillType();
   // const projectResourceRollSkillOptions = useGetProjectResourceRollSkill();
@@ -261,6 +261,9 @@ const ProjectResourceForm: React.FC = () => {
               'created_resource_code',
               res?.data?.projectResource?.rid || ''
             );
+            if (createdNewResourceCode) {
+              params.set('path_count', '3');
+            }
             navigate(fromLocation?.pathname + '?' + params.toString(), {
               replace: true,
             });
@@ -447,6 +450,12 @@ const ProjectResourceForm: React.FC = () => {
     permissionMap
   );
 
+  const isFormLoading =
+    allCountries.isLoading ||
+    currency.isLoading ||
+    resCodeLoading ||
+    getProjectResource.isLoading;
+
   return (
     <>
       <div className='h-[50px] border-box flex items-center justify-between px-10 border-b-2 border-gray-200 sticky top-0 z-10 bg-white'>
@@ -492,28 +501,32 @@ const ProjectResourceForm: React.FC = () => {
         </div>
       </div>
       <div className='pb-4'>
-        <FormBuilder
-          data={formConfig}
-          loading={allCountries.isLoading || currency.isLoading}
-          values={
-            isEditView && projectResourceData
-              ? { ...projectResourceData }
-              : !isEditView
-                ? {
-                    currency_rid: currency_rid,
-                    status_rid: defaultActiveValue,
-                    resource_code: createdNewResourceCode,
-                  }
-                : {}
-          }
-          outData={submitData}
-          formRef={formRef}
-          layout={Layout.TYPE_1}
-          onChange={onChangeField}
-          keyStart='start_date'
-          keyEnd='end_date'
-          isFrom='project_resource'
-        />
+        {isFormLoading ? (
+          <SkeletonForm />
+        ) : (
+          <FormBuilder
+            data={formConfig}
+            loading={false}
+            values={
+              isEditView && projectResourceData
+                ? { ...projectResourceData }
+                : !isEditView
+                  ? {
+                      currency_rid: currency_rid,
+                      status_rid: defaultActiveValue,
+                      resource_code: createdNewResourceCode,
+                    }
+                  : {}
+            }
+            outData={submitData}
+            formRef={formRef}
+            layout={Layout.TYPE_1}
+            onChange={onChangeField}
+            keyStart='start_date'
+            keyEnd='end_date'
+            isFrom='project_resource'
+          />
+        )}
       </div>
     </>
   );

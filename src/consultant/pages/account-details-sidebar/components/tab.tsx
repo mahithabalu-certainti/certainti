@@ -36,7 +36,10 @@ import { FilterType } from '../../../../admin/types';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { projectResourceFilterFields } from '../../project/project-details/project-resources/filters/filter-fields';
-import { useGetAppliedProjectResourceCode } from '../../../services/project-resources/project-resources-form-service';
+import {
+  useGetAppliedProjectResourceCode,
+  useGetProjectResourceTaskType,
+} from '../../../services/project-resources/project-resources-form-service';
 import {
   FieldOptionType,
   getAttachmentsFilterFields,
@@ -45,6 +48,7 @@ import ActionImportDropdown from '../../../../components/actions-dropdown/import
 import { FilterValue } from './filter/filterType';
 import { projectTaskFilterFields } from '../../project/project-details/project-task/filters/filter-fields';
 import { FormFiscalDateType } from '../../../types';
+import SearchBar from '../../../../components/search/search-bar';
 interface TabProps {
   resourceTab?: ResourceTabs[];
   filterVisibility: boolean;
@@ -72,6 +76,12 @@ interface TabProps {
     { read: boolean; edit: boolean }
   >;
   fiscalDatesArg?: FormFiscalDateType;
+  showSearch?: boolean;
+  searchDisabled?: boolean;
+  searchHidden?: boolean;
+  searchPlaceholder?: string;
+  onSearchTextChange?: (text: string) => void;
+  onSearch?: (text: string) => void;
 }
 const TabPanel: React.FC<TabProps> = ({
   resourceTab,
@@ -97,6 +107,12 @@ const TabPanel: React.FC<TabProps> = ({
   handleFilterChange,
   permissionMapTaskTableColumn,
   fiscalDatesArg,
+  showSearch,
+  searchDisabled = false,
+  searchHidden,
+  searchPlaceholder = 'Search',
+  onSearchTextChange,
+  onSearch,
 }) => {
   const [tabValue, setTabValue] = useState('');
   const location = useLocation();
@@ -120,6 +136,7 @@ const TabPanel: React.FC<TabProps> = ({
     { option: string; value: string }[]
   >([]);
   const [, setSelectedSort] = useState('Accounts');
+  const [searchText, setSearchText] = useState('');
 
   useEffect(() => {
     // assign default tab value
@@ -152,6 +169,34 @@ const TabPanel: React.FC<TabProps> = ({
   const { data: skillType } = useFetchResourceSkillType(value === 'skill');
   const { data: skillSubType } = useFetchResourceSkillSubType(
     currentSkillType.skill_type_rid
+  );
+  const type = 'type';
+  const { data: projectResourceTypeOptions } =
+    useGetProjectResourceTaskType(type);
+  const classification = 'classification';
+  const { data: projectResourceClassificationOptions } =
+    useGetProjectResourceTaskType(classification);
+  const memoizedProjectResourceType: { option: string; value: string }[] =
+    useMemo(
+      () =>
+        projectResourceTypeOptions?.data?.projectTaskTypes?.map((item) => ({
+          option: item.project_task_type_name,
+          value: item.rid,
+        })) || [],
+      [projectResourceTypeOptions?.data?.projectTaskTypes]
+    );
+  const memoizedProjectResourceClassification: {
+    option: string;
+    value: string;
+  }[] = useMemo(
+    () =>
+      projectResourceClassificationOptions?.data?.projectTaskClassification?.map(
+        (item) => ({
+          option: item.classification_name ?? '',
+          value: item.rid,
+        })
+      ) || [],
+    [projectResourceClassificationOptions?.data?.projectTaskClassification]
   );
   const memoizedResourceCode: { option: string; value: string }[] = useMemo(
     () =>
@@ -416,6 +461,8 @@ const TabPanel: React.FC<TabProps> = ({
       return projectTaskFilterFields(
         memoizedResourceCode,
         memoizedResourceType,
+        memoizedProjectResourceType,
+        memoizedProjectResourceClassification,
         permissionMapTaskTableColumn,
         fiscalDatesArg,
         memoizedResourceStatus
@@ -544,6 +591,22 @@ const TabPanel: React.FC<TabProps> = ({
           </Tabs>
         )}
         <Box className='flex items-center'>
+          {showSearch && (
+            <Box className='mr-2'>
+              <SearchBar
+                initialSearchText={searchText}
+                onSearch={(value) => {
+                  setSearchText(value);
+                  onSearch?.(value);
+                  onSearchTextChange?.(value);
+                }}
+                placeholder={searchPlaceholder || ''}
+                disabled={searchDisabled}
+                hide={searchHidden}
+              />
+            </Box>
+          )}
+
           {/* <ActionsDropdown actions={MENU_ITEMS} /> */}
           {showToggle && (
             <div className='flex items-center gap-2'>

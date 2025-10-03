@@ -105,6 +105,7 @@ export interface TableField {
   renderValue?: boolean;
   disabled?: boolean;
   placeholder?: string;
+  formatCostNumber?: boolean;
   prefix?: string;
   prefixRegex?: RegExp;
   options?: ListOption[];
@@ -143,7 +144,7 @@ export type ListTableColumn<T> = {
   editId?: string;
   sortable?: boolean;
   sticky?: boolean;
-  sx?: React.CSSProperties;
+  sx?: React.CSSProperties | ((row?: T) => React.CSSProperties);
   editable?: boolean;
   hide?: boolean;
   render?: (row: T) => React.ReactNode;
@@ -262,7 +263,8 @@ export interface ListTableProps<T extends RowData> {
   showEmptyRow?: boolean;
   clearSelectedRows?: boolean;
   disabledSelect?: boolean;
-  toggleLevel?: number
+  toggleLevel?: number;
+  emptyMessege?: string;
 }
 
 export interface EditingCell {

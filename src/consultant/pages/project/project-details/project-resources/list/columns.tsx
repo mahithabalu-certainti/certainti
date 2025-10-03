@@ -71,32 +71,16 @@ export const getProjectResourcesColumns = (
       </span>
     ),
   },
-  // {
-  //   id: 'resource_name',
-  //   editId: 'resource_name',
-  //   label: 'Resource Name',
-  //   sortable: true,
-  //   sortId: 'resource_name',
-  //   width: '180px',
-  //   editable:
-  //     permissionMap?.['resource_name']?.read &&
-  //     permissionMap?.['resource_name']?.edit,
-  //   hide:
-  //     !permissionMap?.['resource_name']?.read &&
-  //     !permissionMap?.['resource_name']?.edit,
-  //   field: {
-  //     type: 'text',
-  //     required: false,
-  //     placeholder: 'Enter Resource Name',
-  //     validation: [
-  //       {
-  //         regex: PROJECT_RESOURCE_REGEX.RESOURCE_NAME,
-  //         errorMessage:
-  //           "Please enter 2–64 characters using only letters, spaces, apostrophes ('), or hyphens (-). Numbers, symbols, or consecutive special characters are not allowed.",
-  //       },
-  //     ],
-  //   },
-  // },
+  {
+    id: 'resource_name',
+    label: 'Resource Name',
+    sortable: true,
+    sortId: 'resource_name',
+    width: '180px',
+    hide:
+      !permissionMap?.['resource_name']?.read &&
+      !permissionMap?.['resource_name']?.edit,
+  },
   {
     id: 'country_name',
     label: 'Resource Country',
@@ -246,6 +230,7 @@ export const getProjectResourcesColumns = (
     field: {
       type: 'text',
       required: false,
+      formatCostNumber: true,
       placeholder: 'Enter an effort',
       validation: [
         {
@@ -281,6 +266,7 @@ export const getProjectResourcesColumns = (
       type: 'text',
       required: false,
       placeholder: 'Enter Cost',
+      formatCostNumber: true,
       validation: [
         {
           regex: PROJECT_RESOURCE_REGEX.COST_REGEX,
@@ -291,7 +277,7 @@ export const getProjectResourcesColumns = (
   },
   {
     id: 'qre_percent',
-    label: 'QRE %',
+    label: 'QRE Percent Final',
     sortable: true,
     sortId: 'qre_percent',
     width: '150px',
@@ -301,7 +287,7 @@ export const getProjectResourcesColumns = (
   },
   {
     id: 'qre_final',
-    label: 'QRE',
+    label: 'QRE Final',
     sortable: true,
     sortId: 'qre_final',
     width: '150px',

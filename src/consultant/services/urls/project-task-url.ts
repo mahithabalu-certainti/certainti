@@ -10,7 +10,7 @@ export const getProjectTaskUrl = (accountRid: string, projectRid: string) =>
   `/api/project_tasks/list?accountRid=${accountRid}&projectRid=${projectRid}`;
 
 const returnURL = (baseUrl: string, params: Record<string, any>): string => {
-  const { page, limit, sortBy, sortOrder, filters } = params;
+  const { page, limit, sortBy, sortOrder, filters, search } = params;
   const searchParams = new URLSearchParams();
 
   if (page !== undefined) searchParams.set('page', String(page));
@@ -21,6 +21,8 @@ const returnURL = (baseUrl: string, params: Record<string, any>): string => {
   if (filters && Object.keys(filters).length > 0) {
     searchParams.set('filters', JSON.stringify(filters));
   }
+
+  if (search) searchParams.set('search', search);
   return `${baseUrl}&${searchParams.toString()}`;
 };
 export const ProjectTaskURL = ({
@@ -31,6 +33,7 @@ export const ProjectTaskURL = ({
   filters,
   accountRid,
   projectRid,
+  search,
 }: ProjectResourcesListParams): string => {
   const base = getProjectTaskUrl(accountRid ?? '', projectRid ?? '');
   return returnURL(base, {
@@ -39,6 +42,7 @@ export const ProjectTaskURL = ({
     sortBy,
     sortOrder,
     filters,
+    search,
   });
 };
 

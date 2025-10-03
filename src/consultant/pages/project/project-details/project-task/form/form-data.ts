@@ -7,6 +7,7 @@ import {
 import {
   createAutoCompleteField,
   createDateField,
+  createSelectField,
   createTextAreaField,
   createTextField,
   PROJECT_TASK_REGEX,
@@ -31,6 +32,8 @@ export const fiscalYears = getFiscalYears(DATE_CONFIG.FISCAL_YEARS_RANGE);
 
 export const ProjectTaskFormData = (
   memoizedProjectResourceCode: SelectOption[],
+  memoizedProjectResourceType: SelectOption[],
+  memoizedProjectResourceClassification: SelectOption[],
   isEditView?: boolean,
   fiscalDate?: FormFiscalDateType,
   permissionMapTaskForm?: Record<string, { read: boolean; edit: boolean }>
@@ -64,15 +67,57 @@ export const ProjectTaskFormData = (
                 !permissionMapTaskForm?.['resource_code']?.edit,
             }
           ),
+          createTextField('task_name', 'Task Name', {
+            required: false,
+            disabled: false,
+            placeholder: 'Enter Task Name',
+            // hide:
+            //   isEditView &&
+            //   !permissionMap?.['created_datetime']?.read &&
+            //   !permissionMap?.['created_datetime']?.edit,
+          }),
+          createSelectField('task_type_rid', 'Task Type', {
+            required: false,
+            width: '140px',
+            placeholder: 'Choose Project Task Type',
+            options: memoizedProjectResourceType,
+            disabled: false,
+          }),
+          createSelectField('task_classification_rid', 'Classification Type', {
+            required: false,
+            width: '140px',
+            placeholder: 'Choose Project Classification Type',
+            options: memoizedProjectResourceClassification,
+            disabled: false,
+          }),
         ],
       },
-
+      {
+        sectionName: '',
+        fillType: 'full',
+        fields: [
+          createTextAreaField('task_description', 'Description', {
+            required: false,
+            placeholder: 'Enter Description',
+            regexErrorMessage: 'Maximum 2000 characters allowed',
+            regex: PROJECT_TASK_REGEX.DESCRIPTION,
+            // disabled:
+            //   isEditView &&
+            //   permissionMapTaskForm?.['comments']?.read &&
+            //   !permissionMapTaskForm?.['comments']?.edit,
+            // hide:
+            //   isEditView &&
+            //   !permissionMapTaskForm?.['comments']?.read &&
+            //   !permissionMapTaskForm?.['comments']?.edit,
+          }),
+        ],
+      },
       {
         sectionName: 'Task Details',
         fillType: 'half',
         fields: [
           createDateField('start_date', 'Start Date', {
-            required: false,
+            required: true,
             minDate: fiscalDate?.startMin,
             maxDate: fiscalDate?.startMax,
             disableFutureDates: true,
@@ -86,7 +131,7 @@ export const ProjectTaskFormData = (
               !permissionMapTaskForm?.['start_date']?.edit,
           }),
           createDateField('end_date', 'End Date', {
-            required: false,
+            required: true,
             minDate: fiscalDate?.startMin,
             maxDate: fiscalDate?.endMax,
             disabled:
@@ -120,6 +165,7 @@ export const ProjectTaskFormData = (
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             placeholder: 'Enter Effort',
+            formatCostValue: true,
             disabled:
               isEditView &&
               permissionMapTaskForm?.['total_hours_pro_task']?.read &&
@@ -214,6 +260,8 @@ export const ProjectTaskFormData = (
       isEditView,
       memoizedProjectResourceCode,
       permissionMapTaskForm,
+      memoizedProjectResourceType,
+      memoizedProjectResourceClassification,
     ]
   );
 };

@@ -133,10 +133,6 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
         interaction_rid: data?.interaction_rid || interactionId || '',
         project_fiscal_rid:
           data?.project_fiscal_rid || projectDetails?.rid || projectid || '',
-        email_info: {
-          email: '',
-          name: '',
-        },
       },
     ];
 
@@ -144,6 +140,10 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       account_rid: data?.account_rid || accountId || '',
       is_interaction_followup: true,
       interactions,
+      email_info: {
+        email: '',
+        name: '',
+      },
     };
     sendInteraction.mutate(payload, {
       onSuccess: (response) => {
@@ -223,6 +223,16 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       label: 'Response Updated By',
       value: data?.response_updated_by,
       key: 'response_updated_by',
+    },
+    {
+      label: 'Recipient Name',
+      value: data?.recipient_name,
+      key: 'recipient_name',
+    },
+    {
+      label: 'Recipient email',
+      value: data?.recipient_email,
+      key: 'recipient_email',
     },
     {
       label: 'Response Received On',

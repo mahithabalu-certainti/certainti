@@ -19,6 +19,7 @@ import { useToast } from '../../../../../../hooks';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
 import { AllPermissions } from '../../../../../../common-service';
+import Markdown from 'react-markdown';
 
 interface TechnicalSummaryDetailsProps {
   accountInActive: boolean;
@@ -194,6 +195,14 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
   ];
 
   const auditDetails = applyHidePermission(auditInfo, permissionMap);
+  const transformedData = data?.technical_summary.map((item) => ({
+    label: item.title,
+    value:
+      item.summary && item.summary.trim() !== ''
+        ? item.summary
+        : 'No information available',
+    hide: hideTechnicalSummary,
+  }));
 
   return (
     <div className='border border-[#CBD6E2] mb-6'>
@@ -221,44 +230,32 @@ const TechnicalSummaryDetails: React.FC<TechnicalSummaryDetailsProps> = ({
         </div>
       ) : (
         <>
-          <div className={`${hideTechnicalSummary ? 'hidden' : ''}`}>
+          <div>
             <div className='flex items-center align-middle px-6 h-[30px] border-t border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
-              Technical Summary Information
+              Project Summary - Technical Summary
             </div>
-            <div
-              className={`min-h-20 mx-6 my-2
-  [&_p]:mb-2
-  [&_strong]:font-bold [&_em]:italic
-  [&_u]:underline [&_s]:line-through
 
-  [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-3
-  [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mb-2
-  [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mb-2
-  [&_h4]:text-base [&_h4]:font-medium [&_h4]:mb-1
-  [&_h5]:text-sm [&_h5]:font-medium [&_h5]:mb-1
-  [&_h6]:text-xs [&_h6]:font-medium [&_h6]:mb-1
-
-  [&_ul]:list-disc [&_ul]:pl-5
-  [&_ol]:list-decimal [&_ol]:pl-5
-  [&_li]:mb-1
-
-  [&_a]:text-blue-600 [&_a]:underline
-  [&_blockquote]:border-l-2 [&_blockquote]:pl-3 [&_blockquote]:italic
-
-  [&_code]:font-mono [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:rounded
-  [&_pre]:font-mono [&_pre]:bg-gray-100 [&_pre]:p-2 [&_pre]:rounded [&_pre]:overflow-x-auto
-
-  [&_img]:max-w-full [&_img]:rounded
-  [&_table]:border-collapse [&_table]:border [&_table]:border-gray-300 [&_table]:my-2
-  [&_th]:border [&_th]:border-gray-300 [&_th]:bg-gray-100 [&_th]:px-2 [&_th]:py-1
-  [&_td]:border [&_td]:border-gray-300 [&_td]:px-2 [&_td]:py-1
-`}
-              dangerouslySetInnerHTML={{
-                __html: data?.technical_summary || '',
-              }}
-            />
+            {/* Label + Paragraph */}
+            <div className='py-2 px-6 flex flex-col gap-4'>
+              {transformedData?.map((item, index) => {
+                const formattedText = (item.value || '')
+                  .replace(/\\n/g, '\n')
+                  .replace(/•/g, '-');
+                return (
+                  <div key={index} className='flex flex-col gap-1'>
+                    {/* Label */}
+                    <div className='text-left font-extrabold text-[16px] text-[#425A76]'>
+                      {item.label}
+                    </div>
+                    {/* Value as paragraph */}
+                    <div className='markdown'>
+                      <Markdown>{formattedText || ''}</Markdown>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-
           <div
             className={`${updateTechSummaryText.isPending ? 'pointer-events-none cursor-default' : ''} ${hideAdditionalSummaryText ? 'hidden' : ''}`}
           >

@@ -139,6 +139,7 @@ export const ProjectResources = ({
   const [updateProjectResourceMutation] = useMutation(UPDATE_PROJECT_RESOURCE, {
     client: resourceClient,
   });
+  const [searchText, setSearchText] = useState('');
 
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
@@ -163,6 +164,7 @@ export const ProjectResources = ({
       fiscalYear: convertedFiscalYear,
       accountNumber: accountID,
       projectid: projectID,
+      search: searchText,
     },
     undefined,
     refreshProjectsTrigger
@@ -208,6 +210,7 @@ export const ProjectResources = ({
     projectResData?.account_rid as string,
     projectResData?.rid as string,
     detailrefecth as number
+    // searchText as string
   );
   // const resourceData = resourceDetails?.data?.projectResource;
   const resourceData = useMemo(() => {
@@ -297,6 +300,8 @@ export const ProjectResources = ({
     const queryParams = new URLSearchParams({
       account_Id: row?.account_rid || '',
       project_Id: row?.project_fiscal_rid || '',
+      account_name: accountData?.accountName || '',
+      account_number: accountData?.accountNumber || '',
       PFY: PFY ? JSON.stringify(PFY) : '',
       projectCode: projectCode ?? '',
       source: 'editProjectResource',
@@ -318,6 +323,12 @@ export const ProjectResources = ({
       setSortOrder(apiOrder);
       setSortField(sortBy);
     }
+  };
+
+  const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
+    const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
+    setSortOrder(apiOrder);
+    setSortField(sortBy);
   };
 
   useEffect(() => {
@@ -660,6 +671,8 @@ export const ProjectResources = ({
         setSortFilterCount={setSortFilterCount}
         projectResourceAccountID={accountID}
         projectResourceProjectID={projectID}
+        showSearch={viewDetails ? false : true}
+        onSearch={(text) => setSearchText(text)}
       />
       <>
         {showUploads ? (
@@ -747,7 +760,7 @@ export const ProjectResources = ({
                     onRowsPerPageChange={setRowsPerPage}
                     sortBy={sortField}
                     sortOrder={sortOrder}
-                    onSort={handleSorting}
+                    onSort={handleSort}
                     selectable={false}
                     onSelectionChange={(selectedIds: unknown) =>
                       console.log('Selected:', selectedIds)

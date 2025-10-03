@@ -80,7 +80,7 @@ export const getInteractionFilterFields = (
     },
     {
       name: 'Last Sent Date',
-      value: 'last_resent_on',
+      value: 'sent_on_datetime',
       type: 'date',
       hide:
         !permissionMap?.['last_resent_on']?.edit &&
@@ -178,6 +178,81 @@ export const getInteractionFilterFields = (
       value: 'sort_options',
       type: 'system-sort',
       options: [{ value: 'createdAt_desc', option: 'Recently Created' }],
+    },
+  ];
+};
+export const getProjectInteractionFilterFields = (
+  interactionStatus: { option: string; value: string }[],
+  permissionMap: Record<string, { read: boolean; edit: boolean }>
+): FieldConfig[] => {
+  return [
+    {
+      name: 'Interaction ID',
+      value: 'r_number',
+      type: 'text',
+      operatorOption: textOptions,
+      hide:
+        !permissionMap?.['r_number']?.edit &&
+        !permissionMap?.['r_number']?.read,
+    },
+    // {
+    //   name: 'Iteration',
+    //   value: 'interaction_iteration',
+    //   type: 'number',
+    //   hide:
+    //     !permissionMap?.['interaction_iteration']?.edit &&
+    //     !permissionMap?.['interaction_iteration']?.read,
+    // },
+    {
+      name: 'Age (Days)',
+      value: 'interaction_age',
+      type: 'number',
+      hide:
+        !permissionMap?.['interaction_age']?.edit &&
+        !permissionMap?.['interaction_age']?.read,
+    },
+    {
+      name: 'Status',
+      value: 'status_rid',
+      type: 'enum',
+      options: interactionStatus,
+      operatorOption: enumOptions,
+      hide:
+        !permissionMap?.['status']?.edit && !permissionMap?.['status']?.read,
+    },
+    {
+      name: 'Recipient Name',
+      value: 'recipient_name',
+      type: 'text',
+      operatorOption: textOptions,
+      hide:
+        !permissionMap?.['recipient_name']?.edit &&
+        !permissionMap?.['recipient_name']?.read,
+    },
+    {
+      name: 'Recipient Email',
+      value: 'recipient_email',
+      type: 'text',
+      operatorOption: textOptions,
+      hide:
+        !permissionMap?.['recipient_email']?.edit &&
+        !permissionMap?.['recipient_email']?.read,
+    },
+    {
+      name: 'Last Sent Date',
+      value: 'last_resent_on',
+      type: 'date',
+      hide:
+        !permissionMap?.['last_resent_on']?.edit &&
+        !permissionMap?.['last_resent_on']?.read,
+    },
+    {
+      name: 'Last Reminder Date',
+      value: 'last_reminder_on',
+      type: 'date',
+      hide:
+        !permissionMap?.['last_reminder_on']?.edit &&
+        !permissionMap?.['last_reminder_on']?.read,
     },
   ];
 };

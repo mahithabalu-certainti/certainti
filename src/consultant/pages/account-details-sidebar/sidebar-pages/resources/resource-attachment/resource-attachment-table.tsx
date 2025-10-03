@@ -52,6 +52,7 @@ interface ResourceSkillTableProps {
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
   >;
+  searchValue?: string;
 }
 const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
   appliedFilters,
@@ -67,6 +68,7 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
   setCount,
   columnAnchorEl,
   setColumnAnchorEl,
+  searchValue,
 }) => {
   const { errorToast } = useToast();
   const { accountid } = useParams();
@@ -95,6 +97,7 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
       accountRid: accountid,
       entityId: resourceRid || '',
       fiscalYear: convertedFiscalYear,
+      search: searchValue,
     },
     refreshAttachments
   );
