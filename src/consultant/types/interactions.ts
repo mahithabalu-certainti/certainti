@@ -334,6 +334,7 @@ export interface InteractionHistoryResponse {
   response: string;
   response_on: string;
   attachments: Attachment[];
+  is_mandatory?: boolean
 }
 export interface InteractionDetailsHistoryResponse {
   statusCode: number;
