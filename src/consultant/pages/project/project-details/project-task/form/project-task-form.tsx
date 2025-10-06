@@ -276,7 +276,7 @@ const ProjectTaskForm: React.FC = () => {
     }
   };
 
-  const isFormLoading = resCodeLoading;
+  const isFormLoading = resCodeLoading || getProjectTask.isLoading;
 
   const formConfig = ProjectTaskFormData(
     memoizedProjectResourceCode,
