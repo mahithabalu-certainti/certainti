@@ -1685,7 +1685,7 @@ export class InteractionService {
         page : data.page,
         limit : data.limit,
         totalCount : totalResults,
-        keyContact : keyContactDetails != null && data.flag == interactionFlag.account ? 
+        keyContact : keyContactDetails != null ? 
         {
           key_contact_name : result[0][0].interactions[0].key_contact_name,
           key_contact_email : result[0][0].interactions[0].key_contact_email
