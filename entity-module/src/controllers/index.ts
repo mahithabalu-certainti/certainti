@@ -8,6 +8,7 @@ import importListController from './importListController';
 import projectTaskController from './projectTaskController';
 import settingController from '../controllers/settingsController'
 import financialController from '../controllers/financialHighlightsController'
+import templateController from './templateController'
 
 const controller = {
     resoucesController,
@@ -19,7 +20,8 @@ const controller = {
     importListController,
     projectTaskController,
     settingController,
-    financialController
+    financialController,
+    templateController
 };
 
 export default controller;

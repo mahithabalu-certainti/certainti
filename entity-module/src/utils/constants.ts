@@ -668,6 +668,20 @@ export const rawQueries = {
     return `SELECT rid FROM ${schemaName}.resources WHERE resource_code = '${resource_code}'`;
   },
   fetchAccountById:  `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
+  updateTemplate(url: string, templateId: string, userId: string){
+    return `UPDATE ${MAIN_SCHEMA_NAME}.templates
+    SET blob_url = '${url}',
+    modified_datetime = NOW(),
+    modified_by = '${userId}' 
+    WHERE rid = '${templateId}';
+  `;
+  },
+  fetchTemplate(){
+    return `SELECT * FROM ${MAIN_SCHEMA_NAME}.templates`;
+  },
+  fetchTemplateById(templateId: string){
+    return `SELECT * FROM ${MAIN_SCHEMA_NAME}.templates WHERE rid = '${templateId}'`;
+  },
   GET_ACCOUNT_ACCESS: `
 (
   (
