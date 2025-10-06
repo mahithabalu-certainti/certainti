@@ -1001,6 +1001,20 @@ export class WebHookService {
         parsedData = rows;
 
         const validationResult = this.validateCSV(rows, interactionLevel);
+        if(validationResult.answerValidation){
+          const errorDetails = validationResult.errors?.join(", ");
+          reason = `CSV validation failed - ${errorDetails}`;
+          await this.sendMailWithAttachment(
+            message,
+            att.name,
+            buffer,
+            reason,
+            forwardEmail,
+            graphClient,
+            email
+          );
+          this.logger.error(`Forwarding file "${att.name}" due to: ${reason}`);
+        }
 
         if (validationResult.valid) {
           this.logger.info("Valid XLSX:", att.name);
