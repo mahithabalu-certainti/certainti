@@ -4,6 +4,7 @@ import {
   PROJECT_TASK_REGEX,
   valueDisplay,
 } from '../../../../../common-utils';
+import TextButton from '../../../../../components/button/text-button';
 import {
   DependencyRowData,
   ListTableColumn,
@@ -21,6 +22,7 @@ export const formatDateToYMD = (dateString: string): string => {
 };
 export const getProjectTaskColumns = (
   onClick: (row: ProjectTaskListType) => void,
+  handleAttachmentClick: (rowId: string) => void,
   memoizedProjectResourceCode: SelectOption[],
   TaskTypeOptions: SelectOption[],
   classificationOptions: SelectOption[],
@@ -359,5 +361,21 @@ export const getProjectTaskColumns = (
     hide:
       !permissionMapTaskTableColumn?.['r_number']?.read &&
       !permissionMapTaskTableColumn?.['r_number']?.edit,
+  },
+  {
+    id: 'attachments',
+    sortId: 'attachments',
+    label: 'Attachments',
+    width: 100,
+    sortable: false,
+    // hide: !attachmentCreateEnable,
+    render: (row) => (
+      <TextButton
+        label='Add'
+        // disabled={accountInActive ? accountInActive : resourceInActive}
+        sx={{ width: '45px', minWidth: '45px', maxWidth: '45px', ml: 2.5 }}
+        onClick={() => handleAttachmentClick?.(row.rid ?? '')}
+      />
+    ),
   },
 ];
