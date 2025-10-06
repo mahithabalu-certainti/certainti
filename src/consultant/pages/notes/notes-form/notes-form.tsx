@@ -175,8 +175,8 @@ const NotesForm: React.FC = () => {
 
     const payload = {
       account_rid: accountId || '',
-      entity_level: entityLevel,
-      entity_id: entityId,
+      attach_to: entityId,
+      attachment_level: entityLevel,
       fiscal_year: projectFiscalYear ?? data?.fiscal_year,
       title: data?.title || '',
       notes_owner: data?.notes_owner || '',

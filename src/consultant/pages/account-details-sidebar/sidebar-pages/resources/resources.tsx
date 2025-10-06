@@ -982,11 +982,7 @@ const Resource: React.FC<ResourceProps> = ({
               value={value}
               title='Resources'
               count={count}
-              resourceNumber={
-                value === 'details'
-                  ? (resourceData?.r_number ?? resourceNumber)
-                  : ''
-              }
+              resourceNumber={resourceData?.r_number ?? resourceNumber}
               titleIcon={
                 <ResourcesIcon
                   alt='resource header icon'

@@ -105,8 +105,8 @@ export interface NoteDetailsResponse {
 export interface NotesFormDataPayload {
   rid: string;
   attachment: File;
-  entity_level: string;
-  entity_id: string;
+  attachment_level: string;
+  attach_to: string;
   fiscal_year?: string | number;
   title: string;
   notes_owner: string;
