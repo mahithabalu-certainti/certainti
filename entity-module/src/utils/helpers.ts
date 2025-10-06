@@ -10,6 +10,7 @@ import { getSecret } from "./azureSecrets";
 import { Attachment } from "../models/attachments";
 import { ProjectTask } from "../models/projectTask";
 import crypto from "crypto";
+import { Notes } from "../models/notes";
 
 function getLogger() {
   return configurations.getInstance().getLogger();
@@ -1744,3 +1745,73 @@ export async function uploadEntityTemplatesToAzureBlob(
     );
   }
 }
+
+export const setInlineForNotes = (
+  dbData: Notes,
+  requestData: any
+) => {
+  let newData: any = {};
+  let dataStorage;
+  let newDataArray = [];
+  if (requestData.fiscal_year != undefined) {
+    newData.fiscal_year =
+      dbData.fiscal_year != requestData.fiscal_year
+        ? requestData.fiscal_year
+        : dbData.fiscal_year;
+    dataStorage = `fiscal_year = ${newData.fiscal_year}`;
+    newDataArray.push(dataStorage);
+  }
+  if (requestData.title != undefined) {
+    newData.title =
+      requestData.title != dbData.title
+        ? requestData.title
+        : dbData.title;
+    dataStorage = `title = '${newData.title.replace(
+      /'/g,
+      "''"
+    )}'`;
+    newDataArray.push(dataStorage);
+  }
+  if (requestData.notes_owner != undefined) {
+    newData.notes_owner =
+      requestData.notes_owner != dbData.notes_owner
+        ? requestData.notes_owner
+        : dbData.notes_owner;
+    dataStorage = `notes_owner = '${newData.notes_owner.replace(
+      /'/g,
+      "''"
+    )}'`;
+    newDataArray.push(dataStorage);
+  }
+  if (requestData.descriptions != undefined) {
+    newData.descriptions =
+      requestData.descriptions != dbData.descriptions
+        ? requestData.descriptions
+        : dbData.descriptions;
+    dataStorage = `descriptions = '${newData.descriptions.replace(
+      /'/g,
+      "''"
+    )}'`;
+    newDataArray.push(dataStorage);
+  }
+  if (newDataArray.length < 1) {
+    return {
+      statusMessage: STATUS_MESSAGE.noDataToUpdate,
+      data: newDataArray,
+    };
+  } else {
+    dataStorage = `modified_by = '${requestData.userId}'`;
+    newDataArray.push(dataStorage);
+    dataStorage = `modified_datetime = NOW()`;
+    newDataArray.push(dataStorage);
+    return {
+      statusMessage: null,
+      data: newDataArray,
+    };
+  }
+};
+
+export const validateNotesInput = (data: any) => {
+  if (!data.account_rid) return STATUS_MESSAGE.accountIdMissing;
+  if (!data.rid) return STATUS_MESSAGE.notesIdMissing;
+};

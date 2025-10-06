@@ -18,7 +18,8 @@ import {
   IFinancialHighlights,
   IProjectTaskIngestionService,
   INotesService,
-  ITemplates
+  ITemplates,
+  INotesGraphqlServices
 } from "./interfaces/interface";
 import { ProjectService } from "./projectService";
 import ResourceCostService from "./resourceCostService";
@@ -55,7 +56,8 @@ class Services implements IServiceContainer {
   private _importGraphqlService? : IImportListGraphqlServices;
   private _projectTaskGraphqlServices? : IProjectTaskGraphqlServices;
   private _settingService? : ISettingsServices;
-  private _financialHighlightServices? : IFinancialHighlights
+  private _financialHighlightServices? : IFinancialHighlights;
+  private _notesGraphqlServices? : INotesGraphqlServices
   notesService : INotesService;
 
   constructor(
@@ -153,6 +155,14 @@ class Services implements IServiceContainer {
       this._financialHighlightServices = new FinancialHighlightsService()
     }
     return this._financialHighlightServices!
+  }
+
+  get notesGraphqlServices() : INotesGraphqlServices {
+    if(!this._notesGraphqlServices) {
+      const {default : NotesGraphqlServies} = require('../services/notes/notesGraphqlServices')
+      this._notesGraphqlServices = new NotesGraphqlServies
+    }
+    return this._notesGraphqlServices!
   }
 
 }

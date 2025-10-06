@@ -1026,3 +1026,11 @@ export interface ITemplates {
     data?: any;
   }>;
 }
+export interface INotesGraphqlServices {
+  updateInlineNotes(data: any): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { notes: any };
+  }>;
+}
