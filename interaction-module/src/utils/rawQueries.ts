@@ -68,6 +68,10 @@ export const fetchInteractionForProjectLevelQuery = (
         ,'key_contact_name', i.key_contact_name,
         'key_contact_email', i.key_contact_email`
   } else {
+    accountLevelkeyContactQuery = `kcd.key_contact_name, kcd.key_contact_email,`
+    aggregatedQuery = `
+        ,'key_contact_name', i.key_contact_name,
+        'key_contact_email', i.key_contact_email`
     whereConditions = `
         i.account_rid = '${account_rid}' 
         AND 
