@@ -585,7 +585,7 @@ export class ProjectService {
           accountRNumber = childRNumber;
         }
         let isSubscriptionCreated = false;
-        isSubscriptionCreated = (await this.schemaService.getSubscriptionDetailsByProjectId(accountId, childRNumber)) ?? false;
+        isSubscriptionCreated = (await this.schemaService.getSubscriptionDetailsByProjectId(accountData.parent_account_rid, childRNumber,accountId)) ?? false;
              
 
       const isExists = await this.schemaService.checkIfSchemaAndTableExists(
