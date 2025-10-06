@@ -156,7 +156,10 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     {
       label: 'Reminder',
       variant: 'outlined' as const,
-      disabled: accountInActive || !disableRemainderBtn,
+      disabled:
+        accountInActive ||
+        !disableRemainderBtn ||
+        !accountDetails?.accountDetails?.is_send_interaction,
       onClick: () => handleReminderBtn(),
       sx: { width: '78px', minWidth: '78px' },
       loading: sendInteraction.isPending,
