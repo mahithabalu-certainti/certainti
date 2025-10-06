@@ -68,6 +68,10 @@ export const fetchInteractionForProjectLevelQuery = (
         ,'key_contact_name', i.key_contact_name,
         'key_contact_email', i.key_contact_email`
   } else {
+    accountLevelkeyContactQuery = `kcd.key_contact_name, kcd.key_contact_email,`
+    aggregatedQuery = `
+        ,'key_contact_name', i.key_contact_name,
+        'key_contact_email', i.key_contact_email`
     whereConditions = `
         i.account_rid = '${account_rid}' 
         AND 
@@ -1073,7 +1077,8 @@ export const interactionResponseHistoryByVersion = (
             ii.question_seq_num, ii.question, a.attachments, a.global_attachments,
             a.interaction_response, a.response_on,i.response_updated_on,
             i.response_submitted_on, i.rid AS interaction_rid,
-            ii.rid AS interaction_item_rid, a.rid AS interaction_response_rid, a.interaction_version
+            ii.rid AS interaction_item_rid, a.rid AS interaction_response_rid, a.interaction_version,
+            ii.is_mandatory
         FROM
         ${schemaName}.interactions i
         LEFT JOIN ${schemaName}.project p ON p.rid = i.project_rid AND p.account_rid = i.account_rid
@@ -1088,7 +1093,8 @@ export const interactionResponseHistoryByVersion = (
             ii.question_seq_num, ii.question,
             a.interaction_response, a.response_on,i.response_updated_on,
             i.response_submitted_on, i.rid,
-            ii.rid, a.rid, a.attachments, a.interaction_version, a.global_attachments
+            ii.rid, a.rid, a.attachments, a.interaction_version, a.global_attachments,
+            ii.is_mandatory
     )
     
     SELECT 
@@ -1104,6 +1110,7 @@ export const interactionResponseHistoryByVersion = (
     'question_id', i.question_seq_num,
     'question', i.question,
     'response', i.interaction_response,
+    'is_mandatory', i.is_mandatory,
     'attachments', i.attachments,
     'global_attachments', i.global_attachments
     )ORDER BY i.question_seq_num ASC NULLS LAST) AS responses_history_details
@@ -1252,9 +1259,17 @@ const buildNumericFilterCondition = (
   
   switch (condition) {
     case ALPHANUMERIC_CONDITIONS.equals:
-      return `${columnRef} = ${values}`;
+      if(filteredColumns === 'fiscal_year') {
+        return `CASE WHEN i.project_fiscal_rid IS NULL THEN i.fiscal_year ELSE pf.fiscal_year END = ${values}`;
+      } else {
+        return `${columnRef} = ${values}`;
+      }
     case ALPHANUMERIC_CONDITIONS.notEquals:
-      return `${columnRef} != ${values}`;
+      if(filteredColumns === 'fiscal_year') {
+        return `CASE WHEN i.project_fiscal_rid IS NULL THEN i.fiscal_year ELSE pf.fiscal_year END != ${values}`
+      } else {
+        return `${columnRef} != ${values}`;
+      }
     case ALPHANUMERIC_CONDITIONS.greater_than:
       return `${columnRef} > ${values}`;
     case ALPHANUMERIC_CONDITIONS.less_than:
@@ -1263,6 +1278,8 @@ const buildNumericFilterCondition = (
       return `${columnRef} BETWEEN ${values.join(" AND ")}`;
     case ALPHANUMERIC_CONDITIONS.isEmpty:
       return `${columnRef} IS NULL`;
+    case ALPHANUMERIC_CONDITIONS.IN :
+      return `CASE WHEN i.project_fiscal_rid IS NULL THEN i.fiscal_year ELSE pf.fiscal_year END IN (${values.map((d : any) => `${d}`)})`
     default:
       return '';
   }
