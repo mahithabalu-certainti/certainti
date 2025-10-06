@@ -410,10 +410,9 @@ async function exportAllInteractionTemplates(req: Request, res: Response) {
         let resultMap: { [key: string]: any } = {
           "r_number": d.r_number,
           "template_name":d.template_name,
-          "status_name": d.status_name,
-          "interaction_level_name": d.interaction_level_name,
-          "interaction_type_name": d.interaction_type_name,
-          "response_source_name": d.response_source_name,
+          "status_rid": d.status_name,
+          "interaction_level_rid": d.interaction_level_name,
+          "interaction_type_rid": d.interaction_type_name,
           "created_by": d.created_user_name,
           "created_datetime":formatDate(d.created_datetime),
           "modified_by": d.modified_user_name,
