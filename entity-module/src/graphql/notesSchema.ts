@@ -3,7 +3,7 @@ import {gql} from 'graphql-tag'
 const typeDefs = gql
 `
 type notesResponse {
-document_rid: String
+rid: String
 r_number: String
 created_datetime: Date
 created_by: String
@@ -22,6 +22,8 @@ notes_owner: String
 descriptions: String
 uploaded_by: String
 attached_to: String
+created_by_name : String
+modified_by_name : String
 }
 
 type notesFinalresponse {

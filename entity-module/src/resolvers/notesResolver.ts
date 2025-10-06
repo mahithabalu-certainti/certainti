@@ -21,7 +21,6 @@ export const notesResolver : IResolvers  = {
                         data : null
                     } 
                 }
-                console.log("test====> ")
                 const result = await ctx.services.notesGraphqlServices.updateInlineGraphqlDetailsForNotes(data)
                 if(result.statusCode == HttpStatus.SUCCESS) {
                     return {

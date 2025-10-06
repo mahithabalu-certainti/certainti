@@ -208,20 +208,25 @@ export class NotesService {
         }
     
         const schemaName = `${MAIN_SCHEMA_NAME}_${schemaNumber.replace(/\D/g, '')}`;
-        const AttachmentModel = Notes.initialize(orgDbSequelize, schemaName);
+        const NotesModel = Notes.initialize(orgDbSequelize, schemaName);
     
-        let allAttachments: any[] = [];
+        let allNotes: any[] = [];
     
         // Handle attached_to and uploaded_by filters separately
         let attachedToFilter;
-        let uploadedByFilter;
+        let createdByFilter;
+        let modifiedByFilter;
         if (filters.attached_to) {
           attachedToFilter = filters.attached_to;
           delete filters.attached_to;
         }
-        if (filters.uploaded_by) {
-          uploadedByFilter = filters.uploaded_by;
-          delete filters.uploaded_by;
+        if (filters.created_by_name) {
+          createdByFilter = filters.created_by_name;
+          delete filters.created_by_name;
+        }
+        if (filters.modified_by_name) {
+          modifiedByFilter = filters.modified_by_name;
+          delete filters.modified_by_name;
         }
     
         const { whereClause } = this.buildRawWhereClause(filters, search);
@@ -313,60 +318,60 @@ export class NotesService {
     
         // 🔷 Non-parent account logic with batched optimized fetches
         if (attachmentLevel === 'account' && entityId) {
-          const accountAttachments = await fetchAttachments(AttachmentModel, 'account', [entityId]);
-          allAttachments.push(...accountAttachments);
+          const accountAttachments = await fetchAttachments(NotesModel, 'account', [entityId]);
+          allNotes.push(...accountAttachments);
     
           const projects = await this.projectIngestionService.getProjectsByAccountId(schemaNumber, entityId);
           const projectIds = projects.map(p => p.rid);
           if (projectIds.length > 0) {
-            const projectAttachments = await fetchAttachments(AttachmentModel, 'project', projectIds);
-            allAttachments.push(...projectAttachments);
+            const projectAttachments = await fetchAttachments(NotesModel, 'project', projectIds);
+            allNotes.push(...projectAttachments);
     
-            const projectChildAttachments = await fetchProjectResourceTaskAttachmentsBulk(AttachmentModel, projectIds);
-            allAttachments.push(...projectChildAttachments);
+            const projectChildAttachments = await fetchProjectResourceTaskAttachmentsBulk(NotesModel, projectIds);
+            allNotes.push(...projectChildAttachments);
           }
     
           const resources = await this.resourceService.getResourcesByAccountId(schemaNumber, entityId);
           const resourceIds = resources.map(r => (r as { rid: string }).rid);
           if (resourceIds.length > 0) {
-            const resourceAttachments = await fetchAttachments(AttachmentModel, 'resource', resourceIds);
-            allAttachments.push(...resourceAttachments);
+            const resourceAttachments = await fetchAttachments(NotesModel, 'resource', resourceIds);
+            allNotes.push(...resourceAttachments);
     
-            const resourceCostSkillAttachments = await fetchResourceCostSkillAttachmentsBulk(AttachmentModel, resourceIds);
-            allAttachments.push(...resourceCostSkillAttachments);
+            const resourceCostSkillAttachments = await fetchResourceCostSkillAttachmentsBulk(NotesModel, resourceIds);
+            allNotes.push(...resourceCostSkillAttachments);
           }
         }
     
         // 🔷 Project logic
         else if (attachmentLevel === 'project' && entityId) {
-          const projectAttachments = await fetchAttachments(AttachmentModel, 'project', [entityId]);
-          allAttachments.push(...projectAttachments);
+          const projectAttachments = await fetchAttachments(NotesModel, 'project', [entityId]);
+          allNotes.push(...projectAttachments);
     
-          const projectChildAttachments = await fetchProjectResourceTaskAttachmentsBulk(AttachmentModel, [entityId]);
-          allAttachments.push(...projectChildAttachments);
+          const projectChildAttachments = await fetchProjectResourceTaskAttachmentsBulk(NotesModel, [entityId]);
+          allNotes.push(...projectChildAttachments);
         }
     
         // 🔷 Project_resource logic
         else if (attachmentLevel === 'project_resource' && entityId) {
-          const projectResourceAttachments = await fetchAttachments(AttachmentModel, 'project_resource', [entityId]);
-          allAttachments.push(...projectResourceAttachments);
+          const projectResourceAttachments = await fetchAttachments(NotesModel, 'project_resource', [entityId]);
+          allNotes.push(...projectResourceAttachments);
     
           const projectResource = await this.projectIngestionService.fetchProjectResourceById(schemaNumber, entityId);
           const projectTasks = await this.projectIngestionService.getProjectTasksByProjectIds(schemaNumber, [(projectResource as any)?.project_fiscal_rid]);
           const projectTaskIds = projectTasks.map(t => t.rid);
           if (projectTaskIds.length > 0) {
-            const projectTaskAttachments = await fetchAttachments(AttachmentModel, 'project_task', projectTaskIds);
-            allAttachments.push(...projectTaskAttachments);
+            const projectTaskAttachments = await fetchAttachments(NotesModel, 'project_task', projectTaskIds);
+            allNotes.push(...projectTaskAttachments);
           }
         }
     
         // 🔷 Resource logic
         else if (attachmentLevel === 'resource' && entityId) {
-          const resourceAttachments = await fetchAttachments(AttachmentModel, 'resource', [entityId]);
-          allAttachments.push(...resourceAttachments);
+          const resourceAttachments = await fetchAttachments(NotesModel, 'resource', [entityId]);
+          allNotes.push(...resourceAttachments);
     
-          const resourceCostSkillAttachments = await fetchResourceCostSkillAttachmentsBulk(AttachmentModel, [entityId]);
-          allAttachments.push(...resourceCostSkillAttachments);
+          const resourceCostSkillAttachments = await fetchResourceCostSkillAttachmentsBulk(NotesModel, [entityId]);
+          allNotes.push(...resourceCostSkillAttachments);
         }
     
         // 🔷 Other direct levels
@@ -382,8 +387,8 @@ export class NotesService {
           }
     
           try {
-            const result = await AttachmentModel.findAll({ where: whereClause });
-            allAttachments.push(...result);
+            const result = await NotesModel.findAll({ where: whereClause });
+            allNotes.push(...result);
           } catch (error) {
             console.error('Error fetching attachments:', error);
             throw new Error('Failed to fetch attachments');
@@ -391,14 +396,14 @@ export class NotesService {
         }
     
         // 🔷 Fetch display names
-        if(graphqlData?.document_rid) {
-          allAttachments = allAttachments.filter((d : any) => d != null)
+        if(graphqlData?.notes_rid) {
+          allNotes = allNotes.filter((d : any) => d != null)
         }
-        const attachmentDisplayNames = await this.getAttachmentDisplayNames(allAttachments, schemaNumber);
+        const attachmentDisplayNames = await this.getAttachmentDisplayNames(allNotes, schemaNumber);
     
         // 🔷 Apply attached_to filter if present
         if (attachedToFilter) {
-          allAttachments = allAttachments.filter(attachment => {
+          allNotes = allNotes.filter(attachment => {
             let displayName = attachmentDisplayNames[attachment.rid] || String(attachment.attach_to) || '';
             const displayValue = displayName.toLowerCase();
             const operator = Object.keys(attachedToFilter)[0];
@@ -413,11 +418,11 @@ export class NotesService {
         }
     
         // 🔷 Sort
-        const validSortFields = ['document_name', 'title', 'notes_owner', 'r_number', 'format', 'attachment_level', 'size_in_mb', 'attached_to', 'created_datetime', 'descriptions', 'uploaded_by', 'fiscal_year'];
+        const validSortFields = ['document_name', 'title', 'notes_owner', 'r_number', 'format', 'attachment_level', 'size_in_mb', 'attached_to', 'created_datetime', 'descriptions', 'created_by_name', 'fiscal_year', 'modified_by_name'];
         const finalSortBy = validSortFields.includes(sortBy) ? sortBy : 'created_datetime';
         const finalSortOrder = ['ASC', 'DESC'].includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
     
-        allAttachments.sort((a, b) => {
+        allNotes.sort((a, b) => {
           // Special handling for created_datetime
           if (finalSortBy === 'created_datetime') {
             const aDate = new Date(a[finalSortBy]).getTime();
@@ -442,14 +447,10 @@ export class NotesService {
           // Both non-empty, normal comparison
           return finalSortOrder === 'ASC' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
         });
-    
-    
-        // 🔷 Pagination
-        const totalCount = allAttachments.length;
-        const paginatedAttachments = allAttachments.slice((page - 1) * limit, page * limit);
+        const paginatedAttachments = allNotes
     
         // 🔷 Map document types and users
-        const userIds = [...new Set(paginatedAttachments.map(att => att.created_by))];
+        const userIds = [...new Set(paginatedAttachments.flatMap(att => [att.created_by,att.modified_by]))];
     
         const mainSequelize = await initMainDbSequelize();
         const [users] = await Promise.all([
@@ -460,19 +461,37 @@ export class NotesService {
         ]);
     
         const userMap = new Map(users.map((u: any) => [u.rid, u.full_name]));
-    
+
         // 🔷 Map final results
         let notes = paginatedAttachments.map(attachment => ({
           ...attachment.get({ plain: true }),
-          uploaded_by: userMap.get(attachment.created_by) || attachment.created_by,
+          created_by_name: userMap.get(attachment.created_by) || attachment.created_by,
+          modified_by_name: userMap.get(attachment.modified_by) || attachment.modified_by,
           attached_to: attachmentDisplayNames[attachment.rid] || attachment.attach_to,
         }));
     
         // Handle uploaded_by sorting
-        if (sortBy === 'uploaded_by') {
+        if (sortBy === 'created_by_name') {
           notes.sort((a, b) => {
-            const aType = a.uploaded_by || '';
-            const bType = b.uploaded_by || '';
+            const aType = a.created_by_name || '';
+            const bType = b.created_by_name || '';
+            const aEmpty = !aType || aType.trim() === '';
+            const bEmpty = !bType || bType.trim() === '';
+            
+            if (aEmpty && bEmpty) return 0;
+            if (aEmpty) return finalSortOrder === 'ASC' ? 1 : -1;
+            if (bEmpty) return finalSortOrder === 'ASC' ? -1 : 1;
+            
+            return finalSortOrder === 'ASC' ? 
+              aType.localeCompare(bType) : 
+              bType.localeCompare(aType);
+          });
+        }
+
+        if (sortBy === 'modified_by_name') {
+          notes.sort((a, b) => {
+            const aType = a.modified_by_name || '';
+            const bType = b.modified_by_name || '';
             const aEmpty = !aType || aType.trim() === '';
             const bEmpty = !bType || bType.trim() === '';
             
@@ -486,11 +505,24 @@ export class NotesService {
           });
         }
         // Apply uploaded_by filter if present
-        if (uploadedByFilter) {
+        if (createdByFilter) {
             notes = notes.filter(notes => {
-            const uploadedBy = notes.uploaded_by?.toLowerCase() || '';
-            const operator = Object.keys(uploadedByFilter)[0];
-            const filterValue = (uploadedByFilter[operator] || '').toLowerCase();
+            const uploadedBy = notes.created_by_name?.toLowerCase() || '';
+            const operator = Object.keys(createdByFilter)[0];
+            const filterValue = (createdByFilter[operator] || '').toLowerCase();
+            switch (operator) {
+              case 'contains': return uploadedBy.includes(filterValue);
+              case 'equals': return uploadedBy === filterValue;
+              case 'not_equals': return uploadedBy !== filterValue || uploadedBy === null;
+              default: return false;
+            }
+          });
+        }
+        if (modifiedByFilter) {
+            notes = notes.filter(notes => {
+            const uploadedBy = notes.modified_by_name?.toLowerCase() || '';
+            const operator = Object.keys(modifiedByFilter)[0];
+            const filterValue = (modifiedByFilter[operator] || '').toLowerCase();
             switch (operator) {
               case 'contains': return uploadedBy.includes(filterValue);
               case 'equals': return uploadedBy === filterValue;
@@ -505,6 +537,8 @@ export class NotesService {
           ...notes,
           size_in_mb: notes.size_in_mb ? `${notes.size_in_mb} mb` : null
           }));
+          const totalCount = notes.length;
+          notes = notes.slice((page - 1) * limit, page * limit);
     
         return {
           statusCode: HttpStatus.SUCCESS,
@@ -555,20 +589,25 @@ export class NotesService {
         }
     
         const schemaName = `${MAIN_SCHEMA_NAME}_${schemaNumber.replace(/\D/g, '')}`;
-        const AttachmentModel = Notes.initialize(orgDbSequelize, schemaName);
+        const NotesModel = Notes.initialize(orgDbSequelize, schemaName);
     
-        let allAttachments: any[] = [];
+        let allNotes: any[] = [];
     
         // Handle attached_to and uploaded_by filters separately
         let attachedToFilter;
-        let uploadedByFilter;
+        let createdByFilter;
+        let modifiedByFilter;
         if (filters.attached_to) {
           attachedToFilter = filters.attached_to;
           delete filters.attached_to;
         }
-        if (filters.uploaded_by) {
-          uploadedByFilter = filters.uploaded_by;
-          delete filters.uploaded_by;
+        if (filters.created_by_name) {
+          createdByFilter = filters.created_by_name;
+          delete filters.created_by_name;
+        }
+        if (filters.modified_by_name) {
+          modifiedByFilter = filters.modified_by_name;
+          delete filters.modified_by_name;
         }
     
         const { whereClause } = this.buildRawWhereClause(filters, search);
@@ -659,59 +698,59 @@ export class NotesService {
     
         // 🔷 Non-parent account logic with batched optimized fetches
         if (attachmentLevel === 'account' && entityId) {
-          const accountAttachments = await fetchAttachments(AttachmentModel, 'account', [entityId]);
-          allAttachments.push(...accountAttachments);
+          const accountAttachments = await fetchAttachments(NotesModel, 'account', [entityId]);
+          allNotes.push(...accountAttachments);
     
           const projects = await this.projectIngestionService.getProjectsByAccountId(schemaNumber, entityId);
           const projectIds = projects.map(p => p.rid);
           if (projectIds.length > 0) {
-            const projectAttachments = await fetchAttachments(AttachmentModel, 'project', projectIds);
-            allAttachments.push(...projectAttachments);
+            const projectAttachments = await fetchAttachments(NotesModel, 'project', projectIds);
+            allNotes.push(...projectAttachments);
     
-            const projectChildAttachments = await fetchProjectResourceTaskAttachmentsBulk(AttachmentModel, projectIds);
-            allAttachments.push(...projectChildAttachments);
+            const projectChildAttachments = await fetchProjectResourceTaskAttachmentsBulk(NotesModel, projectIds);
+            allNotes.push(...projectChildAttachments);
           }
     
           const resources = await this.resourceService.getResourcesByAccountId(schemaNumber, entityId);
           const resourceIds = resources.map(r => (r as { rid: string }).rid);
           if (resourceIds.length > 0) {
-            const resourceAttachments = await fetchAttachments(AttachmentModel, 'resource', resourceIds);
-            allAttachments.push(...resourceAttachments);
+            const resourceAttachments = await fetchAttachments(NotesModel, 'resource', resourceIds);
+            allNotes.push(...resourceAttachments);
     
-            const resourceCostSkillAttachments = await fetchResourceCostSkillAttachmentsBulk(AttachmentModel, resourceIds);
-            allAttachments.push(...resourceCostSkillAttachments);
+            const resourceCostSkillAttachments = await fetchResourceCostSkillAttachmentsBulk(NotesModel, resourceIds);
+            allNotes.push(...resourceCostSkillAttachments);
           }
         }
     
         // 🔷 Project logic
         else if (attachmentLevel === 'project' && entityId) {
-          const projectAttachments = await fetchAttachments(AttachmentModel, 'project', [entityId]);
-          allAttachments.push(...projectAttachments);
+          const projectAttachments = await fetchAttachments(NotesModel, 'project', [entityId]);
+          allNotes.push(...projectAttachments);
     
-          const projectChildAttachments = await fetchProjectResourceTaskAttachmentsBulk(AttachmentModel, [entityId]);
-          allAttachments.push(...projectChildAttachments);
+          const projectChildAttachments = await fetchProjectResourceTaskAttachmentsBulk(NotesModel, [entityId]);
+          allNotes.push(...projectChildAttachments);
         }
     
         // 🔷 Project_resource logic
         else if (attachmentLevel === 'project_resource' && entityId) {
-          const projectResourceAttachments = await fetchAttachments(AttachmentModel, 'project_resource', [entityId]);
-          allAttachments.push(...projectResourceAttachments);
+          const projectResourceAttachments = await fetchAttachments(NotesModel, 'project_resource', [entityId]);
+          allNotes.push(...projectResourceAttachments);
           const projectResource = await this.projectIngestionService.fetchProjectResourceById(schemaNumber, entityId);
           const projectTasks = await this.projectIngestionService.getProjectTasksByProjectIds(schemaNumber, [(projectResource as any)?.project_fiscal_rid]);
           const projectTaskIds = projectTasks.map(t => t.rid);
           if (projectTaskIds.length > 0) {
-            const projectTaskAttachments = await fetchAttachments(AttachmentModel, 'project_task', projectTaskIds);
-            allAttachments.push(...projectTaskAttachments);
+            const projectTaskAttachments = await fetchAttachments(NotesModel, 'project_task', projectTaskIds);
+            allNotes.push(...projectTaskAttachments);
           }
         }
     
         // 🔷 Resource logic
         else if (attachmentLevel === 'resource' && entityId) {
-          const resourceAttachments = await fetchAttachments(AttachmentModel, 'resource', [entityId]);
-          allAttachments.push(...resourceAttachments);
+          const resourceAttachments = await fetchAttachments(NotesModel, 'resource', [entityId]);
+          allNotes.push(...resourceAttachments);
     
-          const resourceCostSkillAttachments = await fetchResourceCostSkillAttachmentsBulk(AttachmentModel, [entityId]);
-          allAttachments.push(...resourceCostSkillAttachments);
+          const resourceCostSkillAttachments = await fetchResourceCostSkillAttachmentsBulk(NotesModel, [entityId]);
+          allNotes.push(...resourceCostSkillAttachments);
         }
     
         // 🔷 Other direct levels
@@ -727,8 +766,8 @@ export class NotesService {
           }
     
           try {
-            const result = await AttachmentModel.findAll({ where: whereClause });
-            allAttachments.push(...result);
+            const result = await NotesModel.findAll({ where: whereClause });
+            allNotes.push(...result);
           } catch (error) {
             console.error('Error fetching Notes:', error);
             throw new Error('Failed to fetch Notes');
@@ -737,13 +776,13 @@ export class NotesService {
     
         // 🔷 Fetch display names
         if(graphqlData?.document_rid) {
-          allAttachments = allAttachments.filter((d : any) => d != null)
+          allNotes = allNotes.filter((d : any) => d != null)
         }
-        const attachmentDisplayNames = await this.getAttachmentDisplayNames(allAttachments, schemaNumber);
+        const attachmentDisplayNames = await this.getAttachmentDisplayNames(allNotes, schemaNumber);
     
         // 🔷 Apply attached_to filter if present
         if (attachedToFilter) {
-          allAttachments = allAttachments.filter(attachment => {
+          allNotes = allNotes.filter(attachment => {
             let displayName = attachmentDisplayNames[attachment.rid] || String(attachment.attach_to) || '';
             const displayValue = displayName.toLowerCase();
             const operator = Object.keys(attachedToFilter)[0];
@@ -758,11 +797,11 @@ export class NotesService {
         }
     
         // 🔷 Sort
-        const validSortFields = ['document_name', 'title', 'notes_owner', 'r_number', 'format', 'attachment_level', 'size_in_mb', 'attached_to', 'descriptions', 'uploaded_by', 'created_datetime', 'fiscal_year'];
+        const validSortFields = ['document_name', 'title', 'notes_owner', 'r_number', 'format', 'attachment_level', 'size_in_mb', 'attached_to', 'descriptions', 'created_by_name', 'created_datetime', 'fiscal_year', 'modified_by_name'];
         const finalSortBy = validSortFields.includes(sortBy) ? sortBy : 'created_datetime';
         const finalSortOrder = ['ASC', 'DESC'].includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
     
-        allAttachments.sort((a, b) => {
+        allNotes.sort((a, b) => {
           // Special handling for created_datetime
           if (finalSortBy === 'created_datetime') {
             const aDate = new Date(a[finalSortBy]).getTime();
@@ -787,7 +826,7 @@ export class NotesService {
           // Both non-empty, normal comparison
           return finalSortOrder === 'ASC' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
         });
-        const userIds = [...new Set(allAttachments.map(att => att.created_by))];
+        const userIds = [...new Set(allNotes.flatMap(att => [att.created_by, att.modified_by]))];
     
         const mainSequelize = await initMainDbSequelize();
         const [users] = await Promise.all([
@@ -800,17 +839,34 @@ export class NotesService {
         const userMap = new Map(users.map((u: any) => [u.rid, u.full_name]));
     
         // 🔷 Map final results
-        let notes = allAttachments.map(attachment => ({
+        let notes = allNotes.map(attachment => ({
           ...attachment.get({ plain: true }),
-          uploaded_by: userMap.get(attachment.created_by) || attachment.created_by,
+          created_by_name: userMap.get(attachment.created_by) || attachment.created_by,
+          modified_by_name: userMap.get(attachment.modified_by) || attachment.modified_by,
           attached_to: attachmentDisplayNames[attachment.rid] || attachment.attach_to,
         }));
     
         // Handle uploaded_by sorting
-        if (sortBy === 'uploaded_by') {
+        if (sortBy === 'created_by_name') {
           notes.sort((a, b) => {
-            const aType = a.uploaded_by || '';
-            const bType = b.uploaded_by || '';
+            const aType = a.created_by_name || '';
+            const bType = b.created_by_name || '';
+            const aEmpty = !aType || aType.trim() === '';
+            const bEmpty = !bType || bType.trim() === '';
+            
+            if (aEmpty && bEmpty) return 0;
+            if (aEmpty) return finalSortOrder === 'ASC' ? 1 : -1;
+            if (bEmpty) return finalSortOrder === 'ASC' ? -1 : 1;
+            
+            return finalSortOrder === 'ASC' ? 
+              aType.localeCompare(bType) : 
+              bType.localeCompare(aType);
+          });
+        }
+        if (sortBy === 'modified_by_name') {
+          notes.sort((a, b) => {
+            const aType = a.modified_by_name || '';
+            const bType = b.modified_by_name || '';
             const aEmpty = !aType || aType.trim() === '';
             const bEmpty = !bType || bType.trim() === '';
             
@@ -845,15 +901,28 @@ export class NotesService {
           "Attachment ID": "Attachment ID",
         };
         // Apply uploaded_by filter if present
-        if (uploadedByFilter) {
+        if (createdByFilter) {
             notes = notes.filter(notes => {
-            const uploadedBy = notes.uploaded_by?.toLowerCase() || '';
-            const operator = Object.keys(uploadedByFilter)[0];
-            const filterValue = (uploadedByFilter[operator] || '').toLowerCase();
+            const createdBy = notes.created_by_name?.toLowerCase() || '';
+            const operator = Object.keys(createdByFilter)[0];
+            const filterValue = (createdByFilter[operator] || '').toLowerCase();
             switch (operator) {
-              case 'contains': return uploadedBy.includes(filterValue);
-              case 'equals': return uploadedBy === filterValue;
-              case 'not_equals': return uploadedBy !== filterValue || uploadedBy === null;
+              case 'contains': return createdBy.includes(filterValue);
+              case 'equals': return createdBy === filterValue;
+              case 'not_equals': return createdBy !== filterValue || createdBy === null;
+              default: return false;
+            }
+          });
+        }
+        if (modifiedByFilter) {
+            notes = notes.filter(notes => {
+            const modifiedBy = notes.modified_by_name?.toLowerCase() || '';
+            const operator = Object.keys(modifiedByFilter)[0];
+            const filterValue = (modifiedByFilter[operator] || '').toLowerCase();
+            switch (operator) {
+              case 'contains': return modifiedBy.includes(filterValue);
+              case 'equals': return modifiedBy === filterValue;
+              case 'not_equals': return modifiedBy !== filterValue || modifiedBy === null;
               default: return false;
             }
           });
@@ -935,14 +1004,18 @@ export class NotesService {
           }
         }
     
-        let attachedToFilter, uploadedByFilter;
+        let attachedToFilter, createdByFilter, modifiedByFilter;
         if (filters.attached_to) {
           attachedToFilter = filters.attached_to;
           delete filters.attached_to;
         }
-        if (filters.uploaded_by) {
-          uploadedByFilter = filters.uploaded_by;
-          delete filters.uploaded_by;
+        if (filters.created_by_name) {
+          createdByFilter = filters.created_by_name;
+          delete filters.created_by_name;
+        }
+        if (filters.modified_by_name) {
+          modifiedByFilter = filters.modified_by_name;
+          delete filters.modified_by_name;
         }
     
         const { whereClause } = this.buildRawWhereClause(filters, search);
@@ -981,7 +1054,6 @@ export class NotesService {
             else
             {
                // Apply valid filtered accounts
-            console.log("Whereclaouse =====> ", whereClause)
             whereClause[Op.and].push({
               account_rid: { [Op.in]: filterAccounts },
             });
@@ -1049,7 +1121,7 @@ export class NotesService {
         );
     
         // Map enriched data
-        const userIds = [...new Set(attachmentsRaw.map(att => att.created_by))];
+        const userIds = [...new Set(attachmentsRaw.flatMap(att => [att.created_by, att.modified_by]))];
     
         const [users] = await Promise.all([
           userIds.length > 0 ? mainSequelize.query(
@@ -1061,7 +1133,8 @@ export class NotesService {
     
         let attachments = attachmentsRaw.map(att => ({
           ...att.get({ plain: true }),
-          uploaded_by: userMap.get(att.created_by) || att.created_by,
+          created_by_name: userMap.get(att.created_by) || att.created_by,
+          modified_by_name: userMap.get(att.modified_by) || att.modified_by,
           attached_to: attachmentDisplayNames[att.rid] || att.attach_to
         }));
     
@@ -1081,11 +1154,11 @@ export class NotesService {
         }
     
         // Filters: uploaded_by
-        if (uploadedByFilter) {
+        if (createdByFilter) {
           attachments = attachments.filter(att => {
-            const uploadedBy = (att.uploaded_by || '').toLowerCase();
-            const operator = Object.keys(uploadedByFilter)[0];
-            const filterValue = (uploadedByFilter[operator] || '').toLowerCase();
+            const uploadedBy = (att.created_by_name || '').toLowerCase();
+            const operator = Object.keys(createdByFilter)[0];
+            const filterValue = (createdByFilter[operator] || '').toLowerCase();
             switch (operator) {
               case 'contains': return uploadedBy.includes(filterValue);
               case 'equals': return uploadedBy === filterValue;
@@ -1094,9 +1167,22 @@ export class NotesService {
             }
           });
         }
+        if (modifiedByFilter) {
+          attachments = attachments.filter(att => {
+            const modifiedBy = (att.modified_by_name || '').toLowerCase();
+            const operator = Object.keys(modifiedByFilter)[0];
+            const filterValue = (modifiedByFilter[operator] || '').toLowerCase();
+            switch (operator) {
+              case 'contains': return modifiedBy.includes(filterValue);
+              case 'equals': return modifiedBy === filterValue;
+              case 'not_equals': return modifiedBy !== filterValue || modifiedBy === null;
+              default: return false;
+            }
+          });
+        }
     
         // 🔷 Sort with custom field sorting logic
-        const validSortFields = ['document_name', 'title', 'notes_owner', 'r_number', 'format', 'attachment_level', 'size_in_mb', 'attached_to', 'descriptions', 'uploaded_by', 'created_datetime', 'fiscal_year'];
+        const validSortFields = ['document_name', 'title', 'notes_owner', 'r_number', 'format', 'attachment_level', 'size_in_mb', 'attached_to', 'descriptions', 'created_by_name', 'created_datetime', 'fiscal_year', 'modified_by_name'];
         const finalSortBy = validSortFields.includes(sortBy) ? sortBy : 'created_datetime';
         const finalSortOrder = ['ASC', 'DESC'].includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
     
@@ -1113,7 +1199,8 @@ export class NotesService {
     
         switch (finalSortBy) {
           case 'attached_to': aVal = a.attached_to || ''; bVal = b.attached_to || ''; break;
-          case 'uploaded_by': aVal = a.uploaded_by || ''; bVal = b.uploaded_by || ''; break;
+          case 'created_by_name': aVal = a.created_by_name || ''; bVal = b.created_by_name || ''; break;
+          case 'modified_by_name': aVal = a.modified_by_name || ''; bVal = b.modified_by_name || ''; break;
           default:
             aVal = a[finalSortBy] !== undefined && a[finalSortBy] !== null ? String(a[finalSortBy]) : '';
             bVal = b[finalSortBy] !== undefined && b[finalSortBy] !== null ? String(b[finalSortBy]) : '';
@@ -1139,8 +1226,7 @@ export class NotesService {
           return bVal.localeCompare(aVal);
         }
       });
-    
-    
+
         // Pagination AFTER sorting
         const paginatedNotes = attachments.slice((page - 1) * limit, page * limit);
     
@@ -1208,14 +1294,18 @@ export class NotesService {
           }
         }
     
-        let attachedToFilter, uploadedByFilter;
+        let attachedToFilter, createdByFilter, modifiedByFilter;
         if (filters.attached_to) {
           attachedToFilter = filters.attached_to;
           delete filters.attached_to;
         }
-        if (filters.uploaded_by) {
-          uploadedByFilter = filters.uploaded_by;
-          delete filters.uploaded_by;
+        if (filters.created_by_name) {
+          createdByFilter = filters.created_by_name;
+          delete filters.created_by_name;
+        }
+        if (filters.modified_by_name) {
+          modifiedByFilter = filters.modified_by_name;
+          delete filters.modified_by_name;
         }
     
         const { whereClause } = this.buildRawWhereClause(filters, search);
@@ -1320,7 +1410,7 @@ export class NotesService {
         );
     
         // Map enriched data
-        const userIds = [...new Set(attachmentsRaw.map(att => att.created_by))];
+        const userIds = [...new Set(attachmentsRaw.flatMap(att => [att.created_by, att.modified_by]))];
     
         const [users] = await Promise.all([
           userIds.length > 0 ? mainSequelize.query(
@@ -1352,15 +1442,28 @@ export class NotesService {
         }
     
         // Filters: uploaded_by
-        if (uploadedByFilter) {
+        if (createdByFilter) {
           attachments = attachments.filter(att => {
-            const uploadedBy = (att.uploaded_by || '').toLowerCase();
-            const operator = Object.keys(uploadedByFilter)[0];
-            const filterValue = (uploadedByFilter[operator] || '').toLowerCase();
+            const createdBy = (att.created_by || '').toLowerCase();
+            const operator = Object.keys(createdByFilter)[0];
+            const filterValue = (createdByFilter[operator] || '').toLowerCase();
             switch (operator) {
-              case 'contains': return uploadedBy.includes(filterValue);
-              case 'equals': return uploadedBy === filterValue;
-              case 'not_equals': return uploadedBy !== filterValue || uploadedBy === null;
+              case 'contains': return createdBy.includes(filterValue);
+              case 'equals': return createdBy === filterValue;
+              case 'not_equals': return createdBy !== filterValue || createdBy === null;
+              default: return false;
+            }
+          });
+        }
+        if (modifiedByFilter) {
+          attachments = attachments.filter(att => {
+            const modifiedBy = (att.modified_by || '').toLowerCase();
+            const operator = Object.keys(modifiedByFilter)[0];
+            const filterValue = (modifiedByFilter[operator] || '').toLowerCase();
+            switch (operator) {
+              case 'contains': return modifiedBy.includes(filterValue);
+              case 'equals': return modifiedBy === filterValue;
+              case 'not_equals': return modifiedBy !== filterValue || modifiedBy === null;
               default: return false;
             }
           });

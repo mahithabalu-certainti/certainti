@@ -56,7 +56,7 @@ export default class NotesGraphqlServies {
                             };
                         }
                         let finalStructuredData = {
-                            document_rid : latestData.rid,
+                            rid : latestData.rid,
                             r_number: latestData.r_number,
                             created_datetime: latestData.created_datetime,
                             created_by: latestData.created_by,
@@ -74,8 +74,9 @@ export default class NotesGraphqlServies {
                             descriptions : latestData.descriptions,
                             uploaded_by: latestData.uploaded_by,
                             attached_to: latestData.attached_to,
-                            browse_file: latestData.browse_file
-                                
+                            browse_file: latestData.browse_file,
+                            created_by_name : latestData.created_by_name,
+                            modified_by_name : latestData.modified_by_name  
                         }
                         await orgSequelize.query(rawQueries.insertNotesTimeline(schemaName, data, latestData))
                         return {
