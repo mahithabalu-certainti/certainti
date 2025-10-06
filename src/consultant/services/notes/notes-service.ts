@@ -4,16 +4,21 @@ import {
   NotesListURLParams,
   NotesList,
   NoteDetails,
+  NotesListExportParams,
   // NotesFormDataPayload,
   // NoteDetailsResponse,
 } from '../../types/notes';
 // import { NotesListURL } from '../urls/notes-url';
-// import { resourceServiceApi } from '../../../api/api';
+import { resourceServiceApi } from '../../../api/api';
 import {
   NoteDetailsMockResponse,
   NotesListMockResponse,
 } from '../../../admin/mockdata/notes-mock-data';
-import { createNoteUrl, updateNoteUrl } from '../urls/notes-url';
+import {
+  createNoteUrl,
+  NoteExportListURL,
+  updateNoteUrl,
+} from '../urls/notes-url';
 import { useApiMutation } from '../../../api/mutation';
 
 export const fetchNotesList = async (
@@ -47,7 +52,7 @@ export const useNotesList = (
     gcTime: 0,
     enabled:
       !!shouldFetchList &&
-      !!params.noteLevel &&
+      !!params.attachmentLevel &&
       !!params.accountRid &&
       !!params.entityId,
   });
@@ -119,54 +124,43 @@ export const useUpdateNote = () => {
 //   return response;
 // };
 
-// type ExportType = 'attachments' | 'all_attachments';
-// export const exportAttachmentsData = async (
-//   type: ExportType,
-//   params: AttachmentsListExportParams
-// ) => {
-//   let url = '';
-//   let filename = '';
+type ExportType = 'notes' | 'all_notes';
+export const ExportNotesList = async (
+  type: ExportType,
+  params: NotesListExportParams
+) => {
+  const isGlobalNotes = type === 'all_notes';
+  const url = NoteExportListURL(params);
+  const filename = isGlobalNotes
+    ? 'all_notes_records.xlsx'
+    : `${params.attachmentLevel}_notes_records.xlsx`;
 
-//   switch (type) {
-//     case 'attachments':
-//       url = AttachmentExportListURL(params);
-//       filename = `${params.attachmentLevel}_attachments_records.xlsx`;
-//       break;
-//     case 'all_attachments':
-//       url = AttachmentExportListURL(params);
-//       filename = 'all_attachments_records.xlsx';
-//       break;
-//     default:
-//       console.error('Invalid export type');
-//       return;
-//   }
+  try {
+    const response = await resourceServiceApi.get(url);
+    const base64Data = response.data?.data;
 
-//   try {
-//     const response = await resourceServiceApi.get(url);
-//     const base64Data = response.data?.data;
+    if (!base64Data) {
+      console.error('No base64 data found in the response.');
+      return;
+    }
 
-//     if (!base64Data) {
-//       console.error('No base64 data found in the response.');
-//       return;
-//     }
+    const binary = atob(base64Data);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
 
-//     const binary = atob(base64Data);
-//     const bytes = new Uint8Array(binary.length);
-//     for (let i = 0; i < binary.length; i++) {
-//       bytes[i] = binary.charCodeAt(i);
-//     }
+    const blob = new Blob([bytes], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
 
-//     const blob = new Blob([bytes], {
-//       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-//     });
-
-//     const link = document.createElement('a');
-//     link.href = URL.createObjectURL(blob);
-//     link.download = filename;
-//     document.body.appendChild(link);
-//     link.click();
-//     document.body.removeChild(link);
-//   } catch (error) {
-//     console.error('Export failed:', error);
-//   }
-// };
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Export failed:', error);
+  }
+};

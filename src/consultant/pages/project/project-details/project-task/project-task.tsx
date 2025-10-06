@@ -13,10 +13,14 @@ import {
   useProjectTask,
   useUpdateProjectTaskStatus,
 } from '../../../../services/project/project-task-service';
-import { PROJECT_TASK, PROJECT_TASK_EDIT } from '../../../../../routes';
+import {
+  NOTES_CREATE,
+  PROJECT_TASK,
+  PROJECT_TASK_EDIT,
+} from '../../../../../routes';
 
 import { getProjectTaskColumns } from '../project-task/columns';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { generatePath, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   AllMenus,
   AllModules,
@@ -304,6 +308,20 @@ export const ProjectTask = ({
     },
   ];
 
+  const handleCreateNote = () => {
+    const projectTaskId = searchParams.get('pro_task_id');
+    const path = generatePath(NOTES_CREATE, {
+      module: 'account',
+    });
+    const queryParams = new URLSearchParams({
+      accountId: accountID,
+      entityLevel: 'project_task',
+      entityId: projectTaskId || '',
+      source: `Project Task > ${resourceData?.r_number}`,
+    });
+    navigate(`${path}?${queryParams.toString()}`);
+  };
+
   const headerButtons = [
     {
       label: 'Add Attachment',
@@ -311,6 +329,13 @@ export const ProjectTask = ({
       onClick: () => handleOpen(),
       sx: { ...BUTTON_STYLES, width: '120px', minWidth: '48px' },
       hide: !viewDetails || !isAttachmentCreateEnable,
+    },
+    {
+      label: 'Add Note',
+      variant: 'outlined' as const,
+      onClick: () => handleCreateNote(),
+      sx: { ...BUTTON_STYLES, width: '80px', minWidth: '80px' },
+      hide: !viewDetails,
     },
     {
       label: viewDetails ? 'Edit' : 'New',

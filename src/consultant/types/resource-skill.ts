@@ -116,4 +116,5 @@ export type ExportModule = {
   rNumber?: string;
   resourceRid?: string;
   filter?: Record<string, any>;
+  search?: string;
 };

@@ -81,6 +81,7 @@ import { UPDATE_QRE_ADJUSTMENT } from '../../../../api/graphql/queries/project-q
 import { useMutation } from '@apollo/client';
 import { ProjectQreAdjustmentResponse } from '../utils';
 import { Notes } from './notes';
+import { ExportNotesList } from '../../../services/notes/notes-service';
 
 export const ProjectDetails = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -189,6 +190,7 @@ export const ProjectDetails = () => {
   const interactionRID = searchParams.get('interaction_rid');
   const interactionsView = !!interactionId || !!interactionRID;
   const technicalSummaryId = searchParams.get('technical_summary_id');
+  const noteView = searchParams.get('note_id');
 
   const { data, isLoading, isError, refetch } = useProjectDetail(
     accountID,
@@ -297,7 +299,7 @@ export const ProjectDetails = () => {
 
     if (list === 'attachments') {
       return !isAttachmentExportEnable;
-    } else if (list === 'notes') {
+    } else if (list === 'notes' && !noteView) {
       return false;
     } else if (list === 'projectsTask') {
       return !isTaskExportViewEnable;
@@ -359,7 +361,7 @@ export const ProjectDetails = () => {
         entityId: projectID,
         attachmentLevel: 'project',
       };
-      console.log('notes-export', {
+      ExportNotesList('notes', {
         ...notesParams,
         ...notePayload,
       });
@@ -614,6 +616,8 @@ export const ProjectDetails = () => {
             accountInActive={accountInActive || projectInActive}
             setExportType={setExportType}
             setNotesParams={setNotesParams}
+            projectFiscalYear={projectData?.fiscal_year}
+            projectCode={projectData?.project_code}
           />
         );
       case 'attachments':

@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { NotesSideIcon, UploadIcon } from '../../../../assets';
 import SingleSkeleton from '../../../../components/skeleton-component/singleskeleton';
 import TextButton from '../../../../components/button/text-button';
@@ -13,8 +13,12 @@ import {
   useUpdateNote,
 } from '../../../services/notes/notes-service';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { formatDateToYYYYMMDDWithTime } from '../../../../common-utils';
+import {
+  formatDateToYYYYMMDDWithTime,
+  getFiscalYears,
+} from '../../../../common-utils';
 import { NotesFormDataPayload } from '../../../types';
+import { useToast } from '../../../../hooks';
 
 const MAX_FILE_SIZE_MB = 100;
 const RESTRICTED_EXTENSIONS = /\.(exe|bat|cmd|sh|bash)$/i;
@@ -32,6 +36,7 @@ const ACCEPTED_FILE_TYPES = [
 
 const NotesForm: React.FC = () => {
   const { noteId } = useParams();
+  const { successToast } = useToast();
   const [searchParams] = useSearchParams();
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -43,20 +48,27 @@ const NotesForm: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
-  // const accountId = searchParams.get('accountId') || '';
+  const accountId = searchParams.get('accountId') || '';
   const entityLevel = searchParams.get('entityLevel') || '';
   const entityId = searchParams.get('entityId') || '';
+  const projectFiscalYear = searchParams.get('projectFiscalYear') || '';
+  const sourcePath = searchParams.get('source') || '';
 
   const createNote = useCreateNote();
   const updateNote = useUpdateNote();
   const { data, isLoading } = useNoteDetails(entityId, noteId, isEditView);
 
+  const minYear = 1950;
+  const currentYear = new Date().getFullYear();
+  const fiscalYears = getFiscalYears(currentYear - minYear + 1);
+
   const noteFormData = useMemo(
     () => ({
       ...(data && {
         title: data?.title || '',
-        note_owner: data?.note_owner || '',
-        note_description: data?.description || '',
+        notes_owner: data?.notes_owner || '',
+        descriptions: data?.descriptions || '',
+        fiscal_year: data?.fiscal_year || '',
         rid: data?.rid || '',
         r_number: data?.r_number || '',
         created_on: formatDateToYYYYMMDDWithTime(data?.created_datetime || '-'),
@@ -69,6 +81,18 @@ const NotesForm: React.FC = () => {
     }),
     [data]
   );
+
+  const commonSuccess = createNote.isSuccess || updateNote.isSuccess;
+
+  useEffect(() => {
+    if (commonSuccess) {
+      successToast(
+        isEditView ? 'Note updated successfully' : 'Note created successfully'
+      );
+      goBack();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [commonSuccess, isEditView]);
 
   const showError = (text: string) => {
     setMessage({ type: 'error', text });
@@ -150,11 +174,13 @@ const NotesForm: React.FC = () => {
     setLoading(true);
 
     const payload = {
+      account_rid: accountId || '',
       entity_level: entityLevel,
       entity_id: entityId,
+      fiscal_year: projectFiscalYear ?? data?.fiscal_year,
       title: data?.title || '',
-      note_owner: data?.note_owner || '',
-      note_description: data?.note_description || '',
+      notes_owner: data?.notes_owner || '',
+      descriptions: data?.descriptions || '',
       ...(isEditView && { rid: data?.rid || '' }),
     };
 
@@ -170,7 +196,11 @@ const NotesForm: React.FC = () => {
     setLoading(false);
   };
 
-  const formConfig = NotesFormData(isEditView);
+  const formConfig = NotesFormData(
+    isEditView,
+    fiscalYears,
+    !!projectFiscalYear
+  );
 
   const goBack = () => {
     window.history.back();
@@ -193,7 +223,9 @@ const NotesForm: React.FC = () => {
               </div>
             ) : (
               <div className='font-semibold text-[12px] leading-[20px] ml-2 mb-[-6px] text-[#7D98B6]'>
-                {`Note ${isEditView ? `> ${data?.r_number}` : ''}`}
+                {sourcePath
+                  ? `${sourcePath}${isEditView ? ` > ${data?.r_number}` : ''}`
+                  : `Note ${isEditView ? `> ${data?.r_number}` : ''}`}
               </div>
             )}
             <h5 className='text-[16px] font-bold ml-2 text-[#2D3E4F]'>
@@ -204,7 +236,7 @@ const NotesForm: React.FC = () => {
         <div className='flex gap-3'>
           <TextButton
             label='Save'
-            loading={false}
+            loading={createNote.isPending || updateNote.isPending}
             onClick={handleExternalSubmit}
             sx={{
               width: '64px',
@@ -216,7 +248,7 @@ const NotesForm: React.FC = () => {
           <TextButton
             label='Cancel'
             onClick={goBack}
-            disabled={false}
+            disabled={createNote.isPending || updateNote.isPending}
             sx={{
               width: '75px',
               minWidth: '75px',
@@ -243,7 +275,7 @@ const NotesForm: React.FC = () => {
 
             <div className={`mt-4 ${isEditView ? 'hidden' : 'block'}`}>
               <div className='border capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-10'>
-                Attachments
+                Attachment
               </div>
 
               <div className='flex flex-col items-center justify-center gap-4 px-4 py-5'>

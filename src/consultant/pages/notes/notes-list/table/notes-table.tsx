@@ -9,8 +9,16 @@ import {
   ListTable,
   ManageColumnsPopover,
 } from '../../../../../components/table';
-import { ShowHideTableColumn } from '../../../../../components/table/types';
+import {
+  CellEditData,
+  FieldChangeValue,
+  ShowHideTableColumn,
+} from '../../../../../components/table/types';
 import { FilterTypes } from '../../../../../common-service';
+import { useToast } from '../../../../../hooks';
+import { useMutation } from '@apollo/client';
+import { NOTES_UPDATE } from '../../../../../api/graphql/queries/notes-query';
+import { resourceClient } from '../../../../../api/graphql/clients/client';
 
 interface NotesTableProps {
   appliedFilters: FilterTypes;
@@ -35,11 +43,16 @@ export const NotesTable: React.FC<NotesTableProps> = ({
   columnAnchorEl,
   searchValue,
 }) => {
+  const { errorToast } = useToast();
   const { fiscalYear, filters } = useSelector<
     RootState,
     { filters: unknown; fiscalYear: string }
   >((state: RootState) => state.account);
   const [notesList, setNotesList] = useState<NotesList[]>([]);
+
+  const [updateNotes] = useMutation(NOTES_UPDATE, {
+    client: resourceClient,
+  });
 
   const newFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
@@ -93,7 +106,18 @@ export const NotesTable: React.FC<NotesTableProps> = ({
 
   const getRowId = (row: NotesList) => row.rid;
 
-  const notesColumns = getNotesTableColumns();
+  const handleDownload = (documentUrl: string) => {
+    if (!documentUrl) return;
+
+    const link = document.createElement('a');
+    link.href = documentUrl;
+    link.download = '';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const notesColumns = getNotesTableColumns(undefined, handleDownload);
 
   const handlePopoverClose = () => {
     setColumnAnchorEl(null);
@@ -101,7 +125,7 @@ export const NotesTable: React.FC<NotesTableProps> = ({
   const isModalOpen = Boolean(columnAnchorEl);
 
   const modalId = isModalOpen
-    ? 'project-notes-list-column-visibility-popover'
+    ? 'global-notes-list-column-visibility-popover'
     : undefined;
 
   const RestrictedColumns = [
@@ -131,6 +155,50 @@ export const NotesTable: React.FC<NotesTableProps> = ({
   const visibleColumns = columnOrder
     .map((id) => notesColumns.find((col) => col.id === id)!)
     .filter((col) => columnVisibility[col.id]);
+
+  const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
+    const previousNotes = [...notesList];
+    // Find account_id
+    const rowData = notesList.find((note) => note.rid === rowId);
+
+    const updateData = updates.reduce<Record<string, FieldChangeValue>>(
+      (acc, item) => {
+        acc[item.editId || item.columnId] = item.value;
+        return acc;
+      },
+      {
+        rid: rowId,
+        account_rid: rowData?.account_rid,
+      }
+    );
+
+    try {
+      const res = await updateNotes({
+        variables: { data: updateData },
+      });
+      const result = res.data?.updateNotesInline;
+      if (result?.statusCode === 200 && result.data) {
+        const updateNotes = result.data;
+        setNotesList((prev) =>
+          prev.map((note) => {
+            if (note.rid === updateNotes.rid) {
+              return {
+                ...note,
+                ...updateNotes,
+              };
+            }
+            return note;
+          })
+        );
+      } else {
+        errorToast(result?.statusMessage || 'Failed to update filed');
+        setNotesList(previousNotes);
+      }
+    } catch (error) {
+      errorToast((error as Error)?.message || 'Failed to update filed');
+      setNotesList(previousNotes);
+    }
+  };
 
   return (
     <>
@@ -163,7 +231,7 @@ export const NotesTable: React.FC<NotesTableProps> = ({
         actionDisplayMode='dropdown'
         actionMenuItems={[]}
         loading={isLoading}
-        error={isError ? 'Failed to load Attachment data' : undefined}
+        error={isError ? 'Failed to load notes data' : undefined}
         rowsPerPageOptions={[25, 50, 100]}
         rowsPerPage={tableParams.limit}
         currentPage={(tableParams.page ?? 1) - 1}
@@ -173,6 +241,7 @@ export const NotesTable: React.FC<NotesTableProps> = ({
         sortBy={tableParams.sortBy}
         sortOrder={tableParams.sortOrder}
         onSort={handleSort}
+        onCellEdit={handleCellEdit}
       />
     </>
   );

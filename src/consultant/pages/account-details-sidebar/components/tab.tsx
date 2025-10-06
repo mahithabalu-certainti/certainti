@@ -49,6 +49,7 @@ import { FilterValue } from './filter/filterType';
 import { projectTaskFilterFields } from '../../project/project-details/project-task/filters/filter-fields';
 import { FormFiscalDateType } from '../../../types';
 import SearchBar from '../../../../components/search/search-bar';
+import { getNotesFilterFields } from '../../notes/helpers';
 interface TabProps {
   resourceTab?: ResourceTabs[];
   filterVisibility: boolean;
@@ -469,6 +470,7 @@ const TabPanel: React.FC<TabProps> = ({
       );
     if (value === 'attachments')
       return getAttachmentsFilterFields(fieldOptions, attachmentPermissionMap);
+    if (value === 'notes') return getNotesFilterFields();
     return value === 'cost'
       ? getCostFilterFields(
           memoizedCurrency,
@@ -493,11 +495,14 @@ const TabPanel: React.FC<TabProps> = ({
     projectPermissionMap,
     memoizedResourceCode,
     permissionProjectResourcesMap,
+    memoizedResourceStatus,
+    memoizedProjectResourceType,
+    memoizedProjectResourceClassification,
     permissionMapTaskTableColumn,
+    fiscalDatesArg,
     fieldOptions,
     attachmentPermissionMap,
     memoizedCurrency,
-    memoizedResourceStatus,
     resourceCostpermissionMap,
     memoizedSkillType,
     skillSubTypeData,

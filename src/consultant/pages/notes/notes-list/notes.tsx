@@ -1,6 +1,6 @@
 import React, { Suspense, useState } from 'react';
 import { FilterTypes } from '../../../../common-service';
-import { NotesListURLParams } from '../../../types';
+import { FilterState, NotesListURLParams } from '../../../types';
 import {
   AccountSettingsIcon,
   ActionIcon,
@@ -13,6 +13,10 @@ import SearchBar from '../../../../components/search/search-bar';
 import Filter from '../../account-details-sidebar/components/filter/filter';
 import { getNotesFilterFields } from '../helpers';
 import { NotesTable } from './table/notes-table';
+import { ExportNotesList } from '../../../services/notes/notes-service';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../store/store';
+import { reshapeGlobalFilter } from '../../../../common-utils';
 
 export const Notes: React.FC = () => {
   const [appliedFilters, setAppliedFilters] = useState<FilterTypes>({});
@@ -31,6 +35,13 @@ export const Notes: React.FC = () => {
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
+
+  const { fiscalYear, filters } = useSelector<
+    RootState,
+    { filters: unknown; fiscalYear: string }
+  >((state: RootState) => state.account);
+
+  const newFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
   const onRefreshClick = () => {
     setRefreshTrigger(Date.now());
@@ -51,7 +62,7 @@ export const Notes: React.FC = () => {
 
   const isModalOpen = Boolean(columnAnchorEl);
   const modalId = isModalOpen
-    ? 'all-notes-column-visibility-popover'
+    ? 'global-notes-list-column-visibility-popover'
     : undefined;
 
   const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
@@ -81,10 +92,12 @@ export const Notes: React.FC = () => {
       sortBy: tableParams.sortBy,
       sortOrder: tableParams.sortOrder,
       filters: appliedFilters,
-      fiscalYear: tableParams.fiscalYear,
-      globalFilters: tableParams.globalFilters,
+      fiscalYear: newFiscalYear,
+      globalFilters: reshapeGlobalFilter(filters as FilterState),
+      isGlobal: true,
+      search: searchText,
     };
-    console.log('all_notes', allNotesParams);
+    ExportNotesList('all_notes', allNotesParams);
   };
 
   const menuItems = [

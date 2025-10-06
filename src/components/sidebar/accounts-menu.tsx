@@ -77,7 +77,7 @@ export const accountNavItems: INavItem[] = [
     name: 'Notes',
     link: NOTES,
     type: 'link',
-    matchLink: '',
+    matchLink: NOTES,
   },
   {
     id: MenuOption.ATTACHMENTS,

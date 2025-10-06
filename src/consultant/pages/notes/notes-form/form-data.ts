@@ -1,12 +1,17 @@
 import { useMemo } from 'react';
 import { FormType } from '../../../types';
 import {
+  createSelectField,
   createTextAreaField,
   createTextField,
   REGEX_PATTERNS,
 } from '../../../../common-utils';
 
-export const NotesFormData = (isEditView: boolean): FormType[] => {
+export const NotesFormData = (
+  isEditView: boolean,
+  fiscalYears: { label: string; value: string }[],
+  projectFiscalYear?: boolean
+): FormType[] => {
   return useMemo(
     () => [
       {
@@ -32,7 +37,7 @@ export const NotesFormData = (isEditView: boolean): FormType[] => {
               },
             ],
           }),
-          createTextField('note_owner', 'Note Owner', {
+          createTextField('notes_owner', 'Note Owner', {
             required: true,
             placeholder: 'Enter Note Owner',
             errorHandling: [
@@ -51,17 +56,25 @@ export const NotesFormData = (isEditView: boolean): FormType[] => {
               },
             ],
           }),
+          createSelectField('fiscal_year', 'Fiscal Year', {
+            options: fiscalYears,
+            placeholder: 'Choose Fiscal Year',
+            required: true,
+            hide: projectFiscalYear ? true : false,
+            isFiscalYear: true,
+          }),
         ],
       },
       {
         sectionName: 'Note Description',
         fillType: 'full',
         fields: [
-          createTextAreaField('note_description', 'Note Description', {
-            required: true,
+          createTextAreaField('descriptions', 'Note Description', {
+            required: false,
             placeholder: 'Enter Note Description',
             regex: REGEX_PATTERNS.MAX_2000,
-            regexErrorMessage: 'Max length exceeded.',
+            regexErrorMessage:
+              'Note Description must not exceed 2000 characters.',
           }),
         ],
       },
@@ -103,6 +116,6 @@ export const NotesFormData = (isEditView: boolean): FormType[] => {
         ],
       },
     ],
-    [isEditView]
+    [fiscalYears, isEditView, projectFiscalYear]
   );
 };

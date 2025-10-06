@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { AttachmentList } from '../../../../../types/attachment';
 import {
   ListTable,
   ManageColumnsPopover,
@@ -11,7 +10,11 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 import { NotesList } from '../../../../../types';
-import { ShowHideTableColumn } from '../../../../../../components/table/types';
+import {
+  CellEditData,
+  FieldChangeValue,
+  ShowHideTableColumn,
+} from '../../../../../../components/table/types';
 import { RootState } from '../../../../../../store/store';
 import { useSelector } from 'react-redux';
 import { useNotesList } from '../../../../../services/notes/notes-service';
@@ -19,6 +22,10 @@ import { getNotesTableColumns } from '../../../../notes/helpers';
 import { NOTES_EDIT } from '../../../../../../routes';
 import { FilterTypes } from '../../../../../../common-service';
 import NotesDetails from './resource-notes-details';
+import { useToast } from '../../../../../../hooks';
+import { NOTES_UPDATE } from '../../../../../../api/graphql/queries/notes-query';
+import { resourceClient } from '../../../../../../api/graphql/clients/client';
+import { useMutation } from '@apollo/client';
 
 interface ResourceNotesListProps {
   fiscalYear?: number;
@@ -27,7 +34,7 @@ interface ResourceNotesListProps {
   order: 'ASC' | 'DESC';
   setOrder: (order: 'ASC' | 'DESC') => void;
   orderBy: string;
-  setOrderBy: (field: keyof AttachmentList) => void;
+  setOrderBy: (field: keyof NotesList) => void;
   currentPage: number;
   setCurrentPage: (page: number) => void;
   refreshNotes?: number;
@@ -40,6 +47,7 @@ interface ResourceNotesListProps {
     React.SetStateAction<HTMLButtonElement | null>
   >;
   searchValue?: string;
+  resourceNumber?: string;
 }
 const ResourceNotesList: React.FC<ResourceNotesListProps> = ({
   appliedFilters,
@@ -56,12 +64,18 @@ const ResourceNotesList: React.FC<ResourceNotesListProps> = ({
   columnAnchorEl,
   setColumnAnchorEl,
   searchValue,
+  resourceNumber,
 }) => {
+  const { errorToast } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { accountid } = useParams();
   const [rowsPerPage, setRowsPerPage] = useState<number>(100);
   const [notesList, setNotesList] = useState<NotesList[]>([]);
+
+  const [updateNotes] = useMutation(NOTES_UPDATE, {
+    client: resourceClient,
+  });
 
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
     (state: RootState) => state.account
@@ -77,7 +91,7 @@ const ResourceNotesList: React.FC<ResourceNotesListProps> = ({
       sortBy: orderBy,
       sortOrder: order,
       filters: appliedFilters,
-      noteLevel: 'resource',
+      attachmentLevel: 'resource',
       accountRid: accountid,
       entityId: resourceRid || '',
       fiscalYear: convertedFiscalYear,
@@ -112,7 +126,7 @@ const ResourceNotesList: React.FC<ResourceNotesListProps> = ({
   const handleSortRequest = (property: string, sortOrder: 'asc' | 'desc') => {
     const apiOrder = sortOrder.toUpperCase() as 'ASC' | 'DESC';
     setOrder(apiOrder);
-    setOrderBy(property as keyof AttachmentList);
+    setOrderBy(property as keyof NotesList);
   };
 
   const handleNoteView = (rowId: string) => {
@@ -122,7 +136,18 @@ const ResourceNotesList: React.FC<ResourceNotesListProps> = ({
     }
   };
 
-  const notesColumns = getNotesTableColumns(handleNoteView);
+  const handleDownload = (documentUrl: string) => {
+    if (!documentUrl) return;
+
+    const link = document.createElement('a');
+    link.href = documentUrl;
+    link.download = '';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const notesColumns = getNotesTableColumns(handleNoteView, handleDownload);
   const getRowId = (row: NotesList) => row.rid;
 
   const isModalOpen = Boolean(columnAnchorEl);
@@ -172,6 +197,7 @@ const ResourceNotesList: React.FC<ResourceNotesListProps> = ({
       accountId: accountid || '',
       entityLevel: 'resource',
       entityId: resourceRid || '',
+      source: `Resource > ${resourceNumber}`,
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
@@ -185,10 +211,57 @@ const ResourceNotesList: React.FC<ResourceNotesListProps> = ({
     },
   ];
 
+  const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
+    const previousNotes = [...notesList];
+    // Find account_id
+    const rowData = notesList.find((note) => note.rid === rowId);
+
+    const updateData = updates.reduce<Record<string, FieldChangeValue>>(
+      (acc, item) => {
+        acc[item.editId || item.columnId] = item.value;
+        return acc;
+      },
+      {
+        rid: rowId,
+        account_rid: rowData?.account_rid,
+      }
+    );
+
+    try {
+      const res = await updateNotes({
+        variables: { data: updateData },
+      });
+      const result = res.data?.updateNotesInline;
+      if (result?.statusCode === 200 && result.data) {
+        const updateNotes = result.data;
+        setNotesList((prev) =>
+          prev.map((note) => {
+            if (note.rid === updateNotes.rid) {
+              return {
+                ...note,
+                ...updateNotes,
+              };
+            }
+            return note;
+          })
+        );
+      } else {
+        errorToast(result?.statusMessage || 'Failed to update filed');
+        setNotesList(previousNotes);
+      }
+    } catch (error) {
+      errorToast((error as Error)?.message || 'Failed to update filed');
+      setNotesList(previousNotes);
+    }
+  };
+
   return (
     <>
       {viewDetails ? (
-        <NotesDetails accountInActive={accountInActive} />
+        <NotesDetails
+          accountInActive={accountInActive}
+          resourceNumber={resourceNumber}
+        />
       ) : (
         <div>
           <ManageColumnsPopover
@@ -228,6 +301,7 @@ const ResourceNotesList: React.FC<ResourceNotesListProps> = ({
             sortBy={orderBy}
             sortOrder={order.toUpperCase() as 'ASC' | 'DESC'}
             onSort={handleSortRequest}
+            onCellEdit={handleCellEdit}
           />
         </div>
       )}

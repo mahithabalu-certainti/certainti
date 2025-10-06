@@ -1,4 +1,8 @@
-import { formatDateToYYYYMMDDWithTime } from '../../../common-utils';
+import { DownloadIcon } from '../../../assets';
+import {
+  formatDateToYYYYMMDDWithTime,
+  REGEX_PATTERNS,
+} from '../../../common-utils';
 import { ListTableColumn } from '../../../components/table/types';
 import { NotesList } from '../../types';
 import { FieldConfig } from '../account-details-sidebar/components/filter/filterType';
@@ -27,6 +31,12 @@ export const getNotesFilterFields =
   : FieldConfig[] => {
     return [
       {
+        name: 'Note ID',
+        value: 'r_number',
+        type: 'text',
+        operatorOption: textOptions,
+      },
+      {
         name: 'Title',
         value: 'title',
         type: 'text',
@@ -34,13 +44,13 @@ export const getNotesFilterFields =
       },
       {
         name: 'Note Owner',
-        value: 'note_owner',
+        value: 'notes_owner',
         type: 'text',
         operatorOption: textOptions,
       },
       {
         name: 'Related To',
-        value: 'related_to',
+        value: 'attachment_level',
         type: 'text',
         operatorOption: textOptions,
       },
@@ -69,12 +79,6 @@ export const getNotesFilterFields =
         operatorOption: dateOptions,
       },
       {
-        name: 'Note ID',
-        value: 'id',
-        type: 'text',
-        operatorOption: textOptions,
-      },
-      {
         name: 'Sort Options',
         value: 'sort_options',
         type: 'system-sort',
@@ -87,7 +91,8 @@ export const getNotesFilterFields =
   };
 
 export const getNotesTableColumns = (
-  handleNoteView?: (rowId: string) => void
+  handleNoteView?: (rowId: string) => void,
+  handleDownload?: (documentUrl: string) => void
 ): ListTableColumn<NotesList>[] => [
   {
     id: 'r_number',
@@ -122,24 +127,66 @@ export const getNotesTableColumns = (
     label: 'Title',
     width: 220,
     sortable: true,
+    editable: true,
+    field: {
+      type: 'text',
+      required: true,
+      placeholder: 'Enter Title',
+      validation: [
+        {
+          regex: REGEX_PATTERNS.MIN_3,
+          errorMessage: 'Title must be at least 3 characters long',
+        },
+        {
+          regex: REGEX_PATTERNS.MAX_64,
+          errorMessage: 'Title must not exceed 64 characters',
+        },
+        {
+          regex: REGEX_PATTERNS.TEMPLATE_NAME_REGEX,
+          errorMessage:
+            "Title must contain only letters, numbers, spaces, apostrophes('), and hyphens(-).",
+        },
+      ],
+    },
   },
   {
-    id: 'note_owner',
-    sortId: 'note_owner',
+    id: 'notes_owner',
+    sortId: 'notes_owner',
     label: 'Note Owner',
     width: 180,
     sortable: true,
+    editable: true,
+    field: {
+      type: 'text',
+      required: true,
+      placeholder: 'Enter Note Owner',
+      validation: [
+        {
+          regex: REGEX_PATTERNS.MIN_3,
+          errorMessage: 'Note Owner must be at least 3 characters long',
+        },
+        {
+          regex: REGEX_PATTERNS.MAX_64,
+          errorMessage: 'Note Owner must not exceed 64 characters',
+        },
+        {
+          regex: REGEX_PATTERNS.NAME_REGEX,
+          errorMessage:
+            "Note Owner must contain only letters, space( ), apostrophes(') and hyphens(-).",
+        },
+      ],
+    },
   },
   {
-    id: 'related_to',
-    sortId: 'related_to',
+    id: 'attachment_level',
+    sortId: 'attachment_level',
     label: 'Related To',
-    width: 200,
+    width: 160,
     sortable: true,
   },
   {
-    id: 'created_by',
-    sortId: 'created_by',
+    id: 'created_by_name',
+    sortId: 'created_by_name',
     label: 'Created By',
     width: 180,
     sortable: true,
@@ -153,8 +200,8 @@ export const getNotesTableColumns = (
     render: (row) => formatDateToYYYYMMDDWithTime(row.created_datetime),
   },
   {
-    id: 'modified_by',
-    sortId: 'modified_by',
+    id: 'modified_by_name',
+    sortId: 'modified_by_name',
     label: 'Modified By',
     width: 180,
     sortable: true,
@@ -166,5 +213,20 @@ export const getNotesTableColumns = (
     width: 200,
     sortable: true,
     render: (row) => formatDateToYYYYMMDDWithTime(row.modified_datetime),
+  },
+  {
+    id: 'download',
+    sortId: 'download',
+    label: 'Download',
+    width: 80,
+    hide: false,
+    render: (row) => (
+      <button
+        className='flex border border-[#CBD6E2] w-[24px] h-[24px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer mx-auto'
+        onClick={() => handleDownload?.(row.browse_file)}
+      >
+        <DownloadIcon alt='download-icon' className='h-4' />
+      </button>
+    ),
   },
 ];

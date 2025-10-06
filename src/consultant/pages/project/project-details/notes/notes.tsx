@@ -19,7 +19,11 @@ import {
   getNotesFilterFields,
   getNotesTableColumns,
 } from '../../../notes/helpers';
-import { ShowHideTableColumn } from '../../../../../components/table/types';
+import {
+  CellEditData,
+  FieldChangeValue,
+  ShowHideTableColumn,
+} from '../../../../../components/table/types';
 import { SectionTabPanel } from '../../../../../components';
 import NotesDetails from './notes-details';
 import SectionHeader from '../../../../../components/details-section/section-header';
@@ -28,6 +32,10 @@ import {
   ListTable,
   ManageColumnsPopover,
 } from '../../../../../components/table';
+import { useToast } from '../../../../../hooks';
+import { useMutation } from '@apollo/client';
+import { NOTES_UPDATE } from '../../../../../api/graphql/queries/notes-query';
+import { resourceClient } from '../../../../../api/graphql/clients/client';
 
 const NotesTabs: OverviewTabs[] = [
   {
@@ -47,13 +55,18 @@ interface NotesProps {
   setExportType?: (type: ExportType) => void;
   setNotesParams: React.Dispatch<React.SetStateAction<NotesListURLParams>>;
   accountInActive: boolean;
+  projectFiscalYear?: number | string;
+  projectCode?: string;
 }
 
 const Notes: React.FC<NotesProps> = ({
   setExportType,
   setNotesParams,
   accountInActive,
+  projectFiscalYear,
+  projectCode,
 }) => {
+  const { errorToast } = useToast();
   const [searchParams] = useSearchParams();
   const { projectid: projectID } = useParams();
   const accountId = searchParams.get('accountID') || '';
@@ -79,6 +92,10 @@ const Notes: React.FC<NotesProps> = ({
     setColumnAnchorEl(event.currentTarget);
   };
 
+  const [updateNotes] = useMutation(NOTES_UPDATE, {
+    client: resourceClient,
+  });
+
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
     (state: RootState) => state.account
   );
@@ -94,7 +111,7 @@ const Notes: React.FC<NotesProps> = ({
       sortBy: sortField,
       sortOrder: sortOrder,
       filters: appliedFilters,
-      noteLevel: 'project',
+      attachmentLevel: 'project',
       accountRid: accountId || '',
       entityId: projectID || '',
       search: searchText,
@@ -164,6 +181,8 @@ const Notes: React.FC<NotesProps> = ({
       accountId,
       entityLevel: 'project',
       entityId: projectID || '',
+      projectFiscalYear: projectFiscalYear?.toString() || '',
+      source: `Project > ${projectCode}`,
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
@@ -177,6 +196,8 @@ const Notes: React.FC<NotesProps> = ({
       accountId,
       entityLevel: 'project',
       entityId: projectID || '',
+      projectFiscalYear: projectFiscalYear?.toString() || '',
+      source: `Project > ${projectCode}`,
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
@@ -231,7 +252,18 @@ const Notes: React.FC<NotesProps> = ({
     }
   };
 
-  const notesColumns = getNotesTableColumns(handleNoteView);
+  const handleDownload = (documentUrl: string) => {
+    if (!documentUrl) return;
+
+    const link = document.createElement('a');
+    link.href = documentUrl;
+    link.download = '';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const notesColumns = getNotesTableColumns(handleNoteView, handleDownload);
 
   const notesFilterFields = getNotesFilterFields();
 
@@ -273,6 +305,50 @@ const Notes: React.FC<NotesProps> = ({
     .map((id) => notesColumns.find((col) => col.id === id)!)
     .filter((col) => columnVisibility[col.id]);
 
+  const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
+    const previousNotes = [...notesList];
+    // Find account_id
+    const rowData = notesList.find((note) => note.rid === rowId);
+
+    const updateData = updates.reduce<Record<string, FieldChangeValue>>(
+      (acc, item) => {
+        acc[item.editId || item.columnId] = item.value;
+        return acc;
+      },
+      {
+        rid: rowId,
+        account_rid: rowData?.account_rid,
+      }
+    );
+
+    try {
+      const res = await updateNotes({
+        variables: { data: updateData },
+      });
+      const result = res.data?.updateNotesInline;
+      if (result?.statusCode === 200 && result.data) {
+        const updateNotes = result.data;
+        setNotesList((prev) =>
+          prev.map((note) => {
+            if (note.rid === updateNotes.rid) {
+              return {
+                ...note,
+                ...updateNotes,
+              };
+            }
+            return note;
+          })
+        );
+      } else {
+        errorToast(result?.statusMessage || 'Failed to update filed');
+        setNotesList(previousNotes);
+      }
+    } catch (error) {
+      errorToast((error as Error)?.message || 'Failed to update filed');
+      setNotesList(previousNotes);
+    }
+  };
+
   return (
     <div className='w-full pt-2 pl-2 pr-4'>
       <SectionTabPanel
@@ -296,7 +372,11 @@ const Notes: React.FC<NotesProps> = ({
         onSearch={(text) => setSearchText(text)}
       />
       {viewDetails ? (
-        <NotesDetails accountInActive={accountInActive} />
+        <NotesDetails
+          accountInActive={accountInActive}
+          projectFiscalYear={projectFiscalYear}
+          projectCode={projectCode}
+        />
       ) : (
         <>
           <SectionHeader
@@ -351,6 +431,7 @@ const Notes: React.FC<NotesProps> = ({
               sortBy={sortField}
               sortOrder={sortOrder.toUpperCase() as 'ASC' | 'DESC'}
               onSort={handleSortRequest}
+              onCellEdit={handleCellEdit}
             />
           </div>
         </>

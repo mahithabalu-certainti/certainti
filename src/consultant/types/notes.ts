@@ -10,23 +10,52 @@ export interface NotesListURLParams {
   filters?: object;
   fiscalYear?: number | string;
   globalFilters?: globalFilters;
-  noteLevel?: string;
+  attachmentLevel?: string;
   entityId?: string;
   accountRid?: string;
   isGlobal?: boolean;
   search?: string;
 }
 
+export interface NotesListExportParams {
+  sortBy?: string;
+  sortOrder?: 'ASC' | 'DESC';
+  filters?: object;
+  fiscalYear?: number | string;
+  globalFilters?: globalFilters;
+  timezone?: string;
+  attachmentLevel?: string;
+  entityId?: string;
+  accountRid?: string;
+  search?: string;
+  isGlobal?: boolean;
+  page?: number;
+  limit?: number;
+}
+
 export type NotesList = {
   rid: string;
+  notes_rid?: string;
   r_number: string;
-  title: string;
-  note_owner: string;
-  related_to: string;
-  created_by: string;
   created_datetime: string;
-  modified_by: string | null;
-  modified_datetime: string | null;
+  created_by: string;
+  modified_datetime: string;
+  modified_by: string;
+  account_rid: string;
+  browse_file: string;
+  document_name: string;
+  attach_to: string;
+  attachment_level: string;
+  fiscal_year: number;
+  format: string;
+  size_in_mb: string;
+  title: string;
+  notes_owner: string;
+  descriptions: string;
+  created_by_name: string;
+  modified_by_name: string;
+  attached_to: string;
+  uploaded_by?: string | null;
 };
 
 export interface NotesListResponse {
@@ -43,15 +72,25 @@ export interface NotesListResponse {
 
 export interface NoteDetails {
   rid: string;
+  notes_rid?: string;
   r_number: string;
-  title: string;
-  note_owner: string;
-  related_to: string;
-  description: string;
-  created_by: string;
   created_datetime: string;
-  modified_by: string | null;
-  modified_datetime: string | null;
+  created_by: string;
+  modified_datetime: string;
+  modified_by: string;
+  account_rid: string;
+  browse_file: string;
+  document_name: string;
+  attach_to: string;
+  attachment_level: string;
+  fiscal_year: number;
+  format: string;
+  size_in_mb: string;
+  title: string;
+  notes_owner: string;
+  descriptions: string;
+  attached_to: string;
+  uploaded_by?: string | null;
 }
 
 export interface NoteDetailsResponse {
@@ -68,7 +107,8 @@ export interface NotesFormDataPayload {
   attachment: File;
   entity_level: string;
   entity_id: string;
+  fiscal_year?: string | number;
   title: string;
-  note_owner: string;
-  note_description: string;
+  notes_owner: string;
+  descriptions: string;
 }

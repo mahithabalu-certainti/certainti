@@ -18,9 +18,13 @@ import { Typography } from '@mui/material';
 
 interface NoteDetailsProps {
   accountInActive: boolean;
+  accountName: string;
 }
 
-const NotesDetails: React.FC<NoteDetailsProps> = ({ accountInActive }) => {
+const NotesDetails: React.FC<NoteDetailsProps> = ({
+  accountInActive,
+  accountName,
+}) => {
   const navigate = useNavigate();
   const { accountid } = useParams();
   const [searchParams] = useSearchParams();
@@ -38,6 +42,7 @@ const NotesDetails: React.FC<NoteDetailsProps> = ({ accountInActive }) => {
       accountId,
       entityLevel: 'account',
       entityId: accountId,
+      source: `Account > ${accountName}`,
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
@@ -105,13 +110,21 @@ const NotesDetails: React.FC<NoteDetailsProps> = ({ accountInActive }) => {
     },
     {
       label: 'Note Owner',
-      value: data?.note_owner,
-      key: 'note_owner',
+      value: data?.notes_owner,
+      key: 'notes_owner',
     },
     {
       label: 'Related To',
-      value: data?.related_to,
-      key: 'related_to',
+      value: data?.attachment_level,
+      key: 'attachment_level',
+    },
+  ];
+
+  const noteDescription: DetailItem[] = [
+    {
+      label: 'Note Description',
+      value: data?.descriptions,
+      key: 'descriptions',
     },
   ];
 
@@ -143,6 +156,12 @@ const NotesDetails: React.FC<NoteDetailsProps> = ({ accountInActive }) => {
             title='Basic Information'
             data={basicInfo}
             customStyle='pt-0 mt-0'
+          />
+          <DetailsSection
+            title=''
+            data={noteDescription}
+            fullColumn={true}
+            customStyle='mt-0'
           />
           <DetailsSection
             title='Audit Information'
