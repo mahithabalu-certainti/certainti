@@ -648,6 +648,9 @@ export const rawQueries = {
   GET_STATUSES: `
   SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid IN (:statusRid)
   `,
+  fetchAccountInfo(schemaName: string, account_rid: string) {
+    return `SELECT * FROM ${schemaName}.account_details WHERE account_rid = '${account_rid}'`;
+  },
   fetchUserDetailsById(userId: string) {
     return `SELECT CONCAT(first_name, ' ', last_name) AS imported_by FROM ${MAIN_SCHEMA_NAME}.user WHERE rid = '${userId}'`;
   },
