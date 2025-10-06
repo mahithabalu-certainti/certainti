@@ -394,8 +394,8 @@ export class InteractionService {
       }
     });
     }  
-    this.logger.info(`Sent count for the current quarter: ${sentCount}`);
-    if (sentCount > maxInteractions) {
+    this.logger.info(`Sent count for the current quarter: ${sentCount} ${maxInteractions} ${sentCount >= maxInteractions} for ${projectFiscalRid}`);
+    if (sentCount >= maxInteractions) {
       this.logger.info(`Max interactions sent for quarter (${sentCount}) reached for project_fiscal_rid: ${projectFiscalRid}`);
       return false;
     }
