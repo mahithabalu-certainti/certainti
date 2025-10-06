@@ -157,6 +157,7 @@ export const STATUS_MESSAGE = {
   notesUpdatedSuccess : "Notes updated successfully",
   noNotesRecordFound: "Notes not found",
   notesIdMissing: "Notes RID missing",
+  notesFetchedSuccess : "Notes fetched successfully"
 };
 
 export const TYPES = {

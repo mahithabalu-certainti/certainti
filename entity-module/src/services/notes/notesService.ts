@@ -2,7 +2,7 @@ import { Op, Sequelize } from "sequelize";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { ICreateNotesSchema } from "./notesSchemas";
-import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries } from "../../utils/constants";
+import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries, STATUS_MESSAGE } from "../../utils/constants";
 import { Notes, setupNotesSeq } from "../../models/notes";
 import { NotesTimeline, setupNotesTimelineSequence } from "../../models/notesTimeline";
 import { NotesSummary } from "../../models/notesSummary";
@@ -14,6 +14,9 @@ import { ResourceService } from "../resourceServices";
 import ResourceCostService from "../resourceCostService";
 import ResourceSkillService from "../resourceSkillService";
 import moment from "moment";
+import { IFetchNotesDetailsInput } from "../../utils/types";
+import { fetchActiveStatus, fetchNotesById, fetchUsers } from "../../utils/rawQueries";
+import { generateSasUrl } from "../../utils/blob";
 
 export class NotesService {
     private logger: Logger;
@@ -22,6 +25,8 @@ export class NotesService {
     private resourceService: ResourceService;
     private resourceCostService: ResourceCostService;
     private resourceSkillService: ResourceSkillService;
+    private mainDbSequelize : Sequelize | null = null
+    private orgDbSequelize : Sequelize | null = null
 
     constructor(logger: Logger) {
         this.logger = logger;
@@ -31,6 +36,21 @@ export class NotesService {
         this.resourceCostService = new ResourceCostService();
         this.resourceSkillService = new ResourceSkillService();
     }
+
+    async fetchMainDb () {
+      if(!this.mainDbSequelize) {
+        this.mainDbSequelize = await initMainDbSequelize()
+      }
+      return this.mainDbSequelize;
+    }
+
+    async fetchOrgDb () {
+      if(!this.orgDbSequelize) {
+        this.orgDbSequelize = await initOrgSequelize()
+      }
+      return this.orgDbSequelize
+    }
+
     async createNotes (notesData : ICreateNotesSchema, userId: string, file: Express.Multer.File) {
         try {
         const { account_rid, attachment_level } = notesData;
@@ -1781,6 +1801,54 @@ private mapAttachmentToCommonFormat(at: any) {
         };
     }
 
+    async getNotesDetailsById (data : IFetchNotesDetailsInput) : Promise<{
+    statusCode : number,
+    statusMessage : string,
+    data : any
+  }> {
+        const mainDb = await this.fetchMainDb();
+        const orgDb = await this.fetchOrgDb();
+
+        const fetchParentAccount : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb))
+        if(fetchParentAccount[0].length > 0) {
+          let schemaName = rawQueries.fetchSchemaName(fetchParentAccount[0][0].r_number);
+
+          const fetchNotes = await orgDb.query(fetchNotesById(schemaName, data.rid))
+          if(fetchNotes[0].length > 0) {
+            const fetchActiveStatusId : any = await mainDb.query(fetchActiveStatus())
+            const uniqueUserIds = [...new Set(fetchNotes[0].flatMap((d : any) => [d.created_by, d.modified_by]))]
+            const allUsers = await mainDb.query(fetchUsers(fetchActiveStatusId[0][0].rid, uniqueUserIds))
+
+            const createdUserMap : Map<string, string> = new Map(allUsers[0].map((d : any) => [d.rid, `${d.first_name} ${d.last_name}`]))
+
+            const finalStructuredData = await Promise.all(fetchNotes[0].map(async (n : any) => {
+              return {
+                ...n,
+                created_by_name : createdUserMap.get(n.created_by) || null,
+                modified_by_name : createdUserMap.get(n.modified_by) || null,
+                browse_file : await generateSasUrl(n.browse_file)
+              }
+            }))
+            return {
+              statusCode : HttpStatus.SUCCESS,
+              statusMessage : STATUS_MESSAGE.notesFetchedSuccess,
+              data : finalStructuredData[0]
+            }
+          } else {
+            return {
+              statusCode : HttpStatus.NOT_FOUND,
+              statusMessage : STATUS_MESSAGE.noNotesRecordFound,
+              data : {}
+            } 
+          }
+        } else {
+          return {
+              statusCode : HttpStatus.NOT_FOUND,
+              statusMessage : STATUS_MESSAGE.accountNoFound,
+              data : {}
+            } 
+        }
+    }
 
 
 

@@ -3022,6 +3022,23 @@ const exportListNotesSummarySchema = Joi.object({
     sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
 })
 
+const listNotesByIdSchema = Joi.object({
+  rid: Joi.string()
+        .pattern(uuidRegex, "valid UUID")
+        .required()
+        .messages({
+            'any.required': 'Note RID is required',
+            'string.pattern.base': 'Note RID must be a valid UUID'
+        }),
+  account_rid: Joi.string()
+      .pattern(uuidRegex, "valid UUID")
+      .required()
+      .messages({
+          'any.required': 'Account RID is required',
+          'string.pattern.base': 'Account RID must be a valid UUID'
+      }),
+})
+
 export {
   listResourceSkillSchema,
   updateResourceSkillSchema,
@@ -3071,5 +3088,6 @@ export {
   listNotesSummarySchema,
   createNotesSchema,
   exportListNotesSchema,
-  listNotesSchema
+  listNotesSchema,
+  listNotesByIdSchema
 };

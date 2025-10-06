@@ -6,6 +6,7 @@ import {
   ICreateProjectResource,
   ICreateProjectTask,
   ICreateResource,
+  IFetchNotesDetailsInput,
   IResourceCost,
   IResourceSkill,
   IUpdateProject,
@@ -1007,6 +1008,11 @@ export interface INotesService {
     errorMessage?: string;
     data?: { notes: any[] };
   }>;
+  getNotesDetailsById(data : IFetchNotesDetailsInput) : Promise<{
+    statusCode : number,
+    statusMessage : string,
+    data : any
+  }>
 }
 export interface ITemplates {
   uploadTemplate(

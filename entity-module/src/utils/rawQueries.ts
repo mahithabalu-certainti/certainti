@@ -1,4 +1,4 @@
-import { ALPHANUMERIC_CONDITIONS, IMPORT_FILTER_COLUMNS, STATUS_MESSAGE, SUMMARY_HIGHLIGHTS_FLAG } from "./constants";
+import { ALPHANUMERIC_CONDITIONS, IMPORT_FILTER_COLUMNS, MAIN_SCHEMA_NAME, STATUS_MESSAGE, SUMMARY_HIGHLIGHTS_FLAG } from "./constants";
 type filterType = {
         [key : string] : {
             [condition : string] : any
@@ -1841,4 +1841,96 @@ export const fetchResCodeWithPrjResRole = (schemaName : string, search : string,
     ORDER BY r.resource_code ASC
     `
     return query;
+  }
+
+  export const fetchNotesById = (schemaName : string, rid : string) => {
+    return `
+    SELECT 
+    n.rid, n.title, n.descriptions, n.notes_owner, 
+    n.created_by, n.modified_by, n.account_rid, 
+    n.browse_file, n.created_datetime, n.modified_datetime,
+    n.document_name, n.fiscal_year, e.name AS attached_to, 
+    n.format, n.size_in_mb, n.attachment_level
+    FROM
+    ${schemaName}.notes n
+    LEFT JOIN LATERAL (
+    SELECT ad.account_rid, ad.account_name AS name 
+    FROM ${schemaName}.account_details ad 
+    WHERE
+    LOWER(n.attachment_level) = 'account'
+    AND
+    ad.account_rid = n.attach_to
+
+    UNION ALL
+
+    SELECT pf.rid, pf.project_code AS name 
+    FROM
+    ${schemaName}.project_fiscal pf
+    WHERE
+    LOWER(n.attachment_level) = 'project'
+    AND
+    pf.rid = n.attach_to
+
+    UNION ALL
+
+    SELECT r.rid, r.resource_code AS name
+    FROM
+    ${schemaName}.resources r
+    WHERE
+    LOWER(n.attachment_level) = 'resource'
+    AND
+    r.rid = n.attach_to
+    
+    UNION ALL
+
+    SELECT rc.rid, rc.r_number AS name
+    FROM
+    ${schemaName}.resource_cost rc
+    WHERE
+    LOWER(n.attachment_level) = 'resource_cost'
+    AND
+    rc.rid = n.attach_to
+
+    UNION ALL
+
+    SELECT rs.rid, rs.r_number AS name
+    FROM
+    ${schemaName}.resource_skill rs
+    WHERE
+    LOWER(n.attachment_level) = 'resource_skill'
+    AND
+    rs.rid = n.attach_to
+
+    UNION ALL
+
+    SELECT pt.rid, pt.r_number AS name
+    FROM
+    ${schemaName}.project_task pt
+    WHERE
+    LOWER(n.attachment_level) = 'project_task'
+    AND
+    pt.rid = n.attach_to
+
+    UNION ALL
+
+    SELECT pr.rid, pr.r_number AS name
+    FROM
+    ${schemaName}.project_resource pr
+    WHERE
+    LOWER(n.attachment_level) = 'project_resource'
+    AND
+    pr.rid = n.attach_to
+    ) e ON true
+    WHERE
+    n.rid = '${rid}'
+    `
+  }
+
+  export const fetchUsers = (statusRid : string, ids : any[]) => {
+    return `SELECT u.rid, u.first_name, u.last_name FROM ${MAIN_SCHEMA_NAME}.user u
+    WHERE u.status_rid = '${statusRid}' AND u.rid IN (${ids.map((d : any) => `'${d}'`).join(',')})`
+  }
+
+  export const fetchActiveStatus = () => {
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE LOWER(status_name) = 'active' `
   }

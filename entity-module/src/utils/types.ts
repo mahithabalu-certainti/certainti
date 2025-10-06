@@ -455,3 +455,9 @@ export interface IUpdateQrePecentAdjustment {
   account_rid: string,
   rd_percent_potential_ai: number;
 }
+
+export interface IFetchNotesDetailsInput {
+  rid : string;
+  account_rid : string;
+  user_rid : string
+}

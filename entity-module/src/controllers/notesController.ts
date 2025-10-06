@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { HttpStatus } from "../utils/constants";
+import { HttpStatus, STATUS_MESSAGE } from "../utils/constants";
 import {
   errorLog,
   generateExcelBase64,
@@ -9,7 +9,7 @@ import {
   validateRequest,
 } from "../utils/helpers";
 import configurations from "../config/config";
-import { exportListNotesSummarySchema, listNotesSummarySchema, createNotesSchema, exportListNotesSchema, listNotesSchema } from "../lib/joi/schemas/schema";
+import { exportListNotesSummarySchema, listNotesSummarySchema, createNotesSchema, exportListNotesSchema, listNotesSchema, listNotesByIdSchema } from "../lib/joi/schemas/schema";
 
 const services = configurations.getInstance().getServices();
 const notesService = services.notesService;
@@ -305,10 +305,60 @@ async function exportAllNotes(req: Request, res: Response): Promise<void> {
   }
   }
 
+  async function fetchNotesDetailsById (req : Request, res : Response) : Promise<any> {
+    const methodName = "fetchNotesDetailsById"
+    try {
+      const value = await validateRequest(req, listNotesByIdSchema, res, "GET");
+      if (!value) {
+        return;    }
+        const userId = req.headers['x-user-id'] as string;
+
+      if (!userId) {
+        handleErrorResponse(
+          res,
+          HttpStatus.BAD_REQUEST,
+          HttpStatus.BAD_REQUEST_MESSAGE,
+          "User id is required"
+        );
+        return;
+      }
+      value.user_rid = userId
+
+      const result = await notesService.getNotesDetailsById(value)
+      if(result.statusCode === HttpStatus.SUCCESS) {
+        return res.status(HttpStatus.SUCCESS).json({
+          statusCode : HttpStatus.SUCCESS,
+          statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+          statusMessage: result.statusMessage,
+          data : result.data
+        })
+      } else {
+        return res.status(HttpStatus.SUCCESS).json({
+          statusCode : HttpStatus.SUCCESS,
+          statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+          statusMessage : result.statusMessage,
+          data : result.data
+        })
+      }
+
+    } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+  }
+
 export default {
   createNotes,
   getAllNotes,
   getAllNotesSummary,
   exportAllNotes,
-  exportAllNotesSummary
+  exportAllNotesSummary,
+  fetchNotesDetailsById
 }
