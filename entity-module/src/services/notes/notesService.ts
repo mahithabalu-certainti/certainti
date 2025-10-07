@@ -1,14 +1,14 @@
 import { Op, Sequelize } from "sequelize";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { initMainDbSequelize } from "../../config/mainDataSource";
-import { ICreateNotesSchema } from "./notesSchemas";
+import { ICreateNotesSchema, IUpdateNotesSchema } from "./notesSchemas";
 import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries, STATUS_MESSAGE } from "../../utils/constants";
 import { Notes, setupNotesSeq } from "../../models/notes";
 import { NotesTimeline, setupNotesTimelineSequence } from "../../models/notesTimeline";
 import { NotesSummary } from "../../models/notesSummary";
 import SchemaService from "../schemaService";
 import { Logger } from "winston";
-import { uploadToAzureBlob } from "../../utils/helpers";
+import { deleteFromAzureBlob, uploadToAzureBlob } from "../../utils/helpers";
 import ProjectIngestionService from "../projectIngestionService";
 import { ResourceService } from "../resourceServices";
 import ResourceCostService from "../resourceCostService";
@@ -85,7 +85,7 @@ export class NotesService {
 
         await this.createNotesTables(accountNumber)
 
-        const { url, name, extension, size } = await uploadToAzureBlob(file, account_rid);        
+        const { url, name, extension, size } = await uploadToAzureBlob(file, account_rid, "notes");        
         if(name.length > 100) {
             throw new Error("Document name cannot exceed 100 characters");
         }
@@ -146,16 +146,6 @@ export class NotesService {
         }
         catch (error) {
         console.error('Error creating attachment:', error);
-        
-        // Handle specific errors
-        if ((error as any).name === 'SequelizeForeignKeyConstraintError') {
-            return {
-                statusCode: 400,
-                message: 'Invalid reference',
-                errorMessage: 'The specified document category or type does not exist'
-            };
-        }
-
         return {
             statusCode: 500,
             message: 'Failed to create Notes',
@@ -1850,6 +1840,153 @@ private mapAttachmentToCommonFormat(at: any) {
         }
     }
 
+    async updateNotes (notesData : IUpdateNotesSchema, userId: string, file?: Express.Multer.File) : Promise<any> {
+      try {
+        const sequelize = await initOrgSequelize();
+        const mainDdSequilze = await initMainDbSequelize();
+        const { account_rid, attachment_level } = notesData;
+        const accountData = await this.schemaService.fetchAccountById(account_rid);
+
+        if (!accountData) {
+        throw new Error("Notes updation failed: Invalid account ID");
+        }
+
+        if (accountData.status !== "active") {
+        throw new Error(
+            "Notes updation failed: The selected account is inactive. Please choose an active account."
+        );
+        }
+        let accountNumber = accountData.r_number;
+        if (accountData.is_parent && attachment_level !== "account") {
+            throw new Error("Notes updation failed: Invalid account ID");
+        }
+
+        if (accountData.storage_type === "store_in_parent") {
+            accountNumber = await this.schemaService.fetchParentAccount(
+            accountData.parent_account_rid
+            );
+        }
+        const isExists = await this.schemaService.checkIfSchemaExists(
+            accountNumber
+        );
+
+        if (!isExists) {
+            throw new Error("Notes updation failed: schema doesn't exists");
+        }
+
+        const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+        const NotesModel = Notes.initialize(sequelize, schemaName)
+        const NotesTimelineModel = NotesTimeline.initialize(sequelize, schemaName)
+        const NotesSummaryModel = NotesSummary.initialize(mainDdSequilze)
+
+        const isNotesExists = await Notes.findOne({
+          where : {
+            rid : notesData.rid
+          }
+        })
+
+        if(!isNotesExists) {
+          return {
+            statusCode: HttpStatus.NOT_FOUND,
+            message: HttpStatus.NOT_FOUND_MESSAGE,
+            data: { affectedCount : 0 }
+        };
+        } 
+        else {
+          let name : string = ``
+          let url : string = ``
+          let extension : string = ``
+          let size : number = 0
+          if(file) {
+            await deleteFromAzureBlob(isNotesExists.browse_file)
+            const uploadResult = await uploadToAzureBlob(file, account_rid, "notes");
+          if(uploadResult.name.length > 100) {
+            throw new Error("Document name cannot exceed 100 characters");
+          }  
+            name = uploadResult.name
+            url = uploadResult.url
+            extension = uploadResult.extension
+            size = uploadResult.size
+        } else {
+            name = isNotesExists.document_name
+            url = isNotesExists.browse_file
+            extension = isNotesExists.format
+            size = isNotesExists.size_in_mb
+        }      
+        const [affectedCount] = await NotesModel.update({
+          browse_file: url,
+          document_name: name,
+          attach_to: notesData.attach_to,
+          attachment_level: notesData.attachment_level,
+          fiscal_year: notesData.fiscal_year,
+          account_rid: account_rid,
+          format: extension,
+          size_in_mb: size,
+          title: notesData.title,
+          notes_owner: notesData.notes_owner,
+          descriptions: notesData.descriptions || null,
+          modified_by: userId,
+          modified_datetime : new Date()
+      }, {
+        where : {
+          rid : isNotesExists.rid
+        }
+        });
+        if(affectedCount > 0) {
+          await NotesTimelineModel.create({
+              notes_rid : notesData.rid,
+              document_name: name,
+              title : notesData.title,
+              descriptions: notesData.descriptions || null,
+              notes_owner : notesData.notes_owner,
+              created_by: userId,
+              modified_by: userId,
+              attach_to: notesData.attach_to,
+              attachment_level: notesData.attachment_level,
+              event_type: 'ui handler',
+              event_status: 'success',
+              event_name: 'update',
+              event_datetime: new Date(),
+          })
+
+          await NotesSummaryModel.update({
+              browse_file: url,
+              document_name: name,
+              attach_to: notesData.attach_to,
+              attachment_level: notesData.attachment_level,
+              fiscal_year: notesData.fiscal_year,
+              account_rid: account_rid,
+              format: extension,
+              size_in_mb: size,
+              title: notesData.title,
+              notes_owner : notesData.notes_owner,
+              descriptions : notesData.descriptions || null,
+              modified_by : userId,
+              modified_datetime : new Date()
+          }, {
+            where : {
+              notes_rid : notesData.rid
+            }
+          });
+
+          return {
+              statusCode: HttpStatus.SUCCESS,
+              message: HttpStatus.SUCCESS_MESSAGE,
+              data: { affectedCount: affectedCount }
+            };
+          }
+        }
+      }
+      catch (error) {
+        console.error('Error updating notes:', error);
+
+        return {
+            statusCode: 500,
+            message: 'Failed to update Notes',
+            errorMessage: error instanceof Error ? error.message : 'An unknown error occurred'
+        };
+      }
+    }
 
 
 

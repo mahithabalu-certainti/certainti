@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Request, Response, Router } from "express";
 import controller from "../controllers";
 import { checkUserStatusMiddleware } from "../middlewares/authMiddleware";
 const multer = require('multer');
@@ -12,6 +12,7 @@ routes.get("/list", checkUserStatusMiddleware("NA"), controller.notesController.
 routes.get("/list/summary/export", checkUserStatusMiddleware("NA"), controller.notesController.exportAllNotesSummary);
 routes.get("/list/summary", checkUserStatusMiddleware("NA"), controller.notesController.getAllNotesSummary);
 routes.get("/list/details", checkUserStatusMiddleware("NA"), controller.notesController.fetchNotesDetailsById)
+routes.put("/update", checkUserStatusMiddleware("NA"), upload.single("notes"), controller.notesController.updateNotes)
 
 export default routes;
 

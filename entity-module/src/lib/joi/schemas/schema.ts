@@ -3039,6 +3039,63 @@ const listNotesByIdSchema = Joi.object({
       }),
 })
 
+const updateNotesSchema = Joi.object({
+    rid : Joi.string().pattern(uuidRegex, "valid UUID").required(),
+    account_rid: Joi.string().pattern(uuidRegex, "valid UUID").required(),
+    attach_to: Joi.string().pattern(uuidRegex, "valid UUID").required(),
+    attachment_level: Joi.string()
+        .valid('account', 'project', 'project_resource', 'project_task', 'resource', 'resource_cost', 'resource_skill')
+        .required()
+        .messages({
+            'string.empty': 'Attachment level cannot be empty',
+            'any.required': 'Attachment level is required',
+            'any.only': 'Attachment level must be one of: account, project, project_resource, project_task, resource, resource_cost, resource_skill'
+        }),
+    fiscal_year: Joi.number()
+        .integer()
+        .custom((value, helpers) => {
+            const currentYear = new Date().getFullYear();
+            const minYear = currentYear - 20;
+            
+            if (value < minYear || value > currentYear) {
+                return helpers.error('number.yearRange');
+            }
+            return value;
+        })
+        .default(() => new Date().getFullYear())
+        .required()
+        .messages({
+            'number.base': 'Fiscal year must be a number',
+            'number.integer': 'Fiscal year must be an integer',
+            'number.yearRange': `Fiscal year must be between ${new Date().getFullYear() - 20} and ${new Date().getFullYear()}`,
+            'any.required': 'Fiscal year is required'
+        }),
+    title: Joi.string()
+        .required()
+        .messages({
+            'string.empty': 'Title cannot be empty',
+            'any.required': 'Title is required'
+        }),
+    notes_owner : Joi.string()
+        .required()
+        .messages({
+            'string.empty': 'Notes Owner cannot be empty',
+            'any.required': 'Notes Owner is required',
+        }),    
+    descriptions: Joi.string()
+        .allow(null, '')
+        .when(Joi.exist(), {
+            then: Joi.string()
+                .min(1)
+                .max(2000)
+                .trim()
+                .messages({
+                    'string.min': 'descriptions must be at least 1 character long when provided',
+                    'string.max': 'descriptions must be less than or equal to 2000 characters'
+                })
+        }),
+});
+
 export {
   listResourceSkillSchema,
   updateResourceSkillSchema,
@@ -3089,5 +3146,6 @@ export {
   createNotesSchema,
   exportListNotesSchema,
   listNotesSchema,
-  listNotesByIdSchema
+  listNotesByIdSchema,
+  updateNotesSchema
 };

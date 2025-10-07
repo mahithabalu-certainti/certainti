@@ -9,7 +9,7 @@ import {
   validateRequest,
 } from "../utils/helpers";
 import configurations from "../config/config";
-import { exportListNotesSummarySchema, listNotesSummarySchema, createNotesSchema, exportListNotesSchema, listNotesSchema, listNotesByIdSchema } from "../lib/joi/schemas/schema";
+import { exportListNotesSummarySchema, listNotesSummarySchema, createNotesSchema, exportListNotesSchema, listNotesSchema, listNotesByIdSchema, updateNotesSchema } from "../lib/joi/schemas/schema";
 
 const services = configurations.getInstance().getServices();
 const notesService = services.notesService;
@@ -354,11 +354,65 @@ async function exportAllNotes(req: Request, res: Response): Promise<void> {
   }
   }
 
+  async function updateNotes(req: Request, res: Response): Promise<void> {
+  const methodName = "updateNotes";
+  try {
+    const value = await validateRequest(req, updateNotesSchema, res);
+     if (!value) {
+      return;    }
+    const userId = req.headers['x-user-id'] as string;
+
+    if (!userId) {
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User id is required"
+      );
+      return;
+    }
+
+    const attachment = await notesService.updateNotes(value, userId, req?.file);
+
+    if (attachment.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      res.status(attachment.statusCode).json({
+        statusCode: attachment.statusCode,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: "Notes updated successfully.",  
+        data: attachment.data,
+      });
+      return;
+    } else {
+      errorLog(methodName, attachment.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        attachment.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+
+}
+
 export default {
   createNotes,
   getAllNotes,
   getAllNotesSummary,
   exportAllNotes,
   exportAllNotesSummary,
-  fetchNotesDetailsById
+  fetchNotesDetailsById,
+  updateNotes
 }

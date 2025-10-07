@@ -17,7 +17,7 @@ import {
   IUpdateResourceCost,
   IUpdateResourceSkill,
 } from "../../utils/types";
-import { ICreateNotesSchema } from "../notes/notesSchemas";
+import { ICreateNotesSchema, IUpdateNotesSchema } from "../notes/notesSchemas";
 
 export interface IProjectGraphQlServices {
   inLineEditProject(data: any): Promise<{
@@ -1013,6 +1013,7 @@ export interface INotesService {
     statusMessage : string,
     data : any
   }>
+  updateNotes (notesData : IUpdateNotesSchema, userId: string, file?: Express.Multer.File) : Promise<any>
 }
 export interface ITemplates {
   uploadTemplate(
