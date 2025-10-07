@@ -88,6 +88,7 @@ export const NOTES = '/notes';
 export const NOTES_BASE = `/:module/notes`;
 export const NOTES_CREATE = `${NOTES_BASE}/create`;
 export const NOTES_EDIT = `${NOTES_BASE}/edit/:noteId`;
+export const GLOBAL_NOTES_EDIT = `${NOTES}/edit/:noteId`;
 
 // ATTACHMENT ROUTES
 export const ATTACHMENTS = '/attachments';

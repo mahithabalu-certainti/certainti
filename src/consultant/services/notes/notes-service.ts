@@ -82,7 +82,7 @@ const fetchNoteDetails = async (
   console.log('details-params', entityId, noteId);
   await new Promise((resolve) => setTimeout(resolve, 2000));
 
-  return NoteDetailsMockResponse.data.noteDetails;
+  return NoteDetailsMockResponse.data;
 };
 
 export const useNoteDetails = (

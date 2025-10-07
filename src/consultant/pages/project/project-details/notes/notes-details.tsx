@@ -25,7 +25,6 @@ interface NoteDetailsProps {
 const NotesDetails: React.FC<NoteDetailsProps> = ({
   accountInActive,
   projectCode,
-  projectFiscalYear,
 }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -42,9 +41,8 @@ const NotesDetails: React.FC<NoteDetailsProps> = ({
     });
     const queryParams = new URLSearchParams({
       accountId,
-      entityLevel: 'project',
-      entityId: projectID || '',
-      projectFiscalYear: projectFiscalYear?.toString() || '',
+      entityLevel: data?.attachment_level || 'project',
+      entityId: data?.attach_to || projectID || '',
       source: `Project > ${projectCode}`,
     });
     navigate(`${path}?${queryParams.toString()}`);
@@ -90,8 +88,8 @@ const NotesDetails: React.FC<NoteDetailsProps> = ({
     },
     {
       label: 'Created By',
-      value: data?.created_by,
-      key: 'created_by',
+      value: data?.created_by_name,
+      key: 'created_by_name',
     },
     {
       label: 'Updated On',
@@ -100,8 +98,8 @@ const NotesDetails: React.FC<NoteDetailsProps> = ({
     },
     {
       label: 'Updated By',
-      value: data?.modified_by,
-      key: 'modified_by',
+      value: data?.modified_by_name,
+      key: 'modified_by_name',
     },
   ];
 

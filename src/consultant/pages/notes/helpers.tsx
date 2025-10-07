@@ -1,6 +1,7 @@
 import { DownloadIcon } from '../../../assets';
 import {
   formatDateToYYYYMMDDWithTime,
+  getFiscalYears,
   REGEX_PATTERNS,
 } from '../../../common-utils';
 import { ListTableColumn } from '../../../components/table/types';
@@ -13,11 +14,11 @@ const textOptions: { option: string; value: string }[] = [
   { option: 'Contains', value: 'contains' },
 ];
 
-// const enumOptions: { option: string; value: string }[] = [
-//   { option: 'Equals', value: 'equals' },
-//   { option: 'Not Equals', value: 'not_equals' },
-//   { option: 'In', value: 'in' },
-// ];
+const enumOptions: { option: string; value: string }[] = [
+  { option: 'Equals', value: 'equals' },
+  { option: 'Not Equals', value: 'not_equals' },
+  { option: 'In', value: 'in' },
+];
 
 const dateOptions: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
@@ -25,6 +26,10 @@ const dateOptions: { option: string; value: string }[] = [
   { option: 'After', value: 'after' },
   { option: 'Between', value: 'between' },
 ];
+
+const minYear = 1950;
+const currentYear = new Date().getFullYear();
+const fiscalYears = getFiscalYears(currentYear - minYear + 1);
 
 export const getNotesFilterFields =
   () // permissionMap?: Record<string, { read: boolean; edit: boolean }>
@@ -49,10 +54,17 @@ export const getNotesFilterFields =
         operatorOption: textOptions,
       },
       {
-        name: 'Related To',
+        name: 'Related Entity',
         value: 'attachment_level',
         type: 'text',
         operatorOption: textOptions,
+      },
+      {
+        name: 'Fiscal Year',
+        value: 'fiscal_year',
+        type: 'enum',
+        options: fiscalYears.map((y) => ({ option: y.label, value: y.value })),
+        operatorOption: enumOptions,
       },
       {
         name: 'Created By',
@@ -91,6 +103,7 @@ export const getNotesFilterFields =
   };
 
 export const getNotesTableColumns = (
+  inActiveEntity?: boolean,
   handleNoteView?: (rowId: string) => void,
   handleDownload?: (documentUrl: string) => void
 ): ListTableColumn<NotesList>[] => [
@@ -180,8 +193,73 @@ export const getNotesTableColumns = (
   {
     id: 'attachment_level',
     sortId: 'attachment_level',
-    label: 'Related To',
+    label: 'Related Entity',
+    width: 140,
+    sortable: true,
+  },
+  {
+    id: 'attach_to',
+    sortId: 'attach_to',
+    label: 'Related To ID',
+    width: 180,
+    sortable: true,
+  },
+  {
+    id: 'attached_to',
+    sortId: 'attached_to',
+    label: 'Related To Name',
+    width: 180,
+    sortable: true,
+  },
+  {
+    id: 'fiscal_year',
+    editId: 'fiscal_year',
+    sortId: 'fiscal_year',
+    label: 'Fiscal Year',
+    width: 120,
+    sortable: true,
+    editable: !inActiveEntity,
+    conditionallyEdit: [
+      {
+        key: 'attachment_level',
+        matchValue: [
+          'account',
+          'project_resource',
+          'project_task',
+          'resource',
+          'resource_cost',
+          'resource_skill',
+        ],
+      },
+    ],
+    field: {
+      type: 'select',
+      required: true,
+      placeholder: '',
+      options: fiscalYears,
+    },
+    render: (row) => `FY-${row.fiscal_year}`,
+  },
+  {
+    id: 'document_name',
+    sortId: 'document_name',
+    label: 'Document Name',
     width: 160,
+    sortable: true,
+    sticky: true,
+  },
+  {
+    id: 'format',
+    sortId: 'format',
+    label: 'Format',
+    width: 100,
+    sortable: true,
+  },
+  {
+    id: 'size_in_mb',
+    sortId: 'size_in_mb',
+    label: 'Size',
+    width: 100,
     sortable: true,
   },
   {

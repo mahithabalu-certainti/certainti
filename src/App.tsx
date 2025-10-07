@@ -62,6 +62,7 @@ import {
   NOTES,
   NOTES_CREATE,
   NOTES_EDIT,
+  GLOBAL_NOTES_EDIT,
 } from './routes';
 import { RootState } from './store/store';
 import ProjectTaskForm from './consultant/pages/project/project-details/project-task/form/project-task-form';
@@ -272,6 +273,7 @@ export const App: React.FC<IApp> = ({ instance }) => {
                   <Route path={NOTES} element={<Notes />} />
                   <Route path={NOTES_CREATE} element={<NotesForm />} />
                   <Route path={NOTES_EDIT} element={<NotesForm />} />
+                  <Route path={GLOBAL_NOTES_EDIT} element={<NotesForm />} />
                   <Route
                     path={INTERACTION_TEMPLATES}
                     element={<InteractionTemplates />}

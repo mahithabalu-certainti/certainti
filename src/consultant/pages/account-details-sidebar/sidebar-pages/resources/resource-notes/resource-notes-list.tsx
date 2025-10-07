@@ -39,7 +39,7 @@ interface ResourceNotesListProps {
   setCurrentPage: (page: number) => void;
   refreshNotes?: number;
   setCount?: (count: number) => void;
-  resourceInActive?: boolean;
+  resourceInActive: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   accountDetails?: Record<string, any>;
   columnAnchorEl: HTMLButtonElement | null;
@@ -65,6 +65,7 @@ const ResourceNotesList: React.FC<ResourceNotesListProps> = ({
   setColumnAnchorEl,
   searchValue,
   resourceNumber,
+  resourceInActive,
 }) => {
   const { errorToast } = useToast();
   const navigate = useNavigate();
@@ -111,7 +112,7 @@ const ResourceNotesList: React.FC<ResourceNotesListProps> = ({
 
   const accountInActive =
     accountDetails?.data?.accountById?.status?.status_name?.toLowerCase() !==
-    'active';
+      'active' || resourceInActive;
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
@@ -147,7 +148,11 @@ const ResourceNotesList: React.FC<ResourceNotesListProps> = ({
     document.body.removeChild(link);
   };
 
-  const notesColumns = getNotesTableColumns(handleNoteView, handleDownload);
+  const notesColumns = getNotesTableColumns(
+    accountInActive,
+    handleNoteView,
+    handleDownload
+  );
   const getRowId = (row: NotesList) => row.rid;
 
   const isModalOpen = Boolean(columnAnchorEl);
@@ -195,8 +200,8 @@ const ResourceNotesList: React.FC<ResourceNotesListProps> = ({
     });
     const queryParams = new URLSearchParams({
       accountId: accountid || '',
-      entityLevel: 'resource',
-      entityId: resourceRid || '',
+      entityLevel: row.attachment_level || 'resource',
+      entityId: row.attach_to || resourceRid || '',
       source: `Resource > ${resourceNumber}`,
     });
     navigate(`${path}?${queryParams.toString()}`);

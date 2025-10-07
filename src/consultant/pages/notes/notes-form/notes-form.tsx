@@ -20,7 +20,7 @@ import {
 import { NotesFormDataPayload } from '../../../types';
 import { useToast } from '../../../../hooks';
 
-const MAX_FILE_SIZE_MB = 100;
+const MAX_FILE_SIZE_MB = 10;
 const RESTRICTED_EXTENSIONS = /\.(exe|bat|cmd|sh|bash)$/i;
 
 const ACCEPTED_FILE_TYPES = [
@@ -29,9 +29,6 @@ const ACCEPTED_FILE_TYPES = [
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
   'application/pdf', // .pdf
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
-  'image/png', // .png
-  'image/jpeg', // .jpg
-  'text/plain', // .txt
 ];
 
 const NotesForm: React.FC = () => {
@@ -44,7 +41,29 @@ const NotesForm: React.FC = () => {
     type: 'error' | 'success';
     text: string;
   } | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [disableFiscalYear, setDisableFiscalYear] = useState<boolean>(false);
+  const [existingFile, setExistingFile] = useState<{
+    name: string;
+    url: string;
+    size: string;
+    format: string;
+  } | null>(null);
+  const [auditInfo, setAuditInfo] = useState<{
+    rid: string;
+    r_number: string;
+    created_on: string;
+    created_by: string;
+    updated_on: string;
+    updated_by: string;
+  }>({
+    rid: '',
+    r_number: '',
+    created_on: '',
+    created_by: '',
+    updated_on: '',
+    updated_by: '',
+  });
+
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -54,9 +73,15 @@ const NotesForm: React.FC = () => {
   const projectFiscalYear = searchParams.get('projectFiscalYear') || '';
   const sourcePath = searchParams.get('source') || '';
 
+  const isFromGlobalNotes = sourcePath?.toLowerCase() === 'notes';
+
   const createNote = useCreateNote();
   const updateNote = useUpdateNote();
-  const { data, isLoading } = useNoteDetails(entityId, noteId, isEditView);
+  const { data: noteData, isLoading } = useNoteDetails(
+    entityId,
+    noteId,
+    isEditView
+  );
 
   const minYear = 1950;
   const currentYear = new Date().getFullYear();
@@ -64,23 +89,58 @@ const NotesForm: React.FC = () => {
 
   const noteFormData = useMemo(
     () => ({
-      ...(data && {
-        title: data?.title || '',
-        notes_owner: data?.notes_owner || '',
-        descriptions: data?.descriptions || '',
-        fiscal_year: data?.fiscal_year || '',
-        rid: data?.rid || '',
-        r_number: data?.r_number || '',
-        created_on: formatDateToYYYYMMDDWithTime(data?.created_datetime || '-'),
-        updated_on: data?.modified_datetime
-          ? formatDateToYYYYMMDDWithTime(data?.modified_datetime || '-')
+      ...(noteData && {
+        title: noteData?.title || '',
+        notes_owner: noteData?.notes_owner || '',
+        descriptions: noteData?.descriptions || '',
+        fiscal_year: noteData?.fiscal_year || '',
+        rid: noteData?.rid || '',
+        r_number: noteData?.r_number || '',
+        related_to: noteData?.attachment_level || '',
+        related_to_name: noteData?.attached_to || '',
+        created_on: formatDateToYYYYMMDDWithTime(
+          noteData?.created_datetime || '-'
+        ),
+        updated_on: noteData?.modified_datetime
+          ? formatDateToYYYYMMDDWithTime(noteData?.modified_datetime || '-')
           : '-',
-        created_by: data?.created_by || '-',
-        updated_by: data?.modified_by || '-',
+        created_by: noteData?.created_by_name || '-',
+        updated_by: noteData?.modified_by_name || '-',
       }),
     }),
-    [data]
+    [noteData]
   );
+
+  useEffect(() => {
+    if (isEditView && noteData) {
+      const disableLevel =
+        noteData?.attachment_level?.toLowerCase() === 'project';
+      setDisableFiscalYear(disableLevel);
+    }
+  }, [noteData, isEditView]);
+
+  useEffect(() => {
+    if (isEditView && noteData) {
+      setExistingFile({
+        name: noteData?.document_name || '',
+        url: noteData?.browse_file,
+        size: noteData?.size_in_mb ? `${noteData.size_in_mb} MB` : '-',
+        format: noteData?.format || '',
+      });
+      setAuditInfo({
+        rid: noteData?.rid || '',
+        r_number: noteData?.r_number || '',
+        created_by: noteData?.created_by_name || '',
+        updated_by: noteData?.modified_by_name || '-',
+        created_on: formatDateToYYYYMMDDWithTime(
+          noteData?.created_datetime || '-'
+        ),
+        updated_on: noteData?.modified_datetime
+          ? formatDateToYYYYMMDDWithTime(noteData?.modified_datetime || '-')
+          : '-',
+      });
+    }
+  }, [isEditView, noteData]);
 
   const commonSuccess = createNote.isSuccess || updateNote.isSuccess;
 
@@ -104,9 +164,12 @@ const NotesForm: React.FC = () => {
     for (const file of Array.from(files)) {
       const isAcceptedType =
         ACCEPTED_FILE_TYPES.includes(file.type) ||
-        /\.(csv|xls|xlsx)$/i.test(file.name);
+        /\.(csv|xls|xlsx|pdf|docx)$/i.test(file.name);
+
       if (!isAcceptedType) {
-        showError(`"${file.name}" is not a valid CSV or Excel file.`);
+        showError(
+          `"${file.name}" is not a valid file. Only .csv, .xls, .xlsx, .pdf, or .docx files are allowed.`
+        );
         continue;
       }
       if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
@@ -129,6 +192,7 @@ const NotesForm: React.FC = () => {
     const validFiles = validateFiles(e.target.files);
     if (validFiles.length > 0) {
       setSelectedFiles([validFiles[0]]);
+      setExistingFile(null);
     }
   };
 
@@ -139,6 +203,7 @@ const NotesForm: React.FC = () => {
     const validFiles = validateFiles(e.dataTransfer.files);
     if (validFiles.length > 0) {
       setSelectedFiles([validFiles[0]]);
+      setExistingFile(null);
     }
   };
 
@@ -157,12 +222,13 @@ const NotesForm: React.FC = () => {
   };
 
   const handleSubmitData = (data: Partial<NotesFormDataPayload>) => {
-    if (!isEditView) {
-      if (selectedFiles.length === 0) {
-        showError('Please select a file before submitting.');
-        return;
-      }
+    // Validation only when no existing file
+    if (!existingFile && selectedFiles.length === 0) {
+      showError('Please select a file before submitting.');
+      return;
+    }
 
+    if (!existingFile) {
       const file = selectedFiles[0];
       if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
         showError(
@@ -171,21 +237,23 @@ const NotesForm: React.FC = () => {
         return;
       }
     }
-    setLoading(true);
 
     const payload = {
-      account_rid: accountId || '',
-      attach_to: entityId,
-      attachment_level: entityLevel,
-      fiscal_year: projectFiscalYear ?? data?.fiscal_year,
+      account_rid: noteData?.account_rid || accountId || '',
+      attach_to: noteData?.attach_to || entityId,
+      attachment_level: noteData?.attachment_level || entityLevel,
+      fiscal_year:
+        noteData?.fiscal_year ?? projectFiscalYear ?? data?.fiscal_year,
       title: data?.title || '',
       notes_owner: data?.notes_owner || '',
       descriptions: data?.descriptions || '',
-      ...(isEditView && { rid: data?.rid || '' }),
+      ...(isEditView && { rid: noteData?.rid || '' }),
     };
 
     const formData = new FormData();
-    formData.append('attachment', selectedFiles[0] as Blob);
+    if (selectedFiles.length > 0) {
+      formData.append('notes', selectedFiles[0]);
+    }
     formData.append('data', JSON.stringify(payload));
 
     if (isEditView) {
@@ -193,13 +261,13 @@ const NotesForm: React.FC = () => {
     } else {
       createNote.mutate(formData);
     }
-    setLoading(false);
   };
 
   const formConfig = NotesFormData(
-    isEditView,
     fiscalYears,
-    !!projectFiscalYear
+    !!projectFiscalYear,
+    disableFiscalYear,
+    isFromGlobalNotes
   );
 
   const goBack = () => {
@@ -210,7 +278,7 @@ const NotesForm: React.FC = () => {
 
   return (
     <div>
-      <div className='h-[50px] flex items-center justify-between px-10 sticky top-0 z-10 bg-white'>
+      <div className='h-[50px] flex items-center justify-between px-10 sticky top-0 z-10 bg-white border-b border-[#CBD6E2]'>
         <div className='flex items-center w-[80%] max-w-[80%]'>
           <NotesSideIcon
             alt='note-icon'
@@ -224,8 +292,8 @@ const NotesForm: React.FC = () => {
             ) : (
               <div className='font-semibold text-[12px] leading-[20px] ml-2 mb-[-6px] text-[#7D98B6]'>
                 {sourcePath
-                  ? `${sourcePath}${isEditView ? ` > ${data?.r_number}` : ''}`
-                  : `Note ${isEditView ? `> ${data?.r_number}` : ''}`}
+                  ? `${sourcePath}${isEditView ? ` > ${noteData?.r_number}` : ''}`
+                  : `Note ${isEditView ? `> ${noteData?.r_number}` : ''}`}
               </div>
             )}
             <h5 className='text-[16px] font-bold ml-2 text-[#2D3E4F]'>
@@ -263,7 +331,12 @@ const NotesForm: React.FC = () => {
         {formLoading ? (
           <SkeletonForm />
         ) : (
-          <div style={{ pointerEvents: loading ? 'none' : 'all' }}>
+          <div
+            style={{
+              pointerEvents:
+                createNote.isPending || updateNote.isPending ? 'none' : 'all',
+            }}
+          >
             <FormBuilder
               loading={false}
               data={formConfig}
@@ -273,7 +346,7 @@ const NotesForm: React.FC = () => {
               layout={Layout.TYPE_1}
             />
 
-            <div className={`mt-4 ${isEditView ? 'hidden' : 'block'}`}>
+            <div className={`mt-4`}>
               <div className='border capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-10'>
                 Attachment
               </div>
@@ -284,11 +357,12 @@ const NotesForm: React.FC = () => {
                   onDragOver={handleDragOver}
                   onClick={openFileDialog}
                   className={`h-[116px] w-[502px] border-[2px] border-dashed rounded-[8px] flex flex-col items-center justify-center gap-2
-              ${selectedFiles.length > 0 ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+              ${selectedFiles.length > 0 || existingFile ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
               ${message?.type === 'error' ? 'border-red-600 bg-[#FEF2F2]' : 'border-[#0176D3] bg-[#F4F6F9]'}
             `}
                   style={{
-                    pointerEvents: selectedFiles.length > 0 ? 'none' : 'all',
+                    pointerEvents:
+                      selectedFiles.length > 0 || existingFile ? 'none' : 'all',
                   }}
                 >
                   <UploadIcon alt='Upload Icon' className='w-[36px] h-[24px]' />
@@ -309,7 +383,7 @@ const NotesForm: React.FC = () => {
                   </div>
                   <input
                     type='file'
-                    accept='.csv,.xls,.xlsx,.pdf,.docx,.png,.jpg,.txt'
+                    accept='.csv,.xls,.xlsx,.pdf,.docx'
                     className='hidden'
                     ref={fileInputRef}
                     onChange={handleFileSelect}
@@ -335,7 +409,64 @@ const NotesForm: React.FC = () => {
                   fileInputRef={fileInputRef}
                   selectedFiles={selectedFiles}
                   setSelectedFiles={setSelectedFiles}
+                  existingFiles={existingFile ? [existingFile] : []}
+                  onRemoveExistingFile={() => setExistingFile(null)}
                 />
+              </div>
+            </div>
+
+            <div className={`${isEditView ? 'block' : 'hidden'}`}>
+              <div
+                className={`border capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-10`}
+              >
+                Audit Information
+              </div>
+              <div className='grid md:grid-cols-3 gap-x-4 gap-y-[2px] px-10 pt-1 mb-4'>
+                {[
+                  {
+                    label: 'Record ID',
+                    value: auditInfo.rid,
+                    hide: false,
+                  },
+                  {
+                    label: 'Created On',
+                    value: auditInfo.created_on,
+                    hide: false,
+                  },
+                  {
+                    label: 'Created By',
+                    value: auditInfo.created_by,
+                    hide: false,
+                  },
+                  {
+                    label: 'Note ID',
+                    value: auditInfo.r_number,
+                    hide: false,
+                  },
+                  {
+                    label: 'Updated On',
+                    value: auditInfo.updated_on,
+                    hide: false,
+                  },
+                  {
+                    label: 'Updated By',
+                    value: auditInfo.updated_by,
+                    hide: false,
+                  },
+                ]
+                  .filter((field) => !field.hide)
+                  .map((field, idx) => (
+                    <div key={idx}>
+                      <label className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px] md:text-left mt-1 block'>
+                        {field.label}
+                      </label>
+                      <div className='placeholder-[#7D98B6] bg-gray-100 text-black w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs flex items-center cursor-default select-none text-nowrap overflow-hidden'>
+                        <span className='overflow-hidden text-ellipsis whitespace-nowrap'>
+                          {field.value || '-'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
               </div>
             </div>
           </div>

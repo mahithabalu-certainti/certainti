@@ -72,34 +72,32 @@ export interface NotesListResponse {
 
 export interface NoteDetails {
   rid: string;
-  notes_rid?: string;
   r_number: string;
-  created_datetime: string;
+  title: string;
+  descriptions: string;
+  notes_owner: string;
   created_by: string;
-  modified_datetime: string;
   modified_by: string;
   account_rid: string;
   browse_file: string;
+  created_datetime: string;
+  modified_datetime: string;
   document_name: string;
-  attach_to: string;
-  attachment_level: string;
   fiscal_year: number;
+  attached_to: string;
+  attach_to: string;
   format: string;
   size_in_mb: string;
-  title: string;
-  notes_owner: string;
-  descriptions: string;
-  attached_to: string;
-  uploaded_by?: string | null;
+  attachment_level: string;
+  created_by_name: string;
+  modified_by_name: string;
 }
 
 export interface NoteDetailsResponse {
   statusCode: number;
   statusCodeValue: string;
   statusMessage: string;
-  data: {
-    noteDetails: NoteDetails;
-  };
+  data: NoteDetails;
 }
 
 export interface NotesFormDataPayload {

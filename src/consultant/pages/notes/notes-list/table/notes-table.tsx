@@ -19,6 +19,8 @@ import { useToast } from '../../../../../hooks';
 import { useMutation } from '@apollo/client';
 import { NOTES_UPDATE } from '../../../../../api/graphql/queries/notes-query';
 import { resourceClient } from '../../../../../api/graphql/clients/client';
+import { generatePath, useNavigate } from 'react-router-dom';
+import { GLOBAL_NOTES_EDIT } from '../../../../../routes';
 
 interface NotesTableProps {
   appliedFilters: FilterTypes;
@@ -43,6 +45,7 @@ export const NotesTable: React.FC<NotesTableProps> = ({
   columnAnchorEl,
   searchValue,
 }) => {
+  const navigate = useNavigate();
   const { errorToast } = useToast();
   const { fiscalYear, filters } = useSelector<
     RootState,
@@ -117,7 +120,29 @@ export const NotesTable: React.FC<NotesTableProps> = ({
     document.body.removeChild(link);
   };
 
-  const notesColumns = getNotesTableColumns(undefined, handleDownload);
+  const handleEdit = (row: NotesList) => {
+    const path = generatePath(GLOBAL_NOTES_EDIT, {
+      noteId: row.rid,
+    });
+    const queryParams = new URLSearchParams({
+      accountId: row?.account_rid || '',
+      entityLevel: row?.attachment_level || '',
+      entityId: row?.attach_to || '',
+      source: `Notes`,
+    });
+    navigate(`${path}?${queryParams.toString()}`);
+  };
+
+  const actionMenuItems = [
+    {
+      label: 'Edit',
+      // disabled: accountInActive,
+      onClick: (row: NotesList) => handleEdit(row),
+      hide: false,
+    },
+  ];
+
+  const notesColumns = getNotesTableColumns(false, undefined, handleDownload);
 
   const handlePopoverClose = () => {
     setColumnAnchorEl(null);
@@ -229,7 +254,7 @@ export const NotesTable: React.FC<NotesTableProps> = ({
         }
         actionWidth={60}
         actionDisplayMode='dropdown'
-        actionMenuItems={[]}
+        actionMenuItems={actionMenuItems}
         loading={isLoading}
         error={isError ? 'Failed to load notes data' : undefined}
         rowsPerPageOptions={[25, 50, 100]}

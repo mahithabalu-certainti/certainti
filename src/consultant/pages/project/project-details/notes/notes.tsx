@@ -194,9 +194,8 @@ const Notes: React.FC<NotesProps> = ({
     });
     const queryParams = new URLSearchParams({
       accountId,
-      entityLevel: 'project',
-      entityId: projectID || '',
-      projectFiscalYear: projectFiscalYear?.toString() || '',
+      entityLevel: row.attachment_level || 'project',
+      entityId: row.attach_to || projectID || '',
       source: `Project > ${projectCode}`,
     });
     navigate(`${path}?${queryParams.toString()}`);
@@ -263,7 +262,11 @@ const Notes: React.FC<NotesProps> = ({
     document.body.removeChild(link);
   };
 
-  const notesColumns = getNotesTableColumns(handleNoteView, handleDownload);
+  const notesColumns = getNotesTableColumns(
+    accountInActive,
+    handleNoteView,
+    handleDownload
+  );
 
   const notesFilterFields = getNotesFilterFields();
 

@@ -69,6 +69,7 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
   columnAnchorEl,
   setColumnAnchorEl,
   searchValue,
+  resourceInActive,
 }) => {
   const { errorToast } = useToast();
   const { accountid } = useParams();
@@ -123,7 +124,7 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
   const categoryTypes = useGetDocumentCategoryType(currentCategory);
   const accountInActive =
     accountDetails?.data?.accountById?.status?.status_name?.toLowerCase() !==
-    'active';
+      'active' || resourceInActive;
 
   const memoizedDocumentTypes: SelectOption[] = useMemo(
     () =>

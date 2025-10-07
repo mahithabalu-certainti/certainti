@@ -191,8 +191,8 @@ const Notes: React.FC<NotesProps> = ({
     });
     const queryParams = new URLSearchParams({
       accountId,
-      entityLevel: 'account',
-      entityId: accountId,
+      entityLevel: row.attachment_level || 'account',
+      entityId: row.attach_to || accountId,
       source: `Account > ${accountName}`,
     });
     navigate(`${path}?${queryParams.toString()}`);
@@ -259,7 +259,11 @@ const Notes: React.FC<NotesProps> = ({
     document.body.removeChild(link);
   };
 
-  const notesColumns = getNotesTableColumns(handleNoteView, handleDownload);
+  const notesColumns = getNotesTableColumns(
+    accountInActive,
+    handleNoteView,
+    handleDownload
+  );
 
   const notesFilterFields = getNotesFilterFields();
 

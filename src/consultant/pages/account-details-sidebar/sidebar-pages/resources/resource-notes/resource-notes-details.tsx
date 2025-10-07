@@ -40,8 +40,8 @@ const NotesDetails: React.FC<NoteDetailsProps> = ({
     });
     const queryParams = new URLSearchParams({
       accountId: accountid || '',
-      entityLevel: 'resource',
-      entityId: resourceRid || '',
+      entityLevel: data?.attachment_level || 'resource',
+      entityId: data?.attach_to || resourceRid || '',
       source: `Resource > ${resourceNumber}`,
     });
     navigate(`${path}?${queryParams.toString()}`);
@@ -87,8 +87,8 @@ const NotesDetails: React.FC<NoteDetailsProps> = ({
     },
     {
       label: 'Created By',
-      value: data?.created_by,
-      key: 'created_by',
+      value: data?.created_by_name,
+      key: 'created_by_name',
     },
     {
       label: 'Updated On',
@@ -97,8 +97,8 @@ const NotesDetails: React.FC<NoteDetailsProps> = ({
     },
     {
       label: 'Updated By',
-      value: data?.modified_by,
-      key: 'modified_by',
+      value: data?.modified_by_name,
+      key: 'modified_by_name',
     },
   ];
 

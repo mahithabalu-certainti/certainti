@@ -8,9 +8,10 @@ import {
 } from '../../../../common-utils';
 
 export const NotesFormData = (
-  isEditView: boolean,
   fiscalYears: { label: string; value: string }[],
-  projectFiscalYear?: boolean
+  projectFiscalYear?: boolean,
+  disableFiscalYear?: boolean,
+  isFromGlobalNotes?: boolean
 ): FormType[] => {
   return useMemo(
     () => [
@@ -56,11 +57,24 @@ export const NotesFormData = (
               },
             ],
           }),
+          createTextField('related_to', 'Related Entity', {
+            required: false,
+            placeholder: 'Enter Related Entity',
+            disabled: true,
+            hide: !isFromGlobalNotes,
+          }),
+          createTextField('related_to_name', 'Related To Name', {
+            required: false,
+            placeholder: 'Enter Related To Name',
+            disabled: true,
+            hide: !isFromGlobalNotes,
+          }),
           createSelectField('fiscal_year', 'Fiscal Year', {
             options: fiscalYears,
             placeholder: 'Choose Fiscal Year',
             required: true,
-            hide: projectFiscalYear ? true : false,
+            hide: disableFiscalYear || projectFiscalYear ? true : false,
+            disabled: disableFiscalYear,
             isFiscalYear: true,
           }),
         ],
@@ -78,44 +92,7 @@ export const NotesFormData = (
           }),
         ],
       },
-      {
-        sectionName: 'Audit Information',
-        fillType: 'half',
-        hide: !isEditView,
-        fields: [
-          createTextField('rid', 'Record ID', {
-            required: false,
-            disabled: true,
-            hide: !isEditView,
-          }),
-          createTextField('created_on', 'Created On', {
-            required: false,
-            disabled: true,
-            hide: !isEditView,
-          }),
-          createTextField('created_by', 'Created By', {
-            required: false,
-            disabled: true,
-            hide: !isEditView,
-          }),
-          createTextField('r_number', 'Note ID', {
-            required: false,
-            disabled: true,
-            hide: !isEditView,
-          }),
-          createTextField('updated_on', 'Updated On', {
-            required: false,
-            disabled: true,
-            hide: !isEditView,
-          }),
-          createTextField('updated_by', 'Updated By', {
-            required: false,
-            disabled: true,
-            hide: !isEditView,
-          }),
-        ],
-      },
     ],
-    [fiscalYears, isEditView, projectFiscalYear]
+    [disableFiscalYear, fiscalYears, isFromGlobalNotes, projectFiscalYear]
   );
 };
