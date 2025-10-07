@@ -399,8 +399,8 @@ const Resource: React.FC<ResourceProps> = ({
 
   const handleResourceClick = (row: any) => {
     setResourceData(row);
-    setViewResourceList(!viewResourceList);
-    setShowBackArrow(!showBackArrow);
+    setViewResourceList(false); // Always set to false to show resource details
+    setShowBackArrow(true); // Always show back arrow when viewing resource details
     setShowFilter(false);
     // setFilterVisibility(false);
     setAppliedFilters({});
@@ -410,6 +410,7 @@ const Resource: React.FC<ResourceProps> = ({
     const activeTab = tabMenus.find((tab) => !tab.hide)?.value;
     setValue(activeTab as string);
   };
+
   useEffect(() => {
     // update the URL when open a resource sub tab
     if (
@@ -525,8 +526,8 @@ const Resource: React.FC<ResourceProps> = ({
         replace: true,
       });
     } else {
-      setViewResourceList(!viewResourceList);
-      setShowBackArrow(!showBackArrow);
+      setViewResourceList(true); // Always set to true to show the resource list
+      setShowBackArrow(false); // Always hide back arrow when showing resource list
       setShowFilter(false);
       setCount(ResourceList?.count || 0);
       // clear query params

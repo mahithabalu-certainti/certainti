@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   Autocomplete,
+  Box,
   MenuItem,
   Select,
   Skeleton,
@@ -21,6 +22,7 @@ import {
   InteractionFormTableColumn,
   InteractionQuestionErrors,
   InteractionTemplateList,
+  IRecipient,
   StatusTypeEnum,
 } from '../../../types';
 import { useToast } from '../../../../hooks';
@@ -38,6 +40,7 @@ import {
   validateInteractionForm,
 } from './helper';
 import {
+  DetailsKeyContactErrorIcon,
   ErrorInfoIcon,
   InteractionDetailIcon,
   KeyContactAddIcon,
@@ -69,6 +72,7 @@ import { getFiscalYears } from '../../../../common-utils';
 import { DATE_CONFIG } from '../../resource-form/form-data';
 import { ListOption } from '../../../../components/table/types';
 import ConfirmationPopup from '../../../../common-utils/confirmation-popup';
+import { PreviewDialog } from './preview-model';
 
 const AccountInteractionForm = () => {
   const [searchParams] = useSearchParams();
@@ -90,7 +94,6 @@ const AccountInteractionForm = () => {
     useState<HTMLButtonElement | null>(null);
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [tab, setTab] = useState<number>(1);
-  const [saveAndSendLoading, setSaveAndSendLoading] = useState<boolean>(false);
   const [saveLoading, setSaveLoading] = useState<boolean>(false);
   const [formData, setFormData] = useState<InteractionFormData>({
     accountName: '',
@@ -128,6 +131,11 @@ const AccountInteractionForm = () => {
     onConfirm: () => void;
     onCancel: () => void;
   }>({ isOpen: false, message: '', onConfirm: () => {}, onCancel: () => {} });
+  const [previewDialog, setPreviewDialog] = React.useState(false);
+  const [recipiants, setRecipiants] = React.useState<IRecipient>({
+    name: '',
+    email: '',
+  });
 
   const { fiscalYear, filters } = useSelector(
     (state: RootState) => state.account
@@ -393,6 +401,12 @@ const AccountInteractionForm = () => {
       }));
     }
   }, [interactionTemplateDetails.data]);
+  useEffect(() => {
+    const currentRecipients = localStorage.getItem('currentRecipients');
+    if (currentRecipients) {
+      setRecipiants(JSON.parse(currentRecipients));
+    }
+  }, []);
 
   const handleAddQuestion = () => {
     setFormData((prev) => {
@@ -478,46 +492,32 @@ const AccountInteractionForm = () => {
     setErrors(validationErrors);
     return isValid;
   };
-  const handleSubmit = (trigger_send?: boolean) => {
+  const handleSubmit = () => {
     if (!validateForm()) {
       return;
     }
-
-    // Set loading state based on action
-    if (trigger_send) {
-      setSaveAndSendLoading(true);
-    } else {
-      setSaveLoading(true);
-    }
-
+    setSaveLoading(true);
     if (isAccountLevel) {
-      createInteraction(trigger_send);
+      createInteraction();
     } else {
       if (tab === 2) {
         if (selectedTableId.length === 0) {
           errorToast('Please select atleast one Project!');
-          // Reset loading state on error
-          if (trigger_send) {
-            setSaveAndSendLoading(false);
-          } else {
-            setSaveLoading(false);
-          }
+          setSaveLoading(false);
         } else {
-          createInteraction(trigger_send);
+          createInteraction();
         }
       } else {
         //If project Level
         setTab(2);
-        // Reset loading state when just changing tabs
-        if (trigger_send) {
-          setSaveAndSendLoading(false);
-        } else {
-          setSaveLoading(false);
-        }
+        setSaveLoading(false);
       }
     }
   };
-  const createInteraction = (trigger_send?: boolean) => {
+  const createInteraction = (
+    trigger_send?: boolean,
+    recipiants?: IRecipient
+  ) => {
     const draftStatus = statusOptions.find(
       (option) => option.label.toLowerCase() === StatusTypeEnum.draft
     );
@@ -544,21 +544,27 @@ const AccountInteractionForm = () => {
         }),
         questions: payload.questions,
         ...(isAccountLevel && { fiscal_year: formData.fiscalYear }),
+        ...(recipiants?.email && { email_info: recipiants }),
       },
       {
         onError: () => {
-          // Reset loading states on error
-          setSaveAndSendLoading(false);
           setSaveLoading(false);
         },
         onSuccess: () => {
-          // Reset loading states on success
-          setSaveAndSendLoading(false);
           setSaveLoading(false);
           window.history.back();
         },
       }
     );
+  };
+  const saveAndSend = () => {
+    if (validateForm()) {
+      if (tab === 2 && selectedTableId.length === 0) {
+        errorToast('Please select atleast one Project!');
+      } else {
+        setPreviewDialog(true);
+      }
+    }
   };
   const goBack = () => {
     if (tab === 2) {
@@ -711,12 +717,11 @@ const AccountInteractionForm = () => {
                 )}
               />
             ))}
-          {tab === 2 && (
+          {(isAccountLevel || tab === 2) && (
             <TextButton
               label='Save and Send'
-              loading={saveAndSendLoading}
-              disabled={saveAndSendLoading || saveLoading}
-              onClick={() => handleSubmit(true)}
+              disabled={saveLoading}
+              onClick={saveAndSend}
               sx={{
                 width: '120px',
                 fontSize: '13px',
@@ -727,8 +732,8 @@ const AccountInteractionForm = () => {
           <TextButton
             label={isAccountLevel ? 'Save' : tab === 2 ? 'Save' : 'Next'}
             loading={saveLoading}
-            disabled={saveAndSendLoading || saveLoading}
-            onClick={() => handleSubmit()}
+            disabled={saveLoading}
+            onClick={handleSubmit}
             sx={{
               width: '64px',
               minWidth: '64px',
@@ -739,7 +744,7 @@ const AccountInteractionForm = () => {
           <TextButton
             label={tab === 1 ? 'Cancel' : 'Back'}
             onClick={goBack}
-            disabled={saveAndSendLoading || saveLoading}
+            disabled={saveLoading}
             sx={{
               padding: '0px 6px',
               fontSize: '12px',
@@ -851,7 +856,10 @@ const AccountInteractionForm = () => {
                             color: '#7D98B6',
                           },
                         }}
-                        onChange={(e) => setInteractionLevel(e.target.value)}
+                        onChange={(e) => {
+                          setInteractionLevel(e.target.value);
+                          setSelectedTableIds([]); //clear selected
+                        }}
                       >
                         {memoizedInteractionLevel.map((it, i) => {
                           return (
@@ -1241,6 +1249,21 @@ const AccountInteractionForm = () => {
               </>
             ) : (
               <React.Suspense fallback={null}>
+                {projectList.length === 0 && (
+                  <Box className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] py-2 border-box px-10'>
+                    <Box>
+                      <DetailsKeyContactErrorIcon alt='key-contact' />
+                    </Box>
+                    <Box>
+                      <span className='font-bold mr-1'>Projects List </span> -{' '}
+                      <span className='ml-1 font-medium'>
+                        {' '}
+                        Please add a project to an account in order to create a new interaction.
+                      </span>
+                    </Box>
+                  </Box>
+                )}
+
                 <div className='border-b border-[#CBD6E2] px-10 py-1 flex justify-end'>
                   <button
                     aria-describedby={filterId}
@@ -1286,7 +1309,6 @@ const AccountInteractionForm = () => {
                     />
                   </React.Suspense>
                 </div>
-
                 <ListTable
                   data={projectList as Project[]}
                   columns={getProjectColumns(projectPermissionMap)}
@@ -1352,6 +1374,18 @@ const AccountInteractionForm = () => {
           }}
         />
       </div>
+      <PreviewDialog
+        previewDialog={previewDialog}
+        formData={formData}
+        createLoading={accountCreateInteraction.isPending}
+        setPreviewDialog={setPreviewDialog}
+        recipiants={recipiants}
+        selectedTableId={selectedTableId}
+        isAccountLevel={isAccountLevel}
+        saveAndSendComplete={(recipiants) => {
+          createInteraction(true, recipiants);
+        }}
+      />
     </div>
   );
 };

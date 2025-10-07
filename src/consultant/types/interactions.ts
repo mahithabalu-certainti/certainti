@@ -153,6 +153,7 @@ export type InteractionList = {
   account_name?: string | null;
   project_count?: string;
   modified_user_name?: string;
+  interaction_level_name?: string;
 };
 
 export type InteractionTemplateList = {
@@ -234,6 +235,7 @@ export interface InteractionListResponse {
     limit: number;
     totalCount: number;
     interactions: InteractionList[];
+    keyContact: InteractionKeyContacts;
   };
 }
 export interface AccountInteractionListResponse {
@@ -333,6 +335,7 @@ export interface InteractionHistoryResponse {
   response: string;
   response_on: string;
   attachments: Attachment[];
+  is_mandatory?: boolean
 }
 export interface InteractionDetailsHistoryResponse {
   statusCode: number;
@@ -466,4 +469,12 @@ export interface AccountSendInteractionPayload {
   account_rid: string;
   account_interaction_rid: string[];
   projects: SendIntractionProject[];
+}
+export interface IRecipient {
+  name: string;
+  email: string;
+}
+export interface InteractionKeyContacts {
+  key_contact_email: string;
+  key_contact_name: string;
 }

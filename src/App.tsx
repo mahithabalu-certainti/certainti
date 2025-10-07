@@ -63,12 +63,14 @@ import {
   NOTES_CREATE,
   NOTES_EDIT,
   GLOBAL_NOTES_EDIT,
+  IMPORT_TEMPLATES,
 } from './routes';
 import { RootState } from './store/store';
 import ProjectTaskForm from './consultant/pages/project/project-details/project-task/form/project-task-form';
 // import { ProjectTask } from './consultant/pages/project/project-details/project-task';
 import ProjectResourceForm from './consultant/pages/project/project-details/project-resources/project-resource-form/project-resource-form';
 import { Attachments } from './consultant/pages';
+import ImportTemplatesList from './admin/pages/import-templates/import-templates';
 
 // Lazy load all page components
 const ExtendedPermission = lazy(
@@ -285,6 +287,10 @@ export const App: React.FC<IApp> = ({ instance }) => {
                   <Route
                     path={INTERACTION_TEMPLATES_EDIT}
                     element={<InteractionTemplateForm />}
+                  />
+                  <Route
+                    path={IMPORT_TEMPLATES}
+                    element={<ImportTemplatesList />}
                   />
                   {/* Page not found */}
                   <Route path={NOT_MATCH} element={<NotFound />} />

@@ -188,7 +188,9 @@ export const getTimesheetProjectTabFilterFields = (
       value: 'rd_percent_final',
       type: 'number',
       operatorOption: numberOptions,
-      hide: !permissionMap?.['qre']?.edit && !permissionMap?.['qre']?.read,
+      hide:
+        !permissionMap?.['rd_percent_final']?.edit &&
+        !permissionMap?.['rd_percent_final']?.read,
     },
     {
       name: 'QRE Final',
