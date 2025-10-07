@@ -16,6 +16,7 @@ import { ResourceType } from "./resourceType";
 import { ProjectType } from "./projectType";
 import { SkillLevel } from "./skillLevel";
 import { AccountFiscalSummary } from "./accountFiscalSummaryModel";
+import { errorLog } from "../utils/helpers";
 
 export const models: {
   Account: typeof Account;
@@ -78,7 +79,7 @@ export async function initModels() {
     //await sequelize.sync({ force: false });
     
   } catch (err) {
-    console.log("Errr loading models", err);
+    errorLog("Error loading models:", (err as Error).message);
   }
 }
 
