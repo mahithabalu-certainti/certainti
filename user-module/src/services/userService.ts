@@ -90,7 +90,7 @@ class UserService {
       } = userData;
 
       const repository = this.getAccountRepository();
-      logMessage(`Creating user with data: ${JSON.stringify(userData)}`);
+      logMessage(`Creating user with data : ${JSON.stringify(userData)}`);
       const user = await repository.create({
         azure_id: azureId,
         first_name,
@@ -1239,6 +1239,7 @@ if (includeDependencies) {
           field_id: faWithField.permission_field.rid,
           permission_id: faWithField.permission_field.module_permission_id,
           name: faWithField.permission_field.field_name,
+          desc: faWithField.permission_field.field_desc,
           read: faWithField.read,
           edit: faWithField.edit,
         });
