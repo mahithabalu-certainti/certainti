@@ -4,6 +4,7 @@ import {constants} from "../utils/constant"
 import { v4 as uuidv4 } from 'uuid';
 
 import {initSequelize} from "../config/maindbDataSource";
+import { errorLog } from "../utils/helpers";
 
 /**
  * Middleware to authenticate the request by checking the 'Authorization' header.
@@ -89,12 +90,13 @@ const checkUserStatusMiddleware = (permissionName?: string) => {
       }
       
       next();
-  } catch (error) {
-      console.error('Error checking user status:', error);
-      res.status(HttpStatus.FAILED).json({
-          error: HttpStatus.FAILED_MESSAGE,
-          message: 'Failed to verify user status'
-      });
+  } catch (err) {
+    const error = err as Error;
+    errorLog('Error checking user status:', error.message);
+    res.status(HttpStatus.FAILED).json({
+        error: HttpStatus.FAILED_MESSAGE,
+        message: 'Failed to verify user status'
+    });
   }
 }
 }

@@ -11,6 +11,7 @@ import { UserPermissionAccessHistory } from "../models/userPermissionAccessHisto
 import { UserModuleAccessHistory } from "../models/userModuleAccessHistoryModel";
 import { UserMenuAccessHistory } from "../models/userMenuAccessHistoryModel";
 import dayjs from "dayjs";
+import { errorLog, logMessage } from "../utils/helpers";
 const {
   Profile,
   ProfileMenuAccess,
@@ -193,7 +194,7 @@ class UserManagementService {
 
       return true;
     } catch (error) {
-      console.error("Error recording profile event:", error);
+      errorLog("Error recording profile event:", (error as Error).message);
       return false;
     }
   }
@@ -227,7 +228,7 @@ class UserManagementService {
 
       return true;
     } catch (error) {
-      console.error("Error recording profile event:", error);
+      errorLog("Error recording user extended profile event:", (error as Error).message);
       return false;
     }
   }
@@ -394,19 +395,19 @@ class UserManagementService {
       ]);
 
       // Now you have access to all created records
-      console.log(`Created ${createdMenuAccess.length} menu access records`);
-      console.log(`menu access data => ${createdMenuAccess}`);
-      console.log(
+      logMessage(`Created ${createdMenuAccess.length} menu access records`);
+      logMessage(`menu access data => ${createdMenuAccess}`);
+      logMessage(
         `Created ${createdModuleAccess.length} module access records`
       );
-      console.log(
+      logMessage(
         `Created ${createdPermissionAccess.length} permission access records`
       );
-      console.log(`Created ${createdFieldAccess.length} field access records`);
+      logMessage(`Created ${createdFieldAccess.length} field access records`);
 
       return true;
     } catch (error) {
-      console.error("Error in profileClone:", error);
+      errorLog("Error in profileClone:", (error as Error).message);
       return false;
     }
   }
@@ -585,7 +586,6 @@ class UserManagementService {
     // Add modules to result
     for (const ma of menuAccess) {
       const menu = ma as any;
-      console.log(menu.rid);
       privileges.push({
         rid: menu.rid,
         type: "menu",
@@ -1202,7 +1202,7 @@ class UserManagementService {
             );
 
           default:
-            console.warn(`Unknown permission type: ${permission.type}`);
+            logMessage(`Unknown permission type: ${permission.type}`);
             return false;
         }
       });
@@ -1352,7 +1352,7 @@ class UserManagementService {
             );
 
           default:
-            console.warn(`Unknown permission type: ${permission.type}`);
+            logMessage(`Unknown permission type: ${permission.type}`);
             return false;
         }
       });
@@ -1431,9 +1431,9 @@ class UserManagementService {
 
       return true;
     } catch (error) {
-      console.error(
+      errorLog(
         "Error checking profile name uniqueness and updating:",
-        error
+        (error as Error).message
       );
       return false;
     }
@@ -1550,7 +1550,6 @@ class UserManagementService {
         ],
         raw: true
       });
-      console.log(updatedProfileData)
       if(updatedProfileData) {
         let finalData = {
           rid: updatedProfileData.rid,
@@ -1603,13 +1602,13 @@ class UserManagementService {
       // First fetch the current value
       const currentAccess = await ProfileMenuAccess.findByPk(accessId);
       if (!currentAccess) {
-        console.error(`Menu access with ID ${accessId} not found`);
+        logMessage(`Menu access with ID ${accessId} not found`);
         return false;
       }
 
       // Check if the value has actually changed
       if (currentAccess.is_enabled === isEnabled) {
-        console.log(`Menu access ${accessId} value unchanged, skipping update`);
+        logMessage(`Menu access ${accessId} value unchanged, skipping update`);
         return false;
       }
 
@@ -1638,7 +1637,7 @@ class UserManagementService {
 
       return updated > 0;
     } catch (error) {
-      console.error("Error updating menu access:", error);
+      errorLog("Error updating menu access:", (error as Error).message);
       return false;
     }
   }
@@ -1656,13 +1655,13 @@ class UserManagementService {
       // First fetch the current value
       const currentAccess = await ProfileModuleAccess.findByPk(accessId);
       if (!currentAccess) {
-        console.error(`Module access with ID ${accessId} not found`);
+        logMessage(`Module access with ID ${accessId} not found`);
         return false;
       }
 
       // Check if the value has actually changed
       if (currentAccess.is_enabled === isEnabled) {
-        console.log(
+        logMessage(
           `Module access ${accessId} value unchanged, skipping update`
         );
         return false;
@@ -1693,7 +1692,7 @@ class UserManagementService {
 
       return updated > 0;
     } catch (error) {
-      console.error("Error updating module access:", error);
+      errorLog("Error updating module access:", (error as Error).message);
       return false;
     }
   }
@@ -1711,13 +1710,13 @@ class UserManagementService {
       // First fetch the current value
       const currentAccess = await ProfilePermissionAccess.findByPk(accessId);
       if (!currentAccess) {
-        console.error(`Permission access with ID ${accessId} not found`);
+        logMessage(`Permission access with ID ${accessId} not found`);
         return false;
       }
 
       // Check if the value has actually changed
       if (currentAccess.is_enabled === isEnabled) {
-        console.log(
+        logMessage(
           `Permission access ${accessId} value unchanged, skipping update`
         );
         return false;
@@ -1748,7 +1747,7 @@ class UserManagementService {
 
       return updated > 0;
     } catch (error) {
-      console.error("Error updating permission access:", error);
+      errorLog("Error updating permission access:", (error as Error).message);
       return false;
     }
   }
@@ -1767,7 +1766,7 @@ class UserManagementService {
       // First fetch the current values
       const currentAccess = await ProfileFieldsAccess.findByPk(accessId);
       if (!currentAccess) {
-        console.error(`Field access with ID ${accessId} not found`);
+        logMessage(`Field access with ID ${accessId} not found`);
         return false;
       }
 
@@ -1776,7 +1775,7 @@ class UserManagementService {
       const editChanged = currentAccess.edit !== edit;
 
       if (!readChanged && !editChanged) {
-        console.log(
+        logMessage(
           `Field access ${accessId} values unchanged, skipping update`
         );
         return false;
@@ -1822,7 +1821,7 @@ class UserManagementService {
 
       return updated > 0;
     } catch (error) {
-      console.error("Error updating field access:", error);
+      errorLog("Error updating field access:", (error as Error).message);
       return false;
     }
   }
@@ -1872,7 +1871,7 @@ class UserManagementService {
       } else {
         // Check if the value has actually changed
         if (currentAccess?.is_enabled === isEnabled) {
-          console.log(
+          logMessage(
             `Menu access ${accessId} value unchanged, skipping update`
           );
           return false;
@@ -1907,7 +1906,7 @@ class UserManagementService {
         return updated > 0;
       }
     } catch (error) {
-      console.error("Error updating menu access:", error);
+      errorLog("Error updating menu access:", (error as Error).message);
       return false;
     }
   }
@@ -1956,7 +1955,7 @@ class UserManagementService {
       } else {
         // Check if the value has actually changed
         if (currentAccess?.is_enabled === has_extended_permission) {
-          console.log(
+          logMessage(
             `Module access ${accessId} value unchanged, skipping update`
           );
           return false;
@@ -1991,7 +1990,7 @@ class UserManagementService {
         return updated > 0;
       }
     } catch (error) {
-      console.error("Error updating module access:", error);
+      errorLog("Error updating module access:", (error as Error).message);
       return false;
     }
   }
@@ -2041,7 +2040,7 @@ class UserManagementService {
       } else {
         // Check if the value has actually changed
         if (currentAccess.is_enabled === isEnabled) {
-          console.log(
+          logMessage(
             `Permission access ${accessId} value unchanged, skipping update`
           );
           return false;
@@ -2076,7 +2075,7 @@ class UserManagementService {
         return updated > 0;
       }
     } catch (error) {
-      console.error("Error updating permission access:", error);
+      errorLog("Error updating permission access:", (error as Error).message);
       return false;
     }
   }
@@ -2122,7 +2121,6 @@ class UserManagementService {
           "success",
           loggedInUsername
         );
-        // console.error(`Menu access with ID ${accessId} not found`);
         return true;
       } else {
         // Check if any values have actually changed
@@ -2130,7 +2128,7 @@ class UserManagementService {
         const editChanged = currentAccess.edit !== edit;
 
         if (!readChanged && !editChanged) {
-          console.log(
+          logMessage(
             `Field access ${accessId} values unchanged, skipping update`
           );
           return false;
@@ -2186,7 +2184,7 @@ class UserManagementService {
         return updated > 0;
       }
     } catch (error) {
-      console.error("Error updating field access:", error);
+      errorLog("Error updating field access:", (error as Error).message);
       return false;
     }
   }

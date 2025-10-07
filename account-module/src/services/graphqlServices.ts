@@ -3,12 +3,13 @@ import { initOrgSequelize } from "../config/orgdbDataSource"
 import { Account } from "../models/accountModel"
 import { Status } from "../models/statusModel"
 import { HttpStatus, rawQueries, STATUS, STATUS_MESSAGE } from "../utils/constant"
-import { setAccountDetails, setInlineValues, setKeyContact, setKeyContactData } from "../utils/helpers"
+import { logMessage, setAccountDetails, setInlineValues, setKeyContact, setKeyContactData } from "../utils/helpers"
 import { Sequelize, Op, QueryTypes } from "sequelize";
 import SchemaService from "./schemaService"
 
 class AccountGraphQlServices {
     async inlineEditAccount(data : any) {
+    logMessage(`AccountGraphQlServices -> inlineEditAccount", ${JSON.stringify(data)}`);
     let parentAccount: any
     let accountDetails: any
     let schemaName: string
@@ -90,7 +91,7 @@ class AccountGraphQlServices {
                 // Update group name if account name changed
                 if (data.account_name != undefined && data.account_name !== existingAccName) 
                 {
-                    console.log("Account name changed from", existingAccName, "to ", data.account_name);
+                    logMessage(`Account name changed from ${existingAccName} to ${data.account_name}`);
                     const schemaService = new SchemaService();
                     await schemaService.updateGroupNameForAccount(fetchAccountById.rid, data.userId, fetchAccountById.is_parent, data.account_name);
                 }           

@@ -9,7 +9,8 @@ import {
   handleSuccessResponse,
   successLog,
   validateRequest,
-  generateExcelBase64
+  generateExcelBase64,
+  logMessage
 } from "../utils/helpers";
 
 import {
@@ -225,7 +226,6 @@ async function userPermissionById(req: Request, res: Response): Promise<void> {
       );
     }
   } catch (error) {
-    console.log(error)
     const err = error as Error;
     errorLog(methodName, err.message);
     handleErrorResponse(
@@ -314,7 +314,7 @@ async function getProfilePermissions(req: Request, res: Response): Promise<void>
       res,
       "GET"
     );
-    console.log("Validated Data:", validatedData);
+   logMessage(`Validated Data: ${JSON.stringify(validatedData)}`);
     
     // If validation fails, validateRequest will handle the response
     if (!validatedData) return;

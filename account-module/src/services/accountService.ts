@@ -10,14 +10,16 @@ import { HttpStatus, primaryKeyContacts, rawQueries } from "../utils/constant";
 import { IAccount, IUpdateAccount, AccountAttributes } from "../utils/types";
 import { errorLog, getTableSchemaByEntity, logMessage, uploadToAzureBlob } from "../utils/helpers";
 import SchemaService from "./schemaService";
-import { models } from "../models";
+import { Account } from "../models/accountModel";
+import { Country } from "../models/countryModel";
+import { Currency } from "../models/currencyModel";
+import { Industry } from "../models/industryModel";
+import { AccountFiscalSummary } from "../models/accountFiscalSummaryModel";
 import Decimal from "decimal.js";
 import { States } from "../models/stateModel";
 import currency from "currency.js";
 import { Status } from "../models/statusModel";
 import { initSequelize } from "../config/maindbDataSource";
-
-const { Account, Country, Currency, Industry, AccountFiscalSummary } = models;
 
 class AccountService {
   private accountRepository: typeof Account | null;
@@ -67,6 +69,9 @@ class AccountService {
     data?: { account: any; count: number };
   }> {
     try {
+      logMessage(
+        `accountList params: page=${page}, limit=${limit}, search=${search}, sortBy=${sortBy}, sortOrder=${sortOrder}, fiscalYear=${fiscalYear}, userId=${userId}, filters=${JSON.stringify(filters)}, globalFilters=${JSON.stringify(globalFilters)}`
+      );
       const repository = this.getAccountRepository();
       const userGroupType = await this.schemaService.getUserGroupType(userId);
       const isCustomGlobal = userGroupType === "DEFAULT";
@@ -342,7 +347,6 @@ class AccountService {
         data: {
           account: {data: updatedAccount.data},
           count: !hasKeyContactFilter ? totalCount : updatedAccount?.total,
-      //count: updatedAccount.total
         },
       };
     } catch (err) {
@@ -558,6 +562,9 @@ class AccountService {
     data?: { account: any };
   }> {
      try {
+      logMessage(
+        `exportAccountList params: sortBy=${sortBy}, sortOrder=${sortOrder}, fiscalYear=${fiscalYear}, userId=${userId}, filters=${JSON.stringify(filters)}, globalFilters=${JSON.stringify(globalFilters)}`  
+      );
       const repository = this.getAccountRepository();
       const userGroupType = await this.schemaService.getUserGroupType(userId);
       const isCustomGlobal = userGroupType === "DEFAULT";
@@ -896,7 +903,7 @@ class AccountService {
           // Replace "0.00" in pattern with our real number
           return pattern.replace("0.00", formattedNumber);
         } catch (error) {
-          console.error("Error formatting number:", error);
+         errorLog("formatNumberForExport", error instanceof Error ? error.message : String(error));
           return "-";
         }
       };
@@ -1051,6 +1058,7 @@ class AccountService {
         },
       };
     } catch (err) {
+      errorLog("Error in exportAccountList", err instanceof Error ? err.message : String(err));
       return this.throwServiceError(err as Error);
     }
   }
@@ -1066,6 +1074,7 @@ class AccountService {
     data?: { account: any };
   }> {
     try {
+      logMessage(`createAccount params: userId=${userId}, accountData=${JSON.stringify(accountData)}`);
       const repository = this.getAccountRepository();
       let parent_account = null;
       const {
@@ -1253,7 +1262,7 @@ class AccountService {
         },
       };
     } catch (err) {
-      console.error(err);
+      errorLog("createAccount", err instanceof Error ? err.message : String(err));
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
@@ -1265,6 +1274,7 @@ class AccountService {
     account_number: string,
     account_rid: string
   ) {
+    logMessage(`insertClientTemplateDetails params: account_number=${account_number}, account_rid=${account_rid}`);
     const entityTypes = [
       "resource",
       "resource_cost",
@@ -1295,7 +1305,7 @@ class AccountService {
           account_rid
         );
       } catch (error) {
-        console.error(`Error processing entity "${entity}":`, error);
+        errorLog("insertClientTemplateDetails", `Error processing entity "${entity}": ${error instanceof Error ? error.message : String(error)}`);
         throw error; // Propagate the error if needed
       }
     }
@@ -1311,6 +1321,7 @@ class AccountService {
     data?: { affectedCounts: number };
   }> {
     try {
+      logMessage(`updateAccount params: userId=${userId}, accountData=${JSON.stringify(accountData)}`);
       const repository = this.getAccountRepository();
       const {
         account_rid,
@@ -1516,6 +1527,7 @@ class AccountService {
         },
       };
     } catch (err) {
+      errorLog("updateAccount", err instanceof Error ? err.message : String(err));
       if (err instanceof UniqueConstraintError) {
         return {
           statusCode: HttpStatus.BAD_REQUEST,
@@ -1548,6 +1560,7 @@ class AccountService {
         attributes: ["rid", "account_name"],
         order: [["account_name", "ASC"]],
       });
+      logMessage(`Fetched ${globalAccount.length} global accounts`);
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -1557,6 +1570,7 @@ class AccountService {
         },
       };
     } catch (err) {
+      errorLog("globalAccounts", err instanceof Error ? err.message : String(err));
       return this.throwServiceError(err as Error);
     }
   }
@@ -1568,6 +1582,7 @@ class AccountService {
     data?: { accountById: any; accountDetails: any };
   }> {
     try {
+      logMessage(`accountById params: account_id=${account_id}`);
       const repository = this.getAccountRepository();
       let accountById = await repository.findOne({
         where: { rid: account_id },
@@ -1740,6 +1755,7 @@ class AccountService {
         },
       };
     } catch (err) {
+      errorLog("accountById", err instanceof Error ? err.message : String(err));
       return this.throwServiceError(err as Error);
     }
   }
@@ -1762,6 +1778,7 @@ class AccountService {
         },
       };
     } catch (err) {
+      errorLog("getKeyContactRoles", err instanceof Error ? err.message : String(err));
       return this.throwServiceError(err as Error);
     }
   }
@@ -1782,6 +1799,7 @@ class AccountService {
 
     try {
       // Fetch created_by user name if ID exists
+      logMessage(`fetchUserNames params: userIds=${JSON.stringify(userIds)}`);
       if (userIds.created_by) {
         const [createdByUser] = await this.schemaService.fetchUserNames(
           userIds.created_by
@@ -1801,7 +1819,7 @@ class AccountService {
         }
       }
     } catch (error) {
-      console.error("Error fetching user names:", error);
+      errorLog("fetchUserNames", error instanceof Error ? error.message : String(error));
       // Return empty strings if there's an error
     }
 
@@ -1847,6 +1865,7 @@ class AccountService {
         },
       };
     } catch (err) {
+      errorLog("listAllAccounts", err instanceof Error ? err.message : String(err));  
       return this.throwServiceError(err as Error);
     }
   }
@@ -1867,6 +1886,8 @@ class AccountService {
     try {
       const userGroupType = await this.schemaService.getUserGroupType(userId);
       const isCustomGlobal = userGroupType === "DEFAULT";
+      logMessage(`listGlobalAccounts params: userId=${userId}, page=${page}, limit=${limit}, sortBy=${sortBy}, sortOrder=${sortOrder}, isCustomGlobal=${isCustomGlobal}, globalFilters=${JSON.stringify(globalFilters)},userGroupType=${userGroupType} `);
+
       if (!userId) {
         return {
           statusCode: HttpStatus.SUCCESS,
@@ -1996,6 +2017,7 @@ class AccountService {
         },
       };
     } catch (err) {
+      errorLog("listGlobalAccounts", err instanceof Error ? err.message : String(err));
       return this.throwServiceError(err as Error);
     }
   }
@@ -2416,8 +2438,6 @@ class AccountService {
         }
       }
     }
-    console.log(parentWhereClause);
-    console.log(childWhereClause);
     return {
       parentWhereClause,
       childWhereClause,

@@ -13,6 +13,7 @@ import { ResourceType } from "../models/resourceType";
 import { SkillLevel } from "../models/skillLevel";
 import { Status } from "../models/statusModel";
 import { initSequelize } from "../config/maindbDataSource";
+import { errorLog } from "../utils/helpers";
 class GeoDataService {
   /**
    * Fetches a list of countries from the database.
@@ -333,7 +334,6 @@ class GeoDataService {
         },
         order: [["status_name", "ASC"]] 
       });
-      console.log(status)
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -343,7 +343,7 @@ class GeoDataService {
         },
       };
     } catch (err) {
-      console.log(err)
+      errorLog("Error fetching status:", (err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }

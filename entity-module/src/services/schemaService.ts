@@ -4095,6 +4095,39 @@ class SchemaService {
       );
     }
   }  
+  async getSubscriptionDetailsByProjectId(parentaccountId:string,schemaName:string,accountId:string) {
+    try {
+     let schemaNameParent = `trd365_${schemaName.replace(/\D/g, "")}`;
+     const query = rawQueries.fetchAccountInfo(schemaNameParent,accountId);
+     const sequelize = await initOrgSequelize();
+     const users: any = await sequelize.query(query, {
+       replacements: { account_rid: accountId },
+       type: "SELECT",
+     });
+     const parentquery = rawQueries.fetchAccountInfo(schemaNameParent, parentaccountId);
+     const parentSubscriptioninfo: any = await sequelize.query(parentquery, {
+       replacements: { accountId: parentaccountId },
+       type: "SELECT",
+     });
+      if(parentSubscriptioninfo && parentSubscriptioninfo.length > 0)
+      {
+        const parentDetails = parentSubscriptioninfo[0];
+        const isSubscriptionCreated = Boolean(
+        parentDetails.subscription_created &&
+        parentDetails.tenant_id &&
+        parentDetails.client_id &&
+        parentDetails.client_secret);
+        if (Array.isArray(users) && users.length > 0) {
+      return  isSubscriptionCreated;
+      }
+      }else{
+        if (Array.isArray(users) && users.length > 0) {
+        return false;
+        }
+      }
+    } catch (err) {
+      return false
+    }
+  }
 }
-
 export default SchemaService;

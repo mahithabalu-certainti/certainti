@@ -9,7 +9,7 @@ import {
   R_NUMBER_PREFIX,
   rawQueries,
 } from "../utils/constant";
-import { decryptClientSecret, getTableSchemaByEntity } from "../utils/helpers";
+import { decryptClientSecret, errorLog, getTableSchemaByEntity, logMessage } from "../utils/helpers";
 import {
   IAccount,
   IUpdateAccount,
@@ -36,7 +36,7 @@ class SchemaService {
 
       return result[0];
     } catch (error) {
-      console.error("Error fetching key contact role:", error);
+      errorLog("Error fetching key contact role:", (error as Error).message);
       throw new Error("Failed to fetch key contact role");
     }
   }
@@ -48,7 +48,7 @@ class SchemaService {
       await this.grantAllReadOnlyAccessToSchema(schema_name, sequelize);  
       await this.createAccountTables(account_number);
     } catch (err) {
-      console.log(err);
+      errorLog("Error creating schema and tables:", (err as Error).message);
       throw new Error("Error creating schema and tables.");
     }
   }
@@ -122,7 +122,7 @@ class SchemaService {
 
       await transaction.commit();
     } catch (Err) {
-      console.log("Table createng err", Err);
+     errorLog("Error creating account tables:", (Err as Error).message);
     }
   }
 
@@ -2695,8 +2695,8 @@ private async createInteractionTable(
           }
         }
       }
-    } catch (Error) {
-      console.log(Error);
+    } catch (err) {
+     errorLog("Error in manageKeyContacts: ", (err as Error).message);
     }
   }
   async updateAccountDetails(
@@ -2776,7 +2776,7 @@ private async createInteractionTable(
       });
       if(parentSubscriptioninfo && parentSubscriptioninfo.length > 0)
       {
-        console.log("parentSubscriptioninfo",parentSubscriptioninfo);
+       logMessage("Parent Subscription Info: " + JSON.stringify(parentSubscriptioninfo));
          const parentDetails = parentSubscriptioninfo[0];
         
         const isSubscriptionCreated = Boolean(
@@ -2838,7 +2838,7 @@ private async createInteractionTable(
 
       return users;
     } catch (err) {
-      console.log("Errr ", err);
+      errorLog("Error in fetchAccountDetails: ", (err as Error).message);
       throw new Error("Error retrieving account details");
     }
   }
@@ -2976,7 +2976,7 @@ private async createInteractionTable(
         }
       );
     } catch (error) {
-      console.error("Error updating key contact details:", error);
+      errorLog("Error updating key contact details:", (error as Error).message);
       throw error;
     }
   }
@@ -3018,7 +3018,7 @@ private async createInteractionTable(
         }
       );
     } catch (error) {
-      console.error("Error inserting key contact details:", error);
+      errorLog("Error inserting key contact details:", (error as Error).message);
       throw error;
     }
   }
@@ -3143,9 +3143,9 @@ private async createInteractionTable(
                   { replacements: { accountRids }, type: "SELECT" }
                 );
               } catch (error) {
-                console.error(
+                errorLog(
                   `Key contacts query failed for schema ${schema}:`,
-                  error
+                  (error as Error).message
                 );
                 return [];
               }
@@ -3175,9 +3175,9 @@ private async createInteractionTable(
                   { replacements: { accountRids }, type: "SELECT" }
                 );
               } catch (error) {
-                console.warn(
+                errorLog(
                   `Fiscal data skipped for schema ${schema}:`,
-                  error
+                  (error as Error).message
                 );
                 return [];
               }
@@ -3504,7 +3504,7 @@ private async createInteractionTable(
                 type: "SELECT",
               });
             } catch (error) {
-              console.warn(`Fiscal data skipped for schema ${schema}:`, error);
+              errorLog(`Fiscal data skipped for schema ${schema}:`, (error as Error).message);
               return [];
             }
           }
@@ -3580,11 +3580,10 @@ private async createInteractionTable(
       );
 
       const orgLicenseInfo = result[0];
-
-      console.log("orgLicenseInfo", orgLicenseInfo);
       return orgLicenseInfo;
     } catch (err) {
-      throw new Error("Error enriching key roles: " + (err as Error).message);
+      errorLog("Error in getOrgInfo: ", (err as Error).message);
+      throw new Error("Error getOrgInfo: " + (err as Error).message);
     }
   }
 
@@ -3608,7 +3607,7 @@ private async createInteractionTable(
 
       return result;
     } catch (error) {
-      console.error("Error fetching attachments:", error);
+      errorLog("Error fetching attachments:", (error as Error).message);
       throw new Error("Failed to fetch attachments");
     }
   }
@@ -3712,7 +3711,7 @@ private async createInteractionTable(
       await transaction.commit();
     } catch (err) {
       await transaction.rollback();
-      console.error("Error creating user group with account mapping:", err);
+      errorLog("Error in createUserGroup:", (err as Error).message);
       throw err;
     }
   }
@@ -3736,7 +3735,7 @@ private async createInteractionTable(
       return results[0]?.group_type;
     } catch (error) {
       // Log the error for debugging
-      console.error("Error fetching user group type:", error);
+      errorLog("Error fetching user group type:", (error as Error).message);
       throw new Error("Failed to get user group type");
     }
   }
@@ -3810,7 +3809,7 @@ private async createInteractionTable(
 
       return Array.from(uniqueAccess.values());
     } catch (err) {
-      console.error("Error in getAccessibleAccountInfo:", err);
+      errorLog("Error in getAccessibleAccountInfo:", (err as Error).message);
       return [];
     }
   }

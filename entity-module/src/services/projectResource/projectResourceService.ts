@@ -226,7 +226,7 @@ export class ProjectResourceService {
             statusCode: HttpStatus.SUCCESS,
             message: HttpStatus.SUCCESS_MESSAGE,
             data: {
-              projectResource: projectResourceData,
+              projectResource: projectResource,
             },
           };
         }

@@ -21,9 +21,7 @@ class Configurations {
         format.colorize({ level: true }),
         format.timestamp(),
         format.printf(({ timestamp, level, message, method, url }) => {
-          return `[${level}] -> ${message} ${method} ${url ? `| ${url}` : ""} ${
-            timestamp ? `| ${timestamp}` : ""
-          }`;
+            return `[${level}] -> ${message}${method ? ` | ${method}` : ""}${url ? ` | ${url}` : ""}${timestamp ? ` | ${timestamp}` : ""}`;
         })
       ),
       transports: [new transports.Console()],

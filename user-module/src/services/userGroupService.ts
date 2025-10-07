@@ -8,7 +8,7 @@ import { initSequelize } from "../config/dataSource";
 import dayjs from "dayjs";
 import { UserGroupEntityAccess } from "../models/UserGroupEntityAccessModel";
 import moment from "moment";
-import { isValidTimezone } from "../utils/helpers";
+import { errorLog, isValidTimezone } from "../utils/helpers";
 import { ProjectAccessView } from "../utils/types";
 import { UserGroupType } from "../models/userGroupTypesModel";
 import { UserGroupAccountMapping } from "../models/userGroupAccountMappingModel";
@@ -120,7 +120,7 @@ async assignUserToUserGroups(
       created_by: loggedInUser,
     });
   } catch (err) {
-    console.error('Error assigning user to user groups:', err);
+    errorLog('Error assigning user to user groups:', (err as Error).message);
     throw err;
   }
 }
@@ -1254,7 +1254,7 @@ async getAccountGroups(
       data: { groups: groupsWithAccess, count:sortedGroups.length },
     };
   } catch (err: any) {
-    console.error("Error in getAccountGroups:", err);
+    errorLog("Error in getAccountGroups:", (err as Error).message);
     return this.throwServiceError(err as Error);
   }
 }
@@ -2131,7 +2131,7 @@ async listUserGroupById(
       },
     };
   } catch (err) {
-    console.error(err);
+    errorLog("Error in listUserGroupById:", (err as Error).message);
     return this.throwServiceError(err as Error);
   }
 }
@@ -2365,11 +2365,11 @@ async assignUsersToGroup({
       data: { added, removed },
     };
   } catch (err: any) {
-    console.error("Error assigning users to group:", err);
+    errorLog("Error assigning users to group:", (err as Error).message);
     return {
       statusCode: constants.FAILED,
       message: constants.FAILED_MESSAGE,
-      errorMessage: err.message,
+      errorMessage: (err as Error).message,
     };
   }
 }
@@ -2437,7 +2437,7 @@ async assignAccountsToGroup({
       data: { created, deleted },
     };
     } catch (err: any) {
-    console.error("Error assigning accounts to group:", err);
+    errorLog("Error assigning accounts to group:", (err as Error).message);
     return {
       statusCode: constants.FAILED,
       message: constants.FAILED_MESSAGE,
@@ -2618,11 +2618,11 @@ async assignEntityAccessToAccount({
       },
     };
   } catch (err: any) {
-    console.error("Error assigning access to entity:", err);
+    errorLog("Error assigning access to entity:", (err as Error).message);
     return {
       statusCode: constants.FAILED,
       message: constants.FAILED_MESSAGE,
-      errorMessage: err.message,
+      errorMessage: (err as Error).message,
     };
   }
 }
@@ -2757,7 +2757,7 @@ async assignUserAccessToAccount({
       },
     };
   } catch (err: any) {
-    console.error("Error assigning access to entity:", err);
+    errorLog("Error assigning access to entity:", (err as Error).message);
     return {
       statusCode: constants.FAILED,
       message: constants.FAILED_MESSAGE,
@@ -2847,11 +2847,11 @@ async assignGroupAccessToAccount({
       },
     };
   } catch (err: any) {
-    console.error("Error assigning access to entity:", err);
+    errorLog("Error assigning access to entity:", (err as Error).message);
     return {
       statusCode: constants.FAILED,
       message: constants.FAILED_MESSAGE,
-      errorMessage: err.message,
+      errorMessage: (err as Error).message,
     };
   }
 }
@@ -2934,7 +2934,7 @@ async  assignEntityAccessToProjects({
         }
         updated++;
       } catch (err) {
-        console.error(`Failed to assign access for project_rid: ${project_rid}`, err);
+        errorLog(`Failed to assign access for project_rid: ${project_rid}`, (err as Error).message);
         failed++;
       }
     }
@@ -2945,11 +2945,11 @@ async  assignEntityAccessToProjects({
       data: { updated, failed },
     };
   } catch (err: any) {
-    console.error("Error in bulk project access assignment:", err);
+    errorLog("Error in  assignEntityAccessToProjects:", (err as Error).message);
     return {
       statusCode: constants.FAILED,
       message: constants.FAILED_MESSAGE,
-      errorMessage: err.message,
+      errorMessage: (err as Error).message,
     };
   }
 }
@@ -3052,7 +3052,7 @@ async  getProjectsOfSelectedAccounts(
       },
     };
   } catch (error) {
-    console.error('Database query failed:', error);
+    errorLog('Database query failed:', (error as Error).message);
     return {
       statusCode: constants.FAILED,
       message: constants.FAILED_MESSAGE,
@@ -3199,7 +3199,7 @@ async  getProjectsWithUserAccessFlag(
       },
     };
   } catch (error) {
-    console.error('Database query failed:', error);
+    errorLog('Database query failed:', (error as Error).message);
     return {
       statusCode: constants.FAILED,
       message: constants.FAILED_MESSAGE,
@@ -3399,7 +3399,7 @@ async getUserGroupUsers(
     };
 
   } catch (err) {
-    console.error("Error in getUserGroupUsers:", err);
+    errorLog("Error in getUserGroupUsers:", (err as Error).message);
     return this.throwServiceError(err as Error);
   }
 }
