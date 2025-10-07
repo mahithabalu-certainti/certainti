@@ -4,6 +4,7 @@ import {
   PROJECT_TASK_REGEX,
   valueDisplay,
 } from '../../../../../common-utils';
+import TextButton from '../../../../../components/button/text-button';
 import {
   DependencyRowData,
   ListTableColumn,
@@ -21,7 +22,10 @@ export const formatDateToYMD = (dateString: string): string => {
 };
 export const getProjectTaskColumns = (
   onClick: (row: ProjectTaskListType) => void,
+  handleAttachmentClick: (rowId: string) => void,
   memoizedProjectResourceCode: SelectOption[],
+  TaskTypeOptions: SelectOption[],
+  classificationOptions: SelectOption[],
   permissionMapTaskTableColumn: Record<
     string,
     { read: boolean; edit: boolean }
@@ -77,6 +81,26 @@ export const getProjectTaskColumns = (
       !permissionMapTaskTableColumn?.['resource_name']?.edit,
   },
   {
+    id: 'task_name',
+    label: 'Task Name',
+    editId: 'task_name',
+    sortable: true,
+    sortId: 'task_name',
+    width: 160,
+    field: {
+      type: 'text',
+      required: false,
+      placeholder: 'Enter Task Name',
+    },
+    editable:
+      permissionMapTaskTableColumn?.['task_name']?.read &&
+      permissionMapTaskTableColumn?.['task_name']?.edit &&
+      !accountOrProjectInActive,
+    hide:
+      !permissionMapTaskTableColumn?.['task_name']?.read &&
+      !permissionMapTaskTableColumn?.['task_name']?.edit,
+  },
+  {
     id: 'resource_type_name',
     label: 'Resource Type',
     sortable: true,
@@ -95,6 +119,48 @@ export const getProjectTaskColumns = (
     hide:
       !permissionMapTaskTableColumn?.['project_resource_role']?.read &&
       !permissionMapTaskTableColumn?.['project_resource_role']?.edit,
+  },
+  {
+    id: 'task_type_name',
+    editId: 'task_type_rid',
+    sortId: 'task_type_name',
+    label: 'Task Type',
+    width: 140,
+    sortable: true,
+    editable:
+      permissionMapTaskTableColumn?.['task_type_rid']?.read &&
+      permissionMapTaskTableColumn?.['task_type_rid']?.edit &&
+      !accountOrProjectInActive,
+    hide:
+      !permissionMapTaskTableColumn?.['task_type_rid']?.read &&
+      !permissionMapTaskTableColumn?.['task_type_rid']?.edit,
+    field: {
+      type: 'select',
+      required: false,
+      placeholder: 'Choose Task Type',
+      options: TaskTypeOptions,
+    },
+  },
+  {
+    id: 'task_classification_name',
+    editId: 'task_classification_rid',
+    sortId: 'task_classification_name',
+    label: 'Classification  Type',
+    width: 180,
+    sortable: true,
+    editable:
+      permissionMapTaskTableColumn?.['task_classification_rid']?.read &&
+      permissionMapTaskTableColumn?.['task_classification_rid']?.edit &&
+      !accountOrProjectInActive,
+    hide:
+      !permissionMapTaskTableColumn?.['task_classification_rid']?.read &&
+      !permissionMapTaskTableColumn?.['task_classification_rid']?.edit,
+    field: {
+      type: 'select',
+      required: false,
+      placeholder: 'Choose Classification Type',
+      options: classificationOptions,
+    },
   },
   {
     id: 'start_date',
@@ -304,5 +370,21 @@ export const getProjectTaskColumns = (
     hide:
       !permissionMapTaskTableColumn?.['r_number']?.read &&
       !permissionMapTaskTableColumn?.['r_number']?.edit,
+  },
+  {
+    id: 'attachments',
+    sortId: 'attachments',
+    label: 'Attachments',
+    width: 100,
+    sortable: false,
+    // hide: !attachmentCreateEnable,
+    render: (row) => (
+      <TextButton
+        label='Add'
+        // disabled={accountInActive ? accountInActive : resourceInActive}
+        sx={{ width: '45px', minWidth: '45px', maxWidth: '45px', ml: 2.5 }}
+        onClick={() => handleAttachmentClick?.(row.rid ?? '')}
+      />
+    ),
   },
 ];

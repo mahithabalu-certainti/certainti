@@ -36,7 +36,10 @@ import { FilterType } from '../../../../admin/types';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { projectResourceFilterFields } from '../../project/project-details/project-resources/filters/filter-fields';
-import { useGetAppliedProjectResourceCode } from '../../../services/project-resources/project-resources-form-service';
+import {
+  useGetAppliedProjectResourceCode,
+  useGetProjectResourceTaskType,
+} from '../../../services/project-resources/project-resources-form-service';
 import {
   FieldOptionType,
   getAttachmentsFilterFields,
@@ -166,6 +169,34 @@ const TabPanel: React.FC<TabProps> = ({
   const { data: skillType } = useFetchResourceSkillType(value === 'skill');
   const { data: skillSubType } = useFetchResourceSkillSubType(
     currentSkillType.skill_type_rid
+  );
+  const type = 'type';
+  const { data: projectResourceTypeOptions } =
+    useGetProjectResourceTaskType(type);
+  const classification = 'classification';
+  const { data: projectResourceClassificationOptions } =
+    useGetProjectResourceTaskType(classification);
+  const memoizedProjectResourceType: { option: string; value: string }[] =
+    useMemo(
+      () =>
+        projectResourceTypeOptions?.data?.projectTaskTypes?.map((item) => ({
+          option: item.project_task_type_name,
+          value: item.rid,
+        })) || [],
+      [projectResourceTypeOptions?.data?.projectTaskTypes]
+    );
+  const memoizedProjectResourceClassification: {
+    option: string;
+    value: string;
+  }[] = useMemo(
+    () =>
+      projectResourceClassificationOptions?.data?.projectTaskClassification?.map(
+        (item) => ({
+          option: item.classification_name ?? '',
+          value: item.rid,
+        })
+      ) || [],
+    [projectResourceClassificationOptions?.data?.projectTaskClassification]
   );
   const memoizedResourceCode: { option: string; value: string }[] = useMemo(
     () =>
@@ -430,6 +461,8 @@ const TabPanel: React.FC<TabProps> = ({
       return projectTaskFilterFields(
         memoizedResourceCode,
         memoizedResourceType,
+        memoizedProjectResourceType,
+        memoizedProjectResourceClassification,
         permissionMapTaskTableColumn,
         fiscalDatesArg,
         memoizedResourceStatus
