@@ -1239,7 +1239,7 @@ if (includeDependencies) {
           field_id: faWithField.permission_field.rid,
           permission_id: faWithField.permission_field.module_permission_id,
           name: faWithField.permission_field.field_name,
-          desc: faWithField.permission_field.permission_desc,
+          desc: faWithField.permission_field.field_desc,
           read: faWithField.read,
           edit: faWithField.edit,
         });
