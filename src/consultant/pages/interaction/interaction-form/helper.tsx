@@ -638,3 +638,36 @@ export const getProjectColumns = (
       !permissionMap?.['r_number']?.read && !permissionMap?.['r_number']?.edit,
   },
 ];
+
+export const getPreviewProjectListColumn = () => [
+  {
+    id: 'project_code',
+    sortId: 'project_code',
+    label: 'Project Code',
+    sortable: false,
+  },
+  {
+    id: 'project_name',
+    sortId: 'project_name',
+    label: 'Project Name',
+    sortable: false,
+  },
+  {
+    id: 'fiscal_year',
+    sortId: 'fiscal_year',
+    label: 'Fiscal year',
+    sortable: false,
+  },
+  {
+    id: 'key_contact_name',
+    sortId: 'key_contact_name',
+    label: 'Key Contact Name',
+    sortable: false,
+  },
+  {
+    id: 'key_contact_email',
+    sortId: 'key_contact_email',
+    label: 'Key Contact Email',
+    sortable: false,
+  },
+];

@@ -64,7 +64,7 @@ const HistoryTable: React.FC<HistoryTableProps> = ({
           rid: question?.interaction_response_rid,
           question_seq_num: question?.question_id,
           notes: '',
-          is_mandatory: false,
+          is_mandatory: question?.is_mandatory,
           response_on_datetime: question?.response_on,
         })
       );
@@ -149,7 +149,7 @@ const HistoryTable: React.FC<HistoryTableProps> = ({
   const isModalOpen = Boolean(columnAnchorEl);
   const modalId = isModalOpen
     ? 'interaction-response-history-visibility-popover'
-    : undefined;
+    : undefined;    
 
   return (
     <div>

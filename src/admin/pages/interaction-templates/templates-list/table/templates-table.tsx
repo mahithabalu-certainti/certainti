@@ -92,9 +92,9 @@ export const TemplateTable: React.FC<ITemplateTableProps> = ({
         ?.fields?.some((field) => field.edit),
     [permission]
   );
-
+  const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const handleDownload = (row: InteractionTemplateList) => {
-    ExportInteractionTemplate(row.rid, row.template_name);
+    ExportInteractionTemplate(row.rid, row.template_name, systemTimezone);
   };
 
   const getRowId = (row: InteractionTemplateList) => row.rid;

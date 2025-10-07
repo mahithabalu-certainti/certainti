@@ -30,7 +30,11 @@ import {
   ActionItem,
   ShowHideTableColumn,
 } from '../../../../../components/table/types';
-import { EditIcon, InteractionDetailIcon } from '../../../../../assets';
+import {
+  DetailsKeyContactErrorIcon,
+  EditIcon,
+  InteractionDetailIcon,
+} from '../../../../../assets';
 import { getInteractionListColumns } from './columns';
 import {
   getInteractionFilterFields,
@@ -59,6 +63,7 @@ import { AccessRestricted } from '../../../../../components/account-restricted';
 import TableModal from '../../../../../components/table/model-table';
 import { getInteractionListModelColumns } from './modelColumns';
 import { useToast } from '../../../../../hooks';
+import { Box } from '@mui/material';
 
 const InteractionsTabs: OverviewTabs[] = [
   {
@@ -100,6 +105,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   const { accountid } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const interactionEnable = accountDetails?.accountDetails?.is_send_interaction;
 
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, string | number | boolean | string[]>
@@ -159,7 +165,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   const viewResponseHistory = !!responseHistory;
   const { successToast } = useToast();
   const sendInteraction = useSendInteraction();
-  const { data, isLoading, isError } = useInteractionList(
+  const { data, isLoading, isError, refetch } = useInteractionList(
     {
       page: currentPage + 1,
       limit: rowsPerPage,
@@ -177,7 +183,6 @@ const Interactions: React.FC<InteractionsProps> = ({
       !viewResponseHistory,
     refreshInteractions
   );
-
   const {
     data: modelTableData,
     isLoading: isModelDataLoading,
@@ -309,7 +314,13 @@ const Interactions: React.FC<InteractionsProps> = ({
             checkBoxMessage,
           };
         }) || [];
-
+      localStorage.setItem(
+        'currentRecipients',
+        JSON.stringify({
+          name: data?.keyContact?.key_contact_name || '',
+          email: data?.keyContact?.key_contact_email || '',
+        })
+      );
       setInteractionList(updatedInteractions);
       setSelectedRows([]);
       setClearSelectedRows((prev) => !prev);
@@ -491,7 +502,10 @@ const Interactions: React.FC<InteractionsProps> = ({
     {
       label: 'Reminder',
       variant: 'outlined' as const,
-      disabled: accountInActive || interactionList.length === 0,
+      disabled:
+        accountInActive ||
+        interactionList.length === 0 ||
+        !accountDetails?.accountDetails?.is_send_interaction,
       onClick: () => setReminderModalOpen(true),
       sx: { width: '80px', minWidth: '80px' },
       hide: viewResponseHistory,
@@ -593,9 +607,10 @@ const Interactions: React.FC<InteractionsProps> = ({
   };
   const handleReminderBtn = (data: InteractionList[]) => {
     // Map your input array into interactions
+
     const interactions = data.map((item) => ({
       interaction_rid: item.rid || '',
-      interaction_level: 'Account',
+      interaction_level: item.interaction_level_name || '',
       project_fiscal_rid: item.project_fiscal_rid || '',
     }));
 
@@ -608,7 +623,6 @@ const Interactions: React.FC<InteractionsProps> = ({
         email: '',
       },
     };
-
     sendInteraction.mutate(payload, {
       onSuccess: (response) => {
         successToast(response?.statusMessage);
@@ -620,7 +634,7 @@ const Interactions: React.FC<InteractionsProps> = ({
           sort_by: 'ASC',
           filter: {},
         });
-        // refetch();
+        refetch();
       },
     });
   };
@@ -639,152 +653,168 @@ const Interactions: React.FC<InteractionsProps> = ({
     : undefined;
 
   return (
-    <div className='w-full pt-2 pl-2 pr-4'>
-      <SectionTabPanel
-        tabs={InteractionsTabs}
-        filterMenu={filterFields}
-        filterVisibility={!viewDetails && !viewInteractionAttachment}
-        showFilter={showFilter}
-        contextKey='project-interactions'
-        appliedFilters={appliedFilters}
-        setAppliedFilters={setAppliedFilters}
-        setCurrentPage={setCurrentPage}
-        handleFilter={handleFilter}
-        handleSorting={handleSorting}
-        sortFilterCount={sortFilterCount}
-        setSortFilterCount={setSortFilterCount}
-        showRefresh={!viewDetails}
-        onRefreshClick={handleRefresh}
-        showSearch={
-          viewResponseHistory || (!viewDetails && !viewInteractionHistory)
-        }
-        searchDisabled={false}
-        searchPlaceholder='Search'
-        onSearch={(text) => setSearchText(text)}
-      />
-      {viewDetails && !viewResponseHistory ? (
-        <InteractionDetails
-          accountInActive={accountInActive}
-          handleBackClick={handleBackClick}
-          accountDetails={accountDetails}
-        />
-      ) : viewInteractionHistory ? (
-        <InteractionHistory
-          handleBackClick={handleBackClick}
-          appliedFilters={appliedFilters}
-          refresh={refreshInteractions}
-          setInteractionsParams={setInteractionsParams}
-        />
-      ) : viewInteractionAttachment ? (
-        <InteractionAttachment
-          handleBackClick={handleBackClick}
-          refresh={refreshInteractions}
-          searchValue={searchText}
-        />
-      ) : (
-        <>
-          <SectionHeader
-            title={
-              viewResponseHistory
-                ? `Interaction Response History ${interactionNumber}`
-                : 'Interaction'
-            }
-            titleIcon={
-              <InteractionDetailIcon
-                alt='financial-header-icon'
-                className={`w-7 h-7 p-1 bg-[#E25A32] ${viewResponseHistory ? 'rounded-[2px]' : 'rounded-full'}`}
-              />
-            }
-            count={viewResponseHistory ? count : totalItems}
-            showItemCount={interactionResponseId ? false : true}
-            showBackArrow={viewResponseHistory}
-            onBackClick={handleBackFromResponse}
-            buttons={headerButtons}
-          />
-          <div className='border border-[#CBD6E2]'>
-            {viewResponseHistory ? (
-              <HistoryTable
-                setCount={setCount}
-                setColumnAnchorEl={setColumnAnchorEl}
-                columnAnchorEl={columnAnchorEl}
-                searchValue={searchText}
-              />
-            ) : (
-              <>
-                <ManageColumnsPopover
-                  anchorEl={columnAnchorEl}
-                  open={isModalOpen}
-                  popoverId={modalId}
-                  onClose={handlePopoverClose}
-                  columns={interactionColumns}
-                  onColumnsChange={handleColumnsChange}
-                  columnRestrictions={RestrictedColumns}
-                />
-                <ListTable
-                  data={interactionList}
-                  columns={visibleColumns}
-                  getRowId={getRowId}
-                  hoverHighlight={false}
-                  tableStyle={{
-                    borderBottom: '1px solid #CBD6E2',
-                    height: '100%',
-                    maxHeight: 'calc(100vh - 330px)',
-                    overflow: 'auto',
-                  }}
-                  stickyHeader={true}
-                  stickyColumnsCount={1}
-                  selectable={true}
-                  onSelectionChange={handleSelectionChange}
-                  actionWidth={80}
-                  actionDisplayMode='dropdown'
-                  actionMenuItems={actionButtons}
-                  loading={isLoading}
-                  error={isError ? 'Failed to load data' : undefined}
-                  rowsPerPageOptions={[25, 50, 100]}
-                  rowsPerPage={rowsPerPage}
-                  currentPage={currentPage}
-                  totalItems={totalItems}
-                  onPageChange={handlePageChange}
-                  onRowsPerPageChange={handleRowsPerPageChange}
-                  sortBy={sortField}
-                  sortOrder={sortBy}
-                  onSort={handleSortRequest}
-                  clearSelectedRows={clearSelectedRows}
-                />
-              </>
-            )}
-            <SendInteractionModal
-              isOpen={sendModalOpen}
-              onClose={() => setSendModalOpen(false)}
-              selectedRows={selectedRows}
-              onSuccessRefetch={handleRefresh}
-              interaction_level='Account'
-            />
-            <TableModal
-              title='Reminder Interaction'
-              contextKey='Account-interactions'
-              isOpen={reminderModalOpen}
-              onClose={handleClose}
-              data={modelTableData?.interactions}
-              loading={isModelDataLoading}
-              isError={isModelDataError}
-              visibleColumns={interactionModelColumn}
-              totalCount={modelTableData?.count || 0}
-              tableParms={modelTableParms}
-              setTableParms={setModdelTableParms}
-              handleSend={handleReminderBtn}
-              handleFilter={handleModelFilter}
-              onRefreshClick={handleRefreshModel}
-              saveBtnLoading={sendInteraction.isPending}
-              showRefresh={true}
-              filterVisibility={modelShowFilter}
-              showFilter={true}
-              filterMenu={modelFIlterFields}
-              emptyMessage='No interaction available to send reminder'
-            />
-          </div>
-        </>
+    <div className='w-full'>
+      {!interactionEnable && (
+        <Box className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
+          <Box>
+            <DetailsKeyContactErrorIcon alt='key-contact' />
+          </Box>
+          <Box>
+            <span className='font-bold mr-1'>Interaction Details </span> -{' '}
+            <span className='ml-1 font-medium'>
+              {' '}
+              {`Global account email configuration missing. Please set it to enable interactions and reminders.`}
+            </span>
+          </Box>
+        </Box>
       )}
+      <div className='w-full pt-2 pl-2 pr-4'>
+        <SectionTabPanel
+          tabs={InteractionsTabs}
+          filterMenu={filterFields}
+          filterVisibility={!viewDetails && !viewInteractionAttachment}
+          showFilter={showFilter}
+          contextKey='project-interactions'
+          appliedFilters={appliedFilters}
+          setAppliedFilters={setAppliedFilters}
+          setCurrentPage={setCurrentPage}
+          handleFilter={handleFilter}
+          handleSorting={handleSorting}
+          sortFilterCount={sortFilterCount}
+          setSortFilterCount={setSortFilterCount}
+          showRefresh={!viewDetails}
+          onRefreshClick={handleRefresh}
+          showSearch={
+            viewResponseHistory || (!viewDetails && !viewInteractionHistory)
+          }
+          searchDisabled={false}
+          searchPlaceholder='Search'
+          onSearch={(text) => setSearchText(text)}
+        />
+        {viewDetails && !viewResponseHistory ? (
+          <InteractionDetails
+            accountInActive={accountInActive}
+            handleBackClick={handleBackClick}
+            accountDetails={accountDetails}
+          />
+        ) : viewInteractionHistory ? (
+          <InteractionHistory
+            handleBackClick={handleBackClick}
+            appliedFilters={appliedFilters}
+            refresh={refreshInteractions}
+            setInteractionsParams={setInteractionsParams}
+          />
+        ) : viewInteractionAttachment ? (
+          <InteractionAttachment
+            handleBackClick={handleBackClick}
+            refresh={refreshInteractions}
+            searchValue={searchText}
+          />
+        ) : (
+          <>
+            <SectionHeader
+              title={
+                viewResponseHistory
+                  ? `Interaction Response History ${interactionNumber}`
+                  : 'Interaction'
+              }
+              titleIcon={
+                <InteractionDetailIcon
+                  alt='financial-header-icon'
+                  className={`w-7 h-7 p-1 bg-[#E25A32] ${viewResponseHistory ? 'rounded-[2px]' : 'rounded-full'}`}
+                />
+              }
+              count={viewResponseHistory ? count : totalItems}
+              showItemCount={interactionResponseId ? false : true}
+              showBackArrow={viewResponseHistory}
+              onBackClick={handleBackFromResponse}
+              buttons={headerButtons}
+            />
+            <div className='border border-[#CBD6E2]'>
+              {viewResponseHistory ? (
+                <HistoryTable
+                  setCount={setCount}
+                  setColumnAnchorEl={setColumnAnchorEl}
+                  columnAnchorEl={columnAnchorEl}
+                  searchValue={searchText}
+                />
+              ) : (
+                <>
+                  <ManageColumnsPopover
+                    anchorEl={columnAnchorEl}
+                    open={isModalOpen}
+                    popoverId={modalId}
+                    onClose={handlePopoverClose}
+                    columns={interactionColumns}
+                    onColumnsChange={handleColumnsChange}
+                    columnRestrictions={RestrictedColumns}
+                  />
+                  <ListTable
+                    data={interactionList}
+                    columns={visibleColumns}
+                    getRowId={getRowId}
+                    hoverHighlight={false}
+                    tableStyle={{
+                      borderBottom: '1px solid #CBD6E2',
+                      height: '100%',
+                      maxHeight: 'calc(100vh - 330px)',
+                      overflow: 'auto',
+                    }}
+                    stickyHeader={true}
+                    stickyColumnsCount={1}
+                    selectable={true}
+                    onSelectionChange={handleSelectionChange}
+                    actionWidth={80}
+                    actionDisplayMode='dropdown'
+                    actionMenuItems={actionButtons}
+                    loading={isLoading}
+                    error={isError ? 'Failed to load data' : undefined}
+                    rowsPerPageOptions={[25, 50, 100]}
+                    rowsPerPage={rowsPerPage}
+                    currentPage={currentPage}
+                    totalItems={totalItems}
+                    onPageChange={handlePageChange}
+                    onRowsPerPageChange={handleRowsPerPageChange}
+                    sortBy={sortField}
+                    sortOrder={sortBy}
+                    onSort={handleSortRequest}
+                    clearSelectedRows={clearSelectedRows}
+                  />
+                </>
+              )}
+              <SendInteractionModal
+                isOpen={sendModalOpen}
+                onClose={() => setSendModalOpen(false)}
+                selectedRows={selectedRows}
+                onSuccessRefetch={handleRefresh}
+                interaction_level='Account'
+              />
+              <TableModal
+                title='Reminder Interaction'
+                contextKey='Account-interactions'
+                isOpen={reminderModalOpen}
+                onClose={handleClose}
+                data={modelTableData?.interactions}
+                loading={isModelDataLoading}
+                isError={isModelDataError}
+                visibleColumns={interactionModelColumn}
+                totalCount={modelTableData?.count || 0}
+                tableParms={modelTableParms}
+                setTableParms={setModdelTableParms}
+                handleSend={handleReminderBtn}
+                handleFilter={handleModelFilter}
+                onRefreshClick={handleRefreshModel}
+                saveBtnLoading={sendInteraction.isPending}
+                showRefresh={true}
+                filterVisibility={modelShowFilter}
+                showFilter={true}
+                filterMenu={modelFIlterFields}
+                emptyMessage='No interaction available to send reminder'
+              />
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 };

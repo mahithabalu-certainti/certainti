@@ -118,6 +118,7 @@ export const ProjectTask = ({
   const [sortField, setSortField] = useState<string>('resource_code');
   const [rowsPerPage, setRowsPerPage] = useState(100);
   const [, setProjectResData] = useState<ProjectTaskListType | null>(null);
+  const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
   const [showProjectTaskDetails, setShowProjectTaskDetails] =
     useState<boolean>(false);
   const [searchText, setSearchText] = useState('');
@@ -303,7 +304,15 @@ export const ProjectTask = ({
       disabled: accountOrProjectInActive,
     },
   ];
-
+  const handleAttachmentClick = (rowId: string) => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('attachment_entity', 'project_task');
+    navigate({
+      pathname: location.pathname,
+      search: newParams.toString(),
+    });
+    setSelectedRowId(rowId);
+  };
   const headerButtons = [
     {
       label: 'Add Attachment',
@@ -464,6 +473,7 @@ export const ProjectTask = ({
 
   const projectTaskColumns = getProjectTaskColumns(
     handleProjectTaskClick,
+    handleAttachmentClick,
     memoizedProjectResourceCode,
     memoizedProjectResourceType,
     memoizedProjectResourceClassification,
@@ -631,7 +641,7 @@ export const ProjectTask = ({
         appliedFilters={appliedFilters}
         setAppliedFilters={setAppliedFilters}
         showFilter={showFilter}
-        filterVisibility={filterShow}
+        filterVisibility={filterShow && !showUploads}
         handleFilter={handleFilter}
         setCurrentPage={setCurrentPage}
         resourceTab={projectsTabs}
@@ -644,13 +654,13 @@ export const ProjectTask = ({
         projectResourceProjectID={projectID}
         permissionMapTaskTableColumn={permissionMapTaskTableColumn}
         fiscalDatesArg={fiscalDatesArg}
-        showSearch={viewDetails ? false : true}
+        showSearch={viewDetails ? false : !showUploads}
         onSearch={(text) => setSearchText(text)}
       />
       {showUploads ? (
         <Uploads
           accountId={accountID}
-          attachID={taskId}
+          attachID={taskId || selectedRowId}
           onUploadSuccess={taskDetailPageRefresh}
         />
       ) : (

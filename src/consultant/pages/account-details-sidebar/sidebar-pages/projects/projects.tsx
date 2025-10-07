@@ -408,6 +408,9 @@ const Projects: React.FC<ProjectsProps> = ({
       accountID: project?.account_rid ?? '',
       source: 'account',
       currency_rid: project?.currency_rid ?? '',
+      send_interaction: accountDetails?.accountDetails?.is_send_interaction
+        ? 'true'
+        : 'false',
     });
 
     navigate(`${path}?${queryParams.toString()}`);

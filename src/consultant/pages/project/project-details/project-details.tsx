@@ -568,6 +568,7 @@ export const ProjectDetails = () => {
             accountInActive={accountInActive || projectInActive}
             projectDetails={projectData}
             setInteractionsParams={setInteractionsParams}
+            isSendInteraction={data?.data?.project?.is_send_interaction}
           />
         );
       case 'technicalSummary':

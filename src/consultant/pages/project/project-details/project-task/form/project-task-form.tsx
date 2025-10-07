@@ -305,7 +305,10 @@ const ProjectTaskForm: React.FC = () => {
   };
 
   const isFormLoading =
-    resCodeLoading || taskTypeLoading || classificationLoading;
+    resCodeLoading ||
+    getProjectTask.isLoading ||
+    taskTypeLoading ||
+    classificationLoading;
 
   const formConfig = ProjectTaskFormData(
     memoizedProjectResourceCode,

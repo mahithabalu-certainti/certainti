@@ -97,8 +97,8 @@ export const projectResourceFilterFields = (
     value: 'qre_percent',
     type: 'text',
     hide:
-      !resourcepermissionMap?.['qre_percent']?.read &&
-      !resourcepermissionMap?.['qre_percent']?.edit,
+      !resourcepermissionMap?.['rd_percent_final']?.read &&
+      !resourcepermissionMap?.['rd_percent_final']?.edit,
   },
   {
     name: 'QRE Final',

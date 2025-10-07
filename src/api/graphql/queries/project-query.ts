@@ -272,6 +272,11 @@ export const UPDATE_PROJECT_TASK = gql`
         rid
         status_rid
         status_name
+        task_name
+        task_type_name
+        task_type_rid
+        task_classification_name
+        task_classification_rid
       }
     }
   }
