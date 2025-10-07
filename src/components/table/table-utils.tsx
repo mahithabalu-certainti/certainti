@@ -329,7 +329,11 @@ export const renderFields = <T extends RowData>({
 
       return (
         <div onKeyDown={handleKeyDown}>
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <LocalizationProvider dateAdapter={AdapterDayjs}
+          localeText={{
+            fieldMonthPlaceholder: (params) =>
+              params.contentType === 'digit' ? 'MM' : params.format,
+          }}>
             <DatePicker
               value={editingCell.value ? dayjs(editingCell.value) : null}
               onChange={(newValue) => {

@@ -433,7 +433,11 @@ export const DateFilterControl: React.FC<{
               </Select>
             </FormControl>
           ) : (
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <LocalizationProvider dateAdapter={AdapterDayjs}
+            localeText={{
+              fieldMonthPlaceholder: (params) =>
+                params.contentType === 'digit' ? 'MM' : params.format,
+            }}>
               <DatePicker
                 name='from'
                 maxDate={maxDate ? dayjs(maxDate) : dayjs(today)}
@@ -497,7 +501,11 @@ export const DateFilterControl: React.FC<{
             </LocalizationProvider>
           ))}
         {isBetween && (
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <LocalizationProvider dateAdapter={AdapterDayjs}
+          localeText={{
+            fieldMonthPlaceholder: (params) =>
+              params.contentType === 'digit' ? 'MM' : params.format,
+          }}>
             <DatePicker
               name='to'
               maxDate={maxDate ? dayjs(maxDate) : dayjs(today)}

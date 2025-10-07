@@ -1559,7 +1559,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         })();
 
         return (
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <LocalizationProvider dateAdapter={AdapterDayjs} 
+          localeText={{
+            fieldMonthPlaceholder: (params) =>
+              params.contentType === 'digit' ? 'MM' : params.format,
+          }}>
             <DatePicker
               className={
                 'placeholder:text-[13px] placeholder:text-[#425A76] placeholder:border border-[#CBD6E2]' +
@@ -1633,16 +1637,15 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                         fontSize: '13px',
                         lineHeight: '21px',
                         pl: '11px',
-                        // '& ::placeholder': {
-                        //   color: '#7D98B6 !important',
-                        // },
+                        '& ::placeholder': {
+                          color: '#7D98B6 !important',
+                        },
                         color: 'black !important',
                         WebkitTextFillColor: 'black !important',
-
-                        // '&[value="YYYY-MM-DD"]': {
-                        //   color: '#7D98B6 !important',
-                        //   WebkitTextFillColor: '#7D98B6 !important',
-                        // },
+                        '&[value="YYYY-MM-DD"]': {
+                          color: '#7D98B6 !important',
+                          WebkitTextFillColor: '#7D98B6 !important',
+                        },
                       },
                       '&:hover .MuiOutlinedInput-notchedOutline': {
                         border: '1px solid #CBD6E2', // match default
@@ -1658,13 +1661,13 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                       },
                     },
                   },
-                  placeholder: field.placeholder,
+                  placeholder: field.placeholder, 
                   error: !!field.error,
                   // onBlur: (event) => {
-                  //   For cache typed data
+                  //   // For cache typed data
                   //   const value = event.target.value;
                   //   if (value !== 'YYYY-MM-DD') {
-                  //    For Avoid default data
+                  //   //  For Avoid default data
                   //     handleChange(value);
                   //   }
                   // },
@@ -1676,7 +1679,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       }
       case 'fiscalDate':
         return (
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <LocalizationProvider dateAdapter={AdapterDayjs}
+          localeText={{
+            fieldMonthPlaceholder: (params) =>
+              params.contentType === 'digit' ? 'MM' : params.format,
+          }}>
             <DatePicker
               className={
                 'placeholder:text-[13px] placeholder:text-[#425A76] placeholder:font-medium border border-[#CBD6E2]' +
