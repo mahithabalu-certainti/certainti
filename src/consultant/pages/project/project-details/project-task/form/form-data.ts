@@ -69,26 +69,43 @@ export const ProjectTaskFormData = (
           ),
           createTextField('task_name', 'Task Name', {
             required: false,
-            disabled: false,
             placeholder: 'Enter Task Name',
-            // hide:
-            //   isEditView &&
-            //   !permissionMap?.['created_datetime']?.read &&
-            //   !permissionMap?.['created_datetime']?.edit,
+            hide:
+              isEditView &&
+              !permissionMapTaskForm?.['task_name']?.read &&
+              !permissionMapTaskForm?.['task_name']?.edit,
+            disabled:
+              isEditView &&
+              permissionMapTaskForm?.['task_name']?.read &&
+              !permissionMapTaskForm?.['task_name']?.edit,
           }),
           createSelectField('task_type_rid', 'Task Type', {
             required: false,
             width: '140px',
-            placeholder: 'Choose Project Task Type',
+            placeholder: 'Choose Task Type',
             options: memoizedProjectResourceType,
-            disabled: false,
+            hide:
+              isEditView &&
+              !permissionMapTaskForm?.['task_type_rid']?.read &&
+              !permissionMapTaskForm?.['task_type_rid']?.edit,
+            disabled:
+              isEditView &&
+              permissionMapTaskForm?.['task_type_rid']?.read &&
+              !permissionMapTaskForm?.['task_type_rid']?.edit,
           }),
           createSelectField('task_classification_rid', 'Classification Type', {
             required: false,
             width: '140px',
-            placeholder: 'Choose Project Classification Type',
+            placeholder: 'Choose Classification Type',
             options: memoizedProjectResourceClassification,
-            disabled: false,
+            hide:
+              isEditView &&
+              !permissionMapTaskForm?.['task_classification_rid']?.read &&
+              !permissionMapTaskForm?.['task_classification_rid']?.edit,
+            disabled:
+              isEditView &&
+              permissionMapTaskForm?.['task_classification_rid']?.read &&
+              !permissionMapTaskForm?.['task_classification_rid']?.edit,
           }),
         ],
       },
