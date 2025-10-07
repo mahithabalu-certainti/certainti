@@ -1217,7 +1217,8 @@ export const setResourceSkillData = (
 
 export async function uploadToAzureBlob(
   file: Express.Multer.File,
-  account_id: string
+  account_id: string,
+  flag? : string
 ): Promise<{
   url: string;
   name: string;
@@ -1264,9 +1265,14 @@ export async function uploadToAzureBlob(
     const sanitizedBaseName = baseName.replace(/[^a-zA-Z0-9\-_]/g, ""); // More strict sanitization
 
     // Create unique blob name with timestamp
-    const timestamp = Date.now();
-    const blobName = `${account_id}/attachments/${timestamp}-${sanitizedBaseName}${originalExtension}`;
-
+    let timestamp = Date.now();
+    let blobName;
+    if(flag === "notes"){
+      blobName = `${account_id}/notes/${timestamp}-${sanitizedBaseName}${originalExtension}`;
+    } else {
+      blobName = `${account_id}/attachments/${timestamp}-${sanitizedBaseName}${originalExtension}`;
+    }
+    
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
 
     // Upload file with content type
