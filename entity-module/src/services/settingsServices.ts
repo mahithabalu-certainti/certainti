@@ -112,8 +112,26 @@ export default class SettingService {
         };
       }
     } else {
-      let subscriptionId = "";
-      if (data.support_email) {
+      let subscriptionId = fetchParent[0][0].subscription_id ?? "";
+      const fetchExistingSettings: any = await rawQueries.fetchSettings(
+        schemaName,
+        orgDb,
+        parentAccountID
+      );
+
+      const existingSettings = fetchExistingSettings[0];
+      let descyptedSecret = "";
+
+      if(existingSettings.client_secret){
+        descyptedSecret = await decryptClientSecret(existingSettings.client_secret);
+      }
+
+      if (data.support_email &&
+        data.support_email !== existingSettings.support_email &&
+        data.tenant_id !== existingSettings.tenant_id &&
+        data.client_id !== existingSettings.client_id &&
+        data.client_secret !== descyptedSecret
+      ) {
         try {
           subscriptionId = await this.validateAndCreateSubscription(
             data.tenant_id,
@@ -140,7 +158,7 @@ export default class SettingService {
           parentAccountID
         );
 
-        if(fetchExistingSettings && fetchExistingSettings.length > 0 && fetchParent[0][0]?.is_parent){
+        if(fetchExistingSettings && fetchExistingSettings.length > 0 && fetchParent[0][0]?.is_parent && !data.support_email){
           const settingsData = fetchExistingSettings[0];
           const {
             support_email: supportEmail,
@@ -162,6 +180,7 @@ export default class SettingService {
               descyptedSecret,
               supportEmail
             );
+            subscriptionId = "";
           }
         }
       }
