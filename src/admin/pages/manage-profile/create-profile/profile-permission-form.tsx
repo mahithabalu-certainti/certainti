@@ -467,11 +467,11 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
     if (!collectModulesRef.current.includes(module_id)) {
       collectModulesRef.current = collectModulesRef.current.concat(module_id);
     }
-    const moduelPermission = getPermissionsForModule(module_id);
-    if (!isEnabled && moduelPermission.length > 0) {
+    const modulePermission = getPermissionsForModule(module_id);
+    if (!isEnabled && modulePermission.length > 0) {
       // expand module and his permissions when disabled
       menuExpand(module_id, undefined, true);
-      moduelPermission.forEach((pem) => {
+      modulePermission.forEach((pem) => {
         menuExpand(pem?.permission_id as string, undefined, true);
       });
       mod['updatedByDependsOn'] = false; //Remove updatedByDependsOn flag when uncheck
@@ -748,20 +748,20 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
             // Disabled checkbox for Extended permission
             const isDisabled =
               menu.has_extended_permission === false && menu.is_enabled;
-            const isMenuHavChild = menu.modules.length > 0;
+            const isMenuHaveChild = menu.modules.length > 0;
             return (
               <div className='border-b border-[#CBD6E2]' key={i}>
                 <div
-                  className={`flex justify-between items-center px-4 py-2 bg-[#FCFCFC] hover:bg-[#F5F8FA] ${isMenuHavChild ? 'cursor-pointer' : ''}`}
+                  className={`flex justify-between items-center px-4 py-2 bg-[#FCFCFC] hover:bg-[#F5F8FA] ${isMenuHaveChild ? 'cursor-pointer' : ''}`}
                   onClick={
-                    isMenuHavChild
+                    isMenuHaveChild
                       ? (e) => menuExpand(menu.menu_id, e)
                       : undefined
                   }
                 >
                   <div className='w-[75%] text-[13px] text-[#425A76] flex items-center gap-2'>
                     <span
-                      className={`transform transition-transform duration-200 ${isMenuHavChild ? '' : 'opacity-60'}`}
+                      className={`transform transition-transform duration-200 ${isMenuHaveChild ? '' : 'opacity-60'}`}
                     >
                       <Suspense fallback={null}>
                         {isMenuExpand ? (
