@@ -6,6 +6,7 @@ import {
   ICreateProjectResource,
   ICreateProjectTask,
   ICreateResource,
+  IFetchNotesDetailsInput,
   IResourceCost,
   IResourceSkill,
   IUpdateProject,
@@ -16,6 +17,7 @@ import {
   IUpdateResourceCost,
   IUpdateResourceSkill,
 } from "../../utils/types";
+import { ICreateNotesSchema, IUpdateNotesSchema } from "../notes/notesSchemas";
 
 export interface IProjectGraphQlServices {
   inLineEditProject(data: any): Promise<{
@@ -925,6 +927,94 @@ exportListAccountLevelProjectCostFinancialHighlights(
 fetchRegions(data : any) : Promise <any>
 }
 
+export interface INotesService {
+   createNotes(
+    notesData: ICreateNotesSchema,
+    userId: string,
+    file: Express.Multer.File
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { notes: any };
+  }>;
+
+  getNotes(
+    userId: string,
+    attachmentLevel: string,
+    entityId: string,
+    accountRid: string,
+    page: number,
+    limit: number,
+    search: string,
+    filters: Record<string, any>,
+    sortBy: string,
+    sortOrder: string,
+    fiscalYear: number,
+    graphqlData: any
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { notes: any[]; totalCount: number };
+  }>;
+
+  exportNotes(
+    userId: string,
+    attachmentLevel: string,
+    entityId: string,
+    accountRid: string,
+    search: string,
+    filters: Record<string, any>,
+    sortBy: string,
+    sortOrder: string,
+    fiscalYear: number,
+    graphqlData: any
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { notes: any[] };
+  }>;
+
+  getNotesSummary(
+    userId: string,
+    page: number,
+    limit: number,
+    search: string,
+    filters: Record<string, any>,
+    globalFilters: Record<string, any>,
+    sortBy: string,
+    sortOrder: string,
+    fiscalYear: number
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { notes: any[]; totalCount: number };
+  }>;
+
+  exportNotesSummary(
+    userId: string,
+    search: string,
+    filters: Record<string, any>,
+    globalFilters: Record<string, any>,
+    sortBy: string,
+    sortOrder: string,
+    fiscalYear: number
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { notes: any[] };
+  }>;
+  getNotesDetailsById(data : IFetchNotesDetailsInput) : Promise<{
+    statusCode : number,
+    statusMessage : string,
+    data : any
+  }>
+  updateNotes (notesData : IUpdateNotesSchema, userId: string, file?: Express.Multer.File) : Promise<any>
+}
 export interface ITemplates {
   uploadTemplate(
     file: Express.Multer.File,
@@ -941,5 +1031,13 @@ export interface ITemplates {
     message: string;
     errorMessage?: string;
     data?: any;
+  }>;
+}
+export interface INotesGraphqlServices {
+  updateInlineNotes(data: any): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { notes: any };
   }>;
 }

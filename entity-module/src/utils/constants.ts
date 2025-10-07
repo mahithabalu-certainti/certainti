@@ -70,6 +70,9 @@ export const R_NUMBER_PREFIX = {
   PROJECT_TASK_FISCAL: "PTAF",
   PROJECT_TASK_TIMELINE: "PTAT",
   PROJECT_TASK_HISTORY: "PTAH",
+  NOTES : "NOT",
+  NOTES_TIMELINE : "NOTTI",
+  NOTES_SUMMARY : "NOTS"
 };
 
 export const STATUS_MESSAGE = {
@@ -150,7 +153,11 @@ export const STATUS_MESSAGE = {
   invalidCredentials: 'Provided Azure credentials are invalid or unusable',
   rdpercentPotentialmissing: "RD Percent Potential AI is missing",
   resCodePrjTaskSuccess : "ResourceCode for ProjectTask fetched successfully",
-  resCodeNotFound : "No ResourceCode found"
+  resCodeNotFound : "No ResourceCode found",
+  notesUpdatedSuccess : "Notes updated successfully",
+  noNotesRecordFound: "Notes not found",
+  notesIdMissing: "Notes RID missing",
+  notesFetchedSuccess : "Notes fetched successfully"
 };
 
 export const TYPES = {
@@ -958,6 +965,51 @@ export const rawQueries = {
   },
   fetchProjetClassificationQuery(){
     return `SELECT * FROM ${MAIN_SCHEMA_NAME}.project_task_classification`
+  },
+  updateNotesQuery(schemaName: string, getSetData: any, data: any) {
+    return `
+    UPDATE 
+        ${schemaName}.notes 
+    SET 
+        ${getSetData.data.join(",")}
+    WHERE
+        rid = '${data.rid}'
+        AND
+        account_rid = '${data.account_rid}'`;
+  },
+  updateNotesSummary(getSetData: any, data: any) {
+    return `
+          UPDATE
+              ${MAIN_SCHEMA_NAME}.notes_summary
+          SET
+              ${getSetData.data.join(",")}
+          WHERE
+              notes_rid = '${data.rid}'
+              AND
+              account_rid = '${data.account_rid}'
+          `;
+  },
+  findNotesDetails(schemaName: string, rid: string, account_rid: string) {
+    return `
+      SELECT * FROM ${schemaName}.notes WHERE rid = '${rid}' AND account_rid = '${account_rid}'`;
+  },
+  insertNotesTimeline(schemaName: string, data: any, latestData: any) {
+    return `
+          INSERT INTO ${schemaName}.notes_timeline
+          (created_by, modified_by, notes_rid, document_name, title, notes_owner, attach_to, attachment_level, event_type, event_status, event_name, event_datetime, descriptions)
+          VALUES
+          ('${data.userId}', '${data.userId}', '${latestData.rid}', '${latestData.document_name}', '${latestData.title.replace(
+      /'/g,
+      "''"
+    )}', '${latestData.notes_owner.replace(
+      /'/g,
+      "''"
+    )}', '${latestData.attach_to}',
+          '${latestData.attachment_level}', '${STATUS_MESSAGE.uiHandler}', '${STATUS_MESSAGE.success}', '${STATUS_MESSAGE.eventUpdate}', NOW(), '${latestData.descriptions.replace(
+      /'/g,
+      "''"
+    )}'
+          )`;
   },
 };
 
