@@ -8,7 +8,6 @@ export const NOTES_UPDATE = gql`
       statusMessage
       data {
         rid
-        notes_rid
         r_number
         created_datetime
         created_by

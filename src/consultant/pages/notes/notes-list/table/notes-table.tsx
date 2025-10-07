@@ -107,7 +107,7 @@ export const NotesTable: React.FC<NotesTableProps> = ({
     }));
   };
 
-  const getRowId = (row: NotesList) => row.rid;
+  const getRowId = (row: NotesList) => row?.notes_rid || '';
 
   const handleDownload = (documentUrl: string) => {
     if (!documentUrl) return;
@@ -122,7 +122,7 @@ export const NotesTable: React.FC<NotesTableProps> = ({
 
   const handleEdit = (row: NotesList) => {
     const path = generatePath(GLOBAL_NOTES_EDIT, {
-      noteId: row.rid,
+      noteId: row?.notes_rid || '',
     });
     const queryParams = new URLSearchParams({
       accountId: row?.account_rid || '',
@@ -184,11 +184,16 @@ export const NotesTable: React.FC<NotesTableProps> = ({
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
     const previousNotes = [...notesList];
     // Find account_id
-    const rowData = notesList.find((note) => note.rid === rowId);
+    const rowData = notesList.find((note) => note?.notes_rid === rowId);
 
     const updateData = updates.reduce<Record<string, FieldChangeValue>>(
       (acc, item) => {
-        acc[item.editId || item.columnId] = item.value;
+        let value = item.value;
+        if (item.columnId === 'fiscal_year' && typeof value === 'string') {
+          const numValue = Number(value);
+          value = !isNaN(numValue) ? numValue : value;
+        }
+        acc[item.editId || item.columnId] = value;
         return acc;
       },
       {
@@ -206,7 +211,7 @@ export const NotesTable: React.FC<NotesTableProps> = ({
         const updateNotes = result.data;
         setNotesList((prev) =>
           prev.map((note) => {
-            if (note.rid === updateNotes.rid) {
+            if (note?.notes_rid === updateNotes.rid) {
               return {
                 ...note,
                 ...updateNotes,

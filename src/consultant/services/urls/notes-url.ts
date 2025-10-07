@@ -46,8 +46,8 @@ export const NotesListURL = ({
   return `${baseUrl}?${searchParams.toString()}`;
 };
 
-export const createNoteUrl = () => `/api/notes/upload/note`;
-export const updateNoteUrl = () => `/api/notes/upload/note`;
+export const createNoteUrl = () => `/api/notes/upload/notes`;
+export const updateNoteUrl = () => `/api/notes/update`;
 
 export const NoteExportListURL = ({
   sortBy,

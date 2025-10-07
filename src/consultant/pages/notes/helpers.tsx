@@ -14,6 +14,13 @@ const textOptions: { option: string; value: string }[] = [
   { option: 'Contains', value: 'contains' },
 ];
 
+const nonReqTextfieldOptions: { option: string; value: string }[] = [
+  { option: 'Contains', value: 'contains' },
+  { option: 'Equals', value: 'equals' },
+  { option: 'Not Equals', value: 'not_equals' },
+  { option: 'Is Empty', value: 'is_empty' },
+];
+
 const enumOptions: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
   { option: 'Not Equals', value: 'not_equals' },
@@ -24,6 +31,14 @@ const dateOptions: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
   { option: 'Before', value: 'before' },
   { option: 'After', value: 'after' },
+  { option: 'Between', value: 'between' },
+];
+
+const numberOptions: { option: string; value: string }[] = [
+  { option: 'Equals', value: 'equals' },
+  { option: 'Not Equals', value: 'not_equals' },
+  { option: 'Less Than', value: 'less_than' },
+  { option: 'Greater Than', value: 'greater_than' },
   { option: 'Between', value: 'between' },
 ];
 
@@ -60,6 +75,18 @@ export const getNotesFilterFields =
         operatorOption: textOptions,
       },
       {
+        name: 'Related To ID',
+        value: 'attach_to',
+        type: 'text',
+        operatorOption: textOptions,
+      },
+      {
+        name: 'Related To Name',
+        value: 'attached_to',
+        type: 'text',
+        operatorOption: textOptions,
+      },
+      {
         name: 'Fiscal Year',
         value: 'fiscal_year',
         type: 'enum',
@@ -67,26 +94,44 @@ export const getNotesFilterFields =
         operatorOption: enumOptions,
       },
       {
+        name: 'Document Name',
+        value: 'document_name',
+        type: 'text',
+        operatorOption: textOptions,
+      },
+      {
+        name: 'Format',
+        value: 'format',
+        type: 'text',
+        operatorOption: textOptions,
+      },
+      {
+        name: 'Size',
+        value: 'size_in_mb',
+        type: 'number',
+        operatorOption: numberOptions,
+      },
+      {
         name: 'Created By',
-        value: 'created_by',
+        value: 'created_by_name',
         type: 'text',
         operatorOption: textOptions,
       },
       {
         name: 'Created On',
-        value: 'created_on',
+        value: 'created_datetime',
         type: 'date',
         operatorOption: dateOptions,
       },
       {
         name: 'Modified By',
-        value: 'modified_by',
+        value: 'modified_by_name',
         type: 'text',
-        operatorOption: textOptions,
+        operatorOption: nonReqTextfieldOptions,
       },
       {
         name: 'Modified On',
-        value: 'modified_on',
+        value: 'modified_datetime',
         type: 'date',
         operatorOption: dateOptions,
       },
@@ -95,8 +140,8 @@ export const getNotesFilterFields =
         value: 'sort_options',
         type: 'system-sort',
         options: [
-          { value: 'created_on_desc', option: 'Recently Created' },
-          { value: 'modified_on_desc', option: 'Recently Modified' },
+          { value: 'createdAt_desc', option: 'Recently Created' },
+          { value: 'modifiedAt_desc', option: 'Recently Modified' },
         ],
       },
     ];
@@ -137,6 +182,7 @@ export const getNotesTableColumns = (
   {
     id: 'title',
     sortId: 'title',
+    editId: 'title',
     label: 'Title',
     width: 220,
     sortable: true,
@@ -165,6 +211,7 @@ export const getNotesTableColumns = (
   {
     id: 'notes_owner',
     sortId: 'notes_owner',
+    editId: 'notes_owner',
     label: 'Note Owner',
     width: 180,
     sortable: true,
@@ -201,8 +248,8 @@ export const getNotesTableColumns = (
     id: 'attach_to',
     sortId: 'attach_to',
     label: 'Related To ID',
-    width: 180,
-    sortable: true,
+    width: 200,
+    sortable: false,
   },
   {
     id: 'attached_to',

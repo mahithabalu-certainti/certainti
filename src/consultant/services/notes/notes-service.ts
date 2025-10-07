@@ -1,42 +1,59 @@
-import { useQuery, UseQueryResult } from '@tanstack/react-query';
 import {
-  // NotesListResponse,
+  useMutation,
+  UseMutationOptions,
+  UseMutationResult,
+  useQuery,
+  UseQueryResult,
+} from '@tanstack/react-query';
+import {
+  NotesListResponse,
   NotesListURLParams,
   NotesList,
   NoteDetails,
   NotesListExportParams,
-  // NotesFormDataPayload,
-  // NoteDetailsResponse,
+  NoteDetailsResponse,
 } from '../../types/notes';
-// import { NotesListURL } from '../urls/notes-url';
 import { resourceServiceApi } from '../../../api/api';
-import {
-  NoteDetailsMockResponse,
-  NotesListMockResponse,
-} from '../../../admin/mockdata/notes-mock-data';
 import {
   createNoteUrl,
   NoteExportListURL,
+  NotesListURL,
   updateNoteUrl,
 } from '../urls/notes-url';
-import { useApiMutation } from '../../../api/mutation';
+
+const useApiMutationSericve = <T, V = void>(
+  endpoint: string,
+  method: 'post' | 'put' | 'patch' | 'delete' = 'post',
+  options?: UseMutationOptions<T, Error, V>
+): UseMutationResult<T, Error, V> => {
+  return useMutation<T, Error, V>({
+    mutationFn: async (data) => {
+      const isFormData = data instanceof FormData;
+
+      const response = await resourceServiceApi.request<T>({
+        url: endpoint,
+        method,
+        data,
+        headers: isFormData
+          ? { 'Content-Type': 'multipart/form-data' }
+          : { 'Content-Type': 'application/json' },
+      });
+
+      return response.data;
+    },
+    ...options,
+  });
+};
 
 export const fetchNotesList = async (
   params: NotesListURLParams
 ): Promise<{ notes: NotesList[]; count: number }> => {
-  console.log('Notes params', params);
-  // const response = await resourceServiceApi.get<NotesListResponse>(
-  //   NotesListURL(params)
-  // );
-  // return {
-  //   notes: response.data.data.notes,
-  //   count: response.data.data.totalCount,
-  // };
-  await new Promise((resolve) => setTimeout(resolve, 3000));
-
+  const response = await resourceServiceApi.get<NotesListResponse>(
+    NotesListURL(params)
+  );
   return {
-    notes: NotesListMockResponse.data.notes,
-    count: NotesListMockResponse.data.totalCount,
+    notes: response.data.data.notes,
+    count: response.data.data.totalCount,
   };
 };
 
@@ -74,15 +91,11 @@ const fetchNoteDetails = async (
   entityId: string,
   noteId: string
 ): Promise<NoteDetails> => {
-  // const response = await resourceServiceApi.get<NoteDetailsResponse>(
-  //   `/api/notes/detail/${entityId}/${noteId}`
-  // );
+  const response = await resourceServiceApi.get<NoteDetailsResponse>(
+    `/api/notes/list/details?account_rid=${entityId}&rid=${noteId}`
+  );
 
-  // return response.data.data.noteDetails;
-  console.log('details-params', entityId, noteId);
-  await new Promise((resolve) => setTimeout(resolve, 2000));
-
-  return NoteDetailsMockResponse.data;
+  return response.data.data;
 };
 
 export const useNoteDetails = (
@@ -100,29 +113,12 @@ export const useNoteDetails = (
 };
 
 export const useCreateNote = () => {
-  return useApiMutation<unknown, FormData>(createNoteUrl(), 'post');
+  return useApiMutationSericve<unknown, FormData>(createNoteUrl(), 'post');
 };
 
 export const useUpdateNote = () => {
-  return useApiMutation<unknown, FormData>(updateNoteUrl(), 'put');
+  return useApiMutationSericve<unknown, FormData>(updateNoteUrl(), 'put');
 };
-
-// export const useCreateNote = async (payload: NotesFormDataPayload) => {
-//   const formData = new FormData();
-//   formData.append('attachment', payload.attachment);
-//   formData.append('entity_level', payload.entity_level);
-//   formData.append('entity_id', payload.entity_id);
-//   formData.append('title', payload.title);
-//   formData.append('note_owner', payload.note_owner);
-//   formData.append('note_description', payload.note_description);
-
-//   const response = await resourceServiceApi.post(createNoteUrl(), formData, {
-//     headers: {
-//       'Content-Type': 'multipart/form-data',
-//     },
-//   });
-//   return response;
-// };
 
 type ExportType = 'notes' | 'all_notes';
 export const ExportNotesList = async (

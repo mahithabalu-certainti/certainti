@@ -195,7 +195,7 @@ const Notes: React.FC<NotesProps> = ({
     const queryParams = new URLSearchParams({
       accountId,
       entityLevel: row.attachment_level || 'project',
-      entityId: row.attach_to || projectID || '',
+      entityId: row.attach_to || '',
       source: `Project > ${projectCode}`,
     });
     navigate(`${path}?${queryParams.toString()}`);
@@ -315,7 +315,12 @@ const Notes: React.FC<NotesProps> = ({
 
     const updateData = updates.reduce<Record<string, FieldChangeValue>>(
       (acc, item) => {
-        acc[item.editId || item.columnId] = item.value;
+        let value = item.value;
+        if (item.columnId === 'fiscal_year' && typeof value === 'string') {
+          const numValue = Number(value);
+          value = !isNaN(numValue) ? numValue : value;
+        }
+        acc[item.editId || item.columnId] = value;
         return acc;
       },
       {

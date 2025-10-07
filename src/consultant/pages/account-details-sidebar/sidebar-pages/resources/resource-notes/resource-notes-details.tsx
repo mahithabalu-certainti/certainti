@@ -29,7 +29,6 @@ const NotesDetails: React.FC<NoteDetailsProps> = ({
   const [searchParams] = useSearchParams();
   const { accountid } = useParams();
   const noteId = searchParams.get('note_id') || '';
-  const resourceRid = searchParams.get('res_id') || '';
 
   const { data, isLoading, error } = useNoteDetails(accountid, noteId, true);
 
@@ -41,7 +40,7 @@ const NotesDetails: React.FC<NoteDetailsProps> = ({
     const queryParams = new URLSearchParams({
       accountId: accountid || '',
       entityLevel: data?.attachment_level || 'resource',
-      entityId: data?.attach_to || resourceRid || '',
+      entityId: data?.attach_to || '',
       source: `Resource > ${resourceNumber}`,
     });
     navigate(`${path}?${queryParams.toString()}`);
@@ -114,9 +113,34 @@ const NotesDetails: React.FC<NoteDetailsProps> = ({
       key: 'notes_owner',
     },
     {
-      label: 'Related To',
+      label: 'Related Entity',
       value: data?.attachment_level,
       key: 'attachment_level',
+    },
+    {
+      label: 'Related To Name',
+      value: data?.attached_to,
+      key: 'attached_to',
+    },
+    {
+      label: 'Fiscal Year',
+      value: `FY-${data?.fiscal_year}`,
+      key: 'fiscal_year',
+    },
+    {
+      label: 'Document Name',
+      value: data?.document_name,
+      key: 'document_name',
+    },
+    {
+      label: 'Format',
+      value: data?.format,
+      key: 'format',
+    },
+    {
+      label: 'Size',
+      value: data?.size_in_mb ? `${data.size_in_mb} MB` : '-',
+      key: 'size',
     },
   ];
 
@@ -129,7 +153,7 @@ const NotesDetails: React.FC<NoteDetailsProps> = ({
   ];
 
   return (
-    <div className='border border-[#CBD6E2]'>
+    <div>
       <SectionHeader
         title='Note'
         subValue={data?.r_number || ''}

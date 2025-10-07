@@ -20,7 +20,7 @@ import {
 import { NotesFormDataPayload } from '../../../types';
 import { useToast } from '../../../../hooks';
 
-const MAX_FILE_SIZE_MB = 10;
+const MAX_FILE_SIZE_MB = 100;
 const RESTRICTED_EXTENSIONS = /\.(exe|bat|cmd|sh|bash)$/i;
 
 const ACCEPTED_FILE_TYPES = [
@@ -78,7 +78,7 @@ const NotesForm: React.FC = () => {
   const createNote = useCreateNote();
   const updateNote = useUpdateNote();
   const { data: noteData, isLoading } = useNoteDetails(
-    entityId,
+    accountId,
     noteId,
     isEditView
   );
@@ -162,6 +162,13 @@ const NotesForm: React.FC = () => {
     if (!files) return [];
     const validFiles: File[] = [];
     for (const file of Array.from(files)) {
+      if (/\s/.test(file.name)) {
+        showError(
+          `"${file.name}" is invalid. File name must not contain spaces.`
+        );
+        continue;
+      }
+
       const isAcceptedType =
         ACCEPTED_FILE_TYPES.includes(file.type) ||
         /\.(csv|xls|xlsx|pdf|docx)$/i.test(file.name);
@@ -238,25 +245,29 @@ const NotesForm: React.FC = () => {
       }
     }
 
-    const payload = {
-      account_rid: noteData?.account_rid || accountId || '',
-      attach_to: noteData?.attach_to || entityId,
-      attachment_level: noteData?.attachment_level || entityLevel,
-      fiscal_year:
-        noteData?.fiscal_year ?? projectFiscalYear ?? data?.fiscal_year,
-      title: data?.title || '',
-      notes_owner: data?.notes_owner || '',
-      descriptions: data?.descriptions || '',
-      ...(isEditView && { rid: noteData?.rid || '' }),
-    };
+    // build payload fields
+    const accountRid = noteData?.account_rid || accountId || '';
+    const attachTo = noteData?.attach_to || entityId;
+    const attachmentLevel = noteData?.attachment_level || entityLevel;
+    const fiscalYear = projectFiscalYear || data?.fiscal_year;
+    const title = data?.title || '';
+    const notesOwner = data?.notes_owner || '';
+    const descriptions = data?.descriptions || '';
 
     const formData = new FormData();
     if (selectedFiles.length > 0) {
       formData.append('notes', selectedFiles[0]);
     }
-    formData.append('data', JSON.stringify(payload));
+    formData.append('account_rid', accountRid);
+    formData.append('attach_to', attachTo);
+    formData.append('attachment_level', attachmentLevel);
+    formData.append('fiscal_year', String(fiscalYear));
+    formData.append('title', title);
+    formData.append('notes_owner', notesOwner);
+    formData.append('descriptions', descriptions);
 
     if (isEditView) {
+      formData.append('rid', noteData?.rid || '');
       updateNote.mutate(formData);
     } else {
       createNote.mutate(formData);

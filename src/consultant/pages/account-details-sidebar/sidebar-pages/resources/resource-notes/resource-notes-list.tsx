@@ -201,7 +201,7 @@ const ResourceNotesList: React.FC<ResourceNotesListProps> = ({
     const queryParams = new URLSearchParams({
       accountId: accountid || '',
       entityLevel: row.attachment_level || 'resource',
-      entityId: row.attach_to || resourceRid || '',
+      entityId: row.attach_to || '',
       source: `Resource > ${resourceNumber}`,
     });
     navigate(`${path}?${queryParams.toString()}`);
@@ -223,7 +223,12 @@ const ResourceNotesList: React.FC<ResourceNotesListProps> = ({
 
     const updateData = updates.reduce<Record<string, FieldChangeValue>>(
       (acc, item) => {
-        acc[item.editId || item.columnId] = item.value;
+        let value = item.value;
+        if (item.columnId === 'fiscal_year' && typeof value === 'string') {
+          const numValue = Number(value);
+          value = !isNaN(numValue) ? numValue : value;
+        }
+        acc[item.editId || item.columnId] = value;
         return acc;
       },
       {

@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-  generatePath,
-  useNavigate,
-  useParams,
-  useSearchParams,
-} from 'react-router-dom';
+import { generatePath, useNavigate, useSearchParams } from 'react-router-dom';
 import { Typography } from '@mui/material';
 import { useNoteDetails } from '../../../../services/notes/notes-service';
 import { NOTES_EDIT } from '../../../../../routes';
@@ -28,11 +23,10 @@ const NotesDetails: React.FC<NoteDetailsProps> = ({
 }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { projectid: projectID } = useParams();
   const accountId = searchParams.get('accountID') || '';
   const noteId = searchParams.get('note_id') || '';
 
-  const { data, isLoading, error } = useNoteDetails(projectID, noteId, true);
+  const { data, isLoading, error } = useNoteDetails(accountId, noteId, true);
 
   const handleEdit = () => {
     const path = generatePath(NOTES_EDIT, {
@@ -42,7 +36,7 @@ const NotesDetails: React.FC<NoteDetailsProps> = ({
     const queryParams = new URLSearchParams({
       accountId,
       entityLevel: data?.attachment_level || 'project',
-      entityId: data?.attach_to || projectID || '',
+      entityId: data?.attach_to || '',
       source: `Project > ${projectCode}`,
     });
     navigate(`${path}?${queryParams.toString()}`);
@@ -115,12 +109,36 @@ const NotesDetails: React.FC<NoteDetailsProps> = ({
       key: 'notes_owner',
     },
     {
-      label: 'Related To',
+      label: 'Related Entity',
       value: data?.attachment_level,
       key: 'attachment_level',
     },
+    {
+      label: 'Related To Name',
+      value: data?.attached_to,
+      key: 'attached_to',
+    },
+    {
+      label: 'Fiscal Year',
+      value: `FY-${data?.fiscal_year}`,
+      key: 'fiscal_year',
+    },
+    {
+      label: 'Document Name',
+      value: data?.document_name,
+      key: 'document_name',
+    },
+    {
+      label: 'Format',
+      value: data?.format,
+      key: 'format',
+    },
+    {
+      label: 'Size',
+      value: data?.size_in_mb ? `${data.size_in_mb} MB` : '-',
+      key: 'size',
+    },
   ];
-
   const noteDescription: DetailItem[] = [
     {
       label: 'Note Description',

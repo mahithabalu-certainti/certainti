@@ -312,7 +312,12 @@ const Notes: React.FC<NotesProps> = ({
 
     const updateData = updates.reduce<Record<string, FieldChangeValue>>(
       (acc, item) => {
-        acc[item.editId || item.columnId] = item.value;
+        let value = item.value;
+        if (item.columnId === 'fiscal_year' && typeof value === 'string') {
+          const numValue = Number(value);
+          value = !isNaN(numValue) ? numValue : value;
+        }
+        acc[item.editId || item.columnId] = value;
         return acc;
       },
       {

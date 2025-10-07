@@ -114,9 +114,34 @@ const NotesDetails: React.FC<NoteDetailsProps> = ({
       key: 'notes_owner',
     },
     {
-      label: 'Related To',
+      label: 'Related Entity',
       value: data?.attachment_level,
       key: 'attachment_level',
+    },
+    {
+      label: 'Related To Name',
+      value: data?.attached_to,
+      key: 'attached_to',
+    },
+    {
+      label: 'Fiscal Year',
+      value: `FY-${data?.fiscal_year}`,
+      key: 'fiscal_year',
+    },
+    {
+      label: 'Document Name',
+      value: data?.document_name,
+      key: 'document_name',
+    },
+    {
+      label: 'Format',
+      value: data?.format,
+      key: 'format',
+    },
+    {
+      label: 'Size',
+      value: data?.size_in_mb ? `${data.size_in_mb} MB` : '-',
+      key: 'size',
     },
   ];
 
