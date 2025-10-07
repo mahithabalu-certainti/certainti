@@ -120,14 +120,18 @@ export const NewDateFilterControl: React.FC<{
               </Select>
             </FormControl>
           ) : (
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <LocalizationProvider dateAdapter={AdapterDayjs}
+            localeText={{
+              fieldMonthPlaceholder: (params) =>
+                params.contentType === 'digit' ? 'MM' : params.format,
+            }}>
               <DatePicker
                 name='from'
                 maxDate={dayjs(today)}
                 minDate={dayjs(sixYearsAgo)}
                 value={dayjs(state.date?.value.from, 'YYYY-MM-DD')}
                 disabled={disableInput}
-                format='YYYY-MM-DD'
+                format='YYYY-MMM-DD'
                 onChange={(newValue) => {
                   onValueChange(
                     'from',
@@ -181,7 +185,11 @@ export const NewDateFilterControl: React.FC<{
             </LocalizationProvider>
           ))}
         {isBetween && (
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <LocalizationProvider dateAdapter={AdapterDayjs}
+          localeText={{
+            fieldMonthPlaceholder: (params) =>
+              params.contentType === 'digit' ? 'MM' : params.format,
+          }}>
             <DatePicker
               name='to'
               maxDate={dayjs(today)}
@@ -189,7 +197,7 @@ export const NewDateFilterControl: React.FC<{
               sx={{ mt: 1 }}
               value={dayjs(state.date?.value.to, 'YYYY-MM-DD')}
               disabled={disableInput}
-              format='YYYY-MM-DD'
+              format='YYYY-MMM-DD'
               onChange={(newValue) => {
                 onValueChange(
                   'to',
