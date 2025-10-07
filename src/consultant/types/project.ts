@@ -214,6 +214,7 @@ export type Project = {
   ProjectFiscal: ProjectFiscalSummary[];
   _level?: number;
   currency_rid?: string;
+  rd_percent_final?: string;
 };
 export type ProjectFiscalSummary = {
   account_status_name?: string;
@@ -243,7 +244,15 @@ export type ProjectFiscalSummary = {
   rid: string;
   isInteractionMapped?: boolean;
   isKeyContactIncluded?: boolean;
+  interactionKeyRecipients?: InteractionKeyRecipients[];
 };
+
+interface InteractionKeyRecipients {
+  rid: string
+  key_contact_name: string
+  key_contact_email: string
+  is_primary_contact: boolean
+}
 
 export type FiscalYearType = {
   year?: number;

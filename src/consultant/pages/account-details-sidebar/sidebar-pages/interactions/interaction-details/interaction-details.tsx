@@ -118,10 +118,6 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       {
         interaction_rid: data?.interaction_rid || interactionId || '',
         project_fiscal_rid: data?.project_fiscal_rid || '',
-        email_info: {
-          email: '',
-          name: '',
-        },
       },
     ];
 
@@ -129,6 +125,10 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       account_rid: data?.account_rid || accountid || '',
       is_interaction_followup: true,
       interactions,
+      email_info: {
+        email: '',
+        name: '',
+      },
     };
     sendInteraction.mutate(payload, {
       onSuccess: (response) => {
@@ -156,7 +156,10 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     {
       label: 'Reminder',
       variant: 'outlined' as const,
-      disabled: accountInActive || !disableRemainderBtn,
+      disabled:
+        accountInActive ||
+        !disableRemainderBtn ||
+        !accountDetails?.accountDetails?.is_send_interaction,
       onClick: () => handleReminderBtn(),
       sx: { width: '78px', minWidth: '78px' },
       loading: sendInteraction.isPending,

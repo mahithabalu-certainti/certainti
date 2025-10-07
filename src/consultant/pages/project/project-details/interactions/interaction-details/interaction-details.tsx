@@ -34,12 +34,14 @@ interface InteractionDetailsProps {
   accountInActive: boolean;
   handleBackClick: () => void;
   projectDetails: NewProjectData | null;
+  isSendInteraction: boolean;
 }
 
 const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   accountInActive,
   handleBackClick,
   projectDetails,
+  isSendInteraction,
 }) => {
   const { projectid } = useParams();
   const navigate = useNavigate();
@@ -133,10 +135,6 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
         interaction_rid: data?.interaction_rid || interactionId || '',
         project_fiscal_rid:
           data?.project_fiscal_rid || projectDetails?.rid || projectid || '',
-        email_info: {
-          email: '',
-          name: '',
-        },
       },
     ];
 
@@ -144,6 +142,10 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       account_rid: data?.account_rid || accountId || '',
       is_interaction_followup: true,
       interactions,
+      email_info: {
+        email: '',
+        name: '',
+      },
     };
     sendInteraction.mutate(payload, {
       onSuccess: (response) => {
@@ -170,7 +172,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     {
       label: 'Reminder',
       variant: 'outlined' as const,
-      disabled: accountInActive || !disableRemainderBtn,
+      disabled: accountInActive || !disableRemainderBtn || !isSendInteraction,
       onClick: () => handleRemainder(),
       sx: { width: '78px', minWidth: '78px' },
       hide: false,

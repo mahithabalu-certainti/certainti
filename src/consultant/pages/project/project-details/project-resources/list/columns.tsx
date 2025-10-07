@@ -76,10 +76,10 @@ export const getProjectResourcesColumns = (
     label: 'Resource Name',
     sortable: true,
     sortId: 'resource_name',
-    width: '180px', 
+    width: '180px',
     hide:
       !permissionMap?.['resource_name']?.read &&
-      !permissionMap?.['resource_name']?.edit, 
+      !permissionMap?.['resource_name']?.edit,
   },
   {
     id: 'country_name',
@@ -230,6 +230,7 @@ export const getProjectResourcesColumns = (
     field: {
       type: 'text',
       required: false,
+      formatCostNumber: true,
       placeholder: 'Enter an effort',
       validation: [
         {
@@ -265,6 +266,7 @@ export const getProjectResourcesColumns = (
       type: 'text',
       required: false,
       placeholder: 'Enter Cost',
+      formatCostNumber: true,
       validation: [
         {
           regex: PROJECT_RESOURCE_REGEX.COST_REGEX,
@@ -275,17 +277,17 @@ export const getProjectResourcesColumns = (
   },
   {
     id: 'qre_percent',
-    label: 'QRE %',
+    label: 'QRE Percent Final',
     sortable: true,
-    sortId: 'qre_percent',
+    sortId: 'rd_percent_final',
     width: '150px',
     hide:
-      !permissionMap?.['qre_percent']?.read &&
-      !permissionMap?.['qre_percent']?.edit,
+      !permissionMap?.['rd_percent_final']?.read &&
+      !permissionMap?.['rd_percent_final']?.edit,
   },
   {
     id: 'qre_final',
-    label: 'QRE',
+    label: 'QRE Final',
     sortable: true,
     sortId: 'qre_final',
     width: '150px',

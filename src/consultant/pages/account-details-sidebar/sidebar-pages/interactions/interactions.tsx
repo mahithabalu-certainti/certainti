@@ -159,7 +159,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   const viewResponseHistory = !!responseHistory;
   const { successToast } = useToast();
   const sendInteraction = useSendInteraction();
-  const { data, isLoading, isError } = useInteractionList(
+  const { data, isLoading, isError, refetch } = useInteractionList(
     {
       page: currentPage + 1,
       limit: rowsPerPage,
@@ -177,7 +177,6 @@ const Interactions: React.FC<InteractionsProps> = ({
       !viewResponseHistory,
     refreshInteractions
   );
-
   const {
     data: modelTableData,
     isLoading: isModelDataLoading,
@@ -309,7 +308,13 @@ const Interactions: React.FC<InteractionsProps> = ({
             checkBoxMessage,
           };
         }) || [];
-
+      localStorage.setItem(
+        'currentRecipients',
+        JSON.stringify({
+          name: data?.keyContact?.key_contact_name || '',
+          email: data?.keyContact?.key_contact_email || '',
+        })
+      );
       setInteractionList(updatedInteractions);
       setSelectedRows([]);
       setClearSelectedRows((prev) => !prev);
@@ -491,7 +496,10 @@ const Interactions: React.FC<InteractionsProps> = ({
     {
       label: 'Reminder',
       variant: 'outlined' as const,
-      disabled: accountInActive || interactionList.length === 0,
+      disabled:
+        accountInActive ||
+        interactionList.length === 0 ||
+        !accountDetails?.accountDetails?.is_send_interaction,
       onClick: () => setReminderModalOpen(true),
       sx: { width: '80px', minWidth: '80px' },
       hide: viewResponseHistory,
@@ -593,22 +601,22 @@ const Interactions: React.FC<InteractionsProps> = ({
   };
   const handleReminderBtn = (data: InteractionList[]) => {
     // Map your input array into interactions
+
     const interactions = data.map((item) => ({
       interaction_rid: item.rid || '',
-      // interaction_level: 'Account',
+      interaction_level: item.interaction_level_name || '',
       project_fiscal_rid: item.project_fiscal_rid || '',
-      email_info: {
-        name: '',
-        email: '',
-      },
     }));
 
     const payload = {
       account_rid: accountid || '',
       is_interaction_followup: true,
       interactions,
+      email_info: {
+        name: '',
+        email: '',
+      },
     };
-
     sendInteraction.mutate(payload, {
       onSuccess: (response) => {
         successToast(response?.statusMessage);
@@ -620,7 +628,7 @@ const Interactions: React.FC<InteractionsProps> = ({
           sort_by: 'ASC',
           filter: {},
         });
-        // refetch();
+        refetch();
       },
     });
   };
