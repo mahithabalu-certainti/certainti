@@ -1252,9 +1252,7 @@ export async function uploadToAzureBlob(
     const containerClient = blobServiceClient.getContainerClient(containerName);
 
     // Ensure container exists with public blob access
-    await containerClient.createIfNotExists({
-      access: "blob", // This makes blobs publicly readable
-    });
+    await containerClient.createIfNotExists();
 
     // Sanitize filename and remove extension
     // Process filename

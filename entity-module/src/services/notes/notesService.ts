@@ -473,12 +473,13 @@ export class NotesService {
         const userMap = new Map(users.map((u: any) => [u.rid, u.full_name]));
 
         // 🔷 Map final results
-        let notes = paginatedAttachments.map(attachment => ({
+        let notes = await Promise.all(paginatedAttachments.map(async attachment => ({
           ...attachment.get({ plain: true }),
           created_by_name: userMap.get(attachment.created_by) || attachment.created_by,
           modified_by_name: userMap.get(attachment.modified_by) || attachment.modified_by,
           attached_to: attachmentDisplayNames[attachment.rid] || attachment.attach_to,
-        }));
+          browse_file : await generateSasUrl(attachment.browse_file)
+        })));
     
         // Handle uploaded_by sorting
         if (sortBy === 'created_by_name') {
@@ -849,12 +850,13 @@ export class NotesService {
         const userMap = new Map(users.map((u: any) => [u.rid, u.full_name]));
     
         // 🔷 Map final results
-        let notes = allNotes.map(attachment => ({
+        let notes = await Promise.all(allNotes.map(async attachment => ({
           ...attachment.get({ plain: true }),
           created_by_name: userMap.get(attachment.created_by) || attachment.created_by,
           modified_by_name: userMap.get(attachment.modified_by) || attachment.modified_by,
           attached_to: attachmentDisplayNames[attachment.rid] || attachment.attach_to,
-        }));
+          browse_file : await generateSasUrl(attachment.browse_file)
+        })));
     
         // Handle uploaded_by sorting
         if (sortBy === 'created_by_name') {
@@ -1141,12 +1143,13 @@ export class NotesService {
         ]);
         const userMap = new Map(users.map((u: any) => [u.rid, u.full_name]));
     
-        let attachments = attachmentsRaw.map(att => ({
+        let attachments = await Promise.all(attachmentsRaw.map(async att => ({
           ...att.get({ plain: true }),
           created_by_name: userMap.get(att.created_by) || att.created_by,
           modified_by_name: userMap.get(att.modified_by) || att.modified_by,
-          attached_to: attachmentDisplayNames[att.rid] || att.attach_to
-        }));
+          attached_to: attachmentDisplayNames[att.rid] || att.attach_to,
+          browse_file: await generateSasUrl(att.browse_file)
+        })));
     
         // Filters: attached_to
         if (attachedToFilter) {
@@ -1353,7 +1356,6 @@ export class NotesService {
             else
             {
                // Apply valid filtered accounts
-            console.log("WhereClause ======> ", whereClause)
             whereClause[Op.and].push({
               account_rid: { [Op.in]: filterAccounts },
             });
@@ -1430,11 +1432,12 @@ export class NotesService {
         ]);
         const userMap = new Map(users.map((u: any) => [u.rid, u.full_name]));
     
-        let attachments = attachmentsRaw.map(att => ({
+        let attachments = await Promise.all(attachmentsRaw.map(async att => ({
           ...att.get({ plain: true }),
           uploaded_by: userMap.get(att.created_by) || att.created_by,
-          attached_to: attachmentDisplayNames[att.rid] || att.attach_to
-        }));
+          attached_to: attachmentDisplayNames[att.rid] || att.attach_to,
+          browse_file: await generateSasUrl(att.browse_file)
+        })));
     
         // Filters: attached_to
         if (attachedToFilter) {
