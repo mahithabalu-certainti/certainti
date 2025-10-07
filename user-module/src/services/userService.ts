@@ -90,7 +90,7 @@ class UserService {
       } = userData;
 
       const repository = this.getAccountRepository();
-      logMessage(`Creating user with data: ${JSON.stringify(userData)}`);
+      logMessage(`Creating user with data : ${JSON.stringify(userData)}`);
       const user = await repository.create({
         azure_id: azureId,
         first_name,
