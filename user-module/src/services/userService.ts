@@ -13,6 +13,7 @@ import { UserGroupEntityAccess } from "../models/UserGroupEntityAccessModel";
 import { UserGroupMapping } from "../models/userGroupMappingModel";
 import { UserGroup } from "../models/userGroupModel";
 import { updateAzureUser } from "./manageUser";
+import { errorLog, logMessage } from "../utils/helpers";
   const { 
     User, UserDetails, Department, FunctionGroup, Profile, BusinessTeams,
     ProfileMenuAccess, Menu, ProfileModuleAccess, MenuModule, ProfilePermissionAccess, ModulePermission,
@@ -89,7 +90,7 @@ class UserService {
       } = userData;
 
       const repository = this.getAccountRepository();
-
+      logMessage(`Creating user with data: ${JSON.stringify(userData)}`);
       const user = await repository.create({
         azure_id: azureId,
         first_name,
@@ -122,6 +123,7 @@ class UserService {
         },
       };
     } catch (err) {
+      errorLog("Error creating user:", (err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
@@ -169,6 +171,7 @@ class UserService {
         org_id,
         remove_group_memberships
       } = userData;
+      logMessage(`Updating user ${userId} with data: ${JSON.stringify(userData)}`);
 
       const repository = this.getAccountRepository();
 
@@ -241,6 +244,7 @@ class UserService {
         },
       };
     } catch (err) {
+      errorLog("Error updating user:", (err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
@@ -297,7 +301,7 @@ class UserService {
         groupNames: []
       };
     } catch (error) {
-      console.error('Error checking user access:', error);
+      errorLog('Error checking user access:', (error as Error).message);
       return {
         hasAccess: false,
         groupNames: []
@@ -316,6 +320,7 @@ class UserService {
     data?: { user: any };
   }> {
     try {
+      logMessage(`Updating user ${userId} with data: ${JSON.stringify(userData)}`);
       const mainSequelize = await initSequelize()
       const { ...fieldsToUpdate } = userData;
 
@@ -395,6 +400,7 @@ class UserService {
         },
       };
     } catch (err) {
+      errorLog("Error updating user inline:", (err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
@@ -404,19 +410,12 @@ class UserService {
   // ... existing code ...
   async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
     try {
-      console.log(
-        `[getPermissionFieldsByIds] DB operation started at: ${new Date(
-          Date.now()
-        ).toISOString()}`
-      );
       // 1. Get profile id for user
       const user = await User.findOne({
         where: { rid: userId },
         attributes: ["profile_rid"],
       });
-      console.log(
-        `After Profile retrieve: ${new Date(Date.now()).toISOString()}`
-      );
+     
       const profileId = user?.profile_rid;
       if (!profileId) {
         return {
@@ -432,11 +431,7 @@ class UserService {
         where: { module_permission_id: permissionIds },
         raw: true,
       });
-      console.log(
-        `After Permission fields retrieve: ${new Date(
-          Date.now()
-        ).toISOString()}`
-      );
+  
 
       // Collect all field IDs
       const fieldIds = fields.map((f) => f.rid);
@@ -446,20 +441,13 @@ class UserService {
         where: { profile_id: profileId, permission_field_id: fieldIds },
         raw: true,
       });
-      console.log(
-        `After profileFieldAccess retrieve: ${new Date(
-          Date.now()
-        ).toISOString()}`
-      );
 
       // 4. Get user field access for these fields
       const userFieldAccess = await UserFieldsAccess.findAll({
         where: { user_id: userId, permission_field_id: fieldIds },
         raw: true,
       });
-      console.log(
-        `After userFieldAccess retrieve: ${new Date(Date.now()).toISOString()}`
-      );
+      
 
       // 5. Build access maps for quick lookup (by field_id)
       const profileAccessMap: {
@@ -478,12 +466,7 @@ class UserService {
           read: acc.read,
           edit: acc.edit,
         };
-      });
-      console.log(
-        `After profileFieldAccess userFieldAccess map: ${new Date(
-          Date.now()
-        ).toISOString()}`
-      );
+      })
 
       // 6. Build the response
       const result: { [key: string]: any[] } = {};
@@ -504,13 +487,10 @@ class UserService {
           };
         });
       });
-      console.log(
-        `After build response: ${new Date(Date.now()).toISOString()}`
-      );
 
       return result;
     } catch (err) {
-      console.log(err);
+      errorLog("Error in getPermissionFieldsByIds:", (err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
@@ -569,7 +549,7 @@ class UserService {
       // Remove all group mappings for the user
       UserGroupMapping.destroy({ where: { user_rid: userId } }),
     ]);
-    console.log(`Revoked all group access for user ${userId}`); 
+    logMessage(`Revoked all group access for user ${userId}`); 
   }
 
   /**
@@ -650,13 +630,14 @@ class UserService {
     data?: { users: any; count: number };
   }> {
     try {
+      logMessage(`listUsers called with page: ${page}, limit: ${limit}, search: ${search}, filters: ${JSON.stringify(filters)}, sortBy: ${sortBy}, sortOrder: ${sortOrder}, organization: ${organization}`);
       let users = null;
       let count: number = 0;
       const offset = (page - 1) * limit;
 
       const whereClause = this.buildWhereClause(filters, search);
 
-      console.log("whereClause : ", JSON.stringify(whereClause));
+      logMessage(`whereClause : ${JSON.stringify(whereClause)}`);
 
       const [finalSortBy, finalSortOrder] = this.getSortParameters(
         sortBy,
@@ -691,6 +672,7 @@ class UserService {
         },
       };
     } catch (err) {
+      errorLog("Error listing users:", (err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
@@ -718,6 +700,7 @@ class UserService {
     data?: { users: any };
   }> {
     try {
+      logMessage(`listUserById called with userId: ${userId}, organization: ${organization}`);
       let users = null;
       if (organization === constants.ENV_TRD365) {
         users = await User.findOne({
@@ -764,7 +747,11 @@ class UserService {
             created_by: users.created_by || "",
             modified_by: users.modified_by || "",
           });
-
+           const permissions = await this.getAllUserExtendedPermissionForView(
+            users.rid,
+            users.profile_rid || ""
+    );
+          (users as any).dataValues.permissions = permissions;
           (users as any).dataValues.created_by = userNames.created_by_name;
           (users as any).dataValues.modified_by = userNames.modified_by_name;
         }
@@ -799,6 +786,7 @@ class UserService {
         },
       };
     } catch (err) {
+      errorLog("Error listing user by ID:", (err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
@@ -830,6 +818,7 @@ class UserService {
         },
       };
     } catch (err) {
+      errorLog("Error fetching roles:", (err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
@@ -859,6 +848,7 @@ class UserService {
     } | null;
   }> {
     try {
+      logMessage(`Fetching permissions for user with Azure ID: ${azureId}`);
       const roles = await User.findOne({
         attributes: [
           "role_rid",
@@ -877,7 +867,6 @@ class UserService {
           },
         ],
       });
-      console.log(`After Profile retrieve: ${new Date().toISOString()}`);
 
       let organisation_name = "";
       let logo_url = "";
@@ -940,8 +929,8 @@ class UserService {
           logo_url,
         },
       };
-    } catch (err) {
-      console.log(err);
+    } catch (err) { 
+      errorLog("Error in permissionById:", (err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
@@ -949,8 +938,7 @@ class UserService {
   // Consolidate all permissions for a user
 // ... existing code ...
 async getAllUserPermission(userId: string, profileId: string) {
-  console.log("userId : ",userId);
-  console.log("profileId : ",profileId);
+ logMessage(`getAllUserPermission called with userId: ${userId}, profileId: ${profileId}`);
   const [profilePermissions, userPermissions] = await Promise.all([
     this.getProfilePermission(profileId,false),
     this.getUserPermission(userId)
@@ -1155,11 +1143,6 @@ if (includeDependencies) {
         });
       }
     });
-    console.log(
-      `After permission access response map: ${new Date(
-        Date.now()
-      ).toISOString()}`
-    );
 
     return permissions;
   }
@@ -1170,7 +1153,7 @@ if (includeDependencies) {
 
     // Menus
     const menuAccess = await UserMenuAccess.findAll({
-      where: { user_id: userId },
+      where: { user_id: userId , is_enabled: true },
       include: [{ model: Menu, as: "menu" }],
     });
     menuAccess.forEach((ma) => {
@@ -1189,7 +1172,7 @@ if (includeDependencies) {
 
     // Modules
     const moduleAccess = await UserModuleAccess.findAll({
-      where: { user_id: userId },
+      where: { user_id: userId , is_enabled: true },
       include: [{ model: MenuModule, as: "menu_module" }],
     });
     moduleAccess.forEach((mo) => {
@@ -1209,7 +1192,7 @@ if (includeDependencies) {
 
     // Permissions
     const permissionAccess = await UserPermissionAccess.findAll({
-      where: { user_id: userId },
+      where: { user_id: userId, is_enabled: true },
       include: [{ model: ModulePermission, as: "module_permission" }],
       indexHints: [
         {
@@ -1234,15 +1217,18 @@ if (includeDependencies) {
     });
 
     const fieldAccess = await UserFieldsAccess.findAll({
-      where: { user_id: userId },
+      where: {
+      user_id: userId,
+      [Op.or]: [
+        { read: true },
+        { edit: true }
+      ]
+      },
       include: [{ model: PermissionField, as: "permission_field" }],
       indexHints: [
-        { type: IndexHints.USE, values: ["idx_user_fields_access_user_id"] },
+      { type: IndexHints.USE, values: ["idx_user_fields_access_user_id"] },
       ],
     });
-    console.log(
-      `After user fieldAccess retrieve: ${new Date(Date.now()).toISOString()}`
-    );
 
     fieldAccess.forEach((fa) => {
       const faWithField = fa as any;
@@ -1285,6 +1271,7 @@ if (includeDependencies) {
     sortBy: string,
     sortOrder: string
   ) {
+    logMessage(`Fetching users with filters: ${JSON.stringify(whereClause)}, limit: ${limit}, offset: ${offset}, sortBy: ${sortBy}, sortOrder: ${sortOrder}`);
     const order: any[] = [];
     if (sortBy === "$business_teams.business_teams$") {
       order.push(
@@ -1373,6 +1360,7 @@ if (includeDependencies) {
     sortBy: string,
     sortOrder: string
   ) {
+    logMessage(`Fetching user details with filters: ${JSON.stringify(whereClause)}, limit: ${limit}, offset: ${offset}, sortBy: ${sortBy}, sortOrder: ${sortOrder}`);
     return await UserDetails.findAll({
       where: whereClause,
       limit,
@@ -1842,7 +1830,6 @@ if (includeDependencies) {
   }));
 
   const exportableFields = [...merged, ...userOnly].filter((f) => f.read);
-  console.log(exportableFields)
   return exportableFields;
 }
 
@@ -1880,10 +1867,12 @@ if (includeDependencies) {
     try {
       let users = null;
       let count: number = 0;
-
+      logMessage(`Export Users - Search: ${search}, Filters: ${JSON.stringify(
+        filters
+      )}, SortBy: ${sortBy}, SortOrder: ${sortOrder}, Organization: ${organization}`);
       const whereClause = this.buildWhereClause(filters, search);
 
-      console.log("whereClause : ", JSON.stringify(whereClause));
+      logMessage(`Export Users - WhereClause: ${JSON.stringify(whereClause)}`);
 
       const [finalSortBy, finalSortOrder] = this.getSortParameters(
         sortBy,
@@ -2141,8 +2130,8 @@ if (includeDependencies) {
         }
       }
     } catch (error) {
-      console.error("Error fetching user names:", error);
-      // Return empty strings if there's an error
+      errorLog("Error fetching user names:", (error as Error).message);
+    
     }
 
     return result;
@@ -2183,9 +2172,6 @@ if (includeDependencies) {
           },
         ],
       });
-      console.log(
-        `After Profile retrieve: ${new Date(Date.now()).toISOString()}`
-      );
 
       if (!roles || !roles.business_teams) {
         return {
@@ -2213,21 +2199,80 @@ if (includeDependencies) {
         },
       };
     } catch (err) {
-      console.log(err);
+      errorLog("Error fetching user extended permissions:", (err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
 
+  async fetchUserExtendedpermissionForUserView(userId: string): Promise<{
+  statusCode: number;
+  message: string;
+  errorMessage?: string;
+  data?: {
+    rid: string;
+    user_role: string;
+    user_id: string;
+    user_name: string;
+    permissions: any[];
+  } | null;
+}> {
+  try {
+    const roles = await User.findOne({
+      attributes: ["role_rid", "rid", "profile_rid", "first_name"],
+      where: { rid: userId },
+      include: [
+        {
+          model: BusinessTeams,
+          as: "business_teams",
+          required: true,
+          attributes: ["business_teams"],
+        },
+      ],
+    });
+   
+
+    if (!roles || !roles.business_teams) {
+      return {
+        statusCode: constants.NOT_FOUND,
+        message: constants.NOT_FOUND_MESSAGE,
+        data: null,
+      };
+    }
+
+    // Call getAllUserPermission here
+    const permissions = await this.getAllUserExtendedPermissionForView(
+      roles.rid,
+      roles.profile_rid || ""
+    );
+
+    return {
+      statusCode: constants.SUCCESS,
+      message: constants.SUCCESS_MESSAGE,
+      data: {
+        rid: roles.role_rid || "",
+        user_role: roles.business_teams?.business_teams,
+        user_id: roles.rid,
+        user_name: roles.first_name,
+        permissions,
+      },
+    };
+  } catch (err) {
+    errorLog("Error fetching user extended permissions:", (err as Error).message);
+    return this.throwServiceError(err as Error);
+  }
+}
+
+  
+
   // Consolidate all permissions for a user
   async getAllUserExtendedPermission(userId: string, profileId: string) {
-    console.log("User ID:", userId);
-    console.log("Profile ID:", profileId);
+    logMessage(`Fetching user extended permissions for userId: ${userId}, profileId: ${profileId}`);
 
   const [profilePermissions, userPermissions] = await Promise.all([
     this.getProfilePermission(profileId,true),
     this.getUserPermission(userId)
   ]);
-  console.log(userPermissions)
+
     // Create map of user permissions by key for quick lookup
     const userPermissionMap = new Map<string, any>();
     userPermissions.forEach((p) =>
@@ -2283,6 +2328,22 @@ if (includeDependencies) {
     }
 
     return mergedPermissions;
+  }
+
+   async getAllUserExtendedPermissionForView(userId: string, profileId: string) {
+   logMessage(`Fetching user extended permissions for edit view userId: ${userId}, profileId: ${profileId}`);
+
+    const [ userPermissions] = await Promise.all([
+      this.getUserPermission(userId)
+    ]);
+
+    // Create map of user permissions by key for quick lookup
+    const userPermissionMap = new Map<string, any>();
+    userPermissions.forEach((p) =>
+      userPermissionMap.set(getPermissionKey(p), p)
+    );
+
+    return userPermissions;
   }
 
   /**
@@ -2501,7 +2562,7 @@ if (includeDependencies) {
       }
       //await workbook.xlsx.writeFile('Profile_Permissions.xlsx');
       const buffer = await workbook.xlsx.writeBuffer();
-      console.log("Excel file generated successfully.");
+      logMessage("Excel file generated successfully.");
       return {
         statusCode: constants.SUCCESS,
         message: constants.SUCCESS_MESSAGE,
@@ -2510,6 +2571,7 @@ if (includeDependencies) {
         },
       };
     } catch (err) {
+      errorLog("Error exporting user profiles:", (err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }

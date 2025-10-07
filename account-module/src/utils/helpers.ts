@@ -97,9 +97,7 @@ export function successLog(methodName: string): void {
   });
 }
 export function logMessage(message: string): void {
-  getLogger().info(message, {
-    timestamp: new Date().toISOString()
-  });
+  getLogger().info(`${message}`);
 }
 
 export function errorLog(methodName: string, errorMessage?: string): void {
@@ -187,9 +185,9 @@ export async function deleteFromAzureBlob(blobUrl: string): Promise<void> {
   const exists = await blockBlobClient.exists();
   if (exists) {
     await blockBlobClient.delete();
-    console.log(`Blob deleted: ${blobName}`);
+  logMessage
   } else {
-    console.log(`Blob not found: ${blobName}`);
+    logMessage(`Blob not found: ${blobUrl}`);
   }
 }
 

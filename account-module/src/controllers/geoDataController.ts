@@ -361,7 +361,6 @@ async function statusList(req: Request, res: Response): Promise<void> {
       return;
     }
   } catch (err) {
-    console.log(err)
     const error = err as Error;
     errorLog(methodName, error.message);
     handleErrorResponse(
