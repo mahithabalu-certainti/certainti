@@ -1305,8 +1305,6 @@ export class InteractionService {
         data.name = email_info?.name === "" ? null : email_info.name
         data.is_interaction_followup = is_interaction_followup
         data.interaction_level = interaction_level
-        this.logger.info(`Email info to be sent: ${JSON.stringify(data)}`);
-        await this.interactionSchemaService.insertEmailInfoDatas(data);
         if(type === 'Auto-Send')
         {
           await this.interactionSchemaService.createAutoSendInteractionEntry(accountNumber, interaction_rid, project_fiscal_rid, email_info,accountRid,interaction_level);
@@ -1314,48 +1312,57 @@ export class InteractionService {
         console.log("Interaction queued for sending:", interaction_rid, fetchInQueueStatus[0][0].rid);
         if(!is_interaction_followup){
         if(interaction_level.toLowerCase() === 'account') {
-          if(data.email !== "" && data.email !== null && data.email !== undefined && data.name !== "" && data.name !== null && data.name !== undefined) {
-            email = data.email;
-            name = data.name;
+          const fetchResNameEmail : any = await orgDb.query(rawQueries.fetchKeyContactForInteraction(schemaName, data.account_rid))
+          if(fetchResNameEmail[0].length > 0) {
+            if(data.email !== "" && data.email !== null && data.email !== undefined && data.name !== "" && data.name !== null && data.name !== undefined) {
+              email = data.email;
+              name = data.name;
+          } 
+          else {
+              email = fetchResNameEmail[0][0].key_contact_email
+              name = fetchResNameEmail[0][0].key_contact_name
+          }
+          this.logger.info(`Email info to be sent: ${JSON.stringify(data)}`);
+          await this.interactionSchemaService.insertEmailInfoDatas(data);
+          await orgDb.query(rawQueries.updateInteractionStatusAndResEmailName(schemaName, fetchInQueueStatus[0][0].rid, interaction_rid, email, name))
+          await mainDb.query(rawQueries.updateInteractionSummaryStatusAndResEmailName(fetchInQueueStatus[0][0].rid, interaction_rid, name, email))
+          }
         } 
         else {
-            const fetchResNameEmail : any = await orgDb.query(rawQueries.fetchKeyContactForInteraction(schemaName, data.account_rid))
+          const fetchResNameEmail : any = await orgDb.query(rawQueries.fetchKeyContactForInteraction(schemaName, project_fiscal_rid))
+          if(fetchResNameEmail[0].length > 0) {
+            if(data.email !== "" && data.email !== null && data.email !== undefined && data.name !== "" && data.name !== null && data.name !== undefined) {
+            email = data.email;
+            name = data.name;
+          } 
+          else {
             email = fetchResNameEmail[0][0].key_contact_email
             name = fetchResNameEmail[0][0].key_contact_name
           
-        }
-        await orgDb.query(rawQueries.updateInteractionStatusAndResEmailName(schemaName, fetchInQueueStatus[0][0].rid, interaction_rid, email, name))
-        await mainDb.query(rawQueries.updateInteractionSummaryStatusAndResEmailName(fetchInQueueStatus[0][0].rid, interaction_rid, name, email))
-        } 
-        else {
-          if(data.email !== "" && data.email !== null && data.email !== undefined && data.name !== "" && data.name !== null && data.name !== undefined) {
-            email = data.email;
-            name = data.name;
-        } else {
-          const fetchResNameEmail : any = await orgDb.query(rawQueries.fetchKeyContactForInteraction(schemaName, project_fiscal_rid))
-          email = fetchResNameEmail[0][0].key_contact_email
-          name = fetchResNameEmail[0][0].key_contact_name
-         
-        }
-        await orgDb.query(rawQueries.updateInteractionStatusAndResEmailName(schemaName, fetchInQueueStatus[0][0].rid, interaction_rid, email, name))
-        await mainDb.query(rawQueries.updateInteractionSummaryStatusAndResEmailName(fetchInQueueStatus[0][0].rid, interaction_rid, name, email))
+          }
+          this.logger.info(`Email info to be sent: ${JSON.stringify(data)}`);
+          await this.interactionSchemaService.insertEmailInfoDatas(data);
+          await orgDb.query(rawQueries.updateInteractionStatusAndResEmailName(schemaName, fetchInQueueStatus[0][0].rid, interaction_rid, email, name))
+          await mainDb.query(rawQueries.updateInteractionSummaryStatusAndResEmailName(fetchInQueueStatus[0][0].rid, interaction_rid, name, email))
+          }
         }
       }
       else
       {
+        this.logger.info(`Email info to be sent: ${JSON.stringify(data)}`);
+        await this.interactionSchemaService.insertEmailInfoDatas(data);
         await orgDb.query(rawQueries.updateInteractionStatus(schemaName, fetchInQueueStatus[0][0].rid, interaction_rid))
         await mainDb.query(rawQueries.updateInteractionSummaryStatus(fetchInQueueStatus[0][0].rid, interaction_rid))
       }
-        interactionResponse.push({
-          interactionRid: interaction_rid,
-        });
-      }
-
-      return {
-        statusCode: HttpStatus.SUCCESS,
-        message: HttpStatus.SUCCESS_MESSAGE,
-        data: { interactionResponse },
-      };
+      interactionResponse.push({
+        interactionRid: interaction_rid,
+      });
+    }
+    return {
+      statusCode: HttpStatus.SUCCESS,
+      message: HttpStatus.SUCCESS_MESSAGE,
+      data: { interactionResponse },
+    };
     } catch (err) {
       console.log("Error sending interaction", err);
       throw this.throwServiceError(err as Error);
