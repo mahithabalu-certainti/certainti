@@ -287,11 +287,15 @@ export const fetchInteractionTemplates = async (
   else searchValue = `%%`
   if(apiSource === 'interaction' && templateType) {
     pagination = ``;
+    const [activeStatus]: any[] = await mainDb.query(
+                  rawQueries.fetchActiveStatusByType("Active"),
+                  { type: "SELECT" }
+                );
     let [fetchInteractionStatus]: any[] = await mainDb.query(
    rawQueries.fetchInteractionLevelRidByName(templateType)
   );
   let interactionLevelId = fetchInteractionStatus[0]?.rid;
-   interactionLLevelCondition = ` AND i.interaction_level_rid = '${interactionLevelId}' `
+   interactionLLevelCondition = ` AND i.interaction_level_rid = '${interactionLevelId}'  AND i.status_rid = '${activeStatus?.rid}' `
   }
   if (apitype === "export") {
     pagination = ``;
