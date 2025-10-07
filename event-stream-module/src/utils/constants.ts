@@ -42,7 +42,8 @@ export const rawQueries = {
     mainSequelize: Sequelize
   ): Promise<any> {
     let [checkIsSeparateDb]: any[] = await mainSequelize.query(
-      `SELECT rid, r_number, account_name, storage_type FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`
+      `SELECT rid, r_number, account_name, storage_type FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`,
+      { type: 'SELECT' }
     );
 
     console.log(checkIsSeparateDb)
