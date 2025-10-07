@@ -371,7 +371,7 @@ export const createDateField = (
   name,
   label,
   required: others.required,
-  placeholder: 'YYYY-MM-DD',
+  placeholder: 'YYYY-MMM-DD',
   minDate: others.minDate,
   maxDate: others.maxDate,
   disabled: others.disabled,
@@ -677,12 +677,17 @@ export const formatAddress = (userDatas?: UserDetail) => {
 
 export const getDateTimeFormat = (date?: string) => {
   if (!date) return '';
-  return dayjs.utc(date).local().format('MM-DD-YYYY HH:mm:ss');
+  // return dayjs.utc(date).local().format('MM-DD-YYYY HH:mm:ss'); // For future ref.
+  return dayjs.utc(date).local().format('MMM-DD-YYYY hh:mm:ss A').toUpperCase();
 };
 
+export const getDateFormatYYYYMMDD = (date?: string) => {
+  if (!date) return '';
+  return dayjs(date).format('YYYY-MM-DD');  
+};
 export const getDateFormat = (date?: string) => {
   if (!date) return '';
-  return dayjs(date).format('YYYY-MM-DD');
+  return dayjs(date).format('YYYY-MMM-DD');
 };
 export const STATUS_OPTIONS: SelectOption[] = [
   { label: 'Active', value: 'active' },
@@ -762,7 +767,9 @@ export const formatDateToYYYYMMDDWithTime = (
 
   // Date parts
   const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
+  // const month = String(date.getMonth() + 1).padStart(2, '0');
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const month = monthNames[date.getMonth()];
   const year = date.getFullYear();
 
   // Time parts (12-hour format with AM/PM)
@@ -977,3 +984,19 @@ export const getDisableReason = (
   if (status === '') return 'Interaction status is invalid or undefined';
   return '';
 };
+
+export const formatMonthDay = (dateStr: string): string => {
+  if (!dateStr) return "";
+  const [month, day] = dateStr.split("/");
+
+  const months = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+  ];
+
+  const monthIndex = parseInt(month, 10) - 1; 
+  const monthName = months[monthIndex] || "";
+
+  return `${monthName}/${day}`;
+};
+

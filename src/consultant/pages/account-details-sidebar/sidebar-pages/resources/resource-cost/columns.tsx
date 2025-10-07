@@ -1,5 +1,6 @@
 import {
   costDisplay,
+  getDateFormat,
   REGEX_PATTERNS,
   RESOURCE_REGEX,
   valueDisplay,
@@ -12,8 +13,7 @@ import {
 } from '../../../../../../components/table/types';
 import { FormFiscalDateType } from '../../../../../types';
 import { ResourceCostList } from '../../../../../types/resource-cost';
-import { DATE_CONFIG } from '../../../../resource-form/form-data';
-import { dateFormatToYYYYMMDD } from '../utils';
+import { DATE_CONFIG } from '../../../../resource-form/form-data'; 
 
 const getFiscalYears = (range: number) => {
   const currentYear = new Date().getFullYear();
@@ -90,7 +90,7 @@ export const getResourceCostColumns = (
     sortable: true,
 
     render: (row: ResourceCostList) => (
-      <span>{dateFormatToYYYYMMDD(row.effective_from as string) || '-'}</span>
+      <span>{getDateFormat(row.effective_from as string) || '-'}</span>
     ),
     editable:
       permissionMap?.['effective_from']?.edit &&
@@ -138,7 +138,7 @@ export const getResourceCostColumns = (
     sortable: true,
 
     render: (row: ResourceCostList) => (
-      <span>{dateFormatToYYYYMMDD(row.end_date as string) || '-'}</span>
+      <span>{getDateFormat(row.end_date as string) || '-'}</span>
     ),
     editable:
       permissionMap?.['end_date']?.edit &&
