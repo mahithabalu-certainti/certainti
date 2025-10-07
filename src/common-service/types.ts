@@ -332,7 +332,16 @@ export interface AxiosErrorMsg {
 export interface UserDetail {
   data?: User;
   loading: boolean;
+  gotoExtendedPermission?: () => void;
 }
+
+export type PermissionTable = {
+  rid: string;
+  menu: string;
+  modules: string;
+  permissions: string;
+  fields: string;
+};
 
 export interface UploadImportPayload {
   entity_type: string;

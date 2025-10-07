@@ -442,10 +442,11 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
     const menu = index.menu.get(menu_id);
     if (!menu) throw new Error('no menu ' + menu_id);
     menu.is_enabled = isEnabled;
+    const menuModules = getModulesForMenu(menu_id);
     // expand Menu and his module and permissions when disabled
-    if (!isEnabled) {
+    if (!isEnabled && menuModules.length > 0) {
       menuExpand(menu_id, undefined, true);
-      getModulesForMenu(menu_id).forEach((mod) => {
+      menuModules.forEach((mod) => {
         menuExpand(mod?.module_id as string, undefined, true);
         getPermissionsForModule(mod?.module_id as string).forEach((pem) => {
           menuExpand(pem?.permission_id as string, undefined, true);
@@ -466,10 +467,11 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
     if (!collectModulesRef.current.includes(module_id)) {
       collectModulesRef.current = collectModulesRef.current.concat(module_id);
     }
-    if (!isEnabled) {
+    const moduelPermission = getPermissionsForModule(module_id);
+    if (!isEnabled && moduelPermission.length > 0) {
       // expand module and his permissions when disabled
       menuExpand(module_id, undefined, true);
-      getPermissionsForModule(module_id).forEach((pem) => {
+      moduelPermission.forEach((pem) => {
         menuExpand(pem?.permission_id as string, undefined, true);
       });
       mod['updatedByDependsOn'] = false; //Remove updatedByDependsOn flag when uncheck
@@ -481,7 +483,11 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
     return formData;
   }
 
-  function togglePermission(permission_id: string, isEnabled: boolean) {
+  function togglePermission(
+    permission_id: string,
+    isEnabled: boolean,
+    hasChild?: boolean
+  ) {
     const perm = index.permission.get(permission_id);
     if (!perm) throw new Error('no permission ' + permission_id);
     perm.is_enabled = isEnabled;
@@ -490,7 +496,7 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
       collectPermissionsRef.current =
         collectPermissionsRef.current.concat(permission_id);
     }
-    if (!isEnabled) {
+    if (!isEnabled && hasChild) {
       // expand permission when disabled
       menuExpand(permission_id, undefined, true);
       perm['updatedByDependsOn'] = false; //Remove updatedByDependsOn flag when uncheck
@@ -635,7 +641,7 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
         const out = toggleModule(id, value);
         setMenus(transformData(out));
       } else if (type === 'permission') {
-        const out = togglePermission(id, value);
+        const out = togglePermission(id, value, hasChild);
         setMenus(transformData(out));
       } else if (type === 'field') {
         const out = toggleField(id, value, fieldType);
@@ -742,14 +748,21 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
             // Disabled checkbox for Extended permission
             const isDisabled =
               menu.has_extended_permission === false && menu.is_enabled;
+            const isMenuHavChild = menu.modules.length > 0;
             return (
               <div className='border-b border-[#CBD6E2]' key={i}>
                 <div
-                  className='flex justify-between items-center px-4 py-2 bg-[#FCFCFC] cursor-pointer hover:bg-[#F5F8FA]'
-                  onClick={(e) => menuExpand(menu.menu_id, e)}
+                  className={`flex justify-between items-center px-4 py-2 bg-[#FCFCFC] hover:bg-[#F5F8FA] ${isMenuHavChild ? 'cursor-pointer' : ''}`}
+                  onClick={
+                    isMenuHavChild
+                      ? (e) => menuExpand(menu.menu_id, e)
+                      : undefined
+                  }
                 >
                   <div className='w-[75%] text-[13px] text-[#425A76] flex items-center gap-2'>
-                    <span className='transform transition-transform duration-200'>
+                    <span
+                      className={`transform transition-transform duration-200 ${isMenuHavChild ? '' : 'opacity-60'}`}
+                    >
                       <Suspense fallback={null}>
                         {isMenuExpand ? (
                           <MenuArrowRightHover
@@ -795,15 +808,20 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
                       const isDisabled =
                         module.has_extended_permission === false &&
                         module.is_enabled;
+                      const isModuleHavChild = module.permission.length > 0;
                       return (
                         <div key={j} className='border-t border-[#CBD6E2]'>
                           <div
-                            className='flex justify-between items-center px-8 py-2 bg-white cursor-pointer hover:bg-[#F5F8FA]'
-                            onClick={(e) => menuExpand(module.module_id, e)}
+                            className={`flex justify-between items-center px-8 py-2 bg-white hover:bg-[#F5F8FA] ${isModuleHavChild ? 'cursor-pointer' : ''}`}
+                            onClick={
+                              isModuleHavChild
+                                ? (e) => menuExpand(module.module_id, e)
+                                : undefined
+                            }
                           >
                             <div className='w-[75%] text-[13px] text-[#425A76] flex items-center gap-2'>
                               <span
-                                className={`transform transition-transform duration-200 ${isModuelExpand ? 'rotate-90' : ''}`}
+                                className={`transform transition-transform duration-200 ${isModuelExpand ? 'rotate-90' : ''} ${isModuleHavChild ? '' : 'opacity-60'}`}
                               >
                                 <ModuleArrowRight
                                   alt='module arrow'
@@ -866,14 +884,20 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
                               return (
                                 <div key={k}>
                                   <div
-                                    className='flex justify-between items-center px-12 py-2 bg-white border-t border-[#CBD6E2] cursor-pointer hover:bg-[#F5F8FA]'
-                                    onClick={(e) =>
-                                      menuExpand(permission.permission_id, e)
+                                    className={`flex justify-between items-center px-12 py-2 bg-white border-t border-[#CBD6E2] hover:bg-[#F5F8FA] ${ishasPermission ? 'cursor-pointer' : ''}`}
+                                    onClick={
+                                      ishasPermission
+                                        ? (e) =>
+                                            menuExpand(
+                                              permission.permission_id,
+                                              e
+                                            )
+                                        : undefined
                                     }
                                   >
                                     <div className='w-[75%] text-[13px] text-[#425A76] flex items-center gap-2'>
                                       <span
-                                        className={`transform transition-transform duration-200 ${isPermissionExpand ? 'rotate-90' : ''}`}
+                                        className={`transform transition-transform duration-200 ${isPermissionExpand ? 'rotate-90' : ''} ${ishasPermission ? '' : 'opacity-60'}`}
                                       >
                                         <ModuleArrowRight
                                           alt='permission arrow'

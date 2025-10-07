@@ -1,3 +1,5 @@
+import { Permissions } from "../../common-service";
+
 export interface Detail {
   label: string;
   value: string | number | undefined;
@@ -54,6 +56,7 @@ export type User = {
   phone: string;
   is_consultant_firm: string;
   org_name: string;
+  permissions?: Permissions[]
 };
 
 // Response status types
