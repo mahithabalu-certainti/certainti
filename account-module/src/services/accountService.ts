@@ -10,14 +10,16 @@ import { HttpStatus, primaryKeyContacts, rawQueries } from "../utils/constant";
 import { IAccount, IUpdateAccount, AccountAttributes } from "../utils/types";
 import { errorLog, getTableSchemaByEntity, logMessage, uploadToAzureBlob } from "../utils/helpers";
 import SchemaService from "./schemaService";
-import { models } from "../models";
+import { Account } from "../models/accountModel";
+import { Country } from "../models/countryModel";
+import { Currency } from "../models/currencyModel";
+import { Industry } from "../models/industryModel";
+import { AccountFiscalSummary } from "../models/accountFiscalSummaryModel";
 import Decimal from "decimal.js";
 import { States } from "../models/stateModel";
 import currency from "currency.js";
 import { Status } from "../models/statusModel";
 import { initSequelize } from "../config/maindbDataSource";
-
-const { Account, Country, Currency, Industry, AccountFiscalSummary } = models;
 
 class AccountService {
   private accountRepository: typeof Account | null;
