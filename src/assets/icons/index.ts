@@ -48,6 +48,7 @@ const icons = {
   download: () => import('./download.svg?react'),
   edit: () => import('./edit.svg?react'),
   emailTemplate: () => import('./email-template.svg?react'),
+  templateImport: () => import('./template-import.svg?react'),
   errorInfoIcon: () => import('./error-info-icon.svg?react'),
   eyeIcon: () => import('./eye-icon.svg?react'),
   filter: () => import('./filter.svg?react'),
@@ -172,6 +173,7 @@ export const DetailsKeyContactErrorIcon = createLazySvgIcon(
   'detailsKeyContactErrorIcon'
 );
 export const DownloadIcon = createLazySvgIcon('download');
+export const TemplateImportIcon = createLazySvgIcon('templateImport');
 export const EditIcon = createLazySvgIcon('edit');
 export const EmailTemplateIcon = createLazySvgIcon('emailTemplate');
 export const ErrorInfoIcon = createLazySvgIcon('errorInfoIcon');

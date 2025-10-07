@@ -12,10 +12,17 @@ import {
 } from '../../../../../components/table';
 import { AccountDetailsResponse, ExportType } from '../../../../types';
 import ImportFile from './import-file/import-file';
-import { useImportListList } from '../../../../services/import';
+import {
+  useImportListList,
+  useTempleteList,
+} from '../../../../services/import';
 import ImportDetails from './import-details/import-details';
 import SectionHeader from '../../../../../components/details-section/section-header';
-import { checkPermission, getFiscalYears } from '../../../../../common-utils';
+import {
+  ActionsDropdownItem,
+  checkPermission,
+  getFiscalYears,
+} from '../../../../../common-utils';
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
 import { AccessRestricted } from '../../../../../components/account-restricted';
@@ -129,6 +136,7 @@ const Imports: React.FC<ImportsProps> = ({
     !viewDetails,
     refreshImports
   );
+  const { data: TempleteList } = useTempleteList();
   const totalItems = data?.count || 0;
   const minYear = 1950;
   const currentYear = new Date().getFullYear();
@@ -197,6 +205,17 @@ const Imports: React.FC<ImportsProps> = ({
     }
     navigate({ search: searchParams.toString() }, { replace: true });
   };
+
+  const menuItems: ActionsDropdownItem[] =
+    TempleteList?.map((item) => ({
+      label: item.template_name,
+      disabled: !item.blob_url,
+      onClick: () => {
+        if (item.blob_url) {
+          handleDownload(item.blob_url);
+        }
+      },
+    })) ?? [];
 
   const headerButtons = [
     {
@@ -351,6 +370,8 @@ const Imports: React.FC<ImportsProps> = ({
                 alt='Imports-header-icon'
               />
             }
+            ActionName='Download Templete'
+            actionItems={menuItems}
             buttons={headerButtons}
             iconBg='#af78ff'
             bgType='circle'
