@@ -395,8 +395,8 @@ export class InteractionService {
       }
     });
     }  
-    this.logger.info(`Sent count for the current quarter: ${sentCount}`);
-    if (sentCount > maxInteractions) {
+    this.logger.info(`Sent count for the current quarter: ${sentCount} ${maxInteractions} ${sentCount >= maxInteractions} for ${projectFiscalRid}`);
+    if (sentCount >= maxInteractions) {
       this.logger.info(`Max interactions sent for quarter (${sentCount}) reached for project_fiscal_rid: ${projectFiscalRid}`);
       return false;
     }
@@ -1301,8 +1301,8 @@ export class InteractionService {
         data.account_rnumber = accountNumber,
         data.interaction_rid = interaction_rid
         data.user_rid = userId
-        data.email = email_info?.email === undefined ? null : email_info?.email
-        data.name = email_info?.name === undefined ? null : email_info.name
+        data.email = email_info?.email === "" ? null : email_info?.email
+        data.name = email_info?.name === "" ? null : email_info.name
         data.is_interaction_followup = is_interaction_followup
         data.interaction_level = interaction_level
         this.logger.info(`Email info to be sent: ${JSON.stringify(data)}`);
@@ -1314,12 +1314,11 @@ export class InteractionService {
         console.log("Interaction queued for sending:", interaction_rid, fetchInQueueStatus[0][0].rid);
         if(!is_interaction_followup){
         if(interaction_level.toLowerCase() === 'account') {
-          if((data.email !== "" || data.email !== null) && (data.name !== "" || data.name !== null)) {
+          if(data.email !== "" && data.email !== null && data.email !== undefined && data.name !== "" && data.name !== null && data.name !== undefined) {
             email = data.email;
             name = data.name;
         } 
         else {
-        
             const fetchResNameEmail : any = await orgDb.query(rawQueries.fetchKeyContactForInteraction(schemaName, data.account_rid))
             email = fetchResNameEmail[0][0].key_contact_email
             name = fetchResNameEmail[0][0].key_contact_name
@@ -1327,13 +1326,13 @@ export class InteractionService {
         }
         await orgDb.query(rawQueries.updateInteractionStatusAndResEmailName(schemaName, fetchInQueueStatus[0][0].rid, interaction_rid, email, name))
         await mainDb.query(rawQueries.updateInteractionSummaryStatusAndResEmailName(fetchInQueueStatus[0][0].rid, interaction_rid, name, email))
-        } else {
-          if((data.email !== "" || data.email !== null) && (data.name !== "" || data.name !== null)) {
+        } 
+        else {
+          if(data.email !== "" && data.email !== null && data.email !== undefined && data.name !== "" && data.name !== null && data.name !== undefined) {
             email = data.email;
             name = data.name;
         } else {
-          
-             const fetchResNameEmail : any = await orgDb.query(rawQueries.fetchKeyContactForInteraction(schemaName, project_fiscal_rid))
+          const fetchResNameEmail : any = await orgDb.query(rawQueries.fetchKeyContactForInteraction(schemaName, project_fiscal_rid))
           email = fetchResNameEmail[0][0].key_contact_email
           name = fetchResNameEmail[0][0].key_contact_name
          
@@ -1785,7 +1784,7 @@ export class InteractionService {
         page : data.page,
         limit : data.limit,
         totalCount : totalResults,
-        keyContact : keyContactDetails != null && data.flag == interactionFlag.account ? 
+        keyContact : keyContactDetails != null ? 
         {
           key_contact_name : result[0][0].interactions[0].key_contact_name,
           key_contact_email : result[0][0].interactions[0].key_contact_email
@@ -2106,6 +2105,7 @@ export class InteractionService {
           question : d.question,
           response : d.response,
           response_on : d.response_on,
+          is_mandatory : d.is_mandatory,
           attachments : await Promise.all(d.attachments.filter((f : any) =>f.file_url !== null).map(async (da : any) => {
               return {
               fileName : da.file_name,
