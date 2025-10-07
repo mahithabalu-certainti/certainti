@@ -994,21 +994,24 @@ export const rawQueries = {
       SELECT * FROM ${schemaName}.notes WHERE rid = '${rid}' AND account_rid = '${account_rid}'`;
   },
   insertNotesTimeline(schemaName: string, data: any, latestData: any) {
+    let notesOwner : string
+    let title : string;
+    let descriptions : string | null
+
+    if(latestData.notes_owner !== null) notesOwner = `${latestData.notes_owner.replace(/'/g,"''")}`
+    else notesOwner = latestData.notes_owner
+
+    if(latestData.title !== null) title = `${latestData.title.replace(/'/g,"''")}`
+    else title = latestData.title
+
+    if(latestData.descriptions !== null) descriptions = `${latestData.descriptions.replace(/'/g,"''")}`
+    else descriptions = latestData.descriptions
     return `
           INSERT INTO ${schemaName}.notes_timeline
           (created_by, modified_by, notes_rid, document_name, title, notes_owner, attach_to, attachment_level, event_type, event_status, event_name, event_datetime, descriptions)
           VALUES
-          ('${data.userId}', '${data.userId}', '${latestData.rid}', '${latestData.document_name}', '${latestData.title.replace(
-      /'/g,
-      "''"
-    )}', '${latestData.notes_owner.replace(
-      /'/g,
-      "''"
-    )}', '${latestData.attach_to}',
-          '${latestData.attachment_level}', '${STATUS_MESSAGE.uiHandler}', '${STATUS_MESSAGE.success}', '${STATUS_MESSAGE.eventUpdate}', NOW(), '${latestData.descriptions.replace(
-      /'/g,
-      "''"
-    )}'
+          ('${data.userId}', '${data.userId}', '${latestData.rid}', '${latestData.document_name}', '${title}','${notesOwner}', '${latestData.attach_to}',
+          '${latestData.attachment_level}', '${STATUS_MESSAGE.uiHandler}', '${STATUS_MESSAGE.success}', '${STATUS_MESSAGE.eventUpdate}', NOW(), '${descriptions}'
           )`;
   },
 };

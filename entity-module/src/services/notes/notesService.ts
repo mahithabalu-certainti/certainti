@@ -428,7 +428,7 @@ export class NotesService {
         }
     
         // 🔷 Sort
-        const validSortFields = ['document_name', 'title', 'notes_owner', 'r_number', 'format', 'attachment_level', 'size_in_mb', 'attached_to', 'created_datetime', 'descriptions', 'created_by_name', 'fiscal_year', 'modified_by_name'];
+        const validSortFields = ['document_name', 'title', 'notes_owner', 'r_number', 'format', 'attachment_level', 'size_in_mb', 'attached_to', 'created_datetime', 'descriptions', 'created_by_name', 'fiscal_year', 'modified_by_name', 'modified_datetime'];
         const finalSortBy = validSortFields.includes(sortBy) ? sortBy : 'created_datetime';
         const finalSortOrder = ['ASC', 'DESC'].includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
     
@@ -517,27 +517,33 @@ export class NotesService {
         }
         // Apply uploaded_by filter if present
         if (createdByFilter) {
+          let filterValue;
             notes = notes.filter(notes => {
             const uploadedBy = notes.created_by_name?.toLowerCase() || '';
             const operator = Object.keys(createdByFilter)[0];
-            const filterValue = (createdByFilter[operator] || '').toLowerCase();
+            if(operator === 'is_empty') filterValue = ''
+            else filterValue = (createdByFilter[operator] || '').toLowerCase();
             switch (operator) {
               case 'contains': return uploadedBy.includes(filterValue);
               case 'equals': return uploadedBy === filterValue;
-              case 'not_equals': return uploadedBy !== filterValue || uploadedBy === null;
+              case 'not_equals': return uploadedBy !== filterValue;
+              case 'is_empty': return uploadedBy === null || uploadedBy === ''
               default: return false;
             }
           });
         }
         if (modifiedByFilter) {
+          let filterValue;
             notes = notes.filter(notes => {
             const uploadedBy = notes.modified_by_name?.toLowerCase() || '';
             const operator = Object.keys(modifiedByFilter)[0];
-            const filterValue = (modifiedByFilter[operator] || '').toLowerCase();
+            if(operator === 'is_empty') filterValue = ''
+            else filterValue = (modifiedByFilter[operator] || '').toLowerCase();
             switch (operator) {
               case 'contains': return uploadedBy.includes(filterValue);
               case 'equals': return uploadedBy === filterValue;
-              case 'not_equals': return uploadedBy !== filterValue || uploadedBy === null;
+              case 'not_equals': return uploadedBy !== filterValue
+              case 'is_empty': return uploadedBy === null || uploadedBy === ''
               default: return false;
             }
           });
@@ -808,7 +814,7 @@ export class NotesService {
         }
     
         // 🔷 Sort
-        const validSortFields = ['document_name', 'title', 'notes_owner', 'r_number', 'format', 'attachment_level', 'size_in_mb', 'attached_to', 'descriptions', 'created_by_name', 'created_datetime', 'fiscal_year', 'modified_by_name'];
+        const validSortFields = ['document_name', 'title', 'notes_owner', 'r_number', 'format', 'attachment_level', 'size_in_mb', 'attached_to', 'descriptions', 'created_by_name', 'created_datetime', 'fiscal_year', 'modified_by_name','modified_datetime'];
         const finalSortBy = validSortFields.includes(sortBy) ? sortBy : 'created_datetime';
         const finalSortOrder = ['ASC', 'DESC'].includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
     
@@ -905,36 +911,46 @@ export class NotesService {
           "Size": "Size",
           "Fiscal Year": "Fiscal Year",
           "Title": "Title",
-          "Descriptions": "Descriptions",
-          "Notes Owner": "Notes Owner",
+          "Note Owner": "Note Owner",
+          "Related Entity": "Related Entity",
           "Related To ID": "Related To ID",
-          "Uploaded By": "Uploaded By",
-          "Attached On": "Attached On",
-          "Attachment ID": "Attachment ID",
+          "Created By": "Created By",
+          "Created On": "Created On",
+          "Modified By": "Modified By",
+          "Modified On": "Modified On",
+          "Note ID": "Note ID",
+          "Descriptions": "Descriptions",
+          "Download": "Download"
         };
         // Apply uploaded_by filter if present
-        if (createdByFilter) {
+         if (createdByFilter) {
+          let filterValue;
             notes = notes.filter(notes => {
-            const createdBy = notes.created_by_name?.toLowerCase() || '';
+            const uploadedBy = notes.created_by_name?.toLowerCase() || '';
             const operator = Object.keys(createdByFilter)[0];
-            const filterValue = (createdByFilter[operator] || '').toLowerCase();
+            if(operator === 'is_empty') filterValue = ''
+            else filterValue = (createdByFilter[operator] || '').toLowerCase();
             switch (operator) {
-              case 'contains': return createdBy.includes(filterValue);
-              case 'equals': return createdBy === filterValue;
-              case 'not_equals': return createdBy !== filterValue || createdBy === null;
+              case 'contains': return uploadedBy.includes(filterValue);
+              case 'equals': return uploadedBy === filterValue;
+              case 'not_equals': return uploadedBy !== filterValue;
+              case 'is_empty': return uploadedBy === null || uploadedBy === ''
               default: return false;
             }
           });
         }
         if (modifiedByFilter) {
+          let filterValue;
             notes = notes.filter(notes => {
-            const modifiedBy = notes.modified_by_name?.toLowerCase() || '';
+            const uploadedBy = notes.modified_by_name?.toLowerCase() || '';
             const operator = Object.keys(modifiedByFilter)[0];
-            const filterValue = (modifiedByFilter[operator] || '').toLowerCase();
+            if(operator === 'is_empty') filterValue = ''
+            else filterValue = (modifiedByFilter[operator] || '').toLowerCase();
             switch (operator) {
-              case 'contains': return modifiedBy.includes(filterValue);
-              case 'equals': return modifiedBy === filterValue;
-              case 'not_equals': return modifiedBy !== filterValue || modifiedBy === null;
+              case 'contains': return uploadedBy.includes(filterValue);
+              case 'equals': return uploadedBy === filterValue;
+              case 'not_equals': return uploadedBy !== filterValue
+              case 'is_empty': return uploadedBy === null || uploadedBy === ''
               default: return false;
             }
           });
@@ -1167,35 +1183,41 @@ export class NotesService {
         }
     
         // Filters: uploaded_by
-        if (createdByFilter) {
-          attachments = attachments.filter(att => {
-            const uploadedBy = (att.created_by_name || '').toLowerCase();
+         if (createdByFilter) {
+          let filterValue;
+            attachments = attachments.filter(notes => {
+            const uploadedBy = notes.created_by_name?.toLowerCase() || '';
             const operator = Object.keys(createdByFilter)[0];
-            const filterValue = (createdByFilter[operator] || '').toLowerCase();
+            if(operator === 'is_empty') filterValue = ''
+            else filterValue = (createdByFilter[operator] || '').toLowerCase();
             switch (operator) {
               case 'contains': return uploadedBy.includes(filterValue);
               case 'equals': return uploadedBy === filterValue;
-              case 'not_equals': return uploadedBy !== filterValue || uploadedBy === null;
+              case 'not_equals': return uploadedBy !== filterValue;
+              case 'is_empty': return uploadedBy === null || uploadedBy === ''
               default: return false;
             }
           });
         }
         if (modifiedByFilter) {
-          attachments = attachments.filter(att => {
-            const modifiedBy = (att.modified_by_name || '').toLowerCase();
+          let filterValue;
+            attachments = attachments.filter(notes => {
+            const uploadedBy = notes.modified_by_name?.toLowerCase() || '';
             const operator = Object.keys(modifiedByFilter)[0];
-            const filterValue = (modifiedByFilter[operator] || '').toLowerCase();
+            if(operator === 'is_empty') filterValue = ''
+            else filterValue = (modifiedByFilter[operator] || '').toLowerCase();
             switch (operator) {
-              case 'contains': return modifiedBy.includes(filterValue);
-              case 'equals': return modifiedBy === filterValue;
-              case 'not_equals': return modifiedBy !== filterValue || modifiedBy === null;
+              case 'contains': return uploadedBy.includes(filterValue);
+              case 'equals': return uploadedBy === filterValue;
+              case 'not_equals': return uploadedBy !== filterValue
+              case 'is_empty': return uploadedBy === null || uploadedBy === ''
               default: return false;
             }
           });
         }
     
         // 🔷 Sort with custom field sorting logic
-        const validSortFields = ['document_name', 'title', 'notes_owner', 'r_number', 'format', 'attachment_level', 'size_in_mb', 'attached_to', 'descriptions', 'created_by_name', 'created_datetime', 'fiscal_year', 'modified_by_name'];
+        const validSortFields = ['document_name', 'title', 'notes_owner', 'r_number', 'format', 'attachment_level', 'size_in_mb', 'attached_to', 'descriptions', 'created_by_name', 'created_datetime', 'fiscal_year', 'modified_by_name', 'modified_datetime'];
         const finalSortBy = validSortFields.includes(sortBy) ? sortBy : 'created_datetime';
         const finalSortOrder = ['ASC', 'DESC'].includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
     
@@ -1434,7 +1456,8 @@ export class NotesService {
     
         let attachments = await Promise.all(attachmentsRaw.map(async att => ({
           ...att.get({ plain: true }),
-          uploaded_by: userMap.get(att.created_by) || att.created_by,
+          created_by_name: userMap.get(att.created_by) || att.created_by,
+          modified_by_name: userMap.get(att.modified_by) || att.modified_by,
           attached_to: attachmentDisplayNames[att.rid] || att.attach_to,
           browse_file: await generateSasUrl(att.browse_file)
         })));
@@ -1457,20 +1480,20 @@ export class NotesService {
         // Filters: uploaded_by
         if (createdByFilter) {
           attachments = attachments.filter(att => {
-            const createdBy = (att.created_by || '').toLowerCase();
+            const uploadedBy = (att.created_by_name || '').toLowerCase();
             const operator = Object.keys(createdByFilter)[0];
             const filterValue = (createdByFilter[operator] || '').toLowerCase();
             switch (operator) {
-              case 'contains': return createdBy.includes(filterValue);
-              case 'equals': return createdBy === filterValue;
-              case 'not_equals': return createdBy !== filterValue || createdBy === null;
+              case 'contains': return uploadedBy.includes(filterValue);
+              case 'equals': return uploadedBy === filterValue;
+              case 'not_equals': return uploadedBy !== filterValue || uploadedBy === null;
               default: return false;
             }
           });
         }
         if (modifiedByFilter) {
           attachments = attachments.filter(att => {
-            const modifiedBy = (att.modified_by || '').toLowerCase();
+            const modifiedBy = (att.modified_by_name || '').toLowerCase();
             const operator = Object.keys(modifiedByFilter)[0];
             const filterValue = (modifiedByFilter[operator] || '').toLowerCase();
             switch (operator) {
@@ -1483,7 +1506,7 @@ export class NotesService {
         }
     
         // 🔷 Sort with custom field sorting logic
-        const validSortFields = ['document_name', 'title', 'notes_owner', 'r_number', 'format', 'attachment_level', 'size_in_mb', 'attached_to', 'descriptions', 'uploaded_by', 'created_datetime', 'fiscal_year'];
+        const validSortFields = ['document_name', 'title', 'notes_owner', 'r_number', 'format', 'attachment_level', 'size_in_mb', 'attached_to', 'descriptions', 'created_by_name', 'created_datetime', 'fiscal_year', 'modified_by_name', 'modified_datetime'];
         const finalSortBy = validSortFields.includes(sortBy) ? sortBy : 'created_datetime';
         const finalSortOrder = ['ASC', 'DESC'].includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
     
@@ -1498,9 +1521,10 @@ export class NotesService {
         let aVal: string = '';
         let bVal: string = '';
     
-        switch (finalSortBy) {
+       switch (finalSortBy) {
           case 'attached_to': aVal = a.attached_to || ''; bVal = b.attached_to || ''; break;
-          case 'uploaded_by': aVal = a.uploaded_by || ''; bVal = b.uploaded_by || ''; break;
+          case 'created_by_name': aVal = a.created_by_name || ''; bVal = b.created_by_name || ''; break;
+          case 'modified_by_name': aVal = a.modified_by_name || ''; bVal = b.modified_by_name || ''; break;
           default:
             aVal = a[finalSortBy] !== undefined && a[finalSortBy] !== null ? String(a[finalSortBy]) : '';
             bVal = b[finalSortBy] !== undefined && b[finalSortBy] !== null ? String(b[finalSortBy]) : '';
@@ -1546,13 +1570,16 @@ export class NotesService {
           "Size": "Size",
           "Fiscal Year": "Fiscal Year",
           "Title": "Title",
-          "Notes Owner": "Notes Owner",
+          "Note Owner": "Note Owner",
           "Related Entity": "Related Entity",
           "Related To ID": "Related To ID",
-          "Attached By": "Attached By",
-          "Attached On": "Attached On",
-          "Attachment ID": "Attachment ID",
-          "Descriptions": "Descriptions"
+          "Created By": "Created By",
+          "Created On": "Created On",
+          "Modified By": "Modified By",
+          "Modified On": "Modified On",
+          "Note ID": "Note ID",
+          "Descriptions": "Descriptions",
+          "Download": "Download"
         };
     
         attachments = attachments.map((at) => {
@@ -1603,7 +1630,10 @@ export class NotesService {
           [Op.or]: [
             { document_name: { [Op.iLike]: `%${search}%` } },
             { r_number: { [Op.iLike]: `%${search}%` } },
-            { descriptions : { [Op.iLike]: `%${search}%` } }
+            { descriptions : { [Op.iLike]: `%${search}%` } },
+            { title : { [Op.iLike]: `%${search}%` } },
+            { notes_owner : { [Op.iLike]: `%${search}%` } },
+            { attachment_level : { [Op.iLike]: `%${search}%` } }
           ]
         });
       }
@@ -1650,7 +1680,6 @@ export class NotesService {
           case 'attached_to':
           case 'attach_to':
           case 'r_number':
-          case 'uploaded_by':
           case 'title':
           case 'notes_owner':
             switch (operator.toLowerCase()) {
@@ -1662,6 +1691,37 @@ export class NotesService {
             break;
     
           case 'created_datetime':
+            switch (operator.toLowerCase()) {
+              case 'equals': {
+                const date = new Date(value);
+                condition[field] = Sequelize.literal(`DATE("${field}") = DATE('${date.toISOString()}')`);
+                break;
+              }
+              case 'before': {
+                const date = new Date(value);
+                condition[field] = Sequelize.literal(`DATE("${field}") < DATE('${date.toISOString()}')`);
+                break;
+              }
+              case 'after': {
+                const date = new Date(value);
+                condition[field] = Sequelize.literal(`DATE("${field}") > DATE('${date.toISOString()}')`);
+                break;
+              }
+              case 'between': {
+                if (Array.isArray(value)) {
+                  const startDate = new Date(value[0]);
+                  const endDate = new Date(value[1]);
+                  condition[field] = Sequelize.literal(
+                    `DATE("${field}") BETWEEN DATE('${startDate.toISOString()}') AND DATE('${endDate.toISOString()}')`
+                  );
+                }
+                break;
+              }
+              case 'is_empty': condition[field] = { [Op.is]: null }; break;
+            }
+            break;
+
+          case 'modified_datetime':
             switch (operator.toLowerCase()) {
               case 'equals': {
                 const date = new Date(value);
@@ -1766,13 +1826,16 @@ private mapAttachmentToCommonFormat(at: any) {
     "Size": at.size_in_mb || "-",
     "Fiscal Year": at.fiscal_year || "-",
     "Title": at.title || "-",
-    "Notes Owner": at.notes_owner || "-",
+    "Note Owner": at.notes_owner || "-",
     "Related Entity": at.attachment_level || "-",
     "Related To ID": at.attached_to || "-",
-    "Uploaded By": at.uploaded_by || "-",
-    "Attached On": moment(at.created_datetime).format('YYYY-MM-DD') || "-",
-    "Notes ID": at.r_number || "-",
-    "Descriptions" : at.descriptions || "-"
+    "Created By": at.created_by_name || "-",
+    "Modified By": at.modified_by_name || "-",
+    "Created On" : moment(at.created_datetime).format('YYYY-MM-DD') || "-",
+    "Modified On": moment(at.modified_datetime).format('YYYY-MM-DD') || "-",
+    "Note ID": at.r_number || "-",
+    "Descriptions" : at.descriptions || "-",
+    "Download": at.browse_file || "-"
   };
 }
 
