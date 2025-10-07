@@ -808,20 +808,20 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
                       const isDisabled =
                         module.has_extended_permission === false &&
                         module.is_enabled;
-                      const isModuleHavChild = module.permission.length > 0;
+                      const isModuleHaveChild = module.permission.length > 0;
                       return (
                         <div key={j} className='border-t border-[#CBD6E2]'>
                           <div
-                            className={`flex justify-between items-center px-8 py-2 bg-white hover:bg-[#F5F8FA] ${isModuleHavChild ? 'cursor-pointer' : ''}`}
+                            className={`flex justify-between items-center px-8 py-2 bg-white hover:bg-[#F5F8FA] ${isModuleHaveChild ? 'cursor-pointer' : ''}`}
                             onClick={
-                              isModuleHavChild
+                              isModuleHaveChild
                                 ? (e) => menuExpand(module.module_id, e)
                                 : undefined
                             }
                           >
                             <div className='w-[75%] text-[13px] text-[#425A76] flex items-center gap-2'>
                               <span
-                                className={`transform transition-transform duration-200 ${isModuelExpand ? 'rotate-90' : ''} ${isModuleHavChild ? '' : 'opacity-60'}`}
+                                className={`transform transition-transform duration-200 ${isModuelExpand ? 'rotate-90' : ''} ${isModuleHaveChild ? '' : 'opacity-60'}`}
                               >
                                 <ModuleArrowRight
                                   alt='module arrow'
