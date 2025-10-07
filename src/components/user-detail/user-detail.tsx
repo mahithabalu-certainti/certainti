@@ -234,22 +234,23 @@ export const UserDetailComponent = ({
           />
         </div>
         <div className='text-sm p-3 grid gap-y-3'>
-          <div className='w-full border border-solid border-[#CBD6E2]'>
+            <div className='w-full border-t border-l border-solid border-[#CBD6E2]'>
             <ListTable
               data={permissionTable as PermissionTable[]}
               columns={ExtendedPermissionColumns()}
               getRowId={(row: PermissionTable) => row.rid}
               hoverHighlight={false}
               tableStyle={{
-                height: '100%',
-                maxHeight: 'calc(100vh - 195px)',
-                overflow: 'auto',
+              height: '100%',
+              maxHeight: 'calc(100vh - 195px)',
+              overflow: 'auto',
               }}
               selectable={false}
               stickyHeader
               actionWidth={60}
+              showEmptyRow={false}
             />
-          </div>
+            </div>
         </div>
       </div>
       <DetailsSection
