@@ -80,12 +80,14 @@ interface InteractionsProps {
   setInteractionsParams: React.Dispatch<
     React.SetStateAction<AttachmentsListExportParams>
   >;
+  isSendInteraction: boolean;
 }
 
 const Interactions: React.FC<InteractionsProps> = ({
   accountInActive,
   projectDetails,
   setInteractionsParams,
+  isSendInteraction,
 }) => {
   const { projectid } = useParams();
   const [searchParams] = useSearchParams();
@@ -410,7 +412,8 @@ const Interactions: React.FC<InteractionsProps> = ({
     {
       label: 'Reminder',
       variant: 'outlined' as const,
-      disabled: accountInActive || interactionList.length === 0,
+      disabled:
+        accountInActive || interactionList.length === 0 || !isSendInteraction,
       onClick: () => setReminderModalOpen(true),
       sx: { width: '80px', minWidth: '80px' },
       hide: viewResponseHistory,
@@ -418,7 +421,8 @@ const Interactions: React.FC<InteractionsProps> = ({
     {
       label: 'Send Interaction',
       variant: 'outlined' as const,
-      disabled: selectedRows.length === 0 || accountInActive,
+      disabled:
+        selectedRows.length === 0 || accountInActive || !isSendInteraction,
       onClick: () => setSendModalOpen(true),
       sx: { width: '120px', minWidth: '120px' },
       hide: !sendInteractionsEnable || viewResponseHistory,
@@ -695,6 +699,7 @@ const Interactions: React.FC<InteractionsProps> = ({
           accountInActive={accountInActive}
           handleBackClick={handleBackClick}
           projectDetails={projectDetails}
+          isSendInteraction={isSendInteraction}
         />
       ) : viewInteractionHistory ? (
         <InteractionHistory

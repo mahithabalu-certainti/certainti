@@ -494,7 +494,10 @@ const Interactions: React.FC<InteractionsProps> = ({
     {
       label: 'Reminder',
       variant: 'outlined' as const,
-      disabled: accountInActive || interactionList.length === 0,
+      disabled:
+        accountInActive ||
+        interactionList.length === 0 ||
+        !accountDetails?.accountDetails?.is_send_interaction,
       onClick: () => setReminderModalOpen(true),
       sx: { width: '80px', minWidth: '80px' },
       hide: viewResponseHistory,
