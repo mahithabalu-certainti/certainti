@@ -1850,7 +1850,7 @@ export const fetchResCodeWithPrjResRole = (schemaName : string, search : string,
     n.created_by, n.modified_by, n.account_rid, 
     n.browse_file, n.created_datetime, n.modified_datetime,
     n.document_name, n.fiscal_year, e.name AS attached_to, 
-    n.format, n.size_in_mb, n.attachment_level, n.r_number
+    n.format, n.size_in_mb, n.attachment_level, n.r_number, n.attach_to
     FROM
     ${schemaName}.notes n
     LEFT JOIN LATERAL (
