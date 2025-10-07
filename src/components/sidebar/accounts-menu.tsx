@@ -1,7 +1,6 @@
 import {
   AccountsIcon,
   AttachmentIcon,
-  CaseIcon,
   DashboardIcon,
   HelpIcon,
   NotesIcon,
@@ -14,7 +13,6 @@ import { INavItem } from '../../consultant/types';
 import {
   ACCOUNT,
   ATTACHMENTS,
-  CASE,
   MAIN_ROUTE,
   NOT_FOUND,
   PROJECT,
@@ -54,14 +52,14 @@ export const accountNavItems: INavItem[] = [
     type: 'link',
     matchLink: '',
   },
-  {
-    id: MenuOption.CASES,
-    icon: CaseIcon,
-    name: 'Cases',
-    link: CASE,
-    type: 'link',
-    matchLink: CASE,
-  },
+  // {
+  //   id: MenuOption.CASES,
+  //   icon: CaseIcon,
+  //   name: 'Cases',
+  //   link: CASE,
+  //   type: 'link',
+  //   matchLink: CASE,
+  // },
   // Global Interactions removed as of now will be added in future if required
   // {
   //   id: MenuOption.INTERACTIONS,

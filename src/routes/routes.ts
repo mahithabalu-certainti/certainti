@@ -86,6 +86,7 @@ export const ATTACHMENTS = '/attachments';
 export const CASE = '/case';
 export const CASE_DETAILS = `${CASE}/details/:caseid`;
 export const CASE_EDIT = `${CASE}/edit/:caseid`;
+export const CASE_CREATE = `${CASE}/create`;
 
 export const NOT_FOUND = '/page-not-found';
 export const NOT_MATCH = '*';

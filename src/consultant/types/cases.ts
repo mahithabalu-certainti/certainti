@@ -49,3 +49,22 @@ export interface CaseApiResponse {
   statusCode: number;
   statusMessage: string;
 }
+
+export interface CaseDetailsResponse {
+  data: Case;
+  statusCode: number;
+  statusMessage: string;
+}
+
+export interface CasesPayload {
+  caseId: string;
+  caseNo: string;
+  fiscalYear: number;
+  caseCode: string;
+  caseType: string;
+  country: string;
+  region: string;
+  caseOwner: string;
+  rdClaim: string;
+  creator: string;
+}

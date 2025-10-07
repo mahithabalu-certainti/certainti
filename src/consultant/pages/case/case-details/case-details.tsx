@@ -23,13 +23,14 @@ import {
   TechSummaryIcon,
 } from '../../../../assets';
 import { WorkBreakDown } from './work-breakdown';
+import { DisplayColumn } from '../../account-details/utils';
 
 export const CaseDetails = () => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
   //   const navigate = useNavigate();
 
-  //   const [caseDetails, setCaseDetails] = useState<DisplayColumn[]>([]);
+  const [caseDetails, setCaseDetails] = useState<DisplayColumn[]>([]);
   //   const [accountDetailsForEdit, setAccountDetailsForEdit] =
   //     useState<AccountFieldsApiResponse['data']>();
   //   const { caseid } = useParams();
@@ -40,7 +41,7 @@ export const CaseDetails = () => {
   //   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
   //   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-  const defaultTab = searchParams.get('list') ?? 'details';
+  const defaultTab = searchParams.get('list') ?? 'workBreakdown';
   const [activeKey, setActiveKey] = useState(defaultTab as string);
   //   const [toggleEnabled, setToggleEnabled] = useState(false);
   //   const [refreshAccountDetails, setRefreshAccountDetails] = useState<number>(
@@ -110,10 +111,16 @@ export const CaseDetails = () => {
   }, [searchParams]);
 
   useEffect(() => {
+    const listParam = searchParams.get('list');
     if (location.state?.activeKey) {
-      setActiveKey(location.state.activeKey);
+      setActiveKey(location.state.activeKey || listParam || 'workBreakdown');
     }
-  }, [location.state]);
+  }, [location.state, searchParams]);
+  // useEffect(() => {
+  //   if (data?.data) {
+  //     setCaseDetails(transformAccountData(data?.data, permissionMap));
+  //   }
+  // }, [data, permissionMap]);
 
   const menuItems: ActionsDropdownItem[] = [
     {
@@ -142,11 +149,6 @@ export const CaseDetails = () => {
     console.log('Settings clicked');
   };
   // Set active key from location stat
-  useEffect(() => {
-    if (location.state?.activeKey) {
-      setActiveKey(location.state.activeKey);
-    }
-  }, [location.state]);
 
   const renderContent = () => {
     switch (activeKey) {
@@ -285,14 +287,14 @@ export const CaseDetails = () => {
       <div className='flex h-[60px]'>
         <PageHeader
           variant='sub'
-          placeholder='Account Name'
+          placeholder='Case ID'
           icon={
             <AccountDetailsIcon
               className='h-6 w-6 rounded'
               style={{ backgroundColor: '#4B9BFF' }}
             />
           }
-          title={'Case Title'}
+          title={'5005003'}
           totalRecords={5}
           actionItems={menuItems}
           //   primaryButton={
@@ -308,10 +310,11 @@ export const CaseDetails = () => {
           showActions={false}
           showSettings={false}
           goBack={goBack}
+          backBtnLabel='Back To Cases'
         />
       </div>
       <InfoSection
-        columns={[]}
+        columns={caseDetails}
         loading={false}
         error={undefined}
         singleLineView={true}
