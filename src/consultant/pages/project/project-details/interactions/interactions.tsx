@@ -85,12 +85,14 @@ interface InteractionsProps {
   setInteractionsParams: React.Dispatch<
     React.SetStateAction<AttachmentsListExportParams>
   >;
+  isSendInteraction: boolean;
 }
 
 const Interactions: React.FC<InteractionsProps> = ({
   accountInActive,
   projectDetails,
   setInteractionsParams,
+  isSendInteraction,
 }) => {
   const { projectid } = useParams();
   const [searchParams] = useSearchParams();
@@ -169,7 +171,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   };
   const fiscalYear = Number(projectDetails?.fiscal_year);
 
-  const { data, isLoading, isError } = useInteractionList(
+  const { data, isLoading, isError, refetch } = useInteractionList(
     {
       page: currentPage + 1,
       limit: rowsPerPage,
@@ -197,14 +199,20 @@ const Interactions: React.FC<InteractionsProps> = ({
     isError: isModelDataError,
   } = useInteractionListModel(
     {
-      page: modelTableParms.page,
+      page: modelTableParms.page + 1,
       limit: modelTableParms.limit,
       sort: modelTableParms.sort,
       sort_by: modelTableParms.sort_by,
       filters: modelTableParms.filter,
       fiscal_year: fiscalYear,
       account_rid: accountId,
-      flag: 'account',
+      flag: 'project',
+      project_rid: projectDetails?.project_rid || '',
+      project_fiscal_rid:
+        projectDetails?.project_fiscal_rid ||
+        projectid ||
+        projectDetails?.rid ||
+        '',
       reminder_specific_list: true,
     },
     reminderModalOpen,
@@ -322,7 +330,13 @@ const Interactions: React.FC<InteractionsProps> = ({
             checkBoxMessage,
           };
         }) || [];
-
+      localStorage.setItem(
+        'currentRecipients',
+        JSON.stringify({
+          name: data?.keyContact?.key_contact_name || '',
+          email: data?.keyContact?.key_contact_email || '',
+        })
+      );
       setInteractionList(updatedInteractions);
       setSelectedRows([]);
       setClearSelectedRows((prev) => !prev);
@@ -406,7 +420,8 @@ const Interactions: React.FC<InteractionsProps> = ({
     {
       label: 'Reminder',
       variant: 'outlined' as const,
-      disabled: accountInActive || interactionList.length === 0,
+      disabled:
+        accountInActive || interactionList.length === 0 || !isSendInteraction,
       onClick: () => setReminderModalOpen(true),
       sx: { width: '80px', minWidth: '80px' },
       hide: viewResponseHistory,
@@ -414,7 +429,8 @@ const Interactions: React.FC<InteractionsProps> = ({
     {
       label: 'Send Interaction',
       variant: 'outlined' as const,
-      disabled: selectedRows.length === 0 || accountInActive,
+      disabled:
+        selectedRows.length === 0 || accountInActive || !isSendInteraction,
       onClick: () => setSendModalOpen(true),
       sx: { width: '120px', minWidth: '120px' },
       hide: !sendInteractionsEnable || viewResponseHistory,
@@ -567,7 +583,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   const handleReminderBtn = (data: InteractionList[]) => {
     const interactions = data.map((item) => ({
       interaction_rid: item.rid || '',
-      // interaction_level: 'Account',
+      interaction_level: item.interaction_level_name || '',
       project_fiscal_rid: item.project_fiscal_rid || '',
     }));
 
@@ -592,7 +608,7 @@ const Interactions: React.FC<InteractionsProps> = ({
           sort_by: 'ASC',
           filter: {},
         });
-        // refetch();
+        refetch();
       },
     });
   };
@@ -710,6 +726,7 @@ const Interactions: React.FC<InteractionsProps> = ({
             accountInActive={accountInActive}
             handleBackClick={handleBackClick}
             projectDetails={projectDetails}
+            isSendInteraction={isSendInteraction}
           />
         ) : viewInteractionHistory ? (
           <InteractionHistory
