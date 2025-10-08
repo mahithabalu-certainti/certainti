@@ -1235,12 +1235,12 @@ export class ProjectInjestionTaskService {
     if (result[0].length > 0) {
       const finalResult = result[0].map((data: any) => {
         return {
-          rid: data.rid,
-          resource_code: data.resource_code,
-          project_resource_role: data.project_resource_role,
+          rid : data.rid,
+          resource_code : data.resource_code,
+          project_resource_role : data.project_resource_role,
           resource_name : data.resource_name
-        };
-      });
+        }
+      })
       return {
         statusCode: HttpStatus.SUCCESS,
         data: finalResult,

@@ -173,7 +173,7 @@ export class ProjectResourceService {
                   "Effort cannot exceed the total hours in the duration",
               };
             }
-          } 
+          }
         }
 
         let status = "Active";
@@ -1497,18 +1497,9 @@ export class ProjectResourceService {
               data : null
             };
           }
-        } else if (startDate && !endDate) {
-          if (newEffort.gt(24)) {
-            logMessage(`Validation Error: ${STATUS_MESSAGE.effort24HrsExceeded}`);
-            return {
-              statusCode: HttpStatus.BAD_REQUEST,
-              message: HttpStatus.BAD_REQUEST_MESSAGE,
-              errorMessage: STATUS_MESSAGE.effort24HrsExceeded,
-              data: null,
-            };
-          }
         }
       }
+      
 
       // const isDuplicate =
       //   await this.projectResourceSchema.findDuplicateProjectResourceOnUpdate(
