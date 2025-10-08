@@ -393,6 +393,7 @@ const Resource: React.FC<ResourceProps> = ({
     // update the URL with the tab value
     searchParams.set('tab', newValue);
     searchParams.delete('attachment_entity');
+    searchParams.delete('note_id');
     navigate({ search: searchParams.toString() }, { replace: true });
     setCurrentPage(0);
   };

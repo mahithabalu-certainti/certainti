@@ -408,6 +408,7 @@ export const ProjectResources = ({
       label: 'Add Attachment',
       variant: 'outlined' as const,
       onClick: () => handleOpen(),
+      disabled: accountOrProjectInActive,
       sx: { ...BUTTON_STYLES, width: '120px', minWidth: '48px' },
       hide:
         !viewDetails ||
@@ -419,6 +420,7 @@ export const ProjectResources = ({
       label: 'Add Note',
       variant: 'outlined' as const,
       onClick: () => handleCreateNote(),
+      disabled: accountOrProjectInActive,
       sx: { ...BUTTON_STYLES, width: '80px', minWidth: '80px' },
       hide: !viewDetails,
     },

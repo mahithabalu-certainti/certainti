@@ -309,8 +309,8 @@ export const ProjectTask = ({
     },
   ];
 
-  const handleCreateNote = () => {
-    const projectTaskId = searchParams.get('pro_task_id');
+  const handleCreateNote = (row?: ProjectTaskListType) => {
+    const projectTaskId = row?.rid || searchParams.get('pro_task_id');
     const path = generatePath(NOTES_CREATE, {
       module: 'account',
     });
@@ -318,7 +318,7 @@ export const ProjectTask = ({
       accountId: accountID,
       entityLevel: 'project_task',
       entityId: projectTaskId || '',
-      source: `Project Task > ${resourceData?.r_number}`,
+      source: `Project Task > ${resourceData?.r_number || row?.r_number}`,
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
@@ -336,6 +336,7 @@ export const ProjectTask = ({
       label: 'Add Attachment',
       variant: 'outlined' as const,
       onClick: () => handleOpen(),
+      disabled: accountOrProjectInActive,
       sx: { ...BUTTON_STYLES, width: '120px', minWidth: '48px' },
       hide: !viewDetails || !isAttachmentCreateEnable,
     },
@@ -343,6 +344,7 @@ export const ProjectTask = ({
       label: 'Add Note',
       variant: 'outlined' as const,
       onClick: () => handleCreateNote(),
+      disabled: accountOrProjectInActive,
       sx: { ...BUTTON_STYLES, width: '80px', minWidth: '80px' },
       hide: !viewDetails,
     },
@@ -499,12 +501,14 @@ export const ProjectTask = ({
   const projectTaskColumns = getProjectTaskColumns(
     handleProjectTaskClick,
     handleAttachmentClick,
+    handleCreateNote,
     memoizedProjectResourceCode,
     memoizedProjectResourceType,
     memoizedProjectResourceClassification,
     permissionMapTaskTableColumn,
     accountOrProjectInActive,
-    fiscalDatesArg
+    fiscalDatesArg,
+    isAttachmentCreateEnable
   );
   const onRefreshClick = () => {
     setRefreshProjectsTrigger(Date.now());
