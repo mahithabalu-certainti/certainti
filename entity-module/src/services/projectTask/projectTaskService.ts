@@ -1075,7 +1075,8 @@ export class ProjectInjestionTaskService {
         return {
           rid : data.rid,
           resource_code : data.resource_code,
-          project_resource_role : data.project_resource_role
+          project_resource_role : data.project_resource_role,
+          resource_name : data.resource_name
         }
       })
       return {

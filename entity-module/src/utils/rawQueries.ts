@@ -1826,7 +1826,7 @@ export const fetchResCodeWithPrjResRole = (schemaName : string, search : string,
     else searchValue = `%%`
 
     let query = `
-    SELECT ps.rid, r.resource_code, ps.project_resource_role
+    SELECT ps.rid, r.resource_code, ps.project_resource_role, r.resource_name
     FROM
     ${schemaName}.project_resource ps
     LEFT JOIN ${schemaName}.resources r ON r.rid = ps.resource_rid
