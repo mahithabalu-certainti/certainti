@@ -149,6 +149,7 @@ export const Accounts: React.FC = () => {
           filters: appliedFilters,
           globalFilters: reshapeGlobalFilter(filters as FilterEntry[]),
           fiscalYear,
+          search: searchText || undefined,
         }),
     },
   ];

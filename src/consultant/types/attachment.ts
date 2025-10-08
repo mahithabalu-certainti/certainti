@@ -67,6 +67,7 @@ export interface AttachmentsListExportParams {
   accountRid?: string;
   page?: number;
   limit?: number;
+  search?: string;
 }
 
 export interface AttachmentUploadPayload {
