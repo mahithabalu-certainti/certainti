@@ -24,13 +24,14 @@ import {
 } from '../../../../assets';
 import { WorkBreakDown } from './work-breakdown';
 import { DisplayColumn } from '../../account-details/utils';
+import { CaseTeam } from './case-team';
 
 export const CaseDetails = () => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
   //   const navigate = useNavigate();
 
-  const [caseDetails, setCaseDetails] = useState<DisplayColumn[]>([]);
+  const [caseDetails] = useState<DisplayColumn[]>([]);
   //   const [accountDetailsForEdit, setAccountDetailsForEdit] =
   //     useState<AccountFieldsApiResponse['data']>();
   //   const { caseid } = useParams();
@@ -158,6 +159,12 @@ export const CaseDetails = () => {
             <WorkBreakDown />
           </div>
         );
+      case 'caseTeam':
+        return (
+          <div className='w-full pr-4 pl-2 py-2'>
+            <CaseTeam />
+          </div>
+        );
       default:
         return (
           <div className='flex items-center justify-center h-full'>
@@ -186,6 +193,13 @@ export const CaseDetails = () => {
       {
         name: 'Case Review',
         key: 'caseReview',
+        id: AllMenus.FINANCIAL_HIGHLIGHTS,
+        disabled: false,
+        icon: CasesIcon,
+      },
+      {
+        name: 'Case Team',
+        key: 'caseTeam',
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
         icon: CasesIcon,

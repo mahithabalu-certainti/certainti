@@ -190,7 +190,7 @@ const Settings: React.FC<SettingsProps> = ({
   }
 
   return (
-    <div className='flex flex-col gap-0 border border-[#CBD6E2] rounded-[2px] pt-5'>
+    <div className='flex flex-col gap-0 border border-[#CBD6E2] rounded-b-[2px] pt-5'>
       <Box
         className='bg-white'
         sx={{
