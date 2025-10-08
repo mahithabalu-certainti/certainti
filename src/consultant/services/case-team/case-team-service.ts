@@ -71,7 +71,7 @@ export const mockCaseTeamData: CaseTeamResponse = {
     {
       rid: 'member_2',
       user_id: 'MEM_002',
-      user_name: 'Jane Smith',
+      user_name: 'Jane',
       user_role: 'Developer',
     },
     {
@@ -188,7 +188,7 @@ const fetchCaseTeam = async (caseId: string): Promise<CaseTeamResponse> => {
     // Return mock data with case ID
     return {
       ...mockCaseTeamData,
-      case_rid: caseId, // Use the actual case ID passed
+      case_rid: caseId,
     };
   } catch (error) {
     console.error('Error fetching case team:', error);

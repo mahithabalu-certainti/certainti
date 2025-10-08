@@ -66,7 +66,7 @@ const CaseTeam = () => {
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   // Get case ID from URL params
-  const caseId = searchParams.get('caseId') || '';
+  const caseId = searchParams.get('caseId') || 'case_123';
 
   // API hooks
   const caseTeamQuery = useGetCaseTeam(caseId);
@@ -79,39 +79,39 @@ const CaseTeam = () => {
 
   // Transform API data to dropdown options with user-specific allocation filtering
   const getAvailableRoleOptions = (currentIndex: number) => {
-    const allRoles = roleOptionsQuery.data?.map(role => role.role_name) || [];
+    const allRoles = roleOptionsQuery.data?.map((role) => role.role_name) || [];
     const currentUser = formData.team_members[currentIndex]?.user_name;
-    
+
     if (!currentUser) {
       return allRoles;
     }
-    
+
     // Find roles that the current user is already allocated to (excluding current row)
     const currentUserAllocatedRoles = formData.team_members
       .filter((_, index) => index !== currentIndex)
-      .filter(member => member.user_name === currentUser)
-      .map(member => member.user_role)
-      .filter(role => role !== '');
-    
-    return allRoles.filter(role => !currentUserAllocatedRoles.includes(role));
+      .filter((member) => member.user_name === currentUser)
+      .map((member) => member.user_role)
+      .filter((role) => role !== '');
+
+    return allRoles.filter((role) => !currentUserAllocatedRoles.includes(role));
   };
 
   const getAvailableUserOptions = (currentIndex: number) => {
-    const allUsers = userOptionsQuery.data?.map(user => user.user_name) || [];
+    const allUsers = userOptionsQuery.data?.map((user) => user.user_name) || [];
     const currentRole = formData.team_members[currentIndex]?.user_role;
-    
+
     if (!currentRole) {
       return allUsers;
     }
-    
+
     // Find users that are already allocated to the current role (excluding current row)
     const currentRoleAllocatedUsers = formData.team_members
       .filter((_, index) => index !== currentIndex)
-      .filter(member => member.user_role === currentRole)
-      .map(member => member.user_name)
-      .filter(user => user !== '');
-    
-    return allUsers.filter(user => !currentRoleAllocatedUsers.includes(user));
+      .filter((member) => member.user_role === currentRole)
+      .map((member) => member.user_name)
+      .filter((user) => user !== '');
+
+    return allUsers.filter((user) => !currentRoleAllocatedUsers.includes(user));
   };
 
   // Load data from API when component mounts
