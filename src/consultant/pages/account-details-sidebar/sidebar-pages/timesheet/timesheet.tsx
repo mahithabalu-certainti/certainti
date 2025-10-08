@@ -168,6 +168,7 @@ const Timesheet: React.FC<TimeSheetProps> = ({
       filters: appliedFilters,
       account_rid: accountid || '',
       fiscal_year: convertedFiscalYear,
+      search: searchText,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -177,6 +178,7 @@ const Timesheet: React.FC<TimeSheetProps> = ({
     currentPage,
     rowsPerPage,
     convertedFiscalYear,
+    searchText,
   ]);
 
   // Functions
