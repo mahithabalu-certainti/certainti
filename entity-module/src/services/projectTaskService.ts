@@ -1204,6 +1204,7 @@ export class ProjectTaskService {
           break;
 
         case "start_date":
+        case "end_date" :
           switch (operator.toLowerCase()) {
             case "equals": {
               const date = new Date(value);
@@ -1213,7 +1214,7 @@ export class ProjectTaskService {
                 );
               }
               condition[field] = Sequelize.literal(
-                `DATE("${field}") = DATE('${date.toISOString()}')`
+                `DATE("ProjectTask".${field}) = DATE('${date.toISOString()}')`
               );
               break;
             }
@@ -1225,7 +1226,7 @@ export class ProjectTaskService {
                 );
               }
               condition[field] = Sequelize.literal(
-                `DATE("${field}") < DATE('${date.toISOString()}')`
+                `DATE("ProjectTask".${field}) < DATE('${date.toISOString()}')`
               );
               break;
             }
@@ -1237,7 +1238,7 @@ export class ProjectTaskService {
                 );
               }
               condition[field] = Sequelize.literal(
-                `DATE("${field}") > DATE('${date.toISOString()}')`
+                `DATE("ProjectTask".${field}) > DATE('${date.toISOString()}')`
               );
               break;
             }
@@ -1261,7 +1262,7 @@ export class ProjectTaskService {
               }
 
               condition[field] = Sequelize.literal(
-                `DATE("${field}") BETWEEN DATE('${startDate.toISOString()}') AND DATE('${endDate.toISOString()}')`
+                `DATE("ProjectTask".${field}) BETWEEN DATE('${startDate.toISOString()}') AND DATE('${endDate.toISOString()}')`
               );
               break;
             }

@@ -557,13 +557,13 @@ class ProjectIngestionService {
       attributes: [
         "project_code",
         [
-          Sequelize.fn("SUM", Sequelize.literal("COALESCE(total_cost_prj, 0)")),
+          Sequelize.fn("SUM", Sequelize.literal("total_cost_prj")),
           "total_cost_prj",
         ],
         [
           Sequelize.fn(
             "SUM",
-            Sequelize.literal("COALESCE(total_effort_prj, 0)")
+            Sequelize.literal("total_effort_prj")
           ),
           "total_effort_prj",
         ],
@@ -588,21 +588,21 @@ class ProjectIngestionService {
         [
           Sequelize.fn(
             "SUM",
-            Sequelize.literal("COALESCE(total_cost_fte_prj, 0)")
+            Sequelize.literal("total_cost_fte_prj")
           ),
           "total_cost_fte_prj",
         ],
         [
           Sequelize.fn(
             "SUM",
-            Sequelize.literal("COALESCE(total_cost_subcon_prj, 0)")
+            Sequelize.literal("total_cost_subcon_prj")
           ),
           "total_cost_subcon_prj",
         ],
         [
           Sequelize.fn(
             "SUM",
-            Sequelize.literal("COALESCE(total_cost_nonlabor_prj, 0)")
+            Sequelize.literal("total_cost_nonlabor_prj")
           ),
           "total_cost_nonlabor_prj",
         ],
