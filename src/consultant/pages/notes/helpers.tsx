@@ -260,7 +260,7 @@ export const getNotesTableColumns = (
     editId: 'fiscal_year',
     sortId: 'fiscal_year',
     label: 'Fiscal Year',
-    width: 120,
+    width: 110,
     sortable: true,
     editable: !inActiveEntity,
     conditionallyEdit: [
@@ -296,14 +296,14 @@ export const getNotesTableColumns = (
     id: 'format',
     sortId: 'format',
     label: 'Format',
-    width: 100,
+    width: 85,
     sortable: true,
   },
   {
     id: 'size_in_mb',
     sortId: 'size_in_mb',
     label: 'Size',
-    width: 100,
+    width: 80,
     sortable: true,
   },
   {

@@ -80,7 +80,7 @@ export const NotesFormData = (
         ],
       },
       {
-        sectionName: 'Note Description',
+        sectionName: '',
         fillType: 'full',
         fields: [
           createTextAreaField('descriptions', 'Note Description', {
