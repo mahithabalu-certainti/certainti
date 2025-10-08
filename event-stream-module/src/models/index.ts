@@ -1,5 +1,6 @@
 
 import { initMainDbSequelize } from "../config/mainDataSource";
+import { logMessage } from "../utils/helpers";
 
 export const models = {
 
@@ -15,6 +16,6 @@ export async function initModels() {
       } 
     });
   } catch (err) {
-    console.log("Errr loading models", err);
+   logMessage(`Error loading models: ${JSON.stringify(err)}`);
   }
 }

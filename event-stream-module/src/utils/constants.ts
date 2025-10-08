@@ -46,7 +46,6 @@ export const rawQueries = {
       { type: 'SELECT' }
     );
 
-    console.log(checkIsSeparateDb)
     if (checkIsSeparateDb.storage_type == STATUS_MESSAGE.separateDb) {
       return `SELECT rid, r_number, account_name, storage_type FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`;
     } else {

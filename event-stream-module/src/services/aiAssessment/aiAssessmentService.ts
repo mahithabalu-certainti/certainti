@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from "uuid";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { Sequelize } from "sequelize";
+import { errorLog, logMessage } from "../../utils/helpers";
 export class AIAssessmentService {
   private logger: Logger;
   private producer!: Producer;
@@ -33,7 +34,7 @@ export class AIAssessmentService {
       const kafka = new Kafka({ clientId, brokers });
       this.producer = kafka.producer();
       await this.producer.connect();
-      this.logger.info("Kafka producer connected");
+      logMessage("Kafka producer connected");
     }
   }
 
@@ -56,16 +57,14 @@ export class AIAssessmentService {
         topic,
         messages: [message],
       });
-      this.logger.info("AI response sent to Kafka topic:", topic);
+      logMessage(`AI response sent to Kafka topic: ${topic}`);
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: "",
       };
     } catch (error) {
-      this.logger.error("Failed to send AI response to Kafka topic:", {
-        error,
-      });
+      logMessage(`Failed to send AI response to Kafka topic: ${error}`);
       return {
         statusCode: HttpStatus.BAD_REQUEST,
         message: "Failed to send AI response to Kafka topic",
@@ -76,7 +75,7 @@ export class AIAssessmentService {
   async disconnectProducer() {
     if (this.producer) {
       await this.producer.disconnect();
-      this.logger.info("Kafka producer disconnected");
+     logMessage("Kafka producer disconnected");
     }
   }
   async createAuditLogEntry(
@@ -117,9 +116,8 @@ export class AIAssessmentService {
         parsedMessage;
 
       if (!company_id && !project_id) {
-        this.logger.error(
-          "Kafka message missing required fields",
-          parsedMessage
+        logMessage(
+          `Kafka message missing required fields: ${JSON.stringify(parsedMessage)}`
         );
         return;
       }
@@ -171,8 +169,7 @@ export class AIAssessmentService {
          
       }
     } catch (err) {
-      console.log(err);
-      this.logger.error("Error processing Kafka message", JSON.stringify(err));
+      logMessage(`Error processing Kafka message: ${JSON.stringify(err)}`);
     }
   }
 }
