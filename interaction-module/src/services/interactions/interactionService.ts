@@ -22,6 +22,7 @@ import ExcelJS from 'exceljs';
 import axios from 'axios'
 import { Kafka, Producer } from "kafkajs";
 import { SchedulerExecutions } from "../../models/schedulerExecution";
+import { errorLog, logMessage } from "../../utils/helpers";
 
 type filterType = {
         [key : string] : {
@@ -101,7 +102,7 @@ export class InteractionService {
         data: { interactions: null },
       };
     } catch (err) {
-     this.logger.error(`Error creating interaction", ${err}`);
+     logMessage(`Error creating interaction", ${err}`);
        return {
           statusCode: HttpStatus.FAILED,
           message: HttpStatus.FAILED_MESSAGE,
@@ -156,7 +157,7 @@ export class InteractionService {
           transaction,
           userId
         );
-       this.logger.info(`Interaction created successfully, ${interaction.rid}`);
+        logMessage(`Interaction created successfully, ${interaction.rid}`);
         await this.interactionSchemaService.addInteractionSummary(
           accountNumber,
           interactionData,
@@ -192,8 +193,8 @@ export class InteractionService {
       {
         isEmailRecipientAvailable = await this.interactionSchemaService.isEmailRecipientAvailable(accountNumber, interactionData.project_fiscal_rid);
       }
-     
-      this.logger.info(`Is email recipient available: ${isEmailRecipientAvailable} for interaction: ${interaction.dataValues.rid} with project fiscal:${interactionData.project_fiscal_rid}`);
+
+      logMessage(`Is email recipient available: ${isEmailRecipientAvailable} for interaction: ${interaction.dataValues.rid} with project fiscal:${interactionData.project_fiscal_rid}`);
       if((interactionStatus === statusAction.DRAFT && isEmailRecipientAvailable) || interactionData.trigger_send)
       await this.checkAutoSendEnabled(accountNumber,interactionData,interaction.rid,userId,interactionData?.account_rid,intLevel, parentAccountId);
        else
@@ -215,9 +216,8 @@ export class InteractionService {
         },
       };
     } catch (err) {
-       this.logger.error(`Error creating interaction, ${err}`);
+      logMessage(`Error creating interaction, ${err}`);
       await transaction.rollback();
-     this.logger.error("Error creating interaction", err);
        return {
           statusCode: HttpStatus.FAILED,
           message: HttpStatus.FAILED_MESSAGE,
@@ -240,7 +240,7 @@ export class InteractionService {
         parentAccountId,
         accountRid
       );
-      this.logger.info(
+      logMessage(
         `Auto-send: ${interactionData?.trigger_send ? "enabled" : "disabled"}, Parent settings: ${isParensettingsConfigured ? "enabled" : "disabled"} for interaction ID: ${interactionId}`
       );
       if (interactionData?.trigger_send && isParensettingsConfigured) {
@@ -263,7 +263,7 @@ export class InteractionService {
           accountNumber,
           interactionData
         );
-        this.logger.info(
+       logMessage(
           `Auto-send: ${isEnabled ? "enabled" : "disabled"}, Parent settings: ${isParensettingsConfigured ? "enabled" : "disabled"} for interaction ID: ${interactionId}`
         );
         let maxInteractions = 0;
@@ -306,7 +306,7 @@ export class InteractionService {
         }
       }
     } catch (err) {
-      this.logger.error(`Error in checkAutoSendEnabled: ${err}`);
+      logMessage(`Error in checkAutoSendEnabled: ${err}`);
     }
   }
    async  checkMaxQuarterlyInteractions(
@@ -320,6 +320,8 @@ export class InteractionService {
     const now = new Date();
     // Parse fiscal start and end month/day
     // Format: MM/DD (e.g., "01/12" for Jan 12)
+    
+    logMessage(`Checking max quarterly interactions for projectFiscalRid: ${projectFiscalRid} with maxInteractions: ${maxInteractions}, accountRid: ${accountRid}, accountInfo: ${JSON.stringify(accountInfo)}`);
     function parseFiscalDate(dateStr: string, year: number): Date {
       const [mmRaw, ddRaw] = dateStr.split("/");
       const mm = mmRaw !== undefined ? Number(mmRaw) : undefined;
@@ -329,6 +331,7 @@ export class InteractionService {
         isNaN(mm) || isNaN(dd) ||
         mm < 1 || mm > 12 || dd < 1 || dd > 31
       ) {
+        logMessage(`Invalid fiscal date format: ${dateStr}`);
         throw new Error(`Invalid fiscal date format: ${dateStr}`);
       }
       return new Date(year, mm - 1, dd);
@@ -358,7 +361,7 @@ export class InteractionService {
       if (now >= q.start && now <= q.end) {
         quarterStart = q.start;
         quarterEnd = new Date(q.end.getFullYear(), q.end.getMonth(), q.end.getDate(), 23, 59, 59, 999);
-        console.log(`Current quarter: Start = ${quarterStart.toISOString()}, End = ${quarterEnd.toISOString()}`);
+        logMessage(`Current quarter: Start = ${quarterStart.toISOString()}, End = ${quarterEnd.toISOString()}`);
         break;
       }
     }
@@ -366,7 +369,7 @@ export class InteractionService {
       // Fallback: use fiscal year start/end
       quarterStart = fiscalStart;
       quarterEnd = fiscalEnd;
-      console.log(`Fallback to fiscal year: Start = ${quarterStart.toISOString()}, End = ${quarterEnd.toISOString()}`);
+      logMessage(`Fallback to fiscal year: Start = ${quarterStart.toISOString()}, End = ${quarterEnd.toISOString()}`);
     }
     let sentCount = 0;
     if(interactionLevel === 'Account')
@@ -395,9 +398,9 @@ export class InteractionService {
       }
     });
     }  
-    this.logger.info(`Sent count for the current quarter: ${sentCount} ${maxInteractions} ${sentCount >= maxInteractions} for ${projectFiscalRid}`);
+    logMessage(`Sent count for the current quarter: ${sentCount} ${maxInteractions} ${sentCount >= maxInteractions} for ${projectFiscalRid}`);
     if (sentCount >= maxInteractions) {
-      this.logger.info(`Max interactions sent for quarter (${sentCount}) reached for project_fiscal_rid: ${projectFiscalRid}`);
+      logMessage(`Max interactions sent for quarter (${sentCount}) reached for project_fiscal_rid: ${projectFiscalRid}`);
       return false;
     }
     return true;
@@ -586,9 +589,8 @@ export class InteractionService {
         },
       };
     } catch (err) {
-      console.log("Error updating resource", err);
+      errorLog("Error updating resource", (err as Error).message);
       await transaction.rollback();
-      this.logger.error("Error updating interaction", err);
        return {
           statusCode: HttpStatus.FAILED,
           message: HttpStatus.FAILED_MESSAGE,
@@ -615,6 +617,7 @@ export class InteractionService {
         );
 
       if (!accountNumber) {
+        logMessage(`Invalid account ID ${interactionData?.account_rid}`);
         throw new Error("Invalid account ID");
       }
     
@@ -652,8 +655,8 @@ export class InteractionService {
         },
       };
     } catch (err) {
+      errorLog("Error updating interaction", (err as Error).message);
       await transaction.rollback();
-      this.logger.error("Error updating interaction", err);
        return {
           statusCode: HttpStatus.FAILED,
           message: HttpStatus.FAILED_MESSAGE,
@@ -682,6 +685,7 @@ export class InteractionService {
         );
 
       if (!accountNumber) {
+        logMessage(`Invalid account ID ${accountId}`);
         throw new Error("Invalid account ID");
       }
       await this.interactionSchemaService.updateTechSummaryContext(
@@ -699,7 +703,7 @@ export class InteractionService {
         },
       };
     } catch (err) {
-      this.logger.error("Error updating interaction", err);
+      errorLog("Error updating interaction", (err as Error).message);
        return {
           statusCode: HttpStatus.FAILED,
           message: HttpStatus.FAILED_MESSAGE,
@@ -727,6 +731,7 @@ export class InteractionService {
         );
 
       if (!accountNumber) {
+        logMessage(`Invalid account ID ${interactionData?.account_rid}`);
         return {
           statusCode: HttpStatus.FAILED,
           message: HttpStatus.FAILED_MESSAGE,
@@ -772,7 +777,7 @@ export class InteractionService {
         },
       };
     } catch (err) {
-      this.logger.error(`Error updating interaction response, ${err}`);
+      logMessage(`Error updating interaction response, ${err}`);
       await transaction.rollback();
       return {
           statusCode: HttpStatus.FAILED,
@@ -796,6 +801,7 @@ export class InteractionService {
         );
 
       if (!accountNumber) {
+        logMessage(`Invalid account ID ${data.account_rid}`);
         return {
           statusCode: HttpStatus.FAILED,
           message: HttpStatus.FAILED_MESSAGE,
@@ -815,15 +821,12 @@ export class InteractionService {
         );
 
       if (!techSummary) {
+        logMessage(`No technical summary found for account ID ${data.account_rid}`);
         return {
           statusCode: HttpStatus.FAILED,
           message: HttpStatus.FAILED_MESSAGE,
           errorMessage: "Invalid interaction ID",
         };
-      }
-      else
-      {
-        
       }
 
        return {
@@ -836,6 +839,7 @@ export class InteractionService {
       };
     }
     catch (err) {
+      logMessage(`Error listing technical summary, ${err}`);
       throw this.throwServiceError(err as Error);
     }
 
@@ -855,6 +859,7 @@ export class InteractionService {
         );
 
       if (!accountNumber) {
+        logMessage(`Invalid account ID ${data.account_rid}`);
         return {
           statusCode: HttpStatus.FAILED,
           message: HttpStatus.FAILED_MESSAGE,
@@ -875,6 +880,7 @@ export class InteractionService {
         );
 
       if (!response) {
+        logMessage(`No account interactions found for account ID ${data.account_rid}`);
         return {
           statusCode: HttpStatus.FAILED,
           message: HttpStatus.FAILED_MESSAGE,
@@ -891,6 +897,7 @@ export class InteractionService {
       };
     }
     catch (err) {
+      logMessage(`Error listing account interactions, ${err}`);
       throw this.throwServiceError(err as Error);
     }
 
@@ -948,6 +955,7 @@ export class InteractionService {
       };
     }
     catch (err) {
+      logMessage(`Error exporting technical summary, ${err}`);
       throw this.throwServiceError(err as Error);
     }
 
@@ -998,7 +1006,7 @@ export class InteractionService {
         },
       };
     } catch (err) {
-      console.log("Error fetching interaction details", err);
+      logMessage(`Error fetching interaction details, ${err}`);
       throw this.throwServiceError(err as Error);
     }
   }
@@ -1032,6 +1040,7 @@ export class InteractionService {
         );
 
       if (!interactionDetails) {
+        logMessage(`No interaction details found for interaction ID ${interactionRid}`);
         return {
           statusCode: HttpStatus.FAILED,
           message: HttpStatus.FAILED_MESSAGE,
@@ -1047,7 +1056,7 @@ export class InteractionService {
         },
       };
     } catch (err) {
-      console.log("Error creatng resource", err);
+      logMessage(`Error creating resource, ${err}`);
       throw this.throwServiceError(err as Error);
     }
   }
@@ -1081,6 +1090,7 @@ export class InteractionService {
         );
 
       if (!techSummaryDetails) {
+        logMessage(`No technical summary found for ID ${techSummaryId}`);
         return {
           statusCode: HttpStatus.FAILED,
           message: HttpStatus.FAILED_MESSAGE,
@@ -1095,7 +1105,7 @@ export class InteractionService {
         
       };
     } catch (err) {
-      console.log("Error creatng resource", err);
+      logMessage(`Error fetching technical summary details, ${err}`);
       throw this.throwServiceError(err as Error);
     }
   }
@@ -1116,6 +1126,7 @@ export class InteractionService {
         );
 
       if (!accountNumber) {
+        logMessage(`Invalid account ID ${accountRid}`);
         throw new Error("Invalid account ID");
       }
       const interactionQuestions =
@@ -1140,7 +1151,7 @@ export class InteractionService {
         },
       };
     } catch (err) {
-      console.log("Error creatng resource", err);
+      logMessage(`Error fetching interaction questions, ${err}`);
       throw this.throwServiceError(err as Error);
     }
   }
@@ -1163,6 +1174,7 @@ export class InteractionService {
         },
       };
     } catch (err) {
+      logMessage(`Error fetching interaction status, ${err}`);
       throw this.throwServiceError(err as Error);
     }
   }
@@ -1185,6 +1197,7 @@ export class InteractionService {
         },
       };
     } catch (err) {
+      logMessage(`Error fetching interaction types, ${err}`);
       throw this.throwServiceError(err as Error);
     }
   }
@@ -1207,6 +1220,7 @@ export class InteractionService {
         },
       };
     } catch (err) {
+      logMessage(`Error fetching interaction level, ${err}`);
       throw this.throwServiceError(err as Error);
     }
   }
@@ -1229,6 +1243,7 @@ export class InteractionService {
         },
       };
     } catch (err) {
+      logMessage(`Error fetching interaction source, ${err}`);
       throw this.throwServiceError(err as Error);
     }
   }
@@ -1251,6 +1266,7 @@ export class InteractionService {
         },
       };
     } catch (err) {
+      logMessage(`Error fetching response source, ${err}`);
       throw this.throwServiceError(err as Error);
     }
   }
@@ -1309,7 +1325,7 @@ export class InteractionService {
         {
           await this.interactionSchemaService.createAutoSendInteractionEntry(accountNumber, interaction_rid, project_fiscal_rid, email_info,accountRid,interaction_level);
         }
-        console.log("Interaction queued for sending:", interaction_rid, fetchInQueueStatus[0][0].rid);
+        logMessage(`Interaction queued for sending: ${interaction_rid}, ${fetchInQueueStatus[0][0].rid}`);
         if(!is_interaction_followup){
         if(interaction_level.toLowerCase() === 'account') {
           const fetchResNameEmail : any = await orgDb.query(rawQueries.fetchKeyContactForInteraction(schemaName, data.account_rid))
@@ -1322,7 +1338,7 @@ export class InteractionService {
               email = fetchResNameEmail[0][0].key_contact_email
               name = fetchResNameEmail[0][0].key_contact_name
           }
-          this.logger.info(`Email info to be sent: ${JSON.stringify(data)}`);
+          logMessage(`Email info to be sent: ${JSON.stringify(data)}`);
           await this.interactionSchemaService.insertEmailInfoDatas(data);
           await orgDb.query(rawQueries.updateInteractionStatusAndResEmailName(schemaName, fetchInQueueStatus[0][0].rid, interaction_rid, email, name))
           await mainDb.query(rawQueries.updateInteractionSummaryStatusAndResEmailName(fetchInQueueStatus[0][0].rid, interaction_rid, name, email))
@@ -1340,7 +1356,7 @@ export class InteractionService {
             name = fetchResNameEmail[0][0].key_contact_name
           
           }
-          this.logger.info(`Email info to be sent: ${JSON.stringify(data)}`);
+          logMessage(`Email info to be sent: ${JSON.stringify(data)}`);
           await this.interactionSchemaService.insertEmailInfoDatas(data);
           await orgDb.query(rawQueries.updateInteractionStatusAndResEmailName(schemaName, fetchInQueueStatus[0][0].rid, interaction_rid, email, name))
           await mainDb.query(rawQueries.updateInteractionSummaryStatusAndResEmailName(fetchInQueueStatus[0][0].rid, interaction_rid, name, email))
@@ -1349,7 +1365,7 @@ export class InteractionService {
       }
       else
       {
-        this.logger.info(`Email info to be sent: ${JSON.stringify(data)}`);
+        logMessage(`Email info to be sent: ${JSON.stringify(data)}`);
         await this.interactionSchemaService.insertEmailInfoDatas(data);
         await orgDb.query(rawQueries.updateInteractionStatus(schemaName, fetchInQueueStatus[0][0].rid, interaction_rid))
         await mainDb.query(rawQueries.updateInteractionSummaryStatus(fetchInQueueStatus[0][0].rid, interaction_rid))
@@ -1364,7 +1380,7 @@ export class InteractionService {
       data: { interactionResponse },
     };
     } catch (err) {
-      console.log("Error sending interaction", err);
+      logMessage(`Error sending interaction: ${err}`);
       throw this.throwServiceError(err as Error);
     }
   }
@@ -1527,7 +1543,7 @@ export class InteractionService {
       });
       return emailResponse;
     } catch (error) {
-      this.logger.error(`Error sending email: ${error}`);
+      logMessage(`Error sending email: ${error}`);
       return emailResponse;
     }
   }
@@ -1561,7 +1577,7 @@ export class InteractionService {
   // Implement all methods required by IInteractionService
   // Example method (replace with actual interface methods)
   public async interact(): Promise<void> {
-    this.logger.info("Interact method called.");
+   logMessage("Interact method called.");
     // Implementation here
   }
   async listInteractionPrjAccount(data : any,userId : string,apiType:string, reminderSpecificList : boolean, statusIdsForReminderList : string[]) : Promise<any>{
@@ -1616,6 +1632,7 @@ export class InteractionService {
           };
         }
       }
+    logMessage(`Accessible Project Fiscal Ids: ${JSON.stringify(accessibleIds)} userId: ${userId}, isDefaultParent: ${isDefaultParent}, isPOCProfile: ${isPOCProfile}, isCustomGlobal: ${isCustomGlobal}`);
 
     let fetchParentAccount : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb))
     let schemaName = rawQueries.fetchSchemaName(fetchParentAccount[0][0].r_number)
@@ -1858,6 +1875,7 @@ export class InteractionService {
       }
         }
       }
+    logMessage(`Accessible Project Fiscal Ids: ${JSON.stringify(accessibleIds)} userId: ${userId}, isDefaultParent: ${isDefaultParent}, isPOCProfile: ${isPOCProfile}, isCustomGlobal: ${isCustomGlobal}`);
     const result : any = await mainDb.query(listAllInteractionSummary(data.page, data.limit, 
       data.filters, data.globalFilters, data.fiscal_year, data.sort, data.sort_by,accessibleIds, data.search
     ))
@@ -2180,6 +2198,7 @@ export class InteractionService {
           );
 
         if (!accountNumber) {
+          logMessage(`Invalid account ID in triggerAI: ${req.data[0].account_rid}`);
           throw new Error("Invalid account ID");
         }
         if (!this.orgDbSequelize) {
@@ -2194,7 +2213,7 @@ export class InteractionService {
         payload.company_id = req.data[0].account_rid;
         payload.project_id = req.data[0].project_fiscal_rid;
       }
-      console.log("Triggering AI with payload:", payload);
+      logMessage(`Triggering AI with payload: ${JSON.stringify(payload)}`);
 
       const topic = process.env.KAFKA_AI_REQUEST_TRIGGER_TOPIC || "ai_assessment_request";
       const message = {
@@ -2206,15 +2225,14 @@ export class InteractionService {
         messages: [message],
       });
       // Check if the message was processed successfully
-      console.log("Send result to topic", sendResult);
+      logMessage(`Send result to topic: ${JSON.stringify(sendResult)}`);
       return {
         statusMessage: "RD Assessment Initiated",
         status: "success",
         data: null
       };
     } catch (error) {
-      console.log(error)
-      this.logger.error("Error in triggerAI", error);
+      logMessage(`Error in triggerAI: ${error}`);
       return {
         statusMessage: "Failed to process AI request",
         status: "error",
@@ -2232,6 +2250,7 @@ export class InteractionService {
         );
 
       if (!accountNumber) {
+        logMessage(`Invalid account ID in fetchAndUpdateFromAiTriggerResponse: ${account_rid}`);
         throw new Error("Invalid account ID");
       }
         let techSummaryPayload ={
@@ -2256,7 +2275,7 @@ export class InteractionService {
 
   async processKafkaMessage(message: any): Promise<void> {
     try {
-       this.logger.info("Processing Kafka message...", JSON.stringify(message));
+       logMessage(`Processing Kafka message: ${JSON.stringify(message)}`);
       let parsedMessage: any;
       if (typeof message === "string") {
         parsedMessage = JSON.parse(message);
@@ -2268,12 +2287,12 @@ export class InteractionService {
       const { company_id, project_id, type, qre_percent, project_summary, transaction_id, interaction_questions, detailed_breakdown } = parsedMessage.data;
       const { accountNumber } = await this.interactionSchemaService.fetchValidAccountNumberById(company_id);
       if (!accountNumber) {
-        this.logger.error("Invalid account ID in Kafka message", company_id);
+        logMessage(`Invalid account ID in Kafka message: ${company_id}`);
         return;
       }
       if (parsedMessage.statusCode) {
         if (!company_id || !project_id || !type) {
-          this.logger.error("Kafka message missing required fields", parsedMessage);
+          logMessage(`Kafka message missing required fields: ${JSON.stringify(parsedMessage)}`);
           return;
         }
 
@@ -2311,12 +2330,12 @@ export class InteractionService {
         }
       }
       else{
-        this.logger.error("Kafka message indicates failure status", JSON.stringify(message));
+        logMessage(`Kafka message indicates failure status: ${JSON.stringify(message)}`);
       }
 
-      this.logger.info(`Processed Kafka message for account: ${company_id}`);
+      logMessage(`Processed Kafka message for account: ${company_id}`);
     } catch (err) {
-       this.logger.error("Error processing Kafka message", JSON.stringify(err));
+       logMessage(`Error processing Kafka message: ${JSON.stringify(err)}`);
     }
   }
   
@@ -2331,15 +2350,15 @@ export class InteractionService {
     const mainDb = await this.getMainDb()
     const orgDb = await this.getOrgDb()
     try {
-      this.logger.info("AI Trigger Scheduler started")
+      logMessage("AI Trigger Scheduler started");
       let fetchAllParentsAccountsRnumber : any = await mainDb.query(rawQueries.fetchAllParentRNumber())
       for(let account of fetchAllParentsAccountsRnumber[0]) {
         let schemaName = rawQueries.fetchSchemaName(account.r_number);
-        console.log("SchemaName : ", schemaName)
-        let verifyTableExistsForAttachments : any = await orgDb.query(checkTableExists(schemaName, "attachments"))
-        let verifyTableExistsForInteractions : any = await orgDb.query(checkTableExists(schemaName, "interactions"))
-        if(verifyTableExistsForInteractions[0][0].exists === true) {
-          console.log("verifyTableExistsForInteractions : ", true)
+        logMessage(`SchemaName: ${schemaName}`);
+        let verifyTableExistsForAttachments: any = await orgDb.query(checkTableExists(schemaName, "attachments"));
+        let verifyTableExistsForInteractions: any = await orgDb.query(checkTableExists(schemaName, "interactions"));
+        if (verifyTableExistsForInteractions[0][0].exists === true) {
+          logMessage(`verifyTableExistsForInteractions: ${true}`);
           try {
             const isRecordExists = await this.interactionSchemaService.findTaskRecordExists(schedulerRecord.rid, interactionTaskName.interactionAge)
             if(isRecordExists == null) {
@@ -2362,7 +2381,7 @@ export class InteractionService {
         }
         if(verifyTableExistsForAttachments[0][0].exists == true) {
           try {
-            console.log("verifyTableExistsForAttachments : ", true)
+            logMessage(`verifyTableExistsForAttachments :, true`)
             const isRecordExists = await this.interactionSchemaService.findTaskRecordExists(schedulerRecord.rid, interactionTaskName.attachments)
             if(isRecordExists == null) {
               await this.interactionSchemaService.createSchedulerTaskRecords(schedulerRecord.rid, interactionTaskName.attachments)
@@ -2379,11 +2398,11 @@ export class InteractionService {
       await this.interactionSchemaService.updateSchedulerTaskRecords(schedulerRecord.rid, interactionTaskName.interactionAge, schedulerStatus.Success, '')
       await this.interactionSchemaService.updateSchedulerRecords(schedulerRecord.rid, schedulerStatus.Success)
     } catch (error : any) {
-      console.log("Scheduler facing error : ", error)
-      await this.interactionSchemaService.updateSchedulerTaskRecords(schedulerRecord.rid, interactionTaskName.attachments, schedulerStatus.Failed, error.message)
-      await this.interactionSchemaService.updateSchedulerTaskRecords(schedulerRecord.rid, interactionTaskName.interaction, schedulerStatus.Failed, error.message)
-      await this.interactionSchemaService.updateSchedulerTaskRecords(schedulerRecord.rid, interactionTaskName.interactionAge, schedulerStatus.Failed, error.message)
-      await this.interactionSchemaService.updateSchedulerRecords(schedulerRecord.rid, schedulerStatus.Failed)
+      logMessage(`Scheduler facing error: ${error}`);
+      await this.interactionSchemaService.updateSchedulerTaskRecords(schedulerRecord.rid, interactionTaskName.attachments, schedulerStatus.Failed, error.message);
+      await this.interactionSchemaService.updateSchedulerTaskRecords(schedulerRecord.rid, interactionTaskName.interaction, schedulerStatus.Failed, error.message);
+      await this.interactionSchemaService.updateSchedulerTaskRecords(schedulerRecord.rid, interactionTaskName.interactionAge, schedulerStatus.Failed, error.message);
+      await this.interactionSchemaService.updateSchedulerRecords(schedulerRecord.rid, schedulerStatus.Failed);
     }
   }
 
@@ -2407,7 +2426,7 @@ export class InteractionService {
         data : Array.from(mappingData.values()),
         type : "project"
       }
-      console.log("Payload to Send : ", payload)
+      logMessage(`AI Trigger Payload: ${JSON.stringify(payload)}`);
       await this.triggerAI(payload)
     }
   }
@@ -2415,7 +2434,7 @@ export class InteractionService {
   async sendEmailInBatch () {
     const mainDb = await this.getMainDb();
     let fetchEmailInfo : any = await mainDb.query(rawQueries.fetchEmailInfo);
-    console.log(`[BATCH EMAIL] Fetched ${fetchEmailInfo[0].length} unsent emails.`);
+    logMessage(`[BATCH EMAIL] Fetched ${fetchEmailInfo[0].length} unsent emails.`);
 
     for(let data of fetchEmailInfo[0]) {
       let email_info : {
@@ -2437,8 +2456,8 @@ export class InteractionService {
 
       // If emailInfo.email is empty, fetch POC email
       let sendEmailInfo = email_info;
-     
-        console.log(`[INFO] Fetched fallback email for interaction ${interaction_rid}: ${sendEmailInfo?.email}`);
+
+        logMessage(`[INFO] Fetched fallback email for interaction ${interaction_rid}: ${sendEmailInfo?.email}`);
         if(interactionLevel === 'Account')
         {
            sendEmailInfo = await this.interactionSchemaService.fetchEmailInfoForAccount(accountNumber, accountRid,email_info,is_interaction_followup,data.interaction_rid);
@@ -2447,17 +2466,17 @@ export class InteractionService {
         {
             sendEmailInfo = await this.interactionSchemaService.fetchEmailInfo(accountNumber, interaction_rid, project_fiscal_rid, accountRid,email_info,is_interaction_followup);
          if (!sendEmailInfo?.email || sendEmailInfo?.email == "") {
-        console.warn(`[SKIP] No email found for interaction ${interaction_rid}. Skipping.`);
+        logMessage(`[SKIP] No email found for interaction ${interaction_rid}. Skipping.`);
         continue;
       }
           }
         
 
       if (!sendEmailInfo?.email || sendEmailInfo?.email == "") {
-        console.warn(`[SKIP] No email found for interaction ${interaction_rid}. Skipping.`);
+        logMessage(`[SKIP] No email found for interaction ${interaction_rid}. Skipping.`);
         continue;
       }
-       console.log(`[SEND] Sending email to ${sendEmailInfo.email} for interaction ${interaction_rid}.`);
+       logMessage(`[SEND] Sending email to ${sendEmailInfo.email} for interaction ${interaction_rid}.`);
 
       const [interactionItems, interactionInfo] =
         await Promise.all([
@@ -2502,7 +2521,7 @@ export class InteractionService {
         false
       );
       if (emailResponse) {
-        console.log(`[SUCCESS] Email sent for interaction ${interaction_rid}.`);
+        logMessage(`[SUCCESS] Email sent for interaction ${interaction_rid}.`);
         if(!is_interaction_followup)
         {
           await this.interactionSchemaService.updateInteractionInfo(
@@ -2530,10 +2549,10 @@ export class InteractionService {
         
       } else {
         //need to add logic for sending toPS team
-        console.error(`[FAIL] Email failed to send for interaction ${interaction_rid}. Needs manual intervention.`);
+        logMessage(`[FAIL] Email failed to send for interaction ${interaction_rid}. Needs manual intervention.`);
       }
     }
-    console.log(`[BATCH EMAIL] Finished processing batch.`);
+    logMessage(`[BATCH EMAIL] Finished processing batch.`);
   }
   async fetchStatusIdsForReminder () {
     const mainDb = await this.getMainDb()
@@ -2592,7 +2611,7 @@ export class InteractionService {
     
      
     } catch (err) {
-       this.logger.error(`Error creating interaction, ${err}`);
+      logMessage(`Error creating interaction, ${err}`);
        return {
           statusCode: HttpStatus.FAILED,
           message: HttpStatus.FAILED_MESSAGE,
@@ -2692,9 +2711,9 @@ export class InteractionService {
       } 
      
     } catch (err) {
-      console.log("Error updating resource", err);
+      logMessage(`Error updating interaction template, ${err}`);
       await transaction.rollback();
-      this.logger.error("Error updating interaction", err);
+     
        return {
           statusCode: HttpStatus.FAILED,
           message: HttpStatus.FAILED_MESSAGE,
@@ -2734,7 +2753,7 @@ export class InteractionService {
         },
       };
     } catch (err) {
-      console.log("Error fetching interaction details", err);
+      logMessage(`Error fetching interaction details, ${err}`);
       throw this.throwServiceError(err as Error);
     }
   }

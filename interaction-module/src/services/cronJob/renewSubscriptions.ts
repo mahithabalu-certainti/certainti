@@ -7,7 +7,7 @@ import cron from "node-cron";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { MAIN_SCHEMA_NAME, rawQueries } from "../../utils/constants";
 import { initOrgSequelize } from "../../config/orgDataSource";
-import { decryptClientSecret } from "../../utils/helpers";
+import { decryptClientSecret, logMessage } from "../../utils/helpers";
 
 const HOURS_BEFORE_EXPIRY = 24;
 
@@ -36,7 +36,7 @@ async function getSubscriptions(graphClient: GraphClient) {
     const res = await graphClient.api("/subscriptions").get();
     return res.value;
   } catch (error) {
-    console.error("Failed to fetch subscriptions:", error);
+    logMessage(`Failed to fetch subscriptions: ${error}`);
     return [];
   }
 }
@@ -56,10 +56,10 @@ async function renewSubscription(
     await graphClient.api(`/subscriptions/${subscription.id}`).update({
       expirationDateTime: newExpiration,
     });
-    console.log(`Renewed subscription ${subscription.id}`);
+    logMessage(`Renewed subscription ${subscription.id}`);
     return subscription.id;
   } catch (error) {
-    console.error(`Failed to renew subscription ${subscription.id}:`, error);
+    logMessage(`Failed to renew subscription ${subscription.id}: ${error}`);
     return null;
   }
 }
@@ -107,7 +107,7 @@ async function renewExpiringSubscriptions() {
           subscription_created;
 
         if (credentialsValid) {
-          console.log(`Checking subscription for account ${r_number}`);
+          logMessage(`Checking subscription for account ${r_number}`);
 
           const decryptedSecret = await decryptClientSecret(client_secret);
           // Initialize per-account graph client
@@ -130,7 +130,7 @@ async function renewExpiringSubscriptions() {
             // if (
             //   sub.id === currentSubId 
             // ) {
-              console.log(
+              logMessage(
                 `Renewing subscription ${
                   sub.id
                 } (expires in ${hoursToExpire.toFixed(1)} hrs)`
@@ -153,19 +153,19 @@ async function renewExpiringSubscriptions() {
                   }
                 );
 
-                console.log(
+               logMessage(
                   `Subscription renewed and updated for account ${r_number}`
                 );
               } else {
-                console.warn(
-                  `⚠️ Failed to renew subscription for account ${r_number}`
+                logMessage(
+                  ` Failed to renew subscription for account ${r_number}`
                 );
               }
             // }
           }
         } else {
-          console.warn(
-            `⚠️ Missing or invalid credentials for account ${r_number}`
+          logMessage(
+            ` Missing or invalid credentials for account ${r_number}`
           );
         }
       }
@@ -236,15 +236,15 @@ cron.schedule("0 10 * * *", async () => {
   const dayOfMonth = today.getDate();
 
   if (dayOfMonth % 2 === 0) {
-    console.log(
+    logMessage(
       `[${today.toISOString()}] Running subscription renewal task`
     );
     try {
       await renewExpiringSubscriptions();
     } catch (err) {
-      console.error("Subscription renewal task failed:", err);
+      logMessage(`Subscription renewal task failed: ${err}`);
     }
   } else {
-    console.log(`[${today.toISOString()}] ⏭️ Skipping task (odd day of month)`);
+    logMessage(`[${today.toISOString()}] ⏭️ Skipping task (odd day of month)`);
   }
 });

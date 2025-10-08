@@ -4,6 +4,7 @@ import {
   errorLog,
   handleErrorResponse,
   handleSuccessResponse,
+  logMessage,
   successLog,
 } from "../utils/helpers";
 import configurations from "../config/config";
@@ -14,9 +15,7 @@ const webhookService = services.webhookService;
 async function handleWehook(req: Request, res: Response): Promise<void> {
   const methodName = "Create interaction";
   try {
-    console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
-
-    console.log("request", req.query);
+    logMessage(`[${methodName}] Request received: ${JSON.stringify(req.body)} Query: ${JSON.stringify(req.query)} `);
     if (req.query && req.query.validationToken) {
       res.status(200).send(req.query.validationToken);
       return;
@@ -30,10 +29,6 @@ async function handleWehook(req: Request, res: Response): Promise<void> {
       req.body,
     );
 
-    console.log(
-      `[${methodName}] Service response:`,
-      JSON.stringify(interaction)
-    );
     if (interaction.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       // handleSuccessResponse(res, interaction.data);

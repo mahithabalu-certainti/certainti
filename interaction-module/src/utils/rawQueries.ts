@@ -1191,7 +1191,6 @@ const updateInteractionAge = async (
 ) => {
   let interactions: any;
   let dateTimeColumn: any;
-  console.log("statusName : ", data.status_name);
   if (data.status_name === "sent") {
     dateTimeColumn = `sent_on_datetime`;
     interactions = await orgDb.query(
