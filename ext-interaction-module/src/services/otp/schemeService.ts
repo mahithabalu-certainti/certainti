@@ -4,6 +4,7 @@ import {
   MAIN_SCHEMA_NAME,
   OTP_EXPIRY_MINUTES,
 } from "../../utils/constants";
+import { logMessage } from "../../utils/helpers";
 import { IGenerateOtp, IOtpHistoryStatus } from "../../utils/types";
 import { InteractionModelService } from "../interactionModelsService";
 
@@ -113,7 +114,7 @@ export class OtpSchemaService {
         error_message,
       });
     } catch (err) {
-      console.error(`[OTP HISTORY] Failed to log OTP attempt: ${err}`);
+     logMessage(`[OTP HISTORY] Failed to log OTP attempt: ${err}`);
     }
   }
 
@@ -185,7 +186,7 @@ export class OtpSchemaService {
     });
 
     if (affectedRows === 0) {
-      console.warn(
+      logMessage(
         `[OTP] No OTP entry found for update (account_rid: ${accountId})`
       );
     }
@@ -213,7 +214,7 @@ export class OtpSchemaService {
     });
 
     if (affectedRows === 0) {
-      console.warn(
+      logMessage(
         `[OTP] No OTP entry found for update (account_rid: ${accountId})`
       );
     }

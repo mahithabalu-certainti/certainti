@@ -4,6 +4,7 @@ import {
   errorLog,
   handleErrorResponse,
   handleSuccessResponse,
+  logMessage,
   successLog,
   validateRequest,
 } from "../utils/helpers";
@@ -19,7 +20,7 @@ async function updateInteractionResponse(
 ): Promise<void> {
   const methodName = "Update interaction response";
   try {
-    console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
+   
     const value = await validateRequest(
       req,
       updateInteractionResponseSchema,
@@ -28,6 +29,7 @@ async function updateInteractionResponse(
 
     const authToken = req.headers['authorization'] as string;
     const userId = req.headers["x-user-id"] as string;
+     logMessage(`[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${userId}`);
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -47,10 +49,7 @@ async function updateInteractionResponse(
       userId,
       authToken
     );
-    console.log(
-      `[${methodName}] Service response:`,
-      JSON.stringify(interaction)
-    );
+  
     if (interaction.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, interaction.data);
@@ -84,7 +83,6 @@ async function getInteractionDetailsById(
 ): Promise<void> {
   const methodName = "Get interaction details";
   try {
-    console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
     const { interactionRid, accountId } = req.params;
     
     const value = await validateRequest(
@@ -97,6 +95,7 @@ async function getInteractionDetailsById(
     const authToken = req.headers['authorization'] as string;
 
     const userId = req.headers["x-user-id"] as string;
+    logMessage(`[${methodName}] interactionRid: ${interactionRid}, accountId: ${accountId}, userId: ${userId}`);
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -129,10 +128,7 @@ async function getInteractionDetailsById(
         userId,
         authToken
       );
-    console.log(
-      `[${methodName}] Service response:`,
-      JSON.stringify(interactionDetails)
-    );
+   
     if (interactionDetails.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, interactionDetails.data);
@@ -166,12 +162,12 @@ async function uploadAttachmentToAzure(
 ): Promise<void> {
   const methodName = "Upload attachment to Azure";
   try {
-    console.log(`[${methodName}] Request received`);
     //  const value = await validateRequest(req, sendInteractionSchema, res)
 
     const authToken = req.headers['authorization'] as string;
     const userId = req.headers["x-user-id"] as string;
     let value = req.body;
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${userId}`);
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -254,6 +250,7 @@ async function deleteAttachmentFromAzure(
       );
       return;
     }
+      logMessage(`[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${userId}`);
 
     if (value.file_url) {
       let deleted = await interactionService.deleteFromAzureBlob(value.file_url, userId, authToken);
