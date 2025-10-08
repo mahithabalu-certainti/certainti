@@ -2,12 +2,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import {
+  generatePath,
   useLocation,
   useNavigate,
   useParams,
   useSearchParams,
 } from 'react-router-dom';
-import { RESOURCE, RESOURCE_CREATE } from '../../../../../routes';
+import { NOTES_CREATE, RESOURCE, RESOURCE_CREATE } from '../../../../../routes';
 import { RootState } from '../../../../../store/store';
 import {
   useGetResourceType,
@@ -121,6 +122,13 @@ const tabs: TabMenus[] = [
     hide: false,
     id: AllPermissions.ATTACHMENT_VIEW_EDIT,
   },
+  {
+    label: 'Notes',
+    value: 'notes',
+    hide: false,
+    // id: AllPermissions.NOTES_VIEW_EDIT,
+    id: AllPermissions.ATTACHMENT_VIEW_EDIT,
+  },
 ];
 
 const Resource: React.FC<ResourceProps> = ({
@@ -169,6 +177,7 @@ const Resource: React.FC<ResourceProps> = ({
   const [refreshAttachments, setRefreshAttachments] = useState<number>(
     Date.now()
   );
+  const [refreshNotes, setRefreshNotes] = useState<number>(Date.now());
   const [attachmentsOrder, setAttachmentsOrder] = useState<'ASC' | 'DESC'>(
     'ASC'
   );
@@ -180,6 +189,10 @@ const Resource: React.FC<ResourceProps> = ({
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [currentCountry, setCurrentCountry] = useState<string>('');
   const [resourcesList, setResourcesList] = useState<ResourceList[]>([]);
+
+  const [notesOrder, setNotesOrder] = useState<'ASC' | 'DESC'>('ASC');
+  const [notesOrderBy, setNotesOrderBy] = useState<string>('r_number');
+
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
   const isModalOpen = Boolean(columnAnchorEl);
@@ -353,8 +366,6 @@ const Resource: React.FC<ResourceProps> = ({
         setResourceData(currentResource);
         setResourceNumber(currentResource.r_number ?? '');
       }
-    } else {
-      setResourceNumber(null);
     }
   }, [searchParams, ResourceList]);
   useEffect(() => {
@@ -382,6 +393,7 @@ const Resource: React.FC<ResourceProps> = ({
     // update the URL with the tab value
     searchParams.set('tab', newValue);
     searchParams.delete('attachment_entity');
+    searchParams.delete('note_id');
     navigate({ search: searchParams.toString() }, { replace: true });
     setCurrentPage(0);
   };
@@ -483,6 +495,8 @@ const Resource: React.FC<ResourceProps> = ({
       return !isResourceSkillCreateEnable;
     } else if (value === 'attachments') {
       return true;
+    } else if (value === 'notes') {
+      return true;
     }
     return accountInActive;
   };
@@ -535,13 +549,37 @@ const Resource: React.FC<ResourceProps> = ({
       clearFilters('resource');
     }
   };
+
+  const handleCreateNote = () => {
+    const accountId = accountid ?? '';
+    const resourceId = searchParams.get('res_id');
+    const path = generatePath(NOTES_CREATE, {
+      module: 'account',
+    });
+    const queryParams = new URLSearchParams({
+      accountId,
+      entityLevel: 'resource',
+      entityId: resourceId || '',
+      source: `Resource > ${resourceNumber}`,
+    });
+    navigate(`${path}?${queryParams.toString()}`);
+  };
+
   const headerButtons = [
     {
       label: 'Add Attachment',
       variant: 'outlined' as const,
       onClick: () => handleOpen(),
-      sx: { ...BUTTON_STYLES, width: '120px', minWidth: '48px' },
+      sx: { ...BUTTON_STYLES, width: '120px', minWidth: '120px' },
       hide: value !== 'details' || !attachmentCreateEnable,
+      disabled: accountInActive ? accountInActive : resourceInActive,
+    },
+    {
+      label: 'Add Note',
+      variant: 'outlined' as const,
+      onClick: () => handleCreateNote(),
+      sx: { ...BUTTON_STYLES, width: '80px', minWidth: '80px' },
+      hide: value !== 'details',
       disabled: accountInActive ? accountInActive : resourceInActive,
     },
     {
@@ -645,6 +683,7 @@ const Resource: React.FC<ResourceProps> = ({
       resourceRid: searchParams.get('res_id') || '',
       rNumber: accountDetails?.data?.accountById?.r_number,
       filter: appliedFilters,
+      search: searchText,
     };
 
     if (value === 'cost') {
@@ -659,6 +698,10 @@ const Resource: React.FC<ResourceProps> = ({
       updatedParams.sortBy = attachmentsOrderBy;
       updatedParams.sortOrder = attachmentsOrder;
       setExportType?.('resource_attachments');
+    } else if (value === 'notes') {
+      updatedParams.sortBy = notesOrderBy;
+      updatedParams.sortOrder = notesOrder;
+      setExportType?.('resource_notes');
     } else {
       updatedParams.sortBy = sortField;
       updatedParams.sortOrder = sortOrder;
@@ -684,6 +727,9 @@ const Resource: React.FC<ResourceProps> = ({
     accountDetails?.data?.accountById?.r_number,
     attachmentsOrderBy,
     attachmentsOrder,
+    notesOrderBy,
+    notesOrder,
+    searchText,
   ]);
 
   const handlePageChange = (newPage: number) => {
@@ -746,6 +792,8 @@ const Resource: React.FC<ResourceProps> = ({
       setRefreshSkillTrigger(Date.now()); // Toggle the refreshTrigger to force re-fetch
     } else if (value === 'attachments') {
       setRefreshAttachments(Date.now());
+    } else if (value === 'notes') {
+      setRefreshNotes(Date.now());
     } else {
       setRefreshTrigger(Date.now()); // Toggle the refreshTrigger to force re-fetch
     }
@@ -775,6 +823,11 @@ const Resource: React.FC<ResourceProps> = ({
         isSortByEmpty ? 'ASC' : (sortOrder.toUpperCase() as 'ASC' | 'DESC')
       );
       setAttachmentsOrderBy(apiSortBy);
+    } else if (value === 'notes') {
+      setNotesOrder(
+        isSortByEmpty ? 'ASC' : (sortOrder.toUpperCase() as 'ASC' | 'DESC')
+      );
+      setNotesOrderBy(apiSortBy);
     } else {
       setSortOrder(isSortByEmpty ? 'ASC' : apiOrder);
       setSortField(apiSortBy);
@@ -974,13 +1027,19 @@ const Resource: React.FC<ResourceProps> = ({
                 setAttachmentsOrder={setAttachmentsOrder}
                 attachmentsOrderBy={attachmentsOrderBy}
                 setAttachmentsOrderBy={setAttachmentsOrderBy}
+                notesOrder={notesOrder}
+                setNotesOrder={setNotesOrder}
+                notesOrderBy={notesOrderBy}
+                setNotesOrderBy={setNotesOrderBy}
                 refreshAttachments={refreshAttachments}
+                refreshNotes={refreshNotes}
                 setCount={setCount}
                 resourceInActive={resourceInActive}
                 setResourceInActive={setResourceInActive}
                 setColumnAnchorEl={setColumnAnchorEl}
                 columnAnchorEl={columnAnchorEl}
                 searchValue={searchText}
+                setResourceNumber={setResourceNumber}
               />
             )}
             {viewResourceList && !value && (

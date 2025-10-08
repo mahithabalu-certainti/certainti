@@ -84,6 +84,13 @@ export const GLOBAL_INTERACTIONS_CREATE = `${INTERACTIONS}/create`;
 export const GLOBAL_INTERACTIONS_EDIT = `${INTERACTIONS}/edit/:interactionId`;
 export const ACCOUNT_INTERACTIONS_CREATE = `${INTERACTIONS_BASE}/account-create`;
 
+// Notes routes
+export const NOTES = '/notes';
+export const NOTES_BASE = `/:module/notes`;
+export const NOTES_CREATE = `${NOTES_BASE}/create`;
+export const NOTES_EDIT = `${NOTES_BASE}/edit/:noteId`;
+export const GLOBAL_NOTES_EDIT = `${NOTES}/edit/:noteId`;
+
 // ATTACHMENT ROUTES
 export const ATTACHMENTS = '/attachments';
 export const NOT_FOUND = '/page-not-found';

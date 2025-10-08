@@ -250,6 +250,11 @@ export enum AllPermissions {
   PROJECT_TECHNICAL_SUMMARY_TIMELINE = 'project_technical_summary_timeline',
   PROJECT_TECHNICAL_SUMMARY_VIEW_EDIT = 'projects_tech_summary_view_edit',
   PROJECT_TECHNICAL_SUMMARY_EXPORT = 'projects_tech_summary_export',
+  NOTES_OVERVIEW = 'notes_overview',
+  NOTES_TIMELINE = 'notes_timeline',
+  NOTES_VIEW_EDIT = 'notes_view_edit',
+  NOTES_EXPORT = 'notes_export',
+  NOTES_CREATE = 'notes_create',
 }
 
 export interface Country {
@@ -258,6 +263,8 @@ export interface Country {
 }
 
 export type FieldTypes = string | string[] | dayjs.Dayjs | null | File;
+
+export type FilterTypes = Record<string, string | number | boolean | string[]>;
 
 export interface OnChange {
   fieldName: string;

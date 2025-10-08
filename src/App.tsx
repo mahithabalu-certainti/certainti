@@ -59,6 +59,10 @@ import {
   INTERACTION_TEMPLATES,
   INTERACTION_TEMPLATES_CREATE,
   INTERACTION_TEMPLATES_EDIT,
+  NOTES,
+  NOTES_CREATE,
+  NOTES_EDIT,
+  GLOBAL_NOTES_EDIT,
   IMPORT_TEMPLATES,
 } from './routes';
 import { RootState } from './store/store';
@@ -164,6 +168,11 @@ const InteractionTemplateForm = lazy(
     import('./admin/pages/interaction-templates/create-template/template-form')
 );
 
+const Notes = lazy(() => import('./consultant/pages/notes/notes-list/notes'));
+const NotesForm = lazy(
+  () => import('./consultant/pages/notes/notes-form/notes-form')
+);
+
 // Loading component for Suspense fallback
 const Loading = () => (
   <div className='flex h-screen w-full items-center justify-center'>
@@ -263,6 +272,10 @@ export const App: React.FC<IApp> = ({ instance }) => {
                     element={<InteractionForm />}
                   />
                   <Route path={ATTACHMENTS} element={<Attachments />} />
+                  <Route path={NOTES} element={<Notes />} />
+                  <Route path={NOTES_CREATE} element={<NotesForm />} />
+                  <Route path={NOTES_EDIT} element={<NotesForm />} />
+                  <Route path={GLOBAL_NOTES_EDIT} element={<NotesForm />} />
                   <Route
                     path={INTERACTION_TEMPLATES}
                     element={<InteractionTemplates />}

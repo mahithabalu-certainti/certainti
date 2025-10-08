@@ -9,38 +9,33 @@ import {
   FilterTypes,
   OverviewTabs,
 } from '../../../../../common-service';
+import { ExportType, NotesList, NotesListURLParams } from '../../../../types';
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import { useNotesList } from '../../../../services/notes/notes-service';
+import { NOTES_CREATE, NOTES_EDIT } from '../../../../../routes';
 import {
-  ListTable,
-  ManageColumnsPopover,
-} from '../../../../../components/table';
-import SectionHeader from '../../../../../components/details-section/section-header';
-import { NotesSideIcon } from '../../../../../assets';
-import { SectionTabPanel } from '../../../../../components';
+  getNotesFilterFields,
+  getNotesTableColumns,
+} from '../../../notes/helpers';
 import {
   CellEditData,
   FieldChangeValue,
   ShowHideTableColumn,
 } from '../../../../../components/table/types';
-import {
-  ExportType,
-  NotesList,
-  NotesListExportParams,
-} from '../../../../types';
-import {
-  getNotesFilterFields,
-  getNotesTableColumns,
-} from '../../../notes/helpers';
-import { NOTES_CREATE, NOTES_EDIT } from '../../../../../routes';
+import { SectionTabPanel } from '../../../../../components';
 import NotesDetails from './notes-details';
+import SectionHeader from '../../../../../components/details-section/section-header';
+import { NotesSideIcon } from '../../../../../assets';
+import {
+  ListTable,
+  ManageColumnsPopover,
+} from '../../../../../components/table';
+import { useToast } from '../../../../../hooks';
 import { useMutation } from '@apollo/client';
 import { NOTES_UPDATE } from '../../../../../api/graphql/queries/notes-query';
 import { resourceClient } from '../../../../../api/graphql/clients/client';
-import { useToast } from '../../../../../hooks';
-import { accountDetailsProps } from '../../../account-details/utils';
 
 const NotesTabs: OverviewTabs[] = [
   {
@@ -58,20 +53,23 @@ const NotesTabs: OverviewTabs[] = [
 
 interface NotesProps {
   setExportType?: (type: ExportType) => void;
-  setNotesParams: React.Dispatch<React.SetStateAction<NotesListExportParams>>;
+  setNotesParams: React.Dispatch<React.SetStateAction<NotesListURLParams>>;
   accountInActive: boolean;
-  accountDetails?: accountDetailsProps;
+  projectFiscalYear?: number | string;
+  projectCode?: string;
 }
 
 const Notes: React.FC<NotesProps> = ({
   setExportType,
   setNotesParams,
   accountInActive,
-  accountDetails,
+  projectFiscalYear,
+  projectCode,
 }) => {
   const { errorToast } = useToast();
-  const { accountid } = useParams();
   const [searchParams] = useSearchParams();
+  const { projectid: projectID } = useParams();
+  const accountId = searchParams.get('accountID') || '';
   const navigate = useNavigate();
   const [appliedFilters, setAppliedFilters] = useState<FilterTypes>({});
   const [showFilter, setShowFilter] = useState<boolean>(false);
@@ -113,9 +111,9 @@ const Notes: React.FC<NotesProps> = ({
       sortBy: sortField,
       sortOrder: sortOrder,
       filters: appliedFilters,
-      attachmentLevel: 'account',
-      accountRid: accountid || '',
-      entityId: accountid || '',
+      attachmentLevel: 'project',
+      accountRid: accountId || '',
+      entityId: projectID || '',
       search: searchText,
       fiscalYear: convertedFiscalYear,
     },
@@ -135,14 +133,22 @@ const Notes: React.FC<NotesProps> = ({
       setExportType('notes');
     }
     setNotesParams({
+      page: currentPage + 1,
+      limit: rowsPerPage,
       sortBy: sortField,
       sortOrder: sortOrder,
       filters: appliedFilters,
-      fiscalYear: convertedFiscalYear,
       search: searchText,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appliedFilters, sortField, sortOrder, convertedFiscalYear, searchText]);
+  }, [
+    sortField,
+    sortOrder,
+    appliedFilters,
+    currentPage,
+    rowsPerPage,
+    searchText,
+  ]);
 
   const handleFilter = () => {
     setShowFilter(!showFilter);
@@ -168,32 +174,29 @@ const Notes: React.FC<NotesProps> = ({
   };
 
   const handleCreate = () => {
-    const accountId = accountid ?? '';
-    const accountName = accountDetails?.accountById?.account_name || '';
     const path = generatePath(NOTES_CREATE, {
-      module: 'account',
+      module: 'project',
     });
     const queryParams = new URLSearchParams({
       accountId,
-      entityLevel: 'account',
-      entityId: accountId,
-      source: `Account > ${accountName}`,
+      entityLevel: 'project',
+      entityId: projectID || '',
+      projectFiscalYear: projectFiscalYear?.toString() || '',
+      source: `Project > ${projectCode}`,
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
 
   const handleEdit = (row: NotesList) => {
-    const accountId = accountid ?? '';
-    const accountName = accountDetails?.accountById?.account_name || '';
     const path = generatePath(NOTES_EDIT, {
-      module: 'account',
+      module: 'project',
       noteId: row.rid,
     });
     const queryParams = new URLSearchParams({
       accountId,
-      entityLevel: row.attachment_level || 'account',
-      entityId: row.attach_to || accountId,
-      source: `Account > ${accountName}`,
+      entityLevel: row.attachment_level || 'project',
+      entityId: row.attach_to || '',
+      source: `Project > ${projectCode}`,
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
@@ -274,7 +277,7 @@ const Notes: React.FC<NotesProps> = ({
   };
 
   const modalId = isModalOpen
-    ? 'account-notes-list-column-visibility-popover'
+    ? 'project-notes-list-column-visibility-popover'
     : undefined;
 
   const RestrictedColumns = [
@@ -379,7 +382,8 @@ const Notes: React.FC<NotesProps> = ({
       {viewDetails ? (
         <NotesDetails
           accountInActive={accountInActive}
-          accountName={accountDetails?.accountById?.account_name || ''}
+          projectFiscalYear={projectFiscalYear}
+          projectCode={projectCode}
         />
       ) : (
         <>
@@ -415,7 +419,7 @@ const Notes: React.FC<NotesProps> = ({
               tableStyle={{
                 borderBottom: '1px solid #CBD6E2',
                 height: '100%',
-                maxHeight: 'calc(100vh - 320px)',
+                maxHeight: 'calc(100vh - 380px)',
                 overflow: 'auto',
               }}
               stickyHeader={true}

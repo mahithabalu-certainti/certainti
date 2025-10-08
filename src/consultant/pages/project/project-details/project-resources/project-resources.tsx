@@ -15,12 +15,13 @@ import {
   useUpdateProjectResourceStatus,
 } from '../../../../services/project-resources/project-resource-service';
 import {
+  NOTES_CREATE,
   PROJECT_RESOURCE_CREATE,
   PROJECT_RESOURCE_EDIT,
 } from '../../../../../routes';
 import { getProjectResourcesColumns } from './list/columns';
 import { ProjectResourcesListType } from '../../../../types/project-resources';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { generatePath, useNavigate, useSearchParams } from 'react-router-dom';
 import ProjectResourceTableHeader from './project-resource-list-header';
 import ProjectResourceDetails from './details/project-resource-detail';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
@@ -387,17 +388,41 @@ export const ProjectResources = ({
   };
   const showUploads =
     searchParams.get('attachment_entity') === 'project_resource';
+
+  const handleCreateNote = () => {
+    const projectResourceId = searchParams.get('pro_res_id');
+    const path = generatePath(NOTES_CREATE, {
+      module: 'account',
+    });
+    const queryParams = new URLSearchParams({
+      accountId: accountID,
+      entityLevel: 'project_resource',
+      entityId: projectResourceId || '',
+      source: `Project Resource > ${resourceData?.r_number}`,
+    });
+    navigate(`${path}?${queryParams.toString()}`);
+  };
+
   const headerButtons = [
     {
       label: 'Add Attachment',
       variant: 'outlined' as const,
       onClick: () => handleOpen(),
+      disabled: accountOrProjectInActive,
       sx: { ...BUTTON_STYLES, width: '120px', minWidth: '48px' },
       hide:
         !viewDetails ||
         !isAttachmentViewEnableMenu ||
         !isAttachmentViewEnableMenuModule ||
         !isAttachmentViewEnablepeormission,
+    },
+    {
+      label: 'Add Note',
+      variant: 'outlined' as const,
+      onClick: () => handleCreateNote(),
+      disabled: accountOrProjectInActive,
+      sx: { ...BUTTON_STYLES, width: '80px', minWidth: '80px' },
+      hide: !viewDetails,
     },
     {
       label: viewDetails ? 'Edit' : 'New',

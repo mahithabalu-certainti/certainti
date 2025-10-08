@@ -31,6 +31,7 @@ export const getResourceCostColumns = (
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
   accountInActive: boolean,
   handleAttachmentClick?: (rowId: string) => void,
+  handleCreateNote?: (rowId: string) => void,
   resourceInActive?: boolean,
   attachmentCreateEnable?: boolean,
   handleGetFiscalYear?: (year: string) => void,
@@ -482,6 +483,25 @@ export const getResourceCostColumns = (
         disabled={accountInActive ? accountInActive : resourceInActive}
         sx={{ width: '45px', minWidth: '45px', maxWidth: '45px', ml: 2.5 }}
         onClick={() => handleAttachmentClick?.(row.rid ?? '')}
+      />
+    ),
+  },
+  {
+    id: 'notes',
+    sortId: 'notes',
+    label: 'Notes',
+    width: 80,
+    sortable: false,
+    hide: false,
+    sx: {
+      textAlign: 'center',
+    },
+    render: (row) => (
+      <TextButton
+        label='Add'
+        disabled={accountInActive ? accountInActive : resourceInActive}
+        sx={{ width: '45px', minWidth: '45px', maxWidth: '45px' }}
+        onClick={() => handleCreateNote?.(row.rid ?? '')}
       />
     ),
   },

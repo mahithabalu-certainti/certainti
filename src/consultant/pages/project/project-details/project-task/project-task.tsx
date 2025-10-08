@@ -13,10 +13,14 @@ import {
   useProjectTask,
   useUpdateProjectTaskStatus,
 } from '../../../../services/project/project-task-service';
-import { PROJECT_TASK, PROJECT_TASK_EDIT } from '../../../../../routes';
+import {
+  NOTES_CREATE,
+  PROJECT_TASK,
+  PROJECT_TASK_EDIT,
+} from '../../../../../routes';
 
 import { getProjectTaskColumns } from '../project-task/columns';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { generatePath, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   AllMenus,
   AllModules,
@@ -304,6 +308,20 @@ export const ProjectTask = ({
       disabled: accountOrProjectInActive,
     },
   ];
+
+  const handleCreateNote = (row?: ProjectTaskListType) => {
+    const projectTaskId = row?.rid || searchParams.get('pro_task_id');
+    const path = generatePath(NOTES_CREATE, {
+      module: 'account',
+    });
+    const queryParams = new URLSearchParams({
+      accountId: accountID,
+      entityLevel: 'project_task',
+      entityId: projectTaskId || '',
+      source: `Project Task > ${resourceData?.r_number || row?.r_number}`,
+    });
+    navigate(`${path}?${queryParams.toString()}`);
+  };
   const handleAttachmentClick = (rowId: string) => {
     const newParams = new URLSearchParams(searchParams);
     newParams.set('attachment_entity', 'project_task');
@@ -318,8 +336,17 @@ export const ProjectTask = ({
       label: 'Add Attachment',
       variant: 'outlined' as const,
       onClick: () => handleOpen(),
+      disabled: accountOrProjectInActive,
       sx: { ...BUTTON_STYLES, width: '120px', minWidth: '48px' },
       hide: !viewDetails || !isAttachmentCreateEnable,
+    },
+    {
+      label: 'Add Note',
+      variant: 'outlined' as const,
+      onClick: () => handleCreateNote(),
+      disabled: accountOrProjectInActive,
+      sx: { ...BUTTON_STYLES, width: '80px', minWidth: '80px' },
+      hide: !viewDetails,
     },
     {
       label: viewDetails ? 'Edit' : 'New',
@@ -474,12 +501,14 @@ export const ProjectTask = ({
   const projectTaskColumns = getProjectTaskColumns(
     handleProjectTaskClick,
     handleAttachmentClick,
+    handleCreateNote,
     memoizedProjectResourceCode,
     memoizedProjectResourceType,
     memoizedProjectResourceClassification,
     permissionMapTaskTableColumn,
     accountOrProjectInActive,
-    fiscalDatesArg
+    fiscalDatesArg,
+    isAttachmentCreateEnable
   );
   const onRefreshClick = () => {
     setRefreshProjectsTrigger(Date.now());

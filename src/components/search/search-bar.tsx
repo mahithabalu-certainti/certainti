@@ -30,7 +30,7 @@ const SearchBar: React.FC<SearchBarProps> = React.memo(
 
     return (
       <div
-        className={`flex items-center border border-[#CBD6E2] rounded-xs w-[200px] h-[24px] box-border focus-within:border-2 focus-within:border-blue-400 bg-white ${disabled ? 'opacity-60 cursor-not-allowed' : ''}`}
+        className={`flex items-center border border-[#CBD6E2] rounded-xs w-[200px] h-[24px] box-border bg-white ${disabled ? 'opacity-60 cursor-not-allowed' : ''}`}
       >
         <input
           type='text'
@@ -44,7 +44,7 @@ const SearchBar: React.FC<SearchBarProps> = React.memo(
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           disabled={disabled}
-          className='flex-1 text-[12px] placeholder:text-[12px] pl-1 pr-2 h-full outline-none bg-white'
+          className='flex-1 text-[12px] placeholder:text-[12px] pl-2.5 pr-2 h-full outline-none bg-white focus-within:border-1 focus-within:border-blue-400'
         />
         <button
           onClick={() => !disabled && onSearch(text)}

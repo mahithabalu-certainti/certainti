@@ -23,6 +23,7 @@ export const formatDateToYMD = (dateString: string): string => {
 export const getProjectTaskColumns = (
   onClick: (row: ProjectTaskListType) => void,
   handleAttachmentClick: (rowId: string) => void,
+  handleCreateNote: (row: ProjectTaskListType) => void,
   memoizedProjectResourceCode: SelectOption[],
   TaskTypeOptions: SelectOption[],
   classificationOptions: SelectOption[],
@@ -31,7 +32,8 @@ export const getProjectTaskColumns = (
     { read: boolean; edit: boolean }
   >,
   accountOrProjectInActive?: boolean,
-  fiscalDate?: FormFiscalDateType
+  fiscalDate?: FormFiscalDateType,
+  isAttachmentCreateEnable?: boolean
 ): ListTableColumn<ProjectTaskListType>[] => [
   {
     id: 'resource_code',
@@ -377,13 +379,32 @@ export const getProjectTaskColumns = (
     label: 'Attachments',
     width: 100,
     sortable: false,
-    // hide: !attachmentCreateEnable,
+    hide: !isAttachmentCreateEnable,
     render: (row) => (
       <TextButton
         label='Add'
-        // disabled={accountInActive ? accountInActive : resourceInActive}
+        disabled={accountOrProjectInActive}
         sx={{ width: '45px', minWidth: '45px', maxWidth: '45px', ml: 2.5 }}
         onClick={() => handleAttachmentClick?.(row.rid ?? '')}
+      />
+    ),
+  },
+  {
+    id: 'notes',
+    sortId: 'notes',
+    label: 'Notes',
+    width: 80,
+    sortable: false,
+    hide: false,
+    sx: {
+      textAlign: 'center',
+    },
+    render: (row) => (
+      <TextButton
+        label='Add'
+        disabled={accountOrProjectInActive}
+        sx={{ width: '45px', minWidth: '45px', maxWidth: '45px' }}
+        onClick={() => handleCreateNote(row)}
       />
     ),
   },

@@ -1,7 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useState } from 'react';
 import React from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import {
+  generatePath,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 import { convertResourceSkill } from './resource-skill-type';
 import { ResourceSkillList } from '../../../../../types/resource-skill';
 import {
@@ -13,7 +18,7 @@ import {
 import { useMutation } from '@apollo/client';
 import { UPDATE_RESOURCE_SKILL } from '../../../../../../api/graphql/queries/resource-query';
 import { resourceClient } from '../../../../../../api/graphql/clients/client';
-import { RESOURCESKILL } from '../../../../../../routes';
+import { NOTES_CREATE, RESOURCESKILL } from '../../../../../../routes';
 import {
   ListTable,
   ManageColumnsPopover,
@@ -55,6 +60,7 @@ interface ResourceSkillTableProps {
     React.SetStateAction<HTMLButtonElement | null>
   >;
   searchValue?: string;
+  resourceNumber?: string;
 }
 const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   appliedFilters,
@@ -73,6 +79,7 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   columnAnchorEl,
   setColumnAnchorEl,
   searchValue,
+  resourceNumber,
 }) => {
   const navigate = useNavigate();
   const { accountid } = useParams();
@@ -235,6 +242,20 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
     setSelectedRowId(rowId);
   };
 
+  const handleCreateNote = (rowId: string) => {
+    const accountId = accountid ?? '';
+    const path = generatePath(NOTES_CREATE, {
+      module: 'account',
+    });
+    const queryParams = new URLSearchParams({
+      accountId,
+      entityLevel: 'resource_skill',
+      entityId: rowId,
+      source: `Resource > ${resourceNumber}`,
+    });
+    navigate(`${path}?${queryParams.toString()}`);
+  };
+
   const resourceSkillColumns = useMemo(
     () =>
       getResourceSkillColumns(
@@ -247,6 +268,7 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
         permissionMap,
         accountInActive,
         handleAttachmentClick,
+        handleCreateNote,
         resourceInActive,
         attachmentCreateEnable
       ),

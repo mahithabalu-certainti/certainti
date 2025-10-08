@@ -903,9 +903,7 @@ const ListTable = <T extends RowData>({
                     maxWidth: '32px',
                     minWidth: '32px',
                     padding: '0px !important',
-                    borderRight: hideHeaderSelect
-                      ? 'none !important'
-                      : '1px solid #CBD6E2',
+                    borderRight: '1px solid #CBD6E2',
                     borderBottom: '1px solid #CBD6E2 !important',
                   }}
                 >
@@ -983,6 +981,7 @@ const ListTable = <T extends RowData>({
                       width: column.width || 160,
                       minWidth: column.width || 160,
                       maxWidth: column.width || 160,
+                      textAlign: 'left',
                       ...(typeof column.sx === 'function'
                         ? filterOutBackground(column.sx())
                         : column.sx || {}),
@@ -1000,7 +999,6 @@ const ListTable = <T extends RowData>({
                                 isAvailableAction
                               ? '50px'
                               : '0px',
-                      textAlign: 'left',
                     }}
                   />
                 ) : (
@@ -1010,6 +1008,7 @@ const ListTable = <T extends RowData>({
                       width: column.width || 160,
                       minWidth: column.width || 160,
                       maxWidth: column.width || 160,
+                      textAlign: 'left',
                       ...(typeof column.sx === 'function'
                         ? filterOutBackground(column.sx())
                         : column.sx || {}),
@@ -1027,7 +1026,6 @@ const ListTable = <T extends RowData>({
                                 isAvailableAction
                               ? '50px'
                               : '0px',
-                      textAlign: 'left',
                     }}
                   >
                     {column.label}

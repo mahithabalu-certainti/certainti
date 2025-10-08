@@ -18,6 +18,7 @@ export const getResourceSkillColumns = (
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
   accountInActive: boolean,
   handleAttachmentClick?: (rowId: string) => void,
+  handleCreateNote?: (row: string) => void,
   resourceInActive?: boolean,
   attachmentCreateEnable?: boolean
 ): ListTableColumn<ResourceSkillList>[] => [
@@ -391,6 +392,25 @@ export const getResourceSkillColumns = (
         disabled={accountInActive ? accountInActive : resourceInActive}
         sx={{ width: '45px', minWidth: '45px', maxWidth: '45px', ml: 2.5 }}
         onClick={() => handleAttachmentClick?.(row.rid ?? '')}
+      />
+    ),
+  },
+  {
+    id: 'notes',
+    sortId: 'notes',
+    label: 'Notes',
+    width: 80,
+    sortable: false,
+    sx: {
+      textAlign: 'center',
+    },
+    hide: false,
+    render: (row) => (
+      <TextButton
+        label='Add'
+        disabled={accountInActive ? accountInActive : resourceInActive}
+        sx={{ width: '45px', minWidth: '45px', maxWidth: '45px' }}
+        onClick={() => handleCreateNote?.(row.rid ?? '')}
       />
     ),
   },
