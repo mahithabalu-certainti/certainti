@@ -9,6 +9,7 @@ import {
   handleErrorResponse,
   handleSuccessResponse,
   isValidTimezone,
+  logMessage,
   successLog,
   uploadToAzureBlob,
   validateRequest,
@@ -37,7 +38,7 @@ const interactionService = services.interactionService;
 async function createInteraction(req: Request, res: Response): Promise<void> {
   const methodName = "Create interaction";
   try {
-    console.log(`[${methodName}] Request received`,JSON.stringify(req.body));
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${req.headers["x-user-id"]}`);
     const value = await validateRequest(req, createInteractionSchema, res);
     const userId = req.headers["x-user-id"] as string;
     if (!userId) {
@@ -57,10 +58,6 @@ async function createInteraction(req: Request, res: Response): Promise<void> {
     const interaction = await interactionService.createInteraction(
       value,interactionSource.MANUAL,
       userId
-    );
-    console.log(
-      `[${methodName}] Service response:`,
-      JSON.stringify(interaction)
     );
     if (interaction.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -92,9 +89,10 @@ async function createInteraction(req: Request, res: Response): Promise<void> {
 async function createAccountInteraction(req: Request, res: Response): Promise<void> {
   const methodName = "Create account interaction";
   try {
-    console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
+   
     const value = await validateRequest(req, createAccountInteractionSchema, res);
     const userId = req.headers["x-user-id"] as string;
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${userId}`);
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -112,10 +110,6 @@ async function createAccountInteraction(req: Request, res: Response): Promise<vo
     const interaction = await interactionService.createAccountInteraction(
       value,interactionSource.MANUAL,
       userId
-    );
-    console.log(
-      `[${methodName}] Service response:`,
-      JSON.stringify(interaction)
     );
     if (interaction.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -147,10 +141,11 @@ async function createAccountInteraction(req: Request, res: Response): Promise<vo
 async function listAccountInteractions(req: Request, res: Response): Promise<void> {
   const methodName = "List account interactions";
   try {
-    console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
+   
     const value = await validateRequest(req, listAccountInteractionSchema, res,"GET");
-    console.log("value",value);
     const userId = req.headers["x-user-id"] as string;
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(value)} userId: ${userId}`);
+
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -183,10 +178,7 @@ async function listAccountInteractions(req: Request, res: Response): Promise<voi
       limit,
       parsedFilters
     );
-    console.log(
-      `[${methodName}] Service response:`,
-      JSON.stringify(interaction)
-    );
+
     if (interaction.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleCustomResponse(res, interaction.data,interaction.message);
@@ -218,9 +210,10 @@ async function listAccountInteractions(req: Request, res: Response): Promise<voi
 async function updateAccountInteraction(req: Request, res: Response): Promise<void> {
   const methodName = "Update account interaction";
   try {
-    console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
+    
     const value = await validateRequest(req, updateAccountInteractionSchema, res);
     const userId = req.headers["x-user-id"] as string;
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(value)} userId: ${userId}`);
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -238,10 +231,6 @@ async function updateAccountInteraction(req: Request, res: Response): Promise<vo
     const interaction = await interactionService.updateAccountInteraction(
       value,
       userId
-    );
-    console.log(
-      `[${methodName}] Service response:`,
-      JSON.stringify(interaction)
     );
     if (interaction.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -272,9 +261,11 @@ async function updateAccountInteraction(req: Request, res: Response): Promise<vo
 async function updateInteraction(req: Request, res: Response): Promise<void> {
   const methodName = "Update interaction";
   try {
-    console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
+    
     const value = await validateRequest(req, updateInteractionSchema, res);
     const userId = req.headers["x-user-id"] as string;
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(value)} userId: ${userId}`);
+
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -292,10 +283,6 @@ async function updateInteraction(req: Request, res: Response): Promise<void> {
     const interaction = await interactionService.updateInteraction(
       value,
       userId
-    );
-    console.log(
-      `[${methodName}] Service response:`,
-      JSON.stringify(interaction)
     );
     if (interaction.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -330,13 +317,15 @@ async function updateInteractionResponse(
 ): Promise<void> {
   const methodName = "Update interaction response";
   try {
-    console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
+   
     const value = await validateRequest(
       req,
       updateInteractionResponseSchema,
       res
     );
     const userId = req.headers["x-user-id"] as string;
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(value)} userId: ${userId}`);
+
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -355,10 +344,7 @@ async function updateInteractionResponse(
       value,
       userId
     );
-    console.log(
-      `[${methodName}] Service response:`,
-      JSON.stringify(interaction)
-    );
+   
     if (interaction.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, interaction.data);
@@ -392,9 +378,11 @@ async function getInteractionDetailsById(
 ): Promise<void> {
   const methodName = "Get interaction details";
   try {
-    console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
+   
     const { interactionRid, accountId } = req.params;
     const userId = req.headers["x-user-id"] as string;
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${userId}`);
+
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -426,12 +414,6 @@ async function getInteractionDetailsById(
           accountId
         );
  
-
-   
-    console.log(
-      `[${methodName}] Service response:`,
-      JSON.stringify(interactionDetails)
-    );
     if (interactionDetails.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, interactionDetails.data);
@@ -466,9 +448,9 @@ async function getTechnicalSummaryDetailsById(
 ): Promise<void> {
   const methodName = "Get technical summary details";
   try {
-    console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
     const value = await validateRequest(req, listTechnicalSummarySchema, res, "GET");
     const userId = req.headers["x-user-id"] as string;
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(value)} userId: ${userId}`);
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -499,10 +481,7 @@ async function getTechnicalSummaryDetailsById(
         value.tech_summary_rid,
         value.account_rid
       );
-    console.log(
-      `[${methodName}] Service response:`,
-      JSON.stringify(interactionDetails)
-    );
+  
     if (interactionDetails.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, interactionDetails.data);
@@ -533,9 +512,9 @@ async function getTechnicalSummaryDetailsById(
 async function updateTechSummaryContext(req: Request, res: Response): Promise<void> {
   const methodName = "Update technical summary context";
   try {
-    console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
     const value = await validateRequest(req, updateTechSummaryContextSchema, res);
     const userId = req.headers["x-user-id"] as string;
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(value)} userId: ${userId}`);
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -555,10 +534,6 @@ async function updateTechSummaryContext(req: Request, res: Response): Promise<vo
       value.tech_summary_rid,
       value.account_rid,
       userId
-    );
-    console.log(
-      `[${methodName}] Service response:`,
-      JSON.stringify(interaction)
     );
     if (interaction.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -599,6 +574,7 @@ async function getInteractionQuestionsById(
     const { interactionRid, accountId } = req.params;
     const value = req.params
     const userId = req.headers["x-user-id"] as string;
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(value)} userId: ${userId}`);
 
     if (!userId) {
       handleErrorResponse(
@@ -658,6 +634,8 @@ async function getInteractionStatus(
   const methodName = "Get resource roles";
   try {
     const value = await validateRequest(req, getInteractionStatusSchema, res,"GET");
+    const userId = req.headers["x-user-id"] as string;
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(value)} userId: ${userId}`);
     const interactionStatus = await interactionService.getInteractionStatus(value.status_scope,value.current_status, value.reminder_specific_list);
     if (interactionStatus.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -821,9 +799,9 @@ async function getResponseSource(
 async function listAllInteractionPrjAcc (req : Request, res : Response) {
   try {
     const methodName = "listAllInteractionPrjAcc"
-    console.log(`[${methodName}] Request received`,JSON.stringify(req.body));
     let data = req.body;
     const userId = req.headers["x-user-id"] as string;
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${userId}`);
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -860,9 +838,9 @@ async function listAllInteractionPrjAcc (req : Request, res : Response) {
 async function exportAllInteractions (req : Request, res : Response) {
   try {
     const methodName = "exportAllInteractions"
-    console.log(`[${methodName}] Request received`,JSON.stringify(req.body));
     const data = req.body
     const userId = req.headers["x-user-id"] as string;
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${userId}`);
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -957,6 +935,7 @@ async function exportAllInteractions (req : Request, res : Response) {
         })
       }
   } catch (error : any) {
+    errorLog("listOutAllInteractionSummary", error.message);
     handleErrorResponse(res, HttpStatus.FAILED, HttpStatus.FAILED_MESSAGE, error.message)
   }
 }
@@ -964,9 +943,9 @@ async function exportAllInteractions (req : Request, res : Response) {
 async function listOutAllInteractionSummary (req : Request, res : Response) {
   try {
     const methodName = "listOutAllInteractionSummary"
-    console.log(`[${methodName}] Request received`,JSON.stringify(req.body));
     const data = req.body;
     const userId = req.headers["x-user-id"] as string;
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${userId}`);
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -1006,6 +985,7 @@ async function listOutAllInteractionSummary (req : Request, res : Response) {
       })
     }
   } catch (error : any) {
+    errorLog("listOutAllInteractionSummary", error.message);
     return res.status(HttpStatus.FAILED).json({
         statusCode : HttpStatus.FAILED,
         statusCodeValue : HttpStatus.FAILED_MESSAGE,
@@ -1018,9 +998,9 @@ async function listOutAllInteractionSummary (req : Request, res : Response) {
 async function exportAllInteractionSummary (req : Request, res : Response) {
   try {
     const methodName = "exportAllInteractionSummary"
-    console.log(`[${methodName}] Request received`,JSON.stringify(req.body));
     const data = req.body;
     const userId = req.headers["x-user-id"] as string;
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${userId}`);
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -1101,6 +1081,7 @@ async function exportAllInteractionSummary (req : Request, res : Response) {
         })
       }
   } catch (error : any) {
+    errorLog("exportAllInteractionSummary", error.message);
     return res.status(HttpStatus.FAILED).json({
         statusCode : HttpStatus.FAILED,
         statusCodeValue : HttpStatus.FAILED_MESSAGE,
@@ -1113,9 +1094,9 @@ async function exportAllInteractionSummary (req : Request, res : Response) {
 async function listResponseHistory (req : Request, res : Response) {
   try {
     const methodName = "listResponseHistory"
-    console.log(`[${methodName}] Request received`,JSON.stringify(req.body));
     const data = req.body;
     const userId = req.headers["x-user-id"] as string;
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${userId}`);
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -1155,6 +1136,7 @@ async function listResponseHistory (req : Request, res : Response) {
       })
     }
   } catch (error : any) {
+    errorLog("listResponseHistory", error.message);
     return res.status(HttpStatus.FAILED).json({
         statusCode : HttpStatus.FAILED,
         statusCodeValue : HttpStatus.FAILED_MESSAGE,
@@ -1167,9 +1149,9 @@ async function listResponseHistory (req : Request, res : Response) {
 async function exportResponseHistory (req : Request, res : Response) {
   try {
     const methodName = "exportResponseHistory"
-    console.log(`[${methodName}] Request received`,JSON.stringify(req.body));
     const data = req.body;
     const userId = req.headers["x-user-id"] as string;
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${userId}`);
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -1204,6 +1186,7 @@ async function exportResponseHistory (req : Request, res : Response) {
         })
       }
   } catch (error : any) {
+    errorLog("exportResponseHistory", error.message);
     return res.status(HttpStatus.FAILED).json({
         statusCode : HttpStatus.FAILED,
         statusCodeValue : HttpStatus.FAILED_MESSAGE,
@@ -1216,9 +1199,9 @@ async function exportResponseHistory (req : Request, res : Response) {
 async function sendInteraction(req: Request, res: Response): Promise<void> {
   const methodName = "Send interaction";
   try {
-    console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
     const value = await validateRequest(req, sendInteractionSchema, res);
     const userId = req.headers["x-user-id"] as string;
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${userId}`);
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -1240,10 +1223,7 @@ async function sendInteraction(req: Request, res: Response): Promise<void> {
        userId,
        value.is_interaction_followup
      );
-    console.log(
-      `[${methodName}] Service response:`,
-      JSON.stringify(interaction)
-    );
+
     if (interaction.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, interaction.data);
@@ -1274,9 +1254,9 @@ async function sendInteraction(req: Request, res: Response): Promise<void> {
 async function uploadAttachmentToAzure(req: Request, res: Response): Promise<void> {
   const methodName = "Upload attachment to Azure";
   try {
-    console.log(`[${methodName}] Request received`);
-  //  const value = await validateRequest(req, sendInteractionSchema, res)
     const userId = req.headers["x-user-id"] as string;
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${userId}`);
+
     let value = req.body;
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
@@ -1366,11 +1346,9 @@ async function deleteAttachmentFromAzure(req: Request, res: Response): Promise<v
 async function listTechnicalSummary(req: Request, res: Response) {
   const methodName = "listTechnicalSummary"
   try {
-    console.log(`[${methodName}] Request received`);
     const userId = req.headers["x-user-id"] as string;
     const value = await validateRequest(req, listAllTechnicalSummarySchema, res, "GET");
-    console.log(`[${methodName}] userId:`, userId);
-    console.log(`[${methodName}] value:`, value);
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(value)} userId: ${userId}`);
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -1413,7 +1391,6 @@ async function listTechnicalSummary(req: Request, res: Response) {
   } catch (err) {
     const error = err as Error;
     errorLog(methodName, error.message);
-    console.log(`[${methodName}] Exception:`, error);
     handleErrorResponse(
       res,
       HttpStatus.FAILED,
@@ -1426,12 +1403,9 @@ async function listTechnicalSummary(req: Request, res: Response) {
 async function exportTechnicalSummary(req: Request, res: Response) {
   const methodName = "exportTechnicalSummary"
   try {
-
-    console.log(`[${methodName}] Request received`);
     const userId = req.headers["x-user-id"] as string;
     const value = await validateRequest(req, exportTechnicalSummarySchema, res, "GET");
-    console.log(`[${methodName}] userId:`, userId);
-    console.log(`[${methodName}] value:`, value);
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(value)} userId: ${userId}`);
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -1508,7 +1482,6 @@ async function exportTechnicalSummary(req: Request, res: Response) {
   } catch (err) {
     const error = err as Error;
     errorLog(methodName, error.message);
-    console.log(`[${methodName}] Exception:`, error);
     handleErrorResponse(
       res,
       HttpStatus.FAILED,
@@ -1521,10 +1494,9 @@ async function exportTechnicalSummary(req: Request, res: Response) {
 async function listInteractionHistory (req : Request, res : Response) {
   const methodName = "listInteractionHistory"
   try {
-    console.log(`[${methodName}] Request received`);
     const userId = req.headers["x-user-id"] as string;
     let data = req.body;
-    console.log(`[${methodName}] userId:`, userId);
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${userId}`);
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -1554,7 +1526,6 @@ async function listInteractionHistory (req : Request, res : Response) {
   } catch (err) {
     const error = err as Error;
     errorLog(methodName, error.message);
-    console.log(`[${methodName}] Exception:`, error);
     handleErrorResponse(
       res,
       HttpStatus.FAILED,
@@ -1567,10 +1538,11 @@ async function listInteractionHistory (req : Request, res : Response) {
 async function fetchInteractionAttachments(req : Request, res : Response) {
   const methodName = "fetchInteractionAttachments"
   try {
-    console.log(`[${methodName}] Request received`);
+  
     const userId = req.headers["x-user-id"] as string;
     let data = req.body;
-    console.log(`[${methodName}] userId:`, userId);
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${userId}`);
+
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -1612,7 +1584,6 @@ async function fetchInteractionAttachments(req : Request, res : Response) {
   } catch (err) {
     const error = err as Error;
     errorLog(methodName, error.message);
-    console.log(`[${methodName}] Exception:`, error);
     handleErrorResponse(
       res,
       HttpStatus.FAILED,
@@ -1626,10 +1597,9 @@ async function fetchInteractionAttachments(req : Request, res : Response) {
 async function fetchResponseHistoryDetails (req : Request, res : Response) {
    const methodName = "fetchResponseHistoryDetails"
     try {
-    console.log(`[${methodName}] Request received`);
     const userId = req.headers["x-user-id"] as string;
     let data = req.body;
-    console.log(`[${methodName}] userId:`, userId);
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${userId}`);
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -1659,7 +1629,6 @@ async function fetchResponseHistoryDetails (req : Request, res : Response) {
     } catch (err) {
     const error = err as Error;
     errorLog(methodName, error.message);
-    console.log(`[${methodName}] Exception:`, error);
     handleErrorResponse(
       res,
       HttpStatus.FAILED,
@@ -1673,10 +1642,9 @@ async function fetchResponseHistoryDetails (req : Request, res : Response) {
   async function triggerAIAndPassResponse (req : Request, res : Response) {
     const methodName = "triggerAIAndSendPassResponse"
     try {
-     console.log(`[${methodName}] Request received`);
     const userId = req.headers["x-user-id"] as string;
     let data = req.body;
-    console.log(`[${methodName}] userId:`, userId);
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${userId}`);
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -1697,7 +1665,6 @@ async function fetchResponseHistoryDetails (req : Request, res : Response) {
     } catch (err) {
     const error = err as Error;
     errorLog(methodName, error.message);
-    console.log(`[${methodName}] Exception:`, error);
     handleErrorResponse(
       res,
       HttpStatus.FAILED,
@@ -1711,10 +1678,9 @@ async function fetchResponseHistoryDetails (req : Request, res : Response) {
   async function exportInteractionHistory (req : Request, res : Response) {
     const methodName = "exportInteractionHistory"
     try {
-      console.log(`[${methodName}] Request received`);
       const userId = req.headers["x-user-id"] as string;
       let data = req.body;
-      console.log(`[${methodName}] userId:`, userId);
+      logMessage(`[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${userId}`);
       if (!userId) {
         errorLog(methodName, "User ID is required in headers");
         handleErrorResponse(
@@ -1745,7 +1711,6 @@ async function fetchResponseHistoryDetails (req : Request, res : Response) {
     } catch (err) {
     const error = err as Error;
     errorLog(methodName, error.message);
-    console.log(`[${methodName}] Exception:`, error);
     handleErrorResponse(
       res,
       HttpStatus.FAILED,
@@ -1759,23 +1724,22 @@ async function fetchResponseHistoryDetails (req : Request, res : Response) {
   {
     const methodName = "processKafkaMessages";
     try {
-      console.log(`[${methodName}] Processing Kafka messages`);
+      logMessage(`[${methodName}] Processing Kafka messages #${JSON.stringify(data)}`);
        const result = await interactionService.processKafkaMessage(data)
       // Implement your Kafka message processing logic here
     } catch (err) {
       const error = err as Error;
       errorLog(methodName, error.message);
-      console.log(`[${methodName}] Exception:`, error);
+      logMessage(`[${methodName}] Exception: ${error.message}`);
     }
   }
 
   async function fetchInteractionListForReminder (req : Request, res : Response) {
     const methodName = "fetchInteractionListForReminder"
-    try {
-      console.log(`[${methodName}] Request received`);
+    try {   
       const userId = req.headers["x-user-id"] as string;
       let data = req.body;
-      console.log(`[${methodName}] userId:`, userId);
+      logMessage(`[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${userId}`);
       if (!userId) {
         errorLog(methodName, "User ID is required in headers");
         handleErrorResponse(
@@ -1815,7 +1779,6 @@ async function fetchResponseHistoryDetails (req : Request, res : Response) {
     } catch (err) {
       const error = err as Error;
       errorLog(methodName, error.message);
-      console.log(`[${methodName}] Exception:`, error);
     }
   }
 

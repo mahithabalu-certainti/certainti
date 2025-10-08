@@ -3,7 +3,7 @@ import Configurations from "../config/config";
 import { initMainDbSequelize } from "../config/mainDataSource";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries, STATUS_MESSAGE } from "../utils/constants";
-import { setPrjFiscalData, setProject, setProjectFiscalSummary } from "../utils/helpers";
+import { logMessage, setPrjFiscalData, setProject, setProjectFiscalSummary } from "../utils/helpers";
 import ProjectIngestionService from "./projectIngestionService";
 import { IUpdateProject } from "../utils/types";
 import { ProjectService } from "./projectService";
@@ -24,6 +24,7 @@ class ProjectGraphQlServices {
     async inLineEditProject (data : any) {
         const mainSequelize = await initMainDbSequelize();
         const orgSequelize = await initOrgSequelize();
+        logMessage(`In-line editing project for account: ${data.account_rid}, project: ${data.project_rid}, fiscal: ${data.project_fiscal_rid}`);
         const checkAccountExists : any = await mainSequelize.query(await rawQueries.fetchParentAccount(data.account_rid, mainSequelize))
         if(checkAccountExists[0].length < 1) {
             return {

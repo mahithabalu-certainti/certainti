@@ -26,6 +26,7 @@ import { Project } from "../../models/project";
 import { AccountFiscal } from "../../models/accountFiscal";
 import { AccountFiscalRegion } from "../../models/accountFiscalRegion";
 import { ProjectTaskHistory, setupProjectTaskHistorySequence } from "../../models/projectTaskHiistory";
+import { logMessage } from "../../utils/helpers";
 
 export class ProjectTaskSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -195,6 +196,7 @@ export class ProjectTaskSchemaService {
         await setupProjectTaskHistorySequence(this.orgDbSequelize, schemaName);
       }
     } catch (err) {
+      logMessage(`Error creating project resources table: ${(err as Error).message}`);
       throw new Error("Error creating project resources table");
     }
   }
@@ -343,8 +345,8 @@ export class ProjectTaskSchemaService {
         }
       );
     } catch (err) {
-      console.log("Error addinng timelne", err);
-      throw new Error("Error creating project resource timline");
+      logMessage(`Error creating project resource timeline: ${(err as Error).message}`);
+      throw new Error("Error creating project resource timeline");
     }
   }
 
@@ -371,7 +373,7 @@ export class ProjectTaskSchemaService {
         },
       );
     } catch (err) {
-      console.log("Error addinng timelne", err);
+      logMessage(`Error adding timeline for inline edit: ${(err as Error).message}`);
       throw new Error("Error creating project resource timline");
     }
   }
@@ -1414,8 +1416,6 @@ export class ProjectTaskSchemaService {
     const { account_rid } = projectTaskData;
     const { project_rid } = projectData;
 
-    console.log("Entity IDS", project_rid, account_rid);
-
     // Aggregate from project_fiscal
     const fiscalAggregates: any = await ProjectFiscal.findOne({
       attributes: [
@@ -2088,6 +2088,7 @@ export class ProjectTaskSchemaService {
     ]);
   
     if (!newResource || !oldResource) {
+      logMessage('Resource not found for given resource_rid');
       throw new Error('Unable to resolve resource_rid to region_rid');
     }
   
@@ -2385,6 +2386,7 @@ export class ProjectTaskSchemaService {
     ]);
   
     if (!resourceData || !oldResource) {
+      logMessage('Resource not found for given resource_rid');
       throw new Error('Unable to resolve region_rid from resource');
     }
   
@@ -2554,6 +2556,7 @@ export class ProjectTaskSchemaService {
     });
   
     if (!resourceData || !oldResource) {
+      logMessage('Unable to resolve region_rid for resource');
       throw new Error('Unable to resolve region_rid for resource');
     }
   
@@ -2804,6 +2807,7 @@ export class ProjectTaskSchemaService {
     });
   
     if (!resourceData || !oldResource) {
+      logMessage('Unable to resolve region_rid for resource');
       throw new Error('Unable to resolve region_rid for resource');
     }
   
@@ -3050,6 +3054,7 @@ export class ProjectTaskSchemaService {
     });
 
     if (!projectTaskData) {
+      logMessage("Project task does not exist for the given account");
       throw new Error("Project task does not exist for the given account");
     }
 

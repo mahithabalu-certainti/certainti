@@ -11,6 +11,7 @@ import {
 } from "../../utils/otpGenerator";
 import { otpMailTemplate } from "../../utils/mailTemplate";
 import { sendEmail } from "../emailService";
+import { logMessage } from "../../utils/helpers";
 
 export class OtpService {
   private logger: Logger;
@@ -139,7 +140,7 @@ export class OtpService {
         statusMessage: HttpStatus.SUCCESS_MESSAGE,
       };
     } catch (err) {
-      console.log("Error generating OTP", err);
+      logMessage(`Error generating OTP: ${err}`);
       throw this.throwServiceError(err as Error);
     }
   }
@@ -280,7 +281,7 @@ export class OtpService {
         };
       }
     } catch (err) {
-      console.log("Inside error", err);
+      logMessage(`Error verifying OTP: ${err}`);
       throw this.throwServiceError(err as Error);
     }
   }

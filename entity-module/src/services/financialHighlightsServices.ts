@@ -23,6 +23,7 @@ import { ProjectFiscalSummary } from "../models/projectFiscalSummary";
 import { ProjectSummary } from "../models/projectSummary";
 import Decimal from "decimal.js";
 import currency from "currency.js";
+import { logMessage } from "../utils/helpers";
 
 export default class FinancialHighlightsService {
   private mainDbSequelize: Sequelize | null = null;
@@ -318,6 +319,7 @@ export default class FinancialHighlightsService {
         },
       };
     } catch (error) {
+      logMessage(`Error in listAccountLevelProjectCostFinancialHighlights: ${error instanceof Error ? error.message : error}`);
       return {
         statusCode: 500,
         message: "Failed to fetch project costs",
@@ -388,7 +390,7 @@ export default class FinancialHighlightsService {
       const currencyRids = allSummary
         .map((summary) => summary.currency_rid)
         .filter((rid) => rid);
-      console.log("CurrencyRids :", currencyRids);
+      logMessage(`CurrencyRids: ${currencyRids}`);
 
       const [currencies] = await Promise.all([
         currencyRids.length
@@ -539,6 +541,7 @@ export default class FinancialHighlightsService {
         },
       };
     } catch (error) {
+      logMessage(`Error in exportListAccountLevelProjectCostFinancialHighlights: ${error instanceof Error ? error.message : error}`);
       return {
         statusCode: 500,
         message: "Failed to fetch project costs",
@@ -578,7 +581,7 @@ export default class FinancialHighlightsService {
       // Replace "0.00" in pattern with our real number
       return pattern.replace("0.00", formattedNumber);
     } catch (error) {
-      console.error("Error formatting number:", error);
+      logMessage(`Error formatting number: ${error instanceof Error ? error.message : error}`);
       return "-";
     }
   }
@@ -605,7 +608,7 @@ export default class FinancialHighlightsService {
     // Filter logic for your input structure
     Object.entries(filters).forEach(([field, filter]) => {
       if (!filter || typeof filter !== "object") {
-        console.log(
+        logMessage(
           `Skipping filter for field ${field} due to invalid structure`
         );
         return;
@@ -615,7 +618,7 @@ export default class FinancialHighlightsService {
       const value = filter[operator];
 
       if (!operator || value === undefined) {
-        console.log(
+        logMessage(
           `Skipping filter for field ${field} due to missing operator or value`
         );
         return;
@@ -686,7 +689,7 @@ export default class FinancialHighlightsService {
           break;
 
         default:
-          console.log(`Unhandled filter field: ${field}`);
+         logMessage(`Unhandled filter field: ${field}`);
       }
 
       if (Object.keys(condition).length > 0) {

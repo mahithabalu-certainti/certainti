@@ -9,6 +9,7 @@ import { parse } from "url";
 import dotenv from "dotenv";
 import { blobUrlExpiration } from "./constants";
 import { getSecret } from "./azureSecrets";
+import { logMessage } from "./helpers";
 dotenv.config();
 
 // Generate a SAS token for a blob URL
@@ -61,7 +62,7 @@ export async function generateSasUrl(blobUrl: string, expiryMinutes = blobUrlExp
 
     return `${blobUrl}?${sasToken}`;
   } catch (error) {
-    console.error("Error generating SAS URL:", error);
+    logMessage(`Error generating SAS URL: ${error}`);
     throw new Error(`SAS URL generation failed: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 }

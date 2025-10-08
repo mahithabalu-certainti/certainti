@@ -1,5 +1,6 @@
 import { DataTypes, Model, Optional, Sequelize, Op } from "sequelize";
 import { ENV_PREFIX, MAIN_SCHEMA_NAME, R_NUMBER_PREFIX } from "../utils/constant";
+import { errorLog } from "../utils/helpers";
 
 // Import User model
 // import { User } from "./userModel";
@@ -150,10 +151,9 @@ export async function setupProfileSequence(sequelize: Sequelize) {
     // Step 2: Set the default value for r_number to use the sequence
     await sequelize.query(`ALTER TABLE ${MAIN_SCHEMA_NAME}.profile
       ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.PROFILE}-' || LPAD(nextval('${MAIN_SCHEMA_NAME}.profile_seq')::text, 10, '0')`);
-    
-    console.log('Profile sequence setup complete');
+  
   } catch (error) {
-    console.error('Error setting up profile sequence:', error);
+    errorLog('Error setting up profile sequence:', (error as Error).message);
     // Don't throw the error to allow the application to continue starting up
     // The sequence setup can be handled separately if needed
   }

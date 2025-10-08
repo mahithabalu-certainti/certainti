@@ -4,6 +4,7 @@ import {
   generateExcelBase64,
   handleErrorResponse,
   handleSuccessResponse,
+  logMessage,
   successLog,
   validateRequest,
 } from "../utils/helpers";
@@ -30,6 +31,7 @@ async function createProjectResource(
     const value = await validateRequest(req, createProjectResourceSchema, res);
 
     const userId = req.headers["x-user-id"] as string;
+    logMessage("Request received for create project resource with data: " + JSON.stringify(value) + " and userId: " + userId);
 
     if (!userId) {
       handleErrorResponse(
@@ -218,6 +220,7 @@ async function projectResourceDetails(
   try {
     const { id: projectResourceId, accountId } = req.params;
     const userId = req.headers["x-user-id"] as string;
+    logMessage("Request received for project resource details with projectResourceId: " + projectResourceId + " and accountId: " + accountId + " and userId: " + userId);
 
     if (!userId) {
       handleErrorResponse(
@@ -277,6 +280,7 @@ async function exportProjectResource(
       res,
       "GET"
     );
+    logMessage("Request received for export project resource with data: " + JSON.stringify(value) + " and userId: " + userId);
 
     let parsedFilters: Record<string, any> = {};
 
@@ -498,6 +502,7 @@ async function anomalyStatusUpdate(req: Request, res: Response): Promise<void> {
     if(!value){
       return;
     }
+    logMessage(`Request received for anomaly status update with data: ${JSON.stringify(value)} user ID: ${req.headers["x-user-id"]}`);
 
     const userId = req.headers["x-user-id"] as string;
 

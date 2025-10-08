@@ -12,6 +12,7 @@ import { initMainDbSequelize } from "../config/mainDataSource";
 import { Op, Sequelize } from "sequelize";
 import moment from "moment";
 import Decimal from "decimal.js";
+import { errorLog, logMessage } from "../utils/helpers";
 
 class ResourceCostService {
   private schemaService: SchemaService;
@@ -90,12 +91,14 @@ class ResourceCostService {
         );
 
       if (!schemaAndTableValidation) {
+        errorLog("Account schema does not exist");
         return resourceCostSchemaService.createErrorResponse(
           "Account schema does not exist"
         );
       }
       const sequelize = await this.getOrgSequelize();
       if (!sequelize) {
+        errorLog("Database connection not available");
         return resourceCostSchemaService.createErrorResponse(
           "Database connection not available"
         );
@@ -132,7 +135,8 @@ class ResourceCostService {
         project_rid
       );
     } catch (err) {
-      console.log("Error ", err);
+       const error = err as Error;
+      errorLog(error.message);
       return this.throwServiceError(err as Error);
     }
   }
@@ -180,12 +184,14 @@ class ResourceCostService {
         );
 
       if (!schemaAndTableValidation) {
+        errorLog("Account schema does not exist");
         return resourceCostSchemaService.createErrorResponse(
           "Account schema does not exist"
         );
       }
       const sequelize = await this.getOrgSequelize();
       if (!sequelize) {
+        errorLog("Database connection not available");
         return resourceCostSchemaService.createErrorResponse(
           "Database connection not available"
         );
@@ -221,7 +227,8 @@ class ResourceCostService {
         project_rid
       );
     } catch (err) {
-      console.log("Error ", err);
+      const error = err as Error;
+      errorLog(error.message);
       return this.throwServiceError(err as Error);
     }
   }
@@ -273,12 +280,14 @@ class ResourceCostService {
         );
 
       if (!schemaAndTableValidation) {
+        errorLog("Account schema does not exist");
         return resourceCostSchemaService.createErrorResponse(
           "Account schema does not exist"
         );
       }
       const sequelize = await this.getOrgSequelize();
       if (!sequelize) {
+        errorLog("Database connection not available");
         return resourceCostSchemaService.createErrorResponse(
           "Database connection not available"
         );
@@ -316,7 +325,7 @@ class ResourceCostService {
         {}
       );
     } catch (err) {
-      console.log("Error ", err);
+      errorLog((err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
@@ -363,12 +372,14 @@ class ResourceCostService {
         );
 
       if (!schemaAndTableValidation) {
+        errorLog("Account schema does not exist");
         return resourceCostSchemaService.createErrorResponse(
           "Account schema does not exist"
         );
       }
       const sequelize = await this.getOrgSequelize();
       if (!sequelize) {
+        errorLog("Database connection not available");
         return resourceCostSchemaService.createErrorResponse(
           "Database connection not available"
         );
@@ -404,7 +415,7 @@ class ResourceCostService {
         userId
       );
     } catch (err) {
-      console.log("Error ", err);
+      errorLog((err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
@@ -620,12 +631,13 @@ class ResourceCostService {
               });
             }
           } catch (fiscalError) {
-            console.error("Error updating resource fiscal:", fiscalError);
+            errorLog(`Failed to update ResourceFiscal: ${(fiscalError as Error).message}`);
           }
         }
       } catch (error) {
         eventStatus = "Failure";
         errorMessage = (error as Error).message;
+        errorLog(`Create Resource Cost failed: ${errorMessage}`);
       }
 
       try {
@@ -638,7 +650,7 @@ class ResourceCostService {
           schemaName
         );
       } catch (timelineError) {
-        console.error("Failed to create timeline entry:", timelineError);
+        errorLog(`Failed to create timeline entry: ${(timelineError as Error).message}`);
       }
 
       if (eventStatus === "Failure") {
@@ -657,6 +669,7 @@ class ResourceCostService {
         },
       };
     } catch (err) {
+      errorLog((err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
@@ -691,7 +704,7 @@ class ResourceCostService {
         created_by: modifiedBy
       });
     } catch (error) {
-      console.error("Failed to create timeline entry:", error);
+      errorLog(`Failed to create timeline entry: ${(error as Error).message}`);
       throw error;
     }
   }
@@ -836,6 +849,7 @@ class ResourceCostService {
                 // Convert valid string/number to Decimal
                 acc[key] = new Decimal(value).toString();
               } catch (error) {
+                errorLog(`Invalid number format for ${key}: ${value}`);
                 throw new Error(`Invalid number format for ${key}: ${value}`);
               }
             }
@@ -955,8 +969,7 @@ class ResourceCostService {
               });
             }
           } catch (fiscalError) {
-            console.error("Error updating resource fiscal:", fiscalError);
-            // Continue with the process even if fiscal update fails
+            errorLog(`Failed to update ResourceFiscal: ${(fiscalError as Error).message}`);
           }
         }
 
@@ -989,8 +1002,7 @@ class ResourceCostService {
           },
         };
       } catch (err) {
-        console.log(err)
-        // Log the failed update to timeline
+       errorLog(`Update Resource Cost failed: ${(err as Error).message}`);
         try {
           await this.createResourceCostTimeline(
             originalResourceCost,
@@ -1001,15 +1013,13 @@ class ResourceCostService {
             schemaName
           );
         } catch (timelineError) {
-          console.error(
-            "Failed to create timeline entry for failed update:",
-            timelineError
-          );
+          errorLog(`Failed to create timeline entry for failed update: ${(timelineError as Error).message}`);
         }
 
         throw err;
       }
     } catch (err) {
+      errorLog((err as Error).message);
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
@@ -1033,6 +1043,7 @@ class ResourceCostService {
     try {
       const sequelize = await this.getOrgSequelize();
       if (!sequelize) {
+        errorLog("Database connection not available");
         throw new Error("Database connection not available");
       }
 
@@ -1045,6 +1056,7 @@ class ResourceCostService {
         "resource_cost_history"
       );
       if (!tableExists) {
+        errorLog(`Table resource_cost_history or account schema does not exist in schema ${schemaName}`);
         throw new Error(
           `Table resource_cost_history  or account schema does not exist in schema ${schemaName}`
         );
@@ -1120,15 +1132,12 @@ class ResourceCostService {
             });
           }
         } catch (attrError) {
-          console.error(
-            `Error creating history for attribute ${attribute}:`,
-            attrError
-          );
+          errorLog(`Failed to create history for attribute ${attribute}: ${(attrError as Error).message}`);
           // Continue with other attributes even if one fails
         }
       }
     } catch (error) {
-      console.error("Failed to create history entries:", error);
+      errorLog(`Failed to create history entries: ${(error as Error).message}`);
       // Continue execution even if history creation fails
     }
   }
@@ -1152,6 +1161,7 @@ class ResourceCostService {
       );
 
       if (!validateSchema) {
+        errorLog("Account schema does not exist");
         return {
           statusCode: HttpStatus.FAILED,
           message: HttpStatus.FAILED_MESSAGE,
@@ -1326,6 +1336,7 @@ class ResourceCostService {
         },
       };
     } catch (err) {
+      errorLog((err as Error).message);
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
@@ -1346,6 +1357,7 @@ async acceptResourceCostStatus(id: string, accountNumber: string, action: string
     );
 
     if (!validateSchema) {
+      errorLog("Account schema does not exist");
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
@@ -1405,6 +1417,7 @@ async acceptResourceCostStatus(id: string, accountNumber: string, action: string
       },
     };
   } catch (err) {
+    errorLog((err as Error).message);
     return {
       statusCode: HttpStatus.FAILED,
       message: HttpStatus.FAILED_MESSAGE,
@@ -1478,8 +1491,7 @@ async acceptResourceCostStatus(id: string, accountNumber: string, action: string
         }
       }
     } catch (error) {
-      console.error("Error fetching user names:", error);
-      // Return empty strings if there's an error
+      errorLog(`Failed to fetch user names: ${(error as Error).message}`);
     }
 
     return result;
@@ -1534,7 +1546,7 @@ async getResourceCostsByResourceIds(accountNumber: string, resourceIds: string[]
     return results;
 
   } catch (error) {
-    console.error('Error fetching resource costs (bulk):', error);
+    errorLog(`Error fetching resource costs by resource IDs: ${(error as Error).message}`);
     throw error;
   }
 }
@@ -1559,7 +1571,7 @@ export async function getResourceStatuses(
 
     return statusMap;
   } catch (error) {
-    console.error('Error fetching resource statuses:', error);
+    errorLog(`Failed to fetch resource statuses: ${(error as Error).message}`);
     return null;
   }
 }
@@ -1578,7 +1590,7 @@ export async function getCurrencyThreshold(
   currency_rid?: string
 ): Promise<number | null> {
   let currencyResult;
-  console.log("currency_rid :",currency_rid);
+  logMessage(`Fetching currency threshold for currency_rid: ${currency_rid || 'USD'}`);
   if (currency_rid) {
     [currencyResult] = await mainDbSequelize.query(
       `SELECT currency_threshold FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid = :currency_rid`,

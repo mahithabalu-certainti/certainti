@@ -5,6 +5,7 @@ import { InteractionResponse } from "../../utils/types";
 import { HttpStatus, rawQueries } from "../../utils/constants";
 import { generateNewCustomJwtKey } from "../../utils/otpGenerator";
 import { InteractionModelService } from "../interactionModelsService";
+import { logMessage } from "../../utils/helpers";
 
 const INTERACTION_BASE_URL = process.env.INTERACTION_BASE_URL!;
 export class InteractionService {
@@ -269,7 +270,7 @@ export class InteractionService {
       (error.response?.data as { message?: string })?.message;
   
     if (this.isUnauthorizedError(error)) {
-      console.log("Inside unauthorized error", error, error.response?.status);
+      logMessage(`Inside unauthorized error: ${error}, ${error.response?.status}`);
       return this.throwServiceError(error, apiMessage || "Unauthorized", error.response?.status);
     }
   

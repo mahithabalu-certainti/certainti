@@ -25,6 +25,7 @@ import { initMainDbSequelize } from "../../config/mainDataSource";
 import moment from "moment";
 import { ProjectResource } from "../../models/projectResource";
 import { fetchResCodeWithPrjResRole } from "../../utils/rawQueries";
+import { errorLog, logMessage } from "../../utils/helpers";
 
 export class ProjectInjestionTaskService {
   projectTaskSchema: ProjectTaskSchemaService;
@@ -111,6 +112,7 @@ export class ProjectInjestionTaskService {
       await this.projectTaskSchema.createProjectTaskTables(accountNumber);
 
       const newEffort = new Decimal(total_hours_pro_task || "0");
+      logMessage(`New Effort: ${newEffort}`);
 
       if (!newEffort.isZero() && !newEffort.isNaN()) {
         if (start_date && end_date) {
@@ -152,6 +154,7 @@ export class ProjectInjestionTaskService {
 
           const totalEffort = totalExistingEffort.plus(newEffort);
           if (totalEffort.gt(maxAllowedEffort)) {
+            logMessage(`Total effort ${totalEffort} exceeds max allowed ${maxAllowedEffort}`);
             return {
               statusCode: HttpStatus.BAD_REQUEST,
               message: "Validation Error",
@@ -161,6 +164,7 @@ export class ProjectInjestionTaskService {
           }
         } else if (start_date && !end_date) {
           if (newEffort.gt(24)) {
+            logMessage(`New effort ${newEffort} exceeds 24 hours for single day`);
             return {
               statusCode: HttpStatus.BAD_REQUEST,
               message: "Validation Error",
@@ -200,6 +204,7 @@ export class ProjectInjestionTaskService {
               // Convert valid string/number to Decimal
               acc[key] = new Decimal(value).toString();
             } catch (error) {
+              logMessage(`Error converting ${key} to Decimal: ${(error as Error).message}`);
               throw new Error(`Invalid number format for ${key}: ${value}`);
             }
           }
@@ -230,6 +235,7 @@ export class ProjectInjestionTaskService {
       );
 
       if (existingTask && (userPreference === null || userPreference === "")) {
+        logMessage("Duplicate task found with same compensation details");
         return {
           statusCode: HttpStatus.PROMPT,
           message:
@@ -243,12 +249,14 @@ export class ProjectInjestionTaskService {
         total_hours_pro_task !== undefined &&
         Number(total_hours_pro_task) > 3000
       ) {
+          logMessage(`Total hours per task ${total_hours_pro_task} exceeds 3000`);
         status = "Anomaly";
       } else if (
         total_cost_pro_task !== undefined &&
         currencyThreshold !== null &&
         Number(total_cost_pro_task) > currencyThreshold
       ) {
+        logMessage(`Total cost per task ${total_cost_pro_task} exceeds currency threshold ${currencyThreshold}`);
         status = "Anomaly";
       }
       const statusRid: any = statusMap?.get(status);
@@ -296,8 +304,8 @@ export class ProjectInjestionTaskService {
         data: { projectTask: newTask },
       };
     } catch (error) {
+      logMessage(`Error creating project task: ${(error as Error).message}`);
       await transaction.rollback();
-      console.log(":Errror creataing project task", error);
       throw this.throwServiceError(error as Error);
     }
   }
@@ -379,6 +387,7 @@ export class ProjectInjestionTaskService {
           );
 
           if (!validation.success) {
+            logMessage(`Validation failed: ${validation.errorMessage}`);
             return {
               statusCode: HttpStatus.BAD_REQUEST,
               message: "Validation Error",
@@ -387,6 +396,7 @@ export class ProjectInjestionTaskService {
           }
         } else if (start_date && !end_date) {
           if (newEffort.gt(24)) {
+            logMessage(`New effort ${newEffort} exceeds 24 hours for single day`);
             return {
               statusCode: HttpStatus.BAD_REQUEST,
               message: "Validation Error",
@@ -427,6 +437,7 @@ export class ProjectInjestionTaskService {
               // Convert valid string/number to Decimal
               acc[key] = new Decimal(value).toString();
             } catch (error) {
+              logMessage(`Error converting ${key} to Decimal: ${(error as Error).message}`);
               throw new Error(`Invalid number format for ${key}: ${value}`);
             }
           }
@@ -456,6 +467,7 @@ export class ProjectInjestionTaskService {
       );
 
       if (existingTask && (userPreference === null || userPreference === "")) {
+        logMessage("Duplicate task found with same compensation details");
         return {
           statusCode: HttpStatus.PROMPT,
           message:
@@ -469,6 +481,7 @@ export class ProjectInjestionTaskService {
         total_hours_pro_task !== undefined &&
         Number(total_hours_pro_task) > 3000
       ) {
+          logMessage(`Total hours per task ${total_hours_pro_task} exceeds 3000`);
         status = "Anomaly";
       } else if (
         total_cost_pro_task !== undefined &&
@@ -534,8 +547,8 @@ export class ProjectInjestionTaskService {
         },
       };
     } catch (error) {
+      errorLog( "Update Project Task", (error as Error).message );
       await transaction.rollback();
-      console.log(":Errror creataing project task", error);
       throw this.throwServiceError(error as Error);
     }
   }
@@ -558,6 +571,7 @@ export class ProjectInjestionTaskService {
         },
       };
     } catch (error) {
+      errorLog("List Project Task Types", (error as Error).message);
       throw this.throwServiceError(error as Error);
     }
   }
@@ -580,6 +594,7 @@ export class ProjectInjestionTaskService {
         },
       };
     } catch (error) {
+      errorLog("List Project Task Classification", (error as Error).message);
       throw this.throwServiceError(error as Error);
     }
   }
@@ -681,10 +696,10 @@ export class ProjectInjestionTaskService {
         try {
           await transaction.rollback();
         } catch (rollbackErr) {
-          console.error("Failed to rollback transaction:", rollbackErr);
+          errorLog("Failed to rollback transaction", (rollbackErr as Error).message);
         }
       }
-      console.log("Error aggregation project task", err);
+      errorLog("Error aggregation project task", (err as Error).message);
       throw err; // Re-throw the error after handling
     }
   }
@@ -718,6 +733,7 @@ export class ProjectInjestionTaskService {
         await projectResourceSchema.fetchValidAccountNumberById(account_rid);
 
       if (!accountNumber) {
+        logMessage("Invalid account ID");
         return {
           success: false,
           statusCode: HttpStatus.BAD_REQUEST,
@@ -733,6 +749,7 @@ export class ProjectInjestionTaskService {
       );
 
       if (!resourceData) {
+        logMessage("Invalid resource code: resource doesn't exist");
         return {
           success: false,
           statusCode: HttpStatus.BAD_REQUEST,
@@ -747,6 +764,7 @@ export class ProjectInjestionTaskService {
       );
 
       if (!projectData) {
+        logMessage("Invalid project ID");
         return {
           success: false,
           statusCode: HttpStatus.BAD_REQUEST,
@@ -762,6 +780,7 @@ export class ProjectInjestionTaskService {
         projectData,
       };
     } catch (err) {
+      errorLog("Validate Project Task Inputs", (err as Error).message);
       return {
         success: false,
         statusCode: HttpStatus.FAILED,
@@ -805,6 +824,7 @@ export class ProjectInjestionTaskService {
         await projectResourceSchema.fetchValidAccountNumberById(account_rid);
 
       if (!accountNumber) {
+        logMessage("Invalid account ID");
         return {
           success: false,
           statusCode: HttpStatus.BAD_REQUEST,
@@ -820,6 +840,7 @@ export class ProjectInjestionTaskService {
       );
 
       if (!resourceData) {
+        logMessage("Invalid resource code: resource doesn't exist");
         return {
           success: false,
           statusCode: HttpStatus.BAD_REQUEST,
@@ -834,6 +855,7 @@ export class ProjectInjestionTaskService {
       );
 
       if (!projectData) {
+        logMessage("Invalid project ID");
         return {
           success: false,
           statusCode: HttpStatus.BAD_REQUEST,
@@ -849,6 +871,7 @@ export class ProjectInjestionTaskService {
       );
 
       if (!projectTaskData) {
+        logMessage("Invalid task ID: project task doesn't exist");
         return {
           success: false,
           statusCode: HttpStatus.BAD_REQUEST,
@@ -865,6 +888,7 @@ export class ProjectInjestionTaskService {
         taskData: projectTaskData,
       };
     } catch (err) {
+      errorLog("Error validating project task update inputs", (err as Error).message);
       return {
         success: false,
         statusCode: HttpStatus.FAILED,
@@ -888,6 +912,7 @@ export class ProjectInjestionTaskService {
         await this.projectResourceSchema.fetchValidAccountNumberById(accountId);
 
       if (!accountNumber) {
+        logMessage("Invalid account ID");
         throw new Error("Invalid account ID");
       }
       const resourceCodes =
@@ -905,6 +930,7 @@ export class ProjectInjestionTaskService {
         },
       };
     } catch (err) {
+      errorLog("Get Assigned Resource Codes", (err as Error).message);
       throw this.throwServiceError(err as Error);
     }
   }
@@ -969,6 +995,7 @@ export class ProjectInjestionTaskService {
       );
 
       if (perDayEffort[dayStr].gt(24)) {
+        logMessage("Effort exceeds daily limit");
         return {
           success: false,
           errorMessage: `Effort cannot exceed the total hours in the duration`,
@@ -998,6 +1025,7 @@ export class ProjectInjestionTaskService {
         await this.projectResourceSchema.fetchValidAccountNumberById(accountId);
 
       if (!accountNumber) {
+        logMessage("Invalid account ID");
         throw new Error("Invalid account ID");
       }
 
@@ -1013,6 +1041,7 @@ export class ProjectInjestionTaskService {
       );
 
       if (!projectTaskOld) {
+        logMessage("Project Task not found");
         throw new Error("Project Task not found");
       }
 
@@ -1025,12 +1054,14 @@ export class ProjectInjestionTaskService {
           projectTaskOld.total_hours_pro_task &&
           Number(projectTaskOld.total_hours_pro_task) > 3000
         ) {
+          logMessage("Total hours per task exceeds 3000");
           projectTaskStatus = "Anomaly";
         } else if (
           projectTaskOld?.total_cost_pro_task &&
           currencyThreshold !== null &&
           Number(projectTaskOld.total_cost_pro_task) > currencyThreshold
         ) {
+          logMessage("Total cost per task exceeds currency threshold");
           projectTaskStatus = "Anomaly";
         }
       }
@@ -1056,6 +1087,7 @@ export class ProjectInjestionTaskService {
         );
 
         if (!projectTask) {
+          logMessage("Project Task not found");
           throw new Error("Project Task not found");
         }
 
@@ -1088,6 +1120,7 @@ export class ProjectInjestionTaskService {
             account_rid
           );
         if (!resourceData) {
+          logMessage("Invalid resource code");
           throw new Error("Invalid resource code");
         }
 
@@ -1173,8 +1206,8 @@ export class ProjectInjestionTaskService {
         };
       }
     } catch (err) {
+      logMessage(`Error handling anomaly status: ${(err as Error).message}`);
       await transaction.rollback();
-      console.log("Error handling accepted anomaly", err);
       throw this.throwServiceError(err as Error);
     }
   }

@@ -4,6 +4,7 @@ import {
   errorLog,
   handleErrorResponse,
   handleSuccessResponse,
+  logMessage,
   successLog,
   validateRequest,
 } from "../utils/helpers";
@@ -21,6 +22,7 @@ async function generateOtp(req: Request, res: Response): Promise<void> {
     if (!value) {
       return;
     }
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(req.body)}`);
     const response = await interactionService.generateOtp(value);
     if (response.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -57,6 +59,7 @@ async function verifyOtp(req: Request, res: Response): Promise<void> {
     if (!value) {
       return;
     }
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(req.body)}`);
     const response = await interactionService.verifyOtp(value);
     if (response.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -93,6 +96,7 @@ async function resendOtp(req: Request, res: Response): Promise<void> {
     if (!value) {
       return;
     }
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(req.body)}`);
     const response = await interactionService.resendOtp(value);
     if (response.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);

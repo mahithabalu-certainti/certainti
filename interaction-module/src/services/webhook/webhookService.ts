@@ -8,7 +8,7 @@ import { InteractionModelService } from "../interactionModelsService";
 import InteractionSchemaService from "../interactions/schemaService";
 import { InteractionService } from "../interactions/interactionService";
 import { Logger } from "winston";
-import { decryptClientSecret } from "../../utils/helpers";
+import { decryptClientSecret, logMessage } from "../../utils/helpers";
 import { WebhookEmailLogAttributes } from "../../models/webhookEmailLog";
 
 export class WebHookService {
@@ -1438,7 +1438,7 @@ export class WebHookService {
         error_message: errorMessage,
       });
     } catch (err) {
-      console.error("Failed to log webhook email event:", err);
+     logMessage(`Failed to log webhook email event: ${err}`);
     }
   }
 

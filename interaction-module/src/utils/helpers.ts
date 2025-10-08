@@ -85,6 +85,9 @@ export function errorLog(methodName: string, errorMessage?: string): void {
     message: errorMessage,
   });
 }
+export function logMessage(message: string): void {
+  getLogger().info(`${message}`);
+}
 
 export function handleSuccessResponse(res: Response, data: any) {
   return successResponse(
@@ -229,9 +232,9 @@ export async function deleteFromAzureBlob(blobUrl: string): Promise<void> {
   const exists = await blockBlobClient.exists();
   if (exists) {
     await blockBlobClient.delete();
-    console.log(`Blob deleted: ${blobName}`);
+   logMessage(`Blob deleted: ${blobName}`);
   } else {
-    console.log(`Blob not found: ${blobName}`);
+    logMessage(`Blob not found: ${blobName}`);
   }
 }
 

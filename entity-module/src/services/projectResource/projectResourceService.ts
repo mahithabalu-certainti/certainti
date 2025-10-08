@@ -15,6 +15,7 @@ import { Logger } from "winston";
 import moment from "moment";
 import Decimal from "decimal.js";
 import { ProjectResource } from "../../models/projectResource";
+import { errorLog, logMessage } from "../../utils/helpers";
 
 export class ProjectResourceService {
   private projectResourceSchema: ProjectResourceSchemaService;
@@ -52,6 +53,7 @@ export class ProjectResourceService {
         );
 
       if (!accountNumber) {
+        logMessage("Invalid account ID");
         throw new Error("Invalid account ID");
       }
 
@@ -63,6 +65,7 @@ export class ProjectResourceService {
         );
 
       if (!resourceData) {
+        logMessage("Invalid resource code: resource doesn't exists");
         return {
           statusCode: HttpStatus.FAILED,
           message: HttpStatus.FAILED_MESSAGE,
@@ -144,6 +147,7 @@ export class ProjectResourceService {
               end
             );
             if (!validation.success) {
+              logMessage(`Validation Error: ${validation.errorMessage}`);
               return {
                 statusCode: HttpStatus.BAD_REQUEST,
                 message: "Validation Error",
@@ -161,6 +165,7 @@ export class ProjectResourceService {
   
             const totalEffort = totalExistingEffort.plus(newEffort);
             if (totalEffort.gt(maxAllowedEffort)) {
+              logMessage("Validation Error: Effort cannot exceed the total hours in the duration");
               return {
                 statusCode: HttpStatus.BAD_REQUEST,
                 message: "Validation Error",
@@ -563,8 +568,8 @@ export class ProjectResourceService {
         },
       };
     } catch (err) {
+      errorLog("Error creating project resource: " + (err as Error).message);
       await transaction.rollback();
-      console.log("Error creatng resource", err);
       throw this.throwServiceError(err as Error);
     }
   }
@@ -607,6 +612,7 @@ export class ProjectResourceService {
       perDayEffort[dayStr] = (perDayEffort[dayStr] || new Decimal(0)).plus(newPerDay);
   
       if (perDayEffort[dayStr].gt(24)) {
+        logMessage("Validation Error: Effort cannot exceed 24 hours for the day");
         return {
           success: false,
           errorMessage: `Effort cannot exceed the total hours in the duration`,
@@ -676,6 +682,7 @@ export class ProjectResourceService {
         );
 
       if (isDuplicate) {
+        logMessage("Resource role already exists");
         return {
           statusCode: HttpStatus.BAD_REQUEST,
           message: HttpStatus.BAD_REQUEST_MESSAGE,
@@ -853,7 +860,7 @@ export class ProjectResourceService {
         },
       };
     } catch (err) {
-      console.log("Error updating project resource", err);
+      errorLog("Error updating project resource", (err as Error).message);
       await transaction.rollback();
       throw this.throwServiceError(err as Error);
     }
@@ -877,6 +884,7 @@ export class ProjectResourceService {
         await this.projectResourceSchema.fetchValidAccountNumberById(accountId);
 
       if (!accountNumber) {
+        logMessage("Invalid account ID");
         throw new Error("Invalid account ID");
       }
 
@@ -887,6 +895,7 @@ export class ProjectResourceService {
         );
 
       if (!projectResource) {
+        logMessage("Project resource not found");
         throw new Error("Project resource not found");
       }
 
@@ -934,6 +943,7 @@ export class ProjectResourceService {
           );
 
         if (!resourceData) {
+          logMessage("Invalid resource code");
           throw new Error("Invalid resource code");
         }
 
@@ -1076,8 +1086,9 @@ export class ProjectResourceService {
         };
       }
     } catch (err) {
+      logMessage(`Error handling accepted anomaly: ${(err as Error).message}`);
       await transaction.rollback();
-      console.log("Error handling accepted anomaly", err);
+     
       throw this.throwServiceError(err as Error);
     }
   }
@@ -1103,6 +1114,7 @@ export class ProjectResourceService {
         await this.projectResourceSchema.fetchValidAccountNumberById(accountId);
 
       if (!accountNumber) {
+        logMessage("Invalid account ID");
         throw new Error("Invalid account ID");
       }
 
@@ -1143,7 +1155,7 @@ export class ProjectResourceService {
         },
       };
     } catch (err) {
-      console.log("Error fetching project ressouce", err);
+      errorLog(`Error fetching project resource, ${(err as Error).message}`);
       throw this.throwServiceError(err as Error);
     }
   }
@@ -1203,7 +1215,7 @@ export class ProjectResourceService {
         },
       };
     } catch (err) {
-      console.log("Error fetching project ressouce", err);
+      errorLog(`Error exporting project resource, ${(err as Error).message}`);
       throw this.throwServiceError(err as Error);
     }
   }
@@ -1304,7 +1316,7 @@ export class ProjectResourceService {
         },
       };
     } catch (err) {
-      console.log("Error fetching project ressouce", err);
+      errorLog(`Error fetching project resource details, ${(err as Error).message}`);
       throw this.throwServiceError(err as Error);
     }
   }
@@ -1339,6 +1351,7 @@ export class ProjectResourceService {
         );
 
       if (!validAccountNumber) {
+        logMessage("Invalid account ID");
         throw new Error("Invalid account ID");
       }
 
@@ -1361,6 +1374,7 @@ export class ProjectResourceService {
         );
 
       if (!existingProjectResource) {
+        logMessage("Project resource doesn't exists");
         return {
           statusCode: HttpStatus.FAILED,
           message: HttpStatus.FAILED_MESSAGE,
@@ -1389,6 +1403,7 @@ export class ProjectResourceService {
       }
 
       if (!resourceData) {
+        logMessage("Invalid resource code: resource doesn't exists");
         return {
           statusCode: HttpStatus.FAILED,
           message: HttpStatus.FAILED_MESSAGE,
@@ -1406,6 +1421,7 @@ export class ProjectResourceService {
         );
         
       if (isDuplicate) {
+        logMessage("Resource role already exists");
         return {
           statusCode: HttpStatus.BAD_REQUEST,
           message: HttpStatus.BAD_REQUEST_MESSAGE,
@@ -1506,6 +1522,7 @@ export class ProjectResourceService {
         total_hours_pro_res_new &&
         Number(total_hours_pro_res_new) > 3000
       ) {
+        logMessage("Anomaly: Effort exceeds 3000 hours");
         status = "Anomaly";
       }
 
@@ -1514,6 +1531,7 @@ export class ProjectResourceService {
         currencyThreshold !== null &&
         Number(total_cost_pro_res_new) > currencyThreshold
       ) {
+        logMessage("Anomaly: Cost exceeds currency threshold");
         status = "Anomaly";
       }
 
@@ -1640,7 +1658,7 @@ export class ProjectResourceService {
         data: updateProjectResourceRecord,
       };
     } catch (err) {
-      console.log("Error updating project resource", err);
+      errorLog(`Error updating project resource, ${(err as Error).message}`);
       await transaction.rollback();
       throw this.throwServiceError(err as Error);
     }
@@ -1664,6 +1682,7 @@ export class ProjectResourceService {
         },
       };
     } catch (err) {
+      errorLog(`Error fetching resource skill roles, ${(err as Error).message}`);
       throw this.throwServiceError(err as Error);
     }
   }
@@ -1686,6 +1705,7 @@ export class ProjectResourceService {
         },
       };
     } catch (err) {
+      errorLog(`Error fetching resource skill roles subtype, ${(err as Error).message}`);
       throw this.throwServiceError(err as Error);
     }
   }
@@ -1720,6 +1740,7 @@ export class ProjectResourceService {
         },
       };
     } catch (err) {
+      errorLog(`Error fetching resource codes, ${(err as Error).message}`);
       throw this.throwServiceError(err as Error);
     }
   }
@@ -1755,6 +1776,7 @@ export class ProjectResourceService {
         },
       };
     } catch (err) {
+      errorLog(`Error fetching assigned resource codes, ${(err as Error).message}`);
       throw this.throwServiceError(err as Error);
     }
   }
