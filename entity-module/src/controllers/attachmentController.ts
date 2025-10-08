@@ -5,6 +5,7 @@ import {
   generateExcelBase64,
   handleErrorResponse,
   handleSuccessResponse,
+  logMessage,
   successLog,
   validateRequest,
 } from "../utils/helpers";
@@ -21,6 +22,7 @@ async function createAttachment(req: Request, res: Response): Promise<void> {
      if (!value) {
       return;    }
     const userId = req.headers['x-user-id'] as string;
+    logMessage("Request received for create attachment with data: " + JSON.stringify(req.body) + " and userId: " + userId);
 
     if (!userId) {
       handleErrorResponse(
@@ -85,6 +87,7 @@ async function getAllAttachments(req: Request, res: Response): Promise<void> {
      if (!value) {
       return;    }
     const userId = req.headers['x-user-id'] as string;
+    logMessage("Request received for get all attachments with query params: " + JSON.stringify(value) + " and userId: " + userId);
 
     if (!userId) {
       handleErrorResponse(
@@ -101,7 +104,7 @@ async function getAllAttachments(req: Request, res: Response): Promise<void> {
       try {
         value.filters = JSON.parse(value.filters);
       } catch (err) {
-        console.error('Invalid filters JSON:', value.filters);
+        logMessage(`Invalid filters JSON: ${value.filters}`);
         value.filters = {};
       }
     }
@@ -142,6 +145,7 @@ async function exportAllAttachments(req: Request, res: Response): Promise<void> 
      if (!value) {
       return;    }
     const userId = req.headers['x-user-id'] as string;
+    logMessage("Request received for export all attachments with query params: " + JSON.stringify(value) + " and userId: " + userId);
 
     if (!userId) {
       handleErrorResponse(
@@ -158,7 +162,7 @@ async function exportAllAttachments(req: Request, res: Response): Promise<void> 
       try {
         value.filters = JSON.parse(value.filters);
       } catch (err) {
-        console.error('Invalid filters JSON:', value.filters);
+        logMessage(`Invalid filters JSON: ${value.filters}`);
         value.filters = {};
       }
     }
@@ -197,6 +201,7 @@ async function exportAllAttachments(req: Request, res: Response): Promise<void> 
         const value = await validateRequest(req, getDocumentTypeAndCategorySchema, res, "GET");
         if (!value) {
           return;      }
+        logMessage("Request received for get document type and category with query params: " + JSON.stringify(value));
         const documentTypeAndCategory = await attachmentService.getDocumentTypeAndCategory(value.category_rid);
     
         if (documentTypeAndCategory.statusCode === HttpStatus.SUCCESS) {
@@ -234,6 +239,7 @@ async function exportAllAttachments(req: Request, res: Response): Promise<void> 
      if (!value) {
       return;    }
     const userId = req.headers['x-user-id'] as string;
+    logMessage("Request received for get all attachment summary with query params: " + JSON.stringify(value) + " and userId: " + userId);
 
     if (!userId) {
       handleErrorResponse(
@@ -250,7 +256,7 @@ async function exportAllAttachments(req: Request, res: Response): Promise<void> 
       try {
         value.filters = JSON.parse(value.filters);
       } catch (err) {
-        console.error('Invalid filters JSON:', value.filters);
+        logMessage(`Invalid filters JSON: ${value.filters}`);
         value.filters = {};
       }
     }
@@ -291,6 +297,7 @@ async function exportAllAttachments(req: Request, res: Response): Promise<void> 
      if (!value) {
       return;    }
     const userId = req.headers['x-user-id'] as string;
+    logMessage("Request received for export all attachment summary with query params: " + JSON.stringify(value) + " and userId: " + userId);
 
     if (!userId) {
       handleErrorResponse(
@@ -307,7 +314,7 @@ async function exportAllAttachments(req: Request, res: Response): Promise<void> 
       try {
         value.filters = JSON.parse(value.filters);
       } catch (err) {
-        console.error('Invalid filters JSON:', value.filters);
+        logMessage(`Invalid filters JSON: ${value.filters}`);
         value.filters = {};
       }
     }

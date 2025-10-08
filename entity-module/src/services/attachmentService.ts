@@ -9,7 +9,7 @@ import { initMainDbSequelize } from "../config/mainDataSource";
 import SchemaService from "./schemaService";
 import { Logger } from "winston";
 import { AttachmentTimeline, setupAttachmentTimelineSequence } from "../models/attachmentTimeline";
-import { uploadToAzureBlob } from "../utils/helpers";
+import { errorLog, logMessage, uploadToAzureBlob } from "../utils/helpers";
 import ProjectIngestionService from "./projectIngestionService";
 import { ResourceService } from "./resourceServices";
 import ResourceCostService from "./resourceCostService";
@@ -52,10 +52,12 @@ async createAttachment(
       const accountData = await this.schemaService.fetchAccountById(account_rid);
 
       if (!accountData) {
+        logMessage(`Attachment creation failed: Invalid account ID ${account_rid}`);
         throw new Error("Attachment creation failed: Invalid account ID");
       }
 
       if (accountData.status !== "active") {
+        logMessage(`Attachment creation failed: The selected account ${account_rid} is inactive.`);
         throw new Error(
           "Attachment creation failed: The selected account is inactive. Please choose an active account."
         );
@@ -64,6 +66,7 @@ async createAttachment(
       let accountNumber = accountData.r_number;
 
       if (accountData.is_parent && attachment_level !== "account") {
+        logMessage(`Attachment creation failed: Invalid account ID ${account_rid}`);
         throw new Error("Attachment creation failed: Invalid account ID");
       }
 
@@ -78,6 +81,7 @@ async createAttachment(
       );
 
       if (!isExists) {
+        logMessage(`Attachment creation failed: schema doesn't exists for account number ${accountNumber}`);
         throw new Error("Attachment creation failed: schema doesn't exists");
       }
        
@@ -86,6 +90,7 @@ async createAttachment(
         const { url, name, extension, size } = await uploadToAzureBlob(file, account_rid);
         
         if(name.length > 100) {
+          logMessage("Document name cannot exceed 100 characters: " + name);
             throw new Error("Document name cannot exceed 100 characters");
         }
 
@@ -148,7 +153,7 @@ async createAttachment(
         };
 
     } catch (error) {
-        console.error('Error creating attachment:', error);
+        errorLog('Error creating attachment:', (error as Error).message);
         
         // Handle specific errors
         if ((error as any).name === 'SequelizeForeignKeyConstraintError') {
@@ -194,6 +199,7 @@ async createAttachment(
       await setupAttachmentTimelineSequence(orgDbSequlize, schemaName);
       
     } catch (err) {
+      errorLog('Error creating attachment tables:', (err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
@@ -264,7 +270,7 @@ async getAttachments(
       if (attachToIds.length === 0) return [];
       let where;
       if(graphqlData?.document_rid) {
-        console.log("Doc Id : ", graphqlData.document_rid)
+      logMessage(`Doc Id : ${graphqlData.document_rid}`);
         where = {
           rid : graphqlData.document_rid,
           attachment_level : level,
@@ -410,7 +416,7 @@ async getAttachments(
         const result = await AttachmentModel.findAll({ where: whereClause });
         allAttachments.push(...result);
       } catch (error) {
-        console.error('Error fetching attachments:', error);
+        errorLog('Error fetching attachments:', (error as Error).message);
         throw new Error('Failed to fetch attachments');
       }
     }
@@ -590,7 +596,7 @@ async getAttachments(
     };
 
   } catch (error) {
-    console.error("getAttachments error:", error);
+    errorLog("getAttachments error:", (error as Error).message);
     return {
       statusCode: 500,
       message: 'Failed to fetch attachments',
@@ -664,7 +670,7 @@ async exportAttachments(
       if (attachToIds.length === 0) return [];
       let where;
       if(graphqlData?.document_rid) {
-        console.log("Doc Id : ", graphqlData.document_rid)
+       logMessage(`Doc Id : ${graphqlData.document_rid}`);
         where = {
           rid : graphqlData.document_rid,
           attachment_level : level,
@@ -808,7 +814,7 @@ async exportAttachments(
         const result = await AttachmentModel.findAll({ where: whereClause });
         allAttachments.push(...result);
       } catch (error) {
-        console.error('Error fetching attachments:', error);
+        errorLog('Error fetching attachments:', (error as Error).message);
         throw new Error('Failed to fetch attachments');
       }
     }
@@ -1015,7 +1021,7 @@ async exportAttachments(
     };
 
   } catch (error) {
-    console.error("getAttachments error:", error);
+   errorLog("getAttachments error:", (error as Error).message);
     return {
       statusCode: 500,
       message: 'Failed to fetch attachments',
@@ -1325,7 +1331,7 @@ async getAttachmentSummary(
     };
 
   } catch (error) {
-    console.error("getAttachmentSummary error:", error);
+   errorLog("getAttachmentSummary error:", (error as Error).message);
     return {
       statusCode: 500,
       message: 'Failed to fetch attachment summary',
@@ -1644,7 +1650,7 @@ async exportAttachmentSummary(
     };
 
   } catch (error) {
-    console.error("getAttachmentSummary error:", error);
+    errorLog("getAttachmentSummary error:", (error as Error).message);
     return {
       statusCode: 500,
       message: 'Failed to fetch attachment summary',
@@ -1694,7 +1700,7 @@ private async getAttachmentDisplayNames(attachments: any[], schemaNumber: string
           displayNames[attachment.rid] = attachment.attach_to;
       }
     } catch (err) {
-      console.error(`Error fetching display name for attachment ${attachment.rid}:`, err);
+      errorLog(`Error fetching display name for attachment ${attachment.rid}:`, (err as Error).message);
       displayNames[attachment.rid] = attachment.attach_to;
     }
   }
@@ -1750,7 +1756,7 @@ async getDocumentTypeAndCategory(category_rid?: string): Promise<{
     };
 
   } catch (error) {
-    console.error("Error fetching document types and categories:", error);
+    errorLog("Error fetching document types and categories:", (error as Error).message);
     return {
       statusCode: HttpStatus.FAILED,
       message: HttpStatus.FAILED_MESSAGE,
@@ -1788,7 +1794,7 @@ private buildRawWhereClause(
   // Filter logic for your input structure
   Object.entries(filters).forEach(([field, filter]) => {
     if (!filter || typeof filter !== 'object') {
-      console.log(`Skipping filter for field ${field} due to invalid structure`);
+      logMessage(`Skipping filter for field ${field} due to invalid structure`);
       return;
     }
 
@@ -1796,7 +1802,7 @@ private buildRawWhereClause(
     const value = filter[operator];
 
     if (!operator || value === undefined) {
-      console.log(`Skipping filter for field ${field} due to missing operator or value`);
+     logMessage(`Skipping filter for field ${field} due to missing operator or value`);
       return;
     }
 
@@ -1879,7 +1885,7 @@ private buildRawWhereClause(
         break;
 
       default:
-        console.log(`Unhandled filter field: ${field}`);
+        logMessage(`Unhandled filter field: ${field}`);
     }
 
     if (Object.keys(condition).length > 0) {

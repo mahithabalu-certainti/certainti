@@ -13,7 +13,7 @@ import {
   listAllStageFailures,
   listAllLoadFailures,
 } from "../utils/rawQueries";
-import { setInlineForImports } from "../utils/helpers";
+import { logMessage, setInlineForImports } from "../utils/helpers";
 import { generateSasUrl } from "../utils/blob";
 import { ProjectService } from "./projectService";
 import { ResourceService } from "./resourceServices";
@@ -231,7 +231,7 @@ export default class ImportGraphqlServices {
   async inlineEditImportList(data: any) {
     const mainDb = await this.getMainDbSequelize();
     const orgDb = await this.getOrgSequelize();
-    console.log(data);
+    logMessage(`inlineEditImportList called with data: ${JSON.stringify(data)}`);
     const fetchAccountDetails: any = await mainDb.query(
       await rawQueries.fetchParentAccount(data.account_rid, mainDb)
     );
@@ -302,6 +302,7 @@ export default class ImportGraphqlServices {
         fetchGivenAccountDetails[0][0].parent_account_rid === null ||
         fetchGivenAccountDetails[0][0].parent_account_rid === ""
       ) {
+        logMessage(`Invalid account ID: ${accountId}`);
         throw new Error("Invalid account ID");
       }
       const userGroupType = await this.schemaService.getUserGroupType(userId);
@@ -412,6 +413,7 @@ export default class ImportGraphqlServices {
         },
       };
     } catch (err) {
+      logMessage(`Error fetching imported projects: ${(err as Error).message}`);
       throw new Error(
         "Error fetching imported projects: " + (err as Error).message
       );
@@ -451,6 +453,7 @@ async exportAccountLevelImportedProjects(
         fetchGivenAccountDetails[0][0].parent_account_rid === null ||
         fetchGivenAccountDetails[0][0].parent_account_rid === ""
       ) {
+        logMessage(`Invalid account ID: ${accountId}`);
         throw new Error("Invalid account ID");
       }
       const userGroupType = await this.schemaService.getUserGroupType(userId);
@@ -557,6 +560,7 @@ async exportAccountLevelImportedProjects(
         },
       };
     } catch (err) {
+      logMessage(`Error exporting imported projects: ${(err as Error).message}`);
       throw new Error(
         "Error exporting imported projects: " + (err as Error).message
       );
@@ -592,6 +596,7 @@ async exportAccountLevelImportedProjects(
       );
 
       if (!isExists) {
+        logMessage(`Invalid account number: ${accountId}`);
         throw new Error(
           "Invalid account number: The account number does not exist."
         );
@@ -630,6 +635,7 @@ async exportAccountLevelImportedProjects(
         },
       };
     } catch (err) {
+      logMessage(`Error fetching imported resources: ${(err as Error).message}`);
       throw new Error(
         "Error fetching imported resources: " + (err as Error).message
       );
@@ -663,6 +669,7 @@ async exportAccountLevelImportedProjects(
       );
 
       if (!isExists) {
+        logMessage(`Invalid account number: ${accountId}`);
         throw new Error(
           "Invalid account number: The account number does not exist."
         );
@@ -757,6 +764,7 @@ async exportAccountLevelImportedProjects(
         },
       };
     } catch (err) {
+      logMessage(`Error fetching imported resources: ${(err as Error).message}`);
       throw new Error(
         "Error fetching imported resources: " + (err as Error).message
       );
@@ -897,6 +905,7 @@ async exportAccountLevelImportedProjects(
         },
       };
     } catch (err) {
+      logMessage(`Error fetching imported project_tasks: ${(err as Error).message}`);
       throw new Error(
         "Error fetching imported project_tasks: " + (err as Error).message
       );
@@ -1091,6 +1100,7 @@ async exportAccountLevelImportedProjects(
         },
       };
     } catch (err) {
+      logMessage(`Error fetching imported project_tasks: ${(err as Error).message}`);
       throw new Error(
         "Error fetching imported project_tasks: " + (err as Error).message
       );

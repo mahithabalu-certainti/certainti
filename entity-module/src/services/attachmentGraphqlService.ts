@@ -2,12 +2,13 @@ import Configurations from "../config/config";
 import { initMainDbSequelize } from "../config/mainDataSource"
 import { initOrgSequelize } from "../config/orgDataSource"
 import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries, STATUS_MESSAGE } from "../utils/constants"
-import { setInlineForAttachments } from "../utils/helpers"
+import { logMessage, setInlineForAttachments } from "../utils/helpers"
 
 export default class AttachmentGraphqlServies {
     private attachmentService = Configurations.getInstance().getServices().attachmentServices;
     
     async updateInlineGraphqlDetails(data : any) {
+        logMessage(`Updating inline GraphQL details for account: ${JSON.stringify(data)}`);
         const orgSequelize = await initOrgSequelize()
         const mainSequelize = await initMainDbSequelize()
 

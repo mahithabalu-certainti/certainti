@@ -5,6 +5,7 @@ import {
   errorLog,
   handleErrorResponse,
   handleSuccessResponse,
+  logMessage,
   successLog,
 } from "../utils/helpers";
 const services = configurations.getInstance().getServices();
@@ -15,17 +16,13 @@ async function sendAIResponseToTopic(
 ): Promise<void> {
   const methodName = "Send AI response to topic";
   try {
-    console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
     const value = req.body;
     if (!value) {
       errorLog(methodName, "Request body is empty");
       return;
     }
+    logMessage(`[${methodName}] Request received: ${JSON.stringify(value)} userId: ${value.userId}`);
     const interaction = await aiAssessmentService.sendAIResponseToTopic(value);
-    console.log(
-      `[${methodName}] Service response:`,
-      JSON.stringify(interaction)
-    );
     if (interaction.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, interaction.data);
@@ -55,13 +52,12 @@ async function sendAIResponseToTopic(
 async function processKafkaMessages(data: any) {
   const methodName = "processKafkaMessages";
   try {
-    console.log(`[${methodName}] Processing Kafka messages`);
+    logMessage(`[${methodName}] Processing Kafka messages data: ${JSON.stringify(data)}`);
     const result = await aiAssessmentService.processKafkaMessage(data);
     // Implement your Kafka message processing logic here
   } catch (err) {
     const error = err as Error;
     errorLog(methodName, error.message);
-    console.log(`[${methodName}] Exception:`, error);
   }
 }
 export default {

@@ -1,6 +1,7 @@
 import { Client } from "@microsoft/microsoft-graph-client";
 import { ClientSecretCredential } from "@azure/identity";
 import { IEmailMessage } from "../utils/types";
+import { logMessage } from "../utils/helpers";
 
 /**
  * Sends an email message using the Microsoft Graph API.
@@ -74,7 +75,7 @@ export async function sendEmailWithAttachment(emailMessage: {
 
     return true;
   } catch (error: any) {
-    console.error("Error sending email with attachment:", error);
+    logMessage(`Error sending email with attachment: ${error}`);
     return false
   }
 }

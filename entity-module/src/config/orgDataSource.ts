@@ -1,6 +1,7 @@
 import { Sequelize } from "sequelize";
 import { NODE_ENV } from "../utils/constants";
 import { getSecret } from "../utils/azureSecrets";
+import { errorLog, logMessage } from "../utils/helpers";
  
 let sequelize: Sequelize;
  
@@ -81,10 +82,10 @@ export async function initOrgSequelize() {
       },
     });
     await sequelize.authenticate();
-    console.log("Database connection established successfully.");
+    logMessage("Database connection established successfully.");
     return sequelize;
   } catch (error) {
-    console.error("Unable to connect to the database:", error);
+    errorLog("Unable to connect to the database:", (error as Error).message);
     process.exit(1);
   }
 }

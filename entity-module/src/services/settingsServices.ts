@@ -11,7 +11,7 @@ import ProjectIngestionService from "./projectIngestionService";
 import { Logger } from "winston";
 import { ClientSecretCredential } from "@azure/identity";
 import { Client } from "@microsoft/microsoft-graph-client";
-import { decryptClientSecret } from "../utils/helpers";
+import { decryptClientSecret, errorLog } from "../utils/helpers";
 export default class SettingService {
   private mainDbSequelize: Sequelize | null = null;
   private orgDbSequelize: Sequelize | null = null;
@@ -146,6 +146,7 @@ export default class SettingService {
             }
           }
         } catch (err) {
+          errorLog("Error in update settings: " + (err as Error).message);
           return {
             statusCode: HttpStatus.BAD_REQUEST,
             statusMessage: STATUS_MESSAGE.invalidCredentials,
@@ -272,7 +273,7 @@ export default class SettingService {
 
       return subscription?.id;
     } catch (error: any) {
-      this.logger.error("Graph Subscription Error:", error);
+      errorLog("Graph Subscription Error: " + error.message);
       throw new Error("Invalid credentials or failed to create subscription.");
     }
   }
@@ -302,10 +303,11 @@ export default class SettingService {
         try {
           await graphClient.api(`/subscriptions/${sub.id}`).delete();
         } catch (deleteErr) {
-          console.log(`Failed to delete subscription ${sub.id}`)
+          errorLog("Error deleting subscription: " + (deleteErr as Error).message);
         }
       }
     } catch (err) {
+      errorLog("Error removing subscriptions: " + (err as Error).message);
       throw err; 
     }
   }  

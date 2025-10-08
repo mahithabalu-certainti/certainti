@@ -18,6 +18,7 @@ import currency from "currency.js";
 import Decimal from "decimal.js";
 import { ProjectTaskTimeline } from "../models/projectTaskTimeline";
 import { ProjectResource } from "../models/projectResource";
+import { errorLog, logMessage } from "../utils/helpers";
 
 export class ProjectTaskService {
   schemaService: SchemaService;
@@ -143,7 +144,7 @@ export class ProjectTaskService {
         },
       };
     } catch (error) {
-      this.logger.error("Error in listProjectTasks:", error);
+      errorLog("projectTaskService - listProjectTasks", (error as Error).message);
       return {
         statusCode: 500,
         message: "Failed to fetch attachments",
@@ -323,7 +324,7 @@ export class ProjectTaskService {
         },
       };
     } catch (error) {
-      this.logger.error("Error in listProjectTasks:", error);
+      errorLog("projectTaskService - listProjectTasksExport", (error as Error).message);
       return {
         statusCode: 500,
         message: "Failed to fetch project tasks",
@@ -761,7 +762,7 @@ export class ProjectTaskService {
       // Replace "0.00" in pattern with our real number
       return pattern.replace("0.00", formattedNumber);
     } catch (error) {
-      console.error("Error formatting number:", error);
+      errorLog("projectTaskService - formatNumberForExport", (error as Error).message);
       return "-";
     }
   }
@@ -1047,7 +1048,7 @@ export class ProjectTaskService {
         data: formattedTask,
       };
     } catch (error) {
-      this.logger.error("Error in getProjectTaskById:", error);
+      errorLog("projectTaskService - getProjectTaskById", (error as Error).message);
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
@@ -1085,7 +1086,7 @@ export class ProjectTaskService {
     // Filter logic for your input structure
     Object.entries(filters).forEach(([field, filter]) => {
       if (!filter || typeof filter !== "object") {
-        console.log(
+        logMessage(
           `Skipping filter for field ${field} due to invalid structure`
         );
         return;
@@ -1095,7 +1096,7 @@ export class ProjectTaskService {
       const value = filter[operator];
 
       if (!operator || value === undefined) {
-        console.log(
+        logMessage(
           `Skipping filter for field ${field} due to missing operator or value`
         );
         return;
@@ -1476,7 +1477,7 @@ export class ProjectTaskService {
           break;
 
         default:
-          console.log(`Unhandled filter field: ${field}`);
+          logMessage(`Unhandled filter field: ${field}`);
       }
 
       if (Object.keys(condition).length > 0) {
@@ -1507,7 +1508,7 @@ export class ProjectTaskService {
 
       return result;
     } catch (error) {
-      this.logger.error("Error fetching attachments:", error);
+      errorLog("projectTaskService - fetchAttachmentsBytaskId", (error as Error).message);
       throw new Error("Failed to fetch attachments");
     }
   }
@@ -1548,7 +1549,7 @@ export class ProjectTaskService {
 
       return taskWithUserDetails;
     } catch (err) {
-      this.logger.error("Error adding user details:", err);
+      errorLog("projectTaskService - insertUserDetails", (err as Error).message);
       return taskData; // Return original task on error
     }
   }

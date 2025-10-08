@@ -41,6 +41,7 @@ import { collapseTextChangeRangesAcrossMultipleVersions } from "typescript";
 import SchemaService from "../schemaService";
 import { getCurrencyDetailsQuery } from "../../utils/rawQueries";
 import AccountDetails from "../../models/accountDetails";
+import { errorLog, logMessage } from "../../utils/helpers";
 
 export class ProjectResourceSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -306,6 +307,7 @@ export class ProjectResourceSchemaService {
         );
       }
     } catch (err) {
+      errorLog(`Error creating project resources table, ${(err as Error).message}`);
       throw new Error("Error creating project resources table");
     }
   }
@@ -343,6 +345,7 @@ export class ProjectResourceSchemaService {
         accountName: account?.account_name,
       };
     } catch (err) {
+      errorLog(`Error fetching account, ${(err as Error).message}`);
       throw new Error("Error fetching account : " + (err as Error).message);
     }
   }
@@ -389,6 +392,7 @@ export class ProjectResourceSchemaService {
       },
     });
     if (!projectData) {
+      errorLog("Error fetching project fiscal", "Invalid project ID: Project doesn't exists");
       throw new Error("Invalid project ID: Project doesn't exists");
     }
     return projectData;
@@ -704,7 +708,7 @@ export class ProjectResourceSchemaService {
 
       return statusMap;
     } catch (error) {
-      console.error("Error fetching resource statuses:", error);
+      errorLog("Error fetching resource statuses:",(error as Error).message);
       return null;
     }
   }
@@ -1026,6 +1030,7 @@ export class ProjectResourceSchemaService {
     });
 
     if (!resourceData) {
+      logMessage(`Resource with code ${projectResourceData.resource_code} not found for account ${accountId}`);
       throw new Error(
         `Resource with code ${projectResourceData.resource_code} not found for account ${accountId}`
       );
@@ -1088,6 +1093,7 @@ export class ProjectResourceSchemaService {
     });
 
     if (!resourceData) {
+      logMessage(`Resource with code ${projectResourceData.resource_code} not found for account ${accountId}`);
       throw new Error(
         `Resource with code ${projectResourceData.resource_code} not found for account ${accountId}`
       );
@@ -1408,12 +1414,14 @@ export class ProjectResourceSchemaService {
     );
 
     if (!resourceType) {
+      logMessage(`Invalid resource type ID: ${""}`); // need to add resource fiscal
       throw new Error(
         `Invalid resource type ID: ${""}` // need to add resource fiscal
       );
     }
 
     if (!projectData) {
+      logMessage(`Project not found for code: ${projectCode}`);
       throw new Error(`Project not found for code: ${projectCode}`);
     }
 
@@ -1472,6 +1480,7 @@ export class ProjectResourceSchemaService {
           projectResourceData.total_cost_pro_res || null;
         break;
       default:
+        logMessage(`Unhandled resource type code: ${typeCode}`);
         throw new Error(`Unhandled resource type code: ${typeCode}`);
     }
 
@@ -1534,12 +1543,14 @@ export class ProjectResourceSchemaService {
     );
 
     if (!resourceType) {
+      logMessage(`Invalid resource type ID: ${""}`); // need to add resource fiscal
       throw new Error(
         `Invalid resource type ID: ${""}` // need to add resource fiscal
       );
     }
 
     if (!projectData) {
+      logMessage(`Project not found for code: ${projectCode}`); 
       throw new Error(`Project not found for code: ${projectCode}`);
     }
 
@@ -1583,6 +1594,7 @@ export class ProjectResourceSchemaService {
           projectResourceData.total_cost_pro_res || null;
         break;
       default:
+        logMessage(`Unhandled resource type code: ${typeCode}`);
         throw new Error(`Unhandled resource type code: ${typeCode}`);
     }
 
@@ -1659,12 +1671,14 @@ export class ProjectResourceSchemaService {
     );
 
     if (!resourceType) {
+      logMessage(`Invalid resource type ID: ${""}`); // need to add resource fiscal
       throw new Error(
         `Invalid resource type ID: ${""}` // need to add resource fiscal
       );
     }
 
     if (!projectData) {
+      logMessage(`Project not found for code: ${projectCode}`);
       throw new Error(`Project not found for code: ${projectCode}`);
     }
 
@@ -1708,6 +1722,7 @@ export class ProjectResourceSchemaService {
           projectResourceData.total_cost_pro_res || null;
         break;
       default:
+        logMessage(`Unhandled resource type code: ${typeCode}`);
         throw new Error(`Unhandled resource type code: ${typeCode}`);
     }
 
@@ -1768,6 +1783,7 @@ export class ProjectResourceSchemaService {
     });
 
     if (!projectData) {
+      logMessage(`Project not found for code: ${projectCode}`);
       throw new Error(`Project not found for code: ${projectCode}`);
     }
 
@@ -1787,6 +1803,7 @@ export class ProjectResourceSchemaService {
       resourceData.resource_type_rid
     ); // need to add resource fiscal
     if (!resourceType) {
+      logMessage(`Invalid resource type ID: ${resourceData.resource_type_rid}`);
       throw new Error(
         `Invalid resource type ID: ${resourceData.resource_type_rid}`
       ); // need to add resource fiscal
@@ -2249,6 +2266,9 @@ export class ProjectResourceSchemaService {
     });
 
     if (!createdProjectResource || !resource) {
+      logMessage(
+        "Missing related resource or project resource entry to complete insertion"
+      );
       throw new Error(
         "Missing related resource or project resource entry to complete insertion"
       );
@@ -2306,6 +2326,7 @@ export class ProjectResourceSchemaService {
     });
 
     if (!createdProjectResource || !resource) {
+      logMessage("Missing related resource entry to complete insertion");
       throw new Error("Missing related resource entry to complete insertion");
     }
 
@@ -2356,6 +2377,7 @@ export class ProjectResourceSchemaService {
     });
 
     if (!projectFiscalData) {
+      logMessage("Project Fiscal Not Found");
       throw new Error("Project Fiscal Not Found");
     }
 
@@ -3043,8 +3065,8 @@ export class ProjectResourceSchemaService {
         }
       );
     } catch (err) {
-      console.log("Error addinng timelne", err);
-      throw new Error("Error creating project resource timline");
+      errorLog("Error adding timeline", (err as Error).message);
+      throw new Error("Error creating project resource timeline");
     }
   }
 
@@ -3074,7 +3096,7 @@ export class ProjectResourceSchemaService {
         }
       );
     } catch (err) {
-      console.log("Error addinng timelne", err);
+      errorLog("Error adding timeline", (err as Error).message);
       throw new Error("Error creating project resource timline");
     }
   }
@@ -3212,7 +3234,7 @@ export class ProjectResourceSchemaService {
             projectResourceData.total_cost_pro_res || null;
           break;
         default:
-          console.warn(`Unknown resource_type_rid: ${typeCode}`);
+        logMessage(`Unknown resource_type_rid: ${typeCode}`);
           break;
       }
     }
@@ -3667,7 +3689,7 @@ export class ProjectResourceSchemaService {
           total_nonlabor_count = count;
           break;
         default:
-          console.warn(`Unknown resource_type_rid: ${row.resource_type_rid}`);
+          logMessage(`Unknown resource_type_rid: ${row.resource_type_rid}`);
           break;
       }
     }
@@ -3838,7 +3860,7 @@ export class ProjectResourceSchemaService {
           total_nonlabor_count = count;
           break;
         default:
-          console.warn(`Unknown resource_type_rid: ${row.resource_type_rid}`);
+          logMessage(`Unknown resource_type_rid: ${row.resource_type_rid}`);
           break;
       }
     }
@@ -5056,6 +5078,7 @@ export class ProjectResourceSchemaService {
 
       return projectResource;
     } catch (err) {
+      errorLog("Error fetching geo data", (err as Error).message);
       throw new Error("Error fetching geo data: " + (err as Error).message);
     }
   }
@@ -5095,6 +5118,7 @@ export class ProjectResourceSchemaService {
         modified_name: modifiedName || null,
       };
     } catch (err) {
+      errorLog("Error adding user details", (err as Error).message);
       throw new Error("Error adding user details" + (err as Error).message);
     }
   }
@@ -5135,6 +5159,7 @@ export class ProjectResourceSchemaService {
 
       return projectResource;
     } catch (err) {
+      errorLog("Error enriching key roles", (err as Error).message);
       throw new Error("Error enriching key roles: " + (err as Error).message);
     }
   }
@@ -5161,6 +5186,7 @@ export class ProjectResourceSchemaService {
 
       return projectResource;
     } catch (err) {
+      errorLog("Error enriching key roles", (err as Error).message);
       throw new Error("Error enriching key roles: " + (err as Error).message);
     }
   }
@@ -5195,6 +5221,7 @@ export class ProjectResourceSchemaService {
         resource_name: resourceName
       };
     } catch (err) {
+      errorLog("Error fetching resource details", (err as Error).message);  
       throw new Error(
         "Error fetching resource details: " + (err as Error).message
       );
@@ -5501,7 +5528,7 @@ export class ProjectResourceSchemaService {
 
       return enrichedResources;
     } catch (err) {
-      console.log(err);
+      errorLog("Error fetching region data", (err as Error).message);
       throw new Error("Error fetching region data: " + (err as Error).message);
     }
   }
@@ -5564,7 +5591,7 @@ export class ProjectResourceSchemaService {
 
       return enrichedResources;
     } catch (err) {
-      console.error(err);
+      errorLog("Error fetching currency data", (err as Error).message);
       throw new Error(
         "Error fetching currency data: " + (err as Error).message
       );
@@ -5655,6 +5682,7 @@ export class ProjectResourceSchemaService {
 
       return enrichedResources;
     } catch (err) {
+      errorLog("Error fetching resource type data", (err as Error).message);
       throw new Error(
         "Error fetching resource type data: " + (err as Error).message
       );
@@ -5703,6 +5731,7 @@ export class ProjectResourceSchemaService {
 
       return enrichedResources;
     } catch (err) {
+      errorLog("Error fetching resource code data", (err as Error).message);
       throw new Error(
         "Error fetching resource code data: " + (err as Error).message
       );
@@ -6022,7 +6051,10 @@ export class ProjectResourceSchemaService {
 
       return result;
     } catch (error) {
-      console.error("Error fetching attachments:", error);
+      errorLog(
+        "Error fetching attachments",
+        (error as Error).message
+      );
       throw new Error("Failed to fetch attachments");
     }
   }

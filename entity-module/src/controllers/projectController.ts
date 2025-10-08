@@ -5,6 +5,7 @@ import {
   generateExcelBase64,
   handleErrorResponse,
   handleSuccessResponse,
+  logMessage,
   successLog,
   validateRequest,
 } from "../utils/helpers";
@@ -25,8 +26,8 @@ async function createProject(req: Request, res: Response): Promise<void> {
   const methodName = "Create project";
   try {
     const value = await validateRequest(req, createProjectSchema, res);
-
     const userId = req.headers["x-user-id"] as string;
+    logMessage(`Create Project payload received: ${JSON.stringify(value)} for User Id: ${userId}`);
 
     if (!userId) {
       handleErrorResponse(
@@ -77,6 +78,7 @@ async function updateProject(req: Request, res: Response): Promise<void> {
     const value = await validateRequest(req, updateProjectSchema, res);
 
     const userId = req.headers["x-user-id"] as string;
+    logMessage(`Update Project payload received: ${JSON.stringify(value)} for User Id: ${userId}`);
 
     if (!userId) {
       handleErrorResponse(
@@ -125,6 +127,7 @@ async function projectById(req: Request, res: Response): Promise<void> {
   const methodName = "Project Details";
   try {
     const { accountId, projectId } = req.params;
+    logMessage(`Project Details - Request received for Account ID: ${accountId}, Project ID: ${projectId}`);
 
     const project = await projectService.projectById(accountId, projectId);
 
@@ -161,9 +164,13 @@ async function projectList(req: Request, res: Response): Promise<void> {
     const { accountId } = req.params;
 
     const value = await validateRequest(req, listResourceSchema, res, "GET");
+    const userId = req.headers["x-user-id"] as string;
+    logMessage(
+      `Project List -Params for Account ID: ${accountId}, User ID: ${userId}, Payload: ${JSON.stringify(value)}`
+    );
 
     let parsedFilters: Record<string, any> = {};
-    const userId = req.headers["x-user-id"] as string;
+    
 
     if (!value) {
       return;
@@ -235,6 +242,7 @@ async function exportProjectList(req: Request, res: Response): Promise<void> {
 
     let parsedFilters: Record<string, any> = {};
     const userId = req.headers["x-user-id"] as string;
+    logMessage(`Export Project List - Params for Account ID: ${accountId}, User ID: ${userId}, Payload: ${JSON.stringify(value)}`);
 
     if (!value) {
       return;
@@ -298,6 +306,7 @@ async function allProjectList(req: Request, res: Response): Promise<void> {
     const value = await validateRequest(req, listAllResourceSchema, res, "POST");
 
     const userId = req.headers["x-user-id"] as string;
+    logMessage(`All Project List - Param for User ID: ${userId}, Payload: ${JSON.stringify(value)}`);
 
     if (!userId) {
       handleErrorResponse(
@@ -383,6 +392,7 @@ async function exportAllProjectList(req: Request, res: Response): Promise<void> 
     const value = await validateRequest(req, exportListResourceSchema, res, "GET");
 
     const userId = req.headers["x-user-id"] as string;
+    logMessage(`Export All Project List - Param for User ID: ${userId}, Payload: ${JSON.stringify(value)}`);
 
     if (!userId) {
       handleErrorResponse(

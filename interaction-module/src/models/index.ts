@@ -5,6 +5,7 @@ import { InteractionStatus } from "./interactionStatus";
 import { InteractionType } from "./interactionType";
 import { InteractionTemplate } from "./interactionTemplate";
 import { AiAssessmentEventTracker } from "./aiAssessmentEventTracker";
+import { logMessage } from "../utils/helpers";
 
 export const models = {
   InteractionStatus,
@@ -23,6 +24,6 @@ export async function initModels() {
       } 
     });
   } catch (err) {
-    console.log("Errr loading models", err);
+   logMessage(`Error loading models: ${err}`);
   }
 }

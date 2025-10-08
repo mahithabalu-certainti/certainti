@@ -7,6 +7,7 @@ import {
   handleErrorResponse,
   handleSuccessResponse,
   isValidTimezone,
+  logMessage,
   successLog,
   validateRequest,
 } from "../utils/helpers";
@@ -26,9 +27,9 @@ const interactionService = services.interactionService;
 async function createInteractionTemplate(req: Request, res: Response): Promise<void> {
   const methodName = "Create template interaction";
   try {
-    console.log(`[${methodName}] Request received`,JSON.stringify(req.body));
     const value = await validateRequest(req, createInteractionTemplateSchema, res);
     const userId = req.headers["x-user-id"] as string;
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(value)} userId: ${userId}`);
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -47,10 +48,7 @@ async function createInteractionTemplate(req: Request, res: Response): Promise<v
       value,
       userId
     );
-    console.log(
-      `[${methodName}] Service response:`,
-      JSON.stringify(interaction)
-    );
+
     if (interaction.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleCustomResponse(res, interaction.data,interaction.message);
@@ -80,11 +78,9 @@ async function createInteractionTemplate(req: Request, res: Response): Promise<v
 async function listInteractionTemplates(req: Request, res: Response) {
   const methodName = "listInteractionTemplate"
   try {
-    console.log(`[${methodName}] Request received`);
     const userId = req.headers["x-user-id"] as string;
     const value = await validateRequest(req, listInteractionTemplatesSchema, res, "POST");
-    console.log(`[${methodName}] userId:`, userId);
-    console.log(`[${methodName}] value:`, value);
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(value)} userId: ${userId}`);
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -107,7 +103,6 @@ async function listInteractionTemplates(req: Request, res: Response) {
     }
 
     const result = await interactionService.listInteractionTemplates(value,userId,parsedFilters,"list")
-    console.log(`[${methodName}] Service response:`, JSON.stringify(result));
     if(result.statusCode === HttpStatus.SUCCESS) {
       return res.status(HttpStatus.SUCCESS).json({
         statusCode : HttpStatus.SUCCESS,
@@ -126,7 +121,6 @@ async function listInteractionTemplates(req: Request, res: Response) {
   } catch (err) {
     const error = err as Error;
     errorLog(methodName, error.message);
-    console.log(`[${methodName}] Exception:`, error);
     handleErrorResponse(
       res,
       HttpStatus.FAILED,
@@ -139,9 +133,9 @@ async function listInteractionTemplates(req: Request, res: Response) {
 async function updateInteractionTemplate(req: Request, res: Response): Promise<void> {
   const methodName = "Update interaction template";
   try {
-    console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
     const value = await validateRequest(req, updateInteractionTemplateSchema, res);
     const userId = req.headers["x-user-id"] as string;
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(value)} userId: ${userId}`);
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -159,10 +153,6 @@ async function updateInteractionTemplate(req: Request, res: Response): Promise<v
     const interaction = await interactionService.updateInteractionTemplate(
       value,
       userId
-    );
-    console.log(
-      `[${methodName}] Service response:`,
-      JSON.stringify(interaction)
     );
     if (interaction.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -196,9 +186,9 @@ async function getInteractionTemplateDetailsById(
 ): Promise<void> {
   const methodName = "Get interaction template details";
   try {
-    console.log(`[${methodName}] Request received`, JSON.stringify(req.body));
     const { templateRid } = req.params;
     const userId = req.headers["x-user-id"] as string;
+    logMessage(`[${methodName}] Request received,  templateRid: ${templateRid} userId: ${userId}`);
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -229,12 +219,6 @@ async function getInteractionTemplateDetailsById(
           templateRid
         );
  
-
-   
-    console.log(
-      `[${methodName}] Service response:`,
-      JSON.stringify(interactionDetails)
-    );
     if (interactionDetails.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, interactionDetails.data);
@@ -264,9 +248,9 @@ async function getInteractionTemplateDetailsById(
 async function exportInteractionTemplate(req : Request, res : Response) {
   try {
     const methodName = "exportAllInteractions"
-    console.log(`[${methodName}] Request received`,JSON.stringify(req.body));
-     const data = req.body
+    const data = req.body
     const userId = req.headers["x-user-id"] as string;
+     logMessage(`[${methodName}] Request received, ${JSON.stringify(data)} userId: ${userId}`);
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -362,11 +346,9 @@ async function exportInteractionTemplate(req : Request, res : Response) {
 async function exportAllInteractionTemplates(req: Request, res: Response) {
   const methodName = "listInteractionTemplate"
   try {
-    console.log(`[${methodName}] Request received`);
     const userId = req.headers["x-user-id"] as string;
     const value = await validateRequest(req, listInteractionTemplatesSchema, res, "POST");
-    console.log(`[${methodName}] userId:`, userId);
-    console.log(`[${methodName}] value:`, value);
+    logMessage(`[${methodName}] Request received, ${JSON.stringify(value)} userId: ${userId}`);
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -389,7 +371,6 @@ async function exportAllInteractionTemplates(req: Request, res: Response) {
     }
 
     const result = await interactionService.listInteractionTemplates(value,userId,parsedFilters,"export")
-    console.log(result?.data)
     const fields = await interactionService.getAllowedExportFields(
              userId,
              "interaction_templates_view_edit"
@@ -442,7 +423,6 @@ async function exportAllInteractionTemplates(req: Request, res: Response) {
   } catch (err) {
     const error = err as Error;
     errorLog(methodName, error.message);
-    console.log(`[${methodName}] Exception:`, error);
     handleErrorResponse(
       res,
       HttpStatus.FAILED,

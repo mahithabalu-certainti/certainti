@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import Configurations from "../config/config";
 import { HttpStatus } from "../utils/constants";
-import { errorLog, generateExcelBase64, handleErrorResponse, handleSuccessResponse, successLog, validateRequest } from "../utils/helpers";
+import { errorLog, generateExcelBase64, handleErrorResponse, handleSuccessResponse, logMessage, successLog, validateRequest } from "../utils/helpers";
 import {v4 as uuid} from 'uuid'
 import { exportListAccountLevelProjectCostsSchema, listAccountLevelProjectCostsSchema } from "../lib/joi/schemas/schema";
 import { permission } from "process";
@@ -12,6 +12,7 @@ const financialService = services.financialHighlightServies;
 async function listFinancialHighlightsAccounts (req : Request, res : Response) {
     try {
         const data = req.body;
+        logMessage(`listFinancialHighlightsAccounts params received: ${JSON.stringify(data)}`);
         const result = await financialService.summaryHighlightsList(data)
         if(result.statusCode == HttpStatus.SUCCESS) {
             let resourceMetricArray = []
@@ -107,6 +108,7 @@ async function listFinancialHighlightsAccounts (req : Request, res : Response) {
             return;
         }
     } catch (error : any) {
+        logMessage(`Error in listFinancialHighlightsAccounts: ${error.message}`);
         handleErrorResponse(res, HttpStatus.FAILED, HttpStatus.FAILED_MESSAGE, error.message)
     }
 }
@@ -114,6 +116,7 @@ async function listFinancialHighlightsAccounts (req : Request, res : Response) {
 async function listFinancialHighlightsProjects (req : Request, res : Response) {
     try {
         const data = req.body;
+        logMessage(`listFinancialHighlightsProjects params received: ${JSON.stringify(data)}`);
         const result = await financialService.projectFinancialHighlights(data)
         if(result.statusCode == HttpStatus.SUCCESS) {
             let resourceMetricArray = []
@@ -238,6 +241,7 @@ async function listFinancialHighlightsProjects (req : Request, res : Response) {
             return;
         }
     } catch (error : any) {
+        logMessage(`Error in listFinancialHighlightsProjects: ${error.message}`);
         handleErrorResponse(res, HttpStatus.FAILED, HttpStatus.FAILED_MESSAGE, error.message)
     }
 }
@@ -303,6 +307,7 @@ async function financialHighlightsProjectCostAccountLevel(req: Request, res: Res
       return;
     }
   } catch (error:any) {
+    logMessage(`Error in financialHighlightsProjectCostAccountLevel: ${error.message}`);
      handleErrorResponse(res, HttpStatus.FAILED, HttpStatus.FAILED_MESSAGE, error.message)
   }
 }
@@ -366,6 +371,7 @@ async function exportFinancialHighlightsProjectCostAccountLevel(req: Request, re
       return;
     }
   } catch (error:any) {
+    logMessage(`Error in exportFinancialHighlightsProjectCostAccountLevel: ${error.message}`);
      handleErrorResponse(res, HttpStatus.FAILED, HttpStatus.FAILED_MESSAGE, error.message)
   }
 }
@@ -381,6 +387,7 @@ async function exportFinancialHighlightsProjectCostAccountLevel(req: Request, re
       handleSuccessResponse(res, result)
       return;
     } catch (error : any) {
+      logMessage(`Error in fetchRegionsFromAccountFiscalRegions: ${error.message}`);
       handleErrorResponse(res, HttpStatus.FAILED, HttpStatus.FAILED_MESSAGE, error.message)
     }
 }

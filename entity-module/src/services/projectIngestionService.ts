@@ -34,6 +34,7 @@ import AccountDetails from "../models/accountDetails";
 import SchemaService from "./schemaService";
 import { Kafka, Producer } from "kafkajs";  
 import { AccountFiscalSummary } from "../models/accountFiscalSummary";
+import { logMessage } from "../utils/helpers";
 
 class ProjectIngestionService {
   private orgDbSequelize: Sequelize | null = null;
@@ -325,7 +326,6 @@ class ProjectIngestionService {
     });
     if(accountSettings[0]?.auto_access_rd === true)
       {
-        //console.log triger the ai
         const req = {
           data: [
         {
@@ -335,6 +335,7 @@ class ProjectIngestionService {
           ],
           type: "project",
         };
+      logMessage(`Triggering AI for project fiscal rid: ${req}`);
       await this.triggerAI(req);
 
       }
