@@ -7,6 +7,7 @@ import attachmentRoutes from "./attachmentRoutes";
 import projectResourceRoutes from "./projectResourceRoutes";
 import { errorLog, successLog } from "../utils/helpers";
 import projectTaskRoutes from "./projectTaskRoutes";
+import notesRoutes from './notesRoutes'
 
 import importRoutes from './importRoutes'
 import settingRoutes from '../routes/settingsRoutes'
@@ -45,6 +46,7 @@ routes.use("/project_tasks", projectTaskRoutes);
 routes.use('/settings', settingRoutes)
 routes.use('/financialHighlight', financialRoutes)
 routes.use('/timesheet', timesheetRoutes)
+routes.use('/notes', notesRoutes)
 routes.use('/template', templateRoutes)
 
 export default routes;

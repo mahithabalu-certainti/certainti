@@ -597,11 +597,15 @@ export class ProjectService {
 
       let accountRNumber = accountData.r_number;
 
-      if (accountData.storage_type === "store_in_parent") {
-        accountRNumber = await this.schemaService.fetchParentAccount(
+      let childRNumber = await this.schemaService.fetchParentAccount(
           accountData.parent_account_rid
         );
-      }
+        if (accountData.storage_type === "store_in_parent") {
+          accountRNumber = childRNumber;
+        }
+        let isSubscriptionCreated = false;
+        isSubscriptionCreated = (await this.schemaService.getSubscriptionDetailsByProjectId(accountData.parent_account_rid, childRNumber,accountId)) ?? false;
+             
 
       const isExists = await this.schemaService.checkIfSchemaAndTableExists(
         accountRNumber
@@ -663,7 +667,8 @@ export class ProjectService {
         projectData = this.insertAccount(
           projectData,
           accountData,
-          accountDetails
+          accountDetails,
+          isSubscriptionCreated
         );
 
         projectData = await this.schemaService.insertUserDetails(projectData);
@@ -748,7 +753,7 @@ export class ProjectService {
     }
   }
 
-  insertAccount(project: any, account: any, accountDetails: any) {
+  insertAccount(project: any, account: any, accountDetails: any,isSubscriptionCreated:boolean) {
     const fiscalStartDate = accountDetails?.[0]?.fiscal_start_date || null;
     const fiscalEndDate = accountDetails?.[0]?.fiscal_end_date || null;
     return {
@@ -759,6 +764,7 @@ export class ProjectService {
       organistaion_name: account.organisation_name,
       fiscal_start_date: fiscalStartDate,
       fiscal_end_date: fiscalEndDate,
+      is_send_interaction: isSubscriptionCreated
     };
   }
 

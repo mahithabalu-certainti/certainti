@@ -10,6 +10,7 @@ import { getSecret } from "./azureSecrets";
 import { Attachment } from "../models/attachments";
 import { ProjectTask } from "../models/projectTask";
 import crypto from "crypto";
+import { Notes } from "../models/notes";
 
 function getLogger() {
   return configurations.getInstance().getLogger();
@@ -1220,7 +1221,8 @@ export const setResourceSkillData = (
 
 export async function uploadToAzureBlob(
   file: Express.Multer.File,
-  account_id: string
+  account_id: string,
+  flag? : string
 ): Promise<{
   url: string;
   name: string;
@@ -1254,9 +1256,7 @@ export async function uploadToAzureBlob(
     const containerClient = blobServiceClient.getContainerClient(containerName);
 
     // Ensure container exists with public blob access
-    await containerClient.createIfNotExists({
-      access: "blob", // This makes blobs publicly readable
-    });
+    await containerClient.createIfNotExists();
 
     // Sanitize filename and remove extension
     // Process filename
@@ -1267,9 +1267,14 @@ export async function uploadToAzureBlob(
     const sanitizedBaseName = baseName.replace(/[^a-zA-Z0-9\-_]/g, ""); // More strict sanitization
 
     // Create unique blob name with timestamp
-    const timestamp = Date.now();
-    const blobName = `${account_id}/attachments/${timestamp}-${sanitizedBaseName}${originalExtension}`;
-
+    let timestamp = Date.now();
+    let blobName;
+    if(flag === "notes"){
+      blobName = `${account_id}/notes/${timestamp}-${sanitizedBaseName}${originalExtension}`;
+    } else {
+      blobName = `${account_id}/attachments/${timestamp}-${sanitizedBaseName}${originalExtension}`;
+    }
+    
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
 
     // Upload file with content type
@@ -1746,5 +1751,107 @@ export async function uploadEntityTemplatesToAzureBlob(
         error instanceof Error ? error.message : "Unknown error"
       }`
     );
+  }
+}
+
+export const setInlineForNotes = (
+  dbData: Notes,
+  requestData: any
+) => {
+  let newData: any = {};
+  let dataStorage;
+  let newDataArray = [];
+  if (requestData.fiscal_year != undefined) {
+    newData.fiscal_year =
+      dbData.fiscal_year != requestData.fiscal_year
+        ? requestData.fiscal_year
+        : dbData.fiscal_year;
+    dataStorage = `fiscal_year = ${newData.fiscal_year}`;
+    newDataArray.push(dataStorage);
+  }
+  if (requestData.title != undefined) {
+    newData.title =
+      requestData.title != dbData.title
+        ? requestData.title
+        : dbData.title;
+    dataStorage = `title = '${newData.title.replace(
+      /'/g,
+      "''"
+    )}'`;
+    newDataArray.push(dataStorage);
+  }
+  if (requestData.notes_owner != undefined) {
+    newData.notes_owner =
+      requestData.notes_owner != dbData.notes_owner
+        ? requestData.notes_owner
+        : dbData.notes_owner;
+    dataStorage = `notes_owner = '${newData.notes_owner.replace(
+      /'/g,
+      "''"
+    )}'`;
+    newDataArray.push(dataStorage);
+  }
+  if (requestData.descriptions != undefined) {
+    newData.descriptions =
+      requestData.descriptions != dbData.descriptions
+        ? requestData.descriptions
+        : dbData.descriptions;
+    dataStorage = `descriptions = '${newData.descriptions.replace(
+      /'/g,
+      "''"
+    )}'`;
+    newDataArray.push(dataStorage);
+  }
+  if (newDataArray.length < 1) {
+    return {
+      statusMessage: STATUS_MESSAGE.noDataToUpdate,
+      data: newDataArray,
+    };
+  } else {
+    dataStorage = `modified_by = '${requestData.userId}'`;
+    newDataArray.push(dataStorage);
+    dataStorage = `modified_datetime = NOW()`;
+    newDataArray.push(dataStorage);
+    return {
+      statusMessage: null,
+      data: newDataArray,
+    };
+  }
+};
+
+export const validateNotesInput = (data: any) => {
+  if (!data.account_rid) return STATUS_MESSAGE.accountIdMissing;
+  if (!data.rid) return STATUS_MESSAGE.notesIdMissing;
+};
+
+export async function deleteFromAzureBlob(blobUrl: string): Promise<void> {
+  if (!blobUrl) return;
+
+ const connectionString = await getSecret(
+      process.env.AZURE_STORAGE_CONNECTION_STRING as string
+    );
+    // const connectionString = "storage-account-connection-string";
+    // const connectionString = await getSecret("storage-account-connection-string");
+  const containerName = "account";
+
+  const url = new URL(blobUrl);
+  const blobName = decodeURIComponent(
+    url.pathname.split("/").slice(2).join("/")
+  );
+  // slice(2) skips the container and empty slash
+  if (!connectionString) {
+    throw new Error("Azure storage connection string is required");
+  }
+  const blobServiceClient =
+    BlobServiceClient.fromConnectionString(connectionString);
+  const containerClient = blobServiceClient.getContainerClient(containerName);
+  const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+
+  const exists = await blockBlobClient.exists();
+  if (exists) {
+    await blockBlobClient.delete();
+    console.log(`Blob deleted: ${blobName}`);
+  } else {
+    console.log(`Blob not found: ${blobName}`);
   }
 }

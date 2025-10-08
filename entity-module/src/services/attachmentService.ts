@@ -16,6 +16,7 @@ import ResourceCostService from "./resourceCostService";
 import ResourceSkillService from "./resourceSkillService";
 import { DocumentType } from "../models/documentType";
 import { AttachmentSummary } from "../models/attachmentSummary";
+import { generateSasUrl } from "../utils/blob";
 
 
 export class AttachmentService {
@@ -504,13 +505,14 @@ async getAttachments(
     const userMap = new Map(users.map((u: any) => [u.rid, u.full_name]));
 
     // 🔷 Map final results
-    let attachments = paginatedAttachments.map(attachment => ({
+    let attachments = await Promise.all(paginatedAttachments.map(async attachment => ({
       ...attachment.get({ plain: true }),
       document_type: documentTypeMap.get(attachment.document_type_rid) || null,
       document_category: documentCategoryMap.get(attachment.document_category_rid) || null,
       uploaded_by: userMap.get(attachment.created_by) || attachment.created_by,
       attached_to: attachmentDisplayNames[attachment.rid] || attachment.attach_to,
-    }));
+      browse_file : await generateSasUrl(attachment.browse_file)
+    })));
 
     // Handle uploaded_by sorting
     if (sortBy === 'uploaded_by') {
@@ -896,13 +898,14 @@ async exportAttachments(
     const userMap = new Map(users.map((u: any) => [u.rid, u.full_name]));
 
     // 🔷 Map final results
-    let attachments = allAttachments.map(attachment => ({
+    let attachments = await Promise.all(allAttachments.map(async attachment => ({
       ...attachment.get({ plain: true }),
       document_type: documentTypeMap.get(attachment.document_type_rid) || null,
       document_category: documentCategoryMap.get(attachment.document_category_rid) || null,
       uploaded_by: userMap.get(attachment.created_by) || attachment.created_by,
       attached_to: attachmentDisplayNames[attachment.rid] || attachment.attach_to,
-    }));
+      browse_file : await generateSasUrl(attachment.browse_file)
+    })))
 
     // Handle uploaded_by sorting
     if (sortBy === 'uploaded_by') {
@@ -1222,13 +1225,14 @@ async getAttachmentSummary(
     const documentCategoryMap = new Map(documentCategories.map((dc: any) => [dc.rid, dc.category_name]));
     const userMap = new Map(users.map((u: any) => [u.rid, u.full_name]));
 
-    let attachments = attachmentsRaw.map(att => ({
+    let attachments = await Promise.all(attachmentsRaw.map(async att => ({
       ...att.get({ plain: true }),
       document_type: documentTypeMap.get(att.document_type_rid) || null,
       document_category: documentCategoryMap.get(att.document_category_rid) || null,
       uploaded_by: userMap.get(att.created_by) || att.created_by,
-      attached_to: attachmentDisplayNames[att.rid] || att.attach_to
-    }));
+      attached_to: attachmentDisplayNames[att.rid] || att.attach_to,
+      browse_file : await generateSasUrl(att.browse_file)
+    })));
 
     // Filters: attached_to
     if (attachedToFilter) {
@@ -1389,6 +1393,7 @@ async exportAttachmentSummary(
 
     const { whereClause } = this.buildRawWhereClause(filters, search);
     if (typeof globalFilters === 'string') globalFilters = JSON.parse(globalFilters);
+    whereClause[Op.and] = whereClause[Op.and] || [];
 
     
       if (globalFilters && Object.keys(globalFilters).length > 0) {
@@ -1510,13 +1515,14 @@ async exportAttachmentSummary(
     const documentCategoryMap = new Map(documentCategories.map((dc: any) => [dc.rid, dc.category_name]));
     const userMap = new Map(users.map((u: any) => [u.rid, u.full_name]));
 
-    let attachments = attachmentsRaw.map(att => ({
+    let attachments = await Promise.all(attachmentsRaw.map(async att => ({
       ...att.get({ plain: true }),
       document_type: documentTypeMap.get(att.document_type_rid) || null,
       document_category: documentCategoryMap.get(att.document_category_rid) || null,
       uploaded_by: userMap.get(att.created_by) || att.created_by,
-      attached_to: attachmentDisplayNames[att.rid] || att.attach_to
-    }));
+      attached_to: attachmentDisplayNames[att.rid] || att.attach_to,
+      browse_file : await generateSasUrl(att.browse_file)
+    })));
 
     // Filters: attached_to
     if (attachedToFilter) {

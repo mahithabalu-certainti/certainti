@@ -70,6 +70,9 @@ export const R_NUMBER_PREFIX = {
   PROJECT_TASK_FISCAL: "PTAF",
   PROJECT_TASK_TIMELINE: "PTAT",
   PROJECT_TASK_HISTORY: "PTAH",
+  NOTES : "NOT",
+  NOTES_TIMELINE : "NOTTI",
+  NOTES_SUMMARY : "NOTS"
 };
 
 export const STATUS_MESSAGE = {
@@ -150,7 +153,11 @@ export const STATUS_MESSAGE = {
   invalidCredentials: 'Provided Azure credentials are invalid or unusable',
   rdpercentPotentialmissing: "RD Percent Potential AI is missing",
   resCodePrjTaskSuccess : "ResourceCode for ProjectTask fetched successfully",
-  resCodeNotFound : "No ResourceCode found"
+  resCodeNotFound : "No ResourceCode found",
+  notesUpdatedSuccess : "Notes updated successfully",
+  noNotesRecordFound: "Notes not found",
+  notesIdMissing: "Notes RID missing",
+  notesFetchedSuccess : "Notes fetched successfully"
 };
 
 export const TYPES = {
@@ -165,16 +172,16 @@ export const rawQueries = {
     mainSequelize: Sequelize
   ): Promise<any> {
     let checkIsSeparateDb: any = await mainSequelize.query(
-      `SELECT rid, r_number, account_name, storage_type,is_parent FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`
+      `SELECT rid, r_number, account_name, storage_type,is_parent, subscription_id FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`
     );
     if (checkIsSeparateDb[0][0].storage_type == STATUS_MESSAGE.separateDb) {
-      return `SELECT rid, r_number, account_name, storage_type,is_parent FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`;
+      return `SELECT rid, r_number, account_name, storage_type,is_parent, subscription_id FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`;
     } else {
       return `
       with fetch_account_details AS (
-      SELECT rid, r_number, parent_account_rid,is_parent FROM ${MAIN_SCHEMA_NAME}.account where rid = '${accountRid}'
+      SELECT rid, r_number, parent_account_rid,is_parent, subscription_id FROM ${MAIN_SCHEMA_NAME}.account where rid = '${accountRid}'
       )
-      SELECT a.rid, a.r_number, a.account_name, ad.is_parent 
+      SELECT a.rid, a.r_number, a.account_name, ad.is_parent , a.subscription_id
       FROM ${MAIN_SCHEMA_NAME}.account a
       LEFT JOIN fetch_account_details ad ON ad.parent_account_rid = a.rid
       WHERE a.rid = ad.parent_account_rid`;
@@ -655,6 +662,9 @@ export const rawQueries = {
   GET_TASK_CLASSIFICATION: `
   SELECT rid, classification_name FROM ${MAIN_SCHEMA_NAME}.project_task_classification WHERE rid IN (:taskClassificationRids)
   `,
+  fetchAccountInfo(schemaName: string, account_rid: string) {
+    return `SELECT * FROM ${schemaName}.account_details WHERE account_rid = '${account_rid}'`;
+  },
   fetchUserDetailsById(userId: string) {
     return `SELECT CONCAT(first_name, ' ', last_name) AS imported_by FROM ${MAIN_SCHEMA_NAME}.user WHERE rid = '${userId}'`;
   },
@@ -955,6 +965,54 @@ export const rawQueries = {
   },
   fetchProjetClassificationQuery(){
     return `SELECT * FROM ${MAIN_SCHEMA_NAME}.project_task_classification`
+  },
+  updateNotesQuery(schemaName: string, getSetData: any, data: any) {
+    return `
+    UPDATE 
+        ${schemaName}.notes 
+    SET 
+        ${getSetData.data.join(",")}
+    WHERE
+        rid = '${data.rid}'
+        AND
+        account_rid = '${data.account_rid}'`;
+  },
+  updateNotesSummary(getSetData: any, data: any) {
+    return `
+          UPDATE
+              ${MAIN_SCHEMA_NAME}.notes_summary
+          SET
+              ${getSetData.data.join(",")}
+          WHERE
+              notes_rid = '${data.rid}'
+              AND
+              account_rid = '${data.account_rid}'
+          `;
+  },
+  findNotesDetails(schemaName: string, rid: string, account_rid: string) {
+    return `
+      SELECT * FROM ${schemaName}.notes WHERE rid = '${rid}' AND account_rid = '${account_rid}'`;
+  },
+  insertNotesTimeline(schemaName: string, data: any, latestData: any) {
+    let notesOwner : string
+    let title : string;
+    let descriptions : string | null
+
+    if(latestData.notes_owner !== null) notesOwner = `${latestData.notes_owner.replace(/'/g,"''")}`
+    else notesOwner = latestData.notes_owner
+
+    if(latestData.title !== null) title = `${latestData.title.replace(/'/g,"''")}`
+    else title = latestData.title
+
+    if(latestData.descriptions !== null) descriptions = `${latestData.descriptions.replace(/'/g,"''")}`
+    else descriptions = latestData.descriptions
+    return `
+          INSERT INTO ${schemaName}.notes_timeline
+          (created_by, modified_by, notes_rid, document_name, title, notes_owner, attach_to, attachment_level, event_type, event_status, event_name, event_datetime, descriptions)
+          VALUES
+          ('${data.userId}', '${data.userId}', '${latestData.rid}', '${latestData.document_name}', '${title}','${notesOwner}', '${latestData.attach_to}',
+          '${latestData.attachment_level}', '${STATUS_MESSAGE.uiHandler}', '${STATUS_MESSAGE.success}', '${STATUS_MESSAGE.eventUpdate}', NOW(), '${descriptions}'
+          )`;
   },
 };
 

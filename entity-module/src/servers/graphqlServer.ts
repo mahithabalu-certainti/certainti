@@ -20,6 +20,8 @@ import { importResolver } from "../resolvers/importListResolver";
 import importListSchema from "../graphql/importListSchema";
 import { projectTaskSchema } from "../graphql/projectTaskSchema";
 import { projectTaskResolver } from "../resolvers/projectTaskResolver";
+import notesListSchema from "../graphql/notesSchema";
+import { notesResolver } from "../resolvers/notesResolver";
 
 const GRAPHQL_PATH = "/graphql";
 
@@ -38,7 +40,8 @@ const initGraphQLServer = async (app: Application): Promise<GraphQLServer> => {
       attachmentSchema,
       projectResourceSchema,
       importListSchema,
-      projectTaskSchema
+      projectTaskSchema,
+      notesListSchema
     ],
     resolvers: [
       resourceCostResolvers,
@@ -48,7 +51,8 @@ const initGraphQLServer = async (app: Application): Promise<GraphQLServer> => {
       attachmentResolver,
       projectResourceResolver,
       importResolver,
-      projectTaskResolver
+      projectTaskResolver,
+      notesResolver
     ],
   });
 

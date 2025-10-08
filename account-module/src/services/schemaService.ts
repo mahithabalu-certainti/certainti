@@ -117,6 +117,8 @@ class SchemaService {
       await this.createOtpEntries(schemaName, sequelize);
       await this.createOtpEntriesHistory(schemaName, sequelize);
       await this.createEmailWebhookHistory(schemaName, sequelize);
+      await this.createNotesTable(schemaName, sequelize)
+      await this.createNotesTimeline(schemaName, sequelize)
 
       await transaction.commit();
     } catch (Err) {
@@ -2414,6 +2416,94 @@ private async createInteractionTable(
         error_message text NULL,
         CONSTRAINT webhook_email_history_status_check CHECK (((status)::text = ANY ((ARRAY['SUCCESS'::character varying, 'FAILED'::character varying, 'MISSING_ATTACHMENT'::character varying, 'INVALID_FORMAT'::character varying, 'NO_MATCH_FOUND'::character varying])::text[])))
       );  
+    `);
+  }
+
+    private async createNotesTable(
+    schemaName: string,
+    sequelize: Sequelize
+  ) {
+    await sequelize.query(`
+     CREATE SEQUENCE IF NOT EXISTS "${schemaName}".notes START 1;
+   `);
+
+    await sequelize.query(`
+    CREATE TABLE IF NOT EXISTS "${schemaName}"."notes"
+    (
+      rid character varying(50) COLLATE pg_catalog."default" NOT NULL DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+      r_number character varying(20) COLLATE pg_catalog."default" DEFAULT ('NOT-'::text || lpad((nextval('"${schemaName}".notes_seq'::regclass))::text, 10, '0'::text)),
+      created_datetime timestamp with time zone NOT NULL,
+      created_by character varying(50) COLLATE pg_catalog."default" NOT NULL,
+      modified_datetime timestamp with time zone,
+      modified_by character varying(50) COLLATE pg_catalog."default",
+      account_rid character varying(50) COLLATE pg_catalog."default" NOT NULL,
+      browse_file character varying(1000) COLLATE pg_catalog."default" NOT NULL,
+      document_name character varying(100) COLLATE pg_catalog."default" NOT NULL,
+      attach_to character varying(50) COLLATE pg_catalog."default" NOT NULL,
+      attachment_level character varying(50) COLLATE pg_catalog."default" NOT NULL,
+      fiscal_year integer NOT NULL,
+      format character varying(10) COLLATE pg_catalog."default" NOT NULL,
+      size_in_mb numeric(10,2) NOT NULL,
+      title character varying(1000) COLLATE pg_catalog."default" NOT NULL,
+      notes_owner character varying(100) COLLATE pg_catalog."default" NOT NULL,
+      descriptions character varying(2000) COLLATE pg_catalog."default",
+      CONSTRAINT notes_pkey PRIMARY KEY (rid),
+      CONSTRAINT notes_r_number_key UNIQUE (r_number)
+    )`);
+
+      const fieldsToIndex = [
+        "r_number",
+        "created_datetime",
+        "created_by",
+        "account_rid",
+        "browse_file",
+        "document_name",
+        "attach_to",
+        "attachment_level",
+        "fiscal_year",
+        "format",
+        "size_in_mb",
+        "title",
+        "notes_owner",
+        "descriptions",
+      ];
+
+      for (const field of fieldsToIndex) {
+        const indexName = `${schemaName}_notes_${field}_idx`;
+        await sequelize.query(`
+        CREATE INDEX IF NOT EXISTS "${indexName}"
+        ON "${schemaName}"."notes"("${field}");
+      `);
+      }
+  }
+
+    private async createNotesTimeline(
+    schemaName: string,
+    sequelize: Sequelize
+  ) {
+    await sequelize.query(`
+     CREATE SEQUENCE IF NOT EXISTS "${schemaName}".notes_timeline_seq START 1;
+   `);
+
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}".notes_timeline
+(
+    rid character varying(50) COLLATE pg_catalog."default" NOT NULL DEFAULT ('${ENV_PREFIX}' || gen_random_uuid()),
+    r_number character varying(20) COLLATE pg_catalog."default" DEFAULT ('NOTTI-'::text || lpad((nextval('"${schemaName}".notes_timeline_seq'::regclass))::text, 10, '0'::text)),
+    created_by character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    modified_by character varying(50) COLLATE pg_catalog."default",
+    document_name character varying(255) COLLATE pg_catalog."default" NOT NULL,
+    title character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    notes_owner character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    attach_to character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    attachment_level character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    event_type character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    event_status character varying(50) COLLATE pg_catalog."default" NOT NULL,
+    event_name character varying(255) COLLATE pg_catalog."default",
+    event_datetime timestamp with time zone NOT NULL,
+    descriptions character varying(2000) COLLATE pg_catalog."default",
+    CONSTRAINT notes_timeline_pkey PRIMARY KEY (rid),
+    CONSTRAINT notes_timeline_r_number_key UNIQUE (r_number))
     `);
   }
 
