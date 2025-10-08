@@ -8,7 +8,7 @@ import {
 import { parse } from "url";
 import { getSecret } from "./azureSecrets";
 import dotenv from "dotenv";
-import { logMessage } from "../../../interaction-module/src/utils/helpers";
+import { logMessage } from "./helpers";
 dotenv.config();
 
 // Generate a SAS token for a blob URL
