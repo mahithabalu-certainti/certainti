@@ -1,7 +1,7 @@
 import { Request, Response } from 'express'
 import { HttpStatus, IMPORT_FIELD_MAPPINGS_FOR_EXPORT, rawQueries, STATUS_MESSAGE } from '../utils/constants'
 import Configurations from '../config/config';
-import { errorLog, generateExcelBase64, handleErrorResponse, handleSuccessResponse, successLog, validateImportListByRidRequest, validateImportListRequest, validateRequest } from '../utils/helpers';
+import { errorLog, generateExcelBase64, handleErrorResponse, handleSuccessResponse, logMessage, successLog, validateImportListByRidRequest, validateImportListRequest, validateRequest } from '../utils/helpers';
 import { validateLoadErrorListRequest, validateStagingErrorListRequest } from '../utils/helpers';
 import { generateSasUrl } from '../utils/blob';
 import { exportImportedAccountLevelProjects, exportImportedAccountLevelProjectTasks, exportImportedAccountLevelResources, importedAccountLevelProjects, importedAccountLevelProjectTasks, importedAccountLevelResources } from '../lib/joi/schemas/schema';
@@ -27,6 +27,7 @@ async function fetchAllImportList(req: Request, res: Response) {
         }
         const requestValidation = validateImportListRequest(data)
         if(requestValidation) {
+            logMessage(`Validation failed: ${requestValidation}`);
             handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, requestValidation);
             return
         }
@@ -127,6 +128,7 @@ async function fetchAllImportList(req: Request, res: Response) {
         handleSuccessResponse(res, finalResponse);
         return;
     } catch (error: any) {
+        errorLog('Error in fetchAllImportList:', error.message);
         handleErrorResponse(res, HttpStatus.FAILED, HttpStatus.FAILED_MESSAGE, error.message);
         return
     }
@@ -135,9 +137,11 @@ async function fetchAllImportList(req: Request, res: Response) {
 async function exportStagingFailureList (req : Request, res : Response) {
     try {
         const { accountRid, importRid, entityType } = req.params;
+        logMessage(`exportStagingFailureList Params received - accountRid: ${accountRid}, importRid: ${importRid}, entityType: ${entityType}`);
 
         const validation = validateStagingErrorListRequest(accountRid, importRid, entityType);
         if (validation) {
+          logMessage(`Validation failed: ${validation}`);
             return handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, validation);
         }
 
@@ -317,6 +321,7 @@ async function exportStagingFailureList (req : Request, res : Response) {
         return;  
 
     } catch (error: any) {
+        logMessage(`Error in exportStagingFailureList: ${error.message}`);
         return handleErrorResponse(res, HttpStatus.FAILED, HttpStatus.FAILED_MESSAGE, error.message);
     }
 }
@@ -324,9 +329,11 @@ async function exportStagingFailureList (req : Request, res : Response) {
 async function exportLoadFailureList(req: Request, res: Response) {
     try {
         const { accountRid, importRid, entityType } = req.params;
+        logMessage(`exportLoadFailureList Params received - accountRid: ${accountRid}, importRid: ${importRid}, entityType: ${entityType}`);
 
         const validation = validateLoadErrorListRequest(accountRid, importRid, entityType);
         if (validation) {
+            logMessage(`Validation failed: ${validation}`);
             return handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, validation);
         }
 
@@ -505,6 +512,7 @@ async function exportLoadFailureList(req: Request, res: Response) {
         return;  
 
     } catch (error: any) {
+        errorLog('Error in exportLoadFailureList:',(error as Error).message);
         return handleErrorResponse(res, HttpStatus.FAILED, HttpStatus.FAILED_MESSAGE, error.message);
     }
 }
@@ -512,8 +520,10 @@ async function exportLoadFailureList(req: Request, res: Response) {
 async function importListByRid (req : Request, res : Response) {
     try {
         const {accountRid, rid} = req.params
+        logMessage(`importListByRid Params received - accountRid: ${accountRid}, rid: ${rid}`);
         const validation = validateImportListByRidRequest(accountRid, rid)
         if(validation) {
+            logMessage(`Validation failed: ${validation}`);
             handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, validation)
             return;
         }
@@ -527,6 +537,7 @@ async function importListByRid (req : Request, res : Response) {
             return 
         }
     } catch (error : any) {
+        errorLog('Error in importListByRid:', error.message);
         handleErrorResponse(res, HttpStatus.FAILED, HttpStatus.FAILED_MESSAGE, error.message);
         return
     }
@@ -538,6 +549,7 @@ async function exportAllImportedData (req : Request, res : Response) {
     let importedByFilter;
     let importedByCondition : string;
     let totalCount : number = 0
+    logMessage(`exportAllImportedData request body: ${JSON.stringify(data)}`);
 
     const userId = req.headers['x-user-id'] as string;
     if (!userId) {
@@ -675,6 +687,7 @@ async function importedAccountLevelprojectList(req: Request, res: Response): Pro
     const { accountId } = req.params;
 
     const value = await validateRequest(req, importedAccountLevelProjects, res, "GET");
+    logMessage(`importedAccountLevelprojectList request query: ${JSON.stringify(value)}`);
 
     let parsedFilters: Record<string, any> = {};
     const userId = req.headers["x-user-id"] as string;
@@ -746,6 +759,7 @@ async function exportImportedProjectList(req: Request, res: Response): Promise<v
     const { accountId } = req.params;
 
     const value = await validateRequest(req, exportImportedAccountLevelProjects, res, "GET");
+    logMessage(`exportImportedProjectList request query: ${JSON.stringify(value)} for accountId: ${accountId}`);
 
     let parsedFilters: Record<string, any> = {};
     const userId = req.headers["x-user-id"] as string;
@@ -813,6 +827,7 @@ async function importedAccountLevelresourceList(req: Request, res: Response): Pr
     const { accountId } = req.params;
 
     const value = await validateRequest(req, importedAccountLevelResources, res, "GET");
+    logMessage(`importedAccountLevelresourceList request query: ${JSON.stringify(value)} for accountId: ${accountId}  `);
 
     let parsedFilters: Record<string, any> = {};
     const userId = req.headers["x-user-id"] as string;
@@ -891,6 +906,7 @@ async function exportImportedResourceList(req: Request, res: Response): Promise<
 
 
     const value = await validateRequest(req, exportImportedAccountLevelResources, res, "GET");
+    logMessage(`exportImportedResourceList request query: ${JSON.stringify(value)} for accountId: ${accountId}  `);
 
     let parsedFilters: Record<string, any> = {};
 
@@ -960,6 +976,7 @@ async function importedAccountLevelProjectTaskList(req: Request, res: Response):
       return;
     }
     const userId = req.headers["x-user-id"] as string;
+    logMessage(`importedAccountLevelProjectTaskList request query: ${JSON.stringify(value)} for accountId: ${accountId}  `);
 
     if (!userId) {
       handleErrorResponse(
@@ -976,7 +993,7 @@ async function importedAccountLevelProjectTaskList(req: Request, res: Response):
       try {
         value.filters = JSON.parse(value.filters);
       } catch (err) {
-        console.error("Invalid filters JSON:", value.filters);
+       logMessage(`Invalid filters JSON: ${value.filters}`);
         value.filters = {};
       }
     }
@@ -1033,6 +1050,7 @@ async function exportImportedProjectTaskList(req: Request, res: Response): Promi
     }
 
     const userId = req.headers["x-user-id"] as string;
+    logMessage(`exportImportedProjectTaskList request query: ${JSON.stringify(value)} for accountId: ${accountId}  `);
 
     if (!userId) {
       handleErrorResponse(
@@ -1049,7 +1067,7 @@ async function exportImportedProjectTaskList(req: Request, res: Response): Promi
       try {
         value.filters = JSON.parse(value.filters);
       } catch (err) {
-        console.error("Invalid filters JSON:", value.filters);
+        logMessage(`Invalid filters JSON: ${value.filters}`);
         value.filters = {};
       }
     }

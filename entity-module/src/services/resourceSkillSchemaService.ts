@@ -10,6 +10,7 @@ import { ResourceFiscal } from "../models/resourceFiscal";
 import { initMainDbSequelize } from "../config/mainDataSource";
 import moment from "moment";
 import SchemaService from "./schemaService";
+import { errorLog, logMessage } from "../utils/helpers";
 
 class ResourceSkillSchemaService {
   private sequelizeInstance: Sequelize | null = null;
@@ -23,6 +24,7 @@ class ResourceSkillSchemaService {
       if (!this.sequelizeInstance) {
         const sequelize = await initOrgSequelize();
         if (!sequelize) {
+          logMessage("Failed to initialize database connection");
           throw new Error("Failed to initialize database connection");
         }
 
@@ -39,7 +41,7 @@ class ResourceSkillSchemaService {
 
       return this.sequelizeInstance;
     } catch (error) {
-      console.error("Error initializing database:", error);
+      errorLog("Error initializing database:", (error as Error).message);
       throw error;
     }
   }
@@ -81,7 +83,7 @@ class ResourceSkillSchemaService {
 
       return result ? (result as any).exists === true : false;
     } catch (error) {
-      console.error("Error checking schema existence:", error);
+      errorLog("Error checking schema existence:", (error as Error).message);
       return false;
     }
   }
@@ -115,7 +117,7 @@ class ResourceSkillSchemaService {
 
       return result ? (result as any).exists === true : false;
     } catch (error) {
-      console.error("Error checking table existence:", error);
+      errorLog("Error checking table existence:", (error as Error).message);
       return false;
     }
   }
@@ -138,7 +140,7 @@ class ResourceSkillSchemaService {
       const schemaExists = await this.checkSchemaExists(sequelize, schemaName);
       if (!schemaExists) {
         await sequelize.query(`CREATE SCHEMA IF NOT EXISTS "${schemaName}"`);
-        console.log(`Schema ${schemaName} created`);
+        logMessage(`Schema ${schemaName} created`);
       }
 
       // Set the schema for this connection
@@ -193,9 +195,9 @@ class ResourceSkillSchemaService {
             default:
               throw new Error(`Table model ${tableName} not found`);
           }
-          console.log(`Table ${tableName} created in schema: ${schemaName}`);
+          logMessage(`Table ${tableName} created in schema: ${schemaName}`);
         } else {
-          console.log(
+          logMessage(
             `Table ${tableName} already exists in schema: ${schemaName}`
           );
         }
@@ -205,12 +207,12 @@ class ResourceSkillSchemaService {
           force: false,
           schema: schemaName, // Explicitly set schema for all tables
         });
-        console.log(`All tables created in schema: ${schemaName}`);
+        logMessage(`All tables created in schema: ${schemaName}`);
       }
 
       return true;
     } catch (err) {
-      console.error(`Error creating tables in schema ${schemaName}:`, err);
+      errorLog(`Error creating tables in schema ${schemaName}:`, (err as Error).message);
       return false;
     }
   }
@@ -239,7 +241,7 @@ class ResourceSkillSchemaService {
         "resources"
       );
       if (!resourcesTableCreated) {
-        console.error(
+        errorLog(
           `Failed to create resources table in schema ${schemaName}`
         );
         return false;
@@ -496,7 +498,7 @@ async executeQueries(
     LIMIT :limit OFFSET :offset
   `;
 
-  console.log(query)
+  logMessage(query)
 
   // Count query to get total records
   const countQuery = `

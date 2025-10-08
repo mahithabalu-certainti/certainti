@@ -88,6 +88,10 @@ export function errorLog(methodName: string, errorMessage?: string): void {
   });
 }
 
+export function logMessage(message: string): void {
+  getLogger().info(`${message}`);
+}
+
 export function handleSuccessResponse(
   res: Response,
   data: any,

@@ -11,6 +11,7 @@ import moment from "moment";
 import currency from "currency.js";
 import Decimal from "decimal.js";
 import SchemaService from "./schemaService";
+import { errorLog, logMessage } from "../utils/helpers";
 
 class ResourceCostSchemaService {
   private sequelizeInstance: Sequelize | null = null;
@@ -24,6 +25,7 @@ class ResourceCostSchemaService {
       if (!this.sequelizeInstance) {
         const sequelize = await initOrgSequelize();
         if (!sequelize) {
+          logMessage("Failed to initialize database connection");
           throw new Error("Failed to initialize database connection");
         }
 
@@ -39,7 +41,7 @@ class ResourceCostSchemaService {
 
       return this.sequelizeInstance;
     } catch (error) {
-      console.error("Error initializing database:", error);
+      errorLog("Error initializing database:", (error as Error).message);
       throw error;
     }
   }
@@ -81,7 +83,7 @@ class ResourceCostSchemaService {
 
       return result ? (result as any).exists === true : false;
     } catch (error) {
-      console.error("Error checking schema existence:", error);
+      errorLog("Error checking schema existence:", (error as Error).message);
       return false;
     }
   }
@@ -115,7 +117,7 @@ class ResourceCostSchemaService {
 
       return result ? (result as any).exists === true : false;
     } catch (error) {
-      console.error("Error checking table existence:", error);
+      errorLog("Error checking table existence:", (error as Error).message);
       return false;
     }
   }
@@ -138,7 +140,7 @@ class ResourceCostSchemaService {
       const schemaExists = await this.checkSchemaExists(sequelize, schemaName);
       if (!schemaExists) {
         await sequelize.query(`CREATE SCHEMA IF NOT EXISTS "${schemaName}"`);
-        console.log(`Schema ${schemaName} created`);
+
       }
 
       // Set the schema for this connection
@@ -200,9 +202,9 @@ class ResourceCostSchemaService {
             default:
               throw new Error(`Table model ${tableName} not found`);
           }
-          console.log(`Table ${tableName} created in schema: ${schemaName}`);
+         logMessage(`Table ${tableName} created in schema: ${schemaName}`);
         } else {
-          console.log(
+          logMessage(
             `Table ${tableName} already exists in schema: ${schemaName}`
           );
         }
@@ -212,12 +214,12 @@ class ResourceCostSchemaService {
           force: false,
           schema: schemaName, // Explicitly set schema for all tables
         });
-        console.log(`All tables created in schema: ${schemaName}`);
+        logMessage(`All tables created in schema: ${schemaName}`);
       }
 
       return true;
     } catch (err) {
-      console.error(`Error creating tables in schema ${schemaName}:`, err);
+      errorLog(`Error creating tables in schema ${schemaName}:`, (err as Error).message);
       return false;
     }
   }
@@ -246,7 +248,7 @@ class ResourceCostSchemaService {
         "resources"
       );
       if (!resourcesTableCreated) {
-        console.error(
+        logMessage(
           `Failed to create resources table in schema ${schemaName}`
         );
         return false;
@@ -259,7 +261,7 @@ class ResourceCostSchemaService {
         "project_resource_fiscal"
       );
       if (!resourcesTableCreated) {
-        console.error(
+        logMessage(
           `Failed to create resources table in schema ${schemaName}`
         );
         return false;
@@ -693,7 +695,7 @@ async exportresourceCostDetailsForFinancialHighlights(
       },
     };
   } catch (err) {
-    console.error(err);
+    errorLog(`Error exporting resource cost details: ${err instanceof Error ? err.message : err}`);
     return {
       statusCode: 500,
       message: "An error occurred while fetching resource cost details.",
@@ -1024,7 +1026,7 @@ async executeQueriesForFinancialHighlights(
       },
     };
   } catch (error) {
-    console.error("Error executing queries:", error);
+    errorLog("Error executing queries in financial highlight:", (error as Error).message);
     return this.createErrorResponse("Error executing database queries");
   }
 }
@@ -1266,7 +1268,7 @@ async executeQueriesForFinancialHighlights(
         },
       };
     } catch (error) {
-      console.error("Error executing queries:", error);
+      errorLog("Error executing queries:", (error as Error).message);
       return this.createErrorResponse("Error executing database queries");
     }
   }
@@ -1493,7 +1495,7 @@ async executeQueriesForFinancialHighlights(
           return pattern.replace('0.00', formattedNumber);
       
         } catch (error) {
-          console.error('Error formatting number:', error);
+          errorLog('Error formatting number:', (error as Error).message);
           return '-';
         }
       };
@@ -1523,7 +1525,6 @@ async executeQueriesForFinancialHighlights(
           allowedFieldSet.add(field.field_name);
         }
       }
-      console.log(allowedFieldSet)
       const requiredResourceFields = new Set(["resource_orgname","resource_designation","resource_role","resource_type_rid","resource_code","resource_name"]); // Add more if needed
         for (const field of resourceFields) {
         if (field.read && requiredResourceFields.has(field.field_name)) {
@@ -1593,7 +1594,7 @@ async executeQueriesForFinancialHighlights(
         },
       };
     } catch (error) {
-      console.error("Error executing queries:", error);
+      errorLog("Error executing queries:", (error as Error).message);
       return this.createErrorResponse("Error executing database queries");
     }
   }
@@ -2399,7 +2400,7 @@ processAlphanumericFilterForFinancialHighlights(key: string, value: any): string
       });
       return result?(result[0] as any).currency_rid : null;
     } catch (err) {
-      console.error('Error getting currency symbol:', err);
+      errorLog('Error getting currency symbol:', (err as Error).message);
       return null;
     }
   }
@@ -2428,7 +2429,7 @@ async assignResourceStatusandType(
           );
           result.currency_rid = usdCurrencyId[0]?.rid;
         } catch (err) {
-          console.error('Error getting USD currency rid:', err);
+          errorLog('Error getting USD currency rid:', (err as Error).message);
         }
       }
     }

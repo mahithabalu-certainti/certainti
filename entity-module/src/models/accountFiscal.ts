@@ -1,6 +1,7 @@
 import { Model, DataTypes, Sequelize, Optional } from "sequelize";
 import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constants";
 import AccountDetails from "./accountDetails";
+import { errorLog, logMessage } from "../utils/helpers";
 
 export interface AccountFiscalAttributes {
   rid: string;
@@ -378,8 +379,8 @@ export async function setupAccountFiscalSequence(
     await sequelize.query(`ALTER TABLE "${schemaName}".account_fiscal
       ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.ACCOUNT_FISCAL}-' || LPAD(nextval('"${schemaName}".account_fiscal_seq')::text, 10, '0')`);
 
-    console.log("Project sequence setup complete");
+    logMessage("Project sequence setup complete");
   } catch (error) {
-    console.error("Error setting up Project sequence:", error);
+    errorLog("Error setting up Project sequence:", (error as Error).message);
   }
 }

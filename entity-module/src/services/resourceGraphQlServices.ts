@@ -6,7 +6,7 @@ import {
   rawQueries,
   STATUS_MESSAGE,
 } from "../utils/constants";
-import { setResourceFiscal, setResourcesData } from "../utils/helpers";
+import { logMessage, setResourceFiscal, setResourcesData } from "../utils/helpers";
 const services = Configurations.getInstance().getServices()
 const resourceServices = services.resourceService
 
@@ -14,6 +14,7 @@ export default class ResourceGraphQlServices {
   async inLineEditResources(data: any) {
     const mainSequelize = await initMainDbSequelize();
     const orgSequelize = await initOrgSequelize();
+    logMessage(`In-line editing resource with data: ${JSON.stringify(data)}`);
 
     const checkAccountExists: any = await mainSequelize.query(
       await rawQueries.fetchParentAccount(data.account_rid, mainSequelize)

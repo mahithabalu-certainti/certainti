@@ -10,6 +10,7 @@ import {
   handleErrorResponse,
   generateExcelBase64,
   handlePromptResponse,
+  logMessage,
 } from "../utils/helpers";
 import {
   resourceCostSchema,
@@ -45,6 +46,7 @@ async function resourceCosts(req: Request, res: Response): Promise<void> {
       res,
       "GET"
     );
+    logMessage(`Resource Costs payload received: ${JSON.stringify(value)} User Id: ${req.headers["x-user-id"]}`);
 
     let parsedFilters: Record<string, any> = {};
 
@@ -123,6 +125,9 @@ async function exportResourceCosts(req: Request, res: Response): Promise<void> {
 
     let parsedFilters: Record<string, any> = {};
     const userId = req.headers["x-user-id"] as string;
+    logMessage(`Export Resource Costs payload received: ${JSON.stringify(value)} User Id: ${userId}`);
+
+
     if (!value) {
       return;
     }
@@ -193,6 +198,7 @@ async function createResourceCost(req: Request, res: Response): Promise<void> {
   try {
     const value = await validateRequest(req, resourceCostSchema, res);
     const userId = req.headers["x-user-id"] as string;
+    logMessage(`Create Resource Cost payload received: ${JSON.stringify(value)}  User Id: ${userId}`);
 
     if (!userId) {
       handleErrorResponse(
@@ -266,6 +272,7 @@ async function updateResourceCost(req: Request, res: Response): Promise<void> {
   try {
     const value = await validateRequest(req, updateResourceCostSchema, res);
     const userId = req.headers["x-user-id"] as string;
+    logMessage(`Update Resource Cost payload received: ${JSON.stringify(value)}  User Id: ${userId}`);
 
     if (!userId) {
       handleErrorResponse(
@@ -340,6 +347,7 @@ async function resourceCostById(req: Request, res: Response): Promise<void> {
   try {
     const { id } = req.params;
     const accountNumber = req.query.accountNumber as string;
+    logMessage(`Resource Cost By Id payload received for id: ${id} and accountNumber: ${accountNumber} User Id: ${req.headers["x-user-id"]}`);
     const result = await resourceCostService.resourceCostById(
       id,
       accountNumber
@@ -377,6 +385,7 @@ async function acceptStatus(req: Request, res: Response): Promise<void> {
     if(!value){
       return;
     }
+    logMessage(`Accept Resource Cost Status payload received: ${JSON.stringify(value)} User Id: ${req.headers["x-user-id"]}`);
 
     const result = await resourceCostService.acceptResourceCostStatus(
       value.rid,
@@ -434,6 +443,7 @@ async function resourceCostsForFinancialHighlights(req: Request, res: Response):
       res,
       "GET"
     );
+    logMessage(`Resource Costs For Financial Highlights payload received: ${JSON.stringify(value)} User Id: ${req.headers["x-user-id"]}`);
 
     let parsedFilters: Record<string, any> = {};
 
@@ -511,6 +521,7 @@ async function exportResourceCostsForFinancialHighlights(req: Request, res: Resp
       res,
       "GET"
     );
+    logMessage(`Export Resource Costs For Financial Highlights payload received: ${JSON.stringify(value)} Account Rid: ${accountRid} Project Rid: ${projectRid} User Id: ${req.headers["x-user-id"]}`);
 
     let parsedFilters: Record<string, any> = {};
     const userId = req.headers["x-user-id"] as string;

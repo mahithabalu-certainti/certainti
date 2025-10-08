@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { handleErrorResponse, validateAccountSettingRequest, validateProjectSettingRequest } from "../utils/helpers";
+import { errorLog, handleErrorResponse, logMessage, validateAccountSettingRequest, validateProjectSettingRequest } from "../utils/helpers";
 import { HttpStatus, STATUS_MESSAGE, UPDATE_FLAG } from "../utils/constants";
 import Configurations from "../config/config";
 
@@ -10,6 +10,7 @@ const settingController = async (req : Request, res : Response) => {
     try {
         const data = req.body;
         const userId = req.headers['x-user-id']
+        logMessage("Request received for updating settings with data: " + JSON.stringify(data) + " and userId: " + userId);
         if(!userId) {
             handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, STATUS_MESSAGE.userIdMissingInHeader);
             return;
@@ -17,6 +18,7 @@ const settingController = async (req : Request, res : Response) => {
         if(data.flag == UPDATE_FLAG.account) {
             let validateRequest = validateAccountSettingRequest(data)
             if(validateRequest) {
+                errorLog("Validation error in account settings: " + validateRequest);
                 handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, validateRequest)
                 return;
             }
@@ -24,6 +26,7 @@ const settingController = async (req : Request, res : Response) => {
         else {
             let validateRequest = validateProjectSettingRequest(data)
             if(validateRequest) {
+                errorLog("Validation error in project settings: " + validateRequest);
                 handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, validateRequest)
                 return
             }
@@ -38,6 +41,7 @@ const settingController = async (req : Request, res : Response) => {
             return;
         }
     } catch (error : any) {
+        errorLog("Error in settingController: " + error.message);
         handleErrorResponse(res, HttpStatus.FAILED, HttpStatus.FAILED_MESSAGE, error.message)
         return;
     }

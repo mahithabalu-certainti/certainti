@@ -48,6 +48,7 @@ import {
   setupResourceFiscalRegionSeq,
 } from "../models/resourceFiscalRegion"
 import { ProjectFiscal } from "../models/projectFiscal";
+import { errorLog } from "../utils/helpers";
 
 // import { Skill } from "../models/skill";
 class SchemaService {
@@ -497,6 +498,7 @@ class SchemaService {
 
       return { resources: [], totalCount: 0 };
     } catch (err) {
+      errorLog("Error fetching resources: " + (err as Error).message);
       throw new Error("Error fetching resources: " + (err as Error).message);
     }
   }
@@ -557,6 +559,7 @@ class SchemaService {
       });
 
       if (isRefIdExist) {
+        errorLog("Resource Code must be unique");
         throw new Error("Resource Code must be unique.");
       }
 
@@ -851,7 +854,8 @@ class SchemaService {
 
       return { resources: finalResources, totalCount };
     } catch (err) {
-      throw new Error("Error fetching resources: " + (err as Error).message);
+      errorLog("Error fetching resources for export: " + (err as Error).message);
+      throw new Error("Error fetching resources for export: " + (err as Error).message);
     }
   }
 
@@ -1110,6 +1114,7 @@ class SchemaService {
 
       return updateResource;
     } catch (err) {
+      errorLog("Error updating resource: " + (err as Error).message);
       throw new Error((err as Error).message);
     }
   }
@@ -1302,6 +1307,7 @@ class SchemaService {
 
       return account?.r_number;
     } catch (err) {
+      errorLog("Error fetching parent account : " + (err as Error).message);
       throw new Error(
         "Error fetching parent account : " + (err as Error).message
       );
@@ -1344,6 +1350,7 @@ class SchemaService {
         accountName: account.account_name,
       };
     } catch (err) {
+      errorLog("Error fetching account : " + (err as Error).message);
       throw new Error("Error fetching account : " + (err as Error).message);
     }
   }
@@ -1811,6 +1818,7 @@ class SchemaService {
 
       return accountData;
     } catch (err) {
+      errorLog("Error fetching Accounts: " + (err as Error).message);
       throw new Error("Error fetching Accounts: " + (err as Error).message);
     }
   }
@@ -2654,6 +2662,7 @@ class SchemaService {
 
       return (result[0] as any).exists === true;
     } catch (err) {
+      errorLog("Error checking schema", (err as Error).message);
       throw new Error("Error checking schema :" + (err as Error).message);
     }
   }

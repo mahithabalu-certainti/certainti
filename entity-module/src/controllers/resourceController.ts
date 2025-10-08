@@ -6,6 +6,7 @@ import {
   successLog,
   validateRequest,
   generateExcelBase64,
+  logMessage,
 } from "../utils/helpers";
 import { HttpStatus } from "../utils/constants";
 import {
@@ -24,6 +25,7 @@ async function createResource(req: Request, res: Response): Promise<void> {
   try {
     const value = await validateRequest(req, createResourcesSchema, res);
     const userId = req.headers["x-user-id"] as string;
+    logMessage(`Create Resource payload received: ${JSON.stringify(value)} for User Id: ${userId}`);
 
     if (!userId) {
       errorLog(methodName, "User Id not found");
@@ -74,6 +76,8 @@ async function resourcesList(req: Request, res: Response): Promise<void> {
     const { accountNumber } = req.params;
 
     const value = await validateRequest(req, listResourceSchema, res, "GET");
+    const userId = req.headers["x-user-id"] as string;
+    logMessage(`Resource List payload received: ${JSON.stringify(value)} for User Id: ${userId}`);
 
     let parsedFilters: Record<string, any> = {};
 
@@ -140,6 +144,7 @@ async function exportResourcesList(req: Request, res: Response): Promise<void> {
 
 
     const value = await validateRequest(req, exportResourceSchema, res, "GET");
+    logMessage(`Export Resource payload received: ${JSON.stringify(value)} for User Id: ${userId}`);
 
     let parsedFilters: Record<string, any> = {};
 
@@ -198,6 +203,9 @@ async function resourcesById(req: Request, res: Response): Promise<void> {
   const methodName = "Resource By Id";
   try {
     const { accountNumber, id } = req.params;
+    const userId = req.headers["x-user-id"] as string;
+    logMessage(`Resource By Id payload received Account Number: ${accountNumber} ID: ${id} for User Id: ${userId}`);
+
 
     const resourceDetails = await resourceService.resourceById(
       accountNumber,
@@ -236,6 +244,7 @@ async function updateResource(req: Request, res: Response): Promise<void> {
   try {
     const value = await validateRequest(req, updateResourceSchema, res);
     const userId = req.headers["x-user-id"] as string;
+    logMessage(`Update Resource payload received: ${JSON.stringify(value)} for User Id: ${userId}`);
 
     if (!userId) {
       errorLog(methodName, "User Id not found");

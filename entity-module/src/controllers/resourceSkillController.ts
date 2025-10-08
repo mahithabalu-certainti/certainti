@@ -8,7 +8,8 @@ import {
   errorLog,
   handleSuccessResponse,
   handleErrorResponse,
-  generateExcelBase64
+  generateExcelBase64,
+  logMessage
 } from "../utils/helpers";
 import {
   createResourceSkillSchema,
@@ -39,6 +40,7 @@ async function createResourceSkill(req: Request, res: Response): Promise<void> {
     try {
       const value = await validateRequest(req, createResourceSkillSchema, res);
       const userId = req.headers["x-user-id"] as string;
+      logMessage(`Create Resource Skill payload received: ${JSON.stringify(value)}  User Id: ${userId}`);
       if(!userId) {
         handleErrorResponse(
           res,
@@ -99,6 +101,7 @@ async function updateResourceSkill(req: Request, res: Response): Promise<void> {
   try {
     const value = await validateRequest(req, updateResourceSkillSchema, res);
     const userId = req.headers["x-user-id"] as string;
+    logMessage(`Update Resource Skill payload received: ${JSON.stringify(value)}  User Id: ${userId}`);
     if(!userId) {
       handleErrorResponse(
         res,
@@ -167,6 +170,8 @@ async function resourceSkill(req: Request, res: Response): Promise<void> {
     if (!value) {
       return;
     }
+    const userId = req.headers["x-user-id"] as string;
+    logMessage(`List Resource Skills payload received: ${JSON.stringify(value)} User Id: ${userId}`);
 
     // If no rid is provided, proceed with normal filtering and pagination
     let parsedFilters: Record<string, any> = {};
@@ -246,6 +251,7 @@ async function exportResourceSkill(req: Request, res: Response): Promise<void> {
       return;
     }
     const userId = req.headers["x-user-id"] as string;
+    logMessage(`Export Resource Skills payload received: ${JSON.stringify(value)} User Id: ${userId}`);
 
     // If no rid is provided, proceed with normal filtering and pagination
     let parsedFilters: Record<string, any> = {};
@@ -316,6 +322,8 @@ async function resourceSkillById(req: Request, res: Response): Promise<void> {
     const { id } = req.params;
     const accountNumber = req.query.accountNumber as string;
     const result = await resourceSkillService.resourceSkillById(id,accountNumber);
+    const userId = req.headers["x-user-id"] as string;
+    logMessage(`Resource Skill by ID payload received ID: ${id} Account Number : ${accountNumber} User Id: ${userId}`);
 
     if (result.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);

@@ -7,7 +7,7 @@ import {
   rawQueries,
   STATUS_MESSAGE,
 } from "../utils/constants";
-import { setInlineForProjectTask } from "../utils/helpers";
+import { logMessage, setInlineForProjectTask } from "../utils/helpers";
 import { ProjectTaskSchemaService } from "../services/projectTask/schemaService";
 import { ProjectInjestionTaskService } from "./projectTask/projectTaskService";
 import Decimal from "decimal.js";
@@ -35,6 +35,7 @@ export default class ProjectTaskGraphqlServies {
     let total_cost_pro_task;
     const orgSequelize = await initOrgSequelize();
     const mainSequelize = await initMainDbSequelize();
+    logMessage(`Updating inline GraphQL details for project task: ${JSON.stringify(data)}`);
 
     const checkAccountExists: any = await mainSequelize.query(
       await rawQueries.fetchParentAccount(data.account_rid, mainSequelize)
@@ -198,6 +199,7 @@ export default class ProjectTaskGraphqlServies {
                 // Convert valid string/number to Decimal
                 acc[key] = new Decimal(value).toString();
               } catch (error) {
+                logMessage(`Error converting ${key} to Decimal: ${error}`);
                 throw new Error(`Invalid number format for ${key}: ${value}`);
               }
             }

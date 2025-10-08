@@ -3,6 +3,7 @@ import {
   errorLog,
   handleErrorResponse,
   handleSuccessResponse,
+  logMessage,
   successLog,
 } from "../utils/helpers";
 import { HttpStatus } from "../utils/constants";
@@ -15,6 +16,7 @@ async function uploadTemplate(req: Request, res: Response): Promise<void> {
   const methodName = "Upload Template";
   try {
     const userId = req.headers["x-user-id"] as string;
+    logMessage("Request received for upload template with data: " + JSON.stringify(req.body) + " and userId: " + userId);
 
     if (!userId) {
       handleErrorResponse(

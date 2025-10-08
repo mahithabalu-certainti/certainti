@@ -1,6 +1,6 @@
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { HttpStatus, rawQueries } from "../../utils/constants";
-import { uploadEntityTemplatesToAzureBlob } from "../../utils/helpers";
+import { logMessage, uploadEntityTemplatesToAzureBlob } from "../../utils/helpers";
 
 export class TemplateService {
   constructor() {}
@@ -27,6 +27,7 @@ export class TemplateService {
         },
       };
     } catch (err) {
+      logMessage(`Error fetching templates: ${(err as Error).message}`);
       throw this.throwServiceError(err as Error);
     }
   }
@@ -59,6 +60,7 @@ export class TemplateService {
         },
       };
     } catch (err) {
+      logMessage(`Error uploading template: ${(err as Error).message}`);
       throw this.throwServiceError(err as Error);
     }
   }

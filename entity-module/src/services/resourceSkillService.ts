@@ -12,6 +12,8 @@ import { Sequelize, Op, QueryTypes } from "sequelize";
 import { initMainDbSequelize } from "../config/mainDataSource";
 import moment from "moment";
 import { Resources } from "../models/resource";
+import { errorLog } from "../utils/helpers";
+
 
 class ResourceSkillService {
   private schemaService: SchemaService;
@@ -133,6 +135,7 @@ class ResourceSkillService {
       ]);
 
       if (!resourceSkillTableCreated) {
+        errorLog("Account schema or resource_skill table could not be created");
         return {
           statusCode: HttpStatus.FAILED,
           message: HttpStatus.FAILED_MESSAGE,
@@ -140,6 +143,7 @@ class ResourceSkillService {
             "Account schema or resource_skill table could not be created",
         };
       } else if (!timelineTableCreated) {
+        errorLog("Account schema or resource_skill_timeline table could not be created");
         return {
           statusCode: HttpStatus.FAILED,
           message: HttpStatus.FAILED_MESSAGE,
@@ -231,7 +235,7 @@ class ResourceSkillService {
               });
             }
           } catch (fiscalError) {
-            console.error("Error updating resource fiscal:", fiscalError);
+            errorLog("Error updating resource fiscal: " + (fiscalError as Error).message);
             // Continue with the process even if fiscal update fails
           }
         }
@@ -251,8 +255,7 @@ class ResourceSkillService {
           schemaName
         );
       } catch (timelineError) {
-        console.error("Failed to create timeline entry:", timelineError);
-        // Continue execution even if timeline creation fails
+        errorLog("Failed to create timeline entry: " + (timelineError as Error).message);
       }
 
       if (eventStatus === "Failure") {
@@ -271,6 +274,7 @@ class ResourceSkillService {
         },
       };
     } catch (err) {
+      errorLog("Error in updateResourceSkill: " + (err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
@@ -304,7 +308,7 @@ class ResourceSkillService {
         created_by: modifiedBy,
       });
     } catch (error) {
-      console.error("Failed to create timeline entry:", error);
+      errorLog("Error creating timeline entry: " + (error as Error).message);
       throw error;
     }
   }
@@ -359,6 +363,7 @@ class ResourceSkillService {
       ]);
 
       if (!timelineTableCreated || !historyTableCreated) {
+        errorLog("Failed to create required tables in account schema");
         return {
           statusCode: HttpStatus.FAILED,
           message: HttpStatus.FAILED_MESSAGE,
@@ -375,6 +380,7 @@ class ResourceSkillService {
       });
 
       if (!originalResourceSkill) {
+        errorLog("Resource skill record not found");
         return {
           statusCode: HttpStatus.FAILED,
           message: HttpStatus.FAILED_MESSAGE,
@@ -480,6 +486,7 @@ class ResourceSkillService {
           },
         };
       } catch (err) {
+        errorLog("Error updating resource skill: " + (err as Error).message);
         // Log the failed update to timeline
         try {
           await this.createResourceSkillTimeline(
@@ -491,15 +498,13 @@ class ResourceSkillService {
             schemaName
           );
         } catch (timelineError) {
-          console.error(
-            "Failed to create timeline entry for failed update:",
-            timelineError
-          );
+          errorLog("Failed to create timeline entry: " + (timelineError as Error).message);
         }
 
         throw err;
       }
     } catch (err) {
+      errorLog("Error in updateResourceSkill: " + (err as Error).message);
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
@@ -528,6 +533,7 @@ class ResourceSkillService {
         "resource_skill_history"
       );
       if (!validatedSchema) {
+        errorLog("Invalid or missing schema for history creation");
         throw new Error("Invalid or missing schema");
       }
 
@@ -592,15 +598,12 @@ class ResourceSkillService {
             });
           }
         } catch (attrError) {
-          console.error(
-            `Error creating history for attribute ${attribute}:`,
-            attrError
-          );
+          errorLog(`Error creating history for attribute ${attribute}: ` + (attrError as Error).message);
           // Continue with other attributes even if one fails
         }
       }
     } catch (error) {
-      console.error("Failed to create history entries:", error);
+      errorLog("Failed to create history entries: " + (error as Error).message);
       // Continue execution even if history creation fails
     }
   }
@@ -671,6 +674,7 @@ class ResourceSkillService {
         );
 
       if (!schemaAndTableValidation) {
+        errorLog("Account schema does not exist");
         return resourceSkillSchemaService.createErrorResponse(
           "Account schema does not exist"
         );
@@ -720,7 +724,7 @@ class ResourceSkillService {
 
       return results;
     } catch (err) {
-      console.log("Error ", err);
+      errorLog("Error fetching resource skill list: " + (err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
@@ -770,6 +774,7 @@ class ResourceSkillService {
         );
 
       if (!schemaAndTableValidation) {
+        errorLog("Account schema does not exist");
         return resourceSkillSchemaService.createErrorResponse(
           "Account schema does not exist"
         );
@@ -796,7 +801,7 @@ class ResourceSkillService {
         userId
       );
     } catch (err) {
-      console.log("Error ", err);
+      errorLog("Error fetching export resource skill list: " + (err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
@@ -907,6 +912,7 @@ class ResourceSkillService {
         },
       };
     } catch (err) {
+      errorLog("Error in resourceSkillById: " + (err as Error).message);
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
@@ -962,8 +968,7 @@ class ResourceSkillService {
         }
       }
     } catch (error) {
-      console.error("Error fetching user names:", error);
-      // Return empty strings if there's an error
+      errorLog("Error fetching user names: " + (error as Error).message);
     }
 
     return result;
@@ -1020,6 +1025,7 @@ class ResourceSkillService {
       };
 
     } catch (err) {
+      errorLog("Error fetching skill types: " + (err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
@@ -1059,6 +1065,7 @@ class ResourceSkillService {
         }
       };
     } catch (err) {
+      errorLog("Error fetching skill subtypes: " + (err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
@@ -1094,7 +1101,7 @@ async getResourceSkillsByResourceIds(accountNumber: string, resourceIds: string[
     return results;
 
   } catch (error) {
-    console.error('Error fetching resource skills (bulk):', error);
+    errorLog("Error fetching resource skills by resource IDs: " + (error as Error).message);
     throw error;
   }
 }

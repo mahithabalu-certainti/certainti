@@ -46,6 +46,7 @@ import {
   AccountFiscalRegion,
   setupAccountFiscalRegionSequence,
 } from "../models/accountFiscalRegion";
+import { errorLog, logMessage } from "../utils/helpers";
 
 export class ProjectService {
   private schemaService: SchemaService;
@@ -73,10 +74,12 @@ export class ProjectService {
       const accountData = await this.schemaService.fetchAccountById(account_id);
 
       if (!accountData) {
+        errorLog("Error creating project: Invalid account ID");
         throw new Error("Error creating project: Invalid account ID");
       }
 
       if (accountData.status !== "active") {
+        errorLog( "Project creation failed: The selected account is inactive. Please choose an active account.");
         throw new Error(
           "Project creation failed: The selected account is inactive. Please choose an active account."
         );
@@ -88,8 +91,10 @@ export class ProjectService {
         accountData.parent_account_rid === null ||
         accountData.parent_account_rid === ""
       ) {
+        errorLog("Error creating project: Invalid account ID");
         throw new Error("Error creating project: Invalid account ID");
       }
+      logMessage(`Account data fetched successfully ${JSON.stringify(accountData)}`);
 
       if (accountData.storage_type === "store_in_parent") {
         accountNumber = await this.schemaService.fetchParentAccount(
@@ -102,6 +107,7 @@ export class ProjectService {
       );
 
       if (!isExists) {
+        errorLog("Invalid account ID: schema doesn't exists");
         throw new Error("Invalid account ID: schema doesn't exists");
       }
 
@@ -125,6 +131,7 @@ export class ProjectService {
         },
       };
     } catch (err) {
+      errorLog("Error creating project", (err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
@@ -182,6 +189,7 @@ export class ProjectService {
       await setupAccountFiscalSequence(orgDbSequlize, schemaName);
       await setupAccountFiscalRegionSequence(orgDbSequlize, schemaName);
     } catch (err) {
+      errorLog("Error creating project tables", (err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
@@ -200,8 +208,9 @@ export class ProjectService {
       );
 
       let createdProjectId = "";
-
+      logMessage(`Existing project check result: ${existing}`);
       if (existing === "fiscal_exists") {
+        errorLog("Project already exists in the account for the fiscal year");
         throw new Error(
           "Project already exists in the account for the fiscal year"
         );
@@ -390,6 +399,7 @@ export class ProjectService {
 
       return { rid: createdProjectId };
     } catch (err) {
+      errorLog("Error creating project records", (err as Error).message);
       throw new Error((err as Error).message);
     }
   }
@@ -409,12 +419,14 @@ export class ProjectService {
       const accountData = await this.schemaService.fetchAccountById(account_id);
 
       if (accountData.status !== "active") {
+        errorLog( "Project update failed: The selected account is inactive. Please choose an active account.");
         throw new Error(
           "Project creation failed: The selected account is inactive. Please choose an active account."
         );
       }
 
       if (!accountData) {
+        errorLog("Invalid account ID.");
         throw new Error("Invalid account ID.");
       }
 
@@ -422,8 +434,10 @@ export class ProjectService {
         accountData.parent_account_rid === null ||
         accountData.parent_account_rid === ""
       ) {
+        errorLog("Invalid account ID");
         throw new Error("Invalid account ID");
       }
+      logMessage(`Account data fetched successfully ${JSON.stringify(accountData)}`);
 
       let accountNumber = accountData.r_number;
 
@@ -438,6 +452,7 @@ export class ProjectService {
       );
 
       if (!isExists) {
+        errorLog("Invalid account ID: project does not exist.");
         throw new Error("Invalid account ID: project does not exist.");
       }
 
@@ -459,6 +474,7 @@ export class ProjectService {
         },
       };
     } catch (err) {
+      errorLog("Error updating project: " + (err as Error).message);
       throw new Error("Error updating project: " + (err as Error).message);
     }
   }
@@ -478,6 +494,7 @@ export class ProjectService {
       );
 
     if (fiscalData) {
+      errorLog("Project already exists in the account for the fiscal year");
       throw new Error(
         "Project already exists in the account for the fiscal year"
       );
@@ -566,6 +583,7 @@ export class ProjectService {
       const accountData = await this.schemaService.fetchAccountById(accountId);
 
       if (!accountData) {
+        errorLog("Invalid account ID");
         throw new Error("Invalid account ID");
       }
 
@@ -573,6 +591,7 @@ export class ProjectService {
         accountData.parent_account_rid === null ||
         accountData.parent_account_rid === ""
       ) {
+        errorLog("Invalid account ID");
         throw new Error("Invalid account ID");
       }
 
@@ -722,6 +741,7 @@ export class ProjectService {
         },
       };
     } catch (err) {
+      errorLog("Error fetching project by ID: " + (err as Error).message);
       throw new Error(
         "Error fetching project by ID: " + (err as Error).message
       );
@@ -764,6 +784,7 @@ export class ProjectService {
       const accountData = await this.schemaService.fetchAccountById(accountId);
 
       if (!accountData) {
+        errorLog("Invalid account account ID.");
         throw new Error("Invalid account account ID.");
       }
 
@@ -771,6 +792,7 @@ export class ProjectService {
         accountData.parent_account_rid === null ||
         accountData.parent_account_rid === ""
       ) {
+        errorLog("Invalid account ID");
         throw new Error("Invalid account ID");
       }
       const userGroupType = await this.schemaService.getUserGroupType(userId);
@@ -823,6 +845,7 @@ export class ProjectService {
           };
         }
       }
+      logMessage(`Project List: ${JSON.stringify(accountData)}`);
 
       let accountRNumber = accountData.r_number;
 
@@ -894,6 +917,7 @@ export class ProjectService {
         },
       };
     } catch (err) {
+      errorLog("Error fetching project: " + (err as Error).message);
       throw new Error("Error fetching project: " + (err as Error).message);
     }
   }
@@ -918,13 +942,15 @@ export class ProjectService {
       const accountData = await this.schemaService.fetchAccountById(accountId);
 
       if (!accountData) {
-        throw new Error("Invalid account account ID.");
+        errorLog("Invalid  account ID.");
+        throw new Error("Invalid account ID.");
       }
 
       if (
         accountData.parent_account_rid === null ||
         accountData.parent_account_rid === ""
       ) {
+        errorLog("Invalid account ID");
         throw new Error("Invalid account ID");
       }
       const userGroupType = await this.schemaService.getUserGroupType(userId);
@@ -976,6 +1002,8 @@ export class ProjectService {
           };
         }
       }
+
+      logMessage(`Export Project List: ${JSON.stringify(accountData)}`);
 
       let accountRNumber = accountData.r_number;
 
@@ -1043,6 +1071,7 @@ export class ProjectService {
         },
       };
     } catch (err) {
+      errorLog("Error fetching project: " + (err as Error).message);
       throw new Error("Error fetching project: " + (err as Error).message);
     }
   }
@@ -1074,6 +1103,7 @@ export class ProjectService {
     const replacements: any[] = [];
 
     let accessControlWhere = "WHERE 1=1";
+    logMessage(`isCustomGlobal: ${isCustomGlobal}, isPOC: ${isPOC}, isdefaultparent: ${isdefaultparent}, userEmail: ${userEmail}, userId: ${userId}`);
 
     if (isCustomGlobal) {
       // If isPOC is also true, restrict to POC email
@@ -1146,6 +1176,7 @@ export class ProjectService {
       const isPOCProfile =
         userProfileType?.profileName === "Project Point of Contact";
       let accessibleIds: string[] = [];
+      logMessage(`allProjectList  - isFromUserGroup: ${isFromUserGroup}, accountRid: ${accountRid}, userGroupType: ${userGroupType}, userProfileType: ${userProfileType?.profileName}`);
       if (!isCustomGlobal) {
         accessibleIds = await this.getAccessibleProjectIds(
           userId,
@@ -1230,6 +1261,7 @@ export class ProjectService {
         },
       };
     } catch (err) {
+      errorLog("Error fetching project: " + (err as Error).message);
       throw new Error("Error fetching project: " + (err as Error).message);
     }
   }
@@ -1272,6 +1304,7 @@ export class ProjectService {
       const isPOCProfile =
         userProfileType?.profileName === "Project Point of Contact";
       let accessibleIds: string[] = [];
+      logMessage(`exportAllProjectList - userGroupType: ${userGroupType}, userProfileType: ${userProfileType?.profileName}, isCustomGlobal: ${isCustomGlobal}, isPOCProfile: ${isPOCProfile}`);
       if (!isCustomGlobal) {
         accessibleIds = await this.getAccessibleProjectIds(
           userId,
@@ -1368,7 +1401,7 @@ export class ProjectService {
           // Replace "0.00" in pattern with our real number
           return pattern.replace("0.00", formattedNumber);
         } catch (error) {
-          console.error("Error formatting number:", error);
+          errorLog("Error formatting number for export", (error as Error).message);
           return "-";
         }
       };
@@ -1570,6 +1603,7 @@ export class ProjectService {
             : projectData.created_by || "",
       });
     } catch (err) {
+      errorLog("Error adding timeline : " + (err as Error).message);
       throw new Error("Error adding timeline : " + (err as Error).message);
     }
   }
@@ -1632,6 +1666,7 @@ export class ProjectService {
 
       // await ProjectFiscalModel.create(projectFiscalData);
     } catch (err) {
+      errorLog("Error adding project fiscal: " + (err as Error).message);
       throw new Error("Error adding project fiscal: " + (err as Error).message);
     }
   }
@@ -1690,6 +1725,7 @@ export class ProjectService {
         },
       });
     } catch (err) {
+      errorLog("Error updating project fiscal: " + (err as Error).message);
       throw new Error(
         "Error updating project fiscal: " + (err as Error).message
       );
@@ -1752,6 +1788,7 @@ export class ProjectService {
 
       await ProjectHistoryModel.bulkCreate(historyChanges);
     } catch (err) {
+      errorLog("Error updating project history : " + (err as Error).message);
       throw new Error(
         "Error updating project history : " + (err as Error).message
       );
@@ -1818,6 +1855,7 @@ export class ProjectService {
         data: {},
       };
     } catch (err) {
+      errorLog("Error updating QRE% adjustment: " + (err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
@@ -2433,6 +2471,7 @@ export class ProjectService {
         },
       };
     } catch (err) {
+      errorLog("Error fetching project classification: " + (err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
@@ -2467,7 +2506,7 @@ export class ProjectService {
       });
       return result ? (result[0] as any).currency_rid : null;
     } catch (err) {
-      console.error("Error getting currency symbol:", err);
+      errorLog("Error fetching currency rid: " + (err as Error).message);
       return null;
     }
   }
@@ -2487,7 +2526,7 @@ export class ProjectService {
           );
           result.currency = usdCurrencyId[0]?.rid;
         } catch (err) {
-          console.error("Error getting USD currency rid:", err);
+        errorLog("Error fetching USD currency: " + (err as Error).message);
         }
       }
     }

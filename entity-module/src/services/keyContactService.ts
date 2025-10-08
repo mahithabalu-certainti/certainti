@@ -1,6 +1,7 @@
 import { Sequelize } from "sequelize";
 import { IKeyContactDetail, IUpdateKeyContactDetail } from "../utils/types";
 import { MAIN_SCHEMA_NAME, primaryKeyContacts, STATUS_MESSAGE } from "../utils/constants";
+import { logMessage } from "../utils/helpers";
 
 export class KeyContactService {
   async manageKeyContacts(
@@ -180,7 +181,7 @@ export class KeyContactService {
         }
       );
     } catch (error) {
-      console.error("Error updating key contact details:", error);
+      logMessage(`Error updating key contact details: ${error instanceof Error ? error.message : error}`);
       throw error;
     }
   }
@@ -207,7 +208,7 @@ export class KeyContactService {
         entity_type: "Project",
       });
     } catch (error) {
-      console.error("Error inserting key contact details:", error);
+      logMessage(`Error inserting key contact details: ${error instanceof Error ? error.message : error}`);
       throw error;
     }
   }
@@ -302,6 +303,7 @@ export class KeyContactService {
         };
       });
     } catch (err) {
+      logMessage(`Error enriching key roles: ${err instanceof Error ? err.message : err}`);
       throw new Error("Error enriching key roles: " + (err as Error).message);
     }
   }

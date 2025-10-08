@@ -4,6 +4,7 @@ import {
   generateExcelBase64,
   handleErrorResponse,
   handleSuccessResponse,
+  logMessage,
   successLog,
   validateRequest,
 } from "../utils/helpers";
@@ -28,6 +29,7 @@ async function createProjectTask(req: Request, res: Response): Promise<any> {
     const value = await validateRequest(req, createProjectTaskSchema, res);
 
     const userId = req.headers["x-user-id"] as string;
+    logMessage("Request received for creating project task with data: " + JSON.stringify(value) + " and userId: " + userId);
     const userPreference = value.user_preference
 
     if (!userId) {
@@ -97,6 +99,7 @@ async function getProjectTasks(req: Request, res: Response): Promise<void> {
       return;
     }
     const userId = req.headers["x-user-id"] as string;
+    logMessage("Request received for getProjectTasks: " + JSON.stringify(value) + " and userId: " + userId);
 
     if (!userId) {
       handleErrorResponse(
@@ -113,7 +116,7 @@ async function getProjectTasks(req: Request, res: Response): Promise<void> {
       try {
         value.filters = JSON.parse(value.filters);
       } catch (err) {
-        console.error("Invalid filters JSON:", value.filters);
+        errorLog(methodName, "Invalid filters JSON: " + (err as Error).message);
         value.filters = {};
       }
     }
@@ -162,6 +165,7 @@ async function getProjectTaskById(req: Request, res: Response): Promise<void> {
     if (!value) {
       return;
     }
+    logMessage("Request received for getProjectTaskById: " + JSON.stringify(value));  
     const userId = req.headers["x-user-id"] as string;
 
     if (!userId) {
@@ -222,6 +226,7 @@ async function exportAllProjectTasks(
       return;
     }
     const userId = req.headers["x-user-id"] as string;
+    logMessage("Request received for exportAllProjectTasks: " + JSON.stringify(value) + " and userId: " + userId);
 
     if (!userId) {
       handleErrorResponse(
@@ -238,7 +243,7 @@ async function exportAllProjectTasks(
       try {
         value.filters = JSON.parse(value.filters);
       } catch (err) {
-        console.error("Invalid filters JSON:", value.filters);
+        errorLog(methodName, "Invalid filters JSON: " + (err as Error).message);
         value.filters = {};
       }
     }
@@ -288,6 +293,7 @@ async function updateProjectTask(req: Request, res: Response): Promise<any> {
     const value = await validateRequest(req, updateProjectTaskSchema, res);
 
     const userId = req.headers["x-user-id"] as string;
+    logMessage("Request received for updating project task with data: " + JSON.stringify(value) + " and userId: " + userId);
     const userPreference = value.user_preference
 
     if (!userId) {
@@ -427,7 +433,7 @@ async function anomalyStatusUpdate(req: Request, res: Response): Promise<void> {
   }
 }
 
-async function fetchReCodeForPrjTask (req : Request, res : Response) : Promise<any> {
+async function fetchReCodeForPrjTask(req : Request, res : Response) : Promise<any> {
   const methodName = "fetchReCodeForPrjTask"
   try {
     const data = req.body;
@@ -435,6 +441,7 @@ async function fetchReCodeForPrjTask (req : Request, res : Response) : Promise<a
       handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, STATUS_MESSAGE.accountNoFound)
     }
     const result = await projectTaskService.listResourceCodeForProjectTask(data)
+    logMessage(`Request received for fetchReCodeForPrjTask: ` + JSON.stringify(data));
     if(result.statusCode == HttpStatus.SUCCESS) {
       return res.status(HttpStatus.SUCCESS).send({
         statusCode : HttpStatus.SUCCESS,
