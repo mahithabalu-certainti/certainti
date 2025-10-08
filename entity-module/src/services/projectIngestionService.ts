@@ -557,13 +557,13 @@ class ProjectIngestionService {
       attributes: [
         "project_code",
         [
-          Sequelize.fn("SUM", Sequelize.literal("COALESCE(total_cost_prj, 0)")),
+          Sequelize.fn("SUM", Sequelize.literal("total_cost_prj")),
           "total_cost_prj",
         ],
         [
           Sequelize.fn(
             "SUM",
-            Sequelize.literal("COALESCE(total_effort_prj, 0)")
+            Sequelize.literal("total_effort_prj")
           ),
           "total_effort_prj",
         ],
@@ -588,21 +588,21 @@ class ProjectIngestionService {
         [
           Sequelize.fn(
             "SUM",
-            Sequelize.literal("COALESCE(total_cost_fte_prj, 0)")
+            Sequelize.literal("total_cost_fte_prj")
           ),
           "total_cost_fte_prj",
         ],
         [
           Sequelize.fn(
             "SUM",
-            Sequelize.literal("COALESCE(total_cost_subcon_prj, 0)")
+            Sequelize.literal("total_cost_subcon_prj")
           ),
           "total_cost_subcon_prj",
         ],
         [
           Sequelize.fn(
             "SUM",
-            Sequelize.literal("COALESCE(total_cost_nonlabor_prj, 0)")
+            Sequelize.literal("total_cost_nonlabor_prj")
           ),
           "total_cost_nonlabor_prj",
         ],
@@ -2328,13 +2328,13 @@ class ProjectIngestionService {
     let exportData = rawResult.flatMap((project: any) => {
       const baseRow = {
         "Project Code": project.project_code || "-",
-        Name: project.project_name || "-",
-        "Project Type": project.project_type_name || "-",
-        "Account Name": project.account_name || "-",
-        "Fiscal Year": project.fiscal_year || "-",
-        "Project Classification": project.classification_name || "-",
-        "Customer Group": project.project_client_group || "-",
-        "Project Group": project?.project_group || "-",
+        "Name": "-",
+        "Project Type": "-",
+        "Account Name": "-",
+        "Fiscal Year": "-",
+        "Project Classification": "-",
+        "Customer Group": "-",
+        "Project Group": "-",
         "Project Effort (Hours)": project.total_effort || "-",
         "Project Cost":
           formatNumberForExport(project.total_cost, project.currency_symbol) ||
@@ -2354,23 +2354,13 @@ class ProjectIngestionService {
             project.total_cost_nonlabor,
             project.currency_symbol
           ) || "-",
-        "Assessment Status": project.assessment_status || "-",
-        "QRE %": project.qre || "-",
-        QRE:
-          formatNumberForExport(
-            project.qualified_research_expenditure,
-            project.currency_symbol
-          ) || "-",
-        "Project Point of Contact": project.project_point_of_contact || "-",
-        "Technical Point of Contact": project.technical_point_of_contact || "-",
-        Comments: project.comments || "-",
-        "Last Modified": project.modified_datetime
-          ? timezone && isValidTimezone(timezone)
-            ? moment(project.modified_datetime)
-                .tz(timezone)
-                .format("YYYY-MMM-DD, hh:mm:ss A")
-            : moment(project.modified_datetime).format("YYYY-MMM-DD, hh:mm:ss A")
-          : "-",
+        "Assessment Status": "-",
+        "QRE %": "-",
+        "QRE": "-",
+        "Project Point of Contact": "-",
+        "Technical Point of Contact": "-",
+        "Comments": "-",
+        "Last Modified": "-",
         "Project ID": project.r_number || "-",
       };
        const filteredProjectRow: Record<string, string> = {};

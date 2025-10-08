@@ -52,7 +52,7 @@ class AccountService {
    * @returns {Promise<{ statusCode: number, message: string, data?: { account: any } }>}
    * - An object containing the status code, message, and retrieved account data.
    */
-  async accountList(
+async accountList(
     page: number = 1,
     limit: number = 10,
     search: string,
@@ -69,9 +69,6 @@ class AccountService {
     data?: { account: any; count: number };
   }> {
     try {
-      logMessage(
-        `accountList params: page=${page}, limit=${limit}, search=${search}, sortBy=${sortBy}, sortOrder=${sortOrder}, fiscalYear=${fiscalYear}, userId=${userId}, filters=${JSON.stringify(filters)}, globalFilters=${JSON.stringify(globalFilters)}`
-      );
       const repository = this.getAccountRepository();
       const userGroupType = await this.schemaService.getUserGroupType(userId);
       const isCustomGlobal = userGroupType === "DEFAULT";
@@ -85,7 +82,6 @@ class AccountService {
           (acc) => acc.id
         );
         if (accessibleAccountIds.length === 0) {
-          logMessage("No accessible accounts found for user: " + userId);
           return {
             statusCode: HttpStatus.SUCCESS,
             message: "No accessible accounts found",
@@ -306,9 +302,19 @@ class AccountService {
           childAccountsByParent.get(account.rid) || []
         );
       });
-      let updatedAccount = { data: parentAccounts,total:0 };
+      let updatedAccount = await this.schemaService.insertFiscalInfoOnly(
+        parentAccounts,
+        filters,
+        limit,
+        offset,
+        finalSortBy,
+        finalSortOrder,
+        "create",
+        fiscalYear
+      );
+
       if (!isCustomGlobal) {
-        updatedAccount.data = parentAccounts.map((parent: any) => {
+        updatedAccount.data = updatedAccount.data.map((parent: any) => {
           if (parentIdsOnlyThroughChildren.includes(parent.rid)) {
             restrictedFields.forEach((field) => {
               parent[field] = null;
@@ -326,10 +332,6 @@ class AccountService {
         });
       }
 
-     
-
-   
-
       // Optimize count query
       let totalCount = await this.getOptimizedCount(
         repository,
@@ -345,7 +347,7 @@ class AccountService {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
-          account: {data: updatedAccount.data},
+          account: updatedAccount,
           count: !hasKeyContactFilter ? totalCount : updatedAccount?.total,
         },
       };

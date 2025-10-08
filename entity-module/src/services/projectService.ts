@@ -1442,13 +1442,13 @@ export class ProjectService {
         // Always add base project data row first
         const projectInfo = {
           "Project Code": project.project_code || "-",
-          "Project Name": project.project_name || "-",
-          "Project Type": project.project_type_name || "-",
-          "Account Name": project.account_name || "-",
+          "Project Name":  "-",
+          "Project Type": "-",
+          "Account Name": "-",
           "Fiscal Year": "-",
-          "Project Classification": project.classification_name || "-",
-          "Customer Group": project.project_client_group || "-",
-          "Project Group": project?.project_group || "-",
+          "Project Classification": "-",
+          "Customer Group": "-",
+          "Project Group": "-",
           "Project Effort (Hours)": project.total_effort || "-",
           "Project Cost":
             formatNumberForExport(
@@ -1470,22 +1470,13 @@ export class ProjectService {
               project.total_cost_nonlabor,
               project.currency_symbol
             ) || "-",
-          "Assessment Status": project.assessment_status || "-",
-          "QRE%": project.qre || "-",
+          "Assessment Status": "-",
+          "QRE%": "-",
           QRE: "-",
-          "Project Point of Contact": project.project_point_of_contact || "-",
-          "Technical Point of Contact":
-            project.technical_point_of_contact || "-",
-          Comments: project.comments || "-",
-          "Last Modified": project.modified_datetime
-            ? timezone && isValidTimezone(timezone)
-              ? moment(project.modified_datetime)
-                  .tz(timezone)
-                  .format("YYYY-MMM-DD, hh:mm:ss A")
-              : moment(project.modified_datetime).format(
-                  "YYYY-MMM-DD, hh:mm:ss A"
-                )
-            : "-",
+          "Project Point of Contact": "-",
+          "Technical Point of Contact":"-",
+          Comments: "-",
+          "Last Modified": "-",
           "Project ID": project.r_number || "-",
         };
         const filteredProjectRow: Record<string, string> = {};
