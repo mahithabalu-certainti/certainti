@@ -173,15 +173,7 @@ export class ProjectResourceService {
                   "Effort cannot exceed the total hours in the duration",
               };
             }
-          } else if (start_date && !end_date) {
-            if (newEffort.gt(24)) {
-              return {
-                statusCode: HttpStatus.BAD_REQUEST,
-                message: "Validation Error",
-                errorMessage: "Effort cannot exceed 24 hours for the day",
-              };
-            }
-          }
+          } 
         }
 
         let status = "Active";
@@ -733,15 +725,6 @@ export class ProjectResourceService {
               statusCode: HttpStatus.BAD_REQUEST,
               message: "Validation Error",
               errorMessage: validation.errorMessage,
-            };
-          }
-        } else if (projectResourceData.start_date && !projectResourceData.end_date) {
-          if (newEffort.gt(24)) {
-            logMessage("Validation Error: Effort cannot exceed 24 hours for the day");
-            return {
-              statusCode: HttpStatus.BAD_REQUEST,
-              message: "Validation Error",
-              errorMessage: "Effort cannot exceed 24 hours for the day",
             };
           }
         }
