@@ -100,6 +100,14 @@ export const PreviewDialog: React.FC<IPreviewDialogProps> = ({
       saveAndSendComplete(externalRecipiants);
     }
   };
+  const cancel = () => {
+    if (enableRecipiants) {
+      setEnableRecipiants(false);
+      setErrors({ email: '', name: '' });
+    } else {
+      setPreviewDialog(false);
+    }
+  };
 
   const memoizedProject = React.useMemo(
     () =>
@@ -373,11 +381,7 @@ export const PreviewDialog: React.FC<IPreviewDialogProps> = ({
               fontSize: '13px',
               fontWeight: 400,
             }}
-            onClick={
-              enableRecipiants
-                ? () => setEnableRecipiants(false)
-                : () => setPreviewDialog(false)
-            }
+            onClick={cancel}
             disabled={createLoading}
           />
           <Tooltip

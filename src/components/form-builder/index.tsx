@@ -1411,6 +1411,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   height: '32px',
                   background: field.error ? '#FEF2F2' : 'transparent',
                 },
+                '& .MuiInputBase-input::placeholder': {
+                  color: '#7D98B6',
+                  opacity: 1,
+                },
                 '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline':
                   {
                     border: '2px solid #60A5FA',

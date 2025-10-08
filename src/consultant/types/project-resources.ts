@@ -186,7 +186,7 @@ interface ProjectResourceType {
 interface ProjectResourceTaskCodeData {
   rid: string;
   resource_code: string;
-  // resource_name: string;
+  resource_name: string;
   project_resource_role: string;
 }
 // skill type
