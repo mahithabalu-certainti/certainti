@@ -1,15 +1,29 @@
-import React, { useMemo } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useLocation, useParams } from 'react-router-dom';
 import { useToast } from '../../../../hooks';
 import { useManageUserDetail } from '../../../../admin/service';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
-import { AllPermissions, Layout } from '../../../../common-service';
+import {
+  AllPermissions,
+  Layout,
+  OnChange,
+  useGetAllCountries,
+} from '../../../../common-service';
 import { FormData } from './form-data';
 import { ManageUserIcon } from '../../../../assets';
 import TextButton from '../../../../components/button/text-button';
 import SkeletonForm from '../../../../components/form-builder/skeleton-form';
 import { FormBuilder } from '../../../../components';
+import { SelectOption } from '../../../types';
+import { useGetResourceType } from '../../../services/resource-list';
+import { useFetchState } from '../../../services/account';
+import {
+  useCreateCases,
+  useUpdateCases,
+} from '../../../services/cases/cases-form/case-form-service';
+import { transFormPayload } from './utils';
+import { caseformPayload } from '../../../types/cases-details';
 
 const HEADER_STYLES = {
   adminPermission:
@@ -23,16 +37,34 @@ export const CreateCases: React.FC = () => {
   const { successToast } = useToast();
   const location = useLocation();
   const { userid } = useParams();
-  const navigate = useNavigate();
-
+  // const navigate = useNavigate();
+  const [currentCountry, setCurrentCountry] = useState({
+    country: '',
+    state: '',
+  });
   const userDetails = useManageUserDetail(userid as string);
+  const resourceTypeOptions = useGetResourceType();
+  const allCountries = useGetAllCountries();
+  const states = useFetchState(currentCountry.country);
   const userData = userDetails.data?.data?.users;
   const userFullName =
     `${userData?.first_name || ''} ${userData?.last_name || ''}`.trim();
 
-  // const updateUser = useUpdateUserDetails();
-  // const createUser = useCreateUserDetails();z
-
+  const updatCases = useUpdateCases();
+  const creatCases = useCreateCases();
+  const commonSuccess = creatCases.isSuccess || updatCases.isSuccess;
+  const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
+  useEffect(() => {
+    if (commonSuccess) {
+      successToast(
+        isEditView
+          ? 'Project Task updated successfully'
+          : 'Project Task created successfully'
+      );
+      goBack();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [commonSuccess, isEditView]);
   // Permission Mangement
   const { permission } = useSelector((state: RootState) => state.permission);
 
@@ -42,8 +74,6 @@ export const CreateCases: React.FC = () => {
         ?.fields ?? [],
     [permission]
   );
-
-  const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
 
   const permissionMap = useMemo(() => {
     const map: Record<string, { read: boolean; edit: boolean }> = {};
@@ -55,64 +85,73 @@ export const CreateCases: React.FC = () => {
 
   // Memoized Options
 
-  const submitData = () => {
-    // const payload = transFormPayload(
-    //   data,
-    //   isEditView,
-    //   userData,
-    // );
-    // if (isEditView && userData) {
-    //   updateUser.mutate(payload, {
-    //     onSuccess: (response) => {
-    //       if (
-    //         response?.statusCode === 210 &&
-    //         response.data.requiresConfirmation
-    //       ) {
-    //         setConfirmationState({
-    //           isOpen: true,
-    //           message:
-    //             response.statusMessage ?? 'Are you sure you want to proceed?',
-    //           onConfirm: () => {
-    //             const updatedPayload = {
-    //               ...payload,
-    //               remove_group_memberships: true,
-    //             };
-    //             updateUser.mutate(updatedPayload, {
-    //               onSuccess: () => {
-    //                 setUserUpdateSuccess(true);
-    //               },
-    //             });
-    //             setConfirmationState((prev) => ({
-    //               ...prev,
-    //               isOpen: false,
-    //               message: '',
-    //             }));
-    //           },
-    //         });
-    //       } else if (response?.statusCode === 200) {
-    //         setUserUpdateSuccess(true);
-    //       }
-    //     },
-    //     onError: (error) => {
-    //       console.error('Update failed:', error);
-    //     },
-    //   });
-    // } else {
-    //   createUser.mutate(payload);
-    // }
+  const submitData = (formValues: Partial<caseformPayload>) => {
+    const payload = transFormPayload(formValues);
+    if (isEditView && userData) {
+      updatCases.mutate(payload);
+    } else {
+      creatCases.mutate(payload);
+    }
   };
 
   const handleExternalSubmit = () => {
     formRef.current?.requestSubmit(); // This will trigger the form's onSubmit
   };
 
-  const onChangeField = () => {};
+  const onChangeField = ({ fieldName, fieldValue }: OnChange) => {
+    if (fieldName === 'country') {
+      setCurrentCountry({
+        country: fieldValue as string,
+        state: '',
+      });
+    }
+    if (fieldName === 'state') {
+      setCurrentCountry((prev) => ({
+        ...prev,
+        state: fieldValue as string,
+      }));
+    }
+  };
 
   const goBack = () => {
     window.history.back();
   };
+  const memoizedResourceType: SelectOption[] = useMemo(
+    () =>
+      resourceTypeOptions?.data?.data?.resouceType.map((item) => ({
+        label: item.resource_type_name,
+        value: item.rid,
+      })) || [],
+    [resourceTypeOptions?.data?.data?.resouceType]
+  );
+  const memoizedCountry: SelectOption[] = useMemo(() => {
+    const countries = allCountries.data?.data.country || [];
+    return countries
+      .slice()
+      .sort((a, b) => a.country_name.localeCompare(b.country_name))
+      .map((country) => ({
+        label: country.country_name,
+        value: country.rid,
+      }));
+  }, [allCountries.data?.data.country]);
 
-  const formConfig = FormData(isEditView, permissionMap);
+  const memoizedState: SelectOption[] = useMemo(
+    () =>
+      states.data?.data.states.map((role) => ({
+        label: role.state_name,
+        value: role.rid,
+      })) || [],
+    [states.data?.data.states]
+  );
+
+  const formConfig = FormData(
+    isEditView,
+    permissionMap,
+    memoizedResourceType,
+    memoizedCountry,
+    memoizedState,
+    states.isLoading
+  );
 
   const formLoading = userDetails.isLoading;
 
