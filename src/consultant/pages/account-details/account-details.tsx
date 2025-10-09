@@ -688,6 +688,7 @@ export const AccountDetails = () => {
             accountDetails={{ ...data?.data } as accountDetailsProps}
             setExportType={setExportType}
             setInteractionsParams={setInteractionsParams}
+            loading={isPending}
           />
         );
       case 'cases':
