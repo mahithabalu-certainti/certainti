@@ -1931,7 +1931,7 @@ private createUserCountCondition(operator: string, value: number): any {
       const isValidTZ = timezone &&  isValidTimezone(timezone);
       const formatDate = (date?: Date) =>
         date
-          ? moment(date).tz(isValidTZ ? timezone : 'UTC').format('YYYY-MM-DD, hh:mm:ss A')
+          ? moment(date).tz(isValidTZ ? timezone : 'UTC').format('YYYY-MMM-DD, hh:mm:ss A')
           : null;
       
        
