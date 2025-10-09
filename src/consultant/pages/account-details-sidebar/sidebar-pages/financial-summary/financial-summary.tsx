@@ -79,6 +79,7 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
   const [searchText, setSearchText] = useState('');
+  const [resetSearch, setResetSearch] = useState(false);
 
   const { permission } = useSelector((state: RootState) => state.permission);
 
@@ -157,10 +158,16 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
     setCount(0);
     setAppliedFilters({});
     clearFilters(`account-financial-${tabParam}`);
+    setSearchText('');
+    setResetSearch(true);
   };
 
   const handleFilter = () => {
     setShowFilter(!showFilter);
+  };
+
+  const handleSearchReset = () => {
+    setResetSearch(false);
   };
 
   const tabs = [
@@ -242,6 +249,8 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
         searchDisabled={false}
         searchPlaceholder='Search'
         onSearch={(text) => setSearchText(text)}
+        searchReset={resetSearch}
+        onSearchReset={handleSearchReset}
       />
       <SectionHeader
         title='Financial Summary'

@@ -178,7 +178,11 @@ const UserList: React.FC = () => {
     },
     {
       label: 'Export',
-      onClick: () => exportUserList({ ...tableParams, timezone }),
+      onClick: () => exportUserList({ 
+        ...tableParams, 
+        timezone,
+        ...(searchText && { search: searchText })
+      }),
       hide: !isUserExportEnable,
     },
   ];

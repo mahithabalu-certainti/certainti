@@ -127,9 +127,11 @@ const FinancialProjectCost: React.FC<FinancialProjectCostProps> = ({
       sortOrder: tableParams.sortOrder,
       filters: appliedFilters,
       fiscalYear: Number(fiscalyear),
+      accountRid: accountid,
+      search: searchValue,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tableParams, fiscalyear, appliedFilters]);
+  }, [tableParams, fiscalyear, appliedFilters, searchValue, accountid]);
 
   const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
     const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';

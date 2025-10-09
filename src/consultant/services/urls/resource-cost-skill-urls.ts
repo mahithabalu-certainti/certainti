@@ -136,6 +136,7 @@ export const ExportResourceCostUrl = ({
   rNumber,
   resourceRid,
   filter,
+  search,
 }: ExportModule): string => {
   const baseUrl = '/entityService/api/resource_cost/export';
   const searchParams = new URLSearchParams();
@@ -146,6 +147,7 @@ export const ExportResourceCostUrl = ({
   if (fiscalYear !== undefined) searchParams.set('fiscalYear', fiscalYear);
   if (filter !== undefined) searchParams.set('filters', JSON.stringify(filter));
   if (resourceRid !== undefined) searchParams.set('resourceRid', resourceRid);
+  if (search) searchParams.set('search', search);
   const queryString = searchParams.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 };
@@ -156,6 +158,7 @@ export const ExportResourceSkillUrl = ({
   rNumber,
   filter,
   resourceRid,
+  search,
 }: ExportModule): string => {
   const baseUrl = '/entityService/api/resource_skill/export';
   const searchParams = new URLSearchParams();
@@ -166,6 +169,7 @@ export const ExportResourceSkillUrl = ({
   if (fiscalYear !== undefined) searchParams.set('fiscalYear', fiscalYear);
   if (filter !== undefined) searchParams.set('filters', JSON.stringify(filter));
   if (resourceRid !== undefined) searchParams.set('resourceRid', resourceRid);
+  if (search) searchParams.set('search', search);
   const queryString = searchParams.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 };

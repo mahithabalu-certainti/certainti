@@ -67,6 +67,7 @@ export const getAccountExportUrl = ({
   filters,
   globalFilters,
   fiscalYear,
+  search,
 }: AccountListURLParams): string => {
   const baseUrl = '/api/accounts/export';
   const searchParams = new URLSearchParams();
@@ -80,6 +81,9 @@ export const getAccountExportUrl = ({
     searchParams.set('globalFilters', JSON.stringify(globalFilters));
   }
   if (fiscalYear) searchParams.set('fiscalYear', fiscalYear);
+  if (search) {
+    searchParams.set('search', search);
+  }
   const queryString = searchParams.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 };

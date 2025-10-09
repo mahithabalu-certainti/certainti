@@ -145,9 +145,10 @@ const Attachments: React.FC<AttachmentsProps> = ({
       sortOrder: sortOrder,
       filters: appliedFilters,
       fiscalYear: convertedFiscalYear,
+      search: searchText,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sortField, sortOrder, appliedFilters]);
+  }, [sortField, sortOrder, appliedFilters, convertedFiscalYear, searchText]);
   const minYear = 1950;
   const currentYear = new Date().getFullYear();
   const fiscalYears = getFiscalYears(currentYear - minYear + 1);

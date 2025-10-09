@@ -1,6 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NewFilterIcon, UserIcon } from '../../../../assets';
-import React, { Suspense, useEffect, useMemo, useState } from 'react';
+import React, {
+  Suspense,
+  useEffect,
+  useMemo,
+  useState,
+  useCallback,
+} from 'react';
 import { ManageAccountTable } from './table';
 import { ProjectListParams } from '../../../../consultant/types/project';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -51,6 +57,7 @@ const AccountList = () => {
     Record<string, FilterType>
   >({});
   const [searchText, setSearchText] = useState<string>('');
+  const [searchKey, setSearchKey] = useState<number>(0);
   const [tableParams, setTableParams] = useState<ProjectListParams>({
     page: page,
     limit: 100,
@@ -79,7 +86,6 @@ const AccountList = () => {
       filters: appliedFilters,
       search: searchText,
     }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appliedFilters, searchText]);
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
@@ -94,17 +100,30 @@ const AccountList = () => {
 
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     searchParams.delete('accountList');
     searchParams.delete('username');
     searchParams.delete('groupname');
     setAppliedFilters({});
     clearFilters();
+    setSearchText('');
+    setSearchKey((prev) => prev + 1);
     navigate({ search: searchParams.toString() });
-  };
-  const handleBackAccount = () => {
+  }, [searchParams, setAppliedFilters, setSearchText, setSearchKey, navigate]);
+
+  const handleSearchReset = useCallback(() => {
+    setSearchText('');
+    setSearchKey((prev) => prev + 1);
+  }, []);
+
+  const handleBackAccount = useCallback(() => {
+    setAppliedFilters({});
+    clearFilters();
+    setSearchText('');
+    setSearchKey((prev) => prev + 1);
     navigate(MANAGE_ACCOUNT_ACCESS);
-  };
+  }, [setAppliedFilters, setSearchText, setSearchKey, navigate]);
+
   const handleCloseFilter = () => {
     setAnchorEl(null);
   };
@@ -153,7 +172,7 @@ const AccountList = () => {
       successToast('projects updated successfully');
       handleBack();
     }
-  }, [commonSuccess]);
+  }, [commonSuccess, successToast, handleBack]);
   const handleSubmit = () => {
     const constructData: Partial<any> = {
       account_rid: accountId,
@@ -360,6 +379,7 @@ const AccountList = () => {
         <div className='flex items-center gap-3'>
           <div className='flex gap-1 relative'>
             <SearchBar
+              key={searchKey}
               initialSearchText={searchText}
               onSearch={(value) => {
                 setSearchText(value);
@@ -470,6 +490,7 @@ const AccountList = () => {
             setColumnAnchorEl={setColumnAnchorEl}
             columnAnchorEl={columnAnchorEl}
             searchValue={searchText}
+            onSearchReset={handleSearchReset}
           />
         </div>
       )}
@@ -485,6 +506,7 @@ const AccountList = () => {
             setColumnAnchorEl={setColumnAnchorEl}
             columnAnchorEl={columnAnchorEl}
             searchValue={searchText}
+            onSearchReset={handleSearchReset}
           />
         </div>
       )}

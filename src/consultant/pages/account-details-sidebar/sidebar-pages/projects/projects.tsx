@@ -224,9 +224,10 @@ const Projects: React.FC<ProjectsProps> = ({
       filters: appliedFilters,
       fiscalYear: convertedFiscalYear,
       accountNumber: accountDetails?.accountDetails?.account_rid || '',
+      search: searchText,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sortField, sortOrder, appliedFilters, convertedFiscalYear]);
+  }, [sortField, sortOrder, appliedFilters, convertedFiscalYear, searchText]);
 
   const handleFilter = () => {
     setShowFilter(!showFilter);

@@ -152,6 +152,7 @@ const Interactions: React.FC<InteractionsProps> = ({
     (state: RootState) => state.permission
   );
   const [searchText, setSearchText] = useState('');
+  const [resetSearch, setResetSearch] = useState(false);
   const newFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
   const interactionId = searchParams.get('interaction_id');
   const interactionNumber = searchParams.get('interaction_number') || '';
@@ -342,10 +343,11 @@ const Interactions: React.FC<InteractionsProps> = ({
       page: currentPage,
       sortOrder: sortBy,
       limit: rowsPerPage,
+      search: searchText,
     };
     setInteractionsParams(updatedParams);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sortField, appliedFilters, currentPage, rowsPerPage, sortBy]);
+  }, [sortField, appliedFilters, currentPage, rowsPerPage, sortBy, searchText]);
 
   const handleRefresh = () => {
     setRefreshInteractions(Date.now());
@@ -428,6 +430,8 @@ const Interactions: React.FC<InteractionsProps> = ({
       setSelectedRows([]);
       setClearSelectedRows((prev) => !prev);
       setCount(0);
+      setSearchText('');
+      setResetSearch(true);
     }
   };
   const handleBackClick = () => {
@@ -438,6 +442,8 @@ const Interactions: React.FC<InteractionsProps> = ({
       searchParams.delete('interaction_rid');
       searchParams.delete('interaction_number');
       navigate({ search: searchParams.toString() }, { replace: true });
+      setSearchText('');
+      setResetSearch(true);
     }
   };
   const handleBackFromResponse = () => {
@@ -449,7 +455,13 @@ const Interactions: React.FC<InteractionsProps> = ({
       searchParams.delete('interaction_attachment_id');
       navigate({ search: searchParams.toString() }, { replace: true });
     }
+    setSearchText('');
+    setResetSearch(true);
   };
+  const handleSearchReset = () => {
+    setResetSearch(false);
+  };
+
   const disableInteractionEditBtn = (row: InteractionList): boolean => {
     const status = (row.status_name || '').toLowerCase() as StatusTypeEnum;
     return [
@@ -480,6 +492,8 @@ const Interactions: React.FC<InteractionsProps> = ({
       navigate({ search: searchParams.toString() }, { replace: true });
       setSelectedRows([]);
       setClearSelectedRows((prev) => !prev);
+      setSearchText('');
+      setResetSearch(true);
     }
   };
   const handleViewInteractionAttachmentCount = (
@@ -497,6 +511,8 @@ const Interactions: React.FC<InteractionsProps> = ({
       navigate({ search: searchParams.toString() }, { replace: true });
       setSelectedRows([]);
       setClearSelectedRows((prev) => !prev);
+      setSearchText('');
+      setResetSearch(true);
     }
   };
 
@@ -692,6 +708,8 @@ const Interactions: React.FC<InteractionsProps> = ({
           searchDisabled={false}
           searchPlaceholder='Search'
           onSearch={(text) => setSearchText(text)}
+          searchReset={resetSearch}
+          onSearchReset={handleSearchReset}
         />
         {viewDetails && !viewResponseHistory ? (
           <InteractionDetails

@@ -54,6 +54,7 @@ export const ProjectFinancialResourceCostExportURL = ({
   accountNumber,
   projectRid,
   accountRid,
+  search,
 }: ProjectFinancialResourceExportParams): string => {
   const baseUrl = `/api/resource_cost/financialHighlights/export/${projectRid ? 'project' : 'account'}`;
   const searchParams = new URLSearchParams();
@@ -75,6 +76,11 @@ export const ProjectFinancialResourceCostExportURL = ({
   if (filters && Object.keys(filters).length > 0) {
     searchParams.set('filters', JSON.stringify(filters));
   }
+
+  if (search) {
+    searchParams.set('search', search);
+  }
+
   const queryString = searchParams.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 };

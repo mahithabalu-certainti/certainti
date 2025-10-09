@@ -248,6 +248,7 @@ export const AccountDetails = () => {
       filters: {},
       page: 1,
       limit: 100,
+      search: '',
     });
   const [timesheetProjectParams, setTimesheetProjectParams] =
     useState<TimesheetProjectExportListURLParams>({
@@ -456,6 +457,7 @@ export const AccountDetails = () => {
           sort_by: interactionsParams?.sortOrder || 'ASC',
           filters: interactionsParams?.filters || {},
           fiscal_year: convertedFiscalYear,
+          search: interactionsParams?.search || '',
           flag: 'account',
           sort: 'r_number',
           page: 1,

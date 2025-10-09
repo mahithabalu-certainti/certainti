@@ -54,6 +54,7 @@ export const ProjectFinancialProjectCostExportURL = ({
   filters,
   fiscalYear,
   accountRid,
+  search,
 }: ProjectFinancialProjectExportParams): string => {
   const baseUrl = `/api/financialHighlight/list/projectCost/export`;
   const searchParams = new URLSearchParams();
@@ -66,6 +67,9 @@ export const ProjectFinancialProjectCostExportURL = ({
   // Only add filters if the object has properties
   if (filters && Object.keys(filters).length > 0) {
     searchParams.set('filters', JSON.stringify(filters));
+  }
+  if (search) {
+    searchParams.set('search', search);
   }
   const queryString = searchParams.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;

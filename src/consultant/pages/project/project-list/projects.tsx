@@ -128,6 +128,7 @@ export const Projects: React.FC = () => {
       globalFilters: tableParams.globalFilters,
       timezone: systemTimezone,
       bothParentAndChild: false,
+      search: searchText || undefined,
       // bothParentAndChild: toggleEnabled, // Commented for it may use in future
     };
     exportProjectData('projectall', projectParams);

@@ -113,6 +113,7 @@ export const Attachments: React.FC = () => {
       filters: appliedFilters,
       fiscalYear: tableParams.fiscalYear,
       globalFilters: tableParams.globalFilters,
+      search: searchText || undefined,
     };
     exportAttachmentsData('all_attachments', projectParams);
   };

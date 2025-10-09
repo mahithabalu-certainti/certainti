@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SearchBlackIcon } from '../../assets';
 
 type SearchBarProps = {
@@ -7,6 +7,8 @@ type SearchBarProps = {
   placeholder?: string;
   disabled?: boolean;
   hide?: boolean;
+  reset?: boolean;
+  onReset?: () => void;
 };
 
 const SearchBar: React.FC<SearchBarProps> = React.memo(
@@ -16,8 +18,18 @@ const SearchBar: React.FC<SearchBarProps> = React.memo(
     placeholder = 'Search',
     disabled = false,
     hide = false,
+    reset = false,
+    onReset,
   }) => {
     const [text, setText] = useState<string>(initialSearchText);
+
+    useEffect(() => {
+      if (reset) {
+        setText('');
+        onSearch('');
+        onReset?.();
+      }
+    }, [reset, onSearch, onReset]);
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === 'Enter' && !disabled) {

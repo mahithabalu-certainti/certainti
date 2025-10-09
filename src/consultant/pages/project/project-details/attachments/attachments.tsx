@@ -147,8 +147,9 @@ const Attachments: React.FC<AttachmentsProps> = ({
       sortOrder: sortOrder,
       filters: appliedFilters,
       fiscalYear: convertedFiscalYear,
+      search: searchText,
     });
-  }, [sortField, sortOrder, appliedFilters, convertedFiscalYear]);
+  }, [sortField, sortOrder, appliedFilters, convertedFiscalYear, searchText]);
 
   const handleFilter = () => {
     setShowFilter(!showFilter);

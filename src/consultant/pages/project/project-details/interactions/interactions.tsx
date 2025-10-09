@@ -131,6 +131,7 @@ const Interactions: React.FC<InteractionsProps> = ({
     filter: {},
   });
   const [searchText, setSearchText] = useState('');
+  const [resetSearch, setResetSearch] = useState(false);
 
   const isModalOpen = Boolean(columnAnchorEl);
   const handleColumnVisibility = (
@@ -354,6 +355,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       page: currentPage,
       sortOrder: sortBy,
       limit: rowsPerPage,
+      search: searchText,
     };
     setInteractionsParams(updatedParams);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -364,6 +366,7 @@ const Interactions: React.FC<InteractionsProps> = ({
     rowsPerPage,
     sortBy,
     interactionHistoryId,
+    searchText,
   ]);
 
   const handleRefresh = () => {
@@ -501,6 +504,8 @@ const Interactions: React.FC<InteractionsProps> = ({
       setSelectedRows([]);
       setCount(0);
       setClearSelectedRows((prev) => !prev);
+      setSearchText('');
+      setResetSearch(true);
     }
   };
 
@@ -510,6 +515,9 @@ const Interactions: React.FC<InteractionsProps> = ({
       navigate({ search: searchParams.toString() }, { replace: true });
       setSelectedRows([]);
       setClearSelectedRows((prev) => !prev);
+      // Reset search when viewing interaction history
+      setSearchText('');
+      setResetSearch(true);
     }
   };
 
@@ -528,6 +536,8 @@ const Interactions: React.FC<InteractionsProps> = ({
       navigate({ search: searchParams.toString() }, { replace: true });
       setSelectedRows([]);
       setClearSelectedRows((prev) => !prev);
+      setSearchText('');
+      setResetSearch(true);
     }
   };
 
@@ -540,6 +550,8 @@ const Interactions: React.FC<InteractionsProps> = ({
       searchParams.delete('interaction_number');
       searchParams.delete('project_fiscal_rid');
       navigate({ search: searchParams.toString() }, { replace: true });
+      setSearchText('');
+      setResetSearch(true);
     }
   };
 
@@ -552,6 +564,13 @@ const Interactions: React.FC<InteractionsProps> = ({
       searchParams.delete('interaction_attachment_id');
       navigate({ search: searchParams.toString() }, { replace: true });
     }
+    // Reset search when navigating back from response
+    setSearchText('');
+    setResetSearch(true);
+  };
+
+  const handleSearchReset = () => {
+    setResetSearch(false);
   };
 
   const interactionModelColumn = getProjectInteractionListModelColumns(
@@ -722,6 +741,8 @@ const Interactions: React.FC<InteractionsProps> = ({
             viewResponseHistory || (!viewDetails && !viewInteractionHistory)
           }
           onSearch={(text) => setSearchText(text)}
+          searchReset={resetSearch}
+          onSearchReset={handleSearchReset}
         />
         {viewDetails && !viewResponseHistory ? (
           <InteractionDetails
