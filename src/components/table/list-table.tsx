@@ -991,7 +991,7 @@ const ListTable = <T extends RowData>({
                         isAvailableAction
                           ? '82px'
                           : selectable &&
-                              actionMenuItems?.length < 1 &&
+                              actionMenuItems?.length &&
                               !isAvailableAction
                             ? '32px'
                             : !selectable &&
@@ -1018,7 +1018,7 @@ const ListTable = <T extends RowData>({
                         isAvailableAction
                           ? '82px'
                           : selectable &&
-                              actionMenuItems?.length < 1 &&
+                              actionMenuItems?.length &&
                               !isAvailableAction
                             ? '32px'
                             : !selectable &&
@@ -1081,7 +1081,8 @@ const ListTable = <T extends RowData>({
                 }
                 selectable={selectable}
                 hasActions={
-                  actionMenuItems?.length > 0 || actionDisplayMode === 'toggle'
+                  (actionMenuItems?.length > 0 && isAvailableAction) ||
+                  actionDisplayMode === 'toggle'
                 }
                 stickyColumnsCount={stickyColumnsCount}
               />
@@ -1332,7 +1333,8 @@ const ListTable = <T extends RowData>({
                             zIndex: 7,
                           }}
                         >
-                          {rowLevel === toggleLevel && (
+                          {(typeof toggleLevel !== 'number' ||
+                            rowLevel === toggleLevel) && (
                             <div className='text-center'>
                               <Tooltip
                                 title={
@@ -1424,7 +1426,7 @@ const ListTable = <T extends RowData>({
                                 isAvailableAction
                                   ? '82px'
                                   : selectable &&
-                                      actionMenuItems?.length < 1 &&
+                                      actionMenuItems?.length &&
                                       !isAvailableAction
                                     ? '32px'
                                     : !selectable &&

@@ -159,6 +159,11 @@ export const AccountDetails = () => {
     AllPermissions.ATTACHMENT_EXPORT
   );
 
+  const isNotesExportEnable = checkPermission(
+    permission,
+    AllPermissions.NOTES_EXPORT
+  );
+
   const isImportExportEnable = checkPermission(
     permission,
     AllPermissions.IMPORTS_EXPORT
@@ -545,13 +550,13 @@ export const AccountDetails = () => {
     } else if (list === 'resources' && tab === 'attachments') {
       return !isAttachmentExportEnable;
     } else if (list === 'resources' && tab === 'notes' && !noteView) {
-      return false;
+      return !isNotesExportEnable;
     } else if (list === 'projects') {
       return !isProjectExportEnable;
     } else if (list === 'attachments') {
       return !isAttachmentExportEnable;
     } else if (list === 'notes' && !noteView) {
-      return false;
+      return !isNotesExportEnable;
     } else if (list === 'imports') {
       return !isImportExportEnable;
     } else if (list === 'financial' && tab === 'resource_cost') {
@@ -690,6 +695,7 @@ export const AccountDetails = () => {
             accountDetails={{ ...data?.data } as accountDetailsProps}
             setExportType={setExportType}
             setInteractionsParams={setInteractionsParams}
+            loading={isPending}
           />
         );
       case 'cases':

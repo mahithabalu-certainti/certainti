@@ -14,6 +14,7 @@ interface FileListProps {
   setSelectedFiles: (files: File[]) => void;
   existingFiles?: ExistingFile[];
   onRemoveExistingFile?: (index: number) => void;
+  disabled?: boolean;
 }
 
 export const FileList: React.FC<FileListProps> = ({
@@ -22,6 +23,7 @@ export const FileList: React.FC<FileListProps> = ({
   fileInputRef,
   setSelectedFiles,
   onRemoveExistingFile,
+  disabled,
 }) => {
   const hasFiles = selectedFiles.length > 0 || existingFiles.length > 0;
 
@@ -38,6 +40,10 @@ export const FileList: React.FC<FileListProps> = ({
         <div
           key={`existing-${index}`}
           className='flex items-center justify-between bg-white border border-[#CBD6E2] rounded-md px-3 py-1 shadow-sm'
+          style={{
+            opacity: disabled ? '0.7' : '1',
+            pointerEvents: disabled ? 'none' : 'all',
+          }}
         >
           <div className='flex items-center gap-2 flex-1 min-w-0'>
             <AttachmentsSideIcon className='w-[14px] h-[14px]' />
@@ -76,6 +82,10 @@ export const FileList: React.FC<FileListProps> = ({
         <div
           key={index}
           className='flex items-center justify-between bg-white border border-[#CBD6E2] rounded-md px-3 py-1 shadow-sm'
+          style={{
+            opacity: disabled ? '0.7' : '1',
+            pointerEvents: disabled ? 'none' : 'all',
+          }}
         >
           <div className='flex items-center gap-2 flex-1 min-w-0'>
             <AttachmentsSideIcon className='w-[14px] h-[14px]' />

@@ -1,9 +1,12 @@
 import { useSelector } from 'react-redux';
 import { FilterState, NotesList, NotesListURLParams } from '../../../../types';
 import { RootState } from '../../../../../store/store';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAllNotesList } from '../../../../services/notes/notes-service';
-import { reshapeGlobalFilter } from '../../../../../common-utils';
+import {
+  checkPermission,
+  reshapeGlobalFilter,
+} from '../../../../../common-utils';
 import { getNotesTableColumns } from '../../helpers';
 import {
   ListTable,
@@ -14,7 +17,7 @@ import {
   FieldChangeValue,
   ShowHideTableColumn,
 } from '../../../../../components/table/types';
-import { FilterTypes } from '../../../../../common-service';
+import { AllPermissions, FilterTypes } from '../../../../../common-service';
 import { useToast } from '../../../../../hooks';
 import { useMutation } from '@apollo/client';
 import { NOTES_UPDATE } from '../../../../../api/graphql/queries/notes-query';
@@ -52,6 +55,7 @@ export const NotesTable: React.FC<NotesTableProps> = ({
     { filters: unknown; fiscalYear: string }
   >((state: RootState) => state.account);
   const [notesList, setNotesList] = useState<NotesList[]>([]);
+  const { permission } = useSelector((state: RootState) => state.permission);
 
   const [updateNotes] = useMutation(NOTES_UPDATE, {
     client: resourceClient,
@@ -82,6 +86,35 @@ export const NotesTable: React.FC<NotesTableProps> = ({
       setNotesList(data.notes || []);
     }
   }, [data]);
+
+  // Permissions
+  const isNotesExportEnable = checkPermission(
+    permission,
+    AllPermissions.NOTES_EXPORT
+  );
+
+  const notesEditFields = useMemo(
+    () =>
+      permission?.find((item) => item.name === AllPermissions.NOTES_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+
+  const notesFieldsEditable = useMemo(
+    () =>
+      permission
+        .find((item) => item.name === AllPermissions.NOTES_VIEW_EDIT)
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    notesEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [notesEditFields]);
 
   const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
     const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
@@ -138,11 +171,17 @@ export const NotesTable: React.FC<NotesTableProps> = ({
       label: 'Edit',
       // disabled: accountInActive,
       onClick: (row: NotesList) => handleEdit(row),
-      hide: false,
+      hide: !notesFieldsEditable,
     },
   ];
 
-  const notesColumns = getNotesTableColumns(false, undefined, handleDownload);
+  const notesColumns = getNotesTableColumns(
+    false,
+    undefined,
+    handleDownload,
+    isNotesExportEnable,
+    permissionMap
+  );
 
   const handlePopoverClose = () => {
     setColumnAnchorEl(null);

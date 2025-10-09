@@ -264,6 +264,22 @@ const TabPanel: React.FC<TabProps> = ({
     [permission]
   );
 
+  // Permissions
+  const resourceNotesEditFields = useMemo(
+    () =>
+      permission?.find((item) => item.name === AllPermissions.NOTES_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+
+  const resourceNotesPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    resourceNotesEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [resourceNotesEditFields]);
+
   const resourcepermissionMap = useMemo(() => {
     const map: Record<string, { read: boolean; edit: boolean }> = {};
     resourceViewEditFields.forEach((item) => {
@@ -474,7 +490,8 @@ const TabPanel: React.FC<TabProps> = ({
       );
     if (value === 'attachments')
       return getAttachmentsFilterFields(fieldOptions, attachmentPermissionMap);
-    if (value === 'notes') return getNotesFilterFields();
+    if (value === 'notes')
+      return getNotesFilterFields(resourceNotesPermissionMap);
     return value === 'cost'
       ? getCostFilterFields(
           memoizedCurrency,
@@ -506,6 +523,7 @@ const TabPanel: React.FC<TabProps> = ({
     fiscalDatesArg,
     fieldOptions,
     attachmentPermissionMap,
+    resourceNotesPermissionMap,
     memoizedCurrency,
     resourceCostpermissionMap,
     memoizedSkillType,

@@ -1,5 +1,9 @@
-import React, { Suspense, useState } from 'react';
-import { FilterTypes } from '../../../../common-service';
+import React, { Suspense, useMemo, useState } from 'react';
+import {
+  AllModules,
+  AllPermissions,
+  FilterTypes,
+} from '../../../../common-service';
 import { FilterState, NotesListURLParams } from '../../../types';
 import {
   AccountSettingsIcon,
@@ -16,7 +20,8 @@ import { NotesTable } from './table/notes-table';
 import { ExportNotesList } from '../../../services/notes/notes-service';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
-import { reshapeGlobalFilter } from '../../../../common-utils';
+import { checkPermission, reshapeGlobalFilter } from '../../../../common-utils';
+import { AccessRestricted } from '../../../../components/account-restricted';
 
 export const Notes: React.FC = () => {
   const [appliedFilters, setAppliedFilters] = useState<FilterTypes>({});
@@ -40,6 +45,22 @@ export const Notes: React.FC = () => {
     RootState,
     { filters: unknown; fiscalYear: string }
   >((state: RootState) => state.account);
+
+  // Permission Management
+  const { modules, permission } = useSelector(
+    (state: RootState) => state.permission
+  );
+  const notesEnable = checkPermission(modules, AllModules.NOTES);
+
+  const isNotesViewEnable = checkPermission(
+    permission,
+    AllPermissions.NOTES_VIEW_EDIT
+  );
+
+  const isNotesExportEnable = checkPermission(
+    permission,
+    AllPermissions.NOTES_EXPORT
+  );
 
   const newFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
@@ -104,7 +125,7 @@ export const Notes: React.FC = () => {
     {
       label: 'Export',
       onClick: () => handleExport(),
-      hide: false,
+      hide: !isNotesExportEnable,
     },
   ];
 
@@ -114,7 +135,25 @@ export const Notes: React.FC = () => {
     setColumnAnchorEl(event.currentTarget);
   };
 
-  const notesFilterFields = getNotesFilterFields();
+  // Permissions
+  const notesEditFields = useMemo(
+    () =>
+      permission?.find((item) => item.name === AllPermissions.NOTES_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    notesEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [notesEditFields]);
+
+  const notesFilterFields = getNotesFilterFields(permissionMap);
+
+  if (!notesEnable || !isNotesViewEnable) return <AccessRestricted />;
 
   return (
     <div className='flex flex-col w-full  h-full'>

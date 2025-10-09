@@ -126,8 +126,7 @@ const tabs: TabMenus[] = [
     label: 'Notes',
     value: 'notes',
     hide: false,
-    // id: AllPermissions.NOTES_VIEW_EDIT,
-    id: AllPermissions.ATTACHMENT_VIEW_EDIT,
+    id: AllPermissions.NOTES_VIEW_EDIT,
   },
 ];
 

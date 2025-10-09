@@ -193,7 +193,7 @@ export const ProjectDetails = () => {
   const technicalSummaryId = searchParams.get('technical_summary_id');
   const noteView = searchParams.get('note_id');
 
-  const { data, isLoading, isError, refetch } = useProjectDetail(
+  const { data, isLoading, isError, refetch, isPending } = useProjectDetail(
     accountID,
     projectID || ''
   );
@@ -289,6 +289,12 @@ export const ProjectDetails = () => {
     permission,
     AllPermissions.PROJECT_TECHNICAL_SUMMARY_EXPORT
   );
+
+  const isNotesExportEnable = checkPermission(
+    permission,
+    AllPermissions.NOTES_EXPORT
+  );
+
   const checkExport = () => {
     const list = searchParams.get('list');
     const tab = searchParams.get('tab');
@@ -301,7 +307,7 @@ export const ProjectDetails = () => {
     if (list === 'attachments') {
       return !isAttachmentExportEnable;
     } else if (list === 'notes' && !noteView) {
-      return false;
+      return !isNotesExportEnable;
     } else if (list === 'projectsTask') {
       return !isTaskExportViewEnable;
     } else if (list === 'financial' && tab === 'resource_cost') {
@@ -600,6 +606,7 @@ export const ProjectDetails = () => {
             projectDetails={projectData}
             setInteractionsParams={setInteractionsParams}
             isSendInteraction={data?.data?.project?.is_send_interaction}
+            loading={isPending}
           />
         );
       case 'technicalSummary':

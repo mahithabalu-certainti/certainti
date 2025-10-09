@@ -155,6 +155,7 @@ export enum AllModules {
   USER_GROUP = 'manage_user_group',
   PROFILE_MANAGEMENT = 'profile_management',
   ATTACHMENTS = 'attachments',
+  NOTES = 'notes',
   IMPORTS = 'imports',
   MANAGE_ACCOUNT_ACCESS = 'manage_account_access',
   INTERACTIONS = 'interactions',

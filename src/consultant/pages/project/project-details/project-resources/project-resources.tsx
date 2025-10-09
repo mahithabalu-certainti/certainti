@@ -367,6 +367,12 @@ export const ProjectResources = ({
     permission,
     AllPermissions.ATTACHMENT_VIEW_EDIT
   );
+
+  const isNoteCreateEnable = checkPermission(
+    permission,
+    AllPermissions.NOTES_CREATE
+  );
+
   const handleOpen = () => {
     const newParams = new URLSearchParams(searchParams);
     newParams.set('attachment_entity', 'project_resource');
@@ -423,7 +429,7 @@ export const ProjectResources = ({
       onClick: () => handleCreateNote(),
       disabled: accountOrProjectInActive,
       sx: { ...BUTTON_STYLES, width: '80px', minWidth: '80px' },
-      hide: !viewDetails,
+      hide: !viewDetails || !isNoteCreateEnable,
     },
     {
       label: viewDetails ? 'Edit' : 'New',

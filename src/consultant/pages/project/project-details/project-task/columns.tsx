@@ -33,7 +33,8 @@ export const getProjectTaskColumns = (
   >,
   accountOrProjectInActive?: boolean,
   fiscalDate?: FormFiscalDateType,
-  isAttachmentCreateEnable?: boolean
+  isAttachmentCreateEnable?: boolean,
+  isNoteCreateEnable?: boolean
 ): ListTableColumn<ProjectTaskListType>[] => [
   {
     id: 'resource_code',
@@ -395,7 +396,7 @@ export const getProjectTaskColumns = (
     label: 'Notes',
     width: 80,
     sortable: false,
-    hide: false,
+    hide: !isNoteCreateEnable,
     sx: {
       textAlign: 'center',
     },
