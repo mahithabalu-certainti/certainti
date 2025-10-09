@@ -1831,9 +1831,9 @@ private mapAttachmentToCommonFormat(at: any) {
   "Format": at.format || "-",
   "Size": at.size_in_mb || "-",
   "Created By": at.created_by_name || "-",
-  "Created On": moment(at.created_datetime).format("YYYY-MM-DD") || "-",
+  "Created On": at.created_datetime ? moment(at.created_datetime).format("YYYY-MMM-DD") : "-",
   "Modified By": at.modified_by_name || "-",
-  "Modified On": moment(at.modified_datetime).format("YYYY-MM-DD") || "-",
+  "Modified On": at.modified_datetime ? moment(at.modified_datetime).format("YYYY-MMM-DD") : "-",
   "Download": at.browse_file || "-"
 };
 }
