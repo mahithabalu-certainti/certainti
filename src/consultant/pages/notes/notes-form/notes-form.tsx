@@ -6,7 +6,7 @@ import SkeletonForm from '../../../../components/form-builder/skeleton-form';
 import { FormBuilder } from '../../../../components/form-builder';
 import { FileList } from '../../../../components/file-list';
 import { NotesFormData } from './form-data';
-import { Layout } from '../../../../common-service';
+import { AllPermissions, Layout } from '../../../../common-service';
 import {
   useCreateNote,
   useNoteDetails,
@@ -19,6 +19,8 @@ import {
 } from '../../../../common-utils';
 import { NotesFormDataPayload } from '../../../types';
 import { useToast } from '../../../../hooks';
+import { RootState } from '../../../../store/store';
+import { useSelector } from 'react-redux';
 
 const MAX_FILE_SIZE_MB = 100;
 const RESTRICTED_EXTENSIONS = /\.(exe|bat|cmd|sh|bash)$/i;
@@ -86,6 +88,24 @@ const NotesForm: React.FC = () => {
   const minYear = 1950;
   const currentYear = new Date().getFullYear();
   const fiscalYears = getFiscalYears(currentYear - minYear + 1);
+
+  // Permissions
+  const { permission } = useSelector((state: RootState) => state.permission);
+
+  const notesEditFields = useMemo(
+    () =>
+      permission?.find((item) => item.name === AllPermissions.NOTES_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    notesEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [notesEditFields]);
 
   const noteFormData = useMemo(
     () => ({
@@ -275,10 +295,12 @@ const NotesForm: React.FC = () => {
   };
 
   const formConfig = NotesFormData(
+    isEditView,
     fiscalYears,
     !!projectFiscalYear,
     disableFiscalYear,
-    isFromGlobalNotes
+    isFromGlobalNotes,
+    permissionMap
   );
 
   const goBack = () => {
@@ -286,6 +308,15 @@ const NotesForm: React.FC = () => {
   };
 
   const formLoading = isLoading;
+
+  const hideAttachments =
+    isEditView &&
+    !permissionMap?.['browse_file']?.read &&
+    !permissionMap?.['browse_file']?.edit;
+  const disableAttachments =
+    isEditView &&
+    permissionMap?.['browse_file']?.read &&
+    !permissionMap?.['browse_file']?.edit;
 
   return (
     <div>
@@ -357,7 +388,12 @@ const NotesForm: React.FC = () => {
               layout={Layout.TYPE_1}
             />
 
-            <div className={`mt-4`}>
+            <div
+              className={`mt-4 ${hideAttachments ? 'hidden' : 'block'}`}
+              style={{
+                pointerEvents: disableAttachments ? 'none' : 'all',
+              }}
+            >
               <div className='border capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-10'>
                 Attachment
               </div>
@@ -422,6 +458,7 @@ const NotesForm: React.FC = () => {
                   setSelectedFiles={setSelectedFiles}
                   existingFiles={existingFile ? [existingFile] : []}
                   onRemoveExistingFile={() => setExistingFile(null)}
+                  disabled={disableAttachments}
                 />
               </div>
             </div>
@@ -437,32 +474,44 @@ const NotesForm: React.FC = () => {
                   {
                     label: 'Record ID',
                     value: auditInfo.rid,
-                    hide: false,
+                    hide:
+                      !permissionMap?.['rid']?.read &&
+                      !permissionMap?.['rid']?.edit,
                   },
                   {
                     label: 'Created On',
                     value: auditInfo.created_on,
-                    hide: false,
+                    hide:
+                      !permissionMap?.['created_datetime']?.read &&
+                      !permissionMap?.['created_datetime']?.edit,
                   },
                   {
                     label: 'Created By',
                     value: auditInfo.created_by,
-                    hide: false,
+                    hide:
+                      !permissionMap?.['created_by_name']?.read &&
+                      !permissionMap?.['created_by_name']?.edit,
                   },
                   {
                     label: 'Note ID',
                     value: auditInfo.r_number,
-                    hide: false,
+                    hide:
+                      !permissionMap?.['r_number']?.read &&
+                      !permissionMap?.['r_number']?.edit,
                   },
                   {
                     label: 'Updated On',
                     value: auditInfo.updated_on,
-                    hide: false,
+                    hide:
+                      !permissionMap?.['modified_datetime']?.read &&
+                      !permissionMap?.['modified_datetime']?.edit,
                   },
                   {
                     label: 'Updated By',
                     value: auditInfo.updated_by,
-                    hide: false,
+                    hide:
+                      !permissionMap?.['modified_by_name']?.read &&
+                      !permissionMap?.['modified_by_name']?.edit,
                   },
                 ]
                   .filter((field) => !field.hide)

@@ -188,6 +188,11 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
     AllPermissions.ATTACHMENT_CREATE
   );
 
+  const isNoteCreateEnable = checkPermission(
+    permission,
+    AllPermissions.NOTES_CREATE
+  );
+
   const handleEdit = (cost: ResourceCostList) => {
     const data = convertResourceCost(cost);
     navigate(RESOURCECOST + '/edit/' + cost.r_number, {
@@ -340,7 +345,8 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
         resourceInActive,
         attachmentCreateEnable,
         handleGetFiscalYear,
-        fiscalDate
+        fiscalDate,
+        isNoteCreateEnable
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [accountInActive, fiscalDate, resourceInActive]

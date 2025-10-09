@@ -172,6 +172,12 @@ export const ProjectTask = ({
     permission,
     AllPermissions.PROJECTS_TASK_CREATE
   );
+
+  const isNoteCreateEnable = checkPermission(
+    permission,
+    AllPermissions.NOTES_CREATE
+  );
+
   const projectViewEditFields = useMemo(
     () =>
       permission.find(
@@ -346,7 +352,7 @@ export const ProjectTask = ({
       onClick: () => handleCreateNote(),
       disabled: accountOrProjectInActive,
       sx: { ...BUTTON_STYLES, width: '80px', minWidth: '80px' },
-      hide: !viewDetails,
+      hide: !viewDetails || !isNoteCreateEnable,
     },
     {
       label: viewDetails ? 'Edit' : 'New',
@@ -508,7 +514,8 @@ export const ProjectTask = ({
     permissionMapTaskTableColumn,
     accountOrProjectInActive,
     fiscalDatesArg,
-    isAttachmentCreateEnable
+    isAttachmentCreateEnable,
+    isNoteCreateEnable
   );
   const onRefreshClick = () => {
     setRefreshProjectsTrigger(Date.now());

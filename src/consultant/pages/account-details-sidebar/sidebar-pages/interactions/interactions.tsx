@@ -94,6 +94,7 @@ interface InteractionsProps {
   setInteractionsParams: React.Dispatch<
     React.SetStateAction<AttachmentsListExportParams>
   >;
+  loading: boolean;
 }
 
 const Interactions: React.FC<InteractionsProps> = ({
@@ -101,6 +102,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   accountDetails,
   setExportType,
   setInteractionsParams,
+  loading,
 }) => {
   const { accountid } = useParams();
   const [searchParams] = useSearchParams();
@@ -654,7 +656,7 @@ const Interactions: React.FC<InteractionsProps> = ({
 
   return (
     <div className='w-full'>
-      {!interactionEnable && (
+      {!interactionEnable && !loading && (
         <Box className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
           <Box>
             <DetailsKeyContactErrorIcon alt='key-contact' />

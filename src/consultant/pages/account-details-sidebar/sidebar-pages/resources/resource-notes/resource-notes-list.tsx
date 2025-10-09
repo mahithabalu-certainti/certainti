@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ListTable,
   ManageColumnsPopover,
@@ -20,12 +20,18 @@ import { useSelector } from 'react-redux';
 import { useNotesList } from '../../../../../services/notes/notes-service';
 import { getNotesTableColumns } from '../../../../notes/helpers';
 import { NOTES_EDIT } from '../../../../../../routes';
-import { FilterTypes } from '../../../../../../common-service';
+import {
+  AllModules,
+  AllPermissions,
+  FilterTypes,
+} from '../../../../../../common-service';
 import NotesDetails from './resource-notes-details';
 import { useToast } from '../../../../../../hooks';
 import { NOTES_UPDATE } from '../../../../../../api/graphql/queries/notes-query';
 import { resourceClient } from '../../../../../../api/graphql/clients/client';
 import { useMutation } from '@apollo/client';
+import { checkPermission } from '../../../../../../common-utils';
+import { AccessRestricted } from '../../../../../../components/account-restricted';
 
 interface ResourceNotesListProps {
   fiscalYear?: number;
@@ -81,6 +87,9 @@ const ResourceNotesList: React.FC<ResourceNotesListProps> = ({
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
     (state: RootState) => state.account
   );
+  const { permission, modules } = useSelector(
+    (state: RootState) => state.permission
+  );
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
   const noteId = searchParams.get('note_id');
   const viewDetails = !!noteId;
@@ -113,6 +122,42 @@ const ResourceNotesList: React.FC<ResourceNotesListProps> = ({
   const accountInActive =
     accountDetails?.data?.accountById?.status?.status_name?.toLowerCase() !==
       'active' || resourceInActive;
+
+  // Permissions
+  const isNotesExportEnable = checkPermission(
+    permission,
+    AllPermissions.NOTES_EXPORT
+  );
+
+  const notesEnable = checkPermission(modules, AllModules.NOTES);
+
+  const isNotesViewEnable = checkPermission(
+    permission,
+    AllPermissions.NOTES_VIEW_EDIT
+  );
+
+  const notesEditFields = useMemo(
+    () =>
+      permission?.find((item) => item.name === AllPermissions.NOTES_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+
+  const notesFieldsEditable = useMemo(
+    () =>
+      permission
+        .find((item) => item.name === AllPermissions.NOTES_VIEW_EDIT)
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    notesEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [notesEditFields]);
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
@@ -151,7 +196,9 @@ const ResourceNotesList: React.FC<ResourceNotesListProps> = ({
   const notesColumns = getNotesTableColumns(
     accountInActive,
     handleNoteView,
-    handleDownload
+    handleDownload,
+    isNotesExportEnable,
+    permissionMap
   );
   const getRowId = (row: NotesList) => row.rid;
 
@@ -212,7 +259,7 @@ const ResourceNotesList: React.FC<ResourceNotesListProps> = ({
       label: 'Edit',
       disabled: accountInActive,
       onClick: (row: NotesList) => handleEdit(row),
-      hide: false,
+      hide: !notesFieldsEditable,
     },
   ];
 
@@ -264,6 +311,8 @@ const ResourceNotesList: React.FC<ResourceNotesListProps> = ({
       setNotesList(previousNotes);
     }
   };
+
+  if (!notesEnable || !isNotesViewEnable) return <AccessRestricted />;
 
   return (
     <>

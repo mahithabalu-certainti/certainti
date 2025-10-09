@@ -13,7 +13,7 @@ import {
 } from '../../../../../../components/table/types';
 import { FormFiscalDateType } from '../../../../../types';
 import { ResourceCostList } from '../../../../../types/resource-cost';
-import { DATE_CONFIG } from '../../../../resource-form/form-data'; 
+import { DATE_CONFIG } from '../../../../resource-form/form-data';
 
 const getFiscalYears = (range: number) => {
   const currentYear = new Date().getFullYear();
@@ -35,7 +35,8 @@ export const getResourceCostColumns = (
   resourceInActive?: boolean,
   attachmentCreateEnable?: boolean,
   handleGetFiscalYear?: (year: string) => void,
-  fiscalDate?: FormFiscalDateType
+  fiscalDate?: FormFiscalDateType,
+  isNoteCreateEnable?: boolean
 ): ListTableColumn<ResourceCostList>[] => [
   {
     id: 'fiscal_year',
@@ -492,7 +493,7 @@ export const getResourceCostColumns = (
     label: 'Notes',
     width: 80,
     sortable: false,
-    hide: false,
+    hide: !isNoteCreateEnable,
     sx: {
       textAlign: 'center',
     },

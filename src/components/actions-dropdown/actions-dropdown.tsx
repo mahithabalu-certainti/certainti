@@ -75,7 +75,7 @@ const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
         onClose={handleClose}
         PaperProps={{
           sx: {
-            width: anchorEl ? anchorEl.offsetWidth : 'auto',
+            minWidth: anchorEl ? anchorEl.offsetWidth : 'auto',
           },
         }}
       >

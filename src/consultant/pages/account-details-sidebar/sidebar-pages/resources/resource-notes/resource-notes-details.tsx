@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   generatePath,
   useNavigate,
@@ -11,10 +11,16 @@ import { NOTES_EDIT } from '../../../../../../routes';
 import DetailsSection, {
   DetailItem,
 } from '../../../../../../components/details-section/details';
-import { formatDateToYYYYMMDDWithTime } from '../../../../../../common-utils';
+import {
+  applyHidePermission,
+  formatDateToYYYYMMDDWithTime,
+} from '../../../../../../common-utils';
 import SectionHeader from '../../../../../../components/details-section/section-header';
 import { NotesSideIcon } from '../../../../../../assets';
 import DetailsSectionSkeleton from '../../../../../../components/skeleton-component/detailsskeleton';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../../store/store';
+import { AllPermissions } from '../../../../../../common-service';
 
 interface NoteDetailsProps {
   accountInActive: boolean;
@@ -30,7 +36,32 @@ const NotesDetails: React.FC<NoteDetailsProps> = ({
   const { accountid } = useParams();
   const noteId = searchParams.get('note_id') || '';
 
+  const { permission } = useSelector((state: RootState) => state.permission);
   const { data, isLoading, error } = useNoteDetails(accountid, noteId, true);
+
+  // Permissions
+  const notesEditFields = useMemo(
+    () =>
+      permission?.find((item) => item.name === AllPermissions.NOTES_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+
+  const notesFieldsEditable = useMemo(
+    () =>
+      permission
+        .find((item) => item.name === AllPermissions.NOTES_VIEW_EDIT)
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    notesEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [notesEditFields]);
 
   const handleEdit = () => {
     const path = generatePath(NOTES_EDIT, {
@@ -58,7 +89,7 @@ const NotesDetails: React.FC<NoteDetailsProps> = ({
       disabled: accountInActive,
       onClick: () => handleEdit(),
       sx: { width: '48px', minWidth: '48px' },
-      hide: false,
+      hide: !notesFieldsEditable,
     },
     {
       label: 'Back To Notes',
@@ -113,16 +144,6 @@ const NotesDetails: React.FC<NoteDetailsProps> = ({
       key: 'notes_owner',
     },
     {
-      label: 'Related Entity',
-      value: data?.attachment_level,
-      key: 'attachment_level',
-    },
-    {
-      label: 'Related To Name',
-      value: data?.attached_to,
-      key: 'attached_to',
-    },
-    {
       label: 'Fiscal Year',
       value: `FY-${data?.fiscal_year}`,
       key: 'fiscal_year',
@@ -131,16 +152,6 @@ const NotesDetails: React.FC<NoteDetailsProps> = ({
       label: 'Document Name',
       value: data?.document_name,
       key: 'document_name',
-    },
-    {
-      label: 'Format',
-      value: data?.format,
-      key: 'format',
-    },
-    {
-      label: 'Size',
-      value: data?.size_in_mb ? `${data.size_in_mb} MB` : '-',
-      key: 'size',
     },
   ];
 
@@ -151,6 +162,13 @@ const NotesDetails: React.FC<NoteDetailsProps> = ({
       key: 'descriptions',
     },
   ];
+
+  const basicDetails = applyHidePermission(basicInfo, permissionMap);
+  const noteDescriptionDetails = applyHidePermission(
+    noteDescription,
+    permissionMap
+  );
+  const auditDetails = applyHidePermission(auditInfo, permissionMap);
 
   return (
     <div>
@@ -178,18 +196,18 @@ const NotesDetails: React.FC<NoteDetailsProps> = ({
         <>
           <DetailsSection
             title='Basic Information'
-            data={basicInfo}
+            data={basicDetails}
             customStyle='pt-0 mt-0'
           />
           <DetailsSection
             title=''
-            data={noteDescription}
+            data={noteDescriptionDetails}
             fullColumn={true}
             customStyle='mt-0'
           />
           <DetailsSection
             title='Audit Information'
-            data={auditInfo}
+            data={auditDetails}
             customStyle='pt-0 mt-0'
             isAudit={true}
           />
