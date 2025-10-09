@@ -1155,6 +1155,10 @@ if (includeDependencies) {
     const menuAccess = await UserMenuAccess.findAll({
       where: { user_id: userId , is_enabled: true },
       include: [{ model: Menu, as: "menu" }],
+        order: [
+        [{ model: Menu, as: "menu" }, "menu_category", "DESC"],
+        [{ model: Menu, as: "menu" }, "sort_order", "ASC"]
+      ]
     });
     menuAccess.forEach((ma) => {
       const maWithMenu = ma as any;
@@ -1174,6 +1178,7 @@ if (includeDependencies) {
     const moduleAccess = await UserModuleAccess.findAll({
       where: { user_id: userId , is_enabled: true },
       include: [{ model: MenuModule, as: "menu_module" }],
+      order: [[{ model: MenuModule, as: "menu_module" }, "sort_order", "ASC"]],
     });
     moduleAccess.forEach((mo) => {
       const moWithModule = mo as any;
@@ -1194,6 +1199,7 @@ if (includeDependencies) {
     const permissionAccess = await UserPermissionAccess.findAll({
       where: { user_id: userId, is_enabled: true },
       include: [{ model: ModulePermission, as: "module_permission" }],
+       order: [[{ model: ModulePermission, as: "module_permission" }, "permission_desc", "ASC"]],
       indexHints: [
         {
           type: IndexHints.USE,
@@ -1222,9 +1228,11 @@ if (includeDependencies) {
       [Op.or]: [
         { read: true },
         { edit: true }
-      ]
+      ],
+      
       },
       include: [{ model: PermissionField, as: "permission_field" }],
+      order: [[{ model: PermissionField, as: "permission_field" }, "sort_order", "ASC"]],
       indexHints: [
       { type: IndexHints.USE, values: ["idx_user_fields_access_user_id"] },
       ],
