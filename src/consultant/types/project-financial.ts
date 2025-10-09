@@ -109,6 +109,7 @@ export interface ProjectResourceExportParams {
   accountNumber?: string;
   projectRid?: string;
   accountRid?: string;
+  search?: string;
 }
 
 export interface ProjectFinancialProjectExportParams {

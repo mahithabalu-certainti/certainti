@@ -108,13 +108,15 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
     if (setExportType) {
       setExportType('financial');
     }
+    console.log('Setting export params with search:', searchValue);
     setResCostExportParams({
       sortBy: tableParams.sortBy,
       sortOrder: tableParams.sortOrder,
       filters: appliedFilters,
+      search: searchValue,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tableParams]);
+  }, [tableParams, appliedFilters, searchValue]);
 
   // Permissions
   const financialResourceCostViewEditFields = useMemo(

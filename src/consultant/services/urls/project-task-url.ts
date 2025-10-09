@@ -56,6 +56,7 @@ export const getProjectTaskExportURL = ({
   filters,
   projectRid,
   accountRid,
+  search,
 }: ProjectTaskListExportParams): string => {
   const baseUrl = 'api/project_tasks/list/export';
   const searchParams = new URLSearchParams();
@@ -70,6 +71,7 @@ export const getProjectTaskExportURL = ({
   }
   if (sortBy !== undefined) searchParams.set('sortBy', sortBy);
   if (sortOrder !== undefined) searchParams.set('sortOrder', sortOrder);
+  if (search) searchParams.set('search', search);
 
   const queryString = searchParams.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;

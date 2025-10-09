@@ -352,6 +352,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       page: currentPage,
       sortOrder: sortBy,
       limit: rowsPerPage,
+      search: searchText,
     };
     setInteractionsParams(updatedParams);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -362,6 +363,7 @@ const Interactions: React.FC<InteractionsProps> = ({
     rowsPerPage,
     sortBy,
     interactionHistoryId,
+    searchText,
   ]);
 
   const handleRefresh = () => {

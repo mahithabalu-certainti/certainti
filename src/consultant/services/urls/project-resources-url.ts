@@ -58,20 +58,22 @@ export const ProjectResourceExportURL = ({
   sortBy,
   sortOrder,
   filters,
-  // fiscalYear,
-  // accountNumber,
   projectRid,
   accountRid,
+  search,
 }: ProjectFinancialResourceExportParams): string => {
   const baseUrl = `/api/project_resources/export/${accountRid}/${projectRid}`;
   const searchParams = new URLSearchParams();
 
   if (sortBy !== undefined) searchParams.set('sortBy', sortBy);
   if (sortOrder !== undefined) searchParams.set('sortOrder', sortOrder);
+  if (search) searchParams.set('search', search);
+
   // Only add filters if the object has properties
   if (filters && Object.keys(filters).length > 0) {
     searchParams.set('filters', JSON.stringify(filters));
   }
+
   const queryString = searchParams.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 };

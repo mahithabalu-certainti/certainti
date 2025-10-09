@@ -120,6 +120,7 @@ export const ProjectDetails = () => {
       sortBy: 'resource_code',
       sortOrder: 'ASC',
       filters: {},
+      search: '',
     });
   const [projectResourceParams, setProjectResourceParams] =
     useState<AttachmentsListExportParams>({
@@ -419,6 +420,7 @@ export const ProjectDetails = () => {
           filters: interactionsParams?.filters || {},
           timezone: systemTimezone,
           flag: 'project',
+          search: interactionsParams?.search || '',
         };
         exportInteractionsHistory(projectInteractionHistoryExportPayload);
         return;
@@ -435,6 +437,7 @@ export const ProjectDetails = () => {
           filters: interactionsParams?.filters || {},
           timezone: systemTimezone,
           flag: 'project',
+          search: interactionsParams?.search || '',
         };
         exportInteractions(projectInteractionExportPayload);
         return;

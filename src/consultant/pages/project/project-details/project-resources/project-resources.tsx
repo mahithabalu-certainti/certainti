@@ -233,8 +233,9 @@ export const ProjectResources = ({
       sortBy: sortField,
       sortOrder: sortOrder,
       filters: appliedFilters,
+      search: searchText,
     });
-  }, [sortField, sortOrder, appliedFilters]);
+  }, [sortField, sortOrder, appliedFilters, searchText]);
   const { data: projectResourceCodeOptions } = useGetProjectResourceCode(
     accountID as string
   );

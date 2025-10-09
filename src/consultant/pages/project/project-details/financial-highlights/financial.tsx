@@ -69,6 +69,8 @@ const Financial: React.FC<ProjectFinancialProps> = ({
     React.useState<HTMLButtonElement | null>(null);
   const [searchText, setSearchText] = useState('');
 
+  console.log('Financial component searchText:', searchText);
+
   const handleColumnVisibility = (
     event: React.MouseEvent<HTMLButtonElement>
   ) => {

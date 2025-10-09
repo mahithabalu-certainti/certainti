@@ -427,8 +427,9 @@ export const ProjectTask = ({
       sortBy: sortField,
       sortOrder: sortOrder,
       filters: appliedFilters,
+      search: searchText,
     });
-  }, [sortField, sortOrder, appliedFilters]);
+  }, [sortField, sortOrder, appliedFilters, searchText]);
 
   const handleCreateProjectResource = () => {
     const account_Id = accountID ?? '';

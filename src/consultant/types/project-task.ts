@@ -11,6 +11,7 @@ export interface ProjectTaskListExportParams {
   fiscalYear?: number | string;
   projectRid?: string;
   accountRid?: string;
+  search?: string;
 }
 export interface ProjectResourcesListParams {
   page?: number;
