@@ -108,7 +108,6 @@ const Interactions: React.FC<InteractionsProps> = ({
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const interactionEnable = accountDetails?.accountDetails?.is_send_interaction;
-  console.log('interactionEnable', interactionEnable);
 
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, string | number | boolean | string[]>
