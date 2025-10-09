@@ -5889,6 +5889,8 @@ export class ProjectResourceSchemaService {
         "resource_code",
         "resource_type_rid",
         "resource_name",
+        ["resource_startdate", "start_date"],
+        ["resource_enddate", "end_date"]
       ],
       where: whereClause,
       order: [["resource_code", "ASC"]],
