@@ -905,21 +905,21 @@ export class NotesService {
                 allowedFieldSet.add(field.field_desc);
               }
             }
-        const labelMap: Record<string, string>  = {
-          "Document Name": "Document Name",
-          "Format": "Format",
-          "Size": "Size",
-          "Fiscal Year": "Fiscal Year",
+         const labelMap: Record<string, string> = {
+          "Note ID": "Note ID",
           "Title": "Title",
           "Note Owner": "Note Owner",
           "Related Entity": "Related Entity",
           "Related To ID": "Related To ID",
+          "Related To Name": "Related To Name",
+          "Fiscal Year": "Fiscal Year",
+          "Document Name": "Document Name",
+          "Format": "Format",
+          "Size": "Size",
           "Created By": "Created By",
           "Created On": "Created On",
           "Modified By": "Modified By",
           "Modified On": "Modified On",
-          "Note ID": "Note ID",
-          "Descriptions": "Descriptions",
           "Download": "Download"
         };
         // Apply uploaded_by filter if present
@@ -1564,24 +1564,23 @@ export class NotesService {
                 allowedFieldSet.add(field.field_desc);
               }
             }
-       const labelMap: Record<string, string>  = {
-          "Document Name": "Document Name",
-          "Format": "Format",
-          "Size": "Size",
-          "Fiscal Year": "Fiscal Year",
+        const labelMap: Record<string, string> = {
+          "Note ID": "Note ID",
           "Title": "Title",
           "Note Owner": "Note Owner",
           "Related Entity": "Related Entity",
           "Related To ID": "Related To ID",
+          "Related To Name": "Related To Name",
+          "Fiscal Year": "Fiscal Year",
+          "Document Name": "Document Name",
+          "Format": "Format",
+          "Size": "Size",
           "Created By": "Created By",
           "Created On": "Created On",
           "Modified By": "Modified By",
           "Modified On": "Modified On",
-          "Note ID": "Note ID",
-          "Descriptions": "Descriptions",
           "Download": "Download"
         };
-    
         attachments = attachments.map((at) => {
         const rawMapped = this.mapAttachmentToCommonFormat(at); // with internal keys
         const filtered: Record<string, any> = {};
@@ -1821,22 +1820,22 @@ private async getAttachmentDisplayNames(attachments: any[], schemaNumber: string
 
 private mapAttachmentToCommonFormat(at: any) {
   return {
-    "Document Name": at.document_name || "-",
-    "Format": at.format || "-", 
-    "Size": at.size_in_mb || "-",
-    "Fiscal Year": at.fiscal_year || "-",
-    "Title": at.title || "-",
-    "Note Owner": at.notes_owner || "-",
-    "Related Entity": at.attachment_level || "-",
-    "Related To ID": at.attached_to || "-",
-    "Created By": at.created_by_name || "-",
-    "Modified By": at.modified_by_name || "-",
-    "Created On" : moment(at.created_datetime).format('YYYY-MM-DD') || "-",
-    "Modified On": moment(at.modified_datetime).format('YYYY-MM-DD') || "-",
-    "Note ID": at.r_number || "-",
-    "Descriptions" : at.descriptions || "-",
-    "Download": at.browse_file || "-"
-  };
+  "Note ID": at.r_number || "-",
+  "Title": at.title || "-",
+  "Note Owner": at.notes_owner || "-",
+  "Related Entity": at.attachment_level || "-",
+  "Related To ID": at.attached_to || "-",
+  "Related To Name": at.related_to_name || "-", // added as per labelMap
+  "Fiscal Year": at.fiscal_year || "-",
+  "Document Name": at.document_name || "-",
+  "Format": at.format || "-",
+  "Size": at.size_in_mb || "-",
+  "Created By": at.created_by_name || "-",
+  "Created On": moment(at.created_datetime).format("YYYY-MM-DD") || "-",
+  "Modified By": at.modified_by_name || "-",
+  "Modified On": moment(at.modified_datetime).format("YYYY-MM-DD") || "-",
+  "Download": at.browse_file || "-"
+};
 }
 
    /**
