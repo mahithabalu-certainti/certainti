@@ -71,7 +71,6 @@ const Configuration: React.FC = () => {
     setCount(0);
     setAppliedFilters({});
     clearFilters(`account-settings-${tabParam}`);
-    // Reset search when tab changes
     setSearchText('');
     setResetSearch(true);
   };

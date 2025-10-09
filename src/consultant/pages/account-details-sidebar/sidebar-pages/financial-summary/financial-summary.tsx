@@ -158,7 +158,6 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
     setCount(0);
     setAppliedFilters({});
     clearFilters(`account-financial-${tabParam}`);
-    // Reset search when tab changes
     setSearchText('');
     setResetSearch(true);
   };

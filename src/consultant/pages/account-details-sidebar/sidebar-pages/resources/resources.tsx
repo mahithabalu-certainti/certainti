@@ -391,7 +391,6 @@ const Resource: React.FC<ResourceProps> = ({
     setSortFilterCount(0);
     setCount(0);
     clearFilters(value || 'resource');
-    // Reset search when tab changes
     setSearchText('');
     setResetSearch(true);
     // update the URL with the tab value

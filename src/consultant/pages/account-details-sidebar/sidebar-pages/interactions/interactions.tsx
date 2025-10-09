@@ -428,7 +428,6 @@ const Interactions: React.FC<InteractionsProps> = ({
       setSelectedRows([]);
       setClearSelectedRows((prev) => !prev);
       setCount(0);
-      // Reset search when viewing interaction details
       setSearchText('');
       setResetSearch(true);
     }
@@ -441,7 +440,6 @@ const Interactions: React.FC<InteractionsProps> = ({
       searchParams.delete('interaction_rid');
       searchParams.delete('interaction_number');
       navigate({ search: searchParams.toString() }, { replace: true });
-      // Reset search when navigating back
       setSearchText('');
       setResetSearch(true);
     }
@@ -455,7 +453,6 @@ const Interactions: React.FC<InteractionsProps> = ({
       searchParams.delete('interaction_attachment_id');
       navigate({ search: searchParams.toString() }, { replace: true });
     }
-    // Reset search when navigating back from response
     setSearchText('');
     setResetSearch(true);
   };
@@ -493,7 +490,6 @@ const Interactions: React.FC<InteractionsProps> = ({
       navigate({ search: searchParams.toString() }, { replace: true });
       setSelectedRows([]);
       setClearSelectedRows((prev) => !prev);
-      // Reset search when viewing interaction history
       setSearchText('');
       setResetSearch(true);
     }
@@ -513,7 +509,6 @@ const Interactions: React.FC<InteractionsProps> = ({
       navigate({ search: searchParams.toString() }, { replace: true });
       setSelectedRows([]);
       setClearSelectedRows((prev) => !prev);
-      // Reset search when viewing interaction attachments
       setSearchText('');
       setResetSearch(true);
     }
