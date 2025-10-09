@@ -898,7 +898,7 @@ export class NotesService {
           });
         }
          
-        const allowedFieldsForExport = await this.schemaService.getAllowedExportFields(userId,"attachments_view_edit");
+        const allowedFieldsForExport = await this.schemaService.getAllowedExportFields(userId,"notes_view_edit");
             const allowedFieldSet = new Set<string>();
             for (const field of allowedFieldsForExport) {
               if (field.read) {
@@ -1557,7 +1557,7 @@ export class NotesService {
           size_in_mb: attachment.size_in_mb ? `${attachment.size_in_mb} mb` : null
         }));
     
-        const allowedFieldsForExport = await this.schemaService.getAllowedExportFields(userId,"attachments_view_edit");
+        const allowedFieldsForExport = await this.schemaService.getAllowedExportFields(userId,"notes_view_edit");
             const allowedFieldSet = new Set<string>();
             for (const field of allowedFieldsForExport) {
               if (field.read) {
