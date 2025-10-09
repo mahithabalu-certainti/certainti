@@ -142,10 +142,22 @@ const ProjectTaskForm: React.FC = () => {
 
   const memoizedProjectResourceCode: SelectResourceOption[] = useMemo(
     () =>
-      projectResourceCodeOptions?.data?.map((item) => ({
-        label: `${item.resource_code}${item.project_resource_role ? ` (${item.project_resource_role})` : ''}`,
-        value: item.rid,
-      })) || [],
+      projectResourceCodeOptions?.data?.map((item) => {
+        let extraInfo = '';
+
+        if (item.resource_name && item.project_resource_role) {
+          extraInfo = ` (${item.resource_name} - ${item.project_resource_role})`;
+        } else if (item.resource_name) {
+          extraInfo = ` (${item.resource_name})`;
+        } else if (item.project_resource_role) {
+          extraInfo = ` (${item.project_resource_role})`;
+        }
+
+        return {
+          label: `${item.resource_code}${extraInfo}`,
+          value: item.rid,
+        };
+      }) || [],
     [projectResourceCodeOptions?.data]
   );
   const memoizedProjectResourceType: SelectResourceOption[] = useMemo(
