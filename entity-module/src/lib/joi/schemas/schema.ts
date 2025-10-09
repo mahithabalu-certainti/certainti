@@ -2265,7 +2265,7 @@ const exportListProjectResourceSchema = Joi.object({
         .messages({
             'string.base': 'Search must be a string',
             'string.max': 'Search cannot exceed 255 characters'
-        }),
+        })
 });
 
 const listProjectTasksSchema = Joi.object({
