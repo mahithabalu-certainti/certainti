@@ -6,13 +6,13 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 const routes: Router = Router();
 
-routes.post("/upload/notes", checkUserStatusMiddleware("NA"), upload.single('notes'), controller.notesController.createNotes);
-routes.get("/list/export", checkUserStatusMiddleware("NA"), controller.notesController.exportAllNotes);
-routes.get("/list", checkUserStatusMiddleware("NA"), controller.notesController.getAllNotes);
-routes.get("/list/summary/export", checkUserStatusMiddleware("NA"), controller.notesController.exportAllNotesSummary);
-routes.get("/list/summary", checkUserStatusMiddleware("NA"), controller.notesController.getAllNotesSummary);
-routes.get("/list/details", checkUserStatusMiddleware("NA"), controller.notesController.fetchNotesDetailsById)
-routes.put("/update", checkUserStatusMiddleware("NA"), upload.single("notes"), controller.notesController.updateNotes)
+routes.post("/upload/notes", checkUserStatusMiddleware("notes_create"), upload.single('notes'), controller.notesController.createNotes);
+routes.get("/list/export", checkUserStatusMiddleware("notes_view_edit"), controller.notesController.exportAllNotes);
+routes.get("/list", checkUserStatusMiddleware("notes_view_edit"), controller.notesController.getAllNotes);
+routes.get("/list/summary/export", checkUserStatusMiddleware("notes_view_edit"), controller.notesController.exportAllNotesSummary);
+routes.get("/list/summary", checkUserStatusMiddleware("notes_view_edit"), controller.notesController.getAllNotesSummary);
+routes.get("/list/details", checkUserStatusMiddleware("notes_view_edit"), controller.notesController.fetchNotesDetailsById)
+routes.put("/update", checkUserStatusMiddleware("notes_view_edit"), upload.single("notes"), controller.notesController.updateNotes)
 
 export default routes;
 
