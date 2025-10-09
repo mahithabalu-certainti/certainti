@@ -8,10 +8,12 @@ import {
 } from '../../../../common-utils';
 
 export const NotesFormData = (
+  isEditView: boolean,
   fiscalYears: { label: string; value: string }[],
   projectFiscalYear?: boolean,
   disableFiscalYear?: boolean,
-  isFromGlobalNotes?: boolean
+  isFromGlobalNotes?: boolean,
+  permissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): FormType[] => {
   return useMemo(
     () => [
@@ -22,6 +24,14 @@ export const NotesFormData = (
           createTextField('title', 'Title', {
             required: true,
             placeholder: 'Enter Title',
+            hide:
+              isEditView &&
+              !permissionMap?.['title']?.read &&
+              !permissionMap?.['title']?.edit,
+            disabled:
+              isEditView &&
+              permissionMap?.['title']?.read &&
+              !permissionMap?.['title']?.edit,
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MIN_3,
@@ -41,6 +51,14 @@ export const NotesFormData = (
           createTextField('notes_owner', 'Note Owner', {
             required: true,
             placeholder: 'Enter Note Owner',
+            hide:
+              isEditView &&
+              !permissionMap?.['notes_owner']?.read &&
+              !permissionMap?.['notes_owner']?.edit,
+            disabled:
+              isEditView &&
+              permissionMap?.['notes_owner']?.read &&
+              !permissionMap?.['notes_owner']?.edit,
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MIN_3,
@@ -61,20 +79,39 @@ export const NotesFormData = (
             required: false,
             placeholder: 'Enter Related Entity',
             disabled: true,
-            hide: !isFromGlobalNotes,
+            hide:
+              !isFromGlobalNotes ||
+              (isFromGlobalNotes &&
+                isEditView &&
+                !permissionMap?.['attached_to']?.read &&
+                !permissionMap?.['attached_to']?.edit),
           }),
           createTextField('related_to_name', 'Related To Name', {
             required: false,
             placeholder: 'Enter Related To Name',
             disabled: true,
-            hide: !isFromGlobalNotes,
+            hide:
+              !isFromGlobalNotes ||
+              (isFromGlobalNotes &&
+                isEditView &&
+                !permissionMap?.['attached_to']?.read &&
+                !permissionMap?.['attached_to']?.edit),
           }),
           createSelectField('fiscal_year', 'Fiscal Year', {
             options: fiscalYears,
             placeholder: 'Choose Fiscal Year',
             required: true,
-            hide: disableFiscalYear || projectFiscalYear ? true : false,
-            disabled: disableFiscalYear,
+            hide:
+              disableFiscalYear ||
+              projectFiscalYear ||
+              (isEditView &&
+                !permissionMap?.['fiscal_year']?.read &&
+                !permissionMap?.['fiscal_year']?.edit),
+            disabled:
+              disableFiscalYear ||
+              (isEditView &&
+                permissionMap?.['fiscal_year']?.read &&
+                !permissionMap?.['fiscal_year']?.edit),
             isFiscalYear: true,
           }),
         ],
@@ -89,10 +126,25 @@ export const NotesFormData = (
             regex: REGEX_PATTERNS.MAX_2000,
             regexErrorMessage:
               'Note Description must not exceed 2000 characters.',
+            hide:
+              isEditView &&
+              !permissionMap?.['descriptions']?.read &&
+              !permissionMap?.['descriptions']?.edit,
+            disabled:
+              isEditView &&
+              permissionMap?.['descriptions']?.read &&
+              !permissionMap?.['descriptions']?.edit,
           }),
         ],
       },
     ],
-    [disableFiscalYear, fiscalYears, isFromGlobalNotes, projectFiscalYear]
+    [
+      disableFiscalYear,
+      fiscalYears,
+      isEditView,
+      isFromGlobalNotes,
+      permissionMap,
+      projectFiscalYear,
+    ]
   );
 };

@@ -134,6 +134,11 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
     AllPermissions.ATTACHMENT_CREATE
   );
 
+  const isNoteCreateEnable = checkPermission(
+    permission,
+    AllPermissions.NOTES_CREATE
+  );
+
   //permissions
   const skillViewEditFields = useMemo(
     () =>
@@ -270,7 +275,8 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
         handleAttachmentClick,
         handleCreateNote,
         resourceInActive,
-        attachmentCreateEnable
+        attachmentCreateEnable,
+        isNoteCreateEnable
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [accountInActive, memoizedSkillSubType, resourceInActive]

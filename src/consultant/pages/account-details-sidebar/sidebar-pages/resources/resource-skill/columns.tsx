@@ -6,7 +6,7 @@ import {
   ListTableColumn,
 } from '../../../../../../components/table/types';
 import { OthersEnum } from '../../../../../types';
-import { ResourceSkillList } from '../../../../../types/resource-skill'; 
+import { ResourceSkillList } from '../../../../../types/resource-skill';
 
 export const getResourceSkillColumns = (
   skillLevelOptions: ListOption[],
@@ -20,7 +20,8 @@ export const getResourceSkillColumns = (
   handleAttachmentClick?: (rowId: string) => void,
   handleCreateNote?: (row: string) => void,
   resourceInActive?: boolean,
-  attachmentCreateEnable?: boolean
+  attachmentCreateEnable?: boolean,
+  isNoteCreateEnable?: boolean
 ): ListTableColumn<ResourceSkillList>[] => [
   {
     id: 'start_date',
@@ -404,7 +405,7 @@ export const getResourceSkillColumns = (
     sx: {
       textAlign: 'center',
     },
-    hide: false,
+    hide: !isNoteCreateEnable,
     render: (row) => (
       <TextButton
         label='Add'
