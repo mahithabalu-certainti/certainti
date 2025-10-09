@@ -789,7 +789,12 @@ async accountList(
           childAccountsByParent.get(account.rid) || []
         );
       });
+      
       let updatedAccount = { data: parentAccounts,total:0 };
+      if(search){
+        updatedAccount.data = updatedAccount.data.filter((val: any) => val?.dataValues?.child_accounts?.length > 0);
+      }
+
       if (!isCustomGlobal) {
         updatedAccount.data = parentAccounts.map((parent: any) => {
           if (parentIdsOnlyThroughChildren.includes(parent.rid)) {
