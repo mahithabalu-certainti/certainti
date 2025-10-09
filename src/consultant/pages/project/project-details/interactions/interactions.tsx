@@ -86,6 +86,7 @@ interface InteractionsProps {
     React.SetStateAction<AttachmentsListExportParams>
   >;
   isSendInteraction: boolean;
+  loading: boolean;
 }
 
 const Interactions: React.FC<InteractionsProps> = ({
@@ -93,6 +94,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   projectDetails,
   setInteractionsParams,
   isSendInteraction,
+  loading,
 }) => {
   const { projectid } = useParams();
   const [searchParams] = useSearchParams();
@@ -144,7 +146,7 @@ const Interactions: React.FC<InteractionsProps> = ({
   const interactionAttachmentId = searchParams.get(
     'interaction_attachment_count'
   );
-  const interactionEnable = searchParams.get('send_interaction') === 'true';
+
   const responseHistory = searchParams.get('history');
   const interactionResponseId = searchParams.get('versionID');
   const viewDetails = !!interactionId;
@@ -686,7 +688,7 @@ const Interactions: React.FC<InteractionsProps> = ({
 
   return (
     <div className='w-full'>
-      {!interactionEnable && (
+      {!isSendInteraction && !loading && (
         <Box className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
           <Box>
             <DetailsKeyContactErrorIcon alt='key-contact' />
