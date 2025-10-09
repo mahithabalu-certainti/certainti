@@ -1492,6 +1492,10 @@ class SchemaService {
         "comments" varchar(2000) NULL,
         project_resource_rid varchar(50) NOT NULL,
         status_rid varchar(50) NOT NULL,
+        task_name text NULL,
+        task_type_rid varchar(50) NULL,
+        task_classification_rid varchar(50) NULL,
+        task_description varchar(2000) NULL,
         CONSTRAINT project_task_r_number_key UNIQUE (r_number)
       );
     `);

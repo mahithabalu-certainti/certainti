@@ -1934,13 +1934,13 @@ if (includeDependencies) {
         business_teams: flatUser.business_teams || "-",
         created_datetime: flatUser.created_datetime
             ? timezone && isValidTimezone(timezone)
-            ? moment(flatUser.created_datetime).tz(timezone).format("YYYY-MM-DD, hh:mm:ss A")
-          : moment(flatUser.created_datetime).format("YYYY-MM-DD, hh:mm:ss A")
+            ? moment(flatUser.created_datetime).tz(timezone).format("YYYY-MMM-DD, hh:mm:ss A")
+          : moment(flatUser.created_datetime).format("YYYY-MMM-DD, hh:mm:ss A")
           : "-",
         modified_datetime: flatUser.modified_datetime
         ? timezone && isValidTimezone(timezone)
-        ? moment(flatUser.modified_datetime).tz(timezone).format("YYYY-MM-DD, hh:mm:ss A")
-        : moment(flatUser.modified_datetime).format("YYYY-MM-DD, hh:mm:ss A")
+        ? moment(flatUser.modified_datetime).tz(timezone).format("YYYY-MMM-DD, hh:mm:ss A")
+        : moment(flatUser.modified_datetime).format("YYYY-MMM-DD, hh:mm:ss A")
         : "-",
         status_rid: flatUser.status_name || "-",
   };
@@ -2425,7 +2425,7 @@ if (includeDependencies) {
           } else if (field === "profile_description") {
             rowData.push(profile.profile_description || "");
           } else if (field === "created_datetime") {
-            rowData.push(createdDate);
+            rowData.push(moment(createdDate).format("YYYY-MMM-DD, hh:mm:ss A"));
           } else if (field === "created_by") {
             rowData.push(createdByName);
           }
