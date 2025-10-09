@@ -83,6 +83,8 @@ interface TabProps {
   searchPlaceholder?: string;
   onSearchTextChange?: (text: string) => void;
   onSearch?: (text: string) => void;
+  resetSearch?: boolean;
+  onSearchReset?: () => void;
 }
 const TabPanel: React.FC<TabProps> = ({
   resourceTab,
@@ -114,6 +116,8 @@ const TabPanel: React.FC<TabProps> = ({
   searchPlaceholder = 'Search',
   onSearchTextChange,
   onSearch,
+  resetSearch,
+  onSearchReset,
 }) => {
   const [tabValue, setTabValue] = useState('');
   const location = useLocation();
@@ -608,6 +612,8 @@ const TabPanel: React.FC<TabProps> = ({
                 placeholder={searchPlaceholder || ''}
                 disabled={searchDisabled}
                 hide={searchHidden}
+                reset={resetSearch}
+                onReset={onSearchReset}
               />
             </Box>
           )}

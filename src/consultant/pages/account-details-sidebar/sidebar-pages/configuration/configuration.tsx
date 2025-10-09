@@ -45,6 +45,7 @@ const Configuration: React.FC = () => {
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
   const [seachText, setSearchText] = useState('');
+  const [resetSearch, setResetSearch] = useState(false);
 
   const list = searchParams.get('subMenu');
   const tabParam = searchParams.get('tab');
@@ -70,6 +71,9 @@ const Configuration: React.FC = () => {
     setCount(0);
     setAppliedFilters({});
     clearFilters(`account-settings-${tabParam}`);
+    // Reset search when tab changes
+    setSearchText('');
+    setResetSearch(true);
   };
 
   const handleColumnVisibility = (
@@ -162,6 +166,10 @@ const Configuration: React.FC = () => {
     setReFetchData(Date.now());
   };
 
+  const handleSearchReset = () => {
+    setResetSearch(false);
+  };
+
   const filterFields =
     tabParam === 'assign_users'
       ? getAssignUserFilterFields()
@@ -192,6 +200,8 @@ const Configuration: React.FC = () => {
         searchDisabled={false}
         searchPlaceholder='Search'
         onSearch={(text) => setSearchText(text)}
+        searchReset={resetSearch}
+        onSearchReset={handleSearchReset}
       />
       <SectionHeader
         title={list ? list.charAt(0).toUpperCase() + list.slice(1) : ''}

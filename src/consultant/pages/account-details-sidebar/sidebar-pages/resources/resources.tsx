@@ -182,6 +182,7 @@ const Resource: React.FC<ResourceProps> = ({
     'ASC'
   );
   const [searchText, setSearchText] = useState('');
+  const [resetSearch, setResetSearch] = useState(false);
 
   const [attachmentsOrderBy, setAttachmentsOrderBy] =
     useState<string>('document_name');
@@ -390,12 +391,19 @@ const Resource: React.FC<ResourceProps> = ({
     setSortFilterCount(0);
     setCount(0);
     clearFilters(value || 'resource');
+    // Reset search when tab changes
+    setSearchText('');
+    setResetSearch(true);
     // update the URL with the tab value
     searchParams.set('tab', newValue);
     searchParams.delete('attachment_entity');
     searchParams.delete('note_id');
     navigate({ search: searchParams.toString() }, { replace: true });
     setCurrentPage(0);
+  };
+
+  const handleSearchReset = () => {
+    setResetSearch(false);
   };
 
   const handleResourceClick = (row: any) => {
@@ -520,7 +528,6 @@ const Resource: React.FC<ResourceProps> = ({
     if (source === 'timesheet') {
       const timesheetId = searchParams.get('timesheet_id');
       const newSearchParams = new URLSearchParams();
-      newSearchParams.set('list', 'timesheet');
       if (timesheetId) newSearchParams.set('timesheet_id', timesheetId);
       newSearchParams.set('tab', 'timesheet_project_resource');
       navigate(`/account/details/${accountid}?${newSearchParams.toString()}`, {
@@ -973,6 +980,8 @@ const Resource: React.FC<ResourceProps> = ({
         searchHidden={value === 'cost' || value === 'skill' ? true : false}
         searchPlaceholder='Search'
         onSearch={(text) => setSearchText(text)}
+        resetSearch={resetSearch}
+        onSearchReset={handleSearchReset}
       />
       {showUploads ? (
         <Uploads accountId={accountid} attachID={resId} />
