@@ -56,6 +56,8 @@ interface TabPanelProps {
   searchPlaceholder?: string;
   onSearchTextChange?: (text: string) => void;
   onSearch?: (text: string) => void;
+  searchReset?: boolean;
+  onSearchReset?: () => void;
 }
 
 const SectionTabPanel: React.FC<TabPanelProps> = ({
@@ -93,6 +95,8 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
   searchPlaceholder = 'Search',
   onSearchTextChange,
   onSearch,
+  searchReset,
+  onSearchReset,
 }) => {
   const location = useLocation();
   const [tabValue, setTabValue] = useState('');
@@ -220,6 +224,8 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
                 placeholder={searchPlaceholder || ''}
                 disabled={searchDisabled}
                 hide={searchHidden}
+                reset={searchReset}
+                onReset={onSearchReset}
               />
             </Box>
           )}
