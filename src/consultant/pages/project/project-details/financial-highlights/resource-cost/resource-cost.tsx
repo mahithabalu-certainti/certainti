@@ -108,7 +108,7 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
     if (setExportType) {
       setExportType('financial');
     }
-    console.log('Setting export params with search:', searchValue);
+
     setResCostExportParams({
       sortBy: tableParams.sortBy,
       sortOrder: tableParams.sortOrder,

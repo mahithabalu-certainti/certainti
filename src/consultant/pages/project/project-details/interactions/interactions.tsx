@@ -502,7 +502,6 @@ const Interactions: React.FC<InteractionsProps> = ({
       setSelectedRows([]);
       setCount(0);
       setClearSelectedRows((prev) => !prev);
-      // Reset search when viewing interaction details
       setSearchText('');
       setResetSearch(true);
     }
@@ -535,7 +534,6 @@ const Interactions: React.FC<InteractionsProps> = ({
       navigate({ search: searchParams.toString() }, { replace: true });
       setSelectedRows([]);
       setClearSelectedRows((prev) => !prev);
-      // Reset search when viewing interaction attachments
       setSearchText('');
       setResetSearch(true);
     }
@@ -550,7 +548,6 @@ const Interactions: React.FC<InteractionsProps> = ({
       searchParams.delete('interaction_number');
       searchParams.delete('project_fiscal_rid');
       navigate({ search: searchParams.toString() }, { replace: true });
-      // Reset search when navigating back
       setSearchText('');
       setResetSearch(true);
     }
