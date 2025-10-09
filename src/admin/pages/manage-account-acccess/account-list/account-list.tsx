@@ -116,9 +116,14 @@ const AccountList = () => {
     setSearchKey((prev) => prev + 1);
   }, []);
 
-  const handleBackAccount = () => {
+  const handleBackAccount = useCallback(() => {
+    setAppliedFilters({});
+    clearFilters();
+    setSearchText('');
+    setSearchKey((prev) => prev + 1);
     navigate(MANAGE_ACCOUNT_ACCESS);
-  };
+  }, [setAppliedFilters, setSearchText, setSearchKey, navigate]);
+
   const handleCloseFilter = () => {
     setAnchorEl(null);
   };
@@ -485,6 +490,7 @@ const AccountList = () => {
             setColumnAnchorEl={setColumnAnchorEl}
             columnAnchorEl={columnAnchorEl}
             searchValue={searchText}
+            onSearchReset={handleSearchReset}
           />
         </div>
       )}
