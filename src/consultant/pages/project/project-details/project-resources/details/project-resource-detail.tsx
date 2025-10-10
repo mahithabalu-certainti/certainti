@@ -127,6 +127,11 @@ const ProjectResourceDetails: React.FC<ResourceDetailsProps> = ({
       key: 'project_resource_role',
     },
     {
+      label: 'Resource Type',
+      value: resourceData.resource_type_name,
+      // key: 'resource_type_name',
+    },
+    {
       key: 'status_action',
       label: 'Status',
       value: resourceData.status_name,
@@ -187,6 +192,14 @@ const ProjectResourceDetails: React.FC<ResourceDetailsProps> = ({
         resourceData?.currency_symbol
       ),
       key: 'total_cost_pro_res',
+    },
+    {
+      // key: 'net_total_cost_pro_res',
+      label: 'Net Resource Cost',
+      value: costDisplay(
+        resourceData.net_total_cost_pro_res,
+        resourceData?.currency_symbol
+      ),
     },
   ];
 
