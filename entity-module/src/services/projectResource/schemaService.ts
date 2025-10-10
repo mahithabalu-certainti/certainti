@@ -5181,18 +5181,33 @@ export class ProjectResourceSchemaService {
       // Fetch the resource code for the given rid
       const resource = await Resources.findOne({
         where: { rid: resourceRid },
-        attributes: ["resource_code", "resource_name"],
+        attributes: ["resource_code", "resource_name", "resource_type_rid"],
         raw: true,
       });
 
       const resourceCode = resource?.resource_code || null;
       const resourceName = resource?.resource_name || null;
+      const resourceTypeRid = resource?.resource_type_rid || null;
+      let resourceTypeName =  null;
+      if (resourceTypeRid) {
+        // Fetch the resource type name for the given rid
+        const [resourceType]: any = await this.mainDbSequelize?.query(
+          `SELECT resource_type_name FROM ${MAIN_SCHEMA_NAME}.resource_type WHERE rid = :id`,
+          {
+            replacements: { id: resourceTypeRid },
+            type: "SELECT",
+          }
+        );
+        console.log('resourceType in return', resourceType);
+        resourceTypeName = resourceType?.resource_type_name || null;
+      }
 
       // Enrich and return the project resource object
       return {
         ...(projectResource.dataValues ?? projectResource),
         resource_code: resourceCode,
-        resource_name: resourceName
+        resource_name: resourceName,
+        resource_type_name: resourceTypeName,
       };
     } catch (err) {
       throw new Error(
