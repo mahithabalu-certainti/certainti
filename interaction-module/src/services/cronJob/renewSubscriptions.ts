@@ -5,7 +5,7 @@ import fetch from "cross-fetch";
 
 import cron from "node-cron";
 import { initMainDbSequelize } from "../../config/mainDataSource";
-import { MAIN_SCHEMA_NAME, rawQueries } from "../../utils/constants";
+import { MAIN_SCHEMA_NAME, SCHEMANAME_PREFIX, rawQueries } from "../../utils/constants";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { decryptClientSecret, logMessage } from "../../utils/helpers";
 
@@ -80,11 +80,11 @@ async function renewExpiringSubscriptions() {
       } = account;
 
       if (storage_type === "separate_db" && r_number) {
-        const schemaName = `trd365_${r_number.replace(/\D/g, "")}`;
+        const schemaName = `${SCHEMANAME_PREFIX}${r_number.replace(/\D/g, "")}`;
         const orgDbSequelize = await initOrgSequelize();
 
         const [accountDetails]: any = await orgDbSequelize.query(
-          `SELECT * FROM ${schemaName}.account_details WHERE account_rid = :accountRid`,
+          rawQueries.getAccountDetailsQuery(schemaName),
           {
             replacements: { accountRid: rid },
             type: "SELECT",
@@ -198,7 +198,7 @@ async function renewExpiringSubscriptions() {
 async function fetchAccountWithSubscription() {
   const mainDbSequelize = await initMainDbSequelize();
   const [accountRecords]: any = await mainDbSequelize.query(
-    `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE subscription_id IS NOT NULL`
+    rawQueries.getAccountsWithSubscriptionQuery()
   );
   return accountRecords;
 }

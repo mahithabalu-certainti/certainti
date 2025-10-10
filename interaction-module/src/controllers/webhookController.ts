@@ -12,6 +12,24 @@ import configurations from "../config/config";
 const services = configurations.getInstance().getServices();
 const webhookService = services.webhookService;
 
+/**
+ * Handles incoming webhook requests, including validation token verification and processing the webhook payload.
+ *
+ * @param {Request} req - The Express request object containing headers, query parameters, and body data.
+ * @param {Response} res - The Express response object used to send responses to the client.
+ *
+ * @returns {Promise<void>} - Resolves once the webhook has been processed and an appropriate response sent.
+ *
+ * @description
+ * - Logs the incoming request body.
+ * - If the request contains a `validationToken` in the query parameters, it immediately responds with that token for webhook verification.
+ * - Otherwise, sends a generic success message response.
+ * - Calls the webhook service handler to process the webhook payload asynchronously.
+ * - Logs and handles the service response:
+ *    - On success, logs a success message.
+ *    - On failure, logs the error and sends a bad request response with an error message.
+ * - Catches any exceptions thrown during processing, logs the error, and sends a bad request response.
+ */
 async function handleWehook(req: Request, res: Response): Promise<void> {
   const methodName = "Create interaction";
   try {

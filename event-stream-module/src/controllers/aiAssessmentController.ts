@@ -10,6 +10,19 @@ import {
 } from "../utils/helpers";
 const services = configurations.getInstance().getServices();
 const aiAssessmentService = services.aiAssessmentService;
+
+/**
+ * Handles sending an AI-generated response to a specific topic.
+ *
+ * This Express route handler processes the incoming request containing AI response data,
+ * invokes the AI assessment service to send the response to the topic, and returns
+ * appropriate success or error responses based on the service outcome.
+ *
+ * @param {Request} req - The Express request object containing the AI response data in the body.
+ * @param {Response} res - The Express response object used to send back the result of the operation.
+ *
+ * @returns {Promise<void>} - A promise that resolves once the response is sent.
+ */
 async function sendAIResponseToTopic(
   req: Request,
   res: Response
@@ -49,6 +62,19 @@ async function sendAIResponseToTopic(
     return;
   }
 }
+
+/**
+ * Processes incoming Kafka messages by delegating to the AI assessment service.
+ *
+ * This asynchronous function receives Kafka message data, logs the start of processing,
+ * and invokes the AI assessment service's method to handle the message payload.
+ * Any errors encountered during processing are logged for debugging and monitoring purposes.
+ *
+ * @param {any} data - The Kafka message payload to be processed.
+ *
+ * @returns {Promise<void>} - A promise that resolves once the message has been processed or
+ *                           an error has been logged.
+ */
 async function processKafkaMessages(data: any) {
   const methodName = "processKafkaMessages";
   try {
@@ -60,6 +86,7 @@ async function processKafkaMessages(data: any) {
     errorLog(methodName, error.message);
   }
 }
+
 export default {
   sendAIResponseToTopic,
   processKafkaMessages,

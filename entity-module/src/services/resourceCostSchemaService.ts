@@ -1,11 +1,11 @@
-import { Op, Sequelize } from "sequelize";
+import { Sequelize } from "sequelize";
 import { ResourceCost } from "../models/resourceCost";
 import { ResourceCostTimeline } from "../models/resourceCostTimeline";
 import { ResourceCostHistory } from "../models/resourceCostHistory";
 import { Resources } from "../models/resource";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { initMainDbSequelize } from "../config/mainDataSource";
-import { HttpStatus, MAIN_SCHEMA_NAME } from "../utils/constants";
+import { HttpStatus, MAIN_SCHEMA_NAME, SCHEMANAME_PREFIX, rawQueries } from "../utils/constants";
 import { ResourceFiscal } from "../models/resourceFiscal";
 import moment from "moment";
 import currency from "currency.js";
@@ -70,10 +70,7 @@ class ResourceCostSchemaService {
   ): Promise<boolean> {
     try {
       const result = await sequelize.query(
-        `SELECT EXISTS (
-          SELECT 1 FROM information_schema.schemata 
-          WHERE schema_name = :schemaName
-        )`,
+        rawQueries.checkIfSchemaExists(),
         {
           replacements: { schemaName },
           type: "SELECT",
@@ -103,11 +100,7 @@ class ResourceCostSchemaService {
   ): Promise<boolean> {
     try {
       const result = await sequelize.query(
-        `SELECT EXISTS (
-          SELECT 1 FROM information_schema.tables 
-          WHERE table_schema = :schemaName
-          AND table_name = :tableName
-        )`,
+        rawQueries.checkSchemaAndTableExists(),
         {
           replacements: { schemaName, tableName },
           type: "SELECT",
@@ -236,9 +229,9 @@ class ResourceCostSchemaService {
     tableName?: string
   ): Promise<boolean> {
     // Check if accountNumber already includes the trd365_ prefix
-    const schemaName = accountNumber.startsWith("trd365_")
+    const schemaName = accountNumber.startsWith(`${SCHEMANAME_PREFIX}`)
       ? accountNumber
-      : `trd365_${accountNumber.replace(/\D/g, '')}`;
+      : `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, '')}`;
 
     // If we're creating resource_cost, make sure resources table exists first
     if (tableName === "resource_cost") {
@@ -440,31 +433,13 @@ async exportresourceCostDetailsForFinancialHighlights(
     const projectFilter = project_rid ? ` AND prf.project_fiscal_rid = :project_rid` : '';
 
     // Build the base query without sorting or pagination
-    let query = `
-      SELECT 
-        prf.total_cost_pro_res,
-        prf.rd_percent_final,
-        prf.qre_final,
-        prf.rd_credits_total,
-        prf.resource_rid,
-        prf.project_fiscal_rid,
-        prf.country_rid,
-        prf.fiscal_year,
-        pf.project_code,
-        pf.r_number,
-        pf.project_name,
-        r.resource_code,
-        r.resource_name,
-        r.resource_type_rid
-      FROM "${schemaName}"."project_resource_fiscal" prf
-      INNER JOIN "${schemaName}"."project_fiscal" pf ON pf.rid = prf.project_fiscal_rid
-      INNER JOIN "${schemaName}"."resources" r ON r.rid = prf.resource_rid
-      WHERE 1=1 
-      ${accountFilter}
-      ${projectFilter}
-      ${filterConditions}
-      ${searchCondition}
-    `;
+    let query = rawQueries.fetchProjetFiscalForFinancialHighlights(
+      schemaName,
+      accountFilter,
+      projectFilter,
+      filterConditions,
+      searchCondition
+    );
 
     const replacements: any = {
       searchTerm: search ? `%${search}%` : null,
@@ -490,7 +465,7 @@ async exportresourceCostDetailsForFinancialHighlights(
     
     // Fetch reference data maps
     const fetchReferenceMap = async (table: string, idField: string, nameField: string) => {
-      const query = `SELECT ${idField}, ${nameField} FROM ${MAIN_SCHEMA_NAME}.${table}`;
+      const query = rawQueries.fetchQueryForReferenceMap(idField, nameField, table);
       const items = await mainDbSequelize.query(query, { type: "SELECT" });
       return new Map(items.map((item: any) => [item[idField], item[nameField]]));
     };
@@ -586,14 +561,10 @@ async exportresourceCostDetailsForFinancialHighlights(
     const referencePromises = [];
 
     if (resourceTypeIds.length > 0) {
-      const resourceTypeQuery = `
-        SELECT rid, resource_type_name
-        FROM ${MAIN_SCHEMA_NAME}.resource_type 
-        WHERE rid IN (:resourceTypeIds)
-      `;
+      const resourceTypeQuery = rawQueries.GET_RESOURCE_TYPES;
       referencePromises.push(
         mainDbSequelize.query(resourceTypeQuery, {
-          replacements: { resourceTypeIds },
+          replacements: { resourceTypeRid: resourceTypeIds },
           type: "SELECT",
         })
       );
@@ -602,14 +573,10 @@ async exportresourceCostDetailsForFinancialHighlights(
     }
 
     if (countryIds.length > 0) {
-      const countryQuery = `
-        SELECT rid, country_code, country_name 
-        FROM ${MAIN_SCHEMA_NAME}.country 
-        WHERE rid IN (:countryIds)
-      `;
+      const countryQuery = rawQueries.GET_COUNTRIES
       referencePromises.push(
         mainDbSequelize.query(countryQuery, {
-          replacements: { countryIds },
+          replacements: { countryRid: countryIds },
           type: "SELECT",
         })
       );
@@ -724,45 +691,22 @@ async executeQueriesForFinancialHighlights(
     const projectFilter = project_rid ? ` AND prf.project_fiscal_rid = :project_rid` : '';
 
     // Build the base query without sorting or pagination
-    let query = `
-      SELECT 
-        prf.total_cost_pro_res,
-        prf.rd_percent_final,
-        prf.qre_final,
-        prf.rd_credits_total,
-        prf.resource_rid,
-        prf.project_fiscal_rid,
-        prf.fiscal_year,
-        prf.country_rid,
-        prf.region_rid,
-        pf.project_code,
-        pf.r_number,
-        pf.project_name,
-        r.resource_code,
-        r.resource_name,
-        r.resource_type_rid
-      FROM "${schemaName}"."project_resource_fiscal" prf
-      INNER JOIN "${schemaName}"."project_fiscal" pf ON pf.rid = prf.project_fiscal_rid
-      INNER JOIN "${schemaName}"."resources" r ON r.rid = prf.resource_rid
-      WHERE 1=1 
-      ${accountFilter}
-      ${projectFilter}
-      ${filterConditions}
-      ${searchCondition}
-    `;
+    let query = rawQueries.fetchProjetFiscalForFinancialHighlights(
+      schemaName,
+      accountFilter,
+      projectFilter,
+      filterConditions,
+      searchCondition
+    );
 
     // Count query to get total records
-    const countQuery = `
-      SELECT COUNT(*) as total
-      FROM "${schemaName}"."project_resource_fiscal" prf
-      INNER JOIN "${schemaName}"."project_fiscal" pf ON pf.rid = prf.project_fiscal_rid
-      INNER JOIN "${schemaName}"."resources" r ON r.rid = prf.resource_rid
-      WHERE 1=1
-      ${accountFilter}
-      ${projectFilter}
-      ${filterConditions}
-      ${searchCondition}
-    `;
+    const countQuery = rawQueries.fetchProjectFiscalCountQuery(
+      schemaName,
+      accountFilter,
+      projectFilter,
+      filterConditions,
+      searchCondition
+    );
 
     const replacements: any = {
       limit,
@@ -797,7 +741,7 @@ async executeQueriesForFinancialHighlights(
     
     // Fetch reference data maps
     const fetchReferenceMap = async (table: string, idField: string, nameField: string) => {
-      const query = `SELECT ${idField}, ${nameField} FROM ${MAIN_SCHEMA_NAME}.${table}`;
+      const query = rawQueries.fetchQueryForReferenceMap(idField, nameField, table);
       const items = await mainDbSequelize.query(query, { type: "SELECT" });
       return new Map(items.map((item: any) => [item[idField], item[nameField]]));
     };
@@ -925,14 +869,10 @@ async executeQueriesForFinancialHighlights(
     const referencePromises = [];
 
     if (resourceTypeIds.length > 0) {
-      const resourceTypeQuery = `
-        SELECT rid, resource_type_name
-        FROM ${MAIN_SCHEMA_NAME}.resource_type 
-        WHERE rid IN (:resourceTypeIds)
-      `;
+      const resourceTypeQuery = rawQueries.GET_RESOURCE_TYPES;
       referencePromises.push(
         mainDbSequelize.query(resourceTypeQuery, {
-          replacements: { resourceTypeIds },
+          replacements: { resourceTypeRid: resourceTypeIds },
           type: "SELECT",
         })
       );
@@ -941,14 +881,10 @@ async executeQueriesForFinancialHighlights(
     }
 
     if (countryIds.length > 0) {
-      const countryQuery = `
-        SELECT rid, country_code, country_name 
-        FROM ${MAIN_SCHEMA_NAME}.country 
-        WHERE rid IN (:countryIds)
-      `;
+      const countryQuery = rawQueries.GET_COUNTRIES;
       referencePromises.push(
         mainDbSequelize.query(countryQuery, {
-          replacements: { countryIds },
+          replacements: { countryRid: countryIds },
           type: "SELECT",
         })
       );
@@ -957,14 +893,10 @@ async executeQueriesForFinancialHighlights(
     }
 
     if (regionIds.length > 0) {
-      const regionQuery = `
-        SELECT rid, state_name
-        FROM ${MAIN_SCHEMA_NAME}.state
-        WHERE rid IN (:regionIds)
-      `;
+      const regionQuery = rawQueries.GET_REGIONS;
       referencePromises.push(
         mainDbSequelize.query(regionQuery, {
-          replacements: { regionIds },
+          replacements: { regionRid: regionIds },
           type: "SELECT",
         })
       );
@@ -1066,28 +998,10 @@ async executeQueriesForFinancialHighlights(
       }
 
       //Build the base query without sorting or pagination
-      let query = `
-        SELECT rc.*,rc.r_number as r_number, r.resource_name, r.resource_orgname, r.resource_designation, r.resource_role, ad.account_name, ad.account_rid,
-        TO_CHAR(rc.effective_from, 'YYYY-MM-DD') as effective_from,
-        TO_CHAR(rc.end_date, 'YYYY-MM-DD') as end_date
-        FROM "${schemaName}"."resource_cost" rc
-        INNER JOIN "${schemaName}"."resources" r ON rc.resource_rid = r.rid
-        INNER JOIN "${schemaName}"."account_details" ad ON r.account_rid = ad.account_rid
-        WHERE 1=1 AND rc.account_rid = :account_rid AND rc.resource_rid = :resource_rid ${resource_cost_rid}
-        ${filterConditions}
-        ${searchCondition}
-      `;
+      let query = rawQueries.getResourceCostQuery(schemaName, resource_cost_rid, filterConditions, searchCondition);
 
       // Count query to get total records
-      const countQuery = `
-        SELECT COUNT(*) as total
-        FROM "${schemaName}"."resource_cost" rc
-        INNER JOIN "${schemaName}"."resources" r ON rc.resource_rid = r.rid
-        INNER JOIN "${schemaName}"."account_details" ad ON r.account_rid = ad.account_rid
-        WHERE 1=1 AND rc.account_rid = :account_rid AND rc.resource_rid = :resource_rid
-        ${filterConditions}
-        ${searchCondition}
-      `;
+      const countQuery = rawQueries.getResourceCostCountQuery(schemaName, filterConditions, searchCondition);;
 
       const replacements = {
         limit,
@@ -1112,7 +1026,7 @@ async executeQueriesForFinancialHighlights(
 
       const mainDbSequelize = await initMainDbSequelize();
       const fetchReferenceMap = async (table: string, idField: string, nameField: string) => {
-      const query = `SELECT ${idField}, ${nameField} FROM ${MAIN_SCHEMA_NAME}.${table}`;
+      const query = rawQueries.fetchQueryForReferenceMap(idField, nameField, table);
       const items = await mainDbSequelize.query(query, { type: "SELECT" });
       return new Map(items.map((item: any) => [item[idField], item[nameField]]));
     };
@@ -1159,13 +1073,9 @@ async executeQueriesForFinancialHighlights(
         if (currencyIds.length > 0) {
           // Fetch currency info from main database
           const currencies = await mainDbSequelize.query(
-            `
-            SELECT rid, currency_code 
-            FROM ${MAIN_SCHEMA_NAME}.currency 
-            WHERE rid IN (:currencyIds)
-          `,
+            rawQueries.GET_CURRENCIES,
             {
-              replacements: { currencyIds },
+              replacements: { currencyRid: currencyIds },
               type: "SELECT",
             }
           );
@@ -1230,14 +1140,10 @@ async executeQueriesForFinancialHighlights(
 
       if (currencyIds.length > 0) {
         // Use raw query to fetch currency information
-        const currencyQuery = `
-            SELECT rid, currency_code, currency_name, currency_symbol 
-            FROM ${MAIN_SCHEMA_NAME}.currency 
-            WHERE rid IN (:currencyIds)
-          `;
+        const currencyQuery = rawQueries.GET_CURRENCIES;
 
         const currencies = await mainDbSequelize.query(currencyQuery, {
-          replacements: { currencyIds },
+          replacements: { currencyRid: currencyIds },
           type: "SELECT",
         });
 
@@ -1299,17 +1205,7 @@ async executeQueriesForFinancialHighlights(
       const sequelize = await this.getDbConnection(schemaName);
 
       //Build the base query without sorting or pagination
-      let query = `
-        SELECT rc.*,rc.r_number as r_number, r.resource_name, r.resource_orgname, r.resource_designation, r.resource_role, ad.account_name, ad.account_rid,
-        TO_CHAR(rc.effective_from, 'YYYY-MM-DD') as effective_from,
-        TO_CHAR(rc.end_date, 'YYYY-MM-DD') as end_date
-        FROM "${schemaName}"."resource_cost" rc
-        INNER JOIN "${schemaName}"."resources" r ON rc.resource_rid = r.rid
-        INNER JOIN "${schemaName}"."account_details" ad ON r.account_rid = ad.account_rid
-        WHERE 1=1 AND rc.account_rid = :account_rid AND rc.resource_rid = :resource_rid
-        ${filterConditions}
-        ${searchCondition}
-      `;
+      let query = rawQueries.getBaseResourceCostQuery(schemaName, filterConditions, searchCondition);;
 
       const replacements = {
         searchTerm: search ? `%${search}%` : null,
@@ -1325,7 +1221,7 @@ async executeQueriesForFinancialHighlights(
 
       const mainDbSequelize = await initMainDbSequelize();
       const fetchReferenceMap = async (table: string, idField: string, nameField: string) => {
-        const query = `SELECT ${idField}, ${nameField} FROM ${MAIN_SCHEMA_NAME}.${table}`;
+        const query = rawQueries.fetchQueryForReferenceMap(idField, nameField, table);
         const items = await mainDbSequelize.query(query, { type: "SELECT" });
         return new Map(items.map((item: any) => [item[idField], item[nameField]]));
       };
@@ -1378,13 +1274,9 @@ async executeQueriesForFinancialHighlights(
         if (currencyIds.length > 0) {
           // Fetch currency info from main database
           const currencies = await mainDbSequelize.query(
-            `
-            SELECT rid, currency_code 
-            FROM ${MAIN_SCHEMA_NAME}.currency 
-            WHERE rid IN (:currencyIds)
-          `,
+            rawQueries.GET_CURRENCIES,
             {
-              replacements: { currencyIds },
+              replacements: { currencyRid: currencyIds },
               type: "SELECT",
             }
           );
@@ -1441,14 +1333,10 @@ async executeQueriesForFinancialHighlights(
 
       if (currencyIds.length > 0) {
         // Use raw query to fetch currency information
-        const currencyQuery = `
-            SELECT rid, currency_code, currency_name, currency_symbol 
-            FROM ${MAIN_SCHEMA_NAME}.currency 
-            WHERE rid IN (:currencyIds)
-          `;
+        const currencyQuery = rawQueries.GET_CURRENCIES;
 
         const currencies = await mainDbSequelize.query(currencyQuery, {
-          replacements: { currencyIds },
+          replacements: {currencyRid: currencyIds },
           type: "SELECT",
         });
 
@@ -2391,7 +2279,7 @@ processAlphanumericFilterForFinancialHighlights(key: string, value: any): string
   }
 
   async getCurrencyRidByAccountRidRaw(accountRid: string): Promise<string | null> {
-    const query = `SELECT a.currency_rid FROM ${MAIN_SCHEMA_NAME}.account a WHERE a.rid = :accountRid`;
+    const query = rawQueries.fetchAccountCurrencyRid(accountRid);
     try {
       const mainDb = await initMainDbSequelize();
       const result = await mainDb.query(query, {
@@ -2424,7 +2312,7 @@ async assignResourceStatusandType(
       } else {
         try {
           const usdCurrencyId = await mainDbSequelize.query(
-            `SELECT c.rid FROM ${MAIN_SCHEMA_NAME}.currency c WHERE c.currency_code = 'USD'`,
+            rawQueries.fetchDefaultCurrency(),
             { type: 'SELECT' }
           );
           result.currency_rid = usdCurrencyId[0]?.rid;

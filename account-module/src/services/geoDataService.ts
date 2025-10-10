@@ -32,10 +32,8 @@ class GeoDataService {
   }> {
     try {
       const country = await Country.findAll({
-      order: [
-        ['country_name', 'ASC']
-      ]
-    });
+        order: [["country_name", "ASC"]],
+      });
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -65,11 +63,9 @@ class GeoDataService {
     data?: { currency: any; count: number };
   }> {
     try {
-     const currency = await Currency.findAll({
-      order: [
-        ['currency_name', 'ASC']
-      ]
-    });
+      const currency = await Currency.findAll({
+        order: [["currency_name", "ASC"]],
+      });
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -100,10 +96,8 @@ class GeoDataService {
   }> {
     try {
       const regions = await Region.findAll({
-      order: [
-        ['region_name', 'ASC']
-      ]
-    });
+        order: [["region_name", "ASC"]],
+      });
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -136,20 +130,20 @@ class GeoDataService {
   }> {
     try {
       let states;
-      
+
       if (countryIds && countryIds.length > 0) {
         states = await States.findAll({
           where: {
-            country_rid: countryIds // Sequelize will automatically handle the IN query for arrays
+            country_rid: countryIds, // Sequelize will automatically handle the IN query for arrays
           },
           include: [
             {
               model: Country,
               as: "country",
-              attributes: ["country_name"]
-            }
+              attributes: ["country_name"],
+            },
           ],
-          order: [["state_name", "ASC"]]
+          order: [["state_name", "ASC"]],
         });
       } else {
         states = await States.findAll({
@@ -157,13 +151,13 @@ class GeoDataService {
             {
               model: Country,
               as: "country",
-              attributes: ["country_name"]
-            }
+              attributes: ["country_name"],
+            },
           ],
-          order: [["state_name", "ASC"]]
+          order: [["state_name", "ASC"]],
         });
       }
-      
+
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -196,25 +190,25 @@ class GeoDataService {
   }> {
     try {
       let cities;
-      
+
       if (stateIds) {
         cities = await models.City.findAll({
           where: {
-            state_rid: stateIds // Sequelize will automatically handle the IN query for arrays
+            state_rid: stateIds, // Sequelize will automatically handle the IN query for arrays
           },
           include: [
             {
               model: States,
               as: "state",
-              attributes: ["state_name"]
+              attributes: ["state_name"],
             },
             {
               model: Country,
               as: "country",
-              attributes: ["country_name"]
-            }
+              attributes: ["country_name"],
+            },
           ],
-          order: [["city_name", "ASC"]]
+          order: [["city_name", "ASC"]],
         });
       } else {
         cities = await models.City.findAll({
@@ -222,18 +216,18 @@ class GeoDataService {
             {
               model: States,
               as: "state",
-              attributes: ["state_name"]
+              attributes: ["state_name"],
             },
             {
               model: Country,
               as: "country",
-              attributes: ["country_name"]
-            }
+              attributes: ["country_name"],
+            },
           ],
-          order: [["city_name", "ASC"]]
+          order: [["city_name", "ASC"]],
         });
       }
-      
+
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -263,11 +257,16 @@ class GeoDataService {
   }> {
     try {
       const industries = await Industry.findAll({
-        attributes: ["rid", "industry_name", "industry_description","industry_status"],
+        attributes: [
+          "rid",
+          "industry_name",
+          "industry_description",
+          "industry_status",
+        ],
         where: {
-          industry_status: "active"
+          industry_status: "active",
         },
-        order: [["industry_name", "ASC"]] 
+        order: [["industry_name", "ASC"]],
       });
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -282,6 +281,19 @@ class GeoDataService {
     }
   }
 
+  /**
+   * Retrieves color codes filtered by status.
+   *
+   * @param {IColorCodeType} status The status to filter color codes by, or 'All' for no filtering.
+   * @returns {Promise<{ statusCode: number; message: string; errorMessage?: string; data?: { colors: any; count: number } }>}
+   * A promise resolving with the list of color codes and their count.
+   *
+   * This method performs the following steps:
+   * - Builds a query filter based on the provided status.
+   * - Fetches color codes from the database matching the filter.
+   * - Returns the fetched color codes and the total count.
+   * - Handles errors via a centralized error handler.
+   */
   async colorCodes(status: IColorCodeType): Promise<{
     statusCode: number;
     message: string;
@@ -291,12 +303,12 @@ class GeoDataService {
     try {
       const whereClause: any = {};
 
-      if (status !== 'All') {
+      if (status !== "All") {
         whereClause.status = status;
       }
 
       const colorCodes = await ColorCodes.findAll({
-        where: whereClause
+        where: whereClause,
       });
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -311,7 +323,7 @@ class GeoDataService {
     }
   }
 
- /**
+  /**
    * Fetches a list of status from the database.
    *
    * @returns {Promise<{ statusCode: number, message: string, errorMessage?: string, data?: { country: any } }>} The response object containing status code, message, and a list of countries.
@@ -328,11 +340,11 @@ class GeoDataService {
   }> {
     try {
       const status = await Status.findAll({
-        attributes: ["rid", "status_name", "status_description","status"],
+        attributes: ["rid", "status_name", "status_description", "status"],
         where: {
-          status: "active"
+          status: "active",
         },
-        order: [["status_name", "ASC"]] 
+        order: [["status_name", "ASC"]],
       });
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -365,11 +377,16 @@ class GeoDataService {
   }> {
     try {
       const resouceType = await ResourceType.findAll({
-        attributes: ["rid", "resource_type_name", "resource_type_description","status"],
+        attributes: [
+          "rid",
+          "resource_type_name",
+          "resource_type_description",
+          "status",
+        ],
         where: {
-          status: "active"
+          status: "active",
         },
-        order: [["resource_type_name", "ASC"]] 
+        order: [["resource_type_name", "ASC"]],
       });
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -384,7 +401,7 @@ class GeoDataService {
     }
   }
 
-/**
+  /**
    * Fetches a list of resource type from the database.
    *
    * @returns {Promise<{ statusCode: number, message: string, errorMessage?: string, data?: { country: any } }>} The response object containing status code, message, and a list of countries.
@@ -401,11 +418,16 @@ class GeoDataService {
   }> {
     try {
       const projectType = await ProjectType.findAll({
-        attributes: ["rid", "project_type_name", "project_type_description","status"],
+        attributes: [
+          "rid",
+          "project_type_name",
+          "project_type_description",
+          "status",
+        ],
         where: {
-          status: "active"
+          status: "active",
         },
-        order: [["project_type_name", "ASC"]] 
+        order: [["project_type_name", "ASC"]],
       });
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -420,7 +442,7 @@ class GeoDataService {
     }
   }
 
-/**
+  /**
    * Fetches a list of resource type from the database.
    *
    * @returns {Promise<{ statusCode: number, message: string, errorMessage?: string, data?: { country: any } }>} The response object containing status code, message, and a list of countries.
@@ -437,11 +459,16 @@ class GeoDataService {
   }> {
     try {
       const skillLevel = await SkillLevel.findAll({
-        attributes: ["rid", "skill_level_name", "skill_level_description","status"],
+        attributes: [
+          "rid",
+          "skill_level_name",
+          "skill_level_description",
+          "status",
+        ],
         where: {
-          status: "active"
+          status: "active",
         },
-        order: [["skill_level_name", "ASC"]] 
+        order: [["skill_level_name", "ASC"]],
       });
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -455,7 +482,7 @@ class GeoDataService {
       return this.throwServiceError(err as Error);
     }
   }
-/**
+  /**
    * Fetches a list of resource status from the database.
    *
    * @returns {Promise<{ statusCode: number, message: string, errorMessage?: string, data?: { country: any } }>} The response object containing status code, message, and a list of countries.
@@ -472,11 +499,16 @@ class GeoDataService {
   }> {
     try {
       const resourceStatus = await ResourceStatus.findAll({
-        attributes: ["rid", "resource_status_name", "resource_status_description","status"],
+        attributes: [
+          "rid",
+          "resource_status_name",
+          "resource_status_description",
+          "status",
+        ],
         where: {
-          status: "active"
+          status: "active",
         },
-        order: [["resource_status_name", "ASC"]] 
+        order: [["resource_status_name", "ASC"]],
       });
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -511,11 +543,22 @@ class GeoDataService {
       errorMessage: err.message,
     };
   }
+
+  /**
+   * Retrieves import entity types from the database.
+   *
+   * @returns {Promise<any[]>} A promise resolving to an array of import entity types fetched via raw SQL query.
+   *
+   * This method:
+   * - Initializes a connection to the main database.
+   * - Executes a raw SQL query to fetch import entity types.
+   * - Returns the first result set from the query execution.
+   */
   async importEntityTypes() {
-    const mainDb = await initSequelize()
+    const mainDb = await initSequelize();
     let rawQuery = rawQueries.GET_IMPORT_ENTITY_TYPES;
-    const result = await mainDb.query(rawQuery)
-    return result[0]
+    const result = await mainDb.query(rawQuery);
+    return result[0];
   }
 }
 

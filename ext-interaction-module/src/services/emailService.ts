@@ -2,7 +2,7 @@ import { Client } from "@microsoft/microsoft-graph-client";
 import { ClientSecretCredential } from "@azure/identity";
 import { IEmailMessage } from "../utils/types";
 import { initMainDbSequelize } from "../config/mainDataSource";
-import { MAIN_SCHEMA_NAME } from "../utils/constants";
+import { MAIN_SCHEMA_NAME, rawQueries } from "../utils/constants";
 import { decryptClientSecret } from "../utils/helpers";
 
 /**
@@ -58,7 +58,7 @@ async function fetchPlatFormCredentials() {
   const mainSequilze = await initMainDbSequelize();
 
   const platformCredentials: any = await mainSequilze.query(
-    `SELECT * from "${MAIN_SCHEMA_NAME}".organization_licenses`,
+    rawQueries.getOrganizationLicensesQuery(),
     {
       type: "SELECT",
     }

@@ -8,7 +8,7 @@ import { ResourceCostHistory } from '../../src/models/resourceCostHistory';
 import { Resources } from '../../src/models/resource';
 import resourceCostSchemaService from '../../src/services/resourceCostSchemaService';
 import SchemaService from '../../src/services/schemaService';
-import { HttpStatus, MAIN_SCHEMA_NAME } from '../../src/utils/constants';
+import { HttpStatus, MAIN_SCHEMA_NAME, SCHEMANAME_PREFIX } from '../../src/utils/constants';
 import { initOrgSequelize } from '../../src/config/orgDataSource';
 import { initMainDbSequelize } from '../../src/config/mainDataSource';
 import moment from 'moment';
@@ -116,7 +116,7 @@ describe('ResourceCostService', () => {
 
     it('should return resource costs successfully', async () => {
       const mockAccount = { accountNumber: 'ACC123', accountId: 'acc123' };
-      const mockSchemaName = 'trd365_123'; // Fixed: only digits are kept
+      const mockSchemaName = `${SCHEMANAME_PREFIX}123`; // Fixed: only digits are kept
       const mockResult = {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -280,7 +280,7 @@ describe('ResourceCostService', () => {
 
     it('should export resource costs successfully', async () => {
       const mockAccount = { accountNumber: 'ACC123', accountId: 'acc123' };
-      const mockSchemaName = 'trd365_ACC123';
+      const mockSchemaName = `${SCHEMANAME_PREFIX}ACC123`;
       const mockResult = {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -355,7 +355,7 @@ describe('ResourceCostService', () => {
 
     it('should return resource cost list successfully', async () => {
       const mockAccount = { accountNumber: 'ACC123', accountId: 'acc123' };
-      const mockSchemaName = 'trd365_ACC123';
+      const mockSchemaName = `${SCHEMANAME_PREFIX}ACC123`;
       const mockResult = {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -429,7 +429,7 @@ describe('ResourceCostService', () => {
 
     it('should export resource cost list successfully', async () => {
       const mockAccount = { accountNumber: 'ACC123', accountId: 'acc123' };
-      const mockSchemaName = 'trd365_ACC123';
+      const mockSchemaName = `${SCHEMANAME_PREFIX}ACC123`;
       const mockResult = {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -485,7 +485,7 @@ describe('ResourceCostService', () => {
 
     it('should create resource cost successfully', async () => {
       const mockAccount = { accountNumber: 'ACC123', accountId: 'acc123' };
-      const mockSchemaName = 'trd365_123';
+      const mockSchemaName = `${SCHEMANAME_PREFIX}123`;
       const mockResourceCost = { ...defaultResourceCost, rid: 'rc123' };
 
       (SchemaService.prototype.fetchAccountByNumber as jest.Mock).mockResolvedValue(mockAccount);
@@ -627,7 +627,7 @@ describe('ResourceCostService', () => {
 
     it('should update resource cost successfully', async () => {
       const mockAccount = { accountNumber: 'ACC123', accountId: 'acc123' };
-      const mockSchemaName = 'trd365_ACC123';
+      const mockSchemaName = `${SCHEMANAME_PREFIX}ACC123`;
       const mockOriginalCost = { ...defaultResourceCost, toJSON: jest.fn().mockReturnValue(defaultResourceCost) };
       const mockUpdatedCost = [{ ...defaultResourceCost, rid: 'rc123' }];
       const statusMap = new Map([['Active', 'status1'], ['Anomaly', 'status2'], ['Duplicate', 'status3']]);
@@ -712,7 +712,7 @@ describe('ResourceCostService', () => {
   describe('resourceCostById', () => {
     it('should retrieve resource cost by ID successfully', async () => {
       const mockAccount = { accountNumber: 'ACC123', accountId: 'acc123' };
-      const mockSchemaName = 'trd365_ACC123';
+      const mockSchemaName = `${SCHEMANAME_PREFIX}ACC123`;
       const mockResourceCost = {
         rid: 'rc123',
         effective_from: new Date('2023-01-01'),
@@ -780,7 +780,7 @@ describe('ResourceCostService', () => {
   describe('acceptResourceCostStatus', () => {
     it('should update status to Active successfully', async () => {
       const mockAccount = { accountNumber: 'ACC123', accountId: 'acc123' };
-      const mockSchemaName = 'trd365_123';
+      const mockSchemaName = `${SCHEMANAME_PREFIX}123`;
       const mockResourceCost = { rid: 'rc123', currency_rid: 'cur123', effort_in_hrs: '2000', salary: '1000', resource_cost: '500' };
 
       (SchemaService.prototype.fetchAccountByNumber as jest.Mock).mockResolvedValue(mockAccount);

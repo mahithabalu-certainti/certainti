@@ -1,8 +1,6 @@
 import { initMainDbSequelize } from "../config/mainDataSource";
 import { initOrgSequelize } from "../config/orgDataSource";
-import { Resources } from "../models/resource";
-import { ResourceFiscal } from "../models/resourceFiscal";
-import { HttpStatus, MAIN_SCHEMA_NAME, STATUS_MESSAGE, rawQueries } from "../utils/constants";
+import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries } from "../utils/constants";
 import { errorLog, logMessage } from "../utils/helpers";
 import { checkResourceMappedToProjectRes } from "../utils/rawQueries";
 import { ICreateResource, IUpdateResource } from "../utils/types";
@@ -888,7 +886,7 @@ export class ResourceService {
       // Fetch created_by user name if ID exists
       if (userIds.created_by) {
         const [createdByUser] = await sequelize.query(
-          `SELECT concat(first_name, ' ', last_name) as full_name FROM ${MAIN_SCHEMA_NAME}."user" WHERE rid = :userId LIMIT 1`,
+          rawQueries.getUserFullNameQuery(),
           {
             replacements: { userId: userIds.created_by },
             type: "SELECT",
@@ -903,7 +901,7 @@ export class ResourceService {
       // Fetch modified_by user name if ID exists
       if (userIds.modified_by) {
         const [modifiedByUser] = await sequelize.query(
-          `SELECT concat(first_name, ' ', last_name) as full_name FROM ${MAIN_SCHEMA_NAME}."user" WHERE rid = :userId LIMIT 1`,
+          rawQueries.getUserFullNameQuery(),
           {
             replacements: { userId: userIds.modified_by },
             type: "SELECT",
@@ -926,13 +924,7 @@ export class ResourceService {
     try {
       const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, '')}`;
 
-      const query = `
-        SELECT 
-          r.rid
-        FROM "${schemaName}".resources r
-        WHERE r.account_rid = :accountRid
-        ORDER BY r.created_datetime DESC
-      `;
+      const query = rawQueries.getResourcesByAccountQuery(schemaName);
 
       const sequelize = await initOrgSequelize();
       const results = await sequelize.query(query, {

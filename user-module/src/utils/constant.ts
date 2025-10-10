@@ -289,7 +289,72 @@ export const rawQuery = {
       (u.first_name ILIKE '${searchValue}' OR u.email ILIKE '${searchValue}')
       ${whereClause}
     `
-  }
+  },
+  getAccountsWithGroupAccessQuery() {
+    return `
+      SELECT a.rid, a.account_name, true as has_access
+      FROM ${MAIN_SCHEMA_NAME}.account a
+      INNER JOIN ${MAIN_SCHEMA_NAME}.user_group_account_mapping uga 
+        ON uga.account_rid = a.rid
+      WHERE uga.group_rid = :group_rid
+    `;
+  },
+  getOrganizationInfoByRidQuery() {
+    return `
+      SELECT organisation_name, logo_url 
+      FROM ${MAIN_SCHEMA_NAME}.account 
+      WHERE rid = :rid
+    `;
+  },
+  getCountryNameByRidQuery() {
+    return `
+      SELECT country_name 
+      FROM ${MAIN_SCHEMA_NAME}.country 
+      WHERE rid = :rid
+    `;
+  },
+  getStateNameByRidQuery() {
+    return `
+      SELECT state_name 
+      FROM ${MAIN_SCHEMA_NAME}.state 
+      WHERE rid = :rid
+    `;
+  },
+  getCityNameByRidQuery() {
+    return `
+      SELECT city_name 
+      FROM ${MAIN_SCHEMA_NAME}.city 
+      WHERE rid = :rid
+    `;
+  },
+  getProfileFieldAccessQuery() {
+    return `
+      SELECT pf.field_desc, pf.field_name, pfa.read, pfa.edit
+      FROM ${MAIN_SCHEMA_NAME}.profile_fields_access pfa
+      JOIN ${MAIN_SCHEMA_NAME}.permission_fields pf ON pfa.permission_field_id = pf.rid
+      JOIN ${MAIN_SCHEMA_NAME}.module_permission mp ON pf.module_permission_id = mp.rid
+      WHERE mp.permission_name = :permissionName
+        AND pfa.profile_id = :profileId
+    `;
+  },
+  getUserFieldAccessQuery() {
+    return `
+      SELECT pf.field_desc, pf.field_name, ufa.read, ufa.edit
+      FROM ${MAIN_SCHEMA_NAME}.user_fields_access ufa
+      JOIN ${MAIN_SCHEMA_NAME}.permission_fields pf ON ufa.permission_field_id = pf.rid
+      JOIN ${MAIN_SCHEMA_NAME}.module_permission mp ON pf.module_permission_id = mp.rid
+      WHERE mp.permission_name = :permissionName
+        AND ufa.user_id = :userId
+    `;
+  },
+  getUserFullNameByIdQuery() {
+    return `
+      SELECT first_name || ' ' || last_name AS full_name 
+      FROM ${MAIN_SCHEMA_NAME}."user" 
+      WHERE rid = :userId 
+      LIMIT 1
+    `;
+  }    
 }
 
 export const statusMessage = {

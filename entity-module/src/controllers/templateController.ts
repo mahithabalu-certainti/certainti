@@ -12,6 +12,19 @@ import configurations from "../config/config";
 const services = configurations.getInstance().getServices();
 const templateService = services.templateServices;
 
+/**
+ * Handles uploading a template file.
+ *
+ * This method:
+ * 1. Validates the presence of the user ID in the request headers.
+ * 2. Checks if a file has been uploaded in the request.
+ * 3. Calls the template service to process the uploaded file.
+ * 4. Sends appropriate success or error responses based on the operation outcome.
+ *
+ * @param req - Express Request object, expected to have `file` and `body.templateId`
+ * @param res - Express Response object used to send back responses
+ * @returns Promise resolving to void
+ */
 async function uploadTemplate(req: Request, res: Response): Promise<void> {
   const methodName = "Upload Template";
   try {
@@ -33,7 +46,11 @@ async function uploadTemplate(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const uploadTemplate = await templateService.uploadTemplate(req.file, req.body.templateId, userId);
+    const uploadTemplate = await templateService.uploadTemplate(
+      req.file,
+      req.body.templateId,
+      userId
+    );
 
     if (uploadTemplate.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -62,6 +79,18 @@ async function uploadTemplate(req: Request, res: Response): Promise<void> {
   }
 }
 
+/**
+ * Handles listing all available templates.
+ *
+ * This method:
+ * 1. Validates the presence of the user ID in the request headers.
+ * 2. Calls the template service to retrieve the list of templates.
+ * 3. Sends appropriate success or error responses based on the operation outcome.
+ *
+ * @param req - Express Request object
+ * @param res - Express Response object used to send back responses
+ * @returns Promise resolving to void
+ */
 async function listTemplates(req: Request, res: Response): Promise<void> {
   const methodName = "List Template";
   try {
@@ -108,5 +137,5 @@ async function listTemplates(req: Request, res: Response): Promise<void> {
 
 export default {
   uploadTemplate,
-  listTemplates
+  listTemplates,
 };

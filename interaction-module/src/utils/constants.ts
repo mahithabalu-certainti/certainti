@@ -45,6 +45,8 @@ export const interactionType = {
 };
 export const ENV_PREFIX = process.env.NODE_ENV_DB_PREFIX || 'D001-';
 export const MAIN_SCHEMA_NAME = "trd365";
+export const SCHEMANAME_PREFIX = "trd365_";
+
 export const constants = {
   SQL_GET_USER: `SELECT status_description as status, "user".rid, email, profile_rid FROM ${MAIN_SCHEMA_NAME}."user" as "user" ,${MAIN_SCHEMA_NAME}."status" as status WHERE  "user".status_rid = status.rid and {whereClause} LIMIT 1`,
   SQL_GET_PERMISSION: `SELECT rid FROM ${MAIN_SCHEMA_NAME}."module_permission" WHERE permission_name = :permissionName LIMIT 1`,
@@ -502,7 +504,7 @@ export const rawQueries = {
   },
    fetchInteractionLevelRidByName(type: string) {
     return `
-    SELECT rid FROM ${MAIN_SCHEMA_NAME}.interaction_level WHERE interaction_level_name = '${type}' LIMIT 1`;
+    SELECT rid, interaction_level_name FROM ${MAIN_SCHEMA_NAME}.interaction_level WHERE interaction_level_name = '${type}' LIMIT 1`;
   },
   fetchAllParentRNumber() {
     let query = `SELECT r_number FROM ${MAIN_SCHEMA_NAME}.account WHERE storage_type = '${STATUS_MESSAGE.separateDb}' AND parent_account_rid IS NULL
@@ -787,7 +789,138 @@ export const rawQueries = {
   },
   fetchInteractionLevelById (interactionLevelRid : string) {
     return `SELECT * FROM ${MAIN_SCHEMA_NAME}.interaction_level WHERE rid = '${interactionLevelRid}'`
-  }
+  },
+  getAccountDetailsQuery(schemaName: string) {
+    return `
+      SELECT * 
+      FROM ${schemaName}.account_details 
+      WHERE account_rid = :accountRid
+    `;
+  },
+  getAccountsWithSubscriptionQuery() {
+    return `
+      SELECT * 
+      FROM ${MAIN_SCHEMA_NAME}.account 
+      WHERE subscription_id IS NOT NULL
+    `;
+  },
+  getUserNameByIdQuery() {
+    return `
+      SELECT first_name, middle_name, last_name 
+      FROM ${MAIN_SCHEMA_NAME}."user" 
+      WHERE rid = :userId
+    `;
+  },
+  getStatusByIdQuery() {
+    return `
+      SELECT rid, status_name 
+      FROM ${MAIN_SCHEMA_NAME}.status 
+      WHERE rid = :id
+    `;
+  },
+  getInteractionTypeByIdQuery() {
+    return `
+      SELECT rid, interaction_type_name 
+      FROM ${MAIN_SCHEMA_NAME}.interaction_type 
+      WHERE rid = :id
+    `;
+  },
+  getInteractionStatusByIdQuery() {
+    return `
+      SELECT rid, status_name 
+      FROM ${MAIN_SCHEMA_NAME}.interaction_status 
+      WHERE rid = :id
+    `;
+  },
+  getInteractionSourceByNameQuery() {
+    return `
+      SELECT rid, interaction_source_name 
+      FROM ${MAIN_SCHEMA_NAME}.interaction_source 
+      WHERE interaction_source_name = :type 
+      LIMIT 1
+    `;
+  },
+  getInteractionLevelNameByIdQuery() {
+    return `
+      SELECT interaction_level_name 
+      FROM ${MAIN_SCHEMA_NAME}.interaction_level 
+      WHERE rid = :type 
+      LIMIT 1
+    `;
+  },
+  getActiveInteractionTypesQuery() {
+    return `
+      SELECT rid, interaction_type_name 
+      FROM ${MAIN_SCHEMA_NAME}.interaction_type 
+      WHERE status = 'active' 
+      ORDER BY interaction_type_name ASC
+    `;
+  },
+  getActiveInteractionSourcesQuery() {
+    return `
+      SELECT rid, interaction_source_name 
+      FROM ${MAIN_SCHEMA_NAME}.interaction_source 
+      WHERE status = 'active' 
+      ORDER BY interaction_source_name ASC
+    `;
+  },
+  getActiveInteractionResponseSourcesQuery() {
+    return `
+      SELECT rid, response_source_name 
+      FROM ${MAIN_SCHEMA_NAME}.interaction_response_source 
+      WHERE status = 'active' 
+      ORDER BY response_source_name ASC
+    `;
+  },
+  getProjectSummaryWithFiscalAccessQuery(accessControlWhere: any) {
+    return `
+      SELECT DISTINCT ps.project_rid
+      FROM ${MAIN_SCHEMA_NAME}.project_summary AS ps
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary AS pfs ON ps.project_rid = pfs.project_rid
+      ${accessControlWhere}
+    `;
+  },
+  getAccountByRNumberQuery() {
+    return `
+      SELECT * 
+      FROM ${MAIN_SCHEMA_NAME}.account 
+      WHERE r_number = :r_number
+    `;
+  },
+  checkProjectFiscalExistsQuery(schemaName: string) {
+    return `
+      SELECT 1 
+      FROM "${schemaName}".project_fiscal 
+      WHERE r_number = :projectId 
+      LIMIT 1;
+    `;
+  },
+  checkProjectFiscalByNameExistsQuery(schemaName: string) {
+    return `
+      SELECT 1 
+      FROM "${schemaName}".project_fiscal 
+      WHERE project_name = :projectName 
+      LIMIT 1;
+    `;
+  },
+  checkProjectFiscalByCodeExistsQuery(schemaName: string) {
+    return `
+      SELECT 1 
+      FROM "${schemaName}".project_fiscal 
+      WHERE project_code = :projectCode 
+      LIMIT 1;
+    `;
+  },
+  checkProjectFiscalExistsByAnyQuery(schemaName: string) {
+    return `
+      SELECT 1 
+      FROM "${schemaName}".project_fiscal 
+      WHERE project_rid = :projectId 
+         OR project_name = :projectName 
+         OR project_code = :projectCode
+      LIMIT 1;
+    `;
+  }  
 };
 
 export const filterTypesForSummaryInteractions : Record<string, any> = 

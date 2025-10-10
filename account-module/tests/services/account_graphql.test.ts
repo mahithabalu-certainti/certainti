@@ -46,6 +46,7 @@ import * as mainDbConfig from '../../src/config/maindbDataSource';
 import * as helpers from '../../src/utils/helpers';
 import {
   HttpStatus,
+  SCHEMANAME_PREFIX,
   STATUS,
   STATUS_MESSAGE,
   rawQueries
@@ -188,7 +189,7 @@ describe('AccountGraphQlServices.inlineEditAccount', () => {
 
     await service.inlineEditAccount(input);
 
-    expect(helpers.setKeyContactData).toHaveBeenCalledWith(input, sequelizeMock, `"trd365_1234"`);
+    expect(helpers.setKeyContactData).toHaveBeenCalledWith(input, sequelizeMock, `"${SCHEMANAME_PREFIX}1234"`);
   });
 
   it('should not call setKeyContactData if key_contacts is an empty array', async () => {

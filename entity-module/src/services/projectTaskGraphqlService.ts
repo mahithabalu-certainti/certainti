@@ -3,7 +3,6 @@ import { initMainDbSequelize } from "../config/mainDataSource";
 import { initOrgSequelize } from "../config/orgDataSource";
 import {
   HttpStatus,
-  MAIN_SCHEMA_NAME,
   rawQueries,
   STATUS_MESSAGE,
 } from "../utils/constants";
@@ -12,7 +11,6 @@ import { ProjectTaskSchemaService } from "../services/projectTask/schemaService"
 import { ProjectInjestionTaskService } from "./projectTask/projectTaskService";
 import Decimal from "decimal.js";
 import { ProjectTask } from "../models/projectTask";
-import { ProjectResourceSchemaService } from "./projectResource/schemaService";
 import { getCurrencyThreshold, getResourceStatuses } from "./resourceCostService";
 
 const services = Configurations.getInstance().getServices();
@@ -184,7 +182,7 @@ export default class ProjectTaskGraphqlServies {
         }
       }
 
-        const getAccountCurrencyRid : any = await mainSequelize.query(`SELECT currency_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${data.account_rid}'`)
+        const getAccountCurrencyRid : any = await mainSequelize.query(rawQueries.fetchCurrencyFromAccount(data.account_rid))
         const costFields = {
           total_hours_pro_task,
           total_cost_pro_task
@@ -212,7 +210,7 @@ export default class ProjectTaskGraphqlServies {
         const currencyThreshold = await getCurrencyThreshold(mainSequelize,getAccountCurrencyRid[0][0].currency_rid);
         let status = "Active";
         const statusMap = await getResourceStatuses(mainSequelize);
-        const activeId : any = await mainSequelize.query(`SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name ILIKE '%${status}%'`)
+        const activeId : any = await mainSequelize.query(rawQueries.fetchActiveStatusRid(status));
         const activeStatusId : any = statusMap?.get(status);
 
         if (total_hours_pro_task != null && Number(total_hours_pro_task) > 3000) {

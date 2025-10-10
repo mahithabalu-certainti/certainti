@@ -68,6 +68,27 @@ export class ProjectInjestionTaskService {
     return this.orgDbSequelize;
   }
 
+  /**
+ * Creates a new project task with detailed validation, transactional database operations,
+ * and anomaly detection based on effort and cost thresholds.
+ * 
+ * Validates input data, checks for existing tasks to prevent duplicates,
+ * calculates effort limits within the task duration,
+ * determines task status including anomaly detection,
+ * and manages transactional inserts and timeline logging.
+ * 
+ * @param {ICreateProjectTask} projectTaskData - Data object containing the details of the project task to create.
+ * @param {string} userId - The ID of the user initiating the creation.
+ * @param {string} userPreference - User preference for handling duplicate tasks.
+ * @returns {Promise<{
+ *   statusCode: number;
+  *   message: string;
+  *   errorMessage?: string;
+  *   data?: { projectTask: any };
+  * }>} Returns an object indicating success, prompt, or error status along with relevant messages and created task data.
+  * 
+  * @throws Will rollback the transaction and throw an error if any unexpected failure occurs during the creation process.
+  */ 
   async createProjectTask(
     projectTaskData: ICreateProjectTask,
     userId: string,
@@ -310,6 +331,32 @@ export class ProjectInjestionTaskService {
     }
   }
 
+  /**
+ * Updates an existing project task with the provided data, performing validations and status checks.
+ * 
+ * This method performs the following:
+ * - Starts a database transaction.
+ * - Validates input data including effort limits and resource existence.
+ * - Checks for duplicate compensation details and prompts if found.
+ * - Calculates and sets anomaly status based on effort or cost thresholds.
+ * - Updates the project task record in the database.
+ * - Logs timeline and history entries related to the update.
+ * - Updates related aggregations asynchronously.
+ * - Commits the transaction on success or rolls back on failure.
+ * 
+ * @param {IUpdateProjectTask} projectTaskData - The project task data to update.
+ * @param {string} userId - The ID of the user performing the update.
+ * @param {string} userPreference - User preference flag to handle duplicate compensation prompts.
+ * 
+ * @returns {Promise<{
+ *   statusCode: number;
+  *   message: string;
+  *   errorMessage?: string;
+  *   data?: { projectTask: any };
+  * }>} Result of the update operation, including the updated task or an error/prompt response.
+  * 
+  * @throws Throws an error if the update process fails and rolls back the transaction.
+  */ 
   async updateProjectTask(
     projectTaskData: IUpdateProjectTask,
     userId: string,
@@ -553,6 +600,27 @@ export class ProjectInjestionTaskService {
     }
   }
 
+  /**
+ * Retrieves the list of project task types.
+ *
+ * This method performs the following steps:
+ * - Fetches project task types from the project task schema.
+ * - Returns a success response with the list of project task types.
+ * - If an error occurs, it throws a service error with the caught error.
+ *
+ * @returns {Promise<{
+ *   statusCode: number;
+  *   message: string;
+  *   errorMessage?: string;
+  *   data?: { projectTaskTypes: any };
+  * }>} The response object containing:
+  *   - statusCode: HTTP status code indicating success.
+  *   - message: Success message string.
+  *   - errorMessage: Optional error message if an error occurs.
+  *   - data: Object containing the array of project task types.
+  *
+  * @throws Throws a service error if fetching project task types fails.
+  */ 
   async listProjectTaskTypes(): Promise<{
     statusCode: number;
     message: string;
@@ -576,6 +644,27 @@ export class ProjectInjestionTaskService {
     }
   }
 
+  /**
+ * Retrieves the list of project task classifications.
+ *
+ * This method performs the following steps:
+ * - Fetches project task classifications from the project task schema.
+ * - Returns a success response containing the list of project task classifications.
+ * - Throws a service error if any error occurs during the fetch operation.
+ *
+ * @returns {Promise<{
+ *   statusCode: number;
+  *   message: string;
+  *   errorMessage?: string;
+  *   data?: { projectTaskClassification: any };
+  * }>} The response object containing:
+  *   - statusCode: HTTP status code indicating success.
+  *   - message: Success message string.
+  *   - errorMessage: Optional error message if an error occurs.
+  *   - data: Object containing the array of project task classifications.
+  *
+  * @throws Throws a service error if fetching project task classifications fails.
+  */ 
   async listProjectTaskClassification(): Promise<{
     statusCode: number;
     message: string;
@@ -898,6 +987,27 @@ export class ProjectInjestionTaskService {
     }
   }
 
+  /**
+ * Retrieves the list of resource codes assigned to a specific project fiscal period for a given account.
+ * 
+ * This method performs the following:
+ * - Validates the provided account ID by fetching the corresponding account number.
+ * - Throws an error if the account ID is invalid.
+ * - Queries the project tasks schema to list all assigned resource codes for the given account and project fiscal period.
+ * - Returns the resource codes along with a success status and message.
+ * 
+ * @param {string} accountId - The identifier for the account.
+ * @param {string} projectFiscalId - The identifier for the project fiscal period.
+ * 
+ * @returns {Promise<{
+ *   statusCode: number;
+  *   message: string;
+  *   errorMessage?: string;
+  *   data?: { resourceCodes: any };
+  * }>} Object containing the status, message, and the list of assigned resource codes.
+  * 
+  * @throws Throws a service error if the account ID is invalid or if the query fails.
+  */ 
   async getAssignedResourceCodes(
     accountId: string,
     projectFiscalId: string
@@ -1006,6 +1116,39 @@ export class ProjectInjestionTaskService {
     return { success: true };
   }
 
+  /**
+ * Handles anomaly status actions for a given project task.
+ *
+ * This method performs the following:
+ * - Initiates a database transaction.
+ * - Validates the provided account ID and fetches the corresponding account number.
+ * - Retrieves the existing project task by its RID.
+ * - Depending on the anomaly type and action:
+ *    - If type is "Duplicate", checks thresholds to determine if the task status should be marked as "Anomaly".
+ *    - If action is "accept":
+ *       - Updates the project task status to "Active".
+ *       - Adds an entry to the project task history.
+ *       - Validates related resource and project fiscal data.
+ *       - Triggers aggregation updates related to the project task.
+ *       - Commits the transaction.
+ *    - If action is other than "accept":
+ *       - Updates the project task status to "In-Active".
+ *       - Adds an entry to the project task history.
+ *       - Commits the transaction.
+ * - Returns success messages indicating whether the anomaly was accepted or rejected.
+ * - Rolls back the transaction and throws a service error if any step fails.
+ *
+ * @param {IAnomalyStatus} data - Object containing details about the anomaly status action, including accountId, project task RID, action, and type.
+ * @param {string} userId - ID of the user performing the action.
+ *
+ * @returns {Promise<{
+ *   statusCode: number;
+  *   message: string;
+  *   data?: { projectTask: any };
+  * }>} Result of the anomaly handling process with status and message.
+  *
+  * @throws Throws a service error if account ID is invalid, project task is not found, resource code is invalid, or any database operation fails.
+  */ 
   async handleAnomalyStatus(
     data: IAnomalyStatus,
     userId: string
@@ -1071,7 +1214,7 @@ export class ProjectInjestionTaskService {
         const taskStatus = statusMap.get(projectTaskStatus);
         const activeStatusId = statusMap.get("Active");
         const activeId: any = await mainDbSequelize.query(
-          `SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name ILIKE '%active%'`
+          rawQueries.fetchActiveStatus()
         );
 
         await this.projectTaskSchema.updateProjectTaskStatus(
@@ -1211,6 +1354,31 @@ export class ProjectInjestionTaskService {
       throw this.throwServiceError(err as Error);
     }
   }
+
+  /**
+ * Lists resource codes associated with a project task based on the provided filters.
+ *
+ * This method performs the following steps:
+ * - Initializes connections to the organization's and main databases.
+ * - Fetches the parent account number for the provided account RID.
+ * - Determines the schema name corresponding to the parent account.
+ * - Fetches the RID for the "Active" status from the main database.
+ * - Queries the organization's database to retrieve resource codes with their project resource roles,
+ *   filtered by the schema name, search term, active status, account RID, and project fiscal RID.
+ * - If resources are found, maps and returns an array of objects containing resource RID, resource code, and role.
+ * - If no resources are found, returns an empty array with a "Not Found" status.
+ *
+ * @param {any} data - An object containing filtering parameters including:
+ *   - account_rid: The account record ID.
+ *   - project_fiscal_rid: The project fiscal record ID.
+ *   - search: Optional search term to filter resource codes.
+ *
+ * @returns {Promise<any>} An object containing:
+ *   - statusCode: HTTP status code indicating success or not found.
+ *   - data: Array of resource code objects or an empty array.
+ *
+ * @throws Throws an error if database queries fail.
+ */
   async listResourceCodeForProjectTask(data: any): Promise<any> {
     const orgDb = await this.getOrgDbSequelize();
     const mainDb = await this.getMainDbSequelize();

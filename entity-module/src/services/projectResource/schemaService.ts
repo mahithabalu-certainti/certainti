@@ -36,8 +36,7 @@ import { ResourceFiscalRegion } from "../../models/resourceFiscalRegion";
 import { AccountFiscal } from "../../models/accountFiscal";
 import { ProjectFiscalRegion } from "../../models/projectFiscalRegion";
 import { AccountFiscalRegion } from "../../models/accountFiscalRegion";
-import { MAIN_SCHEMA_NAME } from "../../utils/constants";
-import { collapseTextChangeRangesAcrossMultipleVersions } from "typescript";
+import { MAIN_SCHEMA_NAME, SCHEMANAME_PREFIX, rawQueries } from "../../utils/constants";
 import SchemaService from "../schemaService";
 import { getCurrencyDetailsQuery } from "../../utils/rawQueries";
 import AccountDetails from "../../models/accountDetails";
@@ -91,7 +90,7 @@ export class ProjectResourceSchemaService {
   }
 
   private async getModels(accountNumber: string) {
-    const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+    const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
 
     const sequelize = await this.getSequelize();
     this.mainDbSequelize = await this.getMainSequelize();
@@ -287,7 +286,7 @@ export class ProjectResourceSchemaService {
       await ProjectFiscalRegion.sync({ force: false });
       await AccountFiscalRegion.sync({ force: false });
       if (this.orgDbSequelize) {
-        const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+        const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
         await setupProjectResourceSequence(this.orgDbSequelize, schemaName);
         await setupProjectResourceFiscalSequence(
           this.orgDbSequelize,
@@ -319,9 +318,8 @@ export class ProjectResourceSchemaService {
       }
 
       const [account]: any[] = await this.mainDbSequelize.query(
-        `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
+        rawQueries.fetchAccountDetailsByRid(accountId),
         {
-          replacements: { rid: accountId },
           type: "SELECT",
         }
       );
@@ -330,7 +328,7 @@ export class ProjectResourceSchemaService {
 
       if (account?.storage_type === "store_in_parent") {
         const [accountData]: any[] = await this.mainDbSequelize.query(
-          `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
+          rawQueries.fetchAccountDetailsByRid(account?.parent_account_rid),
           {
             replacements: { rid: account?.parent_account_rid },
             type: "SELECT",
@@ -669,7 +667,7 @@ export class ProjectResourceSchemaService {
 
     if (currency_rid) {
       [currencyResult] = await this.mainDbSequelize.query(
-        `SELECT currency_threshold FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid = :currency_rid`,
+        rawQueries.fetchCurrencyThresold(),
         {
           replacements: { currency_rid },
           type: "SELECT",
@@ -677,7 +675,7 @@ export class ProjectResourceSchemaService {
       );
     } else {
       [currencyResult] = await this.mainDbSequelize.query(
-        `SELECT currency_threshold FROM ${MAIN_SCHEMA_NAME}.currency WHERE currency_code = 'USD'`,
+        rawQueries.fetchDefualtCurrencyThresold(),
         {
           type: "SELECT",
         }
@@ -692,7 +690,7 @@ export class ProjectResourceSchemaService {
       if (!this.mainDbSequelize) {
         this.mainDbSequelize = await this.getMainSequelize();
       }
-      const resourceStatus = `SELECT rid, resource_status_name FROM ${MAIN_SCHEMA_NAME}.resource_status`;
+      const resourceStatus = rawQueries.fetchAllResourceStatus();
       const results = await this.mainDbSequelize.query(resourceStatus, {
         type: "SELECT",
       });
@@ -2042,7 +2040,7 @@ export class ProjectResourceSchemaService {
     }
 
     const results = await this.mainDbSequelize.query(
-      `SELECT * FROM ${MAIN_SCHEMA_NAME}.resource_type WHERE rid = :resourceTypeId`,
+      rawQueries.fetchSpecificResourceTypeById(),
       {
         replacements: { resourceTypeId },
         type: "SELECT",
@@ -2176,9 +2174,7 @@ export class ProjectResourceSchemaService {
     if (!skillTypeId) return null;
 
     const resourceRoles: any = await this.mainDbSequelize.query(
-      `SELECT rid, skill_role_rid, sub_type_name 
-       FROM ${MAIN_SCHEMA_NAME}.skill_role_sub_type 
-       WHERE rid = :skillTypeId`,
+      rawQueries.fetchSkillRoleSubType(),
       {
         type: "SELECT",
         replacements: { skillTypeId },
@@ -2191,10 +2187,7 @@ export class ProjectResourceSchemaService {
       resourceRoles[0].sub_type_name === "Other"
     ) {
       const existingSubType: any = await this.mainDbSequelize.query(
-        `SELECT rid FROM ${MAIN_SCHEMA_NAME}.skill_role_sub_type
-         WHERE skill_role_rid = :skill_role_rid
-         AND sub_type_name = :sub_type_name
-         LIMIT 1`,
+        rawQueries.fetchSkillRoleSubTypeByName(),
         {
           type: "SELECT",
           replacements: {
@@ -2219,9 +2212,7 @@ export class ProjectResourceSchemaService {
       const timestamp = new Date().toISOString();
 
       await this.mainDbSequelize.query(
-        `INSERT INTO ${MAIN_SCHEMA_NAME}.skill_role_sub_type
-        (rid, created_by, created_datetime, skill_role_rid, sub_type_name, status)
-        VALUES (:rid, :created_by, :created_datetime, :skill_role_rid, :sub_type_name, 'active')`,
+        rawQueries.insertSkillRoleSubType(),
         {
           replacements: {
             rid: newRid,
@@ -5033,7 +5024,7 @@ export class ProjectResourceSchemaService {
 
       if (countryId) {
         const result = await this.mainDbSequelize.query(
-          `SELECT rid, country_name, country_code FROM ${MAIN_SCHEMA_NAME}.country WHERE rid = :id`,
+          rawQueries.fetchCountryById(),
           {
             replacements: { id: countryId },
             type: "SELECT",
@@ -5045,7 +5036,7 @@ export class ProjectResourceSchemaService {
 
       if (regionId) {
         const result = await this.mainDbSequelize.query(
-          `SELECT rid, state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE rid = :id`,
+          rawQueries.fetchStateById(),
           {
             replacements: { id: regionId },
             type: "SELECT",
@@ -5057,7 +5048,7 @@ export class ProjectResourceSchemaService {
 
       if (currencyId) {
         const result = await this.mainDbSequelize.query(
-          `SELECT rid, currency_name, currency_code, currency_symbol FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid = :id`,
+          rawQueries.fetchCurrencyById(),
           {
             replacements: { id: currencyId },
             type: "SELECT",
@@ -5096,7 +5087,7 @@ export class ProjectResourceSchemaService {
         if (!userId) return null;
 
         const [results]: any = await this.mainDbSequelize?.query(
-          `SELECT first_name, middle_name, last_name FROM ${MAIN_SCHEMA_NAME}."user" WHERE rid = :userId`,
+          rawQueries.fetchUserById(),
           {
             replacements: { userId },
             type: "SELECT",
@@ -5131,7 +5122,7 @@ export class ProjectResourceSchemaService {
 
       if (projectResource.status_rid) {
         const statusResult: any = await this.mainDbSequelize?.query(
-          `SELECT resource_status_name FROM ${MAIN_SCHEMA_NAME}.resource_status WHERE rid = :id`,
+          rawQueries.fetchResourceStatusById(),
           {
             replacements: { id: projectResource.status_rid },
             type: "SELECT",
@@ -5145,9 +5136,9 @@ export class ProjectResourceSchemaService {
       }
       if (projectResource.resource_type_rid) {
         const projectTypeResult: any = await this.mainDbSequelize?.query(
-          `SELECT resource_type_name FROM ${MAIN_SCHEMA_NAME}.resource_type WHERE rid = :id`,
+          rawQueries.fetchSpecificResourceTypeById(),
           {
-            replacements: { id: projectResource.resource_type_rid },
+            replacements: { resourceTypeId: projectResource.resource_type_rid },
             type: "SELECT",
           }
         );
@@ -5171,9 +5162,9 @@ export class ProjectResourceSchemaService {
 
       if (projectResource.assigned_skill_role_type_rid) {
         const skillResult: any = await this.mainDbSequelize?.query(
-          `SELECT sub_type_name FROM ${MAIN_SCHEMA_NAME}.skill_role_sub_type WHERE rid = :id`,
+          rawQueries.fetchSkillRoleSubType(),
           {
-            replacements: { id: projectResource.assigned_skill_role_type_rid },
+            replacements: { skillTypeId: projectResource.assigned_skill_role_type_rid },
             type: "SELECT",
           }
         );
@@ -5489,7 +5480,7 @@ export class ProjectResourceSchemaService {
 
       if (uniqueRegionIds.length > 0) {
         const regionsResult: any = await this.mainDbSequelize.query(
-          `SELECT rid, state_name FROM ${MAIN_SCHEMA_NAME}.state WHERE rid IN (:ids)`,
+          rawQueries.fetchStatesByIds(),
           {
             replacements: { ids: uniqueRegionIds },
             type: "SELECT",
@@ -5503,9 +5494,9 @@ export class ProjectResourceSchemaService {
 
       if (uniqueCountryIds.length > 0) {
         const countriesResult: any = await this.mainDbSequelize.query(
-          `SELECT rid, country_name FROM ${MAIN_SCHEMA_NAME}.country WHERE rid IN (:ids)`,
+          rawQueries.GET_COUNTRIES,
           {
-            replacements: { ids: uniqueCountryIds },
+            replacements: { countryRid: uniqueCountryIds },
             type: "SELECT",
           }
         );
@@ -5654,29 +5645,29 @@ export class ProjectResourceSchemaService {
 
       // Step 3: Fetch resource_type_rid → resource_type_name mapping
       const typeResult: any[] = await this.mainDbSequelize.query(
-        `SELECT rid AS resource_type_rid, resource_type_name FROM ${MAIN_SCHEMA_NAME}.resource_type WHERE rid IN (:ids)`,
+        rawQueries.GET_RESOURCE_TYPES,
         {
-          replacements: { ids: Array.from(uniqueTypeIds) },
+          replacements: { resourceTypeRid: Array.from(uniqueTypeIds) },
           type: "SELECT",
         }
       );
 
       const typeMap = new Map<string, string>();
       for (const type of typeResult) {
-        typeMap.set(type.resource_type_rid, type.resource_type_name);
+        typeMap.set(type.rid, type.resource_type_name);
       }
 
       // Step 4: Enrich project resources with resource_type_name, resource_name, and resource_role
       const enrichedResources = projectResources.map((resource) => {
         const resData = resourceMap.get(resource.resource_rid) || {};
-        const typeName = typeMap.get(resData.resource_type_rid || "") || null;
+        const typeName = typeMap.get(resData.rid || "") || null;
 
         return {
           ...(resource.dataValues ?? resource),
           resource_type_name: typeName,
           resource_name: resData.resource_name ?? null,
           resource_role: resData.resource_role ?? null,
-          resource_type_rid: resData.resource_type_rid ?? null,
+          resource_type_rid: resData.rid ?? null,
         };
       });
 
@@ -5753,11 +5744,9 @@ export class ProjectResourceSchemaService {
 
     // Fetch status names from DB
     const statusResults: any[] = await this.mainDbSequelize.query(
-      `SELECT rid, resource_status_name 
-       FROM ${MAIN_SCHEMA_NAME}.resource_status 
-       WHERE rid IN (:ids)`,
+      rawQueries.fetchResourceStatus,
       {
-        replacements: { ids: Array.from(uniqueStatusIds) },
+        replacements: { projectTaskStatusId: Array.from(uniqueStatusIds) },
         type: "SELECT",
       }
     );
@@ -5957,9 +5946,9 @@ export class ProjectResourceSchemaService {
 
     // Step 2: Query resource_type table for names
     const typeResult: any[] = await this.mainDbSequelize.query(
-      `SELECT rid AS resource_type_rid, resource_type_name FROM ${MAIN_SCHEMA_NAME}.resource_type WHERE rid IN (:ids)`,
+      rawQueries.GET_RESOURCE_TYPES,
       {
-        replacements: { ids: uniqueTypeIds },
+        replacements: { resourceTypeRid: uniqueTypeIds },
         type: "SELECT",
       }
     );
@@ -5967,12 +5956,12 @@ export class ProjectResourceSchemaService {
     // Step 3: Build lookup map
     const typeMap = new Map<string, string>();
     for (const type of typeResult) {
-      typeMap.set(type.resource_type_rid, type.resource_type_name);
+      typeMap.set(type.rid, type.resource_type_name);
     }
 
     // Step 4: Enrich resourceCodes with resource_type_name
     const enriched = resourceCodes.map((resource) => {
-      const typeName = typeMap.get(resource.resource_type_rid) || null;
+      const typeName = typeMap.get(resource.rid) || null;
       return {
         ...(resource.dataValues ?? resource),
         resource_type_name: typeName,
@@ -5988,7 +5977,7 @@ export class ProjectResourceSchemaService {
     }
 
     const resourceRoles = await this.mainDbSequelize.query(
-      `Select rid, skill_role_name from ${MAIN_SCHEMA_NAME}.skill_role WHERE status = 'active'`,
+      rawQueries.fetchSkillRole(),
       {
         type: "SELECT",
       }
@@ -6003,7 +5992,7 @@ export class ProjectResourceSchemaService {
     }
 
     const resourceRoles = await this.mainDbSequelize.query(
-      `Select rid, skill_role_rid, sub_type_name from ${MAIN_SCHEMA_NAME}.skill_role_sub_type WHERE status = 'active'`,
+      rawQueries.fetchActiveSkillRoleSubType(),
       {
         type: "SELECT",
       }
@@ -6022,7 +6011,7 @@ export class ProjectResourceSchemaService {
     }
 
     const results = await this.mainDbSequelize.query(
-      `SELECT * FROM ${MAIN_SCHEMA_NAME}.resource_type`,
+      rawQueries.fetchAllResourceTypes(),
       {
         type: "SELECT",
       }
@@ -6038,13 +6027,7 @@ export class ProjectResourceSchemaService {
       const sequelize = await initMainDbSequelize();
 
       const result = await sequelize.query(
-        `
-      SELECT 
-        a.*
-      FROM "${MAIN_SCHEMA_NAME}"."attachment_summary" a
-      WHERE a.attach_to = :project_resource_rid
-      ORDER BY a.created_datetime DESC
-    `,
+        rawQueries.fetchAttachmentSummary(),
         {
           replacements: { project_resource_rid },
           type: "SELECT",
