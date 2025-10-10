@@ -1326,6 +1326,7 @@ export class ProjectResourceService {
         project_fiscal_rid,
         project_resource_rid,
         total_cost_pro_res,
+        net_total_cost_pro_res,
         total_hours_pro_res,
         region_rid,
       } = projectResourceData;
