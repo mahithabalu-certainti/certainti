@@ -47,6 +47,7 @@ import {
   setupAccountFiscalRegionSequence,
 } from "../models/accountFiscalRegion";
 import { errorLog, logMessage } from "../utils/helpers";
+import { checkProjectMappedToProjectRes } from "../utils/rawQueries";
 
 export class ProjectService {
   private schemaService: SchemaService;
@@ -627,13 +628,21 @@ export class ProjectService {
           accountRNumber,
           accountId
         );
-      let projectData = await this.projectIngestion.fetchProjectById(
+      let projectData : any = await this.projectIngestion.fetchProjectById(
         accountRNumber,
         projectId
       );
 
       if (projectData) {
         const mainDbInit = await initMainDbSequelize();
+
+        let schemaName = rawQueries.fetchSchemaName(accountRNumber)
+        const orgDb = await initOrgSequelize()
+        let isResExists : boolean;
+        const checkResExistsInPrjRes = await orgDb.query(checkProjectMappedToProjectRes(schemaName, projectData.rid))
+        if(checkResExistsInPrjRes[0].length > 0) isResExists = true
+        else isResExists = false
+        projectData.dataValues.is_project_exists = isResExists
 
         await this.assignCurrencyRid(projectData, mainDbInit);
 

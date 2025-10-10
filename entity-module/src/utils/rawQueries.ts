@@ -1934,3 +1934,11 @@ export const fetchResCodeWithPrjResRole = (schemaName : string, search : string,
   export const fetchActiveStatus = () => {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE LOWER(status_name) = 'active' `
   }
+
+  export const checkResourceMappedToProjectRes = (schemaName : string, resourceRid : string) => {
+    return `SELECT resource_rid FROM ${schemaName}.project_resource WHERE resource_rid = '${resourceRid}'`
+  }
+
+  export const checkProjectMappedToProjectRes = (schemaName : string, projectFiscalRid : string) => {
+    return `SELECT project_fiscal_rid FROM ${schemaName}.project_resource WHERE project_fiscal_rid = '${projectFiscalRid}'`
+  }
