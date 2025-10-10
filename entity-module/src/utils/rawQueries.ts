@@ -1841,10 +1841,10 @@ export const fetchResCodeWithPrjResRole = (schemaName : string, search : string,
     ps.project_fiscal_rid = '${project_fiscal_rid}'
     AND
     (
-     ps.start_date BETWEEN DATE(pf.project_startdate) AND DATE(pf.project_enddate)
-     OR
-     ps.end_date BETWEEN DATE(pf.project_startdate) AND DATE(pf.project_enddate)
-    )
+    (pf.project_startdate IS NULL OR ps.start_date IS NULL OR ps.start_date >= DATE(pf.project_startdate))
+    AND
+    (pf.project_enddate IS NULL OR ps.end_date IS NULL OR ps.end_date <= DATE(pf.project_enddate))
+)
     ORDER BY r.resource_code ASC
     `
     return query;
@@ -1950,22 +1950,32 @@ export const fetchResCodeWithPrjResRole = (schemaName : string, search : string,
     return `SELECT project_fiscal_rid FROM ${schemaName}.project_resource WHERE project_fiscal_rid = '${projectFiscalRid}'`
   }
 
-  export const fetchResCodesForPrjRes = (schemaName : string, search : string) => {
+  export const fetchResCodesForPrjRes = (schemaName : string, search : string, accountId : string, startDate : string | null, endDate : string | null) => {
     let searchValue : string;
     if(search) searchValue = `%${search}%`
     else searchValue = `%%`
-    return `SELECT DISTINCT on (r.resource_code) r.rid, r.resource_code, r.resource_type_rid,
+    let dynamicReplacerEnd : string = ``
+    if(startDate == null && endDate == null) dynamicReplacerEnd = `OR pf.project_startdate IS NULL OR pf.project_enddate IS NULL`
+    else dynamicReplacerEnd = `OR DATE(r.resource_enddate) >= DATE('${startDate}')`
+
+    return `
+        SELECT r.rid, r.resource_code, r.resource_type_rid,
         r.resource_name, r.resource_startdate AS start_date, r.resource_enddate AS end_date
         FROM
-        ${schemaName}.project_resource pr
+        ${schemaName}.resources r
+        LEFT JOIN ${schemaName}.project_resource pr ON pr.resource_rid = r.rid
         LEFT JOIN ${schemaName}.project_fiscal pf ON pf.rid = pr.project_fiscal_rid
-        LEFT JOIN ${schemaName}.resources r ON r.rid = pr.resource_rid
         WHERE
-        (r.resource_startdate BETWEEN DATE(pf.project_startdate) AND DATE(pf.project_enddate)
-        OR
-        r.resource_enddate BETWEEN DATE(pf.project_startdate) AND DATE(pf.project_enddate))
+        r.account_rid = '${accountId}'
+        AND
+        (r.resource_enddate IS NULL ${dynamicReplacerEnd})
         AND
         r.resource_code ILIKE '${searchValue}'
         ORDER BY r.resource_code ASC
         `
+  }
+
+  export const fetchProjectById = (schemaName : string, id : string) => {
+    return `SELECT project_startdate, project_enddate FROM ${schemaName}.project_fiscal
+    WHERE rid = '${id}'`
   }

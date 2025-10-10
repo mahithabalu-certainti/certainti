@@ -39,7 +39,7 @@ import { AccountFiscalRegion } from "../../models/accountFiscalRegion";
 import { MAIN_SCHEMA_NAME, rawQueries } from "../../utils/constants";
 import { collapseTextChangeRangesAcrossMultipleVersions } from "typescript";
 import SchemaService from "../schemaService";
-import { fetchResCodesForPrjRes, getCurrencyDetailsQuery } from "../../utils/rawQueries";
+import { fetchProjectById, fetchResCodesForPrjRes, getCurrencyDetailsQuery } from "../../utils/rawQueries";
 import AccountDetails from "../../models/accountDetails";
 import { errorLog, logMessage } from "../../utils/helpers";
 
@@ -5869,16 +5869,15 @@ export class ProjectResourceSchemaService {
   async listResourceCodes(
     accountNumber: string,
     accountId: string,
+    projectFiscalRid : string,
     search: string
   ) {
-    const { Resources } = await this.getModels(accountNumber);
     let schemaName = rawQueries.fetchSchemaName(accountNumber)
     const orgDb = await initOrgSequelize()
-
-    const whereClause: any = {
-      account_rid: accountId,
-    };
-    let resourceCodes : any = await orgDb.query(fetchResCodesForPrjRes(schemaName, search))
+    const projectDates : any = await orgDb.query(fetchProjectById(schemaName, projectFiscalRid))
+    const formattedStartDate = projectDates[0][0].project_startdate !== null ? moment(projectDates[0][0].project_startdate ).format("YYYY-MM-DD") : null
+    const formattedEndDate = projectDates[0][0].project_enddate !== null ? moment(projectDates[0][0].project_enddate ).format("YYYY-MM-DD") : null
+    let resourceCodes : any = await orgDb.query(fetchResCodesForPrjRes(schemaName, search, accountId, formattedStartDate, formattedEndDate))
 
     if (resourceCodes[0] && resourceCodes[0].length > 0) {
       resourceCodes[0] = await this.insertResourceTypeName(resourceCodes[0]);

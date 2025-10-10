@@ -1712,6 +1712,7 @@ export class ProjectResourceService {
 
   async getResourceCodes(
     accountId: string,
+    projectFiscalRid : string,
     search: string
   ): Promise<{
     statusCode: number;
@@ -1729,6 +1730,7 @@ export class ProjectResourceService {
       const resourceCodes = await this.projectResourceSchema.listResourceCodes(
         accountNumber,
         accountId,
+        projectFiscalRid,
         search
       );
 

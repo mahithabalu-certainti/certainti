@@ -80,11 +80,11 @@ export class NotesTimeline
           allowNull: false,
         },
         title: {
-          type: DataTypes.STRING(50),
+          type: DataTypes.STRING(64),
           allowNull: false,
         },
         notes_owner: {
-          type: DataTypes.STRING(50),
+          type: DataTypes.STRING(64),
           allowNull: false,
         },
         descriptions: {
