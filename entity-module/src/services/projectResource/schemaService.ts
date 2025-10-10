@@ -2126,6 +2126,7 @@ export class ProjectResourceSchemaService {
         created_datetime: new Date(),
         description: projectResourceData.description || null,
         total_cost_pro_res: projectResourceData.total_cost_pro_res || null,
+        net_total_cost_pro_res: projectResourceData.net_total_cost_pro_res || null,
         total_hours_pro_res: projectResourceData.total_hours_pro_res || null,
         country_rid: projectResourceData.country_rid || null,
         region_rid: projectResourceData.region_rid || null,
