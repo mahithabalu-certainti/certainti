@@ -951,7 +951,6 @@ export const summaryHighlightsQueryRegion = (account_rid : string, fiscal_year :
             afr.account_rid,
             CAST(SUM(COALESCE(pf.total_cost_fte_prj,0.00)) AS DECIMAL(18,2)) AS project_level, 
             CAST(SUM(COALESCE(pf.total_cost_fte_from_prj_res,0.00)) AS DECIMAL(18,2)) AS project_resource_level, 
-            CAST(COALESCE(pr.net_total_cost_pro_res,0.00) AS DECIMAL(18,2)) AS project_resource_level,
             CAST(SUM(COALESCE(pf.total_cost_fte_from_tasks,0.00)) AS DECIMAL(18,2)) AS project_task_level
 
         FROM ${schemaName}.account_fiscal_region afr
@@ -1542,13 +1541,12 @@ export const fetchProjectQueryByPrjId = (account_rid : string, schemaName : stri
         SELECT DISTINCT ON (ad.account_rid)
             ad.account_rid,
             CAST(COALESCE(pf.total_cost_fte_prj,0.00) AS DECIMAL(18,2)) AS project_level, 
-             CAST(COALESCE(SUM(pr.net_total_cost_pro_res), 0.00) AS DECIMAL(18,2)) AS project_resource_level,
+            CAST(COALESCE(pf.total_cost_fte_from_prj_res,0.00) AS DECIMAL(18,2)) AS project_resource_level, 
             CAST(COALESCE(pf.total_cost_fte_from_tasks,0.00) AS DECIMAL(18,2)) AS project_task_level
         FROM
             ${schemaName}.account_details ad
             LEFT JOIN ${schemaName}.project p ON p.account_rid = ad.account_rid
             LEFT JOIN ${schemaName}.project_fiscal pf ON pf.project_rid = p.rid
-            LEFT JOIN ${schemaName}.project_resource pr on pr.project_fiscal_rid = pf.rid
             WHERE 
             ad.account_rid = '${account_rid}'
             AND
