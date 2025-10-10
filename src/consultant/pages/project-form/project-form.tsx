@@ -662,7 +662,8 @@ const ProjectForm: React.FC = () => {
     currencyValue,
     disableTotalEffort,
     disableTotalCost,
-    globalType
+    globalType,
+    account?.is_project_exists
   );
 
   const formLoading =

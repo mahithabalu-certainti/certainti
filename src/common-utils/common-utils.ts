@@ -365,6 +365,7 @@ export const createDateField = (
     dateRangeError?: boolean;
     startValue?: boolean;
     errorMessage?: string;
+    clearDate?: string;
   }
 ): FieldType => ({
   type: 'date',
@@ -384,6 +385,7 @@ export const createDateField = (
   startDateLabel: others.startDateLabel,
   endDateLabel: others.endDateLabel,
   errorMessage: others.errorMessage,
+  clearDate: others.clearDate,
 });
 
 export const createFiscalDateField = (
@@ -683,7 +685,7 @@ export const getDateTimeFormat = (date?: string) => {
 
 export const getDateFormatYYYYMMDD = (date?: string) => {
   if (!date) return '';
-  return dayjs(date).format('YYYY-MM-DD');  
+  return dayjs(date).format('YYYY-MM-DD');
 };
 export const getDateFormat = (date?: string) => {
   if (!date) return '';
@@ -768,7 +770,20 @@ export const formatDateToYYYYMMDDWithTime = (
   // Date parts
   const day = String(date.getDate()).padStart(2, '0');
   // const month = String(date.getMonth() + 1).padStart(2, '0');
-    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const monthNames = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
   const month = monthNames[date.getMonth()];
   const year = date.getFullYear();
 
@@ -986,17 +1001,43 @@ export const getDisableReason = (
 };
 
 export const formatMonthDay = (dateStr: string): string => {
-  if (!dateStr) return "";
-  const [month, day] = dateStr.split("/");
+  if (!dateStr) return '';
+  const [month, day] = dateStr.split('/');
 
   const months = [
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
 
-  const monthIndex = parseInt(month, 10) - 1; 
-  const monthName = months[monthIndex] || "";
+  const monthIndex = parseInt(month, 10) - 1;
+  const monthName = months[monthIndex] || '';
 
   return `${monthName}/${day}`;
 };
 
+export const getIntersection = (
+  aStart: string,
+  aEnd: string,
+  bStart: string,
+  bEnd: string
+) => {
+  const start = new Date(
+    Math.max(new Date(aStart).getTime(), new Date(bStart).getTime())
+  );
+  const end = new Date(
+    Math.min(new Date(aEnd).getTime(), new Date(bEnd).getTime())
+  );
+  return start <= end
+    ? { start: start.toISOString(), end: end.toISOString() }
+    : null;
+};

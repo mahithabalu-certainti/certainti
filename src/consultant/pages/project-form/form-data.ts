@@ -203,7 +203,8 @@ export const FormData = (
   currencyValue?: string,
   disableTotalEffort?: boolean,
   disableTotalCost?: boolean,
-  globalType?: boolean
+  globalType?: boolean,
+  isProjectExists?: boolean
 ): FormType[] => {
   return useMemo(
     () => [
@@ -255,9 +256,10 @@ export const FormData = (
             onChange: true,
             isFiscalYear: true,
             disabled:
-              isEditView &&
-              permissionMap?.['fiscal_year']?.read &&
-              !permissionMap?.['fiscal_year']?.edit,
+              (isEditView &&
+                permissionMap?.['fiscal_year']?.read &&
+                !permissionMap?.['fiscal_year']?.edit) ||
+              isProjectExists,
             hide:
               isEditView &&
               !permissionMap?.['fiscal_year']?.read &&

@@ -43,7 +43,7 @@ import {
 import { projectResourcesPayloadData } from './utils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
-import { formatDateToYYYYMMDDWithTime } from '../../../../../../common-utils';
+import { formatDateToYYYYMMDDWithTime, getIntersection } from '../../../../../../common-utils';
 import { RESOURCE_CREATE } from '../../../../../../routes';
 import SkeletonForm from '../../../../../../components/form-builder/skeleton-form';
 
@@ -56,6 +56,8 @@ const ProjectResourceForm: React.FC = () => {
     useState(false);
   const [isResourceType, setIsResourceType] = useState(false);
   const [isSalaryRequired, setIsSalaryRequired] = useState(true);
+  const [currentResource, setCurrentResource] =
+    useState<SelectResourceOption>();
   const [autoCalculatedValue, setAutoCalculatedValue] = useState<number>(0);
   const [, setResourceFinancials] = useState({
     salary: '',
@@ -78,9 +80,6 @@ const ProjectResourceForm: React.FC = () => {
   const createdNewResourceCode =
     searchParams.get('created_resource_code') || '';
   const newProjectResource = searchParams.get('new_project_res_name') || '';
-  const fiscalDate: FormFiscalDateType = projectPFY
-    ? JSON.parse(projectPFY)
-    : undefined;
   const fromLocation = location.state?.from;
   const getProjectResource = useProjectResourceDetail(
     account_Id as string,
@@ -108,6 +107,26 @@ const ProjectResourceForm: React.FC = () => {
   };
 
   const projectResource = getProjectResource.data?.data;
+  const parseDate: {
+    year: number;
+    startMin?: string;
+    startMax?: string;
+    endMax?: string;
+  } = JSON.parse(projectPFY || '');
+  const interactionDate = getIntersection(
+    parseDate.startMin || '',
+    parseDate.startMax || '',
+    currentResource?.start_date || parseDate.startMin || '',
+    currentResource?.end_date || parseDate.startMax || ''
+  );
+  const fiscalDate = projectPFY
+    ? ({
+        year: parseDate.year,
+        endMax: interactionDate?.end,
+        startMax: interactionDate?.end,
+        startMin: interactionDate?.start,
+      } as FormFiscalDateType)
+    : undefined;
 
   const projectResourceData = useMemo(
     () => ({
@@ -188,9 +207,19 @@ const ProjectResourceForm: React.FC = () => {
         value: item.resource_code,
         resource_type_rid: item.resource_type_rid,
         resource_type_name: item.resource_type_name,
+        start_date: item.start_date,
+        end_date: item.end_date,
       })) || [],
     [projectResourceCodeOptions?.data?.resourceCodes]
   );
+  useEffect(() => {
+    if (projectResource?.projectResource?.resource_code) {
+      const currentResourceCode = memoizedProjectResourceCode.find(
+        (it) => it.value === projectResource?.projectResource?.resource_code
+      );
+      setCurrentResource(currentResourceCode);
+    }
+  }, [projectResource?.projectResource?.resource_code]);
 
   const memoizedProjectResourceSkillType: SelectOption[] = useMemo(
     () =>
@@ -315,6 +344,7 @@ const ProjectResourceForm: React.FC = () => {
         (option) => String(option.value) === String(data.fieldValue)
       );
       if (selectedResource) {
+        setCurrentResource(selectedResource);
         setIsResourceType(
           selectedResource?.resource_type_name?.toLowerCase() ===
             ResourceType.full_time
