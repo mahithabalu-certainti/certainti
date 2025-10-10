@@ -1712,7 +1712,7 @@ export class ProjectResourceService {
 
   async getResourceCodes(
     accountId: string,
-    search: string | null
+    search: string
   ): Promise<{
     statusCode: number;
     message: string;

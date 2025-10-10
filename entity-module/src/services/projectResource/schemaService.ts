@@ -36,10 +36,10 @@ import { ResourceFiscalRegion } from "../../models/resourceFiscalRegion";
 import { AccountFiscal } from "../../models/accountFiscal";
 import { ProjectFiscalRegion } from "../../models/projectFiscalRegion";
 import { AccountFiscalRegion } from "../../models/accountFiscalRegion";
-import { MAIN_SCHEMA_NAME } from "../../utils/constants";
+import { MAIN_SCHEMA_NAME, rawQueries } from "../../utils/constants";
 import { collapseTextChangeRangesAcrossMultipleVersions } from "typescript";
 import SchemaService from "../schemaService";
-import { getCurrencyDetailsQuery } from "../../utils/rawQueries";
+import { fetchResCodesForPrjRes, getCurrencyDetailsQuery } from "../../utils/rawQueries";
 import AccountDetails from "../../models/accountDetails";
 import { errorLog, logMessage } from "../../utils/helpers";
 
@@ -5869,38 +5869,22 @@ export class ProjectResourceSchemaService {
   async listResourceCodes(
     accountNumber: string,
     accountId: string,
-    search: string | null
+    search: string
   ) {
     const { Resources } = await this.getModels(accountNumber);
+    let schemaName = rawQueries.fetchSchemaName(accountNumber)
+    const orgDb = await initOrgSequelize()
 
     const whereClause: any = {
       account_rid: accountId,
     };
+    let resourceCodes : any = await orgDb.query(fetchResCodesForPrjRes(schemaName, search))
 
-    if (search) {
-      whereClause.resource_code = {
-        [Op.iLike]: `%${search}%`,
-      };
+    if (resourceCodes[0] && resourceCodes[0].length > 0) {
+      resourceCodes[0] = await this.insertResourceTypeName(resourceCodes[0]);
     }
 
-    let resourceCodes = await Resources.findAll({
-      attributes: [
-        "rid",
-        "resource_code",
-        "resource_type_rid",
-        "resource_name",
-        ["resource_startdate", "start_date"],
-        ["resource_enddate", "end_date"]
-      ],
-      where: whereClause,
-      order: [["resource_code", "ASC"]],
-    });
-
-    if (resourceCodes && resourceCodes.length > 0) {
-      resourceCodes = await this.insertResourceTypeName(resourceCodes);
-    }
-
-    return resourceCodes;
+    return resourceCodes[0];
   }
 
   async listAssignedResourceCodes(
