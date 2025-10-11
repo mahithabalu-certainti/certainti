@@ -1973,6 +1973,7 @@ export const fetchResCodeWithPrjResRole = (schemaName : string, search : string,
         r.resource_code ILIKE '${searchValue}'
         ORDER BY r.resource_code ASC
         `
+        
   }
 
   export const fetchProjectById = (schemaName : string, id : string) => {
