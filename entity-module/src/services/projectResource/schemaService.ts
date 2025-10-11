@@ -1041,7 +1041,7 @@ export class ProjectResourceSchemaService {
         country_region_rid: projectResourceData.region_rid || null,
         fiscal_year: fiscal_year,
         total_cost_for_year_project_resource_level:
-          projectResourceData.total_cost_pro_res || null,
+          projectResourceData.net_total_cost_pro_res || null,
         total_effort_for_year_project_resource_level:
           projectResourceData.total_hours_pro_res || null,
         effective_date: startDate ? startDate.toDate() : null,
@@ -1103,7 +1103,7 @@ export class ProjectResourceSchemaService {
         country_region_rid: projectResourceData.region_rid || null,
         fiscal_year: fiscalYear,
         total_cost_for_year_project_resource_level:
-          projectResourceData.total_cost_pro_res || null,
+          projectResourceData.net_total_cost_pro_res || null,
         total_effort_for_year_project_resource_level:
           projectResourceData.total_hours_pro_res || null,
         effective_date: startDate ? startDate.toDate() : null,
@@ -1172,7 +1172,7 @@ export class ProjectResourceSchemaService {
             "total_effort",
           ],
           [
-            Sequelize.fn("SUM", Sequelize.col("total_cost_pro_res")),
+            Sequelize.fn("SUM", Sequelize.col("net_total_cost_pro_res")),
             "total_cost",
           ],
         ],
@@ -1235,7 +1235,7 @@ export class ProjectResourceSchemaService {
           "total_effort",
         ],
         [
-          Sequelize.fn("SUM", Sequelize.col("total_cost_pro_res")),
+          Sequelize.fn("SUM", Sequelize.col("net_total_cost_pro_res")),
           "total_cost",
         ],
       ],
@@ -1355,7 +1355,7 @@ export class ProjectResourceSchemaService {
         country_rid: projectResourceData.country_rid || null,
         country_region_rid: projectResourceData.region_rid || null,
         total_cost_for_year_project_resource_level:
-          projectResourceData.total_cost_pro_res || null,
+          projectResourceData.net_total_cost_pro_res || null,
         total_effort_for_year_project_resource_level:
           projectResourceData.total_hours_pro_res || null,
         effective_date: startDate ? startDate.toDate() : null,
@@ -1444,32 +1444,32 @@ export class ProjectResourceSchemaService {
     switch (typeCode) {
       case "full-time":
         baseData.total_cost_fte_from_prj_res =
-          projectResourceData.total_cost_pro_res || null;
+          projectResourceData.net_total_cost_pro_res || null;
         baseData.total_effort_fte_from_prj_res =
           projectResourceData.total_hours_pro_res || null;
 
         baseData.effective_fte_effort =
           projectResourceData.total_hours_pro_res || null;
         baseData.effective_fte_cost =
-          projectResourceData.total_cost_pro_res || null;
+          projectResourceData.net_total_cost_pro_res || null;
         break;
       case "sub con":
         baseData.total_cost_subcon_from_prj_res =
-          projectResourceData.total_cost_pro_res || null;
+          projectResourceData.net_total_cost_pro_res || null;
         baseData.total_effort_subcon_from_prj_res =
           projectResourceData.total_hours_pro_res || null;
 
         baseData.effective_subcon_effort =
           projectResourceData.total_hours_pro_res || null;
         baseData.effective_subcon_cost =
-          projectResourceData.total_cost_pro_res || null;
+          projectResourceData.net_total_cost_pro_res || null;
         break;
       case "non-labor":
         baseData.total_cost_nonlabor_from_prj_res =
-          projectResourceData.total_cost_pro_res || null;
+          projectResourceData.net_total_cost_pro_res || null;
 
         baseData.effective_nonlabor_cost =
-          projectResourceData.total_cost_pro_res || null;
+          projectResourceData.net_total_cost_pro_res || null;
         break;
       default:
         throw new Error(`Unhandled resource type code: ${typeCode}`);
@@ -1555,32 +1555,32 @@ export class ProjectResourceSchemaService {
     switch (typeCode) {
       case "full-time":
         baseData.total_cost_fte_from_prj_res =
-          projectResourceData.total_cost_pro_res || null;
+          projectResourceData.net_total_cost_pro_res || null;
         baseData.total_effort_fte_from_prj_res =
           projectResourceData.total_hours_pro_res || null;
 
         baseData.effective_fte_effort =
           projectResourceData.total_hours_pro_res || null;
         baseData.effective_fte_cost =
-          projectResourceData.total_cost_pro_res || null;
+          projectResourceData.net_total_cost_pro_res || null;
         break;
       case "sub con":
         baseData.total_cost_subcon_from_prj_res =
-          projectResourceData.total_cost_pro_res || null;
+          projectResourceData.net_total_cost_pro_res || null;
         baseData.total_effort_subcon_from_prj_res =
           projectResourceData.total_hours_pro_res || null;
 
         baseData.effective_subcon_effort =
           projectResourceData.total_hours_pro_res || null;
         baseData.effective_subcon_cost =
-          projectResourceData.total_cost_pro_res || null;
+          projectResourceData.net_total_cost_pro_res || null;
         break;
       case "non-labor":
         baseData.total_cost_nonlabor_from_prj_res =
-          projectResourceData.total_cost_pro_res || null;
+          projectResourceData.net_total_cost_pro_res || null;
 
         baseData.effective_nonlabor_cost =
-          projectResourceData.total_cost_pro_res || null;
+          projectResourceData.net_total_cost_pro_res || null;
         break;
       default:
         throw new Error(`Unhandled resource type code: ${typeCode}`);
@@ -1680,32 +1680,32 @@ export class ProjectResourceSchemaService {
     switch (typeCode) {
       case "full-time":
         baseData.total_cost_fte_from_prj_res =
-          projectResourceData.total_cost_pro_res || null;
+          projectResourceData.net_total_cost_pro_res || null;
         baseData.total_effort_fte_from_prj_res =
           projectResourceData.total_hours_pro_res || null;
 
         baseData.effective_fte_effort =
           projectResourceData.total_hours_pro_res || null;
         baseData.effective_fte_cost =
-          projectResourceData.total_cost_pro_res || null;
+          projectResourceData.net_total_cost_pro_res || null;
         break;
       case "sub con":
         baseData.total_cost_subcon_from_prj_res =
-          projectResourceData.total_cost_pro_res || null;
+          projectResourceData.net_total_cost_pro_res || null;
         baseData.total_effort_subcon_from_prj_res =
           projectResourceData.total_hours_pro_res || null;
 
         baseData.effective_subcon_effort =
           projectResourceData.total_hours_pro_res || null;
         baseData.effective_subcon_cost =
-          projectResourceData.total_cost_pro_res || null;
+          projectResourceData.net_total_cost_pro_res || null;
         break;
       case "non-labor":
         baseData.total_cost_nonlabor_from_prj_res =
-          projectResourceData.total_cost_pro_res || null;
+          projectResourceData.net_total_cost_pro_res || null;
 
         baseData.effective_nonlabor_cost =
-          projectResourceData.total_cost_pro_res || null;
+          projectResourceData.net_total_cost_pro_res || null;
         break;
       default:
         throw new Error(`Unhandled resource type code: ${typeCode}`);
@@ -1798,7 +1798,7 @@ export class ProjectResourceSchemaService {
     const aggregates: any = await ProjectResource.findAll({
       attributes: [
         [
-          Sequelize.fn("SUM", Sequelize.col("total_cost_pro_res")),
+          Sequelize.fn("SUM", Sequelize.col("net_total_cost_pro_res")),
           "total_cost",
         ],
         [
@@ -2263,7 +2263,7 @@ export class ProjectResourceSchemaService {
         resource_rid: resource.rid || "",
         fiscal_year: projectData.fiscal_year,
         status_rid: projectResourceData.status_rid || null,
-        total_cost_pro_res: projectResourceData.total_cost_pro_res || null,
+        total_cost_pro_res: projectResourceData.net_total_cost_pro_res || null,
         total_hours_pro_res: projectResourceData.total_hours_pro_res || null,
         country_rid: projectResourceData.country_rid || null,
         region_rid: projectResourceData.region_rid || null,
@@ -2377,7 +2377,7 @@ export class ProjectResourceSchemaService {
           "total_effort",
         ],
         [
-          Sequelize.fn("SUM", Sequelize.col("total_cost_pro_res")),
+          Sequelize.fn("SUM", Sequelize.col("net_total_cost_pro_res")),
           "total_cost",
         ],
       ],
@@ -2496,7 +2496,7 @@ export class ProjectResourceSchemaService {
             "total_effort",
           ],
           [
-            Sequelize.fn("SUM", Sequelize.col("total_cost_pro_res")),
+            Sequelize.fn("SUM", Sequelize.col("net_total_cost_pro_res")),
             "total_cost",
           ],
         ],
@@ -2562,7 +2562,7 @@ export class ProjectResourceSchemaService {
           "total_effort",
         ],
         [
-          Sequelize.fn("SUM", Sequelize.col("total_cost_pro_res")),
+          Sequelize.fn("SUM", Sequelize.col("net_total_cost_pro_res")),
           "total_cost",
         ],
       ],
@@ -2636,7 +2636,7 @@ export class ProjectResourceSchemaService {
           resource_rid: resource?.rid || "",
           status_rid: projectResourceData.status_rid || null,
           total_hours_pro_res: projectResourceData.total_hours_pro_res ?? 0,
-          total_cost_pro_res: projectResourceData.total_cost_pro_res ?? 0,
+          total_cost_pro_res: projectResourceData.net_total_cost_pro_res ?? 0,
           country_rid: projectResourceData.country_rid || null,
           region_rid: projectResourceData.region_rid || null,
           currency_rid: projectResourceData.currency_rid || null,
@@ -2736,7 +2736,7 @@ export class ProjectResourceSchemaService {
           "total_effort",
         ],
         [
-          Sequelize.fn("SUM", Sequelize.col("total_cost_pro_res")),
+          Sequelize.fn("SUM", Sequelize.col("net_total_cost_pro_res")),
           "total_cost",
         ],
       ],
@@ -2866,7 +2866,7 @@ export class ProjectResourceSchemaService {
             "total_effort",
           ],
           [
-            Sequelize.fn("SUM", Sequelize.col("total_cost_pro_res")),
+            Sequelize.fn("SUM", Sequelize.col("net_total_cost_pro_res")),
             "total_cost",
           ],
         ],
@@ -2932,7 +2932,7 @@ export class ProjectResourceSchemaService {
           "total_effort",
         ],
         [
-          Sequelize.fn("SUM", Sequelize.col("total_cost_pro_res")),
+          Sequelize.fn("SUM", Sequelize.col("net_total_cost_pro_res")),
           "total_cost",
         ],
       ],
@@ -3200,17 +3200,17 @@ export class ProjectResourceSchemaService {
           baseData.total_project_hours_fte =
             projectResourceData.total_hours_pro_res || null;
           baseData.total_project_cost_fte =
-            projectResourceData.total_cost_pro_res || null;
+            projectResourceData.net_total_cost_pro_res || null;
           break;
         case "sub con":
           baseData.total_project_hours_subcon =
             projectResourceData.total_hours_pro_res || null;
           baseData.total_project_cost_subcon =
-            projectResourceData.total_cost_pro_res || null;
+            projectResourceData.net_total_cost_pro_res || null;
           break;
         case "non-labor":
           baseData.total_project_cost_nonlabor =
-            projectResourceData.total_cost_pro_res || null;
+            projectResourceData.net_total_cost_pro_res || null;
           break;
         default:
           console.warn(`Unknown resource_type_rid: ${typeCode}`);
@@ -3423,7 +3423,7 @@ export class ProjectResourceSchemaService {
           "total_effort",
         ],
         [
-          Sequelize.fn("SUM", Sequelize.col("total_cost_pro_res")),
+          Sequelize.fn("SUM", Sequelize.col("net_total_cost_pro_res")),
           "total_cost",
         ],
       ],
@@ -3489,7 +3489,7 @@ export class ProjectResourceSchemaService {
           "total_effort",
         ],
         [
-          Sequelize.fn("SUM", Sequelize.col("total_cost_pro_res")),
+          Sequelize.fn("SUM", Sequelize.col("net_total_cost_pro_res")),
           "total_cost",
         ],
       ],
@@ -3558,7 +3558,7 @@ export class ProjectResourceSchemaService {
         "project_fiscal_rid",
         "fiscal_year",
         [
-          Sequelize.fn("SUM", Sequelize.col("total_cost_pro_res")),
+          Sequelize.fn("SUM", Sequelize.col("net_total_cost_pro_res")),
           "total_cost",
         ],
         [
@@ -3603,7 +3603,7 @@ export class ProjectResourceSchemaService {
         [
           Sequelize.fn(
             "SUM",
-            Sequelize.cast(Sequelize.col("total_cost_pro_res"), "DECIMAL")
+            Sequelize.cast(Sequelize.col("net_total_cost_pro_res"), "DECIMAL")
           ),
           "total_cost",
         ],
@@ -3774,7 +3774,7 @@ export class ProjectResourceSchemaService {
         "project_fiscal_rid",
         "fiscal_year",
         [
-          Sequelize.fn("SUM", Sequelize.col("total_cost_pro_res")),
+          Sequelize.fn("SUM", Sequelize.col("net_total_cost_pro_res")),
           "total_cost",
         ],
         [
@@ -3957,7 +3957,7 @@ export class ProjectResourceSchemaService {
       attributes: [
         "region_rid",
         [
-          Sequelize.fn("SUM", Sequelize.col("total_cost_pro_res")),
+          Sequelize.fn("SUM", Sequelize.col("net_total_cost_pro_res")),
           "total_cost",
         ],
         [
@@ -4690,7 +4690,7 @@ export class ProjectResourceSchemaService {
             "total_effort",
           ],
           [
-            Sequelize.fn("SUM", Sequelize.col("total_cost_pro_res")),
+            Sequelize.fn("SUM", Sequelize.col("net_total_cost_pro_res")),
             "total_cost",
           ],
         ],
@@ -4747,7 +4747,7 @@ export class ProjectResourceSchemaService {
           "total_effort",
         ],
         [
-          Sequelize.fn("SUM", Sequelize.col("total_cost_pro_res")),
+          Sequelize.fn("SUM", Sequelize.col("net_total_cost_pro_res")),
           "total_cost",
         ],
       ],
@@ -4831,7 +4831,7 @@ export class ProjectResourceSchemaService {
             total_effort_for_year_project_resource_level:
               projectResourceData.total_hours_pro_res ?? null,
             total_cost_for_year_project_resource_level:
-              projectResourceData.total_cost_pro_res ?? null,
+              projectResourceData.net_total_cost_pro_res ?? null,
             created_by: userId,
             resource_type_rid: resource?.resource_type_rid || "", // need to add resource fiscal
             created_datetime: new Date(),
