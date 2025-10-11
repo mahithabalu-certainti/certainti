@@ -1239,8 +1239,8 @@ export class ProjectInjestionTaskService {
           resource_code : data.resource_code,
           project_resource_role : data.project_resource_role,
           resource_name : data.resource_name,
-          start_date : data.resource_startdate,
-          end_date : data.resource_enddate
+          start_date : data.start_date,
+          end_date : data.end_date
         }
       })
       return {

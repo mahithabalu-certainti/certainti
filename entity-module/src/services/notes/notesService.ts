@@ -1824,16 +1824,16 @@ private mapAttachmentToCommonFormat(at: any) {
   "Title": at.title || "-",
   "Note Owner": at.notes_owner || "-",
   "Related Entity": at.attachment_level || "-",
-  "Related To ID": at.attached_to || "-",
-  "Related To Name": at.related_to_name || "-", // added as per labelMap
+  "Related To ID": at.attach_to || "-",
+  "Related To Name": at.attached_to || "-", // added as per labelMap
   "Fiscal Year": at.fiscal_year || "-",
   "Document Name": at.document_name || "-",
   "Format": at.format || "-",
   "Size": at.size_in_mb || "-",
   "Created By": at.created_by_name || "-",
-  "Created On": at.created_datetime ? moment(at.created_datetime).format("YYYY-MMM-DD") : "-",
+  "Created On": at.created_datetime ? moment(at.created_datetime).format("YYYY-MMM-DD HH:mm:ss") : "-",
   "Modified By": at.modified_by_name || "-",
-  "Modified On": at.modified_datetime ? moment(at.modified_datetime).format("YYYY-MMM-DD") : "-",
+  "Modified On": at.modified_datetime ? moment(at.modified_datetime).format("YYYY-MMM-DD HH:mm:ss") : "-",
   "Download": at.browse_file || "-"
 };
 }

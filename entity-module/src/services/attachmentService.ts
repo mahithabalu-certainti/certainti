@@ -1041,7 +1041,8 @@ private mapAttachmentToCommonFormat(at: any) {
     "Document Category": at.document_category || "-",
     "Document Type": at.document_type || "-",
     "Related Entity": at.attachment_level || "-",
-    "Related To ID": at.attached_to || "-",
+    "Related To ID": at.attach_to || "-",
+    "Related To Name": at.attached_to || "-", // added as per labelMap
     "Attached By": at.uploaded_by || "-",
     "Attached On": at.created_datetime ? moment(at.created_datetime).format('YYYY-MMM-DD, hh:mm:ss A')  : "-",
     "Attachment ID": at.r_number || "-"
