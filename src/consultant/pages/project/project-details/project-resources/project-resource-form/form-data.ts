@@ -87,6 +87,9 @@ export const ProjectResourceFormData = (
               'bonus',
               'insurance',
               'resource_orgname',
+              'deductions',
+              'total_cost_pro_res',
+              'net_resource_cost',
             ],
             disabled:
               isEditView &&
