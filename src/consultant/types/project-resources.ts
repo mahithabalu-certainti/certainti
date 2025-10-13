@@ -46,6 +46,7 @@ export type ProjectResourcesListType = {
   description?: string | null;
   currency_symbol?: string;
   project_fiscal_rid?: string;
+  net_total_cost_pro_res?: string | null;
 };
 
 export interface ProjectResourcesApiResponse extends CommonApiResponse {

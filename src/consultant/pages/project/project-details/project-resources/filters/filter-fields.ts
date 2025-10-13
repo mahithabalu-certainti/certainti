@@ -86,11 +86,11 @@ export const projectResourceFilterFields = (
   },
   {
     name: 'Cost',
-    value: 'total_cost_pro_res',
+    value: 'net_total_cost_pro_res',
     type: 'number',
     hide:
-      !resourcepermissionMap?.['total_cost_pro_res']?.read &&
-      !resourcepermissionMap?.['total_cost_pro_res']?.edit,
+      !resourcepermissionMap?.['net_total_cost_pro_res']?.read &&
+      !resourcepermissionMap?.['net_total_cost_pro_res']?.edit,
   },
   {
     name: 'QRE Percent Final',
