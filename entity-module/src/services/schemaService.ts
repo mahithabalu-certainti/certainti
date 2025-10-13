@@ -4117,9 +4117,7 @@ class SchemaService {
         parentDetails.tenant_id &&
         parentDetails.client_id &&
         parentDetails.client_secret);
-        if (Array.isArray(users) && users.length > 0) {
-      return  isSubscriptionCreated;
-      }
+        return  isSubscriptionCreated;
       }else{
         if (Array.isArray(users) && users.length > 0) {
         return false;
