@@ -1008,6 +1008,7 @@ class SchemaService {
         end_date DATE,
         total_hours_pro_res NUMERIC(18,2),
         total_cost_pro_res NUMERIC(18, 2),
+        net_total_cost_pro_res NUMERIC(18, 2),
         status_rid VARCHAR(50),
         account_rid varchar(50),
         currency_rid varchar(50),
