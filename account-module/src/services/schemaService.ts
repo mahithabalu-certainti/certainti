@@ -1015,7 +1015,6 @@ class SchemaService {
         description TEXT,
         country_rid varchar(50),
         region_rid varchar(50),
-  
         effort_project_resource_level NUMERIC(18,2),
         cost_project_resource_level NUMERIC(18, 2),
         cost_project_task_level NUMERIC(18, 2),
