@@ -647,33 +647,32 @@ async exportresourceCostDetailsForFinancialHighlights(
       }
     });
     let labelMap: Record<string, string>;
-
-    if (!project_rid) {
+    if (!project_rid || project_rid === undefined || project_rid === "undefined") {
       labelMap = {
-        resource_code: "Resource Code",
-        resource_name: "Resource Name",
-        resource_type_name: "Resource Type",
-        country_code: "Country",
-        state_name: "Region",
-        total_cost_pro_res: "Net Resource Cost",
-        rd_percent_final: "RD %",
-        qre_final: "Project QRE",
-        rd_credits_total: "RD Credits",
+      project_code: "Project Code",
+      fiscal_year: "Fiscal Year",
+      project_name: "Project Name",
+      r_number: "Project ID",
+      resource_code: "Resource Code",
+      resource_name: "Resource Name",
+      resource_type_name: "Resource Type",
+      country_code: "Country",
+      total_cost_pro_res: "Net Resource Cost",
+      rd_percent_final: "RD %",
+      qre_final: "Project QRE",
+      rd_credits_total: "RD Credit",
       };
     } else {
       labelMap = {
-        project_code: "Project Ref Id",
-        r_number: "Project Number",
-        fiscal_year: "Fiscal Year",
-        project_name: "Project Name",
-        resource_code: "Resource Code",
-        resource_name: "Resource Name",
-        resource_type_name: "Resource Type",
-        country_code: "Country",
-        total_cost_pro_res: "Net Resource Cost",
-        rd_percent_final: "RD %",
-        qre_final: "Project QRE",
-        rd_credits_total: "RD Credits",
+      resource_code: "Resource Code",
+      resource_name: "Resource Name",
+      resource_type_name: "Resource Type",
+      country_code: "Country",
+      state_name: "Region",
+      total_cost_pro_res: "Net Resource Cost",
+      rd_percent_final: "RD %",
+      qre_final: "Project QRE",
+      rd_credits_total: "RD Credit",
       };
     }
 
