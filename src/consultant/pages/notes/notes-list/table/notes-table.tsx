@@ -36,6 +36,7 @@ interface NotesTableProps {
     React.SetStateAction<HTMLButtonElement | null>
   >;
   searchValue?: string;
+  userListOptions: { value: string; label: string }[];
 }
 
 export const NotesTable: React.FC<NotesTableProps> = ({
@@ -47,6 +48,7 @@ export const NotesTable: React.FC<NotesTableProps> = ({
   setColumnAnchorEl,
   columnAnchorEl,
   searchValue,
+  userListOptions,
 }) => {
   const navigate = useNavigate();
   const { errorToast } = useToast();
@@ -180,7 +182,8 @@ export const NotesTable: React.FC<NotesTableProps> = ({
     undefined,
     handleDownload,
     isNotesExportEnable,
-    permissionMap
+    permissionMap,
+    userListOptions
   );
 
   const handlePopoverClose = () => {

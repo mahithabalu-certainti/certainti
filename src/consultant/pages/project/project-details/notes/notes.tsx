@@ -39,6 +39,7 @@ import { NOTES_UPDATE } from '../../../../../api/graphql/queries/notes-query';
 import { resourceClient } from '../../../../../api/graphql/clients/client';
 import { checkPermission } from '../../../../../common-utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
+import { useManageUserList } from '../../../../../admin/service';
 
 const NotesTabs: OverviewTabs[] = [
   {
@@ -110,6 +111,14 @@ const Notes: React.FC<NotesProps> = ({
   const noteId = searchParams.get('note_id');
   const viewDetails = !!noteId;
 
+  // User List Api
+  const { data: userListData } = useManageUserList({
+    page: 1,
+    limit: 2000,
+    sortBy: 'first_name',
+    sortOrder: 'ASC',
+  });
+
   const { data, isLoading, isError } = useNotesList(
     {
       page: currentPage + 1,
@@ -155,6 +164,15 @@ const Notes: React.FC<NotesProps> = ({
     rowsPerPage,
     searchText,
   ]);
+
+  const userListOptions = useMemo(() => {
+    return (
+      userListData?.data?.users?.map((item) => ({
+        value: item.rid,
+        label: `${item.first_name} ${item.last_name}`,
+      })) || []
+    );
+  }, [userListData]);
 
   // Permissions
   const isNotesExportEnable = checkPermission(
@@ -314,10 +332,14 @@ const Notes: React.FC<NotesProps> = ({
     handleNoteView,
     handleDownload,
     isNotesExportEnable,
-    permissionMap
+    permissionMap,
+    userListOptions
   );
 
-  const notesFilterFields = getNotesFilterFields(permissionMap);
+  const notesFilterFields = getNotesFilterFields(
+    permissionMap,
+    userListOptions
+  );
 
   const getRowId = (row: NotesList) => row.rid;
 

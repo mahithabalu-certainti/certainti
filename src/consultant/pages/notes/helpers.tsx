@@ -4,7 +4,10 @@ import {
   getFiscalYears,
   REGEX_PATTERNS,
 } from '../../../common-utils';
-import { ListTableColumn } from '../../../components/table/types';
+import {
+  DependencyRowData,
+  ListTableColumn,
+} from '../../../components/table/types';
 import { NotesList } from '../../types';
 import { FieldConfig } from '../account-details-sidebar/components/filter/filterType';
 
@@ -47,7 +50,8 @@ const currentYear = new Date().getFullYear();
 const fiscalYears = getFiscalYears(currentYear - minYear + 1);
 
 export const getNotesFilterFields = (
-  permissionMap: Record<string, { read: boolean; edit: boolean }>
+  permissionMap: Record<string, { read: boolean; edit: boolean }>,
+  userListOptions: { value: string; label: string }[]
 ): FieldConfig[] => {
   return [
     {
@@ -69,8 +73,12 @@ export const getNotesFilterFields = (
     {
       name: 'Note Owner',
       value: 'notes_owner',
-      type: 'text',
-      operatorOption: textOptions,
+      type: 'enum',
+      options: userListOptions.map((opt) => ({
+        option: opt.label,
+        value: opt.value,
+      })),
+      operatorOption: enumOptions,
       hide:
         !permissionMap?.['notes_owner']?.edit &&
         !permissionMap?.['notes_owner']?.read,
@@ -188,7 +196,8 @@ export const getNotesTableColumns = (
   handleNoteView?: (rowId: string) => void,
   handleDownload?: (documentUrl: string) => void,
   isNotesExportEnable?: boolean,
-  permissionMap?: Record<string, { read: boolean; edit: boolean }>
+  permissionMap?: Record<string, { read: boolean; edit: boolean }>,
+  userListOptions?: { value: string; label: string }[]
 ): ListTableColumn<NotesList>[] => [
   {
     id: 'r_number',
@@ -253,8 +262,8 @@ export const getNotesTableColumns = (
     hide: !permissionMap?.['title']?.edit && !permissionMap?.['title']?.read,
   },
   {
-    id: 'notes_owner',
-    sortId: 'notes_owner',
+    id: 'notes_owner_name',
+    sortId: 'notes_owner_name',
     editId: 'notes_owner',
     label: 'Note Owner',
     width: 180,
@@ -264,24 +273,13 @@ export const getNotesTableColumns = (
       permissionMap?.['notes_owner']?.read &&
       !inActiveEntity,
     field: {
-      type: 'text',
+      type: 'select',
+      options: userListOptions || [],
       required: true,
-      placeholder: 'Enter Note Owner',
-      validation: [
-        {
-          regex: REGEX_PATTERNS.MIN_3,
-          errorMessage: 'Note Owner must be at least 3 characters long',
-        },
-        {
-          regex: REGEX_PATTERNS.MAX_64,
-          errorMessage: 'Note Owner must not exceed 64 characters',
-        },
-        {
-          regex: REGEX_PATTERNS.NAME_REGEX,
-          errorMessage:
-            "Note Owner must contain only letters, space( ), apostrophes(') and hyphens(-).",
-        },
-      ],
+      placeholder: 'Choose Note Owner',
+      getFieldData: (rowData: DependencyRowData) => {
+        return String(rowData?.notes_owner || '');
+      },
     },
     hide:
       !permissionMap?.['notes_owner']?.edit &&

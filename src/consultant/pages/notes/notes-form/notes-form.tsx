@@ -21,6 +21,7 @@ import { NotesFormDataPayload } from '../../../types';
 import { useToast } from '../../../../hooks';
 import { RootState } from '../../../../store/store';
 import { useSelector } from 'react-redux';
+import { useManageUserList } from '../../../../admin/service';
 
 const MAX_FILE_SIZE_MB = 100;
 const RESTRICTED_EXTENSIONS = /\.(exe|bat|cmd|sh|bash)$/i;
@@ -85,6 +86,14 @@ const NotesForm: React.FC = () => {
     isEditView
   );
 
+  // User List Api
+  const { data: userListData, isLoading: userListLoading } = useManageUserList({
+    page: 1,
+    limit: 2000,
+    sortBy: 'first_name',
+    sortOrder: 'ASC',
+  });
+
   const minYear = 1950;
   const currentYear = new Date().getFullYear();
   const fiscalYears = getFiscalYears(currentYear - minYear + 1);
@@ -130,6 +139,15 @@ const NotesForm: React.FC = () => {
     }),
     [noteData]
   );
+
+  const userListOptions = useMemo(() => {
+    return (
+      userListData?.data?.users?.map((item) => ({
+        value: item.rid,
+        label: `${item.first_name} ${item.last_name}`,
+      })) || []
+    );
+  }, [userListData]);
 
   useEffect(() => {
     if (isEditView && noteData) {
@@ -297,6 +315,7 @@ const NotesForm: React.FC = () => {
   const formConfig = NotesFormData(
     isEditView,
     fiscalYears,
+    userListOptions,
     !!projectFiscalYear,
     disableFiscalYear,
     isFromGlobalNotes,
@@ -307,7 +326,7 @@ const NotesForm: React.FC = () => {
     window.history.back();
   };
 
-  const formLoading = isLoading;
+  const formLoading = isLoading || userListLoading;
 
   const hideAttachments =
     isEditView &&
