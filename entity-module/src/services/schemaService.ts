@@ -4119,9 +4119,7 @@ class SchemaService {
         parentDetails.client_secret);
         return  isSubscriptionCreated;
       }else{
-        if (Array.isArray(users) && users.length > 0) {
         return false;
-        }
       }
     } catch (err) {
       return false
