@@ -147,7 +147,6 @@ export const validateProjectRequest = (data : any) => {
 export const validateProjectQreUpdateRequest = (data : any) => {
   if(!data.account_rid) return STATUS_MESSAGE.accountIdMissing
   if(!data.rid) return STATUS_MESSAGE.projectIdMissing
-  if(!data.rd_percent_potential_ai) return STATUS_MESSAGE.rdpercentPotentialmissing
 }
 
 export const validateResourceRequest = (data : any) => {
