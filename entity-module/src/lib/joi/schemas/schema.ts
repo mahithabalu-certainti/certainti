@@ -1784,21 +1784,10 @@ const createAttachmentSchema = Joi.object({
     //     }),
     fiscal_year: Joi.number()
         .integer()
-        .custom((value, helpers) => {
-            const currentYear = new Date().getFullYear();
-            const minYear = currentYear - 20;
-            
-            if (value < minYear || value > currentYear) {
-                return helpers.error('number.yearRange');
-            }
-            return value;
-        })
-        .default(() => new Date().getFullYear())
         .required()
         .messages({
             'number.base': 'Fiscal year must be a number',
             'number.integer': 'Fiscal year must be an integer',
-            'number.yearRange': `Fiscal year must be between ${new Date().getFullYear() - 20} and ${new Date().getFullYear()}`,
             'any.required': 'Fiscal year is required'
         }),
     document_category_rid: Joi.string()
@@ -2256,7 +2245,16 @@ const exportListProjectResourceSchema = Joi.object({
     .default("DESC")
     .optional()
     .allow(""),
-  timezone: Joi.string().optional()
+  timezone: Joi.string().optional(),
+  search: Joi.string()
+        .max(255)
+        .allow('')
+        .allow(null)
+        .optional()
+        .messages({
+            'string.base': 'Search must be a string',
+            'string.max': 'Search cannot exceed 255 characters'
+        })
 });
 
 const listProjectTasksSchema = Joi.object({
@@ -2781,21 +2779,10 @@ const createNotesSchema = Joi.object({
         }),
     fiscal_year: Joi.number()
         .integer()
-        .custom((value, helpers) => {
-            const currentYear = new Date().getFullYear();
-            const minYear = currentYear - 20;
-            
-            if (value < minYear || value > currentYear) {
-                return helpers.error('number.yearRange');
-            }
-            return value;
-        })
-        .default(() => new Date().getFullYear())
         .required()
         .messages({
             'number.base': 'Fiscal year must be a number',
             'number.integer': 'Fiscal year must be an integer',
-            'number.yearRange': `Fiscal year must be between ${new Date().getFullYear() - 20} and ${new Date().getFullYear()}`,
             'any.required': 'Fiscal year is required'
         }),
     title: Joi.string()
@@ -3053,21 +3040,10 @@ const updateNotesSchema = Joi.object({
         }),
     fiscal_year: Joi.number()
         .integer()
-        .custom((value, helpers) => {
-            const currentYear = new Date().getFullYear();
-            const minYear = currentYear - 20;
-            
-            if (value < minYear || value > currentYear) {
-                return helpers.error('number.yearRange');
-            }
-            return value;
-        })
-        .default(() => new Date().getFullYear())
         .required()
         .messages({
             'number.base': 'Fiscal year must be a number',
             'number.integer': 'Fiscal year must be an integer',
-            'number.yearRange': `Fiscal year must be between ${new Date().getFullYear() - 20} and ${new Date().getFullYear()}`,
             'any.required': 'Fiscal year is required'
         }),
     title: Joi.string()

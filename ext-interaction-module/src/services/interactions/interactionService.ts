@@ -17,6 +17,26 @@ export class InteractionService {
     this.interactionModelService = new InteractionModelService();
   }
 
+  /**
+   * Updates an interaction response by sending the updated data to an external interaction service.
+   *
+   * This function generates a custom JWT token using the provided auth token,
+   * then makes a `PUT` request to the external interaction service to update
+   * interaction response data. It returns the updated interaction details on success.
+   *
+   * @param {InteractionResponse} interactionData - The interaction data payload to be updated.
+   * @param {string} userId - The ID of the user performing the update (used in request headers).
+   * @param {string} authToken - The original authentication token used to generate a new JWT.
+   *
+   * @returns {Promise<{
+   *   statusCode: number;
+   *   message: string;
+   *   errorMessage?: string;
+   *   data?: { interactions: any };
+   * }>} - Returns a promise that resolves with the status of the update, and updated interaction data if successful.
+   *
+   * @throws {Error} - Throws an error if the request to the external service fails or if any unexpected error occurs during execution.
+   */
   async updateInteractionResponse(
     interactionData: InteractionResponse,
     userId: string,
@@ -67,6 +87,28 @@ export class InteractionService {
     }
   }
 
+  /**
+   * Retrieves detailed information for a specific interaction from the external interaction service.
+   *
+   * This function generates a new custom JWT token using the provided auth token,
+   * and performs a `GET` request to fetch interaction details based on the provided
+   * interaction RID and account RID. The user ID is included in the headers for tracking/auth purposes.
+   *
+   * @param {string} interactionRid - The unique identifier of the interaction to retrieve.
+   * @param {string} accountRid - The unique identifier of the associated account.
+   * @param {string} userId - The ID of the user making the request (used in request headers).
+   * @param {string} authToken - The authentication token used to generate a custom JWT.
+   *
+   * @returns {Promise<{
+   *   statusCode: number;
+   *   message: string;
+   *   errorMessage?: string;
+   *   data?: { interactionDetails: any };
+   * }>} - A promise that resolves with the interaction details if the request is successful,
+   * or an error message if the request fails.
+   *
+   * @throws {Error} - Throws an error if the request to the interaction service fails or an unexpected error occurs.
+   */
   async getInteractionDetailsById(
     interactionRid: string,
     accountRid: string,
@@ -115,6 +157,34 @@ export class InteractionService {
     }
   }
 
+  /**
+   * Uploads an attachment related to a specific interaction to Azure via the external interaction service.
+   *
+   * This function builds a multipart form with the file and related metadata (account, interaction, and project IDs),
+   * generates a custom JWT token from the provided auth token, and sends a POST request to the external service.
+   * If successful, it returns metadata about the uploaded file (name, size, type, URL).
+   *
+   * @param {Express.Multer.File} file - The file object uploaded via Multer middleware.
+   * @param {string} accountRid - The unique identifier of the account associated with the file.
+   * @param {string} interactionRid - The unique identifier of the interaction the file is linked to.
+   * @param {string} projectId - The unique identifier of the project related to the interaction.
+   * @param {string} userId - The user ID performing the upload (used in headers).
+   * @param {string} authToken - The bearer token used to generate a custom JWT for authorization.
+   *
+   * @returns {Promise<{
+   *   statusCode: number;
+   *   message: string;
+   *   errorMessage?: string;
+   *   data?: {
+   *     fileName: string;
+   *     fileSize: number;
+   *     fileType: string;
+   *     fileUrl: string;
+   *   };
+   * }>} - A promise resolving to the status and details of the uploaded file if successful.
+   *
+   * @throws {Error} - Throws an error if the upload fails due to network issues, invalid inputs, or unexpected responses.
+   */
   async uploadAttachment(
     file: Express.Multer.File,
     accountRid: string,
@@ -181,6 +251,26 @@ export class InteractionService {
     }
   }
 
+  /**
+   * Deletes an attachment from Azure Blob Storage via the external interaction service.
+   *
+   * This function sends a DELETE request to the interaction service with the provided file URL,
+   * using a custom JWT token generated from the provided authentication token.
+   * It is primarily used to remove files that were previously uploaded in relation to an interaction.
+   *
+   * @param {string} fileUrl - The full URL of the file to be deleted from Azure Blob Storage.
+   * @param {string} userId - The ID of the user performing the delete operation (included in request headers).
+   * @param {string} authToken - The bearer token used to generate a custom JWT for authorization.
+   *
+   * @returns {Promise<{
+   *   statusCode: number;
+   *   message: string;
+   *   errorMessage?: string;
+   *   data?: any;
+   * }>} - A promise that resolves with the status of the delete operation and optional data.
+   *
+   * @throws {Error} - Throws an error if the request to the external service fails or returns an unexpected status.
+   */
   async deleteFromAzureBlob(
     fileUrl: string,
     userId: string,
@@ -266,14 +356,13 @@ export class InteractionService {
   }
 
   private handleAxiosError(error: AxiosError) {
-    const apiMessage =
-      (error.response?.data as { message?: string })?.message;
-  
+    const apiMessage = (error.response?.data as { message?: string })?.message;
+
     if (this.isUnauthorizedError(error)) {
       logMessage(`Inside unauthorized error: ${error}, ${error.response?.status}`);
       return this.throwServiceError(error, apiMessage || "Unauthorized", error.response?.status);
     }
-  
+
     return this.throwServiceError(
       error,
       apiMessage || error.message || "An unexpected API error occurred."

@@ -5,7 +5,6 @@ const userService = new UserService();
 import { ProfileTimeline } from "../models/profileTimelineModel";
 import { UserExtendedPermissionTimeline } from "../models/userExtendedPermissionTimelineModel";
 import { Op, IndexHints, WhereOptions, Sequelize } from "sequelize";
-import { initSequelize } from "../config/dataSource";
 import { UserFieldsAccessHistory } from "../models/userFieldsAccessHistoryModel";
 import { UserPermissionAccessHistory } from "../models/userPermissionAccessHistoryModel";
 import { UserModuleAccessHistory } from "../models/userModuleAccessHistoryModel";
@@ -15,7 +14,6 @@ import { errorLog, logMessage } from "../utils/helpers";
 const {
   Profile,
   ProfileMenuAccess,
-  Menu,
   ProfileModuleAccess,
   MenuModule,
   ProfilePermissionAccess,
@@ -149,7 +147,10 @@ class UserManagementService {
           },
         };
       } else {
-        const privileges = await userService.getProfilePermission(profile.rid,true);
+        const privileges = await userService.getProfilePermission(
+          profile.rid,
+          true
+        );
         return {
           statusCode: constants.SUCCESS,
           message: constants.SUCCESS_MESSAGE,
@@ -463,7 +464,7 @@ class UserManagementService {
         privileges = await this.getModulesForMenu(profileId, id);
       } else {
         // Case 5: If no filters, get all permissions for the profile
-        privileges = await userService.getProfilePermission(profileId,true);
+        privileges = await userService.getProfilePermission(profileId, true);
       }
 
       return {
@@ -658,7 +659,7 @@ class UserManagementService {
     filters: Record<string, any> = {},
     sortBy: string = "created_datetime",
     sortOrder: string = "ASC",
-    search? : string
+    search?: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -685,8 +686,8 @@ class UserManagementService {
       const searchConditions = {
         [Op.or]: [
           // normal fields
-          ...fields.map(field => ({
-            [field]: { [Op.iLike]: `%${search || ''}%` }
+          ...fields.map((field) => ({
+            [field]: { [Op.iLike]: `%${search || ""}%` },
           })),
         ],
       };
@@ -694,7 +695,7 @@ class UserManagementService {
       const totalCount = await Profile.count({
         where: {
           ...whereClause,
-          ...searchConditions
+          ...searchConditions,
         },
         include: includeClause,
         distinct: true, // Add this line to handle LEFT JOINs correctly
@@ -713,7 +714,7 @@ class UserManagementService {
       const profiles = await Profile.findAll({
         where: {
           ...whereClause,
-          ...searchConditions
+          ...searchConditions,
         },
         order: orderArray,
         limit,
@@ -1468,16 +1469,17 @@ class UserManagementService {
 
         const existingProfile = await Profile.findOne({
           where: Sequelize.where(
-            Sequelize.fn('LOWER', Sequelize.col('profile_name')),
+            Sequelize.fn("LOWER", Sequelize.col("profile_name")),
             normalizedName
-          )
+          ),
         });
 
         if (existingProfile) {
           return {
             statusCode: constants.BAD_REQUEST,
             message: constants.BAD_REQUEST_MESSAGE,
-            errorMessage: "A profile with this name already exists. Please choose a unique profile name."
+            errorMessage:
+              "A profile with this name already exists. Please choose a unique profile name.",
           };
         }
 
@@ -1487,7 +1489,7 @@ class UserManagementService {
           old_value: currentProfileName,
           new_value: updates.profile_name,
           created_by: userId,
-          created_datetime: new Date()
+          created_datetime: new Date(),
         });
 
         updateData.profile_name = updates.profile_name;
@@ -1505,7 +1507,7 @@ class UserManagementService {
           old_value: currentProfileDescription,
           new_value: updates.profile_description,
           created_by: userId,
-          created_datetime: new Date()
+          created_datetime: new Date(),
         });
 
         updateData.profile_description = updates.profile_description;
@@ -1518,41 +1520,41 @@ class UserManagementService {
           where: { rid: profileId },
         });
       }
-      const updatedProfileData : any = await Profile.findOne({
+      const updatedProfileData: any = await Profile.findOne({
         where: { rid: profileId },
         include: [
           {
             model: User,
-            as: 'creator',
+            as: "creator",
             attributes: [
               [
                 Sequelize.fn(
-                  'CONCAT',
-                  Sequelize.col('creator.first_name'),
-                  ' ',
-                  Sequelize.col('creator.last_name')
+                  "CONCAT",
+                  Sequelize.col("creator.first_name"),
+                  " ",
+                  Sequelize.col("creator.last_name")
                 ),
-                'full_name'
-              ]
-            ]
+                "full_name",
+              ],
+            ],
           },
           {
             model: User,
-            as: 'modifier',
+            as: "modifier",
             attributes: [
               [
                 Sequelize.fn(
-                  'CONCAT',
-                  Sequelize.col('modifier.first_name'),
-                  ' ',
-                  Sequelize.col('modifier.last_name')
+                  "CONCAT",
+                  Sequelize.col("modifier.first_name"),
+                  " ",
+                  Sequelize.col("modifier.last_name")
                 ),
-                'full_name'
-              ]
-            ]
-          }
+                "full_name",
+              ],
+            ],
+          },
         ],
-        raw: true
+        raw: true,
       });
       if(updatedProfileData) {
         let finalData = {
@@ -1564,16 +1566,16 @@ class UserManagementService {
           profile_status: updatedProfileData.profile_status,
           created_datetime: updatedProfileData.created_datetime,
           modified_datetime: updatedProfileData.modified_datetime,
-          created_by: updatedProfileData['creator.full_name'],
-          modified_by: updatedProfileData['modifier.full_name']
-        }
+          created_by: updatedProfileData["creator.full_name"],
+          modified_by: updatedProfileData["modifier.full_name"],
+        };
         return {
-        statusCode: constants.SUCCESS,
-        message: constants.SUCCESS_MESSAGE,
-        data: {
-          profile: finalData,
-        },
-      };
+          statusCode: constants.SUCCESS,
+          message: constants.SUCCESS_MESSAGE,
+          data: {
+            profile: finalData,
+          },
+        };
       }
     } catch (error) {
       return this.throwServiceError(error as Error);

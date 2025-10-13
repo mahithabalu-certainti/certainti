@@ -226,6 +226,7 @@ export class NotesService {
         let attachedToFilter;
         let createdByFilter;
         let modifiedByFilter;
+        let notesOwnerFilter;
         if (filters.attached_to) {
           attachedToFilter = filters.attached_to;
           delete filters.attached_to;
@@ -237,6 +238,10 @@ export class NotesService {
         if (filters.modified_by_name) {
           modifiedByFilter = filters.modified_by_name;
           delete filters.modified_by_name;
+        }
+        if (filters.notes_owner_name) {
+          notesOwnerFilter = filters.notes_owner_name;
+          delete filters.notes_owner_name;
         }
     
         const { whereClause } = this.buildRawWhereClause(filters, search);
@@ -460,7 +465,7 @@ export class NotesService {
         const paginatedAttachments = allNotes
     
         // 🔷 Map document types and users
-        const userIds = [...new Set(paginatedAttachments.flatMap(att => [att.created_by,att.modified_by]))];
+        const userIds = [...new Set(paginatedAttachments.flatMap(att => [att.created_by,att.modified_by, att.notes_owner]))];
     
         const mainSequelize = await initMainDbSequelize();
         const [users] = await Promise.all([
@@ -478,6 +483,7 @@ export class NotesService {
           created_by_name: userMap.get(attachment.created_by) || attachment.created_by,
           modified_by_name: userMap.get(attachment.modified_by) || attachment.modified_by,
           attached_to: attachmentDisplayNames[attachment.rid] || attachment.attach_to,
+          notes_owner_name: userMap.get(attachment.notes_owner) || attachment.notes_owner,
           browse_file : await generateSasUrl(attachment.browse_file)
         })));
     
@@ -503,6 +509,22 @@ export class NotesService {
           notes.sort((a, b) => {
             const aType = a.modified_by_name || '';
             const bType = b.modified_by_name || '';
+            const aEmpty = !aType || aType.trim() === '';
+            const bEmpty = !bType || bType.trim() === '';
+            
+            if (aEmpty && bEmpty) return 0;
+            if (aEmpty) return finalSortOrder === 'ASC' ? 1 : -1;
+            if (bEmpty) return finalSortOrder === 'ASC' ? -1 : 1;
+            
+            return finalSortOrder === 'ASC' ? 
+              aType.localeCompare(bType) : 
+              bType.localeCompare(aType);
+          });
+        }
+        if (sortBy === 'notes_owner_name') {
+          notes.sort((a, b) => {
+            const aType = a.notes_owner_name || '';
+            const bType = b.notes_owner_name || '';
             const aEmpty = !aType || aType.trim() === '';
             const bEmpty = !bType || bType.trim() === '';
             
@@ -544,6 +566,22 @@ export class NotesService {
               case 'equals': return uploadedBy === filterValue;
               case 'not_equals': return uploadedBy !== filterValue
               case 'is_empty': return uploadedBy === null || uploadedBy === ''
+              default: return false;
+            }
+          });
+        }
+        if (notesOwnerFilter) {
+          let filterValue;
+            notes = notes.filter(notes => {
+            const notesOwner = notes.notes_owner_name?.toLowerCase() || '';
+            const operator = Object.keys(notesOwnerFilter)[0];
+            if(operator === 'is_empty') filterValue = ''
+            else filterValue = (notesOwnerFilter[operator] || '').toLowerCase();
+            switch (operator) {
+              case 'contains': return notesOwner.includes(filterValue);
+              case 'equals': return notesOwner === filterValue;
+              case 'not_equals': return notesOwner !== filterValue;
+              case 'is_empty': return notesOwner === null || notesOwner === ''
               default: return false;
             }
           });
@@ -614,6 +652,7 @@ export class NotesService {
         let attachedToFilter;
         let createdByFilter;
         let modifiedByFilter;
+        let notesOwnerFilter;
         if (filters.attached_to) {
           attachedToFilter = filters.attached_to;
           delete filters.attached_to;
@@ -625,6 +664,10 @@ export class NotesService {
         if (filters.modified_by_name) {
           modifiedByFilter = filters.modified_by_name;
           delete filters.modified_by_name;
+        }
+        if (filters.notes_owner_name) {
+          notesOwnerFilter = filters.notes_owner_name;
+          delete filters.notes_owner_name;
         }
     
         const { whereClause } = this.buildRawWhereClause(filters, search);
@@ -814,7 +857,7 @@ export class NotesService {
         }
     
         // 🔷 Sort
-        const validSortFields = ['document_name', 'title', 'notes_owner', 'r_number', 'format', 'attachment_level', 'size_in_mb', 'attached_to', 'descriptions', 'created_by_name', 'created_datetime', 'fiscal_year', 'modified_by_name','modified_datetime'];
+        const validSortFields = ['document_name', 'title', 'r_number', 'format', 'attachment_level', 'size_in_mb', 'attached_to', 'descriptions', 'created_by_name', 'created_datetime', 'fiscal_year', 'modified_by_name','modified_datetime'];
         const finalSortBy = validSortFields.includes(sortBy) ? sortBy : 'created_datetime';
         const finalSortOrder = ['ASC', 'DESC'].includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
     
@@ -843,7 +886,7 @@ export class NotesService {
           // Both non-empty, normal comparison
           return finalSortOrder === 'ASC' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
         });
-        const userIds = [...new Set(allNotes.flatMap(att => [att.created_by, att.modified_by]))];
+        const userIds = [...new Set(allNotes.flatMap(att => [att.created_by, att.modified_by, att.notes_owner]))];
     
         const mainSequelize = await initMainDbSequelize();
         const [users] = await Promise.all([
@@ -861,6 +904,7 @@ export class NotesService {
           created_by_name: userMap.get(attachment.created_by) || attachment.created_by,
           modified_by_name: userMap.get(attachment.modified_by) || attachment.modified_by,
           attached_to: attachmentDisplayNames[attachment.rid] || attachment.attach_to,
+          notes_owner_name: userMap.get(attachment.notes_owner) || attachment.notes_owner,
           browse_file : await generateSasUrl(attachment.browse_file)
         })));
     
@@ -897,6 +941,23 @@ export class NotesService {
               bType.localeCompare(aType);
           });
         }
+
+        if (sortBy === 'notes_owner_name') {
+          notes.sort((a, b) => {
+            const aType = a.notes_owner_name || '';
+            const bType = b.notes_owner_name || '';
+            const aEmpty = !aType || aType.trim() === '';
+            const bEmpty = !bType || bType.trim() === '';
+            
+            if (aEmpty && bEmpty) return 0;
+            if (aEmpty) return finalSortOrder === 'ASC' ? 1 : -1;
+            if (bEmpty) return finalSortOrder === 'ASC' ? -1 : 1;
+            
+            return finalSortOrder === 'ASC' ? 
+              aType.localeCompare(bType) : 
+              bType.localeCompare(aType);
+          });
+        }
          
         const allowedFieldsForExport = await this.schemaService.getAllowedExportFields(userId,"notes_view_edit");
             const allowedFieldSet = new Set<string>();
@@ -905,21 +966,21 @@ export class NotesService {
                 allowedFieldSet.add(field.field_desc);
               }
             }
-        const labelMap: Record<string, string>  = {
-          "Document Name": "Document Name",
-          "Format": "Format",
-          "Size": "Size",
-          "Fiscal Year": "Fiscal Year",
+         const labelMap: Record<string, string> = {
+          "Note ID": "Note ID",
           "Title": "Title",
           "Note Owner": "Note Owner",
           "Related Entity": "Related Entity",
           "Related To ID": "Related To ID",
+          "Related To Name": "Related To Name",
+          "Fiscal Year": "Fiscal Year",
+          "Document Name": "Document Name",
+          "Format": "Format",
+          "Size": "Size",
           "Created By": "Created By",
           "Created On": "Created On",
           "Modified By": "Modified By",
           "Modified On": "Modified On",
-          "Note ID": "Note ID",
-          "Descriptions": "Descriptions",
           "Download": "Download"
         };
         // Apply uploaded_by filter if present
@@ -951,6 +1012,22 @@ export class NotesService {
               case 'equals': return uploadedBy === filterValue;
               case 'not_equals': return uploadedBy !== filterValue
               case 'is_empty': return uploadedBy === null || uploadedBy === ''
+              default: return false;
+            }
+          });
+        }
+        if (notesOwnerFilter) {
+          let filterValue;
+            notes = notes.filter(notes => {
+            const notesOwner = notes.notes_owner_name?.toLowerCase() || '';
+            const operator = Object.keys(notesOwnerFilter)[0];
+            if(operator === 'is_empty') filterValue = ''
+            else filterValue = (notesOwnerFilter[operator] || '').toLowerCase();
+            switch (operator) {
+              case 'contains': return notesOwner.includes(filterValue);
+              case 'equals': return notesOwner === filterValue;
+              case 'not_equals': return notesOwner !== filterValue;
+              case 'is_empty': return notesOwner === null || notesOwner === ''
               default: return false;
             }
           });
@@ -1032,7 +1109,7 @@ export class NotesService {
           }
         }
     
-        let attachedToFilter, createdByFilter, modifiedByFilter;
+        let attachedToFilter, createdByFilter, modifiedByFilter, notesOwnerFilter;
         if (filters.attached_to) {
           attachedToFilter = filters.attached_to;
           delete filters.attached_to;
@@ -1044,6 +1121,10 @@ export class NotesService {
         if (filters.modified_by_name) {
           modifiedByFilter = filters.modified_by_name;
           delete filters.modified_by_name;
+        }
+        if (filters.notes_owner_name) {
+          notesOwnerFilter = filters.notes_owner_name;
+          delete filters.notes_owner_name;
         }
     
         const { whereClause } = this.buildRawWhereClause(filters, search);
@@ -1149,7 +1230,7 @@ export class NotesService {
         );
     
         // Map enriched data
-        const userIds = [...new Set(attachmentsRaw.flatMap(att => [att.created_by, att.modified_by]))];
+        const userIds = [...new Set(attachmentsRaw.flatMap(att => [att.created_by, att.modified_by, att.notes_owner]))];
     
         const [users] = await Promise.all([
           userIds.length > 0 ? mainSequelize.query(
@@ -1164,6 +1245,7 @@ export class NotesService {
           created_by_name: userMap.get(att.created_by) || att.created_by,
           modified_by_name: userMap.get(att.modified_by) || att.modified_by,
           attached_to: attachmentDisplayNames[att.rid] || att.attach_to,
+          notes_owner_name: userMap.get(att.notes_owner) || att.notes_owner,
           browse_file: await generateSasUrl(att.browse_file)
         })));
     
@@ -1215,6 +1297,22 @@ export class NotesService {
             }
           });
         }
+        if (notesOwnerFilter) {
+          let filterValue;
+            attachments = attachments.filter(notes => {
+            const notesOwner = notes.notes_owner_name?.toLowerCase() || '';
+            const operator = Object.keys(notesOwnerFilter)[0];
+            if(operator === 'is_empty') filterValue = ''
+            else filterValue = (notesOwnerFilter[operator] || '').toLowerCase();
+            switch (operator) {
+              case 'contains': return notesOwner.includes(filterValue);
+              case 'equals': return notesOwner === filterValue;
+              case 'not_equals': return notesOwner !== filterValue;
+              case 'is_empty': return notesOwner === null || notesOwner === ''
+              default: return false;
+            }
+          });
+        }
     
         // 🔷 Sort with custom field sorting logic
         const validSortFields = ['document_name', 'title', 'notes_owner', 'r_number', 'format', 'attachment_level', 'size_in_mb', 'attached_to', 'descriptions', 'created_by_name', 'created_datetime', 'fiscal_year', 'modified_by_name', 'modified_datetime'];
@@ -1236,6 +1334,7 @@ export class NotesService {
           case 'attached_to': aVal = a.attached_to || ''; bVal = b.attached_to || ''; break;
           case 'created_by_name': aVal = a.created_by_name || ''; bVal = b.created_by_name || ''; break;
           case 'modified_by_name': aVal = a.modified_by_name || ''; bVal = b.modified_by_name || ''; break;
+          case 'notes_owner_name': aVal = a.notes_owner_name || ''; bVal = b.notes_owner_name || ''; break;
           default:
             aVal = a[finalSortBy] !== undefined && a[finalSortBy] !== null ? String(a[finalSortBy]) : '';
             bVal = b[finalSortBy] !== undefined && b[finalSortBy] !== null ? String(b[finalSortBy]) : '';
@@ -1329,7 +1428,7 @@ export class NotesService {
           }
         }
     
-        let attachedToFilter, createdByFilter, modifiedByFilter;
+        let attachedToFilter, createdByFilter, modifiedByFilter, notesOwnerFilter;
         if (filters.attached_to) {
           attachedToFilter = filters.attached_to;
           delete filters.attached_to;
@@ -1341,6 +1440,10 @@ export class NotesService {
         if (filters.modified_by_name) {
           modifiedByFilter = filters.modified_by_name;
           delete filters.modified_by_name;
+        }
+        if (filters.notes_owner_name) {
+          notesOwnerFilter = filters.notes_owner_name;
+          delete filters.notes_owner_name;
         }
     
         const { whereClause } = this.buildRawWhereClause(filters, search);
@@ -1444,7 +1547,7 @@ export class NotesService {
         );
     
         // Map enriched data
-        const userIds = [...new Set(attachmentsRaw.flatMap(att => [att.created_by, att.modified_by]))];
+        const userIds = [...new Set(attachmentsRaw.flatMap(att => [att.created_by, att.modified_by, att.notes_owner]))];
     
         const [users] = await Promise.all([
           userIds.length > 0 ? mainSequelize.query(
@@ -1459,6 +1562,7 @@ export class NotesService {
           created_by_name: userMap.get(att.created_by) || att.created_by,
           modified_by_name: userMap.get(att.modified_by) || att.modified_by,
           attached_to: attachmentDisplayNames[att.rid] || att.attach_to,
+          notes_owner_name: userMap.get(att.notes_owner) || att.notes_owner,
           browse_file: await generateSasUrl(att.browse_file)
         })));
     
@@ -1504,6 +1608,19 @@ export class NotesService {
             }
           });
         }
+        if (notesOwnerFilter) {
+          attachments = attachments.filter(att => {
+            const notesOwner = (att.notes_owner_name || '').toLowerCase();
+            const operator = Object.keys(notesOwnerFilter)[0];
+            const filterValue = (notesOwnerFilter[operator] || '').toLowerCase();
+            switch (operator) {
+              case 'contains': return notesOwner.includes(filterValue);
+              case 'equals': return notesOwner === filterValue;
+              case 'not_equals': return notesOwner !== filterValue || notesOwner === null;
+              default: return false;
+            }
+          });
+        }
     
         // 🔷 Sort with custom field sorting logic
         const validSortFields = ['document_name', 'title', 'notes_owner', 'r_number', 'format', 'attachment_level', 'size_in_mb', 'attached_to', 'descriptions', 'created_by_name', 'created_datetime', 'fiscal_year', 'modified_by_name', 'modified_datetime'];
@@ -1525,6 +1642,7 @@ export class NotesService {
           case 'attached_to': aVal = a.attached_to || ''; bVal = b.attached_to || ''; break;
           case 'created_by_name': aVal = a.created_by_name || ''; bVal = b.created_by_name || ''; break;
           case 'modified_by_name': aVal = a.modified_by_name || ''; bVal = b.modified_by_name || ''; break;
+          case 'notes_owner_name': aVal = a.notes_owner_name || ''; bVal = b.notes_owner_name || ''; break;
           default:
             aVal = a[finalSortBy] !== undefined && a[finalSortBy] !== null ? String(a[finalSortBy]) : '';
             bVal = b[finalSortBy] !== undefined && b[finalSortBy] !== null ? String(b[finalSortBy]) : '';
@@ -1564,24 +1682,23 @@ export class NotesService {
                 allowedFieldSet.add(field.field_desc);
               }
             }
-       const labelMap: Record<string, string>  = {
-          "Document Name": "Document Name",
-          "Format": "Format",
-          "Size": "Size",
-          "Fiscal Year": "Fiscal Year",
+        const labelMap: Record<string, string> = {
+          "Note ID": "Note ID",
           "Title": "Title",
           "Note Owner": "Note Owner",
           "Related Entity": "Related Entity",
           "Related To ID": "Related To ID",
+          "Related To Name": "Related To Name",
+          "Fiscal Year": "Fiscal Year",
+          "Document Name": "Document Name",
+          "Format": "Format",
+          "Size": "Size",
           "Created By": "Created By",
           "Created On": "Created On",
           "Modified By": "Modified By",
           "Modified On": "Modified On",
-          "Note ID": "Note ID",
-          "Descriptions": "Descriptions",
           "Download": "Download"
         };
-    
         attachments = attachments.map((at) => {
         const rawMapped = this.mapAttachmentToCommonFormat(at); // with internal keys
         const filtered: Record<string, any> = {};
@@ -1632,7 +1749,6 @@ export class NotesService {
             { r_number: { [Op.iLike]: `%${search}%` } },
             { descriptions : { [Op.iLike]: `%${search}%` } },
             { title : { [Op.iLike]: `%${search}%` } },
-            { notes_owner : { [Op.iLike]: `%${search}%` } },
             { attachment_level : { [Op.iLike]: `%${search}%` } }
           ]
         });
@@ -1681,7 +1797,6 @@ export class NotesService {
           case 'attach_to':
           case 'r_number':
           case 'title':
-          case 'notes_owner':
             switch (operator.toLowerCase()) {
               case 'equals': condition[field] = { [Op.iLike]: value }; break;
               case 'not_equals': condition[field] = { [Op.or]: [{ [Op.notILike]: value }, { [Op.is]: null }] }; break;          
@@ -1821,22 +1936,22 @@ private async getAttachmentDisplayNames(attachments: any[], schemaNumber: string
 
 private mapAttachmentToCommonFormat(at: any) {
   return {
-    "Document Name": at.document_name || "-",
-    "Format": at.format || "-", 
-    "Size": at.size_in_mb || "-",
-    "Fiscal Year": at.fiscal_year || "-",
-    "Title": at.title || "-",
-    "Note Owner": at.notes_owner || "-",
-    "Related Entity": at.attachment_level || "-",
-    "Related To ID": at.attached_to || "-",
-    "Created By": at.created_by_name || "-",
-    "Modified By": at.modified_by_name || "-",
-    "Created On" : moment(at.created_datetime).format('YYYY-MM-DD') || "-",
-    "Modified On": moment(at.modified_datetime).format('YYYY-MM-DD') || "-",
-    "Note ID": at.r_number || "-",
-    "Descriptions" : at.descriptions || "-",
-    "Download": at.browse_file || "-"
-  };
+  "Note ID": at.r_number || "-",
+  "Title": at.title || "-",
+  "Note Owner": at.notes_owner_name || "-",
+  "Related Entity": at.attachment_level || "-",
+  "Related To ID": at.attach_to || "-",
+  "Related To Name": at.attached_to || "-", // added as per labelMap
+  "Fiscal Year": at.fiscal_year || "-",
+  "Document Name": at.document_name || "-",
+  "Format": at.format || "-",
+  "Size": at.size_in_mb || "-",
+  "Created By": at.created_by_name || "-",
+  "Created On": at.created_datetime ? moment(at.created_datetime).format("YYYY-MMM-DD HH:mm:ss") : "-",
+  "Modified By": at.modified_by_name || "-",
+  "Modified On": at.modified_datetime ? moment(at.modified_datetime).format("YYYY-MMM-DD HH:mm:ss") : "-",
+  "Download": at.browse_file || "-"
+};
 }
 
    /**

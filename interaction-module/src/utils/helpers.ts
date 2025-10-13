@@ -165,6 +165,23 @@ export async function generateExcelBase64(data: any, sheetName: string) {
   return Buffer.from(buffer).toString("base64");
 }
 
+/**
+ * Uploads a file to Azure Blob Storage under a structured folder path based on account, project, and interaction IDs.
+ *
+ * @param {Express.Multer.File} file - The file object received from Multer middleware, containing file buffer and metadata.
+ * @param {string} account_id - The account ID used to organize the blob storage path.
+ * @param {string} project_id - The project ID used to organize the blob storage path.
+ * @param {string} interaction_id - The interaction ID used to organize the blob storage path.
+ *
+ * @returns {Promise<{
+*   url: string;
+*   name: string;
+*   extension: string;
+*   size: number;
+* }>} Promise resolving with the uploaded file's accessible URL, sanitized name, extension, and size in megabytes.
+*
+* @throws {Error} Throws if the Azure storage connection string is not provided.
+*/
 export async function uploadToAzureBlob(
   file: Express.Multer.File,
   account_id: string,
@@ -208,6 +225,20 @@ export async function uploadToAzureBlob(
   };
 }
 
+/**
+ * Deletes a blob from Azure Blob Storage given its full URL.
+ *
+ * @param {string} blobUrl - The full URL of the blob to delete.
+ * 
+ * @returns {Promise<void>} Resolves when the deletion process completes.
+ * 
+ * @throws {Error} Throws if the Azure storage connection string is not provided.
+ *
+ * @description
+ * If the blob URL is empty or null, the function returns immediately.
+ * It extracts the blob name from the URL and attempts to delete it from the "account" container.
+ * Logs whether the blob was deleted or not found.
+ */
 export async function deleteFromAzureBlob(blobUrl: string): Promise<void> {
   if (!blobUrl) return;
 

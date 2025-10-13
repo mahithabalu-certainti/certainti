@@ -33,6 +33,32 @@ export class ProjectTaskService {
     this.resourceService = new ResourceService();
   }
 
+  /**
+ * Retrieves a paginated list of project tasks filtered and sorted based on provided criteria,
+ * including optional search and resource name filtering.
+ * 
+ * Initializes necessary database connections and models,
+ * fetches related reference data for formatting,
+ * applies filtering, sorting, and pagination on the task list,
+ * and returns the formatted tasks along with the total count.
+ * 
+ * @param {string} accountRid - The account identifier to scope the tasks.
+ * @param {string} projectRid - The project identifier to filter tasks within a specific project.
+ * @param {Record<string, any>} [filters={}] - Additional filters to apply to the tasks.
+ * @param {string} [search] - Optional search string to filter tasks by text.
+ * @param {number} [page=1] - The page number for pagination.
+ * @param {number} [limit=10] - The number of tasks to return per page.
+ * @param {string} [sortBy="created_datetime"] - The field to sort the results by.
+ * @param {string} [sortOrder="DESC"] - The order of sorting: "ASC" or "DESC".
+ * 
+ * @returns {Promise<{
+ *   statusCode: number;
+  *   message: string;
+  *   errorMessage?: string;
+  *   data?: { tasks: any[]; totalCount: number };
+  * }>} Returns an object containing status, message, optionally error message, 
+  * and data with the paginated and formatted list of tasks and total count.
+  */ 
   async listProjectTasks(
     accountRid: string,
     projectRid: string,
@@ -155,6 +181,29 @@ export class ProjectTaskService {
     }
   }
 
+  /**
+ * Exports a list of project tasks for a given user, account, and project with optional filters and search.
+ * 
+ * This method fetches all matching tasks without pagination, enriches them with related reference data,
+ * filters tasks by resource name if specified, sorts them according to provided criteria, and formats
+ * them based on the allowed export fields for the user. The exported data is returned in a format
+ * suitable for export (e.g., CSV or Excel).
+ * 
+ * @param {string} userId - The ID of the user requesting the export, used to determine allowed export fields.
+ * @param {string} accountRid - The account identifier to scope the tasks.
+ * @param {string} projectRid - The project fiscal RID to filter tasks by.
+ * @param {Record<string, any>} [filters={}] - Optional filters to apply on task attributes.
+ * @param {string} [search] - Optional search text to apply across task fields.
+ * @param {string} [sortBy="created_datetime"] - The field by which to sort the tasks.
+ * @param {string} [sortOrder="DESC"] - The order of sorting: "ASC" or "DESC".
+ * 
+ * @returns {Promise<{
+ *   statusCode: number;
+  *   message: string;
+  *   errorMessage?: string;
+  *   data?: { tasks: any[]; totalCount: number };
+  * }>} An object containing the export data of tasks, total count, and status information.
+  */ 
   async listProjectTasksExport(
     userId: string,
     accountRid: string,
@@ -767,6 +816,26 @@ export class ProjectTaskService {
     }
   }
 
+  /**
+ * Retrieves detailed information about a specific project task by its ID,
+ * including related account, project, resource, and attachments data.
+ * 
+ * Initializes database models and associations based on the account schema,
+ * fetches the task with all related entities, and enriches the result with
+ * additional reference data such as resource types, currencies, statuses, task types, 
+ * classifications, and mapped attachments with document and user details.
+ * 
+ * @param {string} accountRid - The account identifier to scope the task.
+ * @param {string} taskRid - The unique identifier of the project task to retrieve.
+ * 
+ * @returns {Promise<{
+ *   statusCode: number;
+  *   message: string;
+  *   errorMessage?: string;
+  *   data?: any;
+  * }>} Returns an object containing status, message, optionally error message, 
+  * and data with the detailed project task information.
+  */ 
   async getProjectTaskById(
     accountRid: string,
     taskRid: string
@@ -1494,13 +1563,7 @@ export class ProjectTaskService {
       const sequelize = await initMainDbSequelize();
 
       const result = await sequelize.query(
-        `
-      SELECT 
-        a.*
-      FROM "${MAIN_SCHEMA_NAME}"."attachment_summary" a
-      WHERE a.attach_to = :task_rid
-      ORDER BY a.created_datetime DESC
-    `,
+        rawQueries.fetchAttachmentSummaryByTask(),
         {
           replacements: { task_rid },
           type: "SELECT",
@@ -1525,7 +1588,7 @@ export class ProjectTaskService {
         if (!userId) return null;
 
         const [results] = await mainDbInit.query(
-          `SELECT first_name, middle_name, last_name FROM ${MAIN_SCHEMA_NAME}."user" WHERE rid = :userId`,
+          rawQueries.fetchUserById(),
           {
             replacements: { userId },
             type: "SELECT",

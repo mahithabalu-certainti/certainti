@@ -1,8 +1,9 @@
 import { Interaction } from "../../models/interaction";
 import {
   HttpStatus,
-  MAIN_SCHEMA_NAME,
   OTP_EXPIRY_MINUTES,
+  SCHEMANAME_PREFIX,
+  rawQueries,
 } from "../../utils/constants";
 import { logMessage } from "../../utils/helpers";
 import { IGenerateOtp, IOtpHistoryStatus } from "../../utils/types";
@@ -24,7 +25,7 @@ export class OtpSchemaService {
 
       const [account]: any[] =
         await this.interactionModelService.mainDbSequelize.query(
-          `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
+          rawQueries.getAccountByRid(),
           {
             replacements: { rid: accountId },
             type: "SELECT",
@@ -36,7 +37,7 @@ export class OtpSchemaService {
       if (account?.storage_type === "store_in_parent") {
         const [accountData]: any[] =
           await this.interactionModelService.mainDbSequelize.query(
-            `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
+            rawQueries.getAccountByRid(),
             {
               replacements: { rid: account?.parent_account_rid },
               type: "SELECT",
@@ -387,16 +388,10 @@ export class OtpSchemaService {
     projectFiscalId: string,
     email: string
   ): Promise<boolean> {
-    const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+    const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
     const sequelize = await this.interactionModelService.getSequelize();
 
-    const contactQuery = `
-      SELECT * 
-      FROM ${schemaName}.key_contact_details
-      WHERE entity_rid = :projectFiscalId 
-        AND is_primary_contact = :is_primary_contact
-        AND key_contact_email = :email
-    `;
+    const contactQuery = rawQueries.getContactQuery(schemaName);
 
     const contactResults: any = await sequelize.query(contactQuery, {
       type: "SELECT",
@@ -417,11 +412,7 @@ export class OtpSchemaService {
       await this.interactionModelService.getMainSequelize();
 
     const roleResults: any = await mainDbSequelize.query(
-      `
-        SELECT * 
-        FROM ${MAIN_SCHEMA_NAME}.key_contact_role 
-        WHERE rid = :rid
-      `,
+      rawQueries.getKeyContactRoleQuery(),
       {
         type: "SELECT",
         replacements: {

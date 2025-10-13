@@ -2,7 +2,7 @@ import { initSequelize } from "../config/maindbDataSource"
 import { initOrgSequelize } from "../config/orgdbDataSource"
 import { Account } from "../models/accountModel"
 import { Status } from "../models/statusModel"
-import { HttpStatus, rawQueries, STATUS, STATUS_MESSAGE } from "../utils/constant"
+import { HttpStatus, rawQueries, STATUS, STATUS_MESSAGE, SCHEMANAME_PREFIX } from "../utils/constant"
 import { logMessage, setAccountDetails, setInlineValues, setKeyContact, setKeyContactData } from "../utils/helpers"
 import { Sequelize, Op, QueryTypes } from "sequelize";
 import SchemaService from "./schemaService"
@@ -55,10 +55,10 @@ class AccountGraphQlServices {
                             rid: fetchAccountById.parent_account_rid
                         }, raw: true
                     })
-                    schemaName = `"trd365_${parentAccount?.r_number?.replace('ACC-', '')}"`
+                    schemaName = `"${SCHEMANAME_PREFIX}${parentAccount?.r_number?.replace('ACC-', '')}"`
                     accountDetails = await sequelize.query(rawQueries.fetchAccountDetails(schemaName, fetchAccountById.rid))
                 } else {
-                    schemaName = `"trd365_${fetchAccountById?.r_number?.replace('ACC-', '')}"`
+                    schemaName = `"${SCHEMANAME_PREFIX}${fetchAccountById?.r_number?.replace('ACC-', '')}"`
                     accountDetails = await sequelize.query(rawQueries.fetchAccountDetails(schemaName, fetchAccountById.rid))
                 }
                 const setAccountData = setInlineValues(fetchAccountById, data, accountDetails[0])

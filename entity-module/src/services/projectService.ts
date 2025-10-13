@@ -1,11 +1,10 @@
-import moment, { Moment } from "moment";
+import moment from "moment";
 import "moment-timezone";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { Project, setupProjectSequence } from "../models/project";
 import {
   HttpStatus,
-  MAIN_SCHEMA_NAME,
-  STATUS_MESSAGE,
+  SCHEMANAME_PREFIX,
   primaryKeyContacts,
   rawQueries,
 } from "../utils/constants";
@@ -38,15 +37,14 @@ import {
 } from "../models/accountFiscal";
 import { isValidTimezone } from "../utils/valideTimeChecker";
 import { Logger } from "winston";
-import { ProjectFiscalSummary } from "../models/projectFiscalSummary";
 import Decimal from "decimal.js";
-import { ProjectSummary } from "../models/projectSummary";
 import { setupProjectFiscalRegion } from "../models/projectFiscalRegion";
 import {
   AccountFiscalRegion,
   setupAccountFiscalRegionSequence,
 } from "../models/accountFiscalRegion";
 import { errorLog, logMessage } from "../utils/helpers";
+import { checkProjectMappedToProjectRes } from "../utils/rawQueries";
 
 export class ProjectService {
   private schemaService: SchemaService;
@@ -59,6 +57,29 @@ export class ProjectService {
     this.projectIngestion = new ProjectIngestionService(this.logger);
   }
 
+  /**
+ * Creates a new project in the appropriate schema based on account configuration.
+ *
+ * @async
+ * @function createProject
+ * @param {ICreateProject} projectData - The data required to create a project (e.g., name, account ID, fiscal info).
+ * @param {string} userId - The ID of the user initiating the creation request.
+ * @returns {Promise<{
+ *   statusCode: number;
+  *   message: string;
+  *   errorMessage?: string;
+  *   data?: { project: any };
+  * }>} Returns status code, success message, and created project object or an error message.
+  *
+  * @throws {Error} If account is invalid, inactive, or schema doesn't exist.
+  *
+  * @description
+  * - Validates that the provided account ID exists and is active.
+  * - If the account uses `store_in_parent`, fetches the parent account's schema.
+  * - Checks whether the appropriate schema exists.
+  * - Ensures project tables are created in the correct schema.
+  * - Persists the project data using `createProjectRecords`.
+  */ 
   async createProject(
     projectData: ICreateProject,
     userId: string
@@ -140,7 +161,7 @@ export class ProjectService {
     try {
       const orgDbSequlize = await initOrgSequelize();
       const mainDbSequlize = await initMainDbSequelize();
-      const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
 
       const KeyContactModel = await KeyContact.initialize(
         orgDbSequlize,
@@ -404,6 +425,29 @@ export class ProjectService {
     }
   }
 
+  /**
+ * Updates an existing project in the appropriate schema based on account configuration.
+ *
+ * @async
+ * @function updateProject
+ * @param {IUpdateProject} projectData - The data to update the project with (includes account ID and project details).
+ * @param {string} userId - The ID of the user performing the update.
+ * @returns {Promise<{
+ *   statusCode: number;
+  *   message: string;
+  *   errorMessage?: string;
+  *   data?: { project: any[] };
+  * }>} Returns status code, success message, and an empty project array on success or throws an error.
+  *
+  * @throws {Error} If the account is inactive, invalid, or the schema/table does not exist.
+  *
+  * @description
+  * - Validates that the provided account ID exists and is active.
+  * - If the account uses `store_in_parent`, fetches the parent account's schema.
+  * - Checks whether the appropriate schema and project table exist.
+  * - Calls `updateProjectRecords` to update the project data in the database.
+  * - Returns success response with an empty project array.
+  */ 
   async updateProject(
     projectData: IUpdateProject,
     userId: string
@@ -570,6 +614,34 @@ export class ProjectService {
     );
   }
 
+  /**
+ * Retrieves detailed information about a project and its attachments by account and project IDs.
+ *
+ * @async
+ * @function projectById
+ * @param {string} accountId - The ID of the account to which the project belongs.
+ * @param {string} projectId - The ID of the project to retrieve.
+ * @returns {Promise<{
+ *   statusCode: number;
+  *   message: string;
+  *   errorMessage?: string;
+  *   data?: {
+  *     project: any;
+  *     attachment: any[];
+  *   };
+  * }>} Returns the status, message, and project details with attachments, or throws an error.
+  *
+  * @throws {Error} If the account ID is invalid or any other error occurs during processing.
+  *
+  * @description
+  * - Validates the account ID and fetches the account details.
+  * - Resolves the correct account schema based on whether the account stores data in a parent schema.
+  * - Checks if the relevant schema and tables exist.
+  * - If schema/tables do not exist, returns success with empty project and attachments.
+  * - Fetches project details and enriches them with additional data such as currency, key contacts, geo data, industry, project type and status, classification, user details, and account info.
+  * - Retrieves project attachments and enriches them with document types, categories, uploader info, and formatted size.
+  * - Returns the project data and mapped attachments in the response.
+  */ 
   async projectById(
     accountId: string,
     projectId: string
@@ -627,13 +699,21 @@ export class ProjectService {
           accountRNumber,
           accountId
         );
-      let projectData = await this.projectIngestion.fetchProjectById(
+      let projectData : any = await this.projectIngestion.fetchProjectById(
         accountRNumber,
         projectId
       );
 
       if (projectData) {
         const mainDbInit = await initMainDbSequelize();
+
+        let schemaName = rawQueries.fetchSchemaName(accountRNumber)
+        const orgDb = await initOrgSequelize()
+        let isResExists : boolean;
+        const checkResExistsInPrjRes = await orgDb.query(checkProjectMappedToProjectRes(schemaName, projectData.rid))
+        if(checkResExistsInPrjRes[0].length > 0) isResExists = true
+        else isResExists = false
+        projectData.dataValues.is_project_exists = isResExists
 
         await this.assignCurrencyRid(projectData, mainDbInit);
 
@@ -768,6 +848,44 @@ export class ProjectService {
     };
   }
 
+  /**
+ * Retrieves a paginated list of projects for a given account with optional filtering, sorting, and search.
+ *
+ * @async
+ * @function projectList
+ * @param {string} accountId - The ID of the account to fetch projects from.
+ * @param {number} [fiscalYear=0] - The fiscal year to filter projects by (default is 0, meaning no filter).
+ * @param {number} [page=1] - The page number for pagination (default is 1).
+ * @param {number} [limit=10] - The number of projects per page (default is 10).
+ * @param {string} search - Search term to filter projects by relevant fields.
+ * @param {Record<string, any>} [filters={}] - Additional filters to apply on the project list.
+ * @param {string} [sortBy="created_datetime"] - The field to sort the projects by (default is "created_datetime").
+ * @param {string} [sortOrder="ASC"] - Sort order, either "ASC" for ascending or "DESC" for descending (default is "ASC").
+ * @param {boolean} [bothParentAndChild=false] - Whether to include projects from both parent and child accounts (default is false).
+ * @param {string} userId - The ID of the user requesting the project list (used for access control).
+ * @param {string} [apiSource="Project"] - The API source identifier (default is "Project").
+ * @returns {Promise<{
+ *   statusCode: number;
+  *   message: string;
+  *   errorMessage?: string;
+  *   data?: {
+  *     projects: any[];
+  *     totalCount: number;
+  *   };
+  * }>} Returns paginated projects list and total count, or throws an error.
+  *
+  * @throws {Error} Throws an error if the account ID is invalid or any other failure occurs.
+  *
+  * @description
+  * - Validates the account and fetches account details.
+  * - Determines user access permissions based on user group and profile.
+  * - Determines accessible project IDs for the user.
+  * - Resolves the correct schema for the account (parent or child).
+  * - Checks if the schema and required tables exist.
+  * - Builds filtering and search clauses based on input parameters.
+  * - Fetches the filtered, sorted, paginated project list from the database.
+  * - Returns projects and total count.
+  */ 
   async projectList(
     accountId: string,
     fiscalYear: number = 0,
@@ -928,6 +1046,42 @@ export class ProjectService {
     }
   }
 
+  /**
+ * Exports a list of projects for a given account with optional filtering, sorting, and search.
+ *
+ * @async
+ * @function exportProjectList
+ * @param {string} accountId - The ID of the account to export projects from.
+ * @param {number} [fiscalYear=0] - The fiscal year to filter projects by (default is 0, meaning no filter).
+ * @param {string} search - Search term to filter projects by relevant fields.
+ * @param {Record<string, any>} [filters={}] - Additional filters to apply on the project list.
+ * @param {string} [sortBy="created_datetime"] - The field to sort the projects by (default is "created_datetime").
+ * @param {string} [sortOrder="ASC"] - Sort order, either "ASC" for ascending or "DESC" for descending (default is "ASC").
+ * @param {boolean} [bothParentAndChild=false] - Whether to include projects from both parent and child accounts (default is false).
+ * @param {string} timezone - The timezone to consider for date/time fields in the exported data.
+ * @param {string} userId - The ID of the user requesting the export (used for access control).
+ * @returns {Promise<{
+ *   statusCode: number;
+  *   message: string;
+  *   errorMessage?: string;
+  *   data?: {
+  *     projects: any[];
+  *     totalCount: number;
+  *   };
+  * }>} Returns the list of projects matching criteria along with total count, or throws an error.
+  *
+  * @throws {Error} Throws an error if the account ID is invalid or any other failure occurs.
+  *
+  * @description
+  * - Validates the account and fetches account details.
+  * - Determines user access permissions based on user group and profile.
+  * - Determines accessible project IDs for the user.
+  * - Resolves the correct schema for the account (parent or child).
+  * - Checks if the schema and required tables exist.
+  * - Builds filtering and search clauses based on input parameters.
+  * - Fetches the filtered and sorted project list for export from the database.
+  * - Returns projects and total count.
+  */ 
   async exportProjectList(
     accountId: string,
     fiscalYear: number = 0,
@@ -1081,12 +1235,13 @@ export class ProjectService {
       throw new Error("Error fetching project: " + (err as Error).message);
     }
   }
+
   async getAccInteractionProjectIds(
     accIntId: string,
     accountRNumber: string
   ): Promise<string[]> {
     const orgDbSequlize = await initOrgSequelize();
-    const schemaName = `trd365_${accountRNumber.replace(/\D/g, "")}`;
+    const schemaName = `${SCHEMANAME_PREFIX}${accountRNumber.replace(/\D/g, "")}`;
     const interactionProjects = await orgDbSequlize.query(
       rawQueries.getAccountInteractionProjects(schemaName, accIntId),
       {
@@ -1137,12 +1292,7 @@ export class ProjectService {
       }
     }
 
-    const query = `
-    SELECT DISTINCT ps.project_fiscal_rid
-    FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary AS ps
-    LEFT JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary AS pfs ON ps.project_fiscal_rid = pfs.project_fiscal_rid
-    ${accessControlWhere}
-  `;
+    const query = rawQueries.fetchProjectFiscalSummary(accessControlWhere);
 
     const results = await mainDbSequelize.query(query, {
       replacements,
@@ -1152,6 +1302,46 @@ export class ProjectService {
     return results.map((row: any) => row.project_fiscal_rid);
   }
 
+  /**
+ * Retrieves a paginated list of all projects across accounts with filtering, sorting, and user access control.
+ *
+ * @async
+ * @function allProjectList
+ * @param {number} [fiscalYear=0] - Fiscal year to filter projects by (default is 0, meaning no filter).
+ * @param {number} [page=1] - Page number for pagination (default is 1).
+ * @param {number} [limit=100] - Number of projects per page (default is 100).
+ * @param {string} search - Search term to filter projects by relevant fields.
+ * @param {Record<string, any>} [filters={}] - Additional filters to apply on the project list.
+ * @param {string} [sortBy="created_datetime"] - Field to sort the projects by (default is "created_datetime").
+ * @param {string} [sortOrder="ASC"] - Sort order, either "ASC" for ascending or "DESC" for descending (default is "ASC").
+ * @param {Record<string, string[]>} globalFilters - Global account filters to narrow down projects.
+ * @param {string} userId - ID of the user requesting the project list (used for access control).
+ * @param {boolean} bothParentAndChild - Whether to include projects from both parent and child accounts.
+ * @param {boolean} [isFromUserGroup=false] - Flag indicating if filtering is from a user group context.
+ * @param {string[]} [accountRid=[]] - Array of account RIDs to include additionally when `isFromUserGroup` is true.
+ * @returns {Promise<{
+ *   statusCode: number;
+  *   message: string;
+  *   errorMessage?: string;
+  *   data?: {
+  *     projects: any[];
+  *     count: number;
+  *   };
+  * }>} Returns the list of projects matching the criteria along with the total count, or throws an error.
+  *
+  * @throws {Error} Throws an error if fetching projects fails.
+  *
+  * @description
+  * - Calculates pagination offset based on page and limit.
+  * - Retrieves the user's group and profile types.
+  * - Determines if the user has custom global access or specific role (e.g., Project Point of Contact).
+  * - Fetches accessible project IDs for the user based on access rules.
+  * - Returns early with empty results if no accessible projects found.
+  * - Computes sorting parameters for project list and related account data.
+  * - Applies global account filters and optionally merges additional account RIDs if from user group.
+  * - Fetches all projects matching filters, pagination, sorting, fiscal year, and access permissions.
+  * - Returns paginated project list and total count.
+  */ 
   async allProjectList(
     fiscalYear: number = 0,
     page: number = 1,
@@ -1272,6 +1462,44 @@ export class ProjectService {
     }
   }
 
+  /**
+ * Exports a comprehensive list of all projects with detailed fiscal data, formatted and filtered by user access and permissions.
+ *
+ * @async
+ * @function exportAllProjectList
+ * @param {number} [fiscalYear=0] - Fiscal year to filter projects (default 0 means no filter).
+ * @param {string} search - Search term to filter projects.
+ * @param {Record<string, any>} [filters={}] - Additional filters applied to the projects.
+ * @param {string} [sortBy="created_datetime"] - Field by which to sort the projects.
+ * @param {string} [sortOrder="ASC"] - Sort order: "ASC" for ascending or "DESC" for descending.
+ * @param {Record<string, string[]>} globalFilters - Global account filters for restricting the project scope.
+ * @param {string} userId - User ID for access control and permissions.
+ * @param {boolean} bothParentAndChild - Whether to include projects from both parent and child accounts.
+ * @param {string} timezone - Timezone string used to format date/time fields in the export.
+ * @returns {Promise<{
+ *   statusCode: number;
+  *   message: string;
+  *   errorMessage?: string;
+  *   data?: {
+  *     projects: any[];
+  *     count: number;
+  *   };
+  * }>} Returns exported project data with fiscal details and total count, or throws an error.
+  *
+  * @throws {Error} Throws an error if project export fetching or formatting fails.
+  *
+  * @description
+  * - Computes sorting parameters and account data sorting based on input.
+  * - Determines user's group and profile types to apply access control.
+  * - Fetches accessible project IDs for the user, returning early if none are accessible.
+  * - Applies global account filters.
+  * - Fetches all projects for export with filters, sorting, fiscal year, and access controls.
+  * - Retrieves allowed export fields for the user and filters the project data accordingly.
+  * - Formats numeric fields as currency with correct symbols and decimal places.
+  * - Processes both base project data and associated fiscal year summaries.
+  * - Formats date/time fields using the specified timezone, falling back to default format if invalid.
+  * - Constructs a final export dataset containing only allowed fields with user-friendly labels.
+  */ 
   async exportAllProjectList(
     fiscalYear: number = 0,
     search: string,
@@ -1399,13 +1627,13 @@ export class ProjectService {
 
           // Format actual value manually using Decimal
           const [intPart, decPart] = decimalValue.toFixed().split(".");
-          const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+          const formattedInt = intPart?.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 
           const formattedNumber = decPart
             ? `${formattedInt}.${decPart}`
             : formattedInt;
           // Replace "0.00" in pattern with our real number
-          return pattern.replace("0.00", formattedNumber);
+          return pattern.replace("0.00", formattedNumber ?? "");
         } catch (error) {
           errorLog("Error formatting number for export", (error as Error).message);
           return "-";
@@ -1580,7 +1808,7 @@ export class ProjectService {
     projectData: ICreateProject
   ) {
     try {
-      const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
       const sequelize = await initOrgSequelize();
 
       const ProjectTimelineModel = await ProjectTimeline.initialize(
@@ -1736,7 +1964,7 @@ export class ProjectService {
     existingProjectData: any
   ) {
     try {
-      const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
       const sequelize = await initOrgSequelize();
       const ProjectHistoryModel = await ProjectHistory.initialize(
         sequelize,
@@ -1872,7 +2100,7 @@ export class ProjectService {
 
       if (keyContactIds.length > 0) {
         const keyContactRows = await mainDbSequlize.query(
-          `SELECT rid, role_name ,role_map FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE rid IN (:ids)`,
+          rawQueries.fetchKeyContactsByIds(),
           {
             replacements: { ids: keyContactIds },
             type: "SELECT",
@@ -2450,10 +2678,7 @@ export class ProjectService {
     try {
       const mainDbSequlize = await initMainDbSequelize();
       const projectClassifications = await mainDbSequlize.query(
-        `SELECT rid, classification_name, classification_description, classification_status
-         FROM ${MAIN_SCHEMA_NAME}.project_classification
-         WHERE classification_status = 'Active'
-         ORDER BY classification_name ASC`,
+        rawQueries.fetchProjectClassification(),
         {
           type: "SELECT",
         }
@@ -2494,11 +2719,10 @@ export class ProjectService {
   async getCurrencyDetailsByAccountRidRaw(
     accountRid: string
   ): Promise<string | null> {
-    const query = `SELECT a.currency_rid FROM ${MAIN_SCHEMA_NAME}.account a WHERE a.rid = :accountRid`;
+    const query = rawQueries.fetchAccountDetailsByRid(accountRid);
     try {
       const mainDb = await initMainDbSequelize();
       const result = await mainDb.query(query, {
-        replacements: { accountRid },
         type: "SELECT",
       });
       return result ? (result[0] as any).currency_rid : null;
@@ -2518,7 +2742,7 @@ export class ProjectService {
       } else {
         try {
           const usdCurrencyId = await mainDbSequelize.query(
-            `SELECT c.* FROM ${MAIN_SCHEMA_NAME}.currency c WHERE c.currency_code = 'USD'`,
+            rawQueries.fetchDefaultCurrency(),
             { type: "SELECT" }
           );
           result.currency = usdCurrencyId[0]?.rid;

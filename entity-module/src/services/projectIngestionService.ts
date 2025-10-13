@@ -1,4 +1,13 @@
-import { Op, Order, QueryTypes, Sequelize, col, fn, literal, where } from "sequelize";
+import {
+  Op,
+  Order,
+  QueryTypes,
+  Sequelize,
+  col,
+  fn,
+  literal,
+  where,
+} from "sequelize";
 import { initOrgSequelize } from "../config/orgDataSource";
 import "moment-timezone";
 import { Project } from "../models/project";
@@ -24,7 +33,6 @@ import { Logger } from "winston";
 import { MAIN_SCHEMA_NAME, rawQueries } from "../utils/constants";
 import {
   ProjectFiscalRegion,
-  ProjectFiscalRegionAttributes,
 } from "../models/projectFiscalRegion";
 import { AccountFiscalRegion } from "../models/accountFiscalRegion";
 import { ProjectResource } from "../models/projectResource";
@@ -32,7 +40,7 @@ import { ProjectResourceFiscal } from "../models/projectResourceFiscal";
 import { ProjectResourceFiscalRegion } from "../models/projectResourceFiscalRegion";
 import AccountDetails from "../models/accountDetails";
 import SchemaService from "./schemaService";
-import { Kafka, Producer } from "kafkajs";  
+import { Kafka, Producer } from "kafkajs";
 import { AccountFiscalSummary } from "../models/accountFiscalSummary";
 import { logMessage } from "../utils/helpers";
 
@@ -108,7 +116,7 @@ class ProjectIngestionService {
       schemaName
     );
     const AccountFiscalSummaryModel = await AccountFiscalSummary.initialize(
-       mainDbSequelize,
+      mainDbSequelize,
       ""
     );
     const AccountFiscalRegionModel = await AccountFiscalRegion.initialize(
@@ -127,9 +135,12 @@ class ProjectIngestionService {
       foreignKey: "project_rid",
       sourceKey: "rid",
       as: "ProjectFiscal",
-    })
+    });
 
-    const ProjectFiscalRegionModel = await ProjectFiscalRegion.initialize(sequelize, schemaName);
+    const ProjectFiscalRegionModel = await ProjectFiscalRegion.initialize(
+      sequelize,
+      schemaName
+    );
 
     const ProjectTimelineModel = await ProjectTimeline.initialize(
       sequelize,
@@ -310,7 +321,10 @@ class ProjectIngestionService {
       ? moment.utc(projectData.project_enddate, "YYYY-MM-DD")
       : null;
 
-    const accountSettings: any = await this.fetchAccountDetailsById(accountNumber, projectData.account_id);  
+    const accountSettings: any = await this.fetchAccountDetailsById(
+      accountNumber,
+      projectData.account_id
+    );
 
     const baseData = ProjectMapper.mapToProjectFiscalModel(
       projectData,
@@ -337,12 +351,11 @@ class ProjectIngestionService {
         };
       logMessage(`Triggering AI for project fiscal rid: ${req}`);
       await this.triggerAI(req);
-
-      }
+    }
 
     return response;
   }
-   private async getProducer(): Promise<Producer> {
+  private async getProducer(): Promise<Producer> {
     if (!this.producer) {
       const kafka = new Kafka({
         clientId: "my-app",
@@ -354,42 +367,43 @@ class ProjectIngestionService {
     return this.producer;
   }
 
-   async fetchValidAccountNumberById(accountId: string) {
-      try {
-        if (!this.mainDbSequelize) {
-          this.mainDbSequelize = await this.getMainSequelize();
+  async fetchValidAccountNumberById(accountId: string) {
+    try {
+      if (!this.mainDbSequelize) {
+        this.mainDbSequelize = await this.getMainSequelize();
+      }
+
+      const [account]: any[] = await this.mainDbSequelize.query(
+        rawQueries.fetchAccountById,
+        {
+          replacements: { rid: accountId },
+          type: "SELECT",
         }
-  
-        const [account]: any[] = await this.mainDbSequelize.query(
+      );
+
+      let accountRnumber = account?.r_number;
+
+      if (account?.storage_type === "store_in_parent") {
+        const [accountData]: any[] = await this.mainDbSequelize.query(
           rawQueries.fetchAccountById,
           {
-            replacements: { rid: accountId },
+            replacements: { rid: account?.parent_account_rid },
             type: "SELECT",
           }
         );
-  
-        let accountRnumber = account?.r_number;
-  
-        if (account?.storage_type === "store_in_parent") {
-          const [accountData]: any[] = await this.mainDbSequelize.query(
-           rawQueries.fetchAccountById,
-            {
-              replacements: { rid: account?.parent_account_rid },
-              type: "SELECT",
-            }
-          );
-          accountRnumber = accountData?.r_number;
-        }
-  
-        return {
-          accountNumber: accountRnumber,
-          accountId: account?.rid,
-          accountName: account?.account_name,
-        };
-      } catch (err) {
-        throw new Error("Error fetching account : " + (err as Error).message);
+        accountRnumber = accountData?.r_number;
       }
+
+      return {
+        accountNumber: accountRnumber,
+        accountId: account?.rid,
+        accountName: account?.account_name,
+      };
+    } catch (err) {
+      throw new Error("Error fetching account : " + (err as Error).message);
     }
+  }
+  
   async triggerAI(req: any) {
     try {
       let payload: {
@@ -399,28 +413,33 @@ class ProjectIngestionService {
         project_id?: any;
       } = {
         input_text: "This is some text to be processed by the AI.",
-        model_type: "NA"
+        model_type: "NA",
       };
-    
-        payload.company_id = req.data[0].account_rid;
-        payload.project_id = req.data[0].project_fiscal_rid; 
-        this.logger.info(`Triggering AI with payload: ${JSON.stringify(payload)}`);
 
-      const topic = process.env.KAFKA_AI_REQUEST_TRIGGER_TOPIC || "ai_assessment_request";
+      payload.company_id = req.data[0].account_rid;
+      payload.project_id = req.data[0].project_fiscal_rid;
+      this.logger.info(
+        `Triggering AI with payload: ${JSON.stringify(payload)}`
+      );
+
+      const topic =
+        process.env.KAFKA_AI_REQUEST_TRIGGER_TOPIC || "ai_assessment_request";
       const message = {
         value: JSON.stringify(payload),
       };
       const producer = await this.getProducer();
-       const sendResult = await producer.send({
-         topic,
-         messages: [message],
-       });
-    //   Check if the message was processed successfully
-    this.logger.info(`Message sent to topic ${topic}: ${JSON.stringify(sendResult)}`);
+      const sendResult = await producer.send({
+        topic,
+        messages: [message],
+      });
+      //   Check if the message was processed successfully
+      this.logger.info(
+        `Message sent to topic ${topic}: ${JSON.stringify(sendResult)}`
+      );
       return {
         statusMessage: "RD Assessment Initiated",
         status: "success",
-        data: null
+        data: null,
       };
     } catch (error) {
       this.logger.error("Error in triggerAI", error);
@@ -428,7 +447,7 @@ class ProjectIngestionService {
         statusMessage: "Failed to process AI request",
         status: "error",
         data: null,
-        errorMessage: error instanceof Error ? error.message : String(error)
+        errorMessage: error instanceof Error ? error.message : String(error),
       };
     }
   }
@@ -449,7 +468,10 @@ class ProjectIngestionService {
       ? moment.utc(projectData.project_enddate, "YYYY-MM-DD")
       : null;
 
-    const accountSettings: any = this.fetchAccountDetailsById(accountNumber, projectData.account_id);
+    const accountSettings: any = this.fetchAccountDetailsById(
+      accountNumber,
+      projectData.account_id
+    );
 
     const baseData = ProjectMapper.mapToProjectFiscalModel(
       projectData,
@@ -503,16 +525,43 @@ class ProjectIngestionService {
     const aggregates = await ProjectFiscal.findOne({
       attributes: [
         "project_code",
-        [Sequelize.fn("SUM", Sequelize.col("total_cost_prj")), "total_cost_prj"],
-        [Sequelize.fn("SUM", Sequelize.col("total_effort_prj")), "total_effort_prj"],
+        [
+          Sequelize.fn("SUM", Sequelize.col("total_cost_prj")),
+          "total_cost_prj",
+        ],
+        [
+          Sequelize.fn("SUM", Sequelize.col("total_effort_prj")),
+          "total_effort_prj",
+        ],
         [Sequelize.fn("SUM", Sequelize.col("total_fte_prj")), "total_fte_prj"],
-        [Sequelize.fn("SUM", Sequelize.col("total_subcon_prj")), "total_subcon_prj"],
-        [Sequelize.fn("SUM", Sequelize.col("total_nonlabor_prj")), "total_nonlabor_prj"],
-        [Sequelize.fn("SUM", Sequelize.col("total_effort_fte_prj")), "total_effort_fte_prj"],
-        [Sequelize.fn("SUM", Sequelize.col("total_effort_subcon_prj")), "total_effort_subcon_prj"],
-        [Sequelize.fn("SUM", Sequelize.col("total_cost_fte_prj")), "total_cost_fte_prj"],
-        [Sequelize.fn("SUM", Sequelize.col("total_cost_subcon_prj")), "total_cost_subcon_prj"],
-        [Sequelize.fn("SUM", Sequelize.col("total_cost_nonlabor_prj")), "total_cost_nonlabor_prj"],
+        [
+          Sequelize.fn("SUM", Sequelize.col("total_subcon_prj")),
+          "total_subcon_prj",
+        ],
+        [
+          Sequelize.fn("SUM", Sequelize.col("total_nonlabor_prj")),
+          "total_nonlabor_prj",
+        ],
+        [
+          Sequelize.fn("SUM", Sequelize.col("total_effort_fte_prj")),
+          "total_effort_fte_prj",
+        ],
+        [
+          Sequelize.fn("SUM", Sequelize.col("total_effort_subcon_prj")),
+          "total_effort_subcon_prj",
+        ],
+        [
+          Sequelize.fn("SUM", Sequelize.col("total_cost_fte_prj")),
+          "total_cost_fte_prj",
+        ],
+        [
+          Sequelize.fn("SUM", Sequelize.col("total_cost_subcon_prj")),
+          "total_cost_subcon_prj",
+        ],
+        [
+          Sequelize.fn("SUM", Sequelize.col("total_cost_nonlabor_prj")),
+          "total_cost_nonlabor_prj",
+        ],
       ],
       where: {
         project_code: projectCode,
@@ -520,7 +569,7 @@ class ProjectIngestionService {
       },
       group: ["project_code"],
       raw: true,
-    });    
+    });
 
     if (!aggregates) return;
 
@@ -702,11 +751,15 @@ class ProjectIngestionService {
   ) {
     const { ProjectSummary } = await this.getModels(accountNumber);
 
-    const { technicalConsultant, projectPointOfContact,projectPointOfContactEmail,isEmailRecipient } =
-      await this.keyContactService.calculateKeyContactDetails(
-        keyContacts,
-        this.mainDbSequelize
-      );
+    const {
+      technicalConsultant,
+      projectPointOfContact,
+      projectPointOfContactEmail,
+      isEmailRecipient,
+    } = await this.keyContactService.calculateKeyContactDetails(
+      keyContacts,
+      this.mainDbSequelize
+    );
 
     const summaryData = ProjectMapper.mapToProjectSummary(
       projectData,
@@ -732,7 +785,7 @@ class ProjectIngestionService {
   ) {
     const { ProjectFiscalSummary } = await this.getModels(accountNumber);
 
-    const { technicalConsultant, projectPointOfContact,isEmailRecipient } =
+    const { technicalConsultant, projectPointOfContact, isEmailRecipient } =
       await this.keyContactService.calculateKeyContactDetails(
         keyContacts,
         this.mainDbSequelize
@@ -754,15 +807,16 @@ class ProjectIngestionService {
       technicalConsultant,
       projectPointOfContact,
       isEmailRecipient,
-      projectFiscalId,
-     
+      projectFiscalId
     );
 
     await ProjectFiscalSummary.create(summaryData);
   }
 
   async addAccountFiscal(accountNumber: string, projectData: ICreateProject) {
-    const { AccountFiscal,AccountFiscalSummary } = await this.getModels(accountNumber);
+    const { AccountFiscal, AccountFiscalSummary } = await this.getModels(
+      accountNumber
+    );
 
     const accountFiscalData = ProjectMapper.mapToAccountFiscal(projectData);
 
@@ -799,10 +853,8 @@ class ProjectIngestionService {
         fiscal_year,
         created_datetime: new Date(),
       });
-
-
     } else {
-       console.log("Updating existing AccountFiscal record");
+      console.log("Updating existing AccountFiscal record");
       await this.updateAccountFiscalAggregatesFromFiscal(
         accountNumber,
         projectData
@@ -810,43 +862,32 @@ class ProjectIngestionService {
     }
   }
 
-  async autoAssignToDefaultUserGroup(project_rid:string,account_rid: string,userId:string) {
-    const autoAssignedChildGroup = await this.mainDbSequelize?.query<{ group_rid: string }>(
-        `
-        SELECT ug.rid AS group_rid
-        FROM "${MAIN_SCHEMA_NAME}"."user_groups" ug
-        JOIN "${MAIN_SCHEMA_NAME}"."user_group_account_mapping" ugam ON ug.rid = ugam.group_rid
-        JOIN "${MAIN_SCHEMA_NAME}"."user_group_type" ugt ON ug.group_type_rid = ugt.rid
-        WHERE ugam.account_rid = :account_rid
-          AND ugt.type = 'AUTO_ASSIGNED_CHILD'
-        `,
-        {
-          replacements: { account_rid },
-          type: QueryTypes.SELECT
-        }
-      );
+  async autoAssignToDefaultUserGroup(
+    project_rid: string,
+    account_rid: string,
+    userId: string
+  ) {
+    const autoAssignedChildGroup = await this.mainDbSequelize?.query<{
+      group_rid: string;
+    }>(rawQueries.fetchUserGroups(), {
+      replacements: { account_rid },
+      type: QueryTypes.SELECT,
+    });
 
-      const childGroupRid = autoAssignedChildGroup?.[0]?.group_rid;
-       await this.mainDbSequelize?.query(
-      `
-      INSERT INTO "${MAIN_SCHEMA_NAME}"."user_group_entity_access" (
-        group_rid, entity_type, entity_rid, access_type, created_by, created_datetime
-      )
-      VALUES (
-        :group_rid, 'PROJECT', :entity_rid, 'INCLUDE', :created_by, NOW()
-      )
-      `,
-      {
-        replacements: {
-          group_rid: childGroupRid,
-          entity_rid: project_rid,
-          created_by: userId,
-        }
-      }
-    );
+    const childGroupRid = autoAssignedChildGroup?.[0]?.group_rid;
+    await this.mainDbSequelize?.query(rawQueries.insertIntoGroupEntity(), {
+      replacements: {
+        group_rid: childGroupRid,
+        entity_rid: project_rid,
+        created_by: userId,
+      },
+    });
   }
 
-  async addAccountFiscalRegion(accountNumber: string, projectData: ICreateProject){
+  async addAccountFiscalRegion(
+    accountNumber: string,
+    projectData: ICreateProject
+  ) {
     const { AccountFiscalRegion } = await this.getModels(accountNumber);
 
     const accountFiscalData = ProjectMapper.mapToAccountFiscal(projectData);
@@ -869,16 +910,16 @@ class ProjectIngestionService {
     });
 
     if (!existingFiscal) {
-      if(projectData.region_rid) {
-      await AccountFiscalRegion.create({
-        ...accountFiscalData,
-        region_rid: projectData.region_rid,
-        total_projects: 1,
-        account_rid,
-        fiscal_year,
-        created_datetime: new Date(),
-      });
-    }
+      if (projectData.region_rid) {
+        await AccountFiscalRegion.create({
+          ...accountFiscalData,
+          region_rid: projectData.region_rid,
+          total_projects: 1,
+          account_rid,
+          fiscal_year,
+          created_datetime: new Date(),
+        });
+      }
     } else {
       await this.updateAccountFiscalRegionAggregatesFromFiscal(
         accountNumber,
@@ -891,9 +932,8 @@ class ProjectIngestionService {
     accountNumber: string,
     projectData: ICreateProject
   ) {
-    const { ProjectFiscal, AccountFiscal, AccountFiscalSummary } = await this.getModels(
-      accountNumber
-    );
+    const { ProjectFiscal, AccountFiscal, AccountFiscalSummary } =
+      await this.getModels(accountNumber);
 
     const aggregates: any = await ProjectFiscal.findOne({
       attributes: [
@@ -918,10 +958,7 @@ class ProjectIngestionService {
           "total_cost_prj",
         ],
         [
-          Sequelize.fn(
-            "SUM",
-            Sequelize.literal("COALESCE(total_fte_prj, 0)")
-          ),
+          Sequelize.fn("SUM", Sequelize.literal("COALESCE(total_fte_prj, 0)")),
           "total_fte_prj",
         ],
         [
@@ -992,7 +1029,7 @@ class ProjectIngestionService {
         total_project_hours: aggregates.total_effort_prj,
         total_fte: Number(aggregates.total_fte_prj || 0),
         total_subcon: Number(aggregates.total_subcon_prj || 0),
-        total_nonlabor : Number(aggregates.total_nonlabor_prj || 0),
+        total_nonlabor: Number(aggregates.total_nonlabor_prj || 0),
         total_project_hours_fte: aggregates.total_effort_fte_prj,
         total_project_hours_subcon: aggregates.total_effort_subcon_prj,
         total_project_cost_fte: aggregates.total_cost_fte_prj,
@@ -1014,7 +1051,7 @@ class ProjectIngestionService {
         total_project_hours: aggregates.total_effort_prj,
         total_fte: Number(aggregates.total_fte_prj || 0),
         total_subcon: Number(aggregates.total_subcon_prj || 0),
-        total_nonlabor : Number(aggregates.total_nonlabor_prj || 0),
+        total_nonlabor: Number(aggregates.total_nonlabor_prj || 0),
         total_project_hours_fte: aggregates.total_effort_fte_prj,
         total_project_hours_subcon: aggregates.total_effort_subcon_prj,
         total_project_cost_fte: aggregates.total_cost_fte_prj,
@@ -1062,19 +1099,33 @@ class ProjectIngestionService {
           "total_cost_prj",
         ],
         [
-          Sequelize.cast(Sequelize.fn("SUM",Sequelize.literal("COALESCE(total_fte_prj, 0)")), "INTEGER"), "total_fte_prj"],
+          Sequelize.cast(
+            Sequelize.fn(
+              "SUM",
+              Sequelize.literal("COALESCE(total_fte_prj, 0)")
+            ),
+            "INTEGER"
+          ),
+          "total_fte_prj",
+        ],
         [
-          Sequelize.cast(Sequelize.fn(
-            "SUM",
-            Sequelize.literal("COALESCE(total_subcon_prj, 0)")
-          ), "INTEGER"),
+          Sequelize.cast(
+            Sequelize.fn(
+              "SUM",
+              Sequelize.literal("COALESCE(total_subcon_prj, 0)")
+            ),
+            "INTEGER"
+          ),
           "total_subcon_prj",
         ],
         [
-          Sequelize.cast(Sequelize.fn(
-            "SUM",
-            Sequelize.literal("COALESCE(total_nonlabor_prj, 0)")
-          ), "INTEGER"),
+          Sequelize.cast(
+            Sequelize.fn(
+              "SUM",
+              Sequelize.literal("COALESCE(total_nonlabor_prj, 0)")
+            ),
+            "INTEGER"
+          ),
           "total_nonlabor_prj",
         ],
         [
@@ -1322,7 +1373,7 @@ class ProjectIngestionService {
         effective_fte_cost,
         effective_subcon_cost,
         effective_nonlabor_cost,
-        effective_total_nonlabor
+        effective_total_nonlabor,
       },
       {
         where: {
@@ -1365,7 +1416,9 @@ class ProjectIngestionService {
     projectData: IUpdateProject,
     existingProjectCode: string
   ) {
-    const { ProjectFiscalRegion , ProjectFiscal } = await this.getModels(accountNumber);
+    const { ProjectFiscalRegion, ProjectFiscal } = await this.getModels(
+      accountNumber
+    );
 
     const startDate = projectData.project_startdate
       ? moment.utc(projectData.project_startdate, "YYYY-MM-DD")
@@ -1389,16 +1442,55 @@ class ProjectIngestionService {
         effective_metric_type: null,
       },
       attributes: [
-        [Sequelize.fn("SUM", Sequelize.col("total_cost_prj")), "effective_cost"],
-        [Sequelize.fn("SUM", Sequelize.col("total_effort_prj")), "effective_effort"],
-        [Sequelize.cast(Sequelize.fn("SUM", Sequelize.col("total_fte_prj")), "INTEGER"), "effective_total_fte"],
-        [Sequelize.cast(Sequelize.fn("SUM", Sequelize.col("total_subcon_prj")), "INTEGER"), "effective_total_subcon"],
-        [Sequelize.cast(Sequelize.fn("SUM", Sequelize.col("total_nonlabor_prj")), "INTEGER"), "effective_total_nonlabor"],
-        [Sequelize.fn("SUM", Sequelize.col("total_effort_fte_prj")), "effective_fte_effort"],
-        [Sequelize.fn("SUM", Sequelize.col("total_effort_subcon_prj")), "effective_subcon_effort"],
-        [Sequelize.fn("SUM", Sequelize.col("total_cost_fte_prj")), "effective_fte_cost"],
-        [Sequelize.fn("SUM", Sequelize.col("total_cost_subcon_prj")), "effective_subcon_cost"],
-        [Sequelize.fn("SUM", Sequelize.col("total_cost_nonlabor_prj")), "effective_nonlabor_cost"],
+        [
+          Sequelize.fn("SUM", Sequelize.col("total_cost_prj")),
+          "effective_cost",
+        ],
+        [
+          Sequelize.fn("SUM", Sequelize.col("total_effort_prj")),
+          "effective_effort",
+        ],
+        [
+          Sequelize.cast(
+            Sequelize.fn("SUM", Sequelize.col("total_fte_prj")),
+            "INTEGER"
+          ),
+          "effective_total_fte",
+        ],
+        [
+          Sequelize.cast(
+            Sequelize.fn("SUM", Sequelize.col("total_subcon_prj")),
+            "INTEGER"
+          ),
+          "effective_total_subcon",
+        ],
+        [
+          Sequelize.cast(
+            Sequelize.fn("SUM", Sequelize.col("total_nonlabor_prj")),
+            "INTEGER"
+          ),
+          "effective_total_nonlabor",
+        ],
+        [
+          Sequelize.fn("SUM", Sequelize.col("total_effort_fte_prj")),
+          "effective_fte_effort",
+        ],
+        [
+          Sequelize.fn("SUM", Sequelize.col("total_effort_subcon_prj")),
+          "effective_subcon_effort",
+        ],
+        [
+          Sequelize.fn("SUM", Sequelize.col("total_cost_fte_prj")),
+          "effective_fte_cost",
+        ],
+        [
+          Sequelize.fn("SUM", Sequelize.col("total_cost_subcon_prj")),
+          "effective_subcon_cost",
+        ],
+        [
+          Sequelize.fn("SUM", Sequelize.col("total_cost_nonlabor_prj")),
+          "effective_nonlabor_cost",
+        ],
       ],
       raw: true,
     });
@@ -1431,7 +1523,7 @@ class ProjectIngestionService {
         effective_metric_type: null,
         created_by: projectData.created_by,
         project_rid: projectData.project_id,
-        project_fiscal_rid: projectData.project_fiscal_id, 
+        project_fiscal_rid: projectData.project_fiscal_id,
 
         effective_cost: baseData.total_cost_prj,
         effective_effort: baseData.total_effort_prj,
@@ -1463,10 +1555,7 @@ class ProjectIngestionService {
       );
     }
 
-    await this.clearRemovedRegionAggregates(
-      accountNumber,
-      projectData
-    );
+    await this.clearRemovedRegionAggregates(accountNumber, projectData);
   }
 
   async clearRemovedRegionAggregates(
@@ -1476,7 +1565,7 @@ class ProjectIngestionService {
     const { ProjectFiscal, ProjectFiscalRegion } = await this.getModels(
       accountNumber
     );
-  
+
     const regionsInUse = await ProjectFiscal.findAll({
       attributes: ["region_rid"],
       where: {
@@ -1487,18 +1576,19 @@ class ProjectIngestionService {
       },
       group: ["region_rid"],
     });
-  
+
     const activeRegionIds = regionsInUse
       .map((r) => r.region_rid)
       .filter((id): id is string => typeof id === "string");
-  
+
     await ProjectFiscalRegion.destroy({
       where: {
         account_rid: projectData.account_id,
         project_code: projectData.project_code,
         fiscal_year: projectData.fiscal_year,
         region_rid: {
-          [Op.notIn]: activeRegionIds.length > 0 ? activeRegionIds : ["__none__"] 
+          [Op.notIn]:
+            activeRegionIds.length > 0 ? activeRegionIds : ["__none__"],
         },
         default_metric_type: "project",
         effective_metric_type: null,
@@ -1592,11 +1682,15 @@ class ProjectIngestionService {
       accountNumber
     );
 
-    const { technicalConsultant, projectPointOfContact, projectPointOfContactEmail, isEmailRecipient } =
-      await this.keyContactService.calculateKeyContactDetails(
-        projectData.key_contacts,
-        this.mainDbSequelize
-      );
+    const {
+      technicalConsultant,
+      projectPointOfContact,
+      projectPointOfContactEmail,
+      isEmailRecipient,
+    } = await this.keyContactService.calculateKeyContactDetails(
+      projectData.key_contacts,
+      this.mainDbSequelize
+    );
 
     const startDate = projectData.project_startdate
       ? moment.utc(projectData.project_startdate, "YYYY-MM-DD")
@@ -1662,12 +1756,14 @@ class ProjectIngestionService {
     finalMetaDataSortOrder: string,
     graphqlData: any,
     accessibleIds: string[],
-    apiSource: string ="project",
+    apiSource: string = "project",
     documentRid?: string,
-    searchClause : Record<symbol, any>= {},
+    searchClause: Record<symbol, any> = {}
   ) {
-    const { Project, ProjectFiscal, ProjectTimeline } = await this.getModels(accountNumber);
-    
+    const { Project, ProjectFiscal, ProjectTimeline } = await this.getModels(
+      accountNumber
+    );
+
     const parentLevelFields = [
       "project_name",
       "industry_name",
@@ -1752,8 +1848,7 @@ class ProjectIngestionService {
         whereFiscal.fiscal_year = fiscalYear;
       }
 
-      
-        projectData = await Project.findAll({
+      projectData = await Project.findAll({
         where: whereProject,
         subQuery: false,
         order: fullOrder,
@@ -1771,26 +1866,28 @@ class ProjectIngestionService {
             where: {
               account_rid: accountData.rid,
               ...whereFiscal,
-              ...searchClause
-             
+              ...searchClause,
             },
             include: [
-              ...(documentRid ? [{
-                model: ProjectTimeline,
-                as: "ProjectTimelines",
-                required: true,
-                where: {
-                    document_rid: documentRid,
-                },
-                attributes: [
-                  'rid',
-                  'entity_rid', // THIS IS CRUCIAL
-                  'document_rid',
-                  'event_name',
-                ]
-              }] : []),
+              ...(documentRid
+                ? [
+                    {
+                      model: ProjectTimeline,
+                      as: "ProjectTimelines",
+                      required: true,
+                      where: {
+                        document_rid: documentRid,
+                      },
+                      attributes: [
+                        "rid",
+                        "entity_rid", // THIS IS CRUCIAL
+                        "document_rid",
+                        "event_name",
+                      ],
+                    },
+                  ]
+                : []),
               // KeyContact filter-only join (no data fetched)
-              
             ],
             attributes: {
               include: [
@@ -1813,79 +1910,83 @@ class ProjectIngestionService {
       };
       whereFiscal = {
         account_rid: accountData.rid,
-         ...(accessibleIds.length > 0 ? { rid: accessibleIds } : {}),
+        ...(accessibleIds.length > 0 ? { rid: accessibleIds } : {}),
       };
       let activeStatusId = "";
-      if(apiSource === "interaction"){
-        const [activeId] : any[] = await this.mainDbSequelize!.query(rawQueries.fetchActiveStatus(),{type:"SELECT"})
-        whereFiscal.status_rid = activeId.rid
-        whereProject.status_rid = activeId.rid
+      if (apiSource === "interaction") {
+        const [activeId]: any[] = await this.mainDbSequelize!.query(
+          rawQueries.fetchActiveStatus(),
+          { type: "SELECT" }
+        );
+        whereFiscal.status_rid = activeId.rid;
+        whereProject.status_rid = activeId.rid;
         activeStatusId = activeId.rid;
       }
-      
+
       for (const key in filters) {
         const dbField = fiscalFieldMap[key];
         if (dbField) {
           whereFiscal[dbField] = filters[key];
         }
-    }
+      }
       if (fiscalYear) {
         whereFiscal.fiscal_year = fiscalYear;
       }
-      
-          for (const [field, direction] of order) {
-      const sortDirection = direction.toUpperCase() === "DESC" ? "DESC" : "ASC";
-      const nullsHandled = `${sortDirection} NULLS LAST`;
 
-      if (bothParentAndChild) {
-        if (parentLevelFields.includes(field)) {
-          fullOrder.push([
-            Sequelize.literal(`"Project"."${field}" ${nullsHandled}`),
-          ]);
-        }
-        if (field === "created_datetime") {
-          fullOrder.push([
-            Sequelize.literal(`"Project"."created_datetime" ${nullsHandled}`),
-          ]);
-        }
-      } else {
-        if (field === "created_datetime") {
-          fullOrder.push([
-            Sequelize.literal(`"Project"."project_code" ASC NULLS LAST`),
-          ]);
-          fullOrder.push([
-          Sequelize.literal(`"ProjectFiscal"."fiscal_year" ASC`),
-          ]);
+      for (const [field, direction] of order) {
+        const sortDirection =
+          direction.toUpperCase() === "DESC" ? "DESC" : "ASC";
+        const nullsHandled = `${sortDirection} NULLS LAST`;
+
+        if (bothParentAndChild) {
+          if (parentLevelFields.includes(field)) {
+            fullOrder.push([
+              Sequelize.literal(`"Project"."${field}" ${nullsHandled}`),
+            ]);
+          }
+          if (field === "created_datetime") {
+            fullOrder.push([
+              Sequelize.literal(`"Project"."created_datetime" ${nullsHandled}`),
+            ]);
+          }
         } else {
-          if(field === "project_code" && sortDirection === 'ASC') {
+          if (field === "created_datetime") {
             fullOrder.push([
-            Sequelize.literal(`"Project"."project_code" ASC NULLS LAST`),
-          ]);
-          fullOrder.push([
-          Sequelize.literal(`"ProjectFiscal"."fiscal_year" ASC`),
-          ]);
-          } else if(field === "project_code" && sortDirection === 'DESC') {
+              Sequelize.literal(`"Project"."project_code" ASC NULLS LAST`),
+            ]);
             fullOrder.push([
-            Sequelize.literal(`"Project"."project_code" DESC NULLS LAST`),
-          ]);
-          fullOrder.push([
-          Sequelize.literal(`"ProjectFiscal"."fiscal_year" DESC`),
-          ]);
+              Sequelize.literal(`"ProjectFiscal"."fiscal_year" ASC`),
+            ]);
           } else {
-            fullOrder.push([
-            Sequelize.literal(`"Project"."${field}" ${nullsHandled}`),
-          ]);
+            if (field === "project_code" && sortDirection === "ASC") {
+              fullOrder.push([
+                Sequelize.literal(`"Project"."project_code" ASC NULLS LAST`),
+              ]);
+              fullOrder.push([
+                Sequelize.literal(`"ProjectFiscal"."fiscal_year" ASC`),
+              ]);
+            } else if (field === "project_code" && sortDirection === "DESC") {
+              fullOrder.push([
+                Sequelize.literal(`"Project"."project_code" DESC NULLS LAST`),
+              ]);
+              fullOrder.push([
+                Sequelize.literal(`"ProjectFiscal"."fiscal_year" DESC`),
+              ]);
+            } else {
+              fullOrder.push([
+                Sequelize.literal(`"Project"."${field}" ${nullsHandled}`),
+              ]);
+            }
           }
         }
+
+        const aliasFilter =
+          fiscalFieldMap[field] !== undefined ? fiscalFieldMap[field] : field;
+
+        fullOrder.push([
+          Sequelize.literal(`"ProjectFiscal"."${aliasFilter}" ${nullsHandled}`),
+        ]);
       }
-
-      const aliasFilter =
-        fiscalFieldMap[field] !== undefined ? fiscalFieldMap[field] : field;
-
-      fullOrder.push([
-        Sequelize.literal(`"ProjectFiscal"."${aliasFilter}" ${nullsHandled}`),
-      ]);
-    }
       projectData = await Project.findAll({
         where: whereProject,
         subQuery: false,
@@ -1906,44 +2007,62 @@ class ProjectIngestionService {
               ...searchClause,
               ...whereFiscal,
             },
-            include: documentRid ? [{
-          model: ProjectTimeline,
-          as: "ProjectTimelines",
-          required: true,
-          where: {
-              document_rid: documentRid,
-          },
-          attributes: [
-            'rid',
-            'entity_rid', // THIS IS CRUCIAL
-                  'document_rid',
-                  'event_name',
-                ]
-        }] : [],
-        attributes: {
-          include: [
-            [Sequelize.col("rid"), "project_fiscal_rid"],
-            [Sequelize.col("total_fte_prj"), "total_fte"],
-            [Sequelize.col("total_effort_prj"), "total_effort"],
-            [Sequelize.col("total_cost_prj"), "total_cost"],
-            [Sequelize.col("total_cost_fte_prj"), "total_cost_fte"],
-            [Sequelize.col("total_cost_subcon_prj"), "total_cost_subcon"],
-            [Sequelize.col("total_cost_nonlabor_prj"), "total_cost_nonlabor"],
-            ...(apiSource === "interaction"
+            include: documentRid
               ? [
-                  [
-                    Sequelize.literal(`EXISTS (
+                  {
+                    model: ProjectTimeline,
+                    as: "ProjectTimelines",
+                    required: true,
+                    where: {
+                      document_rid: documentRid,
+                    },
+                    attributes: [
+                      "rid",
+                      "entity_rid", // THIS IS CRUCIAL
+                      "document_rid",
+                      "event_name",
+                    ],
+                  },
+                ]
+              : [],
+            attributes: {
+              include: [
+                [Sequelize.col("rid"), "project_fiscal_rid"],
+                [Sequelize.col("total_fte_prj"), "total_fte"],
+                [Sequelize.col("total_effort_prj"), "total_effort"],
+                [Sequelize.col("total_cost_prj"), "total_cost"],
+                [Sequelize.col("total_cost_fte_prj"), "total_cost_fte"],
+                [Sequelize.col("total_cost_subcon_prj"), "total_cost_subcon"],
+                [
+                  Sequelize.col("total_cost_nonlabor_prj"),
+                  "total_cost_nonlabor",
+                ],
+                ...(apiSource === "interaction"
+                  ? [
+                      [
+                        Sequelize.literal(`EXISTS (
                       SELECT 1 FROM "${schemaName}"."key_contact_details" kc
                       WHERE kc.entity_rid = "ProjectFiscal"."rid"
                         AND kc.include_in_communication = true
                         AND kc.status_rid = '${activeStatusId}'
                     )`),
-                    "isKeyContactIncluded"
-                  ] as [any, string]
-                ]
-              : []),
-          ] as (string | [string | ReturnType<typeof Sequelize.fn> | ReturnType<typeof Sequelize.col> | ReturnType<typeof Sequelize.literal>, string])[],
-        },
+                        "isKeyContactIncluded",
+                      ] as [any, string],
+                    ]
+                  : []),
+              ] as (
+                | string
+                | [
+                    (
+                      | string
+                      | ReturnType<typeof Sequelize.fn>
+                      | ReturnType<typeof Sequelize.col>
+                      | ReturnType<typeof Sequelize.literal>
+                    ),
+                    string
+                  ]
+              )[],
+            },
           },
         ],
       });
@@ -1965,13 +2084,13 @@ class ProjectIngestionService {
           where: {
             account_rid: accountData.rid,
             ...searchClause,
-            ...whereFiscal
+            ...whereFiscal,
           },
         },
       ],
       distinct: true,
     });
-    
+
     if (this.mainDbSequelize) {
       let projectData = await this.enrichKeyContactsManually(
         projects,
@@ -2000,9 +2119,8 @@ class ProjectIngestionService {
       );
       projects = projectData;
 
-
       totalCount = count;
-      if(searchClause[Op.or] && searchClause[Op.or].length > 0) {
+      if (searchClause[Op.or] && searchClause[Op.or].length > 0) {
         projects = projects.filter((val: any) => val.ProjectFiscal.length > 0);
       }
       if (projects && projects.length > 0 && !bothParentAndChild) {
@@ -2046,9 +2164,11 @@ class ProjectIngestionService {
     userId: string,
     accessibleIds: string[],
     documentRid?: string,
-    searchClause : Record<symbol, any>= {}
+    searchClause: Record<symbol, any> = {}
   ) {
-    const { Project, ProjectFiscal, ProjectTimeline } = await this.getModels(accountNumber);
+    const { Project, ProjectFiscal, ProjectTimeline } = await this.getModels(
+      accountNumber
+    );
 
     const parentLevelFields = [
       "project_name",
@@ -2094,7 +2214,7 @@ class ProjectIngestionService {
       project_type_rid: "project_type_rid",
       project_name: "project_name",
       project_code: "project_code",
-      rd_percent_final: "rd_percent_final"
+      rd_percent_final: "rd_percent_final",
     };
 
     const childOnlyFilters = ["fiscal_year", "project_code"];
@@ -2169,22 +2289,26 @@ class ProjectIngestionService {
           where: {
             account_rid: accountData.rid,
             ...whereFiscal,
-            ...searchClause
+            ...searchClause,
           },
-          include: documentRid ? [{
-                model: ProjectTimeline,
-                as: "ProjectTimelines",
-                required: true,
-                where: {
+          include: documentRid
+            ? [
+                {
+                  model: ProjectTimeline,
+                  as: "ProjectTimelines",
+                  required: true,
+                  where: {
                     document_rid: documentRid,
+                  },
+                  attributes: [
+                    "rid",
+                    "entity_rid", // THIS IS CRUCIAL
+                    "document_rid",
+                    "event_name",
+                  ],
                 },
-                attributes: [
-                  'rid',
-                  'entity_rid', // THIS IS CRUCIAL
-                  'document_rid',
-                  'event_name',
-                ]
-            }] : [],
+              ]
+            : [],
           attributes: [
             "rid",
             "r_number",
@@ -2293,37 +2417,39 @@ class ProjectIngestionService {
 
     const rawResult = projects || [];
     const schemaService = new SchemaService();
-     const allowedFieldsForExport = await schemaService.getAllowedExportFields(userId,"projects_view_edit");
-        const allowedFieldSet = new Set<string>();
-        for (const field of allowedFieldsForExport) {
-          if (field.read) {
-            allowedFieldSet.add(field.field_desc);
-          }
-        }
-        const labelMap: Record<string, string> = {
-        "Project Code": "Project Code",
-        "Project Name": "Name",
-        "Project Type": "Project Type",
-        "Account Name": "Name",
-        "Fiscal Year": "Fiscal Year",
-        "Project Classification": "Classification",
-        "Customer Group": "Client Group",
-        "Project Group": "Project Group",
-        "Project Effort (Hours)": "Total Effort In Hrs",
-        "Project Cost": "Total Cost",
-        "FTE Cost": "Total FTE Cost",
-        "SubCon Cost": "Total Sub Con Cost",
-        "Non-Labor Cost": "Total Non Labor Cost",
-        "Assessment Status": "Assessment Status",
-        "QRE%": "QRE %",
-        "QRE": "QRE",
-        "Project Point of Contact": "Key Contacts List",
-        "Technical Point of Contact": "Key Contacts List",
-        "Comments": "Comments",
-        "Last Modified": "Updated On",
-        "Project ID": "Project ID",
-      };
-
+    const allowedFieldsForExport = await schemaService.getAllowedExportFields(
+      userId,
+      "projects_view_edit"
+    );
+    const allowedFieldSet = new Set<string>();
+    for (const field of allowedFieldsForExport) {
+      if (field.read) {
+        allowedFieldSet.add(field.field_desc);
+      }
+    }
+    const labelMap: Record<string, string> = {
+      "Project Code": "Project Code",
+      "Project Name": "Name",
+      "Project Type": "Project Type",
+      "Account Name": "Name",
+      "Fiscal Year": "Fiscal Year",
+      "Project Classification": "Classification",
+      "Customer Group": "Client Group",
+      "Project Group": "Project Group",
+      "Project Effort (Hours)": "Total Effort In Hrs",
+      "Project Cost": "Total Cost",
+      "FTE Cost": "Total FTE Cost",
+      "SubCon Cost": "Total Sub Con Cost",
+      "Non-Labor Cost": "Total Non Labor Cost",
+      "Assessment Status": "Assessment Status",
+      "QRE%": "QRE %",
+      QRE: "QRE",
+      "Project Point of Contact": "Key Contacts List",
+      "Technical Point of Contact": "Key Contacts List",
+      Comments: "Comments",
+      "Last Modified": "Updated On",
+      "Project ID": "Project ID",
+    };
 
     let exportData = rawResult.flatMap((project: any) => {
       const baseRow = {
@@ -2363,57 +2489,78 @@ class ProjectIngestionService {
         "Last Modified": "-",
         "Project ID": project.r_number || "-",
       };
-       const filteredProjectRow: Record<string, string> = {};
-        for (const [label, value] of Object.entries(baseRow)) {
-    
-          const mappedLabel = labelMap[label] || label;
-          if (allowedFieldSet.has(mappedLabel)) {
-            filteredProjectRow[label] = value; // Keep original label for export
-          }
+      const filteredProjectRow: Record<string, string> = {};
+      for (const [label, value] of Object.entries(baseRow)) {
+        const mappedLabel = labelMap[label] || label;
+        if (allowedFieldSet.has(mappedLabel)) {
+          filteredProjectRow[label] = value; // Keep original label for export
         }
+      }
 
       const fiscalSummaries = project.ProjectFiscal || [];
 
-     const fiscalRows = fiscalSummaries.map((fiscal: any) => {
-      const rawFiscalRow = {
-        "Project Code": fiscal.project_code ? fiscal.project_code + ' - FY' + fiscal.fiscal_year : "-",
-        "Name": fiscal.project_name || "-",
-        "Project Type": fiscal.project_type_name || "-",
-        "Account Name": project.account_name || "-",
-        "Fiscal Year": `FY-${fiscal.fiscal_year}` || "-",
-        "Project Classification": fiscal.classification_name || "-",
-        "Customer Group": fiscal.project_client_group || "-",
-        "Project Group": fiscal?.project_group || "-",
-        "Project Effort (Hours)": fiscal.total_effort || "-",
-        "Project Cost": formatNumberForExport(fiscal.total_cost, fiscal.currency_symbol) || "-",
-        "FTE Cost": formatNumberForExport(fiscal.total_cost_fte, fiscal.currency_symbol) || "-",
-        "SubCon Cost": formatNumberForExport(fiscal.total_cost_subcon, fiscal.currency_symbol) || "-",
-        "Non-Labor Cost": formatNumberForExport(fiscal.total_cost_nonlabor, fiscal.currency_symbol) || "-",
-        "Assessment Status": fiscal.assessment_status || "-",
-        "QRE %": "-", // Only base project has QRE %
-        "QRE": formatNumberForExport(fiscal.qre_final, project.currency_symbol) || "-",
-        "Project Point of Contact": fiscal.project_point_of_contact || "-",
-        "Technical Point of Contact": fiscal.technical_point_of_contact || "-",
-        "Comments": fiscal.comments || "-",
-        "Last Modified": fiscal.modified_datetime
-          ? timezone && isValidTimezone(timezone)
-            ? moment(fiscal.modified_datetime).tz(timezone).format('YYYY-MMM-DD, hh:mm:ss A')
-            : moment(fiscal.modified_datetime).format('YYYY-MMM-DD, hh:mm:ss A')
-          : '-',
-        "Project ID": fiscal.r_number || "-",
-      };
+      const fiscalRows = fiscalSummaries.map((fiscal: any) => {
+        const rawFiscalRow = {
+          "Project Code": fiscal.project_code
+            ? fiscal.project_code + " - FY" + fiscal.fiscal_year
+            : "-",
+          Name: fiscal.project_name || "-",
+          "Project Type": fiscal.project_type_name || "-",
+          "Account Name": project.account_name || "-",
+          "Fiscal Year": `FY-${fiscal.fiscal_year}` || "-",
+          "Project Classification": fiscal.classification_name || "-",
+          "Customer Group": fiscal.project_client_group || "-",
+          "Project Group": fiscal?.project_group || "-",
+          "Project Effort (Hours)": fiscal.total_effort || "-",
+          "Project Cost":
+            formatNumberForExport(fiscal.total_cost, fiscal.currency_symbol) ||
+            "-",
+          "FTE Cost":
+            formatNumberForExport(
+              fiscal.total_cost_fte,
+              fiscal.currency_symbol
+            ) || "-",
+          "SubCon Cost":
+            formatNumberForExport(
+              fiscal.total_cost_subcon,
+              fiscal.currency_symbol
+            ) || "-",
+          "Non-Labor Cost":
+            formatNumberForExport(
+              fiscal.total_cost_nonlabor,
+              fiscal.currency_symbol
+            ) || "-",
+          "Assessment Status": fiscal.assessment_status || "-",
+          "QRE %": "-", // Only base project has QRE %
+          QRE:
+            formatNumberForExport(fiscal.qre_final, project.currency_symbol) ||
+            "-",
+          "Project Point of Contact": fiscal.project_point_of_contact || "-",
+          "Technical Point of Contact":
+            fiscal.technical_point_of_contact || "-",
+          Comments: fiscal.comments || "-",
+          "Last Modified": fiscal.modified_datetime
+            ? timezone && isValidTimezone(timezone)
+              ? moment(fiscal.modified_datetime)
+                  .tz(timezone)
+                  .format("YYYY-MMM-DD, hh:mm:ss A")
+              : moment(fiscal.modified_datetime).format(
+                  "YYYY-MMM-DD, hh:mm:ss A"
+                )
+            : "-",
+          "Project ID": fiscal.r_number || "-",
+        };
 
-    const filteredFiscalRow: Record<string, string> = {};
-    for (const [label, value] of Object.entries(rawFiscalRow)) {
-      const mappedLabel = labelMap[label] || label;
-      if (allowedFieldSet.has(mappedLabel)) {
-        filteredFiscalRow[label] = value; // keep original label for export
-      }
-    }
+        const filteredFiscalRow: Record<string, string> = {};
+        for (const [label, value] of Object.entries(rawFiscalRow)) {
+          const mappedLabel = labelMap[label] || label;
+          if (allowedFieldSet.has(mappedLabel)) {
+            filteredFiscalRow[label] = value; // keep original label for export
+          }
+        }
 
-    return filteredFiscalRow;
-});
-
+        return filteredFiscalRow;
+      });
 
       return [filteredProjectRow, ...fiscalRows];
     });
@@ -2435,7 +2582,7 @@ class ProjectIngestionService {
     }
 
     const accountDetails = await this.orgDbSequelize.query(
-      `select * from ${schemaName}.account_details where account_rid = :accountId`,
+      rawQueries.fetchAccountDetailsById(schemaName),
       {
         replacements: { accountId },
         type: "SELECT",
@@ -2495,11 +2642,7 @@ class ProjectIngestionService {
       ""
     )}`;
 
-    const query = `
-    SELECT rid,r_number,project_rid,project_fiscal_rid 
-    FROM "${schemaName}".project_resource
-    WHERE rid = :projectResourceId
-  `;
+    const query = rawQueries.fetchProjectResourceById(schemaName);
 
     const sequelize = await this.getSequelize();
     const result = await sequelize.query(query, {
@@ -2516,11 +2659,7 @@ class ProjectIngestionService {
       ""
     )}`;
 
-    const query = `
-    SELECT rid,r_number 
-    FROM "${schemaName}".project_task
-    WHERE rid = :projectTaskId
-  `;
+    const query = rawQueries.fetchProjectTaskById(schemaName);
 
     const sequelize = await this.getSequelize();
     const result = await sequelize.query(query, {
@@ -2537,11 +2676,7 @@ class ProjectIngestionService {
       ""
     )}`;
 
-    const query = `
-    SELECT rid,resource_code 
-    FROM "${schemaName}".resources
-    WHERE rid = :resourceId
-  `;
+    const query = rawQueries.fetchResourceById(schemaName);
 
     const sequelize = await this.getSequelize();
     const result = await sequelize.query(query, {
@@ -2559,11 +2694,7 @@ class ProjectIngestionService {
       ""
     )}`;
 
-    const query = `
-    SELECT rid,r_number 
-    FROM "${schemaName}".resource_cost
-    WHERE rid = :resourceCostId
-  `;
+    const query = rawQueries.fetchResourceCostById(schemaName);
 
     const sequelize = await this.getSequelize();
     const result = await sequelize.query(query, {
@@ -2581,11 +2712,7 @@ class ProjectIngestionService {
       ""
     )}`;
 
-    const query = `
-    SELECT rid,r_number 
-    FROM "${schemaName}".resource_skill
-    WHERE rid = :resourceSkillId
-  `;
+    const query = rawQueries.fetchResourceSkillById(schemaName);
 
     const sequelize = await this.getSequelize();
     const result = await sequelize.query(query, {
@@ -2642,7 +2769,7 @@ class ProjectIngestionService {
 
       if (classificationIds.length > 0) {
         const classificationRows = await mainDbSequelize.query(
-          `SELECT rid, classification_name FROM ${MAIN_SCHEMA_NAME}.project_classification WHERE rid IN (:ids)`,
+          rawQueries.fetchProjectClassificationById(),
           {
             replacements: { ids: classificationIds },
             type: "SELECT",
@@ -2657,7 +2784,7 @@ class ProjectIngestionService {
       }
       if (projectTypeIds.length > 0) {
         const projectTypeList = await mainDbSequelize.query(
-          `SELECT rid, project_type_name FROM ${MAIN_SCHEMA_NAME}.project_type WHERE rid IN (:ids)`,
+          rawQueries.fetchProjectTypeById(),
           {
             replacements: { ids: projectTypeIds },
             type: "SELECT",
@@ -2673,7 +2800,7 @@ class ProjectIngestionService {
 
       if (statusTypeIds.length > 0) {
         const statusTypeList = await mainDbSequelize.query(
-          `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid IN (:ids)`,
+          rawQueries.fetchStatusByIds(),
           {
             replacements: { ids: statusTypeIds },
             type: "SELECT",
@@ -3029,7 +3156,11 @@ class ProjectIngestionService {
     return finalData;
   }
 
-  async enrichKeyContactsManually(projects: any[], accountNumber: string, apiSource : string) {
+  async enrichKeyContactsManually(
+    projects: any[],
+    accountNumber: string,
+    apiSource: string
+  ) {
     const { KeyContact } = await this.getModels(accountNumber);
 
     const allProjectIds = projects.map((p) => p.rid);
@@ -3039,9 +3170,8 @@ class ProjectIngestionService {
 
     const allIds = [...new Set([...allProjectIds, ...allFiscalIds])];
     if (allIds.length === 0) return projects;
-    
-    const allFiscalIdsForInteractions = [...new Set([...allFiscalIds])]
 
+    const allFiscalIdsForInteractions = [...new Set([...allFiscalIds])];
 
     // Fetch key_contact records where reference_id is in allIds
     const keyContacts: any[] = await KeyContact.findAll({
@@ -3051,16 +3181,17 @@ class ProjectIngestionService {
       raw: true,
     });
     const contactInteractionMap: Record<string, any[]> = {};
-    if(apiSource.toLowerCase() === "interaction") {
-      let interactionKeyContact : any[] = []
-      if(allFiscalIdsForInteractions.length > 0) {
-        let schemaName = rawQueries.fetchSchemaName(accountNumber)
-          interactionKeyContact = await KeyContact.findAll({
-          where : {
-            entity_rid : allFiscalIdsForInteractions,
-            include_in_communication : true
-          }, raw : true
-        })
+    if (apiSource.toLowerCase() === "interaction") {
+      let interactionKeyContact: any[] = [];
+      if (allFiscalIdsForInteractions.length > 0) {
+        let schemaName = rawQueries.fetchSchemaName(accountNumber);
+        interactionKeyContact = await KeyContact.findAll({
+          where: {
+            entity_rid: allFiscalIdsForInteractions,
+            include_in_communication: true,
+          },
+          raw: true,
+        });
       }
       for (const kc of interactionKeyContact) {
         const refId = kc.entity_rid;
@@ -3086,7 +3217,7 @@ class ProjectIngestionService {
         (fiscal: any) => ({
           ...(typeof fiscal.toJSON === "function" ? fiscal.toJSON() : fiscal),
           keyContact: contactMap[fiscal.rid] || [],
-          interactionKeyRecipients : contactInteractionMap[fiscal.rid] || []
+          interactionKeyRecipients: contactInteractionMap[fiscal.rid] || [],
         })
       );
 
@@ -3152,11 +3283,7 @@ class ProjectIngestionService {
 
       // Step 2: Fetch currency details in one query
       const placeholders = currencyRids.map(() => "?").join(", ");
-      const query = `
-        SELECT rid, currency_code, currency_symbol 
-        FROM ${MAIN_SCHEMA_NAME}.currency 
-        WHERE rid IN (${placeholders})
-      `;
+      const query = rawQueries.fetchCurrenciesByIds(placeholders);
 
       const results: any = await this.mainDbSequelize.query(query, {
         replacements: currencyRids,
@@ -3236,14 +3363,7 @@ class ProjectIngestionService {
         ""
       )}`;
 
-      const query = `
-      SELECT 
-        ps.rid,
-        ps.project_fiscal_rid
-      FROM "${schemaName}".project_resource ps
-      WHERE ps.project_fiscal_rid IN (:projectIds)
-      ORDER BY ps.created_datetime DESC
-    `;
+      const query = rawQueries.fetchProjectResourceAndFiscal(schemaName);
 
       const sequelize = await initOrgSequelize();
       const results = await sequelize.query(query, {
@@ -3258,119 +3378,115 @@ class ProjectIngestionService {
     }
   }
 
-/**
- * Fetches project tasks for multiple project IDs using a single SQL query
- *
- * @param {string} accountNumber - Account number to determine schema
- * @param {string[]} projectIds - Array of project IDs
- * @returns {Promise<any[]>} - Project_task data
- */
-async getProjectTasksByProjectIds(
-  accountNumber: string,
-  projectIds: string[]
-): Promise<any[]> {
-  try {
-    if (!projectIds?.length) return [];
-    
-    const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
-      /\D/g,
-      ""
-    )}`;
-    const sequelize = await initOrgSequelize();
+  /**
+   * Fetches project tasks for multiple project IDs using a single SQL query
+   *
+   * @param {string} accountNumber - Account number to determine schema
+   * @param {string[]} projectIds - Array of project IDs
+   * @returns {Promise<any[]>} - Project_task data
+   */
+  async getProjectTasksByProjectIds(
+    accountNumber: string,
+    projectIds: string[]
+  ): Promise<any[]> {
+    try {
+      if (!projectIds?.length) return [];
 
-    // Check if project_task table exists
-    const checkTableQuery = `
-    SELECT EXISTS (
-      SELECT 1 
-      FROM information_schema.tables 
-      WHERE table_schema = '${schemaName}'
-      AND table_name = 'project_task'
-    );
-  `;
+      const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+        /\D/g,
+        ""
+      )}`;
+      const sequelize = await initOrgSequelize();
 
-    const [tableExists] = await sequelize.query(checkTableQuery, {
-      type: "SELECT",
-    });
+      // Check if project_task table exists
+      const checkTableQuery = rawQueries.checkProjectTaskExists(schemaName);
 
-    if ((tableExists as any).exists === false) {
-      return [];
+      const [tableExists] = await sequelize.query(checkTableQuery, {
+        type: "SELECT",
+      });
+
+      if ((tableExists as any).exists === false) {
+        return [];
+      }
+
+      const query = rawQueries.fetchProjectTaskAndFiscal(schemaName);
+
+      const results = await sequelize.query(query, {
+        replacements: { projectIds },
+        type: "SELECT",
+      });
+
+      return results;
+    } catch (error) {
+      console.error("Error fetching project tasks:", error);
+      throw error;
     }
-
-    const query = `
-      SELECT 
-        pt.rid,
-        pt.project_resource_code
-      FROM "${schemaName}".project_task pt
-      WHERE pt.project_fiscal_rid IN (:projectIds)
-      ORDER BY pt.created_datetime DESC
-    `;
-
-    const results = await sequelize.query(query, {
-      replacements: { projectIds },
-      type: 'SELECT'
-    });
-
-    return results;
-
-  } catch (error) {
-    console.error('Error fetching project tasks:', error);
-    throw error;
   }
-}
 
-async deleteAccountFiscalForInlineEdit(r_number: any, account_rid: any, fiscal_year: any, projectData: ICreateProject) {
-        const{AccountFiscal, ProjectFiscal}=await this.getModels(r_number);
-        const existingProjectFiscal = await ProjectFiscal.findOne({
-          where: {
-            account_rid,
-            fiscal_year,
-          },
-        });
+  async deleteAccountFiscalForInlineEdit(
+    r_number: any,
+    account_rid: any,
+    fiscal_year: any,
+    projectData: ICreateProject
+  ) {
+    const { AccountFiscal, ProjectFiscal } = await this.getModels(r_number);
+    const existingProjectFiscal = await ProjectFiscal.findOne({
+      where: {
+        account_rid,
+        fiscal_year,
+      },
+    });
 
-        if(!existingProjectFiscal) {
-           await AccountFiscal.destroy({
-             where: {
-               account_rid,
-               fiscal_year,
-             }
-           })
-        }
-        else {
-        await this.updateAccountFiscalAggregatesFromFiscal(r_number, projectData)
-        }
+    if (!existingProjectFiscal) {
+      await AccountFiscal.destroy({
+        where: {
+          account_rid,
+          fiscal_year,
+        },
+      });
+    } else {
+      await this.updateAccountFiscalAggregatesFromFiscal(r_number, projectData);
     }
+  }
 
-async deleteAccountFiscalRegionForInlineEdit(r_number: any, account_rid: any, fiscal_year: any, projectData: ICreateProject) {
-        const{AccountFiscalRegion, ProjectFiscalRegion, ProjectFiscal}=await this.getModels(r_number);
-        const existingProjectFiscal = await ProjectFiscal.findOne({
-          where: {
-            account_rid,
-            fiscal_year,
-            region_rid: projectData.region_rid,
-          },
-        });
-        if(!existingProjectFiscal) {
-           await ProjectFiscalRegion.destroy({
-             where: {
-               account_rid,
-               fiscal_year,
-               region_rid: projectData.region_rid,
-             }
-           });
+  async deleteAccountFiscalRegionForInlineEdit(
+    r_number: any,
+    account_rid: any,
+    fiscal_year: any,
+    projectData: ICreateProject
+  ) {
+    const { AccountFiscalRegion, ProjectFiscalRegion, ProjectFiscal } =
+      await this.getModels(r_number);
+    const existingProjectFiscal = await ProjectFiscal.findOne({
+      where: {
+        account_rid,
+        fiscal_year,
+        region_rid: projectData.region_rid,
+      },
+    });
+    if (!existingProjectFiscal) {
+      await ProjectFiscalRegion.destroy({
+        where: {
+          account_rid,
+          fiscal_year,
+          region_rid: projectData.region_rid,
+        },
+      });
 
-           await AccountFiscalRegion.destroy({
-             where: {
-               account_rid,
-               fiscal_year,
-               region_rid: projectData.region_rid,
-             }
-           })
-        }
-        else {
-        await this.updateAccountFiscalRegionAggregatesFromFiscal(r_number, projectData);
-        }
-    }    
-
+      await AccountFiscalRegion.destroy({
+        where: {
+          account_rid,
+          fiscal_year,
+          region_rid: projectData.region_rid,
+        },
+      });
+    } else {
+      await this.updateAccountFiscalRegionAggregatesFromFiscal(
+        r_number,
+        projectData
+      );
+    }
+  }
 }
 
 export default ProjectIngestionService;

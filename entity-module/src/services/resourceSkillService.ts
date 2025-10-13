@@ -1,14 +1,18 @@
 import { ResourceSkill } from "../models/resourceSkill";
 import { IResourceSkill, IUpdateResourceSkill } from "../utils/types";
-import { HttpStatus, MAIN_SCHEMA_NAME } from "../utils/constants";
+import {
+  HttpStatus,
+  MAIN_SCHEMA_NAME,
+  SCHEMANAME_PREFIX,
+  rawQueries,
+} from "../utils/constants";
 import { ResourceSkillTimeline } from "../models/resourceSkillTimeline";
-import { Skill } from "../models/skill";
 import { ResourceSkillHistory } from "../models/resourceSkillHistory";
 import resourceSkillSchemaService from "./resourceSkillSchemaService";
 import SchemaService from "./schemaService";
 import { ResourceFiscal } from "../models/resourceFiscal";
 import { initOrgSequelize } from "../config/orgDataSource";
-import { Sequelize, Op, QueryTypes } from "sequelize";
+import { Sequelize, QueryTypes } from "sequelize";
 import { initMainDbSequelize } from "../config/mainDataSource";
 import moment from "moment";
 import { Resources } from "../models/resource";
@@ -44,6 +48,25 @@ class ResourceSkillService {
     return this.mainDbSequelize;
   }
 
+  /**
+   * Creates a new resource skill entry in the specified account schema.
+   *
+   * - Validates and prepares the schema and tables for the resource skill.
+   * - Initializes the Sequelize models dynamically based on the account number.
+   * - Inserts the resource skill into the database and updates related tables (e.g., `resource_fiscal`).
+   * - Adds an entry into the `resource_skill_timeline` for auditing purposes.
+   * - Handles errors gracefully and continues processing where applicable.
+   *
+   * @param {IResourceSkill} resourceSkill - The resource skill data to be created.
+   * @param {string} userId - The ID of the user performing the operation.
+   *
+   * @returns {Promise<{
+   *   statusCode: number;
+   *   message: string;
+   *   errorMessage?: string;
+   *   data?: { resourceSkill: any };
+   * }>} A promise resolving to the status and result of the operation.
+   */
   async createResourceSkill(
     resourceSkill: IResourceSkill,
     userId: string
@@ -77,9 +100,11 @@ class ResourceSkillService {
 
       let { accountNumber: accountNumberFetched, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
-         const schemaName = `trd365_${accountNumberFetched.replace(/\D/g, '')}`;
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumberFetched.replace(
+        /\D/g,
+        ""
+      )}`;
 
-      
       // if (skill_type_rid && resource_rid) {
       //   const sequelizeInstance = await this.getOrgSequelize();
       //   console.log("Before Initialize");
@@ -110,29 +135,26 @@ class ResourceSkillService {
       //         };
       //       }
       //     }
-          
+
       //   } catch (error) {
       //     console.error("Error checking for duplicate skill:", error);
       //     // Continue with creation if check fails
       //   }
-      
+
       // }
-    
 
       // Create tables in parallel for better performance
-      const [
-        resourceSkillTableCreated,
-        timelineTableCreated,
-      ] = await Promise.all([
-        resourceSkillSchemaService.createTablesInSchema(
-          schemaName,
-          "resource_skill"
-        ),
-        resourceSkillSchemaService.createTablesInSchema(
-          schemaName,
-          "resource_skill_timeline"
-        ),
-      ]);
+      const [resourceSkillTableCreated, timelineTableCreated] =
+        await Promise.all([
+          resourceSkillSchemaService.createTablesInSchema(
+            schemaName,
+            "resource_skill"
+          ),
+          resourceSkillSchemaService.createTablesInSchema(
+            schemaName,
+            "resource_skill_timeline"
+          ),
+        ]);
 
       if (!resourceSkillTableCreated) {
         errorLog("Account schema or resource_skill table could not be created");
@@ -150,7 +172,7 @@ class ResourceSkillService {
           errorMessage:
             "Account schema or resource_skill_timeline table could not be created",
         };
-      } 
+      }
 
       // Check if skill exists or create a new one
       // let skillRidToUse = skill_rid;
@@ -214,7 +236,7 @@ class ResourceSkillService {
           skill_subtype_others,
           comments,
           skill_details: skill_details || undefined,
-          created_by: userId
+          created_by: userId,
         });
 
         // Update the resource_fiscal table
@@ -348,7 +370,10 @@ class ResourceSkillService {
 
       let { accountNumber: accountNumberFetched, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
-      const schemaName = `trd365_${accountNumberFetched.replace(/\D/g, '')}`;
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumberFetched.replace(
+        /\D/g,
+        ""
+      )}`;
 
       // Create tables in parallel for better performance
       const [timelineTableCreated, historyTableCreated] = await Promise.all([
@@ -431,7 +456,6 @@ class ResourceSkillService {
       // }
 
       try {
-
         const startDate = this.formatDateForDb(effective_from as string);
         const [affectedCounts, affectedRows] = await ResourceSkill.update(
           {
@@ -527,7 +551,10 @@ class ResourceSkillService {
   ): Promise<void> {
     try {
       // Make sure we're in the right schema context
-      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(
+        /\D/g,
+        ""
+      )}`;
       const validatedSchema = await resourceSkillSchemaService.validateSchema(
         schemaName,
         "resource_skill_history"
@@ -594,7 +621,7 @@ class ResourceSkillService {
                 formattedNewValue !== undefined
                   ? String(formattedNewValue)
                   : "",
-              created_by: modifiedBy
+              created_by: modifiedBy,
             });
           }
         } catch (attrError) {
@@ -665,7 +692,10 @@ class ResourceSkillService {
       let { accountNumber: accountNumberFetched, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
       // Check if account-specific schema exists
-      const schemaName = `trd365_${accountNumberFetched.replace(/\D/g, '')}`;
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumberFetched.replace(
+        /\D/g,
+        ""
+      )}`;
       const tableName = "resource_skill";
       const schemaAndTableValidation =
         await resourceSkillSchemaService.validateSchema(
@@ -705,18 +735,20 @@ class ResourceSkillService {
 
       if (results?.data?.resourceSkill?.length) {
         // Fetch user names for each result row in parallel
-        const userNamesPromises = results.data.resourceSkill.map(async (row) => {
-          if (!row) return;
-          
-          const userNames = await this.fetchUserNames({
-            created_by: row.created_by,
-            modified_by: row.modified_by,
-          });
+        const userNamesPromises = results.data.resourceSkill.map(
+          async (row) => {
+            if (!row) return;
 
-          // Update the row with user names
-          row.created_by = userNames.created_by_name || row.created_by;
-          row.modified_by = userNames.modified_by_name || row.modified_by;
-        });
+            const userNames = await this.fetchUserNames({
+              created_by: row.created_by,
+              modified_by: row.modified_by,
+            });
+
+            // Update the row with user names
+            row.created_by = userNames.created_by_name || row.created_by;
+            row.modified_by = userNames.modified_by_name || row.modified_by;
+          }
+        );
 
         // Wait for all user name fetches to complete
         await Promise.all(userNamesPromises);
@@ -728,7 +760,6 @@ class ResourceSkillService {
       return this.throwServiceError(err as Error);
     }
   }
-
 
   /**
    * Retrieves a  list of resource skills for a specific account and fiscal year for excel download.
@@ -756,7 +787,7 @@ class ResourceSkillService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { resourceSkill: any; };
+    data?: { resourceSkill: any };
   }> {
     try {
       const [finalSortBy, finalSortOrder] =
@@ -765,7 +796,10 @@ class ResourceSkillService {
       let { accountNumber: accountNumberFetched, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
       // Check if account-specific schema exists
-      const schemaName = `trd365_${accountNumberFetched.replace(/\D/g, '')}`;
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumberFetched.replace(
+        /\D/g,
+        ""
+      )}`;
       const tableName = "resource_skill";
       const schemaAndTableValidation =
         await resourceSkillSchemaService.validateSchema(
@@ -818,7 +852,10 @@ class ResourceSkillService {
     try {
       let { accountNumber: accountNumberFetched, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
-      const schemaName = `trd365_${accountNumberFetched.replace(/\D/g, '')}`;
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumberFetched.replace(
+        /\D/g,
+        ""
+      )}`;
       const validateSchema = await resourceSkillSchemaService.validateSchema(
         schemaName,
         "resource_skill"
@@ -865,44 +902,49 @@ class ResourceSkillService {
         if (resourceInfo.resource_startdate) {
           const startDate = moment(resourceInfo.resource_startdate);
           if (startDate.isValid()) {
-            resourceInfo.dataValues.resource_startdate = startDate.format('YYYY-MM-DD') as any;
+            resourceInfo.dataValues.resource_startdate = startDate.format(
+              "YYYY-MM-DD"
+            ) as any;
           }
         }
-        
+
         if (resourceInfo.resource_enddate) {
           const endDate = moment(resourceInfo.resource_enddate);
           if (endDate.isValid()) {
-            resourceInfo.dataValues.resource_enddate = endDate.format('YYYY-MM-DD') as any;
+            resourceInfo.dataValues.resource_enddate = endDate.format(
+              "YYYY-MM-DD"
+            ) as any;
           }
         }
       }
 
       // Get the main database connection
-    const mainDbSequelize = await this.getMainDbSequelize();
+      const mainDbSequelize = await this.getMainDbSequelize();
 
-    // Fetch skill type name
-    const skillTypeQuery = `SELECT skill_type_name FROM ${MAIN_SCHEMA_NAME}."skill_type" WHERE rid = :skillTypeRid`;
-    const skillType = await mainDbSequelize.query(skillTypeQuery, {
-      replacements: { skillTypeRid: resourceSkillById?.skill_type_rid },
-      type: "SELECT",
-      plain: true
-    });
+      // Fetch skill type name
+      const skillTypeQuery = rawQueries.getSkillTypeQuery();
+      const skillType = await mainDbSequelize.query(skillTypeQuery, {
+        replacements: { skillTypeRid: resourceSkillById?.skill_type_rid },
+        type: "SELECT",
+        plain: true,
+      });
 
-    // Fetch skill subtype name
-    const skillSubtypeQuery = `SELECT skill_subtype_name FROM ${MAIN_SCHEMA_NAME}."skill_subtype" WHERE rid = :skillSubtypeRid`;
-    const skillSubtype = await mainDbSequelize.query(skillSubtypeQuery, {
-      replacements: { skillSubtypeRid: resourceSkillById?.skill_subtype_rid },
-      type: "SELECT",
-      plain: true
-    });
+      // Fetch skill subtype name
+      const skillSubtypeQuery = rawQueries.getSkillSubtypeQuery();
+      const skillSubtype = await mainDbSequelize.query(skillSubtypeQuery, {
+        replacements: { skillSubtypeRid: resourceSkillById?.skill_subtype_rid },
+        type: "SELECT",
+        plain: true,
+      });
 
-    if (resourceSkillById && resourceSkillById.dataValues) {
-      resourceSkillById.dataValues = {
-        ...resourceSkillById.dataValues,
-        skill_type_name: skillType?.skill_type_name?.toString() || '',
-        skill_subtype_name: skillSubtype?.skill_subtype_name?.toString() || ''
-      };
-    }
+      if (resourceSkillById && resourceSkillById.dataValues) {
+        resourceSkillById.dataValues = {
+          ...resourceSkillById.dataValues,
+          skill_type_name: skillType?.skill_type_name?.toString() || "",
+          skill_subtype_name:
+            skillSubtype?.skill_subtype_name?.toString() || "",
+        };
+      }
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -941,7 +983,7 @@ class ResourceSkillService {
       // Fetch created_by user name if ID exists
       if (userIds.created_by) {
         const [createdByUser] = await sequelize.query(
-          `SELECT concat(first_name, ' ', last_name) as full_name FROM ${MAIN_SCHEMA_NAME}."user" WHERE rid = :userId LIMIT 1`,
+          rawQueries.getUserFullNameQuery(),
           {
             replacements: { userId: userIds.created_by },
             type: "SELECT",
@@ -956,7 +998,7 @@ class ResourceSkillService {
       // Fetch modified_by user name if ID exists
       if (userIds.modified_by) {
         const [modifiedByUser] = await sequelize.query(
-          `SELECT concat(first_name, ' ', last_name) as full_name FROM ${MAIN_SCHEMA_NAME}."user" WHERE rid = :userId LIMIT 1`,
+          rawQueries.getUserFullNameQuery(),
           {
             replacements: { userId: userIds.modified_by },
             type: "SELECT",
@@ -989,30 +1031,33 @@ class ResourceSkillService {
     return date.toDate();
   }
 
+  /**
+   * Fetches all active skill types from the main database schema.
+   *
+   * - Connects to the main DB using Sequelize.
+   * - Executes a raw SQL query to retrieve all skill types with status 'active'.
+   * - Returns the list sorted alphabetically by `skill_type_name`.
+   *
+   * @returns {Promise<{
+   *   statusCode: number;
+   *   message: string;
+   *   errorMessage?: string;
+   *   data?: { skillTypes: any[] };
+   * }>} A promise resolving to the response object containing active skill types or an error.
+   */
   async getSkillTypes(): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { skillTypes: any[]};
+    data?: { skillTypes: any[] };
   }> {
     try {
       const mainDbSequelize = await this.getMainDbSequelize();
-      
+
       const skillTypes = await mainDbSequelize.query(
-        `SELECT 
-          rid,
-          skill_type_name,
-          skill_type_description,
-          status,
-          created_by,
-          modified_by,
-          created_datetime,
-          modified_datetime
-        FROM ${MAIN_SCHEMA_NAME}.skill_type 
-        WHERE status = 'active'
-        ORDER BY skill_type_name ASC`,
+        rawQueries.getActiveSkillTypesQuery(),
         {
-          type: QueryTypes.SELECT
+          type: QueryTypes.SELECT,
         }
       );
 
@@ -1020,16 +1065,30 @@ class ResourceSkillService {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
-          skillTypes
-        }
+          skillTypes,
+        },
       };
-
     } catch (err) {
       errorLog("Error fetching skill types: " + (err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
 
+  /**
+   * Fetches all active skill subtypes based on provided skill type RIDs.
+   *
+   * - Connects to the main database using Sequelize.
+   * - Executes a raw SQL query to retrieve subtypes for the given `skill_type_rid`s.
+   * - Filters only those subtypes with status `'active'` and sorts them alphabetically.
+   *
+   * @param {string[] | string} skillTypeRids - One or more skill type RIDs to filter subtypes by.
+   * @returns {Promise<{
+   *   statusCode: number;
+   *   message: string;
+   *   errorMessage?: string;
+   *   data?: { skillSubTypes: any[] };
+   * }>} A promise resolving to a list of skill subtypes or an error object.
+   */
   async getSkillSubTypes(skillTypeRids: string[] | string): Promise<{
     statusCode: number;
     message: string;
@@ -1039,30 +1098,18 @@ class ResourceSkillService {
     try {
       const mainDbSequelize = await this.getMainDbSequelize();
       const skillSubTypes = await mainDbSequelize.query(
-        `SELECT
-          rid,
-          skill_type_rid,
-          skill_subtype_name,
-          skill_subtype_description,
-          status,
-          created_by,
-          modified_by,
-          created_datetime,
-          modified_datetime
-        FROM ${MAIN_SCHEMA_NAME}.skill_subtype
-        WHERE skill_type_rid IN (:skillTypeRids) AND status = 'active'
-        ORDER BY skill_subtype_name ASC`,
+        rawQueries.getActiveSkillSubtypesQuery(),
         {
           replacements: { skillTypeRids },
-          type: QueryTypes.SELECT
+          type: QueryTypes.SELECT,
         }
       );
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
-          skillSubTypes
-        }
+          skillSubTypes,
+        },
       };
     } catch (err) {
       errorLog("Error fetching skill subtypes: " + (err as Error).message);
@@ -1070,33 +1117,32 @@ class ResourceSkillService {
     }
   }
 
-    /**
- * Fetches resource skills for multiple resource IDs using a single SQL query
- * 
- * @param {string} accountNumber - Account number to determine schema
- * @param {string[]} resourceIds - Array of resource IDs
- * @returns {Promise<any[]>} - Resource skills data
- */
-async getResourceSkillsByResourceIds(accountNumber: string, resourceIds: string[]): Promise<any[]> {
-  try {
-    if (resourceIds.length === 0) return [];
+  /**
+   * Fetches resource skills for multiple resource IDs using a single SQL query
+   *
+   * @param {string} accountNumber - Account number to determine schema
+   * @param {string[]} resourceIds - Array of resource IDs
+   * @returns {Promise<any[]>} - Resource skills data
+   */
+  async getResourceSkillsByResourceIds(
+    accountNumber: string,
+    resourceIds: string[]
+  ): Promise<any[]> {
+    try {
+      if (resourceIds.length === 0) return [];
 
-    const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, '')}`;
+      const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+        /\D/g,
+        ""
+      )}`;
 
-    const query = `
-      SELECT 
-        rs.rid,
-        rs.resource_rid
-      FROM "${schemaName}".resource_skill rs
-      WHERE rs.resource_rid IN (:resourceIds)
-      ORDER BY rs.created_datetime DESC
-    `;
+      const query = rawQueries.getLatestResourceSkillsQuery(schemaName);
 
-    const sequelize = await initOrgSequelize();
-    const results = await sequelize.query(query, {
-      replacements: { resourceIds },
-      type: 'SELECT'
-    });
+      const sequelize = await initOrgSequelize();
+      const results = await sequelize.query(query, {
+        replacements: { resourceIds },
+        type: "SELECT",
+      });
 
     return results;
 

@@ -5,6 +5,8 @@ import { schdulerForSendEmailInfo, schedulerForTriggerAi } from "./utils/cronSch
 import './services/cronJob/renewSubscriptions';
 // import initGraphQLServer from "./servers/graphqlServer";
 
+console.log("Inside index ks")
+
 import { Kafka } from "kafkajs";
 import interactionsController from "./controllers/interactionsController";
 import { logMessage } from "./utils/helpers";
@@ -12,10 +14,13 @@ const PORT = process.env.SERVER_PORT || 3000;
 
 async function startServer() {
   try {
+    console.log("Before Server start")
     const { app } = await initExpressServer();
+
+    console.log("After Server start")
     // const { graphqlPath } = await initGraphQLServer(app);
-    schedulerForTriggerAi()
-    schdulerForSendEmailInfo()
+    // schedulerForTriggerAi()
+    // schdulerForSendEmailInfo()
     
 
     app.listen(PORT, () => {
@@ -58,4 +63,4 @@ async function startKafkaConsumer() {
 
 
 startServer();
-startKafkaConsumer();
+// startKafkaConsumer();
