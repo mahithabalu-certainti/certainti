@@ -243,15 +243,15 @@ export const getProjectResourcesColumns = (
   },
   {
     id: 'net_total_cost_pro_res',
-    label: 'Cost',
+    label: 'Net Resource Cost',
     sortable: true,
     sortId: 'net_total_cost_pro_res',
-    width: '150px',
+    width: '160px',
     sx: {
       textAlign: 'right',
     },
     render: (row: ProjectResourcesListType) =>
-      row.total_cost_pro_res
+      row.net_total_cost_pro_res
         ? costDisplay(row.net_total_cost_pro_res, row?.currency_symbol)
         : '-',
 
