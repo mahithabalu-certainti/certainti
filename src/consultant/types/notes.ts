@@ -51,6 +51,7 @@ export type NotesList = {
   size_in_mb: string;
   title: string;
   notes_owner: string;
+  notes_owner_name: string;
   descriptions: string;
   created_by_name: string;
   modified_by_name: string;
@@ -76,6 +77,7 @@ export interface NoteDetails {
   title: string;
   descriptions: string;
   notes_owner: string;
+  notes_owner_name: string;
   created_by: string;
   modified_by: string;
   account_rid: string;

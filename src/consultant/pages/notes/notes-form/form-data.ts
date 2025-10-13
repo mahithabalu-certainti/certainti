@@ -10,6 +10,7 @@ import {
 export const NotesFormData = (
   isEditView: boolean,
   fiscalYears: { label: string; value: string }[],
+  userListOptions: { value: string; label: string }[],
   projectFiscalYear?: boolean,
   disableFiscalYear?: boolean,
   isFromGlobalNotes?: boolean,
@@ -48,9 +49,10 @@ export const NotesFormData = (
               },
             ],
           }),
-          createTextField('notes_owner', 'Note Owner', {
+          createSelectField('notes_owner', 'Note Owner', {
+            options: userListOptions,
+            placeholder: 'Choose Note Owner',
             required: true,
-            placeholder: 'Enter Note Owner',
             hide:
               isEditView &&
               !permissionMap?.['notes_owner']?.read &&
@@ -59,21 +61,6 @@ export const NotesFormData = (
               isEditView &&
               permissionMap?.['notes_owner']?.read &&
               !permissionMap?.['notes_owner']?.edit,
-            errorHandling: [
-              {
-                regex: REGEX_PATTERNS.MIN_3,
-                errorMessage: 'Note Owner must be at least 3 characters long',
-              },
-              {
-                regex: REGEX_PATTERNS.MAX_64,
-                errorMessage: 'Note Owner must not exceed 64 characters',
-              },
-              {
-                regex: REGEX_PATTERNS.NAME_REGEX,
-                errorMessage:
-                  "Note Owner must contain only letters, space( ), apostrophes(') and hyphens(-).",
-              },
-            ],
           }),
           createTextField('related_to', 'Related Entity', {
             required: false,
@@ -145,6 +132,7 @@ export const NotesFormData = (
       isFromGlobalNotes,
       permissionMap,
       projectFiscalYear,
+      userListOptions,
     ]
   );
 };

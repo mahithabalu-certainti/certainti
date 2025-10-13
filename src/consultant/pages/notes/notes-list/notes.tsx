@@ -22,6 +22,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { checkPermission, reshapeGlobalFilter } from '../../../../common-utils';
 import { AccessRestricted } from '../../../../components/account-restricted';
+import { useManageUserList } from '../../../../admin/service';
 
 export const Notes: React.FC = () => {
   const [appliedFilters, setAppliedFilters] = useState<FilterTypes>({});
@@ -40,6 +41,14 @@ export const Notes: React.FC = () => {
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
+
+  // User List Api
+  const { data: userListData } = useManageUserList({
+    page: 1,
+    limit: 2000,
+    sortBy: 'first_name',
+    sortOrder: 'ASC',
+  });
 
   const { fiscalYear, filters } = useSelector<
     RootState,
@@ -135,6 +144,15 @@ export const Notes: React.FC = () => {
     setColumnAnchorEl(event.currentTarget);
   };
 
+  const userListOptions = useMemo(() => {
+    return (
+      userListData?.data?.users?.map((item) => ({
+        value: item.rid,
+        label: `${item.first_name} ${item.last_name}`,
+      })) || []
+    );
+  }, [userListData]);
+
   // Permissions
   const notesEditFields = useMemo(
     () =>
@@ -151,7 +169,10 @@ export const Notes: React.FC = () => {
     return map;
   }, [notesEditFields]);
 
-  const notesFilterFields = getNotesFilterFields(permissionMap);
+  const notesFilterFields = getNotesFilterFields(
+    permissionMap,
+    userListOptions
+  );
 
   if (!notesEnable || !isNotesViewEnable) return <AccessRestricted />;
 
@@ -263,6 +284,7 @@ export const Notes: React.FC = () => {
           setColumnAnchorEl={setColumnAnchorEl}
           columnAnchorEl={columnAnchorEl}
           searchValue={searchText}
+          userListOptions={userListOptions}
         />
       </div>
     </div>
