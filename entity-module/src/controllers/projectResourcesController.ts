@@ -497,10 +497,11 @@ async function resourceSkillRolesSubtype(
 async function resourceCodes(req: Request, res: Response): Promise<void> {
   const methodName = "Get resource codes";
   try {
-    const { accountId } = req.params;
+    const { accountId, projectFiscalRid } = req.params;
     const { search } = req.query;
     const projectResourceCodes = await projectResourceServices.getResourceCodes(
       accountId,
+      projectFiscalRid,
       search?.toString() ?? null
     );
     if (projectResourceCodes.statusCode === HttpStatus.SUCCESS) {
