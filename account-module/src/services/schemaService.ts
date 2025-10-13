@@ -155,6 +155,24 @@ class SchemaService {
     await sequelize.query(
       rawQueries.getAlterAiAssessmentQreForeignKeysQuery(schemaName)
     );
+
+    const fieldsToIndex = [
+      "created_by",
+      "modified_by",
+      "created_datetime",
+      "modified_datetime",
+      "transaction_id",
+      "project_fiscal_rid",
+      "project_rid",
+      "account_rid",
+      "version"
+    ];
+  
+    for (const field of fieldsToIndex) {
+      await sequelize.query(
+        rawQueries.getAiAssessmentQreIndexQuery(schemaName, field)
+      );
+    }
   }
 
   private async createAIAssesmentAudit(
@@ -167,6 +185,27 @@ class SchemaService {
     await sequelize.query(
       rawQueries.getAlterAiAssessmentAuditForeignKeysQuery(schemaName)
     );
+
+    const fieldsToIndex = [
+      "created_by",
+      "modified_by",
+      "created_datetime",
+      "modified_datetime",
+      "transaction_id",
+      "project_rid",
+      "project_fiscal_rid",
+      "account_rid",
+      "is_qre_processed",
+      "is_tech_summary_processed",
+      "is_interaction_question_processed",
+      "data_ingestion"
+    ];
+  
+    for (const field of fieldsToIndex) {
+      await sequelize.query(
+        rawQueries.getAiAssessmentAuditIndexQuery(schemaName, field)
+      );
+    }
   }
 
   private async createAITechnicalSummary(
@@ -184,6 +223,24 @@ class SchemaService {
     await sequelize.query(
       rawQueries.getAlterAiTechnicalSummaryForeignKeysQuery(schemaName)
     );
+
+    const fieldsToIndex = [
+      "account_rid",
+      "project_rid",
+      "fiscal_year",
+      "project_fiscal_rid",
+      "status_rid",
+      "created_by",
+      "modified_by",
+      "created_datetime",
+      "modified_datetime"
+    ];
+  
+    for (const field of fieldsToIndex) {
+      await sequelize.query(
+        rawQueries.getAiTechnicalSummaryIndexQuery(schemaName, field)
+      );
+    }
   }
 
   private async createAttachmentTimeline(
@@ -197,6 +254,22 @@ class SchemaService {
     await sequelize.query(
       rawQueries.getCreateAttachmentTimelineTableQuery(schemaName)
     );
+
+    const fieldsToIndex = [
+      "document_rid",
+      "document_category_rid",
+      "document_type_rid",
+      "event_type",
+      "event_status",
+      "event_datetime",
+      "created_by"
+    ];
+  
+    for (const field of fieldsToIndex) {
+      await sequelize.query(
+        rawQueries.getAttachmentTimelineIndexQuery(schemaName, field)
+      );
+    }
   }
 
   private async createAttachmentTable(
@@ -284,6 +357,20 @@ class SchemaService {
     await sequelize.query(
       rawQueries.getAccountFiscalRegionForeignKeyQuery(schemaName)
     );
+
+    const fieldsToIndex = [
+      "account_rid",
+      "fiscal_year",
+      "region_rid",
+      "created_by",
+      "created_datetime"
+    ];
+  
+    for (const field of fieldsToIndex) {
+      await sequelize.query(
+        rawQueries.getAccountFiscalRegionIndexQuery(schemaName, field)
+      );
+    }
   }
 
   private async createProjectTable(schemaName: string, sequelize: any) {
@@ -333,6 +420,18 @@ class SchemaService {
     await sequelize.query(
       rawQueries.getAddProjectHistoryForeignKeyQuery(schemaName)
     );
+
+    const fieldsToIndex = [
+      "project_rid",
+      "created_by",
+      "created_datetime"
+    ];
+  
+    for (const field of fieldsToIndex) {
+      await sequelize.query(
+        rawQueries.getProjectHistoryIndexQuery(schemaName, field)
+      );
+    }
   }
 
   private async createProjectFiscalTable(schemaName: string, sequelize: any) {
@@ -385,6 +484,30 @@ class SchemaService {
     await sequelize.query(
       rawQueries.getAddProjectFiscalRegionForeignKeysQuery(schemaName)
     );
+
+    const fieldsToIndex = [
+      "project_rid",
+      "project_code",
+      "fiscal_year",
+      "project_type_rid",
+      "project_classification_rid",
+      "project_client_group",
+      "account_rid",
+      "country_rid",
+      "region_rid",
+      "currency_rid",
+      "status_rid",
+      "project_startdate",
+      "project_enddate",
+      "created_by",
+      "created_datetime"
+    ];
+  
+    for (const field of fieldsToIndex) {
+      await sequelize.query(
+        rawQueries.getProjectFiscalRegionIndexQuery(schemaName, field)
+      );
+    }
   }
 
   private async createProjectTimelineTable(schemaName: string, sequelize: any) {
@@ -399,6 +522,23 @@ class SchemaService {
     await sequelize.query(
       rawQueries.getAddProjectTimelineForeignKeysQuery(schemaName)
     );
+
+    const fieldsToIndex = [
+      "account_rid",
+      "document_rid",
+      "entity_rid",
+      "event_type",
+      "event_status",
+      "event_datetime",
+      "created_by",
+      "created_datetime"
+    ];
+  
+    for (const field of fieldsToIndex) {
+      await sequelize.query(
+        rawQueries.getProjectTimelineIndexQuery(schemaName, field)
+      );
+    }
   }
 
   private async createProjectResourcesTable(
@@ -416,6 +556,29 @@ class SchemaService {
     await sequelize.query(
       rawQueries.getProjectResourceForeignKeysQuery(schemaName)
     );
+
+    const fieldsToIndex = [
+      "project_rid",
+      "project_fiscal_rid",
+      "resource_rid",
+      "status_rid",
+      "account_rid",
+      "currency_rid",
+      "country_rid",
+      "region_rid",
+      "assigned_skill_role_type_rid",
+      "fiscal_year",
+      "start_date",
+      "end_date",
+      "created_by",
+      "created_datetime"
+    ];
+  
+    for (const field of fieldsToIndex) {
+      await sequelize.query(
+        rawQueries.getProjectResourceIndexQuery(schemaName, field)
+      );
+    }
   }
 
   private async createProjectResourcesTimelineTable(
@@ -433,6 +596,20 @@ class SchemaService {
     await sequelize.query(
       rawQueries.getAddProjectResourceTimelineConstraintsQuery(schemaName)
     );
+
+    const fieldsToIndex = [
+      "account_rid",
+      "entity_rid",
+      "document_rid",
+      "event_datetime",
+      "created_by"
+    ];
+  
+    for (const field of fieldsToIndex) {
+      await sequelize.query(
+        rawQueries.getProjectResourceTimelineIndexQuery(schemaName, field)
+      );
+    }
   }
 
   private async createProjectResourcesHistoryTable(
@@ -450,6 +627,18 @@ class SchemaService {
     await sequelize.query(
       rawQueries.getAddProjectResourceHistoryConstraintsQuery(schemaName)
     );
+
+    const fieldsToIndex = [
+      "project_resource_rid",
+      "created_by",
+      "created_datetime"
+    ];
+  
+    for (const field of fieldsToIndex) {
+      await sequelize.query(
+        rawQueries.getProjectResourceHistoryIndexQuery(schemaName, field)
+      );
+    }
   }
 
   private async createDocumentTable(schemaName: string, sequelize: any) {
@@ -554,6 +743,25 @@ class SchemaService {
     await sequelize.query(
       rawQueries.getResourceFiscalRegionForeignKeysQuery(schemaName)
     );
+
+    const fieldsToIndex = [
+      "account_rid",
+      "resource_rid",
+      "resource_type_rid",
+      "resource_code",
+      "fiscal_year",
+      "country_rid",
+      "country_region_rid",
+      "created_by",
+      "effective_date",
+      "end_date"
+    ];
+  
+    for (const field of fieldsToIndex) {
+      await sequelize.query(
+        rawQueries.getResourceFiscalRegionIndexQuery(schemaName, field)
+      );
+    }
   }
 
   private async createProjectTaskTable(schemaName: string, sequelize: any) {
@@ -568,6 +776,27 @@ class SchemaService {
     await sequelize.query(
       rawQueries.getAddProjectTaskConstraintsQuery(schemaName)
     );
+
+    const fieldsToIndex = [
+      "account_rid",
+      "project_rid",
+      "project_fiscal_rid",
+      "resource_rid",
+      "fiscal_year",
+      "country_rid",
+      "region_rid",
+      "currency_rid",
+      "project_resource_rid",
+      "status_rid",
+      "task_type_rid",
+      "task_classification_rid"
+    ];
+  
+    for (const field of fieldsToIndex) {
+      await sequelize.query(
+        rawQueries.getProjectTaskIndexQuery(schemaName, field)
+      );
+    }
   }
 
   private async createProjectTaskTimeLineTable(
@@ -585,6 +814,22 @@ class SchemaService {
     await sequelize.query(
       rawQueries.getAddProjectTaskTimelineConstraintsQuery(schemaName)
     );
+
+    const fieldsToIndex = [
+      "account_rid",
+      "entity_rid",
+      "event_datetime",
+      "event_type",
+      "event_status",
+      "document_rid",
+      "created_datetime"
+    ];
+  
+    for (const field of fieldsToIndex) {
+      await sequelize.query(
+        rawQueries.getProjectTaskTimelineIndexQuery(schemaName, field)
+      );
+    }
   }
 
   private async createProjectTaskHistoryTable(
@@ -602,6 +847,20 @@ class SchemaService {
     await sequelize.query(
       rawQueries.getAddProjectTaskHistoryConstraintsQuery(schemaName)
     );
+    
+    const fieldsToIndex = [
+      "project_task_rid",
+      "modified_datetime",
+      "created_datetime",
+      "modified_by",
+      "created_by"
+    ];
+  
+    for (const field of fieldsToIndex) {
+      await sequelize.query(
+        rawQueries.getProjectTaskHistoryIndexQuery(schemaName, field)
+      );
+    }
   }
 
   private async createResourceHistoryTable(schemaName: string, sequelize: any) {
@@ -616,6 +875,18 @@ class SchemaService {
     await sequelize.query(
       rawQueries.getAddResourcesHistoryForeignKeyQuery(schemaName)
     );
+
+    const fieldsToIndex = [
+      "resource_rid",
+      "created_by",
+      "created_datetime"
+    ];
+
+    for (const field of fieldsToIndex) {
+      await sequelize.query(
+        rawQueries.getResourcesHistoryIndexQuery(schemaName, field)
+      );
+    }
   }
 
   private async createResourceTimelineTable(
@@ -633,6 +904,22 @@ class SchemaService {
     await sequelize.query(
       rawQueries.getAddResourcesTimelineForeignKeysQuery(schemaName)
     );
+
+    const fieldsToIndex = [
+      "account_rid",
+      "entity_rid",
+      "document_rid",
+      "event_type",
+      "event_datetime",
+      "created_by",
+      "created_datetime"
+    ];
+  
+    for (const field of fieldsToIndex) {
+      await sequelize.query(
+        rawQueries.getResourcesTimelineIndexQuery(schemaName, field)
+      );
+    }
   }
 
   private async createResourceCostTable(schemaName: string, sequelize: any) {
@@ -670,6 +957,23 @@ class SchemaService {
     await sequelize.query(
       rawQueries.getAddResourceCostTimelineForeignKeysQuery(schemaName)
     );
+
+    const fieldsToIndex = [
+      "account_rid",
+      "document_rid",
+      "entity_rid",
+      "event_type",
+      "event_status",
+      "event_datetime",
+      "created_by",
+      "created_datetime"
+    ];
+  
+    for (const field of fieldsToIndex) {
+      await sequelize.query(
+        rawQueries.getResourceCostTimelineIndexQuery(schemaName, field)
+      );
+    }
   }
 
   private async createResourceCostHistoryTable(
@@ -687,6 +991,18 @@ class SchemaService {
     await sequelize.query(
       rawQueries.getAddResourceCostHistoryForeignKeyQuery(schemaName)
     );
+
+    const fieldsToIndex = [
+      "resource_cost_rid",
+      "created_by",
+      "created_datetime"
+    ];
+  
+    for (const field of fieldsToIndex) {
+      await sequelize.query(
+        rawQueries.getResourceCostHistoryIndexQuery(schemaName, field)
+      );
+    }
   }
 
   private async createResourceSkillTable(schemaName: string, sequelize: any) {
@@ -723,6 +1039,23 @@ class SchemaService {
     await sequelize.query(
       rawQueries.getAddResourceSkillTimelineForeignKeysQuery(schemaName)
     );
+
+    const fieldsToIndex = [
+      "account_rid",
+      "document_rid",
+      "entity_rid",
+      "event_type",
+      "event_status",
+      "event_datetime",
+      "created_by",
+      "created_datetime"
+    ];
+  
+    for (const field of fieldsToIndex) {
+      await sequelize.query(
+        rawQueries.getResourceSkillTimelineIndexQuery(schemaName, field)
+      );
+    }
   }
 
   private async createResourceSkillHistoryTable(
@@ -740,6 +1073,18 @@ class SchemaService {
     await sequelize.query(
       rawQueries.getAddResourceSkillHistoryForeignKeyQuery(schemaName)
     );
+
+    const fieldsToIndex = [
+      "resource_skill_rid",
+      "created_by",
+      "created_datetime"
+    ];
+  
+    for (const field of fieldsToIndex) {
+      await sequelize.query(
+        rawQueries.getResourceSkillHistoryIndexQuery(schemaName, field)
+      );
+    }
   }
 
   async createProjectResourceFiscalTable(schemaName: string, sequelize: any) {
@@ -754,6 +1099,21 @@ class SchemaService {
     await sequelize.query(
       rawQueries.getAddProjectResourceFiscalConstraintsQuery(schemaName)
     );
+
+    const fieldsToIndex = [
+      "account_rid",
+      "project_rid",
+      "project_fiscal_rid",
+      "resource_rid",
+      "fiscal_year",
+      "status_rid"
+    ];
+
+    for (const field of fieldsToIndex) {
+      await sequelize.query(
+        rawQueries.getProjectResourceFiscalIndexQuery(schemaName, field)
+      );
+    }
   }
 
   async createProjectResourceFiscalRegionTable(
@@ -771,6 +1131,24 @@ class SchemaService {
     await sequelize.query(
       rawQueries.getAddProjectResourceFiscalRegionConstraintsQuery(schemaName)
     );
+
+    const fieldsToIndex = [
+      "account_rid",
+      "project_rid",
+      "project_fiscal_rid",
+      "resource_rid",
+      "fiscal_year",
+      "status_rid",
+      "country_rid",
+      "region_rid",
+      "currency_rid"
+    ];
+  
+    for (const field of fieldsToIndex) {
+      await sequelize.query(
+        rawQueries.getProjectResourceFiscalRegionIndexQuery(schemaName, field)
+      );
+    }
   }
 
   private async createInteractionTable(schemaName: string, sequelize: any) {
@@ -816,6 +1194,22 @@ class SchemaService {
     await sequelize.query(
       rawQueries.getAlterInteractionHistoryForeignKeysQuery(schemaName)
     );
+
+    const fieldsToIndex = [
+      "interaction_rid",
+      "interaction_item_rid",
+      "project_fiscal_rid",
+      "created_by",
+      "modified_by",
+      "created_datetime",
+      "modified_datetime"
+    ];
+  
+    for (const field of fieldsToIndex) {
+      await sequelize.query(
+        rawQueries.getInteractionHistoryIndexQuery(schemaName, field)
+      );
+    }
   }
 
   private async createInteractionItemTable(schemaName: string, sequelize: any) {
@@ -892,6 +1286,24 @@ class SchemaService {
     await sequelize.query(
       rawQueries.getAlterInteractionTimelineForeignKeysQuery(schemaName)
     );
+
+    const fieldsToIndex = [
+      "created_by",
+      "modified_by",
+      "created_datetime",
+      "modified_datetime",
+      "account_rid",
+      "entity_rid",
+      "event_type",
+      "event_status",
+      "event_datetime"
+    ];
+
+    for (const field of fieldsToIndex) {
+      await sequelize.query(
+        rawQueries.getInteractionTimelineIndexQuery(schemaName, field)
+      );
+    }
   }
 
   private async createAutoSendInteractionAudit(
@@ -918,6 +1330,23 @@ class SchemaService {
     await sequelize.query(
       rawQueries.getAlterOtpEntriesForeignKeysQuery(schemaName)
     );
+
+    const fieldsToIndex = [
+      "created_by",
+      "modified_by",
+      "created_datetime",
+      "modified_datetime",
+      "account_rid",
+      "interaction_rid",
+      "project_fiscal_rid",
+      "is_verified",
+    ];
+
+    for (const field of fieldsToIndex) {
+      await sequelize.query(
+        rawQueries.getOtpEntriesIndexQuery(schemaName, field)
+      );
+    }
   }
 
   private async createOtpEntriesHistory(schemaName: string, sequelize: any) {
@@ -928,12 +1357,42 @@ class SchemaService {
     await sequelize.query(
       rawQueries.getAlterOtpEntriesHistoryForeignKeysQuery(schemaName)
     );
+
+    const fieldsToIndex = [
+      "created_by",
+      "created_datetime",
+      "account_rid",
+      "interaction_rid",
+      "project_fiscal_rid",
+      "status",
+      "attempt_number"
+    ];
+  
+    for (const field of fieldsToIndex) {
+      await sequelize.query(
+        rawQueries.getOtpEntriesHistoryIndexQuery(schemaName, field)
+      );
+    }
   }
 
   private async createEmailWebhookHistory(schemaName: string, sequelize: any) {
     await sequelize.query(
       rawQueries.getCreateWebhookEmailHistoryTableQuery(schemaName)
     );
+
+    const fieldsToIndex = [
+      "created_by",
+      "created_datetime",
+      "email_sender",
+      "status",
+      "uploaded_time"
+    ];
+  
+    for (const field of fieldsToIndex) {
+      await sequelize.query(
+        rawQueries.getWebhookEmailHistoryIndexQuery(schemaName, field)
+      );
+    }
   }
 
   private async createNotesTable(schemaName: string, sequelize: Sequelize) {
@@ -954,6 +1413,21 @@ class SchemaService {
     await sequelize.query(
       rawQueries.getCreateNotesTimelineTableQuery(schemaName)
     );
+
+    const fieldsToIndex = [
+      "created_by",
+      "modified_by",
+      "attachment_level",
+      "event_type",
+      "event_status",
+      "event_datetime"
+    ];
+  
+    for (const field of fieldsToIndex) {
+      await sequelize.query(
+        rawQueries.getNotesTimelineIndexQuery(schemaName, field)
+      );
+    }
   }
 
   async insertAccountDetails(
