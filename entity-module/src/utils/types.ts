@@ -321,6 +321,7 @@ export interface ICreateProjectResource {
   status_rid?: string | null;
   total_hours_pro_res?: number;
   total_cost_pro_res?: number;
+  net_total_cost_pro_res?: number;
   fiscal_year: number;
   country_rid: string | null;
   region_rid?: string | null;
@@ -354,6 +355,7 @@ export interface IUpdateProjectResource {
   status_rid?: string | null;
   total_hours_pro_res?: number;
   total_cost_pro_res?: number;
+  net_total_cost_pro_res?: number;
   fiscal_year: number;
   country_rid?: string | null;
   region_rid?: string | null;
@@ -383,6 +385,7 @@ export interface IUpdateInlineProjectResource {
   resource_role?: string | null;
   total_hours_pro_res?: number;
   total_cost_pro_res?: number;
+  net_total_cost_pro_res?: number;
   region_rid?: string | null;
   description?: string | null;
   modified_by?: string;
