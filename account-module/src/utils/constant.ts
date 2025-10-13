@@ -2883,7 +2883,210 @@ export const rawQueries = {
         notes_rid VARCHAR(50)
       );
     `;
-  }                                                   
+  },
+  getProjectResourceIndexQuery(schemaName: string, field: string): string {
+    const indexName = `${schemaName}_project_resource_${field}_idx`;
+    return `
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."project_resource"("${field}");
+    `;
+  },
+  getAccountFiscalRegionIndexQuery(schemaName: string, field: string): string {
+    const indexName = `${schemaName}_account_fiscal_region_${field}_idx`;
+    return `
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."account_fiscal_region"("${field}");
+    `;
+  },
+  getProjectHistoryIndexQuery(schemaName: string, field: string): string {
+    const indexName = `${schemaName}_project_history_${field}_idx`;
+    return `
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."project_history"("${field}");
+    `;
+  },
+  getProjectFiscalRegionIndexQuery(schemaName: string, field: string): string {
+    const indexName = `${schemaName}_project_fiscal_region_${field}_idx`;
+    return `
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."project_fiscal_region"("${field}");
+    `;
+  },
+  getProjectTimelineIndexQuery(schemaName: string, field: string): string {
+    const indexName = `${schemaName}_project_timeline_${field}_idx`;
+    return `
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."project_timeline"("${field}");
+    `;
+  },
+  getResourcesHistoryIndexQuery(schemaName: string, field: string): string {
+    const indexName = `${schemaName}_resources_history_${field}_idx`;
+    return `
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."resources_history"("${field}");
+    `;
+  },
+  getResourcesTimelineIndexQuery(schemaName: string, field: string): string {
+    const indexName = `${schemaName}_resources_timeline_${field}_idx`;
+    return `
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."resources_timeline"("${field}");
+    `;
+  },
+  getResourceCostTimelineIndexQuery(schemaName: string, field: string): string {
+    const indexName = `${schemaName}_resource_cost_timeline_${field}_idx`;
+    return `
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."resource_cost_timeline"("${field}");
+    `;
+  },
+  getResourceCostHistoryIndexQuery(schemaName: string, field: string): string {
+    const indexName = `${schemaName}_resource_cost_history_${field}_idx`;
+    return `
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."resource_cost_history"("${field}");
+    `;
+  },
+  getResourceSkillTimelineIndexQuery(schemaName: string, field: string): string {
+    const indexName = `${schemaName}_resource_skill_timeline_${field}_idx`;
+    return `
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."resource_skill_timeline"("${field}");
+    `;
+  },
+  getResourceSkillHistoryIndexQuery(schemaName: string, field: string): string {
+    const indexName = `${schemaName}_resource_skill_history_${field}_idx`;
+    return `
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."resource_skill_history"("${field}");
+    `;
+  },
+  getAttachmentTimelineIndexQuery(schemaName: string, field: string): string {
+    const indexName = `${schemaName}_attachment_timeline_${field}_idx`;
+    return `
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."attachment_timeline"("${field}");
+    `;
+  },
+  getResourceFiscalRegionIndexQuery(schemaName: string, field: string): string {
+    const indexName = `${schemaName}_resource_fiscal_region_${field}_idx`;
+    return `
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."resource_fiscal_region"("${field}");
+    `;
+  },
+  getProjectResourceTimelineIndexQuery(schemaName: string, field: string): string {
+    const indexName = `${schemaName}_project_resource_timeline_${field}_idx`;
+    return `
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."project_resource_timeline"("${field}");
+    `;
+  },
+  getProjectResourceHistoryIndexQuery(schemaName: string, field: string): string {
+    const indexName = `${schemaName}_project_resource_history_${field}_idx`;
+    return `
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."project_resource_history"("${field}");
+    `;
+  },
+  getProjectResourceFiscalIndexQuery(schemaName: string, field: string): string {
+    const indexName = `${schemaName}_project_resource_fiscal_${field}_idx`;
+    return `
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."project_resource_fiscal"("${field}");
+    `;
+  },
+  getProjectResourceFiscalRegionIndexQuery(schemaName: string, field: string): string {
+    const indexName = `${schemaName}_project_resource_fiscal_region_${field}_idx`;
+    return `
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."project_resource_fiscal_region"("${field}");
+    `;
+  },
+  getProjectTaskIndexQuery(schemaName: string, field: string): string {
+    const indexName = `${schemaName}_project_task_${field}_idx`;
+    return `
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."project_task"("${field}");
+    `;
+  },
+  getProjectTaskTimelineIndexQuery(schemaName: string, field: string): string {
+    const indexName = `${schemaName}_project_task_timeline_${field}_idx`;
+    return `
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."project_task_timeline"("${field}");
+    `;
+  },
+  getProjectTaskHistoryIndexQuery(schemaName: string, field: string): string {
+    const indexName = `${schemaName}_project_task_history_${field}_idx`;
+    return `
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."project_task_history"("${field}");
+    `;
+  },
+  getInteractionHistoryIndexQuery(schemaName: string, field: string): string {
+    const indexName = `${schemaName}_interaction_history_${field}_idx`;
+    return `
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."interaction_history"("${field}");
+    `;
+  },
+  getAiTechnicalSummaryIndexQuery(schemaName: string, field: string): string {
+    const indexName = `${schemaName}_ai_technical_summary_${field}_idx`;
+    return `
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."ai_technical_summary"("${field}");
+    `;
+  },                                                                                      
+  getInteractionTimelineIndexQuery(schemaName: string, field: string): string {
+    const indexName = `${schemaName}_interaction_timeline_${field}_idx`;
+    return `
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."interaction_timeline"("${field}");
+    `;
+  },  
+  getAiAssessmentAuditIndexQuery(schemaName: string, field: string): string {
+    const indexName = `${schemaName}_ai_assessment_audit_${field}_idx`;
+    return `
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."ai_assessment_audit"("${field}");
+    `;
+  },
+  getAiAssessmentQreIndexQuery(schemaName: string, field: string): string {
+    const indexName = `${schemaName}_ai_assessment_qre_${field}_idx`;
+    return `
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."ai_assessment_qre"("${field}");
+    `;
+  },
+  getOtpEntriesIndexQuery(schemaName: string, field: string): string {
+    const indexName = `${schemaName}_otp_entries_${field}_idx`;
+    return `
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."otp_entries"("${field}");
+    `;
+  },
+  getOtpEntriesHistoryIndexQuery(schemaName: string, field: string): string {
+    const indexName = `${schemaName}_otp_entries_history_${field}_idx`;
+    return `
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."otp_entries_history"("${field}");
+    `;
+  },
+  getWebhookEmailHistoryIndexQuery(schemaName: string, field: string): string {
+    const indexName = `${schemaName}_webhook_email_history_${field}_idx`;
+    return `
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."webhook_email_history"("${field}");
+    `;
+  },
+  getNotesTimelineIndexQuery(schemaName: string, field: string): string {
+    const indexName = `${schemaName}_notes_timeline_${field}_idx`;
+    return `
+      CREATE INDEX IF NOT EXISTS "${indexName}"
+      ON "${schemaName}"."notes_timeline"("${field}");
+    `;
+  },          
 };
 
 export const DEFAULT_ACCOUNT_DETAILS = {
