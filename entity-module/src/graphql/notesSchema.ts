@@ -24,6 +24,7 @@ uploaded_by: String
 attached_to: String
 created_by_name : String
 modified_by_name : String
+notes_owner_name : String
 }
 
 type notesFinalresponse {
