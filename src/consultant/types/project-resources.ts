@@ -46,6 +46,7 @@ export type ProjectResourcesListType = {
   description?: string | null;
   currency_symbol?: string;
   project_fiscal_rid?: string;
+  net_total_cost_pro_res?: string | null;
 };
 
 export interface ProjectResourcesApiResponse extends CommonApiResponse {
@@ -96,7 +97,7 @@ export interface ProjectResourceDetailsType {
   insurance?: number | null;
   deductions: number | null;
   description: string | null;
-
+  net_total_cost_pro_res: string | null;
   // Derived or display fields
   country_name: string | null;
   country_code: string | null;
@@ -224,6 +225,7 @@ export interface ProjectResourceNewPayload {
   insurance?: string | null;
   deductions?: string | null;
   description?: string | null;
+  net_total_cost_pro_res?: string | null;
 }
 
 //Row project resource items
