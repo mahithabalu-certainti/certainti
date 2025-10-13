@@ -43,7 +43,10 @@ import {
 import { projectResourcesPayloadData } from './utils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
-import { formatDateToYYYYMMDDWithTime, getIntersection } from '../../../../../../common-utils';
+import {
+  formatDateToYYYYMMDDWithTime,
+  getIntersection,
+} from '../../../../../../common-utils';
 import { RESOURCE_CREATE } from '../../../../../../routes';
 import SkeletonForm from '../../../../../../components/form-builder/skeleton-form';
 
@@ -168,7 +171,7 @@ const ProjectResourceForm: React.FC = () => {
   }, [projectViewEditFields]);
 
   const { data: projectResourceCodeOptions, isLoading: resCodeLoading } =
-    useGetProjectResourceCode(account_Id as string);
+    useGetProjectResourceCode(account_Id as string, project_Id as string);
   // const projectResourceTypeOptions = useGetResourceType();
   const projectResourceSkillTypeOptions = useGetProjectResourceSkillType();
   // const projectResourceRollSkillOptions = useGetProjectResourceRollSkill();

@@ -875,9 +875,9 @@ export const getFiscalDateBounds = (
     startYear = fiscalYear - 1;
     endYear = fiscalYear;
   } else {
-    // FY 2024 with Jan–Dec → Jan 2023 to Dec 2023
-    startYear = fiscalYear - 1;
-    endYear = fiscalYear - 1;
+    // FY 2024 with Jan–Dec → Jan 2024 to Dec 2024
+    startYear = fiscalYear;
+    endYear = fiscalYear;
   }
 
   const startDateMin = getFiscalParseDateFromMMDD(

@@ -9,12 +9,15 @@ import {
 import { useQuery } from '@tanstack/react-query';
 
 // Get Project Resource Code Api
-export const useGetProjectResourceCode = (accountId: string) => {
+export const useGetProjectResourceCode = (
+  accountId: string,
+  projectID: string
+) => {
   return useQuery<ProjectResourceCodeResponse, Error>({
     queryKey: ['getProjectResourceCode', accountId],
     queryFn: () => {
       if (!accountId) throw new Error('Missing accountId');
-      return fetchProjectResourceCode(accountId);
+      return fetchProjectResourceCode(accountId, projectID);
     },
     enabled: !!accountId,
     retry: 0,
@@ -77,11 +80,12 @@ export const useGetAppliedProjectResourceCode = (
 };
 
 export const fetchProjectResourceCode = async (
-  accountId: string
+  accountId: string,
+  projectID: string
 ): Promise<ProjectResourceCodeResponse> => {
   try {
     const { data } = await resourceServiceApi.get<ProjectResourceCodeResponse>(
-      getProjectResourceCodeUrl(accountId)
+      getProjectResourceCodeUrl(accountId, projectID)
     );
     return data;
   } catch (error) {
@@ -135,8 +139,11 @@ export const fetchAppliedProjectResourceCode = async (
   }
 };
 
-export const getProjectResourceCodeUrl = (accountId: string): string => {
-  return `/api/project_resources/resourcecodes/${accountId}`;
+export const getProjectResourceCodeUrl = (
+  accountId: string,
+  projectID: string
+): string => {
+  return `/api/project_resources/resourcecodes/${accountId}/${projectID}`;
 };
 export const getProjectResourceTaskCodeUrl = (): string => {
   return `/api/project_tasks/resourcecodes/`;
