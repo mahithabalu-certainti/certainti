@@ -1516,10 +1516,13 @@ class ResourceCostService {
           },
         }
       );
+      let dynamicResKey : string = ``
+      if(resourceCostStatus == 'Anomaly') dynamicResKey = "Anomaly"
+      else dynamicResKey = "Duplicate"
 
     return {
       statusCode: HttpStatus.SUCCESS,
-      message: action === "accept" ? "Anomaly accepted successfully" : "Anomaly rejected successfully",
+      message: action === "accept" ? `${dynamicResKey} accepted successfully` : `${dynamicResKey} rejected successfully`,
       data: {
         updateStatus,
       },

@@ -2829,8 +2829,8 @@ export const rawQueries = {
         fiscal_year INTEGER NOT NULL,
         format VARCHAR(10) NOT NULL,
         size_in_mb NUMERIC(10,2) NOT NULL,
-        title VARCHAR(1000) NOT NULL,
-        notes_owner VARCHAR(100) NOT NULL,
+        title VARCHAR(64) NOT NULL,
+        notes_owner VARCHAR(64) NOT NULL,
         descriptions VARCHAR(2000)
       );
     `;
@@ -2871,15 +2871,16 @@ export const rawQueries = {
         created_by VARCHAR(50) NOT NULL,
         modified_by VARCHAR(50),
         document_name VARCHAR(255) NOT NULL,
-        title VARCHAR(50) NOT NULL,
-        notes_owner VARCHAR(50) NOT NULL,
+        title VARCHAR(64) NOT NULL,
+        notes_owner VARCHAR(64) NOT NULL,
         attach_to VARCHAR(50) NOT NULL,
         attachment_level VARCHAR(50) NOT NULL,
         event_type VARCHAR(50) NOT NULL,
         event_status VARCHAR(50) NOT NULL,
         event_name VARCHAR(255),
         event_datetime TIMESTAMPTZ NOT NULL,
-        descriptions VARCHAR(2000)
+        descriptions VARCHAR(2000),
+        notes_rid VARCHAR(50)
       );
     `;
   }                                                   
