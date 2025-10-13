@@ -239,10 +239,6 @@ export class NotesService {
           modifiedByFilter = filters.modified_by_name;
           delete filters.modified_by_name;
         }
-        if (filters.notes_owner_name) {
-          notesOwnerFilter = filters.notes_owner_name;
-          delete filters.notes_owner_name;
-        }
     
         const { whereClause } = this.buildRawWhereClause(filters, search);
     
@@ -570,22 +566,6 @@ export class NotesService {
             }
           });
         }
-        if (notesOwnerFilter) {
-          let filterValue;
-            notes = notes.filter(notes => {
-            const notesOwner = notes.notes_owner_name?.toLowerCase() || '';
-            const operator = Object.keys(notesOwnerFilter)[0];
-            if(operator === 'is_empty') filterValue = ''
-            else filterValue = (notesOwnerFilter[operator] || '').toLowerCase();
-            switch (operator) {
-              case 'contains': return notesOwner.includes(filterValue);
-              case 'equals': return notesOwner === filterValue;
-              case 'not_equals': return notesOwner !== filterValue;
-              case 'is_empty': return notesOwner === null || notesOwner === ''
-              default: return false;
-            }
-          });
-        }
     
         // Add "mb" suffix to size values for attachments
           notes = notes.map(notes => ({
@@ -664,10 +644,6 @@ export class NotesService {
         if (filters.modified_by_name) {
           modifiedByFilter = filters.modified_by_name;
           delete filters.modified_by_name;
-        }
-        if (filters.notes_owner_name) {
-          notesOwnerFilter = filters.notes_owner_name;
-          delete filters.notes_owner_name;
         }
     
         const { whereClause } = this.buildRawWhereClause(filters, search);
@@ -1016,22 +992,6 @@ export class NotesService {
             }
           });
         }
-        if (notesOwnerFilter) {
-          let filterValue;
-            notes = notes.filter(notes => {
-            const notesOwner = notes.notes_owner_name?.toLowerCase() || '';
-            const operator = Object.keys(notesOwnerFilter)[0];
-            if(operator === 'is_empty') filterValue = ''
-            else filterValue = (notesOwnerFilter[operator] || '').toLowerCase();
-            switch (operator) {
-              case 'contains': return notesOwner.includes(filterValue);
-              case 'equals': return notesOwner === filterValue;
-              case 'not_equals': return notesOwner !== filterValue;
-              case 'is_empty': return notesOwner === null || notesOwner === ''
-              default: return false;
-            }
-          });
-        }
     
         // Add "mb" suffix to size values for attachments
            notes = notes.map(notes => ({
@@ -1121,10 +1081,6 @@ export class NotesService {
         if (filters.modified_by_name) {
           modifiedByFilter = filters.modified_by_name;
           delete filters.modified_by_name;
-        }
-        if (filters.notes_owner_name) {
-          notesOwnerFilter = filters.notes_owner_name;
-          delete filters.notes_owner_name;
         }
     
         const { whereClause } = this.buildRawWhereClause(filters, search);
@@ -1297,25 +1253,8 @@ export class NotesService {
             }
           });
         }
-        if (notesOwnerFilter) {
-          let filterValue;
-            attachments = attachments.filter(notes => {
-            const notesOwner = notes.notes_owner_name?.toLowerCase() || '';
-            const operator = Object.keys(notesOwnerFilter)[0];
-            if(operator === 'is_empty') filterValue = ''
-            else filterValue = (notesOwnerFilter[operator] || '').toLowerCase();
-            switch (operator) {
-              case 'contains': return notesOwner.includes(filterValue);
-              case 'equals': return notesOwner === filterValue;
-              case 'not_equals': return notesOwner !== filterValue;
-              case 'is_empty': return notesOwner === null || notesOwner === ''
-              default: return false;
-            }
-          });
-        }
-    
         // 🔷 Sort with custom field sorting logic
-        const validSortFields = ['document_name', 'title', 'notes_owner', 'r_number', 'format', 'attachment_level', 'size_in_mb', 'attached_to', 'descriptions', 'created_by_name', 'created_datetime', 'fiscal_year', 'modified_by_name', 'modified_datetime'];
+        const validSortFields = ['document_name', 'title', 'r_number', 'format', 'attachment_level', 'size_in_mb', 'attached_to', 'descriptions', 'created_by_name', 'created_datetime', 'fiscal_year', 'modified_by_name', 'modified_datetime'];
         const finalSortBy = validSortFields.includes(sortBy) ? sortBy : 'created_datetime';
         const finalSortOrder = ['ASC', 'DESC'].includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
     
@@ -1440,10 +1379,6 @@ export class NotesService {
         if (filters.modified_by_name) {
           modifiedByFilter = filters.modified_by_name;
           delete filters.modified_by_name;
-        }
-        if (filters.notes_owner_name) {
-          notesOwnerFilter = filters.notes_owner_name;
-          delete filters.notes_owner_name;
         }
     
         const { whereClause } = this.buildRawWhereClause(filters, search);
@@ -1604,19 +1539,6 @@ export class NotesService {
               case 'contains': return modifiedBy.includes(filterValue);
               case 'equals': return modifiedBy === filterValue;
               case 'not_equals': return modifiedBy !== filterValue || modifiedBy === null;
-              default: return false;
-            }
-          });
-        }
-        if (notesOwnerFilter) {
-          attachments = attachments.filter(att => {
-            const notesOwner = (att.notes_owner_name || '').toLowerCase();
-            const operator = Object.keys(notesOwnerFilter)[0];
-            const filterValue = (notesOwnerFilter[operator] || '').toLowerCase();
-            switch (operator) {
-              case 'contains': return notesOwner.includes(filterValue);
-              case 'equals': return notesOwner === filterValue;
-              case 'not_equals': return notesOwner !== filterValue || notesOwner === null;
               default: return false;
             }
           });
@@ -1797,11 +1719,13 @@ export class NotesService {
           case 'attach_to':
           case 'r_number':
           case 'title':
+          case 'notes_owner':
             switch (operator.toLowerCase()) {
               case 'equals': condition[field] = { [Op.iLike]: value }; break;
               case 'not_equals': condition[field] = { [Op.or]: [{ [Op.notILike]: value }, { [Op.is]: null }] }; break;          
               case 'contains': condition[field] = { [Op.iLike]: `%${value}%` }; break;
               case 'is_empty': condition[field] = { [Op.or]: [{ [Op.is]: null }, { [Op.eq]: '' }] }; break;
+              case 'in': condition[field] = { [Op.in]: Array.isArray(value) ? value : [value] }; break;
             }
             break;
     
@@ -1947,9 +1871,9 @@ private mapAttachmentToCommonFormat(at: any) {
   "Format": at.format || "-",
   "Size": at.size_in_mb || "-",
   "Created By": at.created_by_name || "-",
-  "Created On": at.created_datetime ? moment(at.created_datetime).format("YYYY-MMM-DD HH:mm:ss") : "-",
+  "Created On": at.created_datetime ? moment(at.created_datetime).format("YYYY-MMM-DD, hh:mm:ss A") : "-",
   "Modified By": at.modified_by_name || "-",
-  "Modified On": at.modified_datetime ? moment(at.modified_datetime).format("YYYY-MMM-DD HH:mm:ss") : "-",
+  "Modified On": at.modified_datetime ? moment(at.modified_datetime).format("YYYY-MMM-DD, hh:mm:ss A") : "-",
   "Download": at.browse_file || "-"
 };
 }
@@ -1987,7 +1911,7 @@ private mapAttachmentToCommonFormat(at: any) {
           const fetchNotes = await orgDb.query(fetchNotesById(schemaName, data.rid))
           if(fetchNotes[0].length > 0) {
             const fetchActiveStatusId : any = await mainDb.query(fetchActiveStatus())
-            const uniqueUserIds = [...new Set(fetchNotes[0].flatMap((d : any) => [d.created_by, d.modified_by]))]
+            const uniqueUserIds = [...new Set(fetchNotes[0].flatMap((d : any) => [d.created_by, d.modified_by, d.notes_owner]))]
             const allUsers = await mainDb.query(fetchUsers(fetchActiveStatusId[0][0].rid, uniqueUserIds))
 
             const createdUserMap : Map<string, string> = new Map(allUsers[0].map((d : any) => [d.rid, `${d.first_name} ${d.last_name}`]))
@@ -1997,6 +1921,7 @@ private mapAttachmentToCommonFormat(at: any) {
                 ...n,
                 created_by_name : createdUserMap.get(n.created_by) || null,
                 modified_by_name : createdUserMap.get(n.modified_by) || null,
+                notes_owner_name : createdUserMap.get(n.notes_owner) || null,
                 browse_file : await generateSasUrl(n.browse_file)
               }
             }))
