@@ -1319,12 +1319,13 @@ class UserManagementService {
       }
 
       // Process updates by type
-      const updatePromises = modifiedPermissions.map(async (permission) => {
+      const updatePromises = modifiedPermissions.map(async (permission:any) => {
         switch (permission.type) {
           case "menu":
             return this.updateMenuAccessIfChanged(
               permission.rid,
               permission.is_enabled || false,
+              permission.menu_id,
               userId,
               originalUrl
             );
@@ -1332,6 +1333,7 @@ class UserManagementService {
             return this.updateModuleAccessIfChanged(
               permission.rid,
               permission.is_enabled || false,
+              permission.module_id,
               userId,
               originalUrl
             );
@@ -1339,6 +1341,7 @@ class UserManagementService {
             return this.updatePermissionAccessIfChanged(
               permission.rid,
               permission.is_enabled || false,
+              permission.permission_id,
               userId,
               originalUrl
             );
@@ -1347,6 +1350,7 @@ class UserManagementService {
               permission.rid,
               permission.read || false,
               permission.edit || false,
+              permission.field_id,
               userId,
               originalUrl
             );
@@ -1595,6 +1599,7 @@ class UserManagementService {
   private async updateMenuAccessIfChanged(
     accessId: string,
     isEnabled: boolean,
+    menuId: string,
     userId: string,
     originalUrl: string = "create"
   ): Promise<boolean> {
@@ -1634,6 +1639,18 @@ class UserManagementService {
           where: { rid: accessId },
         }
       );
+      if (updated > 0 && isEnabled === true) {
+        // If the record was updated and is_enabled is now true, also update UserMenuAccess if exists
+        const userMenuAccess = await UserMenuAccess.findOne({
+          where: { menu_id: menuId, is_enabled: true },
+        });
+        if (userMenuAccess) {
+          await UserMenuAccess.update(
+            { is_enabled: false },
+            { where: { menu_id: menuId } }
+          );
+        }
+      }
 
       return updated > 0;
     } catch (error) {
@@ -1648,6 +1665,7 @@ class UserManagementService {
   private async updateModuleAccessIfChanged(
     accessId: string,
     isEnabled: boolean,
+    moduleId: string,
     userId: string,
     originalUrl: string = "create"
   ): Promise<boolean> {
@@ -1689,6 +1707,19 @@ class UserManagementService {
           where: { rid: accessId },
         }
       );
+       if (updated > 0 && isEnabled === true) {
+        // If the record was updated and is_enabled is now true, also update UserModuleAccess if exists
+        const userModuleAccess = await UserModuleAccess.findOne({
+          where: { menu_module_id: moduleId , is_enabled: true},
+        });
+
+        if (userModuleAccess) {
+          await UserModuleAccess.update(
+            { is_enabled: false },
+            { where: { menu_module_id: moduleId } }
+          );
+        }
+      }
 
       return updated > 0;
     } catch (error) {
@@ -1703,6 +1734,7 @@ class UserManagementService {
   private async updatePermissionAccessIfChanged(
     accessId: string,
     isEnabled: boolean,
+    permissionId: string,
     userId: string,
     originalUrl: string = "create"
   ): Promise<boolean> {
@@ -1744,6 +1776,18 @@ class UserManagementService {
           where: { rid: accessId },
         }
       );
+       if (updated > 0 && isEnabled === true) {
+        // If the record was updated and is_enabled is now true, also update UserPermissionAccess if exists
+        const userPermissionAccess = await UserPermissionAccess.findOne({
+          where: { module_permission_id: permissionId, is_enabled: true },
+        });
+        if (userPermissionAccess) {
+          await UserPermissionAccess.update(
+            { is_enabled: false },
+            { where: { module_permission_id: permissionId } }
+          );
+        }
+      }
 
       return updated > 0;
     } catch (error) {
@@ -1759,6 +1803,7 @@ class UserManagementService {
     accessId: string,
     read: boolean,
     edit: boolean,
+    fieldId: string,
     userId: string,
     originalUrl: string = "create"
   ): Promise<boolean> {
@@ -1818,6 +1863,30 @@ class UserManagementService {
           where: { rid: accessId },
         }
       );
+      if (updated > 0 && read === true) {
+        // If the record was updated and is_enabled is now true, also update UserFieldsAccess if exists
+        const userFieldsAccess = await UserFieldsAccess.findOne({
+          where: { permission_field_id: fieldId, read: true },
+        });
+        if (userFieldsAccess) {
+          await UserFieldsAccess.update(
+            { read: false },
+            { where: { permission_field_id: fieldId } }
+          );
+        }
+      }
+       if (updated > 0 && edit === true) {
+        // If the record was updated and is_enabled is now true, also update UserFieldsAccess if exists
+        const userFieldsAccess = await UserFieldsAccess.findOne({
+          where: { permission_field_id: fieldId, edit: true },
+        });
+        if (userFieldsAccess) {
+          await UserFieldsAccess.update(
+            { edit: false },
+            { where: { permission_field_id: fieldId } }
+          );
+        }
+      }
 
       return updated > 0;
     } catch (error) {
