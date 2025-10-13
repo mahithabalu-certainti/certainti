@@ -1412,6 +1412,7 @@ export class AttachmentService {
         "Document Type": "Document Type",
         "Related Entity": "Related Entity",
         "Related To ID": "Related To ID",
+        "Related To Name": "Related To Name",
         "Attached By": "Attached By",
         "Attached On": "Attached On",
         "Attachment ID": "Attachment ID",
@@ -1482,7 +1483,8 @@ export class AttachmentService {
       "Document Category": at.document_category || "-",
       "Document Type": at.document_type || "-",
       "Related Entity": at.attachment_level || "-",
-      "Related To ID": at.attached_to || "-",
+      "Related To ID": at.attach_to || "-",
+      "Related To Name": at.attached_to || "-",
       "Attached By": at.uploaded_by || "-",
       "Attached On": at.created_datetime
         ? moment(at.created_datetime).format("YYYY-MMM-DD, hh:mm:ss A")
@@ -2274,6 +2276,7 @@ export class AttachmentService {
         "Document Type": "Document Type",
         "Related Entity": "Related Entity",
         "Related To ID": "Related To ID",
+        "Related To Name": "Related To Name",
         "Attached By": "Attached By",
         "Attached On": "Attached On",
         "Attachment ID": "Attachment ID",

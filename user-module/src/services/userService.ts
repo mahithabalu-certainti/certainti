@@ -1423,6 +1423,7 @@ async getAllUserPermission(userId: string, profileId: string) {
         "email",
         "status_rid",
         "first_name",
+        "last_name",
         "created_datetime",
         "modified_datetime",
         "azure_id",
