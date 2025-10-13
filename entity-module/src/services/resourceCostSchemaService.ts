@@ -647,7 +647,7 @@ async exportresourceCostDetailsForFinancialHighlights(
       }
     });
     let labelMap: Record<string, string>;
-    if (!project_rid || project_rid === undefined || project_rid === null || project_rid === "" || project_rid === "undefined") {
+    if (!project_rid || project_rid === undefined || project_rid === "undefined") {
       labelMap = {
       project_code: "Project Code",
       fiscal_year: "Fiscal Year",
