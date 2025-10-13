@@ -54,7 +54,7 @@ export const getProjectFinancialResCostFields = (
     options: regionOptions,
   },
   {
-    name: 'Cost',
+    name: 'Net Resource Cost',
     value: 'total_cost_pro_res',
     type: 'number',
     operatorOption: numberOptions,

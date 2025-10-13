@@ -67,10 +67,10 @@ export const getFinancialResourceCostColumns = (
   },
   {
     id: 'total_cost_pro_res',
-    label: 'Cost',
+    label: 'Net Resource Cost',
     sortable: true,
     sortId: 'total_cost_pro_res',
-    width: 140,
+    width: 160,
     sx: {
       textAlign: 'right',
     },

@@ -85,7 +85,7 @@ export const projectResourceFilterFields = (
       !resourcepermissionMap?.['total_cost_pro_res']?.edit,
   },
   {
-    name: 'Cost',
+    name: 'Net Resource Cost',
     value: 'net_total_cost_pro_res',
     type: 'number',
     hide:
