@@ -71,6 +71,7 @@ export default class NotesGraphqlServies {
                             size_in_mb: latestData.size_in_mb,
                             title: latestData.title,
                             notes_owner: latestData.notes_owner,
+                            notes_owner_name : latestData.notes_owner_name,
                             descriptions : latestData.descriptions,
                             uploaded_by: latestData.uploaded_by,
                             attached_to: latestData.attached_to,
