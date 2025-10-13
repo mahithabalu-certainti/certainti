@@ -35,6 +35,8 @@ export const interactionSource = {
 
 export const ENV_PREFIX = process.env.NODE_ENV_DB_PREFIX || "D001-";
 export const MAIN_SCHEMA_NAME = "trd365";
+export const SCHEMANAME_PREFIX = "trd365_";
+
 export const constants = {
   SQL_GET_USER: `SELECT status_description as status, "user".rid, email, profile_rid FROM ${MAIN_SCHEMA_NAME}."user" as "user" ,${MAIN_SCHEMA_NAME}."status" as status WHERE  "user".status_rid = status.rid and {whereClause} LIMIT 1`,
   SQL_GET_PERMISSION: `SELECT rid FROM ${MAIN_SCHEMA_NAME}."module_permission" WHERE permission_name = :permissionName LIMIT 1`,
@@ -234,6 +236,31 @@ export const rawQueries = {
   fetchEmailResponseSourceRid(): string {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.interaction_response_source WHERE response_source_name = 'Email'`;
   },
+  getAccountByRid() {
+    return `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`
+  },
+  getContactQuery(schemaName: string) {
+    return `
+      SELECT * 
+      FROM ${schemaName}.key_contact_details
+      WHERE entity_rid = :projectFiscalId 
+        AND is_primary_contact = :is_primary_contact
+        AND key_contact_email = :email
+    `;
+  },
+  getKeyContactRoleQuery() {
+    return `
+      SELECT * 
+      FROM ${MAIN_SCHEMA_NAME}.key_contact_role 
+      WHERE rid = :rid
+    `;
+  },
+  getOrganizationLicensesQuery() {
+    return `
+      SELECT * 
+      FROM "${MAIN_SCHEMA_NAME}".organization_licenses
+    `;
+  }  
 };
 
 export const filterTypesForSummaryInteractions: Record<string, any> = {

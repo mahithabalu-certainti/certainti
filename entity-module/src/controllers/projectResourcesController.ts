@@ -16,12 +16,18 @@ import {
   listResourceSchema,
   updateProjectResourceSchema,
   updateProjectResourceStatus,
-  updateResourceDuplicateStatus,
 } from "../lib/joi/schemas/schema";
 
 const services = configurations.getInstance().getServices();
 const projectResourceServices = services.projectResourceServices;
 
+/**
+ * Create a new project resource.
+ *
+ * @param {Request} req - Express request object.
+ * @param {Response} res - Express response object.
+ * @returns {Promise<void>} - Resolves when the creation process is complete.
+ */
 async function createProjectResource(
   req: Request,
   res: Response
@@ -50,9 +56,17 @@ async function createProjectResource(
       value,
       userId
     );
-    if (projectResource.statusCode === HttpStatus.SUCCESS || projectResource.statusCode === HttpStatus.PROMPT) {
+    if (
+      projectResource.statusCode === HttpStatus.SUCCESS ||
+      projectResource.statusCode === HttpStatus.PROMPT
+    ) {
       successLog(methodName);
-      handleSuccessResponse(res, projectResource.data, projectResource.message, projectResource.statusCode);
+      handleSuccessResponse(
+        res,
+        projectResource.data,
+        projectResource.message,
+        projectResource.statusCode
+      );
       return;
     } else {
       errorLog(methodName, projectResource.errorMessage);
@@ -77,6 +91,13 @@ async function createProjectResource(
   }
 }
 
+/**
+ * Update an existing project resource.
+ *
+ * @param {Request} req - Express request object.
+ * @param {Response} res - Express response object.
+ * @returns {Promise<void>} - Resolves when the update process is complete.
+ */
 async function updateProjectResource(
   req: Request,
   res: Response
@@ -104,9 +125,17 @@ async function updateProjectResource(
       value,
       userId
     );
-    if (projectResource.statusCode === HttpStatus.SUCCESS || projectResource.statusCode === HttpStatus.PROMPT) {
+    if (
+      projectResource.statusCode === HttpStatus.SUCCESS ||
+      projectResource.statusCode === HttpStatus.PROMPT
+    ) {
       successLog(methodName);
-      handleSuccessResponse(res, projectResource.data, projectResource.message, projectResource.statusCode);
+      handleSuccessResponse(
+        res,
+        projectResource.data,
+        projectResource.message,
+        projectResource.statusCode
+      );
       return;
     } else {
       errorLog(methodName, projectResource.errorMessage);
@@ -131,6 +160,13 @@ async function updateProjectResource(
   }
 }
 
+/**
+ * List project resources with optional filters, pagination, and sorting.
+ *
+ * @param {Request} req - Express request object.
+ * @param {Response} res - Express response object.
+ * @returns {Promise<void>} - Resolves when the list retrieval is complete.
+ */
 async function listProjectResource(req: Request, res: Response): Promise<void> {
   const methodName = "Get project resource list";
   try {
@@ -212,6 +248,13 @@ async function listProjectResource(req: Request, res: Response): Promise<void> {
   }
 }
 
+/**
+ * Get detailed information about a specific project resource.
+ *
+ * @param {Request} req - Express request object.
+ * @param {Response} res - Express response object.
+ * @returns {Promise<void>} - Resolves when the details retrieval is complete.
+ */
 async function projectResourceDetails(
   req: Request,
   res: Response
@@ -264,6 +307,13 @@ async function projectResourceDetails(
   }
 }
 
+/**
+ * Export the list of project resources based on filters and sorting.
+ *
+ * @param {Request} req - Express request object.
+ * @param {Response} res - Express response object.
+ * @returns {Promise<void>} - Resolves when the export process is complete.
+ */
 async function exportProjectResource(
   req: Request,
   res: Response
@@ -356,6 +406,13 @@ async function exportProjectResource(
   }
 }
 
+/**
+ * Get all resource skill roles.
+ *
+ * @param {Request} req - Express request object.
+ * @param {Response} res - Express response object.
+ * @returns {Promise<void>} - Resolves when the roles retrieval is complete.
+ */
 async function resourceSkillRoles(req: Request, res: Response): Promise<void> {
   const methodName = "Get resource roles";
   try {
@@ -388,6 +445,13 @@ async function resourceSkillRoles(req: Request, res: Response): Promise<void> {
   }
 }
 
+/**
+ * Get all resource skill role subtypes.
+ *
+ * @param {Request} req - Express request object.
+ * @param {Response} res - Express response object.
+ * @returns {Promise<void>} - Resolves when the subtypes retrieval is complete.
+ */
 async function resourceSkillRolesSubtype(
   req: Request,
   res: Response
@@ -423,6 +487,13 @@ async function resourceSkillRolesSubtype(
   }
 }
 
+/**
+ * Get resource codes filtered by account and optional search term.
+ *
+ * @param {Request} req - Express request object.
+ * @param {Response} res - Express response object.
+ * @returns {Promise<void>} - Resolves when the codes retrieval is complete.
+ */
 async function resourceCodes(req: Request, res: Response): Promise<void> {
   const methodName = "Get resource codes";
   try {
@@ -460,14 +531,25 @@ async function resourceCodes(req: Request, res: Response): Promise<void> {
   }
 }
 
-async function assignedResourceCodes(req: Request, res: Response): Promise<void> {
+/**
+ * Get assigned resource codes for a given account and project fiscal ID.
+ *
+ * @param {Request} req - Express request object.
+ * @param {Response} res - Express response object.
+ * @returns {Promise<void>} - Resolves when the assigned codes retrieval is complete.
+ */
+async function assignedResourceCodes(
+  req: Request,
+  res: Response
+): Promise<void> {
   const methodName = "Get assigned resource codes";
   try {
     const { accountId, projectFiscalId } = req.params;
-    const projectResourceCodes = await projectResourceServices.getAssignedResourceCodes(
-      accountId,
-      projectFiscalId
-    );
+    const projectResourceCodes =
+      await projectResourceServices.getAssignedResourceCodes(
+        accountId,
+        projectFiscalId
+      );
     if (projectResourceCodes.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, projectResourceCodes.data);
@@ -495,12 +577,19 @@ async function assignedResourceCodes(req: Request, res: Response): Promise<void>
   }
 }
 
+/**
+ * Update anomaly status, such as accepting duplicates.
+ *
+ * @param {Request} req - Express request object.
+ * @param {Response} res - Express response object.
+ * @returns {Promise<void>} - Resolves when the status update is complete.
+ */
 async function anomalyStatusUpdate(req: Request, res: Response): Promise<void> {
   const methodName = "Accept duplicate";
   try {
     const value = await validateRequest(req, updateProjectResourceStatus, res);
 
-    if(!value){
+    if (!value) {
       return;
     }
     logMessage(`Request received for anomaly status update with data: ${JSON.stringify(value)} user ID: ${req.headers["x-user-id"]}`);
@@ -527,7 +616,7 @@ async function anomalyStatusUpdate(req: Request, res: Response): Promise<void> {
       res.status(HttpStatus.SUCCESS).json({
         statusCode: HttpStatus.SUCCESS,
         statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
-        statusMessage: result.message || '', 
+        statusMessage: result.message || "",
         data: result.data,
       });
       return;
@@ -562,5 +651,5 @@ export default {
   listProjectResource,
   exportProjectResource,
   assignedResourceCodes,
-  anomalyStatusUpdate
+  anomalyStatusUpdate,
 };

@@ -5,6 +5,16 @@ import { logMessage, uploadEntityTemplatesToAzureBlob } from "../../utils/helper
 export class TemplateService {
   constructor() {}
 
+  /**
+   * Retrieves the list of templates from the main database.
+   *
+   * This method:
+   * 1. Executes a database query to fetch all template records.
+   * 2. Returns the retrieved templates along with a success status.
+   *
+   * @returns Promise resolving to an object containing status code, message, and template data array
+   * @throws Throws a service error if the database query fails
+   */
   async listTemplates(): Promise<{
     statusCode: number;
     message: string;
@@ -32,6 +42,19 @@ export class TemplateService {
     }
   }
 
+  /**
+   * Uploads a template file to Azure Blob Storage and updates the template record in the database.
+   *
+   * This method:
+   * 1. Uploads the provided file to Azure Blob Storage linked to the given template ID.
+   * 2. Updates the template record in the main database with the new blob URL and user information.
+   *
+   * @param file - The file to upload (received from Multer middleware)
+   * @param templateId - The ID of the template to update
+   * @param userId - The ID of the user performing the upload
+   * @returns Promise resolving to an object containing status code, message, and uploaded template data (including blob URL)
+   * @throws Throws a service error if the upload or database update fails
+   */
   async uploadTemplate(
     file: Express.Multer.File,
     templateId: string,

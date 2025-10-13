@@ -36,6 +36,29 @@ export default class SettingService {
     return this.orgDbSequelize;
   }
 
+  /**
+ * Updates project-level or account-level settings for an organization.
+ *
+ * This method:
+ * 1. Determines whether the update is for a project or account based on `data.flag`
+ * 2. For project settings:
+ *    - Validates schema existence
+ *    - Updates project fiscal data
+ *    - Compares old vs new values to insert history records
+ *    - Logs changes to project timeline and triggers ingestion
+ * 3. For account settings:
+ *    - Handles subscription creation and validation if `support_email` is present
+ *    - Removes old subscriptions for parent accounts when necessary
+ *    - Updates account settings in the org and main databases
+ *
+ * @param data - Object containing setting details, including:
+ *   - `flag`: A string indicating the update type ('project' or 'account')
+ *   - `account_rid`, `project_rid`, `project_fiscal_rid`, and setting fields to update
+ *   - Optional: `support_email`, `tenant_id`, `client_id`, `client_secret`
+ * @returns Promise resolving to a status object with:
+ *   - `statusCode`: Number indicating success or failure
+ *   - `statusMessage`: Descriptive message indicating operation result
+ */
   async updateSettings(data: any) {
     let mainDb = await this.getMainDbSequelize();
     let orgDb = await this.getOrgDbSequelize();

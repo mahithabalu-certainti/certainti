@@ -1070,6 +1070,20 @@ async accountList(
     }
   }
 
+  /**
+ * Creates a new organization account with the provided data and optional logo file.
+ *
+ * @param {IAccount} accountData The data required to create the account (name, contacts, etc.).
+ * @param {string} userId The ID of the user creating the account.
+ * @param {Express.Multer.File} file Optional uploaded file (e.g. account logo).
+ * @returns {Promise<{ statusCode: number, message: string, errorMessage?: string, data?: { account: any } }>}
+ * A promise resolving to the result of the operation, including account data on success.
+ *
+ * This method:
+ * - Validates input and ensures uniqueness.
+ * - Handles parent account logic and contact role mapping.
+ * - Creates the account, uploads the logo (if any), and sets up schema and contact links.
+ */
   async createAccount(
     accountData: IAccount,
     userId: string,
@@ -1277,6 +1291,7 @@ async accountList(
       };
     }
   }
+
   async insertClientTemplateDetails(
     account_number: string,
     account_rid: string
@@ -1318,6 +1333,21 @@ async accountList(
     }
   }
 
+  /**
+ * Updates an existing organization account with the provided data.
+ *
+ * @param {IUpdateAccount} accountData The updated account data (name, contacts, region, etc.).
+ * @param {string} userId The ID of the user performing the update.
+ * @returns {Promise<{ statusCode: number, message: string, errorMessage?: string, data?: { affectedCounts: number } }>}
+ * A promise resolving to the result of the update operation, including affected record count on success.
+ *
+ * This method:
+ * - Validates account and organization name uniqueness.
+ * - Handles parent account lookup and storage type logic.
+ * - Extracts and maps key contacts based on their roles.
+ * - Updates the account record and related schema/contact data.
+ * - Updates the associated user group name if the account name changes.
+ */
   async updateAccount(
     accountData: IUpdateAccount,
     userId: string
@@ -1550,6 +1580,17 @@ async accountList(
     }
   }
 
+  /**
+ * Retrieves all global accounts (i.e., accounts without a parent).
+ *
+ * @returns {Promise<{ statusCode: number, message: string, errorMessage?: string, data?: { globalAccount: any; count: number } }>}
+ * A promise resolving to a list of global accounts and their total count.
+ *
+ * This method:
+ * - Fetches all accounts where `parent_account_rid` is null (indicating top-level accounts).
+ * - Returns each account's `rid` and `account_name`, sorted alphabetically.
+ * - Handles errors and returns a structured error response if needed.
+ */
   async globalAccounts(): Promise<{
     statusCode: number;
     message: string;
@@ -1582,6 +1623,21 @@ async accountList(
     }
   }
 
+  /**
+ * Fetches detailed information for a specific account by its ID.
+ *
+ * @param {string} account_id The unique identifier of the account.
+ * @returns {Promise<{ statusCode: number, message: string, errorMessage?: string, data?: { accountById: any; accountDetails: any } }>}
+ * A promise resolving to the account's full data, including metadata, child/parent info, contacts, and attachments.
+ *
+ * This method:
+ * - Retrieves the account by ID along with related models (country, region, status, etc.).
+ * - Ensures currency is assigned (defaults to USD if missing).
+ * - Handles logic based on whether the account is stored independently or under a parent.
+ * - Fetches and combines account details, key contacts, attachments, and uploader info.
+ * - Maps attachment metadata (type, category, uploader, size) for clarity.
+ * - Returns the complete account object and associated enriched details.
+ */
   async accountById(account_id: string): Promise<{
     statusCode: number;
     message: string;
@@ -1767,6 +1823,18 @@ async accountList(
     }
   }
 
+  /**
+ * Fetches key contact roles for a specified entity type.
+ *
+ * @param {string} entity_type The type of entity to retrieve key contact roles for.
+ * @returns {Promise<{ statusCode: number; message: string; errorMessage?: string; data?: { keyContactRoles: any } }>} 
+ * A promise resolving with the list of key contact roles.
+ *
+ * This method performs the following steps:
+ * - Calls the schema service to fetch key contact roles based on the entity type.
+ * - Returns the roles along with a success status.
+ * - Handles and returns errors via a centralized error handler.
+ */
   async getKeyContactRoles(entity_type: string): Promise<{
     statusCode: number;
     message: string;
@@ -1832,6 +1900,13 @@ async accountList(
 
     return result;
   }
+
+  /**
+ * Retrieves all active accounts with organization names along with additional organization info.
+ * @returns {Promise<{ statusCode: number; message: string; errorMessage?: string; data?: { accountData: any; orgData: any; count?: number } }>}
+ * Retrieves all active accounts with organization names and additional organization info.
+ * Returns status, message, and combined account and organization data.
+ */
   async listAllAccounts(): Promise<{
     statusCode: number;
     message: string;
@@ -1877,6 +1952,27 @@ async accountList(
     }
   }
 
+  /**
+ * Retrieves global accounts accessible to the specified user, supporting pagination, sorting, and filtering.
+ *
+ * @param {string} userId The ID of the user requesting the accounts.
+ * @param {number | undefined} page The page number for paginated results.
+ * @param {number | undefined} limit The number of results per page.
+ * @param {string} [sortBy="account_name"] The field to sort the results by.
+ * @param {string} [sortOrder="ASC"] The order direction for sorting (ASC or DESC).
+ * @param {Record<string, string[]>} [globalFilters={}] Optional filters to apply to the account list.
+ * @returns {Promise<{ statusCode: number; message: string; errorMessage?: string; data?: { gloablAcconunt: any[]; count: number } }>} 
+ * A promise resolving with the filtered, sorted, and paginated global accounts and total count.
+ *
+ * This method performs the following steps:
+ * - Validates the presence of the user ID.
+ * - Determines the user's group type to decide access scope.
+ * - Retrieves accessible accounts, differentiating parent and child accounts.
+ * - Applies global filters and pagination options.
+ * - Fetches the accounts with their child accounts, sorted as specified.
+ * - Returns the results or appropriate messages if no accounts are accessible.
+ * - Handles errors using a centralized error handler.
+ */
   async listGlobalAccounts(
     userId: string,
     page: number | undefined,

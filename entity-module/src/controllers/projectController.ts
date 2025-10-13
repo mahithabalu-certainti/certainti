@@ -15,13 +15,27 @@ import {
   listAllResourceSchema,
   listResourceSchema,
   updateProjectSchema,
-  updateQreAdjutmentSchema,
 } from "../lib/joi/schemas/schema";
 import configurations from "../config/config";
 
 const services = configurations.getInstance().getServices();
 const projectService = services.projectServices;
 
+/**
+ * Creates a new project using the validated request body.
+ *
+ * @async
+ * @function createProject
+ * @param {Request} req - The Express request object containing project data.
+ * @param {Response} res - The Express response object used to send the response.
+ * @returns {Promise<void>} Sends success or error response based on creation outcome.
+ *
+ * @description
+ * - Validates request using `createProjectSchema`.
+ * - Extracts user ID from request headers.
+ * - Delegates to `projectService.createProject` for business logic.
+ * - Returns the created project or an error response.
+ */
 async function createProject(req: Request, res: Response): Promise<void> {
   const methodName = "Create project";
   try {
@@ -72,6 +86,20 @@ async function createProject(req: Request, res: Response): Promise<void> {
   }
 }
 
+/**
+ * Updates an existing project with the provided request body.
+ *
+ * @async
+ * @function updateProject
+ * @param {Request} req - The Express request object containing updated project data.
+ * @param {Response} res - The Express response object used to send the response.
+ * @returns {Promise<void>} Sends success or error response based on update outcome.
+ *
+ * @description
+ * - Validates request using `updateProjectSchema`.
+ * - Extracts user ID from headers.
+ * - Delegates to `projectService.updateProject` for update logic.
+ */
 async function updateProject(req: Request, res: Response): Promise<void> {
   const methodName = "Update project";
   try {
@@ -123,6 +151,19 @@ async function updateProject(req: Request, res: Response): Promise<void> {
   }
 }
 
+/**
+ * Retrieves a specific project's details by account and project IDs.
+ *
+ * @async
+ * @function projectById
+ * @param {Request} req - The Express request object with `accountId` and `projectId` as route params.
+ * @param {Response} res - The Express response object to send the result.
+ * @returns {Promise<void>} Sends project details or error response.
+ *
+ * @description
+ * - Calls `projectService.projectById` using provided params.
+ * - Sends back the project info or an appropriate error message.
+ */
 async function projectById(req: Request, res: Response): Promise<void> {
   const methodName = "Project Details";
   try {
@@ -158,6 +199,20 @@ async function projectById(req: Request, res: Response): Promise<void> {
   }
 }
 
+/**
+ * Fetches a paginated list of projects for a given account with optional filters and search.
+ *
+ * @async
+ * @function projectList
+ * @param {Request} req - Express request object containing filters, pagination, and sort info.
+ * @param {Response} res - Express response object to send results.
+ * @returns {Promise<void>} Sends a list of projects or an error response.
+ *
+ * @description
+ * - Validates the query using `listResourceSchema`.
+ * - Parses filters and handles pagination.
+ * - Fetches data using `projectService.projectList`.
+ */
 async function projectList(req: Request, res: Response): Promise<void> {
   const methodName = "Project List";
   try {
@@ -233,12 +288,31 @@ async function projectList(req: Request, res: Response): Promise<void> {
   }
 }
 
+/**
+ * Exports a filtered list of projects for a given account in Excel (Base64) format.
+ *
+ * @async
+ * @function exportProjectList
+ * @param {Request} req - The Express request object containing query filters and params.
+ * @param {Response} res - The Express response object to send the file data.
+ * @returns {Promise<void>} Sends Base64-encoded Excel file or error response.
+ *
+ * @description
+ * - Validates query using `exportListResourceSchema`.
+ * - Parses filters and fetches exportable data from `projectService.exportProjectList`.
+ * - Converts data to Excel via `generateExcelBase64`.
+ */
 async function exportProjectList(req: Request, res: Response): Promise<void> {
   const methodName = "Export Project List";
   try {
     const { accountId } = req.params;
 
-    const value = await validateRequest(req, exportListResourceSchema, res, "GET");
+    const value = await validateRequest(
+      req,
+      exportListResourceSchema,
+      res,
+      "GET"
+    );
 
     let parsedFilters: Record<string, any> = {};
     const userId = req.headers["x-user-id"] as string;
@@ -275,7 +349,10 @@ async function exportProjectList(req: Request, res: Response): Promise<void> {
 
     if (project.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
-      handleSuccessResponse(res, await generateExcelBase64(project?.data?.projects,"Projects"));
+      handleSuccessResponse(
+        res,
+        await generateExcelBase64(project?.data?.projects, "Projects")
+      );
       return;
     } else {
       errorLog(methodName, project.errorMessage);
@@ -300,10 +377,29 @@ async function exportProjectList(req: Request, res: Response): Promise<void> {
   }
 }
 
+/**
+ * Fetches a global list of all accessible projects, with optional filters, global filters, and pagination.
+ *
+ * @async
+ * @function allProjectList
+ * @param {Request} req - Express request object with filter and user info in body and headers.
+ * @param {Response} res - Express response object to return the results.
+ * @returns {Promise<void>} Sends paginated global project list or error response.
+ *
+ * @description
+ * - Validates request using `listAllResourceSchema`.
+ * - Supports both per-account and global project listing.
+ * - Uses `projectService.allProjectList` to fetch data.
+ */
 async function allProjectList(req: Request, res: Response): Promise<void> {
   const methodName = "All Project List";
   try {
-    const value = await validateRequest(req, listAllResourceSchema, res, "POST");
+    const value = await validateRequest(
+      req,
+      listAllResourceSchema,
+      res,
+      "POST"
+    );
 
     const userId = req.headers["x-user-id"] as string;
     logMessage(`All Project List - Param for User ID: ${userId}, Payload: ${JSON.stringify(value)}`);
@@ -319,7 +415,7 @@ async function allProjectList(req: Request, res: Response): Promise<void> {
     }
 
     let parsedFilters: Record<string, any> = {};
-    let parsedGlobalFilters: Record<string, string[]> = {}
+    let parsedGlobalFilters: Record<string, string[]> = {};
 
     if (!value) {
       return;
@@ -386,10 +482,32 @@ async function allProjectList(req: Request, res: Response): Promise<void> {
   }
 }
 
-async function exportAllProjectList(req: Request, res: Response): Promise<void> {
+/**
+ * Exports all projects globally accessible to the user based on filters and permissions.
+ *
+ * @async
+ * @function exportAllProjectList
+ * @param {Request} req - Express request object containing query params, filters, and headers.
+ * @param {Response} res - Express response object to send the Excel file in Base64 format.
+ * @returns {Promise<void>} Sends export data or an error message.
+ *
+ * @description
+ * - Validates query using `exportListResourceSchema`.
+ * - Parses JSON filters and global filters from query params.
+ * - Uses `projectService.exportAllProjectList` and exports to Excel via `generateExcelBase64`.
+ */
+async function exportAllProjectList(
+  req: Request,
+  res: Response
+): Promise<void> {
   const methodName = "Export All Project List";
   try {
-    const value = await validateRequest(req, exportListResourceSchema, res, "GET");
+    const value = await validateRequest(
+      req,
+      exportListResourceSchema,
+      res,
+      "GET"
+    );
 
     const userId = req.headers["x-user-id"] as string;
     logMessage(`Export All Project List - Param for User ID: ${userId}, Payload: ${JSON.stringify(value)}`);
@@ -405,7 +523,7 @@ async function exportAllProjectList(req: Request, res: Response): Promise<void> 
     }
 
     let parsedFilters: Record<string, any> = {};
-    let parsedGlobalFilters: Record<string, string[]> = {}
+    let parsedGlobalFilters: Record<string, string[]> = {};
 
     if (!value) {
       return;
@@ -441,7 +559,10 @@ async function exportAllProjectList(req: Request, res: Response): Promise<void> 
 
     if (project.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
-      handleSuccessResponse(res, await generateExcelBase64(project?.data?.projects,"Projects"));
+      handleSuccessResponse(
+        res,
+        await generateExcelBase64(project?.data?.projects, "Projects")
+      );
       return;
     } else {
       errorLog(methodName, project.errorMessage);
@@ -477,10 +598,14 @@ async function exportAllProjectList(req: Request, res: Response): Promise<void> 
  * - If successful, it sends a success response with the list of Project Classification.
  * - If failed, it logs the error and sends an error response.
  */
-async function projectClassification(req: Request, res: Response): Promise<void> {
+async function projectClassification(
+  req: Request,
+  res: Response
+): Promise<void> {
   const methodName = "Project Classification";
   try {
-    const projectClassifications = await services.projectServices.getProjectClassification();
+    const projectClassifications =
+      await services.projectServices.getProjectClassification();
     if (projectClassifications.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, projectClassifications.data);
@@ -516,5 +641,5 @@ export default {
   allProjectList,
   projectClassification,
   exportProjectList,
-  exportAllProjectList
+  exportAllProjectList,
 };

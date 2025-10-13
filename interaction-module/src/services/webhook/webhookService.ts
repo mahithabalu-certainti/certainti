@@ -2,7 +2,7 @@ import { Client } from "@microsoft/microsoft-graph-client";
 import { ClientSecretCredential } from "@azure/identity";
 import csv from "csv-parser";
 import ExcelJS from "exceljs";
-import { HttpStatus, rawQueries } from "../../utils/constants";
+import { HttpStatus, SCHEMANAME_PREFIX, rawQueries } from "../../utils/constants";
 import { Readable } from "stream";
 import { InteractionModelService } from "../interactionModelsService";
 import InteractionSchemaService from "../interactions/schemaService";
@@ -559,7 +559,7 @@ export class WebHookService {
     const accountNumber = accountData[0]?.r_number;
     const accountId = accountData[0]?.rid;
     const schemaName = accountNumber
-      ? `trd365_${accountNumber.replace(/\D/g, "")}`
+      ? `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`
       : null;
 
     if (!schemaName) {
@@ -639,12 +639,10 @@ export class WebHookService {
     try {
       const orgDbSequelize = await this.interactionModelService.getSequelize();
 
-      const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
 
       const [idResult] = await orgDbSequelize.query(
-        `SELECT 1 FROM "${schemaName}".project_fiscal 
-         WHERE r_number = :projectId 
-         LIMIT 1;`,
+        rawQueries.checkProjectFiscalExistsQuery(schemaName),
         {
           type: "SELECT",
           replacements: { projectId },
@@ -661,9 +659,7 @@ export class WebHookService {
         projectName.trim() !== ""
       ) {
         const [nameResult] = await orgDbSequelize.query(
-          `SELECT 1 FROM "${schemaName}".project_fiscal 
-           WHERE project_name = :projectName 
-           LIMIT 1;`,
+          rawQueries.checkProjectFiscalByNameExistsQuery(schemaName),
           {
             type: "SELECT",
             replacements: { projectName },
@@ -676,9 +672,7 @@ export class WebHookService {
       }
 
       const [codeResult] = await orgDbSequelize.query(
-        `SELECT 1 FROM "${schemaName}".project_fiscal 
-         WHERE project_code = :projectCode 
-         LIMIT 1;`,
+        rawQueries.checkProjectFiscalByCodeExistsQuery(schemaName),
         {
           type: "SELECT",
           replacements: { projectCode },
@@ -690,11 +684,7 @@ export class WebHookService {
       }
 
       const [finalResult] = await orgDbSequelize.query(
-        `SELECT 1 FROM "${schemaName}".project_fiscal 
-         WHERE project_rid = :projectId 
-            OR project_name = :projectName 
-            OR project_code = :projectCode
-         LIMIT 1;`,
+        rawQueries.checkProjectFiscalExistsByAnyQuery(schemaName),
         {
           type: "SELECT",
           replacements: {
@@ -1106,7 +1096,7 @@ export class WebHookService {
   }
 
   private async fetchKeyContacts(accountNumber: string, accountId: string) {
-    const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+    const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
 
     const orgDbSequelize = await this.interactionModelService.getSequelize();
     const mainDbSequelize =
@@ -1156,7 +1146,7 @@ export class WebHookService {
     accountNumber: string,
     interactionId: string
   ) {
-    const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+    const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
 
     const orgDbSequelize = await this.interactionModelService.getSequelize();
     const mainDbSequelize =

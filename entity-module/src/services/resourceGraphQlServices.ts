@@ -4,6 +4,7 @@ import { initOrgSequelize } from "../config/orgDataSource";
 import {
   HttpStatus,
   rawQueries,
+  SCHEMANAME_PREFIX,
   STATUS_MESSAGE,
 } from "../utils/constants";
 import { logMessage, setResourceFiscal, setResourcesData } from "../utils/helpers";
@@ -27,7 +28,7 @@ export default class ResourceGraphQlServices {
         data : null
       };
     } else {
-      let schemaName = `"trd365_${checkAccountExists[0][0].r_number.replace(
+      let schemaName = `"${SCHEMANAME_PREFIX}${checkAccountExists[0][0].r_number.replace(
         "ACC-",
         ""
       )}"`;

@@ -1,5 +1,5 @@
 import { Op, Order, Sequelize } from "sequelize";
-import { HttpStatus, STATUS_MESSAGE, rawQueries } from "../../utils/constants";
+import { HttpStatus, rawQueries } from "../../utils/constants";
 import {
   IAnomalyStatus,
   ICreateProjectResource,
@@ -9,7 +9,6 @@ import {
 import { ProjectResourceSchemaService } from "./schemaService";
 import { ProjectResourceMapper } from "../../utils/projectMapper";
 import { initMainDbSequelize } from "../../config/mainDataSource";
-import { initOrgSequelize } from "../../config/orgDataSource";
 import ProjectIngestionService from "../projectIngestionService";
 import { Logger } from "winston";
 import moment from "moment";
@@ -28,6 +27,27 @@ export class ProjectResourceService {
     this.projectIngestion = new ProjectIngestionService(this.logger);
   }
 
+  /**
+ * Creates a new project resource record within a transactional context.
+ *
+ * This method validates the input data, checks for duplicates and anomalies,
+ * and performs various inserts/updates across related tables to maintain
+ * referential integrity and data consistency.
+ *
+ * It also enforces business rules such as effort limits per day and total cost thresholds,
+ * marking resources as "Anomaly" when thresholds are exceeded.
+ *
+ * @param {ICreateProjectResource} projectResourceData - The data required to create the project resource.
+ * @param {string} userId - The ID of the user performing the operation.
+ * @returns {Promise<{
+ *   statusCode: number;
+  *   message: string;
+  *   errorMessage?: string;
+  *   data?: { projectResource: any };
+  * }>} Response object containing status, message, and optionally created resource data or error message.
+  *
+  * @throws Will rollback the transaction and throw an error if any step fails.
+  */ 
   async createProjectResource(
     projectResourceData: ICreateProjectResource,
     userId: string
@@ -623,6 +643,30 @@ export class ProjectResourceService {
     return { success: true };
   }
 
+  /**
+ * Updates an existing project resource record within a transactional context.
+ *
+ * This method validates the input data, checks for duplicates and anomalies,
+ * enforces business rules on effort limits and cost thresholds, and performs
+ * updates across related tables to ensure data consistency.
+ *
+ * It handles the necessary cascading updates for fiscal tables, resource fiscal regions,
+ * project fiscal regions, account fiscal regions, and aggregates resource, project,
+ * and account level data accordingly.
+ *
+ * A timeline and history record of the update is also maintained.
+ *
+ * @param {IUpdateProjectResource} projectResourceData - The data required to update the project resource.
+ * @param {string} userId - The ID of the user performing the update.
+ * @returns {Promise<{
+ *   statusCode: number;
+  *   message: string;
+  *   errorMessage?: string;
+  *   data?: { projectResource: any };
+  * }>} Response object containing status, message, and optionally the updated resource data or error message.
+  *
+  * @throws Will rollback the transaction and throw an error if any step fails.
+  */ 
   async updateProjectResource(
     projectResourceData: IUpdateProjectResource,
     userId: string
@@ -866,6 +910,26 @@ export class ProjectResourceService {
     }
   }
 
+  /**
+ * Handles the anomaly status of a project resource by either accepting or rejecting the anomaly.
+ * 
+ * If the anomaly is accepted, the status of the project resource is updated to 'Active' and related fiscal,
+ * resource, project, and account aggregates are updated accordingly. If rejected, the status is updated to 'In-Active'.
+ * 
+ * All database operations are performed within a transaction to ensure atomicity.
+ *
+ * @param {IAnomalyStatus} data - The anomaly data containing accountId, projectResourceRid, action (accept/reject), and resourceCode.
+ * @param {string} userId - The ID of the user performing the action.
+ *
+ * @returns {Promise<{
+ *   statusCode: number;
+  *   message: string;
+  *   data?: { projectResource: any };
+  * }>} A promise resolving to an object with status, message, and optionally updated project resource data.
+  *
+  * @throws Throws an error if the account ID is invalid, the project resource is not found,
+  *         the resource code is invalid, or if any database operation fails.
+  */
   async handleAnomalyStatus(
     data: IAnomalyStatus,
     userId: string
@@ -1093,6 +1157,31 @@ export class ProjectResourceService {
     }
   }
 
+  /**
+   * Retrieves a paginated list of project resources based on filtering, sorting, and search criteria.
+   *
+   * Validates the provided account ID and constructs the query parameters including
+   * offset for pagination, sorting options, and filtering conditions. Fetches the matching
+   * project resources and total count from the data source.
+   *
+   * @param {string} accountId - The ID of the account to which the project resources belong.
+   * @param {string} projectId - The ID of the project for which resources are to be listed.
+   * @param {number} fiscal_year - The fiscal year for filtering project resources.
+   * @param {number} page - The current page number for pagination.
+   * @param {number} limit - The number of records per page.
+   * @param {Record<string, string>} filters - Key-value pairs for filtering the results.
+   * @param {string} sortBy - The field name to sort the results by.
+   * @param {string} sortOrder - The sort order, typically 'ASC' or 'DESC'.
+   * @param {string} search - A search string to filter project resources by matching fields.
+   * @returns {Promise<{
+   *   statusCode: number;
+    *   message: string;
+    *   errorMessage?: string;
+    *   data?: { projectResources: any; count: number };
+    * }>} Response object containing status, message, and optionally the list of project resources and total count.
+    *
+    * @throws Throws an error if the account ID is invalid or if there is any issue fetching data.
+    */ 
   async listProjectResources(
     accountId: string,
     projectId: string,
@@ -1160,6 +1249,30 @@ export class ProjectResourceService {
     }
   }
 
+  /**
+ * Exports project resources for a given account and project with applied filters, sorting, and search.
+ *
+ * Validates the account ID, constructs sorting and filtering criteria, then fetches the
+ * project resources data suitable for export.
+ *
+ * @param {string} accountId - The account ID used to validate and scope the query.
+ * @param {string} projectId - The project ID to fetch resources from.
+ * @param {number} fiscal_year - The fiscal year to filter the project resources.
+ * @param {Record<string, string>} filters - Key-value pairs for filtering the project resources.
+ * @param {string} sortBy - The field to sort the project resources by.
+ * @param {string} sortOrder - The sort direction, either 'ASC' or 'DESC'.
+ * @param {string} userId - The ID of the user performing the export (used for logging or auditing).
+ * @param {string} search - Search string to apply across relevant fields.
+ * 
+ * @returns {Promise<{
+ *   statusCode: number;
+  *   message: string;
+  *   errorMessage?: string;
+  *   data?: { projectResources: any };
+  * }>} Response object containing the status, message, and optionally the exported project resources data.
+  *
+  * @throws Throws an error if the account ID is invalid or if fetching the project resources fails.
+  */ 
   async exportProjectResources(
     accountId: string,
     projectId: string,
@@ -1220,6 +1333,24 @@ export class ProjectResourceService {
     }
   }
 
+  /**
+ * Retrieves detailed information about a specific project resource, including its attachments.
+ *
+ * Validates the provided account ID, fetches the project resource details,
+ * and retrieves associated attachments with enriched metadata such as document type,
+ * document category, uploader details, and formatted size.
+ *
+ * @param {string} projectResourceId - The unique identifier of the project resource.
+ * @param {string} accountId - The account ID to validate and scope the query.
+ * @returns {Promise<{
+ *   statusCode: number;
+  *   message: string;
+  *   errorMessage?: string;
+  *   data?: { projectResource: any; attachment: any };
+  * }>} Response object containing status, message, and optionally the project resource details and attachments.
+  *
+  * @throws Throws an error if the account ID is invalid or if there is any issue fetching data.
+  */ 
   async projectResourceDetails(
     projectResourceId: string,
     accountId: string
@@ -1664,6 +1795,20 @@ export class ProjectResourceService {
     }
   }
 
+  /**
+   * Retrieves a list of resource skill roles from the system.
+   *
+   * Fetches all resource skill roles available in the project resource schema.
+   *
+   * @returns {Promise<{
+   *   statusCode: number;
+    *   message: string;
+    *   errorMessage?: string;
+    *   data?: { resourceRoles: any };
+    * }>} Response object containing the status, message, and optionally the list of resource skill roles.
+    *
+    * @throws Throws an error if fetching the resource skill roles fails.
+    */ 
   async getResourceSkillRoles(): Promise<{
     statusCode: number;
     message: string;
@@ -1687,6 +1832,20 @@ export class ProjectResourceService {
     }
   }
 
+  /**
+ * Retrieves a list of resource skill role subtypes from the system.
+ *
+ * Fetches all resource skill role subtypes available in the project resource schema.
+ *
+ * @returns {Promise<{
+ *   statusCode: number;
+  *   message: string;
+  *   errorMessage?: string;
+  *   data?: { resourceRolesSubType: any };
+  * }>} Response object containing the status, message, and optionally the list of resource skill role subtypes.
+  *
+  * @throws Throws an error if fetching the resource skill role subtypes fails.
+  */ 
   async getResourceSkillRolesSubtype(): Promise<{
     statusCode: number;
     message: string;
@@ -1710,6 +1869,24 @@ export class ProjectResourceService {
     }
   }
 
+  /**
+ * Retrieves a list of resource codes for a given account, optionally filtered by a search string.
+ *
+ * This method fetches the valid account number associated with the provided account ID,
+ * then retrieves the list of resource codes filtered by the optional search parameter.
+ *
+ * @param {string} accountId - The ID of the account to fetch resource codes for.
+ * @param {string | null} search - Optional search string to filter resource codes.
+ *
+ * @returns {Promise<{
+ *   statusCode: number;
+  *   message: string;
+  *   errorMessage?: string;
+  *   data?: { resourceCodes: any };
+  * }>} A promise resolving to an object containing the status, message, and optionally the list of resource codes.
+  *
+  * @throws Throws an error if the account ID is invalid or if fetching resource codes fails.
+  */ 
   async getResourceCodes(
     accountId: string,
     projectFiscalRid : string,
@@ -1747,6 +1924,24 @@ export class ProjectResourceService {
     }
   }
 
+  /**
+ * Retrieves a list of resource codes assigned to a specific project fiscal period within an account.
+ *
+ * This method validates the account ID to get the valid account number, then fetches
+ * the resource codes that are assigned to the specified project fiscal ID under that account.
+ *
+ * @param {string} accountId - The ID of the account to fetch assigned resource codes for.
+ * @param {string} projectFiscalId - The fiscal ID of the project to filter assigned resource codes.
+ *
+ * @returns {Promise<{
+ *   statusCode: number;
+  *   message: string;
+  *   errorMessage?: string;
+  *   data?: { resourceCodes: any };
+  * }>} A promise resolving to an object containing the status, message, and optionally the list of assigned resource codes.
+  *
+  * @throws Throws an error if the account ID is invalid or if fetching assigned resource codes fails.
+  */ 
   async getAssignedResourceCodes(
     accountId: string,
     projectFiscalId: string

@@ -41,7 +41,7 @@ export interface IUpdateResource {
   total_years_experience?: number | null;
   total_years_in_org?: number | null;
   status_rid?: string;
-  modified_by ?: string | null;
+  modified_by?: string | null;
   comments?: string;
 }
 export interface IResourceCost {

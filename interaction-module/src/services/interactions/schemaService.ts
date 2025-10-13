@@ -13,7 +13,7 @@ import {
   IUpdateInteraction,
 } from "../../utils/types";
 import { Interaction } from "../../models/interaction";
-import { ALPHANUMERIC_CONDITIONS, HttpStatus, MAIN_SCHEMA_NAME, mainTableFilters, rawQueries, schedulerStatus, statusAction, techSummaryStatus } from "../../utils/constants";
+import { ALPHANUMERIC_CONDITIONS, HttpStatus, MAIN_SCHEMA_NAME, mainTableFilters, rawQueries, schedulerStatus, SCHEMANAME_PREFIX, statusAction, techSummaryStatus } from "../../utils/constants";
 import { SendEmailInfo } from "../../models/sendEmailInfo";
 import { decryptClientSecret, logMessage } from "../../utils/helpers";
 import { fetchStatusIdsForReminderList } from "../../utils/rawQueries";
@@ -947,7 +947,7 @@ class InteractionSchemaService {
       }
 
       const [account]: any[] = await this.mainDbSequelize.query(
-        `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
+        rawQueries.fetchParentAccountforEmail,
         {
           replacements: { rid: accountId },
           type: "SELECT",
@@ -958,7 +958,7 @@ class InteractionSchemaService {
 
       if (account?.storage_type === "store_in_parent") {
         const [accountData]: any[] = await this.mainDbSequelize.query(
-          `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
+          rawQueries.fetchParentAccountforEmail,
           {
             replacements: { rid: account?.parent_account_rid },
             type: "SELECT",
@@ -1818,7 +1818,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         if (!userId) return null;
 
         const [results]: any = await this.mainDbSequelize?.query(
-          `SELECT first_name, middle_name, last_name FROM ${MAIN_SCHEMA_NAME}."user" WHERE rid = :userId`,
+          rawQueries.getUserNameByIdQuery(),
           {
             replacements: { userId },
             type: "SELECT",
@@ -1856,7 +1856,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
      
       if (status_rid) {
         const result = await this.mainDbSequelize.query(
-          `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid = :id`,
+          rawQueries.getStatusByIdQuery(),
           {
             replacements: {
               id: status_rid,
@@ -1901,7 +1901,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
 
       if (interactionDetails?.dataValues?.interaction_type_rid) {
         const result = await this.mainDbSequelize.query(
-          `SELECT rid, interaction_type_name FROM ${MAIN_SCHEMA_NAME}.interaction_type WHERE rid = :id`,
+          rawQueries.getInteractionTypeByIdQuery(),
           {
             replacements: {
               id: interactionDetails.dataValues.interaction_type_rid,
@@ -1914,11 +1914,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       }
       if (interactionDetails?.dataValues?.interaction_level_rid) {
         const result = await this.mainDbSequelize.query(
-          `SELECT rid, interaction_level_name FROM ${MAIN_SCHEMA_NAME}.interaction_level WHERE rid = :id`,
+        rawQueries.fetchInteractionLevelById(interactionDetails.dataValues.interaction_level_rid),
           {
-            replacements: {
-              id: interactionDetails.dataValues.interaction_level_rid,
-            },
             type: "SELECT",
           }
         );
@@ -1927,7 +1924,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       }
       if (interactionDetails?.dataValues?.status_rid) {
         const result = await this.mainDbSequelize.query(
-          `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE rid = :id`,
+          rawQueries.getInteractionStatusByIdQuery(),
           {
             replacements: { id: interactionDetails.dataValues.status_rid },
             type: "SELECT",
@@ -2185,7 +2182,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     }
 
     const interactionSource = await this.mainDbSequelize.query(
-      `Select rid, interaction_source_name from ${MAIN_SCHEMA_NAME}.interaction_source WHERE interaction_source_name = :type limit 1`,
+     rawQueries.getInteractionSourceByNameQuery(),
       {
         replacements: { type },
         type: "SELECT",
@@ -2205,7 +2202,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     }
 
     const interactionLevel = await this.mainDbSequelize.query(
-      `Select  interaction_level_name from ${MAIN_SCHEMA_NAME}.interaction_level WHERE rid = :type limit 1`,
+      rawQueries.getInteractionLevelNameByIdQuery(),
       {
         replacements: { type },
         type: "SELECT",
@@ -2225,9 +2222,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     }
 
     const interactionLevel = await this.mainDbSequelize.query(
-      `Select rid, interaction_level_name from ${MAIN_SCHEMA_NAME}.interaction_level WHERE interaction_level_name = :type limit 1`,
+      rawQueries.fetchInteractionLevelRidByName(type),
       {
-        replacements: { type },
         type: "SELECT",
       }
     );
@@ -2262,7 +2258,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     }
 
     const interactionTypes = await this.mainDbSequelize.query(
-      `Select rid, interaction_type_name from ${MAIN_SCHEMA_NAME}.interaction_type WHERE status = 'active' order by interaction_type_name ASC`,
+      rawQueries.getActiveInteractionTypesQuery(),
       {
         type: "SELECT",
       }
@@ -2278,7 +2274,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     }
 
     const interactionSource = await this.mainDbSequelize.query(
-      `Select rid, interaction_source_name from ${MAIN_SCHEMA_NAME}.interaction_source WHERE status = 'active' order by interaction_source_name ASC`,
+      rawQueries.getActiveInteractionSourcesQuery(),
       {
         type: "SELECT",
       }
@@ -2309,7 +2305,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     }
 
     const responseSource = await this.mainDbSequelize.query(
-      `Select rid, response_source_name from ${MAIN_SCHEMA_NAME}.interaction_response_source WHERE status = 'active' order by response_source_name ASC`,
+      rawQueries.getActiveInteractionResponseSourcesQuery(),
       {
         type: "SELECT",
       }
@@ -3216,12 +3212,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       }
     }
 
-    const query = `
-    SELECT DISTINCT ps.project_rid
-    FROM ${MAIN_SCHEMA_NAME}.project_summary AS ps
-    LEFT JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary AS pfs ON ps.project_rid = pfs.project_rid
-    ${accessControlWhere}
-  `;
+    const query = rawQueries.getProjectSummaryWithFiscalAccessQuery(accessControlWhere);
 
     const results = await this.mainDbSequelize.query(query, {
       replacements,
@@ -3928,7 +3919,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       }
 
       const [account]: any[] = await this.mainDbSequelize.query(
-        `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE r_number = :r_number`,
+       rawQueries.getAccountByRNumberQuery(),
         {
           replacements: { r_number: accountNumber },
           type: "SELECT",
@@ -3939,7 +3930,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
 
       if (account?.storage_type === "store_in_parent") {
         const [accountData]: any[] = await this.mainDbSequelize.query(
-          `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
+          rawQueries.fetchParentAccountforEmail,
           {
             replacements: { rid: account?.parent_account_rid },
             type: "SELECT",
@@ -4146,7 +4137,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
   async fetchAccountDetails(account_number: string, parentAccountId: string, accountRid: string) {
     const {accountNumber} = await this.fetchValidAccountNumberByIdForEmail(accountRid);
   
-    const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+    const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
     try {
 
       const sequelize = await initOrgSequelize();

@@ -1,7 +1,5 @@
 import { Request, Response } from "express";
-import {
-  
-} from "../lib/joi/schemas/schema";
+import {} from "../lib/joi/schemas/schema";
 import { errorResponse } from "../utils/apiResponse";
 import { constants } from "../utils/constant";
 import configurations from "../config/config";
@@ -16,6 +14,20 @@ import {
 
 const services = configurations.getInstance().getServices();
 
+/**
+ * Handles the request to update admin settings for the current user.
+ *
+ * @param {Request} req The HTTP request object containing headers and body with update data.
+ * @param {Response} res The HTTP response object used to send the outcome.
+ * @returns {Promise<void>} A promise that resolves once the update request is processed.
+ *
+ * This function:
+ * - Extracts the user ID from request headers and update data from the body.
+ * - Validates presence of user ID and update payload.
+ * - Calls the settings service to perform the update.
+ * - Sends success response if update succeeds.
+ * - Logs errors and sends appropriate error responses on failure.
+ */
 async function updateSettings(req: Request, res: Response): Promise<void> {
   const methodName = "Update Admin settings";
   try {
@@ -82,6 +94,20 @@ async function updateSettings(req: Request, res: Response): Promise<void> {
     return;
   }
 }
+
+/**
+ * Handles the request to list admin settings for the current user.
+ *
+ * @param {Request} req The HTTP request object containing headers.
+ * @param {Response} res The HTTP response object used to send the settings data or errors.
+ * @returns {Promise<void>} A promise that resolves once the settings are retrieved and response sent.
+ *
+ * This function:
+ * - Extracts the user ID from request headers and validates its presence.
+ * - Calls the settings service to fetch the list of settings for the user.
+ * - Sends a success response with the settings data if retrieval succeeds.
+ * - Logs errors and sends appropriate error responses on failure.
+ */
 async function listSettings(req: Request, res: Response): Promise<void> {
   const methodName = "List Admin settings";
   try {
@@ -124,4 +150,5 @@ async function listSettings(req: Request, res: Response): Promise<void> {
     return;
   }
 }
+
 export { updateSettings, listSettings };

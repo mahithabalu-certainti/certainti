@@ -24,7 +24,7 @@ const dbPort = process.env.MAIN_PG_DB_PORT
 const env = process.env.NODE_ENV || NODE_ENV.DEV;
  
 const sslOptions =
-  env === NODE_ENV.PROD
+  env === NODE_ENV?.PROD
     ? {
         dialectOptions: {
           ssl: {

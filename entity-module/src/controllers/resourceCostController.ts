@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import { HttpStatus } from "../utils/constants";
-import { errorResponse, successResponse } from "../utils/apiResponse";
 import configurations from "../config/config";
 import {
   validateRequest,
@@ -15,12 +14,11 @@ import {
 import {
   resourceCostSchema,
   listResourceCostSchema,
-  getResourceCostSchema,
   updateResourceCostSchema,
   exportResourceCostSchema,
   updateResourceDuplicateStatus,
   listResourceCostSchemaForFinancialHighlights,
-  exportResourceCostSchemaForFinancialHighlights
+  exportResourceCostSchemaForFinancialHighlights,
 } from "../lib/joi/schemas/schema";
 
 // const logger = configurations.getInstance().getLogger();
@@ -147,7 +145,8 @@ async function exportResourceCosts(req: Request, res: Response): Promise<void> {
       value.sortOrder,
       value.accountNumber,
       value.fiscalYear,
-      value.resourceRid,userId
+      value.resourceRid,
+      userId
     );
 
     if (resourceCost.statusCode === HttpStatus.SUCCESS) {
@@ -214,7 +213,7 @@ async function createResourceCost(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    if(value.user_preference === "reject"){
+    if (value.user_preference === "reject") {
       return;
     }
 
@@ -228,8 +227,13 @@ async function createResourceCost(req: Request, res: Response): Promise<void> {
       successLog(methodName);
       handleSuccessResponse(res, resourceCost.data);
       return;
-    } else if(resourceCost.statusCode === HttpStatus.PROMPT) {
-      handlePromptResponse(res, HttpStatus.PROMPT, resourceCost.message, resourceCost.data);
+    } else if (resourceCost.statusCode === HttpStatus.PROMPT) {
+      handlePromptResponse(
+        res,
+        HttpStatus.PROMPT,
+        resourceCost.message,
+        resourceCost.data
+      );
     } else {
       errorLog(methodName, resourceCost.errorMessage);
       handleErrorResponse(
@@ -288,22 +292,27 @@ async function updateResourceCost(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    if(value.user_preference === "reject"){
+    if (value.user_preference === "reject") {
       return;
     }
 
     const resourceCost = await resourceCostService.updateResourceCost(
       value,
       userId,
-      value.user_preference,
+      value.user_preference
     );
 
     if (resourceCost.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, resourceCost.data);
       return;
-    } else if(resourceCost.statusCode === HttpStatus.PROMPT){
-      handlePromptResponse(res, HttpStatus.PROMPT, resourceCost.message, resourceCost.data);
+    } else if (resourceCost.statusCode === HttpStatus.PROMPT) {
+      handlePromptResponse(
+        res,
+        HttpStatus.PROMPT,
+        resourceCost.message,
+        resourceCost.data
+      );
     } else {
       errorLog(methodName, resourceCost.errorMessage);
       handleErrorResponse(
@@ -377,12 +386,27 @@ async function resourceCostById(req: Request, res: Response): Promise<void> {
   }
 }
 
+/**
+ * Handles the acceptance or rejection of a duplicate or anomaly status for a resource cost entry.
+ *
+ * - Validates the incoming request using `updateResourceDuplicateStatus` schema.
+ * - If validation passes, delegates the status update logic to `resourceCostService.acceptResourceCostStatus`.
+ * - Returns a success response if the operation succeeds, otherwise returns a structured error response.
+ *
+ * @param {Request} req - Express request containing status update details (e.g. rid, accountNumber, action, type).
+ * @param {Response} res - Express response used to return operation result to the client.
+ * @returns {Promise<void>}
+ */
 async function acceptStatus(req: Request, res: Response): Promise<void> {
   const methodName = "Accept duplicate";
   try {
-    const value = await validateRequest(req, updateResourceDuplicateStatus, res);
+    const value = await validateRequest(
+      req,
+      updateResourceDuplicateStatus,
+      res
+    );
 
-    if(!value){
+    if (!value) {
       return;
     }
     logMessage(`Accept Resource Cost Status payload received: ${JSON.stringify(value)} User Id: ${req.headers["x-user-id"]}`);
@@ -434,7 +458,10 @@ async function acceptStatus(req: Request, res: Response): Promise<void> {
  * @returns {Promise<void>} - Sends a JSON response with resource cost data on success,
  * or an error message on failure.
  */
-async function resourceCostsForFinancialHighlights(req: Request, res: Response): Promise<void> {
+async function resourceCostsForFinancialHighlights(
+  req: Request,
+  res: Response
+): Promise<void> {
   const methodName = "resourceCosts For FinancialHighlights";
   try {
     const value = await validateRequest(
@@ -463,18 +490,19 @@ async function resourceCostsForFinancialHighlights(req: Request, res: Response):
     const pageNum: number = parseInt(value.page, 10) || 1;
     const limitNum: number = parseInt(value.limit, 10) || 10;
 
-    const resourceCost = await resourceCostService.resourceCostsForFinancialHighlights(
-      pageNum,
-      limitNum,
-      value.search,
-      parsedFilters,
-      value.sortBy,
-      value.sortOrder,
-      value.accountNumber,
-      value.fiscalYear,
-      value.projectRid,
-      value.accountRid
-    );
+    const resourceCost =
+      await resourceCostService.resourceCostsForFinancialHighlights(
+        pageNum,
+        limitNum,
+        value.search,
+        parsedFilters,
+        value.sortBy,
+        value.sortOrder,
+        value.accountNumber,
+        value.fiscalYear,
+        value.projectRid,
+        value.accountRid
+      );
 
     if (resourceCost.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -511,7 +539,10 @@ async function resourceCostsForFinancialHighlights(req: Request, res: Response):
  * @returns {Promise<void>} - Sends a JSON response with resource cost data on success,
  * or an error message on failure.
  */
-async function exportResourceCostsForFinancialHighlights(req: Request, res: Response): Promise<void> {
+async function exportResourceCostsForFinancialHighlights(
+  req: Request,
+  res: Response
+): Promise<void> {
   const methodName = "export resourceCosts";
   try {
     const { accountRid, projectRid } = req.params;
@@ -537,17 +568,18 @@ async function exportResourceCostsForFinancialHighlights(req: Request, res: Resp
         "Invalid filters format. Must be a valid JSON object."
       );
     }
-    const resourceCost = await resourceCostService.exportResourceCostsForFinancialHighlights(
-      value.search,
-      parsedFilters,
-      value.sortBy,
-      value.sortOrder,
-      value.accountNumber,
-      value.fiscalYear,
-      value.projectRid,
-      value.accountRid,
-      userId
-    );
+    const resourceCost =
+      await resourceCostService.exportResourceCostsForFinancialHighlights(
+        value.search,
+        parsedFilters,
+        value.sortBy,
+        value.sortOrder,
+        value.accountNumber,
+        value.fiscalYear,
+        value.projectRid,
+        value.accountRid,
+        userId
+      );
 
     if (resourceCost.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -579,6 +611,7 @@ async function exportResourceCostsForFinancialHighlights(req: Request, res: Resp
     );
   }
 }
+
 export default {
   resourceCosts,
   exportResourceCosts,
@@ -587,5 +620,5 @@ export default {
   resourceCostById,
   acceptStatus,
   resourceCostsForFinancialHighlights,
-  exportResourceCostsForFinancialHighlights
+  exportResourceCostsForFinancialHighlights,
 };

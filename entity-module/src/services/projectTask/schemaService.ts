@@ -20,7 +20,7 @@ import {
   setupProjectTaskTimelineSeq,
 } from "../../models/projectTaskTimeline";
 import { ProjectResource } from "../../models/projectResource";
-import { MAIN_SCHEMA_NAME, rawQueries } from "../../utils/constants";
+import { MAIN_SCHEMA_NAME, SCHEMANAME_PREFIX, rawQueries } from "../../utils/constants";
 import { ProjectFiscalRegion } from "../../models/projectFiscalRegion";
 import { Project } from "../../models/project";
 import { AccountFiscal } from "../../models/accountFiscal";
@@ -73,7 +73,7 @@ export class ProjectTaskSchemaService {
   }
 
   private async getModels(accountNumber: string) {
-    const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+    const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
 
     const sequelize = await this.getSequelize();
     this.mainDbSequelize = await this.getMainSequelize();
@@ -190,7 +190,7 @@ export class ProjectTaskSchemaService {
       await ProjectTaskTimeline.sync({ force: false });
       await ProjectTaskHistory.sync({ force: false });
       if (this.orgDbSequelize) {
-        const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+        const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
         await setupProjectTaskSequence(this.orgDbSequelize, schemaName);
         await setupProjectTaskTimelineSeq(this.orgDbSequelize, schemaName);
         await setupProjectTaskHistorySequence(this.orgDbSequelize, schemaName);
@@ -3029,7 +3029,7 @@ export class ProjectTaskSchemaService {
     }
 
     const results = await this.mainDbSequelize.query(
-      `SELECT * FROM ${MAIN_SCHEMA_NAME}.resource_type WHERE rid = :resourceTypeId`,
+      rawQueries.fetchSpecificResourceTypeById(),
       {
         replacements: { resourceTypeId },
         type: "SELECT",
