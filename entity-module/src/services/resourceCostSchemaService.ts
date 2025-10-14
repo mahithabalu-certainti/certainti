@@ -823,7 +823,7 @@ async exportresourceCostDetailsForFinancialHighlights(
 
           let exportData = rawResult.map((resource: any) => {
          const exportData: Record<string, string> = {};  
-          let resultMap: Record<string, any> = {};
+      let resultMap: Record<string, any> = {};
       if (!project_rid || project_rid === undefined || project_rid === "undefined") {
       resultMap = {
       project_code: resource.project_code,
