@@ -649,7 +649,8 @@ async exportresourceCostDetailsForFinancialHighlights(
     const exportData = projectResourceFiscal.map((row: any) => {
       const mappedRow: Record<string, any> = {};
       Object.keys(labelMap).forEach((key) => {
-        mappedRow[labelMap[key]] = row[key];
+        if(key == 'fiscal_year') mappedRow[labelMap[key]] = `FY-${row[key]}`;
+        else mappedRow[labelMap[key]] = row[key];
       });
       return mappedRow;
     });
