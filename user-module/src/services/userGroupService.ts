@@ -2137,9 +2137,11 @@ class UserGroupService {
       const result = userGrp.get({ plain: true });
       
       const isValidTZ = timezone &&  isValidTimezone(timezone);
+      // moment.utc(date).utcOffset('+05:30').format('YYYY-MMM-DD hh:mm:ss A')
+      
       const formatDate = (date?: Date) =>
         date
-          ? moment(date).tz(isValidTZ ? timezone : 'UTC').format('YYYY-MMM-DD, hh:mm:ss A')
+          ? moment(date).tz(isValidTZ ? timezone : 'UTC').utcOffset('+05:30').format('YYYY-MMM-DD, hh:mm:ss A')
           : null;
       
        

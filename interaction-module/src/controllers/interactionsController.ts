@@ -1194,6 +1194,7 @@ async function exportAllInteractions(req: Request, res: Response) {
       date
         ? moment(date)
             .tz(isValidTZ ? data.timezone : "UTC")
+            .utcOffset('+05:30')
             .format("YYYY-MMM-DD, hh:mm:ss A")
         : null;
 
@@ -1621,6 +1622,7 @@ async function exportResponseHistory(req: Request, res: Response) {
     );
     if (result.statusCodeValue == HttpStatus.SUCCESS_MESSAGE) {
       let structuredData = result.data.map((d: any) => {
+        let isoDate = new Date(d.response_on).toISOString();
         return {
           "Interaction ID": d.r_number,
           "Interaction Type": d.interaction_source_name,
@@ -1628,7 +1630,7 @@ async function exportResponseHistory(req: Request, res: Response) {
           "Response On":
             d.response_on == null
               ? ""
-              : new Date(d.response_on).toISOString().split("T")[0],
+              : moment.utc(d.response_on).utcOffset('+05:30').format('YYYY-MMM-DD, hh:mm:ss A'),
           "Response Email-ID": d.response_email,
           "Response By": d.response_by,
         };
@@ -1983,12 +1985,17 @@ async function exportTechnicalSummary(req: Request, res: Response) {
       }
     }
     const isValidTZ = value.timezone && isValidTimezone(value.timezone);
-    const formatDate = (date?: Date) =>
-      date
-        ? moment(date)
+    const formatDate = (date?: Date) => {
+      const offsetMs = (5 * 60 + 30) * 60 * 1000;
+      const convertedDate = new Date(date?.getTime() ?? "" + offsetMs);
+      return date
+        ? moment
+            .utc(convertedDate)
             .tz(isValidTZ ? value.timezone : "UTC")
+            .utcOffset('-012:30')
             .format("YYYY-MMM-DD, hh:mm:ss A")
         : null;
+    }
     if (result.statusCode === HttpStatus.SUCCESS) {
       const finalStructuredData =
         result?.data?.techSummaryInfo.length < 1
@@ -2315,7 +2322,7 @@ async function exportInteractionHistory(req: Request, res: Response) {
       let finalStructuredData = result.data.data.interaction_history.map(
         (data: any) => ({
           Action: data.status_name,
-          Date: formatToLocalTime(data.date),
+          Date: data.date,
         })
       );
       const generateBase64Response = await generateExcelBase64(
