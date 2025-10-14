@@ -28,6 +28,9 @@ interface ProjectTaskAttributes {
   total_cost_pro_task?: number | null;
 
   comments?: string | null;
+
+  status_rid : string;
+  project_resource_rid : string | undefined | null
 }
 
 type ProjectTaskCreationAttributes = Optional<ProjectTaskAttributes, "rid">;
@@ -63,6 +66,10 @@ export class ProjectTask
   public total_cost_pro_task?: number;
 
   public comments?: string;
+
+  public status_rid!: string;
+
+  public project_resource_rid! : string
 
   static initialize(sequelize: Sequelize, schema: string) {
     ProjectTask.init(
@@ -125,11 +132,11 @@ export class ProjectTask
           allowNull: false,
         },
         start_date: {
-          type: DataTypes.DATE,
+          type: DataTypes.DATEONLY,
           allowNull: true,
         },
         end_date: {
-          type: DataTypes.DATE,
+          type: DataTypes.DATEONLY,
           allowNull: true,
         },
         country_rid: {
@@ -156,6 +163,14 @@ export class ProjectTask
           type: DataTypes.STRING(2000),
           allowNull: true,
         },
+        status_rid : {
+          type : DataTypes.STRING(50),
+          allowNull : true
+        },
+        project_resource_rid : {
+          type : DataTypes.STRING(50),
+          allowNull : true
+        }
       },
       {
         sequelize,

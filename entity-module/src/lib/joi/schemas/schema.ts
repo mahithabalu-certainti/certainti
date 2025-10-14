@@ -233,7 +233,7 @@ const createResourcesSchema = Joi.object({
     .pattern(uuidRegex, "valid UUID")
     .required(),
   resource_code: Joi.string()
-    .pattern(/^[A-Za-z][A-Za-z0-9\-_]{2,49}$/)
+    .pattern(/^[A-Za-z0-9][A-Za-z0-9\-_]{2,49}$/)
     .required()
     .messages({
       'string.base': 'Resource Code must be a string.',
@@ -428,7 +428,7 @@ const updateResourceSchema = Joi.object({
     .required(),
   account_number: Joi.string().max(50).required(),
   resource_code: Joi.string()
-    .pattern(/^[A-Za-z][A-Za-z0-9\-_]{2,49}$/)
+    .pattern(/^[A-Za-z0-9][A-Za-z0-9\-_]{2,49}$/)
     .required()
     .messages({
       'string.base': 'Resource Code must be a string.',
@@ -637,6 +637,8 @@ const listResourceSchema = Joi.object({
     .optional()
     .allow(""),
   bothParentAndChild: Joi.boolean().optional().default(false),
+  apiSource: Joi.string().optional().default("Project"),
+  accountInteractionId: Joi.string().optional().allow(null).allow("").default(""),
 });
 
 const exportListResourceSchema = Joi.object({
@@ -1413,8 +1415,14 @@ const createProjectSchema = Joi.object({
         "string.max": "Key Contact Email cannot exceed 254 characters.",
         "string.pattern.base": "Key Contact Email must follow the format: localpart@domain.tld, with a valid TLD (2–63 characters)."
       }),
-      key_contact_role: Joi.string().pattern(uuidRegex, "valid UUID").optional().allow(null),
+      key_contact_role: Joi.string().pattern(uuidRegex, "valid UUID").optional().allow(null,""),
       is_primary_contact: Joi.boolean().valid(true, false).optional().allow(null),
+      interaction_cc_recipient: Joi.boolean()
+        .optional()
+        .messages({
+          'boolean.base': 'Interaction CC Recipient must be a boolean value (true or false)',
+          'any.required': 'Interaction CC Recipient is required',
+        }),
       include_in_communication: Joi.boolean().optional().allow(null),
       status_rid: Joi.string().optional().allow(null),
       action_type: Joi.string().valid('add').required()
@@ -1656,8 +1664,14 @@ const updateProjectSchema = Joi.object({
           "string.max": "Key Contact Email cannot exceed 254 characters.",
           "string.pattern.base": "Key Contact Email must follow the format: localpart@domain.tld, with a valid TLD (2–63 characters)."
         }),
-        key_contact_role: Joi.string().pattern(uuidRegex, "valid UUID").optional().allow(null),
+        key_contact_role: Joi.string().pattern(uuidRegex, "valid UUID").optional().allow(null,""),
         is_primary_contact: Joi.boolean().valid(true, false).optional().allow(null),
+        interaction_cc_recipient: Joi.boolean()
+        .optional()
+        .messages({
+          'boolean.base': 'Interaction CC Recipient must be a boolean value (true or false)',
+          'any.required': 'Interaction CC Recipient is required',
+        }),
         include_in_communication: Joi.boolean().optional().allow(null),
         status_rid: Joi.string().optional().allow(null)
       })
@@ -2013,6 +2027,8 @@ const createProjectResourceSchema = Joi.object({
   project_fiscal_rid: Joi.string().pattern(uuidRegex).required(),
   account_rid: Joi.string().pattern(uuidRegex).required(),
   resource_code: Joi.string().min(3).max(50).required(),
+  user_preference: Joi.string().optional().allow(null).allow(""),
+  project_resource_role: Joi.string().optional().allow(null).allow(""),
   assigned_skill_role_type_rid: Joi.string().pattern(uuidRegex).optional().allow(null).allow(""),
   skill_role_rid: Joi.string().pattern(uuidRegex).optional().allow(null).allow(""),
   skill_role_others: Joi.string().min(3).max(100).optional().allow("").allow(null),
@@ -2047,7 +2063,7 @@ const createProjectResourceSchema = Joi.object({
       "date.invalidFormat":
         "Invalid end_date. Please use the format YYYY-MM-DD",
     }),
-
+  net_total_cost_pro_res: Joi.string(),
   total_hours_pro_res: Joi.string()
   .pattern(decimal18_2Regex)
   .messages({
@@ -2104,6 +2120,7 @@ const updateProjectResourceSchema = Joi.object({
   account_rid: Joi.string().pattern(uuidRegex).required(),
   project_resource_rid: Joi.string().pattern(uuidRegex).required(),
   resource_code: Joi.string().min(3).max(50).required(),
+  project_resource_role: Joi.string().optional().allow(null).allow(""),
   assigned_skill_role_type_rid: Joi.string().pattern(uuidRegex).optional().allow(null).allow(""),
   skill_role_rid: Joi.string().pattern(uuidRegex).optional().allow(null).allow(""),
   skill_role_others: Joi.string().min(3).max(100).optional().allow("").allow(null),
@@ -2160,6 +2177,7 @@ const updateProjectResourceSchema = Joi.object({
   })
   .optional()
   .allow(null),
+  net_total_cost_pro_res: Joi.string(),
   total_cost_pro_res: Joi.string()
   .pattern(decimal18_2Regex)
   .messages({
@@ -2188,6 +2206,7 @@ const updateProjectResourceSchema = Joi.object({
   deductions: costFieldValidator('deductions'),
   
   description: Joi.string().max(2000).optional().allow("").allow(null),
+  user_preference: Joi.string().optional().allow(null).allow(""),
 });
 
 const exportListProjectResourceSchema = Joi.object({
@@ -2347,6 +2366,8 @@ const createProjectTaskSchema = Joi.object({
   .allow(null),
   
   comments: Joi.string().max(2000).optional().allow("").allow(null),
+  user_preference: Joi.string().max(2000).optional().allow("").allow(null),
+  project_resource_rid: Joi.string().pattern(uuidRegex).required(),
 });
 
 const updateProjectTaskSchema = Joi.object({
@@ -2430,6 +2451,8 @@ const updateProjectTaskSchema = Joi.object({
   .allow(null),
   
   comments: Joi.string().max(2000).optional().allow("").allow(null),
+  user_preference : Joi.string().max(2000).optional().allow("").allow(null),
+  project_resource_rid: Joi.string().pattern(uuidRegex).required(),
 });
 
 const listResourceCostSchemaForFinancialHighlights = Joi.object({
@@ -2544,6 +2567,164 @@ const exportListAccountLevelProjectCostsSchema = Joi.object({
     sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
 });
 
+const importedAccountLevelProjects = Joi.object({
+  page: Joi.string()
+    .pattern(/^[0-9]+$/)
+    .default("1"),
+  limit: Joi.string()
+    .pattern(/^[0-9]+$/)
+    .default("100"),
+  fiscalYear: Joi.number().min(1000).max(9999).optional().allow(0).messages({
+    "number.base": "Fiscal year must be a number",
+    "number.min": "Fiscal year must be a 4-digit number",
+    "number.max": "Fiscal year must be a 4-digit number",
+    "any.required": "Fiscal year is required",
+  }),
+  search: Joi.string().max(255).optional(),
+  filters: Joi.string().default("{}"),
+  globalFilters: Joi.string().default("{}"),
+  sortBy: Joi.string().default("created_datetime").optional().allow(""),
+  sortOrder: Joi.string()
+    .valid("ASC", "DESC")
+    .default("DESC")
+    .optional()
+    .allow(""),
+  bothParentAndChild: Joi.boolean().optional().default(false),
+  documentRid: Joi.string()
+    .pattern(uuidRegex, "valid UUID")
+});
+
+const exportImportedAccountLevelProjects = Joi.object({
+  fiscalYear: Joi.number().min(1000).max(9999).optional().allow(0).messages({
+    "number.base": "Fiscal year must be a number",
+    "number.min": "Fiscal year must be a 4-digit number",
+    "number.max": "Fiscal year must be a 4-digit number",
+    "any.required": "Fiscal year is required",
+  }),
+  search: Joi.string().max(255).optional(),
+  filters: Joi.string().default("{}"),
+  globalFilters: Joi.string().default("{}"),
+  sortBy: Joi.string().default("created_datetime").optional().allow(""),
+  sortOrder: Joi.string()
+    .valid("ASC", "DESC")
+    .default("DESC")
+    .optional()
+    .allow(""),
+  bothParentAndChild: Joi.boolean().optional().default(false),
+  documentRid: Joi.string()
+    .pattern(uuidRegex, "valid UUID"),
+  timezone: Joi.string().optional()  
+});
+
+const importedAccountLevelResources = Joi.object({
+  page: Joi.string()
+    .pattern(/^[0-9]+$/)
+    .default("1"),
+  limit: Joi.string()
+    .pattern(/^[0-9]+$/)
+    .default("100"),
+  search: Joi.string().max(255).optional(),
+  filters: Joi.string().default("{}"),
+  sortBy: Joi.string().default("created_datetime").optional().allow(""),
+  sortOrder: Joi.string()
+    .valid("ASC", "DESC")
+    .default("DESC")
+    .optional()
+    .allow(""),
+  documentRid: Joi.string()
+    .pattern(uuidRegex, "valid UUID")
+});
+
+const exportImportedAccountLevelResources = Joi.object({
+  search: Joi.string().max(255).optional(),
+  filters: Joi.string().default("{}"),
+  sortBy: Joi.string().default("created_datetime").optional().allow(""),
+  sortOrder: Joi.string()
+    .valid("ASC", "DESC")
+    .default("DESC")
+    .optional()
+    .allow(""),
+  documentRid: Joi.string()
+    .pattern(uuidRegex, "valid UUID")
+});
+
+const importedAccountLevelProjectTasks = Joi.object({
+  documentRid: Joi.string().pattern(uuidRegex).required(),
+    page: Joi.number()
+        .integer()
+        .min(1)
+        .required()
+        .messages({
+            'any.required': 'Page number is required',
+            'number.base': 'Page must be a number',
+            'number.integer': 'Page must be an integer',
+            'number.min': 'Page must be greater than or equal to 1'
+        }),
+    limit: Joi.number()
+        .integer()
+        .min(1)
+        .max(100)
+        .required()
+        .messages({
+            'any.required': 'Limit is required',
+            'number.base': 'Limit must be a number',
+            'number.integer': 'Limit must be an integer',
+            'number.min': 'Limit must be greater than or equal to 1',
+            'number.max': 'Limit cannot exceed 100'
+        }),
+    search: Joi.string()
+        .max(255)
+        .allow('')
+        .allow(null)
+        .optional()
+        .messages({
+            'string.base': 'Search must be a string',
+            'string.max': 'Search cannot exceed 255 characters'
+        }),
+    filters: Joi.string().default("{}").optional(),
+    sortBy: Joi.string().default("created_datetime").optional(),
+    sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
+})
+
+const exportImportedAccountLevelProjectTasks = Joi.object({
+  documentRid: Joi.string().pattern(uuidRegex).required(),
+    search: Joi.string()
+        .max(255)
+        .allow('')
+        .allow(null)
+        .optional()
+        .messages({
+            'string.base': 'Search must be a string',
+            'string.max': 'Search cannot exceed 255 characters'
+        }),
+    filters: Joi.string().default("{}").optional(),
+    sortBy: Joi.string().default("created_datetime").optional(),
+    sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
+})
+
+const updateProjectResourceStatus = Joi.object({
+  rid: Joi.string().pattern(uuidRegex).required(),
+  action: Joi.string()
+    .valid("accept", "reject")
+    .required()
+    .messages({
+      "any.only": 'Action must be either "accept" or "reject"',
+      "any.required": "Action is required"
+    }),
+  accountId: Joi.string().max(255).required(),
+  resourceCode: Joi.string().max(255).required(),
+  type: Joi.string().valid("Anomaly", "Duplicate").required().messages({
+      "any.only": 'Type must be either "Anomaly" or "Duplicate"',
+      "any.required": "Type is required"
+    }),
+});
+
+const updateQreAdjutmentSchema = Joi.object({
+  rid: Joi.string().pattern(uuidRegex).required(),
+  accountId: Joi.string().pattern(uuidRegex).required(),
+  rd_percent_potential_ai: Joi.number().required()
+});
+
 export {
   listResourceSkillSchema,
   updateResourceSkillSchema,
@@ -2579,5 +2760,13 @@ export {
   listResourceCostSchemaForFinancialHighlights,
   exportResourceCostSchemaForFinancialHighlights,
   listAccountLevelProjectCostsSchema,
-  exportListAccountLevelProjectCostsSchema
+  exportListAccountLevelProjectCostsSchema,
+  importedAccountLevelProjects,
+  importedAccountLevelResources,
+  importedAccountLevelProjectTasks,
+  exportImportedAccountLevelProjects,
+  exportImportedAccountLevelResources,
+  exportImportedAccountLevelProjectTasks,
+  updateProjectResourceStatus,
+  updateQreAdjutmentSchema
 };

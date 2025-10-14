@@ -1,0 +1,159 @@
+import { Sequelize } from "sequelize";
+import { initOrgSequelize } from "../config/orgDataSource";
+import { initMainDbSequelize } from "../config/mainDataSource";
+import { Interaction } from "../models/interaction";
+import { InteractionItem } from "../models/interactionItem";
+import { InteractionHistory } from "../models/interactionHistory";
+import { InteractionTimeline } from "../models/interactionTimeline";
+import { InteractionType } from "../models/interactionType";
+import { MAIN_SCHEMA_NAME } from "../utils/constants";
+import { InteractionSummary } from "../models/interactionSummary";
+import { InteractionResponseHistory } from "../models/interactionResponseHistory";
+import { InteractionAttachment } from "../models/interactionAttachment";
+import { AiTechnicalSummary } from "../models/aiTechnicalSummary";
+import { AiAssessmentError } from "../models/aiAssessmentError";
+import { AiAssessmentQre } from "../models/aiAssessmentQre";
+import { AiAssessmentAudit } from "../models/aiAssessmentAudit";
+import { SchedulerExecutions } from "../models/schedulerExecution";
+import { SchedulerTaskExecutions } from "../models/schedulerTaskExecution";
+import { WebhookEmailLog } from "../models/webhookEmailLog";
+import { AccountInteractions } from "../models/accountInteractions";
+import { SendEmailInfo } from "../models/sendEmailInfo";
+import { AutoSendInteractionAudit } from "../models/autoSendInteractionAudit";
+import { InteractionTemplate } from "../models/interactionTemplate";
+import { InteractionTemplateItem } from "../models/interactionTemplateItems";
+import { AiAssessmentEventTracker } from "../models/aiAssessmentEventTracker";
+
+export class InteractionModelService {
+  orgDbSequelize: Sequelize | null = null;
+  mainDbSequelize: Sequelize | null = null;
+
+  modelCache: Map<
+    string,
+    {
+      Interaction: ReturnType<typeof Interaction.initialize>;
+      InteractionItem: ReturnType<typeof InteractionItem.initialize>;
+      InteractionHistory: ReturnType<typeof InteractionHistory.initialize>;
+      InteractionTimeline: ReturnType<
+        typeof InteractionTimeline.initialize
+      >;
+      InteractionType: ReturnType<
+        typeof InteractionType.initialize
+      >;
+      WebhookEmailLog: ReturnType<
+        typeof WebhookEmailLog.initialize
+      >;
+    }
+  > = new Map();
+
+  constructor() {}
+
+  async getSequelize(): Promise<Sequelize> {
+    if (!this.orgDbSequelize) {
+      this.orgDbSequelize = await initOrgSequelize();
+    }
+    return this.orgDbSequelize;
+  }
+
+  async getMainSequelize(): Promise<Sequelize> {
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await initMainDbSequelize();
+    }
+    return this.mainDbSequelize;
+  }
+
+  async getModels(accountNumber: string) {
+    const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+
+    const sequelize = await initOrgSequelize();
+    const mainDbSequelize = await this.getMainSequelize();
+
+    const InteractionModel = Interaction.initialize(sequelize, schemaName);
+    const AiTechnicalSummaryModel = AiTechnicalSummary.initialize(sequelize, schemaName);
+    const AiAssessmentErrorResponseModel = AiAssessmentError.initialize(sequelize, schemaName);
+    const AutoSendInteractionAuditModel = AutoSendInteractionAudit.initialize(sequelize, schemaName);
+    const InteractionItemModel = InteractionItem.initialize(
+      sequelize,
+      schemaName
+    );
+    const InteractionHistoryModel = InteractionHistory.initialize(
+      sequelize,
+      schemaName
+    );
+    const InteractionTimelineModel = InteractionTimeline.initialize(
+      sequelize,
+      schemaName
+    );
+    const InteractionTypeModel = InteractionType.initialize(
+      sequelize,
+      schemaName
+    );
+    const InteractionTemplateModel = InteractionTemplate.initialize(
+      mainDbSequelize,
+      ""
+    );
+    const InteractionTemplateItemModel = InteractionTemplateItem.initialize(
+      mainDbSequelize,
+      ""
+    );
+    const AiAssessmentEventTrackerModel = AiAssessmentEventTracker.initialize(
+      mainDbSequelize,
+      ""
+    );
+    const InteractionSummaryModel = InteractionSummary.initialize(
+      mainDbSequelize,
+      ""
+    );
+    const InteractionResponseHistoryModel =
+      InteractionResponseHistory.initialize(sequelize, schemaName);
+
+    const InteractionAttachmentModel = InteractionAttachment.initialize(
+      sequelize,
+      schemaName
+    );
+    const AiAssessmentQreModel   = AiAssessmentQre.initialize(
+      sequelize,
+      schemaName
+    );
+    const AiAssessmentAuditModel = AiAssessmentAudit.initialize(
+      sequelize,
+      schemaName
+    );
+    const AccountInteractionModel = AccountInteractions.initialize(sequelize, schemaName)
+    const SchedulerExcecutionModel = SchedulerExecutions.initialize(mainDbSequelize, "")
+    const SchedulerTaskExecutionModel = SchedulerTaskExecutions.initialize(mainDbSequelize, "")
+    const SendEmailInfoModel = SendEmailInfo.initialize(mainDbSequelize, "")
+
+    const WebhookEmailLogModel = WebhookEmailLog.initialize(
+      sequelize,
+      schemaName
+    );
+
+    const models = {
+      Interaction: InteractionModel,
+      InteractionItem: InteractionItemModel,
+      InteractionHistory: InteractionHistoryModel,
+      InteractionResponseHistory: InteractionResponseHistoryModel,
+      InteractionTimeline: InteractionTimelineModel,
+      InteractionType: InteractionTypeModel,
+      InteractionSummary: InteractionSummaryModel,
+      InteractionAttachment: InteractionAttachmentModel,
+      AiTechnicalSummary: AiTechnicalSummaryModel,
+      AiAssessmentAudit: AiAssessmentAuditModel,
+      AiAssessmentError: AiAssessmentErrorResponseModel,
+      AiAssessmentQre: AiAssessmentQreModel,
+      SchedulerExecution : SchedulerExcecutionModel,
+      SchedulerTaskExecution : SchedulerTaskExecutionModel,
+      WebhookEmailLog: WebhookEmailLogModel,
+      AccountInteraction : AccountInteractionModel,
+      SendEmailInfo : SendEmailInfoModel,
+      AutoSendInteractionAudit: AutoSendInteractionAuditModel,
+      InteractionTemplate: InteractionTemplateModel,
+      InteractionTemplateItem: InteractionTemplateItemModel,
+      AiAssessmentEventTracker: AiAssessmentEventTrackerModel
+    };
+
+    this.modelCache.set(schemaName, models);
+    return models;
+  }
+}

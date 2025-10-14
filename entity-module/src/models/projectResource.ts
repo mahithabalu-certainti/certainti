@@ -15,6 +15,7 @@ interface ProjectResourceAttributes {
   project_fiscal_rid: string;
   resource_rid: string;
   project_resource_code: string;
+  project_resource_role?: string | null;
   fiscal_year: number;
 
   start_date?: Date | null;
@@ -24,6 +25,7 @@ interface ProjectResourceAttributes {
 
   total_hours_pro_res?: number | null;
   total_cost_pro_res?: number | null;
+  net_total_cost_pro_res?: number | null;
 
   status_rid: string | null;
   country_rid?: string | null;
@@ -42,6 +44,8 @@ interface ProjectResourceAttributes {
   deductions?: number | null;
 
   description?: string | null;
+  total_hours_from_tasks? : number | null,
+  total_cost_from_tasks? : number | null
 }
 
 type ProjectResourceCreationAttributes = Optional<
@@ -67,6 +71,7 @@ export class ProjectResource
   public resource_rid!: string;
   public fiscal_year!: number;
   public project_resource_code!: string;
+  public project_resource_role?: string | null;
 
   public start_date?: Date | null;
   public end_date?: Date | null;
@@ -75,6 +80,7 @@ export class ProjectResource
 
   public total_hours_pro_res?: number | null;
   public total_cost_pro_res?: number | null;
+  public net_total_cost_pro_res?: number | null;
 
   public status_rid!: string | null;
   public country_rid?: string | null;
@@ -93,6 +99,8 @@ export class ProjectResource
   public bonus?: number | null;
 
   public description?: string | null;
+  public total_hours_from_tasks? : number | null
+  public total_cost_from_tasks? : number | null;
 
   static initialize(sequelize: Sequelize, schema: string) {
     ProjectResource.init(
@@ -124,6 +132,10 @@ export class ProjectResource
           type: DataTypes.STRING(100),
           allowNull: false,
         },
+        project_resource_role: {
+          type: DataTypes.STRING(100),
+          allowNull: true,
+        },
 
         start_date: { type: DataTypes.DATE },
         end_date: { type: DataTypes.DATE },
@@ -134,6 +146,7 @@ export class ProjectResource
         },
         total_hours_pro_res: { type: DataTypes.DECIMAL(18, 2) },
         total_cost_pro_res: { type: DataTypes.DECIMAL(18, 2) },
+        net_total_cost_pro_res: { type: DataTypes.DECIMAL(18, 2) },
 
         status_rid: { type: DataTypes.STRING(50) },
         country_rid: { type: DataTypes.STRING(50) },
@@ -171,6 +184,14 @@ export class ProjectResource
           type: DataTypes.STRING(2000),
           allowNull: true,
         },
+        total_hours_from_tasks : {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+        },
+        total_cost_from_tasks : {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+        }
       },
       {
         sequelize,
@@ -178,22 +199,6 @@ export class ProjectResource
         tableName: "project_resource",
         schema,
         timestamps: false,
-        validate: {
-          bothDatesOrNeither() {
-            const hasEffectiveDate =
-              this.resource_effective_from_date !== null &&
-              this.resource_effective_from_date !== undefined;
-            const hasEndDate =
-              this.resource_end_date !== null &&
-              this.resource_end_date !== undefined;
-
-            if (hasEffectiveDate !== hasEndDate) {
-              throw new Error(
-                "Both resource start date and end date must be provided together, or neither should be provided"
-              );
-            }
-          },
-        },
       }
     );
 

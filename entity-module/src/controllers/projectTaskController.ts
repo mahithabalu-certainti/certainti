@@ -7,13 +7,14 @@ import {
   successLog,
   validateRequest,
 } from "../utils/helpers";
-import { HttpStatus } from "../utils/constants";
+import { HttpStatus, STATUS_MESSAGE } from "../utils/constants";
 import configurations from "../config/config";
 import {
   createProjectTaskSchema,
   exportListProjectTasksSchema,
   listProjectTasksSchema,
   projectTaskByIdSchema,
+  updateProjectResourceStatus,
   updateProjectTaskSchema,
 } from "../lib/joi/schemas/schema";
 
@@ -21,12 +22,13 @@ const services = configurations.getInstance().getServices();
 const taskService = services.projectTaskServices;
 const projectTaskService = services.projectTaskInjestionServices;
 
-async function createProjectTask(req: Request, res: Response): Promise<void> {
+async function createProjectTask(req: Request, res: Response): Promise<any> {
   const methodName = "Create project task";
   try {
     const value = await validateRequest(req, createProjectTaskSchema, res);
 
     const userId = req.headers["x-user-id"] as string;
+    const userPreference = value.user_preference
 
     if (!userId) {
       handleErrorResponse(
@@ -43,13 +45,23 @@ async function createProjectTask(req: Request, res: Response): Promise<void> {
     }
     const projectResource = await projectTaskService.createProjectTask(
       value,
-      userId
+      userId,
+      userPreference
     );
     if (projectResource.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, projectResource.data);
       return;
-    } else {
+    } 
+    else if (projectResource.statusCode === HttpStatus.PROMPT) {
+      return res.status(HttpStatus.PROMPT).send({
+        statusCode : HttpStatus.PROMPT,
+        statusCodeValue : HttpStatus.PROMPT_MESSAGE,
+        statusMessage : projectResource.message,
+        data : projectResource.data
+      })
+    }
+    else {
       errorLog(methodName, projectResource.errorMessage);
       handleErrorResponse(
         res,
@@ -270,12 +282,13 @@ async function exportAllProjectTasks(
   }
 }
 
-async function updateProjectTask(req: Request, res: Response): Promise<void> {
+async function updateProjectTask(req: Request, res: Response): Promise<any> {
   const methodName = "Update project task";
   try {
     const value = await validateRequest(req, updateProjectTaskSchema, res);
 
     const userId = req.headers["x-user-id"] as string;
+    const userPreference = value.user_preference
 
     if (!userId) {
       handleErrorResponse(
@@ -292,13 +305,23 @@ async function updateProjectTask(req: Request, res: Response): Promise<void> {
     }
     const projectResource = await projectTaskService.updateProjectTask(
       value,
-      userId
+      userId,
+      userPreference
     );
     if (projectResource.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, projectResource.data);
       return;
-    } else {
+    }
+    else if (projectResource.statusCode === HttpStatus.PROMPT) {
+      return res.status(HttpStatus.PROMPT).send({
+        statusCode : HttpStatus.PROMPT,
+        statusCodeValue : HttpStatus.PROMPT_MESSAGE,
+        statusMessage : projectResource.message,
+        data : projectResource.data
+      })
+    } 
+    else {
       errorLog(methodName, projectResource.errorMessage);
       handleErrorResponse(
         res,
@@ -321,10 +344,130 @@ async function updateProjectTask(req: Request, res: Response): Promise<void> {
   }
 }
 
+async function assignedResourceCodes(req: Request, res: Response): Promise<void> {
+  const methodName = "Get assigned resource codes";
+  try {
+    const { accountId, projectFiscalId } = req.params;
+    const projectResourceCodes = await projectTaskService.getAssignedResourceCodes(
+      accountId,
+      projectFiscalId
+    );
+    if (projectResourceCodes.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, projectResourceCodes.data);
+      return;
+    } else {
+      errorLog(methodName, projectResourceCodes.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        projectResourceCodes.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function anomalyStatusUpdate(req: Request, res: Response): Promise<void> {
+  const methodName = "Accept Anamoly";
+  try {
+    const value = await validateRequest(req, updateProjectResourceStatus, res);
+
+    if(!value){
+      return;
+    }
+
+    const userId = req.headers["x-user-id"] as string;
+
+    if (!userId) {
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    const result = await projectTaskService.handleAnomalyStatus(
+      value,
+      userId
+    );
+
+    if (result.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.message || '', 
+        data: result.data,
+      });
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+async function fetchReCodeForPrjTask (req : Request, res : Response) : Promise<any> {
+  const methodName = "fetchReCodeForPrjTask"
+  try {
+    const data = req.body;
+    if(!data.account_rid) {
+      handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, STATUS_MESSAGE.accountNoFound)
+    }
+    const result = await projectTaskService.listResourceCodeForProjectTask(data)
+    if(result.statusCode == HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.resCodePrjTaskSuccess,
+        data : result.data
+      })
+    } else {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.resCodeNotFound,
+        data : result.data
+      })
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
 export default {
   getProjectTasks,
   getProjectTaskById,
   exportAllProjectTasks,
   createProjectTask,
-  updateProjectTask
+  updateProjectTask,
+  assignedResourceCodes,
+  anomalyStatusUpdate,
+  fetchReCodeForPrjTask
 };

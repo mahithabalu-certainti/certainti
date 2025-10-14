@@ -42,14 +42,12 @@ import {
 } from "../models/resourceSkillHistory";
 import { KeyContact } from "../models/keyContactDetails";
 import AccountDetails from "../models/accountDetails";
-import { MAIN_SCHEMA_NAME, rawQueries } from "../utils/constants";
+import { MAIN_SCHEMA_NAME, primaryKeyContacts, rawQueries } from "../utils/constants";
 import {
   ResourceFiscalRegion,
   setupResourceFiscalRegionSeq,
-} from "../models/resourceFiscalRegion";
-import { ProjectResource } from "../models/projectResource";
-import { ProjectResourceFiscal } from "../models/projectResourceFiscal";
-import { ProjectResourceFiscalRegion } from "../models/projectResourceFiscalRegion";
+} from "../models/resourceFiscalRegion"
+import { ProjectFiscal } from "../models/projectFiscal";
 
 // import { Skill } from "../models/skill";
 class SchemaService {
@@ -328,7 +326,8 @@ class SchemaService {
     whereClause: Record<string, string> = {},
     havingClause: Record<string, string> = {},
     geoDataSort: string[][],
-    accountId: string
+    accountId: string,
+    documentRid?: string
   ) {
     try {
       const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
@@ -371,6 +370,9 @@ class SchemaService {
         schemaName
       );
 
+      const ResourceTimelineModel = ResourcesTimeline.initialize(sequelize, schemaName);
+
+
       Resource.belongsTo(AccountDetailsModel, {
         foreignKey: "account_rid",
         as: "AccountDetails",
@@ -382,6 +384,41 @@ class SchemaService {
         sourceKey: "rid",
         as: "ResourceFiscal",
       });
+
+      Resource.hasMany(ResourceTimelineModel, {
+        foreignKey: "entity_rid",
+        sourceKey: "rid",
+        as: "ResourceTimelines",
+      });
+
+      // Build the include array dynamically
+      const include: any[] = [
+        {
+          model: ResourceFiscalModel,
+          as: "ResourceFiscal",
+          attributes: [],
+          required: false,
+        },
+        {
+          model: AccountDetailsModel,
+          as: "AccountDetails",
+          attributes: [],
+          required: false,
+        },
+      ];
+
+      // Add ResourceTimeline join if documentRid is provided
+      if (documentRid) {
+        include.push({
+          model: ResourceTimelineModel,
+          as: "ResourceTimelines",
+          required: true,
+          where: {
+            document_rid: documentRid
+          },
+          attributes: [] // Only join, don't select fields
+        });
+      }
 
       // First get all resources without pagination
       const resources = await Resource.findAll({
@@ -443,20 +480,7 @@ class SchemaService {
             "estimated_rd_hours",
           ],
         ],
-        include: [
-          {
-            model: ResourceFiscalModel,
-            as: "ResourceFiscal",
-            attributes: [],
-            required: false,
-          },
-          {
-            model: AccountDetailsModel,
-            as: "AccountDetails",
-            attributes: [],
-            required: false,
-          },
-        ],
+        include: include,
       });
 
       if (resources) {
@@ -613,7 +637,8 @@ class SchemaService {
     whereClause: Record<string, string> = {},
     havingClause: Record<string, string> = {},
     geoDataSort: string[][],
-    accountId: string
+    accountId: string,
+    documentRid?: string
   ) {
     try {
       const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
@@ -674,6 +699,8 @@ class SchemaService {
         schemaName
       );
 
+      const ResourceTimelineModel = ResourcesTimeline.initialize(sequelize, schemaName);
+
       Resource.belongsTo(AccountDetailsModel, {
         foreignKey: "account_rid",
         as: "AccountDetails",
@@ -685,6 +712,41 @@ class SchemaService {
         sourceKey: "rid",
         as: "ResourceFiscal",
       });
+
+      Resource.hasMany(ResourceTimelineModel, {
+        foreignKey: "entity_rid",
+        sourceKey: "rid",
+        as: "ResourceTimelines",
+      });
+
+      // Build the include array dynamically
+      const include: any[] = [
+        {
+          model: ResourceFiscalModel,
+          as: "ResourceFiscal",
+          attributes: [],
+          required: false,
+        },
+        {
+          model: AccountDetailsModel,
+          as: "AccountDetails",
+          attributes: [],
+          required: false,
+        },
+      ];
+
+      // Add ResourceTimeline join if documentRid is provided
+      if (documentRid) {
+        include.push({
+          model: ResourceTimelineModel,
+          as: "ResourceTimelines",
+          required: true,
+          where: {
+            document_rid: documentRid
+          },
+          attributes: [] // Only join, don't select fields
+        });
+      }
 
       const resources = await Resource.findAll({
         where: {
@@ -745,20 +807,7 @@ class SchemaService {
             "estimated_rd_hours",
           ],
         ],
-        include: [
-          {
-            model: ResourceFiscalModel,
-            as: "ResourceFiscal",
-            attributes: [],
-            required: false,
-          },
-          {
-            model: AccountDetailsModel,
-            as: "AccountDetails",
-            attributes: [],
-            required: false,
-          },
-        ],
+        include: include,
       });
 
       const results = await Resource.findAll({
@@ -790,20 +839,7 @@ class SchemaService {
           "ResourceFiscal.rid",
         ],
         raw: true,
-        include: [
-          {
-            model: ResourceFiscalModel,
-            as: "ResourceFiscal",
-            attributes: [],
-            required: false,
-          },
-          {
-            model: AccountDetailsModel,
-            as: "AccountDetails",
-            attributes: [],
-            required: false,
-          },
-        ],
+        include: include,
       });
 
       const totalCount = results.length;
@@ -1865,6 +1901,7 @@ class SchemaService {
         fiscal_year: { parent: "", child: "fiscal_year" },
         qre_final: { parent: "", child: "qre_final" },
         qre: { parent: "qre", child: "qre" },
+        rd_percent_final : {parent : "", child  : "rd_percent_final"},
         assessment_status: {
           parent: "assessment_status",
           child: "assessment_status",
@@ -1877,7 +1914,7 @@ class SchemaService {
         child: sort.sortCol,
       };
       const isChildOnlySort =
-        sort.sortCol === "fiscal_year" || sort.sortCol === "qre_final";
+        sort.sortCol === "fiscal_year" || sort.sortCol === "qre_final" || sort.sortCol === "rd_percent_final";
 
       const parentSortClause =
         bothParentAndChild && sortConfig.parent
@@ -2054,7 +2091,8 @@ class SchemaService {
         pfs.r_number, 
         pfs.account_rid,
         COALESCE(curr.currency_code,acc_curr.currency_code,usd_curr.currency_code) as currency_code,
-        COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol
+        COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol,
+        pfs.rd_percent_final
       FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary pfs
       INNER JOIN ${MAIN_SCHEMA_NAME}.account acc ON acc.rid = pfs.account_rid 
       LEFT JOIN ${MAIN_SCHEMA_NAME}.project_classification pc ON pc.rid = pfs.project_classification_rid
@@ -2530,6 +2568,10 @@ class SchemaService {
           key_contact_email: keyContactDetails.key_contact_email || null,
           key_contact_role: keyContactDetails.key_contact_role || null,
           status_rid: keyContactDetails.status_rid || "Active",
+          interaction_cc_recipient:
+            keyContactDetails.interaction_cc_recipient === null
+              ? null
+              : keyContactDetails.interaction_cc_recipient,
           is_primary_contact:
             keyContactDetails.is_primary_contact === null
               ? null
@@ -2565,6 +2607,7 @@ class SchemaService {
         key_contact_email: keyContactDetails.key_contact_email || null,
         key_contact_role: keyContactDetails.key_contact_role || null,
         status_rid: keyContactDetails.status_rid || null,
+        interaction_cc_recipient:keyContactDetails.interaction_cc_recipient || null,
         is_primary_contact: keyContactDetails.is_primary_contact || null,
         include_in_communication:
           keyContactDetails.include_in_communication || null,
@@ -2694,6 +2737,8 @@ class SchemaService {
       assessment_status: `${tablePrefix}.assessment_status`,
       project_point_of_contact: `${tablePrefix}.project_point_of_contact`,
       technical_point_of_contact: `${tablePrefix}.technical_point_of_contact`,
+      rd_percent_final: `pfs.rd_percent_final`,
+      qre_final : `pfs.qre_final`
       // financial_consultant: `${tablePrefix}.financial_consultant`,
     };
 
@@ -2706,7 +2751,8 @@ class SchemaService {
       `${fieldAliasMap.total_cost_subcon}`,
       `${fieldAliasMap.total_cost_nonlabor}`,
       "qre",
-      "qre_final",
+      `pfs.qre_final`,
+      `pfs.rd_percent_final`
     ];
     const dateFields = [
       "project_startdate",
@@ -2738,59 +2784,12 @@ class SchemaService {
 
       const allProjectFields = [
         "project_code",
-        "project_name",
-        "fiscal_year",
-        "account_name",
-        "industry_name_other",
-        "project_type_rid",
-        "project_client_group",
-        "project_group",
-        "classification_name",
-        "status_rid",
-        "project_point_of_contact",
-        "technical_point_of_contact",
-        "r_number",
-        "project_number",
-        "program_name",
-        "project_startdate",
-        "project_enddate",
-        "is_rd_qualified",
-        "qre",
-        "total_cost",
-        "total_effort",
-        "total_fte",
-        "total_cost_fte",
-        "total_subcon",
-        "total_cost_subcon",
-        "total_cost_nonlabor",
-        "assessment_status",
-        "comments",
-        "country_name",
-        "currency_code",
-        "region_name",
-        "financial_consultant",
-        "modified_datetime",
+        "project_name"
       ];
 
       const searchFieldAliasMap: Record<string, string> = {
-        r_number: `${tablePrefix}.r_number`,
-        comments: `${tablePrefix}.comments`,
-        region_name: "st.state_name",
-        industry_name_other: `COALESCE(ind.industry_name, ${tablePrefix}.industry_name)`,
-        status_rid: `CAST(${tablePrefix}.status_rid AS TEXT)`,
-        project_type_name: `CAST(pt.project_type_name AS TEXT)`,
-        fiscal_year: `CAST(pfs.fiscal_year AS TEXT)`,
-        is_rd_qualified: `CAST(ps.is_rd_qualified AS TEXT)`,
-        project_startdate: `CAST(${tablePrefix}.project_startdate AS TEXT)`,
-        project_enddate: `CAST(${tablePrefix}.project_enddate AS TEXT)`,
-        total_cost: `CAST(${tablePrefix}.total_cost AS TEXT)`,
-        total_effort: `CAST(${tablePrefix}.total_effort AS TEXT)`,
-        total_fte: `CAST(${tablePrefix}.total_fte AS TEXT)`,
-        total_fte_cost: `CAST(${tablePrefix}.total_cost_fte AS TEXT)`,
-        total_sub_con: `CAST(${tablePrefix}.total_subcon AS TEXT)`,
-        total_sub_con_cost: `CAST(${tablePrefix}.total_cost_subcon AS TEXT)`,
-        total_non_labor_cost: `CAST(${tablePrefix}.total_cost_nonlabor AS TEXT)`,
-        qre: `CAST(ps.qre AS TEXT)`,
+        project_code: `${tablePrefix}.project_code`,
+        project_name: `${tablePrefix}.project_name`
       };
 
       const searchConditions: string[] = [];
@@ -2800,20 +2799,6 @@ class SchemaService {
         searchConditions.push(`${qualifiedField} ILIKE ?`);
         replacements.push(`%${search}%`);
       }
-
-      if (numericSearch) {
-        searchConditions.push(
-          `${tablePrefix}.total_cost = ?`,
-          `${tablePrefix}.total_effort = ?`,
-          `ps.fiscal_year = ?`
-        );
-        replacements.push(
-          parseFloat(search),
-          parseFloat(search),
-          parseFloat(search)
-        );
-      }
-
       conditions.push(`(${searchConditions.join(" OR ")})`);
     }
 
@@ -3238,10 +3223,11 @@ class SchemaService {
       ].filter(Boolean);
 
       let keyContactMap: Record<string, string> = {};
+      let keyContactRoleMap: Record<string, string> = {};
 
       if (keyContactIds.length > 0) {
         const keyContactRows = await mainDdSequilze.query(
-          `SELECT rid, role_name FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE rid IN (:ids)`,
+          `SELECT rid, role_name, role_map FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE rid IN (:ids)`,
           {
             replacements: { ids: keyContactIds },
             type: "SELECT",
@@ -3251,6 +3237,9 @@ class SchemaService {
         keyContactMap = Object.fromEntries(
           keyContactRows.map((c: any) => [c.rid, c.role_name])
         );
+        keyContactRoleMap = Object.fromEntries(
+          keyContactRows.map((c: any) => [c.role_map, c.role_name])
+        );
       }
 
       const updatedProjects = projects.map((project) => {
@@ -3258,21 +3247,21 @@ class SchemaService {
 
         const enrichedKeyContacts = keyContacts.map((kc: any) => ({
           ...kc,
-          role_name: keyContactMap[kc.key_contact_role] || null,
+          role_name: keyContactMap[kc.key_contact_role] || null
         }));
-
+       
         const technicalConsultant = enrichedKeyContacts.find(
           (e: any) =>
-            e.role_name === "Client Project Technical Point of Contact" &&
+            e.role_name === keyContactRoleMap[primaryKeyContacts.technical_point_of_contact] &&
             e.is_primary_contact
         );
         const financialConsultant = enrichedKeyContacts.find(
           (e: any) =>
-            e.role_name === "Financial Consultant" && e.is_primary_contact
+            e.role_name === keyContactRoleMap[primaryKeyContacts.financial_consultant] && e.is_primary_contact
         );
         const pointOfContact = enrichedKeyContacts.find(
           (e: any) =>
-            e.role_name === "Project Point of Contact" && e.is_primary_contact
+            e.role_name === keyContactRoleMap[primaryKeyContacts.project_point_of_contact] && e.is_primary_contact
         );
 
         return {
@@ -4046,6 +4035,95 @@ class SchemaService {
       );
     }
   }
-}
 
+  async updateQreAdjustmentCalculation(
+    accountNumber: string,
+    projectFiscalId: string,
+    qreAdjustment: number,
+    userId: string
+  ) {
+    const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+    const sequelize = await initOrgSequelize();
+  
+    const projectFiscalData: any = await sequelize.query(
+      rawQueries.fetchProjectFiscalById(schemaName,projectFiscalId ),
+      {
+        type: QueryTypes.SELECT,
+      }
+    );
+  
+    if (!projectFiscalData && projectFiscalData.length === 0) {
+      throw new Error("Invalid Project Id");
+    };
+
+    const projectFiscalDetails = projectFiscalData[0];
+  
+    const existingPercent = projectFiscalDetails.rd_percent_potential_ai ?? 0;
+
+    const parsedPercent = parseFloat(existingPercent);
+
+    if(!isNaN(parsedPercent) && parsedPercent > 0) {
+      const netQre = qreAdjustment + parseFloat(existingPercent);
+  
+      const totalCost = projectFiscalDetails.total_cost_prj ?? 0;
+      const totalFteCost = projectFiscalDetails.total_cost_fte_prj ?? 0;
+      const totalSubconCost = projectFiscalDetails.total_cost_subcon_prj ?? 0;
+      const totalNonlaborCost = projectFiscalDetails.total_cost_nonlabor_prj ?? 0;
+    
+      const qreFinalCost = totalCost * (netQre / 100);
+      const qreFteCost = totalFteCost * (netQre / 100);
+      const qreSubconCost = totalSubconCost * (netQre / 100);
+      const qreNonlaborCost = totalNonlaborCost * (netQre / 100);
+
+      await sequelize.query(
+        rawQueries.updateProjectFiscalQre(schemaName, 
+          {
+            rd_percent_adjustment: qreAdjustment,
+            rd_percent_final: netQre,
+            qre_final: qreFinalCost,
+            qre_fte: qreFteCost,
+            qre_subcon: qreSubconCost,
+            qre_nonlabor: qreNonlaborCost,
+            modified_by: userId,
+            modified_datetime: new Date(),
+            rid: projectFiscalId
+          }
+        ),
+        {
+          type: QueryTypes.SELECT,
+        }
+      );
+    }
+  }  
+  async getSubscriptionDetailsByProjectId(parentaccountId:string,schemaName:string,accountId:string) {
+    try {
+     let schemaNameParent = `trd365_${schemaName.replace(/\D/g, "")}`;
+     const query = rawQueries.fetchAccountInfo(schemaNameParent,accountId);
+     const sequelize = await initOrgSequelize();
+     const users: any = await sequelize.query(query, {
+       replacements: { account_rid: accountId },
+       type: "SELECT",
+     });
+     const parentquery = rawQueries.fetchAccountInfo(schemaNameParent, parentaccountId);
+     const parentSubscriptioninfo: any = await sequelize.query(parentquery, {
+       replacements: { accountId: parentaccountId },
+       type: "SELECT",
+     });
+      if(parentSubscriptioninfo && parentSubscriptioninfo.length > 0)
+      {
+        const parentDetails = parentSubscriptioninfo[0];
+        const isSubscriptionCreated = Boolean(
+        parentDetails.subscription_created &&
+        parentDetails.tenant_id &&
+        parentDetails.client_id &&
+        parentDetails.client_secret);
+        return  isSubscriptionCreated;
+      }else{
+        return false;
+      }
+    } catch (err) {
+      return false
+    }
+  }
+}
 export default SchemaService;

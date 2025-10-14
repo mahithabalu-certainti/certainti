@@ -22,6 +22,7 @@ import {
   listProjectUserGroupSchema,
   listUserGroupSchema,
   listUserGroupTypeSchema,
+  listUserGroupUserSchema,
   updateUserGroupSchema
 } from "../lib/joi/schemas/schema";
 
@@ -247,7 +248,7 @@ async function getAccountUsers(req: Request, res: Response): Promise<void> {
       validatedData.entity_type,validatedData.page,validatedData.limit,
       validatedData.sortBy,
       validatedData.sortOrder,
-      parsedFilters);
+      parsedFilters, validatedData.search)
 
     if (account.statusCode === constants.SUCCESS) {
       successLog(methodName);
@@ -433,7 +434,7 @@ async function getAccountGroups(req: Request, res: Response): Promise<void> {
       );
     }
     
-    const account = await services.userGroupService.getAccountGroups(req.params.accountid,validatedData.page,validatedData.limit,validatedData.sortBy,validatedData.sortOrder,parsedFilters);
+    const account = await services.userGroupService.getAccountGroups(req.params.accountid,validatedData.page,validatedData.limit,validatedData.sortBy,validatedData.sortOrder,parsedFilters, validatedData.search);
 
     if (account.statusCode === constants.SUCCESS) {
       successLog(methodName);
@@ -501,6 +502,7 @@ async function listUserGroup(req: Request, res: Response): Promise<void> {
       userId,
       validatedData.sortBy,
       validatedData.sortOrder,
+      validatedData.search
     );
     
     if (result.statusCode === constants.SUCCESS) {
@@ -566,7 +568,8 @@ async function exportUserGroup(req: Request, res: Response): Promise<void> {
       validatedData.sortBy,
       validatedData.sortOrder,
       validatedData.timezone,
-      userId
+      userId,
+      validatedData.search
 
     );
     
@@ -807,7 +810,64 @@ async function getUserGroupType(req: Request, res: Response): Promise<void> {
   }
 }
 
+async function listUserGroupUser(req: Request, res: Response): Promise<void> {
+  const methodName = "List User Group User";
+  try {
+    const { accountid, userGroupId } = req.params; 
 
+    const validatedData = await validateRequest(
+      req,
+      listUserGroupUserSchema,
+      "",
+      res,
+      "GET"
+    );
+
+    if (!validatedData) return;
+    let parsedFilters: Record<string, any> = {};
+    
+    try {
+      parsedFilters = JSON.parse(validatedData.filters);
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+
+    const groupTypes = await services.userGroupService.getUserGroupUsers(
+      accountid,
+      userGroupId,
+      validatedData,
+      parsedFilters,
+      validatedData.search
+    );
+    if (groupTypes.statusCode === constants.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, groupTypes.data);
+      return;
+    } else {
+      errorLog(methodName, groupTypes.errorMessage);
+      handleErrorResponse(
+        res,
+        constants.BAD_REQUEST,
+        constants.BAD_REQUEST_MESSAGE,
+        groupTypes.message
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      constants.FAILED,
+      constants.FAILED_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
 
 export { 
    createUserGroup,
@@ -822,5 +882,6 @@ export {
    assignEntityAccessToAccount,
    assignEntityAccessToProject,
    getUserGroupType,
-   getProjectOfAccounts
+   getProjectOfAccounts,
+   listUserGroupUser
   };

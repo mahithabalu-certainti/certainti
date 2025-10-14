@@ -6,16 +6,19 @@ import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries, STATUS_MESSAGE } from "../uti
 import { setPrjFiscalData, setProject, setProjectFiscalSummary } from "../utils/helpers";
 import ProjectIngestionService from "./projectIngestionService";
 import { IUpdateProject } from "../utils/types";
+import { ProjectService } from "./projectService";
 
 const services = Configurations.getInstance().getServices();
 const projectService = services.projectServices;
 
 class ProjectGraphQlServices {
     private projectIngestion: ProjectIngestionService;
+    private projectService: ProjectService;
     private logger: Logger;
     constructor(logger: Logger) {
         this.logger = logger;
         this.projectIngestion = new ProjectIngestionService(this.logger);
+        this.projectService = new ProjectService(this.logger);
     }
 
     async inLineEditProject (data : any) {
@@ -108,7 +111,7 @@ class ProjectGraphQlServices {
             await this.projectIngestion.addAccountFiscalRegion(checkAccountExists[0][0].r_number, updatedProjectFiscal[0][0]);
             if(findProjectFiscal[0][0].fiscal_year !== updatedProjectFiscal[0][0].fiscal_year) {
               await this.projectIngestion.deleteAccountFiscalRegionForInlineEdit(checkAccountExists[0][0].r_number, findProjectFiscal[0][0].account_rid, findProjectFiscal[0][0].fiscal_year, findProjectFiscal[0][0]);  
-            }    
+            }
             await this.projectIngestion.updateAccountAggregatesFromAccountFiscal(
                 checkAccountExists[0][0].r_number,
                 data.account_rid
@@ -150,7 +153,7 @@ class ProjectGraphQlServices {
             graphqlData.fiscal_rid = data.project_fiscal_rid
             
             let fetchUpdatedProjectResponse : any = await this.projectIngestion.fetchProjectList
-            (checkAccountExists[0][0].r_number, accountData, {}, 0, 0, 2,[], false, {}, 'project_code', 'ASC',graphqlData,[])
+            (checkAccountExists[0][0].r_number, accountData, {}, data.global_fiscal_year, 0, 2,[], false, {}, 'project_code', 'ASC',graphqlData,[])
             
             if(fetchUpdatedProjectResponse.projects.length > 0) {
                 let data : any = fetchUpdatedProjectResponse.projects[0]
@@ -308,6 +311,7 @@ class ProjectGraphQlServices {
                             total_cost_subcon: d.total_cost_subcon,
                             total_cost_nonlabor: d.total_cost_nonlabor,
                             project_type_name: d.project_type_name,
+                            currency_symbol: d.currency_symbol,
                         }
                     })
                     }
@@ -325,6 +329,25 @@ class ProjectGraphQlServices {
             }
             }
         }
+    }
+
+    async updateProjectQreAdjustment(data : any){
+       const result = await this.projectService.updateQrePercentAdjustment(data, data.userId);
+       if(result.statusCode === HttpStatus.SUCCESS){
+        const projectDetails = await this.projectService.projectById(data.account_rid,data.rid);
+        if(projectDetails.statusCode === HttpStatus.SUCCESS){
+            return {
+                statusCode : HttpStatus.SUCCESS,
+                statusMessage : STATUS_MESSAGE.projectUpdateSuccess,
+                data: projectDetails.data?.project
+            }
+        }
+       }else{
+        return {
+            statusCode : HttpStatus.BAD_REQUEST,
+            statusMessage : result.errorMessage,
+        }
+       }
     }
 }
 

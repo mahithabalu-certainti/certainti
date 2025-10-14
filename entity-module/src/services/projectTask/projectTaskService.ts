@@ -1,24 +1,64 @@
 import Decimal from "decimal.js";
-import { HttpStatus } from "../../utils/constants";
-import { ICreateProjectTask, IUpdateProjectTask } from "../../utils/types";
+import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries } from "../../utils/constants";
+import { IAnomalyStatus, ICreateProjectResource, ICreateProjectTask, IUpdateProjectTask } from "../../utils/types";
 import { ProjectTaskSchemaService } from "./schemaService";
 import { ProjectResourceSchemaService } from "../projectResource/schemaService";
 import { Resources } from "../../models/resource";
 import { ProjectFiscal } from "../../models/projectFiscal";
 import { ProjectTask } from "../../models/projectTask";
+import { getCurrencyThreshold, getResourceStatuses } from "../resourceCostService";
+import { Sequelize } from "sequelize";
+import { initOrgSequelize } from "../../config/orgDataSource";
+import { initMainDbSequelize } from "../../config/mainDataSource";
+import moment from "moment";
+import { ProjectResource } from "../../models/projectResource";
+import { fetchResCodeWithPrjResRole } from "../../utils/rawQueries";
 
 export class ProjectInjestionTaskService {
   projectTaskSchema: ProjectTaskSchemaService;
   private projectResourceSchema: ProjectResourceSchemaService;
+  private mainDbSequelize: Sequelize | null = null;
+  private orgDbSequelize : Sequelize | null = null;
 
   constructor() {
     this.projectTaskSchema = new ProjectTaskSchemaService();
     this.projectResourceSchema = new ProjectResourceSchemaService();
   }
 
+    private formatDateForDb(dateString?: string): Date | null {
+        if (!dateString) return null;
+    
+        // Parse the date using moment to ensure consistent handling
+        const date = moment(dateString, "YYYY-MM-DD", true);
+        if (!date.isValid()) return null;
+    
+        // Set the time to noon to avoid timezone issues
+        date.hour(12).minute(0).second(0).millisecond(0);
+    
+        return date.toDate();
+      }
+  
+    /**
+     * Get the main database connection
+     */
+    private async getMainDbSequelize(): Promise<Sequelize> {
+      if (!this.mainDbSequelize) {
+        this.mainDbSequelize = await initMainDbSequelize();
+      }
+      return this.mainDbSequelize;
+    }
+
+    private async getOrgDbSequelize(): Promise<Sequelize> {
+      if (!this.orgDbSequelize) {
+        this.orgDbSequelize = await initOrgSequelize();
+      }
+      return this.orgDbSequelize;
+    }
+
   async createProjectTask(
     projectTaskData: ICreateProjectTask,
-    userId: string
+    userId: string,
+    userPreference : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -27,14 +67,20 @@ export class ProjectInjestionTaskService {
   }> {
     const dbInit = await this.projectTaskSchema.getSequelize();
     const transaction = await dbInit.transaction();
+    const mainDbSequelize = await this.getMainDbSequelize();
+    const orgDbSequelize = await this.getOrgDbSequelize()
+    let projectResourceResult : string
     try {
       const {
         start_date,
         end_date,
         total_hours_pro_task,
+        total_cost_pro_task,
         project_fiscal_rid,
         account_rid,
         resource_code,
+        comments,
+        project_resource_rid
       } = projectTaskData;
 
       const validationResult = await this.validateProjectTaskInputs({
@@ -111,7 +157,70 @@ export class ProjectInjestionTaskService {
           }
         }
       }
+      let status = "Active";
+      const statusMap = await getResourceStatuses(mainDbSequelize);
+      const activeStatusId : any = statusMap?.get(status);
+      const activeId : any = await mainDbSequelize.query(rawQueries.fetchActiveStatusRid(status))
 
+      const schemaName = rawQueries.fetchSchemaName(accountNumber)
+      const findResourceAlreadyInPrjResource : any = await orgDbSequelize.query(rawQueries.checkResCodeExistsInPrjRes(schemaName, project_resource_rid));
+      if(findResourceAlreadyInPrjResource[0].length > 0) {
+        projectResourceResult = findResourceAlreadyInPrjResource[0][0].rid
+        
+      }
+      const getAccountCurrencyRid : any = await mainDbSequelize.query(rawQueries.fetchAccountCurrencyRid(account_rid))
+      const costFields = {
+        total_hours_pro_task,
+        total_cost_pro_task
+      };
+      const costValues : any = Object.entries(costFields).reduce(
+        (acc, [key, value]) => {
+          // Normalize empty string to null
+          if (value === null || value === undefined) {
+            acc[key] = null;
+          } else {
+            try {
+              // Convert valid string/number to Decimal
+              acc[key] = new Decimal(value).toString();
+            } catch (error) {
+              throw new Error(`Invalid number format for ${key}: ${value}`);
+            }
+          }
+          return acc;
+        },
+        {} as Record<string, string | null>
+      );
+              
+      // Get currency threshold
+      const currencyThreshold = await getCurrencyThreshold(mainDbSequelize,getAccountCurrencyRid[0][0].currency_rid);
+      
+      const startDate = this.formatDateForDb(start_date as string);
+      const endDate = this.formatDateForDb(end_date as string);
+
+      const existingTask = await this.projectTaskSchema.findDuplicateTask(
+        accountNumber, resourceData.rid, startDate, endDate, statusMap, comments, account_rid, project_fiscal_rid, costValues
+      )
+
+      if (existingTask && (userPreference === null || userPreference === "")) {
+            return {
+                statusCode: HttpStatus.PROMPT,
+                message: "Entered compensation details already exists for the Project Task. Would you like to create another compensation with same values?",
+                data: {
+                    projectTask: existingTask
+                }
+            };
+        }
+      if (total_hours_pro_task!== undefined && Number(total_hours_pro_task) > 3000) {
+          status = "Anomaly";
+        } else if (
+          (total_cost_pro_task !== undefined && currencyThreshold !== null && Number(total_cost_pro_task) > currencyThreshold)) {
+          status = "Anomaly";
+        }
+      const statusRid : any = statusMap?.get(status);
+      projectTaskData.status_rid = statusRid
+      projectTaskData.total_cost_pro_task = costValues['total_cost_pro_task']
+      projectTaskData.total_hours_pro_task = costValues['total_hours_pro_task']
+      projectTaskData.project_resource_rid = projectResourceResult!
       // Proceed to insert
       const newTask = await this.projectTaskSchema.addProjectTask(
         accountNumber,
@@ -140,6 +249,8 @@ export class ProjectInjestionTaskService {
         projectData.fiscal_year,
         resourceData.rid!,
         userId,
+        activeStatusId,
+        activeId[0][0].rid,
         transaction
       );
 
@@ -158,7 +269,8 @@ export class ProjectInjestionTaskService {
 
   async updateProjectTask(
     projectTaskData: IUpdateProjectTask,
-    userId: string
+    userId: string,
+    userPreference : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -167,16 +279,22 @@ export class ProjectInjestionTaskService {
   }> {
     const dbInit = await this.projectTaskSchema.getSequelize();
     const transaction = await dbInit.transaction();
+    const mainDbSequelize = await this.getMainDbSequelize();
+    const orgDbSequelize = await this.getOrgDbSequelize();
+    let projectResourceResult : string | undefined = ""
 
     try {
       const {
         start_date,
         end_date,
         total_hours_pro_task,
+        total_cost_pro_task,
         project_fiscal_rid,
         project_task_rid,
         account_rid,
         resource_code,
+        comments,
+        project_resource_rid
       } = projectTaskData;
 
       const validationResult = await this.validateProjectTaskUpdateInputs({
@@ -243,6 +361,68 @@ export class ProjectInjestionTaskService {
         }
       }
 
+      let status = "Active";
+      const statusMap = await getResourceStatuses(mainDbSequelize);
+      const activeId : any = await mainDbSequelize.query(rawQueries.fetchActiveStatusRid(status))
+      const activeStatusId : any = statusMap?.get(status);
+
+      const schemaName = rawQueries.fetchSchemaName(accountNumber)
+      const findResourceAlreadyInPrjResource : any = await orgDbSequelize.query(rawQueries.checkResCodeExistsInPrjRes(schemaName,project_resource_rid));
+      if(findResourceAlreadyInPrjResource[0].length > 0) {
+          projectResourceResult = findResourceAlreadyInPrjResource[0][0].rid
+        }
+      const getAccountCurrencyRid : any = await mainDbSequelize.query(rawQueries.fetchAccountCurrencyRid(account_rid))
+      const costFields = {
+        total_hours_pro_task,
+        total_cost_pro_task
+      };
+      const costValues : any = Object.entries(costFields).reduce(
+        (acc, [key, value]) => {
+          // Normalize empty string to null
+          if (value === null || value === undefined) {
+            acc[key] = null;
+          } else {
+            try {
+              // Convert valid string/number to Decimal
+              acc[key] = new Decimal(value).toString();
+            } catch (error) {
+              throw new Error(`Invalid number format for ${key}: ${value}`);
+            }
+          }
+          return acc;
+        },
+        {} as Record<string, string | null>
+      );
+              
+      // Get currency threshold
+      const currencyThreshold = await getCurrencyThreshold(mainDbSequelize,getAccountCurrencyRid[0][0].currency_rid);
+      const startDate = this.formatDateForDb(start_date as string);
+      const endDate = this.formatDateForDb(end_date as string);
+
+      const existingTask = await this.projectTaskSchema.findDuplicateTask(
+        accountNumber, resourceData.rid, startDate, endDate, statusMap, comments, account_rid, project_fiscal_rid, costValues 
+      )
+
+      if (existingTask && (userPreference === null || userPreference === "")) {
+            return {
+                statusCode: HttpStatus.PROMPT,
+                message: "Entered compensation details already exists for the Project Task. Would you like to create another compensation with same values?",
+                data: {
+                    projectTask: existingTask
+                }
+            };
+        }
+      if (total_hours_pro_task!== undefined && Number(total_hours_pro_task) > 3000) {
+          status = "Anomaly";
+        } else if (
+          (total_cost_pro_task !== undefined && currencyThreshold !== null && Number(total_cost_pro_task) > currencyThreshold)) {
+          status = "Anomaly";
+        }
+      const statusRid : any = statusMap?.get(status);
+      projectTaskData.status_rid = statusRid
+      projectTaskData.total_cost_pro_task = costValues['total_cost_pro_task']
+      projectTaskData.total_hours_pro_task = costValues['total_hours_pro_task']
+      projectTaskData.project_resource_rid = projectResourceResult!
       // Proceed to update
       const updatedTask = await this.projectTaskSchema.updateProjectTask(
         accountNumber,
@@ -280,6 +460,8 @@ export class ProjectInjestionTaskService {
         resourceData.rid!,
         projectData,
         userId,
+        activeStatusId,
+        activeId[0][0].rid,
         transaction
       );
 
@@ -302,7 +484,9 @@ export class ProjectInjestionTaskService {
     async runAggregationAfterInlineUpdate(
     accountNumber: string,
     projectTaskData: any,
-    fullTaskData: ProjectTask
+    fullTaskData: ProjectTask,
+    activeId : string,
+    activeStatusId : string
   ) {
     const dbInit = await this.projectTaskSchema.getSequelize();
     const transaction = await dbInit.transaction();
@@ -382,6 +566,8 @@ export class ProjectInjestionTaskService {
         resourceData.rid!,
         projectData,
         userId,
+        activeStatusId,
+        activeId,
         transaction
       );
 
@@ -585,6 +771,37 @@ export class ProjectInjestionTaskService {
     }
   }
 
+  async getAssignedResourceCodes(accountId: string, projectFiscalId: string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { resourceCodes: any };
+  }> {
+    try {
+      const { accountNumber } =
+        await this.projectResourceSchema.fetchValidAccountNumberById(accountId);
+
+      if (!accountNumber) {
+        throw new Error("Invalid account ID");
+      }
+      const resourceCodes = await this.projectTaskSchema.listAssignedResourceCodes(
+        accountNumber,
+        accountId,
+        projectFiscalId
+      );
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          resourceCodes,
+        },
+      };
+    } catch (err) {
+      throw this.throwServiceError(err as Error);
+    }
+  }
+
   /**
    * Formats an error response to be returned from service methods.
    *
@@ -650,5 +867,228 @@ export class ProjectInjestionTaskService {
 
   return { success: true };
 }
+
+  async handleAnomalyStatus(
+    data: IAnomalyStatus,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    data?: { projectTask : any };
+  }> {
+    const dbInit = await this.projectResourceSchema.getSequelize();
+    const transaction = await dbInit.transaction();
+    const mainDbSequelize = await this.getMainDbSequelize();
+
+    const { accountId, rid: projectTaskRid, action, type } = data;
+
+    try {
+      const { accountNumber } =
+        await this.projectResourceSchema.fetchValidAccountNumberById(accountId);
+
+      if (!accountNumber) {
+        throw new Error("Invalid account ID");
+      }
+
+      let projectTaskStatus = "Active";
+      const statusMap: any =
+          await this.projectResourceSchema.getResourceStatuses();
+      const getAccountCurrencyRid : any = await mainDbSequelize.query(rawQueries.fetchAccountCurrencyRid(accountId))
+      const projectTaskOld =
+        await this.projectTaskSchema.fetchProjectTaskById(
+          accountNumber,
+          projectTaskRid
+        );
+
+      if (!projectTaskOld) {
+        throw new Error("Project Task not found");
+      }
+
+      if(type == 'Duplicate') {
+        const currencyThreshold = await getCurrencyThreshold(mainDbSequelize,getAccountCurrencyRid[0][0].currency_rid);
+         if (
+          projectTaskOld.total_hours_pro_task &&
+          Number(projectTaskOld.total_hours_pro_task) > 3000
+        ) {
+          projectTaskStatus = "Anomaly";
+        } else if (
+          (projectTaskOld?.total_cost_pro_task && currencyThreshold !== null && Number(projectTaskOld.total_cost_pro_task) > currencyThreshold)
+        ) {
+          projectTaskStatus = "Anomaly";
+        }
+      }
+
+      if (action === "accept") {
+        // 1. Update status to 'Active'
+        const taskStatus = statusMap.get(projectTaskStatus);
+        const activeStatusId = statusMap.get("Active")
+        const activeId : any = await mainDbSequelize.query(`SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_name ILIKE '%active%'`)
+
+        await this.projectTaskSchema.updateProjectTaskStatus(
+          accountNumber,
+          projectTaskRid,
+          taskStatus,
+          userId,
+          transaction
+        );
+        const projectTask =
+        await this.projectTaskSchema.fetchProjectTaskById(
+          accountNumber,
+          projectTaskRid
+        );
+
+        if (!projectTask) {
+          throw new Error("Project Task not found");
+        }
+
+        await this.projectTaskSchema.addProjctTaskHistory(
+          accountNumber,
+          {
+            ...projectTask,
+            status_rid: activeStatusId,
+          },
+          projectTaskOld,
+          projectTaskRid,
+          userId,
+          transaction
+        );
+
+        // 2. Fetch required data for aggregation
+        const {
+          account_rid,
+          project_fiscal_rid,
+          fiscal_year,
+          region_rid,
+          country_rid,
+          project_rid,
+        } = projectTask;
+
+        const resourceData  =
+          await this.projectResourceSchema.validateResourceByCode(
+            accountNumber,
+            data.resourceCode,
+            account_rid
+          );
+        if (!resourceData) {
+          throw new Error("Invalid resource code");
+        }
+
+        const projectData =
+          await this.projectResourceSchema.validateProjectFiscalById(
+            accountNumber,
+            project_fiscal_rid
+          );
+        let projectTaskData : any = {
+          project_task_rid: projectTask.rid,
+          project_fiscal_rid: projectTask.project_fiscal_rid,
+          account_rid: projectTask.account_rid,
+          resource_id: resourceData.rid,
+          resource_code: resourceData.resource_code,
+          total_hours_pro_task: projectTask.total_hours_pro_task,
+          total_cost_pro_task: projectTask.total_cost_pro_task,
+          fiscal_year: projectTask.fiscal_year,
+          country_rid: projectTask.country_rid,
+          region_rid: projectTask.region_rid,
+          currency_rid: projectTask.currency_rid,
+          start_date: projectTask.start_date,
+          end_date: projectTask.end_date,
+          comments: projectTask.comments,
+          created_by: projectTask.created_by,
+          modified_by: projectTask.modified_by,
+          status_rid : projectTask.status_rid
+        }
+        const aggreation = await this.projectTaskSchema.startUpdateAggregation(
+        accountNumber,
+        projectTaskData,
+        projectTaskOld,
+        resourceData,
+        projectData.fiscal_year,
+        resourceData.rid!,
+        projectData,
+        userId,
+        activeStatusId,
+        activeId[0][0].rid,
+        transaction
+      );
+
+      await transaction.commit()
+
+      return {
+          statusCode: HttpStatus.SUCCESS,
+          message: "Anomaly accepted successfully",
+          data: {
+            projectTask : {},
+          },
+        };
+      } else {
+        const statusMap: any =
+          await this.projectResourceSchema.getResourceStatuses();
+        const activeStatusId = statusMap.get("In-Active");
+
+        await this.projectTaskSchema.updateProjectTaskStatus(
+          accountNumber,
+          projectTaskRid,
+          activeStatusId,
+          userId,
+          transaction
+        );
+        
+
+        await this.projectTaskSchema.addProjctTaskHistory(
+          accountNumber,
+          {
+            ...projectTaskOld,
+            status_rid: activeStatusId,
+          },
+          projectTaskOld,
+          projectTaskRid,
+          userId,
+          transaction
+        );
+
+        await transaction.commit();
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          message: "Anomaly rejected successfully",
+          data: {
+            projectTask : {},
+          },
+        };
+      }
+    } catch (err) {
+      await transaction.rollback();
+      console.log("Error handling accepted anomaly", err);
+      throw this.throwServiceError(err as Error);
+    }
+  }
+  async listResourceCodeForProjectTask (data : any) : Promise<any> {
+    const orgDb = await this.getOrgDbSequelize()
+    const mainDb = await this.getMainDbSequelize()
+
+    const parentRnumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+    const schemaName = rawQueries.fetchSchemaName(parentRnumber[0][0].r_number)
+    let status = "Active";
+    const activeId : any = await mainDb.query(rawQueries.fetchActiveStatusRid(status))
+    const result : any = await orgDb.query(fetchResCodeWithPrjResRole(schemaName, data.search, activeId[0][0].rid, data.account_rid, data.project_fiscal_rid))
+    if(result[0].length > 0) {
+      const finalResult = result[0].map((data : any) => {
+        return {
+          rid : data.rid,
+          resource_code : data.resource_code,
+          project_resource_role : data.project_resource_role,
+          resource_name : data.resource_name
+        }
+      })
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        data : finalResult
+      };
+    } else {
+      return {
+        statusCode : HttpStatus.NOT_FOUND,
+        data : []
+      }
+    }
+  }
 
 }

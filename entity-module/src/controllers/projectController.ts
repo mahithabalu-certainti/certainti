@@ -13,6 +13,7 @@ import {
   exportListResourceSchema,
   listResourceSchema,
   updateProjectSchema,
+  updateQreAdjutmentSchema,
 } from "../lib/joi/schemas/schema";
 import configurations from "../config/config";
 
@@ -193,7 +194,8 @@ async function projectList(req: Request, res: Response): Promise<void> {
       value.sortBy,
       value.sortOrder,
       value.bothParentAndChild,
-      userId
+      userId,
+      value.apiSource
     );
 
     if (project.statusCode === HttpStatus.SUCCESS) {

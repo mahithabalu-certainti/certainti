@@ -1,4 +1,4 @@
-import { constants, MAIN_SCHEMA_NAME } from "../utils/constant";
+import { constants, MAIN_SCHEMA_NAME, rawQuery } from "../utils/constant";
 import { UserGroup } from "../models/userGroupModel";
 import { where, fn, col, Op, WhereOptions, literal,QueryTypes, Sequelize  } from "sequelize";
 import { UserGroupMapping } from "../models/userGroupMappingModel";
@@ -14,6 +14,7 @@ import { UserGroupType } from "../models/userGroupTypesModel";
 import { UserGroupAccountMapping } from "../models/userGroupAccountMappingModel";
 import UserService from "./userService";
 import { getUserGroupUserCount } from "../utils/rawQueries";
+import { BusinessTeams } from "../models/businessTeamModel";
 
 
 
@@ -568,7 +569,7 @@ async getActiveUsersForGrouping(
           as: "status",
           where: { status_description: "active" },
           attributes: [],
-        },
+        },    
       ],
       order,
     });
@@ -698,7 +699,7 @@ async getActiveUsersForUpdate(
     const { rows: allActiveUsers, count: totalCount } = await User.findAndCountAll({
       where: basewhereClause,
       attributes: ["rid", "email", "status_rid", "first_name", "org_id", 
-        "is_consultant_firm",
+        "is_consultant_firm", "role_rid",
       [
     Sequelize.literal(`(
       CASE
@@ -711,7 +712,7 @@ async getActiveUsersForUpdate(
       END
     )`),
     "organization_name"
-  ]],
+  ], [Sequelize.col("business_teams.business_teams"), "role_name"]],
       include: [
         {
           model: Status,
@@ -719,6 +720,11 @@ async getActiveUsersForUpdate(
           where: { status_description: "active" },
           attributes: [],
         },
+        {
+          model: BusinessTeams, 
+          as: "business_teams",
+          attributes: [],
+        }
       ],
       order
     });
@@ -799,6 +805,7 @@ async getAccountUsers(
   sortBy: string = "first_name",
   sortOrder: string = "ASC",
   filters: Record<string, any> = {},
+  search? : string
 ): Promise<{
   statusCode: number;
   message: string;
@@ -854,10 +861,35 @@ async getAccountUsers(
     const sortField = allowedSortFields.includes(sortBy || '') ? sortBy : 'first_name';
     const sortDirection = ['asc', 'desc'].includes(sortOrder.toLowerCase()) ? sortOrder.toUpperCase() : 'ASC';
     order.push([sortField, sortDirection]);
+    const fields = ["first_name", "email"];
+    const searchConditions = {
+      [Op.or]: [
+        ...fields.map(field => ({
+          [field]: { [Op.iLike]: `%${search || ''}%` }
+        })),
+        Sequelize.where(
+          Sequelize.literal(`(
+            CASE
+              WHEN "User"."is_consultant_firm" = true THEN "User"."org_id"
+              ELSE (
+                SELECT account_name
+                FROM ${MAIN_SCHEMA_NAME}.account
+                WHERE account.rid = "User".org_id
+              )
+            END
+          )`),
+          { [Op.iLike]: `%${search || ''}%` }
+        )
+      ]
+    };
+
 
     // Step 4: Fetch users
    const { rows: users, count } = await User.findAndCountAll({
-      where: basewhereClause,
+      where: {
+        ...basewhereClause,
+        ...searchConditions
+      },
       attributes: ["rid", "email", "status_rid", "first_name", "org_id", "is_consultant_firm",
         [Sequelize.literal(`(
         CASE
@@ -1020,6 +1052,7 @@ async getAccountGroups(
   sortBy: string = "first_name", 
   sortOrder: string = "ASC",
   filters: Record<string, any> = {},
+  search? : string
 ): Promise<{
   statusCode: number;
   message: string;
@@ -1055,6 +1088,14 @@ async getAccountGroups(
     }
     const offset = (page - 1) * limit;
     const {whereClause} = this.buildWhereClause(filters);
+    const fields = ["group_name"];
+    const searchConditions = {
+      [Op.or]: [
+        ...fields.map(field => ({
+          [field]: { [Op.iLike]: `%${search || ''}%` }
+        })),
+      ]
+    };
     const order: any[] = [];
     const allowedSortFields = ['group_name', 'user_count'];
     const sortField = allowedSortFields.includes(sortBy || '') ? sortBy : 'group_name';
@@ -1081,7 +1122,10 @@ async getAccountGroups(
             "user_count"
         ]
       ],
-      where:whereClause,
+      where:{
+        ...whereClause,
+        ...searchConditions
+      },
       include: [
         {
         model: UserGroupType,
@@ -1098,7 +1142,10 @@ async getAccountGroups(
 
   // 2. Get mapped groups for this account
   const mappedGroups = await UserGroup.findAll({
-    where:whereClause,
+    where:{
+        ...whereClause,
+        ...searchConditions
+      },
     attributes: [
       "rid",
       "group_name",
@@ -1231,7 +1278,8 @@ async getAccountGroups(
         'created_datetime': (value: any) => this.processDateFilter('created_datetime', value, whereClause),
         'modified_datetime': (value: any) => this.processDateFilter('modified_datetime', value, whereClause),
         'created_by': (value: any) => this.processRelationFilter('created_by', value, whereClause, includeClause),
-        'user_count': (value: any) => this.processUserCountFilter(value, whereClause)
+        'user_count': (value: any) => this.processUserCountFilter(value, whereClause),
+        'organization_name': (value: any) => this.processOrganisationNameFilter( value, whereClause), // Added organisation filter
       };
       Object.keys(filters).forEach(key => {
         
@@ -1400,6 +1448,79 @@ private createUserCountCondition(operator: string, value: number): any {
     }
   }
 
+  private processOrganisationNameFilter(whereClause: Record<string | symbol, any>, value: any): void {
+    // Handles computed field 'organization_name' (from account/account_name or org_id)
+    if (typeof value === 'string') {
+      whereClause[Op.or] = [
+        Sequelize.where(
+          Sequelize.fn('LOWER',
+            Sequelize.literal(`CASE WHEN "User"."is_consultant_firm" = true THEN "User"."org_id" ELSE (SELECT account_name FROM ${MAIN_SCHEMA_NAME}.account WHERE account.rid = "User".org_id) END`)
+          ),
+          value.toLowerCase()
+        )
+      ];
+    } else if (typeof value === 'object') {
+      const conditions: any[] = [];
+      if (value.equals !== undefined) {
+        conditions.push(
+          Sequelize.where(
+            Sequelize.fn('LOWER',
+              Sequelize.literal(`CASE WHEN "User"."is_consultant_firm" = true THEN "User"."org_id" ELSE (SELECT account_name FROM ${MAIN_SCHEMA_NAME}.account WHERE account.rid = "User".org_id) END`)
+            ),
+            value.equals.toLowerCase()
+          )
+        );
+      }
+      if (value.not_equals !== undefined) {
+        conditions.push(
+          Sequelize.where(
+            Sequelize.fn('LOWER',
+              Sequelize.literal(`CASE WHEN "User"."is_consultant_firm" = true THEN "User"."org_id" ELSE (SELECT account_name FROM ${MAIN_SCHEMA_NAME}.account WHERE account.rid = "User".org_id) END`)
+            ),
+            '!=',
+            value.not_equals.toLowerCase()
+          )
+        );
+      }
+      if (value.contains !== undefined) {
+        conditions.push(
+          Sequelize.where(
+            Sequelize.literal(`CASE WHEN "User"."is_consultant_firm" = true THEN "User"."org_id" ELSE (SELECT account_name FROM ${MAIN_SCHEMA_NAME}.account WHERE account.rid = "User".org_id) END`),
+            { [Op.iLike]: `%${value.contains}%` }
+          )
+        );
+      }
+      if (Array.isArray(value.in) && value.in.length > 0) {
+        conditions.push(
+          Sequelize.where(
+            Sequelize.literal(`CASE WHEN "User"."is_consultant_firm" = true THEN "User"."org_id" ELSE (SELECT account_name FROM ${MAIN_SCHEMA_NAME}.account WHERE account.rid = "User".org_id) END`),
+            { [Op.in]: value.in.map((v: string) => v) }
+          )
+        );
+      }
+      if (value.is_empty !== undefined) {
+        if (value.is_empty) {
+          conditions.push(
+            Sequelize.where(
+              Sequelize.literal(`CASE WHEN "User"."is_consultant_firm" = true THEN "User"."org_id" ELSE (SELECT account_name FROM ${MAIN_SCHEMA_NAME}.account WHERE account.rid = "User".org_id) END`),
+              { [Op.or]: [null, ''] }
+            )
+          );
+        } else {
+          conditions.push(
+            Sequelize.where(
+              Sequelize.literal(`CASE WHEN "User"."is_consultant_firm" = true THEN "User"."org_id" ELSE (SELECT account_name FROM ${MAIN_SCHEMA_NAME}.account WHERE account.rid = "User".org_id) END`),
+              { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: '' }] }
+            )
+          );
+        }
+      }
+      if (conditions.length > 0) {
+        whereClause[Op.and] = (whereClause[Op.and] || []).concat(conditions);
+      }
+    }
+  }
+
   /**
    * Process date field filter with various operators
    * 
@@ -1555,7 +1676,8 @@ private createUserCountCondition(operator: string, value: number): any {
     filters: Record<string, string>,
     userRid: string,
     sortBy: string,
-    sortOrder: string
+    sortOrder: string,
+    search? : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -1611,6 +1733,14 @@ private createUserCountCondition(operator: string, value: number): any {
     if (!user.is_consultant_firm) {
       basewhereClause.rid = Array.from(groupRidSet); // merged rid list
     }
+    const fields = ["group_name"];
+    const searchConditions = {
+      [Op.or]: [
+        ...fields.map(field => ({
+          [field]: { [Op.iLike]: `%${search || ''}%` }
+        })),
+      ]
+    };
 
     let orderArray;
     if (finalSortBy === 'created_by') {
@@ -1637,6 +1767,7 @@ private createUserCountCondition(operator: string, value: number): any {
       where: {
         ...whereClause,
         ...basewhereClause,
+        ...searchConditions
       },
       include: includeClause,
       distinct: true,
@@ -1646,6 +1777,7 @@ private createUserCountCondition(operator: string, value: number): any {
       where: {
         ...whereClause,
         ...basewhereClause,
+        ...searchConditions
       },
       order: orderArray,
       limit,
@@ -1697,7 +1829,8 @@ private createUserCountCondition(operator: string, value: number): any {
     sortBy: string,
     sortOrder: string,
     timezone:string,
-    userId: string
+    userId: string,
+    search? : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -1730,9 +1863,20 @@ private createUserCountCondition(operator: string, value: number): any {
           allowedFieldSet.add(field.field_name);
         }
       }
+      const fields = ["group_name"];
+      const searchConditions = {
+        [Op.or]: [
+          ...fields.map(field => ({
+            [field]: { [Op.iLike]: `%${search || ''}%` }
+          })),
+        ]
+      };
       const userGroup = await UserGroup.findAll(
         {
-          where: whereClause,
+          where: {
+            ...whereClause,
+            ...searchConditions
+          },
           order: orderArray,
           attributes: {
            include: [
@@ -2849,10 +2993,14 @@ async  getProjectsOfSelectedAccounts(
        const replacements: any = { accountRidArray, limit, offset,
         group_rid: group_rid ?? null,
       };
-      const filterConditions = this.buildSQLConditions(filters);
-      if (filterConditions) {
-        baseWhereClauses.push(filterConditions);
+      if (filters && typeof filters === 'object' && Object.keys(filters).length > 0) {
+        const filterConditions = this.buildSQLConditions(filters);
+        if (filterConditions) {
+          baseWhereClauses.push(filterConditions);
         }
+      }
+
+      
         
     // Build ORDER BY clause with proper access type sorting
       let orderByClause: string;
@@ -3083,61 +3231,311 @@ async getUserGroupType(type: string): Promise<{
   }
 }
 
+async getUserGroupUsers(
+  accountId: string,
+  userGroupId: string,
+  validatedData: any,
+  filters: any = {},
+  search : string
+): Promise<{
+  statusCode: number;
+  message: string;
+  errorMessage?: string;
+  data?: { users: any[]; count: number };
+}> {
+  try {
+    const sequelize = await initSequelize();
+    const {
+      page = 1,
+      limit = 10,
+      sortBy = "user_name",
+      sortOrder = "ASC",
+      search
+    } = validatedData;
+
+    const offset = (page - 1) * limit;
+
+    // Step 1: Validate account
+    const [accountResult] = await sequelize.query(
+      constants.SQL_GET_ACCOUNT.replace("{whereClause}", "rid = :account_rid"),
+      {
+        replacements: { account_rid: accountId },
+        type: constants.SELECT,
+      }
+    ) as Array<{ rid: string; is_parent: string; parent_account_rid: string }>;
+
+    if (!accountResult) {
+      return {
+        statusCode: constants.BAD_REQUEST,
+        message: constants.BAD_REQUEST_MESSAGE,
+        errorMessage: "Invalid account_rid provided.",
+      };
+    }
+
+    // Step 2: Validate user group access
+    const groupResult = await UserGroup.findOne({
+      where: { rid: userGroupId },
+      include: [
+        {
+          model: UserGroupAccountMapping,
+          as: "usergroupaccount",
+          required: false,
+          where: { account_rid: accountId }
+        },
+        {
+          model: UserGroupType,
+          as: "usergrouptype",
+          required: true,
+          where: {
+            [Op.or]: [
+              { type: "DEFAULT" },
+              { type: { [Op.ne]: "DEFAULT" } }
+            ]
+          }
+        }
+      ]
+    });
+
+    if (!groupResult) {
+      return {
+        statusCode: constants.NOT_FOUND,
+        message: constants.NOT_FOUND_MESSAGE,
+        errorMessage: "User group not found or not accessible by this account.",
+      };
+    }
+
+    // Step 3: Build WHERE clause from filters
+    const replacements: Record<string, any> = {
+      group_rid: userGroupId
+    };
+
+    const whereClause = this.buildUserFilterWhereClause(filters, replacements);
+
+    // Step 4: Get total count with filters
+    const countQuery = await rawQuery.fetchUserByGroupCount({
+      whereClause,
+      search
+    });
+
+    const countResult = await sequelize.query(
+      countQuery,
+      {
+        replacements,
+        type: constants.SELECT,
+      }
+    );
+
+    const totalUsers = parseInt((countResult[0] as any).count, 10) || 0;
+
+    if (totalUsers === 0) {
+      return {
+        statusCode: constants.SUCCESS,
+        message: constants.SUCCESS_MESSAGE,
+        data: { users: [], count: 0 },
+      };
+    }
+
+    // Step 5: Fetch users with filters, sort, pagination
+    let orderByClause = "u.first_name ASC"; // default
+    const sanitizedSortOrder = ["ASC", "DESC"].includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : "ASC";
+
+    if (sortBy === "user_name") {
+      orderByClause = `(u.first_name || ' ' || u.last_name) ${sanitizedSortOrder}`;
+    } else if (["first_name", "last_name", "email", "created_datetime"].includes(sortBy)) {
+      orderByClause = `u.${sortBy} ${sanitizedSortOrder}`;
+    } else if(sortBy === "role_name"){
+      orderByClause = `bt.business_teams ${sanitizedSortOrder}`;
+    } else if(sortBy === "organization_name"){
+      orderByClause = `(
+        CASE
+          WHEN u.is_consultant_firm = TRUE THEN u.org_id
+          ELSE (
+            SELECT a.account_name 
+            FROM "${MAIN_SCHEMA_NAME}".account AS a 
+            WHERE a.rid = u.org_id
+          )
+        END
+      ) ${sanitizedSortOrder}`;
+    }
+
+    const query = rawQuery.fetchUsersByGroup({
+      whereClause,
+      orderByClause,
+      search
+    });
+
+    const users = await sequelize.query(
+      query,
+      {
+        replacements: {
+          ...replacements,
+          limit,
+          offset
+        },
+        type: constants.SELECT,
+      }
+    );        
+
+    return {
+      statusCode: constants.SUCCESS,
+      message: constants.SUCCESS_MESSAGE,
+      data: { users, count: totalUsers },
+    };
+
+  } catch (err) {
+    console.error("Error in getUserGroupUsers:", err);
+    return this.throwServiceError(err as Error);
+  }
+}
+
+// utils/sqlFilterBuilder.ts (or any appropriate file)
+
+buildUserFilterWhereClause(
+  filters: Record<string, any>,
+  replacements: Record<string, any>
+): string {
+  const filterConditions: string[] = [];
+
+  // Supported fields and their SQL expressions
+  const fieldSqlMap: Record<string, string> = {
+    user_name: `(LOWER(u.first_name ))`,
+    email: `u.email`,
+    role_name: `u.role_rid`,
+    organization_name: `(
+      CASE
+        WHEN u.is_consultant_firm = TRUE THEN u.org_id
+        ELSE (
+          SELECT a.account_name 
+          FROM "${MAIN_SCHEMA_NAME}".account AS a 
+          WHERE a.rid = u.org_id
+        )
+      END
+    )`
+  };
+
+  // Builds each individual condition
+  const buildFilterClause = (columnSql: string, operation: string, value: any, key: string): string => {
+    switch (operation) {
+      case "equals":
+        replacements[key] = value;
+        return `${columnSql} = :${key}`;
+      case "not_equals":
+        replacements[key] = value;
+        return `${columnSql} != :${key}`;
+      case "contains":
+        replacements[key] = `%${value}%`;
+        return `${columnSql} ILIKE :${key}`;
+      case "not_contains":
+        replacements[key] = `%${value}%`;
+        return `${columnSql} NOT ILIKE :${key}`;
+      case "is_empty":
+        return `${columnSql} IS NULL OR ${columnSql} = ''`;
+      case "in":
+        return `${columnSql} IN (${value.map((d : any) => `'${d}'`)})`
+      default:
+        return "";
+    }
+  };
+
+  Object.entries(filters).forEach(([field, condition], index) => {
+    const columnSql = fieldSqlMap[field];
+    if (!columnSql || !condition || typeof condition !== "object" || Array.isArray(condition)) return;
+
+    const op = Object.keys(condition)[0];
+    const value = (condition as Record<string, any>)[op];
+    const key = `${field}_${op}_${index}`;
+
+    const clause = buildFilterClause(columnSql, op, value, key);
+    if (clause) filterConditions.push(clause);
+  });
+
+  return filterConditions.length ? `AND ${filterConditions.join(" AND ")}` : "";
+}
 
 
 private buildSQLConditions(filters: Record<string, any>): string | null {
   const conditions: string[] = [];
-
+  // List of filter names that should always be treated as numbers
+  
   for (const [column, condition] of Object.entries(filters)) {
-    if (!condition || typeof condition !== 'object') continue;
+    if (condition === undefined || condition === null) continue;
+
+    const sqlColumn = column === 'account_name' ? 'acc.account_name' : column;
+
+    // If condition is a primitive (number or string), treat as equals
+    if (typeof condition === 'number') {
+      conditions.push(`${sqlColumn} = ${condition}`);
+      continue;
+    }
+    if (typeof condition === 'string') {
+      conditions.push(`LOWER(${sqlColumn}) = '${condition.toLowerCase()}'`);
+      continue;
+    }
 
     // Handle operators like { equals: "value" }, { contains: "value" }
-    for (const [operator, value] of Object.entries(condition)) {
-      if (value === undefined || value === null) continue;
-      const lowerColumn = `LOWER(${column})`; // wrap column in LOWER()
-      switch (operator.toLowerCase()) {
-        case 'equals':
-        case 'eq':
-          conditions.push(`${lowerColumn} = '${String(value).toLowerCase()}'`);
-          break;
-        case 'not_equals':
-        case 'ne':
-           conditions.push(`${lowerColumn} != '${String(value).toLowerCase()}'`);
-          break;
-        case 'is_empty':
-          conditions.push(`(${lowerColumn} IS NULL OR ${lowerColumn} = '')`);
-          break;
-        case 'contains':
-          conditions.push(`${lowerColumn} LIKE '%${String(value).toLowerCase()}%'`);
-          break;
-        case 'in':
-          if (Array.isArray(value)) {
-            const quotedValues = value
-              .map(v => `'${String(v).toLowerCase()}'`)
-              .join(', ');
-            conditions.push(`${lowerColumn} IN (${quotedValues})`);
-          }
-          break;
-        case 'gt':
-          conditions.push(`${column} > ${value}`);
-          break;
-        case 'lt':
-          conditions.push(`${column} < ${value}`);
-          break;
-        case 'gte':
-          conditions.push(`${column} >= ${value}`);
-          break;
-        case 'lte':
-          conditions.push(`${column} <= ${value}`);
-          break;
-        default:
-          console.warn(`Unsupported operator: ${operator}`);
+    if (typeof condition === 'object') {
+      for (const [operator, value] of Object.entries(condition)) {
+        if (value === undefined || value === null) continue;
+        const lowerColumn = `LOWER(${sqlColumn})`;
+        switch (operator.toLowerCase()) {
+          case 'equals':
+            if (typeof value === 'number') {
+              conditions.push(`${sqlColumn} = ${value}`);
+            } else {
+              conditions.push(`${lowerColumn} = '${String(value).toLowerCase()}'`);
+            }
+            break;
+          case 'not_equals':
+            if (typeof value === 'number') {
+              conditions.push(`${sqlColumn} != ${value}`);
+            } else {
+              conditions.push(`${lowerColumn} != '${String(value).toLowerCase()}'`);
+            }
+            break;
+          case 'is_empty':
+            conditions.push(`(${lowerColumn} IS NULL OR ${lowerColumn} = '')`);
+            break;
+          case 'contains':
+            conditions.push(`${lowerColumn} LIKE '%${String(value).toLowerCase()}%'`);
+            break;
+          case 'in':
+            if (Array.isArray(value)) {
+              if (value.length > 0 && typeof value[0] === 'number') {
+                conditions.push(`${sqlColumn} IN (${value.join(', ')})`);
+              } else {
+                const quotedValues = value
+                  .map(v => `'${String(v).toLowerCase()}'`)
+                  .join(', ');
+                conditions.push(`${lowerColumn} IN (${quotedValues})`);
+              }
+            }
+            break;
+          case 'gt':
+            conditions.push(`${sqlColumn} > ${value}`);
+            break;
+          case 'lt':
+            conditions.push(`${sqlColumn} < ${value}`);
+            break;
+          case 'gte':
+            conditions.push(`${sqlColumn} >= ${value}`);
+            break;
+          case 'lte':
+            conditions.push(`${sqlColumn} <= ${value}`);
+            break;
+          case 'between':
+            if (Array.isArray(value) && value.length === 2) {
+              conditions.push(`${sqlColumn} BETWEEN ${value[0]} AND ${value[1]}`);
+            }
+            break;
+          default:
+            break;
+        }
       }
     }
   }
 
   return conditions.length > 0 ? conditions.join(' AND ') : null;
 }
-  
+ 
 }
 export default UserGroupService

@@ -14,6 +14,8 @@ import {
   exportListProjectResourceSchema,
   listResourceSchema,
   updateProjectResourceSchema,
+  updateProjectResourceStatus,
+  updateResourceDuplicateStatus,
 } from "../lib/joi/schemas/schema";
 
 const services = configurations.getInstance().getServices();
@@ -46,9 +48,9 @@ async function createProjectResource(
       value,
       userId
     );
-    if (projectResource.statusCode === HttpStatus.SUCCESS) {
+    if (projectResource.statusCode === HttpStatus.SUCCESS || projectResource.statusCode === HttpStatus.PROMPT) {
       successLog(methodName);
-      handleSuccessResponse(res, projectResource.data);
+      handleSuccessResponse(res, projectResource.data, projectResource.message, projectResource.statusCode);
       return;
     } else {
       errorLog(methodName, projectResource.errorMessage);
@@ -100,9 +102,9 @@ async function updateProjectResource(
       value,
       userId
     );
-    if (projectResource.statusCode === HttpStatus.SUCCESS) {
+    if (projectResource.statusCode === HttpStatus.SUCCESS || projectResource.statusCode === HttpStatus.PROMPT) {
       successLog(methodName);
-      handleSuccessResponse(res, projectResource.data);
+      handleSuccessResponse(res, projectResource.data, projectResource.message, projectResource.statusCode);
       return;
     } else {
       errorLog(methodName, projectResource.errorMessage);
@@ -177,7 +179,8 @@ async function listProjectResource(req: Request, res: Response): Promise<void> {
         limitNum,
         parsedFilters,
         value.sortBy,
-        value.sortOrder
+        value.sortOrder,
+        value.search
       );
 
     if (projectResourceDetails.statusCode === HttpStatus.SUCCESS) {
@@ -312,7 +315,8 @@ async function exportProjectResource(
         parsedFilters,
         value.sortBy,
         value.sortOrder,
-        userId
+        userId,
+        value.search
       );
 
     if (projectResourceDetails.statusCode === HttpStatus.SUCCESS) {
@@ -486,6 +490,62 @@ async function assignedResourceCodes(req: Request, res: Response): Promise<void>
   }
 }
 
+async function anomalyStatusUpdate(req: Request, res: Response): Promise<void> {
+  const methodName = "Accept duplicate";
+  try {
+    const value = await validateRequest(req, updateProjectResourceStatus, res);
+
+    if(!value){
+      return;
+    }
+
+    const userId = req.headers["x-user-id"] as string;
+
+    if (!userId) {
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    const result = await projectResourceServices.handleAnomalyStatus(
+      value,
+      userId
+    );
+
+    if (result.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.message || '', 
+        data: result.data,
+      });
+      return;
+    } else {
+      errorLog(methodName, result.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        result.errorMessage
+      );
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
 export default {
   createProjectResource,
   updateProjectResource,
@@ -495,5 +555,6 @@ export default {
   resourceSkillRolesSubtype,
   listProjectResource,
   exportProjectResource,
-  assignedResourceCodes
+  assignedResourceCodes,
+  anomalyStatusUpdate
 };

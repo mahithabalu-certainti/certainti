@@ -19,10 +19,11 @@ import {
   getAccountGroups,
   assignEntityAccessToAccount,
   assignEntityAccessToProject,
-  getUserGroupType
-
-
+  getUserGroupType,
+  listUserGroupUser
 } from "./userGroupController";
+import { listSettings, updateSettings } from "./settingsController";
+
 import { get } from "http";
 const controller = {
   userController: {
@@ -58,7 +59,12 @@ const controller = {
     getProjectOfAccounts,
     assignEntityAccessToAccount,
     assignEntityAccessToProject,
-    getUserGroupType
+    getUserGroupType,
+    listUserGroupUser
+  },
+  settingsController:{
+    updateSettings,
+    listSettings
   }
 };
 

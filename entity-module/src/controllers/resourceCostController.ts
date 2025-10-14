@@ -387,7 +387,13 @@ async function acceptStatus(req: Request, res: Response): Promise<void> {
 
     if (result.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
-      handleSuccessResponse(res, result.data);
+      res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.message,
+        data: result.data,
+      });
+      return;
     } else {
       errorLog(methodName, result.errorMessage);
       handleErrorResponse(

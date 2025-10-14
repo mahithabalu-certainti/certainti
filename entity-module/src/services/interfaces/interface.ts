@@ -1,5 +1,6 @@
 import { Project } from "../../models/project";
 import {
+  IAnomalyStatus,
   ICreateAttachment,
   ICreateProject,
   ICreateProjectResource,
@@ -10,6 +11,7 @@ import {
   IUpdateProject,
   IUpdateProjectResource,
   IUpdateProjectTask,
+  IUpdateQrePecentAdjustment,
   IUpdateResource,
   IUpdateResourceCost,
   IUpdateResourceSkill,
@@ -315,7 +317,8 @@ export interface IProjectService {
     sortBy: string,
     sortOrder: string,
     bothParentAndChild: boolean,
-    userId: string
+    userId: string,
+    apiSource:string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -558,7 +561,8 @@ export interface IProjectResourceService {
     limit: number,
     filters: Record<string, string>,
     sortBy: string,
-    sortOrder: string
+    sortOrder: string,
+    search : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -572,7 +576,8 @@ export interface IProjectResourceService {
     filters: Record<string, string>,
     sortBy: string,
     sortOrder: string,
-    userId: string
+    userId: string,
+    search : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -584,6 +589,12 @@ export interface IProjectResourceService {
     message: string;
     errorMessage?: string;
     data?: { resourceCodes: any };
+  }>;
+  handleAnomalyStatus(data: IAnomalyStatus, userId: string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { projectResource: any };
   }>;
 }
 
@@ -604,7 +615,8 @@ export interface IImportListGraphqlServices {
     sortBy: string,
     account_rid: string,
     filters: any,
-    fiscal_year: number
+    fiscal_year: number,
+    search : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -655,12 +667,117 @@ export interface IImportListGraphqlServices {
         data: null;
       }
   >;
+
+  fetchAccountLevelImportedProjects(
+    accountId: string,
+    fiscal_year: number,
+    page: number,
+    limit: number,
+    search: string,
+    filters: Record<string, string>,
+    sortBy: string,
+    sortOrder: string,
+    bothParentAndChild: boolean,
+    userId: string,
+    documentRid: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { projects: any; totalCount: number };
+  }>;
+
+  exportAccountLevelImportedProjects(
+    accountId: string,
+    fiscal_year: number,
+    search: string,
+    filters: Record<string, string>,
+    sortBy: string,
+    sortOrder: string,
+    bothParentAndChild: boolean,
+    userId: string,
+    timezone: string,
+    documentRid: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { projects: any; totalCount: number };
+  }>;
+
+  fetchAccountLevelImportedResources(
+    accountId: string,
+    page: number,
+    limit: number,
+    search: string,
+    filters: Record<string, string>,
+    sortBy: string,
+    sortOrder: string,
+    documentRid: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { resources: any; count: number};
+  }>;
+
+  exportAccountLevelImportedResources(
+    accountId: string,
+    search: string,
+    filters: Record<string, string>,
+    sortBy: string,
+    sortOrder: string,
+    documentRid: string,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { resources: any; count: number};
+  }>;
+
+  fetchAccountLevelImportedProjectTasks(
+    accountRid: string,
+    documentRid: string,
+    filters: Record<string, any>,
+    search: string,
+    page: number,
+    limit: number,
+    sortBy: string,
+    sortOrder: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { tasks: any[]; totalCount: number };
+  }>;
+  
+  exportAccountLevelImportedProjectTasks(
+    accountRid: string,
+    documentRid: string,
+    userId: string,
+    filters: Record<string, any>,
+    search: string,
+    sortBy: string,
+    sortOrder: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { tasks: any[]; totalCount: number };
+  }>;
+
+  getAllowedExportFields(
+      userId: string,
+      permission_name: string
+    ): Promise<any[]>;
 }
 
 export interface IProjectTaskIngestionService {
   createProjectTask(
     projectTaskData: ICreateProjectTask,
-    userId: string
+    userId: string,
+    userPreference : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -669,13 +786,27 @@ export interface IProjectTaskIngestionService {
   }>;
   updateProjectTask(
     projectTaskData: IUpdateProjectTask,
-    userId: string
+    userId: string,
+    userPreference : string
   ): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
     data?: { projectTask: any };
   }>;
+  getAssignedResourceCodes(accountId: string, projectFiscalId: string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { resourceCodes: any };
+  }>;
+   handleAnomalyStatus(data: IAnomalyStatus,
+    userId: string) : Promise<{
+    statusCode: number;
+    message: string;
+    data?: { projectTask: any };
+  }>
+  listResourceCodeForProjectTask(data : any) : Promise<any>
 }
 export interface IProjectTaskService {
   listProjectTasks(

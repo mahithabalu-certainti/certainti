@@ -6,9 +6,14 @@ import {
   HttpStatus,
   MAIN_SCHEMA_NAME,
   STATUS_MESSAGE,
+  primaryKeyContacts,
   rawQueries,
 } from "../utils/constants";
-import { ICreateProject, IUpdateProject } from "../utils/types";
+import {
+  ICreateProject,
+  IUpdateProject,
+  IUpdateQrePecentAdjustment,
+} from "../utils/types";
 import SchemaService from "./schemaService";
 import {
   ProjectTimeline,
@@ -573,11 +578,15 @@ export class ProjectService {
 
       let accountRNumber = accountData.r_number;
 
-      if (accountData.storage_type === "store_in_parent") {
-        accountRNumber = await this.schemaService.fetchParentAccount(
+      let childRNumber = await this.schemaService.fetchParentAccount(
           accountData.parent_account_rid
         );
-      }
+        if (accountData.storage_type === "store_in_parent") {
+          accountRNumber = childRNumber;
+        }
+        let isSubscriptionCreated = false;
+        isSubscriptionCreated = (await this.schemaService.getSubscriptionDetailsByProjectId(accountData.parent_account_rid, childRNumber,accountId)) ?? false;
+             
 
       const isExists = await this.schemaService.checkIfSchemaAndTableExists(
         accountRNumber
@@ -639,7 +648,8 @@ export class ProjectService {
         projectData = this.insertAccount(
           projectData,
           accountData,
-          accountDetails
+          accountDetails,
+          isSubscriptionCreated
         );
 
         projectData = await this.schemaService.insertUserDetails(projectData);
@@ -723,7 +733,7 @@ export class ProjectService {
     }
   }
 
-  insertAccount(project: any, account: any, accountDetails: any) {
+  insertAccount(project: any, account: any, accountDetails: any,isSubscriptionCreated:boolean) {
     const fiscalStartDate = accountDetails?.[0]?.fiscal_start_date || null;
     const fiscalEndDate = accountDetails?.[0]?.fiscal_end_date || null;
     return {
@@ -731,8 +741,10 @@ export class ProjectService {
       account_name: account.account_name,
       account_number: account.r_number,
       account_status: account.status,
+      organistaion_name: account.organisation_name,
       fiscal_start_date: fiscalStartDate,
       fiscal_end_date: fiscalEndDate,
+      is_send_interaction: isSubscriptionCreated
     };
   }
 
@@ -746,7 +758,8 @@ export class ProjectService {
     sortBy: string = "created_datetime",
     sortOrder: string = "ASC",
     bothParentAndChild: boolean = false,
-    userId: string
+    userId: string,
+    apiSource: string = "Project"
   ): Promise<{
     statusCode: number;
     message: string;
@@ -775,6 +788,7 @@ export class ProjectService {
       const isPOCProfile =
         userProfileType?.profileName === "Project Point of Contact";
       let accessibleIds: string[] = [];
+      let accInteractionProjs: string[] = [];
 
       if (!isCustomGlobal) {
         accessibleIds = await this.getAccessibleProjectIds(
@@ -846,7 +860,7 @@ export class ProjectService {
       const [finalMetaDataSortBy, finalMetaDataSortOrder] =
         this.getMetaDataSortParameters(sortBy, sortOrder);
 
-      const { whereClause } = this.buildWhereClause(
+      const { whereClause, searchClause } = this.buildWhereClause(
         filters,
         search,
         false,
@@ -870,10 +884,12 @@ export class ProjectService {
         finalMetaDataSortBy,
         finalMetaDataSortOrder,
         {},
-        accessibleIds
+        accessibleIds,
+        apiSource,
+        "",
+        searchClause
       );
-
-      projects = projects.slice(offset, page * limit)
+      projects = projects.slice(offset, page * limit);
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -997,7 +1013,7 @@ export class ProjectService {
       const [finalMetaDataSortBy, finalMetaDataSortOrder] =
         this.getMetaDataSortParameters(sortBy, sortOrder);
 
-      const { whereClause } = this.buildWhereClause(
+      const { whereClause, searchClause } = this.buildWhereClause(
         filters,
         search,
         false,
@@ -1019,7 +1035,9 @@ export class ProjectService {
           finalMetaDataSortOrder,
           timezone,
           userId,
-          accessibleIds
+          accessibleIds,
+          "",
+          searchClause
         );
 
       return {
@@ -1033,6 +1051,21 @@ export class ProjectService {
     } catch (err) {
       throw new Error("Error fetching project: " + (err as Error).message);
     }
+  }
+  async getAccInteractionProjectIds(
+    accIntId: string,
+    accountRNumber: string
+  ): Promise<string[]> {
+    const orgDbSequlize = await initOrgSequelize();
+    const schemaName = `trd365_${accountRNumber.replace(/\D/g, "")}`;
+    const interactionProjects = await orgDbSequlize.query(
+      rawQueries.getAccountInteractionProjects(schemaName, accIntId),
+      {
+        replacements: { account_interaction_rid: accIntId },
+        type: "SELECT",
+      }
+    );
+    return interactionProjects.map((row: any) => row.project_fiscal_rid);
   }
   async getAccessibleProjectIds(
     userId: string,
@@ -1725,6 +1758,70 @@ export class ProjectService {
     }
   }
 
+  async updateQrePercentAdjustment(
+    data: IUpdateQrePecentAdjustment,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: any;
+  }> {
+    try {
+      const { account_rid, rid, rd_percent_potential_ai } = data;
+
+      const accountData = await this.schemaService.fetchAccountById(account_rid);
+
+      if (!accountData) {
+        throw new Error("Error creating project: Invalid account ID");
+      }
+
+      if (accountData.status !== "active") {
+        throw new Error(
+          "Project creation failed: The selected account is inactive. Please choose an active account."
+        );
+      }
+
+      let accountNumber = accountData.r_number;
+
+      if (
+        accountData.parent_account_rid === null ||
+        accountData.parent_account_rid === ""
+      ) {
+        throw new Error("Error creating project: Invalid account ID");
+      }
+
+      if (accountData.storage_type === "store_in_parent") {
+        accountNumber = await this.schemaService.fetchParentAccount(
+          accountData.parent_account_rid
+        );
+      }
+
+      const isExists = await this.schemaService.checkIfSchemaExists(
+        accountNumber
+      );
+
+      if (!isExists) {
+        throw new Error("Invalid account ID: schema doesn't exists");
+      }
+
+      await this.schemaService.updateQreAdjustmentCalculation(
+        accountNumber,
+        rid,
+        rd_percent_potential_ai,
+        userId
+      );
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {},
+      };
+    } catch (err) {
+      return this.throwServiceError(err as Error);
+    }
+  }
+
   async calculateKeyContactDetails(keyContacts: any[], mainDbSequlize: any) {
     let technicalConsultant = "-";
     let financialConsultant = "-";
@@ -1736,10 +1833,11 @@ export class ProjectService {
       ].filter(Boolean);
 
       let keyContactMap: Record<string, string> = {};
+      let keyContactRoleMap: Record<string, string> = {};
 
       if (keyContactIds.length > 0) {
         const keyContactRows = await mainDbSequlize.query(
-          `SELECT rid, role_name FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE rid IN (:ids)`,
+          `SELECT rid, role_name ,role_map FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE rid IN (:ids)`,
           {
             replacements: { ids: keyContactIds },
             type: "SELECT",
@@ -1748,6 +1846,9 @@ export class ProjectService {
 
         keyContactMap = Object.fromEntries(
           keyContactRows.map((c: any) => [c.rid, c.role_name])
+        );
+        keyContactRoleMap = Object.fromEntries(
+          keyContactRows.map((c: any) => [c.role_map, c.role_name])
         );
       }
 
@@ -1758,16 +1859,20 @@ export class ProjectService {
 
       const technicalContact = enrichedKeyContacts.find(
         (e: any) =>
-          e.role_name === "Client Project Technical Point of Contact" &&
+          e.role_name ===
+            keyContactRoleMap[primaryKeyContacts.technical_point_of_contact] &&
           e.is_primary_contact
       );
       const financialContact = enrichedKeyContacts.find(
         (e: any) =>
-          e.role_name === "Financial Consultant" && e.is_primary_contact
+          e.role_name ===
+            keyContactRoleMap[primaryKeyContacts.financial_consultant] &&
+          e.is_primary_contact
       );
       const pointOfContact = enrichedKeyContacts.find(
         (e: any) =>
-          e.role_name === "Client Project Point of Contact" &&
+          e.role_name ===
+            keyContactRoleMap[primaryKeyContacts.project_point_of_contact] &&
           e.is_primary_contact
       );
 
@@ -1826,6 +1931,7 @@ export class ProjectService {
       "modified_datetime",
       "assessment_status",
       "qre_final",
+      "rd_percent_final"
     ];
 
     if (!validSortColumns.includes(sortBy)) {
@@ -1869,11 +1975,13 @@ export class ProjectService {
     isParent: boolean = false
   ): {
     whereClause: Record<string, any>;
+    searchClause : Record<string, any>;
   } {
     let whereClause: Record<string, any> = {};
+    let searchClause : Record<string, any> = {};
 
     if (search) {
-      whereClause = this.buildSearchCondition(
+      searchClause = this.buildSearchCondition(
         search,
         whereClause,
         isAllProject
@@ -1887,7 +1995,7 @@ export class ProjectService {
       isParent
     );
 
-    return { whereClause };
+    return { whereClause, searchClause };
   }
 
   private buildSearchCondition(
@@ -1896,8 +2004,8 @@ export class ProjectService {
     isAllProject: boolean
   ): Record<string, any> {
     const searchCondition = [
-      { industry: { [Op.iLike]: `%${search}%` } },
-      { r_number: { [Op.iLike]: `%${search}%` } },
+      { project_code: { [Op.iLike]: `%${search}%` } },
+      { project_name: { [Op.iLike]: `%${search}%` } },
     ];
 
     let AllProjectsearchCondition = null;
@@ -1956,6 +2064,7 @@ export class ProjectService {
       "qualified_research_expenditure",
       "qre",
       "qre_final",
+      "rd_percent_final"
     ];
     const dateFields = [
       "project_startdate",
@@ -2253,6 +2362,7 @@ export class ProjectService {
       { clientField: "total_cost_nonlabor", dbField: "total_cost_nonlabor" },
       { clientField: "comments", dbField: "comments" },
       { clientField: "qre_final", dbField: "qre_final" },
+      { clientField: "rd_percent_final", dbField: "rd_percent_final" },
       {
         clientField: "qualified_research_expenditure",
         dbField: "qualified_research_expenditure",

@@ -7,6 +7,8 @@ import ExcelJS from 'exceljs';
 import { BlobServiceClient } from '@azure/storage-blob';
 import { getSecret } from "../utils/azureSecrets";
 import { Sequelize } from "sequelize";
+import crypto from "crypto";
+
 function getLogger() {
   return configurations.getInstance().getLogger();
 }
@@ -233,7 +235,7 @@ export function getTableSchemaByEntity(entity: string): ColumnSchema[] {
       return [
         { column_name: 'project_id', data_type: 'String', required:true},
         { column_name: 'project_name', data_type: 'String' ,required:false},
-        { column_name: 'project_description', data_type: 'String',required:true },
+        { column_name: 'project_description', data_type: 'String',required:false },
         { column_name: 'resource_id', data_type: 'String' ,required:true},
         { column_name: 'resource_name', data_type: 'String',required:false },
         { column_name: 'resource_type', data_type: 'ENUM' ,required:false},
@@ -435,8 +437,6 @@ export const validateInlineEditPayload = (data : any) => {
         setKeyData.key_contact_role = d.key_contact_role !== dbData.key_contact_role ? d.key_contact_role : dbData.key_contact_role
       if(typeof d.is_primary_contact == 'boolean')
         setKeyData.is_primary_contact = d.is_primary_contact !== dbData.is_primary_contact ? d.is_primary_contact : dbData.is_primary_contact
-      if(typeof d.include_in_communication == 'boolean')
-        setKeyData.include_in_communication = d.include_in_communication !== dbData.include_in_communication ? d.include_in_communication : dbData.include_in_communication
       if(typeof d.interaction_cc_recipient == 'boolean')
         setKeyData.interaction_cc_recipient = d.interaction_cc_recipient !== dbData.interaction_cc_recipient ? d.interaction_cc_recipient : dbData.interaction_cc_recipient
       if(d.status_rid)
@@ -519,7 +519,6 @@ export const validateInlineEditPayload = (data : any) => {
     let key_contact_email
     let key_contact_role
     let is_primary_contact
-    let include_in_communication
     let interaction_cc_recipient
     let status_rid
     let modified_by
@@ -554,11 +553,6 @@ export const validateInlineEditPayload = (data : any) => {
                 let primary = `is_primary_contact = ${is_primary_contact}`
                 updatedKeyData.push(primary)
             }
-            if (setDataResult.include_in_communication != undefined) {
-                include_in_communication = setDataResult.include_in_communication
-                let communication = `include_in_communication = ${include_in_communication}`
-                updatedKeyData.push(communication)
-            }
             if (setDataResult.interaction_cc_recipient !== undefined) {
                 interaction_cc_recipient = setDataResult.interaction_cc_recipient
                 let recipient = `interaction_cc_recipient = ${interaction_cc_recipient}`
@@ -577,4 +571,37 @@ export const validateInlineEditPayload = (data : any) => {
             await sequelize.query(rawQueries.updateKeyContactDetails(schemaName, updatedKeyData, dbKeyContactData[0][0].rid))
         }
     }
+  }
+
+  export async function decryptClientSecret(encryptedText: string): Promise<string> {
+    const ENCRYPTION_KEY = process.env.CLIENT_SECRET_ENCRYPTION_KEY;
+    
+    if (!ENCRYPTION_KEY) {
+      throw new Error('CLIENT_SECRET_ENCRYPTION_KEY is not set in environment');
+    };
+  
+    const encryptClientSecret = await getSecret(ENCRYPTION_KEY);
+  
+    if(!encryptClientSecret){
+      throw new Error("Invalid Client Encryption Key")
+    }
+  
+    const [ivHex, encryptedHex] = encryptedText.split(":");
+  
+    if (!ivHex || !encryptedHex) {
+      throw new Error('Invalid encrypted text format. Expected format "iv:encrypted"');
+    }
+  
+    const iv = Buffer.from(ivHex, "hex");
+    const encrypted = Buffer.from(encryptedHex, "hex");
+  
+    const decipher = crypto.createDecipheriv(
+      "aes-256-cbc",
+      Buffer.from(encryptClientSecret),
+      iv
+    );
+    let decrypted = decipher.update(encrypted);
+    decrypted = Buffer.concat([decrypted, decipher.final()]);
+  
+    return decrypted.toString();
   }

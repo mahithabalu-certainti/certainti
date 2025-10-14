@@ -16,18 +16,18 @@ export const projectResourceResolver: IResolvers = {
         const userId = ctx.req.headers["x-user-id"];
         let result =
           await ctx.services.projectResourceServices.inLineEditProjectResource(data, userId);
-        if (result.statusCode == HttpStatus.SUCCESS) {
+        if (result.statusCode == HttpStatus.SUCCESS || result.statusCode == HttpStatus.PROMPT) {
           return {
-            statusCode: HttpStatus.SUCCESS,
+            statusCode: result.statusCode == HttpStatus.PROMPT ? HttpStatus.PROMPT : HttpStatus.SUCCESS,
             statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
             statusMessage: result.message,
-            data: result.data,
+            data: result?.data,
           };
         } else {
           return {
             statusCode: HttpStatus.NOT_FOUND,
             statusCodeValue: HttpStatus.NOT_FOUND_MESSAGE,
-            statusMessage: result.statusMessage,
+            statusMessage: result.errorMessage ? result.errorMessage : result.statusMessage,
             data: result.data,
           };
         }

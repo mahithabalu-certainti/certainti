@@ -19,6 +19,11 @@ routes.get(
   checkUserStatusMiddleware("projects_task_view_edit"),
   controller.projectTaskController.getProjectTaskById
 );
+routes.get(
+  "/assignedCodes/:accountId/:projectFiscalId",
+  checkUserStatusMiddleware("NA"),
+  controller.projectTaskController.assignedResourceCodes
+);
 routes.post(
   "/new",
   checkUserStatusMiddleware("projects_task_create"),
@@ -29,5 +34,15 @@ routes.put(
   checkUserStatusMiddleware("projects_task_view_edit"),
   controller.projectTaskController.updateProjectTask
 );
+routes.put(
+  "/status/update",
+  checkUserStatusMiddleware("projects_task_view_edit"),
+  controller.projectTaskController.anomalyStatusUpdate
+)
+routes.post(
+  "/resourceCodes",
+  checkUserStatusMiddleware("NA"),
+  controller.projectTaskController.fetchReCodeForPrjTask
+)
 
 export default routes;

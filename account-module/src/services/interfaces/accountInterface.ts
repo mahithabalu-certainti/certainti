@@ -77,7 +77,7 @@ export interface IAccountService {
     limit?: number,
     sortBy?: string,
     sortOrder?: string,
-    filters?: Record<string, any>
+     globalFilters?: Record<string, string[]>,
   
   ): Promise<{
     statusCode: number;
@@ -94,6 +94,9 @@ export interface IAccountService {
     errorMessage?: string;
     data?: { keyContactRoles: any };
   }>;
+  // provisionMonitoredAccount(
+  //   account_name: string
+  // ): void;
 }
 
 export interface GeoDataResponse<T> {

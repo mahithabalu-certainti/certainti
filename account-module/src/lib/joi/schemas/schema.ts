@@ -117,7 +117,6 @@ const accountSchema = Joi.object({
         }),
         key_contact_role: Joi.string().optional().allow("").allow(null),
         is_primary_contact: Joi.boolean().valid(true, false).optional(),
-        include_in_communication: Joi.boolean().allow(null).optional(),
         status_rid: Joi.string().required(),
         interaction_cc_recipient: Joi.boolean()
         .required()
@@ -125,6 +124,7 @@ const accountSchema = Joi.object({
           'boolean.base': 'interaction_cc_recipient must be a boolean value (true or false)',
           'any.required': 'interaction_cc_recipient is required',
         }),
+        include_in_communication: Joi.boolean().optional().allow(null,""),
         action_type: Joi.string().valid('add', 'edit','delete').required()
       })
     )
@@ -228,14 +228,14 @@ const updateAccountSchema = Joi.object({
         }),
         key_contact_role: Joi.string().optional().allow("").allow(null),
         is_primary_contact: Joi.boolean().valid(true, false).optional(),
-        include_in_communication: Joi.boolean().allow(null).optional(),
         status_rid: Joi.string().required(),
         interaction_cc_recipient: Joi.boolean()
         .required()
         .messages({
-          'boolean.base': 'interaction_cc_recipient must be a boolean value (true or false)',
-          'any.required': 'interaction_cc_recipient is required',
+          'boolean.base': 'Interaction CC Recipient  must be a boolean value (true or false)',
+          'any.required': 'Interaction CC Recipient is required',
         }),
+         include_in_communication: Joi.boolean().optional().allow(null,""),
         action_type: Joi.string().valid('add', 'edit','delete').required()
       })
     )
@@ -249,7 +249,7 @@ const listOrgAccountSchema = Joi.object({
   limit: Joi.string().optional()
     .pattern(/^[0-9]+$/)
     ,
- 
+ globalFilters: Joi.string().default("{}"),
   filters: Joi.string().default("{}"),
   sortBy: Joi.string().optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC")
