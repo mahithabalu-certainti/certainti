@@ -26,6 +26,7 @@ export const projectResourceSchema = gql`
     assigned_skill_role_type_rid: String
     total_hours_pro_res: String
     total_cost_pro_res: String
+    net_total_cost_pro_res: String
     status_rid: String
     country_rid: String
     region_rid: String
@@ -72,6 +73,7 @@ export const projectResourceSchema = gql`
     resource_role: String
     total_hours_pro_res: String
     total_cost_pro_res: String
+    net_total_cost_pro_res: String
     description: String
     project_resource_role: String
   }

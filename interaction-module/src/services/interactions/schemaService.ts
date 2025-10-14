@@ -3903,7 +3903,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         updateData.interaction_question_error_message = response.error_message;
       }
       await AiAssessmentAudit.update(updateData, {
-        where: { transaction_id: response.transaction_id },
+        where: { transaction_id: response.data.transaction_id },
       });
     } catch (err) {
       logMessage(`Error updating interaction status: ${err}`);

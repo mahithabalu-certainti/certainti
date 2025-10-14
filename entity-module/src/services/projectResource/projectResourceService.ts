@@ -1469,6 +1469,7 @@ export class ProjectResourceService {
         project_fiscal_rid,
         project_resource_rid,
         total_cost_pro_res,
+        net_total_cost_pro_res,
         total_hours_pro_res,
         region_rid,
       } = projectResourceData;
@@ -2297,6 +2298,7 @@ export class ProjectResourceService {
       "fiscal_year",
       "total_hours_pro_res",
       "total_cost_pro_res",
+      "net_total_cost_pro_res",
       "qre_percent",
       "qre_final",
       "description",
@@ -2351,6 +2353,7 @@ export class ProjectResourceService {
     const numberFields = [
       "total_hours_pro_res",
       "total_cost_pro_res",
+      "net_total_cost_pro_res",
       "qre_percent",
       "qre_final",
     ];
@@ -2391,6 +2394,7 @@ export class ProjectResourceService {
       { clientField: "country_rid", dbField: "country_rid" },
       { clientField: "total_hours_pro_res", dbField: "total_hours_pro_res" },
       { clientField: "total_cost_pro_res", dbField: "total_cost_pro_res" },
+      { clientField: "net_total_cost_pro_res", dbField: "net_total_cost_pro_res" },
       { clientField: "qre_final", dbField: "qre_final" },
       { clientField: "qre_percent", dbField: "qre_percent" },
       { clientField: "description", dbField: "description" },
