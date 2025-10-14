@@ -598,7 +598,29 @@ async exportresourceCostDetailsForFinancialHighlights(
     const regionIds = [
       ...new Set(projectResourceFiscal.map((prf: any) => prf.region_rid)),
     ].filter(Boolean);
+    let currencyIds: string[] = [];
+    let currencyId: string | null = null;
+    if(!project_rid || project_rid === undefined || project_rid === "undefined")
+      {
+         const currencyQuery = `
+        SELECT rid, currency_rid 
+        FROM ${MAIN_SCHEMA_NAME}.account
+        WHERE rid IN (:account_rid)
 
+      `;
+        const [currency]:any[]  = await Promise.all([mainDbSequelize.query(currencyQuery, {
+          replacements: { account_rid: account_rid },
+          type: "SELECT",
+        })]);
+        currencyId = currency[0]?.currency_rid;
+        currencyIds.push(currencyId!);
+      }
+    else
+    {
+       currencyIds = [
+      ...new Set(projectResourceFiscal.map((prf: any) => prf.currency_rid)),
+    ].filter(Boolean);
+    }
     // Fetch detailed reference information if needed
     const referencePromises = [];
 
@@ -651,7 +673,25 @@ async exportresourceCostDetailsForFinancialHighlights(
       referencePromises.push(Promise.resolve([]));
     }
 
-    const [resourceTypes, countries, regions] = await Promise.all(referencePromises);
+    if (currencyIds.length > 0) {
+      const currencyQuery = `
+
+        SELECT rid, currency_symbol 
+        FROM ${MAIN_SCHEMA_NAME}.currency
+        WHERE rid IN (:currencyIds)
+
+      `;
+      referencePromises.push(
+        mainDbSequelize.query(currencyQuery, {
+          replacements: { currencyIds },
+          type: "SELECT",
+        })
+      );
+    } else {
+      referencePromises.push(Promise.resolve([]));
+    }
+
+    const [resourceTypes, countries, regions, currencies] = await Promise.all(referencePromises);
 
     // Create maps for quick lookup
     const resourceTypeDetailMap: any = (resourceTypes as any[]).reduce((map: any, rt: any) => {
@@ -666,6 +706,11 @@ async exportresourceCostDetailsForFinancialHighlights(
 
     const regionDetailMap: any = (regions as any[]).reduce((map: any, region: any) => {
       map[region.rid] = region;
+      return map;
+    }, {});
+
+    const currencyDetailMap: any = (currencies as any[]).reduce((map: any, currency: any) => {
+      map[currency.rid] = currency;
       return map;
     }, {});
 
@@ -694,9 +739,44 @@ async exportresourceCostDetailsForFinancialHighlights(
         prf.region_name = null;
       }
     });
+      const formatNumberForExport = (
+        value: any,
+        currency_symbol: string
+      ): string => {
+        if (value == null || value === "") return "-";
+
+        try {
+          const decimalValue = new Decimal(value.toString());
+          if (!decimalValue.isFinite()) return "-";
+
+          // Always show two decimal places
+          const formattedValue = decimalValue.toFixed(2);
+
+          // Extract just the formatted currency pattern using a dummy value
+          const pattern = currency(0, {
+        symbol: currency_symbol || "$",
+        precision: 2,
+        pattern: "! #",
+        separator: ",",
+        decimal: ".",
+          }).format(); // e.g., "$ 0.00"
+
+          // Format actual value manually using Decimal
+          const [intPart, decPart] = formattedValue.split(".");
+          const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+          const formattedNumber = `${formattedInt}.${decPart}`;
+          // Replace "0.00" in pattern with our real number
+          return pattern.replace("0.00", formattedNumber);
+        } catch (error) {
+          console.error("Error formatting number:", error);
+          return "-";
+        }
+      };
     let labelMap: Record<string, string>;
     let permissionName = 'account_resource_cost_view'
     if (!project_rid || project_rid === undefined || project_rid === "undefined") {
+      currencyId = currencyId;
       permissionName = 'account_resource_cost_view'
       labelMap = {
       project_code: "Project Code",
@@ -743,20 +823,18 @@ async exportresourceCostDetailsForFinancialHighlights(
 
           let exportData = rawResult.map((resource: any) => {
          const exportData: Record<string, string> = {};  
-         console.log("resource", resource);  
-          
           let resultMap: Record<string, any> = {};
-           if (!project_rid || project_rid === undefined || project_rid === "undefined") {
+      if (!project_rid || project_rid === undefined || project_rid === "undefined") {
       resultMap = {
       project_code: resource.project_code,
-      fiscal_year: resource.fiscal_year,
+      fiscal_year: "FY-"+resource.fiscal_year,
       project_name: resource.project_name,
       r_number: resource.r_number,
       resource_code: resource.resource_code,
       resource_name: resource.resource_name,
       resource_type_name: resource.resource_type_name,
       country_name: resource.country_name,
-      total_cost_pro_res: resource.total_cost_pro_res,
+      total_cost_pro_res: formatNumberForExport(resource.total_cost_pro_res, currencyDetailMap[currencyId!]?.currency_symbol || '$'),
       rd_percent_final: resource.rd_percent_final,
       qre_final: resource.qre_final,
       rd_credits_total: resource.rd_credits_total,
@@ -768,14 +846,12 @@ async exportresourceCostDetailsForFinancialHighlights(
       resource_type_rid: resource.resource_type_name,
       country_rid: resource.country_name,
       region_rid: resource.region_name,
-      total_cost_pro_res: resource.total_cost_pro_res,
+      total_cost_pro_res: formatNumberForExport(resource.total_cost_pro_res, currencyDetailMap[resource.currency_rid]?.currency_symbol || '$'),
       rd_percent_final: resource.rd_percent_final,
       qre_final: resource.qre_final,
       rd_credits_total: resource.rd_credits_total,
       };
     }
-    console.log("resultMap", resultMap);
-    console.log("allowedFieldSet", allowedFieldSet);
 
         for (const [field, value] of Object.entries(resultMap)) {
           if (allowedFieldSet.has(field)) {
@@ -1631,7 +1707,6 @@ async executeQueriesForFinancialHighlights(
           allowedFieldSet.add(field.field_name);
         }
       }
-      console.log(allowedFieldSet)
       const requiredResourceFields = new Set(["resource_orgname","resource_designation","resource_role","resource_type_rid","resource_code","resource_name"]); // Add more if needed
         for (const field of resourceFields) {
         if (field.read && requiredResourceFields.has(field.field_name)) {
