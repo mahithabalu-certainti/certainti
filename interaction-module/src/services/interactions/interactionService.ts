@@ -1566,7 +1566,7 @@ export class InteractionService {
     }
     return {
       statusCode: HttpStatus.SUCCESS,
-      message: HttpStatus.SUCCESS_MESSAGE,
+      message: "Interaction has been sent successfully",
       data: { interactionResponse },
     };
     } catch (err) {

@@ -1699,7 +1699,12 @@ async function sendInteraction(req: Request, res: Response): Promise<void> {
 
     if (interaction.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
-      handleSuccessResponse(res, interaction.data);
+      res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: interaction.message,
+        data: interaction.data,
+      });
       return;
     } else {
       errorLog(methodName, interaction.errorMessage);
