@@ -265,7 +265,8 @@ async function exportAllAttachments(
       value.sortBy,
       value.sortOrder,
       value.fiscalYear,
-      {}
+      {},
+      value.timezone
     );
 
     if (attachments.statusCode === HttpStatus.SUCCESS) {
@@ -519,7 +520,8 @@ async function exportAllAttachmentSummary(
       value.globalFilters,
       value.sortBy,
       value.sortOrder,
-      value.fiscalYear
+      value.fiscalYear,
+      value.timezone
     );
 
     if (attachments.statusCode === HttpStatus.SUCCESS) {

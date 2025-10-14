@@ -463,7 +463,8 @@ export interface IAttachmentService {
     sortBy: string,
     sortOrder: string,
     fiscalYear: number,
-    graphqlData: any
+    graphqlData: any,
+    timezone : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -495,7 +496,8 @@ export interface IAttachmentService {
     globalFilters: Record<string, any>,
     sortBy: string,
     sortOrder: string,
-    fiscalYear: number
+    fiscalYear: number,
+    timezone : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -969,7 +971,8 @@ export interface INotesService {
     sortBy: string,
     sortOrder: string,
     fiscalYear: number,
-    graphqlData: any
+    graphqlData: any,
+    timezone : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -1001,7 +1004,8 @@ export interface INotesService {
     globalFilters: Record<string, any>,
     sortBy: string,
     sortOrder: string,
-    fiscalYear: number
+    fiscalYear: number,
+    timezone : string
   ): Promise<{
     statusCode: number;
     message: string;

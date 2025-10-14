@@ -17,6 +17,7 @@ import ResourceSkillService from "./resourceSkillService";
 import { DocumentType } from "../models/documentType";
 import { AttachmentSummary } from "../models/attachmentSummary";
 import { generateSasUrl } from "../utils/blob";
+import { isValidTimezone } from "../utils/valideTimeChecker";
 
 
 export class AttachmentService {
@@ -892,7 +893,8 @@ export class AttachmentService {
     sortBy: string = "created_datetime",
     sortOrder: string = "DESC",
     fiscalYear: number = 0,
-    graphqlData?: any
+    graphqlData?: any,
+    timezone : string = ``
   ): Promise<{
     statusCode: number;
     message: string;
@@ -1445,7 +1447,7 @@ export class AttachmentService {
       }));
 
       attachments = attachments.map((at) => {
-        const rawMapped = this.mapAttachmentToCommonFormat(at); // with internal keys
+        const rawMapped = this.mapAttachmentToCommonFormat(at, timezone); // with internal keys
         const filtered: Record<string, any> = {};
         for (const [fieldKey, value] of Object.entries(rawMapped)) {
           const label = labelMap[fieldKey]; // field_desc
@@ -1474,12 +1476,12 @@ export class AttachmentService {
 }
 
   // Helper function to map attachment data to common format
-  private mapAttachmentToCommonFormat(at: any) {
+  private mapAttachmentToCommonFormat(at: any, timezone : string) {
     return {
       "Document Name": at.document_name || "-",
       Format: at.format || "-",
       Size: at.size_in_mb || "-",
-      "Fiscal Year": at.fiscal_year || "-",
+      "Fiscal Year": `FY-${at.fiscal_year}` || "-",
       "Document Category": at.document_category || "-",
       "Document Type": at.document_type || "-",
       "Related Entity": at.attachment_level || "-",
@@ -1487,8 +1489,14 @@ export class AttachmentService {
       "Related To Name": at.attached_to || "-",
       "Attached By": at.uploaded_by || "-",
       "Attached On": at.created_datetime
-        ? moment(at.created_datetime).format("YYYY-MMM-DD, hh:mm:ss A")
-        : "-",
+        ? timezone && isValidTimezone(timezone)
+        ? moment(at.created_datetime)
+            .tz(timezone)
+            .format("YYYY-MMM-DD, hh:mm:ss A")
+        : moment(at.created_datetime).format(
+            "YYYY-MMM-DD, hh:mm:ss A"
+          )
+      : "-",
       "Attachment ID": at.r_number || "-",
     };
   }
@@ -1926,7 +1934,8 @@ export class AttachmentService {
     globalFilters: Record<string, any> = {},
     sortBy: string = "created_datetime",
     sortOrder: string = "DESC",
-    fiscalYear: number = 0
+    fiscalYear: number = 0,
+    timezone : string = ``
   ): Promise<{
     statusCode: number;
     message: string;
@@ -2283,7 +2292,7 @@ export class AttachmentService {
       };
 
       attachments = attachments.map((at) => {
-        const rawMapped = this.mapAttachmentToCommonFormat(at); // with internal keys
+        const rawMapped = this.mapAttachmentToCommonFormat(at, timezone); // with internal keys
         const filtered: Record<string, any> = {};
         for (const [fieldKey, value] of Object.entries(rawMapped)) {
           const label = labelMap[fieldKey]; // field_desc

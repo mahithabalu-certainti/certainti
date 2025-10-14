@@ -162,7 +162,7 @@ async function exportAllNotes(req: Request, res: Response): Promise<void> {
         value.filters = {};
       }
     }
-    const attachments = await notesService.exportNotes(userId,value.attachmentLevel,value.entityId,value.accountRid,value.search,value.filters,value.sortBy,value.sortOrder,value.fiscalYear, {});
+    const attachments = await notesService.exportNotes(userId,value.attachmentLevel,value.entityId,value.accountRid,value.search,value.filters,value.sortBy,value.sortOrder,value.fiscalYear, {}, value.timezone);
 
     if (attachments.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -276,7 +276,7 @@ async function exportAllNotes(req: Request, res: Response): Promise<void> {
         value.filters = {};
       }
     }
-    const attachments = await notesService.exportNotesSummary(userId,value.search,value.filters,value.globalFilters,value.sortBy,value.sortOrder,value.fiscalYear);
+    const attachments = await notesService.exportNotesSummary(userId,value.search,value.filters,value.globalFilters,value.sortBy,value.sortOrder,value.fiscalYear, value.timezone);
 
     if (attachments.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
