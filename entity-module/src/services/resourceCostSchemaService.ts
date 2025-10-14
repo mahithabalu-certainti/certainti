@@ -450,6 +450,7 @@ async exportresourceCostDetailsForFinancialHighlights(
         prf.fiscal_year,
         prf.region_rid,
         pf.project_code,
+        pf.currency_rid,
         pf.r_number,
         pf.project_name,
         r.resource_code,
