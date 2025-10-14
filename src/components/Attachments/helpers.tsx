@@ -1,3 +1,4 @@
+import { DownloadIcon } from '../../assets';
 import {
   formatDateToYYYYMMDDWithTime,
   REGEX_PATTERNS,
@@ -179,7 +180,9 @@ export const getAttachmentTableColumns = (
   docCategories: SelectOption[],
   docTypes: SelectOption[],
   handleDocumentCategory: (rid: string) => void,
+  handleDownload: (documentUrl: string) => void,
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
+  isAttachmentExportEnable?: boolean,
   typeLoading?: boolean,
   accountOrProjectInActive?: boolean
 ): ListTableColumn<AttachmentList>[] => [
@@ -268,8 +271,8 @@ export const getAttachmentTableColumns = (
       onChange: true,
       resetDependentFields: ['document_type'],
       getFieldData: (rowData: DependencyRowData) => {
-        handleDocumentCategory(String(rowData.document_category_rid));
-        return String(rowData.document_category_rid);
+        handleDocumentCategory(String(rowData.document_category_rid || ''));
+        return String(rowData.document_category_rid || '');
       },
       dependencies: [
         {
@@ -383,7 +386,7 @@ export const getAttachmentTableColumns = (
       loading: typeLoading,
       options: docTypes,
       getFieldData: (rowData: DependencyRowData) => {
-        return String(rowData.document_type_rid);
+        return String(rowData.document_type_rid || '');
       },
       dependencies: [
         {
@@ -536,5 +539,20 @@ export const getAttachmentTableColumns = (
     sortable: true,
     hide:
       !permissionMap?.['r_number']?.edit && !permissionMap?.['r_number']?.read,
+  },
+  {
+    id: 'download',
+    sortId: 'download',
+    label: 'Download',
+    width: 80,
+    hide: !isAttachmentExportEnable,
+    render: (row: AttachmentList) => (
+      <button
+        className='flex border border-[#CBD6E2] w-[24px] h-[24px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer mx-auto'
+        onClick={() => handleDownload(row.browse_file)}
+      >
+        <DownloadIcon alt='download-icon' className='h-4' />
+      </button>
+    ),
   },
 ];

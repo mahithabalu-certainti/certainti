@@ -46,6 +46,18 @@ import {
   RESOURCESKILL_CREATE,
   RESOURCESKILL_EDIT,
   USER_EXTENDED_PERMISSION,
+  INTERACTIONS_CREATE,
+  INTERACTIONS_EDIT,
+  INTERACTIONS,
+  INTERACTIONS_DETAILS,
+  EMAIL_INTERACTION,
+  GLOBAL_INTERACTIONS_EDIT,
+  GLOBAL_INTERACTIONS_CREATE,
+  MANAGE_SETTINGS,
+  ACCOUNT_INTERACTIONS_CREATE,
+  INTERACTION_TEMPLATES,
+  INTERACTION_TEMPLATES_CREATE,
+  INTERACTION_TEMPLATES_EDIT,
 } from './routes';
 import { RootState } from './store/store';
 import ProjectTaskForm from './consultant/pages/project/project-details/project-task/form/project-task-form';
@@ -65,6 +77,9 @@ const Resource = lazy(
     )
 );
 const Login = lazy(() => import('./pages/login/login'));
+const EmailInteraction = lazy(
+  () => import('./pages/email-interaction/email-interaction')
+);
 const Profile = lazy(() => import('./pages/profile/profile'));
 const HomePage = lazy(() => import('./consultant/pages/home/Home'));
 const NotFound = lazy(() => import('./pages/not-found/NotFound'));
@@ -115,6 +130,36 @@ const CreateUserGroup = lazy(
 const ManageAccountAccess = lazy(
   () => import('./admin/pages/manage-account-acccess/account-list/account-list')
 );
+const ConfigureManageSetting = lazy(
+  () => import('./admin/pages/configure-manage-setting/configure-setting')
+);
+
+const InteractionForm = lazy(
+  () =>
+    import('./consultant/pages/interaction/interaction-form/interaction-form')
+);
+
+const AccountInteractionForm = lazy(
+  () =>
+    import(
+      './consultant/pages/interaction/interaction-form/account-interaction-form'
+    )
+);
+
+const Interaction = lazy(
+  () => import('./consultant/pages/interaction/interaction-list/interaction')
+);
+
+const InteractionTemplates = lazy(
+  () =>
+    import(
+      './admin/pages/interaction-templates/templates-list/interaction-templates-list'
+    )
+);
+const InteractionTemplateForm = lazy(
+  () =>
+    import('./admin/pages/interaction-templates/create-template/template-form')
+);
 
 // Loading component for Suspense fallback
 const Loading = () => (
@@ -144,6 +189,9 @@ export const App: React.FC<IApp> = ({ instance }) => {
                 )
               }
             />
+
+            <Route path={EMAIL_INTERACTION} element={<EmailInteraction />} />
+
             <Route element={<ProtectedRoute />}>
               <Route element={<AppLayout />}>
                 <Route index element={<HomePage />} />
@@ -176,7 +224,41 @@ export const App: React.FC<IApp> = ({ instance }) => {
                   path={PROJECT_RESOURCE_EDIT}
                   element={<ProjectResourceForm />}
                 />
+                <Route path={INTERACTIONS} element={<Interaction />} />
+                <Route
+                  path={INTERACTIONS_DETAILS}
+                  element={<ProjectDetails />}
+                />
+                <Route
+                  path={INTERACTIONS_CREATE}
+                  element={<InteractionForm />}
+                />
+                <Route
+                  path={ACCOUNT_INTERACTIONS_CREATE}
+                  element={<AccountInteractionForm />}
+                />
+                <Route
+                  path={GLOBAL_INTERACTIONS_CREATE}
+                  element={<InteractionForm />}
+                />
+                <Route path={INTERACTIONS_EDIT} element={<InteractionForm />} />
+                <Route
+                  path={GLOBAL_INTERACTIONS_EDIT}
+                  element={<InteractionForm />}
+                />
                 <Route path={ATTACHMENTS} element={<Attachments />} />
+                <Route
+                  path={INTERACTION_TEMPLATES}
+                  element={<InteractionTemplates />}
+                />
+                <Route
+                  path={INTERACTION_TEMPLATES_CREATE}
+                  element={<InteractionTemplateForm />}
+                />
+                <Route
+                  path={INTERACTION_TEMPLATES_EDIT}
+                  element={<InteractionTemplateForm />}
+                />
                 {/* Page not found */}
                 <Route path={NOT_MATCH} element={<NotFound />} />
               </Route>
@@ -189,6 +271,10 @@ export const App: React.FC<IApp> = ({ instance }) => {
                 <Route
                   path={MANAGE_ACCOUNT_ACCESS}
                   element={<ManageAccountAccess />}
+                />
+                <Route
+                  path={MANAGE_SETTINGS}
+                  element={<ConfigureManageSetting />}
                 />
                 <Route
                   path={ADMIN_MANAGE_USER_DETAILS}

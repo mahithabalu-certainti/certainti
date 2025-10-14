@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { ListTable } from '../../../../../../components/table';
+import {
+  ListTable,
+  ManageColumnsPopover,
+} from '../../../../../../components/table';
 import { getFinancialResourceCostColumns } from './columns';
 import { NewProjectData } from '../../../../../types/project';
 import {
@@ -13,6 +16,10 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { RootState } from '../../../../../../store/store';
 import { useSelector } from 'react-redux';
 import { AllPermissions } from '../../../../../../common-service';
+import {
+  ListTableColumn,
+  ShowHideTableColumn,
+} from '../../../../../../components/table/types';
 
 interface FinancialResourceCostProps {
   projectDetails: NewProjectData | null;
@@ -24,6 +31,10 @@ interface FinancialResourceCostProps {
     params: ProjectFinancialResourceExportParams
   ) => void;
   setExportType?: (type: ExportType) => void;
+  columnAnchorEl: HTMLButtonElement | null;
+  setColumnAnchorEl: React.Dispatch<
+    React.SetStateAction<HTMLButtonElement | null>
+  >;
 }
 
 const ResourceCost: React.FC<FinancialResourceCostProps> = ({
@@ -34,6 +45,8 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
   setCount,
   setResCostExportParams,
   setExportType,
+  columnAnchorEl,
+  setColumnAnchorEl,
 }) => {
   const { projectid: projectId } = useParams();
   const [searchParams] = useSearchParams();
@@ -146,33 +159,73 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
     currencySymbol
   );
 
+  const RestrictedColumns = [
+    {
+      id: 'resource_code',
+      canHide: false,
+      canDrag: false,
+    },
+  ];
+
+  const [visibleColumns, setVisibleColumns] = useState<
+    ListTableColumn<ProjectFinancialResourceCostList>[]
+  >(financialResourceCostColumns.filter((col) => !col.hide));
+
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    setVisibleColumns(
+      updatedColumns.filter(
+        (col) => !col.hide
+      ) as ListTableColumn<ProjectFinancialResourceCostList>[]
+    );
+  };
+
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
+  };
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const modalId = isModalOpen
+    ? 'interaction-column-visibility-popover'
+    : undefined;
+
   return (
-    <ListTable
-      data={resourceCostList}
-      columns={financialResourceCostColumns}
-      getRowId={getRowId}
-      hoverHighlight={false}
-      tableStyle={{
-        height: '100%',
-        maxHeight: 'calc(100vh - 320px)',
-        overflow: 'auto',
-      }}
-      stickyHeader={true}
-      stickyColumnsCount={1}
-      selectable={false}
-      actionWidth={80}
-      loading={isLoading || !fiscalYear}
-      error={isError ? 'Failed to load data' : undefined}
-      rowsPerPageOptions={[25, 50, 100]}
-      rowsPerPage={tableParams.limit}
-      currentPage={(tableParams.page ?? 1) - 1}
-      totalItems={totalItems}
-      onPageChange={handlePageChange}
-      onRowsPerPageChange={handleRowsPerPageChange}
-      sortBy={tableParams.sortBy}
-      sortOrder={tableParams.sortOrder}
-      onSort={handleSort}
-    />
+    <>
+      <ManageColumnsPopover
+        anchorEl={columnAnchorEl}
+        open={isModalOpen}
+        popoverId={modalId}
+        onClose={handlePopoverClose}
+        columns={financialResourceCostColumns}
+        onColumnsChange={handleColumnsChange}
+        columnRestrictions={RestrictedColumns}
+      />
+      <ListTable
+        data={resourceCostList}
+        columns={visibleColumns}
+        getRowId={getRowId}
+        hoverHighlight={false}
+        tableStyle={{
+          height: '100%',
+          maxHeight: 'calc(100vh - 420px)',
+          overflow: 'auto',
+        }}
+        stickyHeader={true}
+        stickyColumnsCount={1}
+        selectable={false}
+        actionWidth={80}
+        loading={isLoading || !fiscalYear}
+        error={isError ? 'Failed to load data' : undefined}
+        rowsPerPageOptions={[25, 50, 100]}
+        rowsPerPage={tableParams.limit}
+        currentPage={(tableParams.page ?? 1) - 1}
+        totalItems={totalItems}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+        sortBy={tableParams.sortBy}
+        sortOrder={tableParams.sortOrder}
+        onSort={handleSort}
+      />
+    </>
   );
 };
 

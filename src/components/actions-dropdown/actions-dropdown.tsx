@@ -18,7 +18,7 @@ const StyledButton = styled(Button)(() => {
     background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
     textTransform: 'none',
     fontSize: '13px',
-    fontWeight: 600,
+    fontWeight: 400,
     width: '81px',
     minWidth: '81px',
     maxWidth: '81px',

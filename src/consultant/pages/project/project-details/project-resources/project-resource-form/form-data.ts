@@ -13,6 +13,7 @@ import {
   createTextField,
   PROJECT_RESOURCE_REGEX,
   REGEX_PATTERNS,
+  RESOURCE_REGEX,
   // REGEX_PATTERNS,
 } from '../../../../../../common-utils';
 
@@ -79,12 +80,16 @@ export const ProjectResourceFormData = (
             options: projectResourceCodes,
             required: true,
             onChange: true,
+            showCreateBtn: true,
             placeholder: 'Choose Resource Code',
             resetDependsFields: [
               'salary',
               'bonus',
               'insurance',
               'resource_orgname',
+              'deductions',
+              'total_cost_pro_res',
+              'net_resource_cost',
             ],
             disabled:
               isEditView &&
@@ -95,18 +100,32 @@ export const ProjectResourceFormData = (
               !permissionMap?.['resource_code']?.read &&
               !permissionMap?.['resource_code']?.edit,
           }),
-          createSelectField('status_rid', 'Resource Status', {
-            options: resourceStatusOptions,
-            placeholder: 'Choose Resource Status',
+          createTextField('project_resource_role', 'Project Resource Role', {
+            placeholder: 'Enter Project Resource Role',
             required: false,
             disabled:
               isEditView &&
-              permissionMap?.['status_rid']?.read &&
-              !permissionMap?.['status_rid']?.edit,
+              permissionMap?.['project_resource_role']?.read &&
+              !permissionMap?.['project_resource_role']?.edit,
             hide:
               isEditView &&
-              !permissionMap?.['status_rid']?.read &&
-              !permissionMap?.['status_rid']?.edit,
+              !permissionMap?.['project_resource_role']?.read &&
+              !permissionMap?.['project_resource_role']?.edit,
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MIN_3,
+                errorMessage: 'Please enter more than 2 characters.',
+              },
+              {
+                regex: REGEX_PATTERNS.MAX_64,
+                errorMessage: 'Max length exceeded.',
+              },
+              {
+                regex: RESOURCE_REGEX.ROLE,
+                errorMessage:
+                  'Allows only letters, Apostrophe, spaces, hyphens, and Periods.',
+              },
+            ],
           }),
         ],
       },
@@ -199,6 +218,7 @@ export const ProjectResourceFormData = (
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             placeholder: 'Enter Effort',
+            formatCostValue: true,
             disabled:
               isEditView &&
               permissionMap?.['total_hours_pro_res']?.read &&
@@ -211,6 +231,7 @@ export const ProjectResourceFormData = (
           createTextField('salary', 'Salary', {
             required: false,
             placeholder: 'Enter Salary',
+            formatCostValue: true,
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             onChange: true,
             regexErrorMessage:
@@ -229,6 +250,7 @@ export const ProjectResourceFormData = (
           createTextField('bonus', 'Bonus', {
             required: false,
             placeholder: 'Enter Bonus',
+            formatCostValue: true,
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             onChange: true,
             regexErrorMessage:
@@ -247,6 +269,7 @@ export const ProjectResourceFormData = (
           createTextField('insurance', 'Insurance', {
             required: false,
             placeholder: 'Enter Insurance',
+            formatCostValue: true,
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             onChange: true,
             regexErrorMessage:
@@ -265,6 +288,7 @@ export const ProjectResourceFormData = (
           createTextField('deductions', 'Deductions', {
             required: false,
             placeholder: 'Enter Deductions',
+            formatCostValue: true,
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             onChange: true,
             regexErrorMessage:
@@ -281,6 +305,7 @@ export const ProjectResourceFormData = (
           createTextField('total_cost_pro_res', 'Cost', {
             required: isSalaryRequired,
             regex: PROJECT_RESOURCE_REGEX.COST_REGEX,
+            formatCostValue: true,
             onChange: true,
             regexErrorMessage:
               'Cost must be a 18-digit number with up to 2 decimals',
@@ -298,6 +323,7 @@ export const ProjectResourceFormData = (
             required: false,
             disabled: true,
             onChange: true,
+            formatCostValue: true,
             defaultValue: autoCalculatedValue
               ? autoCalculatedValue.toString()
               : '0',
@@ -392,7 +418,6 @@ export const ProjectResourceFormData = (
       projectResourceCodes,
       isSalaryRequired,
       autoCalculatedValue,
-      isSalaryRequired,
       isEditView,
       permissionMap,
       resourceStatusOptions,

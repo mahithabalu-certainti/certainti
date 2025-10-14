@@ -35,6 +35,7 @@ export type ProjectResourcesListType = {
   region_rid?: string;
   currency_rid?: string | null;
   start_date?: string | null;
+  status_name?: string | null;
   end_date?: string | null;
   total_hours_pro_res?: string;
   total_cost_pro_res?: string;
@@ -45,6 +46,7 @@ export type ProjectResourcesListType = {
   description?: string | null;
   currency_symbol?: string;
   project_fiscal_rid?: string;
+  net_total_cost_pro_res?: string | null;
 };
 
 export interface ProjectResourcesApiResponse extends CommonApiResponse {
@@ -67,6 +69,7 @@ export interface ProjectResourceDetailsType {
   resource_rid: string;
   fiscal_year: number;
   project_resource_code: string;
+  project_resource_role: string;
   project_code: string;
   start_date: string | null;
   end_date: string | null;
@@ -94,7 +97,7 @@ export interface ProjectResourceDetailsType {
   insurance?: number | null;
   deductions: number | null;
   description: string | null;
-
+  net_total_cost_pro_res: string | null;
   // Derived or display fields
   country_name: string | null;
   country_code: string | null;
@@ -151,12 +154,22 @@ export interface ProjectResourceCodeResponse extends CommonApiResponse {
     resourceCodes: ProjectResourceCodeData[];
   };
 }
+export interface ProjectResourceTaskCodeResponse extends CommonApiResponse {
+  data: ProjectResourceTaskCodeData[];
+}
 
 interface ProjectResourceCodeData {
   resource_type_rid?: string;
   resource_type_name?: string;
   rid: string;
   resource_code: string;
+  resource_name: string;
+}
+interface ProjectResourceTaskCodeData {
+  rid: string;
+  resource_code: string;
+  resource_name: string;
+  project_resource_role: string;
 }
 // skill type
 export interface PRSkillSubTypeResponse extends CommonApiResponse {
@@ -199,6 +212,7 @@ export interface ProjectResourceNewPayload {
   skill_role_rid?: string | null;
   skill_role_others?: string | null;
   status_rid?: string | null;
+  project_resource_role?: string | null;
   country_rid?: string | null;
   region_rid?: string | null;
   currency_rid?: string | null;
@@ -211,6 +225,7 @@ export interface ProjectResourceNewPayload {
   insurance?: string | null;
   deductions?: string | null;
   description?: string | null;
+  net_total_cost_pro_res?: string | null;
 }
 
 //Row project resource items
@@ -257,3 +272,15 @@ export interface ProjectResourceRowItem {
   _level: number;
   _type: 'parent' | 'child' | string;
 }
+export interface ProjectResourceStatusApiResponse extends CommonApiResponse {
+  data: {
+    updateStatus: number[];
+  };
+}
+export type ProjectResourceStatusPayload = {
+  rid: string;
+  accountId: string;
+  action: string;
+  resourceCode: string;
+  type: string;
+};

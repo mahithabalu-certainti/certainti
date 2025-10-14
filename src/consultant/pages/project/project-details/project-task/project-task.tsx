@@ -1,11 +1,17 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import TabPanel from '../../../account-details-sidebar/components/tab';
-import { CreateResourceIcon, ResourceProfileIcon } from '../../../../../assets';
+import {
+  AcceptIcon,
+  CreateResourceIcon,
+  RejectIcon,
+  ResourcesIcon,
+} from '../../../../../assets';
 import { useSelector } from 'react-redux';
 import {
   useProjectTaskDetail,
   useProjectTask,
+  useUpdateProjectTaskStatus,
 } from '../../../../services/project/project-task-service';
 import { PROJECT_TASK, PROJECT_TASK_EDIT } from '../../../../../routes';
 
@@ -16,7 +22,10 @@ import {
   AllModules,
   AllPermissions,
 } from '../../../../../common-service';
-import { ListTable } from '../../../../../components/table';
+import {
+  ListTable,
+  ManageColumnsPopover,
+} from '../../../../../components/table';
 import {
   ProjectTaskDetailsType,
   ProjectTaskListExportParams,
@@ -27,11 +36,13 @@ import ProjectTaskDetails from './project-task-details';
 import {
   ExportType,
   FormFiscalDateType,
+  ProjectResourcesListType,
   SelectOption,
 } from '../../../../types';
 import {
   CellEditData,
   FieldChangeValue,
+  ShowHideTableColumn,
 } from '../../../../../components/table/types';
 import { useToast } from '../../../../../hooks';
 import { useMutation } from '@apollo/client';
@@ -46,7 +57,6 @@ import SectionHeader from '../../../../../components/details-section/section-hea
 const BUTTON_STYLES = {
   height: '24px !important',
   fontSize: '13px',
-  fontWeight: 600,
 };
 
 export interface ProjectsTabs {
@@ -71,7 +81,7 @@ const projectTabs: ProjectsTabs[] = [
 
 export const ProjectTask = ({
   projectID,
-  accountID,
+  accountData,
   projectFiscalDate,
   setExportType,
   setProjectTaskParams,
@@ -79,7 +89,11 @@ export const ProjectTask = ({
   accountOrProjectInActive,
 }: {
   projectID?: string;
-  accountID?: string;
+  accountData?: {
+    accountID: string;
+    accountName: string;
+    accountNumber: string;
+  };
   projectFiscalDate?: FormFiscalDateType;
   setExportType?: (type: ExportType) => void;
   setProjectTaskParams: React.Dispatch<
@@ -88,10 +102,10 @@ export const ProjectTask = ({
   projectCode?: string;
   accountOrProjectInActive?: boolean;
 }) => {
-  const { errorToast, successToast } = useToast();
+  const { errorToast } = useToast();
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [projectsTabs] = useState(projectTabs);
-  const [, setSortFilterCount] = useState<number>(0);
+  const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, string | number | boolean>
   >({});
@@ -103,6 +117,18 @@ export const ProjectTask = ({
   const [showProjectTaskDetails, setShowProjectTaskDetails] =
     useState<boolean>(false);
   const [searchParams] = useSearchParams();
+  const accountID =
+    accountData?.accountID || searchParams.get('accountID') || '';
+  const currency_rid = searchParams.get('currency_rid') || '';
+  const [columnAnchorEl, setColumnAnchorEl] =
+    React.useState<HTMLButtonElement | null>(null);
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const handleColumnVisibility = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setColumnAnchorEl(event.currentTarget);
+  };
 
   const navigate = useNavigate();
   const [refreshProjectsTrigger, setRefreshProjectsTrigger] = useState<number>(
@@ -151,7 +177,7 @@ export const ProjectTask = ({
     return map;
   }, [projectViewEditFields]);
 
-  const { data, isLoading, error } = useProjectTask(
+  const { data, isLoading, error, refetch } = useProjectTask(
     {
       page: currentPage + 1,
       limit: rowsPerPage,
@@ -167,7 +193,7 @@ export const ProjectTask = ({
   const taskId = searchParams.get('pro_task_id');
   const taskDetails = searchParams.get('page');
   const checkDetail = taskDetails === 'details' && taskId;
-
+  const source = searchParams.get('source');
   const viewDetails = !!checkDetail;
 
   const {
@@ -179,7 +205,8 @@ export const ProjectTask = ({
     accountID || '',
     refreshTaskDetailPageTrigger
   );
-
+  const { successToast } = useToast();
+  const updateStatusAccept = useUpdateProjectTaskStatus();
   const totalItems = data?.count || 0;
   useEffect(() => {
     if (data) {
@@ -201,6 +228,11 @@ export const ProjectTask = ({
       setSortOrder(apiOrder);
       setSortField(sortBy);
     }
+  };
+  const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
+    const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
+    setSortOrder(apiOrder);
+    setSortField(sortBy);
   };
 
   useEffect(() => {
@@ -261,6 +293,22 @@ export const ProjectTask = ({
       hide: viewDetails ? !isProjectTaskFieldsEditable : !isTaskCreateEnable,
       disabled: accountOrProjectInActive,
     },
+    {
+      label: 'Show/Hide Fields',
+      variant: 'outlined' as const,
+      disabled: false,
+      onClick: handleColumnVisibility,
+      sx: { ...BUTTON_STYLES, width: '125px', minWidth: '125px' },
+      hide: viewDetails ? true : false,
+    },
+    {
+      label:
+        source === 'timesheet' ? 'Back To Timesheet' : 'Back To Project Tasks',
+      variant: 'contained' as const,
+      onClick: () => handleBackClick(),
+      sx: { width: '155px', minWidth: '155px' },
+      hide: viewDetails ? false : true,
+    },
   ];
   const PFY = projectFiscalDate;
   const handleProjectTaskDetailEdit = () => {
@@ -268,9 +316,10 @@ export const ProjectTask = ({
       const path = resourceData?.rid
         ? PROJECT_TASK_EDIT.replace(':taskId', resourceData.rid)
         : PROJECT_TASK_EDIT;
+      const project_Id = projectID ?? '';
       const queryParams = new URLSearchParams({
-        account_Id: resourceData?.account_rid || '',
-        project_Id: resourceData?.project_rid || '',
+        account_Id: resourceData?.account_rid || accountID || '',
+        project_Id,
         PFY: PFY ? JSON.stringify(PFY) : '',
         source: 'editProjectTask',
         projectCode: projectCode ?? '',
@@ -284,15 +333,25 @@ export const ProjectTask = ({
   };
 
   const handleBackClick = () => {
-    setShowProjectTaskDetails(!showProjectTaskDetails);
-    setProjectResData(null);
-    setShowFilter(false);
-    searchParams.delete('pro_task_id');
-    searchParams.delete('page');
-    navigate({
-      pathname: location.pathname,
-      search: searchParams.toString(),
-    });
+    if (source === 'timesheet') {
+      const timesheetId = searchParams.get('timesheet_id');
+      const accountid = searchParams.get('accountID');
+      const newSearchParams = new URLSearchParams();
+      newSearchParams.set('list', 'timesheet');
+      if (timesheetId) newSearchParams.set('timesheet_id', timesheetId);
+      newSearchParams.set('tab', 'timesheet_project_task');
+      navigate(`/account/details/${accountid}?${newSearchParams.toString()}`);
+    } else {
+      setShowProjectTaskDetails(!showProjectTaskDetails);
+      setProjectResData(null);
+      setShowFilter(false);
+      searchParams.delete('pro_task_id');
+      searchParams.delete('page');
+      navigate({
+        pathname: location.pathname,
+        search: searchParams.toString(),
+      });
+    }
   };
   useEffect(() => {
     if (setExportType) {
@@ -311,6 +370,9 @@ export const ProjectTask = ({
     const queryParams = new URLSearchParams({
       account_Id,
       project_Id,
+      account_name: accountData?.accountName || '',
+      account_number: accountData?.accountNumber || '',
+      currency_rid: currency_rid ?? '',
       PFY: JSON.stringify(PFY),
       projectCode: projectCode ?? '',
       source: 'createProjectTask',
@@ -322,9 +384,10 @@ export const ProjectTask = ({
     const path = row?.rid
       ? PROJECT_TASK_EDIT.replace(':taskId', row.rid)
       : PROJECT_TASK_EDIT;
+    const project_Id = projectID ?? '';
     const queryParams = new URLSearchParams({
-      account_Id: row?.account_rid || '',
-      project_Id: row?.project_rid || '',
+      account_Id: row?.account_rid || accountID || '',
+      project_Id,
       PFY: PFY ? JSON.stringify(PFY) : '',
       projectCode: projectCode ?? '',
       source: 'editProjectTask',
@@ -340,11 +403,41 @@ export const ProjectTask = ({
     setShowProjectTaskDetails(true);
     setShowFilter(false);
   };
+  const convertDates = (pfy: FormFiscalDateType) => {
+    const isValidDate = (date?: Date) => {
+      return date && !isNaN(new Date(date).getTime());
+    };
+
+    return {
+      ...pfy,
+      endMax: isValidDate(pfy.endMax)
+        ? new Date(pfy.endMax as Date).toISOString()
+        : null,
+      startMax: isValidDate(pfy.startMax)
+        ? new Date(pfy.startMax as Date).toISOString()
+        : null,
+      startMin: isValidDate(pfy.startMin)
+        ? new Date(pfy.startMin as Date).toISOString()
+        : null,
+    };
+  };
+  const fiscalDate = PFY ? convertDates(PFY) : null;
+  let fiscalDatesArg;
+  if (fiscalDate) {
+    fiscalDatesArg = {
+      endMax: fiscalDate.endMax ? new Date(fiscalDate.endMax) : undefined,
+      startMax: fiscalDate.startMax ? new Date(fiscalDate.startMax) : undefined,
+      startMin: fiscalDate.startMin ? new Date(fiscalDate.startMin) : undefined,
+      year: fiscalDate.year,
+    };
+  }
+
   const projectTaskColumns = getProjectTaskColumns(
     handleProjectTaskClick,
     memoizedProjectResourceCode,
     permissionMapTaskTableColumn,
-    accountOrProjectInActive
+    accountOrProjectInActive,
+    fiscalDatesArg
   );
   const onRefreshClick = () => {
     setRefreshProjectsTrigger(Date.now());
@@ -385,7 +478,6 @@ export const ProjectTask = ({
           }
           return project;
         });
-        successToast(result?.statusMessage);
         setProjectTaskList(newProjects);
       } else {
         errorToast(result?.statusMessage || 'Failed to update filed');
@@ -397,7 +489,109 @@ export const ProjectTask = ({
     }
   };
   const filterShow = !searchParams.get('page');
+  const RestrictedColumns = [
+    {
+      id: 'resource_code',
+      canHide: false,
+      canDrag: false,
+    },
+  ];
+
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
+  };
+
+  const modalId = isModalOpen
+    ? 'project-resource-list-column-visibility-popover'
+    : undefined;
+
+  const [columnVisibility, setColumnVisibility] = useState<
+    Record<string, boolean>
+  >(Object.fromEntries(projectTaskColumns.map((col) => [col.id, !col.hide])));
+
+  const [columnOrder, setColumnOrder] = useState(
+    projectTaskColumns.map((col) => col.id)
+  );
+
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    const newVisibility = Object.fromEntries(
+      updatedColumns.map((col) => [col.id, !col.hide])
+    );
+    setColumnVisibility(newVisibility);
+    setColumnOrder(updatedColumns.map((col) => col.id));
+  };
+
+  const visibleColumns = columnOrder
+    .map((id) => projectTaskColumns.find((col) => col.id === id)!)
+    .filter((col) => columnVisibility[col.id]);
   if (!projectTaskIsEnable) return <AccessRestricted />;
+  const handleAccept = (row: ProjectResourcesListType) => {
+    const payload = {
+      rid: row?.rid || '',
+      accountId: accountData?.accountID || '',
+      action: 'accept',
+      type: row?.status_name || '',
+      resourceCode: row?.resource_code,
+    };
+    updateStatusAccept.mutate(payload, {
+      onSuccess: (data) => {
+        successToast(data?.statusMessage || 'Status updated successfully');
+        refetch();
+      },
+    });
+  };
+
+  const handleReject = (row: ProjectResourcesListType) => {
+    const payload = {
+      rid: row?.rid || '',
+      accountId: accountData?.accountID || '',
+      action: 'reject',
+      type: row?.status_name || '',
+      resourceCode: row?.resource_code,
+    };
+    updateStatusAccept.mutate(payload, {
+      onSuccess: (data) => {
+        successToast(data?.statusMessage || 'Status updated successfully');
+        refetch();
+      },
+    });
+  };
+
+  const hideStatusAction =
+    !permissionMapTaskTableColumn?.['status_action']?.edit &&
+    !permissionMapTaskTableColumn?.['status_action']?.read;
+
+  const getConditionMenuItems = (row: ProjectResourcesListType) => {
+    let statusLabel = '';
+    switch (row.status_name) {
+      case 'Duplicate':
+        statusLabel = 'Duplicate';
+        break;
+      case 'Anomaly':
+        statusLabel = 'Anomaly';
+        break;
+      default:
+        return [];
+    }
+
+    return [
+      {
+        label: statusLabel ? `Accept ${statusLabel}` : 'Accept',
+        onClick: handleAccept,
+        icon: AcceptIcon,
+        className:
+          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer h-[24px] bg-[#3EA72F1A] hover:bg-[#3EA72F] hover:text-[#fff]',
+      },
+      {
+        label: statusLabel ? `Reject ${statusLabel}` : 'Reject',
+        onClick: handleReject,
+        icon: RejectIcon,
+        className:
+          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer h-[24px] bg-[#FF3C031A] hover:bg-[#FF3C03] hover:text-[#fff]',
+      },
+    ];
+  };
+
   return (
     <div className='w-full pt-2 pb-2 pl-2 pr-4'>
       <TabPanel
@@ -412,10 +606,12 @@ export const ProjectTask = ({
         showRefresh={filterShow}
         onRefreshClick={onRefreshClick}
         handleSorting={handleSorting}
-        sortFilterCount={0}
+        sortFilterCount={sortFilterCount}
         setSortFilterCount={setSortFilterCount}
         projectResourceAccountID={accountID}
+        projectResourceProjectID={projectID}
         permissionMapTaskTableColumn={permissionMapTaskTableColumn}
+        fiscalDatesArg={fiscalDatesArg}
       />
       {showUploads ? (
         <Uploads
@@ -426,16 +622,22 @@ export const ProjectTask = ({
       ) : (
         <>
           <SectionHeader
-            title={'Project Task'}
+            title={viewDetails ? 'Project Task' : 'Project Tasks'}
             titleIcon={
-              viewDetails ? <ResourceProfileIcon /> : <CreateResourceIcon />
+              viewDetails ? (
+                <ResourcesIcon
+                  alt='resource header icon'
+                  className='[&>path]:stroke-white w-[14px] h-[14px]'
+                />
+              ) : (
+                <CreateResourceIcon />
+              )
             }
             count={totalItems}
             showItemCount={!viewDetails}
-            showBackArrow={viewDetails ? true : false}
             buttons={headerButtons}
             subValue={resourceData?.r_number}
-            onBackClick={handleBackClick}
+            iconBg={viewDetails ? '#7785ff' : ''}
           />
           <div className='border border-[#CBD6E2]'>
             {showProjectTaskDetails ? (
@@ -448,39 +650,56 @@ export const ProjectTask = ({
                 detailsError={detailsError}
               />
             ) : (
-              <ListTable
-                data={projectTaskList}
-                columns={projectTaskColumns}
-                actionMenuItems={actionMenuItems}
-                getRowId={getRowId}
-                hoverHighlight={false}
-                tableStyle={{
-                  height: '100%',
-                  maxHeight: 'calc(100vh - 290px)',
-                  overflow: 'auto',
-                }}
-                stickyHeader={true}
-                stickyColumnsCount={1}
-                actionWidth={60}
-                actionDisplayMode='dropdown'
-                loading={isLoading}
-                error={error ? 'Failed to load projects' : undefined}
-                rowsPerPageOptions={[25, 50, 100]}
-                rowsPerPage={rowsPerPage}
-                currentPage={currentPage ?? 1}
-                totalItems={data?.count || 0}
-                onPageChange={setCurrentPage}
-                onRowsPerPageChange={setRowsPerPage}
-                sortBy={sortField}
-                sortOrder={sortOrder}
-                onSort={handleSorting}
-                selectable={false}
-                onSelectionChange={(selectedIds: unknown) =>
-                  console.log('Selected:', selectedIds)
-                }
-                component='project task'
-                onCellEdit={handleCellEdit}
-              />
+              <>
+                <ManageColumnsPopover
+                  anchorEl={columnAnchorEl}
+                  open={isModalOpen}
+                  popoverId={modalId}
+                  onClose={handlePopoverClose}
+                  columns={projectTaskColumns}
+                  onColumnsChange={handleColumnsChange}
+                  columnRestrictions={RestrictedColumns}
+                />
+                <ListTable
+                  data={projectTaskList}
+                  columns={visibleColumns}
+                  actionMenuItems={actionMenuItems}
+                  getRowId={getRowId}
+                  hoverHighlight={false}
+                  tableStyle={{
+                    height: '100%',
+                    maxHeight: 'calc(100vh - 380px)',
+                    overflow: 'auto',
+                  }}
+                  stickyHeader={true}
+                  stickyColumnsCount={1}
+                  actionWidth={60}
+                  actionDisplayMode='dropdown'
+                  conditionMenuItems={
+                    !hideStatusAction
+                      ? (row: ProjectResourcesListType) =>
+                          getConditionMenuItems(row)
+                      : undefined
+                  }
+                  loading={isLoading}
+                  error={error ? 'Failed to load projects' : undefined}
+                  rowsPerPageOptions={[25, 50, 100]}
+                  rowsPerPage={rowsPerPage}
+                  currentPage={currentPage ?? 1}
+                  totalItems={data?.count || 0}
+                  onPageChange={setCurrentPage}
+                  onRowsPerPageChange={setRowsPerPage}
+                  sortBy={sortField}
+                  sortOrder={sortOrder}
+                  onSort={handleSort}
+                  selectable={false}
+                  onSelectionChange={(selectedIds: unknown) =>
+                    console.log('Selected:', selectedIds)
+                  }
+                  component='project task'
+                  onCellEdit={handleCellEdit}
+                />
+              </>
             )}
           </div>
         </>

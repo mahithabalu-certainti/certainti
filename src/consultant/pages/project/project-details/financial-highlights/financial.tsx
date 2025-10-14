@@ -9,6 +9,7 @@ import { FinancialIcon } from '../../../../../assets';
 import SummayListTable from './summary/summay-list';
 import ResourceCost from './resource-cost/resource-cost';
 import { NewProjectData } from '../../../../types/project';
+import { ProjectQreAdjustmentResponse } from '../../utils';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getProjectFinancialResCostFields } from './helpers';
 import { useFetchState } from '../../../../services/account';
@@ -22,6 +23,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import { checkPermission } from '../../../../../common-utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
+import { BUTTON_STYLES } from '../../../../../admin/pages/manage-user-detail/styles';
 
 const FinancialTabs = [
   {
@@ -43,12 +45,14 @@ interface ProjectFinancialProps {
     params: ProjectFinancialResourceExportParams
   ) => void;
   setExportType: (type: ExportType) => void;
+  onQreAdjustmentUpdated?: (data: ProjectQreAdjustmentResponse) => void;
 }
 
 const Financial: React.FC<ProjectFinancialProps> = ({
   projectDetails,
   setExportType,
   setResCostExportParams,
+  onQreAdjustmentUpdated,
 }) => {
   const navigate = useNavigate();
   const [appliedFilters, setAppliedFilters] = useState<
@@ -61,6 +65,14 @@ const Financial: React.FC<ProjectFinancialProps> = ({
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [currentCountry, setCurrentCountry] = useState<string>('');
+  const [columnAnchorEl, setColumnAnchorEl] =
+    React.useState<HTMLButtonElement | null>(null);
+
+  const handleColumnVisibility = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setColumnAnchorEl(event.currentTarget);
+  };
 
   const [searchParams] = useSearchParams();
   const { permission } = useSelector((state: RootState) => state.permission);
@@ -157,6 +169,17 @@ const Financial: React.FC<ProjectFinancialProps> = ({
     },
   ];
 
+  const headerButtons = [
+    {
+      label: 'Show/Hide Fields',
+      variant: 'outlined' as const,
+      disabled: false,
+      onClick: handleColumnVisibility,
+      sx: { ...BUTTON_STYLES, width: '125px', minWidth: '125px' },
+      hide: tabParam === 'resource_cost' ? false : true,
+    },
+  ];
+
   if (!isSummaryViewEnable && !isResourceCostViewEnable)
     return <AccessRestricted />;
 
@@ -180,14 +203,12 @@ const Financial: React.FC<ProjectFinancialProps> = ({
       />
       <SectionHeader
         title='Financial Summary'
-        titleIcon={
-          <FinancialIcon
-            alt='financial-header-icon'
-            className='w-7 h-7 p-1.5 bg-[#D2E6FF] rounded-full'
-          />
-        }
+        titleIcon={<FinancialIcon alt='financial-header-icon' />}
         count={resourceCostCount}
         showItemCount={tabParam === 'resource_cost'}
+        iconBg='#D2E6FF'
+        bgType='circle'
+        buttons={headerButtons}
       />
       <SectionHeaderTab
         tabs={tabs}
@@ -201,7 +222,10 @@ const Financial: React.FC<ProjectFinancialProps> = ({
         }`}
       >
         {tabParam === 'summary' && isSummaryViewEnable && (
-          <SummayListTable projectDetails={projectDetails} />
+          <SummayListTable
+            projectDetails={projectDetails}
+            onQreAdjustmentUpdated={onQreAdjustmentUpdated}
+          />
         )}
         {tabParam === 'resource_cost' && isResourceCostViewEnable && (
           <ResourceCost
@@ -212,6 +236,8 @@ const Financial: React.FC<ProjectFinancialProps> = ({
             appliedFilters={appliedFilters}
             setResCostExportParams={setResCostExportParams}
             setExportType={setExportType}
+            setColumnAnchorEl={setColumnAnchorEl}
+            columnAnchorEl={columnAnchorEl}
           />
         )}
       </div>

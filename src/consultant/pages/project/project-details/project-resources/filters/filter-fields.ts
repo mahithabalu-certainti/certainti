@@ -1,4 +1,6 @@
 import { FieldConfig } from '../../../../account-details-sidebar/components/filter/filterType';
+import { fiscalOptions } from '../../../../account-details-sidebar/sidebar-pages/projects/utils';
+import { requiredFieldFilterOptionsForText } from '../../project-task/filters/filter-fields';
 
 const requiredFieldFilterOptionsForEnum: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
@@ -11,7 +13,8 @@ export const projectResourceFilterFields = (
   memoizedCountry: { option: string; value: string }[],
   region: { option: string; value: string }[],
   // resourceTypeOptions: { option: string; value: string }[], /* It may use in future, based on client confirmation */
-  resourcepermissionMap?: Record<string, { read: boolean; edit: boolean }>
+  resourcepermissionMap?: Record<string, { read: boolean; edit: boolean }>,
+  memoizedResourceStatus?: { option: string; value: string }[]
 ): FieldConfig[] => [
   {
     name: 'Resource Code',
@@ -24,15 +27,14 @@ export const projectResourceFilterFields = (
       !resourcepermissionMap?.['resource_code']?.read &&
       !resourcepermissionMap?.['resource_code']?.edit,
   },
-  // It may use in future, based on client confirmation
-  // {
-  //   name: 'Resource Name',
-  //   value: 'resource_name',
-  //   type: 'text',
-  //   hide:
-  //     !resourcepermissionMap?.['resource_name']?.read &&
-  //     !resourcepermissionMap?.['resource_name']?.edit,
-  // },
+  {
+    name: 'Resource Name',
+    value: 'resource_name',
+    type: 'text',
+    hide:
+      !resourcepermissionMap?.['resource_name']?.read &&
+      !resourcepermissionMap?.['resource_name']?.edit,
+  },
   {
     name: 'Resource Country',
     value: 'country_rid',
@@ -66,16 +68,14 @@ export const projectResourceFilterFields = (
   //     !resourcepermissionMap?.['resource_type_rid']?.read &&
   //     !resourcepermissionMap?.['resource_type_rid']?.edit,
   // },
-
-  // {
-  //   name: 'Resource Role',
-  //   value: 'resource_role',
-  //   type: 'text',
-  //   hide:
-  //     !resourcepermissionMap?.['resource_role']?.read &&
-  //     !resourcepermissionMap?.['resource_role']?.edit,
-  // },
-
+  {
+    name: 'Project Resource Role',
+    value: 'project_resource_role',
+    type: 'text',
+    hide:
+      !resourcepermissionMap?.['project_resource_role']?.read &&
+      !resourcepermissionMap?.['project_resource_role']?.edit,
+  },
   {
     name: 'Effort Hours',
     value: 'total_hours_pro_res',
@@ -85,28 +85,38 @@ export const projectResourceFilterFields = (
       !resourcepermissionMap?.['total_cost_pro_res']?.edit,
   },
   {
-    name: 'Cost',
-    value: 'total_cost_pro_res',
+    name: 'Net Resource Cost',
+    value: 'net_total_cost_pro_res',
     type: 'number',
     hide:
-      !resourcepermissionMap?.['total_cost_pro_res']?.read &&
-      !resourcepermissionMap?.['total_cost_pro_res']?.edit,
+      !resourcepermissionMap?.['net_total_cost_pro_res']?.read &&
+      !resourcepermissionMap?.['net_total_cost_pro_res']?.edit,
   },
   {
-    name: 'QRE %',
+    name: 'QRE Percent Final',
     value: 'qre_percent',
     type: 'text',
     hide:
-      !resourcepermissionMap?.['qre_percent']?.read &&
-      !resourcepermissionMap?.['qre_percent']?.edit,
+      !resourcepermissionMap?.['rd_percent_final']?.read &&
+      !resourcepermissionMap?.['rd_percent_final']?.edit,
   },
   {
-    name: 'QRE',
+    name: 'QRE Final',
     value: 'qre_final',
     type: 'text',
     hide:
       !resourcepermissionMap?.['qre_final']?.read &&
       !resourcepermissionMap?.['qre_final']?.edit,
+  },
+  {
+    name: 'Status',
+    value: 'status_rid',
+    type: 'enum',
+    options: memoizedResourceStatus,
+    operatorOption: fiscalOptions,
+    hide:
+      !resourcepermissionMap?.['status_action']?.read &&
+      !resourcepermissionMap?.['status_action']?.edit,
   },
   {
     name: 'Comments',
@@ -117,16 +127,16 @@ export const projectResourceFilterFields = (
       !resourcepermissionMap?.['description']?.edit,
   },
   // It may use in future, based on client confirmation
-  //   {
-  //     name: 'Resource ID',
-  //     value: 'r_number',
-  //     type: 'text',
-  //     required: true,
-  //     filterOptions: requiredFieldFilterOptionsForText,
-  //     // hide:
-  //     //   !resourcepermissionMap?.['r_number']?.read &&
-  //     //   !resourcepermissionMap?.['r_number']?.edit,
-  //   },
+  {
+    name: 'Project Resource ID',
+    value: 'r_number',
+    type: 'text',
+    required: true,
+    filterOptions: requiredFieldFilterOptionsForText,
+    hide:
+      !resourcepermissionMap?.['r_number']?.read &&
+      !resourcepermissionMap?.['r_number']?.edit,
+  },
   {
     name: 'Sort Options',
     value: 'sort_options',

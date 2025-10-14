@@ -57,6 +57,7 @@ export type ProjectTaskListType = {
   comments: string | null;
   created_by: string;
   modified_by: string;
+  status_name: string;
   created_datetime: string;
   modified_datetime: string;
   // need to modidy list data based on mock data or api response
@@ -105,6 +106,7 @@ export interface ProjectTaskDetailsType {
   currency_name: string;
   total_cost_pro_task: string;
   total_hours_pro_task: string;
+  status_name: string;
 }
 
 export interface Attachment {
@@ -191,6 +193,12 @@ export interface ProjectTaskInput {
   total_hours_pro_task: string | null;
   total_cost_pro_task: string | null;
   comments: string | null;
+  user_preference: string;
+  project_resource_rid: string;
+  task_description: string | null;
+  task_classification_rid: string | null;
+  task_type_rid: string | null;
+  task_name: string | null;
 }
 //create task api response,
 export interface createProjectTaskApiResponse {
@@ -224,3 +232,15 @@ export interface createProjectTaskResponseType {
   modified_by: string | null;
   modified_datetime: string | null;
 }
+export interface ProjectTaskStatusApiResponse extends CommonApiResponse {
+  data: {
+    updateStatus: number[];
+  };
+}
+export type ProjectTaskStatusPayload = {
+  rid: string;
+  accountId: string;
+  action: string;
+  resourceCode: string;
+  type: string;
+};

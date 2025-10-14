@@ -1,4 +1,4 @@
-import { costDisplay } from '../../../../../../common-utils';
+import { costDisplay, valueDisplay } from '../../../../../../common-utils';
 import { ListTableColumn } from '../../../../../../components/table/types';
 import {
   SummaryClaimJurisdiction,
@@ -8,6 +8,13 @@ import {
   SummaryRdPercent,
   SummaryResourceMetric,
 } from '../../../../../types';
+
+const percentDisplay = (value: string | number | null | undefined): string => {
+  if (value === null || value === undefined || value === '' || value === '-')
+    return '-';
+  const s = String(value).trim();
+  return s.endsWith('%') ? s : `${s}%`;
+};
 
 export const getResourceMetricColumns = (
   permissionMap: Record<string, { read: boolean; edit: boolean }>
@@ -39,6 +46,8 @@ export const getResourceMetricColumns = (
       textAlign: 'right',
     },
     hide: !permissionMap?.['fte']?.edit && !permissionMap?.['fte']?.read,
+    render: (row: SummaryResourceMetric) =>
+      row.fte ? valueDisplay(row.fte) : '-',
   },
   {
     id: 'subcon',
@@ -50,6 +59,8 @@ export const getResourceMetricColumns = (
       textAlign: 'right',
     },
     hide: !permissionMap?.['subcon']?.edit && !permissionMap?.['subcon']?.read,
+    render: (row: SummaryResourceMetric) =>
+      row.subcon ? valueDisplay(row.subcon) : '-',
   },
   {
     id: 'nonlabor',
@@ -62,6 +73,8 @@ export const getResourceMetricColumns = (
     },
     hide:
       !permissionMap?.['nonlabor']?.edit && !permissionMap?.['nonlabor']?.read,
+    render: (row: SummaryResourceMetric) =>
+      row.nonlabor ? valueDisplay(row.nonlabor) : '-',
   },
 ];
 
@@ -100,7 +113,7 @@ export const getDetailedMetricColumns = (
         row.metric_name === 'Sub Con Cost' ||
         row.metric_name === 'Non Labor Cost')
         ? costDisplay(row.project_level, currencySymbol)
-        : row.project_level || '-',
+        : valueDisplay(row.project_level) || '-',
   },
   {
     id: 'project_resource_level',
@@ -162,6 +175,7 @@ export const getRdPercentColumns = (
     hide:
       !permissionMap?.['rd_percent_potential']?.edit &&
       !permissionMap?.['rd_percent_potential']?.read,
+    render: (row: SummaryRdPercent) => percentDisplay(row.rd_percent_potential),
   },
   {
     id: 'rd_percent_adjustment',
@@ -172,9 +186,31 @@ export const getRdPercentColumns = (
     sx: {
       textAlign: 'right',
     },
+    editable: true,
+    field: {
+      type: 'number',
+      placeholder: '',
+      dependencies: [
+        {
+          dependsOn: 'rd_percent_potential',
+          condition: (value) => !value || value === '-' || value === '',
+          action: 'disabled',
+          message: 'Enter QRE Percent Potential',
+        },
+      ],
+      validation: [
+        {
+          regex: /^(?:-?\d{1,2}(?:\.\d{1,2})?|100(?:\.0{1,2})?)$/,
+          errorMessage: 'Enter a valid percentage between -99.99 and 100',
+        },
+      ],
+      required: false,
+    },
     hide:
       !permissionMap?.['rd_percent_adjustment']?.edit &&
       !permissionMap?.['rd_percent_adjustment']?.read,
+    render: (row: SummaryRdPercent) =>
+      percentDisplay(row.rd_percent_adjustment),
   },
   {
     id: 'rd_percent_final',
@@ -188,6 +224,7 @@ export const getRdPercentColumns = (
     hide:
       !permissionMap?.['rd_percent_final']?.edit &&
       !permissionMap?.['rd_percent_final']?.read,
+    render: (row: SummaryRdPercent) => percentDisplay(row.rd_percent_final),
   },
 ];
 

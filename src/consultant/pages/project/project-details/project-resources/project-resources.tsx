@@ -1,12 +1,18 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import TabPanel from '../../../account-details-sidebar/components/tab';
-import { CreateResourceIcon, ResourceProfileIcon } from '../../../../../assets';
+import {
+  AcceptIcon,
+  CreateResourceIcon,
+  RejectIcon,
+  ResourcesIcon,
+} from '../../../../../assets';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import {
   useProjectResourceDetail,
   useProjectResources,
+  useUpdateProjectResourceStatus,
 } from '../../../../services/project-resources/project-resource-service';
 import {
   PROJECT_RESOURCE_CREATE,
@@ -24,7 +30,10 @@ import {
   AllPermissions,
   useGetAllCountries,
 } from '../../../../../common-service';
-import { ListTable } from '../../../../../components/table';
+import {
+  ListTable,
+  ManageColumnsPopover,
+} from '../../../../../components/table';
 import { checkPermission } from '../../../../../common-utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import { resourceClient } from '../../../../../api/graphql/clients/client';
@@ -34,6 +43,7 @@ import {
   CellEditData,
   FieldChangeEvent,
   FieldChangeValue,
+  ShowHideTableColumn,
 } from '../../../../../components/table/types';
 import { useToast } from '../../../../../hooks';
 import { useGetProjectResourceCode } from '../../../../services/project-resources/project-resources-form-service';
@@ -50,7 +60,6 @@ import Uploads from '../../../../../components/Attachments/upload';
 const BUTTON_STYLES = {
   height: '24px !important',
   fontSize: '13px',
-  fontWeight: 600,
 };
 
 const projectTabs: ResourceTabs[] = [
@@ -69,7 +78,7 @@ const projectTabs: ResourceTabs[] = [
 
 export const ProjectResources = ({
   projectID,
-  accountID,
+  accountData,
   projectFiscalDate,
   setExportType,
   setAttachmentParams,
@@ -77,7 +86,11 @@ export const ProjectResources = ({
   accountOrProjectInActive,
 }: {
   projectID?: string;
-  accountID?: string;
+  accountData?: {
+    accountID: string;
+    accountName: string;
+    accountNumber: string;
+  };
   projectFiscalDate?: FormFiscalDateType;
   setExportType?: (type: ExportType) => void;
   setAttachmentParams: React.Dispatch<
@@ -106,6 +119,15 @@ export const ProjectResources = ({
   const [showProjectResourceDetails, setShowProjectResourceDetails] =
     useState<boolean>(false);
   const [currentCountry, setCurrentCountry] = useState<string>('');
+  const [columnAnchorEl, setColumnAnchorEl] =
+    React.useState<HTMLButtonElement | null>(null);
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const handleColumnVisibility = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setColumnAnchorEl(event.currentTarget);
+  };
 
   const [searchParams] = useSearchParams();
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
@@ -121,16 +143,17 @@ export const ProjectResources = ({
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
   const navigate = useNavigate();
-  // const [searchParams] = useSearchParams();
   const fileId = searchParams.get('page');
   const resID = searchParams.get('pro_res_id');
   const checkDetail = fileId === 'details' && resID;
   const viewDetails = !!checkDetail;
+  const accountID =
+    accountData?.accountID || searchParams.get('accountID') || '';
 
   const [refreshProjectsTrigger, setRefreshProjectsTrigger] = useState<number>(
     Date.now()
   );
-  const { data, isLoading, error } = useProjectResources(
+  const { data, isLoading, error, refetch } = useProjectResources(
     {
       page: currentPage + 1,
       limit: rowsPerPage,
@@ -211,6 +234,8 @@ export const ProjectResources = ({
   const { data: projectResourceCodeOptions } = useGetProjectResourceCode(
     accountID as string
   );
+  const { successToast } = useToast();
+  const updateStatusAccept = useUpdateProjectResourceStatus();
   // const projectResourceTypeOptions = useGetResourceType();
   const countriesList = useGetAllCountries();
   const region = useFetchState(currentCountry);
@@ -272,6 +297,8 @@ export const ProjectResources = ({
     const queryParams = new URLSearchParams({
       account_Id: row?.account_rid || '',
       project_Id: row?.project_fiscal_rid || '',
+      account_name: accountData?.accountName || '',
+      account_number: accountData?.accountNumber || '',
       PFY: PFY ? JSON.stringify(PFY) : '',
       projectCode: projectCode ?? '',
       source: 'editProjectResource',
@@ -289,10 +316,16 @@ export const ProjectResources = ({
       setSortOrder(defaultSortOrder);
       setSortField(defaultSortField);
     } else {
-      // setSortFilterCount(1);
+      setSortFilterCount(1);
       setSortOrder(apiOrder);
       setSortField(sortBy);
     }
+  };
+
+  const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
+    const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
+    setSortOrder(apiOrder);
+    setSortField(sortBy);
   };
 
   useEffect(() => {
@@ -303,7 +336,26 @@ export const ProjectResources = ({
       setShowProjectResourceDetails(false);
     }
   }, [searchParams]);
-
+  const calculateAutoValue = ({
+    salary = '0',
+    bonus = '0',
+    insurance = '0',
+    total_cost_pro_res = '0',
+    deductions = '0',
+  }: {
+    salary?: string;
+    bonus?: string;
+    insurance?: string;
+    total_cost_pro_res?: string;
+    deductions?: string;
+  }) => {
+    const s = parseFloat(salary) || 0;
+    const b = parseFloat(bonus) || 0;
+    const i = parseFloat(insurance) || 0;
+    const r = parseFloat(total_cost_pro_res) || 0;
+    const d = parseFloat(deductions) || 0;
+    return s + b + i + r - d;
+  };
   const actionMenuItems = [
     {
       label: 'Edit',
@@ -337,6 +389,18 @@ export const ProjectResources = ({
       search: newParams.toString(),
     });
   };
+  const handleBackClick = () => {
+    setShowProjectResourceDetails(!showProjectResourceDetails);
+    setProjectResData(null);
+    setShowFilter(false);
+    // clear query params
+    searchParams.delete('pro_res_id');
+    searchParams.delete('page');
+    navigate({
+      pathname: location.pathname,
+      search: searchParams.toString(),
+    });
+  };
   const showUploads =
     searchParams.get('attachment_entity') === 'project_resource';
   const headerButtons = [
@@ -364,22 +428,25 @@ export const ProjectResources = ({
         : !isResourceCreateViewEnable,
       disabled: accountOrProjectInActive,
     },
+    {
+      label: 'Show/Hide Fields',
+      variant: 'outlined' as const,
+      disabled: false,
+      onClick: handleColumnVisibility,
+      sx: { ...BUTTON_STYLES, width: '125px', minWidth: '125px' },
+      hide: viewDetails ? true : false,
+    },
+    {
+      label: 'Back To Project Resources',
+      variant: 'outlined' as const,
+      disabled: false,
+      onClick: handleBackClick,
+      sx: { ...BUTTON_STYLES, width: '175px', minWidth: '175px' },
+      hide: viewDetails ? false : true,
+    },
   ];
   const handleFilter = () => {
     setShowFilter(!showFilter);
-  };
-
-  const handleBackClick = () => {
-    setShowProjectResourceDetails(!showProjectResourceDetails);
-    setProjectResData(null);
-    setShowFilter(false);
-    // clear query params
-    searchParams.delete('pro_res_id');
-    searchParams.delete('page');
-    navigate({
-      pathname: location.pathname,
-      search: searchParams.toString(),
-    });
   };
 
   const PFY = projectFiscalDate;
@@ -390,6 +457,8 @@ export const ProjectResources = ({
     const queryParams = new URLSearchParams({
       account_Id,
       project_Id,
+      account_name: accountData?.accountName || '',
+      account_number: accountData?.accountNumber || '',
       PFY: JSON.stringify(PFY),
       source: 'createProjectResource',
       currency_rid: currency_rid ?? '',
@@ -439,6 +508,12 @@ export const ProjectResources = ({
     const selectedProject = projectResourceList.find(
       (pro) => pro.rid === rowId
     );
+    if (!selectedProject) return;
+
+    console.log('selectedProject', selectedProject);
+
+    let netCost = '';
+
     // let hasResourceTye = false;
     let hasCountry = false;
     let hasRegion = false;
@@ -449,6 +524,16 @@ export const ProjectResources = ({
         // if (item.columnId === 'resource_type_name') hasResourceTye = true;
         if (item.columnId === 'country_name') hasCountry = true;
         if (item.columnId === 'region_name') hasRegion = true;
+        if (item.columnId === 'total_cost_pro_res') {
+          const total = calculateAutoValue({
+            salary: String(selectedProject.salary),
+            bonus: String(selectedProject.bonus),
+            insurance: String(selectedProject.insurance),
+            total_cost_pro_res: String(item.value),
+            deductions: String(selectedProject.deductions),
+          });
+          netCost = total.toString();
+        }
         return acc;
       },
       {
@@ -461,7 +546,9 @@ export const ProjectResources = ({
     if (hasCountry && !hasRegion) {
       updateData['region_rid'] = '';
     }
-
+    if (netCost) {
+      updateData['net_total_cost_pro_res'] = netCost;
+    }
     try {
       const res = await updateProjectResourceMutation({
         variables: { data: updateData },
@@ -488,6 +575,111 @@ export const ProjectResources = ({
       errorToast((error as Error)?.message || 'Failed to update filed');
       setProjectResourceList(previousProject);
     }
+  };
+
+  const RestrictedColumns = [
+    {
+      id: 'resource_code',
+      canHide: false,
+      canDrag: false,
+    },
+  ];
+
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
+  };
+
+  const modalId = isModalOpen
+    ? 'project-resource-list-column-visibility-popover'
+    : undefined;
+
+  const [columnVisibility, setColumnVisibility] = useState<
+    Record<string, boolean>
+  >(
+    Object.fromEntries(
+      projectResourcesColumns.map((col) => [col.id, !col.hide])
+    )
+  );
+
+  const [columnOrder, setColumnOrder] = useState(
+    projectResourcesColumns.map((col) => col.id)
+  );
+
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    const newVisibility = Object.fromEntries(
+      updatedColumns.map((col) => [col.id, !col.hide])
+    );
+    setColumnVisibility(newVisibility);
+    setColumnOrder(updatedColumns.map((col) => col.id));
+  };
+
+  const visibleColumns = columnOrder
+    .map((id) => projectResourcesColumns.find((col) => col.id === id)!)
+    .filter((col) => columnVisibility[col.id]);
+  const handleAccept = (row: ProjectResourcesListType) => {
+    const payload = {
+      rid: row?.rid || '',
+      accountId: accountData?.accountID || '',
+      action: 'accept',
+      type: row?.status_name || '',
+      resourceCode: row?.resource_code,
+    };
+    updateStatusAccept.mutate(payload, {
+      onSuccess: (data) => {
+        successToast(data?.statusMessage || 'Status updated successfully');
+        refetch();
+      },
+    });
+  };
+
+  const handleReject = (row: ProjectResourcesListType) => {
+    const payload = {
+      rid: row?.rid || '',
+      accountId: accountData?.accountID || '',
+      action: 'reject',
+      type: row?.status_name || '',
+      resourceCode: row?.resource_code,
+    };
+    updateStatusAccept.mutate(payload, {
+      onSuccess: (data) => {
+        successToast(data?.statusMessage || 'Status updated successfully');
+        refetch();
+      },
+    });
+  };
+  const hideStatusAction =
+    !permissionMap?.['status_action']?.edit &&
+    !permissionMap?.['status_action']?.read;
+
+  const getConditionMenuItems = (row: ProjectResourcesListType) => {
+    let statusLabel = '';
+    switch (row.status_name) {
+      case 'Duplicate':
+        statusLabel = 'Duplicate';
+        break;
+      case 'Anomaly':
+        statusLabel = 'Anomaly';
+        break;
+      default:
+        return [];
+    }
+
+    return [
+      {
+        label: statusLabel ? `Accept ${statusLabel}` : 'Accept',
+        onClick: handleAccept,
+        icon: AcceptIcon,
+        className:
+          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer h-[24px] bg-[#3EA72F1A] hover:bg-[#3EA72F] hover:text-[#fff]',
+      },
+      {
+        label: statusLabel ? `Reject ${statusLabel}` : 'Reject',
+        onClick: handleReject,
+        icon: RejectIcon,
+        className:
+          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer h-[24px] bg-[#FF3C031A] hover:bg-[#FF3C03] hover:text-[#fff]',
+      },
+    ];
   };
 
   if (!projectIsEnable) return <AccessRestricted />;
@@ -527,15 +719,23 @@ export const ProjectResources = ({
               value={
                 viewDetails ? 'project-resource-details' : 'projects-resources'
               }
-              title={'Project Resource'}
+              title={viewDetails ? 'Project Resource' : 'Project Resources'}
               titleIcon={
-                viewDetails ? <ResourceProfileIcon /> : <CreateResourceIcon />
+                viewDetails ? (
+                  <ResourcesIcon
+                    alt='resource header icon'
+                    className='[&>path]:stroke-white w-[14px] h-[14px]'
+                  />
+                ) : (
+                  <CreateResourceIcon />
+                )
               }
               count={totalItems}
               showBackArrow={viewDetails}
               headerButtons={headerButtons}
               projectResourceNumber={resourceData?.r_number}
               onBackClick={handleBackClick}
+              iconBg={viewDetails ? '#7785ff' : ''}
             />
             <div className='border border-[#CBD6E2]'>
               {showProjectResourceDetails ? (
@@ -549,42 +749,59 @@ export const ProjectResources = ({
                   permission={permission}
                 />
               ) : (
-                <ListTable
-                  data={projectResourceList}
-                  columns={projectResourcesColumns}
-                  actionMenuItems={actionMenuItems}
-                  getRowId={(row: ProjectResourcesListType): string =>
-                    row.rid || ''
-                  }
-                  hoverHighlight={false}
-                  tableStyle={{
-                    height: '100%',
-                    maxHeight: 'calc(100vh - 290px)',
-                    overflow: 'auto',
-                  }}
-                  stickyHeader={true}
-                  stickyColumnsCount={1}
-                  actionWidth={60}
-                  actionDisplayMode='dropdown'
-                  loading={isLoading}
-                  error={error ? 'Failed to load projects' : undefined}
-                  rowsPerPageOptions={[25, 50, 100]}
-                  rowsPerPage={rowsPerPage}
-                  currentPage={currentPage ?? 1}
-                  totalItems={data?.count || 0}
-                  onPageChange={setCurrentPage}
-                  onRowsPerPageChange={setRowsPerPage}
-                  sortBy={sortField}
-                  sortOrder={sortOrder}
-                  onSort={handleSorting}
-                  selectable={false}
-                  onSelectionChange={(selectedIds: unknown) =>
-                    console.log('Selected:', selectedIds)
-                  }
-                  component='project resources'
-                  onCellEdit={handleCellEdit}
-                  onFieldChange={handleFieldChange}
-                />
+                <>
+                  <ManageColumnsPopover
+                    anchorEl={columnAnchorEl}
+                    open={isModalOpen}
+                    popoverId={modalId}
+                    onClose={handlePopoverClose}
+                    columns={projectResourcesColumns}
+                    onColumnsChange={handleColumnsChange}
+                    columnRestrictions={RestrictedColumns}
+                  />
+                  <ListTable
+                    data={projectResourceList}
+                    columns={visibleColumns}
+                    actionMenuItems={actionMenuItems}
+                    getRowId={(row: ProjectResourcesListType): string =>
+                      row.rid || ''
+                    }
+                    hoverHighlight={false}
+                    tableStyle={{
+                      height: '100%',
+                      maxHeight: 'calc(100vh - 380px)',
+                      overflow: 'auto',
+                    }}
+                    stickyHeader={true}
+                    stickyColumnsCount={1}
+                    actionWidth={60}
+                    actionDisplayMode='dropdown'
+                    conditionMenuItems={
+                      !hideStatusAction
+                        ? (row: ProjectResourcesListType) =>
+                            getConditionMenuItems(row)
+                        : undefined
+                    }
+                    loading={isLoading}
+                    error={error ? 'Failed to load projects' : undefined}
+                    rowsPerPageOptions={[25, 50, 100]}
+                    rowsPerPage={rowsPerPage}
+                    currentPage={currentPage ?? 1}
+                    totalItems={data?.count || 0}
+                    onPageChange={setCurrentPage}
+                    onRowsPerPageChange={setRowsPerPage}
+                    sortBy={sortField}
+                    sortOrder={sortOrder}
+                    onSort={handleSort}
+                    selectable={false}
+                    onSelectionChange={(selectedIds: unknown) =>
+                      console.log('Selected:', selectedIds)
+                    }
+                    component='project resources'
+                    onCellEdit={handleCellEdit}
+                    onFieldChange={handleFieldChange}
+                  />
+                </>
               )}
             </div>
           </>

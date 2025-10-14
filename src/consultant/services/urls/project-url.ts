@@ -10,6 +10,8 @@ export const ProjectListURL = ({
   accountNumber,
   globalFilters,
   bothParentAndChild,
+  apiSource,
+  accountInteractionId,
 }: ProjectListParams): string => {
   const baseUrl = `/api/project/list${accountNumber ? `/${accountNumber}` : ''}`;
   const searchParams = new URLSearchParams();
@@ -27,6 +29,12 @@ export const ProjectListURL = ({
   }
   if (bothParentAndChild !== undefined) {
     searchParams.set('bothParentAndChild', bothParentAndChild.toString());
+  }
+  if (apiSource !== undefined) {
+    searchParams.set('apiSource', apiSource);
+  }
+  if (accountInteractionId) {
+    searchParams.set('accountInteractionId', accountInteractionId);
   }
   const queryString = searchParams.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;
@@ -68,4 +76,8 @@ export const ProjectExportListURL = ({
   if (timezone !== undefined) searchParams.set('timezone', timezone);
   const queryString = searchParams.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;
+};
+
+export const ProjectTriggerAIUrl = (): string => {
+  return '/api/interactions/triggerAi';
 };

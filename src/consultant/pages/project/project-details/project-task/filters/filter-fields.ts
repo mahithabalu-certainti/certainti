@@ -1,6 +1,13 @@
+import { FormFiscalDateType } from '../../../../../types';
 import { FieldConfig } from '../../../../account-details-sidebar/components/filter/filterType';
-import { numberOptions } from '../../../../account-details-sidebar/sidebar-pages/projects/utils';
-const requiredFieldFilterOptionsForText: { option: string; value: string }[] = [
+import {
+  fiscalOptions,
+  numberOptions,
+} from '../../../../account-details-sidebar/sidebar-pages/projects/utils';
+export const requiredFieldFilterOptionsForText: {
+  option: string;
+  value: string;
+}[] = [
   { option: 'Equals', value: 'equals' },
   { option: 'Not Equals', value: 'not_equals' },
   { option: 'Contains', value: 'contains' },
@@ -17,7 +24,9 @@ export const projectTaskFilterFields = (
   permissionMapTaskTableColumn?: Record<
     string,
     { read: boolean; edit: boolean }
-  >
+  >,
+  fiscalDatesArg?: FormFiscalDateType,
+  memoizedResourceStatus?: { option: string; value: string }[]
 ): FieldConfig[] => [
   {
     name: 'Resource Code',
@@ -52,22 +61,33 @@ export const projectTaskFilterFields = (
   },
 
   {
-    name: 'Resource Role',
-    value: 'resource_role',
+    name: 'Project Resource Role',
+    value: 'project_resource_role',
     type: 'text',
     hide:
-      !permissionMapTaskTableColumn?.['resource_role']?.read &&
-      !permissionMapTaskTableColumn?.['resource_role']?.edit,
+      !permissionMapTaskTableColumn?.['project_resource_role']?.read &&
+      !permissionMapTaskTableColumn?.['project_resource_role']?.edit,
   },
   {
-    name: 'Task Date',
+    name: 'Start Date',
     value: 'start_date',
     type: 'date',
+    minDate: fiscalDatesArg?.startMin,
+    maxDate: fiscalDatesArg?.startMax,
     hide:
       !permissionMapTaskTableColumn?.['start_date']?.read &&
       !permissionMapTaskTableColumn?.['start_date']?.edit,
   },
-
+  {
+    name: 'End Date',
+    value: 'end_date',
+    type: 'date',
+    minDate: fiscalDatesArg?.startMin,
+    maxDate: fiscalDatesArg?.endMax,
+    hide:
+      !permissionMapTaskTableColumn?.['end_date']?.read &&
+      !permissionMapTaskTableColumn?.['end_date']?.edit,
+  },
   {
     name: 'Cost',
     value: 'total_cost_pro_task',
@@ -87,6 +107,16 @@ export const projectTaskFilterFields = (
       !permissionMapTaskTableColumn?.['total_hours_pro_task']?.edit,
   },
   {
+    name: 'Status',
+    value: 'status_rid',
+    type: 'enum',
+    options: memoizedResourceStatus,
+    operatorOption: fiscalOptions,
+    hide:
+      !permissionMapTaskTableColumn?.['status_action']?.read &&
+      !permissionMapTaskTableColumn?.['status_action']?.edit,
+  },
+  {
     name: 'Comments',
     value: 'comments',
     type: 'text',
@@ -96,7 +126,7 @@ export const projectTaskFilterFields = (
   },
 
   {
-    name: 'Resource ID',
+    name: 'Project Task ID',
     value: 'r_number',
     type: 'text',
     required: true,

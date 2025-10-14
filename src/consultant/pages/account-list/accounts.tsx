@@ -38,7 +38,6 @@ import { FilterState } from '../../types/account-filter';
 const BUTTON_STYLES = {
   height: '24px',
   fontSize: '13px',
-  fontWeight: 600,
 };
 
 export const Accounts: React.FC = () => {
@@ -51,6 +50,8 @@ export const Accounts: React.FC = () => {
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [refreshAccountTrigger, setRefreshAccountTrigger] = useState<number>();
+  const [columnAnchorEl, setColumnAnchorEl] =
+    React.useState<HTMLButtonElement | null>(null);
 
   const { fiscalYear, filters } = useSelector<
     RootState,
@@ -68,6 +69,9 @@ export const Accounts: React.FC = () => {
 
   const isFilterOpen = Boolean(anchorEl);
   const filterId = isFilterOpen ? 'account-filter-popover' : undefined;
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const modalId = isModalOpen ? 'account-column-visibility-popover' : undefined;
 
   useEffect(() => {
     const saved = getStoredFilters();
@@ -217,6 +221,12 @@ export const Accounts: React.FC = () => {
 
   if (!accountIsEnable || !isAccountViewAllEnable) return <AccessRestricted />;
 
+  const handleColumnVisibility = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setColumnAnchorEl(event.currentTarget);
+  };
+
   return (
     <div className='flex flex-col w-full h-full'>
       <div className='flex items-center justify-between w-full h-[55px] min-h-[55px] border-b border-[#CBD6E2] px-4'>
@@ -266,7 +276,7 @@ export const Accounts: React.FC = () => {
         </div>
       </div>
 
-      <div className='flex items-center justify-end gap-4 h-[34px] min-h-[34px] px-4'>
+      <div className='flex items-center justify-end gap-2 h-[34px] min-h-[34px] px-4'>
         <TextButton
           label={expandChild ? 'Collapse' : 'Expand All'}
           onClick={() => setExpandChild(!expandChild)}
@@ -277,7 +287,17 @@ export const Accounts: React.FC = () => {
             maxWidth: '80px',
           }}
         />
-        <div className='relative'>
+        <div className='flex gap-1 relative'>
+          <button
+            aria-describedby={modalId}
+            className={`w-[120px] h-[24px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 rounded-[2px] relative border border-[#CBD6E2] px-0 py-0 normal-case ${isModalOpen ? 'bg-[#F3F3F3]' : 'bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'} hover:text-[#425A76] transition-colors duration-150`}
+            style={{
+              boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
+            }}
+            onClick={handleColumnVisibility}
+          >
+            Show/Hide Fields
+          </button>
           <button
             aria-describedby={filterId}
             className={`w-[64px] h-[24px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
@@ -327,6 +347,8 @@ export const Accounts: React.FC = () => {
           countryOptions={countryOptions}
           industryOptions={industryOptions}
           onRefreshClick={onRefreshClick}
+          setColumnAnchorEl={setColumnAnchorEl}
+          columnAnchorEl={columnAnchorEl}
           expandChild={expandChild}
         />
       </div>

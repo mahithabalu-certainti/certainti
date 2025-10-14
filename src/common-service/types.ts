@@ -1,5 +1,9 @@
 import dayjs from 'dayjs';
 import { User } from '../admin/types/admin-user-detail';
+import {
+  Attachment,
+  InteractionQuestionResponseType,
+} from '../consultant/types';
 
 export interface CommonApiResponse {
   statusCode: number;
@@ -8,6 +12,13 @@ export interface CommonApiResponse {
 }
 export interface ProfileApiResponse extends CommonApiResponse {
   data: ManageProfileResponse;
+}
+
+export interface VerifyOtpApiResponse extends CommonApiResponse {
+  data: {
+    auth_token: string;
+    email: string;
+  };
 }
 export interface ManageProfileResponse {
   profile_id: string;
@@ -100,7 +111,7 @@ export enum AllMenus {
   DASHBOARD = 'dashboard',
   ACCOUNTS = 'accounts',
   PROJECTS = 'projects',
-  TIMESHEETS = 'timeline',
+  TIMESHEETS = 'timesheet',
   CASES = 'cases',
   SURVEY = 'survey',
   NOTES = 'notes',
@@ -146,6 +157,8 @@ export enum AllModules {
   ATTACHMENTS = 'attachments',
   IMPORTS = 'imports',
   MANAGE_ACCOUNT_ACCESS = 'manage_account_access',
+  INTERACTIONS = 'interactions',
+  INTERACTION_TEMPLATES = 'interaction_templates',
 }
 
 export enum AllPermissions {
@@ -157,6 +170,9 @@ export enum AllPermissions {
   USER_GROUP_CREATE = 'user_group_create',
   USER_DELETE = 'user_delete',
   PROFILE_CREATE = 'profile_create',
+  INTERACTION_TEMPLATES_CREATE = 'interaction_templates_create',
+  INTERACTION_TEMPLATES_VIEW_EDIT = 'interaction_templates_view_edit',
+  INTERACTION_TEMPLATES_EXPORT = 'interaction_templates_export',
   PROJECTS_TASK_CREATE = 'projects_task_create',
   ACCOUNT_RESOURCES_COST_CREATE = 'account_resources_cost_create',
   ACCOUNT_RESOURCES_SKILL_CREATE = 'account_resources_skill_create',
@@ -182,6 +198,10 @@ export enum AllPermissions {
   USER_VIEW_EDIT = 'user_view_edit',
   USER_GROUP_VIEW_EDIT = 'user_group_view_edit',
   PROFILE_VIEW_EDIT = 'profile_view_edit',
+  ACCOUNT_TIMESHEET_VIEW = 'account_timesheet_view',
+  ACCOUNT_TIMESHEET_PROJECT_VIEW = 'account_project_view',
+  ACCOUNT_TIMESHEET_RESOURCE_VIEW = 'account_resource_view',
+  ACCOUNT_TIMESHEET_PROJECT_TASK_VIEW = 'account_project_task_view',
   ACCOUNT_RESOURCES_VIEW_EDIT = 'account_resources_view_edit',
   ACCOUNT_RESOURCE_COST_EDIT_VIEW = 'account_resource_cost_edit_view',
   PROJECTS_RESOURCES_VIEW_EDIT = 'projects_resources_view_edit',
@@ -193,12 +213,16 @@ export enum AllPermissions {
   ACCOUNT_ATTACHMENT_OVERVIEW = 'account_attachments_overview',
   ACCOUNT_ATTACHMENT_TIMELINE = 'account_attachments_timeline',
   ATTACHMENT_VIEW_EDIT = 'attachments_view_edit',
+  ATTACHMENT_EXPORT = 'attachments_export',
   ACCOUNT_IMPORTS_OVERVIEW = 'account_imports_overview',
   ACCOUNT_IMPORTS_TIMELINE = 'account_imports_timeline',
+  ACCOUNT_TIMESHEET_OVERVIEW = 'account_timesheet_overview',
   ATTACHMENT_CREATE = 'attachments_create',
   ACCOUNT_SETTINGS_VIEW_EDIT = 'account_settings_view_edit',
   PROJECT_SETTINGS_VIEW_EDIT = 'project_settings_view_edit',
   IMPORTS_VIEW_EDIT = 'imports_view_edit',
+  TIMESHEET_VIEW_EDIT = 'timesheet_view_edit',
+  TIMESHEET_PROJECT_TASK_VIEW_EDIT = 'timesheet_project_task_view_edit',
   IMPORTS_EXPORT = 'imports_export',
   MANAGE_ACCOUNT_ACCESS_VIEW_EDIT = 'manage_account_access_view_edit',
   PROJECT_FINANCIAL_OVERVIEW = 'project_financial_overview',
@@ -214,6 +238,18 @@ export enum AllPermissions {
   ACCOUNT_FINANCIAL_PROJECT_COST_EXPORT = 'account_project_cost_export',
   ACCOUNT_FINANCIAL_RESOURCE_COST_VIEW = 'account_resource_cost_view',
   ACCOUNT_FINANCIAL_RESOURCE_COST_EXPORT = 'account_resource_cost_export',
+  INTERACTIONS_OVERVIEW = 'interactions_overview',
+  INTERACTIONS_TIMELINE = 'interactions_timeline',
+  ACCOUNT_TIMESHEET_EXPORT = 'timesheet_export',
+  INTERACTIONS_VIEW_EDIT = 'interactions_view_edit',
+  INTERACTIONS_EXPORT = 'interactions_export',
+  INTERACTIONS_CREATE = 'interactions_create',
+  SEND_INTERACTIONS = 'send_interactions',
+  TRIGGER_AI_ASSESSMENT = 'trigger_ai_assessment',
+  PROJECT_TECHNICAL_SUMMARY_OVERVIEW = 'project_technical_summary_overview',
+  PROJECT_TECHNICAL_SUMMARY_TIMELINE = 'project_technical_summary_timeline',
+  PROJECT_TECHNICAL_SUMMARY_VIEW_EDIT = 'projects_tech_summary_view_edit',
+  PROJECT_TECHNICAL_SUMMARY_EXPORT = 'projects_tech_summary_export',
 }
 
 export interface Country {
@@ -226,6 +262,7 @@ export type FieldTypes = string | string[] | dayjs.Dayjs | null | File;
 export interface OnChange {
   fieldName: string;
   fieldValue: FieldTypes;
+  isCreate?: boolean;
 }
 
 export enum UserRoles {
@@ -247,6 +284,7 @@ export enum MenuOption {
   SURVEY = 'survey',
   NOTES = 'notes',
   ATTACHMENTS = 'attachments',
+  INTERACTIONS = 'interactions',
   HELP = 'help',
   SETTINGS = 'settings',
   LOGOUT = 'logout',
@@ -263,6 +301,13 @@ export enum MenuOption {
   TASK_TEMPLATE = 'task_template',
   CHECKLIST_TEMPLATE = 'checklist_template',
   MANAGE_USER = 'manage_user',
+}
+
+export interface OverviewTabs {
+  id: AllPermissions | AllMenus;
+  name: string;
+  hide: boolean;
+  disable?: boolean;
 }
 
 export type FailedQueueItem = {
@@ -292,7 +337,7 @@ export interface UserDetail {
 export interface UploadImportPayload {
   entity_type: string;
   file: File;
-  fiscal_year: string;
+  fiscal_year?: string;
   account_rid: string;
   related_to: string;
   related_to_rid: string;
@@ -302,6 +347,14 @@ export interface UploadImportPayload {
 
 export enum Layout {
   TYPE_1 = 1,
+}
+
+export interface ExpandCollapseSelectOptions {
+  group: string;
+  options: {
+    value: string;
+    label: string;
+  }[];
 }
 
 export interface StatusItem {
@@ -349,4 +402,98 @@ export interface EntityTypes {
 
 export interface GetImportEntityTypeApiResponse extends CommonApiResponse {
   data: EntityTypes[];
+}
+
+export interface GenerateOtp {
+  interaction_rid: string;
+  account_rid: string;
+}
+
+export interface VerifyOtp extends GenerateOtp {
+  otp: string;
+}
+
+//Interactions
+export interface InteractionStatusItem {
+  rid: string;
+  status_name: string;
+  status_type?: string | null;
+}
+
+export interface GetInteractionStatusApiResponse extends CommonApiResponse {
+  data: {
+    interactionStatus: InteractionStatusItem[];
+  };
+}
+export interface InteractionlevelItem {
+  rid: string;
+  interaction_level_name: string;
+}
+
+export interface GetInteractionLevelApiResponse extends CommonApiResponse {
+  data: {
+    interactionLevel: InteractionlevelItem[];
+  };
+}
+
+export interface InteractionTypeItem {
+  rid: string;
+  interaction_type_name: string;
+}
+
+export interface GetInteractionTypesApiResponse extends CommonApiResponse {
+  data: {
+    interactionTypes: InteractionTypeItem[];
+  };
+}
+
+export interface InteractionResSourceItem {
+  rid: string;
+  response_source_name: string;
+}
+
+export interface GetInteractionResponeSourcesApiResponse
+  extends CommonApiResponse {
+  data: {
+    responseSource: InteractionResSourceItem[];
+  };
+}
+
+export interface InteractionResponseSourceItem {
+  rid: string;
+  response_source_name: string;
+}
+export interface GetInteractionResponseSourcesApiResponse
+  extends CommonApiResponse {
+  data: {
+    responseSource: InteractionResponseSourceItem[];
+  };
+}
+
+export interface InteractionQuestionUpdateRequest {
+  account_rid: string;
+  project_rid: string;
+  project_fiscal_rid: string;
+  interaction_rid: string;
+  status_action: 'RESPONSE_DRAFT' | 'RESPONSE_RECEIVED';
+  attachments: Attachment[];
+  questions: InteractionQuestionResponseType[];
+  authToken: string;
+  userId: string;
+  response_source: string;
+}
+
+export interface UploadAttachmentRequest {
+  account_rid: string;
+  project_rid: string;
+  interaction_rid: string;
+  file: File;
+  authToken: string;
+  userId: string;
+}
+
+export interface DeleteAttachmentRequest {
+  file_url: string;
+  authToken: string;
+  userId: string;
 }

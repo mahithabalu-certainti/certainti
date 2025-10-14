@@ -21,13 +21,13 @@ import React, {
 import { useDispatch, useSelector } from 'react-redux';
 import {
   AccountsIcon,
+  AdminSettingIcon,
   BurgerMenuIcon,
   ChevronDownIcon,
   GlobeIcon,
   MenuIcon,
   // NotificationIcon,
   // PhoneIcon,
-  SettingsIcon,
 } from '../../assets';
 import { AllPermissions } from '../../common-service';
 import { useAuthHook, useToast } from '../../hooks';
@@ -500,8 +500,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                     onClick={debounce(switchSideBarMenus, 300)}
                     disabled={isAnyApiWasLoading}
                   >
-                    <SettingsIcon
-                      alt='settings'
+                    <AdminSettingIcon
+                      alt='admin-settings'
                       className='h-[20px] w-[20px]'
                     />
                   </IconButton>

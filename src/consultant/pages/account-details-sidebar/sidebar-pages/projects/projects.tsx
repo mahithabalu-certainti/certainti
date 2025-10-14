@@ -1,18 +1,25 @@
-import { useEffect, useMemo, useState } from 'react';
-import { ProjectHeaderIcon } from '../../../../../assets';
+import React, { useEffect, useMemo, useState } from 'react';
 import TabPanel from '../../components/tab';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import ResourceTableHeader from '../resources/resource-table-header';
 import { getProjectColumns } from './columns';
 import {
+  ProjectTriggerAI,
   useAccountProjects,
   useGetProjectType,
 } from '../../../../services/project';
 import { PROJECT_CREATE, PROJECT_DETAILS } from '../../../../../routes';
 import { generatePath, useNavigate, useParams } from 'react-router-dom';
-import { Project, ProjectListParams } from '../../../../types/project';
-import { ListTable } from '../../../../../components/table';
+import {
+  Project,
+  ProjectListParams,
+  ProjectTriggerAIPayload,
+} from '../../../../types/project';
+import {
+  ListTable,
+  ManageColumnsPopover,
+} from '../../../../../components/table';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import { checkPermission, REGEX_PATTERNS } from '../../../../../common-utils';
 import { AllModules, AllPermissions } from '../../../../../common-service';
@@ -20,6 +27,8 @@ import { ResourceTabs } from '../resources/resources';
 import {
   CellEditData,
   FieldChangeValue,
+  ListTableColumn,
+  ShowHideTableColumn,
 } from '../../../../../components/table/types';
 import { useFetchClassification } from '../../../../services/account';
 import { AccountDetailsResponse, ExportType } from '../../../../types';
@@ -27,10 +36,10 @@ import { UPDATE_PROJECT } from '../../../../../api/graphql/queries/project-query
 import { useMutation } from '@apollo/client';
 import { resourceClient } from '../../../../../api/graphql/clients/client';
 import { useToast } from '../../../../../hooks';
+import { ProjectsSideIcon } from '../../../../../assets';
 const BUTTON_STYLES = {
   height: '24px !important',
   fontSize: '13px',
-  fontWeight: 600,
 };
 
 interface AccountDetailsProps extends AccountDetailsResponse {
@@ -69,7 +78,7 @@ const Projects: React.FC<ProjectsProps> = ({
 }) => {
   const { accountid } = useParams();
   const navigate = useNavigate();
-  const { errorToast } = useToast();
+  const { successToast, errorToast } = useToast();
   const projectTypeOptions = useGetProjectType();
   const Classification = useFetchClassification();
   const [projectsTabs, setProjectsTabs] = useState(projectTabs);
@@ -81,9 +90,20 @@ const Projects: React.FC<ProjectsProps> = ({
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('ASC');
   const [sortField, setSortField] = useState<string>('project_code');
   const [rowsPerPage, setRowsPerPage] = useState(100);
+  const [columnAnchorEl, setColumnAnchorEl] =
+    React.useState<HTMLButtonElement | null>(null);
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
     (state: RootState) => state.account
   );
+
+  const isModalOpen = Boolean(columnAnchorEl);
+
+  const handleColumnVisibility = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setColumnAnchorEl(event.currentTarget);
+  };
+
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
   const [refreshProjectsTrigger, setRefreshProjectsTrigger] = useState<number>(
     Date.now()
@@ -93,7 +113,8 @@ const Projects: React.FC<ProjectsProps> = ({
     accountDetails?.accountById?.status?.status_name?.toLowerCase() !==
     'active';
   const [projectList, setProjectList] = useState<Project[]>([]);
-
+  const [selectedTableId, setSelectedTableIds] = useState<string[]>([]);
+  const [clearTrigger, setClearTrigger] = useState(false);
   // Permission Mangement
   const { modules, permission } = useSelector(
     (state: RootState) => state.permission
@@ -247,6 +268,39 @@ const Projects: React.FC<ProjectsProps> = ({
     }
     return row.project_rid || '';
   };
+
+  const TriggerAIEnable = checkPermission(
+    permission,
+    AllPermissions.TRIGGER_AI_ASSESSMENT
+  );
+
+  const handleselectedList = (id: string[]) => {
+    console.log(id);
+    const childIds = id.filter((_, index) => index % 2 === 0);
+    setSelectedTableIds(childIds);
+  };
+  const triggerAIMutation = ProjectTriggerAI();
+
+  const handleTriggerAIBtn = () => {
+    const payload: ProjectTriggerAIPayload = {
+      data: [
+        {
+          account_rid: accountid || '',
+          project_fiscal_rid: selectedTableId,
+        },
+      ],
+      type: 'project',
+    };
+    triggerAIMutation.mutate(payload, {
+      onSuccess: (res) => {
+        successToast(res.statusMessage);
+        setClearTrigger((prev) => !prev);
+      },
+      onError: (err) => {
+        console.log(err);
+      },
+    });
+  };
   const actionMenuItems = [
     {
       label: 'Edit',
@@ -286,6 +340,23 @@ const Projects: React.FC<ProjectsProps> = ({
       onClick: () => handleCreateProject(),
       sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
       hide: !projectCreateIsEnable,
+    },
+    {
+      label: 'RD Assessment',
+      variant: 'outlined' as const,
+      disabled: accountInActive || selectedTableId.length === 0,
+      onClick: () => handleTriggerAIBtn(),
+      loading: triggerAIMutation.isPending,
+      sx: { ...BUTTON_STYLES, width: '115px', minWidth: '115px' },
+      hide: !TriggerAIEnable,
+    },
+    {
+      label: 'Show/Hide Fields',
+      variant: 'outlined' as const,
+      disabled: false,
+      onClick: handleColumnVisibility,
+      sx: { ...BUTTON_STYLES, width: '125px', minWidth: '125px' },
+      hide: false,
     },
     {
       label: 'Download',
@@ -374,14 +445,28 @@ const Projects: React.FC<ProjectsProps> = ({
     [Classification.data?.data.projectClassifications]
   );
 
-  const projectColumns = getProjectColumns(
-    handleProject,
-    memoizedProjectTypes,
-    memoizedClassification,
-    handleEdit,
-    permissionMap,
-    accountInActive
+  const projectColumns = useMemo(
+    () =>
+      getProjectColumns(
+        handleProject,
+        memoizedProjectTypes,
+        memoizedClassification,
+        handleEdit,
+        permissionMap,
+        accountInActive
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [accountInActive]
   );
+
+  const [visibleColumns, setVisibleColumns] = useState<
+    ListTableColumn<Project>[]
+  >(projectColumns.filter((col) => !col.hide));
+
+  useEffect(() => {
+    const updatedColumns = projectColumns.filter((col) => !col.hide);
+    setVisibleColumns(updatedColumns);
+  }, [accountInActive, projectColumns]);
 
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
     // Save the old state to revert if needed
@@ -411,6 +496,7 @@ const Projects: React.FC<ProjectsProps> = ({
         account_rid: parentProject.account_rid,
         project_rid: childFiscal.project_rid,
         project_fiscal_rid: childFiscal.project_fiscal_rid,
+        global_fiscal_year: convertedFiscalYear || 0,
       }
     );
 
@@ -500,6 +586,27 @@ const Projects: React.FC<ProjectsProps> = ({
 
   if (!projectIsEnable || !projectViewAllIsEnable) return <AccessRestricted />;
 
+  const RestrictedColumns = [
+    {
+      id: 'project_code',
+      canHide: false,
+      canDrag: false,
+    },
+  ];
+
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    setVisibleColumns(
+      updatedColumns.filter((col) => !col.hide) as ListTableColumn<Project>[]
+    );
+  };
+
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
+  };
+  const modalId = isModalOpen
+    ? 'account-interaction-attachment-column-visibility-popover'
+    : undefined;
+
   return (
     <div className='w-full pt-2 pl-2 pr-4'>
       <TabPanel
@@ -528,18 +635,33 @@ const Projects: React.FC<ProjectsProps> = ({
             value={'projects'}
             title='Projects'
             count={totalItems}
-            titleIcon={<ProjectHeaderIcon alt='project-header-icon' />}
+            titleIcon={
+              <ProjectsSideIcon
+                alt='project-header-icon'
+                className='[&>path]:stroke-[#E54787] w-[14px] h-[14px]'
+              />
+            }
             headerButtons={headerButtons}
+            iconBg='#FFE7F1'
           />
           <div className='border border-[#CBD6E2]'>
+            <ManageColumnsPopover
+              anchorEl={columnAnchorEl}
+              open={isModalOpen}
+              popoverId={modalId}
+              onClose={handlePopoverClose}
+              columns={projectColumns}
+              onColumnsChange={handleColumnsChange}
+              columnRestrictions={RestrictedColumns}
+            />
             <ListTable
               data={projectList as Project[]}
-              columns={projectColumns}
+              columns={visibleColumns}
               getRowId={getRowId}
               hoverHighlight={false}
               tableStyle={{
                 height: '100%',
-                maxHeight: 'calc(100vh - 290px)',
+                maxHeight: 'calc(100vh - 320px)',
                 overflow: 'auto',
               }}
               stickyHeader={true}
@@ -565,10 +687,11 @@ const Projects: React.FC<ProjectsProps> = ({
               onSort={handleSort}
               selectable={true}
               onSelectionChange={(selectedIds) =>
-                console.log('Selected:', selectedIds)
+                handleselectedList(selectedIds)
               }
               component='project'
               onCellEdit={handleCellEdit}
+              clearSelectedRows={clearTrigger}
             />
           </div>
         </>

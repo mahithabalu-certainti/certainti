@@ -1,9 +1,13 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useMemo } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { EditIcon, CreateResourceIcon } from '../../../../../../assets';
 import { useToast } from '../../../../../../hooks';
-import { AllPermissions, Layout } from '../../../../../../common-service';
+import {
+  AllPermissions,
+  Layout,
+  OnChange,
+} from '../../../../../../common-service';
 import { FormFiscalDateType, SelectResourceOption } from '../../../../../types';
 import TextButton from '../../../../../../components/button/text-button';
 import { FormBuilder } from '../../../../../../components';
@@ -15,24 +19,42 @@ import {
 } from '../../../../../services/project/project-task-service';
 import { projectTaskPayloadData } from './utils';
 import { ProjectTaskInput } from '../../../../../types/project-task';
-import { useGetProjectResourceCode } from '../../../../../services/project-resources/project-resources-form-service';
+import { useGetProjectResourceTaskCode } from '../../../../../services/project-resources/project-resources-form-service';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
 import {
   formatDateToYYYYMMDDWithTime,
   getDateFormat,
 } from '../../../../../../common-utils';
+import { PROJECT_RESOURCE_CREATE } from '../../../../../../routes';
+import ConfirmationPopup from '../../../../../../common-utils/confirmation-popup';
+import SkeletonForm from '../../../../../../components/form-builder/skeleton-form';
 
 const ProjectTaskForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
   const { successToast } = useToast();
   const location = useLocation();
+  const navigate = useNavigate();
   const { taskId } = useParams();
   const queryParams = new URLSearchParams(location.search);
   const account_Id = queryParams.get('account_Id');
+  const account_name = queryParams.get('account_name');
+  const account_number = queryParams.get('account_number');
   const project_Id = queryParams.get('project_Id');
   const projectPFY = queryParams.get('PFY');
   const projectCode = queryParams.get('projectCode');
+  const currency_rid = queryParams.get('currency_rid');
+  const createdNewResourceCode = queryParams.get('created_resource_code') || '';
+  const pathCount = queryParams.get('path_count') || '';
+  const [confirmationState, setConfirmationState] = React.useState<{
+    isOpen: boolean;
+    message: string;
+    onConfirm: () => void;
+  }>({ isOpen: false, message: '', onConfirm: () => {} });
+  const [costResourceForceSuccess, setCostResourceForceSuccess] =
+    React.useState(false);
+  const [currentResourceCode, setCurrentResourceCode] =
+    React.useState<string>('');
   const fiscalDate: FormFiscalDateType = projectPFY
     ? JSON.parse(projectPFY)
     : undefined;
@@ -63,11 +85,15 @@ const ProjectTaskForm: React.FC = () => {
   const createProjectTask = useCreateProjectTask();
   const updateProjectTask = useUpdateProjectTask();
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
-  const { data: projectResourceCodeOptions } = useGetProjectResourceCode(
-    account_Id as string
-  );
-  const commonSuccess =
-    createProjectTask.isSuccess || updateProjectTask.isSuccess;
+  const payload = {
+    account_rid: account_Id || undefined,
+    search: '',
+    project_fiscal_rid: project_Id || undefined,
+  };
+
+  const { data: projectResourceCodeOptions, isLoading: resCodeLoading } =
+    useGetProjectResourceTaskCode(payload);
+  const commonSuccess = costResourceForceSuccess;
   useEffect(() => {
     if (commonSuccess) {
       successToast(
@@ -78,6 +104,13 @@ const ProjectTaskForm: React.FC = () => {
       goBack();
     }
   }, [commonSuccess, isEditView]);
+
+  useEffect(() => {
+    if (isEditView) {
+      setCurrentResourceCode(projectTaskDetailsData?.resource_code || '');
+    }
+  }, [isEditView, projectTaskDetailsData?.resource_code]);
+
   // Permission Mangement
   const { permission } = useSelector((state: RootState) => state.permission);
   const projectViewEditFields = useMemo(
@@ -87,6 +120,7 @@ const ProjectTaskForm: React.FC = () => {
       )?.fields ?? [],
     [permission]
   );
+
   const permissionMapTaskForm = useMemo(() => {
     const map: Record<string, { read: boolean; edit: boolean }> = {};
     projectViewEditFields.forEach((item) => {
@@ -97,14 +131,33 @@ const ProjectTaskForm: React.FC = () => {
 
   const memoizedProjectResourceCode: SelectResourceOption[] = useMemo(
     () =>
-      projectResourceCodeOptions?.data?.resourceCodes.map((item) => ({
-        label: item.resource_code,
-        value: item.resource_code,
-        resource_type_rid: item.resource_type_rid,
-        resource_type_name: item.resource_type_name,
-      })) || [],
-    [projectResourceCodeOptions?.data?.resourceCodes]
+      projectResourceCodeOptions?.data?.map((item) => {
+        let extraInfo = '';
+
+        if (item.resource_name && item.project_resource_role) {
+          extraInfo = ` (${item.resource_name} - ${item.project_resource_role})`;
+        } else if (item.resource_name) {
+          extraInfo = ` (${item.resource_name})`;
+        } else if (item.project_resource_role) {
+          extraInfo = ` (${item.project_resource_role})`;
+        }
+
+        return {
+          label: `${item.resource_code}${extraInfo}`,
+          value: item.rid,
+        };
+      }) || [],
+    [projectResourceCodeOptions?.data]
   );
+
+  useEffect(() => {
+    if (createdNewResourceCode) {
+      const selectedResource = projectResourceCodeOptions?.data?.find(
+        (item) => String(item.rid) === String(createdNewResourceCode)
+      );
+      setCurrentResourceCode(selectedResource?.resource_code || '');
+    }
+  }, [createdNewResourceCode, projectResourceCodeOptions?.data]);
 
   const submitData = (formValues: Partial<ProjectTaskInput>) => {
     const project_task_rid = isEditView ? (taskId as string) : '';
@@ -115,15 +168,111 @@ const ProjectTaskForm: React.FC = () => {
         project_fiscal_rid: isEditView
           ? projectTaskDetailsData?.project_fiscal_rid
           : project_Id || undefined,
+        user_preference: confirmationState.message ? 'accept' : '',
       },
       project_task_rid,
-      isEditView
+      isEditView,
+      currentResourceCode
     );
 
     if (isEditView) {
-      updateProjectTask.mutate(projectTaskData);
+      updateProjectTask.mutate(projectTaskData, {
+        onSuccess: (response) => {
+          if (response?.statusCode === 210) {
+            setConfirmationState({
+              isOpen: true,
+              message:
+                response.statusMessage ||
+                'Compensation details already exists for the resource',
+              onConfirm: () => {
+                const updatedFormValues = {
+                  ...projectTaskData,
+                  user_preference: 'accept',
+                };
+                updateProjectTask.mutate(updatedFormValues, {
+                  onSuccess: () => {
+                    setCostResourceForceSuccess(true);
+                  },
+                });
+                setConfirmationState((prev) => ({
+                  ...prev,
+                  isOpen: false,
+                  message: '',
+                }));
+              },
+            });
+          } else if (response?.statusCode === 200) {
+            setCostResourceForceSuccess(true);
+          }
+        },
+        onError: (error) => {
+          console.error('Update failed:', error);
+        },
+      });
     } else {
-      createProjectTask.mutate(projectTaskData);
+      createProjectTask.mutate(projectTaskData, {
+        onSuccess: (response) => {
+          if (response?.statusCode === 210) {
+            setConfirmationState({
+              isOpen: true,
+              message:
+                response.statusMessage ||
+                'Compensation details already exists for the resource',
+              onConfirm: () => {
+                const updatedFormValues = {
+                  ...projectTaskData,
+                  user_preference: 'accept',
+                };
+                createProjectTask.mutate(updatedFormValues, {
+                  onSuccess: () => {
+                    setCostResourceForceSuccess(true);
+                  },
+                });
+                setConfirmationState((prev) => ({
+                  ...prev,
+                  isOpen: false,
+                  message: '',
+                }));
+              },
+            });
+          } else if (response?.statusCode === 200) {
+            setCostResourceForceSuccess(true);
+          }
+        },
+        onError: (error) => {
+          console.error('Update failed:', error);
+        },
+      });
+    }
+  };
+
+  const handleCreateNewProjectResource = (resCode?: string) => {
+    const queryParams = new URLSearchParams({
+      account_Id: account_Id || '',
+      project_Id: project_Id || '',
+      account_name: account_name || '',
+      account_number: account_number || '',
+      PFY: JSON.stringify(projectPFY),
+      source: 'createProjectResource',
+      currency_rid: currency_rid ?? '',
+      projectCode: projectCode ?? '',
+      new_project_res_name: resCode || '',
+    });
+    navigate(`${PROJECT_RESOURCE_CREATE}?${queryParams.toString()}`, {
+      state: { from: location },
+    });
+  };
+
+  const onChangeField = (data: OnChange) => {
+    if (data.fieldName === 'project_resource_rid') {
+      const selectedResource = projectResourceCodeOptions?.data?.find(
+        (item) => String(item.rid) === String(data.fieldValue)
+      );
+      if (selectedResource) {
+        setCurrentResourceCode(selectedResource.resource_code);
+      } else if (!selectedResource && data.isCreate) {
+        handleCreateNewProjectResource(data.fieldValue as string);
+      }
     }
   };
 
@@ -132,8 +281,21 @@ const ProjectTaskForm: React.FC = () => {
   };
 
   const goBack = () => {
-    window.history.back();
+    if (createdNewResourceCode) {
+      navigate(pathCount ? -3 : -2);
+    } else {
+      window.history.back();
+    }
   };
+
+  const isFormLoading = resCodeLoading || getProjectTask.isLoading;
+
+  const formConfig = ProjectTaskFormData(
+    memoizedProjectResourceCode,
+    isEditView,
+    fiscalDate,
+    permissionMapTaskForm
+  );
 
   return (
     <>
@@ -142,12 +304,12 @@ const ProjectTaskForm: React.FC = () => {
           {isEditView ? (
             <EditIcon
               alt='projrct-resource-icon'
-              className='h-6 w-6 bg-[#7D98B6] p-1.5 border-box rounded'
+              className='h-8 w-8 mt-1.5 bg-[#7D98B6] p-2 border-box rounded'
             />
           ) : (
             <CreateResourceIcon
               alt='projrct-resource-icon'
-              className='h-6 w-6 bg-[#7D98B6] p-1.5 border-box rounded'
+              className='h-8 w-8 [&>path:first-child]:fill-[#7D98B6] mt-1.5 border-box rounded'
             />
           )}
 
@@ -178,24 +340,46 @@ const ProjectTaskForm: React.FC = () => {
         </div>
       </div>
       <div className='pb-4'>
-        <FormBuilder
-          data={ProjectTaskFormData(
-            memoizedProjectResourceCode,
-            isEditView,
-            fiscalDate,
-            permissionMapTaskForm
-          )}
-          values={
-            isEditView && projectTaskDetailsData
-              ? { ...projectTaskDetailsData }
-              : undefined
-          }
-          outData={submitData}
-          formRef={formRef}
-          layout={Layout.TYPE_1}
-          onChange={() => console.log('onChange')}
-          keyStart='start_date'
-          keyEnd='end_date'
+        {isFormLoading ? (
+          <SkeletonForm />
+        ) : (
+          <FormBuilder
+            data={formConfig}
+            values={
+              isEditView && projectTaskDetailsData
+                ? { ...projectTaskDetailsData }
+                : !isEditView
+                  ? { project_resource_rid: createdNewResourceCode }
+                  : {}
+            }
+            outData={submitData}
+            formRef={formRef}
+            layout={Layout.TYPE_1}
+            onChange={onChangeField}
+            keyStart='start_date'
+            keyEnd='end_date'
+          />
+        )}
+      </div>
+      <div>
+        <ConfirmationPopup
+          isOpen={confirmationState.isOpen}
+          message={confirmationState.message}
+          onConfirm={() => {
+            confirmationState.onConfirm();
+            setConfirmationState((prev) => ({
+              ...prev,
+              isOpen: false,
+              message: '',
+            }));
+          }}
+          onCancel={() => {
+            setConfirmationState((prev) => ({
+              ...prev,
+              isOpen: false,
+              message: '',
+            }));
+          }}
         />
       </div>
     </>

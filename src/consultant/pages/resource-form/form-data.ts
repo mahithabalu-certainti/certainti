@@ -11,7 +11,7 @@ import {
 import { FormFiscalDateType, FormType, SelectOption } from '../../types';
 
 // 1. Extract date constants
-const minYear = 2000;
+const minYear = 1950;
 const currentYear = new Date().getFullYear();
 export const DATE_CONFIG = {
   FISCAL_YEARS_RANGE: 6,
@@ -155,9 +155,10 @@ export const ResourceFormData = (
                 errorMessage: 'Max length exceeded',
               },
               {
-                regex: REGEX_PATTERNS.NO_LEADING_SPECIAL_REGEX,
+                regex:
+                  REGEX_PATTERNS.NO_LEADING_SPECIAL_REGEX_FOR_RESOURCE_CODE,
                 errorMessage:
-                  'Cannot start with a number, hyphen, or underscore.',
+                  'Cannot start with a space, hyphen, or underscore.',
               },
               {
                 regex: REGEX_PATTERNS.ALLOWED_CHARS_REGEX,
@@ -536,6 +537,7 @@ export const ResourceFormData = (
           createTextField('effort_in_hrs', 'Effort In Hrs', {
             required: true,
             placeholder: 'Enter Effort In Hrs',
+            formatCostValue: true,
             disabled:
               isEditView &&
               resourceCostPermissionMap?.['effort_in_hrs']?.read &&
@@ -551,6 +553,7 @@ export const ResourceFormData = (
           createTextField('salary', 'Salary', {
             required: false,
             placeholder: 'Enter Salary',
+            formatCostValue: true,
             disabled:
               isEditView &&
               resourceCostPermissionMap?.['salary']?.read &&
@@ -569,6 +572,7 @@ export const ResourceFormData = (
           createTextField('bonus', 'Bonus', {
             required: false,
             placeholder: 'Enter Bonus',
+            formatCostValue: true,
             disabled:
               isEditView &&
               resourceCostPermissionMap?.['bouns']?.read &&
@@ -587,6 +591,7 @@ export const ResourceFormData = (
           createTextField('insurance', 'Insurance', {
             required: false,
             placeholder: 'Enter Insurance',
+            formatCostValue: true,
             disabled:
               isEditView &&
               resourceCostPermissionMap?.['insurance']?.read &&
@@ -605,6 +610,7 @@ export const ResourceFormData = (
           createTextField('deductions', 'Deductions', {
             required: false,
             placeholder: 'Enter Deductions',
+            formatCostValue: true,
             disabled:
               isEditView &&
               resourceCostPermissionMap?.['deductions']?.read &&
@@ -621,6 +627,7 @@ export const ResourceFormData = (
           createTextField('resource_cost', 'Resource Cost', {
             required: isSalaryRequired,
             placeholder: 'Enter Cost',
+            formatCostValue: true,
             disabled:
               isEditView &&
               resourceCostPermissionMap?.['resource_cost']?.read &&
@@ -637,6 +644,7 @@ export const ResourceFormData = (
           createTextField('net_resource_cost', 'Net Resource Cost', {
             required: false,
             disabled: true,
+            formatCostValue: true,
             hide:
               isEditView &&
               !resourceCostPermissionMap?.['net_resource_cost']?.read &&
@@ -666,7 +674,6 @@ export const ResourceFormData = (
         fields: [
           createDateField('skill_start_date', 'Effective Date', {
             required: false,
-            minDate: new Date('1950-01-01'),
             maxDate: currentDate,
             disableFutureDates: true,
             disabled:
@@ -821,7 +828,6 @@ export const ResourceFormData = (
         fields: [
           createDateField('resource_startdate', 'Effective Date', {
             required: false,
-            minDate: new Date('1950-01-01'),
             maxDate: previousDate,
             disableFutureDates: true,
             disabled:
@@ -844,10 +850,10 @@ export const ResourceFormData = (
               isEditView &&
               !resourcePermissionMap?.['resource_enddate']?.read &&
               !resourcePermissionMap?.['resource_enddate']?.edit,
-            greaterThan: {
-              field: 'resource_startdate',
-              message: 'End Date must be after Effective Date',
-            },
+            // greaterThan: {
+            //   field: 'resource_startdate',
+            //   message: 'End Date must be after Effective Date',
+            // },
           }),
           createEmptyField('', '', {
             name: 'emptyData',

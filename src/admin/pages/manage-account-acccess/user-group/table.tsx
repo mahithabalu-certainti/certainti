@@ -4,7 +4,7 @@ import {
   useManageAccountAccessGroupList,
   useUpdateAccountAccesseDetails,
 } from '../../../service/manage-account-access/manage-account-service';
-import { ListTable } from '../../../../components/table';
+import { ListTable, ManageColumnsPopover } from '../../../../components/table';
 import { useEffect, useState } from 'react';
 import {
   AccountAccessDetail,
@@ -14,6 +14,10 @@ import {
 import { useToast } from '../../../../hooks';
 import { FilterType } from '../../../types';
 import { clearFilters } from '../../../../components/filter-component/utils';
+import {
+  ListTableColumn,
+  ShowHideTableColumn,
+} from '../../../../components/table/types';
 interface UserTableProps {
   isProfileViewEnable?: boolean;
   appliedFilters: Record<string, FilterType>;
@@ -22,12 +26,18 @@ interface UserTableProps {
   >;
   disabled?: boolean;
   hide?: boolean;
+  columnAnchorEl: HTMLButtonElement | null;
+  setColumnAnchorEl: React.Dispatch<
+    React.SetStateAction<HTMLButtonElement | null>
+  >;
 }
 export const ManageAccountUserGroupTable: React.FC<UserTableProps> = ({
   appliedFilters,
   setAppliedFilters,
   disabled,
   hide,
+  columnAnchorEl,
+  setColumnAnchorEl,
 }) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -170,51 +180,100 @@ export const ManageAccountUserGroupTable: React.FC<UserTableProps> = ({
       }
     );
   };
+  const viewUserList = (id: string) => {
+    setAppliedFilters({});
+    clearFilters();
+    searchParams.set('groupid', id);
+    searchParams.set('tabIndex', '1');
+    navigate({ search: searchParams.toString() }, { replace: true });
+  };
   const projectColumns = manageUserGroupColumns(
     handleAccountName,
-    addedAccounts
+    addedAccounts,
+    viewUserList
   );
+
+  const RestrictedColumns = [
+    {
+      id: 'group_name',
+      canHide: false,
+      canDrag: false,
+    },
+  ];
+
+  const [visibleColumns, setVisibleColumns] = useState<
+    ListTableColumn<ManageAccountsGroupList>[]
+  >(projectColumns.filter((col) => !col.hide));
+
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    setVisibleColumns(
+      updatedColumns.filter(
+        (col) => !col.hide
+      ) as ListTableColumn<ManageAccountsGroupList>[]
+    );
+  };
+
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
+  };
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const modalId = isModalOpen
+    ? 'interaction-column-visibility-popover'
+    : undefined;
+
   return (
     <div className='pt-1'>
-      <ListTable
-        data={groupList || []}
-        columns={projectColumns}
-        getRowId={getRowId}
-        hoverHighlight={false}
-        tableStyle={{
-          height: '100%',
-          maxHeight: 'calc(100vh - 180px)',
-          overflow: 'auto',
-        }}
-        stickyHeader
-        stickyColumnsCount={1}
-        selectable={false}
-        onSelectionChange={(selectedIds) =>
-          console.log('Selected:', selectedIds)
-        }
-        actionWidth={80}
-        actionDisplayMode={hide ? undefined : 'toggle'}
-        loading={isLoading}
-        error={
-          isError ? 'Failed to load Manage Account Groups Access' : undefined
-        }
-        rowsPerPageOptions={[25, 50, 100]}
-        rowsPerPage={tableParams.limit}
-        currentPage={(tableParams.page ?? 1) - 1}
-        totalItems={totalItems}
-        onPageChange={handlePageChange}
-        onRowsPerPageChange={handleRowsPerPageChange}
-        sortBy={tableParams.sortBy}
-        sortOrder={tableParams.sortOrder}
-        onSort={handleSort}
-        component='Manage-Account-Group-Access'
-        actionColumnName='Add/Remove'
-        toggleClick={toggleProjects}
-        toggleData={addedAccounts}
-        disabledToggle={disabled}
-        checkedToggleTooltip='Added'
-        unCheckedToggleTooltip='Removed'
-      />
+      <>
+        <ManageColumnsPopover
+          anchorEl={columnAnchorEl}
+          open={isModalOpen}
+          popoverId={modalId}
+          onClose={handlePopoverClose}
+          columns={projectColumns}
+          onColumnsChange={handleColumnsChange}
+          columnRestrictions={RestrictedColumns}
+        />
+        <ListTable
+          data={groupList || []}
+          columns={visibleColumns}
+          getRowId={getRowId}
+          hoverHighlight={false}
+          tableStyle={{
+            height: '100%',
+            maxHeight: 'calc(100vh - 180px)',
+            overflow: 'auto',
+          }}
+          stickyHeader
+          stickyColumnsCount={1}
+          selectable={false}
+          onSelectionChange={(selectedIds) =>
+            console.log('Selected:', selectedIds)
+          }
+          actionWidth={80}
+          actionDisplayMode={hide ? undefined : 'toggle'}
+          loading={isLoading}
+          error={
+            isError ? 'Failed to load Manage Account Groups Access' : undefined
+          }
+          rowsPerPageOptions={[25, 50, 100]}
+          rowsPerPage={tableParams.limit}
+          currentPage={(tableParams.page ?? 1) - 1}
+          totalItems={totalItems}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleRowsPerPageChange}
+          sortBy={tableParams.sortBy}
+          sortOrder={tableParams.sortOrder}
+          onSort={handleSort}
+          component='Manage-Account-Group-Access'
+          actionColumnName='Add/Remove'
+          toggleClick={toggleProjects}
+          toggleData={addedAccounts}
+          disabledToggle={disabled}
+          checkedToggleTooltip='Added'
+          unCheckedToggleTooltip='Removed'
+        />
+      </>
     </div>
   );
 };

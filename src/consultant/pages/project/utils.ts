@@ -1,6 +1,5 @@
-interface ProjectResponse {
-  project: projectDetails;
-}
+import { costDisplay, valueDisplay } from '../../../common-utils';
+
 export interface projectDetails {
   rid: string;
   r_number: string;
@@ -32,7 +31,8 @@ export interface projectDetails {
   status_rid: string;
   project_startdate: string | null;
   project_enddate: string | null;
-
+  fiscal_start_date: string | null;
+  fiscal_end_date: string | null;
   total_fte_prj: number | null;
   total_fte_from_prj_res: number | null;
   total_fte_from_tasks: number | null;
@@ -44,6 +44,7 @@ export interface projectDetails {
   total_resources_prj: number | null;
   total_resources_from_prj_res: number | null;
   total_resources_from_tasks: number | null;
+  organistaion_name: string | null;
 
   total_effort_prj: number | null;
   total_effort_fte_prj: number | null;
@@ -137,18 +138,37 @@ export interface projectDetails {
   industry_rid_name?: string;
 }
 
+export interface ProjectQreAdjustmentResponse {
+  rd_percent_potential_ai: string | null;
+  rd_percent_adjustment: string | null;
+  rd_percent_final: string | null;
+  qre_fte: string | null;
+  qre_subcon: string | null;
+  qre_nonlabor: string | null;
+  qre_final: string | null;
+}
+
 interface DisplayColumn {
   items: Array<{
     label: string;
-    value: string;
+    key?: string;
+    value: string | React.ReactNode;
     className?: string;
+    hide?: boolean;
+    editable?: boolean;
+    onSave?: (value: string) => void;
+    showHyphenForEmptyValue?: boolean;
   }>;
 }
+
 export const transformProjectData = (
-  data: ProjectResponse
+  project: projectDetails
 ): DisplayColumn[] => {
-  const project = data?.project;
-  const status = project?.status_name.toLowerCase();
+  const status = project?.status_name?.toLowerCase() || 'active';
+  const currencySymbol = project?.currency_symbol;
+  const aiEstimatedQre = project?.rd_percent_potential_ai;
+  const adjustmentFactor = project?.rd_percent_adjustment;
+
   return [
     {
       items: [
@@ -157,57 +177,124 @@ export const transformProjectData = (
           value: project?.r_number || '-',
           className: `${status === 'active' ? 'text-[#199806]' : 'text-[#f44336]'}`,
         },
-        // {
-        //   label: 'Project Code',
-        //   value: project?.project_code || '-',
-        // },
-      ],
-    },
-    {
-      items: [
-        // {
-        //   label: 'Project ID',
-        //   value: project?.r_number || '-',
-        //   className: `${status === 'active' ? 'text-[#199806]' : 'text-[#f44336]'}`,
-        // },
-        {
-          label: 'Project Name',
-          value: project?.project_name || '-',
-        },
-      ],
-    },
-
-    {
-      items: [
-        // {
-        //   label: 'Name',
-        //   value: project?.project_name || '-',
-        // },
-        { label: 'Account Name', value: project?.account_name },
-      ],
-    },
-    {
-      items: [
-        {
-          label: 'Country / Currency',
-          value: `${project?.country_code || '-'} / ${project?.currency_name || '-'}`,
-        },
-      ],
-    },
-
-    {
-      items: [
         {
           label: 'Industry',
           value: project?.industry_name || project?.industry_rid_name || '-',
         },
-        // {
-        //   label: 'Status',
-        //   value:
-        //     project?.project_status.charAt(0).toUpperCase() +
-        //     project?.project_status.slice(1),
-        // },
+        {
+          label: 'FTE Cost',
+          value: project?.total_cost_fte
+            ? costDisplay(project.total_cost_fte, currencySymbol)
+            : '-',
+        },
+        {
+          label: 'QRE Percent Potential',
+          value: aiEstimatedQre ? `${aiEstimatedQre}%` : '-',
+          key: 'ai_estimated_qre',
+        },
+      ],
+    },
+    {
+      items: [
+        {
+          label: 'Project Name',
+          value: project?.project_name || '-',
+        },
+        {
+          label: 'Business Name',
+          value: project?.organistaion_name || '-',
+        },
+        {
+          label: 'SubCon Cost',
+          value: project?.total_cost_subcon
+            ? costDisplay(project.total_cost_subcon, currencySymbol)
+            : '-',
+        },
+        {
+          label: 'QRE Percent Adjustment',
+          key: 'adjustment_factor',
+          value: adjustmentFactor ? `${adjustmentFactor}%` : '',
+          editable: aiEstimatedQre ? true : false,
+        },
+      ],
+    },
+    {
+      items: [
+        { label: 'Account Name', value: project?.account_name || '-' },
+        {
+          label: 'Fiscal Start',
+          value: project?.fiscal_start_date || '-',
+        },
+        {
+          label: 'Non-Labor Cost',
+          value: project?.total_cost_nonlabor
+            ? costDisplay(project.total_cost_nonlabor, currencySymbol)
+            : '-',
+        },
+        {
+          label: 'QRE Percent Final',
+          value: project?.rd_percent_final
+            ? `${project.rd_percent_final}%`
+            : '-',
+        },
+      ],
+    },
+    {
+      items: [
+        {
+          label: 'Country',
+          value: `${project?.country_code || '-'}`,
+        },
+        {
+          label: 'Fiscal End',
+          value: project?.fiscal_end_date || '-',
+        },
+        {
+          label: 'Project Cost',
+          value: project?.total_cost
+            ? costDisplay(project.total_cost, currencySymbol)
+            : '-',
+        },
+        {
+          label: 'QRE Final',
+          value: costDisplay(project?.qre_final, currencySymbol),
+        },
+      ],
+    },
+    {
+      items: [
+        {
+          label: 'Currency',
+          value: project?.currency_name || '-',
+        },
+        {
+          label: '',
+          value: '',
+          showHyphenForEmptyValue: false,
+        },
+        {
+          label: 'Project Effort (Hours)',
+          value: valueDisplay(project?.total_effort?.toString()) || '-',
+        }, 
       ],
     },
   ];
+};
+
+export const mergeAdjustmentResponse = (
+  project: projectDetails,
+  adjustmentResponse: ProjectQreAdjustmentResponse
+) => {
+  if (!adjustmentResponse) return project;
+
+  return {
+    ...project,
+    rd_percent_potential_ai: adjustmentResponse.rd_percent_potential_ai,
+    rd_percent_adjustment: adjustmentResponse.rd_percent_adjustment,
+    rd_percent_final: adjustmentResponse.rd_percent_final,
+    qre_fte: adjustmentResponse.qre_fte,
+    qre_subcon: adjustmentResponse.qre_subcon,
+    qre_nonlabor: adjustmentResponse.qre_nonlabor,
+    qre_final: adjustmentResponse.qre_final,
+  };
 };

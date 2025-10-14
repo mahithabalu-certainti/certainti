@@ -5,14 +5,21 @@ import {
   createEmptyField,
   createImgButton,
   createRadioField,
+  createSelectChildField,
   createSelectField,
   createTextAreaField,
   createTextField,
   REGEX_PATTERNS,
   STATUS_OPTIONS,
   YES_NO_OPTIONS,
+  formatCostValue,
 } from '../../../common-utils';
-import { FieldType, FormType, SelectOption } from '../../types';
+import {
+  FieldType,
+  FormType,
+  ParentChildSelectOption,
+  SelectOption,
+} from '../../types';
 import { fiscalYears } from '../resource-form/form-data';
 import { CloseIcon } from '../../../assets';
 const DATE_CONFIG = {
@@ -99,6 +106,12 @@ export const newKeyContactFields = (
     required: true,
     disabled: disabled || false,
   }),
+  createRadioField('interaction_cc_recipient', 'Interaction CC Recipient?', {
+    radioOptions: YES_NO_OPTIONS,
+    width: '200px',
+    required: true,
+    disabled: disabled || false,
+  }),
   createSelectField('key_contact_status', 'Key Contact Status', {
     required: false,
     width: '140px',
@@ -117,7 +130,7 @@ const createDynamicField = (
   removeKeyContact: (index: number) => void
 ) => {
   const fieldsArr: FieldType[] = [];
-  const groupIndex = Math.floor(index / 8);
+  const groupIndex = Math.floor(index / 9);
   const { name, label, ...rest } = contacts;
   const dynamicName = `${name}_${groupIndex}`;
   if (contacts.type === 'text') {
@@ -176,6 +189,8 @@ export const FormData = (
   state: SelectOption[],
   industry: SelectOption[],
   classification: SelectOption[],
+  accountList: ParentChildSelectOption[],
+  // roles: SelectOption[],
   keyContacts: FieldType[],
   addNewKeyContact: () => void,
   removeKeyContact: (index: number) => void,
@@ -186,8 +201,10 @@ export const FormData = (
   permissionMap?: Record<string, { read: boolean; edit: boolean }>,
   totalEffort?: string,
   calculatedTotalCost?: string,
+  currencyValue?: string,
   disableTotalEffort?: boolean,
-  disableTotalCost?: boolean
+  disableTotalCost?: boolean,
+  globalType?: boolean
 ): FormType[] => {
   return useMemo(
     () => [
@@ -195,6 +212,15 @@ export const FormData = (
         sectionName: 'Basic Information',
         fillType: 'half',
         fields: [
+          createSelectChildField('account_rid', 'Account Name', {
+            expandOptions: accountList,
+            placeholder: 'Choose Account Name',
+            required: true,
+            onChange: true,
+            hide: !globalType,
+            expandedAll: true,
+            disabled: isEditView,
+          }),
           createTextField('project_code', 'Project Code', {
             required: true,
             placeholder: 'Enter Project Code',
@@ -279,7 +305,6 @@ export const FormData = (
           }),
           createDateField('project_startdate', 'Start Date', {
             required: false,
-            minDate: new Date('2000-01-01'),
             maxDate: currentDate,
             disableFutureDates: true,
             disabled:
@@ -293,7 +318,6 @@ export const FormData = (
           }),
           createDateField('project_enddate', 'End Date', {
             required: false,
-            minDate: new Date('2000-01-01'),
             maxDate: currentDate,
             disabled:
               isEditView &&
@@ -544,7 +568,10 @@ export const FormData = (
           createSelectField('currency', 'Currency', {
             options: currency,
             required: false,
+            onChange: true,
+            defaultValue: currencyValue,
             placeholder: 'Choose Currency',
+            dependantLabel: 'account_rid',
             disabled:
               isEditView &&
               permissionMap?.['currency']?.read &&
@@ -599,6 +626,7 @@ export const FormData = (
             regexErrorMessage:
               'Total FTE Count must be a positive integer with up to 9 digits',
             placeholder: 'Enter Total FTE Count',
+            formatCostValue: true,
             disabled:
               isEditView &&
               permissionMap?.['total_fte']?.read &&
@@ -613,6 +641,7 @@ export const FormData = (
             regexErrorMessage:
               'Total Sub Con Count must be a positive integer with up to 9 digits',
             placeholder: 'Enter Total Sub Con Count',
+            formatCostValue: true,
             disabled:
               isEditView &&
               permissionMap?.['total_subcon']?.read &&
@@ -635,6 +664,7 @@ export const FormData = (
             placeholder: 'Enter Total FTE Effort',
             onChange: true,
             resetDependsFields: ['total_effort'],
+            formatCostValue: true,
             disabled:
               isEditView &&
               permissionMap?.['total_effort_fte']?.read &&
@@ -650,6 +680,7 @@ export const FormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             placeholder: 'Enter Total Sub Con Effort',
             onChange: true,
+            formatCostValue: true,
             resetDependsFields: ['total_effort'],
             disabled:
               isEditView &&
@@ -666,6 +697,7 @@ export const FormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             placeholder: 'Enter Total Effort In Hrs',
             onChange: true,
+            formatCostValue: true,
             defaultValue: totalEffort || '',
             disabled:
               (isEditView &&
@@ -684,6 +716,7 @@ export const FormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             placeholder: 'Enter Total FTE Cost',
             onChange: true,
+            formatCostValue: true,
             disabled:
               isEditView &&
               permissionMap?.['total_cost_fte']?.read &&
@@ -700,6 +733,7 @@ export const FormData = (
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             placeholder: 'Enter Total Sub Con Cost',
             onChange: true,
+            formatCostValue: true,
             disabled:
               isEditView &&
               permissionMap?.['total_cost_subcon']?.read &&
@@ -716,6 +750,7 @@ export const FormData = (
               'Total Non Labor Cost must be a positive integer with up to 16 digits and 2 decimal places',
             placeholder: 'Enter Total Non Labor Cost',
             onChange: true,
+            formatCostValue: true,
             disabled:
               isEditView &&
               permissionMap?.['total_cost_nonlabor']?.read &&
@@ -731,7 +766,10 @@ export const FormData = (
               'Total Cost must be a positive integer with up to 16 digits and 2 decimal places',
             placeholder: 'Enter Total Cost',
             onChange: true,
-            defaultValue: calculatedTotalCost || '',
+            formatCostValue: true,
+            defaultValue: calculatedTotalCost
+              ? formatCostValue(calculatedTotalCost)
+              : '',
             disabled:
               (isEditView &&
                 permissionMap?.['total_cost']?.read &&
@@ -825,25 +863,28 @@ export const FormData = (
       },
     ],
     [
-      statusOptions,
+      accountList,
+      globalType,
+      isEditView,
+      permissionMap,
       projectTypeOptions,
       classification,
       showClassifyOthersField,
       industry,
       showOthersField,
+      statusOptions,
       country,
       state,
       stateLoading,
       currency,
+      currencyValue,
       keyContacts,
       addNewKeyContact,
-      removeKeyContact,
-      isEditView,
-      permissionMap,
       totalEffort,
-      calculatedTotalCost,
       disableTotalEffort,
+      calculatedTotalCost,
       disableTotalCost,
+      removeKeyContact,
     ]
   );
 };

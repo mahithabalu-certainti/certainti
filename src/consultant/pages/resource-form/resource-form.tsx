@@ -58,6 +58,7 @@ import ConfirmationPopup from '../../../common-utils/confirmation-popup.tsx';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../store/store.ts';
 import { getFiscalDateBounds } from '../../../common-utils/common-utils.ts';
+import SkeletonForm from '../../../components/form-builder/skeleton-form.tsx';
 
 const ResourceForm: React.FC = () => {
   // Refs
@@ -77,6 +78,8 @@ const ResourceForm: React.FC = () => {
   // Hooks
   const { successToast } = useToast();
   const location = useLocation();
+  const fromLocation = location.state?.from;
+  const subLocation = location.state?.subLocation;
   const { resourcesid } = useParams();
   const { state } = location;
   const navigate = useNavigate();
@@ -85,6 +88,8 @@ const ResourceForm: React.FC = () => {
   const [resourceDetails, setResourceDetails] = useState<any>(null);
   const accountId = searchParams.get('account_id');
   const accNumber = searchParams.get('acc_number');
+  const account_name = searchParams.get('account_name');
+  const newResourceCode = searchParams.get('new_res_code');
   const [skillSubTypeData, setSkillSubTypeData] = useState<SelectOption[]>([]);
   const [isResourceFullNameEmpty, setIsResourceFullNameEmpty] =
     useState<boolean>(false);
@@ -583,6 +588,7 @@ const ResourceForm: React.FC = () => {
             ? 'Resource cost details updated successfully'
             : 'Resource cost details added successfully'
         );
+        navigate(-1);
       }
 
       if (state?.skill) {
@@ -591,6 +597,7 @@ const ResourceForm: React.FC = () => {
             ? 'Resource skill details updated successfully'
             : 'Resource skill details added successfully'
         );
+        navigate(-1);
       }
       if (!state?.skill && !state?.cost) {
         successToast(
@@ -599,7 +606,6 @@ const ResourceForm: React.FC = () => {
             : 'Resource created successfully'
         );
       }
-      navigate(-1);
     }
   }, [commonSuccess, isEditView, state?.cost, state?.skill]);
 
@@ -749,15 +755,35 @@ const ResourceForm: React.FC = () => {
             text: 'sample',
           }
         );
-        updateResource.mutate(updatedData as any);
+        updateResource.mutate(updatedData as any, {
+          onSuccess: () => {
+            navigate(-1);
+          },
+        });
       } else {
         const finaldata = transformPayloadforCreateResource({
-          account_number: accountData?.r_number,
-          account_id: accountData?.rid,
+          account_number: accountData?.r_number || accNumber,
+          account_id: accountData?.rid || accountId,
           created_by: userDetails.userId,
           ...formValues,
         });
-        createResource.mutate(finaldata as any);
+        createResource.mutate(finaldata as any, {
+          onSuccess: (res) => {
+            if (newResourceCode) {
+              const params = new URLSearchParams(fromLocation?.search);
+              params.set(
+                'created_resource_code',
+                res.data.resource.resource_code || ''
+              );
+              navigate(fromLocation?.pathname + '?' + params.toString(), {
+                replace: true,
+                state: { from: subLocation },
+              });
+            } else {
+              navigate(-1);
+            }
+          },
+        });
       }
     }
   };
@@ -908,6 +934,14 @@ const ResourceForm: React.FC = () => {
     resourceSKillPermissionMap
   );
 
+  const isFormLoading =
+    allCountries.isLoading ||
+    currency.isLoading ||
+    statusOptions.isLoading ||
+    skillLevelOptions.isLoading ||
+    resourceTypeOptions.isLoading ||
+    resourceStatusOptions.isLoading;
+
   return (
     <div className='resource-form-container'>
       <div className='h-[50px] border-box flex justify-between items-center border-b-2 border-gray-200 px-10 sticky top-0 z-10 bg-white'>
@@ -923,7 +957,7 @@ const ResourceForm: React.FC = () => {
           <div>
             <div className='font-semibold text-[12px] leading-[20px] ml-2 text-[#7D98B6]'>
               {!state?.skill && !state?.cost
-                ? `Account > ${accountData?.account_name}  ${state?.resource?.r_number ? `> ${state?.resource?.r_number}` : ''}`
+                ? `Account > ${accountData?.account_name || account_name}  ${state?.resource?.r_number ? `> ${state?.resource?.r_number}` : ''}`
                 : `Account > ${costAndSKillAccountInfo?.account_name} > ${resource?.data?.resourceDetails?.r_number || ''}  ${state?.costInfo?.resourceCostNumber ? `> ${state?.costInfo?.resourceCostNumber}` : ''} ${state?.skillInfo?.resourceNumber ? `>${state?.skillInfo?.resourceNumber}` : ''}`}
             </div>
             {!isEditView && (
@@ -982,36 +1016,47 @@ const ResourceForm: React.FC = () => {
         </div>
       </div>
       <div className={`${isEditView ? 'pb-10' : 'pb-4'}`}>
-        <FormBuilder
-          data={formConfig}
-          loading={allCountries.isLoading}
-          values={
-            isEditView &&
-            isSuccess &&
-            !state?.cost &&
-            !state?.skill &&
-            (resourceDetails as unknown as Record<
-              string,
-              string | number | boolean | string[] | null
-            >)
-              ? (resourceDetails as unknown as Record<
-                  string,
-                  string | number | boolean | string[] | null
-                >)
-              : state?.cost || state?.skill
-                ? (formValues as unknown as Record<
+        {isFormLoading ? (
+          <SkeletonForm />
+        ) : (
+          <FormBuilder
+            data={formConfig}
+            loading={false}
+            values={
+              isEditView &&
+              isSuccess &&
+              !state?.cost &&
+              !state?.skill &&
+              (resourceDetails as unknown as Record<
+                string,
+                string | number | boolean | string[] | null
+              >)
+                ? (resourceDetails as unknown as Record<
                     string,
                     string | number | boolean | string[] | null
                   >)
-                : undefined
-          }
-          outData={handleSubmit}
-          formRef={formRef}
-          onChange={onChangeField}
-          layout={Layout.TYPE_1}
-          keyStart={state?.cost ? 'financial_start_date' : 'resource_startdate'}
-          keyEnd={state?.cost ? 'financial_end_date' : 'resource_enddate'}
-        />
+                : state?.cost || state?.skill
+                  ? (formValues as unknown as Record<
+                      string,
+                      string | number | boolean | string[] | null
+                    >)
+                  : // : !isEditView &&
+                    //     newResourceCode &&
+                    //     !state?.cost &&
+                    //     !state?.skill
+                    //   ? { resource_code: newResourceCode }
+                    undefined
+            }
+            outData={handleSubmit}
+            formRef={formRef}
+            onChange={onChangeField}
+            layout={Layout.TYPE_1}
+            keyStart={
+              state?.cost ? 'financial_start_date' : 'resource_startdate'
+            }
+            keyEnd={state?.cost ? 'financial_end_date' : 'resource_enddate'}
+          />
+        )}
       </div>
       <ConfirmationPopup
         isOpen={confirmationState.isOpen}

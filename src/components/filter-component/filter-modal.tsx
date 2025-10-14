@@ -53,6 +53,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
   handleCloseFilter,
   handleSorting,
   onFilterChange,
+  carryFilterData = true,
 }) => {
   const location = useLocation();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -537,7 +538,9 @@ const FilterModal: React.FC<FilterModalProps> = ({
 
     setPage(1);
     setAppliedFilters(formatFilterForApi(filterStates));
-    storeFilters(filterStates);
+    if (carryFilterData) {
+      storeFilters(filterStates);
+    }
   };
 
   const handleResetFilters = (clearSort: boolean = false) => {

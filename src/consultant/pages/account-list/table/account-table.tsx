@@ -1,10 +1,10 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { generatePath, useNavigate } from 'react-router-dom';
 import { reshapeGlobalFilter } from '../../../../common-utils';
-import { ListTable } from '../../../../components/table';
+import { ListTable, ManageColumnsPopover } from '../../../../components/table';
 import { ACCOUNT, ACCOUNT_DETAILS } from '../../../../routes';
 import { RootState } from '../../../../store/store';
 import { useAccounts, useFetchColorCodes } from '../../../services/account';
@@ -17,6 +17,7 @@ import {
   ActionItem,
   CellEditData,
   FieldChangeValue,
+  ShowHideTableColumn,
 } from '../../../../components/table/types';
 import { DeleteIcon, EditIcon } from '../../../../assets';
 import { useMutation } from '@apollo/client';
@@ -39,6 +40,8 @@ const AccountTable: React.FC<Record<string, any>> = ({
   countryOptions,
   industryOptions,
   expandChild,
+  setColumnAnchorEl,
+  columnAnchorEl,
 }) => {
   const navigate = useNavigate();
   const { errorToast } = useToast();
@@ -151,12 +154,16 @@ const AccountTable: React.FC<Record<string, any>> = ({
     setOrder(direction);
   };
 
-  const accountColumns = getAccountColumns(
-    handleAccountNameClick,
-    countryOptions,
-    industryOptions,
-    handleEdit,
-    permissionMap
+  const accountColumns = useMemo(
+    () =>
+      getAccountColumns(
+        handleAccountNameClick,
+        countryOptions,
+        industryOptions,
+        handleEdit,
+        permissionMap
+      ),
+    [countryOptions, industryOptions]
   );
 
   const isSkeletonLoading = loading || colorCodes.isLoading;
@@ -282,11 +289,56 @@ const AccountTable: React.FC<Record<string, any>> = ({
     }
   };
 
+  const handlePopoverClose = () => {
+    setColumnAnchorEl(null);
+  };
+
+  const RestrictedColumns = [
+    {
+      id: 'account_name',
+      canHide: false,
+      canDrag: false,
+      // tooltip: 'Account name cannot be hidden or dragged',
+    },
+  ];
+
+  const isModalOpen = Boolean(columnAnchorEl);
+  const modalId = isModalOpen ? 'account-column-visibility-popover' : undefined;
+
+  const [columnVisibility, setColumnVisibility] = useState<
+    Record<string, boolean>
+  >(Object.fromEntries(accountColumns.map((col) => [col.id, !col.hide])));
+  const [columnOrder, setColumnOrder] = useState(
+    accountColumns.map((col) => col.id)
+  );
+
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    const newVisibility = Object.fromEntries(
+      updatedColumns.map((col) => [col.id, !col.hide])
+    );
+    setColumnVisibility(newVisibility);
+    setColumnOrder(updatedColumns.map((col) => col.id));
+  };
+
+  const visibleColumns = columnOrder
+    .map((id) => accountColumns.find((col) => col.id === id)!)
+    .filter((col) => columnVisibility[col.id]);
+
   return (
     <div className='border-t border-[#CBD6E2] h-full'>
+      {/* Column Visibility Popover */}
+      <ManageColumnsPopover
+        anchorEl={columnAnchorEl}
+        open={isModalOpen}
+        popoverId={modalId}
+        onClose={handlePopoverClose}
+        columns={accountColumns}
+        onColumnsChange={handleColumnsChange}
+        columnRestrictions={RestrictedColumns}
+      />
       <ListTable
         data={accountsList || []}
-        columns={accountColumns}
+        columns={visibleColumns}
         getRowId={getRowId}
         component={'account'}
         hoverHighlight={true}

@@ -112,7 +112,7 @@ export const costStatusOptions: { option: string; value: string }[] = [
   { option: 'Anomaly', value: 'anomaly' },
   { option: 'Duplicate', value: 'duplicate' },
 ];
-const minYear = 2000;
+const minYear = 1950;
 const currentYear = new Date().getFullYear();
 const getFiscalYears = (range: number) => {
   return Array.from({ length: range }, (_, i) => {
@@ -233,7 +233,7 @@ export interface FilterComponentProps {
     }>
   >;
   setCurrentCountry?: Dispatch<SetStateAction<string[] | null>>;
-  setCurrentPage: (page: number) => void;
+  setCurrentPage?: (page: number) => void;
   mode?: string;
   handleSorting?: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
   onFilterChange?: (fieldName: string, value: FilterValue) => void;

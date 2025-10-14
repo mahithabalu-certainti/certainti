@@ -2,6 +2,7 @@ export const MAIN_ROUTE = '/';
 
 export const LOGIN = '/login';
 export const PROFILE = '/profile';
+export const EMAIL_INTERACTION = '/ext/interaction';
 
 export const MANAGE_USER = '/manage-user';
 export const MANAGE_USER_ACCESS = '/manage-user-access';
@@ -9,7 +10,6 @@ export const MANAGE_ACCOUNT_ACCESS = '/manage-account-access';
 export const MANAGE_SETTINGS = '/manage-settings';
 export const MANAGE_GEO_BASED_RULE = '/manage-geo-based-rule';
 export const IMPORT_TEMPLATES = '/import-templates';
-export const INTERACTION_TEMPLATES = '/interaction-templates';
 export const EMAIL_TEMPLATES = '/email-templates';
 export const SURVEY_TEMPLATES = '/survey-templates';
 export const TASK_TEMPLATES = '/task-templates';
@@ -31,6 +31,11 @@ export const MANAGE_PROFILE_VIEW = `${MANAGE_PROFILE}/view/:profileId`;
 export const MANAGE_USER_GROUP = `${ADMIN}/manage-user-group`;
 export const MANAGE_USER_GROUP_CREATE = `${MANAGE_USER_GROUP}/create`;
 export const MANAGE_USER_GROUP_EDIT = `${MANAGE_USER_GROUP}/edit/:groupId`;
+
+/** ADMIN TEMPLATES ROUTES */
+export const INTERACTION_TEMPLATES = `${ADMIN}/interaction-templates`;
+export const INTERACTION_TEMPLATES_CREATE = `${INTERACTION_TEMPLATES}/create`;
+export const INTERACTION_TEMPLATES_EDIT = `${INTERACTION_TEMPLATES}/edit/:templateId`;
 
 /** ACCOUNT ROUTES */
 export const ACCOUNT = '/account';
@@ -67,6 +72,17 @@ export const PROJECT_TASK_EDIT = `${PROJECT_TASK}/edit/:taskId`;
 export const PROJECT_RESOURCE = '/project/resource';
 export const PROJECT_RESOURCE_CREATE = `${PROJECT_RESOURCE}/create`;
 export const PROJECT_RESOURCE_EDIT = `${PROJECT_RESOURCE}/edit/:resourceId`;
+
+// Interaction route
+export const INTERACTIONS = '/interactions';
+export const INTERACTIONS_DETAILS = '/interactions/details/:projectid';
+export const INTERACTIONS_BASE = `/:module/interactions`;
+export const INTERACTIONS_CREATE = `${INTERACTIONS_BASE}/create`;
+export const INTERACTIONS_EDIT = `${INTERACTIONS_BASE}/edit/:interactionId`;
+export const GLOBAL_INTERACTIONS_CREATE = `${INTERACTIONS}/create`;
+export const GLOBAL_INTERACTIONS_EDIT = `${INTERACTIONS}/edit/:interactionId`;
+export const ACCOUNT_INTERACTIONS_CREATE = `${INTERACTIONS_BASE}/account-create`;
+
 // ATTACHMENT ROUTES
 export const ATTACHMENTS = '/attachments';
 export const NOT_FOUND = '/page-not-found';

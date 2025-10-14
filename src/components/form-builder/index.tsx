@@ -1,6 +1,8 @@
 import {
   Autocomplete,
   Checkbox,
+  ClickAwayListener,
+  createFilterOptions,
   MenuItem,
   Select,
   Skeleton,
@@ -30,6 +32,7 @@ import {
   // SearchBlackIcon, /* It may use in future, based on client confirmation */
   VerticalSeparatorIcon,
   ErrorInfoIcon,
+  ArrowUpIcon,
 } from '../../assets';
 
 import { useLocation } from 'react-router-dom';
@@ -45,6 +48,7 @@ import ConfirmationPopup from '../../common-utils/confirmation-popup';
 import TextButton from '../button/text-button';
 import { ArrowDropDownIcon } from '@mui/x-date-pickers/icons';
 import FormFiscalYearDropdown from '../fiscal-dropdown/form-fiscal-dropdown';
+import { formatCostValue, removeFormatCostValue } from '../../common-utils';
 
 interface FormBuilderProps {
   data: FormType[];
@@ -93,6 +97,16 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     onConfirm: () => void;
     confirmLabel?: string;
   }>({ isOpen: false, message: '', onConfirm: () => {}, confirmLabel: '' });
+  const [expandedParents, setExpandedParents] = React.useState<string[]>([]);
+  const [menuOpen, setMenuOpen] = React.useState(false);
+  const toggleExpand = (parentId: string) => {
+    setExpandedParents((prev) =>
+      prev.includes(parentId)
+        ? prev.filter((id) => id !== parentId)
+        : [...prev, parentId]
+    );
+  };
+  const autoCompleteFilter = createFilterOptions<SelectOption>();
 
   const CommonSkeleton = (
     <Skeleton variant='rounded' width='100%' height={32} />
@@ -185,13 +199,12 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     );
 
     if (!keyContactSection) return;
-    const isFromAccount = formData?.find((item) => item.from === 'account');
-    const fieldsPerRow = newContactLength ?? 8;
+    const fieldsPerRow = newContactLength ?? 9;
     const rowCount = Math.ceil(keyContactSection.fields.length / fieldsPerRow);
 
     for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
       const baseIndex = rowIndex * fieldsPerRow;
-      const statusIndex = isFromAccount ? 7 : 6;
+      const statusIndex = 7;
       const nameField = keyContactSection.fields[baseIndex];
       const roleField = keyContactSection.fields[baseIndex + 1];
       const emailField = keyContactSection.fields[baseIndex + 2];
@@ -258,10 +271,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         );
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [constructFormData, formData]);
 
   const handleRemoveKeyContactRow = (rowIndexToRemove: number) => {
-    const fieldsPerRow = newContactLength ?? 8;
+    const fieldsPerRow = newContactLength ?? 9;
 
     setFormData((prevFormData) => {
       if (!prevFormData) return prevFormData;
@@ -333,8 +347,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   };
 
   const handleAddKeyContact = () => {
-    const isFromAccount = formData?.find((item) => item.from === 'account');
-    const fieldsPerRow = newContactLength ?? 8;
+    const fieldsPerRow = newContactLength ?? 9;
     // Update constructFormData with default values for the new row
     setConstructFormData((prevData) => {
       if (!prevData) return prevData;
@@ -349,10 +362,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       newData[`key_contact_email_${newRowIndex}`] = '';
       newData[`key_contact_rid_${newRowIndex}`] = '';
       newData[`is_primary_contact_${newRowIndex}`] = 'no';
+      newData[`interaction_cc_recipient_${newRowIndex}`] = 'no';
       newData[`include_in_communication_${newRowIndex}`] = 'no';
-      if (isFromAccount) {
-        newData[`interaction_cc_recipient_${newRowIndex}`] = 'no';
-      }
       newData[`key_contact_status_${newRowIndex}`] = 'active';
       newData[`button_${newRowIndex}`] = '';
 
@@ -366,7 +377,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     const fieldValue = (constructFormData[field.name] as string) || '';
     const fieldDisabled = field.disabled ? ' bg-gray-100' : '';
 
-    const handleChange = (value: FieldTypes, countryCode?: FieldTypes) => {
+    const handleChange = (
+      value: FieldTypes,
+      countryCode?: FieldTypes,
+      isCreate: boolean = false
+    ) => {
       const newData = {
         ...constructFormData,
         [field.name]: value,
@@ -395,6 +410,18 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             .map((f) => f.trim())
             .forEach((f) => {
               newData[f] = '';
+
+              // Also clear errors for these fields
+              setFormData((prevFormData) => {
+                if (!prevFormData) return prevFormData;
+
+                return prevFormData.map((section) => ({
+                  ...section,
+                  fields: section.fields.map((field) =>
+                    field.name === f ? { ...field, error: '' } : field
+                  ),
+                }));
+              });
             });
         });
       }
@@ -830,7 +857,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       }
 
       if (field.onChange && onChange) {
-        onChange({ fieldName: field.name, fieldValue: value });
+        onChange({
+          fieldName: field.name,
+          fieldValue: value,
+          isCreate: isCreate,
+        });
       }
 
       setFormData((prevFormData) => {
@@ -951,11 +982,48 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             className={
               'placeholder-custom-color placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ' +
               isError +
-              fieldDisabled
+              fieldDisabled +
+              (field.disabled
+                ? ' truncate overflow-hidden text-ellipsis whitespace-nowrap'
+                : '')
             }
             disabled={field.disabled}
-            onChange={(e) => handleChange(e.target.value)}
-            value={fieldValue || field.defaultValue || ''}
+            onChange={(e) => {
+              const inputValue = e.target.value;
+              if (field.formatCostValue) {
+                const cleanValue = removeFormatCostValue(inputValue);
+                // Only format if it's a valid number
+                if (/^\d*\.?\d*$/.test(cleanValue)) {
+                  const formattedValue = formatCostValue(cleanValue);
+                  // Update the input display value
+                  e.target.value = formattedValue;
+                  // Store the clean value in form data for processing
+                  handleChange(cleanValue);
+                } else {
+                  handleChange(inputValue);
+                }
+              } else {
+                handleChange(inputValue);
+              }
+            }}
+            onBlur={(e) => {
+              if (field.formatCostValue) {
+                // Reformat on blur to ensure proper formatting
+                const inputValue = e.target.value;
+                const cleanValue = removeFormatCostValue(inputValue);
+                if (/^\d*\.?\d*$/.test(cleanValue) && cleanValue !== '') {
+                  const formattedValue = formatCostValue(cleanValue);
+                  e.target.value = formattedValue;
+                }
+              }
+            }}
+            value={
+              field.formatCostValue && fieldValue
+                ? formatCostValue(fieldValue)
+                : field.formatCostValue && field.defaultValue
+                  ? formatCostValue(field.defaultValue)
+                  : fieldValue || field.defaultValue || ''
+            }
           />
         );
       case 'file':
@@ -1042,6 +1110,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 fiscalYearsOptions={field.options || []}
                 onChange={(e) => handleChange(e.target.value)}
                 isError={!!field.error}
+                disabled={field.disabled}
               />
             </div>
           );
@@ -1147,6 +1216,118 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           </div>
         );
       }
+      case 'expandselect': {
+        const fieldValue =
+          (constructFormData[field.name] || field.defaultValue) ?? '';
+
+        const handleSelectChange = (value: string) => {
+          handleChange(value);
+          setMenuOpen(false);
+        };
+
+        return (
+          <ClickAwayListener onClickAway={() => setMenuOpen(false)}>
+            <div className='w-full relative'>
+              <div
+                tabIndex={0}
+                className={`w-full h-[32px] px-3 py-1.5 border rounded-[2px] text-[13px] flex items-center justify-between
+                ${field.error ? isError : 'border-[#CBD6E2]'} 
+                ${
+                  field.disabled
+                    ? 'bg-gray-100 cursor-default'
+                    : 'cursor-pointer focus:outline-none focus:!border-2 focus:border-[#60A5FA]'
+                }`}
+                onClick={() => !field.disabled && setMenuOpen(!menuOpen)}
+              >
+                <span
+                  className={`block truncate text-[13px] ${
+                    fieldValue ? 'text-black' : 'text-[#7D98B6]'
+                  }`}
+                >
+                  {fieldValue
+                    ? (() => {
+                        for (const parent of field?.expandOptions || []) {
+                          const child = parent.childList?.find(
+                            (c) => c.child_value === fieldValue
+                          );
+                          if (child) return child.child_label;
+                        }
+                        return field.placeholder;
+                      })()
+                    : field.placeholder || 'Select'}
+                </span>
+
+                <span>
+                  <ArrowUpIcon
+                    alt={menuOpen ? 'arrowUp' : 'arrowDown'}
+                    style={{
+                      filter:
+                        'invert(62%) sepia(15%) saturate(656%) hue-rotate(179deg) brightness(90%) contrast(87%)',
+                      transform: menuOpen ? 'rotate(0deg)' : 'rotate(180deg)',
+                      transition: 'transform 0.3s ease',
+                    }}
+                  />
+                </span>
+              </div>
+              {menuOpen && (
+                <div className='absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded shadow-lg max-h-60 overflow-y-auto'>
+                  {field?.expandOptions?.map((parent, idx) => {
+                    const isExpanded = expandedParents.includes(
+                      parent.parent_value
+                    );
+                    return (
+                      <div key={idx}>
+                        {/* Parent item */}
+                        <div
+                          title={parent.parent_label}
+                          className='px-3 py-2 bg-gray-100 font-semibold text-[13px] text-[#425A76] cursor-pointer flex items-center gap-2 hover:bg-[#f4f4f4]'
+                          onClick={() => toggleExpand(parent.parent_value)}
+                        >
+                          <span>
+                            <ArrowUpIcon
+                              alt={isExpanded ? 'arrowUp' : 'arrowDown'}
+                              style={{
+                                filter:
+                                  'invert(62%) sepia(15%) saturate(656%) hue-rotate(179deg) brightness(90%) contrast(87%)',
+                                transform: isExpanded
+                                  ? 'rotate(0deg)'
+                                  : 'rotate(180deg)',
+                                transition: 'transform 0.3s ease',
+                              }}
+                            />
+                          </span>
+
+                          <span className='truncate block text-[13px] w-full'>
+                            {parent.parent_label}
+                          </span>
+                        </div>
+
+                        {/* Child items */}
+                        {!isExpanded &&
+                          parent.childList?.map((child, cIdx) => (
+                            <div
+                              title={child.child_label}
+                              key={cIdx}
+                              className='px-6 py-2 text-[#425A76] text-[13px] cursor-pointer hover:bg-[#F9F9F9] truncate'
+                              onClick={() =>
+                                handleSelectChange(child.child_value)
+                              }
+                            >
+                              <span className='truncate block text-[13px] w-full'>
+                                {child.child_label}
+                              </span>
+                            </div>
+                          ))}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </ClickAwayListener>
+        );
+      }
+
       case 'textarea':
         return (
           <textarea
@@ -1173,17 +1354,54 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             <Autocomplete
               options={field.options || []}
               disableClearable
+              freeSolo
+              forcePopupIcon={true}
               popupIcon={<ArrowDropDownIcon />}
               slotProps={{ paper: { style: { fontSize } } }}
-              onChange={(_e, newValue: SelectOption) => {
-                handleChange(newValue?.value || '');
+              onChange={(_e, newValue) => {
+                if (typeof newValue === 'string') {
+                  handleChange(newValue || '');
+                } else if (newValue && newValue?.isCreate) {
+                  handleChange(newValue.value || '', '', true);
+                } else if (newValue) {
+                  handleChange(newValue.value || '');
+                } else {
+                  handleChange('');
+                }
+              }}
+              onInputChange={() => {
+                handleChange('');
+              }}
+              filterOptions={(options, params) => {
+                const filtered = autoCompleteFilter(options, params);
+
+                const { inputValue } = params;
+                const hasPartialMatches = filtered.length > 0;
+                const isExisting = options.some(
+                  (option) =>
+                    inputValue.toLowerCase() === option.label?.toLowerCase() ||
+                    inputValue.toLowerCase() === option.value?.toLowerCase()
+                );
+                if (
+                  inputValue !== '' &&
+                  !hasPartialMatches &&
+                  !isExisting &&
+                  field.showCreateBtn
+                ) {
+                  filtered.push({
+                    label: `✚ Create "${inputValue}"`,
+                    value: inputValue,
+                    isCreate: true,
+                  });
+                }
+
+                return filtered;
               }}
               disabled={field.disabled}
               value={
-                field.options?.find((opt) => opt.value === fieldValue) || {
-                  label: '',
-                  value: '',
-                }
+                (field.options?.find((opt) => opt.value === fieldValue) ||
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  null) as any
               }
               size='small'
               sx={{
@@ -1191,10 +1409,16 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 fontSize: '13px',
                 '&.MuiAutocomplete-root .MuiOutlinedInput-root': {
                   height: '32px',
+                  background: field.error ? '#FEF2F2' : 'transparent',
                 },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  border: '2px solid #60A5FA',
+                '& .MuiInputBase-input::placeholder': {
+                  color: '#7D98B6',
+                  opacity: 1,
                 },
+                '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline':
+                  {
+                    border: '2px solid #60A5FA',
+                  },
                 '& .MuiOutlinedInput-root': {
                   '&.Mui-focused': {
                     boxShadow: 'none',
@@ -1221,6 +1445,20 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 '& svg': {
                   color: '#7D98B6',
                 },
+              }}
+              renderOption={(props, option) => {
+                const { key, ...optionProps } = props;
+                return (
+                  <li
+                    key={key}
+                    {...optionProps}
+                    style={{
+                      color: option.isCreate ? '#1976d2' : 'inherit',
+                    }}
+                  >
+                    {option.label}
+                  </li>
+                );
               }}
               renderInput={(params) => (
                 <TextField
@@ -1321,7 +1559,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 : today
               : today;
           }
-          return field?.maxDate ? dayjs(field.maxDate) : undefined;
+          return field?.maxDate ? dayjs(field.maxDate) : today;
         })();
 
         return (
@@ -1332,11 +1570,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 isError +
                 fieldDisabled
               }
-              minDate={customMinDate}
+              minDate={customMinDate || dayjs('1950-01-01')}
               maxDate={customMaxDate}
               value={dayjs(fieldValue, 'YYYY-MM-DD')}
               disabled={field.disabled}
               format='YYYY-MM-DD'
+              referenceDate={
+                customMaxDate ? dayjs(customMinDate) : dayjs(customMaxDate)
+              }
               // onOpen={() => {
               //   if (!fieldValue && isFinancialDateField && selectedFiscalYear) {
               //     // Show calendar from Jan 1 of fiscal year
@@ -1915,7 +2156,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             // Check if date is before the minimum allowed date (1-1-1950)
             const minAllowedDate =
               field.name === 'project_startdate'
-                ? dayjs('2000-01-01', 'YYYY-MM-DD')
+                ? dayjs('1950-01-01', 'YYYY-MM-DD')
                 : dayjs('1-1-1950', 'D-M-YYYY');
             if (dayjs(dateValue).isBefore(minAllowedDate, 'day')) {
               hasError = true;
@@ -1927,9 +2168,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     : field.name === 'skill_start_date'
                       ? 'Start Date cannot be before 1950-01-01'
                       : field.name === 'project_startdate'
-                        ? 'Start Date cannot be before 2000-01-01'
+                        ? 'Start Date cannot be before 1950-01-01'
                         : field.name === 'project_enddate'
-                          ? 'End Date cannot be before 2000-01-01'
+                          ? 'End Date cannot be before 1950-01-01'
                           : 'Date cannot be before 1950-01-01',
               };
             }
@@ -2066,12 +2307,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               ] as string;
               const endDate = constructFormData['resource_enddate'] as string;
 
-              // Check if one is provided without the other
-              if ((startDate && !endDate) || (!startDate && endDate)) {
+              if (!startDate && endDate) {
                 hasError = true;
                 return {
                   ...field,
-                  error: 'Both Effective Date and End Date must be provided',
+                  error: 'Effective Date is required if End Date is provided',
                 };
               }
 

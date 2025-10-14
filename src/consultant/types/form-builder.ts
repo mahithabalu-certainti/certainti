@@ -16,6 +16,8 @@ export interface FormTypeFields {
   minDate?: Date;
   maxDate?: Date;
   options?: SelectOption[];
+  expandOptions?: ParentChildSelectOption[];
+  expandedAll?: boolean;
   width?: string;
   error?: string;
   placeholder?: string;
@@ -52,11 +54,14 @@ export interface FormTypeFields {
   assignDefaultValue?: boolean;
   dependantLabel?: string;
   isFiscalYear?: boolean;
+  showCreateBtn?: boolean;
+  formatCostValue?: boolean;
 }
 
 export type InputType =
   | 'text'
   | 'select'
+  | 'expandselect'
   | 'autocomplete'
   | 'textarea'
   | 'checkbox'
@@ -74,6 +79,7 @@ export interface SelectOption {
   label: string;
   value: string;
   desc?: string;
+  isCreate?: boolean;
 }
 export interface SelectResourceOption {
   label: string;
@@ -96,7 +102,8 @@ export interface FieldType {
   minDate?: Date;
   maxDate?: Date;
   iconUrl?: React.ElementType | string;
-
+  expandOptions?: ParentChildSelectOption[];
+  expandedAll?: boolean;
   options?: SelectOption[];
   regex?: RegExp;
   regexErrorMessage?: string;
@@ -132,6 +139,8 @@ export interface FieldType {
   assignDefaultValue?: boolean;
   dependantLabel?: string;
   isFiscalYear?: boolean;
+  showCreateBtn?: boolean;
+  formatCostValue?: boolean;
 }
 
 export type AllowedCountry =
@@ -151,3 +160,13 @@ export type KeyContactHeader = {
   label: string;
   width: string;
 };
+export interface ChildList {
+  child_value: string;
+  child_label: string;
+  currency_rid?: string;
+}
+export interface ParentChildSelectOption {
+  parent_value: string;
+  parent_label: string;
+  childList: ChildList[];
+}

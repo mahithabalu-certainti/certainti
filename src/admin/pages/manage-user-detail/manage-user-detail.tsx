@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ManageUserIcon, RealatedListDetailsIcon } from '../../../assets/icons';
+import { DetailsIcon, ManageUserIcon } from '../../../assets/icons';
 import ActionsDropdown from '../../../components/actions-dropdown/actions-dropdown';
 import TextButton from '../../../components/button/text-button';
 import { useManageUserDetail } from '../../service/manage-user-detail/manage-user-detail-service';
@@ -124,7 +124,6 @@ export const ManageUserDetails: React.FC = () => {
               sx={{
                 ...BUTTON_STYLES,
                 fontSize: '13px',
-                fontWeight: 400,
                 width: '91px',
                 minWidth: '91px',
               }}
@@ -133,11 +132,11 @@ export const ManageUserDetails: React.FC = () => {
           )}
 
           <TextButton
-            label='Back'
+            label='Back To Users'
             onClick={goBack}
             sx={{
-              width: '49px',
-              minWidth: '49px',
+              width: '100px',
+              minWidth: '100px',
               fontWeight: 400,
               fontSize: '13px',
             }}
@@ -148,9 +147,12 @@ export const ManageUserDetails: React.FC = () => {
       <div className='flex flex-col gap-0 border border-[#CBD6E2] rounded-[2px]'>
         <Box className='flex items-center justify-between gap-4 h-[38px] py-1 px-2'>
           <Box className='flex items-center gap-2'>
-            <Box>
-              <RealatedListDetailsIcon alt='details' className='w-6 h-6' />
-            </Box>
+            <div className='w-[24px] h-[24px] flex items-center justify-center rounded-full bg-[#D7E5FF]'>
+              <DetailsIcon
+                alt='details'
+                className='[&>path]:stroke-[#294F98] w-[14px] h-[14px]'
+              />
+            </div>
             <Box className='text-[13px] text-[#2D3E4F] font-semibold'>
               Details
             </Box>
@@ -168,7 +170,6 @@ export const ManageUserDetails: React.FC = () => {
                   sx={{
                     ...BUTTON_STYLES,
                     fontSize: '13px',
-                    fontWeight: 600,
                     width: button.width,
                     minWidth: button.width,
                     maxWidth: button.width,

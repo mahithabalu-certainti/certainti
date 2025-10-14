@@ -5,7 +5,8 @@ export const projectResourcesPayloadData = (
   updated_resource_rid: string,
   isEdit: boolean,
   showSkillRoleOthersField?: boolean,
-  isResourceType?: boolean
+  isResourceType?: boolean,
+  autoCalculatedValue?: number
 ): Partial<ProjectResourceNewPayload> => {
   const data: Partial<ProjectResourceNewPayload> = {
     account_rid: formData.account_rid,
@@ -22,6 +23,7 @@ export const projectResourcesPayloadData = (
       ? formData.skill_role_others
       : null,
     status_rid: formData.status_rid || null,
+    project_resource_role: formData.project_resource_role || null,
     country_rid: formData.country_rid || null,
     region_rid: formData.region_rid || null,
     currency_rid: formData.currency_rid || null,
@@ -34,6 +36,7 @@ export const projectResourcesPayloadData = (
     insurance: isResourceType ? formData.insurance : null,
     deductions: formData.deductions || null,
     description: formData.description || null,
+    net_total_cost_pro_res: autoCalculatedValue?.toString() || '',
   };
 
   if (isEdit && updated_resource_rid) {
