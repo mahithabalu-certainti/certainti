@@ -125,8 +125,9 @@ export const ExportNotesList = async (
   type: ExportType,
   params: NotesListExportParams
 ) => {
+  const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const isGlobalNotes = type === 'all_notes';
-  const url = NoteExportListURL(params);
+  const url = NoteExportListURL({ ...params, timezone: systemTimezone });
   const filename = isGlobalNotes
     ? 'all_notes_records.xlsx'
     : `${params.attachmentLevel}_notes_records.xlsx`;

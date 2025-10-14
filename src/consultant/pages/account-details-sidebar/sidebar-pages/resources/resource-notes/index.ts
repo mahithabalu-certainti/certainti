@@ -1,2 +1,2 @@
-export { default as Notes } from './notes';
-export { default as NotesDetails } from './notes-details';
+export { default as Notes } from './resource-notes-list';
+export { default as NotesDetails } from './resource-notes-details';
