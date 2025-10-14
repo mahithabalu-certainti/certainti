@@ -826,6 +826,7 @@ export class ProjectResourceMapper {
 
       total_hours_pro_res: projectResource.total_hours_pro_res || null,
       total_cost_pro_res: projectResource.total_cost_pro_res || null,
+      net_total_cost_pro_res: projectResource.net_total_cost_pro_res || null,
 
       status_rid: projectResource.status_rid || null,
       country_rid: projectResource.country_rid || null,
