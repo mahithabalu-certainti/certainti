@@ -448,6 +448,7 @@ async exportresourceCostDetailsForFinancialHighlights(
         prf.project_fiscal_rid,
         prf.country_rid,
         prf.fiscal_year,
+        prf.region_rid,
         pf.project_code,
         pf.r_number,
         pf.project_name,
@@ -494,9 +495,10 @@ async exportresourceCostDetailsForFinancialHighlights(
     };
 
     // Fetch all reference data in parallel
-    const [resourceTypeMap, countryMap] = await Promise.all([
+    const [resourceTypeMap, countryMap, regionMap] = await Promise.all([
       fetchReferenceMap('resource_type', 'rid', 'resource_type_name'),
-      fetchReferenceMap('country', 'rid', 'country_code')
+      fetchReferenceMap('country', 'rid', 'country_code'),
+      fetchReferenceMap('state', 'rid', 'state_name')
     ]);
 
     // Helper function to assign reference data
@@ -547,6 +549,19 @@ async exportresourceCostDetailsForFinancialHighlights(
           : bCode.localeCompare(aCode);
       });
     }
+     else if (sortBy === "state_name") {
+      // Assign reference data first
+      results.forEach(assignReferenceData);
+      
+      // Sort in memory
+      results.sort((a: any, b: any) => {
+        const aCode = a.country_code || "";
+        const bCode = b.country_code || "";
+        return sortOrder === "ASC"
+          ? aCode.localeCompare(bCode)
+          : bCode.localeCompare(aCode);
+      });
+    }
     else {
       // Handle database-level sorting
       if (sortBy === "resource_code" || sortBy === "resource_name") {
@@ -578,6 +593,10 @@ async exportresourceCostDetailsForFinancialHighlights(
 
     const countryIds = [
       ...new Set(projectResourceFiscal.map((prf: any) => prf.country_rid)),
+    ].filter(Boolean);
+
+    const regionIds = [
+      ...new Set(projectResourceFiscal.map((prf: any) => prf.region_rid)),
     ].filter(Boolean);
 
     // Fetch detailed reference information if needed
@@ -615,7 +634,24 @@ async exportresourceCostDetailsForFinancialHighlights(
       referencePromises.push(Promise.resolve([]));
     }
 
-    const [resourceTypes, countries] = await Promise.all(referencePromises);
+    if (regionIds.length > 0) {
+      const regionQuery = `
+        SELECT rid, state_name 
+        FROM ${MAIN_SCHEMA_NAME}.state  
+        WHERE rid IN (:regionIds)
+      `;
+      referencePromises.push(
+        mainDbSequelize.query(regionQuery, {
+          replacements: { regionIds },
+          type: "SELECT",
+
+        })
+      );
+    } else {  
+      referencePromises.push(Promise.resolve([]));
+    }
+
+    const [resourceTypes, countries, regions] = await Promise.all(referencePromises);
 
     // Create maps for quick lookup
     const resourceTypeDetailMap: any = (resourceTypes as any[]).reduce((map: any, rt: any) => {
@@ -625,6 +661,11 @@ async exportresourceCostDetailsForFinancialHighlights(
 
     const countryDetailMap: any = (countries as any[]).reduce((map: any, country: any) => {
       map[country.rid] = country;
+      return map;
+    }, {});
+
+    const regionDetailMap: any = (regions as any[]).reduce((map: any, region: any) => {
+      map[region.rid] = region;
       return map;
     }, {});
 
@@ -645,9 +686,18 @@ async exportresourceCostDetailsForFinancialHighlights(
         prf.country_code = null;
         prf.country_name = null;
       }
+
+      // Add detailed region info
+      if (prf.region_rid && regionDetailMap[prf.region_rid]) {
+        prf.region_name = regionDetailMap[prf.region_rid].state_name;
+      } else {
+        prf.region_name = null;
+      }
     });
     let labelMap: Record<string, string>;
+    let permissionName = 'account_resource_cost_view'
     if (!project_rid || project_rid === undefined || project_rid === "undefined") {
+      permissionName = 'account_resource_cost_view'
       labelMap = {
       project_code: "Project Code",
       fiscal_year: "Fiscal Year",
@@ -656,33 +706,92 @@ async exportresourceCostDetailsForFinancialHighlights(
       resource_code: "Resource Code",
       resource_name: "Resource Name",
       resource_type_name: "Resource Type",
-      country_code: "Country",
+      country_name: "Country",
       total_cost_pro_res: "Net Resource Cost",
       rd_percent_final: "RD %",
       qre_final: "Project QRE",
       rd_credits_total: "RD Credit",
       };
     } else {
+      permissionName = 'project_resource_cost_view'
       labelMap = {
       resource_code: "Resource Code",
       resource_name: "Resource Name",
-      resource_type_name: "Resource Type",
-      country_code: "Country",
-      state_name: "Region",
+      resource_type_rid: "Resource Type",
+      country_rid: "Country",
+      region_rid: "Region",
       total_cost_pro_res: "Net Resource Cost",
       rd_percent_final: "RD %",
       qre_final: "Project QRE",
       rd_credits_total: "RD Credit",
       };
     }
+  
+     const rawResult = projectResourceFiscal || [];
+       const schemaService = new SchemaService();
+        const [
+        costFields
+      ] = await Promise.all([
+        schemaService.getAllowedExportFields(userId, permissionName)
+      ]);
+        const allowedFieldSet = new Set<string>();
+        for (const field of costFields) {
+          if (field.read) {
+            allowedFieldSet.add(field.field_name);
+          }
+        }
 
-    const exportData = projectResourceFiscal.map((row: any) => {
+          let exportData = rawResult.map((resource: any) => {
+         const exportData: Record<string, string> = {};  
+         console.log("resource", resource);  
+          
+          let resultMap: Record<string, any> = {};
+           if (!project_rid || project_rid === undefined || project_rid === "undefined") {
+      resultMap = {
+      project_code: resource.project_code,
+      fiscal_year: resource.fiscal_year,
+      project_name: resource.project_name,
+      r_number: resource.r_number,
+      resource_code: resource.resource_code,
+      resource_name: resource.resource_name,
+      resource_type_name: resource.resource_type_name,
+      country_name: resource.country_name,
+      total_cost_pro_res: resource.total_cost_pro_res,
+      rd_percent_final: resource.rd_percent_final,
+      qre_final: resource.qre_final,
+      rd_credits_total: resource.rd_credits_total,
+      };
+    } else {
+      resultMap = {
+      resource_code: resource.resource_code,
+      resource_name: resource.resource_name,
+      resource_type_rid: resource.resource_type_name,
+      country_rid: resource.country_name,
+      region_rid: resource.region_name,
+      total_cost_pro_res: resource.total_cost_pro_res,
+      rd_percent_final: resource.rd_percent_final,
+      qre_final: resource.qre_final,
+      rd_credits_total: resource.rd_credits_total,
+      };
+    }
+    console.log("resultMap", resultMap);
+    console.log("allowedFieldSet", allowedFieldSet);
+
+        for (const [field, value] of Object.entries(resultMap)) {
+          if (allowedFieldSet.has(field)) {
+            exportData[labelMap[field]] = value;
+          }
+         }
+         return exportData
+      });
+
+    /*const exportData = projectResourceFiscal.map((row: any) => {
       const mappedRow: Record<string, any> = {};
       Object.keys(labelMap).forEach((key) => {
         mappedRow[labelMap[key]] = row[key];
       });
       return mappedRow;
-    });
+    }); */
 
     return {
       statusCode: HttpStatus.SUCCESS,
