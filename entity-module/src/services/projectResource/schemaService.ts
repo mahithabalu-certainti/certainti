@@ -41,6 +41,8 @@ import { collapseTextChangeRangesAcrossMultipleVersions } from "typescript";
 import SchemaService from "../schemaService";
 import { getCurrencyDetailsQuery } from "../../utils/rawQueries";
 import AccountDetails from "../../models/accountDetails";
+import Decimal from "decimal.js";
+import currency from "currency.js";
 
 export class ProjectResourceSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -5399,6 +5401,41 @@ export class ProjectResourceSchemaService {
         allowedFieldSet.add(field.field_name);
       }
     }
+    
+     const formatNumberForExport = (
+            value: any,
+            currency_symbol: string
+          ): string => {
+            if (value == null || value === "") return "-";
+    
+            try {
+              const decimalValue = new Decimal(value.toString());
+              if (!decimalValue.isFinite()) return "-";
+    
+              // Always show two decimal places
+              const formattedValue = decimalValue.toFixed(2);
+    
+              // Extract just the formatted currency pattern using a dummy value
+              const pattern = currency(0, {
+            symbol: currency_symbol || "$",
+            precision: 2,
+            pattern: "! #",
+            separator: ",",
+            decimal: ".",
+              }).format(); // e.g., "$ 0.00"
+    
+              // Format actual value manually using Decimal
+              const [intPart, decPart] = formattedValue.split(".");
+              const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    
+              const formattedNumber = `${formattedInt}.${decPart}`;
+              // Replace "0.00" in pattern with our real number
+              return pattern.replace("0.00", formattedNumber);
+            } catch (error) {
+              console.error("Error formatting number:", error);
+              return "-";
+            }
+          };
 
     const labelMap: Record<string, string> = {
       resource_code: "Resource Code",
@@ -5431,7 +5468,7 @@ export class ProjectResourceSchemaService {
         resource_role: resource.resource_role || "-",
         project_resource_role: resource.project_resource_role || "-",
         total_hours_pro_res: resource.total_hours_pro_res || "-",
-        net_total_cost_pro_res: resource.net_total_cost_pro_res || "-",
+        net_total_cost_pro_res: formatNumberForExport(resource.net_total_cost_pro_res, resource.currency_symbol || '$') || "-",
         qre_percent: resource.qre_percent || "-",
         qre_final: resource.qre_final || "-",
         status_rid: resource.status_name || "-",
@@ -5473,8 +5510,17 @@ export class ProjectResourceSchemaService {
         ),
       ];
 
+      const uniqueCurrencyIds = [ 
+        ...new Set(
+          projectResources
+            .map((res) => res.currency_rid)
+            .filter((id) => id !== null && id !== undefined)
+        ),
+      ];
+
       const regionMap = new Map<string, string>();
       const countryMap = new Map<string, string>();
+      const currencyMap = new Map<string, string>();
 
       if (uniqueRegionIds.length > 0) {
         const regionsResult: any = await this.mainDbSequelize.query(
@@ -5504,14 +5550,33 @@ export class ProjectResourceSchemaService {
         }
       }
 
+        if (uniqueCurrencyIds.length > 0) {
+        const currenciesResult: any = await this.mainDbSequelize.query(
+          `SELECT rid, currency_code, currency_symbol FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid IN (:ids)`,
+          {
+            replacements: { ids: uniqueCurrencyIds },
+            type: "SELECT",
+          }
+        );
+
+       for (const currency of currenciesResult) {
+          currencyMap.set(currency.rid, currency.currency_symbol);
+        }
+      }
+
+      // Enrich each project resource object with region name
+      
+
       // Enrich each project resource object with region name
       const enrichedResources = projectResources.map((resource) => {
         const regionName = regionMap.get(resource.region_rid) || null;
         const countryName = countryMap.get(resource.country_rid) || null;
+        const currencySymbol = currencyMap.get(resource.currency_rid) || null;
         return {
           ...(resource.dataValues ?? resource),
           region_name: regionName,
           country_name: countryName,
+          currency_symbol: currencySymbol,
         };
       });
 
