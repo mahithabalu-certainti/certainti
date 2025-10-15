@@ -1631,7 +1631,7 @@ async executeQueriesForFinancialHighlights(
         let resultMap = {
           "account_name": resource.account_name || "-",
           "resource_code": resource.resource_code || "-",
-          "fiscal_year": resource.fiscal_year || "-",
+          "fiscal_year": `FY-${resource.fiscal_year}` || "-",
           "resource_name": resource.resource_name || "-",
           "resource_type_rid": resource.resource_type_name || "-",
           "effective_from": resource.effective_from ? moment(resource.effective_from).format('YYYY-MMM-DD') : "-",
