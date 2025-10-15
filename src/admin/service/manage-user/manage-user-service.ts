@@ -49,7 +49,7 @@ export const useManageUserList = (
     queryFn: () => fetchManageUserList(params),
     staleTime: 0, // No cache
     gcTime: 0, // Immediately remove from cache
-    enabled: !!refreshUserTrigger,
+    // enabled: !!refreshUserTrigger,
   });
 };
 

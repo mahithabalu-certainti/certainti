@@ -70,6 +70,7 @@ export interface User {
   status_rid: string;
   full_name: string;
   first_name: string;
+  last_name: string;
   profile: UserProfile;
   business_teams: BusinessTeams;
   created_datetime: string;

@@ -50,6 +50,7 @@ import { projectTaskFilterFields } from '../../project/project-details/project-t
 import { FormFiscalDateType } from '../../../types';
 import SearchBar from '../../../../components/search/search-bar';
 import { getNotesFilterFields } from '../../notes/helpers';
+import { useManageUserList } from '../../../../admin/service';
 interface TabProps {
   resourceTab?: ResourceTabs[];
   filterVisibility: boolean;
@@ -170,6 +171,23 @@ const TabPanel: React.FC<TabProps> = ({
     projectResourceProjectID as string,
     value === 'project-task' ? 'project_tasks' : 'project_resources'
   );
+
+  // User List Api
+  const { data: userListData } = useManageUserList({
+    page: 1,
+    limit: 2000,
+    sortBy: 'first_name',
+    sortOrder: 'ASC',
+  });
+
+  const userListOptions = useMemo(() => {
+    return (
+      userListData?.data?.users?.map((item) => ({
+        value: item.rid,
+        label: `${item.first_name} ${item.last_name}`,
+      })) || []
+    );
+  }, [userListData]);
 
   const { data: skillType } = useFetchResourceSkillType(value === 'skill');
   const { data: skillSubType } = useFetchResourceSkillSubType(
@@ -491,7 +509,7 @@ const TabPanel: React.FC<TabProps> = ({
     if (value === 'attachments')
       return getAttachmentsFilterFields(fieldOptions, attachmentPermissionMap);
     if (value === 'notes')
-      return getNotesFilterFields(resourceNotesPermissionMap);
+      return getNotesFilterFields(resourceNotesPermissionMap, userListOptions);
     return value === 'cost'
       ? getCostFilterFields(
           memoizedCurrency,
@@ -524,6 +542,7 @@ const TabPanel: React.FC<TabProps> = ({
     fieldOptions,
     attachmentPermissionMap,
     resourceNotesPermissionMap,
+    userListOptions,
     memoizedCurrency,
     resourceCostpermissionMap,
     memoizedSkillType,

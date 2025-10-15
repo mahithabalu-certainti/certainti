@@ -32,6 +32,7 @@ import { resourceClient } from '../../../../../../api/graphql/clients/client';
 import { useMutation } from '@apollo/client';
 import { checkPermission } from '../../../../../../common-utils';
 import { AccessRestricted } from '../../../../../../components/account-restricted';
+import { useManageUserList } from '../../../../../../admin/service';
 
 interface ResourceNotesListProps {
   fiscalYear?: number;
@@ -94,6 +95,14 @@ const ResourceNotesList: React.FC<ResourceNotesListProps> = ({
   const noteId = searchParams.get('note_id');
   const viewDetails = !!noteId;
 
+  // User List Api
+  const { data: userListData } = useManageUserList({
+    page: 1,
+    limit: 2000,
+    sortBy: 'first_name',
+    sortOrder: 'ASC',
+  });
+
   const { data, isLoading, isError } = useNotesList(
     {
       page: currentPage + 1,
@@ -122,6 +131,15 @@ const ResourceNotesList: React.FC<ResourceNotesListProps> = ({
   const accountInActive =
     accountDetails?.data?.accountById?.status?.status_name?.toLowerCase() !==
       'active' || resourceInActive;
+
+  const userListOptions = useMemo(() => {
+    return (
+      userListData?.data?.users?.map((item) => ({
+        value: item.rid,
+        label: `${item.first_name} ${item.last_name}`,
+      })) || []
+    );
+  }, [userListData]);
 
   // Permissions
   const isNotesExportEnable = checkPermission(
@@ -198,7 +216,8 @@ const ResourceNotesList: React.FC<ResourceNotesListProps> = ({
     handleNoteView,
     handleDownload,
     isNotesExportEnable,
-    permissionMap
+    permissionMap,
+    userListOptions
   );
   const getRowId = (row: NotesList) => row.rid;
 

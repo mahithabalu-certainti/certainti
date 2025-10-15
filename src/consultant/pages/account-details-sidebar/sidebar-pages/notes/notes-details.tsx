@@ -142,7 +142,7 @@ const NotesDetails: React.FC<NoteDetailsProps> = ({
     },
     {
       label: 'Note Owner',
-      value: data?.notes_owner,
+      value: data?.notes_owner_name,
       key: 'notes_owner',
     },
     {
@@ -205,7 +205,7 @@ const NotesDetails: React.FC<NoteDetailsProps> = ({
             title=''
             data={noteDescriptionDetails}
             fullColumn={true}
-            customStyle='mt-0'
+            customStyle='pt-[1px]'
           />
           <DetailsSection
             title='Audit Information'

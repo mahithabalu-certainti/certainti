@@ -23,6 +23,7 @@ export const NOTES_UPDATE = gql`
         size_in_mb
         title
         notes_owner
+        notes_owner_name
         descriptions
         created_by_name
         modified_by_name
