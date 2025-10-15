@@ -890,6 +890,7 @@ async function exportAllImportedData(req: Request, res: Response) {
           : data[mapping.dataField];
       }
     });
+    if(exportRecord["Fiscal Year"] != undefined) exportRecord["Fiscal Year"] = `FY-${exportRecord["Fiscal Year"]}`
 
     return exportRecord;
   });

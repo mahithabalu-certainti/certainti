@@ -1267,7 +1267,7 @@ async function exportAllInteractions(req: Request, res: Response) {
                   }
                 });
               }
-
+              if(exportRecord["Fiscal Year"] != undefined) exportRecord["Fiscal Year"] = `FY-${exportRecord["Fiscal Year"]}`
               return exportRecord;
             });
 
@@ -1621,6 +1621,9 @@ async function exportResponseHistory(req: Request, res: Response) {
       data
     );
     if (result.statusCodeValue == HttpStatus.SUCCESS_MESSAGE) {
+      let timezone;
+      if(data.timezone != undefined) timezone = data.timezone
+      else timezone = "UTC"
       let structuredData = result.data.map((d: any) => {
         let isoDate = new Date(d.response_on).toISOString();
         return {
@@ -1630,7 +1633,7 @@ async function exportResponseHistory(req: Request, res: Response) {
           "Response On":
             d.response_on == null
               ? ""
-              : moment.utc(d.response_on).utcOffset('+05:30').format('YYYY-MMM-DD, hh:mm:ss A'),
+              : moment(d.response_on).tz(timezone).format("YYYY-MMM-DD hh:mm:ss A"),
           "Response Email-ID": d.response_email,
           "Response By": d.response_by,
         };
@@ -2319,11 +2322,19 @@ async function exportInteractionHistory(req: Request, res: Response) {
     }
     const result = await interactionService.fetchInteractionHistory(data);
     if (result.statusCodeValue == HttpStatus.SUCCESS_MESSAGE) {
+      let timezone : string
+      if(data.timezone != undefined) {
+        const res = isValidTimezone(data.timezone)
+        if(res) timezone = data.timezone
+      }else timezone = "UTC"
+      
       let finalStructuredData = result.data.data.interaction_history.map(
-        (data: any) => ({
-          Action: data.status_name,
-          Date: data.date,
-        })
+        (data: any) => {
+          return {
+            Action: data.status_name,
+            Date: moment(data.date).tz(timezone).format("YYYY-MMM-DD hh:mm:ss A"),
+          }
+        }
       );
       const generateBase64Response = await generateExcelBase64(
         finalStructuredData,
