@@ -55,6 +55,8 @@ import axios from "axios";
 import { Kafka, Producer } from "kafkajs";
 import { SchedulerExecutions } from "../../models/schedulerExecution";
 import { errorLog, logMessage } from "../../utils/helpers";
+import "moment-timezone";
+import moment from "moment";
 
 type filterType = {
   [key: string]: {
@@ -2536,12 +2538,13 @@ export class InteractionService {
           sourceMap.get(responseData.interaction_source_rid) || null,
         interaction_history: sortedData.map((d: any) => {
           let isoDate = new Date(d.date).toISOString();
-          let formattedDate = isoDate.replace("Z", "+00:00");
+          // let formattedDate = 
+          // isoDate.replace("Z", "+00:00");
           return {
             rid: d.interaction_history_rid,
             status_rid: d.new_status_rid,
             status_name: d.status_name,
-            date: formattedDate,
+            date: isoDate ? moment(isoDate).add(5, 'hours').add(30, 'minutes').format('YYYY-MMM-DD, hh:mm:ss A') : null,
           };
         }),
       };
