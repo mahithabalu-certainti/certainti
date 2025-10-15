@@ -163,6 +163,8 @@ interface ProjectResourceCodeData {
   rid: string;
   resource_code: string;
   resource_name: string;
+  start_date: string;
+  end_date: string;
 }
 export interface ProjectResourceTaskTypeResponse extends CommonApiResponse {
   data: {
@@ -183,11 +185,13 @@ interface ProjectResourceType {
   classification_description?: string;
   classification_status?: string;
 }
-interface ProjectResourceTaskCodeData {
+export interface ProjectResourceTaskCodeData {
   rid: string;
   resource_code: string;
   resource_name: string;
   project_resource_role: string;
+  start_date: string;
+  end_date: string;
 }
 // skill type
 export interface PRSkillSubTypeResponse extends CommonApiResponse {

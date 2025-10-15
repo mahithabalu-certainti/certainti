@@ -522,6 +522,12 @@ const Resource: React.FC<ResourceProps> = ({
     permission || [],
     AllPermissions.ATTACHMENT_CREATE
   );
+
+  const isNoteCreateEnable = checkPermission(
+    permission || [],
+    AllPermissions.NOTES_CREATE
+  );
+
   const handleBackClick = () => {
     if (source === 'timesheet') {
       const timesheetId = searchParams.get('timesheet_id');
@@ -584,7 +590,7 @@ const Resource: React.FC<ResourceProps> = ({
       variant: 'outlined' as const,
       onClick: () => handleCreateNote(),
       sx: { ...BUTTON_STYLES, width: '80px', minWidth: '80px' },
-      hide: value !== 'details',
+      hide: value !== 'details' || !isNoteCreateEnable,
       disabled: accountInActive ? accountInActive : resourceInActive,
     },
     {

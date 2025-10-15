@@ -222,6 +222,7 @@ export const ProjectTask = ({
     accountID || '',
     refreshTaskDetailPageTrigger
   );
+
   const { successToast } = useToast();
   const updateStatusAccept = useUpdateProjectTaskStatus();
   const totalItems = data?.count || 0;
@@ -287,7 +288,8 @@ export const ProjectTask = ({
 
   const resourceData = resourceDetails?.data;
   const { data: projectResourceCodeOptions } = useGetProjectResourceCode(
-    accountID as string
+    accountID as string,
+    projectID as string
   );
   const memoizedProjectResourceCode: SelectOption[] = useMemo(
     () =>

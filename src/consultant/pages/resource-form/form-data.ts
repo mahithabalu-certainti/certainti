@@ -89,7 +89,8 @@ export const ResourceFormData = (
   fiscalDate?: FormFiscalDateType,
   resourcePermissionMap?: Record<string, { read: boolean; edit: boolean }>,
   resourceCostPermissionMap?: Record<string, { read: boolean; edit: boolean }>,
-  resourceSkillPermissionMap?: Record<string, { read: boolean; edit: boolean }>
+  resourceSkillPermissionMap?: Record<string, { read: boolean; edit: boolean }>,
+  isResourceExists?: boolean
 ): FormType[] => {
   // const commandsHide =
   //   isEditView &&
@@ -831,9 +832,10 @@ export const ResourceFormData = (
             maxDate: previousDate,
             disableFutureDates: true,
             disabled:
-              isEditView &&
-              resourcePermissionMap?.['resource_startdate']?.read &&
-              !resourcePermissionMap?.['resource_startdate']?.edit,
+              (isEditView &&
+                resourcePermissionMap?.['resource_startdate']?.read &&
+                !resourcePermissionMap?.['resource_startdate']?.edit) ||
+              isResourceExists,
             hide:
               isEditView &&
               !resourcePermissionMap?.['resource_startdate']?.read &&
@@ -843,9 +845,10 @@ export const ResourceFormData = (
             required: false,
             maxDate: currentDate,
             disabled:
-              isEditView &&
-              resourcePermissionMap?.['resource_enddate']?.read &&
-              !resourcePermissionMap?.['resource_enddate']?.edit,
+              (isEditView &&
+                resourcePermissionMap?.['resource_enddate']?.read &&
+                !resourcePermissionMap?.['resource_enddate']?.edit) ||
+              isResourceExists,
             hide:
               isEditView &&
               !resourcePermissionMap?.['resource_enddate']?.read &&
@@ -1042,6 +1045,7 @@ export const ResourceFormData = (
       rNumberHide,
       modifiedOnHide,
       modifiedByHide,
+      isResourceExists,
     ]
   );
 };

@@ -904,6 +904,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               newData[f.name] = '';
               updatedField.error = '';
             }
+            // clear selected date when other field change
+            if (f.clearDate === field.name) {
+              newData[f.name] = '';
+              updatedField.error = '';
+            }
             // Handle name/email error clearing when Include In Communications is No
             if (
               field.name.startsWith('key_contact_name_') ||
@@ -1409,7 +1414,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 fontSize: '13px',
                 '&.MuiAutocomplete-root .MuiOutlinedInput-root': {
                   height: '32px',
-                  background: field.error ? '#FEF2F2' : 'transparent',
+                  background: field.error
+                    ? '#FEF2F2'
+                    : field.disabled
+                      ? '#f3f4f6'
+                      : 'transparent',
                 },
                 '& .MuiInputBase-input::placeholder': {
                   color: '#7D98B6',
@@ -1563,11 +1572,13 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         })();
 
         return (
-          <LocalizationProvider dateAdapter={AdapterDayjs} 
-          localeText={{
-            fieldMonthPlaceholder: (params) =>
-              params.contentType === 'digit' ? 'MM' : params.format,
-          }}>
+          <LocalizationProvider
+            dateAdapter={AdapterDayjs}
+            localeText={{
+              fieldMonthPlaceholder: (params) =>
+                params.contentType === 'digit' ? 'MM' : params.format,
+            }}
+          >
             <DatePicker
               className={
                 'placeholder:text-[13px] placeholder:text-[#425A76] placeholder:border border-[#CBD6E2]' +
@@ -1605,7 +1616,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 ),
                 clearIcon: () => (
                   <CloseIcon alt='calendar' className='w-2.5 h-2.5' />
-                ), 
+                ),
               }}
               slotProps={{
                 field: { clearable: !field.disabled },
@@ -1623,7 +1634,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     },
                   },
                 },
-                textField: { 
+                textField: {
                   fullWidth: true,
                   size: 'small',
                   disabled: field.disabled,
@@ -1665,7 +1676,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                       },
                     },
                   },
-                  placeholder: field.placeholder, 
+                  placeholder: field.placeholder,
                   error: !!field.error,
                   // onBlur: (event) => {
                   //   // For cache typed data
@@ -1683,11 +1694,13 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       }
       case 'fiscalDate':
         return (
-          <LocalizationProvider dateAdapter={AdapterDayjs}
-          localeText={{
-            fieldMonthPlaceholder: (params) =>
-              params.contentType === 'digit' ? 'MM' : params.format,
-          }}>
+          <LocalizationProvider
+            dateAdapter={AdapterDayjs}
+            localeText={{
+              fieldMonthPlaceholder: (params) =>
+                params.contentType === 'digit' ? 'MM' : params.format,
+            }}
+          >
             <DatePicker
               className={
                 'placeholder:text-[13px] placeholder:text-[#425A76] placeholder:font-medium border border-[#CBD6E2]' +

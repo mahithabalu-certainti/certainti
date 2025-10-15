@@ -237,7 +237,8 @@ export const ProjectResources = ({
     });
   }, [sortField, sortOrder, appliedFilters, searchText]);
   const { data: projectResourceCodeOptions } = useGetProjectResourceCode(
-    accountID as string
+    accountID as string,
+    projectID as string
   );
   const { successToast } = useToast();
   const updateStatusAccept = useUpdateProjectResourceStatus();

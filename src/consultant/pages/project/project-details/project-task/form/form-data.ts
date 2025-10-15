@@ -138,6 +138,7 @@ export const ProjectTaskFormData = (
             minDate: fiscalDate?.startMin,
             maxDate: fiscalDate?.startMax,
             disableFutureDates: true,
+            clearDate: 'project_resource_rid',
             disabled:
               isEditView &&
               permissionMapTaskForm?.['start_date']?.read &&
@@ -151,6 +152,7 @@ export const ProjectTaskFormData = (
             required: true,
             minDate: fiscalDate?.startMin,
             maxDate: fiscalDate?.endMax,
+            clearDate: 'project_resource_rid',
             disabled:
               isEditView &&
               permissionMapTaskForm?.['end_date']?.read &&

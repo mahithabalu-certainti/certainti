@@ -8,7 +8,11 @@ import {
   Layout,
   OnChange,
 } from '../../../../../../common-service';
-import { FormFiscalDateType, SelectResourceOption } from '../../../../../types';
+import {
+  FormFiscalDateType,
+  ProjectResourceTaskCodeData,
+  SelectResourceOption,
+} from '../../../../../types';
 import TextButton from '../../../../../../components/button/text-button';
 import { FormBuilder } from '../../../../../../components';
 import { ProjectTaskFormData } from './form-data';
@@ -57,9 +61,22 @@ const ProjectTaskForm: React.FC = () => {
   const [costResourceForceSuccess, setCostResourceForceSuccess] =
     React.useState(false);
   const [currentResourceCode, setCurrentResourceCode] =
-    React.useState<string>('');
-  const fiscalDate: FormFiscalDateType = projectPFY
-    ? JSON.parse(projectPFY)
+    React.useState<ProjectResourceTaskCodeData>();
+
+  const parseDate: {
+    year: number;
+    startMin?: string;
+    startMax?: string;
+    endMax?: string;
+  } = JSON.parse(projectPFY || '');
+
+  const fiscalDate = projectPFY
+    ? ({
+        year: parseDate.year,
+        endMax: currentResourceCode?.end_date || parseDate.startMax,
+        startMax: currentResourceCode?.end_date || parseDate.startMax,
+        startMin: currentResourceCode?.start_date || parseDate.startMin,
+      } as FormFiscalDateType)
     : undefined;
   const getProjectTask = useProjectTaskDetail(
     taskId as string,
@@ -118,9 +135,18 @@ const ProjectTaskForm: React.FC = () => {
 
   useEffect(() => {
     if (isEditView) {
-      setCurrentResourceCode(projectTaskDetailsData?.resource_code || '');
+      const selectedResource = projectResourceCodeOptions?.data?.find(
+        (item) => String(item.rid) === String(createdNewResourceCode)
+      );
+      if (selectedResource) {
+        setCurrentResourceCode(selectedResource);
+      }
     }
-  }, [isEditView, projectTaskDetailsData?.resource_code]);
+  }, [
+    isEditView,
+    projectTaskDetailsData?.resource_code,
+    projectResourceCodeOptions?.data,
+  ]);
 
   // Permission Mangement
   const { permission } = useSelector((state: RootState) => state.permission);
@@ -183,7 +209,7 @@ const ProjectTaskForm: React.FC = () => {
       const selectedResource = projectResourceCodeOptions?.data?.find(
         (item) => String(item.rid) === String(createdNewResourceCode)
       );
-      setCurrentResourceCode(selectedResource?.resource_code || '');
+      setCurrentResourceCode(selectedResource);
     }
   }, [createdNewResourceCode, projectResourceCodeOptions?.data]);
 
@@ -200,7 +226,7 @@ const ProjectTaskForm: React.FC = () => {
       },
       project_task_rid,
       isEditView,
-      currentResourceCode
+      currentResourceCode?.resource_code as string
     );
 
     if (isEditView) {
@@ -297,7 +323,7 @@ const ProjectTaskForm: React.FC = () => {
         (item) => String(item.rid) === String(data.fieldValue)
       );
       if (selectedResource) {
-        setCurrentResourceCode(selectedResource.resource_code);
+        setCurrentResourceCode(selectedResource);
       } else if (!selectedResource && data.isCreate) {
         handleCreateNewProjectResource(data.fieldValue as string);
       }

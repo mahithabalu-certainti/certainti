@@ -88,10 +88,7 @@ export const ProjectResourceFormData = (
               'insurance',
               'resource_orgname',
             ],
-            disabled:
-              isEditView &&
-              permissionMap?.['resource_code']?.read &&
-              !permissionMap?.['resource_code']?.edit,
+            disabled: isEditView,
             hide:
               isEditView &&
               !permissionMap?.['resource_code']?.read &&
@@ -183,10 +180,8 @@ export const ProjectResourceFormData = (
             minDate: fiscalDate?.startMin,
             maxDate: fiscalDate?.startMax,
             disableFutureDates: true,
-            disabled:
-              isEditView &&
-              permissionMap?.['start_date']?.read &&
-              !permissionMap?.['start_date']?.edit,
+            clearDate: 'resource_code',
+            disabled: isEditView,
             hide:
               isEditView &&
               !permissionMap?.['start_date']?.read &&
@@ -200,10 +195,8 @@ export const ProjectResourceFormData = (
             //   field: 'start_date',
             //   message: 'End Date must be after Start Date',
             // },
-            disabled:
-              isEditView &&
-              permissionMap?.['end_date']?.read &&
-              !permissionMap?.['end_date']?.edit,
+            clearDate: 'resource_code',
+            disabled: isEditView,
             hide:
               isEditView &&
               !permissionMap?.['end_date']?.read &&
