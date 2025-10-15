@@ -1266,7 +1266,7 @@ async function exportAllInteractions(req: Request, res: Response) {
                   }
                 });
               }
-
+              if(exportRecord["Fiscal Year"] != undefined) exportRecord["Fiscal Year"] = `FY-${exportRecord["Fiscal Year"]}`
               return exportRecord;
             });
 
