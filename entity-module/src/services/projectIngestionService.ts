@@ -2500,6 +2500,7 @@ class ProjectIngestionService {
       const fiscalSummaries = project.ProjectFiscal || [];
 
       const fiscalRows = fiscalSummaries.map((fiscal: any) => {
+        let modifiedDateTime = fiscal.modified_datetime;
         const rawFiscalRow = {
           "Project Code": fiscal.project_code
             ? fiscal.project_code + " - FY" + fiscal.fiscal_year
@@ -2539,12 +2540,13 @@ class ProjectIngestionService {
           "Technical Point of Contact":
             fiscal.technical_point_of_contact || "-",
           Comments: fiscal.comments || "-",
-          "Last Modified": fiscal.modified_datetime
+          "Last Modified": modifiedDateTime
             ? timezone && isValidTimezone(timezone)
-              ? moment(fiscal.modified_datetime)
-                  .tz(timezone)
+              ? moment
+                  .tz(modifiedDateTime.toISOString(), timezone)
+                  .add(5, 'hours').add(30, 'minutes')
                   .format("YYYY-MMM-DD, hh:mm:ss A")
-              : moment(fiscal.modified_datetime).format(
+              : moment(modifiedDateTime.toISOString()).add(5, 'hours').add(30, 'minutes').format(
                   "YYYY-MMM-DD, hh:mm:ss A"
                 )
             : "-",
