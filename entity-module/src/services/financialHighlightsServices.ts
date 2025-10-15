@@ -565,8 +565,33 @@ export default class FinancialHighlightsService {
         rd_credits_total: "RD Credit",
       };
 
+      let formattedResult = formattedSummary.map((summary) => ({
+        rid: summary.rid,
+        r_number: summary.r_number,
+        account_rid: summary.account_rid,
+        project_rid: summary.project_rid,
+        project_name: summary.project_name || null,
+        project_code: summary.project_code || null,
+        fiscal_year: `FY-${summary.fiscal_year}`,
+        country_rid: summary.country_rid,
+        region_rid: summary.region_rid,
+        currency_rid: summary.currency_rid,
+        currency_symbol: currencyMap.get(summary.currency_rid) || null,
+        total_cost_fte_prj: summary.total_cost_fte_prj,
+        total_cost_subcon_prj: summary.total_cost_subcon_prj,
+        total_cost_nonlabor_prj: summary.total_cost_nonlabor_prj,
+        total_cost_prj: summary.total_cost_prj,
+        rd_percent_final: summary.rd_percent_final,
+        qre_final: summary.qre_final,
+        rd_credits_total: summary.rd_credits_total,
+        created_by: summary.created_by,
+        modified_by: summary.modified_by,
+        created_datetime: summary.created_datetime,
+        modified_datetime: summary.modified_datetime,
+      }));
+
       const exportData = await Promise.all(
-        formattedSummary.map(async (row: any) => {
+        formattedResult.map(async (row: any) => {
           const mappedRow: Record<string, any> = {};
           for (const key of Object.keys(labelMap)) {
             if (

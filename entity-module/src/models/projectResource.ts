@@ -25,6 +25,7 @@ interface ProjectResourceAttributes {
 
   total_hours_pro_res?: number | null;
   total_cost_pro_res?: number | null;
+  net_total_cost_pro_res?: number | null;
 
   status_rid: string | null;
   country_rid?: string | null;
@@ -79,6 +80,7 @@ export class ProjectResource
 
   public total_hours_pro_res?: number | null;
   public total_cost_pro_res?: number | null;
+  public net_total_cost_pro_res?: number | null;
 
   public status_rid!: string | null;
   public country_rid?: string | null;
@@ -144,6 +146,7 @@ export class ProjectResource
         },
         total_hours_pro_res: { type: DataTypes.DECIMAL(18, 2) },
         total_cost_pro_res: { type: DataTypes.DECIMAL(18, 2) },
+        net_total_cost_pro_res: { type: DataTypes.DECIMAL(18, 2) },
 
         status_rid: { type: DataTypes.STRING(50) },
         country_rid: { type: DataTypes.STRING(50) },

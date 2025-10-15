@@ -1962,6 +1962,7 @@ const exportListAttachmentsSchema = Joi.object({
     }),
     sortBy: Joi.string().default("created_datetime").optional(),
     sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
+    timezone: Joi.string().optional()
 })
 
 const listAttachmentSummarySchema = Joi.object({
@@ -2040,6 +2041,7 @@ const exportListAttachmentSummarySchema = Joi.object({
     globalFilters: Joi.string().default("{}").optional(),
     sortBy: Joi.string().default("created_datetime").optional(),
     sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
+    timezone: Joi.string().optional()
 })
 
 const getDocumentTypeAndCategorySchema = Joi.object({
@@ -2086,7 +2088,7 @@ const createProjectResourceSchema = Joi.object({
       "date.invalidFormat":
         "Invalid end_date. Please use the format YYYY-MM-DD",
     }),
-
+  net_total_cost_pro_res: Joi.string(),
   total_hours_pro_res: Joi.string()
   .pattern(decimal18_2Regex)
   .messages({
@@ -2200,6 +2202,7 @@ const updateProjectResourceSchema = Joi.object({
   })
   .optional()
   .allow(null),
+  net_total_cost_pro_res: Joi.string(),
   total_cost_pro_res: Joi.string()
   .pattern(decimal18_2Regex)
   .messages({
@@ -2883,6 +2886,7 @@ const listNotesSchema = Joi.object({
 })
 
 const exportListNotesSchema = Joi.object({
+    timezone: Joi.string().optional(),
     attachmentLevel: Joi.string()
         .valid('account', 'project', 'project_resource', 'project_task', 'resource', 'resource_cost', 'resource_skill')
         .required()
@@ -2982,6 +2986,7 @@ const listNotesSummarySchema = Joi.object({
 })
 
 const exportListNotesSummarySchema = Joi.object({
+    timezone: Joi.string().optional(),
     search: Joi.string()
         .max(255)
         .allow('')

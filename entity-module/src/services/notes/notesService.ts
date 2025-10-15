@@ -17,6 +17,7 @@ import moment from "moment";
 import { IFetchNotesDetailsInput } from "../../utils/types";
 import { fetchActiveStatus, fetchNotesById, fetchUsers } from "../../utils/rawQueries";
 import { generateSasUrl } from "../../utils/blob";
+import { isValidTimezone } from "../../utils/valideTimeChecker";
 
 export class NotesService {
     private logger: Logger;
@@ -602,7 +603,8 @@ export class NotesService {
       sortBy: string = 'created_datetime',
       sortOrder: string = 'DESC',
       fiscalYear: number = 0,
-      graphqlData? : any
+      graphqlData? : any,
+      timezone : string = ``
     ): Promise<{
       statusCode: number;
       message: string;
@@ -1000,7 +1002,7 @@ export class NotesService {
           }));
     
         notes = notes.map((at) => {
-        const rawMapped = this.mapAttachmentToCommonFormat(at); // with internal keys
+        const rawMapped = this.mapAttachmentToCommonFormat(at, timezone); // with internal keys
         const filtered: Record<string, any> = {};
         for (const [fieldKey, value] of Object.entries(rawMapped)) {
           const label = labelMap[fieldKey]; // field_desc
@@ -1336,7 +1338,8 @@ export class NotesService {
       globalFilters: Record<string, any> = {},
       sortBy: string = 'created_datetime',
       sortOrder: string = 'DESC',
-      fiscalYear: number = 0
+      fiscalYear: number = 0,
+      timezone : string = ``
     ): Promise<{
       statusCode: number;
       message: string;
@@ -1622,7 +1625,7 @@ export class NotesService {
           "Download": "Download"
         };
         attachments = attachments.map((at) => {
-        const rawMapped = this.mapAttachmentToCommonFormat(at); // with internal keys
+        const rawMapped = this.mapAttachmentToCommonFormat(at, timezone); // with internal keys
         const filtered: Record<string, any> = {};
         for (const [fieldKey, value] of Object.entries(rawMapped)) {
           const label = labelMap[fieldKey]; // field_desc
@@ -1858,7 +1861,7 @@ private async getAttachmentDisplayNames(attachments: any[], schemaNumber: string
   return displayNames;
 }
 
-private mapAttachmentToCommonFormat(at: any) {
+private mapAttachmentToCommonFormat(at: any, timezone : string) {
   return {
   "Note ID": at.r_number || "-",
   "Title": at.title || "-",
@@ -1866,14 +1869,30 @@ private mapAttachmentToCommonFormat(at: any) {
   "Related Entity": at.attachment_level || "-",
   "Related To ID": at.attach_to || "-",
   "Related To Name": at.attached_to || "-", // added as per labelMap
-  "Fiscal Year": at.fiscal_year || "-",
+  "Fiscal Year": `FY-${at.fiscal_year}` || "-",
   "Document Name": at.document_name || "-",
   "Format": at.format || "-",
   "Size": at.size_in_mb || "-",
   "Created By": at.created_by_name || "-",
-  "Created On": at.created_datetime ? moment(at.created_datetime).format("YYYY-MMM-DD, hh:mm:ss A") : "-",
+  "Created On": at.created_datetime
+    ? timezone && isValidTimezone(timezone)
+    ? moment(at.created_datetime)
+        .tz(timezone)
+        .format("YYYY-MMM-DD, hh:mm:ss A")
+    : moment(at.created_datetime).format(
+        "YYYY-MMM-DD, hh:mm:ss A"
+      )
+  : "-",
   "Modified By": at.modified_by_name || "-",
-  "Modified On": at.modified_datetime ? moment(at.modified_datetime).format("YYYY-MMM-DD, hh:mm:ss A") : "-",
+  "Modified On": at.modified_datetime 
+    ? timezone && isValidTimezone(timezone)
+    ? moment(at.modified_datetime)
+        .tz(timezone)
+        .format("YYYY-MMM-DD, hh:mm:ss A")
+    : moment(at.modified_datetime).format(
+        "YYYY-MMM-DD, hh:mm:ss A"
+      )
+  : "-",
   "Download": at.browse_file || "-"
 };
 }
