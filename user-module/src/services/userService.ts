@@ -1370,37 +1370,22 @@ async getAllUserPermission(userId: string, profileId: string) {
     return permissions;
   }
 
-   async getUserPermissionForView(userId: string) {
+  async getUserPermissionForView(userId: string) {
     const permissions: any[] = [];
-
-    // Menus
-   
-
-    // Modules
-   
-
-    // Permissions
     const mainDbSequelize = await initSequelize();
-    const permissionQuery = `
-    select distinct  m.rid as menu_id, mp.rid as module_permission_id, mp.permission_name,mp.permission_desc,
-    mm.module_name,mm.module_desc,m.menu_name,m.menu_desc,mp.is_field_available
-from 
-trd365.user_permission_access ua , 
-trd365.module_permission mp,
-trd365.menu_module mm,
-trd365.menu m
-where mp.rid = ua.module_permission_id
-and mp.menu_module_id = mm.rid
-and m.rid = mm.menu_id
-and ua.is_enabled = true
-and ua.user_id = :userId
-order by mp.permission_desc asc
-    `;
+
+    // First, get all menu IDs and module IDs from user_permission_access
+    const permissionQuery = rawQuery.getUserExtendedPermissionsQuery();
     const permissionAccess: any[] = await mainDbSequelize.query(permissionQuery, {
       replacements: { userId },
       type: QueryTypes.SELECT,
     });
+
+    // Collect menu IDs and module IDs from permission access
+    const permissionMenuIds = new Set(permissionAccess.map(pa => pa.menu_id));
+    const permissionModuleIds = new Set(permissionAccess.map(pa => pa.module_id));
     
+    // Process permission access data
     for (const pa of permissionAccess) {
       const permissionData: any = {
         menu_id: pa.menu_id,
@@ -1446,70 +1431,61 @@ order by mp.permission_desc asc
 
       permissions.push(permissionData);
     }
-    
 
-    // Permissions
-  /*  const permissionAccess = await UserPermissionAccess.findAll({
-      where: { user_id: userId, is_enabled: true },
-      include: [{ model: ModulePermission, as: "module_permission" }],
-       order: [[{ model: ModulePermission, as: "module_permission" }, "permission_desc", "ASC"]],
-      indexHints: [
-        {
-          type: IndexHints.USE,
-          values: ["idx_user_permission_access_user_id"],
-        },
-      ],
-    });
-    
-    permissionAccess.forEach((pa) => {
-      const paWithPerm = pa as any;
-      if (paWithPerm.module_permission) {
-        permissions.push({
-          rid: paWithPerm.rid,
-          type: "permission",
-          permission_id: paWithPerm.module_permission_id,
-          module_id: paWithPerm.module_permission.menu_module_id,
-          module_name: paWithPerm.module_permission.module_name,
-          name: paWithPerm.module_permission.permission_name,
-          desc: paWithPerm.module_permission.permission_desc,
-          is_enabled: paWithPerm.is_enabled,
-        });
-      }
-    }); 
-
-    const fieldAccess = await UserFieldsAccess.findAll({
-      where: {
-      user_id: userId,
-      [Op.or]: [
-        { read: true },
-        { edit: true }
-      ],
-      
+    // Now find extra menus from user_menu_access that are not in permission access
+    const extraMenuAccess = await UserMenuAccess.findAll({
+      where: { 
+        user_id: userId,
+        is_enabled: true,
+        menu_id: {
+          [Op.notIn]: Array.from(permissionMenuIds)
+        }
       },
-      include: [{ model: PermissionField, as: "permission_field" }],
-      order: [[{ model: PermissionField, as: "permission_field" }, "sort_order", "ASC"]],
-      indexHints: [
-      { type: IndexHints.USE, values: ["idx_user_fields_access_user_id"] },
-      ],
+      include: [{ model: Menu, as: "menu" }],
+      order: [
+        [{ model: Menu, as: "menu" }, "menu_category", "DESC"],
+        [{ model: Menu, as: "menu" }, "sort_order", "ASC"]
+      ]
     });
 
-    fieldAccess.forEach((fa) => {
-      const faWithField = fa as any;
-      if (faWithField.permission_field) {
+    // Add extra menus to permissions
+    extraMenuAccess.forEach((ma: any) => {
+      if (ma.menu) {
         permissions.push({
-          rid: faWithField.rid,
-          type: "field",
-          field_id: faWithField.permission_field.rid,
-          permission_id: faWithField.permission_field.module_permission_id,
-          name: faWithField.permission_field.field_name,
-          desc: faWithField.permission_field.field_desc,
-          read: faWithField.read,
-          edit: faWithField.edit,
+          menu_id: ma.menu.rid,
+          menu_name: ma.menu.menu_name,
+          menu_desc: ma.menu.menu_desc,
+          is_enabled: ma.is_enabled,
         });
       }
     });
-    */
 
+    // Find extra modules from user_module_access that are not in permission access
+    const extraModuleAccess = await UserModuleAccess.findAll({
+      where: { 
+        user_id: userId,
+        is_enabled: true,
+        menu_module_id: {
+          [Op.notIn]: Array.from(permissionModuleIds)
+        }
+      },
+      include: [{ model: MenuModule, as: "menu_module" }],
+      order: [[{ model: MenuModule, as: "menu_module" }, "sort_order", "ASC"]],
+    });
+
+    // Add extra modules to permissions
+    extraModuleAccess.forEach((mo: any) => {
+      if (mo.menu_module) {
+        permissions.push({
+          module_id: mo.menu_module.rid,
+          menu_id: mo.menu_module.menu_id,
+          module_name: mo.menu_module.module_name,
+          module_desc: mo.menu_module.module_desc,
+          is_enabled: mo.is_enabled,
+        });
+      }
+    });
+    
     return permissions;
   }
 
