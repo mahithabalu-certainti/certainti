@@ -1318,7 +1318,6 @@ async getAllUserPermission(userId: string, profileId: string) {
         },
       ],
     });
-    
     permissionAccess.forEach((pa) => {
       const paWithPerm = pa as any;
       if (paWithPerm.module_permission) {
