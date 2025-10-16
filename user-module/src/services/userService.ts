@@ -1327,7 +1327,6 @@ async getAllUserPermission(userId: string, profileId: string) {
           type: "permission",
           permission_id: paWithPerm.module_permission_id,
           module_id: paWithPerm.module_permission.menu_module_id,
-          module_name: paWithPerm.module_permission.module_name,
           name: paWithPerm.module_permission.permission_name,
           desc: paWithPerm.module_permission.permission_desc,
           is_enabled: paWithPerm.is_enabled,
