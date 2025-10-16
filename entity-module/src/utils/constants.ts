@@ -864,8 +864,8 @@ export const rawQueries = {
         support_email = '${data.support_email}',
         tenant_id = '${data.tenant_id}',
         client_id = '${data.client_id}',
-        client_secret = '${encryptedSecretKey}',
-        subscription_created = true
+        client_secret = '${data.client_secret ? encryptedSecretKey : ''}',
+        subscription_created = ${subscriptionId ? "true" : "false"}
         WHERE account_rid = '${parentAccountID}'
         `;
 
