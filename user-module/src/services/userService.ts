@@ -1318,6 +1318,7 @@ async getAllUserPermission(userId: string, profileId: string) {
         },
       ],
     });
+    
     permissionAccess.forEach((pa) => {
       const paWithPerm = pa as any;
       if (paWithPerm.module_permission) {
@@ -1326,6 +1327,7 @@ async getAllUserPermission(userId: string, profileId: string) {
           type: "permission",
           permission_id: paWithPerm.module_permission_id,
           module_id: paWithPerm.module_permission.menu_module_id,
+          module_name: paWithPerm.module_permission.module_name,
           name: paWithPerm.module_permission.permission_name,
           desc: paWithPerm.module_permission.permission_desc,
           is_enabled: paWithPerm.is_enabled,
@@ -1364,6 +1366,149 @@ async getAllUserPermission(userId: string, profileId: string) {
         });
       }
     });
+
+    return permissions;
+  }
+
+   async getUserPermissionForView(userId: string) {
+    const permissions: any[] = [];
+
+    // Menus
+   
+
+    // Modules
+   
+
+    // Permissions
+    const mainDbSequelize = await initSequelize();
+    const permissionQuery = `
+    select distinct  m.rid as menu_id, mp.rid as module_permission_id, mp.permission_name,mp.permission_desc,
+    mm.module_name,mm.module_desc,m.menu_name,m.menu_desc,mp.is_field_available
+from 
+trd365.user_permission_access ua , 
+trd365.module_permission mp,
+trd365.menu_module mm,
+trd365.menu m
+where mp.rid = ua.module_permission_id
+and mp.menu_module_id = mm.rid
+and m.rid = mm.menu_id
+and ua.is_enabled = true
+and ua.user_id = :userId
+order by mp.permission_desc asc
+    `;
+    const permissionAccess: any[] = await mainDbSequelize.query(permissionQuery, {
+      replacements: { userId },
+      type: QueryTypes.SELECT,
+    });
+    
+    for (const pa of permissionAccess) {
+      const permissionData: any = {
+        menu_id: pa.menu_id,
+        module_id: pa.module_id,
+        module_permission_id: pa.module_permission_id,
+        menu_desc: pa.menu_desc,
+        module_desc: pa.module_desc,
+        permission_desc: pa.permission_desc,
+        is_field_available: pa.is_field_available,
+      };
+
+      // If fields are available for this permission, fetch field info from user field access
+      if (pa.is_field_available) {
+        const fieldAccess = await UserFieldsAccess.findAll({
+          where: {
+            user_id: userId,
+            [Op.or]: [
+              { read: true },
+              { edit: true }
+            ],
+          },
+          include: [{ 
+            model: PermissionField, 
+            as: "permission_field",
+            where: {
+              module_permission_id: pa.module_permission_id
+            },
+            required: true
+          }],
+          order: [[{ model: PermissionField, as: "permission_field" }, "sort_order", "ASC"]],
+        });
+
+        const fields = fieldAccess.map((fa: any) => ({
+          field_id: fa.permission_field.rid,
+          field_name: fa.permission_field.field_name,
+          field_desc: fa.permission_field.field_desc,
+          read: fa.read,
+          edit: fa.edit,
+        }));
+
+        permissionData.fields = fields;
+      }
+
+      permissions.push(permissionData);
+    }
+    
+
+    // Permissions
+  /*  const permissionAccess = await UserPermissionAccess.findAll({
+      where: { user_id: userId, is_enabled: true },
+      include: [{ model: ModulePermission, as: "module_permission" }],
+       order: [[{ model: ModulePermission, as: "module_permission" }, "permission_desc", "ASC"]],
+      indexHints: [
+        {
+          type: IndexHints.USE,
+          values: ["idx_user_permission_access_user_id"],
+        },
+      ],
+    });
+    
+    permissionAccess.forEach((pa) => {
+      const paWithPerm = pa as any;
+      if (paWithPerm.module_permission) {
+        permissions.push({
+          rid: paWithPerm.rid,
+          type: "permission",
+          permission_id: paWithPerm.module_permission_id,
+          module_id: paWithPerm.module_permission.menu_module_id,
+          module_name: paWithPerm.module_permission.module_name,
+          name: paWithPerm.module_permission.permission_name,
+          desc: paWithPerm.module_permission.permission_desc,
+          is_enabled: paWithPerm.is_enabled,
+        });
+      }
+    }); 
+
+    const fieldAccess = await UserFieldsAccess.findAll({
+      where: {
+      user_id: userId,
+      [Op.or]: [
+        { read: true },
+        { edit: true }
+      ],
+      
+      },
+      include: [{ model: PermissionField, as: "permission_field" }],
+      order: [[{ model: PermissionField, as: "permission_field" }, "sort_order", "ASC"]],
+      indexHints: [
+      { type: IndexHints.USE, values: ["idx_user_fields_access_user_id"] },
+      ],
+    });
+
+    fieldAccess.forEach((fa) => {
+      const faWithField = fa as any;
+      if (faWithField.permission_field) {
+        permissions.push({
+          rid: faWithField.rid,
+          type: "field",
+          field_id: faWithField.permission_field.rid,
+          permission_id: faWithField.permission_field.module_permission_id,
+          name: faWithField.permission_field.field_name,
+          desc: faWithField.permission_field.field_desc,
+          read: faWithField.read,
+          edit: faWithField.edit,
+        });
+      }
+    });
+    */
 
     return permissions;
   }
@@ -2446,7 +2591,7 @@ async getAllUserPermission(userId: string, profileId: string) {
    logMessage(`Fetching user extended permissions for edit view userId: ${userId}, profileId: ${profileId}`);
 
     const [ userPermissions] = await Promise.all([
-      this.getUserPermission(userId)
+      this.getUserPermissionForView(userId)
     ]);
 
     // Create map of user permissions by key for quick lookup
