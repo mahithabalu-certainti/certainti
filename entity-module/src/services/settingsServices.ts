@@ -206,6 +206,27 @@ export default class SettingService {
             );
             subscriptionId = "";
           }
+        }else{
+          try {
+            subscriptionId = await this.validateAndCreateSubscription(
+              data.tenant_id,
+              data.client_id,
+              data.client_secret,
+              data.support_email
+            );
+            if(subscriptionId === null){
+              return {
+                statusCode: HttpStatus.BAD_REQUEST,
+                statusMessage: `Subscription already exists for ${data.support_email}`,
+              }
+            }
+          } catch (err) {
+            errorLog("Error in update settings: " + (err as Error).message);
+            return {
+              statusCode: HttpStatus.BAD_REQUEST,
+              statusMessage: STATUS_MESSAGE.invalidCredentials,
+            }
+          }
         }
       }
 

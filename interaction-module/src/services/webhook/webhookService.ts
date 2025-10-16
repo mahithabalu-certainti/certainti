@@ -768,7 +768,7 @@ export class WebHookService {
       .get();
 
     const subject = message.subject;
-    if (!subject.toLowerCase().includes("interaction invitation")) {
+    if (!subject.toLowerCase().includes("interaction invitation") && !subject.toLowerCase().includes("reminder: r&d credits claims process interaction")) {
       this.logger.error("Subject is not related to interaction. Skipping.");
       return {
         success: false,
