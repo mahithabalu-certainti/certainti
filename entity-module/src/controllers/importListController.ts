@@ -5,6 +5,8 @@ import { errorLog, generateExcelBase64, handleErrorResponse, handleSuccessRespon
 import { validateLoadErrorListRequest, validateStagingErrorListRequest } from '../utils/helpers';
 import { generateSasUrl } from '../utils/blob';
 import { exportImportedAccountLevelProjects, exportImportedAccountLevelProjectTasks, exportImportedAccountLevelResources, importedAccountLevelProjects, importedAccountLevelProjectTasks, importedAccountLevelResources } from '../lib/joi/schemas/schema';
+import { isValidTimezone } from '../utils/valideTimeChecker';
+import moment from 'moment';
 const services = Configurations.getInstance().getServices();
 const importServices = services.importGraphqlServices;
 
@@ -778,7 +780,17 @@ async function exportAllImportedData(req: Request, res: Response) {
   if (data.filters.imported_by) {
     importedByFilter = data.filters.imported_by;
   }
-
+  let timezone;
+  if(data.timezone != undefined) {
+    const res = isValidTimezone(data.timezone)
+    if(res) {
+      timezone = data.timezone
+    } else {
+      timezone = "UTC"
+    }
+  } else {
+    timezone = "UTC"
+  }
   let flatData = result.data.flatMap((d: any) => {
     return d.imports == null
       ? []
@@ -796,7 +808,7 @@ async function exportAllImportedData(req: Request, res: Response) {
             records_with_warning: data.records_with_warning,
             status: data.status,
             status_description: data.status_description,
-            imported_on: new Date(data.imported_on).toISOString(),
+            imported_on: data.imported_on !== undefined || data.imported_on !== null ? moment(data.imported_on).tz(timezone).format("YYYY-MMM-DD hh:mm:ss A") : null,
             imported_by: data.imported_by,
           };
           if (!isTimeSheet) {
@@ -890,6 +902,7 @@ async function exportAllImportedData(req: Request, res: Response) {
           : data[mapping.dataField];
       }
     });
+    if(exportRecord["Fiscal Year"] != undefined) exportRecord["Fiscal Year"] = `FY-${exportRecord["Fiscal Year"]}`
 
     return exportRecord;
   });
