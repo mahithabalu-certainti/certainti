@@ -1388,6 +1388,7 @@ async getAllUserPermission(userId: string, profileId: string) {
     // Process permission access data
     for (const pa of permissionAccess) {
       const permissionData: any = {
+        type: "permission",
         menu_id: pa.menu_id,
         module_id: pa.module_id,
         module_permission_id: pa.module_permission_id,
@@ -1432,7 +1433,47 @@ async getAllUserPermission(userId: string, profileId: string) {
       permissions.push(permissionData);
     }
 
-    // Now find extra menus from user_menu_access that are not in permission access
+   
+
+    const extraModuleAccess = await UserModuleAccess.findAll({
+      where: { 
+        user_id: userId,
+        is_enabled: true,
+        menu_module_id: {
+          [Op.notIn]: Array.from(permissionModuleIds)
+        }
+      },
+      include: [{ 
+        model: MenuModule, 
+        as: "menu_module",
+        include: [{
+          model: Menu,
+          as: "menu",
+          attributes: ["menu_name", "menu_desc"]
+        }]
+      }],
+      order: [[{ model: MenuModule, as: "menu_module" }, "sort_order", "ASC"]],
+    });
+
+    // Add extra modules to permissions
+    extraModuleAccess.forEach((mo: any) => {
+      if (mo.menu_module) {
+        // Add the menu ID from extra modules to the permissionMenuIds set
+        permissionMenuIds.add(mo.menu_module.menu_id);
+        
+        permissions.push({
+          type: "module",
+          module_id: mo.menu_module.rid,
+          menu_id: mo.menu_module.menu_id,
+          module_name: mo.menu_module.module_name,
+          module_desc: mo.menu_module.module_desc,
+          menu_desc: mo.menu_module.menu?.menu_desc || null,
+          is_enabled: mo.is_enabled,
+        });
+      }
+    });
+
+     // Now find extra menus from user_menu_access that are not in permission access
     const extraMenuAccess = await UserMenuAccess.findAll({
       where: { 
         user_id: userId,
@@ -1452,39 +1493,17 @@ async getAllUserPermission(userId: string, profileId: string) {
     extraMenuAccess.forEach((ma: any) => {
       if (ma.menu) {
         permissions.push({
+          type: "menu",
           menu_id: ma.menu.rid,
           menu_name: ma.menu.menu_name,
           menu_desc: ma.menu.menu_desc,
-          is_enabled: ma.is_enabled,
+          is_enabled: ma.is_enabled
         });
       }
     });
 
     // Find extra modules from user_module_access that are not in permission access
-    const extraModuleAccess = await UserModuleAccess.findAll({
-      where: { 
-        user_id: userId,
-        is_enabled: true,
-        menu_module_id: {
-          [Op.notIn]: Array.from(permissionModuleIds)
-        }
-      },
-      include: [{ model: MenuModule, as: "menu_module" }],
-      order: [[{ model: MenuModule, as: "menu_module" }, "sort_order", "ASC"]],
-    });
-
-    // Add extra modules to permissions
-    extraModuleAccess.forEach((mo: any) => {
-      if (mo.menu_module) {
-        permissions.push({
-          module_id: mo.menu_module.rid,
-          menu_id: mo.menu_module.menu_id,
-          module_name: mo.menu_module.module_name,
-          module_desc: mo.menu_module.module_desc,
-          is_enabled: mo.is_enabled,
-        });
-      }
-    });
+    
     
     return permissions;
   }
