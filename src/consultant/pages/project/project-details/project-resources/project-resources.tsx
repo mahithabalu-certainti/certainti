@@ -287,10 +287,12 @@ export const ProjectResources = ({
         ':resourceId',
         resourceData.rid
       );
+      const PFY = projectFiscalDate;
       const queryParams = new URLSearchParams({
         account_Id: resourceData.account_rid,
         project_Id: resourceData?.project_fiscal_rid,
         projectCode: projectCode ?? '',
+        PFY: PFY ? JSON.stringify(PFY) : '',
       });
       navigate(`${path}?${queryParams.toString()}`);
     }
