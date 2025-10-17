@@ -47,63 +47,100 @@ export const UserDetailComponent = ({
     });
     return map;
   }, [userViewEditFields]);
-  const permissionTable = useMemo(() => {
-    const modulesData = data?.permissions
-      ?.filter((item) => item.type === 'module')
-      .map((module) => {
-        // Find parent menu
-        const menu = data?.permissions?.find(
-          (m) => m.type === 'menu' && m.menu_id === module.menu_id
-        );
 
-        // Find permissions under this module
-        const permissions = data?.permissions?.filter(
-          (p) => p.type === 'permission' && p.module_id === module.module_id
-        );
-
-        // Collect permission names and sort alphabetically
-        const permissionNames = permissions?.map((p) => p.desc);
-        const sortedPermissionNames = permissionNames?.sort((a, b) =>
-          a.localeCompare(b)
-        );
-
-        // Collect fields belonging to any of those permissions
-        const permissionIds = permissions?.map((p) => p.permission_id);
-        const fields = data?.permissions?.filter(
-          (f) => f.type === 'field' && permissionIds?.includes(f.permission_id)
-        );
-
-        // Collect field names and sort alphabetically
-        const fieldNames = fields?.map((f) => f.desc);
-        const sortedFieldNames = fieldNames?.sort((a, b) => a.localeCompare(b));
-
-        return {
-          rid: module.rid,
-          menu: menu?.desc || '',
-          modules: module.desc,
-          permissions: sortedPermissionNames?.join(', '),
-          fields: sortedFieldNames?.join(', '),
+  const transformedData = useMemo(() => {
+    const menus: {
+      [key: string]: {
+        menu_id: string | number | undefined;
+        menu_desc: string;
+        modules: {
+          [key: string]: {
+            module_desc: string;
+            permissions: string[];
+            fields: string[];
+            hasPermission: boolean;
+          };
         };
-      });
+      };
+    } = {};
 
-    const standaloneMenus = data?.permissions
-      ?.filter((item) => item.type === 'menu')
-      ?.filter((menu) => {
-        const hasModules = data?.permissions?.some(
-          (item) => item.type === 'module' && item.menu_id === menu.menu_id
-        );
-        return !hasModules;
-      })
-      ?.map((menu) => ({
-        rid: menu.rid,
-        menu: menu.desc || '',
-        modules: '',
-        permissions: '',
-        fields: '',
-      }));
-    const combinedData = [...(modulesData || []), ...(standaloneMenus || [])];
-    return combinedData?.sort((a, b) => a.menu.localeCompare(b.menu));
-  }, [data?.permissions]);
+    data?.permissions?.forEach((item) => {
+      if (item.menu_id !== undefined && !menus[item.menu_id]) {
+        menus[item.menu_id] = {
+          menu_id: item.menu_id,
+          menu_desc: item.menu_desc || '',
+          modules: {},
+        };
+      }
+
+      if (item.type === 'module') {
+        if (!menus[item.menu_id].modules[item.module_id]) {
+          menus[item.menu_id].modules[item.module_id] = {
+            module_desc: item.module_desc || item.module_name || '',
+            permissions: [],
+            fields: [],
+            hasPermission: false,
+          };
+        }
+      }
+
+      if (item.type === 'permission') {
+        if (!menus[item.menu_id].modules[item.module_id]) {
+          menus[item.menu_id].modules[item.module_id] = {
+            module_desc: item.module_desc || '',
+            permissions: [],
+            fields: [],
+            hasPermission: false,
+          };
+        }
+
+        const moduleGroup = menus[item.menu_id].modules[item.module_id];
+        moduleGroup.hasPermission = true;
+        moduleGroup.permissions.push(item.permission_desc);
+
+        if (item.is_field_available && item.fields?.length) {
+          moduleGroup.fields.push(...item.fields.map((f) => f.field_desc));
+        }
+      }
+    });
+
+    const output: PermissionTable[] = [];
+    Object.values(menus).forEach((menu) => {
+      const moduleValues = Object.values(menu.modules);
+
+      if (moduleValues.length === 0) {
+        output.push({
+          rid: String(output.length + 1),
+          menu: menu.menu_desc,
+          modules: '',
+          permissions: '',
+          fields: '',
+        });
+      } else {
+        moduleValues.forEach((module) => {
+          if (!module.hasPermission) {
+            output.push({
+              rid: String(output.length + 1),
+              menu: menu.menu_desc,
+              modules: module.module_desc,
+              permissions: '',
+              fields: '',
+            });
+          } else {
+            output.push({
+              rid: String(output.length + 1),
+              menu: menu.menu_desc,
+              modules: module.module_desc,
+              permissions: module.permissions.join(', '),
+              fields: module.fields.join(', '),
+            });
+          }
+        });
+      }
+    });
+
+    return output;
+  }, [data]);
 
   if (loading) {
     return (
@@ -259,7 +296,7 @@ export const UserDetailComponent = ({
         <div className='text-sm p-3 grid gap-y-3'>
           <div className='w-full border-t border-l border-solid border-[#CBD6E2]'>
             <ListTable
-              data={permissionTable as PermissionTable[]}
+              data={transformedData}
               columns={ExtendedPermissionColumns()}
               getRowId={(row: PermissionTable) => row.rid}
               hoverHighlight={false}
