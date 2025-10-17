@@ -155,6 +155,7 @@ export enum AllModules {
   USER_GROUP = 'manage_user_group',
   PROFILE_MANAGEMENT = 'profile_management',
   ATTACHMENTS = 'attachments',
+  NOTES = 'notes',
   IMPORTS = 'imports',
   MANAGE_ACCOUNT_ACCESS = 'manage_account_access',
   INTERACTIONS = 'interactions',
@@ -250,6 +251,11 @@ export enum AllPermissions {
   PROJECT_TECHNICAL_SUMMARY_TIMELINE = 'project_technical_summary_timeline',
   PROJECT_TECHNICAL_SUMMARY_VIEW_EDIT = 'projects_tech_summary_view_edit',
   PROJECT_TECHNICAL_SUMMARY_EXPORT = 'projects_tech_summary_export',
+  NOTES_OVERVIEW = 'notes_overview',
+  NOTES_TIMELINE = 'notes_timeline',
+  NOTES_VIEW_EDIT = 'notes_view_edit',
+  NOTES_EXPORT = 'notes_export',
+  NOTES_CREATE = 'notes_create',
 }
 
 export interface Country {
@@ -258,6 +264,8 @@ export interface Country {
 }
 
 export type FieldTypes = string | string[] | dayjs.Dayjs | null | File;
+
+export type FilterTypes = Record<string, string | number | boolean | string[]>;
 
 export interface OnChange {
   fieldName: string;
@@ -332,7 +340,16 @@ export interface AxiosErrorMsg {
 export interface UserDetail {
   data?: User;
   loading: boolean;
+  gotoExtendedPermission?: () => void;
 }
+
+export type PermissionTable = {
+  rid: string;
+  menu: string;
+  modules: string;
+  permissions: string;
+  fields: string;
+};
 
 export interface UploadImportPayload {
   entity_type: string;

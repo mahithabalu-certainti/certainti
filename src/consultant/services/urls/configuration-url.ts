@@ -12,6 +12,7 @@ export const getConfigAssignUsersListURL = (
     entity_type,
     page,
     limit,
+    search,
   }: ConfigAssignUserListParms,
   project_rid?: string
 ) => {
@@ -36,6 +37,10 @@ export const getConfigAssignUsersListURL = (
     searchParams.set('project_rid', project_rid);
   }
 
+  if (search) {
+    searchParams.set('search', search);
+  }
+
   return `${baseUrl}?${searchParams.toString()}`;
 };
 
@@ -48,6 +53,7 @@ export const getConfigAssignGroupsListURL = (
     entity_type,
     page,
     limit,
+    search,
   }: ConfigAssignGroupsListParms,
   project_rid?: string
 ) => {
@@ -70,6 +76,10 @@ export const getConfigAssignGroupsListURL = (
 
   if (project_rid !== undefined) {
     searchParams.set('project_rid', project_rid);
+  }
+
+  if (search) {
+    searchParams.set('search', search);
   }
 
   return `${baseUrl}?${searchParams.toString()}`;

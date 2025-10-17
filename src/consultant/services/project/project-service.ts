@@ -44,15 +44,28 @@ export const useAccountProjects = (
     enabled: !!params.accountNumber && projectOverviewIsEnable,
   });
 };
-export const useAllProjects = (
-  params: ProjectListParams,
-  refreshProjectsTrigger?: number
-): UseQueryResult<{ projects: Project[]; count: number }, Error> => {
-  return useQuery<{ projects: Project[]; count: number }, Error>({
-    queryKey: ['allProjects', params, refreshProjectsTrigger],
-    queryFn: () => fetchProjects(params),
-    retry: 0,
-    enabled: !!refreshProjectsTrigger,
+
+export const fetchPostProjects = async (
+  body: Record<string, Object>
+): Promise<{ projects: Project[]; count: number }> => {
+  const response = await resourceServiceApi.post<ProjectAccordionResponse>(
+    '/api/project/list',
+    body
+  );
+
+  return {
+    projects: response.data.data.projects,
+    count: response.data.data.count ?? response.data.data.totalCount ?? 0,
+  };
+};
+
+export const useAllProjects = () => {
+  return useMutation<
+    { projects: Project[]; count: number },
+    Error,
+    Record<string, Object | string | number>
+  >({
+    mutationFn: (body) => fetchPostProjects({ ...body }),
   });
 };
 

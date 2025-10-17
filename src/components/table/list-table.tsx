@@ -104,6 +104,7 @@ const ListTable = <T extends RowData>({
   toggleClick,
   clearSelectedRows = false,
   disabledSelect,
+  toggleLevel,
   emptyMessege = 'No data available',
 }: ListTableProps<T>) => {
   actionWidth = 50;
@@ -902,9 +903,7 @@ const ListTable = <T extends RowData>({
                     maxWidth: '32px',
                     minWidth: '32px',
                     padding: '0px !important',
-                    borderRight: hideHeaderSelect
-                      ? 'none !important'
-                      : '1px solid #CBD6E2',
+                    borderRight: '1px solid #CBD6E2',
                     borderBottom: '1px solid #CBD6E2 !important',
                   }}
                 >
@@ -982,6 +981,7 @@ const ListTable = <T extends RowData>({
                       width: column.width || 160,
                       minWidth: column.width || 160,
                       maxWidth: column.width || 160,
+                      textAlign: 'left',
                       ...(typeof column.sx === 'function'
                         ? filterOutBackground(column.sx())
                         : column.sx || {}),
@@ -991,7 +991,7 @@ const ListTable = <T extends RowData>({
                         isAvailableAction
                           ? '82px'
                           : selectable &&
-                              actionMenuItems?.length < 1 &&
+                              actionMenuItems?.length &&
                               !isAvailableAction
                             ? '32px'
                             : !selectable &&
@@ -999,7 +999,6 @@ const ListTable = <T extends RowData>({
                                 isAvailableAction
                               ? '50px'
                               : '0px',
-                      textAlign: 'left',
                     }}
                   />
                 ) : (
@@ -1009,6 +1008,7 @@ const ListTable = <T extends RowData>({
                       width: column.width || 160,
                       minWidth: column.width || 160,
                       maxWidth: column.width || 160,
+                      textAlign: 'left',
                       ...(typeof column.sx === 'function'
                         ? filterOutBackground(column.sx())
                         : column.sx || {}),
@@ -1018,7 +1018,7 @@ const ListTable = <T extends RowData>({
                         isAvailableAction
                           ? '82px'
                           : selectable &&
-                              actionMenuItems?.length < 1 &&
+                              actionMenuItems?.length &&
                               !isAvailableAction
                             ? '32px'
                             : !selectable &&
@@ -1026,7 +1026,6 @@ const ListTable = <T extends RowData>({
                                 isAvailableAction
                               ? '50px'
                               : '0px',
-                      textAlign: 'left',
                     }}
                   >
                     {column.label}
@@ -1082,7 +1081,8 @@ const ListTable = <T extends RowData>({
                 }
                 selectable={selectable}
                 hasActions={
-                  actionMenuItems?.length > 0 || actionDisplayMode === 'toggle'
+                  (actionMenuItems?.length > 0 && isAvailableAction) ||
+                  actionDisplayMode === 'toggle'
                 }
                 stickyColumnsCount={stickyColumnsCount}
               />
@@ -1142,6 +1142,7 @@ const ListTable = <T extends RowData>({
                 const conditionallyDisabled = isChecked
                   ? undefined
                   : disabledSelect;
+
                 return (
                   <React.Fragment key={`${rowId}-${i}`}>
                     <TableRow
@@ -1332,31 +1333,34 @@ const ListTable = <T extends RowData>({
                             zIndex: 7,
                           }}
                         >
-                          <div className='text-center'>
-                            <Tooltip
-                              title={
-                                toggleData?.includes(rowId)
-                                  ? checkedToggleTooltip
-                                  : unCheckedToggleTooltip
-                              }
-                              arrow
-                              placement='top'
-                            >
-                              <Switch
-                                size='small'
-                                color={
-                                  row.isColorEnabled ? 'warning' : 'success'
+                          {(typeof toggleLevel !== 'number' ||
+                            rowLevel === toggleLevel) && (
+                            <div className='text-center'>
+                              <Tooltip
+                                title={
+                                  toggleData?.includes(rowId)
+                                    ? checkedToggleTooltip
+                                    : unCheckedToggleTooltip
                                 }
-                                onChange={(_e, checked) =>
-                                  toggleClick && toggleClick(rowId, checked)
-                                }
-                                checked={toggleData?.includes(rowId)}
-                                disabled={Boolean(
-                                  disabledToggle || row?.isDisabledToggle
-                                )}
-                              />
-                            </Tooltip>
-                          </div>
+                                arrow
+                                placement='top'
+                              >
+                                <Switch
+                                  size='small'
+                                  color={
+                                    row.isColorEnabled ? 'warning' : 'success'
+                                  }
+                                  onChange={(_e, checked) =>
+                                    toggleClick && toggleClick(rowId, checked)
+                                  }
+                                  checked={toggleData?.includes(rowId)}
+                                  disabled={Boolean(
+                                    disabledToggle || row?.isDisabledToggle
+                                  )}
+                                />
+                              </Tooltip>
+                            </div>
+                          )}
                         </TableCell>
                       )}
                       {/* Data cells */}
@@ -1422,7 +1426,7 @@ const ListTable = <T extends RowData>({
                                 isAvailableAction
                                   ? '82px'
                                   : selectable &&
-                                      actionMenuItems?.length < 1 &&
+                                      actionMenuItems?.length &&
                                       !isAvailableAction
                                     ? '32px'
                                     : !selectable &&

@@ -40,6 +40,7 @@ import {
   FiscalDates,
   FormFiscalDateType,
   MenuItem,
+  NotesListURLParams,
   ProjectFinancialResourceExportParams,
   TechnicalSummaryExportListParams,
 } from '../../../types';
@@ -79,6 +80,8 @@ import { resourceClient } from '../../../../api/graphql/clients/client';
 import { UPDATE_QRE_ADJUSTMENT } from '../../../../api/graphql/queries/project-query';
 import { useMutation } from '@apollo/client';
 import { ProjectQreAdjustmentResponse } from '../utils';
+import { Notes } from './notes';
+import { ExportNotesList } from '../../../services/notes/notes-service';
 
 export const ProjectDetails = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -117,6 +120,7 @@ export const ProjectDetails = () => {
       sortBy: 'resource_code',
       sortOrder: 'ASC',
       filters: {},
+      search: '',
     });
   const [projectResourceParams, setProjectResourceParams] =
     useState<AttachmentsListExportParams>({
@@ -130,6 +134,14 @@ export const ProjectDetails = () => {
       sortOrder: 'ASC',
       filters: {},
     });
+  const [notesParams, setNotesParams] = useState<NotesListURLParams>({
+    page: 1,
+    limit: 100,
+    sortBy: 'r_number',
+    sortOrder: 'ASC',
+    filters: {},
+  });
+
   const [fiscalDate, setFiscalDate] = useState<FormFiscalDateType>({
     year: 0,
   });
@@ -179,8 +191,9 @@ export const ProjectDetails = () => {
   const interactionRID = searchParams.get('interaction_rid');
   const interactionsView = !!interactionId || !!interactionRID;
   const technicalSummaryId = searchParams.get('technical_summary_id');
+  const noteView = searchParams.get('note_id');
 
-  const { data, isLoading, isError, refetch } = useProjectDetail(
+  const { data, isLoading, isError, refetch, isPending } = useProjectDetail(
     accountID,
     projectID || ''
   );
@@ -276,6 +289,12 @@ export const ProjectDetails = () => {
     permission,
     AllPermissions.PROJECT_TECHNICAL_SUMMARY_EXPORT
   );
+
+  const isNotesExportEnable = checkPermission(
+    permission,
+    AllPermissions.NOTES_EXPORT
+  );
+
   const checkExport = () => {
     const list = searchParams.get('list');
     const tab = searchParams.get('tab');
@@ -287,6 +306,8 @@ export const ProjectDetails = () => {
 
     if (list === 'attachments') {
       return !isAttachmentExportEnable;
+    } else if (list === 'notes' && !noteView) {
+      return !isNotesExportEnable;
     } else if (list === 'projectsTask') {
       return !isTaskExportViewEnable;
     } else if (list === 'financial' && tab === 'resource_cost') {
@@ -318,6 +339,7 @@ export const ProjectDetails = () => {
 
     if (
       list !== 'attachments' &&
+      list !== 'notes' &&
       list !== 'financial' &&
       list !== 'projectResources' &&
       list !== 'projectsTask' &&
@@ -336,6 +358,19 @@ export const ProjectDetails = () => {
       exportAttachmentsData('attachments', {
         ...attachmentParams,
         ...attachmentPayload,
+      });
+      return;
+    }
+
+    if (list === 'notes' && exportType === 'notes') {
+      const notePayload = {
+        accountRid: accountID,
+        entityId: projectID,
+        attachmentLevel: 'project',
+      };
+      ExportNotesList('notes', {
+        ...notesParams,
+        ...notePayload,
       });
       return;
     }
@@ -391,6 +426,7 @@ export const ProjectDetails = () => {
           filters: interactionsParams?.filters || {},
           timezone: systemTimezone,
           flag: 'project',
+          search: interactionsParams?.search || '',
         };
         exportInteractionsHistory(projectInteractionHistoryExportPayload);
         return;
@@ -407,6 +443,7 @@ export const ProjectDetails = () => {
           filters: interactionsParams?.filters || {},
           timezone: systemTimezone,
           flag: 'project',
+          search: interactionsParams?.search || '',
         };
         exportInteractions(projectInteractionExportPayload);
         return;
@@ -569,6 +606,7 @@ export const ProjectDetails = () => {
             projectDetails={projectData}
             setInteractionsParams={setInteractionsParams}
             isSendInteraction={data?.data?.project?.is_send_interaction}
+            loading={isPending}
           />
         );
       case 'technicalSummary':
@@ -584,7 +622,15 @@ export const ProjectDetails = () => {
       case 'activities':
         return <NotFound />;
       case 'notes':
-        return <NotFound />;
+        return (
+          <Notes
+            accountInActive={accountInActive || projectInActive}
+            setExportType={setExportType}
+            setNotesParams={setNotesParams}
+            projectFiscalYear={projectData?.fiscal_year}
+            projectCode={projectData?.project_code}
+          />
+        );
       case 'attachments':
         return (
           <Attachments

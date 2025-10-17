@@ -1,4 +1,8 @@
-import { AllPermissions, UserDetail } from '../../common-service';
+import {
+  AllPermissions,
+  PermissionTable,
+  UserDetail,
+} from '../../common-service';
 import {
   applyHidePermission,
   formatDateToYYYYMMDDWithTime,
@@ -10,8 +14,15 @@ import { RootState } from '../../store/store';
 import { useSelector } from 'react-redux';
 import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { ListTable } from '../table';
+import TextButton from '../button/text-button';
+import { ExtendedPermissionColumns } from './column';
 
-export const UserDetailComponent = ({ data, loading }: UserDetail) => {
+export const UserDetailComponent = ({
+  data,
+  loading,
+  gotoExtendedPermission,
+}: UserDetail) => {
   // Map your API data to the mock data structure
   const getValueOrDefault = (
     value?: string | number | null,
@@ -36,6 +47,63 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
     });
     return map;
   }, [userViewEditFields]);
+  const permissionTable = useMemo(() => {
+    const modulesData = data?.permissions
+      ?.filter((item) => item.type === 'module')
+      .map((module) => {
+        // Find parent menu
+        const menu = data?.permissions?.find(
+          (m) => m.type === 'menu' && m.menu_id === module.menu_id
+        );
+
+        // Find permissions under this module
+        const permissions = data?.permissions?.filter(
+          (p) => p.type === 'permission' && p.module_id === module.module_id
+        );
+
+        // Collect permission names and sort alphabetically
+        const permissionNames = permissions?.map((p) => p.desc);
+        const sortedPermissionNames = permissionNames?.sort((a, b) =>
+          a.localeCompare(b)
+        );
+
+        // Collect fields belonging to any of those permissions
+        const permissionIds = permissions?.map((p) => p.permission_id);
+        const fields = data?.permissions?.filter(
+          (f) => f.type === 'field' && permissionIds?.includes(f.permission_id)
+        );
+
+        // Collect field names and sort alphabetically
+        const fieldNames = fields?.map((f) => f.desc);
+        const sortedFieldNames = fieldNames?.sort((a, b) => a.localeCompare(b));
+
+        return {
+          rid: module.rid,
+          menu: menu?.desc || '',
+          modules: module.desc,
+          permissions: sortedPermissionNames?.join(', '),
+          fields: sortedFieldNames?.join(', '),
+        };
+      });
+
+    const standaloneMenus = data?.permissions
+      ?.filter((item) => item.type === 'menu')
+      ?.filter((menu) => {
+        const hasModules = data?.permissions?.some(
+          (item) => item.type === 'module' && item.menu_id === menu.menu_id
+        );
+        return !hasModules;
+      })
+      ?.map((menu) => ({
+        rid: menu.rid,
+        menu: menu.desc || '',
+        modules: '',
+        permissions: '',
+        fields: '',
+      }));
+    const combinedData = [...(modulesData || []), ...(standaloneMenus || [])];
+    return combinedData?.sort((a, b) => a.menu.localeCompare(b.menu));
+  }, [data?.permissions]);
 
   if (loading) {
     return (
@@ -158,6 +226,7 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
   const AddressDetails = applyHidePermission(addressInfo, permissionMap);
   const AccessDetails = applyHidePermission(accessInfo, permissionMap);
   const AuditDetails = applyHidePermission(auditInfo, permissionMap);
+
   return (
     <Fragment>
       <DetailsSection
@@ -173,6 +242,40 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
         title='Address'
         data={viewDetails ? addressInfo : AddressDetails}
       />
+      <div className='pt-2 mt-3'>
+        <div className='flex items-center justify-between align-middle px-3 h-[30px] border-t border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC] '>
+          <span>Extended Permissions</span>
+          <TextButton
+            label='Edit'
+            onClick={gotoExtendedPermission}
+            sx={{
+              width: '50px',
+              minWidth: '50px',
+              fontSize: '13px',
+              fontWeight: 400,
+            }}
+          />
+        </div>
+        <div className='text-sm p-3 grid gap-y-3'>
+          <div className='w-full border-t border-l border-solid border-[#CBD6E2]'>
+            <ListTable
+              data={permissionTable as PermissionTable[]}
+              columns={ExtendedPermissionColumns()}
+              getRowId={(row: PermissionTable) => row.rid}
+              hoverHighlight={false}
+              tableStyle={{
+                height: '100%',
+                maxHeight: 'calc(100vh - 195px)',
+                overflow: 'auto',
+              }}
+              selectable={false}
+              stickyHeader
+              actionWidth={60}
+              showEmptyRow={false}
+            />
+          </div>
+        </div>
+      </div>
       <DetailsSection
         title='Audit Information'
         data={viewDetails ? auditInfo : AuditDetails}

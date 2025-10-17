@@ -107,3 +107,8 @@ export interface ExportInteractionTemplateResponse {
   statusCodeValue?: string;
   data: string;
 }
+
+export type ImportTemplatePayload = {
+  templateId: string;
+  file: File;
+};
