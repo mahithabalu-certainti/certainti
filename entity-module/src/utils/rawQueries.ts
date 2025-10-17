@@ -398,8 +398,6 @@ export const summaryHighlightsQuery = (
             a.account_rid
         FROM 
         ${schemaName}.account_fiscal a
-        LEFT JOIN ${schemaName}.project p ON p.account_rid = a.account_rid
-        LEFT JOIN ${schemaName}.project_fiscal pf ON pf.project_rid = p.rid
         WHERE 
             a.account_rid = '${account_rid}'
             AND
