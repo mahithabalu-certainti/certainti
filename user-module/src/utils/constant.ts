@@ -354,7 +354,24 @@ export const rawQuery = {
       WHERE rid = :userId 
       LIMIT 1
     `;
-  }    
+  } ,
+  getUserExtendedPermissionsQuery() {
+    return  `
+        select distinct  m.rid as menu_id, mm.rid as module_id, mp.rid as module_permission_id, mp.permission_name,mp.permission_desc,
+        mm.module_name,mm.module_desc,m.menu_name,m.menu_desc,mp.is_field_available,mm.sort_order,m.sort_order as menu_order
+    from 
+    ${MAIN_SCHEMA_NAME}.user_permission_access ua , 
+    ${MAIN_SCHEMA_NAME}.module_permission mp,
+    ${MAIN_SCHEMA_NAME}.menu_module mm,
+    ${MAIN_SCHEMA_NAME}.menu m
+    where mp.rid = ua.module_permission_id
+    and mp.menu_module_id = mm.rid
+    and m.rid = mm.menu_id
+    and ua.is_enabled = true
+    and ua.user_id = :userId
+    order by menu_order,mm.sort_order, mp.permission_desc asc
+        `;
+}
 }
 
 export const statusMessage = {
