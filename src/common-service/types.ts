@@ -101,6 +101,48 @@ export interface Permissions {
   }[];
 }
 
+interface FieldPermission {
+  field_id: string;
+  field_name: string;
+  field_desc: string;
+  read: boolean;
+  edit: boolean;
+}
+
+interface Permission {
+  type: 'permission';
+  menu_id: string;
+  module_id: string;
+  module_permission_id: string;
+  menu_desc: string;
+  module_desc: string;
+  permission_desc: string;
+  is_field_available: boolean;
+  fields?: FieldPermission[];
+}
+
+// Define Module type
+interface Module {
+  type: 'module';
+  module_id: string;
+  menu_id: string;
+  module_name: string;
+  module_desc: string;
+  menu_desc: string;
+  is_enabled: boolean;
+}
+
+// Define Menu type
+interface Menu {
+  type: 'menu';
+  menu_id: string;
+  menu_name: string;
+  menu_desc: string;
+  is_enabled: boolean;
+}
+
+export type UserDetailPermissions = Permission | Module | Menu;
+
 export enum PermissionsMenus {
   MENU = 'menu',
   MODULE = 'module',

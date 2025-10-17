@@ -103,6 +103,7 @@ export const ExtendedPermission: React.FC = () => {
               loading={isPending}
               formRef={formRef}
               outData={outData}
+              oldData={JSON.parse(JSON.stringify(data?.data.permissions || []))}
             />
           )}
         </div>

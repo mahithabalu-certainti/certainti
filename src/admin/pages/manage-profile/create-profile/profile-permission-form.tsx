@@ -18,6 +18,7 @@ interface ProfilePermissionFormProps {
   loading: boolean;
   formData: ProfileResponse[];
   formRef: React.RefObject<HTMLFormElement>;
+  oldData: ProfileResponse[];
   outData: (e: ProfileResponse[]) => void;
 }
 
@@ -94,6 +95,7 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
   loading,
   formData,
   formRef,
+  oldData,
   outData,
 }) => {
   const [menus, setMenus] = useState<TransformForRender[]>([]);
@@ -684,7 +686,20 @@ export const ProfilePermissionForm: React.FC<ProfilePermissionFormProps> = ({
   const submitData = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const modifiedData: ProfileResponse[] = [];
-    formData.forEach((item) => {
+    const modifiedFormData = formData.filter((it) => it.is_modified);
+    // Filter modifiedFormData to only include items where is_enabled differs from oldData
+    const filteredModifiedData = modifiedFormData.filter((item) => {
+      const oldItem = oldData.find((old) => old.rid === item.rid);
+      if (item.type === 'field') {
+        return (
+          oldItem && (oldItem.read !== item.read || oldItem?.edit !== item.edit)
+        );
+      } else {
+        return oldItem && oldItem.is_enabled !== item.is_enabled;
+      }
+    });
+
+    filteredModifiedData.forEach((item) => {
       if (item.is_modified) {
         const updateData: ProfileResponse = {
           rid: item.rid,
