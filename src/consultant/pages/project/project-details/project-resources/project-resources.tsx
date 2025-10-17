@@ -342,7 +342,26 @@ export const ProjectResources = ({
       setShowProjectResourceDetails(false);
     }
   }, [searchParams]);
-
+  const calculateAutoValue = ({
+    salary = '0',
+    bonus = '0',
+    insurance = '0',
+    total_cost_pro_res = '0',
+    deductions = '0',
+  }: {
+    salary?: string;
+    bonus?: string;
+    insurance?: string;
+    total_cost_pro_res?: string;
+    deductions?: string;
+  }) => {
+    const s = parseFloat(salary) || 0;
+    const b = parseFloat(bonus) || 0;
+    const i = parseFloat(insurance) || 0;
+    const r = parseFloat(total_cost_pro_res) || 0;
+    const d = parseFloat(deductions) || 0;
+    return s + b + i + r - d;
+  };
   const actionMenuItems = [
     {
       label: 'Edit',
@@ -525,6 +544,12 @@ export const ProjectResources = ({
     const selectedProject = projectResourceList.find(
       (pro) => pro.rid === rowId
     );
+    if (!selectedProject) return;
+
+    console.log('selectedProject', selectedProject);
+
+    let netCost = '';
+
     // let hasResourceTye = false;
     let hasCountry = false;
     let hasRegion = false;
@@ -535,6 +560,16 @@ export const ProjectResources = ({
         // if (item.columnId === 'resource_type_name') hasResourceTye = true;
         if (item.columnId === 'country_name') hasCountry = true;
         if (item.columnId === 'region_name') hasRegion = true;
+        if (item.columnId === 'total_cost_pro_res') {
+          const total = calculateAutoValue({
+            salary: String(selectedProject.salary),
+            bonus: String(selectedProject.bonus),
+            insurance: String(selectedProject.insurance),
+            total_cost_pro_res: String(item.value),
+            deductions: String(selectedProject.deductions),
+          });
+          netCost = total.toString();
+        }
         return acc;
       },
       {
@@ -547,7 +582,9 @@ export const ProjectResources = ({
     if (hasCountry && !hasRegion) {
       updateData['region_rid'] = '';
     }
-
+    if (netCost) {
+      updateData['net_total_cost_pro_res'] = netCost;
+    }
     try {
       const res = await updateProjectResourceMutation({
         variables: { data: updateData },

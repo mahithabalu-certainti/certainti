@@ -280,7 +280,8 @@ const ProjectResourceForm: React.FC = () => {
       updated_resource_rid,
       isEditView,
       showSkillRoleOthersField,
-      isResourceType
+      isResourceType,
+      autoCalculatedValue
     );
     if (isEditView) {
       updateProjectResource.mutate(projectResourceFormData);
@@ -343,6 +344,7 @@ const ProjectResourceForm: React.FC = () => {
       setCurrentCountry(data.fieldValue as string);
     }
     if (data.fieldName === 'resource_code') {
+      setAutoCalculatedValue(0);
       const selectedResource = memoizedProjectResourceCode.find(
         (option) => String(option.value) === String(data.fieldValue)
       );

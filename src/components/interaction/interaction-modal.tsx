@@ -81,7 +81,7 @@ const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
     if (!showEmailFields) {
       const interactions = selectedRows.map((row) => ({
         interaction_rid: row.rid,
-        interaction_level: interaction_level,
+        interaction_level: row.interaction_level_name || '',
         project_fiscal_rid: row.project_fiscal_rid || '',
       }));
 
@@ -151,7 +151,8 @@ const SendInteractionModal: React.FC<SendInteractionModalProps> = ({
         {!showEmailFields && (
           <div className='mt-4'>
             <h3 className='text-[16px] font-bold text-[#2D3E4F] text-center text-sm mb-8'>
-              Do you want to add external email address to notify alternate recipient for this interaction?
+              Do you want to add external email address to notify alternate
+              recipient for this interaction?
             </h3>
             <div className='flex gap-3 justify-end'>
               <TextButton

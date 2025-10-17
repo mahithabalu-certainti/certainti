@@ -242,38 +242,22 @@ export const getProjectResourcesColumns = (
     },
   },
   {
-    id: 'total_cost_pro_res',
-    label: 'Cost',
+    id: 'net_total_cost_pro_res',
+    label: 'Net Resource Cost',
     sortable: true,
-    sortId: 'total_cost_pro_res',
-    width: '150px',
+    sortId: 'net_total_cost_pro_res',
+    width: '160px',
     sx: {
       textAlign: 'right',
     },
     render: (row: ProjectResourcesListType) =>
-      row.total_cost_pro_res
-        ? costDisplay(row.total_cost_pro_res, row?.currency_symbol)
+      row.net_total_cost_pro_res
+        ? costDisplay(row.net_total_cost_pro_res, row?.currency_symbol)
         : '-',
 
-    editable:
-      permissionMap?.['total_cost_pro_res']?.read &&
-      permissionMap?.['total_cost_pro_res']?.edit &&
-      !accountOrProjectInActive,
     hide:
-      !permissionMap?.['total_cost_pro_res']?.read &&
-      !permissionMap?.['total_cost_pro_res']?.edit,
-    field: {
-      type: 'text',
-      required: false,
-      placeholder: 'Enter Cost',
-      formatCostNumber: true,
-      validation: [
-        {
-          regex: PROJECT_RESOURCE_REGEX.COST_REGEX,
-          errorMessage: 'Cost must be a 18-digit number with up to 2 decimals',
-        },
-      ],
-    },
+      !permissionMap?.['net_total_cost_pro_res']?.read &&
+      !permissionMap?.['net_total_cost_pro_res']?.edit,
   },
   {
     id: 'qre_percent',
