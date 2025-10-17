@@ -10,6 +10,7 @@ import { initOrgSequelize } from "../../config/orgDataSource";
 import { decryptClientSecret, logMessage } from "../../utils/helpers";
 
 const HOURS_BEFORE_EXPIRY = 24;
+const SUBSCRIPTION_TIMER = process.env.SUBSCRIPTION_RENEW_TIMER!;
 
 // -----------------------------
 // Graph Client Factory Function
@@ -136,31 +137,31 @@ async function renewExpiringSubscriptions() {
                 } (expires in ${hoursToExpire.toFixed(1)} hrs)`
               );
 
-              const renewedSubId = await renewSubscription(
+              await renewSubscription(
                 sub,
                 accountGraphClient
               );
 
-              if (renewedSubId) {
-                const mainDb = await initMainDbSequelize();
-                await mainDb.query(
-                  `UPDATE ${MAIN_SCHEMA_NAME}.account SET subscription_id = :newSubId WHERE rid = :rid`,
-                  {
-                    replacements: {
-                      newSubId: renewedSubId,
-                      rid,
-                    },
-                  }
-                );
+              // if (renewedSubId) {
+              //   const mainDb = await initMainDbSequelize();
+              //   await mainDb.query(
+              //     `UPDATE ${MAIN_SCHEMA_NAME}.account SET subscription_id = :newSubId WHERE rid = :rid`,
+              //     {
+              //       replacements: {
+              //         newSubId: renewedSubId,
+              //         rid,
+              //       },
+              //     }
+              //   );
 
-               logMessage(
-                  `Subscription renewed and updated for account ${r_number}`
-                );
-              } else {
-                logMessage(
-                  ` Failed to renew subscription for account ${r_number}`
-                );
-              }
+              //  logMessage(
+              //     `Subscription renewed and updated for account ${r_number}`
+              //   );
+              // } else {
+              //   logMessage(
+              //     ` Failed to renew subscription for account ${r_number}`
+              //   );
+              // }
             // }
           }
         } else {
@@ -231,11 +232,11 @@ async function fetchPlatformSettings() {
 // -----------------------------
 // Cron Job (Runs every day at 2AM on even days)
 // -----------------------------
-cron.schedule("0 10 * * *", async () => {
+cron.schedule(SUBSCRIPTION_TIMER, async () => {
   const today = new Date();
   const dayOfMonth = today.getDate();
 
-  if (dayOfMonth % 2 === 0) {
+  if (dayOfMonth % 2 === 1) {
     logMessage(
       `[${today.toISOString()}] Running subscription renewal task`
     );
