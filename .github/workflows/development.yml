@@ -578,6 +578,7 @@ jobs:
           SCHEDULER_EMAIL=scheduler-email     
           CLIENT_SECRET_ENCRYPTION_KEY=client-secret-encryption-key
           CLIENT_SECRET_ENCRYPTION_LENGTH=16
+          SUBSCRIPTION_RENEW_TIMER = "subscription-renewal-timer"
           EOF
           echo "$ENV_FILE file created successfully!"
       - name: Copy .env file to VM

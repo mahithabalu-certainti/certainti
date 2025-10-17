@@ -5,11 +5,17 @@ import fetch from "cross-fetch";
 
 import cron from "node-cron";
 import { initMainDbSequelize } from "../../config/mainDataSource";
-import { MAIN_SCHEMA_NAME, SCHEMANAME_PREFIX, rawQueries } from "../../utils/constants";
+import {
+  MAIN_SCHEMA_NAME,
+  SCHEMANAME_PREFIX,
+  rawQueries,
+} from "../../utils/constants";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { decryptClientSecret, logMessage } from "../../utils/helpers";
+import { getSecret } from "../../utils/azureSecrets";
 
 const HOURS_BEFORE_EXPIRY = 24;
+const SUBSCRIPTION_TIMER = process.env.SUBSCRIPTION_RENEW_TIMER!;
 
 // -----------------------------
 // Graph Client Factory Function
@@ -128,45 +134,40 @@ async function renewExpiringSubscriptions() {
               (expiry.getTime() - now.getTime()) / (1000 * 60 * 60);
 
             // if (
-            //   sub.id === currentSubId 
+            //   sub.id === currentSubId
             // ) {
-              logMessage(
-                `Renewing subscription ${
-                  sub.id
-                } (expires in ${hoursToExpire.toFixed(1)} hrs)`
-              );
+            logMessage(
+              `Renewing subscription ${
+                sub.id
+              } (expires in ${hoursToExpire.toFixed(1)} hrs)`
+            );
 
-              const renewedSubId = await renewSubscription(
-                sub,
-                accountGraphClient
-              );
+            await renewSubscription(sub, accountGraphClient);
 
-              if (renewedSubId) {
-                const mainDb = await initMainDbSequelize();
-                await mainDb.query(
-                  `UPDATE ${MAIN_SCHEMA_NAME}.account SET subscription_id = :newSubId WHERE rid = :rid`,
-                  {
-                    replacements: {
-                      newSubId: renewedSubId,
-                      rid,
-                    },
-                  }
-                );
+            // if (renewedSubId) {
+            //   const mainDb = await initMainDbSequelize();
+            //   await mainDb.query(
+            //     `UPDATE ${MAIN_SCHEMA_NAME}.account SET subscription_id = :newSubId WHERE rid = :rid`,
+            //     {
+            //       replacements: {
+            //         newSubId: renewedSubId,
+            //         rid,
+            //       },
+            //     }
+            //   );
 
-               logMessage(
-                  `Subscription renewed and updated for account ${r_number}`
-                );
-              } else {
-                logMessage(
-                  ` Failed to renew subscription for account ${r_number}`
-                );
-              }
+            //  logMessage(
+            //     `Subscription renewed and updated for account ${r_number}`
+            //   );
+            // } else {
+            //   logMessage(
+            //     ` Failed to renew subscription for account ${r_number}`
+            //   );
+            // }
             // }
           }
         } else {
-          logMessage(
-            ` Missing or invalid credentials for account ${r_number}`
-          );
+          logMessage(` Missing or invalid credentials for account ${r_number}`);
         }
       }
     }
@@ -231,20 +232,25 @@ async function fetchPlatformSettings() {
 // -----------------------------
 // Cron Job (Runs every day at 2AM on even days)
 // -----------------------------
-cron.schedule("0 10 * * *", async () => {
-  const today = new Date();
-  const dayOfMonth = today.getDate();
+export async function scheduleSubscriptionRenewal() {
+  const schdulerExpression =
+    (await getSecret(process.env.SUBSCRIPTION_RENEW_TIMER as string)) ||
+    `0 10 * * *`;
+  cron.schedule(schdulerExpression, async () => {
+    const today = new Date();
+    const dayOfMonth = today.getDate();
 
-  if (dayOfMonth % 2 === 0) {
-    logMessage(
-      `[${today.toISOString()}] Running subscription renewal task`
-    );
-    try {
-      await renewExpiringSubscriptions();
-    } catch (err) {
-      logMessage(`Subscription renewal task failed: ${err}`);
+    if (dayOfMonth % 2 === 0) {
+      logMessage(`[${today.toISOString()}] Running subscription renewal task`);
+      try {
+        await renewExpiringSubscriptions();
+      } catch (err) {
+        logMessage(`Subscription renewal task failed: ${err}`);
+      }
+    } else {
+      logMessage(
+        `[${today.toISOString()}] ⏭️ Skipping task (odd day of month)`
+      );
     }
-  } else {
-    logMessage(`[${today.toISOString()}] ⏭️ Skipping task (odd day of month)`);
-  }
-});
+  });
+}
