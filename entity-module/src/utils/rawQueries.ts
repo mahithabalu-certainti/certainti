@@ -394,8 +394,7 @@ export const summaryHighlightsQuery = (
     ),
     resource_metrics AS (
         SELECT DISTINCT ON (a.account_rid) 
-            a.total_fte, a.total_subcon,
-            SUM(COALESCE(pf.total_nonlabor_prj, 0)) AS  total_nonlabor,
+            a.total_fte, a.total_subcon, a.total_nonlabor,
             a.account_rid
         FROM 
         ${schemaName}.account_fiscal a
@@ -406,7 +405,7 @@ export const summaryHighlightsQuery = (
             AND
             a.fiscal_year = ${fiscal_year} 
         GROUP BY
-        a.account_rid,a.total_fte, a.total_subcon
+        a.account_rid,a.total_fte, a.total_subcon, a.total_nonlabor
     ),
     calculate_hours_fte AS (
         SELECT DISTINCT ON (ad.account_rid)
