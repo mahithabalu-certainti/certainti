@@ -980,6 +980,22 @@ export const rawQueries = {
       rid = '${data.rid}'
     `;
   },
+  updateProjectFiscalSummaryQre(data: any) {
+    return `
+    UPDATE ${MAIN_SCHEMA_NAME}.project_fiscal_summary
+    SET 
+      rd_percent_adjustment = ${data.rd_percent_adjustment},
+      rd_percent_final = ${data.rd_percent_final},
+      qre_final = ${data.qre_final},
+      qre_fte = ${data.qre_fte},
+      qre_subcon = ${data.qre_subcon},
+      qre_nonlabor = ${data.qre_nonlabor},
+      modified_by = '${data.modified_by}',
+      modified_datetime = '${new Date().toISOString()}'
+    WHERE
+      project_fiscal_rid = '${data.rid}'
+    `;
+  },
   fetchProjecTaskType() {
     return `SELECT * FROM ${MAIN_SCHEMA_NAME}.project_task_type`;
   },

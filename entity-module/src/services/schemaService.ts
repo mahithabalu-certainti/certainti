@@ -3808,6 +3808,7 @@ class SchemaService {
   ) {
     const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
     const sequelize = await initOrgSequelize();
+    const mainSequelize = await initMainDbSequelize();
   
     const projectFiscalData: any = await sequelize.query(
       rawQueries.fetchProjectFiscalById(schemaName,projectFiscalId ),
@@ -3855,6 +3856,26 @@ class SchemaService {
         ),
         {
           type: QueryTypes.SELECT,
+        }
+      );
+
+      // update project summary
+      await mainSequelize.query(
+        rawQueries.updateProjectFiscalSummaryQre( 
+          {
+            rd_percent_adjustment: qreAdjustment,
+            rd_percent_final: netQre,
+            qre_final: qreFinalCost,
+            qre_fte: qreFteCost,
+            qre_subcon: qreSubconCost,
+            qre_nonlabor: qreNonlaborCost,
+            modified_by: userId,
+            modified_datetime: new Date(),
+            rid: projectFiscalId
+          }
+        ),
+        {
+          type: QueryTypes.UPDATE,
         }
       );
     }
