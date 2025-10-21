@@ -1657,8 +1657,8 @@ export class ProjectService {
         "SubCon Cost": "Total Sub Con Cost",
         "Non-Labor Cost": "Total Non Labor Cost",
         "Assessment Status": "Assessment Status",
-        "QRE%": "QRE %",
-        QRE: "QRE",
+        "QRE Percent Final": "QRE %",
+        "QRE Final": "QRE",
         "Project Point of Contact": "Key Contacts List",
         "Technical Point of Contact": "Key Contacts List",
         Comments: "Comments",
@@ -1699,8 +1699,8 @@ export class ProjectService {
               project.currency_symbol
             ) || "-",
           "Assessment Status": "-",
-          "QRE%": "-",
-          QRE: "-",
+          "QRE Percent Final": "-",
+          "QRE Final": "-",
           "Project Point of Contact": "-",
           "Technical Point of Contact":"-",
           Comments: "-",
@@ -1753,12 +1753,9 @@ export class ProjectService {
                   project.currency_symbol
                 ) || "-",
               "Assessment Status": fiscal.assessment_status || "-",
-              "QRE%": "-",
-              QRE:
-                formatNumberForExport(
-                  fiscal.qre_final,
-                  project.currency_symbol
-                ) || "-",
+              "QRE Percent Final": fiscal.rd_percent_final || "-",
+              "QRE Final":
+                fiscal.qre_final || "-", //formatNumberForExport(fiscal.qre_final,project.currency_symbol)
               "Project Point of Contact":
                 fiscal.project_point_of_contact || "-",
               "Technical Point of Contact":
