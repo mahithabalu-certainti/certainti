@@ -1834,6 +1834,7 @@ export const rawQueries = {
             pfs.assessment_status, 
             pfs.created_datetime,
             pfs.qre_final, 
+            pfs.rd_percent_final,
             pfs.project_point_of_contact, 
             pfs.technical_point_of_contact, 
             pfs.comments, 

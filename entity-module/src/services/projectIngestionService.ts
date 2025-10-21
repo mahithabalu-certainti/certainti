@@ -2341,6 +2341,7 @@ class ProjectIngestionService {
             "project_startdate",
             "project_enddate",
             "qre_final",
+            "rd_percent_final",
             "comments",
             ["total_fte_prj", "total_fte"],
             "total_subcon_prj",
@@ -2442,8 +2443,8 @@ class ProjectIngestionService {
       "SubCon Cost": "Total Sub Con Cost",
       "Non-Labor Cost": "Total Non Labor Cost",
       "Assessment Status": "Assessment Status",
-      "QRE%": "QRE %",
-      QRE: "QRE",
+      "QRE Percent Final": "QRE %",
+      "QRE Final": "QRE",
       "Project Point of Contact": "Key Contacts List",
       "Technical Point of Contact": "Key Contacts List",
       Comments: "Comments",
@@ -2481,8 +2482,8 @@ class ProjectIngestionService {
             project.currency_symbol
           ) || "-",
         "Assessment Status": "-",
-        "QRE %": "-",
-        "QRE": "-",
+        "QRE Percent Final": project.rd_percent_final || "-",
+        "QRE Final": project.qre_final || "-",
         "Project Point of Contact": "-",
         "Technical Point of Contact": "-",
         "Comments": "-",
@@ -2532,9 +2533,9 @@ class ProjectIngestionService {
               fiscal.currency_symbol
             ) || "-",
           "Assessment Status": fiscal.assessment_status || "-",
-          "QRE %": "-", // Only base project has QRE %
-          QRE:
-            formatNumberForExport(fiscal.qre_final, project.currency_symbol) ||
+          "QRE Percent Final": fiscal.rd_percent_final || "-", // Only base project has QRE %
+          "QRE Final":
+          fiscal.qre_final || // formatNumberForExport(fiscal.qre_final, project.currency_symbol)
             "-",
           "Project Point of Contact": fiscal.project_point_of_contact || "-",
           "Technical Point of Contact":
