@@ -157,8 +157,8 @@ export const getAllProjectFilterFields = (
     type: 'number',
     operatorOption: numberOptions,
     hide:
-      !projectPermissionMap?.['rd_percent_final']?.read &&
-      !projectPermissionMap?.['rd_percent_final']?.edit,
+      !projectPermissionMap?.['qre']?.read &&
+      !projectPermissionMap?.['qre']?.edit,
   },
   {
     name: 'QRE Final',
