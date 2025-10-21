@@ -617,7 +617,7 @@ export const getProjectColumns = (
 
   {
     id: 'qre_final',
-    label: 'QRE',
+    label: 'QRE Final',
     sortable: true,
     sortId: 'qre_final',
     width: 130,
