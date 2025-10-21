@@ -41,6 +41,7 @@ export interface AttachmentsListURLParams {
   entityId?: string;
   accountRid?: string;
   isGlobal?: boolean;
+  search?: string;
 }
 
 export type AttachmentListResponse = {
@@ -66,6 +67,7 @@ export interface AttachmentsListExportParams {
   accountRid?: string;
   page?: number;
   limit?: number;
+  search?: string;
 }
 
 export interface AttachmentUploadPayload {

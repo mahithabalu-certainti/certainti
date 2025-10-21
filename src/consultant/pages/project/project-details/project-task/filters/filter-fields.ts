@@ -21,6 +21,8 @@ const requiredFieldFilterOptionsForEnum: { option: string; value: string }[] = [
 export const projectTaskFilterFields = (
   memoizedProjectTaskResourceCode: { option: string; value: string }[],
   resourceTypeOptions: { option: string; value: string }[],
+  memoizedProjectResourceType: { option: string; value: string }[],
+  memoizedProjectResourceClassification: { option: string; value: string }[],
   permissionMapTaskTableColumn?: Record<
     string,
     { read: boolean; edit: boolean }
@@ -47,6 +49,14 @@ export const projectTaskFilterFields = (
       !permissionMapTaskTableColumn?.['resource_name']?.read &&
       !permissionMapTaskTableColumn?.['resource_name']?.edit,
   },
+  {
+    name: 'Task Name',
+    value: 'task_name',
+    type: 'text',
+    // hide:
+    //   !permissionMapTaskTableColumn?.['resource_name']?.read &&
+    //   !permissionMapTaskTableColumn?.['resource_name']?.edit,
+  },
 
   {
     name: 'Resource Type',
@@ -54,6 +64,28 @@ export const projectTaskFilterFields = (
     type: 'enum',
     required: true,
     options: resourceTypeOptions,
+    filterOptions: requiredFieldFilterOptionsForEnum,
+    hide:
+      !permissionMapTaskTableColumn?.['resource_type_name']?.read &&
+      !permissionMapTaskTableColumn?.['resource_type_name']?.edit,
+  },
+  {
+    name: 'Task Type',
+    value: 'task_type_rid',
+    type: 'enum',
+    required: true,
+    options: memoizedProjectResourceType,
+    filterOptions: requiredFieldFilterOptionsForEnum,
+    hide:
+      !permissionMapTaskTableColumn?.['resource_type_name']?.read &&
+      !permissionMapTaskTableColumn?.['resource_type_name']?.edit,
+  },
+  {
+    name: 'Classification Type',
+    value: 'task_classification_rid',
+    type: 'enum',
+    required: true,
+    options: memoizedProjectResourceClassification,
     filterOptions: requiredFieldFilterOptionsForEnum,
     hide:
       !permissionMapTaskTableColumn?.['resource_type_name']?.read &&

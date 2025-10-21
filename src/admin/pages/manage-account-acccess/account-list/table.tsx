@@ -26,6 +26,8 @@ interface AcoountTableProps {
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
   >;
+  searchValue?: string;
+  onSearchReset?: () => void;
 }
 export const ManageAccountTable: React.FC<AcoountTableProps> = ({
   appliedFilters,
@@ -34,6 +36,8 @@ export const ManageAccountTable: React.FC<AcoountTableProps> = ({
   setAppliedFilters,
   columnAnchorEl,
   setColumnAnchorEl,
+  searchValue,
+  onSearchReset,
 }) => {
   const navigate = useNavigate();
   const handlePageChange = (newPage: number) => {
@@ -67,6 +71,7 @@ export const ManageAccountTable: React.FC<AcoountTableProps> = ({
     navigate({ search: searchParams.toString() }, { replace: true });
     setAppliedFilters({});
     clearFilters();
+    onSearchReset?.();
   };
   const {
     data,
@@ -79,6 +84,7 @@ export const ManageAccountTable: React.FC<AcoountTableProps> = ({
       sortBy: tableParams.sortBy,
       sortOrder: tableParams.sortOrder,
       filters: appliedFilters,
+      search: searchValue,
     }
     // refreshAccountTrigger
   );

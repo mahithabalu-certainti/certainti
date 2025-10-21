@@ -21,6 +21,7 @@ interface UserProps {
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
   >;
+  searchValue?: string;
 }
 
 const Users: React.FC<UserProps> = ({
@@ -30,6 +31,7 @@ const Users: React.FC<UserProps> = ({
   filterParams,
   columnAnchorEl,
   setColumnAnchorEl,
+  searchValue,
 }) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -88,6 +90,7 @@ const Users: React.FC<UserProps> = ({
             setCount={setCount}
             setColumnAnchorEl={setColumnAnchorEl}
             columnAnchorEl={columnAnchorEl}
+            searchValue={searchValue}
           />
         )}
         {tabParam === 'assign_group' && (
@@ -97,6 +100,7 @@ const Users: React.FC<UserProps> = ({
             setCount={setCount}
             setColumnAnchorEl={setColumnAnchorEl}
             columnAnchorEl={columnAnchorEl}
+            searchValue={searchValue}
           />
         )}
       </div>

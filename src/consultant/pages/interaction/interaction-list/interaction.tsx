@@ -26,6 +26,7 @@ import TextButton from '../../../../components/button/text-button';
 import { GLOBAL_INTERACTIONS_CREATE } from '../../../../routes';
 import { useNavigate } from 'react-router-dom';
 import { AccessRestricted } from '../../../../components/account-restricted';
+import SearchBar from '../../../../components/search/search-bar';
 
 const Interaction: React.FC = () => {
   const navigate = useNavigate();
@@ -53,6 +54,7 @@ const Interaction: React.FC = () => {
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
+  const [searchText, setSearchText] = useState<string>('');
   const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   const { permission, modules } = useSelector(
@@ -265,6 +267,16 @@ const Interaction: React.FC = () => {
       </div>
       <div className='flex items-center justify-end h-[34px] min-h-[34px] px-4'>
         <div className='flex gap-1 relative'>
+          <SearchBar
+            initialSearchText={searchText}
+            onSearch={(value) => {
+              setSearchText(value);
+              console.log('Search triggered for:', value);
+            }}
+            placeholder='Search'
+            disabled={false}
+            hide={false}
+          />
           <button
             aria-describedby={modalId}
             className={`w-[120px] h-[24px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative border border-[#CBD6E2] px-0 py-0 normal-case ${isModalOpen ? 'bg-[#F3F3F3]' : 'bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'} hover:text-[#425A76] transition-colors duration-150`}

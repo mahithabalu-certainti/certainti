@@ -15,12 +15,13 @@ import {
   useUpdateProjectResourceStatus,
 } from '../../../../services/project-resources/project-resource-service';
 import {
+  NOTES_CREATE,
   PROJECT_RESOURCE_CREATE,
   PROJECT_RESOURCE_EDIT,
 } from '../../../../../routes';
 import { getProjectResourcesColumns } from './list/columns';
 import { ProjectResourcesListType } from '../../../../types/project-resources';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { generatePath, useNavigate, useSearchParams } from 'react-router-dom';
 import ProjectResourceTableHeader from './project-resource-list-header';
 import ProjectResourceDetails from './details/project-resource-detail';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
@@ -139,6 +140,7 @@ export const ProjectResources = ({
   const [updateProjectResourceMutation] = useMutation(UPDATE_PROJECT_RESOURCE, {
     client: resourceClient,
   });
+  const [searchText, setSearchText] = useState('');
 
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
@@ -163,6 +165,7 @@ export const ProjectResources = ({
       fiscalYear: convertedFiscalYear,
       accountNumber: accountID,
       projectid: projectID,
+      search: searchText,
     },
     undefined,
     refreshProjectsTrigger
@@ -208,6 +211,7 @@ export const ProjectResources = ({
     projectResData?.account_rid as string,
     projectResData?.rid as string,
     detailrefecth as number
+    // searchText as string
   );
   // const resourceData = resourceDetails?.data?.projectResource;
   const resourceData = useMemo(() => {
@@ -229,10 +233,12 @@ export const ProjectResources = ({
       sortBy: sortField,
       sortOrder: sortOrder,
       filters: appliedFilters,
+      search: searchText,
     });
-  }, [sortField, sortOrder, appliedFilters]);
+  }, [sortField, sortOrder, appliedFilters, searchText]);
   const { data: projectResourceCodeOptions } = useGetProjectResourceCode(
-    accountID as string
+    accountID as string,
+    projectID as string
   );
   const { successToast } = useToast();
   const updateStatusAccept = useUpdateProjectResourceStatus();
@@ -281,10 +287,12 @@ export const ProjectResources = ({
         ':resourceId',
         resourceData.rid
       );
+      const PFY = projectFiscalDate;
       const queryParams = new URLSearchParams({
         account_Id: resourceData.account_rid,
         project_Id: resourceData?.project_fiscal_rid,
         projectCode: projectCode ?? '',
+        PFY: PFY ? JSON.stringify(PFY) : '',
       });
       navigate(`${path}?${queryParams.toString()}`);
     }
@@ -381,6 +389,12 @@ export const ProjectResources = ({
     permission,
     AllPermissions.ATTACHMENT_VIEW_EDIT
   );
+
+  const isNoteCreateEnable = checkPermission(
+    permission,
+    AllPermissions.NOTES_CREATE
+  );
+
   const handleOpen = () => {
     const newParams = new URLSearchParams(searchParams);
     newParams.set('attachment_entity', 'project_resource');
@@ -403,17 +417,41 @@ export const ProjectResources = ({
   };
   const showUploads =
     searchParams.get('attachment_entity') === 'project_resource';
+
+  const handleCreateNote = () => {
+    const projectResourceId = searchParams.get('pro_res_id');
+    const path = generatePath(NOTES_CREATE, {
+      module: 'account',
+    });
+    const queryParams = new URLSearchParams({
+      accountId: accountID,
+      entityLevel: 'project_resource',
+      entityId: projectResourceId || '',
+      source: `Project Resource > ${resourceData?.r_number}`,
+    });
+    navigate(`${path}?${queryParams.toString()}`);
+  };
+
   const headerButtons = [
     {
       label: 'Add Attachment',
       variant: 'outlined' as const,
       onClick: () => handleOpen(),
+      disabled: accountOrProjectInActive,
       sx: { ...BUTTON_STYLES, width: '120px', minWidth: '48px' },
       hide:
         !viewDetails ||
         !isAttachmentViewEnableMenu ||
         !isAttachmentViewEnableMenuModule ||
         !isAttachmentViewEnablepeormission,
+    },
+    {
+      label: 'Add Note',
+      variant: 'outlined' as const,
+      onClick: () => handleCreateNote(),
+      disabled: accountOrProjectInActive,
+      sx: { ...BUTTON_STYLES, width: '80px', minWidth: '80px' },
+      hide: !viewDetails || !isNoteCreateEnable,
     },
     {
       label: viewDetails ? 'Edit' : 'New',
@@ -705,6 +743,8 @@ export const ProjectResources = ({
         setSortFilterCount={setSortFilterCount}
         projectResourceAccountID={accountID}
         projectResourceProjectID={projectID}
+        showSearch={viewDetails ? false : true}
+        onSearch={(text) => setSearchText(text)}
       />
       <>
         {showUploads ? (

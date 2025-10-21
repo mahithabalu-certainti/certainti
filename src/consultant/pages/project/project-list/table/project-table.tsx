@@ -52,6 +52,7 @@ interface IProjectTableProps {
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
   >;
+  searchValue: string;
 }
 
 export const ProjectTable: React.FC<IProjectTableProps> = ({
@@ -66,6 +67,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
   dropdownOptions,
   setColumnAnchorEl,
   columnAnchorEl,
+  searchValue,
 }) => {
   const navigate = useNavigate();
   const { errorToast } = useToast();
@@ -97,46 +99,54 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
   }, [projectViewEditFields]);
 
   useEffect(() => {
-    setTableParams((prev) => ({
-      ...prev,
-      page: 1,
-      filters: appliedFilters,
-      fiscalYear: convertedFiscalYear,
-      globalFilters: reshapeGlobalFilter(filters as FilterState),
-    }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appliedFilters, fiscalYear, filters]);
+    setTableParams((prev) => {
+      const newParams: Partial<ProjectListParams> = {
+        ...prev,
+        page: 1,
+        filters: appliedFilters,
+        fiscalYear: convertedFiscalYear,
+        globalFilters: reshapeGlobalFilter(filters as FilterState),
+      };
 
-  const { data, isLoading, isError } = useAllProjects(
-    {
-      ...tableParams,
-      bothParentAndChild: false,
-      // bothParentAndChild: toggleEnabled // Commented for it may use in future
-    },
-    refreshProjectsTrigger
-  );
+      if (searchValue) {
+        newParams.search = searchValue;
+      } else {
+        delete newParams.search;
+      }
+
+      return newParams as ProjectListParams;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appliedFilters, fiscalYear, filters, searchValue]);
+
+  const { data, isPending, isError, mutate } = useAllProjects();
   const totalItems = data?.count || 0;
 
-  // Update total count when data changes
   useEffect(() => {
-    if (data) {
-      setTotalCount(data?.count || 0);
-      // Add account_status_name to each ProjectFiscal item
-      if (data.projects) {
-        setAllProjectList(
-          data.projects.map((project) => ({
-            ...project,
-            ProjectFiscal:
-              project.ProjectFiscal?.map((fiscal) => ({
-                ...fiscal,
-                account_status_name: project.account_status_name,
-              })) || [],
-          }))
-        );
-      }
+    if (refreshProjectsTrigger) {
+      mutate(
+        {
+          ...tableParams,
+          bothParentAndChild: false,
+        },
+        {
+          onSuccess: (data) => {
+            setTotalCount(data?.count || 0);
+            setAllProjectList(
+              data.projects.map((project) => ({
+                ...project,
+                ProjectFiscal:
+                  project.ProjectFiscal?.map((fiscal) => ({
+                    ...fiscal,
+                    account_status_name: project.account_status_name,
+                  })) || [],
+              }))
+            );
+          },
+        }
+      );
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data]);
+  }, [refreshProjectsTrigger]);
 
   const getRowId = (row: Project) => {
     if (row._level === 1 && 'project_fiscal_rid' in row) {
@@ -450,7 +460,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
         actionWidth={60}
         actionDisplayMode='dropdown'
         actionMenuItems={actionButtons}
-        loading={isLoading}
+        loading={isPending}
         error={isError ? 'Failed to load projects' : undefined}
         rowsPerPageOptions={[25, 50, 100]}
         rowsPerPage={tableParams.limit}

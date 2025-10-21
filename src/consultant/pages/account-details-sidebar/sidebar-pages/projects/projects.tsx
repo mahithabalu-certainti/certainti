@@ -115,6 +115,7 @@ const Projects: React.FC<ProjectsProps> = ({
   const [projectList, setProjectList] = useState<Project[]>([]);
   const [selectedTableId, setSelectedTableIds] = useState<string[]>([]);
   const [clearTrigger, setClearTrigger] = useState(false);
+  const [searchText, setSearchText] = useState('');
   // Permission Mangement
   const { modules, permission } = useSelector(
     (state: RootState) => state.permission
@@ -176,6 +177,7 @@ const Projects: React.FC<ProjectsProps> = ({
       fiscalYear: convertedFiscalYear,
       accountNumber: accountid ?? accountDetails?.accountDetails?.account_rid,
       bothParentAndChild: false,
+      search: searchText,
       // bothParentAndChild: toggleEnabled  // Commented for it may use in future
     },
     projectOverviewIsEnable && projectViewAllIsEnable,
@@ -222,9 +224,10 @@ const Projects: React.FC<ProjectsProps> = ({
       filters: appliedFilters,
       fiscalYear: convertedFiscalYear,
       accountNumber: accountDetails?.accountDetails?.account_rid || '',
+      search: searchText,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sortField, sortOrder, appliedFilters, convertedFiscalYear]);
+  }, [sortField, sortOrder, appliedFilters, convertedFiscalYear, searchText]);
 
   const handleFilter = () => {
     setShowFilter(!showFilter);
@@ -628,6 +631,10 @@ const Projects: React.FC<ProjectsProps> = ({
         // showToggle={isProjectViewEditEnable} // Commented for it may use in future
         toggleEnabled={toggleEnabled}
         setToggleEnabled={setToggleEnabled}
+        showSearch={true}
+        searchDisabled={false}
+        searchPlaceholder='Search'
+        onSearch={(text) => setSearchText(text)}
       />
       {projectOverviewIsEnable && projectViewAllIsEnable ? (
         <>

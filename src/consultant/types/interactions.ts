@@ -208,6 +208,7 @@ export interface InteractionListURLParams {
   isGlobal?: boolean;
   flag?: string;
   attachment_count?: number | string | null;
+  search?: string;
   reminder_specific_list?: boolean;
 }
 
@@ -378,7 +379,7 @@ export interface InteractionAttachmentListParams {
   sortBy?: string;
   sortOrder?: SortOrder;
   filters?: Filters;
-  searchTerm?: string;
+  search?: string;
   exportKey?: string;
   timezone?: string;
   entity_type?: string;
