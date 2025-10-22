@@ -267,13 +267,12 @@ const NotesForm: React.FC = () => {
   };
 
   const handleSubmitData = (data: Partial<NotesFormDataPayload>) => {
-    // Validation only when no existing file
-    if (!existingFile && selectedFiles.length === 0) {
-      showError('Please select a file before submitting.');
-      return;
+    if (selectedFiles.length === 0) {
+      setMessage(null);
     }
 
-    if (!existingFile) {
+    // File validation only if a file is selected
+    if (!existingFile && selectedFiles.length > 0) {
       const file = selectedFiles[0];
       if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
         showError(

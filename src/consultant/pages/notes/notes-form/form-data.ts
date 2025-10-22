@@ -108,7 +108,7 @@ export const NotesFormData = (
         fillType: 'full',
         fields: [
           createTextAreaField('descriptions', 'Note Description', {
-            required: false,
+            required: true,
             placeholder: 'Enter Note Description',
             regex: REGEX_PATTERNS.MAX_2000,
             regexErrorMessage:
