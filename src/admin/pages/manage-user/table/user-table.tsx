@@ -40,6 +40,7 @@ interface IUserTableProps {
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
   >;
+  searchValue: string;
 }
 
 export const UserTable: React.FC<IUserTableProps> = ({
@@ -54,6 +55,7 @@ export const UserTable: React.FC<IUserTableProps> = ({
   roleOptions,
   columnAnchorEl,
   setColumnAnchorEl,
+  searchValue,
 }) => {
   const [users, setUsers] = useState<ManageUser[]>([]);
   const navigate = useNavigate();
@@ -84,6 +86,14 @@ export const UserTable: React.FC<IUserTableProps> = ({
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appliedFilters]);
+
+  useEffect(() => {
+    setTableParams((prev) => ({
+      ...prev,
+      search: searchValue,
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchValue]);
 
   const { data, isLoading, isError } = useManageUserList(
     tableParams,

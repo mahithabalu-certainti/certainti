@@ -58,6 +58,7 @@ import {
   AccountFieldsApiResponse,
   ExportType,
   MenuItem,
+  NotesListExportParams,
   ProjectFinancialProjectExportParams,
   ProjectFinancialResourceExportParams,
 } from '../../types';
@@ -89,6 +90,7 @@ import {
 import { TimesheetProjectExportListURLParams } from '../../types/timesheet-projects';
 import { BUTTON_STYLES } from '../../../admin/pages/manage-user-detail/styles';
 import { useToast } from '../../../hooks';
+import { ExportNotesList } from '../../services/notes/notes-service';
 
 export const AccountDetails = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -115,6 +117,7 @@ export const AccountDetails = () => {
   const interactionId = searchParams.get('interaction_id');
   const interactionRID = searchParams.get('interaction_rid');
   const interactionsView = !!interactionId || !!interactionRID;
+  const noteView = searchParams.get('note_id');
 
   // Permission Mangement
   const accountIsEnable = checkPermission(modules, AllModules.ACCOUNTS);
@@ -154,6 +157,11 @@ export const AccountDetails = () => {
   const isAttachmentExportEnable = checkPermission(
     permission,
     AllPermissions.ATTACHMENT_EXPORT
+  );
+
+  const isNotesExportEnable = checkPermission(
+    permission,
+    AllPermissions.NOTES_EXPORT
   );
 
   const isImportExportEnable = checkPermission(
@@ -240,6 +248,7 @@ export const AccountDetails = () => {
       filters: {},
       page: 1,
       limit: 100,
+      search: '',
     });
   const [timesheetProjectParams, setTimesheetProjectParams] =
     useState<TimesheetProjectExportListURLParams>({
@@ -282,6 +291,14 @@ export const AccountDetails = () => {
       filters: {},
       fiscalYear: 0,
     });
+
+  const [notesParams, setNotesParams] = useState<NotesListExportParams>({
+    sortBy: 'r_number',
+    sortOrder: 'ASC',
+    filters: {},
+    fiscalYear: convertedFiscalYear,
+  });
+
   useEffect(() => {
     const list = searchParams.get('list');
     const tabParams = searchParams.get('tab');
@@ -305,6 +322,7 @@ export const AccountDetails = () => {
       searchParams.get('list') !== 'resources' &&
       searchParams.get('list') !== 'projects' &&
       searchParams.get('list') !== 'attachments' &&
+      searchParams.get('list') !== 'notes' &&
       searchParams.get('list') !== 'imports' &&
       searchParams.get('list') !== 'financial' &&
       searchParams.get('list') !== 'timesheet' &&
@@ -317,14 +335,22 @@ export const AccountDetails = () => {
     }
 
     //"resource" | "cost" | "skill"
-    const { fiscalYear, rNumber, resourceRid, sortBy, sortOrder, filter } =
-      tableParams;
+    const {
+      fiscalYear,
+      rNumber,
+      resourceRid,
+      sortBy,
+      sortOrder,
+      filter,
+      search,
+    } = tableParams;
 
     const commonPayload = {
       rNumber,
       sortBy,
       sortOrder,
       filter,
+      search,
     };
 
     const exportPayload = {
@@ -338,8 +364,24 @@ export const AccountDetails = () => {
         exportType === 'attachments' ? accountid || rNumber : resourceRid,
       attachmentLevel: exportType === 'attachments' ? 'account' : 'resource',
       ...(exportType === 'resource_attachments' && {
+        sortBy: tableParams.sortBy,
+        sortOrder: tableParams.sortOrder as 'ASC' | 'DESC' | undefined,
         fiscalYear: convertedFiscalYear,
         filters: filter,
+        search,
+      }),
+    };
+
+    const notesPayload = {
+      accountRid: accountid || rNumber,
+      entityId: exportType === 'notes' ? accountid || rNumber : resourceRid,
+      attachmentLevel: exportType === 'notes' ? 'account' : 'resource',
+      ...(exportType === 'resource_notes' && {
+        sortBy: tableParams.sortBy,
+        sortOrder: tableParams.sortOrder as 'ASC' | 'DESC' | undefined,
+        fiscalYear: convertedFiscalYear,
+        filters: filter,
+        search,
       }),
     };
 
@@ -366,6 +408,8 @@ export const AccountDetails = () => {
         ...attachmentParams,
         ...attachmentPayload,
       });
+    } else if (exportType === 'notes' || exportType === 'resource_notes') {
+      ExportNotesList('notes', { ...notesParams, ...notesPayload });
     } else if (exportType === 'imports') {
       exportImportsData(importsParams);
     } else if (exportType === 'timesheet' && !tab) {
@@ -413,6 +457,7 @@ export const AccountDetails = () => {
           sort_by: interactionsParams?.sortOrder || 'ASC',
           filters: interactionsParams?.filters || {},
           fiscal_year: convertedFiscalYear,
+          search: interactionsParams?.search || '',
           flag: 'account',
           sort: 'r_number',
           page: 1,
@@ -504,10 +549,14 @@ export const AccountDetails = () => {
       return !isResourceSkillExportEnable;
     } else if (list === 'resources' && tab === 'attachments') {
       return !isAttachmentExportEnable;
+    } else if (list === 'resources' && tab === 'notes' && !noteView) {
+      return !isNotesExportEnable;
     } else if (list === 'projects') {
       return !isProjectExportEnable;
     } else if (list === 'attachments') {
       return !isAttachmentExportEnable;
+    } else if (list === 'notes' && !noteView) {
+      return !isNotesExportEnable;
     } else if (list === 'imports') {
       return !isImportExportEnable;
     } else if (list === 'financial' && tab === 'resource_cost') {
@@ -646,6 +695,7 @@ export const AccountDetails = () => {
             accountDetails={{ ...data?.data } as accountDetailsProps}
             setExportType={setExportType}
             setInteractionsParams={setInteractionsParams}
+            loading={isPending}
           />
         );
       case 'cases':
@@ -653,7 +703,14 @@ export const AccountDetails = () => {
       case 'activities':
         return <Activities />;
       case 'notes':
-        return <Notes />;
+        return (
+          <Notes
+            setExportType={setExportType}
+            accountInActive={accountInActive}
+            setNotesParams={setNotesParams}
+            accountDetails={{ ...data?.data } as accountDetailsProps}
+          />
+        );
       case 'checklist':
         return <Checklist />;
       case 'timesheet':
@@ -873,7 +930,7 @@ export const AccountDetails = () => {
         error={isError}
         singleLineView={false}
       />
-      <div className='flex flex-1 flex-row w-full'>
+      <div className='flex flex-1 flex-row w-full border-b border-[#CBD6E2]'>
         <div
           className={`flex transition-all ease-in-out ${
             isCollapsed
@@ -894,7 +951,7 @@ export const AccountDetails = () => {
         </div>
         <div
           className='flex-1'
-          style={{ maxHeight: 'calc(100vh - 180px)', overflow: 'auto' }}
+          style={{ maxHeight: 'calc(100vh - 220px)', overflow: 'auto' }}
         >
           <Suspense fallback={null}>{renderContent()}</Suspense>
         </div>

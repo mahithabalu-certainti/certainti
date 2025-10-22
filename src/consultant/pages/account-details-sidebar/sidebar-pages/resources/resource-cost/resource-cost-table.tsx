@@ -1,7 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useState } from 'react';
 import React from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import {
+  generatePath,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 import { useMutation } from '@apollo/client';
 import { UPDATE_RESOURCE_COST } from '../../../../../../api/graphql/queries/resource-query';
 import { ResourceCostList } from '../../../../../types/resource-cost';
@@ -16,7 +21,7 @@ import {
   ShowHideTableColumn,
 } from '../../../../../../components/table/types';
 import { resourceClient } from '../../../../../../api/graphql/clients/client';
-import { RESOURCECOST } from '../../../../../../routes';
+import { NOTES_CREATE, RESOURCECOST } from '../../../../../../routes';
 import {
   ListTable,
   ManageColumnsPopover,
@@ -60,6 +65,8 @@ interface ResourceCostTableProps {
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
   >;
+  searchValue?: string;
+  resourceNumber?: string;
 }
 
 const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
@@ -80,6 +87,8 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
   resourceInActive,
   columnAnchorEl,
   setColumnAnchorEl,
+  searchValue,
+  resourceNumber,
 }) => {
   const navigate = useNavigate();
   const { accountid } = useParams();
@@ -125,6 +134,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
       sortBy: costorderBy,
       sortOrder: apiOrder,
       filters: appliedFilters,
+      search: searchValue,
       accountNumber: accountDetails?.data?.accountById?.r_number,
       fiscalYear,
       resourceRid,
@@ -176,6 +186,11 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
   const attachmentCreateEnable = checkPermission(
     permission,
     AllPermissions.ATTACHMENT_CREATE
+  );
+
+  const isNoteCreateEnable = checkPermission(
+    permission,
+    AllPermissions.NOTES_CREATE
   );
 
   const handleEdit = (cost: ResourceCostList) => {
@@ -304,6 +319,20 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
 
   const getRowId = (row: ResourceCostList) => row?.rid || '';
 
+  const handleCreateNote = (rowId: string) => {
+    const accountId = accountid ?? '';
+    const path = generatePath(NOTES_CREATE, {
+      module: 'account',
+    });
+    const queryParams = new URLSearchParams({
+      accountId,
+      entityLevel: 'resource_cost',
+      entityId: rowId,
+      source: `Resource > ${resourceNumber}`,
+    });
+    navigate(`${path}?${queryParams.toString()}`);
+  };
+
   const resourceCostColumns = useMemo(
     () =>
       getResourceCostColumns(
@@ -312,10 +341,12 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
         permissionMap,
         accountInActive,
         handleAttachmentClick,
+        handleCreateNote,
         resourceInActive,
         attachmentCreateEnable,
         handleGetFiscalYear,
-        fiscalDate
+        fiscalDate,
+        isNoteCreateEnable
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [accountInActive, fiscalDate, resourceInActive]

@@ -16,6 +16,7 @@ import {
   ATTACHMENTS,
   MAIN_ROUTE,
   NOT_FOUND,
+  NOTES,
   PROJECT,
 } from '../../routes';
 
@@ -74,9 +75,9 @@ export const accountNavItems: INavItem[] = [
     id: MenuOption.NOTES,
     icon: NotesIcon,
     name: 'Notes',
-    link: NOT_FOUND,
+    link: NOTES,
     type: 'link',
-    matchLink: '',
+    matchLink: NOTES,
   },
   {
     id: MenuOption.ATTACHMENTS,

@@ -11,6 +11,7 @@ import {
 import ActionImportDropdown from '../actions-dropdown/import-dropdown';
 import { SelectOption } from '../../consultant/types';
 import { GlobalFiscalYearDropdown } from '../fiscal-dropdown';
+import SearchBar from '../search/search-bar';
 
 interface TabOption {
   id: string;
@@ -49,6 +50,14 @@ interface TabPanelProps {
   showFiscalYear?: boolean;
   fiscalYearValue?: string;
   updatedYear?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  showSearch?: boolean;
+  searchDisabled?: boolean;
+  searchHidden?: boolean;
+  searchPlaceholder?: string;
+  onSearchTextChange?: (text: string) => void;
+  onSearch?: (text: string) => void;
+  searchReset?: boolean;
+  onSearchReset?: () => void;
 }
 
 const SectionTabPanel: React.FC<TabPanelProps> = ({
@@ -80,11 +89,20 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
   fiscalYearValue,
   updatedYear,
   showFiscalYear,
+  showSearch,
+  searchDisabled = false,
+  searchHidden,
+  searchPlaceholder = 'Search',
+  onSearchTextChange,
+  onSearch,
+  searchReset,
+  onSearchReset,
 }) => {
   const location = useLocation();
   const [tabValue, setTabValue] = useState('');
   const [filterAnchorEl, setFilterAnchorEl] =
     useState<HTMLButtonElement | null>(null);
+  const [searchText, setSearchText] = useState('');
 
   const isFilterOpen = Boolean(filterAnchorEl);
   const filterId = isFilterOpen ? `${contextKey}-filter-popover` : undefined;
@@ -194,7 +212,23 @@ const SectionTabPanel: React.FC<TabPanelProps> = ({
                 />
               </div>
             ))}
-
+          {showSearch && (
+            <Box className={filterVisibility ? 'mr-2' : ''}>
+              <SearchBar
+                initialSearchText={searchText}
+                onSearch={(value) => {
+                  setSearchText(value);
+                  onSearch?.(value);
+                  onSearchTextChange?.(value);
+                }}
+                placeholder={searchPlaceholder || ''}
+                disabled={searchDisabled}
+                hide={searchHidden}
+                reset={searchReset}
+                onReset={onSearchReset}
+              />
+            </Box>
+          )}
           {filterVisibility && contextKey !== 'details' && (
             <>
               <Box className='relative'>

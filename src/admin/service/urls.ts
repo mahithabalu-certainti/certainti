@@ -107,6 +107,7 @@ export const getUserExportUrl = (params: UserListParams = {}): string => {
     sortOrder: params.sortOrder || 'DESC',
     filters: params.filters,
     timezone: params.timezone,
+    ...(params.search && { search: params.search }),
   };
 
   return `/api/user/export?${buildQueryString(queryParams)}`;
