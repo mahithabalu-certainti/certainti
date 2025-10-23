@@ -94,6 +94,9 @@ export const ProjectDetails = () => {
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [exportType, setExportType] = useState<ExportType>('attachments');
   const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  const detailPageView = activeKey === 'projectDetails';
+
   const [interactionsParams, setInteractionsParams] =
     useState<AttachmentsListExportParams>({
       sortBy: '',
@@ -554,7 +557,7 @@ export const ProjectDetails = () => {
       case 'projectDetails':
         return (
           <ProjectDetailsData
-            accountInActive={accountInActive || projectInActive}
+            accountInActive={accountInActive}
             projectDetails={{
               ...projectData!,
               attachment: data?.data?.attachment || [],
@@ -792,14 +795,14 @@ export const ProjectDetails = () => {
             {
               label: 'RD Assessment',
               onClick: handleTriggerAI,
-              disabled: accountInActive,
+              disabled: accountInActive || projectInActive,
               loading: triggerAIMutation.isPending,
               sx: { ...BUTTON_STYLES, width: '115px', minWidth: '115px' },
               hide: !TriggerAIEnable,
             },
           ]}
           primaryButton={
-            isProjectFieldsEditable
+            isProjectFieldsEditable && !detailPageView
               ? {
                   label: 'Edit',
                   onClick: handleEditAccount,
