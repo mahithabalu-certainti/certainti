@@ -1894,9 +1894,9 @@ export const fetchResCodeWithPrjResRole = (
     AND
     (
     (pf.project_startdate IS NULL OR ps.start_date IS NULL OR ps.start_date >= DATE(pf.project_startdate))
-    AND
+    OR
     (pf.project_enddate IS NULL OR ps.end_date IS NULL OR ps.end_date <= DATE(pf.project_enddate))
-)
+    )
     ORDER BY r.resource_code ASC
     `
     return query;
@@ -2015,8 +2015,6 @@ export const fetchResCodeWithPrjResRole = (
         r.resource_name, r.resource_startdate AS start_date, r.resource_enddate AS end_date
         FROM
         ${schemaName}.resources r
-        LEFT JOIN ${schemaName}.project_resource pr ON pr.resource_rid = r.rid
-        LEFT JOIN ${schemaName}.project_fiscal pf ON pf.rid = pr.project_fiscal_rid
         WHERE
         r.account_rid = '${accountId}'
         AND

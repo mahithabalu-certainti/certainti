@@ -1811,7 +1811,7 @@ class ProjectIngestionService {
       rd_percent_final: "rd_percent_final",
     };
 
-    const childOnlyFilters = ["fiscal_year", "project_code"];
+    const childOnlyFilters = ["fiscal_year", "project_code", "rd_percent_final", "qre_final"];
     let isChildOnlyFilter: boolean = false;
 
     const parentFilters: Record<string, any> = {};
@@ -1952,12 +1952,13 @@ class ProjectIngestionService {
         } else {
           if (field === "created_datetime") {
             fullOrder.push([
-              Sequelize.literal(`"Project"."project_code" ASC NULLS LAST`),
+              Sequelize.literal(`"Project"."created_datetime" ASC NULLS LAST`),
             ]);
             fullOrder.push([
               Sequelize.literal(`"ProjectFiscal"."fiscal_year" ASC`),
             ]);
-          } else {
+          } 
+          else {
             if (field === "project_code" && sortDirection === "ASC") {
               fullOrder.push([
                 Sequelize.literal(`"Project"."project_code" ASC NULLS LAST`),
@@ -1972,10 +1973,31 @@ class ProjectIngestionService {
               fullOrder.push([
                 Sequelize.literal(`"ProjectFiscal"."fiscal_year" DESC`),
               ]);
-            } else {
-              fullOrder.push([
-                Sequelize.literal(`"Project"."${field}" ${nullsHandled}`),
+            } 
+            else {
+              if(field === 'rd_percent_final') {
+                fullOrder.push([
+                Sequelize.literal(`"Project"."project_code" ASC NULLS LAST`),
               ]);
+                fullOrder.push([
+                Sequelize.literal(`"ProjectFiscal"."${field}" ${nullsHandled}`),
+              ]);
+              } 
+              else if(field === "qre_final") {
+                fullOrder.push([
+                Sequelize.literal(`"Project"."project_code" ASC NULLS LAST`),
+                ]);
+                fullOrder.push([
+                Sequelize.literal(`"ProjectFiscal"."${field}" ${nullsHandled}`),
+              ]);
+              } 
+              else {
+                if(field !== 'qre_final' && field !== 'fiscal_year' && field !== 'rd_percent_final') {
+                  fullOrder.push([
+                  Sequelize.literal(`"Project"."${field}" ${nullsHandled}`),
+                ]);
+                }
+              }
             }
           }
         }
