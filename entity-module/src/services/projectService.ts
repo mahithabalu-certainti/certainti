@@ -705,6 +705,9 @@ export class ProjectService {
       );
 
       if (projectData) {
+        projectData.dataValues.total_fte = projectData.dataValues.total_fte == 0 ? null : projectData.dataValues.total_fte
+        projectData.dataValues.total_nonlabor_prj = projectData.dataValues.total_nonlabor_prj == 0 ? null : projectData.dataValues.total_nonlabor_prj
+        projectData.dataValues.total_subcon = projectData.dataValues.total_subcon == 0 ? null : projectData.dataValues.total_subcon
         const mainDbInit = await initMainDbSequelize();
 
         let schemaName = rawQueries.fetchSchemaName(accountRNumber)
