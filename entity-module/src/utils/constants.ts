@@ -1215,16 +1215,18 @@ export const rawQueries = {
   },
   fetchProjectResourceById(schemaName: string) {
     return `
-      SELECT rid,r_number,project_rid,project_fiscal_rid 
-      FROM "${schemaName}".project_resource
-      WHERE rid = :projectResourceId
+      SELECT pr.rid,pr.r_number,pr.project_rid,pr.project_fiscal_rid, pf.currency_rid 
+      FROM "${schemaName}".project_resource pr
+      LEFT JOIN "${schemaName}".project_fiscal pf ON pf.rid = pr.project_fiscal_rid
+      WHERE pr.rid = :projectResourceId
     `;
   },
   fetchProjectTaskById(schemaName: string) {
     return `
-      SELECT rid,r_number 
-      FROM "${schemaName}".project_task
-      WHERE rid = :projectTaskId
+      SELECT pt.rid,pt.r_number, pf.currency_rid, pt.project_fiscal_rid 
+      FROM "${schemaName}".project_task pt
+      LEFT JOIN "${schemaName}".project_fiscal pf ON pf.rid = pt.project_fiscal_rid
+      WHERE pt.rid = :projectTaskId
     `;
   },
   fetchResourceById(schemaName: string) {
@@ -1236,14 +1238,14 @@ export const rawQueries = {
   },
   fetchResourceCostById(schemaName: string) {
     return `
-      SELECT rid,r_number 
+      SELECT rid,r_number,resource_rid
       FROM "${schemaName}".resource_cost
       WHERE rid = :resourceCostId
     `;
   },
   fetchResourceSkillById(schemaName: string) {
     return `
-    SELECT rid,r_number 
+    SELECT rid,r_number,resource_rid
     FROM "${schemaName}".resource_skill
     WHERE rid = :resourceSkillId
     `;

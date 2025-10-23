@@ -411,12 +411,12 @@ export class NotesService {
         if(graphqlData?.notes_rid) {
           allNotes = allNotes.filter((d : any) => d != null)
         }
-        const attachmentDisplayNames = await this.getAttachmentDisplayNames(allNotes, schemaNumber);
+        const {displayNames} = await this.getAttachmentDisplayNames(allNotes, schemaNumber);
     
         // 🔷 Apply attached_to filter if present
         if (attachedToFilter) {
           allNotes = allNotes.filter(attachment => {
-            let displayName = attachmentDisplayNames[attachment.rid] || String(attachment.attach_to) || '';
+            let displayName = displayNames[attachment.rid] || String(attachment.attach_to) || '';
             const displayValue = displayName.toLowerCase();
             const operator = Object.keys(attachedToFilter)[0];
             const filterValue = (attachedToFilter[operator] || '').toLowerCase();
@@ -442,8 +442,8 @@ export class NotesService {
             return finalSortOrder === 'ASC' ? aDate - bDate : bDate - aDate;
           }
     
-          let aVal = finalSortBy === 'attached_to' ? (attachmentDisplayNames[a.rid] ?? '') : (a[finalSortBy] ?? '');
-          let bVal = finalSortBy === 'attached_to' ? (attachmentDisplayNames[b.rid] ?? '') : (b[finalSortBy] ?? '');
+          let aVal = finalSortBy === 'attached_to' ? (displayNames[a.rid] ?? '') : (a[finalSortBy] ?? '');
+          let bVal = finalSortBy === 'attached_to' ? (displayNames[b.rid] ?? '') : (b[finalSortBy] ?? '');
     
           // Convert to string safely
           aVal = typeof aVal === 'string' ? aVal.toLowerCase() : String(aVal).toLowerCase();
@@ -479,7 +479,7 @@ export class NotesService {
           ...attachment.get({ plain: true }),
           created_by_name: userMap.get(attachment.created_by) || attachment.created_by,
           modified_by_name: userMap.get(attachment.modified_by) || attachment.modified_by,
-          attached_to: attachmentDisplayNames[attachment.rid] || attachment.attach_to,
+          attached_to: displayNames[attachment.rid] || attachment.attach_to,
           notes_owner_name: userMap.get(attachment.notes_owner) || attachment.notes_owner,
           browse_file : await generateSasUrl(attachment.browse_file)
         })));
@@ -816,12 +816,12 @@ export class NotesService {
         if(graphqlData?.document_rid) {
           allNotes = allNotes.filter((d : any) => d != null)
         }
-        const attachmentDisplayNames = await this.getAttachmentDisplayNames(allNotes, schemaNumber);
+        const {displayNames} = await this.getAttachmentDisplayNames(allNotes, schemaNumber);
     
         // 🔷 Apply attached_to filter if present
         if (attachedToFilter) {
           allNotes = allNotes.filter(attachment => {
-            let displayName = attachmentDisplayNames[attachment.rid] || String(attachment.attach_to) || '';
+            let displayName = displayNames[attachment.rid] || String(attachment.attach_to) || '';
             const displayValue = displayName.toLowerCase();
             const operator = Object.keys(attachedToFilter)[0];
             const filterValue = (attachedToFilter[operator] || '').toLowerCase();
@@ -847,8 +847,8 @@ export class NotesService {
             return finalSortOrder === 'ASC' ? aDate - bDate : bDate - aDate;
           }
     
-          let aVal = finalSortBy === 'attached_to' ? (attachmentDisplayNames[a.rid] ?? '') : (a[finalSortBy] ?? '');
-          let bVal = finalSortBy === 'attached_to' ? (attachmentDisplayNames[b.rid] ?? '') : (b[finalSortBy] ?? '');
+          let aVal = finalSortBy === 'attached_to' ? (displayNames[a.rid] ?? '') : (a[finalSortBy] ?? '');
+          let bVal = finalSortBy === 'attached_to' ? (displayNames[b.rid] ?? '') : (b[finalSortBy] ?? '');
     
           // Convert to string safely
           aVal = typeof aVal === 'string' ? aVal.toLowerCase() : String(aVal).toLowerCase();
@@ -881,7 +881,7 @@ export class NotesService {
           ...attachment.get({ plain: true }),
           created_by_name: userMap.get(attachment.created_by) || attachment.created_by,
           modified_by_name: userMap.get(attachment.modified_by) || attachment.modified_by,
-          attached_to: attachmentDisplayNames[attachment.rid] || attachment.attach_to,
+          attached_to: displayNames[attachment.rid] || attachment.attach_to,
           notes_owner_name: userMap.get(attachment.notes_owner) || attachment.notes_owner,
           browse_file : await generateSasUrl(attachment.browse_file)
         })));
@@ -1179,11 +1179,15 @@ export class NotesService {
     
         // Build attachment display names for each schemaNumber group
         const attachmentDisplayNames: Record<string, string> = {};
+        let parentDisplayRid : Record<string, string> = {}
+        let currencyDisplayRid : Record<string, string> = {}
     
         await Promise.all(
           Array.from(schemaAttachmentMap.entries()).map(async ([schemaNumber, attachments]) => {
-            const displayNames = await this.getAttachmentDisplayNames(attachments, schemaNumber);
+            const {displayNames, parentRid, currencyRid} = await this.getAttachmentDisplayNames(attachments, schemaNumber);
             Object.assign(attachmentDisplayNames, displayNames);
+            Object.assign(parentDisplayRid, parentRid)
+            Object.assign(currencyDisplayRid, currencyRid)
           })
         );
     
@@ -1204,7 +1208,9 @@ export class NotesService {
           modified_by_name: userMap.get(att.modified_by) || att.modified_by,
           attached_to: attachmentDisplayNames[att.rid] || att.attach_to,
           notes_owner_name: userMap.get(att.notes_owner) || att.notes_owner,
-          browse_file: await generateSasUrl(att.browse_file)
+          browse_file: await generateSasUrl(att.browse_file),
+          parent_rid : parentDisplayRid[att.attach_to],
+          currency_rid : currencyDisplayRid[att.attach_to]
         })));
     
         // Filters: attached_to
@@ -1479,7 +1485,7 @@ export class NotesService {
     
         await Promise.all(
           Array.from(schemaAttachmentMap.entries()).map(async ([schemaNumber, attachments]) => {
-            const displayNames = await this.getAttachmentDisplayNames(attachments, schemaNumber);
+            const {displayNames} = await this.getAttachmentDisplayNames(attachments, schemaNumber);
             Object.assign(attachmentDisplayNames, displayNames);
           })
         );
@@ -1816,38 +1822,54 @@ export class NotesService {
     }
 
     // Helper method to get display names for attachments
-private async getAttachmentDisplayNames(attachments: any[], schemaNumber: string): Promise<Record<string, string>> {
+private async getAttachmentDisplayNames(attachments: any[], schemaNumber: string): Promise<any> {
   const displayNames: Record<string, string> = {};
+  let parentRid : Record<string, string> = {}
+  let currencyRid : Record<string, string> = {}
   for (const attachment of attachments) {
     try {
       switch (attachment.attachment_level) {
         case 'account':
           const account = await this.schemaService.fetchAccountById(attachment.attach_to);
           displayNames[attachment.rid] = account?.account_name || attachment.attach_to;
+          parentRid[attachment.attach_to] = ''
+          currencyRid[attachment.attach_to] = ''
           break;
         case 'project':
           const project = await this.projectIngestionService.fetchProjectInfoById(schemaNumber, attachment.attach_to);
           displayNames[attachment.rid] = project?.project_code || attachment.attach_to;
+          parentRid[attachment.attach_to] =''
+          currencyRid[attachment.attach_to] =''
           break;
         case 'project_resource':
           const projectResource = await this.projectIngestionService.fetchProjectResourceById(schemaNumber, attachment.attach_to);
           displayNames[attachment.rid] = (projectResource as { r_number?: string })?.r_number || attachment.attach_to;
+          parentRid[attachment.attach_to] = (projectResource as {project_fiscal_rid? : string})?.project_fiscal_rid || ''
+          currencyRid[attachment.attach_to] = (projectResource as {currency_rid? : string})?.currency_rid || ''
           break;
         case 'project_task':
           const projectTask = await this.projectIngestionService.fetchProjectTaskById(schemaNumber, attachment.attach_to);
           displayNames[attachment.rid] = (projectTask as { r_number?: string })?.r_number || attachment.attach_to;
+          parentRid[attachment.attach_to] = (projectTask as {project_fiscal_rid? : string})?.project_fiscal_rid || ''
+          currencyRid[attachment.attach_to] = (projectTask as {currency_rid? : string})?.currency_rid || ''
           break;
         case 'resource':
           const resource = await this.projectIngestionService.fetchResourceById(schemaNumber, attachment.attach_to);
           displayNames[attachment.rid] = (resource as { resource_code?: string })?.resource_code || attachment.attach_to;
+          parentRid[attachment.attach_to] = ''
+          currencyRid[attachment.attach_to] = ''
           break;
         case 'resource_cost':
           const resourceCost = await this.projectIngestionService.fetchResourceCostById(schemaNumber, attachment.attach_to);
           displayNames[attachment.rid] = (resourceCost as { r_number?: string })?.r_number || attachment.attach_to;
+          parentRid[attachment.attach_to] = (resourceCost as {resource_rid? : string})?.resource_rid || attachment.attach_to
+          currencyRid[attachment.attach_to] = ''
           break;
         case 'resource_skill': 
           const resourceSkill = await this.projectIngestionService.fetchResourceSkillById(schemaNumber, attachment.attach_to);
           displayNames[attachment.rid] = (resourceSkill as { r_number?: string })?.r_number || attachment.attach_to;
+          parentRid[attachment.attach_to] = (resourceSkill as {resource_rid? : string})?.resource_rid || ''
+          currencyRid[attachment.attach_to] = ''
           break;       
         default:
           displayNames[attachment.rid] = attachment.attach_to;
@@ -1858,7 +1880,11 @@ private async getAttachmentDisplayNames(attachments: any[], schemaNumber: string
     }
   }
   
-  return displayNames;
+  return {
+    displayNames,
+    parentRid,
+    currencyRid
+  };
 }
 
 private mapAttachmentToCommonFormat(at: any, timezone : string) {
@@ -2112,6 +2138,12 @@ private mapAttachmentToCommonFormat(at: any, timezone : string) {
         };
       }
     }
+
+    // async fetchParentId (account,entityRid : string, attachmentLevel : string) {
+    //   if(attachmentLevel == "project_task") {
+
+    //   }
+    // }
 
 
 
