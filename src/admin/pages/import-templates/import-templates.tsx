@@ -16,7 +16,7 @@ const ImportTemplatesList: React.FC = () => {
                 Admin Template
               </div>
               <div className='font-bold text-[16px] text-[#2D3E4F] -mt-1'>
-                Manage Import Templates
+                Import Templates
               </div>
             </div>
           </div>

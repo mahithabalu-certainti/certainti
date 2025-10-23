@@ -860,6 +860,9 @@ const ListTable = <T extends RowData>({
       <TableContainer
         sx={{
           ...tableStyle,
+          maxHeight: tableStyle?.maxHeight
+            ? `calc(${tableStyle.maxHeight} - 42px)`
+            : 'calc(100vh - 42px)',
           overflow: isEditingAnyCell ? 'hidden' : 'auto',
         }}
       >

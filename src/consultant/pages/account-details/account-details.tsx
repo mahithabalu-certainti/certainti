@@ -208,6 +208,8 @@ export const AccountDetails = () => {
   );
   const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
+  const detailPageView = activeKey === 'details';
+
   const [tableParams, setTableParams] = useState<ExportModule>({
     sortBy: 'created_datetime',
     sortOrder: 'DESC',
@@ -908,7 +910,7 @@ export const AccountDetails = () => {
             },
           ]}
           primaryButton={
-            isAccountFieldsEditable
+            isAccountFieldsEditable && !detailPageView
               ? {
                   label: 'Edit',
                   onClick: handleEditAccount,
@@ -930,7 +932,7 @@ export const AccountDetails = () => {
         error={isError}
         singleLineView={false}
       />
-      <div className='flex flex-1 flex-row w-full'>
+      <div className='flex flex-1 flex-row w-full border-b border-[#CBD6E2]'>
         <div
           className={`flex transition-all ease-in-out ${
             isCollapsed
@@ -951,7 +953,7 @@ export const AccountDetails = () => {
         </div>
         <div
           className='flex-1'
-          style={{ maxHeight: 'calc(100vh - 180px)', overflow: 'auto' }}
+          style={{ maxHeight: 'calc(100vh - 220px)', overflow: 'auto' }}
         >
           <Suspense fallback={null}>{renderContent()}</Suspense>
         </div>

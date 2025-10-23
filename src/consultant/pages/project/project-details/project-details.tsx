@@ -94,6 +94,9 @@ export const ProjectDetails = () => {
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [exportType, setExportType] = useState<ExportType>('attachments');
   const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  const detailPageView = activeKey === 'projectDetails';
+
   const [interactionsParams, setInteractionsParams] =
     useState<AttachmentsListExportParams>({
       sortBy: '',
@@ -554,7 +557,7 @@ export const ProjectDetails = () => {
       case 'projectDetails':
         return (
           <ProjectDetailsData
-            accountInActive={accountInActive || projectInActive}
+            accountInActive={accountInActive}
             projectDetails={{
               ...projectData!,
               attachment: data?.data?.attachment || [],
@@ -792,14 +795,14 @@ export const ProjectDetails = () => {
             {
               label: 'RD Assessment',
               onClick: handleTriggerAI,
-              disabled: accountInActive,
+              disabled: accountInActive || projectInActive,
               loading: triggerAIMutation.isPending,
               sx: { ...BUTTON_STYLES, width: '115px', minWidth: '115px' },
               hide: !TriggerAIEnable,
             },
           ]}
           primaryButton={
-            isProjectFieldsEditable
+            isProjectFieldsEditable && !detailPageView
               ? {
                   label: 'Edit',
                   onClick: handleEditAccount,
@@ -821,7 +824,7 @@ export const ProjectDetails = () => {
         loading={isLoading}
         onAdjustmentFactorChange={handleAdjustmentFactor}
       />
-      <div className='flex flex-row flex-1 w-full'>
+      <div className='flex flex-row flex-1 w-full border-b border-[#CBD6E2]'>
         <div
           className={`flex transition-all duration-300 ease-in-out ${
             isCollapsed
@@ -842,7 +845,7 @@ export const ProjectDetails = () => {
         </div>
         <div
           className='flex-1'
-          style={{ maxHeight: 'calc(100vh - 240px)', overflow: 'auto' }}
+          style={{ maxHeight: 'calc(100vh - 283px)', overflow: 'auto' }}
         >
           <Suspense fallback={null}>{renderContent()}</Suspense>
         </div>

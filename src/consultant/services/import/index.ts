@@ -164,7 +164,7 @@ export const useTimesheetDetails = (
 
 export const useTempleteList = () => {
   return useQuery<TemplateItem[], Error>({
-    queryKey: ['timesheetDetails'],
+    queryKey: ['import-template-list'],
     queryFn: fetchTempleteList,
     enabled: true,
     retry: 0,
