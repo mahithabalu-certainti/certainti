@@ -31,17 +31,6 @@ async function createNotes(req: Request, res: Response): Promise<void> {
       );
       return;
     }
-    
-
-    if (!req.file) {
-      handleErrorResponse(
-        res,
-        HttpStatus.BAD_REQUEST,
-        HttpStatus.BAD_REQUEST_MESSAGE,
-        "File is required"
-      );
-      return;
-    }
     const attachment = await notesService.createNotes(value, userId, req.file);
 
     if (attachment.statusCode === HttpStatus.SUCCESS) {
@@ -372,7 +361,7 @@ async function exportAllNotes(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const attachment = await notesService.updateNotes(value, userId, req?.file);
+    const attachment = await notesService.updateNotes(value, userId, req?.file, value.is_file_deleted);
 
     if (attachment.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);

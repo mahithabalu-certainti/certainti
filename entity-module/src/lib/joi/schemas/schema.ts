@@ -3035,6 +3035,7 @@ const updateNotesSchema = Joi.object({
     rid : Joi.string().pattern(uuidRegex, "valid UUID").required(),
     account_rid: Joi.string().pattern(uuidRegex, "valid UUID").required(),
     attach_to: Joi.string().pattern(uuidRegex, "valid UUID").required(),
+    is_file_deleted : Joi.boolean().optional(),
     attachment_level: Joi.string()
         .valid('account', 'project', 'project_resource', 'project_task', 'resource', 'resource_cost', 'resource_skill')
         .required()

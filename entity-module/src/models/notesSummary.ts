@@ -58,11 +58,11 @@ export class NotesSummary extends Model {
         },
         browse_file: {
           type: DataTypes.STRING(1000),
-          allowNull: false,
+          allowNull: true,
         },
         document_name: {
           type: DataTypes.STRING(100),
-          allowNull: false,
+          allowNull: true,
         },
         notes_rid: {
           type: DataTypes.STRING(100),
@@ -82,11 +82,11 @@ export class NotesSummary extends Model {
         },
         format: {
           type: DataTypes.STRING(10),
-          allowNull: false,
+          allowNull: true,
         },
         size_in_mb: {
           type: DataTypes.DECIMAL(10, 2),
-          allowNull: false,
+          allowNull: true,
         },
         title: {
           type: DataTypes.STRING(64),

@@ -52,7 +52,7 @@ export class NotesService {
       return this.orgDbSequelize
     }
 
-    async createNotes (notesData : ICreateNotesSchema, userId: string, file: Express.Multer.File) {
+    async createNotes (notesData : ICreateNotesSchema, userId: string, file?: Express.Multer.File) {
         try {
         const { account_rid, attachment_level } = notesData;
         const accountData = await this.schemaService.fetchAccountById(account_rid);
@@ -86,9 +86,20 @@ export class NotesService {
 
         await this.createNotesTables(accountNumber)
 
-        const { url, name, extension, size } = await uploadToAzureBlob(file, account_rid, "notes");        
-        if(name.length > 100) {
+        let name : string | null = null
+        let url : string | null = null
+        let extension : string | null = null
+        let size : number | null = null
+
+        if(file) {
+          const uploadedResult = await uploadToAzureBlob(file, account_rid, "notes");
+          name = uploadedResult.name
+          url = uploadedResult.url
+          extension = uploadedResult.extension
+          size = uploadedResult.size
+          if(name.length > 100) {
             throw new Error("Document name cannot exceed 100 characters");
+          }
         }
 
         const notesModel = await Notes.create({
@@ -481,7 +492,7 @@ export class NotesService {
           modified_by_name: userMap.get(attachment.modified_by) || attachment.modified_by,
           attached_to: displayNames[attachment.rid] || attachment.attach_to,
           notes_owner_name: userMap.get(attachment.notes_owner) || attachment.notes_owner,
-          browse_file : await generateSasUrl(attachment.browse_file)
+          browse_file : attachment.browse_file !== '' && attachment.browse_file !== null && attachment.browse_file !== undefined ? await generateSasUrl(attachment.browse_file) : null
         })));
     
         // Handle uploaded_by sorting
@@ -883,7 +894,7 @@ export class NotesService {
           modified_by_name: userMap.get(attachment.modified_by) || attachment.modified_by,
           attached_to: displayNames[attachment.rid] || attachment.attach_to,
           notes_owner_name: userMap.get(attachment.notes_owner) || attachment.notes_owner,
-          browse_file : await generateSasUrl(attachment.browse_file)
+          browse_file : attachment.browse_file !== '' && attachment.browse_file !== null && attachment.browse_file !== undefined ? await generateSasUrl(attachment.browse_file) : null
         })));
     
         // Handle uploaded_by sorting
@@ -1208,7 +1219,7 @@ export class NotesService {
           modified_by_name: userMap.get(att.modified_by) || att.modified_by,
           attached_to: attachmentDisplayNames[att.rid] || att.attach_to,
           notes_owner_name: userMap.get(att.notes_owner) || att.notes_owner,
-          browse_file: await generateSasUrl(att.browse_file),
+          browse_file : att.browse_file !== '' && att.browse_file !== null && att.browse_file !== undefined ? await generateSasUrl(att.browse_file) : null,
           parent_rid : parentDisplayRid[att.attach_to],
           currency_rid : currencyDisplayRid[att.attach_to]
         })));
@@ -1507,7 +1518,7 @@ export class NotesService {
           modified_by_name: userMap.get(att.modified_by) || att.modified_by,
           attached_to: attachmentDisplayNames[att.rid] || att.attach_to,
           notes_owner_name: userMap.get(att.notes_owner) || att.notes_owner,
-          browse_file: await generateSasUrl(att.browse_file)
+          browse_file : att.browse_file !== '' && att.browse_file !== null && att.browse_file !== undefined ? await generateSasUrl(att.browse_file) : null,
         })));
     
         // Filters: attached_to
@@ -1991,7 +2002,7 @@ private mapAttachmentToCommonFormat(at: any, timezone : string) {
         }
     }
 
-    async updateNotes (notesData : IUpdateNotesSchema, userId: string, file?: Express.Multer.File) : Promise<any> {
+    async updateNotes (notesData : IUpdateNotesSchema, userId: string, file?: Express.Multer.File, isFileDeleted? : boolean) : Promise<any> {
       try {
         const sequelize = await initOrgSequelize();
         const mainDdSequilze = await initMainDbSequelize();
@@ -2044,11 +2055,18 @@ private mapAttachmentToCommonFormat(at: any, timezone : string) {
         };
         } 
         else {
-          let name : string = ``
-          let url : string = ``
-          let extension : string = ``
-          let size : number = 0
-          if(file) {
+          let name : string | null = null
+          let url : string | null = null
+          let extension : string | null = null
+          let size : number | null = null
+          if(isFileDeleted && file == undefined) {
+            await deleteFromAzureBlob(isNotesExists.browse_file)
+            name = null
+            url = null
+            extension = null
+            size = null
+          }
+          else if(file && !isFileDeleted) {
             await deleteFromAzureBlob(isNotesExists.browse_file)
             const uploadResult = await uploadToAzureBlob(file, account_rid, "notes");
           if(uploadResult.name.length > 100) {
