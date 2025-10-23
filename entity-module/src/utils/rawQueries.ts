@@ -1894,9 +1894,9 @@ export const fetchResCodeWithPrjResRole = (
     AND
     (
     (pf.project_startdate IS NULL OR ps.start_date IS NULL OR ps.start_date >= DATE(pf.project_startdate))
-    AND
+    OR
     (pf.project_enddate IS NULL OR ps.end_date IS NULL OR ps.end_date <= DATE(pf.project_enddate))
-)
+    )
     ORDER BY r.resource_code ASC
     `
     return query;
