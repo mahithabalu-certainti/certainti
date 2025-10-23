@@ -208,6 +208,8 @@ export const AccountDetails = () => {
   );
   const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
+  const detailPageView = activeKey === 'details';
+
   const [tableParams, setTableParams] = useState<ExportModule>({
     sortBy: 'created_datetime',
     sortOrder: 'DESC',
@@ -908,7 +910,7 @@ export const AccountDetails = () => {
             },
           ]}
           primaryButton={
-            isAccountFieldsEditable
+            isAccountFieldsEditable && !detailPageView
               ? {
                   label: 'Edit',
                   onClick: handleEditAccount,

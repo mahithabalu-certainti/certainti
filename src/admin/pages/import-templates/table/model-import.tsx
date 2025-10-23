@@ -20,9 +20,6 @@ const ImportModel: React.FC<ModelTableProps> = ({
   templateId,
   onUploadSuccess,
 }) => {
-  const handleClose = () => {
-    onClose();
-  };
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
@@ -144,6 +141,14 @@ const ImportModel: React.FC<ModelTableProps> = ({
       showError('Failed to upload the file.');
       setLoading(false);
     }
+  };
+
+  const handleClose = () => {
+    onClose();
+    setSelectedFiles([]);
+    setMessage(null);
+    setLoading(false);
+    fileInputRef.current!.value = '';
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {

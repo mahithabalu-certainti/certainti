@@ -236,6 +236,22 @@ const GlobalFilterModal: React.FC<GlobalFilterModalProps> = ({
     setSelectedFilters(newFilters);
   };
 
+  const handleSelectAllLabelClick =
+    (index: number) => (event: React.MouseEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const parentAccount = accounts?.find(
+        (acc) => acc.rid === selectedFilters[index].account
+      );
+      const allChildIds =
+        parentAccount?.child_accounts?.map((child) => child.rid) || [];
+      const isAllSelected =
+        selectedFilters[index].child.length === allChildIds.length;
+
+      handleSelectAllChildren(index, !isAllSelected);
+    };
+
   const handleSaveFilters = () => {
     const validFilters = selectedFilters.filter(
       (filter) => filter.account !== ''
@@ -464,6 +480,7 @@ const GlobalFilterModal: React.FC<GlobalFilterModalProps> = ({
                                 backgroundColor: 'transparent',
                               },
                             }}
+                            onClick={handleSelectAllLabelClick(index)}
                           >
                             <Checkbox
                               size='small'
@@ -474,9 +491,14 @@ const GlobalFilterModal: React.FC<GlobalFilterModalProps> = ({
                                       (acc) => acc.rid === filter.account
                                     )?.child_accounts?.length
                               )}
-                              onChange={(e) =>
-                                handleSelectAllChildren(index, e.target.checked)
-                              }
+                              onChange={(e) => {
+                                e.stopPropagation();
+                                handleSelectAllChildren(
+                                  index,
+                                  e.target.checked
+                                );
+                              }}
+                              onClick={(e) => e.stopPropagation()}
                               sx={{
                                 color: '#CBD6E2',
                                 '&.Mui-checked': {
@@ -486,7 +508,16 @@ const GlobalFilterModal: React.FC<GlobalFilterModalProps> = ({
                                 mr: 1,
                               }}
                             />
-                            <span className='pl-0.5'>Select All</span>
+                            <span
+                              className='pl-0.5 flex-1'
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleSelectAllLabelClick(index)(e);
+                              }}
+                            >
+                              Select All
+                            </span>
                           </MenuItem>
                         )}
                         {accounts?.find((acc) => acc.rid === filter.account)
