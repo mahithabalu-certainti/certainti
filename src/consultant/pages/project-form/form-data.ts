@@ -658,14 +658,14 @@ export const FormData = (
               'Total Non Labor Count must be a positive integer with up to 9 digits',
             placeholder: 'Enter Total Non Labor Count',
             formatCostValue: true,
-            // disabled:
-            //   isEditView &&
-            //   permissionMap?.['total_subcon']?.read &&
-            //   !permissionMap?.['total_subcon']?.edit,
-            // hide:
-            //   isEditView &&
-            //   !permissionMap?.['total_subcon']?.read &&
-            //   !permissionMap?.['total_subcon']?.edit,
+            disabled:
+              isEditView &&
+              permissionMap?.['total_nonlabor']?.read &&
+              !permissionMap?.['total_nonlabor']?.edit,
+            hide:
+              isEditView &&
+              !permissionMap?.['total_nonlabor']?.read &&
+              !permissionMap?.['total_nonlabor']?.edit,
           }),
 
           createTextField('total_effort_fte', 'Total FTE Effort', {

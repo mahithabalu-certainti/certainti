@@ -400,7 +400,7 @@ export const getProjectColumns = (
     hide:
       !permissionMap?.['qre_final']?.read &&
       !permissionMap?.['qre_final']?.edit,
-    render: (row: Project) => (row.qre_final ? row.qre_final : '-'),
+    render: (row: Project) => (row.rd_percent_final ? row.rd_percent_final : '-'),
   },
   {
     id: 'qre_final',
@@ -412,7 +412,7 @@ export const getProjectColumns = (
       textAlign: 'right',
     },
     hide: !permissionMap?.['qre']?.read && !permissionMap?.['qre']?.edit,
-    render: (row: Project) => (row.qre ? row.qre : '-'),
+    render: (row: Project) => (row.qre_final ? row.qre_final : '-'),
   },
   {
     id: 'comments',
