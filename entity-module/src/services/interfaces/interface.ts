@@ -933,7 +933,7 @@ export interface INotesService {
    createNotes(
     notesData: ICreateNotesSchema,
     userId: string,
-    file: Express.Multer.File
+    file?: Express.Multer.File
   ): Promise<{
     statusCode: number;
     message: string;
@@ -1017,7 +1017,7 @@ export interface INotesService {
     statusMessage : string,
     data : any
   }>
-  updateNotes (notesData : IUpdateNotesSchema, userId: string, file?: Express.Multer.File) : Promise<any>
+  updateNotes (notesData : IUpdateNotesSchema, userId: string, file?: Express.Multer.File, isFileDeleted? : boolean) : Promise<any>
 }
 export interface ITemplates {
   uploadTemplate(

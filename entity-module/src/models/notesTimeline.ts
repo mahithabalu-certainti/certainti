@@ -9,7 +9,7 @@ export interface NotesTimelineAttributes {
   modified_by?: string | null;
 
   notes_rid : string
-  document_name: string;
+  document_name: string | null;
   title : string
   notes_owner : string
   descriptions? : string | null
@@ -73,7 +73,7 @@ export class NotesTimeline
         },
         document_name: {
           type: DataTypes.STRING(255),
-          allowNull: false,
+          allowNull: true,
         },
         notes_rid: {
           type: DataTypes.STRING(255),

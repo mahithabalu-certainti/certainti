@@ -10,14 +10,14 @@ interface NotesAttributes {
   created_by: string;
   modified_datetime?: Date;
   modified_by?: string | null;
-  browse_file: string;
-  document_name: string;
+  browse_file: string | null;
+  document_name: string | null;
   account_rid: string;
   attach_to: string;
   attachment_level: string;
   fiscal_year: number;
-  format: string;
-  size_in_mb: number;
+  format: string | null;
+  size_in_mb: number | null;
   title : string;
   notes_owner : string;
   descriptions?: string | null;
@@ -36,14 +36,14 @@ export class Notes
   public created_by!: string;
   public modified_datetime?: Date;
   public modified_by?: string | null;
-  public browse_file!: string;
+  public browse_file!: string | null;
   public account_rid!: string;
-  public document_name!: string;
+  public document_name!: string | null;;
   public attach_to!: string;
   public attachment_level!: string;
   public fiscal_year!: number;
-  public format!: string;
-  public size_in_mb!: number;
+  public format!: string | null;;
+  public size_in_mb!: number | null;;
   public title!: string;
   public notes_owner!: string;
   public descriptions?: string | null;
@@ -85,11 +85,11 @@ export class Notes
         },
         browse_file: {
           type: DataTypes.STRING(1000),
-          allowNull: false,
+          allowNull: true,
         },
         document_name: {
           type: DataTypes.STRING(100),
-          allowNull: false,
+          allowNull: true,
         },
         attach_to: {
           type: DataTypes.STRING(50),
@@ -105,11 +105,11 @@ export class Notes
         },
         format: {
           type: DataTypes.STRING(10),
-          allowNull: false,
+          allowNull: true,
         },
         size_in_mb: {
           type: DataTypes.DECIMAL(10, 2),
-          allowNull: false,
+          allowNull: true,
         },
         title: {
           type: DataTypes.STRING(64),
