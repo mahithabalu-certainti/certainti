@@ -2014,13 +2014,19 @@ export const fetchResCodeWithPrjResRole = (
         SELECT r.rid, r.resource_code, r.resource_type_rid,
         r.resource_name, r.resource_startdate AS start_date, r.resource_enddate AS end_date
         FROM
-        ${schemaName}.resources r
+        ${schemaName}.account_details ad
+        LEFT JOIN ${schemaName}.resources r ON ad.account_rid = r.account_rid
+        LEFT JOIN ${schemaName}.project_fiscal pf ON pf.account_rid = ad.account_rid
+        LEFT JOIN ${schemaName}.project_resource pr 
+        ON 
+        pr.account_rid = ad.account_rid AND pr.resource_rid = r.rid AND pr.project_fiscal_rid = pf.rid
         WHERE
-        r.account_rid = '${accountId}'
+        ad.account_rid = '${accountId}'
         AND
         (r.resource_enddate IS NULL ${dynamicReplacerEnd})
         AND
         r.resource_code ILIKE '${searchValue}'
+        GROUP BY r.rid, r.resource_code, r.resource_type_rid, r.resource_name
         ORDER BY r.resource_code ASC
         `
         

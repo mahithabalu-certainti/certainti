@@ -6025,7 +6025,7 @@ export class ProjectResourceSchemaService {
 
     // Step 4: Enrich resourceCodes with resource_type_name
     const enriched = resourceCodes.map((resource) => {
-      const typeName = typeMap.get(resource.rid) || null;
+      const typeName = typeMap.get(resource.resource_type_rid) || null;
       return {
         ...(resource.dataValues ?? resource),
         resource_type_name: typeName,
