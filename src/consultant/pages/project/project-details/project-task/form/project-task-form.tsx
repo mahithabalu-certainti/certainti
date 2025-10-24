@@ -136,7 +136,7 @@ const ProjectTaskForm: React.FC = () => {
   useEffect(() => {
     if (isEditView) {
       const selectedResource = projectResourceCodeOptions?.data?.find(
-        (item) => String(item.rid) === String(createdNewResourceCode)
+        (item) => item.resource_code === projectTaskDetailsData?.resource_code
       );
       if (selectedResource) {
         setCurrentResourceCode(selectedResource);
