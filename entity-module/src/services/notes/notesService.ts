@@ -422,7 +422,7 @@ export class NotesService {
         if(graphqlData?.notes_rid) {
           allNotes = allNotes.filter((d : any) => d != null)
         }
-        const {displayNames} = await this.getAttachmentDisplayNames(allNotes, schemaNumber);
+        const {displayNames, parentRid, currencyRid} = await this.getAttachmentDisplayNames(allNotes, schemaNumber);
     
         // 🔷 Apply attached_to filter if present
         if (attachedToFilter) {
@@ -485,15 +485,31 @@ export class NotesService {
     
         const userMap = new Map(users.map((u: any) => [u.rid, u.full_name]));
 
-        // 🔷 Map final results
-        let notes = await Promise.all(paginatedAttachments.map(async attachment => ({
+        let notes : any[]
+
+        if(graphqlData.notes_rid) {
+          notes = await Promise.all(paginatedAttachments.map(async attachment => {
+            return {
+              ...attachment.get({ plain: true }),
+              created_by_name: userMap.get(attachment.created_by) || attachment.created_by,
+              modified_by_name: userMap.get(attachment.modified_by) || attachment.modified_by,
+              attached_to: displayNames[attachment.rid] || attachment.attach_to,
+              notes_owner_name: userMap.get(attachment.notes_owner) || attachment.notes_owner,
+              browse_file : attachment.browse_file !== '' && attachment.browse_file !== null && attachment.browse_file !== undefined ? await generateSasUrl(attachment.browse_file) : null,
+              parent_rid: parentRid[attachment.attach_to],
+              currency_rid : currencyRid[attachment.attach_to]
+                }
+          }));
+        } 
+        else {
+          notes = await Promise.all(paginatedAttachments.map(async attachment => ({
           ...attachment.get({ plain: true }),
           created_by_name: userMap.get(attachment.created_by) || attachment.created_by,
           modified_by_name: userMap.get(attachment.modified_by) || attachment.modified_by,
           attached_to: displayNames[attachment.rid] || attachment.attach_to,
           notes_owner_name: userMap.get(attachment.notes_owner) || attachment.notes_owner,
           browse_file : attachment.browse_file !== '' && attachment.browse_file !== null && attachment.browse_file !== undefined ? await generateSasUrl(attachment.browse_file) : null
-        })));
+        })))};
     
         // Handle uploaded_by sorting
         if (sortBy === 'created_by_name') {
@@ -1978,7 +1994,7 @@ private mapAttachmentToCommonFormat(at: any, timezone : string) {
                 created_by_name : createdUserMap.get(n.created_by) || null,
                 modified_by_name : createdUserMap.get(n.modified_by) || null,
                 notes_owner_name : createdUserMap.get(n.notes_owner) || null,
-                browse_file : await generateSasUrl(n.browse_file)
+                browse_file : n.browse_file !== '' && n.browse_file !== null && n.browse_file !== undefined ? await generateSasUrl(n.browse_file) : null,
               }
             }))
             return {

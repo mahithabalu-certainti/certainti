@@ -77,7 +77,9 @@ export default class NotesGraphqlServies {
                             attached_to: latestData.attached_to,
                             browse_file: latestData.browse_file,
                             created_by_name : latestData.created_by_name,
-                            modified_by_name : latestData.modified_by_name  
+                            modified_by_name : latestData.modified_by_name,
+                            parent_rid : latestData.parent_rid,
+                            currency_rid : latestData.currency_rid  
                         }
                         await orgSequelize.query(rawQueries.insertNotesTimeline(schemaName, data, latestData))
                         return {

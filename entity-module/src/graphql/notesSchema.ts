@@ -25,6 +25,8 @@ attached_to: String
 created_by_name : String
 modified_by_name : String
 notes_owner_name : String
+parent_rid : String
+currency_rid : String
 }
 
 type notesFinalresponse {
