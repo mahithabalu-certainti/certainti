@@ -1372,3 +1372,15 @@ const buildDatetimeFilterConditionTemplates = (
       return '';
   }
 };
+
+export const fetchAccountKeyContactDetailsForInteractions = (schemaName : string, accountRid : string) => {
+  return `
+    SELECT kc.key_contact_name, kc.key_contact_email
+    FROM
+    ${schemaName}.key_contact_details kc
+    WHERE
+    kc.entity_rid = '${accountRid}'
+    AND
+    kc.include_in_communication = TRUE
+  `
+}

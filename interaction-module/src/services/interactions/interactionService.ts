@@ -42,6 +42,7 @@ import {
   listInteractionHistory,
   listResponseHistory,
   fetchInteractionTemplates,
+  fetchAccountKeyContactDetailsForInteractions,
 } from "../../utils/rawQueries";
 import { generateSasUrl } from "../../utils/blob";
 import {
@@ -1954,6 +1955,9 @@ export class InteractionService {
       )
     );
     let hasEmailRecipient = false;
+    const keyContactData : any = await orgDb.query(fetchAccountKeyContactDetailsForInteractions(schemaName, data.account_rid))
+      const keyContactDetails =
+        keyContactData[0][0] !== null ? keyContactData[0][0] : null;
     if (result[0][0].interactions != null) {
       let statusIds: any[] = [
         ...new Set(result[0][0].interactions.map((d: any) => d.status)),
@@ -2185,8 +2189,7 @@ export class InteractionService {
             )
           : finalData;
       }
-      const keyContactDetails =
-        result[0][0].interactions !== null ? result[0][0].interactions : null;
+      
       let organizedData = {
         page: data.page,
         limit: data.limit,
@@ -2194,9 +2197,9 @@ export class InteractionService {
         keyContact:
           keyContactDetails != null
             ? {
-                key_contact_name: result[0][0].interactions[0].key_contact_name,
+                key_contact_name: keyContactData[0][0].key_contact_name,
                 key_contact_email:
-                  result[0][0].interactions[0].key_contact_email,
+                  keyContactData[0][0].key_contact_email,
               }
             : {},
         interactions: finalPaginatedData,
@@ -2210,6 +2213,14 @@ export class InteractionService {
         page: data.page,
         limit: data.limit,
         totalCount: 0,
+        keyContact:
+          keyContactDetails != null
+            ? {
+                key_contact_name: keyContactData[0][0].key_contact_name,
+                key_contact_email:
+                  keyContactData[0][0].key_contact_email,
+              }
+            : {},
         interactions: [],
       };
       return {
