@@ -1822,7 +1822,7 @@ export const validateNotesInput = (data: any) => {
   if (!data.rid) return STATUS_MESSAGE.notesIdMissing;
 };
 
-export async function deleteFromAzureBlob(blobUrl: string): Promise<void> {
+export async function deleteFromAzureBlob(blobUrl: string | null): Promise<void> {
   if (!blobUrl) return;
 
  const connectionString = await getSecret(
