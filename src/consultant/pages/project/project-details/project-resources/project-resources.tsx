@@ -151,6 +151,7 @@ export const ProjectResources = ({
   const viewDetails = !!checkDetail;
   const accountID =
     accountData?.accountID || searchParams.get('accountID') || '';
+  const activeMenuPath = searchParams.get('activeMenu') || '';
 
   const [refreshProjectsTrigger, setRefreshProjectsTrigger] = useState<number>(
     Date.now()
@@ -428,6 +429,7 @@ export const ProjectResources = ({
       entityLevel: 'project_resource',
       entityId: projectResourceId || '',
       source: `Project Resource > ${resourceData?.r_number}`,
+      ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
     });
     navigate(`${path}?${queryParams.toString()}`);
   };

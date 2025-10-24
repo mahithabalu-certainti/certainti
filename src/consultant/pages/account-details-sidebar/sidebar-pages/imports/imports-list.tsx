@@ -343,7 +343,7 @@ const Imports: React.FC<ImportsProps> = ({
         setSortFilterCount={setSortFilterCount}
         showRefresh={showUploads || viewDetails ? false : true}
         onRefreshClick={onRefreshClick}
-        showSearch={viewDetails ? false : true}
+        showSearch={showUploads || viewDetails ? false : true}
         searchDisabled={false}
         searchPlaceholder='Search'
         onSearch={(text) => setSearchText(text)}

@@ -197,7 +197,8 @@ export const getNotesTableColumns = (
   handleDownload?: (documentUrl: string) => void,
   isNotesExportEnable?: boolean,
   permissionMap?: Record<string, { read: boolean; edit: boolean }>,
-  userListOptions?: { value: string; label: string }[]
+  userListOptions?: { value: string; label: string }[],
+  handleViewGlobalNoteDetails?: (row: NotesList) => void
 ): ListTableColumn<NotesList>[] => [
   {
     id: 'r_number',
@@ -220,6 +221,13 @@ export const getNotesTableColumns = (
       handleNoteView ? (
         <span
           onClick={() => handleNoteView(row.rid)}
+          className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
+        >
+          {row.r_number}
+        </span>
+      ) : handleViewGlobalNoteDetails ? (
+        <span
+          onClick={() => handleViewGlobalNoteDetails(row)}
           className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
         >
           {row.r_number}

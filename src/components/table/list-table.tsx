@@ -864,6 +864,8 @@ const ListTable = <T extends RowData>({
             ? `calc(${tableStyle.maxHeight} - 42px)`
             : 'calc(100vh - 42px)',
           overflow: isEditingAnyCell ? 'hidden' : 'auto',
+          minHeight: 'auto',
+          height: 'fit-content',
         }}
       >
         <MuiTable

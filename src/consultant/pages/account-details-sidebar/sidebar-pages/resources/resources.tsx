@@ -213,6 +213,9 @@ const Resource: React.FC<ResourceProps> = ({
   const { accountid } = useParams();
   const resId = searchParams.get('res_id');
   const source = searchParams.get('source');
+  const activeMenuPath = searchParams.get('activeMenu') || '';
+  const noteId = searchParams.get('note_id');
+  const noteViewDetails = !!noteId;
 
   // Permission Mangement
   const isAccountResourceFieldsEditable = useMemo(
@@ -396,6 +399,7 @@ const Resource: React.FC<ResourceProps> = ({
     searchParams.set('tab', newValue);
     searchParams.delete('attachment_entity');
     searchParams.delete('note_id');
+    searchParams.delete('origin');
     navigate({ search: searchParams.toString() }, { replace: true });
     setCurrentPage(0);
   };
@@ -461,6 +465,7 @@ const Resource: React.FC<ResourceProps> = ({
     });
   };
   const showUploads = searchParams.get('attachment_entity') === 'resource';
+  const attachmentEntity = searchParams.get('attachment_entity');
   const actionMenuItems = [
     {
       label: 'Edit',
@@ -546,6 +551,8 @@ const Resource: React.FC<ResourceProps> = ({
       searchParams.delete('res_id');
       searchParams.delete('attachment_entity');
       searchParams.delete('tab');
+      searchParams.delete('note_id');
+      searchParams.delete('origin');
       navigate(
         {
           pathname: location.pathname,
@@ -572,6 +579,7 @@ const Resource: React.FC<ResourceProps> = ({
       entityLevel: 'resource',
       entityId: resourceId || '',
       source: `Resource > ${resourceNumber}`,
+      ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
@@ -605,14 +613,14 @@ const Resource: React.FC<ResourceProps> = ({
       hide:
         value === 'details'
           ? !isAccountResourceFieldsEditable
-          : handleCreateButtonEnable(),
+          : handleCreateButtonEnable() || !!attachmentEntity,
     },
     {
       label: 'Show/Hide Fields',
       variant: 'outlined' as const,
       onClick: handleColumnVisibility,
       sx: { ...BUTTON_STYLES, width: '125px', minWidth: '125px' },
-      hide: value === 'details',
+      hide: value === 'details' || noteViewDetails || !!attachmentEntity,
       disabled: false,
     },
     {
@@ -965,21 +973,27 @@ const Resource: React.FC<ResourceProps> = ({
           isResoureceOverviewHide
             ? false
             : isResourceViewAllEnable
-              ? showUploads
+              ? showUploads || noteViewDetails || !!attachmentEntity
                 ? false
                 : filterVisibility
               : false
         }
         handleFilter={handleFilter}
         setCurrentPage={setCurrentPage}
-        showRefresh={showUploads ? false : true}
+        showRefresh={
+          showUploads || noteViewDetails || !!attachmentEntity ? false : true
+        }
         onRefreshClick={onRefreshClick}
         handleSorting={handleSorting}
         sortFilterCount={sortFilterCount}
         setSortFilterCount={setSortFilterCount}
         fieldOptions={fieldOptions}
         handleFilterChange={handleCategory}
-        showSearch={value === 'details' ? false : true}
+        showSearch={
+          value === 'details' || noteViewDetails || !!attachmentEntity
+            ? false
+            : true
+        }
         searchDisabled={false}
         searchHidden={value === 'cost' || value === 'skill' ? true : false}
         searchPlaceholder='Search'
@@ -1009,6 +1023,7 @@ const Resource: React.FC<ResourceProps> = ({
               onBackClick={handleBackClick}
               iconBg='#7785ff'
               bgType={showBackArrow ? 'react' : 'circle'}
+              showCount={noteViewDetails ? false : true}
             />
 
             {!viewResourceList && value && (

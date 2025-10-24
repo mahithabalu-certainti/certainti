@@ -303,6 +303,10 @@ const NotesForm: React.FC = () => {
     formData.append('notes_owner', notesOwner);
     formData.append('descriptions', descriptions);
 
+    if (!existingFile && isEditView && selectedFiles.length === 0) {
+      formData.append('is_file_deleted', 'true');
+    }
+
     if (isEditView) {
       formData.append('rid', noteData?.rid || '');
       updateNote.mutate(formData);

@@ -297,7 +297,7 @@ const ImportFile: React.FC<ImportFileProps> = ({
           createSelectField('entity_type', 'Entity Type', {
             required: true,
             options: entityOptions,
-            placeholder: 'Select Type',
+            placeholder: 'Choose Entity Type',
             onChange: true,
             resetDependsFields: ['fiscal_year'],
           }),

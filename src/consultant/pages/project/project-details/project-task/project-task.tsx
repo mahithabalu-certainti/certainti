@@ -140,6 +140,8 @@ export const ProjectTask = ({
     setColumnAnchorEl(event.currentTarget);
   };
 
+  const activeMenuPath = searchParams.get('activeMenu') || '';
+
   const navigate = useNavigate();
   const [refreshProjectsTrigger, setRefreshProjectsTrigger] = useState<number>(
     Date.now()
@@ -327,6 +329,7 @@ export const ProjectTask = ({
       entityLevel: 'project_task',
       entityId: projectTaskId || '',
       source: `Project Task > ${resourceData?.r_number || row?.r_number}`,
+      ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
