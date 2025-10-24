@@ -11,6 +11,7 @@ import {
   createTextAreaField,
   createTextField,
   PROJECT_TASK_REGEX,
+  REGEX_PATTERNS,
 } from '../../../../../../common-utils';
 
 // 1. Extract date constants
@@ -78,6 +79,16 @@ export const ProjectTaskFormData = (
               isEditView &&
               permissionMapTaskForm?.['task_name']?.read &&
               !permissionMapTaskForm?.['task_name']?.edit,
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MIN_3,
+                errorMessage: 'Task Name must be more than 2 characters long',
+              },
+              {
+                regex: REGEX_PATTERNS.MAX_250,
+                errorMessage: 'Max length exceeded',
+              },
+            ],
           }),
           createSelectField('task_type_rid', 'Task Type', {
             required: false,
