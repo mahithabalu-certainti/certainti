@@ -207,7 +207,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
       value: valueDisplay(projectDetails?.total_subcon),
     },
     {
-      // key: 'total_nonlabor_prj',
+      key: 'total_nonlabor',
       label: 'Total Non Labor Count',
       value: valueDisplay(projectDetails?.total_nonlabor_prj),
     },
