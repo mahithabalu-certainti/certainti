@@ -1,6 +1,7 @@
 import React from 'react';
 
 const Footer: React.FC = () => {
+  const currentYear = new Date().getFullYear();
   return (
     <footer
       style={{
@@ -14,7 +15,7 @@ const Footer: React.FC = () => {
         backgroundColor: '#fff',
       }}
     >
-      &copy; 2025 Certainti.Ai. All Rights Reserved.
+      &copy; {currentYear} Certainti.Ai. All Rights Reserved.
     </footer>
   );
 };

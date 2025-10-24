@@ -116,6 +116,7 @@ export interface NewProjectData {
   total_effort_subcon?: string | null;
   total_cost_fte?: string | null;
   total_cost_subcon?: string | null;
+  total_nonlabor_prj?: string | null;
   auto_send_ai_interaction?: boolean | string;
   auto_assessment?: boolean | string;
   auto_access_rd?: boolean;
@@ -248,10 +249,10 @@ export type ProjectFiscalSummary = {
 };
 
 interface InteractionKeyRecipients {
-  rid: string
-  key_contact_name: string
-  key_contact_email: string
-  is_primary_contact: boolean
+  rid: string;
+  key_contact_name: string;
+  key_contact_email: string;
+  is_primary_contact: boolean;
 }
 
 export type FiscalYearType = {

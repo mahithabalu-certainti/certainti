@@ -206,7 +206,11 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
       label: 'Total Sub Con Count',
       value: valueDisplay(projectDetails?.total_subcon),
     },
-    { label: '', value: 'empty' },
+    {
+      // key: 'total_nonlabor_prj',
+      label: 'Total Non Labor Count',
+      value: valueDisplay(projectDetails?.total_nonlabor_prj),
+    },
     {
       key: 'total_effort_fte',
       label: 'Total FTE Effort',
