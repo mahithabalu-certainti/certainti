@@ -294,6 +294,8 @@ export const ProjectResources = ({
         project_Id: resourceData?.project_fiscal_rid,
         projectCode: projectCode ?? '',
         PFY: PFY ? JSON.stringify(PFY) : '',
+        account_name: accountData?.accountName || '',
+        account_number: accountData?.accountNumber || '',
       });
       navigate(`${path}?${queryParams.toString()}`);
     }
