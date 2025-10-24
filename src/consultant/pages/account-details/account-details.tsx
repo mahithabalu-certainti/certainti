@@ -223,7 +223,7 @@ export const AccountDetails = () => {
     sortOrder: 'DESC',
     filters: {},
     fiscalYear: String(convertedFiscalYear),
-    accountNumber: accountDetailsForEdit?.accountById?.r_number || '',
+    accountNumber: accountid || '',
   });
   const [attachmentParams, setAttachmentParams] =
     useState<AttachmentsListExportParams>({
