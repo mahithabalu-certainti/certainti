@@ -29,6 +29,8 @@ export const NOTES_UPDATE = gql`
         modified_by_name
         attached_to
         uploaded_by
+        parent_rid
+        currency_rid
       }
     }
   }

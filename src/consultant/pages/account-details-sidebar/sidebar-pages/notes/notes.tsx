@@ -113,6 +113,7 @@ const Notes: React.FC<NotesProps> = ({
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
   const noteId = searchParams.get('note_id');
   const viewDetails = !!noteId;
+  const activeMenuPath = searchParams.get('activeMenu') || '';
 
   // User List Api
   const { data: userListData } = useManageUserList({
@@ -244,6 +245,7 @@ const Notes: React.FC<NotesProps> = ({
       entityLevel: 'account',
       entityId: accountId,
       source: `Account > ${accountName}`,
+      ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
@@ -260,6 +262,7 @@ const Notes: React.FC<NotesProps> = ({
       entityLevel: row.attachment_level || 'account',
       entityId: row.attach_to || accountId,
       source: `Account > ${accountName}`,
+      ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
     });
     navigate(`${path}?${queryParams.toString()}`);
   };

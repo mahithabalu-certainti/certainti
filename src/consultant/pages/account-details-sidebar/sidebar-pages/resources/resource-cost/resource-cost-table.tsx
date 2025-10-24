@@ -116,6 +116,8 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
     year: 0,
   });
 
+  const activeMenuPath = searchParams.get('activeMenu') || '';
+
   const account = accountDetails?.data?.accountDetails;
   const accountFiscalDates = {
     startDate: account?.fiscal_start_date || '',
@@ -329,6 +331,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
       entityLevel: 'resource_cost',
       entityId: rowId,
       source: `Resource > ${resourceNumber}`,
+      ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
     });
     navigate(`${path}?${queryParams.toString()}`);
   };

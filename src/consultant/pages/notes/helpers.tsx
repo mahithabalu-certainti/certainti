@@ -197,7 +197,8 @@ export const getNotesTableColumns = (
   handleDownload?: (documentUrl: string) => void,
   isNotesExportEnable?: boolean,
   permissionMap?: Record<string, { read: boolean; edit: boolean }>,
-  userListOptions?: { value: string; label: string }[]
+  userListOptions?: { value: string; label: string }[],
+  handleViewGlobalNoteDetails?: (row: NotesList) => void
 ): ListTableColumn<NotesList>[] => [
   {
     id: 'r_number',
@@ -220,6 +221,13 @@ export const getNotesTableColumns = (
       handleNoteView ? (
         <span
           onClick={() => handleNoteView(row.rid)}
+          className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
+        >
+          {row.r_number}
+        </span>
+      ) : handleViewGlobalNoteDetails ? (
+        <span
+          onClick={() => handleViewGlobalNoteDetails(row)}
           className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
         >
           {row.r_number}
@@ -422,18 +430,21 @@ export const getNotesTableColumns = (
       !permissionMap?.['modified_datetime']?.read,
   },
   {
-    id: 'download',
-    sortId: 'download',
-    label: 'Download',
-    width: 80,
+    id: 'attachment',
+    sortId: 'attachment',
+    label: 'Attachment',
+    width: 90,
     hide: !isNotesExportEnable,
-    render: (row) => (
-      <button
-        className='flex border border-[#CBD6E2] w-[24px] h-[24px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer mx-auto'
-        onClick={() => handleDownload?.(row.browse_file)}
-      >
-        <DownloadIcon alt='download-icon' className='h-4' />
-      </button>
-    ),
+    render: (row) =>
+      row?.browse_file ? (
+        <button
+          className='flex border border-[#CBD6E2] w-[24px] h-[24px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer mx-auto'
+          onClick={() => handleDownload?.(row.browse_file)}
+        >
+          <DownloadIcon alt='download-icon' className='h-4' />
+        </button>
+      ) : (
+        <div className='text-center'>-</div>
+      ),
   },
 ];

@@ -9,6 +9,7 @@ export interface INavItem {
   matchLink: string;
   hide?: boolean;
   noRedirect?: boolean;
+  activePath?: string;
 }
 
 export interface AdminNavItem {

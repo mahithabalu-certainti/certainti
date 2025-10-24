@@ -47,7 +47,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
   sidebarExpand,
 }) => {
   const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   // Get only few segments of the path
   const trimmedPathname = useCallback(
     (count: number) =>
@@ -112,6 +112,16 @@ export const Sidebar: React.FC<SideBarProps> = ({
 
   const noItemsOpen = adminNavItems.every((item) => !item.openStatus);
 
+  const searchParams = new URLSearchParams(search);
+  const activePathParam = searchParams.get('activeMenu');
+
+  const accountMenusWithActive = accountMenus.map((item) => {
+    const isActive =
+      item.activePath === activePathParam ||
+      (!activePathParam && item.matchLink === trimmedPathname(1));
+    return { ...item, isActive };
+  });
+
   return (
     <Drawer
       variant={mobileView ? 'temporary' : 'persistent'}
@@ -171,7 +181,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
           }}
         >
           {!showAdminSidebar &&
-            accountMenus.map((item, i) => {
+            accountMenusWithActive.map((item, i) => {
               if (item.hide) return null;
               if (item.type === 'divider') {
                 return <Fragment key={i} />;
@@ -199,10 +209,9 @@ export const Sidebar: React.FC<SideBarProps> = ({
                       mt: '4px',
                       gap: '4px',
                       borderRadius: '2px',
-                      backgroundColor:
-                        item.matchLink === trimmedPathname(1)
-                          ? 'rgba(255, 255, 255, 0.2)'
-                          : 'transparent',
+                      backgroundColor: item.isActive
+                        ? 'rgba(255, 255, 255, 0.2)'
+                        : 'transparent',
                       '&:hover': {
                         backgroundColor: 'rgba(255, 255, 255, 0.2)',
                       },

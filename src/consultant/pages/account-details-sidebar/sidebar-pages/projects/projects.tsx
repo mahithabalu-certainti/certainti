@@ -223,7 +223,8 @@ const Projects: React.FC<ProjectsProps> = ({
       sortOrder: sortOrder,
       filters: appliedFilters,
       fiscalYear: convertedFiscalYear,
-      accountNumber: accountDetails?.accountDetails?.account_rid || '',
+      accountNumber:
+        accountid || accountDetails?.accountDetails?.account_rid || '',
       search: searchText,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -159,12 +159,19 @@ const NotesForm: React.FC = () => {
 
   useEffect(() => {
     if (isEditView && noteData) {
-      setExistingFile({
-        name: noteData?.document_name || '',
-        url: noteData?.browse_file,
-        size: noteData?.size_in_mb ? `${noteData.size_in_mb} MB` : '-',
-        format: noteData?.format || '',
-      });
+      if (
+        noteData?.browse_file &&
+        noteData?.document_name &&
+        noteData?.size_in_mb &&
+        noteData?.format
+      ) {
+        setExistingFile({
+          name: noteData?.document_name || '',
+          url: noteData?.browse_file,
+          size: noteData?.size_in_mb ? `${noteData.size_in_mb} MB` : '-',
+          format: noteData?.format || '',
+        });
+      }
       setAuditInfo({
         rid: noteData?.rid || '',
         r_number: noteData?.r_number || '',
@@ -267,13 +274,12 @@ const NotesForm: React.FC = () => {
   };
 
   const handleSubmitData = (data: Partial<NotesFormDataPayload>) => {
-    // Validation only when no existing file
-    if (!existingFile && selectedFiles.length === 0) {
-      showError('Please select a file before submitting.');
-      return;
+    if (selectedFiles.length === 0) {
+      setMessage(null);
     }
 
-    if (!existingFile) {
+    // File validation only if a file is selected
+    if (!existingFile && selectedFiles.length > 0) {
       const file = selectedFiles[0];
       if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
         showError(
@@ -303,6 +309,10 @@ const NotesForm: React.FC = () => {
     formData.append('title', title);
     formData.append('notes_owner', notesOwner);
     formData.append('descriptions', descriptions);
+
+    if (!existingFile && isEditView && selectedFiles.length === 0) {
+      formData.append('is_file_deleted', 'true');
+    }
 
     if (isEditView) {
       formData.append('rid', noteData?.rid || '');

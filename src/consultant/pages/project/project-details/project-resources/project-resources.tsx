@@ -151,6 +151,7 @@ export const ProjectResources = ({
   const viewDetails = !!checkDetail;
   const accountID =
     accountData?.accountID || searchParams.get('accountID') || '';
+  const activeMenuPath = searchParams.get('activeMenu') || '';
 
   const [refreshProjectsTrigger, setRefreshProjectsTrigger] = useState<number>(
     Date.now()
@@ -293,6 +294,8 @@ export const ProjectResources = ({
         project_Id: resourceData?.project_fiscal_rid,
         projectCode: projectCode ?? '',
         PFY: PFY ? JSON.stringify(PFY) : '',
+        account_name: accountData?.accountName || '',
+        account_number: accountData?.accountNumber || '',
       });
       navigate(`${path}?${queryParams.toString()}`);
     }
@@ -428,6 +431,7 @@ export const ProjectResources = ({
       entityLevel: 'project_resource',
       entityId: projectResourceId || '',
       source: `Project Resource > ${resourceData?.r_number}`,
+      ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
     });
     navigate(`${path}?${queryParams.toString()}`);
   };

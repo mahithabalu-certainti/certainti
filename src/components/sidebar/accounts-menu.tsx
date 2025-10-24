@@ -29,6 +29,7 @@ export const accountNavItems: INavItem[] = [
     type: 'link',
     matchLink: MAIN_ROUTE,
     noRedirect: true,
+    activePath: 'dashboard',
   },
   {
     id: MenuOption.ACCOUNTS,
@@ -37,6 +38,7 @@ export const accountNavItems: INavItem[] = [
     link: ACCOUNT,
     type: 'link',
     matchLink: ACCOUNT,
+    activePath: 'account',
   },
   {
     id: MenuOption.PROJECTS,
@@ -45,6 +47,7 @@ export const accountNavItems: INavItem[] = [
     link: PROJECT,
     type: 'link',
     matchLink: PROJECT,
+    activePath: 'project',
   },
   {
     id: MenuOption.TIMESHEET,
@@ -78,6 +81,7 @@ export const accountNavItems: INavItem[] = [
     link: NOTES,
     type: 'link',
     matchLink: NOTES,
+    activePath: 'notes',
   },
   {
     id: MenuOption.ATTACHMENTS,
@@ -86,6 +90,7 @@ export const accountNavItems: INavItem[] = [
     link: ATTACHMENTS,
     type: 'link',
     matchLink: ATTACHMENTS,
+    activePath: 'attachments',
   },
   {
     id: '',

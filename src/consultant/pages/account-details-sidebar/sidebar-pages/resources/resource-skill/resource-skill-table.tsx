@@ -99,6 +99,8 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   const apiOrder = skillOrder.toUpperCase() as 'ASC' | 'DESC';
   const { permission } = useSelector((state: RootState) => state.permission);
 
+  const activeMenuPath = searchParams.get('activeMenu') || '';
+
   const {
     data: skillList,
     isLoading,
@@ -257,6 +259,7 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
       entityLevel: 'resource_skill',
       entityId: rowId,
       source: `Resource > ${resourceNumber}`,
+      ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
