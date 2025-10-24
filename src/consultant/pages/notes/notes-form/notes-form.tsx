@@ -159,12 +159,19 @@ const NotesForm: React.FC = () => {
 
   useEffect(() => {
     if (isEditView && noteData) {
-      setExistingFile({
-        name: noteData?.document_name || '',
-        url: noteData?.browse_file,
-        size: noteData?.size_in_mb ? `${noteData.size_in_mb} MB` : '-',
-        format: noteData?.format || '',
-      });
+      if (
+        noteData?.browse_file &&
+        noteData?.document_name &&
+        noteData?.size_in_mb &&
+        noteData?.format
+      ) {
+        setExistingFile({
+          name: noteData?.document_name || '',
+          url: noteData?.browse_file,
+          size: noteData?.size_in_mb ? `${noteData.size_in_mb} MB` : '-',
+          format: noteData?.format || '',
+        });
+      }
       setAuditInfo({
         rid: noteData?.rid || '',
         r_number: noteData?.r_number || '',
