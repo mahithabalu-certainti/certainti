@@ -1866,7 +1866,7 @@ private async getAttachmentDisplayNames(attachments: any[], schemaNumber: string
           const project = await this.projectIngestionService.fetchProjectInfoById(schemaNumber, attachment.attach_to);
           displayNames[attachment.rid] = project?.project_code || attachment.attach_to;
           parentRid[attachment.attach_to] =''
-          currencyRid[attachment.attach_to] =''
+          currencyRid[attachment.attach_to] = project?.currency_rid || ''
           break;
         case 'project_resource':
           const projectResource = await this.projectIngestionService.fetchProjectResourceById(schemaNumber, attachment.attach_to);

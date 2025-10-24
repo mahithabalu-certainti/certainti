@@ -2652,7 +2652,7 @@ class ProjectIngestionService {
       where: {
         rid: projectId,
       },
-      attributes: ["rid", "project_code"],
+      attributes: ["rid", "project_code", "currency_rid"],
     });
 
     return projectData;
