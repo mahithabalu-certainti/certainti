@@ -28,7 +28,6 @@ import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/res
 import { AllPermissions } from '../../../../../common-service';
 import { useToast } from '../../../../../hooks';
 import { useSearchParams } from 'react-router-dom';
-
 import {
   getCaseTeamTableColumns,
   CaseTeamFormData,
@@ -58,34 +57,22 @@ const CaseTeam = () => {
   const { successToast, errorToast } = useToast();
 
   const [formData, setFormData] = useState<CaseTeamFormData>({
-    team_members: [
-      {
-        user_id: 'USER_1',
-        user_name: '',
-        user_role: '',
-        start_date: '',
-        end_date: '',
-      },
-    ],
+    team_members: [],
   });
-
   const [errors, setErrors] = useState<CaseTeamFormErrors>({});
   const [isLoading, setIsLoading] = useState(false);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
-  // Get case ID from URL params
   const caseId = searchParams.get('caseId') || 'case_123';
 
-  // API hooks
   const caseTeamQuery = useGetCaseTeam(caseId);
   const updateCaseTeamMutation = useUpdateCaseTeam();
   const roleOptionsQuery = useGetRoleOptions();
   const userOptionsQuery = useGetUserOptions();
 
   const teamTableColumns = getCaseTeamTableColumns();
-  const formLoading = caseTeamQuery.isLoading && isInitialLoad;
+  const formLoading = caseTeamQuery.isLoading || !isDataLoaded;
 
-  // Transform API data to dropdown options with user-specific allocation filtering
   const getAvailableRoleOptions = (currentIndex: number) => {
     const allRoles = roleOptionsQuery.data?.map((role) => role.role_name) || [];
     const currentUser = formData.team_members[currentIndex]?.user_name;
@@ -94,7 +81,6 @@ const CaseTeam = () => {
       return allRoles;
     }
 
-    // Find roles that the current user is already allocated to (excluding current row)
     const currentUserAllocatedRoles = formData.team_members
       .filter((_, index) => index !== currentIndex)
       .filter((member) => member.user_name === currentUser)
@@ -112,7 +98,6 @@ const CaseTeam = () => {
       return allUsers;
     }
 
-    // Find users that are already allocated to the current role (excluding current row)
     const currentRoleAllocatedUsers = formData.team_members
       .filter((_, index) => index !== currentIndex)
       .filter((member) => member.user_role === currentRole)
@@ -122,9 +107,8 @@ const CaseTeam = () => {
     return allUsers.filter((user) => !currentRoleAllocatedUsers.includes(user));
   };
 
-  // Load data from API when component mounts
   useEffect(() => {
-    if (caseTeamQuery.data && isInitialLoad) {
+    if (caseTeamQuery.data && !isDataLoaded) {
       setFormData({
         team_members: caseTeamQuery.data.team_members.map(
           (user: CaseTeamMember) => ({
@@ -137,23 +121,21 @@ const CaseTeam = () => {
           })
         ),
       });
-      setIsInitialLoad(false);
+      setIsDataLoaded(true);
     }
-  }, [caseTeamQuery.data, isInitialLoad]);
+  }, [caseTeamQuery.data, isDataLoaded]);
 
   useEffect(() => {
     if (updateCaseTeamMutation.isSuccess) {
       successToast('Case team updated successfully');
       caseTeamQuery.refetch();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [updateCaseTeamMutation.isSuccess]);
 
   useEffect(() => {
     if (updateCaseTeamMutation.isError) {
       errorToast('Failed to update case team');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [updateCaseTeamMutation.isError]);
 
   function handleAddTeamMember() {
@@ -182,17 +164,6 @@ const CaseTeam = () => {
   function handleRemoveTeamMember(index: number) {
     setFormData((prev) => {
       const updatedMembers = prev.team_members.filter((_, i) => i !== index);
-
-      if (updatedMembers.length === 0) {
-        updatedMembers.push({
-          user_id: 'MEM_1',
-          user_name: '',
-          user_role: '',
-          start_date: '',
-          end_date: '',
-        });
-      }
-
       return {
         ...prev,
         team_members: updatedMembers,
@@ -217,7 +188,6 @@ const CaseTeam = () => {
       };
     });
 
-    // Clear error when field changes
     setErrors((prev) => {
       const newMemberErrors = [...(prev.team_members || [])];
       if (newMemberErrors[index]) {
@@ -279,7 +249,6 @@ const CaseTeam = () => {
 
     setIsLoading(true);
 
-    // Transform data for API
     const payload = {
       case_rid: caseId,
       team_members: formData.team_members.map((member) => ({
@@ -291,7 +260,6 @@ const CaseTeam = () => {
       })),
     };
 
-    // Update operation
     updateCaseTeamMutation.mutate(payload, {
       onSuccess: () => {
         setIsLoading(false);
@@ -343,12 +311,7 @@ const CaseTeam = () => {
       />
 
       <div className='flex flex-col gap-0 border border-[#CBD6E2] rounded-[2px] pt-5'>
-        <div
-          className='w-full mb-5'
-          style={{
-            display: 'block',
-          }}
-        >
+        <div className='w-full mb-5'>
           <div className='px-4'>
             <TableContainer sx={{ overflowX: 'auto' }}>
               <Table className='border-l border-t border-[#CBD6E2]'>
@@ -400,6 +363,7 @@ const CaseTeam = () => {
                         '&:disabled': {
                           backgroundColor: '#f3f4f6',
                           color: '#6b7280',
+                          WebkitTextFillColor: '#6b7280',
                         },
                         '&:focus': {
                           border: '1px solid #60a5fa',
@@ -409,10 +373,19 @@ const CaseTeam = () => {
                     },
                   }}
                 >
-                  {formLoading && (
-                    <TableSkeleton rowsPerPage={4} columnsCount={3} />
-                  )}
-                  {!formLoading &&
+                  {formLoading ? (
+                    <TableSkeleton rowsPerPage={4} columnsCount={5} />
+                  ) : formData.team_members.length === 0 ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={teamTableColumns.length}
+                        align='center'
+                      >
+                        No team members available. Click "Add Case Team Member"
+                        to add one.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
                     formData.team_members.map((member, index) => (
                       <TableRow
                         key={index}
@@ -666,8 +639,8 @@ const CaseTeam = () => {
                                               backgroundColor:
                                                 'transparent !important',
                                               '& input': {
-                                                color: 'black',
-                                                WebkitTextFillColor: 'black',
+                                                color: '#6b7280',
+                                                WebkitTextFillColor: '#6b7280',
                                                 backgroundColor:
                                                   'transparent !important',
                                               },
@@ -689,7 +662,7 @@ const CaseTeam = () => {
                                             '&.Mui-focused fieldset': {
                                               borderColor: error
                                                 ? '#ef4444'
-                                                : '#transparent',
+                                                : 'transparent',
                                               backgroundColor:
                                                 'transparent !important',
                                             },
@@ -702,7 +675,7 @@ const CaseTeam = () => {
                                                 'transparent !important',
                                             },
                                           '& .MuiInputBase-input': {
-                                            fontSize: '12px',
+                                            fontSize: '13px', // Changed back to 13px
                                             padding: '5px 2px',
                                             height: '20px',
                                             color: member.start_date
@@ -710,6 +683,25 @@ const CaseTeam = () => {
                                               : '#7D98B6',
                                             backgroundColor:
                                               'transparent !important',
+                                            '&::placeholder': {
+                                              fontSize: '13px', // Changed back to 13px
+                                              color: '#7D98B6 !important',
+                                              opacity: 1,
+                                            },
+                                            '&[placeholder]': {
+                                              color: '#7D98B6 !important',
+                                              opacity: 1,
+                                            },
+                                            '&.Mui-disabled::placeholder': {
+                                              color: '#7D98B6 !important',
+                                              WebkitTextFillColor:
+                                                '#7D98B6 !important',
+                                              opacity: 1,
+                                            },
+                                            '&.Mui-disabled': {
+                                              color: '#6b7280',
+                                              WebkitTextFillColor: '#6b7280',
+                                            },
                                           },
                                           '& .MuiInputAdornment-root': {
                                             marginLeft: '0px',
@@ -803,8 +795,8 @@ const CaseTeam = () => {
                                               backgroundColor:
                                                 'transparent !important',
                                               '& input': {
-                                                color: 'black',
-                                                WebkitTextFillColor: 'black',
+                                                color: '#6b7280',
+                                                WebkitTextFillColor: '#6b7280',
                                                 backgroundColor:
                                                   'transparent !important',
                                               },
@@ -826,7 +818,7 @@ const CaseTeam = () => {
                                             '&.Mui-focused fieldset': {
                                               borderColor: error
                                                 ? '#ef4444'
-                                                : '#transparent',
+                                                : 'transparent',
                                               backgroundColor:
                                                 'transparent !important',
                                             },
@@ -839,7 +831,7 @@ const CaseTeam = () => {
                                                 'transparent !important',
                                             },
                                           '& .MuiInputBase-input': {
-                                            fontSize: '12px',
+                                            fontSize: '13px', // Changed back to 13px
                                             padding: '5px 2px',
                                             height: '20px',
                                             color: member.end_date
@@ -847,6 +839,25 @@ const CaseTeam = () => {
                                               : '#7D98B6',
                                             backgroundColor:
                                               'transparent !important',
+                                            '&::placeholder': {
+                                              fontSize: '13px', // Changed back to 13px
+                                              color: '#7D98B6 !important',
+                                              opacity: 1,
+                                            },
+                                            '&[placeholder]': {
+                                              color: '#7D98B6 !important',
+                                              opacity: 1,
+                                            },
+                                            '&.Mui-disabled::placeholder': {
+                                              color: '#7D98B6 !important',
+                                              WebkitTextFillColor:
+                                                '#7D98B6 !important',
+                                              opacity: 1,
+                                            },
+                                            '&.Mui-disabled': {
+                                              color: '#6b7280',
+                                              WebkitTextFillColor: '#6b7280',
+                                            },
                                           },
                                           '& .MuiInputAdornment-root': {
                                             marginLeft: '0px',
@@ -965,7 +976,8 @@ const CaseTeam = () => {
                             );
                           })}
                       </TableRow>
-                    ))}
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </TableContainer>
@@ -976,7 +988,7 @@ const CaseTeam = () => {
               className='flex items-center cursor-pointer gap-1 bg-[#EAF0F5] h-[30px] rounded-[2px] color-[#2D3E4F] px-2 text-[12px] font-semibold disabled:bg-gray-100 disabled:opacity-75 disabled:cursor-default'
               type='button'
               onClick={handleAddTeamMember}
-              disabled={false}
+              disabled={formLoading}
             >
               <span>
                 <React.Suspense fallback={null}>
