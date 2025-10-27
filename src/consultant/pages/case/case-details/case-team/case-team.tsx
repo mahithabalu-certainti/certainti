@@ -12,10 +12,16 @@ import {
 } from '@mui/material';
 import {
   ActionItemsIcon,
+  CalendarIcon,
+  CloseIcon,
   ErrorInfoIcon,
   KeyContactAddIcon,
   KeyContactRemoveIcon,
 } from '../../../../../assets';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import dayjs from 'dayjs';
 import { SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
@@ -57,6 +63,8 @@ const CaseTeam = () => {
         user_id: 'USER_1',
         user_name: '',
         user_role: '',
+        start_date: '',
+        end_date: '',
       },
     ],
   });
@@ -124,6 +132,8 @@ const CaseTeam = () => {
             user_id: user.user_id || '',
             user_name: user.user_name || '',
             user_role: user.user_role || '',
+            start_date: user.start_date || '',
+            end_date: user.end_date || '',
           })
         ),
       });
@@ -161,6 +171,8 @@ const CaseTeam = () => {
             user_id: `MEM_${highestSeq + 1}`,
             user_name: '',
             user_role: '',
+            start_date: '',
+            end_date: '',
           },
         ],
       };
@@ -176,6 +188,8 @@ const CaseTeam = () => {
           user_id: 'MEM_1',
           user_name: '',
           user_role: '',
+          start_date: '',
+          end_date: '',
         });
       }
 
@@ -237,6 +251,19 @@ const CaseTeam = () => {
         isValid = false;
       }
 
+      if (!member.start_date) {
+        memberError.start_date = 'Start date is required';
+        isValid = false;
+      } else if (member.end_date && member.start_date > member.end_date) {
+        memberError.start_date = 'Start date cannot be after end date';
+        isValid = false;
+      }
+
+      if (!member.end_date) {
+        memberError.end_date = 'End date is required';
+        isValid = false;
+      }
+
       memberErrors[index] = memberError;
     });
 
@@ -259,6 +286,8 @@ const CaseTeam = () => {
         user_id: member.user_id,
         user_name: member.user_name,
         user_role: member.user_role,
+        start_date: member.start_date,
+        end_date: member.end_date,
       })),
     };
 
@@ -595,6 +624,279 @@ const CaseTeam = () => {
                                         )
                                       )}
                                     </Select>
+                                  </div>
+                                )}
+
+                                {col.name === 'start_date' && (
+                                  <div onKeyDown={(e) => e.stopPropagation()}>
+                                    <LocalizationProvider
+                                      dateAdapter={AdapterDayjs}
+                                    >
+                                      <DatePicker
+                                        value={
+                                          member.start_date
+                                            ? dayjs(member.start_date)
+                                            : null
+                                        }
+                                        onChange={(newValue) =>
+                                          handleTeamMemberChange(
+                                            index,
+                                            'start_date',
+                                            newValue
+                                              ? dayjs(newValue).format(
+                                                  'YYYY-MM-DD'
+                                                )
+                                              : ''
+                                          )
+                                        }
+                                        format='YYYY-MM-DD'
+                                        disabled={isDisabled}
+                                        sx={{
+                                          width: '100%',
+                                          backgroundColor:
+                                            'transparent !important',
+                                          margin: 0,
+                                          padding: 0,
+                                          '& .MuiOutlinedInput-root': {
+                                            height: '28px',
+                                            borderRadius: '2px',
+                                            backgroundColor:
+                                              'transparent !important',
+                                            '&.Mui-disabled': {
+                                              backgroundColor:
+                                                'transparent !important',
+                                              '& input': {
+                                                color: 'black',
+                                                WebkitTextFillColor: 'black',
+                                                backgroundColor:
+                                                  'transparent !important',
+                                              },
+                                            },
+                                            '& fieldset': {
+                                              border: error
+                                                ? '1px solid #ef4444'
+                                                : 'none',
+                                              backgroundColor:
+                                                'transparent !important',
+                                            },
+                                            '&:hover fieldset': {
+                                              borderColor: error
+                                                ? '#ef4444'
+                                                : 'transparent',
+                                              backgroundColor:
+                                                'transparent !important',
+                                            },
+                                            '&.Mui-focused fieldset': {
+                                              borderColor: error
+                                                ? '#ef4444'
+                                                : '#transparent',
+                                              backgroundColor:
+                                                'transparent !important',
+                                            },
+                                          },
+                                          '& .MuiOutlinedInput-notchedOutline':
+                                            {
+                                              borderColor:
+                                                'transparent !important',
+                                              backgroundColor:
+                                                'transparent !important',
+                                            },
+                                          '& .MuiInputBase-input': {
+                                            fontSize: '12px',
+                                            padding: '5px 2px',
+                                            height: '20px',
+                                            color: member.start_date
+                                              ? '#425A76'
+                                              : '#7D98B6',
+                                            backgroundColor:
+                                              'transparent !important',
+                                          },
+                                          '& .MuiInputAdornment-root': {
+                                            marginLeft: '0px',
+                                            gap: '0px',
+                                            backgroundColor:
+                                              'transparent !important',
+                                          },
+                                        }}
+                                        slotProps={{
+                                          field: { clearable: true },
+                                          clearButton: {
+                                            tabIndex: -1,
+                                          },
+                                          openPickerButton: {
+                                            tabIndex: -1,
+                                          },
+                                          textField: {
+                                            size: 'small',
+                                            error: !!error,
+                                            placeholder: 'Choose Start Date',
+                                            InputProps: {
+                                              disabled: true,
+                                              onPaste: (
+                                                e: React.ClipboardEvent<HTMLInputElement>
+                                              ) => {
+                                                e.preventDefault();
+                                                return false;
+                                              },
+                                            },
+                                          },
+                                          inputAdornment: {
+                                            position: 'end',
+                                          },
+                                        }}
+                                        slots={{
+                                          openPickerIcon: () => (
+                                            <CalendarIcon
+                                              alt='calendar'
+                                              className='w-3 h-3'
+                                            />
+                                          ),
+                                          clearIcon: () => (
+                                            <CloseIcon
+                                              alt='calendar'
+                                              className='w-[9px] h-[9px]'
+                                            />
+                                          ),
+                                        }}
+                                      />
+                                    </LocalizationProvider>
+                                  </div>
+                                )}
+
+                                {col.name === 'end_date' && (
+                                  <div onKeyDown={(e) => e.stopPropagation()}>
+                                    <LocalizationProvider
+                                      dateAdapter={AdapterDayjs}
+                                    >
+                                      <DatePicker
+                                        value={
+                                          member.end_date
+                                            ? dayjs(member.end_date)
+                                            : null
+                                        }
+                                        onChange={(newValue) =>
+                                          handleTeamMemberChange(
+                                            index,
+                                            'end_date',
+                                            newValue
+                                              ? dayjs(newValue).format(
+                                                  'YYYY-MM-DD'
+                                                )
+                                              : ''
+                                          )
+                                        }
+                                        format='YYYY-MM-DD'
+                                        disabled={isDisabled}
+                                        minDate={dayjs(member.start_date)}
+                                        sx={{
+                                          width: '100%',
+                                          backgroundColor:
+                                            'transparent !important',
+                                          margin: 0,
+                                          padding: 0,
+                                          '& .MuiOutlinedInput-root': {
+                                            height: '28px',
+                                            borderRadius: '2px',
+                                            backgroundColor:
+                                              'transparent !important',
+                                            '&.Mui-disabled': {
+                                              backgroundColor:
+                                                'transparent !important',
+                                              '& input': {
+                                                color: 'black',
+                                                WebkitTextFillColor: 'black',
+                                                backgroundColor:
+                                                  'transparent !important',
+                                              },
+                                            },
+                                            '& fieldset': {
+                                              border: error
+                                                ? '1px solid #ef4444'
+                                                : 'none',
+                                              backgroundColor:
+                                                'transparent !important',
+                                            },
+                                            '&:hover fieldset': {
+                                              borderColor: error
+                                                ? '#ef4444'
+                                                : 'transparent',
+                                              backgroundColor:
+                                                'transparent !important',
+                                            },
+                                            '&.Mui-focused fieldset': {
+                                              borderColor: error
+                                                ? '#ef4444'
+                                                : '#transparent',
+                                              backgroundColor:
+                                                'transparent !important',
+                                            },
+                                          },
+                                          '& .MuiOutlinedInput-notchedOutline':
+                                            {
+                                              borderColor:
+                                                'transparent !important',
+                                              backgroundColor:
+                                                'transparent !important',
+                                            },
+                                          '& .MuiInputBase-input': {
+                                            fontSize: '12px',
+                                            padding: '5px 2px',
+                                            height: '20px',
+                                            color: member.end_date
+                                              ? '#425A76'
+                                              : '#7D98B6',
+                                            backgroundColor:
+                                              'transparent !important',
+                                          },
+                                          '& .MuiInputAdornment-root': {
+                                            marginLeft: '0px',
+                                            gap: '0px',
+                                            backgroundColor:
+                                              'transparent !important',
+                                          },
+                                        }}
+                                        slotProps={{
+                                          field: { clearable: true },
+                                          clearButton: {
+                                            tabIndex: -1,
+                                          },
+                                          openPickerButton: {
+                                            tabIndex: -1,
+                                          },
+                                          textField: {
+                                            size: 'small',
+                                            error: !!error,
+                                            placeholder: 'Choose End Date',
+                                            InputProps: {
+                                              disabled: true,
+                                              onPaste: (
+                                                e: React.ClipboardEvent<HTMLInputElement>
+                                              ) => {
+                                                e.preventDefault();
+                                                return false;
+                                              },
+                                            },
+                                          },
+                                          inputAdornment: {
+                                            position: 'end',
+                                          },
+                                        }}
+                                        slots={{
+                                          openPickerIcon: () => (
+                                            <CalendarIcon
+                                              alt='calendar'
+                                              className='w-3 h-3'
+                                            />
+                                          ),
+                                          clearIcon: () => (
+                                            <CloseIcon
+                                              alt='calendar'
+                                              className='w-[9px] h-[9px]'
+                                            />
+                                          ),
+                                        }}
+                                      />
+                                    </LocalizationProvider>
                                   </div>
                                 )}
 

@@ -8,6 +8,8 @@ export interface CaseTeamMember {
   user_id: string;
   user_name: string;
   user_role: string;
+  start_date: string;
+  end_date: string;
 }
 
 export interface CaseTeamResponse {
@@ -67,18 +69,24 @@ export const mockCaseTeamData: CaseTeamResponse = {
       user_id: 'MEM_001',
       user_name: 'John',
       user_role: 'Project Manager',
+      start_date: '2024-01-15',
+      end_date: '2024-07-15',
     },
     {
       rid: 'member_2',
       user_id: 'MEM_002',
       user_name: 'Jane',
       user_role: 'Developer',
+      start_date: '2024-02-01',
+      end_date: '2024-08-01',
     },
     {
       rid: 'member_3',
       user_id: 'MEM_003',
       user_name: 'Mike',
       user_role: 'Designer',
+      start_date: '2024-03-10',
+      end_date: '2024-09-10',
     },
   ],
   created_by: 'admin',

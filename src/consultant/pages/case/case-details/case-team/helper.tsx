@@ -11,6 +11,8 @@ export interface CaseTeamFormErrors {
 export interface CaseTeamMemberErrors {
   user_name?: string;
   user_role?: string;
+  start_date?: string;
+  end_date?: string;
 }
 
 export interface CaseTeamTableColumn {
@@ -27,13 +29,25 @@ export const getCaseTeamTableColumns = (): CaseTeamTableColumn[] => [
   {
     name: 'user_role',
     label: 'User Role',
-    width: '40%',
+    width: '25%',
     required: true,
   },
   {
     name: 'user_name',
     label: 'User Name',
-    width: '50%',
+    width: '25%',
+    required: true,
+  },
+  {
+    name: 'start_date',
+    label: 'Start Date',
+    width: '20%',
+    required: true,
+  },
+  {
+    name: 'end_date',
+    label: 'End Date',
+    width: '20%',
     required: true,
   },
   {
