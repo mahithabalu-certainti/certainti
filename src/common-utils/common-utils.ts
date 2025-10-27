@@ -443,7 +443,7 @@ export const REGEX_PATTERNS = {
   PHONE: /^([0-9]{10})$/,
   CLIENT_ID:
     /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/,
-  SECRET: /^(?=\S{1,19}$)\S+$/,
+  SECRET: /^\S+$/,
   WEBSITE:
     /^(https?:\/\/|www\.)[a-zA-Z0-9-.]+\.[a-zA-Z]{2,}(:[0-9]+)?(\/[a-zA-Z0-9-._~:/?#[\]@!$&'()*+,;=%]*)?$/,
   MAX_WEBSITE: /^.{0,255}$/,
