@@ -64,6 +64,9 @@ import {
   NOTES_EDIT,
   GLOBAL_NOTES_EDIT,
   IMPORT_TEMPLATES,
+  EMAIL_TEMPLATES,
+  EMAIL_TEMPLATES_CREATE,
+  EMAIL_TEMPLATES_EDIT,
 } from './routes';
 import { RootState } from './store/store';
 import ProjectTaskForm from './consultant/pages/project/project-details/project-task/form/project-task-form';
@@ -173,6 +176,20 @@ const NotesForm = lazy(
   () => import('./consultant/pages/notes/notes-form/notes-form')
 );
 
+const EmailTemplateList = lazy(
+  () =>
+    import(
+      './admin/pages/email-templates/email-templates-list/email-templates-list'
+    )
+);
+
+const EmailTemplateForm = lazy(
+  () =>
+    import(
+      './admin/pages/email-templates/email-template-form/email-template-form'
+    )
+);
+
 // Loading component for Suspense fallback
 const Loading = () => (
   <div className='flex h-screen w-full items-center justify-center'>
@@ -276,22 +293,6 @@ export const App: React.FC<IApp> = ({ instance }) => {
                   <Route path={NOTES_CREATE} element={<NotesForm />} />
                   <Route path={NOTES_EDIT} element={<NotesForm />} />
                   <Route path={GLOBAL_NOTES_EDIT} element={<NotesForm />} />
-                  <Route
-                    path={INTERACTION_TEMPLATES}
-                    element={<InteractionTemplates />}
-                  />
-                  <Route
-                    path={INTERACTION_TEMPLATES_CREATE}
-                    element={<InteractionTemplateForm />}
-                  />
-                  <Route
-                    path={INTERACTION_TEMPLATES_EDIT}
-                    element={<InteractionTemplateForm />}
-                  />
-                  <Route
-                    path={IMPORT_TEMPLATES}
-                    element={<ImportTemplatesList />}
-                  />
                   {/* Page not found */}
                   <Route path={NOT_MATCH} element={<NotFound />} />
                 </Route>
@@ -336,6 +337,34 @@ export const App: React.FC<IApp> = ({ instance }) => {
                   <Route
                     path={MANAGE_USER_GROUP_EDIT}
                     element={<CreateUserGroup />}
+                  />
+                  <Route
+                    path={INTERACTION_TEMPLATES}
+                    element={<InteractionTemplates />}
+                  />
+                  <Route
+                    path={INTERACTION_TEMPLATES_CREATE}
+                    element={<InteractionTemplateForm />}
+                  />
+                  <Route
+                    path={INTERACTION_TEMPLATES_EDIT}
+                    element={<InteractionTemplateForm />}
+                  />
+                  <Route
+                    path={IMPORT_TEMPLATES}
+                    element={<ImportTemplatesList />}
+                  />
+                  <Route
+                    path={EMAIL_TEMPLATES}
+                    element={<EmailTemplateList />}
+                  />
+                  <Route
+                    path={EMAIL_TEMPLATES_CREATE}
+                    element={<EmailTemplateForm />}
+                  />
+                  <Route
+                    path={EMAIL_TEMPLATES_EDIT}
+                    element={<EmailTemplateForm />}
                   />
                 </Route>
                 {/* Page not found */}
