@@ -2,6 +2,7 @@ import {
   costDisplay,
   getDateFormat,
   PROJECT_TASK_REGEX,
+  REGEX_PATTERNS,
   valueDisplay,
 } from '../../../../../common-utils';
 import TextButton from '../../../../../components/button/text-button';
@@ -94,7 +95,18 @@ export const getProjectTaskColumns = (
       type: 'text',
       required: false,
       placeholder: 'Enter Task Name',
+      validation: [
+        {
+          regex: REGEX_PATTERNS.MIN_3,
+          errorMessage: 'Task Name must be more than 2 characters long',
+        },
+        {
+          regex: REGEX_PATTERNS.MAX_250,
+          errorMessage: 'Max length exceeded',
+        },
+      ],
     },
+
     editable:
       permissionMapTaskTableColumn?.['task_name']?.read &&
       permissionMapTaskTableColumn?.['task_name']?.edit &&
