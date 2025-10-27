@@ -161,10 +161,10 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
   };
 
   const getRowId = (row: ProjectFinancialResourceCostList) => row.resource_rid;
-  const financialResourceCostColumns = getFinancialResourceCostColumns(
-    permissionMap,
-    currencySymbol
-  );
+
+  const financialResourceCostColumns = useMemo(() => {
+    return getFinancialResourceCostColumns(permissionMap, currencySymbol);
+  }, [permissionMap, currencySymbol]);
 
   const RestrictedColumns = [
     {
@@ -177,7 +177,12 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
   const [visibleColumns, setVisibleColumns] = useState<
     ListTableColumn<ProjectFinancialResourceCostList>[]
   >(financialResourceCostColumns.filter((col) => !col.hide));
-
+  useEffect(() => {
+    const updatedColumns = financialResourceCostColumns.filter(
+      (col) => !col.hide
+    );
+    setVisibleColumns(updatedColumns);
+  }, [currencySymbol, financialResourceCostColumns]);
   const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
     setVisibleColumns(
       updatedColumns.filter(
