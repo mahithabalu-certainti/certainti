@@ -576,117 +576,6 @@ export class InteractionService {
           }
         }
       }
-      if (interactionStatus === statusAction.RESPONSE_RECEIVED) {
-        const fetchInteractionDetails: any =
-          await this.interactionSchemaService.fetchInteractionDetailsById(
-            accountNumber,
-            interactionData.interaction_rid
-          );
-        if (fetchInteractionDetails) {
-          const professionalServiceConsultantRid: any =
-            await mainDbSequelize.query(
-              rawQueries.fetchProfServConsultantRid()
-            );
-          if (professionalServiceConsultantRid[0].length > 0) {
-            let schemaName = rawQueries.fetchSchemaName(accountNumber);
-            const fetchProfSerConsultantId: any = await orgDbSequelize.query(
-              rawQueries.fetchProfServConsultantDetails(
-                schemaName,
-                interactionData.account_rid,
-                professionalServiceConsultantRid[0][0].rid
-              )
-            );
-            if (fetchProfSerConsultantId[0][0] !== null) {
-              const interactionLevel: any = await mainDbSequelize.query(
-                rawQueries.fetchInteractionLevelById(
-                  interactionData.interaction_level_rid
-                )
-              );
-              const [interactionItems, interactionInfo] = await Promise.all([
-                this.interactionSchemaService.fetchInteractionQuestionsById(
-                  accountNumber,
-                  interactionData.interaction_rid
-                ),
-                this.interactionSchemaService.fetchInteractionInfo(
-                  interactionData.interaction_rid,
-                  accountNumber
-                ),
-              ]);
-              const senderEmailInfo = await this.getSenderEmailInfo(
-                interactionInfo.accountInfo.parent_account_rid,
-                interactionInfo.accountInfo.account_rid
-              );
-              const interactionLink = await this.generateInteractionLink(
-                interactionData.interaction_rid,
-                interactionInfo.accountInfo.account_rid,
-                interactionData.project_fiscal_rid,
-                interactionLevel[0][0].interaction_level_name
-              );
-              const excelBuffer = await this.generateExcelBuffer(
-                interactionData.interaction_rid,
-                interactionItems,
-                interactionInfo
-              );
-              const excelAttachment = {
-                filename: `interaction_${interactionData.interaction_rid}.xlsx`,
-                content: Buffer.from(excelBuffer).toString("base64"),
-                contentType:
-                  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-              };
-              let project;
-              let account;
-              let recipient;
-              if (interactionLevel[0][0].interaction_level_name === "Project") {
-                const fetchProjectDetails: any = await orgDbSequelize.query(
-                  rawQueries.fetchProjectDetails(
-                    schemaName,
-                    interactionData.project_fiscal_rid
-                  )
-                );
-                project = {
-                  project_id: fetchProjectDetails[0][0].rid,
-                  project_name: fetchProjectDetails[0][0].project_name,
-                  project_code: fetchProjectDetails[0][0].project_code,
-                  fiscalYear: fetchProjectDetails[0][0].fiscal_year,
-                };
-                account = {
-                  account_name: accountName,
-                };
-                recipient = {
-                  name: fetchInteractionDetails.recipient_name,
-                  email: fetchInteractionDetails.recipient_email,
-                };
-              } else {
-                recipient = {
-                  name: fetchInteractionDetails.recipient_name,
-                  email: fetchInteractionDetails.recipient_email,
-                };
-                account = {
-                  account_name: accountName,
-                };
-                project = {
-                  project_id: "",
-                  project_name: "",
-                  project_code: "",
-                  fiscalYear: 0,
-                };
-              }
-              const sendEmailResult = await this.sendEmailWithAttachment(
-                recipient,
-                project,
-                account,
-                excelAttachment,
-                interactionLink,
-                senderEmailInfo!,
-                interactionData.interaction_rid,
-                false,
-                interactionLevel[0][0].interaction_level_name,
-                true
-              );
-            }
-          }
-        }
-      }
       return {
         statusCode: HttpStatus.SUCCESS,
         message: STATUS_MESSAGE.interactionUpdated,
@@ -827,8 +716,10 @@ export class InteractionService {
   }> {
     const dbInit = await this.interactionModelService.getSequelize();
     const transaction = await dbInit.transaction();
+    const mainDbSequelize = await this.getMainDb();
+    const orgDbSequelize = await this.getOrgDb();
     try {
-      const { accountNumber } =
+      const { accountNumber, accountName } =
         await this.interactionSchemaService.fetchValidAccountNumberById(
           interactionData?.account_rid
         );
@@ -872,6 +763,117 @@ export class InteractionService {
         )
       );
       await Promise.all(parallelTasks);
+      if(updatedInteractionResponse.status === statusAction.RESPONSE_RECEIVED) {
+        const fetchInteractionDetails: any =
+          await this.interactionSchemaService.fetchInteractionDetailsById(
+            accountNumber,
+            interactionData.interaction_rid
+          );
+        if (fetchInteractionDetails) {
+          const professionalServiceConsultantRid: any =
+            await mainDbSequelize.query(
+              rawQueries.fetchProfServConsultantRid()
+            );
+          if (professionalServiceConsultantRid[0].length > 0) {
+            let schemaName = rawQueries.fetchSchemaName(accountNumber);
+            const fetchProfSerConsultantId: any = await orgDbSequelize.query(
+              rawQueries.fetchProfServConsultantDetails(
+                schemaName,
+                interactionData.account_rid,
+                professionalServiceConsultantRid[0][0].rid
+              )
+            );
+            if (fetchProfSerConsultantId[0][0] !== null) {
+              const interactionLevel: any = await mainDbSequelize.query(
+                rawQueries.fetchInteractionLevelById(
+                  fetchInteractionDetails.interaction_level_rid
+                )
+              );
+              const [interactionItems, interactionInfo] = await Promise.all([
+                this.interactionSchemaService.fetchInteractionQuestionsById(
+                  accountNumber,
+                  interactionData.interaction_rid
+                ),
+                this.interactionSchemaService.fetchInteractionInfo(
+                  interactionData.interaction_rid,
+                  accountNumber
+                ),
+              ]);
+              const senderEmailInfo = await this.getSenderEmailInfo(
+                interactionInfo.accountInfo.parent_account_rid,
+                interactionInfo.accountInfo.account_rid
+              );
+              const interactionLink = await this.generateInteractionLink(
+                interactionData.interaction_rid,
+                interactionInfo.accountInfo.account_rid,
+                interactionData.project_fiscal_rid,
+                interactionLevel[0][0].interaction_level_name
+              );
+              const excelBuffer = await this.generateExcelBuffer(
+                interactionData.interaction_rid,
+                interactionItems,
+                interactionInfo
+              );
+              const excelAttachment = {
+                filename: `interaction_${interactionData.interaction_rid}.xlsx`,
+                content: Buffer.from(excelBuffer).toString("base64"),
+                contentType:
+                  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+              };
+              let project;
+              let account;
+              let recipient;
+              if (interactionLevel[0][0].interaction_level_name === "Project") {
+                const fetchProjectDetails: any = await orgDbSequelize.query(
+                  rawQueries.fetchProjectDetails(
+                    schemaName,
+                    interactionData.project_fiscal_rid
+                  )
+                );
+                project = {
+                  project_id: fetchProjectDetails[0][0].rid,
+                  project_name: fetchProjectDetails[0][0].project_name,
+                  project_code: fetchProjectDetails[0][0].project_code,
+                  fiscalYear: fetchProjectDetails[0][0].fiscal_year,
+                };
+                account = {
+                  account_name: accountName,
+                };
+                recipient = {
+                  name: fetchInteractionDetails.recipient_name,
+                  email: fetchInteractionDetails.recipient_email,
+                };
+              } else {
+                recipient = {
+                  name: fetchInteractionDetails.recipient_name,
+                  email: fetchInteractionDetails.recipient_email,
+                };
+                account = {
+                  account_name: accountName,
+                };
+                project = {
+                  project_id: "",
+                  project_name: "",
+                  project_code: "",
+                  fiscalYear: 0,
+                };
+              }
+              const sendEmailResult = await this.sendEmailWithAttachment(
+                recipient,
+                project,
+                account,
+                excelAttachment,
+                interactionLink,
+                senderEmailInfo!,
+                interactionData.interaction_rid,
+                false,
+                interactionLevel[0][0].interaction_level_name,
+                true
+              );
+            }
+          }
+        }        
+      }
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
