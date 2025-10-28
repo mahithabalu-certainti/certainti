@@ -44,5 +44,10 @@ routes.get(
   checkUserStatusMiddleware("NA"),
   controller.projectController.projectClassification
 );
+routes.post(
+  "/qreHistory",
+  checkUserStatusMiddleware("projects_view_edit"),
+  controller.projectController.fetchQreHistory
+)
 
 export default routes;
