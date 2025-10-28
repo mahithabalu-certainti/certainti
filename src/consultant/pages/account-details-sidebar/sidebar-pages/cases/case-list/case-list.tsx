@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from 'react';
 import { getAllCaseListColumns } from './columns';
 import { generatePath, useNavigate } from 'react-router-dom';
@@ -81,13 +80,13 @@ export const CaseList: React.FC<ICaseTableProps> = ({
   //   });
   //   navigate(path);
   // };
-  const handleCaseIDClick = (project: any) => {
+  const handleCaseIDClick = () => {
     const path = generatePath(CASE_DETAILS, {
       caseid: 'DO98335VDBRFU53001',
     });
     // Create query parameter
     const queryParams = new URLSearchParams({
-      accountID: project?.account_rid ?? '',
+      accountID: 'D001-61c08383-92ec-4b84-97b5-337993d8144f',
     });
 
     navigate(`${path}?${queryParams.toString()}`);

@@ -4,7 +4,7 @@ import { useLocation, useSearchParams } from 'react-router-dom';
 // import { RootState } from '../../../../store/store';
 // import { useSelector } from 'react-redux';
 import { ActionsDropdownItem } from '../../../../common-utils';
-import { MenuItem } from '../../../types';
+import { InteractionListExportParams, MenuItem } from '../../../types';
 import { AllMenus, AllModules } from '../../../../common-service';
 import { InfoSection, PageHeader, SideMenuPanel } from '../../../../components';
 import {
@@ -25,6 +25,7 @@ import {
 import { WorkBreakDown } from './work-breakdown';
 import { DisplayColumn } from '../../account-details/utils';
 import { CaseTeam } from './case-team';
+import { CaseInteractions } from './case-interactions';
 
 export const CaseDetails = () => {
   const [searchParams] = useSearchParams();
@@ -102,6 +103,14 @@ export const CaseDetails = () => {
   //     setRefreshAccountDetails(Date.now());
   //   };
 
+  const [, setInteractionsParams] = useState<InteractionListExportParams>({
+    sortBy: '',
+    sortOrder: 'ASC',
+    filters: {},
+    page: 1,
+    limit: 100,
+  });
+
   useEffect(() => {
     const list = searchParams.get('list');
     if (list) {
@@ -164,6 +173,15 @@ export const CaseDetails = () => {
           <div className='w-full pr-4 pl-2 py-2'>
             <CaseTeam />
           </div>
+        );
+      case 'interactions':
+        return (
+          <CaseInteractions
+            accountInActive={false}
+            isSendInteraction={false}
+            loading={false}
+            setInteractionsParams={setInteractionsParams}
+          />
         );
       default:
         return (
@@ -233,9 +251,9 @@ export const CaseDetails = () => {
         icon: ProjectsSideIcon,
       },
       {
-        name: 'Interaction',
-        key: 'interaction',
-        id: AllModules.PROJECT_INTERACTIONS,
+        name: 'Interactions',
+        key: 'interactions',
+        id: AllModules.INTERACTIONS,
         disabled: false,
         icon: InteractionsIcon,
       },
@@ -333,7 +351,7 @@ export const CaseDetails = () => {
         error={undefined}
         singleLineView={true}
       />
-      <div className='flex flex-1 flex-row w-full'>
+      <div className='flex flex-1 flex-row w-full border-b border-[#CBD6E2]'>
         <div
           className={`flex transition-all ease-in-out ${
             isCollapsed

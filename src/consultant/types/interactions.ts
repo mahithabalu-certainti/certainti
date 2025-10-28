@@ -27,6 +27,25 @@ export enum StatusTypeEnum {
   inqueue = 'in-queue',
 }
 
+export interface globalFiltersType {
+  [key: string]: string[];
+}
+
+export interface InteractionListExportParams {
+  sortBy?: string;
+  sortOrder?: 'ASC' | 'DESC';
+  filters?: object;
+  fiscalYear?: number | string;
+  globalFilters?: globalFiltersType;
+  timezone?: string;
+  attachmentLevel?: string;
+  entityId?: string;
+  accountRid?: string;
+  page?: number;
+  limit?: number;
+  search?: string;
+}
+
 export interface InteractionFormTableColumn {
   name: string;
   label: string;
@@ -335,7 +354,7 @@ export interface InteractionHistoryResponse {
   response: string;
   response_on: string;
   attachments: Attachment[];
-  is_mandatory?: boolean
+  is_mandatory?: boolean;
 }
 export interface InteractionDetailsHistoryResponse {
   statusCode: number;
