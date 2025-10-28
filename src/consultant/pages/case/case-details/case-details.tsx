@@ -1,8 +1,6 @@
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
-// import { AccountState } from '../../../../store/type';
-// import { RootState } from '../../../../store/store';
-// import { useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { ActionsDropdownItem } from '../../../../common-utils';
 import { MenuItem } from '../../../types';
 import { AllMenus, AllModules } from '../../../../common-service';
@@ -25,82 +23,40 @@ import {
 import { WorkBreakDown } from './work-breakdown';
 import { DisplayColumn } from '../../account-details/utils';
 import { CaseTeam } from './case-team';
+import { ExportType } from '../../../types';
+import { RootState } from '../../../../store/store';
+import { AccountState } from '../../../../store/type';
+import { Attachments } from './attachments';
+import { AttachmentsListExportParams } from '../../../types/attachment';
 
 export const CaseDetails = () => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
-  //   const navigate = useNavigate();
+  // const { caseId } = useParams();
 
   const [caseDetails] = useState<DisplayColumn[]>([]);
-  //   const [accountDetailsForEdit, setAccountDetailsForEdit] =
-  //     useState<AccountFieldsApiResponse['data']>();
-  //   const { caseid } = useParams();
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
-  //   const { fiscalYear } = useSelector<RootState, AccountState>(
-  //     (state: RootState) => state.account
-  //   );
-  //   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
-  //   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const { fiscalYear } = useSelector<RootState, AccountState>(
+    (state: RootState) => state.account
+  );
+  const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
   const defaultTab = searchParams.get('list') ?? 'workBreakdown';
   const [activeKey, setActiveKey] = useState(defaultTab as string);
-  //   const [toggleEnabled, setToggleEnabled] = useState(false);
-  //   const [refreshAccountDetails, setRefreshAccountDetails] = useState<number>(
-  //     Date.now()
-  //   );
+  const [, setRefreshCaseDetails] = useState<number>(Date.now());
 
-  //   const [tableParams, setTableParams] = useState<ExportModule>({
-  //     sortBy: 'created_datetime',
-  //     sortOrder: 'DESC',
-  //     fiscalYear: String(convertedFiscalYear),
-  //     rNumber: accountDetailsForEdit?.accountById?.r_number || '',
-  //     resourceRid: '',
-  //     filter: {},
-  //   });
-  //   const [projectParams, setProjectParams] = useState<ProjectListParams>({
-  //     sortBy: 'created_datetime',
-  //     sortOrder: 'DESC',
-  //     filters: {},
-  //     fiscalYear: String(convertedFiscalYear),
-  //     accountNumber: accountDetailsForEdit?.accountById?.r_number || '',
-  //   });
-  //   const [attachmentParams, setAttachmentParams] =
-  //     useState<AttachmentsListExportParams>({
-  //       sortBy: 'document_name',
-  //       sortOrder: 'ASC',
-  //       filters: {},
-  //       fiscalYear: convertedFiscalYear,
-  //     });
+  const [, setAttachmentParams] = useState<AttachmentsListExportParams>({
+    sortBy: 'document_name',
+    sortOrder: 'ASC',
+    filters: {},
+    fiscalYear: convertedFiscalYear,
+  });
 
-  //   const [importsParams, setImportsParams] = useState<ImportsListURLParams>({
-  //     page: 1,
-  //     limit: 100,
-  //     sort: 'r_number',
-  //     sort_by: 'asc',
-  //     filters: {},
-  //     fiscal_year: convertedFiscalYear,
-  //     account_rid: accountid || '',
-  //   });
-  //   const [financialResCostParams, setFinancialResCostParams] =
-  //     useState<ProjectFinancialResourceExportParams>({
-  //       sortBy: 'project_code',
-  //       sortOrder: 'ASC',
-  //       filters: {},
-  //     });
+  const [, setExportType] = useState<ExportType>('resource');
 
-  //   const [financialProjectCostParams, setFinancialProjectCostParams] =
-  //     useState<ProjectFinancialProjectExportParams>({
-  //       sortBy: 'project_code',
-  //       sortOrder: 'ASC',
-  //       filters: {},
-  //       fiscalYear: 0,
-  //     });
-
-  //   const [exportType, setExportType] = useState<ExportType>('resource');
-
-  //   const onRefreshClick = () => {
-  //     setRefreshAccountDetails(Date.now());
-  //   };
+  const onRefreshClick = () => {
+    setRefreshCaseDetails(Date.now());
+  };
 
   useEffect(() => {
     const list = searchParams.get('list');
@@ -117,11 +73,6 @@ export const CaseDetails = () => {
       setActiveKey(location.state.activeKey || listParam || 'workBreakdown');
     }
   }, [location.state, searchParams]);
-  // useEffect(() => {
-  //   if (data?.data) {
-  //     setCaseDetails(transformAccountData(data?.data, permissionMap));
-  //   }
-  // }, [data, permissionMap]);
 
   const menuItems: ActionsDropdownItem[] = [
     {
@@ -136,12 +87,6 @@ export const CaseDetails = () => {
     },
   ];
 
-  //   const handleEditAccount = () => {
-  //     navigate(ACCOUNT + '/edit/' + data?.data?.accountById?.rid, {
-  //       state: { accountDetailsForEdit },
-  //     });
-  //   };
-
   const handleActionsClick = () => {
     console.log('Actions clicked');
   };
@@ -149,7 +94,6 @@ export const CaseDetails = () => {
   const handleSettingsClick = () => {
     console.log('Settings clicked');
   };
-  // Set active key from location stat
 
   const renderContent = () => {
     switch (activeKey) {
@@ -164,6 +108,15 @@ export const CaseDetails = () => {
           <div className='w-full pr-4 pl-2 py-2'>
             <CaseTeam />
           </div>
+        );
+      case 'attachments':
+        return (
+          <Attachments
+            accountInActive={false}
+            setExportType={setExportType}
+            setAttachmentParams={setAttachmentParams}
+            refetchAccountDetails={onRefreshClick}
+          />
         );
       default:
         return (
@@ -311,14 +264,6 @@ export const CaseDetails = () => {
           title={'5005003'}
           totalRecords={5}
           actionItems={menuItems}
-          //   primaryButton={
-          //     isAccountFieldsEditable
-          //       ? {
-          //           label: 'Edit',
-          //           onClick: handleEditAccount,
-          //         }
-          //       : undefined
-          //   }
           onActionsClick={handleActionsClick}
           onSettingsClick={handleSettingsClick}
           showActions={false}
