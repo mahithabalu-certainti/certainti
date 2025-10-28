@@ -25,6 +25,7 @@ import {
 import { WorkBreakDown } from './work-breakdown';
 import { DisplayColumn } from '../../account-details/utils';
 import { CaseTeam } from './case-team';
+import AssignProjects from './case-assign-projects/assign-projects';
 
 export const CaseDetails = () => {
   const [searchParams] = useSearchParams();
@@ -165,6 +166,12 @@ export const CaseDetails = () => {
             <CaseTeam />
           </div>
         );
+      case 'assignProjects':
+        return (
+          <div>
+            <AssignProjects />
+          </div>
+        );
       default:
         return (
           <div className='flex items-center justify-center h-full'>
@@ -179,35 +186,42 @@ export const CaseDetails = () => {
       {
         name: 'Work Breakdown',
         key: 'workBreakdown',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS,
+        id: AllMenus.FINANCIAL_HIGHLIGHTS, // ADD PERMISSION FOR CASES
         disabled: false,
         icon: ProjectsSideIcon,
       },
       {
         name: 'Financial Workings',
         key: 'financialWorkings',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS,
+        id: AllMenus.FINANCIAL_HIGHLIGHTS, // ADD PERMISSION FOR CASES
         disabled: false,
         icon: FinancialIcon,
       },
       {
         name: 'Case Review',
         key: 'caseReview',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS,
+        id: AllMenus.FINANCIAL_HIGHLIGHTS, // ADD PERMISSION FOR CASES
         disabled: false,
         icon: CasesIcon,
       },
       {
         name: 'Case Team',
         key: 'caseTeam',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS,
+        id: AllMenus.FINANCIAL_HIGHLIGHTS, // ADD PERMISSION FOR CASES
         disabled: false,
         icon: CasesIcon,
       },
       {
         name: 'Assign Projects',
         key: 'assignProjects',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS,
+        id: AllMenus.FINANCIAL_HIGHLIGHTS, // ADD PERMISSION FOR CASES
+        disabled: false,
+        icon: ProjectsSideIcon,
+      },
+      {
+        name: 'Review Projects',
+        key: 'reviewProjects',
+        id: AllMenus.FINANCIAL_HIGHLIGHTS, // ADD PERMISSION FOR CASES
         disabled: false,
         icon: ProjectsSideIcon,
       },
