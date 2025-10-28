@@ -2953,7 +2953,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       );
       const interactionCCRecipientsAccount: any[] =
         await this.orgDbSequelize.query(
-          rawQueries.fetchInteractionRecipientAccount(accountRid,statusArr.rid ,schemaName),
+          rawQueries.fetchInteractionCCRecipientAccount(accountRid,statusArr.rid ,schemaName),
           { type: "SELECT" }
         );
 
