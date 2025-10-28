@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { ManageUserIcon } from '../../../../assets/icons';
 import TextButton from '../../../../components/button/text-button';
 import {
@@ -12,7 +12,6 @@ import {
 import { Skeleton } from '@mui/material';
 import React, { useEffect } from 'react';
 import { useToast } from '../../../../hooks';
-import { ADMIN_MANAGE_USER } from '../../../../routes';
 import { ProfileResponse } from '../../../../common-service';
 
 const HEADER_STYLES = {
@@ -26,14 +25,13 @@ export const ExtendedPermission: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
   const { userid } = useParams();
   const { successToast } = useToast();
-  const navigate = useNavigate();
   const { data, isPending } = useExtendedPermissionToUser(userid as string);
   const updateExtendedPermission = useUpdateExtendedPermission();
 
   useEffect(() => {
     if (updateExtendedPermission.isSuccess) {
       successToast('User permissions updated successfully.');
-      navigate(ADMIN_MANAGE_USER);
+      goBack();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [updateExtendedPermission.isSuccess]);
@@ -105,6 +103,7 @@ export const ExtendedPermission: React.FC = () => {
               loading={isPending}
               formRef={formRef}
               outData={outData}
+              oldData={JSON.parse(JSON.stringify(data?.data.permissions || []))}
             />
           )}
         </div>

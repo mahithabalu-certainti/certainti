@@ -5,9 +5,10 @@ export interface DisplayColumn {
     label: string;
     value: string;
     className?: string;
+    hide?: boolean;
   }>;
 }
-export const transformInteractionData = (data: HeaderData): DisplayColumn[] => {
+export const transformInteractionData = (data: HeaderData, isAccountlevel?: boolean): DisplayColumn[] => {
   const interaction = data;
   return [
     {
@@ -19,6 +20,7 @@ export const transformInteractionData = (data: HeaderData): DisplayColumn[] => {
         {
           label: 'Project ID',
           value: interaction?.projectId || '-',
+          hide: isAccountlevel,
         },
       ],
     },
@@ -29,8 +31,9 @@ export const transformInteractionData = (data: HeaderData): DisplayColumn[] => {
           value: interaction?.accountId || '-',
         },
         {
-          label: 'Interaction ID',
-          value: interaction?.interactionId || '-',
+          label: 'Project Code',
+          value: interaction?.projectCode || '-',
+          hide: isAccountlevel,
         },
       ],
     },
@@ -38,16 +41,22 @@ export const transformInteractionData = (data: HeaderData): DisplayColumn[] => {
     {
       items: [
         {
-          label: 'Project Code',
-          value: interaction?.projectCode || '-',
+          label: 'Interaction ID',
+          value: interaction?.interactionId || '-',
+        },
+        {
+          label: 'Project Name',
+          value: interaction?.projectName || '-',
+          hide: isAccountlevel,
         },
       ],
     },
     {
       items: [
         {
-          label: 'Project Name',
-          value: interaction?.projectName || '-',
+          label: 'Fiscal Year',
+          value: interaction?.fiscal_year || '-',
+          hide: isAccountlevel,
         },
       ],
     },

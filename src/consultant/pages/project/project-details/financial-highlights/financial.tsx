@@ -9,6 +9,7 @@ import { FinancialIcon } from '../../../../../assets';
 import SummayListTable from './summary/summay-list';
 import ResourceCost from './resource-cost/resource-cost';
 import { NewProjectData } from '../../../../types/project';
+import { ProjectQreAdjustmentResponse } from '../../utils';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getProjectFinancialResCostFields } from './helpers';
 import { useFetchState } from '../../../../services/account';
@@ -44,12 +45,14 @@ interface ProjectFinancialProps {
     params: ProjectFinancialResourceExportParams
   ) => void;
   setExportType: (type: ExportType) => void;
+  onQreAdjustmentUpdated?: (data: ProjectQreAdjustmentResponse) => void;
 }
 
 const Financial: React.FC<ProjectFinancialProps> = ({
   projectDetails,
   setExportType,
   setResCostExportParams,
+  onQreAdjustmentUpdated,
 }) => {
   const navigate = useNavigate();
   const [appliedFilters, setAppliedFilters] = useState<
@@ -64,6 +67,7 @@ const Financial: React.FC<ProjectFinancialProps> = ({
   const [currentCountry, setCurrentCountry] = useState<string>('');
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
+  const [searchText, setSearchText] = useState('');
 
   const handleColumnVisibility = (
     event: React.MouseEvent<HTMLButtonElement>
@@ -197,6 +201,8 @@ const Financial: React.FC<ProjectFinancialProps> = ({
         showRefresh={tabParam === 'resource_cost'}
         onRefreshClick={handleRefresh}
         onFilterChange={handleFilterChange}
+        showSearch={tabParam === 'resource_cost'}
+        onSearch={(text) => setSearchText(text)}
       />
       <SectionHeader
         title='Financial Summary'
@@ -219,7 +225,10 @@ const Financial: React.FC<ProjectFinancialProps> = ({
         }`}
       >
         {tabParam === 'summary' && isSummaryViewEnable && (
-          <SummayListTable projectDetails={projectDetails} />
+          <SummayListTable
+            projectDetails={projectDetails}
+            onQreAdjustmentUpdated={onQreAdjustmentUpdated}
+          />
         )}
         {tabParam === 'resource_cost' && isResourceCostViewEnable && (
           <ResourceCost
@@ -232,6 +241,7 @@ const Financial: React.FC<ProjectFinancialProps> = ({
             setExportType={setExportType}
             setColumnAnchorEl={setColumnAnchorEl}
             columnAnchorEl={columnAnchorEl}
+            searchValue={searchText}
           />
         )}
       </div>

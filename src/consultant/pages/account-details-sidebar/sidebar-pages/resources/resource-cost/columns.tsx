@@ -1,5 +1,6 @@
 import {
   costDisplay,
+  getDateFormat,
   REGEX_PATTERNS,
   RESOURCE_REGEX,
   valueDisplay,
@@ -13,7 +14,6 @@ import {
 import { FormFiscalDateType } from '../../../../../types';
 import { ResourceCostList } from '../../../../../types/resource-cost';
 import { DATE_CONFIG } from '../../../../resource-form/form-data';
-import { dateFormatToYYYYMMDD } from '../utils';
 
 const getFiscalYears = (range: number) => {
   const currentYear = new Date().getFullYear();
@@ -31,10 +31,12 @@ export const getResourceCostColumns = (
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
   accountInActive: boolean,
   handleAttachmentClick?: (rowId: string) => void,
+  handleCreateNote?: (rowId: string) => void,
   resourceInActive?: boolean,
   attachmentCreateEnable?: boolean,
   handleGetFiscalYear?: (year: string) => void,
-  fiscalDate?: FormFiscalDateType
+  fiscalDate?: FormFiscalDateType,
+  isNoteCreateEnable?: boolean
 ): ListTableColumn<ResourceCostList>[] => [
   {
     id: 'fiscal_year',
@@ -89,7 +91,7 @@ export const getResourceCostColumns = (
     sortable: true,
 
     render: (row: ResourceCostList) => (
-      <span>{dateFormatToYYYYMMDD(row.effective_from as string) || '-'}</span>
+      <span>{getDateFormat(row.effective_from as string) || '-'}</span>
     ),
     editable:
       permissionMap?.['effective_from']?.edit &&
@@ -137,7 +139,7 @@ export const getResourceCostColumns = (
     sortable: true,
 
     render: (row: ResourceCostList) => (
-      <span>{dateFormatToYYYYMMDD(row.end_date as string) || '-'}</span>
+      <span>{getDateFormat(row.end_date as string) || '-'}</span>
     ),
     editable:
       permissionMap?.['end_date']?.edit &&
@@ -214,8 +216,9 @@ export const getResourceCostColumns = (
       !permissionMap?.['effort_in_hrs']?.edit &&
       !permissionMap?.['effort_in_hrs']?.read,
     field: {
-      type: 'number',
+      type: 'text',
       required: true,
+      formatCostNumber: true,
       placeholder: 'Enter Effort In Hrs',
       validation: [
         {
@@ -246,8 +249,9 @@ export const getResourceCostColumns = (
       !accountInActive,
     hide: !permissionMap?.['salary']?.edit && !permissionMap?.['salary']?.read,
     field: {
-      type: 'number',
+      type: 'text',
       required: false,
+      formatCostNumber: true,
       placeholder: 'Enter Salary',
       validation: [
         {
@@ -287,8 +291,9 @@ export const getResourceCostColumns = (
       !permissionMap?.['resource_cost']?.edit &&
       !permissionMap?.['resource_cost']?.read,
     field: {
-      type: 'number',
+      type: 'text',
       required: !isFullTime,
+      formatCostNumber: true,
       placeholder: 'Enter Cost',
       validation: [
         {
@@ -327,8 +332,9 @@ export const getResourceCostColumns = (
       !accountInActive,
     hide: !permissionMap?.['bonus']?.edit && !permissionMap?.['bonus']?.read,
     field: {
-      type: 'number',
+      type: 'text',
       required: false,
+      formatCostNumber: true,
       placeholder: 'Enter Bonus',
       validation: [
         {
@@ -361,8 +367,9 @@ export const getResourceCostColumns = (
       !permissionMap?.['insurance']?.edit &&
       !permissionMap?.['insurance']?.read,
     field: {
-      type: 'number',
+      type: 'text',
       required: false,
+      formatCostNumber: true,
       placeholder: 'Enter Insurance',
       validation: [
         {
@@ -394,8 +401,9 @@ export const getResourceCostColumns = (
       !permissionMap?.['deductions']?.edit &&
       !permissionMap?.['deductions']?.read,
     field: {
-      type: 'number',
+      type: 'text',
       required: false,
+      formatCostNumber: true,
       placeholder: 'Enter Deductions',
       validation: [
         {
@@ -476,6 +484,25 @@ export const getResourceCostColumns = (
         disabled={accountInActive ? accountInActive : resourceInActive}
         sx={{ width: '45px', minWidth: '45px', maxWidth: '45px', ml: 2.5 }}
         onClick={() => handleAttachmentClick?.(row.rid ?? '')}
+      />
+    ),
+  },
+  {
+    id: 'notes',
+    sortId: 'notes',
+    label: 'Notes',
+    width: 80,
+    sortable: false,
+    hide: !isNoteCreateEnable,
+    sx: {
+      textAlign: 'center',
+    },
+    render: (row) => (
+      <TextButton
+        label='Add'
+        disabled={accountInActive ? accountInActive : resourceInActive}
+        sx={{ width: '45px', minWidth: '45px', maxWidth: '45px' }}
+        onClick={() => handleCreateNote?.(row.rid ?? '')}
       />
     ),
   },

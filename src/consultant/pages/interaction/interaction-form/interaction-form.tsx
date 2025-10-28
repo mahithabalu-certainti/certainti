@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import {
+  Autocomplete,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
+  TextField,
   Tooltip,
 } from '@mui/material';
 import { Project } from '../../../types/project';
@@ -17,7 +19,8 @@ import {
   InteractionFormQuestion,
   InteractionFormTableColumn,
   InteractionQuestionErrors,
-  StatusActionEnum,
+  InteractionTemplateList,
+  IRecipient,
   StatusTypeEnum,
 } from '../../../types';
 import { useToast } from '../../../../hooks';
@@ -25,12 +28,15 @@ import {
   useAccountCreateInteraction,
   useAccountInteractionDetails,
   useCreateInteraction,
+  useGetInteractionTemplate,
+  useGetInteractionTemplateDetails,
   useInteractionDetails,
   useUpdateInteractionDetails,
 } from '../../../services/interactions/interactions-service';
 import { useAccountProjects } from '../../../services/project';
 import {
   formatDateToYYYYMMDDWithTime,
+  getFiscalYears,
   reshapeGlobalFilter,
 } from '../../../../common-utils';
 import {
@@ -56,20 +62,24 @@ import {
   ExpandCollapseSelectOptions,
   useGetInteractionLevel,
   useGetInteractionStatus,
-  useGetStatus,
   // useGetInteractionStatusById,
 } from '../../../../common-service';
 import { RootState } from '../../../../store/store';
 import { useSelector } from 'react-redux';
 import { ExpandCollapseDropdown } from '../../../../components';
 import { useGlobalAccountsList } from '../../../services/account';
+import FormFiscalYearDropdown from '../../../../components/fiscal-dropdown/form-fiscal-dropdown';
+import { DATE_CONFIG } from '../../resource-form/form-data';
+import { ArrowDropDownIcon } from '@mui/x-date-pickers/icons';
+import { ListOption } from '../../../../components/table/types';
+import ConfirmationPopup from '../../../../common-utils/confirmation-popup';
+import { PreviewDialog } from './preview-model';
 
 const InteractionForm = () => {
   const { interactionId } = useParams();
   const [searchParams] = useSearchParams();
   const { successToast } = useToast();
   const [projectList, setProjectList] = useState<Project[]>([]);
-  const [activeFlag, setActiveFlag] = useState<StatusActionEnum | null>(null);
   const [selectedProject, setSelectedProject] = useState<ProjectDetails>({
     account_name: '',
     project_code: '',
@@ -103,11 +113,29 @@ const InteractionForm = () => {
   });
   const [errors, setErrors] = useState<InteractionFormErrors>({});
   const [currentAccountId, setCurrentAccountId] = useState<string>('');
+  const [interactionTemplate, setInteractionTemplate] = useState<ListOption[]>(
+    []
+  );
+  const [currentTemplate, setCurrentTemplate] = useState<ListOption>({
+    label: 'Choose Template',
+    value: '',
+  });
+  const [confirmationState, setConfirmationState] = React.useState<{
+    isOpen: boolean;
+    message: string;
+    onConfirm: () => void;
+    onCancel: () => void;
+  }>({ isOpen: false, message: '', onConfirm: () => {}, onCancel: () => {} });
+  const [saveLoading, setSaveLoading] = useState<boolean>(false);
+  const [previewDialog, setPreviewDialog] = React.useState(false);
+  const [recipiants, setRecipiants] = React.useState<IRecipient>({
+    name: '',
+    email: '',
+  });
 
   const { fiscalYear, filters } = useSelector(
     (state: RootState) => state.account
   );
-
   const { permission } = useSelector((state: RootState) => state.permission);
 
   const interactionsViewEditFields = useMemo(
@@ -117,7 +145,6 @@ const InteractionForm = () => {
       )?.fields ?? [],
     [permission]
   );
-
   const permissionMap = useMemo(() => {
     const map: Record<string, { read: boolean; edit: boolean }> = {};
     interactionsViewEditFields.forEach((item) => {
@@ -135,7 +162,6 @@ const InteractionForm = () => {
   const isProjectFields = source !== 'account';
   const isGlobalInteraction = source === 'global';
   const isAccountFields = source === 'account';
-
   const newFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
   const { data: globalAccountList, isLoading: isGlobalLoading } =
@@ -145,6 +171,37 @@ const InteractionForm = () => {
       },
       isGlobalInteraction && !isEditView
     );
+  const { data: otherInteractionData, isLoading } = useInteractionDetails(
+    accountId,
+    interactionId,
+    projectFiscalRid
+  );
+  const accountInteraction = useAccountInteractionDetails(
+    accountId,
+    interactionId,
+    source == 'account'
+  );
+  const createInteraction = useCreateInteraction();
+  const accountCreateInteraction = useAccountCreateInteraction();
+  const updateInteraction = useUpdateInteractionDetails();
+  const interactionStatus = useGetInteractionStatus();
+  const getInteractionLevel = useGetInteractionLevel();
+  const interactionTemplates = useGetInteractionTemplate();
+  const interactionTemplateDetails = useGetInteractionTemplateDetails(
+    currentTemplate.value as string
+  );
+  const { data: projectsData, isLoading: projectsLoading } = useAccountProjects(
+    {
+      page: 1,
+      limit: 1000,
+      sortBy: 'project_code',
+      sortOrder: 'ASC',
+      accountNumber: accountId || currentAccountId || '',
+      fiscalYear: newFiscalYear,
+    },
+    !isProjectFields || isGlobalInteraction
+  );
+  const interactionData = otherInteractionData || accountInteraction.data;
 
   // Clear account name only when filters change
   useEffect(() => {
@@ -160,7 +217,6 @@ const InteractionForm = () => {
       }));
     }
   }, [filters, isGlobalInteraction, isEditView]);
-
   // Clear project details when either fiscalYear or filters change
   useEffect(() => {
     if (isGlobalInteraction && !isEditView) {
@@ -187,7 +243,6 @@ const InteractionForm = () => {
       }));
     }
   }, [fiscalYear, filters, isGlobalInteraction, isEditView]);
-
   useEffect(() => {
     if (projectDetails && source !== 'account') {
       try {
@@ -216,6 +271,19 @@ const InteractionForm = () => {
       }));
     }
   }, [accountName, projectDetails, searchParams, source]);
+  useEffect(() => {
+    if (isEditView) {
+      setRecipiants({
+        name: interactionData?.recipient_name || '',
+        email: interactionData?.recipient_email || '',
+      });
+    } else {
+      const currentRecipients = localStorage.getItem('currentRecipients');
+      if (currentRecipients) {
+        setRecipiants(JSON.parse(currentRecipients));
+      }
+    }
+  }, [isEditView, accountInteraction.data]);
 
   const accountsData: ExpandCollapseSelectOptions[] = useMemo(() => {
     if (!globalAccountList?.accounts) return [];
@@ -230,68 +298,20 @@ const InteractionForm = () => {
     }));
   }, [globalAccountList?.accounts]);
 
-  const handleAccountChange = (accountRid: string) => {
-    // Find the selected account
-    let selectedAccountName = '';
-    accountsData.forEach((group) => {
-      const account = group.options.find((acc) => acc.value === accountRid);
-      if (account) {
-        selectedAccountName = account.label;
-      }
-    });
-
-    setCurrentAccountId(accountRid);
-    setFormData((prev) => ({
-      ...prev,
-      accountName: selectedAccountName,
-      projectCode: '',
-      projectName: '',
-      fiscalYear: 0,
-    }));
-    setErrors((prev) => ({
-      ...prev,
-      accountName: undefined,
-      projectCode: undefined,
-      projectName: undefined,
-      fiscalYear: undefined,
-    }));
-  };
-
-  const { data: otherInteractionData, isLoading } = useInteractionDetails(
-    accountId,
-    interactionId,
-    projectFiscalRid
-  );
-  const accountInteraction = useAccountInteractionDetails(
-    accountId,
-    interactionId,
-    source == 'account'
-  );
-  const interactionData = otherInteractionData || accountInteraction.data;
-
-  const createInteraction = useCreateInteraction();
-  const accountCreateInteraction = useAccountCreateInteraction();
-  const accountStatusOptions = useGetStatus();
-  const updateInteraction = useUpdateInteractionDetails();
-  const interactionStatus = useGetInteractionStatus();
-  const getInteractionLevel = useGetInteractionLevel();
-
+  const isAccountInteractionLevel =
+    interactionData?.interaction_level_name?.toLocaleLowerCase() === 'account';
+  const isProjectInteractionLevel =
+    interactionData?.interaction_level_name?.toLocaleLowerCase() === 'project';
   const commonSuccess =
     createInteraction.isSuccess ||
     accountCreateInteraction.isSuccess ||
     updateInteraction.isSuccess;
-
-  const { data: projectsData, isLoading: projectsLoading } = useAccountProjects(
-    {
-      page: 1,
-      limit: 1000,
-      sortBy: 'project_code',
-      sortOrder: 'ASC',
-      accountNumber: accountId || currentAccountId || '',
-      fiscalYear: newFiscalYear,
-    },
-    !isProjectFields || isGlobalInteraction
-  );
+  const questionTableColumns = getQuestionTableColumns(isEditView);
+  const formLoading =
+    isLoading ||
+    accountInteraction.isLoading ||
+    (projectsLoading && !isGlobalInteraction) ||
+    interactionStatus.isLoading;
 
   const statusOptions = useMemo(
     () =>
@@ -302,6 +322,28 @@ const InteractionForm = () => {
       })) || [],
     [interactionStatus.data?.data.interactionStatus]
   );
+  const memoizedInteractionLevel = useMemo(
+    () =>
+      getInteractionLevel.data?.data.interactionLevel
+        .filter((it) => it.interaction_level_name.toLowerCase() !== 'all')
+        .map((status) => ({
+          option: status.interaction_level_name,
+          value: status.rid,
+        })) || [],
+    [getInteractionLevel.data?.data.interactionLevel]
+  );
+  const projectCodeList: ExpandCollapseSelectOptions[] = useMemo(() => {
+    if (!projectsData) return [];
+
+    return projectsData?.projects?.map((project) => ({
+      group: project.project_code,
+      options:
+        project.ProjectFiscal?.map((child) => ({
+          label: `FY${child.fiscal_year} - ${child.project_code}`,
+          value: `${child.project_code}_${child.fiscal_year}`,
+        })) || [],
+    }));
+  }, [projectsData]);
 
   useEffect(() => {
     if (interactionData && isEditView) {
@@ -358,13 +400,11 @@ const InteractionForm = () => {
     isEditView,
     accountName,
   ]);
-
   useEffect(() => {
     if (projectsData) {
       setProjectList(projectsData.projects);
     }
   }, [projectsData]);
-
   useEffect(() => {
     if (commonSuccess) {
       successToast(
@@ -376,19 +416,62 @@ const InteractionForm = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [commonSuccess, isEditView]);
-
-  const projectCodeList: ExpandCollapseSelectOptions[] = useMemo(() => {
-    if (!projectsData) return [];
-
-    return projectsData?.projects?.map((project) => ({
-      group: project.project_code,
-      options:
-        project.ProjectFiscal?.map((child) => ({
-          label: `FY${child.fiscal_year} - ${child.project_code}`,
-          value: `${child.project_code}_${child.fiscal_year}`,
-        })) || [],
-    }));
-  }, [projectsData]);
+  useEffect(() => {
+    if (memoizedInteractionLevel.length > 0) {
+      interactionTemplates.mutate(
+        {
+          sortBy: 'template_name',
+          sortOrder: 'ASC',
+          apiSource: 'interaction',
+          templateType: isProjectInteractionLevel
+            ? 'Project'
+            : isAccountFields
+              ? 'Account'
+              : 'Project',
+          filters: {},
+        },
+        {
+          onSuccess: (res: {
+            interactions: InteractionTemplateList[];
+            count: number;
+          }) => {
+            setInteractionTemplate(
+              res.interactions.map((it, i) => ({
+                label: it.template_name || i.toString(),
+                value: it.rid,
+              }))
+            );
+          },
+        }
+      );
+    }
+  }, [memoizedInteractionLevel, isAccountFields, isProjectInteractionLevel]);
+  useEffect(() => {
+    if (interactionTemplateDetails.data) {
+      setFormData((prev) => ({
+        ...prev,
+        questions:
+          interactionTemplateDetails?.data?.questions &&
+          interactionTemplateDetails.data.questions.length > 0
+            ? interactionTemplateDetails.data.questions.map((qus, index) => ({
+                question_seq_num: qus.question_seq_num || `Q00-${index + 1}`,
+                question: qus.question.trim() || '',
+                is_mandatory: qus.is_mandatory ?? false,
+                notes: qus.notes.trim() || '',
+                is_editable: qus.is_editable ?? true,
+              }))
+            : [
+                {
+                  question_seq_num: 'SNO_1',
+                  question: '',
+                  is_mandatory: false,
+                  is_editable: true,
+                  notes: '',
+                },
+              ],
+      }));
+    }
+  }, [interactionTemplateDetails.data]);
 
   const handleProjectChange = (selectedValue: string) => {
     const [projectCode, fiscalYear] = selectedValue.split('_');
@@ -434,7 +517,6 @@ const InteractionForm = () => {
       }));
     }
   };
-
   const handleAddQuestion = () => {
     setFormData((prev) => {
       // Find the highest sequence number
@@ -458,28 +540,39 @@ const InteractionForm = () => {
       };
     });
   };
-
   const handleRemoveQuestion = (index: number) => {
-    setFormData((prev) => {
-      const updatedQuestions = prev.questions.filter((_, i) => i !== index);
+    const updatedQuestions = [...formData.questions];
+    updatedQuestions.splice(index, 1);
 
-      if (updatedQuestions.length === 0) {
-        updatedQuestions.push({
-          question_seq_num: 'SNO_1',
-          question: '',
-          is_mandatory: false,
-          is_editable: true,
-          notes: '',
-        });
-      }
+    // If this was the last question, add a new empty one
+    if (updatedQuestions.length === 0) {
+      updatedQuestions.push({
+        question_seq_num: 'SNO_1',
+        question: '',
+        is_mandatory: false,
+        is_editable: true,
+        notes: '',
+      });
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      questions: updatedQuestions,
+    }));
+
+    // Clear errors for the removed question and reindex remaining errors
+    setErrors((prev) => {
+      if (!prev.questions) return prev;
+
+      const newQuestionErrors = [...prev.questions];
+      newQuestionErrors.splice(index, 1);
 
       return {
         ...prev,
-        questions: updatedQuestions,
+        questions: newQuestionErrors,
       };
     });
   };
-
   const handleQuestionChange = (
     index: number,
     field: keyof InteractionFormQuestion,
@@ -512,7 +605,6 @@ const InteractionForm = () => {
       };
     });
   };
-
   const validateForm = (): boolean => {
     const { isValid, errors: validationErrors } = validateInteractionForm(
       formData,
@@ -521,20 +613,41 @@ const InteractionForm = () => {
     setErrors(validationErrors);
     return isValid;
   };
-
-  const handleSubmit = (saveFlag: StatusActionEnum) => {
+  const handleSubmit = () => {
     if (isEditView && !hasFormValuesChanged(formData, interactionData)) {
       goBack(); // No changes, just go back
       return;
     }
 
-    const draftStatus = statusOptions.find(
-      (option) => option.label.toLowerCase() === StatusTypeEnum.draft
-    );
-
     if (!validateForm()) {
       return;
     }
+
+    // Set loading state based on action
+    setSaveLoading(true);
+
+    // update flow
+    if (isEditView && interactionData) {
+      updateInteractionComplete();
+    } else {
+      // create flow
+      if (!isAccountFields) {
+        createInteractionComplete();
+      }
+    }
+  };
+  const saveAndSend = () => {
+    if (validateForm()) {
+      setPreviewDialog(true);
+    }
+  };
+  const updateInteractionComplete = (
+    trigger_send?: boolean,
+    recipiants?: IRecipient
+  ) => {
+    const draftStatus = statusOptions.find(
+      (option) => option.label.toLowerCase() === StatusTypeEnum.draft
+    );
     const payload = transFormPayload(
       accountId,
       formData,
@@ -543,100 +656,119 @@ const InteractionForm = () => {
       interactionData,
       selectedProject
     );
-
-    setActiveFlag(saveFlag);
-
-    if (isEditView && interactionData) {
-      if (isAccountFields) {
-        updateInteraction.mutate(
-          {
-            account_rid: payload.account_rid,
-            status_rid: payload.status_rid,
-            questions: payload.questions,
-            interaction_rid: payload.interaction_rid,
-            interaction_level_rid:
-              getInteractionLevel.data?.data.interactionLevel.find(
-                (it) =>
-                  it.interaction_level_name.toLocaleLowerCase() === 'account'
-              )?.rid,
-          },
-          {
-            onError: () => {
-              setActiveFlag(null);
-            },
-            onSuccess: () => {
-              setActiveFlag(null);
-            },
-          }
-        );
-      } else {
-        updateInteraction.mutate(
-          {
-            account_rid: payload.account_rid,
-            project_rid: payload.project_rid,
-            project_fiscal_rid: payload.project_fiscal_rid,
-            status_rid: payload.status_rid,
-            questions: payload.questions,
-            interaction_rid: payload.interaction_rid,
-            interaction_level_rid:
-              getInteractionLevel.data?.data.interactionLevel.find(
-                (it) =>
-                  it.interaction_level_name.toLocaleLowerCase() === 'project'
-              )?.rid,
-          },
-          {
-            onError: () => {
-              setActiveFlag(null);
-            },
-            onSuccess: () => {
-              setActiveFlag(null);
-            },
-          }
-        );
-      }
-    } else {
-      if (isAccountFields) {
-        accountCreateInteraction.mutate(
-          {
-            account_rid: payload.account_rid,
-            status_rid: accountStatusOptions.data?.data.status.find(
-              (option) => option.status.toLowerCase() === 'active'
+    if (isAccountFields) {
+      updateInteraction.mutate(
+        {
+          account_rid: payload.account_rid,
+          status_rid: payload.status_rid,
+          questions: payload.questions,
+          interaction_rid: payload.interaction_rid,
+          interaction_level_rid:
+            getInteractionLevel.data?.data.interactionLevel.find(
+              (it) =>
+                it.interaction_level_name.toLocaleLowerCase() === 'account'
             )?.rid,
-            questions: payload.questions,
-          },
-          {
-            onError: () => {
-              setActiveFlag(null);
-            },
-            onSuccess: () => {
-              setActiveFlag(null);
-            },
-          }
-        );
-      } else {
-        createInteraction.mutate(payload, {
+          fiscal_year: formData.fiscalYear,
+          trigger_send: !!trigger_send,
+          ...(recipiants?.email && { email_info: recipiants }),
+        },
+        {
           onError: () => {
-            setActiveFlag(null);
+            setSaveLoading(false);
           },
           onSuccess: () => {
-            setActiveFlag(null);
+            setSaveLoading(false);
           },
-        });
-      }
+        }
+      );
+    } else {
+      updateInteraction.mutate(
+        {
+          account_rid: payload.account_rid,
+          project_rid: payload.project_rid,
+          project_fiscal_rid: payload.project_fiscal_rid,
+          status_rid: payload.status_rid,
+          questions: payload.questions,
+          interaction_rid: payload.interaction_rid,
+          interaction_level_rid:
+            getInteractionLevel.data?.data.interactionLevel.find(
+              (it) =>
+                it.interaction_level_name.toLocaleLowerCase() === 'project'
+            )?.rid,
+          trigger_send: !!trigger_send,
+          ...(recipiants?.email && { email_info: recipiants }),
+        },
+        {
+          onError: () => {
+            setSaveLoading(false);
+          },
+          onSuccess: () => {
+            setSaveLoading(false);
+          },
+        }
+      );
     }
   };
+  const createInteractionComplete = (
+    trigger_send?: boolean,
+    recipiants?: IRecipient
+  ) => {
+    const draftStatus = statusOptions.find(
+      (option) => option.label.toLowerCase() === StatusTypeEnum.draft
+    );
+    const payload = transFormPayload(
+      accountId,
+      formData,
+      isEditView,
+      draftStatus?.value || '',
+      interactionData,
+      selectedProject
+    );
+    createInteraction.mutate(
+      {
+        ...payload,
+        trigger_send: !!trigger_send,
+        ...(recipiants?.email && { email_info: recipiants }),
+      },
+      {
+        onError: () => {
+          setSaveLoading(false);
+        },
+        onSuccess: () => {
+          setSaveLoading(false);
+        },
+      }
+    );
+  };
+  const handleAccountChange = (accountRid: string) => {
+    // Find the selected account
+    let selectedAccountName = '';
+    accountsData.forEach((group) => {
+      const account = group.options.find((acc) => acc.value === accountRid);
+      if (account) {
+        selectedAccountName = account.label;
+      }
+    });
 
-  const questionTableColumns = getQuestionTableColumns(isEditView);
-
+    setCurrentAccountId(accountRid);
+    setFormData((prev) => ({
+      ...prev,
+      accountName: selectedAccountName,
+      projectCode: '',
+      projectName: '',
+      fiscalYear: 0,
+    }));
+    setErrors((prev) => ({
+      ...prev,
+      accountName: undefined,
+      projectCode: undefined,
+      projectName: undefined,
+      fiscalYear: undefined,
+    }));
+  };
   const goBack = () => {
     window.history.back();
   };
-
-  const formLoading =
-    isLoading ||
-    accountInteraction.isLoading ||
-    (projectsLoading && !isGlobalInteraction) ||
-    interactionStatus.isLoading;
 
   return (
     <div>
@@ -667,18 +799,104 @@ const InteractionForm = () => {
           </div>
         </div>
         <div className='flex gap-3'>
+          <Autocomplete
+            disableClearable
+            forcePopupIcon
+            popupIcon={<ArrowDropDownIcon />}
+            slotProps={{ paper: { style: { fontSize: '0.7rem' } } }}
+            options={interactionTemplate}
+            size='small'
+            sx={{
+              height: '24px',
+              fontSize: '13px',
+              width: '160px',
+              '&.MuiAutocomplete-root .MuiOutlinedInput-root': {
+                height: '24px',
+                background: 'transparent',
+              },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                border: '2px solid #60A5FA',
+              },
+              '& .MuiOutlinedInput-root': {
+                '&.Mui-focused': {
+                  boxShadow: 'none',
+                },
+              },
+              '.MuiSelect-select': {
+                padding: '6px 6px',
+                color: 'black',
+              },
+              '&.Mui-disabled': {
+                backgroundColor: '#f3f4f6',
+              },
+              '& .MuiOutlinedInput-notchedOutline': {
+                border: '1px solid #CBD6E2',
+                borderRadius: '2px',
+              },
+              '&:hover .MuiOutlinedInput-notchedOutline': {
+                border: '1px solid #CBD6E2',
+              },
+              '& svg': {
+                color: '#7D98B6',
+              },
+              '& .MuiInputBase-input::placeholder': {
+                color: '#7D98B6',
+                opacity: 1,
+              },
+            }}
+            onChange={(_e, newValue) => {
+              if (isEditView || currentTemplate.value) {
+                //If template already choose
+                setConfirmationState({
+                  isOpen: true,
+                  message:
+                    'The current questions will be deleted, are you sure you want to continue?',
+                  onConfirm: () => {
+                    setCurrentTemplate(newValue);
+                  },
+                  onCancel: () => {
+                    setCurrentTemplate(currentTemplate);
+                  },
+                });
+              } else {
+                setCurrentTemplate(newValue);
+              }
+            }}
+            value={currentTemplate}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                variant='outlined'
+                size='small'
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 0,
+                    fontSize: '0.8rem',
+                  },
+                  '& .MuiInputBase-input::placeholder': {
+                    color: '#7D98B6',
+                    opacity: 1,
+                  },
+                }}
+                placeholder='Choose Template'
+              />
+            )}
+          />
+          <TextButton
+            label='Save and Send'
+            disabled={saveLoading}
+            onClick={saveAndSend}
+            sx={{
+              width: '120px',
+              fontSize: '13px',
+              fontWeight: 400,
+            }}
+          />
           <TextButton
             label='Save'
-            loading={
-              activeFlag === StatusActionEnum.Draft &&
-              (createInteraction.isPending ||
-                accountCreateInteraction.isPending ||
-                updateInteraction.isPending)
-            }
-            disabled={
-              activeFlag !== null && activeFlag !== StatusActionEnum.Draft
-            }
-            onClick={() => handleSubmit(StatusActionEnum.Draft)}
+            loading={saveLoading}
+            disabled={saveLoading}
+            onClick={handleSubmit}
             sx={{
               width: '64px',
               minWidth: '64px',
@@ -689,11 +907,7 @@ const InteractionForm = () => {
           <TextButton
             label='Cancel'
             onClick={goBack}
-            disabled={
-              createInteraction.isPending ||
-              accountCreateInteraction.isPending ||
-              updateInteraction.isPending
-            }
+            disabled={saveLoading}
             sx={{
               width: '75px',
               minWidth: '75px',
@@ -757,6 +971,43 @@ const InteractionForm = () => {
                     disabled={true}
                     value={formData.accountName}
                   />
+                </div>
+              )}
+              {isAccountInteractionLevel && isAccountFields && (
+                <div>
+                  <label
+                    className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
+                    htmlFor='account_name'
+                  >
+                    Fiscal Year
+                    <span className='text-red-500 text-[16px]'>*</span>
+                  </label>
+                  <FormFiscalYearDropdown
+                    fiscalYear={String(formData.fiscalYear)}
+                    fiscalYearsOptions={getFiscalYears(
+                      DATE_CONFIG.COST_FISCAL_YEARS_RANGE
+                    )}
+                    isError={!!errors.fiscalYear}
+                    onChange={(e) => {
+                      setFormData((prev) => {
+                        return {
+                          ...prev,
+                          fiscalYear: Number(e.target.value),
+                        };
+                      });
+                      setErrors((prev) => {
+                        return {
+                          ...prev,
+                          fiscalYear: '',
+                        };
+                      });
+                    }}
+                  />
+                  {errors?.fiscalYear && (
+                    <span className='text-[12px] text-red-400 col-span-full'>
+                      {errors.fiscalYear}
+                    </span>
+                  )}
                 </div>
               )}
             </div>
@@ -1310,6 +1561,43 @@ const InteractionForm = () => {
           </form>
         )}
       </div>
+      <ConfirmationPopup
+        isOpen={confirmationState.isOpen}
+        message={confirmationState.message}
+        onConfirm={() => {
+          confirmationState.onConfirm();
+          setConfirmationState((prev) => ({
+            ...prev,
+            isOpen: false,
+            message: '',
+          }));
+        }}
+        onCancel={() => {
+          confirmationState.onCancel();
+          setConfirmationState((prev) => ({
+            ...prev,
+            isOpen: false,
+            message: '',
+          }));
+        }}
+      />
+      <PreviewDialog
+        previewDialog={previewDialog}
+        formData={formData}
+        createLoading={
+          createInteraction.isPending || updateInteraction.isPending
+        }
+        recipiants={recipiants}
+        setPreviewDialog={setPreviewDialog}
+        isAccountLevel={isAccountInteractionLevel}
+        saveAndSendComplete={(recipiants) => {
+          if (isEditView && interactionData) {
+            updateInteractionComplete(true, recipiants);
+          } else {
+            createInteractionComplete(true, recipiants);
+          }
+        }}
+      />
     </div>
   );
 };

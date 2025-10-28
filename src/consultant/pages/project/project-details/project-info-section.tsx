@@ -20,6 +20,7 @@ interface ProjectInfoItem {
   hide?: boolean;
   editable?: boolean;
   onSave?: (value: string) => void;
+  showHyphenForEmptyValue?: boolean;
 }
 
 interface InfoSectionColumn {
@@ -149,7 +150,8 @@ export const ProjectInfoSection: React.FC<ProjectInfoSectionProps> = ({
               style: {
                 fontSize: '12px',
                 color: '#425A76',
-                width: isSaving ? '90px' : '100px',
+                textAlign: 'left',
+                paddingLeft: '4px',
               },
               type: 'number',
               step: '0.1',
@@ -162,13 +164,20 @@ export const ProjectInfoSection: React.FC<ProjectInfoSectionProps> = ({
               ),
             }}
             sx={{
+              width: '100%',
+              minWidth: '80px',
+              maxWidth: '120px',
               '& .MuiInputBase-input': {
-                padding: '0px 8px',
+                padding: '2px 8px',
+                textAlign: 'left',
+                overflow: 'visible',
               },
               '& .MuiOutlinedInput-root': {
                 height: '24px',
                 backgroundColor: 'white',
                 borderRadius: '2px',
+                display: 'flex',
+                alignItems: 'center',
                 '& fieldset': {
                   borderColor: '#CBD6E2',
                 },
@@ -329,7 +338,9 @@ export const ProjectInfoSection: React.FC<ProjectInfoSectionProps> = ({
                           text={String(item.value)}
                           className={`font-medium text-[14px] text-[#2D3E4F] ${item.className}`}
                         >
-                          {renderValue(item, item.value) || '-'}
+                          {item.showHyphenForEmptyValue === false
+                            ? renderValue(item, item.value)
+                            : renderValue(item, item.value) || '-'}
                         </TruncateWithTooltip>
                       )}
                     </Grid>

@@ -58,6 +58,7 @@ export interface HeaderData {
   accountId: string;
   projectCode: string;
   statusName: string;
+  fiscal_year: string;
 }
 interface InteractionQuesProps {
   questions: InteractionQuestion[];
@@ -73,6 +74,7 @@ interface InteractionQuesProps {
   };
   isEditEnable?: boolean;
   headerData?: HeaderData;
+  isAccountlevel?: boolean
 }
 enum FlagTypeEnum {
   draft = 'draft',
@@ -97,6 +99,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   parseToken,
   // isEditEnable,
   headerData,
+  isAccountlevel
 }) => {
   const { successToast, errorToast } = useToast();
   const [isEditing, setIsEditing] = useState<boolean>(true);
@@ -152,6 +155,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   const [headerIntertaction, setHeaderInteraction] = useState<DisplayColumn[]>(
     []
   );
+
   const [disableAllAction, setDisableAllAction] = useState<boolean>(false);
 
   useEffect(() => {
@@ -176,7 +180,7 @@ const InteractionQuestions: React.FC<InteractionQuesProps> = ({
   }, [questions, isEditing]);
   useEffect(() => {
     setHeaderInteraction(
-      headerData ? transformInteractionData(headerData) : []
+      headerData ? transformInteractionData(headerData, isAccountlevel) : []
     );
     setIsEditing(
       headerData?.statusName?.toLowerCase() === StatusTypeEnum.response_received

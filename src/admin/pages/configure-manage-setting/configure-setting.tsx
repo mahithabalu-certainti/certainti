@@ -5,7 +5,7 @@ import { ConfigureSettingsFormFields } from './helper';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../store/store';
-import { AllPermissions, OnChange } from '../../../common-service';
+import { AllPermissions, Layout, OnChange } from '../../../common-service';
 import {
   useManageSettingDetails,
   useUpdateManageSettings,
@@ -80,6 +80,7 @@ const ConfigureSetting = () => {
       !!data?.data.settings.client_id;
 
     setIdRequried(hasAnyIdValue);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formValues]);
 
   const handleFormSubmit = (values: object) => {
@@ -114,13 +115,10 @@ const ConfigureSetting = () => {
     }
   };
 
-  if (isLoading) {
-    return <SkeletonForm />;
-  }
   return (
     <>
       <div className='flex flex-col w-full'>
-        <div className='flex items-center justify-between w-full h-[55px] min-h-[50px] border-b border-[#CBD6E2] px-4'>
+        <div className='flex items-center justify-between w-full h-[55px] min-h-[50px] border-b border-[#CBD6E2] px-10'>
           <div className='flex h-[33px]'>
             <div className='flex items-center justify-center'>
               <ManageConfigSettingIcon
@@ -153,41 +151,47 @@ const ConfigureSetting = () => {
                 maxWidth: '59px',
               }}
               loading={updateManageSettings.isPending}
+              disabled={isLoading}
             />
           </div>
         </div>
       </div>
-      <div className='flex flex-col gap-0 border border-[#CBD6E2] rounded-[2px] pt-5'>
-        <Box
-          className='bg-white'
-          sx={{
-            // minHeight: '560px',
-            // maxHeight: '560px',
-            overflowY: 'auto',
-            '& .grid': {
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr) !important',
-              gap: '1rem',
-            },
-            '& .grid > div': {
-              gridColumn: 'span 1 !important',
-            },
-          }}
-        >
-          <FormBuilder
-            key={JSON.stringify(data?.data.settings)}
-            data={ConfigureSettingsFormFields(
-              permissionMap,
-              emailRequried,
-              idRequried
-            )}
-            formRef={formRef}
-            outData={handleFormSubmit}
-            values={formValues}
-            onChange={onChangeField}
-          />
-        </Box>
-      </div>
+      {isLoading ? (
+        <SkeletonForm />
+      ) : (
+        <div className='flex flex-col gap-0 border-b border-[#CBD6E2] rounded-[2px] py-5'>
+          <Box
+            className='bg-white'
+            sx={{
+              // minHeight: '560px',
+              // maxHeight: '560px',
+              overflowY: 'auto',
+              '& .grid': {
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr) !important',
+                gap: '1rem',
+              },
+              '& .grid > div': {
+                gridColumn: 'span 1 !important',
+              },
+            }}
+          >
+            <FormBuilder
+              key={JSON.stringify(data?.data.settings)}
+              data={ConfigureSettingsFormFields(
+                permissionMap,
+                emailRequried,
+                idRequried
+              )}
+              formRef={formRef}
+              outData={handleFormSubmit}
+              values={formValues}
+              onChange={onChangeField}
+              layout={Layout.TYPE_1}
+            />
+          </Box>
+        </div>
+      )}
     </>
   );
 };

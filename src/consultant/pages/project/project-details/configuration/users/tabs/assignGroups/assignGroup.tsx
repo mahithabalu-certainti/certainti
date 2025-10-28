@@ -31,6 +31,7 @@ interface AssignGroupsProps {
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
   >;
+  searchValue?: string;
 }
 
 const AssignGroups: React.FC<AssignGroupsProps> = ({
@@ -39,6 +40,7 @@ const AssignGroups: React.FC<AssignGroupsProps> = ({
   setCount,
   columnAnchorEl,
   setColumnAnchorEl,
+  searchValue,
 }) => {
   const { projectid } = useParams();
   const [searchParams] = useSearchParams();
@@ -51,6 +53,7 @@ const AssignGroups: React.FC<AssignGroupsProps> = ({
     page: filterParams.page + 1,
     limit: 100,
     filters: filterParams.filters,
+    search: searchValue,
   });
   const [assignGroupList, setAssignGroupList] = useState<
     ConfigAssignGroupsList[]
@@ -101,8 +104,9 @@ const AssignGroups: React.FC<AssignGroupsProps> = ({
       ...prev,
       page: 1,
       filters: filterParams.filters,
+      search: searchValue,
     }));
-  }, [filterParams.filters]);
+  }, [filterParams.filters, searchValue]);
 
   useEffect(() => {
     if (data?.groups?.length) {
