@@ -6,7 +6,7 @@ import {
   logMessage,
   successLog,
 } from "../utils/helpers";
-import { HttpStatus } from "../utils/constants";
+import { HttpStatus, STATUS_MESSAGE } from "../utils/constants";
 import configurations from "../config/config";
 
 const services = configurations.getInstance().getServices();
@@ -25,7 +25,7 @@ const templateService = services.templateServices;
  * @param res - Express Response object used to send back responses
  * @returns Promise resolving to void
  */
-async function uploadTemplate(req: Request, res: Response): Promise<void> {
+async function uploadTemplate(req: Request, res: Response): Promise<any> {
   const methodName = "Upload Template";
   try {
     const userId = req.headers["x-user-id"] as string;
@@ -54,8 +54,12 @@ async function uploadTemplate(req: Request, res: Response): Promise<void> {
 
     if (uploadTemplate.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
-      handleSuccessResponse(res, uploadTemplate.data);
-      return;
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.templateUploadedSuccess,
+        data : uploadTemplate.data
+      })
     } else {
       errorLog(methodName, uploadTemplate.errorMessage);
       handleErrorResponse(
