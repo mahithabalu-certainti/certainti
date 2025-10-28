@@ -4,7 +4,7 @@ import { useLocation, useSearchParams } from 'react-router-dom';
 // import { RootState } from '../../../../store/store';
 // import { useSelector } from 'react-redux';
 import { ActionsDropdownItem } from '../../../../common-utils';
-import { MenuItem } from '../../../types';
+import { ExportType, MenuItem, NotesListURLParams } from '../../../types';
 import { AllMenus, AllModules } from '../../../../common-service';
 import { InfoSection, PageHeader, SideMenuPanel } from '../../../../components';
 import {
@@ -25,6 +25,7 @@ import {
 import { WorkBreakDown } from './work-breakdown';
 import { DisplayColumn } from '../../account-details/utils';
 import { CaseTeam } from './case-team';
+import { CaseNotes } from './case-notes';
 
 export const CaseDetails = () => {
   const [searchParams] = useSearchParams();
@@ -96,7 +97,17 @@ export const CaseDetails = () => {
   //       fiscalYear: 0,
   //     });
 
-  //   const [exportType, setExportType] = useState<ExportType>('resource');
+  const [exportType, setExportType] = useState<ExportType>('resource');
+
+  const [notesParams, setNotesParams] = useState<NotesListURLParams>({
+    page: 1,
+    limit: 100,
+    sortBy: 'r_number',
+    sortOrder: 'ASC',
+    filters: {},
+  });
+
+  console.log('notesParams', notesParams, 'exportType', exportType);
 
   //   const onRefreshClick = () => {
   //     setRefreshAccountDetails(Date.now());
@@ -164,6 +175,16 @@ export const CaseDetails = () => {
           <div className='w-full pr-4 pl-2 py-2'>
             <CaseTeam />
           </div>
+        );
+      case 'notes':
+        return (
+          <CaseNotes
+            accountInActive={false}
+            setExportType={setExportType}
+            setNotesParams={setNotesParams}
+            projectFiscalYear={2025}
+            projectCode={'CM-23232'}
+          />
         );
       default:
         return (
