@@ -1289,7 +1289,7 @@ export class NotesService {
           });
         }
         // 🔷 Sort with custom field sorting logic
-        const validSortFields = ['document_name', 'title', 'r_number', 'format', 'attachment_level', 'size_in_mb', 'attached_to', 'descriptions', 'created_by_name', 'created_datetime', 'fiscal_year', 'modified_by_name', 'modified_datetime'];
+        const validSortFields = ['document_name', 'title', 'r_number', 'format', 'attachment_level', 'size_in_mb', 'attached_to', 'descriptions', 'created_by_name', 'created_datetime', 'fiscal_year', 'modified_by_name', 'modified_datetime', 'notes_owner_name'];
         const finalSortBy = validSortFields.includes(sortBy) ? sortBy : 'created_datetime';
         const finalSortOrder = ['ASC', 'DESC'].includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
     
@@ -1581,7 +1581,7 @@ export class NotesService {
         }
     
         // 🔷 Sort with custom field sorting logic
-        const validSortFields = ['document_name', 'title', 'notes_owner', 'r_number', 'format', 'attachment_level', 'size_in_mb', 'attached_to', 'descriptions', 'created_by_name', 'created_datetime', 'fiscal_year', 'modified_by_name', 'modified_datetime'];
+        const validSortFields = ['document_name', 'title', 'notes_owner', 'r_number', 'format', 'attachment_level', 'size_in_mb', 'attached_to', 'descriptions', 'created_by_name', 'created_datetime', 'fiscal_year', 'modified_by_name', 'modified_datetime', 'notes_owner_name'];
         const finalSortBy = validSortFields.includes(sortBy) ? sortBy : 'created_datetime';
         const finalSortOrder = ['ASC', 'DESC'].includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
     
