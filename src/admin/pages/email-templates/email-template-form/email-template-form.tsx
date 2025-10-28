@@ -189,7 +189,7 @@ const EmailTemplateForm: React.FC = () => {
           />
         </div>
       </div>
-      <div className={`${isEditView ? 'pb-10' : 'pb-4'}`}>
+      <div className={`${isEditView ? 'pb-6' : 'pb-4'}`}>
         {formLoading ? (
           <SkeletonForm />
         ) : (
@@ -380,7 +380,7 @@ const EmailTemplateForm: React.FC = () => {
             </div>
 
             {/* Email Body */}
-            <div className='grid grid-cols-1 px-10 pt-4'>
+            <div className='email-template-editor grid grid-cols-1 px-10 pt-4'>
               <label
                 htmlFor='email_body'
                 className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'
