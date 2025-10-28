@@ -2,12 +2,8 @@ import { useSearchParams } from 'react-router-dom';
 import { ComingSoon, DetailsIcon, ResourcesIcon } from '../../../../../assets';
 import { Settings } from './settings';
 import { SectionTabPanel } from '../../../../../components';
-import React, { useRef, useState } from 'react';
-import {
-  AllMenus,
-  AllModules,
-  AllPermissions,
-} from '../../../../../common-service';
+import { useRef, useState } from 'react';
+import { AllModules, AllPermissions } from '../../../../../common-service';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import { Users } from './users';
 import SectionHeader from '../../../../../components/details-section/section-header';
@@ -49,7 +45,7 @@ const Configuration: React.FC = () => {
   const [resetSearch, setResetSearch] = useState(false);
 
   const [columnAnchorEl, setColumnAnchorEl] =
-    React.useState<HTMLButtonElement | null>(null);
+    useState<HTMLButtonElement | null>(null);
 
   const list = searchParams.get('subMenu');
   const tabParam = searchParams.get('tab');
@@ -72,11 +68,7 @@ const Configuration: React.FC = () => {
     permission,
     AllPermissions.MANAGE_ACCOUNT_ACCESS_VIEW_EDIT
   );
-  const projectSettingsEnable = checkPermission(
-    modules,
-    AllMenus.PROJECT_SETTINGS
-  );
-  console.log('projectSettingsEnable', projectSettingsEnable);
+
   const handleSubmit = () => {
     formRef.current?.requestSubmit();
   };

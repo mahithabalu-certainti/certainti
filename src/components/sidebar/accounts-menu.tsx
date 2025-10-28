@@ -1,7 +1,6 @@
 import {
   AccountsIcon,
   AttachmentIcon,
-  CaseIcon,
   DashboardIcon,
   HelpIcon,
   NotesIcon,
@@ -57,14 +56,14 @@ export const accountNavItems: INavItem[] = [
     type: 'link',
     matchLink: '',
   },
-  {
-    id: MenuOption.CASES,
-    icon: CaseIcon,
-    name: 'Cases',
-    link: NOT_FOUND,
-    type: 'link',
-    matchLink: '',
-  },
+  // {
+  //   id: MenuOption.CASES,
+  //   icon: CaseIcon,
+  //   name: 'Cases',
+  //   link: CASE,
+  //   type: 'link',
+  //   matchLink: CASE,
+  // },
   // Global Interactions removed as of now will be added in future if required
   // {
   //   id: MenuOption.INTERACTIONS,

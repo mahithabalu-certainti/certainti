@@ -47,6 +47,8 @@ import {
   RESOURCESKILL_CREATE,
   RESOURCESKILL_EDIT,
   USER_EXTENDED_PERMISSION,
+  CASE,
+  CASE_DETAILS,
   INTERACTIONS_CREATE,
   INTERACTIONS_EDIT,
   INTERACTIONS,
@@ -67,6 +69,8 @@ import {
   EMAIL_TEMPLATES,
   EMAIL_TEMPLATES_CREATE,
   EMAIL_TEMPLATES_EDIT,
+  CASE_CREATE,
+  CASE_EDIT,
 } from './routes';
 import { RootState } from './store/store';
 import ProjectTaskForm from './consultant/pages/project/project-details/project-task/form/project-task-form';
@@ -74,6 +78,9 @@ import ProjectTaskForm from './consultant/pages/project/project-details/project-
 import ProjectResourceForm from './consultant/pages/project/project-details/project-resources/project-resource-form/project-resource-form';
 import { Attachments } from './consultant/pages';
 import ImportTemplatesList from './admin/pages/import-templates/import-templates';
+import Case from './consultant/pages/case/case';
+import { CreateCases } from './consultant/pages/case/case-form';
+import { CaseDetails } from './consultant/pages/case/case-details';
 
 // Lazy load all page components
 const ExtendedPermission = lazy(
@@ -247,6 +254,10 @@ export const App: React.FC<IApp> = ({ instance }) => {
                   <Route path={RESOURCESKILL_EDIT} element={<ResourceForm />} />
                   <Route path={RESOURCE} element={<Resource />} />
                   <Route path={PROFILE} element={<Profile />} />
+                  <Route path={CASE} element={<Case />} />
+                  <Route path={CASE_DETAILS} element={<CaseDetails />} />
+                  <Route path={CASE_CREATE} element={<CreateCases />} />
+                  <Route path={CASE_EDIT} element={<CreateCases />} />
                   <Route
                     path={PROJECT_TASK_CREATE}
                     element={<ProjectTaskForm />}

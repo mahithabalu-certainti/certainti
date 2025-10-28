@@ -28,7 +28,6 @@ import { useAccountDetail } from '../../services/account-details/account-details
 import {
   Activities,
   Attachments,
-  Cases,
   Checklist,
   Details,
   FinancialSummary,
@@ -38,6 +37,7 @@ import {
   Resources,
   Timesheet,
   Configuration,
+  Cases,
   Interactions,
 } from '../account-details-sidebar';
 import {
