@@ -40,8 +40,9 @@ export const getInteractionTemplateColumns = (
         </Tooltip>
         <Tooltip title={'Download'} arrow placement='top'>
           <button
-            className='flex border border-[#CBD6E2] rounded-[2px] w-[24px] h-[24px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer mx-auto'
+            className='flex border border-[#CBD6E2] rounded-[2px] w-[24px] h-[24px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer mx-auto disabled:opacity-50 disabled:cursor-not-allowed'
             onClick={() => handleDownload(row)}
+            disabled={!row.blob_url}
           >
             <DownloadIcon alt='download-icon' className='h-4' />
           </button>
