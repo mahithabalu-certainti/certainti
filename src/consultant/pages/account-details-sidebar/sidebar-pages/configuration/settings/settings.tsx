@@ -136,6 +136,7 @@ const Settings: React.FC<SettingsProps> = ({
     const payload = {
       account_rid: accountDetails?.account_rid ?? accountid ?? '',
       flag: 'account',
+      level: isParentAccount ? 'parent' : 'child',
       fiscal_start_date: formData.fiscal_start_date,
       fiscal_end_date: formData.fiscal_end_date,
       max_ai_interactions: isParentAccount
