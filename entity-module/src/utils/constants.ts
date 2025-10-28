@@ -860,7 +860,6 @@ export const rawQueries = {
           const encryptedSecretKey = await encryptClientSecret(
             data.client_secret
           );
-        console.log("encryptedSecretKey ======> ", encryptedSecretKey)
           let query = `
         UPDATE ${schema}.${t}
         SET
