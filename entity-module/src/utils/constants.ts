@@ -695,7 +695,7 @@ export const rawQueries = {
   `;
   },
   fetchTemplate() {
-    return `SELECT * FROM ${MAIN_SCHEMA_NAME}.templates`;
+    return `SELECT * FROM ${MAIN_SCHEMA_NAME}.templates order by template_name ASC`;
   },
   fetchTemplateById(templateId: string) {
     return `SELECT * FROM ${MAIN_SCHEMA_NAME}.templates WHERE rid = '${templateId}'`;
@@ -850,15 +850,16 @@ export const rawQueries = {
       ${setValues}
       ${whereParams}
       `;
-      if (
-        data.flag == UPDATE_FLAG.account &&
-        t == "account_details" &&
-        isParentAccount
-      ) {
-        const encryptedSecretKey = await encryptClientSecret(
-          data.client_secret
-        );
-        let query = `
+      if (data?.level == "parent") {
+        if (
+          data.flag == UPDATE_FLAG.account &&
+          t == "account_details" &&
+          isParentAccount
+        ) {
+          const encryptedSecretKey = await encryptClientSecret(
+            data.client_secret
+          );
+          let query = `
         UPDATE ${schema}.${t}
         SET
         support_email = '${data.support_email}',
@@ -869,13 +870,15 @@ export const rawQueries = {
         WHERE account_rid = '${parentAccountID}'
         `;
 
-        const subscriptionQuery = `
+          const subscriptionQuery = `
           UPDATE ${MAIN_SCHEMA_NAME}.account set subscription_id = '${subscriptionId}'
           WHERE rid = '${parentAccountID}'
         `;
-        await dbConnection.query(query);
-        await mainDb.query(subscriptionQuery);
+          await dbConnection.query(query);
+          await mainDb.query(subscriptionQuery);
+        }
       }
+
       await dbConnection.query(query);
     }
     return HttpStatus.SUCCESS_MESSAGE;
