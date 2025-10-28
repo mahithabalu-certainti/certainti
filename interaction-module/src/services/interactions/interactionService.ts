@@ -865,7 +865,7 @@ export class InteractionService {
                 excelAttachment,
                 interactionLink,
                 senderEmailInfo!,
-                interactionData.interaction_rid,
+                fetchInteractionDetails.r_number,
                 false,
                 interactionLevel[0][0].interaction_level_name,
                 true
