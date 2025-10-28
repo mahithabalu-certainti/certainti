@@ -71,32 +71,16 @@ export const getProjectResourcesColumns = (
       </span>
     ),
   },
-  // {
-  //   id: 'resource_name',
-  //   editId: 'resource_name',
-  //   label: 'Resource Name',
-  //   sortable: true,
-  //   sortId: 'resource_name',
-  //   width: '180px',
-  //   editable:
-  //     permissionMap?.['resource_name']?.read &&
-  //     permissionMap?.['resource_name']?.edit,
-  //   hide:
-  //     !permissionMap?.['resource_name']?.read &&
-  //     !permissionMap?.['resource_name']?.edit,
-  //   field: {
-  //     type: 'text',
-  //     required: false,
-  //     placeholder: 'Enter Resource Name',
-  //     validation: [
-  //       {
-  //         regex: PROJECT_RESOURCE_REGEX.RESOURCE_NAME,
-  //         errorMessage:
-  //           "Please enter 2–64 characters using only letters, spaces, apostrophes ('), or hyphens (-). Numbers, symbols, or consecutive special characters are not allowed.",
-  //       },
-  //     ],
-  //   },
-  // },
+  {
+    id: 'resource_name',
+    label: 'Resource Name',
+    sortable: true,
+    sortId: 'resource_name',
+    width: '180px',
+    hide:
+      !permissionMap?.['resource_name']?.read &&
+      !permissionMap?.['resource_name']?.edit,
+  },
   {
     id: 'country_name',
     label: 'Resource Country',
@@ -246,6 +230,7 @@ export const getProjectResourcesColumns = (
     field: {
       type: 'text',
       required: false,
+      formatCostNumber: true,
       placeholder: 'Enter an effort',
       validation: [
         {
@@ -257,51 +242,36 @@ export const getProjectResourcesColumns = (
     },
   },
   {
-    id: 'total_cost_pro_res',
-    label: 'Cost',
+    id: 'net_total_cost_pro_res',
+    label: 'Net Resource Cost',
     sortable: true,
-    sortId: 'total_cost_pro_res',
-    width: '150px',
+    sortId: 'net_total_cost_pro_res',
+    width: '160px',
     sx: {
       textAlign: 'right',
     },
     render: (row: ProjectResourcesListType) =>
-      row.total_cost_pro_res
-        ? costDisplay(row.total_cost_pro_res, row?.currency_symbol)
+      row.net_total_cost_pro_res
+        ? costDisplay(row.net_total_cost_pro_res, row?.currency_symbol)
         : '-',
 
-    editable:
-      permissionMap?.['total_cost_pro_res']?.read &&
-      permissionMap?.['total_cost_pro_res']?.edit &&
-      !accountOrProjectInActive,
     hide:
-      !permissionMap?.['total_cost_pro_res']?.read &&
-      !permissionMap?.['total_cost_pro_res']?.edit,
-    field: {
-      type: 'text',
-      required: false,
-      placeholder: 'Enter Cost',
-      validation: [
-        {
-          regex: PROJECT_RESOURCE_REGEX.COST_REGEX,
-          errorMessage: 'Cost must be a 18-digit number with up to 2 decimals',
-        },
-      ],
-    },
+      !permissionMap?.['net_total_cost_pro_res']?.read &&
+      !permissionMap?.['net_total_cost_pro_res']?.edit,
   },
   {
     id: 'qre_percent',
-    label: 'QRE %',
+    label: 'QRE Percent Final',
     sortable: true,
-    sortId: 'qre_percent',
+    sortId: 'rd_percent_final',
     width: '150px',
     hide:
-      !permissionMap?.['qre_percent']?.read &&
-      !permissionMap?.['qre_percent']?.edit,
+      !permissionMap?.['rd_percent_final']?.read &&
+      !permissionMap?.['rd_percent_final']?.edit,
   },
   {
     id: 'qre_final',
-    label: 'QRE',
+    label: 'QRE Final',
     sortable: true,
     sortId: 'qre_final',
     width: '150px',

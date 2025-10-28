@@ -41,6 +41,8 @@ const Configuration: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [reFetchData, setReFetchData] = useState<number>(Date.now());
   const [count, setCount] = useState<number>(0);
+  const [searchText, setSearchText] = useState('');
+  const [resetSearch, setResetSearch] = useState(false);
 
   const [columnAnchorEl, setColumnAnchorEl] =
     useState<HTMLButtonElement | null>(null);
@@ -75,6 +77,13 @@ const Configuration: React.FC = () => {
     setCount(0);
     setAppliedFilters({});
     clearFilters(`project-settings-${tabParam}`);
+    // Reset search when tab changes
+    setSearchText('');
+    setResetSearch(true);
+  };
+
+  const handleSearchReset = () => {
+    setResetSearch(false);
   };
 
   const renderContent = () => {
@@ -93,6 +102,7 @@ const Configuration: React.FC = () => {
             }}
             setColumnAnchorEl={setColumnAnchorEl}
             columnAnchorEl={columnAnchorEl}
+            searchValue={searchText}
           />
         );
       case 'settings':
@@ -186,6 +196,12 @@ const Configuration: React.FC = () => {
         showRefresh={list !== 'settings'}
         onRefreshClick={onRefreshClick}
         hideTabPanel={hideSection}
+        showSearch={list === 'users' ? true : false}
+        searchDisabled={false}
+        searchPlaceholder='Search'
+        onSearch={(text) => setSearchText(text)}
+        searchReset={resetSearch}
+        onSearchReset={handleSearchReset}
       />
       <SectionHeader
         title={list ? list.charAt(0).toUpperCase() + list.slice(1) : ''}

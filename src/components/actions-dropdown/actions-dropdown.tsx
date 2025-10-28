@@ -6,6 +6,7 @@ import { ActionsDropdownItem } from '../../common-utils';
 
 interface ActionsDropdownProps {
   actions: ActionsDropdownItem[];
+  titleName?: string;
   sx?: SxProps<Theme>;
 }
 
@@ -19,16 +20,17 @@ const StyledButton = styled(Button)(() => {
     textTransform: 'none',
     fontSize: '13px',
     fontWeight: 400,
-    width: '81px',
-    minWidth: '81px',
-    maxWidth: '81px',
-    padding: '0px',
+    width: 'auto',
+    minWidth: 'auto',
+    maxWidth: 'auto',
+    padding: '10px 5px',
     borderRadius: '2px',
   };
 });
 
 const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
   actions,
+  titleName = 'Actions',
   ...rest
 }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -65,9 +67,18 @@ const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
           />
         }
       >
-        Actions
+        {titleName}
       </StyledButton>
-      <Menu anchorEl={anchorEl} open={open} onClose={handleClose}>
+      <Menu
+        anchorEl={anchorEl}
+        open={open}
+        onClose={handleClose}
+        PaperProps={{
+          sx: {
+            minWidth: anchorEl ? anchorEl.offsetWidth : 'auto',
+          },
+        }}
+      >
         {actions.map((action, index) => {
           if (action.hide) return null;
           return (

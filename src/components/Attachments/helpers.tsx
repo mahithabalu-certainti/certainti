@@ -244,6 +244,19 @@ export const getAttachmentTableColumns = (
       options: fiscalYears,
     },
     render: (row: AttachmentList) => `FY-${row.fiscal_year}`,
+    conditionallyEdit: [
+      {
+        key: 'attachment_level',
+        matchValue: [
+          'account',
+          'project_resource',
+          'project_task',
+          'resource',
+          'resource_cost',
+          'resource_skill',
+        ],
+      },
+    ],
   },
   {
     id: 'document_category',

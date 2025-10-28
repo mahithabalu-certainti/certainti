@@ -89,13 +89,15 @@ export const exportAttachmentsData = async (
   let url = '';
   let filename = '';
 
+  const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
   switch (type) {
     case 'attachments':
-      url = AttachmentExportListURL(params);
+      url = AttachmentExportListURL({ ...params, timezone: systemTimezone });
       filename = `${params.attachmentLevel}_attachments_records.xlsx`;
       break;
     case 'all_attachments':
-      url = AttachmentExportListURL(params);
+      url = AttachmentExportListURL({ ...params, timezone: systemTimezone });
       filename = 'all_attachments_records.xlsx';
       break;
     default:

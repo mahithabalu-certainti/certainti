@@ -2,18 +2,22 @@ import { resourceServiceApi } from '../../../api/api';
 import {
   ProjectResourceCodeResponse,
   ProjectResourceTaskCodeResponse,
+  ProjectResourceTaskTypeResponse,
   PRSkillSubTypeResponse,
   RoleSkillResponse,
 } from '../../types/project-resources';
 import { useQuery } from '@tanstack/react-query';
 
 // Get Project Resource Code Api
-export const useGetProjectResourceCode = (accountId: string) => {
+export const useGetProjectResourceCode = (
+  accountId: string,
+  projectID: string
+) => {
   return useQuery<ProjectResourceCodeResponse, Error>({
     queryKey: ['getProjectResourceCode', accountId],
     queryFn: () => {
       if (!accountId) throw new Error('Missing accountId');
-      return fetchProjectResourceCode(accountId);
+      return fetchProjectResourceCode(accountId, projectID);
     },
     enabled: !!accountId,
     retry: 0,
@@ -31,6 +35,19 @@ export const useGetProjectResourceTaskCode = (payload: {
     queryFn: () => {
       if (!payload.account_rid) throw new Error('Missing accountId');
       return fetchProjectResourceTaskCode(payload);
+    },
+    // enabled: !!payload.account_rid,
+    retry: 0,
+    gcTime: 0, // Never delete from cache
+    refetchOnMount: true, // Don't refetch on component mount
+    refetchOnReconnect: true, // Don't refetch on reconnect
+  });
+};
+export const useGetProjectResourceTaskType = (endPoint: string) => {
+  return useQuery<ProjectResourceTaskTypeResponse, Error>({
+    queryKey: ['getProjectResourceType', endPoint],
+    queryFn: () => {
+      return fetchProjectResourceTaskType(endPoint);
     },
     // enabled: !!payload.account_rid,
     retry: 0,
@@ -63,11 +80,12 @@ export const useGetAppliedProjectResourceCode = (
 };
 
 export const fetchProjectResourceCode = async (
-  accountId: string
+  accountId: string,
+  projectID: string
 ): Promise<ProjectResourceCodeResponse> => {
   try {
     const { data } = await resourceServiceApi.get<ProjectResourceCodeResponse>(
-      getProjectResourceCodeUrl(accountId)
+      getProjectResourceCodeUrl(accountId, projectID)
     );
     return data;
   } catch (error) {
@@ -91,6 +109,20 @@ export const fetchProjectResourceTaskCode = async (payload: {
     throw error;
   }
 };
+export const fetchProjectResourceTaskType = async (
+  endPoint: string
+): Promise<ProjectResourceTaskTypeResponse> => {
+  try {
+    const { data } =
+      await resourceServiceApi.get<ProjectResourceTaskTypeResponse>(
+        getProjectResourceTaskTypeUrl(endPoint)
+      );
+    return data;
+  } catch (error) {
+    console.error('Error fetching resource type:', error);
+    throw error;
+  }
+};
 export const fetchAppliedProjectResourceCode = async (
   accountId: string,
   projectId: string,
@@ -107,11 +139,17 @@ export const fetchAppliedProjectResourceCode = async (
   }
 };
 
-export const getProjectResourceCodeUrl = (accountId: string): string => {
-  return `/api/project_resources/resourcecodes/${accountId}`;
+export const getProjectResourceCodeUrl = (
+  accountId: string,
+  projectID: string
+): string => {
+  return `/api/project_resources/resourcecodes/${accountId}/${projectID}`;
 };
 export const getProjectResourceTaskCodeUrl = (): string => {
   return `/api/project_tasks/resourcecodes/`;
+};
+export const getProjectResourceTaskTypeUrl = (endPoint: string): string => {
+  return `/api/project_tasks/${endPoint}`;
 };
 export const getAppliedProjectResourceCodeUrl = (
   accountId: string,

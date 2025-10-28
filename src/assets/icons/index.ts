@@ -48,6 +48,7 @@ const icons = {
   download: () => import('./download.svg?react'),
   edit: () => import('./edit.svg?react'),
   emailTemplate: () => import('./email-template.svg?react'),
+  templateImport: () => import('./template-import.svg?react'),
   errorInfoIcon: () => import('./error-info-icon.svg?react'),
   eyeIcon: () => import('./eye-icon.svg?react'),
   filter: () => import('./filter.svg?react'),
@@ -120,6 +121,7 @@ const icons = {
   adminSetting: () => import('./admin-setting.svg?react'),
   documentIcon: () => import('./doc-attachments.svg?react'),
   editTextIcon: () => import('./edit-text-icon.svg?react'),
+  gearIcon: () => import('./gear.svg?react'),
   editTaskIcon: () => import('./editTaskIcon.svg?react'),
 };
 
@@ -175,6 +177,7 @@ export const DetailsKeyContactErrorIcon = createLazySvgIcon(
   'detailsKeyContactErrorIcon'
 );
 export const DownloadIcon = createLazySvgIcon('download');
+export const TemplateImportIcon = createLazySvgIcon('templateImport');
 export const EditIcon = createLazySvgIcon('edit');
 export const EmailTemplateIcon = createLazySvgIcon('emailTemplate');
 export const ErrorInfoIcon = createLazySvgIcon('errorInfoIcon');
@@ -248,4 +251,5 @@ export const PdfIcon = createLazySvgIcon('pdfIcon');
 export const AdminSettingIcon = createLazySvgIcon('adminSetting');
 export const DocumentIcon = createLazySvgIcon('documentIcon');
 export const EditTextIcon = createLazySvgIcon('editTextIcon');
+export const GearIcon = createLazySvgIcon('gearIcon');
 export const EditTaskIcon = createLazySvgIcon('editTaskIcon');

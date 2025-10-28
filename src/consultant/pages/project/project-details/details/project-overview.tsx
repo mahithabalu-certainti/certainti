@@ -12,6 +12,7 @@ import {
   costDisplay,
   formatDateToYYYYMMDDWithTime,
   getDateFormat,
+  valueDisplay,
 } from '../../../../../common-utils';
 import DetailsSection from '../../../../../components/details-section/details';
 import KeyContactSection from '../../../../../components/details-section/keyContact';
@@ -198,28 +199,32 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
     {
       key: 'total_fte',
       label: 'Total FTE Count',
-      value: projectDetails?.total_fte,
+      value: valueDisplay(projectDetails?.total_fte),
     },
     {
       key: 'total_subcon',
       label: 'Total Sub Con Count',
-      value: projectDetails?.total_subcon,
+      value: valueDisplay(projectDetails?.total_subcon),
     },
-    { label: '', value: 'empty' },
+    {
+      key: 'total_nonlabor',
+      label: 'Total Non Labor Count',
+      value: valueDisplay(projectDetails?.total_nonlabor_prj),
+    },
     {
       key: 'total_effort_fte',
       label: 'Total FTE Effort',
-      value: projectDetails?.total_effort_fte,
+      value: valueDisplay(projectDetails?.total_effort_fte),
     },
     {
       key: 'total_effort_subcon',
       label: 'Total Sub Con Effort',
-      value: projectDetails?.total_effort_subcon,
+      value: valueDisplay(projectDetails?.total_effort_subcon),
     },
     {
       key: 'total_effort',
       label: 'Total Effort in Hrs',
-      value: projectDetails?.total_effort,
+      value: valueDisplay(projectDetails?.total_effort),
     },
     {
       key: 'total_cost_fte',

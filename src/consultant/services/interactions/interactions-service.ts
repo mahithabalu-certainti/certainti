@@ -9,6 +9,8 @@ import {
   SendInteractionPayload,
   ExportInteractionResponse,
   AccountSendInteractionPayload,
+  InteractionTemplatePayload,
+  InteractionTemplateList,
 } from '../../types';
 import { interactionServiceApi } from '../../../api/api';
 import { CommonApiResponse } from '../../../common-service';
@@ -19,7 +21,9 @@ import {
   getInteractionListUrl,
   getGlobalInteractionListUrl,
   getGlobalInteractionExportUrl,
+  getInteractionListRemainderUrl,
 } from '../urls/interactions-url';
+import { InteractionKeyContacts } from '../../types/interactions';
 
 export const exportInteractions = async (
   params: InteractionListURLParams
@@ -149,9 +153,26 @@ const getInteractionDetailsURL = (
 
 export const fetchInteractionList = async (
   params: InteractionListURLParams
-): Promise<{ interactions: InteractionList[]; count: number }> => {
+): Promise<{
+  interactions: InteractionList[];
+  count: number;
+  keyContact: InteractionKeyContacts;
+}> => {
   const { data } = await interactionServiceApi.post<InteractionListResponse>(
     getInteractionListUrl(),
+    params
+  );
+  return {
+    interactions: data.data.interactions,
+    count: data.data.totalCount,
+    keyContact: data.data.keyContact,
+  };
+};
+export const fetchInteractionListRemainder = async (
+  params: InteractionListURLParams
+): Promise<{ interactions: InteractionList[]; count: number }> => {
+  const { data } = await interactionServiceApi.post<InteractionListResponse>(
+    getInteractionListRemainderUrl(),
     params
   );
   return {
@@ -165,10 +186,21 @@ export const useInteractionList = (
   shouldFetchList: boolean,
   refreshInteractions?: number
 ): UseQueryResult<
-  { interactions: InteractionList[]; count: number },
+  {
+    interactions: InteractionList[];
+    count: number;
+    keyContact: InteractionKeyContacts;
+  },
   Error
 > => {
-  return useQuery<{ interactions: InteractionList[]; count: number }, Error>({
+  return useQuery<
+    {
+      interactions: InteractionList[];
+      count: number;
+      keyContact: InteractionKeyContacts;
+    },
+    Error
+  >({
     queryKey: ['interaction-list', params, refreshInteractions],
     queryFn: () => fetchInteractionList(params),
     retry: 0,
@@ -178,6 +210,27 @@ export const useInteractionList = (
       params.fiscal_year !== undefined &&
       params.fiscal_year !== null &&
       !!shouldFetchList,
+  });
+};
+export const useInteractionListModel = (
+  params: InteractionListURLParams,
+  shouldFetchList: boolean,
+  refreshInteractions?: number
+): UseQueryResult<
+  { interactions: InteractionList[]; count: number },
+  Error
+> => {
+  return useQuery<{ interactions: InteractionList[]; count: number }, Error>({
+    queryKey: ['interaction-list', params, refreshInteractions],
+    queryFn: () => fetchInteractionListRemainder(params),
+    retry: 0,
+    gcTime: 0,
+    enabled:
+      !!params.account_rid &&
+      params.fiscal_year !== undefined &&
+      params.fiscal_year !== null &&
+      !!shouldFetchList &&
+      params.reminder_specific_list,
   });
 };
 
@@ -295,6 +348,27 @@ export const useAccountInteractionDetails = (
     retry: 0,
     gcTime: 0,
     enabled: !!interactionId && !!accountId && isEnable,
+  });
+};
+
+const fetchInteractionTemplateDetails = async (
+  interactionId: string
+): Promise<InteractionDetails> => {
+  const response = await interactionServiceApi.get<InteractionDetailsResponse>(
+    `/api/interactionTemplates/detail/${interactionId}`
+  );
+
+  return response.data.data.interactionDetails;
+};
+export const useGetInteractionTemplateDetails = (
+  interactionId: string
+): UseQueryResult<InteractionDetails | undefined, Error> => {
+  return useQuery<InteractionDetails | undefined, Error>({
+    queryKey: ['interaction-template-details', interactionId],
+    queryFn: () => fetchInteractionTemplateDetails(interactionId),
+    retry: 0,
+    gcTime: 0,
+    enabled: !!interactionId,
   });
 };
 
@@ -456,4 +530,31 @@ export const exportGlobalInteractions = async (
   } catch (error) {
     console.error('Export failed:', error);
   }
+};
+
+export const getInteractionTemplate = async (
+  body: InteractionTemplatePayload
+): Promise<{ interactions: InteractionTemplateList[]; count: number }> => {
+  try {
+    const { data } = await interactionServiceApi.post<{
+      data: {
+        interactions: InteractionTemplateList[];
+        count: number;
+      };
+    }>('/api/interactionTemplates/list', body);
+    return data.data;
+  } catch (error) {
+    console.error('Error updating interaction details:', error);
+    throw error;
+  }
+};
+
+export const useGetInteractionTemplate = () => {
+  return useMutation<
+    { interactions: InteractionTemplateList[]; count: number },
+    Error,
+    InteractionTemplatePayload
+  >({
+    mutationFn: (body) => getInteractionTemplate({ ...body }),
+  });
 };

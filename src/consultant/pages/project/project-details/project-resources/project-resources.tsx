@@ -15,12 +15,13 @@ import {
   useUpdateProjectResourceStatus,
 } from '../../../../services/project-resources/project-resource-service';
 import {
+  NOTES_CREATE,
   PROJECT_RESOURCE_CREATE,
   PROJECT_RESOURCE_EDIT,
 } from '../../../../../routes';
 import { getProjectResourcesColumns } from './list/columns';
 import { ProjectResourcesListType } from '../../../../types/project-resources';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { generatePath, useNavigate, useSearchParams } from 'react-router-dom';
 import ProjectResourceTableHeader from './project-resource-list-header';
 import ProjectResourceDetails from './details/project-resource-detail';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
@@ -139,6 +140,7 @@ export const ProjectResources = ({
   const [updateProjectResourceMutation] = useMutation(UPDATE_PROJECT_RESOURCE, {
     client: resourceClient,
   });
+  const [searchText, setSearchText] = useState('');
 
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
@@ -149,6 +151,7 @@ export const ProjectResources = ({
   const viewDetails = !!checkDetail;
   const accountID =
     accountData?.accountID || searchParams.get('accountID') || '';
+  const activeMenuPath = searchParams.get('activeMenu') || '';
 
   const [refreshProjectsTrigger, setRefreshProjectsTrigger] = useState<number>(
     Date.now()
@@ -163,6 +166,7 @@ export const ProjectResources = ({
       fiscalYear: convertedFiscalYear,
       accountNumber: accountID,
       projectid: projectID,
+      search: searchText,
     },
     undefined,
     refreshProjectsTrigger
@@ -208,6 +212,7 @@ export const ProjectResources = ({
     projectResData?.account_rid as string,
     projectResData?.rid as string,
     detailrefecth as number
+    // searchText as string
   );
   // const resourceData = resourceDetails?.data?.projectResource;
   const resourceData = useMemo(() => {
@@ -229,10 +234,12 @@ export const ProjectResources = ({
       sortBy: sortField,
       sortOrder: sortOrder,
       filters: appliedFilters,
+      search: searchText,
     });
-  }, [sortField, sortOrder, appliedFilters]);
+  }, [sortField, sortOrder, appliedFilters, searchText]);
   const { data: projectResourceCodeOptions } = useGetProjectResourceCode(
-    accountID as string
+    accountID as string,
+    projectID as string
   );
   const { successToast } = useToast();
   const updateStatusAccept = useUpdateProjectResourceStatus();
@@ -281,10 +288,14 @@ export const ProjectResources = ({
         ':resourceId',
         resourceData.rid
       );
+      const PFY = projectFiscalDate;
       const queryParams = new URLSearchParams({
         account_Id: resourceData.account_rid,
         project_Id: resourceData?.project_fiscal_rid,
         projectCode: projectCode ?? '',
+        PFY: PFY ? JSON.stringify(PFY) : '',
+        account_name: accountData?.accountName || '',
+        account_number: accountData?.accountNumber || '',
       });
       navigate(`${path}?${queryParams.toString()}`);
     }
@@ -297,6 +308,8 @@ export const ProjectResources = ({
     const queryParams = new URLSearchParams({
       account_Id: row?.account_rid || '',
       project_Id: row?.project_fiscal_rid || '',
+      account_name: accountData?.accountName || '',
+      account_number: accountData?.accountNumber || '',
       PFY: PFY ? JSON.stringify(PFY) : '',
       projectCode: projectCode ?? '',
       source: 'editProjectResource',
@@ -320,6 +333,12 @@ export const ProjectResources = ({
     }
   };
 
+  const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
+    const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
+    setSortOrder(apiOrder);
+    setSortField(sortBy);
+  };
+
   useEffect(() => {
     const page = searchParams.get('page');
     if (page === 'details' && resID) {
@@ -328,7 +347,26 @@ export const ProjectResources = ({
       setShowProjectResourceDetails(false);
     }
   }, [searchParams]);
-
+  const calculateAutoValue = ({
+    salary = '0',
+    bonus = '0',
+    insurance = '0',
+    total_cost_pro_res = '0',
+    deductions = '0',
+  }: {
+    salary?: string;
+    bonus?: string;
+    insurance?: string;
+    total_cost_pro_res?: string;
+    deductions?: string;
+  }) => {
+    const s = parseFloat(salary) || 0;
+    const b = parseFloat(bonus) || 0;
+    const i = parseFloat(insurance) || 0;
+    const r = parseFloat(total_cost_pro_res) || 0;
+    const d = parseFloat(deductions) || 0;
+    return s + b + i + r - d;
+  };
   const actionMenuItems = [
     {
       label: 'Edit',
@@ -354,6 +392,12 @@ export const ProjectResources = ({
     permission,
     AllPermissions.ATTACHMENT_VIEW_EDIT
   );
+
+  const isNoteCreateEnable = checkPermission(
+    permission,
+    AllPermissions.NOTES_CREATE
+  );
+
   const handleOpen = () => {
     const newParams = new URLSearchParams(searchParams);
     newParams.set('attachment_entity', 'project_resource');
@@ -376,17 +420,42 @@ export const ProjectResources = ({
   };
   const showUploads =
     searchParams.get('attachment_entity') === 'project_resource';
+
+  const handleCreateNote = () => {
+    const projectResourceId = searchParams.get('pro_res_id');
+    const path = generatePath(NOTES_CREATE, {
+      module: 'account',
+    });
+    const queryParams = new URLSearchParams({
+      accountId: accountID,
+      entityLevel: 'project_resource',
+      entityId: projectResourceId || '',
+      source: `Project Resource > ${resourceData?.r_number}`,
+      ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
+    });
+    navigate(`${path}?${queryParams.toString()}`);
+  };
+
   const headerButtons = [
     {
       label: 'Add Attachment',
       variant: 'outlined' as const,
       onClick: () => handleOpen(),
+      disabled: accountOrProjectInActive,
       sx: { ...BUTTON_STYLES, width: '120px', minWidth: '48px' },
       hide:
         !viewDetails ||
         !isAttachmentViewEnableMenu ||
         !isAttachmentViewEnableMenuModule ||
         !isAttachmentViewEnablepeormission,
+    },
+    {
+      label: 'Add Note',
+      variant: 'outlined' as const,
+      onClick: () => handleCreateNote(),
+      disabled: accountOrProjectInActive,
+      sx: { ...BUTTON_STYLES, width: '80px', minWidth: '80px' },
+      hide: !viewDetails || !isNoteCreateEnable,
     },
     {
       label: viewDetails ? 'Edit' : 'New',
@@ -481,6 +550,12 @@ export const ProjectResources = ({
     const selectedProject = projectResourceList.find(
       (pro) => pro.rid === rowId
     );
+    if (!selectedProject) return;
+
+    console.log('selectedProject', selectedProject);
+
+    let netCost = '';
+
     // let hasResourceTye = false;
     let hasCountry = false;
     let hasRegion = false;
@@ -491,6 +566,16 @@ export const ProjectResources = ({
         // if (item.columnId === 'resource_type_name') hasResourceTye = true;
         if (item.columnId === 'country_name') hasCountry = true;
         if (item.columnId === 'region_name') hasRegion = true;
+        if (item.columnId === 'total_cost_pro_res') {
+          const total = calculateAutoValue({
+            salary: String(selectedProject.salary),
+            bonus: String(selectedProject.bonus),
+            insurance: String(selectedProject.insurance),
+            total_cost_pro_res: String(item.value),
+            deductions: String(selectedProject.deductions),
+          });
+          netCost = total.toString();
+        }
         return acc;
       },
       {
@@ -503,7 +588,9 @@ export const ProjectResources = ({
     if (hasCountry && !hasRegion) {
       updateData['region_rid'] = '';
     }
-
+    if (netCost) {
+      updateData['net_total_cost_pro_res'] = netCost;
+    }
     try {
       const res = await updateProjectResourceMutation({
         variables: { data: updateData },
@@ -660,6 +747,8 @@ export const ProjectResources = ({
         setSortFilterCount={setSortFilterCount}
         projectResourceAccountID={accountID}
         projectResourceProjectID={projectID}
+        showSearch={viewDetails ? false : true}
+        onSearch={(text) => setSearchText(text)}
       />
       <>
         {showUploads ? (
@@ -747,7 +836,7 @@ export const ProjectResources = ({
                     onRowsPerPageChange={setRowsPerPage}
                     sortBy={sortField}
                     sortOrder={sortOrder}
-                    onSort={handleSorting}
+                    onSort={handleSort}
                     selectable={false}
                     onSelectionChange={(selectedIds: unknown) =>
                       console.log('Selected:', selectedIds)

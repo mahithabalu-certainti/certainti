@@ -21,6 +21,8 @@ import ResourceAttachmentsTable from './resource-attachment/resource-attachment-
 import { AttachmentList } from '../../../../types/attachment';
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
+import ResourceNotesList from './resource-notes/resource-notes-list';
+import { NotesList } from '../../../../types';
 
 interface SubcomponentProps {
   tabMenus: TabMenus[];
@@ -51,13 +53,20 @@ interface SubcomponentProps {
   setAttachmentsOrder: (order: 'ASC' | 'DESC') => void;
   attachmentsOrderBy: string;
   setAttachmentsOrderBy: (field: keyof AttachmentList) => void;
+  notesOrder: 'ASC' | 'DESC';
+  setNotesOrder: (order: 'ASC' | 'DESC') => void;
+  notesOrderBy: string;
+  setNotesOrderBy: (field: keyof NotesList) => void;
   refreshAttachments?: number;
+  refreshNotes?: number;
   resourceInActive: boolean;
   setResourceInActive: (value: boolean) => void;
   columnAnchorEl: HTMLButtonElement | null;
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
   >;
+  searchValue?: string;
+  setResourceNumber?: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 const ResourceSubComponents: React.FC<SubcomponentProps> = ({
@@ -91,11 +100,18 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
   setAttachmentsOrder,
   attachmentsOrderBy,
   setAttachmentsOrderBy,
+  notesOrder,
+  setNotesOrder,
+  notesOrderBy,
+  setNotesOrderBy,
   refreshAttachments,
+  refreshNotes,
   resourceInActive,
   setResourceInActive,
   columnAnchorEl,
   setColumnAnchorEl,
+  searchValue,
+  setResourceNumber,
 }) => {
   // Permission Mangement
   const isResourceViewEnable = checkPermission(
@@ -178,6 +194,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
     setResourceDetails(
       resource ? transformResourceData(resource, permissionMap) : []
     );
+    setResourceNumber?.(resource?.data?.resourceDetails?.r_number || '');
     const status =
       resource?.data?.resourceDetails?.status_name.toLowerCase() !== 'active';
     setResourceInActive(status);
@@ -266,6 +283,8 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
               resourceInActive={resourceInActive}
               setColumnAnchorEl={setColumnAnchorEl}
               columnAnchorEl={columnAnchorEl}
+              searchValue={searchValue}
+              resourceNumber={resource?.data?.resourceDetails?.r_number || ''}
             />
           </Box>
         )}
@@ -290,6 +309,8 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
               resourceInActive={resourceInActive}
               setColumnAnchorEl={setColumnAnchorEl}
               columnAnchorEl={columnAnchorEl}
+              searchValue={searchValue}
+              resourceNumber={resource?.data?.resourceDetails?.r_number || ''}
             />
           </Box>
         )}
@@ -311,6 +332,30 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
               resourceInActive={resourceInActive}
               setColumnAnchorEl={setColumnAnchorEl}
               columnAnchorEl={columnAnchorEl}
+              searchValue={searchValue}
+            />
+          </Box>
+        )}
+        {value === 'notes' && (
+          <Box sx={{ width: '100%', overflowX: 'auto' }}>
+            <ResourceNotesList
+              accountDetails={accountDetails}
+              fiscalYear={fiscalYearValue}
+              appliedFilters={appliedFilters}
+              resourceRid={resourceId}
+              setCurrentPage={setCurrentPage}
+              currentPage={currentPage}
+              order={notesOrder}
+              setOrder={setNotesOrder}
+              orderBy={notesOrderBy}
+              setOrderBy={setNotesOrderBy}
+              refreshNotes={refreshNotes}
+              setCount={setCount}
+              resourceInActive={resourceInActive}
+              setColumnAnchorEl={setColumnAnchorEl}
+              columnAnchorEl={columnAnchorEl}
+              searchValue={searchValue}
+              resourceNumber={resource?.data?.resourceDetails?.r_number || ''}
             />
           </Box>
         )}

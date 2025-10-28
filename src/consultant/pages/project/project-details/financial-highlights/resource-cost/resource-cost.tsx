@@ -35,6 +35,7 @@ interface FinancialResourceCostProps {
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
   >;
+  searchValue: string;
 }
 
 const ResourceCost: React.FC<FinancialResourceCostProps> = ({
@@ -47,6 +48,7 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
   setExportType,
   columnAnchorEl,
   setColumnAnchorEl,
+  searchValue,
 }) => {
   const { projectid: projectId } = useParams();
   const [searchParams] = useSearchParams();
@@ -64,6 +66,7 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
       page: currentPage + 1,
       limit: 100,
       filters: appliedFilters,
+      search: searchValue,
     });
   const { permission } = useSelector((state: RootState) => state.permission);
 
@@ -78,6 +81,7 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
       accountRid: accountId,
       fiscalYear: fiscalYear,
       accountNumber: projectDetails?.account_number,
+      search: searchValue,
     },
     refreshTrigger
   );
@@ -96,20 +100,23 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
       ...prev,
       page: currentPage + 1,
       filters: appliedFilters,
+      search: searchValue,
     }));
-  }, [currentPage, appliedFilters]);
+  }, [currentPage, appliedFilters, searchValue]);
 
   useEffect(() => {
     if (setExportType) {
       setExportType('financial');
     }
+
     setResCostExportParams({
       sortBy: tableParams.sortBy,
       sortOrder: tableParams.sortOrder,
       filters: appliedFilters,
+      search: searchValue,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tableParams]);
+  }, [tableParams, appliedFilters, searchValue]);
 
   // Permissions
   const financialResourceCostViewEditFields = useMemo(
@@ -154,10 +161,10 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
   };
 
   const getRowId = (row: ProjectFinancialResourceCostList) => row.resource_rid;
-  const financialResourceCostColumns = getFinancialResourceCostColumns(
-    permissionMap,
-    currencySymbol
-  );
+
+  const financialResourceCostColumns = useMemo(() => {
+    return getFinancialResourceCostColumns(permissionMap, currencySymbol);
+  }, [permissionMap, currencySymbol]);
 
   const RestrictedColumns = [
     {
@@ -170,7 +177,12 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
   const [visibleColumns, setVisibleColumns] = useState<
     ListTableColumn<ProjectFinancialResourceCostList>[]
   >(financialResourceCostColumns.filter((col) => !col.hide));
-
+  useEffect(() => {
+    const updatedColumns = financialResourceCostColumns.filter(
+      (col) => !col.hide
+    );
+    setVisibleColumns(updatedColumns);
+  }, [currencySymbol, financialResourceCostColumns]);
   const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
     setVisibleColumns(
       updatedColumns.filter(

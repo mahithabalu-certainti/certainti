@@ -9,8 +9,6 @@ export const MANAGE_USER_ACCESS = '/manage-user-access';
 export const MANAGE_ACCOUNT_ACCESS = '/manage-account-access';
 export const MANAGE_SETTINGS = '/manage-settings';
 export const MANAGE_GEO_BASED_RULE = '/manage-geo-based-rule';
-export const IMPORT_TEMPLATES = '/import-templates';
-export const INTERACTION_TEMPLATES = '/interaction-templates';
 export const EMAIL_TEMPLATES = '/email-templates';
 export const SURVEY_TEMPLATES = '/survey-templates';
 export const TASK_TEMPLATES = '/task-templates';
@@ -33,6 +31,13 @@ export const MANAGE_USER_GROUP = `${ADMIN}/manage-user-group`;
 export const MANAGE_USER_GROUP_CREATE = `${MANAGE_USER_GROUP}/create`;
 export const MANAGE_USER_GROUP_EDIT = `${MANAGE_USER_GROUP}/edit/:groupId`;
 
+/** ADMIN TEMPLATES ROUTES */
+export const INTERACTION_TEMPLATES = `${ADMIN}/interaction-templates`;
+export const INTERACTION_TEMPLATES_CREATE = `${INTERACTION_TEMPLATES}/create`;
+export const INTERACTION_TEMPLATES_EDIT = `${INTERACTION_TEMPLATES}/edit/:templateId`;
+
+/** ADMIN IMPORT TEMPLATES ROUTES */
+export const IMPORT_TEMPLATES = `${ADMIN}/import-templates`;
 /** ACCOUNT ROUTES */
 export const ACCOUNT = '/account';
 export const ACCOUNT_CREATE = `${ACCOUNT}/create`;
@@ -78,6 +83,13 @@ export const INTERACTIONS_EDIT = `${INTERACTIONS_BASE}/edit/:interactionId`;
 export const GLOBAL_INTERACTIONS_CREATE = `${INTERACTIONS}/create`;
 export const GLOBAL_INTERACTIONS_EDIT = `${INTERACTIONS}/edit/:interactionId`;
 export const ACCOUNT_INTERACTIONS_CREATE = `${INTERACTIONS_BASE}/account-create`;
+
+// Notes routes
+export const NOTES = '/notes';
+export const NOTES_BASE = `/:module/notes`;
+export const NOTES_CREATE = `${NOTES_BASE}/create`;
+export const NOTES_EDIT = `${NOTES_BASE}/edit/:noteId`;
+export const GLOBAL_NOTES_EDIT = `${NOTES}/edit/:noteId`;
 
 // ATTACHMENT ROUTES
 export const ATTACHMENTS = '/attachments';

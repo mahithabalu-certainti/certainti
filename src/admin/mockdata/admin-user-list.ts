@@ -16,6 +16,7 @@ export const ManageUserMockData: ManageUserApiResponse = {
         },
         full_name: 'KK KK',
         first_name: 'KK',
+        last_name: 'KK',
         profile: {
           profile_name: 'Technical Consultant',
           rid: '',
@@ -38,6 +39,7 @@ export const ManageUserMockData: ManageUserApiResponse = {
         },
         full_name: 'Isabella Adams',
         first_name: 'Rahul',
+        last_name: 'Adams',
         profile: {
           profile_name: 'Administrator',
           rid: '',
