@@ -159,6 +159,7 @@ export const STATUS_MESSAGE = {
   noNotesRecordFound: "Notes not found",
   notesIdMissing: "Notes RID missing",
   notesFetchedSuccess: "Notes fetched successfully",
+  templateUploadedSuccess : "Template uploaded successfully"
 };
 
 export const TYPES = {
@@ -859,6 +860,7 @@ export const rawQueries = {
           const encryptedSecretKey = await encryptClientSecret(
             data.client_secret
           );
+        console.log("encryptedSecretKey ======> ", encryptedSecretKey)
           let query = `
         UPDATE ${schema}.${t}
         SET
