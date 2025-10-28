@@ -1,4 +1,3 @@
-'use client';
 import type React from 'react';
 import { useState, useRef, useEffect } from 'react';
 import { useDroppable } from '@dnd-kit/core';
@@ -129,9 +128,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
 
   return (
     <div className='flex-shrink-0 w-80'>
-      <div
-        className='bg-[#f5f5f5] rounded-lg p-4'
-      >
+      <div className='bg-[#f5f5f5] rounded-lg p-4'>
         {/* Column Header */}
         <div className='bg-white border border-slate-200 rounded-lg p-4 mb-4 shadow-md'>
           <div className='flex items-center justify-between'>
