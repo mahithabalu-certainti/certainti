@@ -1,4 +1,4 @@
-import { getDateFormat, REGEX_PATTERNS } from '../../../../../../common-utils';
+import { REGEX_PATTERNS } from '../../../../../../common-utils';
 import TextButton from '../../../../../../components/button/text-button';
 import {
   DependencyRowData,
@@ -7,6 +7,7 @@ import {
 } from '../../../../../../components/table/types';
 import { OthersEnum } from '../../../../../types';
 import { ResourceSkillList } from '../../../../../types/resource-skill';
+import { dateFormatToYYYYMMDD } from '../utils';
 
 export const getResourceSkillColumns = (
   skillLevelOptions: ListOption[],
@@ -18,10 +19,8 @@ export const getResourceSkillColumns = (
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
   accountInActive: boolean,
   handleAttachmentClick?: (rowId: string) => void,
-  handleCreateNote?: (row: string) => void,
   resourceInActive?: boolean,
-  attachmentCreateEnable?: boolean,
-  isNoteCreateEnable?: boolean
+  attachmentCreateEnable?: boolean
 ): ListTableColumn<ResourceSkillList>[] => [
   {
     id: 'start_date',
@@ -31,7 +30,7 @@ export const getResourceSkillColumns = (
     width: 160,
     sortable: true,
     render: (row: ResourceSkillList) => (
-      <span>{getDateFormat(row.start_date as string) || '-'}</span>
+      <span>{dateFormatToYYYYMMDD(row.start_date as string) || '-'}</span>
     ),
     sticky: true,
     sx: {
@@ -393,25 +392,6 @@ export const getResourceSkillColumns = (
         disabled={accountInActive ? accountInActive : resourceInActive}
         sx={{ width: '45px', minWidth: '45px', maxWidth: '45px', ml: 2.5 }}
         onClick={() => handleAttachmentClick?.(row.rid ?? '')}
-      />
-    ),
-  },
-  {
-    id: 'notes',
-    sortId: 'notes',
-    label: 'Notes',
-    width: 80,
-    sortable: false,
-    sx: {
-      textAlign: 'center',
-    },
-    hide: !isNoteCreateEnable,
-    render: (row) => (
-      <TextButton
-        label='Add'
-        disabled={accountInActive ? accountInActive : resourceInActive}
-        sx={{ width: '45px', minWidth: '45px', maxWidth: '45px' }}
-        onClick={() => handleCreateNote?.(row.rid ?? '')}
       />
     ),
   },

@@ -177,10 +177,7 @@ const EmailInteraction: React.FC = () => {
     accountId: questions?.account_rnumber || '',
     projectCode: questions?.project_code || '',
     statusName: questions?.status_name || '',
-    fiscal_year: String(questions?.fiscal_year) || ''
   };
-  const isAccountlevel = questions?.interaction_level_name?.toLocaleLowerCase() === 'account'
-  
 
   return (
     <div className={isAuthentic ? '' : 'bg-[#f4f4f4]'}>
@@ -211,7 +208,6 @@ const EmailInteraction: React.FC = () => {
                   interaction_rid: questions?.interaction_rid || '',
                 }}
                 headerData={headerData}
-                isAccountlevel={isAccountlevel}
               />
             )}
           </div>

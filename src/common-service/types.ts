@@ -101,48 +101,6 @@ export interface Permissions {
   }[];
 }
 
-interface FieldPermission {
-  field_id: string;
-  field_name: string;
-  field_desc: string;
-  read: boolean;
-  edit: boolean;
-}
-
-interface Permission {
-  type: 'permission';
-  menu_id: string;
-  module_id: string;
-  module_permission_id: string;
-  menu_desc: string;
-  module_desc: string;
-  permission_desc: string;
-  is_field_available: boolean;
-  fields?: FieldPermission[];
-}
-
-// Define Module type
-interface Module {
-  type: 'module';
-  module_id: string;
-  menu_id: string;
-  module_name: string;
-  module_desc: string;
-  menu_desc: string;
-  is_enabled: boolean;
-}
-
-// Define Menu type
-interface Menu {
-  type: 'menu';
-  menu_id: string;
-  menu_name: string;
-  menu_desc: string;
-  is_enabled: boolean;
-}
-
-export type UserDetailPermissions = Permission | Module | Menu;
-
 export enum PermissionsMenus {
   MENU = 'menu',
   MODULE = 'module',
@@ -197,11 +155,9 @@ export enum AllModules {
   USER_GROUP = 'manage_user_group',
   PROFILE_MANAGEMENT = 'profile_management',
   ATTACHMENTS = 'attachments',
-  NOTES = 'notes',
   IMPORTS = 'imports',
   MANAGE_ACCOUNT_ACCESS = 'manage_account_access',
   INTERACTIONS = 'interactions',
-  INTERACTION_TEMPLATES = 'interaction_templates',
 }
 
 export enum AllPermissions {
@@ -213,9 +169,6 @@ export enum AllPermissions {
   USER_GROUP_CREATE = 'user_group_create',
   USER_DELETE = 'user_delete',
   PROFILE_CREATE = 'profile_create',
-  INTERACTION_TEMPLATES_CREATE = 'interaction_templates_create',
-  INTERACTION_TEMPLATES_VIEW_EDIT = 'interaction_templates_view_edit',
-  INTERACTION_TEMPLATES_EXPORT = 'interaction_templates_export',
   PROJECTS_TASK_CREATE = 'projects_task_create',
   ACCOUNT_RESOURCES_COST_CREATE = 'account_resources_cost_create',
   ACCOUNT_RESOURCES_SKILL_CREATE = 'account_resources_skill_create',
@@ -293,11 +246,6 @@ export enum AllPermissions {
   PROJECT_TECHNICAL_SUMMARY_TIMELINE = 'project_technical_summary_timeline',
   PROJECT_TECHNICAL_SUMMARY_VIEW_EDIT = 'projects_tech_summary_view_edit',
   PROJECT_TECHNICAL_SUMMARY_EXPORT = 'projects_tech_summary_export',
-  NOTES_OVERVIEW = 'notes_overview',
-  NOTES_TIMELINE = 'notes_timeline',
-  NOTES_VIEW_EDIT = 'notes_view_edit',
-  NOTES_EXPORT = 'notes_export',
-  NOTES_CREATE = 'notes_create',
 }
 
 export interface Country {
@@ -306,8 +254,6 @@ export interface Country {
 }
 
 export type FieldTypes = string | string[] | dayjs.Dayjs | null | File;
-
-export type FilterTypes = Record<string, string | number | boolean | string[]>;
 
 export interface OnChange {
   fieldName: string;
@@ -382,16 +328,7 @@ export interface AxiosErrorMsg {
 export interface UserDetail {
   data?: User;
   loading: boolean;
-  gotoExtendedPermission?: () => void;
 }
-
-export type PermissionTable = {
-  rid: string;
-  menu: string;
-  modules: string;
-  permissions: string;
-  fields: string;
-};
 
 export interface UploadImportPayload {
   entity_type: string;

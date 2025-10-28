@@ -28,7 +28,6 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
 import { AllPermissions } from '../../../../../../common-service';
 import { useToast } from '../../../../../../hooks';
-import { getInteractionStatusColor } from '../helpers';
 
 interface InteractionDetailsProps {
   accountInActive: boolean;
@@ -118,6 +117,10 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       {
         interaction_rid: data?.interaction_rid || interactionId || '',
         project_fiscal_rid: data?.project_fiscal_rid || '',
+        email_info: {
+          email: '',
+          name: '',
+        },
       },
     ];
 
@@ -125,10 +128,6 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       account_rid: data?.account_rid || accountid || '',
       is_interaction_followup: true,
       interactions,
-      email_info: {
-        email: '',
-        name: '',
-      },
     };
     sendInteraction.mutate(payload, {
       onSuccess: (response) => {
@@ -156,10 +155,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     {
       label: 'Reminder',
       variant: 'outlined' as const,
-      disabled:
-        accountInActive ||
-        !disableRemainderBtn ||
-        !accountDetails?.accountDetails?.is_send_interaction,
+      disabled: accountInActive || !disableRemainderBtn,
       onClick: () => handleReminderBtn(),
       sx: { width: '78px', minWidth: '78px' },
       loading: sendInteraction.isPending,
@@ -178,37 +174,28 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
       value: data?.interaction_type_name,
       key: 'interaction_type_name',
     },
-    {
-      label: 'Interaction Status',
-      value: (
-        <span
-          className={`font-semibold ${getInteractionStatusColor(data?.status_name)}`}
-        >
-          {data?.status_name}
-        </span>
-      ),
-      key: 'status',
-    },
-    {
-      label: 'Response Updated By',
-      value: data?.response_updated_by,
-      key: 'response_updated_by',
-    },
-    {
-      label: 'Recipient Name',
-      value: data?.recipient_name,
-      key: 'recipient_name',
-    },
-    {
-      label: 'Recipient email',
-      value: data?.recipient_email,
-      key: 'recipient_email',
-    },
-    {
-      label: 'Response Received On',
-      value: formatDateToYYYYMMDDWithTime(data?.response_updated_on) || '-',
-      key: 'response_updated_on',
-    },
+    //might be added in future if required
+    // {
+    //   label: 'Interaction Status',
+    //   value: (
+    //     <span
+    //       className={`font-semibold ${getInteractionStatusColor(data?.status_name)}`}
+    //     >
+    //       {data?.status_name}
+    //     </span>
+    //   ),
+    //   key: 'status',
+    // },
+    // {
+    //   label: 'Response Updated By',
+    //   value: data?.response_updated_by,
+    //   key: 'response_updated_by',
+    // },
+    // {
+    //   label: 'Response Received On',
+    //   value: formatDateToYYYYMMDDWithTime(data?.response_updated_on) || '-',
+    //   key: 'response_updated_on',
+    // },
   ];
 
   const auditInfo: DetailItem[] = [
@@ -244,25 +231,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     //   key: 'modified_by',
     // },
   ];
-  const basicInfo: DetailItem[] = [
-    {
-      label: 'Project Code',
-      value: data?.project_code,
-      key: 'project_code',
-    },
-    {
-      label: 'Project Name',
-      value: data?.project_name,
-      key: 'project_name',
-    },
-    {
-      label: 'Fiscal Year',
-      value: data?.fiscal_year,
-      key: 'fiscal_year',
-    },
-  ];
 
-  const basicDetails = applyHidePermission(basicInfo, permissionMap);
   const interactionDetails = applyHidePermission(
     InteractionInfo,
     permissionMap
@@ -300,14 +269,6 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
           </div>
         ) : (
           <>
-            {data?.interaction_level_name?.toLocaleLowerCase() ===
-              'project' && (
-              <DetailsSection
-                title='Basic Information'
-                data={basicDetails}
-                customStyle='pt-0 mt-0'
-              />
-            )}
             <DetailsSection
               title='Interaction Information'
               data={interactionDetails}

@@ -56,7 +56,6 @@ export interface FormTypeFields {
   isFiscalYear?: boolean;
   showCreateBtn?: boolean;
   formatCostValue?: boolean;
-  clearDate?: string
 }
 
 export type InputType =
@@ -88,8 +87,6 @@ export interface SelectResourceOption {
   desc?: string;
   resource_type_rid?: string;
   resource_type_name?: string;
-  start_date?: string;
-  end_date?: string
 }
 export interface ErrorHandling {
   regex: RegExp;
@@ -144,7 +141,6 @@ export interface FieldType {
   isFiscalYear?: boolean;
   showCreateBtn?: boolean;
   formatCostValue?: boolean;
-  clearDate?: string
 }
 
 export type AllowedCountry =

@@ -180,8 +180,6 @@ export const getAccountColumns = (
     hide:
       !permissionMap?.['total_projects']?.read &&
       !permissionMap?.['total_projects']?.edit,
-    render: (row: AccountList) =>
-      row.total_projects ? (row.total_projects).toLocaleString() : '-',
   },
   {
     id: 'total_project_hours',
@@ -230,7 +228,7 @@ export const getAccountColumns = (
   {
     id: 'qualifying_project_qre_fed',
     sortId: 'qualifying_project_qre_fed',
-    label: 'QRE Final',
+    label: 'QRE',
     width: 140,
     sortable: true,
     hide:

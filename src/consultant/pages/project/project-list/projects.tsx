@@ -30,7 +30,6 @@ import { useFetchClassification } from '../../../services/account';
 import TextButton from '../../../../components/button/text-button';
 import { PROJECT_CREATE } from '../../../../routes';
 import { useNavigate } from 'react-router-dom';
-import SearchBar from '../../../../components/search/search-bar';
 
 export const Projects: React.FC = () => {
   // const [toggleEnabled, setToggleEnabled] = useState(false);
@@ -50,7 +49,6 @@ export const Projects: React.FC = () => {
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
-  const [searchText, setSearchText] = useState<string>('');
   const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   const onRefreshClick = () => {
@@ -128,7 +126,6 @@ export const Projects: React.FC = () => {
       globalFilters: tableParams.globalFilters,
       timezone: systemTimezone,
       bothParentAndChild: false,
-      search: searchText || undefined,
       // bothParentAndChild: toggleEnabled, // Commented for it may use in future
     };
     exportProjectData('projectall', projectParams);
@@ -277,15 +274,6 @@ export const Projects: React.FC = () => {
           />
         </div> */}
         <div className='flex gap-1 relative'>
-          <SearchBar
-            initialSearchText={searchText}
-            onSearch={(value) => {
-              setSearchText(value);
-            }}
-            placeholder='Search'
-            disabled={false}
-            hide={false}
-          />
           <button
             aria-describedby={modalId}
             className={`w-[120px] h-[24px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative border border-[#CBD6E2] px-0 py-0 normal-case ${isModalOpen ? 'bg-[#F3F3F3]' : 'bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'} hover:text-[#425A76] transition-colors duration-150`}
@@ -348,7 +336,6 @@ export const Projects: React.FC = () => {
           dropdownOptions={dropdownOptions}
           setColumnAnchorEl={setColumnAnchorEl}
           columnAnchorEl={columnAnchorEl}
-          searchValue={searchText}
         />
       </div>
     </div>

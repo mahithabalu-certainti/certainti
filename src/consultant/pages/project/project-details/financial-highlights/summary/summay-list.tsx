@@ -1,11 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ListTable } from '../../../../../../components/table';
-import { CellEditData } from '../../../../../../components/table/types';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useProjectFinancialSummary } from '../../../../../services/financial/financial-service';
-import { useMutation } from '@apollo/client';
-import { resourceClient } from '../../../../../../api/graphql/clients/client';
-import { UPDATE_QRE_ADJUSTMENT } from '../../../../../../api/graphql/queries/project-query';
 import {
   SummaryClaimJurisdiction,
   SummaryDetailedMetric,
@@ -26,20 +22,14 @@ import { NewProjectData } from '../../../../../types/project';
 import { RootState } from '../../../../../../store/store';
 import { useSelector } from 'react-redux';
 import { AllPermissions } from '../../../../../../common-service';
-import { ProjectQreAdjustmentResponse } from '../../../utils';
 
 interface FinancialSummaryProps {
   projectDetails: NewProjectData | null;
-  onQreAdjustmentUpdated?: (data: ProjectQreAdjustmentResponse) => void;
 }
 
 const SummayListTable: React.FC<FinancialSummaryProps> = ({
   projectDetails,
-  onQreAdjustmentUpdated,
 }) => {
-  const [updateQreAdjustment] = useMutation(UPDATE_QRE_ADJUSTMENT, {
-    client: resourceClient,
-  });
   const [resourceMetric, setResourceMetric] = useState<SummaryResourceMetric[]>(
     []
   );
@@ -105,21 +95,6 @@ const SummayListTable: React.FC<FinancialSummaryProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
-  useEffect(() => {
-    if (projectDetails) {
-      const newRdPercent: SummaryRdPercent[] = [
-        {
-          rid: 'rd_percent_summary',
-          name: 'RD Percent Summary',
-          rd_percent_potential: projectDetails.rd_percent_potential_ai || '-',
-          rd_percent_adjustment: projectDetails.rd_percent_adjustment || '-',
-          rd_percent_final: projectDetails.rd_percent_final || '-',
-        },
-      ];
-      setRdPercent(newRdPercent);
-    }
-  }, [projectDetails]);
-
   const getResourceMetricRowId = (row: SummaryResourceMetric) => row.rid;
   const getDetailedMetricRowId = (row: SummaryDetailedMetric) => row.rid;
   const getRdPercentRowId = (row: SummaryRdPercent) => row.rid;
@@ -133,56 +108,6 @@ const SummayListTable: React.FC<FinancialSummaryProps> = ({
     currencySymbol
   );
   const rdPercentColumns = getRdPercentColumns(permissionMap);
-
-  const handleRdPercentCellEdit = async (
-    rowId: string,
-    updates: CellEditData[]
-  ) => {
-    const adj = updates.find((u) => u.columnId === 'rd_percent_adjustment');
-    if (!adj) return;
-
-    const value = adj.value;
-    if (typeof value !== 'string' && typeof value !== 'number') {
-      return;
-    }
-
-    const newValueNum = Number(value);
-    if (isNaN(newValueNum)) return;
-
-    try {
-      const res = await updateQreAdjustment({
-        variables: {
-          data: {
-            account_rid: accountId,
-            rid: projectId,
-            rd_percent_potential_ai: newValueNum,
-          },
-        },
-      });
-
-      const result = res.data?.updateQreAdjustment?.data;
-      if (result) {
-        setRdPercent((prev) =>
-          prev.map((row) =>
-            row.rid === rowId
-              ? {
-                  ...row,
-                  rd_percent_potential:
-                    result.rd_percent_potential_ai ?? row.rd_percent_potential,
-                  rd_percent_adjustment:
-                    result.rd_percent_adjustment ?? row.rd_percent_adjustment,
-                  rd_percent_final:
-                    result.rd_percent_final ?? row.rd_percent_final,
-                }
-              : row
-          )
-        );
-        onQreAdjustmentUpdated?.(result as ProjectQreAdjustmentResponse);
-      }
-    } catch (e) {
-      console.error('Failed to update QRE adjustment from summary:', e);
-    }
-  };
   const qreColumns = getQREColumns(permissionMap, currencySymbol);
   const rdCreditsColumns = getRdCreditsColumns(permissionMap, currencySymbol);
 
@@ -299,7 +224,6 @@ const SummayListTable: React.FC<FinancialSummaryProps> = ({
           error={isError ? 'Failed to load data' : undefined}
           showEmptyRow={false}
           loadindRowCount={1}
-          onCellEdit={handleRdPercentCellEdit}
         />
       </div>
       <div className={hideQreColumns ? 'hidden' : 'block'}>

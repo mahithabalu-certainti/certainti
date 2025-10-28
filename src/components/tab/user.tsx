@@ -14,14 +14,9 @@ interface UsersProps {
   setAppliedFilters: React.Dispatch<
     React.SetStateAction<Record<string, FilterType>>
   >;
-  onSearchReset?: () => void;
 }
 
-const Users: React.FC<UsersProps> = ({
-  tabs,
-  setAppliedFilters,
-  onSearchReset,
-}) => {
+const Users: React.FC<UsersProps> = ({ tabs, setAppliedFilters }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = Number(searchParams.get('tabIndex')) || 0;
 
@@ -40,7 +35,6 @@ const Users: React.FC<UsersProps> = ({
     setSearchParams(searchParams, { replace: true });
     clearFilters();
     setAppliedFilters({});
-    onSearchReset?.();
   };
 
   return (

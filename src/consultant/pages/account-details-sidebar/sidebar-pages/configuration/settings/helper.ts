@@ -83,8 +83,6 @@ export const settingsFormFields = (
           placeholder: 'Enter Tenant ID',
           hide: !isParentAccount,
           onChange: true,
-          regex: REGEX_PATTERNS.CLIENT_ID,
-          regexErrorMessage: 'Invalid Tenant ID',
           // disabled:
           //   permissionMap?.['tenant_id']?.read &&
           //   !permissionMap?.['tenant_id']?.edit,
@@ -97,8 +95,6 @@ export const settingsFormFields = (
           placeholder: 'Enter Client ID',
           onChange: true,
           hide: !isParentAccount,
-          regex: REGEX_PATTERNS.CLIENT_ID,
-          regexErrorMessage: 'Invalid Client ID',
           // disabled:
           //   permissionMap?.['client_id']?.read &&
           //   !permissionMap?.['client_id']?.edit,
@@ -111,8 +107,6 @@ export const settingsFormFields = (
           placeholder: 'Enter Client Secret',
           onChange: true,
           hide: !isParentAccount,
-          regex: REGEX_PATTERNS.SECRET,
-          regexErrorMessage: 'Invalid Client Secret',
           // disabled:
           //   permissionMap?.['client_secret']?.read &&
           //   !permissionMap?.['client_secret']?.edit,

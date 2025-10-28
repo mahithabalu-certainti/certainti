@@ -21,7 +21,6 @@ const returnURL = (url: string, params: Record<string, any>): string => {
     accountNumber,
     fiscalYear,
     resourceRid,
-    search,
   } = params;
   const searchParams = new URLSearchParams();
 
@@ -40,9 +39,6 @@ const returnURL = (url: string, params: Record<string, any>): string => {
   // Only add filters if the object has properties
   if (filters && Object.keys(filters).length > 0) {
     searchParams.set('filters', JSON.stringify(filters));
-  }
-  if (search) {
-    searchParams.set('search', search);
   }
 
   return `${baseUrl}/${url}?${searchParams.toString()}`;
@@ -74,7 +70,6 @@ export const costListURL = ({
   accountNumber,
   fiscalYear,
   resourceRid,
-  search,
 }: ResourceCostListParams): string => {
   return returnURL(resourceCostUrl, {
     page,
@@ -85,7 +80,6 @@ export const costListURL = ({
     accountNumber,
     fiscalYear,
     resourceRid,
-    search,
   });
 };
 
@@ -116,7 +110,6 @@ export const skillListURL = ({
   filters,
   accountNumber,
   resourceRid,
-  search,
 }: ResourceSkillListParams): string => {
   return returnURL(resourceSkillUrl, {
     page,
@@ -126,7 +119,6 @@ export const skillListURL = ({
     filters,
     accountNumber,
     resourceRid,
-    search,
   });
 };
 export const ExportResourceCostUrl = ({
@@ -136,7 +128,6 @@ export const ExportResourceCostUrl = ({
   rNumber,
   resourceRid,
   filter,
-  search,
 }: ExportModule): string => {
   const baseUrl = '/entityService/api/resource_cost/export';
   const searchParams = new URLSearchParams();
@@ -147,7 +138,6 @@ export const ExportResourceCostUrl = ({
   if (fiscalYear !== undefined) searchParams.set('fiscalYear', fiscalYear);
   if (filter !== undefined) searchParams.set('filters', JSON.stringify(filter));
   if (resourceRid !== undefined) searchParams.set('resourceRid', resourceRid);
-  if (search) searchParams.set('search', search);
   const queryString = searchParams.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 };
@@ -158,7 +148,6 @@ export const ExportResourceSkillUrl = ({
   rNumber,
   filter,
   resourceRid,
-  search,
 }: ExportModule): string => {
   const baseUrl = '/entityService/api/resource_skill/export';
   const searchParams = new URLSearchParams();
@@ -169,7 +158,6 @@ export const ExportResourceSkillUrl = ({
   if (fiscalYear !== undefined) searchParams.set('fiscalYear', fiscalYear);
   if (filter !== undefined) searchParams.set('filters', JSON.stringify(filter));
   if (resourceRid !== undefined) searchParams.set('resourceRid', resourceRid);
-  if (search) searchParams.set('search', search);
   const queryString = searchParams.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 };

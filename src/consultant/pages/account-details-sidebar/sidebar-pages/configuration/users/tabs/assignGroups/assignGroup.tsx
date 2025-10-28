@@ -30,7 +30,6 @@ interface AssignGroupsProps {
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
   >;
-  searchValue?: string;
 }
 
 const AssignGroups: React.FC<AssignGroupsProps> = ({
@@ -39,7 +38,6 @@ const AssignGroups: React.FC<AssignGroupsProps> = ({
   setCount,
   columnAnchorEl,
   setColumnAnchorEl,
-  searchValue,
 }) => {
   const { accountid } = useParams();
   const { successToast, errorToast } = useToast();
@@ -49,7 +47,6 @@ const AssignGroups: React.FC<AssignGroupsProps> = ({
     entity_type: 'ACCOUNT',
     page: filterParams.page + 1,
     limit: 100,
-    search: searchValue,
     filters: filterParams.filters,
   });
   const [assignGroupList, setAssignGroupList] = useState<
@@ -102,9 +99,8 @@ const AssignGroups: React.FC<AssignGroupsProps> = ({
       ...prev,
       page: 1,
       filters: filterParams.filters,
-      search: searchValue,
     }));
-  }, [filterParams.filters, searchValue]);
+  }, [filterParams.filters]);
 
   useEffect(() => {
     if (data?.groups?.length) {

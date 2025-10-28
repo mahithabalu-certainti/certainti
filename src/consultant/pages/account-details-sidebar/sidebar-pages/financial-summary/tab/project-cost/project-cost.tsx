@@ -40,7 +40,6 @@ interface FinancialProjectCostProps {
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
   >;
-  searchValue?: string;
 }
 
 const FinancialProjectCost: React.FC<FinancialProjectCostProps> = ({
@@ -53,7 +52,6 @@ const FinancialProjectCost: React.FC<FinancialProjectCostProps> = ({
   setExportType,
   columnAnchorEl,
   setColumnAnchorEl,
-  searchValue,
 }) => {
   const { accountid } = useParams();
   const [projectCostList, setProjectCostList] = useState<
@@ -65,7 +63,6 @@ const FinancialProjectCost: React.FC<FinancialProjectCostProps> = ({
     page: currentPage + 1,
     limit: 100,
     filters: appliedFilters,
-    search: searchValue,
   });
 
   const {
@@ -114,9 +111,8 @@ const FinancialProjectCost: React.FC<FinancialProjectCostProps> = ({
       ...prev,
       page: currentPage + 1,
       filters: appliedFilters,
-      search: searchValue,
     }));
-  }, [currentPage, appliedFilters, searchValue]);
+  }, [currentPage, appliedFilters]);
 
   useEffect(() => {
     if (setExportType) {
@@ -127,11 +123,9 @@ const FinancialProjectCost: React.FC<FinancialProjectCostProps> = ({
       sortOrder: tableParams.sortOrder,
       filters: appliedFilters,
       fiscalYear: Number(fiscalyear),
-      accountRid: accountid,
-      search: searchValue,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tableParams, fiscalyear, appliedFilters, searchValue, accountid]);
+  }, [tableParams, fiscalyear, appliedFilters]);
 
   const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
     const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';

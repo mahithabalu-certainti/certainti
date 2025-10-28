@@ -1,4 +1,4 @@
-import { costDisplay, formatMonthDay, valueDisplay } from '../../../common-utils';
+import { costDisplay } from '../../../common-utils';
 
 export interface projectDetails {
   rid: string;
@@ -157,7 +157,6 @@ interface DisplayColumn {
     hide?: boolean;
     editable?: boolean;
     onSave?: (value: string) => void;
-    showHyphenForEmptyValue?: boolean;
   }>;
 }
 
@@ -188,7 +187,7 @@ export const transformProjectData = (
             : '-',
         },
         {
-          label: 'QRE Percent Potential',
+          label: 'AI-Estimated QRE',
           value: aiEstimatedQre ? `${aiEstimatedQre}%` : '-',
           key: 'ai_estimated_qre',
         },
@@ -211,7 +210,7 @@ export const transformProjectData = (
             : '-',
         },
         {
-          label: 'QRE Percent Adjustment',
+          label: 'Adjustment Factor',
           key: 'adjustment_factor',
           value: adjustmentFactor ? `${adjustmentFactor}%` : '',
           editable: aiEstimatedQre ? true : false,
@@ -223,7 +222,7 @@ export const transformProjectData = (
         { label: 'Account Name', value: project?.account_name || '-' },
         {
           label: 'Fiscal Start',
-          value: project?.fiscal_start_date ? formatMonthDay(project?.fiscal_start_date) : '-',
+          value: project?.fiscal_start_date || '-',
         },
         {
           label: 'Non-Labor Cost',
@@ -232,7 +231,7 @@ export const transformProjectData = (
             : '-',
         },
         {
-          label: 'QRE Percent Final',
+          label: 'Net QRE',
           value: project?.rd_percent_final
             ? `${project.rd_percent_final}%`
             : '-',
@@ -247,17 +246,13 @@ export const transformProjectData = (
         },
         {
           label: 'Fiscal End',
-          value: project?.fiscal_end_date ? formatMonthDay(project?.fiscal_end_date) : '-',
+          value: project?.fiscal_end_date || '-',
         },
         {
           label: 'Project Cost',
           value: project?.total_cost
             ? costDisplay(project.total_cost, currencySymbol)
             : '-',
-        },
-        {
-          label: 'QRE Final',
-          value: costDisplay(project?.qre_final, currencySymbol),
         },
       ],
     },
@@ -268,14 +263,13 @@ export const transformProjectData = (
           value: project?.currency_name || '-',
         },
         {
-          label: '',
-          value: '',
-          showHyphenForEmptyValue: false,
+          label: 'Project Effort (Hours)',
+          value: project?.total_effort?.toString() || '-',
         },
         {
-          label: 'Project Effort (Hours)',
-          value: valueDisplay(project?.total_effort?.toString()) || '-',
-        }, 
+          label: 'QRE Cost',
+          value: costDisplay(project?.qre_final, currencySymbol),
+        },
       ],
     },
   ];

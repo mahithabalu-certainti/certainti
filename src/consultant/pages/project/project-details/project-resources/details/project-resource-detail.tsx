@@ -8,7 +8,6 @@ import {
   costDisplay,
   getDateFormat,
   formatDateToYYYYMMDDWithTime,
-  valueDisplay,
 } from '../../../../../../common-utils';
 import { AllPermissions, Permissions } from '../../../../../../common-service';
 import DetailsSectionSkeleton from '../../../../../../components/skeleton-component/detailsskeleton';
@@ -117,21 +116,6 @@ const ProjectResourceDetails: React.FC<ResourceDetailsProps> = ({
       key: 'resource_code',
     },
     {
-      label: 'Resource Name',
-      value: resourceData.resource_name,
-      key: 'resource_name',
-    },
-    {
-      label: 'Resource Role',
-      value: resourceData.project_resource_role,
-      key: 'project_resource_role',
-    },
-    {
-      label: 'Resource Type',
-      value: resourceData.resource_type_name,
-      // key: 'resource_type_name',
-    },
-    {
       key: 'status_action',
       label: 'Status',
       value: resourceData.status_name,
@@ -159,7 +143,7 @@ const ProjectResourceDetails: React.FC<ResourceDetailsProps> = ({
     },
     {
       label: 'Effort',
-      value: valueDisplay(resourceData.total_hours_pro_res),
+      value: resourceData.total_hours_pro_res,
       key: 'total_hours_pro_res',
     },
     {
@@ -192,14 +176,6 @@ const ProjectResourceDetails: React.FC<ResourceDetailsProps> = ({
         resourceData?.currency_symbol
       ),
       key: 'total_cost_pro_res',
-    },
-    {
-      // key: 'net_total_cost_pro_res',
-      label: 'Net Resource Cost',
-      value: costDisplay(
-        resourceData.net_total_cost_pro_res,
-        resourceData?.currency_symbol
-      ),
     },
   ];
 

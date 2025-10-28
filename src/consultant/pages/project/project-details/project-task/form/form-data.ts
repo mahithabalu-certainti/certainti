@@ -7,11 +7,9 @@ import {
 import {
   createAutoCompleteField,
   createDateField,
-  createSelectField,
   createTextAreaField,
   createTextField,
   PROJECT_TASK_REGEX,
-  REGEX_PATTERNS,
 } from '../../../../../../common-utils';
 
 // 1. Extract date constants
@@ -33,8 +31,6 @@ export const fiscalYears = getFiscalYears(DATE_CONFIG.FISCAL_YEARS_RANGE);
 
 export const ProjectTaskFormData = (
   memoizedProjectResourceCode: SelectOption[],
-  memoizedProjectResourceType: SelectOption[],
-  memoizedProjectResourceClassification: SelectOption[],
   isEditView?: boolean,
   fiscalDate?: FormFiscalDateType,
   permissionMapTaskForm?: Record<string, { read: boolean; edit: boolean }>
@@ -68,88 +64,18 @@ export const ProjectTaskFormData = (
                 !permissionMapTaskForm?.['resource_code']?.edit,
             }
           ),
-          createTextField('task_name', 'Task Name', {
-            required: false,
-            placeholder: 'Enter Task Name',
-            hide:
-              isEditView &&
-              !permissionMapTaskForm?.['task_name']?.read &&
-              !permissionMapTaskForm?.['task_name']?.edit,
-            disabled:
-              isEditView &&
-              permissionMapTaskForm?.['task_name']?.read &&
-              !permissionMapTaskForm?.['task_name']?.edit,
-            errorHandling: [
-              {
-                regex: REGEX_PATTERNS.MIN_3,
-                errorMessage: 'Task Name must be more than 2 characters long',
-              },
-              {
-                regex: REGEX_PATTERNS.MAX_250,
-                errorMessage: 'Max length exceeded',
-              },
-            ],
-          }),
-          createSelectField('task_type_rid', 'Task Type', {
-            required: false,
-            width: '140px',
-            placeholder: 'Choose Task Type',
-            options: memoizedProjectResourceType,
-            hide:
-              isEditView &&
-              !permissionMapTaskForm?.['task_type_rid']?.read &&
-              !permissionMapTaskForm?.['task_type_rid']?.edit,
-            disabled:
-              isEditView &&
-              permissionMapTaskForm?.['task_type_rid']?.read &&
-              !permissionMapTaskForm?.['task_type_rid']?.edit,
-          }),
-          createSelectField('task_classification_rid', 'Classification Type', {
-            required: false,
-            width: '140px',
-            placeholder: 'Choose Classification Type',
-            options: memoizedProjectResourceClassification,
-            hide:
-              isEditView &&
-              !permissionMapTaskForm?.['task_classification_rid']?.read &&
-              !permissionMapTaskForm?.['task_classification_rid']?.edit,
-            disabled:
-              isEditView &&
-              permissionMapTaskForm?.['task_classification_rid']?.read &&
-              !permissionMapTaskForm?.['task_classification_rid']?.edit,
-          }),
         ],
       },
-      {
-        sectionName: '',
-        fillType: 'full',
-        fields: [
-          createTextAreaField('task_description', 'Description', {
-            required: false,
-            placeholder: 'Enter Description',
-            regexErrorMessage: 'Maximum 2000 characters allowed',
-            regex: PROJECT_TASK_REGEX.DESCRIPTION,
-            // disabled:
-            //   isEditView &&
-            //   permissionMapTaskForm?.['comments']?.read &&
-            //   !permissionMapTaskForm?.['comments']?.edit,
-            // hide:
-            //   isEditView &&
-            //   !permissionMapTaskForm?.['comments']?.read &&
-            //   !permissionMapTaskForm?.['comments']?.edit,
-          }),
-        ],
-      },
+
       {
         sectionName: 'Task Details',
         fillType: 'half',
         fields: [
           createDateField('start_date', 'Start Date', {
-            required: true,
+            required: false,
             minDate: fiscalDate?.startMin,
             maxDate: fiscalDate?.startMax,
             disableFutureDates: true,
-            clearDate: 'project_resource_rid',
             disabled:
               isEditView &&
               permissionMapTaskForm?.['start_date']?.read &&
@@ -160,10 +86,9 @@ export const ProjectTaskFormData = (
               !permissionMapTaskForm?.['start_date']?.edit,
           }),
           createDateField('end_date', 'End Date', {
-            required: true,
+            required: false,
             minDate: fiscalDate?.startMin,
             maxDate: fiscalDate?.endMax,
-            clearDate: 'project_resource_rid',
             disabled:
               isEditView &&
               permissionMapTaskForm?.['end_date']?.read &&
@@ -195,7 +120,6 @@ export const ProjectTaskFormData = (
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             placeholder: 'Enter Effort',
-            formatCostValue: true,
             disabled:
               isEditView &&
               permissionMapTaskForm?.['total_hours_pro_task']?.read &&
@@ -290,8 +214,6 @@ export const ProjectTaskFormData = (
       isEditView,
       memoizedProjectResourceCode,
       permissionMapTaskForm,
-      memoizedProjectResourceType,
-      memoizedProjectResourceClassification,
     ]
   );
 };

@@ -32,7 +32,7 @@ export const fetchManageUserList = async (params: UserListParams = {}) => {
     sortOrder: params.sortOrder || 'DESC',
     filters: params.filters || {},
     ...(params.filters && { filters: params.filters }),
-    ...(params.search && { search: params.search }),
+    ...(params.searchTerm && { search: params.searchTerm }),
   };
 
   const url = getUserListUrl(queryParams);
@@ -49,7 +49,7 @@ export const useManageUserList = (
     queryFn: () => fetchManageUserList(params),
     staleTime: 0, // No cache
     gcTime: 0, // Immediately remove from cache
-    // enabled: !!refreshUserTrigger,
+    enabled: !!refreshUserTrigger,
   });
 };
 

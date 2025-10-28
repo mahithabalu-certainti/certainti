@@ -371,7 +371,6 @@ export const getProjectColumns = (
       type: 'text',
       required: false,
       placeholder: 'Enter Project Effort',
-      formatCostNumber: true,
       validation: [
         {
           regex: REGEX_PATTERNS.EFFORTS_NUMBER,
@@ -409,7 +408,6 @@ export const getProjectColumns = (
     field: {
       type: 'text',
       required: false,
-      formatCostNumber: true,
       placeholder: 'Enter Project Cost',
       validation: [
         {
@@ -444,7 +442,6 @@ export const getProjectColumns = (
     field: {
       type: 'text',
       required: false,
-      formatCostNumber: true,
       placeholder: 'Enter FTE Cost',
       validation: [
         {
@@ -479,7 +476,6 @@ export const getProjectColumns = (
     field: {
       type: 'text',
       required: false,
-      formatCostNumber: true,
       placeholder: 'Enter Sub Con Cost',
       validation: [
         {
@@ -513,7 +509,6 @@ export const getProjectColumns = (
     field: {
       type: 'text',
       required: false,
-      formatCostNumber: true,
       placeholder: 'Enter Non Labor Cost',
       validation: [
         {
@@ -549,7 +544,9 @@ export const getProjectColumns = (
           {row.project_point_of_contact}
         </div>
       ) : (
-        '-'
+        <span>
+          {row.project_point_of_contact ? row.project_point_of_contact : '-'}
+        </span>
       );
     },
   },
@@ -578,7 +575,11 @@ export const getProjectColumns = (
           {row.technical_point_of_contact}
         </div>
       ) : (
-        '-'
+        <span>
+          {row.technical_point_of_contact
+            ? row.technical_point_of_contact
+            : '-'}
+        </span>
       );
     },
   },
@@ -591,44 +592,33 @@ export const getProjectColumns = (
     hide:
       !permissionMap?.['assessment_status']?.read &&
       !permissionMap?.['assessment_status']?.edit,
-    render: (row: Project & { _level?: number }) => {
-      const isChild = row._level !== undefined && row._level === 1;
-      return isChild ? row.assessment_status : '-';
-    },
   },
   {
-    id: 'rd_percent_final',
-    label: 'QRE Percent Final',
+    id: 'rd_percent_potential_ai',
+    label: 'QRE %',
     sortable: true,
-    sortId: 'rd_percent_final',
-    width: 150,
+    sortId: 'rd_percent_potential_ai',
+    width: 130,
     sx: {
       textAlign: 'right',
     },
     hide:
       !permissionMap?.['qre_final']?.read &&
       !permissionMap?.['qre_final']?.edit,
-
-    render: (row: Project) => {
-      const isChild = row._level !== undefined && row._level === 1;
-      return isChild ? row.rd_percent_final : '-';
-    },
+    render: (row: Project) =>
+      row.rd_percent_potential_ai ? row.rd_percent_potential_ai : '-',
   },
-
   {
-    id: 'qre_final',
-    label: 'QRE Final',
+    id: 'qre',
+    label: 'QRE',
     sortable: true,
-    sortId: 'qre_final',
+    sortId: 'qre',
     width: 130,
     sx: {
       textAlign: 'right',
     },
     hide: !permissionMap?.['qre']?.read && !permissionMap?.['qre']?.edit,
-    render: (row: Project) => {
-      const isChild = row._level !== undefined && row._level === 1;
-      return isChild ? row.qre_final : '-';
-    },
+    render: (row: Project) => (row.qre ? row.qre : '-'),
   },
   {
     id: 'comments',
@@ -643,10 +633,6 @@ export const getProjectColumns = (
       !accountInActive,
     hide:
       !permissionMap?.['comments']?.read && !permissionMap?.['comments']?.edit,
-    render: (row: Project) => {
-      const isChild = row._level !== undefined && row._level === 1;
-      return isChild ? row.comments : '-';
-    },
     field: {
       type: 'textarea',
       required: false,
@@ -668,12 +654,10 @@ export const getProjectColumns = (
     hide:
       !permissionMap?.['modified_datetime']?.read &&
       !permissionMap?.['modified_datetime']?.edit,
-    render: (row: Project) => {
-      const isChild = row._level !== undefined && row._level === 1;
-      return isChild
-        ? formatDateToYYYYMMDDWithTime(row.modified_datetime) || '-'
-        : '-';
-    },
+    render: (row: Project) =>
+      row.modified_datetime
+        ? formatDateToYYYYMMDDWithTime(row.modified_datetime)
+        : '-',
   },
   {
     id: 'r_number',

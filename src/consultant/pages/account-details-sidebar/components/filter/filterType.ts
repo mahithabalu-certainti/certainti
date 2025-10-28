@@ -233,7 +233,7 @@ export interface FilterComponentProps {
     }>
   >;
   setCurrentCountry?: Dispatch<SetStateAction<string[] | null>>;
-  setCurrentPage?: (page: number) => void;
+  setCurrentPage: (page: number) => void;
   mode?: string;
   handleSorting?: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
   onFilterChange?: (fieldName: string, value: FilterValue) => void;

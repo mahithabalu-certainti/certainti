@@ -89,8 +89,7 @@ export const ResourceFormData = (
   fiscalDate?: FormFiscalDateType,
   resourcePermissionMap?: Record<string, { read: boolean; edit: boolean }>,
   resourceCostPermissionMap?: Record<string, { read: boolean; edit: boolean }>,
-  resourceSkillPermissionMap?: Record<string, { read: boolean; edit: boolean }>,
-  isResourceExists?: boolean
+  resourceSkillPermissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): FormType[] => {
   // const commandsHide =
   //   isEditView &&
@@ -538,7 +537,6 @@ export const ResourceFormData = (
           createTextField('effort_in_hrs', 'Effort In Hrs', {
             required: true,
             placeholder: 'Enter Effort In Hrs',
-            formatCostValue: true,
             disabled:
               isEditView &&
               resourceCostPermissionMap?.['effort_in_hrs']?.read &&
@@ -832,10 +830,9 @@ export const ResourceFormData = (
             maxDate: previousDate,
             disableFutureDates: true,
             disabled:
-              (isEditView &&
-                resourcePermissionMap?.['resource_startdate']?.read &&
-                !resourcePermissionMap?.['resource_startdate']?.edit) ||
-              isResourceExists,
+              isEditView &&
+              resourcePermissionMap?.['resource_startdate']?.read &&
+              !resourcePermissionMap?.['resource_startdate']?.edit,
             hide:
               isEditView &&
               !resourcePermissionMap?.['resource_startdate']?.read &&
@@ -845,10 +842,9 @@ export const ResourceFormData = (
             required: false,
             maxDate: currentDate,
             disabled:
-              (isEditView &&
-                resourcePermissionMap?.['resource_enddate']?.read &&
-                !resourcePermissionMap?.['resource_enddate']?.edit) ||
-              isResourceExists,
+              isEditView &&
+              resourcePermissionMap?.['resource_enddate']?.read &&
+              !resourcePermissionMap?.['resource_enddate']?.edit,
             hide:
               isEditView &&
               !resourcePermissionMap?.['resource_enddate']?.read &&
@@ -1045,7 +1041,6 @@ export const ResourceFormData = (
       rNumberHide,
       modifiedOnHide,
       modifiedByHide,
-      isResourceExists,
     ]
   );
 };

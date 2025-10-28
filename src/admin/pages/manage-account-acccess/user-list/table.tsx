@@ -31,7 +31,6 @@ interface UserTableProps {
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
   >;
-  searchValue?: string;
 }
 export const ManageAccountUserListTable: React.FC<UserTableProps> = ({
   appliedFilters,
@@ -40,7 +39,6 @@ export const ManageAccountUserListTable: React.FC<UserTableProps> = ({
   hide,
   columnAnchorEl,
   setColumnAnchorEl,
-  searchValue,
 }) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -48,19 +46,9 @@ export const ManageAccountUserListTable: React.FC<UserTableProps> = ({
     sortBy: 'first_name',
     sortOrder: 'ASC',
     entity_type: 'ACCOUNT',
-    search: searchValue,
     page: 1,
     limit: 100,
   });
-
-  useEffect(() => {
-    setTableParams((prev) => ({
-      ...prev,
-      search: searchValue,
-      page: 1,
-    }));
-  }, [searchValue]);
-
   const { successToast } = useToast();
   const [addedAccounts, setAddedAccounts] = useState<string[]>([]);
   const [, setAddedProjects] = useState<
@@ -84,7 +72,6 @@ export const ManageAccountUserListTable: React.FC<UserTableProps> = ({
       sortOrder: tableParams.sortOrder,
       entity_type: 'ACCOUNT',
       filters: appliedFilters,
-      search: tableParams.search,
     },
     accountId
   );

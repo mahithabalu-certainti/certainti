@@ -15,7 +15,6 @@ export const AttachmentListURL = ({
   entityId,
   accountRid,
   isGlobal,
-  search,
 }: AttachmentsListURLParams) => {
   const baseUrl = `/api/attachment/list${isGlobal ? `/summary` : ''}`;
   const searchParams = new URLSearchParams();
@@ -42,9 +41,6 @@ export const AttachmentListURL = ({
   if (globalFilters !== undefined) {
     searchParams.set('globalFilters', JSON.stringify(globalFilters));
   }
-  if (search) {
-    searchParams.set('search', search);
-  }
 
   return `${baseUrl}?${searchParams.toString()}`;
 };
@@ -61,7 +57,6 @@ export const AttachmentExportListURL = ({
   entityId,
   accountRid,
   attachmentLevel,
-  search,
 }: AttachmentsListExportParams): string => {
   const baseUrl = attachmentLevel
     ? `/api/attachment/list/export`
@@ -87,9 +82,6 @@ export const AttachmentExportListURL = ({
     searchParams.set('accountRid', accountRid.toString());
   }
   if (timezone !== undefined) searchParams.set('timezone', timezone);
-  if (search) {
-    searchParams.set('search', search);
-  }
   const queryString = searchParams.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 };

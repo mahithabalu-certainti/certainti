@@ -2,8 +2,6 @@ import React from 'react';
 import { SxProps } from '@mui/material';
 import { Theme } from '@emotion/react';
 import TextButton from '../button/text-button';
-import { ActionsDropdown } from '../actions-dropdown';
-import { ActionsDropdownItem } from '../../common-utils';
 
 interface SectionHeaderButton {
   label: string;
@@ -20,8 +18,6 @@ interface SectionHeaderProps {
   title: string;
   titleIcon?: React.ReactNode;
   count?: number;
-  ActionName?: string;
-  actionItems?: ActionsDropdownItem[];
   buttons?: SectionHeaderButton[];
   onViewToggle?: () => void;
   showBackArrow?: boolean;
@@ -38,8 +34,6 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
   title,
   titleIcon,
   count = 0,
-  ActionName,
-  actionItems = [],
   buttons = [],
   onViewToggle,
   subValue,
@@ -105,35 +99,25 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
             )}
           </div>
         </div>
+
         <div className='flex items-center gap-2'>
-          <div>
-            {actionItems.length > 0 && (
-              <ActionsDropdown
-                actions={actionItems}
-                titleName={ActionName}
-                sx={{ fontWeight: 400 }}
+          {buttons.map((button, index) =>
+            button.hide ? null : (
+              <TextButton
+                key={`section-header-btn-${index}`}
+                label={button.label}
+                onClick={
+                  button.label.toLowerCase() === 'view'
+                    ? onViewToggle
+                    : button.onClick
+                }
+                loading={button.loading}
+                aria-label={button.label}
+                sx={button.sx}
+                disabled={button.disabled}
               />
-            )}
-          </div>
-          <div className='flex items-center gap-2'>
-            {buttons.map((button, index) =>
-              button.hide ? null : (
-                <TextButton
-                  key={`section-header-btn-${index}`}
-                  label={button.label}
-                  onClick={
-                    button.label.toLowerCase() === 'view'
-                      ? onViewToggle
-                      : button.onClick
-                  }
-                  loading={button.loading}
-                  aria-label={button.label}
-                  sx={button.sx}
-                  disabled={button.disabled}
-                />
-              )
-            )}
-          </div>
+            )
+          )}
         </div>
       </div>
     </div>

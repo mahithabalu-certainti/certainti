@@ -56,7 +56,6 @@ import {
   useGetProjectType,
 } from '../../../../consultant/services/project';
 import { Project } from '../../../../consultant/types/project';
-import { clearFilters } from '../../../../components/filter-component/utils';
 
 const HEADER_STYLES = {
   adminPermission:
@@ -340,6 +339,10 @@ export const CreateUserGroup: React.FC = () => {
   }, [createUserGroup.isSuccess, updateUserGroup.isSuccess]);
   useEffect(() => {
     if (tabs === Tabs.USER) {
+      setUserParams((prev) => ({
+        ...prev,
+        page: 1,
+      }));
       availableUsers.mutate({
         is_consultant_only_group: groupInformation.isConsultantOnly,
         account_rid: selectedAccounts,
@@ -353,9 +356,13 @@ export const CreateUserGroup: React.FC = () => {
       });
     }
     if (tabs === Tabs.PROJECT) {
+      setProjectParams((prev) => ({
+        ...prev,
+        page: 1,
+      }));
       allProjects.mutate({
         limit: projectParams.limit as number,
-        page: projectParams.page as number,
+        page: 1 as number,
         sortBy: projectParams.sortBy as string,
         sortOrder: projectParams.sortOrder as string,
         bothParentAndChild: false,
@@ -391,6 +398,7 @@ export const CreateUserGroup: React.FC = () => {
         }))
       );
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allProjects.data?.projects]);
 
   // Functions
@@ -413,7 +421,6 @@ export const CreateUserGroup: React.FC = () => {
       window.history.back();
     } else {
       setAppliedFilters({});
-      clearFilters();
       setTabs(tabOrder[currentIndex - 1]);
     }
   };
@@ -567,12 +574,10 @@ export const CreateUserGroup: React.FC = () => {
       if (Object.values(newErrors).every((val) => val === '')) {
         // If No errors
         setAppliedFilters({});
-        clearFilters();
         setTabs(Tabs.USER);
       }
     } else if (tabs === Tabs.USER) {
       setAppliedFilters({});
-      clearFilters();
       setTabs(Tabs.PROJECT);
     } else if (tabs === Tabs.PROJECT) {
       const commonData = {
@@ -740,6 +745,7 @@ export const CreateUserGroup: React.FC = () => {
               setAppliedFilters={setAppliedFilters}
               setPage={(page) => setUserParams({ ...userParams, page })}
               handleCloseFilter={handleCloseFilter}
+              carryFilterData={false}
             />
           </Suspense>
         </div>

@@ -9,7 +9,6 @@ import {
   checkPermission,
   costDisplay,
   formatDateToYYYYMMDDWithTime,
-  formatMonthDay,
 } from '../../../../../common-utils';
 import DetailsSection from '../../../../../components/details-section/details';
 import KeyContactSection from '../../../../../components/details-section/keyContact';
@@ -210,15 +209,13 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
   const accountSettings: DetailItem[] = [
     {
       label: 'Fiscal Start',
-      value: accountDetails?.fiscal_start_date
-        ? formatMonthDay(accountDetails?.fiscal_start_date)
-        : '-',
+      value: accountDetails?.fiscal_start_date,
       key: 'fiscal_start_date',
     },
 
     {
       label: 'Fiscal End',
-      value: accountDetails?.fiscal_end_date ? formatMonthDay(accountDetails?.fiscal_end_date) : '-',
+      value: accountDetails?.fiscal_end_date,
       key: 'fiscal_end_date',
     },
     { label: 'Data Residency', value: dataResidency, key: 'data_storage' },

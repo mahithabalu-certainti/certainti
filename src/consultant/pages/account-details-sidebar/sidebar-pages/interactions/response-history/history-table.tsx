@@ -29,14 +29,12 @@ interface HistoryTableProps {
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
   >;
-  searchValue?: string;
 }
 
 const HistoryTable: React.FC<HistoryTableProps> = ({
   setCount,
   columnAnchorEl,
   setColumnAnchorEl,
-  searchValue,
 }) => {
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = useState(100);
@@ -64,7 +62,7 @@ const HistoryTable: React.FC<HistoryTableProps> = ({
           rid: question?.interaction_response_rid,
           question_seq_num: question?.question_id,
           notes: '',
-          is_mandatory: question?.is_mandatory,
+          is_mandatory: false,
           response_on_datetime: question?.response_on,
         })
       );
@@ -83,7 +81,6 @@ const HistoryTable: React.FC<HistoryTableProps> = ({
       sort: sortField,
       sort_by: sortBy,
       fiscal_year: 2023,
-      search: searchValue,
       account_rid: accountid,
       interaction_rid: interactionId,
     },
@@ -149,7 +146,7 @@ const HistoryTable: React.FC<HistoryTableProps> = ({
   const isModalOpen = Boolean(columnAnchorEl);
   const modalId = isModalOpen
     ? 'interaction-response-history-visibility-popover'
-    : undefined;    
+    : undefined;
 
   return (
     <div>

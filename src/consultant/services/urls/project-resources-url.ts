@@ -11,8 +11,7 @@ export const getProjectResourcesUrl = (
 ) => `/api/project_resources/list/${accountNumber}/${projectid}`;
 
 const returnURL = (baseURL: string, params: Record<string, any>): string => {
-  const { page, limit, sortBy, sortOrder, filters, fiscalYear, search } =
-    params;
+  const { page, limit, sortBy, sortOrder, filters, fiscalYear } = params;
 
   const searchParams = new URLSearchParams();
 
@@ -21,7 +20,7 @@ const returnURL = (baseURL: string, params: Record<string, any>): string => {
   if (sortBy) searchParams.set('sortBy', sortBy);
   if (sortOrder) searchParams.set('sortOrder', sortOrder);
   if (fiscalYear) searchParams.set('fiscalYear', fiscalYear);
-  if (search) searchParams.set('search', search);
+
   if (filters && Object.keys(filters).length > 0) {
     searchParams.set('filters', JSON.stringify(filters));
   }
@@ -37,7 +36,6 @@ export const ProjectResourcesURL = ({
   accountNumber,
   fiscalYear,
   projectid,
-  search,
 }: ProjectResourcesListParams): string => {
   const base = getProjectResourcesUrl(accountNumber ?? '', projectid ?? '');
   return returnURL(base, {
@@ -47,7 +45,6 @@ export const ProjectResourcesURL = ({
     sortOrder,
     filters,
     fiscalYear,
-    search,
   });
 };
 
@@ -58,22 +55,20 @@ export const ProjectResourceExportURL = ({
   sortBy,
   sortOrder,
   filters,
+  // fiscalYear,
+  // accountNumber,
   projectRid,
   accountRid,
-  search,
 }: ProjectFinancialResourceExportParams): string => {
   const baseUrl = `/api/project_resources/export/${accountRid}/${projectRid}`;
   const searchParams = new URLSearchParams();
 
   if (sortBy !== undefined) searchParams.set('sortBy', sortBy);
   if (sortOrder !== undefined) searchParams.set('sortOrder', sortOrder);
-  if (search) searchParams.set('search', search);
-
   // Only add filters if the object has properties
   if (filters && Object.keys(filters).length > 0) {
     searchParams.set('filters', JSON.stringify(filters));
   }
-
   const queryString = searchParams.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 };

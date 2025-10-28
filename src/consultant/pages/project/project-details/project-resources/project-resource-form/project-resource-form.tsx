@@ -43,12 +43,8 @@ import {
 import { projectResourcesPayloadData } from './utils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
-import {
-  formatDateToYYYYMMDDWithTime,
-  getIntersection,
-} from '../../../../../../common-utils';
+import { formatDateToYYYYMMDDWithTime } from '../../../../../../common-utils';
 import { RESOURCE_CREATE } from '../../../../../../routes';
-import SkeletonForm from '../../../../../../components/form-builder/skeleton-form';
 
 const ProjectResourceForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
@@ -59,8 +55,6 @@ const ProjectResourceForm: React.FC = () => {
     useState(false);
   const [isResourceType, setIsResourceType] = useState(false);
   const [isSalaryRequired, setIsSalaryRequired] = useState(true);
-  const [currentResource, setCurrentResource] =
-    useState<SelectResourceOption>();
   const [autoCalculatedValue, setAutoCalculatedValue] = useState<number>(0);
   const [, setResourceFinancials] = useState({
     salary: '',
@@ -83,6 +77,9 @@ const ProjectResourceForm: React.FC = () => {
   const createdNewResourceCode =
     searchParams.get('created_resource_code') || '';
   const newProjectResource = searchParams.get('new_project_res_name') || '';
+  const fiscalDate: FormFiscalDateType = projectPFY
+    ? JSON.parse(projectPFY)
+    : undefined;
   const fromLocation = location.state?.from;
   const getProjectResource = useProjectResourceDetail(
     account_Id as string,
@@ -110,26 +107,6 @@ const ProjectResourceForm: React.FC = () => {
   };
 
   const projectResource = getProjectResource.data?.data;
-  const parseDate: {
-    year: number;
-    startMin?: string;
-    startMax?: string;
-    endMax?: string;
-  } = JSON.parse(projectPFY || '');
-  const interactionDate = getIntersection(
-    parseDate.startMin || '',
-    parseDate.startMax || '',
-    currentResource?.start_date || parseDate.startMin || '',
-    currentResource?.end_date || parseDate.startMax || ''
-  );
-  const fiscalDate = projectPFY
-    ? ({
-        year: parseDate.year,
-        endMax: interactionDate?.end,
-        startMax: interactionDate?.end,
-        startMin: interactionDate?.start,
-      } as FormFiscalDateType)
-    : undefined;
 
   const projectResourceData = useMemo(
     () => ({
@@ -170,8 +147,9 @@ const ProjectResourceForm: React.FC = () => {
     return map;
   }, [projectViewEditFields]);
 
-  const { data: projectResourceCodeOptions, isLoading: resCodeLoading } =
-    useGetProjectResourceCode(account_Id as string, project_Id as string);
+  const { data: projectResourceCodeOptions } = useGetProjectResourceCode(
+    account_Id as string
+  );
   // const projectResourceTypeOptions = useGetResourceType();
   const projectResourceSkillTypeOptions = useGetProjectResourceSkillType();
   // const projectResourceRollSkillOptions = useGetProjectResourceRollSkill();
@@ -210,19 +188,9 @@ const ProjectResourceForm: React.FC = () => {
         value: item.resource_code,
         resource_type_rid: item.resource_type_rid,
         resource_type_name: item.resource_type_name,
-        start_date: item.start_date,
-        end_date: item.end_date,
       })) || [],
     [projectResourceCodeOptions?.data?.resourceCodes]
   );
-  useEffect(() => {
-    if (projectResource?.projectResource?.resource_code) {
-      const currentResourceCode = memoizedProjectResourceCode.find(
-        (it) => it.value === projectResource?.projectResource?.resource_code
-      );
-      setCurrentResource(currentResourceCode);
-    }
-  }, [projectResource?.projectResource?.resource_code]);
 
   const memoizedProjectResourceSkillType: SelectOption[] = useMemo(
     () =>
@@ -280,8 +248,7 @@ const ProjectResourceForm: React.FC = () => {
       updated_resource_rid,
       isEditView,
       showSkillRoleOthersField,
-      isResourceType,
-      autoCalculatedValue
+      isResourceType
     );
     if (isEditView) {
       updateProjectResource.mutate(projectResourceFormData);
@@ -294,9 +261,6 @@ const ProjectResourceForm: React.FC = () => {
               'created_resource_code',
               res?.data?.projectResource?.rid || ''
             );
-            if (createdNewResourceCode) {
-              params.set('path_count', '3');
-            }
             navigate(fromLocation?.pathname + '?' + params.toString(), {
               replace: true,
             });
@@ -344,12 +308,10 @@ const ProjectResourceForm: React.FC = () => {
       setCurrentCountry(data.fieldValue as string);
     }
     if (data.fieldName === 'resource_code') {
-      setAutoCalculatedValue(0);
       const selectedResource = memoizedProjectResourceCode.find(
         (option) => String(option.value) === String(data.fieldValue)
       );
       if (selectedResource) {
-        setCurrentResource(selectedResource);
         setIsResourceType(
           selectedResource?.resource_type_name?.toLowerCase() ===
             ResourceType.full_time
@@ -485,12 +447,6 @@ const ProjectResourceForm: React.FC = () => {
     permissionMap
   );
 
-  const isFormLoading =
-    allCountries.isLoading ||
-    currency.isLoading ||
-    resCodeLoading ||
-    getProjectResource.isLoading;
-
   return (
     <>
       <div className='h-[50px] border-box flex items-center justify-between px-10 border-b-2 border-gray-200 sticky top-0 z-10 bg-white'>
@@ -536,32 +492,28 @@ const ProjectResourceForm: React.FC = () => {
         </div>
       </div>
       <div className='pb-4'>
-        {isFormLoading ? (
-          <SkeletonForm />
-        ) : (
-          <FormBuilder
-            data={formConfig}
-            loading={false}
-            values={
-              isEditView && projectResourceData
-                ? { ...projectResourceData }
-                : !isEditView
-                  ? {
-                      currency_rid: currency_rid,
-                      status_rid: defaultActiveValue,
-                      resource_code: createdNewResourceCode,
-                    }
-                  : {}
-            }
-            outData={submitData}
-            formRef={formRef}
-            layout={Layout.TYPE_1}
-            onChange={onChangeField}
-            keyStart='start_date'
-            keyEnd='end_date'
-            isFrom='project_resource'
-          />
-        )}
+        <FormBuilder
+          data={formConfig}
+          loading={allCountries.isLoading || currency.isLoading}
+          values={
+            isEditView && projectResourceData
+              ? { ...projectResourceData }
+              : !isEditView
+                ? {
+                    currency_rid: currency_rid,
+                    status_rid: defaultActiveValue,
+                    resource_code: createdNewResourceCode,
+                  }
+                : {}
+          }
+          outData={submitData}
+          formRef={formRef}
+          layout={Layout.TYPE_1}
+          onChange={onChangeField}
+          keyStart='start_date'
+          keyEnd='end_date'
+          isFrom='project_resource'
+        />
       </div>
     </>
   );

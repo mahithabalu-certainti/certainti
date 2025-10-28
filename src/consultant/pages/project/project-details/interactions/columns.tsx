@@ -81,9 +81,6 @@ export const getInteractionListColumns = (
     label: 'Recipient Name',
     width: 160,
     sortable: true,
-    sx: (row) => ({
-      background: row?.has_email_recipient ? '#fff' : '#f4ecec !important',
-    }),
     hide:
       !permissionMap?.['recipient_name']?.edit &&
       !permissionMap?.['recipient_name']?.read,
@@ -95,9 +92,6 @@ export const getInteractionListColumns = (
     label: 'Recipient Email',
     width: 200,
     sortable: true,
-    sx: (row) => ({
-      background: row?.has_email_recipient ? '#fff' : '#f4ecec !important',
-    }),
     hide:
       !permissionMap?.['recipient_email']?.edit &&
       !permissionMap?.['recipient_email']?.read,
@@ -105,7 +99,7 @@ export const getInteractionListColumns = (
   },
   {
     id: 'last_resent_on',
-    sortId: 'sent_on_datetime',
+    sortId: 'last_resent_on',
     label: 'Last Sent Date',
     width: 180,
     sortable: true,

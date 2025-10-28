@@ -5,7 +5,6 @@ import {
   costDisplay,
   formatDateToYYYYMMDDWithTime,
   getDateFormat,
-  valueDisplay,
 } from '../../../../../common-utils';
 import DetailsTable from '../../../../../components/details-section/details-table';
 import { useMemo } from 'react';
@@ -125,7 +124,7 @@ const ProjectTaskDetails: React.FC<ResourceDetailsProps> = ({
     },
     {
       key: 'status_action',
-      label: 'Status',
+      label: 'Status Name',
       value: projectTaskData.status_name,
     },
   ];
@@ -152,7 +151,7 @@ const ProjectTaskDetails: React.FC<ResourceDetailsProps> = ({
     {
       key: 'total_hours_pro_task',
       label: 'Effort',
-      value: valueDisplay(projectTaskData.total_hours_pro_task),
+      value: projectTaskData.total_hours_pro_task,
     },
   ];
 

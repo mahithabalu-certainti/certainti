@@ -1,8 +1,4 @@
-import {
-  AllPermissions,
-  PermissionTable,
-  UserDetail,
-} from '../../common-service';
+import { AllPermissions, UserDetail } from '../../common-service';
 import {
   applyHidePermission,
   formatDateToYYYYMMDDWithTime,
@@ -14,15 +10,8 @@ import { RootState } from '../../store/store';
 import { useSelector } from 'react-redux';
 import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { ListTable } from '../table';
-import TextButton from '../button/text-button';
-import { ExtendedPermissionColumns } from './column';
 
-export const UserDetailComponent = ({
-  data,
-  loading,
-  gotoExtendedPermission,
-}: UserDetail) => {
+export const UserDetailComponent = ({ data, loading }: UserDetail) => {
   // Map your API data to the mock data structure
   const getValueOrDefault = (
     value?: string | number | null,
@@ -47,100 +36,6 @@ export const UserDetailComponent = ({
     });
     return map;
   }, [userViewEditFields]);
-
-  const transformedData = useMemo(() => {
-    const menus: {
-      [key: string]: {
-        menu_id: string | number | undefined;
-        menu_desc: string;
-        modules: {
-          [key: string]: {
-            module_desc: string;
-            permissions: string[];
-            fields: string[];
-            hasPermission: boolean;
-          };
-        };
-      };
-    } = {};
-
-    data?.permissions?.forEach((item) => {
-      if (item.menu_id !== undefined && !menus[item.menu_id]) {
-        menus[item.menu_id] = {
-          menu_id: item.menu_id,
-          menu_desc: item.menu_desc || '',
-          modules: {},
-        };
-      }
-
-      if (item.type === 'module') {
-        if (!menus[item.menu_id].modules[item.module_id]) {
-          menus[item.menu_id].modules[item.module_id] = {
-            module_desc: item.module_desc || item.module_name || '',
-            permissions: [],
-            fields: [],
-            hasPermission: false,
-          };
-        }
-      }
-
-      if (item.type === 'permission') {
-        if (!menus[item.menu_id].modules[item.module_id]) {
-          menus[item.menu_id].modules[item.module_id] = {
-            module_desc: item.module_desc || '',
-            permissions: [],
-            fields: [],
-            hasPermission: false,
-          };
-        }
-
-        const moduleGroup = menus[item.menu_id].modules[item.module_id];
-        moduleGroup.hasPermission = true;
-        moduleGroup.permissions.push(item.permission_desc);
-
-        if (item.is_field_available && item.fields?.length) {
-          moduleGroup.fields.push(...item.fields.map((f) => f.field_desc));
-        }
-      }
-    });
-
-    const output: PermissionTable[] = [];
-    Object.values(menus).forEach((menu) => {
-      const moduleValues = Object.values(menu.modules);
-
-      if (moduleValues.length === 0) {
-        output.push({
-          rid: String(output.length + 1),
-          menu: menu.menu_desc,
-          modules: '',
-          permissions: '',
-          fields: '',
-        });
-      } else {
-        moduleValues.forEach((module) => {
-          if (!module.hasPermission) {
-            output.push({
-              rid: String(output.length + 1),
-              menu: menu.menu_desc,
-              modules: module.module_desc,
-              permissions: '',
-              fields: '',
-            });
-          } else {
-            output.push({
-              rid: String(output.length + 1),
-              menu: menu.menu_desc,
-              modules: module.module_desc,
-              permissions: module.permissions.join(', '),
-              fields: module.fields.join(', '),
-            });
-          }
-        });
-      }
-    });
-
-    return output;
-  }, [data]);
 
   if (loading) {
     return (
@@ -263,7 +158,6 @@ export const UserDetailComponent = ({
   const AddressDetails = applyHidePermission(addressInfo, permissionMap);
   const AccessDetails = applyHidePermission(accessInfo, permissionMap);
   const AuditDetails = applyHidePermission(auditInfo, permissionMap);
-
   return (
     <Fragment>
       <DetailsSection
@@ -279,40 +173,6 @@ export const UserDetailComponent = ({
         title='Address'
         data={viewDetails ? addressInfo : AddressDetails}
       />
-      <div className='pt-2 mt-3'>
-        <div className='flex items-center justify-between align-middle px-3 h-[30px] border-t border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC] '>
-          <span>Extended Permissions</span>
-          <TextButton
-            label='Edit'
-            onClick={gotoExtendedPermission}
-            sx={{
-              width: '50px',
-              minWidth: '50px',
-              fontSize: '13px',
-              fontWeight: 400,
-            }}
-          />
-        </div>
-        <div className='text-sm p-3 grid gap-y-3'>
-          <div className='w-full border-t border-l border-solid border-[#CBD6E2]'>
-            <ListTable
-              data={transformedData}
-              columns={ExtendedPermissionColumns()}
-              getRowId={(row: PermissionTable) => row.rid}
-              hoverHighlight={false}
-              tableStyle={{
-                height: '100%',
-                maxHeight: 'calc(100vh - 195px)',
-                overflow: 'auto',
-              }}
-              selectable={false}
-              stickyHeader
-              actionWidth={60}
-              showEmptyRow={false}
-            />
-          </div>
-        </div>
-      </div>
       <DetailsSection
         title='Audit Information'
         data={viewDetails ? auditInfo : AuditDetails}

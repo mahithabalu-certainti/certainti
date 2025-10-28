@@ -78,8 +78,6 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
   const [count, setCount] = useState<number>(0);
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
-  const [searchText, setSearchText] = useState('');
-  const [resetSearch, setResetSearch] = useState(false);
 
   const { permission } = useSelector((state: RootState) => state.permission);
 
@@ -158,16 +156,10 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
     setCount(0);
     setAppliedFilters({});
     clearFilters(`account-financial-${tabParam}`);
-    setSearchText('');
-    setResetSearch(true);
   };
 
   const handleFilter = () => {
     setShowFilter(!showFilter);
-  };
-
-  const handleSearchReset = () => {
-    setResetSearch(false);
   };
 
   const tabs = [
@@ -245,12 +237,6 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
         }
         showFilter={showFilter}
         // showFiscalYear={true}
-        showSearch={tabParam === 'project_cost' || tabParam === 'resource_cost'}
-        searchDisabled={false}
-        searchPlaceholder='Search'
-        onSearch={(text) => setSearchText(text)}
-        searchReset={resetSearch}
-        onSearchReset={handleSearchReset}
       />
       <SectionHeader
         title='Financial Summary'
@@ -305,7 +291,6 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
             setExportType={setExportType}
             setColumnAnchorEl={setColumnAnchorEl}
             columnAnchorEl={columnAnchorEl}
-            searchValue={searchText}
           />
         )}
         {tabParam === 'resource_cost' && isResourceCostViewEnable && (
@@ -320,7 +305,6 @@ const FinancialSummary: React.FC<ProjectFinancialProps> = ({
             setExportType={setExportType}
             setColumnAnchorEl={setColumnAnchorEl}
             columnAnchorEl={columnAnchorEl}
-            searchValue={searchText}
           />
         )}
       </div>

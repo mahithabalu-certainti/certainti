@@ -1,13 +1,13 @@
 import { Typography } from '@mui/material';
 import React, { useMemo } from 'react';
-import { ResourceData } from '../../../../../types'; 
+import { ResourceData } from '../../../../../types';
+import { formatDateToYYYYMMDD } from '../utils';
 import DetailsSection, {
   DetailItem,
 } from '../../../../../../components/details-section/details';
 import {
   applyHidePermission,
   checkPermission,
-  getDateFormat,
   formatDateToYYYYMMDDWithTime,
 } from '../../../../../../common-utils';
 import DetailsTable from '../../../../../../components/details-section/details-table';
@@ -113,12 +113,12 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
   const employmentDetails: DetailItem[] = [
     {
       label: 'Effective Date',
-      value: getDateFormat(resourceData?.resource_startdate),
+      value: formatDateToYYYYMMDD(resourceData?.resource_startdate),
       key: 'resource_startdate',
     },
     {
       label: 'End Date',
-      value: getDateFormat(resourceData?.resource_enddate),
+      value: formatDateToYYYYMMDD(resourceData?.resource_enddate),
       key: 'resource_enddate',
     },
     {

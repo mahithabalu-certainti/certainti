@@ -24,6 +24,9 @@ const ACCEPTED_FILE_TYPES = [
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
   'application/pdf', // .pdf
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+  'image/png', // .png
+  'image/jpeg', // .jpg
+  'text/plain', // .txt
 ];
 
 const Uploads: React.FC<UploadsProps> = ({
@@ -63,12 +66,9 @@ const Uploads: React.FC<UploadsProps> = ({
     for (const file of Array.from(files)) {
       const isAcceptedType =
         ACCEPTED_FILE_TYPES.includes(file.type) ||
-        /\.(csv|xls|xlsx|pdf|docx)$/i.test(file.name);
-
+        /\.(csv|xls|xlsx)$/i.test(file.name);
       if (!isAcceptedType) {
-        showError(
-          `"${file.name}" is not a valid file. Only .csv, .xls, .xlsx, .pdf, or .docx files are allowed.`
-        );
+        showError(`"${file.name}" is not a valid CSV or Excel file.`);
         continue;
       }
       if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
@@ -235,7 +235,7 @@ const Uploads: React.FC<UploadsProps> = ({
             </div>
             <input
               type='file'
-              accept='.csv,.xls,.xlsx,.pdf,.docx'
+              accept='.csv,.xls,.xlsx,.pdf,.docx,.png,.jpg,.txt'
               className='hidden'
               ref={fileInputRef}
               onChange={handleFileSelect}

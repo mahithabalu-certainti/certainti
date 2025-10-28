@@ -389,30 +389,30 @@ export const getProjectColumns = (
       !permissionMap?.['assessment_status']?.edit,
   },
   {
-    id: 'rd_percent_final',
-    label: 'QRE Percent Final',
-    sortable: true,
-    sortId: 'rd_percent_final',
-    width: 150,
-    sx: {
-      textAlign: 'right',
-    },
-    hide:
-      !permissionMap?.['qre_final']?.read &&
-      !permissionMap?.['qre_final']?.edit,
-    render: (row: Project) => (row.rd_percent_final ? row.rd_percent_final : '-'),
-  },
-  {
     id: 'qre_final',
-    label: 'QRE Final',
+    label: 'QRE %',
     sortable: true,
     sortId: 'qre_final',
     width: 130,
     sx: {
       textAlign: 'right',
     },
-    hide: !permissionMap?.['qre']?.read && !permissionMap?.['qre']?.edit,
+    hide:
+      !permissionMap?.['qre_final']?.read &&
+      !permissionMap?.['qre_final']?.edit,
     render: (row: Project) => (row.qre_final ? row.qre_final : '-'),
+  },
+  {
+    id: 'qre',
+    label: 'QRE',
+    sortable: true,
+    sortId: 'qre',
+    width: 130,
+    sx: {
+      textAlign: 'right',
+    },
+    hide: !permissionMap?.['qre']?.read && !permissionMap?.['qre']?.edit,
+    render: (row: Project) => (row.qre ? row.qre : '-'),
   },
   {
     id: 'comments',

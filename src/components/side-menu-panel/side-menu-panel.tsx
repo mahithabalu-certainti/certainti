@@ -114,7 +114,6 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
     searchParams.delete('tab');
     searchParams.delete('attachment_entity');
     searchParams.delete('file_id');
-    searchParams.delete('note_id');
     searchParams.delete('timesheet_id');
     searchParams.delete('interaction_id');
     searchParams.delete('interaction_rid');
@@ -128,7 +127,6 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
     searchParams.delete('page');
     searchParams.delete('pro_res_id');
     searchParams.delete('pro_task_id');
-    searchParams.delete('origin');
 
     if (parentKey) {
       // Submenu item - check if navigation is actually needed

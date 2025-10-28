@@ -36,10 +36,7 @@ import { FilterType } from '../../../../admin/types';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { projectResourceFilterFields } from '../../project/project-details/project-resources/filters/filter-fields';
-import {
-  useGetAppliedProjectResourceCode,
-  useGetProjectResourceTaskType,
-} from '../../../services/project-resources/project-resources-form-service';
+import { useGetAppliedProjectResourceCode } from '../../../services/project-resources/project-resources-form-service';
 import {
   FieldOptionType,
   getAttachmentsFilterFields,
@@ -48,9 +45,6 @@ import ActionImportDropdown from '../../../../components/actions-dropdown/import
 import { FilterValue } from './filter/filterType';
 import { projectTaskFilterFields } from '../../project/project-details/project-task/filters/filter-fields';
 import { FormFiscalDateType } from '../../../types';
-import SearchBar from '../../../../components/search/search-bar';
-import { getNotesFilterFields } from '../../notes/helpers';
-import { useManageUserList } from '../../../../admin/service';
 interface TabProps {
   resourceTab?: ResourceTabs[];
   filterVisibility: boolean;
@@ -78,14 +72,6 @@ interface TabProps {
     { read: boolean; edit: boolean }
   >;
   fiscalDatesArg?: FormFiscalDateType;
-  showSearch?: boolean;
-  searchDisabled?: boolean;
-  searchHidden?: boolean;
-  searchPlaceholder?: string;
-  onSearchTextChange?: (text: string) => void;
-  onSearch?: (text: string) => void;
-  resetSearch?: boolean;
-  onSearchReset?: () => void;
 }
 const TabPanel: React.FC<TabProps> = ({
   resourceTab,
@@ -111,14 +97,6 @@ const TabPanel: React.FC<TabProps> = ({
   handleFilterChange,
   permissionMapTaskTableColumn,
   fiscalDatesArg,
-  showSearch,
-  searchDisabled = false,
-  searchHidden,
-  searchPlaceholder = 'Search',
-  onSearchTextChange,
-  onSearch,
-  resetSearch,
-  onSearchReset,
 }) => {
   const [tabValue, setTabValue] = useState('');
   const location = useLocation();
@@ -142,7 +120,6 @@ const TabPanel: React.FC<TabProps> = ({
     { option: string; value: string }[]
   >([]);
   const [, setSelectedSort] = useState('Accounts');
-  const [searchText, setSearchText] = useState('');
 
   useEffect(() => {
     // assign default tab value
@@ -172,54 +149,9 @@ const TabPanel: React.FC<TabProps> = ({
     value === 'project-task' ? 'project_tasks' : 'project_resources'
   );
 
-  // User List Api
-  const { data: userListData } = useManageUserList({
-    page: 1,
-    limit: 2000,
-    sortBy: 'first_name',
-    sortOrder: 'ASC',
-  });
-
-  const userListOptions = useMemo(() => {
-    return (
-      userListData?.data?.users?.map((item) => ({
-        value: item.rid,
-        label: `${item.first_name} ${item.last_name}`,
-      })) || []
-    );
-  }, [userListData]);
-
   const { data: skillType } = useFetchResourceSkillType(value === 'skill');
   const { data: skillSubType } = useFetchResourceSkillSubType(
     currentSkillType.skill_type_rid
-  );
-  const type = 'type';
-  const { data: projectResourceTypeOptions } =
-    useGetProjectResourceTaskType(type);
-  const classification = 'classification';
-  const { data: projectResourceClassificationOptions } =
-    useGetProjectResourceTaskType(classification);
-  const memoizedProjectResourceType: { option: string; value: string }[] =
-    useMemo(
-      () =>
-        projectResourceTypeOptions?.data?.projectTaskTypes?.map((item) => ({
-          option: item.project_task_type_name,
-          value: item.rid,
-        })) || [],
-      [projectResourceTypeOptions?.data?.projectTaskTypes]
-    );
-  const memoizedProjectResourceClassification: {
-    option: string;
-    value: string;
-  }[] = useMemo(
-    () =>
-      projectResourceClassificationOptions?.data?.projectTaskClassification?.map(
-        (item) => ({
-          option: item.classification_name ?? '',
-          value: item.rid,
-        })
-      ) || [],
-    [projectResourceClassificationOptions?.data?.projectTaskClassification]
   );
   const memoizedResourceCode: { option: string; value: string }[] = useMemo(
     () =>
@@ -281,22 +213,6 @@ const TabPanel: React.FC<TabProps> = ({
       )?.fields ?? [],
     [permission]
   );
-
-  // Permissions
-  const resourceNotesEditFields = useMemo(
-    () =>
-      permission?.find((item) => item.name === AllPermissions.NOTES_VIEW_EDIT)
-        ?.fields ?? [],
-    [permission]
-  );
-
-  const resourceNotesPermissionMap = useMemo(() => {
-    const map: Record<string, { read: boolean; edit: boolean }> = {};
-    resourceNotesEditFields.forEach((item) => {
-      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
-    });
-    return map;
-  }, [resourceNotesEditFields]);
 
   const resourcepermissionMap = useMemo(() => {
     const map: Record<string, { read: boolean; edit: boolean }> = {};
@@ -500,16 +416,12 @@ const TabPanel: React.FC<TabProps> = ({
       return projectTaskFilterFields(
         memoizedResourceCode,
         memoizedResourceType,
-        memoizedProjectResourceType,
-        memoizedProjectResourceClassification,
         permissionMapTaskTableColumn,
         fiscalDatesArg,
         memoizedResourceStatus
       );
     if (value === 'attachments')
       return getAttachmentsFilterFields(fieldOptions, attachmentPermissionMap);
-    if (value === 'notes')
-      return getNotesFilterFields(resourceNotesPermissionMap, userListOptions);
     return value === 'cost'
       ? getCostFilterFields(
           memoizedCurrency,
@@ -534,16 +446,11 @@ const TabPanel: React.FC<TabProps> = ({
     projectPermissionMap,
     memoizedResourceCode,
     permissionProjectResourcesMap,
-    memoizedResourceStatus,
-    memoizedProjectResourceType,
-    memoizedProjectResourceClassification,
     permissionMapTaskTableColumn,
-    fiscalDatesArg,
     fieldOptions,
     attachmentPermissionMap,
-    resourceNotesPermissionMap,
-    userListOptions,
     memoizedCurrency,
+    memoizedResourceStatus,
     resourceCostpermissionMap,
     memoizedSkillType,
     skillSubTypeData,
@@ -637,24 +544,6 @@ const TabPanel: React.FC<TabProps> = ({
           </Tabs>
         )}
         <Box className='flex items-center'>
-          {showSearch && (
-            <Box className='mr-2'>
-              <SearchBar
-                initialSearchText={searchText}
-                onSearch={(value) => {
-                  setSearchText(value);
-                  onSearch?.(value);
-                  onSearchTextChange?.(value);
-                }}
-                placeholder={searchPlaceholder || ''}
-                disabled={searchDisabled}
-                hide={searchHidden}
-                reset={resetSearch}
-                onReset={onSearchReset}
-              />
-            </Box>
-          )}
-
           {/* <ActionsDropdown actions={MENU_ITEMS} /> */}
           {showToggle && (
             <div className='flex items-center gap-2'>

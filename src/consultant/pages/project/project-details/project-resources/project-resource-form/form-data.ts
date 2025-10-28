@@ -87,11 +87,11 @@ export const ProjectResourceFormData = (
               'bonus',
               'insurance',
               'resource_orgname',
-              'deductions',
-              'total_cost_pro_res',
-              'net_resource_cost',
             ],
-            disabled: isEditView,
+            disabled:
+              isEditView &&
+              permissionMap?.['resource_code']?.read &&
+              !permissionMap?.['resource_code']?.edit,
             hide:
               isEditView &&
               !permissionMap?.['resource_code']?.read &&
@@ -183,8 +183,10 @@ export const ProjectResourceFormData = (
             minDate: fiscalDate?.startMin,
             maxDate: fiscalDate?.startMax,
             disableFutureDates: true,
-            clearDate: 'resource_code',
-            disabled: isEditView,
+            disabled:
+              isEditView &&
+              permissionMap?.['start_date']?.read &&
+              !permissionMap?.['start_date']?.edit,
             hide:
               isEditView &&
               !permissionMap?.['start_date']?.read &&
@@ -198,8 +200,10 @@ export const ProjectResourceFormData = (
             //   field: 'start_date',
             //   message: 'End Date must be after Start Date',
             // },
-            clearDate: 'resource_code',
-            disabled: isEditView,
+            disabled:
+              isEditView &&
+              permissionMap?.['end_date']?.read &&
+              !permissionMap?.['end_date']?.edit,
             hide:
               isEditView &&
               !permissionMap?.['end_date']?.read &&
@@ -211,7 +215,6 @@ export const ProjectResourceFormData = (
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             placeholder: 'Enter Effort',
-            formatCostValue: true,
             disabled:
               isEditView &&
               permissionMap?.['total_hours_pro_res']?.read &&

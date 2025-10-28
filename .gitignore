@@ -24,5 +24,4 @@ coverage
 *.sln
 *.sw?
 .env.dev
-.env.qa
 .env.prod

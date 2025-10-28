@@ -2,10 +2,8 @@ import {
   costDisplay,
   getDateFormat,
   PROJECT_TASK_REGEX,
-  REGEX_PATTERNS,
   valueDisplay,
 } from '../../../../../common-utils';
-import TextButton from '../../../../../components/button/text-button';
 import {
   DependencyRowData,
   ListTableColumn,
@@ -23,19 +21,13 @@ export const formatDateToYMD = (dateString: string): string => {
 };
 export const getProjectTaskColumns = (
   onClick: (row: ProjectTaskListType) => void,
-  handleAttachmentClick: (rowId: string) => void,
-  handleCreateNote: (row: ProjectTaskListType) => void,
   memoizedProjectResourceCode: SelectOption[],
-  TaskTypeOptions: SelectOption[],
-  classificationOptions: SelectOption[],
   permissionMapTaskTableColumn: Record<
     string,
     { read: boolean; edit: boolean }
   >,
   accountOrProjectInActive?: boolean,
-  fiscalDate?: FormFiscalDateType,
-  isAttachmentCreateEnable?: boolean,
-  isNoteCreateEnable?: boolean
+  fiscalDate?: FormFiscalDateType
 ): ListTableColumn<ProjectTaskListType>[] => [
   {
     id: 'resource_code',
@@ -85,37 +77,6 @@ export const getProjectTaskColumns = (
       !permissionMapTaskTableColumn?.['resource_name']?.edit,
   },
   {
-    id: 'task_name',
-    label: 'Task Name',
-    editId: 'task_name',
-    sortable: true,
-    sortId: 'task_name',
-    width: 160,
-    field: {
-      type: 'text',
-      required: false,
-      placeholder: 'Enter Task Name',
-      validation: [
-        {
-          regex: REGEX_PATTERNS.MIN_3,
-          errorMessage: 'Task Name must be more than 2 characters long',
-        },
-        {
-          regex: REGEX_PATTERNS.MAX_250,
-          errorMessage: 'Max length exceeded',
-        },
-      ],
-    },
-
-    editable:
-      permissionMapTaskTableColumn?.['task_name']?.read &&
-      permissionMapTaskTableColumn?.['task_name']?.edit &&
-      !accountOrProjectInActive,
-    hide:
-      !permissionMapTaskTableColumn?.['task_name']?.read &&
-      !permissionMapTaskTableColumn?.['task_name']?.edit,
-  },
-  {
     id: 'resource_type_name',
     label: 'Resource Type',
     sortable: true,
@@ -134,48 +95,6 @@ export const getProjectTaskColumns = (
     hide:
       !permissionMapTaskTableColumn?.['project_resource_role']?.read &&
       !permissionMapTaskTableColumn?.['project_resource_role']?.edit,
-  },
-  {
-    id: 'task_type_name',
-    editId: 'task_type_rid',
-    sortId: 'task_type_name',
-    label: 'Task Type',
-    width: 140,
-    sortable: true,
-    editable:
-      permissionMapTaskTableColumn?.['task_type_rid']?.read &&
-      permissionMapTaskTableColumn?.['task_type_rid']?.edit &&
-      !accountOrProjectInActive,
-    hide:
-      !permissionMapTaskTableColumn?.['task_type_rid']?.read &&
-      !permissionMapTaskTableColumn?.['task_type_rid']?.edit,
-    field: {
-      type: 'select',
-      required: false,
-      placeholder: 'Choose Task Type',
-      options: TaskTypeOptions,
-    },
-  },
-  {
-    id: 'task_classification_name',
-    editId: 'task_classification_rid',
-    sortId: 'task_classification_name',
-    label: 'Classification  Type',
-    width: 180,
-    sortable: true,
-    editable:
-      permissionMapTaskTableColumn?.['task_classification_rid']?.read &&
-      permissionMapTaskTableColumn?.['task_classification_rid']?.edit &&
-      !accountOrProjectInActive,
-    hide:
-      !permissionMapTaskTableColumn?.['task_classification_rid']?.read &&
-      !permissionMapTaskTableColumn?.['task_classification_rid']?.edit,
-    field: {
-      type: 'select',
-      required: false,
-      placeholder: 'Choose Classification Type',
-      options: classificationOptions,
-    },
   },
   {
     id: 'start_date',
@@ -279,7 +198,6 @@ export const getProjectTaskColumns = (
     field: {
       type: 'text',
       required: false,
-      formatCostNumber: true,
       placeholder: 'Enter Cost',
       validation: [
         {
@@ -313,7 +231,6 @@ export const getProjectTaskColumns = (
       !permissionMapTaskTableColumn?.['total_hours_pro_task']?.edit,
     field: {
       type: 'text',
-      formatCostNumber: true,
       required: false,
       placeholder: 'Enter an effort',
       validation: [
@@ -385,40 +302,5 @@ export const getProjectTaskColumns = (
     hide:
       !permissionMapTaskTableColumn?.['r_number']?.read &&
       !permissionMapTaskTableColumn?.['r_number']?.edit,
-  },
-  {
-    id: 'attachments',
-    sortId: 'attachments',
-    label: 'Attachments',
-    width: 100,
-    sortable: false,
-    hide: !isAttachmentCreateEnable,
-    render: (row) => (
-      <TextButton
-        label='Add'
-        disabled={accountOrProjectInActive}
-        sx={{ width: '45px', minWidth: '45px', maxWidth: '45px', ml: 2.5 }}
-        onClick={() => handleAttachmentClick?.(row.rid ?? '')}
-      />
-    ),
-  },
-  {
-    id: 'notes',
-    sortId: 'notes',
-    label: 'Notes',
-    width: 80,
-    sortable: false,
-    hide: !isNoteCreateEnable,
-    sx: {
-      textAlign: 'center',
-    },
-    render: (row) => (
-      <TextButton
-        label='Add'
-        disabled={accountOrProjectInActive}
-        sx={{ width: '45px', minWidth: '45px', maxWidth: '45px' }}
-        onClick={() => handleCreateNote(row)}
-      />
-    ),
   },
 ];

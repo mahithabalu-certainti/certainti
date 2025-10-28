@@ -38,7 +38,6 @@ interface IUserTableProps {
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
   >;
-  searchValue?: string;
 }
 
 export const ProfileTable: React.FC<IUserTableProps> = ({
@@ -51,7 +50,6 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
   refreshProfileTrigger,
   columnAnchorEl,
   setColumnAnchorEl,
-  searchValue,
 }) => {
   const navigate = useNavigate();
   const { errorToast } = useToast();
@@ -76,14 +74,19 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
     return map;
   }, [profileViewEditFields]);
 
+  useEffect(() => {
+    setTableParams((prev) => ({
+      ...prev,
+      filters: appliedFilters,
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appliedFilters]);
+
   const {
     data: ProfileList,
     isLoading,
     isError,
-  } = useManageProfileList(
-    { ...tableParams, filters: appliedFilters, search: searchValue },
-    refreshProfileTrigger
-  );
+  } = useManageProfileList(tableParams, refreshProfileTrigger);
   const totalItems = ProfileList?.data?.count || 0;
 
   useEffect(() => {

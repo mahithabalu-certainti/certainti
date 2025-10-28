@@ -42,15 +42,11 @@ export interface TechnicalSummaryListResponse {
     techSummaryInfo: TechnicalSummaryList[];
   };
 }
-export interface Technical_summary {
-  title: string;
-  summary: string;
-  summary_tag_ids: number | string;
-}
+
 export interface TechnicalSummaryDetails {
   rid: string;
   r_number: string;
-  technical_summary: Technical_summary[];
+  technical_summary: string;
   version: number;
   status_rid: string | null;
   status_name: string | null;
@@ -67,7 +63,9 @@ export interface TechnicalSummaryDetailsResponse {
   statusCode: number;
   statusCodeValue: string;
   statusMessage: string;
-  data: TechnicalSummaryDetails;
+  data: {
+    technicalSummaryDetails: TechnicalSummaryDetails;
+  };
 }
 
 export interface TechnicalSummaryTextUpdateRequest {

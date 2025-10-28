@@ -20,8 +20,6 @@ interface UserTabProps {
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
   >;
-  searchValue?: string;
-  onSearchReset?: () => void;
 }
 
 const UserTab: React.FC<UserTabProps> = ({
@@ -33,8 +31,6 @@ const UserTab: React.FC<UserTabProps> = ({
   hide,
   columnAnchorEl,
   setColumnAnchorEl,
-  searchValue,
-  onSearchReset,
 }) => {
   const [searchParams] = useSearchParams();
   const accountList = searchParams.get('accountList');
@@ -55,7 +51,6 @@ const UserTab: React.FC<UserTabProps> = ({
                     hide={hide}
                     setColumnAnchorEl={setColumnAnchorEl}
                     columnAnchorEl={columnAnchorEl}
-                    searchValue={searchValue}
                   />
                 ),
               },
@@ -69,13 +64,11 @@ const UserTab: React.FC<UserTabProps> = ({
                     hide={hide}
                     setColumnAnchorEl={setColumnAnchorEl}
                     columnAnchorEl={columnAnchorEl}
-                    searchValue={searchValue}
                   />
                 ),
               },
             ]}
             setAppliedFilters={setAppliedFilters}
-            onSearchReset={onSearchReset}
           />
         </div>
       )}

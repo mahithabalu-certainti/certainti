@@ -102,10 +102,6 @@ export const ManageUserDetails: React.FC = () => {
     window.history.back();
   };
 
-  const gotoExtendedPermission = () => {
-    navigate(ADMIN_MANAGE_USER + '/extended-permission/' + userId);
-  };
-
   if (!userIsEnable || !isUserViewEnable) return <AccessRestricted />;
 
   return (
@@ -187,7 +183,6 @@ export const ManageUserDetails: React.FC = () => {
           <UserDetailComponent
             data={userDetail}
             loading={userDetails.isLoading}
-            gotoExtendedPermission={gotoExtendedPermission}
           />
         </Box>
       </div>

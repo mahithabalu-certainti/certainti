@@ -153,28 +153,7 @@ export type InteractionList = {
   account_name?: string | null;
   project_count?: string;
   modified_user_name?: string;
-  interaction_level_name?: string;
 };
-
-export type InteractionTemplateList = {
-  rid: string;
-  status: string;
-  r_number: string;
-  created_by: string;
-  modified_by: string;
-  status_name: string;
-  total_records: number;
-  created_datetime: string;
-  interaction_type: string;
-  created_user_name: string;
-  interaction_level: string;
-  modified_datetime: string;
-  modified_user_name: string;
-  interaction_type_name: string;
-  interaction_level_name: string;
-  template_name: string;
-};
-
 export type ResponseInteractionList = {
   rid: string;
   r_number: string;
@@ -208,16 +187,6 @@ export interface InteractionListURLParams {
   isGlobal?: boolean;
   flag?: string;
   attachment_count?: number | string | null;
-  search?: string;
-  reminder_specific_list?: boolean;
-}
-
-export interface InteractionTemplatePayload {
-  sortBy: string;
-  sortOrder: string;
-  apiSource: string;
-  templateType: string;
-  filters: object;
 }
 
 export interface ResponseListURLParams {
@@ -235,7 +204,6 @@ export interface InteractionListResponse {
     limit: number;
     totalCount: number;
     interactions: InteractionList[];
-    keyContact: InteractionKeyContacts;
   };
 }
 export interface AccountInteractionListResponse {
@@ -313,8 +281,6 @@ export interface InteractionDetails {
   response_updated_on: string | null;
   account_rnumber: string;
   project_rnumber: string;
-  recipient_email?: string;
-  interaction_level_name?: string;
 }
 
 export interface InteractionDetailsResponse {
@@ -335,7 +301,6 @@ export interface InteractionHistoryResponse {
   response: string;
   response_on: string;
   attachments: Attachment[];
-  is_mandatory?: boolean
 }
 export interface InteractionDetailsHistoryResponse {
   statusCode: number;
@@ -379,7 +344,7 @@ export interface InteractionAttachmentListParams {
   sortBy?: string;
   sortOrder?: SortOrder;
   filters?: Filters;
-  search?: string;
+  searchTerm?: string;
   exportKey?: string;
   timezone?: string;
   entity_type?: string;
@@ -446,16 +411,15 @@ export interface UploadInteractionAttachmentResponse {
 export interface InteractionItem {
   interaction_rid: string;
   project_fiscal_rid: string;
-  interaction_level?: string;
+  email_info: {
+    email: string;
+    name: string;
+  };
 }
 
 export interface SendInteractionPayload {
   account_rid: string;
   interactions: InteractionItem[];
-  email_info: {
-    email: string;
-    name: string;
-  };
   customRecipient?: boolean;
   is_interaction_followup?: boolean;
 }
@@ -469,12 +433,4 @@ export interface AccountSendInteractionPayload {
   account_rid: string;
   account_interaction_rid: string[];
   projects: SendIntractionProject[];
-}
-export interface IRecipient {
-  name: string;
-  email: string;
-}
-export interface InteractionKeyContacts {
-  key_contact_email: string;
-  key_contact_name: string;
 }

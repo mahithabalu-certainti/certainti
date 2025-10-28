@@ -118,7 +118,6 @@ const Timesheet: React.FC<TimeSheetProps> = ({
   );
   const [toggleEnabled, setToggleEnabled] = useState(false);
   const [currentCountry, setCurrentCountry] = useState<string>('');
-  const [searchText, setSearchText] = useState('');
 
   // API Hooks
   const fileId = searchParams.get('timesheet_id');
@@ -136,7 +135,6 @@ const Timesheet: React.FC<TimeSheetProps> = ({
       sort_by: sortOrder,
       filters: { ...appliedFilters, entity: { equals: 'project_task' } },
       account_rid: accountid || '',
-      search: searchText,
       fiscal_year: convertedFiscalYear,
     },
     !viewDetails,
@@ -168,7 +166,6 @@ const Timesheet: React.FC<TimeSheetProps> = ({
       filters: appliedFilters,
       account_rid: accountid || '',
       fiscal_year: convertedFiscalYear,
-      search: searchText,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -178,7 +175,6 @@ const Timesheet: React.FC<TimeSheetProps> = ({
     currentPage,
     rowsPerPage,
     convertedFiscalYear,
-    searchText,
   ]);
 
   // Functions
@@ -389,10 +385,6 @@ const Timesheet: React.FC<TimeSheetProps> = ({
         }
         onRefreshClick={onRefreshClick}
         onFilterChange={handleCountry}
-        showSearch={viewDetails ? false : true}
-        searchDisabled={false}
-        searchPlaceholder='Search'
-        onSearch={(text) => setSearchText(text)}
       />
       {viewDetails ? (
         <TimesheetDetails

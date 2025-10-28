@@ -5,8 +5,7 @@ export const projectResourcesPayloadData = (
   updated_resource_rid: string,
   isEdit: boolean,
   showSkillRoleOthersField?: boolean,
-  isResourceType?: boolean,
-  autoCalculatedValue?: number
+  isResourceType?: boolean
 ): Partial<ProjectResourceNewPayload> => {
   const data: Partial<ProjectResourceNewPayload> = {
     account_rid: formData.account_rid,
@@ -36,7 +35,6 @@ export const projectResourcesPayloadData = (
     insurance: isResourceType ? formData.insurance : null,
     deductions: formData.deductions || null,
     description: formData.description || null,
-    net_total_cost_pro_res: autoCalculatedValue?.toString() || '',
   };
 
   if (isEdit && updated_resource_rid) {

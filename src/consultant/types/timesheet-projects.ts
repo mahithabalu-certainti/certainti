@@ -66,7 +66,6 @@ export type TimesheetProjectList = {
   ProjectFiscal: ProjectFiscalSummary[];
   _level?: number;
   currency_rid?: string;
-  rd_percent_final?: string;
 };
 
 export type ProjectFiscalSummary = {

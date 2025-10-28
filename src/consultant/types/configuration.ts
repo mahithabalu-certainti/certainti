@@ -20,7 +20,6 @@ export interface ConfigAssignUserListParms {
   sortBy?: string;
   filters?: object;
   sortOrder?: SortOrder;
-  search?: string;
 }
 
 export interface ConfigAssignUserListApiResponse extends CommonApiResponse {
@@ -37,7 +36,6 @@ export interface ConfigAssignGroupsListParms {
   sortBy?: string;
   filters?: object;
   sortOrder?: SortOrder;
-  search?: string;
 }
 
 export type ConfigAssignGroupsList = {

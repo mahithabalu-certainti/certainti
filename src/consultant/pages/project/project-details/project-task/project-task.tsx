@@ -13,14 +13,10 @@ import {
   useProjectTask,
   useUpdateProjectTaskStatus,
 } from '../../../../services/project/project-task-service';
-import {
-  NOTES_CREATE,
-  PROJECT_TASK,
-  PROJECT_TASK_EDIT,
-} from '../../../../../routes';
+import { PROJECT_TASK, PROJECT_TASK_EDIT } from '../../../../../routes';
 
 import { getProjectTaskColumns } from '../project-task/columns';
-import { generatePath, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   AllMenus,
   AllModules,
@@ -42,7 +38,6 @@ import {
   FormFiscalDateType,
   ProjectResourcesListType,
   SelectOption,
-  SelectResourceOption,
 } from '../../../../types';
 import {
   CellEditData,
@@ -53,10 +48,7 @@ import { useToast } from '../../../../../hooks';
 import { useMutation } from '@apollo/client';
 import { UPDATE_PROJECT_TASK } from '../../../../../api/graphql/queries/project-query';
 import { taskClient } from '../../../../../api/graphql/clients/client';
-import {
-  useGetProjectResourceCode,
-  useGetProjectResourceTaskType,
-} from '../../../../services/project-resources/project-resources-form-service';
+import { useGetProjectResourceCode } from '../../../../services/project-resources/project-resources-form-service';
 import { checkPermission } from '../../../../../common-utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import Uploads from '../../../../../components/Attachments/upload';
@@ -122,10 +114,8 @@ export const ProjectTask = ({
   const [sortField, setSortField] = useState<string>('resource_code');
   const [rowsPerPage, setRowsPerPage] = useState(100);
   const [, setProjectResData] = useState<ProjectTaskListType | null>(null);
-  const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
   const [showProjectTaskDetails, setShowProjectTaskDetails] =
     useState<boolean>(false);
-  const [searchText, setSearchText] = useState('');
   const [searchParams] = useSearchParams();
   const accountID =
     accountData?.accountID || searchParams.get('accountID') || '';
@@ -139,8 +129,6 @@ export const ProjectTask = ({
   ) => {
     setColumnAnchorEl(event.currentTarget);
   };
-
-  const activeMenuPath = searchParams.get('activeMenu') || '';
 
   const navigate = useNavigate();
   const [refreshProjectsTrigger, setRefreshProjectsTrigger] = useState<number>(
@@ -174,12 +162,6 @@ export const ProjectTask = ({
     permission,
     AllPermissions.PROJECTS_TASK_CREATE
   );
-
-  const isNoteCreateEnable = checkPermission(
-    permission,
-    AllPermissions.NOTES_CREATE
-  );
-
   const projectViewEditFields = useMemo(
     () =>
       permission.find(
@@ -204,7 +186,6 @@ export const ProjectTask = ({
       filters: appliedFilters,
       accountRid: accountID,
       projectRid: projectID,
-      search: searchText,
     },
     undefined,
     refreshProjectsTrigger
@@ -224,7 +205,6 @@ export const ProjectTask = ({
     accountID || '',
     refreshTaskDetailPageTrigger
   );
-
   const { successToast } = useToast();
   const updateStatusAccept = useUpdateProjectTaskStatus();
   const totalItems = data?.count || 0;
@@ -233,31 +213,7 @@ export const ProjectTask = ({
       setProjectTaskList(data?.projectTask || []);
     }
   }, [data]);
-  const type = 'type';
-  const { data: projectResourceTypeOptions } =
-    useGetProjectResourceTaskType(type);
-  const classification = 'classification';
-  const { data: projectResourceClassificationOptions } =
-    useGetProjectResourceTaskType(classification);
 
-  const memoizedProjectResourceType: SelectResourceOption[] = useMemo(
-    () =>
-      projectResourceTypeOptions?.data?.projectTaskTypes?.map((item) => ({
-        label: item.project_task_type_name,
-        value: item.rid,
-      })) || [],
-    [projectResourceTypeOptions?.data?.projectTaskTypes]
-  );
-  const memoizedProjectResourceClassification: SelectResourceOption[] = useMemo(
-    () =>
-      projectResourceClassificationOptions?.data?.projectTaskClassification?.map(
-        (item) => ({
-          label: item.classification_name ?? '',
-          value: item.rid,
-        })
-      ) || [],
-    [projectResourceClassificationOptions?.data?.projectTaskClassification]
-  );
   const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
     const defaultSortField = 'resource_code';
     const defaultSortOrder = 'ASC';
@@ -273,11 +229,6 @@ export const ProjectTask = ({
       setSortField(sortBy);
     }
   };
-  const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
-    const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
-    setSortOrder(apiOrder);
-    setSortField(sortBy);
-  };
 
   useEffect(() => {
     const page = searchParams.get('page');
@@ -290,8 +241,7 @@ export const ProjectTask = ({
 
   const resourceData = resourceDetails?.data;
   const { data: projectResourceCodeOptions } = useGetProjectResourceCode(
-    accountID as string,
-    projectID as string
+    accountID as string
   );
   const memoizedProjectResourceCode: SelectOption[] = useMemo(
     () =>
@@ -319,45 +269,13 @@ export const ProjectTask = ({
     },
   ];
 
-  const handleCreateNote = (row?: ProjectTaskListType) => {
-    const projectTaskId = row?.rid || searchParams.get('pro_task_id');
-    const path = generatePath(NOTES_CREATE, {
-      module: 'account',
-    });
-    const queryParams = new URLSearchParams({
-      accountId: accountID,
-      entityLevel: 'project_task',
-      entityId: projectTaskId || '',
-      source: `Project Task > ${resourceData?.r_number || row?.r_number}`,
-      ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
-    });
-    navigate(`${path}?${queryParams.toString()}`);
-  };
-  const handleAttachmentClick = (rowId: string) => {
-    const newParams = new URLSearchParams(searchParams);
-    newParams.set('attachment_entity', 'project_task');
-    navigate({
-      pathname: location.pathname,
-      search: newParams.toString(),
-    });
-    setSelectedRowId(rowId);
-  };
   const headerButtons = [
     {
       label: 'Add Attachment',
       variant: 'outlined' as const,
       onClick: () => handleOpen(),
-      disabled: accountOrProjectInActive,
       sx: { ...BUTTON_STYLES, width: '120px', minWidth: '48px' },
       hide: !viewDetails || !isAttachmentCreateEnable,
-    },
-    {
-      label: 'Add Note',
-      variant: 'outlined' as const,
-      onClick: () => handleCreateNote(),
-      disabled: accountOrProjectInActive,
-      sx: { ...BUTTON_STYLES, width: '80px', minWidth: '80px' },
-      hide: !viewDetails || !isNoteCreateEnable,
     },
     {
       label: viewDetails ? 'Edit' : 'New',
@@ -393,15 +311,12 @@ export const ProjectTask = ({
       const path = resourceData?.rid
         ? PROJECT_TASK_EDIT.replace(':taskId', resourceData.rid)
         : PROJECT_TASK_EDIT;
-      const project_Id = projectID ?? '';
       const queryParams = new URLSearchParams({
-        account_Id: resourceData?.account_rid || accountID || '',
-        project_Id,
+        account_Id: resourceData?.account_rid || '',
+        project_Id: resourceData?.project_rid || '',
         PFY: PFY ? JSON.stringify(PFY) : '',
         source: 'editProjectTask',
         projectCode: projectCode ?? '',
-        account_name: accountData?.accountName || '',
-        account_number: accountData?.accountNumber || '',
       });
       navigate(`${path}?${queryParams.toString()}`);
     }
@@ -440,9 +355,8 @@ export const ProjectTask = ({
       sortBy: sortField,
       sortOrder: sortOrder,
       filters: appliedFilters,
-      search: searchText,
     });
-  }, [sortField, sortOrder, appliedFilters, searchText]);
+  }, [sortField, sortOrder, appliedFilters]);
 
   const handleCreateProjectResource = () => {
     const account_Id = accountID ?? '';
@@ -464,15 +378,12 @@ export const ProjectTask = ({
     const path = row?.rid
       ? PROJECT_TASK_EDIT.replace(':taskId', row.rid)
       : PROJECT_TASK_EDIT;
-    const project_Id = projectID ?? '';
     const queryParams = new URLSearchParams({
-      account_Id: row?.account_rid || accountID || '',
-      project_Id,
+      account_Id: row?.account_rid || '',
+      project_Id: row?.project_rid || '',
       PFY: PFY ? JSON.stringify(PFY) : '',
       projectCode: projectCode ?? '',
       source: 'editProjectTask',
-      account_number: accountData?.accountNumber || '',
-      account_name: accountData?.accountName || '',
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
@@ -516,16 +427,10 @@ export const ProjectTask = ({
 
   const projectTaskColumns = getProjectTaskColumns(
     handleProjectTaskClick,
-    handleAttachmentClick,
-    handleCreateNote,
     memoizedProjectResourceCode,
-    memoizedProjectResourceType,
-    memoizedProjectResourceClassification,
     permissionMapTaskTableColumn,
     accountOrProjectInActive,
-    fiscalDatesArg,
-    isAttachmentCreateEnable,
-    isNoteCreateEnable
+    fiscalDatesArg
   );
   const onRefreshClick = () => {
     setRefreshProjectsTrigger(Date.now());
@@ -687,7 +592,7 @@ export const ProjectTask = ({
         appliedFilters={appliedFilters}
         setAppliedFilters={setAppliedFilters}
         showFilter={showFilter}
-        filterVisibility={filterShow && !showUploads}
+        filterVisibility={filterShow}
         handleFilter={handleFilter}
         setCurrentPage={setCurrentPage}
         resourceTab={projectsTabs}
@@ -700,13 +605,11 @@ export const ProjectTask = ({
         projectResourceProjectID={projectID}
         permissionMapTaskTableColumn={permissionMapTaskTableColumn}
         fiscalDatesArg={fiscalDatesArg}
-        showSearch={viewDetails ? false : !showUploads}
-        onSearch={(text) => setSearchText(text)}
       />
       {showUploads ? (
         <Uploads
           accountId={accountID}
-          attachID={taskId || selectedRowId}
+          attachID={taskId}
           onUploadSuccess={taskDetailPageRefresh}
         />
       ) : (
@@ -781,7 +684,7 @@ export const ProjectTask = ({
                   onRowsPerPageChange={setRowsPerPage}
                   sortBy={sortField}
                   sortOrder={sortOrder}
-                  onSort={handleSort}
+                  onSort={handleSorting}
                   selectable={false}
                   onSelectionChange={(selectedIds: unknown) =>
                     console.log('Selected:', selectedIds)

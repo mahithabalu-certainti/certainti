@@ -12,7 +12,6 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 import { CalendarIcon, CloseIcon } from '../../assets';
 import { checkDependencies, getDateConstraints } from './dependency-utils';
-import { formatCostValue, removeFormatCostValue } from '../../common-utils';
 
 export function cleanCellValue(raw: unknown): string {
   if (raw == null || raw === '-' || raw === '--') return '';
@@ -94,15 +93,12 @@ export const renderFields = <T extends RowData>({
 
   const isFieldDisabled = isSaving || dependencies.isDisabled;
   const fieldError = editingCell.error || dependencies.errorMessage;
-  const rawValue =
-    (column.field?.prefix && column.field?.prefixRegex
-      ? editingCell.value.toString().replace(column.field?.prefixRegex, '')
-      : editingCell.value) || '';
 
   const commonProps = {
-    value: column.field?.formatCostNumber
-      ? formatCostValue(removeFormatCostValue(rawValue?.toString()))
-      : rawValue,
+    value:
+      (column.field?.prefix && column.field?.prefixRegex
+        ? editingCell.value.toString().replace(column.field?.prefixRegex, '')
+        : editingCell.value) || '',
     onChange: handleChange,
     onKeyDown: handleKeyDown,
     disabled: isFieldDisabled,
@@ -178,19 +174,7 @@ export const renderFields = <T extends RowData>({
     case 'text':
       return (
         <div className='relative'>
-          <TextField {...commonProps} type='text' autoFocus onChange={(e) => {
-              const inputValue = e.target.value;
- 
-              if (column.field?.formatCostNumber) {
-                const cleanValue = removeFormatCostValue(inputValue);
-                if (/^\d*\.?\d*$/.test(cleanValue)) {
-                  handleValueChange(cleanValue);
-                }
-              } else {
-                handleChange(e);
-              }
-            }}
-            />
+          <TextField {...commonProps} type='text' autoFocus />
           {column.field.prefix && (
             <span className='absolute left-0 top-1/2 -translate-y-1/2 text-sm border-r border-r-[#d1d5dc] px-1 py-1 pl-[10px]'>
               {column.field.prefix}
@@ -329,11 +313,7 @@ export const renderFields = <T extends RowData>({
 
       return (
         <div onKeyDown={handleKeyDown}>
-          <LocalizationProvider dateAdapter={AdapterDayjs}
-          localeText={{
-            fieldMonthPlaceholder: (params) =>
-              params.contentType === 'digit' ? 'MM' : params.format,
-          }}>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
               value={editingCell.value ? dayjs(editingCell.value) : null}
               onChange={(newValue) => {
@@ -341,7 +321,7 @@ export const renderFields = <T extends RowData>({
                   newValue ? dayjs(newValue).format('YYYY-MM-DD') : ''
                 );
               }}
-              format='YYYY-MMM-DD'
+              format='YYYY-MM-DD'
               disabled={isFieldDisabled}
               minDate={dateConstraints.minDate || undefined}
               maxDate={dateConstraints.maxDate || undefined}

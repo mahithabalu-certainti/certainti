@@ -1,6 +1,4 @@
 export const getInteractionListUrl = () => '/api/interactions/list';
-export const getInteractionListRemainderUrl = () =>
-  '/api/interactions/list/reminder';
 export const getInteractionExportUrl = () => '/api/interactions/export';
 export const getInteractionHistoryExportUrl = () =>
   '/api/interactions/history/export';

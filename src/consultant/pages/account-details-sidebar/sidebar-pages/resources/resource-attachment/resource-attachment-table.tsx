@@ -52,7 +52,6 @@ interface ResourceSkillTableProps {
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
   >;
-  searchValue?: string;
 }
 const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
   appliedFilters,
@@ -68,8 +67,6 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
   setCount,
   columnAnchorEl,
   setColumnAnchorEl,
-  searchValue,
-  resourceInActive,
 }) => {
   const { errorToast } = useToast();
   const { accountid } = useParams();
@@ -98,7 +95,6 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
       accountRid: accountid,
       entityId: resourceRid || '',
       fiscalYear: convertedFiscalYear,
-      search: searchValue,
     },
     refreshAttachments
   );
@@ -124,7 +120,7 @@ const ResourceAttachmentsTable: React.FC<ResourceSkillTableProps> = ({
   const categoryTypes = useGetDocumentCategoryType(currentCategory);
   const accountInActive =
     accountDetails?.data?.accountById?.status?.status_name?.toLowerCase() !==
-      'active' || resourceInActive;
+    'active';
 
   const memoizedDocumentTypes: SelectOption[] = useMemo(
     () =>

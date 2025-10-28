@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   AllModules,
@@ -7,7 +6,6 @@ import {
   useGetInteractionLevel,
   useGetInteractionResponeSources,
   useGetInteractionStatus,
-  useGetInteractionStatusByReminder,
   useGetInteractionTypes,
 } from '../../../../../common-service';
 import {
@@ -17,11 +15,7 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 import { ExportType, InteractionList, StatusTypeEnum } from '../../../../types';
-import {
-  useInteractionList,
-  useInteractionListModel,
-  useSendInteraction,
-} from '../../../../services/interactions/interactions-service';
+import { useInteractionList } from '../../../../services/interactions/interactions-service';
 import {
   ACCOUNT_INTERACTIONS_CREATE,
   INTERACTIONS_EDIT,
@@ -30,16 +24,9 @@ import {
   ActionItem,
   ShowHideTableColumn,
 } from '../../../../../components/table/types';
-import {
-  DetailsKeyContactErrorIcon,
-  EditIcon,
-  InteractionDetailIcon,
-} from '../../../../../assets';
+import { EditIcon, InteractionDetailIcon } from '../../../../../assets';
 import { getInteractionListColumns } from './columns';
-import {
-  getInteractionFilterFields,
-  getInteractionModelFilterFields,
-} from './helpers';
+import { getInteractionFilterFields } from './helpers';
 import {
   SectionTabPanel,
   SendInteractionModal,
@@ -60,10 +47,6 @@ import { getInteractionHistoryFilterFields } from './interaction-history/helper'
 import { AttachmentsListExportParams } from '../../../../types/attachment';
 import { checkPermission, getDisableReason } from '../../../../../common-utils';
 import { AccessRestricted } from '../../../../../components/account-restricted';
-import TableModal from '../../../../../components/table/model-table';
-import { getInteractionListModelColumns } from './modelColumns';
-import { useToast } from '../../../../../hooks';
-import { Box } from '@mui/material';
 
 const InteractionsTabs: OverviewTabs[] = [
   {
@@ -79,14 +62,6 @@ const InteractionsTabs: OverviewTabs[] = [
   // },
 ];
 
-export interface ModelTableParams {
-  page: number;
-  limit: number;
-  sort: string;
-  sort_by: 'ASC' | 'DESC'; // restrict to only ASC or DESC
-  filter: Record<string, any>; // or a stricter type if you know filter shape
-}
-
 interface InteractionsProps {
   accountInActive: boolean;
   accountDetails?: accountDetailsProps;
@@ -94,7 +69,6 @@ interface InteractionsProps {
   setInteractionsParams: React.Dispatch<
     React.SetStateAction<AttachmentsListExportParams>
   >;
-  loading: boolean;
 }
 
 const Interactions: React.FC<InteractionsProps> = ({
@@ -102,12 +76,10 @@ const Interactions: React.FC<InteractionsProps> = ({
   accountDetails,
   setExportType,
   setInteractionsParams,
-  loading,
 }) => {
   const { accountid } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const interactionEnable = accountDetails?.accountDetails?.is_send_interaction;
 
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, string | number | boolean | string[]>
@@ -115,30 +87,19 @@ const Interactions: React.FC<InteractionsProps> = ({
   const [refreshInteractions, setRefreshInteractions] = useState<number>(
     Date.now()
   );
-  const [refreshModelInteractions, setRefreshModelInteractions] =
-    useState<number>(Date.now());
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = useState(100);
   const [sortField, setSortField] = useState<string>('r_number');
   const [sortBy, setSortBy] = useState<'ASC' | 'DESC'>('ASC');
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
-  const [modelShowFilter, setModelShowFilter] = useState<boolean>(false);
   const [interactionList, setInteractionList] = useState<InteractionList[]>([]);
   const [count, setCount] = useState<number>(0);
   const [sendModalOpen, setSendModalOpen] = useState(false);
-  const [reminderModalOpen, setReminderModalOpen] = useState(false);
   const [selectedRows, setSelectedRows] = useState<InteractionList[]>([]);
   const [clearSelectedRows, setClearSelectedRows] = useState<boolean>(false);
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
-  const [modelTableParms, setModdelTableParms] = useState<ModelTableParams>({
-    page: 0,
-    limit: 100,
-    sort: 'r_number',
-    sort_by: 'ASC',
-    filter: {},
-  });
   const isModalOpen = Boolean(columnAnchorEl);
   const handleColumnVisibility = (
     event: React.MouseEvent<HTMLButtonElement>
@@ -151,8 +112,6 @@ const Interactions: React.FC<InteractionsProps> = ({
   const { permission, modules } = useSelector(
     (state: RootState) => state.permission
   );
-  const [searchText, setSearchText] = useState('');
-  const [resetSearch, setResetSearch] = useState(false);
   const newFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
   const interactionId = searchParams.get('interaction_id');
   const interactionNumber = searchParams.get('interaction_number') || '';
@@ -166,9 +125,8 @@ const Interactions: React.FC<InteractionsProps> = ({
   const viewInteractionHistory = !!interactionHistoryId;
   const viewInteractionAttachment = !!interactionAttachmentId;
   const viewResponseHistory = !!responseHistory;
-  const { successToast } = useToast();
-  const sendInteraction = useSendInteraction();
-  const { data, isLoading, isError, refetch } = useInteractionList(
+
+  const { data, isLoading, isError } = useInteractionList(
     {
       page: currentPage + 1,
       limit: rowsPerPage,
@@ -177,7 +135,6 @@ const Interactions: React.FC<InteractionsProps> = ({
       filters: appliedFilters,
       account_rid: accountid || '',
       fiscal_year: newFiscalYear,
-      search: searchText,
       flag: 'account',
     },
     !viewDetails &&
@@ -186,41 +143,9 @@ const Interactions: React.FC<InteractionsProps> = ({
       !viewResponseHistory,
     refreshInteractions
   );
-  const {
-    data: modelTableData,
-    isLoading: isModelDataLoading,
-    isError: isModelDataError,
-  } = useInteractionListModel(
-    {
-      page: modelTableParms.page + 1,
-      limit: modelTableParms.limit,
-      sort: modelTableParms.sort,
-      sort_by: modelTableParms.sort_by,
-      filters: modelTableParms.filter,
-      account_rid: accountid || '',
-      fiscal_year: newFiscalYear,
-      flag: 'account',
-      reminder_specific_list: true,
-    },
-    reminderModalOpen,
-    refreshModelInteractions
-  );
-
-  useEffect(() => {
-    if (reminderModalOpen) {
-      console.log('modelTableData', isModelDataError);
-    }
-  }, [
-    reminderModalOpen,
-    modelTableData,
-    isModelDataLoading,
-    isModelDataError,
-    modelTableParms,
-  ]);
   const totalItems = data?.count || 0;
   const interactionTypes = useGetInteractionTypes();
   const interactionStatus = useGetInteractionStatus();
-  const interactionStatusRemainder = useGetInteractionStatusByReminder(true);
   const interactionLevel = useGetInteractionLevel();
   const interactionResSources = useGetInteractionResponeSources();
 
@@ -267,14 +192,6 @@ const Interactions: React.FC<InteractionsProps> = ({
       })) || [],
     [interactionStatus.data?.data.interactionStatus]
   );
-  const memoizedInteractionStatusReminder = useMemo(
-    () =>
-      interactionStatusRemainder.data?.data.interactionStatus.map((status) => ({
-        option: status.status_name,
-        value: status.rid,
-      })) || [],
-    [interactionStatusRemainder.data?.data.interactionStatus]
-  );
   const memoizedInteractionLevel = useMemo(
     () =>
       interactionLevel.data?.data.interactionLevel.map((status) => ({
@@ -317,13 +234,7 @@ const Interactions: React.FC<InteractionsProps> = ({
             checkBoxMessage,
           };
         }) || [];
-      localStorage.setItem(
-        'currentRecipients',
-        JSON.stringify({
-          name: data?.keyContact?.key_contact_name || '',
-          email: data?.keyContact?.key_contact_email || '',
-        })
-      );
+
       setInteractionList(updatedInteractions);
       setSelectedRows([]);
       setClearSelectedRows((prev) => !prev);
@@ -343,23 +254,16 @@ const Interactions: React.FC<InteractionsProps> = ({
       page: currentPage,
       sortOrder: sortBy,
       limit: rowsPerPage,
-      search: searchText,
     };
     setInteractionsParams(updatedParams);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sortField, appliedFilters, currentPage, rowsPerPage, sortBy, searchText]);
+  }, [sortField, appliedFilters, currentPage, rowsPerPage, sortBy]);
 
   const handleRefresh = () => {
     setRefreshInteractions(Date.now());
   };
-  const handleRefreshModel = () => {
-    setRefreshModelInteractions(Date.now());
-  };
   const handleFilter = () => {
     setShowFilter(!showFilter);
-  };
-  const handleModelFilter = () => {
-    setModelShowFilter(!modelShowFilter);
   };
   const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
     const defaultSortField = 'r_number';
@@ -430,8 +334,6 @@ const Interactions: React.FC<InteractionsProps> = ({
       setSelectedRows([]);
       setClearSelectedRows((prev) => !prev);
       setCount(0);
-      setSearchText('');
-      setResetSearch(true);
     }
   };
   const handleBackClick = () => {
@@ -442,8 +344,6 @@ const Interactions: React.FC<InteractionsProps> = ({
       searchParams.delete('interaction_rid');
       searchParams.delete('interaction_number');
       navigate({ search: searchParams.toString() }, { replace: true });
-      setSearchText('');
-      setResetSearch(true);
     }
   };
   const handleBackFromResponse = () => {
@@ -455,13 +355,7 @@ const Interactions: React.FC<InteractionsProps> = ({
       searchParams.delete('interaction_attachment_id');
       navigate({ search: searchParams.toString() }, { replace: true });
     }
-    setSearchText('');
-    setResetSearch(true);
   };
-  const handleSearchReset = () => {
-    setResetSearch(false);
-  };
-
   const disableInteractionEditBtn = (row: InteractionList): boolean => {
     const status = (row.status_name || '').toLowerCase() as StatusTypeEnum;
     return [
@@ -492,8 +386,6 @@ const Interactions: React.FC<InteractionsProps> = ({
       navigate({ search: searchParams.toString() }, { replace: true });
       setSelectedRows([]);
       setClearSelectedRows((prev) => !prev);
-      setSearchText('');
-      setResetSearch(true);
     }
   };
   const handleViewInteractionAttachmentCount = (
@@ -511,23 +403,10 @@ const Interactions: React.FC<InteractionsProps> = ({
       navigate({ search: searchParams.toString() }, { replace: true });
       setSelectedRows([]);
       setClearSelectedRows((prev) => !prev);
-      setSearchText('');
-      setResetSearch(true);
     }
   };
 
   const headerButtons = [
-    {
-      label: 'Reminder',
-      variant: 'outlined' as const,
-      disabled:
-        accountInActive ||
-        interactionList.length === 0 ||
-        !accountDetails?.accountDetails?.is_send_interaction,
-      onClick: () => setReminderModalOpen(true),
-      sx: { width: '80px', minWidth: '80px' },
-      hide: viewResponseHistory,
-    },
     {
       label: 'Send Interaction',
       variant: 'outlined' as const,
@@ -569,10 +448,6 @@ const Interactions: React.FC<InteractionsProps> = ({
     handleViewInteractionAttachmentCount,
     permissionMap
   );
-  const interactionModelColumn = getInteractionListModelColumns(
-    // handleViewInteraction,
-    permissionMap
-  );
   const filterFields = !viewInteractionHistory
     ? getInteractionFilterFields(
         memoizedInteractionTypes,
@@ -582,11 +457,6 @@ const Interactions: React.FC<InteractionsProps> = ({
         permissionMap
       )
     : getInteractionHistoryFilterFields(memoizedInteractionStatus);
-  const modelFIlterFields = getInteractionModelFilterFields(
-    memoizedInteractionStatusReminder,
-    memoizedInteractionLevel,
-    permissionMap
-  );
   const RestrictedColumns = [
     {
       id: 'r_number',
@@ -623,218 +493,128 @@ const Interactions: React.FC<InteractionsProps> = ({
   const handlePopoverClose = () => {
     setColumnAnchorEl(null);
   };
-  const handleReminderBtn = (data: InteractionList[]) => {
-    // Map your input array into interactions
 
-    const interactions = data.map((item) => ({
-      interaction_rid: item.rid || '',
-      interaction_level: item.interaction_level_name || '',
-      project_fiscal_rid: item.project_fiscal_rid || '',
-    }));
-
-    const payload = {
-      account_rid: accountid || '',
-      is_interaction_followup: true,
-      interactions,
-      email_info: {
-        name: '',
-        email: '',
-      },
-    };
-    sendInteraction.mutate(payload, {
-      onSuccess: (response) => {
-        successToast(response?.statusMessage);
-        setReminderModalOpen(false);
-        setModdelTableParms({
-          page: 0,
-          limit: 100,
-          sort: 'r_number',
-          sort_by: 'ASC',
-          filter: {},
-        });
-        refetch();
-      },
-    });
-  };
-  const handleClose = () => {
-    setReminderModalOpen(false);
-    setModdelTableParms({
-      page: 0,
-      limit: 100,
-      sort: 'r_number',
-      sort_by: 'ASC',
-      filter: {},
-    });
-  };
   const modalId = isModalOpen
     ? 'account-interaction-list-column-visibility-popover'
     : undefined;
 
   return (
-    <div className='w-full'>
-      {!interactionEnable && !loading && (
-        <Box className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
-          <Box>
-            <DetailsKeyContactErrorIcon alt='key-contact' />
-          </Box>
-          <Box>
-            <span className='font-bold mr-1'>Interaction Details </span> -{' '}
-            <span className='ml-1 font-medium'>
-              {' '}
-              {`Global account email configuration missing. Please set it to enable interactions and reminders.`}
-            </span>
-          </Box>
-        </Box>
-      )}
-      <div className='w-full pt-2 pl-2 pr-4'>
-        <SectionTabPanel
-          tabs={InteractionsTabs}
-          filterMenu={filterFields}
-          filterVisibility={!viewDetails && !viewInteractionAttachment}
-          showFilter={showFilter}
-          contextKey='project-interactions'
-          appliedFilters={appliedFilters}
-          setAppliedFilters={setAppliedFilters}
-          setCurrentPage={setCurrentPage}
-          handleFilter={handleFilter}
-          handleSorting={handleSorting}
-          sortFilterCount={sortFilterCount}
-          setSortFilterCount={setSortFilterCount}
-          showRefresh={!viewDetails}
-          onRefreshClick={handleRefresh}
-          showSearch={
-            viewResponseHistory || (!viewDetails && !viewInteractionHistory)
-          }
-          searchDisabled={false}
-          searchPlaceholder='Search'
-          onSearch={(text) => setSearchText(text)}
-          searchReset={resetSearch}
-          onSearchReset={handleSearchReset}
+    <div className='w-full pt-2 pl-2 pr-4'>
+      <SectionTabPanel
+        tabs={InteractionsTabs}
+        filterMenu={filterFields}
+        filterVisibility={!viewDetails && !viewInteractionAttachment}
+        showFilter={showFilter}
+        contextKey='project-interactions'
+        appliedFilters={appliedFilters}
+        setAppliedFilters={setAppliedFilters}
+        setCurrentPage={setCurrentPage}
+        handleFilter={handleFilter}
+        handleSorting={handleSorting}
+        sortFilterCount={sortFilterCount}
+        setSortFilterCount={setSortFilterCount}
+        showRefresh={!viewDetails}
+        onRefreshClick={handleRefresh}
+      />
+      {viewDetails && !viewResponseHistory ? (
+        <InteractionDetails
+          accountInActive={accountInActive}
+          handleBackClick={handleBackClick}
+          accountDetails={accountDetails}
         />
-        {viewDetails && !viewResponseHistory ? (
-          <InteractionDetails
-            accountInActive={accountInActive}
-            handleBackClick={handleBackClick}
-            accountDetails={accountDetails}
+      ) : viewInteractionHistory ? (
+        <InteractionHistory
+          handleBackClick={handleBackClick}
+          appliedFilters={appliedFilters}
+          refresh={refreshInteractions}
+          setInteractionsParams={setInteractionsParams}
+        />
+      ) : viewInteractionAttachment ? (
+        <InteractionAttachment
+          handleBackClick={handleBackClick}
+          refresh={refreshInteractions}
+        />
+      ) : (
+        <>
+          <SectionHeader
+            title={
+              viewResponseHistory
+                ? `Interaction Response History ${interactionNumber}`
+                : 'Interaction'
+            }
+            titleIcon={
+              <InteractionDetailIcon
+                alt='financial-header-icon'
+                className={`w-7 h-7 p-1 bg-[#E25A32] ${viewResponseHistory ? 'rounded-[2px]' : 'rounded-full'}`}
+              />
+            }
+            count={viewResponseHistory ? count : totalItems}
+            showItemCount={interactionResponseId ? false : true}
+            showBackArrow={viewResponseHistory}
+            onBackClick={handleBackFromResponse}
+            buttons={headerButtons}
           />
-        ) : viewInteractionHistory ? (
-          <InteractionHistory
-            handleBackClick={handleBackClick}
-            appliedFilters={appliedFilters}
-            refresh={refreshInteractions}
-            setInteractionsParams={setInteractionsParams}
-          />
-        ) : viewInteractionAttachment ? (
-          <InteractionAttachment
-            handleBackClick={handleBackClick}
-            refresh={refreshInteractions}
-            searchValue={searchText}
-          />
-        ) : (
-          <>
-            <SectionHeader
-              title={
-                viewResponseHistory
-                  ? `Interaction Response History ${interactionNumber}`
-                  : 'Interaction'
-              }
-              titleIcon={
-                <InteractionDetailIcon
-                  alt='financial-header-icon'
-                  className={`w-7 h-7 p-1 bg-[#E25A32] ${viewResponseHistory ? 'rounded-[2px]' : 'rounded-full'}`}
+          <div className='border border-[#CBD6E2]'>
+            {viewResponseHistory ? (
+              <HistoryTable
+                setCount={setCount}
+                setColumnAnchorEl={setColumnAnchorEl}
+                columnAnchorEl={columnAnchorEl}
+              />
+            ) : (
+              <>
+                <ManageColumnsPopover
+                  anchorEl={columnAnchorEl}
+                  open={isModalOpen}
+                  popoverId={modalId}
+                  onClose={handlePopoverClose}
+                  columns={interactionColumns}
+                  onColumnsChange={handleColumnsChange}
+                  columnRestrictions={RestrictedColumns}
                 />
-              }
-              count={viewResponseHistory ? count : totalItems}
-              showItemCount={interactionResponseId ? false : true}
-              showBackArrow={viewResponseHistory}
-              onBackClick={handleBackFromResponse}
-              buttons={headerButtons}
+                <ListTable
+                  data={interactionList}
+                  columns={visibleColumns}
+                  getRowId={getRowId}
+                  hoverHighlight={false}
+                  tableStyle={{
+                    borderBottom: '1px solid #CBD6E2',
+                    height: '100%',
+                    maxHeight: 'calc(100vh - 330px)',
+                    overflow: 'auto',
+                  }}
+                  stickyHeader={true}
+                  stickyColumnsCount={1}
+                  selectable={true}
+                  onSelectionChange={handleSelectionChange}
+                  actionWidth={80}
+                  actionDisplayMode='dropdown'
+                  actionMenuItems={actionButtons}
+                  loading={isLoading}
+                  error={isError ? 'Failed to load data' : undefined}
+                  rowsPerPageOptions={[25, 50, 100]}
+                  rowsPerPage={rowsPerPage}
+                  currentPage={currentPage}
+                  totalItems={totalItems}
+                  onPageChange={handlePageChange}
+                  onRowsPerPageChange={handleRowsPerPageChange}
+                  sortBy={sortField}
+                  sortOrder={sortBy}
+                  onSort={handleSortRequest}
+                  clearSelectedRows={clearSelectedRows}
+                />
+              </>
+            )}
+            <SendInteractionModal
+              isOpen={sendModalOpen}
+              onClose={() => setSendModalOpen(false)}
+              selectedRows={selectedRows}
+              onSuccessRefetch={handleRefresh}
+              interaction_level='Account'
             />
-            <div className='border border-[#CBD6E2]'>
-              {viewResponseHistory ? (
-                <HistoryTable
-                  setCount={setCount}
-                  setColumnAnchorEl={setColumnAnchorEl}
-                  columnAnchorEl={columnAnchorEl}
-                  searchValue={searchText}
-                />
-              ) : (
-                <>
-                  <ManageColumnsPopover
-                    anchorEl={columnAnchorEl}
-                    open={isModalOpen}
-                    popoverId={modalId}
-                    onClose={handlePopoverClose}
-                    columns={interactionColumns}
-                    onColumnsChange={handleColumnsChange}
-                    columnRestrictions={RestrictedColumns}
-                  />
-                  <ListTable
-                    data={interactionList}
-                    columns={visibleColumns}
-                    getRowId={getRowId}
-                    hoverHighlight={false}
-                    tableStyle={{
-                      borderBottom: '1px solid #CBD6E2',
-                      height: '100%',
-                      maxHeight: 'calc(100vh - 330px)',
-                      overflow: 'auto',
-                    }}
-                    stickyHeader={true}
-                    stickyColumnsCount={1}
-                    selectable={true}
-                    onSelectionChange={handleSelectionChange}
-                    actionWidth={80}
-                    actionDisplayMode='dropdown'
-                    actionMenuItems={actionButtons}
-                    loading={isLoading}
-                    error={isError ? 'Failed to load data' : undefined}
-                    rowsPerPageOptions={[25, 50, 100]}
-                    rowsPerPage={rowsPerPage}
-                    currentPage={currentPage}
-                    totalItems={totalItems}
-                    onPageChange={handlePageChange}
-                    onRowsPerPageChange={handleRowsPerPageChange}
-                    sortBy={sortField}
-                    sortOrder={sortBy}
-                    onSort={handleSortRequest}
-                    clearSelectedRows={clearSelectedRows}
-                  />
-                </>
-              )}
-              <SendInteractionModal
-                isOpen={sendModalOpen}
-                onClose={() => setSendModalOpen(false)}
-                selectedRows={selectedRows}
-                onSuccessRefetch={handleRefresh}
-                interaction_level='Account'
-              />
-              <TableModal
-                title='Reminder Interaction'
-                contextKey='Account-interactions'
-                isOpen={reminderModalOpen}
-                onClose={handleClose}
-                data={modelTableData?.interactions}
-                loading={isModelDataLoading}
-                isError={isModelDataError}
-                visibleColumns={interactionModelColumn}
-                totalCount={modelTableData?.count || 0}
-                tableParms={modelTableParms}
-                setTableParms={setModdelTableParms}
-                handleSend={handleReminderBtn}
-                handleFilter={handleModelFilter}
-                onRefreshClick={handleRefreshModel}
-                saveBtnLoading={sendInteraction.isPending}
-                showRefresh={true}
-                filterVisibility={modelShowFilter}
-                showFilter={true}
-                filterMenu={modelFIlterFields}
-                emptyMessage='No interaction available to send reminder'
-              />
-            </div>
-          </>
-        )}
-      </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };

@@ -904,11 +904,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               newData[f.name] = '';
               updatedField.error = '';
             }
-            // clear selected date when other field change
-            if (f.clearDate === field.name) {
-              newData[f.name] = '';
-              updatedField.error = '';
-            }
             // Handle name/email error clearing when Include In Communications is No
             if (
               field.name.startsWith('key_contact_name_') ||
@@ -1404,9 +1399,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               }}
               disabled={field.disabled}
               value={
-                (field.options?.find((opt) => opt.value === fieldValue) ||
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  null) as any
+                field.options?.find((opt) => opt.value === fieldValue) || ''
               }
               size='small'
               sx={{
@@ -1414,20 +1407,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 fontSize: '13px',
                 '&.MuiAutocomplete-root .MuiOutlinedInput-root': {
                   height: '32px',
-                  background: field.error
-                    ? '#FEF2F2'
-                    : field.disabled
-                      ? '#f3f4f6'
-                      : 'transparent',
+                  background: field.error ? '#FEF2F2' : 'transparent',
                 },
-                '& .MuiInputBase-input::placeholder': {
-                  color: '#7D98B6',
-                  opacity: 1,
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  border: '2px solid #60A5FA',
                 },
-                '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline':
-                  {
-                    border: '2px solid #60A5FA',
-                  },
                 '& .MuiOutlinedInput-root': {
                   '&.Mui-focused': {
                     boxShadow: 'none',
@@ -1572,24 +1556,18 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         })();
 
         return (
-          <LocalizationProvider
-            dateAdapter={AdapterDayjs}
-            localeText={{
-              fieldMonthPlaceholder: (params) =>
-                params.contentType === 'digit' ? 'MM' : params.format,
-            }}
-          >
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
               className={
-                'placeholder:text-[13px] placeholder:text-[#425A76] placeholder:border border-[#CBD6E2]' +
+                'placeholder:text-[13px] placeholder:text-[#425A76] placeholder:font-medium border border-[#CBD6E2]' +
                 isError +
                 fieldDisabled
               }
               minDate={customMinDate || dayjs('1950-01-01')}
               maxDate={customMaxDate}
-              value={fieldValue ? dayjs(fieldValue, 'YYYY-MM-DD') : null}
+              value={dayjs(fieldValue, 'YYYY-MM-DD')}
               disabled={field.disabled}
-              format='YYYY-MMM-DD'
+              format='YYYY-MM-DD'
               referenceDate={
                 customMaxDate ? dayjs(customMinDate) : dayjs(customMaxDate)
               }
@@ -1657,6 +1635,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                         },
                         color: 'black !important',
                         WebkitTextFillColor: 'black !important',
+
                         '&[value="YYYY-MM-DD"]': {
                           color: '#7D98B6 !important',
                           WebkitTextFillColor: '#7D98B6 !important',
@@ -1679,10 +1658,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   placeholder: field.placeholder,
                   error: !!field.error,
                   // onBlur: (event) => {
-                  //   // For cache typed data
+                  //   //For cache typed data
                   //   const value = event.target.value;
                   //   if (value !== 'YYYY-MM-DD') {
-                  //   //  For Avoid default data
+                  //     //For Avoid default data
                   //     handleChange(value);
                   //   }
                   // },
@@ -1694,13 +1673,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       }
       case 'fiscalDate':
         return (
-          <LocalizationProvider
-            dateAdapter={AdapterDayjs}
-            localeText={{
-              fieldMonthPlaceholder: (params) =>
-                params.contentType === 'digit' ? 'MM' : params.format,
-            }}
-          >
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
               className={
                 'placeholder:text-[13px] placeholder:text-[#425A76] placeholder:font-medium border border-[#CBD6E2]' +
@@ -1709,7 +1682,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               }
               value={dayjs(fieldValue, 'MM/DD')}
               disabled={field.disabled}
-              format='MMM/DD'
+              format='MM/DD'
               views={['month', 'day']}
               open={false}
               onChange={(newValue) => {

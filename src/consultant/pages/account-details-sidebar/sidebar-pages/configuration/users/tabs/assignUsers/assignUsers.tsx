@@ -31,7 +31,6 @@ interface AssignUserProps {
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
   >;
-  searchValue?: string;
 }
 
 const AssignUsers: React.FC<AssignUserProps> = ({
@@ -40,7 +39,6 @@ const AssignUsers: React.FC<AssignUserProps> = ({
   setCount,
   columnAnchorEl,
   setColumnAnchorEl,
-  searchValue,
 }) => {
   const { accountid } = useParams();
   const { successToast, errorToast } = useToast();
@@ -50,7 +48,6 @@ const AssignUsers: React.FC<AssignUserProps> = ({
     entity_type: 'ACCOUNT',
     page: filterParams.page + 1,
     limit: 100,
-    search: searchValue,
     filters: filterParams.filters,
   });
   const [assignUserList, setAssignUserList] = useState<ConfigAssignUserList[]>(
@@ -101,9 +98,8 @@ const AssignUsers: React.FC<AssignUserProps> = ({
       ...prev,
       page: 1,
       filters: filterParams.filters,
-      search: searchValue,
     }));
-  }, [filterParams.filters, searchValue]);
+  }, [filterParams.filters]);
 
   useEffect(() => {
     if (data?.users?.length) {

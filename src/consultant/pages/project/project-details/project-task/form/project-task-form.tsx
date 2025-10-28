@@ -8,11 +8,7 @@ import {
   Layout,
   OnChange,
 } from '../../../../../../common-service';
-import {
-  FormFiscalDateType,
-  ProjectResourceTaskCodeData,
-  SelectResourceOption,
-} from '../../../../../types';
+import { FormFiscalDateType, SelectResourceOption } from '../../../../../types';
 import TextButton from '../../../../../../components/button/text-button';
 import { FormBuilder } from '../../../../../../components';
 import { ProjectTaskFormData } from './form-data';
@@ -23,19 +19,15 @@ import {
 } from '../../../../../services/project/project-task-service';
 import { projectTaskPayloadData } from './utils';
 import { ProjectTaskInput } from '../../../../../types/project-task';
-import {
-  useGetProjectResourceTaskCode,
-  useGetProjectResourceTaskType,
-} from '../../../../../services/project-resources/project-resources-form-service';
+import { useGetProjectResourceTaskCode } from '../../../../../services/project-resources/project-resources-form-service';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
 import {
   formatDateToYYYYMMDDWithTime,
-  getDateFormatYYYYMMDD,
+  getDateFormat,
 } from '../../../../../../common-utils';
 import { PROJECT_RESOURCE_CREATE } from '../../../../../../routes';
 import ConfirmationPopup from '../../../../../../common-utils/confirmation-popup';
-import SkeletonForm from '../../../../../../components/form-builder/skeleton-form';
 
 const ProjectTaskForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
@@ -52,7 +44,6 @@ const ProjectTaskForm: React.FC = () => {
   const projectCode = queryParams.get('projectCode');
   const currency_rid = queryParams.get('currency_rid');
   const createdNewResourceCode = queryParams.get('created_resource_code') || '';
-  const pathCount = queryParams.get('path_count') || '';
   const [confirmationState, setConfirmationState] = React.useState<{
     isOpen: boolean;
     message: string;
@@ -61,22 +52,9 @@ const ProjectTaskForm: React.FC = () => {
   const [costResourceForceSuccess, setCostResourceForceSuccess] =
     React.useState(false);
   const [currentResourceCode, setCurrentResourceCode] =
-    React.useState<ProjectResourceTaskCodeData>();
-
-  const parseDate: {
-    year: number;
-    startMin?: string;
-    startMax?: string;
-    endMax?: string;
-  } = JSON.parse(projectPFY || '');
-
-  const fiscalDate = projectPFY
-    ? ({
-        year: parseDate.year,
-        endMax: currentResourceCode?.end_date || parseDate.startMax,
-        startMax: currentResourceCode?.end_date || parseDate.startMax,
-        startMin: currentResourceCode?.start_date || parseDate.startMin,
-      } as FormFiscalDateType)
+    React.useState<string>('');
+  const fiscalDate: FormFiscalDateType = projectPFY
+    ? JSON.parse(projectPFY)
     : undefined;
   const getProjectTask = useProjectTaskDetail(
     taskId as string,
@@ -87,8 +65,8 @@ const ProjectTaskForm: React.FC = () => {
     () => ({
       ...projectTask?.data,
       ...(projectTask?.data && {
-        start_date: getDateFormatYYYYMMDD(projectTask?.data.start_date),
-        end_date: getDateFormatYYYYMMDD(projectTask?.data.end_date),
+        start_date: getDateFormat(projectTask?.data.start_date),
+        end_date: getDateFormat(projectTask?.data.end_date),
         created_datetime:
           formatDateToYYYYMMDDWithTime(projectTask?.data.created_datetime) ||
           '-',
@@ -110,17 +88,8 @@ const ProjectTaskForm: React.FC = () => {
     search: '',
     project_fiscal_rid: project_Id || undefined,
   };
-
-  const { data: projectResourceCodeOptions, isLoading: resCodeLoading } =
+  const { data: projectResourceCodeOptions } =
     useGetProjectResourceTaskCode(payload);
-  const type = 'type';
-  const { data: projectResourceTypeOptions, isLoading: taskTypeLoading } =
-    useGetProjectResourceTaskType(type);
-  const classification = 'classification';
-  const {
-    data: projectResourceClassificationOptions,
-    isLoading: classificationLoading,
-  } = useGetProjectResourceTaskType(classification);
   const commonSuccess = costResourceForceSuccess;
   useEffect(() => {
     if (commonSuccess) {
@@ -135,18 +104,9 @@ const ProjectTaskForm: React.FC = () => {
 
   useEffect(() => {
     if (isEditView) {
-      const selectedResource = projectResourceCodeOptions?.data?.find(
-        (item) => item.resource_code === projectTaskDetailsData?.resource_code
-      );
-      if (selectedResource) {
-        setCurrentResourceCode(selectedResource);
-      }
+      setCurrentResourceCode(projectTaskDetailsData?.resource_code || '');
     }
-  }, [
-    isEditView,
-    projectTaskDetailsData?.resource_code,
-    projectResourceCodeOptions?.data,
-  ]);
+  }, [isEditView, projectTaskDetailsData?.resource_code]);
 
   // Permission Mangement
   const { permission } = useSelector((state: RootState) => state.permission);
@@ -168,48 +128,19 @@ const ProjectTaskForm: React.FC = () => {
 
   const memoizedProjectResourceCode: SelectResourceOption[] = useMemo(
     () =>
-      projectResourceCodeOptions?.data?.map((item) => {
-        let extraInfo = '';
-
-        if (item.resource_name && item.project_resource_role) {
-          extraInfo = ` (${item.resource_name} - ${item.project_resource_role})`;
-        } else if (item.resource_name) {
-          extraInfo = ` (${item.resource_name})`;
-        } else if (item.project_resource_role) {
-          extraInfo = ` (${item.project_resource_role})`;
-        }
-
-        return {
-          label: `${item.resource_code}${extraInfo}`,
-          value: item.rid,
-        };
-      }) || [],
+      projectResourceCodeOptions?.data?.map((item) => ({
+        label: `${item.resource_code}${item.project_resource_role ? ` (${item.project_resource_role})` : ''}`,
+        value: `${item.rid}`,
+      })) || [],
     [projectResourceCodeOptions?.data]
   );
-  const memoizedProjectResourceType: SelectResourceOption[] = useMemo(
-    () =>
-      projectResourceTypeOptions?.data?.projectTaskTypes?.map((item) => ({
-        label: item.project_task_type_name,
-        value: item.rid,
-      })) || [],
-    [projectResourceTypeOptions?.data?.projectTaskTypes]
-  );
-  const memoizedProjectResourceClassification: SelectResourceOption[] = useMemo(
-    () =>
-      projectResourceClassificationOptions?.data?.projectTaskClassification?.map(
-        (item) => ({
-          label: item.classification_name ?? '',
-          value: item.rid,
-        })
-      ) || [],
-    [projectResourceClassificationOptions?.data?.projectTaskClassification]
-  );
+
   useEffect(() => {
     if (createdNewResourceCode) {
       const selectedResource = projectResourceCodeOptions?.data?.find(
         (item) => String(item.rid) === String(createdNewResourceCode)
       );
-      setCurrentResourceCode(selectedResource);
+      setCurrentResourceCode(selectedResource?.resource_code || '');
     }
   }, [createdNewResourceCode, projectResourceCodeOptions?.data]);
 
@@ -226,7 +157,7 @@ const ProjectTaskForm: React.FC = () => {
       },
       project_task_rid,
       isEditView,
-      currentResourceCode?.resource_code as string
+      currentResourceCode
     );
 
     if (isEditView) {
@@ -323,7 +254,7 @@ const ProjectTaskForm: React.FC = () => {
         (item) => String(item.rid) === String(data.fieldValue)
       );
       if (selectedResource) {
-        setCurrentResourceCode(selectedResource);
+        setCurrentResourceCode(selectedResource.resource_code);
       } else if (!selectedResource && data.isCreate) {
         handleCreateNewProjectResource(data.fieldValue as string);
       }
@@ -336,26 +267,11 @@ const ProjectTaskForm: React.FC = () => {
 
   const goBack = () => {
     if (createdNewResourceCode) {
-      navigate(pathCount ? -3 : -2);
+      navigate(-2);
     } else {
       window.history.back();
     }
   };
-
-  const isFormLoading =
-    resCodeLoading ||
-    getProjectTask.isLoading ||
-    taskTypeLoading ||
-    classificationLoading;
-
-  const formConfig = ProjectTaskFormData(
-    memoizedProjectResourceCode,
-    memoizedProjectResourceType,
-    memoizedProjectResourceClassification,
-    isEditView,
-    fiscalDate,
-    permissionMapTaskForm
-  );
 
   return (
     <>
@@ -400,26 +316,27 @@ const ProjectTaskForm: React.FC = () => {
         </div>
       </div>
       <div className='pb-4'>
-        {isFormLoading ? (
-          <SkeletonForm />
-        ) : (
-          <FormBuilder
-            data={formConfig}
-            values={
-              isEditView && projectTaskDetailsData
-                ? { ...projectTaskDetailsData }
-                : !isEditView
-                  ? { project_resource_rid: createdNewResourceCode }
-                  : {}
-            }
-            outData={submitData}
-            formRef={formRef}
-            layout={Layout.TYPE_1}
-            onChange={onChangeField}
-            keyStart='start_date'
-            keyEnd='end_date'
-          />
-        )}
+        <FormBuilder
+          data={ProjectTaskFormData(
+            memoizedProjectResourceCode,
+            isEditView,
+            fiscalDate,
+            permissionMapTaskForm
+          )}
+          values={
+            isEditView && projectTaskDetailsData
+              ? { ...projectTaskDetailsData }
+              : !isEditView
+                ? { project_resource_rid: createdNewResourceCode }
+                : {}
+          }
+          outData={submitData}
+          formRef={formRef}
+          layout={Layout.TYPE_1}
+          onChange={onChangeField}
+          keyStart='start_date'
+          keyEnd='end_date'
+        />
       </div>
       <div>
         <ConfirmationPopup

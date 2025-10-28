@@ -10,7 +10,6 @@ export interface ResourceSkillListParams {
   accountNumber?: string;
   rid?: string;
   resourceRid?: string;
-  search?: string;
 }
 
 enum skillLevel {
@@ -116,5 +115,4 @@ export type ExportModule = {
   rNumber?: string;
   resourceRid?: string;
   filter?: Record<string, any>;
-  search?: string;
 };

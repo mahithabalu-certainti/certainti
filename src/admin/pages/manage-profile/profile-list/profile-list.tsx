@@ -15,7 +15,6 @@ import { RootState } from '../../../../store/store';
 import { checkPermission } from '../../../../common-utils';
 import { AllModules, AllPermissions } from '../../../../common-service';
 import { AccessRestricted } from '../../../../components/account-restricted';
-import SearchBar from '../../../../components/search/search-bar';
 
 const BUTTON_STYLES = {
   height: '24px',
@@ -47,7 +46,6 @@ export const ProfileList: React.FC = () => {
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
-  const [searchText, setSearchText] = useState<string>('');
   const isModalOpen = Boolean(columnAnchorEl);
   const modalId = isModalOpen ? 'account-column-visibility-popover' : undefined;
 
@@ -204,18 +202,28 @@ export const ProfileList: React.FC = () => {
         </div>
         <div className='flex items-center gap-0'>
           <div className='flex gap-1 relative'>
-            <SearchBar
-              initialSearchText={searchText}
-              onSearch={(value) => {
-                setSearchText(value);
-              }}
-              placeholder='Search'
-              disabled={false}
-              hide={false}
-            />
+            <button
+              aria-describedby={filterId}
+              className={`w-[64px] h-[24px] text-[13px] mt-[5px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
+              ${isFilterOpen || (appliedFilters && Object.keys(appliedFilters).length > 0) || sortFilterCount > 0 ? 'bg-[#F3F3F3]' : ''}`}
+              onClick={handleFilterModal}
+            >
+              <NewFilterIcon alt='filter-icon' />
+              Filter
+              {(appliedFilters && Object.keys(appliedFilters).length > 0) ||
+              sortFilterCount > 0 ? (
+                <div className='absolute -top-[5px] -right-2 w-4 h-4 flex items-center justify-center text-xs'>
+                  <span className='absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0'></span>
+                  <span className='w-4 h-4 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>
+                    {(appliedFilters ? Object.keys(appliedFilters).length : 0) +
+                      sortFilterCount}
+                  </span>
+                </div>
+              ) : null}
+            </button>
             <button
               aria-describedby={modalId}
-              className={`w-[120px] h-[24px] mr-[4px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 rounded-[2px] relative border border-[#CBD6E2] px-0 py-0 normal-case ${isModalOpen ? 'bg-[#F3F3F3]' : 'bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'} hover:text-[#425A76] transition-colors duration-150`}
+              className={`w-[120px] h-[24px] mt-[3px] mr-[7px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 rounded-[2px] relative border border-[#CBD6E2] px-0 py-0 normal-case ${isModalOpen ? 'bg-[#F3F3F3]' : 'bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'} hover:text-[#425A76] transition-colors duration-150`}
               style={{
                 boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
               }}
@@ -249,25 +257,6 @@ export const ProfileList: React.FC = () => {
               loading={isExporting}
             />
           )}
-          <button
-            aria-describedby={filterId}
-            className={`w-[64px] h-[24px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
-              ${isFilterOpen || (appliedFilters && Object.keys(appliedFilters).length > 0) || sortFilterCount > 0 ? 'bg-[#F3F3F3]' : ''}`}
-            onClick={handleFilterModal}
-          >
-            <NewFilterIcon alt='filter-icon' />
-            Filter
-            {(appliedFilters && Object.keys(appliedFilters).length > 0) ||
-            sortFilterCount > 0 ? (
-              <div className='absolute -top-[5px] -right-2 w-4 h-4 flex items-center justify-center text-xs'>
-                <span className='absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0'></span>
-                <span className='w-4 h-4 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>
-                  {(appliedFilters ? Object.keys(appliedFilters).length : 0) +
-                    sortFilterCount}
-                </span>
-              </div>
-            ) : null}
-          </button>
         </div>
       </div>
 
@@ -284,7 +273,6 @@ export const ProfileList: React.FC = () => {
             refreshProfileTrigger={refreshProfileTrigger}
             setColumnAnchorEl={setColumnAnchorEl}
             columnAnchorEl={columnAnchorEl}
-            searchValue={searchText}
           />
         </Suspense>
       </div>

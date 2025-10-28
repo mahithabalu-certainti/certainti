@@ -365,14 +365,13 @@ export const createDateField = (
     dateRangeError?: boolean;
     startValue?: boolean;
     errorMessage?: string;
-    clearDate?: string;
   }
 ): FieldType => ({
   type: 'date',
   name,
   label,
   required: others.required,
-  placeholder: 'YYYY-MMM-DD',
+  placeholder: 'YYYY-MM-DD',
   minDate: others.minDate,
   maxDate: others.maxDate,
   disabled: others.disabled,
@@ -385,7 +384,6 @@ export const createDateField = (
   startDateLabel: others.startDateLabel,
   endDateLabel: others.endDateLabel,
   errorMessage: others.errorMessage,
-  clearDate: others.clearDate,
 });
 
 export const createFiscalDateField = (
@@ -441,9 +439,6 @@ export const REGEX_PATTERNS = {
   EMAIL:
     /^(?=.{6,254}$)[a-zA-Z0-9]+(?:[._+-][a-zA-Z0-9]+)*@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,63}$/,
   PHONE: /^([0-9]{10})$/,
-  CLIENT_ID:
-    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/,
-  SECRET: /^\S+$/,
   WEBSITE:
     /^(https?:\/\/|www\.)[a-zA-Z0-9-.]+\.[a-zA-Z]{2,}(:[0-9]+)?(\/[a-zA-Z0-9-._~:/?#[\]@!$&'()*+,;=%]*)?$/,
   MAX_WEBSITE: /^.{0,255}$/,
@@ -466,11 +461,9 @@ export const REGEX_PATTERNS = {
   MAX_COST_REVENUE: /^.{1,15}$/,
   COST_REGEX: /^(0|([1-9]\d{0,11}))(\.\d{1,2})?$/,
   NAME_REGEX: /^[A-Za-z' -]+$/,
-  TEMPLATE_NAME_REGEX: /^[A-Za-z0-9' -]+$/,
   USER_NAME: /^(?!.*['-]{2})(?!.*^\s)(?!.*\s$)[A-Za-z]+(?:['-][A-Za-z]+)*$/,
   STREET_REGEX: /^(?![\W_]+$)(?!\s*$)[a-zA-Z0-9\s,.\-#]+$/,
   MAX_255: /^.{0,255}$/,
-  MAX_250: /^.{0,250}$/,
   MAX_64: /^.{0,64}$/,
   MAX_50: /^.{0,50}$/,
   MAX_100: /^.{0,100}$/,
@@ -683,17 +676,12 @@ export const formatAddress = (userDatas?: UserDetail) => {
 
 export const getDateTimeFormat = (date?: string) => {
   if (!date) return '';
-  // return dayjs.utc(date).local().format('MM-DD-YYYY HH:mm:ss'); // For future ref.
-  return dayjs.utc(date).local().format('MMM-DD-YYYY hh:mm:ss A').toUpperCase();
+  return dayjs.utc(date).local().format('MM-DD-YYYY HH:mm:ss');
 };
 
-export const getDateFormatYYYYMMDD = (date?: string) => {
-  if (!date) return '';
-  return dayjs(date).format('YYYY-MM-DD');
-};
 export const getDateFormat = (date?: string) => {
   if (!date) return '';
-  return dayjs(date).format('YYYY-MMM-DD');
+  return dayjs(date).format('YYYY-MM-DD');
 };
 export const STATUS_OPTIONS: SelectOption[] = [
   { label: 'Active', value: 'active' },
@@ -773,22 +761,7 @@ export const formatDateToYYYYMMDDWithTime = (
 
   // Date parts
   const day = String(date.getDate()).padStart(2, '0');
-  // const month = String(date.getMonth() + 1).padStart(2, '0');
-  const monthNames = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-  const month = monthNames[date.getMonth()];
+  const month = String(date.getMonth() + 1).padStart(2, '0');
   const year = date.getFullYear();
 
   // Time parts (12-hour format with AM/PM)
@@ -879,9 +852,9 @@ export const getFiscalDateBounds = (
     startYear = fiscalYear - 1;
     endYear = fiscalYear;
   } else {
-    // FY 2024 with Jan–Dec → Jan 2024 to Dec 2024
-    startYear = fiscalYear;
-    endYear = fiscalYear;
+    // FY 2024 with Jan–Dec → Jan 2023 to Dec 2023
+    startYear = fiscalYear - 1;
+    endYear = fiscalYear - 1;
   }
 
   const startDateMin = getFiscalParseDateFromMMDD(
@@ -1002,46 +975,4 @@ export const getDisableReason = (
     return 'This interaction is currently queued for sending';
   if (status === '') return 'Interaction status is invalid or undefined';
   return '';
-};
-
-export const formatMonthDay = (dateStr: string): string => {
-  if (!dateStr) return '';
-  const [month, day] = dateStr.split('/');
-
-  const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-
-  const monthIndex = parseInt(month, 10) - 1;
-  const monthName = months[monthIndex] || '';
-
-  return `${monthName}/${day}`;
-};
-
-export const getIntersection = (
-  aStart: string,
-  aEnd: string,
-  bStart: string,
-  bEnd: string
-) => {
-  const start = new Date(
-    Math.max(new Date(aStart).getTime(), new Date(bStart).getTime())
-  );
-  const end = new Date(
-    Math.min(new Date(aEnd).getTime(), new Date(bEnd).getTime())
-  );
-  return start <= end
-    ? { start: start.toISOString(), end: end.toISOString() }
-    : null;
 };

@@ -80,7 +80,7 @@ export const getAccountFinancialResCostFields = (
     options: countryOptions,
   },
   {
-    name: 'Net Resource Cost',
+    name: 'Cost',
     value: 'total_cost_pro_res',
     type: 'number',
     operatorOption: numberOptions,
