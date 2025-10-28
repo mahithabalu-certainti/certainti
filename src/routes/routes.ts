@@ -9,7 +9,6 @@ export const MANAGE_USER_ACCESS = '/manage-user-access';
 export const MANAGE_ACCOUNT_ACCESS = '/manage-account-access';
 export const MANAGE_SETTINGS = '/manage-settings';
 export const MANAGE_GEO_BASED_RULE = '/manage-geo-based-rule';
-export const EMAIL_TEMPLATES = '/email-templates';
 export const SURVEY_TEMPLATES = '/survey-templates';
 export const TASK_TEMPLATES = '/task-templates';
 export const CHECKLIST_TEMPLATES = '/checklist-templates';
@@ -38,6 +37,12 @@ export const INTERACTION_TEMPLATES_EDIT = `${INTERACTION_TEMPLATES}/edit/:templa
 
 /** ADMIN IMPORT TEMPLATES ROUTES */
 export const IMPORT_TEMPLATES = `${ADMIN}/import-templates`;
+
+/** ADMIN EMAIL TEMPLATES ROUTES */
+export const EMAIL_TEMPLATES = `${ADMIN}/email-templates`;
+export const EMAIL_TEMPLATES_CREATE = `${EMAIL_TEMPLATES}/create`;
+export const EMAIL_TEMPLATES_EDIT = `${EMAIL_TEMPLATES}/edit/:templateId`;
+
 /** ACCOUNT ROUTES */
 export const ACCOUNT = '/account';
 export const ACCOUNT_CREATE = `${ACCOUNT}/create`;
