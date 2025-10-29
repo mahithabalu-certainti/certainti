@@ -563,7 +563,7 @@ jobs:
           LOG_LEVEL=debug
           NODE_ENV=PROD
           TRIGGER_AI_URL=${{ secrets.PROD_TRIGGER_AI_URL }}
-          NODE_ENV_DB_PREFIX="S001-"
+          NODE_ENV_DB_PREFIX="P001-"
           INTERACTION_URL="https://thinkrd365.certainti.ai/ext/interaction"
           KAFKA_BROKER=${{ secrets.PROD_KAFKA_BROKER }}
           KAFKA_CONSUMER_GROUP="ai_assessment_request"
@@ -723,7 +723,7 @@ jobs:
           LOG_LEVEL=debug
           NODE_ENV=PROD
           INTERACTION_BASE_URL='https://prod-thinkrd365-api-management.azure-api.net/interactionService/api'
-          NODE_ENV_DB_PREFIX="S001-"
+          NODE_ENV_DB_PREFIX="P001-"
           JWT_SECRET=jwt-secret
           CUSTOM_PVT_KEY=custom-pvt
           CUSTOM_PUB_KEY=custom-pub
@@ -876,7 +876,7 @@ jobs:
           LOG_LEVEL=debug
           NODE_ENV=PROD
           TRIGGER_AI_URL=${{ secrets.PROD_TRIGGER_AI_URL }}
-          NODE_ENV_DB_PREFIX="S001-"
+          NODE_ENV_DB_PREFIX="P001-"
           INTERACTION_URL="https://thinkrd365.certainti.ai/ext/interaction"
           KAFKA_BROKER=${{ secrets.PROD_KAFKA_BROKER }}
           KAFKA_CONSUMER_GROUP="ai_assessment_response"
