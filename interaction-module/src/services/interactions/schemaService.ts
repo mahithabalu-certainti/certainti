@@ -2473,10 +2473,12 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         }
       }
 
+      let status : string = ``
+
       if (responseCreated) {
         const { Interaction, InteractionSummary } =
           await this.interactionModelService.getModels(accountNumber);
-        const status =
+        status =
           statusAction[responseData.status_action as keyof typeof statusAction];
         const [statusArr]: any = await this.mainDbSequelize.query(
           rawQueries.fetchInteractionStatusByType(status)
@@ -2533,6 +2535,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       return {
         interactionVersion,
         isAutoTriggerEnabled,
+        status
       };
     } catch (err) {
       logMessage(`Error updating interaction response: ${err}`);
@@ -2953,7 +2956,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       );
       const interactionCCRecipientsAccount: any[] =
         await this.orgDbSequelize.query(
-          rawQueries.fetchInteractionRecipientAccount(accountRid,statusArr.rid ,schemaName),
+          rawQueries.fetchInteractionCCRecipientAccount(accountRid,statusArr.rid ,schemaName),
           { type: "SELECT" }
         );
 

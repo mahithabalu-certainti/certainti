@@ -1502,6 +1502,85 @@ async getAllUserPermission(userId: string, profileId: string) {
 
     // Find extra modules from user_module_access that are not in permission access
     
+    // Find standalone user field access that are not tied to any permission
+    const userFieldAccess = await UserFieldsAccess.findAll({
+      where: {
+        user_id: userId,
+        [Op.or]: [
+          { read: true },
+          { edit: true }
+        ],
+      },
+      include: [{ 
+        model: PermissionField, 
+        as: "permission_field",
+        where: {
+          module_permission_id: {
+            [Op.notIn]: permissionAccess.map(pa => pa.module_permission_id)
+          }
+        },
+        required: true,
+        include: [{
+          model: ModulePermission,
+          as: "module_permission",
+          include: [{
+            model: MenuModule,
+            as: "menu_module",
+            include: [{
+              model: Menu,
+              as: "menu"
+            }]
+          }]
+        }]
+      }],
+      order: [[{ model: PermissionField, as: "permission_field" }, "sort_order", "ASC"]],
+    });
+
+    // Group standalone fields by their permission ID for better organization
+    const userFieldsByPermission = new Map();
+    userFieldAccess.forEach((fa: any) => {
+      if (fa.permission_field && fa.permission_field.module_permission) {
+        const permissionId = fa.permission_field.module_permission_id;
+        const modulePermission = fa.permission_field.module_permission;
+        const menuModule = modulePermission.menu_module;
+        const menu = menuModule?.menu;
+        
+        if (!userFieldsByPermission.has(permissionId)) {
+          userFieldsByPermission.set(permissionId, {
+            permission_desc: modulePermission.permission_desc,
+            permission_name: modulePermission.permission_name,
+            module_desc: menuModule?.module_desc,
+            menu_desc: menu?.menu_desc,
+            module_id: menuModule?.rid,
+            menu_id: menu?.rid,
+            fields: []
+          });
+        }
+        userFieldsByPermission.get(permissionId).fields.push({
+          field_id: fa.permission_field.rid,
+          field_name: fa.permission_field.field_name,
+          field_desc: fa.permission_field.field_desc,
+          read: fa.read,
+          edit: fa.edit,
+        });
+      }
+    });
+
+    // Add standalone field permissions to the result
+    userFieldsByPermission.forEach((permissionData, permissionId) => {
+      permissions.push({
+        type: "permission",
+        module_permission_id: permissionId,
+        permission_desc: permissionData.permission_desc,
+        permission_name: permissionData.permission_name,
+        module_desc: permissionData.module_desc,
+        menu_desc: permissionData.menu_desc,
+        module_id: permissionData.module_id,
+        menu_id: permissionData.menu_id,
+        is_field_available: true,
+        fields: permissionData.fields,
+      });
+    });
     
     return permissions;
   }
