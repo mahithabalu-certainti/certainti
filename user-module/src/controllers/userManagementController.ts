@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import { constants } from "../utils/constant";
-import { errorResponse, successResponse } from "../utils/apiResponse";
 import configurations from "../config/config";
 import { ParsedQs } from "qs";
 import {
@@ -9,7 +8,8 @@ import {
   handleSuccessResponse,
   successLog,
   validateRequest,
-  generateExcelBase64
+  generateExcelBase64,
+  logMessage
 } from "../utils/helpers";
 
 import {
@@ -19,7 +19,7 @@ import {
   updateProfilePermissionsSchema,
   editProfilePermissionsSchema,
   updateUserExtendedPermissionsSchema,
-  listProfileSchema
+  listProfileSchema,
 } from "../lib/joi/schemas/schema";
 
 const logger = configurations.getInstance().getLogger();
@@ -55,7 +55,12 @@ async function userRoles(req: Request, res: Response): Promise<void> {
   } catch (error) {
     const err = error as Error;
     errorLog(methodName, err.message);
-    handleErrorResponse(res, constants.FAILED, constants.FAILED_MESSAGE, err.message);
+    handleErrorResponse(
+      res,
+      constants.FAILED,
+      constants.FAILED_MESSAGE,
+      err.message
+    );
   }
 }
 
@@ -72,31 +77,43 @@ async function userRoles(req: Request, res: Response): Promise<void> {
 async function userProfiles(req: Request, res: Response): Promise<void> {
   const methodName = "User profiles";
   try {
-        // Check if no query parameters are provided
-        const hasNoQueryParams = !req.query.page && !req.query.limit && !req.query.filters && !req.query.sortBy && !req.query.sortOrder;
-    
-        if (hasNoQueryParams) {
-          // If no parameters provided, get all profiles
-          const allProfiles = await services.userManagementServices.getAllProfiles();
-          
-          if (allProfiles.statusCode === constants.SUCCESS) {
-            successLog(methodName);
-            handleSuccessResponse(res, allProfiles.data);
-            return;
-          } else {
-            errorLog(methodName, allProfiles.errorMessage);
-            handleErrorResponse(
-              res,
-              constants.BAD_REQUEST,
-              constants.BAD_REQUEST_MESSAGE,
-              allProfiles.errorMessage
-            );
-            return;
-          }
-        }
-        
-        // Continue with existing validation and pagination logic for when parameters are provided
-    const value = await validateRequest(req, listProfileSchema,"ENV_TRD365", res, "GET");
+    // Check if no query parameters are provided
+    const hasNoQueryParams =
+      !req.query.page &&
+      !req.query.limit &&
+      !req.query.filters &&
+      !req.query.sortBy &&
+      !req.query.sortOrder;
+
+    if (hasNoQueryParams) {
+      // If no parameters provided, get all profiles
+      const allProfiles =
+        await services.userManagementServices.getAllProfiles();
+
+      if (allProfiles.statusCode === constants.SUCCESS) {
+        successLog(methodName);
+        handleSuccessResponse(res, allProfiles.data);
+        return;
+      } else {
+        errorLog(methodName, allProfiles.errorMessage);
+        handleErrorResponse(
+          res,
+          constants.BAD_REQUEST,
+          constants.BAD_REQUEST_MESSAGE,
+          allProfiles.errorMessage
+        );
+        return;
+      }
+    }
+
+    // Continue with existing validation and pagination logic for when parameters are provided
+    const value = await validateRequest(
+      req,
+      listProfileSchema,
+      "ENV_TRD365",
+      res,
+      "GET"
+    );
 
     let parsedFilters: Record<string, any> = {};
 
@@ -155,7 +172,32 @@ async function userProfiles(req: Request, res: Response): Promise<void> {
 }
 
 // ... existing code ...
-async function userPermissionFields(req: Request, res: Response): Promise<void> {
+/**
+ * Handles the HTTP request to retrieve permission fields for a user based on given permission IDs.
+ *
+ * @param {Request} req - Express request object, expects:
+ *   - `params.userId` (string): The user ID to fetch permissions for.
+ *   - `query.id` (string|string[]): Comma-separated string or array of permission IDs.
+ *
+ * @param {Response} res - Express response object used to send the result or error.
+ *
+ * @returns {Promise<void>} Sends the response directly and does not return a value.
+ *
+ * @throws Will send a BAD_REQUEST response if `userId` or `permissionIds` are missing or invalid.
+ *
+ * @description
+ * The function:
+ * 1. Extracts `userId` from route parameters and `permissionIds` from query parameters.
+ * 2. Validates that both are present, else returns a BAD_REQUEST.
+ * 3. Parses `permissionIds` into an array of strings if provided as a comma-separated string.
+ * 4. Calls `getPermissionFieldsByIds` service with `userId` and the permission IDs array.
+ * 5. On success, logs and returns the result.
+ * 6. On error, logs and returns an appropriate failure response.
+ */
+async function userPermissionFields(
+  req: Request,
+  res: Response
+): Promise<void> {
   const methodName = "User permission fields";
   try {
     const userId: string = req.params.userId;
@@ -179,10 +221,14 @@ async function userPermissionFields(req: Request, res: Response): Promise<void> 
     }
 
     // Ensure permissionIds is string[]
-    const permissionIdsArr: string[] = (permissionIds as Array<string | ParsedQs>)
-      .map(id => typeof id === "string" ? id : String(id));
+    const permissionIdsArr: string[] = (
+      permissionIds as Array<string | ParsedQs>
+    ).map((id) => (typeof id === "string" ? id : String(id)));
 
-    const result = await services.userServices.getPermissionFieldsByIds(userId, permissionIdsArr);
+    const result = await services.userServices.getPermissionFieldsByIds(
+      userId,
+      permissionIdsArr
+    );
 
     successLog(methodName);
     handleSuccessResponse(res, result);
@@ -196,7 +242,20 @@ async function userPermissionFields(req: Request, res: Response): Promise<void> 
     );
   }
 }
+
 // ... existing code ...
+/**
+ * Retrieves user permission details by the user's Azure ID.
+ * The function validates the request parameters, fetches permission information for the specified user,
+ * and sends a success or error response accordingly.
+ *
+ * @param {Request} req - The Express request object containing the user Azure ID in the URL parameters.
+ * @param {Response} res - The Express response object used to send back the permission data or errors.
+ * @returns {Promise<void>} - A promise that resolves when the response is sent.
+ *
+ * @throws {Error} - Throws an error if the process fails during validation or data retrieval.
+ */
+
 async function userPermissionById(req: Request, res: Response): Promise<void> {
   const methodName = "User permission by ID";
   try {
@@ -209,7 +268,7 @@ async function userPermissionById(req: Request, res: Response): Promise<void> {
     );
     // If validation fails, validateRequest will handle the response
     if (!validatedData) return;
-    
+
     const userAzureId = req.params.id;
     const userRole = await services.userServices.permissionById(userAzureId);
     if (userRole.statusCode === constants.SUCCESS) {
@@ -225,7 +284,6 @@ async function userPermissionById(req: Request, res: Response): Promise<void> {
       );
     }
   } catch (error) {
-    console.log(error)
     const err = error as Error;
     errorLog(methodName, err.message);
     handleErrorResponse(
@@ -255,24 +313,31 @@ async function createProfile(req: Request, res: Response): Promise<void> {
       res,
       "POST"
     );
-    
+
     // If validation fails, validateRequest will handle the response
     if (!validatedData) return;
-    
-    // Use the validated data instead of req.body
-    const { source_profile_id, profile_name, profile_description, profile_type } = validatedData;
-    
-    // Get user ID from request (assuming it's set by auth middleware)
-    const userId = req.headers["x-user-id"] as string || "";
 
-    
-    const result = await services.userManagementServices.createProfile({
+    // Use the validated data instead of req.body
+    const {
       source_profile_id,
       profile_name,
       profile_description,
-      profile_type
-    }, userId);
-    
+      profile_type,
+    } = validatedData;
+
+    // Get user ID from request (assuming it's set by auth middleware)
+    const userId = (req.headers["x-user-id"] as string) || "";
+
+    const result = await services.userManagementServices.createProfile(
+      {
+        source_profile_id,
+        profile_name,
+        profile_description,
+        profile_type,
+      },
+      userId
+    );
+
     if (result.statusCode === constants.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, result.data);
@@ -299,12 +364,15 @@ async function createProfile(req: Request, res: Response): Promise<void> {
 
 /**
  * Retrieves profile permissions based on profile ID and optional type and ID filters
- * 
+ *
  * @param {Request} req - Express request object containing profile ID and optional filters
  * @param {Response} res - Express response object
  * @returns {Promise<void>} - Returns permissions data based on filters
  */
-async function getProfilePermissions(req: Request, res: Response): Promise<void> {
+async function getProfilePermissions(
+  req: Request,
+  res: Response
+): Promise<void> {
   const methodName = "Get profile permissions";
   try {
     const validatedData = await validateRequest(
@@ -314,11 +382,11 @@ async function getProfilePermissions(req: Request, res: Response): Promise<void>
       res,
       "GET"
     );
-    console.log("Validated Data:", validatedData);
+   logMessage(`Validated Data: ${JSON.stringify(validatedData)}`);
     
     // If validation fails, validateRequest will handle the response
     if (!validatedData) return;
-    
+
     const profileId = req.params.profileId;
     // Get type and id from validated data
     const { type, id } = validatedData;
@@ -327,9 +395,9 @@ async function getProfilePermissions(req: Request, res: Response): Promise<void>
     const result = await services.userManagementServices.getProfilePermissions({
       profileId,
       type: type as string,
-      id: id as string
+      id: id as string,
     });
-    
+
     if (result.statusCode === constants.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, result.data);
@@ -356,12 +424,15 @@ async function getProfilePermissions(req: Request, res: Response): Promise<void>
 
 /**
  * Updates profile permissions based on the provided data
- * 
+ *
  * @param {Request} req - Express request object containing profile ID and permissions to update
  * @param {Response} res - Express response object
  * @returns {Promise<void>} - Returns updated profile data
  */
-async function updateProfilePermissions(req: Request, res: Response): Promise<void> {
+async function updateProfilePermissions(
+  req: Request,
+  res: Response
+): Promise<void> {
   const methodName = "Update profile permissions";
   try {
     // Validate request data
@@ -374,22 +445,23 @@ async function updateProfilePermissions(req: Request, res: Response): Promise<vo
     );
     // If validation fails, validateRequest will handle the response
     if (!validatedData) return;
-    
+
     // Use the validated data instead of req.body
     const { profile_id, profile_name, privileges } = validatedData;
-    
+
     // Get user ID from request (assuming it's set by auth middleware)
-    const userId = req.headers["x-user-id"] as string || "";
-    
+    const userId = (req.headers["x-user-id"] as string) || "";
+
     // Call service method to update permissions
-    const result = await services.userManagementServices.updateProfilePermissions(
-      profile_id,
-      profile_name,
-      privileges,
-      userId,
-      req.originalUrl // Pass "create" as the event name
-    );
-    
+    const result =
+      await services.userManagementServices.updateProfilePermissions(
+        profile_id,
+        profile_name,
+        privileges,
+        userId,
+        req.originalUrl // Pass "create" as the event name
+      );
+
     if (result.statusCode === constants.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, result.data);
@@ -416,41 +488,45 @@ async function updateProfilePermissions(req: Request, res: Response): Promise<vo
 
 /**
  * Edits profile permissions based on the provided data
- * 
+ *
  * @param {Request} req - Express request object containing profile ID and permissions to update
  * @param {Response} res - Express response object
  * @returns {Promise<void>} - Returns updated profile data
  */
-async function editProfilePermissions(req: Request, res: Response): Promise<void> {
+async function editProfilePermissions(
+  req: Request,
+  res: Response
+): Promise<void> {
   const methodName = "Edit profile permissions";
   try {
-  // Validate request data
-  const validatedData = await validateRequest(
-    req,
-    editProfilePermissionsSchema,
-    "ENV_TRD365", // Or appropriate organization value
-    res,
-    "PUT"
-  );
-  
-  // If validation fails, validateRequest will handle the response
-  if (!validatedData) return;
-  
-  // Use the validated data instead of req.body
-  const { profile_id, profile_name, privileges } = validatedData;
-    
-    // Get user ID from request (assuming it's set by auth middleware)
-    const userId = req.headers["x-user-id"] as string || "";
-    
-    // Call service method to update permissions
-    const result = await services.userManagementServices.updateProfilePermissions(
-      profile_id,
-      profile_name,
-      privileges,
-      userId,
-      req.originalUrl // Pass "edit" as the event name
+    // Validate request data
+    const validatedData = await validateRequest(
+      req,
+      editProfilePermissionsSchema,
+      "ENV_TRD365", // Or appropriate organization value
+      res,
+      "PUT"
     );
-    
+
+    // If validation fails, validateRequest will handle the response
+    if (!validatedData) return;
+
+    // Use the validated data instead of req.body
+    const { profile_id, profile_name, privileges } = validatedData;
+
+    // Get user ID from request (assuming it's set by auth middleware)
+    const userId = (req.headers["x-user-id"] as string) || "";
+
+    // Call service method to update permissions
+    const result =
+      await services.userManagementServices.updateProfilePermissions(
+        profile_id,
+        profile_name,
+        privileges,
+        userId,
+        req.originalUrl // Pass "edit" as the event name
+      );
+
     if (result.statusCode === constants.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, result.data);
@@ -477,37 +553,42 @@ async function editProfilePermissions(req: Request, res: Response): Promise<void
 
 /**
  * Edits profile permissions for specific user based on the provided data
- * 
+ *
  * @param {Request} req - Express request object containing profile ID and permissions to update
  * @param {Response} res - Express response object
  * @returns {Promise<void>} - Returns updated profile data
  */
-async function updateUserExtendedPermissions(req: Request, res: Response): Promise<void> {
+async function updateUserExtendedPermissions(
+  req: Request,
+  res: Response
+): Promise<void> {
   const methodName = "Upate user extended profile permissions";
   try {
-  // Validate request data
-  const validatedData = await validateRequest(
-    req,
-    updateUserExtendedPermissionsSchema,
-    "ENV_TRD365", // Or appropriate organization value
-    res,
-    "PUT"
-  );
-  
-  // If validation fails, validateRequest will handle the response
-  if (!validatedData) return;
-  
-  // Use the validated data instead of req.body
-  const {user_id,privileges } = validatedData;
-    
-    // Get user ID from request (assuming it's set by auth middleware)
-    const loggedInUsername = req.headers['x-user-id'] as string;
-    // Call service method to update permissions
-    const result = await services.userManagementServices.updateUserExtendedPermissions(
-      privileges,
-      user_id ,loggedInUsername
+    // Validate request data
+    const validatedData = await validateRequest(
+      req,
+      updateUserExtendedPermissionsSchema,
+      "ENV_TRD365", // Or appropriate organization value
+      res,
+      "PUT"
     );
-    
+
+    // If validation fails, validateRequest will handle the response
+    if (!validatedData) return;
+
+    // Use the validated data instead of req.body
+    const { user_id, privileges } = validatedData;
+
+    // Get user ID from request (assuming it's set by auth middleware)
+    const loggedInUsername = req.headers["x-user-id"] as string;
+    // Call service method to update permissions
+    const result =
+      await services.userManagementServices.updateUserExtendedPermissions(
+        privileges,
+        user_id,
+        loggedInUsername
+      );
+
     if (result.statusCode === constants.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, result.data);
@@ -533,17 +614,21 @@ async function updateUserExtendedPermissions(req: Request, res: Response): Promi
 }
 /**
  * Returns profile permissions for specific user with profile permissions
- * 
+ *
  * @param {Request} req - Express request object containing profile ID and permissions to update
  * @param {Response} res - Express response object
  * @returns {Promise<void>} - Returns updated profile data
  */
 
-async function getUserExtendedPermissions(req: Request, res: Response): Promise<void> {
+async function getUserExtendedPermissions(
+  req: Request,
+  res: Response
+): Promise<void> {
   const methodName = "Get User extended permission";
   try {
     const userId = req.params.userId;
-    const userExtendedPermsissions = await services.userServices.fetchUserExtendedpermission(userId);
+    const userExtendedPermsissions =
+      await services.userServices.fetchUserExtendedpermission(userId);
     if (userExtendedPermsissions.statusCode === constants.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, userExtendedPermsissions.data);
@@ -579,16 +664,19 @@ async function getUserExtendedPermissions(req: Request, res: Response): Promise<
  * @throws {Error} - Throws an error if the request to fetch profiles fails at any step.
  */
 async function exportUserProfiles(req: Request, res: Response): Promise<void> {
-  const methodName = "Export user profiles"
+  const methodName = "Export user profiles";
   try {
     //  const validatedData = await validateRequest(req, exportUserProfilesSchema,"ENV_TRD365", res, "GET");
     //   if (!validatedData) return;
     const profileId = req.params.profileId;
-    const userId = req.headers["x-user-id"] as string || "";
-    const profiles = await services.userServices.exportUserprofiles(profileId,userId);
+    const userId = (req.headers["x-user-id"] as string) || "";
+    const profiles = await services.userServices.exportUserprofiles(
+      profileId,
+      userId
+    );
 
     if (profiles.statusCode === constants.SUCCESS) {
-      successLog(methodName)
+      successLog(methodName);
       handleSuccessResponse(res, profiles?.data?.exportProfiles);
     } else {
       errorLog(methodName, profiles.errorMessage);
@@ -602,9 +690,25 @@ async function exportUserProfiles(req: Request, res: Response): Promise<void> {
   } catch (error) {
     const err = error as Error;
     errorLog(methodName, err.message);
-    handleErrorResponse(res, constants.FAILED, constants.FAILED_MESSAGE, err.message);
+    handleErrorResponse(
+      res,
+      constants.FAILED,
+      constants.FAILED_MESSAGE,
+      err.message
+    );
   }
 }
 
-
-export { userProfiles, userRoles, userPermissionById, userPermissionFields, createProfile, getProfilePermissions, updateProfilePermissions, editProfilePermissions,exportUserProfiles,getUserExtendedPermissions,updateUserExtendedPermissions};
+export {
+  userProfiles,
+  userRoles,
+  userPermissionById,
+  userPermissionFields,
+  createProfile,
+  getProfilePermissions,
+  updateProfilePermissions,
+  editProfilePermissions,
+  exportUserProfiles,
+  getUserExtendedPermissions,
+  updateUserExtendedPermissions,
+};

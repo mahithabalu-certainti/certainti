@@ -1,7 +1,13 @@
 import { ResourceCost } from "../models/resourceCost";
 import { Resources } from "../models/resource";
 import { IResourceCost, IUpdateResourceCost } from "../utils/types";
-import { HttpStatus, MAIN_SCHEMA_NAME, STATUS_MESSAGE } from "../utils/constants";
+import {
+  HttpStatus,
+  MAIN_SCHEMA_NAME,
+  SCHEMANAME_PREFIX,
+  STATUS_MESSAGE,
+  rawQueries,
+} from "../utils/constants";
 import { ResourceCostTimeline } from "../models/resourceCostTimeline";
 import { ResourceCostHistory } from "../models/resourceCostHistory";
 import resourceCostSchemaService from "../services/resourceCostSchemaService";
@@ -12,6 +18,7 @@ import { initMainDbSequelize } from "../config/mainDataSource";
 import { Op, Sequelize } from "sequelize";
 import moment from "moment";
 import Decimal from "decimal.js";
+import { errorLog, logMessage } from "../utils/helpers";
 
 class ResourceCostService {
   private schemaService: SchemaService;
@@ -42,7 +49,7 @@ class ResourceCostService {
     return this.mainDbSequelize;
   }
 
-/**
+  /**
    * Retrieves a paginated list of resource costs for a specific account and fiscal year.
    * Supports filtering, sorting, and searching functionality.
    *
@@ -66,7 +73,7 @@ class ResourceCostService {
     accountNumber: string,
     fiscalYear: number,
     project_rid: string,
-    account_rid:string
+    account_rid: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -76,12 +83,18 @@ class ResourceCostService {
     try {
       const offset = (page - 1) * limit;
       const [finalSortBy, finalSortOrder] =
-        resourceCostSchemaService.getSortParametersForFinancialHighlights(sortBy, sortOrder);
+        resourceCostSchemaService.getSortParametersForFinancialHighlights(
+          sortBy,
+          sortOrder
+        );
 
       let { accountNumber: accountNumberFetched, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
       // Check if account-specific schema exists
-      const schemaName = `trd365_${accountNumberFetched.replace(/\D/g, '')}`;
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumberFetched.replace(
+        /\D/g,
+        ""
+      )}`;
       const tableName = "project_resource_fiscal";
       const schemaAndTableValidation =
         await resourceCostSchemaService.validateSchema(
@@ -90,12 +103,14 @@ class ResourceCostService {
         );
 
       if (!schemaAndTableValidation) {
+        errorLog("Account schema does not exist");
         return resourceCostSchemaService.createErrorResponse(
           "Account schema does not exist"
         );
       }
       const sequelize = await this.getOrgSequelize();
       if (!sequelize) {
+        errorLog("Database connection not available");
         return resourceCostSchemaService.createErrorResponse(
           "Database connection not available"
         );
@@ -112,11 +127,14 @@ class ResourceCostService {
 
       // Build query components
       const searchCondition =
-        resourceCostSchemaService.buildSearchConditionForFinancialHighlights(search);
-      let filterConditions = resourceCostSchemaService.buildFilterConditionsForFinancialHighlights(
-        filters,
-        fiscalYear
-      );
+        resourceCostSchemaService.buildSearchConditionForFinancialHighlights(
+          search
+        );
+      let filterConditions =
+        resourceCostSchemaService.buildFilterConditionsForFinancialHighlights(
+          filters,
+          fiscalYear
+        );
 
       // Execute queries and return results
       return await resourceCostSchemaService.executeQueriesForFinancialHighlights(
@@ -132,12 +150,13 @@ class ResourceCostService {
         project_rid
       );
     } catch (err) {
-      console.log("Error ", err);
+       const error = err as Error;
+      errorLog(error.message);
       return this.throwServiceError(err as Error);
     }
   }
 
- /**
+  /**
    * Retrieves a  list of resource costs for a specific account and fiscal year for downloadind  as excel.
    * Supports filtering, sorting, and searching functionality.
    * @param search - Search term to filter results
@@ -155,9 +174,9 @@ class ResourceCostService {
     sortOrder: string,
     accountNumber: string,
     fiscalYear: number,
-    project_rid:string,
-    account_rid:string,
-    userId:string
+    project_rid: string,
+    account_rid: string,
+    userId: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -166,12 +185,18 @@ class ResourceCostService {
   }> {
     try {
       const [finalSortBy, finalSortOrder] =
-        resourceCostSchemaService.getSortParametersForFinancialHighlights(sortBy, sortOrder);
+        resourceCostSchemaService.getSortParametersForFinancialHighlights(
+          sortBy,
+          sortOrder
+        );
 
       let { accountNumber: accountNumberFetched, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
       // Check if account-specific schema exists
-      const schemaName = `trd365_${accountNumberFetched.replace(/\D/g, '')}`;
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumberFetched.replace(
+        /\D/g,
+        ""
+      )}`;
       const tableName = "project_resource_fiscal";
       const schemaAndTableValidation =
         await resourceCostSchemaService.validateSchema(
@@ -180,12 +205,14 @@ class ResourceCostService {
         );
 
       if (!schemaAndTableValidation) {
+        errorLog("Account schema does not exist");
         return resourceCostSchemaService.createErrorResponse(
           "Account schema does not exist"
         );
       }
       const sequelize = await this.getOrgSequelize();
       if (!sequelize) {
+        errorLog("Database connection not available");
         return resourceCostSchemaService.createErrorResponse(
           "Database connection not available"
         );
@@ -202,11 +229,14 @@ class ResourceCostService {
 
       // Build query components
       const searchCondition =
-        resourceCostSchemaService.buildSearchConditionForFinancialHighlights(search);
-      let filterConditions = resourceCostSchemaService.buildFilterConditionsForFinancialHighlights(
-        filters,
-        fiscalYear
-      );
+        resourceCostSchemaService.buildSearchConditionForFinancialHighlights(
+          search
+        );
+      let filterConditions =
+        resourceCostSchemaService.buildFilterConditionsForFinancialHighlights(
+          filters,
+          fiscalYear
+        );
 
       // Execute queries and return results
       return await resourceCostSchemaService.exportresourceCostDetailsForFinancialHighlights(
@@ -221,7 +251,8 @@ class ResourceCostService {
         project_rid
       );
     } catch (err) {
-      console.log("Error ", err);
+      const error = err as Error;
+      errorLog(error.message);
       return this.throwServiceError(err as Error);
     }
   }
@@ -264,7 +295,10 @@ class ResourceCostService {
       let { accountNumber: accountNumberFetched, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
       // Check if account-specific schema exists
-      const schemaName = `trd365_${accountNumberFetched.replace(/\D/g, '')}`;
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumberFetched.replace(
+        /\D/g,
+        ""
+      )}`;
       const tableName = "resource_cost";
       const schemaAndTableValidation =
         await resourceCostSchemaService.validateSchema(
@@ -273,12 +307,14 @@ class ResourceCostService {
         );
 
       if (!schemaAndTableValidation) {
+        errorLog("Account schema does not exist");
         return resourceCostSchemaService.createErrorResponse(
           "Account schema does not exist"
         );
       }
       const sequelize = await this.getOrgSequelize();
       if (!sequelize) {
+        errorLog("Database connection not available");
         return resourceCostSchemaService.createErrorResponse(
           "Database connection not available"
         );
@@ -316,7 +352,7 @@ class ResourceCostService {
         {}
       );
     } catch (err) {
-      console.log("Error ", err);
+      errorLog((err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
@@ -340,7 +376,7 @@ class ResourceCostService {
     accountNumber: string,
     fiscalYear: number,
     resourceRid: string,
-    userId:string
+    userId: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -354,7 +390,10 @@ class ResourceCostService {
       let { accountNumber: accountNumberFetched, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
       // Check if account-specific schema exists
-      const schemaName = `trd365_${accountNumberFetched.replace(/\D/g, '')}`;
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumberFetched.replace(
+        /\D/g,
+        ""
+      )}`;
       const tableName = "resource_cost";
       const schemaAndTableValidation =
         await resourceCostSchemaService.validateSchema(
@@ -363,12 +402,14 @@ class ResourceCostService {
         );
 
       if (!schemaAndTableValidation) {
+        errorLog("Account schema does not exist");
         return resourceCostSchemaService.createErrorResponse(
           "Account schema does not exist"
         );
       }
       const sequelize = await this.getOrgSequelize();
       if (!sequelize) {
+        errorLog("Database connection not available");
         return resourceCostSchemaService.createErrorResponse(
           "Database connection not available"
         );
@@ -404,7 +445,7 @@ class ResourceCostService {
         userId
       );
     } catch (err) {
-      console.log("Error ", err);
+      errorLog((err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
@@ -462,8 +503,11 @@ class ResourceCostService {
       } = resourceCost;
       let { accountNumber: accountNumberFetched, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
-      const schemaName = `trd365_${accountNumberFetched.replace(/\D/g, '')}`;
-      
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumberFetched.replace(
+        /\D/g,
+        ""
+      )}`;
+
       const [resourceCostTableCreated, timelineTableCreated] =
         await Promise.all([
           resourceCostSchemaService.validateSchema(schemaName, "resource_cost"),
@@ -521,9 +565,12 @@ class ResourceCostService {
 
         const sequelize = await this.getOrgSequelize();
         const mainDbSequelize = await this.getMainDbSequelize();
-        
+
         // Get currency threshold
-        const currencyThreshold = await getCurrencyThreshold(mainDbSequelize, currency_rid);
+        const currencyThreshold = await getCurrencyThreshold(
+          mainDbSequelize,
+          currency_rid
+        );
 
         ResourceCost.initialize(sequelize, schemaName);
         const effectiveFrom = this.formatDateForDb(effective_from as string);
@@ -551,33 +598,41 @@ class ResourceCostService {
             fiscal_year,
             comments,
             currency_rid,
-           status_rid: { 
-            [Op.in]: [
-              statusMap?.get('Active'), 
-              statusMap?.get('Anomaly'), 
-              statusMap?.get('Duplicate')
-            ].filter(Boolean) as string[] // Filter out undefined and assert as string[]
-          },
+            status_rid: {
+              [Op.in]: [
+                statusMap?.get("Active"),
+                statusMap?.get("Anomaly"),
+                statusMap?.get("Duplicate"),
+              ].filter(Boolean) as string[], // Filter out undefined and assert as string[]
+            },
             net_resource_cost: calculatedResourceCost,
             account_rid,
           },
         });
 
-        if (existingCost && (userPreference === null || userPreference === "")) {
-            return {
-                statusCode: HttpStatus.PROMPT,
-                message: "Entered compensation details already exists for the resource. Would you like to create another compensation with same values?",
-                data: {
-                    resourceCost: existingCost
-                }
-            };
+        if (
+          existingCost &&
+          (userPreference === null || userPreference === "")
+        ) {
+          return {
+            statusCode: HttpStatus.PROMPT,
+            message:
+              "Entered compensation details already exists for the resource. Would you like to create another compensation with same values?",
+            data: {
+              resourceCost: existingCost,
+            },
+          };
         }
 
-        if (effort_in_hrs!== undefined && Number(effort_in_hrs) > 3000) {
+        if (effort_in_hrs !== undefined && Number(effort_in_hrs) > 3000) {
           status = "Anomaly";
         } else if (
-          (resource_cost !== undefined && currencyThreshold !== null && Number(resource_cost) > currencyThreshold) ||
-          (salary !== undefined && currencyThreshold !== null && Number(salary) > currencyThreshold)
+          (resource_cost !== undefined &&
+            currencyThreshold !== null &&
+            Number(resource_cost) > currencyThreshold) ||
+          (salary !== undefined &&
+            currencyThreshold !== null &&
+            Number(salary) > currencyThreshold)
         ) {
           status = "Anomaly";
         }
@@ -601,7 +656,7 @@ class ResourceCostService {
           comments,
           status_rid,
           created_datetime: new Date(),
-          created_by: userId
+          created_by: userId,
         });
 
         if (resource_rid) {
@@ -620,12 +675,13 @@ class ResourceCostService {
               });
             }
           } catch (fiscalError) {
-            console.error("Error updating resource fiscal:", fiscalError);
+            errorLog(`Failed to update ResourceFiscal: ${(fiscalError as Error).message}`);
           }
         }
       } catch (error) {
         eventStatus = "Failure";
         errorMessage = (error as Error).message;
+        errorLog(`Create Resource Cost failed: ${errorMessage}`);
       }
 
       try {
@@ -638,7 +694,7 @@ class ResourceCostService {
           schemaName
         );
       } catch (timelineError) {
-        console.error("Failed to create timeline entry:", timelineError);
+        errorLog(`Failed to create timeline entry: ${(timelineError as Error).message}`);
       }
 
       if (eventStatus === "Failure") {
@@ -657,6 +713,7 @@ class ResourceCostService {
         },
       };
     } catch (err) {
+      errorLog((err as Error).message);
       return this.throwServiceError(err as Error);
     }
   }
@@ -688,10 +745,10 @@ class ResourceCostService {
         event_status: eventStatus,
         entity_rid: resourceCost.rid || "",
         created_datetime: new Date(),
-        created_by: modifiedBy
+        created_by: modifiedBy,
       });
     } catch (error) {
-      console.error("Failed to create timeline entry:", error);
+      errorLog(`Failed to create timeline entry: ${(error as Error).message}`);
       throw error;
     }
   }
@@ -710,7 +767,7 @@ class ResourceCostService {
   async updateResourceCost(
     resourceCostData: IUpdateResourceCost,
     userId: string,
-    userPreference: string,
+    userPreference: string
   ) {
     try {
       const {
@@ -738,12 +795,15 @@ class ResourceCostService {
         rid,
         fiscal_year,
         comments,
-        status_rid:status,
+        status_rid: status,
       } = resourceCostData;
       let { accountNumber: accountNumberFetched, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
 
-      const schemaName = `trd365_${accountNumberFetched.replace(/\D/g, '')}`;
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumberFetched.replace(
+        /\D/g,
+        ""
+      )}`;
       const tableName = "resource_cost_timeline";
       const schemaAndTableValidation =
         await resourceCostSchemaService.validateSchema(schemaName, tableName);
@@ -766,8 +826,8 @@ class ResourceCostService {
       ResourceCost.initialize(sequelize, schemaName);
       // Get the original resource cost before updating
       const mainDbSequelize = await this.getMainDbSequelize();
-       const statusMap = await getResourceStatuses(mainDbSequelize);
-        const activeStatusId = statusMap?.get("Active");
+      const statusMap = await getResourceStatuses(mainDbSequelize);
+      const activeStatusId = statusMap?.get("Active");
       const originalResourceCost = await ResourceCost.findOne({
         where: { rid: rid },
       });
@@ -780,12 +840,13 @@ class ResourceCostService {
         };
       }
 
-      if(originalResourceCost.status_rid === statusMap?.get("Duplicate")){
-         return {
+      if (originalResourceCost.status_rid === statusMap?.get("Duplicate")) {
+        return {
           statusCode: HttpStatus.BAD_REQUEST,
           message: HttpStatus.BAD_REQUEST_MESSAGE,
-          errorMessage: "Duplicate Record cannot be update. Please resolve duplicate status. Alternately you can reject this record and add new compensation."
-         }
+          errorMessage:
+            "Duplicate Record cannot be update. Please resolve duplicate status. Alternately you can reject this record and add new compensation.",
+        };
       }
 
       // Check for any other records with same values and Duplicate status
@@ -804,16 +865,17 @@ class ResourceCostService {
           fiscal_year: originalResourceCost.fiscal_year,
           comments: originalResourceCost.comments,
           currency_rid: originalResourceCost.currency_rid,
-          status_rid: statusMap?.get("Duplicate")
-        }
+          status_rid: statusMap?.get("Duplicate"),
+        },
       });
 
       if (duplicateRecords) {
         return {
           statusCode: HttpStatus.BAD_REQUEST,
           message: HttpStatus.BAD_REQUEST_MESSAGE,
-          errorMessage: "Please resolve the other duplicate records of this data."
-        }
+          errorMessage:
+            "Please resolve the other duplicate records of this data.",
+        };
       }
 
       try {
@@ -836,6 +898,7 @@ class ResourceCostService {
                 // Convert valid string/number to Decimal
                 acc[key] = new Decimal(value).toString();
               } catch (error) {
+                errorLog(`Invalid number format for ${key}: ${value}`);
                 throw new Error(`Invalid number format for ${key}: ${value}`);
               }
             }
@@ -845,10 +908,11 @@ class ResourceCostService {
           {} as Record<string, string | null>
         );
 
-        
-        
         // Get currency threshold
-        const currencyThreshold = await getCurrencyThreshold(mainDbSequelize, currency_rid);
+        const currencyThreshold = await getCurrencyThreshold(
+          mainDbSequelize,
+          currency_rid
+        );
 
         const effectiveFrom = this.formatDateForDb(effective_from as string);
         const endDate = this.formatDateForDb(end_date as string);
@@ -861,13 +925,14 @@ class ResourceCostService {
             .minus(deductions || 0)
         );
 
-       const statusNameMap = new Map<string, string>();
+        const statusNameMap = new Map<string, string>();
         statusMap?.forEach((value, key) => {
           statusNameMap.set(value, key);
         });
 
-      let resourceCostStatus = statusNameMap.get(status?.toString() || '') || 'Active';
-        
+        let resourceCostStatus =
+          statusNameMap.get(status?.toString() || "") || "Active";
+
         // Check for duplicate record
         const existingCost = await ResourceCost.findOne({
           where: {
@@ -876,36 +941,47 @@ class ResourceCostService {
             end_date: endDate,
             ...costValues,
             fiscal_year,
-            comments, 
+            comments,
             currency_rid,
-            status_rid: { 
+            status_rid: {
               [Op.in]: [
-                statusMap?.get('Active'),
-                statusMap?.get('Anomaly'),
-                statusMap?.get('Duplicate') 
-              ].filter(Boolean) as string[]
+                statusMap?.get("Active"),
+                statusMap?.get("Anomaly"),
+                statusMap?.get("Duplicate"),
+              ].filter(Boolean) as string[],
             },
             net_resource_cost: calculatedResourceCost,
             rid: {
-              [Op.ne]: rid // Exclude the current record being updated
-            }
+              [Op.ne]: rid, // Exclude the current record being updated
+            },
           },
         });
 
-        if (existingCost && (userPreference === null || userPreference === "")) {
+        if (
+          existingCost &&
+          (userPreference === null || userPreference === "")
+        ) {
           return {
             statusCode: HttpStatus.PROMPT,
-            message: "Compensation details already exists for the resource. Would to like proceed updating with same values ?",
+            message:
+              "Compensation details already exists for the resource. Would to like proceed updating with same values ?",
             data: {
               affectedCounts: 0,
               resourceCost: [],
             },
-        };
-        } else if (effort_in_hrs!== undefined && Number(effort_in_hrs) > 3000) {
+          };
+        } else if (
+          effort_in_hrs !== undefined &&
+          Number(effort_in_hrs) > 3000
+        ) {
           resourceCostStatus = "Anomaly";
         } else if (
-          (resource_cost !== undefined && currencyThreshold !== null && Number(resource_cost) > currencyThreshold) ||
-          (salary !== undefined && currencyThreshold !== null && Number(salary) > currencyThreshold)
+          (resource_cost !== undefined &&
+            currencyThreshold !== null &&
+            Number(resource_cost) > currencyThreshold) ||
+          (salary !== undefined &&
+            currencyThreshold !== null &&
+            Number(salary) > currencyThreshold)
         ) {
           resourceCostStatus = "Anomaly";
         }
@@ -955,8 +1031,7 @@ class ResourceCostService {
               });
             }
           } catch (fiscalError) {
-            console.error("Error updating resource fiscal:", fiscalError);
-            // Continue with the process even if fiscal update fails
+            errorLog(`Failed to update ResourceFiscal: ${(fiscalError as Error).message}`);
           }
         }
 
@@ -989,8 +1064,7 @@ class ResourceCostService {
           },
         };
       } catch (err) {
-        console.log(err)
-        // Log the failed update to timeline
+       errorLog(`Update Resource Cost failed: ${(err as Error).message}`);
         try {
           await this.createResourceCostTimeline(
             originalResourceCost,
@@ -1001,15 +1075,13 @@ class ResourceCostService {
             schemaName
           );
         } catch (timelineError) {
-          console.error(
-            "Failed to create timeline entry for failed update:",
-            timelineError
-          );
+          errorLog(`Failed to create timeline entry for failed update: ${(timelineError as Error).message}`);
         }
 
         throw err;
       }
     } catch (err) {
+      errorLog((err as Error).message);
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
@@ -1033,18 +1105,23 @@ class ResourceCostService {
     try {
       const sequelize = await this.getOrgSequelize();
       if (!sequelize) {
+        errorLog("Database connection not available");
         throw new Error("Database connection not available");
       }
 
       let { accountNumber: accountNumberFetched, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
       // Make sure we're in the right schema context
-      const schemaName = `trd365_${accountNumberFetched.replace(/\D/g, '')}`;
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumberFetched.replace(
+        /\D/g,
+        ""
+      )}`;
       const tableExists = await resourceCostSchemaService.validateSchema(
         schemaName,
         "resource_cost_history"
       );
       if (!tableExists) {
+        errorLog(`Table resource_cost_history or account schema does not exist in schema ${schemaName}`);
         throw new Error(
           `Table resource_cost_history  or account schema does not exist in schema ${schemaName}`
         );
@@ -1120,15 +1197,12 @@ class ResourceCostService {
             });
           }
         } catch (attrError) {
-          console.error(
-            `Error creating history for attribute ${attribute}:`,
-            attrError
-          );
+          errorLog(`Failed to create history for attribute ${attribute}: ${(attrError as Error).message}`);
           // Continue with other attributes even if one fails
         }
       }
     } catch (error) {
-      console.error("Failed to create history entries:", error);
+      errorLog(`Failed to create history entries: ${(error as Error).message}`);
       // Continue execution even if history creation fails
     }
   }
@@ -1145,13 +1219,17 @@ class ResourceCostService {
     try {
       let { accountNumber: accountNumberFetched, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
-      const schemaName = `trd365_${accountNumberFetched.replace(/\D/g, '')}`;
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumberFetched.replace(
+        /\D/g,
+        ""
+      )}`;
       const validateSchema = await resourceCostSchemaService.validateSchema(
         schemaName,
         "resource_cost"
       );
 
       if (!validateSchema) {
+        errorLog("Account schema does not exist");
         return {
           statusCode: HttpStatus.FAILED,
           message: HttpStatus.FAILED_MESSAGE,
@@ -1176,13 +1254,14 @@ class ResourceCostService {
       // 1. Fetch ResourceCost with Resource (from DB1)
       const resourceCost = await ResourceCost.findOne({
         where: { rid: id },
-        include: [{
-          model: Resources,
-          as: "Resource",
-          required: true,
-        }],
+        include: [
+          {
+            model: Resources,
+            as: "Resource",
+            required: true,
+          },
+        ],
       });
-
 
       let currencyName = "";
       let currencyCode = "";
@@ -1195,22 +1274,22 @@ class ResourceCostService {
         await resourceCostSchemaService.assignCurrencyRid(costData, sequelize);
         // Query the currency table in the main database
         const [currencyResult] = await sequelize.query(
-          `SELECT currency_name,currency_code,currency_symbol FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid = :currency_rid`,
+          rawQueries.fetchCurrencyById(),
           {
-            replacements: { currency_rid: costData.currency_rid },
+            replacements: { id: costData.currency_rid },
             type: "SELECT",
           }
         );
 
-         const [statusResult] = await sequelize.query(
-          `SELECT resource_status_name as status_name FROM ${MAIN_SCHEMA_NAME}.resource_status WHERE rid = :status_rid`,
+        const [statusResult] = await sequelize.query(
+          rawQueries.fetchResourceStatusById(),
           {
-            replacements: { status_rid: costData.status_rid },
+            replacements: { id: costData.status_rid },
             type: "SELECT",
           }
         );
         if (statusResult) {
-          statusName = (statusResult as any).status_name;
+          statusName = (statusResult as any).resource_status_name;
         }
         if (currencyResult) {
           currencyName = (currencyResult as any).currency_name;
@@ -1277,10 +1356,10 @@ class ResourceCostService {
           resourceInfo.resource_enddate = moment(
             resourceInfo.resource_enddate
           ).format("YYYY-MM-DD") as any;
-           if (resourceInfo.status_rid) {
-             const sequelize = await this.getMainDbSequelize();
+          if (resourceInfo.status_rid) {
+            const sequelize = await this.getMainDbSequelize();
             const status = await sequelize.query(
-              `SELECT status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid = :rid`,
+              rawQueries.fetchStatusById(),
               {
                 replacements: { rid: resourceInfo.status_rid },
                 type: "SELECT",
@@ -1288,7 +1367,7 @@ class ResourceCostService {
               }
             );
             resourceInfo.status_name = status?.status_name || "Unknown";
-  }
+          }
         }
 
         //Create a new response object with simplified cost data
@@ -1297,7 +1376,7 @@ class ResourceCostService {
           currency_name: currencyName,
           currency_code: currencyCode,
           currency_symbol: currencySymbol,
-          status_name:statusName
+          status_name: statusName,
         };
 
         // // Remove the individual cost frequency fields
@@ -1326,6 +1405,7 @@ class ResourceCostService {
         },
       };
     } catch (err) {
+      errorLog((err as Error).message);
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
@@ -1334,18 +1414,48 @@ class ResourceCostService {
     }
   }
 
-async acceptResourceCostStatus(id: string, accountNumber: string, action: string, type: string) {
-  try {
-    let { accountNumber: accountNumberFetched } =
-      await this.schemaService.fetchAccountByNumber(accountNumber);
+  /**
+   * Handles the acceptance or rejection of a resource cost entry marked as a duplicate or anomaly.
+   *
+   * - Fetches and validates the schema for the given account number.
+   * - Initializes the `ResourceCost` model with the resolved schema.
+   * - If the type is `'Duplicate'`, checks for anomaly conditions based on effort hours, salary, and cost.
+   * - Updates the status of the resource cost entry based on the `action` parameter (`accept` or `reject`).
+   * - Returns a structured response indicating the outcome.
+   *
+   * @param {string} id - The unique identifier (RID) of the resource cost entry to update.
+   * @param {string} accountNumber - The account number related to the resource cost entry.
+   * @param {string} action - The action to perform: `"accept"` or `"reject"`.
+   * @param {string} type - The type of status being handled (e.g., `"Duplicate"`).
+   *
+   * @returns {Promise<{
+   *   statusCode: number;
+   *   message: string;
+   *   data?: { updateStatus: any };
+   *   errorMessage?: string;
+   * }>} A promise that resolves to an object indicating the result of the operation.
+   */
+  async acceptResourceCostStatus(
+    id: string,
+    accountNumber: string,
+    action: string,
+    type: string
+  ) {
+    try {
+      let { accountNumber: accountNumberFetched } =
+        await this.schemaService.fetchAccountByNumber(accountNumber);
 
-    const schemaName = `trd365_${accountNumberFetched.replace(/\D/g, '')}`;
-    const validateSchema = await resourceCostSchemaService.validateSchema(
-      schemaName,
-      "resource_cost"
-    );
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumberFetched.replace(
+        /\D/g,
+        ""
+      )}`;
+      const validateSchema = await resourceCostSchemaService.validateSchema(
+        schemaName,
+        "resource_cost"
+      );
 
     if (!validateSchema) {
+      errorLog("Account schema does not exist");
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
@@ -1353,58 +1463,72 @@ async acceptResourceCostStatus(id: string, accountNumber: string, action: string
       };
     }
 
-    const sequelize = await this.getOrgSequelize();
-    const mainDbSequelize = await this.getMainDbSequelize();
-    ResourceCost.initialize(sequelize, schemaName);
+      const sequelize = await this.getOrgSequelize();
+      const mainDbSequelize = await this.getMainDbSequelize();
+      ResourceCost.initialize(sequelize, schemaName);
 
-    let resourceCostStatus = "Active";
-    const statusMap = await getResourceStatuses(mainDbSequelize);
-    const activeStatusId = statusMap?.get("Active");
+      let resourceCostStatus = "Active";
+      const statusMap = await getResourceStatuses(mainDbSequelize);
+      const activeStatusId = statusMap?.get("Active");
 
-    // Only check for anomaly conditions if handling duplicate type
-    if (type === 'Duplicate') {
-      const resourceCostBy = await ResourceCost.findOne({
-        where: {
-          rid: id,
-        },
-      });
+      // Only check for anomaly conditions if handling duplicate type
+      if (type === "Duplicate") {
+        const resourceCostBy = await ResourceCost.findOne({
+          where: {
+            rid: id,
+          },
+        });
 
-      if (resourceCostBy) {
-        // Get currency threshold based on resource cost's currency_rid
-        const currencyThreshold = await getCurrencyThreshold(mainDbSequelize, resourceCostBy.currency_rid);
+        if (resourceCostBy) {
+          // Get currency threshold based on resource cost's currency_rid
+          const currencyThreshold = await getCurrencyThreshold(
+            mainDbSequelize,
+            resourceCostBy.currency_rid
+          );
 
-        if (
-          resourceCostBy.effort_in_hrs &&
-          Number(resourceCostBy.effort_in_hrs) > 3000
-        ) {
-          resourceCostStatus = "Anomaly";
-        } else if (
-          (resourceCostBy?.salary && currencyThreshold !== null && Number(resourceCostBy.salary) > currencyThreshold) ||
-          (resourceCostBy?.resource_cost && currencyThreshold !== null && Number(resourceCostBy.resource_cost) > currencyThreshold)
-        ) {
-          resourceCostStatus = "Anomaly";
+          if (
+            resourceCostBy.effort_in_hrs &&
+            Number(resourceCostBy.effort_in_hrs) > 3000
+          ) {
+            resourceCostStatus = "Anomaly";
+          } else if (
+            (resourceCostBy?.salary &&
+              currencyThreshold !== null &&
+              Number(resourceCostBy.salary) > currencyThreshold) ||
+            (resourceCostBy?.resource_cost &&
+              currencyThreshold !== null &&
+              Number(resourceCostBy.resource_cost) > currencyThreshold)
+          ) {
+            resourceCostStatus = "Anomaly";
+          }
         }
       }
-    }
-     const updateStatus = await ResourceCost.update(
-      {
-        status_rid: action === "accept" ?  statusMap?.get(resourceCostStatus) : statusMap?.get("In-Active"),
-      },
-      {
-        where: {
-          rid: id,
+      const updateStatus = await ResourceCost.update(
+        {
+          status_rid:
+            action === "accept"
+              ? statusMap?.get(resourceCostStatus)
+              : statusMap?.get("In-Active"),
         },
-      }
-    );
+        {
+          where: {
+            rid: id,
+          },
+        }
+      );
+      let dynamicResKey : string = ``
+      if(resourceCostStatus == 'Anomaly') dynamicResKey = "Anomaly"
+      else dynamicResKey = "Duplicate"
 
     return {
       statusCode: HttpStatus.SUCCESS,
-      message: action === "accept" ? "Anomaly accepted successfully" : "Anomaly rejected successfully",
+      message: action === "accept" ? `${dynamicResKey} accepted successfully` : `${dynamicResKey} rejected successfully`,
       data: {
         updateStatus,
       },
     };
   } catch (err) {
+    errorLog((err as Error).message);
     return {
       statusCode: HttpStatus.FAILED,
       message: HttpStatus.FAILED_MESSAGE,
@@ -1451,7 +1575,7 @@ async acceptResourceCostStatus(id: string, accountNumber: string, action: string
       // Fetch created_by user name if ID exists
       if (userIds.created_by) {
         const [createdByUser] = await sequelize.query(
-          `SELECT concat(first_name, ' ', last_name) as full_name FROM ${MAIN_SCHEMA_NAME}."user" WHERE rid = :userId LIMIT 1`,
+          rawQueries.getUserFullNameQuery(),
           {
             replacements: { userId: userIds.created_by },
             type: "SELECT",
@@ -1466,7 +1590,7 @@ async acceptResourceCostStatus(id: string, accountNumber: string, action: string
       // Fetch modified_by user name if ID exists
       if (userIds.modified_by) {
         const [modifiedByUser] = await sequelize.query(
-          `SELECT concat(first_name, ' ', last_name) as full_name FROM ${MAIN_SCHEMA_NAME}."user" WHERE rid = :userId LIMIT 1`,
+          rawQueries.getUserFullNameQuery(),
           {
             replacements: { userId: userIds.modified_by },
             type: "SELECT",
@@ -1478,8 +1602,7 @@ async acceptResourceCostStatus(id: string, accountNumber: string, action: string
         }
       }
     } catch (error) {
-      console.error("Error fetching user names:", error);
-      // Return empty strings if there's an error
+      errorLog(`Failed to fetch user names: ${(error as Error).message}`);
     }
 
     return result;
@@ -1504,49 +1627,48 @@ async acceptResourceCostStatus(id: string, accountNumber: string, action: string
   }
 
   /**
- * Fetches resource costs for multiple resource IDs using a single SQL query
- * 
- * @param {string} accountNumber - Account number to determine schema
- * @param {string[]} resourceIds - Array of resource IDs
- * @returns {Promise<any[]>} - Resource costs data
- */
-async getResourceCostsByResourceIds(accountNumber: string, resourceIds: string[]): Promise<any[]> {
-  try {
-    if (resourceIds.length === 0) return [];
+   * Fetches resource costs for multiple resource IDs using a single SQL query
+   *
+   * @param {string} accountNumber - Account number to determine schema
+   * @param {string[]} resourceIds - Array of resource IDs
+   * @returns {Promise<any[]>} - Resource costs data
+   */
+  async getResourceCostsByResourceIds(
+    accountNumber: string,
+    resourceIds: string[]
+  ): Promise<any[]> {
+    try {
+      if (resourceIds.length === 0) return [];
 
-    const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, '')}`;
+      const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+        /\D/g,
+        ""
+      )}`;
 
-    const query = `
-      SELECT 
-        rc.rid,
-        rc.resource_rid
-      FROM "${schemaName}".resource_cost rc
-      WHERE rc.resource_rid IN (:resourceIds)
-      ORDER BY rc.created_datetime DESC
-    `;
+      const query = rawQueries.getLatestResourceCostEntriesQuery(schemaName);
 
-    const sequelize = await initOrgSequelize();
-    const results = await sequelize.query(query, {
-      replacements: { resourceIds },
-      type: 'SELECT'
-    });
+      const sequelize = await initOrgSequelize();
+      const results = await sequelize.query(query, {
+        replacements: { resourceIds },
+        type: "SELECT",
+      });
 
     return results;
 
   } catch (error) {
-    console.error('Error fetching resource costs (bulk):', error);
+    errorLog(`Error fetching resource costs by resource IDs: ${(error as Error).message}`);
     throw error;
   }
 }
 }
 
 export async function getResourceStatuses(
-  mainDbSequelize: Sequelize,
+  mainDbSequelize: Sequelize
 ): Promise<Map<string, string> | null> {
   try {
-    const resourceStatus = `SELECT rid, resource_status_name FROM ${MAIN_SCHEMA_NAME}.resource_status`;
+    const resourceStatus = rawQueries.fetchAllResourceStatus();
     const results = await mainDbSequelize.query(resourceStatus, {
-      type: "SELECT"
+      type: "SELECT",
     });
 
     if (!results || !Array.isArray(results)) {
@@ -1554,16 +1676,16 @@ export async function getResourceStatuses(
     }
 
     // Create lookup maps
-    const statusMap = new Map(results.map((st: any) => [st.resource_status_name,st.rid]));
-        
+    const statusMap = new Map(
+      results.map((st: any) => [st.resource_status_name, st.rid])
+    );
 
     return statusMap;
   } catch (error) {
-    console.error('Error fetching resource statuses:', error);
+    errorLog(`Failed to fetch resource statuses: ${(error as Error).message}`);
     return null;
   }
 }
-  
 
 /**
  * Fetches the currency threshold from the currency table.
@@ -1578,10 +1700,10 @@ export async function getCurrencyThreshold(
   currency_rid?: string
 ): Promise<number | null> {
   let currencyResult;
-  console.log("currency_rid :",currency_rid);
+  logMessage(`Fetching currency threshold for currency_rid: ${currency_rid || 'USD'}`);
   if (currency_rid) {
     [currencyResult] = await mainDbSequelize.query(
-      `SELECT currency_threshold FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid = :currency_rid`,
+      rawQueries.fetchCurrencyThresold(),
       {
         replacements: { currency_rid },
         type: "SELECT",
@@ -1589,7 +1711,7 @@ export async function getCurrencyThreshold(
     );
   } else {
     [currencyResult] = await mainDbSequelize.query(
-      `SELECT currency_threshold FROM ${MAIN_SCHEMA_NAME}.currency WHERE currency_code = 'USD'`,
+      rawQueries.fetchDefualtCurrencyThresold(),
       {
         type: "SELECT",
       }

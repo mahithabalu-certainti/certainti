@@ -38,6 +38,12 @@ export const projectTaskSchema = gql`
       modified_by: String,
       status_name : String,
       project_resource_role : String
+      task_name: String
+      task_description: String
+      task_classification_rid: String
+      task_type_rid: String
+      task_type_name: String
+      task_classification_name: String
   }
 
   type ProjectTaskResponse {
@@ -60,6 +66,10 @@ export const projectTaskSchema = gql`
     start_date: String
     end_date: String
     comments: String
+    task_name: String
+    task_description: String
+    task_type_rid: String
+    task_classification_rid: String
   }
 
   type Mutation {

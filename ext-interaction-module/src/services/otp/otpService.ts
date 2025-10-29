@@ -11,6 +11,7 @@ import {
 } from "../../utils/otpGenerator";
 import { otpMailTemplate } from "../../utils/mailTemplate";
 import { sendEmail } from "../emailService";
+import { logMessage } from "../../utils/helpers";
 
 export class OtpService {
   private logger: Logger;
@@ -21,6 +22,28 @@ export class OtpService {
     this.otpSchema = new OtpSchemaService();
   }
 
+  /**
+   * Generates a One-Time Password (OTP) for the given interaction and account.
+   *
+   * This function performs several steps to generate and send an OTP:
+   * 1. Validates the input data for required fields.
+   * 2. Checks if the user is temporarily blocked from receiving OTPs.
+   * 3. Generates a random OTP and hashes it.
+   * 4. Stores the hashed OTP in the database.
+   * 5. Sends the OTP to the user's email (only once).
+   * 6. Tracks OTP send attempt history and handles failure scenarios.
+   * 7. Resets OTP attempt counters on successful send.
+   *
+   * @param {IGenerateOtp} data - The input data containing account and interaction identifiers.
+   *
+   * @returns {Promise<{
+   *   statusCode: number;
+   *   statusMessage: string;
+   *   errorMessage?: string;
+   * }>} - A promise resolving with the operation status including success or detailed error messages.
+   *
+   * @throws {Error} - Throws an error if any internal process fails during OTP generation or sending.
+   */
   async generateOtp(data: IGenerateOtp): Promise<{
     statusCode: number;
     statusMessage: string;
@@ -139,16 +162,38 @@ export class OtpService {
         statusMessage: HttpStatus.SUCCESS_MESSAGE,
       };
     } catch (err) {
-      console.log("Error generating OTP", err);
+      logMessage(`Error generating OTP: ${err}`);
       throw this.throwServiceError(err as Error);
     }
   }
 
+  /**
+   * Verifies the provided OTP for a given account and interaction.
+   *
+   * This function performs the following steps:
+   * 1. Validates the input data.
+   * 2. Retrieves the latest OTP entry for the account and interaction.
+   * 3. Checks if the OTP exists, has not expired, and has not been used before.
+   * 4. Compares the entered OTP with the stored hashed OTP.
+   * 5. Updates OTP verification status and logs history of attempts.
+   * 6. Generates and returns a custom JWT token upon successful verification.
+   *
+   * @param {IVerifyOtp} data - The input data including account RID, interaction RID, and the OTP to verify.
+   *
+   * @returns {Promise<{
+   *   statusCode: number;
+   *   statusMessage: string;
+   *   errorMessage?: string;
+   *   data?: { auth_token: string; email: string };
+   * }>} - A promise resolving to the verification result including success, failure, or error details.
+   *
+   * @throws {Error} - Throws an error if internal operations fail during OTP verification.
+   */
   async verifyOtp(data: IVerifyOtp): Promise<{
     statusCode: number;
     statusMessage: string;
     errorMessage?: string;
-    data?: { auth_token: string, email: string }
+    data?: { auth_token: string; email: string };
   }> {
     try {
       const { account_rid, interaction_rid, otp: enteredOtp } = data;
@@ -249,7 +294,7 @@ export class OtpService {
           interaction_rid,
           email,
         };
-    
+
         const token = await generateCustomJwtToken(payload);
 
         return {
@@ -258,8 +303,8 @@ export class OtpService {
             "OTP verified successfully. Redirecting to interaction details.",
           data: {
             auth_token: token,
-            email
-          }
+            email,
+          },
         };
       } else {
         await this.otpSchema.storeOtpHistory({
@@ -280,11 +325,33 @@ export class OtpService {
         };
       }
     } catch (err) {
-      console.log("Inside error", err);
+      logMessage(`Error verifying OTP: ${err}`);
       throw this.throwServiceError(err as Error);
     }
   }
 
+  /**
+   * Resends an OTP for a specified account and interaction after validating and managing resend attempts.
+   *
+   * This function performs the following operations:
+   * 1. Validates input data for account and interaction identifiers.
+   * 2. Checks OTP metadata for resend attempt limits and blocks if the limit is exceeded.
+   * 3. Clears any previously generated OTP for the user.
+   * 4. Generates a new OTP, hashes it, and stores it securely.
+   * 5. Sends the new OTP to the user's registered email.
+   * 6. Updates the resend attempt count and OTP metadata.
+   * 7. Logs the OTP resend attempt in history.
+   *
+   * @param {IGenerateOtp} data - The data containing account RID and interaction RID needed to resend the OTP.
+   *
+   * @returns {Promise<{
+   *   statusCode: number;
+   *   statusMessage: string;
+   *   errorMessage?: string;
+   * }>} - A promise resolving with the result of the resend operation, including success or error details.
+   *
+   * @throws {Error} - Throws an error if any internal operation fails during OTP resend processing.
+   */
   async resendOtp(data: IGenerateOtp): Promise<{
     statusCode: number;
     statusMessage: string;
@@ -333,7 +400,8 @@ export class OtpService {
         };
       }
 
-      const currentAttemptCount = parseInt(otpMeta?.otp_attempt_count as any, 10) || 0;
+      const currentAttemptCount =
+        parseInt(otpMeta?.otp_attempt_count as any, 10) || 0;
       const newAttemptCount = currentAttemptCount + 1;
 
       // 3. Block if attempts exceeded
@@ -388,9 +456,15 @@ export class OtpService {
       }
 
       // // 8. Update attempt meta (increase count, no block unless max hit)
-      await this.otpSchema.updateOtpMeta(accountNumber, account_rid, interaction_rid, email, {
-        otp_attempt_count: newAttemptCount,
-      });
+      await this.otpSchema.updateOtpMeta(
+        accountNumber,
+        account_rid,
+        interaction_rid,
+        email,
+        {
+          otp_attempt_count: newAttemptCount,
+        }
+      );
 
       // 9. Log history
       await this.otpSchema.storeOtpHistory({

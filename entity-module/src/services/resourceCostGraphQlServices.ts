@@ -1,7 +1,7 @@
 import { initMainDbSequelize } from "../config/mainDataSource";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { HttpStatus, MAIN_SCHEMA_NAME, rawQueries, STATUS_MESSAGE } from "../utils/constants";
-import { setResFiscalForResCost, setResourceCostDatas } from "../utils/helpers";
+import { logMessage, setResFiscalForResCost, setResourceCostDatas } from "../utils/helpers";
 import resourceCostSchemaService from "../services/resourceCostSchemaService";
 import { getCurrencyThreshold, getResourceStatuses } from "./resourceCostService";
 import Decimal from "decimal.js";
@@ -136,6 +136,7 @@ export default class ResourceCostGraphQlService {
                   // Convert valid string/number to Decimal
                   acc[key] = new Decimal(value).toString();
                 } catch (error) {
+                  logMessage(`Error converting ${key} to Decimal: ${error}`);
                   throw new Error(`Invalid number format for ${key}: ${value}`);
                 }
               }

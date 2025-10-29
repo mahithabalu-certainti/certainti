@@ -58,4 +58,7 @@ del2.md
 *.tfstate
 gitcommands.md
 
-
+terraform.*
+.terraform*
+.terraform/*
+*.tfvars

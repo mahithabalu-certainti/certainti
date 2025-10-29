@@ -9,7 +9,7 @@ import {
   validateRequest,
   generateExcelBase64,
   uploadToAzureBlob,
-  deleteFromAzureBlob
+  deleteFromAzureBlob,
 } from "../utils/helpers";
 import {
   accountSchema,
@@ -18,7 +18,6 @@ import {
   updateAccountSchema,
   listOrgAccountSchema,
 } from "../lib/joi/schemas/schema";
-
 
 const services = configurations.getInstance().getServices();
 const accountServices = services.accountServices;
@@ -38,7 +37,7 @@ async function accounts(req: Request, res: Response): Promise<void> {
   try {
     const value = await validateRequest(req, listAccountSchema, res, "GET");
     let parsedFilters: Record<string, any> = {};
-    let parsedGlobalFilters: Record<string, string[]> = {}
+    let parsedGlobalFilters: Record<string, string[]> = {};
 
     if (!value) {
       return;
@@ -59,8 +58,8 @@ async function accounts(req: Request, res: Response): Promise<void> {
     }
     const pageNum: number = parseInt(value.page, 10) || 1;
     const limitNum: number = parseInt(value.limit, 10) || 10;
-    const fiscalYear: number | "FY-All" = value?.fiscalYear || null ;
-    const userId = req.headers['x-user-id'] as string;
+    const fiscalYear: number | "FY-All" = value?.fiscalYear || null;
+    const userId = req.headers["x-user-id"] as string;
 
     const accounts = await accountServices.accountList(
       pageNum,
@@ -70,7 +69,8 @@ async function accounts(req: Request, res: Response): Promise<void> {
       value.sortBy,
       value.sortOrder,
       parsedGlobalFilters,
-      fiscalYear,userId
+      fiscalYear,
+      userId
     );
 
     if (accounts.statusCode === HttpStatus.SUCCESS) {
@@ -114,9 +114,9 @@ async function exportAccounts(req: Request, res: Response): Promise<void> {
   const methodName = "Export user";
   try {
     const value = await validateRequest(req, exportAccountSchema, res, "GET");
-    const userId = req.headers['x-user-id'] as string;
+    const userId = req.headers["x-user-id"] as string;
     let parsedFilters: Record<string, any> = {};
-    let parsedGlobalFilters: Record<string, string[]> = {}
+    let parsedGlobalFilters: Record<string, string[]> = {};
 
     if (!value) {
       return;
@@ -136,8 +136,7 @@ async function exportAccounts(req: Request, res: Response): Promise<void> {
       );
     }
 
-    const fiscalYear: number | "FY-All" = value?.fiscalYear || null ;
-  
+    const fiscalYear: number | "FY-All" = value?.fiscalYear || null;
 
     const accounts = await accountServices.exportAccountList(
       value.search,
@@ -145,14 +144,18 @@ async function exportAccounts(req: Request, res: Response): Promise<void> {
       value.sortBy,
       value.sortOrder,
       parsedGlobalFilters,
-      fiscalYear,userId
+      fiscalYear,
+      userId
     );
 
     if (accounts.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
-      handleSuccessResponse(res, await generateExcelBase64(accounts?.data?.account,"Accounts"));
+      handleSuccessResponse(
+        res,
+        await generateExcelBase64(accounts?.data?.account, "Accounts")
+      );
 
-      return
+      return;
     } else {
       errorLog(methodName, accounts.errorMessage);
       handleErrorResponse(
@@ -190,12 +193,13 @@ async function exportAccounts(req: Request, res: Response): Promise<void> {
  */
 async function createAccount(req: Request, res: Response): Promise<void> {
   const methodName = "create account";
-  let file_url = '';
+  let file_url = "";
   try {
     const value = await validateRequest(req, accountSchema, res);
-     if (!value) {
-      return;    }
-    const userId = req.headers['x-user-id'] as string;
+    if (!value) {
+      return;
+    }
+    const userId = req.headers["x-user-id"] as string;
 
     if (!userId) {
       handleErrorResponse(
@@ -207,10 +211,11 @@ async function createAccount(req: Request, res: Response): Promise<void> {
       return;
     }
 
-   
-    
-
-    const account = await accountServices.createAccount(value, userId,req.file);
+    const account = await accountServices.createAccount(
+      value,
+      userId,
+      req.file
+    );
 
     if (account.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -253,13 +258,13 @@ async function createAccount(req: Request, res: Response): Promise<void> {
  */
 async function updateAccount(req: Request, res: Response): Promise<void> {
   const methodName = "update account";
-  let file_url = '';
+  let file_url = "";
   try {
     const value = await validateRequest(req, updateAccountSchema, res);
     if (!value) {
       return;
     }
-    const userId = req.headers['x-user-id'] as string;
+    const userId = req.headers["x-user-id"] as string;
     if (!userId) {
       handleErrorResponse(
         res,
@@ -269,19 +274,15 @@ async function updateAccount(req: Request, res: Response): Promise<void> {
       );
       return;
     }
-    if(req.file && value.logo_action  ==="upload")
-    {
-      if(value.logo_url)
-      {
+    if (req.file && value.logo_action === "upload") {
+      if (value.logo_url) {
         await deleteFromAzureBlob(value.logo_url);
       }
-      file_url = await uploadToAzureBlob(req.file,value?.account_rid);
-      value.logo_url = file_url; 
-    }
-    else if(value.logo_action  === "delete")
-    {
-       await deleteFromAzureBlob(value.logo_url);
-        value.logo_url = ""; 
+      file_url = await uploadToAzureBlob(req.file, value?.account_rid);
+      value.logo_url = file_url;
+    } else if (value.logo_action === "delete") {
+      await deleteFromAzureBlob(value.logo_url);
+      value.logo_url = "";
     }
     const account = await accountServices.updateAccount(value, userId);
 
@@ -395,11 +396,21 @@ async function accountById(req: Request, res: Response): Promise<void> {
   }
 }
 
+/**
+ * Handles the request to fetch all organization accounts.
+ *
+ * @param {Request} req The request object containing details of the HTTP request.
+ * @param {Response} res The response object to send the HTTP response.
+ * @returns {Promise<void>} A promise that resolves when the request is processed.
+ *
+ * This method calls the `listAllAccounts` service to retrieve all organization accounts,
+ * and sends an appropriate response:
+ * - If successful, it sends a success response with the account data.
+ * - If failed, it logs the error and sends an error response with the error message.
+ */
 async function listOrgAccounts(req: Request, res: Response): Promise<void> {
-   const methodName = "List Org account";
-    try {
-       
-  
+  const methodName = "List Org account";
+  try {
     const account = await accountServices.listAllAccounts();
 
     if (account.statusCode === HttpStatus.SUCCESS) {
@@ -425,29 +436,43 @@ async function listOrgAccounts(req: Request, res: Response): Promise<void> {
     );
   }
 }
+
+/**
+ * Handles the request to fetch global accounts accessible by the current user.
+ *
+ * @param {Request} req The request object containing HTTP headers and query parameters.
+ * @param {Response} res The response object used to send the HTTP response.
+ * @returns {Promise<void>} A promise that resolves when the request is fully handled.
+ *
+ * This method performs the following steps:
+ * - Validates the incoming request using `listOrgAccountSchema`.
+ * - Parses optional filter criteria from the `filters` query param (must be a valid JSON string).
+ * - Extracts the user ID from the request headers (`x-user-id`).
+ * - Calls the `listGlobalAccounts` service method with pagination, sorting, and filtering inputs.
+ * - Sends a success response with the list of accounts if the service call is successful.
+ * - Logs and sends an error response if the request validation or service call fails.
+ */
 async function ListGlobalAccounts(req: Request, res: Response): Promise<void> {
   const methodName = "List global account";
   try {
-    const userId = req.headers['x-user-id'] as string;
-    const value = await validateRequest(req, listOrgAccountSchema, res,"GET");
+    const userId = req.headers["x-user-id"] as string;
+    const value = await validateRequest(req, listOrgAccountSchema, res, "GET");
     if (!value) {
       return;
     }
     let parsedFilters: Record<string, any> = {};
-      try {
+    try {
       if (value.filters) {
         parsedFilters = JSON.parse(value.filters);
       }
-    
     } catch (error) {
       errorLog(
         methodName,
         "Invalid filters format. Must be a valid JSON object."
       );
     }
-    if(!userId)
-    {
-      return
+    if (!userId) {
+      return;
     }
     const account = await accountServices.listGlobalAccounts(
       userId,
@@ -482,39 +507,48 @@ async function ListGlobalAccounts(req: Request, res: Response): Promise<void> {
   }
 }
 
-  async function getKeyContactRoles(req: Request, res: Response): Promise<void> {
-    const methodName = "get key contact roles";
-    try {
-      const entity_type = req.query.entity_type as string;
-      const account = await accountServices.getKeyContactRoles(entity_type);
+/**
+ * Handles the request to fetch key contact roles based on the provided entity type.
+ *
+ * @param {Request} req The request object containing the entity type in the query parameters.
+ * @param {Response} res The response object used to send the HTTP response.
+ * @returns {Promise<void>} A promise that resolves once the response is sent.
+ *
+ * This method:
+ * - Extracts the `entity_type` from the query parameters.
+ * - Calls the `getKeyContactRoles` service to fetch roles for the given entity type.
+ * - Sends a success response with the roles if found.
+ * - Sends an error response if the service call fails.
+ */
+async function getKeyContactRoles(req: Request, res: Response): Promise<void> {
+  const methodName = "get key contact roles";
+  try {
+    const entity_type = req.query.entity_type as string;
+    const account = await accountServices.getKeyContactRoles(entity_type);
 
-      if (account.statusCode === HttpStatus.SUCCESS) {
-        successLog(methodName);
-        handleSuccessResponse(res, account.data);
-      }
-      else{
-        errorLog(methodName, account.errorMessage);
-        handleErrorResponse(
-          res,
-          HttpStatus.BAD_REQUEST,
-          HttpStatus.BAD_REQUEST_MESSAGE,
-          account.errorMessage
-        );
-      }
-    }
-    catch (err) {
-      const error = err as Error;
-      errorLog(methodName, error.message);
+    if (account.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, account.data);
+    } else {
+      errorLog(methodName, account.errorMessage);
       handleErrorResponse(
         res,
-        HttpStatus.FAILED,
-        HttpStatus.FAILED_MESSAGE,
-        error.message
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        account.errorMessage
       );
     }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
   }
-
-
+}
 
 export default {
   accounts,
@@ -525,5 +559,5 @@ export default {
   accountById,
   ListGlobalAccounts,
   getKeyContactRoles,
-  listOrgAccounts
+  listOrgAccounts,
 };

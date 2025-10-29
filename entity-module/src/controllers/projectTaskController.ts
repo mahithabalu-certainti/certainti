@@ -4,6 +4,7 @@ import {
   generateExcelBase64,
   handleErrorResponse,
   handleSuccessResponse,
+  logMessage,
   successLog,
   validateRequest,
 } from "../utils/helpers";
@@ -22,12 +23,24 @@ const services = configurations.getInstance().getServices();
 const taskService = services.projectTaskServices;
 const projectTaskService = services.projectTaskInjestionServices;
 
+/**
+ * Handles the creation of a new project task.
+ * 
+ * Validates the request, retrieves user ID and user preferences,
+ * calls the service to create the project task, and sends appropriate response
+ * based on success, prompt, or error outcomes.
+ * 
+ * @param {Request} req - Express request object containing task data and headers.
+ * @param {Response} res - Express response object for sending responses.
+ * @returns {Promise<any>} A promise that resolves when the response is sent.
+ */
 async function createProjectTask(req: Request, res: Response): Promise<any> {
   const methodName = "Create project task";
   try {
     const value = await validateRequest(req, createProjectTaskSchema, res);
 
     const userId = req.headers["x-user-id"] as string;
+    logMessage("Request received for creating project task with data: " + JSON.stringify(value) + " and userId: " + userId);
     const userPreference = value.user_preference
 
     if (!userId) {
@@ -84,6 +97,16 @@ async function createProjectTask(req: Request, res: Response): Promise<any> {
   }
 }
 
+/**
+ * Retrieves a list of project tasks based on provided filters, pagination, and sorting.
+ * 
+ * Validates the request and user ID from headers, parses filters if necessary,
+ * then fetches and returns the list of project tasks or error responses accordingly.
+ * 
+ * @param {Request} req - Express request object containing query parameters and headers.
+ * @param {Response} res - Express response object for sending responses.
+ * @returns {Promise<void>} A promise that resolves when the response is sent.
+ */
 async function getProjectTasks(req: Request, res: Response): Promise<void> {
   const methodName = "getProjectTasks";
   try {
@@ -97,6 +120,7 @@ async function getProjectTasks(req: Request, res: Response): Promise<void> {
       return;
     }
     const userId = req.headers["x-user-id"] as string;
+    logMessage("Request received for getProjectTasks: " + JSON.stringify(value) + " and userId: " + userId);
 
     if (!userId) {
       handleErrorResponse(
@@ -113,7 +137,7 @@ async function getProjectTasks(req: Request, res: Response): Promise<void> {
       try {
         value.filters = JSON.parse(value.filters);
       } catch (err) {
-        console.error("Invalid filters JSON:", value.filters);
+        errorLog(methodName, "Invalid filters JSON: " + (err as Error).message);
         value.filters = {};
       }
     }
@@ -155,6 +179,16 @@ async function getProjectTasks(req: Request, res: Response): Promise<void> {
   }
 }
 
+/**
+ * Retrieves a project task by its ID.
+ * 
+ * Validates request and user ID, fetches task details from the service,
+ * and responds with the task data or error messages.
+ * 
+ * @param {Request} req - Express request object containing task ID and headers.
+ * @param {Response} res - Express response object for sending responses.
+ * @returns {Promise<void>} A promise that resolves when the response is sent.
+ */
 async function getProjectTaskById(req: Request, res: Response): Promise<void> {
   const methodName = "getProjectTaskById";
   try {
@@ -162,6 +196,7 @@ async function getProjectTaskById(req: Request, res: Response): Promise<void> {
     if (!value) {
       return;
     }
+    logMessage("Request received for getProjectTaskById: " + JSON.stringify(value));  
     const userId = req.headers["x-user-id"] as string;
 
     if (!userId) {
@@ -206,6 +241,16 @@ async function getProjectTaskById(req: Request, res: Response): Promise<void> {
   }
 }
 
+/**
+ * Exports all project tasks matching the given filters and search parameters.
+ * 
+ * Validates request and user ID, parses filters if needed, calls export service,
+ * and returns an Excel file in base64 format or error response.
+ * 
+ * @param {Request} req - Express request object containing export parameters and headers.
+ * @param {Response} res - Express response object for sending responses.
+ * @returns {Promise<void>} A promise that resolves when the response is sent.
+ */
 async function exportAllProjectTasks(
   req: Request,
   res: Response
@@ -222,6 +267,7 @@ async function exportAllProjectTasks(
       return;
     }
     const userId = req.headers["x-user-id"] as string;
+    logMessage("Request received for exportAllProjectTasks: " + JSON.stringify(value) + " and userId: " + userId);
 
     if (!userId) {
       handleErrorResponse(
@@ -238,7 +284,7 @@ async function exportAllProjectTasks(
       try {
         value.filters = JSON.parse(value.filters);
       } catch (err) {
-        console.error("Invalid filters JSON:", value.filters);
+        errorLog(methodName, "Invalid filters JSON: " + (err as Error).message);
         value.filters = {};
       }
     }
@@ -282,12 +328,23 @@ async function exportAllProjectTasks(
   }
 }
 
+/**
+ * Updates an existing project task.
+ * 
+ * Validates the request and user ID, calls the update service with the task data,
+ * and handles success, prompt, or error responses accordingly.
+ * 
+ * @param {Request} req - Express request object containing updated task data and headers.
+ * @param {Response} res - Express response object for sending responses.
+ * @returns {Promise<any>} A promise that resolves when the response is sent.
+ */
 async function updateProjectTask(req: Request, res: Response): Promise<any> {
   const methodName = "Update project task";
   try {
     const value = await validateRequest(req, updateProjectTaskSchema, res);
 
     const userId = req.headers["x-user-id"] as string;
+    logMessage("Request received for updating project task with data: " + JSON.stringify(value) + " and userId: " + userId);
     const userPreference = value.user_preference
 
     if (!userId) {
@@ -344,6 +401,15 @@ async function updateProjectTask(req: Request, res: Response): Promise<any> {
   }
 }
 
+/**
+ * Retrieves assigned resource codes for a given account and project fiscal ID.
+ * 
+ * Calls the service to fetch assigned resource codes and returns them or error responses.
+ * 
+ * @param {Request} req - Express request object containing route parameters.
+ * @param {Response} res - Express response object for sending responses.
+ * @returns {Promise<void>} A promise that resolves when the response is sent.
+ */
 async function assignedResourceCodes(req: Request, res: Response): Promise<void> {
   const methodName = "Get assigned resource codes";
   try {
@@ -379,6 +445,17 @@ async function assignedResourceCodes(req: Request, res: Response): Promise<void>
   }
 }
 
+/**
+ * Handles updating the anomaly status of a project resource.
+ * 
+ * Validates the request and user ID, processes acceptance or rejection of anomaly,
+ * updates multiple related fiscal and resource tables in a transaction,
+ * and returns success or error responses.
+ * 
+ * @param {Request} req - Express request object containing anomaly status data and headers.
+ * @param {Response} res - Express response object for sending responses.
+ * @returns {Promise<void>} A promise that resolves when the response is sent.
+ */
 async function anomalyStatusUpdate(req: Request, res: Response): Promise<void> {
   const methodName = "Accept Anamoly";
   try {
@@ -426,7 +503,18 @@ async function anomalyStatusUpdate(req: Request, res: Response): Promise<void> {
     );
   }
 }
-async function fetchReCodeForPrjTask (req : Request, res : Response) : Promise<any> {
+
+/**
+ * Fetches resource codes available for project tasks based on account RID.
+ * 
+ * Validates the request body, calls service to retrieve resource codes,
+ * and returns them with appropriate success or not found messages.
+ * 
+ * @param {Request} req - Express request object containing account RID in the body.
+ * @param {Response} res - Express response object for sending responses.
+ * @returns {Promise<any>} A promise that resolves when the response is sent.
+ */
+async function fetchReCodeForPrjTask(req : Request, res : Response) : Promise<any> {
   const methodName = "fetchReCodeForPrjTask"
   try {
     const data = req.body;
@@ -434,6 +522,7 @@ async function fetchReCodeForPrjTask (req : Request, res : Response) : Promise<a
       handleErrorResponse(res, HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST_MESSAGE, STATUS_MESSAGE.accountNoFound)
     }
     const result = await projectTaskService.listResourceCodeForProjectTask(data)
+    logMessage(`Request received for fetchReCodeForPrjTask: ` + JSON.stringify(data));
     if(result.statusCode == HttpStatus.SUCCESS) {
       return res.status(HttpStatus.SUCCESS).send({
         statusCode : HttpStatus.SUCCESS,
@@ -461,6 +550,108 @@ async function fetchReCodeForPrjTask (req : Request, res : Response) : Promise<a
   }
 }
 
+/**
+ * Retrieves the list of available project task types.
+ * 
+ * Validates user ID from headers, calls the service to get task types,
+ * and returns the data or error messages.
+ * 
+ * @param {Request} req - Express request object containing headers.
+ * @param {Response} res - Express response object for sending responses.
+ * @returns {Promise<any>} A promise that resolves when the response is sent.
+ */
+async function fetchProjectTaskTypes (req : Request, res : Response) : Promise<any> {
+  const methodName = "Project Task Type"
+  try {
+    const userId = req.headers["x-user-id"] as string;
+
+    if (!userId) {
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    const result = await projectTaskService.listProjectTaskTypes()
+    if(result.statusCode == HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        data : result.data
+      })
+    } else {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        data : result.data
+      })
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
+/**
+ * Retrieves the list of project task classifications.
+ * 
+ * Validates user ID from headers, calls the service to get task classifications,
+ * and returns the data or error messages.
+ * 
+ * @param {Request} req - Express request object containing headers.
+ * @param {Response} res - Express response object for sending responses.
+ * @returns {Promise<any>} A promise that resolves when the response is sent.
+ */
+async function fetchProjectTaskClassification (req : Request, res : Response) : Promise<any> {
+  const methodName = "Project Task Type"
+  try {
+    const userId = req.headers["x-user-id"] as string;
+
+    if (!userId) {
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    const result = await projectTaskService.listProjectTaskClassification()
+    if(result.statusCode == HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        data : result.data
+      })
+    } else {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        data : result.data
+      })
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
 export default {
   getProjectTasks,
   getProjectTaskById,
@@ -469,5 +660,7 @@ export default {
   updateProjectTask,
   assignedResourceCodes,
   anomalyStatusUpdate,
-  fetchReCodeForPrjTask
+  fetchReCodeForPrjTask,
+  fetchProjectTaskTypes,
+  fetchProjectTaskClassification
 };

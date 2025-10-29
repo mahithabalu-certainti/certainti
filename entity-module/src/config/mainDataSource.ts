@@ -1,6 +1,7 @@
 import { Sequelize } from "sequelize";
 import { NODE_ENV } from "../utils/constants";
 import { getSecret } from "../utils/azureSecrets";
+import { errorLog, logMessage } from "../utils/helpers";
  
 let sequelize: Sequelize;
  
@@ -23,7 +24,7 @@ const dbPort = process.env.MAIN_PG_DB_PORT
 const env = process.env.NODE_ENV || NODE_ENV.DEV;
  
 const sslOptions =
-  env === NODE_ENV.PROD
+  env === NODE_ENV?.PROD
     ? {
         dialectOptions: {
           ssl: {
@@ -88,10 +89,10 @@ export async function initMainDbSequelize() {
       },
     );
     await sequelize.authenticate();
-    console.log("Database connection established successfully.");
+    logMessage("Database connection established successfully.");
     return sequelize;
   } catch (error) {
-    console.error("Unable to connect to the database:", error);
+    errorLog("Unable to connect to the database:", (error as Error).message);
     process.exit(1);
   }
 }

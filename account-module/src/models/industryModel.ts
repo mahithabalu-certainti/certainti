@@ -1,5 +1,6 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 import { ENV_PREFIX, MAIN_SCHEMA_NAME, R_NUMBER_PREFIX } from "../utils/constant";
+import { errorLog } from "../utils/helpers";
 interface IndustryAttributes {
   rid: string; 
   r_number?: string;
@@ -97,9 +98,8 @@ export async function setupIndustrySequence(sequelize: Sequelize) {
     await sequelize.query(`ALTER TABLE ${MAIN_SCHEMA_NAME}.industry
       ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.INDUSTRY}-' || LPAD(nextval('${MAIN_SCHEMA_NAME}.industry_seq')::text, 10, '0')`);
     
-    console.log('Industry sequence setup complete');
   } catch (error) {
-    console.error('Error setting up Industry sequence:', error);
+    errorLog("Error setting up Industry sequence:", (error as Error).message);
     // Don't throw the error to allow the application to continue starting up
     // The sequence setup can be handled separately if needed
   }

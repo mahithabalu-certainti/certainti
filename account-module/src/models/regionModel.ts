@@ -1,6 +1,7 @@
 import { Model, DataTypes, Optional, Sequelize } from "sequelize";
 import { Country } from "./countryModel";
 import { ENV_PREFIX, MAIN_SCHEMA_NAME, R_NUMBER_PREFIX } from "../utils/constant";
+import { errorLog } from "../utils/helpers";
 interface RegionAttributes {
   rid: string;
   r_number?: string;
@@ -101,10 +102,9 @@ export async function setupRegionSequence(sequelize: Sequelize) {
     // Step 2: Set the default value for r_number to use the sequence
     await sequelize.query(`ALTER TABLE ${MAIN_SCHEMA_NAME}.regions
       ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.REGION}-' || LPAD(nextval('s${MAIN_SCHEMA_NAME}.region_seq')::text, 10, '0')`);
-    
-    console.log('Region sequence setup complete');
+
   } catch (error) {
-    console.error('Error setting up Region sequence:', error);
+    errorLog("Error setting up Region sequence:", (error as Error).message);
     // Don't throw the error to allow the application to continue starting up
     // The sequence setup can be handled separately if needed
   }

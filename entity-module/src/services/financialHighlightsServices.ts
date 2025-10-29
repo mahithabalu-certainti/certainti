@@ -23,6 +23,7 @@ import { ProjectFiscalSummary } from "../models/projectFiscalSummary";
 import { ProjectSummary } from "../models/projectSummary";
 import Decimal from "decimal.js";
 import currency from "currency.js";
+import { logMessage } from "../utils/helpers";
 
 export default class FinancialHighlightsService {
   private mainDbSequelize: Sequelize | null = null;
@@ -140,6 +141,36 @@ export default class FinancialHighlightsService {
     }
   }
 
+  /**
+ * Retrieves and returns a paginated, sorted list of **account-level project cost financial highlights**.
+ * 
+ * This method fetches account details (including child accounts if the account is a parent),
+ * constructs a query with optional filters, search, and fiscal year constraints,
+ * fetches project fiscal summaries, formats results with currency symbols,
+ * applies sorting (including special cases for empty values),
+ * and returns paginated results.
+ *
+ * @async
+ * @function
+ * @param {string} accountRid - The unique identifier (RID) of the account to fetch data for.
+ * @param {Record<string, any>} [filters={}] - Optional filters to apply when querying project summaries.
+ * @param {string} [search] - Optional search term to filter project summaries.
+ * @param {number} [fiscalYear=0] - Fiscal year to filter data by. Defaults to 0 (no filter).
+ * @param {number} [page=1] - Page number for pagination. Defaults to 1.
+ * @param {number} [limit=10] - Number of items per page. Defaults to 10.
+ * @param {string} [sortBy="created_datetime"] - Field name to sort results by.
+ * @param {string} [sortOrder="DESC"] - Sort direction: either "ASC" or "DESC".
+ *
+ * @returns {Promise<{
+ *   statusCode: number;
+  *   message: string;
+  *   errorMessage?: string;
+  *   data?: { summaries: any[]; totalCount: number };
+  * }>} An object containing status code, message, optional error message,
+  * and paginated summaries with the total count.
+  *
+  * @throws Will return a 500 status code with error message if any failure occurs during processing.
+  */
   async listAccountLevelProjectCostFinancialHighlights(
     accountRid: string,
     filters: Record<string, any> = {},
@@ -318,6 +349,7 @@ export default class FinancialHighlightsService {
         },
       };
     } catch (error) {
+      logMessage(`Error in listAccountLevelProjectCostFinancialHighlights: ${error instanceof Error ? error.message : error}`);
       return {
         statusCode: 500,
         message: "Failed to fetch project costs",
@@ -328,6 +360,33 @@ export default class FinancialHighlightsService {
     }
   }
 
+  /**
+ * Exports a list of **account-level project cost financial highlights** based on filters, fiscal year,
+ * and optional search terms. This method is similar to the list method but returns all matching records
+ * (no pagination) and formats them for export (e.g., Excel/CSV).
+ *
+ * Retrieves and aggregates financial project summaries for the given account (including child accounts),
+ * joins currency data for formatting, applies sorting, and maps the result into a human-readable format
+ * suitable for export with headers and currency symbols.
+ *
+ * @async
+ * @function
+ * @param {string} accountRid - The unique identifier (RID) of the account to fetch data for.
+ * @param {Record<string, any>} [filters={}] - Optional filters to apply to the export dataset.
+ * @param {string} [search] - Optional text search to apply on project-level fields.
+ * @param {number} [fiscalYear=0] - Fiscal year to filter the data. Defaults to 0 (no filtering).
+ * @param {string} [sortBy="created_datetime"] - Field name to sort by. Defaults to "created_datetime".
+ * @param {string} [sortOrder="DESC"] - Sorting order, either "ASC" or "DESC". Defaults to "DESC".
+ *
+ * @returns {Promise<{
+ *   statusCode: number;
+  *   message: string;
+  *   errorMessage?: string;
+  *   data?: { summaries: any[]; totalCount: number };
+  * }>} A response object containing the export-ready summaries and total count.
+  *
+  * @throws Returns a 500 status code and an error message if the export process fails.
+  */ 
   async exportListAccountLevelProjectCostFinancialHighlights(
     accountRid: string,
     filters: Record<string, any> = {},
@@ -388,7 +447,7 @@ export default class FinancialHighlightsService {
       const currencyRids = allSummary
         .map((summary) => summary.currency_rid)
         .filter((rid) => rid);
-      console.log("CurrencyRids :", currencyRids);
+      logMessage(`CurrencyRids: ${currencyRids}`);
 
       const [currencies] = await Promise.all([
         currencyRids.length
@@ -506,8 +565,33 @@ export default class FinancialHighlightsService {
         rd_credits_total: "RD Credit",
       };
 
+      let formattedResult = formattedSummary.map((summary) => ({
+        rid: summary.rid,
+        r_number: summary.r_number,
+        account_rid: summary.account_rid,
+        project_rid: summary.project_rid,
+        project_name: summary.project_name || null,
+        project_code: summary.project_code || null,
+        fiscal_year: `FY-${summary.fiscal_year}`,
+        country_rid: summary.country_rid,
+        region_rid: summary.region_rid,
+        currency_rid: summary.currency_rid,
+        currency_symbol: currencyMap.get(summary.currency_rid) || null,
+        total_cost_fte_prj: summary.total_cost_fte_prj,
+        total_cost_subcon_prj: summary.total_cost_subcon_prj,
+        total_cost_nonlabor_prj: summary.total_cost_nonlabor_prj,
+        total_cost_prj: summary.total_cost_prj,
+        rd_percent_final: summary.rd_percent_final,
+        qre_final: summary.qre_final,
+        rd_credits_total: summary.rd_credits_total,
+        created_by: summary.created_by,
+        modified_by: summary.modified_by,
+        created_datetime: summary.created_datetime,
+        modified_datetime: summary.modified_datetime,
+      }));
+
       const exportData = await Promise.all(
-        formattedSummary.map(async (row: any) => {
+        formattedResult.map(async (row: any) => {
           const mappedRow: Record<string, any> = {};
           for (const key of Object.keys(labelMap)) {
             if (
@@ -539,6 +623,7 @@ export default class FinancialHighlightsService {
         },
       };
     } catch (error) {
+      logMessage(`Error in exportListAccountLevelProjectCostFinancialHighlights: ${error instanceof Error ? error.message : error}`);
       return {
         statusCode: 500,
         message: "Failed to fetch project costs",
@@ -578,7 +663,7 @@ export default class FinancialHighlightsService {
       // Replace "0.00" in pattern with our real number
       return pattern.replace("0.00", formattedNumber);
     } catch (error) {
-      console.error("Error formatting number:", error);
+      logMessage(`Error formatting number: ${error instanceof Error ? error.message : error}`);
       return "-";
     }
   }
@@ -605,7 +690,7 @@ export default class FinancialHighlightsService {
     // Filter logic for your input structure
     Object.entries(filters).forEach(([field, filter]) => {
       if (!filter || typeof filter !== "object") {
-        console.log(
+        logMessage(
           `Skipping filter for field ${field} due to invalid structure`
         );
         return;
@@ -615,7 +700,7 @@ export default class FinancialHighlightsService {
       const value = filter[operator];
 
       if (!operator || value === undefined) {
-        console.log(
+        logMessage(
           `Skipping filter for field ${field} due to missing operator or value`
         );
         return;
@@ -686,7 +771,7 @@ export default class FinancialHighlightsService {
           break;
 
         default:
-          console.log(`Unhandled filter field: ${field}`);
+         logMessage(`Unhandled filter field: ${field}`);
       }
 
       if (Object.keys(condition).length > 0) {
@@ -697,6 +782,30 @@ export default class FinancialHighlightsService {
     return { whereClause: whereClause[Op.and].length > 0 ? whereClause : {} };
   }
 
+  /**
+ * Fetches a list of regions (states) associated with a given account and fiscal year.
+ *
+ * This function:
+ * - Identifies the parent account using the provided `account_rid`
+ * - Resolves the associated schema name for that parent account
+ * - Queries region RIDs based on the fiscal year and account
+ * - Filters valid (non-empty) region RIDs
+ * - Retrieves corresponding state (region) details from the main database if valid IDs exist
+ *
+ * Returns an array of state objects (`rid` and `state_name`) or an empty array if none found.
+ *
+ * @async
+ * @function
+ * @param {any} data - Input data object containing:
+ *   @param {string} data.account_rid - RID of the account to retrieve region data for
+ *   @param {number} data.fiscal_year - Fiscal year to filter regions
+ *   @param {string} data.country_rid - Country RID to further narrow the region search
+ *
+ * @returns {Promise<Array<{ rid: string; state_name: string }>>}
+ * An array of matching state/region records, each with `rid` and `state_name`. Returns empty array if none found.
+ *
+ * @throws Will throw if database queries fail or return invalid data formats.
+ */
   async fetchRegions(data : any) {
     const mainDb = await this.getMainDbSequelize()
     const orgDb = await this.getOrgDbSequelize()

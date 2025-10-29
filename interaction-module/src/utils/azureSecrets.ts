@@ -1,5 +1,6 @@
 import { DefaultAzureCredential } from "@azure/identity";
 import { SecretClient } from "@azure/keyvault-secrets";
+import { logMessage } from "./helpers";
 
 const keyVaultUrl = process.env.KEY_VAULT_URI;
 
@@ -15,7 +16,7 @@ export async function getSecret(secretName: string): Promise<string | null> {
     const secret = await client.getSecret(secretName);
     return secret.value || null;
   } catch (error) {
-    console.error(`Error fetching secret "${secretName}":`, error);
+   logMessage(`Error fetching secret "${secretName}": ${error}`);
     return null;
   }
 }

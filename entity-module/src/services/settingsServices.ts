@@ -11,7 +11,7 @@ import ProjectIngestionService from "./projectIngestionService";
 import { Logger } from "winston";
 import { ClientSecretCredential } from "@azure/identity";
 import { Client } from "@microsoft/microsoft-graph-client";
-import { decryptClientSecret } from "../utils/helpers";
+import { decryptClientSecret, errorLog } from "../utils/helpers";
 export default class SettingService {
   private mainDbSequelize: Sequelize | null = null;
   private orgDbSequelize: Sequelize | null = null;
@@ -36,6 +36,29 @@ export default class SettingService {
     return this.orgDbSequelize;
   }
 
+  /**
+ * Updates project-level or account-level settings for an organization.
+ *
+ * This method:
+ * 1. Determines whether the update is for a project or account based on `data.flag`
+ * 2. For project settings:
+ *    - Validates schema existence
+ *    - Updates project fiscal data
+ *    - Compares old vs new values to insert history records
+ *    - Logs changes to project timeline and triggers ingestion
+ * 3. For account settings:
+ *    - Handles subscription creation and validation if `support_email` is present
+ *    - Removes old subscriptions for parent accounts when necessary
+ *    - Updates account settings in the org and main databases
+ *
+ * @param data - Object containing setting details, including:
+ *   - `flag`: A string indicating the update type ('project' or 'account')
+ *   - `account_rid`, `project_rid`, `project_fiscal_rid`, and setting fields to update
+ *   - Optional: `support_email`, `tenant_id`, `client_id`, `client_secret`
+ * @returns Promise resolving to a status object with:
+ *   - `statusCode`: Number indicating success or failure
+ *   - `statusMessage`: Descriptive message indicating operation result
+ */
   async updateSettings(data: any) {
     let mainDb = await this.getMainDbSequelize();
     let orgDb = await this.getOrgDbSequelize();
@@ -146,6 +169,7 @@ export default class SettingService {
             }
           }
         } catch (err) {
+          errorLog("Error in update settings: " + (err as Error).message);
           return {
             statusCode: HttpStatus.BAD_REQUEST,
             statusMessage: STATUS_MESSAGE.invalidCredentials,
@@ -182,6 +206,35 @@ export default class SettingService {
             );
             subscriptionId = "";
           }
+        }else {
+            const sameCredentials =
+                data.support_email === existingSettings.support_email &&
+                data.tenant_id === existingSettings.tenant_id &&
+                data.client_id === existingSettings.client_id &&
+                data.client_secret === descyptedSecret;
+
+            if (!sameCredentials) {
+                try {
+                    subscriptionId = await this.validateAndCreateSubscription(
+                        data.tenant_id,
+                        data.client_id,
+                        data.client_secret,
+                        data.support_email
+                    );
+                    if (subscriptionId === null) {
+                        return {
+                            statusCode: HttpStatus.BAD_REQUEST,
+                            statusMessage: `Subscription already exists for ${data.support_email}`,
+                        }
+                    }
+                } catch (err) {
+                    errorLog("Error in update settings: " + (err as Error).message);
+                    return {
+                        statusCode: HttpStatus.BAD_REQUEST,
+                        statusMessage: STATUS_MESSAGE.invalidCredentials,
+                    }
+                }
+            }
         }
       }
 
@@ -272,7 +325,7 @@ export default class SettingService {
 
       return subscription?.id;
     } catch (error: any) {
-      this.logger.error("Graph Subscription Error:", error);
+      errorLog("Graph Subscription Error: " + error.message);
       throw new Error("Invalid credentials or failed to create subscription.");
     }
   }
@@ -302,10 +355,11 @@ export default class SettingService {
         try {
           await graphClient.api(`/subscriptions/${sub.id}`).delete();
         } catch (deleteErr) {
-          console.log(`Failed to delete subscription ${sub.id}`)
+          errorLog("Error deleting subscription: " + (deleteErr as Error).message);
         }
       }
     } catch (err) {
+      errorLog("Error removing subscriptions: " + (err as Error).message);
       throw err; 
     }
   }  
