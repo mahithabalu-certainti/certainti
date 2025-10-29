@@ -1,0 +1,340 @@
+import { useMutation, useQuery, UseQueryResult } from '@tanstack/react-query';
+import { interactionServiceApi } from '../../../api/api';
+import {
+  ChecklistLevelApiResponse,
+  ChecklistStatusApiResponse,
+  ChecklistTemplateDetails,
+  ChecklistTemplateFormPayload,
+  ChecklistTemplateList,
+  ChecklistTemplateListParams,
+  ChecklistTypeApiResponse,
+  ExportChecklistTemplateResponse,
+} from '../../types';
+import {
+  ChecklistLevelsMockData,
+  ChecklistStatusMockData,
+  ChecklistTemplateDetailsMockData,
+  ChecklistTemplatesMockData,
+  ChecklistTypesMockData,
+} from '../../mockdata/checklist-templates';
+import { CommonApiResponse } from '../../../common-service';
+
+// List
+export const getChecklistTemplateListUrl = () => '/api/checklistTemplates/list';
+
+export const fetchChecklistTemplateList = async (
+  params: ChecklistTemplateListParams
+): Promise<{ checklistTemplates: ChecklistTemplateList[]; count: number }> => {
+  //   const { data } = await interactionServiceApi.post<ChecklistTemplateListResponse>(
+  //     getChecklistTemplateListUrl(),
+  //     params
+  //   );
+  //   return {
+  //     checklistTemplates: data.data.checklistTemplates,
+  //     count: data.data.totalCount,
+  //   };
+  console.log('checklist-template-list-params', params);
+  await new Promise((resolve) => setTimeout(resolve, 2000));
+  return {
+    checklistTemplates: ChecklistTemplatesMockData.data.checklists,
+    count: ChecklistTemplatesMockData.data.totalCount,
+  };
+};
+
+export const useChecklistTemplateList = (
+  params: ChecklistTemplateListParams,
+  refresh?: number
+): UseQueryResult<
+  { checklistTemplates: ChecklistTemplateList[]; count: number },
+  Error
+> => {
+  return useQuery<
+    { checklistTemplates: ChecklistTemplateList[]; count: number },
+    Error
+  >({
+    queryKey: ['checklist-template-list', params, refresh],
+    queryFn: () => fetchChecklistTemplateList(params),
+    retry: 0,
+    gcTime: 0,
+  });
+};
+
+// Details
+export const getChecklistTemplateDetailsURL = (templateId: string) => {
+  return `/api/checklistTemplates/detail/${templateId}`;
+};
+
+export const fetchChecklistTemplateDetails = async (
+  templateId: string
+): Promise<ChecklistTemplateDetails> => {
+  //   const response =
+  //     await interactionServiceApi.get<ChecklistTemplateDetailsResponse>(
+  //       getChecklistTemplateDetailsURL(templateId)
+  //     );
+  //   return response.data.data.templateDetails;
+
+  console.log('checklist-template-details-params', templateId);
+  await new Promise((resolve) => setTimeout(resolve, 2000));
+
+  return ChecklistTemplateDetailsMockData.data.checklistDetails;
+};
+
+export const useChecklistTemplateDetails = (
+  templateId: string
+): UseQueryResult<ChecklistTemplateDetails | undefined, Error> => {
+  return useQuery<ChecklistTemplateDetails | undefined, Error>({
+    queryKey: ['checklist-template-details', templateId],
+    queryFn: () => fetchChecklistTemplateDetails(templateId),
+    retry: 0,
+    gcTime: 0,
+    enabled: !!templateId,
+  });
+};
+
+// Create & Edit
+export const getCreateChecklistTemplateUrl = (): string => {
+  return `/api/checklistTemplates/new`;
+};
+
+export const createChecklistTemplate = async (
+  body: Partial<ChecklistTemplateFormPayload>
+): Promise<CommonApiResponse> => {
+  try {
+    const { data } = await interactionServiceApi.post<CommonApiResponse>(
+      getCreateChecklistTemplateUrl(),
+      body
+    );
+    return data;
+  } catch (error) {
+    console.error('Error creating checklist template:', error);
+    throw error;
+  }
+};
+
+export const useCreateChecklistTemplate = () => {
+  return useMutation<
+    CommonApiResponse,
+    Error,
+    Partial<ChecklistTemplateFormPayload>
+  >({
+    mutationFn: (body) => createChecklistTemplate({ ...body }),
+  });
+};
+
+export const getUpdateChecklistTemplateUrl = (): string => {
+  return `/api/checklistTemplates/update`;
+};
+
+export const updateChecklistTemplateDetails = async (
+  body: Partial<ChecklistTemplateFormPayload>
+): Promise<CommonApiResponse> => {
+  try {
+    const { data } = await interactionServiceApi.post<CommonApiResponse>(
+      getUpdateChecklistTemplateUrl(),
+      body
+    );
+    return data;
+  } catch (error) {
+    console.error('Error updating checklist template details:', error);
+    throw error;
+  }
+};
+
+export const useUpdateChecklistTemplateDetails = () => {
+  return useMutation<
+    CommonApiResponse,
+    Error,
+    Partial<ChecklistTemplateFormPayload>
+  >({
+    mutationFn: (body) => updateChecklistTemplateDetails({ ...body }),
+  });
+};
+
+// Export All checklist
+export const getChecklistTemplateExportAllUrl = () =>
+  '/api/checklistTemplates/exportAll';
+
+export const ExportChecklistTemplateAllList = async (
+  params: ChecklistTemplateListParams
+): Promise<void> => {
+  try {
+    const filename = `checklist_templates.xlsx`;
+    const response =
+      await interactionServiceApi.post<ExportChecklistTemplateResponse>(
+        getChecklistTemplateExportAllUrl(),
+        params
+      );
+    const base64Data = response.data?.data;
+
+    if (!base64Data) {
+      console.error('No base64 data found in the response.');
+      return;
+    }
+
+    const binary = atob(base64Data);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+
+    const blob = new Blob([bytes], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Export failed:', error);
+  }
+};
+
+// Export individual checklist
+export const getChecklistTemplateExportUrl = () =>
+  '/api/checklistTemplates/export';
+
+export const ExportChecklistTemplate = async (
+  templateId: string,
+  checklistName: string,
+  timezone: string
+): Promise<void> => {
+  try {
+    const filename = `${checklistName ? checklistName + '_' : ''}template.xlsx`;
+    const response =
+      await interactionServiceApi.post<ExportChecklistTemplateResponse>(
+        getChecklistTemplateExportUrl(),
+        {
+          template_rid: templateId,
+          timezone,
+        }
+      );
+    const base64Data = response.data?.data;
+
+    if (!base64Data) {
+      console.error('No base64 data found in the response.');
+      return;
+    }
+
+    const binary = atob(base64Data);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+
+    const blob = new Blob([bytes], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Export failed:', error);
+  }
+};
+
+// Checklist ->  level, status, type
+export const getChecklistTypeUrl = (): string => {
+  return '/api/checklist/type';
+};
+
+export const fetchChecklistTypes =
+  async (): Promise<ChecklistTypeApiResponse> => {
+    try {
+      // const { data } =
+      //   await interactionServiceApi.get<ChecklistTypeApiResponse>(
+      //     getChecklistTypeUrl()
+      //   );
+      // return data;
+
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      return ChecklistTypesMockData;
+    } catch (error) {
+      console.error('Error fetching checklist types:', error);
+      throw error;
+    }
+  };
+
+export const useGetChecklistTypes = () => {
+  return useQuery<ChecklistTypeApiResponse, Error>({
+    queryKey: ['checklist-type'],
+    queryFn: () => fetchChecklistTypes(),
+    retry: 0,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  });
+};
+
+export const getChecklistLevelUrl = (): string => {
+  return '/api/checklist/level';
+};
+
+export const fetchChecklistLevels =
+  async (): Promise<ChecklistLevelApiResponse> => {
+    try {
+      // const { data } =
+      //   await interactionServiceApi.get<GetChecklistLevelApiResponse>(
+      //     getChecklistLevelUrl()
+      //   );
+      // return data;
+
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      return ChecklistLevelsMockData;
+    } catch (error) {
+      console.error('Error fetching checklist levels:', error);
+      throw error;
+    }
+  };
+
+export const useGetChecklistLevels = () => {
+  return useQuery<ChecklistLevelApiResponse, Error>({
+    queryKey: ['checklist-level'],
+    queryFn: () => fetchChecklistLevels(),
+    retry: 0,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  });
+};
+
+export const getChecklistStatusUrl = (): string => {
+  return '/api/checklist/status';
+};
+
+export const fetchChecklistStatus =
+  async (): Promise<ChecklistStatusApiResponse> => {
+    try {
+      // const { data } =
+      //   await interactionServiceApi.get<ChecklistStatusApiResponse>(
+      //     getChecklistStatusUrl()
+      //   );
+      // return data;
+
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      return ChecklistStatusMockData;
+    } catch (error) {
+      console.error('Error fetching checklist status:', error);
+      throw error;
+    }
+  };
+
+export const useGetChecklistStatus = () => {
+  return useQuery<ChecklistStatusApiResponse, Error>({
+    queryKey: ['checklist-status'],
+    queryFn: () => fetchChecklistStatus(),
+    retry: 0,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  });
+};

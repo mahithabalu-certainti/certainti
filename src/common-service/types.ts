@@ -203,6 +203,7 @@ export enum AllModules {
   INTERACTIONS = 'interactions',
   INTERACTION_TEMPLATES = 'interaction_templates',
   EMAIL_TEMPLATES = 'email_templates',
+  CHECKLIST_TEMPLATES = 'checklist_templates',
 }
 
 export enum AllPermissions {
@@ -302,6 +303,9 @@ export enum AllPermissions {
   EMAIL_TEMPLATES_CREATE = 'email_templates_create',
   EMAIL_TEMPLATES_VIEW_EDIT = 'email_templates_view_edit',
   EMAIL_TEMPLATES_EXPORT = 'email_templates_export',
+  CHECKLIST_TEMPLATES_CREATE = 'checklist_templates_create',
+  CHECKLIST_TEMPLATES_VIEW_EDIT = 'checklist_templates_view_edit',
+  CHECKLIST_TEMPLATES_EXPORT = 'checklist_templates_export',
 }
 
 export interface Country {

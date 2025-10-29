@@ -67,6 +67,9 @@ import {
   EMAIL_TEMPLATES,
   EMAIL_TEMPLATES_CREATE,
   EMAIL_TEMPLATES_EDIT,
+  CHECKLIST_TEMPLATES,
+  CHECKLIST_TEMPLATES_CREATE,
+  CHECKLIST_TEMPLATES_EDIT,
 } from './routes';
 import { RootState } from './store/store';
 import ProjectTaskForm from './consultant/pages/project/project-details/project-task/form/project-task-form';
@@ -187,6 +190,20 @@ const EmailTemplateForm = lazy(
   () =>
     import(
       './admin/pages/email-templates/email-template-form/email-template-form'
+    )
+);
+
+const ChecklistTemplates = lazy(
+  () =>
+    import(
+      './admin/pages/checklist-templates/checklist-templates/templates-list'
+    )
+);
+
+const ChecklistTemplateForm = lazy(
+  () =>
+    import(
+      './admin/pages/checklist-templates/checklist-template-form/template-form'
     )
 );
 
@@ -365,6 +382,18 @@ export const App: React.FC<IApp> = ({ instance }) => {
                   <Route
                     path={EMAIL_TEMPLATES_EDIT}
                     element={<EmailTemplateForm />}
+                  />
+                  <Route
+                    path={CHECKLIST_TEMPLATES}
+                    element={<ChecklistTemplates />}
+                  />
+                  <Route
+                    path={CHECKLIST_TEMPLATES_CREATE}
+                    element={<ChecklistTemplateForm />}
+                  />
+                  <Route
+                    path={CHECKLIST_TEMPLATES_EDIT}
+                    element={<ChecklistTemplateForm />}
                   />
                 </Route>
                 {/* Page not found */}
