@@ -202,6 +202,7 @@ export enum AllModules {
   MANAGE_ACCOUNT_ACCESS = 'manage_account_access',
   INTERACTIONS = 'interactions',
   INTERACTION_TEMPLATES = 'interaction_templates',
+  EMAIL_TEMPLATES = 'email_templates',
 }
 
 export enum AllPermissions {
@@ -298,6 +299,9 @@ export enum AllPermissions {
   NOTES_VIEW_EDIT = 'notes_view_edit',
   NOTES_EXPORT = 'notes_export',
   NOTES_CREATE = 'notes_create',
+  EMAIL_TEMPLATES_CREATE = 'email_templates_create',
+  EMAIL_TEMPLATES_VIEW_EDIT = 'email_templates_view_edit',
+  EMAIL_TEMPLATES_EXPORT = 'email_templates_export',
 }
 
 export interface Country {
