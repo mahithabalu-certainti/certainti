@@ -91,6 +91,7 @@ import { TimesheetProjectExportListURLParams } from '../../types/timesheet-proje
 import { BUTTON_STYLES } from '../../../admin/pages/manage-user-detail/styles';
 import { useToast } from '../../../hooks';
 import { ExportNotesList } from '../../services/notes/notes-service';
+import { QrePercentHistory } from '../account-details-sidebar/sidebar-pages/qre-percent-history';
 
 export const AccountDetails = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -704,6 +705,8 @@ export const AccountDetails = () => {
         return <Cases />;
       case 'activities':
         return <Activities />;
+      case 'qre-percent-history':
+        return <QrePercentHistory refetchAccountDetails={onRefreshClick} />;
       case 'notes':
         return (
           <Notes
@@ -802,6 +805,14 @@ export const AccountDetails = () => {
       {
         name: 'Activities',
         key: 'activities',
+        id: AllModules.ACTIVITIES,
+        disabled: disable,
+        hide: disable,
+        icon: ActivitiesIcon,
+      },
+      {
+        name: 'QRE Percent History',
+        key: 'qre-percent-history',
         id: AllModules.ACTIVITIES,
         disabled: disable,
         hide: disable,
