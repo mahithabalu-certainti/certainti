@@ -11,6 +11,7 @@ import {
 import { AssignProject } from '../../../../../../types/assign-projects';
 import { ListTable } from '../../../../../../../components/table';
 import { AllPermissions } from '../../../../../../../common-service';
+import { useAssingeProjectsList } from '../../../../../../services/cases-assign-projects/assign-project-service';
 
 const AssignedProjects: React.FC = () => {
   const projectList: any[] = [];
@@ -19,6 +20,12 @@ const AssignedProjects: React.FC = () => {
   const [sortField, setSortField] = useState<string>('interaction_source_name');
   const [sortBy, setSortBy] = useState<'ASC' | 'DESC'>('ASC');
   const { permission } = useSelector((state: RootState) => state.permission);
+  const { data, isLoading, isError } = useAssingeProjectsList({
+    page: currentPage + 1,
+    limit: rowsPerPage,
+    sort: sortField,
+    sort_by: sortBy,
+  });
   const projectViewEditFields = useMemo(
     () =>
       permission.find((item) => item.name === AllPermissions.PROJECTS_VIEW_EDIT)

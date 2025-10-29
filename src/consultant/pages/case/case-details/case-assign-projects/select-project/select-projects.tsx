@@ -11,7 +11,7 @@ import { AllPermissions } from '../../../../../../common-service';
 import { RootState } from '../../../../../../store/store';
 import { useSelector } from 'react-redux';
 import { mockAssignProjects } from './mockdata';
-import { useAssingeProjectsList } from '../../../../../services/cases-assign-projects/assign-project-service';
+import { useSelectProjectsList } from '../../../../../services/cases-assign-projects/assign-project-service';
 
 const SelectProjects: React.FC = () => {
   const projectList: any[] = [];
@@ -34,7 +34,7 @@ const SelectProjects: React.FC = () => {
     });
     return map;
   }, [projectViewEditFields]);
-  const { data, isLoading, isError } = useAssingeProjectsList({
+  const { data, isLoading, isError } = useSelectProjectsList({
     page: currentPage + 1,
     limit: rowsPerPage,
     sort: sortField,
