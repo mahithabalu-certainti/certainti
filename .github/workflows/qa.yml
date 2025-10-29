@@ -73,6 +73,27 @@ jobs:
       - name: Push Docker Image to ACR
         run: docker push ${{ secrets.QA_ACR_LOGIN_SERVER }}/user-module:${{ env.IMAGE_TAG }}
         working-directory: user-module
+
+      - name: Cleanup old Docker tags in ACR (keep latest 10)
+        run: |
+          ACR_NAME=${{ secrets.QA_ACR_NAME }}
+          REPO_NAME="user-module"
+          KEEP_LATEST=10
+
+          echo "Cleaning up old tags for $REPO_NAME (keeping latest $KEEP_LATEST)..."
+
+          # List tags sorted by last update descending and skip the latest $KEEP_LATEST
+          tags_to_delete=$(az acr repository show-tags --name "$ACR_NAME" --repository "$REPO_NAME" --orderby time_desc --output tsv | tail -n +$((KEEP_LATEST + 1)))
+
+          if [ -z "$tags_to_delete" ]; then
+            echo "No old tags to delete."
+          else
+            for tag in $tags_to_delete; do
+              echo "Deleting $REPO_NAME:$tag"
+              az acr repository delete --name "$ACR_NAME" --image "$REPO_NAME:$tag" --yes
+            done
+          fi
+
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
@@ -114,10 +135,14 @@ jobs:
           AZURE_B2C_TENANT_ID=$API_TENANT_ID
           AZURE_SCOPE=https://graph.microsoft.com/.default
           AZURE_STORAGE_CONNECTION_STRING="storage-account-connection-string"
-          MAINDB_NAME=main-database-name
-          MAINDB_PASSWORD=main-db-admin-password
-          MAINDB_USERNAME=main-db-admin-username
-          MAINDB_ENDPOINT=main-db-endpoint
+          # MAINDB_NAME=main-database-name
+          # MAINDB_PASSWORD=main-db-admin-password
+          # MAINDB_USERNAME=main-db-admin-username
+          # MAINDB_ENDPOINT=main-db-endpoint
+          MAINDB_NAME=main-database-name-pvt
+          MAINDB_PASSWORD=main-db-admin-password-pvt
+          MAINDB_USERNAME=main-db-admin-username-pvt
+          MAINDB_ENDPOINT=main-db-endpoint-pvt
           MAIL_TENANT_ID=$MAIL_TENANT_ID
           MAIL_CLIENT_ID=$MAIL_CLIENT_ID
           MAIL_CLIENT_SECRET=$MAIL_CLIENT_SECRET
@@ -201,6 +226,26 @@ jobs:
       - name: Push Docker Image to ACR
         run: docker push ${{ secrets.QA_ACR_LOGIN_SERVER }}/account-module:${{ env.IMAGE_TAG }}
         working-directory: account-module
+
+      - name: Cleanup old Docker tags in ACR (keep latest 10)
+        run: |
+          ACR_NAME=${{ secrets.QA_ACR_NAME }}
+          REPO_NAME="account-module"
+          KEEP_LATEST=10
+
+          echo "Cleaning up old tags for $REPO_NAME (keeping latest $KEEP_LATEST)..."
+
+          # List tags sorted by last update descending and skip the latest $KEEP_LATEST
+          tags_to_delete=$(az acr repository show-tags --name "$ACR_NAME" --repository "$REPO_NAME" --orderby time_desc --output tsv | tail -n +$((KEEP_LATEST + 1)))
+
+          if [ -z "$tags_to_delete" ]; then
+            echo "No old tags to delete."
+          else
+            for tag in $tags_to_delete; do
+              echo "Deleting $REPO_NAME:$tag"
+              az acr repository delete --name "$ACR_NAME" --image "$REPO_NAME:$tag" --yes
+            done
+          fi
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
@@ -230,14 +275,22 @@ jobs:
           SERVER_PORT=5001
           KEY_VAULT_URI=$KEY_VAULT_URI
           AZURE_STORAGE_CONNECTION_STRING="storage-account-connection-string"
-          MAINDB_NAME=main-database-name
-          MAINDB_PASSWORD=main-db-admin-password
-          MAINDB_USERNAME=main-db-admin-username
-          MAINDB_ENDPOINT=main-db-endpoint
-          ORGDB_NAME=org-database-name
-          ORGDB_PASSWORD=org-db-admin-password
-          ORGDB_USERNAME=org-db-admin-username
-          ORGDB_ENDPOINT=org-db-endpoint
+          # MAINDB_NAME=main-database-name
+          # MAINDB_PASSWORD=main-db-admin-password
+          # MAINDB_USERNAME=main-db-admin-username
+          # MAINDB_ENDPOINT=main-db-endpoint
+          # ORGDB_NAME=org-database-name
+          # ORGDB_PASSWORD=org-db-admin-password
+          # ORGDB_USERNAME=org-db-admin-username
+          # ORGDB_ENDPOINT=org-db-endpoint
+          MAINDB_NAME=main-database-name-pvt
+          MAINDB_PASSWORD=main-db-admin-password-pvt
+          MAINDB_USERNAME=main-db-admin-username-pvt
+          MAINDB_ENDPOINT=main-db-endpoint-pvt
+          ORGDB_NAME=org-database-name-pvt
+          ORGDB_PASSWORD=org-db-admin-password-pvt
+          ORGDB_USERNAME=org-db-admin-username-pvt
+          ORGDB_ENDPOINT=org-db-endpoint-pvt
           LOG_LEVEL=debug
           NODE_ENV=QA
           NODE_ENV_DB_PREFIX="U001-"
@@ -315,6 +368,28 @@ jobs:
       - name: Push Docker Image to ACR
         run: docker push ${{ secrets.QA_ACR_LOGIN_SERVER }}/entity-module:${{ env.IMAGE_TAG }}
         working-directory: entity-module
+
+
+      - name: Cleanup old Docker tags in ACR (keep latest 10)
+        run: |
+          ACR_NAME=${{ secrets.QA_ACR_NAME }}
+          REPO_NAME="entity-module"
+          KEEP_LATEST=10
+
+          echo "Cleaning up old tags for $REPO_NAME (keeping latest $KEEP_LATEST)..."
+
+          # List tags sorted by last update descending and skip the latest $KEEP_LATEST
+          tags_to_delete=$(az acr repository show-tags --name "$ACR_NAME" --repository "$REPO_NAME" --orderby time_desc --output tsv | tail -n +$((KEEP_LATEST + 1)))
+
+          if [ -z "$tags_to_delete" ]; then
+            echo "No old tags to delete."
+          else
+            for tag in $tags_to_delete; do
+              echo "Deleting $REPO_NAME:$tag"
+              az acr repository delete --name "$ACR_NAME" --image "$REPO_NAME:$tag" --yes
+            done
+          fi
+
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
@@ -343,14 +418,22 @@ jobs:
           cat <<EOF > $ENV_FILE
           SERVER_PORT=5006
           KEY_VAULT_URI=$KEY_VAULT_URI
-          MAINDB_NAME=main-database-name
-          MAINDB_PASSWORD=main-db-admin-password
-          MAINDB_USERNAME=main-db-admin-username
-          MAINDB_ENDPOINT=main-db-endpoint
-          ORGDB_NAME=org-database-name
-          ORGDB_PASSWORD=org-db-admin-password
-          ORGDB_USERNAME=org-db-admin-username
-          ORGDB_ENDPOINT=org-db-endpoint
+          # MAINDB_NAME=main-database-name
+          # MAINDB_PASSWORD=main-db-admin-password
+          # MAINDB_USERNAME=main-db-admin-username
+          # MAINDB_ENDPOINT=main-db-endpoint
+          # ORGDB_NAME=org-database-name
+          # ORGDB_PASSWORD=org-db-admin-password
+          # ORGDB_USERNAME=org-db-admin-username
+          # ORGDB_ENDPOINT=org-db-endpoint
+          MAINDB_NAME=main-database-name-pvt
+          MAINDB_PASSWORD=main-db-admin-password-pvt
+          MAINDB_USERNAME=main-db-admin-username-pvt
+          MAINDB_ENDPOINT=main-db-endpoint-pvt
+          ORGDB_NAME=org-database-name-pvt
+          ORGDB_PASSWORD=org-db-admin-password-pvt
+          ORGDB_USERNAME=org-db-admin-username-pvt
+          ORGDB_ENDPOINT=org-db-endpoint-pvt
           LOG_LEVEL=debug
           NODE_ENV=QA
           NODE_ENV_DB_PREFIX="U001-"
@@ -430,6 +513,26 @@ jobs:
       - name: Push Docker Image to ACR
         run: docker push ${{ secrets.QA_ACR_LOGIN_SERVER }}/interaction-module:${{ env.IMAGE_TAG }}
         working-directory: interaction-module
+
+      - name: Cleanup old Docker tags in ACR (keep latest 10)
+        run: |
+          ACR_NAME=${{ secrets.QA_ACR_NAME }}
+          REPO_NAME="interaction-module"
+          KEEP_LATEST=10
+
+          echo "Cleaning up old tags for $REPO_NAME (keeping latest $KEEP_LATEST)..."
+
+          # List tags sorted by last update descending and skip the latest $KEEP_LATEST
+          tags_to_delete=$(az acr repository show-tags --name "$ACR_NAME" --repository "$REPO_NAME" --orderby time_desc --output tsv | tail -n +$((KEEP_LATEST + 1)))
+
+          if [ -z "$tags_to_delete" ]; then
+            echo "No old tags to delete."
+          else
+            for tag in $tags_to_delete; do
+              echo "Deleting $REPO_NAME:$tag"
+              az acr repository delete --name "$ACR_NAME" --image "$REPO_NAME:$tag" --yes
+            done
+          fi
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
@@ -463,14 +566,22 @@ jobs:
           KEY_VAULT_URI=$KEY_VAULT_URI
           AZURE_SCOPE=https://graph.microsoft.com/.default
           AZURE_STORAGE_CONNECTION_STRING="storage-account-connection-string"
-          MAINDB_NAME=main-database-name
-          MAINDB_PASSWORD=main-db-admin-password
-          MAINDB_USERNAME=main-db-admin-username
-          MAINDB_ENDPOINT=main-db-endpoint
-          ORGDB_NAME=org-database-name
-          ORGDB_PASSWORD=org-db-admin-password
-          ORGDB_USERNAME=org-db-admin-username
-          ORGDB_ENDPOINT=org-db-endpoint
+          # MAINDB_NAME=main-database-name
+          # MAINDB_PASSWORD=main-db-admin-password
+          # MAINDB_USERNAME=main-db-admin-username
+          # MAINDB_ENDPOINT=main-db-endpoint
+          # ORGDB_NAME=org-database-name
+          # ORGDB_PASSWORD=org-db-admin-password
+          # ORGDB_USERNAME=org-db-admin-username
+          # ORGDB_ENDPOINT=org-db-endpoint
+          MAINDB_NAME=main-database-name-pvt
+          MAINDB_PASSWORD=main-db-admin-password-pvt
+          MAINDB_USERNAME=main-db-admin-username-pvt
+          MAINDB_ENDPOINT=main-db-endpoint-pvt
+          ORGDB_NAME=org-database-name-pvt
+          ORGDB_PASSWORD=org-db-admin-password-pvt
+          ORGDB_USERNAME=org-db-admin-username-pvt
+          ORGDB_ENDPOINT=org-db-endpoint-pvt
           MAIL_TENANT_ID=$MAIL_TENANT_ID
           MAIL_CLIENT_ID=$MAIL_CLIENT_ID
           MAIL_CLIENT_SECRET=$MAIL_CLIENT_SECRET
@@ -569,6 +680,27 @@ jobs:
       - name: Push Docker Image to ACR
         run: docker push ${{ secrets.QA_ACR_LOGIN_SERVER }}/ext-interaction-module:${{ env.IMAGE_TAG }}
         working-directory: ext-interaction-module
+
+      - name: Cleanup old Docker tags in ACR (keep latest 10)
+        run: |
+          ACR_NAME=${{ secrets.QA_ACR_NAME }}
+          REPO_NAME="ext-interaction-module"
+          KEEP_LATEST=10
+
+          echo "Cleaning up old tags for $REPO_NAME (keeping latest $KEEP_LATEST)..."
+
+          # List tags sorted by last update descending and skip the latest $KEEP_LATEST
+          tags_to_delete=$(az acr repository show-tags --name "$ACR_NAME" --repository "$REPO_NAME" --orderby time_desc --output tsv | tail -n +$((KEEP_LATEST + 1)))
+
+          if [ -z "$tags_to_delete" ]; then
+            echo "No old tags to delete."
+          else
+            for tag in $tags_to_delete; do
+              echo "Deleting $REPO_NAME:$tag"
+              az acr repository delete --name "$ACR_NAME" --image "$REPO_NAME:$tag" --yes
+            done
+          fi
+
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
@@ -602,14 +734,22 @@ jobs:
           KEY_VAULT_URI=$KEY_VAULT_URI
           AZURE_SCOPE=https://graph.microsoft.com/.default
           AZURE_STORAGE_CONNECTION_STRING="storage-account-connection-string"
-          MAINDB_NAME=main-database-name
-          MAINDB_PASSWORD=main-db-admin-password
-          MAINDB_USERNAME=main-db-admin-username
-          MAINDB_ENDPOINT=main-db-endpoint
-          ORGDB_NAME=org-database-name
-          ORGDB_PASSWORD=org-db-admin-password
-          ORGDB_USERNAME=org-db-admin-username
-          ORGDB_ENDPOINT=org-db-endpoint
+          # MAINDB_NAME=main-database-name
+          # MAINDB_PASSWORD=main-db-admin-password
+          # MAINDB_USERNAME=main-db-admin-username
+          # MAINDB_ENDPOINT=main-db-endpoint
+          # ORGDB_NAME=org-database-name
+          # ORGDB_PASSWORD=org-db-admin-password
+          # ORGDB_USERNAME=org-db-admin-username
+          # ORGDB_ENDPOINT=org-db-endpoint
+          MAINDB_NAME=main-database-name-pvt
+          MAINDB_PASSWORD=main-db-admin-password-pvt
+          MAINDB_USERNAME=main-db-admin-username-pvt
+          MAINDB_ENDPOINT=main-db-endpoint-pvt
+          ORGDB_NAME=org-database-name-pvt
+          ORGDB_PASSWORD=org-db-admin-password-pvt
+          ORGDB_USERNAME=org-db-admin-username-pvt
+          ORGDB_ENDPOINT=org-db-endpoint-pvt
           MAIL_TENANT_ID=$MAIL_TENANT_ID
           MAIL_CLIENT_ID=$MAIL_CLIENT_ID
           MAIL_CLIENT_SECRET=$MAIL_CLIENT_SECRET
@@ -701,6 +841,27 @@ jobs:
       - name: Push Docker Image to ACR
         run: docker push ${{ secrets.QA_ACR_LOGIN_SERVER }}/event-stream-module:${{ env.IMAGE_TAG }}
         working-directory: event-stream-module
+
+      - name: Cleanup old Docker tags in ACR (keep latest 10)
+        run: |
+          ACR_NAME=${{ secrets.QA_ACR_NAME }}
+          REPO_NAME="event-stream-module"
+          KEEP_LATEST=10
+
+          echo "Cleaning up old tags for $REPO_NAME (keeping latest $KEEP_LATEST)..."
+
+          # List tags sorted by last update descending and skip the latest $KEEP_LATEST
+          tags_to_delete=$(az acr repository show-tags --name "$ACR_NAME" --repository "$REPO_NAME" --orderby time_desc --output tsv | tail -n +$((KEEP_LATEST + 1)))
+
+          if [ -z "$tags_to_delete" ]; then
+            echo "No old tags to delete."
+          else
+            for tag in $tags_to_delete; do
+              echo "Deleting $REPO_NAME:$tag"
+              az acr repository delete --name "$ACR_NAME" --image "$REPO_NAME:$tag" --yes
+            done
+          fi
+
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
@@ -734,14 +895,22 @@ jobs:
           KEY_VAULT_URI=$KEY_VAULT_URI
           AZURE_SCOPE=https://graph.microsoft.com/.default
           AZURE_STORAGE_CONNECTION_STRING="storage-account-connection-string"
-          MAINDB_NAME=main-database-name
-          MAINDB_PASSWORD=main-db-admin-password
-          MAINDB_USERNAME=main-db-admin-username
-          MAINDB_ENDPOINT=main-db-endpoint
-          ORGDB_NAME=org-database-name
-          ORGDB_PASSWORD=org-db-admin-password
-          ORGDB_USERNAME=org-db-admin-username
-          ORGDB_ENDPOINT=org-db-endpoint
+          # MAINDB_NAME=main-database-name
+          # MAINDB_PASSWORD=main-db-admin-password
+          # MAINDB_USERNAME=main-db-admin-username
+          # MAINDB_ENDPOINT=main-db-endpoint
+          # ORGDB_NAME=org-database-name
+          # ORGDB_PASSWORD=org-db-admin-password
+          # ORGDB_USERNAME=org-db-admin-username
+          # ORGDB_ENDPOINT=org-db-endpoint
+          MAINDB_NAME=main-database-name-pvt
+          MAINDB_PASSWORD=main-db-admin-password-pvt
+          MAINDB_USERNAME=main-db-admin-username-pvt
+          MAINDB_ENDPOINT=main-db-endpoint-pvt
+          ORGDB_NAME=org-database-name-pvt
+          ORGDB_PASSWORD=org-db-admin-password-pvt
+          ORGDB_USERNAME=org-db-admin-username-pvt
+          ORGDB_ENDPOINT=org-db-endpoint-pvt
           MAIL_TENANT_ID=$MAIL_TENANT_ID
           MAIL_CLIENT_ID=$MAIL_CLIENT_ID
           MAIL_CLIENT_SECRET=$MAIL_CLIENT_SECRET
