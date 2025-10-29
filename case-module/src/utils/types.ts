@@ -71,3 +71,105 @@ export type CurrencyType = {
   rid : string,
   currency_code : string
 }
+
+export type FilterType = {
+  [key : string] : {
+    [condition : string] : any
+  }
+}
+
+export const validColumnsForSorting : any = {
+  project_code : "project_code",
+  project_name : "project_name",
+  fiscal_year : "fiscal_year",
+  project_classification_other : "project_classification_other",
+  project_client_group : "project_client_group",
+  project_group : "project_group",
+  total_effort_prj : "total_effort_prj",
+  total_cost_prj : "total_cost_prj",
+  total_cost_fte_prj : "total_cost_fte_prj",
+  total_cost_subcon_prj : "total_cost_subcon_prj",
+  total_cost_nonlabor_prj : "total_cost_nonlabor_prj",
+  assessment_status : "assessment_status",
+  rd_percent_final : "rd_percent_final",
+  qre_final : "qre_final",
+  comments : "comments",
+  modified_datetime : "modified_datetime",
+  r_number : "r_number",
+  project_point_of_contact : "project_point_of_contact",
+  project_technical_point_of_contact : "project_technical_point_of_contact"
+}
+
+export const validColumns : any = {
+  project_code : "project_code",
+  project_name : "project_name",
+  fiscal_year : "fiscal_year",
+  project_classification_rid : "project_classification_rid",
+  project_type_rid : "project_type_rid",
+  project_type_name : "project_type_name",
+  project_classification_other : "project_classification_other",
+  project_client_group : "project_client_group",
+  project_group : "project_group",
+  total_effort_prj : "total_effort_prj",
+  total_cost_prj : "total_cost_prj",
+  total_cost_fte_prj : "total_cost_fte_prj",
+  total_cost_subcon_prj : "total_cost_subcon_prj",
+  total_cost_nonlabor_prj : "total_cost_nonlabor_prj",
+  assessment_status : "assessment_status",
+  rd_percent_final : "rd_percent_final",
+  qre_final : "qre_final",
+  comments : "comments",
+  modified_datetime : "modified_datetime",
+  r_number : "r_number",
+  project_point_of_contact : "project_point_of_contact",
+  project_technical_point_of_contact : "project_technical_point_of_contact"
+}
+
+export const columnType : any = {
+  project_code : "string",
+  project_name : "string",
+  fiscal_year : "number",
+  project_classification_rid : "string",
+  project_type_rid : "string",
+  project_classification_other : "string",
+  project_client_group : "string",
+  project_group : "string",
+  total_effort_prj : "number",
+  total_cost_prj : "number",
+  total_cost_fte_prj : "number",
+  total_cost_subcon_prj : "number",
+  total_cost_nonlabor_prj : "number",
+  assessment_status : "string",
+  rd_percent_final : "number",
+  qre_final : "number",
+  comments : "string",
+  modified_datetime : "date",
+  r_number : "string",
+  project_point_of_contact : "string",
+  project_technical_point_of_contact : "string"
+}
+
+export type caseProjectsResponseType = {
+  project_code : string,
+  project_name : string,
+  fiscal_year : number,
+  project_classification_rid : string,
+  project_classification_name : string,
+  project_type_rid : string,
+  project_classification_other : string,
+  project_client_group : string,
+  project_group : string,
+  total_effort_prj : number,
+  total_cost_prj : number
+  total_cost_fte_prj : number,
+  total_cost_subcon_prj : number,
+  total_cost_nonlabor_prj : number,
+  assessment_status : string,
+  rd_percent_final : number,
+  qre_final : number,
+  comments : string,
+  modified_datetime : Date,
+  r_number : number,
+  project_point_of_contact : string,
+  project_technical_point_of_contact : string
+}

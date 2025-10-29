@@ -2092,7 +2092,7 @@ export const fetchResCodeWithPrjResRole = (
                 filterQueryConditions.push(`q.${validColumns} < ${values}`)
                 break;
               case "between" :
-                filterQueryConditions.push(`DATE(q.${validColumns}) BETWEEN ${values.map((d : any) => `'${d}'`).join(',')}`)
+                filterQueryConditions.push(`DATE(q.${validColumns}) BETWEEN ${values.map((d : any) => `'${d}'`).join(' AND ')}`)
                 break;
               case "is_empty" :
                 filterQueryConditions.push(`DATE(q.${validColumns}) IS EMPTY`)
