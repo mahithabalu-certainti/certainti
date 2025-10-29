@@ -2,16 +2,16 @@ import { Sequelize } from "sequelize";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { initMainDbSequelize } from "../config/mainDataSource";
 import { SCHEMANAME_PREFIX } from "../utils/constants";
+import { Case } from "../models/caseModel";
 
-export class InteractionModelService {
+export class CaseModelService {
   orgDbSequelize: Sequelize | null = null;
   mainDbSequelize: Sequelize | null = null;
 
   modelCache: Map<
     string,
     {
-    //  Interaction: ReturnType<typeof Interaction.initialize>;
-    
+      Case: ReturnType<typeof Case.initialize>;
     }
   > = new Map();
 
@@ -32,18 +32,19 @@ export class InteractionModelService {
   }
 
   async getModels(accountNumber: string) {
-    const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
+    const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(
+      /\D/g,
+      ""
+    )}`;
 
     const sequelize = await initOrgSequelize();
-
-   
-   
+    const CaseModel = Case.initialize(sequelize, schemaName);
 
     const models = {
-      
+      Case: CaseModel,
     };
 
-   // this.modelCache.set(schemaName, models);
+    this.modelCache.set(schemaName, models);
     return models;
   }
 }

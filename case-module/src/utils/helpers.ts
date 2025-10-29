@@ -98,6 +98,19 @@ export function handleSuccessResponse(res: Response, data: any) {
   );
 }
 
+export function handleCustomResponse(
+  res: Response,
+  data: any,
+  message: string
+) {
+  return successResponse(
+    res,
+    HttpStatus.SUCCESS,
+    HttpStatus.SUCCESS_MESSAGE,
+    data,
+    message
+  );
+}
 export function handleErrorResponse(
   res: Response,
   statusCode: number,
@@ -121,17 +134,14 @@ export function handlePromptResponse(
   });
 }
 
-export async function generateExcelBase64(
-  data: any,
-  sheetName: string
-) {
+export async function generateExcelBase64(data: any, sheetName: string) {
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet(sheetName);
-  
+
   // Get headers from the first object in data
   const headers = Object.keys(data[0] || {});
   worksheet.addRow(headers);
-  
+
   // Add data rows
   data.forEach((row: any) => {
     worksheet.addRow(Object.values(row));
@@ -139,26 +149,30 @@ export async function generateExcelBase64(
 
   // Generate buffer
   const buffer = await workbook.xlsx.writeBuffer();
-  return Buffer.from(buffer).toString('base64');
+  return Buffer.from(buffer).toString("base64");
 }
 
-export async function decryptClientSecret(encryptedText: string): Promise<string> {
+export async function decryptClientSecret(
+  encryptedText: string
+): Promise<string> {
   const ENCRYPTION_KEY = process.env.CLIENT_SECRET_ENCRYPTION_KEY;
-  
+
   if (!ENCRYPTION_KEY) {
-    throw new Error('CLIENT_SECRET_ENCRYPTION_KEY is not set in environment');
-  };
+    throw new Error("CLIENT_SECRET_ENCRYPTION_KEY is not set in environment");
+  }
 
   const encryptClientSecret = await getSecret(ENCRYPTION_KEY);
 
-  if(!encryptClientSecret){
-    throw new Error("Invalid Client Encryption Key")
+  if (!encryptClientSecret) {
+    throw new Error("Invalid Client Encryption Key");
   }
 
   const [ivHex, encryptedHex] = encryptedText.split(":");
 
   if (!ivHex || !encryptedHex) {
-    throw new Error('Invalid encrypted text format. Expected format "iv:encrypted"');
+    throw new Error(
+      'Invalid encrypted text format. Expected format "iv:encrypted"'
+    );
   }
 
   const iv = Buffer.from(ivHex, "hex");

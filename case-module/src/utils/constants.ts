@@ -18,21 +18,6 @@ export const HttpStatus = {
   SUCCESS_NOTIFICATION: "Operation completed successfully!",
 };
 
-export const statusAction = {
-  CREATE: "Create",
-  SENT: "Sent",
-  RESPONSE_DRAFT: "Response Draft",
-  CREATED: "Created",
-  RESPONSE_RECEIVED: "Response Received",
-  CANCELLED: "Cancelled",
-  ON_HOLD: "On-Hold",
-};
-
-export const interactionSource = {
-  AUTO: "Auto",
-  MANUAL: "Manual",
-};
-
 export const ENV_PREFIX = process.env.NODE_ENV_DB_PREFIX || "D001-";
 export const MAIN_SCHEMA_NAME = "trd365";
 export const SCHEMANAME_PREFIX = "trd365_";
@@ -53,41 +38,6 @@ export const NODE_ENV = {
   PROD: "PRODUCTION",
 };
 
-export const OTP_EXPIRY_MINUTES = 10;
-export const MAX_RESEND_ATTEMPTS = 3;
-
-export const filtersColumns: Record<string, string> = {
-  r_number: "r_number",
-  iteration: "interaction_iteration",
-  interaction_age: "interaction_age",
-  recipient_name: "recipient_name",
-  recipient_email: "recipient_email",
-  last_resent_on: "last_resent_on",
-  last_reminder_on: "last_reminder_on",
-  response_submitted_on: "response_submitted_on",
-  response_updated_on: "response_updated_on",
-  attachments: "attachments",
-  response_source: "response_source",
-  created_datetime: "created_datetime",
-  modified_datetime: "modified_datetime",
-};
-
-export const filterTypes: Record<string, any> = {
-  r_number: "string",
-  iteration: "number",
-  interaction_age: "number",
-  recipient_name: "string",
-  recipient_email: "string",
-  last_resent_on: "datetime",
-  last_reminder_on: "datetime",
-  response_submitted_on: "datetime",
-  response_updated_on: "datetime",
-  attachments: "number",
-  response_source: "string",
-  created_datetime: "datetime",
-  modified_datetime: "datetime",
-};
-
 export const ALPHANUMERIC_CONDITIONS = {
   equals: "equals",
   notEquals: "not_equals",
@@ -101,95 +51,14 @@ export const ALPHANUMERIC_CONDITIONS = {
   after: "after",
 };
 
-export const interactionFlag = {
-  account: "account",
-  project: "project",
-};
-
-export const mainTableFilters: Record<any, any> = {
-  created_user_name: "created_user_name",
-  updated_user_name: "updated_user_name",
-  interaction_type_name: "interaction_type_name",
-  interaction_source_name: "interaction_source_name",
-  status_name: "status_name",
-};
-
 export const STATUS_MESSAGE = {
-  accountInactive: "Inactive Account",
-  accountNoFound: "Account not found",
-  accountUpdateSuccess: "Account updated successfully",
-  accountIdMissing: "Account RID mising",
-  importIdMissing: "Import RID mising",
-  entityTypeMissing: "Entity type mising",
-  oneFieldRequired: "Atleast one field is required to update",
-  keyContactIdMissing: "Key-Contact RID is missing",
-  projectUpdateSuccess: "Field updated successfully",
-  projectIdMissing: "Project RID missing",
-  projectTaskIdMissing: "Project Task RID is missing",
-  fiscalIdMissing: "Project-Fiscal RID is missing",
-  projectCodeMissing: "Project-Code missing",
-  resourceNotFound: "Resource not found",
-  active: "Active",
-  inactive: "In-Active",
-  resourceInactive: "Resource you are trying to update is currently In-Active",
-  eventUpdate: "Update",
-  uiHandler: "ui handler",
-  success: "success",
-  resourceUpdateSuccess: "Resource updated successfully",
-  resourceTypeNotFound: "Resource Type you are trying to update is invalid",
-  countryNotFound: "Country you are trying to update is invalid",
-  stateNotFound: "Region you are trying to update is invalid",
-  resourceIdMissing: "Resource RID missing",
-  invalidKeyData: "Invalid Id for update. Kindly check RID and update again.",
-  resourceCostNotFound: "Resource Cost not found",
-  resourceCostUpdSuccess: "Resource Cost updated successfully",
-  duplicateProjectCode: "Project Code already exists",
-  costIdMissing: "Resource Cost RID missing",
-  skillIdMissing: "Resource Skill RID missing",
-  currencyInvalid: "Currency you are trying to update is invalid",
-  projectCodeDuplicate: "Project Code already exists",
-  resourceCodeDuplicate: "Resource Code already exists",
-  resourceSkillNoFound: "Resource Skill you are trying to update is invalid",
-  resourceSkillTypeNoFound:
-    "Resource SkillType you are trying to update is invalid",
-  resourceSkillSubTypeNoFound:
-    "Resource Skill SubType you are trying to update is invalid",
-  resourceSkillLevelNoFound:
-    "Resource Skill level you are trying to update is invalid",
-  resourceSkillUpdSuccess: "Resource Skill updated successfully",
-  noAttachmentRecordFound: "No Attachment record found",
-  noDataToUpdate: "Data is requried to update",
-  attachmentUpdatedSuccess: "Attachment details updated successfully",
-  projectTaskUpdatedSuccess: "Project task details updated successfully",
-  userIdEmpty: "User-Id is missing",
-  attachmentIdMissing: "Attachment RID missing",
-  docCatInvalid: "Document category you are trying to update is invalid",
-  docTypeInvalid: "Document Type you are trying to update is invalid",
-  NoResourceFound: "No Resource found",
-  separateDb: "separate_db",
-  fiscalYearAlreadyExists: "Duplicate fiscal year not allowed",
-  targetLoadSuccess: "Success",
-  targetLoadFailed: "Failed",
-  importListedSuccess: "Imports listed successfully",
-  importsNoFound: "No imports found",
-  importUpdatedSuccess: "Import updated successfully",
-  projectTaskNotFound: "Project Task not found",
-  settingsUpdatedSuccess: "Operation updated successfully",
-  userIdMissingInHeader: "User-ID missing in headers",
-  fiscalStartDateMissing: "Fiscal Startdate missing",
-  fiscalEndDateMissing: "Fiscal Enddate missing",
-  autoAccessmentMissing: "Auto Assessment missing",
-  autoSendMissing: "Autosend Interaction missing",
-  maxAiMissing: "Max AI Interaction missing",
-  accountSummaryHighlightsSuccess: "Financial Summary fetched successfully",
-  effortExceeded: "Effort cannot exceed the total hours in the duration",
-  effort24HrsExceeded: "Effort cannot exceed 24 hours for the day",
-  interactionFetchedSuccess: "Interactions fetched successfully",
-  dataNotFound: "Data not found",
-  historyResponseFetched: "Interaction Response history fetched successfully",
+  caseCreated: "Case created successfully",
+  caseCreationFailed: "Case creation failed",
+  separateDb: "SEPARATE_DB",
 };
 
 export const rawQueries = {
+  fetchParentAccountDetails: `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
   async fetchParentAccount(
     accountRid: any,
     mainSequelize: Sequelize
@@ -213,102 +82,17 @@ export const rawQueries = {
   fetchSchemaName(r_number: string) {
     return `${MAIN_SCHEMA_NAME}_${r_number.replace("ACC-", "")}`;
   },
-  fetchInteractionTypes(data: any) {
-    let ids = data.map((d: any) => `'${d}'`);
-    return `
-    SELECT rid, interaction_type_name FROM ${MAIN_SCHEMA_NAME}.interaction_type WHERE rid IN (${ids})`;
-  },
-  fetchInteractionSource(data: any) {
-    let ids = data.map((d: any) => `'${d}'`);
-    return `
-    SELECT rid, interaction_source_name FROM ${MAIN_SCHEMA_NAME}.interaction_source WHERE rid IN (${ids})`;
-  },
-  fetchInteractionStatus(data: any) {
-    let ids = data.map((d: any) => `'${d}'`);
-    return `
-    SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE rid IN (${ids})`;
-  },
   fetchUser(data: any) {
     let ids = data.map((d: any) => `'${d}'`);
     return `
     SELECT rid, first_name, last_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (${ids})`;
   },
-  fetchEmailResponseSourceRid(): string {
-    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.interaction_response_source WHERE response_source_name = 'Email'`;
-  },
-  getAccountByRid() {
-    return `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`
-  },
-  getContactQuery(schemaName: string) {
+  getCaseFilingType() {
     return `
-      SELECT * 
-      FROM ${schemaName}.key_contact_details
-      WHERE entity_rid = :projectFiscalId 
-        AND is_primary_contact = :is_primary_contact
-        AND key_contact_email = :email
+      SELECT rid, case_filing_type_name 
+      FROM ${MAIN_SCHEMA_NAME}.case_filing_type
+      WHERE status = 'active'
+      ORDER BY case_filing_type_name ASC
     `;
   },
-  getKeyContactRoleQuery() {
-    return `
-      SELECT * 
-      FROM ${MAIN_SCHEMA_NAME}.key_contact_role 
-      WHERE rid = :rid
-    `;
-  },
-  getOrganizationLicensesQuery() {
-    return `
-      SELECT * 
-      FROM "${MAIN_SCHEMA_NAME}".organization_licenses
-    `;
-  }  
 };
-
-export const filterTypesForSummaryInteractions: Record<string, any> = {
-  r_number: "string",
-  iteration: "number",
-  interaction_age: "number",
-  recipient_name: "string",
-  recipient_email: "string",
-  last_resent_on: "datetime",
-  last_reminder_on: "datetime",
-  response_submitted_on: "datetime",
-  response_updated_on: "datetime",
-  attachments: "number",
-  response_source: "string",
-  created_datetime: "datetime",
-  modified_datetime: "datetime",
-  status_name: "string",
-  interaction_type_name: "string",
-  interaction_source_name: "string",
-  created_user_name: "string",
-  updated_user_name: "string",
-};
-
-export const filtersColumnsForInteractionSummary: Record<string, string> = {
-  r_number: "r_number",
-  iteration: "interaction_iteration",
-  interaction_age: "interaction_age",
-  recipient_name: "recipient_name",
-  recipient_email: "recipient_email",
-  last_resent_on: "last_resent_on",
-  last_reminder_on: "last_reminder_on",
-  response_submitted_on: "response_submitted_on",
-  response_updated_on: "response_updated_on",
-  attachments: "attachments",
-  response_source: "response_source",
-  created_datetime: "created_datetime",
-  modified_datetime: "modified_datetime",
-  status_name: "string_name",
-  interaction_type_name: "interaction_type_name",
-  interaction_source_name: "interaction_source_name",
-  created_user_name: "created_user_name",
-  updated_user_name: "updated_user_name",
-};
-
-export const responseSortKeys = [
-  "r_number",
-  "response_by",
-  "response_on",
-  "response_email",
-  "interaction_response",
-];
