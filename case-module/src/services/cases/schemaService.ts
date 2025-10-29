@@ -12,9 +12,10 @@ import {
   where,
 } from "sequelize";
 import { CaseModelService } from "../caseModelsService";
-import { rawQueries } from "../../utils/constants";
+import { HttpStatus, rawQueries } from "../../utils/constants";
 import { logMessage } from "../../utils/helpers";
-import { ICreateCases } from "../../utils/types";
+import { CaseHeadersColumns, ICreateCases } from "../../utils/types";
+import { fetchCasesHeadersDatas } from "../../utils/rawQueries";
 class CaseSchemaService {
   private orgDbSequelize: Sequelize | null = null;
   private mainDbSequelize: Sequelize | null = null;
@@ -115,6 +116,13 @@ class CaseSchemaService {
     );
 
     return caseFilingType;
+  }
+
+  async getCasesHeadersSectionList (caseRid : string, schemaName : string, orgDb : Sequelize) {
+    const [result] = await orgDb.query<CaseHeadersColumns>(fetchCasesHeadersDatas(schemaName, caseRid), {type : QueryTypes.SELECT});
+    if(result) {
+      return result;
+    }
   }
 }
 

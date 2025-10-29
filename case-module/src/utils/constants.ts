@@ -55,6 +55,8 @@ export const STATUS_MESSAGE = {
   caseCreated: "Case created successfully",
   caseCreationFailed: "Case creation failed",
   separateDb: "SEPARATE_DB",
+  caseDetailsFetchedSuccess : "Case details fetched successfully",
+  dataNotAvailable : "Data not available"
 };
 
 export const rawQueries = {
@@ -94,5 +96,30 @@ export const rawQueries = {
       WHERE status = 'active'
       ORDER BY case_filing_type_name ASC
     `;
+  },
+  fetchAccountDetails (accountRid : string) {
+    return `SELECT r_number, account_name, rid, country_rid, currency_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`
+  },
+  getCaseFilingTypeById(filingTypeRid : string) {
+    return `
+      SELECT rid, filing_type_name 
+      FROM ${MAIN_SCHEMA_NAME}.case_filing_type
+      WHERE 
+      status = 'active'
+      AND
+      rid = '${filingTypeRid}'
+    `;
+  },
+  getCountryDetails (countryRid : string) {
+    return `SELECT rid, country_name FROM ${MAIN_SCHEMA_NAME}.country WHERE rid = '${countryRid}'`
+  },
+  getOwnerDetails (caseOwnerRid : string) {
+    return `SELECT rid, CONCAT(first_name,' ',last_name) AS name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid = '${caseOwnerRid}'`
+  },  
+  getCaseStatusDetails (statusRid : string) {
+    return `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.case_status WHERE rid = '${statusRid}'`
+  },  
+  getCurrencyDetails (currencyRid : string) {
+    return `SELECT rid, currency_code FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid = '${currencyRid}'`
   },
 };

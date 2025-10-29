@@ -8,7 +8,7 @@ import {
   successLog,
   validateRequest,
 } from "../utils/helpers";
-import { HttpStatus } from "../utils/constants";
+import { HttpStatus, STATUS_MESSAGE } from "../utils/constants";
 import { createCaseSchema, updateCaseSchema } from "../lib/joi/schemas/schema";
 import configurations from "../config/config";
 
@@ -191,8 +191,77 @@ async function getCaseFilingType(req: Request, res: Response): Promise<void> {
   }
 }
 
+/**
+ * Controller: getCaseheadersDetails
+ * ------------------------------------------------------
+ * Description:
+ *   Fetches detailed header and section information for a specific case
+ *   associated with an account. The user ID must be provided in the request headers.
+ *
+ * Flow:
+ *   1. Validate that 'x-user-id' exists in headers.
+ *   2. Extract 'accountRid' and 'caseRid' from request params.
+ *   3. Call the service layer (caseService.fetchCaseHeadersSectionsList)
+ *      to retrieve case header and section details.
+ *   4. Return success response with the fetched data if available,
+ *      otherwise send a "data not available" response.
+ *   5. Catch and handle any errors that occur during processing.
+ *
+ * Parameters:
+ *   @param req - Express Request object containing headers and params.
+ *   @param res - Express Response object used to send the response.
+ *
+ * Returns:
+ *   JSON response with status code, message, and case details (if available).
+ */
+async function getCaseheadersDetails (req : Request, res : Response) {
+  const methodName = "getCaseheadersDetails"
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const { accountRid, caseRid } = req.params;
+    const result = await caseService.fetchCaseHeadersSectionsList(accountRid!, caseRid!)
+    if(result.statusCode == HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.caseDetailsFetchedSuccess,
+        data : result.data
+      })
+    } else {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.dataNotAvailable,
+        data : result.data
+      })      
+    }
+
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
 export default {
   createCases,
   updateCases,
   getCaseFilingType,
+  getCaseheadersDetails
 };
