@@ -42,7 +42,7 @@ import {
   listInteractionHistory,
   listResponseHistory,
   fetchInteractionTemplates,
-  fetchAccountKeyContactDetailsForInteractions,
+  fetchKeyContactDetailsForInteractions,
 } from "../../utils/rawQueries";
 import { generateSasUrl } from "../../utils/blob";
 import {
@@ -1955,7 +1955,9 @@ export class InteractionService {
       )
     );
     let hasEmailRecipient = false;
-    const keyContactData : any = await orgDb.query(fetchAccountKeyContactDetailsForInteractions(schemaName, data.account_rid))
+    let entityRid: string = "";
+    entityRid = data.flag === "project" ? data.project_fiscal_rid : data.account_rid
+    const keyContactData : any = await orgDb.query(fetchKeyContactDetailsForInteractions(schemaName, entityRid))
       const keyContactDetails =
         keyContactData[0][0] !== null ? keyContactData[0][0] : null;
     if (result[0][0].interactions != null) {
