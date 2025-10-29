@@ -25,4 +25,10 @@ export interface ICaseService {
     errorMessage?: string;
     data?: { caseFilingType: any };
   }>;
+  getCaseStatus(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { caseStatus: any };
+  }>;
 }
