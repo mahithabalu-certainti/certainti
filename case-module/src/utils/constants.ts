@@ -38,26 +38,14 @@ export const NODE_ENV = {
   PROD: "PRODUCTION",
 };
 
-export const ALPHANUMERIC_CONDITIONS = {
-  equals: "equals",
-  notEquals: "not_equals",
-  contains: "contains",
-  isEmpty: "is_empty",
-  IN: "in",
-  less_than: "less_than",
-  greater_than: "greater_than",
-  between: "between",
-  before: "before",
-  after: "after",
-};
-
 export const STATUS_MESSAGE = {
   caseCreated: "Case created successfully",
   caseUpdated: "Case updated successfully",
   caseCreationFailed: "Case creation failed",
   separateDb: "SEPARATE_DB",
   caseDetailsFetchedSuccess : "Case details fetched successfully",
-  dataNotAvailable : "Data not available"
+  dataNotAvailable : "Data not available",
+  projectsFetchedSuccess : "Project fetched successfully"
 };
 
 export const caseStatuses = {
@@ -142,4 +130,30 @@ export const rawQueries = {
   getCurrencyDetails (currencyRid : string) {
     return `SELECT rid, currency_code FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid = '${currencyRid}'`
   },
+  getPointOfContactId () {
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE role_name = '${keyContactRole.pocName}'`
+  },
+  getTechnicalPointOfContactId () {
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE role_name = '${keyContactRole.tPocName}'`
+  },
+  getProjectClassifications (rid : any[]) {
+    if(rid.length > 0)
+      return `SELECT rid, classification_name FROM ${MAIN_SCHEMA_NAME}.project_classification WHERE rid IN (${rid.map((d : any) => `'${d}'`).join(',')})`
+    else {
+      return `SELECT rid, classification_name FROM ${MAIN_SCHEMA_NAME}.project_classification WHERE rid IN ('')`
+    }
+  },
+  getProjectTypes (rid : any[]) {
+    if(rid.length > 0) {
+      return `SELECT rid, project_type_name FROM ${MAIN_SCHEMA_NAME}.project_type WHERE rid IN (${rid.map((d : any) => `'${d}'`).join(',')})`
+    } else {
+      return `SELECT rid, project_type_name FROM ${MAIN_SCHEMA_NAME}.project_type WHERE rid IN ('')`
+    }
+    
+  }
 };
+
+const keyContactRole = {
+  pocName : "Project Point of Contact",
+  tPocName : "Project Technical Point of Contact"
+}

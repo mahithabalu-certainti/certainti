@@ -31,6 +31,11 @@ routes.get(
   checkUserStatusMiddleware("NA"),
   controller.caseController.getCaseStatus
 );
+routes.post(
+  '/projects',
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.fetchProjectForAssign
+)
 
 
 export default routes;

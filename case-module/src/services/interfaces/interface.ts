@@ -32,4 +32,5 @@ export interface ICaseService {
     errorMessage?: string;
     data?: { caseStatus: any };
   }>;
+  fetchProjectsForAssign(data : any) : Promise<any>
 }
