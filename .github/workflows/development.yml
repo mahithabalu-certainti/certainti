@@ -1000,7 +1000,7 @@ jobs:
           ENV_FILE=".env.casemodule"
           
           # Ensure Azure CLI is authenticated
-          az case show > /dev/null 2>&1
+          az account show > /dev/null 2>&1
           if [ $? -ne 0 ]; then
           echo "Error: Azure CLI is not authenticated. Run 'az login' first."
           exit 1
