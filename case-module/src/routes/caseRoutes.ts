@@ -14,7 +14,7 @@ const routes: Router = Router();
  routes.get(
   "/details/:accountRid/:caseRid",
   checkUserStatusMiddleware("NA"),
-  controller.caseController.getCaseheadersDetails
+  controller.caseController.getCaseHeadersDetails
  )
  routes.put(
    "/update",

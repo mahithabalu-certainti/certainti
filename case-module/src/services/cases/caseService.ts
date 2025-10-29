@@ -4,7 +4,7 @@ import { initOrgSequelize } from "../../config/orgDataSource";
 import { Logger } from "winston";
 import { CaseModelService } from "../caseModelsService";
 import CaseSchemaService from "./schemaService";
-import { Accounttype, CaseOwnertype, CaseStatustype, Countrytype, Currencytype, Filingtype, ICreateCases } from "../../utils/types";
+import { AccountType, CaseOwnerType, CaseStatusType, CountryType, CurrencyType, FilingType, ICreateCases } from "../../utils/types";
 import { logMessage } from "../../utils/helpers";
 import {
   caseStatuses,
@@ -264,16 +264,16 @@ export class CaseService {
       let schemaName = rawQueries.fetchSchemaName(fetchParentAccountRnumber[0][0].r_number)
       const queryResult = await this.caseSchemaService.getCasesHeadersSectionList(caseRid, schemaName, orgDb);
       if(queryResult) {
-        let getCountryDetails: Countrytype | undefined
-        let getCurrencyDetails : Currencytype | undefined
-        const [getAccountDetails] = await mainDb.query<Accounttype>(rawQueries.fetchAccountDetails(queryResult.account_rid), {type : QueryTypes.SELECT});
-        const [getCaseFilingType] = await mainDb.query<Filingtype>(rawQueries.getCaseFilingTypeById(queryResult.filing_type_rid), {type : QueryTypes.SELECT}) 
+        let getCountryDetails: CountryType | undefined
+        let getCurrencyDetails : CurrencyType | undefined
+        const [getAccountDetails] = await mainDb.query<AccountType>(rawQueries.fetchAccountDetails(queryResult.account_rid), {type : QueryTypes.SELECT});
+        const [getCaseFilingType] = await mainDb.query<FilingType>(rawQueries.getCaseFilingTypeById(queryResult.filing_type_rid), {type : QueryTypes.SELECT}) 
         if(getAccountDetails?.country_rid != null) 
-          [getCountryDetails] = await mainDb.query<Countrytype>(rawQueries.getCountryDetails(getAccountDetails.country_rid), {type : QueryTypes.SELECT})
+          [getCountryDetails] = await mainDb.query<CountryType>(rawQueries.getCountryDetails(getAccountDetails.country_rid), {type : QueryTypes.SELECT})
         if(getAccountDetails?.currency_rid !== null)
-          [getCurrencyDetails] = await mainDb.query<Currencytype>(rawQueries.getCurrencyDetails(getAccountDetails!.currency_rid), {type : QueryTypes.SELECT})
-        const [getOwnerDetails] = await mainDb.query<CaseOwnertype>(rawQueries.getOwnerDetails(queryResult.case_owner_rid), {type : QueryTypes.SELECT})
-        const [getCaseStatusDetails] = await mainDb.query<CaseStatustype>(rawQueries.getCaseStatusDetails(queryResult.status_rid), {type : QueryTypes.SELECT})
+          [getCurrencyDetails] = await mainDb.query<CurrencyType>(rawQueries.getCurrencyDetails(getAccountDetails!.currency_rid), {type : QueryTypes.SELECT})
+        const [getOwnerDetails] = await mainDb.query<CaseOwnerType>(rawQueries.getOwnerDetails(queryResult.case_owner_rid), {type : QueryTypes.SELECT})
+        const [getCaseStatusDetails] = await mainDb.query<CaseStatusType>(rawQueries.getCaseStatusDetails(queryResult.status_rid), {type : QueryTypes.SELECT})
         if(getAccountDetails) queryResult.account_rnumber = getAccountDetails.r_number
         else queryResult.account_rnumber = null
         if(getCaseFilingType) queryResult.filing_type_name = getCaseFilingType.filing_type_name

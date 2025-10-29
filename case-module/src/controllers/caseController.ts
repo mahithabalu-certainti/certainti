@@ -219,7 +219,7 @@ async function getCaseFilingType(req: Request, res: Response): Promise<void> {
  * Returns:
  *   JSON response with status code, message, and case details (if available).
  */
-async function getCaseheadersDetails (req : Request, res : Response) {
+async function getCaseHeadersDetails (req : Request, res : Response) {
   const methodName = "getCaseheadersDetails"
   try {
     const userId = req.headers["x-user-id"] as string;
@@ -319,6 +319,6 @@ export default {
   createCases,
   updateCases,
   getCaseFilingType,
-  getCaseheadersDetails,
+  getCaseHeadersDetails,
   getCaseStatus
 };

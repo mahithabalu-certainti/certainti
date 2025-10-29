@@ -39,17 +39,17 @@ export type CaseHeadersColumns = {
   case_total_qre_cost : number | null
 }
 
-export type Filingtype = {
+export type FilingType = {
   rid : string,
   filing_type_name : string
 }
 
-export type Countrytype = {
+export type CountryType = {
   rid : string,
   country_name : string
 }
 
-export type Accounttype = {
+export type AccountType = {
   rid : string,
   r_number : string,
   account_name : string,
@@ -57,17 +57,17 @@ export type Accounttype = {
   currency_rid : string | null
 }
 
-export type CaseOwnertype = {
+export type CaseOwnerType = {
   rid : string,
   name : string
 }
 
-export type CaseStatustype = {
+export type CaseStatusType = {
   rid : string,
   status_name : string
 }
 
-export type Currencytype = {
+export type CurrencyType = {
   rid : string,
   currency_code : string
 }
