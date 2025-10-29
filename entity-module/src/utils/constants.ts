@@ -159,6 +159,9 @@ export const STATUS_MESSAGE = {
   noNotesRecordFound: "Notes not found",
   notesIdMissing: "Notes RID missing",
   notesFetchedSuccess: "Notes fetched successfully",
+  templateUploadedSuccess : "Template uploaded successfully",
+  qreHistoryFetchedSuccess : "Qre-History fetched successfully",
+  noDataFound : "Data not available"
 };
 
 export const TYPES = {
@@ -695,7 +698,7 @@ export const rawQueries = {
   `;
   },
   fetchTemplate() {
-    return `SELECT * FROM ${MAIN_SCHEMA_NAME}.templates`;
+    return `SELECT * FROM ${MAIN_SCHEMA_NAME}.templates order by template_name ASC`;
   },
   fetchTemplateById(templateId: string) {
     return `SELECT * FROM ${MAIN_SCHEMA_NAME}.templates WHERE rid = '${templateId}'`;
@@ -850,15 +853,16 @@ export const rawQueries = {
       ${setValues}
       ${whereParams}
       `;
-      if (
-        data.flag == UPDATE_FLAG.account &&
-        t == "account_details" &&
-        isParentAccount
-      ) {
-        const encryptedSecretKey = await encryptClientSecret(
-          data.client_secret
-        );
-        let query = `
+      if (data?.level == "parent") {
+        if (
+          data.flag == UPDATE_FLAG.account &&
+          t == "account_details" &&
+          isParentAccount
+        ) {
+          const encryptedSecretKey = await encryptClientSecret(
+            data.client_secret
+          );
+          let query = `
         UPDATE ${schema}.${t}
         SET
         support_email = '${data.support_email}',
@@ -869,13 +873,15 @@ export const rawQueries = {
         WHERE account_rid = '${parentAccountID}'
         `;
 
-        const subscriptionQuery = `
+          const subscriptionQuery = `
           UPDATE ${MAIN_SCHEMA_NAME}.account set subscription_id = '${subscriptionId}'
           WHERE rid = '${parentAccountID}'
         `;
-        await dbConnection.query(query);
-        await mainDb.query(subscriptionQuery);
+          await dbConnection.query(query);
+          await mainDb.query(subscriptionQuery);
+        }
       }
+
       await dbConnection.query(query);
     }
     return HttpStatus.SUCCESS_MESSAGE;
@@ -2038,7 +2044,7 @@ export const IMPORT_DOC_IMPORT_KEYS = {
   records_with_warning: "records_with_warning",
 };
 
-export const ALPHANUMERIC_CONDITIONS = {
+export const ALPHANUMERIC_CONDITIONS : any = {
   equals: "equals",
   notEquals: "not_equals",
   contains: "contains",
@@ -2133,3 +2139,32 @@ export const IMPORT_FIELD_MAPPINGS_FOR_EXPORT = [
     formatter: (value: any) => moment(value).format("YYYY-MMM-DD, hh:mm:ss A"),
   },
 ];
+
+export const filterColumnsForQreHistoryList : any = {
+  qre_percent : `qre_percent`,
+  version : `version`,
+  created_datetime : `created_datetime`
+}
+
+export const filterColumnsTypesForQreHistory : any = {
+  qre_percent : `number`,
+  version : `number`,
+  created_datetime : `date`
+}
+
+export const numericConditionsForQRE : any = {
+  equals: "equals",
+  notEquals: "not_equals",
+  is_empty: "is_empty",
+  less_than: "less_than",
+  greater_than: "greater_than",
+  between: "between"
+};
+
+export const dateConditionsForQRE : any = {
+  equals: "equals",
+  between: "between",
+  before: "before",
+  after: "after",
+  is_empty: "is_empty",
+};

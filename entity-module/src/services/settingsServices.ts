@@ -206,27 +206,35 @@ export default class SettingService {
             );
             subscriptionId = "";
           }
-        }else{
-          try {
-            subscriptionId = await this.validateAndCreateSubscription(
-              data.tenant_id,
-              data.client_id,
-              data.client_secret,
-              data.support_email
-            );
-            if(subscriptionId === null){
-              return {
-                statusCode: HttpStatus.BAD_REQUEST,
-                statusMessage: `Subscription already exists for ${data.support_email}`,
-              }
+        }else {
+            const sameCredentials =
+                data.support_email === existingSettings.support_email &&
+                data.tenant_id === existingSettings.tenant_id &&
+                data.client_id === existingSettings.client_id &&
+                data.client_secret === descyptedSecret;
+
+            if (!sameCredentials) {
+                try {
+                    subscriptionId = await this.validateAndCreateSubscription(
+                        data.tenant_id,
+                        data.client_id,
+                        data.client_secret,
+                        data.support_email
+                    );
+                    if (subscriptionId === null) {
+                        return {
+                            statusCode: HttpStatus.BAD_REQUEST,
+                            statusMessage: `Subscription already exists for ${data.support_email}`,
+                        }
+                    }
+                } catch (err) {
+                    errorLog("Error in update settings: " + (err as Error).message);
+                    return {
+                        statusCode: HttpStatus.BAD_REQUEST,
+                        statusMessage: STATUS_MESSAGE.invalidCredentials,
+                    }
+                }
             }
-          } catch (err) {
-            errorLog("Error in update settings: " + (err as Error).message);
-            return {
-              statusCode: HttpStatus.BAD_REQUEST,
-              statusMessage: STATUS_MESSAGE.invalidCredentials,
-            }
-          }
         }
       }
 

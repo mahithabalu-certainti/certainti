@@ -1,7 +1,7 @@
 import { Model, DataTypes, Sequelize, Optional } from "sequelize";
 import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constants";
 
-interface CaseAttributes {
+interface CaseSummaryAttributes {
   rid: string;
   r_number?: string;
   created_by: string;
@@ -9,6 +9,7 @@ interface CaseAttributes {
   created_datetime?: Date;
   modified_datetime?: Date;
   account_rid: string;
+  case_rid: string;
   case_name: string;
   description?: string;
   fiscal_year: number;
@@ -21,12 +22,12 @@ interface CaseAttributes {
   status_rid?: string;
 }
 
-export interface CaseCreationAttributes
-  extends Optional<CaseAttributes, "rid"> {}
+export interface CaseSummaryCreationAttributes
+  extends Optional<CaseSummaryAttributes, "rid"> {}
 
-export class Case
-  extends Model<CaseAttributes, CaseCreationAttributes>
-  implements CaseAttributes
+export class CaseSummary
+  extends Model<CaseSummaryAttributes, CaseSummaryCreationAttributes>
+  implements CaseSummaryAttributes
 {
   public rid!: string;
   public r_number?: string;
@@ -34,6 +35,7 @@ export class Case
   public modified_by?: string;
   public created_datetime?: Date;
   public modified_datetime?: Date;
+  public case_rid!: string;
   public account_rid!: string;
   public case_name!: string;
   public description?: string;
@@ -49,7 +51,7 @@ export class Case
     sequelize: Sequelize,
     schemaName: string = MAIN_SCHEMA_NAME
   ) {
-    return Case.init(
+    return CaseSummary.init(
       {
         rid: {
           type: DataTypes.STRING(50),
@@ -71,6 +73,7 @@ export class Case
           defaultValue: DataTypes.NOW
         },
         modified_datetime: { type: DataTypes.DATE, allowNull: true },
+        case_rid: { type: DataTypes.STRING(50), allowNull: false },
         account_rid: { type: DataTypes.STRING(50), allowNull: false },
         case_name: { type: DataTypes.STRING(255), allowNull: false },
         description: { type: DataTypes.TEXT, allowNull: true },
@@ -84,28 +87,11 @@ export class Case
       },
       {
         sequelize,
-        schema: schemaName,
-        tableName: "cases",
+        schema: schemaName ? schemaName : `${MAIN_SCHEMA_NAME}`,
+        tableName: "case_summary",
         timestamps: false,
         underscored: true,
       }
     );
-  }
-}
-export async function setupCaseSequence(
-  sequelize: Sequelize,
-  schemaName: string
-) {
-  try {
-    await sequelize.query(
-      `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".cases_seq START 1`
-    );
-
-    await sequelize.query(`ALTER TABLE "${schemaName}".cases
-      ALTER COLUMN r_number SET DEFAULT 'CAS-' || LPAD(nextval('"${schemaName}".cases_seq')::text, 10, '0')`);
-
-    console.log("Cases sequence setup complete");
-  } catch (error) {
-    console.error("Error setting up Cases sequence:", error);
   }
 }

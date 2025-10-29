@@ -1,4 +1,4 @@
-import { ALPHANUMERIC_CONDITIONS, IMPORT_FILTER_COLUMNS, MAIN_SCHEMA_NAME, STATUS_MESSAGE, SUMMARY_HIGHLIGHTS_FLAG } from "./constants";
+import { ALPHANUMERIC_CONDITIONS, dateConditionsForQRE, filterColumnsForQreHistoryList, filterColumnsTypesForQreHistory, IMPORT_FILTER_COLUMNS, MAIN_SCHEMA_NAME, numericConditionsForQRE, STATUS_MESSAGE, SUMMARY_HIGHLIGHTS_FLAG } from "./constants";
 type filterType = {
   [key: string]: {
     [condition: string]: any;
@@ -2035,4 +2035,115 @@ export const fetchResCodeWithPrjResRole = (
   export const fetchProjectById = (schemaName : string, id : string) => {
     return `SELECT project_startdate, project_enddate FROM ${schemaName}.project_fiscal
     WHERE rid = '${id}'`
+  }
+
+  export const fetchQreHistoryDatas = (schemaName : string, accountRid : string, page : number, limit : number, sort : string, sortBy : string, filter : filterType) => {
+    let offset = (page - 1) * limit
+    let pagination = `LIMIT ${limit} OFFSET ${offset}`
+    let and : string = ``
+    let sortValue;
+    let filterQueryConditions : string[] = []
+
+    if(sort === 'version') sortValue = `ORDER BY q.version ${sortBy}`
+    else if(sort === 'qre_percent') sortValue = `ORDER BY q.qre_percent ${sortBy}`
+    else if(sort === 'created_datetime') sortValue = `ORDER BY q.created_datetime ${sortBy}`
+    else sortValue = `ORDER BY q.created_datetime ASC`
+
+    if(Object.keys(filter).length > 0) {
+      let validColumns : string = ``
+      for(let [key, conditions] of Object.entries(filter)) {
+        if(Object.keys(filterColumnsForQreHistoryList).includes(key)) {
+          validColumns = filterColumnsForQreHistoryList[key]
+          and = ` AND `
+        }
+        for(let [cond, values] of Object.entries(conditions)) {
+          if(filterColumnsTypesForQreHistory[key] === 'number') {
+            switch (numericConditionsForQRE[cond]) {
+              case "equals":
+                filterQueryConditions.push(`q.${validColumns} = ${values}`)
+                break;
+              case "not_equals" :
+                filterQueryConditions.push(`q.${validColumns} != ${values}`)
+                break;
+              case "greater_than" :
+                filterQueryConditions.push(`q.${validColumns} > ${values}`)
+                break;
+              case "less_than" :
+                filterQueryConditions.push(`q.${validColumns} < ${values}`)
+                break;
+              case "between" :
+                filterQueryConditions.push(`q.${validColumns} BETWEEN ${values.map((d : any) => `${d}`).join(',')}`)
+                break;
+              case "is_empty" :
+                filterQueryConditions.push(`q.${validColumns} IS EMPTY`)
+                break;
+              default:
+                break;
+            }
+          } else if(filterColumnsTypesForQreHistory[validColumns] === 'date') {
+            switch (dateConditionsForQRE[cond]) {
+              case "equals":
+                filterQueryConditions.push(`DATE(q.${validColumns}) = '${values}'`)
+                break;
+              case "after" :
+                filterQueryConditions.push(`q.${validColumns} > ${values}`)
+                break;
+              case "before" :
+                filterQueryConditions.push(`q.${validColumns} < ${values}`)
+                break;
+              case "between" :
+                filterQueryConditions.push(`DATE(q.${validColumns}) BETWEEN ${values.map((d : any) => `'${d}'`).join(',')}`)
+                break;
+              case "is_empty" :
+                filterQueryConditions.push(`DATE(q.${validColumns}) IS EMPTY`)
+                break;
+              default:
+                break;
+            }
+          }
+        }
+      }
+    } else {
+      filterQueryConditions = []
+    }
+    let finalListOfCondtions;
+    if(filterQueryConditions.length > 0) {
+      finalListOfCondtions = filterQueryConditions.map((d : any) => d).join('AND')
+    } else {
+      finalListOfCondtions = ``
+    }
+
+    let query =
+    `WITH fetch_all_qre AS (
+    SELECT 
+      q.rid, q.created_datetime,
+      q.transaction_id, q.project_fiscal_rid, q.project_rid, q.account_rid, q.qre_percent,
+      q.version, q.qre_detailed_breakdown, COUNT(*) OVER() AS total_results
+    FROM
+      ${schemaName}.ai_assessment_qre q
+    WHERE
+      q.account_rid = '${accountRid}'
+      ${and}
+      ${finalListOfCondtions}
+      ${sortValue}
+    ),
+    paginated_result AS (
+    SELECT * FROM fetch_all_qre ${pagination}
+    )
+    SELECT array_agg(jsonb_build_object(
+    'total_result', q.total_results,
+    'rid', q.rid,
+    'created_datetime', q.created_datetime,
+    'transaction_id', q.transaction_id,
+    'project_fiscal_rid', q.project_fiscal_rid,
+    'project_rid', q.project_rid,
+    'account_rid', q.account_rid,
+    'qre_percent', q.qre_percent,
+    'version', q.version,
+    'qre_detailed_breakdown', q.qre_detailed_breakdown    
+    )) AS data
+    FROM
+    paginated_result q
+    `
+    return query;
   }

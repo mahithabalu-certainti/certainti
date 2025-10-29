@@ -44,7 +44,7 @@ import {
   setupAccountFiscalRegionSequence,
 } from "../models/accountFiscalRegion";
 import { errorLog, logMessage } from "../utils/helpers";
-import { checkProjectMappedToProjectRes } from "../utils/rawQueries";
+import { checkProjectMappedToProjectRes, fetchQreHistoryDatas } from "../utils/rawQueries";
 
 export class ProjectService {
   private schemaService: SchemaService;
@@ -2749,6 +2749,43 @@ export class ProjectService {
         } catch (err) {
         errorLog("Error fetching USD currency: " + (err as Error).message);
         }
+      }
+    }
+  }
+  async fetchQreHistoryByAccountId (data : any) {
+    const mainDbSequlize = await initMainDbSequelize();
+    const orgDbSequlize = await initOrgSequelize();
+
+    const fetchParentAccount : any = await mainDbSequlize.query(await rawQueries.fetchParentAccount(data.account_rid, mainDbSequlize))
+    if(fetchParentAccount[0].length > 0) {
+      let parentAccountRNumber = fetchParentAccount[0][0].r_number;
+      let schemaName = rawQueries.fetchSchemaName(parentAccountRNumber);
+      let result : any = await orgDbSequlize.query(fetchQreHistoryDatas(schemaName, data.account_rid, data.page, data.limit, data.sort, data.sort_by, data.filter))
+      if(result[0].length > 0) {
+        const finalResult = result[0][0].data.map((d : any) => {
+          return {
+            rid : d.rid,
+            created_datetime : d.created_datetime,
+            transaction_id : d.transaction_id,
+            project_fiscal_rid : d.project_fiscal_rid,
+            project_rid : d.project_rid,
+            account_rid : d.account_rid,
+            qre_percent : d.qre_percent,
+            version : d.version,
+            qre_detailed_breakdown : d.qre_detailed_breakdown
+          }
+        });
+        return {
+          status : HttpStatus.SUCCESS,
+          total_result : result[0][0].data[0].total_result,
+          data : finalResult
+        };
+      } else {
+       return {
+          status : HttpStatus.NOT_FOUND,
+          total_result : 0,
+          data : []
+        };
       }
     }
   }

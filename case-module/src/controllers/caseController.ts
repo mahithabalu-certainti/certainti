@@ -147,18 +147,23 @@ async function updateCases(req: Request, res: Response): Promise<void> {
 }
 
 /**
- * Retrieves the list of available interaction levels from the system.
+ * Retrieves the list of available case filing types from the system.
  *
  * This controller method performs the following steps:
- * 1. Calls the `getInteractionLevel` method from the `interactionService`, which fetches the defined interaction levels.
- * 2. If the service responds with success, logs the success event and sends an HTTP 200 response with the interaction level data.
+ * 1. Calls the `getCaseFilingType` method from the `caseService`, which fetches all defined case filing types.
+ * 2. If the service responds with success, logs the success event and sends an HTTP 200 response with the filing type data.
  * 3. If the service responds with a failure status code, logs the error and returns a `BAD_REQUEST` response with the error message.
  * 4. Handles and logs any unexpected exceptions and returns a generic `BAD_REQUEST` response with the exception message.
  *
  * @param {Request} req - Express request object (not used directly in this function).
- * @param {Response} res - Express response object used to send the HTTP response.
+ * @param {Response} res - Express response object used to send the HTTP response with filing type data.
  *
  * @returns {Promise<void>} - A Promise that resolves after the HTTP response is sent.
+ *
+ * @description
+ * - Used for populating dropdown options in the frontend for case filing type selection.
+ * - Returns all available filing types that can be assigned to cases.
+ * - Provides standardized error handling and logging for debugging purposes.
  */
 async function getCaseFilingType(req: Request, res: Response): Promise<void> {
   const methodName = "Get Case Filing Type";
@@ -259,9 +264,61 @@ async function getCaseheadersDetails (req : Request, res : Response) {
   }
 }
 
+/**
+ * Retrieves the list of available case statuses from the system.
+ *
+ * This controller method performs the following steps:
+ * 1. Calls the `getCaseStatus` method from the `caseService`, which fetches all defined case statuses.
+ * 2. If the service responds with success, logs the success event and sends an HTTP 200 response with the status data.
+ * 3. If the service responds with a failure status code, logs the error and returns a `BAD_REQUEST` response with the error message.
+ * 4. Handles and logs any unexpected exceptions and returns a generic `BAD_REQUEST` response with the exception message.
+ *
+ * @param {Request} req - Express request object (not used directly in this function).
+ * @param {Response} res - Express response object used to send the HTTP response with case status data.
+ *
+ * @returns {Promise<void>} - A Promise that resolves after the HTTP response is sent.
+ *
+ * @description
+ * - Used for populating dropdown options in the frontend for case status selection.
+ * - Returns all available statuses that can be assigned to cases (e.g., In Progress, Completed, On Hold).
+ * - Provides standardized error handling and logging for debugging purposes.
+ * - Essential for case workflow management and status tracking.
+ */
+async function getCaseStatus(req: Request, res: Response): Promise<void> {
+  const methodName = "Get Case Status";
+  try {
+    const caseStatus = await caseService.getCaseStatus();
+    if (caseStatus.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, caseStatus.data);
+      return;
+    } else {
+      errorLog(methodName, caseStatus.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        caseStatus.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
 export default {
   createCases,
   updateCases,
   getCaseFilingType,
-  getCaseheadersDetails
+  getCaseheadersDetails,
+  getCaseStatus
 };

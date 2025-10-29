@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { HttpStatus } from "../utils/constants";
+import { HttpStatus, STATUS_MESSAGE } from "../utils/constants";
 import {
   errorLog,
   generateExcelBase64,
@@ -633,6 +633,60 @@ async function projectClassification(
   }
 }
 
+  async function fetchQreHistory (req : Request, res : Response) : Promise<any>{
+    const methodName = "Project Classification";
+    try {
+      const userId = req.headers["x-user-id"] as string;
+      if (!userId) {
+        handleErrorResponse(
+          res,
+          HttpStatus.BAD_REQUEST,
+          HttpStatus.BAD_REQUEST_MESSAGE,
+          "User ID is required in headers"
+        );
+        return;
+      }
+      const data = req.body;
+      const result = await projectService.fetchQreHistoryByAccountId(data);
+      if(result.status === HttpStatus.SUCCESS) {
+        return res.status(HttpStatus.SUCCESS).send({
+          statusCode : HttpStatus.SUCCESS,
+          statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+          statusMessage : STATUS_MESSAGE.qreHistoryFetchedSuccess,
+          data : {
+            page : data.page,
+            limit : data.limit,
+            total_result : result.total_result,
+            qre_history : result.data
+          }
+        })
+      } else {
+        return res.status(HttpStatus.SUCCESS).send({
+          statusCode : HttpStatus.SUCCESS,
+          statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+          statusMessage : STATUS_MESSAGE.noDataFound,
+          data : {
+            page : data.page,
+            limit : data.limit,
+            total_result : result.total_result,
+            qre_history : []
+          }
+        })
+      }
+
+    } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+    return;
+  }
+  }
+
 export default {
   createProject,
   updateProject,
@@ -642,4 +696,5 @@ export default {
   projectClassification,
   exportProjectList,
   exportAllProjectList,
+  fetchQreHistory
 };

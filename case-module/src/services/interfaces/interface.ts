@@ -26,4 +26,10 @@ export interface ICaseService {
     data?: { caseFilingType: any };
   }>;
   fetchCaseHeadersSectionsList(caseRid : string, accountRid : string) : Promise<any>
+  getCaseStatus(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { caseStatus: any };
+  }>;
 }

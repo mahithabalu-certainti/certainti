@@ -3,6 +3,7 @@ import { initOrgSequelize } from "../config/orgDataSource";
 import { initMainDbSequelize } from "../config/mainDataSource";
 import { SCHEMANAME_PREFIX } from "../utils/constants";
 import { Case } from "../models/caseModel";
+import { CaseSummary } from "../models/caseSummaryModel";
 
 export class CaseModelService {
   orgDbSequelize: Sequelize | null = null;
@@ -12,6 +13,7 @@ export class CaseModelService {
     string,
     {
       Case: ReturnType<typeof Case.initialize>;
+      CaseSummary: ReturnType<typeof CaseSummary.initialize>;
     }
   > = new Map();
 
@@ -38,10 +40,16 @@ export class CaseModelService {
     )}`;
 
     const sequelize = await initOrgSequelize();
+    const mainDbSequelize = await this.getMainSequelize();
     const CaseModel = Case.initialize(sequelize, schemaName);
+    const CaseSummaryModel = CaseSummary.initialize(
+      mainDbSequelize,
+      ""
+    );
 
     const models = {
       Case: CaseModel,
+      CaseSummary: CaseSummaryModel,
     };
 
     this.modelCache.set(schemaName, models);
