@@ -2761,7 +2761,7 @@ export class ProjectService {
       let parentAccountRNumber = fetchParentAccount[0][0].r_number;
       let schemaName = rawQueries.fetchSchemaName(parentAccountRNumber);
       let result : any = await orgDbSequlize.query(fetchQreHistoryDatas(schemaName, data.account_rid, data.page, data.limit, data.sort, data.sort_by, data.filter))
-      if(result[0].length > 0) {
+      if(result[0][0].data !== null) {
         const finalResult = result[0][0].data.map((d : any) => {
           return {
             rid : d.rid,

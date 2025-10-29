@@ -11,6 +11,11 @@ const routes: Router = Router();
    checkUserStatusMiddleware("NA"),
    controller.caseController.createCases
  );
+ routes.get(
+  "/details/:accountRid/:caseRid",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.getCaseHeadersDetails
+ )
  routes.put(
    "/update",
    checkUserStatusMiddleware("NA"),

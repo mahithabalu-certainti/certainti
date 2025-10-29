@@ -25,6 +25,7 @@ export interface ICaseService {
     errorMessage?: string;
     data?: { caseFilingType: any };
   }>;
+  fetchCaseHeadersSectionsList(caseRid : string, accountRid : string) : Promise<any>
   getCaseStatus(): Promise<{
     statusCode: number;
     message: string;
