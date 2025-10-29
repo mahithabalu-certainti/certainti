@@ -188,6 +188,7 @@ const Filter: React.FC<FilterComponentProps> = ({
     const unListen = () => {
       if (window.location.pathname !== currentPathname) {
         localStorage.removeItem(`allProjects`);
+        clearFilters(value);
         setSelectedSystemFilters([]);
         setCurrentSort(null);
         handleSorting?.('', 'desc');
