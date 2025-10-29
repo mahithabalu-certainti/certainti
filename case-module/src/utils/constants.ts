@@ -53,8 +53,16 @@ export const ALPHANUMERIC_CONDITIONS = {
 
 export const STATUS_MESSAGE = {
   caseCreated: "Case created successfully",
+  caseUpdated: "Case updated successfully",
   caseCreationFailed: "Case creation failed",
   separateDb: "SEPARATE_DB",
+};
+
+export const caseStatuses = {
+  INPROGRESS: "In Progress",
+  REOPENED: "Reopened",
+  SUBMITTED: "Submitted",
+  CLOSED: "Closed"
 };
 
 export const rawQueries = {
@@ -89,10 +97,22 @@ export const rawQueries = {
   },
   getCaseFilingType() {
     return `
-      SELECT rid, case_filing_type_name 
+      SELECT rid, filing_type_name 
       FROM ${MAIN_SCHEMA_NAME}.case_filing_type
       WHERE status = 'active'
-      ORDER BY case_filing_type_name ASC
+      ORDER BY filing_type_name ASC
     `;
+  },
+  getCaseStatus() {
+    return `
+      SELECT rid, status_name 
+      FROM ${MAIN_SCHEMA_NAME}.case_status
+      WHERE status = 'active'
+      ORDER BY status_name ASC
+    `;
+  },
+  fetchCaseStatusByType(type: string) {
+    return `
+    SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.case_status WHERE status_name = '${type}'`;
   },
 };

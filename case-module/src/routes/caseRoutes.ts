@@ -11,5 +11,21 @@ const routes: Router = Router();
    checkUserStatusMiddleware("NA"),
    controller.caseController.createCases
  );
+ routes.put(
+   "/update",
+   checkUserStatusMiddleware("NA"),
+   controller.caseController.updateCases
+ );
+ routes.get(
+  "/caseFilingType",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.getCaseFilingType
+);
+routes.get(
+  "/caseStatus",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.getCaseStatus
+);
+
 
 export default routes;
