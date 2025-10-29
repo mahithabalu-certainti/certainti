@@ -384,6 +384,7 @@ export interface IProjectService {
     errorMessage?: string;
     data?: { projects: any; count: number };
   }>;
+  fetchQreHistoryByAccountId(data : any) : Promise<any>
 }
 
 export interface IResourceGraphQlServices {

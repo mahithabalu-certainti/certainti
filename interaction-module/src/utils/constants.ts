@@ -477,6 +477,10 @@ export const rawQueries = {
     return `
     SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE lower(entity_type) = 'account' and include_in_communication is true and entity_rid = '${accountRid}' and status_rid = '${statusRid}'`;
   },
+  fetchInteractionCCRecipientAccount(accountRid: string,statusRid:string,schemaName: string) {
+    return `
+    SELECT  key_contact_name,key_contact_email FROM ${schemaName}.key_contact_details WHERE lower(entity_type) = 'account' and interaction_cc_recipient is true and entity_rid = '${accountRid}' and status_rid = '${statusRid}'`;
+  },
   fetchRemainderEmailInfo(interactionRid: string, schemaName: string) {
     return `
     SELECT recipient_name, recipient_email FROM ${schemaName}.interactions WHERE rid = '${interactionRid}' `
