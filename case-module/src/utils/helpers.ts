@@ -6,6 +6,7 @@ import configurations from "../config/config";
 import ExcelJS from 'exceljs'
 import { getSecret } from "./azureSecrets";
 import crypto from "crypto";
+import moment from "moment-timezone";
 
 function getLogger() {
   return configurations.getInstance().getLogger();
@@ -149,7 +150,12 @@ export async function generateExcelBase64(data: any, sheetName: string) {
 
   // Generate buffer
   const buffer = await workbook.xlsx.writeBuffer();
+ // await workbook.xlsx.writeFile('cases.xlsx');
   return Buffer.from(buffer).toString("base64");
+}
+
+export function isValidTimezone(tz: string) {
+  return moment.tz.names().includes(tz);
 }
 
 export async function decryptClientSecret(

@@ -19,6 +19,12 @@ interface CaseAttributes {
   planned_submission_date?: Date;
   statutory_submission_date?: Date;
   status_rid?: string;
+  case_total_projects?: number;
+  case_total_project_cost?: number;
+  case_total_rd_cost?: number;
+  case_total_qre_cost?: number;
+  submitted_datetime?: Date;
+  approved_datetime?: Date;
 }
 
 export interface CaseCreationAttributes
@@ -44,6 +50,12 @@ export class Case
   public planned_submission_date!: Date;
   public statutory_submission_date!: Date;
   public status_rid!: string;
+  public case_total_projects?: number;
+  public case_total_project_cost?: number;
+  public case_total_rd_cost?: number;
+  public case_total_qre_cost?: number;
+  public submitted_datetime?: Date;
+  public approved_datetime?: Date;
 
   static initialize(
     sequelize: Sequelize,
@@ -81,6 +93,12 @@ export class Case
         planned_submission_date: { type: DataTypes.DATE, allowNull: false },
         statutory_submission_date: { type: DataTypes.DATE, allowNull: false },
         status_rid: { type: DataTypes.STRING(50), allowNull: false },
+        case_total_projects: { type: DataTypes.INTEGER, allowNull: true },
+        case_total_project_cost: { type: DataTypes.DECIMAL, allowNull: true },
+        case_total_rd_cost: { type: DataTypes.DECIMAL, allowNull: true },
+        case_total_qre_cost: { type: DataTypes.DECIMAL, allowNull: true },
+        submitted_datetime: { type: DataTypes.DATE, allowNull: true },
+        approved_datetime: { type: DataTypes.DATE, allowNull: true },
       },
       {
         sequelize,

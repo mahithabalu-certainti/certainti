@@ -12,7 +12,14 @@ import {
   where,
 } from "sequelize";
 import { CaseModelService } from "../caseModelsService";
-import { HttpStatus, rawQueries, SCHEMANAME_PREFIX, STATUS_MESSAGE } from "../../utils/constants";
+import {
+  ALPHANUMERIC_CONDITIONS,
+  HttpStatus,
+  mainTableFilters,
+  rawQueries,
+  SCHEMANAME_PREFIX,
+  STATUS_MESSAGE
+} from "../../utils/constants";
 import { errorLog, logMessage } from "../../utils/helpers";
 import { assignProjectType, CaseHeadersColumns, ICreateCases } from "../../utils/types";
 import { Case, setupCaseSequence } from "../../models/caseModel";
@@ -85,14 +92,16 @@ class CaseSchemaService {
       throw new Error("Error creating interaction: " + error);
     }
   }
-   async addCaseSummary(
+  async addCaseSummary(
     accountNumber: string,
     caseData: ICreateCases,
     caseRid: string,
     caseRnumber: string
   ) {
     try {
-      const { CaseSummary } = await this.caseModelService.getModels(accountNumber);
+      const { CaseSummary } = await this.caseModelService.getModels(
+        accountNumber
+      );
 
       await CaseSummary.create({
         case_rid: caseRid,
@@ -114,23 +123,25 @@ class CaseSchemaService {
   ) {
     // Implementation for creating interactions in the database
     try {
-      const { Case ,CaseSummary } = await this.caseModelService.getModels(accountNumber);
+      const { Case, CaseSummary } = await this.caseModelService.getModels(
+        accountNumber
+      );
 
       const caseUpdateResponse = await Case.update(caseRequest, {
         where: { rid: caseRequest.case_rid },
         transaction,
       });
       await CaseSummary.update(
-      {
-        ...caseRequest,
-        modified_datetime: new Date(),
-      },
-      {
-        where: {
-          case_rid: caseRequest.case_rid,
+        {
+          ...caseRequest,
+          modified_datetime: new Date(),
         },
-      }
-    );
+        {
+          where: {
+            case_rid: caseRequest.case_rid,
+          },
+        }
+      );
 
       return caseUpdateResponse;
     } catch (error) {
@@ -143,12 +154,12 @@ class CaseSchemaService {
     try {
       const orgDbSequlize = await initOrgSequelize();
       const mainDbSequlize = await initMainDbSequelize();
-      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(
+        /\D/g,
+        ""
+      )}`;
 
-      const CaseModel = await Case.initialize(
-        orgDbSequlize,
-        schemaName
-      );
+      const CaseModel = await Case.initialize(orgDbSequlize, schemaName);
 
       await CaseModel.sync({ force: false });
       await setupCaseSequence(orgDbSequlize, schemaName);
@@ -158,14 +169,13 @@ class CaseSchemaService {
     }
   }
 
-   async getCaseStatusByType(type: string) {
+  async getCaseStatusByType(type: string) {
     if (!this.mainDbSequelize) {
-      this.mainDbSequelize =
-        await this.caseModelService.getMainSequelize();
+      this.mainDbSequelize = await this.caseModelService.getMainSequelize();
     }
 
     const caseStatus = await this.mainDbSequelize.query(
-     rawQueries.fetchCaseStatusByType(type),
+      rawQueries.fetchCaseStatusByType(type),
       {
         replacements: { type },
         type: "SELECT",
@@ -177,6 +187,564 @@ class CaseSchemaService {
       case_status_name: string;
     }>;
     return sourceArr.length > 0 ? sourceArr[0]?.rid : null;
+  }
+
+  async listAllCasesAccount(
+    accountNumber: string,
+    filters: Record<string, any>,
+    data: any,
+    page: number = 1,
+    limit: number = 100,
+    sortBy: string = "r_number",
+    sortOrder: string = "ASC",
+    userId: string,
+    type: string = "list"
+  ) {
+    try {
+      const offset = (page - 1) * limit;
+      let modifiedByFilter;
+      let modifiedByConditions;
+      let caseOwnerFilter;
+      let caseOwnerConditions;
+      let totalResults: number = 0;
+      let disablePagination = false;
+      if (type === "download") {
+        disablePagination = true;
+      }
+      const detectConditions = (filters: any) => {
+        if (!filters) return null;
+
+        for (let conditions of Object.values(ALPHANUMERIC_CONDITIONS)) {
+          if (Object.keys(filters).includes(conditions)) {
+            return conditions;
+          }
+        }
+        return null;
+      };
+      if (filters?.modified_by) {
+        modifiedByFilter = filters.modified_by;
+        modifiedByConditions = detectConditions(modifiedByFilter);
+      }
+      if (filters?.case_owner_name) {
+        caseOwnerFilter = filters.case_owner_name;
+        caseOwnerConditions = detectConditions(caseOwnerFilter);
+      }
+      if (filters) {
+        ["modified_by", "case_owner_name"].forEach((key) => {
+          if (filters[key]) {
+            disablePagination = true;
+            delete filters[key];
+          }
+        });
+      }
+      if (mainTableFilters[sortBy] !== undefined) {
+        disablePagination = true;
+      }
+      const { whereClause } = this.buildWhereClause(filters);
+      const [finalSortBy, finalSortOrder] = this.getSortParameters(
+        sortBy,
+        sortOrder
+      );
+      const { Case } = await this.caseModelService.getModels(accountNumber);
+      if (!this.mainDbSequelize) {
+        this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+      }
+
+      // Fetch technical summaries and count
+      const { rows: caseDetails, count } = await Case.findAndCountAll({
+        where: {
+          account_rid: data.account_rid,
+          ...whereClause,
+        },
+        order: [[finalSortBy, finalSortOrder]],
+        ...(disablePagination ? {} : { limit: limit, offset: offset }),
+      });
+      // You can now use both technicalSummary (array) and count (number)
+      if (caseDetails.length === 0) {
+        return {
+          caseInfo: [],
+          count: 0,
+        };
+      }
+      let createdByIds: any[] = [
+        ...new Set(caseDetails.map((caseDetail: any) => caseDetail.created_by)),
+      ];
+      let modifiedByIds: any[] = [
+        ...new Set(
+          caseDetails.map((caseDetail: any) => caseDetail.modified_by)
+        ),
+      ];
+      let statusIds: any[] = [
+        ...new Set(caseDetails.map((caseDetail: any) => caseDetail.status_rid)),
+      ];
+      let filingTypeIds: any[] = [
+        ...new Set(
+          caseDetails.map((caseDetail: any) => caseDetail.filing_type_rid)
+        ),
+      ];
+      let caseOwnerIds: any[] = [
+        ...new Set(
+          caseDetails.map((caseDetail: any) => caseDetail.case_owner_rid)
+        ),
+      ];
+      let fetchCreatedByUsers = await this.mainDbSequelize.query(
+        rawQueries.fetchUser(createdByIds)
+      );
+      let fetchModifiedByUsers = await this.mainDbSequelize.query(
+        rawQueries.fetchUser(modifiedByIds)
+      );
+      let fetchStatusInfo = await this.mainDbSequelize.query(
+        rawQueries.fetchStatus(statusIds)
+      );
+      let fetchFilingTypeInfo = await this.mainDbSequelize.query(
+        rawQueries.fetchFilingType(filingTypeIds)
+      );
+      let fetchCaseOwnerInfo = await this.mainDbSequelize.query(
+        rawQueries.fetchUser(caseOwnerIds)
+      );
+      let createdMap: Map<string, string> = new Map(
+        fetchCreatedByUsers[0].map((user: any) => [
+          user.rid,
+          `${user.first_name} ${user.last_name}`,
+        ])
+      );
+      let modifiedMap: Map<string, string> = new Map(
+        fetchModifiedByUsers[0].map((user: any) => [
+          user.rid,
+          `${user.first_name} ${user.last_name}`,
+        ])
+      );
+      let statusMap: Map<string, string> = new Map(
+        fetchStatusInfo[0].map((status: any) => [status.rid, status.name])
+      );
+      let filingTypeMap: Map<string, string> = new Map(
+        fetchFilingTypeInfo[0].map((type: any) => [type.rid, type.name])
+      );
+      let caseOwnerMap: Map<string, string> = new Map(
+        fetchCaseOwnerInfo[0].map((user: any) => [
+          user.rid,
+          `${user.first_name} ${user.last_name}`,
+        ])
+      );
+      let finalData =
+        caseDetails == null
+          ? []
+          : caseDetails.map((d: any) => {
+              return {
+                rid: d.rid,
+                r_number: d.r_number,
+                case_name: d.case_name,
+                description: d.description,
+                fiscal_year: d.fiscal_year,
+                case_owner_rid: d.case_owner_rid,
+                case_owner_name: caseOwnerMap.get(d.case_owner_rid) || null,
+                country_rid: d.country_rid,
+                case_total_projects: d.case_total_projects,
+                case_total_project_cost: d.case_total_project_cost,
+                case_total_rd_cost: d.case_total_rd_cost,
+                case_total_qre_cost: d.case_total_qre_cost,
+                filing_type_rid: d.filing_type_rid,
+                filing_type_name: filingTypeMap.get(d.filing_type_rid) || null,
+                status_rid: d.status_rid,
+                status_name: statusMap.get(d.status_rid) || null,
+                created_by: d.created_by,
+                created_user_name: createdMap.get(d.created_by) || null,
+                modified_by: d.modified_by,
+                modified_user_name: modifiedMap.get(d.modified_by) || null,
+                created_datetime: d.created_datetime,
+                modified_datetime: d.modified_datetime,
+                submitted_datetime: d.submitted_datetime,
+                approved_datetime: d.approved_datetime,
+              };
+            });
+      const applyFilters = (
+        data: any[],
+        conditions: any,
+        value: any,
+        field: any
+      ) => {
+        if (!conditions || !field) return data;
+        const val = value[conditions];
+        let result;
+        switch (conditions) {
+          case ALPHANUMERIC_CONDITIONS.equals:
+            result = data.filter((d: any) => {
+              const fieldValue = d[field];
+              const filterValue = val;
+              logMessage(`Comparing "${fieldValue}" === "${filterValue}"`);
+              return fieldValue?.toLowerCase() === filterValue?.toLowerCase();
+            });
+            break;
+          case ALPHANUMERIC_CONDITIONS.notEquals:
+            result = data.filter(
+              (d: any) => d[field]?.toLowerCase() != val?.toLowerCase()
+            );
+            break;
+          case ALPHANUMERIC_CONDITIONS.contains:
+            result = data.filter((d: any) =>
+              d[field]?.toLowerCase().includes(val?.toLowerCase())
+            );
+            break;
+          case ALPHANUMERIC_CONDITIONS.isEmpty:
+            result = data.filter((d: any) => d[field] == null);
+            break;
+          default:
+            result = data;
+        }
+
+        return result;
+      };
+
+      if (caseOwnerConditions != null && caseOwnerConditions != undefined) {
+        finalData = applyFilters(
+          finalData,
+          caseOwnerConditions,
+          caseOwnerFilter,
+          "case_owner_name"
+        );
+      }
+      if (
+        mainTableFilters[sortBy] != undefined &&
+        sortOrder.toLowerCase() == "asc"
+      ) {
+        finalData = finalData.sort((a: any, b: any) => {
+          if (!a?.[sortBy]) return 1;
+          if (!b?.[sortBy]) return -1;
+          return a[sortBy].localeCompare(b[sortBy]);
+        });
+      } else if (
+        mainTableFilters[sortBy] != undefined &&
+        sortOrder.toLowerCase() == "desc"
+      ) {
+        finalData = finalData.sort((a: any, b: any) => {
+          if (!b?.[sortBy]) return 1;
+          if (!a?.[sortBy]) return -1;
+          return b[sortBy].localeCompare(a[sortBy]);
+        });
+      }
+      totalResults = disablePagination ? finalData.length : count;
+      let finalPaginatedData = [];
+      if (type === "download") {
+        finalPaginatedData = finalData;
+      } else {
+        finalPaginatedData = disablePagination
+          ? finalData.slice((page - 1) * limit, page * limit)
+          : finalData;
+      }
+
+      return {
+        caseInfo: finalPaginatedData,
+        count: totalResults,
+      };
+    } catch (err) {
+      console.log(err);
+      logMessage(`Error listing case information: ${err as Error}`);
+      throw new Error(
+        "Error listing case information: " + (err as Error).message
+      );
+    }
+  }
+
+  async getAllowedExportFields(
+    userId: string,
+    permission_name: string
+  ): Promise<any[]> {
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+    }
+    const [userInfo] = (await this.mainDbSequelize.query(
+      rawQueries.fetchUserProfileId(),
+      {
+        replacements: { userId },
+        type: QueryTypes.SELECT,
+      }
+    )) as [{ profile_rid: string }] | [];
+
+    if (!userInfo?.profile_rid) {
+      return [];
+    }
+
+    const [profileFields, userFields] = await Promise.all([
+      this.mainDbSequelize.query(rawQueries.fetchProfilePermissions(), {
+        replacements: {
+          permissionName: permission_name,
+          profileId: userInfo?.profile_rid,
+        },
+        type: "SELECT",
+      }),
+      this.mainDbSequelize.query(rawQueries.fetchUserPermissions(), {
+        replacements: {
+          permissionName: permission_name,
+          userId,
+        },
+        type: QueryTypes.SELECT,
+      }),
+    ]);
+
+    // Merge: user overrides profile
+    const userFieldMap = new Map<string, any>();
+    for (const field of userFields as any[]) {
+      userFieldMap.set(field.field_name, field);
+    }
+
+    const merged = (profileFields as any[]).map((pf) => {
+      const userPerm = userFieldMap.get(pf.field_name);
+      if (userPerm) {
+        userFieldMap.delete(pf.field_name);
+        return {
+          field_desc: pf.field_desc,
+          field_name: pf.field_name,
+          read: pf.read ? true : userPerm?.read === true,
+        };
+      }
+      return {
+        field_desc: pf.field_desc,
+        field_name: pf.field_name,
+        read: pf.read,
+      };
+    });
+
+    const userOnly = Array.from(userFieldMap.values()).map((uf) => ({
+      field_desc: uf.field_desc,
+      field_name: uf.field_name,
+      read: uf.read,
+    }));
+
+    const exportableFields = [...merged, ...userOnly].filter((f) => f.read);
+    return exportableFields;
+  }
+
+  /**
+   * Validates and normalizes sort parameters
+   *
+   * @param {string} sortBy - Field to sort by
+   * @param {string} sortOrder - Sort order (ASC or DESC)
+   * @returns {[string, string]} - Tuple of validated sort parameters
+   */
+  private getSortParameters(
+    sortBy: string,
+    sortOrder: string
+  ): [string, string] {
+    const validSortColumns = [
+      "r_number",
+      "created_datetime",
+      "modified_datetime",
+      "case_name",
+      "fiscal_year",
+      "case_total_projects",
+      "case_total_project_cost",
+      "case_total_rd_cost",
+      "case_total_qre_cost",
+      "status",
+    ];
+    if (!validSortColumns.includes(sortBy)) {
+      sortBy = "created_datetime";
+    }
+
+    sortOrder = sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC";
+    return [sortBy, sortOrder];
+  }
+
+  private buildWhereClause(
+    filters: Record<string, any>,
+    schemaName?: string
+  ): {
+    whereClause: Record<string, any>;
+  } {
+    let whereClause: Record<string, any> = {};
+    let includeClause: Array<any> = [];
+    if (filters) {
+      const filterProcessors: Record<string, Function> = {
+        r_number: (value: any) =>
+          this.processTextFilter("r_number", value, whereClause),
+        created_datetime: (value: any) =>
+          this.processDateFilter("created_datetime", value, whereClause),
+        modified_datetime: (value: any) =>
+          this.processDateFilter("modified_datetime", value, whereClause),
+        status_rid: (value: any) =>
+          this.processTextFilter("status_rid", value, whereClause),
+        case_name: (value: any) =>
+          this.processTextFilter("case_name", value, whereClause),
+        filing_type_name: (value: any) =>
+          this.processTextFilter("filing_type_rid", value, whereClause),
+        fiscal_year: (value: any) =>
+          this.processNumberFilter("fiscal_year", value, whereClause),
+        case_total_projects: (value: any) =>
+          this.processNumberFilter("case_total_projects", value, whereClause),
+        case_total_project_cost: (value: any) =>
+          this.processNumberFilter(
+            "case_total_project_cost",
+            value,
+            whereClause
+          ),
+        case_total_rd_cost: (value: any) =>
+          this.processNumberFilter("case_total_rd_cost", value, whereClause),
+        case_total_qre_cost: (value: any) =>
+          this.processNumberFilter("case_total_qre_cost", value, whereClause),
+        submitted_datetime: (value: any) =>
+          this.processDateFilter("submitted_datetime", value, whereClause),
+        approved_datetime: (value: any) =>
+          this.processDateFilter("approved_datetime", value, whereClause),
+      };
+      Object.keys(filters).forEach((key) => {
+        console.log(key);
+        const value = filters[key];
+        if (value === undefined || value === null) return;
+        if (filterProcessors[key]) {
+          filterProcessors[key](value);
+        } else if (value !== "") {
+          whereClause[key] = value;
+        }
+      });
+    }
+    return { whereClause };
+  }
+
+  private processTextFilter(
+    field: string,
+    value: any,
+    whereClause: Record<string | symbol, any>
+  ): void {
+    if (typeof value === "string") {
+      // Simple string value - treat as equals
+      whereClause[field] = value;
+    } else if (typeof value === "object") {
+      if (value.equals !== undefined) {
+        whereClause[field] = Sequelize.where(
+          Sequelize.fn("LOWER", Sequelize.col(field)),
+          value.equals.toLowerCase()
+        );
+      } else if (value.not_equals !== undefined) {
+        whereClause[field] = Sequelize.where(
+          Sequelize.fn("LOWER", Sequelize.col(field)),
+          "!=",
+          value.not_equals.toLowerCase()
+        );
+      } else if (value.contains !== undefined) {
+        whereClause[field] = { [Op.iLike]: `%${value.contains}%` };
+      } else if (Array.isArray(value.in) && value.in.length > 0) {
+        whereClause[Op.or] = value.in.map((val: string) =>
+          Sequelize.where(
+            Sequelize.fn("LOWER", Sequelize.col(field)),
+            "=",
+            val.toLowerCase()
+          )
+        );
+      } else if (value.is_empty !== undefined) {
+        if (value.is_empty) {
+          whereClause[field] = { [Op.or]: [null, ""] };
+        } else {
+          whereClause[field] = {
+            [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: "" }],
+          };
+        }
+      }
+    }
+  }
+  private processNumberFilter(
+    field: string,
+    value: any,
+    whereClause: Record<string | symbol, any>
+  ): void {
+    if (typeof value === "number") {
+      // Simple number value - treat as equals
+      whereClause[field] = value;
+    } else if (typeof value === "object") {
+      if (value.equals !== undefined) {
+        whereClause[field] = value.equals;
+      } else if (value.not_equals !== undefined) {
+        whereClause[field] = { [Op.ne]: value.not_equals };
+      } else if (value.greater_than !== undefined) {
+        whereClause[field] = {
+          ...(whereClause[field] || {}),
+          [Op.gt]: value.greater_than,
+        };
+      }
+      if (value.less_than !== undefined) {
+        whereClause[field] = {
+          ...(whereClause[field] || {}),
+          [Op.lt]: value.less_than,
+        };
+      }
+      if (Array.isArray(value.in) && value.in.length > 0) {
+        whereClause[field] = { [Op.in]: value.in };
+      }
+      // Support for between operator (e.g., { between: [min, max] })
+      if (
+        "between" in value &&
+        Array.isArray(value.between) &&
+        value.between.length === 2
+      ) {
+        whereClause[field] = {
+          ...(whereClause[field] || {}),
+          [Op.gte]: value.between[0],
+          [Op.lte]: value.between[1],
+        };
+      }
+    }
+    if (value.is_empty !== undefined) {
+      if (value.is_empty) {
+        whereClause[field] = null;
+      } else {
+        whereClause[field] = { [Op.ne]: null };
+      }
+    }
+  }
+
+  private processDateFilter(
+    field: string,
+    value: any,
+    whereClause: Record<string, any>
+  ): void {
+    if (typeof value === "string") {
+      const date = dayjs(value, "YYYY-MM-DD").startOf("day").toDate();
+      const nextDay = dayjs(date).add(1, "day").toDate();
+
+      whereClause[field] = {
+        [Op.gte]: date,
+        [Op.lt]: nextDay,
+      };
+    } else if (typeof value === "object") {
+      if (value.equals !== undefined) {
+        const date = dayjs(value.equals, "YYYY-MM-DD")
+          .startOf("day")
+          .format("YYYY-MM-DDTHH:mm:ss[Z]");
+        const nextDay = dayjs(date).add(1, "day").toDate();
+
+        whereClause[field] = {
+          [Op.gte]: date,
+          [Op.lt]: nextDay,
+        };
+      } else if (value.before !== undefined) {
+        const beforeDate = dayjs(value.before, "YYYY-MM-DD")
+          .startOf("day")
+          .format("YYYY-MM-DDTHH:mm:ss[Z]");
+        whereClause[field] = { [Op.lt]: beforeDate };
+      } else if (value.after !== undefined) {
+        const afterDate = dayjs(value.after, "YYYY-MM-DD")
+          .endOf("day")
+          .format("YYYY-MM-DDTHH:mm:ss[Z]");
+        whereClause[field] = { [Op.gt]: afterDate };
+      } else if (value.between[0] && value.between[1]) {
+        const fromDate = dayjs(value.between[0], "YYYY-MM-DD")
+          .startOf("day")
+          .format("YYYY-MM-DDTHH:mm:ss[Z]");
+        const toDate = dayjs(value.between[1], "YYYY-MM-DD")
+          .endOf("day")
+          .format("YYYY-MM-DDTHH:mm:ss[Z]");
+
+        whereClause[field] = {
+          [Op.gte]: fromDate,
+          [Op.lte]: toDate,
+        };
+      } else if (value.is_empty !== undefined) {
+        if (value.is_empty) {
+          whereClause[field] = null;
+        } else {
+          whereClause[field] = { [Op.ne]: null };
+        }
+      }
+    }
   }
 
   /**
@@ -211,7 +779,7 @@ class CaseSchemaService {
     return caseFilingType;
   }
 
-   async getCaseStatus() {
+  async getCaseStatus() {
     if (!this.mainDbSequelize) {
       this.mainDbSequelize = await this.caseModelService.getMainSequelize();
     }

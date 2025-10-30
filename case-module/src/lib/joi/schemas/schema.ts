@@ -11,9 +11,6 @@ const createCaseSchema = Joi.object({
   case_startdate: Joi.date().required(),
   planned_submission_date: Joi.date().required(),
   statutory_submission_date: Joi.date().required(),
-  country_rid: Joi.string().optional(),
-
- 
 });
 
 const updateCaseSchema = Joi.object({
@@ -31,6 +28,26 @@ const updateCaseSchema = Joi.object({
   country_rid: Joi.string().optional(),
 });
 
+const exportCasesAccountSchema = Joi.object({
+  account_rid: Joi.string().required(),
+  filters: Joi.string().default("{}"),
+  sortBy: Joi.string().optional(),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
+  timezone: Joi.string().optional(),
+});
 
+const listCasesAccountSchema = Joi.object({
+  page: Joi.string().optional().pattern(/^[0-9]+$/),
+  limit: Joi.string().optional().pattern(/^[0-9]+$/),
+  account_rid: Joi.string().required(),
+  filters: Joi.string().default("{}"),
+  sortBy: Joi.string().optional(),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
+});
 
-export { createCaseSchema, updateCaseSchema };
+export {
+  createCaseSchema,
+  updateCaseSchema,
+  exportCasesAccountSchema,
+  listCasesAccountSchema,
+};
