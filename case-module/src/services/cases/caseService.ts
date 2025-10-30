@@ -586,8 +586,7 @@ export class CaseService {
             comments : d.comments,
             modified_datetime : d.modified_datetime,
             project_point_of_contact : d.project_point_of_contact,
-            project_technical_point_of_contact : d.project_technical_point_of_contact,
-            is_project_assigned : d.is_project_added
+            project_technical_point_of_contact : d.project_technical_point_of_contact
           }
         })
         return {

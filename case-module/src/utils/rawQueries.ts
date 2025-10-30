@@ -24,10 +24,23 @@ export const fetchProjectsForCases = (schemaName : string, page : number, limit 
     let and : string = ``
 
     let whereConditions : string = ``
+    let subQuery : string = ``
+    let subQueryConditions : string = ``
+    let subQueryJoinConditions : string = ``
 
     if(assignedApi) {
         whereConditions = `cp.case_rid = '${caseRid}'`
+        subQuery = ` `
+        subQueryConditions = ` `
+        subQueryJoinConditions = ` `
     } else {
+        subQuery = `
+        fetch_case_projects_ids AS (
+        SELECT c.project_fiscal_rid FROM ${schemaName}.case_projects c WHERE c.case_rid = '${caseRid}' AND c.account_rid = '${accountRid}'        
+        ),
+        `
+        subQueryConditions = ` AND NOT EXISTS (SELECT 1 FROM fetch_case_projects_ids f WHERE f.project_fiscal_rid = pf.rid)`
+        subQueryJoinConditions = `LEFT JOIN fetch_case_projects_ids f ON f.project_fiscal_rid = pf.rid`
         whereConditions = `pf.account_rid = '${accountRid}' AND pf.fiscal_year = ${fiscalYear}`
     }
 
@@ -153,7 +166,7 @@ export const fetchProjectsForCases = (schemaName : string, page : number, limit 
     AND
     kc.key_contact_role = '${pointOfContactRid}'
     ),
-
+    ${subQuery}
     fetch_project_technical_point_of_contact AS (
     SELECT pf.rid, kc.key_contact_name AS project_technical_point_of_contact
     FROM 
@@ -172,16 +185,17 @@ export const fetchProjectsForCases = (schemaName : string, page : number, limit 
     pf.total_cost_subcon_prj, pf.total_cost_nonlabor_prj, pf.assessment_status,
     pf.rd_percent_final, pf.qre_final, pf.comments, pf.modified_datetime, pf.r_number,
     poc.project_point_of_contact, tpoc.project_technical_point_of_contact, pf.account_rid,
-    pf.project_rid,
-    CASE WHEN cp.project_fiscal_rid = pf.rid AND cp.case_rid = '${caseRid}' THEN true ELSE FALSE END AS is_project_added
+    pf.project_rid
     FROM
     ${schemaName}.project_fiscal pf
     LEFT JOIN fetch_project_point_of_contact poc ON poc.rid = pf.rid
     LEFT JOIN fetch_project_technical_point_of_contact tpoc ON tpoc.rid = pf.rid
     LEFT JOIN fetch_all_prj_ids fp ON fp.rid = pf.rid
     LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid
+    ${subQueryJoinConditions}
     WHERE
     ${whereConditions}
+    ${subQueryConditions}
     AND
     (pf.project_code ILIKE '${searchValue}' OR pf.project_name ILIKE '${searchValue}' OR pf.r_number ILIKE '${searchValue}')
     ${and}
