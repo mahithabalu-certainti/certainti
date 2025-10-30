@@ -455,6 +455,8 @@ export class CaseService {
           return {
             rid : d.rid,
             r_number : d.r_number,
+            account_rid : d.account_rid,
+            project_rid : d.project_rid,
             project_code : d.project_code,
             project_name : d.project_name,
             project_type_rid : d.project_type_rid,
