@@ -69,7 +69,7 @@ const QrePercentHistory = ({
       sort: sortField,
       filter: appliedFilters,
       account_rid: accountID || '',
-      project_rid: projectID || '',
+      project_fiscal_rid: projectID || '',
     }),
     [
       currentPage,
