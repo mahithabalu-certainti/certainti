@@ -1,8 +1,8 @@
 import React, { Suspense } from 'react';
 import { Modal, Box, Typography, IconButton } from '@mui/material';
-import { CloseIcon, InfoIcon } from '../../../../../assets/icons';
-import ListTable from '../../../../../components/table/list-table';
 import { ListTableColumn } from '../../../../../components/table/types';
+import { CloseIcon, InfoIcon } from '../../../../../assets';
+import { ListTable } from '../../../../../components/table';
 
 interface QrePercentHistoryModalProps {
   open: boolean;

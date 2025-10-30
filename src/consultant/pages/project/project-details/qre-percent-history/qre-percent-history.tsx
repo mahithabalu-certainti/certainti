@@ -1,6 +1,6 @@
-import { useParams } from 'react-router-dom';
 import React, { useEffect, useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
+import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
+import { AllPermissions } from '../../../../../common-service';
 import { QrePercentHistoryItem } from '../../../../types/qre-percent-history';
 import { useGetQrePercentHistory } from '../../../../services/qre-percent-history/qre-percent-history';
 import { BUTTON_STYLES } from '../../../../../admin/pages/manage-user-detail/styles';
@@ -9,17 +9,14 @@ import {
   ListTableColumn,
   ShowHideTableColumn,
 } from '../../../../../components/table/types';
+import { getQrePercentHistoryFilterFields } from './helpers';
 import { SectionTabPanel } from '../../../../../components';
+import ResourceTableHeader from '../../../account-details-sidebar/sidebar-pages/resources/resource-table-header';
+import { ActivitiesIcon } from '../../../../../assets';
 import {
   ListTable,
   ManageColumnsPopover,
 } from '../../../../../components/table';
-import { ResourceTabs } from '../resources/resources';
-import { AllPermissions } from '../../../../../common-service';
-import ResourceTableHeader from '../resources/resource-table-header';
-import { TechSummaryIcon } from '../../../../../assets';
-import { getQrePercentHistoryFilterFields } from './helpers';
-import { RootState } from '../../../../../store/store';
 
 const AttachmentTabs: ResourceTabs[] = [
   {
@@ -31,11 +28,14 @@ const AttachmentTabs: ResourceTabs[] = [
 
 interface QrePercentHistoryProps {
   refetchAccountDetails: () => void;
+  accountID: string;
+  projectID: string | undefined;
 }
 const QrePercentHistory = ({
   refetchAccountDetails,
+  accountID,
+  projectID,
 }: QrePercentHistoryProps) => {
-  const { accountid } = useParams();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
   const [showFilter, setShowFilter] = useState<boolean>(false);
@@ -60,10 +60,6 @@ const QrePercentHistory = ({
   ) => {
     setColumnAnchorEl(event.currentTarget);
   };
-  const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
-    (state: RootState) => state.account
-  );
-  const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
   const queryParams = useMemo(
     () => ({
@@ -72,8 +68,8 @@ const QrePercentHistory = ({
       sort_by: sortOrder,
       sort: sortField,
       filter: appliedFilters,
-      account_rid: accountid || '',
-      fiscal_year: convertedFiscalYear,
+      account_rid: accountID || '',
+      project_rid: projectID || '',
     }),
     [
       currentPage,
@@ -81,8 +77,8 @@ const QrePercentHistory = ({
       sortField,
       sortOrder,
       appliedFilters,
-      accountid,
-      convertedFiscalYear,
+      accountID,
+      projectID,
     ]
   );
 
@@ -213,7 +209,7 @@ const QrePercentHistory = ({
         title='QRE Percent History'
         count={totalItems}
         titleIcon={
-          <TechSummaryIcon
+          <ActivitiesIcon
             alt='financial-header-icon'
             className='w-7 h-7 p-1.5 rounded-full bg-[#DFE8FF] [&>path]:stroke-[#1755E7]'
           />

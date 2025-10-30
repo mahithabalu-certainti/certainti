@@ -21,7 +21,6 @@ import {
   TimeSheetIcon,
   ConfigIcon,
   InteractionsIcon,
-  TechSummaryIcon,
 } from '../../../assets';
 import { InfoSection, PageHeader, SideMenuPanel } from '../../../components';
 import { ACCOUNT } from '../../../routes';
@@ -92,7 +91,6 @@ import { TimesheetProjectExportListURLParams } from '../../types/timesheet-proje
 import { BUTTON_STYLES } from '../../../admin/pages/manage-user-detail/styles';
 import { useToast } from '../../../hooks';
 import { ExportNotesList } from '../../services/notes/notes-service';
-import { QrePercentHistory } from '../account-details-sidebar/sidebar-pages/qre-percent-history';
 
 export const AccountDetails = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -706,8 +704,6 @@ export const AccountDetails = () => {
         return <Cases />;
       case 'activities':
         return <Activities />;
-      case 'qre-percent-history':
-        return <QrePercentHistory refetchAccountDetails={onRefreshClick} />;
       case 'notes':
         return (
           <Notes
@@ -810,14 +806,6 @@ export const AccountDetails = () => {
         disabled: disable,
         hide: disable,
         icon: ActivitiesIcon,
-      },
-      {
-        name: 'QRE Percent History',
-        key: 'qre-percent-history',
-        id: AllModules.ACTIVITIES,
-        disabled: disable,
-        hide: disable,
-        icon: TechSummaryIcon,
       },
       {
         name: 'Notes',

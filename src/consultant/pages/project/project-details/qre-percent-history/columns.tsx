@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { ListTableColumn } from '../../../../../components/table/types';
-import { QrePercentHistoryItem } from '../../../../types/qre-percent-history';
-import { formatDateToYYYYMMDDWithTime } from '../resources/utils';
 import { IconButton } from '@mui/material';
 import { InfoIcon } from '../../../../../assets';
 import QrePercentHistoryModal from './modal';
+import { QrePercentHistoryItem } from '../../../../types/qre-percent-history';
+import { ListTableColumn } from '../../../../../components/table/types';
+import { formatDateToYYYYMMDDWithTime } from '../../../../../common-utils';
 
 interface ContentCellProps {
   content: string;
