@@ -17,7 +17,7 @@ import {
 import { ResourceTabs } from '../resources/resources';
 import { AllPermissions } from '../../../../../common-service';
 import ResourceTableHeader from '../resources/resource-table-header';
-import { AttachmentsSideIcon } from '../../../../../assets';
+import { TechSummaryIcon } from '../../../../../assets';
 import { getQrePercentHistoryFilterFields } from './helpers';
 import { RootState } from '../../../../../store/store';
 
@@ -212,9 +212,9 @@ const QrePercentHistory = ({
         title='QRE Percent History'
         count={totalItems}
         titleIcon={
-          <AttachmentsSideIcon
-            alt='attachment-header-icon'
-            className='[&>path]:stroke-[#4B9BFF]'
+          <TechSummaryIcon
+            alt='financial-header-icon'
+            className='w-7 h-7 p-1.5 rounded-full bg-[#DFE8FF] [&>path]:stroke-[#1755E7]'
           />
         }
         headerButtons={headerButtons}

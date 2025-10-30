@@ -21,6 +21,7 @@ import {
   TimeSheetIcon,
   ConfigIcon,
   InteractionsIcon,
+  TechSummaryIcon,
 } from '../../../assets';
 import { InfoSection, PageHeader, SideMenuPanel } from '../../../components';
 import { ACCOUNT } from '../../../routes';
@@ -816,7 +817,7 @@ export const AccountDetails = () => {
         id: AllModules.ACTIVITIES,
         disabled: disable,
         hide: disable,
-        icon: ActivitiesIcon,
+        icon: TechSummaryIcon,
       },
       {
         name: 'Notes',

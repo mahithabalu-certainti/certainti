@@ -62,7 +62,7 @@ const QrePercentHistoryModal: React.FC<QrePercentHistoryModalProps> = ({
       });
     }
   } catch (error) {
-    // Not a JSON string, will display as is.
+    console.log('error parsing content:', error);
   }
 
   const sectionHeaderStyle = {
