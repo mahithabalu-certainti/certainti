@@ -1744,33 +1744,59 @@ class ProjectIngestionService {
     }
   }
 
-  async addProjectResourceExistsFlags(projects: Project[], accountRNumber: string): Promise<Project[]> {
-    let schemaName = rawQueries.fetchSchemaName(accountRNumber);
+  async addProjectResourceExistsFlags(projects: any[]): Promise<any[]> {
     const orgDb = await initOrgSequelize();
-
-    // Create all check promises
     const checkPromises: Promise<void>[] = [];
 
-    projects.forEach((project: any) => {
-        
-        // Add ProjectFiscal checks
-        if (project.ProjectFiscal && project.ProjectFiscal.length > 0) {
-            project.ProjectFiscal.forEach((fiscal: any) => {
-                checkPromises.push(
-                    orgDb.query(checkProjectMappedToProjectRes(schemaName, fiscal.rid))
-                        .then((result: any) => {
-                            fiscal.is_project_exists = result[0].length > 0;
-                        })
-                );
-            });
-        }
-    });
+    for (const project of projects) {
+      const { accountNumber } =
+        await this.fetchValidAccountNumberById(project.account_rid);
+      const schemaName = rawQueries.fetchSchemaName(accountNumber);
 
-    // Wait for all checks to complete
+      if (project.ProjectFiscal && project.ProjectFiscal.length > 0) {
+        for (const fiscal of project.ProjectFiscal) {
+          try {
+            // Check if table exists
+            const checkTable: any = await orgDb.query(`
+              SELECT EXISTS (
+                SELECT 1
+                FROM information_schema.tables
+                WHERE table_schema = '${schemaName}'
+                  AND table_name = 'project_resource'
+              ) AS table_exists;
+            `);
+
+            const tableExists = checkTable[0][0].table_exists;
+
+            if (tableExists) {
+              const query = checkProjectMappedToProjectRes(schemaName, fiscal.project_fiscal_rid);
+              
+              const promise = orgDb
+                .query(query)
+                .then((result: any) => {
+                  fiscal.is_project_exists = result[0]?.length > 0;
+                })
+                .catch((error) => {
+                  console.error(`Error checking project resource for fiscal ${fiscal.project_fiscal_rid}:`, error);
+                  fiscal.is_project_exists = false;
+                });
+
+              checkPromises.push(promise);
+            } else {
+              // Table doesn't exist, set flag to false
+              fiscal.is_project_exists = false;
+            }
+          } catch (error) {
+            console.error(`Error checking table existence for schema ${schemaName}:`, error);
+            fiscal.is_project_exists = false;
+          }
+        }
+      }
+    }
+
     await Promise.all(checkPromises);
-    
     return projects;
-}
+  }
 
   async fetchProjectList(
     accountNumber: string,
@@ -1935,7 +1961,7 @@ class ProjectIngestionService {
       });
 
       if (projectData.length > 0) {
-        projectData = await this.addProjectResourceExistsFlags(projectData, accountNumber);
+        projectData = await this.addProjectResourceExistsFlags(projectData);
       }
     } else {
       whereProject = {
@@ -2201,7 +2227,7 @@ class ProjectIngestionService {
     }
 
     if (projects.length > 0) {
-      projects = await this.addProjectResourceExistsFlags(projects, accountNumber);
+      projects = await this.addProjectResourceExistsFlags(projects);
     }
 
     return {

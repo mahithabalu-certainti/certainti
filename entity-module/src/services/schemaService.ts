@@ -1890,7 +1890,6 @@ class SchemaService {
               const promise = orgDb
                 .query(query)
                 .then((result: any) => {
-                  console.log("yoki", result);
                   fiscal.is_project_exists = result[0]?.length > 0;
                 })
                 .catch((error) => {
