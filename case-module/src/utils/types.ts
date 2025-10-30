@@ -173,3 +173,21 @@ export type caseProjectsResponseType = {
   project_point_of_contact : string,
   project_technical_point_of_contact : string
 }
+
+export type assignProjectType = {
+  account_rid : string,
+  case_rid : string,
+  created_by : string,
+  modified_by? : string,
+  created_datetime : Date,
+  modified_datetime : Date,
+  case_total_projects? : number | null,
+  case_total_project_cost : number | null,
+  projects : projectType[]
+}
+
+type projectType = {
+  project_rid : string,
+  project_fiscal_rid : string,
+  project_group : string,
+}

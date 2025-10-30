@@ -38,6 +38,17 @@ routes.post(
   checkUserStatusMiddleware("NA"),
   controller.caseController.fetchProjectForAssign
 )
+routes.post(
+  '/projects/assign',
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.assignProjectToCase
+)
+
+routes.post(
+  '/assignedProjects',
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.fetchAssignedprojects
+)
 
 
 export default routes;

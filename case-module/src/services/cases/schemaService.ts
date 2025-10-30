@@ -18,11 +18,13 @@ import {
   mainTableFilters,
   rawQueries,
   SCHEMANAME_PREFIX,
+  STATUS_MESSAGE
 } from "../../utils/constants";
 import { errorLog, logMessage } from "../../utils/helpers";
-import { CaseHeadersColumns, ICreateCases } from "../../utils/types";
+import { assignProjectType, CaseHeadersColumns, ICreateCases } from "../../utils/types";
 import { Case, setupCaseSequence } from "../../models/caseModel";
 import { fetchCasesHeadersDatas, fetchProjectsForCases } from "../../utils/rawQueries";
+import { CaseProject } from "../../models/caseProjectsModel";
 
 class CaseSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -798,13 +800,113 @@ class CaseSchemaService {
     }
   }
 
-  async fetchProjectsForCasesResult (data : any, orgDb : Sequelize, schemaName : string, pocRid : string, tPocRid : string, isSorting : boolean) {
+  async fetchProjectsForCasesResult (data : any, orgDb : Sequelize, schemaName : string, pocRid : string, tPocRid : string, isSorting : boolean, assignedApi : boolean) {
     const result = await orgDb.query(
       fetchProjectsForCases(schemaName, data.page, data.limit, data.sort, data.sort_by,
-        data.filter, data.account_rid, data.fiscal_year, pocRid, tPocRid, isSorting, data.search
+        data.filter, data.account_rid, data.fiscal_year, pocRid, tPocRid, isSorting, data.search, data.case_rid, assignedApi
       )
     )
     return result[0]
+  }
+  
+  async assignProjectToCase (data : assignProjectType, accountNumber : string, schemaName : string) {
+    const { CaseProject, Case, CaseSummary } = await this.caseModelService.getModels(accountNumber);
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+    }
+    if (!this.orgDbSequelize) {
+      this.orgDbSequelize = await this.caseModelService.getSequelize();
+    }
+    await this.createCaseProjectTables(accountNumber);
+    let iterationCount : number = 0
+    let totalCount : number = 0;
+    totalCount = data.projects.length;
+
+    for(let p of data.projects) {
+      await CaseProject.create({
+        case_rid : data.case_rid,
+        account_rid : data.account_rid,
+        created_by : data.created_by,
+        created_datetime : new Date(),
+        project_rid : p.project_rid,
+        project_group : p.project_group,
+        project_fiscal_rid : p.project_fiscal_rid
+      })
+      iterationCount += 1
+    }
+    if(totalCount === iterationCount) {
+      const getTotalProjectCount : any = await this.orgDbSequelize.query(rawQueries.getTotalProjectsCount(schemaName, data.case_rid, data.account_rid)) 
+      const getTotalProjectCost : any = await this.orgDbSequelize.query(rawQueries.getTotalProjectCost(schemaName, data.case_rid, data.account_rid))
+      await this.orgDbSequelize.query(rawQueries.updateCostCountInCase(schemaName, data.case_rid, getTotalProjectCount[0][0].total_projects, getTotalProjectCost[0][0].total_cost))
+      await this.mainDbSequelize.query(rawQueries.updateCostCountInCaseSummary(data.case_rid, getTotalProjectCount[0][0].total_projects, getTotalProjectCost[0][0].total_cost))
+      if(totalCount === 1) {
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          statusMessage : STATUS_MESSAGE.singleProjectAssignedSuccess
+        }
+      } 
+      else {
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          statusMessage : STATUS_MESSAGE.multipleProjectAssignedSuccess
+        }
+      }
+    } else {
+      return {
+        statusCode : HttpStatus.FAILED,
+        statusMessage : STATUS_MESSAGE.multipleProjectAssignedSuccess
+        }
+    }
+  }
+
+    async createCaseProjectTables(accountNumber: string) {
+    try {
+      const orgDbSequlize = await initOrgSequelize();
+      const mainDbSequlize = await initMainDbSequelize();
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
+
+      const CaseProjectModel = await CaseProject.initialize(
+        orgDbSequlize,
+        schemaName
+      );
+
+      await CaseProjectModel.sync({ force: false });
+      await setupCaseSequence(orgDbSequlize, schemaName);
+    } catch (err) {
+      errorLog("Error creating case tables", (err as Error).message);
+      return this.throwServiceError(err as Error);
+    }
+  }
+  async isCaseExistsForAccount (accountRid : string, caseRid : string, accountNumber : string) {
+    const { Case } = await this.caseModelService.getModels(accountNumber);
+    const result = await Case.findOne({
+      where : {
+        account_rid : accountRid,
+        rid : caseRid
+      }, raw : true
+    })
+    if(result) return result;
+    else null
+  }
+  async isProjectAlreadyAssigned (data : assignProjectType, accountNumber : string) {
+    const { CaseProject } = await this.caseModelService.getModels(accountNumber);
+    for(let p of data.projects) {
+      const checkProjectAlreadyMapped = await CaseProject.findOne({
+        where : {
+          account_rid : data.account_rid,
+          case_rid : data.case_rid,
+          project_fiscal_rid : p.project_fiscal_rid,
+          project_rid : p.project_rid,
+          project_group : p.project_group
+        }
+      })
+      if(checkProjectAlreadyMapped) {
+        return {
+          statusCode : HttpStatus.BAD_REQUEST,
+          statusMessage : STATUS_MESSAGE.projectAlreadyMapped
+        }
+      }
+    }
   }
 }
 
