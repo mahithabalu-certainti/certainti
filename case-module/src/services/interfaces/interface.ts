@@ -32,6 +32,8 @@ export interface ICaseService {
     errorMessage?: string;
     data?: { caseStatus: any };
   }>;
+  fetchProjectsForAssign(data : any, assignedProjects : boolean, userId : string) : Promise<any>
+  assignProjectToCases(data : any, userId : string) : Promise<any>
   listAllCasesAccount(
     data: any,
     filters: Record<string, any>,
@@ -47,7 +49,7 @@ export interface ICaseService {
       userId: string,
       permission_name: string
     ): Promise<any[]>;
-  fetchProjectsForAssign(data : any) : Promise<any>;
+  deleteAssignedProjectFromCases(data : any, userId : string) :Promise<any>;
   listAllCasesSummary(
     data: any,
     filters: Record<string, any>,
