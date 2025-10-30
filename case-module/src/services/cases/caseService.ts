@@ -273,6 +273,115 @@ export class CaseService {
   }
 
   /**
+   * Retrieves a filtered and paginated list of case records for a given account,
+   * based on user access permissions, filtering criteria, and sorting preferences.
+   *
+   * This function:
+   * - Validates the account ID and retrieves account information.
+   * - Applies dynamic filtering by case name, status, owner, fiscal year, and other case attributes.
+   * - Supports advanced search conditions (equals, contains, not equals, is empty).
+   * - Handles pagination with configurable page size and offset.
+   * - Applies sorting by various case fields (name, date, status, etc.).
+   * - Maps related metadata (case owners, statuses, filing types, user information).
+   * - Returns comprehensive case information including financial data and timestamps.
+   * - Supports both list and export modes for different API consumption patterns.
+   *
+   * @param {any} data - Request parameters containing pagination (page, limit), sorting (sortBy, sortOrder), and account information.
+   * @param {Record<string, any>} filters - Object containing filter criteria for case attributes with condition operators.
+   * @param {string} userId - The ID of the user making the request for access control and audit purposes.
+   * @param {string} apiType - Type of API call ('list' for paginated results, 'export' for all matching records).
+   *
+   * @returns {Promise<{
+   *   statusCode: number;
+   *   message: string;
+   *   errorMessage?: string;
+   *   data?: { caseInfo: any; count: number };
+   * }>} An object containing status, metadata, filtered case data, and total count for pagination.
+   *
+   * @description
+   * - Used by both list and export endpoints to retrieve case data with consistent filtering logic.
+   * - Provides comprehensive case information including owner names, status descriptions, and financial totals.
+   * - Supports complex filtering scenarios for advanced case search and reporting functionality.
+   * - Ensures data security by validating account access and user permissions.
+   */
+  async listAllCasesAccount(
+    data: any,
+    filters: Record<string, any>,
+    userId: string, 
+    apiType: string,
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { caseInfo: any; count: number };
+  }>  {
+    try {
+      const { accountNumber } =
+        await this.caseSchemaService.fetchValidAccountNumberById(
+          data.account_rid
+        );
+
+      if (!accountNumber) {
+        logMessage(`Invalid account ID ${data.account_rid}`);
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: "Invalid account ID",
+        };
+      }
+      const response = await this.caseSchemaService.listAllCasesAccount(
+        accountNumber,
+        filters,
+        data,
+        data.page,
+        data.limit,
+        data.sortBy,
+        data.sortOrder,
+        userId,
+        apiType,
+      );
+      
+      if (!response) {
+        logMessage(`No cases  found for account ID ${data.account_rid}`);
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: "No cases found",
+        };
+      }
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          caseInfo: response.caseInfo,
+          count: response.count,
+        },
+      };
+    } catch (error) {   
+      logMessage(`Error listing cases for account: ${error}`);
+      throw new Error("Error listing cases for account: " + error);
+    }
+
+  }
+  /**
+   * Retrieves the list of export fields that the specified user is permitted to access
+   * based on a given permission name.
+   *
+   * @param {string} userId - The ID of the user requesting the allowed export fields.
+   * @param {string} permission_name - The name of the permission to check against.
+   *
+   * @returns {Promise<any[]>} A promise that resolves to an array of allowed export fields for the user.
+   */
+  async getAllowedExportFields(
+    userId: string,
+    permission_name: string
+  ): Promise<any[]> {
+    return this.caseSchemaService.getAllowedExportFields(
+      userId,
+      permission_name
+    );
+  }
+  /**
    * Formats an error response to be returned from service methods.
    *
    * @param {Error} err - The caught error object containing error details.
