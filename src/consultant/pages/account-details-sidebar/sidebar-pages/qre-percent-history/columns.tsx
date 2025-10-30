@@ -34,46 +34,58 @@ export const getQrePercentHistoryColumns =
         id: 'version',
         sortId: 'version',
         label: 'Sequence',
-        width: 80,
+        width: '8%',
         sticky: true,
-        render: (row: QrePercentHistoryItem) => row.version || '-',
-        sx: {
-          position: 'sticky',
-          left: 32,
-          background: '#fff',
-          zIndex: 10,
-          borderRight: '1px solid #CBD6E2',
-          borderBottom: '1px solid #CBD6E2 !important',
-        },
+        render: (row: QrePercentHistoryItem) => (
+          <div
+            style={{
+              textAlign: 'right',
+            }}
+          >{`${row.version || '-'}`}</div>
+        ),
       },
       {
         id: 'type',
         sortId: 'type',
         label: 'Type',
-        width: 60,
+        width: '17%',
         render: (row: QrePercentHistoryItem) => row.type || '-',
       },
       {
         id: 'contents',
         sortId: 'contents',
         label: 'Contents',
-        width: 60,
+        width: '10%',
         render: (row: QrePercentHistoryItem) => (
-          <ContentCell content={JSON.stringify(row.qre_detailed_breakdown || {})} />
+          <div
+            style={{
+              textAlign: 'center',
+            }}
+          >
+            <ContentCell
+              content={JSON.stringify(row.qre_detailed_breakdown || {})}
+            />
+          </div>
         ),
       },
       {
         id: 'qre_percent',
         sortId: 'qre_percent',
         label: 'QRE Percent Score',
-        width: 120,
-        render: (row: QrePercentHistoryItem) => row.qre_percent || '-',
+        width: '13%',
+        render: (row: QrePercentHistoryItem) => (
+          <div
+            style={{
+              textAlign: 'right',
+            }}
+          >{`${row.qre_percent + '%' || '-'}`}</div>
+        ),
       },
       {
         id: 'created_datetime',
         sortId: 'created_datetime',
         label: 'Date',
-        width: 180,
+        width: '20%',
         render: (row: QrePercentHistoryItem) =>
           formatDateToYYYYMMDDWithTime(row.created_datetime) || '-',
       },

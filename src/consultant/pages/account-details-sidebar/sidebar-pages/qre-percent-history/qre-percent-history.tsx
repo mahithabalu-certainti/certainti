@@ -237,7 +237,6 @@ const QrePercentHistory = ({
           getRowId={getRowId}
           hoverHighlight={false}
           tableStyle={{
-            borderBottom: '1px solid #CBD6E2',
             height: '100%',
             maxHeight: 'calc(100vh - 320px)',
             overflow: 'auto',
@@ -246,7 +245,6 @@ const QrePercentHistory = ({
           stickyColumnsCount={1}
           selectable={false}
           actionWidth={80}
-          actionDisplayMode='dropdown'
           actionMenuItems={[]}
           loading={isLoading}
           error={isError ? 'Failed to load Attachment data' : undefined}
