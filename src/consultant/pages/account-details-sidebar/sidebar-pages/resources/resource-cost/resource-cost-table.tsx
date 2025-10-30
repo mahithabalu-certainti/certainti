@@ -69,6 +69,11 @@ interface ResourceCostTableProps {
   resourceNumber?: string;
 }
 
+enum ActionEnum {
+  ACCEPT = 'accept',
+  REJECT = 'reject',
+}
+
 const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
   fiscalYear,
   appliedFilters,
@@ -112,6 +117,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
     message: string;
     onConfirm: () => void;
   }>({ isOpen: false, message: '', onConfirm: () => {} });
+  const [actionFlag, setActionFlag] = useState<null | ActionEnum>(null);
   const [fiscalDate, setFiscalDate] = useState<FormFiscalDateType>({
     year: 0,
   });
@@ -234,21 +240,25 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
   ];
 
   const handleAccept = (row: ResourceCostList) => {
+    setActionFlag(ActionEnum.ACCEPT);
     const payload = {
       rid: row?.rid,
       accountNumber: accountDetails?.data?.accountById?.r_number,
       action: 'accept',
       type: row?.status_name,
     };
+
     updateStatusAccept.mutate(payload, {
       onSuccess: (data) => {
         successToast(data?.statusMessage || 'Status updated successfully');
         refetch();
+        setActionFlag(null);
       },
     });
   };
 
   const handleReject = (row: ResourceCostList) => {
+    setActionFlag(ActionEnum.REJECT);
     const payload = {
       rid: row?.rid,
       accountNumber: accountDetails?.data?.accountById?.r_number,
@@ -259,6 +269,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
       onSuccess: (data) => {
         successToast(data?.statusMessage || 'Status updated successfully');
         refetch();
+        setActionFlag(null);
       },
     });
   };
@@ -281,15 +292,21 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
         label: statusLabel ? `Accept ${statusLabel}` : 'Accept',
         onClick: handleAccept,
         icon: AcceptIcon,
+        loading:
+          actionFlag === ActionEnum.ACCEPT && updateStatusAccept.isPending,
+        disabled: updateStatusAccept.isPending,
         className:
-          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer h-[24px] bg-[#3EA72F1A] hover:bg-[#3EA72F] hover:text-[#fff]',
+          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] min-w-[140px] max-w-[140px] cursor-pointer h-[24px] bg-[#3EA72F1A] hover:bg-[#3EA72F] hover:text-[#fff] disabled:opacity-60 disabled:cursor-default',
       },
       {
         label: statusLabel ? `Reject ${statusLabel}` : 'Reject',
         onClick: handleReject,
+        loading:
+          actionFlag === ActionEnum.REJECT && updateStatusAccept.isPending,
+        disabled: updateStatusAccept.isPending,
         icon: RejectIcon,
         className:
-          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer h-[24px] bg-[#FF3C031A] hover:bg-[#FF3C03] hover:text-[#fff]',
+          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer  min-w-[140px] max-w-[140px] h-[24px] bg-[#FF3C031A] hover:bg-[#FF3C03] hover:text-[#fff] disabled:opacity-60 disabled:cursor-default  ',
       },
     ];
   };
