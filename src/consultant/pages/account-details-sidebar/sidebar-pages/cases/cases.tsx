@@ -1,36 +1,58 @@
-import React, { useMemo, useState } from 'react';
-import { AllPermissions, OverviewTabs } from '../../../../../common-service';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  AllModules,
+  AllPermissions,
+  OverviewTabs,
+} from '../../../../../common-service';
 import { SectionTabPanel } from '../../../../../components';
 import { CasesIcon } from '../../../../../assets';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { CaseListTable } from './table/case-list';
-import { CaseListParams } from '../../../../types';
+import {
+  CaseListExportParams,
+  CaseListParams,
+  ExportType,
+} from '../../../../types';
 import { CASE_CREATE } from '../../../../../routes';
 import { generatePath, useNavigate, useParams } from 'react-router-dom';
 import { getCaseFilterFields } from './helper';
 import { useManageUserList } from '../../../../../admin/service';
 import { accountDetailsProps } from '../../../account-details/utils';
-import { useGetCaseFilingTypes } from '../../../../services/cases/case-service';
+import {
+  useGetCaseFilingTypes,
+  useGetCaseStatuses,
+} from '../../../../services/cases/case-service';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../store/store';
+import { checkPermission } from '../../../../../common-utils';
+import { AccessRestricted } from '../../../../../components/account-restricted';
 
 const CasesTabs: OverviewTabs[] = [
   {
-    id: AllPermissions.INTERACTIONS_OVERVIEW, // need to change persmission
+    id: AllPermissions.CASES_OVERVIEW, // need to change persmission
     name: 'Overview',
     hide: false,
   },
-  // {
-  //   id: AllPermissions.INTERACTIONS_TIMELINE,
-  //   name: 'Timeline',
-  //   hide: false,
-  //   disable: true,
-  // },
+  {
+    id: AllPermissions.CASES_TIMELINE,
+    name: 'Timeline',
+    hide: true,
+    disable: true,
+  },
 ];
 
 interface CaseProps {
   accountInActive: boolean;
   accountDetails: accountDetailsProps;
+  setExportType: (type: ExportType) => void;
+  setCasesParams: React.Dispatch<React.SetStateAction<CaseListExportParams>>;
 }
-const Cases: React.FC<CaseProps> = ({ accountInActive, accountDetails }) => {
+const Cases: React.FC<CaseProps> = ({
+  accountInActive,
+  accountDetails,
+  setExportType,
+  setCasesParams,
+}) => {
   const navigate = useNavigate();
   const { accountid } = useParams();
   const [appliedFilters, setAppliedFilters] = useState<
@@ -40,6 +62,7 @@ const Cases: React.FC<CaseProps> = ({ accountInActive, accountDetails }) => {
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [totalCount, setTotalCount] = useState<number>(0);
   const [page, setPage] = useState<number>(1);
+  const [searchText, setSearchText] = useState<string>('');
   const [tableParams, setTableParams] = useState<CaseListParams>({
     page: page,
     limit: 100,
@@ -53,6 +76,16 @@ const Cases: React.FC<CaseProps> = ({ accountInActive, accountDetails }) => {
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
 
+  const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
+    (state: RootState) => state.account
+  );
+
+  const { permission, modules } = useSelector(
+    (state: RootState) => state.permission
+  );
+
+  const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
+
   // User List Api
   const { data: userListData } = useManageUserList({
     page: 1,
@@ -62,6 +95,7 @@ const Cases: React.FC<CaseProps> = ({ accountInActive, accountDetails }) => {
   });
 
   const caseFillingTypes = useGetCaseFilingTypes();
+  const caseStatus = useGetCaseStatuses();
 
   const userListOptions = useMemo(() => {
     return (
@@ -80,6 +114,63 @@ const Cases: React.FC<CaseProps> = ({ accountInActive, accountDetails }) => {
       })) || []
     );
   }, [caseFillingTypes]);
+
+  const caseStatusOptions = useMemo(() => {
+    return (
+      caseStatus?.data?.data?.caseStatus?.map((item) => ({
+        value: item.rid,
+        label: item.status_name,
+      })) || []
+    );
+  }, [caseStatus]);
+
+  useEffect(() => {
+    if (setExportType) {
+      setExportType('cases');
+    }
+    setCasesParams({
+      sortBy: tableParams.sortBy,
+      sortOrder: tableParams.sortOrder as 'ASC' | 'DESC' | undefined,
+      filters: appliedFilters,
+      fiscalYear: convertedFiscalYear,
+      search: searchText,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    appliedFilters,
+    convertedFiscalYear,
+    tableParams.sortBy,
+    tableParams.sortOrder,
+    searchText,
+  ]);
+
+  // Permissions
+  const casesEnable = checkPermission(modules, AllModules.CASES);
+
+  const isCasesViewEnable = checkPermission(
+    permission,
+    AllPermissions.CASES_VIEW_EDIT
+  );
+
+  const isCaseCreateEnable = checkPermission(
+    permission,
+    AllPermissions.CASES_CREATE
+  );
+
+  const casesEditFields = useMemo(
+    () =>
+      permission?.find((item) => item.name === AllPermissions.CASES_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    casesEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [casesEditFields]);
 
   const handleFilter = () => {
     setShowFilter(!showFilter);
@@ -117,9 +208,7 @@ const Cases: React.FC<CaseProps> = ({ accountInActive, accountDetails }) => {
     }
   };
 
-  console.log('accountDetails', accountDetails);
-
-  const handlCreateNewCases = () => {
+  const handlCreateNewCase = () => {
     const accountId = accountid ?? '';
     const path = generatePath(CASE_CREATE);
     const queryParams = new URLSearchParams({
@@ -143,17 +232,20 @@ const Cases: React.FC<CaseProps> = ({ accountInActive, accountDetails }) => {
       label: 'New',
       variant: 'outlined' as const,
       disabled: accountInActive,
-      onClick: () => handlCreateNewCases(),
+      onClick: () => handlCreateNewCase(),
       sx: { width: '48px', minWidth: '48px' },
-      hide: false,
+      hide: !isCaseCreateEnable,
     },
   ];
 
   const filterFields = getCaseFilterFields(
-    [],
+    caseStatusOptions,
     caseFilingTypesOptions,
-    userListOptions
+    userListOptions,
+    permissionMap
   );
+
+  if (!casesEnable || !isCasesViewEnable) return <AccessRestricted />;
 
   return (
     <div className='w-full pt-2 pl-2 pr-4'>
@@ -172,6 +264,10 @@ const Cases: React.FC<CaseProps> = ({ accountInActive, accountDetails }) => {
         setSortFilterCount={setSortFilterCount}
         showRefresh={true}
         onRefreshClick={onRefreshClick}
+        showSearch={true}
+        searchDisabled={false}
+        searchPlaceholder='Search'
+        onSearch={(text) => setSearchText(text)}
       />
       <SectionHeader
         title={'Cases'}
@@ -198,6 +294,7 @@ const Cases: React.FC<CaseProps> = ({ accountInActive, accountDetails }) => {
           setColumnAnchorEl={setColumnAnchorEl}
           columnAnchorEl={columnAnchorEl}
           accountDetails={accountDetails}
+          searchText={searchText}
         />
       </div>
     </div>

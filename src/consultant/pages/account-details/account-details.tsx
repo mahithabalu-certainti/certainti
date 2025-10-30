@@ -56,6 +56,7 @@ import { AccountState } from '../../../store/type';
 import {
   AccountDetailsResponse,
   AccountFieldsApiResponse,
+  CaseListExportParams,
   ExportType,
   MenuItem,
   NotesListExportParams,
@@ -91,6 +92,7 @@ import { TimesheetProjectExportListURLParams } from '../../types/timesheet-proje
 import { BUTTON_STYLES } from '../../../admin/pages/manage-user-detail/styles';
 import { useToast } from '../../../hooks';
 import { ExportNotesList } from '../../services/notes/notes-service';
+import { ExportCaseList } from '../../services/cases/case-service';
 
 export const AccountDetails = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -301,6 +303,13 @@ export const AccountDetails = () => {
     fiscalYear: convertedFiscalYear,
   });
 
+  const [casesParams, setCasesParams] = useState<CaseListExportParams>({
+    sortBy: 'r_number',
+    sortOrder: 'ASC',
+    filters: {},
+    fiscalYear: convertedFiscalYear,
+  });
+
   useEffect(() => {
     const list = searchParams.get('list');
     const tabParams = searchParams.get('tab');
@@ -325,6 +334,7 @@ export const AccountDetails = () => {
       searchParams.get('list') !== 'projects' &&
       searchParams.get('list') !== 'attachments' &&
       searchParams.get('list') !== 'notes' &&
+      searchParams.get('list') !== 'cases' &&
       searchParams.get('list') !== 'imports' &&
       searchParams.get('list') !== 'financial' &&
       searchParams.get('list') !== 'timesheet' &&
@@ -414,6 +424,8 @@ export const AccountDetails = () => {
       ExportNotesList('notes', { ...notesParams, ...notesPayload });
     } else if (exportType === 'imports') {
       exportImportsData(importsParams);
+    } else if (exportType === 'cases') {
+      ExportCaseList(casesParams, accountid);
     } else if (exportType === 'timesheet' && !tab) {
       exportTimesheetData({
         ...importsParams,
@@ -561,6 +573,8 @@ export const AccountDetails = () => {
       return !isNotesExportEnable;
     } else if (list === 'imports') {
       return !isImportExportEnable;
+    } else if (list === 'cases') {
+      return false;
     } else if (list === 'financial' && tab === 'resource_cost') {
       return !isFinancialResourceCostExportEnable;
     } else if (list === 'financial' && tab === 'project_cost') {
@@ -705,6 +719,8 @@ export const AccountDetails = () => {
           <Cases
             accountInActive={accountInActive}
             accountDetails={{ ...data?.data } as accountDetailsProps}
+            setExportType={setExportType}
+            setCasesParams={setCasesParams}
           />
         );
       case 'activities':

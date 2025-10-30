@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { getCaseListColumns } from './columns';
 import { generatePath, useNavigate, useParams } from 'react-router-dom';
 import { CaseList, CaseListParams } from '../../../../../types';
@@ -16,6 +16,7 @@ import { useCaseList } from '../../../../../services/cases/case-service';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
 import { accountDetailsProps } from '../../../../account-details/utils';
+import { AllPermissions } from '../../../../../../common-service';
 
 interface ICaseTableProps {
   appliedFilters: Record<string, string | number | boolean | string[]>;
@@ -30,6 +31,7 @@ interface ICaseTableProps {
     React.SetStateAction<HTMLButtonElement | null>
   >;
   accountDetails: accountDetailsProps;
+  searchText: string;
 }
 
 export const CaseListTable: React.FC<ICaseTableProps> = ({
@@ -41,6 +43,7 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
   columnAnchorEl,
   setColumnAnchorEl,
   accountDetails,
+  searchText,
 }) => {
   const navigate = useNavigate();
   const { accountid } = useParams();
@@ -48,11 +51,20 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
     (state: RootState) => state.account
   );
+  const { permission } = useSelector((state: RootState) => state.permission);
 
   const newFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
+  const currencySymbol =
+    accountDetails?.accountById?.currency?.currency_symbol || '';
 
   const { data, isLoading, isError } = useCaseList(
-    { ...tableParams, filters: appliedFilters, fiscalYear: newFiscalYear },
+    {
+      ...tableParams,
+      filters: appliedFilters,
+      fiscalYear: newFiscalYear,
+      search: searchText,
+    },
+    accountid,
     refreshTrigger
   );
   const totalItems = data?.count || 0;
@@ -63,6 +75,30 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
       setCaseList(data.cases || []);
     }
   }, [data, setTotalCount]);
+
+  //Permission
+  const casesEditFields = useMemo(
+    () =>
+      permission?.find((item) => item.name === AllPermissions.CASES_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+
+  const casesFieldsEditable = useMemo(
+    () =>
+      permission
+        .find((item) => item.name === AllPermissions.CASES_VIEW_EDIT)
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    casesEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [casesEditFields]);
 
   const getRowId = (row: CaseList) => {
     return row.rid;
@@ -105,7 +141,11 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
     navigate(`${path}?${queryParams.toString()}`);
   };
 
-  const caseColumns = getCaseListColumns(handleViewCaseDetails);
+  const caseColumns = getCaseListColumns(
+    handleViewCaseDetails,
+    currencySymbol,
+    permissionMap
+  );
 
   // show hide columns
   const [columnVisibility, setColumnVisibility] = useState<
@@ -165,7 +205,7 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
         filter:
           'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
       },
-      hide: false,
+      hide: !casesFieldsEditable,
     },
   ];
 
@@ -187,7 +227,7 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
         hoverHighlight={false}
         tableStyle={{
           height: '100%',
-          maxHeight: 'calc(100vh - 180px)',
+          maxHeight: 'calc(100vh - 320px)',
           overflow: 'auto',
         }}
         stickyHeader={true}

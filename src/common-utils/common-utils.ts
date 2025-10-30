@@ -356,6 +356,7 @@ export const createDateField = (
     disabled?: boolean;
     hide?: boolean;
     disableFutureDates?: boolean;
+    resetDependsFields?: string[];
     minDate?: Date;
     maxDate?: Date;
     endDateValue?: boolean;
@@ -386,6 +387,7 @@ export const createDateField = (
   endDateLabel: others.endDateLabel,
   errorMessage: others.errorMessage,
   clearDate: others.clearDate,
+  resetDependsFields: others.resetDependsFields,
 });
 
 export const createFiscalDateField = (

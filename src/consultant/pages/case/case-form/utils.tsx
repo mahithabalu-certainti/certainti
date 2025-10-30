@@ -13,7 +13,6 @@ export const transformCaseFormPayload = (
     description: formData.description || '',
     fiscal_year: formData.fiscal_year || 0,
     filing_type_rid: formData.filing_type || '',
-    country_rid: formData.country || '',
     case_startdate: formData.case_startdate || '',
     planned_submission_date: formData.planned_submission_date || '',
     statutory_submission_date: formData.statutory_submission_date || '',
