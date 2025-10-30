@@ -238,7 +238,7 @@ class CaseSchemaService {
       if (mainTableFilters[sortBy] !== undefined) {
         disablePagination = true;
       }
-      const { whereClause } = this.buildWhereClause(filters);
+      const { whereClause } = this.buildWhereClause(filters,data.search);
       const [finalSortBy, finalSortOrder] = this.getSortParameters(
         sortBy,
         sortOrder
@@ -535,6 +535,10 @@ class CaseSchemaService {
       "case_total_qre_cost",
       "status",
     ];
+    if(sortBy === "createdAt") {
+      sortBy = "created_datetime";
+    }
+
     if (!validSortColumns.includes(sortBy)) {
       sortBy = "created_datetime";
     }
@@ -543,13 +547,32 @@ class CaseSchemaService {
     return [sortBy, sortOrder];
   }
 
+   private buildSearchCondition(
+    search: string,
+    whereClause: Record<string, any>
+  ): Record<string, any> {
+    const searchCondition = {
+      [Op.or]: [
+        { case_name: { [Op.iLike]: `%${search}%` } },
+        { r_number: { [Op.iLike]: `%${search}%` } },
+      ],
+    };
+
+    return Object.keys(whereClause).length > 0
+      ? { [Op.and]: [whereClause, searchCondition] }
+      : searchCondition;
+  }
+
   private buildWhereClause(
     filters: Record<string, any>,
-    schemaName?: string
+    search?: string
   ): {
     whereClause: Record<string, any>;
   } {
     let whereClause: Record<string, any> = {};
+     if (search) {
+      whereClause = this.buildSearchCondition(search, whereClause);
+    }
     let includeClause: Array<any> = [];
     if (filters) {
       const filterProcessors: Record<string, Function> = {

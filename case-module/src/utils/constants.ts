@@ -68,7 +68,8 @@ export const STATUS_MESSAGE = {
   separateDb: "SEPARATE_DB",
   caseDetailsFetchedSuccess : "Case details fetched successfully",
   dataNotAvailable : "Data not available",
-  projectsFetchedSuccess : "Project fetched successfully"
+  projectsFetchedSuccess : "Project fetched successfully",
+  caseIdMissing : "Case ID is required",
 };
 
 export const caseStatuses = {

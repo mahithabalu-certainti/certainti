@@ -31,6 +31,7 @@ const updateCaseSchema = Joi.object({
 const exportCasesAccountSchema = Joi.object({
   account_rid: Joi.string().required(),
   filters: Joi.string().default("{}"),
+  search: Joi.string().max(255).optional(),
   sortBy: Joi.string().optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
   timezone: Joi.string().optional(),
@@ -41,6 +42,7 @@ const listCasesAccountSchema = Joi.object({
   limit: Joi.string().optional().pattern(/^[0-9]+$/),
   account_rid: Joi.string().required(),
   filters: Joi.string().default("{}"),
+  search: Joi.string().max(255).optional(),
   sortBy: Joi.string().optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
 });
