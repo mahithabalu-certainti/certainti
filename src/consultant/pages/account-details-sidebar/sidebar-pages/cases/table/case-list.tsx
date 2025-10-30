@@ -136,6 +136,7 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
       accountID: accountid || '',
       account_name: accountDetails?.accountById?.account_name || '',
       account_number: accountDetails?.accountById?.r_number || '',
+      activeMenu: 'account',
     });
 
     navigate(`${path}?${queryParams.toString()}`);
@@ -185,6 +186,7 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
 
   const handleEdit = (caseItem: CaseList) => {
     const accountId = accountid ?? '';
+    const accountName = accountDetails?.accountById?.account_name || '';
     const path = generatePath(CASE_EDIT, {
       caseId: caseItem.rid,
     });
@@ -192,6 +194,8 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
       accountId,
       account_name: accountDetails?.accountById?.account_name || '',
       account_number: accountDetails?.accountById?.r_number || '',
+      source: `Account > ${accountName}`,
+      activeMenu: 'account',
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
