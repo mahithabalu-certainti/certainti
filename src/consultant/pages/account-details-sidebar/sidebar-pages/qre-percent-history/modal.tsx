@@ -45,12 +45,17 @@ const QrePercentHistoryModal: React.FC<QrePercentHistoryModalProps> = ({
           'answer' in value &&
           'weight' in value
         ) {
+          const typedValue = value as {
+            question?: string;
+            answer: string;
+            weight: number;
+          };
           assessmentDetailsData.push({
             id: `assessment-${key}`,
             questionCategory: key,
-            question: key,
-            answer: (value as { answer: string }).answer ?? '-',
-            weight: (value as { weight: number }).weight ?? 0,
+            question: typedValue.question ?? '-',
+            answer: typedValue.answer ?? '-',
+            weight: typedValue.weight ?? 0,
           });
         } else {
           projectSummaryData.push({
@@ -109,7 +114,7 @@ const QrePercentHistoryModal: React.FC<QrePercentHistoryModalProps> = ({
       label: 'Question',
       sortId: 'question',
       width: 200,
-      render: () => '-',
+      render: (row) => row.question,
     },
     {
       id: 'answer',
