@@ -43,6 +43,8 @@ import SchemaService from "./schemaService";
 import { Kafka, Producer } from "kafkajs";
 import { AccountFiscalSummary } from "../models/accountFiscalSummary";
 import { logMessage } from "../utils/helpers";
+import { checkProjectMappedToProjectRes } from "../utils/rawQueries";
+
 
 class ProjectIngestionService {
   private orgDbSequelize: Sequelize | null = null;
@@ -1742,6 +1744,34 @@ class ProjectIngestionService {
     }
   }
 
+  async addProjectResourceExistsFlags(projects: Project[], accountRNumber: string): Promise<Project[]> {
+    let schemaName = rawQueries.fetchSchemaName(accountRNumber);
+    const orgDb = await initOrgSequelize();
+
+    // Create all check promises
+    const checkPromises: Promise<void>[] = [];
+
+    projects.forEach((project: any) => {
+        
+        // Add ProjectFiscal checks
+        if (project.ProjectFiscal && project.ProjectFiscal.length > 0) {
+            project.ProjectFiscal.forEach((fiscal: any) => {
+                checkPromises.push(
+                    orgDb.query(checkProjectMappedToProjectRes(schemaName, fiscal.rid))
+                        .then((result: any) => {
+                            fiscal.is_project_exists = result[0].length > 0;
+                        })
+                );
+            });
+        }
+    });
+
+    // Wait for all checks to complete
+    await Promise.all(checkPromises);
+    
+    return projects;
+}
+
   async fetchProjectList(
     accountNumber: string,
     accountData: any,
@@ -1903,6 +1933,10 @@ class ProjectIngestionService {
           },
         ],
       });
+
+      if (projectData.length > 0) {
+        projectData = await this.addProjectResourceExistsFlags(projectData, accountNumber);
+      }
     } else {
       whereProject = {
         account_rid: accountData.rid,
@@ -2164,6 +2198,10 @@ class ProjectIngestionService {
           totalCount = projects.length;
         }
       }
+    }
+
+    if (projects.length > 0) {
+      projects = await this.addProjectResourceExistsFlags(projects, accountNumber);
     }
 
     return {

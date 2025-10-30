@@ -1704,7 +1704,7 @@ export const rawQueries = {
   },
   getCommonProjectSelectFields(): string {
     return `
-      ps.project_code, ps.project_name, acc.account_name, accountStatus.status_name as account_status_name,
+      ps.project_code, ps.project_name, acc.account_name, acc.r_number as account_number, accountStatus.status_name as account_status_name,
       ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
       COALESCE(ps.industry_name, ind.industry_name) AS industry_name_other,
       ps.project_type_rid, ps.project_client_group, ps.project_group,
@@ -1740,7 +1740,7 @@ export const rawQueries = {
   getCommonProjectGroupBy(): string {
     return `
       GROUP BY 
-        ps.project_code, ps.project_name, acc.account_name, accountStatus.status_name, ps.project_rid, ps.modified_datetime, 
+        ps.project_code, ps.project_name, acc.account_name, acc.r_number, accountStatus.status_name, ps.project_rid, ps.modified_datetime, 
         ps.assessment_status, ps.qre, ps.is_rd_qualified,
         ps.industry_name, ind.industry_name, ps.project_type_rid, ps.project_client_group, ps.project_group,
         ps.project_classification_rid, ps.project_classification_other, pc.classification_name, pt.project_type_name,
