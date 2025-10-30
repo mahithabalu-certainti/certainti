@@ -45,7 +45,11 @@ export const STATUS_MESSAGE = {
   separateDb: "SEPARATE_DB",
   caseDetailsFetchedSuccess : "Case details fetched successfully",
   dataNotAvailable : "Data not available",
-  projectsFetchedSuccess : "Project fetched successfully"
+  projectsFetchedSuccess : "Project fetched successfully",
+  singleProjectAssignedSuccess : "Project assigned successfully",
+  multipleProjectAssignedSuccess : "Projects assigned successfully",
+  projectAssignFailed: "Project assign failed",
+  projectAlreadyMapped : "Project already mapped to this case"
 };
 
 export const caseStatuses = {
@@ -149,7 +153,26 @@ export const rawQueries = {
     } else {
       return `SELECT rid, project_type_name FROM ${MAIN_SCHEMA_NAME}.project_type WHERE rid IN ('')`
     }
-    
+  },
+  getTotalProjectsCount (schemaName : string, caseRid : string, accountRid : string) {
+    return `SELECT COUNT(project_fiscal_rid) OVER() AS total_projects FROM ${schemaName}.case_projects WHERE case_rid = '${caseRid}' AND account_rid = '${accountRid}'`
+  },
+  getTotalProjectCost(schemaName : string, caseRid : string, accountRid : string) {
+    return `
+    SELECT COALESCE(SUM(pf.total_cost_prj), 0) AS total_cost 
+    FROM ${schemaName}.project_fiscal pf 
+    LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid
+    WHERE
+    cp.case_rid = '${caseRid}'
+    AND
+    cp.account_rid = '${accountRid}'
+    `
+  },
+  updateCostCountInCase (schemaName : string, caseRid : string, totalprojects : any, totalCost : any) {
+    return `UPDATE ${schemaName}.cases SET case_total_projects = ${totalprojects}, case_total_project_cost = ${totalCost} WHERE rid = '${caseRid}'`
+  },
+  updateCostCountInCaseSummary (caseRid : string, totalprojects : any, totalCost : any) {
+    return `UPDATE ${MAIN_SCHEMA_NAME}.case_summary SET case_total_projects = ${totalprojects}, case_total_project_cost = ${totalCost} WHERE case_rid = '${caseRid}'`
   }
 };
 

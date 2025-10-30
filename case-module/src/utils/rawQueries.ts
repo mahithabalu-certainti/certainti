@@ -14,7 +14,7 @@ export const fetchCasesHeadersDatas = (schemaName : string, caseRid : string) =>
     `
 }
 
-export const fetchProjectsForCases = (schemaName : string, page : number, limit : number, sort : string, sortBy : string, filter : FilterType, accountRid : string, fiscalYear : number, pointOfContactRid : string, technicalPointOfContactRid : string, isSorting : boolean, search : string) => {
+export const fetchProjectsForCases = (schemaName : string, page : number, limit : number, sort : string, sortBy : string, filter : FilterType, accountRid : string, fiscalYear : number, pointOfContactRid : string, technicalPointOfContactRid : string, isSorting : boolean, search : string, caseRid : string, assignedApi : boolean) => {
     const offset = (page - 1) * limit
     const pagination = `LIMIT ${limit} OFFSET ${offset}`
     let sortValue : string;
@@ -22,6 +22,14 @@ export const fetchProjectsForCases = (schemaName : string, page : number, limit 
     let filterQueryConditions : string[] = []
     let combinedFilterQuery : string = ``
     let and : string = ``
+
+    let whereConditions : string = ``
+
+    if(assignedApi) {
+        whereConditions = `cp.case_rid = '${caseRid}'`
+    } else {
+        whereConditions = `pf.account_rid = '${accountRid}' AND pf.fiscal_year = ${fiscalYear}`
+    }
 
     if(!isSorting) {
         let dynamicAlias : string = ``
@@ -133,9 +141,7 @@ export const fetchProjectsForCases = (schemaName : string, page : number, limit 
     SELECT pf.rid 
     FROM ${schemaName}.project_fiscal pf
     WHERE
-    pf.account_rid = '${accountRid}'
-    AND
-    pf.fiscal_year = ${fiscalYear}
+    pf.account_rid = '${accountRid}' AND pf.fiscal_year = ${fiscalYear}
     ),
     fetch_project_point_of_contact AS (
     SELECT pf.rid, kc.key_contact_name AS project_point_of_contact
@@ -166,16 +172,16 @@ export const fetchProjectsForCases = (schemaName : string, page : number, limit 
     pf.total_cost_subcon_prj, pf.total_cost_nonlabor_prj, pf.assessment_status,
     pf.rd_percent_final, pf.qre_final, pf.comments, pf.modified_datetime, pf.r_number,
     poc.project_point_of_contact, tpoc.project_technical_point_of_contact, pf.account_rid,
-    pf.project_rid
+    pf.project_rid,
+    CASE WHEN cp.project_fiscal_rid = pf.rid AND cp.case_rid = '${caseRid}' THEN true ELSE FALSE END AS is_project_added
     FROM
     ${schemaName}.project_fiscal pf
     LEFT JOIN fetch_project_point_of_contact poc ON poc.rid = pf.rid
     LEFT JOIN fetch_project_technical_point_of_contact tpoc ON tpoc.rid = pf.rid
     LEFT JOIN fetch_all_prj_ids fp ON fp.rid = pf.rid
+    LEFT JOIN ${schemaName}.case_projects cp ON cp.project_fiscal_rid = pf.rid
     WHERE
-    pf.account_rid = '${accountRid}'
-    AND
-    pf.fiscal_year = ${fiscalYear}
+    ${whereConditions}
     AND
     (pf.project_code ILIKE '${searchValue}' OR pf.project_name ILIKE '${searchValue}' OR pf.r_number ILIKE '${searchValue}')
     ${and}

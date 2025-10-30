@@ -396,7 +396,7 @@ export class CaseService {
     };
   }
 
-  async fetchProjectsForAssign (data : any) {
+  async fetchProjectsForAssign (data : any, assignedProject : boolean) {
     const mainDb = await this.getMainDb();
     const orgDb = await this.getOrgDb();
     const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
@@ -412,7 +412,7 @@ export class CaseService {
       const projectPocId : any = await mainDb.query(rawQueries.getPointOfContactId());
       const projectTechnicalPocId : any = await mainDb.query(rawQueries.getTechnicalPointOfContactId());
       const queryResult : any = await this.caseSchemaService.fetchProjectsForCasesResult(data, orgDb, schemaName, projectPocId[0][0].rid,
-        projectTechnicalPocId[0][0].rid, isSorting
+        projectTechnicalPocId[0][0].rid, isSorting, assignedProject
       )
 
       if(queryResult.length > 0) {
@@ -477,7 +477,8 @@ export class CaseService {
             comments : d.comments,
             modified_datetime : d.modified_datetime,
             project_point_of_contact : d.project_point_of_contact,
-            project_technical_point_of_contact : d.project_technical_point_of_contact
+            project_technical_point_of_contact : d.project_technical_point_of_contact,
+            is_project_assigned : d.is_project_added
           }
         })
         return {
@@ -500,6 +501,41 @@ export class CaseService {
           },
         }
       }
+    }
+  }
+  async assignProjectToCases (data : any, userId : string) {
+    const mainDb = await this.getMainDb();
+    const fetchParentRnumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb))
+    data.created_by = userId;
+    let schemaName = rawQueries.fetchSchemaName(fetchParentRnumber[0][0].r_number)
+    const checkCaseExists = await this.caseSchemaService.isCaseExistsForAccount(data.account_rid, data.case_rid, fetchParentRnumber[0][0].r_number)
+    if(checkCaseExists) {
+      const isProjectMapped = await this.caseSchemaService.isProjectAlreadyAssigned(data, fetchParentRnumber[0][0].r_number)
+      if(isProjectMapped != undefined) {
+        if(isProjectMapped.statusCode === HttpStatus.BAD_REQUEST) {
+          return {
+          statusCode : HttpStatus.BAD_REQUEST,
+          statusMessage : isProjectMapped.statusMessage
+          }
+        }
+      }
+      const result = await this.caseSchemaService.assignProjectToCase(data, fetchParentRnumber[0][0].r_number, schemaName)
+      if(result.statusCode == HttpStatus.SUCCESS) {
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          statusMessage : result.statusMessage
+        }
+      } else {
+        return {
+          statusCode : HttpStatus.FAILED,
+          statusMessage : result.statusMessage
+        }
+      }
+    } else {
+      return {
+          statusCode : HttpStatus.NOT_FOUND,
+          statusMessage : STATUS_MESSAGE.dataNotAvailable
+        }
     }
   }
 }
