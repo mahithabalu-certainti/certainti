@@ -38,28 +38,28 @@ const QrePercentHistoryModal: React.FC<QrePercentHistoryModalProps> = ({
     if (typeof content === 'string' && content.trim().startsWith('{')) {
       const parsedContent = JSON.parse(content);
 
-      // Project Summary Data
-      projectSummaryData.push({
-        id: 'stage',
-        attribute: 'stage',
-        value: parsedContent.stage ?? '-',
+      Object.entries(parsedContent).forEach(([key, value]) => {
+        if (
+          typeof value === 'object' &&
+          value !== null &&
+          'answer' in value &&
+          'weight' in value
+        ) {
+          assessmentDetailsData.push({
+            id: `assessment-${key}`,
+            questionCategory: key,
+            question: key,
+            answer: (value as { answer: string }).answer ?? '-',
+            weight: (value as { weight: number }).weight ?? 0,
+          });
+        } else {
+          projectSummaryData.push({
+            id: key,
+            attribute: key,
+            value: String(value) ?? '-',
+          });
+        }
       });
-      projectSummaryData.push({
-        id: 'max_qre_percent',
-        attribute: 'max_qre_percent',
-        value: parsedContent.max_qre_percent ?? '-',
-      });
-
-      // Assessment Details Data
-      assessmentDetailsData = Object.entries(parsedContent)
-        .filter(([key]) => key !== 'stage' && key !== 'max_qre_percent')
-        .map(([key, value]: [string, any], index) => ({
-          id: `assessment-${index}`,
-          questionCategory: key, // Using key as question category
-          question: key, // Also using key as question
-          answer: value.answer ?? '-',
-          weight: value.weight ?? 0,
-        }));
     }
   } catch (error) {
     // Not a JSON string, will display as is.
