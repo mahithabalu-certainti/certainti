@@ -151,7 +151,7 @@ const QrePercentHistory = ({
 
   const RestrictedColumns = [
     {
-      id: 'sequence',
+      id: 'version',
       canHide: false,
       canDrag: false,
     },
