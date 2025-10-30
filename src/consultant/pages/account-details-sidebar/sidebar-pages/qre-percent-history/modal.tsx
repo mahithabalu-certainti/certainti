@@ -109,7 +109,7 @@ const QrePercentHistoryModal: React.FC<QrePercentHistoryModalProps> = ({
       label: 'Question',
       sortId: 'question',
       width: 200,
-      render: (row) => row.question,
+      render: () => '-',
     },
     {
       id: 'answer',
@@ -138,7 +138,7 @@ const QrePercentHistoryModal: React.FC<QrePercentHistoryModalProps> = ({
         sx={{
           position: 'absolute',
           top: '50%',
-          left: '50%',
+          left: '60%',
           transform: 'translate(-50%, -50%)',
           height: 500,
           width: 900,
@@ -160,6 +160,7 @@ const QrePercentHistoryModal: React.FC<QrePercentHistoryModalProps> = ({
             color: '#2D3E4F',
             lineHeight: '21px',
             height: '30px',
+            px: 2,
             textTransform: 'capitalize' as const,
           }}
         >
