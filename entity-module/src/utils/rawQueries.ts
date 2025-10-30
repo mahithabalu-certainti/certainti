@@ -2037,7 +2037,7 @@ export const fetchResCodeWithPrjResRole = (
     WHERE rid = '${id}'`
   }
 
-  export const fetchQreHistoryDatas = (schemaName : string, accountRid : string, page : number, limit : number, sort : string, sortBy : string, filter : filterType) => {
+  export const fetchQreHistoryDatas = (schemaName : string, accountRid : string, page : number, limit : number, sort : string, sortBy : string, filter : filterType, projectFiscalRid : string) => {
     let offset = (page - 1) * limit
     let pagination = `LIMIT ${limit} OFFSET ${offset}`
     let and : string = ``
@@ -2123,6 +2123,8 @@ export const fetchResCodeWithPrjResRole = (
       ${schemaName}.ai_assessment_qre q
     WHERE
       q.account_rid = '${accountRid}'
+      AND
+      q.project_fiscal_rid = '${projectFiscalRid}'
       ${and}
       ${finalListOfCondtions}
       ${sortValue}
