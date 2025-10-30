@@ -359,6 +359,7 @@ export const createDateField = (
     resetDependsFields?: string[];
     minDate?: Date;
     maxDate?: Date;
+    onChange?: boolean;
     endDateValue?: boolean;
     startDateLabel?: string;
     endDateLabel?: string;
@@ -378,6 +379,7 @@ export const createDateField = (
   maxDate: others.maxDate,
   disabled: others.disabled,
   hide: others.hide,
+  onChange: others.onChange,
   disableFutureDates: others.disableFutureDates,
   greaterThan: others.greaterThan,
   dateRangeError: others.dateRangeError,

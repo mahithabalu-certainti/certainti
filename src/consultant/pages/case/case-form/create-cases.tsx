@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { useToast } from '../../../../hooks';
 import { useManageUserList } from '../../../../admin/service';
@@ -31,6 +31,17 @@ export const CreateCases: React.FC = () => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const { caseId } = useParams();
+  const [dateConstraints, setDateConstraints] = useState<{
+    planned_min: string;
+    planned_max: string;
+    statutory_min: string;
+    statutory_max: string;
+  }>({
+    planned_min: '',
+    planned_max: '',
+    statutory_min: '',
+    statutory_max: '',
+  });
 
   const { userId } = useSelector<RootState, { userId: unknown }>(
     (state: RootState) => state.auth
@@ -42,6 +53,7 @@ export const CreateCases: React.FC = () => {
   const accountId = searchParams.get('accountId') || '';
   const accountNumber = searchParams.get('account_number') || '';
   const accountName = searchParams.get('account_name') || '';
+  const sourcePath = searchParams.get('source') || '';
   // const countryRid = searchParams.get('country_rid') || '';
 
   // User List Api
@@ -139,13 +151,34 @@ export const CreateCases: React.FC = () => {
 
   const onChangeField = ({ fieldName, fieldValue }: OnChange) => {
     if (fieldName === 'case_startdate') {
-      console.log(fieldValue);
+      // When Start Date changes:
+      // - Planned Submission Date must be > Start Date
+      // - Statutory Submission Date must be ≥ Start Date
+      setDateConstraints((prev) => ({
+        ...prev,
+        planned_min: fieldValue as string,
+        statutory_min: fieldValue as string,
+        planned_max: '',
+      }));
     }
+
     if (fieldName === 'planned_submission_date') {
-      console.log(fieldValue);
+      // When Planned Submission Date changes:
+      // - Statutory Submission Date must be ≥ Planned Submission Date
+      setDateConstraints((prev) => ({
+        ...prev,
+        statutory_min: fieldValue as string,
+        planned_max: '',
+      }));
     }
+
     if (fieldName === 'statutory_submission_date') {
-      console.log(fieldValue);
+      // When Statutory Submission Date changes:
+      // - Planned Submission Date must be ≤ Statutory Submission Date
+      setDateConstraints((prev) => ({
+        ...prev,
+        planned_max: fieldValue as string,
+      }));
     }
   };
 
@@ -175,7 +208,8 @@ export const CreateCases: React.FC = () => {
     isEditView,
     permissionMap,
     caseFilingTypesOptions,
-    userListOptions
+    userListOptions,
+    dateConstraints
   );
 
   const formLoading =
@@ -196,7 +230,9 @@ export const CreateCases: React.FC = () => {
               </div>
             ) : (
               <div className='font-semibold text-[12px] leading-[20px] ml-2 mb-[-6px] text-[#7D98B6]'>
-                {`Case ${isEditView ? `> ${caseData?.r_number}` : ''}`}
+                {sourcePath
+                  ? `${sourcePath}${isEditView ? ` > ${caseData?.r_number}` : ''}`
+                  : `Cases ${isEditView ? `> ${caseData?.r_number}` : ''}`}
               </div>
             )}
             <h5 className='text-[16px] font-bold ml-2 text-[#2D3E4F]'>

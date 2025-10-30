@@ -166,6 +166,11 @@ export const AccountDetails = () => {
     AllPermissions.NOTES_EXPORT
   );
 
+  const isCasesExportEnable = checkPermission(
+    permission,
+    AllPermissions.CASES_EXPORT
+  );
+
   const isImportExportEnable = checkPermission(
     permission,
     AllPermissions.IMPORTS_EXPORT
@@ -574,7 +579,7 @@ export const AccountDetails = () => {
     } else if (list === 'imports') {
       return !isImportExportEnable;
     } else if (list === 'cases') {
-      return false;
+      return !isCasesExportEnable;
     } else if (list === 'financial' && tab === 'resource_cost') {
       return !isFinancialResourceCostExportEnable;
     } else if (list === 'financial' && tab === 'project_cost') {

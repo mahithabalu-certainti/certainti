@@ -19,7 +19,13 @@ export const CaseFormData = (
   isEditView?: boolean,
   permissionMap?: Record<string, { read: boolean; edit: boolean }>,
   filingTypeOptions?: SelectOption[],
-  ownerOptions?: SelectOption[]
+  ownerOptions?: SelectOption[],
+  dateConstraints?: {
+    planned_min: string;
+    planned_max: string;
+    statutory_min: string;
+    statutory_max: string;
+  }
 ): FormType[] => {
   return useMemo(
     () => [
@@ -119,6 +125,7 @@ export const CaseFormData = (
           }),
           createDateField('case_startdate', 'Start Date', {
             required: true,
+            onChange: true,
             maxDate: currentDate,
             disableFutureDates: true,
             resetDependsFields: [
@@ -139,8 +146,14 @@ export const CaseFormData = (
             'Planned Submission Date',
             {
               required: true,
-              maxDate: currentDate,
               disableFutureDates: true,
+              onChange: true,
+              minDate: dateConstraints?.planned_min
+                ? new Date(dateConstraints.planned_min)
+                : undefined,
+              maxDate: dateConstraints?.planned_max
+                ? new Date(dateConstraints.planned_max)
+                : currentDate,
               resetDependsFields: ['statutory_submission_date'],
               disabled:
                 isEditView &&
@@ -157,8 +170,14 @@ export const CaseFormData = (
             'Statutory Submission Date',
             {
               required: true,
-              maxDate: currentDate,
+              onChange: true,
               disableFutureDates: true,
+              minDate: dateConstraints?.statutory_min
+                ? new Date(dateConstraints.statutory_min)
+                : undefined,
+              maxDate: dateConstraints?.statutory_max
+                ? new Date(dateConstraints.statutory_max)
+                : currentDate,
               disabled:
                 isEditView &&
                 !permissionMap?.['statutory_submission_date']?.edit &&
@@ -247,6 +266,12 @@ export const CaseFormData = (
         ],
       },
     ],
-    [filingTypeOptions, isEditView, permissionMap, ownerOptions]
+    [
+      filingTypeOptions,
+      isEditView,
+      permissionMap,
+      ownerOptions,
+      dateConstraints,
+    ]
   );
 };
