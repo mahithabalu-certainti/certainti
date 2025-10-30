@@ -11,6 +11,11 @@ const routes: Router = Router();
    checkUserStatusMiddleware("cases_create"),
    controller.caseController.createCases
  );
+ routes.get(
+  "/details/:accountRid/:caseRid",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.getCaseHeadersDetails
+ )
  routes.put(
    "/update",
    checkUserStatusMiddleware("cases_view_edit"),
@@ -28,6 +33,11 @@ routes.get(
 );
 routes.get('/list', checkUserStatusMiddleware("cases_view_edit"), controller.caseController.listAllCasesAccount)
 routes.get('/export', checkUserStatusMiddleware("cases_export"), controller.caseController.exportAllCasesAccount)
+routes.post(
+  '/projects',
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.fetchProjectForAssign
+)
 
 
 export default routes;

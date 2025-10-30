@@ -20,8 +20,10 @@ import {
   SCHEMANAME_PREFIX,
 } from "../../utils/constants";
 import { errorLog, logMessage } from "../../utils/helpers";
-import { ICreateCases } from "../../utils/types";
+import { CaseHeadersColumns, ICreateCases } from "../../utils/types";
 import { Case, setupCaseSequence } from "../../models/caseModel";
+import { fetchCasesHeadersDatas, fetchProjectsForCases } from "../../utils/rawQueries";
+
 class CaseSchemaService {
   private orgDbSequelize: Sequelize | null = null;
   private mainDbSequelize: Sequelize | null = null;
@@ -787,6 +789,22 @@ class CaseSchemaService {
     );
 
     return caseStatus;
+  }
+
+  async getCasesHeadersSectionList (caseRid : string, schemaName : string, orgDb : Sequelize) {
+    const [result] = await orgDb.query<CaseHeadersColumns>(fetchCasesHeadersDatas(schemaName, caseRid), {type : QueryTypes.SELECT});
+    if(result) {
+      return result;
+    }
+  }
+
+  async fetchProjectsForCasesResult (data : any, orgDb : Sequelize, schemaName : string, pocRid : string, tPocRid : string, isSorting : boolean) {
+    const result = await orgDb.query(
+      fetchProjectsForCases(schemaName, data.page, data.limit, data.sort, data.sort_by,
+        data.filter, data.account_rid, data.fiscal_year, pocRid, tPocRid, isSorting, data.search
+      )
+    )
+    return result[0]
   }
 }
 

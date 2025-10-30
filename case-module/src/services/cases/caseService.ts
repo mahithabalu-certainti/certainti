@@ -1,15 +1,16 @@
-import { Op, Sequelize } from "sequelize";
+import { Op, QueryTypes, Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { Logger } from "winston";
 import { CaseModelService } from "../caseModelsService";
 import CaseSchemaService from "./schemaService";
-import { ICreateCases } from "../../utils/types";
+import { AccountType, CaseOwnerType, CaseStatusType, CountryType, CurrencyType, FilingType, ICreateCases } from "../../utils/types";
 import { logMessage } from "../../utils/helpers";
 import {
   caseStatuses,
   HttpStatus,
   STATUS_MESSAGE,
+  rawQueries
 } from "../../utils/constants";
 export class CaseService {
   private caseSchemaService: CaseSchemaService;
@@ -24,6 +25,19 @@ export class CaseService {
     this.caseModelService = new CaseModelService(); // Initialize your model service here
   }
 
+  private async getMainDb() {
+    if(!this.mainDbSequelize) {
+      this.mainDbSequelize = await initMainDbSequelize()
+    }
+    return this.mainDbSequelize
+  }
+
+  private async getOrgDb () {
+    if(!this.orgDbSequelize) {
+      this.orgDbSequelize = await initOrgSequelize()
+    }
+    return this.orgDbSequelize    
+  }
   /**
    * Creates a new case along with its associated data within a database transaction.
    *
@@ -215,6 +229,86 @@ export class CaseService {
     }
   }
 
+/**
+   * Fetch Case Headers and Section List
+   * -------------------------------------------------------
+   * Description:
+   *   This method retrieves detailed case header and section information 
+   *   for a given account and case. It performs multiple database lookups 
+   *   to enrich the case data with additional metadata like country, currency, 
+   *   owner, and status details.
+   *
+   * Flow:
+   *   1. Connect to both main and organization databases.
+   *   2. Fetch the parent account's `r_number` to determine the schema name.
+   *   3. Query the case details (header + sections) using the organization DB.
+   *   4. Enrich the case data with:
+   *      - Account details (r_number, country, currency)
+   *      - Filing type, owner, and status details
+   *   5. Return a structured response with the case details or a not-found status.
+   *
+   * Parameters:
+   *   @param accountRid - Unique identifier (RID) of the account.
+   *   @param caseRid - Unique identifier (RID) of the case.
+   *
+   * Returns:
+   *   An object containing:
+   *     - statusCode: HTTP-like status indicator.
+   *     - data: Case details object (if found) or empty object.
+   */
+  async fetchCaseHeadersSectionsList (accountRid : string, caseRid : string) {
+    const mainDb = await this.getMainDb()
+    const orgDb = await this.getOrgDb();
+    const fetchParentAccountRnumber : any = await mainDb.query(await rawQueries.fetchParentAccount(accountRid, mainDb))
+    if(fetchParentAccountRnumber[0].length > 0) {
+      let schemaName = rawQueries.fetchSchemaName(fetchParentAccountRnumber[0][0].r_number)
+      const queryResult = await this.caseSchemaService.getCasesHeadersSectionList(caseRid, schemaName, orgDb);
+      if(queryResult) {
+        let getCountryDetails: CountryType | undefined
+        let getCurrencyDetails : CurrencyType | undefined
+        const [getAccountDetails] = await mainDb.query<AccountType>(rawQueries.fetchAccountDetails(queryResult.account_rid), {type : QueryTypes.SELECT});
+        const [getCaseFilingType] = await mainDb.query<FilingType>(rawQueries.getCaseFilingTypeById(queryResult.filing_type_rid), {type : QueryTypes.SELECT}) 
+        if(getAccountDetails?.country_rid != null) 
+          [getCountryDetails] = await mainDb.query<CountryType>(rawQueries.getCountryDetails(getAccountDetails.country_rid), {type : QueryTypes.SELECT})
+        if(getAccountDetails?.currency_rid !== null)
+          [getCurrencyDetails] = await mainDb.query<CurrencyType>(rawQueries.getCurrencyDetails(getAccountDetails!.currency_rid), {type : QueryTypes.SELECT})
+        const [getOwnerDetails] = await mainDb.query<CaseOwnerType>(rawQueries.getOwnerDetails(queryResult.case_owner_rid), {type : QueryTypes.SELECT})
+        const [getCaseStatusDetails] = await mainDb.query<CaseStatusType>(rawQueries.getCaseStatusDetails(queryResult.status_rid), {type : QueryTypes.SELECT})
+        if(getAccountDetails) queryResult.account_rnumber = getAccountDetails.r_number
+        else queryResult.account_rnumber = null
+        if(getCaseFilingType) queryResult.filing_type_name = getCaseFilingType.filing_type_name
+        else queryResult.filing_type_name = null
+        if(getCountryDetails) {
+          queryResult.country_name = getCountryDetails.country_name
+          queryResult.country_rid = getAccountDetails!.country_rid
+        }
+        else {
+          queryResult.country_name = null
+          queryResult.currency_rid = null
+        }
+        if(getOwnerDetails) queryResult.case_owner_name = getOwnerDetails.name
+        else queryResult.case_owner_name = null
+        if(getCaseStatusDetails) queryResult.status_name = getCaseStatusDetails.status_name
+        else queryResult.status_name = null
+        if(getCurrencyDetails) {
+          queryResult.currency_code = getCurrencyDetails.currency_code
+          queryResult.currency_rid = getAccountDetails!.currency_rid
+        } else {
+          queryResult.currency_code = null
+          queryResult.currency_rid = null
+        }
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          data : queryResult
+        }
+      } else {
+        return {
+          statusCode : HttpStatus.NOT_FOUND,
+          data : {}          
+        }
+      }
+    }
+  }
   /**
    * Retrieves all available case statuses from the database.
    *
@@ -409,5 +503,112 @@ export class CaseService {
       message: HttpStatus.FAILED_MESSAGE,
       errorMessage: err.message,
     };
+  }
+
+  async fetchProjectsForAssign (data : any) {
+    const mainDb = await this.getMainDb();
+    const orgDb = await this.getOrgDb();
+    const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+    if(fetchParent[0].length > 0) {
+      let isSorting : boolean;
+      if(data.sort === 'project_classification_name' || data.sort === 'project_type_name') {
+        isSorting = true
+      } else {
+        isSorting = false
+      }
+
+      const schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number);
+      const projectPocId : any = await mainDb.query(rawQueries.getPointOfContactId());
+      const projectTechnicalPocId : any = await mainDb.query(rawQueries.getTechnicalPointOfContactId());
+      const queryResult : any = await this.caseSchemaService.fetchProjectsForCasesResult(data, orgDb, schemaName, projectPocId[0][0].rid,
+        projectTechnicalPocId[0][0].rid, isSorting
+      )
+
+      if(queryResult.length > 0) {
+        const classificationIds : any = [... new Set(queryResult.map((d : any) => d.project_classification_rid))];
+        const projectTypeIds : any = [... new Set(queryResult.map((d : any) => d.project_type_rid))];
+
+        const getClassifications : any = await mainDb.query(rawQueries.getProjectClassifications(classificationIds));
+        const getProjectTypes : any = await mainDb.query(rawQueries.getProjectTypes(projectTypeIds))
+
+        const classificationMappedValue = new Map(getClassifications[0].map((d : any) => [d.rid, d.classification_name]))
+        const projectTypeMappedValue = new Map(getProjectTypes[0].map((d : any) => [d.rid, d.project_type_name]))
+
+        let geoDataAddedResult = queryResult.map((d : any) => {
+          return {
+            ...d,
+            project_classification_name : classificationMappedValue.get(d.project_classification_rid) || null,
+            project_type_name : projectTypeMappedValue.get(d.project_type_rid) || null
+          }
+        })
+
+        if(data.sort === 'project_classification_name') {
+          geoDataAddedResult = geoDataAddedResult.sort((a : any, b : any) => {
+            if(data.sort_by === 'DESC') {
+              return b.project_classification_name?.localeCompare(a.project_classification_name || '') || 0
+            } else {
+              return a.project_classification_name?.localeCompare(b.project_classification_name || '') || 0
+            }
+          })
+        }
+        if(data.sort === 'project_type_name') {
+          geoDataAddedResult = geoDataAddedResult.sort((a : any, b : any) => {
+            if(data.sort_by === 'DESC') {
+              return b.project_type_name?.localeCompare(a.project_type_name || '') || 0
+            } else {
+              return a.project_type_name?.localeCompare(b.project_type_name || '') || 0
+            }
+          })
+        }
+        const finalData = geoDataAddedResult.map((d : any) => {
+          return {
+            rid : d.rid,
+            r_number : d.r_number,
+            account_rid : d.account_rid,
+            project_rid : d.project_rid,
+            project_code : d.project_code,
+            project_name : d.project_name,
+            project_type_rid : d.project_type_rid,
+            project_type_name : d.project_type_name,
+            fiscal_year : d.fiscal_year,
+            project_classification_rid : d.project_classification_rid,
+            project_classification_name : d.project_classification_name,
+            project_client_group : d.project_client_group,
+            project_group : d.project_group,
+            total_effort_prj : d.total_effort_prj,
+            total_cost_prj : d.total_cost_prj,
+            total_cost_fte_prj : d.total_cost_fte_prj,
+            total_cost_subcon_prj : d.total_cost_subcon_prj,
+            total_cost_nonlabor_prj : d.total_cost_nonlabor_prj,
+            assessment_status : d.assessment_status,
+            rd_percent_final : d.rd_percent_final,
+            qre_final : d.qre_final,
+            comments : d.comments,
+            modified_datetime : d.modified_datetime,
+            project_point_of_contact : d.project_point_of_contact,
+            project_technical_point_of_contact : d.project_technical_point_of_contact
+          }
+        })
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          data : {
+            page : data.page,
+            limit : data.limit,
+            total_result : parseInt(geoDataAddedResult[0].total_result),
+            projects : finalData
+          },
+        }
+      } else {
+         return {
+          statusCode : HttpStatus.NOT_FOUND,
+          data : {
+            page : data.page,
+            limit : data.limit,
+            total_result : 0,
+            projects : []
+          },
+        }
+      }
+    }
   }
 }

@@ -25,6 +25,7 @@ export interface ICaseService {
     errorMessage?: string;
     data?: { caseFilingType: any };
   }>;
+  fetchCaseHeadersSectionsList(caseRid : string, accountRid : string) : Promise<any>
   getCaseStatus(): Promise<{
     statusCode: number;
     message: string;
@@ -46,4 +47,5 @@ export interface ICaseService {
       userId: string,
       permission_name: string
     ): Promise<any[]>;
+  fetchProjectsForAssign(data : any) : Promise<any>
 }
