@@ -1,51 +1,29 @@
 export type AssignProject = {
-  project_classification_other: string | null;
+  rid: string;
+  r_number: string;
+  account_rid: string;
+  project_rid: string;
   project_code: string;
   project_name: string | null;
-  account_name?: string;
-  account_status_name?: string;
-  account_id: string;
-  project_rid: string;
-  modified_datetime: string;
-  assessment_status: string | null;
-  qre: string | null;
-  qre_final?: string | null;
-  rd_percent_potential_ai: string | null;
-  is_rd_qualified: boolean;
-  industry_name_other: string | null;
-  project_type: string;
   project_type_name: string;
+  fiscal_year: number;
+  project_classification_rid: string | null;
+  project_classification_name: string | null;
   project_client_group: string | null;
   project_group: string | null;
-  project_classification_rid: string | null;
-  classification_name: string | null;
-  project_status: string;
-  project_point_of_contact: string | null;
-  technical_point_of_contact: string | null;
-  r_number: string;
-  program_name: string | null;
-  project_startdate: string | null;
-  project_enddate: string | null;
-  total_cost: number | null;
-  total_effort: number | null;
-  total_fte: number | null;
-  total_cost_fte: number | null;
-  total_subcon: number | null;
-  total_cost_subcon: number | null;
-  total_cost_nonlabor: number | null;
+  total_effort_prj: number | null;
+  total_cost_prj: number | null;
+  total_cost_fte_prj: number | null;
+  total_cost_subcon_prj: number | null;
+  total_cost_nonlabor_prj: number | null;
+  assessment_status: string | null;
+  rd_percent_final: string | null;
+  qre_final: string | null;
   comments: string | null;
-  country_name: string | null;
-  currency_code: string;
-  currency_symbol: string;
-  region_name: string | null;
-  created_datetime: string;
-  rid?: string;
-  account_rid?: string;
-  fiscal_year?: number;
-  project_fiscal_rid?: string;
-  // ProjectFiscal: ProjectFiscalSummary[];
-  _level?: number;
-  currency_rid?: string;
+  modified_datetime: string;
+  project_point_of_contact: string | null;
+  project_technical_point_of_contact: string | null;
+  currency_symbol: string | undefined;
 };
 
 export interface AssignProjectListURLParams {
@@ -53,18 +31,11 @@ export interface AssignProjectListURLParams {
   limit: number;
   sort: string;
   sort_by: 'ASC' | 'DESC';
-  filters?: object;
-  globalFilters?: object;
+  filter?: object;
   account_rid?: string;
-  interaction_rid?: string;
-  project_rid?: string;
-  project_fiscal_rid?: string;
+  case_rid?: string;
   fiscal_year?: number;
-  isGlobal?: boolean;
-  flag?: string;
-  attachment_count?: number | string | null;
   search?: string;
-  reminder_specific_list?: boolean;
 }
 
 export interface assignProjectsListResponse {
@@ -74,7 +45,7 @@ export interface assignProjectsListResponse {
   data: {
     page: number;
     limit: number;
-    totalCount: number;
-    interactions: AssignProject[];
+    total_result: number;
+    projects: AssignProject[];
   };
 }

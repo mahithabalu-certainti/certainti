@@ -1,3 +1,3 @@
-export const getAssignProjectsListUrl = () => '/api/assignProjects/list';
+export const getAssignProjectsListUrl = () => '/api/cases/assignedProjects';
 
-export const getSelectProjectsListUrl = () => '/api/assignProjects/list';
+export const getSelectProjectsListUrl = () => '/api/cases/projects';

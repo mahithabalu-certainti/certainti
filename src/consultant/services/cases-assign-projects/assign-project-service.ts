@@ -8,27 +8,27 @@ import {
   AssignProjectListURLParams,
   assignProjectsListResponse,
 } from '../../types/assign-projects';
-import { interactionServiceApi } from '../../../api/api';
-import { mockAssignProjects } from '../../pages/case/case-details/case-assign-projects/select-project/mockdata';
+import { caseServiceApi } from '../../../api/api';
 
 export const fetchAssigneprojectList = async (
   params: AssignProjectListURLParams
-): Promise<{ interactions: AssignProject[]; count: number }> => {
-  const { data } = await interactionServiceApi.post<assignProjectsListResponse>(
+): Promise<{ projects: AssignProject[]; count: number }> => {
+  const { data } = await caseServiceApi.post<assignProjectsListResponse>(
     getAssignProjectsListUrl(),
     params
   );
   return {
-    interactions: mockAssignProjects,
-    count: data.data.totalCount,
+    projects: data.data.projects,
+    count: data.data.total_result,
   };
 };
 
 export const useAssingeProjectsList = (
-  params: AssignProjectListURLParams
-): UseQueryResult<{ interactions: AssignProject[]; count: number }, Error> => {
-  return useQuery<{ interactions: AssignProject[]; count: number }, Error>({
-    queryKey: ['assign-project-list', params],
+  params: AssignProjectListURLParams,
+  refreshInteractions?: number
+): UseQueryResult<{ projects: AssignProject[]; count: number }, Error> => {
+  return useQuery<{ projects: AssignProject[]; count: number }, Error>({
+    queryKey: ['assign-project-list', params, refreshInteractions],
     queryFn: () => fetchAssigneprojectList(params),
     retry: 0,
     gcTime: 0,
@@ -40,22 +40,23 @@ export const useAssingeProjectsList = (
 
 export const fetchSelectprojectList = async (
   params: AssignProjectListURLParams
-): Promise<{ interactions: AssignProject[]; count: number }> => {
-  const { data } = await interactionServiceApi.post<assignProjectsListResponse>(
+): Promise<{ projects: AssignProject[]; count: number }> => {
+  const { data } = await caseServiceApi.post<assignProjectsListResponse>(
     getSelectProjectsListUrl(),
     params
   );
   return {
-    interactions: mockAssignProjects,
-    count: data.data.totalCount,
+    projects: data.data.projects,
+    count: data.data.total_result,
   };
 };
 
 export const useSelectProjectsList = (
-  params: AssignProjectListURLParams
-): UseQueryResult<{ interactions: AssignProject[]; count: number }, Error> => {
-  return useQuery<{ interactions: AssignProject[]; count: number }, Error>({
-    queryKey: ['select-project-list', params],
+  params: AssignProjectListURLParams,
+  refreshInteractions?: number
+): UseQueryResult<{ projects: AssignProject[]; count: number }, Error> => {
+  return useQuery<{ projects: AssignProject[]; count: number }, Error>({
+    queryKey: ['select-project-list', params, refreshInteractions],
     queryFn: () => fetchSelectprojectList(params),
     retry: 0,
     gcTime: 0,

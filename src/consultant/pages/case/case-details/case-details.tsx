@@ -25,7 +25,7 @@ import {
 import { WorkBreakDown } from './work-breakdown';
 import { DisplayColumn } from '../../account-details/utils';
 import { CaseTeam } from './case-team';
-import AssignProjects from './case-assign-projects/assign-projects';
+import CasesProjects from './case-assign-projects/cases-projects';
 
 export const CaseDetails = () => {
   const [searchParams] = useSearchParams();
@@ -169,7 +169,7 @@ export const CaseDetails = () => {
       case 'assignProjects':
         return (
           <div>
-            <AssignProjects />
+            <CasesProjects />
           </div>
         );
       default:

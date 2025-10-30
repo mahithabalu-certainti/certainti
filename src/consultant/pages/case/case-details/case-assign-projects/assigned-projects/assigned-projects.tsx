@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { useState } from 'react';
 import { AssignProject } from '../../../../../types/assign-projects';
+import { useAssingeProjectsList } from '../../../../../services/cases-assign-projects/assign-project-service';
 import { ListTable } from '../../../../../../components/table';
-import { useSelectProjectsList } from '../../../../../services/cases-assign-projects/assign-project-service';
 import { useParams, useSearchParams } from 'react-router-dom';
 
-interface selectProjectProps {
+interface AssignedProjectsProps {
   accountInActive: boolean;
   setSelectedRows: React.Dispatch<React.SetStateAction<AssignProject[]>>;
   refreshTrigger: number;
@@ -15,7 +16,7 @@ interface selectProjectProps {
   visibleColumns: any[];
 }
 
-const SelectProjects: React.FC<selectProjectProps> = ({
+const AssignedProjects: React.FC<AssignedProjectsProps> = ({
   setSelectedRows,
   refreshTrigger,
   currentPage,
@@ -28,8 +29,9 @@ const SelectProjects: React.FC<selectProjectProps> = ({
   const [rowsPerPage, setRowsPerPage] = useState(100);
   const [sortField, setSortField] = useState<string>('project_type_name');
   const [sortBy, setSortBy] = useState<'ASC' | 'DESC'>('ASC');
+  // const { permission } = useSelector((state: RootState) => state.permission);
   const accountID = searchParams.get('accountID') || '';
-  const { data, isLoading, isError } = useSelectProjectsList(
+  const { data, isLoading, isError } = useAssingeProjectsList(
     {
       page: currentPage + 1,
       limit: rowsPerPage,
@@ -38,13 +40,11 @@ const SelectProjects: React.FC<selectProjectProps> = ({
       search: searchText,
       filter: {},
       case_rid: caseID,
-      account_rid: accountID,
+      account_rid: accountID, // Replace with the actual account_rid
       fiscal_year: 2024,
     },
     refreshTrigger
   );
-
-  // const projectColumns = getSelectProjectColumns(permissionMap);
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
@@ -54,17 +54,16 @@ const SelectProjects: React.FC<selectProjectProps> = ({
     setRowsPerPage(newPageSize);
     setCurrentPage(1);
   };
-
-  const handleSortRequest = (property: string, sortOrder: 'asc' | 'desc') => {
-    const apiOrder = sortOrder.toUpperCase() as 'ASC' | 'DESC';
-    setSortBy(apiOrder);
-    setSortField(property);
-  };
   const handleSelectionChange = (selectedIds: string[]) => {
     const selectedData = data?.projects?.filter((row) =>
       selectedIds.includes(row.rid)
     );
     setSelectedRows(selectedData || []);
+  };
+  const handleSortRequest = (property: string, sortOrder: 'asc' | 'desc') => {
+    const apiOrder = sortOrder.toUpperCase() as 'ASC' | 'DESC';
+    setSortBy(apiOrder);
+    setSortField(property);
   };
   const getRowId = (row: AssignProject) => row.rid;
   return (
@@ -80,10 +79,10 @@ const SelectProjects: React.FC<selectProjectProps> = ({
           maxHeight: 'calc(100vh - 380px)',
           overflow: 'auto',
         }}
+        onSelectionChange={handleSelectionChange}
         stickyHeader={true}
         stickyColumnsCount={1}
         selectable={true}
-        onSelectionChange={handleSelectionChange}
         actionWidth={80}
         actionDisplayMode='dropdown'
         actionMenuItems={[]}
@@ -103,4 +102,4 @@ const SelectProjects: React.FC<selectProjectProps> = ({
   );
 };
 
-export default SelectProjects;
+export default AssignedProjects;
