@@ -4,7 +4,10 @@ export const fetchCasesHeadersDatas = (schemaName : string, caseRid : string) =>
     return `
     SELECT c.rid, c.account_rid, ad.account_name, c.case_name, c.filing_type_rid,
     c.case_owner_rid, c.fiscal_year, c.status_rid, c.case_total_projects,
-    c.case_total_project_cost, c.case_total_rd_cost, c.case_total_qre_cost
+    c.case_total_project_cost, c.case_total_rd_cost, c.case_total_qre_cost,
+    c.planned_submission_date, c.statutory_submission_date, c.case_startdate,
+    c.description, c.r_number, c.created_by, c.modified_by, c.created_datetime,
+    c.modified_datetime
 
     FROM
     ${schemaName}.cases c

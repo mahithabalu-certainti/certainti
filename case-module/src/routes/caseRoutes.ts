@@ -50,5 +50,11 @@ routes.post(
   controller.caseController.fetchAssignedprojects
 )
 
+routes.post(
+  '/projects/delete',
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.deleteProjectFromCase
+)
+
 
 export default routes;
