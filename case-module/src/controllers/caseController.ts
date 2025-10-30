@@ -593,7 +593,7 @@ async function fetchProjectForAssign (req : Request, res : Response) : Promise<a
       return;
     }
     const data = req.body;
-    const result = await caseService.fetchProjectsForAssign(data);
+    const result = await caseService.fetchProjectsForAssign(data, false, userId);
     if(result.statusCode === HttpStatus.SUCCESS) {
       return res.status(HttpStatus.SUCCESS).send({
         statusCode : HttpStatus.SUCCESS,
@@ -621,7 +621,6 @@ async function fetchProjectForAssign (req : Request, res : Response) : Promise<a
     return;
   }
 }
-
 /**
  * Lists all cases for a specific account with filtering, sorting, and pagination support.
  *
@@ -730,14 +729,169 @@ async function listAllCasesSummary(req: Request, res: Response) {
   }
 }
 
+
+async function assignProjectToCase (req : Request, res : Response) : Promise<any> {
+  const methodName = "assignProjectToCase"
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const data = req.body;
+    const result = await caseService.assignProjectToCases(data, userId);
+    if(result.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : result.statusMessage
+      })
+    } 
+    else if(result.statusCode === HttpStatus.BAD_REQUEST) {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : result.statusMessage
+      })
+    }
+    else if(result.statusCode === HttpStatus.NOT_FOUND) {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : result.statusMessage
+      })
+    }
+    else {
+      return res.status(HttpStatus.FAILED).send({
+        statusCode : HttpStatus.FAILED,
+        statusCodeValue : HttpStatus.FAILED_MESSAGE,
+        statusMessage : result.statusMessage
+      })
+    }   
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function fetchAssignedprojects (req : Request, res : Response) : Promise<any> {
+  const methodName = "fetchAssignedprojects"
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const data = req.body;
+    const result = await caseService.fetchProjectsForAssign(data, true, userId)
+    if(result.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.projectsFetchedSuccess,
+        data : result.data
+      })
+    } else {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.dataNotAvailable,
+        data : result.data
+      })
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function deleteProjectFromCase (req : Request, res : Response) : Promise<any> {
+  const methodName = "deleteProjectFromCase"
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const data = req.body;
+    const result = await caseService.deleteAssignedProjectFromCases(data, userId);
+    if(result.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : result.statusMessage
+      })
+    }
+    else if(result.statusCode === HttpStatus.NOT_FOUND) {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : result.statusMessage
+      })
+    }
+    else {
+      return res.status(HttpStatus.FAILED).send({
+        statusCode : HttpStatus.FAILED,
+        statusCodeValue : HttpStatus.FAILED_MESSAGE,
+        statusMessage : result.statusMessage
+      })
+    }   
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
 export default {
   createCases,
   updateCases,
   getCaseFilingType,
   getCaseHeadersDetails,
   getCaseStatus,
+  fetchProjectForAssign,
+  assignProjectToCase,
+  fetchAssignedprojects,
   listAllCasesAccount,
   exportAllCasesAccount,
-  listAllCasesSummary,
-  fetchProjectForAssign
+  deleteProjectFromCase,
+  listAllCasesSummary
 };

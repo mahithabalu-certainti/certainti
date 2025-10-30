@@ -265,6 +265,15 @@ export class CaseService {
       let schemaName = rawQueries.fetchSchemaName(fetchParentAccountRnumber[0][0].r_number)
       const queryResult = await this.caseSchemaService.getCasesHeadersSectionList(caseRid, schemaName, orgDb);
       if(queryResult) {
+        const ids = [
+          queryResult.created_by,
+          queryResult.case_owner_rid,
+          queryResult.modified_by
+        ].filter((d : any) => d !== null)
+
+        const uniqueIds = [... new Set(ids)]
+        let userMap = new Map()
+
         let getCountryDetails: CountryType | undefined
         let getCurrencyDetails : CurrencyType | undefined
         const [getAccountDetails] = await mainDb.query<AccountType>(rawQueries.fetchAccountDetails(queryResult.account_rid), {type : QueryTypes.SELECT});
@@ -273,7 +282,10 @@ export class CaseService {
           [getCountryDetails] = await mainDb.query<CountryType>(rawQueries.getCountryDetails(getAccountDetails.country_rid), {type : QueryTypes.SELECT})
         if(getAccountDetails?.currency_rid !== null)
           [getCurrencyDetails] = await mainDb.query<CurrencyType>(rawQueries.getCurrencyDetails(getAccountDetails!.currency_rid), {type : QueryTypes.SELECT})
-        const [getOwnerDetails] = await mainDb.query<CaseOwnerType>(rawQueries.getOwnerDetails(queryResult.case_owner_rid), {type : QueryTypes.SELECT})
+        if(uniqueIds.length > 0) {
+          let getOwnerDetails = await mainDb.query<CaseOwnerType>(rawQueries.getOwnerDetails(uniqueIds), {type : QueryTypes.SELECT})
+          userMap = new Map(getOwnerDetails.map((d : any) => [d.rid, d.name]))
+        }
         const [getCaseStatusDetails] = await mainDb.query<CaseStatusType>(rawQueries.getCaseStatusDetails(queryResult.status_rid), {type : QueryTypes.SELECT})
         if(getAccountDetails) queryResult.account_rnumber = getAccountDetails.r_number
         else queryResult.account_rnumber = null
@@ -287,8 +299,10 @@ export class CaseService {
           queryResult.country_name = null
           queryResult.currency_rid = null
         }
-        if(getOwnerDetails) queryResult.case_owner_name = getOwnerDetails.name
-        else queryResult.case_owner_name = null
+        queryResult.case_owner_name = userMap.get(queryResult.case_owner_rid) || null
+        queryResult.created_by_name = userMap.get(queryResult.created_by) || null
+        queryResult.modified_by_name = userMap.get(queryResult.modified_by) || null
+
         if(getCaseStatusDetails) queryResult.status_name = getCaseStatusDetails.status_name
         else queryResult.status_name = null
         if(getCurrencyDetails) {
@@ -505,8 +519,7 @@ export class CaseService {
       errorMessage: err.message,
     };
   }
-
-    /**
+   /**
    * Retrieves a filtered and paginated list of case records for a given account,
    * based on user access permissions, filtering criteria, and sorting preferences.
    *
@@ -598,7 +611,7 @@ export class CaseService {
     }
   }
 
-  async fetchProjectsForAssign (data : any) {
+  async fetchProjectsForAssign (data : any, assignedProject : boolean, userId : string) {
     const mainDb = await this.getMainDb();
     const orgDb = await this.getOrgDb();
     const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
@@ -613,8 +626,61 @@ export class CaseService {
       const schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number);
       const projectPocId : any = await mainDb.query(rawQueries.getPointOfContactId());
       const projectTechnicalPocId : any = await mainDb.query(rawQueries.getTechnicalPointOfContactId());
+
+      const userGroupType = await this.caseSchemaService.getUserGroupType(userId);
+      const userProfileType = await this.caseSchemaService.getUserProfileType(
+        userId
+      );
+      const isCustomGlobal = userGroupType === "DEFAULT";
+      const isDefaultParent = userGroupType === "AUTO_ASSIGNED_PARENT";
+      const isPOCProfile =
+        userProfileType?.profileName === "Project Point of Contact";
+      let accessibleIds: string[] = [];
+
+      if (!isCustomGlobal) {
+        accessibleIds = await this.getAccessibleProjectIds(
+          userId,
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
+        );
+        if (accessibleIds.length === 0) {
+          return {
+            statusCode: HttpStatus.NOT_FOUND,
+            data: {
+              page : data.page,
+              limit : data.limit,
+              total_result : 0,
+              projects : []
+            },
+          };
+        }
+      }
+
+      if (isCustomGlobal && isPOCProfile) {
+        accessibleIds = await this.getAccessibleProjectIds(
+          userId,
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
+        );
+        if (accessibleIds.length === 0) {
+          return {
+            statusCode: HttpStatus.NOT_FOUND,
+            data: {
+              page : data.page,
+              limit : data.limit,
+              total_result : 0,
+              projects : []
+            },
+          };
+        }
+      }
+
       const queryResult : any = await this.caseSchemaService.fetchProjectsForCasesResult(data, orgDb, schemaName, projectPocId[0][0].rid,
-        projectTechnicalPocId[0][0].rid, isSorting
+        projectTechnicalPocId[0][0].rid, isSorting, assignedProject, accessibleIds
       )
 
       if(queryResult.length > 0) {
@@ -653,6 +719,12 @@ export class CaseService {
             }
           })
         }
+        const fetchAccountDetails : any = await this.caseSchemaService.getAccountDetails(data.account_rid);
+        let fetchCurrencyDetails : any
+        if(fetchAccountDetails.currency_rid !== null) {
+          fetchCurrencyDetails = await this.caseSchemaService.getCurrencyDetails(fetchAccountDetails.currency_rid);
+        }
+
         const finalData = geoDataAddedResult.map((d : any) => {
           return {
             rid : d.rid,
@@ -679,7 +751,10 @@ export class CaseService {
             comments : d.comments,
             modified_datetime : d.modified_datetime,
             project_point_of_contact : d.project_point_of_contact,
-            project_technical_point_of_contact : d.project_technical_point_of_contact
+            project_technical_point_of_contact : d.project_technical_point_of_contact,
+            currency_rid : fetchCurrencyDetails.rid,
+            currency_code : fetchCurrencyDetails.currency_code,
+            currency_symbol : fetchCurrencyDetails.currency_symbol
           }
         })
         return {
@@ -703,5 +778,127 @@ export class CaseService {
         }
       }
     }
+  }
+  async assignProjectToCases (data : any, userId : string) {
+    const mainDb = await this.getMainDb();
+    const fetchParentRnumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb))
+    data.created_by = userId;
+    let schemaName = rawQueries.fetchSchemaName(fetchParentRnumber[0][0].r_number)
+    const checkCaseExists = await this.caseSchemaService.isCaseExistsForAccount(data.account_rid, data.case_rid, fetchParentRnumber[0][0].r_number)
+    if(checkCaseExists) {
+      const isProjectMapped = await this.caseSchemaService.isProjectAlreadyAssigned(data, fetchParentRnumber[0][0].r_number)
+      if(isProjectMapped != undefined) {
+        if(isProjectMapped.statusCode === HttpStatus.BAD_REQUEST) {
+          return {
+          statusCode : HttpStatus.BAD_REQUEST,
+          statusMessage : isProjectMapped.statusMessage
+          }
+        }
+      }
+      const result = await this.caseSchemaService.assignProjectToCase(data, fetchParentRnumber[0][0].r_number, schemaName)
+      if(result.statusCode == HttpStatus.SUCCESS) {
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          statusMessage : result.statusMessage
+        }
+      } else {
+        return {
+          statusCode : HttpStatus.FAILED,
+          statusMessage : result.statusMessage
+        }
+      }
+    } else {
+      return {
+          statusCode : HttpStatus.NOT_FOUND,
+          statusMessage : STATUS_MESSAGE.dataNotAvailable
+        }
+    }
+  }
+
+  async deleteAssignedProjectFromCases (data : any, userId : string) {
+    const mainDb = await this.getMainDb();
+    const fetchParentRnumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb))
+    data.created_by = userId;
+    let schemaName = rawQueries.fetchSchemaName(fetchParentRnumber[0][0].r_number)
+    const checkCaseExists = await this.caseSchemaService.isCaseExistsForAccount(data.account_rid, data.case_rid, fetchParentRnumber[0][0].r_number)
+    if(checkCaseExists) {
+      const isProjectMapped = await this.caseSchemaService.isProjectAssignedInCase(data, fetchParentRnumber[0][0].r_number)
+      if(isProjectMapped != undefined) {
+        if(isProjectMapped.statusCode === HttpStatus.NOT_FOUND) {
+          return {
+          statusCode : HttpStatus.NOT_FOUND,
+          statusMessage : isProjectMapped.statusMessage
+          }
+        }
+      }
+      const result = await this.caseSchemaService.deletedAssignedProject(data, fetchParentRnumber[0][0].r_number, schemaName)
+      if(result.statusCode == HttpStatus.SUCCESS) {
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          statusMessage : result.statusMessage
+        }
+      } else {
+        return {
+          statusCode : HttpStatus.FAILED,
+          statusMessage : result.statusMessage
+        }
+      }
+    } else {
+      return {
+          statusCode : HttpStatus.NOT_FOUND,
+          statusMessage : STATUS_MESSAGE.dataNotAvailable
+        }
+    }
+  }
+
+    async getAccessibleProjectIds(
+    userId: string,
+    isdefaultparent: boolean,
+    isPOC: boolean = false,
+    userEmail?: string,
+    isCustomGlobal: boolean = false
+  ): Promise<string[]> {
+    const mainDbSequelize = await initMainDbSequelize();
+    const MAIN_SCHEMA_NAME = "trd365";
+
+    const replacements: any[] = [];
+
+    let accessControlWhere = "WHERE 1=1";
+    logMessage(`isCustomGlobal: ${isCustomGlobal}, isPOC: ${isPOC}, isdefaultparent: ${isdefaultparent}, userEmail: ${userEmail}, userId: ${userId}`);
+
+    if (isCustomGlobal) {
+      // If isPOC is also true, restrict to POC email
+      if (isPOC && userEmail) {
+        accessControlWhere += ` AND (ps.project_point_of_contact_email = ? OR pfs.project_point_of_contact_email = ?)`;
+        replacements.push(userEmail, userEmail);
+      }
+      // Else allow all projects (no extra access checks)
+    } else {
+      // Non-global user – apply account/project access checks
+      const accountAccessSubquery = rawQueries.GET_ACCOUNT_ACCESS;
+      replacements.push(userId, userId, userId, userId);
+      accessControlWhere += ` AND ${accountAccessSubquery}`;
+
+      if (!isdefaultparent) {
+        // Add project-level access checks if not a parent group
+        accessControlWhere += rawQueries.GET_PROJECT_ACCESS;
+        replacements.push(userId, userId, userId, userId);
+      }
+
+      // Only non-global users can be further filtered by POC
+      if (isPOC && userEmail) {
+        accessControlWhere += ` AND (ps.project_point_of_contact_email = ? OR pfs.project_point_of_contact_email = ?)`;
+        replacements.push(userEmail, userEmail);
+      }
+    }
+
+    const query = rawQueries.fetchProjectFiscalSummary(accessControlWhere);
+
+    const results = await mainDbSequelize.query(query, {
+      replacements,
+      type: "SELECT",
+    });
+
+    return results.map((row: any) => row.project_fiscal_rid);
   }
 }

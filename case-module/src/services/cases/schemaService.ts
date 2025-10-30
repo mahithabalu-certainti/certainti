@@ -1038,30 +1038,6 @@ class CaseSchemaService {
     }
   }
 
-    async getUserGroupType(userRid: string): Promise<string | null> {
-    const mainDbSequelize = await initMainDbSequelize();
-
-    try {
-      const results = await mainDbSequelize.query<{ group_type: string }>(
-       rawQueries.getUserGroupTypeByUserRidQuery(), // Important if user can only have one group type
-        {
-          replacements: { userRid },
-          type: QueryTypes.SELECT,
-        }
-      );
-
-      if (!results || results.length === 0) {
-        return null;
-      }
-
-      return results[0]?.group_type ?? null;
-    } catch (error) {
-      // Log the error for debugging
-      console.error("Error fetching user group type:", error);
-      throw new Error("Failed to get user group type");
-    }
-  }
-
   async getUserProfileType(
     userRid: string
   ): Promise<{ profileName: string; email: string } | null> {
