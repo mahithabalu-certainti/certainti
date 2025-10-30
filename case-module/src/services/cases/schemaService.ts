@@ -21,13 +21,15 @@ import {
   mainTableFilters,
   rawQueries,
   SCHEMANAME_PREFIX,
+  STATUS_MESSAGE
 } from "../../utils/constants";
 import { errorLog, logMessage } from "../../utils/helpers";
-import { CaseHeadersColumns, filterType, ICreateCases } from "../../utils/types";
+import { assignProjectType, CaseHeadersColumns, filterType, ICreateCases } from "../../utils/types";
 
 // Define filterType interface
 import { Case, setupCaseSequence } from "../../models/caseModel";
 import { fetchCasesHeadersDatas, fetchProjectsForCases,listAllCasesSummaryQuery } from "../../utils/rawQueries";
+import { CaseProject } from "../../models/caseProjectsModel";
 
 class CaseSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -847,7 +849,7 @@ class CaseSchemaService {
     pocRid: string,
     tPocRid: string,
     isSorting: boolean
-  ) {
+  , assignedApi : boolean, accessibleIds : string[]) {
     const result = await orgDb.query(
       fetchProjectsForCases(
         schemaName,
@@ -861,11 +863,249 @@ class CaseSchemaService {
         pocRid,
         tPocRid,
         isSorting,
-        data.search
+        data.search, data.case_rid, assignedApi, accessibleIds
       )
     );
     return result[0];
   }
+  
+  async assignProjectToCase (data : assignProjectType, accountNumber : string, schemaName : string) {
+    const { CaseProject, Case, CaseSummary } = await this.caseModelService.getModels(accountNumber);
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+    }
+    if (!this.orgDbSequelize) {
+      this.orgDbSequelize = await this.caseModelService.getSequelize();
+    }
+    await this.createCaseProjectTables(accountNumber);
+    let iterationCount : number = 0
+    let totalCount : number = 0;
+    totalCount = data.projects.length;
+
+    for(let p of data.projects) {
+      await CaseProject.create({
+        case_rid : data.case_rid,
+        account_rid : data.account_rid,
+        created_by : data.created_by,
+        created_datetime : new Date(),
+        project_rid : p.project_rid,
+        project_group : p.project_group,
+        project_fiscal_rid : p.project_fiscal_rid
+      })
+      iterationCount += 1
+    }
+    if(totalCount === iterationCount) {
+      const getTotalProjectCount : any = await this.orgDbSequelize.query(rawQueries.getTotalProjectsCount(schemaName, data.case_rid, data.account_rid)) 
+      const getTotalProjectCost : any = await this.orgDbSequelize.query(rawQueries.getTotalProjectCost(schemaName, data.case_rid, data.account_rid))
+      await this.orgDbSequelize.query(rawQueries.updateCostCountInCase(schemaName, data.case_rid, getTotalProjectCount[0][0].total_projects, getTotalProjectCost[0][0].total_cost))
+      await this.mainDbSequelize.query(rawQueries.updateCostCountInCaseSummary(data.case_rid, getTotalProjectCount[0][0].total_projects, getTotalProjectCost[0][0].total_cost))
+      if(totalCount === 1) {
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          statusMessage : STATUS_MESSAGE.singleProjectAssignedSuccess
+        }
+      } 
+      else {
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          statusMessage : STATUS_MESSAGE.multipleProjectAssignedSuccess
+        }
+      }
+    } else {
+      return {
+        statusCode : HttpStatus.FAILED,
+        statusMessage : STATUS_MESSAGE.multipleProjectAssignedSuccess
+        }
+    }
+  }
+
+    async createCaseProjectTables(accountNumber: string) {
+    try {
+      const orgDbSequlize = await initOrgSequelize();
+      const mainDbSequlize = await initMainDbSequelize();
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
+
+      const CaseProjectModel = await CaseProject.initialize(
+        orgDbSequlize,
+        schemaName
+      );
+
+      await CaseProjectModel.sync({ force: false });
+      await setupCaseSequence(orgDbSequlize, schemaName);
+    } catch (err) {
+      errorLog("Error creating case tables", (err as Error).message);
+      return this.throwServiceError(err as Error);
+    }
+  }
+  async isCaseExistsForAccount (accountRid : string, caseRid : string, accountNumber : string) {
+    const { Case } = await this.caseModelService.getModels(accountNumber);
+    const result = await Case.findOne({
+      where : {
+        account_rid : accountRid,
+        rid : caseRid
+      }, raw : true
+    })
+    if(result) return result;
+    else null
+  }
+  async isProjectAlreadyAssigned (data : assignProjectType, accountNumber : string) {
+    const { CaseProject } = await this.caseModelService.getModels(accountNumber);
+    for(let p of data.projects) {
+      const checkProjectAlreadyMapped = await CaseProject.findOne({
+        where : {
+          account_rid : data.account_rid,
+          case_rid : data.case_rid,
+          project_fiscal_rid : p.project_fiscal_rid,
+          project_rid : p.project_rid,
+          project_group : p.project_group
+        }
+      })
+      if(checkProjectAlreadyMapped) {
+        return {
+          statusCode : HttpStatus.BAD_REQUEST,
+          statusMessage : STATUS_MESSAGE.projectAlreadyMapped
+        }
+      }
+    }
+  }
+
+    async deletedAssignedProject (data : assignProjectType, accountNumber : string, schemaName : string) {
+    const { CaseProject } = await this.caseModelService.getModels(accountNumber);
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+    }
+    if (!this.orgDbSequelize) {
+      this.orgDbSequelize = await this.caseModelService.getSequelize();
+    }
+    await this.createCaseProjectTables(accountNumber);
+    let iterationCount : number = 0
+    let totalCount : number = 0;
+    totalCount = data.projects.length;
+
+    for(let p of data.projects) {
+      await CaseProject.destroy({
+        where : {
+          case_rid : data.case_rid,
+          account_rid : data.account_rid,
+          project_fiscal_rid : p.project_fiscal_rid
+        }
+      })
+      iterationCount += 1
+    }
+    if(totalCount === iterationCount) {
+      const getTotalProjectCount : any = await this.orgDbSequelize.query(rawQueries.getTotalProjectsCount(schemaName, data.case_rid, data.account_rid)) 
+      const getTotalProjectCost : any = await this.orgDbSequelize.query(rawQueries.getTotalProjectCost(schemaName, data.case_rid, data.account_rid))
+      await this.orgDbSequelize.query(rawQueries.updateCostCountInCase(schemaName, data.case_rid, getTotalProjectCount[0][0].total_projects, getTotalProjectCost[0][0].total_cost))
+      await this.mainDbSequelize.query(rawQueries.updateCostCountInCaseSummary(data.case_rid, getTotalProjectCount[0][0].total_projects, getTotalProjectCost[0][0].total_cost))
+      if(totalCount === 1) {
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          statusMessage : STATUS_MESSAGE.singleProjectDeletedSuccess
+        }
+      } 
+      else {
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          statusMessage : STATUS_MESSAGE.multipleProjectDeletedSuccess
+        }
+      }
+    } else {
+      return {
+        statusCode : HttpStatus.FAILED,
+        statusMessage : STATUS_MESSAGE.projectAssignFailed
+        }
+    }
+  }
+
+  async isProjectAssignedInCase (data : assignProjectType, accountNumber : string) {
+    const { CaseProject } = await this.caseModelService.getModels(accountNumber);
+    for(let p of data.projects) {
+      const checkProjectAlreadyMapped = await CaseProject.findOne({
+        where : {
+          account_rid : data.account_rid,
+          case_rid : data.case_rid,
+          project_fiscal_rid : p.project_fiscal_rid,
+          project_rid : p.project_rid,
+          project_group : p.project_group
+        }
+      })
+      if(!checkProjectAlreadyMapped) {
+        return {
+          statusCode : HttpStatus.NOT_FOUND,
+          statusMessage : STATUS_MESSAGE.projectNotAssigned
+        }
+      }
+    }
+  }
+
+    async getUserGroupType(userRid: string): Promise<string | null> {
+    const mainDbSequelize = await initMainDbSequelize();
+
+    try {
+      const results = await mainDbSequelize.query<{ group_type: string }>(
+       rawQueries.getUserGroupTypeByUserRidQuery(), // Important if user can only have one group type
+        {
+          replacements: { userRid },
+          type: QueryTypes.SELECT,
+        }
+      );
+
+      if (!results || results.length === 0) {
+        return null;
+      }
+
+      return results[0]?.group_type ?? null;
+    } catch (error) {
+      // Log the error for debugging
+      console.error("Error fetching user group type:", error);
+      throw new Error("Failed to get user group type");
+    }
+  }
+
+  async getUserProfileType(
+    userRid: string
+  ): Promise<{ profileName: string; email: string } | null> {
+    const mainDbSequelize = await initMainDbSequelize();
+
+    try {
+      const results = await mainDbSequelize.query<{
+        profile_name: string;
+        email: string;
+      }>(
+        rawQueries.getUserProfileAndEmailByUserRidQuery(),
+        {
+          replacements: { userRid },
+          type: QueryTypes.SELECT,
+        }
+      );
+
+      if (!results || results.length === 0) {
+        return null;
+      }
+
+      // Return renamed keys to match camelCase (optional)
+      return {
+        profileName: results[0]?.profile_name ?? "",
+        email: results[0]?.email ?? "",
+      };      
+    } catch (error) {
+      console.error("Error fetching user profile info:", error);
+      throw new Error("Failed to get user profile information");
+    }
+  }
+
+  async getCurrencyDetails (currencyRid : string) {
+    const mainDbSequelize = await initMainDbSequelize();
+    const result = await mainDbSequelize.query(rawQueries.getCurrencyDetails(currencyRid))
+    return result[0][0]
+  }
+
+    async getAccountDetails (accountRid : string) {
+    const mainDbSequelize = await initMainDbSequelize();
+    const result = await mainDbSequelize.query(rawQueries.fetchAccountDetails(accountRid))
+    return result[0][0]
+  }
+
 
   async getUserGroupType(userRid: string): Promise<string | null> {
     const mainDbSequelize = await initMainDbSequelize();
