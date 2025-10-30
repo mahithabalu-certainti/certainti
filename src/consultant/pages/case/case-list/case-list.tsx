@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from 'react';
 import { useToast } from '../../../../hooks';
-import { Case, CaseListParams } from '../../../types';
+import { CaseListParams } from '../../../types';
 import { EditIcon } from '../../../../assets';
 import { ListTable } from '../../../../components/table';
 import { ActionItem, CellEditData } from '../../../../components/table/types';
 import { getAllCaseListColumns } from './columns';
-import { useAllCases } from '../MockData';
+import { Case, useAllCases } from '../MockData';
 import { generatePath, useNavigate } from 'react-router-dom';
 import { CASE_DETAILS } from '../../../../routes';
 
@@ -20,7 +20,7 @@ interface ICaseTableProps {
   refreshCasesTrigger?: number;
 }
 
-export const CaseList: React.FC<ICaseTableProps> = ({
+export const CaseListTable: React.FC<ICaseTableProps> = ({
   tableParams,
   setTableParams,
   setTotalCount,
@@ -80,7 +80,7 @@ export const CaseList: React.FC<ICaseTableProps> = ({
   // };
   const handleCaseIDClick = (project: any) => {
     const path = generatePath(CASE_DETAILS, {
-      caseid: 'DO98335VDBRFU53001',
+      caseId: 'DO98335VDBRFU53001',
     });
     // Create query parameter
     const queryParams = new URLSearchParams({

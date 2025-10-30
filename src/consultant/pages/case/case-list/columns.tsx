@@ -1,5 +1,5 @@
 import { ListTableColumn } from '../../../../components/table/types';
-import { Case } from '../../../types';
+import { Case } from '../MockData';
 
 export const getAllCaseListColumns = (
   onClick: (caseItem: Case) => void

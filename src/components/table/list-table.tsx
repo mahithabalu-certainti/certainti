@@ -1655,20 +1655,28 @@ const ListTable = <T extends RowData>({
                                   <button
                                     key={index}
                                     onClick={() => item.onClick(row)}
-                                    disabled={item.disabled}
+                                    disabled={item.disabled || item.loading}
                                     className={item.className}
                                   >
-                                    {item.icon && (
-                                      <item.icon
-                                        alt='actionIcon'
-                                        style={{
-                                          width: '14px',
-                                          height: '14px',
-                                          ...item.iconStyle,
-                                        }}
-                                      />
+                                    {item.loading ? (
+                                      <span className='w-full  flex items-center justify-center'>
+                                        <CircularProgress size='14px' />
+                                      </span>
+                                    ) : (
+                                      <>
+                                        {item.icon && (
+                                          <item.icon
+                                            alt='actionIcon'
+                                            style={{
+                                              width: '14px',
+                                              height: '14px',
+                                              ...item.iconStyle,
+                                            }}
+                                          />
+                                        )}
+                                        {item.label}
+                                      </>
                                     )}
-                                    {item.label}
                                   </button>
                                 );
                               })}
