@@ -1,6 +1,6 @@
 import React, { Suspense } from 'react';
-import { Modal, Box, Typography, IconButton, Divider } from '@mui/material';
-import { InfoIcon } from '../../../../../assets/icons';
+import { Modal, Box, Typography, IconButton } from '@mui/material';
+import { CloseIcon, InfoIcon } from '../../../../../assets/icons';
 import ListTable from '../../../../../components/table/list-table';
 import { ListTableColumn } from '../../../../../components/table/types';
 
@@ -144,30 +144,41 @@ const QrePercentHistoryModal: React.FC<QrePercentHistoryModalProps> = ({
           width: 900,
           bgcolor: '#FCFCFC',
           boxShadow: '0px 2px 10px rgba(0, 0, 0, 0.1)',
-          borderRadius: '2px',
+          borderRadius: '4px',
           overflowY: 'auto',
-          pt: 2,
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <Typography
-          variant='h6'
-          component='h2'
+        <Box
           sx={{
-            fontWeight: 'bold',
-            fontSize: '14px',
-            fontFamily: "'Mulish', 'Lexend', sans-serif",
-            color: '#2D3E4F',
-            lineHeight: '21px',
-            height: '30px',
-            px: 2,
-            textTransform: 'capitalize' as const,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderBottom: '1px solid #CBD6E2',
+            p: '8px 16px',
+            m: '2px',
           }}
         >
-          Project Content
-        </Typography>
+          <Typography
+            variant='h6'
+            component='h2'
+            sx={{
+              fontWeight: 'bold',
+              fontSize: '14px',
+              fontFamily: "'Mulish', 'Lexend', sans-serif",
+              color: '#2D3E4F',
+              lineHeight: '21px',
+              textTransform: 'capitalize' as const,
+            }}
+          >
+            Project Content
+          </Typography>
+          <IconButton onClick={onClose} size='small'>
+            <CloseIcon />
+          </IconButton>
+        </Box>
 
-        <Box>
+        <Box sx={{ p: 2 }}>
           <Typography variant='subtitle1' sx={sectionHeaderStyle}>
             Project Summary
           </Typography>
