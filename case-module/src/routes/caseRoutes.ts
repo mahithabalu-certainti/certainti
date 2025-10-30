@@ -32,6 +32,7 @@ routes.get(
   controller.caseController.getCaseStatus
 );
 routes.get('/list', checkUserStatusMiddleware("cases_view_edit"), controller.caseController.listAllCasesAccount)
+routes.get('/list/caseSummary', checkUserStatusMiddleware("cases_view_edit"), controller.caseController.listAllCasesSummary)
 routes.get('/export', checkUserStatusMiddleware("cases_export"), controller.caseController.exportAllCasesAccount)
 routes.post(
   '/projects',

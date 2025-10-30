@@ -47,5 +47,16 @@ export interface ICaseService {
       userId: string,
       permission_name: string
     ): Promise<any[]>;
-  fetchProjectsForAssign(data : any) : Promise<any>
+  fetchProjectsForAssign(data : any) : Promise<any>;
+  listAllCasesSummary(
+    data: any,
+    filters: Record<string, any>,
+    userId: string,
+    apiType: string,
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { caseInfo: any; count: number };
+  }>;
 }

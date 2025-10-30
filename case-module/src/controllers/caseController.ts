@@ -15,6 +15,7 @@ import {
   createCaseSchema,
   exportCasesAccountSchema,
   listCasesAccountSchema,
+  listCaseSummarySchema,
   updateCaseSchema,
 } from "../lib/joi/schemas/schema";
 import configurations from "../config/config";
@@ -621,6 +622,114 @@ async function fetchProjectForAssign (req : Request, res : Response) : Promise<a
   }
 }
 
+/**
+ * Lists all cases for a specific account with filtering, sorting, and pagination support.
+ *
+ * This controller method performs the following steps:
+ * 1. Validates the incoming request parameters against the list cases schema.
+ * 2. Extracts and parses filter parameters from the request query string.
+ * 3. Extracts the user ID from the `x-user-id` request header for authentication.
+ * 4. Calls the `listAllCasesAccount` method from the `caseService` to fetch paginated case data.
+ * 5. Returns a success response with case data and pagination info, or an error response if failed.
+ *
+ * @param {Request} req - Express request object containing query parameters, filters, and user authentication headers.
+ * @param {Response} res - Express response object used to send the HTTP response with case data.
+ *
+ * @returns {Promise<void>} - A Promise that resolves after sending the HTTP response.
+ *
+ * @description
+ * - Supports advanced filtering by case name, status, owner, fiscal year, and other case attributes.
+ * - Provides pagination with configurable page size and offset.
+ * - Includes sorting capabilities by various case fields.
+ * - Returns comprehensive case information including owner names, status descriptions, and filing types.
+ * - Used by the frontend to display case lists with search and filter functionality.
+ */
+async function listAllCasesSummary(req: Request, res: Response) {
+  try {
+    const methodName = "List All Cases Summary";
+
+    const userId = req.headers["x-user-id"] as string;
+    const value = await validateRequest(
+      req,
+      listCaseSummarySchema,
+      res,
+      "GET"
+    );
+    if (!value) return;
+    let parsedFilters: Record<string, any> = {};
+    let parsedGlobalFilters: Record<string, string[]> = {};
+    
+    try {
+      parsedFilters = JSON.parse(value.filters);
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+    
+    try {
+      parsedGlobalFilters = JSON.parse(value.globalFilters);
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid globalFilters format. Must be a valid JSON object."
+      );
+    }
+    
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(
+        req.body
+      )} userId: ${userId}`
+    );
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    
+    // Create modified data object with parsed globalFilters
+    const dataWithParsedGlobalFilters = {
+      ...value,
+      globalFilters: parsedGlobalFilters,
+      parsedFilters: parsedFilters
+    };
+    
+    const result = await caseService.listAllCasesSummary(
+      dataWithParsedGlobalFilters,
+      parsedFilters,
+      userId,
+      "list"
+    );
+    if (result.statusCode == HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, result.data);
+      return;
+    } else {
+      errorLog(methodName, "No data found");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        result.errorMessage
+      );
+      return;
+    }
+  } catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
 export default {
   createCases,
   updateCases,
@@ -629,5 +738,6 @@ export default {
   getCaseStatus,
   listAllCasesAccount,
   exportAllCasesAccount,
+  listAllCasesSummary,
   fetchProjectForAssign
 };

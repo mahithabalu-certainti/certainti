@@ -173,3 +173,9 @@ export type caseProjectsResponseType = {
   project_point_of_contact : string,
   project_technical_point_of_contact : string
 }
+
+export type filterType = {
+  [key: string]: {
+    [condition: string]: any;
+  };
+};
