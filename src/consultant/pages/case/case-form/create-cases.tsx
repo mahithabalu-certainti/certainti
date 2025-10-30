@@ -1,129 +1,122 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import React, { useEffect, useMemo } from 'react';
+import { useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { useToast } from '../../../../hooks';
-import { useManageUserDetail } from '../../../../admin/service';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../../../store/store';
-import {
-  AllPermissions,
-  Layout,
-  OnChange,
-  useGetAllCountries,
-} from '../../../../common-service';
-import { FormData } from './form-data';
-import { ManageUserIcon } from '../../../../assets';
+import { useManageUserList } from '../../../../admin/service';
+import { Layout, useGetAllCountries } from '../../../../common-service';
+import { CaseFormData } from './form-data';
 import TextButton from '../../../../components/button/text-button';
 import SkeletonForm from '../../../../components/form-builder/skeleton-form';
 import { FormBuilder } from '../../../../components';
-import { SelectOption } from '../../../types';
-import { useGetResourceType } from '../../../services/resource-list';
-import { useFetchState } from '../../../services/account';
+import { CaseFormPayload, SelectOption } from '../../../types';
 import {
-  useCreateCases,
-  useUpdateCases,
-} from '../../../services/cases/cases-form/case-form-service';
-import { transFormPayload } from './utils';
-import { caseformPayload } from '../../../types/cases-details';
-
-const HEADER_STYLES = {
-  adminPermission:
-    'font-semibold text-[#7D98B6] text-[12px] leading-5 tracking-normal',
-  manageUser: 'text-[16px] font-bold text-[#2D3E4F] -mt-0.5',
-};
+  useCaseDetails,
+  useCreateCase,
+  useGetCaseFilingTypes,
+  useUpdateCaseDetails,
+} from '../../../services/cases/case-service';
+import { CaseIcon } from '../../../../assets';
+import SingleSkeleton from '../../../../components/skeleton-component/singleskeleton';
+import { formatDateToYYYYMMDDWithTime } from '../../../../common-utils';
+import { transformCaseFormPayload } from './utils';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../store/store';
 
 export const CreateCases: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
 
   const { successToast } = useToast();
+  const [searchParams] = useSearchParams();
   const location = useLocation();
-  const { userid } = useParams();
-  // const navigate = useNavigate();
-  const [currentCountry, setCurrentCountry] = useState({
-    country: '',
-    state: '',
-  });
-  const userDetails = useManageUserDetail(userid as string);
-  const resourceTypeOptions = useGetResourceType();
-  const allCountries = useGetAllCountries();
-  const states = useFetchState(currentCountry.country);
-  const userData = userDetails.data?.data?.users;
-  const userFullName =
-    `${userData?.first_name || ''} ${userData?.last_name || ''}`.trim();
+  const { caseId } = useParams();
 
-  const updatCases = useUpdateCases();
-  const creatCases = useCreateCases();
-  const commonSuccess = creatCases.isSuccess || updatCases.isSuccess;
+  const { userId } = useSelector<RootState, { userId: unknown }>(
+    (state: RootState) => state.auth
+  );
+
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
+  const accountId = searchParams.get('accountId') || '';
+  const accountNumber = searchParams.get('account_number') || '';
+  const accountName = searchParams.get('account_name') || '';
+  const countryRid = searchParams.get('country_rid') || '';
+
+  // User List Api
+  const { data: userListData, isLoading: userListLoading } = useManageUserList({
+    page: 1,
+    limit: 2000,
+    sortBy: 'first_name',
+    sortOrder: 'ASC',
+  });
+
+  const { data: caseData, isLoading } = useCaseDetails(caseId || '');
+
+  const allCountries = useGetAllCountries();
+  const updateCase = useUpdateCaseDetails();
+  const createCase = useCreateCase();
+  const caseFillingTypes = useGetCaseFilingTypes();
+
+  const commonSuccess = createCase.isSuccess || updateCase.isSuccess;
+
   useEffect(() => {
     if (commonSuccess) {
       successToast(
-        isEditView
-          ? 'Project Task updated successfully'
-          : 'Project Task created successfully'
+        isEditView ? 'Case updated successfully' : 'Case created successfully'
       );
       goBack();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [commonSuccess, isEditView]);
-  // Permission Mangement
-  const { permission } = useSelector((state: RootState) => state.permission);
 
-  const userViewEditFields = useMemo(
-    () =>
-      permission.find((item) => item.name === AllPermissions.USER_VIEW_EDIT)
-        ?.fields ?? [],
-    [permission]
+  const caseFormData = useMemo(
+    () => ({
+      ...caseData,
+      ...(caseData && {
+        account_name: accountName || '',
+        account_id: accountNumber || '',
+        filing_type: caseData.filing_type_rid || '',
+        case_name: caseData.case_name || '',
+        case_owner: caseData.case_owner_rid || '',
+        fiscal_year: caseData.fiscal_year || '',
+        country: caseData.country_rid || '',
+
+        case_startdate: formatDateToYYYYMMDDWithTime(caseData.start_date),
+        planned_submission_date: formatDateToYYYYMMDDWithTime(
+          caseData.planned_submission_date
+        ),
+        statutory_submission_date: formatDateToYYYYMMDDWithTime(
+          caseData.statutory_submission_date
+        ),
+        description: caseData.description || '',
+        record_id: caseData.rid || '',
+        created_on: formatDateToYYYYMMDDWithTime(caseData.created_datetime),
+        created_by: caseData.created_by || '',
+        case_id: caseData.r_number || '',
+        updated_on: caseData.modified_datetime
+          ? formatDateToYYYYMMDDWithTime(caseData.modified_datetime)
+          : '-',
+        updated_by: caseData.modified_by || '-',
+      }),
+    }),
+    [accountNumber, accountName, caseData]
   );
 
-  const permissionMap = useMemo(() => {
-    const map: Record<string, { read: boolean; edit: boolean }> = {};
-    userViewEditFields.forEach((item) => {
-      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
-    });
-    return map;
-  }, [userViewEditFields]);
-
-  // Memoized Options
-
-  const submitData = (formValues: Partial<caseformPayload>) => {
-    const payload = transFormPayload(formValues);
-    if (isEditView && userData) {
-      updatCases.mutate(payload);
-    } else {
-      creatCases.mutate(payload);
-    }
-  };
-
-  const handleExternalSubmit = () => {
-    formRef.current?.requestSubmit(); // This will trigger the form's onSubmit
-  };
-
-  const onChangeField = ({ fieldName, fieldValue }: OnChange) => {
-    if (fieldName === 'country') {
-      setCurrentCountry({
-        country: fieldValue as string,
-        state: '',
-      });
-    }
-    if (fieldName === 'state') {
-      setCurrentCountry((prev) => ({
-        ...prev,
-        state: fieldValue as string,
-      }));
-    }
-  };
-
-  const goBack = () => {
-    window.history.back();
-  };
-  const memoizedResourceType: SelectOption[] = useMemo(
-    () =>
-      resourceTypeOptions?.data?.data?.resouceType.map((item) => ({
-        label: item.resource_type_name,
+  const userListOptions = useMemo(() => {
+    return (
+      userListData?.data?.users?.map((item) => ({
         value: item.rid,
-      })) || [],
-    [resourceTypeOptions?.data?.data?.resouceType]
-  );
+        label: `${item.first_name} ${item.last_name}`,
+      })) || []
+    );
+  }, [userListData]);
+
+  const caseFilingTypesOptions = useMemo(() => {
+    return (
+      caseFillingTypes?.data?.data?.caseFilingType?.map((item) => ({
+        value: item.rid,
+        label: item.filing_type_name,
+      })) || []
+    );
+  }, [caseFillingTypes]);
+
   const memoizedCountry: SelectOption[] = useMemo(() => {
     const countries = allCountries.data?.data.country || [];
     return countries
@@ -135,47 +128,68 @@ export const CreateCases: React.FC = () => {
       }));
   }, [allCountries.data?.data.country]);
 
-  const memoizedState: SelectOption[] = useMemo(
-    () =>
-      states.data?.data.states.map((role) => ({
-        label: role.state_name,
-        value: role.rid,
-      })) || [],
-    [states.data?.data.states]
-  );
+  const submitData = (formValues: Partial<CaseFormPayload>) => {
+    const payload = transformCaseFormPayload(
+      accountId,
+      formValues,
+      isEditView,
+      caseData
+    );
+    if (isEditView) {
+      updateCase.mutate(payload);
+    } else {
+      createCase.mutate(payload);
+    }
+  };
 
-  const formConfig = FormData(
+  const handleExternalSubmit = () => {
+    formRef.current?.requestSubmit();
+  };
+
+  const goBack = () => {
+    window.history.back();
+  };
+
+  const formConfig = CaseFormData(
     isEditView,
-    permissionMap,
-    memoizedResourceType,
-    memoizedCountry,
-    memoizedState,
-    states.isLoading
+    caseFilingTypesOptions,
+    userListOptions,
+    memoizedCountry
   );
 
-  const formLoading = userDetails.isLoading;
+  const formLoading =
+    userListLoading ||
+    allCountries.isPending ||
+    isLoading ||
+    caseFillingTypes.isPending;
 
   return (
     <>
-      {/* Header Section */}
-      <div className='h-[50px] border-box flex items-center justify-between px-10 border-b-2 border-gray-200 sticky top-0 z-10 bg-white'>
-        <div className='flex items-center gap-2 w-[80%] max-w-[80%]'>
-          <ManageUserIcon alt='manage user' className='h-6 w-6 rounded' />
+      <div className='h-[50px] flex items-center justify-between px-10 sticky top-0 z-10 bg-white border-b border-[#CBD6E2]'>
+        <div className='flex items-center w-[80%] max-w-[80%]'>
+          <CaseIcon
+            alt='case-icon'
+            className={`w-7 h-7 p-[5px] [&>path]:stroke-[#4ce547] bg-[#D2FFE3] rounded`}
+          />
           <div className='w-[90%]'>
-            <div className={HEADER_STYLES.adminPermission}>
-              {isEditView
-                ? `Admin Permission > Manage User${(userData?.full_name ?? userFullName) ? ` > ${userData?.full_name ?? userFullName}` : ''}`
-                : `Account > Certainti Account  ${isEditView ? ' > 50005003' : ''}  `}
-            </div>
-            <div className={HEADER_STYLES.manageUser}>
-              {isEditView ? 'Edit Case' : 'New Case'}
-            </div>
+            {isLoading ? (
+              <div className='ml-2'>
+                <SingleSkeleton width={150} height={12} />
+              </div>
+            ) : (
+              <div className='font-semibold text-[12px] leading-[20px] ml-2 mb-[-6px] text-[#7D98B6]'>
+                {`Case ${isEditView ? `> ${caseData?.r_number}` : ''}`}
+              </div>
+            )}
+            <h5 className='text-[16px] font-bold ml-2 text-[#2D3E4F]'>
+              {isEditView ? 'Edit Case' : 'Create Case'}
+            </h5>
           </div>
         </div>
         <div className='flex gap-3'>
           <TextButton
             label='Save'
-            // loading={updateUser.isPending || createUser.isPending}
+            loading={createCase.isPending || updateCase.isPending}
             onClick={handleExternalSubmit}
             sx={{
               width: '64px',
@@ -187,6 +201,7 @@ export const CreateCases: React.FC = () => {
           <TextButton
             label='Cancel'
             onClick={goBack}
+            disabled={createCase.isPending || updateCase.isPending}
             sx={{
               width: '75px',
               minWidth: '75px',
@@ -205,16 +220,20 @@ export const CreateCases: React.FC = () => {
             loading={false}
             data={formConfig}
             values={
-              isEditView && userData
+              isEditView && caseFormData
                 ? {
-                    ...userData,
-                    status: userData?.status_rid,
+                    ...caseFormData,
                   }
-                : {}
+                : {
+                    account_name: accountName || '',
+                    account_id: accountNumber || '',
+                    case_owner: userId || '',
+                    country: countryRid || '',
+                  }
             }
             outData={submitData}
             formRef={formRef}
-            onChange={onChangeField}
+            // onChange={onChangeField}
             layout={Layout.TYPE_1}
           />
         )}

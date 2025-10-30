@@ -1,21 +1,23 @@
 import { useMemo } from 'react';
-
 import { FormType, SelectOption } from '../../../types';
 import {
   createSelectField,
-  createTextAreaField,
   createTextField,
+  createTextAreaField,
   REGEX_PATTERNS,
+  createDateField,
+  createEmptyField,
 } from '../../../../common-utils';
 import { fiscalYears } from '../../resource-form/form-data';
 
-export const FormData = (
+const currentDate = new Date();
+
+export const CaseFormData = (
   isEditView?: boolean,
-  permissionMap?: Record<string, { read: boolean; edit: boolean }>,
-  resourceTypeOptions?: SelectOption[],
-  country?: SelectOption[],
-  states?: SelectOption[],
-  stateLoading?: boolean
+  // permissionMap?: Record<string, { read: boolean; edit: boolean }>,
+  filingTypeOptions?: SelectOption[],
+  ownerOptions?: SelectOption[],
+  countryOptions?: SelectOption[]
 ): FormType[] => {
   return useMemo(
     () => [
@@ -23,109 +25,86 @@ export const FormData = (
         sectionName: 'Basic Information',
         fillType: 'half',
         fields: [
-          createSelectField('cases_type', 'Case Type', {
-            options: resourceTypeOptions || [],
-            placeholder: 'Choose Case Type',
+          createTextField('account_name', 'Account Name', {
+            required: false,
+            disabled: true,
+            placeholder: 'Enter Account Name',
+          }),
+          createTextField('account_id', 'Account ID', {
+            required: false,
+            disabled: true,
+            placeholder: 'Enter Account ID',
+          }),
+        ],
+      },
+      {
+        sectionName: 'Case Information',
+        fillType: 'half',
+        fields: [
+          createSelectField('filing_type', 'Filing Type', {
+            options: filingTypeOptions || [],
+            placeholder: 'Choose Filing Type',
             required: true,
-            // disabled:
-            //   isEditView &&
-            //   resourcePermissionMap?.['resource_type_rid']?.read &&
-            //   !resourcePermissionMap?.['resource_type_rid']?.edit,
-            // hide:
-            //   isEditView &&
-            //   !resourcePermissionMap?.['resource_type_rid']?.read &&
-            //   !resourcePermissionMap?.['resource_type_rid']?.edit,
-            // onChange: true,
-            // resetDependsFields: ['resource_orgname'],
           }),
           createTextField('case_name', 'Case Name', {
-            required: false,
+            required: true,
             placeholder: 'Enter Case Name',
-            // disabled:
-            //   isEditView &&
-            //   permissionMap?.['last_name']?.read &&
-            //   !permissionMap?.['last_name']?.edit,
-            // hide:
-            //   isEditView &&
-            //   !permissionMap?.['last_name']?.read &&
-            //   !permissionMap?.['last_name']?.edit,
             errorHandling: [
-              // {
-              //   regex: REGEX_PATTERNS.MIN_3,
-              //   errorMessage: 'Last name must be more than 2 characters long',
-              // },
-              // {
-              //   regex: REGEX_PATTERNS.MAX_64,
-              //   errorMessage: 'Max length exceeded',
-              // },
-              // {
-              //   regex: REGEX_PATTERNS.NAME_REGEX,
-              //   errorMessage:
-              //     "Last name must contain only letters, space( ), apostrophes(') and hyphens(-).",
-              // },
+              {
+                regex: REGEX_PATTERNS.MIN_3,
+                errorMessage: 'Case Name must be more than 2 characters long',
+              },
+              {
+                regex: REGEX_PATTERNS.MAX_255,
+                errorMessage: 'Case Name must be within 255 characters',
+              },
             ],
           }),
-          createSelectField('owner', 'Owner', {
-            options: resourceTypeOptions || [],
-            placeholder: 'Choose Owner',
+          createSelectField('case_owner', 'Case Owner', {
+            options: ownerOptions || [],
+            placeholder: 'Choose Case Owner',
             required: true,
-            // disabled:
-            //   isEditView &&
-            //   resourcePermissionMap?.['resource_type_rid']?.read &&
-            //   !resourcePermissionMap?.['resource_type_rid']?.edit,
-            // hide:
-            //   isEditView &&
-            //   !resourcePermissionMap?.['resource_type_rid']?.read &&
-            //   !resourcePermissionMap?.['resource_type_rid']?.edit,
-            // onChange: true,
-            // resetDependsFields: ['resource_orgname'],
           }),
           createSelectField('fiscal_year', 'Fiscal Year', {
             options: fiscalYears,
             placeholder: 'Choose Fiscal Year',
             required: true,
-            onChange: true,
             isFiscalYear: true,
-            // disabled:
-            //   isEditView &&
-            //   permissionMap?.['fiscal_year']?.read &&
-            //   !permissionMap?.['fiscal_year']?.edit,
-            // hide:
-            //   isEditView &&
-            //   !permissionMap?.['fiscal_year']?.read &&
-            //   !permissionMap?.['fiscal_year']?.edit,
           }),
           createSelectField('country', 'Country', {
-            options: country || [],
+            options: countryOptions || [],
             placeholder: 'Choose Country',
-            required: false,
-            onChange: true,
-            resetDependsFields: ['state, city'],
-            // disabled:
-            //   isEditView &&
-            //   resourcePermissionMap?.['country_rid']?.read &&
-            //   !resourcePermissionMap?.['country_rid']?.edit,
-            // hide:
-            //   isEditView &&
-            //   !resourcePermissionMap?.['country_rid']?.read &&
-            //   !resourcePermissionMap?.['country_rid']?.edit,
+            required: true,
           }),
-          createSelectField('state', 'Region', {
-            options: states || [],
-            placeholder: 'Choose Region',
+          createEmptyField('', '', {
+            name: 'emptyData',
+            label: '',
+            type: '',
             required: false,
-            onChange: true,
-            isLoading: stateLoading,
-            resetDependsFields: ['city'],
-            // disabled:
-            //   isEditView &&
-            //   resourcePermissionMap?.['region_rid']?.read &&
-            //   !resourcePermissionMap?.['region_rid']?.edit,
-            // hide:
-            //   isEditView &&
-            //   !resourcePermissionMap?.['region_rid']?.read &&
-            //   !resourcePermissionMap?.['region_rid']?.edit,
           }),
+          createDateField('case_startdate', 'Start Date', {
+            required: true,
+            maxDate: currentDate,
+            disableFutureDates: true,
+          }),
+          createDateField(
+            'planned_submission_date',
+            'Planned Submission Date',
+            {
+              required: true,
+              maxDate: currentDate,
+              disableFutureDates: true,
+            }
+          ),
+          createDateField(
+            'statutory_submission_date',
+            'Statutory Submission Date',
+            {
+              required: true,
+              maxDate: currentDate,
+              disableFutureDates: true,
+            }
+          ),
         ],
       },
       {
@@ -135,27 +114,43 @@ export const FormData = (
           createTextAreaField('description', 'Description', {
             required: false,
             placeholder: 'Enter Description',
-            regexErrorMessage: 'Maximum 2000 characters allowed',
+            regexErrorMessage: 'Description must be within 2000 characters',
             regex: REGEX_PATTERNS.DESCRIPTION,
-            disabled:
-              isEditView &&
-              permissionMap?.['description']?.read &&
-              !permissionMap?.['description']?.edit,
-            hide:
-              isEditView &&
-              !permissionMap?.['description']?.read &&
-              !permissionMap?.['description']?.edit,
+          }),
+        ],
+      },
+      {
+        sectionName: 'Audit Information',
+        fillType: 'half',
+        hide: !isEditView,
+        fields: [
+          createTextField('record_id', 'Record ID', {
+            required: false,
+            disabled: true,
+          }),
+          createTextField('created_on', 'Created On', {
+            required: false,
+            disabled: true,
+          }),
+          createTextField('created_by', 'Created By', {
+            required: false,
+            disabled: true,
+          }),
+          createTextField('case_id', 'Case ID', {
+            required: false,
+            disabled: true,
+          }),
+          createTextField('updated_on', 'Updated On', {
+            required: false,
+            disabled: true,
+          }),
+          createTextField('updated_by', 'Updated By', {
+            required: false,
+            disabled: true,
           }),
         ],
       },
     ],
-    [
-      country,
-      isEditView,
-      permissionMap,
-      resourceTypeOptions,
-      stateLoading,
-      states,
-    ]
+    [isEditView, filingTypeOptions, ownerOptions, countryOptions]
   );
 };

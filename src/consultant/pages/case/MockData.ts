@@ -1,5 +1,31 @@
 import { useEffect, useState } from 'react';
-import { Case, CaseApiResponse, CaseListParams } from '../../types';
+import { CaseListParams } from '../../types';
+
+export interface Case {
+  [key: string]: unknown;
+  case_id: string;
+  case_number: string;
+  fiscal_year: number;
+  case_code: string;
+  case_type: string;
+  country: string;
+  region: string;
+  case_owner: string;
+  rd_claim: string;
+  status?: string;
+  created_at?: string;
+  updated_at?: string;
+  account_rid?: string;
+}
+
+export interface CaseListResponse {
+  cases: Case[];
+  count: number;
+  totalCount: number;
+}
+export interface CaseApiResponse {
+  data: CaseListResponse;
+}
 
 const MOCK_CASES: Case[] = [
   {
@@ -159,7 +185,7 @@ export const useAllCases = (params: CaseListParams, trigger?: number) => {
           });
         }
 
-        if (params.fiscalYear && params.fiscalYear > 0) {
+        if (params.fiscalYear && Number(params.fiscalYear) > 0) {
           filteredCases = filteredCases.filter(
             (caseItem) => caseItem.fiscal_year === params.fiscalYear
           );
@@ -190,8 +216,8 @@ export const useAllCases = (params: CaseListParams, trigger?: number) => {
             count: filteredCases.length,
             totalCount: filteredCases.length,
           },
-          statusCode: 200,
-          statusMessage: 'Success',
+          // statusCode: 200,
+          // statusMessage: 'Success',
         };
 
         setData(response);

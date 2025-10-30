@@ -8,9 +8,9 @@ import {
 } from '../../../assets';
 import { ActionsDropdown } from '../../../components';
 import Filter from '../account-details-sidebar/components/filter/filter';
-import { CaseList } from './case-list/case-list';
 import TextButton from '../../../components/button/text-button';
 import { BUTTON_STYLES } from '../../../admin/pages/manage-user-detail/styles';
+import { CaseListTable } from './case-list/case-list';
 
 export const Case: React.FC = () => {
   const [appliedFilters, setAppliedFilters] = useState<
@@ -161,7 +161,7 @@ export const Case: React.FC = () => {
       </div>
 
       <div className='border border-[#CBD6E2]'>
-        <CaseList
+        <CaseListTable
           appliedFilters={appliedFilters}
           tableParams={tableParams}
           setTableParams={(data) => {
