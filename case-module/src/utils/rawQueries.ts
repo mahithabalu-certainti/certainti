@@ -17,7 +17,7 @@ export const fetchCasesHeadersDatas = (schemaName : string, caseRid : string) =>
     `
 }
 
-export const fetchProjectsForCases = (schemaName : string, page : number, limit : number, sort : string, sortBy : string, filter : FilterType, accountRid : string, fiscalYear : number, pointOfContactRid : string, technicalPointOfContactRid : string, isSorting : boolean, search : string, caseRid : string, assignedApi : boolean) => {
+export const fetchProjectsForCases = (schemaName : string, page : number, limit : number, sort : string, sortBy : string, filter : FilterType, accountRid : string, fiscalYear : number, pointOfContactRid : string, technicalPointOfContactRid : string, isSorting : boolean, search : string, caseRid : string, assignedApi : boolean, accessibleIds : string[]) => {
     const offset = (page - 1) * limit
     const pagination = `LIMIT ${limit} OFFSET ${offset}`
     let sortValue : string;
@@ -30,6 +30,10 @@ export const fetchProjectsForCases = (schemaName : string, page : number, limit 
     let subQuery : string = ``
     let subQueryConditions : string = ``
     let subQueryJoinConditions : string = ``
+    let accessibleProjects : string = ``
+
+    if(accessibleIds.length > 0) accessibleProjects = `AND pf.rid IN (${accessibleIds.map((d : any) => `'${d}'`).join(',')})`
+    else accessibleProjects = ``
 
     if(assignedApi) {
         whereConditions = `cp.case_rid = '${caseRid}'`
@@ -44,7 +48,7 @@ export const fetchProjectsForCases = (schemaName : string, page : number, limit 
         `
         subQueryConditions = ` AND NOT EXISTS (SELECT 1 FROM fetch_case_projects_ids f WHERE f.project_fiscal_rid = pf.rid)`
         subQueryJoinConditions = `LEFT JOIN fetch_case_projects_ids f ON f.project_fiscal_rid = pf.rid`
-        whereConditions = `pf.account_rid = '${accountRid}' AND pf.fiscal_year = ${fiscalYear}`
+        whereConditions = `pf.account_rid = '${accountRid}' AND pf.fiscal_year = ${fiscalYear} ${accessibleProjects}`
     }
 
     if(!isSorting) {
@@ -157,7 +161,7 @@ export const fetchProjectsForCases = (schemaName : string, page : number, limit 
     SELECT pf.rid 
     FROM ${schemaName}.project_fiscal pf
     WHERE
-    pf.account_rid = '${accountRid}' AND pf.fiscal_year = ${fiscalYear}
+    pf.account_rid = '${accountRid}' AND pf.fiscal_year = ${fiscalYear} ${accessibleProjects}
     ),
     fetch_project_point_of_contact AS (
     SELECT pf.rid, kc.key_contact_name AS project_point_of_contact

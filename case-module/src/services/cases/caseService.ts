@@ -519,7 +519,7 @@ export class CaseService {
     };
   }
 
-  async fetchProjectsForAssign (data : any, assignedProject : boolean) {
+  async fetchProjectsForAssign (data : any, assignedProject : boolean, userId : string) {
     const mainDb = await this.getMainDb();
     const orgDb = await this.getOrgDb();
     const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
@@ -534,8 +534,61 @@ export class CaseService {
       const schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number);
       const projectPocId : any = await mainDb.query(rawQueries.getPointOfContactId());
       const projectTechnicalPocId : any = await mainDb.query(rawQueries.getTechnicalPointOfContactId());
+
+      const userGroupType = await this.caseSchemaService.getUserGroupType(userId);
+      const userProfileType = await this.caseSchemaService.getUserProfileType(
+        userId
+      );
+      const isCustomGlobal = userGroupType === "DEFAULT";
+      const isDefaultParent = userGroupType === "AUTO_ASSIGNED_PARENT";
+      const isPOCProfile =
+        userProfileType?.profileName === "Project Point of Contact";
+      let accessibleIds: string[] = [];
+
+      if (!isCustomGlobal) {
+        accessibleIds = await this.getAccessibleProjectIds(
+          userId,
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
+        );
+        if (accessibleIds.length === 0) {
+          return {
+            statusCode: HttpStatus.NOT_FOUND,
+            data: {
+              page : data.page,
+              limit : data.limit,
+              total_result : 0,
+              projects : []
+            },
+          };
+        }
+      }
+
+      if (isCustomGlobal && isPOCProfile) {
+        accessibleIds = await this.getAccessibleProjectIds(
+          userId,
+          isDefaultParent,
+          isPOCProfile,
+          userProfileType?.email,
+          isCustomGlobal
+        );
+        if (accessibleIds.length === 0) {
+          return {
+            statusCode: HttpStatus.NOT_FOUND,
+            data: {
+              page : data.page,
+              limit : data.limit,
+              total_result : 0,
+              projects : []
+            },
+          };
+        }
+      }
+
       const queryResult : any = await this.caseSchemaService.fetchProjectsForCasesResult(data, orgDb, schemaName, projectPocId[0][0].rid,
-        projectTechnicalPocId[0][0].rid, isSorting, assignedProject
+        projectTechnicalPocId[0][0].rid, isSorting, assignedProject, accessibleIds
       )
 
       if(queryResult.length > 0) {
@@ -574,6 +627,12 @@ export class CaseService {
             }
           })
         }
+        const fetchAccountDetails : any = await this.caseSchemaService.getAccountDetails(data.account_rid);
+        let fetchCurrencyDetails : any
+        if(fetchAccountDetails.currency_rid !== null) {
+          fetchCurrencyDetails = await this.caseSchemaService.getCurrencyDetails(fetchAccountDetails.currency_rid);
+        }
+
         const finalData = geoDataAddedResult.map((d : any) => {
           return {
             rid : d.rid,
@@ -600,7 +659,10 @@ export class CaseService {
             comments : d.comments,
             modified_datetime : d.modified_datetime,
             project_point_of_contact : d.project_point_of_contact,
-            project_technical_point_of_contact : d.project_technical_point_of_contact
+            project_technical_point_of_contact : d.project_technical_point_of_contact,
+            currency_rid : fetchCurrencyDetails.rid,
+            currency_code : fetchCurrencyDetails.currency_code,
+            currency_symbol : fetchCurrencyDetails.currency_symbol
           }
         })
         return {
@@ -695,5 +757,56 @@ export class CaseService {
           statusMessage : STATUS_MESSAGE.dataNotAvailable
         }
     }
+  }
+
+    async getAccessibleProjectIds(
+    userId: string,
+    isdefaultparent: boolean,
+    isPOC: boolean = false,
+    userEmail?: string,
+    isCustomGlobal: boolean = false
+  ): Promise<string[]> {
+    const mainDbSequelize = await initMainDbSequelize();
+    const MAIN_SCHEMA_NAME = "trd365";
+
+    const replacements: any[] = [];
+
+    let accessControlWhere = "WHERE 1=1";
+    logMessage(`isCustomGlobal: ${isCustomGlobal}, isPOC: ${isPOC}, isdefaultparent: ${isdefaultparent}, userEmail: ${userEmail}, userId: ${userId}`);
+
+    if (isCustomGlobal) {
+      // If isPOC is also true, restrict to POC email
+      if (isPOC && userEmail) {
+        accessControlWhere += ` AND (ps.project_point_of_contact_email = ? OR pfs.project_point_of_contact_email = ?)`;
+        replacements.push(userEmail, userEmail);
+      }
+      // Else allow all projects (no extra access checks)
+    } else {
+      // Non-global user – apply account/project access checks
+      const accountAccessSubquery = rawQueries.GET_ACCOUNT_ACCESS;
+      replacements.push(userId, userId, userId, userId);
+      accessControlWhere += ` AND ${accountAccessSubquery}`;
+
+      if (!isdefaultparent) {
+        // Add project-level access checks if not a parent group
+        accessControlWhere += rawQueries.GET_PROJECT_ACCESS;
+        replacements.push(userId, userId, userId, userId);
+      }
+
+      // Only non-global users can be further filtered by POC
+      if (isPOC && userEmail) {
+        accessControlWhere += ` AND (ps.project_point_of_contact_email = ? OR pfs.project_point_of_contact_email = ?)`;
+        replacements.push(userEmail, userEmail);
+      }
+    }
+
+    const query = rawQueries.fetchProjectFiscalSummary(accessControlWhere);
+
+    const results = await mainDbSequelize.query(query, {
+      replacements,
+      type: "SELECT",
+    });
+
+    return results.map((row: any) => row.project_fiscal_rid);
   }
 }

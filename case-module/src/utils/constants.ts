@@ -216,7 +216,7 @@ export const rawQueries = {
     return `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.case_status WHERE rid = '${statusRid}'`
   },  
   getCurrencyDetails (currencyRid : string) {
-    return `SELECT rid, currency_code FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid = '${currencyRid}'`
+    return `SELECT rid, currency_code, currency_symbol FROM ${MAIN_SCHEMA_NAME}.currency WHERE rid = '${currencyRid}'`
   },
   getPointOfContactId () {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE role_name = '${keyContactRole.pocName}'`
@@ -263,7 +263,109 @@ export const rawQueries = {
   },
   updateCostCountInCaseSummaryFoDelete (caseRid : string, totalprojects : any, totalCost : any) {
     return `UPDATE ${MAIN_SCHEMA_NAME}.case_summary SET case_total_projects = GREATEST(case_total_projects - ${totalprojects}, 0), case_total_project_cost = GREATEST(case_total_projects - ${totalCost}, 0) WHERE case_rid = '${caseRid}'`
-  }
+  },
+    getUserGroupTypeByUserRidQuery(): string {
+    return `
+      SELECT ugt.type AS group_type
+      FROM ${MAIN_SCHEMA_NAME}.user_groups ug
+      JOIN ${MAIN_SCHEMA_NAME}.user_group_mapping ugm ON ug.rid = ugm.group_rid 
+      JOIN ${MAIN_SCHEMA_NAME}.user_group_type ugt ON ugt.rid = ug.group_type_rid
+      WHERE ugm.user_rid = :userRid
+      LIMIT 1
+    `;
+  },
+  getUserProfileAndEmailByUserRidQuery(): string {
+    return `
+      SELECT p.profile_name, u.email
+      FROM ${MAIN_SCHEMA_NAME}.user u
+      JOIN ${MAIN_SCHEMA_NAME}.profile p ON u.profile_rid = p.rid 
+      WHERE u.rid = :userRid
+      LIMIT 1
+    `;
+  },
+    GET_ACCOUNT_ACCESS: `
+(
+  (
+    EXISTS (
+      SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access uea
+      WHERE uea.user_rid = ? 
+      AND uea.entity_type = 'ACCOUNT'
+      AND uea.entity_rid = ps.account_rid
+      AND uea.access_type = 'INCLUDE' 
+    )
+    OR EXISTS (
+      SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_mapping ugm
+      JOIN ${MAIN_SCHEMA_NAME}.user_group_entity_access ugea 
+        ON ugea.group_rid = ugm.group_rid
+      WHERE ugm.user_rid = ?
+      AND ugea.entity_type = 'ACCOUNT'
+      AND ugea.entity_rid = ps.account_rid
+      AND ugea.access_type = 'INCLUDE'
+    )
+  )
+  AND NOT EXISTS (
+    SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access uea
+    WHERE uea.user_rid = ? 
+    AND uea.entity_type = 'ACCOUNT'
+    AND uea.entity_rid = ps.account_rid
+    AND uea.access_type = 'EXCLUDE'
+  )
+  AND NOT EXISTS (
+    SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_mapping ugm
+    JOIN ${MAIN_SCHEMA_NAME}.user_group_entity_access ugea 
+      ON ugea.group_rid = ugm.group_rid
+    WHERE ugm.user_rid = ?
+    AND ugea.entity_type = 'ACCOUNT'
+    AND ugea.entity_rid = ps.account_rid
+    AND ugea.access_type = 'EXCLUDE'
+  )
+)`,
+  GET_PROJECT_ACCESS: `
+      AND (
+        (
+          EXISTS (
+            SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access uea
+            WHERE uea.user_rid = ? 
+            AND uea.entity_type = 'PROJECT'
+            AND uea.entity_rid = ps.project_fiscal_rid
+            AND uea.access_type = 'INCLUDE'
+          )
+          OR EXISTS (
+            SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_mapping ugm
+            JOIN ${MAIN_SCHEMA_NAME}.user_group_entity_access ugea 
+              ON ugea.group_rid = ugm.group_rid
+            WHERE ugm.user_rid = ?
+            AND ugea.entity_type = 'PROJECT'
+            AND ugea.entity_rid = ps.project_fiscal_rid
+            AND ugea.access_type = 'INCLUDE'
+          )
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access uea
+          WHERE uea.user_rid = ? 
+          AND uea.entity_type = 'PROJECT'
+          AND uea.entity_rid = ps.project_fiscal_rid
+          AND uea.access_type = 'EXCLUDE'
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM ${MAIN_SCHEMA_NAME}.user_group_mapping ugm
+          JOIN ${MAIN_SCHEMA_NAME}.user_group_entity_access ugea 
+            ON ugea.group_rid = ugm.group_rid
+          WHERE ugm.user_rid = ?
+          AND ugea.entity_type = 'PROJECT'
+          AND ugea.entity_rid = ps.project_fiscal_rid
+          AND ugea.access_type = 'EXCLUDE'
+        )
+      )
+    `,
+  fetchProjectFiscalSummary(accessControlWhere: any) {
+    return `
+      SELECT DISTINCT ps.project_fiscal_rid
+      FROM ${MAIN_SCHEMA_NAME}.project_fiscal_summary AS ps
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary AS pfs ON ps.project_fiscal_rid = pfs.project_fiscal_rid
+      ${accessControlWhere}
+    `;
+  },
 };
 
 const keyContactRole = {
