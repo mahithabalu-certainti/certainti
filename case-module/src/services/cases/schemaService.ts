@@ -908,6 +908,75 @@ class CaseSchemaService {
       }
     }
   }
+
+    async deletedAssignedProject (data : assignProjectType, accountNumber : string, schemaName : string) {
+    const { CaseProject } = await this.caseModelService.getModels(accountNumber);
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+    }
+    if (!this.orgDbSequelize) {
+      this.orgDbSequelize = await this.caseModelService.getSequelize();
+    }
+    await this.createCaseProjectTables(accountNumber);
+    let iterationCount : number = 0
+    let totalCount : number = 0;
+    totalCount = data.projects.length;
+
+    for(let p of data.projects) {
+      await CaseProject.destroy({
+        where : {
+          case_rid : data.case_rid,
+          account_rid : data.account_rid,
+          project_fiscal_rid : p.project_fiscal_rid
+        }
+      })
+      iterationCount += 1
+    }
+    if(totalCount === iterationCount) {
+      const getTotalProjectCount : any = await this.orgDbSequelize.query(rawQueries.getTotalProjectsCount(schemaName, data.case_rid, data.account_rid)) 
+      const getTotalProjectCost : any = await this.orgDbSequelize.query(rawQueries.getTotalProjectCost(schemaName, data.case_rid, data.account_rid))
+      await this.orgDbSequelize.query(rawQueries.updateCostCountInCase(schemaName, data.case_rid, getTotalProjectCount[0][0].total_projects, getTotalProjectCost[0][0].total_cost))
+      await this.mainDbSequelize.query(rawQueries.updateCostCountInCaseSummary(data.case_rid, getTotalProjectCount[0][0].total_projects, getTotalProjectCost[0][0].total_cost))
+      if(totalCount === 1) {
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          statusMessage : STATUS_MESSAGE.singleProjectDeletedSuccess
+        }
+      } 
+      else {
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          statusMessage : STATUS_MESSAGE.multipleProjectDeletedSuccess
+        }
+      }
+    } else {
+      return {
+        statusCode : HttpStatus.FAILED,
+        statusMessage : STATUS_MESSAGE.projectAssignFailed
+        }
+    }
+  }
+
+  async isProjectAssignedInCase (data : assignProjectType, accountNumber : string) {
+    const { CaseProject } = await this.caseModelService.getModels(accountNumber);
+    for(let p of data.projects) {
+      const checkProjectAlreadyMapped = await CaseProject.findOne({
+        where : {
+          account_rid : data.account_rid,
+          case_rid : data.case_rid,
+          project_fiscal_rid : p.project_fiscal_rid,
+          project_rid : p.project_rid,
+          project_group : p.project_group
+        }
+      })
+      if(!checkProjectAlreadyMapped) {
+        return {
+          statusCode : HttpStatus.NOT_FOUND,
+          statusMessage : STATUS_MESSAGE.projectNotAssigned
+        }
+      }
+    }
+  }
 }
 
 export default CaseSchemaService;

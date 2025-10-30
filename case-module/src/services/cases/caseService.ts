@@ -646,4 +646,40 @@ export class CaseService {
         }
     }
   }
+
+  async deleteAssignedProjectFromCases (data : any, userId : string) {
+    const mainDb = await this.getMainDb();
+    const fetchParentRnumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb))
+    data.created_by = userId;
+    let schemaName = rawQueries.fetchSchemaName(fetchParentRnumber[0][0].r_number)
+    const checkCaseExists = await this.caseSchemaService.isCaseExistsForAccount(data.account_rid, data.case_rid, fetchParentRnumber[0][0].r_number)
+    if(checkCaseExists) {
+      const isProjectMapped = await this.caseSchemaService.isProjectAssignedInCase(data, fetchParentRnumber[0][0].r_number)
+      if(isProjectMapped != undefined) {
+        if(isProjectMapped.statusCode === HttpStatus.NOT_FOUND) {
+          return {
+          statusCode : HttpStatus.NOT_FOUND,
+          statusMessage : isProjectMapped.statusMessage
+          }
+        }
+      }
+      const result = await this.caseSchemaService.deletedAssignedProject(data, fetchParentRnumber[0][0].r_number, schemaName)
+      if(result.statusCode == HttpStatus.SUCCESS) {
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          statusMessage : result.statusMessage
+        }
+      } else {
+        return {
+          statusCode : HttpStatus.FAILED,
+          statusMessage : result.statusMessage
+        }
+      }
+    } else {
+      return {
+          statusCode : HttpStatus.NOT_FOUND,
+          statusMessage : STATUS_MESSAGE.dataNotAvailable
+        }
+    }
+  }
 }

@@ -49,4 +49,5 @@ export interface ICaseService {
       userId: string,
       permission_name: string
     ): Promise<any[]>;
+  deleteAssignedProjectFromCases(data : any, userId : string) :Promise<any>
 }

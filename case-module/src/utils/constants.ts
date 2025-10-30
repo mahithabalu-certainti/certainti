@@ -72,7 +72,10 @@ export const STATUS_MESSAGE = {
   singleProjectAssignedSuccess : "Project assigned successfully",
   multipleProjectAssignedSuccess : "Projects assigned successfully",
   projectAssignFailed: "Project assign failed",
-  projectAlreadyMapped : "Project already mapped to this case"
+  projectAlreadyMapped : "Project already mapped to this case",
+  singleProjectDeletedSuccess : "Project deleted successfully",
+  multipleProjectDeletedSuccess : "Projects deleted successfully",
+  projectNotAssigned : "Requested project not found"
 };
 
 export const caseStatuses = {
@@ -254,6 +257,12 @@ export const rawQueries = {
   },
   updateCostCountInCaseSummary (caseRid : string, totalprojects : any, totalCost : any) {
     return `UPDATE ${MAIN_SCHEMA_NAME}.case_summary SET case_total_projects = ${totalprojects}, case_total_project_cost = ${totalCost} WHERE case_rid = '${caseRid}'`
+  },
+  updateCostCountInCaseForDelete (schemaName : string, caseRid : string, totalprojects : any, totalCost : any) {
+    return `UPDATE ${schemaName}.cases SET case_total_projects = GREATEST(case_total_projects - ${totalprojects}, 0), case_total_project_cost = GREATEST(case_total_project_cost - ${totalCost}, 0) WHERE rid = '${caseRid}'`
+  },
+  updateCostCountInCaseSummaryFoDelete (caseRid : string, totalprojects : any, totalCost : any) {
+    return `UPDATE ${MAIN_SCHEMA_NAME}.case_summary SET case_total_projects = GREATEST(case_total_projects - ${totalprojects}, 0), case_total_project_cost = GREATEST(case_total_projects - ${totalCost}, 0) WHERE case_rid = '${caseRid}'`
   }
 };
 
