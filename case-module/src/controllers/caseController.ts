@@ -592,7 +592,7 @@ async function fetchProjectForAssign (req : Request, res : Response) : Promise<a
       return;
     }
     const data = req.body;
-    const result = await caseService.fetchProjectsForAssign(data, false);
+    const result = await caseService.fetchProjectsForAssign(data, false, userId);
     if(result.statusCode === HttpStatus.SUCCESS) {
       return res.status(HttpStatus.SUCCESS).send({
         statusCode : HttpStatus.SUCCESS,
@@ -693,7 +693,7 @@ async function fetchAssignedprojects (req : Request, res : Response) : Promise<a
       return;
     }
     const data = req.body;
-    const result = await caseService.fetchProjectsForAssign(data, true);
+    const result = await caseService.fetchProjectsForAssign(data, true, userId)
     if(result.statusCode === HttpStatus.SUCCESS) {
       return res.status(HttpStatus.SUCCESS).send({
         statusCode : HttpStatus.SUCCESS,

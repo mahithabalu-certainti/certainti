@@ -800,10 +800,10 @@ class CaseSchemaService {
     }
   }
 
-  async fetchProjectsForCasesResult (data : any, orgDb : Sequelize, schemaName : string, pocRid : string, tPocRid : string, isSorting : boolean, assignedApi : boolean) {
+  async fetchProjectsForCasesResult (data : any, orgDb : Sequelize, schemaName : string, pocRid : string, tPocRid : string, isSorting : boolean, assignedApi : boolean, accessibleIds : string[]) {
     const result = await orgDb.query(
       fetchProjectsForCases(schemaName, data.page, data.limit, data.sort, data.sort_by,
-        data.filter, data.account_rid, data.fiscal_year, pocRid, tPocRid, isSorting, data.search, data.case_rid, assignedApi
+        data.filter, data.account_rid, data.fiscal_year, pocRid, tPocRid, isSorting, data.search, data.case_rid, assignedApi, accessibleIds
       )
     )
     return result[0]
@@ -977,6 +977,63 @@ class CaseSchemaService {
       }
     }
   }
+
+    async getUserGroupType(userRid: string): Promise<string | null> {
+    const mainDbSequelize = await initMainDbSequelize();
+
+    try {
+      const results = await mainDbSequelize.query<{ group_type: string }>(
+       rawQueries.getUserGroupTypeByUserRidQuery(), // Important if user can only have one group type
+        {
+          replacements: { userRid },
+          type: QueryTypes.SELECT,
+        }
+      );
+
+      if (!results || results.length === 0) {
+        return null;
+      }
+
+      return results[0]?.group_type ?? null;
+    } catch (error) {
+      // Log the error for debugging
+      console.error("Error fetching user group type:", error);
+      throw new Error("Failed to get user group type");
+    }
+  }
+
+  async getUserProfileType(
+    userRid: string
+  ): Promise<{ profileName: string; email: string } | null> {
+    const mainDbSequelize = await initMainDbSequelize();
+
+    try {
+      const results = await mainDbSequelize.query<{
+        profile_name: string;
+        email: string;
+      }>(
+        rawQueries.getUserProfileAndEmailByUserRidQuery(),
+        {
+          replacements: { userRid },
+          type: QueryTypes.SELECT,
+        }
+      );
+
+      if (!results || results.length === 0) {
+        return null;
+      }
+
+      // Return renamed keys to match camelCase (optional)
+      return {
+        profileName: results[0]?.profile_name ?? "",
+        email: results[0]?.email ?? "",
+      };      
+    } catch (error) {
+      console.error("Error fetching user profile info:", error);
+      throw new Error("Failed to get user profile information");
+    }
+  }
+
 }
 
 export default CaseSchemaService;

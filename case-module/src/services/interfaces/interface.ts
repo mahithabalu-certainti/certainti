@@ -32,7 +32,7 @@ export interface ICaseService {
     errorMessage?: string;
     data?: { caseStatus: any };
   }>;
-  fetchProjectsForAssign(data : any, assignedProjects : boolean) : Promise<any>
+  fetchProjectsForAssign(data : any, assignedProjects : boolean, userId : string) : Promise<any>
   assignProjectToCases(data : any, userId : string) : Promise<any>
   listAllCasesAccount(
     data: any,
