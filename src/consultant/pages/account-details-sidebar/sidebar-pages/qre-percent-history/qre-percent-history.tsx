@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom';
 import React, { useEffect, useMemo, useState } from 'react';
-
+import { useSelector } from 'react-redux';
 import { QrePercentHistoryItem } from '../../../../types/qre-percent-history';
 import { useGetQrePercentHistory } from '../../../../services/qre-percent-history/qre-percent-history';
 import { BUTTON_STYLES } from '../../../../../admin/pages/manage-user-detail/styles';
@@ -18,6 +18,8 @@ import { ResourceTabs } from '../resources/resources';
 import { AllPermissions } from '../../../../../common-service';
 import ResourceTableHeader from '../resources/resource-table-header';
 import { AttachmentsSideIcon } from '../../../../../assets';
+import { getQrePercentHistoryFilterFields } from './helpers';
+import { RootState } from '../../../../../store/store';
 
 const AttachmentTabs: ResourceTabs[] = [
   {
@@ -57,6 +59,10 @@ const QrePercentHistory = ({
   ) => {
     setColumnAnchorEl(event.currentTarget);
   };
+  const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
+    (state: RootState) => state.account
+  );
+  const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
   const queryParams = useMemo(
     () => ({
@@ -66,8 +72,17 @@ const QrePercentHistory = ({
       sort: sortField,
       filter: appliedFilters,
       account_rid: accountid || '',
+      fiscal_year: convertedFiscalYear,
     }),
-    [currentPage, rowsPerPage, sortField, sortOrder, appliedFilters, accountid]
+    [
+      currentPage,
+      rowsPerPage,
+      sortField,
+      sortOrder,
+      appliedFilters,
+      accountid,
+      convertedFiscalYear,
+    ]
   );
 
   const { data, isLoading, isError } = useGetQrePercentHistory(
@@ -76,12 +91,10 @@ const QrePercentHistory = ({
   );
 
   useEffect(() => {
-    console.log(data);
     if (data) {
       setTotalItems(data?.data?.total_result || 0);
       setQrePercentHistoryList(data.data?.qre_history || []);
     }
-    console.log(qrePercentHistoryList);
   }, [data]);
 
   const handleFilter = () => {
@@ -93,11 +106,15 @@ const QrePercentHistory = ({
   };
 
   const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
-    const defaultSortField = 'document_name';
+    const defaultSortField = 'version';
     const defaultSortOrder = 'ASC';
     const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
 
-    if (!sortBy) {
+    if (sortBy === 'createdAt_desc') {
+      setSortFilterCount(1);
+      setSortOrder('DESC');
+      setSortField('created_datetime');
+    } else if (!sortBy) {
       setSortFilterCount(0);
       setSortOrder(defaultSortOrder);
       setSortField(defaultSortField);
@@ -168,14 +185,14 @@ const QrePercentHistory = ({
   const handlePopoverClose = () => {
     setColumnAnchorEl(null);
   };
-
+  const filterFields = getQrePercentHistoryFilterFields();
   const modalId = isModalOpen ? 'qre-percent-history' : undefined;
 
   return (
     <div className='w-full pt-2 pl-2 pr-4'>
       <SectionTabPanel
         tabs={AttachmentTabs}
-        filterMenu={[]}
+        filterMenu={filterFields}
         filterVisibility={true}
         showFilter={showFilter}
         contextKey='qre-percent-history'
