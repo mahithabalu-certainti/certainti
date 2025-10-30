@@ -264,6 +264,15 @@ export class CaseService {
       let schemaName = rawQueries.fetchSchemaName(fetchParentAccountRnumber[0][0].r_number)
       const queryResult = await this.caseSchemaService.getCasesHeadersSectionList(caseRid, schemaName, orgDb);
       if(queryResult) {
+        const ids = [
+          queryResult.created_by,
+          queryResult.case_owner_rid,
+          queryResult.modified_by
+        ].filter((d : any) => d !== null)
+
+        const uniqueIds = [... new Set(ids)]
+        let userMap = new Map()
+
         let getCountryDetails: CountryType | undefined
         let getCurrencyDetails : CurrencyType | undefined
         const [getAccountDetails] = await mainDb.query<AccountType>(rawQueries.fetchAccountDetails(queryResult.account_rid), {type : QueryTypes.SELECT});
@@ -272,7 +281,10 @@ export class CaseService {
           [getCountryDetails] = await mainDb.query<CountryType>(rawQueries.getCountryDetails(getAccountDetails.country_rid), {type : QueryTypes.SELECT})
         if(getAccountDetails?.currency_rid !== null)
           [getCurrencyDetails] = await mainDb.query<CurrencyType>(rawQueries.getCurrencyDetails(getAccountDetails!.currency_rid), {type : QueryTypes.SELECT})
-        const [getOwnerDetails] = await mainDb.query<CaseOwnerType>(rawQueries.getOwnerDetails(queryResult.case_owner_rid), {type : QueryTypes.SELECT})
+        if(uniqueIds.length > 0) {
+          let getOwnerDetails = await mainDb.query<CaseOwnerType>(rawQueries.getOwnerDetails(uniqueIds), {type : QueryTypes.SELECT})
+          userMap = new Map(getOwnerDetails.map((d : any) => [d.rid, d.name]))
+        }
         const [getCaseStatusDetails] = await mainDb.query<CaseStatusType>(rawQueries.getCaseStatusDetails(queryResult.status_rid), {type : QueryTypes.SELECT})
         if(getAccountDetails) queryResult.account_rnumber = getAccountDetails.r_number
         else queryResult.account_rnumber = null
@@ -286,8 +298,10 @@ export class CaseService {
           queryResult.country_name = null
           queryResult.currency_rid = null
         }
-        if(getOwnerDetails) queryResult.case_owner_name = getOwnerDetails.name
-        else queryResult.case_owner_name = null
+        queryResult.case_owner_name = userMap.get(queryResult.case_owner_rid) || null
+        queryResult.created_by_name = userMap.get(queryResult.created_by) || null
+        queryResult.modified_by_name = userMap.get(queryResult.modified_by) || null
+
         if(getCaseStatusDetails) queryResult.status_name = getCaseStatusDetails.status_name
         else queryResult.status_name = null
         if(getCurrencyDetails) {

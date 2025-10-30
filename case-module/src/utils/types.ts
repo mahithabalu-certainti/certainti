@@ -36,7 +36,16 @@ export type CaseHeadersColumns = {
   case_total_projects : number | null,
   case_total_project_cost : number | null,
   case_total_rd_cost : number | null,
-  case_total_qre_cost : number | null
+  case_total_qre_cost : number | null,
+  r_number : string,
+  planned_submission_date: Date,
+  statutory_submission_date: Date,
+  description?: string,
+  created_by: string | null,
+  modified_by: string | null;
+  created_by_name : string | null,
+  modified_by_name : string | null
+
 }
 
 export type FilingType = {

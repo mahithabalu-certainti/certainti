@@ -209,8 +209,8 @@ export const rawQueries = {
   getCountryDetails (countryRid : string) {
     return `SELECT rid, country_name FROM ${MAIN_SCHEMA_NAME}.country WHERE rid = '${countryRid}'`
   },
-  getOwnerDetails (caseOwnerRid : string) {
-    return `SELECT rid, CONCAT(first_name,' ',last_name) AS name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid = '${caseOwnerRid}'`
+  getOwnerDetails (caseOwnerRid : any[]) {
+    return `SELECT rid, CONCAT(first_name,' ',last_name) AS name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (${caseOwnerRid.map((d : any) => `'${d}'`)})`
   },  
   getCaseStatusDetails (statusRid : string) {
     return `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.case_status WHERE rid = '${statusRid}'`
