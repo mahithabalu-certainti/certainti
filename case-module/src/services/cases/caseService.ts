@@ -627,6 +627,12 @@ export class CaseService {
             }
           })
         }
+        const fetchAccountDetails : any = await this.caseSchemaService.getAccountDetails(data.account_rid);
+        let fetchCurrencyDetails : any
+        if(fetchAccountDetails.currency_rid !== null) {
+          fetchCurrencyDetails = await this.caseSchemaService.getCurrencyDetails(fetchAccountDetails.currency_rid);
+        }
+
         const finalData = geoDataAddedResult.map((d : any) => {
           return {
             rid : d.rid,
@@ -653,7 +659,10 @@ export class CaseService {
             comments : d.comments,
             modified_datetime : d.modified_datetime,
             project_point_of_contact : d.project_point_of_contact,
-            project_technical_point_of_contact : d.project_technical_point_of_contact
+            project_technical_point_of_contact : d.project_technical_point_of_contact,
+            currency_rid : fetchCurrencyDetails.rid,
+            currency_code : fetchCurrencyDetails.currency_code,
+            currency_symbol : fetchCurrencyDetails.currency_symbol
           }
         })
         return {

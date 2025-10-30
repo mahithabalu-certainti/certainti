@@ -1034,6 +1034,18 @@ class CaseSchemaService {
     }
   }
 
+  async getCurrencyDetails (currencyRid : string) {
+    const mainDbSequelize = await initMainDbSequelize();
+    const result = await mainDbSequelize.query(rawQueries.getCurrencyDetails(currencyRid))
+    return result[0][0]
+  }
+
+    async getAccountDetails (accountRid : string) {
+    const mainDbSequelize = await initMainDbSequelize();
+    const result = await mainDbSequelize.query(rawQueries.fetchAccountDetails(accountRid))
+    return result[0][0]
+  }
+
 }
 
 export default CaseSchemaService;
