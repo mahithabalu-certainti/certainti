@@ -1,13 +1,13 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { useToast } from '../../../../hooks';
 import { useManageUserList } from '../../../../admin/service';
-import { Layout, useGetAllCountries } from '../../../../common-service';
+import { AllPermissions, Layout, OnChange } from '../../../../common-service';
 import { CaseFormData } from './form-data';
 import TextButton from '../../../../components/button/text-button';
 import SkeletonForm from '../../../../components/form-builder/skeleton-form';
 import { FormBuilder } from '../../../../components';
-import { CaseFormPayload, SelectOption } from '../../../types';
+import { CaseFormPayload } from '../../../types';
 import {
   useCaseDetails,
   useCreateCase,
@@ -16,7 +16,10 @@ import {
 } from '../../../services/cases/case-service';
 import { CaseIcon } from '../../../../assets';
 import SingleSkeleton from '../../../../components/skeleton-component/singleskeleton';
-import { formatDateToYYYYMMDDWithTime } from '../../../../common-utils';
+import {
+  formatDateToYYYYMMDDWithTime,
+  getDateFormatYYYYMMDD,
+} from '../../../../common-utils';
 import { transformCaseFormPayload } from './utils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
@@ -28,16 +31,30 @@ export const CreateCases: React.FC = () => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const { caseId } = useParams();
+  const [dateConstraints, setDateConstraints] = useState<{
+    planned_min: string;
+    planned_max: string;
+    statutory_min: string;
+    statutory_max: string;
+  }>({
+    planned_min: '',
+    planned_max: '',
+    statutory_min: '',
+    statutory_max: '',
+  });
 
   const { userId } = useSelector<RootState, { userId: unknown }>(
     (state: RootState) => state.auth
   );
+  const { permission } = useSelector((state: RootState) => state.permission);
 
+  const currentYear = new Date().getFullYear();
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
   const accountId = searchParams.get('accountId') || '';
   const accountNumber = searchParams.get('account_number') || '';
   const accountName = searchParams.get('account_name') || '';
-  const countryRid = searchParams.get('country_rid') || '';
+  const sourcePath = searchParams.get('source') || '';
+  // const countryRid = searchParams.get('country_rid') || '';
 
   // User List Api
   const { data: userListData, isLoading: userListLoading } = useManageUserList({
@@ -47,9 +64,8 @@ export const CreateCases: React.FC = () => {
     sortOrder: 'ASC',
   });
 
-  const { data: caseData, isLoading } = useCaseDetails(caseId || '');
+  const { data: caseData, isLoading } = useCaseDetails(caseId || '', accountId);
 
-  const allCountries = useGetAllCountries();
   const updateCase = useUpdateCaseDetails();
   const createCase = useCreateCase();
   const caseFillingTypes = useGetCaseFilingTypes();
@@ -70,30 +86,30 @@ export const CreateCases: React.FC = () => {
     () => ({
       ...caseData,
       ...(caseData && {
-        account_name: accountName || '',
-        account_id: accountNumber || '',
+        account_name: accountName || caseData.account_name || '',
+        account_id: accountNumber || caseData.account_rnumber || '',
         filing_type: caseData.filing_type_rid || '',
         case_name: caseData.case_name || '',
         case_owner: caseData.case_owner_rid || '',
         fiscal_year: caseData.fiscal_year || '',
-        country: caseData.country_rid || '',
-
-        case_startdate: formatDateToYYYYMMDDWithTime(caseData.start_date),
-        planned_submission_date: formatDateToYYYYMMDDWithTime(
-          caseData.planned_submission_date
-        ),
-        statutory_submission_date: formatDateToYYYYMMDDWithTime(
-          caseData.statutory_submission_date
-        ),
+        case_startdate: caseData.case_startdate
+          ? getDateFormatYYYYMMDD(caseData.case_startdate)
+          : '',
+        planned_submission_date: caseData.planned_submission_date
+          ? getDateFormatYYYYMMDD(caseData.planned_submission_date)
+          : '',
+        statutory_submission_date: caseData.statutory_submission_date
+          ? getDateFormatYYYYMMDD(caseData.statutory_submission_date)
+          : '',
         description: caseData.description || '',
         record_id: caseData.rid || '',
         created_on: formatDateToYYYYMMDDWithTime(caseData.created_datetime),
-        created_by: caseData.created_by || '',
+        created_by: caseData.created_by_name || '',
         case_id: caseData.r_number || '',
         updated_on: caseData.modified_datetime
           ? formatDateToYYYYMMDDWithTime(caseData.modified_datetime)
           : '-',
-        updated_by: caseData.modified_by || '-',
+        updated_by: caseData.modified_by_name || '-',
       }),
     }),
     [accountNumber, accountName, caseData]
@@ -117,16 +133,54 @@ export const CreateCases: React.FC = () => {
     );
   }, [caseFillingTypes]);
 
-  const memoizedCountry: SelectOption[] = useMemo(() => {
-    const countries = allCountries.data?.data.country || [];
-    return countries
-      .slice()
-      .sort((a, b) => a.country_name.localeCompare(b.country_name))
-      .map((country) => ({
-        label: country.country_name,
-        value: country.rid,
+  //Permission
+  const casesEditFields = useMemo(
+    () =>
+      permission?.find((item) => item.name === AllPermissions.CASES_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    casesEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [casesEditFields]);
+
+  const onChangeField = ({ fieldName, fieldValue }: OnChange) => {
+    if (fieldName === 'case_startdate') {
+      // When Start Date changes:
+      // - Planned Submission Date must be > Start Date
+      // - Statutory Submission Date must be ≥ Start Date
+      setDateConstraints((prev) => ({
+        ...prev,
+        planned_min: fieldValue as string,
+        statutory_min: fieldValue as string,
+        planned_max: '',
       }));
-  }, [allCountries.data?.data.country]);
+    }
+
+    if (fieldName === 'planned_submission_date') {
+      // When Planned Submission Date changes:
+      // - Statutory Submission Date must be ≥ Planned Submission Date
+      setDateConstraints((prev) => ({
+        ...prev,
+        statutory_min: fieldValue as string,
+        planned_max: '',
+      }));
+    }
+
+    if (fieldName === 'statutory_submission_date') {
+      // When Statutory Submission Date changes:
+      // - Planned Submission Date must be ≤ Statutory Submission Date
+      setDateConstraints((prev) => ({
+        ...prev,
+        planned_max: fieldValue as string,
+      }));
+    }
+  };
 
   const submitData = (formValues: Partial<CaseFormPayload>) => {
     const payload = transformCaseFormPayload(
@@ -152,16 +206,14 @@ export const CreateCases: React.FC = () => {
 
   const formConfig = CaseFormData(
     isEditView,
+    permissionMap,
     caseFilingTypesOptions,
     userListOptions,
-    memoizedCountry
+    dateConstraints
   );
 
   const formLoading =
-    userListLoading ||
-    allCountries.isPending ||
-    isLoading ||
-    caseFillingTypes.isPending;
+    userListLoading || isLoading || caseFillingTypes.isPending;
 
   return (
     <>
@@ -178,7 +230,9 @@ export const CreateCases: React.FC = () => {
               </div>
             ) : (
               <div className='font-semibold text-[12px] leading-[20px] ml-2 mb-[-6px] text-[#7D98B6]'>
-                {`Case ${isEditView ? `> ${caseData?.r_number}` : ''}`}
+                {sourcePath
+                  ? `${sourcePath}${isEditView ? ` > ${caseData?.r_number}` : ''}`
+                  : `Cases ${isEditView ? `> ${caseData?.r_number}` : ''}`}
               </div>
             )}
             <h5 className='text-[16px] font-bold ml-2 text-[#2D3E4F]'>
@@ -228,12 +282,12 @@ export const CreateCases: React.FC = () => {
                     account_name: accountName || '',
                     account_id: accountNumber || '',
                     case_owner: userId || '',
-                    country: countryRid || '',
+                    fiscal_year: currentYear.toString(),
                   }
             }
             outData={submitData}
             formRef={formRef}
-            // onChange={onChangeField}
+            onChange={onChangeField}
             layout={Layout.TYPE_1}
           />
         )}

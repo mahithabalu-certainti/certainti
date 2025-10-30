@@ -6,7 +6,9 @@ import { ListTableColumn } from '../../../../../../components/table/types';
 import { CaseList } from '../../../../../types';
 
 export const getCaseListColumns = (
-  handleViewCaseDetails: (caseItem: CaseList) => void
+  handleViewCaseDetails: (caseItem: CaseList) => void,
+  currencySymbol?: string,
+  permissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<CaseList>[] => {
   return [
     {
@@ -24,6 +26,9 @@ export const getCaseListColumns = (
         borderRight: '1px solid #CBD6E2 !important',
         borderBottom: '1px solid #CBD6E2 !important',
       },
+      hide:
+        !permissionMap?.['r_number']?.edit &&
+        !permissionMap?.['r_number']?.read,
       render: (row) => (
         <span
           className='cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
@@ -36,31 +41,33 @@ export const getCaseListColumns = (
     {
       id: 'filing_type_name',
       label: 'Filing Type',
-      width: 140,
+      width: 120,
       sortable: true,
       sortId: 'filing_type_name',
+      hide:
+        !permissionMap?.['filing_type_rid']?.edit &&
+        !permissionMap?.['filing_type_rid']?.read,
     },
     {
       id: 'case_name',
       label: 'Case Name',
-      width: 180,
+      width: 200,
       sortable: true,
       sortId: 'case_name',
+      hide:
+        !permissionMap?.['case_name']?.edit &&
+        !permissionMap?.['case_name']?.read,
     },
     {
       id: 'fiscal_year',
       label: 'Fiscal Year',
-      width: 120,
+      width: 110,
       sortable: true,
       sortId: 'fiscal_year',
       render: (row) => (row.fiscal_year ? `FY-${row.fiscal_year}` : '-'),
-    },
-    {
-      id: 'country',
-      label: 'Country',
-      width: 140,
-      sortable: true,
-      sortId: 'country',
+      hide:
+        !permissionMap?.['fiscal_year']?.edit &&
+        !permissionMap?.['fiscal_year']?.read,
     },
     {
       id: 'case_owner_name',
@@ -68,80 +75,113 @@ export const getCaseListColumns = (
       width: 180,
       sortable: true,
       sortId: 'case_owner_name',
+      hide:
+        !permissionMap?.['case_owner_rid']?.edit &&
+        !permissionMap?.['case_owner_rid']?.read,
     },
     {
-      id: 'total_projects_cost',
+      id: 'case_total_project_cost',
       label: 'Total Case Project Cost',
       width: 180,
       sortable: true,
-      sortId: 'total_projects_cost',
+      sortId: 'case_total_project_cost',
       sx: {
         textAlign: 'right',
       },
+      hide:
+        !permissionMap?.['case_total_project_cost']?.edit &&
+        !permissionMap?.['case_total_project_cost']?.read,
       render: (row) =>
-        row.total_projects_cost ? costDisplay(row.total_projects_cost) : '-',
+        row.case_total_project_cost
+          ? costDisplay(row.case_total_project_cost, currencySymbol)
+          : '-',
     },
     {
-      id: 'total_qre_cost',
+      id: 'case_total_qre_cost',
       label: 'Case Project QRE Cost',
       width: 180,
       sortable: true,
-      sortId: 'total_qre_cost',
+      sortId: 'case_total_qre_cost',
       sx: {
         textAlign: 'right',
       },
+      hide:
+        !permissionMap?.['case_total_qre_cost']?.edit &&
+        !permissionMap?.['case_total_qre_cost']?.read,
       render: (row) =>
-        row.total_qre_cost ? costDisplay(row.total_qre_cost) : '-',
+        row.case_total_qre_cost
+          ? costDisplay(row.case_total_qre_cost, currencySymbol)
+          : '-',
     },
     {
-      id: 'total_project_rd_credits',
+      id: 'case_total_rd_cost',
       label: 'Case Project RD Credit',
       width: 180,
       sortable: true,
-      sortId: 'total_project_rd_credits',
+      sortId: 'case_total_rd_cost',
       sx: {
         textAlign: 'right',
       },
+      hide:
+        !permissionMap?.['case_total_rd_cost']?.edit &&
+        !permissionMap?.['case_total_rd_cost']?.read,
       render: (row) =>
-        row.total_project_rd_credits
-          ? costDisplay(row.total_project_rd_credits)
+        row.case_total_rd_cost
+          ? costDisplay(row.case_total_rd_cost, currencySymbol)
           : '-',
     },
     {
       id: 'created_datetime',
       label: 'Created On',
-      width: 160,
+      width: 190,
       sortable: true,
       sortId: 'created_datetime',
+      hide:
+        !permissionMap?.['created_datetime']?.edit &&
+        !permissionMap?.['created_datetime']?.read,
+
       render: (row) =>
         row.created_datetime
           ? formatDateToYYYYMMDDWithTime(row.created_datetime)
           : '-',
     },
     {
-      id: 'submitted_on',
+      id: 'submitted_datetime',
       label: 'Submitted On',
-      width: 160,
+      width: 190,
       sortable: true,
-      sortId: 'submitted_on',
+      sortId: 'submitted_datetime',
+      hide:
+        !permissionMap?.['submitted_datetime']?.edit &&
+        !permissionMap?.['submitted_datetime']?.read,
       render: (row) =>
-        row.submitted_on ? formatDateToYYYYMMDDWithTime(row.submitted_on) : '-',
+        row.submitted_datetime
+          ? formatDateToYYYYMMDDWithTime(row.submitted_datetime)
+          : '-',
     },
     {
-      id: 'approved_on',
+      id: 'approved_datetime',
       label: 'Approved On',
-      width: 160,
+      width: 190,
       sortable: true,
-      sortId: 'approved_on',
+      sortId: 'approved_datetime',
+      hide:
+        !permissionMap?.['approved_datetime']?.edit &&
+        !permissionMap?.['approved_datetime']?.read,
       render: (row) =>
-        row.approved_on ? formatDateToYYYYMMDDWithTime(row.approved_on) : '-',
+        row.approved_datetime
+          ? formatDateToYYYYMMDDWithTime(row.approved_datetime)
+          : '-',
     },
     {
       id: 'status_name',
       label: 'Status',
-      width: 140,
+      width: 100,
       sortable: true,
       sortId: 'status_name',
+      hide:
+        !permissionMap?.['status_rid']?.edit &&
+        !permissionMap?.['status_rid']?.read,
     },
   ];
 };

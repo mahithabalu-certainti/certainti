@@ -2,87 +2,76 @@ import { useMutation, useQuery, UseQueryResult } from '@tanstack/react-query';
 import { caseServiceApi } from '../../../api/api';
 import {
   CaseDetails,
+  CaseDetailsResponse,
   CaseFilingTypeResponse,
   CaseFormPayload,
   CaseList,
+  CaseListExportParams,
   CaseListParams,
+  CaseListResponse,
+  CaseStatusResponse,
   ExportCaseListResponse,
 } from '../../types/cases';
 import { CommonApiResponse } from '../../../common-service';
-// import { CaseDetailsResponse } from '../../types';
-import {
-  CaseDetailsMockData,
-  CaseListMockData,
-} from '../../mockdata/case-mockdata';
+import { getCaseExportListURL, getCaseListURL } from '../urls';
 
 // List
-export const getCaseListUrl = (): string => '/api/cases/list';
-
 export const fetchCaseList = async (
-  params: CaseListParams
+  params: CaseListParams,
+  accountId?: string
 ): Promise<{ cases: CaseList[]; count: number }> => {
-  // Actual API call (uncomment when ready)
-  // const { data } = await caseServiceApi.post<CaseListResponse>(
-  //   getCaseListUrl(),
-  //   params
-  // );
-  // return {
-  //   cases: data.data.cases,
-  //   count: data.data.totalCount,
-  // };
-
-  console.log('case-list-params', params);
-  await new Promise((resolve) => setTimeout(resolve, 2000));
-
-  // Mock data fallback
+  const { data } = await caseServiceApi.get<CaseListResponse>(
+    getCaseListURL(params, accountId)
+  );
   return {
-    cases: CaseListMockData.data.caseInfo,
-    count: CaseListMockData.data.count,
+    cases: data.data.caseInfo,
+    count: data.data.count,
   };
 };
 
 export const useCaseList = (
   params: CaseListParams,
+  accountId?: string,
   refresh?: number
 ): UseQueryResult<{ cases: CaseList[]; count: number }, Error> => {
   return useQuery<{ cases: CaseList[]; count: number }, Error>({
-    queryKey: ['case-list', params, refresh],
-    queryFn: () => fetchCaseList(params),
+    queryKey: ['case-list', params, accountId, refresh],
+    queryFn: () => fetchCaseList(params, accountId),
     retry: 0,
     gcTime: 0,
+    enabled: !!accountId,
   });
 };
 
 // Details
-export const getCaseDetailsUrl = (caseId: string): string => {
-  return `/api/cases/detail/${caseId}`;
+export const getCaseDetailsUrl = (
+  caseId: string,
+  accountId: string
+): string => {
+  return `/api/cases/details/${accountId}/${caseId}`;
 };
 
 export const fetchCaseDetails = async (
-  caseId: string
+  caseId: string,
+  accountId: string
 ): Promise<CaseDetails> => {
   // Actual API call
-  // const response = await caseServiceApi.get<CaseDetailsResponse>(
-  //   getCaseDetailsUrl(caseId)
-  // );
-  // return response.data.data.caseDetails;
-
-  console.log('case-details-params', caseId);
-  await new Promise((resolve) => setTimeout(resolve, 2000));
-
-  // Mock return (replace with actual API data above)
-  return CaseDetailsMockData.data.caseDetails;
+  const response = await caseServiceApi.get<CaseDetailsResponse>(
+    getCaseDetailsUrl(caseId, accountId)
+  );
+  return response.data.data;
 };
 
 export const useCaseDetails = (
-  caseId: string
+  caseId: string,
+  accountId: string
 ): UseQueryResult<CaseDetails | undefined, Error> => {
   return useQuery<CaseDetails | undefined, Error>({
-    queryKey: ['case-details', caseId],
-    queryFn: () => fetchCaseDetails(caseId),
+    queryKey: ['case-details', caseId, accountId],
+    queryFn: () => fetchCaseDetails(caseId, accountId),
     retry: 0,
     gcTime: 0,
-    enabled: !!caseId,
+    enabled: !!caseId && !!accountId,
   });
 };
 
@@ -138,15 +127,15 @@ export const useUpdateCaseDetails = () => {
 };
 
 // Export
-export const getCaseExportUrl = (): string => '/api/cases/export';
-
-export const exportCaseList = async (params: CaseListParams): Promise<void> => {
+export const ExportCaseList = async (
+  params: CaseListExportParams,
+  accountId?: string
+): Promise<void> => {
   try {
     const filename = `cases_list.xlsx`;
 
-    const response = await caseServiceApi.post<ExportCaseListResponse>(
-      getCaseExportUrl(),
-      params
+    const response = await caseServiceApi.get<ExportCaseListResponse>(
+      getCaseExportListURL(params, accountId)
     );
 
     const base64Data = response.data?.data;
@@ -197,6 +186,32 @@ export const useGetCaseFilingTypes = () => {
   return useQuery<CaseFilingTypeResponse, Error>({
     queryKey: ['case-filing-types'],
     queryFn: fetchCaseFilingTypes,
+    retry: 0,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  });
+};
+
+// Case Status
+export const getCaseStatusUrl = (): string => '/api/cases/caseStatus';
+
+export const fetchCaseStatuses = async (): Promise<CaseStatusResponse> => {
+  try {
+    const { data } =
+      await caseServiceApi.get<CaseStatusResponse>(getCaseStatusUrl());
+    return data;
+  } catch (error) {
+    console.error('Error fetching case statuses:', error);
+    throw error;
+  }
+};
+
+export const useGetCaseStatuses = () => {
+  return useQuery<CaseStatusResponse, Error>({
+    queryKey: ['case-statuses'],
+    queryFn: fetchCaseStatuses,
     retry: 0,
     staleTime: Infinity,
     gcTime: Infinity,
