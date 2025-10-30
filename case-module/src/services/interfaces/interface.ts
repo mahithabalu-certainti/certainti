@@ -32,5 +32,20 @@ export interface ICaseService {
     errorMessage?: string;
     data?: { caseStatus: any };
   }>;
+  listAllCasesAccount(
+    data: any,
+    filters: Record<string, any>,
+    userId: string,
+    apiType: string,
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { caseInfo: any; count: number };
+  }>;
+  getAllowedExportFields(
+      userId: string,
+      permission_name: string
+    ): Promise<any[]>;
   fetchProjectsForAssign(data : any) : Promise<any>
 }

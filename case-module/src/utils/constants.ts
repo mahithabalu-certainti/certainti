@@ -38,6 +38,29 @@ export const NODE_ENV = {
   PROD: "PRODUCTION",
 };
 
+export const ALPHANUMERIC_CONDITIONS = {
+  equals: "equals",
+  notEquals: "not_equals",
+  contains: "contains",
+  isEmpty: "is_empty",
+  IN: "in",
+  less_than: "less_than",
+  greater_than: "greater_than",
+  between: "between",
+  before: "before",
+  after: "after",
+};
+
+export const mainTableFilters : Record<any, any> = {
+  created_user_name : "created_user_name",
+  updated_user_name : "updated_user_name",
+  status_name : "status_name",
+  modified_by: "modified_by",
+  modified_user_name:"modified_user_name",
+  filing_type_name : "filing_type_name",
+  case_owner_name : "case_owner_name"
+}
+
 export const STATUS_MESSAGE = {
   caseCreated: "Case created successfully",
   caseUpdated: "Case updated successfully",
@@ -54,6 +77,29 @@ export const caseStatuses = {
   SUBMITTED: "Submitted",
   CLOSED: "Closed"
 };
+
+export const casesFieldMappings = [
+     
+    { permissionField: 'r_number', exportField: 'Case ID', dataField: 'r_number' },
+    { permissionField: 'filing_type_rid', exportField: 'Filing Type', dataField: 'filing_type_name' },
+    { permissionField: 'case_name', exportField: 'Case Name', dataField: 'case_name' },
+    { permissionField: 'fiscal_year', exportField: 'Fiscal Year', dataField: 'fiscal_year' },
+    { permissionField: 'case_owner_rid', exportField: 'Case Owner', dataField: 'case_owner_name' },
+    { permissionField: 'case_total_project_cost', exportField: 'Total Case Project Cost', dataField: 'case_total_project_cost' },
+    { permissionField: 'case_total_qre_cost', exportField: 'Case Project QRE Cost', dataField: 'case_total_qre_cost' },
+    { permissionField: 'case_total_rd_cost', exportField: 'Case Project RD Credit', dataField: 'case_total_rd_cost' },
+   // { permissionField: 'created_by', exportField: 'Created By', dataField: 'created_by' },
+    { permissionField: 'created_datetime', exportField: 'Created On', dataField: 'created_datetime' },
+    { permissionField: 'submitted_datetime', exportField: 'Submitted On', dataField: 'submitted_datetime' },
+    { permissionField: 'approved_datetime', exportField: 'Approved On', dataField: 'approved_datetime' },
+
+    { permissionField: 'status_rid', exportField: 'Status', dataField: 'status_name' }
+    //{ permissionField: 'modified_by', exportField: 'Updated By', dataField: 'modified_by' },
+    //{ permissionField: 'modified_datetime', exportField: 'Updated On', dataField: 'modified_datetime' }
+   
+  ];
+
+
 
 export const rawQueries = {
   fetchParentAccountDetails: `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
@@ -85,6 +131,16 @@ export const rawQueries = {
     return `
     SELECT rid, first_name, last_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (${ids})`;
   },
+  fetchStatus(statusIds: any): string {
+    let ids = statusIds.map((d: any) => `'${d}'`);
+    return `
+    SELECT rid, status_name as name FROM ${MAIN_SCHEMA_NAME}.case_status WHERE rid IN (${ids})`;
+  },
+  fetchFilingType(filingTypeIds: any): string {
+    let ids = filingTypeIds.map((d: any) => `'${d}'`);
+    return `
+    SELECT rid, filing_type_name as name FROM ${MAIN_SCHEMA_NAME}.case_filing_type WHERE rid IN (${ids})`;
+  },
   getCaseFilingType() {
     return `
       SELECT rid, filing_type_name 
@@ -104,6 +160,31 @@ export const rawQueries = {
   fetchCaseStatusByType(type: string) {
     return `
     SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.case_status WHERE status_name = '${type}'`;
+  },
+  fetchUserProfileId(): string {
+    return `
+      SELECT profile_rid FROM ${MAIN_SCHEMA_NAME}.user WHERE rid = :userId LIMIT 1;
+    `;
+  },
+  fetchProfilePermissions(): string {
+    return `
+      SELECT pf.field_desc, pf.field_name, pfa.read, pfa.edit
+      FROM ${MAIN_SCHEMA_NAME}.profile_fields_access pfa
+      JOIN ${MAIN_SCHEMA_NAME}.permission_fields pf ON pfa.permission_field_id = pf.rid
+      JOIN ${MAIN_SCHEMA_NAME}.module_permission mp ON pf.module_permission_id = mp.rid
+        WHERE mp.permission_name = :permissionName
+          AND pfa.profile_id = :profileId
+        `;
+  },
+  fetchUserPermissions(): string {
+    return `
+      SELECT pf.field_desc, pf.field_name, ufa.read, ufa.edit
+      FROM ${MAIN_SCHEMA_NAME}.user_fields_access ufa
+      JOIN ${MAIN_SCHEMA_NAME}.permission_fields pf ON ufa.permission_field_id = pf.rid
+      JOIN ${MAIN_SCHEMA_NAME}.module_permission mp ON pf.module_permission_id = mp.rid
+      WHERE mp.permission_name = :permissionName
+        AND ufa.user_id = :userId
+    `;
   },
     fetchAccountDetails (accountRid : string) {
     return `SELECT r_number, account_name, rid, country_rid, currency_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`

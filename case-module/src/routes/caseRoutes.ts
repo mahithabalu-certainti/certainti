@@ -8,7 +8,7 @@ import { checkUserStatusMiddleware } from "../middlewares/authmiddleware";
 const routes: Router = Router();
  routes.post(
    "/new",
-   checkUserStatusMiddleware("NA"),
+   checkUserStatusMiddleware("cases_create"),
    controller.caseController.createCases
  );
  routes.get(
@@ -18,7 +18,7 @@ const routes: Router = Router();
  )
  routes.put(
    "/update",
-   checkUserStatusMiddleware("NA"),
+   checkUserStatusMiddleware("cases_view_edit"),
    controller.caseController.updateCases
  );
  routes.get(
@@ -31,6 +31,8 @@ routes.get(
   checkUserStatusMiddleware("NA"),
   controller.caseController.getCaseStatus
 );
+routes.get('/list', checkUserStatusMiddleware("cases_view_edit"), controller.caseController.listAllCasesAccount)
+routes.get('/export', checkUserStatusMiddleware("cases_export"), controller.caseController.exportAllCasesAccount)
 routes.post(
   '/projects',
   checkUserStatusMiddleware("NA"),

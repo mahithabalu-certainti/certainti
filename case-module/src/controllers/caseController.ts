@@ -1,16 +1,24 @@
 import { Request, Response } from "express";
 import {
   errorLog,
+  generateExcelBase64,
   handleCustomResponse,
   handleErrorResponse,
   handleSuccessResponse,
+  isValidTimezone,
   logMessage,
   successLog,
   validateRequest,
 } from "../utils/helpers";
-import { HttpStatus, STATUS_MESSAGE } from "../utils/constants";
-import { createCaseSchema, updateCaseSchema } from "../lib/joi/schemas/schema";
+import { casesFieldMappings, HttpStatus, STATUS_MESSAGE } from "../utils/constants";
+import {
+  createCaseSchema,
+  exportCasesAccountSchema,
+  listCasesAccountSchema,
+  updateCaseSchema,
+} from "../lib/joi/schemas/schema";
 import configurations from "../config/config";
+import moment from "moment";
 
 const services = configurations.getInstance().getServices();
 const caseService = services.caseService;
@@ -315,6 +323,260 @@ async function getCaseStatus(req: Request, res: Response): Promise<void> {
   }
 }
 
+/**
+ * Lists all cases for a specific account with filtering, sorting, and pagination support.
+ *
+ * This controller method performs the following steps:
+ * 1. Validates the incoming request parameters against the list cases schema.
+ * 2. Extracts and parses filter parameters from the request query string.
+ * 3. Extracts the user ID from the `x-user-id` request header for authentication.
+ * 4. Calls the `listAllCasesAccount` method from the `caseService` to fetch paginated case data.
+ * 5. Returns a success response with case data and pagination info, or an error response if failed.
+ *
+ * @param {Request} req - Express request object containing query parameters, filters, and user authentication headers.
+ * @param {Response} res - Express response object used to send the HTTP response with case data.
+ *
+ * @returns {Promise<void>} - A Promise that resolves after sending the HTTP response.
+ *
+ * @description
+ * - Supports advanced filtering by case name, status, owner, fiscal year, and other case attributes.
+ * - Provides pagination with configurable page size and offset.
+ * - Includes sorting capabilities by various case fields.
+ * - Returns comprehensive case information including owner names, status descriptions, and filing types.
+ * - Used by the frontend to display case lists with search and filter functionality.
+ */
+async function listAllCasesAccount(req: Request, res: Response) {
+  try {
+    const methodName = "List All Cases Account";
+
+    const userId = req.headers["x-user-id"] as string;
+    const value = await validateRequest(
+      req,
+      listCasesAccountSchema,
+      res,
+      "GET"
+    );
+    if (!value) return;
+    let parsedFilters: Record<string, any> = {};
+    try {
+      parsedFilters = JSON.parse(value.filters);
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(
+        req.body
+      )} userId: ${userId}`
+    );
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const result = await caseService.listAllCasesAccount(
+      value,
+      parsedFilters,
+      userId,
+      "list"
+    );
+    if (result.statusCode == HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, result.data);
+      return;
+    } else {
+      errorLog(methodName, "No data found");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        result.errorMessage
+      );
+      return;
+    }
+  } catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
+/**
+ * Exports all cases for a specific account to an Excel file with user permission-based field filtering.
+ *
+ * This controller method performs the following steps:
+ * 1. Validates the incoming request parameters against the export cases schema.
+ * 2. Extracts and parses filter parameters from the request query string.
+ * 3. Extracts the user ID from the `x-user-id` request header for authentication.
+ * 4. Calls the `listAllCasesAccount` method from the `caseService` with "download" mode to fetch all matching case data.
+ * 5. Retrieves user's field-level permissions for the "cases_view_edit" permission.
+ * 6. Filters the export data based on user's allowed fields and permissions.
+ * 7. Formats datetime fields according to the specified timezone or defaults to UTC.
+ * 8. Generates an Excel file in base64 format and returns it in the response.
+ *
+ * @param {Request} req - Express request object containing query parameters, filters, timezone, and user authentication headers.
+ * @param {Response} res - Express response object used to send the HTTP response with the Excel file data.
+ *
+ * @returns {Promise<void>} - A Promise that resolves after sending the HTTP response with Excel file.
+ *
+ * @description
+ * - Supports the same filtering capabilities as the list function but exports all matching records.
+ * - Respects user-level and profile-level field permissions for data security.
+ * - Handles timezone conversion for datetime fields based on user preferences.
+ * - Generates Excel files with properly formatted case data including financial information.
+ * - Maps internal field names to user-friendly export column headers.
+ * - Used for generating case reports and data exports for external analysis.
+ */
+async function exportAllCasesAccount(req: Request, res: Response) {
+  try {
+    const methodName = "Export All Cases Account";
+    const userId = req.headers["x-user-id"] as string;
+    const value = await validateRequest(
+      req,
+      exportCasesAccountSchema,
+      res,
+      "GET"
+    );
+    if (!value) return;
+    let parsedFilters: Record<string, any> = {};
+    try {
+      parsedFilters = JSON.parse(value.filters);
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(
+        req.body
+      )} userId: ${userId}`
+    );
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const result = await caseService.listAllCasesAccount(
+      value,
+      parsedFilters,
+      userId,
+      "download"
+    );
+    const fields = await caseService.getAllowedExportFields(
+      userId,
+      "cases_view_edit"
+    );
+    const allowedFieldSet = new Set<string>();
+    for (const field of fields) {
+      if (field.read) {
+        allowedFieldSet.add(field.field_name);
+      }
+    }
+    const isValidTZ = value.timezone && isValidTimezone(value.timezone);
+    const formatDate = (date?: Date) => {
+      const offsetMs = (5 * 60 + 30) * 60 * 1000;
+      const convertedDate = new Date(date?.getTime() ?? "" + offsetMs);
+      return date
+        ? moment
+            .utc(convertedDate)
+            .tz(isValidTZ ? value.timezone : "UTC")
+            .utcOffset("-012:30")
+            .format("YYYY-MMM-DD, hh:mm:ss A")
+        : null;
+    };
+    if (result.statusCode === HttpStatus.SUCCESS) {
+      const finalStructuredData =
+        result?.data?.caseInfo.length < 1
+          ? []
+          : result?.data?.caseInfo.map((d: any) => {
+              let resultMap: { [key: string]: any } = {
+                r_number: d.r_number,
+                fiscal_year: d.fiscal_year,
+                status_name: d.status_name,
+                case_owner_name: d.case_owner_name,
+                filing_type_name: d.filing_type_name,
+                case_total_project_cost: d.case_total_project_cost,
+                case_total_projects: d.case_total_projects,
+                case_total_rd_cost: d.case_total_rd_cost,
+                case_total_qre_cost: d.case_total_qre_cost,
+                description: d.description,
+                case_name: d.case_name,
+                created_by: d.created_user_name,
+                created_datetime: formatDate(d.created_datetime),
+                modified_by: d.modified_user_name,
+                modified_datetime:
+                  d.modified_datetime == null
+                    ? ""
+                    : formatDate(d.modified_datetime),
+                submitted_datetime:
+                  d.submitted_datetime == null
+                    ? ""
+                    : formatDate(d.submitted_datetime),
+                approved_datetime:
+                  d.approved_datetime == null
+                    ? ""
+                    : formatDate(d.approved_datetime),
+              };
+
+              // Build exportRecord using allowed fields and resultMap
+              const exportRecord: Record<string, any> = {};
+              casesFieldMappings.forEach((mapping) => {
+                if (allowedFieldSet.has(mapping.permissionField)) {
+                  exportRecord[mapping.exportField] =
+                    resultMap[mapping.dataField];
+                }
+              });
+
+              return exportRecord;
+            });
+
+      const generateBase64Response = await generateExcelBase64(
+        finalStructuredData,
+        "Cases"
+      );
+      handleSuccessResponse(res, generateBase64Response);
+    } else {
+      errorLog(methodName, "No data found");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        result.errorMessage
+      );
+      /* return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.dataNotFound,
+        data: result.data,
+      });
+      */
+    }
+  } catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
 async function fetchProjectForAssign (req : Request, res : Response) : Promise<any> {
   const methodName = "fetchProjectForAssign"
   try {
@@ -365,5 +627,7 @@ export default {
   getCaseFilingType,
   getCaseHeadersDetails,
   getCaseStatus,
+  listAllCasesAccount,
+  exportAllCasesAccount,
   fetchProjectForAssign
 };
