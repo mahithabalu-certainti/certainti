@@ -31,8 +31,8 @@ const QrePercentHistoryModal: React.FC<QrePercentHistoryModalProps> = ({
   onClose,
   content,
 }) => {
-  let projectSummaryData: AttributeValueRow[] = [];
-  let assessmentDetailsData: AssessmentDetailsRow[] = [];
+  const projectSummaryData: AttributeValueRow[] = [];
+  const assessmentDetailsData: AssessmentDetailsRow[] = [];
 
   try {
     if (typeof content === 'string' && content.trim().startsWith('{')) {
@@ -56,7 +56,7 @@ const QrePercentHistoryModal: React.FC<QrePercentHistoryModalProps> = ({
           projectSummaryData.push({
             id: key,
             attribute: key,
-            value: String(value) ?? '-',
+            value: String(value ?? '-'),
           });
         }
       });

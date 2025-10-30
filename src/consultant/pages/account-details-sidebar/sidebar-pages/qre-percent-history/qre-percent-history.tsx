@@ -36,6 +36,7 @@ const QrePercentHistory = ({
   refetchAccountDetails,
 }: QrePercentHistoryProps) => {
   const { accountid } = useParams();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState(0);
