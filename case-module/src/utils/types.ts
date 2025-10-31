@@ -29,6 +29,7 @@ export type CaseHeadersColumns = {
   currency_rid : string | null,
   filing_type_name : string | null,
   country_name : string | null,
+  country_code : string | null,
   case_owner_name : string | null,
   account_rnumber : string | null,
   currency_code : string | null,
@@ -37,6 +38,9 @@ export type CaseHeadersColumns = {
   case_total_project_cost : number | null,
   case_total_rd_cost : number | null,
   case_total_qre_cost : number | null,
+  case_total_qualified_projects : number | null,
+  case_total_qualified_project_cost : number | null,
+  case_completion_percentage: number | null,
   r_number : string,
   planned_submission_date: Date,
   statutory_submission_date: Date,
@@ -56,6 +60,7 @@ export type FilingType = {
 export type CountryType = {
   rid : string,
   country_name : string
+  country_code: string
 }
 
 export type AccountType = {

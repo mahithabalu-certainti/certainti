@@ -1,27 +1,26 @@
 import { Router } from "express";
 import controller from "../controllers";
 
-
 import multer from "multer";
 import { checkUserStatusMiddleware } from "../middlewares/authmiddleware";
 
 const routes: Router = Router();
- routes.post(
-   "/new",
-   checkUserStatusMiddleware("cases_create"),
-   controller.caseController.createCases
- );
- routes.get(
+routes.post(
+  "/new",
+  checkUserStatusMiddleware("cases_create"),
+  controller.caseController.createCases
+);
+routes.get(
   "/details/:accountRid/:caseRid",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("cases_view_edit"),
   controller.caseController.getCaseHeadersDetails
- )
- routes.put(
-   "/update",
-   checkUserStatusMiddleware("cases_view_edit"),
-   controller.caseController.updateCases
- );
- routes.get(
+);
+routes.put(
+  "/update",
+  checkUserStatusMiddleware("cases_view_edit"),
+  controller.caseController.updateCases
+);
+routes.get(
   "/caseFilingType",
   checkUserStatusMiddleware("NA"),
   controller.caseController.getCaseFilingType
@@ -31,32 +30,47 @@ routes.get(
   checkUserStatusMiddleware("NA"),
   controller.caseController.getCaseStatus
 );
-routes.get('/list', checkUserStatusMiddleware("cases_view_edit"), controller.caseController.listAllCasesAccount)
-routes.get('/list/caseSummary', checkUserStatusMiddleware("cases_view_edit"), controller.caseController.listAllCasesSummary)
-routes.get('/export', checkUserStatusMiddleware("cases_export"), controller.caseController.exportAllCasesAccount)
-routes.get('/export/caseSummary', checkUserStatusMiddleware("cases_export"), controller.caseController.exportAllCasesSummary)
+routes.get(
+  "/list",
+  checkUserStatusMiddleware("cases_view_edit"),
+  controller.caseController.listAllCasesAccount
+);
+routes.get(
+  "/list/caseSummary",
+  checkUserStatusMiddleware("cases_view_edit"),
+  controller.caseController.listAllCasesSummary
+);
+routes.get(
+  "/export",
+  checkUserStatusMiddleware("cases_export"),
+  controller.caseController.exportAllCasesAccount
+);
+routes.get(
+  "/export/caseSummary",
+  checkUserStatusMiddleware("cases_export"),
+  controller.caseController.exportAllCasesSummary
+);
 routes.post(
-  '/projects',
+  "/projects",
   checkUserStatusMiddleware("NA"),
   controller.caseController.fetchProjectForAssign
-)
+);
 routes.post(
-  '/projects/assign',
+  "/projects/assign",
   checkUserStatusMiddleware("NA"),
   controller.caseController.assignProjectToCase
-)
+);
 
 routes.post(
-  '/assignedProjects',
+  "/assignedProjects",
   checkUserStatusMiddleware("NA"),
   controller.caseController.fetchAssignedprojects
-)
+);
 
 routes.post(
-  '/projects/delete',
+  "/projects/delete",
   checkUserStatusMiddleware("NA"),
   controller.caseController.deleteProjectFromCase
-)
-
+);
 
 export default routes;

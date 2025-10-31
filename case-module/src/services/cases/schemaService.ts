@@ -21,17 +21,32 @@ import {
   mainTableFilters,
   rawQueries,
   SCHEMANAME_PREFIX,
-  STATUS_MESSAGE
+  STATUS_MESSAGE,
 } from "../../utils/constants";
 import { errorLog, logMessage } from "../../utils/helpers";
-import { assignProjectType, CaseHeadersColumns, filterType, ICreateCases } from "../../utils/types";
+import {
+  assignProjectType,
+  CaseHeadersColumns,
+  filterType,
+  ICreateCases,
+} from "../../utils/types";
 
 // Define filterType interface
 import { Case, setupCaseSequence } from "../../models/caseModel";
-import { fetchCasesHeadersDatas, fetchProjectsForCases,listAllCasesSummaryQuery } from "../../utils/rawQueries";
+import {
+  fetchCasesHeadersDatas,
+  fetchProjectsForCases,
+  listAllCasesSummaryQuery,
+} from "../../utils/rawQueries";
 import { CaseProject } from "../../models/caseProjectsModel";
-import { CaseTimeline, setupCaseTimelineSequence } from "../../models/caseTimeline";
-import { CaseHistory, setupCaseHistorySequence } from "../../models/caseHistory";
+import {
+  CaseTimeline,
+  setupCaseTimelineSequence,
+} from "../../models/caseTimeline";
+import {
+  CaseHistory,
+  setupCaseHistorySequence,
+} from "../../models/caseHistory";
 
 class CaseSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -1516,33 +1531,39 @@ class CaseSchemaService {
 // Utility function for optimized column sorting
 const getSortColumn = (sortField: string): string => {
   const sortMapping: Record<string, string> = {
-    'r_number': 'c.r_number',
-    'created_datetime': 'c.created_datetime',
-    'modified_datetime': 'c.modified_datetime',
-    'case_total_projects': 'c.case_total_projects',
-    'case_total_qualified_projects': 'c.case_total_qualified_projects',
-    'case_total_project_cost': 'c.case_total_project_cost',
-    'case_total_rd_cost': 'c.case_total_rd_cost',
-    'case_total_qre_cost': 'c.case_total_qre_cost',
-    'submitted_datetime': 'c.submitted_datetime',
-    'approved_datetime': 'c.approved_datetime',
-    'status_name': 'c.status_name',
-    'created_user_name': 'c.created_user_name',
-    'updated_user_name': 'c.updated_user_name',
-    'account_name': 'c.account_name',
-    'country_name': 'c.country_name',
-    'fiscal_year': 'c.fiscal_year',
-    'case_owner_name': 'c.case_owner_name',
-    'case_name': 'c.case_name',
-    'createdAt': 'c.created_datetime'
+    r_number: "c.r_number",
+    created_datetime: "c.created_datetime",
+    modified_datetime: "c.modified_datetime",
+    case_total_projects: "c.case_total_projects",
+    case_total_qualified_projects: "c.case_total_qualified_projects",
+    case_total_project_cost: "c.case_total_project_cost",
+    case_total_rd_cost: "c.case_total_rd_cost",
+    case_total_qre_cost: "c.case_total_qre_cost",
+    submitted_datetime: "c.submitted_datetime",
+    approved_datetime: "c.approved_datetime",
+    status_name: "c.status_name",
+    created_user_name: "c.created_user_name",
+    updated_user_name: "c.updated_user_name",
+    account_name: "c.account_name",
+    country_name: "c.country_name",
+    fiscal_year: "c.fiscal_year",
+    case_owner_name: "c.case_owner_name",
+    case_name: "c.case_name",
+    createdAt: "c.created_datetime",
   };
-  
-  return sortMapping[sortField] || 'c.r_number';
+
+  return sortMapping[sortField] || "c.r_number";
 };
 
 export default CaseSchemaService;
-function filterForCases(filters: filterType, andConditions: string, filteredQueryArray: string[], filterTypes: any, filterColumns: any) {
- let filteredColumns: string | undefined;
+function filterForCases(
+  filters: filterType,
+  andConditions: string,
+  filteredQueryArray: string[],
+  filterTypes: any,
+  filterColumns: any
+) {
+  let filteredColumns: string | undefined;
   if (Object.keys(filters).length > 0) {
     for (let [key, conditions] of Object.entries(filters)) {
       if (Object.keys(filterTypes).includes(key)) {
@@ -1553,26 +1574,39 @@ function filterForCases(filters: filterType, andConditions: string, filteredQuer
         switch (filterTypes[key]) {
           case "string": {
             let dynamicReference = ``;
-            
-           if (filteredColumns == "account_name") dynamicReference = `a`;
-           if (filteredColumns == "country_name") dynamicReference = `c`;
-           else dynamicReference = `cs`;
-            
-            const stringCondition = buildStringFilterCondition(condition, values, filteredColumns!, dynamicReference);
+
+            if (filteredColumns == "account_name") dynamicReference = `a`;
+            if (filteredColumns == "country_name") dynamicReference = `c`;
+            else dynamicReference = `cs`;
+
+            const stringCondition = buildStringFilterCondition(
+              condition,
+              values,
+              filteredColumns!,
+              dynamicReference
+            );
             if (stringCondition) {
               filteredQueryArray.push(stringCondition);
             }
             break;
           }
           case "number": {
-            const numericCondition = buildNumericFilterCondition(condition, values, filteredColumns!);
+            const numericCondition = buildNumericFilterCondition(
+              condition,
+              values,
+              filteredColumns!
+            );
             if (numericCondition) {
               filteredQueryArray.push(numericCondition);
             }
             break;
           }
           case "datetime": {
-            const datetimeCondition = buildDatetimeFilterCondition(condition, values, filteredColumns!);
+            const datetimeCondition = buildDatetimeFilterCondition(
+              condition,
+              values,
+              filteredColumns!
+            );
             if (datetimeCondition) {
               filteredQueryArray.push(datetimeCondition);
             }
@@ -1599,22 +1633,24 @@ const buildNumericFilterCondition = (
   condition: string,
   values: any,
   filteredColumns: string,
-  tableAlias: string = 'i'
+  tableAlias: string = "i"
 ): string => {
   const columnRef = `${tableAlias}.${filteredColumns}`;
-  
+
   // Use object mapping for better performance instead of switch
   const conditionMap: Record<string, (col: string, val: any) => string> = {
     [ALPHANUMERIC_CONDITIONS.equals]: (col, val) => `${col} = ${val}`,
     [ALPHANUMERIC_CONDITIONS.notEquals]: (col, val) => `${col} != ${val}`,
     [ALPHANUMERIC_CONDITIONS.greater_than]: (col, val) => `${col} > ${val}`,
     [ALPHANUMERIC_CONDITIONS.less_than]: (col, val) => `${col} < ${val}`,
-    [ALPHANUMERIC_CONDITIONS.between]: (col, val) => `${col} BETWEEN ${Array.isArray(val) ? val.join(" AND ") : val}`,
+    [ALPHANUMERIC_CONDITIONS.between]: (col, val) =>
+      `${col} BETWEEN ${Array.isArray(val) ? val.join(" AND ") : val}`,
     [ALPHANUMERIC_CONDITIONS.isEmpty]: (col) => `${col} IS NULL`,
-    [ALPHANUMERIC_CONDITIONS.IN]: (col, val) => `${col} IN (${Array.isArray(val) ? val.join(',') : val})`
+    [ALPHANUMERIC_CONDITIONS.IN]: (col, val) =>
+      `${col} IN (${Array.isArray(val) ? val.join(",") : val})`,
   };
-  
-  return conditionMap[condition]?.(columnRef, values) || '';
+
+  return conditionMap[condition]?.(columnRef, values) || "";
 };
 
 // Optimized utility function for handling string filter conditions
@@ -1627,24 +1663,31 @@ const buildStringFilterCondition = (
   // Optimize column reference determination
   const getColumnRef = (column: string, ref: string): string => {
     const columnMap: Record<string, string> = {
-      'created_user_name': '(uc.first_name || \' \' || uc.last_name)',
-      'modified_user_name': '(um.first_name || \' \' || um.last_name)'
+      created_user_name: "(uc.first_name || ' ' || uc.last_name)",
+      modified_user_name: "(um.first_name || ' ' || um.last_name)",
     };
     return columnMap[column] || `${ref}.${column}`;
   };
-  
+
   const columnRef = getColumnRef(filteredColumns, dynamicReference);
-  
+
   // Use object mapping for conditions
   const conditionMap: Record<string, (col: string, val: any) => string> = {
-    [ALPHANUMERIC_CONDITIONS.equals]: (col, val) => `LOWER(${col}) = LOWER('${val}')`,
-    [ALPHANUMERIC_CONDITIONS.notEquals]: (col, val) => `(LOWER(${col}) != LOWER('${val}') OR ${col} IS NULL)`,
+    [ALPHANUMERIC_CONDITIONS.equals]: (col, val) =>
+      `LOWER(${col}) = LOWER('${val}')`,
+    [ALPHANUMERIC_CONDITIONS.notEquals]: (col, val) =>
+      `(LOWER(${col}) != LOWER('${val}') OR ${col} IS NULL)`,
     [ALPHANUMERIC_CONDITIONS.isEmpty]: (col) => `${col} IS NULL`,
     [ALPHANUMERIC_CONDITIONS.contains]: (col, val) => `${col} ILIKE '%${val}%'`,
-    [ALPHANUMERIC_CONDITIONS.IN]: (col, val) => `${col} IN (${Array.isArray(val) ? val.map((d: any) => `'${d}'`).join(",") : `'${val}'`})`
+    [ALPHANUMERIC_CONDITIONS.IN]: (col, val) =>
+      `${col} IN (${
+        Array.isArray(val)
+          ? val.map((d: any) => `'${d}'`).join(",")
+          : `'${val}'`
+      })`,
   };
-  
-  return conditionMap[condition]?.(columnRef, values) || '';
+
+  return conditionMap[condition]?.(columnRef, values) || "";
 };
 
 // Optimized utility function for handling datetime filter conditions
@@ -1652,20 +1695,25 @@ const buildDatetimeFilterCondition = (
   condition: string,
   values: any,
   filteredColumns: string,
-  tableAlias: string = 'i'
+  tableAlias: string = "i"
 ): string => {
   const columnRef = `DATE(${tableAlias}.${filteredColumns})`;
-  
+
   // Use object mapping for better performance
   const conditionMap: Record<string, (col: string, val: any) => string> = {
     [ALPHANUMERIC_CONDITIONS.equals]: (col, val) => `${col} = '${val}'`,
     [ALPHANUMERIC_CONDITIONS.before]: (col, val) => `${col} < '${val}'`,
     [ALPHANUMERIC_CONDITIONS.after]: (col, val) => `${col} > '${val}'`,
-    [ALPHANUMERIC_CONDITIONS.between]: (col, val) => `${col} BETWEEN ${Array.isArray(val) ? val.map((d: any) => `'${d}'`).join(" AND ") : `'${val}'`}`,
-    [ALPHANUMERIC_CONDITIONS.isEmpty]: (col) => `${col} IS NULL`
+    [ALPHANUMERIC_CONDITIONS.between]: (col, val) =>
+      `${col} BETWEEN ${
+        Array.isArray(val)
+          ? val.map((d: any) => `'${d}'`).join(" AND ")
+          : `'${val}'`
+      }`,
+    [ALPHANUMERIC_CONDITIONS.isEmpty]: (col) => `${col} IS NULL`,
   };
-  
-  return conditionMap[condition]?.(columnRef, values) || '';
+
+  return conditionMap[condition]?.(columnRef, values) || "";
 };
 
 const globalFiltersforCaseSummary = (
@@ -1675,10 +1723,13 @@ const globalFiltersforCaseSummary = (
   if (!globalFilters || Object.keys(globalFilters).length === 0) {
     return [];
   }
-  
+
   try {
     // Use flatMap for more efficient array flattening
-    return Object.entries(globalFilters).flatMap(([key, values = []]) => [key, ...values]);
+    return Object.entries(globalFilters).flatMap(([key, values = []]) => [
+      key,
+      ...values,
+    ]);
   } catch (err) {
     console.error("Error computing global account filter:", err);
     return [];

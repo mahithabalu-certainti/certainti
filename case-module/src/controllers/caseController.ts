@@ -10,7 +10,12 @@ import {
   successLog,
   validateRequest,
 } from "../utils/helpers";
-import { casesFieldMappings, casesSummaryFieldMappings, HttpStatus, STATUS_MESSAGE } from "../utils/constants";
+import {
+  casesFieldMappings,
+  casesSummaryFieldMappings,
+  HttpStatus,
+  STATUS_MESSAGE,
+} from "../utils/constants";
 import {
   createCaseSchema,
   exportCasesAccountSchema,
@@ -229,8 +234,8 @@ async function getCaseFilingType(req: Request, res: Response): Promise<void> {
  * Returns:
  *   JSON response with status code, message, and case details (if available).
  */
-async function getCaseHeadersDetails (req : Request, res : Response) {
-  const methodName = "getCaseheadersDetails"
+async function getCaseHeadersDetails(req: Request, res: Response) {
+  const methodName = "getCaseheadersDetails";
   try {
     const userId = req.headers["x-user-id"] as string;
     if (!userId) {
@@ -244,23 +249,25 @@ async function getCaseHeadersDetails (req : Request, res : Response) {
       return;
     }
     const { accountRid, caseRid } = req.params;
-    const result = await caseService.fetchCaseHeadersSectionsList(accountRid!, caseRid!)
-    if(result.statusCode == HttpStatus.SUCCESS) {
+    const result = await caseService.fetchCaseHeadersSectionsList(
+      accountRid!,
+      caseRid!
+    );
+    if (result.statusCode == HttpStatus.SUCCESS) {
       return res.status(HttpStatus.SUCCESS).send({
-        statusCode : HttpStatus.SUCCESS,
-        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
-        statusMessage : STATUS_MESSAGE.caseDetailsFetchedSuccess,
-        data : result.data
-      })
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.caseDetailsFetchedSuccess,
+        data: result.data,
+      });
     } else {
       return res.status(HttpStatus.SUCCESS).send({
-        statusCode : HttpStatus.SUCCESS,
-        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
-        statusMessage : STATUS_MESSAGE.dataNotAvailable,
-        data : result.data
-      })      
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.dataNotAvailable,
+        data: result.data,
+      });
     }
-
   } catch (err) {
     const error = err as Error;
     errorLog(methodName, error.message);
@@ -518,7 +525,14 @@ async function exportAllCasesAccount(req: Request, res: Response) {
                 case_total_rd_cost: d.case_total_rd_cost,
                 case_total_qre_cost: d.case_total_qre_cost,
                 description: d.description,
-                case_name: d.account_name || '-' || d.country_code || '-' || d.fiscal_year || '-' || d.case_name,
+                case_name:
+                  d.account_name ||
+                  "-" ||
+                  d.country_code ||
+                  "-" ||
+                  d.fiscal_year ||
+                  "-" ||
+                  d.case_name,
                 created_by: d.created_user_name,
                 created_datetime: formatDate(d.created_datetime),
                 modified_by: d.modified_user_name,
@@ -579,10 +593,13 @@ async function exportAllCasesAccount(req: Request, res: Response) {
   }
 }
 
-async function fetchProjectForAssign (req : Request, res : Response) : Promise<any> {
-  const methodName = "fetchProjectForAssign"
+async function fetchProjectForAssign(
+  req: Request,
+  res: Response
+): Promise<any> {
+  const methodName = "fetchProjectForAssign";
   try {
-     const userId = req.headers["x-user-id"] as string;
+    const userId = req.headers["x-user-id"] as string;
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -594,21 +611,25 @@ async function fetchProjectForAssign (req : Request, res : Response) : Promise<a
       return;
     }
     const data = req.body;
-    const result = await caseService.fetchProjectsForAssign(data, false, userId);
-    if(result.statusCode === HttpStatus.SUCCESS) {
+    const result = await caseService.fetchProjectsForAssign(
+      data,
+      false,
+      userId
+    );
+    if (result.statusCode === HttpStatus.SUCCESS) {
       return res.status(HttpStatus.SUCCESS).send({
-        statusCode : HttpStatus.SUCCESS,
-        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
-        statusMessage : STATUS_MESSAGE.projectsFetchedSuccess,
-        data : result.data
-      })
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.projectsFetchedSuccess,
+        data: result.data,
+      });
     } else {
       return res.status(HttpStatus.SUCCESS).send({
-        statusCode : HttpStatus.SUCCESS,
-        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
-        statusMessage : STATUS_MESSAGE.dataNotAvailable,
-        data : result.data
-      })
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.dataNotAvailable,
+        data: result.data,
+      });
     }
   } catch (err) {
     const error = err as Error;
@@ -649,16 +670,11 @@ async function listAllCasesSummary(req: Request, res: Response) {
     const methodName = "List All Cases Summary";
 
     const userId = req.headers["x-user-id"] as string;
-    const value = await validateRequest(
-      req,
-      listCaseSummarySchema,
-      res,
-      "GET"
-    );
+    const value = await validateRequest(req, listCaseSummarySchema, res, "GET");
     if (!value) return;
     let parsedFilters: Record<string, any> = {};
     let parsedGlobalFilters: Record<string, string[]> = {};
-    
+
     try {
       parsedFilters = JSON.parse(value.filters);
     } catch (error) {
@@ -667,7 +683,7 @@ async function listAllCasesSummary(req: Request, res: Response) {
         "Invalid filters format. Must be a valid JSON object."
       );
     }
-    
+
     try {
       parsedGlobalFilters = JSON.parse(value.globalFilters);
     } catch (error) {
@@ -676,7 +692,7 @@ async function listAllCasesSummary(req: Request, res: Response) {
         "Invalid globalFilters format. Must be a valid JSON object."
       );
     }
-    
+
     logMessage(
       `[${methodName}] Request received, ${JSON.stringify(
         req.body
@@ -692,14 +708,14 @@ async function listAllCasesSummary(req: Request, res: Response) {
       );
       return;
     }
-    
+
     // Create modified data object with parsed globalFilters
     const dataWithParsedGlobalFilters = {
       ...value,
       globalFilters: parsedGlobalFilters,
-      parsedFilters: parsedFilters
+      parsedFilters: parsedFilters,
     };
-    
+
     const result = await caseService.listAllCasesSummary(
       dataWithParsedGlobalFilters,
       parsedFilters,
@@ -765,7 +781,7 @@ async function exportAllCasesSummary(req: Request, res: Response) {
     if (!value) return;
     let parsedFilters: Record<string, any> = {};
     let parsedGlobalFilters: Record<string, string[]> = {};
-    
+
     try {
       parsedFilters = JSON.parse(value.filters);
     } catch (error) {
@@ -774,7 +790,7 @@ async function exportAllCasesSummary(req: Request, res: Response) {
         "Invalid filters format. Must be a valid JSON object."
       );
     }
-    
+
     try {
       parsedGlobalFilters = JSON.parse(value.globalFilters);
     } catch (error) {
@@ -783,7 +799,7 @@ async function exportAllCasesSummary(req: Request, res: Response) {
         "Invalid globalFilters format. Must be a valid JSON object."
       );
     }
-    
+
     logMessage(
       `[${methodName}] Request received, ${JSON.stringify(
         req.body
@@ -799,14 +815,14 @@ async function exportAllCasesSummary(req: Request, res: Response) {
       );
       return;
     }
-    
+
     // Create modified data object with parsed globalFilters
     const dataWithParsedGlobalFilters = {
       ...value,
       globalFilters: parsedGlobalFilters,
-      parsedFilters: parsedFilters
+      parsedFilters: parsedFilters,
     };
-    
+
     const result = await caseService.listAllCasesSummary(
       dataWithParsedGlobalFilters,
       parsedFilters,
@@ -814,43 +830,40 @@ async function exportAllCasesSummary(req: Request, res: Response) {
       "download"
     );
 
-     const fields = await caseService.getAllowedExportFields(
+    const fields = await caseService.getAllowedExportFields(
       userId,
       "cases_view_edit"
     );
-        const [
-        accountFields,
-        caseFields
-      ] = await Promise.all([
-        caseService.getAllowedExportFields(userId, "accounts_view_edit"),
-        caseService.getAllowedExportFields(userId, "cases_view_edit")
-      ]);
+    const [accountFields, caseFields] = await Promise.all([
+      caseService.getAllowedExportFields(userId, "accounts_view_edit"),
+      caseService.getAllowedExportFields(userId, "cases_view_edit"),
+    ]);
     const allowedFieldSet = new Set<string>();
     for (const field of caseFields) {
       if (field.read) {
         allowedFieldSet.add(field.field_name);
       }
     }
-    const requiredAccountFields = new Set(["account_name","country_rid"]); // Add more if needed
+    const requiredAccountFields = new Set(["account_name", "country_rid"]); // Add more if needed
 
-      for (const field of accountFields) {
-        if (field.read && requiredAccountFields.has(field.field_name)) {
-          allowedFieldSet.add(field.field_name);
-        }
+    for (const field of accountFields) {
+      if (field.read && requiredAccountFields.has(field.field_name)) {
+        allowedFieldSet.add(field.field_name);
       }
+    }
     const isValidTZ = value.timezone && isValidTimezone(value.timezone);
     const formatDate = (date?: Date | string | null) => {
       if (!date) return null;
-      
+
       // Convert string to Date if needed
       const dateObj = date instanceof Date ? date : new Date(date);
-      
+
       // Check if date is valid
       if (isNaN(dateObj.getTime())) return null;
-      
+
       const offsetMs = (5 * 60 + 30) * 60 * 1000;
       const convertedDate = new Date(dateObj.getTime() + offsetMs);
-      
+
       return moment
         .utc(convertedDate)
         .tz(isValidTZ ? value.timezone : "UTC")
@@ -859,7 +872,7 @@ async function exportAllCasesSummary(req: Request, res: Response) {
     };
     if (result.statusCode == HttpStatus.SUCCESS) {
       console.log("Export result data:", result.data);
-     const finalStructuredData =
+      const finalStructuredData =
         result?.data?.caseInfo.length < 1
           ? []
           : result?.data?.caseInfo.map((d: any) => {
@@ -876,7 +889,14 @@ async function exportAllCasesSummary(req: Request, res: Response) {
                 case_total_rd_cost: d.case_total_rd_cost,
                 case_total_qre_cost: d.case_total_qre_cost,
                 description: d.description,
-                case_name: d.account_name || '-'|| d.country_code || '-' || d.fiscal_year || '-' || d.case_name,
+                case_name:
+                  d.account_name ||
+                  "-" ||
+                  d.country_code ||
+                  "-" ||
+                  d.fiscal_year ||
+                  "-" ||
+                  d.case_name,
                 country_name: d.country_name,
                 created_by: d.created_user_name,
                 created_datetime: formatDate(d.created_datetime),
@@ -933,9 +953,8 @@ async function exportAllCasesSummary(req: Request, res: Response) {
   }
 }
 
-
-async function assignProjectToCase (req : Request, res : Response) : Promise<any> {
-  const methodName = "assignProjectToCase"
+async function assignProjectToCase(req: Request, res: Response): Promise<any> {
+  const methodName = "assignProjectToCase";
   try {
     const userId = req.headers["x-user-id"] as string;
     if (!userId) {
@@ -950,34 +969,31 @@ async function assignProjectToCase (req : Request, res : Response) : Promise<any
     }
     const data = req.body;
     const result = await caseService.assignProjectToCases(data, userId);
-    if(result.statusCode === HttpStatus.SUCCESS) {
+    if (result.statusCode === HttpStatus.SUCCESS) {
       return res.status(HttpStatus.SUCCESS).send({
-        statusCode : HttpStatus.SUCCESS,
-        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
-        statusMessage : result.statusMessage
-      })
-    } 
-    else if(result.statusCode === HttpStatus.BAD_REQUEST) {
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.statusMessage,
+      });
+    } else if (result.statusCode === HttpStatus.BAD_REQUEST) {
       return res.status(HttpStatus.SUCCESS).send({
-        statusCode : HttpStatus.SUCCESS,
-        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
-        statusMessage : result.statusMessage
-      })
-    }
-    else if(result.statusCode === HttpStatus.NOT_FOUND) {
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.statusMessage,
+      });
+    } else if (result.statusCode === HttpStatus.NOT_FOUND) {
       return res.status(HttpStatus.SUCCESS).send({
-        statusCode : HttpStatus.SUCCESS,
-        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
-        statusMessage : result.statusMessage
-      })
-    }
-    else {
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.statusMessage,
+      });
+    } else {
       return res.status(HttpStatus.FAILED).send({
-        statusCode : HttpStatus.FAILED,
-        statusCodeValue : HttpStatus.FAILED_MESSAGE,
-        statusMessage : result.statusMessage
-      })
-    }   
+        statusCode: HttpStatus.FAILED,
+        statusCodeValue: HttpStatus.FAILED_MESSAGE,
+        statusMessage: result.statusMessage,
+      });
+    }
   } catch (err) {
     const error = err as Error;
     errorLog(methodName, error.message);
@@ -991,8 +1007,11 @@ async function assignProjectToCase (req : Request, res : Response) : Promise<any
   }
 }
 
-async function fetchAssignedprojects (req : Request, res : Response) : Promise<any> {
-  const methodName = "fetchAssignedprojects"
+async function fetchAssignedprojects(
+  req: Request,
+  res: Response
+): Promise<any> {
+  const methodName = "fetchAssignedprojects";
   try {
     const userId = req.headers["x-user-id"] as string;
     if (!userId) {
@@ -1006,21 +1025,21 @@ async function fetchAssignedprojects (req : Request, res : Response) : Promise<a
       return;
     }
     const data = req.body;
-    const result = await caseService.fetchProjectsForAssign(data, true, userId)
-    if(result.statusCode === HttpStatus.SUCCESS) {
+    const result = await caseService.fetchProjectsForAssign(data, true, userId);
+    if (result.statusCode === HttpStatus.SUCCESS) {
       return res.status(HttpStatus.SUCCESS).send({
-        statusCode : HttpStatus.SUCCESS,
-        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
-        statusMessage : STATUS_MESSAGE.projectsFetchedSuccess,
-        data : result.data
-      })
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.projectsFetchedSuccess,
+        data: result.data,
+      });
     } else {
       return res.status(HttpStatus.SUCCESS).send({
-        statusCode : HttpStatus.SUCCESS,
-        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
-        statusMessage : STATUS_MESSAGE.dataNotAvailable,
-        data : result.data
-      })
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.dataNotAvailable,
+        data: result.data,
+      });
     }
   } catch (err) {
     const error = err as Error;
@@ -1035,8 +1054,11 @@ async function fetchAssignedprojects (req : Request, res : Response) : Promise<a
   }
 }
 
-async function deleteProjectFromCase (req : Request, res : Response) : Promise<any> {
-  const methodName = "deleteProjectFromCase"
+async function deleteProjectFromCase(
+  req: Request,
+  res: Response
+): Promise<any> {
+  const methodName = "deleteProjectFromCase";
   try {
     const userId = req.headers["x-user-id"] as string;
     if (!userId) {
@@ -1050,28 +1072,29 @@ async function deleteProjectFromCase (req : Request, res : Response) : Promise<a
       return;
     }
     const data = req.body;
-    const result = await caseService.deleteAssignedProjectFromCases(data, userId);
-    if(result.statusCode === HttpStatus.SUCCESS) {
+    const result = await caseService.deleteAssignedProjectFromCases(
+      data,
+      userId
+    );
+    if (result.statusCode === HttpStatus.SUCCESS) {
       return res.status(HttpStatus.SUCCESS).send({
-        statusCode : HttpStatus.SUCCESS,
-        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
-        statusMessage : result.statusMessage
-      })
-    }
-    else if(result.statusCode === HttpStatus.NOT_FOUND) {
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.statusMessage,
+      });
+    } else if (result.statusCode === HttpStatus.NOT_FOUND) {
       return res.status(HttpStatus.SUCCESS).send({
-        statusCode : HttpStatus.SUCCESS,
-        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
-        statusMessage : result.statusMessage
-      })
-    }
-    else {
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.statusMessage,
+      });
+    } else {
       return res.status(HttpStatus.FAILED).send({
-        statusCode : HttpStatus.FAILED,
-        statusCodeValue : HttpStatus.FAILED_MESSAGE,
-        statusMessage : result.statusMessage
-      })
-    }   
+        statusCode: HttpStatus.FAILED,
+        statusCodeValue: HttpStatus.FAILED_MESSAGE,
+        statusMessage: result.statusMessage,
+      });
+    }
   } catch (err) {
     const error = err as Error;
     errorLog(methodName, error.message);
@@ -1098,5 +1121,5 @@ export default {
   exportAllCasesAccount,
   deleteProjectFromCase,
   listAllCasesSummary,
-  exportAllCasesSummary
+  exportAllCasesSummary,
 };
