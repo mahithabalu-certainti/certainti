@@ -48,6 +48,10 @@ import {
   setupResourceFiscalRegionSeq,
 } from "../models/resourceFiscalRegion"
 import { errorLog } from "../utils/helpers";
+import { checkProjectMappedToProjectRes } from "../utils/rawQueries";
+import  ProjectIngestionService  from "./projectIngestionService";
+
+
 
 // import { Skill } from "../models/skill";
 class SchemaService {
@@ -1818,6 +1822,96 @@ class SchemaService {
       errorLog("Error fetching Accounts: " + (err as Error).message);
       throw new Error("Error fetching Accounts: " + (err as Error).message);
     }
+  }
+
+    async fetchValidAccountNumberById(accountId: string) {
+      try {
+
+        const mainDbSequelize = await initMainDbSequelize();
+
+        const [account]: any[] = await mainDbSequelize.query(
+          rawQueries.fetchAccountById,
+          {
+            replacements: { rid: accountId },
+            type: "SELECT",
+          }
+        );
+  
+        let accountRnumber = account?.r_number;
+  
+        if (account?.storage_type === "store_in_parent") {
+          const [accountData]: any[] = await mainDbSequelize.query(
+            rawQueries.fetchAccountById,
+            {
+              replacements: { rid: account?.parent_account_rid },
+              type: "SELECT",
+            }
+          );
+          accountRnumber = accountData?.r_number;
+        }
+  
+        return {
+          accountNumber: accountRnumber,
+          accountId: account?.rid,
+          accountName: account?.account_name,
+        };
+      } catch (err) {
+        throw new Error("Error fetching account : " + (err as Error).message);
+      }
+    }
+
+  async addProjectResourceExistsFlags(projects: any[]): Promise<any[]> {
+    const orgDb = await initOrgSequelize();
+    const checkPromises: Promise<void>[] = [];
+
+    for (const project of projects) {
+      const { accountNumber } =
+        await this.fetchValidAccountNumberById(project.account_rid);
+      const schemaName = rawQueries.fetchSchemaName(accountNumber);
+
+      if (project.ProjectFiscal && project.ProjectFiscal.length > 0) {
+        for (const fiscal of project.ProjectFiscal) {
+          try {
+            // Check if table exists
+            const checkTable: any = await orgDb.query(`
+              SELECT EXISTS (
+                SELECT 1
+                FROM information_schema.tables
+                WHERE table_schema = '${schemaName}'
+                  AND table_name = 'project_resource'
+              ) AS table_exists;
+            `);
+
+            const tableExists = checkTable[0][0].table_exists;
+
+            if (tableExists) {
+              const query = checkProjectMappedToProjectRes(schemaName, fiscal.project_fiscal_rid);
+              
+              const promise = orgDb
+                .query(query)
+                .then((result: any) => {
+                  fiscal.is_project_exists = result[0]?.length > 0;
+                })
+                .catch((error) => {
+                  console.error(`Error checking project resource for fiscal ${fiscal.project_fiscal_rid}:`, error);
+                  fiscal.is_project_exists = false;
+                });
+
+              checkPromises.push(promise);
+            } else {
+              // Table doesn't exist, set flag to false
+              fiscal.is_project_exists = false;
+            }
+          } catch (error) {
+            console.error(`Error checking table existence for schema ${schemaName}:`, error);
+            fiscal.is_project_exists = false;
+          }
+        }
+      }
+    }
+
+    await Promise.all(checkPromises);
+    return projects;
   }
 
   async fetchAllProjects(
