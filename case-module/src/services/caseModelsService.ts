@@ -5,6 +5,8 @@ import { SCHEMANAME_PREFIX } from "../utils/constants";
 import { Case } from "../models/caseModel";
 import { CaseSummary } from "../models/caseSummaryModel";
 import { CaseProject } from "../models/caseProjectsModel";
+import { CaseTimeline } from "../models/caseTimeline";
+import { CaseHistory } from "../models/caseHistory";
 
 export class CaseModelService {
   orgDbSequelize: Sequelize | null = null;
@@ -15,7 +17,8 @@ export class CaseModelService {
     {
       Case: ReturnType<typeof Case.initialize>;
       CaseSummary: ReturnType<typeof CaseSummary.initialize>;
-      CaseProject : ReturnType<typeof CaseProject.initialize>
+      CaseProject : ReturnType<typeof CaseProject.initialize>;
+      CaseTimeline : ReturnType<typeof CaseTimeline.initialize>;
     }
   > = new Map();
 
@@ -48,12 +51,16 @@ export class CaseModelService {
       mainDbSequelize,
       ""
     );
-    const CaseProjectModel = CaseProject.initialize(sequelize, schemaName) 
+    const CaseProjectModel = CaseProject.initialize(sequelize, schemaName);
+    const CaseTimelineModel = CaseTimeline.initialize(sequelize, schemaName); 
+    const CaseHistoryModel = CaseHistory.initialize(sequelize, schemaName);
 
     const models = {
       Case: CaseModel,
       CaseSummary: CaseSummaryModel,
-      CaseProject: CaseProjectModel
+      CaseProject: CaseProjectModel,
+      CaseTimeline: CaseTimelineModel,
+      CaseHistory: CaseHistoryModel,
     };
 
     this.modelCache.set(schemaName, models);

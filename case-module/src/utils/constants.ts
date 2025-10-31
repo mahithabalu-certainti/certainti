@@ -75,7 +75,9 @@ export const STATUS_MESSAGE = {
   projectAlreadyMapped : "Project already mapped to this case",
   singleProjectDeletedSuccess : "Project deleted successfully",
   multipleProjectDeletedSuccess : "Projects deleted successfully",
-  projectNotAssigned : "Requested project not found"
+  projectNotAssigned : "Requested project not found",
+  caseIdMissing : "Case ID is required",
+  countryValidationFailed : "Country is not associated with the account,Please select country",
 };
 
 export const caseStatuses = {
@@ -103,6 +105,26 @@ export const casesFieldMappings = [
     { permissionField: 'status_rid', exportField: 'Status', dataField: 'status_name' }
     //{ permissionField: 'modified_by', exportField: 'Updated By', dataField: 'modified_by' },
     //{ permissionField: 'modified_datetime', exportField: 'Updated On', dataField: 'modified_datetime' }
+   
+  ];
+
+  export const casesSummaryFieldMappings = [
+     
+    { permissionField: 'r_number', exportField: 'Case ID', dataField: 'r_number' },
+    { permissionField: 'filing_type_rid', exportField: 'Filing Type', dataField: 'filing_type_name' },
+    { permissionField: 'case_name', exportField: 'Case Name', dataField: 'case_name' },
+    { permissionField: 'fiscal_year', exportField: 'Fiscal Year', dataField: 'fiscal_year' },
+    { permissionField: 'country_rid', exportField: 'Country', dataField: 'country_name' },
+    { permissionField: 'case_owner_rid', exportField: 'Case Owner', dataField: 'case_owner_name' },
+    { permissionField: 'case_total_projects', exportField: 'Total Projects', dataField: 'case_total_projects' },
+    { permissionField: 'case_total_qualified_projects', exportField: 'Total Qualified Projects', dataField: 'case_total_qualified_projects' },
+    { permissionField: 'case_total_project_cost', exportField: 'Total Case Project Cost', dataField: 'case_total_project_cost' },
+    { permissionField: 'case_total_qre_cost', exportField: 'Case Project QRE Cost', dataField: 'case_total_qre_cost' },
+    { permissionField: 'case_total_rd_cost', exportField: 'Case Project RD Credit', dataField: 'case_total_rd_cost' },
+    { permissionField: 'created_datetime', exportField: 'Created On', dataField: 'created_datetime' },
+    { permissionField: 'submitted_datetime', exportField: 'Submitted On', dataField: 'submitted_datetime' },
+    { permissionField: 'approved_datetime', exportField: 'Approved On', dataField: 'approved_datetime' },
+    { permissionField: 'status_rid', exportField: 'Status', dataField: 'status_name' }
    
   ];
 
@@ -137,6 +159,14 @@ export const rawQueries = {
     let ids = data.map((d: any) => `'${d}'`);
     return `
     SELECT rid, first_name, last_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (${ids})`;
+  },
+  fetchAccountAndCountryDetails(accountRid : string) {
+    return `SELECT r_number, account_name, rid, country_rid,c.country_code, currency_rid FROM ${MAIN_SCHEMA_NAME}.account 
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON c.rid = account.country_rid
+    WHERE rid = '${accountRid}'`
+  },
+  fetchCountryByAccountId(accountRid : string) {  
+    return `SELECT country_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`
   },
   fetchStatus(statusIds: any): string {
     let ids = statusIds.map((d: any) => `'${d}'`);
@@ -283,6 +313,13 @@ export const rawQueries = {
       LIMIT 1
     `;
   },
+   fetchUserGroupType: `
+      SELECT type group_type
+      FROM ${MAIN_SCHEMA_NAME}.user_groups ug
+      JOIN ${MAIN_SCHEMA_NAME}.user_group_mapping ugm ON ug.rid = ugm.group_rid 
+      JOIN ${MAIN_SCHEMA_NAME}.user_group_type ugt ON ugt.rid = ug.group_type_rid
+      WHERE ugm.user_rid = :userRid
+      LIMIT 1`,
     GET_ACCOUNT_ACCESS: `
 (
   (
@@ -366,9 +403,83 @@ export const rawQueries = {
       ${accessControlWhere}
     `;
   },
+   GET_ACCOUNT_DIRECT_ACCESS_USER_IDS: `SELECT 
+        ugea.entity_rid,
+        a.parent_account_rid,
+        CASE WHEN a.parent_account_rid IS NULL THEN false ELSE true END as is_child
+      FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access ugea
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.account a ON ugea.entity_rid = a.rid
+      WHERE ugea.user_rid = :userRid 
+        AND ugea.entity_type = 'ACCOUNT'
+        AND ugea.access_type = 'INCLUDE'`,
+  GET_ACCOUNT_DIRECT_EXCLUDE_ACCESS_USER_IDS: `
+      SELECT ugea.entity_rid
+      FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access ugea
+      WHERE ugea.user_rid = :userRid 
+        AND ugea.entity_type = 'ACCOUNT'
+        AND ugea.access_type = 'EXCLUDE'`,
+  GET_GROUP_ACCESS: `
+      WITH user_groups AS (
+        SELECT group_rid FROM ${MAIN_SCHEMA_NAME}.user_group_mapping
+        WHERE user_rid = :userRid
+      )
+      SELECT DISTINCT 
+        gea.entity_rid,
+        a.parent_account_rid,
+        CASE WHEN a.parent_account_rid IS NULL THEN false ELSE true END as is_child
+      FROM ${MAIN_SCHEMA_NAME}.user_group_entity_access gea
+      JOIN user_groups ug ON gea.group_rid = ug.group_rid
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.account a ON gea.entity_rid = a.rid
+      WHERE gea.entity_type = 'ACCOUNT'
+        AND gea.access_type = 'INCLUDE'`,
 };
 
 const keyContactRole = {
   pocName : "Project Point of Contact",
   tPocName : "Project Technical Point of Contact"
 }
+
+export const filterTypesForCaseSummary : Record<string, any> = 
+  {
+    r_number : "string",
+    created_datetime : "datetime",
+    modified_datetime : "datetime",
+    created_user_name : "string",
+    updated_user_name : "string",
+    status_rid : "string",
+    account_name : "string",
+    fiscal_year : "number",
+    createdAt:"datetime",
+    case_owner_name : "string",
+    filing_type_name : "string",
+    case_name : "string",
+    submitted_datetime : "datetime",
+    approved_datetime : "datetime",
+    case_total_project_cost : "number",
+    case_total_qre_cost : "number",
+    case_total_rd_cost : "number",
+    country_name : "string"
+  }
+
+export const filtersColumnsForCaseSummary : Record<string, string> =
+  {
+    r_number : "r_number",
+    created_datetime : "created_datetime",
+    modified_datetime : "modified_datetime",
+    created_user_name : "created_user_name",
+    updated_user_name : "updated_user_name",
+    status_rid : "status_rid",
+    status_name : "status_name",
+    account_name : "account_name",
+    fiscal_year : "fiscal_year",
+    createdAt:"createdAt",
+    case_owner_name : "case_owner_name",
+    filing_type_name : "filing_type_name",
+    case_name : "case_name",  
+    submitted_datetime : "submitted_datetime",
+    approved_datetime : "approved_datetime",
+    case_total_project_cost : "case_total_project_cost",
+    case_total_qre_cost : "case_total_qre_cost",
+    case_total_rd_cost : "case_total_rd_cost",
+    country_name : "country_name"
+  }

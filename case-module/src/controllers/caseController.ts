@@ -10,11 +10,13 @@ import {
   successLog,
   validateRequest,
 } from "../utils/helpers";
-import { casesFieldMappings, HttpStatus, STATUS_MESSAGE } from "../utils/constants";
+import { casesFieldMappings, casesSummaryFieldMappings, HttpStatus, STATUS_MESSAGE } from "../utils/constants";
 import {
   createCaseSchema,
   exportCasesAccountSchema,
+  exportCaseSummarySchema,
   listCasesAccountSchema,
+  listCaseSummarySchema,
   updateCaseSchema,
 } from "../lib/joi/schemas/schema";
 import configurations from "../config/config";
@@ -60,18 +62,18 @@ async function createCases(req: Request, res: Response): Promise<void> {
       errorLog(methodName, "Request body is empty");
       return;
     }
-    const interaction = await caseService.createCase(value, userId);
-    if (interaction.statusCode === HttpStatus.SUCCESS) {
+    const cases = await caseService.createCase(value, userId);
+    if (cases.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
-      handleCustomResponse(res, interaction.data, interaction.message);
+      handleCustomResponse(res, cases.data, cases.message);
       return;
     } else {
-      errorLog(methodName, interaction.errorMessage);
+      errorLog(methodName, cases.errorMessage);
       handleErrorResponse(
         res,
         HttpStatus.BAD_REQUEST,
         HttpStatus.BAD_REQUEST_MESSAGE,
-        interaction.errorMessage
+        cases.errorMessage
       );
       return;
     }
@@ -516,7 +518,7 @@ async function exportAllCasesAccount(req: Request, res: Response) {
                 case_total_rd_cost: d.case_total_rd_cost,
                 case_total_qre_cost: d.case_total_qre_cost,
                 description: d.description,
-                case_name: d.case_name,
+                case_name: d.account_name || '-' || d.country_code || '-' || d.fiscal_year || '-' || d.case_name,
                 created_by: d.created_user_name,
                 created_datetime: formatDate(d.created_datetime),
                 modified_by: d.modified_user_name,
@@ -580,7 +582,7 @@ async function exportAllCasesAccount(req: Request, res: Response) {
 async function fetchProjectForAssign (req : Request, res : Response) : Promise<any> {
   const methodName = "fetchProjectForAssign"
   try {
-    const userId = req.headers["x-user-id"] as string;
+     const userId = req.headers["x-user-id"] as string;
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
       handleErrorResponse(
@@ -620,6 +622,317 @@ async function fetchProjectForAssign (req : Request, res : Response) : Promise<a
     return;
   }
 }
+/**
+ * Lists all cases for a specific account with filtering, sorting, and pagination support.
+ *
+ * This controller method performs the following steps:
+ * 1. Validates the incoming request parameters against the list cases schema.
+ * 2. Extracts and parses filter parameters from the request query string.
+ * 3. Extracts the user ID from the `x-user-id` request header for authentication.
+ * 4. Calls the `listAllCasesAccount` method from the `caseService` to fetch paginated case data.
+ * 5. Returns a success response with case data and pagination info, or an error response if failed.
+ *
+ * @param {Request} req - Express request object containing query parameters, filters, and user authentication headers.
+ * @param {Response} res - Express response object used to send the HTTP response with case data.
+ *
+ * @returns {Promise<void>} - A Promise that resolves after sending the HTTP response.
+ *
+ * @description
+ * - Supports advanced filtering by case name, status, owner, fiscal year, and other case attributes.
+ * - Provides pagination with configurable page size and offset.
+ * - Includes sorting capabilities by various case fields.
+ * - Returns comprehensive case information including owner names, status descriptions, and filing types.
+ * - Used by the frontend to display case lists with search and filter functionality.
+ */
+async function listAllCasesSummary(req: Request, res: Response) {
+  try {
+    const methodName = "List All Cases Summary";
+
+    const userId = req.headers["x-user-id"] as string;
+    const value = await validateRequest(
+      req,
+      listCaseSummarySchema,
+      res,
+      "GET"
+    );
+    if (!value) return;
+    let parsedFilters: Record<string, any> = {};
+    let parsedGlobalFilters: Record<string, string[]> = {};
+    
+    try {
+      parsedFilters = JSON.parse(value.filters);
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+    
+    try {
+      parsedGlobalFilters = JSON.parse(value.globalFilters);
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid globalFilters format. Must be a valid JSON object."
+      );
+    }
+    
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(
+        req.body
+      )} userId: ${userId}`
+    );
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    
+    // Create modified data object with parsed globalFilters
+    const dataWithParsedGlobalFilters = {
+      ...value,
+      globalFilters: parsedGlobalFilters,
+      parsedFilters: parsedFilters
+    };
+    
+    const result = await caseService.listAllCasesSummary(
+      dataWithParsedGlobalFilters,
+      parsedFilters,
+      userId,
+      "list"
+    );
+    if (result.statusCode == HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, result.data);
+      return;
+    } else {
+      errorLog(methodName, "No data found");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        result.errorMessage
+      );
+      return;
+    }
+  } catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
+/**
+ * Lists all cases for a specific account with filtering, sorting, and pagination support.
+ *
+ * This controller method performs the following steps:
+ * 1. Validates the incoming request parameters against the list cases schema.
+ * 2. Extracts and parses filter parameters from the request query string.
+ * 3. Extracts the user ID from the `x-user-id` request header for authentication.
+ * 4. Calls the `listAllCasesAccount` method from the `caseService` to fetch paginated case data.
+ * 5. Returns a success response with case data and pagination info, or an error response if failed.
+ *
+ * @param {Request} req - Express request object containing query parameters, filters, and user authentication headers.
+ * @param {Response} res - Express response object used to send the HTTP response with case data.
+ *
+ * @returns {Promise<void>} - A Promise that resolves after sending the HTTP response.
+ *
+ * @description
+ * - Supports advanced filtering by case name, status, owner, fiscal year, and other case attributes.
+ * - Provides pagination with configurable page size and offset.
+ * - Includes sorting capabilities by various case fields.
+ * - Returns comprehensive case information including owner names, status descriptions, and filing types.
+ * - Used by the frontend to display case lists with search and filter functionality.
+ */
+async function exportAllCasesSummary(req: Request, res: Response) {
+  try {
+    const methodName = "Export All Cases Summary";
+    const userId = req.headers["x-user-id"] as string;
+    const value = await validateRequest(
+      req,
+      exportCaseSummarySchema,
+      res,
+      "GET"
+    );
+    if (!value) return;
+    let parsedFilters: Record<string, any> = {};
+    let parsedGlobalFilters: Record<string, string[]> = {};
+    
+    try {
+      parsedFilters = JSON.parse(value.filters);
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+    
+    try {
+      parsedGlobalFilters = JSON.parse(value.globalFilters);
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid globalFilters format. Must be a valid JSON object."
+      );
+    }
+    
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(
+        req.body
+      )} userId: ${userId}`
+    );
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    
+    // Create modified data object with parsed globalFilters
+    const dataWithParsedGlobalFilters = {
+      ...value,
+      globalFilters: parsedGlobalFilters,
+      parsedFilters: parsedFilters
+    };
+    
+    const result = await caseService.listAllCasesSummary(
+      dataWithParsedGlobalFilters,
+      parsedFilters,
+      userId,
+      "download"
+    );
+
+     const fields = await caseService.getAllowedExportFields(
+      userId,
+      "cases_view_edit"
+    );
+        const [
+        accountFields,
+        caseFields
+      ] = await Promise.all([
+        caseService.getAllowedExportFields(userId, "accounts_view_edit"),
+        caseService.getAllowedExportFields(userId, "cases_view_edit")
+      ]);
+    const allowedFieldSet = new Set<string>();
+    for (const field of caseFields) {
+      if (field.read) {
+        allowedFieldSet.add(field.field_name);
+      }
+    }
+    const requiredAccountFields = new Set(["account_name","country_rid"]); // Add more if needed
+
+      for (const field of accountFields) {
+        if (field.read && requiredAccountFields.has(field.field_name)) {
+          allowedFieldSet.add(field.field_name);
+        }
+      }
+    const isValidTZ = value.timezone && isValidTimezone(value.timezone);
+    const formatDate = (date?: Date | string | null) => {
+      if (!date) return null;
+      
+      // Convert string to Date if needed
+      const dateObj = date instanceof Date ? date : new Date(date);
+      
+      // Check if date is valid
+      if (isNaN(dateObj.getTime())) return null;
+      
+      const offsetMs = (5 * 60 + 30) * 60 * 1000;
+      const convertedDate = new Date(dateObj.getTime() + offsetMs);
+      
+      return moment
+        .utc(convertedDate)
+        .tz(isValidTZ ? value.timezone : "UTC")
+        .utcOffset("-012:30")
+        .format("YYYY-MMM-DD, hh:mm:ss A");
+    };
+    if (result.statusCode == HttpStatus.SUCCESS) {
+      console.log("Export result data:", result.data);
+     const finalStructuredData =
+        result?.data?.caseInfo.length < 1
+          ? []
+          : result?.data?.caseInfo.map((d: any) => {
+              let resultMap: { [key: string]: any } = {
+                r_number: d.r_number,
+                account_name: d.account_name,
+                fiscal_year: d.fiscal_year,
+                status_name: d.status_name,
+                case_owner_name: d.case_owner_name,
+                filing_type_name: d.filing_type_name,
+                case_total_project_cost: d.case_total_project_cost,
+                case_total_projects: d.case_total_projects,
+                case_total_qualified_projects: d.case_total_qualified_projects,
+                case_total_rd_cost: d.case_total_rd_cost,
+                case_total_qre_cost: d.case_total_qre_cost,
+                description: d.description,
+                case_name: d.account_name || '-'|| d.country_code || '-' || d.fiscal_year || '-' || d.case_name,
+                country_name: d.country_name,
+                created_by: d.created_user_name,
+                created_datetime: formatDate(d.created_datetime),
+                modified_by: d.modified_user_name,
+                modified_datetime:
+                  d.modified_datetime == null
+                    ? ""
+                    : formatDate(d.modified_datetime),
+                submitted_datetime:
+                  d.submitted_datetime == null
+                    ? ""
+                    : formatDate(d.submitted_datetime),
+                approved_datetime:
+                  d.approved_datetime == null
+                    ? ""
+                    : formatDate(d.approved_datetime),
+              };
+
+              // Build exportRecord using allowed fields and resultMap
+              const exportRecord: Record<string, any> = {};
+              casesSummaryFieldMappings.forEach((mapping) => {
+                if (allowedFieldSet.has(mapping.permissionField)) {
+                  exportRecord[mapping.exportField] =
+                    resultMap[mapping.dataField];
+                }
+              });
+
+              return exportRecord;
+            });
+
+      const generateBase64Response = await generateExcelBase64(
+        finalStructuredData,
+        "Cases"
+      );
+      handleSuccessResponse(res, generateBase64Response);
+    } else {
+      errorLog(methodName, "No data found");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        result.errorMessage
+      );
+      return;
+    }
+  } catch (error: any) {
+    console.log("Error in exportAllCasesSummary:", error);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
 
 async function assignProjectToCase (req : Request, res : Response) : Promise<any> {
   const methodName = "assignProjectToCase"
@@ -783,5 +1096,7 @@ export default {
   fetchAssignedprojects,
   listAllCasesAccount,
   exportAllCasesAccount,
-  deleteProjectFromCase
+  deleteProjectFromCase,
+  listAllCasesSummary,
+  exportAllCasesSummary
 };

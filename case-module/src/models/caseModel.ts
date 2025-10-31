@@ -1,5 +1,7 @@
 import { Model, DataTypes, Sequelize, Optional } from "sequelize";
 import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constants";
+import { log } from "console";
+import { logMessage } from "../utils/helpers";
 
 interface CaseAttributes {
   rid: string;
@@ -20,6 +22,7 @@ interface CaseAttributes {
   statutory_submission_date?: Date;
   status_rid?: string;
   case_total_projects?: number;
+  case_total_qualified_projects?: number;
   case_total_project_cost?: number;
   case_total_rd_cost?: number;
   case_total_qre_cost?: number;
@@ -51,6 +54,7 @@ export class Case
   public statutory_submission_date!: Date;
   public status_rid!: string;
   public case_total_projects?: number;
+  public case_total_qualified_projects?: number;
   public case_total_project_cost?: number;
   public case_total_rd_cost?: number;
   public case_total_qre_cost?: number;
@@ -94,6 +98,7 @@ export class Case
         statutory_submission_date: { type: DataTypes.DATE, allowNull: false },
         status_rid: { type: DataTypes.STRING(50), allowNull: false },
         case_total_projects: { type: DataTypes.INTEGER, allowNull: true },
+        case_total_qualified_projects: { type: DataTypes.INTEGER, allowNull: true },
         case_total_project_cost: { type: DataTypes.DECIMAL, allowNull: true },
         case_total_rd_cost: { type: DataTypes.DECIMAL, allowNull: true },
         case_total_qre_cost: { type: DataTypes.DECIMAL, allowNull: true },
@@ -122,8 +127,8 @@ export async function setupCaseSequence(
     await sequelize.query(`ALTER TABLE "${schemaName}".cases
       ALTER COLUMN r_number SET DEFAULT 'CAS-' || LPAD(nextval('"${schemaName}".cases_seq')::text, 10, '0')`);
 
-    console.log("Cases sequence setup complete");
+    logMessage("Cases sequence setup complete");
   } catch (error) {
-    console.error("Error setting up Cases sequence:", error);
+    logMessage(`Error setting up Cases sequence: ${error}`);
   }
 }

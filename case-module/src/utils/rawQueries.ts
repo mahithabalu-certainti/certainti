@@ -1,3 +1,4 @@
+import { MAIN_SCHEMA_NAME } from "./constants"
 import { FilterType, validColumns, columnType, validColumnsForSorting } from "./types"
 
 export const fetchCasesHeadersDatas = (schemaName : string, caseRid : string) => {
@@ -221,3 +222,62 @@ export const fetchProjectsForCases = (schemaName : string, page : number, limit 
     `
     return query;
 }
+
+export const listAllCasesSummaryQuery = (searchValue:string,whereKey:string,joinedConditions:string,sortValue:string,pagination:string,accessibleIds:string[])  => `
+    WITH fetch_all_cases AS 
+    (SELECT cs.case_rid AS rid, cs.r_number, cs.status_rid,s.status_name,
+    cs.created_by, CONCAT(u.first_name, ' ', u.last_name) AS created_user_name,
+    CASE WHEN uu.first_name IS NULL THEN cs.modified_by ELSE CONCAT(uu.first_name, ' ', uu.last_name) END AS updated_user_name,
+    cs.created_datetime, cs.modified_datetime, cs.account_rid,
+    cs.modified_by,cs.filing_type_rid,cft.filing_type_name, cs.case_name,
+    a.account_name,cs.fiscal_year,c.country_name,c.country_code,
+    CONCAT(co.first_name, ' ', co.last_name) AS case_owner_name,
+    case_total_projects, case_total_project_cost, case_total_rd_cost, case_total_qre_cost,
+    submitted_datetime, approved_datetime
+    FROM
+    ${MAIN_SCHEMA_NAME}.case_summary cs
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.case_filing_type cft ON cft.rid = cs.filing_type_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.case_status s ON s.rid = cs.status_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.user u ON u.rid = cs.created_by
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.user uu ON uu.rid = cs.modified_by
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.account a ON a.rid = cs.account_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON a.country_rid = c.rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.user co ON co.rid = cs.case_owner_rid
+    WHERE
+    (cs.r_number ILIKE '${searchValue}' OR cs.case_name ILIKE '${searchValue}')
+    ${joinedConditions}
+    ),
+    paginated_data AS (
+    SELECT * FROM fetch_all_cases c ${sortValue} ${pagination}
+    )
+    SELECT 
+        array_agg(jsonb_build_object(
+            'rid', c.rid,
+            'r_number', c.r_number,
+            'status_rid', c.status_rid,
+            'status_name', c.status_name,
+            'created_by', c.created_by,
+            'modified_by', c.modified_by,
+            'created_datetime', c.created_datetime,
+            'modified_datetime', c.modified_datetime,
+            'account_rid', c.account_rid,
+            'account_name', c.account_name,
+            'fiscal_year', c.fiscal_year,
+            'filing_type_rid', c.filing_type_rid,
+            'filing_type_name', c.filing_type_name,
+            'case_name', c.case_name,
+            'country_name', c.country_name,
+            'case_owner_name', c.case_owner_name,
+            'created_user_name', c.created_user_name,
+            'updated_user_name', c.updated_user_name,
+            'case_total_projects', c.case_total_projects,
+            'case_total_project_cost', c.case_total_project_cost,
+            'case_total_rd_cost', c.case_total_rd_cost,
+            'case_total_qre_cost', c.case_total_qre_cost,
+            'submitted_datetime', c.submitted_datetime,
+            'approved_datetime', c.approved_datetime
+           
+        )) AS cases_summary
+
+        FROM
+        paginated_data c`

@@ -84,6 +84,23 @@ export class CaseService {
       if (!accountNumber) {
         throw new Error("Invalid account ID");
       }
+
+    const {country_rid } =
+      await this.caseSchemaService.fetchCountryByAccountId(
+        caseRequest.account_rid
+      );
+
+    if (!country_rid) {
+      
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: HttpStatus.BAD_REQUEST_MESSAGE,
+        errorMessage: STATUS_MESSAGE.countryValidationFailed,
+        data: {
+          cases: null,
+        },
+      };
+    }
       const { statusRid } = await this.getCaseStatusForCreate();
       caseRequest.status_rid = statusRid || "";
       const response = await this.caseSchemaService.createCases(
@@ -98,6 +115,14 @@ export class CaseService {
           caseRequest,
           response.rid,
           response.get("r_number") || ""
+        );
+         await this.caseSchemaService.addCaseTimeline(
+          accountNumber,
+          "create",
+          caseRequest,
+          response.rid,
+          userId,
+          transaction
         );
       }
 
@@ -167,9 +192,18 @@ export class CaseService {
 
       const response = await this.caseSchemaService.updateCases(
         accountNumber,
+        userId,
         caseRequest,
         transaction
       );
+      await this.caseSchemaService.addCaseTimeline(
+          accountNumber,
+          "create",
+          caseRequest,
+          caseRequest.case_rid!,
+          userId,
+          transaction
+        );
 
       await transaction.commit();
 
@@ -517,6 +551,94 @@ export class CaseService {
       message: HttpStatus.FAILED_MESSAGE,
       errorMessage: err.message,
     };
+  }
+   /**
+   * Retrieves a filtered and paginated list of case records for a given account,
+   * based on user access permissions, filtering criteria, and sorting preferences.
+   *
+   * This function:
+   * - Validates the account ID and retrieves account information.
+   * - Applies dynamic filtering by case name, status, owner, fiscal year, and other case attributes.
+   * - Supports advanced search conditions (equals, contains, not equals, is empty).
+   * - Handles pagination with configurable page size and offset.
+   * - Applies sorting by various case fields (name, date, status, etc.).
+   * - Maps related metadata (case owners, statuses, filing types, user information).
+   * - Returns comprehensive case information including financial data and timestamps.
+   * - Supports both list and export modes for different API consumption patterns.
+   *
+   * @param {any} data - Request parameters containing pagination (page, limit), sorting (sortBy, sortOrder), and account information.
+   * @param {Record<string, any>} filters - Object containing filter criteria for case attributes with condition operators.
+   * @param {string} userId - The ID of the user making the request for access control and audit purposes.
+   * @param {string} apiType - Type of API call ('list' for paginated results, 'export' for all matching records).
+   *
+   * @returns {Promise<{
+   *   statusCode: number;
+   *   message: string;
+   *   errorMessage?: string;
+   *   data?: { caseInfo: any; count: number };
+   * }>} An object containing status, metadata, filtered case data, and total count for pagination.
+   *
+   * @description
+   * - Used by both list and export endpoints to retrieve case data with consistent filtering logic.
+   * - Provides comprehensive case information including owner names, status descriptions, and financial totals.
+   * - Supports complex filtering scenarios for advanced case search and reporting functionality.
+   * - Ensures data security by validating account access and user permissions.
+   */
+   async listAllCasesSummary(data: any, filters: Record<string, any>, userId: string,apiType:string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { caseInfo: any; count: number };
+  }> {
+    const mainDb = await this.getMainDb();
+    const userGroupType = await this.caseSchemaService.getUserGroupType(
+      userId
+    );
+   
+    const isCustomGlobal = userGroupType === "DEFAULT";
+    const isDefaultParent = userGroupType === "AUTO_ASSIGNED_PARENT";
+
+    let accessibleIds: string[] = [];
+    if (!isCustomGlobal) {
+      const accessibleAccountsInfo =
+          await this.caseSchemaService.getAccessibleAccountInfo(userId);
+        const accessibleAccountIds = accessibleAccountsInfo.map(
+          (acc) => acc.id
+        );
+        accessibleIds =accessibleAccountIds;
+        if (accessibleAccountIds.length === 0) {
+          return {
+            statusCode: HttpStatus.SUCCESS,
+            message: "No accessible accounts found",
+            data: { caseInfo: [], count: 0 },
+          };
+        }
+    }
+    logMessage(`Filters applied: ${JSON.stringify(apiType)}`);
+    logMessage(`Accessible Project Fiscal Ids: ${JSON.stringify(accessibleIds)} userId: ${userId}, isDefaultParent: ${isDefaultParent}, isCustomGlobal: ${isCustomGlobal}`);
+    let result  = await this.caseSchemaService.listAllCaseSummary(data.page, data.limit, 
+      data.parsedFilters, data.globalFilters, data.fiscal_year, data.sort, data.sort_by,accessibleIds, data.search,apiType);
+   
+
+    if(result.cases_summary != null) {
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data:{
+          caseInfo: result.cases_summary,
+          count: result.total_result
+        },
+      };
+    } else {
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.NOT_FOUND_MESSAGE,
+        data:{
+          caseInfo: null,
+          count: 0
+        }
+      };
+    }
   }
 
   async fetchProjectsForAssign (data : any, assignedProject : boolean, userId : string) {

@@ -1,3 +1,4 @@
+import { time } from "console";
 import Joi from "joi";
 
 const createCaseSchema = Joi.object({
@@ -31,6 +32,7 @@ const updateCaseSchema = Joi.object({
 const exportCasesAccountSchema = Joi.object({
   account_rid: Joi.string().required(),
   filters: Joi.string().default("{}"),
+  search: Joi.string().max(255).optional(),
   sortBy: Joi.string().optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
   timezone: Joi.string().optional(),
@@ -41,8 +43,30 @@ const listCasesAccountSchema = Joi.object({
   limit: Joi.string().optional().pattern(/^[0-9]+$/),
   account_rid: Joi.string().required(),
   filters: Joi.string().default("{}"),
+  search: Joi.string().max(255).optional(),
   sortBy: Joi.string().optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
+});
+
+const listCaseSummarySchema = Joi.object({
+  page: Joi.string().optional().pattern(/^[0-9]+$/),
+  limit: Joi.string().optional().pattern(/^[0-9]+$/),
+  filters: Joi.string().default("{}"),
+  globalFilters: Joi.string().default("{}"),
+  fiscal_year: Joi.string().optional(),
+  search: Joi.string().max(255).optional(),
+  sortBy: Joi.string().optional(),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
+});
+
+const exportCaseSummarySchema = Joi.object({
+  filters: Joi.string().default("{}"),
+  globalFilters: Joi.string().default("{}"),
+  fiscal_year: Joi.string().optional(),
+  search: Joi.string().max(255).optional(),
+  sortBy: Joi.string().optional(),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
+  timezone: Joi.string().optional()
 });
 
 export {
@@ -50,4 +74,6 @@ export {
   updateCaseSchema,
   exportCasesAccountSchema,
   listCasesAccountSchema,
+  listCaseSummarySchema,
+  exportCaseSummarySchema
 };
