@@ -17,8 +17,8 @@ export class CaseModelService {
     {
       Case: ReturnType<typeof Case.initialize>;
       CaseSummary: ReturnType<typeof CaseSummary.initialize>;
-      CaseProject : ReturnType<typeof CaseProject.initialize>;
-      CaseTimeline : ReturnType<typeof CaseTimeline.initialize>;
+      CaseProject: ReturnType<typeof CaseProject.initialize>;
+      CaseTimeline: ReturnType<typeof CaseTimeline.initialize>;
     }
   > = new Map();
 
@@ -47,12 +47,9 @@ export class CaseModelService {
     const sequelize = await initOrgSequelize();
     const mainDbSequelize = await this.getMainSequelize();
     const CaseModel = Case.initialize(sequelize, schemaName);
-    const CaseSummaryModel = CaseSummary.initialize(
-      mainDbSequelize,
-      ""
-    );
+    const CaseSummaryModel = CaseSummary.initialize(mainDbSequelize, "");
     const CaseProjectModel = CaseProject.initialize(sequelize, schemaName);
-    const CaseTimelineModel = CaseTimeline.initialize(sequelize, schemaName); 
+    const CaseTimelineModel = CaseTimeline.initialize(sequelize, schemaName);
     const CaseHistoryModel = CaseHistory.initialize(sequelize, schemaName);
 
     const models = {

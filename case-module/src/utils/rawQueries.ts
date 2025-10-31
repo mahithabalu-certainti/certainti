@@ -1,11 +1,16 @@
-import { MAIN_SCHEMA_NAME } from "./constants"
-import { FilterType, validColumns, columnType, validColumnsForSorting } from "./types"
+import { MAIN_SCHEMA_NAME } from "./constants";
+import {
+  FilterType,
+  validColumns,
+  columnType,
+  validColumnsForSorting,
+} from "./types";
 
-export const fetchCasesHeadersDatas = (schemaName : string, caseRid : string) => {
-    return `
+export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string) => {
+  return `
     SELECT c.rid, c.account_rid, ad.account_name, c.case_name, c.filing_type_rid,
-    c.case_owner_rid, c.fiscal_year, c.status_rid, c.case_total_projects,
-    c.case_total_project_cost, c.case_total_rd_cost, c.case_total_qre_cost,
+    c.case_owner_rid, c.fiscal_year, c.status_rid, c.case_total_projects,c.case_total_qualified_projects,
+    c.case_total_project_cost, c.case_total_rd_cost, c.case_total_qre_cost,c.case_completion_percentage,
     c.planned_submission_date, c.statutory_submission_date, c.case_startdate,
     c.description, c.r_number, c.created_by, c.modified_by, c.created_datetime,
     c.modified_datetime
@@ -15,149 +20,210 @@ export const fetchCasesHeadersDatas = (schemaName : string, caseRid : string) =>
     LEFT JOIN ${schemaName}.account_details ad ON ad.account_rid = c.account_rid
     WHERE
     c.rid = '${caseRid}'
-    `
-}
+    `;
+};
 
-export const fetchProjectsForCases = (schemaName : string, page : number, limit : number, sort : string, sortBy : string, filter : FilterType, accountRid : string, fiscalYear : number, pointOfContactRid : string, technicalPointOfContactRid : string, isSorting : boolean, search : string, caseRid : string, assignedApi : boolean, accessibleIds : string[]) => {
-    const offset = (page - 1) * limit
-    const pagination = `LIMIT ${limit} OFFSET ${offset}`
-    let sortValue : string;
-    let searchValue : string;
-    let filterQueryConditions : string[] = []
-    let combinedFilterQuery : string = ``
-    let and : string = ``
+export const fetchProjectsForCases = (
+  schemaName: string,
+  page: number,
+  limit: number,
+  sort: string,
+  sortBy: string,
+  filter: FilterType,
+  accountRid: string,
+  fiscalYear: number,
+  pointOfContactRid: string,
+  technicalPointOfContactRid: string,
+  isSorting: boolean,
+  search: string,
+  caseRid: string,
+  assignedApi: boolean,
+  accessibleIds: string[]
+) => {
+  const offset = (page - 1) * limit;
+  const pagination = `LIMIT ${limit} OFFSET ${offset}`;
+  let sortValue: string;
+  let searchValue: string;
+  let filterQueryConditions: string[] = [];
+  let combinedFilterQuery: string = ``;
+  let and: string = ``;
 
-    let whereConditions : string = ``
-    let subQuery : string = ``
-    let subQueryConditions : string = ``
-    let subQueryJoinConditions : string = ``
-    let accessibleProjects : string = ``
+  let whereConditions: string = ``;
+  let subQuery: string = ``;
+  let subQueryConditions: string = ``;
+  let subQueryJoinConditions: string = ``;
+  let accessibleProjects: string = ``;
 
-    if(accessibleIds.length > 0) accessibleProjects = `AND pf.rid IN (${accessibleIds.map((d : any) => `'${d}'`).join(',')})`
-    else accessibleProjects = ``
+  if (accessibleIds.length > 0)
+    accessibleProjects = `AND pf.rid IN (${accessibleIds
+      .map((d: any) => `'${d}'`)
+      .join(",")})`;
+  else accessibleProjects = ``;
 
-    if(assignedApi) {
-        whereConditions = `cp.case_rid = '${caseRid}'`
-        subQuery = ` `
-        subQueryConditions = ` `
-        subQueryJoinConditions = ` `
-    } else {
-        subQuery = `
+  if (assignedApi) {
+    whereConditions = `cp.case_rid = '${caseRid}'`;
+    subQuery = ` `;
+    subQueryConditions = ` `;
+    subQueryJoinConditions = ` `;
+  } else {
+    subQuery = `
         fetch_case_projects_ids AS (
         SELECT c.project_fiscal_rid FROM ${schemaName}.case_projects c WHERE c.case_rid = '${caseRid}' AND c.account_rid = '${accountRid}'        
         ),
-        `
-        subQueryConditions = ` AND NOT EXISTS (SELECT 1 FROM fetch_case_projects_ids f WHERE f.project_fiscal_rid = pf.rid)`
-        subQueryJoinConditions = `LEFT JOIN fetch_case_projects_ids f ON f.project_fiscal_rid = pf.rid`
-        whereConditions = `pf.account_rid = '${accountRid}' AND pf.fiscal_year = ${fiscalYear} ${accessibleProjects}`
-    }
+        `;
+    subQueryConditions = ` AND NOT EXISTS (SELECT 1 FROM fetch_case_projects_ids f WHERE f.project_fiscal_rid = pf.rid)`;
+    subQueryJoinConditions = `LEFT JOIN fetch_case_projects_ids f ON f.project_fiscal_rid = pf.rid`;
+    whereConditions = `pf.account_rid = '${accountRid}' AND pf.fiscal_year = ${fiscalYear} ${accessibleProjects}`;
+  }
 
-    if(!isSorting) {
-        let dynamicAlias : string = ``
-        if(sort.includes(validColumnsForSorting[sort]) && validColumnsForSorting[sort] === 'project_point_of_contact') {
-            dynamicAlias = `poc`
-            sortValue = `ORDER BY ${dynamicAlias}.${validColumnsForSorting[sort]} ${sortBy}`
-        } else if(sort.includes(validColumnsForSorting[sort]) && validColumnsForSorting[sort] === 'project_point_of_contact') {
-            dynamicAlias = `tpoc`
-            sortValue = `ORDER BY ${dynamicAlias}.${validColumnsForSorting[sort]} ${sortBy}`
-        } else if(sort.includes(validColumnsForSorting[sort])) {
-            dynamicAlias = `pf`
-            sortValue = `ORDER BY ${dynamicAlias}.${validColumnsForSorting[sort]} ${sortBy}`
-        } else sortValue = `ORDER BY pf.project_code ASC`
-    } else {
-        sortValue = ``
-    }
+  if (!isSorting) {
+    let dynamicAlias: string = ``;
+    if (
+      sort.includes(validColumnsForSorting[sort]) &&
+      validColumnsForSorting[sort] === "project_point_of_contact"
+    ) {
+      dynamicAlias = `poc`;
+      sortValue = `ORDER BY ${dynamicAlias}.${validColumnsForSorting[sort]} ${sortBy}`;
+    } else if (
+      sort.includes(validColumnsForSorting[sort]) &&
+      validColumnsForSorting[sort] === "project_point_of_contact"
+    ) {
+      dynamicAlias = `tpoc`;
+      sortValue = `ORDER BY ${dynamicAlias}.${validColumnsForSorting[sort]} ${sortBy}`;
+    } else if (sort.includes(validColumnsForSorting[sort])) {
+      dynamicAlias = `pf`;
+      sortValue = `ORDER BY ${dynamicAlias}.${validColumnsForSorting[sort]} ${sortBy}`;
+    } else sortValue = `ORDER BY pf.project_code ASC`;
+  } else {
+    sortValue = ``;
+  }
 
-    if(search) searchValue = `%${search}%`
-    else searchValue = `%%`
+  if (search) searchValue = `%${search}%`;
+  else searchValue = `%%`;
 
-
-    if(Object.keys(filter).length > 0) {
-        let validKey : string;
-        let dynamicAlias : string = ``
-        and = ` AND `
-        for(let [key, condition] of Object.entries(filter)) {
-            if(Object.keys(validColumns).includes(key)) {
-                validKey = validColumns[key]
-                if(validKey === 'project_point_of_contact') dynamicAlias = `poc`
-                else if(validKey === 'project_technical_point_of_contact') dynamicAlias = `tpoc`
-                else dynamicAlias = `pf`
-                for(let [cond, value] of Object.entries(condition)) {
-                    switch(columnType[validKey]) {
-                        case "string" : {
-                            if(cond === 'equals') {
-                                filterQueryConditions.push(`${dynamicAlias}.${validKey} = '${value}'`)
-                            }
-                            if(cond === 'not_equals') {
-                                filterQueryConditions.push(`${dynamicAlias}.${validKey} != '${value}'`)
-                            }
-                            if(cond === 'contains') {
-                                filterQueryConditions.push(`${dynamicAlias}.${validKey} ILIKE '%${value}%'`)
-                            }
-                            if(cond === 'is_empty') {
-                                filterQueryConditions.push(`${dynamicAlias}.${validKey} IS NULL`)
-                            }
-                            if(cond === 'in') {
-                                filterQueryConditions.push(`${dynamicAlias}.${validKey} IN (${value.map((d : any) => `'${d}'`).join(',')})`)
-                            }
-                            break;
-                        }
-                        case "number" : {
-                            if(cond === 'equals') {
-                                filterQueryConditions.push(`${dynamicAlias}.${validKey} = ${value}`)
-                            }
-                            if(cond === 'not_equals') {
-                                filterQueryConditions.push(`${dynamicAlias}.${validKey} != ${value}`)
-                            }
-                            if(cond === 'greater_than') {
-                                filterQueryConditions.push(`${dynamicAlias}.${validKey} > ${value}`)
-                            }
-                            if(cond === 'less_than') {
-                                filterQueryConditions.push(`${dynamicAlias}.${validKey} < ${value}`)
-                            }    
-                            if(cond === 'is_empty') {
-                                filterQueryConditions.push(`${dynamicAlias}.${validKey} IS NULL`)
-                            }
-                            if(cond === 'between') {
-                                filterQueryConditions.push(`${dynamicAlias}.${validKey} BETWEEN ${value.map((d : any) => d).join(' AND ')}`)
-                            }
-                            break;                         
-                        }
-                        case "date" : {
-                            if(cond === 'equals') {
-                                filterQueryConditions.push(`${dynamicAlias}.${validKey} = '${value}'`)
-                            }
-                            if(cond === 'after') {
-                                filterQueryConditions.push(`${dynamicAlias}.${validKey} > '${value}'`)
-                            }
-                            if(cond === 'before') {
-                                filterQueryConditions.push(`${dynamicAlias}.${validKey} < '${value}'`)
-                            }    
-                            if(cond === 'is_empty') {
-                                filterQueryConditions.push(`${dynamicAlias}.${validKey} IS NULL`)
-                            }
-                            if(cond === 'between') {
-                                filterQueryConditions.push(`DATE(${dynamicAlias}.${validKey}) BETWEEN ${value.map((d : any) => `'${d}'`).join(' AND ')}`)
-                            }
-                            break;        
-                        }
-                    }
-                }
+  if (Object.keys(filter).length > 0) {
+    let validKey: string;
+    let dynamicAlias: string = ``;
+    and = ` AND `;
+    for (let [key, condition] of Object.entries(filter)) {
+      if (Object.keys(validColumns).includes(key)) {
+        validKey = validColumns[key];
+        if (validKey === "project_point_of_contact") dynamicAlias = `poc`;
+        else if (validKey === "project_technical_point_of_contact")
+          dynamicAlias = `tpoc`;
+        else dynamicAlias = `pf`;
+        for (let [cond, value] of Object.entries(condition)) {
+          switch (columnType[validKey]) {
+            case "string": {
+              if (cond === "equals") {
+                filterQueryConditions.push(
+                  `${dynamicAlias}.${validKey} = '${value}'`
+                );
+              }
+              if (cond === "not_equals") {
+                filterQueryConditions.push(
+                  `${dynamicAlias}.${validKey} != '${value}'`
+                );
+              }
+              if (cond === "contains") {
+                filterQueryConditions.push(
+                  `${dynamicAlias}.${validKey} ILIKE '%${value}%'`
+                );
+              }
+              if (cond === "is_empty") {
+                filterQueryConditions.push(
+                  `${dynamicAlias}.${validKey} IS NULL`
+                );
+              }
+              if (cond === "in") {
+                filterQueryConditions.push(
+                  `${dynamicAlias}.${validKey} IN (${value
+                    .map((d: any) => `'${d}'`)
+                    .join(",")})`
+                );
+              }
+              break;
             }
+            case "number": {
+              if (cond === "equals") {
+                filterQueryConditions.push(
+                  `${dynamicAlias}.${validKey} = ${value}`
+                );
+              }
+              if (cond === "not_equals") {
+                filterQueryConditions.push(
+                  `${dynamicAlias}.${validKey} != ${value}`
+                );
+              }
+              if (cond === "greater_than") {
+                filterQueryConditions.push(
+                  `${dynamicAlias}.${validKey} > ${value}`
+                );
+              }
+              if (cond === "less_than") {
+                filterQueryConditions.push(
+                  `${dynamicAlias}.${validKey} < ${value}`
+                );
+              }
+              if (cond === "is_empty") {
+                filterQueryConditions.push(
+                  `${dynamicAlias}.${validKey} IS NULL`
+                );
+              }
+              if (cond === "between") {
+                filterQueryConditions.push(
+                  `${dynamicAlias}.${validKey} BETWEEN ${value
+                    .map((d: any) => d)
+                    .join(" AND ")}`
+                );
+              }
+              break;
+            }
+            case "date": {
+              if (cond === "equals") {
+                filterQueryConditions.push(
+                  `${dynamicAlias}.${validKey} = '${value}'`
+                );
+              }
+              if (cond === "after") {
+                filterQueryConditions.push(
+                  `${dynamicAlias}.${validKey} > '${value}'`
+                );
+              }
+              if (cond === "before") {
+                filterQueryConditions.push(
+                  `${dynamicAlias}.${validKey} < '${value}'`
+                );
+              }
+              if (cond === "is_empty") {
+                filterQueryConditions.push(
+                  `${dynamicAlias}.${validKey} IS NULL`
+                );
+              }
+              if (cond === "between") {
+                filterQueryConditions.push(
+                  `DATE(${dynamicAlias}.${validKey}) BETWEEN ${value
+                    .map((d: any) => `'${d}'`)
+                    .join(" AND ")}`
+                );
+              }
+              break;
+            }
+          }
         }
+      }
     }
-    else {
-        and = ` `
-        filterQueryConditions = []
-    }
-    if(filterQueryConditions.length > 0) {
-        combinedFilterQuery = filterQueryConditions.join('AND')
-    } else {
-        combinedFilterQuery = ` `
-    }
+  } else {
+    and = ` `;
+    filterQueryConditions = [];
+  }
+  if (filterQueryConditions.length > 0) {
+    combinedFilterQuery = filterQueryConditions.join("AND");
+  } else {
+    combinedFilterQuery = ` `;
+  }
 
-    let query = 
-    `
+  let query = `
     WITH fetch_all_prj_ids AS (
     SELECT pf.rid 
     FROM ${schemaName}.project_fiscal pf
@@ -219,11 +285,18 @@ export const fetchProjectsForCases = (schemaName : string, page : number, limit 
     SELECT * FROM total_projects ${pagination}
     )
     SELECT * FROM paginated_projects
-    `
-    return query;
-}
+    `;
+  return query;
+};
 
-export const listAllCasesSummaryQuery = (searchValue:string,whereKey:string,joinedConditions:string,sortValue:string,pagination:string,accessibleIds:string[])  => `
+export const listAllCasesSummaryQuery = (
+  searchValue: string,
+  whereKey: string,
+  joinedConditions: string,
+  sortValue: string,
+  pagination: string,
+  accessibleIds: string[]
+) => `
     WITH fetch_all_cases AS 
     (SELECT cs.case_rid AS rid, cs.r_number, cs.status_rid,s.status_name,
     cs.created_by, CONCAT(u.first_name, ' ', u.last_name) AS created_user_name,
@@ -280,4 +353,4 @@ export const listAllCasesSummaryQuery = (searchValue:string,whereKey:string,join
         )) AS cases_summary
 
         FROM
-        paginated_data c`
+        paginated_data c`;
