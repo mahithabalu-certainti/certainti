@@ -136,6 +136,24 @@ export const getCaseFilterFields = (
         !permissionMap?.['case_total_rd_cost']?.read,
     },
     {
+      name: 'No. of Projects',
+      value: 'case_total_projects',
+      type: 'number',
+      operatorOption: numberOptions,
+      hide:
+        !permissionMap?.['case_total_projects']?.edit &&
+        !permissionMap?.['case_total_projects']?.read,
+    },
+    {
+      name: 'No. of Qualified Projects',
+      value: 'case_total_qualified_projects',
+      type: 'number',
+      operatorOption: numberOptions,
+      hide:
+        !permissionMap?.['case_total_qualified_projects']?.edit &&
+        !permissionMap?.['case_total_qualified_projects']?.read,
+    },
+    {
       name: 'Created On',
       value: 'created_datetime',
       type: 'date',

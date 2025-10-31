@@ -1,13 +1,20 @@
 import {
   costDisplay,
   formatDateToYYYYMMDDWithTime,
+  REGEX_PATTERNS,
 } from '../../../../../common-utils';
-import { ListTableColumn } from '../../../../../components/table/types';
+import {
+  DependencyRowData,
+  ListTableColumn,
+} from '../../../../../components/table/types';
 import { CaseGlobalList } from '../../../../types';
 
 export const getGlobalCaseListColumns = (
   handleViewCaseDetails: (caseItem: CaseGlobalList) => void,
-  permissionMap?: Record<string, { read: boolean; edit: boolean }>
+  userListOptions: { value: string; label: string }[],
+  caseFilingTypesOptions: { value: string; label: string }[],
+  permissionMap?: Record<string, { read: boolean; edit: boolean }>,
+  accountPermissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<CaseGlobalList>[] => {
   return [
     {
@@ -43,19 +50,35 @@ export const getGlobalCaseListColumns = (
       width: 180,
       sortable: true,
       sortId: 'account_name',
-      // hide:
-      //   !permissionMap?.['account_name']?.edit &&
-      //   !permissionMap?.['account_name']?.read,
+      hide:
+        !accountPermissionMap?.['account_name']?.read &&
+        !accountPermissionMap?.['account_name']?.edit,
     },
     {
       id: 'filing_type_name',
       label: 'Filing Type',
-      width: 120,
+      width: 160,
       sortable: true,
       sortId: 'filing_type_name',
+      editId: 'filing_type_rid',
+      editable:
+        permissionMap?.['filing_type_rid']?.edit &&
+        permissionMap?.['filing_type_rid']?.read,
       hide:
         !permissionMap?.['filing_type_rid']?.edit &&
         !permissionMap?.['filing_type_rid']?.read,
+      field: {
+        type: 'select',
+        required: true,
+        placeholder: 'Choose Filing Type',
+        options: caseFilingTypesOptions,
+        getFieldData: (rowData: DependencyRowData) => {
+          return String(rowData.filing_type_rid || '');
+        },
+      },
+      conditionallyEdit: [
+        { key: 'account_status_name', matchValue: ['Active'] },
+      ],
     },
     {
       id: 'case_name',
@@ -63,9 +86,31 @@ export const getGlobalCaseListColumns = (
       width: 200,
       sortable: true,
       sortId: 'case_name',
+      editId: 'case_name',
+      editable:
+        permissionMap?.['case_name']?.edit &&
+        permissionMap?.['case_name']?.read,
       hide:
         !permissionMap?.['case_name']?.edit &&
         !permissionMap?.['case_name']?.read,
+      field: {
+        type: 'text',
+        required: true,
+        placeholder: 'Enter Case Name',
+        validation: [
+          {
+            regex: REGEX_PATTERNS.MIN_3,
+            errorMessage: 'Case Name must be more than 2 characters long',
+          },
+          {
+            regex: REGEX_PATTERNS.MAX_255,
+            errorMessage: 'Case Name must be within 255 characters',
+          },
+        ],
+      },
+      conditionallyEdit: [
+        { key: 'account_status_name', matchValue: ['Active'] },
+      ],
     },
     {
       id: 'fiscal_year',
@@ -84,24 +129,40 @@ export const getGlobalCaseListColumns = (
       width: 180,
       sortable: true,
       sortId: 'country_name',
-      // hide:
-      //   !permissionMap?.['country_rid']?.edit &&
-      //   !permissionMap?.['country_rid']?.read,
+      hide:
+        !accountPermissionMap?.['country_rid']?.read &&
+        !accountPermissionMap?.['country_rid']?.edit,
     },
     {
       id: 'case_owner_name',
       label: 'Case Owner',
-      width: 180,
+      width: 190,
       sortable: true,
       sortId: 'case_owner_name',
+      editId: 'case_owner_rid',
+      editable:
+        permissionMap?.['case_owner_rid']?.edit &&
+        permissionMap?.['case_owner_rid']?.read,
       hide:
         !permissionMap?.['case_owner_rid']?.edit &&
         !permissionMap?.['case_owner_rid']?.read,
+      field: {
+        type: 'select',
+        required: true,
+        placeholder: 'Choose Case Owner',
+        options: userListOptions,
+        getFieldData: (rowData: DependencyRowData) => {
+          return String(rowData.case_owner_rid || '');
+        },
+      },
+      conditionallyEdit: [
+        { key: 'account_status_name', matchValue: ['Active'] },
+      ],
     },
     {
       id: 'case_total_project_cost',
       label: 'Total Case Project Cost',
-      width: 180,
+      width: 190,
       sortable: true,
       sortId: 'case_total_project_cost',
       sx: {
@@ -118,7 +179,7 @@ export const getGlobalCaseListColumns = (
     {
       id: 'case_total_qre_cost',
       label: 'Case Project QRE Cost',
-      width: 180,
+      width: 190,
       sortable: true,
       sortId: 'case_total_qre_cost',
       sx: {
@@ -135,7 +196,7 @@ export const getGlobalCaseListColumns = (
     {
       id: 'case_total_rd_cost',
       label: 'Case Project RD Credit',
-      width: 180,
+      width: 190,
       sortable: true,
       sortId: 'case_total_rd_cost',
       sx: {
@@ -150,9 +211,35 @@ export const getGlobalCaseListColumns = (
           : '-',
     },
     {
+      id: 'case_total_projects',
+      label: 'No. of Projects',
+      width: 160,
+      sortable: true,
+      sortId: 'case_total_projects',
+      sx: {
+        textAlign: 'right',
+      },
+      hide:
+        !permissionMap?.['case_total_projects']?.edit &&
+        !permissionMap?.['case_total_projects']?.read,
+    },
+    {
+      id: 'case_total_qualified_projects',
+      label: 'No. of Qualified Projects',
+      width: 190,
+      sortable: true,
+      sortId: 'case_total_qualified_projects',
+      sx: {
+        textAlign: 'right',
+      },
+      hide:
+        !permissionMap?.['case_total_qualified_projects']?.edit &&
+        !permissionMap?.['case_total_qualified_projects']?.read,
+    },
+    {
       id: 'created_datetime',
       label: 'Created On',
-      width: 190,
+      width: 200,
       sortable: true,
       sortId: 'created_datetime',
       hide:
@@ -167,7 +254,7 @@ export const getGlobalCaseListColumns = (
     {
       id: 'submitted_datetime',
       label: 'Submitted On',
-      width: 190,
+      width: 200,
       sortable: true,
       sortId: 'submitted_datetime',
       hide:
@@ -181,7 +268,7 @@ export const getGlobalCaseListColumns = (
     {
       id: 'approved_datetime',
       label: 'Approved On',
-      width: 190,
+      width: 200,
       sortable: true,
       sortId: 'approved_datetime',
       hide:

@@ -6,6 +6,7 @@ import {
   CaseFilingTypeResponse,
   CaseFormPayload,
   CaseGlobalList,
+  CaseGlobalListResponse,
   CaseList,
   CaseListExportParams,
   CaseListParams,
@@ -15,7 +16,6 @@ import {
 } from '../../types/cases';
 import { CommonApiResponse } from '../../../common-service';
 import { getCaseExportListURL, getCaseListURL } from '../urls';
-import { GlobalCasesListMockData } from '../../mockdata/case-mock';
 
 // List
 export const fetchCaseList = async (
@@ -49,18 +49,12 @@ export const useCaseList = (
 export const fetchGlobalCaseList = async (
   params: CaseListParams
 ): Promise<{ cases: CaseGlobalList[]; count: number }> => {
-  // const { data } = await caseServiceApi.get<CaseGlobalListResponse>(
-  //   getCaseListURL(params)
-  // );
-  // return {
-  //   cases: data.data.caseInfo,
-  //   count: data.data.count,
-  // };
-  console.log('global-cases-params', params);
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  const { data } = await caseServiceApi.get<CaseGlobalListResponse>(
+    getCaseListURL(params)
+  );
   return {
-    cases: GlobalCasesListMockData.data.caseInfo,
-    count: GlobalCasesListMockData.data.count,
+    cases: data.data.caseInfo,
+    count: data.data.count,
   };
 };
 export const useCaseGlobalList = (
