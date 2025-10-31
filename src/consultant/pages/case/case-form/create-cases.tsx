@@ -165,6 +165,20 @@ export const CreateCases: React.FC = () => {
     return map;
   }, [casesEditFields]);
 
+  const accountViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.ACCOUNTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const accountPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    accountViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [accountViewEditFields]);
+
   const onChangeField = ({ fieldName, fieldValue }: OnChange) => {
     if (fieldName === 'case_startdate') {
       // When Start Date changes:
@@ -223,6 +237,7 @@ export const CreateCases: React.FC = () => {
   const formConfig = CaseFormData(
     isEditView,
     permissionMap,
+    accountPermissionMap,
     caseFilingTypesOptions,
     userListOptions,
     countryOptions,

@@ -18,6 +18,7 @@ const fiscalYears = getFiscalYears(currentYear - minYear + 1);
 export const CaseFormData = (
   isEditView?: boolean,
   permissionMap?: Record<string, { read: boolean; edit: boolean }>,
+  accountPermissionMap?: Record<string, { read: boolean; edit: boolean }>,
   filingTypeOptions?: SelectOption[],
   ownerOptions?: SelectOption[],
   countryOptions?: SelectOption[],
@@ -115,9 +116,12 @@ export const CaseFormData = (
           createSelectField('country', 'Country', {
             options: countryOptions || [],
             placeholder: 'Choose Country',
-            required: true,
+            required: false,
             disabled: true,
-            // hide: true,
+            hide:
+              isEditView &&
+              !accountPermissionMap?.['currency_rid']?.read &&
+              !accountPermissionMap?.['currency_rid']?.edit,
           }),
           createEmptyField('', '', {
             name: 'emptyData',
@@ -272,6 +276,7 @@ export const CaseFormData = (
       filingTypeOptions,
       isEditView,
       permissionMap,
+      accountPermissionMap,
       ownerOptions,
       countryOptions,
       dateConstraints,
