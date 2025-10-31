@@ -8,12 +8,20 @@ import {
   ListTableColumn,
 } from '../../../../../../components/table/types';
 import { CaseList } from '../../../../../types';
+import { generateCaseNamePrefixValue } from '../../../../case/helper';
 
 export const getCaseListColumns = (
   handleViewCaseDetails: (caseItem: CaseList) => void,
   userListOptions: { value: string; label: string }[],
   caseFilingTypesOptions: { value: string; label: string }[],
   accountInActive: boolean,
+  accountData: {
+    accountId: string;
+    account_name: string;
+    account_number: string;
+    country_rid: string;
+    country_code: string;
+  },
   currencySymbol?: string,
   permissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<CaseList>[] => {
@@ -72,7 +80,7 @@ export const getCaseListColumns = (
     {
       id: 'case_name',
       label: 'Case Name',
-      width: 200,
+      width: 250,
       sortable: true,
       sortId: 'case_name',
       editId: 'case_name',
@@ -83,6 +91,14 @@ export const getCaseListColumns = (
       hide:
         !permissionMap?.['case_name']?.edit &&
         !permissionMap?.['case_name']?.read,
+      render: (row) =>
+        row.case_name && accountData.account_name && accountData.country_code
+          ? generateCaseNamePrefixValue(
+              accountData.account_name,
+              accountData.country_code,
+              row.fiscal_year.toString()
+            ) + row.case_name
+          : '-',
       field: {
         type: 'text',
         required: true,

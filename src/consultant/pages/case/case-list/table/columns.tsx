@@ -8,6 +8,7 @@ import {
   ListTableColumn,
 } from '../../../../../components/table/types';
 import { CaseGlobalList } from '../../../../types';
+import { generateCaseNamePrefixValue } from '../../helper';
 
 export const getGlobalCaseListColumns = (
   handleViewCaseDetails: (caseItem: CaseGlobalList) => void,
@@ -83,7 +84,7 @@ export const getGlobalCaseListColumns = (
     {
       id: 'case_name',
       label: 'Case Name',
-      width: 200,
+      width: 250,
       sortable: true,
       sortId: 'case_name',
       editId: 'case_name',
@@ -93,6 +94,14 @@ export const getGlobalCaseListColumns = (
       hide:
         !permissionMap?.['case_name']?.edit &&
         !permissionMap?.['case_name']?.read,
+      render: (row) =>
+        row.case_name && row.account_name && row.country_code
+          ? generateCaseNamePrefixValue(
+              row.account_name,
+              row.country_code,
+              row.fiscal_year.toString()
+            ) + row.case_name
+          : '-',
       field: {
         type: 'text',
         required: true,

@@ -225,3 +225,11 @@ export const getGlobalCasesFilterFields = (
     },
   ];
 };
+
+export const generateCaseNamePrefixValue = (
+  accName: string,
+  country: string,
+  year: string
+) => {
+  return `${accName}-${country}-${year}-`;
+};

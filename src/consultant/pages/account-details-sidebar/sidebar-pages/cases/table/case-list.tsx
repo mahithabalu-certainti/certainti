@@ -74,6 +74,14 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
   const currencySymbol =
     accountDetails?.accountById?.currency?.currency_symbol || '';
 
+  const accountData = {
+    accountId: accountid || '',
+    account_name: accountDetails?.accountById?.account_name || '',
+    account_number: accountDetails?.accountById?.r_number || '',
+    country_rid: accountDetails?.accountById?.country_rid || '',
+    country_code: accountDetails?.accountById?.country?.country_code || '',
+  };
+
   const { data, isLoading, isError } = useCaseList(
     {
       ...tableParams,
@@ -166,6 +174,7 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
     userListOptions,
     caseFilingTypesOptions,
     accountInActive,
+    accountData,
     currencySymbol,
     permissionMap
   );
