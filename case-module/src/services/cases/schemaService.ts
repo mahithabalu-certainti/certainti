@@ -30,6 +30,8 @@ import { assignProjectType, CaseHeadersColumns, filterType, ICreateCases } from 
 import { Case, setupCaseSequence } from "../../models/caseModel";
 import { fetchCasesHeadersDatas, fetchProjectsForCases,listAllCasesSummaryQuery } from "../../utils/rawQueries";
 import { CaseProject } from "../../models/caseProjectsModel";
+import { CaseTimeline, setupCaseTimelineSequence } from "../../models/caseTimeline";
+import { CaseHistory, setupCaseHistorySequence } from "../../models/caseHistory";
 
 class CaseSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -93,8 +95,8 @@ class CaseSchemaService {
 
       return casecreationResponse;
     } catch (error) {
-      logMessage(`Error creating interaction: ${error}`);
-      throw new Error("Error creating interaction: " + error);
+      logMessage(`Error creating case: ${error}`);
+      throw new Error("Error creating case: " + error);
     }
   }
   async addCaseSummary(
@@ -133,6 +135,11 @@ class CaseSchemaService {
         accountNumber
       );
 
+      const existingCase = await Case.findOne({
+        where: { rid: caseRequest.case_rid },
+        transaction,
+      });
+
       const caseUpdateResponse = await Case.update(
         {
           ...caseRequest,
@@ -156,11 +163,78 @@ class CaseSchemaService {
           },
         }
       );
+      await this.updateCaseHistory( 
+        accountNumber,
+        caseRequest.case_rid as string,
+        { ...caseRequest, modified_by: userId },
+        existingCase
+      );
 
       return caseUpdateResponse;
     } catch (error) {
       logMessage(`Error updating cases: ${error}`);
       throw new Error("Error updating cases: " + error);
+    }
+  }
+
+   async updateCaseHistory(
+    accountNumber: string,
+    caseId: string,
+    newCaseData: any,
+    existingCaseData: any
+  ) {
+    try {
+      const { CaseHistory } = await this.caseModelService.getModels(
+        accountNumber
+      );
+
+      const excludedFields = [
+        "created_by",
+        "modified_by",
+        "case_rid",
+        "account_rid",
+        "modified_datetime",
+      ];
+
+      const cleanedNewData = Object.fromEntries(
+        Object.entries(newCaseData).filter(
+          ([key]) => !excludedFields.includes(key)
+        )
+      );
+
+      const historyChanges = Object.entries(cleanedNewData)
+        .filter(([key, newValue]) => {
+          const oldValue = existingCaseData[key];
+
+          if (newValue == null && oldValue == null) return false;
+
+          if (typeof newValue === "number" || typeof oldValue === "number") {
+            return Number(newValue) !== Number(oldValue);
+          }
+
+          return String(newValue ?? "") !== String(oldValue ?? "");
+        })
+        .map(([key, newValue]) => ({
+          case_rid: caseId,
+          attribute_name: key,
+          old_value:
+            existingCaseData[key] !== null &&
+            existingCaseData[key] !== undefined
+              ? String(existingCaseData[key])
+              : "",
+          new_value:
+            newValue !== null && newValue !== undefined ? String(newValue) : "",
+          created_by: newCaseData["modified_by"],
+        }));
+
+      if (historyChanges.length === 0) return;
+
+      await CaseHistory.bulkCreate(historyChanges);
+    } catch (err) {
+      errorLog("Error updating project history : " + (err as Error).message);
+      throw new Error(
+        "Error updating project history : " + (err as Error).message
+      );
     }
   }
 
@@ -174,9 +248,16 @@ class CaseSchemaService {
       )}`;
 
       const CaseModel = await Case.initialize(orgDbSequlize, schemaName);
+      const caseTimelineModel = await CaseTimeline.initialize(orgDbSequlize, schemaName);
+      const caseHistoryModel = await CaseHistory.initialize(orgDbSequlize, schemaName);
 
       await CaseModel.sync({ force: false });
       await setupCaseSequence(orgDbSequlize, schemaName);
+      await caseTimelineModel.sync({ force: false });
+      await setupCaseTimelineSequence(orgDbSequlize, schemaName);
+      await caseHistoryModel.sync({ force: false });
+      await setupCaseHistorySequence(orgDbSequlize, schemaName);
+
     } catch (err) {
       errorLog("Error creating case tables", (err as Error).message);
       return this.throwServiceError(err as Error);
@@ -1253,6 +1334,38 @@ class CaseSchemaService {
       return [];
     }
 }
+async addCaseTimeline(
+    accountNumber: string,
+    eventName: string,
+    caseRequest: ICreateCases,
+    caseId: string,
+    userId: string,
+    transaction: Transaction
+  ) {
+    try {
+      const { CaseTimeline } =
+        await this.caseModelService.getModels(accountNumber);
+
+      await CaseTimeline.create(
+        {
+          account_rid: caseRequest.account_rid,
+          event_name: eventName,
+          event_status: "success",
+          event_type: "ui handler",
+          entity_rid: caseId,
+          created_by: userId,
+          event_datetime: new Date(),
+          created_datetime: new Date(),
+        },
+        {
+          transaction,
+        }
+      );
+    } catch (err) {
+      logMessage(`Error creating case timeline: ${err}`);
+      throw new Error("Error creating case timeline");
+    }
+  }
 }
 
 // Utility function for optimized column sorting

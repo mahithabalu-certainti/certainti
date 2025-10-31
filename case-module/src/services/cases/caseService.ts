@@ -99,6 +99,14 @@ export class CaseService {
           response.rid,
           response.get("r_number") || ""
         );
+         await this.caseSchemaService.addCaseTimeline(
+          accountNumber,
+          "create",
+          caseRequest,
+          response.rid,
+          userId,
+          transaction
+        );
       }
 
       await transaction.commit();
@@ -171,6 +179,14 @@ export class CaseService {
         caseRequest,
         transaction
       );
+      await this.caseSchemaService.addCaseTimeline(
+          accountNumber,
+          "create",
+          caseRequest,
+          caseRequest.case_rid!,
+          userId,
+          transaction
+        );
 
       await transaction.commit();
 
