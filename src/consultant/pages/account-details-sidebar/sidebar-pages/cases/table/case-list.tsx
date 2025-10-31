@@ -136,6 +136,7 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
       accountID: accountid || '',
       account_name: accountDetails?.accountById?.account_name || '',
       account_number: accountDetails?.accountById?.r_number || '',
+      country_rid: accountDetails?.accountById?.country_rid || '',
       // activeMenu: 'account',
     });
 
@@ -194,6 +195,7 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
       accountId,
       account_name: accountDetails?.accountById?.account_name || '',
       account_number: accountDetails?.accountById?.r_number || '',
+      country_rid: accountDetails?.accountById?.country_rid || '',
       source: `Account > ${accountName}`,
       // activeMenu: 'account',
     });

@@ -218,7 +218,7 @@ const Cases: React.FC = () => {
               className={`w-7 h-7 p-[5px] [&>path]:stroke-[#4ce547] bg-[#D2FFE3] rounded`}
             />
             <div className='flex flex-col mx-2.5 pb-1'>
-              <div className='font-bold text-[16px] text-[#2D3E4F]'>Notes</div>
+              <div className='font-bold text-[16px] text-[#2D3E4F]'>Cases</div>
               <div className='font-semibold text-[#7D98B6] text-[12px] -mt-1'>
                 {`${totalCount} items`}
               </div>

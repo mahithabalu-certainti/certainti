@@ -20,6 +20,7 @@ export const CaseFormData = (
   permissionMap?: Record<string, { read: boolean; edit: boolean }>,
   filingTypeOptions?: SelectOption[],
   ownerOptions?: SelectOption[],
+  countryOptions?: SelectOption[],
   dateConstraints?: {
     planned_min: string;
     planned_max: string;
@@ -111,11 +112,12 @@ export const CaseFormData = (
               !permissionMap?.['fiscal_year']?.edit &&
               !permissionMap?.['fiscal_year']?.read,
           }),
-          createEmptyField('', '', {
-            name: 'emptyData',
-            label: '',
-            type: '',
-            required: false,
+          createSelectField('country', 'Country', {
+            options: countryOptions || [],
+            placeholder: 'Choose Country',
+            required: true,
+            disabled: true,
+            // hide: true,
           }),
           createEmptyField('', '', {
             name: 'emptyData',
@@ -271,6 +273,7 @@ export const CaseFormData = (
       isEditView,
       permissionMap,
       ownerOptions,
+      countryOptions,
       dateConstraints,
     ]
   );

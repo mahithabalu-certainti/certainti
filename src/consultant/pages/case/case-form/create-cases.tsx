@@ -2,7 +2,12 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { useToast } from '../../../../hooks';
 import { useManageUserList } from '../../../../admin/service';
-import { AllPermissions, Layout, OnChange } from '../../../../common-service';
+import {
+  AllPermissions,
+  Layout,
+  OnChange,
+  useGetAllCountries,
+} from '../../../../common-service';
 import { CaseFormData } from './form-data';
 import TextButton from '../../../../components/button/text-button';
 import SkeletonForm from '../../../../components/form-builder/skeleton-form';
@@ -54,7 +59,7 @@ export const CreateCases: React.FC = () => {
   const accountNumber = searchParams.get('account_number') || '';
   const accountName = searchParams.get('account_name') || '';
   const sourcePath = searchParams.get('source') || '';
-  // const countryRid = searchParams.get('country_rid') || '';
+  const countryRid = searchParams.get('country_rid') || '';
 
   // User List Api
   const { data: userListData, isLoading: userListLoading } = useManageUserList({
@@ -69,6 +74,7 @@ export const CreateCases: React.FC = () => {
   const updateCase = useUpdateCaseDetails();
   const createCase = useCreateCase();
   const caseFillingTypes = useGetCaseFilingTypes();
+  const allCountries = useGetAllCountries();
 
   const commonSuccess = createCase.isSuccess || updateCase.isSuccess;
 
@@ -92,6 +98,7 @@ export const CreateCases: React.FC = () => {
         case_name: caseData.case_name || '',
         case_owner: caseData.case_owner_rid || '',
         fiscal_year: caseData.fiscal_year || '',
+        country: caseData.country_rid || countryRid || '',
         case_startdate: caseData.case_startdate
           ? getDateFormatYYYYMMDD(caseData.case_startdate)
           : '',
@@ -112,7 +119,7 @@ export const CreateCases: React.FC = () => {
         updated_by: caseData.modified_by_name || '-',
       }),
     }),
-    [accountNumber, accountName, caseData]
+    [caseData, accountName, accountNumber, countryRid]
   );
 
   const userListOptions = useMemo(() => {
@@ -132,6 +139,15 @@ export const CreateCases: React.FC = () => {
       })) || []
     );
   }, [caseFillingTypes]);
+
+  const countryOptions = useMemo(
+    () =>
+      allCountries.data?.data.country.map((country) => ({
+        label: country.country_name,
+        value: country.rid,
+      })) || [],
+    [allCountries.data?.data.country]
+  );
 
   //Permission
   const casesEditFields = useMemo(
@@ -209,6 +225,7 @@ export const CreateCases: React.FC = () => {
     permissionMap,
     caseFilingTypesOptions,
     userListOptions,
+    countryOptions,
     dateConstraints
   );
 
@@ -283,6 +300,7 @@ export const CreateCases: React.FC = () => {
                     account_id: accountNumber || '',
                     case_owner: userId || '',
                     fiscal_year: currentYear.toString(),
+                    country: countryRid || '',
                   }
             }
             outData={submitData}
