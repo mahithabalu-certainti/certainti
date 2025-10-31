@@ -1,3 +1,4 @@
+import { time } from "console";
 import Joi from "joi";
 
 const createCaseSchema = Joi.object({
@@ -58,10 +59,21 @@ const listCaseSummarySchema = Joi.object({
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
 });
 
+const exportCaseSummarySchema = Joi.object({
+  filters: Joi.string().default("{}"),
+  globalFilters: Joi.string().default("{}"),
+  fiscal_year: Joi.string().optional(),
+  search: Joi.string().max(255).optional(),
+  sortBy: Joi.string().optional(),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
+  timezone: Joi.string().optional()
+});
+
 export {
   createCaseSchema,
   updateCaseSchema,
   exportCasesAccountSchema,
   listCasesAccountSchema,
-  listCaseSummarySchema
+  listCaseSummarySchema,
+  exportCaseSummarySchema
 };

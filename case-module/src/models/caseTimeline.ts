@@ -1,5 +1,7 @@
 import { Model, DataTypes, Sequelize, Optional } from "sequelize";
 import { ENV_PREFIX } from "../utils/constants";
+import { log } from "console";
+import { logMessage } from "../utils/helpers";
 
 export interface CaseTimelineAttributes {
   rid?: string;
@@ -136,8 +138,8 @@ export async function setupCaseTimelineSequence(
     await sequelize.query(`ALTER TABLE "${schemaName}".cases_timeline
       ALTER COLUMN r_number SET DEFAULT 'CST-' || LPAD(nextval('"${schemaName}".cases_timeline_seq')::text, 10, '0')`);
 
-    console.log("Cases timeline sequence setup complete");
+   logMessage("Cases timeline sequence setup complete");
   } catch (error) {
-    console.error("Error setting up Cases timeline sequence:", error);
+    logMessage(`Error setting up Cases timeline sequence: ${error}`);
   }
 }

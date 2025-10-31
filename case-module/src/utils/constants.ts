@@ -77,6 +77,7 @@ export const STATUS_MESSAGE = {
   multipleProjectDeletedSuccess : "Projects deleted successfully",
   projectNotAssigned : "Requested project not found",
   caseIdMissing : "Case ID is required",
+  countryValidationFailed : "Country is not associated with the account,Please select country",
 };
 
 export const caseStatuses = {
@@ -104,6 +105,26 @@ export const casesFieldMappings = [
     { permissionField: 'status_rid', exportField: 'Status', dataField: 'status_name' }
     //{ permissionField: 'modified_by', exportField: 'Updated By', dataField: 'modified_by' },
     //{ permissionField: 'modified_datetime', exportField: 'Updated On', dataField: 'modified_datetime' }
+   
+  ];
+
+  export const casesSummaryFieldMappings = [
+     
+    { permissionField: 'r_number', exportField: 'Case ID', dataField: 'r_number' },
+    { permissionField: 'filing_type_rid', exportField: 'Filing Type', dataField: 'filing_type_name' },
+    { permissionField: 'case_name', exportField: 'Case Name', dataField: 'case_name' },
+    { permissionField: 'fiscal_year', exportField: 'Fiscal Year', dataField: 'fiscal_year' },
+    { permissionField: 'country_rid', exportField: 'Country', dataField: 'country_name' },
+    { permissionField: 'case_owner_rid', exportField: 'Case Owner', dataField: 'case_owner_name' },
+    { permissionField: 'case_total_projects', exportField: 'Total Projects', dataField: 'case_total_projects' },
+    { permissionField: 'case_total_qualified_projects', exportField: 'Total Qualified Projects', dataField: 'case_total_qualified_projects' },
+    { permissionField: 'case_total_project_cost', exportField: 'Total Case Project Cost', dataField: 'case_total_project_cost' },
+    { permissionField: 'case_total_qre_cost', exportField: 'Case Project QRE Cost', dataField: 'case_total_qre_cost' },
+    { permissionField: 'case_total_rd_cost', exportField: 'Case Project RD Credit', dataField: 'case_total_rd_cost' },
+    { permissionField: 'created_datetime', exportField: 'Created On', dataField: 'created_datetime' },
+    { permissionField: 'submitted_datetime', exportField: 'Submitted On', dataField: 'submitted_datetime' },
+    { permissionField: 'approved_datetime', exportField: 'Approved On', dataField: 'approved_datetime' },
+    { permissionField: 'status_rid', exportField: 'Status', dataField: 'status_name' }
    
   ];
 
@@ -138,6 +159,14 @@ export const rawQueries = {
     let ids = data.map((d: any) => `'${d}'`);
     return `
     SELECT rid, first_name, last_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (${ids})`;
+  },
+  fetchAccountAndCountryDetails(accountRid : string) {
+    return `SELECT r_number, account_name, rid, country_rid,c.country_code, currency_rid FROM ${MAIN_SCHEMA_NAME}.account 
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON c.rid = account.country_rid
+    WHERE rid = '${accountRid}'`
+  },
+  fetchCountryByAccountId(accountRid : string) {  
+    return `SELECT country_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`
   },
   fetchStatus(statusIds: any): string {
     let ids = statusIds.map((d: any) => `'${d}'`);

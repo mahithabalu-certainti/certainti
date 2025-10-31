@@ -80,6 +80,28 @@ class CaseSchemaService {
       throw new Error("Error fetching account : " + (err as Error).message);
     }
   }
+
+  async fetchCountryByAccountId(accountId: string) {
+    try {
+      if (!this.mainDbSequelize) {
+        this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+      }
+      const [account]: any[] = await this.mainDbSequelize.query(
+        rawQueries.fetchCountryByAccountId(accountId),
+        {
+          replacements: { rid: accountId },
+          type: "SELECT",
+        }
+      );
+      return {
+        country_rid: account?.country_rid,
+      };
+    } catch (err) {
+      logMessage(`Error fetching country: ${err}`);
+      throw new Error("Error fetching country: " + (err as Error).message);
+    }
+  }
+
   async createCases(
     accountNumber: string,
     caseRequest: ICreateCases,
@@ -163,7 +185,7 @@ class CaseSchemaService {
           },
         }
       );
-      await this.updateCaseHistory( 
+      await this.updateCaseHistory(
         accountNumber,
         caseRequest.case_rid as string,
         { ...caseRequest, modified_by: userId },
@@ -177,7 +199,7 @@ class CaseSchemaService {
     }
   }
 
-   async updateCaseHistory(
+  async updateCaseHistory(
     accountNumber: string,
     caseId: string,
     newCaseData: any,
@@ -248,8 +270,14 @@ class CaseSchemaService {
       )}`;
 
       const CaseModel = await Case.initialize(orgDbSequlize, schemaName);
-      const caseTimelineModel = await CaseTimeline.initialize(orgDbSequlize, schemaName);
-      const caseHistoryModel = await CaseHistory.initialize(orgDbSequlize, schemaName);
+      const caseTimelineModel = await CaseTimeline.initialize(
+        orgDbSequlize,
+        schemaName
+      );
+      const caseHistoryModel = await CaseHistory.initialize(
+        orgDbSequlize,
+        schemaName
+      );
 
       await CaseModel.sync({ force: false });
       await setupCaseSequence(orgDbSequlize, schemaName);
@@ -257,7 +285,6 @@ class CaseSchemaService {
       await setupCaseTimelineSequence(orgDbSequlize, schemaName);
       await caseHistoryModel.sync({ force: false });
       await setupCaseHistorySequence(orgDbSequlize, schemaName);
-
     } catch (err) {
       errorLog("Error creating case tables", (err as Error).message);
       return this.throwServiceError(err as Error);
@@ -393,6 +420,11 @@ class CaseSchemaService {
       let fetchCaseOwnerInfo = await this.mainDbSequelize.query(
         rawQueries.fetchUser(caseOwnerIds)
       );
+
+      let [accountInfo]: any[] = await this.mainDbSequelize.query(
+        rawQueries.fetchAccountAndCountryDetails(data.account_rid),
+        { type: QueryTypes.SELECT }
+      );
       let createdMap: Map<string, string> = new Map(
         fetchCreatedByUsers[0].map((user: any) => [
           user.rid,
@@ -424,6 +456,8 @@ class CaseSchemaService {
               return {
                 rid: d.rid,
                 r_number: d.r_number,
+                account_name: accountInfo?.account_name,
+                country_code: accountInfo?.country_code,
                 case_name: d.case_name,
                 description: d.description,
                 fiscal_year: d.fiscal_year,
@@ -528,7 +562,6 @@ class CaseSchemaService {
         count: totalResults,
       };
     } catch (err) {
-      console.log(err);
       logMessage(`Error listing case information: ${err as Error}`);
       throw new Error(
         "Error listing case information: " + (err as Error).message
@@ -623,6 +656,8 @@ class CaseSchemaService {
       "case_name",
       "fiscal_year",
       "case_total_projects",
+      "case_total_qualified_projects",
+
       "case_total_project_cost",
       "case_total_rd_cost",
       "case_total_qre_cost",
@@ -687,6 +722,12 @@ class CaseSchemaService {
           this.processNumberFilter("fiscal_year", value, whereClause),
         case_total_projects: (value: any) =>
           this.processNumberFilter("case_total_projects", value, whereClause),
+        case_total_qualified_projects: (value: any) =>
+          this.processNumberFilter(
+            "case_total_qualified_projects",
+            value,
+            whereClause
+          ),
         case_total_project_cost: (value: any) =>
           this.processNumberFilter(
             "case_total_project_cost",
@@ -703,7 +744,6 @@ class CaseSchemaService {
           this.processDateFilter("approved_datetime", value, whereClause),
       };
       Object.keys(filters).forEach((key) => {
-        console.log(key);
         const value = filters[key];
         if (value === undefined || value === null) return;
         if (filterProcessors[key]) {
@@ -929,8 +969,10 @@ class CaseSchemaService {
     schemaName: string,
     pocRid: string,
     tPocRid: string,
-    isSorting: boolean
-  , assignedApi : boolean, accessibleIds : string[]) {
+    isSorting: boolean,
+    assignedApi: boolean,
+    accessibleIds: string[]
+  ) {
     const result = await orgDb.query(
       fetchProjectsForCases(
         schemaName,
@@ -944,14 +986,22 @@ class CaseSchemaService {
         pocRid,
         tPocRid,
         isSorting,
-        data.search, data.case_rid, assignedApi, accessibleIds
+        data.search,
+        data.case_rid,
+        assignedApi,
+        accessibleIds
       )
     );
     return result[0];
   }
-  
-  async assignProjectToCase (data : assignProjectType, accountNumber : string, schemaName : string) {
-    const { CaseProject, Case, CaseSummary } = await this.caseModelService.getModels(accountNumber);
+
+  async assignProjectToCase(
+    data: assignProjectType,
+    accountNumber: string,
+    schemaName: string
+  ) {
+    const { CaseProject, Case, CaseSummary } =
+      await this.caseModelService.getModels(accountNumber);
     if (!this.mainDbSequelize) {
       this.mainDbSequelize = await this.caseModelService.getMainSequelize();
     }
@@ -959,52 +1009,79 @@ class CaseSchemaService {
       this.orgDbSequelize = await this.caseModelService.getSequelize();
     }
     await this.createCaseProjectTables(accountNumber);
-    let iterationCount : number = 0
-    let totalCount : number = 0;
+    let iterationCount: number = 0;
+    let totalCount: number = 0;
     totalCount = data.projects.length;
 
-    for(let p of data.projects) {
+    for (let p of data.projects) {
       await CaseProject.create({
-        case_rid : data.case_rid,
-        account_rid : data.account_rid,
-        created_by : data.created_by,
-        created_datetime : new Date(),
-        project_rid : p.project_rid,
-        project_group : p.project_group,
-        project_fiscal_rid : p.project_fiscal_rid
-      })
-      iterationCount += 1
+        case_rid: data.case_rid,
+        account_rid: data.account_rid,
+        created_by: data.created_by,
+        created_datetime: new Date(),
+        project_rid: p.project_rid,
+        project_group: p.project_group,
+        project_fiscal_rid: p.project_fiscal_rid,
+      });
+      iterationCount += 1;
     }
-    if(totalCount === iterationCount) {
-      const getTotalProjectCount : any = await this.orgDbSequelize.query(rawQueries.getTotalProjectsCount(schemaName, data.case_rid, data.account_rid)) 
-      const getTotalProjectCost : any = await this.orgDbSequelize.query(rawQueries.getTotalProjectCost(schemaName, data.case_rid, data.account_rid))
-      await this.orgDbSequelize.query(rawQueries.updateCostCountInCase(schemaName, data.case_rid, getTotalProjectCount[0][0].total_projects, getTotalProjectCost[0][0].total_cost))
-      await this.mainDbSequelize.query(rawQueries.updateCostCountInCaseSummary(data.case_rid, getTotalProjectCount[0][0].total_projects, getTotalProjectCost[0][0].total_cost))
-      if(totalCount === 1) {
+    if (totalCount === iterationCount) {
+      const getTotalProjectCount: any = await this.orgDbSequelize.query(
+        rawQueries.getTotalProjectsCount(
+          schemaName,
+          data.case_rid,
+          data.account_rid
+        )
+      );
+      const getTotalProjectCost: any = await this.orgDbSequelize.query(
+        rawQueries.getTotalProjectCost(
+          schemaName,
+          data.case_rid,
+          data.account_rid
+        )
+      );
+      await this.orgDbSequelize.query(
+        rawQueries.updateCostCountInCase(
+          schemaName,
+          data.case_rid,
+          getTotalProjectCount[0][0].total_projects,
+          getTotalProjectCost[0][0].total_cost
+        )
+      );
+      await this.mainDbSequelize.query(
+        rawQueries.updateCostCountInCaseSummary(
+          data.case_rid,
+          getTotalProjectCount[0][0].total_projects,
+          getTotalProjectCost[0][0].total_cost
+        )
+      );
+      if (totalCount === 1) {
         return {
-          statusCode : HttpStatus.SUCCESS,
-          statusMessage : STATUS_MESSAGE.singleProjectAssignedSuccess
-        }
-      } 
-      else {
+          statusCode: HttpStatus.SUCCESS,
+          statusMessage: STATUS_MESSAGE.singleProjectAssignedSuccess,
+        };
+      } else {
         return {
-          statusCode : HttpStatus.SUCCESS,
-          statusMessage : STATUS_MESSAGE.multipleProjectAssignedSuccess
-        }
+          statusCode: HttpStatus.SUCCESS,
+          statusMessage: STATUS_MESSAGE.multipleProjectAssignedSuccess,
+        };
       }
     } else {
       return {
-        statusCode : HttpStatus.FAILED,
-        statusMessage : STATUS_MESSAGE.multipleProjectAssignedSuccess
-        }
+        statusCode: HttpStatus.FAILED,
+        statusMessage: STATUS_MESSAGE.multipleProjectAssignedSuccess,
+      };
     }
   }
 
-    async createCaseProjectTables(accountNumber: string) {
+  async createCaseProjectTables(accountNumber: string) {
     try {
       const orgDbSequlize = await initOrgSequelize();
       const mainDbSequlize = await initMainDbSequelize();
-      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(
+        /\D/g,
+        ""
+      )}`;
 
       const CaseProjectModel = await CaseProject.initialize(
         orgDbSequlize,
@@ -1018,40 +1095,56 @@ class CaseSchemaService {
       return this.throwServiceError(err as Error);
     }
   }
-  async isCaseExistsForAccount (accountRid : string, caseRid : string, accountNumber : string) {
+  async isCaseExistsForAccount(
+    accountRid: string,
+    caseRid: string,
+    accountNumber: string
+  ) {
     const { Case } = await this.caseModelService.getModels(accountNumber);
     const result = await Case.findOne({
-      where : {
-        account_rid : accountRid,
-        rid : caseRid
-      }, raw : true
-    })
-    if(result) return result;
-    else null
+      where: {
+        account_rid: accountRid,
+        rid: caseRid,
+      },
+      raw: true,
+    });
+    if (result) return result;
+    else null;
   }
-  async isProjectAlreadyAssigned (data : assignProjectType, accountNumber : string) {
-    const { CaseProject } = await this.caseModelService.getModels(accountNumber);
-    for(let p of data.projects) {
+  async isProjectAlreadyAssigned(
+    data: assignProjectType,
+    accountNumber: string
+  ) {
+    const { CaseProject } = await this.caseModelService.getModels(
+      accountNumber
+    );
+    for (let p of data.projects) {
       const checkProjectAlreadyMapped = await CaseProject.findOne({
-        where : {
-          account_rid : data.account_rid,
-          case_rid : data.case_rid,
-          project_fiscal_rid : p.project_fiscal_rid,
-          project_rid : p.project_rid,
-          project_group : p.project_group
-        }
-      })
-      if(checkProjectAlreadyMapped) {
+        where: {
+          account_rid: data.account_rid,
+          case_rid: data.case_rid,
+          project_fiscal_rid: p.project_fiscal_rid,
+          project_rid: p.project_rid,
+          project_group: p.project_group,
+        },
+      });
+      if (checkProjectAlreadyMapped) {
         return {
-          statusCode : HttpStatus.BAD_REQUEST,
-          statusMessage : STATUS_MESSAGE.projectAlreadyMapped
-        }
+          statusCode: HttpStatus.BAD_REQUEST,
+          statusMessage: STATUS_MESSAGE.projectAlreadyMapped,
+        };
       }
     }
   }
 
-    async deletedAssignedProject (data : assignProjectType, accountNumber : string, schemaName : string) {
-    const { CaseProject } = await this.caseModelService.getModels(accountNumber);
+  async deletedAssignedProject(
+    data: assignProjectType,
+    accountNumber: string,
+    schemaName: string
+  ) {
+    const { CaseProject } = await this.caseModelService.getModels(
+      accountNumber
+    );
     if (!this.mainDbSequelize) {
       this.mainDbSequelize = await this.caseModelService.getMainSequelize();
     }
@@ -1059,62 +1152,91 @@ class CaseSchemaService {
       this.orgDbSequelize = await this.caseModelService.getSequelize();
     }
     await this.createCaseProjectTables(accountNumber);
-    let iterationCount : number = 0
-    let totalCount : number = 0;
+    let iterationCount: number = 0;
+    let totalCount: number = 0;
     totalCount = data.projects.length;
 
-    for(let p of data.projects) {
+    for (let p of data.projects) {
       await CaseProject.destroy({
-        where : {
-          case_rid : data.case_rid,
-          account_rid : data.account_rid,
-          project_fiscal_rid : p.project_fiscal_rid
-        }
-      })
-      iterationCount += 1
+        where: {
+          case_rid: data.case_rid,
+          account_rid: data.account_rid,
+          project_fiscal_rid: p.project_fiscal_rid,
+        },
+      });
+      iterationCount += 1;
     }
-    if(totalCount === iterationCount) {
-      const getTotalProjectCount : any = await this.orgDbSequelize.query(rawQueries.getTotalProjectsCount(schemaName, data.case_rid, data.account_rid)) 
-      const getTotalProjectCost : any = await this.orgDbSequelize.query(rawQueries.getTotalProjectCost(schemaName, data.case_rid, data.account_rid))
-      await this.orgDbSequelize.query(rawQueries.updateCostCountInCase(schemaName, data.case_rid, getTotalProjectCount[0][0].total_projects, getTotalProjectCost[0][0].total_cost))
-      await this.mainDbSequelize.query(rawQueries.updateCostCountInCaseSummary(data.case_rid, getTotalProjectCount[0][0].total_projects, getTotalProjectCost[0][0].total_cost))
-      if(totalCount === 1) {
+    if (totalCount === iterationCount) {
+      const getTotalProjectCount: any = await this.orgDbSequelize.query(
+        rawQueries.getTotalProjectsCount(
+          schemaName,
+          data.case_rid,
+          data.account_rid
+        )
+      );
+      const getTotalProjectCost: any = await this.orgDbSequelize.query(
+        rawQueries.getTotalProjectCost(
+          schemaName,
+          data.case_rid,
+          data.account_rid
+        )
+      );
+      await this.orgDbSequelize.query(
+        rawQueries.updateCostCountInCase(
+          schemaName,
+          data.case_rid,
+          getTotalProjectCount[0][0].total_projects,
+          getTotalProjectCost[0][0].total_cost
+        )
+      );
+      await this.mainDbSequelize.query(
+        rawQueries.updateCostCountInCaseSummary(
+          data.case_rid,
+          getTotalProjectCount[0][0].total_projects,
+          getTotalProjectCost[0][0].total_cost
+        )
+      );
+      if (totalCount === 1) {
         return {
-          statusCode : HttpStatus.SUCCESS,
-          statusMessage : STATUS_MESSAGE.singleProjectDeletedSuccess
-        }
-      } 
-      else {
+          statusCode: HttpStatus.SUCCESS,
+          statusMessage: STATUS_MESSAGE.singleProjectDeletedSuccess,
+        };
+      } else {
         return {
-          statusCode : HttpStatus.SUCCESS,
-          statusMessage : STATUS_MESSAGE.multipleProjectDeletedSuccess
-        }
+          statusCode: HttpStatus.SUCCESS,
+          statusMessage: STATUS_MESSAGE.multipleProjectDeletedSuccess,
+        };
       }
     } else {
       return {
-        statusCode : HttpStatus.FAILED,
-        statusMessage : STATUS_MESSAGE.projectAssignFailed
-        }
+        statusCode: HttpStatus.FAILED,
+        statusMessage: STATUS_MESSAGE.projectAssignFailed,
+      };
     }
   }
 
-  async isProjectAssignedInCase (data : assignProjectType, accountNumber : string) {
-    const { CaseProject } = await this.caseModelService.getModels(accountNumber);
-    for(let p of data.projects) {
+  async isProjectAssignedInCase(
+    data: assignProjectType,
+    accountNumber: string
+  ) {
+    const { CaseProject } = await this.caseModelService.getModels(
+      accountNumber
+    );
+    for (let p of data.projects) {
       const checkProjectAlreadyMapped = await CaseProject.findOne({
-        where : {
-          account_rid : data.account_rid,
-          case_rid : data.case_rid,
-          project_fiscal_rid : p.project_fiscal_rid,
-          project_rid : p.project_rid,
-          project_group : p.project_group
-        }
-      })
-      if(!checkProjectAlreadyMapped) {
+        where: {
+          account_rid: data.account_rid,
+          case_rid: data.case_rid,
+          project_fiscal_rid: p.project_fiscal_rid,
+          project_rid: p.project_rid,
+          project_group: p.project_group,
+        },
+      });
+      if (!checkProjectAlreadyMapped) {
         return {
-          statusCode : HttpStatus.NOT_FOUND,
-          statusMessage : STATUS_MESSAGE.projectNotAssigned
-        }
+          statusCode: HttpStatus.NOT_FOUND,
+          statusMessage: STATUS_MESSAGE.projectNotAssigned,
+        };
       }
     }
   }
@@ -1128,13 +1250,10 @@ class CaseSchemaService {
       const results = await mainDbSequelize.query<{
         profile_name: string;
         email: string;
-      }>(
-        rawQueries.getUserProfileAndEmailByUserRidQuery(),
-        {
-          replacements: { userRid },
-          type: QueryTypes.SELECT,
-        }
-      );
+      }>(rawQueries.getUserProfileAndEmailByUserRidQuery(), {
+        replacements: { userRid },
+        type: QueryTypes.SELECT,
+      });
 
       if (!results || results.length === 0) {
         return null;
@@ -1144,25 +1263,28 @@ class CaseSchemaService {
       return {
         profileName: results[0]?.profile_name ?? "",
         email: results[0]?.email ?? "",
-      };      
+      };
     } catch (error) {
       console.error("Error fetching user profile info:", error);
       throw new Error("Failed to get user profile information");
     }
   }
 
-  async getCurrencyDetails (currencyRid : string) {
+  async getCurrencyDetails(currencyRid: string) {
     const mainDbSequelize = await initMainDbSequelize();
-    const result = await mainDbSequelize.query(rawQueries.getCurrencyDetails(currencyRid))
-    return result[0][0]
+    const result = await mainDbSequelize.query(
+      rawQueries.getCurrencyDetails(currencyRid)
+    );
+    return result[0][0];
   }
 
-    async getAccountDetails (accountRid : string) {
+  async getAccountDetails(accountRid: string) {
     const mainDbSequelize = await initMainDbSequelize();
-    const result = await mainDbSequelize.query(rawQueries.fetchAccountDetails(accountRid))
-    return result[0][0]
+    const result = await mainDbSequelize.query(
+      rawQueries.fetchAccountDetails(accountRid)
+    );
+    return result[0][0];
   }
-
 
   async getUserGroupType(userRid: string): Promise<string | null> {
     const mainDbSequelize = await initMainDbSequelize();
@@ -1187,7 +1309,7 @@ class CaseSchemaService {
       throw new Error("Failed to get user group type");
     }
   }
-   async getAccessibleAccountInfo(userRid: string): Promise<
+  async getAccessibleAccountInfo(userRid: string): Promise<
     Array<{
       id: string;
       isChild: boolean;
@@ -1262,79 +1384,101 @@ class CaseSchemaService {
     }
   }
 
-    async listAllCaseSummary(
+  async listAllCaseSummary(
     page: number,
-  limit: number,
-  filters: filterType,
-  globalFilters: any ={},
-  fiscal_year: number,
-  sort: string,
-  sortBy: string,
-  accessibleIds: string[] = [],
-  search : string
+    limit: number,
+    filters: filterType,
+    globalFilters: any = {},
+    fiscal_year: number,
+    sort: string,
+    sortBy: string,
+    accessibleIds: string[] = [],
+    search: string,
+    apiType?: string
   ) {
     try {
-     let offset = (page - 1) * limit;
-  let pagination = `LIMIT ${limit} OFFSET ${offset}`;
-  let filteredQueryArray: string[] = [];
-  let andConditions = ``;
-  let filterQueryValues;
-  let whereKey: string = ``;
-  let accountIdsArray: string[] = [];
-  let globalFiltersQueryConditions: string = ``;
-  let fiscalYearQuery: string = ``;
-  let sortValue;
-  let searchValue : string
-  let filterDatas = filterForCases(
-    filters,
-    andConditions,
-    filteredQueryArray,
-    filterTypesForCaseSummary,
-    filtersColumnsForCaseSummary
-  );
-  // Optimize filter query processing
-  filterQueryValues = filterDatas?.filteredQueryArray?.length ? 
-    filterDatas.filteredQueryArray.join(" AND ") : "";
+      let offset = (page - 1) * limit;
+      let pagination = `LIMIT ${limit} OFFSET ${offset}`;
+      if (apiType === "download") {
+        pagination = ``;
+      }
+      if (!this.orgDbSequelize) {
+        this.orgDbSequelize = await this.caseModelService.getSequelize();
+      }
+      let filteredQueryArray: string[] = [];
+      let andConditions = ``;
+      let filterQueryValues;
+      let whereKey: string = ``;
+      let accountIdsArray: string[] = [];
+      let globalFiltersQueryConditions: string = ``;
+      let fiscalYearQuery: string = ``;
+      let sortValue;
+      let searchValue: string;
+      let filterDatas = filterForCases(
+        filters,
+        andConditions,
+        filteredQueryArray,
+        filterTypesForCaseSummary,
+        filtersColumnsForCaseSummary
+      );
+      // Optimize filter query processing
+      filterQueryValues = filterDatas?.filteredQueryArray?.length
+        ? filterDatas.filteredQueryArray.join(" AND ")
+        : "";
 
-  // Optimize global filters processing
-  if (Object.keys(globalFilters).length > 0) {
-    accountIdsArray = globalFiltersforCaseSummary(globalFilters);
-  }
-  if (accessibleIds.length > 0) {
-    accountIdsArray.push(...accessibleIds);
-  }
-  
-  // Optimize conditions building
-  globalFiltersQueryConditions = accountIdsArray.length > 0 
-    ? ` cs.account_rid IN (${accountIdsArray.map(d => `'${d}'`).join(",")})` 
-    : "";
- 
- if (fiscal_year == 0) fiscalYearQuery = ``;
-  else fiscalYearQuery = ` cs.fiscal_year = ${fiscal_year}`;
-  
-  searchValue = search ? `%${search}%` : `%%`;
-  whereKey = `1 = 1`;
+      // Optimize global filters processing
+      if (Object.keys(globalFilters).length > 0) {
+        accountIdsArray = globalFiltersforCaseSummary(globalFilters);
+      }
+      if (accessibleIds.length > 0) {
+        accountIdsArray.push(...accessibleIds);
+      }
 
-  // Optimized conditions joining
-  const conditions = [globalFiltersQueryConditions, fiscalYearQuery, filterQueryValues]
-    .filter(Boolean);
-  
-  const joinedConditions = conditions.length > 0 ? " AND " + conditions.join(" AND ") : "";
+      // Optimize conditions building
+      globalFiltersQueryConditions =
+        accountIdsArray.length > 0
+          ? ` cs.account_rid IN (${accountIdsArray
+              .map((d) => `'${d}'`)
+              .join(",")})`
+          : "";
 
-  // Optimized sorting logic using extracted utility function
-  const sortColumn = getSortColumn(sort);
-  const sortDirection = sortBy || 'ASC';
-  sortValue = `ORDER BY ${sortColumn} ${sortDirection}`;
+      if (fiscal_year == 0) fiscalYearQuery = ``;
+      else fiscalYearQuery = ` cs.fiscal_year = ${fiscal_year}`;
 
-  let query = listAllCasesSummaryQuery(searchValue,whereKey,joinedConditions,sortValue,pagination,accessibleIds);
-  return query;
+      searchValue = search ? `%${search}%` : `%%`;
+      whereKey = `1 = 1`;
+
+      // Optimized conditions joining
+      const conditions = [
+        globalFiltersQueryConditions,
+        fiscalYearQuery,
+        filterQueryValues,
+      ].filter(Boolean);
+
+      const joinedConditions =
+        conditions.length > 0 ? " AND " + conditions.join(" AND ") : "";
+
+      // Optimized sorting logic using extracted utility function
+      const sortColumn = getSortColumn(sort);
+      const sortDirection = sortBy || "ASC";
+      sortValue = `ORDER BY ${sortColumn} ${sortDirection}`;
+      let caseSummaryQuery = await listAllCasesSummaryQuery(
+        searchValue,
+        whereKey,
+        joinedConditions,
+        sortValue,
+        pagination,
+        accessibleIds
+      );
+      const result: any = await this.orgDbSequelize.query(caseSummaryQuery);
+      return result;
     } catch (err) {
-      console.log(err);
+      logMessage(`Error in fetch cases summary: ${err}`);
       errorLog("Error in fetch cases summary:", (err as Error).message);
       return [];
     }
-}
-async addCaseTimeline(
+  }
+  async addCaseTimeline(
     accountNumber: string,
     eventName: string,
     caseRequest: ICreateCases,
@@ -1343,8 +1487,9 @@ async addCaseTimeline(
     transaction: Transaction
   ) {
     try {
-      const { CaseTimeline } =
-        await this.caseModelService.getModels(accountNumber);
+      const { CaseTimeline } = await this.caseModelService.getModels(
+        accountNumber
+      );
 
       await CaseTimeline.create(
         {
@@ -1375,6 +1520,7 @@ const getSortColumn = (sortField: string): string => {
     'created_datetime': 'c.created_datetime',
     'modified_datetime': 'c.modified_datetime',
     'case_total_projects': 'c.case_total_projects',
+    'case_total_qualified_projects': 'c.case_total_qualified_projects',
     'case_total_project_cost': 'c.case_total_project_cost',
     'case_total_rd_cost': 'c.case_total_rd_cost',
     'case_total_qre_cost': 'c.case_total_qre_cost',
@@ -1384,6 +1530,7 @@ const getSortColumn = (sortField: string): string => {
     'created_user_name': 'c.created_user_name',
     'updated_user_name': 'c.updated_user_name',
     'account_name': 'c.account_name',
+    'country_name': 'c.country_name',
     'fiscal_year': 'c.fiscal_year',
     'case_owner_name': 'c.case_owner_name',
     'case_name': 'c.case_name',
@@ -1408,6 +1555,7 @@ function filterForCases(filters: filterType, andConditions: string, filteredQuer
             let dynamicReference = ``;
             
            if (filteredColumns == "account_name") dynamicReference = `a`;
+           if (filteredColumns == "country_name") dynamicReference = `c`;
            else dynamicReference = `cs`;
             
             const stringCondition = buildStringFilterCondition(condition, values, filteredColumns!, dynamicReference);

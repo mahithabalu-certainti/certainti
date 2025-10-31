@@ -1,5 +1,6 @@
 import { Model, DataTypes, Sequelize, Optional } from "sequelize";
 import { ENV_PREFIX, MAIN_SCHEMA_NAME } from "../utils/constants";
+import { logMessage } from "../utils/helpers";
 
 interface CaseProjectAttributes {
   rid: string;
@@ -93,8 +94,8 @@ export async function setupCaseProjectSequence(
       ALTER COLUMN r_number SET DEFAULT 'CSP-' || LPAD(nextval('"${schemaName}".case_projects_seq')::text, 10, '0')
     `);
 
-    console.log("CaseProjects sequence setup complete");
+   logMessage("CaseProjects sequence setup complete");
   } catch (error) {
-    console.error("Error setting up CaseProjects sequence:", error);
+    logMessage(`Error setting up CaseProjects sequence: ${error}`);
   }
 }

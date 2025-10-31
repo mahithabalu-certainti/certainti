@@ -84,6 +84,23 @@ export class CaseService {
       if (!accountNumber) {
         throw new Error("Invalid account ID");
       }
+
+    const {country_rid } =
+      await this.caseSchemaService.fetchCountryByAccountId(
+        caseRequest.account_rid
+      );
+
+    if (!country_rid) {
+      
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: HttpStatus.BAD_REQUEST_MESSAGE,
+        errorMessage: STATUS_MESSAGE.countryValidationFailed,
+        data: {
+          cases: null,
+        },
+      };
+    }
       const { statusRid } = await this.getCaseStatusForCreate();
       caseRequest.status_rid = statusRid || "";
       const response = await this.caseSchemaService.createCases(
@@ -599,23 +616,20 @@ export class CaseService {
     }
     logMessage(`Filters applied: ${JSON.stringify(apiType)}`);
     logMessage(`Accessible Project Fiscal Ids: ${JSON.stringify(accessibleIds)} userId: ${userId}, isDefaultParent: ${isDefaultParent}, isCustomGlobal: ${isCustomGlobal}`);
-    let query  = await this.caseSchemaService.listAllCaseSummary(data.page, data.limit, 
-      data.parsedFilters, data.globalFilters, data.fiscal_year, data.sort, data.sort_by,accessibleIds, data.search);
-    const [result] : any[] = await mainDb.query(
-      query as string,{ type: QueryTypes.SELECT }
-    )
+    let result  = await this.caseSchemaService.listAllCaseSummary(data.page, data.limit, 
+      data.parsedFilters, data.globalFilters, data.fiscal_year, data.sort, data.sort_by,accessibleIds, data.search,apiType);
+   
 
     if(result.cases_summary != null) {
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data:{
-          caseInfo: result,
+          caseInfo: result.cases_summary,
           count: result.total_result
         },
       };
     } else {
-      console.log("No data found");
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.NOT_FOUND_MESSAGE,

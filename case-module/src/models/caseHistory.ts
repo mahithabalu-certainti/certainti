@@ -1,5 +1,6 @@
 import { Model, DataTypes, Sequelize, Optional } from "sequelize";
 import { ENV_PREFIX } from "../utils/constants";
+import { logMessage } from "../utils/helpers";
 
 export interface CaseHistoryAttributes {
   rid?: string;
@@ -111,8 +112,8 @@ export async function setupCaseHistorySequence(
     await sequelize.query(`ALTER TABLE "${schemaName}".cases_history
       ALTER COLUMN r_number SET DEFAULT 'CSH-' || LPAD(nextval('"${schemaName}".cases_history_seq')::text, 10, '0')`);
 
-    console.log("Cases history sequence setup complete");
+    logMessage("Cases history sequence setup complete");
   } catch (error) {
-    console.error("Error setting up Cases history sequence:", error);
+    logMessage(`Error setting up Cases history sequence: ${error}`);
   }
 }

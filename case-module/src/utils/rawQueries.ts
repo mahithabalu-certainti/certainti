@@ -230,7 +230,7 @@ export const listAllCasesSummaryQuery = (searchValue:string,whereKey:string,join
     CASE WHEN uu.first_name IS NULL THEN cs.modified_by ELSE CONCAT(uu.first_name, ' ', uu.last_name) END AS updated_user_name,
     cs.created_datetime, cs.modified_datetime, cs.account_rid,
     cs.modified_by,cs.filing_type_rid,cft.filing_type_name, cs.case_name,
-    a.account_name,cs.fiscal_year,c.country_name,
+    a.account_name,cs.fiscal_year,c.country_name,c.country_code,
     CONCAT(co.first_name, ' ', co.last_name) AS case_owner_name,
     case_total_projects, case_total_project_cost, case_total_rd_cost, case_total_qre_cost,
     submitted_datetime, approved_datetime
