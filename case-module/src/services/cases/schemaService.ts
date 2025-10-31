@@ -345,6 +345,10 @@ class CaseSchemaService {
       let caseOwnerConditions;
       let totalResults: number = 0;
       let disablePagination = false;
+
+      if (data.fiscal_year && data.fiscal_year !== 0) {
+        filters.fiscal_year = data.fiscal_year;
+      }
       if (type === "download") {
         disablePagination = true;
       }
@@ -384,11 +388,18 @@ class CaseSchemaService {
       }
 
       // Fetch technical summaries and count
+      const whereConditions: any = {
+        account_rid: data.account_rid,
+        ...whereClause,
+      };
+
+      // Add fiscal year filter only if not 0
+      if (data.fiscal_year && data.fiscal_year !== 0) {
+        whereConditions.fiscal_year = data.fiscal_year;
+      }
+
       const { rows: caseDetails, count } = await Case.findAndCountAll({
-        where: {
-          account_rid: data.account_rid,
-          ...whereClause,
-        },
+        where: whereConditions,
         order: [[finalSortBy, finalSortOrder]],
         ...(disablePagination ? {} : { limit: limit, offset: offset }),
       });
@@ -480,6 +491,7 @@ class CaseSchemaService {
                 case_owner_name: caseOwnerMap.get(d.case_owner_rid) || null,
                 country_rid: d.country_rid,
                 case_total_projects: d.case_total_projects,
+                case_total_qualified_projects: d.case_total_qualified_projects,
                 case_total_project_cost: d.case_total_project_cost,
                 case_total_rd_cost: d.case_total_rd_cost,
                 case_total_qre_cost: d.case_total_qre_cost,

@@ -116,18 +116,28 @@ export const casesFieldMappings = [
   },
   {
     permissionField: "case_total_project_cost",
-    exportField: "Total Case Project Cost",
+    exportField: "Total Project Cost",
     dataField: "case_total_project_cost",
   },
   {
     permissionField: "case_total_qre_cost",
-    exportField: "Case Project QRE Cost",
+    exportField: "Total QRE",
     dataField: "case_total_qre_cost",
   },
   {
     permissionField: "case_total_rd_cost",
-    exportField: "Case Project RD Credit",
+    exportField: "Total RD Credits",
     dataField: "case_total_rd_cost",
+  },
+   {
+    permissionField: "case_total_projects",
+    exportField: "No of Projects",
+    dataField: "case_total_projects",
+  },
+  {
+    permissionField: "case_total_qualified_projects",
+    exportField: "No of Qualified Projects",
+    dataField: "case_total_qualified_projects",
   },
   // { permissionField: 'created_by', exportField: 'Created By', dataField: 'created_by' },
   {
@@ -162,6 +172,11 @@ export const casesSummaryFieldMappings = [
     dataField: "r_number",
   },
   {
+    permissionField: "account_name",
+    exportField: "Account Name",
+    dataField: "account_name",
+  },
+  {
     permissionField: "filing_type_rid",
     exportField: "Filing Type",
     dataField: "filing_type_name",
@@ -186,30 +201,31 @@ export const casesSummaryFieldMappings = [
     exportField: "Case Owner",
     dataField: "case_owner_name",
   },
-  {
-    permissionField: "case_total_projects",
-    exportField: "Total Projects",
-    dataField: "case_total_projects",
-  },
-  {
-    permissionField: "case_total_qualified_projects",
-    exportField: "Total Qualified Projects",
-    dataField: "case_total_qualified_projects",
-  },
+ 
   {
     permissionField: "case_total_project_cost",
-    exportField: "Total Case Project Cost",
+    exportField: "Total Project Cost",
     dataField: "case_total_project_cost",
   },
   {
     permissionField: "case_total_qre_cost",
-    exportField: "Case Project QRE Cost",
+    exportField: "Total QRE",
     dataField: "case_total_qre_cost",
   },
   {
     permissionField: "case_total_rd_cost",
-    exportField: "Case Project RD Credit",
+    exportField: "Total RD Credits",
     dataField: "case_total_rd_cost",
+  },
+   {
+    permissionField: "case_total_projects",
+    exportField: "No of Projects",
+    dataField: "case_total_projects",
+  },
+  {
+    permissionField: "case_total_qualified_projects",
+    exportField: "No of Qualified Projects",
+    dataField: "case_total_qualified_projects",
   },
   {
     permissionField: "created_datetime",
@@ -588,6 +604,8 @@ export const filterTypesForCaseSummary: Record<string, any> = {
   case_total_project_cost: "number",
   case_total_qre_cost: "number",
   case_total_rd_cost: "number",
+  case_total_projects: "number",
+  case_total_qualified_projects: "number",
   country_name: "string",
 };
 
@@ -610,5 +628,7 @@ export const filtersColumnsForCaseSummary: Record<string, string> = {
   case_total_project_cost: "case_total_project_cost",
   case_total_qre_cost: "case_total_qre_cost",
   case_total_rd_cost: "case_total_rd_cost",
+  case_total_projects: "case_total_projects",
+  case_total_qualified_projects: "case_total_qualified_projects",
   country_name: "country_name",
 };

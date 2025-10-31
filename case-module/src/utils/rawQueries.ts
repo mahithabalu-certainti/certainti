@@ -305,7 +305,7 @@ export const listAllCasesSummaryQuery = (
     cs.modified_by,cs.filing_type_rid,cft.filing_type_name, cs.case_name,
     a.account_name,cs.fiscal_year,c.country_name,c.country_code,c.rid AS country_rid,
     CONCAT(co.first_name, ' ', co.last_name) AS case_owner_name,
-    case_total_projects, case_total_project_cost, case_total_rd_cost, case_total_qre_cost,
+    case_total_projects, case_total_project_cost, case_total_rd_cost, case_total_qre_cost,case_total_qualified_projects,
     submitted_datetime, approved_datetime,COUNT(*) OVER() AS total_records,a.r_number as account_r_number,a.status_rid as account_status_rid,
     COALESCE( acc_curr.currency_code, usd_curr.currency_code) as currency_code,
       COALESCE( acc_curr.currency_symbol, usd_curr.currency_symbol) as currency_symbol,accountStatus.status_name as account_status_name
@@ -362,7 +362,8 @@ export const listAllCasesSummaryQuery = (
             'submitted_datetime', c.submitted_datetime,
             'approved_datetime', c.approved_datetime,
             'total_records', c.total_records,
-            'account_r_number', c.account_r_number
+            'account_r_number', c.account_r_number,
+            'case_total_qualified_projects', c.case_total_qualified_projects
            
         )) AS cases_summary
 
