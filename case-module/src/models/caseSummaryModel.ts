@@ -14,7 +14,6 @@ interface CaseSummaryAttributes {
   description?: string;
   fiscal_year: number;
   filing_type_rid: string;
-  form_type?: string;
   case_owner_rid: string;
   case_startdate?: Date;
   planned_submission_date?: Date;
