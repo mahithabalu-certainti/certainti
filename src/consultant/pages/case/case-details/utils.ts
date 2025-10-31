@@ -115,7 +115,6 @@ export const transformCaseData = (cases: CaseDetails): DisplayColumn[] => {
         {
           label: 'Case Status',
           value: cases?.status_name || '-',
-          className: `${status === 'active' ? 'text-[#199806]' : 'text-[#f44336]'}`,
         },
 
         {

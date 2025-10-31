@@ -253,7 +253,7 @@ export const CaseDetails = () => {
       <div className='flex h-[60px]'>
         <PageHeader
           variant='sub'
-          placeholder={isLoading ? 'Loading...' : 'Case ID'}
+          placeholder={'Case ID'}
           icon={
             <AccountDetailsIcon
               className='h-6 w-6 rounded'
@@ -261,6 +261,7 @@ export const CaseDetails = () => {
             />
           }
           title={caseData?.r_number || ''}
+          isLoading={isLoading}
           totalRecords={5}
           actionItems={menuItems}
           onActionsClick={handleActionsClick}
@@ -274,8 +275,9 @@ export const CaseDetails = () => {
       <InfoSection
         columns={caseHeaderDetails}
         loading={isLoading}
+        loadingRows={4}
         error={isError}
-        className='max-h-[140px] min-h-[140px]'
+        className={!isError ? 'max-h-[140px] min-h-[140px]' : ''}
       />
       <div className='flex flex-1 flex-row w-full'>
         <div
