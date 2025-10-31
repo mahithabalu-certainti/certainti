@@ -520,7 +520,8 @@ export type ExportType =
   | 'timesheet_project_task'
   | 'technical_summary'
   | 'resource_notes'
-  | 'notes';
+  | 'notes'
+  | 'cases';
 
 export type FinancialSummaryFlag = 'all' | 'rd_qualified';
 

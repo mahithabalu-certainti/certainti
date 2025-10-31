@@ -122,6 +122,7 @@ const icons = {
   documentIcon: () => import('./doc-attachments.svg?react'),
   editTextIcon: () => import('./edit-text-icon.svg?react'),
   gearIcon: () => import('./gear.svg?react'),
+  infoIcon: () => import('./info-icon.svg?react'),
   editTaskIcon: () => import('./editTaskIcon.svg?react'),
 };
 
@@ -252,4 +253,5 @@ export const AdminSettingIcon = createLazySvgIcon('adminSetting');
 export const DocumentIcon = createLazySvgIcon('documentIcon');
 export const EditTextIcon = createLazySvgIcon('editTextIcon');
 export const GearIcon = createLazySvgIcon('gearIcon');
+export const InfoIcon = createLazySvgIcon('infoIcon');
 export const EditTaskIcon = createLazySvgIcon('editTaskIcon');

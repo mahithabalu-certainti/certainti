@@ -1947,6 +1947,112 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             }
           }
 
+          // Enhanced Date Validation for Case Dates
+          if (field.type === 'date' && constructFormData[field.name]) {
+            const dateValue = constructFormData[field.name] as string;
+
+            // Basic date format validation
+            if (!isValidDate(dateValue, 'YYYY-MM-DD')) {
+              hasError = true;
+              return {
+                ...field,
+                error: 'Please enter a valid date in YYYY-MM-DD format',
+              };
+            }
+
+            // Case-specific date validation
+            if (field.name === 'case_startdate') {
+              const plannedDate = constructFormData[
+                'planned_submission_date'
+              ] as string;
+              const statutoryDate = constructFormData[
+                'statutory_submission_date'
+              ] as string;
+
+              // Start Date must be ≤ Planned Submission Date
+              if (plannedDate && dayjs(dateValue).isAfter(dayjs(plannedDate))) {
+                hasError = true;
+                return {
+                  ...field,
+                  error:
+                    'Start Date must be before or equal to Planned Submission Date',
+                };
+              }
+
+              // Start Date must be ≤ Statutory Submission Date
+              if (
+                statutoryDate &&
+                dayjs(dateValue).isAfter(dayjs(statutoryDate))
+              ) {
+                hasError = true;
+                return {
+                  ...field,
+                  error:
+                    'Start Date must be before or equal to Statutory Submission Date',
+                };
+              }
+            }
+
+            if (field.name === 'planned_submission_date') {
+              const startDate = constructFormData['case_startdate'] as string;
+              const statutoryDate = constructFormData[
+                'statutory_submission_date'
+              ] as string;
+
+              // Planned Submission Date must be > Start Date
+              if (startDate && !dayjs(dateValue).isAfter(dayjs(startDate))) {
+                hasError = true;
+                return {
+                  ...field,
+                  error: 'Planned Submission Date must be after Start Date',
+                };
+              }
+
+              // Planned Submission Date must be ≤ Statutory Submission Date
+              if (
+                statutoryDate &&
+                dayjs(dateValue).isAfter(dayjs(statutoryDate))
+              ) {
+                hasError = true;
+                return {
+                  ...field,
+                  error:
+                    'Planned Submission Date must be before or equal to Statutory Submission Date',
+                };
+              }
+            }
+
+            if (field.name === 'statutory_submission_date') {
+              const startDate = constructFormData['case_startdate'] as string;
+              const plannedDate = constructFormData[
+                'planned_submission_date'
+              ] as string;
+
+              // Statutory Submission Date must be ≥ Start Date
+              if (startDate && dayjs(dateValue).isBefore(dayjs(startDate))) {
+                hasError = true;
+                return {
+                  ...field,
+                  error:
+                    'Statutory Submission Date must be after or equal to Start Date',
+                };
+              }
+
+              // Statutory Submission Date must be ≥ Planned Submission Date
+              if (
+                plannedDate &&
+                dayjs(dateValue).isBefore(dayjs(plannedDate))
+              ) {
+                hasError = true;
+                return {
+                  ...field,
+                  error:
+                    'Statutory Submission Date must be after or equal to Planned Submission Date',
+                };
+              }
+            }
+          }
+
           // Date validation
           if (field.type === 'fiscalDate' && constructFormData[field.name]) {
             const dateValue = constructFormData[field.name] as string;

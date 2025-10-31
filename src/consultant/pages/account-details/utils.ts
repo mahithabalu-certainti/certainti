@@ -321,6 +321,7 @@ export interface accountByIdProps {
     industry_name: string;
   };
   business_details: string;
+  country_rid?: string;
   is_parent: boolean;
   parent_account: {
     account_name: string;
