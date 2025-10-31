@@ -400,7 +400,7 @@ class CaseSchemaService {
         order: [[finalSortBy, finalSortOrder]],
         ...(disablePagination ? {} : { limit: limit, offset: offset }),
       });
-      // You can now use both technicalSummary (array) and count (number)
+      
       if (caseDetails.length === 0) {
         return {
           caseInfo: [],
