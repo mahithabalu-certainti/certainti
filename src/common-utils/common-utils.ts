@@ -48,6 +48,7 @@ export const createTextField = (
     anyOneRequired?: boolean;
     hide?: boolean;
     defaultValue?: string;
+    prefixValue?: string;
     errorHandling?: ErrorHandling[];
     resetDependsFields?: string[];
     clearValue?: Record<string, string>;
@@ -80,6 +81,7 @@ export const createTextField = (
   defaultValue: options.defaultValue,
   resetDependsFields: options.resetDependsFields,
   formatCostValue: options.formatCostValue,
+  prefixValue: options.prefixValue,
 });
 
 export const createPhoneInputField = (
@@ -356,8 +358,10 @@ export const createDateField = (
     disabled?: boolean;
     hide?: boolean;
     disableFutureDates?: boolean;
+    resetDependsFields?: string[];
     minDate?: Date;
     maxDate?: Date;
+    onChange?: boolean;
     endDateValue?: boolean;
     startDateLabel?: string;
     endDateLabel?: string;
@@ -377,6 +381,7 @@ export const createDateField = (
   maxDate: others.maxDate,
   disabled: others.disabled,
   hide: others.hide,
+  onChange: others.onChange,
   disableFutureDates: others.disableFutureDates,
   greaterThan: others.greaterThan,
   dateRangeError: others.dateRangeError,
@@ -386,6 +391,7 @@ export const createDateField = (
   endDateLabel: others.endDateLabel,
   errorMessage: others.errorMessage,
   clearDate: others.clearDate,
+  resetDependsFields: others.resetDependsFields,
 });
 
 export const createFiscalDateField = (

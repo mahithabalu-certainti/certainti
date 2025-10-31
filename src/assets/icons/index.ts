@@ -113,6 +113,9 @@ const icons = {
   ConfigIcon: () => import('./config-icon.svg?react'),
   ManageGroupIcon: () => import('./Managegroup.svg?react'),
   arrowDownDisabledIcon: () => import('./arrow-down-icon.svg?react'),
+  cases: () => import('./cases.svg?react'),
+  actionItems: () => import('./action-items.svg?react'),
+  dropdownmenuIcon: () => import('./dropdown-menu.svg?react'),
   interactionDetailIcon: () => import('./interaction-detail-icon.svg?react'),
   pdfIcon: () => import('./pdf-icon.svg?react'),
   adminSetting: () => import('./admin-setting.svg?react'),
@@ -120,6 +123,7 @@ const icons = {
   editTextIcon: () => import('./edit-text-icon.svg?react'),
   gearIcon: () => import('./gear.svg?react'),
   infoIcon: () => import('./info-icon.svg?react'),
+  editTaskIcon: () => import('./editTaskIcon.svg?react'),
 };
 
 function createLazySvgIcon(name: keyof typeof icons) {
@@ -240,6 +244,9 @@ export const RejectIcon = createLazySvgIcon('RejectIcon');
 export const AcceptIcon = createLazySvgIcon('AcceptIcon');
 export const ConfigIcon = createLazySvgIcon('ConfigIcon');
 export const ManageGroup = createLazySvgIcon('ManageGroupIcon');
+export const GlobalCasesIcon = createLazySvgIcon('cases');
+export const ActionItemsIcon = createLazySvgIcon('actionItems');
+export const DropDownMenuIcon = createLazySvgIcon('dropdownmenuIcon');
 export const InteractionDetailIcon = createLazySvgIcon('interactionDetailIcon');
 export const PdfIcon = createLazySvgIcon('pdfIcon');
 export const AdminSettingIcon = createLazySvgIcon('adminSetting');
@@ -247,3 +254,4 @@ export const DocumentIcon = createLazySvgIcon('documentIcon');
 export const EditTextIcon = createLazySvgIcon('editTextIcon');
 export const GearIcon = createLazySvgIcon('gearIcon');
 export const InfoIcon = createLazySvgIcon('infoIcon');
+export const EditTaskIcon = createLazySvgIcon('editTaskIcon');

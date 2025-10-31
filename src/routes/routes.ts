@@ -98,5 +98,12 @@ export const GLOBAL_NOTES_EDIT = `${NOTES}/edit/:noteId`;
 
 // ATTACHMENT ROUTES
 export const ATTACHMENTS = '/attachments';
+
+//CASES ROUTES
+export const CASE = '/case';
+export const CASE_DETAILS = `${CASE}/details/:caseId`;
+export const CASE_EDIT = `${CASE}/edit/:caseId`;
+export const CASE_CREATE = `${CASE}/create`;
+
 export const NOT_FOUND = '/page-not-found';
 export const NOT_MATCH = '*';

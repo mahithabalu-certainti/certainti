@@ -11,7 +11,6 @@ import { PageHeader, SideMenuPanel } from '../../../../components';
 import {
   // ActivitiesIcon,
   AttachmentsSideIcon,
-  CasesIcon,
   ChecklistIcon,
   DetailsIcon,
   FinancialIcon,
@@ -719,13 +718,6 @@ export const ProjectDetails = () => {
         id: AllModules.PROJECT_TECHNICAL_SUMMARY,
         disabled: false,
         icon: TechSummaryIcon,
-      },
-      {
-        name: 'Cases',
-        key: 'cases',
-        id: AllMenus.CASES,
-        disabled: false,
-        icon: CasesIcon,
       },
       // {
       //   name: 'Activities',
