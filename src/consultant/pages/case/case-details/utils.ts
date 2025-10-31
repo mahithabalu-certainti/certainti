@@ -15,8 +15,6 @@ interface DisplayColumn {
 }
 
 export const transformCaseData = (cases: CaseDetails): DisplayColumn[] => {
-  const status = cases?.status_name?.toLowerCase() || 'active';
-
   const currencySymbol = cases?.currency_code;
 
   return [

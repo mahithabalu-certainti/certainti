@@ -36,8 +36,6 @@ export const CaseDetails = () => {
     isError,
   } = useCaseDetails(caseId ?? '', accountId ?? '');
 
-  console.log('caseData', caseData);
-
   const caseHeaderDetails = useMemo(() => {
     if (caseData) {
       return transformCaseData(caseData);
