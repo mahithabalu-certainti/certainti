@@ -27,6 +27,7 @@ interface CaseAttributes {
   case_total_rd_cost?: number;
   case_total_qre_cost?: number;
   case_completion_percentage?: number;
+  case_total_qualified_project_cost?: number;
   submitted_datetime?: Date;
   approved_datetime?: Date;
 }
@@ -60,6 +61,7 @@ export class Case
   public case_total_rd_cost?: number;
   public case_total_qre_cost?: number;
   public case_completion_percentage?: number;
+  public case_total_qualified_project_cost?: number;
   public submitted_datetime?: Date;
   public approved_datetime?: Date;
 
@@ -105,6 +107,7 @@ export class Case
         case_total_rd_cost: { type: DataTypes.DECIMAL, allowNull: true },
         case_total_qre_cost: { type: DataTypes.DECIMAL, allowNull: true },
         case_completion_percentage: { type: DataTypes.DECIMAL, allowNull: true },
+        case_total_qualified_project_cost: { type: DataTypes.DECIMAL, allowNull: true },
         submitted_datetime: { type: DataTypes.DATE, allowNull: true },
         approved_datetime: { type: DataTypes.DATE, allowNull: true },
       },

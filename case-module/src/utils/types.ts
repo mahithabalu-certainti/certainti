@@ -39,6 +39,7 @@ export type CaseHeadersColumns = {
   case_total_rd_cost : number | null,
   case_total_qre_cost : number | null,
   case_total_qualified_projects : number | null,
+  case_total_qualified_project_cost : number | null,
   case_completion_percentage: number | null,
   r_number : string,
   planned_submission_date: Date,
