@@ -979,57 +979,87 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     switch (field.type) {
       case 'text':
         return (
-          <input
-            type={field.type}
-            name={field.name}
-            placeholder={field.placeholder}
-            autoComplete='off'
-            className={
-              'placeholder-custom-color placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ' +
-              isError +
-              fieldDisabled +
-              (field.disabled
-                ? ' truncate overflow-hidden text-ellipsis whitespace-nowrap'
-                : '')
-            }
-            disabled={field.disabled}
-            onChange={(e) => {
-              const inputValue = e.target.value;
-              if (field.formatCostValue) {
-                const cleanValue = removeFormatCostValue(inputValue);
-                // Only format if it's a valid number
-                if (/^\d*\.?\d*$/.test(cleanValue)) {
-                  const formattedValue = formatCostValue(cleanValue);
-                  // Update the input display value
-                  e.target.value = formattedValue;
-                  // Store the clean value in form data for processing
-                  handleChange(cleanValue);
+          <div
+            className={`flex items-center w-full rounded-xs 
+    ${field.prefixValue ? 'focus-within:border focus-within:border-blue-400' : ''} 
+    ${field.error ? '' : 'border border-transparent'}
+  `}
+          >
+            {field.prefixValue && (
+              <Tooltip
+                title={field.prefixValue}
+                placement='top'
+                arrow
+                disableInteractive
+              >
+                <div
+                  className={`flex-shrink-0 max-w-[35%] pl-3 pr-1 py-1.5 h-[32px] flex items-center text-[13px]
+        rounded-l-xs border border-r overflow-hidden text-ellipsis whitespace-nowrap cursor-default
+        ${
+          field.error
+            ? 'border-red-500 bg-gray-100 text-gray-600'
+            : 'border-[#CBD6E2] bg-gray-100 text-gray-600'
+        }
+      `}
+                >
+                  <span className='block overflow-hidden text-ellipsis whitespace-nowrap'>
+                    {field.prefixValue}
+                  </span>
+                </div>
+              </Tooltip>
+            )}
+
+            <input
+              type={field.type}
+              name={field.name}
+              placeholder={field.placeholder}
+              autoComplete='off'
+              className={`placeholder-[#7D98B6] outline-none w-full sm:text-sm px-3 h-[32px]
+      ${field.prefixValue ? 'border-y border-r border-[#CBD6E2] rounded-r-xs' : 'border border-[#CBD6E2] rounded-xs focus:border-2 focus:border-blue-400'}
+      ${isError} ${fieldDisabled} ${
+        field.disabled
+          ? ' truncate overflow-hidden text-ellipsis whitespace-nowrap'
+          : ''
+      }`}
+              disabled={field.disabled}
+              onChange={(e) => {
+                const inputValue = e.target.value;
+                if (field.formatCostValue) {
+                  const cleanValue = removeFormatCostValue(inputValue);
+                  // Only format if it's a valid number
+                  if (/^\d*\.?\d*$/.test(cleanValue)) {
+                    const formattedValue = formatCostValue(cleanValue);
+                    // Update the input display value
+                    e.target.value = formattedValue;
+                    // Store the clean value in form data for processing
+                    handleChange(cleanValue);
+                  } else {
+                    handleChange(inputValue);
+                  }
                 } else {
                   handleChange(inputValue);
                 }
-              } else {
-                handleChange(inputValue);
-              }
-            }}
-            onBlur={(e) => {
-              if (field.formatCostValue) {
-                // Reformat on blur to ensure proper formatting
-                const inputValue = e.target.value;
-                const cleanValue = removeFormatCostValue(inputValue);
-                if (/^\d*\.?\d*$/.test(cleanValue) && cleanValue !== '') {
-                  const formattedValue = formatCostValue(cleanValue);
-                  e.target.value = formattedValue;
+              }}
+              onBlur={(e) => {
+                if (field.formatCostValue) {
+                  // Reformat on blur to ensure proper formatting
+                  const inputValue = e.target.value;
+                  const cleanValue = removeFormatCostValue(inputValue);
+                  if (/^\d*\.?\d*$/.test(cleanValue) && cleanValue !== '') {
+                    const formattedValue = formatCostValue(cleanValue);
+                    e.target.value = formattedValue;
+                  }
                 }
+              }}
+              value={
+                field.formatCostValue && fieldValue
+                  ? formatCostValue(fieldValue)
+                  : field.formatCostValue && field.defaultValue
+                    ? formatCostValue(field.defaultValue)
+                    : fieldValue || field.defaultValue || ''
               }
-            }}
-            value={
-              field.formatCostValue && fieldValue
-                ? formatCostValue(fieldValue)
-                : field.formatCostValue && field.defaultValue
-                  ? formatCostValue(field.defaultValue)
-                  : fieldValue || field.defaultValue || ''
-            }
-          />
+            />
+          </div>
         );
       case 'file':
         return (

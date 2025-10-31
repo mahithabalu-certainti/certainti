@@ -217,6 +217,7 @@ const Cases: React.FC<CaseProps> = ({
       account_name: accountDetails?.accountById?.account_name || '',
       account_number: accountDetails?.accountById?.r_number || '',
       country_rid: accountDetails?.accountById?.country_rid || '',
+      country_code: accountDetails?.accountById?.country?.country_code || '',
       source: `Account > ${accountName}`,
       // activeMenu: 'account',
     });

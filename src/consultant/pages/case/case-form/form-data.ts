@@ -27,7 +27,8 @@ export const CaseFormData = (
     planned_max: string;
     statutory_min: string;
     statutory_max: string;
-  }
+  },
+  caseNamePrefix?: string
 ): FormType[] => {
   return useMemo(
     () => [
@@ -64,9 +65,25 @@ export const CaseFormData = (
               !permissionMap?.['filing_type_rid']?.edit &&
               !permissionMap?.['filing_type_rid']?.read,
           }),
+          createSelectField('fiscal_year', 'Fiscal Year', {
+            options: fiscalYears,
+            placeholder: 'Choose Fiscal Year',
+            required: true,
+            onChange: true,
+            isFiscalYear: true,
+            disabled:
+              isEditView &&
+              !permissionMap?.['fiscal_year']?.edit &&
+              permissionMap?.['fiscal_year']?.read,
+            hide:
+              isEditView &&
+              !permissionMap?.['fiscal_year']?.edit &&
+              !permissionMap?.['fiscal_year']?.read,
+          }),
           createTextField('case_name', 'Case Name', {
             required: true,
             placeholder: 'Enter Case Name',
+            prefixValue: caseNamePrefix,
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MIN_3,
@@ -99,24 +116,10 @@ export const CaseFormData = (
               !permissionMap?.['case_owner_rid']?.edit &&
               !permissionMap?.['case_owner_rid']?.read,
           }),
-          createSelectField('fiscal_year', 'Fiscal Year', {
-            options: fiscalYears,
-            placeholder: 'Choose Fiscal Year',
-            required: true,
-            isFiscalYear: true,
-            disabled:
-              isEditView &&
-              !permissionMap?.['fiscal_year']?.edit &&
-              permissionMap?.['fiscal_year']?.read,
-            hide:
-              isEditView &&
-              !permissionMap?.['fiscal_year']?.edit &&
-              !permissionMap?.['fiscal_year']?.read,
-          }),
           createSelectField('country', 'Country', {
             options: countryOptions || [],
             placeholder: 'Choose Country',
-            required: false,
+            required: true,
             disabled: true,
             hide:
               isEditView &&
@@ -134,10 +137,6 @@ export const CaseFormData = (
             onChange: true,
             maxDate: currentDate,
             disableFutureDates: true,
-            resetDependsFields: [
-              'planned_submission_date',
-              'statutory_submission_date',
-            ],
             disabled:
               isEditView &&
               !permissionMap?.['start_date']?.edit &&
@@ -160,7 +159,6 @@ export const CaseFormData = (
               maxDate: dateConstraints?.planned_max
                 ? new Date(dateConstraints.planned_max)
                 : currentDate,
-              resetDependsFields: ['statutory_submission_date'],
               disabled:
                 isEditView &&
                 !permissionMap?.['planned_submission_date']?.edit &&
@@ -280,6 +278,7 @@ export const CaseFormData = (
       ownerOptions,
       countryOptions,
       dateConstraints,
+      caseNamePrefix,
     ]
   );
 };

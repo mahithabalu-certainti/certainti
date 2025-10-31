@@ -1,5 +1,13 @@
 import { CaseDetails, CaseFormFields, CaseFormPayload } from '../../../types';
 
+export const generateCaseNamePrefix = (
+  accName: string,
+  country: string,
+  year: string
+) => {
+  return `${accName}-${country}-${year}-`;
+};
+
 export const transformCaseFormPayload = (
   accountId: string,
   formData: CaseFormFields,

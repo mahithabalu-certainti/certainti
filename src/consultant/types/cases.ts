@@ -131,6 +131,7 @@ export interface CaseDetails {
   status_name: string;
   currency_code: string;
   currency_rid: string;
+  country_code?: string;
 }
 
 export interface CaseDetailsResponse {

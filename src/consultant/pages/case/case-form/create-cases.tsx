@@ -25,7 +25,7 @@ import {
   formatDateToYYYYMMDDWithTime,
   getDateFormatYYYYMMDD,
 } from '../../../../common-utils';
-import { transformCaseFormPayload } from './utils';
+import { generateCaseNamePrefix, transformCaseFormPayload } from './utils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 
@@ -36,6 +36,7 @@ export const CreateCases: React.FC = () => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const { caseId } = useParams();
+  const [caseNamePrefix, setCaseNamePrefix] = useState<string>('');
   const [dateConstraints, setDateConstraints] = useState<{
     planned_min: string;
     planned_max: string;
@@ -60,6 +61,7 @@ export const CreateCases: React.FC = () => {
   const accountName = searchParams.get('account_name') || '';
   const sourcePath = searchParams.get('source') || '';
   const countryRid = searchParams.get('country_rid') || '';
+  const countryCode = searchParams.get('country_code') || '';
 
   // User List Api
   const { data: userListData, isLoading: userListLoading } = useManageUserList({
@@ -121,6 +123,23 @@ export const CreateCases: React.FC = () => {
     }),
     [caseData, accountName, accountNumber, countryRid]
   );
+
+  useEffect(() => {
+    if (isEditView && caseData) {
+      const accName = caseData?.account_name || accountName;
+      const country = caseData?.country_code || countryCode;
+      const year = caseData?.fiscal_year?.toString();
+      const prefixValue = generateCaseNamePrefix(accName, country, year);
+      setCaseNamePrefix(prefixValue);
+    } else {
+      const prefixValue = generateCaseNamePrefix(
+        accountName,
+        countryCode,
+        currentYear.toString()
+      );
+      setCaseNamePrefix(prefixValue);
+    }
+  }, [accountName, caseData, countryCode, currentYear, isEditView]);
 
   const userListOptions = useMemo(() => {
     return (
@@ -210,6 +229,14 @@ export const CreateCases: React.FC = () => {
         planned_max: fieldValue as string,
       }));
     }
+    if (fieldName === 'fiscal_year') {
+      const accName = caseData?.account_name || accountName;
+      const country = caseData?.country_code || countryCode;
+      const year = fieldValue as string;
+      // Update prefix when fiscal year changes
+      const newPrefix = generateCaseNamePrefix(accName, country, year);
+      setCaseNamePrefix(newPrefix);
+    }
   };
 
   const submitData = (formValues: Partial<CaseFormPayload>) => {
@@ -241,7 +268,8 @@ export const CreateCases: React.FC = () => {
     caseFilingTypesOptions,
     userListOptions,
     countryOptions,
-    dateConstraints
+    dateConstraints,
+    caseNamePrefix
   );
 
   const formLoading =
