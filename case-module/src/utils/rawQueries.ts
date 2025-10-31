@@ -301,12 +301,14 @@ export const listAllCasesSummaryQuery = (
     (SELECT cs.case_rid AS rid, cs.r_number, cs.status_rid,s.status_name,
     cs.created_by, CONCAT(u.first_name, ' ', u.last_name) AS created_user_name,
     CASE WHEN uu.first_name IS NULL THEN cs.modified_by ELSE CONCAT(uu.first_name, ' ', uu.last_name) END AS updated_user_name,
-    cs.created_datetime, cs.modified_datetime, cs.account_rid,
+    cs.created_datetime, cs.modified_datetime, cs.account_rid,cs.case_owner_rid,
     cs.modified_by,cs.filing_type_rid,cft.filing_type_name, cs.case_name,
-    a.account_name,cs.fiscal_year,c.country_name,c.country_code,
+    a.account_name,cs.fiscal_year,c.country_name,c.country_code,c.rid AS country_rid,
     CONCAT(co.first_name, ' ', co.last_name) AS case_owner_name,
     case_total_projects, case_total_project_cost, case_total_rd_cost, case_total_qre_cost,
-    submitted_datetime, approved_datetime
+    submitted_datetime, approved_datetime,COUNT(*) OVER() AS total_records,a.r_number as account_r_number,a.status_rid as account_status_rid,
+    COALESCE( acc_curr.currency_code, usd_curr.currency_code) as currency_code,
+      COALESCE( acc_curr.currency_symbol, usd_curr.currency_symbol) as currency_symbol,accountStatus.status_name as account_status_name
     FROM
     ${MAIN_SCHEMA_NAME}.case_summary cs
     LEFT JOIN ${MAIN_SCHEMA_NAME}.case_filing_type cft ON cft.rid = cs.filing_type_rid
@@ -316,6 +318,9 @@ export const listAllCasesSummaryQuery = (
     LEFT JOIN ${MAIN_SCHEMA_NAME}.account a ON a.rid = cs.account_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.country c ON a.country_rid = c.rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.user co ON co.rid = cs.case_owner_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.currency acc_curr ON acc_curr.rid = a.currency_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.currency usd_curr ON usd_curr.currency_code = 'USD'
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.status accountStatus ON accountStatus.rid = a.status_rid
     WHERE
     (cs.r_number ILIKE '${searchValue}' OR cs.case_name ILIKE '${searchValue}')
     ${joinedConditions}
@@ -335,12 +340,19 @@ export const listAllCasesSummaryQuery = (
             'modified_datetime', c.modified_datetime,
             'account_rid', c.account_rid,
             'account_name', c.account_name,
+            'account_status_rid', c.account_status_rid,
             'fiscal_year', c.fiscal_year,
             'filing_type_rid', c.filing_type_rid,
             'filing_type_name', c.filing_type_name,
             'case_name', c.case_name,
             'country_name', c.country_name,
+            'country_rid', c.country_rid,
+            'country_code', c.country_code,
+            'currency_code', c.currency_code,
+            'currency_symbol', c.currency_symbol,
+            'account_status_name', c.account_status_name,
             'case_owner_name', c.case_owner_name,
+            'case_owner_rid', c.case_owner_rid,
             'created_user_name', c.created_user_name,
             'updated_user_name', c.updated_user_name,
             'case_total_projects', c.case_total_projects,
@@ -348,7 +360,9 @@ export const listAllCasesSummaryQuery = (
             'case_total_rd_cost', c.case_total_rd_cost,
             'case_total_qre_cost', c.case_total_qre_cost,
             'submitted_datetime', c.submitted_datetime,
-            'approved_datetime', c.approved_datetime
+            'approved_datetime', c.approved_datetime,
+            'total_records', c.total_records,
+            'account_r_number', c.account_r_number
            
         )) AS cases_summary
 

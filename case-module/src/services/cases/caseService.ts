@@ -668,8 +668,8 @@ export class CaseService {
       data.parsedFilters,
       data.globalFilters,
       data.fiscal_year,
-      data.sort,
-      data.sort_by,
+      data.sortBy,
+      data.sortOrder,
       accessibleIds,
       data.search,
       apiType
@@ -681,7 +681,7 @@ export class CaseService {
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
           caseInfo: result.cases_summary,
-          count: result.total_result,
+          count: result.cases_summary[0]?.total_records || 0,
         },
       };
     } else {
