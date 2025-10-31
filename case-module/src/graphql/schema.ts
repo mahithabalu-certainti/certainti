@@ -38,8 +38,8 @@ export const typeDefs = gql`
     country_name: String
     currency_code: String
     currency_symbol: String
-    created_by_name: String
-    modified_by_name: String
+    created_user_name: String
+    modified_user_name: String
   }
 
   input CaseFilterInput {

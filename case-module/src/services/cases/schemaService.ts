@@ -346,9 +346,6 @@ class CaseSchemaService {
       let totalResults: number = 0;
       let disablePagination = false;
 
-      if (data.fiscal_year && data.fiscal_year !== 0) {
-        filters.fiscal_year = data.fiscal_year;
-      }
       if (type === "download") {
         disablePagination = true;
       }
@@ -394,7 +391,7 @@ class CaseSchemaService {
       };
 
       // Add fiscal year filter only if not 0
-      if (data.fiscal_year && data.fiscal_year !== 0) {
+    if (data.fiscal_year != null && data.fiscal_year !== 0 && data.fiscal_year !== '0') {
         whereConditions.fiscal_year = data.fiscal_year;
       }
 
@@ -403,7 +400,7 @@ class CaseSchemaService {
         order: [[finalSortBy, finalSortOrder]],
         ...(disablePagination ? {} : { limit: limit, offset: offset }),
       });
-      // You can now use both technicalSummary (array) and count (number)
+      
       if (caseDetails.length === 0) {
         return {
           caseInfo: [],
@@ -482,6 +479,7 @@ class CaseSchemaService {
               return {
                 rid: d.rid,
                 r_number: d.r_number,
+                account_rid: d.account_rid,
                 account_name: accountInfo?.account_name,
                 country_code: accountInfo?.country_code,
                 case_name: d.case_name,
@@ -1421,9 +1419,14 @@ class CaseSchemaService {
     sortOrder: string,
     accessibleIds: string[] = [],
     search: string,
-    apiType?: string
+    apiType?: string,
+    case_rid?: string,
   ) {
     try {
+      // Ensure filters is not null or undefined
+      filters = filters || {};
+      globalFilters = globalFilters || {};
+      
       let offset = (page - 1) * limit;
       let pagination = `LIMIT ${limit} OFFSET ${offset}`;
       if (apiType === "download") {
@@ -1439,6 +1442,7 @@ class CaseSchemaService {
       let accountIdsArray: string[] = [];
       let globalFiltersQueryConditions: string = ``;
       let fiscalYearQuery: string = ``;
+      let caseRidQuery: string = ``;
       let sortValue;
       let searchValue: string;
       let filterDatas = filterForCases(
@@ -1471,7 +1475,9 @@ class CaseSchemaService {
 
       if (fiscal_year == 0) fiscalYearQuery = ``;
       else fiscalYearQuery = ` cs.fiscal_year = ${fiscal_year}`;
-
+      if(apiType === "graphql"){
+        caseRidQuery = ` cs.case_rid = '${case_rid}'`;
+      }
       searchValue = search ? `%${search}%` : `%%`;
       whereKey = `1 = 1`;
 
@@ -1480,6 +1486,7 @@ class CaseSchemaService {
         globalFiltersQueryConditions,
         fiscalYearQuery,
         filterQueryValues,
+        caseRidQuery
       ].filter(Boolean);
 
       const joinedConditions =
@@ -1578,7 +1585,7 @@ function filterForCases(
   filterColumns: any
 ) {
   let filteredColumns: string | undefined;
-  if (Object.keys(filters).length > 0) {
+  if (filters && Object.keys(filters).length > 0) {
     for (let [key, conditions] of Object.entries(filters)) {
       if (Object.keys(filterTypes).includes(key)) {
         filteredColumns = filterColumns[key];

@@ -672,7 +672,8 @@ export class CaseService {
       data.sortOrder,
       accessibleIds,
       data.search,
-      apiType
+      apiType,
+      data?.case_rid || null
     );
 
     if (result.cases_summary != null) {
