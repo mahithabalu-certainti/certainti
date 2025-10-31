@@ -78,9 +78,6 @@ import ProjectTaskForm from './consultant/pages/project/project-details/project-
 import ProjectResourceForm from './consultant/pages/project/project-details/project-resources/project-resource-form/project-resource-form';
 import { Attachments } from './consultant/pages';
 import ImportTemplatesList from './admin/pages/import-templates/import-templates';
-import Case from './consultant/pages/case/case';
-import { CreateCases } from './consultant/pages/case/case-form';
-import { CaseDetails } from './consultant/pages/case/case-details';
 
 // Lazy load all page components
 const ExtendedPermission = lazy(
@@ -197,6 +194,14 @@ const EmailTemplateForm = lazy(
     )
 );
 
+const Case = lazy(() => import('./consultant/pages/case/case-list/cases'));
+const CaseForm = lazy(
+  () => import('./consultant/pages/case/case-form/create-cases')
+);
+const CaseDetails = lazy(
+  () => import('./consultant/pages/case/case-details/case-details')
+);
+
 // Loading component for Suspense fallback
 const Loading = () => (
   <div className='flex h-screen w-full items-center justify-center'>
@@ -256,8 +261,8 @@ export const App: React.FC<IApp> = ({ instance }) => {
                   <Route path={PROFILE} element={<Profile />} />
                   <Route path={CASE} element={<Case />} />
                   <Route path={CASE_DETAILS} element={<CaseDetails />} />
-                  <Route path={CASE_CREATE} element={<CreateCases />} />
-                  <Route path={CASE_EDIT} element={<CreateCases />} />
+                  <Route path={CASE_CREATE} element={<CaseForm />} />
+                  <Route path={CASE_EDIT} element={<CaseForm />} />
                   <Route
                     path={PROJECT_TASK_CREATE}
                     element={<ProjectTaskForm />}

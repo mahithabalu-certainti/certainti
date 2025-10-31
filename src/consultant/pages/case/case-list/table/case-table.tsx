@@ -1,28 +1,26 @@
 import { useEffect, useMemo, useState } from 'react';
-import { getCaseListColumns } from './columns';
-import { generatePath, useNavigate, useParams } from 'react-router-dom';
-import { CaseList, CaseListParams } from '../../../../../types';
+import { CaseGlobalList, CaseListParams, FilterState } from '../../../../types';
+import { generatePath, useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../store/store';
+import { useCaseGlobalList } from '../../../../services/cases/case-service';
+import { CASE_DETAILS, CASE_EDIT } from '../../../../../routes';
+import { getGlobalCaseListColumns } from './columns';
+import { reshapeGlobalFilter } from '../../../../../common-utils';
 import {
   ActionItem,
   ShowHideTableColumn,
-} from '../../../../../../components/table/types';
-import { CASE_DETAILS, CASE_EDIT } from '../../../../../../routes';
+} from '../../../../../components/table/types';
+import { EditIcon } from '../../../../../assets';
 import {
   ListTable,
   ManageColumnsPopover,
-} from '../../../../../../components/table';
-import { EditIcon } from '../../../../../../assets';
-import { useCaseList } from '../../../../../services/cases/case-service';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../../../../../store/store';
-import { accountDetailsProps } from '../../../../account-details/utils';
-import { AllPermissions } from '../../../../../../common-service';
+} from '../../../../../components/table';
+import { AllPermissions, FilterTypes } from '../../../../../common-service';
 
 interface ICaseTableProps {
-  appliedFilters: Record<string, string | number | boolean | string[]>;
+  appliedFilters: FilterTypes;
   tableParams: CaseListParams;
-  isCaseEditEnable?: boolean;
-  isCaseDeleteEnable?: boolean;
   setTableParams: React.Dispatch<React.SetStateAction<CaseListParams>>;
   setTotalCount: React.Dispatch<React.SetStateAction<number>>;
   refreshTrigger?: number;
@@ -30,7 +28,6 @@ interface ICaseTableProps {
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
   >;
-  accountDetails: accountDetailsProps;
   searchText: string;
 }
 
@@ -40,31 +37,28 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
   setTableParams,
   setTotalCount,
   refreshTrigger,
-  columnAnchorEl,
   setColumnAnchorEl,
-  accountDetails,
+  columnAnchorEl,
   searchText,
 }) => {
   const navigate = useNavigate();
-  const { accountid } = useParams();
-  const [caseList, setCaseList] = useState<CaseList[]>([]);
-  const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
-    (state: RootState) => state.account
-  );
+  const [caseList, setCaseList] = useState<CaseGlobalList[]>([]);
+  const { fiscalYear, filters } = useSelector<
+    RootState,
+    { filters: unknown; fiscalYear: string }
+  >((state: RootState) => state.account);
   const { permission } = useSelector((state: RootState) => state.permission);
 
   const newFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
-  const currencySymbol =
-    accountDetails?.accountById?.currency?.currency_symbol || '';
 
-  const { data, isLoading, isError } = useCaseList(
+  const { data, isLoading, isError } = useCaseGlobalList(
     {
       ...tableParams,
       filters: appliedFilters,
       fiscalYear: newFiscalYear,
+      globalFilters: reshapeGlobalFilter(filters as FilterState),
       search: searchText,
     },
-    accountid,
     refreshTrigger
   );
   const totalItems = data?.count || 0;
@@ -100,7 +94,7 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
     return map;
   }, [casesEditFields]);
 
-  const getRowId = (row: CaseList) => {
+  const getRowId = (row: CaseGlobalList) => {
     return row.rid;
   };
 
@@ -128,33 +122,31 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
     }));
   };
 
-  const handleViewCaseDetails = (caseItem: CaseList) => {
+  const handleViewCaseDetails = (caseItem: CaseGlobalList) => {
     const path = generatePath(CASE_DETAILS, {
       caseId: caseItem.rid,
     });
     const queryParams = new URLSearchParams({
-      accountID: accountid || '',
-      account_name: accountDetails?.accountById?.account_name || '',
-      account_number: accountDetails?.accountById?.r_number || '',
-      // activeMenu: 'account',
+      accountID: caseItem?.account_rid || '',
+      account_name: caseItem?.account_name || '',
+      account_number: caseItem?.account_number || '',
     });
 
     navigate(`${path}?${queryParams.toString()}`);
   };
 
-  const caseColumns = getCaseListColumns(
+  const globalCaseColumns = getGlobalCaseListColumns(
     handleViewCaseDetails,
-    currencySymbol,
     permissionMap
   );
 
   // show hide columns
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
-  >(Object.fromEntries(caseColumns.map((col) => [col.id, !col.hide])));
+  >(Object.fromEntries(globalCaseColumns.map((col) => [col.id, !col.hide])));
 
   const [columnOrder, setColumnOrder] = useState(
-    caseColumns.map((col) => col.id)
+    globalCaseColumns.map((col) => col.id)
   );
 
   const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
@@ -166,7 +158,7 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
   };
 
   const visibleColumns = columnOrder
-    .map((id) => caseColumns.find((col) => col.id === id)!)
+    .map((id) => globalCaseColumns.find((col) => col.id === id)!)
     .filter((col) => columnVisibility[col.id]);
 
   const handlePopoverClose = () => {
@@ -182,25 +174,26 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
   ];
 
   const isModalOpen = Boolean(columnAnchorEl);
-  const modalId = isModalOpen ? 'case-column-visibility-popover' : undefined;
+  const modalId = isModalOpen
+    ? 'global-case-column-visibility-popover'
+    : undefined;
 
-  const handleEdit = (caseItem: CaseList) => {
-    const accountId = accountid ?? '';
-    const accountName = accountDetails?.accountById?.account_name || '';
+  const handleEdit = (caseItem: CaseGlobalList) => {
+    const accountId = caseItem?.account_rid || '';
+    const accountName = caseItem?.account_name || '';
     const path = generatePath(CASE_EDIT, {
       caseId: caseItem.rid,
     });
     const queryParams = new URLSearchParams({
       accountId,
-      account_name: accountDetails?.accountById?.account_name || '',
-      account_number: accountDetails?.accountById?.r_number || '',
+      account_name: accountName || '',
+      account_number: caseItem?.account_number || '',
       source: `Account > ${accountName}`,
-      // activeMenu: 'account',
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
 
-  const actionButtons: ActionItem<CaseList>[] = [
+  const actionButtons: ActionItem<CaseGlobalList>[] = [
     {
       label: 'Edit',
       onClick: (row) => handleEdit(row),
@@ -220,7 +213,7 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
         open={isModalOpen}
         popoverId={modalId}
         onClose={handlePopoverClose}
-        columns={caseColumns}
+        columns={globalCaseColumns}
         onColumnsChange={handleColumnsChange}
         columnRestrictions={RestrictedColumns}
       />
@@ -231,7 +224,7 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
         hoverHighlight={false}
         tableStyle={{
           height: '100%',
-          maxHeight: 'calc(100vh - 320px)',
+          maxHeight: 'calc(100vh - 180px)',
           overflow: 'auto',
         }}
         stickyHeader={true}

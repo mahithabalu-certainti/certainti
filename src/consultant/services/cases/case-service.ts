@@ -5,6 +5,7 @@ import {
   CaseDetailsResponse,
   CaseFilingTypeResponse,
   CaseFormPayload,
+  CaseGlobalList,
   CaseList,
   CaseListExportParams,
   CaseListParams,
@@ -14,6 +15,7 @@ import {
 } from '../../types/cases';
 import { CommonApiResponse } from '../../../common-service';
 import { getCaseExportListURL, getCaseListURL } from '../urls';
+import { GlobalCasesListMockData } from '../../mockdata/case-mock';
 
 // List
 export const fetchCaseList = async (
@@ -40,6 +42,37 @@ export const useCaseList = (
     retry: 0,
     gcTime: 0,
     enabled: !!accountId,
+  });
+};
+
+// Global cases list
+export const fetchGlobalCaseList = async (
+  params: CaseListParams
+): Promise<{ cases: CaseGlobalList[]; count: number }> => {
+  // const { data } = await caseServiceApi.get<CaseGlobalListResponse>(
+  //   getCaseListURL(params)
+  // );
+  // return {
+  //   cases: data.data.caseInfo,
+  //   count: data.data.count,
+  // };
+  console.log('global-cases-params', params);
+  await new Promise((resolve) => setTimeout(resolve, 2000));
+  return {
+    cases: GlobalCasesListMockData.data.caseInfo,
+    count: GlobalCasesListMockData.data.count,
+  };
+};
+export const useCaseGlobalList = (
+  params: CaseListParams,
+  refresh?: number
+): UseQueryResult<{ cases: CaseGlobalList[]; count: number }, Error> => {
+  return useQuery<{ cases: CaseGlobalList[]; count: number }, Error>({
+    queryKey: ['case-global-list', params, refresh],
+    queryFn: () => fetchGlobalCaseList(params),
+    retry: 0,
+    gcTime: 0,
+    enabled: true,
   });
 };
 
