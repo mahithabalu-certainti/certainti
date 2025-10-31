@@ -300,7 +300,7 @@ export const listAllCasesSummaryQuery = (
     WITH fetch_all_cases AS 
     (SELECT cs.case_rid AS rid, cs.r_number, cs.status_rid,s.status_name,
     cs.created_by, CONCAT(u.first_name, ' ', u.last_name) AS created_user_name,
-    CASE WHEN uu.first_name IS NULL THEN cs.modified_by ELSE CONCAT(uu.first_name, ' ', uu.last_name) END AS updated_user_name,
+    CASE WHEN uu.first_name IS NULL THEN cs.modified_by ELSE CONCAT(uu.first_name, ' ', uu.last_name) END AS modified_user_name,
     cs.created_datetime, cs.modified_datetime, cs.account_rid,cs.case_owner_rid,
     cs.modified_by,cs.filing_type_rid,cft.filing_type_name, cs.case_name,
     a.account_name,cs.fiscal_year,c.country_name,c.country_code,c.rid AS country_rid,
@@ -354,7 +354,7 @@ export const listAllCasesSummaryQuery = (
             'case_owner_name', c.case_owner_name,
             'case_owner_rid', c.case_owner_rid,
             'created_user_name', c.created_user_name,
-            'updated_user_name', c.updated_user_name,
+            'modified_user_name', c.modified_user_name,
             'case_total_projects', c.case_total_projects,
             'case_total_project_cost', c.case_total_project_cost,
             'case_total_rd_cost', c.case_total_rd_cost,

@@ -48,7 +48,7 @@ export const caseResolver: IResolvers = {
         // Convert GraphQL filters to the format expected by the service
         const serviceFilters = filters || {};
 
-        const result = await ctx.services.caseService.listAllCasesAccount(
+        const result = await ctx.services.caseService.listAllCasesSummary(
           data,
           serviceFilters,
           userId,
@@ -130,16 +130,19 @@ export const caseResolver: IResolvers = {
         if (result.statusCode === HttpStatus.SUCCESS) {
           // Fetch the updated case information with all joined fields
           try {
-            const caseListResult = await ctx.services.caseService.listAllCasesAccount(
+            const caseListResult = await ctx.services.caseService.listAllCasesSummary(
               { 
                 account_rid: data.account_rid,
                 page: 1,
-                limit: 1 
+                limit: 1 ,
+                fiscal_year: 0,
+                case_rid: data.case_rid
               },
               { rid: data.case_rid }, // Filter by rid (the primary key of the case)
               userId,
-              "get"
+              "graphql"
             );
+            console.log("Fetched updated case:", caseListResult);
 
             if (caseListResult.statusCode === HttpStatus.SUCCESS && 
                 caseListResult.data?.caseInfo && 
