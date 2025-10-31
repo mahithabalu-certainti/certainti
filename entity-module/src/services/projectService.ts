@@ -1436,7 +1436,7 @@ export class ProjectService {
          appliedAccountNumber.push(...accountRid);
         }
 
-      const { finalResult: allProjectList, totalCount } =
+      let { finalResult: allProjectList, totalCount } =
         await this.schemaService.fetchAllProjects(
           offset,
           limit,
@@ -1450,6 +1450,10 @@ export class ProjectService {
           bothParentAndChild,
           accessibleIds
         );
+
+      if (allProjectList.length > 0) {
+        allProjectList = await this.schemaService.addProjectResourceExistsFlags(allProjectList) as [unknown[], unknown] | never[];
+      }
 
       return {
         statusCode: HttpStatus.SUCCESS,
