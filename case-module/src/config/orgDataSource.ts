@@ -69,7 +69,15 @@ export async function initOrgSequelize() {
       host: DB_HOST,
       dialect: "postgres",
       port: 5432,
-      logging: env !== "production",
+      logging: env !== "production" ? (sql: string, timing?: any) => {
+        const cleanedSql = sql.replace(/\n\s*/g, ' ').replace(/\s+/g, ' ').trim();
+        logMessage(`[SQL Query] ${JSON.stringify({
+          query: cleanedSql,
+          timestamp: new Date().toISOString(),
+          timing: timing !== undefined ? `${timing}ms` : 'N/A'
+        })}`);
+      } : false,
+      benchmark: env !== "production",
       define: {
         freezeTableName: true,
         timestamps: false,

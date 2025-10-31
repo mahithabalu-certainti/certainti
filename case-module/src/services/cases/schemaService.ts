@@ -1405,8 +1405,8 @@ class CaseSchemaService {
     filters: filterType,
     globalFilters: any = {},
     fiscal_year: number,
-    sort: string,
     sortBy: string,
+    sortOrder: string,
     accessibleIds: string[] = [],
     search: string,
     apiType?: string
@@ -1417,8 +1417,8 @@ class CaseSchemaService {
       if (apiType === "download") {
         pagination = ``;
       }
-      if (!this.orgDbSequelize) {
-        this.orgDbSequelize = await this.caseModelService.getSequelize();
+      if (!this.mainDbSequelize) {
+        this.mainDbSequelize = await this.caseModelService.getMainSequelize();
       }
       let filteredQueryArray: string[] = [];
       let andConditions = ``;
@@ -1474,8 +1474,9 @@ class CaseSchemaService {
         conditions.length > 0 ? " AND " + conditions.join(" AND ") : "";
 
       // Optimized sorting logic using extracted utility function
-      const sortColumn = getSortColumn(sort);
-      const sortDirection = sortBy || "ASC";
+      const sortColumn = getSortColumn(sortBy);
+      const sortDirection = sortOrder || "ASC";
+      logMessage(`Sorting by column: ${sortColumn}, direction: ${sortDirection}`);
       sortValue = `ORDER BY ${sortColumn} ${sortDirection}`;
       let caseSummaryQuery = await listAllCasesSummaryQuery(
         searchValue,
@@ -1485,7 +1486,7 @@ class CaseSchemaService {
         pagination,
         accessibleIds
       );
-      const result: any = await this.orgDbSequelize.query(caseSummaryQuery);
+      const [result]: any[] = await this.mainDbSequelize.query(caseSummaryQuery,{type: "SELECT"});
       return result;
     } catch (err) {
       logMessage(`Error in fetch cases summary: ${err}`);
@@ -1550,6 +1551,7 @@ const getSortColumn = (sortField: string): string => {
     case_owner_name: "c.case_owner_name",
     case_name: "c.case_name",
     createdAt: "c.created_datetime",
+    filing_type_name: "c.filing_type_name"
   };
 
   return sortMapping[sortField] || "c.r_number";
@@ -1576,7 +1578,7 @@ function filterForCases(
             let dynamicReference = ``;
 
             if (filteredColumns == "account_name") dynamicReference = `a`;
-            if (filteredColumns == "country_name") dynamicReference = `c`;
+            else if (filteredColumns == "country_name") dynamicReference = `c`;
             else dynamicReference = `cs`;
 
             const stringCondition = buildStringFilterCondition(
@@ -1633,7 +1635,7 @@ const buildNumericFilterCondition = (
   condition: string,
   values: any,
   filteredColumns: string,
-  tableAlias: string = "i"
+  tableAlias: string ="cs"
 ): string => {
   const columnRef = `${tableAlias}.${filteredColumns}`;
 
