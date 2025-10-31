@@ -1,8 +1,9 @@
 import { Suspense, useEffect, useMemo, useState } from 'react';
-import { useLocation, useSearchParams } from 'react-router-dom';
+import { useLocation, useParams, useSearchParams } from 'react-router-dom';
+import { useCaseDetails } from '../../../services/cases/case-service';
 import { MenuItem } from '../../../types';
 import { AllMenus, AllModules } from '../../../../common-service';
-import { PageHeader, SideMenuPanel } from '../../../../components';
+import { InfoSection, PageHeader, SideMenuPanel } from '../../../../components';
 import {
   AccountDetailsIcon,
   ActivitiesIcon,
@@ -20,15 +21,27 @@ import {
 } from '../../../../assets';
 import { WorkBreakDown } from './work-breakdown';
 import { CaseTeam } from './case-team';
-import { CaseInfoSection } from './case-info-section';
 import { transformCaseData } from './utils';
 import { ActionsDropdownItem } from '../../../../common-utils';
 
 export const CaseDetails = () => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [caseDetails, setCaseDetails] = useState<any>([]);
+  const { caseId } = useParams();
+  const accountId = searchParams.get('accountID');
+  const { data: caseData, isLoading } = useCaseDetails(
+    caseId ?? '',
+    accountId ?? ''
+  );
+
+  console.log('caseData', caseData);
+
+  const caseHeaderDetails = useMemo(() => {
+    if (caseData) {
+      return transformCaseData(caseData);
+    }
+    return [];
+  }, [caseData]);
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const defaultTab = searchParams.get('list') ?? 'workBreakdown';
   const [activeKey, setActiveKey] = useState(defaultTab as string);
@@ -41,10 +54,6 @@ export const CaseDetails = () => {
       setActiveKey('workBreakdown');
     }
   }, [searchParams]);
-
-  useEffect(() => {
-    setCaseDetails(transformCaseData([]));
-  }, []);
 
   useEffect(() => {
     const listParam = searchParams.get('list');
@@ -224,14 +233,14 @@ export const CaseDetails = () => {
       <div className='flex h-[60px]'>
         <PageHeader
           variant='sub'
-          placeholder='Case ID'
+          placeholder={isLoading ? 'Loading...' : 'Case ID'}
           icon={
             <AccountDetailsIcon
               className='h-6 w-6 rounded'
               style={{ backgroundColor: '#4B9BFF' }}
             />
           }
-          title={'5005003'}
+          title={caseData?.r_number || ''}
           totalRecords={5}
           actionItems={menuItems}
           onActionsClick={handleActionsClick}
@@ -242,10 +251,10 @@ export const CaseDetails = () => {
           backBtnLabel='Back To Cases'
         />
       </div>
-      <CaseInfoSection
-        columns={caseDetails}
-        loading={false}
-        // onAdjustmentFactorChange={handleAdjustmentFactor}
+      <InfoSection
+        columns={caseHeaderDetails}
+        loading={isLoading}
+        className='max-h-[140px] min-h-[140px]'
       />
       <div className='flex flex-1 flex-row w-full'>
         <div
@@ -267,7 +276,10 @@ export const CaseDetails = () => {
         </div>
         <div
           className='flex-1'
-          style={{ maxHeight: 'calc(100vh - 140px)', overflow: 'auto' }}
+          style={{
+            maxHeight: 'calc(100vh - 140px)',
+            overflow: 'auto',
+          }}
         >
           <Suspense fallback={null}>{renderContent()}</Suspense>
         </div>
