@@ -134,6 +134,7 @@ export interface CaseDetails {
   case_completion_percentage: string | null;
   case_total_qualified_projects: string | null;
   case_total_qualified_project_cost: string | null;
+  country_code?: string;
 }
 
 export interface CaseDetailsResponse {
