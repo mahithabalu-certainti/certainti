@@ -71,6 +71,9 @@ import {
   EMAIL_TEMPLATES_EDIT,
   CASE_CREATE,
   CASE_EDIT,
+  TASK_TEMPLATES,
+  TASK_TEMPLATES_CREATE,
+  TASK_TEMPLATES_EDIT,
 } from './routes';
 import { RootState } from './store/store';
 import ProjectTaskForm from './consultant/pages/project/project-details/project-task/form/project-task-form';
@@ -200,6 +203,18 @@ const CaseForm = lazy(
 );
 const CaseDetails = lazy(
   () => import('./consultant/pages/case/case-details/case-details')
+);
+
+const TaskTemplateList = lazy(
+  () =>
+    import(
+      './admin/pages/task-templates/task-templates-list/task-templates-list'
+    )
+);
+
+const TaskTemplateForm = lazy(
+  () =>
+    import('./admin/pages/task-templates/task-template-form/task-template-form')
 );
 
 // Loading component for Suspense fallback
@@ -381,6 +396,15 @@ export const App: React.FC<IApp> = ({ instance }) => {
                   <Route
                     path={EMAIL_TEMPLATES_EDIT}
                     element={<EmailTemplateForm />}
+                  />
+                  <Route path={TASK_TEMPLATES} element={<TaskTemplateList />} />
+                  <Route
+                    path={TASK_TEMPLATES_CREATE}
+                    element={<TaskTemplateForm />}
+                  />
+                  <Route
+                    path={TASK_TEMPLATES_EDIT}
+                    element={<TaskTemplateForm />}
                   />
                 </Route>
                 {/* Page not found */}
