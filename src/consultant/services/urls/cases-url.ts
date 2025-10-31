@@ -14,7 +14,7 @@ export const getCaseListURL = (
   }: CaseListParams,
   accountId?: string
 ): string => {
-  const baseUrl = `/api/cases/list${isGlobal ? `/summary` : ''}`;
+  const baseUrl = `/api/cases/list${isGlobal ? `/caseSummary` : ''}`;
   const searchParams = new URLSearchParams();
 
   if (accountId) searchParams.set('account_rid', accountId);
@@ -22,7 +22,9 @@ export const getCaseListURL = (
   searchParams.set('limit', limit.toString());
   if (sortBy) searchParams.set('sortBy', sortBy);
   if (sortOrder) searchParams.set('sortOrder', sortOrder);
-  if (fiscalYear) searchParams.set('fiscalYear', fiscalYear.toString());
+  if (fiscalYear !== undefined && fiscalYear !== null) {
+    searchParams.set('fiscal_year', fiscalYear.toString());
+  }
 
   // Only add filters if present
   if (filters && Object.keys(filters).length > 0) {
@@ -53,11 +55,15 @@ export const getCaseExportListURL = (
   }: CaseListExportParams,
   accountId?: string
 ): string => {
-  const baseUrl = isGlobal ? `/api/cases/exportAll` : `/api/cases/export`;
+  const baseUrl = isGlobal
+    ? `/api/cases/export/caseSummary`
+    : `/api/cases/export`;
 
   const searchParams = new URLSearchParams();
   if (accountId) searchParams.set('account_rid', accountId);
-  if (fiscalYear) searchParams.set('fiscalYear', fiscalYear.toString());
+  if (fiscalYear !== undefined && fiscalYear !== null) {
+    searchParams.set('fiscal_year', fiscalYear.toString());
+  }
   if (filters && Object.keys(filters).length > 0) {
     searchParams.set('filters', JSON.stringify(filters));
   }

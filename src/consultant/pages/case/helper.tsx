@@ -51,7 +51,9 @@ export const getGlobalCasesFilterFields = (
   caseStatusOptions: { label: string; value: string }[],
   caseTypeOptions: { label: string; value: string }[],
   caseOwnerOptions: { label: string; value: string }[],
-  permissionMap: Record<string, { read: boolean; edit: boolean }>
+  contryOptions: { label: string; value: string }[],
+  permissionMap: Record<string, { read: boolean; edit: boolean }>,
+  accountPermissionMap: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => {
   return [
     {
@@ -68,9 +70,9 @@ export const getGlobalCasesFilterFields = (
       value: 'account_name',
       type: 'text',
       operatorOption: textOptions,
-      // hide:
-      //   !permissionMap?.['account_name']?.edit &&
-      //   !permissionMap?.['account_name']?.read,
+      hide:
+        !accountPermissionMap?.['account_name']?.read &&
+        !accountPermissionMap?.['account_name']?.edit,
     },
     {
       name: 'Filing Type',
@@ -108,11 +110,14 @@ export const getGlobalCasesFilterFields = (
       name: 'Country',
       value: 'country_name',
       type: 'enum',
-      options: [],
+      options: contryOptions.map((opt) => ({
+        option: opt.label,
+        value: opt.value,
+      })),
       operatorOption: enumOperator,
-      // hide:
-      //   !permissionMap?.['country_rid']?.edit &&
-      //   !permissionMap?.['country_rid']?.read,
+      hide:
+        !accountPermissionMap?.['country_rid']?.read &&
+        !accountPermissionMap?.['country_rid']?.edit,
     },
     {
       name: 'Case Owner',
@@ -153,6 +158,24 @@ export const getGlobalCasesFilterFields = (
       hide:
         !permissionMap?.['case_total_rd_cost']?.edit &&
         !permissionMap?.['case_total_rd_cost']?.read,
+    },
+    {
+      name: 'No. of Projects',
+      value: 'case_total_projects',
+      type: 'number',
+      operatorOption: numberOptions,
+      hide:
+        !permissionMap?.['case_total_projects']?.edit &&
+        !permissionMap?.['case_total_projects']?.read,
+    },
+    {
+      name: 'No. of Qualified Projects',
+      value: 'case_total_qualified_projects',
+      type: 'number',
+      operatorOption: numberOptions,
+      hide:
+        !permissionMap?.['case_total_qualified_projects']?.edit &&
+        !permissionMap?.['case_total_qualified_projects']?.read,
     },
     {
       name: 'Created On',
@@ -201,4 +224,12 @@ export const getGlobalCasesFilterFields = (
       options: [{ value: 'createdAt_desc', option: 'Recently Created' }],
     },
   ];
+};
+
+export const generateCaseNamePrefixValue = (
+  accName: string,
+  country: string,
+  year: string
+) => {
+  return `${accName}-${country}-${year}-`;
 };

@@ -9,6 +9,8 @@ import { getGlobalCaseListColumns } from './columns';
 import { reshapeGlobalFilter } from '../../../../../common-utils';
 import {
   ActionItem,
+  CellEditData,
+  FieldChangeValue,
   ShowHideTableColumn,
 } from '../../../../../components/table/types';
 import { EditIcon } from '../../../../../assets';
@@ -17,6 +19,10 @@ import {
   ManageColumnsPopover,
 } from '../../../../../components/table';
 import { AllPermissions, FilterTypes } from '../../../../../common-service';
+import { useMutation } from '@apollo/client';
+import { UPDATE_CASE } from '../../../../../api/graphql/queries/case-query';
+import { caseClient } from '../../../../../api/graphql/clients/client';
+import { useToast } from '../../../../../hooks';
 
 interface ICaseTableProps {
   appliedFilters: FilterTypes;
@@ -29,6 +35,8 @@ interface ICaseTableProps {
     React.SetStateAction<HTMLButtonElement | null>
   >;
   searchText: string;
+  caseFilingTypesOptions: { value: string; label: string }[];
+  userListOptions: { value: string; label: string }[];
 }
 
 export const CaseListTable: React.FC<ICaseTableProps> = ({
@@ -40,7 +48,10 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
   setColumnAnchorEl,
   columnAnchorEl,
   searchText,
+  userListOptions,
+  caseFilingTypesOptions,
 }) => {
+  const { errorToast } = useToast();
   const navigate = useNavigate();
   const [caseList, setCaseList] = useState<CaseGlobalList[]>([]);
   const { fiscalYear, filters } = useSelector<
@@ -48,6 +59,10 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
     { filters: unknown; fiscalYear: string }
   >((state: RootState) => state.account);
   const { permission } = useSelector((state: RootState) => state.permission);
+
+  const [updateCaseMutation] = useMutation(UPDATE_CASE, {
+    client: caseClient,
+  });
 
   const newFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
@@ -94,6 +109,20 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
     return map;
   }, [casesEditFields]);
 
+  const accountViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.ACCOUNTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const accountPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    accountViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [accountViewEditFields]);
+
   const getRowId = (row: CaseGlobalList) => {
     return row.rid;
   };
@@ -129,7 +158,7 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
     const queryParams = new URLSearchParams({
       accountID: caseItem?.account_rid || '',
       account_name: caseItem?.account_name || '',
-      account_number: caseItem?.account_number || '',
+      account_number: caseItem?.account_r_number || '',
     });
 
     navigate(`${path}?${queryParams.toString()}`);
@@ -137,7 +166,10 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
 
   const globalCaseColumns = getGlobalCaseListColumns(
     handleViewCaseDetails,
-    permissionMap
+    userListOptions,
+    caseFilingTypesOptions,
+    permissionMap,
+    accountPermissionMap
   );
 
   // show hide columns
@@ -187,8 +219,9 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
     const queryParams = new URLSearchParams({
       accountId,
       account_name: accountName || '',
-      account_number: caseItem?.account_number || '',
-      source: `Account > ${accountName}`,
+      account_number: caseItem?.account_r_number || '',
+      country_rid: caseItem?.country_rid || '',
+      country_code: caseItem?.country_code || '',
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
@@ -198,6 +231,7 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
       label: 'Edit',
       onClick: (row) => handleEdit(row),
       icon: EditIcon,
+      disabled: (row) => row?.account_status_name?.toLowerCase() !== 'active',
       iconStyle: {
         filter:
           'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
@@ -205,6 +239,55 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
       hide: !casesFieldsEditable,
     },
   ];
+
+  const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
+    const previousCases = [...caseList];
+
+    const rowData = caseList.find((data) => data.rid === rowId);
+    if (!rowData) {
+      errorToast('Row not found.');
+      return;
+    }
+
+    const updateData = updates.reduce<Record<string, FieldChangeValue>>(
+      (data, item) => {
+        const key = item.editId || item.columnId;
+        data[key] = item.value;
+        return data;
+      },
+      {
+        case_rid: rowId,
+        account_rid: rowData?.account_rid,
+      }
+    );
+
+    try {
+      const res = await updateCaseMutation({
+        variables: { data: updateData },
+      });
+      const result = res?.data?.updateInlineCaseDetails;
+      if (result?.statusCode === 200 && result.data) {
+        const updatedCase = result.data;
+        setCaseList((prev) =>
+          prev.map((data) => {
+            if (data.rid === updatedCase.rid) {
+              return {
+                ...data,
+                ...updatedCase,
+              };
+            }
+            return data;
+          })
+        );
+      } else {
+        errorToast(result?.message || 'Failed to update field');
+        setCaseList(previousCases);
+      }
+    } catch (error) {
+      errorToast((error as Error)?.message || 'Failed to update field');
+      setCaseList(previousCases);
+    }
+  };
 
   return (
     <div>
@@ -248,6 +331,7 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
         sortBy={tableParams.sortBy}
         sortOrder={tableParams.sortOrder}
         onSort={handleSort}
+        onCellEdit={handleCellEdit}
       />
     </div>
   );
