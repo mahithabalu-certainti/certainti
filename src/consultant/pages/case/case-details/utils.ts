@@ -39,7 +39,6 @@ export const transformCaseData = (cases: CaseDetails): DisplayColumn[] => {
 
         {
           label: 'Total Project Cost',
-
           value: cases?.case_total_project_cost
             ? costDisplay(cases.case_total_project_cost, currencySymbol)
             : '-',
@@ -60,12 +59,17 @@ export const transformCaseData = (cases: CaseDetails): DisplayColumn[] => {
 
         {
           label: 'No. of Qualified Projects',
-          value: '-',
+          value: cases?.case_total_qualified_projects || '-',
         },
 
         {
           label: 'Total Qualified Project Cost',
-          value: '-',
+          value: cases?.case_total_project_cost
+            ? costDisplay(
+                cases.case_total_qualified_project_cost,
+                currencySymbol
+              )
+            : '-',
         },
       ],
     },
@@ -116,7 +120,9 @@ export const transformCaseData = (cases: CaseDetails): DisplayColumn[] => {
 
         {
           label: 'Case % Completion',
-          value: '-',
+          value: cases.case_completion_percentage
+            ? `${cases.case_completion_percentage}%`
+            : '-',
         },
       ],
     },

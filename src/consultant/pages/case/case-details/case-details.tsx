@@ -17,6 +17,7 @@ import {
   NotesSideIcon,
   ProjectsSideIcon,
   ResourcesIcon,
+  SettingIcon,
   TechSummaryIcon,
 } from '../../../../assets';
 import { WorkBreakDown } from './work-breakdown';
@@ -29,10 +30,11 @@ export const CaseDetails = () => {
   const location = useLocation();
   const { caseId } = useParams();
   const accountId = searchParams.get('accountID');
-  const { data: caseData, isLoading } = useCaseDetails(
-    caseId ?? '',
-    accountId ?? ''
-  );
+  const {
+    data: caseData,
+    isLoading,
+    isError,
+  } = useCaseDetails(caseId ?? '', accountId ?? '');
 
   console.log('caseData', caseData);
 
@@ -116,32 +118,11 @@ export const CaseDetails = () => {
         icon: ProjectsSideIcon,
       },
       {
-        name: 'Financial Workings',
-        key: 'financialWorkings',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS,
-        disabled: false,
-        icon: FinancialIcon,
-      },
-      {
-        name: 'Case Review',
-        key: 'caseReview',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS,
-        disabled: false,
-        icon: CasesIcon,
-      },
-      {
         name: 'Case Team',
         key: 'caseTeam',
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
         icon: CasesIcon,
-      },
-      {
-        name: 'Assign Projects',
-        key: 'assignProjects',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS,
-        disabled: false,
-        icon: ProjectsSideIcon,
       },
       {
         name: 'Case Projects',
@@ -165,7 +146,14 @@ export const CaseDetails = () => {
         icon: ProjectsSideIcon,
       },
       {
-        name: 'Interaction',
+        name: 'Historical Submission',
+        key: 'historical_submission',
+        id: AllModules.PROJECT_INTERACTIONS,
+        disabled: false,
+        icon: InteractionsIcon,
+      },
+      {
+        name: 'Interactions',
         key: 'interaction',
         id: AllModules.PROJECT_INTERACTIONS,
         disabled: false,
@@ -179,6 +167,20 @@ export const CaseDetails = () => {
         icon: TechSummaryIcon,
       },
       {
+        name: 'Financial Workings',
+        key: 'financialWorkings',
+        id: AllMenus.FINANCIAL_HIGHLIGHTS,
+        disabled: false,
+        icon: FinancialIcon,
+      },
+      {
+        name: 'RD Credit Forms',
+        key: 'rd_credit_forms',
+        id: AllMenus.FINANCIAL_HIGHLIGHTS,
+        disabled: false,
+        icon: DetailsIcon,
+      },
+      {
         name: 'Dossier',
         key: 'dossier',
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
@@ -186,11 +188,11 @@ export const CaseDetails = () => {
         icon: DetailsIcon,
       },
       {
-        name: 'Survey',
-        key: 'survey',
+        name: 'Case Review',
+        key: 'caseReview',
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
-        icon: ChecklistIcon,
+        icon: CasesIcon,
       },
       {
         name: 'Activities',
@@ -219,6 +221,24 @@ export const CaseDetails = () => {
         id: AllMenus.CHECKLISTS,
         disabled: false,
         icon: ChecklistIcon,
+      },
+      {
+        name: 'Settings',
+        key: 'settings',
+        id: AllMenus.CONFIGURATION,
+        disabled: false,
+        hide: false,
+        icon: SettingIcon,
+        subMenu: [
+          {
+            name: 'Jurisdiction Configuration',
+            key: 'jurisdiction_configuration',
+            id: AllMenus.MANAGE_ACCOUNT_ACCESS,
+            disabled: false,
+            hide: false,
+            icon: ResourcesIcon,
+          },
+        ],
       },
     ];
     return allMenus;
@@ -254,6 +274,7 @@ export const CaseDetails = () => {
       <InfoSection
         columns={caseHeaderDetails}
         loading={isLoading}
+        error={isError}
         className='max-h-[140px] min-h-[140px]'
       />
       <div className='flex flex-1 flex-row w-full'>
