@@ -1,8 +1,14 @@
 import { initMainDbSequelize } from "../config/mainDataSource";
-
+import { Case } from "./caseModel";
+import { CaseTeam } from "./caseTeamModel";
+import { CaseProject } from "./caseProjectsModel";
 import { logMessage } from "../utils/helpers";
 
-export const models = {};
+export const models = {
+  Case,
+  CaseTeam,
+  CaseProject,
+};
 
 export async function initModels() {
   try {

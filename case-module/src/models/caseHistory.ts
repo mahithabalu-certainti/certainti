@@ -106,10 +106,10 @@ export async function setupCaseHistorySequence(
 ) {
   try {
     await sequelize.query(
-      `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".cases_history_seq START 1`
+      `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".case_history_seq START 1`
     );
 
-    await sequelize.query(`ALTER TABLE "${schemaName}".cases_history
+    await sequelize.query(`ALTER TABLE "${schemaName}".case_history
       ALTER COLUMN r_number SET DEFAULT 'CSH-' || LPAD(nextval('"${schemaName}".cases_history_seq')::text, 10, '0')`);
 
     logMessage("Cases history sequence setup complete");

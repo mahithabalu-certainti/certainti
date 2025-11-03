@@ -7,6 +7,7 @@ import { CaseSummary } from "../models/caseSummaryModel";
 import { CaseProject } from "../models/caseProjectsModel";
 import { CaseTimeline } from "../models/caseTimeline";
 import { CaseHistory } from "../models/caseHistory";
+import { CaseTeam } from "../models/caseTeamModel";
 
 export class CaseModelService {
   orgDbSequelize: Sequelize | null = null;
@@ -51,13 +52,15 @@ export class CaseModelService {
     const CaseProjectModel = CaseProject.initialize(sequelize, schemaName);
     const CaseTimelineModel = CaseTimeline.initialize(sequelize, schemaName);
     const CaseHistoryModel = CaseHistory.initialize(sequelize, schemaName);
-
+    const CaseTeamModel = CaseTeam.initialize(sequelize, schemaName);
     const models = {
       Case: CaseModel,
       CaseSummary: CaseSummaryModel,
       CaseProject: CaseProjectModel,
       CaseTimeline: CaseTimelineModel,
       CaseHistory: CaseHistoryModel,
+      CaseTeam: CaseTeamModel,
+
     };
 
     this.modelCache.set(schemaName, models);

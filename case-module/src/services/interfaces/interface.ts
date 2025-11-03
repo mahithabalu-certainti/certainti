@@ -1,4 +1,4 @@
-import { ICreateCases } from "../../utils/types";
+import { ICreateCases, ICreateCaseTeam } from "../../utils/types";
 
 export interface ICaseService {
   createCase(
@@ -67,5 +67,26 @@ export interface ICaseService {
     message: string;
     errorMessage?: string;
     data?: { caseInfo: any; count: number };
+  }>;
+  createCaseTeam(
+    caseTeamRequest: ICreateCaseTeam,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?:any;
+  }>;
+  getCaseTeamRoles(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { caseRoles: any };
+  }>;
+  listCaseTeamMembers( data: any, filters: Record<string, any>,userId:string,apiType:string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { caseTeamMembers: any };
   }>;
 }

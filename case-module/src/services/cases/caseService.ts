@@ -12,6 +12,7 @@ import {
   CurrencyType,
   FilingType,
   ICreateCases,
+  ICreateCaseTeam,
 } from "../../utils/types";
 import { logMessage } from "../../utils/helpers";
 import {
@@ -124,14 +125,7 @@ export class CaseService {
           response.rid,
           response.get("r_number") || ""
         );
-        await this.caseSchemaService.addCaseTimeline(
-          accountNumber,
-          "create",
-          caseRequest,
-          response.rid,
-          userId,
-          transaction
-        );
+       
       }
 
       await transaction.commit();
@@ -204,14 +198,7 @@ export class CaseService {
         caseRequest,
         transaction
       );
-      await this.caseSchemaService.addCaseTimeline(
-        accountNumber,
-        "create",
-        caseRequest,
-        caseRequest.case_rid!,
-        userId,
-        transaction
-      );
+  
 
       await transaction.commit();
 
@@ -1078,4 +1065,213 @@ export class CaseService {
 
     return results.map((row: any) => row.project_fiscal_rid);
   }
+   /**
+   * Creates a new case along with its associated data within a database transaction.
+   *
+   * @param {ICreateCases} caseRequest - The case data to create, including account information, case details, and metadata.
+   * @param {string} userId - The ID of the user creating the case.
+   *
+   * @returns {Promise<{
+   *   statusCode: number;
+   *   message: string;
+   *   errorMessage?: string;
+   *   data?: { cases: any };
+   * }>} - Result of the creation process, including status code, message, optional error message, and case data if successful.
+   *
+   * @description
+   * - Initializes database transaction for atomic operations.
+   * - Sets the created_by field to the provided userId.
+   * - Validates account information and retrieves account details.
+   * - Sets default case status to 'IN PROGRESS' for new cases.
+   * - Creates the case record in the database.
+   * - Adds case summary information for reporting purposes.
+   * - Commits transaction on success or rolls back on error.
+   * - Returns success response with case data or error response accordingly.
+   * - Catches and logs errors, returning a failed status with an error message.
+   */
+
+  /**
+   * Creates and manages case team members with comprehensive CRUD operations and timeline logging.
+   *
+   * @param {ICreateCaseTeam} caseRequest - The case team data containing team member information, roles, effective dates, and action types.
+   * @param {string} userId - The ID of the user performing the case team operations.
+   *
+   * @returns {Promise<{
+   *   statusCode: number;
+   *   message: string;
+   *   errorMessage?: string;
+   *   data?: any;
+   * }>} - Result of the team management operations, including status code, message, optional error message, and validation results.
+   *
+   * @description
+   * - Supports batch operations for adding, editing, and deleting team members.
+   * - Validates account information and retrieves account details for multi-tenant support.
+   * - Performs date range overlap validation to prevent conflicting team member assignments.
+   * - Processes operations in ordered sequence: delete → edit → add for data consistency.
+   * - Automatically logs all operations to case timeline with detailed descriptions including user and role names.
+   * - Returns comprehensive validation results and operation summaries.
+   * - Handles errors gracefully with detailed logging and standardized error responses.
+   * - Essential for case team composition management and assignment tracking.
+   */
+  async createCaseTeam(
+    caseRequest: ICreateCaseTeam,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?:any
+  }> {
+    try {
+      caseRequest.created_by = userId;
+      const { accountNumber, parentAccountId } =
+        await this.caseSchemaService.fetchValidAccountNumberById(
+          caseRequest.account_rid
+        );
+
+      if (!accountNumber) {
+        throw new Error("Invalid account ID");
+      }
+
+      const response = await this.caseSchemaService.createCaseTeam(
+        accountNumber,
+        caseRequest,
+        userId
+      );
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: STATUS_MESSAGE.caseTeamCreated,
+        data: response.validationErrors
+      };
+    } catch (err) {
+      logMessage(`Error creating case, ${err}`);
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: STATUS_MESSAGE.caseTeamCreationFailed,
+      };
+    }
+  }
+
+  /**
+   * Retrieves all available case team roles from the database.
+   *
+   * @returns {Promise<{
+   *   statusCode: number;
+   *   message: string;
+   *   errorMessage?: string;
+   *   data?: { caseTeamRoles: any };
+   * }>} - Result containing all case team roles or error information.
+   *
+   * @description
+   * - Fetches all case team roles from the database through the schema service.
+   * - Returns success response with role data on successful retrieval.
+   * - Catches and logs errors, throwing a standardized service error.
+   * - Used for populating role dropdown options during team member assignment.
+   * - Essential for role-based team management and assignment workflows.
+   * - Supports roles like Lead Consultant, Tech Consultant, Reviewer, etc.
+   */
+  async getCaseTeamRoles(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { caseRoles: any };
+  }> {
+    try {
+      const caseRoles = await this.caseSchemaService.getCaseTeamRoles();
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          caseRoles,
+        },
+      };
+    } catch (err) {
+      logMessage(`Error fetching case roles, ${err}`);
+      throw this.throwServiceError(err as Error);
+    }
+  }
+
+      /**
+   * Retrieves all available case statuses from the database.
+   *
+   * @returns {Promise<{
+   *   statusCode: number;
+   *   message: string;
+   *   errorMessage?: string;
+   *   data?: { caseStatus: any };
+   * }>} - Result containing all case statuses or error information.
+   *
+   * @description
+   * - Fetches all case statuses from the database through the schema service.
+   * - Returns success response with status data on successful retrieval.
+   * - Catches and logs errors, throwing a standardized service error.
+   * - Used for populating status dropdown options or validation in the frontend.
+  }
+
+  /**
+   * Lists case team members for a specific case with advanced filtering, sorting, and pagination support.
+   *
+   * @param {any} data - Request data containing account_rid, case_rid, pagination parameters, and sorting options.
+   * @param {Record<string, any>} filters - Filter criteria for team member search (user name, role, effective dates, etc.).
+   * @param {string} userId - The ID of the user requesting the team member list for authorization.
+   * @param {string} apiType - The type of API call ('list' for pagination, 'download' for export).
+   *
+   * @returns {Promise<{
+   *   statusCode: number;
+   *   message: string;
+   *   errorMessage?: string;
+   *   data?: { caseTeamMembers: any };
+   * }>} - Result containing paginated team member data or error information.
+   *
+   * @description
+   * - Validates account information and retrieves account details for multi-tenant support.
+   * - Supports comprehensive filtering by user name, role, effective date ranges, and team member status.
+   * - Provides pagination with configurable page size and offset for large team datasets.
+   * - Includes sorting capabilities by various team member attributes.
+   * - Returns detailed team member information including user names, role descriptions, and effective date ranges.
+   * - Handles both list and export operations based on apiType parameter.
+   * - Essential for team management interfaces, assignment tracking, and team composition reports.
+   * - Catches and logs errors with standardized service error handling.
+   */
+  async listCaseTeamMembers(data: any, filters: Record<string, any>,userId:string,apiType:string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { caseTeamMembers: any };
+  }> {
+    try {
+      const { accountNumber } =
+        await this.caseSchemaService.fetchValidAccountNumberById(
+          data.account_rid
+        );
+
+      if (!accountNumber) {
+        logMessage(`Invalid account ID ${data.account_rid}`);
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: "Invalid account ID",
+        };
+      }
+      const caseTeamMembers = await this.caseSchemaService.listCaseTeamMembers(
+        accountNumber,data,userId,apiType);
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          caseTeamMembers,
+        },
+      };
+    } catch (err) {
+      logMessage(`Error fetching case roles, ${err}`);
+      throw this.throwServiceError(err as Error);
+    }
+  }
 }
+
+
+
