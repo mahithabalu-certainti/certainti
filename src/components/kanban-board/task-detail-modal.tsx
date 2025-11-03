@@ -1759,12 +1759,6 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                       ×
                     </button>
                   </div>
-
-                  {/* Tooltip on hover */}
-                  <div className='absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out pointer-events-none whitespace-nowrap z-50'>
-                    {collab.name}
-                    <div className='absolute top-full left-1/2 transform -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900'></div>
-                  </div>
                 </div>
               ))}
             </div>
