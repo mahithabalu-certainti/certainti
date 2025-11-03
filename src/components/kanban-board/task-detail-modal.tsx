@@ -27,8 +27,6 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   const [activeTab, setActiveTab] = useState<'comments' | 'activity'>(
     'comments'
   );
-  const [showCollaboratorModal, setShowCollaboratorModal] = useState(false);
-  const [showAssigneeModal, setShowAssigneeModal] = useState(false);
 
   useEffect(() => {
     setEditedTask(task);
@@ -47,7 +45,14 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   };
 
   const handleMarkComplete = () => {
-    onTaskUpdate(task.id, { status: 'Done' });
+    setEditedTask((prev) =>
+      prev
+        ? { ...prev, status: 'Done' as 'Done' | 'In Progress' | 'To Do' }
+        : null
+    );
+    if (editedTask) {
+      onTaskUpdate(task.id, { ...editedTask, status: 'Done' });
+    }
   };
 
   const handleDescriptionChange = (
@@ -79,11 +84,6 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
         ? { ...prev, priority: event.target.value as 'Low' | 'Medium' | 'High' }
         : null
     );
-  };
-
-  const handleTagsChange = (event: SelectChangeEvent<string>) => {
-    const selected = event.target.value ? [event.target.value] : [];
-    setEditedTask((prev) => (prev ? { ...prev, tags: selected } : null));
   };
 
   const handleStartDateChange = (date: string) => {
@@ -158,12 +158,51 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     }
   };
 
-  const handleAddCollaborator = (user: {
+  const handleRemoveAttachment = (indexToRemove: number) => {
+    setEditedTask((prev) =>
+      prev
+        ? {
+            ...prev,
+            attachments:
+              prev.attachments?.filter((_, index) => index !== indexToRemove) ||
+              [],
+          }
+        : null
+    );
+  };
+
+  const handleRemoveCommentAttachment = (indexToRemove: number) => {
+    setEditedTask((prev) =>
+      prev
+        ? {
+            ...prev,
+            commentAttachments:
+              prev.commentAttachments?.filter(
+                (_, index) => index !== indexToRemove
+              ) || [],
+          }
+        : null
+    );
+  };
+
+  const handleToggleCollaborator = (user: {
     name: string;
     initials: string;
     color: string;
   }) => {
-    if (!selectedCollaborators.find((c) => c.name === user.name)) {
+    const isAlreadySelected = selectedCollaborators.find(
+      (c) => c.name === user.name
+    );
+
+    if (isAlreadySelected) {
+      // Remove collaborator if already selected
+      const updated = selectedCollaborators.filter((c) => c.name !== user.name);
+      setSelectedCollaborators(updated);
+      setEditedTask((prev) =>
+        prev ? { ...prev, collaborators: updated } : null
+      );
+    } else {
+      // Add collaborator if not selected
       setSelectedCollaborators([...selectedCollaborators, user]);
       setEditedTask((prev) =>
         prev
@@ -173,21 +212,12 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     }
   };
 
-  const handleRemoveCollaborator = (userName: string) => {
-    const updated = selectedCollaborators.filter((c) => c.name !== userName);
-    setSelectedCollaborators(updated);
-    setEditedTask((prev) =>
-      prev ? { ...prev, collaborators: updated } : null
-    );
-  };
-
   const handleAssigneeChange = (user: {
     name: string;
     initials: string;
     color: string;
   }) => {
     setEditedTask((prev) => (prev ? { ...prev, assignee: user } : null));
-    setShowAssigneeModal(false);
   };
 
   const getMinEndDate = () => {
@@ -210,10 +240,10 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
         className={`fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl transform transition-transform duration-300 ease-in-out z-50 overflow-y-auto ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
-        style={{ top: '38.8px' }}
+        style={{ top: '9.8px' }}
       >
         {/* Header */}
-        <div className='sticky top-0 flex items-center justify-between p-4 border-b border-gray-200 bg-white'>
+        <div className='sticky top-0 flex items-center justify-between p-4 border-b border-gray-200 bg-white z-50 shadow-sm'>
           <button
             onClick={handleMarkComplete}
             className='flex items-center gap-2 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 rounded text-sm font-medium transition-colors text-white'
@@ -261,51 +291,176 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
           </div>
 
           {/* Assignee */}
-          <div className='flex items-center justify-between relative'>
+          <div className='flex items-center justify-between'>
             <span className='text-sm font-medium text-gray-600'>Assignee</span>
-            <div className='flex items-center gap-2'>
-              <div
-                className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold text-white cursor-pointer'
-                style={{ backgroundColor: task.assignee.color }}
-                onClick={() => setShowAssigneeModal(!showAssigneeModal)}
+            <div className='w-[200px]'>
+              <Select
+                name='assignee'
+                className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
+                onChange={(event: SelectChangeEvent<string>) => {
+                  const selectedUser = availableUsers.find(
+                    (user) => user.id === event.target.value
+                  );
+                  if (selectedUser) {
+                    handleAssigneeChange(selectedUser);
+                  }
+                }}
+                value={
+                  editedTask?.assignee
+                    ? availableUsers.find(
+                        (u) => u.name === editedTask.assignee.name
+                      )?.id || ''
+                    : ''
+                }
+                displayEmpty
+                fullWidth
+                size='small'
+                MenuProps={{
+                  PaperProps: {
+                    sx: {
+                      maxWidth: 300,
+                      maxHeight: 300,
+                      marginTop: '4px',
+                      zIndex: 40, // Lower than modal header (z-50)
+                      boxShadow:
+                        'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
+                      '& .MuiMenuItem-root': {
+                        fontSize: '13px',
+                        padding: '6px 12px',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      },
+                    },
+                  },
+                }}
+                sx={{
+                  height: '32px',
+                  fontSize: '13px',
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    border: '2px solid #60A5FA',
+                  },
+                  '& .MuiOutlinedInput-root': {
+                    '&.Mui-focused': {
+                      boxShadow: 'none',
+                    },
+                  },
+                  '.MuiSelect-select': {
+                    padding: '6px 6px',
+                    color: !editedTask?.assignee ? '#7D98B6' : 'black',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    border: '1px solid #CBD6E2',
+                    borderRadius: '2px',
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    border: '1px solid #CBD6E2',
+                  },
+                  '& svg': {
+                    color: '#7D98B6',
+                  },
+                }}
+                renderValue={(value) => {
+                  if (!value) {
+                    return (
+                      <span
+                        style={{
+                          color: '#7D98B6',
+                          fontSize: '13px',
+                          fontWeight: '400',
+                        }}
+                      >
+                        Select User
+                      </span>
+                    );
+                  }
+                  const user = availableUsers.find((u) => u.id === value);
+                  if (user) {
+                    return (
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: '20px',
+                            height: '20px',
+                            borderRadius: '50%',
+                            backgroundColor: user.color,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '10px',
+                            fontWeight: '600',
+                            color: 'white',
+                          }}
+                        >
+                          {user.initials}
+                        </div>
+                        <span style={{ fontSize: '13px', color: 'black' }}>
+                          {user.name}
+                        </span>
+                      </div>
+                    );
+                  }
+                  return value;
+                }}
               >
-                {task.assignee.initials}
-              </div>
-              <span
-                className='text-sm text-gray-900 cursor-pointer hover:text-blue-600 transition-colors'
-                onClick={() => setShowAssigneeModal(!showAssigneeModal)}
-              >
-                {task.assignee.name}
-              </span>
-            </div>
-            {showAssigneeModal && (
-              <div className='absolute right-0 top-full mt-2 bg-white border border-gray-300 rounded-lg shadow-xl z-[60] w-64'>
-                <div className='p-3 border-b border-gray-200'>
-                  <h4 className='text-sm font-semibold text-gray-900'>
-                    Change Assignee
-                  </h4>
-                </div>
-                <div className='max-h-48 overflow-y-auto'>
-                  {availableUsers.map((user) => (
-                    <button
-                      key={user.id}
-                      onClick={() => handleAssigneeChange(user)}
-                      className='w-full flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors text-left border-b border-gray-200 last:border-b-0'
+                <MenuItem
+                  value=''
+                  sx={{
+                    color: '#425A76',
+                    fontSize: '13px',
+                    fontWeight: '500',
+                  }}
+                >
+                  Select User
+                </MenuItem>
+                {availableUsers.map((user) => (
+                  <MenuItem
+                    sx={{
+                      color: '#425A76',
+                      fontSize: '13px',
+                      fontWeight: '500',
+                    }}
+                    key={user.id}
+                    value={user.id}
+                    title={user.name}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                      }}
                     >
                       <div
-                        className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold text-white'
-                        style={{ backgroundColor: user.color }}
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          borderRadius: '50%',
+                          backgroundColor: user.color,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '10px',
+                          fontWeight: '600',
+                          color: 'white',
+                        }}
                       >
                         {user.initials}
                       </div>
-                      <div className='flex-1'>
-                        <p className='text-sm text-gray-900'>{user.name}</p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+                      {user.name}
+                    </div>
+                  </MenuItem>
+                ))}
+              </Select>
+            </div>
           </div>
 
           {/* Date Range */}
@@ -543,6 +698,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                           maxWidth: 300,
                           maxHeight: 300,
                           marginTop: '4px',
+                          zIndex: 40, // Lower than modal header (z-50)
                           boxShadow:
                             'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
                           '& .MuiMenuItem-root': {
@@ -648,6 +804,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                           maxWidth: 300,
                           maxHeight: 300,
                           marginTop: '4px',
+                          zIndex: 40, // Lower than modal header (z-50)
                           boxShadow:
                             'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
                           '& .MuiMenuItem-root': {
@@ -721,107 +878,158 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
               </div>
 
               {/* Tags Row */}
-              <div className='flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors'>
-                <div className='flex items-center gap-2'>
-                  <svg
-                    width='16'
-                    height='16'
-                    viewBox='0 0 24 24'
-                    fill='none'
-                    stroke='currentColor'
-                    strokeWidth='2'
-                    className='text-gray-500'
-                  >
-                    <path d='M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z'></path>
-                    <line x1='7' y1='7' x2='7.01' y2='7'></line>
-                  </svg>
-                  <span className='text-sm text-gray-700'>Tags</span>
-                </div>
-                <div className='w-[140px]'>
-                  <Select
-                    name='tags'
-                    className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
-                    onChange={handleTagsChange}
-                    value={editedTask?.tags?.[0] || ''}
-                    displayEmpty
-                    fullWidth
-                    size='small'
-                    MenuProps={{
-                      PaperProps: {
-                        sx: {
-                          maxWidth: 300,
-                          maxHeight: 300,
-                          marginTop: '4px',
-                          boxShadow:
-                            'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
-                          '& .MuiMenuItem-root': {
-                            fontSize: '13px',
-                            padding: '6px 12px',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
+              <div className='px-4 py-3 hover:bg-gray-50 transition-colors'>
+                <div className='flex items-center justify-between mb-3'>
+                  <div className='flex items-center gap-2'>
+                    <svg
+                      width='16'
+                      height='16'
+                      viewBox='0 0 24 24'
+                      fill='none'
+                      stroke='currentColor'
+                      strokeWidth='2'
+                      className='text-gray-500'
+                    >
+                      <path d='M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z'></path>
+                      <line x1='7' y1='7' x2='7.01' y2='7'></line>
+                    </svg>
+                    <span className='text-sm text-gray-700'>Tags</span>
+                  </div>
+                  <div className='w-[140px]'>
+                    <Select
+                      name='tags'
+                      className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
+                      onChange={(event: SelectChangeEvent<string>) => {
+                        const selectedTag = event.target.value as string;
+                        if (
+                          selectedTag &&
+                          !editedTask?.tags?.includes(selectedTag)
+                        ) {
+                          const newTags = [
+                            ...(editedTask?.tags || []),
+                            selectedTag,
+                          ];
+                          setEditedTask((prev) =>
+                            prev ? { ...prev, tags: newTags } : null
+                          );
+                        }
+                      }}
+                      value=''
+                      displayEmpty
+                      fullWidth
+                      size='small'
+                      MenuProps={{
+                        PaperProps: {
+                          sx: {
+                            maxWidth: 300,
+                            maxHeight: 300,
+                            marginTop: '4px',
+                            zIndex: 40,
+                            boxShadow:
+                              'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
+                            '& .MuiMenuItem-root': {
+                              fontSize: '13px',
+                              padding: '6px 12px',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                            },
                           },
                         },
-                      },
-                    }}
-                    sx={{
-                      height: '32px',
-                      fontSize: '13px',
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        border: '2px solid #60A5FA',
-                      },
-                      '& .MuiOutlinedInput-root': {
-                        '&.Mui-focused': {
-                          boxShadow: 'none',
-                        },
-                      },
-                      '.MuiSelect-select': {
-                        padding: '6px 6px',
-                        color: !editedTask?.tags?.[0] ? '#7D98B6' : 'black',
-                      },
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        border: '1px solid #CBD6E2',
-                        borderRadius: '2px',
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        border: '1px solid #CBD6E2',
-                      },
-                      '& svg': {
-                        color: '#7D98B6',
-                      },
-                    }}
-                  >
-                    <MenuItem
-                      value=''
-                      sx={{
-                        color: '#425A76',
-                        fontSize: '13px',
-                        fontWeight: '500',
                       }}
+                      sx={{
+                        height: '32px',
+                        fontSize: '13px',
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          border: '2px solid #60A5FA',
+                        },
+                        '& .MuiOutlinedInput-root': {
+                          '&.Mui-focused': {
+                            boxShadow: 'none',
+                          },
+                        },
+                        '.MuiSelect-select': {
+                          padding: '6px 6px',
+                          color: '#7D98B6',
+                        },
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          border: '1px solid #CBD6E2',
+                          borderRadius: '2px',
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          border: '1px solid #CBD6E2',
+                        },
+                        '& svg': {
+                          color: '#7D98B6',
+                        },
+                      }}
+                      renderValue={() => (
+                        <span style={{ color: '#7D98B6', fontSize: '13px' }}>
+                          Add Tags
+                        </span>
+                      )}
                     >
-                      Select Tags
-                    </MenuItem>
-                    {(
-                      tagData || [
-                        { id: '1', name: 'Bug', color: '#red' },
-                        { id: '2', name: 'Feature', color: '#blue' },
-                        { id: '3', name: 'Enhancement', color: '#green' },
-                      ]
-                    ).map((tag) => (
                       <MenuItem
+                        value=''
                         sx={{
                           color: '#425A76',
                           fontSize: '13px',
                           fontWeight: '500',
                         }}
-                        key={tag.id}
-                        value={tag.name}
-                        title={tag.name}
                       >
-                        {tag.name}
+                        Add Tags
                       </MenuItem>
-                    ))}
-                  </Select>
+                      {(
+                        tagData || [
+                          { id: '1', name: 'Bug', color: '#red' },
+                          { id: '2', name: 'Feature', color: '#blue' },
+                          { id: '3', name: 'Enhancement', color: '#green' },
+                        ]
+                      )
+                        .filter((tag) => !editedTask?.tags?.includes(tag.name))
+                        .map((tag) => (
+                          <MenuItem
+                            sx={{
+                              color: '#425A76',
+                              fontSize: '13px',
+                              fontWeight: '500',
+                            }}
+                            key={tag.id}
+                            value={tag.name}
+                            title={tag.name}
+                          >
+                            {tag.name}
+                          </MenuItem>
+                        ))}
+                    </Select>
+                  </div>
                 </div>
+
+                {/* Horizontal Tags Display */}
+                {editedTask?.tags && editedTask.tags.length > 0 && (
+                  <div className='flex flex-wrap items-center gap-2 mt-2'>
+                    {editedTask.tags.map((tag, index) => (
+                      <div
+                        key={index}
+                        className='inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium hover:bg-blue-200 transition-colors group'
+                      >
+                        <span>{tag}</span>
+                        <button
+                          onClick={() => {
+                            const newTags =
+                              editedTask.tags?.filter((t) => t !== tag) || [];
+                            setEditedTask((prev) =>
+                              prev ? { ...prev, tags: newTags } : null
+                            );
+                          }}
+                          className='ml-1 text-blue-600 hover:text-red-600 transition-colors'
+                          title={`Remove ${tag}`}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -868,12 +1076,19 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                     className='text-xs text-gray-600 bg-gray-50 p-2 rounded flex items-center gap-2'
                   >
                     <span>📎</span> {file}
+                    <button
+                      onClick={() => handleRemoveAttachment(idx)}
+                      className='ml-auto text-red-500 hover:text-red-700 transition-colors'
+                    >
+                      Remove
+                    </button>
                   </div>
                 ))}
               </div>
             )}
           </div>
 
+          {/* Comments and Activity Section */}
           <div className='border-t border-gray-200 pt-6'>
             <div className='flex gap-6 mb-4 border-b border-gray-200'>
               <button
@@ -972,6 +1187,14 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                               className='text-xs text-gray-600 bg-gray-50 p-2 rounded flex items-center gap-2'
                             >
                               <span>📎</span> {file}
+                              <button
+                                onClick={() =>
+                                  handleRemoveCommentAttachment(idx)
+                                }
+                                className='ml-auto text-red-500 hover:text-red-700 transition-colors'
+                              >
+                                Remove
+                              </button>
                             </div>
                           ))}
                         </div>
@@ -1015,37 +1238,192 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
             )}
           </div>
 
-          <div className='border-t border-gray-200 pt-6'>
+          {/* Collaborators Section - Moved after comments */}
+          <div className='border-t border-gray-200 pt-6 relative'>
             <div className='flex items-center justify-between mb-3'>
               <h3 className='text-sm font-semibold text-gray-700'>
                 Collaborators
               </h3>
-              <button
-                onClick={() => setShowCollaboratorModal(!showCollaboratorModal)}
-                className='text-lg text-gray-600 hover:text-gray-900 transition-colors'
-              >
-                +
-              </button>
+              <div className='w-[200px] relative'>
+                <Select
+                  name='collaborators'
+                  className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
+                  onChange={(event: SelectChangeEvent<string>) => {
+                    const selectedUser = availableUsers.find(
+                      (user) => user.id === event.target.value
+                    );
+                    if (selectedUser) {
+                      handleToggleCollaborator(selectedUser);
+                    }
+                  }}
+                  value=''
+                  displayEmpty
+                  fullWidth
+                  size='small'
+                  MenuProps={{
+                    PaperProps: {
+                      sx: {
+                        maxWidth: 300,
+                        maxHeight: 300,
+                        marginBottom: '4px', // Changed to marginBottom for upward positioning
+                        zIndex: 40,
+                        boxShadow:
+                          'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
+                        '& .MuiMenuItem-root': {
+                          fontSize: '13px',
+                          padding: '6px 12px',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        },
+                      },
+                      anchorOrigin: {
+                        vertical: 'top',
+                        horizontal: 'left',
+                      },
+                      transformOrigin: {
+                        vertical: 'bottom',
+                        horizontal: 'left',
+                      },
+                    },
+                  }}
+                  sx={{
+                    height: '32px',
+                    fontSize: '13px',
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      border: '2px solid #60A5FA',
+                    },
+                    '& .MuiOutlinedInput-root': {
+                      '&.Mui-focused': {
+                        boxShadow: 'none',
+                      },
+                    },
+                    '.MuiSelect-select': {
+                      padding: '6px 6px',
+                      color: '#7D98B6',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                    },
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      border: '1px solid #CBD6E2',
+                      borderRadius: '2px',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      border: '1px solid #CBD6E2',
+                    },
+                    '& svg': {
+                      color: '#7D98B6',
+                    },
+                  }}
+                  renderValue={() => (
+                    <span
+                      style={{
+                        color: '#7D98B6',
+                        fontSize: '13px',
+                        fontWeight: '400',
+                      }}
+                    >
+                      Add Collaborators
+                    </span>
+                  )}
+                >
+                  <MenuItem
+                    value=''
+                    sx={{
+                      color: '#425A76',
+                      fontSize: '13px',
+                      fontWeight: '500',
+                    }}
+                  >
+                    Add Collaborators
+                  </MenuItem>
+                  {availableUsers.map((user) => (
+                    <MenuItem
+                      sx={{
+                        color: '#425A76',
+                        fontSize: '13px',
+                        fontWeight: '500',
+                        backgroundColor: selectedCollaborators.find(
+                          (c) => c.name === user.name
+                        )
+                          ? '#EBF8FF'
+                          : 'inherit',
+                      }}
+                      key={user.id}
+                      value={user.id}
+                      title={user.name}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          width: '100%',
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: '20px',
+                            height: '20px',
+                            borderRadius: '50%',
+                            backgroundColor: user.color,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '10px',
+                            fontWeight: '600',
+                            color: 'white',
+                          }}
+                        >
+                          {user.initials}
+                        </div>
+                        <span style={{ flex: 1 }}>{user.name}</span>
+                        {selectedCollaborators.find(
+                          (c) => c.name === user.name
+                        ) ? (
+                          <span
+                            style={{
+                              fontSize: '11px',
+                              color: '#EF4444',
+                              fontWeight: '500',
+                            }}
+                          >
+                            Remove
+                          </span>
+                        ) : (
+                          <span
+                            style={{
+                              fontSize: '11px',
+                              color: '#10B981',
+                              fontWeight: '500',
+                            }}
+                          >
+                            Add
+                          </span>
+                        )}
+                      </div>
+                    </MenuItem>
+                  ))}
+                </Select>
+              </div>
             </div>
-            <div className='flex items-center flex-wrap' style={{ gap: '2px' }}>
-              {selectedCollaborators.map((collab, index) => (
+
+            {/* Overlapping Profile Indicators */}
+            <div className='flex items-center -space-x-2'>
+              {selectedCollaborators.map((collab) => (
                 <div
                   key={collab.name}
-                  className='relative group flex items-center'
+                  className='relative group transition-transform duration-200 hover:scale-110 hover:z-10 hover:translate-x-2'
                   title={collab.name}
-                  style={{
-                    marginRight:
-                      index < selectedCollaborators.length - 1 ? '2px' : '0',
-                  }}
                 >
                   <div
-                    className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold cursor-pointer text-white relative'
+                    className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold cursor-pointer text-white border-2 border-white shadow-md transition-all duration-200 group-hover:shadow-lg'
                     style={{ backgroundColor: collab.color }}
                   >
                     {collab.initials}
                     <button
-                      onClick={() => handleRemoveCollaborator(collab.name)}
-                      className='absolute -top-1 -right-1 w-4 h-4 bg-red-500 hover:bg-red-600 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity'
+                      onClick={() => handleToggleCollaborator(collab)}
+                      className='absolute -top-1 -right-1 w-4 h-4 bg-red-500 hover:bg-red-600 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 scale-0 group-hover:scale-100'
                       title={`Remove ${collab.name}`}
                     >
                       ×
@@ -1054,46 +1432,6 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                 </div>
               ))}
             </div>
-
-            {showCollaboratorModal && (
-              <div className='absolute right-6 bottom-auto mb-2 bg-white border border-gray-300 rounded-lg shadow-xl z-[60] w-64 transform -translate-y-full'>
-                <div className='p-3 border-b border-gray-200'>
-                  <h4 className='text-sm font-semibold text-gray-900'>
-                    Add Collaborators
-                  </h4>
-                </div>
-                <div className='max-h-48 overflow-y-auto'>
-                  {availableUsers.map((user) => (
-                    <button
-                      key={user.id}
-                      onClick={() => {
-                        handleAddCollaborator(user);
-                        setShowCollaboratorModal(false);
-                      }}
-                      disabled={
-                        !!selectedCollaborators.find(
-                          (c) => c.name === user.name
-                        )
-                      }
-                      className='w-full flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed border-b border-gray-200 last:border-b-0'
-                    >
-                      <div
-                        className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold text-white'
-                        style={{ backgroundColor: user.color }}
-                      >
-                        {user.initials}
-                      </div>
-                      <div className='flex-1'>
-                        <p className='text-sm text-gray-900'>{user.name}</p>
-                      </div>
-                      {selectedCollaborators.find(
-                        (c) => c.name === user.name
-                      ) && <span className='text-xs text-green-600'>✓</span>}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>
