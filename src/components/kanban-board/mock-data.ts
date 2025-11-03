@@ -17,7 +17,8 @@ export const mockKanbanData: KanbanColumn[] = [
       {
         id: 'task-1',
         title: 'Design homepage wireframes',
-        description: 'Create wireframes for the new homepage design including mobile responsive layouts',
+        description:
+          'Create wireframes for the new homepage design including mobile responsive layouts',
         status: 'To Do',
         priority: 'High',
         assignee: {
@@ -38,6 +39,18 @@ export const mockKanbanData: KanbanColumn[] = [
         attachments: ['wireframe-v1.pdf', 'design-specs.figma'],
         commentCount: 5,
         createdAt: new Date('2025-10-28'),
+        checklist: [
+          {
+            id: '1-1',
+            text: 'Research current design trends',
+            completed: true,
+          },
+          { id: '1-2', text: 'Create mobile wireframes', completed: false },
+          { id: '1-3', text: 'Design desktop layout', completed: false },
+          { id: '1-4', text: 'Review with stakeholders', completed: false },
+          { id: '1-5', text: 'Create interactive prototype', completed: false },
+          { id: '1-6', text: 'Test navigation flow', completed: false },
+        ],
         activities: [
           {
             id: 'task-1-activity-1',
@@ -63,7 +76,8 @@ export const mockKanbanData: KanbanColumn[] = [
       {
         id: 'task-2',
         title: 'Set up development environment',
-        description: 'Configure local development environment with all necessary tools and dependencies',
+        description:
+          'Configure local development environment with all necessary tools and dependencies',
         status: 'To Do',
         priority: 'Medium',
         assignee: {
@@ -74,6 +88,23 @@ export const mockKanbanData: KanbanColumn[] = [
         tags: ['Development', 'Setup'],
         commentCount: 2,
         createdAt: new Date('2025-10-30'),
+        checklist: [
+          { id: '2-1', text: 'Install Node.js and npm', completed: true },
+          {
+            id: '2-2',
+            text: 'Set up code editor with extensions',
+            completed: true,
+          },
+          { id: '2-3', text: 'Configure Git repository', completed: false },
+          { id: '2-4', text: 'Install project dependencies', completed: false },
+          { id: '2-5', text: 'Set up database connection', completed: false },
+          {
+            id: '2-6',
+            text: 'Configure environment variables',
+            completed: false,
+          },
+          { id: '2-7', text: 'Test development server', completed: false },
+        ],
         activities: [
           {
             id: 'task-2-activity-1',
@@ -101,6 +132,13 @@ export const mockKanbanData: KanbanColumn[] = [
         },
         commentCount: 1,
         createdAt: new Date('2025-11-01'),
+        checklist: [
+          // { id: '3-1', text: 'Identify top 5 competitors', completed: false },
+          // { id: '3-2', text: 'Analyze competitor features', completed: false },
+          // { id: '3-3', text: 'Document pricing strategies', completed: false },
+          // { id: '3-4', text: 'Review user feedback', completed: false },
+          // { id: '3-5', text: 'Create comparison matrix', completed: false },
+        ],
         activities: [
           {
             id: 'task-3-activity-1',
@@ -132,7 +170,8 @@ export const mockKanbanData: KanbanColumn[] = [
       {
         id: 'task-4',
         title: 'Implement user authentication',
-        description: 'Build secure user authentication system with JWT tokens and password encryption',
+        description:
+          'Build secure user authentication system with JWT tokens and password encryption',
         status: 'In Progress',
         priority: 'High',
         assignee: {
@@ -158,6 +197,28 @@ export const mockKanbanData: KanbanColumn[] = [
         attachments: ['auth-flow.png'],
         commentCount: 8,
         createdAt: new Date('2025-10-25'),
+        checklist: [
+          {
+            id: '4-1',
+            text: 'Review technical specifications',
+            completed: true,
+          },
+          { id: '4-2', text: 'Set up JWT token generation', completed: true },
+          { id: '4-3', text: 'Implement password encryption', completed: true },
+          { id: '4-4', text: 'Create login API endpoint', completed: false },
+          {
+            id: '4-5',
+            text: 'Add token validation middleware',
+            completed: false,
+          },
+          { id: '4-6', text: 'Test authentication flow', completed: false },
+          {
+            id: '4-7',
+            text: 'Add password reset functionality',
+            completed: false,
+          },
+          { id: '4-8', text: 'Implement session management', completed: false },
+        ],
         activities: [
           {
             id: 'task-4-activity-1',
@@ -199,6 +260,14 @@ export const mockKanbanData: KanbanColumn[] = [
         tags: ['Frontend', 'Marketing'],
         commentCount: 3,
         createdAt: new Date('2025-10-28'),
+        checklist: [
+          { id: '5-1', text: 'Design landing page layout', completed: true },
+          { id: '5-2', text: 'Create hero section', completed: true },
+          { id: '5-3', text: 'Add product features section', completed: false },
+          { id: '5-4', text: 'Implement contact form', completed: false },
+          { id: '5-5', text: 'Add testimonials section', completed: false },
+          { id: '5-6', text: 'Optimize for mobile devices', completed: false },
+        ],
         activities: [
           {
             id: 'task-5-activity-1',
@@ -230,7 +299,8 @@ export const mockKanbanData: KanbanColumn[] = [
       {
         id: 'task-6',
         title: 'Database schema design',
-        description: 'Design and implement the database schema for user management and content storage',
+        description:
+          'Design and implement the database schema for user management and content storage',
         status: 'Done',
         priority: 'High',
         assignee: {
@@ -244,6 +314,19 @@ export const mockKanbanData: KanbanColumn[] = [
         attachments: ['schema.sql', 'er-diagram.png'],
         commentCount: 12,
         createdAt: new Date('2025-10-15'),
+        checklist: [
+          { id: '6-1', text: 'Analyze data requirements', completed: true },
+          { id: '6-2', text: 'Design user tables', completed: true },
+          { id: '6-3', text: 'Create content storage schema', completed: true },
+          { id: '6-4', text: 'Add indexes for performance', completed: true },
+          {
+            id: '6-5',
+            text: 'Set up foreign key constraints',
+            completed: true,
+          },
+          { id: '6-6', text: 'Test database migrations', completed: true },
+          { id: '6-7', text: 'Generate ER diagram', completed: true },
+        ],
         activities: [
           {
             id: 'task-6-activity-1',
@@ -283,6 +366,26 @@ export const mockKanbanData: KanbanColumn[] = [
         tags: ['Planning'],
         commentCount: 6,
         createdAt: new Date('2025-10-10'),
+        checklist: [
+          {
+            id: '7-1',
+            text: 'Conduct stakeholder interviews',
+            completed: true,
+          },
+          {
+            id: '7-2',
+            text: 'Document functional requirements',
+            completed: true,
+          },
+          {
+            id: '7-3',
+            text: 'Define technical specifications',
+            completed: true,
+          },
+          { id: '7-4', text: 'Create user stories', completed: true },
+          { id: '7-5', text: 'Set project timeline', completed: true },
+          { id: '7-6', text: 'Get stakeholder approval', completed: true },
+        ],
         activities: [
           {
             id: 'task-7-activity-1',

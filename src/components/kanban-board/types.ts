@@ -22,6 +22,13 @@ export interface Task {
   commentCount: number;
   createdAt: Date;
   activities?: Activity[];
+  checklist?: ChecklistItem[];
+}
+
+export interface ChecklistItem {
+  id: string;
+  text: string;
+  completed: boolean;
 }
 
 export interface StatusOption {

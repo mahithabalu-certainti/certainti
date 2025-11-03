@@ -28,10 +28,24 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     'comments'
   );
 
+  // TC Checklist state
+  const [tcChecklistItems, setTcChecklistItems] = useState<
+    Array<{ id: string; text: string; completed: boolean }>
+  >([]);
+  const [hideCheckedItems, setHideCheckedItems] = useState(false);
+  const [newItemText, setNewItemText] = useState('');
+  const [isAddingItem, setIsAddingItem] = useState(false);
+
   useEffect(() => {
     setEditedTask(task);
     if (task?.collaborators) {
       setSelectedCollaborators(task.collaborators);
+    }
+    // Initialize checklist from task data
+    if (task?.checklist) {
+      setTcChecklistItems(task.checklist);
+    } else {
+      setTcChecklistItems([]);
     }
     // Debug: Log activities to see what's being passed
     console.log('Task activities:', task?.activities);
@@ -246,6 +260,62 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   const formatDateForInput = (date: Date | undefined) => {
     if (!date) return null;
     return date instanceof Date ? dayjs(date) : dayjs(date);
+  };
+
+  // TC Checklist helper functions
+  const handleTcChecklistToggle = (itemId: string) => {
+    const updatedItems = tcChecklistItems.map((item) =>
+      item.id === itemId ? { ...item, completed: !item.completed } : item
+    );
+    setTcChecklistItems(updatedItems);
+
+    // Update the task with the new checklist
+    if (editedTask) {
+      const updatedTask = { ...editedTask, checklist: updatedItems };
+      setEditedTask(updatedTask);
+      onTaskUpdate(task.id, { checklist: updatedItems });
+    }
+  };
+
+  const getCompletionPercentage = () => {
+    const completedItems = tcChecklistItems.filter(
+      (item) => item.completed
+    ).length;
+    const totalItems = tcChecklistItems.length;
+    return totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+  };
+
+  const getFilteredChecklistItems = () => {
+    return hideCheckedItems
+      ? tcChecklistItems.filter((item) => !item.completed)
+      : tcChecklistItems;
+  };
+
+  const handleAddNewItem = () => {
+    if (newItemText.trim()) {
+      const newItem = {
+        id: `${task.id}-${Date.now()}`,
+        text: newItemText.trim(),
+        completed: false,
+      };
+      const updatedItems = [newItem, ...tcChecklistItems];
+      setTcChecklistItems(updatedItems);
+
+      // Update the task with the new checklist
+      if (editedTask) {
+        const updatedTask = { ...editedTask, checklist: updatedItems };
+        setEditedTask(updatedTask);
+        onTaskUpdate(task.id, { checklist: updatedItems });
+      }
+
+      setNewItemText('');
+      setIsAddingItem(false);
+    }
+  };
+
+  const handleCancelAddItem = () => {
+    setNewItemText('');
+    setIsAddingItem(false);
   };
 
   return (
@@ -1044,6 +1114,258 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                 )}
               </div>
             </div>
+          </div>
+
+          {/* TC Checklist Section */}
+          <div>
+            <div className='flex items-center justify-between mb-3'>
+              <h3 className='text-sm font-semibold text-gray-700'>
+                TC Checklist
+              </h3>
+              <div className='flex items-center gap-2'>
+                <button
+                  onClick={() => setIsAddingItem(true)}
+                  style={{
+                    height: '24px !important',
+                    color: '#425A76',
+                    border: '1px solid #CBD6E2',
+                    boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
+                    background:
+                      'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
+                    textTransform: 'none',
+                    fontSize: '13px',
+                    fontWeight: 400,
+                    padding: '0px 8px',
+                    borderRadius: '2px',
+                    cursor: 'pointer',
+                  }}
+                  className='transition-colors hover:text-[#425A76]'
+                >
+                  Add Item
+                </button>
+                <button
+                  onClick={() => setHideCheckedItems(!hideCheckedItems)}
+                  style={{
+                    height: '24px !important',
+                    color: '#425A76',
+                    border: '1px solid #CBD6E2',
+                    boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
+                    background:
+                      'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
+                    textTransform: 'none',
+                    fontSize: '13px',
+                    fontWeight: 400,
+                    padding: '0px 8px',
+                    borderRadius: '2px',
+                    cursor: 'pointer',
+                  }}
+                  className='transition-colors hover:text-[#425A76]'
+                >
+                  {hideCheckedItems
+                    ? 'Show Checked Items'
+                    : 'Hide Checked Items'}
+                </button>
+              </div>
+            </div>
+
+            {/* Progress Bar - Only show when there are checklist items */}
+            {tcChecklistItems.length > 0 && (
+              <div className='mb-4'>
+                <div className='flex items-center justify-between text-xs text-gray-600 mb-1'>
+                  <span>Progress</span>
+                  <span>{getCompletionPercentage()}% Complete</span>
+                </div>
+                <div className='w-full bg-gray-200 rounded-full h-2'>
+                  <div
+                    className='bg-emerald-500 h-2 rounded-full transition-all duration-300 ease-in-out'
+                    style={{ width: `${getCompletionPercentage()}%` }}
+                  ></div>
+                </div>
+                <div className='text-xs text-gray-500 mt-1'>
+                  {tcChecklistItems.filter((item) => item.completed).length} of{' '}
+                  {tcChecklistItems.length} items completed
+                </div>
+              </div>
+            )}
+
+            {/* Checklist Items or Create Message */}
+            {tcChecklistItems.length > 0 || isAddingItem ? (
+              <div className='border border-gray-200 rounded-lg'>
+                <div
+                  className={`space-y-0 ${
+                    getFilteredChecklistItems().length > 6 || isAddingItem
+                      ? 'max-h-64 overflow-y-auto'
+                      : ''
+                  }`}
+                >
+                  {/* Add Item Input - Inside checklist box */}
+                  {isAddingItem && (
+                    <div className='flex items-center gap-3 px-4 py-3 border-b border-gray-200'>
+                      <div className='w-4 h-4 flex items-center justify-center'>
+                        <svg
+                          className='w-3 h-3 text-blue-500'
+                          fill='currentColor'
+                          viewBox='0 0 20 20'
+                        >
+                          <path
+                            fillRule='evenodd'
+                            d='M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z'
+                            clipRule='evenodd'
+                          />
+                        </svg>
+                      </div>
+                      <input
+                        type='text'
+                        value={newItemText}
+                        onChange={(e) => setNewItemText(e.target.value)}
+                        placeholder='Enter new checklist item'
+                        className='flex-1 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:border-blue-500'
+                        autoFocus
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            handleAddNewItem();
+                          } else if (e.key === 'Escape') {
+                            handleCancelAddItem();
+                          }
+                        }}
+                        style={{
+                          fontSize: '13px',
+                          height: '28px',
+                        }}
+                        onFocus={(e) => {
+                          e.target.style.border = '2px solid #60A5FA';
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.border = '1px solid #CBD5E1';
+                        }}
+                      />
+                      <div className='flex gap-1'>
+                        <button
+                          onClick={handleAddNewItem}
+                          disabled={!newItemText.trim()}
+                          style={{
+                            height: '24px !important',
+                            color: !newItemText.trim() ? '#9CA3AF' : '#425A76',
+                            border: '1px solid #CBD6E2',
+                            boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
+                            background: !newItemText.trim()
+                              ? '#F3F4F6'
+                              : 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
+                            textTransform: 'none',
+                            fontSize: '13px',
+                            fontWeight: 400,
+                            padding: '0px 6px',
+                            borderRadius: '2px',
+                            cursor: !newItemText.trim()
+                              ? 'not-allowed'
+                              : 'pointer',
+                          }}
+                          className='transition-colors'
+                        >
+                          Add
+                        </button>
+                        <button
+                          onClick={handleCancelAddItem}
+                          style={{
+                            height: '24px !important',
+                            color: '#425A76',
+                            border: '1px solid #CBD6E2',
+                            boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
+                            background:
+                              'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
+                            textTransform: 'none',
+                            fontSize: '13px',
+                            fontWeight: 400,
+                            padding: '0px 6px',
+                            borderRadius: '2px',
+                            cursor: 'pointer',
+                          }}
+                          className='transition-colors hover:text-[#425A76]'
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {getFilteredChecklistItems().map((item, index) => (
+                    <div
+                      key={item.id}
+                      className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${
+                        index !== getFilteredChecklistItems().length - 1 ||
+                        isAddingItem
+                          ? 'border-b border-gray-200'
+                          : ''
+                      }`}
+                    >
+                      <input
+                        type='checkbox'
+                        checked={item.completed}
+                        onChange={() => handleTcChecklistToggle(item.id)}
+                        className='w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 focus:ring-2 cursor-pointer'
+                      />
+                      <span
+                        className={`flex-1 text-sm transition-all duration-200 cursor-pointer ${
+                          item.completed
+                            ? 'line-through text-gray-500'
+                            : 'text-gray-700'
+                        }`}
+                        style={{ fontSize: '13px' }}
+                        onClick={() => handleTcChecklistToggle(item.id)}
+                      >
+                        {item.text}
+                      </span>
+                      {item.completed && (
+                        <svg
+                          className='w-4 h-4 text-emerald-500'
+                          fill='currentColor'
+                          viewBox='0 0 20 20'
+                        >
+                          <path
+                            fillRule='evenodd'
+                            d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z'
+                            clipRule='evenodd'
+                          />
+                        </svg>
+                      )}
+                    </div>
+                  ))}
+
+                  {getFilteredChecklistItems().length === 0 &&
+                    hideCheckedItems &&
+                    !isAddingItem && (
+                      <div className='px-4 py-6 text-center text-gray-500 text-sm'>
+                        All items are completed! 🎉
+                      </div>
+                    )}
+                </div>
+              </div>
+            ) : (
+              /* Create Checklist Message */
+              <div className='border border-gray-200 rounded-lg px-4 py-8 text-center'>
+                <div className='flex flex-col items-center gap-2'>
+                  <svg
+                    className='w-8 h-8 text-gray-400'
+                    fill='none'
+                    stroke='currentColor'
+                    viewBox='0 0 24 24'
+                  >
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4'
+                    />
+                  </svg>
+                  <h4 className='text-sm font-medium text-gray-700'>
+                    Create checklist
+                  </h4>
+                  <p className='text-xs text-gray-500'>
+                    Add checklist items to track progress.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           <div>
