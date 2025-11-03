@@ -905,25 +905,22 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                     <Select
                       name='tags'
                       className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
-                      onChange={(event: SelectChangeEvent<string>) => {
-                        const selectedTag = event.target.value as string;
-                        if (
-                          selectedTag &&
-                          !editedTask?.tags?.includes(selectedTag)
-                        ) {
-                          const newTags = [
-                            ...(editedTask?.tags || []),
-                            selectedTag,
-                          ];
-                          setEditedTask((prev) =>
-                            prev ? { ...prev, tags: newTags } : null
-                          );
-                        }
+                      onChange={(event: SelectChangeEvent<string[]>) => {
+                        const selectedTags = event.target.value as string[];
+                        setEditedTask((prev) =>
+                          prev ? { ...prev, tags: selectedTags } : null
+                        );
                       }}
-                      value=''
+                      value={editedTask?.tags || []}
                       displayEmpty
                       fullWidth
                       size='small'
+                      multiple
+                      renderValue={() => (
+                        <span style={{ color: '#7D98B6', fontSize: '13px' }}>
+                          Add Tags
+                        </span>
+                      )}
                       MenuProps={{
                         PaperProps: {
                           sx: {
@@ -956,6 +953,10 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                         '.MuiSelect-select': {
                           padding: '6px 6px',
                           color: '#7D98B6',
+                          display: 'flex',
+                          alignItems: 'center',
+                          minHeight: '20px',
+                          overflow: 'hidden',
                         },
                         '& .MuiOutlinedInput-notchedOutline': {
                           border: '1px solid #CBD6E2',
@@ -968,44 +969,49 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                           color: '#7D98B6',
                         },
                       }}
-                      renderValue={() => (
-                        <span style={{ color: '#7D98B6', fontSize: '13px' }}>
-                          Add Tags
-                        </span>
-                      )}
                     >
-                      <MenuItem
-                        value=''
-                        sx={{
-                          color: '#425A76',
-                          fontSize: '13px',
-                          fontWeight: '500',
-                        }}
-                      >
-                        Add Tags
-                      </MenuItem>
                       {(
                         tagData || [
                           { id: '1', name: 'Bug', color: '#red' },
                           { id: '2', name: 'Feature', color: '#blue' },
                           { id: '3', name: 'Enhancement', color: '#green' },
                         ]
-                      )
-                        .filter((tag) => !editedTask?.tags?.includes(tag.name))
-                        .map((tag) => (
-                          <MenuItem
-                            sx={{
-                              color: '#425A76',
-                              fontSize: '13px',
-                              fontWeight: '500',
+                      ).map((tag) => (
+                        <MenuItem
+                          sx={{
+                            color: '#425A76',
+                            fontSize: '13px',
+                            fontWeight: '500',
+                            backgroundColor: editedTask?.tags?.includes(
+                              tag.name
+                            )
+                              ? '#EBF8FF'
+                              : 'inherit',
+                          }}
+                          key={tag.id}
+                          value={tag.name}
+                          title={tag.name}
+                        >
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              width: '100%',
                             }}
-                            key={tag.id}
-                            value={tag.name}
-                            title={tag.name}
                           >
-                            {tag.name}
-                          </MenuItem>
-                        ))}
+                            <input
+                              type='checkbox'
+                              checked={
+                                editedTask?.tags?.includes(tag.name) || false
+                              }
+                              onChange={() => {}}
+                              style={{ margin: 0, pointerEvents: 'none' }}
+                            />
+                            <span style={{ flex: 1 }}>{tag.name}</span>
+                          </div>
+                        </MenuItem>
+                      ))}
                     </Select>
                   </div>
                 </div>
@@ -1230,18 +1236,39 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                 <Select
                   name='collaborators'
                   className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
-                  onChange={(event: SelectChangeEvent<string>) => {
-                    const selectedUser = availableUsers.find(
-                      (user) => user.id === event.target.value
+                  onChange={(event: SelectChangeEvent<string[]>) => {
+                    const selectedUserIds = event.target.value as string[];
+                    const selectedUsers = availableUsers.filter((user) =>
+                      selectedUserIds.includes(user.id)
                     );
-                    if (selectedUser) {
-                      handleToggleCollaborator(selectedUser);
-                    }
+                    setSelectedCollaborators(selectedUsers);
+                    setEditedTask((prev) =>
+                      prev ? { ...prev, collaborators: selectedUsers } : null
+                    );
                   }}
-                  value=''
+                  value={selectedCollaborators
+                    .map((collab) => {
+                      const user = availableUsers.find(
+                        (u) => u.name === collab.name
+                      );
+                      return user?.id || '';
+                    })
+                    .filter((id) => id !== '')}
                   displayEmpty
                   fullWidth
                   size='small'
+                  multiple
+                  renderValue={() => (
+                    <span
+                      style={{
+                        color: '#7D98B6',
+                        fontSize: '13px',
+                        fontWeight: '400',
+                      }}
+                    >
+                      Add Collaborators
+                    </span>
+                  )}
                   MenuProps={{
                     anchorOrigin: {
                       vertical: 'top',
@@ -1292,6 +1319,8 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px',
+                      minHeight: '20px',
+                      overflow: 'hidden',
                     },
                     '& .MuiOutlinedInput-notchedOutline': {
                       border: '1px solid #CBD6E2',
@@ -1304,28 +1333,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                       color: '#7D98B6',
                     },
                   }}
-                  renderValue={() => (
-                    <span
-                      style={{
-                        color: '#7D98B6',
-                        fontSize: '13px',
-                        fontWeight: '400',
-                      }}
-                    >
-                      Add Collaborators
-                    </span>
-                  )}
                 >
-                  <MenuItem
-                    value=''
-                    sx={{
-                      color: '#425A76',
-                      fontSize: '13px',
-                      fontWeight: '500',
-                    }}
-                  >
-                    Add Collaborators
-                  </MenuItem>
                   {availableUsers.map((user) => (
                     <MenuItem
                       sx={{
@@ -1350,6 +1358,16 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                           width: '100%',
                         }}
                       >
+                        <input
+                          type='checkbox'
+                          checked={
+                            selectedCollaborators.find(
+                              (c) => c.name === user.name
+                            ) !== undefined
+                          }
+                          onChange={() => {}}
+                          style={{ margin: 0, pointerEvents: 'none' }}
+                        />
                         <div
                           style={{
                             width: '20px',
@@ -1367,29 +1385,6 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                           {user.initials}
                         </div>
                         <span style={{ flex: 1 }}>{user.name}</span>
-                        {selectedCollaborators.find(
-                          (c) => c.name === user.name
-                        ) ? (
-                          <span
-                            style={{
-                              fontSize: '11px',
-                              color: '#EF4444',
-                              fontWeight: '500',
-                            }}
-                          >
-                            Remove
-                          </span>
-                        ) : (
-                          <span
-                            style={{
-                              fontSize: '11px',
-                              color: '#10B981',
-                              fontWeight: '500',
-                            }}
-                          >
-                            Add
-                          </span>
-                        )}
                       </div>
                     </MenuItem>
                   ))}
@@ -1406,17 +1401,26 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                   title={collab.name}
                 >
                   <div
-                    className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold cursor-pointer text-white border-2 border-white shadow-md transition-all duration-200 group-hover:shadow-lg'
+                    className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold cursor-pointer text-white border-2 border-white shadow-md transition-all duration-300 ease-in-out group-hover:shadow-xl group-hover:border-blue-200'
                     style={{ backgroundColor: collab.color }}
                   >
                     {collab.initials}
                     <button
-                      onClick={() => handleToggleCollaborator(collab)}
-                      className='absolute -top-1 -right-1 w-4 h-4 bg-red-500 hover:bg-red-600 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 scale-0 group-hover:scale-100'
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleCollaborator(collab);
+                      }}
+                      className='absolute -top-1 -right-1 w-4 h-4 bg-red-500 hover:bg-red-600 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out scale-0 group-hover:scale-100 shadow-sm'
                       title={`Remove ${collab.name}`}
                     >
                       ×
                     </button>
+                  </div>
+
+                  {/* Tooltip on hover */}
+                  <div className='absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out pointer-events-none whitespace-nowrap z-50'>
+                    {collab.name}
+                    <div className='absolute top-full left-1/2 transform -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900'></div>
                   </div>
                 </div>
               ))}
