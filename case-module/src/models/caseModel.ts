@@ -116,6 +116,24 @@ export class Case
         tableName: "cases",
         timestamps: false,
         underscored: true,
+        indexes: [
+          {
+            name: "idx_cases_account_rid",
+            fields: ["account_rid"],
+          },
+          {
+            name: "idx_cases_case_rid",
+            fields: ["rid"],
+          },
+          {
+            name: "idx_cases_case_name",
+            fields: ["case_name"],
+          },
+          {
+            name: "idx_cases_case_owner_rid",
+            fields: ["case_owner_rid"],
+          }
+        ],
       }
     );
   }
