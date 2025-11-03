@@ -1090,6 +1090,29 @@ export class CaseService {
    * - Catches and logs errors, returning a failed status with an error message.
    */
 
+  /**
+   * Creates and manages case team members with comprehensive CRUD operations and timeline logging.
+   *
+   * @param {ICreateCaseTeam} caseRequest - The case team data containing team member information, roles, effective dates, and action types.
+   * @param {string} userId - The ID of the user performing the case team operations.
+   *
+   * @returns {Promise<{
+   *   statusCode: number;
+   *   message: string;
+   *   errorMessage?: string;
+   *   data?: any;
+   * }>} - Result of the team management operations, including status code, message, optional error message, and validation results.
+   *
+   * @description
+   * - Supports batch operations for adding, editing, and deleting team members.
+   * - Validates account information and retrieves account details for multi-tenant support.
+   * - Performs date range overlap validation to prevent conflicting team member assignments.
+   * - Processes operations in ordered sequence: delete → edit → add for data consistency.
+   * - Automatically logs all operations to case timeline with detailed descriptions including user and role names.
+   * - Returns comprehensive validation results and operation summaries.
+   * - Handles errors gracefully with detailed logging and standardized error responses.
+   * - Essential for case team composition management and assignment tracking.
+   */
   async createCaseTeam(
     caseRequest: ICreateCaseTeam,
     userId: string
@@ -1131,21 +1154,23 @@ export class CaseService {
     }
   }
 
-    /**
-   * Retrieves all available case statuses from the database.
+  /**
+   * Retrieves all available case team roles from the database.
    *
    * @returns {Promise<{
    *   statusCode: number;
    *   message: string;
    *   errorMessage?: string;
-   *   data?: { caseStatus: any };
-   * }>} - Result containing all case statuses or error information.
+   *   data?: { caseTeamRoles: any };
+   * }>} - Result containing all case team roles or error information.
    *
    * @description
-   * - Fetches all case statuses from the database through the schema service.
-   * - Returns success response with status data on successful retrieval.
+   * - Fetches all case team roles from the database through the schema service.
+   * - Returns success response with role data on successful retrieval.
    * - Catches and logs errors, throwing a standardized service error.
-   * - Used for populating status dropdown options or validation in the frontend.
+   * - Used for populating role dropdown options during team member assignment.
+   * - Essential for role-based team management and assignment workflows.
+   * - Supports roles like Lead Consultant, Tech Consultant, Reviewer, etc.
    */
   async getCaseTeamRoles(): Promise<{
     statusCode: number;
@@ -1184,6 +1209,32 @@ export class CaseService {
    * - Returns success response with status data on successful retrieval.
    * - Catches and logs errors, throwing a standardized service error.
    * - Used for populating status dropdown options or validation in the frontend.
+  }
+
+  /**
+   * Lists case team members for a specific case with advanced filtering, sorting, and pagination support.
+   *
+   * @param {any} data - Request data containing account_rid, case_rid, pagination parameters, and sorting options.
+   * @param {Record<string, any>} filters - Filter criteria for team member search (user name, role, effective dates, etc.).
+   * @param {string} userId - The ID of the user requesting the team member list for authorization.
+   * @param {string} apiType - The type of API call ('list' for pagination, 'download' for export).
+   *
+   * @returns {Promise<{
+   *   statusCode: number;
+   *   message: string;
+   *   errorMessage?: string;
+   *   data?: { caseTeamMembers: any };
+   * }>} - Result containing paginated team member data or error information.
+   *
+   * @description
+   * - Validates account information and retrieves account details for multi-tenant support.
+   * - Supports comprehensive filtering by user name, role, effective date ranges, and team member status.
+   * - Provides pagination with configurable page size and offset for large team datasets.
+   * - Includes sorting capabilities by various team member attributes.
+   * - Returns detailed team member information including user names, role descriptions, and effective date ranges.
+   * - Handles both list and export operations based on apiType parameter.
+   * - Essential for team management interfaces, assignment tracking, and team composition reports.
+   * - Catches and logs errors with standardized service error handling.
    */
   async listCaseTeamMembers(data: any, filters: Record<string, any>,userId:string,apiType:string): Promise<{
     statusCode: number;

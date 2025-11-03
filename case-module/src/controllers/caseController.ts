@@ -1110,18 +1110,26 @@ async function deleteProjectFromCase(
   }
 }
 /**
- * Handles the creation of a new case based on the incoming HTTP request.
+ * Handles the creation and management of case team members based on the incoming HTTP request.
  *
  * This async function validates the request body against a schema, extracts the user ID from headers,
- * and calls the case service to create a new case with the provided data.
+ * and calls the case service to manage case team members with CRUD operations (add, edit, delete).
+ * It supports batch operations and includes comprehensive timeline logging for audit purposes.
  * It sends back appropriate success or error responses based on the service outcome.
  *
- * @param {Request} req - Express request object containing case data in the body and user ID in headers.
+ * @param {Request} req - Express request object containing case team data in the body and user ID in headers.
  * @param {Response} res - Express response object used to send back the operation result.
  *
  * @returns {Promise<void>} - Resolves after sending the response to the client.
  *
  * @throws {Error} - Throws if the request validation fails or the case service encounters an error.
+ *
+ * @description
+ * - Supports adding, editing, and deleting team members with role assignments and effective date ranges.
+ * - Validates date range overlaps to prevent conflicts in team member assignments.
+ * - Automatically logs all operations to case timeline for comprehensive audit trail.
+ * - Handles batch operations with ordered processing (delete → edit → add).
+ * - Includes user and role name resolution for meaningful timeline descriptions.
  */
 async function createCaseTeam(req: Request, res: Response): Promise<void> {
   const methodName = "Create case team";
@@ -1175,24 +1183,24 @@ async function createCaseTeam(req: Request, res: Response): Promise<void> {
   }
 }
 /**
- * Retrieves the list of available case statuses from the system.
+ * Retrieves the list of available case team roles from the system.
  *
  * This controller method performs the following steps:
- * 1. Calls the `getCaseStatus` method from the `caseService`, which fetches all defined case statuses.
- * 2. If the service responds with success, logs the success event and sends an HTTP 200 response with the status data.
+ * 1. Calls the `getCaseTeamRoles` method from the `caseService`, which fetches all defined case team roles.
+ * 2. If the service responds with success, logs the success event and sends an HTTP 200 response with the roles data.
  * 3. If the service responds with a failure status code, logs the error and returns a `BAD_REQUEST` response with the error message.
  * 4. Handles and logs any unexpected exceptions and returns a generic `BAD_REQUEST` response with the exception message.
  *
  * @param {Request} req - Express request object (not used directly in this function).
- * @param {Response} res - Express response object used to send the HTTP response with case status data.
+ * @param {Response} res - Express response object used to send the HTTP response with case team roles data.
  *
  * @returns {Promise<void>} - A Promise that resolves after the HTTP response is sent.
  *
  * @description
- * - Used for populating dropdown options in the frontend for case status selection.
- * - Returns all available statuses that can be assigned to cases (e.g., In Progress, Completed, On Hold).
+ * - Used for populating dropdown options in the frontend for case team role selection.
+ * - Returns all available roles that can be assigned to team members (e.g., Lead Consultant, Tech Consultant, Reviewer).
  * - Provides standardized error handling and logging for debugging purposes.
- * - Essential for case workflow management and status tracking.
+ * - Essential for case team management and role-based assignment workflows.
  */
 async function getCaseTeamRoles(req: Request, res: Response): Promise<void> {
   const methodName = "Get Case Team Roles";
@@ -1226,24 +1234,27 @@ async function getCaseTeamRoles(req: Request, res: Response): Promise<void> {
 }
 
 /**
- * Retrieves the list of available case statuses from the system.
+ * Lists all case team members for a specific case with filtering, sorting, and pagination support.
  *
  * This controller method performs the following steps:
- * 1. Calls the `getCaseStatus` method from the `caseService`, which fetches all defined case statuses.
- * 2. If the service responds with success, logs the success event and sends an HTTP 200 response with the status data.
- * 3. If the service responds with a failure status code, logs the error and returns a `BAD_REQUEST` response with the error message.
- * 4. Handles and logs any unexpected exceptions and returns a generic `BAD_REQUEST` response with the exception message.
+ * 1. Validates the incoming request parameters against the list case team schema.
+ * 2. Extracts and parses filter parameters from the request query string.
+ * 3. Extracts the user ID from the `x-user-id` request header for authentication.
+ * 4. Calls the `listCaseTeamMembers` method from the `caseService` to fetch paginated team member data.
+ * 5. Returns a success response with team member data and pagination info, or an error response if failed.
  *
- * @param {Request} req - Express request object (not used directly in this function).
- * @param {Response} res - Express response object used to send the HTTP response with case status data.
+ * @param {Request} req - Express request object containing query parameters, filters, and user authentication headers.
+ * @param {Response} res - Express response object used to send the HTTP response with case team member data.
  *
- * @returns {Promise<void>} - A Promise that resolves after the HTTP response is sent.
+ * @returns {Promise<void>} - A Promise that resolves after sending the HTTP response.
  *
  * @description
- * - Used for populating dropdown options in the frontend for case status selection.
- * - Returns all available statuses that can be assigned to cases (e.g., In Progress, Completed, On Hold).
- * - Provides standardized error handling and logging for debugging purposes.
- * - Essential for case workflow management and status tracking.
+ * - Supports advanced filtering by user name, role, effective dates, and other team member attributes.
+ * - Provides pagination with configurable page size and offset.
+ * - Includes sorting capabilities by various team member fields.
+ * - Returns comprehensive team member information including user names, role descriptions, and effective date ranges.
+ * - Used by the frontend to display case team member lists with search and filter functionality.
+ * - Essential for case team management, assignment tracking, and team composition visibility.
  */
 async function listCaseTeamMembers(req: Request, res: Response): Promise<void> {
   const methodName = "List Case Team Members";
