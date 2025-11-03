@@ -63,8 +63,10 @@ export const mainTableFilters: Record<any, any> = {
 
 export const STATUS_MESSAGE = {
   caseCreated: "Case created successfully",
+  caseTeamCreated: "Case team updated successfully",
   caseUpdated: "Case updated successfully",
   caseCreationFailed: "Case creation failed",
+  caseTeamCreationFailed: "Case team creation failed",
   separateDb: "SEPARATE_DB",
   caseDetailsFetchedSuccess: "Case details fetched successfully",
   dataNotAvailable: "Data not available",
@@ -311,6 +313,14 @@ export const rawQueries = {
       FROM ${MAIN_SCHEMA_NAME}.case_status
       WHERE status = 'active'
       ORDER BY status_name ASC
+    `;
+  },
+  getCaseTeamRoles() {
+    return `
+      SELECT rid, role_name 
+      FROM ${MAIN_SCHEMA_NAME}.case_team_role
+      WHERE status = 'active'
+      ORDER BY role_name ASC
     `;
   },
   fetchCaseStatusByType(type: string) {

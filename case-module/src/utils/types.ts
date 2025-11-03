@@ -211,3 +211,23 @@ type projectType = {
   project_fiscal_rid : string,
   project_group : string,
 }
+
+export interface ICreateCaseTeam {
+  account_rid: string;
+  case_rid: string;
+ 
+  created_by: string;
+  modified_by?: string;
+  created_datetime: Date;
+  modified_datetime?: Date;
+  team_members: TeamMember[];
+}
+
+export interface TeamMember {
+  user_rid: string;
+  role_rid: string;
+  case_team_rid?: string;
+  effective_from: Date;
+  effective_to: Date;
+  action_type: "add" | "edit" | "delete";
+}

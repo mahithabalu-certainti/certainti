@@ -18,10 +18,12 @@ import {
 } from "../utils/constants";
 import {
   createCaseSchema,
+  createCaseTeamSchema,
   exportCasesAccountSchema,
   exportCaseSummarySchema,
   listCasesAccountSchema,
   listCaseSummarySchema,
+  listCaseTeamSchema,
   updateCaseSchema,
 } from "../lib/joi/schemas/schema";
 import configurations from "../config/config";
@@ -1107,6 +1109,190 @@ async function deleteProjectFromCase(
     return;
   }
 }
+/**
+ * Handles the creation of a new case based on the incoming HTTP request.
+ *
+ * This async function validates the request body against a schema, extracts the user ID from headers,
+ * and calls the case service to create a new case with the provided data.
+ * It sends back appropriate success or error responses based on the service outcome.
+ *
+ * @param {Request} req - Express request object containing case data in the body and user ID in headers.
+ * @param {Response} res - Express response object used to send back the operation result.
+ *
+ * @returns {Promise<void>} - Resolves after sending the response to the client.
+ *
+ * @throws {Error} - Throws if the request validation fails or the case service encounters an error.
+ */
+async function createCaseTeam(req: Request, res: Response): Promise<void> {
+  const methodName = "Create case team";
+  try {
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${
+        req.headers["x-user-id"]
+      }`
+    );
+    const value = await validateRequest(req, createCaseTeamSchema, res);
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    if (!value) {
+      errorLog(methodName, "Request body is empty");
+      return;
+    }
+    const cases = await caseService.createCaseTeam(value, userId);
+    if (cases.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, cases.data, cases.message);
+      return;
+    } else {
+      errorLog(methodName, cases.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        cases.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+/**
+ * Retrieves the list of available case statuses from the system.
+ *
+ * This controller method performs the following steps:
+ * 1. Calls the `getCaseStatus` method from the `caseService`, which fetches all defined case statuses.
+ * 2. If the service responds with success, logs the success event and sends an HTTP 200 response with the status data.
+ * 3. If the service responds with a failure status code, logs the error and returns a `BAD_REQUEST` response with the error message.
+ * 4. Handles and logs any unexpected exceptions and returns a generic `BAD_REQUEST` response with the exception message.
+ *
+ * @param {Request} req - Express request object (not used directly in this function).
+ * @param {Response} res - Express response object used to send the HTTP response with case status data.
+ *
+ * @returns {Promise<void>} - A Promise that resolves after the HTTP response is sent.
+ *
+ * @description
+ * - Used for populating dropdown options in the frontend for case status selection.
+ * - Returns all available statuses that can be assigned to cases (e.g., In Progress, Completed, On Hold).
+ * - Provides standardized error handling and logging for debugging purposes.
+ * - Essential for case workflow management and status tracking.
+ */
+async function getCaseTeamRoles(req: Request, res: Response): Promise<void> {
+  const methodName = "Get Case Team Roles";
+  try {
+    const caseTeamRoles = await caseService.getCaseTeamRoles();
+    if (caseTeamRoles.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, caseTeamRoles.data);
+      return;
+    } else {
+      errorLog(methodName, caseTeamRoles.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        caseTeamRoles.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+/**
+ * Retrieves the list of available case statuses from the system.
+ *
+ * This controller method performs the following steps:
+ * 1. Calls the `getCaseStatus` method from the `caseService`, which fetches all defined case statuses.
+ * 2. If the service responds with success, logs the success event and sends an HTTP 200 response with the status data.
+ * 3. If the service responds with a failure status code, logs the error and returns a `BAD_REQUEST` response with the error message.
+ * 4. Handles and logs any unexpected exceptions and returns a generic `BAD_REQUEST` response with the exception message.
+ *
+ * @param {Request} req - Express request object (not used directly in this function).
+ * @param {Response} res - Express response object used to send the HTTP response with case status data.
+ *
+ * @returns {Promise<void>} - A Promise that resolves after the HTTP response is sent.
+ *
+ * @description
+ * - Used for populating dropdown options in the frontend for case status selection.
+ * - Returns all available statuses that can be assigned to cases (e.g., In Progress, Completed, On Hold).
+ * - Provides standardized error handling and logging for debugging purposes.
+ * - Essential for case workflow management and status tracking.
+ */
+async function listCaseTeamMembers(req: Request, res: Response): Promise<void> {
+  const methodName = "List Case Team Members";
+  try {
+    const userId = req.headers["x-user-id"] as string;
+     const value = await validateRequest(
+      req,
+      listCaseTeamSchema,
+      res,
+      "GET"
+    );
+    if (!value) return;
+    let parsedFilters: Record<string, any> = {};
+    try {
+      parsedFilters = JSON.parse(value.filters);
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+    const caseTeamMembers = await caseService.listCaseTeamMembers(value,parsedFilters,userId,"list");
+    if (caseTeamMembers.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, caseTeamMembers.data);
+      return;
+    } else {
+      errorLog(methodName, caseTeamMembers.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        caseTeamMembers.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
 
 export default {
   createCases,
@@ -1122,4 +1308,7 @@ export default {
   deleteProjectFromCase,
   listAllCasesSummary,
   exportAllCasesSummary,
+  createCaseTeam,
+  getCaseTeamRoles,
+  listCaseTeamMembers
 };

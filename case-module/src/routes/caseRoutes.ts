@@ -31,6 +31,11 @@ routes.get(
   controller.caseController.getCaseStatus
 );
 routes.get(
+  "/caseTeamRoles",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.getCaseTeamRoles
+);
+routes.get(
   "/list",
   checkUserStatusMiddleware("cases_view_edit"),
   controller.caseController.listAllCasesAccount
@@ -71,6 +76,17 @@ routes.post(
   "/projects/delete",
   checkUserStatusMiddleware("NA"),
   controller.caseController.deleteProjectFromCase
+);
+
+routes.post(
+  "/createCaseTeam",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.createCaseTeam
+);
+routes.get(
+  "/caseTeam/list",
+  checkUserStatusMiddleware("cases_view_edit"),
+  controller.caseController.listCaseTeamMembers
 );
 
 export default routes;

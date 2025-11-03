@@ -29,6 +29,8 @@ import {
   CaseHeadersColumns,
   filterType,
   ICreateCases,
+  ICreateCaseTeam,
+  TeamMember,
 } from "../../utils/types";
 
 // Define filterType interface
@@ -47,6 +49,8 @@ import {
   CaseHistory,
   setupCaseHistorySequence,
 } from "../../models/caseHistory";
+import { CaseTeam, setupCaseTeamSequence } from "../../models/caseTeamModel";
+import { log } from "console";
 
 class CaseSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -130,6 +134,18 @@ class CaseSchemaService {
         transaction,
       });
 
+      // Add timeline entry for case creation
+      if (casecreationResponse && casecreationResponse.rid) {
+        await this.addCaseManagementTimeline(
+          accountNumber,
+          casecreationResponse.rid,
+          caseRequest.account_rid,
+          caseRequest,
+          caseRequest.created_by || '',
+          'created'
+        );
+      }
+
       return casecreationResponse;
     } catch (error) {
       logMessage(`Error creating case: ${error}`);
@@ -206,6 +222,20 @@ class CaseSchemaService {
         { ...caseRequest, modified_by: userId },
         existingCase
       );
+
+      // Add timeline entry for case update
+      if (caseRequest.case_rid) {
+        await this.addCaseManagementTimeline(
+          accountNumber,
+          caseRequest.case_rid,
+          caseRequest.account_rid,
+          caseRequest,
+          userId,
+          'updated',
+          'success',
+          existingCase
+        );
+      }
 
       return caseUpdateResponse;
     } catch (error) {
@@ -293,6 +323,10 @@ class CaseSchemaService {
         orgDbSequlize,
         schemaName
       );
+      const caseTeamModel = await CaseTeam.initialize(
+        orgDbSequlize,
+        schemaName
+      );
 
       await CaseModel.sync({ force: false });
       await setupCaseSequence(orgDbSequlize, schemaName);
@@ -300,6 +334,8 @@ class CaseSchemaService {
       await setupCaseTimelineSequence(orgDbSequlize, schemaName);
       await caseHistoryModel.sync({ force: false });
       await setupCaseHistorySequence(orgDbSequlize, schemaName);
+      await caseTeamModel.sync({ force: false });
+      await setupCaseTeamSequence(orgDbSequlize, schemaName);
     } catch (err) {
       errorLog("Error creating case tables", (err as Error).message);
       return this.throwServiceError(err as Error);
@@ -1513,39 +1549,710 @@ class CaseSchemaService {
       return [];
     }
   }
+
+  /**
+   * Adds a case timeline entry for team management operations
+   */
   async addCaseTimeline(
     accountNumber: string,
-    eventName: string,
-    caseRequest: ICreateCases,
-    caseId: string,
+    caseRid: string,
+    accountRid: string,
+    description: string,
     userId: string,
-    transaction: Transaction
+    eventStatus: string = "success",
+    eventName: string = "",
+    eventType: string = "ui handler"
   ) {
     try {
-      const { CaseTimeline } = await this.caseModelService.getModels(
-        accountNumber
-      );
+      const { CaseTimeline } = await this.caseModelService.getModels(accountNumber);
 
-      await CaseTimeline.create(
-        {
-          account_rid: caseRequest.account_rid,
-          event_name: eventName,
-          event_status: "success",
-          event_type: "ui handler",
-          entity_rid: caseId,
-          created_by: userId,
-          event_datetime: new Date(),
-          created_datetime: new Date(),
-        },
-        {
-          transaction,
-        }
-      );
+      await CaseTimeline.create({
+        account_rid: accountRid,
+        event_name: eventName,
+        event_status: eventStatus,
+        event_type: eventType,
+        entity_rid: caseRid,
+        description: description,
+        created_by: userId,
+        event_datetime: new Date(),
+        created_datetime: new Date(),
+      });
     } catch (err) {
-      logMessage(`Error creating case timeline: ${err}`);
-      throw new Error("Error creating case timeline");
+      logMessage(`Error creating case team timeline: ${err}`);
+      // Don't throw error for timeline issues to avoid breaking main functionality
     }
   }
+
+  /**
+   * Adds a case timeline entry for case management operations (create/update)
+   */
+  async addCaseManagementTimeline(
+    accountNumber: string,
+    caseRid: string,
+    accountRid: string,
+    caseData: any,
+    userId: string,
+    operation: 'created' | 'updated',
+    eventStatus: string = "success",
+    existingCaseData?: any
+  ) {
+    try {
+      const eventName = operation === 'created' ? 'Case Created' : 'Case Updated';
+      let description = '';
+      
+      if (operation === 'created') {
+        description = `Case created with title: ${caseData.case_title || caseData.case_name || 'N/A'}`;
+      } else {
+        // For updates, show specific fields that changed
+        const changes = this.generateCaseChangeDescription(caseData, existingCaseData);
+        description = changes.length > 0 ? `Case updated: ${changes.join(', ')}` : 'Case updated';
+      }
+
+      await this.addCaseTimeline(
+        accountNumber,
+        caseRid,
+        accountRid,
+        description,
+        userId,
+        eventStatus,
+        eventName,
+        "ui handler"
+      );
+    } catch (err) {
+      logMessage(`Error creating case management timeline: ${err}`);
+      // Don't throw error for timeline issues to avoid breaking main functionality
+    }
+  }
+
+  /**
+   * Generates description of changed fields for case updates
+   */
+  private generateCaseChangeDescription(newData: any, existingData: any): string[] {
+    if (!existingData) return [];
+    
+    const changes: string[] = [];
+    const fieldMappings: { [key: string]: string } = {
+      'case_owner_rid': 'case owner',
+      'case_name': 'case name',
+      'description': 'description',
+      'fiscal_year': 'fiscal year',
+      'filing_type_rid': 'filing type',
+      'case_startdate': 'case start date',
+      'planned_submission_date': 'planned submission date',
+      'statutory_submission_date': 'statutory submission date'
+    };
+
+    // Define which fields are dates
+    const dateFields = ['case_startdate', 'planned_submission_date', 'statutory_submission_date'];
+
+    for (const [field, displayName] of Object.entries(fieldMappings)) {
+      if (newData[field] !== undefined && newData[field] !== existingData[field]) {
+        let oldValue = existingData[field] || 'N/A';
+        let newValue = newData[field] || 'N/A';
+        
+        // Format dates using the same function as case team timeline
+        if (dateFields.includes(field)) {
+          oldValue = oldValue !== 'N/A' ? this.formatDateForDisplay(oldValue) : 'N/A';
+          newValue = newValue !== 'N/A' ? this.formatDateForDisplay(newValue) : 'N/A';
+        }
+        
+        changes.push(`${displayName} changed to "${newValue}"`);
+      }
+    }
+
+    return changes;
+  }
+
+  /**
+   * Generates timeline entry for case team management operations
+   */
+  private async addCaseTeamTimelineEntry(
+    accountNumber: string,
+    caseRid: string,
+    accountRid: string,
+    results: any[],
+    userId: string,
+    eventStatus: string,
+    eventName: string = "",
+    eventType: string = "",
+    errorMessage?: string,
+  ) {
+    try {
+      let description = '';
+      
+      if (errorMessage) {
+        description = `${errorMessage}`;
+      } else {
+        const summary = await this.generateTimelineDescription(results);
+        description = `${summary}`;
+      }
+
+      await this.addCaseTimeline(
+        accountNumber,
+        caseRid,
+        accountRid,
+        description,
+        userId,
+        eventStatus,
+        eventName,
+        eventType
+      );
+    } catch (err) {
+      logMessage(`Error adding case team timeline entry: ${err}`);
+    }
+  }
+
+  /**
+   * Fetches user names from the main database for given user RIDs
+   */
+  private async fetchUserNames(userRids: string[]): Promise<Map<string, string>> {
+    try {
+      if (!this.mainDbSequelize) {
+        this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+      }
+
+      if (userRids.length === 0) {
+        return new Map();
+      }
+
+      const users = await this.mainDbSequelize.query(
+        rawQueries.fetchUser(userRids)
+      );
+
+      const userMap = new Map<string, string>();
+      if (users && Array.isArray(users) && users[0] && Array.isArray(users[0])) {
+        (users[0] as any[]).forEach((user: any) => {
+          const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim();
+          userMap.set(user.rid, fullName || user.email || user.rid);
+        });
+      }
+
+      return userMap;
+    } catch (error) {
+      logMessage(`Error fetching user names: ${error}`);
+      return new Map();
+    }
+  }
+
+  /**
+   * Fetches role names from the main database for given role RIDs
+   */
+  private async fetchRoleNames(roleRids: string[]): Promise<Map<string, string>> {
+    try {
+      if (!this.mainDbSequelize) {
+        this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+      }
+
+      if (roleRids.length === 0) {
+        return new Map();
+      }
+
+      const roles = await this.mainDbSequelize.query(
+        rawQueries.getCaseTeamRoles()
+      );
+
+      const roleMap = new Map<string, string>();
+      if (roles && Array.isArray(roles) && roles[0] && Array.isArray(roles[0])) {
+        (roles[0] as any[]).forEach((role: any) => {
+          if (roleRids.includes(role.rid)) {
+            roleMap.set(role.rid, role.role_name || role.name || role.rid);
+          }
+        });
+      }
+
+      return roleMap;
+    } catch (error) {
+      logMessage(`Error fetching role names: ${error}`);
+      return new Map();
+    }
+  }
+
+  /**
+   * Generates a descriptive summary of team management operations for timeline
+   */
+  private async generateTimelineDescription(results: any[]): Promise<string> {
+    const successful = results.filter(r => r.status === 'success');
+    const failed = results.filter(r => r.status === 'failed');
+    const skipped = results.filter(r => r.status === 'skipped');
+
+    // Collect all unique user RIDs and role RIDs
+    const allUserRids = [...new Set([
+      ...successful.map(r => r.user_rid),
+      ...failed.map(r => r.user_rid),
+      ...skipped.map(r => r.user_rid)
+    ].filter(Boolean))];
+
+    const allRoleRids = [...new Set([
+      ...successful.map(r => r.role_rid),
+      ...failed.map(r => r.role_rid),
+      ...skipped.map(r => r.role_rid)
+    ].filter(Boolean))];
+
+    // Fetch user names and role names
+    const [userNameMap, roleNameMap] = await Promise.all([
+      this.fetchUserNames(allUserRids),
+      this.fetchRoleNames(allRoleRids)
+    ]);
+
+    const summaryParts: string[] = [];
+
+    // Group successful operations by action type
+    const successfulByAction = {
+      added: successful.filter(r => r.action === 'inserted'),
+      updated: successful.filter(r => r.action === 'updated'),
+      deleted: successful.filter(r => r.action === 'deleted')
+    };
+
+    // Helper function to get user names with roles
+    const getUserDisplayNamesWithRoles = (operations: any[]): string => {
+      return operations.map(r => {
+        const userName = userNameMap.get(r.user_rid) || r.user_rid;
+        const roleName = roleNameMap.get(r.role_rid) || r.role_rid;
+        return `${userName} as ${roleName}`;
+      }).join(', ');
+    };
+
+    // Add success descriptions with member names and roles
+    if (successfulByAction.added.length > 0) {
+      const memberDetails = getUserDisplayNamesWithRoles(successfulByAction.added);
+      summaryParts.push(`Added team members: ${memberDetails}`);
+    }
+    if (successfulByAction.updated.length > 0) {
+      const memberDetails = getUserDisplayNamesWithRoles(successfulByAction.updated);
+      summaryParts.push(`Updated team members: ${memberDetails}`);
+    }
+    if (successfulByAction.deleted.length > 0) {
+      const memberDetails = getUserDisplayNamesWithRoles(successfulByAction.deleted);
+      summaryParts.push(`Deleted team members: ${memberDetails}`);
+    }
+
+    // Add failure details with member names and roles if any
+    if (failed.length > 0) {
+      const failedMembers = getUserDisplayNamesWithRoles(failed);
+      summaryParts.push(`Failed operations for: ${failedMembers}`);
+    }
+    
+    // Add skip details with member names and roles if any
+    if (skipped.length > 0) {
+      const skippedMembers = getUserDisplayNamesWithRoles(skipped);
+      summaryParts.push(`Skipped operations for: ${skippedMembers}`);
+    }
+
+    // Return formatted description
+    if (summaryParts.length === 0) {
+      return 'No operations performed';
+    }
+    
+    return summaryParts.join('; ') + '.';
+  }
+
+  async createCaseTeam(
+    accountNumber: string,
+    caseTeamRequest: ICreateCaseTeam,
+    userId: string
+  ) {
+    try {
+      const { CaseTeam } = await this.caseModelService.getModels(accountNumber);
+      const results: any[] = [];
+
+      // Check if case team already exists
+      const existingTeamMembers = await CaseTeam.findAll({
+        where: {
+          case_rid: caseTeamRequest.case_rid,
+          account_rid: caseTeamRequest.account_rid,
+        },
+        raw: true
+      });
+
+      const hasExistingTeam = existingTeamMembers.length > 0;
+
+      // Group operations by type for ordered processing
+      const operationGroups = this.groupTeamMembersByActionType(caseTeamRequest.team_members);
+      
+      // Process operations in sequence: delete -> edit -> add 
+      await this.processDeleteOperations(CaseTeam, operationGroups.deleteOperations, results);
+      await this.processEditOperations(CaseTeam, operationGroups.editOperations, caseTeamRequest, userId, results);
+      await this.processAddOperations(CaseTeam, operationGroups.addOperations, caseTeamRequest, userId, results);
+      
+      // Generate response summary
+      const response = this.generateCaseTeamResponse(results);
+      
+      // Determine event name based on existing team and operations
+      let eventName = "Case Team Management";
+      if (!hasExistingTeam && operationGroups.addOperations.length > 0) {
+        eventName = "Case Team Member Added";
+      } else if (hasExistingTeam && (operationGroups.editOperations.length > 0 || operationGroups.deleteOperations.length > 0 || operationGroups.addOperations.length > 0)) {
+        eventName = "Case Team Member Updated";
+      }
+      
+      // Add timeline entry for the team management request
+      await this.addCaseTeamTimelineEntry(
+        accountNumber,
+        caseTeamRequest.case_rid,
+        caseTeamRequest.account_rid,
+        results,
+        userId,
+        response.success ? "success" : "partial_success",
+        eventName,
+        "ui_handler"
+      );
+      
+      return response;
+    } catch (error) {
+      logMessage(`Error managing case team: ${error}`);
+      
+      // Add timeline entry for failed operation
+      try {
+        await this.addCaseTeamTimelineEntry(
+          accountNumber,
+          caseTeamRequest.case_rid,
+          caseTeamRequest.account_rid,
+          [],
+          userId,
+          "failed",
+          "Case Team Management Failed",
+          "team_management",
+          `Error: ${(error as Error).message}`
+        );
+      } catch (timelineError) {
+        logMessage(`Error adding timeline for failed operation: ${timelineError}`);
+      }
+      
+      throw new Error("Error managing case team: " + error);
+    }
+  }
+
+  /**
+   * Formats dates for display in error messages
+   */
+  private formatDateForDisplay(date: Date | string | null): string {
+    if (!date) return '';
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return dateObj.toISOString().split('T')[0] || 'invalid-date';
+  }
+
+  /**
+   * Groups team members by their action type for ordered processing
+   */
+  private groupTeamMembersByActionType(teamMembers: TeamMember[]) {
+    return {
+      deleteOperations: teamMembers.filter(tm => tm.action_type === 'delete'),
+      editOperations: teamMembers.filter(tm => tm.action_type === 'edit'),
+      addOperations: teamMembers.filter(tm => tm.action_type === 'add'),
+      unknownOperations: teamMembers.filter(tm => 
+        !['delete', 'edit', 'add'].includes(tm.action_type)
+      )
+    };
+  }
+
+  /**
+   * Validates that a team member's date range doesn't overlap with existing assignments
+   */
+  private async validateNoOverlappingDates(
+    CaseTeam: any,
+    teamMember: TeamMember,
+    caseTeamRequest: ICreateCaseTeam
+  ): Promise<string | null> {
+    try {
+      const whereCondition: any = {
+        account_rid: caseTeamRequest.account_rid,
+        case_rid: caseTeamRequest.case_rid,
+        user_rid: teamMember.user_rid,
+        role_rid: teamMember.role_rid,
+      };
+
+      // Exclude current record for edit operations
+      if (teamMember.case_team_rid && teamMember.action_type === 'edit') {
+        whereCondition.rid = { [Op.ne]: teamMember.case_team_rid };
+      }
+
+      const existingRecords = await CaseTeam.findAll({
+        where: whereCondition,
+        raw: true
+      });
+
+      // Check for overlapping date ranges
+      const hasOverlap = existingRecords.some((existing: any) => 
+        this.checkDateRangeOverlap(existing, teamMember)
+      );
+
+      if (hasOverlap) {
+        const formattedStartDate = this.formatDateForDisplay(teamMember.effective_from);
+        const formattedEndDate = this.formatDateForDisplay(teamMember.effective_to);
+        
+        return `Date range overlap detected for user ${teamMember.user_rid} with role ${teamMember.role_rid}. ` +
+               `Effective dates from ${formattedStartDate} to ${formattedEndDate} ` +
+               `overlap with existing assignment.`;
+      }
+
+      return null;
+    } catch (error) {
+      return `Validation error for user ${teamMember.user_rid}: ${(error as Error).message}`;
+    }
+  }
+
+  /**
+   * Checks if two date ranges overlap
+   */
+  private checkDateRangeOverlap(existing: any, teamMember: TeamMember): boolean {
+    const existingStart = new Date(existing.effective_startdate);
+    const existingEnd = existing.effective_enddate ? new Date(existing.effective_enddate) : null;
+    const newStart = new Date(teamMember.effective_from);
+    const newEnd = teamMember.effective_to ? new Date(teamMember.effective_to) : null;
+
+    // Check for overlap conditions
+    const startOverlaps = newStart >= existingStart && 
+      (existingEnd === null || newStart <= existingEnd);
+    
+    const endOverlaps = newEnd && newEnd >= existingStart && 
+      (existingEnd === null || newEnd <= existingEnd);
+    
+    const encompassesExisting = newStart <= existingStart && 
+      (newEnd === null || (existingEnd !== null && newEnd >= existingEnd));
+    
+    const encompassedByExisting = existingStart <= newStart && 
+      (existingEnd === null || (newEnd !== null && existingEnd >= newEnd));
+
+    return startOverlaps || endOverlaps || encompassesExisting || encompassedByExisting;
+  }
+
+  /**
+   * Processes delete operations for team members
+   */
+  private async processDeleteOperations(
+    CaseTeam: any,
+    deleteOperations: TeamMember[],
+    results: any[]
+  ): Promise<void> {
+    logMessage(`Processing ${deleteOperations.length} delete operations...`);
+    
+    for (const teamMember of deleteOperations) {
+      try {
+        const deletedRowsCount = await CaseTeam.destroy({
+          where: {
+            rid: teamMember.case_team_rid,
+          }
+        });
+        
+        results.push({
+          action: 'deleted',
+          affectedRows: deletedRowsCount,
+          user_rid: teamMember.user_rid,
+          role_rid: teamMember.role_rid,
+          status: 'success'
+        });
+      } catch (memberError) {
+        logMessage(`Error deleting team member ${teamMember.user_rid}: ${memberError}`);
+        results.push({
+          action: 'delete',
+          user_rid: teamMember.user_rid,
+          role_rid: teamMember.role_rid,
+          status: 'failed',
+          error: (memberError as Error).message
+        });
+      }
+    }
+  }
+
+  /**
+   * Processes edit operations for team members
+   */
+  private async processEditOperations(
+    CaseTeam: any,
+    editOperations: TeamMember[],
+    caseTeamRequest: ICreateCaseTeam,
+    userId: string,
+    results: any[]
+  ): Promise<void> {
+    logMessage(`Processing ${editOperations.length} edit operations...`);
+    
+    for (const teamMember of editOperations) {
+      try {
+        const validationError = await this.validateNoOverlappingDates(CaseTeam, teamMember, caseTeamRequest);
+        
+        if (validationError) {
+          results.push({
+            action: 'edit',
+            user_rid: teamMember.user_rid,
+            role_rid: teamMember.role_rid,
+            status: 'failed',
+            error: validationError
+          });
+        } else {
+          const [updatedRowsCount] = await CaseTeam.update(
+            {
+              role_rid: teamMember.role_rid,
+              user_rid: teamMember.user_rid,
+              effective_startdate: teamMember.effective_from,
+              effective_enddate: teamMember.effective_to,
+              modified_by: userId,
+              modified_datetime: new Date()
+            },
+            {
+              where: {
+                rid: teamMember.case_team_rid,
+              }
+            }
+          );
+          
+          results.push({
+            action: 'updated',
+            affectedRows: updatedRowsCount,
+            user_rid: teamMember.user_rid,
+            role_rid: teamMember.role_rid,
+            status: 'success'
+          });
+        }
+      } catch (memberError) {
+        logMessage(`Error editing team member ${teamMember.user_rid}: ${memberError}`);
+        results.push({
+          action: 'edit',
+          user_rid: teamMember.user_rid,
+          role_rid: teamMember.role_rid,
+          status: 'failed',
+          error: (memberError as Error).message
+        });
+      }
+    }
+  }
+
+  /**
+   * Processes add operations for team members
+   */
+  private async processAddOperations(
+    CaseTeam: any,
+    addOperations: TeamMember[],
+    caseTeamRequest: ICreateCaseTeam,
+    userId: string,
+    results: any[]
+  ): Promise<void> {
+    logMessage(`Processing ${addOperations.length} add operations...`);
+    
+    for (const teamMember of addOperations) {
+      try {
+        const validationError = await this.validateNoOverlappingDates(CaseTeam, teamMember, caseTeamRequest);
+        
+        if (validationError) {
+          results.push({
+            action: 'add',
+            user_rid: teamMember.user_rid,
+            role_rid: teamMember.role_rid,
+            status: 'failed',
+            error: validationError
+          });
+        } else {
+          const newTeamMember = await CaseTeam.create({
+            account_rid: caseTeamRequest.account_rid,
+            case_rid: caseTeamRequest.case_rid,
+            role_rid: teamMember.role_rid,
+            user_rid: teamMember.user_rid,
+            effective_startdate: teamMember.effective_from,
+            effective_enddate: teamMember.effective_to,
+            created_by: userId,
+            created_datetime: new Date()
+          });
+          
+          results.push({
+            action: 'inserted',
+            data: newTeamMember,
+            user_rid: teamMember.user_rid,
+            role_rid: teamMember.role_rid,
+            status: 'success'
+          });
+        }
+      } catch (memberError) {
+        logMessage(`Error adding team member ${teamMember.user_rid}: ${memberError}`);
+        results.push({
+          action: 'add',
+          user_rid: teamMember.user_rid,
+          role_rid: teamMember.role_rid,
+          status: 'failed',
+          error: (memberError as Error).message
+        });
+      }
+    }
+  }
+
+
+
+  /**
+   * Generates the final response for case team operations
+   */
+  private generateCaseTeamResponse(results: any[]) {
+    const failedOperations = results.filter(r => r.status === 'failed');
+    const successfulOperations = results.filter(r => r.status === 'success');
+    const skippedOperations = results.filter(r => r.status === 'skipped');
+
+    // Create summary message
+    let summaryMessage = '';
+    if (failedOperations.length === 0) {
+      summaryMessage = 'All case team operations completed successfully';
+    } else {
+      const messages = [];
+      if (successfulOperations.length > 0) {
+        messages.push(`${successfulOperations.length} operations succeeded`);
+      }
+      if (failedOperations.length > 0) {
+        messages.push(`${failedOperations.length} operations failed`);
+      }
+      if (skippedOperations.length > 0) {
+        messages.push(`${skippedOperations.length} operations skipped`);
+      }
+      summaryMessage = messages.join(', ');
+    }
+
+    return {
+      success: failedOperations.length === 0,
+      message: summaryMessage,
+      results: results,
+      validationErrors: failedOperations.map(r => ({
+        user_rid: r.user_rid,
+        role_rid: r.role_rid,
+        error: r.error
+      }))
+    };
+  }
+
+  async getCaseTeamRoles() {
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+    }
+    const caseRoles = await this.mainDbSequelize.query(
+      rawQueries.getCaseTeamRoles(),
+      {
+        type: "SELECT",
+      }
+    );
+
+    return caseRoles;
+  }
+
+    async listCaseTeamMembers(
+    accountNumber: string,
+    data: any,
+    userId: string,
+    type: string = "list"
+  ) {
+    try {
+      const { CaseTeam } = await this.caseModelService.getModels(accountNumber);
+      const whereConditions: any = {
+        case_rid: data.case_rid,
+        account_rid: data.account_rid,
+      };
+      const queryOptions: any = {
+        where: whereConditions,
+        order: [["effective_startdate", "ASC"]],
+      };  
+      const caseTeamMembers = await CaseTeam.findAll(queryOptions);
+      return caseTeamMembers;
+    }
+    catch (err) {
+      logMessage(`Error in fetching case team members: ${err}`);
+      errorLog("Error in fetching case team members:", (err as Error).message);
+      return [];
+    }
+  }
+
 }
 
 // Utility function for optimized column sorting

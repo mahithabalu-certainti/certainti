@@ -71,11 +71,40 @@ const exportCaseSummarySchema = Joi.object({
   timezone: Joi.string().optional()
 });
 
+const createCaseTeamSchema = Joi.object({
+  account_rid: Joi.string().required(),
+  case_rid: Joi.string().required(),
+  team_members: Joi.array()
+    .items(
+      Joi.object({
+        case_team_rid: Joi.string().optional(),
+        user_rid: Joi.string().required(),
+        role_rid: Joi.string().required(),
+        effective_from: Joi.date().required(),
+        effective_to: Joi.date().required(),
+        action_type: Joi.string().valid("add", "edit", "delete").required(),
+      })
+    )
+    .min(1)
+    .required(),
+});
+
+const listCaseTeamSchema = Joi.object({
+  account_rid: Joi.string().required(),
+  case_rid: Joi.string().required(),
+  page: Joi.string().optional().pattern(/^[0-9]+$/),
+  limit: Joi.string().optional().pattern(/^[0-9]+$/),
+  filters: Joi.string().default("{}"),
+  sortBy: Joi.string().optional(),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
+});
 export {
   createCaseSchema,
   updateCaseSchema,
   exportCasesAccountSchema,
   listCasesAccountSchema,
   listCaseSummarySchema,
-  exportCaseSummarySchema
+  exportCaseSummarySchema,
+  createCaseTeamSchema,
+  listCaseTeamSchema
 };
