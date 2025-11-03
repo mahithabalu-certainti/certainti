@@ -1335,7 +1335,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                     hideCheckedItems &&
                     !isAddingItem && (
                       <div className='px-4 py-6 text-center text-gray-500 text-sm'>
-                        All items are completed! 🎉
+                        All items are completed
                       </div>
                     )}
                 </div>
@@ -1361,7 +1361,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                     Create checklist
                   </h4>
                   <p className='text-xs text-gray-500'>
-                    Add checklist items to track progress.
+                    Add checklist items to track progress
                   </p>
                 </div>
               </div>
@@ -1716,11 +1716,32 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
 
             {/* Overlapping Profile Indicators */}
             <div className='flex items-center -space-x-2'>
-              {selectedCollaborators.map((collab) => (
+              {selectedCollaborators.map((collab, index) => (
                 <div
                   key={collab.name}
-                  className='relative group transition-transform duration-200 hover:scale-110 hover:z-10 hover:translate-x-2'
+                  className={`relative group transition-transform duration-200 hover:scale-110 hover:z-10 hover:-translate-y-2 ${
+                    index < selectedCollaborators.length - 1 ? 'peer' : ''
+                  }`}
                   title={collab.name}
+                  onMouseEnter={() => {
+                    // Move the next profile to the right when this one is hovered
+                    const nextProfile = document.querySelector(
+                      `[data-profile-index="${index + 1}"]`
+                    ) as HTMLElement;
+                    if (nextProfile) {
+                      nextProfile.style.transform = 'translateX(8px)';
+                    }
+                  }}
+                  onMouseLeave={() => {
+                    // Reset the next profile position when hover ends
+                    const nextProfile = document.querySelector(
+                      `[data-profile-index="${index + 1}"]`
+                    ) as HTMLElement;
+                    if (nextProfile) {
+                      nextProfile.style.transform = 'translateX(0)';
+                    }
+                  }}
+                  data-profile-index={index}
                 >
                   <div
                     className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold cursor-pointer text-white border-2 border-white shadow-md transition-all duration-300 ease-in-out group-hover:shadow-xl group-hover:border-blue-200'

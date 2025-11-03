@@ -104,6 +104,11 @@ export const mockKanbanData: KanbanColumn[] = [
             completed: false,
           },
           { id: '2-7', text: 'Test development server', completed: false },
+          { id: '3-1', text: 'Identify top 5 competitors', completed: false },
+          { id: '3-2', text: 'Analyze competitor features', completed: false },
+          { id: '3-3', text: 'Document pricing strategies', completed: false },
+          { id: '3-4', text: 'Review user feedback', completed: false },
+          { id: '3 -5', text: 'Create comparison matrix', completed: false },
         ],
         activities: [
           {
@@ -133,11 +138,11 @@ export const mockKanbanData: KanbanColumn[] = [
         commentCount: 1,
         createdAt: new Date('2025-11-01'),
         checklist: [
-          // { id: '3-1', text: 'Identify top 5 competitors', completed: false },
-          // { id: '3-2', text: 'Analyze competitor features', completed: false },
-          // { id: '3-3', text: 'Document pricing strategies', completed: false },
-          // { id: '3-4', text: 'Review user feedback', completed: false },
-          // { id: '3-5', text: 'Create comparison matrix', completed: false },
+          //  { id: '3-1', text: 'Identify top 5 competitors', completed: false },
+          //   { id: '3-2', text: 'Analyze competitor features', completed: false },
+          //   { id: '3-3', text: 'Document pricing strategies', completed: false },
+          //   { id: '3-4', text: 'Review user feedback', completed: false },
+          //   { id: '3 -5', text: 'Create comparison matrix', completed: false },
         ],
         activities: [
           {
