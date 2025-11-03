@@ -6,7 +6,10 @@ import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/res
 import { AllPermissions } from '../../../../../common-service';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import KanbanBoard from '../../../../../components/kanban-board/kanban-board';
-import { mockKanbanData } from './mockData';
+import {
+  mockUserData,
+  mockKanbanData,
+} from '../../../../../components/kanban-board/mock-data';
 
 const ConfigTabs: ResourceTabs[] = [
   {
@@ -104,11 +107,12 @@ const WorkBreakDown = () => {
         {tabParam === 'milestone' && (
           <KanbanBoard
             data={mockKanbanData}
+            userData={mockUserData}
             showCommentCount={true}
             showTaskCount={true}
             showProfileIndicator={true}
-            isCreateTaskDisabled={false}
-            isCreateTaskHide={false}
+            isCreateTaskHide={true}
+            isCreateTaskDisabled={true}
           />
         )}
         {tabParam === 'case_task' && (

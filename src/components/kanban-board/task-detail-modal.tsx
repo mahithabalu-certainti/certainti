@@ -33,7 +33,10 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     if (task?.collaborators) {
       setSelectedCollaborators(task.collaborators);
     }
-  }, [task]);
+    // Debug: Log activities to see what's being passed
+    console.log('Task activities:', task?.activities);
+    console.log('Activities prop:', activities);
+  }, [task, activities]);
 
   if (!task) return null;
 
@@ -220,6 +223,17 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     setEditedTask((prev) => (prev ? { ...prev, assignee: user } : null));
   };
 
+  // Find the assignee in availableUsers or create a temporary user object
+  const getAssigneeForSelect = () => {
+    if (!editedTask?.assignee) return '';
+
+    const foundUser = availableUsers.find(
+      (u) => u.name === editedTask.assignee.name
+    );
+
+    return foundUser?.id || '';
+  };
+
   const getMinEndDate = () => {
     if (editedTask?.startDate) {
       const minDate = new Date(editedTask.startDate);
@@ -240,7 +254,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
         className={`fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl transform transition-transform duration-300 ease-in-out z-50 overflow-y-auto ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
-        style={{ top: '9.8px' }}
+        style={{ top: '38.1px' }}
       >
         {/* Header */}
         <div className='sticky top-0 flex items-center justify-between p-4 border-b border-gray-200 bg-white z-50 shadow-sm'>
@@ -305,13 +319,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                     handleAssigneeChange(selectedUser);
                   }
                 }}
-                value={
-                  editedTask?.assignee
-                    ? availableUsers.find(
-                        (u) => u.name === editedTask.assignee.name
-                      )?.id || ''
-                    : ''
-                }
+                value={getAssigneeForSelect()}
                 displayEmpty
                 fullWidth
                 size='small'
@@ -362,22 +370,9 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                     color: '#7D98B6',
                   },
                 }}
-                renderValue={(value) => {
-                  if (!value) {
-                    return (
-                      <span
-                        style={{
-                          color: '#7D98B6',
-                          fontSize: '13px',
-                          fontWeight: '400',
-                        }}
-                      >
-                        Select User
-                      </span>
-                    );
-                  }
-                  const user = availableUsers.find((u) => u.id === value);
-                  if (user) {
+                renderValue={() => {
+                  // Always show the task's assignee if it exists, regardless of availableUsers
+                  if (editedTask?.assignee) {
                     return (
                       <div
                         style={{
@@ -391,7 +386,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                             width: '20px',
                             height: '20px',
                             borderRadius: '50%',
-                            backgroundColor: user.color,
+                            backgroundColor: editedTask.assignee.color,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -400,15 +395,26 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                             color: 'white',
                           }}
                         >
-                          {user.initials}
+                          {editedTask.assignee.initials}
                         </div>
                         <span style={{ fontSize: '13px', color: 'black' }}>
-                          {user.name}
+                          {editedTask.assignee.name}
                         </span>
                       </div>
                     );
                   }
-                  return value;
+
+                  return (
+                    <span
+                      style={{
+                        color: '#7D98B6',
+                        fontSize: '13px',
+                        fontWeight: '400',
+                      }}
+                    >
+                      Select User
+                    </span>
+                  );
                 }}
               >
                 <MenuItem
@@ -565,7 +571,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
               </div>
               <div>
                 <label className='block text-xs font-medium text-gray-600 mb-1'>
-                  End Date
+                  Due Date
                 </label>
                 <DatePicker
                   value={formatDateForInput(editedTask?.endDate)}
@@ -1041,7 +1047,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
             <textarea
               value={editedTask?.description || ''}
               onChange={handleDescriptionChange}
-              placeholder='Ensure accuracy and completeness of Project IDs, project costs, FTE and subcontractor costs, and cost allocations.'
+              placeholder=''
               className='w-full bg-white border border-gray-300 rounded-lg p-3 text-sm resize-none focus:border-blue-500 focus:outline-none text-gray-900 placeholder-gray-500 min-h-[100px]'
             />
           </div>
@@ -1116,37 +1122,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
             {/* Comments Tab */}
             {activeTab === 'comments' && (
               <div className='space-y-4'>
-                {/* Activity Feed in Comments */}
-                <div className='space-y-3'>
-                  {activities.map((activity, idx) => (
-                    <div key={activity.id || idx} className='flex gap-3'>
-                      <div className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 bg-amber-500 text-white'>
-                        {activity.user
-                          .split(' ')
-                          .map((n) => n[0])
-                          .join('')}
-                      </div>
-                      <div className='flex-1'>
-                        <p className='text-sm text-gray-700'>
-                          <span className='font-semibold'>{activity.user}</span>{' '}
-                          {activity.action}
-                          {activity.link && (
-                            <span className='text-blue-600'>
-                              {' '}
-                              {activity.link}
-                            </span>
-                          )}
-                          <span className='text-gray-500 text-xs ml-2'>·</span>
-                          <span className='text-gray-500 text-xs ml-2'>
-                            {activity.date}
-                          </span>
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Comment Input */}
+                {/* Only show comments UI, not activity feed here */}
                 <div className='flex items-start gap-3 mt-6 pt-4 border-t border-gray-200'>
                   <div
                     className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 text-white'
@@ -1206,34 +1182,40 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
 
             {activeTab === 'activity' && (
               <div className='space-y-3'>
-                {activities.map((activity, idx) => (
-                  <div
-                    key={activity.id || idx}
-                    className='flex gap-3 pb-3 border-b border-gray-200 last:border-b-0'
-                  >
-                    <div className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 bg-amber-500 text-white'>
-                      {activity.user
-                        .split(' ')
-                        .map((n) => n[0])
-                        .join('')}
+                {(task?.activities || []).length > 0 ? (
+                  (task?.activities || []).map((activity, idx) => (
+                    <div
+                      key={activity.id || idx}
+                      className='flex gap-3 pb-3 border-b border-gray-200 last:border-b-0'
+                    >
+                      <div className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 bg-amber-500 text-white'>
+                        {activity.user
+                          .split(' ')
+                          .map((n) => n[0])
+                          .join('')}
+                      </div>
+                      <div className='flex-1'>
+                        <p className='text-sm text-gray-700'>
+                          <span className='font-semibold'>{activity.user}</span>{' '}
+                          {activity.action}
+                          {activity.link && (
+                            <span className='text-blue-600'>
+                              {' '}
+                              {activity.link}
+                            </span>
+                          )}
+                        </p>
+                        <p className='text-xs text-gray-500 mt-1'>
+                          {activity.date}
+                        </p>
+                      </div>
                     </div>
-                    <div className='flex-1'>
-                      <p className='text-sm text-gray-700'>
-                        <span className='font-semibold'>{activity.user}</span>{' '}
-                        {activity.action}
-                        {activity.link && (
-                          <span className='text-blue-600'>
-                            {' '}
-                            {activity.link}
-                          </span>
-                        )}
-                      </p>
-                      <p className='text-xs text-gray-500 mt-1'>
-                        {activity.date}
-                      </p>
-                    </div>
+                  ))
+                ) : (
+                  <div className='text-center py-4'>
+                    <p className='text-sm text-gray-500'>No activities yet</p>
                   </div>
-                ))}
+                )}
               </div>
             )}
           </div>
@@ -1261,12 +1243,20 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                   fullWidth
                   size='small'
                   MenuProps={{
+                    anchorOrigin: {
+                      vertical: 'top',
+                      horizontal: 'left',
+                    },
+                    transformOrigin: {
+                      vertical: 'bottom',
+                      horizontal: 'left',
+                    },
                     PaperProps: {
                       sx: {
                         maxWidth: 300,
                         maxHeight: 300,
-                        marginBottom: '4px', // Changed to marginBottom for upward positioning
-                        zIndex: 40,
+                        marginBottom: '8px',
+                        zIndex: 9999,
                         boxShadow:
                           'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
                         '& .MuiMenuItem-root': {
@@ -1276,13 +1266,12 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                           textOverflow: 'ellipsis',
                         },
                       },
-                      anchorOrigin: {
-                        vertical: 'top',
-                        horizontal: 'left',
-                      },
-                      transformOrigin: {
-                        vertical: 'bottom',
-                        horizontal: 'left',
+                    },
+                    slotProps: {
+                      paper: {
+                        style: {
+                          marginBottom: '8px',
+                        },
                       },
                     },
                   }}

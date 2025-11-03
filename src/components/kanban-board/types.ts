@@ -21,6 +21,7 @@ export interface Task {
   commentAttachments?: string[];
   commentCount: number;
   createdAt: Date;
+  activities?: Activity[];
 }
 
 export interface StatusOption {
@@ -53,6 +54,7 @@ export interface KanbanBoardProps {
   statusData?: StatusOption[];
   priorityData?: PriorityOption[];
   tagData?: TagOption[];
+  userData?: User[];
   isCreateTaskDisabled?: boolean;
   isCreateTaskHide?: boolean;
   isCreateKanbanDisabled?: boolean;
@@ -68,6 +70,9 @@ export interface TaskCardProps {
   showProfileIndicator: boolean;
   onEditTask?: (taskId: string, newTitle: string) => void;
   onTaskClick?: (task: Task) => void;
+  statusData?: StatusOption[];
+  priorityData?: PriorityOption[];
+  onTaskUpdate?: (taskId: string, updatedTask: Partial<Task>) => void;
 }
 
 export interface KanbanColumnProps {

@@ -125,6 +125,7 @@ const icons = {
   infoIcon: () => import('./info-icon.svg?react'),
   editTaskIcon: () => import('./editTaskIcon.svg?react'),
   pencilIcon: () => import('./PencilIcon.svg?react'),
+  commentIcon: () => import('./comment-icon.svg?react'),
 };
 
 function createLazySvgIcon(name: keyof typeof icons) {
@@ -257,3 +258,4 @@ export const GearIcon = createLazySvgIcon('gearIcon');
 export const InfoIcon = createLazySvgIcon('infoIcon');
 export const EditTaskIcon = createLazySvgIcon('editTaskIcon');
 export const PencilIcon = createLazySvgIcon('pencilIcon');
+export const CommentIcon = createLazySvgIcon('commentIcon');
