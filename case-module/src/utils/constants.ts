@@ -333,6 +333,14 @@ export const rawQueries = {
     AND u.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active')
 	  order by name asc`
   },
+  checkCaseTableExists(schemaName: string) {
+    return `
+    SELECT EXISTS (
+      SELECT 1 FROM information_schema.tables
+      WHERE table_schema = '${schemaName}'
+      AND table_name = 'cases'
+    )`;
+  },
   fetchCaseStatusByType(type: string) {
     return `
     SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.case_status WHERE status_name = '${type}'`;
