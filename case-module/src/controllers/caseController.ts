@@ -1260,12 +1260,7 @@ async function listCaseTeamMembers(req: Request, res: Response): Promise<void> {
   const methodName = "List Case Team Members";
   try {
     const userId = req.headers["x-user-id"] as string;
-     const value = await validateRequest(
-      req,
-      listCaseTeamSchema,
-      res,
-      "GET"
-    );
+    const value = await validateRequest(req, listCaseTeamSchema, res, "GET");
     if (!value) return;
     let parsedFilters: Record<string, any> = {};
     try {
@@ -1276,7 +1271,12 @@ async function listCaseTeamMembers(req: Request, res: Response): Promise<void> {
         "Invalid filters format. Must be a valid JSON object."
       );
     }
-    const caseTeamMembers = await caseService.listCaseTeamMembers(value,parsedFilters,userId,"list");
+    const caseTeamMembers = await caseService.listCaseTeamMembers(
+      value,
+      parsedFilters,
+      userId,
+      "list"
+    );
     if (caseTeamMembers.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, caseTeamMembers.data);
@@ -1304,7 +1304,6 @@ async function listCaseTeamMembers(req: Request, res: Response): Promise<void> {
   }
 }
 
-
 export default {
   createCases,
   updateCases,
@@ -1321,5 +1320,5 @@ export default {
   exportAllCasesSummary,
   createCaseTeam,
   getCaseTeamRoles,
-  listCaseTeamMembers
+  listCaseTeamMembers,
 };
