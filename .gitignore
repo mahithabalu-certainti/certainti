@@ -53,3 +53,10 @@ Thumbs.db
 #env
 .env
 del.yml
+*.tfstate
+gitcommands.md
+del1.md
+del2.md
+del3.md
+
+
