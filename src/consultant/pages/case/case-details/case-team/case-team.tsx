@@ -100,7 +100,7 @@ const CaseTeam = () => {
   const caseTeamQuery = useGetCaseTeam(caseId, accountId);
   const updateCaseTeamMutation = useUpdateCaseTeam();
   const roleOptionsQuery = useGetRoleOptions();
-  const userOptionsQuery = useGetUserOptions();
+  const userOptionsQuery = useGetUserOptions(accountId);
 
   const teamTableColumns = getCaseTeamTableColumns();
   const formLoading = caseTeamQuery.isLoading || !isDataLoaded;
@@ -123,7 +123,7 @@ const CaseTeam = () => {
   };
 
   const getAvailableUserOptions = (currentIndex: number) => {
-    const allUsers = userOptionsQuery.data?.map((user) => user.user_name) || [];
+    const allUsers = userOptionsQuery.data?.map((user) => user.name) || [];
     const currentRole = formData.team_members[currentIndex]?.user_role;
 
     if (!currentRole) {
@@ -154,7 +154,7 @@ const CaseTeam = () => {
           return {
             ...user,
             user_id: user.rid || '',
-            user_name: userOption?.user_name || '',
+            user_name: userOption?.name || '',
             user_role: roleOption?.role_name || '',
             start_date: user.effective_startdate || '',
             end_date: user.effective_enddate || '',
@@ -322,7 +322,7 @@ const CaseTeam = () => {
     );
     const teamMembersPayload = validMembers.map((member) => {
       const userOption = userOptionsQuery.data?.find(
-        (user) => user.user_name === member.user_name
+        (user) => user.name === member.user_name
       );
       const roleOption = roleOptionsQuery.data?.find(
         (role) => role.role_name === member.user_role
@@ -368,7 +368,7 @@ const CaseTeam = () => {
 
     const deletePayloads = deletedMembers.map((member) => {
       const userOption = userOptionsQuery.data?.find(
-        (user) => user.user_name === member.user_name
+        (user) => user.name === member.user_name
       );
       const roleOption = roleOptionsQuery.data?.find(
         (role) => role.role_name === member.user_role
@@ -810,7 +810,7 @@ const CaseTeam = () => {
                                                 'transparent !important',
                                             },
                                           '& .MuiInputBase-input': {
-                                            fontSize: '13px', // Changed back to 13px
+                                            fontSize: '13px',
                                             padding: '5px 2px',
                                             height: '20px',
                                             color: member.start_date
@@ -819,7 +819,7 @@ const CaseTeam = () => {
                                             backgroundColor:
                                               'transparent !important',
                                             '&::placeholder': {
-                                              fontSize: '13px', // Changed back to 13px
+                                              fontSize: '13px',
                                               color: '#7D98B6 !important',
                                               opacity: 1,
                                             },

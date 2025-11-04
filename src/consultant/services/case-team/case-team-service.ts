@@ -1,8 +1,7 @@
 import { useMutation, useQuery, UseQueryResult } from '@tanstack/react-query';
 
 import { CommonApiResponse } from '../../../common-service';
-import { caseServiceApi, userServiceApi } from '../../../api/api';
-import { ManageUserApiResponse } from '../../../admin/types/manage-user';
+import { caseServiceApi } from '../../../api/api';
 export interface CaseTeamMember {
   rid?: string;
   user_id: string;
@@ -65,9 +64,9 @@ export interface RoleOptionsResponse extends CommonApiResponse {
 }
 export interface UserOption {
   rid: string;
-  user_name: string;
-  email: string;
-  status: string;
+  name: string;
+  email?: string;
+  status?: string;
 }
 
 export interface UserOptionsResponse extends CommonApiResponse {
@@ -132,30 +131,14 @@ const fetchRoleOptions = async (): Promise<RoleOption[]> => {
   }
 };
 
-const fetchUserOptions = async (): Promise<UserOption[]> => {
+const fetchUserOptions = async (accountId: string): Promise<UserOption[]> => {
   try {
-    const response = await userServiceApi.get<ManageUserApiResponse>(
-      '/api/user/list',
-      {
-        params: {
-          organization: import.meta.env.VITE_ORGANIZATION,
-          limit: 1000,
-          page: 1,
-          sortBy: 'first_name',
-          sortOrder: 'ASC',
-        },
-      }
+    const response = await caseServiceApi.get<UserOptionsResponse>(
+      `/api/cases/caseTeam/users/${accountId}`
     );
 
     if (response.data?.data?.users) {
-      return response.data.data.users
-        .filter((user) => user.status?.status_name === 'Active')
-        .map((user) => ({
-          rid: user.rid,
-          user_name: user.first_name,
-          email: user.email,
-          status: user.status?.status_name || 'Active',
-        }));
+      return response.data.data.users;
     }
     return [];
   } catch (error) {
@@ -191,15 +174,16 @@ export const useGetRoleOptions = (
 };
 
 export const useGetUserOptions = (
+  accountId?: string,
   enabled: boolean = true
 ): UseQueryResult<UserOption[] | undefined, Error> => {
   return useQuery<UserOption[] | undefined, Error>({
-    queryKey: ['case-team-user-options'],
-    queryFn: () => fetchUserOptions(),
+    queryKey: ['case-team-user-options', accountId],
+    queryFn: () => fetchUserOptions(accountId!),
     retry: 0,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
-    enabled,
+    enabled: enabled && !!accountId,
   });
 };
 
