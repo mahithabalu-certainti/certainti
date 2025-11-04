@@ -2426,6 +2426,28 @@ class CaseSchemaService {
       return [];
     }
   }
+
+  async listUsersForCaseTeam(accountRid:string) {
+    try {
+      if (!this.mainDbSequelize) {
+        this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+      }
+      const users = await this.mainDbSequelize.query(
+        rawQueries.listUsersForCaseTeam(accountRid),
+        {
+          type: "SELECT",
+        }
+      );
+      return users;
+    } catch (err) {
+      logMessage(`Error in fetching users for case team: ${err}`);
+      errorLog(
+        "Error in fetching users for case team:",
+        (err as Error).message
+      );
+      return [];
+    }
+}
 }
 
 // Utility function for optimized column sorting

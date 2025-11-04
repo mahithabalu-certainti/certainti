@@ -324,6 +324,15 @@ export const rawQueries = {
       ORDER BY role_name ASC
     `;
   },
+  listUsersForCaseTeam(accountRid: string) {
+    return `  
+      SELECT u.rid, CONCAT(u.first_name, ' ', u.last_name) AS name
+      FROM ${MAIN_SCHEMA_NAME}.user u
+	  where is_consultant_firm is true
+	  or org_id = '${accountRid}'
+    AND u.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active')
+	  order by name asc`
+  },
   fetchCaseStatusByType(type: string) {
     return `
     SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.case_status WHERE status_name = '${type}'`;

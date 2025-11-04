@@ -1356,7 +1356,98 @@ async function exportAllAssignedProjects(req: Request, res: Response) {
   }
 }
 
+/**
+ * Retrieves a list of users eligible to be assigned to case teams for a specific account.
+ *
+ * This controller method performs the following steps:
+ * 1. Validates that the user ID is present in the request headers for authentication.
+ * 2. Extracts the account RID from the request parameters to identify the target account.
+ * 3. Calls the `listUsersForCaseTeam` method from the `caseService` to fetch available users.
+ * 4. Returns a success response with user data if found, or an error response if the operation fails.
+ *
+ * @param {Request} req - Express request object containing:
+ *   - headers: Must include 'x-user-id' for authentication
+ *   - params: Must include 'accountRid' to specify the target account
+ * @param {Response} res - Express response object used to send the HTTP response with user data
+ *
+ * @returns {Promise<void>} - A Promise that resolves after sending the HTTP response
+ *
+ * @throws {Error} - Handles validation errors, missing user ID, and service errors
+ *
+ * @description
+ * HTTP Response Codes:
+ * - 200: Users retrieved successfully with user data
+ * - 400: Bad request (missing user ID or service error)
+ * 
+ * Use Cases:
+ * - Populating user dropdown lists in case team assignment forms
+ * - Filtering users based on account-specific permissions and roles
+ * - Supporting case team member selection workflows
+ * - Enabling dynamic user assignment based on account context
+ * 
+ * Security:
+ * - Requires valid user authentication via 'x-user-id' header
+ * - Account-based access control for user visibility
+ * - Filters users based on account permissions and roles
+ * 
+ * Data Returned:
+ * - User IDs, names, and relevant profile information
+ * - Role information for team assignment context
+ * - Account-specific user permissions and availability
+ */
+async function listUsersForCaseTeam(req: Request, res: Response): Promise<void> {
+  const methodName = "List Users For Case Team";
+  try {
+    // Extract and validate user ID from request headers for authentication
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST, 
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    
+    // Extract account RID from request parameters to identify target account
+    const accountrid = req.params.accountRid as string;
+    
+    // Call the service layer to fetch users eligible for case team assignment
+    const result = await caseService.listUsersForCaseTeam(accountrid);
+    
+    // Handle successful user retrieval
+    if (result.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, result.data);
+      return;
+    }
+    else {
+      // Handle service-level errors or cases where no users are found
+      errorLog(methodName, result.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        result.errorMessage
+      );
+      return;
+    }   
+  } catch (err) {
+    // Handle unexpected errors (system failures, network issues, etc.)
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
 
+}
 export default {
   createCases,
   updateCases,
@@ -1374,5 +1465,6 @@ export default {
   createCaseTeam,
   getCaseTeamRoles,
   listCaseTeamMembers,
-  exportAllAssignedProjects
+  exportAllAssignedProjects,
+  listUsersForCaseTeam
 };
