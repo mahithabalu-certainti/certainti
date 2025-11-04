@@ -5,7 +5,7 @@ import { CaseManagementSchemaService } from "./schemaService";
 import { HttpStatus, STATUS_MESSAGE } from "../../utils/constants";
 import { logMessage } from "../../utils/helpers";
 import CaseSchemaService from "../cases/schemaService";
-import { ICreateChecklist } from "../../utils/types";
+import { CreateTaskTemplateType, ICreateChecklist } from "../../utils/types";
 
 /**
  * Service class for managing case-related operations including case creation,
@@ -108,6 +108,21 @@ export class CaseManagementService {
         message: HttpStatus.FAILED_MESSAGE,
         errorMessage: STATUS_MESSAGE.adminChecklistFailed,
       };
+    }
+  }
+
+  async createTaskTemplate (data : CreateTaskTemplateType, userId : string) {
+    const createTaskResult = await this.caseManangementSchemaService.createTaskTemplate(data, userId);
+    if(createTaskResult.statusCode == HttpStatus.SUCCESS) {
+      return {
+        statusCode : createTaskResult.statusCode,
+        statusMessage : createTaskResult.statusMessage
+      }
+    } else {
+      return {
+        statusCode : createTaskResult.statusCode,
+        statusMessage : createTaskResult.statusMessage
+      } 
     }
   }
 }

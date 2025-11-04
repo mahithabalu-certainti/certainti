@@ -8,5 +8,10 @@ routes.post(
   checkUserStatusMiddleware("NA"),
   controller.caseManagementController.createAdminCheckList
 );
+routes.post(
+  "/taskTemplate/create",
+  checkUserStatusMiddleware("NA"),
+  controller.caseManagementController.createTaskTemplate
+);
 
 export default routes;

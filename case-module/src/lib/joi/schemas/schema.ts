@@ -114,6 +114,19 @@ const adminChecklistSchema = Joi.object({
     .min(1)
     .required(),
 });
+
+const createTaskTemplateSchema = Joi.object({
+  task_name: Joi.string().max(255).required(),
+  effort_in_days : Joi.number().optional(),
+  reminder_interval: Joi.number().optional(),
+  effective_start_datetime : Joi.string().optional(),
+  effective_end_datetime : Joi.string().optional(),
+  case_team_member_role_rid : Joi.string().optional(),
+  checklist_rid : Joi.string().optional(),
+  status_rid : Joi.string().optional(),
+  priority_rid : Joi.string().optional(),
+  milestone_rid : Joi.string().optional()
+});
 export {
   createCaseSchema,
   updateCaseSchema,
@@ -123,5 +136,6 @@ export {
   exportCaseSummarySchema,
   createCaseTeamSchema,
   listCaseTeamSchema,
-  adminChecklistSchema
+  adminChecklistSchema,
+  createTaskTemplateSchema
 };

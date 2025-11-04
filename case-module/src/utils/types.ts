@@ -251,3 +251,22 @@ export interface ICreateChecklistItem {
   created_datetime: Date;
   modified_datetime?: Date;
 }
+
+export type CreateTaskTemplateType = {
+  created_by : string,
+  modified_by : string,
+  created_datetime : Date,
+  modified_datetime : Date,
+  task_name : string,
+  sequence_no : number,
+  effort_in_days : number,
+  reminder_interval : number,
+  effective_start_datetime : Date,
+  effective_end_datetime : Date,
+  case_team_member_role_rid : string,
+  checklist_rid : string,
+  status_rid : string,
+  priority_rid : string,
+  task_type: string,
+  milestone_rid : string
+}
