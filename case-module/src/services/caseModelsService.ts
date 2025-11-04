@@ -8,6 +8,8 @@ import { CaseProject } from "../models/caseProjectsModel";
 import { CaseTimeline } from "../models/caseTimeline";
 import { CaseHistory } from "../models/caseHistory";
 import { CaseTeam } from "../models/caseTeamModel";
+import { AdminChecklist } from "../models/adminChecklistModel";
+import { AdminCheckListItem } from "../models/adminCheckListItemsModel";
 
 export class CaseModelService {
   orgDbSequelize: Sequelize | null = null;
@@ -53,6 +55,8 @@ export class CaseModelService {
     const CaseTimelineModel = CaseTimeline.initialize(sequelize, schemaName);
     const CaseHistoryModel = CaseHistory.initialize(sequelize, schemaName);
     const CaseTeamModel = CaseTeam.initialize(sequelize, schemaName);
+    const AdminChecklistModel = AdminChecklist.initialize(mainDbSequelize, "");
+    const AdminCheckListItemModel = AdminCheckListItem.initialize(mainDbSequelize, "");
     const models = {
       Case: CaseModel,
       CaseSummary: CaseSummaryModel,
@@ -60,6 +64,8 @@ export class CaseModelService {
       CaseTimeline: CaseTimelineModel,
       CaseHistory: CaseHistoryModel,
       CaseTeam: CaseTeamModel,
+      AdminChecklist: AdminChecklistModel,
+      AdminCheckListItem: AdminCheckListItemModel,
 
     };
 

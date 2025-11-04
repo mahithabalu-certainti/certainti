@@ -98,6 +98,22 @@ const listCaseTeamSchema = Joi.object({
   sortBy: Joi.string().optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
 });
+
+const adminChecklistSchema = Joi.object({
+  checklist_name: Joi.string().max(255).required(),
+  checklist_description: Joi.string().max(2000).optional().allow(""),
+  checklist_items: Joi.array()
+    .items(
+      Joi.object({  
+        checklist_item_name: Joi.string().max(255).required(),
+        sequence_no: Joi.number().integer().min(1).required(),
+        description: Joi.string().max(2000).optional().allow(""), 
+        action_type: Joi.string().valid("add", "edit", "delete").required(),
+      })
+    )
+    .min(1)
+    .required(),
+});
 export {
   createCaseSchema,
   updateCaseSchema,
@@ -106,5 +122,6 @@ export {
   listCaseSummarySchema,
   exportCaseSummarySchema,
   createCaseTeamSchema,
-  listCaseTeamSchema
+  listCaseTeamSchema,
+  adminChecklistSchema
 };

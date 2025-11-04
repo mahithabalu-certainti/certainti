@@ -1,0 +1,113 @@
+import { Logger } from "winston";
+import { CaseModelService } from "../caseModelsService";
+import { Sequelize } from "sequelize";
+import { CaseManagementSchemaService } from "./schemaService";
+import { HttpStatus, STATUS_MESSAGE } from "../../utils/constants";
+import { logMessage } from "../../utils/helpers";
+import CaseSchemaService from "../cases/schemaService";
+import { ICreateChecklist } from "../../utils/types";
+
+/**
+ * Service class for managing case-related operations including case creation,
+ * admin checklist management, and database operations.
+ *
+ * Provides high-level business logic for case management workflows,
+ * integrating with schema services and database models to handle
+ * transactional operations safely.
+ */
+export class CaseManagementService {
+  private caseManangementSchemaService: CaseManagementSchemaService;
+  private caseSchemaService: CaseSchemaService;
+  private caseModelService: CaseModelService; // Service for database model operations and connection management
+  private logger: Logger;
+  private orgDbSequelize: Sequelize | null = null;
+  private mainDbSequelize: Sequelize | null = null;
+
+  /**
+   * Initializes the CaseManagementService with required dependencies.
+   *
+   * @param logger - Winston logger instance for logging operations and errors
+   */
+  constructor(logger: Logger) {
+    this.logger = logger;
+    this.caseManangementSchemaService = new CaseManagementSchemaService();
+    this.caseSchemaService = new CaseSchemaService();
+    this.caseModelService = new CaseModelService(); // Handles database connections and model operations
+  }
+  /**
+   * Creates a new admin checklist with associated checklist items within a database transaction.
+   *
+   * @param {ICreateChecklist} caseRequest - The checklist data including template information and checklist items to create
+   * @param {string} userId - The ID of the user creating the checklist (will be set as created_by)
+   *
+   * @returns {Promise<{
+   *   statusCode: number;
+   *   message: string;
+   *   errorMessage?: string;
+   *   data?: { checklist: any };
+   * }>} - Result of the creation process with status code, message, and checklist data if successful
+   *
+   * @description
+   * This method performs the following operations within a database transaction:
+   * - Initializes a database transaction for atomic operations
+   * - Sets the created_by field to the provided userId
+   * - Creates the admin checklist record using the schema service
+   * - Creates associated checklist items linked to the new checklist
+   * - Commits the transaction on success or rolls back on any error
+   * - Returns success response with checklist data or error response with details
+   * - Logs errors and ensures proper transaction cleanup
+   */
+
+  async createAdminCheckList(
+    caseRequest: ICreateChecklist,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { checklist: any };
+  }> {
+    // Initialize database connection and start transaction for atomic operations
+    const dbInit = await this.caseModelService.getMainSequelize();
+    const transaction = await dbInit.transaction();
+    try {
+      // Set the user who is creating this checklist
+      caseRequest.created_by = userId;
+
+      // Create the main admin checklist record
+      const response =
+        await this.caseManangementSchemaService.createAdminCheckList(
+          caseRequest,
+          transaction
+        );
+
+      // If checklist creation was successful, manage associated checklist items (add/edit/delete)
+      if (response) {
+        await this.caseManangementSchemaService.manageAdminCheckListItems(
+          caseRequest,
+          response.rid,
+          transaction
+        );
+      }
+
+      // Commit the transaction after all operations succeed
+      await transaction.commit();
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: STATUS_MESSAGE.adminChecklistCreated,
+        data: {
+          checklist: response,
+        },
+      };
+    } catch (err) {
+      logMessage(`Error creating admin checklist: ${err}`);
+      await transaction.rollback();
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: STATUS_MESSAGE.adminChecklistFailed,
+      };
+    }
+  }
+}

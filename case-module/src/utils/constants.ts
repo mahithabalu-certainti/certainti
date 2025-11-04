@@ -81,6 +81,8 @@ export const STATUS_MESSAGE = {
   caseIdMissing: "Case ID is required",
   countryValidationFailed:
     "Country is not associated with the account,Please select country",
+  adminChecklistCreated: "Admin checklist created successfully",
+  adminChecklistFailed: "Admin checklist creation failed",
 };
 
 export const caseStatuses = {
