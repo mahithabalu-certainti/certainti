@@ -1,14 +1,16 @@
 'use client';
 import type React from 'react';
-import { useState } from 'react';
+import { useState, useMemo, lazy, Suspense } from 'react';
 import type {
   KanbanBoardProps,
   KanbanColumn as KanbanColumnType,
   Task,
 } from './types';
 import KanbanColumn from './kanban-column';
-import TaskDetailModal from './task-detail-modal';
 import { AddIcon } from '../../assets';
+
+// Lazy load the modal to reduce bundle size and initial render time
+const TaskDetailModal = lazy(() => import('./task-detail-modal'));
 
 const KanbanBoard: React.FC<KanbanBoardProps> = ({
   data,
@@ -102,8 +104,11 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   };
 
   const handleTaskClick = (task: Task) => {
-    setSelectedTask(task);
-    setIsModalOpen(true);
+    // Use setTimeout to defer the heavy modal rendering
+    setTimeout(() => {
+      setSelectedTask(task);
+      setIsModalOpen(true);
+    }, 0);
   };
 
   const handleTaskUpdate = (taskId: string, updatedTask: Partial<Task>) => {
@@ -120,11 +125,14 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
     }
   };
 
+  // Memoize columns to prevent unnecessary re-renders
+  const memoizedColumns = useMemo(() => columns, [columns]);
+
   return (
     <div className='min-h-screen p-4'>
       <div className='max-w-full overflow-x-auto'>
         <div className='flex items-start gap-6 pb-6'>
-          {columns.map((column) => (
+          {memoizedColumns.map((column) => (
             <KanbanColumn
               key={column.id}
               column={column}
@@ -175,17 +183,22 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
         </div>
       </div>
 
-      <TaskDetailModal
-        task={selectedTask}
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onTaskUpdate={handleTaskUpdate}
-        statusData={statusData}
-        priorityData={priorityData}
-        tagData={tagData}
-        availableUsers={userData}
-        activities={selectedTask?.activities || []}
-      />
+      {/* Add Suspense wrapper for lazy-loaded modal */}
+      <Suspense fallback={null}>
+        {isModalOpen && (
+          <TaskDetailModal
+            task={selectedTask}
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            onTaskUpdate={handleTaskUpdate}
+            statusData={statusData}
+            priorityData={priorityData}
+            tagData={tagData}
+            availableUsers={userData}
+            activities={selectedTask?.activities || []}
+          />
+        )}
+      </Suspense>
     </div>
   );
 };

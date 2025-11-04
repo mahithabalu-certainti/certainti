@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { TaskCardProps } from './types';
 import { PencilIcon, CommentIcon } from '../../assets';
+import CustomChecklistIcon from './CustomChecklistIcon';
 import { MenuItem, Select, SelectChangeEvent } from '@mui/material';
 
 const TaskCard: React.FC<TaskCardProps> = ({
@@ -108,6 +109,25 @@ const TaskCard: React.FC<TaskCardProps> = ({
       setIsEditing(false);
     }
   };
+
+  // Calculate checklist progress
+  const getChecklistProgress = () => {
+    if (!task.checklist || task.checklist.length === 0) return null;
+
+    const completedItems = task.checklist.filter(
+      (item) => item.completed
+    ).length;
+    const totalItems = task.checklist.length;
+    const percentage = Math.round((completedItems / totalItems) * 100);
+
+    return {
+      completed: completedItems,
+      total: totalItems,
+      percentage,
+    };
+  };
+
+  const checklistProgress = getChecklistProgress();
 
   return (
     <div
@@ -364,12 +384,25 @@ const TaskCard: React.FC<TaskCardProps> = ({
           </div>
         )}
 
-        {showCommentCount && (
-          <div className='flex items-center gap-1 text-gray-400 ml-auto'>
-            <CommentIcon className='w-3 h-3 text-gray-400' />
-            <span className='text-[11px]'>{task.commentCount}</span>
-          </div>
-        )}
+        <div className='flex items-center gap-2 ml-auto'>
+          {/* Progress Indicator for Checklist */}
+          {checklistProgress && (
+            <div className='flex items-center gap-1 text-gray-400'>
+              <CustomChecklistIcon className='w-3 h-3 text-gray-400' />
+              <span className='text-[11px]'>
+                {checklistProgress.completed}/{checklistProgress.total}
+              </span>
+            </div>
+          )}
+
+          {/* Comments Count */}
+          {showCommentCount && (
+            <div className='flex items-center gap-1 text-gray-400'>
+              <CommentIcon className='w-3 h-3 text-gray-400' />
+              <span className='text-[11px]'>{task.commentCount}</span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
