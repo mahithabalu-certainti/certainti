@@ -61,6 +61,34 @@ class CaseSchemaService {
     this.caseModelService = new CaseModelService();
   }
 
+  /**
+   * Checks if a table exists in the specified schema
+   */
+  private async checkTableExists(schemaName: string, tableName: string): Promise<boolean> {
+    try {
+      if (!this.orgDbSequelize) {
+        this.orgDbSequelize = await this.caseModelService.getSequelize();
+      }
+
+      const result = await this.orgDbSequelize.query(
+        `SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_schema = $1 
+          AND table_name = $2
+        )`,
+        {
+          bind: [schemaName, tableName],
+          type: "SELECT"
+        }
+      );
+
+      return (result[0] as any[])[0]?.exists || false;
+    } catch (error) {
+      logMessage(`Error checking table existence: ${error}`);
+      return false;
+    }
+  }
+
   async fetchValidAccountNumberById(accountId: string) {
     try {
       if (!this.mainDbSequelize) {
@@ -440,6 +468,18 @@ class CaseSchemaService {
         data.fiscal_year !== "0"
       ) {
         whereConditions.fiscal_year = data.fiscal_year;
+      }
+
+      // Check if cases table exists before querying
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
+      const tableExists = await this.checkTableExists(schemaName, 'cases');
+      
+      if (!tableExists) {
+        logMessage(`Cases table does not exist for account ${accountNumber}, returning empty result`);
+        return {
+          caseInfo: [],
+          count: 0,
+        };
       }
 
       const { rows: caseDetails, count } = await Case.findAndCountAll({
