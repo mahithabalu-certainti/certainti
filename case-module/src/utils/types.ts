@@ -231,3 +231,23 @@ export interface TeamMember {
   effective_to: Date;
   action_type: "add" | "edit" | "delete";
 }
+
+export interface ICreateChecklist {
+  checklist_name: string;
+  checklist_description?: string;
+  created_by: string;
+  modified_by?: string;
+  created_datetime: Date;
+  modified_datetime?: Date;
+  checklist_items: ICreateChecklistItem[];
+}
+export interface ICreateChecklistItem {
+  checklist_item_name: string;
+  action_type: "add" | "edit" | "delete";
+  sequence_no: number;
+  description?: string;
+  created_by: string;
+  modified_by?: string;
+  created_datetime: Date;
+  modified_datetime?: Date;
+}

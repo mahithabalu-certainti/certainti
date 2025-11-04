@@ -1,4 +1,4 @@
-import { ICreateCases, ICreateCaseTeam } from "../../utils/types";
+import { ICreateCases, ICreateCaseTeam, ICreateChecklist } from "../../utils/types";
 
 export interface ICaseService {
   createCase(
@@ -91,4 +91,16 @@ export interface ICaseService {
     data?: { caseTeamMembers: any };
   }>;
   exportAssignedProjects (data : any) : Promise<any>
+}
+
+export interface ICaseManagementService {
+    createAdminCheckList(
+    checklistRequest: ICreateChecklist,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { checklist: any };
+  }>;
 }
