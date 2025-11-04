@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Select,
   MenuItem,
@@ -69,6 +69,9 @@ const CaseTeam = () => {
 
   // Track if form has unsaved changes
   const [isFormChanged, setIsFormChanged] = useState(false);
+
+  // Fix cellRefs type to handle undefined values properly
+  const cellRefs = useRef<Record<string, HTMLTableCellElement | null>>({});
 
   // Compare formData.team_members with originalTeamMembers
   useEffect(() => {
@@ -190,14 +193,19 @@ const CaseTeam = () => {
       updateCaseTeamMutation.reset();
       caseTeamQuery.refetch();
     }
-  }, [updateCaseTeamMutation.isSuccess]);
+  }, [
+    updateCaseTeamMutation.isSuccess,
+    successToast,
+    updateCaseTeamMutation,
+    caseTeamQuery,
+  ]);
 
   useEffect(() => {
     if (updateCaseTeamMutation.isError) {
       errorToast('Failed to update case team');
       updateCaseTeamMutation.reset();
     }
-  }, [updateCaseTeamMutation.isError]);
+  }, [updateCaseTeamMutation.isError, errorToast, updateCaseTeamMutation]);
 
   function handleAddTeamMember() {
     setFormData((prev) => {
@@ -434,7 +442,7 @@ const CaseTeam = () => {
         hideSection={false}
       />
 
-      <div className='flex flex-col gap-0 border border-[#CBD6E2] rounded-[2px] pt-5'>
+      <div className='flex flex-col gap-0 border border-[#CBD6E2] pt-5'>
         <div className='w-full mb-5'>
           <div className='px-4'>
             <TableContainer sx={{ overflowX: 'auto' }}>
@@ -522,6 +530,11 @@ const CaseTeam = () => {
                             return (
                               <TableCell
                                 key={`${col.name}-${index}`}
+                                ref={(el: HTMLTableCellElement | null) => {
+                                  if (el)
+                                    cellRefs.current[`${col.name}-${index}`] =
+                                      el;
+                                }}
                                 style={{
                                   width: col.width,
                                   textAlign: col.align ?? 'left',
@@ -575,8 +588,12 @@ const CaseTeam = () => {
                                         PaperProps: {
                                           sx: {
                                             marginTop: '4px',
-                                            minWidth: 'fit-content',
-                                            width: 'auto',
+                                            maxHeight: '250px',
+                                            borderRadius: '0px',
+                                            width:
+                                              cellRefs.current[
+                                                `user_role-${index}`
+                                              ]?.offsetWidth || 'auto',
                                             boxShadow:
                                               'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
                                             '& .MuiMenuItem-root': {
@@ -666,8 +683,12 @@ const CaseTeam = () => {
                                         PaperProps: {
                                           sx: {
                                             marginTop: '4px',
-                                            minWidth: 'fit-content',
-                                            width: 'auto',
+                                            maxHeight: '250px',
+                                            borderRadius: '0px',
+                                            width:
+                                              cellRefs.current[
+                                                `user_name-${index}`
+                                              ]?.offsetWidth || 'auto',
                                             boxShadow:
                                               'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
                                             '& .MuiMenuItem-root': {
@@ -845,9 +866,21 @@ const CaseTeam = () => {
                                                 return false;
                                               },
                                             },
+                                            InputLabelProps: {
+                                              shrink: true,
+                                            },
                                           },
                                           inputAdornment: {
                                             position: 'end',
+                                          },
+                                          popper: {
+                                            sx: {
+                                              '& .MuiPaper-root': {
+                                                marginTop: '7px',
+                                                marginLeft: '-10px',
+                                                borderRadius: '0px',
+                                              },
+                                            },
                                           },
                                         }}
                                         slots={{
@@ -1001,9 +1034,21 @@ const CaseTeam = () => {
                                                 return false;
                                               },
                                             },
+                                            InputLabelProps: {
+                                              shrink: true,
+                                            },
                                           },
                                           inputAdornment: {
                                             position: 'end',
+                                          },
+                                          popper: {
+                                            sx: {
+                                              '& .MuiPaper-root': {
+                                                marginTop: '7px',
+                                                marginLeft: '-10px',
+                                                borderRadius: '0px',
+                                              },
+                                            },
                                           },
                                         }}
                                         slots={{
@@ -1099,7 +1144,7 @@ const CaseTeam = () => {
 
           <div className='mt-2 pl-4'>
             <button
-              className='flex items-center cursor-pointer gap-1 bg-[#EAF0F5] h-[30px] rounded-[2px] color-[#2D3E4F] px-2 text-[12px] font-semibold disabled:bg-gray-100 disabled:opacity-75 disabled:cursor-default'
+              className='flex items-center cursor-pointer gap-1 bg-[#EAF0F5] h-[30px] color-[#2D3E4F] px-2 text-[12px] font-semibold disabled:bg-gray-100 disabled:opacity-75 disabled:cursor-default'
               type='button'
               onClick={handleAddTeamMember}
               disabled={formLoading}
