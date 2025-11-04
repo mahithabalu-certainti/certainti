@@ -67,6 +67,31 @@ const CaseTeam = () => {
     CaseTeamMember[]
   >([]);
 
+  // Track if form has unsaved changes
+  const [isFormChanged, setIsFormChanged] = useState(false);
+
+  // Compare formData.team_members with originalTeamMembers
+  useEffect(() => {
+    if (formData.team_members.length !== originalTeamMembers.length) {
+      setIsFormChanged(true);
+      return;
+    }
+    for (let i = 0; i < formData.team_members.length; i++) {
+      const a = formData.team_members[i];
+      const b = originalTeamMembers[i];
+      if (
+        a.user_name !== b.user_name ||
+        a.user_role !== b.user_role ||
+        a.start_date !== b.start_date ||
+        a.end_date !== b.end_date
+      ) {
+        setIsFormChanged(true);
+        return;
+      }
+    }
+    setIsFormChanged(false);
+  }, [formData.team_members, originalTeamMembers]);
+
   const accountId = searchParams.get('accountID') || '';
 
   const caseTeamQuery = useGetCaseTeam(caseId, accountId);
@@ -375,7 +400,7 @@ const CaseTeam = () => {
       variant: 'contained' as const,
       onClick: handleSave,
       hide: false,
-      disabled: false,
+      disabled: !isFormChanged || isLoading,
       loading: isLoading,
     },
   ];
