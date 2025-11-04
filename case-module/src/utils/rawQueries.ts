@@ -38,10 +38,17 @@ export const fetchProjectsForCases = (
   search: string,
   caseRid: string,
   assignedApi: boolean,
-  accessibleIds: string[]
+  accessibleIds: string[],
+  isExport : boolean
 ) => {
-  const offset = (page - 1) * limit;
-  const pagination = `LIMIT ${limit} OFFSET ${offset}`;
+  let pagination : string = ``
+  if(isExport) {
+    const offset = (page - 1) * limit;
+    pagination = `LIMIT ${limit} OFFSET ${offset}`;
+  } else {
+    pagination = ` `
+  }
+    
   let sortValue: string;
   let searchValue: string;
   let filterQueryConditions: string[] = [];

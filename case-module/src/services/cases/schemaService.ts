@@ -1032,7 +1032,8 @@ class CaseSchemaService {
     tPocRid: string,
     isSorting: boolean,
     assignedApi: boolean,
-    accessibleIds: string[]
+    accessibleIds: string[],
+    isExport : boolean
   ) {
     const result = await orgDb.query(
       fetchProjectsForCases(
@@ -1050,7 +1051,8 @@ class CaseSchemaService {
         data.search,
         data.case_rid,
         assignedApi,
-        accessibleIds
+        accessibleIds,
+        isExport
       )
     );
     return result[0];

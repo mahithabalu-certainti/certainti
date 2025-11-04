@@ -616,7 +616,8 @@ async function fetchProjectForAssign(
     const result = await caseService.fetchProjectsForAssign(
       data,
       false,
-      userId
+      userId,
+      false
     );
     if (result.statusCode === HttpStatus.SUCCESS) {
       return res.status(HttpStatus.SUCCESS).send({
@@ -1027,7 +1028,7 @@ async function fetchAssignedprojects(
       return;
     }
     const data = req.body;
-    const result = await caseService.fetchProjectsForAssign(data, true, userId);
+    const result = await caseService.fetchProjectsForAssign(data, true, userId, false);
     if (result.statusCode === HttpStatus.SUCCESS) {
       return res.status(HttpStatus.SUCCESS).send({
         statusCode: HttpStatus.SUCCESS,
@@ -1304,6 +1305,57 @@ async function listCaseTeamMembers(req: Request, res: Response): Promise<void> {
   }
 }
 
+async function exportAllAssignedProjects(req: Request, res: Response) {
+  try {
+    const methodName = "Export All Assigned Projects";
+    const userId = req.headers["x-user-id"] as string;
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(
+        req.body
+      )} userId: ${userId}`
+    );
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    // Create modified data object with parsed globalFilters
+    const data = req.body;
+    data.userId = userId
+    const result = await caseService.exportAssignedProjects(data);
+    if (result.statusCode == HttpStatus.SUCCESS) {
+      const generateBase64Response = await generateExcelBase64(
+        result.data,
+        "Cases"
+      );
+      handleSuccessResponse(res, generateBase64Response);
+    } else {
+      errorLog(methodName, "No data found");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        result.errorMessage
+      );
+      return;
+    }
+  } catch (error: any) {
+    console.log("Error in exportAllCasesSummary:", error);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
 
 export default {
   createCases,
@@ -1321,5 +1373,6 @@ export default {
   exportAllCasesSummary,
   createCaseTeam,
   getCaseTeamRoles,
-  listCaseTeamMembers
+  listCaseTeamMembers,
+  exportAllAssignedProjects
 };

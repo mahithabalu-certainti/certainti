@@ -57,24 +57,24 @@ routes.get(
 );
 routes.post(
   "/projects",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("projects_view_edit"),
   controller.caseController.fetchProjectForAssign
 );
 routes.post(
   "/projects/assign",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("projects_view_edit"),
   controller.caseController.assignProjectToCase
 );
 
 routes.post(
   "/assignedProjects",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("projects_view_edit"),
   controller.caseController.fetchAssignedprojects
 );
 
 routes.post(
   "/projects/delete",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("projects_view_edit"),
   controller.caseController.deleteProjectFromCase
 );
 
@@ -88,5 +88,10 @@ routes.get(
   checkUserStatusMiddleware("cases_view_edit"),
   controller.caseController.listCaseTeamMembers
 );
+routes.post(
+  "/assignedProjects/export",
+  checkUserStatusMiddleware("projects_view_edit"),
+  controller.caseController.exportAllAssignedProjects
+)
 
 export default routes;
