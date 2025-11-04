@@ -64,25 +64,26 @@ class CaseSchemaService {
   /**
    * Checks if a table exists in the specified schema
    */
-  private async checkTableExists(schemaName: string, tableName: string): Promise<boolean> {
+  private async checkTableExists(
+    schemaName: string,
+    tableName: string
+  ): Promise<boolean> {
     try {
       if (!this.orgDbSequelize) {
         this.orgDbSequelize = await this.caseModelService.getSequelize();
       }
 
-      const result = await this.orgDbSequelize.query(
-        `SELECT EXISTS (
-          SELECT FROM information_schema.tables 
-          WHERE table_schema = $1 
-          AND table_name = $2
-        )`,
-        {
-          bind: [schemaName, tableName],
-          type: "SELECT"
-        }
-      );
+  
+      const checkTableQuery = rawQueries.checkCaseTableExists(schemaName);
 
-      return (result[0] as any[])[0]?.exists || false;
+      const [tableExists] = await this.orgDbSequelize.query(checkTableQuery, {
+        type: "SELECT",
+      });
+
+      if ((tableExists as any).exists === false) {
+        return false;
+      }
+      return true;
     } catch (error) {
       logMessage(`Error checking table existence: ${error}`);
       return false;
@@ -471,11 +472,17 @@ class CaseSchemaService {
       }
 
       // Check if cases table exists before querying
-      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
-      const tableExists = await this.checkTableExists(schemaName, 'cases');
-      
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(
+        /\D/g,
+        ""
+      )}`;
+      console.log(schemaName);
+      const tableExists = await this.checkTableExists(schemaName, "cases");
+
       if (!tableExists) {
-        logMessage(`Cases table does not exist for account ${accountNumber}, returning empty result`);
+        logMessage(
+          `Cases table does not exist for account ${accountNumber}, returning empty result`
+        );
         return {
           caseInfo: [],
           count: 0,
@@ -1084,7 +1091,7 @@ class CaseSchemaService {
     isSorting: boolean,
     assignedApi: boolean,
     accessibleIds: string[],
-    isExport : boolean
+    isExport: boolean
   ) {
     const result = await orgDb.query(
       fetchProjectsForCases(
@@ -2427,7 +2434,7 @@ class CaseSchemaService {
     }
   }
 
-  async listUsersForCaseTeam(accountRid:string) {
+  async listUsersForCaseTeam(accountRid: string) {
     try {
       if (!this.mainDbSequelize) {
         this.mainDbSequelize = await this.caseModelService.getMainSequelize();
@@ -2447,7 +2454,7 @@ class CaseSchemaService {
       );
       return [];
     }
-}
+  }
 }
 
 // Utility function for optimized column sorting
