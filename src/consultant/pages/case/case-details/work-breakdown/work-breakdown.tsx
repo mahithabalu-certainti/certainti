@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActionItemsIcon, ComingSoon } from '../../../../../assets';
+import { ActionItemsIcon } from '../../../../../assets';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
@@ -7,6 +7,7 @@ import { AllPermissions } from '../../../../../common-service';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import KanbanBoard from '../../../../../components/kanban-board/kanban-board';
 import { mockKanbanData } from './mockData';
+import { CaseTask } from './case-task';
 
 const ConfigTabs: ResourceTabs[] = [
   {
@@ -111,11 +112,7 @@ const WorkBreakDown = () => {
             isCreateTaskHide={false}
           />
         )}
-        {tabParam === 'case_task' && (
-          <div className='flex items-center justify-center h-full'>
-            <ComingSoon alt='comingSoon' />
-          </div>
-        )}
+        {tabParam === 'case_task' && <CaseTask />}
       </div>
     </>
   );
