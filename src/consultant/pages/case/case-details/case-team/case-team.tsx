@@ -27,7 +27,7 @@ import SectionHeader from '../../../../../components/details-section/section-hea
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import { AllPermissions } from '../../../../../common-service';
 import { useToast } from '../../../../../hooks';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useParams } from 'react-router-dom';
 import {
   getCaseTeamTableColumns,
   CaseTeamFormData,
@@ -54,6 +54,7 @@ const ConfigTabs: ResourceTabs[] = [
 
 const CaseTeam = () => {
   const [searchParams] = useSearchParams();
+  const { caseId } = useParams();
   const { successToast, errorToast } = useToast();
 
   const [formData, setFormData] = useState<CaseTeamFormData>({
@@ -62,10 +63,13 @@ const CaseTeam = () => {
   const [errors, setErrors] = useState<CaseTeamFormErrors>({});
   const [isLoading, setIsLoading] = useState(false);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
+  const [originalTeamMembers, setOriginalTeamMembers] = useState<
+    CaseTeamMember[]
+  >([]);
 
-  const caseId = searchParams.get('caseId') || 'case_123';
+  const accountId = searchParams.get('accountID') || '';
 
-  const caseTeamQuery = useGetCaseTeam(caseId);
+  const caseTeamQuery = useGetCaseTeam(caseId, accountId);
   const updateCaseTeamMutation = useUpdateCaseTeam();
   const roleOptionsQuery = useGetRoleOptions();
   const userOptionsQuery = useGetUserOptions();
@@ -108,26 +112,57 @@ const CaseTeam = () => {
   };
 
   useEffect(() => {
-    if (caseTeamQuery.data && !isDataLoaded) {
-      setFormData({
-        team_members: caseTeamQuery.data.team_members.map(
-          (user: CaseTeamMember) => ({
+    // Process data whenever we have case team data and dropdown options are available
+    if (caseTeamQuery.data && userOptionsQuery.data && roleOptionsQuery.data) {
+      const teamMembers = caseTeamQuery.data.team_members.map(
+        (user: CaseTeamMember) => {
+          const userOption = userOptionsQuery.data?.find(
+            (u) => u.rid === user.user_rid
+          );
+          const roleOption = roleOptionsQuery.data?.find(
+            (r) => r.rid === user.role_rid
+          );
+
+          return {
             ...user,
-            user_id: user.user_id || '',
-            user_name: user.user_name || '',
-            user_role: user.user_role || '',
-            start_date: user.start_date || '',
-            end_date: user.end_date || '',
-          })
-        ),
+            user_id: user.rid || '',
+            user_name: userOption?.user_name || '',
+            user_role: roleOption?.role_name || '',
+            start_date: user.effective_startdate || '',
+            end_date: user.effective_enddate || '',
+          };
+        }
+      );
+
+      // Always update the state when we have fresh data
+      setOriginalTeamMembers([...teamMembers]);
+
+      const finalTeamMembers =
+        teamMembers.length === 0
+          ? [
+              {
+                user_id: 'MEM_1',
+                user_name: '',
+                user_role: '',
+                start_date: '',
+                end_date: '',
+              },
+            ]
+          : teamMembers;
+
+      setFormData({
+        team_members: finalTeamMembers,
       });
       setIsDataLoaded(true);
     }
-  }, [caseTeamQuery.data, isDataLoaded]);
+  }, [caseTeamQuery.data, userOptionsQuery.data, roleOptionsQuery.data]);
 
   useEffect(() => {
     if (updateCaseTeamMutation.isSuccess) {
       successToast('Case team updated successfully');
+      // Reset the mutation state and reload data
+      setIsDataLoaded(false);
+      updateCaseTeamMutation.reset();
       caseTeamQuery.refetch();
     }
   }, [updateCaseTeamMutation.isSuccess]);
@@ -135,6 +170,7 @@ const CaseTeam = () => {
   useEffect(() => {
     if (updateCaseTeamMutation.isError) {
       errorToast('Failed to update case team');
+      updateCaseTeamMutation.reset();
     }
   }, [updateCaseTeamMutation.isError]);
 
@@ -248,21 +284,84 @@ const CaseTeam = () => {
     }
 
     setIsLoading(true);
+    const validMembers = formData.team_members.filter(
+      (member) => member.user_name.trim() && member.user_role.trim()
+    );
+    const teamMembersPayload = validMembers.map((member) => {
+      const userOption = userOptionsQuery.data?.find(
+        (user) => user.user_name === member.user_name
+      );
+      const roleOption = roleOptionsQuery.data?.find(
+        (role) => role.role_name === member.user_role
+      );
+
+      const originalMember = originalTeamMembers.find(
+        (orig) =>
+          orig.user_id === member.user_id && !member.user_id.startsWith('MEM_')
+      );
+
+      let actionType: 'add' | 'edit' | 'delete' = 'add';
+      let caseTeamRid: string | undefined;
+
+      if (originalMember) {
+        const hasChanges =
+          originalMember.user_name !== member.user_name ||
+          originalMember.user_role !== member.user_role ||
+          originalMember.start_date !== member.start_date ||
+          originalMember.end_date !== member.end_date;
+
+        actionType = hasChanges ? 'edit' : 'add';
+        caseTeamRid = originalMember.rid;
+      }
+
+      return {
+        ...(caseTeamRid && { case_team_rid: caseTeamRid }),
+        user_rid: userOption?.rid || '',
+        role_rid: roleOption?.rid || '',
+        effective_from: member.start_date,
+        effective_to: member.end_date,
+        action_type: actionType,
+      };
+    });
+
+    const deletedMembers = originalTeamMembers.filter(
+      (original) =>
+        !validMembers.some(
+          (current) =>
+            current.user_id === original.user_id &&
+            !current.user_id.startsWith('MEM_')
+        )
+    );
+
+    const deletePayloads = deletedMembers.map((member) => {
+      const userOption = userOptionsQuery.data?.find(
+        (user) => user.user_name === member.user_name
+      );
+      const roleOption = roleOptionsQuery.data?.find(
+        (role) => role.role_name === member.user_role
+      );
+
+      return {
+        case_team_rid: member.rid || '',
+        user_rid: userOption?.rid || '',
+        role_rid: roleOption?.rid || '',
+        effective_from: member.start_date,
+        effective_to: member.end_date,
+        action_type: 'delete' as const,
+      };
+    });
 
     const payload = {
-      case_rid: caseId,
-      team_members: formData.team_members.map((member) => ({
-        user_id: member.user_id,
-        user_name: member.user_name,
-        user_role: member.user_role,
-        start_date: member.start_date,
-        end_date: member.end_date,
-      })),
+      case_rid: caseId || '',
+      account_rid: accountId,
+      team_members: [...teamMembersPayload, ...deletePayloads],
     };
 
     updateCaseTeamMutation.mutate(payload, {
       onSuccess: () => {
         setIsLoading(false);
+        // Don't manually update originalTeamMembers here - let the API response handle it
+        // The useEffect will handle updating the state when fresh data comes from the API
       },
       onError: () => {
         setIsLoading(false);
@@ -375,16 +474,6 @@ const CaseTeam = () => {
                 >
                   {formLoading ? (
                     <TableSkeleton rowsPerPage={4} columnsCount={5} />
-                  ) : formData.team_members.length === 0 ? (
-                    <TableRow>
-                      <TableCell
-                        colSpan={teamTableColumns.length}
-                        align='center'
-                      >
-                        No team members available. Click "Add Case Team Member"
-                        to add one.
-                      </TableCell>
-                    </TableRow>
                   ) : (
                     formData.team_members.map((member, index) => (
                       <TableRow
