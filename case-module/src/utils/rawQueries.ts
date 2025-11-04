@@ -7,10 +7,23 @@ import {
 } from "./types";
 
 export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string) => {
-  return `
+  let   query = `
+    WITH fetch_fiscal_year AS (
+    SELECT fiscal_year, account_rid FROM ${schemaName}.cases where rid = '${caseRid}'
+    ),
+    fetch_project_count_cost AS (
+    SELECT COALESCE(COUNT(pf.rid), 0) AS total_projects, COALESCE(SUM(pf.total_cost_prj), 0.00) AS total_project_cost
+    FROM ${schemaName}.project_fiscal pf
+    CROSS JOIN fetch_fiscal_year f
+    WHERE
+    pf.account_rid = f.account_rid
+    AND
+    pf.fiscal_year = f.fiscal_year
+    )
+
     SELECT c.rid, c.account_rid, ad.account_name, c.case_name, c.filing_type_rid,
-    c.case_owner_rid, c.fiscal_year, c.status_rid, c.case_total_projects,c.case_total_qualified_projects,
-    c.case_total_project_cost, c.case_total_rd_cost, c.case_total_qre_cost,c.case_completion_percentage,c.case_total_qualified_project_cost,
+    c.case_owner_rid, c.fiscal_year, c.status_rid, f.total_projects AS case_total_projects,c.case_total_qualified_projects,
+    f.total_project_cost AS case_total_project_cost, c.case_total_rd_cost, c.case_total_qre_cost,c.case_completion_percentage,c.case_total_qualified_project_cost,
     c.planned_submission_date, c.statutory_submission_date, c.case_startdate,
     c.description, c.r_number, c.created_by, c.modified_by, c.created_datetime,
     c.modified_datetime
@@ -18,9 +31,11 @@ export const fetchCasesHeadersDatas = (schemaName: string, caseRid: string) => {
     FROM
     ${schemaName}.cases c
     LEFT JOIN ${schemaName}.account_details ad ON ad.account_rid = c.account_rid
+    CROSS JOIN fetch_project_count_cost f
     WHERE
     c.rid = '${caseRid}'
     `;
+    return query
 };
 
 export const fetchProjectsForCases = (
