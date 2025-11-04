@@ -14,7 +14,7 @@ import {
   ICreateCases,
   ICreateCaseTeam,
 } from "../../utils/types";
-import { logMessage } from "../../utils/helpers";
+import { isValidTimezone, logMessage } from "../../utils/helpers";
 import {
   caseStatuses,
   HttpStatus,
@@ -22,6 +22,8 @@ import {
   rawQueries,
 } from "../../utils/constants";
 import { query } from "express";
+import currency from "currency.js";
+import moment from "moment";
 export class CaseService {
   private caseSchemaService: CaseSchemaService;
   private caseModelService: CaseModelService; // Assuming this is defined somewhere in your code
@@ -685,7 +687,8 @@ export class CaseService {
   async fetchProjectsForAssign(
     data: any,
     assignedProject: boolean,
-    userId: string
+    userId: string,
+    isExport : boolean
   ) {
     const mainDb = await this.getMainDb();
     const orgDb = await this.getOrgDb();
@@ -774,7 +777,8 @@ export class CaseService {
           projectTechnicalPocId[0][0].rid,
           isSorting,
           assignedProject,
-          accessibleIds
+          accessibleIds,
+          isExport
         );
 
       if (queryResult.length > 0) {
@@ -1276,6 +1280,136 @@ export class CaseService {
     } catch (err) {
       logMessage(`Error fetching case roles, ${err}`);
       throw this.throwServiceError(err as Error);
+    }
+  }
+
+  async exportAssignedProjects (data : any) {
+    const result = await this.fetchProjectsForAssign(data, true, data.userId, true);
+    if(result?.statusCode === HttpStatus.SUCCESS) {
+    const formatNumberForExport = (
+      value: any,
+      currency_symbol: string
+    ): string => {
+      if (value == null || value === "") return "-";
+      const num = Number(value);
+      if (isNaN(num)) return "-";
+      return currency(num, {
+        symbol: currency_symbol ? currency_symbol : "$",
+        precision: 2,
+        pattern: "! #",
+        separator: ",",
+        decimal: ".",
+      }).format();
+    };
+
+    const allowedFieldsForExport = await this.getAllowedExportFields(
+      data.userId,
+      "projects_view_edit"
+    );
+    const allowedFieldSet = new Set<string>();
+    for (const field of allowedFieldsForExport) {
+      if (field.read) {
+        allowedFieldSet.add(field.field_desc);
+      }
+    }
+    const labelMap: Record<string, string> = {
+      "Project Code": "Project Code",
+      "Project Name": "Name",
+      "Project Type": "Project Type",
+      "Account Name": "Name",
+      "Fiscal Year": "Fiscal Year",
+      "Project Classification": "Classification",
+      "Customer Group": "Client Group",
+      "Project Group": "Project Group",
+      "Project Effort (Hours)": "Total Effort In Hrs",
+      "Project Cost": "Total Cost",
+      "FTE Cost": "Total FTE Cost",
+      "SubCon Cost": "Total Sub Con Cost",
+      "Non-Labor Cost": "Total Non Labor Cost",
+      "Assessment Status": "Assessment Status",
+      "QRE Percent Final": "QRE Percent Final",
+      "QRE Final": "QRE Final",
+      "Project Point of Contact": "Key Contacts List",
+      "Technical Point of Contact": "Key Contacts List",
+      "Comments": "Comments",
+      "Last Modified": "Updated On",
+      "Project ID": "Project ID",
+    };
+
+    const fiscalData = result.data.projects || []
+
+    let exportData = fiscalData.map((fiscal: any) => {
+        let modifiedDateTime = fiscal.modified_datetime;
+        const rawFiscalRow = {
+          "Project Code": fiscal.project_code
+            ? fiscal.project_code + " - FY" + fiscal.fiscal_year
+            : "-",
+          Name: fiscal.project_name || "-",
+          "Project Type": fiscal.project_type_name || "-",
+          "Fiscal Year": `FY-${fiscal.fiscal_year}` || "-",
+          "Project Classification": fiscal.project_classification_name || "-",
+          "Customer Group": fiscal.project_client_group || "-",
+          "Project Group": fiscal?.project_group || "-",
+          "Project Effort (Hours)": fiscal.total_effort_prj || "-",
+          "Project Cost":
+            formatNumberForExport(fiscal.total_cost_prj, fiscal.currency_symbol) ||
+            "-",
+          "FTE Cost":
+            formatNumberForExport(
+              fiscal.total_cost_fte_prj,
+              fiscal.currency_symbol
+            ) || "-",
+          "SubCon Cost":
+            formatNumberForExport(
+              fiscal.total_cost_subcon_prj,
+              fiscal.currency_symbol
+            ) || "-",
+          "Non-Labor Cost":
+            formatNumberForExport(
+              fiscal.total_cost_nonlabor_prj,
+              fiscal.currency_symbol
+            ) || "-",
+          "Assessment Status": fiscal.assessment_status || "-",
+          "QRE Percent Final": fiscal.rd_percent_final || "-", // Only base project has QRE %
+          "QRE Final":
+          fiscal.qre_final || // formatNumberForExport(fiscal.qre_final, project.currency_symbol)
+            "-",
+          "Project Point of Contact": fiscal.project_point_of_contact || "-",
+          "Technical Point of Contact":
+            fiscal.project_technical_point_of_contact || "-",
+          Comments: fiscal.comments || "-",
+          "Last Modified": modifiedDateTime
+            ? data.timezone && isValidTimezone(data.timezone)
+              ? moment
+                  .tz(modifiedDateTime.toISOString(), data.timezone)
+                  .add(5, 'hours').add(30, 'minutes')
+                  .format("YYYY-MMM-DD, hh:mm:ss A")
+              : moment(modifiedDateTime.toISOString()).add(5, 'hours').add(30, 'minutes').format(
+                  "YYYY-MMM-DD, hh:mm:ss A"
+                )
+            : "-",
+          "Project ID": fiscal.r_number || "-",
+        };
+
+        const filteredFiscalRow: Record<string, string> = {};
+        for (const [label, value] of Object.entries(rawFiscalRow)) {
+          const mappedLabel = labelMap[label] || label;
+          if (allowedFieldSet.has(mappedLabel)) {
+            filteredFiscalRow[label] = value; // keep original label for export
+          }
+        }
+
+        return filteredFiscalRow;
+      });
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        data : exportData
+      };
+    } else {
+      return {
+        statusCode : HttpStatus.NOT_FOUND,
+        data : []
+      };
     }
   }
 }

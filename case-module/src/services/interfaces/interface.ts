@@ -38,7 +38,8 @@ export interface ICaseService {
   fetchProjectsForAssign(
     data: any,
     assignedProjects: boolean,
-    userId: string
+    userId: string,
+    isExport : boolean
   ): Promise<any>;
   assignProjectToCases(data: any, userId: string): Promise<any>;
   listAllCasesAccount(
@@ -89,4 +90,5 @@ export interface ICaseService {
     errorMessage?: string;
     data?: { caseTeamMembers: any };
   }>;
+  exportAssignedProjects (data : any) : Promise<any>
 }
