@@ -1735,12 +1735,12 @@ const createAttachmentSchema = Joi.object({
     //     }),
     attach_to: Joi.string().pattern(uuidRegex, "valid UUID").required(),
     attachment_level: Joi.string()
-        .valid('account', 'project', 'project_resource', 'project_task', 'resource', 'resource_cost', 'resource_skill')
+        .valid('account', 'project', 'project_resource', 'project_task', 'resource', 'resource_cost', 'resource_skill', 'case')
         .required()
         .messages({
             'string.empty': 'Attachment level cannot be empty',
             'any.required': 'Attachment level is required',
-            'any.only': 'Attachment level must be one of: account, project, project_resource, project_task, resource, resource_cost, resource_skill'
+            'any.only': 'Attachment level must be one of: account, project, project_resource, project_task, resource, resource_cost, resource_skill, case'
         }),
     // document_name: Joi.string()
     //     .required()
@@ -1846,12 +1846,12 @@ const createAttachmentSchema = Joi.object({
 
 const listAttachmentsSchema = Joi.object({
     attachmentLevel: Joi.string()
-        .valid('account', 'project', 'project_resource', 'project_task', 'resource', 'resource_cost', 'resource_skill')
+        .valid('account', 'project', 'project_resource', 'project_task', 'resource', 'resource_cost', 'resource_skill', 'case')
         .required()
         .messages({
             'string.empty': 'Attachment level cannot be empty',
             'any.required': 'Attachment level is required',
-            'any.only': 'Attachment level must be one of: account, project, project_resource, project_task, resource, resource_cost, resource_skill'
+            'any.only': 'Attachment level must be one of: account, project, project_resource, project_task, resource, resource_cost, resource_skill, case'
         }),
     entityId: Joi.string()
         .pattern(uuidRegex, "valid UUID")
@@ -1917,12 +1917,12 @@ const listAttachmentsSchema = Joi.object({
 
 const exportListAttachmentsSchema = Joi.object({
     attachmentLevel: Joi.string()
-        .valid('account', 'project', 'project_resource', 'project_task', 'resource', 'resource_cost', 'resource_skill')
+        .valid('account', 'project', 'project_resource', 'project_task', 'resource', 'resource_cost', 'resource_skill', 'case')
         .required()
         .messages({
             'string.empty': 'Attachment level cannot be empty',
             'any.required': 'Attachment level is required',
-            'any.only': 'Attachment level must be one of: account, project, project_resource, project_task, resource, resource_cost, resource_skill'
+            'any.only': 'Attachment level must be one of: account, project, project_resource, project_task, resource, resource_cost, resource_skill, case'
         }),
     entityId: Joi.string()
         .pattern(uuidRegex, "valid UUID")
@@ -2773,12 +2773,12 @@ const createNotesSchema = Joi.object({
     account_rid: Joi.string().pattern(uuidRegex, "valid UUID").required(),
     attach_to: Joi.string().pattern(uuidRegex, "valid UUID").required(),
     attachment_level: Joi.string()
-        .valid('account', 'project', 'project_resource', 'project_task', 'resource', 'resource_cost', 'resource_skill')
+        .valid('account', 'project', 'project_resource', 'project_task', 'resource', 'resource_cost', 'resource_skill', 'case')
         .required()
         .messages({
             'string.empty': 'Attachment level cannot be empty',
             'any.required': 'Attachment level is required',
-            'any.only': 'Attachment level must be one of: account, project, project_resource, project_task, resource, resource_cost, resource_skill'
+            'any.only': 'Attachment level must be one of: account, project, project_resource, project_task, resource, resource_cost, resource_skill, case'
         }),
     fiscal_year: Joi.number()
         .integer()
@@ -2816,12 +2816,12 @@ const createNotesSchema = Joi.object({
 
 const listNotesSchema = Joi.object({
     attachmentLevel: Joi.string()
-        .valid('account', 'project', 'project_resource', 'project_task', 'resource', 'resource_cost', 'resource_skill')
+        .valid('account', 'project', 'project_resource', 'project_task', 'resource', 'resource_cost', 'resource_skill', 'case')
         .required()
         .messages({
             'string.empty': 'Attachment level cannot be empty',
             'any.required': 'Attachment level is required',
-            'any.only': 'Attachment level must be one of: account, project, project_resource, project_task, resource, resource_cost, resource_skill'
+            'any.only': 'Attachment level must be one of: account, project, project_resource, project_task, resource, resource_cost, resource_skill, case'
         }),
     entityId: Joi.string()
         .pattern(uuidRegex, "valid UUID")
@@ -2888,12 +2888,12 @@ const listNotesSchema = Joi.object({
 const exportListNotesSchema = Joi.object({
     timezone: Joi.string().optional(),
     attachmentLevel: Joi.string()
-        .valid('account', 'project', 'project_resource', 'project_task', 'resource', 'resource_cost', 'resource_skill')
+        .valid('account', 'project', 'project_resource', 'project_task', 'resource', 'resource_cost', 'resource_skill', 'case')
         .required()
         .messages({
             'string.empty': 'Attachment level cannot be empty',
             'any.required': 'Attachment level is required',
-            'any.only': 'Attachment level must be one of: account, project, project_resource, project_task, resource, resource_cost, resource_skill'
+            'any.only': 'Attachment level must be one of: account, project, project_resource, project_task, resource, resource_cost, resource_skill, case'
         }),
     entityId: Joi.string()
         .pattern(uuidRegex, "valid UUID")
@@ -3037,12 +3037,12 @@ const updateNotesSchema = Joi.object({
     attach_to: Joi.string().pattern(uuidRegex, "valid UUID").required(),
     is_file_deleted : Joi.boolean().optional(),
     attachment_level: Joi.string()
-        .valid('account', 'project', 'project_resource', 'project_task', 'resource', 'resource_cost', 'resource_skill')
+        .valid('account', 'project', 'project_resource', 'project_task', 'resource', 'resource_cost', 'resource_skill', 'case')
         .required()
         .messages({
             'string.empty': 'Attachment level cannot be empty',
             'any.required': 'Attachment level is required',
-            'any.only': 'Attachment level must be one of: account, project, project_resource, project_task, resource, resource_cost, resource_skill'
+            'any.only': 'Attachment level must be one of: account, project, project_resource, project_task, resource, resource_cost, resource_skill, case'
         }),
     fiscal_year: Joi.number()
         .integer()
