@@ -127,7 +127,6 @@ export class CaseService {
           response.rid,
           response.get("r_number") || ""
         );
-       
       }
 
       await transaction.commit();
@@ -200,7 +199,6 @@ export class CaseService {
         caseRequest,
         transaction
       );
-  
 
       await transaction.commit();
 
@@ -1069,7 +1067,7 @@ export class CaseService {
 
     return results.map((row: any) => row.project_fiscal_rid);
   }
-   /**
+  /**
    * Creates a new case along with its associated data within a database transaction.
    *
    * @param {ICreateCases} caseRequest - The case data to create, including account information, case details, and metadata.
@@ -1124,7 +1122,7 @@ export class CaseService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?:any
+    data?: any;
   }> {
     try {
       caseRequest.created_by = userId;
@@ -1146,7 +1144,7 @@ export class CaseService {
       return {
         statusCode: HttpStatus.SUCCESS,
         message: STATUS_MESSAGE.caseTeamCreated,
-        data: response.validationErrors
+        data: response.validationErrors,
       };
     } catch (err) {
       logMessage(`Error creating case, ${err}`);
@@ -1198,7 +1196,7 @@ export class CaseService {
     }
   }
 
-      /**
+  /**
    * Retrieves all available case statuses from the database.
    *
    * @returns {Promise<{
@@ -1240,7 +1238,12 @@ export class CaseService {
    * - Essential for team management interfaces, assignment tracking, and team composition reports.
    * - Catches and logs errors with standardized service error handling.
    */
-  async listCaseTeamMembers(data: any, filters: Record<string, any>,userId:string,apiType:string): Promise<{
+  async listCaseTeamMembers(
+    data: any,
+    filters: Record<string, any>,
+    userId: string,
+    apiType: string
+  ): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -1261,7 +1264,11 @@ export class CaseService {
         };
       }
       const caseTeamMembers = await this.caseSchemaService.listCaseTeamMembers(
-        accountNumber,data,userId,apiType);
+        accountNumber,
+        data,
+        userId,
+        apiType
+      );
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -1406,6 +1413,3 @@ export class CaseService {
     }
   }
 }
-
-
-

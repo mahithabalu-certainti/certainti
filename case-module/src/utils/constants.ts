@@ -131,7 +131,7 @@ export const casesFieldMappings = [
     exportField: "Total RD Credits",
     dataField: "case_total_rd_cost",
   },
-   {
+  {
     permissionField: "case_total_projects",
     exportField: "No of Projects",
     dataField: "case_total_projects",
@@ -203,7 +203,6 @@ export const casesSummaryFieldMappings = [
     exportField: "Case Owner",
     dataField: "case_owner_name",
   },
- 
   {
     permissionField: "case_total_project_cost",
     exportField: "Total Project Cost",
@@ -219,7 +218,7 @@ export const casesSummaryFieldMappings = [
     exportField: "Total RD Credits",
     dataField: "case_total_rd_cost",
   },
-   {
+  {
     permissionField: "case_total_projects",
     exportField: "No of Projects",
     dataField: "case_total_projects",
