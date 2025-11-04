@@ -93,5 +93,10 @@ routes.post(
   checkUserStatusMiddleware("projects_view_edit"),
   controller.caseController.exportAllAssignedProjects
 )
+routes.get(
+  "/caseTeam/users/:accountRid",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.listUsersForCaseTeam
+);
 
 export default routes;

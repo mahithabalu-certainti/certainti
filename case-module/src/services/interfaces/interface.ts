@@ -90,6 +90,13 @@ export interface ICaseService {
     errorMessage?: string;
     data?: { caseTeamMembers: any };
   }>;
+  listUsersForCaseTeam(accountRid: string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { users: any };
+  }>;
+
   exportAssignedProjects (data : any) : Promise<any>
 }
 

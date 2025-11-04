@@ -1412,4 +1412,57 @@ export class CaseService {
       };
     }
   }
+
+  /**
+   * Retrieves a list of users who are eligible to be assigned to case teams for a specific account.
+   *
+   * This service method performs the following operations:
+   * 1. Delegates to the schema service to fetch users based on account-specific criteria.
+   * 2. Applies account-level filtering to ensure users have appropriate permissions for the account.
+   * 3. Returns user information suitable for case team assignment workflows.
+   * 4. Handles errors gracefully with standardized error responses and logging.
+   *
+   * @param {string} accountRid - The unique identifier (RID) of the account for which to retrieve eligible users.
+   *
+   * @returns {Promise<{
+   *   statusCode: number;
+   *   message: string;
+   *   data?: { users: any };
+   * }>} - A promise that resolves to an object containing:
+   *   - statusCode: HTTP-like status code indicating success (200) or failure
+   *   - message: Descriptive message about the operation result
+   *   - data: Object containing the users array with user information
+   *
+   * @throws {Error} - Throws standardized service errors if the operation fails
+   *
+   * @description
+   * - Filters users based on account-specific permissions and roles
+   * - Ensures users have appropriate access levels for case team participation
+   * 
+   */
+  async listUsersForCaseTeam(accountRid: string) {
+    try {
+      // Delegate to schema service to fetch account-specific eligible users
+      const users = await this.caseSchemaService.listUsersForCaseTeam(
+        accountRid
+      );
+      
+      // Return successful response with user data
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,  
+        data: {
+          users,
+        },
+      };
+    }
+    catch (err) {
+      // Log error for debugging and monitoring
+      logMessage(`Error fetching users for case team, ${err}`);
+      
+      // Convert to standardized service error and re-throw
+      throw this.throwServiceError(err as Error);
+    }
+  }
+
 }
