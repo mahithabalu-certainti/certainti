@@ -649,6 +649,39 @@ async function updateTaskTemplate (req : Request, res : Response) : Promise<any>
   }
 }
 
+/**
+ * Controller function to handle fetching the list of admin task templates.
+ *
+ * This async function processes HTTP requests for retrieving paginated task template lists by:
+ * - Validating the presence of the user ID in request headers (`x-user-id`)
+ * - Delegating the data retrieval to the `caseManagementService.fetchTaskTemplate` method
+ * - Formatting and returning paginated task template data with metadata
+ *
+ * @param {Request} req - Express request object containing:
+ *   - body: Request parameters for pagination, filtering, and search criteria
+ *   - headers: Must include 'x-user-id' for authentication and audit tracking
+ * @param {Response} res - Express response object used to send the operation result
+ *
+ * @returns {Promise<void>} - Resolves after sending the formatted task template list response
+ *
+ * @throws {Error} - Catches and handles missing user ID, service errors, or unexpected exceptions
+ * 
+ * @description
+ * **HTTP Response Codes:**
+ * - 200: Successfully retrieved the task template list
+ * - 400: Bad request (missing user ID, validation error, or unexpected failure)
+ * 
+ * **Response Structure:**
+ * - `page`: Current page number
+ * - `limit`: Number of records per page
+ * - `total_result`: Total number of available records
+ * - `task_templates`: Array of task template objects
+ * 
+ * **Request Requirements:**
+ * - Requires `x-user-id` in headers for authorization and audit purposes
+ * - Accepts pagination and optional filter criteria in the request body
+ * - Logs all requests and responses for traceability and debugging
+ */
 async function fetchAdminTaskTemplateList (req : Request, res : Response) {
   const methodName = "fetch Admin TaskTemplate List"
   try {
