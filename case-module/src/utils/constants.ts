@@ -83,6 +83,13 @@ export const STATUS_MESSAGE = {
     "Country is not associated with the account,Please select country",
   adminChecklistCreated: "Admin checklist created successfully",
   adminChecklistFailed: "Admin checklist creation failed",
+  taskNameExistsAlready : "Taskname already exists",
+  taskCreatedSuccess : "Task Template created successfully",
+  casePrioritySuccess : "Priority fetched successfully",
+  milestonesSuccess : "Milestones fetched successfully",
+  checklistSuccess : "Checklist fetched successfully",
+  taskUpdatedSuccess : "Task Template updated successfully",
+  taskUpdateFailed : "Task Template updation failed",
 };
 
 export const caseStatuses = {
@@ -607,6 +614,20 @@ export const rawQueries = {
       LEFT JOIN ${MAIN_SCHEMA_NAME}.account a ON gea.entity_rid = a.rid
       WHERE gea.entity_type = 'ACCOUNT'
         AND gea.access_type = 'INCLUDE'`,
+  getPriorityTypes() {
+    return `SELECT rid, priority_name FROM ${MAIN_SCHEMA_NAME}.case_priority ORDER BY priority_level DESC`
+  },
+  getMilestones() {
+    return `
+    SELECT m.rid, m.milestone_name, m.case_filing_type_rid, c.filing_type_name
+    FROM ${MAIN_SCHEMA_NAME}.case_milestones m
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.case_filing_type c ON c.rid = m.case_filing_type_rid
+    ORDER BY r_number ASC
+    `
+  },
+  getChecklistTypes() {
+    return `SELECT rid, checklist_name FROM ${MAIN_SCHEMA_NAME}.checklist_template ORDER BY created_datetime ASC`
+  },
 };
 
 const keyContactRole = {

@@ -1,7 +1,8 @@
-import { Sequelize, Transaction } from "sequelize";
+import { Op, Sequelize, Transaction } from "sequelize";
 import { CaseModelService } from "../caseModelsService";
-import { ICreateChecklist, ICreateChecklistItem } from "../../utils/types";
+import { CreateTaskTemplateType, ICreateChecklist, ICreateChecklistItem, UpdateTaskTemplateType } from "../../utils/types";
 import { logMessage } from "../../utils/helpers";
+import { HttpStatus, STATUS_MESSAGE } from "../../utils/constants";
 
 /**
  * Utility function to add a new checklist item
@@ -252,6 +253,129 @@ class CaseManagementSchemaService {
       logMessage(`Error processing checklist items: ${error}`);
       throw new Error("Error processing checklist items: " + error);
     }
+  }
+  async createTaskTemplate (data : CreateTaskTemplateType, userId : string) {
+    const { TaskTemplate } = await this.caseModelService.getModels("");
+    const findSequenceOrder = await this.fetchSequenceOrder();
+    let sequenceNumber : number = 0;
+    if(findSequenceOrder.length > 0) {
+      sequenceNumber = findSequenceOrder[0]?.sequence_no! + 1
+    } else {
+      sequenceNumber = sequenceNumber + 1
+    }
+    const checkTaskNameExists = await this.checkTaskExists(data);
+    if(checkTaskNameExists) {
+      return {
+        statusCode : HttpStatus.BAD_REQUEST,
+        statusMessage : STATUS_MESSAGE.taskNameExistsAlready
+      }
+    }
+    await TaskTemplate.create({
+      created_by : userId,
+      task_name : data.task_name,
+      sequence_no : sequenceNumber,
+      effort_in_days : data.effort_in_days,
+      reminder_interval : data.reminder_interval,
+      effective_start_datetime : data.effective_start_datetime,
+      effective_end_datetime : data.effective_end_datetime,
+      case_team_member_role_rid : data.case_team_member_role_rid,
+      checklist_rid : data.checklist_rid,
+      status_rid : data.status_rid,
+      priority_rid : data.priority_rid,
+      task_type : "Milestone",
+      milestone_rid : data.milestone_rid
+    })
+    return {
+      statusCode : HttpStatus.SUCCESS,
+      statusMessage : STATUS_MESSAGE.taskCreatedSuccess
+    };
+  }
+  async fetchSequenceOrder () {
+    const { TaskTemplate } = await this.caseModelService.getModels("");
+    const findSequenceOrder = await TaskTemplate.findAll({
+      attributes : ['sequence_no'],
+      order : [['created_datetime', 'DESC']],
+      raw : true
+    })
+    return findSequenceOrder;
+  }
+  async checkTaskExists (data : any) {
+    const { TaskTemplate } = await this.caseModelService.getModels("");
+    const checkTaskNameExists = await TaskTemplate.findOne({
+      attributes : ['task_name'],
+      where : {
+        task_name : {
+          [Op.iLike] : data.task_name
+        }
+      },raw : true
+    })
+    return checkTaskNameExists
+  }
+  async updateTaskTemplate (data : UpdateTaskTemplateType, userId : string) {
+     const { TaskTemplate } = await this.caseModelService.getModels("");
+    const checkTaskExists = await this.checkTaskExistsForUpdate(data.rid);
+    if(checkTaskExists) {
+      const checkTaskNameExists = await this.checkTaskNameExistsForUpdate(data)
+      if(checkTaskNameExists) {
+        return {
+          statusCode : HttpStatus.BAD_REQUEST,
+          statusMessage : STATUS_MESSAGE.taskNameExistsAlready
+        }        
+      }
+      data.modified_by = userId
+      data.modified_datetime = new Date()
+      const [result] = await TaskTemplate.update(data, {
+        where : {
+          rid : data.rid
+        }
+      })
+      if(result === 1) {
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          statusMessage : STATUS_MESSAGE.taskUpdatedSuccess
+        }
+      } else {
+      return {
+        statusCode : HttpStatus.FAILED,
+        statusMessage : STATUS_MESSAGE.taskUpdateFailed
+      }        
+      }
+    } else {
+      return {
+        statusCode : HttpStatus.NOT_FOUND,
+        statusMessage : STATUS_MESSAGE.dataNotAvailable
+      }
+    }
+  }
+  async checkTaskExistsForUpdate (rid : string) {
+    const { TaskTemplate } = await this.caseModelService.getModels("");
+    const checkTaskExists = await TaskTemplate.findOne({
+      attributes : ['rid'],
+      where : {
+        rid : rid
+      }, 
+      raw : true
+    })
+    if(checkTaskExists) return checkTaskExists
+    else return null
+  }
+
+  async checkTaskNameExistsForUpdate (data : UpdateTaskTemplateType) {
+    const { TaskTemplate } = await this.caseModelService.getModels("");
+    const checkTaskExists = await TaskTemplate.findOne({
+      attributes : ['rid'],
+      where : {
+        task_name : {
+          [Op.iLike] : data.task_name
+        },
+        rid : {
+          [Op.notIn] : [data.rid]
+        }
+      }, 
+      raw : true
+    })
+    if(checkTaskExists) return checkTaskExists
+    else return null
   }
 }
 export { CaseManagementSchemaService };
