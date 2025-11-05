@@ -13,5 +13,20 @@ routes.post(
   checkUserStatusMiddleware("NA"),
   controller.caseManagementController.createTaskTemplate
 );
+routes.get(
+  "/priority",
+  checkUserStatusMiddleware("NA"),
+  controller.caseManagementController.getPriorityTypes
+)
+routes.get(
+  "/caseMilestones",
+  checkUserStatusMiddleware("NA"),
+  controller.caseManagementController.getMilestones
+)
+routes.get(
+  "/checklist",
+  checkUserStatusMiddleware("NA"),
+  controller.caseManagementController.getChecklist
+)
 
 export default routes;

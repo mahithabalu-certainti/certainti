@@ -111,4 +111,7 @@ export interface ICaseManagementService {
     data?: { checklist: any };
   }>;
   createTaskTemplate(data : CreateTaskTemplateType, userId : string) :Promise<any>;
+  getAllPriority() : Promise<any>
+  getMilestones() : Promise<any>
+  getChecklist() : Promise<any>
 }

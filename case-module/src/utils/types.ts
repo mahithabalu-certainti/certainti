@@ -270,3 +270,20 @@ export type CreateTaskTemplateType = {
   task_type: string,
   milestone_rid : string
 }
+
+export type priorityTypes = {
+  rid : string,
+  priority_name : string
+}
+
+export type MilestoneTypes = {
+  rid : string,
+  case_filing_type_rid : string,
+  case_filing_type_name : string,
+  milestone_name : string
+}
+
+export type checkListTypes = {
+  rid : string,
+  checklist_name : string
+}
