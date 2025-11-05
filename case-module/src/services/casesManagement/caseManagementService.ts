@@ -5,8 +5,9 @@ import { CaseManagementSchemaService } from "./schemaService";
 import { HttpStatus, rawQueries, STATUS_MESSAGE } from "../../utils/constants";
 import { logMessage } from "../../utils/helpers";
 import CaseSchemaService from "../cases/schemaService";
-import { checkListTypes, CreateTaskTemplateType, ICreateChecklist, MilestoneTypes, priorityTypes, UpdateTaskTemplateType } from "../../utils/types";
+import { AdminTaskTemplatePayloadType, AdminTaskTemplateResponseTypes, checkListTypes, CreateTaskTemplateType, ICreateChecklist, MilestoneTypes, priorityTypes, UpdateTaskTemplateType } from "../../utils/types";
 import { initMainDbSequelize } from "../../config/mainDataSource";
+import { fetchAdminTemplates } from "../../utils/rawQueries";
 
 /**
  * Service class for managing case-related operations including case creation,
@@ -259,6 +260,21 @@ export class CaseManagementService {
         statusCode : result.statusCode,
         statusMessage : result.statusMessage
       }      
+    }
+  }
+  async fetchTaskTemplate (data : AdminTaskTemplatePayloadType) {
+    const mainDb = await this.getMainDb();
+    const result = await mainDb.query<AdminTaskTemplateResponseTypes>(fetchAdminTemplates(data.page, data.limit, data.sort, data.sort_by, data.filter, data.search), {type : QueryTypes.SELECT});
+    if(result.length > 0) {
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        data : result
+      }
+    } else {
+      return {
+        statusCode : HttpStatus.NOT_FOUND,
+        data : []
+      }     
     }
   }
 }

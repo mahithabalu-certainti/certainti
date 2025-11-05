@@ -90,6 +90,7 @@ export const STATUS_MESSAGE = {
   checklistSuccess : "Checklist fetched successfully",
   taskUpdatedSuccess : "Task Template updated successfully",
   taskUpdateFailed : "Task Template updation failed",
+  taskTemplateSuccess : "Task Template fetched successfully"
 };
 
 export const caseStatuses = {
@@ -752,3 +753,41 @@ export const filtersColumnsForAdminCheckList: Record<string, string> = {
   checklist_description: "checklist_description"
  
 };
+
+export const validColumnsForSortFilters : Record<string, string> = {
+  r_number : "t.r_number",
+  task_name : "t.task_name",
+  milestone_name : "m.milestone_name",
+  checklist_name : "c.checklist_name",
+  priority_name : "p.priority_name",
+  status_name : "s.status_name",
+  role_name : "r.role_name",
+  effective_start_datetime : "t.effective_start_datetime",
+  effective_end_datetime : "t.effective_end_datetime",
+  reminder_interval : "t.reminder_interval",
+  effort_in_days : "t.effort_in_days",
+  created_datetime : "t.created_datetime",
+  modified_datetime : "t.modified_datetime",
+  created_by_name : "CONCAT(u.first_name,' ', u.last_name)",
+  modified_by_name : "CONCAT(uu.first_name,' ', uu.last_name)",
+  sequence_no : "t.sequence_no"
+}
+
+export const validFilterColumnTypes : Record<string, string> = {
+  r_number : "string",
+  task_name : "string",
+  milestone_name : "string",
+  checklist_name : "string",
+  priority_name : "string",
+  status_name : "string",
+  role_name : "string",
+  effective_start_datetime : "date",
+  effective_end_datetime : "date",
+  reminder_interval : "number",
+  effort_in_days : "number",
+  created_datetime : "date",
+  modified_datetime : "date",
+  created_by_name : "string",
+  modified_by_name : "string",
+  sequence_no : "number"
+}

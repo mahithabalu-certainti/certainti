@@ -649,6 +649,67 @@ async function updateTaskTemplate (req : Request, res : Response) : Promise<any>
   }
 }
 
+async function fetchAdminTaskTemplateList (req : Request, res : Response) {
+  const methodName = "fetch Admin TaskTemplate List"
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const data = req.body;
+    let result = await caseManagementService.fetchTaskTemplate(data);
+    let totalRecord = parseInt(result.data[0].total_result)
+    result.data.forEach((d : any) => {
+      delete d.total_result
+    })
+    if(result.statusCode == HttpStatus.SUCCESS) {
+      const finalData = {
+        page : data.page,
+        limit : data.limit,
+        total_result : totalRecord,
+        task_templates : result.data
+      }
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.taskTemplateSuccess,
+        data : finalData
+      })     
+    } else {
+      const finalData = {
+        page : data.page,
+        limit : data.limit,
+        total_result : 0,
+        task_templates : result.data
+      }
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.dataNotAvailable,
+        data : finalData
+      })  
+    }
+  } catch (err) {
+    // Handle unexpected errors (system failures, network issues, etc.)
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
 // Export the controller functions for use in route definitions
 export default {
   createAdminCheckList,
@@ -658,5 +719,6 @@ export default {
   getMilestones,
   getChecklist,
   updateTaskTemplate,
+  fetchAdminTaskTemplateList,
   exportAdminCheckList
 };

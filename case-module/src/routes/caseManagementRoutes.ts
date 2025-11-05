@@ -38,5 +38,11 @@ routes.put(
   checkUserStatusMiddleware("NA"),
   controller.caseManagementController.updateTaskTemplate
 );
+routes.post(
+  "/taskTemplate/list",
+  checkUserStatusMiddleware("NA"),
+  controller.caseManagementController.fetchAdminTaskTemplateList
+);
+
 
 export default routes;
