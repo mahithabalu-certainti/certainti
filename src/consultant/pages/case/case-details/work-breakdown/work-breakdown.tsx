@@ -67,6 +67,13 @@ const WorkBreakDown = () => {
     navigate(`?${searchParams.toString()}`, { replace: true });
   };
 
+  const activityMenuItems = [
+    { label: 'Create Task', onClick: () => console.log('Task') },
+    { label: 'Draft Email', onClick: () => console.log('Email') },
+    { label: 'Schedule Meeting', onClick: () => console.log('Meeting') },
+    { label: 'Log a call', onClick: () => console.log('Call') },
+  ];
+
   return (
     <>
       <SectionTabPanel
@@ -83,8 +90,8 @@ const WorkBreakDown = () => {
         sortFilterCount={0}
         setSortFilterCount={() => {}}
         showRefresh={false}
-        // onRefreshClick={onRefreshClick}
-        // hideTabPanel={hideSection}
+        showAddActivity={true}
+        activityMenuItems={activityMenuItems}
       />
       <SectionHeader
         title={'Action Items'}

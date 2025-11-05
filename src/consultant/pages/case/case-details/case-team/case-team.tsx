@@ -417,6 +417,13 @@ const CaseTeam = () => {
     return <ActionItemsIcon alt='action-items-icon' />;
   };
 
+  const activityMenuItems = [
+    { label: 'Create Task', onClick: () => console.log('Task') },
+    { label: 'Draft Email', onClick: () => console.log('Email') },
+    { label: 'Schedule Meeting', onClick: () => console.log('Meeting') },
+    { label: 'Log a call', onClick: () => console.log('Call') },
+  ];
+
   return (
     <>
       <SectionTabPanel
@@ -432,6 +439,8 @@ const CaseTeam = () => {
         sortFilterCount={0}
         setSortFilterCount={() => {}}
         showRefresh={false}
+        showAddActivity={true}
+        activityMenuItems={activityMenuItems}
       />
       <SectionHeader
         title={'Case Team'}
