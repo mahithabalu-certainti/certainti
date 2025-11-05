@@ -91,8 +91,9 @@ export const STATUS_MESSAGE = {
   checklistSuccess : "Checklist fetched successfully",
   taskUpdatedSuccess : "Task Template updated successfully",
   taskUpdateFailed : "Task Template updation failed",
-  checkListError : "Checklist retrieval failed",
-  taskTemplateSuccess : "Task Template fetched successfully"
+  taskTemplateSuccess : "Task Template fetched successfully",
+  taskTemplateExport: "Task Template export successfully",
+  checkListError : "Checklist retrieval failed"
 };
 
 export const caseStatuses = {
