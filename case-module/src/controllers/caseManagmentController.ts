@@ -664,12 +664,16 @@ async function fetchAdminTaskTemplateList (req : Request, res : Response) {
       return;
     }
     const data = req.body;
-    const result = await caseManagementService.fetchTaskTemplate(data);
+    let result = await caseManagementService.fetchTaskTemplate(data);
+    let totalRecord = parseInt(result.data[0].total_result)
+    result.data.forEach((d : any) => {
+      delete d.total_result
+    })
     if(result.statusCode == HttpStatus.SUCCESS) {
       const finalData = {
         page : data.page,
         limit : data.limit,
-        total_result : parseInt(result.data[0].total_result),
+        total_result : totalRecord,
         task_templates : result.data
       }
       return res.status(HttpStatus.SUCCESS).send({
