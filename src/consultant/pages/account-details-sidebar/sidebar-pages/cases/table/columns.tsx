@@ -1,12 +1,27 @@
 import {
   costDisplay,
   formatDateToYYYYMMDDWithTime,
+  REGEX_PATTERNS,
 } from '../../../../../../common-utils';
-import { ListTableColumn } from '../../../../../../components/table/types';
+import {
+  DependencyRowData,
+  ListTableColumn,
+} from '../../../../../../components/table/types';
 import { CaseList } from '../../../../../types';
+import { generateCaseNamePrefixValue } from '../../../../case/helper';
 
 export const getCaseListColumns = (
   handleViewCaseDetails: (caseItem: CaseList) => void,
+  userListOptions: { value: string; label: string }[],
+  caseFilingTypesOptions: { value: string; label: string }[],
+  accountInActive: boolean,
+  accountData: {
+    accountId: string;
+    account_name: string;
+    account_number: string;
+    country_rid: string;
+    country_code: string;
+  },
   currencySymbol?: string,
   permissionMap?: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<CaseList>[] => {
@@ -41,22 +56,64 @@ export const getCaseListColumns = (
     {
       id: 'filing_type_name',
       label: 'Filing Type',
-      width: 120,
+      width: 160,
       sortable: true,
       sortId: 'filing_type_name',
+      editId: 'filing_type_rid',
+      editable:
+        permissionMap?.['filing_type_rid']?.edit &&
+        permissionMap?.['filing_type_rid']?.read &&
+        !accountInActive,
       hide:
         !permissionMap?.['filing_type_rid']?.edit &&
         !permissionMap?.['filing_type_rid']?.read,
+      field: {
+        type: 'select',
+        required: true,
+        placeholder: 'Choose Filing Type',
+        options: caseFilingTypesOptions,
+        getFieldData: (rowData: DependencyRowData) => {
+          return String(rowData.filing_type_rid || '');
+        },
+      },
     },
     {
       id: 'case_name',
       label: 'Case Name',
-      width: 200,
+      width: 250,
       sortable: true,
       sortId: 'case_name',
+      editId: 'case_name',
+      editable:
+        permissionMap?.['case_name']?.edit &&
+        permissionMap?.['case_name']?.read &&
+        !accountInActive,
       hide:
         !permissionMap?.['case_name']?.edit &&
         !permissionMap?.['case_name']?.read,
+      render: (row) =>
+        row.case_name && accountData.account_name && accountData.country_code
+          ? generateCaseNamePrefixValue(
+              accountData.account_name,
+              accountData.country_code,
+              row.fiscal_year.toString()
+            ) + row.case_name
+          : '-',
+      field: {
+        type: 'text',
+        required: true,
+        placeholder: 'Enter Case Name',
+        validation: [
+          {
+            regex: REGEX_PATTERNS.MIN_3,
+            errorMessage: 'Case Name must be more than 2 characters long',
+          },
+          {
+            regex: REGEX_PATTERNS.MAX_255,
+            errorMessage: 'Case Name must be within 255 characters',
+          },
+        ],
+      },
     },
     {
       id: 'fiscal_year',
@@ -75,9 +132,23 @@ export const getCaseListColumns = (
       width: 180,
       sortable: true,
       sortId: 'case_owner_name',
+      editId: 'case_owner_rid',
+      editable:
+        permissionMap?.['case_owner_rid']?.edit &&
+        permissionMap?.['case_owner_rid']?.read &&
+        !accountInActive,
       hide:
         !permissionMap?.['case_owner_rid']?.edit &&
         !permissionMap?.['case_owner_rid']?.read,
+      field: {
+        type: 'select',
+        required: true,
+        placeholder: 'Choose Case Owner',
+        options: userListOptions,
+        getFieldData: (rowData: DependencyRowData) => {
+          return String(rowData.case_owner_rid || '');
+        },
+      },
     },
     {
       id: 'case_total_project_cost',
@@ -129,6 +200,32 @@ export const getCaseListColumns = (
         row.case_total_rd_cost
           ? costDisplay(row.case_total_rd_cost, currencySymbol)
           : '-',
+    },
+    {
+      id: 'case_total_projects',
+      label: 'No. of Projects',
+      width: 160,
+      sortable: true,
+      sortId: 'case_total_projects',
+      sx: {
+        textAlign: 'right',
+      },
+      hide:
+        !permissionMap?.['case_total_projects']?.edit &&
+        !permissionMap?.['case_total_projects']?.read,
+    },
+    {
+      id: 'case_total_qualified_projects',
+      label: 'No. of Qualified Projects',
+      width: 190,
+      sortable: true,
+      sortId: 'case_total_qualified_projects',
+      sx: {
+        textAlign: 'right',
+      },
+      hide:
+        !permissionMap?.['case_total_qualified_projects']?.edit &&
+        !permissionMap?.['case_total_qualified_projects']?.read,
     },
     {
       id: 'created_datetime',

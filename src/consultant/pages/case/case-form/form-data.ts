@@ -71,10 +71,7 @@ export const CaseFormData = (
             required: true,
             onChange: true,
             isFiscalYear: true,
-            disabled:
-              isEditView &&
-              !permissionMap?.['fiscal_year']?.edit &&
-              permissionMap?.['fiscal_year']?.read,
+            disabled: isEditView,
             hide:
               isEditView &&
               !permissionMap?.['fiscal_year']?.edit &&

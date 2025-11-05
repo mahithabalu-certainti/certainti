@@ -3,6 +3,7 @@ import {
   AllModules,
   AllPermissions,
   FilterTypes,
+  useGetAllCountries,
 } from '../../../../common-service';
 import { CaseListParams, FilterState } from '../../../types';
 import { useSelector } from 'react-redux';
@@ -67,6 +68,7 @@ const Cases: React.FC = () => {
 
   const caseFillingTypes = useGetCaseFilingTypes();
   const caseStatus = useGetCaseStatuses();
+  const allCountries = useGetAllCountries();
 
   const userListOptions = useMemo(() => {
     return (
@@ -94,6 +96,15 @@ const Cases: React.FC = () => {
       })) || []
     );
   }, [caseStatus]);
+
+  const memoizedContry = useMemo(
+    () =>
+      allCountries.data?.data.country.map((country) => ({
+        label: country.country_name,
+        value: country.rid,
+      })) || [],
+    [allCountries.data?.data.country]
+  );
 
   // Permissions
   const casesEnable = checkPermission(modules, AllModules.CASES);
@@ -127,6 +138,20 @@ const Cases: React.FC = () => {
     });
     return map;
   }, [casesEditFields]);
+
+  const accountViewEditFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllPermissions.ACCOUNTS_VIEW_EDIT)
+        ?.fields ?? [],
+    [permission]
+  );
+  const accountPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    accountViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [accountViewEditFields]);
 
   const onRefreshClick = () => {
     setRefreshTrigger(Date.now());
@@ -203,7 +228,9 @@ const Cases: React.FC = () => {
     caseStatusOptions,
     caseFilingTypesOptions,
     userListOptions,
-    permissionMap
+    memoizedContry,
+    permissionMap,
+    accountPermissionMap
   );
 
   if (!casesEnable || !isCasesViewEnable) return <AccessRestricted />;
@@ -316,6 +343,8 @@ const Cases: React.FC = () => {
           setColumnAnchorEl={setColumnAnchorEl}
           columnAnchorEl={columnAnchorEl}
           searchText={searchText}
+          caseFilingTypesOptions={caseFilingTypesOptions}
+          userListOptions={userListOptions}
         />
       </div>
     </div>

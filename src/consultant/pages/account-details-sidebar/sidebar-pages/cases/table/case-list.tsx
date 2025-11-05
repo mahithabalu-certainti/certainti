@@ -4,6 +4,8 @@ import { generatePath, useNavigate, useParams } from 'react-router-dom';
 import { CaseList, CaseListParams } from '../../../../../types';
 import {
   ActionItem,
+  CellEditData,
+  FieldChangeValue,
   ShowHideTableColumn,
 } from '../../../../../../components/table/types';
 import { CASE_DETAILS, CASE_EDIT } from '../../../../../../routes';
@@ -17,6 +19,10 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../../store/store';
 import { accountDetailsProps } from '../../../../account-details/utils';
 import { AllPermissions } from '../../../../../../common-service';
+import { UPDATE_CASE } from '../../../../../../api/graphql/queries/case-query';
+import { useMutation } from '@apollo/client';
+import { caseClient } from '../../../../../../api/graphql/clients/client';
+import { useToast } from '../../../../../../hooks';
 
 interface ICaseTableProps {
   appliedFilters: Record<string, string | number | boolean | string[]>;
@@ -32,6 +38,9 @@ interface ICaseTableProps {
   >;
   accountDetails: accountDetailsProps;
   searchText: string;
+  accountInActive: boolean;
+  caseFilingTypesOptions: { value: string; label: string }[];
+  userListOptions: { value: string; label: string }[];
 }
 
 export const CaseListTable: React.FC<ICaseTableProps> = ({
@@ -44,7 +53,11 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
   setColumnAnchorEl,
   accountDetails,
   searchText,
+  accountInActive,
+  caseFilingTypesOptions,
+  userListOptions,
 }) => {
+  const { errorToast } = useToast();
   const navigate = useNavigate();
   const { accountid } = useParams();
   const [caseList, setCaseList] = useState<CaseList[]>([]);
@@ -53,9 +66,21 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
   );
   const { permission } = useSelector((state: RootState) => state.permission);
 
+  const [updateCaseMutation] = useMutation(UPDATE_CASE, {
+    client: caseClient,
+  });
+
   const newFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
   const currencySymbol =
     accountDetails?.accountById?.currency?.currency_symbol || '';
+
+  const accountData = {
+    accountId: accountid || '',
+    account_name: accountDetails?.accountById?.account_name || '',
+    account_number: accountDetails?.accountById?.r_number || '',
+    country_rid: accountDetails?.accountById?.country_rid || '',
+    country_code: accountDetails?.accountById?.country?.country_code || '',
+  };
 
   const { data, isLoading, isError } = useCaseList(
     {
@@ -146,6 +171,10 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
 
   const caseColumns = getCaseListColumns(
     handleViewCaseDetails,
+    userListOptions,
+    caseFilingTypesOptions,
+    accountInActive,
+    accountData,
     currencySymbol,
     permissionMap
   );
@@ -208,6 +237,7 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
     {
       label: 'Edit',
       onClick: (row) => handleEdit(row),
+      disabled: accountInActive,
       icon: EditIcon,
       iconStyle: {
         filter:
@@ -216,6 +246,55 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
       hide: !casesFieldsEditable,
     },
   ];
+
+  const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
+    const previousCases = [...caseList];
+
+    const rowData = caseList.find((data) => data.rid === rowId);
+    if (!rowData) {
+      errorToast('Row not found.');
+      return;
+    }
+
+    const updateData = updates.reduce<Record<string, FieldChangeValue>>(
+      (data, item) => {
+        const key = item.editId || item.columnId;
+        data[key] = item.value;
+        return data;
+      },
+      {
+        case_rid: rowId,
+        account_rid: accountid,
+      }
+    );
+
+    try {
+      const res = await updateCaseMutation({
+        variables: { data: updateData },
+      });
+      const result = res?.data?.updateInlineCaseDetails;
+      if (result?.statusCode === 200 && result.data) {
+        const updatedCase = result.data;
+        setCaseList((prev) =>
+          prev.map((data) => {
+            if (data.rid === updatedCase.rid) {
+              return {
+                ...data,
+                ...updatedCase,
+              };
+            }
+            return data;
+          })
+        );
+      } else {
+        errorToast(result?.message || 'Failed to update field');
+        setCaseList(previousCases);
+      }
+    } catch (error) {
+      errorToast((error as Error)?.message || 'Failed to update field');
+      setCaseList(previousCases);
+    }
+  };
 
   return (
     <div>
@@ -259,6 +338,7 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
         sortBy={tableParams.sortBy}
         sortOrder={tableParams.sortOrder}
         onSort={handleSort}
+        onCellEdit={handleCellEdit}
       />
     </div>
   );

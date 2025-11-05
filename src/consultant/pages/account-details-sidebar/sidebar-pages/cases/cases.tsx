@@ -299,6 +299,9 @@ const Cases: React.FC<CaseProps> = ({
           columnAnchorEl={columnAnchorEl}
           accountDetails={accountDetails}
           searchText={searchText}
+          accountInActive={accountInActive}
+          caseFilingTypesOptions={caseFilingTypesOptions}
+          userListOptions={userListOptions}
         />
       </div>
     </div>
