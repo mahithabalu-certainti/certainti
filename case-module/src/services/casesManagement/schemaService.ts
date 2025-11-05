@@ -307,7 +307,7 @@ class CaseManagementSchemaService {
         task_name : {
           [Op.iLike] : data.task_name
         }
-      }, raw : true
+      },raw : true
     })
     return checkTaskNameExists
   }
