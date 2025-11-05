@@ -332,6 +332,7 @@ export interface accountByIdProps {
   annual_revenue: string;
   country: {
     country_name: string;
+    country_code: string;
   };
   region_details: {
     state_name: string;

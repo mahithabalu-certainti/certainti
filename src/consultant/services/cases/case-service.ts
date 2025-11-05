@@ -5,6 +5,8 @@ import {
   CaseDetailsResponse,
   CaseFilingTypeResponse,
   CaseFormPayload,
+  CaseGlobalList,
+  CaseGlobalListResponse,
   CaseList,
   CaseListExportParams,
   CaseListParams,
@@ -40,6 +42,31 @@ export const useCaseList = (
     retry: 0,
     gcTime: 0,
     enabled: !!accountId,
+  });
+};
+
+// Global cases list
+export const fetchGlobalCaseList = async (
+  params: CaseListParams
+): Promise<{ cases: CaseGlobalList[]; count: number }> => {
+  const { data } = await caseServiceApi.get<CaseGlobalListResponse>(
+    getCaseListURL(params)
+  );
+  return {
+    cases: data.data.caseInfo,
+    count: data.data.count,
+  };
+};
+export const useCaseGlobalList = (
+  params: CaseListParams,
+  refresh?: number
+): UseQueryResult<{ cases: CaseGlobalList[]; count: number }, Error> => {
+  return useQuery<{ cases: CaseGlobalList[]; count: number }, Error>({
+    queryKey: ['case-global-list', params, refresh],
+    queryFn: () => fetchGlobalCaseList(params),
+    retry: 0,
+    gcTime: 0,
+    enabled: true,
   });
 };
 

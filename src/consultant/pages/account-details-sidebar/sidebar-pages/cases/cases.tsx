@@ -210,12 +210,16 @@ const Cases: React.FC<CaseProps> = ({
 
   const handlCreateNewCase = () => {
     const accountId = accountid ?? '';
+    const accountName = accountDetails?.accountById?.account_name || '';
     const path = generatePath(CASE_CREATE);
     const queryParams = new URLSearchParams({
       accountId,
       account_name: accountDetails?.accountById?.account_name || '',
       account_number: accountDetails?.accountById?.r_number || '',
       country_rid: accountDetails?.accountById?.country_rid || '',
+      country_code: accountDetails?.accountById?.country?.country_code || '',
+      source: `Account > ${accountName}`,
+      // activeMenu: 'account',
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
@@ -295,6 +299,9 @@ const Cases: React.FC<CaseProps> = ({
           columnAnchorEl={columnAnchorEl}
           accountDetails={accountDetails}
           searchText={searchText}
+          accountInActive={accountInActive}
+          caseFilingTypesOptions={caseFilingTypesOptions}
+          userListOptions={userListOptions}
         />
       </div>
     </div>

@@ -55,6 +55,53 @@ export interface CaseListResponse {
   };
 }
 
+// Global case list
+export type CaseGlobalList = {
+  rid: string;
+  r_number: string;
+  case_name: string;
+  created_by: string;
+  status_rid: string;
+  account_rid: string;
+  country_rid: string;
+  fiscal_year: number;
+  modified_by: string;
+  status_name: string;
+  account_name: string;
+  country_code: string;
+  country_name: string;
+  currency_code: string;
+  total_records: number;
+  case_owner_rid: string;
+  case_owner_name: string;
+  currency_symbol: string;
+  filing_type_rid: string;
+  account_r_number: string;
+  created_datetime: string;
+  filing_type_name: string;
+  approved_datetime: string | null;
+  created_user_name: string;
+  modified_datetime: string;
+  updated_user_name: string;
+  account_status_rid: string;
+  account_status_name: string;
+  submitted_datetime: string | null;
+  case_total_rd_cost: string | null;
+  case_total_projects: number | null;
+  case_total_qre_cost: string | null;
+  case_total_project_cost: string | null;
+};
+
+export interface CaseGlobalListResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    caseInfo: CaseGlobalList[];
+    count: number;
+  };
+}
+
 // Details
 export interface CaseDetails {
   rid: string;
@@ -88,6 +135,10 @@ export interface CaseDetails {
   status_name: string;
   currency_code: string;
   currency_rid: string;
+  case_completion_percentage: string | null;
+  case_total_qualified_projects: string | null;
+  case_total_qualified_project_cost: string | null;
+  country_code?: string;
 }
 
 export interface CaseDetailsResponse {

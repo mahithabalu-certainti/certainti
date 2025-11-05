@@ -2,29 +2,21 @@ import {
   costDisplay,
   formatDateToYYYYMMDDWithTime,
   REGEX_PATTERNS,
-} from '../../../../../../common-utils';
+} from '../../../../../common-utils';
 import {
   DependencyRowData,
   ListTableColumn,
-} from '../../../../../../components/table/types';
-import { CaseList } from '../../../../../types';
-import { generateCaseNamePrefixValue } from '../../../../case/helper';
+} from '../../../../../components/table/types';
+import { CaseGlobalList } from '../../../../types';
+import { generateCaseNamePrefixValue } from '../../helper';
 
-export const getCaseListColumns = (
-  handleViewCaseDetails: (caseItem: CaseList) => void,
+export const getGlobalCaseListColumns = (
+  handleViewCaseDetails: (caseItem: CaseGlobalList) => void,
   userListOptions: { value: string; label: string }[],
   caseFilingTypesOptions: { value: string; label: string }[],
-  accountInActive: boolean,
-  accountData: {
-    accountId: string;
-    account_name: string;
-    account_number: string;
-    country_rid: string;
-    country_code: string;
-  },
-  currencySymbol?: string,
-  permissionMap?: Record<string, { read: boolean; edit: boolean }>
-): ListTableColumn<CaseList>[] => {
+  permissionMap?: Record<string, { read: boolean; edit: boolean }>,
+  accountPermissionMap?: Record<string, { read: boolean; edit: boolean }>
+): ListTableColumn<CaseGlobalList>[] => {
   return [
     {
       id: 'r_number',
@@ -54,6 +46,16 @@ export const getCaseListColumns = (
       ),
     },
     {
+      id: 'account_name',
+      label: 'Account Name',
+      width: 180,
+      sortable: true,
+      sortId: 'account_name',
+      hide:
+        !accountPermissionMap?.['account_name']?.read &&
+        !accountPermissionMap?.['account_name']?.edit,
+    },
+    {
       id: 'filing_type_name',
       label: 'Filing Type',
       width: 160,
@@ -62,8 +64,7 @@ export const getCaseListColumns = (
       editId: 'filing_type_rid',
       editable:
         permissionMap?.['filing_type_rid']?.edit &&
-        permissionMap?.['filing_type_rid']?.read &&
-        !accountInActive,
+        permissionMap?.['filing_type_rid']?.read,
       hide:
         !permissionMap?.['filing_type_rid']?.edit &&
         !permissionMap?.['filing_type_rid']?.read,
@@ -76,6 +77,9 @@ export const getCaseListColumns = (
           return String(rowData.filing_type_rid || '');
         },
       },
+      conditionallyEdit: [
+        { key: 'account_status_name', matchValue: ['Active'] },
+      ],
     },
     {
       id: 'case_name',
@@ -86,16 +90,15 @@ export const getCaseListColumns = (
       editId: 'case_name',
       editable:
         permissionMap?.['case_name']?.edit &&
-        permissionMap?.['case_name']?.read &&
-        !accountInActive,
+        permissionMap?.['case_name']?.read,
       hide:
         !permissionMap?.['case_name']?.edit &&
         !permissionMap?.['case_name']?.read,
       render: (row) =>
-        row.case_name && accountData.account_name && accountData.country_code
+        row.case_name && row.account_name && row.country_code
           ? generateCaseNamePrefixValue(
-              accountData.account_name,
-              accountData.country_code,
+              row.account_name,
+              row.country_code,
               row.fiscal_year.toString()
             ) + row.case_name
           : '-',
@@ -114,6 +117,9 @@ export const getCaseListColumns = (
           },
         ],
       },
+      conditionallyEdit: [
+        { key: 'account_status_name', matchValue: ['Active'] },
+      ],
     },
     {
       id: 'fiscal_year',
@@ -127,16 +133,25 @@ export const getCaseListColumns = (
         !permissionMap?.['fiscal_year']?.read,
     },
     {
+      id: 'country_name',
+      label: 'Country',
+      width: 180,
+      sortable: true,
+      sortId: 'country_name',
+      hide:
+        !accountPermissionMap?.['country_rid']?.read &&
+        !accountPermissionMap?.['country_rid']?.edit,
+    },
+    {
       id: 'case_owner_name',
       label: 'Case Owner',
-      width: 180,
+      width: 190,
       sortable: true,
       sortId: 'case_owner_name',
       editId: 'case_owner_rid',
       editable:
         permissionMap?.['case_owner_rid']?.edit &&
-        permissionMap?.['case_owner_rid']?.read &&
-        !accountInActive,
+        permissionMap?.['case_owner_rid']?.read,
       hide:
         !permissionMap?.['case_owner_rid']?.edit &&
         !permissionMap?.['case_owner_rid']?.read,
@@ -149,11 +164,14 @@ export const getCaseListColumns = (
           return String(rowData.case_owner_rid || '');
         },
       },
+      conditionallyEdit: [
+        { key: 'account_status_name', matchValue: ['Active'] },
+      ],
     },
     {
       id: 'case_total_project_cost',
       label: 'Total Case Project Cost',
-      width: 180,
+      width: 190,
       sortable: true,
       sortId: 'case_total_project_cost',
       sx: {
@@ -164,13 +182,13 @@ export const getCaseListColumns = (
         !permissionMap?.['case_total_project_cost']?.read,
       render: (row) =>
         row.case_total_project_cost
-          ? costDisplay(row.case_total_project_cost, currencySymbol)
+          ? costDisplay(row.case_total_project_cost, row?.currency_symbol)
           : '-',
     },
     {
       id: 'case_total_qre_cost',
       label: 'Case Project QRE Cost',
-      width: 180,
+      width: 190,
       sortable: true,
       sortId: 'case_total_qre_cost',
       sx: {
@@ -181,13 +199,13 @@ export const getCaseListColumns = (
         !permissionMap?.['case_total_qre_cost']?.read,
       render: (row) =>
         row.case_total_qre_cost
-          ? costDisplay(row.case_total_qre_cost, currencySymbol)
+          ? costDisplay(row.case_total_qre_cost, row?.currency_symbol)
           : '-',
     },
     {
       id: 'case_total_rd_cost',
       label: 'Case Project RD Credit',
-      width: 180,
+      width: 190,
       sortable: true,
       sortId: 'case_total_rd_cost',
       sx: {
@@ -198,7 +216,7 @@ export const getCaseListColumns = (
         !permissionMap?.['case_total_rd_cost']?.read,
       render: (row) =>
         row.case_total_rd_cost
-          ? costDisplay(row.case_total_rd_cost, currencySymbol)
+          ? costDisplay(row.case_total_rd_cost, row?.currency_symbol)
           : '-',
     },
     {
@@ -230,7 +248,7 @@ export const getCaseListColumns = (
     {
       id: 'created_datetime',
       label: 'Created On',
-      width: 190,
+      width: 200,
       sortable: true,
       sortId: 'created_datetime',
       hide:
@@ -245,7 +263,7 @@ export const getCaseListColumns = (
     {
       id: 'submitted_datetime',
       label: 'Submitted On',
-      width: 190,
+      width: 200,
       sortable: true,
       sortId: 'submitted_datetime',
       hide:
@@ -259,7 +277,7 @@ export const getCaseListColumns = (
     {
       id: 'approved_datetime',
       label: 'Approved On',
-      width: 190,
+      width: 200,
       sortable: true,
       sortId: 'approved_datetime',
       hide:

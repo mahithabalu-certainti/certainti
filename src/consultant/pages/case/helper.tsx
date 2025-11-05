@@ -1,5 +1,5 @@
-import { getFiscalYears } from '../../../../../common-utils';
-import { FieldConfig } from '../../components/filter/filterType';
+import { getFiscalYears } from '../../../common-utils';
+import { FieldConfig } from '../account-details-sidebar/components/filter/filterType';
 
 const textOptions: { option: string; value: string }[] = [
   { option: 'Contains', value: 'contains' },
@@ -47,11 +47,13 @@ const minYear = 1950;
 const currentYear = new Date().getFullYear();
 const fiscalYears = getFiscalYears(currentYear - minYear + 1);
 
-export const getCaseFilterFields = (
+export const getGlobalCasesFilterFields = (
   caseStatusOptions: { label: string; value: string }[],
   caseTypeOptions: { label: string; value: string }[],
   caseOwnerOptions: { label: string; value: string }[],
-  permissionMap: Record<string, { read: boolean; edit: boolean }>
+  contryOptions: { label: string; value: string }[],
+  permissionMap: Record<string, { read: boolean; edit: boolean }>,
+  accountPermissionMap: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => {
   return [
     {
@@ -62,6 +64,15 @@ export const getCaseFilterFields = (
       hide:
         !permissionMap?.['r_number']?.edit &&
         !permissionMap?.['r_number']?.read,
+    },
+    {
+      name: 'Account Name',
+      value: 'account_name',
+      type: 'text',
+      operatorOption: textOptions,
+      hide:
+        !accountPermissionMap?.['account_name']?.read &&
+        !accountPermissionMap?.['account_name']?.edit,
     },
     {
       name: 'Filing Type',
@@ -94,6 +105,19 @@ export const getCaseFilterFields = (
       hide:
         !permissionMap?.['fiscal_year']?.edit &&
         !permissionMap?.['fiscal_year']?.read,
+    },
+    {
+      name: 'Country',
+      value: 'country_name',
+      type: 'enum',
+      options: contryOptions.map((opt) => ({
+        option: opt.label,
+        value: opt.value,
+      })),
+      operatorOption: enumOperator,
+      hide:
+        !accountPermissionMap?.['country_rid']?.read &&
+        !accountPermissionMap?.['country_rid']?.edit,
     },
     {
       name: 'Case Owner',
@@ -200,4 +224,12 @@ export const getCaseFilterFields = (
       options: [{ value: 'createdAt_desc', option: 'Recently Created' }],
     },
   ];
+};
+
+export const generateCaseNamePrefixValue = (
+  accName: string,
+  country: string,
+  year: string
+) => {
+  return `${accName}-${country}-${year}-`;
 };

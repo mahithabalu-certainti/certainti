@@ -18,14 +18,17 @@ const fiscalYears = getFiscalYears(currentYear - minYear + 1);
 export const CaseFormData = (
   isEditView?: boolean,
   permissionMap?: Record<string, { read: boolean; edit: boolean }>,
+  accountPermissionMap?: Record<string, { read: boolean; edit: boolean }>,
   filingTypeOptions?: SelectOption[],
   ownerOptions?: SelectOption[],
+  countryOptions?: SelectOption[],
   dateConstraints?: {
     planned_min: string;
     planned_max: string;
     statutory_min: string;
     statutory_max: string;
-  }
+  },
+  caseNamePrefix?: string
 ): FormType[] => {
   return useMemo(
     () => [
@@ -62,9 +65,22 @@ export const CaseFormData = (
               !permissionMap?.['filing_type_rid']?.edit &&
               !permissionMap?.['filing_type_rid']?.read,
           }),
+          createSelectField('fiscal_year', 'Fiscal Year', {
+            options: fiscalYears,
+            placeholder: 'Choose Fiscal Year',
+            required: true,
+            onChange: true,
+            isFiscalYear: true,
+            disabled: isEditView,
+            hide:
+              isEditView &&
+              !permissionMap?.['fiscal_year']?.edit &&
+              !permissionMap?.['fiscal_year']?.read,
+          }),
           createTextField('case_name', 'Case Name', {
             required: true,
             placeholder: 'Enter Case Name',
+            prefixValue: caseNamePrefix,
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MIN_3,
@@ -97,25 +113,15 @@ export const CaseFormData = (
               !permissionMap?.['case_owner_rid']?.edit &&
               !permissionMap?.['case_owner_rid']?.read,
           }),
-          createSelectField('fiscal_year', 'Fiscal Year', {
-            options: fiscalYears,
-            placeholder: 'Choose Fiscal Year',
+          createSelectField('country', 'Country', {
+            options: countryOptions || [],
+            placeholder: 'Choose Country',
             required: true,
-            isFiscalYear: true,
-            disabled:
-              isEditView &&
-              !permissionMap?.['fiscal_year']?.edit &&
-              permissionMap?.['fiscal_year']?.read,
+            disabled: true,
             hide:
               isEditView &&
-              !permissionMap?.['fiscal_year']?.edit &&
-              !permissionMap?.['fiscal_year']?.read,
-          }),
-          createEmptyField('', '', {
-            name: 'emptyData',
-            label: '',
-            type: '',
-            required: false,
+              !accountPermissionMap?.['currency_rid']?.read &&
+              !accountPermissionMap?.['currency_rid']?.edit,
           }),
           createEmptyField('', '', {
             name: 'emptyData',
@@ -128,10 +134,6 @@ export const CaseFormData = (
             onChange: true,
             maxDate: currentDate,
             disableFutureDates: true,
-            resetDependsFields: [
-              'planned_submission_date',
-              'statutory_submission_date',
-            ],
             disabled:
               isEditView &&
               !permissionMap?.['start_date']?.edit &&
@@ -154,7 +156,6 @@ export const CaseFormData = (
               maxDate: dateConstraints?.planned_max
                 ? new Date(dateConstraints.planned_max)
                 : currentDate,
-              resetDependsFields: ['statutory_submission_date'],
               disabled:
                 isEditView &&
                 !permissionMap?.['planned_submission_date']?.edit &&
@@ -270,8 +271,11 @@ export const CaseFormData = (
       filingTypeOptions,
       isEditView,
       permissionMap,
+      accountPermissionMap,
       ownerOptions,
+      countryOptions,
       dateConstraints,
+      caseNamePrefix,
     ]
   );
 };
