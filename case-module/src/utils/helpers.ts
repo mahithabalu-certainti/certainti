@@ -232,8 +232,11 @@ export const buildStringFilterCondition = (
     const columnMap: Record<string, string> = {
       created_user_name: "(uc.first_name || ' ' || uc.last_name)",
       modified_user_name: "(um.first_name || ' ' || um.last_name)",
+      case_full_name: " CONCAT(a.account_name, '-', c.country_name, '-', cs.fiscal_year, '-', cs.case_name)"
     };
-    return columnMap[column] || `${ref}.${column}`;
+    
+    return columnMap[column] || (ref ? `${ref}.${column}` : column);
+
   };
 
   const columnRef = getColumnRef(filteredColumns, dynamicReference);

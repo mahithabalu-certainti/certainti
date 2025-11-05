@@ -5,17 +5,22 @@ import { checkUserStatusMiddleware } from "../middlewares/authmiddleware";
 const routes: Router = Router();
 routes.post(
   "/adminChecklist/create",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("checklist_templates_create"),
   controller.caseManagementController.createAdminCheckList
 );
 routes.get(
   "/adminChecklist/list",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("checklist_templates_view_edit"),
   controller.caseManagementController.listAdminCheckList
 );
 routes.get(
+  "/adminChecklist/export",
+  checkUserStatusMiddleware("checklist_templates_export"),
+  controller.caseManagementController.exportAdminCheckList
+);
+routes.get(
   "/adminChecklist/detail/:checkListRid",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("checklist_templates_view_edit"),
   controller.caseManagementController.getCheckListTemplateDetailsById
 );
 routes.post(

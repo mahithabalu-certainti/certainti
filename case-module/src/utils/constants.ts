@@ -59,6 +59,7 @@ export const mainTableFilters: Record<any, any> = {
   modified_user_name: "modified_user_name",
   filing_type_name: "filing_type_name",
   case_owner_name: "case_owner_name",
+  case_name:"case_full_name"
 };
 
 export const STATUS_MESSAGE = {
@@ -745,7 +746,7 @@ export const filtersColumnsForCaseSummary: Record<string, string> = {
   createdAt: "createdAt",
   case_owner_name: "case_owner_rid",
   filing_type_name: "filing_type_rid",
-  case_name: "case_name",
+  case_name: "case_full_name",
   submitted_datetime: "submitted_datetime",
   approved_datetime: "approved_datetime",
   case_total_project_cost: "case_total_project_cost",
@@ -753,7 +754,7 @@ export const filtersColumnsForCaseSummary: Record<string, string> = {
   case_total_rd_cost: "case_total_rd_cost",
   case_total_projects: "case_total_projects",
   case_total_qualified_projects: "case_total_qualified_projects",
-  country_name: "country_name",
+  country_name: "country_rid",
 };
 
 export const filterTypesForAdminCheckList: Record<string, any> = {

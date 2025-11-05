@@ -330,7 +330,8 @@ export const listAllCasesSummaryQuery = (
     case_total_projects, case_total_project_cost, case_total_rd_cost, case_total_qre_cost,case_total_qualified_projects,
     submitted_datetime, approved_datetime,COUNT(*) OVER() AS total_records,a.r_number as account_r_number,a.status_rid as account_status_rid,
     COALESCE( acc_curr.currency_code, usd_curr.currency_code) as currency_code,
-      COALESCE( acc_curr.currency_symbol, usd_curr.currency_symbol) as currency_symbol,accountStatus.status_name as account_status_name
+      COALESCE( acc_curr.currency_symbol, usd_curr.currency_symbol) as currency_symbol,accountStatus.status_name as account_status_name,
+      CONCAT(a.account_name, '-', c.country_name, '-',cs.fiscal_year,'-',cs.case_name) AS case_full_name
     FROM
     ${MAIN_SCHEMA_NAME}.case_summary cs
     LEFT JOIN ${MAIN_SCHEMA_NAME}.case_filing_type cft ON cft.rid = cs.filing_type_rid
@@ -344,7 +345,7 @@ export const listAllCasesSummaryQuery = (
     LEFT JOIN ${MAIN_SCHEMA_NAME}.currency usd_curr ON usd_curr.currency_code = 'USD'
     LEFT JOIN ${MAIN_SCHEMA_NAME}.status accountStatus ON accountStatus.rid = a.status_rid
     WHERE
-    (cs.r_number ILIKE '${searchValue}' OR cs.case_name ILIKE '${searchValue}')
+    (cs.r_number ILIKE '${searchValue}' OR CONCAT(a.account_name, '-', c.country_name, '-',cs.fiscal_year,'-',cs.case_name) ILIKE '${searchValue}')
     ${joinedConditions}
     ),
     paginated_data AS (
@@ -385,7 +386,8 @@ export const listAllCasesSummaryQuery = (
             'approved_datetime', c.approved_datetime,
             'total_records', c.total_records,
             'account_r_number', c.account_r_number,
-            'case_total_qualified_projects', c.case_total_qualified_projects
+            'case_total_qualified_projects', c.case_total_qualified_projects,
+            'case_full_name', c.case_full_name
            
         )) AS cases_summary
 
