@@ -83,18 +83,25 @@ export const CaseDetails = () => {
     console.log('Settings clicked');
   };
 
+  const activityMenuItems = [
+    { label: 'Create Task', onClick: () => console.log('Task') },
+    { label: 'Draft Email', onClick: () => console.log('Email') },
+    { label: 'Schedule Meeting', onClick: () => console.log('Meeting') },
+    { label: 'Log a call', onClick: () => console.log('Call') },
+  ];
+
   const renderContent = () => {
     switch (activeKey) {
       case 'workBreakdown':
         return (
           <div className='w-full pr-4 pl-2 py-2'>
-            <WorkBreakDown />
+            <WorkBreakDown activityMenuItems={activityMenuItems} />
           </div>
         );
       case 'caseTeam':
         return (
           <div className='w-full pr-4 pl-2 py-2'>
-            <CaseTeam />
+            <CaseTeam activityMenuItems={activityMenuItems} />
           </div>
         );
       default:

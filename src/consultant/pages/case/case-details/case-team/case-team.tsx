@@ -43,6 +43,7 @@ import {
   useGetUserOptions,
 } from '../../../../services/case-team';
 import { TableSkeleton } from '../../../../../components/table';
+import { ActivityMenuItem } from '../../../../types';
 
 const ConfigTabs: ResourceTabs[] = [
   {
@@ -52,7 +53,11 @@ const ConfigTabs: ResourceTabs[] = [
   },
 ];
 
-const CaseTeam = () => {
+interface CaseTeamProps {
+  activityMenuItems: ActivityMenuItem[];
+}
+
+const CaseTeam: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
   const [searchParams] = useSearchParams();
   const { caseId } = useParams();
   const { successToast, errorToast } = useToast();
@@ -416,13 +421,6 @@ const CaseTeam = () => {
   const getTitleIcon = () => {
     return <ActionItemsIcon alt='action-items-icon' />;
   };
-
-  const activityMenuItems = [
-    { label: 'Create Task', onClick: () => console.log('Task') },
-    { label: 'Draft Email', onClick: () => console.log('Email') },
-    { label: 'Schedule Meeting', onClick: () => console.log('Meeting') },
-    { label: 'Log a call', onClick: () => console.log('Call') },
-  ];
 
   return (
     <>

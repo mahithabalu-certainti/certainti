@@ -7,6 +7,7 @@ import { AllPermissions } from '../../../../../common-service';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import KanbanBoard from '../../../../../components/kanban-board/kanban-board';
 import { mockKanbanData } from './mockData';
+import { ActivityMenuItem } from '../../../../types';
 
 const ConfigTabs: ResourceTabs[] = [
   {
@@ -22,7 +23,11 @@ const ConfigTabs: ResourceTabs[] = [
   // },
 ];
 
-const WorkBreakDown = () => {
+interface WorkBreakDownProps {
+  activityMenuItems: ActivityMenuItem[];
+}
+
+const WorkBreakDown: React.FC<WorkBreakDownProps> = ({ activityMenuItems }) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const tabParam = searchParams.get('tab') || 'milestone';
@@ -66,13 +71,6 @@ const WorkBreakDown = () => {
     // setSearchParams(searchParams);
     navigate(`?${searchParams.toString()}`, { replace: true });
   };
-
-  const activityMenuItems = [
-    { label: 'Create Task', onClick: () => console.log('Task') },
-    { label: 'Draft Email', onClick: () => console.log('Email') },
-    { label: 'Schedule Meeting', onClick: () => console.log('Meeting') },
-    { label: 'Log a call', onClick: () => console.log('Call') },
-  ];
 
   return (
     <>
