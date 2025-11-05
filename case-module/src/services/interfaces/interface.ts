@@ -126,5 +126,5 @@ export interface ICaseManagementService {
   getMilestones() : Promise<any>
   getChecklist() : Promise<any>
   updateTaskTemplate(data : UpdateTaskTemplateType, userId : string) :Promise<any>;
-  fetchTaskTemplate(data : AdminTaskTemplatePayloadType) : Promise<any>
+  fetchTaskTemplate(data : AdminTaskTemplatePayloadType, isExport : boolean) : Promise<any>
 }
