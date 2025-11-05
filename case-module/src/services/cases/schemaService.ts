@@ -415,6 +415,8 @@ class CaseSchemaService {
       let modifiedByConditions;
       let caseOwnerFilter;
       let caseOwnerConditions;
+      let caseNameFilter;
+      let caseNameConditions;
       let totalResults: number = 0;
       let disablePagination = false;
 
@@ -435,8 +437,12 @@ class CaseSchemaService {
         modifiedByFilter = filters.modified_by;
         modifiedByConditions = detectConditions(modifiedByFilter);
       }
+      if( filters?.case_name) {
+        caseNameFilter = filters.case_name;
+        caseNameConditions = detectConditions(caseNameFilter);
+      }
       if (filters) {
-        ["modified_by"].forEach((key) => {
+        ["modified_by","case_name"].forEach((key) => {
           if (filters[key]) {
             disablePagination = true;
             delete filters[key];
@@ -476,7 +482,6 @@ class CaseSchemaService {
         /\D/g,
         ""
       )}`;
-      console.log(schemaName);
       const tableExists = await this.checkTableExists(schemaName, "cases");
 
       if (!tableExists) {
@@ -577,6 +582,7 @@ class CaseSchemaService {
                 account_name: accountInfo?.account_name,
                 country_code: accountInfo?.country_code,
                 case_name: d.case_name,
+                case_full_name: accountInfo?.account_name + ' - ' + accountInfo?.country_code + ' - ' + d.fiscal_year + ' - ' + d.case_name,
                 description: d.description,
                 fiscal_year: d.fiscal_year,
                 case_owner_rid: d.case_owner_rid,
@@ -645,6 +651,14 @@ class CaseSchemaService {
           caseOwnerConditions,
           caseOwnerFilter,
           "case_owner_name"
+        );
+      }
+      if (caseNameConditions != null && caseNameConditions != undefined) {
+        finalData = applyFilters(
+          finalData,
+          caseNameConditions,
+          caseNameFilter,
+          "case_full_name"
         );
       }
       if (
@@ -2477,7 +2491,7 @@ const getSortColumn = (sortField: string): string => {
     country_name: "c.country_name",
     fiscal_year: "c.fiscal_year",
     case_owner_name: "c.case_owner_name",
-    case_name: "c.case_name",
+    case_name: "c.case_full_name",
     createdAt: "c.created_datetime",
     filing_type_name: "c.filing_type_name",
   };
@@ -2507,6 +2521,7 @@ function filterForCases(
 
             if (filteredColumns == "account_name") dynamicReference = `a`;
             else if (filteredColumns == "country_name") dynamicReference = `c`;
+            else if (filteredColumns == "case_full_name") dynamicReference = ``;
             else dynamicReference = `cs`;
 
             const stringCondition = buildStringFilterCondition(
@@ -2532,10 +2547,12 @@ function filterForCases(
             break;
           }
           case "datetime": {
+            let dynamicReference = `cs`;
             const datetimeCondition = buildDatetimeFilterCondition(
               condition,
               values,
-              filteredColumns!
+              filteredColumns!,
+              dynamicReference
             );
             if (datetimeCondition) {
               filteredQueryArray.push(datetimeCondition);

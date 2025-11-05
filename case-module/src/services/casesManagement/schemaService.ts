@@ -494,9 +494,8 @@ class CaseManagementSchemaService {
         );
         return result.admin_checklists;
       } catch (err) {
-        console.log(err)
-        logMessage(`Error in fetch cases summary: ${err}`);
-        errorLog("Error in fetch cases summary:", (err as Error).message);
+        logMessage(`Error in fetching admin check list template: ${err}`);
+        errorLog("Error in fetching admin check list template:", (err as Error).message);
         return [];
       }
     }
