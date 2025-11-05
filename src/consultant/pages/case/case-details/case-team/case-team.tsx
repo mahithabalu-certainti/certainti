@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useLayoutEffect } from 'react';
 import {
   Select,
   MenuItem,
@@ -71,6 +71,7 @@ const CaseTeam = () => {
 
   const [isFormChanged, setIsFormChanged] = useState(false);
   const cellRefs = useRef<Record<string, HTMLTableCellElement | null>>({});
+  const [cellWidths, setCellWidths] = useState<Record<string, number>>({});
 
   const { permission } = useSelector((state: RootState) => state.permission);
   //Permission
@@ -232,6 +233,30 @@ const CaseTeam = () => {
       updateCaseTeamMutation.reset();
     }
   }, [updateCaseTeamMutation.isError, errorToast, updateCaseTeamMutation]);
+
+  useLayoutEffect(() => {
+    const calculateCellWidths = () => {
+      const newWidths: Record<string, number> = {};
+      Object.entries(cellRefs.current).forEach(([key, cell]) => {
+        if (cell) {
+          newWidths[key] = cell.offsetWidth;
+        }
+      });
+      setCellWidths(newWidths);
+    };
+
+    // Calculate widths after a short delay to ensure table layout is complete
+    const timer = setTimeout(calculateCellWidths, 100);
+
+    // Also recalculate on window resize
+    const handleResize = () => calculateCellWidths();
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [formData.team_members, isDataLoaded]);
 
   function handleAddTeamMember() {
     setFormData((prev) => {
@@ -619,10 +644,10 @@ const CaseTeam = () => {
                                             marginTop: '4px',
                                             maxHeight: '250px',
                                             borderRadius: '0px',
-                                            width:
-                                              cellRefs.current[
-                                                `user_role-${index}`
-                                              ]?.offsetWidth || 'auto',
+                                            width: Math.max(
+                                              cellWidths[`user_role-${index}`] || 0,
+                                              150 // minimum width fallback
+                                            ),
                                             boxShadow:
                                               'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
                                             '& .MuiMenuItem-root': {
@@ -717,10 +742,10 @@ const CaseTeam = () => {
                                             marginTop: '4px',
                                             maxHeight: '250px',
                                             borderRadius: '0px',
-                                            width:
-                                              cellRefs.current[
-                                                `user_name-${index}`
-                                              ]?.offsetWidth || 'auto',
+                                            width: Math.max(
+                                              cellWidths[`user_name-${index}`] || 0,
+                                              150 // minimum width fallback
+                                            ),
                                             boxShadow:
                                               'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
                                             '& .MuiMenuItem-root': {
