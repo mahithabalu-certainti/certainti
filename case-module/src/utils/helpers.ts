@@ -1,7 +1,7 @@
 import Joi from "joi";
 import { Request, Response } from "express";
 import { errorResponse, successResponse } from "./apiResponse";
-import { HttpStatus } from "./constants";
+import { ALPHANUMERIC_CONDITIONS, HttpStatus } from "./constants";
 import configurations from "../config/config";
 import ExcelJS from 'exceljs'
 import { getSecret } from "./azureSecrets";
@@ -194,3 +194,91 @@ export async function decryptClientSecret(
 
   return decrypted.toString();
 }
+
+// Optimized utility function for handling numeric filter conditions
+export const buildNumericFilterCondition = (
+  condition: string,
+  values: any,
+  filteredColumns: string,
+  tableAlias: string = "cs"
+): string => {
+  const columnRef = `${tableAlias}.${filteredColumns}`;
+
+  // Use object mapping for better performance instead of switch
+  const conditionMap: Record<string, (col: string, val: any) => string> = {
+    [ALPHANUMERIC_CONDITIONS.equals]: (col, val) => `${col} = ${val}`,
+    [ALPHANUMERIC_CONDITIONS.notEquals]: (col, val) => `${col} != ${val}`,
+    [ALPHANUMERIC_CONDITIONS.greater_than]: (col, val) => `${col} > ${val}`,
+    [ALPHANUMERIC_CONDITIONS.less_than]: (col, val) => `${col} < ${val}`,
+    [ALPHANUMERIC_CONDITIONS.between]: (col, val) =>
+      `${col} BETWEEN ${Array.isArray(val) ? val.join(" AND ") : val}`,
+    [ALPHANUMERIC_CONDITIONS.isEmpty]: (col) => `${col} IS NULL`,
+    [ALPHANUMERIC_CONDITIONS.IN]: (col, val) =>
+      `${col} IN (${Array.isArray(val) ? val.join(",") : val})`,
+  };
+
+  return conditionMap[condition]?.(columnRef, values) || "";
+};
+
+// Optimized utility function for handling string filter conditions
+export const buildStringFilterCondition = (
+  condition: string,
+  values: any,
+  filteredColumns: string,
+  dynamicReference: string
+): string => {
+  // Optimize column reference determination
+  const getColumnRef = (column: string, ref: string): string => {
+    const columnMap: Record<string, string> = {
+      created_user_name: "(uc.first_name || ' ' || uc.last_name)",
+      modified_user_name: "(um.first_name || ' ' || um.last_name)",
+    };
+    return columnMap[column] || `${ref}.${column}`;
+  };
+
+  const columnRef = getColumnRef(filteredColumns, dynamicReference);
+
+  // Use object mapping for conditions
+  const conditionMap: Record<string, (col: string, val: any) => string> = {
+    [ALPHANUMERIC_CONDITIONS.equals]: (col, val) =>
+      `LOWER(${col}) = LOWER('${val}')`,
+    [ALPHANUMERIC_CONDITIONS.notEquals]: (col, val) =>
+      `(LOWER(${col}) != LOWER('${val}') OR ${col} IS NULL)`,
+    [ALPHANUMERIC_CONDITIONS.isEmpty]: (col) => `${col} IS NULL`,
+    [ALPHANUMERIC_CONDITIONS.contains]: (col, val) => `${col} ILIKE '%${val}%'`,
+    [ALPHANUMERIC_CONDITIONS.IN]: (col, val) =>
+      `${col} IN (${
+        Array.isArray(val)
+          ? val.map((d: any) => `'${d}'`).join(",")
+          : `'${val}'`
+      })`,
+  };
+
+  return conditionMap[condition]?.(columnRef, values) || "";
+};
+
+// Optimized utility function for handling datetime filter conditions
+export const buildDatetimeFilterCondition = (
+  condition: string,
+  values: any,
+  filteredColumns: string,
+  tableAlias: string = "i"
+): string => {
+  const columnRef = `DATE(${tableAlias}.${filteredColumns})`;
+
+  // Use object mapping for better performance
+  const conditionMap: Record<string, (col: string, val: any) => string> = {
+    [ALPHANUMERIC_CONDITIONS.equals]: (col, val) => `${col} = '${val}'`,
+    [ALPHANUMERIC_CONDITIONS.before]: (col, val) => `${col} < '${val}'`,
+    [ALPHANUMERIC_CONDITIONS.after]: (col, val) => `${col} > '${val}'`,
+    [ALPHANUMERIC_CONDITIONS.between]: (col, val) =>
+      `${col} BETWEEN ${
+        Array.isArray(val)
+          ? val.map((d: any) => `'${d}'`).join(" AND ")
+          : `'${val}'`
+      }`,
+    [ALPHANUMERIC_CONDITIONS.isEmpty]: (col) => `${col} IS NULL`,
+  };
+
+  return conditionMap[condition]?.(columnRef, values) || "";
+};

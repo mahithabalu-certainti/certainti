@@ -8,6 +8,11 @@ routes.post(
   checkUserStatusMiddleware("NA"),
   controller.caseManagementController.createAdminCheckList
 );
+routes.get(
+  "/adminChecklist/list",
+  checkUserStatusMiddleware("NA"),
+  controller.caseManagementController.listAdminCheckList
+);
 routes.post(
   "/taskTemplate/create",
   checkUserStatusMiddleware("NA"),

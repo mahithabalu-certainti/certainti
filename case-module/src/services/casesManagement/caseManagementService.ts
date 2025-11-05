@@ -120,6 +120,63 @@ export class CaseManagementService {
     }
   }
 
+  /**
+   * Retrieves admin checklists with comprehensive filtering, pagination, and search capabilities.
+   *
+   * @param {any} data - Request parameters object containing pagination and sorting options
+   * @param {Record<string, any>} filters - Advanced filter conditions for data refinement
+   * @param {string} userId - The ID of the user requesting the data (for authorization)
+   * @param {string} apiType - Operation type determining response format ("list" or "download")
+   *
+   * @returns {Promise<{
+   *   statusCode: number;
+   *   message: string;
+   *   errorMessage?: string;
+   *   data?: { checklist: any; count: number };
+   * }>} - Result object with status code, message, and checklist data if successful
+   *
+   * @description
+   * This method performs the following operations:
+   * - Delegates data retrieval to the schema service with provided parameters
+   * - Processes pagination, sorting, and filtering options
+   * - Applies search functionality across checklist fields
+   * - Returns structured response with checklist data and total count
+   * - Handles both list view and export scenarios based on apiType
+   * - Provides consistent error handling and response formatting
+   */
+  async listAdminCheckList (
+    data: any,
+    filters: Record<string, any>,
+    userId: string,
+    apiType: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { checklist: any; count: number };
+  }> {
+    const result = await this.caseManangementSchemaService.listAdminCheckList(data.page,data.limit,apiType,filters,data.search, data.sortBy, data.sortOrder);
+  if (result != null) {
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          checklist: result,
+          count: result[0]?.total_records || 0,
+        },
+      };
+    } else {
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.NOT_FOUND_MESSAGE,
+        data: {
+          checklist: null,
+          count: 0,
+        },
+      };
+    }
+  }
+
   async createTaskTemplate (data : CreateTaskTemplateType, userId : string) {
     const createTaskResult = await this.caseManangementSchemaService.createTaskTemplate(data, userId);
     if(createTaskResult.statusCode == HttpStatus.SUCCESS) {
