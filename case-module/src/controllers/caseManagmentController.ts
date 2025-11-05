@@ -371,6 +371,108 @@ async function exportAdminCheckList(req: Request, res: Response) {
 }
 
 /**
+ * Controller function to handle retrieval of detailed admin checklist template information by unique identifier.
+ *
+ * This async function processes HTTP requests for fetching comprehensive checklist template details by:
+ * - Extracting and validating the checklist RID from URL path parameters
+ * - Authenticating the request using user ID from request headers
+ * - Delegating data retrieval to the case management service for detailed template information
+ * - Returning structured checklist template data including associated items and metadata
+ *
+ * @param {Request} req - Express request object containing:
+ *   - params.checkListRid: The unique identifier (RID) of the checklist template to retrieve
+ *   - headers: Must include 'x-user-id' for user authentication and access control
+ * @param {Response} res - Express response object used to send the detailed checklist template data
+ *
+ * @returns {Promise<void>} - Resolves after sending the HTTP response with template details or error message
+ *
+ * @throws {Error} - Catches and handles missing parameters, authentication failures, and service errors
+ * 
+ * @description
+ * **HTTP Response Codes:**
+ * - 200: Checklist template details retrieved successfully with complete data structure
+ * - 400: Bad request (missing checkListRid parameter, missing user ID, or service-level error)
+ * - 404: Checklist template not found for the provided RID
+ * - 401: Unauthorized access when user ID is missing from headers
+ * - 500: Internal server error for unexpected system failures
+ * 
+ * **Request Validation:**
+ * - Validates presence of `checkListRid` parameter in URL path
+ * - Requires `x-user-id` header for user authentication and audit trail
+ * - Logs all requests including parameters and user identification for debugging
+ * - No request body validation required as this is a GET operation with path parameters
+ * 
+ * **Response Structure:**
+ * - Returns comprehensive checklist template details including:
+ *   - Template metadata (name, description, dates, status)
+ *   - Associated checklist items and their configurations
+ *   - User information for created/modified tracking
+ *   - Template configuration and settings
+ */
+async function getCheckListTemplateDetailsById(
+  req: Request,
+  res: Response
+): Promise<void> {
+  const methodName = "Get checklist template details";
+  try {
+    const { checkListRid } = req.params;
+    const userId = req.headers["x-user-id"] as string;
+    logMessage(`[${methodName}] Request received,  checkListRid: ${checkListRid} userId: ${userId}`);
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    if (!checkListRid) {
+      errorLog(methodName, "CheckList ID is required in params");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "CheckList ID is required in params"
+      );
+      return;
+    }
+    let checkListResponse;
+   checkListResponse =
+        await caseManagementService.getCheckListTemplateDetailsById(
+          checkListRid
+        );
+
+    if (checkListResponse.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, checkListResponse.data);
+      return;
+    } else {
+      errorLog(methodName, checkListResponse.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        checkListResponse.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+/**
  * Controller function to handle the creation of a new task template.
  *
  * This async function processes HTTP requests for creating task templates by:
@@ -851,5 +953,6 @@ export default {
   updateTaskTemplate,
   fetchAdminTaskTemplateList,
   exportAdminCheckList,
-  ExportAdminTaskTemplateList
+  ExportAdminTaskTemplateList,
+  getCheckListTemplateDetailsById
 };

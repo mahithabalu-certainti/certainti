@@ -177,6 +177,109 @@ export class CaseManagementService {
     }
   }
 
+  async updateAdminChecklist(
+    data: any,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { checklist: any };
+  }> {
+    try {
+      const result = await this.caseManangementSchemaService.updateAdminChecklist(data, userId);
+      
+      if (result.statusCode === HttpStatus.SUCCESS) {
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          message: "Admin checklist updated successfully",
+          data: {
+            checklist: result.data,
+          },
+        };
+      } else {
+        return {
+          statusCode: result.statusCode,
+          message: result.message,
+          errorMessage: result.errorMessage,
+        };
+      }
+    } catch (error: any) {
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: error.message,
+      };
+    }
+  }
+
+  /**
+   * Retrieves detailed admin checklist template information by unique identifier.
+   *
+   * @param {string} checkListRid - The unique identifier (RID) of the checklist template to retrieve
+   *
+   * @returns {Promise<{
+   *   statusCode: number;
+   *   message: string;
+   *   errorMessage?: string;
+   *   data?: { checklistDetails: any };
+   * }>} - Result object with status code, message, and detailed checklist template data if successful
+   *
+   * @description
+   * This method performs the following operations:
+   * - Delegates detailed data retrieval to the schema service with the provided checklist RID
+   * - Fetches comprehensive checklist template information including associated items and metadata
+   * - Validates the existence of the checklist template and returns appropriate error if not found
+   * - Returns structured response with complete checklist template details
+   * - Provides consistent error handling and response formatting
+   * - Logs errors for debugging and audit purposes
+   *
+   * @throws {Error} - Catches and handles service-level errors, database connection issues, and data retrieval failures
+   * 
+   * **Response Structure:**
+   * - Returns detailed checklist template data including:
+   *   - Template metadata (name, description, effective dates, status)
+   *   - Associated checklist items with their configurations and sequencing
+   *   - User information for created/modified tracking
+   *   - Template configuration settings and assignments
+   */
+  async getCheckListTemplateDetailsById(checkListRid: string): Promise<{
+  statusCode: number;
+  message: string;
+  errorMessage?: string;
+  data?: { checklistDetails: any };
+}> {
+  try {
+    const checklistDetails =
+      await this.caseManangementSchemaService.fetchChecklistTemplateDetailsById(
+        checkListRid
+      );
+
+    if (!checklistDetails) {
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: "Invalid CheckList ID",
+      };
+    }
+
+    return {
+      statusCode: HttpStatus.SUCCESS,
+      message: HttpStatus.SUCCESS_MESSAGE,
+      data: {
+        checklistDetails,
+      },
+    };
+  } catch (err) {
+    logMessage(`Error fetching checklist details, ${err}`);
+     return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: STATUS_MESSAGE.checkListError,
+      };
+  }
+}
+
   async createTaskTemplate (data : CreateTaskTemplateType, userId : string) {
     const createTaskResult = await this.caseManangementSchemaService.createTaskTemplate(data, userId);
     if(createTaskResult.statusCode == HttpStatus.SUCCESS) {

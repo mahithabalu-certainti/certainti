@@ -102,6 +102,7 @@ const listCaseTeamSchema = Joi.object({
 const adminChecklistSchema = Joi.object({
   checklist_name: Joi.string().max(255).required(),
   checklist_description: Joi.string().max(2000).optional().allow(""),
+  status_rid: Joi.string().required(),
   checklist_items: Joi.array()
     .items(
       Joi.object({  
