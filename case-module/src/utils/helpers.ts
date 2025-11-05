@@ -7,6 +7,8 @@ import ExcelJS from 'exceljs'
 import { getSecret } from "./azureSecrets";
 import crypto from "crypto";
 import moment from "moment-timezone";
+import { CreateTaskTemplateType, UpdateTaskTemplateType } from "./types";
+import { TaskTemplate } from "../models/caseTaskTemplateModel";
 
 function getLogger() {
   return configurations.getInstance().getLogger();
@@ -285,3 +287,57 @@ export const buildDatetimeFilterCondition = (
 
   return conditionMap[condition]?.(columnRef, values) || "";
 };
+
+export const setTaskTemplateData = (dbData : TaskTemplate, reqData : any, userId : string) => {
+  let validUpdateQuery : string[] = []
+  let validUpdateConditions : string = ``
+  if(reqData.task_name) {
+    if(reqData.task_name !== dbData.task_name) {
+      validUpdateConditions = `task_name = '${reqData.task_name.replace(/'/g, "''")}'`
+      validUpdateQuery.push(validUpdateConditions)
+    } 
+  }
+  if(reqData.effort_in_days) {
+    if(reqData.effort_in_days !== dbData.effort_in_days) {
+      validUpdateConditions = `effort_in_days = ${reqData.effort_in_days}`
+      validUpdateQuery.push(validUpdateConditions)
+    }
+  }
+  if(reqData.reminder_interval) {
+    if(reqData.reminder_interval !== dbData.reminder_interval) {
+      validUpdateConditions = `reminder_interval = ${reqData.reminder_interval}`
+      validUpdateQuery.push(validUpdateConditions)
+    }
+  }
+  if(reqData.case_team_member_role_rid) {
+    if(reqData.case_team_member_role_rid !== dbData.case_team_member_role_rid) {
+      validUpdateConditions = `case_team_member_role_rid = '${reqData.case_team_member_role_rid}'`
+      validUpdateQuery.push(validUpdateConditions)
+    }
+  }
+  if(reqData.checklist_rid) {
+    if(reqData.checklist_rid !== dbData.checklist_rid) {
+      validUpdateConditions = `checklist_rid = '${reqData.checklist_rid}'`
+      validUpdateQuery.push(validUpdateConditions)
+    }
+  }
+  if(reqData.priority_rid) {
+    if(reqData.priority_rid !== dbData.priority_rid) {
+      validUpdateConditions = `priority_rid = '${reqData.priority_rid}'`
+      validUpdateQuery.push(validUpdateConditions)
+    }
+  }
+  if(reqData.milestone_rid) {
+    if(reqData.milestone_rid !== dbData.milestone_rid) {
+      validUpdateConditions = `milestone_rid = '${reqData.milestone_rid}'`
+      validUpdateQuery.push(validUpdateConditions)
+    }
+  }
+  if(validUpdateQuery.length > 0) {
+    validUpdateConditions = `modified_by = '${userId}'`
+    validUpdateQuery.push(validUpdateConditions)
+    validUpdateConditions = `modified_datetime = NOW()`
+    validUpdateQuery.push(validUpdateConditions)
+  }
+  return validUpdateQuery
+}
