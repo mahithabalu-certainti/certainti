@@ -5,7 +5,7 @@ import { CaseManagementSchemaService } from "./schemaService";
 import { HttpStatus, rawQueries, STATUS_MESSAGE } from "../../utils/constants";
 import { logMessage } from "../../utils/helpers";
 import CaseSchemaService from "../cases/schemaService";
-import { checkListTypes, CreateTaskTemplateType, ICreateChecklist, MilestoneTypes, priorityTypes } from "../../utils/types";
+import { checkListTypes, CreateTaskTemplateType, ICreateChecklist, MilestoneTypes, priorityTypes, UpdateTaskTemplateType } from "../../utils/types";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 
 /**
@@ -178,6 +178,30 @@ export class CaseManagementService {
         statusCode : HttpStatus.NOT_FOUND,
         data : []
       }  
+    }
+  }
+  async updateTaskTemplate (data : UpdateTaskTemplateType, userId : string) {
+    const result = await this.caseManangementSchemaService.updateTaskTemplate(data, userId);
+    if(result?.statusCode == HttpStatus.SUCCESS) {
+      return {
+        statusCode : result.statusCode,
+        statusMessage : result.statusMessage
+      }
+    } else if(result?.statusCode === HttpStatus.NOT_FOUND) {
+      return {
+        statusCode : result.statusCode,
+        statusMessage : result.statusMessage
+      }      
+    } else if(result?.statusCode === HttpStatus.BAD_REQUEST) {
+      return {
+        statusCode : result.statusCode,
+        statusMessage : result.statusMessage
+      }      
+    } else {
+      return {
+        statusCode : result.statusCode,
+        statusMessage : result.statusMessage
+      }      
     }
   }
 }

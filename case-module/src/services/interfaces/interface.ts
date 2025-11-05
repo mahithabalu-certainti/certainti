@@ -1,4 +1,4 @@
-import { CreateTaskTemplateType, ICreateCases, ICreateCaseTeam, ICreateChecklist } from "../../utils/types";
+import { CreateTaskTemplateType, ICreateCases, ICreateCaseTeam, ICreateChecklist, UpdateTaskTemplateType } from "../../utils/types";
 
 export interface ICaseService {
   createCase(
@@ -114,4 +114,5 @@ export interface ICaseManagementService {
   getAllPriority() : Promise<any>
   getMilestones() : Promise<any>
   getChecklist() : Promise<any>
+  updateTaskTemplate(data : UpdateTaskTemplateType, userId : string) :Promise<any>;
 }

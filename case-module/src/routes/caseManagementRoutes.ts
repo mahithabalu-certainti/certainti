@@ -28,5 +28,10 @@ routes.get(
   checkUserStatusMiddleware("NA"),
   controller.caseManagementController.getChecklist
 )
+routes.put(
+  "/taskTemplate/update",
+  checkUserStatusMiddleware("NA"),
+  controller.caseManagementController.updateTaskTemplate
+);
 
 export default routes;
