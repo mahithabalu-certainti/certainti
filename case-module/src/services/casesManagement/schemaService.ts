@@ -322,6 +322,8 @@ class CaseManagementSchemaService {
           statusMessage : STATUS_MESSAGE.taskNameExistsAlready
         }        
       }
+      data.modified_by = userId
+      data.modified_datetime = new Date()
       const [result] = await TaskTemplate.update(data, {
         where : {
           rid : data.rid
