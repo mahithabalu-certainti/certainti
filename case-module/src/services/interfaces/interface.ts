@@ -121,6 +121,23 @@ export interface ICaseManagementService {
     errorMessage?: string;
     data?: { checklist: any; count: number };
   }>;
+  updateAdminChecklist(
+    data: any,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { checklist: any };
+  }>;
+  getCheckListTemplateDetailsById(
+    checkListRid: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { checklistDetails: any };
+  }>;
   createTaskTemplate(data : CreateTaskTemplateType, userId : string) :Promise<any>;
   getAllPriority() : Promise<any>
   getMilestones() : Promise<any>

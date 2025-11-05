@@ -13,6 +13,11 @@ routes.get(
   checkUserStatusMiddleware("NA"),
   controller.caseManagementController.listAdminCheckList
 );
+routes.get(
+  "/adminChecklist/detail/:checkListRid",
+  checkUserStatusMiddleware("NA"),
+  controller.caseManagementController.getCheckListTemplateDetailsById
+);
 routes.post(
   "/taskTemplate/create",
   checkUserStatusMiddleware("NA"),

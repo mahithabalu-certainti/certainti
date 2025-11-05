@@ -2,7 +2,7 @@ import { Op, Sequelize, Transaction } from "sequelize";
 import { CaseModelService } from "../caseModelsService";
 import { CreateTaskTemplateType, filterType, ICreateChecklist, ICreateChecklistItem, UpdateTaskTemplateType } from "../../utils/types";
 import { buildDatetimeFilterCondition, buildNumericFilterCondition, buildStringFilterCondition, errorLog, logMessage } from "../../utils/helpers";
-import { HttpStatus, STATUS_MESSAGE, filtersColumnsForCaseSummary, filterTypesForCaseSummary, filterTypesForAdminCheckList, filtersColumnsForAdminCheckList } from "../../utils/constants";
+import { HttpStatus, STATUS_MESSAGE, filtersColumnsForCaseSummary, filterTypesForCaseSummary, filterTypesForAdminCheckList, filtersColumnsForAdminCheckList, rawQueries } from "../../utils/constants";
 import { listAllCheckList } from "../../utils/rawQueries";
 
 
@@ -221,6 +221,75 @@ class CaseManagementSchemaService {
       throw new Error("Error creating checklist: " + error);
     }
   }
+
+  async updateAdminChecklist(data: any, userId: string) {
+    try {
+      const { AdminChecklist } = await this.caseModelService.getModels("");
+      
+      // Find the checklist by RID
+      const existingChecklist = await AdminChecklist.findOne({
+        where: { rid: data.rid }
+      });
+
+      if (!existingChecklist) {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: "Checklist not found",
+          errorMessage: "Admin checklist with the provided RID does not exist",
+        };
+      }
+
+      // Prepare update data - only include fields that are provided
+      const updateData: any = {
+        modified_by: userId,
+        modified_datetime: new Date(),
+      };
+
+      if (data.checklist_name !== undefined) {
+        updateData.checklist_name = data.checklist_name;
+      }
+
+      if (data.checklist_description !== undefined) {
+        updateData.checklist_description = data.checklist_description;
+      }
+
+      // Update the checklist
+      const [affectedCount] = await AdminChecklist.update(
+        updateData,
+        {
+          where: { rid: data.rid },
+          returning: true
+        }
+      );
+
+      if (affectedCount === 0) {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: "No checklist was updated",
+          errorMessage: "Failed to update the checklist",
+        };
+      }
+
+      // Fetch the updated checklist
+      const updatedChecklist = await AdminChecklist.findOne({
+        where: { rid: data.rid }
+      });
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: "Admin checklist updated successfully",
+        data: updatedChecklist,
+      };
+    } catch (error) {
+      logMessage(`Error updating checklist: ${error}`);
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: "Failed to update checklist",
+        errorMessage: error instanceof Error ? error.message : "Unknown error occurred",
+      };
+    }
+  }
+
   async manageAdminCheckListItems(
     checklistReq: ICreateChecklist,
     checklistTemplateRid: string,
@@ -552,6 +621,122 @@ class CaseManagementSchemaService {
     })
     if(checkTaskExists) return checkTaskExists
     else return null
+  }
+
+async fetchChecklistTemplateDetailsById(
+  checklistId: string
+) {``
+  if (!this.mainDbSequelize) {
+    this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+  }
+
+  const [checklistDetailsResult] = await this.mainDbSequelize.query(rawQueries.fetchChecklistTemplates, {
+    replacements: { checklistId },
+    type: "SELECT"
+  }) as [any[], any];
+
+  if (!checklistDetailsResult || checklistDetailsResult.length === 0) {
+    return null;
+  }
+
+  const checklistDetails = checklistDetailsResult as any;
+
+  let checklistItems = await this.fetchChecklistTemplateItems(
+    checklistId
+  );
+
+   const userInfo = await this.insertUserDetails(
+     checklistDetails.created_by ?? "",
+     checklistDetails.modified_by ?? ""
+   );
+
+  const response: any = {
+    checklist_rid: checklistDetails?.rid,
+    checklist_name: checklistDetails?.checklist_name ?? "",
+    checklist_description: checklistDetails?.checklist_description ?? "",
+    r_number: checklistDetails.r_number ?? "",
+    status_rid: checklistDetails.status_rid ?? "",
+    status_name: checklistDetails.status_name ?? "",
+    modified_by: userInfo.modified_name ?? checklistDetails.modified_by,
+    created_by: userInfo.created_name ?? checklistDetails.created_by,
+    created_datetime: checklistDetails.created_datetime ?? null,
+    modified_datetime: checklistDetails.modified_datetime ?? null,
+    checklist_items: checklistItems ?? [],
+  };
+
+  return response;
+  }
+  async fetchChecklistTemplateItems(
+    checklistId: string,
+  ) {
+    try {
+      const {
+        AdminCheckListItem,
+      } = await this.caseModelService.getModels("");
+      // Convert Sequelize instances to plain objects
+
+      const items = await AdminCheckListItem.findAll({
+        attributes: [
+          "rid",
+          "sequence_no",
+          "checklist_item_name",
+          "checklist_template_rid",
+          "description"
+          ],
+        order: [
+          ["sequence_no", "ASC"],
+          ["created_datetime", "ASC"],
+        ],
+        where: { $checklist_template_rid$: checklistId},
+      });
+      const plainItems = items.map((item) => item.get({ plain: true }));
+      return items;
+    } catch (err) {
+      logMessage(`Error fetching interaction template items: ${err}`);
+      throw new Error(
+        "Error fetching interaction template items: " + (err as Error).message
+      );
+    }
+  }
+
+  async insertUserDetails(
+    createdById: string,
+    modifiedById: string
+  ): Promise<any> {
+    try {
+      if (!this.mainDbSequelize) {
+        this.mainDbSequelize =
+          await this.caseModelService.getMainSequelize();
+      }
+
+      const getUserFullName = async (userId: string) => {
+        if (!userId) return null;
+
+        const [results]: any = await this.mainDbSequelize?.query(
+          rawQueries.getUserNameByIdQuery(),
+          {
+            replacements: { userId },
+            type: "SELECT",
+          }
+        );
+
+        if (!results) return null;
+
+        const { first_name, middle_name, last_name } = results as any;
+        return [first_name, middle_name, last_name].filter(Boolean).join(" ");
+      };
+
+      const createdName = await getUserFullName(createdById);
+      const modifiedName = await getUserFullName(modifiedById);
+
+      return {
+        created_name: createdName || null,
+        modified_name: modifiedName || null,
+      };
+    } catch (err) {
+      logMessage(`Error adding user details: ${err}`);
+      throw new Error("Error adding user details" + (err as Error).message);
+    }
   }
 }
 export { CaseManagementSchemaService };
