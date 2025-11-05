@@ -3,7 +3,7 @@ import { CaseModelService } from "../caseModelsService";
 import { QueryTypes, Sequelize } from "sequelize";
 import { CaseManagementSchemaService } from "./schemaService";
 import { HttpStatus, rawQueries, STATUS_MESSAGE } from "../../utils/constants";
-import { logMessage } from "../../utils/helpers";
+import { logMessage, setTaskTemplateData } from "../../utils/helpers";
 import CaseSchemaService from "../cases/schemaService";
 import { AdminTaskTemplatePayloadType, AdminTaskTemplateResponseTypes, checkListTypes, CreateTaskTemplateType, ICreateChecklist, MilestoneTypes, priorityTypes, UpdateTaskTemplateType } from "../../utils/types";
 import { initMainDbSequelize } from "../../config/mainDataSource";
@@ -365,9 +365,9 @@ export class CaseManagementService {
       }      
     }
   }
-  async fetchTaskTemplate (data : AdminTaskTemplatePayloadType, isExport : boolean) {
+  async fetchTaskTemplate (data : AdminTaskTemplatePayloadType, isExport : boolean, isGraphql : boolean, templateRid : string | null) {
     const mainDb = await this.getMainDb();
-    const result = await mainDb.query<AdminTaskTemplateResponseTypes>(fetchAdminTemplates(data.page, data.limit, data.sort, data.sort_by, data.filter, data.search, isExport), {type : QueryTypes.SELECT});
+    const result = await mainDb.query<AdminTaskTemplateResponseTypes>(fetchAdminTemplates(data.page, data.limit, data.sort, data.sort_by, data.filter, data.search, isExport, isGraphql, templateRid), {type : QueryTypes.SELECT});
     if(result.length > 0) {
       return {
         statusCode : HttpStatus.SUCCESS,
@@ -378,6 +378,51 @@ export class CaseManagementService {
         statusCode : HttpStatus.NOT_FOUND,
         data : []
       }     
+    }
+  }
+  async inlineEditTaskTemplate (data : any) {
+    const mainDb = await this.getMainDb();
+    const isTaskExists = await this.caseManangementSchemaService.checkTaskExistsForUpdate(data.rid);
+    if(isTaskExists) {
+      const setData = setTaskTemplateData(isTaskExists, data, data.userId)
+      if(setData.length > 0) {
+        const result : any = await mainDb.query(rawQueries.updateTaskTemplate(setData, data.rid));
+        if(result[1].rowCount == 1) {
+          const responsePayload : AdminTaskTemplatePayloadType = {
+            page : 1,
+            limit : 1,
+            search : "",
+            filter : {},
+            sort : "",
+            sort_by : ""
+          }
+          const responseData = await this.fetchTaskTemplate(responsePayload, false, true, data.rid);
+          if(responseData.data.length > 0) {
+          return {
+            statusCode : HttpStatus.SUCCESS,
+            statusMessage : STATUS_MESSAGE.taskTemplateSuccess,
+            data : responseData.data[0]
+            }
+          }
+        }
+      } else {
+          const responsePayload : AdminTaskTemplatePayloadType = {
+          page : 1,
+          limit : 1,
+          search : "",
+          filter : {},
+          sort : "",
+          sort_by : ""
+        }
+          const responseData = await this.fetchTaskTemplate(responsePayload, false, true, data.rid);
+          if(responseData.data.length > 0) {
+          return {
+            statusCode : HttpStatus.SUCCESS,
+            statusMessage : STATUS_MESSAGE.taskTemplateSuccess,
+            data : responseData.data[0]
+          }
+        }
+      }
     }
   }
 }

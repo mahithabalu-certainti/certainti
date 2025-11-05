@@ -1,0 +1,56 @@
+import {gql} from 'graphql-tag'
+
+export const taskTemplateDefs = gql`
+scalar Date
+
+type TaskResponse {
+rid: String
+r_number: String
+created_by_name: String
+modified_by_name: String
+created_datetime: Date
+modified_datetime: Date
+task_name: String
+sequence_no: Int
+effort_in_days: Int
+reminder_interval: Int
+effective_start_datetime: Date
+effective_end_datetime: Date
+role_name: String
+case_team_member_role_rid: String
+checklist_name: String
+checklist_rid: String
+priority_name: String
+priority_rid: String
+status_name: String
+status_rid: String
+milestone_name: String
+milestone_rid: String
+}
+
+type finalTaskResponse {
+statusCode : Int
+statusCodeValue : String
+statusMessage : String
+data : TaskResponse
+}
+
+input taskUpdateInput {
+rid : String
+milestone_rid: String
+priority_rid: String
+checklist_rid: String
+case_team_member_role_rid: String
+effort_in_days: Int
+task_name : String
+}
+
+type Mutation {
+UpdateTaskTemplateInline (data : taskUpdateInput) : finalTaskResponse
+}
+
+
+
+
+
+`

@@ -703,6 +703,10 @@ export const rawQueries = {
         ct.rid = :checklistId
     LIMIT 1;
   `,
+  updateTaskTemplate (data : string[], rid : string) {
+    let query = `UPDATE ${MAIN_SCHEMA_NAME}.task_template SET ${data.map((d : any) => d).join(',')} WHERE rid = '${rid}'`
+    return query;
+  }
 };
 
 const keyContactRole = {
