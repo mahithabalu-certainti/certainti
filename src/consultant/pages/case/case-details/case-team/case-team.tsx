@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Select,
   MenuItem,
@@ -43,6 +43,8 @@ import {
   useGetUserOptions,
 } from '../../../../services/case-team';
 import { TableSkeleton } from '../../../../../components/table';
+import { RootState } from '../../../../../store/store';
+import { useSelector } from 'react-redux';
 
 const ConfigTabs: ResourceTabs[] = [
   {
@@ -67,12 +69,36 @@ const CaseTeam = () => {
     CaseTeamMember[]
   >([]);
 
-  // Track if form has unsaved changes
   const [isFormChanged, setIsFormChanged] = useState(false);
-
-  // Fix cellRefs type to handle undefined values properly
   const cellRefs = useRef<Record<string, HTMLTableCellElement | null>>({});
 
+  const { permission } = useSelector((state: RootState) => state.permission);
+  //Permission
+  const casesTeamEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.CASES_TEAM_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    casesTeamEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [casesTeamEditFields]);
+  console.log('permissionMap', permissionMap);
+
+  const isCaseTeamEditable = useMemo(
+    () =>
+      permission
+        .find((item) => item.name === AllPermissions.CASES_TEAM_VIEW_EDIT)
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
+  console.log('isCaseTeamEditable', isCaseTeamEditable);
   // Compare formData.team_members with originalTeamMembers
   useEffect(() => {
     if (formData.team_members.length !== originalTeamMembers.length) {
@@ -407,7 +433,7 @@ const CaseTeam = () => {
       label: 'Save',
       variant: 'contained' as const,
       onClick: handleSave,
-      hide: false,
+      hide: !isCaseTeamEditable,
       disabled: !isFormChanged || isLoading,
       loading: isLoading,
     },
@@ -556,7 +582,10 @@ const CaseTeam = () => {
                                           e.target.value
                                         )
                                       }
-                                      disabled={isDisabled}
+                                      disabled={
+                                        isDisabled ||
+                                        !permissionMap.role_rid?.edit
+                                      }
                                       size='small'
                                       fullWidth
                                       displayEmpty
@@ -651,7 +680,10 @@ const CaseTeam = () => {
                                           e.target.value
                                         )
                                       }
-                                      disabled={isDisabled}
+                                      disabled={
+                                        isDisabled ||
+                                        !permissionMap.user_rid?.edit
+                                      }
                                       size='small'
                                       fullWidth
                                       displayEmpty
@@ -758,7 +790,11 @@ const CaseTeam = () => {
                                           )
                                         }
                                         format='YYYY-MM-DD'
-                                        disabled={isDisabled}
+                                        disabled={
+                                          isDisabled ||
+                                          !permissionMap.effective_startdate
+                                            ?.edit
+                                        }
                                         sx={{
                                           width: '100%',
                                           backgroundColor:
@@ -925,7 +961,10 @@ const CaseTeam = () => {
                                           )
                                         }
                                         format='YYYY-MM-DD'
-                                        disabled={isDisabled}
+                                        disabled={
+                                          isDisabled ||
+                                          !permissionMap.effective_enddate?.edit
+                                        }
                                         minDate={dayjs(member.start_date)}
                                         sx={{
                                           width: '100%',
@@ -1091,8 +1130,10 @@ const CaseTeam = () => {
                                         padding: 0,
                                         marginTop: '6px',
                                       }}
-                                      aria-label='Remove team member'
-                                      disabled={isBtnDisabled}
+                                      aria-label='Remove team member' // prettier-ignore
+                                      disabled={
+                                        isBtnDisabled || !isCaseTeamEditable
+                                      }
                                     >
                                       <React.Suspense fallback={null}>
                                         <KeyContactRemoveIcon
@@ -1147,7 +1188,7 @@ const CaseTeam = () => {
               className='flex items-center cursor-pointer gap-1 bg-[#EAF0F5] h-[30px] color-[#2D3E4F] px-2 text-[12px] font-semibold disabled:bg-gray-100 disabled:opacity-75 disabled:cursor-default'
               type='button'
               onClick={handleAddTeamMember}
-              disabled={formLoading}
+              disabled={formLoading || !isCaseTeamEditable}
             >
               <span>
                 <React.Suspense fallback={null}>
