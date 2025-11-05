@@ -447,7 +447,7 @@ export const listAllCheckList = (
         paginated_datas i
     `;
 
-export const fetchAdminTemplates = (page : number, limit : number, sort : string, sortBy : string, filter : FilterType, search : string, isExport : boolean) => {
+export const fetchAdminTemplates = (page : number, limit : number, sort : string, sortBy : string, filter : FilterType, search : string, isExport : boolean, isGraphql : boolean, templateRid : string | null) => {
   let pagination : string = ``
   if(isExport) pagination = ` `
   else {
@@ -459,9 +459,16 @@ export const fetchAdminTemplates = (page : number, limit : number, sort : string
   let andConditions : string = ``
   let queryContainer : string[] = []
   let finalContainer : string = ``
+  let graphqlConditions : string = ``
 
   if(search) searchValue = `%${search}%`
   else searchValue = `%%`
+
+  if(isGraphql) {
+    graphqlConditions = ` AND t.rid = '${templateRid}'`
+  } else {
+    graphqlConditions = ` `
+  }
 
   if(Object.keys(validColumnsForSortFilters).includes(sort)) finalSortOrder = `ORDER BY ${validColumnsForSortFilters[sort]} ${sortBy}`
   else finalSortOrder = `ORDER BY t.r_number ASC`
@@ -604,6 +611,7 @@ export const fetchAdminTemplates = (page : number, limit : number, sort : string
     uu.first_name ILIKE '${searchValue}' OR uu.last_name ILIKE '${searchValue}' OR CONCAT(uu.first_name,' ', uu.last_name) ILIKE '${searchValue}' OR
     r.role_name ILIKE '${searchValue}' OR c.checklist_name ILIKE '${searchValue}' OR p.priority_name ILIKE '${searchValue}' OR
     s.status_name ILIKE '${searchValue}' OR m.milestone_name ILIKE '${searchValue}')
+    ${graphqlConditions}
     ${andConditions}
     ${finalContainer}
     ${finalSortOrder}
