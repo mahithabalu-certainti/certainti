@@ -39,8 +39,8 @@ export const UPDATE_CASE = gql`
         country_name
         currency_code
         currency_symbol
-        created_by_name
-        modified_by_name
+        created_user_name
+        modified_user_name
       }
     }
   }
