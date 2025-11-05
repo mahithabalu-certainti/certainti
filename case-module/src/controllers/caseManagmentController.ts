@@ -12,17 +12,24 @@ import {
   validateRequest,
 } from "../utils/helpers";
 import {
+  adminCheckListMappings,
   HttpStatus,
+  STATUS_MESSAGE,
 } from "../utils/constants";
 import {
   adminChecklistSchema,
   createCaseSchema,
+  createTaskTemplateSchema,
+  listAdminCheckListSchema,
+  updateTaskTemplateSchema,
 } from "../lib/joi/schemas/schema";
 import configurations from "../config/config";
+import moment from "moment";
 
 // Initialize services from configuration for dependency injection
 const services = configurations.getInstance().getServices();
 const caseManagementService = services.caseManagementService;
+const caseService = services.caseService;
 /**
  * Controller function to handle the creation of a new admin checklist.
  *
@@ -116,7 +123,836 @@ async function createAdminCheckList(req: Request, res: Response): Promise<void> 
   }
 }
 
+/**
+ * Controller function to handle listing and retrieval of admin checklists with filtering, sorting, and pagination.
+ *
+ * This async function processes HTTP requests for fetching admin checklists by:
+ * - Validating request parameters against the `listAdminCheckListSchema`
+ * - Parsing and validating JSON-formatted filter parameters
+ * - Extracting user identification from request headers for authorization
+ * - Delegating data retrieval to the case management service with comprehensive query options
+ * - Returning paginated checklist data with metadata for frontend consumption
+ *
+ * @param {Request} req - Express request object containing:
+ *   - query: Parameters including page, limit, sort, sortBy, search, and filters (JSON string)
+ *   - headers: Must include 'x-user-id' for user authentication and access control
+ * @param {Response} res - Express response object used to send the operation result
+ *
+ * @returns {Promise<void>} - Resolves after sending the HTTP response to the client
+ *
+ * @throws {Error} - Catches and handles validation errors, JSON parsing failures, missing user ID, and service errors
+ * 
+ * @description
+ * **HTTP Response Codes:**
+ * - 200: Checklists retrieved successfully with data and pagination metadata
+ * - 400: Bad request (validation failure, invalid filters JSON, missing user ID, or service error)
+ * - 500: Internal server error for unexpected system failures
+ * 
+ * **Request Validation:**
+ * - Uses `listAdminCheckListSchema` for query parameter validation
+ * - Parses `filters` parameter as JSON object for advanced filtering capabilities
+ * - Requires `x-user-id` header for user identification and authorization
+ * - Logs all requests, filter parsing attempts, and responses for audit purposes
+ * 
+ */
+async function listAdminCheckList(req: Request, res: Response) {
+  try {
+    const methodName = "List Admin Checklists";
+
+    const userId = req.headers["x-user-id"] as string;
+    const value = await validateRequest(req, listAdminCheckListSchema, res, "GET");
+    if (!value) return;
+    let parsedFilters: Record<string, any> = {};
+
+    try {
+      parsedFilters = JSON.parse(value.filters);
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(
+        req.body
+      )} userId: ${userId}`
+    );
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    const result = await caseManagementService.listAdminCheckList(
+      value,
+      parsedFilters,
+      userId,
+      "list"
+    );
+    if (result.statusCode == HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, result.data);
+      return;
+    } else {
+      errorLog(methodName, "No data found");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        result.errorMessage
+      );
+      return;
+    }
+  } catch (error: any) {
+    console.log("error", error);  
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
+/**
+ * Controller function to handle exporting admin checklists to Excel format with advanced filtering and field-level permissions.
+ *
+ * This async function processes HTTP requests for exporting admin checklist data by:
+ * - Validating request parameters against the `listAdminCheckListSchema`
+ * - Parsing JSON-formatted filter parameters for data selection
+ * - Retrieving user-specific field permissions for data security compliance
+ * - Formatting datetime fields according to user timezone preferences
+ * - Generating Excel files in Base64 format for secure download delivery
+ * - Applying field-level access controls based on user permissions
+ *
+ * @param {Request} req - Express request object containing:
+ *   - query: Export parameters including filters (JSON string), timezone, and data selection criteria
+ *   - headers: Must include 'x-user-id' for authentication and permission-based field filtering
+ * @param {Response} res - Express response object used to send the Base64-encoded Excel file
+ *
+ * @returns {Promise<void>} - Resolves after sending the HTTP response with Excel data or error message
+ *
+ * @throws {Error} - Catches and handles validation errors, permission failures, timezone issues, and Excel generation errors
+ * 
+ * @description
+ * **HTTP Response Codes:**
+ * - 200: Excel file generated successfully with Base64-encoded data
+ * - 400: Bad request (validation failure, invalid filters JSON, missing user ID, or permission error)
+ * - 403: Forbidden when user lacks required export permissions
+ * - 500: Internal server error for Excel generation failures or unexpected system errors
+ * 
+ * **Request Validation:**
+ * - Uses `listAdminCheckListSchema` for query parameter validation
+ * - Parses `filters` parameter as JSON object for advanced data filtering
+ * - Validates timezone parameter against supported timezone list
+ * - Requires `x-user-id` header for user authentication and field permission resolution
+*/
+async function exportAdminCheckList(req: Request, res: Response) {
+  try {
+    const methodName = "Export Admin Checklists";
+    const userId = req.headers["x-user-id"] as string;
+    const value = await validateRequest(req, listAdminCheckListSchema, res, "GET");
+    if (!value) return;
+    let parsedFilters: Record<string, any> = {};
+
+    try {
+      parsedFilters = JSON.parse(value.filters);
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(
+        req.body
+      )} userId: ${userId}`
+    );
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    const result = await caseManagementService.listAdminCheckList(
+      value,
+      parsedFilters,
+      userId,
+      "download"
+    );
+     const fields = await caseService.getAllowedExportFields(
+         userId,
+         "admin_checklist_view_edit"
+       );
+       const allowedFieldSet = new Set<string>();
+       for (const field of fields) {
+         if (field.read) {
+           allowedFieldSet.add(field.field_name);
+         }
+       }
+       const isValidTZ = value.timezone && isValidTimezone(value.timezone);
+       const formatDate = (date?: Date) => {
+         const offsetMs = (5 * 60 + 30) * 60 * 1000;
+         const convertedDate = new Date(date?.getTime() ?? "" + offsetMs);
+         return date
+           ? moment
+               .utc(convertedDate)
+               .tz(isValidTZ ? value.timezone : "UTC")
+               .utcOffset("-012:30")
+               .format("YYYY-MMM-DD, hh:mm:ss A")
+           : null;
+       };
+       if (result.statusCode === HttpStatus.SUCCESS) {
+         const finalStructuredData =
+           result?.data?.checklist.length < 1
+             ? []
+             : result?.data?.checklist.map((d: any) => {
+                 let resultMap: { [key: string]: any } = {
+                   r_number: d.r_number,
+                   status_name: d.status_name,
+                   checklist_name: d.checklist_name,
+                   checklist_description: d.checklist_description,
+                   created_by: d.created_user_name,
+                   created_datetime: formatDate(d.created_datetime),
+                   modified_by: d.modified_user_name,
+                   modified_datetime:
+                     d.modified_datetime == null
+                       ? ""
+                       : formatDate(d.modified_datetime)
+                 };
+   
+                 // Build exportRecord using allowed fields and resultMap
+                 const exportRecord: Record<string, any> = {};
+                 adminCheckListMappings.forEach((mapping) => {
+                   if (allowedFieldSet.has(mapping.permissionField)) {
+                     exportRecord[mapping.exportField] =
+                       resultMap[mapping.dataField];
+                   }
+                 });
+   
+                 return exportRecord;
+               });
+   
+         const generateBase64Response = await generateExcelBase64(
+           finalStructuredData,
+           "CheckList"
+         );
+         handleSuccessResponse(res, generateBase64Response);
+       } else {
+         errorLog(methodName, "No data found");
+         handleErrorResponse(
+           res,
+           HttpStatus.BAD_REQUEST,
+           HttpStatus.BAD_REQUEST_MESSAGE,
+           result.errorMessage
+         );
+        }
+  } catch (error: any) {
+    console.log("error", error);  
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
+/**
+ * Controller function to handle retrieval of detailed admin checklist template information by unique identifier.
+ *
+ * This async function processes HTTP requests for fetching comprehensive checklist template details by:
+ * - Extracting and validating the checklist RID from URL path parameters
+ * - Authenticating the request using user ID from request headers
+ * - Delegating data retrieval to the case management service for detailed template information
+ * - Returning structured checklist template data including associated items and metadata
+ *
+ * @param {Request} req - Express request object containing:
+ *   - params.checkListRid: The unique identifier (RID) of the checklist template to retrieve
+ *   - headers: Must include 'x-user-id' for user authentication and access control
+ * @param {Response} res - Express response object used to send the detailed checklist template data
+ *
+ * @returns {Promise<void>} - Resolves after sending the HTTP response with template details or error message
+ *
+ * @throws {Error} - Catches and handles missing parameters, authentication failures, and service errors
+ * 
+ * @description
+ * **HTTP Response Codes:**
+ * - 200: Checklist template details retrieved successfully with complete data structure
+ * - 400: Bad request (missing checkListRid parameter, missing user ID, or service-level error)
+ * - 404: Checklist template not found for the provided RID
+ * - 401: Unauthorized access when user ID is missing from headers
+ * - 500: Internal server error for unexpected system failures
+ * 
+ * **Request Validation:**
+ * - Validates presence of `checkListRid` parameter in URL path
+ * - Requires `x-user-id` header for user authentication and audit trail
+ * - Logs all requests including parameters and user identification for debugging
+ * - No request body validation required as this is a GET operation with path parameters
+ * 
+ * **Response Structure:**
+ * - Returns comprehensive checklist template details including:
+ *   - Template metadata (name, description, dates, status)
+ *   - Associated checklist items and their configurations
+ *   - User information for created/modified tracking
+ *   - Template configuration and settings
+ */
+async function getCheckListTemplateDetailsById(
+  req: Request,
+  res: Response
+): Promise<void> {
+  const methodName = "Get checklist template details";
+  try {
+    const { checkListRid } = req.params;
+    const userId = req.headers["x-user-id"] as string;
+    logMessage(`[${methodName}] Request received,  checkListRid: ${checkListRid} userId: ${userId}`);
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    if (!checkListRid) {
+      errorLog(methodName, "CheckList ID is required in params");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "CheckList ID is required in params"
+      );
+      return;
+    }
+    let checkListResponse;
+   checkListResponse =
+        await caseManagementService.getCheckListTemplateDetailsById(
+          checkListRid
+        );
+
+    if (checkListResponse.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, checkListResponse.data);
+      return;
+    } else {
+      errorLog(methodName, checkListResponse.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        checkListResponse.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+/**
+ * Controller function to handle the creation of a new task template.
+ *
+ * This async function processes HTTP requests for creating task templates by:
+ * - Validating the request body against the `createTaskTemplateSchema`
+ * - Extracting and validating the user ID from request headers (`x-user-id`)
+ * - Delegating task template creation to the `caseManagementService`
+ * - Returning structured HTTP responses based on the operation outcome
+ *
+ * @param {Request} req - Express request object containing:
+ *   - body: Task template data including template name, milestone details, and related fields
+ *   - headers: Must include 'x-user-id' for authentication and audit purposes
+ * @param {Response} res - Express response object used to send the operation result
+ *
+ * @returns {Promise<void>} - Resolves after sending the HTTP response to the client
+ *
+ * @throws {Error} - Catches and handles validation errors, missing user ID, and unexpected service errors
+ * 
+ * @description
+ * **HTTP Response Codes:**
+ * - 200: Task template created successfully
+ * - 400: Bad request (validation failure, missing user ID, or service-level error)
+ * 
+ * **Request Validation:**
+ * - Uses `createTaskTemplateSchema` to validate the request body
+ * - Requires `x-user-id` in request headers for tracking user actions
+ * - Logs all incoming requests, responses, and errors for audit and debugging purposes
+ */
+async function createTaskTemplate (req : Request, res : Response) : Promise<any> {
+  const methodName = "Create TaskTemplate"
+  try {
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${
+        req.headers["x-user-id"]
+      }`
+    );
+    // Validate request body against the defined schema
+    const value = await validateRequest(req, createTaskTemplateSchema, res);
+     const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    if (!value) {
+      errorLog(methodName, "Request body is empty");
+      return;
+    }
+    const cases = await caseManagementService.createTaskTemplate(value, userId);
+    
+    // Handle successful checklist creation
+    if (cases.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : cases.statusMessage
+      })
+    } else {
+      // Handle service-level errors (business logic failures)
+      return res.status(HttpStatus.BAD_REQUEST).send({
+        statusCode : HttpStatus.BAD_REQUEST_MESSAGE,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : cases.statusMessage
+      })
+    }
+  } catch (err) {
+    // Handle unexpected errors (system failures, network issues, etc.)
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function getPriorityTypes (req : Request, res : Response) {
+  const methodName = "Get Priority Types";
+  try {
+    const result = await caseManagementService.getAllPriority();
+    if(result.statusCode == HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.casePrioritySuccess,
+        data : result.data
+      })
+    } else {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.dataNotAvailable,
+        data : []
+      })    
+    }
+  } catch (err) {
+    // Handle unexpected errors (system failures, network issues, etc.)
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function getMilestones (req : Request, res : Response) {
+  const methodName = "Get Milestones Types";
+  try {
+    const result = await caseManagementService.getMilestones();
+    if(result.statusCode == HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.milestonesSuccess,
+        data : result.data
+      })
+    } else {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.dataNotAvailable,
+        data : []
+      })    
+    }
+  } catch (err) {
+    // Handle unexpected errors (system failures, network issues, etc.)
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function getChecklist (req : Request, res : Response) {
+  const methodName = "Get Checklist";
+  try {
+    const result = await caseManagementService.getChecklist();
+    if(result.statusCode == HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.checklistSuccess,
+        data : result.data
+      })
+    } else {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.dataNotAvailable,
+        data : []
+      })    
+    }
+  } catch (err) {
+    // Handle unexpected errors (system failures, network issues, etc.)
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+/**
+ * Controller function to handle the update of an existing task template.
+ *
+ * This async function processes HTTP requests for updating task templates by:
+ * - Validating the request body against the `updateTaskTemplateSchema`
+ * - Extracting and validating the user ID from request headers (`x-user-id`)
+ * - Delegating update operations to the `caseManagementService`
+ * - Returning appropriate HTTP responses based on the service outcome
+ *
+ * @param {Request} req - Express request object containing:
+ *   - body: Updated task template data including identifiers and modified fields
+ *   - headers: Must include 'x-user-id' for authentication and audit tracking
+ * @param {Response} res - Express response object used to send the operation result
+ *
+ * @returns {Promise<void>} - Resolves after sending the HTTP response to the client
+ *
+ * @throws {Error} - Catches and handles validation errors, missing user ID, and unexpected service or system errors
+ * 
+ * @description
+ * **HTTP Response Codes:**
+ * - 200: Task template updated successfully
+ * - 400: Bad request (validation failure, missing user ID, or business rule violation)
+ * - 404: Task template not found
+ * - 500: Internal server or processing error
+ * 
+ * **Request Validation:**
+ * - Uses `updateTaskTemplateSchema` for request body validation
+ * - Requires `x-user-id` header for tracking user operations
+ * - Logs all request inputs, validation results, and responses for debugging and auditing
+ */
+async function updateTaskTemplate (req : Request, res : Response) : Promise<any> {
+  const methodName = "Update TaskTemplate"
+  try {
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${
+        req.headers["x-user-id"]
+      }`
+    );
+    // Validate request body against the defined schema
+    const value = await validateRequest(req, updateTaskTemplateSchema, res);
+     const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    if (!value) {
+      errorLog(methodName, "Request body is empty");
+      return;
+    }
+    const cases = await caseManagementService.updateTaskTemplate(value, userId);
+    // Handle successful checklist creation
+    if (cases.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : cases.statusMessage
+      })
+    } else if(cases.statusCode === HttpStatus.NOT_FOUND) {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : cases.statusMessage
+      })    
+    } else if(cases.statusCode === HttpStatus.BAD_REQUEST) {
+      return res.status(HttpStatus.BAD_REQUEST).send({
+        statusCode : HttpStatus.BAD_REQUEST,
+        statusCodeValue : HttpStatus.BAD_REQUEST_MESSAGE,
+        statusMessage : cases.statusMessage
+      })    
+    } else {
+      return res.status(HttpStatus.FAILED).send({
+        statusCode : HttpStatus.FAILED,
+        statusCodeValue : HttpStatus.FAILED_MESSAGE,
+        statusMessage : cases.statusMessage
+      })    
+    }
+  } catch (err) {
+    // Handle unexpected errors (system failures, network issues, etc.)
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+/**
+ * Controller function to handle fetching the list of admin task templates.
+ *
+ * This async function processes HTTP requests for retrieving paginated task template lists by:
+ * - Validating the presence of the user ID in request headers (`x-user-id`)
+ * - Delegating the data retrieval to the `caseManagementService.fetchTaskTemplate` method
+ * - Formatting and returning paginated task template data with metadata
+ *
+ * @param {Request} req - Express request object containing:
+ *   - body: Request parameters for pagination, filtering, and search criteria
+ *   - headers: Must include 'x-user-id' for authentication and audit tracking
+ * @param {Response} res - Express response object used to send the operation result
+ *
+ * @returns {Promise<void>} - Resolves after sending the formatted task template list response
+ *
+ * @throws {Error} - Catches and handles missing user ID, service errors, or unexpected exceptions
+ * 
+ * @description
+ * **HTTP Response Codes:**
+ * - 200: Successfully retrieved the task template list
+ * - 400: Bad request (missing user ID, validation error, or unexpected failure)
+ * 
+ * **Response Structure:**
+ * - `page`: Current page number
+ * - `limit`: Number of records per page
+ * - `total_result`: Total number of available records
+ * - `task_templates`: Array of task template objects
+ * 
+ * **Request Requirements:**
+ * - Requires `x-user-id` in headers for authorization and audit purposes
+ * - Accepts pagination and optional filter criteria in the request body
+ * - Logs all requests and responses for traceability and debugging
+ */
+async function fetchAdminTaskTemplateList (req : Request, res : Response) {
+  const methodName = "fetch Admin TaskTemplate List"
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const data = req.body;
+    let result = await caseManagementService.fetchTaskTemplate(data, false, false, null);
+    let totalRecord = parseInt(result.data[0].total_result)
+    result.data.forEach((d : any) => {
+      delete d.total_result
+    })
+    if(result.statusCode == HttpStatus.SUCCESS) {
+      const finalData = {
+        page : data.page,
+        limit : data.limit,
+        total_result : totalRecord,
+        task_templates : result.data
+      }
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.taskTemplateSuccess,
+        data : finalData
+      })     
+    } else {
+      const finalData = {
+        page : data.page,
+        limit : data.limit,
+        total_result : 0,
+        task_templates : result.data
+      }
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.dataNotAvailable,
+        data : finalData
+      })  
+    }
+  } catch (err) {
+    // Handle unexpected errors (system failures, network issues, etc.)
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function ExportAdminTaskTemplateList (req : Request, res : Response) {
+  const methodName = "fetch Admin TaskTemplate List"
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const data = req.body;
+    let result = await caseManagementService.fetchTaskTemplate(data, true, false, null);
+    let totalRecord = parseInt(result.data[0].total_result)
+    const fields = await caseService.getAllowedExportFields(
+    userId,
+    "admin_checklist_view_edit"
+    );
+    const allowedFieldSet = new Set<string>();
+    for (const field of fields) {
+      if (field.read) {
+        allowedFieldSet.add(field.field_name);
+      }
+    }
+    const isValidTZ = data.timezone && isValidTimezone(data.timezone);
+    const formatDate = (date?: Date) => {
+      const offsetMs = (5 * 60 + 30) * 60 * 1000;
+      const convertedDate = new Date(date?.getTime() ?? "" + offsetMs);
+      return date
+        ? moment
+            .utc(convertedDate)
+            .tz(isValidTZ ? data.timezone : "UTC")
+            .utcOffset("-012:30")
+            .format("YYYY-MMM-DD, hh:mm:ss A")
+        : null;
+    };
+    if(result.statusCode == HttpStatus.SUCCESS) {
+      const finalData = result.data.map((d : any) => {
+        return {
+          "Template ID" : d.r_number,
+          "Task Name" : d.task_name,
+          "Efforts (Hrs)" : d.effort_in_days || "-",
+          "Created By" : d.created_by_name || "-",
+          "Created On" : d.created_datetime
+                        ? data.timezone && isValidTimezone(data.timezone)
+                          ? moment.tz(d.created_datetime.toISOString(), data.timezone)
+                              .format("YYYY-MMM-DD, hh:mm:ss A")
+                          : moment(d.created_datetime.toISOString())
+                              .tz(data.timezone)
+                              .format("YYYY-MMM-DD, hh:mm:ss A")
+                        : "-",
+          "Modified By": d.modified_by_name || "-",
+          "Updated On": d.modified_datetime
+                        ? data.timezone && isValidTimezone(data.timezone)
+                          ? moment.tz(d.modified_datetime.toISOString(), data.timezone)
+                              .format("YYYY-MMM-DD, hh:mm:ss A")
+                          : moment(d.modified_datetime.toISOString())
+                              .tz(data.timezone)
+                              .format("YYYY-MMM-DD, hh:mm:ss A")
+                        : "-"
+        }
+      })
+      const generateBase64Response = await generateExcelBase64(
+           finalData,
+           "Task Template"
+         );
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.taskTemplateExport,
+        data : generateBase64Response
+      })     
+    } else {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.dataNotAvailable,
+        data : {}
+      })  
+    }
+  } catch (err) {
+    // Handle unexpected errors (system failures, network issues, etc.)
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
 // Export the controller functions for use in route definitions
 export default {
-  createAdminCheckList
+  createAdminCheckList,
+  listAdminCheckList,
+  createTaskTemplate,
+  getPriorityTypes,
+  getMilestones,
+  getChecklist,
+  updateTaskTemplate,
+  fetchAdminTaskTemplateList,
+  exportAdminCheckList,
+  ExportAdminTaskTemplateList,
+  getCheckListTemplateDetailsById
 };

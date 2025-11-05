@@ -1,4 +1,4 @@
-import { ICreateCases, ICreateCaseTeam, ICreateChecklist } from "../../utils/types";
+import { AdminTaskTemplatePayloadType, CreateTaskTemplateType, ICreateCases, ICreateCaseTeam, ICreateChecklist, UpdateTaskTemplateType } from "../../utils/types";
 
 export interface ICaseService {
   createCase(
@@ -110,4 +110,39 @@ export interface ICaseManagementService {
     errorMessage?: string;
     data?: { checklist: any };
   }>;
+  listAdminCheckList(
+    data: any,
+    filters: Record<string, any>,
+    userId: string,
+    apiType: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { checklist: any; count: number };
+  }>;
+  updateAdminChecklist(
+    data: any,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { checklist: any };
+  }>;
+  getCheckListTemplateDetailsById(
+    checkListRid: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { checklistDetails: any };
+  }>;
+  createTaskTemplate(data : CreateTaskTemplateType, userId : string) :Promise<any>;
+  getAllPriority() : Promise<any>
+  getMilestones() : Promise<any>
+  getChecklist() : Promise<any>
+  updateTaskTemplate(data : UpdateTaskTemplateType, userId : string) :Promise<any>;
+  fetchTaskTemplate(data : AdminTaskTemplatePayloadType, isExport : boolean, isGraphql : boolean, templateRid : string | null) : Promise<any>
+  inlineEditTaskTemplate(data : any) : Promise<any>
 }

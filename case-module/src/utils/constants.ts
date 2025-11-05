@@ -59,6 +59,7 @@ export const mainTableFilters: Record<any, any> = {
   modified_user_name: "modified_user_name",
   filing_type_name: "filing_type_name",
   case_owner_name: "case_owner_name",
+  case_name:"case_full_name"
 };
 
 export const STATUS_MESSAGE = {
@@ -90,6 +91,16 @@ export const STATUS_MESSAGE = {
   userIdMissingInHeader: "User ID is missing in request header.",
   jurisdictionAddedSuccess: "Jurisdiction configuration added successfully",
   jurisdictionAddedFailed: "Jurisdiction configuration addition failed",
+  taskNameExistsAlready : "Taskname already exists",
+  taskCreatedSuccess : "Task Template created successfully",
+  casePrioritySuccess : "Priority fetched successfully",
+  milestonesSuccess : "Milestones fetched successfully",
+  checklistSuccess : "Checklist fetched successfully",
+  taskUpdatedSuccess : "Task Template updated successfully",
+  taskUpdateFailed : "Task Template updation failed",
+  taskTemplateSuccess : "Task Template fetched successfully",
+  taskTemplateExport: "Task Template export successfully",
+  checkListError : "Checklist retrieval failed"
 };
 
 export const caseStatuses = {
@@ -259,6 +270,51 @@ export const casesSummaryFieldMappings = [
   },
 ];
 
+export const adminCheckListMappings = [
+  {
+    permissionField: "r_number",
+    exportField: "Checklist ID",
+    dataField: "r_number",
+  },
+  {
+    permissionField: "checklist_name",
+    exportField: "Checklist Name",
+    dataField: "checklist_name",
+  },
+  {
+    permissionField: "checklist_description",
+    exportField: "Checklist Description",
+    dataField: "checklist_description",
+  },
+  {
+    permissionField: "created_by",
+    exportField: "Created By",
+    dataField: "created_by",
+  },
+  {
+    permissionField: "created_datetime",
+    exportField: "Created On",
+    dataField: "created_datetime",
+  },
+  {
+    permissionField: "updated_by",
+    exportField: "Updated By",
+    dataField: "updated_by",
+  },
+  {
+    permissionField: "updated_datetime",
+    exportField: "Updated On",
+    dataField: "updated_datetime",
+  },
+  {
+    permissionField: "status_rid",
+    exportField: "Status",
+    dataField: "status_name",
+  },
+  //{ permissionField: 'modified_by', exportField: 'Updated By', dataField: 'modified_by' },
+  //{ permissionField: 'modified_datetime', exportField: 'Updated On', dataField: 'modified_datetime' }
+];
+
 export const rawQueries = {
   fetchParentAccountDetails: `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
   async fetchParentAccount(
@@ -339,6 +395,14 @@ export const rawQueries = {
 	  or org_id = '${accountRid}'
     AND u.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active')
 	  order by name asc`
+  },
+  checkCaseTableExists(schemaName: string) {
+    return `
+    SELECT EXISTS (
+      SELECT 1 FROM information_schema.tables
+      WHERE table_schema = '${schemaName}'
+      AND table_name = 'cases'
+    )`;
   },
   fetchCaseStatusByType(type: string) {
     return `
@@ -606,6 +670,51 @@ export const rawQueries = {
       LEFT JOIN ${MAIN_SCHEMA_NAME}.account a ON gea.entity_rid = a.rid
       WHERE gea.entity_type = 'ACCOUNT'
         AND gea.access_type = 'INCLUDE'`,
+  getPriorityTypes() {
+    return `SELECT rid, priority_name FROM ${MAIN_SCHEMA_NAME}.case_priority ORDER BY priority_level DESC`
+  },
+  getMilestones() {
+    return `
+    SELECT m.rid, m.milestone_name, m.case_filing_type_rid, c.filing_type_name
+    FROM ${MAIN_SCHEMA_NAME}.case_milestones m
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.case_filing_type c ON c.rid = m.case_filing_type_rid
+    ORDER BY r_number ASC
+    `
+  },
+  getChecklistTypes() {
+    return `SELECT rid, checklist_name FROM ${MAIN_SCHEMA_NAME}.checklist_template ORDER BY created_datetime ASC`
+  },
+   getUserNameByIdQuery() {
+    return `
+      SELECT first_name, middle_name, last_name 
+      FROM ${MAIN_SCHEMA_NAME}."user" 
+      WHERE rid = :userId
+    `;
+  },
+  fetchChecklistTemplates :  `
+    SELECT 
+        ct.rid,
+        ct.r_number,
+        ct.checklist_name,
+        ct.checklist_description,
+        ct.status_rid,
+        s.status_name AS status_name,
+        ct.created_by,
+        ct.modified_by,
+        ct.created_datetime,
+        ct.modified_datetime
+    FROM 
+        ${MAIN_SCHEMA_NAME}.checklist_template ct
+    LEFT JOIN 
+        ${MAIN_SCHEMA_NAME}.status s ON ct.status_rid = s.rid
+        WHERE 
+        ct.rid = :checklistId
+    LIMIT 1;
+  `,
+  updateTaskTemplate (data : string[], rid : string) {
+    let query = `UPDATE ${MAIN_SCHEMA_NAME}.task_template SET ${data.map((d : any) => d).join(',')} WHERE rid = '${rid}'`
+    return query;
+  }
 };
 
 const keyContactRole = {
@@ -649,7 +758,7 @@ export const filtersColumnsForCaseSummary: Record<string, string> = {
   createdAt: "createdAt",
   case_owner_name: "case_owner_rid",
   filing_type_name: "filing_type_rid",
-  case_name: "case_name",
+  case_name: "case_full_name",
   submitted_datetime: "submitted_datetime",
   approved_datetime: "approved_datetime",
   case_total_project_cost: "case_total_project_cost",
@@ -657,5 +766,69 @@ export const filtersColumnsForCaseSummary: Record<string, string> = {
   case_total_rd_cost: "case_total_rd_cost",
   case_total_projects: "case_total_projects",
   case_total_qualified_projects: "case_total_qualified_projects",
-  country_name: "country_name",
+  country_name: "country_rid",
 };
+
+export const filterTypesForAdminCheckList: Record<string, any> = {
+  r_number: "string",
+  created_datetime: "datetime",
+  modified_datetime: "datetime",
+  created_user_name: "string",
+  updated_user_name: "string",
+  status_rid: "string",
+  checklist_name: "string",
+  checklist_description: "string",
+  createdAt: "datetime"
+};
+
+export const filtersColumnsForAdminCheckList: Record<string, string> = {
+  r_number: "r_number",
+  created_datetime: "created_datetime",
+  modified_datetime: "modified_datetime",
+  created_user_name: "created_user_name",
+  updated_user_name: "updated_user_name",
+  status_rid: "status_rid",
+  status_name: "status_name",
+  createdAt: "createdAt",
+  checklist_name: "checklist_name",
+  checklist_description: "checklist_description"
+ 
+};
+
+export const validColumnsForSortFilters : Record<string, string> = {
+  r_number : "t.r_number",
+  task_name : "t.task_name",
+  milestone_name : "m.milestone_name",
+  checklist_name : "c.checklist_name",
+  priority_name : "p.priority_name",
+  status_name : "s.status_name",
+  role_name : "r.role_name",
+  effective_start_datetime : "t.effective_start_datetime",
+  effective_end_datetime : "t.effective_end_datetime",
+  reminder_interval : "t.reminder_interval",
+  effort_in_days : "t.effort_in_days",
+  created_datetime : "t.created_datetime",
+  modified_datetime : "t.modified_datetime",
+  created_by_name : "CONCAT(u.first_name,' ', u.last_name)",
+  modified_by_name : "CONCAT(uu.first_name,' ', uu.last_name)",
+  sequence_no : "t.sequence_no"
+}
+
+export const validFilterColumnTypes : Record<string, string> = {
+  r_number : "string",
+  task_name : "string",
+  milestone_name : "string",
+  checklist_name : "string",
+  priority_name : "string",
+  status_name : "string",
+  role_name : "string",
+  effective_start_datetime : "date",
+  effective_end_datetime : "date",
+  reminder_interval : "number",
+  effort_in_days : "number",
+  created_datetime : "date",
+  modified_datetime : "date",
+  created_by_name : "string",
+  modified_by_name : "string",
+  sequence_no : "number"
+}

@@ -102,6 +102,7 @@ const listCaseTeamSchema = Joi.object({
 const adminChecklistSchema = Joi.object({
   checklist_name: Joi.string().max(255).required(),
   checklist_description: Joi.string().max(2000).optional().allow(""),
+  status_rid: Joi.string().required(),
   checklist_items: Joi.array()
     .items(
       Joi.object({  
@@ -155,6 +156,43 @@ const jurisdictionSchema = Joi.object({
     "any.required": "{{#label}} is required",
   });
 
+
+const listAdminCheckListSchema = Joi.object({
+ page: Joi.string().optional().pattern(/^[0-9]+$/),
+  limit: Joi.string().optional().pattern(/^[0-9]+$/),
+  filters: Joi.string().default("{}"),
+  search: Joi.string().max(255).optional(),
+  sortBy: Joi.string().optional(),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
+  timezone: Joi.string().optional()
+}); 
+
+const createTaskTemplateSchema = Joi.object({
+  task_name: Joi.string().max(255).required(),
+  effort_in_days : Joi.number().optional(),
+  reminder_interval: Joi.number().optional(),
+  effective_start_datetime : Joi.string().optional(),
+  effective_end_datetime : Joi.string().optional(),
+  case_team_member_role_rid : Joi.string().optional(),
+  checklist_rid : Joi.string().optional(),
+  status_rid : Joi.string().optional(),
+  priority_rid : Joi.string().optional(),
+  milestone_rid : Joi.string().optional()
+});
+
+const updateTaskTemplateSchema = Joi.object({
+  rid : Joi.string().max(255).required(),
+  task_name: Joi.string().max(255).required(),
+  effort_in_days : Joi.number().optional(),
+  reminder_interval: Joi.number().optional(),
+  effective_start_datetime : Joi.string().optional(),
+  effective_end_datetime : Joi.string().optional(),
+  case_team_member_role_rid : Joi.string().optional(),
+  checklist_rid : Joi.string().optional(),
+  status_rid : Joi.string().optional(),
+  priority_rid : Joi.string().optional(),
+  milestone_rid : Joi.string().optional()
+});
 export {
   createCaseSchema,
   updateCaseSchema,
@@ -165,5 +203,8 @@ export {
   createCaseTeamSchema,
   listCaseTeamSchema,
   adminChecklistSchema,
-  jurisdictionSchema
+  jurisdictionSchema,
+  createTaskTemplateSchema,
+  updateTaskTemplateSchema,
+  listAdminCheckListSchema
 };

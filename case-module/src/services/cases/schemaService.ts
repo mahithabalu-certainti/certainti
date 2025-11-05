@@ -23,7 +23,7 @@ import {
   SCHEMANAME_PREFIX,
   STATUS_MESSAGE,
 } from "../../utils/constants";
-import { errorLog, logMessage } from "../../utils/helpers";
+import { buildDatetimeFilterCondition, buildNumericFilterCondition, buildStringFilterCondition, errorLog, logMessage } from "../../utils/helpers";
 import {
   assignProjectType,
   CaseHeadersColumns,
@@ -64,25 +64,26 @@ class CaseSchemaService {
   /**
    * Checks if a table exists in the specified schema
    */
-  private async checkTableExists(schemaName: string, tableName: string): Promise<boolean> {
+  private async checkTableExists(
+    schemaName: string,
+    tableName: string
+  ): Promise<boolean> {
     try {
       if (!this.orgDbSequelize) {
         this.orgDbSequelize = await this.caseModelService.getSequelize();
       }
 
-      const result = await this.orgDbSequelize.query(
-        `SELECT EXISTS (
-          SELECT FROM information_schema.tables 
-          WHERE table_schema = $1 
-          AND table_name = $2
-        )`,
-        {
-          bind: [schemaName, tableName],
-          type: "SELECT"
-        }
-      );
+  
+      const checkTableQuery = rawQueries.checkCaseTableExists(schemaName);
 
-      return (result[0] as any[])[0]?.exists || false;
+      const [tableExists] = await this.orgDbSequelize.query(checkTableQuery, {
+        type: "SELECT",
+      });
+
+      if ((tableExists as any).exists === false) {
+        return false;
+      }
+      return true;
     } catch (error) {
       logMessage(`Error checking table existence: ${error}`);
       return false;
@@ -414,6 +415,8 @@ class CaseSchemaService {
       let modifiedByConditions;
       let caseOwnerFilter;
       let caseOwnerConditions;
+      let caseNameFilter;
+      let caseNameConditions;
       let totalResults: number = 0;
       let disablePagination = false;
 
@@ -434,8 +437,12 @@ class CaseSchemaService {
         modifiedByFilter = filters.modified_by;
         modifiedByConditions = detectConditions(modifiedByFilter);
       }
+      if( filters?.case_name) {
+        caseNameFilter = filters.case_name;
+        caseNameConditions = detectConditions(caseNameFilter);
+      }
       if (filters) {
-        ["modified_by"].forEach((key) => {
+        ["modified_by","case_name"].forEach((key) => {
           if (filters[key]) {
             disablePagination = true;
             delete filters[key];
@@ -471,11 +478,16 @@ class CaseSchemaService {
       }
 
       // Check if cases table exists before querying
-      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
-      const tableExists = await this.checkTableExists(schemaName, 'cases');
-      
+      const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(
+        /\D/g,
+        ""
+      )}`;
+      const tableExists = await this.checkTableExists(schemaName, "cases");
+
       if (!tableExists) {
-        logMessage(`Cases table does not exist for account ${accountNumber}, returning empty result`);
+        logMessage(
+          `Cases table does not exist for account ${accountNumber}, returning empty result`
+        );
         return {
           caseInfo: [],
           count: 0,
@@ -570,6 +582,7 @@ class CaseSchemaService {
                 account_name: accountInfo?.account_name,
                 country_code: accountInfo?.country_code,
                 case_name: d.case_name,
+                case_full_name: accountInfo?.account_name + ' - ' + accountInfo?.country_code + ' - ' + d.fiscal_year + ' - ' + d.case_name,
                 description: d.description,
                 fiscal_year: d.fiscal_year,
                 case_owner_rid: d.case_owner_rid,
@@ -638,6 +651,14 @@ class CaseSchemaService {
           caseOwnerConditions,
           caseOwnerFilter,
           "case_owner_name"
+        );
+      }
+      if (caseNameConditions != null && caseNameConditions != undefined) {
+        finalData = applyFilters(
+          finalData,
+          caseNameConditions,
+          caseNameFilter,
+          "case_full_name"
         );
       }
       if (
@@ -1084,7 +1105,7 @@ class CaseSchemaService {
     isSorting: boolean,
     assignedApi: boolean,
     accessibleIds: string[],
-    isExport : boolean
+    isExport: boolean
   ) {
     const result = await orgDb.query(
       fetchProjectsForCases(
@@ -2427,7 +2448,7 @@ class CaseSchemaService {
     }
   }
 
-  async listUsersForCaseTeam(accountRid:string) {
+  async listUsersForCaseTeam(accountRid: string) {
     try {
       if (!this.mainDbSequelize) {
         this.mainDbSequelize = await this.caseModelService.getMainSequelize();
@@ -2447,7 +2468,7 @@ class CaseSchemaService {
       );
       return [];
     }
-}
+  }
 }
 
 // Utility function for optimized column sorting
@@ -2470,7 +2491,7 @@ const getSortColumn = (sortField: string): string => {
     country_name: "c.country_name",
     fiscal_year: "c.fiscal_year",
     case_owner_name: "c.case_owner_name",
-    case_name: "c.case_name",
+    case_name: "c.case_full_name",
     createdAt: "c.created_datetime",
     filing_type_name: "c.filing_type_name",
   };
@@ -2500,6 +2521,7 @@ function filterForCases(
 
             if (filteredColumns == "account_name") dynamicReference = `a`;
             else if (filteredColumns == "country_name") dynamicReference = `c`;
+            else if (filteredColumns == "case_full_name") dynamicReference = ``;
             else dynamicReference = `cs`;
 
             const stringCondition = buildStringFilterCondition(
@@ -2525,10 +2547,12 @@ function filterForCases(
             break;
           }
           case "datetime": {
+            let dynamicReference = `cs`;
             const datetimeCondition = buildDatetimeFilterCondition(
               condition,
               values,
-              filteredColumns!
+              filteredColumns!,
+              dynamicReference
             );
             if (datetimeCondition) {
               filteredQueryArray.push(datetimeCondition);
@@ -2551,93 +2575,7 @@ function filterForCases(
     };
   }
 }
-// Optimized utility function for handling numeric filter conditions
-const buildNumericFilterCondition = (
-  condition: string,
-  values: any,
-  filteredColumns: string,
-  tableAlias: string = "cs"
-): string => {
-  const columnRef = `${tableAlias}.${filteredColumns}`;
 
-  // Use object mapping for better performance instead of switch
-  const conditionMap: Record<string, (col: string, val: any) => string> = {
-    [ALPHANUMERIC_CONDITIONS.equals]: (col, val) => `${col} = ${val}`,
-    [ALPHANUMERIC_CONDITIONS.notEquals]: (col, val) => `${col} != ${val}`,
-    [ALPHANUMERIC_CONDITIONS.greater_than]: (col, val) => `${col} > ${val}`,
-    [ALPHANUMERIC_CONDITIONS.less_than]: (col, val) => `${col} < ${val}`,
-    [ALPHANUMERIC_CONDITIONS.between]: (col, val) =>
-      `${col} BETWEEN ${Array.isArray(val) ? val.join(" AND ") : val}`,
-    [ALPHANUMERIC_CONDITIONS.isEmpty]: (col) => `${col} IS NULL`,
-    [ALPHANUMERIC_CONDITIONS.IN]: (col, val) =>
-      `${col} IN (${Array.isArray(val) ? val.join(",") : val})`,
-  };
-
-  return conditionMap[condition]?.(columnRef, values) || "";
-};
-
-// Optimized utility function for handling string filter conditions
-const buildStringFilterCondition = (
-  condition: string,
-  values: any,
-  filteredColumns: string,
-  dynamicReference: string
-): string => {
-  // Optimize column reference determination
-  const getColumnRef = (column: string, ref: string): string => {
-    const columnMap: Record<string, string> = {
-      created_user_name: "(uc.first_name || ' ' || uc.last_name)",
-      modified_user_name: "(um.first_name || ' ' || um.last_name)",
-    };
-    return columnMap[column] || `${ref}.${column}`;
-  };
-
-  const columnRef = getColumnRef(filteredColumns, dynamicReference);
-
-  // Use object mapping for conditions
-  const conditionMap: Record<string, (col: string, val: any) => string> = {
-    [ALPHANUMERIC_CONDITIONS.equals]: (col, val) =>
-      `LOWER(${col}) = LOWER('${val}')`,
-    [ALPHANUMERIC_CONDITIONS.notEquals]: (col, val) =>
-      `(LOWER(${col}) != LOWER('${val}') OR ${col} IS NULL)`,
-    [ALPHANUMERIC_CONDITIONS.isEmpty]: (col) => `${col} IS NULL`,
-    [ALPHANUMERIC_CONDITIONS.contains]: (col, val) => `${col} ILIKE '%${val}%'`,
-    [ALPHANUMERIC_CONDITIONS.IN]: (col, val) =>
-      `${col} IN (${
-        Array.isArray(val)
-          ? val.map((d: any) => `'${d}'`).join(",")
-          : `'${val}'`
-      })`,
-  };
-
-  return conditionMap[condition]?.(columnRef, values) || "";
-};
-
-// Optimized utility function for handling datetime filter conditions
-const buildDatetimeFilterCondition = (
-  condition: string,
-  values: any,
-  filteredColumns: string,
-  tableAlias: string = "i"
-): string => {
-  const columnRef = `DATE(${tableAlias}.${filteredColumns})`;
-
-  // Use object mapping for better performance
-  const conditionMap: Record<string, (col: string, val: any) => string> = {
-    [ALPHANUMERIC_CONDITIONS.equals]: (col, val) => `${col} = '${val}'`,
-    [ALPHANUMERIC_CONDITIONS.before]: (col, val) => `${col} < '${val}'`,
-    [ALPHANUMERIC_CONDITIONS.after]: (col, val) => `${col} > '${val}'`,
-    [ALPHANUMERIC_CONDITIONS.between]: (col, val) =>
-      `${col} BETWEEN ${
-        Array.isArray(val)
-          ? val.map((d: any) => `'${d}'`).join(" AND ")
-          : `'${val}'`
-      }`,
-    [ALPHANUMERIC_CONDITIONS.isEmpty]: (col) => `${col} IS NULL`,
-  };
-
-  return conditionMap[condition]?.(columnRef, values) || "";
-};
 
 const globalFiltersforCaseSummary = (
   globalFilters: Record<string, string[]>

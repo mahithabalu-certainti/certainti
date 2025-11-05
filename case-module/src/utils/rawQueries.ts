@@ -1,4 +1,4 @@
-import { MAIN_SCHEMA_NAME } from "./constants";
+import { MAIN_SCHEMA_NAME, validColumnsForSortFilters, validFilterColumnTypes } from "./constants";
 import {
   FilterType,
   validColumns,
@@ -330,7 +330,8 @@ export const listAllCasesSummaryQuery = (
     case_total_projects, case_total_project_cost, case_total_rd_cost, case_total_qre_cost,case_total_qualified_projects,
     submitted_datetime, approved_datetime,COUNT(*) OVER() AS total_records,a.r_number as account_r_number,a.status_rid as account_status_rid,
     COALESCE( acc_curr.currency_code, usd_curr.currency_code) as currency_code,
-      COALESCE( acc_curr.currency_symbol, usd_curr.currency_symbol) as currency_symbol,accountStatus.status_name as account_status_name
+      COALESCE( acc_curr.currency_symbol, usd_curr.currency_symbol) as currency_symbol,accountStatus.status_name as account_status_name,
+      CONCAT(a.account_name, '-', c.country_name, '-',cs.fiscal_year,'-',cs.case_name) AS case_full_name
     FROM
     ${MAIN_SCHEMA_NAME}.case_summary cs
     LEFT JOIN ${MAIN_SCHEMA_NAME}.case_filing_type cft ON cft.rid = cs.filing_type_rid
@@ -344,7 +345,7 @@ export const listAllCasesSummaryQuery = (
     LEFT JOIN ${MAIN_SCHEMA_NAME}.currency usd_curr ON usd_curr.currency_code = 'USD'
     LEFT JOIN ${MAIN_SCHEMA_NAME}.status accountStatus ON accountStatus.rid = a.status_rid
     WHERE
-    (cs.r_number ILIKE '${searchValue}' OR cs.case_name ILIKE '${searchValue}')
+    (cs.r_number ILIKE '${searchValue}' OR CONCAT(a.account_name, '-', c.country_name, '-',cs.fiscal_year,'-',cs.case_name) ILIKE '${searchValue}')
     ${joinedConditions}
     ),
     paginated_data AS (
@@ -385,9 +386,243 @@ export const listAllCasesSummaryQuery = (
             'approved_datetime', c.approved_datetime,
             'total_records', c.total_records,
             'account_r_number', c.account_r_number,
-            'case_total_qualified_projects', c.case_total_qualified_projects
+            'case_total_qualified_projects', c.case_total_qualified_projects,
+            'case_full_name', c.case_full_name
            
         )) AS cases_summary
 
         FROM
         paginated_data c`;
+
+export const listAllCheckList = (
+  searchValue: string,
+  whereKey: string,
+  joinedConditions: string,
+  sortValue: string,
+  pagination: string
+) =>  `
+    WITH fetch_case_checklist AS (
+        SELECT
+            ct.rid, ct.r_number,
+            ct.status_rid,s.status_name,
+            ct.created_by, ct.modified_by,
+            ct.created_datetime, ct.modified_datetime,
+            COUNT(ct.rid) OVER() AS total_records,
+            ct.checklist_name,
+            ct.checklist_description,
+            uc.first_name || ' ' || uc.last_name AS created_user_name,
+            um.first_name || ' ' || um.last_name AS modified_user_name
+
+            FROM
+            ${MAIN_SCHEMA_NAME}.checklist_template ct
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.status s ON s.rid = ct.status_rid
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.user uc ON uc.rid = ct.created_by
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.user um ON um.rid = ct.modified_by
+              WHERE
+    (ct.r_number ILIKE '${searchValue}' OR ct.checklist_name ILIKE '${searchValue}')
+    ${joinedConditions}
+    ),
+    paginated_datas AS (
+    SELECT * FROM fetch_case_checklist ${sortValue} ${pagination}
+    
+    )
+        SELECT 
+        array_agg(jsonb_build_object(
+        'rid', i.rid,
+        'r_number', i.r_number,
+        'status', i.status_rid,
+        'status_name', i.status_name,
+        'created_by', i.created_by,
+        'modified_by', i.modified_by,
+        'created_datetime', i.created_datetime,
+        'modified_datetime', i.modified_datetime,
+        'checklist_description', i.checklist_description,
+        'checklist_name', i.checklist_name,
+        'total_records', i.total_records,
+        'created_user_name', i.created_user_name,
+        'modified_user_name', i.modified_user_name
+        ) ) AS admin_checklists
+
+        FROM
+        paginated_datas i
+    `;
+
+export const fetchAdminTemplates = (page : number, limit : number, sort : string, sortBy : string, filter : FilterType, search : string, isExport : boolean, isGraphql : boolean, templateRid : string | null) => {
+  let pagination : string = ``
+  if(isExport) pagination = ` `
+  else {
+  let offset = (page - 1) * limit;
+  pagination = `LIMIT ${limit} OFFSET ${offset}`
+  }
+  let searchValue : string = ``
+  let finalSortOrder : string = ``
+  let andConditions : string = ``
+  let queryContainer : string[] = []
+  let finalContainer : string = ``
+  let graphqlConditions : string = ``
+
+  if(search) searchValue = `%${search}%`
+  else searchValue = `%%`
+
+  if(isGraphql) {
+    graphqlConditions = ` AND t.rid = '${templateRid}'`
+  } else {
+    graphqlConditions = ` `
+  }
+
+  if(Object.keys(validColumnsForSortFilters).includes(sort)) finalSortOrder = `ORDER BY ${validColumnsForSortFilters[sort]} ${sortBy}`
+  else finalSortOrder = `ORDER BY t.r_number ASC`
+
+  if(Object.keys(filter).length > 0) {
+    let validKeyColumns : string;
+    for(let [key, conditions] of Object.entries(filter)) {
+      if(Object.keys(validColumnsForSortFilters).includes(key)) {
+        validKeyColumns = validColumnsForSortFilters[key]!
+        andConditions = ` AND `
+        for(let [cond, value] of Object.entries(conditions)) {
+          switch(validFilterColumnTypes[key]) {
+            case "string" : {
+              switch(cond) {
+                case "equals" : {
+                  queryContainer.push(`LOWER(${validKeyColumns}) = '${value.toLowerCase()}'`)
+                  break;
+                }
+                case "not_equals" : {
+                  queryContainer.push(`LOWER(${validKeyColumns}) != '${value.toLowerCase()}'`)
+                  break;
+                }
+                case "contains" : {
+                  queryContainer.push(`${validKeyColumns} ILIKE '%${value}%'`)
+                  break;
+                }
+                case "is_empty" : {
+                  queryContainer.push(`${validKeyColumns} IS NULL`)
+                  break;
+                }
+                case "in" : {
+                  queryContainer.push(`${validKeyColumns} IN ${value.map((d : any) => `'${d}'`).join(',')}`)
+                  break;
+                }
+                default : {
+                  break;
+                }
+              }
+              break;
+            }
+            case "number" : {
+              switch (cond) {
+                case "equals" : {
+                  queryContainer.push(`${validKeyColumns} = ${value}`)
+                  break;
+                }
+                case "not_equals" : {
+                  queryContainer.push(`${validKeyColumns} != ${value}`)
+                  break;
+                }
+                case "greater_than" : {
+                  queryContainer.push(`${validKeyColumns} > ${value}`)
+                  break;
+                }
+                case "less_than" : {
+                  queryContainer.push(`${validKeyColumns} < ${value}`)
+                  break;
+                }
+                case "is_empty" : {
+                  queryContainer.push(`${validKeyColumns} IS NULL`)
+                  break;
+                }
+                case "between" : {
+                  queryContainer.push(`${validKeyColumns} BETWEEN ${value.map((d : any) => d).join(' AND ')}`)
+                  break;
+                }
+                default : {
+                  break;
+                }
+              }
+              break;
+            }
+            case "date" : {
+              switch (cond) {
+                case "equals" : {
+                  queryContainer.push(`DATE(${validKeyColumns}) = '${value}'`)
+                  break;
+                }
+                case "before" : {
+                  queryContainer.push(`DATE(${validKeyColumns}) < '${value}'`)
+                  break;
+                }
+                case "after" : {
+                  queryContainer.push(`DATE(${validKeyColumns}) > '${value}'`)
+                  break;
+                }
+                case "is_empty" : {
+                  queryContainer.push(`DATE(${validKeyColumns}) IS NULL`)
+                  break;
+                }
+                case "between" : {
+                  queryContainer.push(`DATE(${validKeyColumns}) BETWEEN ${value.map((d: string) => `${d}`).join(' AND ')}`)
+                  break;
+                }
+                default : {
+                  break;
+                }
+              }
+              break;
+            }
+            default : {
+              break;
+            }
+          }
+        }
+      }
+    }
+  } else {
+    queryContainer = []
+    andConditions = ` `
+  }
+  if(queryContainer.length > 0) {
+    finalContainer = queryContainer.join(' AND ');
+  } else {
+    finalContainer = ` `
+  }
+
+  let query = 
+  `
+  WITH fetch_template_data AS (
+    SELECT t.rid, t.r_number, CONCAT(u.first_name,' ', u.last_name) AS created_by_name,
+    CONCAT(uu.first_name,' ', uu.last_name) AS modified_by_name, 
+    t.created_datetime, t.modified_datetime, t.task_name, t.sequence_no,
+    t.effort_in_days, t.reminder_interval, t.effective_start_datetime,
+    t.effective_end_datetime, r.role_name, t.case_team_member_role_rid,
+    c.checklist_name, t.checklist_rid, p.priority_name, t.priority_rid,
+    s.status_name, t.status_rid, m.milestone_name, t.milestone_rid
+    FROM
+    ${MAIN_SCHEMA_NAME}.task_template t
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.case_priority p ON p.rid = t.priority_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.user u ON u.rid = t.created_by
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.user uu ON uu.rid = t.modified_by
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.checklist_template c ON c.rid = t.checklist_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.case_milestones m ON m.rid = t.milestone_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.status s ON s.rid = t.status_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.case_team_role r ON r.rid = t.case_team_member_role_rid
+    WHERE
+    (t.task_name ILIKE '${searchValue}' OR t.r_number ILIKE '${searchValue}' OR 
+    u.first_name ILIKE '${searchValue}' OR u.last_name ILIKE '${searchValue}' OR CONCAT(u.first_name,' ', u.last_name) ILIKE '${searchValue}' OR
+    uu.first_name ILIKE '${searchValue}' OR uu.last_name ILIKE '${searchValue}' OR CONCAT(uu.first_name,' ', uu.last_name) ILIKE '${searchValue}' OR
+    r.role_name ILIKE '${searchValue}' OR c.checklist_name ILIKE '${searchValue}' OR p.priority_name ILIKE '${searchValue}' OR
+    s.status_name ILIKE '${searchValue}' OR m.milestone_name ILIKE '${searchValue}')
+    ${graphqlConditions}
+    ${andConditions}
+    ${finalContainer}
+    ${finalSortOrder}
+  ),
+  fetch_total_result AS (
+  SELECT COUNT(*) OVER() AS total_result, * FROM fetch_template_data
+  ),
+  fetch_paginated_data AS (
+  SELECT * FROM fetch_total_result ${pagination}
+  )
+  SELECT * FROM fetch_paginated_data`
+  return query
+}
+

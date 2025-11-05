@@ -1,11 +1,13 @@
 import { Logger } from "winston";
 import { CaseModelService } from "../caseModelsService";
-import { Sequelize } from "sequelize";
+import { QueryTypes, Sequelize } from "sequelize";
 import { CaseManagementSchemaService } from "./schemaService";
-import { HttpStatus, STATUS_MESSAGE } from "../../utils/constants";
-import { logMessage } from "../../utils/helpers";
+import { HttpStatus, rawQueries, STATUS_MESSAGE } from "../../utils/constants";
+import { logMessage, setTaskTemplateData } from "../../utils/helpers";
 import CaseSchemaService from "../cases/schemaService";
-import { ICreateChecklist } from "../../utils/types";
+import { AdminTaskTemplatePayloadType, AdminTaskTemplateResponseTypes, checkListTypes, CreateTaskTemplateType, ICreateChecklist, MilestoneTypes, priorityTypes, UpdateTaskTemplateType } from "../../utils/types";
+import { initMainDbSequelize } from "../../config/mainDataSource";
+import { fetchAdminTemplates } from "../../utils/rawQueries";
 
 /**
  * Service class for managing case-related operations including case creation,
@@ -33,6 +35,13 @@ export class CaseManagementService {
     this.caseManangementSchemaService = new CaseManagementSchemaService();
     this.caseSchemaService = new CaseSchemaService();
     this.caseModelService = new CaseModelService(); // Handles database connections and model operations
+  }
+
+  async getMainDb() {
+    if(!this.mainDbSequelize) {
+      this.mainDbSequelize = await initMainDbSequelize();
+    }
+    return this.mainDbSequelize
   }
   /**
    * Creates a new admin checklist with associated checklist items within a database transaction.
@@ -108,6 +117,312 @@ export class CaseManagementService {
         message: HttpStatus.FAILED_MESSAGE,
         errorMessage: STATUS_MESSAGE.adminChecklistFailed,
       };
+    }
+  }
+
+  /**
+   * Retrieves admin checklists with comprehensive filtering, pagination, and search capabilities.
+   *
+   * @param {any} data - Request parameters object containing pagination and sorting options
+   * @param {Record<string, any>} filters - Advanced filter conditions for data refinement
+   * @param {string} userId - The ID of the user requesting the data (for authorization)
+   * @param {string} apiType - Operation type determining response format ("list" or "download")
+   *
+   * @returns {Promise<{
+   *   statusCode: number;
+   *   message: string;
+   *   errorMessage?: string;
+   *   data?: { checklist: any; count: number };
+   * }>} - Result object with status code, message, and checklist data if successful
+   *
+   * @description
+   * This method performs the following operations:
+   * - Delegates data retrieval to the schema service with provided parameters
+   * - Processes pagination, sorting, and filtering options
+   * - Applies search functionality across checklist fields
+   * - Returns structured response with checklist data and total count
+   * - Handles both list view and export scenarios based on apiType
+   * - Provides consistent error handling and response formatting
+   */
+  async listAdminCheckList (
+    data: any,
+    filters: Record<string, any>,
+    userId: string,
+    apiType: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { checklist: any; count: number };
+  }> {
+    const result = await this.caseManangementSchemaService.listAdminCheckList(data.page,data.limit,apiType,filters,data.search, data.sortBy, data.sortOrder);
+  if (result != null) {
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          checklist: result,
+          count: result[0]?.total_records || 0,
+        },
+      };
+    } else {
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.NOT_FOUND_MESSAGE,
+        data: {
+          checklist: null,
+          count: 0,
+        },
+      };
+    }
+  }
+
+  async updateAdminChecklist(
+    data: any,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { checklist: any };
+  }> {
+    try {
+      const result = await this.caseManangementSchemaService.updateAdminChecklist(data, userId);
+      
+      if (result.statusCode === HttpStatus.SUCCESS) {
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          message: "Admin checklist updated successfully",
+          data: {
+            checklist: result.data,
+          },
+        };
+      } else {
+        return {
+          statusCode: result.statusCode,
+          message: result.message,
+          errorMessage: result.errorMessage,
+        };
+      }
+    } catch (error: any) {
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: error.message,
+      };
+    }
+  }
+
+  /**
+   * Retrieves detailed admin checklist template information by unique identifier.
+   *
+   * @param {string} checkListRid - The unique identifier (RID) of the checklist template to retrieve
+   *
+   * @returns {Promise<{
+   *   statusCode: number;
+   *   message: string;
+   *   errorMessage?: string;
+   *   data?: { checklistDetails: any };
+   * }>} - Result object with status code, message, and detailed checklist template data if successful
+   *
+   * @description
+   * This method performs the following operations:
+   * - Delegates detailed data retrieval to the schema service with the provided checklist RID
+   * - Fetches comprehensive checklist template information including associated items and metadata
+   * - Validates the existence of the checklist template and returns appropriate error if not found
+   * - Returns structured response with complete checklist template details
+   * - Provides consistent error handling and response formatting
+   * - Logs errors for debugging and audit purposes
+   *
+   * @throws {Error} - Catches and handles service-level errors, database connection issues, and data retrieval failures
+   * 
+   * **Response Structure:**
+   * - Returns detailed checklist template data including:
+   *   - Template metadata (name, description, effective dates, status)
+   *   - Associated checklist items with their configurations and sequencing
+   *   - User information for created/modified tracking
+   *   - Template configuration settings and assignments
+   */
+  async getCheckListTemplateDetailsById(checkListRid: string): Promise<{
+  statusCode: number;
+  message: string;
+  errorMessage?: string;
+  data?: { checklistDetails: any };
+}> {
+  try {
+    const checklistDetails =
+      await this.caseManangementSchemaService.fetchChecklistTemplateDetailsById(
+        checkListRid
+      );
+
+    if (!checklistDetails) {
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: "Invalid CheckList ID",
+      };
+    }
+
+    return {
+      statusCode: HttpStatus.SUCCESS,
+      message: HttpStatus.SUCCESS_MESSAGE,
+      data: {
+        checklistDetails,
+      },
+    };
+  } catch (err) {
+    logMessage(`Error fetching checklist details, ${err}`);
+     return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: STATUS_MESSAGE.checkListError,
+      };
+  }
+}
+
+  async createTaskTemplate (data : CreateTaskTemplateType, userId : string) {
+    const createTaskResult = await this.caseManangementSchemaService.createTaskTemplate(data, userId);
+    if(createTaskResult.statusCode == HttpStatus.SUCCESS) {
+      return {
+        statusCode : createTaskResult.statusCode,
+        statusMessage : createTaskResult.statusMessage
+      }
+    } else {
+      return {
+        statusCode : createTaskResult.statusCode,
+        statusMessage : createTaskResult.statusMessage
+      } 
+    }
+  }
+  async getAllPriority () {
+    const mainDb = await this.getMainDb();
+    const result = await mainDb.query<priorityTypes>(rawQueries.getPriorityTypes(), {
+      type : QueryTypes.SELECT
+    });
+    if(result.length > 0) {
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        data : result
+      }
+    } else {
+      return {
+        statusCode : HttpStatus.NOT_FOUND,
+        data : []
+      }     
+    }
+  }
+  async getMilestones () {
+    const mainDb = await this.getMainDb();
+    const result = await mainDb.query<MilestoneTypes>(rawQueries.getMilestones(), {type : QueryTypes.SELECT});
+    if(result.length > 0) {
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        data : result
+      }      
+    } else {
+      return {
+        statusCode : HttpStatus.NOT_FOUND,
+        data : []
+      }  
+    }
+  }
+  async getChecklist () {
+    const mainDb = await this.getMainDb();
+    const result = await mainDb.query<checkListTypes>(rawQueries.getChecklistTypes(), {type : QueryTypes.SELECT});
+    if(result.length > 0) {
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        data : result
+      }      
+    } else {
+      return {
+        statusCode : HttpStatus.NOT_FOUND,
+        data : []
+      }  
+    }
+  }
+  async updateTaskTemplate (data : UpdateTaskTemplateType, userId : string) {
+    const result = await this.caseManangementSchemaService.updateTaskTemplate(data, userId);
+    if(result?.statusCode == HttpStatus.SUCCESS) {
+      return {
+        statusCode : result.statusCode,
+        statusMessage : result.statusMessage
+      }
+    } else if(result?.statusCode === HttpStatus.NOT_FOUND) {
+      return {
+        statusCode : result.statusCode,
+        statusMessage : result.statusMessage
+      }      
+    } else if(result?.statusCode === HttpStatus.BAD_REQUEST) {
+      return {
+        statusCode : result.statusCode,
+        statusMessage : result.statusMessage
+      }      
+    } else {
+      return {
+        statusCode : result.statusCode,
+        statusMessage : result.statusMessage
+      }      
+    }
+  }
+  async fetchTaskTemplate (data : AdminTaskTemplatePayloadType, isExport : boolean, isGraphql : boolean, templateRid : string | null) {
+    const mainDb = await this.getMainDb();
+    const result = await mainDb.query<AdminTaskTemplateResponseTypes>(fetchAdminTemplates(data.page, data.limit, data.sort, data.sort_by, data.filter, data.search, isExport, isGraphql, templateRid), {type : QueryTypes.SELECT});
+    if(result.length > 0) {
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        data : result
+      }
+    } else {
+      return {
+        statusCode : HttpStatus.NOT_FOUND,
+        data : []
+      }     
+    }
+  }
+  async inlineEditTaskTemplate (data : any) {
+    const mainDb = await this.getMainDb();
+    const isTaskExists = await this.caseManangementSchemaService.checkTaskExistsForUpdate(data.rid);
+    if(isTaskExists) {
+      const setData = setTaskTemplateData(isTaskExists, data, data.userId)
+      if(setData.length > 0) {
+        const result : any = await mainDb.query(rawQueries.updateTaskTemplate(setData, data.rid));
+        if(result[1].rowCount == 1) {
+          const responsePayload : AdminTaskTemplatePayloadType = {
+            page : 1,
+            limit : 1,
+            search : "",
+            filter : {},
+            sort : "",
+            sort_by : ""
+          }
+          const responseData = await this.fetchTaskTemplate(responsePayload, false, true, data.rid);
+          if(responseData.data.length > 0) {
+          return {
+            statusCode : HttpStatus.SUCCESS,
+            statusMessage : STATUS_MESSAGE.taskTemplateSuccess,
+            data : responseData.data[0]
+            }
+          }
+        }
+      } else {
+          const responsePayload : AdminTaskTemplatePayloadType = {
+          page : 1,
+          limit : 1,
+          search : "",
+          filter : {},
+          sort : "",
+          sort_by : ""
+        }
+          const responseData = await this.fetchTaskTemplate(responsePayload, false, true, data.rid);
+          if(responseData.data.length > 0) {
+          return {
+            statusCode : HttpStatus.SUCCESS,
+            statusMessage : STATUS_MESSAGE.taskTemplateSuccess,
+            data : responseData.data[0]
+          }
+        }
+      }
     }
   }
 }

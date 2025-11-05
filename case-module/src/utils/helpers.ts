@@ -1,12 +1,14 @@
 import Joi from "joi";
 import { Request, Response } from "express";
 import { errorResponse, successResponse } from "./apiResponse";
-import { HttpStatus } from "./constants";
+import { ALPHANUMERIC_CONDITIONS, HttpStatus } from "./constants";
 import configurations from "../config/config";
 import ExcelJS from 'exceljs'
 import { getSecret } from "./azureSecrets";
 import crypto from "crypto";
 import moment from "moment-timezone";
+import { CreateTaskTemplateType, UpdateTaskTemplateType } from "./types";
+import { TaskTemplate } from "../models/caseTaskTemplateModel";
 
 function getLogger() {
   return configurations.getInstance().getLogger();
@@ -193,4 +195,149 @@ export async function decryptClientSecret(
   decrypted = Buffer.concat([decrypted, decipher.final()]);
 
   return decrypted.toString();
+}
+
+// Optimized utility function for handling numeric filter conditions
+export const buildNumericFilterCondition = (
+  condition: string,
+  values: any,
+  filteredColumns: string,
+  tableAlias: string = "cs"
+): string => {
+  const columnRef = `${tableAlias}.${filteredColumns}`;
+
+  // Use object mapping for better performance instead of switch
+  const conditionMap: Record<string, (col: string, val: any) => string> = {
+    [ALPHANUMERIC_CONDITIONS.equals]: (col, val) => `${col} = ${val}`,
+    [ALPHANUMERIC_CONDITIONS.notEquals]: (col, val) => `${col} != ${val}`,
+    [ALPHANUMERIC_CONDITIONS.greater_than]: (col, val) => `${col} > ${val}`,
+    [ALPHANUMERIC_CONDITIONS.less_than]: (col, val) => `${col} < ${val}`,
+    [ALPHANUMERIC_CONDITIONS.between]: (col, val) =>
+      `${col} BETWEEN ${Array.isArray(val) ? val.join(" AND ") : val}`,
+    [ALPHANUMERIC_CONDITIONS.isEmpty]: (col) => `${col} IS NULL`,
+    [ALPHANUMERIC_CONDITIONS.IN]: (col, val) =>
+      `${col} IN (${Array.isArray(val) ? val.join(",") : val})`,
+  };
+
+  return conditionMap[condition]?.(columnRef, values) || "";
+};
+
+// Optimized utility function for handling string filter conditions
+export const buildStringFilterCondition = (
+  condition: string,
+  values: any,
+  filteredColumns: string,
+  dynamicReference: string
+): string => {
+  // Optimize column reference determination
+  const getColumnRef = (column: string, ref: string): string => {
+    const columnMap: Record<string, string> = {
+      created_user_name: "(uc.first_name || ' ' || uc.last_name)",
+      modified_user_name: "(um.first_name || ' ' || um.last_name)",
+      case_full_name: " CONCAT(a.account_name, '-', c.country_name, '-', cs.fiscal_year, '-', cs.case_name)"
+    };
+    
+    return columnMap[column] || (ref ? `${ref}.${column}` : column);
+
+  };
+
+  const columnRef = getColumnRef(filteredColumns, dynamicReference);
+
+  // Use object mapping for conditions
+  const conditionMap: Record<string, (col: string, val: any) => string> = {
+    [ALPHANUMERIC_CONDITIONS.equals]: (col, val) =>
+      `LOWER(${col}) = LOWER('${val}')`,
+    [ALPHANUMERIC_CONDITIONS.notEquals]: (col, val) =>
+      `(LOWER(${col}) != LOWER('${val}') OR ${col} IS NULL)`,
+    [ALPHANUMERIC_CONDITIONS.isEmpty]: (col) => `${col} IS NULL`,
+    [ALPHANUMERIC_CONDITIONS.contains]: (col, val) => `${col} ILIKE '%${val}%'`,
+    [ALPHANUMERIC_CONDITIONS.IN]: (col, val) =>
+      `${col} IN (${
+        Array.isArray(val)
+          ? val.map((d: any) => `'${d}'`).join(",")
+          : `'${val}'`
+      })`,
+  };
+
+  return conditionMap[condition]?.(columnRef, values) || "";
+};
+
+// Optimized utility function for handling datetime filter conditions
+export const buildDatetimeFilterCondition = (
+  condition: string,
+  values: any,
+  filteredColumns: string,
+  tableAlias: string = "i"
+): string => {
+  const columnRef = `DATE(${tableAlias}.${filteredColumns})`;
+
+  // Use object mapping for better performance
+  const conditionMap: Record<string, (col: string, val: any) => string> = {
+    [ALPHANUMERIC_CONDITIONS.equals]: (col, val) => `${col} = '${val}'`,
+    [ALPHANUMERIC_CONDITIONS.before]: (col, val) => `${col} < '${val}'`,
+    [ALPHANUMERIC_CONDITIONS.after]: (col, val) => `${col} > '${val}'`,
+    [ALPHANUMERIC_CONDITIONS.between]: (col, val) =>
+      `${col} BETWEEN ${
+        Array.isArray(val)
+          ? val.map((d: any) => `'${d}'`).join(" AND ")
+          : `'${val}'`
+      }`,
+    [ALPHANUMERIC_CONDITIONS.isEmpty]: (col) => `${col} IS NULL`,
+  };
+
+  return conditionMap[condition]?.(columnRef, values) || "";
+};
+
+export const setTaskTemplateData = (dbData : TaskTemplate, reqData : any, userId : string) => {
+  let validUpdateQuery : string[] = []
+  let validUpdateConditions : string = ``
+  if(reqData.task_name) {
+    if(reqData.task_name !== dbData.task_name) {
+      validUpdateConditions = `task_name = '${reqData.task_name.replace(/'/g, "''")}'`
+      validUpdateQuery.push(validUpdateConditions)
+    } 
+  }
+  if(reqData.effort_in_days) {
+    if(reqData.effort_in_days !== dbData.effort_in_days) {
+      validUpdateConditions = `effort_in_days = ${reqData.effort_in_days}`
+      validUpdateQuery.push(validUpdateConditions)
+    }
+  }
+  if(reqData.reminder_interval) {
+    if(reqData.reminder_interval !== dbData.reminder_interval) {
+      validUpdateConditions = `reminder_interval = ${reqData.reminder_interval}`
+      validUpdateQuery.push(validUpdateConditions)
+    }
+  }
+  if(reqData.case_team_member_role_rid) {
+    if(reqData.case_team_member_role_rid !== dbData.case_team_member_role_rid) {
+      validUpdateConditions = `case_team_member_role_rid = '${reqData.case_team_member_role_rid}'`
+      validUpdateQuery.push(validUpdateConditions)
+    }
+  }
+  if(reqData.checklist_rid) {
+    if(reqData.checklist_rid !== dbData.checklist_rid) {
+      validUpdateConditions = `checklist_rid = '${reqData.checklist_rid}'`
+      validUpdateQuery.push(validUpdateConditions)
+    }
+  }
+  if(reqData.priority_rid) {
+    if(reqData.priority_rid !== dbData.priority_rid) {
+      validUpdateConditions = `priority_rid = '${reqData.priority_rid}'`
+      validUpdateQuery.push(validUpdateConditions)
+    }
+  }
+  if(reqData.milestone_rid) {
+    if(reqData.milestone_rid !== dbData.milestone_rid) {
+      validUpdateConditions = `milestone_rid = '${reqData.milestone_rid}'`
+      validUpdateQuery.push(validUpdateConditions)
+    }
+  }
+  if(validUpdateQuery.length > 0) {
+    validUpdateConditions = `modified_by = '${userId}'`
+    validUpdateQuery.push(validUpdateConditions)
+    validUpdateConditions = `modified_datetime = NOW()`
+    validUpdateQuery.push(validUpdateConditions)
+  }
+  return validUpdateQuery
 }
