@@ -623,9 +623,7 @@ export class CaseService {
     errorMessage?: string;
     data?: { caseInfo: any; count: number };
   }> {
-    const mainDb = await this.getMainDb();
     const userGroupType = await this.caseSchemaService.getUserGroupType(userId);
-
     const isCustomGlobal = userGroupType === "DEFAULT";
     const isDefaultParent = userGroupType === "AUTO_ASSIGNED_PARENT";
 
