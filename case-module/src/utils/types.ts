@@ -307,3 +307,39 @@ export type UpdateTaskTemplateType = {
   task_type: string,
   milestone_rid : string
 }
+
+export type AdminTaskTemplateResponseTypes = {
+  rid : string,
+  r_number : string,
+  created_by : string,
+  created_by_name : string,
+  modified_by : string,
+  modified_by_name : string,
+  created_datetime : Date,
+  modified_datetime : Date,
+  task_name : string,
+  sequence_no : number,
+  effort_in_days : number,
+  reminder_interval : number,
+  effective_start_datetime : Date,
+  effective_end_datetime : Date,
+  case_team_member_role_rid : string,
+  role_name : string,
+  checklist_rid : string,
+  status_rid : string,
+  status_name : string,
+  priority_rid : string,
+  priority_name : string,
+  milestone_rid : string,
+  milestone_name : string,
+  total_result: string
+}
+
+export type AdminTaskTemplatePayloadType = {
+  page : number,
+  limit : number,
+  search : string,
+  filter : FilterType,
+  sort : string,
+  sort_by : string
+}
