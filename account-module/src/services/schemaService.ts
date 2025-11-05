@@ -122,6 +122,7 @@ class SchemaService {
       await this.createEmailWebhookHistory(schemaName, sequelize);
       await this.createNotesTable(schemaName, sequelize);
       await this.createNotesTimeline(schemaName, sequelize);
+      // await this.createJurisdictions(schemaName, sequelize);
 
       await transaction.commit();
     } catch (Err) {
@@ -1426,6 +1427,23 @@ class SchemaService {
     for (const field of fieldsToIndex) {
       await sequelize.query(
         rawQueries.getNotesTimelineIndexQuery(schemaName, field)
+      );
+    }
+  }
+
+  private async createJurisdictions(schemaName: string, sequelize: Sequelize) {
+    await sequelize.query(
+      rawQueries.getCreateJurisdictionTableQuery(schemaName)
+    );
+
+    const fieldsToIndex = [
+      "account_rid",
+      "case_rid",
+    ];
+  
+    for (const field of fieldsToIndex) {
+      await sequelize.query(
+        rawQueries.getJurisdictionIndexQuery(schemaName, field)
       );
     }
   }

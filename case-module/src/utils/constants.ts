@@ -83,6 +83,13 @@ export const STATUS_MESSAGE = {
     "Country is not associated with the account,Please select country",
   adminChecklistCreated: "Admin checklist created successfully",
   adminChecklistFailed: "Admin checklist creation failed",
+  accountIdMissing: "Account RID mising",
+  invalidJurisdictionLevel: "Level must be either 'state' or 'federal'.",
+  statesMissing: "States array is required when level is 'state'.",
+  invalidStatesArray: "All states must be valid non-empty strings.",
+  userIdMissingInHeader: "User ID is missing in request header.",
+  jurisdictionAddedSuccess: "Jurisdiction configuration added successfully",
+  jurisdictionAddedFailed: "Jurisdiction configuration addition failed",
 };
 
 export const caseStatuses = {

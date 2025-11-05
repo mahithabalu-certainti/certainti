@@ -114,6 +114,47 @@ const adminChecklistSchema = Joi.object({
     .min(1)
     .required(),
 });
+
+const jurisdictionSchema = Joi.object({
+  account_rid: Joi.string().required(),
+  case_rid: Joi.string().required(),
+  is_state_level: Joi.boolean().required(),
+  is_federal_level: Joi.boolean().required(),
+  states: Joi.array()
+    .items(Joi.string().trim().optional ())
+    .optional(), // We'll handle requirement manually in custom()
+})
+  // Custom validation
+  .custom((value, helpers) => {
+    const { is_state_level, is_federal_level, states } = value;
+
+    // Rule 1: Only one level should be true
+    if (is_state_level === is_federal_level) {
+      return helpers.error("any.invalidCombination");
+    }
+
+    // Rule 2: If state level is true → must have at least one state
+    if (is_state_level) {
+      if (!Array.isArray(states) || states.length === 0) {
+        return helpers.error("any.missingStates");
+      }
+    }
+
+    // Rule 3: If federal level → states should be absent or empty
+    if (is_federal_level && states && states.length > 0) {
+      return helpers.error("any.statesNotAllowed");
+    }
+
+    return value;
+  })
+  .messages({
+    "any.invalidCombination":
+      "Either is_state_level or is_federal_level must be true, but not both.",
+    "any.missingStates": "States must contain at least one value when state level is true.",
+    "any.statesNotAllowed": "States are not allowed when federal level is true.",
+    "any.required": "{{#label}} is required",
+  });
+
 export {
   createCaseSchema,
   updateCaseSchema,
@@ -123,5 +164,6 @@ export {
   exportCaseSummarySchema,
   createCaseTeamSchema,
   listCaseTeamSchema,
-  adminChecklistSchema
+  adminChecklistSchema,
+  jurisdictionSchema
 };
