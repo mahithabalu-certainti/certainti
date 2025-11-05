@@ -1,12 +1,15 @@
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import { makeExecutableSchema } from '@graphql-tools/schema';
+import { mergeTypeDefs, mergeResolvers } from '@graphql-tools/merge';
 
 import initRequestContext from '../graphql/context';
 import configurations from '../config/config';
 import { Application } from 'express';
 import { caseResolver } from '../resolvers/caseResolver';
+import { adminChecklistResolver } from '../resolvers/adminChecklistResolver';
 import { typeDefs } from '../graphql/schema';
+import { adminChecklistTypeDefs } from '../graphql/adminChecklistSchema';
 
 const GRAPHQL_PATH = '/graphql';
 
@@ -16,9 +19,15 @@ interface GraphQLServer {
 }
 
 const initGraphQLServer = async (app: Application): Promise<GraphQLServer> => {
+  // Merge type definitions from multiple schemas
+  const mergedTypeDefs = mergeTypeDefs([typeDefs, adminChecklistTypeDefs]);
+  
+  // Merge resolvers from multiple resolver files
+  const mergedResolvers = mergeResolvers([caseResolver, adminChecklistResolver]);
+
   const schema = makeExecutableSchema({
-    typeDefs,
-    resolvers: caseResolver,
+    typeDefs: mergedTypeDefs,
+    resolvers: mergedResolvers,
   });
 
   const server = new ApolloServer({

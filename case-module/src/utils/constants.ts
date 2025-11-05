@@ -90,6 +90,7 @@ export const STATUS_MESSAGE = {
   checklistSuccess : "Checklist fetched successfully",
   taskUpdatedSuccess : "Task Template updated successfully",
   taskUpdateFailed : "Task Template updation failed",
+  checkListError : "Checklist retrieval failed",
 };
 
 export const caseStatuses = {
@@ -673,6 +674,33 @@ export const rawQueries = {
   getChecklistTypes() {
     return `SELECT rid, checklist_name FROM ${MAIN_SCHEMA_NAME}.checklist_template ORDER BY created_datetime ASC`
   },
+   getUserNameByIdQuery() {
+    return `
+      SELECT first_name, middle_name, last_name 
+      FROM ${MAIN_SCHEMA_NAME}."user" 
+      WHERE rid = :userId
+    `;
+  },
+  fetchChecklistTemplates :  `
+    SELECT 
+        ct.rid,
+        ct.r_number,
+        ct.checklist_name,
+        ct.checklist_description,
+        ct.status_rid,
+        s.status_name AS status_name,
+        ct.created_by,
+        ct.modified_by,
+        ct.created_datetime,
+        ct.modified_datetime
+    FROM 
+        ${MAIN_SCHEMA_NAME}.checklist_template ct
+    LEFT JOIN 
+        ${MAIN_SCHEMA_NAME}.status s ON ct.status_rid = s.rid
+        WHERE 
+        ct.rid = :checklistId
+    LIMIT 1;
+  `,
 };
 
 const keyContactRole = {
