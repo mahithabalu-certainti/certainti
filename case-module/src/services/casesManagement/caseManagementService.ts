@@ -365,9 +365,9 @@ export class CaseManagementService {
       }      
     }
   }
-  async fetchTaskTemplate (data : AdminTaskTemplatePayloadType) {
+  async fetchTaskTemplate (data : AdminTaskTemplatePayloadType, isExport : boolean) {
     const mainDb = await this.getMainDb();
-    const result = await mainDb.query<AdminTaskTemplateResponseTypes>(fetchAdminTemplates(data.page, data.limit, data.sort, data.sort_by, data.filter, data.search), {type : QueryTypes.SELECT});
+    const result = await mainDb.query<AdminTaskTemplateResponseTypes>(fetchAdminTemplates(data.page, data.limit, data.sort, data.sort_by, data.filter, data.search, isExport), {type : QueryTypes.SELECT});
     if(result.length > 0) {
       return {
         statusCode : HttpStatus.SUCCESS,

@@ -751,6 +751,39 @@ async function updateTaskTemplate (req : Request, res : Response) : Promise<any>
   }
 }
 
+/**
+ * Controller function to handle fetching the list of admin task templates.
+ *
+ * This async function processes HTTP requests for retrieving paginated task template lists by:
+ * - Validating the presence of the user ID in request headers (`x-user-id`)
+ * - Delegating the data retrieval to the `caseManagementService.fetchTaskTemplate` method
+ * - Formatting and returning paginated task template data with metadata
+ *
+ * @param {Request} req - Express request object containing:
+ *   - body: Request parameters for pagination, filtering, and search criteria
+ *   - headers: Must include 'x-user-id' for authentication and audit tracking
+ * @param {Response} res - Express response object used to send the operation result
+ *
+ * @returns {Promise<void>} - Resolves after sending the formatted task template list response
+ *
+ * @throws {Error} - Catches and handles missing user ID, service errors, or unexpected exceptions
+ * 
+ * @description
+ * **HTTP Response Codes:**
+ * - 200: Successfully retrieved the task template list
+ * - 400: Bad request (missing user ID, validation error, or unexpected failure)
+ * 
+ * **Response Structure:**
+ * - `page`: Current page number
+ * - `limit`: Number of records per page
+ * - `total_result`: Total number of available records
+ * - `task_templates`: Array of task template objects
+ * 
+ * **Request Requirements:**
+ * - Requires `x-user-id` in headers for authorization and audit purposes
+ * - Accepts pagination and optional filter criteria in the request body
+ * - Logs all requests and responses for traceability and debugging
+ */
 async function fetchAdminTaskTemplateList (req : Request, res : Response) {
   const methodName = "fetch Admin TaskTemplate List"
   try {
@@ -766,7 +799,7 @@ async function fetchAdminTaskTemplateList (req : Request, res : Response) {
       return;
     }
     const data = req.body;
-    let result = await caseManagementService.fetchTaskTemplate(data);
+    let result = await caseManagementService.fetchTaskTemplate(data, false);
     let totalRecord = parseInt(result.data[0].total_result)
     result.data.forEach((d : any) => {
       delete d.total_result
@@ -812,6 +845,103 @@ async function fetchAdminTaskTemplateList (req : Request, res : Response) {
   }
 }
 
+async function ExportAdminTaskTemplateList (req : Request, res : Response) {
+  const methodName = "fetch Admin TaskTemplate List"
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const data = req.body;
+    let result = await caseManagementService.fetchTaskTemplate(data, true);
+    let totalRecord = parseInt(result.data[0].total_result)
+    const fields = await caseService.getAllowedExportFields(
+    userId,
+    "admin_checklist_view_edit"
+    );
+    const allowedFieldSet = new Set<string>();
+    for (const field of fields) {
+      if (field.read) {
+        allowedFieldSet.add(field.field_name);
+      }
+    }
+    const isValidTZ = data.timezone && isValidTimezone(data.timezone);
+    const formatDate = (date?: Date) => {
+      const offsetMs = (5 * 60 + 30) * 60 * 1000;
+      const convertedDate = new Date(date?.getTime() ?? "" + offsetMs);
+      return date
+        ? moment
+            .utc(convertedDate)
+            .tz(isValidTZ ? data.timezone : "UTC")
+            .utcOffset("-012:30")
+            .format("YYYY-MMM-DD, hh:mm:ss A")
+        : null;
+    };
+    if(result.statusCode == HttpStatus.SUCCESS) {
+      const finalData = result.data.map((d : any) => {
+        return {
+          "Template ID" : d.r_number,
+          "Task Name" : d.task_name,
+          "Efforts (Hrs)" : d.effort_in_days || "-",
+          "Created By" : d.created_by_name || "-",
+          "Created On" : d.created_datetime
+                        ? data.timezone && isValidTimezone(data.timezone)
+                          ? moment.tz(d.created_datetime.toISOString(), data.timezone)
+                              .format("YYYY-MMM-DD, hh:mm:ss A")
+                          : moment(d.created_datetime.toISOString())
+                              .tz(data.timezone)
+                              .format("YYYY-MMM-DD, hh:mm:ss A")
+                        : "-",
+          "Modified By": d.modified_by_name || "-",
+          "Updated On": d.modified_datetime
+                        ? data.timezone && isValidTimezone(data.timezone)
+                          ? moment.tz(d.modified_datetime.toISOString(), data.timezone)
+                              .format("YYYY-MMM-DD, hh:mm:ss A")
+                          : moment(d.modified_datetime.toISOString())
+                              .tz(data.timezone)
+                              .format("YYYY-MMM-DD, hh:mm:ss A")
+                        : "-"
+        }
+      })
+      const generateBase64Response = await generateExcelBase64(
+           finalData,
+           "Task Template"
+         );
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.taskTemplateExport,
+        data : generateBase64Response
+      })     
+    } else {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.dataNotAvailable,
+        data : {}
+      })  
+    }
+  } catch (err) {
+    // Handle unexpected errors (system failures, network issues, etc.)
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
 // Export the controller functions for use in route definitions
 export default {
   createAdminCheckList,
@@ -823,5 +953,6 @@ export default {
   updateTaskTemplate,
   fetchAdminTaskTemplateList,
   exportAdminCheckList,
+  ExportAdminTaskTemplateList,
   getCheckListTemplateDetailsById
 };

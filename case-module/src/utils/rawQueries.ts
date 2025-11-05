@@ -445,9 +445,13 @@ export const listAllCheckList = (
         paginated_datas i
     `;
 
-export const fetchAdminTemplates = (page : number, limit : number, sort : string, sortBy : string, filter : FilterType, search : string) => {
+export const fetchAdminTemplates = (page : number, limit : number, sort : string, sortBy : string, filter : FilterType, search : string, isExport : boolean) => {
+  let pagination : string = ``
+  if(isExport) pagination = ` `
+  else {
   let offset = (page - 1) * limit;
-  let pagination = `LIMIT ${limit} OFFSET ${offset}`
+  pagination = `LIMIT ${limit} OFFSET ${offset}`
+  }
   let searchValue : string = ``
   let finalSortOrder : string = ``
   let andConditions : string = ``
