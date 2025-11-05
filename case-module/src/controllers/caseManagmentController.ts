@@ -13,10 +13,12 @@ import {
 } from "../utils/helpers";
 import {
   HttpStatus,
+  STATUS_MESSAGE,
 } from "../utils/constants";
 import {
   adminChecklistSchema,
   createCaseSchema,
+  createTaskTemplateSchema,
 } from "../lib/joi/schemas/schema";
 import configurations from "../config/config";
 
@@ -116,7 +118,166 @@ async function createAdminCheckList(req: Request, res: Response): Promise<void> 
   }
 }
 
+async function createTaskTemplate (req : Request, res : Response) : Promise<any> {
+  const methodName = "Create TaskTemplate"
+  try {
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${
+        req.headers["x-user-id"]
+      }`
+    );
+    // Validate request body against the defined schema
+    const value = await validateRequest(req, createTaskTemplateSchema, res);
+     const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    if (!value) {
+      errorLog(methodName, "Request body is empty");
+      return;
+    }
+    const cases = await caseManagementService.createTaskTemplate(value, userId);
+    
+    // Handle successful checklist creation
+    if (cases.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : cases.statusMessage
+      })
+    } else {
+      // Handle service-level errors (business logic failures)
+      return res.status(HttpStatus.BAD_REQUEST).send({
+        statusCode : HttpStatus.BAD_REQUEST_MESSAGE,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : cases.statusMessage
+      })
+    }
+  } catch (err) {
+    // Handle unexpected errors (system failures, network issues, etc.)
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function getPriorityTypes (req : Request, res : Response) {
+  const methodName = "Get Priority Types";
+  try {
+    const result = await caseManagementService.getAllPriority();
+    if(result.statusCode == HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.casePrioritySuccess,
+        data : result.data
+      })
+    } else {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.dataNotAvailable,
+        data : []
+      })    
+    }
+  } catch (err) {
+    // Handle unexpected errors (system failures, network issues, etc.)
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function getMilestones (req : Request, res : Response) {
+  const methodName = "Get Milestones Types";
+  try {
+    const result = await caseManagementService.getMilestones();
+    if(result.statusCode == HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.milestonesSuccess,
+        data : result.data
+      })
+    } else {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.dataNotAvailable,
+        data : []
+      })    
+    }
+  } catch (err) {
+    // Handle unexpected errors (system failures, network issues, etc.)
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function getChecklist (req : Request, res : Response) {
+  const methodName = "Get Checklist";
+  try {
+    const result = await caseManagementService.getChecklist();
+    if(result.statusCode == HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.checklistSuccess,
+        data : result.data
+      })
+    } else {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.dataNotAvailable,
+        data : []
+      })    
+    }
+  } catch (err) {
+    // Handle unexpected errors (system failures, network issues, etc.)
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
 // Export the controller functions for use in route definitions
 export default {
-  createAdminCheckList
+  createAdminCheckList,
+  createTaskTemplate,
+  getPriorityTypes,
+  getMilestones,
+  getChecklist
 };

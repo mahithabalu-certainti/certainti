@@ -1,11 +1,12 @@
 import { Logger } from "winston";
 import { CaseModelService } from "../caseModelsService";
-import { Sequelize } from "sequelize";
+import { QueryTypes, Sequelize } from "sequelize";
 import { CaseManagementSchemaService } from "./schemaService";
-import { HttpStatus, STATUS_MESSAGE } from "../../utils/constants";
+import { HttpStatus, rawQueries, STATUS_MESSAGE } from "../../utils/constants";
 import { logMessage } from "../../utils/helpers";
 import CaseSchemaService from "../cases/schemaService";
-import { ICreateChecklist } from "../../utils/types";
+import { checkListTypes, CreateTaskTemplateType, ICreateChecklist, MilestoneTypes, priorityTypes } from "../../utils/types";
+import { initMainDbSequelize } from "../../config/mainDataSource";
 
 /**
  * Service class for managing case-related operations including case creation,
@@ -33,6 +34,13 @@ export class CaseManagementService {
     this.caseManangementSchemaService = new CaseManagementSchemaService();
     this.caseSchemaService = new CaseSchemaService();
     this.caseModelService = new CaseModelService(); // Handles database connections and model operations
+  }
+
+  async getMainDb() {
+    if(!this.mainDbSequelize) {
+      this.mainDbSequelize = await initMainDbSequelize();
+    }
+    return this.mainDbSequelize
   }
   /**
    * Creates a new admin checklist with associated checklist items within a database transaction.
@@ -108,6 +116,68 @@ export class CaseManagementService {
         message: HttpStatus.FAILED_MESSAGE,
         errorMessage: STATUS_MESSAGE.adminChecklistFailed,
       };
+    }
+  }
+
+  async createTaskTemplate (data : CreateTaskTemplateType, userId : string) {
+    const createTaskResult = await this.caseManangementSchemaService.createTaskTemplate(data, userId);
+    if(createTaskResult.statusCode == HttpStatus.SUCCESS) {
+      return {
+        statusCode : createTaskResult.statusCode,
+        statusMessage : createTaskResult.statusMessage
+      }
+    } else {
+      return {
+        statusCode : createTaskResult.statusCode,
+        statusMessage : createTaskResult.statusMessage
+      } 
+    }
+  }
+  async getAllPriority () {
+    const mainDb = await this.getMainDb();
+    const result = await mainDb.query<priorityTypes>(rawQueries.getPriorityTypes(), {
+      type : QueryTypes.SELECT
+    });
+    if(result.length > 0) {
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        data : result
+      }
+    } else {
+      return {
+        statusCode : HttpStatus.NOT_FOUND,
+        data : []
+      }     
+    }
+  }
+  async getMilestones () {
+    const mainDb = await this.getMainDb();
+    const result = await mainDb.query<MilestoneTypes>(rawQueries.getMilestones(), {type : QueryTypes.SELECT});
+    if(result.length > 0) {
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        data : result
+      }      
+    } else {
+      return {
+        statusCode : HttpStatus.NOT_FOUND,
+        data : []
+      }  
+    }
+  }
+  async getChecklist () {
+    const mainDb = await this.getMainDb();
+    const result = await mainDb.query<checkListTypes>(rawQueries.getChecklistTypes(), {type : QueryTypes.SELECT});
+    if(result.length > 0) {
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        data : result
+      }      
+    } else {
+      return {
+        statusCode : HttpStatus.NOT_FOUND,
+        data : []
+      }  
     }
   }
 }
