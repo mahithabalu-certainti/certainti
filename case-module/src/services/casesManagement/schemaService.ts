@@ -306,9 +306,6 @@ class CaseManagementSchemaService {
       where : {
         task_name : {
           [Op.iLike] : data.task_name
-        },
-        milestone_rid : {
-          [Op.in] : [data.milestone_rid]
         }
       }, raw : true
     })
