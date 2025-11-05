@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActionItemsIcon, ComingSoon } from '../../../../../assets';
+import { CaseIcon, ComingSoon } from '../../../../../assets';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
@@ -56,7 +56,12 @@ const WorkBreakDown = () => {
   // ];
 
   const getTitleIcon = () => {
-    return <ActionItemsIcon alt='action-items-icon' />;
+    return (
+      <CaseIcon
+        alt='case-icon'
+        className={`w-6 h-6 p-[5px] [&>path]:stroke-[#4ce547] bg-[#D2FFE3] !rounded-lg`}
+      />
+    );
   };
 
   const tabs = [
