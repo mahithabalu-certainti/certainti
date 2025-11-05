@@ -3,7 +3,12 @@ import { useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { useCaseDetails } from '../../../services/cases/case-service';
 import { MenuItem } from '../../../types';
 import { AllMenus, AllModules } from '../../../../common-service';
-import { InfoSection, PageHeader, SideMenuPanel } from '../../../../components';
+import {
+  InfoSection,
+  PageHeader,
+  SideMenuPanel,
+  EmailModal,
+} from '../../../../components';
 import {
   AccountDetailsIcon,
   ActivitiesIcon,
@@ -45,6 +50,7 @@ export const CaseDetails = () => {
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const defaultTab = searchParams.get('list') ?? 'workBreakdown';
   const [activeKey, setActiveKey] = useState(defaultTab as string);
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     const list = searchParams.get('list');
@@ -83,12 +89,55 @@ export const CaseDetails = () => {
     console.log('Settings clicked');
   };
 
+  const handleDraftEmail = () => {
+    setShowModal(true);
+  };
+
   const activityMenuItems = [
     { label: 'Create Task', onClick: () => console.log('Task') },
-    { label: 'Draft Email', onClick: () => console.log('Email') },
+    { label: 'Draft Email', onClick: handleDraftEmail },
     { label: 'Schedule Meeting', onClick: () => console.log('Meeting') },
     { label: 'Log a call', onClick: () => console.log('Call') },
   ];
+
+  // Mock data for email modal
+  const mockData = {
+    userName: 'John Doe',
+    userEmail: 'john.doe@example.com',
+    templates: [
+      {
+        id: '1',
+        name: 'Welcome Email Template',
+        content: 'Dear recipient,<br><br>Welcome to our platform!',
+      },
+      {
+        id: '2',
+        name: 'Follow-up Template',
+        content:
+          'Hi there,<br><br>Just following up on our previous conversation.',
+      },
+      {
+        id: '3',
+        name: 'Meeting Invitation',
+        content: 'Hello,<br><br>I would like to invite you to a meeting.',
+      },
+    ],
+  };
+
+  const mockUserData = {
+    toOptions: [
+      'alice@example.com',
+      'bob@example.com',
+      'charlie@example.com',
+      'david@example.com',
+    ],
+    ccOptions: [
+      'manager@example.com',
+      'team@example.com',
+      'support@example.com',
+    ],
+    bccOptions: ['admin@example.com', 'records@example.com'],
+  };
 
   const renderContent = () => {
     switch (activeKey) {
@@ -312,6 +361,13 @@ export const CaseDetails = () => {
           <Suspense fallback={null}>{renderContent()}</Suspense>
         </div>
       </div>
+      {showModal && (
+        <EmailModal
+          onClose={() => setShowModal(false)}
+          data={mockData}
+          userData={mockUserData}
+        />
+      )}
     </div>
   );
 };
