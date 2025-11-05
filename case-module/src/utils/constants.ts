@@ -259,6 +259,51 @@ export const casesSummaryFieldMappings = [
   },
 ];
 
+export const adminCheckListMappings = [
+  {
+    permissionField: "r_number",
+    exportField: "Checklist ID",
+    dataField: "r_number",
+  },
+  {
+    permissionField: "checklist_name",
+    exportField: "Checklist Name",
+    dataField: "checklist_name",
+  },
+  {
+    permissionField: "checklist_description",
+    exportField: "Checklist Description",
+    dataField: "checklist_description",
+  },
+  {
+    permissionField: "created_by",
+    exportField: "Created By",
+    dataField: "created_by",
+  },
+  {
+    permissionField: "created_datetime",
+    exportField: "Created On",
+    dataField: "created_datetime",
+  },
+  {
+    permissionField: "updated_by",
+    exportField: "Updated By",
+    dataField: "updated_by",
+  },
+  {
+    permissionField: "updated_datetime",
+    exportField: "Updated On",
+    dataField: "updated_datetime",
+  },
+  {
+    permissionField: "status_rid",
+    exportField: "Status",
+    dataField: "status_name",
+  },
+  //{ permissionField: 'modified_by', exportField: 'Updated By', dataField: 'modified_by' },
+  //{ permissionField: 'modified_datetime', exportField: 'Updated On', dataField: 'modified_datetime' }
+];
+
 export const rawQueries = {
   fetchParentAccountDetails: `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
   async fetchParentAccount(
@@ -680,4 +725,30 @@ export const filtersColumnsForCaseSummary: Record<string, string> = {
   case_total_projects: "case_total_projects",
   case_total_qualified_projects: "case_total_qualified_projects",
   country_name: "country_name",
+};
+
+export const filterTypesForAdminCheckList: Record<string, any> = {
+  r_number: "string",
+  created_datetime: "datetime",
+  modified_datetime: "datetime",
+  created_user_name: "string",
+  updated_user_name: "string",
+  status_rid: "string",
+  checklist_name: "string",
+  checklist_description: "string",
+  createdAt: "datetime"
+};
+
+export const filtersColumnsForAdminCheckList: Record<string, string> = {
+  r_number: "r_number",
+  created_datetime: "created_datetime",
+  modified_datetime: "modified_datetime",
+  created_user_name: "created_user_name",
+  updated_user_name: "updated_user_name",
+  status_rid: "status_rid",
+  status_name: "status_name",
+  createdAt: "createdAt",
+  checklist_name: "checklist_name",
+  checklist_description: "checklist_description"
+ 
 };

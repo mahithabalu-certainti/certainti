@@ -12,6 +12,7 @@ import {
   validateRequest,
 } from "../utils/helpers";
 import {
+  adminCheckListMappings,
   HttpStatus,
   STATUS_MESSAGE,
 } from "../utils/constants";
@@ -19,13 +20,16 @@ import {
   adminChecklistSchema,
   createCaseSchema,
   createTaskTemplateSchema,
+  listAdminCheckListSchema,
   updateTaskTemplateSchema,
 } from "../lib/joi/schemas/schema";
 import configurations from "../config/config";
+import moment from "moment";
 
 // Initialize services from configuration for dependency injection
 const services = configurations.getInstance().getServices();
 const caseManagementService = services.caseManagementService;
+const caseService = services.caseService;
 /**
  * Controller function to handle the creation of a new admin checklist.
  *
@@ -116,6 +120,253 @@ async function createAdminCheckList(req: Request, res: Response): Promise<void> 
       error.message
     );
     return;
+  }
+}
+
+/**
+ * Controller function to handle listing and retrieval of admin checklists with filtering, sorting, and pagination.
+ *
+ * This async function processes HTTP requests for fetching admin checklists by:
+ * - Validating request parameters against the `listAdminCheckListSchema`
+ * - Parsing and validating JSON-formatted filter parameters
+ * - Extracting user identification from request headers for authorization
+ * - Delegating data retrieval to the case management service with comprehensive query options
+ * - Returning paginated checklist data with metadata for frontend consumption
+ *
+ * @param {Request} req - Express request object containing:
+ *   - query: Parameters including page, limit, sort, sortBy, search, and filters (JSON string)
+ *   - headers: Must include 'x-user-id' for user authentication and access control
+ * @param {Response} res - Express response object used to send the operation result
+ *
+ * @returns {Promise<void>} - Resolves after sending the HTTP response to the client
+ *
+ * @throws {Error} - Catches and handles validation errors, JSON parsing failures, missing user ID, and service errors
+ * 
+ * @description
+ * **HTTP Response Codes:**
+ * - 200: Checklists retrieved successfully with data and pagination metadata
+ * - 400: Bad request (validation failure, invalid filters JSON, missing user ID, or service error)
+ * - 500: Internal server error for unexpected system failures
+ * 
+ * **Request Validation:**
+ * - Uses `listAdminCheckListSchema` for query parameter validation
+ * - Parses `filters` parameter as JSON object for advanced filtering capabilities
+ * - Requires `x-user-id` header for user identification and authorization
+ * - Logs all requests, filter parsing attempts, and responses for audit purposes
+ * 
+ */
+async function listAdminCheckList(req: Request, res: Response) {
+  try {
+    const methodName = "List Admin Checklists";
+
+    const userId = req.headers["x-user-id"] as string;
+    const value = await validateRequest(req, listAdminCheckListSchema, res, "GET");
+    if (!value) return;
+    let parsedFilters: Record<string, any> = {};
+
+    try {
+      parsedFilters = JSON.parse(value.filters);
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(
+        req.body
+      )} userId: ${userId}`
+    );
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    const result = await caseManagementService.listAdminCheckList(
+      value,
+      parsedFilters,
+      userId,
+      "list"
+    );
+    if (result.statusCode == HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, result.data);
+      return;
+    } else {
+      errorLog(methodName, "No data found");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        result.errorMessage
+      );
+      return;
+    }
+  } catch (error: any) {
+    console.log("error", error);  
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
+/**
+ * Controller function to handle exporting admin checklists to Excel format with advanced filtering and field-level permissions.
+ *
+ * This async function processes HTTP requests for exporting admin checklist data by:
+ * - Validating request parameters against the `listAdminCheckListSchema`
+ * - Parsing JSON-formatted filter parameters for data selection
+ * - Retrieving user-specific field permissions for data security compliance
+ * - Formatting datetime fields according to user timezone preferences
+ * - Generating Excel files in Base64 format for secure download delivery
+ * - Applying field-level access controls based on user permissions
+ *
+ * @param {Request} req - Express request object containing:
+ *   - query: Export parameters including filters (JSON string), timezone, and data selection criteria
+ *   - headers: Must include 'x-user-id' for authentication and permission-based field filtering
+ * @param {Response} res - Express response object used to send the Base64-encoded Excel file
+ *
+ * @returns {Promise<void>} - Resolves after sending the HTTP response with Excel data or error message
+ *
+ * @throws {Error} - Catches and handles validation errors, permission failures, timezone issues, and Excel generation errors
+ * 
+ * @description
+ * **HTTP Response Codes:**
+ * - 200: Excel file generated successfully with Base64-encoded data
+ * - 400: Bad request (validation failure, invalid filters JSON, missing user ID, or permission error)
+ * - 403: Forbidden when user lacks required export permissions
+ * - 500: Internal server error for Excel generation failures or unexpected system errors
+ * 
+ * **Request Validation:**
+ * - Uses `listAdminCheckListSchema` for query parameter validation
+ * - Parses `filters` parameter as JSON object for advanced data filtering
+ * - Validates timezone parameter against supported timezone list
+ * - Requires `x-user-id` header for user authentication and field permission resolution
+*/
+async function exportAdminCheckList(req: Request, res: Response) {
+  try {
+    const methodName = "Export Admin Checklists";
+    const userId = req.headers["x-user-id"] as string;
+    const value = await validateRequest(req, listAdminCheckListSchema, res, "GET");
+    if (!value) return;
+    let parsedFilters: Record<string, any> = {};
+
+    try {
+      parsedFilters = JSON.parse(value.filters);
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(
+        req.body
+      )} userId: ${userId}`
+    );
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    const result = await caseManagementService.listAdminCheckList(
+      value,
+      parsedFilters,
+      userId,
+      "download"
+    );
+     const fields = await caseService.getAllowedExportFields(
+         userId,
+         "admin_checklist_view_edit"
+       );
+       const allowedFieldSet = new Set<string>();
+       for (const field of fields) {
+         if (field.read) {
+           allowedFieldSet.add(field.field_name);
+         }
+       }
+       const isValidTZ = value.timezone && isValidTimezone(value.timezone);
+       const formatDate = (date?: Date) => {
+         const offsetMs = (5 * 60 + 30) * 60 * 1000;
+         const convertedDate = new Date(date?.getTime() ?? "" + offsetMs);
+         return date
+           ? moment
+               .utc(convertedDate)
+               .tz(isValidTZ ? value.timezone : "UTC")
+               .utcOffset("-012:30")
+               .format("YYYY-MMM-DD, hh:mm:ss A")
+           : null;
+       };
+       if (result.statusCode === HttpStatus.SUCCESS) {
+         const finalStructuredData =
+           result?.data?.checklist.length < 1
+             ? []
+             : result?.data?.checklist.map((d: any) => {
+                 let resultMap: { [key: string]: any } = {
+                   r_number: d.r_number,
+                   status_name: d.status_name,
+                   checklist_name: d.checklist_name,
+                   checklist_description: d.checklist_description,
+                   created_by: d.created_user_name,
+                   created_datetime: formatDate(d.created_datetime),
+                   modified_by: d.modified_user_name,
+                   modified_datetime:
+                     d.modified_datetime == null
+                       ? ""
+                       : formatDate(d.modified_datetime)
+                 };
+   
+                 // Build exportRecord using allowed fields and resultMap
+                 const exportRecord: Record<string, any> = {};
+                 adminCheckListMappings.forEach((mapping) => {
+                   if (allowedFieldSet.has(mapping.permissionField)) {
+                     exportRecord[mapping.exportField] =
+                       resultMap[mapping.dataField];
+                   }
+                 });
+   
+                 return exportRecord;
+               });
+   
+         const generateBase64Response = await generateExcelBase64(
+           finalStructuredData,
+           "CheckList"
+         );
+         handleSuccessResponse(res, generateBase64Response);
+       } else {
+         errorLog(methodName, "No data found");
+         handleErrorResponse(
+           res,
+           HttpStatus.BAD_REQUEST,
+           HttpStatus.BAD_REQUEST_MESSAGE,
+           result.errorMessage
+         );
+        }
+  } catch (error: any) {
+    console.log("error", error);  
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
   }
 }
 
@@ -401,9 +652,11 @@ async function updateTaskTemplate (req : Request, res : Response) : Promise<any>
 // Export the controller functions for use in route definitions
 export default {
   createAdminCheckList,
+  listAdminCheckList,
   createTaskTemplate,
   getPriorityTypes,
   getMilestones,
   getChecklist,
-  updateTaskTemplate
+  updateTaskTemplate,
+  exportAdminCheckList
 };

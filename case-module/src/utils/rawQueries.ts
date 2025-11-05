@@ -391,3 +391,59 @@ export const listAllCasesSummaryQuery = (
 
         FROM
         paginated_data c`;
+
+export const listAllCheckList = (
+  searchValue: string,
+  whereKey: string,
+  joinedConditions: string,
+  sortValue: string,
+  pagination: string
+) =>  `
+    WITH fetch_case_checklist AS (
+        SELECT
+            ct.rid, ct.r_number,
+            ct.status_rid,s.status_name,
+            ct.created_by, ct.modified_by,
+            ct.created_datetime, ct.modified_datetime,
+            COUNT(ct.rid) OVER() AS total_records,
+            ct.checklist_name,
+            ct.checklist_description,
+            uc.first_name || ' ' || uc.last_name AS created_user_name,
+            um.first_name || ' ' || um.last_name AS modified_user_name
+
+            FROM
+            ${MAIN_SCHEMA_NAME}.checklist_template ct
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.status s ON s.rid = ct.status_rid
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.user uc ON uc.rid = ct.created_by
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.user um ON um.rid = ct.modified_by
+              WHERE
+    (ct.r_number ILIKE '${searchValue}' OR ct.checklist_name ILIKE '${searchValue}')
+    ${joinedConditions}
+    ),
+    paginated_datas AS (
+    SELECT * FROM fetch_case_checklist ${sortValue} ${pagination}
+    
+    )
+        SELECT 
+        array_agg(jsonb_build_object(
+        'rid', i.rid,
+        'r_number', i.r_number,
+        'status', i.status_rid,
+        'status_name', i.status_name,
+        'created_by', i.created_by,
+        'modified_by', i.modified_by,
+        'created_datetime', i.created_datetime,
+        'modified_datetime', i.modified_datetime,
+        'checklist_description', i.checklist_description,
+        'checklist_name', i.checklist_name,
+        'total_records', i.total_records,
+        'created_user_name', i.created_user_name,
+        'modified_user_name', i.modified_user_name
+        ) ) AS admin_checklists
+
+        FROM
+        paginated_datas i
+    `;
+
+
+

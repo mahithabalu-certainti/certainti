@@ -80,12 +80,12 @@ routes.post(
 
 routes.post(
   "/createCaseTeam",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("case_team_create"),
   controller.caseController.createCaseTeam
 );
 routes.get(
   "/caseTeam/list",
-  checkUserStatusMiddleware("cases_view_edit"),
+  checkUserStatusMiddleware("case_team_view_edit"),
   controller.caseController.listCaseTeamMembers
 );
 routes.post(

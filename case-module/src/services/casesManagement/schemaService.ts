@@ -1,8 +1,11 @@
 import { Op, Sequelize, Transaction } from "sequelize";
 import { CaseModelService } from "../caseModelsService";
-import { CreateTaskTemplateType, ICreateChecklist, ICreateChecklistItem, UpdateTaskTemplateType } from "../../utils/types";
-import { logMessage } from "../../utils/helpers";
-import { HttpStatus, STATUS_MESSAGE } from "../../utils/constants";
+import { CreateTaskTemplateType, filterType, ICreateChecklist, ICreateChecklistItem, UpdateTaskTemplateType } from "../../utils/types";
+import { buildDatetimeFilterCondition, buildNumericFilterCondition, buildStringFilterCondition, errorLog, logMessage } from "../../utils/helpers";
+import { HttpStatus, STATUS_MESSAGE, filtersColumnsForCaseSummary, filterTypesForCaseSummary, filterTypesForAdminCheckList, filtersColumnsForAdminCheckList } from "../../utils/constants";
+import { listAllCheckList } from "../../utils/rawQueries";
+
+
 
 /**
  * Utility function to add a new checklist item
@@ -254,6 +257,180 @@ class CaseManagementSchemaService {
       throw new Error("Error processing checklist items: " + error);
     }
   }
+
+  getSortColumnForAdminCheckList = (sortField: string): string => {
+    const sortMapping: Record<string, string> = {
+      r_number: "r_number",
+      created_datetime: "created_datetime",
+      modified_datetime: "modified_datetime",
+      status_name: "status_name",
+      created_user_name: "created_user_name",
+      updated_user_name: "modified_user_name",
+      checklist_name: "checklist_name",
+      checklist_description: "checklist_description",
+      createdAt: "created_datetime"
+    };
+
+    return sortMapping[sortField] || "r_number";
+  };
+
+  /**
+   * Simplified filter processing for cases
+   * @param filters - Filter object
+   * @param andConditions - AND conditions string
+   * @param filteredQueryArray - Array to store filter conditions
+   * @param filterTypes - Filter types mapping
+   * @param filterColumns - Filter columns mapping
+   * @returns Object with filtered query array and conditions
+   */
+   filterForCheckList(
+    filters: filterType,
+    andConditions: string,
+    filteredQueryArray: string[],
+    filterTypes: any,
+    filterColumns: any
+  ) {
+    let filteredColumns: string | undefined;
+    if (filters && Object.keys(filters).length > 0) {
+      for (let [key, conditions] of Object.entries(filters)) {
+        if (Object.keys(filterTypes).includes(key)) {
+          filteredColumns = filterColumns[key];
+          andConditions = ` AND `;
+        }
+        for (let [condition, values] of Object.entries(conditions)) {
+          switch (filterTypes[key]) {
+            case "string": {
+              let dynamicReference = `ct`;
+  
+              const stringCondition = buildStringFilterCondition(
+                condition,
+                values,
+                filteredColumns!,
+                dynamicReference
+              );
+              if (stringCondition) {
+                filteredQueryArray.push(stringCondition);
+              }
+              break;
+            }
+            case "number": {
+              const numericCondition = buildNumericFilterCondition(
+                condition,
+                values,
+                filteredColumns!
+              );
+              if (numericCondition) {
+                filteredQueryArray.push(numericCondition);
+              }
+              break;
+            }
+            case "datetime": {
+              let dynamicReference = `ct`;
+              const datetimeCondition = buildDatetimeFilterCondition(
+                condition,
+                values,
+                filteredColumns!,
+                dynamicReference
+              );
+              if (datetimeCondition) {
+                filteredQueryArray.push(datetimeCondition);
+              }
+              break;
+            }
+          }
+        }
+      }
+      return {
+        filteredQueryArray,
+        andConditions,
+      };
+    } else {
+      filteredQueryArray = [];
+      andConditions = ` `;
+      return {
+        filteredQueryArray,
+        andConditions,
+      };
+    }
+  }
+  
+
+   async listAdminCheckList(
+      page: number,
+      limit: number,
+      apiType: string,
+      filters: filterType,
+      search: string,
+      sortBy: string,
+      sortOrder: string,
+    ) {
+      try {
+        // Ensure filters is not null or undefined
+        filters = filters || {};
+        let offset = (page - 1) * limit;
+        let pagination = `LIMIT ${limit} OFFSET ${offset}`;
+        if (apiType === "download") {
+          pagination = ``;
+        }
+        if (!this.mainDbSequelize) {
+          this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+        }
+        let filteredQueryArray: string[] = [];
+        let andConditions = ``;
+        let filterQueryValues;
+        let whereKey: string = ``;
+        let sortValue;
+        let searchValue: string;
+        let filterDatas = this.filterForCheckList(
+          filters,
+          andConditions,
+          filteredQueryArray,
+          filterTypesForAdminCheckList,
+          filtersColumnsForAdminCheckList
+        );
+        // Optimize filter query processing
+        filterQueryValues = filterDatas?.filteredQueryArray?.length
+          ? filterDatas.filteredQueryArray.join(" AND ")
+          : "";
+  
+        
+        searchValue = search ? `%${search}%` : `%%`;
+        whereKey = `1 = 1`;
+  
+        // Optimized conditions joining
+        const conditions = [
+          filterQueryValues,
+        ].filter(Boolean);
+  
+        const joinedConditions =
+          conditions.length > 0 ? " AND " + conditions.join(" AND ") : "";
+  
+        // Optimized sorting logic using extracted utility function
+        const sortColumn = this.getSortColumnForAdminCheckList(sortBy);
+        const sortDirection = sortOrder || "ASC";
+        logMessage(
+          `Sorting by column: ${sortColumn}, direction: ${sortDirection}`
+        );
+        sortValue = `ORDER BY ${sortColumn} ${sortDirection}`;
+        let caseSummaryQuery = await listAllCheckList(
+          searchValue,
+          whereKey,
+          joinedConditions,
+          sortValue,
+          pagination
+        );
+        const [result]: any[] = await this.mainDbSequelize.query(
+          caseSummaryQuery,
+          { type: "SELECT" }
+        );
+        return result.admin_checklists;
+      } catch (err) {
+        console.log(err)
+        logMessage(`Error in fetch cases summary: ${err}`);
+        errorLog("Error in fetch cases summary:", (err as Error).message);
+        return [];
+      }
+    }
   async createTaskTemplate (data : CreateTaskTemplateType, userId : string) {
     const { TaskTemplate } = await this.caseModelService.getModels("");
     const findSequenceOrder = await this.fetchSequenceOrder();
@@ -311,7 +488,8 @@ class CaseManagementSchemaService {
     })
     return checkTaskNameExists
   }
-  async updateTaskTemplate (data : UpdateTaskTemplateType, userId : string) {
+
+   async updateTaskTemplate (data : UpdateTaskTemplateType, userId : string) {
      const { TaskTemplate } = await this.caseModelService.getModels("");
     const checkTaskExists = await this.checkTaskExistsForUpdate(data.rid);
     if(checkTaskExists) {
@@ -322,8 +500,6 @@ class CaseManagementSchemaService {
           statusMessage : STATUS_MESSAGE.taskNameExistsAlready
         }        
       }
-      data.modified_by = userId
-      data.modified_datetime = new Date()
       const [result] = await TaskTemplate.update(data, {
         where : {
           rid : data.rid
