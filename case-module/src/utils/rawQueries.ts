@@ -1,4 +1,4 @@
-import { MAIN_SCHEMA_NAME } from "./constants";
+import { MAIN_SCHEMA_NAME, validColumnsForSortFilters, validFilterColumnTypes } from "./constants";
 import {
   FilterType,
   validColumns,
@@ -445,5 +445,170 @@ export const listAllCheckList = (
         paginated_datas i
     `;
 
+export const fetchAdminTemplates = (page : number, limit : number, sort : string, sortBy : string, filter : FilterType, search : string) => {
+  let offset = (page - 1) * limit;
+  let pagination = `LIMIT ${limit} OFFSET ${offset}`
+  let searchValue : string = ``
+  let finalSortOrder : string = ``
+  let andConditions : string = ``
+  let queryContainer : string[] = []
+  let finalContainer : string = ``
 
+  if(search) searchValue = `%${search}%`
+  else searchValue = `%%`
+
+  if(Object.keys(validColumnsForSortFilters).includes(sort)) finalSortOrder = `ORDER BY ${validColumnsForSortFilters[sort]} ${sortBy}`
+  else finalSortOrder = `ORDER BY t.r_number ASC`
+
+  if(Object.keys(filter).length > 0) {
+    let validKeyColumns : string;
+    for(let [key, conditions] of Object.entries(filter)) {
+      if(Object.keys(validColumnsForSortFilters).includes(key)) {
+        validKeyColumns = validColumnsForSortFilters[key]!
+        andConditions = ` AND `
+        for(let [cond, value] of Object.entries(conditions)) {
+          switch(validFilterColumnTypes[key]) {
+            case "string" : {
+              switch(cond) {
+                case "equals" : {
+                  queryContainer.push(`LOWER(${validKeyColumns}) = '${value.toLowerCase()}'`)
+                  break;
+                }
+                case "not_equals" : {
+                  queryContainer.push(`LOWER(${validKeyColumns}) != '${value.toLowerCase()}'`)
+                  break;
+                }
+                case "contains" : {
+                  queryContainer.push(`${validKeyColumns} ILIKE '%${value}%'`)
+                  break;
+                }
+                case "is_empty" : {
+                  queryContainer.push(`${validKeyColumns} IS NULL`)
+                  break;
+                }
+                case "in" : {
+                  queryContainer.push(`${validKeyColumns} IN ${value.map((d : any) => `'${d}'`).join(',')}`)
+                  break;
+                }
+                default : {
+                  break;
+                }
+              }
+              break;
+            }
+            case "number" : {
+              switch (cond) {
+                case "equals" : {
+                  queryContainer.push(`${validKeyColumns} = ${value}`)
+                  break;
+                }
+                case "not_equals" : {
+                  queryContainer.push(`${validKeyColumns} != ${value}`)
+                  break;
+                }
+                case "greater_than" : {
+                  queryContainer.push(`${validKeyColumns} > ${value}`)
+                  break;
+                }
+                case "less_than" : {
+                  queryContainer.push(`${validKeyColumns} < ${value}`)
+                  break;
+                }
+                case "is_empty" : {
+                  queryContainer.push(`${validKeyColumns} IS NULL`)
+                  break;
+                }
+                case "between" : {
+                  queryContainer.push(`${validKeyColumns} BETWEEN ${value.map((d : any) => d).join(' AND ')}`)
+                  break;
+                }
+                default : {
+                  break;
+                }
+              }
+              break;
+            }
+            case "date" : {
+              switch (cond) {
+                case "equals" : {
+                  queryContainer.push(`DATE(${validKeyColumns}) = '${value}'`)
+                  break;
+                }
+                case "before" : {
+                  queryContainer.push(`DATE(${validKeyColumns}) < '${value}'`)
+                  break;
+                }
+                case "after" : {
+                  queryContainer.push(`DATE(${validKeyColumns}) > '${value}'`)
+                  break;
+                }
+                case "is_empty" : {
+                  queryContainer.push(`DATE(${validKeyColumns}) IS NULL`)
+                  break;
+                }
+                case "between" : {
+                  queryContainer.push(`DATE(${validKeyColumns}) BETWEEN ${value.map((d: string) => `${d}`).join(' AND ')}`)
+                  break;
+                }
+                default : {
+                  break;
+                }
+              }
+              break;
+            }
+            default : {
+              break;
+            }
+          }
+        }
+      }
+    }
+  } else {
+    queryContainer = []
+    andConditions = ` `
+  }
+  if(queryContainer.length > 0) {
+    finalContainer = queryContainer.join(' AND ');
+  } else {
+    finalContainer = ` `
+  }
+
+  let query = 
+  `
+  WITH fetch_template_data AS (
+    SELECT t.rid, t.r_number, CONCAT(u.first_name,' ', u.last_name) AS created_by_name,
+    CONCAT(uu.first_name,' ', uu.last_name) AS modified_by_name, 
+    t.created_datetime, t.modified_datetime, t.task_name, t.sequence_no,
+    t.effort_in_days, t.reminder_interval, t.effective_start_datetime,
+    t.effective_end_datetime, r.role_name, t.case_team_member_role_rid,
+    c.checklist_name, t.checklist_rid, p.priority_name, t.priority_rid,
+    s.status_name, t.status_rid, m.milestone_name, t.milestone_rid
+    FROM
+    ${MAIN_SCHEMA_NAME}.task_template t
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.case_priority p ON p.rid = t.priority_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.user u ON u.rid = t.created_by
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.user uu ON uu.rid = t.modified_by
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.checklist_template c ON c.rid = t.checklist_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.case_milestones m ON m.rid = t.milestone_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.status s ON s.rid = t.status_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.case_team_role r ON r.rid = t.case_team_member_role_rid
+    WHERE
+    (t.task_name ILIKE '${searchValue}' OR t.r_number ILIKE '${searchValue}' OR 
+    u.first_name ILIKE '${searchValue}' OR u.last_name ILIKE '${searchValue}' OR CONCAT(u.first_name,' ', u.last_name) ILIKE '${searchValue}' OR
+    uu.first_name ILIKE '${searchValue}' OR uu.last_name ILIKE '${searchValue}' OR CONCAT(uu.first_name,' ', uu.last_name) ILIKE '${searchValue}' OR
+    r.role_name ILIKE '${searchValue}' OR c.checklist_name ILIKE '${searchValue}' OR p.priority_name ILIKE '${searchValue}' OR
+    s.status_name ILIKE '${searchValue}' OR m.milestone_name ILIKE '${searchValue}')
+    ${andConditions}
+    ${finalContainer}
+    ${finalSortOrder}
+  ),
+  fetch_total_result AS (
+  SELECT COUNT(*) OVER() AS total_result, * FROM fetch_template_data
+  ),
+  fetch_paginated_data AS (
+  SELECT * FROM fetch_total_result ${pagination}
+  )
+  SELECT * FROM fetch_paginated_data`
+  return query
+}
 
