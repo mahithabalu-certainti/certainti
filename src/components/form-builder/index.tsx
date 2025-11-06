@@ -2042,12 +2042,13 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 'statutory_submission_date'
               ] as string;
 
-              // Planned Submission Date must be > Start Date
-              if (startDate && !dayjs(dateValue).isAfter(dayjs(startDate))) {
+              // Planned Submission Date must be ≥ Start Date
+              if (startDate && dayjs(dateValue).isBefore(dayjs(startDate))) {
                 hasError = true;
                 return {
                   ...field,
-                  error: 'Planned Submission Date must be after Start Date',
+                  error:
+                    'Planned Submission Date must be after or equal to Start Date', // Updated error message
                 };
               }
 
