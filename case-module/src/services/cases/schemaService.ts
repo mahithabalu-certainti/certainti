@@ -30,6 +30,8 @@ import {
   filterType,
   ICreateCases,
   ICreateCaseTeam,
+  ICreateChecklist,
+  ICreateChecklistItem,
   TeamMember,
 } from "../../utils/types";
 
@@ -52,6 +54,8 @@ import {
 import { CaseTeam, setupCaseTeamSequence } from "../../models/caseTeamModel";
 import { Jurisdiction } from "../../models/jurisdiction";
 import { log } from "console";
+import { CheckList, setupCheckListSequence } from "../../models/checkListModel";
+import { CheckListItem } from "../../models/checkListItemModel";
 
 class CaseSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -366,6 +370,15 @@ class CaseSchemaService {
         orgDbSequlize,
         schemaName
       );
+      const checkListModel = await CheckList.initialize(  
+        orgDbSequlize,
+        schemaName
+      );
+      const checkListItemModel = await CheckListItem.initialize(
+        orgDbSequlize,
+        schemaName
+      );
+      
 
       await CaseModel.sync({ force: false });
       await setupCaseSequence(orgDbSequlize, schemaName);
@@ -378,6 +391,9 @@ class CaseSchemaService {
       await caseTeamModel.sync({ force: false });
       await setupCaseTeamSequence(orgDbSequlize, schemaName);
       await jurisdictionModel.sync({ force: false });
+      await checkListModel.sync({ force: false });
+      await setupCheckListSequence(orgDbSequlize, schemaName);
+      await checkListItemModel.sync({ force: false });
     } catch (err) {
       errorLog("Error creating case tables", (err as Error).message);
       return this.throwServiceError(err as Error);
@@ -2475,6 +2491,131 @@ class CaseSchemaService {
       return [];
     }
   }
+ async createCheckList(
+    accountNumber: string,
+    caseRequest: ICreateChecklist,
+    transaction: Transaction
+  ) {
+    // Implementation for creating checklist in the database
+    try {
+      const { CheckList } = await this.caseModelService.getModels(accountNumber);
+      const createdChecklist = await CheckList.create(
+        {
+          account_rid: caseRequest.account_rid,
+          attach_to: caseRequest.attach_to,
+          attachment_level: caseRequest.attachment_level,
+          checklist_name: caseRequest.checklist_name,
+          checklist_description: caseRequest.checklist_description,
+          created_by: caseRequest.created_by,
+          //modified_by: caseRequest.modified_by,
+          created_datetime: new Date(),
+          //  modified_datetime: caseRequest.modified_datetime,
+        },
+        { transaction }
+      );
+
+      return createdChecklist;
+    } catch (error) {
+      logMessage(`Error creating checklist: ${error}`);
+      throw new Error("Error creating checklist: " + error);
+    }
+  }
+        /**
+     * Utility function to process a single checklist item based on its action type
+     * @param AdminCheckListItem - The model instance
+     * @param checklistTemplateRid - Parent checklist RID
+     * @param item - Checklist item data
+     * @param createdBy - User ID performing the action
+     * @param transaction - Database transaction
+     * @returns Promise resolving to the processed item result
+     */
+    async  processChecklistItemByAction(
+      CheckListItem: any,
+      checklistRid: string,
+      item: ICreateChecklistItem,
+      checkListReq: ICreateChecklist,
+      transaction: Transaction
+    ) {
+      console.log("Processing checklist item:", item,"checklistRid:",checklistRid );
+      switch (item.action_type) {
+        case "add":
+          return await addChecklistItem(
+            CheckListItem,
+            checklistRid,
+            item,
+            checkListReq.created_by,
+            checkListReq.account_rid,
+            transaction
+          );
+    
+        case "edit":
+          return await editChecklistItem(
+            CheckListItem,
+            checklistRid,
+            item,
+            checkListReq.created_by,
+            transaction
+          );
+    
+        case "delete":
+          return await deleteChecklistItem(
+            CheckListItem,
+            checklistRid,
+            item,
+            transaction
+          );
+    
+        default:
+          logMessage(
+            `Warning: Unknown action type '${item.action_type}' for checklist item: ${item.checklist_item_name}`
+          );
+          throw new Error(
+            `Invalid action type: ${item.action_type}. Supported types are: add, edit, delete`
+          );
+      }
+    }
+  
+
+  async manageCheckListItems(
+      accountNumber: string,
+      checklistReq: ICreateChecklist,
+      checklistRid: string,
+      transaction: Transaction
+    ): Promise<any[]> {
+      // Implementation for managing checklist items based on action type (add, edit, delete)
+      try {
+        const { CheckListItem } = await this.caseModelService.getModels(accountNumber);
+  
+        const processedItems = [];
+  
+        for (const item of checklistReq.checklist_items) {
+          // Use the utility function to process each item based on its action type
+          const result = await this.processChecklistItemByAction(
+            CheckListItem,
+            checklistRid,
+            item,
+            checklistReq,
+            transaction,
+            
+          );
+  
+          if (result) {
+            processedItems.push({
+              ...result,
+              action_type: item.action_type,
+            });
+          }
+        }
+  
+        return processedItems;
+      } catch (error) {
+        logMessage(`Error processing checklist items: ${error}`);
+        throw new Error("Error processing checklist items: " + error);
+      }
+    }
+
+ 
+ 
 }
 
 // Utility function for optimized column sorting
@@ -2602,3 +2743,132 @@ const globalFiltersforCaseSummary = (
     return [];
   }
 };
+/**
+ * Utility function to add a new checklist item
+ * @param AdminCheckListItem - The model instance
+ * @param checklistTemplateRid - Parent checklist RID
+ * @param item - Checklist item data
+ * @param createdBy - User ID who is creating the item
+ * @param transaction - Database transaction
+ * @returns Promise resolving to the created item
+ */
+async function addChecklistItem(
+  CheckListItem: any,
+  checklistRid: string,
+  item: ICreateChecklistItem,
+  createdBy: string,
+  accountRid:string,
+  transaction: Transaction
+) {
+  const result = await CheckListItem.create(
+    {
+      account_rid: accountRid,
+      case_checklist_rid: checklistRid,
+      checklist_item_name: item.checklist_item_name,
+      description: item.description,
+      status_rid: item.status_rid,
+      created_by: createdBy,
+      created_datetime: new Date(),
+    },
+    { transaction }
+  );
+  logMessage(
+    `Added new checklist item: ${item.checklist_item_name}`
+  );
+  return result;
+}
+
+/**
+ * Utility function to edit/update an existing checklist item
+ * @param AdminCheckListItem - The model instance
+ * @param checklistTemplateRid - Parent checklist RID
+ * @param item - Checklist item data
+ * @param createdBy - User ID who is modifying the item
+ * @param transaction - Database transaction
+ * @returns Promise resolving to the updated or created item
+ */
+async function editChecklistItem(
+  CheckListItem: any,
+  checklistRid: string,
+  item: ICreateChecklistItem,
+  createdBy: string,
+  transaction: Transaction
+) {
+  // First, find the existing item by template_rid and sequence_no
+  const existingItem = await CheckListItem.findOne({
+    where: {
+      rid: checklistRid,
+    },
+    transaction,
+  });
+
+  if (existingItem) {
+    // Update existing item
+    const result = await existingItem.update(
+      {
+        checklist_item_name: item.checklist_item_name,
+        description: item.description,
+        status_rid: item.status_rid,
+        modified_by: createdBy,
+        modified_datetime: new Date(),
+      },
+      { transaction }
+    );
+    logMessage(
+      `Updated checklist item  ${item.checklist_item_name}`
+    );
+    return result;
+  } else {
+    // Item doesn't exist, create it as fallback
+    logMessage(
+      `Warning: Checklist item  not found for editing`
+    );
+    const result = await CheckListItem.create(
+      {
+        checklist_item_name: item.checklist_item_name,
+        status_rid: item.status_rid,
+        created_by: createdBy,
+        created_datetime: new Date(),
+      },
+      { transaction }
+    );
+    logMessage(
+      `Created new checklist item (edit fallback): ${item.checklist_item_name}`
+    );
+    return result;
+  }
+}
+
+/**
+ * Utility function to delete an existing checklist item
+ * @param AdminCheckListItem - The model instance
+ * @param checklistTemplateRid - Parent checklist RID
+ * @param item - Checklist item data
+ * @param transaction - Database transaction
+ * @returns Promise resolving to the deletion result
+ */
+async function deleteChecklistItem(
+  CheckListItem: any,
+  checklistRid: string,
+  item: ICreateChecklistItem,
+  transaction: Transaction
+) {
+  // Find the item to delete
+  const itemToDelete = await CheckListItem.findOne({
+    where: {
+      rid: checklistRid
+    },
+    transaction,
+  });
+
+  if (itemToDelete) {
+    await itemToDelete.destroy({ transaction });
+    logMessage(
+      `Deleted checklist item: ${item.checklist_item_name}`
+    );
+  } else {
+    logMessage(
+      `Warning: Checklist item not found for deletion`
+    );
+  }
+}

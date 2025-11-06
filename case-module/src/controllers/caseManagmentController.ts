@@ -210,7 +210,6 @@ async function listAdminCheckList(req: Request, res: Response) {
       return;
     }
   } catch (error: any) {
-    console.log("error", error);  
     handleErrorResponse(
       res,
       HttpStatus.FAILED,
@@ -294,7 +293,7 @@ async function exportAdminCheckList(req: Request, res: Response) {
     );
      const fields = await caseService.getAllowedExportFields(
          userId,
-         "admin_checklist_view_edit"
+         "checklist_templates_view_edit"
        );
        const allowedFieldSet = new Set<string>();
        for (const field of fields) {
@@ -303,16 +302,24 @@ async function exportAdminCheckList(req: Request, res: Response) {
          }
        }
        const isValidTZ = value.timezone && isValidTimezone(value.timezone);
-       const formatDate = (date?: Date) => {
-         const offsetMs = (5 * 60 + 30) * 60 * 1000;
-         const convertedDate = new Date(date?.getTime() ?? "" + offsetMs);
-         return date
-           ? moment
-               .utc(convertedDate)
-               .tz(isValidTZ ? value.timezone : "UTC")
-               .utcOffset("-012:30")
-               .format("YYYY-MMM-DD, hh:mm:ss A")
-           : null;
+
+       
+       const formatDate = (date?: Date | string) => {
+        if (!date) return null;
+        
+        // Convert string to Date object if needed
+        const dateObj = typeof date === 'string' ? new Date(date) : date;
+        
+        // Check if the date is valid
+        if (isNaN(dateObj.getTime())) return null;
+        
+        const offsetMs = (5 * 60 + 30) * 60 * 1000;
+        const convertedDate = new Date(dateObj.getTime() + offsetMs);
+        return moment
+          .utc(convertedDate)
+          .tz(isValidTZ ? value.timezone : "UTC")
+          .utcOffset("-012:30")
+          .format("YYYY-MMM-DD, hh:mm:ss A");
        };
        if (result.statusCode === HttpStatus.SUCCESS) {
          const finalStructuredData =
@@ -325,12 +332,12 @@ async function exportAdminCheckList(req: Request, res: Response) {
                    checklist_name: d.checklist_name,
                    checklist_description: d.checklist_description,
                    created_by: d.created_user_name,
-                   created_datetime: formatDate(d.created_datetime),
+                   created_datetime: formatDate(d?.created_datetime),
                    modified_by: d.modified_user_name,
                    modified_datetime:
-                     d.modified_datetime == null
+                     d?.modified_datetime == null
                        ? ""
-                       : formatDate(d.modified_datetime)
+                       : formatDate(d.modified_datetime) 
                  };
    
                  // Build exportRecord using allowed fields and resultMap
@@ -360,7 +367,6 @@ async function exportAdminCheckList(req: Request, res: Response) {
          );
         }
   } catch (error: any) {
-    console.log("error", error);  
     handleErrorResponse(
       res,
       HttpStatus.FAILED,

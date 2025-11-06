@@ -12,6 +12,8 @@ import { AdminChecklist } from "../models/adminChecklistModel";
 import { AdminCheckListItem } from "../models/adminCheckListItemsModel";
 import { Jurisdiction } from "../models/jurisdiction";
 import { TaskTemplate } from "../models/caseTaskTemplateModel";
+import { CheckList } from "../models/checkListModel";
+import { CheckListItem } from "../models/checkListItemModel";
 
 export class CaseModelService {
   orgDbSequelize: Sequelize | null = null;
@@ -62,6 +64,8 @@ export class CaseModelService {
     const AdminChecklistModel = AdminChecklist.initialize(mainDbSequelize, "");
     const AdminCheckListItemModel = AdminCheckListItem.initialize(mainDbSequelize, "");
     const TaskTemplateModel = TaskTemplate.initialize(mainDbSequelize, "");
+    const CheckListModel = CheckList.initialize(sequelize, schemaName);
+    const CheckListItemModel = CheckListItem.initialize(sequelize, schemaName);
     const models = {
       Case: CaseModel,
       CaseSummary: CaseSummaryModel,
@@ -71,8 +75,10 @@ export class CaseModelService {
       CaseTeam: CaseTeamModel,
       AdminChecklist: AdminChecklistModel,
       AdminCheckListItem: AdminCheckListItemModel,
-      Jurisdiction: JurisdictionModel,
-      TaskTemplate: TaskTemplateModel
+      TaskTemplate: TaskTemplateModel,
+      CheckList: CheckListModel,
+      CheckListItem: CheckListItemModel,
+      Jurisdiction: JurisdictionModel
 
     };
 

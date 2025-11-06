@@ -232,16 +232,43 @@ export interface TeamMember {
   action_type: "add" | "edit" | "delete";
 }
 
-export interface ICreateChecklist {
+export interface ICreateChecklistTemplate {
   checklist_name: string;
   checklist_description?: string;
   created_by: string;
   modified_by?: string;
   created_datetime: Date;
   modified_datetime?: Date;
+  checklist_items: ICreateChecklistItemTemplate[];
+}
+
+export interface ICreateChecklist {
+  
+  account_rid: string;
+  attach_to: string;
+  attachment_level: string;
+  checklist_template_rid?: string;
+  checklist_name: string;
+  checklist_description?: string;
+  status_rid?: string;
+  created_by: string;
+  modified_by?: string;
+  created_datetime: Date;
+  modified_datetime?: Date;
   checklist_items: ICreateChecklistItem[];
 }
-export interface ICreateChecklistItem {
+
+export interface ICreateChecklistItem{
+  checklist_item_name: string;
+  action_type: "add" | "edit" | "delete";
+  status_rid: string;
+  description?: string;
+  created_by: string;
+  modified_by?: string;
+  created_datetime: Date;
+  modified_datetime?: Date;
+}
+export interface ICreateChecklistItemTemplate {
   checklist_item_name: string;
   action_type: "add" | "edit" | "delete";
   sequence_no: number;
