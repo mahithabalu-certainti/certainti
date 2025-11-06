@@ -1,4 +1,4 @@
-import { MAIN_SCHEMA_NAME, validColumnsForSortFilters, validFilterColumnTypes } from "./constants";
+import { MAIN_SCHEMA_NAME, validColumnsForFilters, validColumnsForSortFilters, validFilterColumnTypes } from "./constants";
 import {
   FilterType,
   validColumns,
@@ -476,8 +476,8 @@ export const fetchAdminTemplates = (page : number, limit : number, sort : string
   if(Object.keys(filter).length > 0) {
     let validKeyColumns : string;
     for(let [key, conditions] of Object.entries(filter)) {
-      if(Object.keys(validColumnsForSortFilters).includes(key)) {
-        validKeyColumns = validColumnsForSortFilters[key]!
+      if(Object.keys(validColumnsForFilters).includes(key)) {
+        validKeyColumns = validColumnsForFilters[key]!
         andConditions = ` AND `
         for(let [cond, value] of Object.entries(conditions)) {
           switch(validFilterColumnTypes[key]) {
@@ -594,14 +594,14 @@ export const fetchAdminTemplates = (page : number, limit : number, sort : string
     t.created_datetime, t.modified_datetime, t.task_name, t.sequence_no,
     t.effort_in_days, t.reminder_interval, t.effective_start_datetime,
     t.effective_end_datetime, r.role_name, t.case_team_member_role_rid,
-    c.checklist_name, t.checklist_rid, p.priority_name, t.priority_rid,
+    c.checklist_name, t.checklist_template_rid, p.priority_name, t.priority_rid,
     s.status_name, t.status_rid, m.milestone_name, t.milestone_rid
     FROM
     ${MAIN_SCHEMA_NAME}.task_template t
     LEFT JOIN ${MAIN_SCHEMA_NAME}.case_priority p ON p.rid = t.priority_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.user u ON u.rid = t.created_by
     LEFT JOIN ${MAIN_SCHEMA_NAME}.user uu ON uu.rid = t.modified_by
-    LEFT JOIN ${MAIN_SCHEMA_NAME}.checklist_template c ON c.rid = t.checklist_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.checklist_template c ON c.rid = t.checklist_template_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.case_milestones m ON m.rid = t.milestone_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.status s ON s.rid = t.status_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.case_team_role r ON r.rid = t.case_team_member_role_rid

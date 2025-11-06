@@ -134,7 +134,7 @@ const createTaskTemplateSchema = Joi.object({
   effective_start_datetime : Joi.string().optional(),
   effective_end_datetime : Joi.string().optional(),
   case_team_member_role_rid : Joi.string().optional(),
-  checklist_rid : Joi.string().optional(),
+  checklist_template_rid : Joi.string().optional(),
   status_rid : Joi.string().optional(),
   priority_rid : Joi.string().optional(),
   milestone_rid : Joi.string().optional()
@@ -148,7 +148,7 @@ const updateTaskTemplateSchema = Joi.object({
   effective_start_datetime : Joi.string().optional(),
   effective_end_datetime : Joi.string().optional(),
   case_team_member_role_rid : Joi.string().optional(),
-  checklist_rid : Joi.string().optional(),
+  checklist_template_rid : Joi.string().optional(),
   status_rid : Joi.string().optional(),
   priority_rid : Joi.string().optional(),
   milestone_rid : Joi.string().optional()
