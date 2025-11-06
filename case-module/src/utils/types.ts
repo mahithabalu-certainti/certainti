@@ -376,3 +376,6 @@ export type TaskType = {
   rid : string,
   task_type_name : string
 }
+export type TaskTypeResponse = {
+  rid : string
+}

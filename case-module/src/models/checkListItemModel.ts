@@ -80,17 +80,9 @@ export class CheckListItem
             fields: ["case_checklist_rid"],
           },
           {
-            name: "idx_checklist_items_checklist_template_rid",
-            fields: ["checklist_template_rid"],
-          },
-          {
             name: "idx_checklist_items_status_rid",
             fields: ["status_rid"],
           },
-          {
-            name: "idx_checklist_items_attach_to",
-            fields: ["attach_to"],
-          }
         ],
       }
     );

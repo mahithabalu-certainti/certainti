@@ -14,6 +14,8 @@ import { Jurisdiction } from "../models/jurisdiction";
 import { TaskTemplate } from "../models/caseTaskTemplateModel";
 import { CheckList } from "../models/checkListModel";
 import { CheckListItem } from "../models/checkListItemModel";
+import { CaseMilestone } from "../models/caseMilestoneModel";
+import { CaseTask } from "../models/caseTaskModel";
 
 export class CaseModelService {
   orgDbSequelize: Sequelize | null = null;
@@ -27,6 +29,8 @@ export class CaseModelService {
       CaseProject: ReturnType<typeof CaseProject.initialize>;
       CaseTimeline: ReturnType<typeof CaseTimeline.initialize>;
       TaskTemplate: ReturnType<typeof TaskTemplate.initialize>
+      CaseMilestone: ReturnType<typeof CaseMilestone.initialise>
+      CaseTask : ReturnType<typeof CaseTask.initialise>
     }
   > = new Map();
 
@@ -66,6 +70,8 @@ export class CaseModelService {
     const TaskTemplateModel = TaskTemplate.initialize(mainDbSequelize, "");
     const CheckListModel = CheckList.initialize(sequelize, schemaName);
     const CheckListItemModel = CheckListItem.initialize(sequelize, schemaName);
+    const CaseMilestoneModel = CaseMilestone.initialise(sequelize, schemaName);
+    const CaseTaskModel = CaseTask.initialise(sequelize, schemaName)
     const models = {
       Case: CaseModel,
       CaseSummary: CaseSummaryModel,
@@ -78,8 +84,9 @@ export class CaseModelService {
       TaskTemplate: TaskTemplateModel,
       CheckList: CheckListModel,
       CheckListItem: CheckListItemModel,
-      Jurisdiction: JurisdictionModel
-
+      Jurisdiction: JurisdictionModel,
+      CaseMilestone: CaseMilestoneModel,
+      CaseTask : CaseTaskModel
     };
 
     this.modelCache.set(schemaName, models);
