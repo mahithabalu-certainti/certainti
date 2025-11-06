@@ -669,7 +669,7 @@ export const rawQueries = {
   getMilestones() {
     return `
     SELECT m.rid, m.milestone_name, m.case_filing_type_rid, c.filing_type_name
-    FROM ${MAIN_SCHEMA_NAME}.case_milestones m
+    FROM ${MAIN_SCHEMA_NAME}.milestone_template m
     LEFT JOIN ${MAIN_SCHEMA_NAME}.case_filing_type c ON c.rid = m.case_filing_type_rid
     ORDER BY r_number ASC
     `
@@ -810,7 +810,7 @@ export const validColumnsForSortFilters : Record<string, string> = {
 export const validColumnsForFilters : Record<string, string> = {
   r_number : "t.r_number",
   task_name : "t.task_name",
-  milestone_rid : "t.milestone_rid",
+  milestone_template_rid : "t.milestone_template_rid",
   checklist_template_rid : "t.checklist_template_rid",
   priority_rid : "t.priority_rid",
   status_rid : "t.status_rid",
@@ -829,7 +829,7 @@ export const validColumnsForFilters : Record<string, string> = {
 export const validFilterColumnTypes : Record<string, string> = {
   r_number : "string",
   task_name : "string",
-  milestone_rid : "string",
+  milestone_template_rid : "string",
   checklist_template_rid : "string",
   priority_rid : "string",
   status_rid : "string",

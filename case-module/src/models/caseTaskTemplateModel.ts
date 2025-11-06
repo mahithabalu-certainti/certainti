@@ -20,7 +20,7 @@ interface CaseTaskTemplateAttributes {
   status_rid?: string;
   priority_rid?: string;
   task_type?: string;
-  milestone_rid?: string;
+  milestone_template_rid?: string;
 }
 
 export interface CaseTaskTemplateCreationAttributes
@@ -48,7 +48,7 @@ export class TaskTemplate
   public status_rid?: string;
   public priority_rid?: string;
   public task_type?: string;
-  public milestone_rid?: string;
+  public milestone_template_rid?: string;
 
   static initialize(
     sequelize: Sequelize,
@@ -91,7 +91,7 @@ export class TaskTemplate
         status_rid: { type: DataTypes.STRING(50), allowNull: true },
         priority_rid: { type: DataTypes.STRING(50), allowNull: true },
         task_type: { type: DataTypes.STRING(50), allowNull: true },
-        milestone_rid: { type: DataTypes.STRING(50), allowNull: true },
+        milestone_template_rid: { type: DataTypes.STRING(50), allowNull: true },
       },
       {
         sequelize,
