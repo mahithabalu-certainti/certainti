@@ -52,6 +52,7 @@ import {
   setupCaseHistorySequence,
 } from "../../models/caseHistory";
 import { CaseTeam, setupCaseTeamSequence } from "../../models/caseTeamModel";
+import { Jurisdiction } from "../../models/jurisdiction";
 import { log } from "console";
 import { CheckList, setupCheckListSequence } from "../../models/checkListModel";
 import { CheckListItem } from "../../models/checkListItemModel";
@@ -365,6 +366,10 @@ class CaseSchemaService {
         orgDbSequlize,
         schemaName
       );
+      const jurisdictionModel = await Jurisdiction.initialize(
+        orgDbSequlize,
+        schemaName
+      );
       const checkListModel = await CheckList.initialize(  
         orgDbSequlize,
         schemaName
@@ -385,6 +390,7 @@ class CaseSchemaService {
       await setupCaseHistorySequence(orgDbSequlize, schemaName);
       await caseTeamModel.sync({ force: false });
       await setupCaseTeamSequence(orgDbSequlize, schemaName);
+      await jurisdictionModel.sync({ force: false });
       await checkListModel.sync({ force: false });
       await setupCheckListSequence(orgDbSequlize, schemaName);
       await checkListItemModel.sync({ force: false });

@@ -291,11 +291,11 @@ export type CreateTaskTemplateType = {
   effective_start_datetime : Date,
   effective_end_datetime : Date,
   case_team_member_role_rid : string,
-  checklist_rid : string,
+  checklist_template_rid : string,
   status_rid : string,
   priority_rid : string,
   task_type: string,
-  milestone_rid : string
+  milestone_template_rid : string
 }
 
 export type priorityTypes = {
@@ -328,11 +328,11 @@ export type UpdateTaskTemplateType = {
   effective_start_datetime : Date,
   effective_end_datetime : Date,
   case_team_member_role_rid : string,
-  checklist_rid : string,
+  checklist_template_rid : string,
   status_rid : string,
   priority_rid : string,
   task_type: string,
-  milestone_rid : string
+  milestone_template_rid : string
 }
 
 export type AdminTaskTemplateResponseTypes = {
@@ -352,12 +352,12 @@ export type AdminTaskTemplateResponseTypes = {
   effective_end_datetime : Date,
   case_team_member_role_rid : string,
   role_name : string,
-  checklist_rid : string,
+  checklist_template_rid : string,
   status_rid : string,
   status_name : string,
   priority_rid : string,
   priority_name : string,
-  milestone_rid : string,
+  milestone_template_rid : string,
   milestone_name : string,
   total_result: string
 }

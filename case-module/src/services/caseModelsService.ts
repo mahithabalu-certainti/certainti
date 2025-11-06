@@ -10,6 +10,7 @@ import { CaseHistory } from "../models/caseHistory";
 import { CaseTeam } from "../models/caseTeamModel";
 import { AdminChecklist } from "../models/adminChecklistModel";
 import { AdminCheckListItem } from "../models/adminCheckListItemsModel";
+import { Jurisdiction } from "../models/jurisdiction";
 import { TaskTemplate } from "../models/caseTaskTemplateModel";
 import { CheckList } from "../models/checkListModel";
 import { CheckListItem } from "../models/checkListItemModel";
@@ -59,6 +60,7 @@ export class CaseModelService {
     const CaseTimelineModel = CaseTimeline.initialize(sequelize, schemaName);
     const CaseHistoryModel = CaseHistory.initialize(sequelize, schemaName);
     const CaseTeamModel = CaseTeam.initialize(sequelize, schemaName);
+    const JurisdictionModel = Jurisdiction.initialize(sequelize, schemaName);
     const AdminChecklistModel = AdminChecklist.initialize(mainDbSequelize, "");
     const AdminCheckListItemModel = AdminCheckListItem.initialize(mainDbSequelize, "");
     const TaskTemplateModel = TaskTemplate.initialize(mainDbSequelize, "");
@@ -76,6 +78,7 @@ export class CaseModelService {
       TaskTemplate: TaskTemplateModel,
       CheckList: CheckListModel,
       CheckListItem: CheckListItemModel,
+      Jurisdiction: JurisdictionModel
 
     };
 

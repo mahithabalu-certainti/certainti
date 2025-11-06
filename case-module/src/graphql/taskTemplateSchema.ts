@@ -19,13 +19,13 @@ effective_end_datetime: Date
 role_name: String
 case_team_member_role_rid: String
 checklist_name: String
-checklist_rid: String
+checklist_template_rid: String
 priority_name: String
 priority_rid: String
 status_name: String
 status_rid: String
 milestone_name: String
-milestone_rid: String
+milestone_template_rid: String
 }
 
 type finalTaskResponse {
@@ -37,9 +37,9 @@ data : TaskResponse
 
 input taskUpdateInput {
 rid : String
-milestone_rid: String
+milestone_template_rid: String
 priority_rid: String
-checklist_rid: String
+checklist_template_rid: String
 case_team_member_role_rid: String
 effort_in_days: Int
 task_name : String
