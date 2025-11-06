@@ -46,7 +46,7 @@ export const getChecklistTemplateFilterFields = (
   return [
     {
       label: 'Checklist ID',
-      name: 'r_number',
+      name: 'rid',
       type: 'text',
       operatorOption: textfieldOptions,
       // hide:
@@ -84,7 +84,7 @@ export const getChecklistTemplateFilterFields = (
     },
     {
       label: 'Description',
-      name: 'description',
+      name: 'checklist_description',
       type: 'text',
       operatorOption: nonReqTextfieldOptions,
       // hide:

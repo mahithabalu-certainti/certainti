@@ -28,6 +28,7 @@ export type ChecklistTemplateList = {
   modified_user_name: string | null;
   created_datetime: string;
   modified_datetime: string | null;
+  checklist_description: string | null;
 };
 
 export interface ChecklistTemplateListResponse {
@@ -37,8 +38,8 @@ export interface ChecklistTemplateListResponse {
   data: {
     page: number;
     limit: number;
-    totalCount: number;
-    checklists: ChecklistTemplateList[];
+    count: number;
+    checklist: ChecklistTemplateList[];
   };
 }
 

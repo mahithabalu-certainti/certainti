@@ -9,10 +9,10 @@ export const getChecklistTemplateColumns = (
   // isTemplateExportEnable?: boolean
 ): ListTableColumn<ChecklistTemplateList>[] => [
   {
-    id: 'r_number',
-    sortId: 'r_number',
+    id: 'rid',
+    sortId: 'rid',
     label: 'Checklist ID',
-    width: 130,
+    width: 330,
     sortable: true,
     sticky: true,
     // hide:
@@ -57,15 +57,15 @@ export const getChecklistTemplateColumns = (
     //   !permissionMap?.['checklist_type']?.edit,
   },
   {
-    id: 'description',
-    sortId: 'description',
+    id: 'checklist_description',
+    sortId: 'checklist_description',
     label: 'Description',
     width: 220,
     sortable: true,
     // hide:
     //   !permissionMap?.['description']?.read &&
     //   !permissionMap?.['description']?.edit,
-    render: (row: ChecklistTemplateList) => row.description || '-',
+    render: (row: ChecklistTemplateList) => row.checklist_description || '-',
   },
   {
     id: 'created_user_name',

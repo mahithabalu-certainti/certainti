@@ -1,5 +1,8 @@
 import { useMutation, useQuery, UseQueryResult } from '@tanstack/react-query';
-import { interactionServiceApi } from '../../../api/api';
+import {
+  caseServiceApi,
+  interactionServiceApi,
+} from '../../../api/api';
 import {
   ChecklistLevelApiResponse,
   ChecklistStatusApiResponse,
@@ -7,6 +10,7 @@ import {
   ChecklistTemplateFormPayload,
   ChecklistTemplateList,
   ChecklistTemplateListParams,
+  ChecklistTemplateListResponse,
   ChecklistTypeApiResponse,
   ExportChecklistTemplateResponse,
 } from '../../types';
@@ -14,30 +18,40 @@ import {
   ChecklistLevelsMockData,
   ChecklistStatusMockData,
   ChecklistTemplateDetailsMockData,
-  ChecklistTemplatesMockData,
   ChecklistTypesMockData,
 } from '../../mockdata/checklist-templates';
 import { CommonApiResponse } from '../../../common-service';
 
 // List
-export const getChecklistTemplateListUrl = () => '/api/checklistTemplates/list';
+export const getChecklistTemplateListUrl = (
+  params: ChecklistTemplateListParams
+) => {
+  const queryParams = new URLSearchParams();
+  queryParams.append('page', params.page.toString());
+  queryParams.append('limit', params.limit.toString());
+
+  if (params.sortBy) {
+    queryParams.append('sortBy', params.sortBy);
+  }
+  if (params.sortOrder) {
+    queryParams.append('sortOrder', params.sortOrder);
+  }
+  if (params.filters) {
+    queryParams.append('filters', JSON.stringify(params.filters));
+  }
+
+  return `/api/caseManagement/adminChecklist/list?${queryParams.toString()}`;
+};
 
 export const fetchChecklistTemplateList = async (
   params: ChecklistTemplateListParams
 ): Promise<{ checklistTemplates: ChecklistTemplateList[]; count: number }> => {
-  //   const { data } = await interactionServiceApi.post<ChecklistTemplateListResponse>(
-  //     getChecklistTemplateListUrl(),
-  //     params
-  //   );
-  //   return {
-  //     checklistTemplates: data.data.checklistTemplates,
-  //     count: data.data.totalCount,
-  //   };
-  console.log('checklist-template-list-params', params);
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  const { data } = await caseServiceApi.get<ChecklistTemplateListResponse>(
+    getChecklistTemplateListUrl(params)
+  );
   return {
-    checklistTemplates: ChecklistTemplatesMockData.data.checklists,
-    count: ChecklistTemplatesMockData.data.totalCount,
+    checklistTemplates: data.data.checklist,
+    count: data.data.count,
   };
 };
 
