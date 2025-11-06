@@ -13,6 +13,7 @@ import {
 import { useParams } from 'react-router-dom';
 import TextButton from '../../../../components/button/text-button';
 import { useToast } from '../../../../hooks';
+import { useGetStatus } from '../../../../common-service';
 import {
   validateTemplateForm,
   ChecklistTemplateFormData,
@@ -38,9 +39,6 @@ import { formatDateToYYYYMMDDWithTime } from '../../../../common-utils';
 import {
   useChecklistTemplateDetails,
   useCreateTemplate,
-  useGetChecklistLevels,
-  useGetChecklistStatus,
-  useGetChecklistTypes,
   useUpdateChecklistTemplateDetails,
 } from '../../../service/checklist-templates/checklist-template-service';
 
@@ -48,8 +46,6 @@ const ChecklistTemplateForm: React.FC = () => {
   const { successToast } = useToast();
   const { templateId } = useParams();
   const [formData, setFormData] = useState<ChecklistTemplateFormData>({
-    checklist_level: '',
-    checklist_type: '',
     checklist_name: '',
     description: '',
     status: '',
@@ -57,6 +53,7 @@ const ChecklistTemplateForm: React.FC = () => {
       {
         question_seq_num: 'SNO_1',
         question: '',
+        description: '',
         // is_mandatory: false,
         // notes: '',
       },
@@ -91,9 +88,7 @@ const ChecklistTemplateForm: React.FC = () => {
   //   return map;
   // }, [checklistTemplateViewEditFields]);
 
-  const checklistTemplateStatus = useGetChecklistStatus();
-  const checklistTemplateTypes = useGetChecklistTypes();
-  const checklistTemplateLevels = useGetChecklistLevels();
+  const statusData = useGetStatus();
   const createChecklistTemplate = useCreateTemplate();
   const updateChecklistTemplate = useUpdateChecklistTemplateDetails();
 
@@ -120,8 +115,6 @@ const ChecklistTemplateForm: React.FC = () => {
     if (templateData && isEditView) {
       setFormData((prev) => ({
         ...prev,
-        // checklist_level: templateData.checklist_level_rid,
-        // checklist_type: templateData.checklist_type_rid,
         checklist_name: templateData.checklist_name,
         description: templateData.description,
         status: templateData.status_rid,
@@ -138,16 +131,14 @@ const ChecklistTemplateForm: React.FC = () => {
             ? templateData.questions.map((qus, index) => ({
                 question_seq_num: qus.question_seq_num || `Q00-${index + 1}`,
                 question: qus.question.trim() || '',
-                // is_mandatory: qus.is_mandatory ?? false,
-                // notes: qus.notes.trim() || '',
+                description: qus.description || '',
                 rid: qus.rid,
               }))
             : [
                 {
                   question_seq_num: 'SNO_1',
                   question: '',
-                  // is_mandatory: false,
-                  // notes: '',
+                  description: '',
                 },
               ],
       }));
@@ -156,29 +147,11 @@ const ChecklistTemplateForm: React.FC = () => {
 
   const statusOptions = useMemo(
     () =>
-      checklistTemplateStatus.data?.data?.checklistStatus?.map((status) => ({
+      statusData.data?.data?.status?.map((status) => ({
         label: status.status_name,
         value: status.rid,
       })) || [],
-    [checklistTemplateStatus.data?.data?.checklistStatus]
-  );
-
-  const checklistTypeOptions = useMemo(
-    () =>
-      checklistTemplateTypes.data?.data?.checklistTypes?.map((type) => ({
-        label: type.checklist_type_name,
-        value: type.rid,
-      })) || [],
-    [checklistTemplateTypes.data?.data?.checklistTypes]
-  );
-
-  const checklistLevelOptions = useMemo(
-    () =>
-      checklistTemplateLevels.data?.data?.checklistLevel.map((level) => ({
-        label: level.checklist_level_name,
-        value: level.rid,
-      })) || [],
-    [checklistTemplateLevels.data?.data?.checklistLevel]
+    [statusData.data?.data?.status]
   );
 
   const handleInputChange = (
@@ -190,7 +163,6 @@ const ChecklistTemplateForm: React.FC = () => {
       [field]: value,
     }));
 
-    // Clear error when field changes
     setErrors((prev) => ({
       ...prev,
       [field]: undefined,
@@ -213,7 +185,6 @@ const ChecklistTemplateForm: React.FC = () => {
       questions: updatedQuestions,
     }));
 
-    // Clear error when field changes
     setErrors((prev) => {
       const newQuestionErrors = [...(prev.questions || [])];
       if (newQuestionErrors[index]) {
@@ -237,8 +208,7 @@ const ChecklistTemplateForm: React.FC = () => {
         {
           question_seq_num: `SNO_${prev.questions.length + 1}`,
           question: '',
-          // is_mandatory: false,
-          // notes: '',
+          description: '',
         },
       ],
     }));
@@ -248,13 +218,11 @@ const ChecklistTemplateForm: React.FC = () => {
     const updatedQuestions = [...formData.questions];
     updatedQuestions.splice(index, 1);
 
-    // If this was the last question, add a new empty one
     if (updatedQuestions.length === 0) {
       updatedQuestions.push({
         question_seq_num: 'SNO_1',
         question: '',
-        // is_mandatory: false,
-        // notes: '',
+        description: '',
       });
     }
 
@@ -263,7 +231,6 @@ const ChecklistTemplateForm: React.FC = () => {
       questions: updatedQuestions,
     }));
 
-    // Clear errors for the removed question and reindex remaining errors
     setErrors((prev) => {
       if (!prev.questions) return prev;
 
@@ -307,11 +274,7 @@ const ChecklistTemplateForm: React.FC = () => {
   };
 
   const questionTableColumns = getQuestionTableColumns(isEditView);
-  const formLoading =
-    isLoading ||
-    checklistTemplateStatus.isLoading ||
-    checklistTemplateTypes.isLoading ||
-    checklistTemplateLevels.isLoading;
+  const formLoading = isLoading || statusData.isLoading;
 
   return (
     <div>
@@ -415,154 +378,6 @@ const ChecklistTemplateForm: React.FC = () => {
                 {errors?.checklist_name && (
                   <span className='text-[12px] text-red-400 col-span-full'>
                     {errors.checklist_name}
-                  </span>
-                )}
-              </div>
-
-              <div
-              // style={{
-              //   display: shouldHideField(
-              //     'checklist_type',
-              //     isEditView,
-              //     permissionMap
-              //   )
-              //     ? 'none'
-              //     : 'block',
-              // }}
-              >
-                <label
-                  className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
-                  htmlFor='checklist_type'
-                >
-                  Checklist Type
-                </label>
-
-                <Select
-                  name='checklist_type'
-                  value={formData.checklist_type}
-                  onChange={(e) =>
-                    handleInputChange('checklist_type', e.target.value)
-                  }
-                  displayEmpty
-                  required
-                  fullWidth
-                  size='small'
-                  // disabled={shouldDisableField(
-                  //   'checklist_type',
-                  //   isEditView,
-                  //   permissionMap
-                  // )}
-                  className={`custom-select-no-arrow sm:text-sm ${
-                    formData.checklist_type === ''
-                      ? 'text-[#7D98B6]'
-                      : 'text-black'
-                  } ${errors?.checklist_type ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
-                  MenuProps={COMMON_MENU_PROPS}
-                  sx={getSelectStyles(
-                    !!errors?.checklist_type,
-                    formData.checklist_type === ''
-                  )}
-                >
-                  <MenuItem
-                    value=''
-                    sx={{ color: '#425A76', fontSize: '13px', fontWeight: 500 }}
-                  >
-                    Choose Checklist Type
-                  </MenuItem>
-
-                  {checklistTypeOptions?.map((option, i) => (
-                    <MenuItem
-                      key={`${option.value}-${i}`}
-                      value={option.value}
-                      title={option.label}
-                      sx={{
-                        color: '#425A76',
-                        fontSize: '13px',
-                        fontWeight: 500,
-                      }}
-                    >
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-
-                {errors?.checklist_type && (
-                  <span className='text-[12px] text-red-400 col-span-full'>
-                    {errors.checklist_type}
-                  </span>
-                )}
-              </div>
-
-              <div
-              // style={{
-              //   display: shouldHideField(
-              //     'checklist_level',
-              //     isEditView,
-              //     permissionMap
-              //   )
-              //     ? 'none'
-              //     : 'block',
-              // }}
-              >
-                <label
-                  className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
-                  htmlFor='checklist_level'
-                >
-                  Checklist Level
-                </label>
-
-                <Select
-                  name='checklist_level'
-                  value={formData.checklist_level}
-                  onChange={(e) =>
-                    handleInputChange('checklist_level', e.target.value)
-                  }
-                  displayEmpty
-                  required
-                  fullWidth
-                  size='small'
-                  // disabled={shouldDisableField(
-                  //   'checklist_level',
-                  //   isEditView,
-                  //   permissionMap
-                  // )}
-                  className={`custom-select-no-arrow sm:text-sm ${
-                    formData.checklist_level === ''
-                      ? 'text-[#7D98B6]'
-                      : 'text-black'
-                  } ${errors?.checklist_level ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
-                  MenuProps={COMMON_MENU_PROPS}
-                  sx={getSelectStyles(
-                    !!errors?.checklist_level,
-                    formData.checklist_level === ''
-                  )}
-                >
-                  <MenuItem
-                    value=''
-                    sx={{ color: '#425A76', fontSize: '13px', fontWeight: 500 }}
-                  >
-                    Choose Checklist Level
-                  </MenuItem>
-
-                  {checklistLevelOptions?.map((option, i) => (
-                    <MenuItem
-                      key={`${option.value}-${i}`}
-                      value={option.value}
-                      title={option.label}
-                      sx={{
-                        color: '#425A76',
-                        fontSize: '13px',
-                        fontWeight: 500,
-                      }}
-                    >
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-
-                {errors?.checklist_level && (
-                  <span className='text-[12px] text-red-400 col-span-full'>
-                    {errors.checklist_level}
                   </span>
                 )}
               </div>
@@ -860,46 +675,28 @@ const ChecklistTemplateForm: React.FC = () => {
                                     </div>
                                   )}
 
-                                  {/* {col.name === 'mandatory' && (
-                                    <div style={{ textAlign: 'center' }}>
-                                      <input
-                                        type='checkbox'
-                                        checked={question.is_mandatory}
+                                  {col.name === 'description' && (
+                                    <div
+                                      className={`flex relative ${error ? 'bg-[#FEF2F2]' : ''}`}
+                                    >
+                                      <textarea
+                                        name='checklist_description'
+                                        placeholder='Enter Description'
+                                        autoComplete='off'
+                                        className={`outline-none placeholder-custom-color w-full sm:text-sm p-2 resize-none focus:border-2 focus:border-blue-400 ${error ? 'bg-[#FEF2F2] focus:!bg-[#FEF2F2]' : ''}`}
                                         onChange={(e) =>
                                           handleQuestionChange(
                                             index,
-                                            'is_mandatory',
-                                            e.target.checked
+                                            'description',
+                                            e.target.value
                                           )
                                         }
+                                        value={question.description}
                                         disabled={isDisabled}
-                                        className='cursor-pointer disabled:cursor-default scale-105'
-                                      />
-                                    </div>
-                                  )}
-
-                                  {col.name === 'notes' && (
-                                    <div
-                                      className={`flex ${isDisabled && !question.notes ? '' : 'relative'} ${error ? 'bg-[#FEF2F2]' : ''}`}
-                                    >
-                                      <textarea
-                                        name='notes'
-                                        placeholder='Enter Notes'
-                                        autoComplete='off'
-                                        className={`outline-none placeholder-custom-color w-full sm:text-sm py-2 px-3 resize-none focus:border-2 focus:border-blue-400 ${error ? 'bg-[#FEF2F2] focus:!bg-[#FEF2F2]' : ''}`}
-                                        value={question.notes}
                                         style={{
                                           scrollbarWidth: 'thin',
                                           scrollbarColor: '#9ca3af transparent',
                                         }}
-                                        onChange={(e) =>
-                                          handleQuestionChange(
-                                            index,
-                                            'notes',
-                                            e.target.value
-                                          )
-                                        }
-                                        disabled={isDisabled}
                                       />
                                       {error && (
                                         <Tooltip
@@ -926,7 +723,7 @@ const ChecklistTemplateForm: React.FC = () => {
                                         </Tooltip>
                                       )}
                                     </div>
-                                  )} */}
+                                  )}
 
                                   {col.name === 'action' && (
                                     <Tooltip

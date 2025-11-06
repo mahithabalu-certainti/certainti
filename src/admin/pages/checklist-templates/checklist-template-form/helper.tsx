@@ -52,8 +52,6 @@ export const COMMON_MENU_PROPS = {
 };
 
 export interface ChecklistTemplateFormData {
-  checklist_level: string;
-  checklist_type: string;
   checklist_name: string;
   description: string;
   status: string;
@@ -69,6 +67,7 @@ export interface ChecklistTemplateFormData {
 export interface ChecklistTemplateFormQuestion {
   question_seq_num: string;
   question: string;
+  description: string;
   // is_mandatory: boolean;
   // is_editable?: boolean;
   // notes: string;
@@ -76,8 +75,6 @@ export interface ChecklistTemplateFormQuestion {
 }
 
 export interface ChecklistTemplateFormErrors {
-  checklist_level?: string;
-  checklist_type?: string;
   checklist_name?: string;
   description?: string;
   status?: string;
@@ -118,7 +115,13 @@ export const getQuestionTableColumns = (
   {
     name: 'question',
     label: 'Checklist Questions',
-    width: '85%',
+    width: '40%',
+    required: true,
+  },
+  {
+    name: 'description',
+    label: 'Description',
+    width: '40%',
     required: true,
   },
   // { name: 'mandatory', label: 'Mandatory', width: '5%' },
@@ -301,8 +304,6 @@ export const transformChecklistTemplatePayload = (
   const payload: ChecklistTemplateFormPayload = {
     checklist_name: formData.checklist_name,
     description: formData.description,
-    checklist_level_rid: formData.checklist_level,
-    checklist_type_rid: formData.checklist_type,
     status_rid: formData.status,
     questions: transformedQuestions,
   };
@@ -327,18 +328,10 @@ export const transformToNewCreateTemplatePayload = (
     checklist_items: formData.questions.map((question, index) => ({
       checklist_item_name: question.question,
       sequence_no: index + 1,
-      description: question.question,
+      description: question.description || question.question,
       action_type: 'add' as const,
     })),
   };
-
-  // if (formData.checklist_level && formData.checklist_level.trim()) {
-  //   payload.checklist_level_rid = formData.checklist_level;
-  // }
-
-  // if (formData.checklist_type && formData.checklist_type.trim()) {
-  //   payload.checklist_type_rid = formData.checklist_type;
-  // }
 
   return payload;
 };

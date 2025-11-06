@@ -48,6 +48,7 @@ export interface ChecklistTemplateQuestion {
   rid: string;
   question_seq_num: string;
   question: string;
+  description?: string;
   //   notes?: string;
   //   is_mandatory?: boolean;
   //   is_editable?: boolean;
