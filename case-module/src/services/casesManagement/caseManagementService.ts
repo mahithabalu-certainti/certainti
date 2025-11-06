@@ -120,6 +120,83 @@ export class CaseManagementService {
     }
   }
 
+   /**
+   * Updates an existing admin checklist with associated checklist items within a database transaction.
+   *
+   * @param {ICreateChecklistTemplate} caseRequest - The checklist data including template information, checklist items to update, and checklist_rid for identification
+   * @param {string} userId - The ID of the user updating the checklist (will be set as modified_by)
+   *
+   * @returns {Promise<{
+   *   statusCode: number;
+   *   message: string;
+   *   errorMessage?: string;
+   *   data?: { checklist: any };
+   * }>} - Result of the update process with status code, message, and updated checklist data if successful
+   *
+   * @description
+   * This method performs the following operations within a database transaction:
+   * - Initializes a database transaction for atomic operations
+   * - Sets the modified_by field to the provided userId
+   * - Updates the existing admin checklist record using the schema service
+   * - Manages associated checklist items (add new, update existing, delete removed items)
+   * - Uses checklist_rid from caseRequest to identify the checklist to update
+   * - Commits the transaction on success or rolls back on any error
+   * - Returns success response with updated checklist data or error response with details
+   * - Logs errors and ensures proper transaction cleanup
+   */
+
+  async updateAdminCheckList(
+    caseRequest: ICreateChecklistTemplate,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { checklist: any };
+  }> {
+    // Initialize database connection and start transaction for atomic operations
+    const dbInit = await this.caseModelService.getMainSequelize();
+    const transaction = await dbInit.transaction();
+    try {
+      // Set the user who is creating this checklist
+      caseRequest.created_by = userId;
+
+      // Create the main admin checklist record
+      const response =
+        await this.caseManangementSchemaService.updateAdminChecklist(
+          caseRequest,userId
+        );
+
+      // If checklist creation was successful, manage associated checklist items (add/edit/delete)
+      if (response) {
+        await this.caseManangementSchemaService.manageAdminCheckListItems(
+          caseRequest,
+          caseRequest.checklist_template_rid!,
+          transaction
+        );
+      }
+
+      // Commit the transaction after all operations succeed
+      await transaction.commit();
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: STATUS_MESSAGE.adminChecklistCreated,
+        data: {
+          checklist: response,
+        },
+      };
+    } catch (err) {
+      logMessage(`Error creating admin checklist: ${err}`);
+      await transaction.rollback();
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: STATUS_MESSAGE.adminChecklistFailed,
+      };
+    }
+  }
+
   /**
    * Retrieves admin checklists with comprehensive filtering, pagination, and search capabilities.
    *

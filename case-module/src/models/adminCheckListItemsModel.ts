@@ -12,7 +12,6 @@ interface AdminCheckListItemAttributes {
   checklist_template_rid: string;
   checklist_item_name: string;
   description?: string;
-  sequence_no: number;
   status_rid?: string;
 }
 
@@ -32,7 +31,6 @@ export class AdminCheckListItem
   public checklist_template_rid!: string;
   public checklist_item_name!: string;
   public description?: string;
-  public sequence_no!: number;
   public status_rid?: string;
 
   static initialize(
@@ -64,7 +62,6 @@ export class AdminCheckListItem
         checklist_template_rid: { type: DataTypes.STRING(50), allowNull: false },
         checklist_item_name: { type: DataTypes.STRING(255), allowNull: false },
         description: { type: DataTypes.STRING(2000), allowNull: true },
-        sequence_no: { type: DataTypes.INTEGER, allowNull: false },
         status_rid: { type: DataTypes.STRING(50), allowNull: true },
       },
       {
