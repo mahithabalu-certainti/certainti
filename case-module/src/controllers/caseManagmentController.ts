@@ -799,7 +799,7 @@ async function fetchAdminTaskTemplateList (req : Request, res : Response) {
       return;
     }
     const data = req.body;
-    let result = await caseManagementService.fetchTaskTemplate(data, false);
+    let result = await caseManagementService.fetchTaskTemplate(data, false, false, null);
     let totalRecord = parseInt(result.data[0].total_result)
     result.data.forEach((d : any) => {
       delete d.total_result
@@ -860,7 +860,7 @@ async function ExportAdminTaskTemplateList (req : Request, res : Response) {
       return;
     }
     const data = req.body;
-    let result = await caseManagementService.fetchTaskTemplate(data, true);
+    let result = await caseManagementService.fetchTaskTemplate(data, true, false, null);
     let totalRecord = parseInt(result.data[0].total_result)
     const fields = await caseService.getAllowedExportFields(
     userId,

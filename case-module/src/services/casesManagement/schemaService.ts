@@ -596,7 +596,6 @@ class CaseManagementSchemaService {
   async checkTaskExistsForUpdate (rid : string) {
     const { TaskTemplate } = await this.caseModelService.getModels("");
     const checkTaskExists = await TaskTemplate.findOne({
-      attributes : ['rid'],
       where : {
         rid : rid
       }, 
