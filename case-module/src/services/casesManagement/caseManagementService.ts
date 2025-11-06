@@ -425,4 +425,18 @@ export class CaseManagementService {
       }
     }
   }
+  async fetchTaskTypeForTemplate () {
+    const result = await this.caseManangementSchemaService.fetchTaskTypes();
+    if(result.length > 0) {
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        data : result
+      }
+    } else {
+      return {
+        statusCode : HttpStatus.NOT_FOUND,
+        data : []
+      }      
+    }
+  }
 }

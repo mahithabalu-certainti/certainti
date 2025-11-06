@@ -1,6 +1,6 @@
-import { Op, Sequelize, Transaction } from "sequelize";
+import { Op, QueryTypes, Sequelize, Transaction } from "sequelize";
 import { CaseModelService } from "../caseModelsService";
-import { CreateTaskTemplateType, filterType, ICreateChecklist, ICreateChecklistItem, UpdateTaskTemplateType } from "../../utils/types";
+import { CreateTaskTemplateType, filterType, ICreateChecklist, ICreateChecklistItem, TaskType, UpdateTaskTemplateType } from "../../utils/types";
 import { buildDatetimeFilterCondition, buildNumericFilterCondition, buildStringFilterCondition, errorLog, logMessage } from "../../utils/helpers";
 import { HttpStatus, STATUS_MESSAGE, filtersColumnsForCaseSummary, filterTypesForCaseSummary, filterTypesForAdminCheckList, filtersColumnsForAdminCheckList, rawQueries } from "../../utils/constants";
 import { listAllCheckList } from "../../utils/rawQueries";
@@ -737,6 +737,13 @@ async fetchChecklistTemplateDetailsById(
       logMessage(`Error adding user details: ${err}`);
       throw new Error("Error adding user details" + (err as Error).message);
     }
+  }
+  async fetchTaskTypes () {
+    if(!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+    }
+    const result = await this.mainDbSequelize.query<TaskType>(rawQueries.getTaskType(), {type : QueryTypes.SELECT});
+    return result;
   }
 }
 export { CaseManagementSchemaService };

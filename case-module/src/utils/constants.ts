@@ -104,6 +104,7 @@ export const STATUS_MESSAGE = {
   jurisdictionFetchedSuccess: "Jurisdiction configuration fetched successfully",
   jurisdictionFetchedFailed: "Failed to fetch jurisdiction configuration",
   jurisdictionNotFound: "No jurisdiction configuration found for this case",
+  taskTypeFetchedSuccess : "Task Type fetched successfully"
 
 };
 
@@ -718,7 +719,10 @@ export const rawQueries = {
   updateTaskTemplate(data: string[], rid: string) {
     let query = `UPDATE ${MAIN_SCHEMA_NAME}.task_template SET ${data.map((d: any) => d).join(',')} WHERE rid = '${rid}'`
     return query;
-  }
+  },
+  getTaskType() {
+    return `SELECT rid, task_type_name FROM ${MAIN_SCHEMA_NAME}.task_type ORDER BY task_type_name ASC`
+  },
 };
 
 const keyContactRole = {

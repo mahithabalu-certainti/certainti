@@ -343,3 +343,8 @@ export type AdminTaskTemplatePayloadType = {
   sort : string,
   sort_by : string
 }
+
+export type TaskType = {
+  rid : string,
+  task_type_name : string
+}

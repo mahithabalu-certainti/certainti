@@ -942,6 +942,50 @@ async function ExportAdminTaskTemplateList (req : Request, res : Response) {
   }
 }
 
+async function fetchAllTaskTypes (req : Request, res : Response) {
+  const methodName = "fetchAllTaskTypes";
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const result = await caseManagementService.fetchTaskTypeForTemplate();
+    if(result.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.taskTypeFetchedSuccess,
+        data : result.data
+      })        
+    } else {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.dataNotAvailable,
+        data : result.data
+      }) 
+    }
+  } catch (err) {
+    // Handle unexpected errors (system failures, network issues, etc.)
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
 // Export the controller functions for use in route definitions
 export default {
   createAdminCheckList,
@@ -954,5 +998,6 @@ export default {
   fetchAdminTaskTemplateList,
   exportAdminCheckList,
   ExportAdminTaskTemplateList,
-  getCheckListTemplateDetailsById
+  getCheckListTemplateDetailsById,
+  fetchAllTaskTypes
 };
