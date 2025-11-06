@@ -128,11 +128,6 @@ const jurisdictionSchema = Joi.object({
   .custom((value, helpers) => {
     const { is_state_level, is_federal_level, states } = value;
 
-    // Both cannot be false
-    if (!is_state_level && !is_federal_level) {
-      return helpers.error("any.bothFalse");
-    }
-
     // If state level is true → states must contain at least one
     if (is_state_level) {
       if (!Array.isArray(states) || states.length === 0) {
@@ -150,8 +145,6 @@ const jurisdictionSchema = Joi.object({
     return value;
   })
   .messages({
-    "any.bothFalse":
-      "At least one of is_state_level or is_federal_level must be true.",
     "any.missingStates":
       "States must contain at least one value when state level is true.",
     "any.statesNotAllowed":
