@@ -186,16 +186,13 @@ const Settings: React.FC<SettingsProps> = ({
       setIdRequried(hasAnyValue);
     }
   };
-  if (isLoading) {
-    return <SkeletonForm />;
-  }
 
   return (
     <div className='flex flex-col gap-0 border border-[#CBD6E2] rounded-[2px] pt-5'>
       <Box
         className='bg-white'
         sx={{
-          minHeight: '560px',
+          minHeight: '300px',
           maxHeight: '560px',
           overflowY: 'auto',
           '& .grid': {
@@ -208,19 +205,23 @@ const Settings: React.FC<SettingsProps> = ({
           },
         }}
       >
-        <FormBuilder
-          key={JSON.stringify(accountDetails)}
-          data={settingsFormFields(
-            permissionMap,
-            emailRequried,
-            idRequried,
-            isParentAccount
-          )}
-          formRef={formRef}
-          outData={handleFormSubmit}
-          values={formValues}
-          onChange={onChangeField}
-        />
+        {isLoading ? (
+          <SkeletonForm />
+        ) : (
+          <FormBuilder
+            key={JSON.stringify(accountDetails)}
+            data={settingsFormFields(
+              permissionMap,
+              emailRequried,
+              idRequried,
+              isParentAccount
+            )}
+            formRef={formRef}
+            outData={handleFormSubmit}
+            values={formValues}
+            onChange={onChangeField}
+          />
+        )}
       </Box>
     </div>
   );

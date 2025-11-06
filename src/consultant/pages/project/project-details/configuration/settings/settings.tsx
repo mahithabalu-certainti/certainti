@@ -134,7 +134,7 @@ const Settings: React.FC<SettingsProps> = ({
         <SkeletonForm sectionCount={1} showSectionHead={false} />
       ) : (
         <Box
-          className='bg-white'
+          className='bg-white min-h-[300px]'
           sx={{
             '& .grid': {
               display: 'grid',

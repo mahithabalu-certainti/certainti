@@ -47,6 +47,8 @@ import {
   RESOURCESKILL_CREATE,
   RESOURCESKILL_EDIT,
   USER_EXTENDED_PERMISSION,
+  CASE,
+  CASE_DETAILS,
   INTERACTIONS_CREATE,
   INTERACTIONS_EDIT,
   INTERACTIONS,
@@ -67,6 +69,8 @@ import {
   EMAIL_TEMPLATES,
   EMAIL_TEMPLATES_CREATE,
   EMAIL_TEMPLATES_EDIT,
+  CASE_CREATE,
+  CASE_EDIT,
   CHECKLIST_TEMPLATES,
   CHECKLIST_TEMPLATES_CREATE,
   CHECKLIST_TEMPLATES_EDIT,
@@ -193,6 +197,14 @@ const EmailTemplateForm = lazy(
     )
 );
 
+const Case = lazy(() => import('./consultant/pages/case/case-list/cases'));
+const CaseForm = lazy(
+  () => import('./consultant/pages/case/case-form/create-cases')
+);
+const CaseDetails = lazy(
+  () => import('./consultant/pages/case/case-details/case-details')
+);
+
 const ChecklistTemplates = lazy(
   () =>
     import(
@@ -264,6 +276,10 @@ export const App: React.FC<IApp> = ({ instance }) => {
                   <Route path={RESOURCESKILL_EDIT} element={<ResourceForm />} />
                   <Route path={RESOURCE} element={<Resource />} />
                   <Route path={PROFILE} element={<Profile />} />
+                  <Route path={CASE} element={<Case />} />
+                  <Route path={CASE_DETAILS} element={<CaseDetails />} />
+                  <Route path={CASE_CREATE} element={<CaseForm />} />
+                  <Route path={CASE_EDIT} element={<CaseForm />} />
                   <Route
                     path={PROJECT_TASK_CREATE}
                     element={<ProjectTaskForm />}
