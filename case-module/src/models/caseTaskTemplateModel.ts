@@ -16,7 +16,7 @@ interface CaseTaskTemplateAttributes {
   effective_start_datetime?: Date;
   effective_end_datetime?: Date;
   case_team_member_role_rid?: string;
-  checklist_rid?: string;
+  checklist_template_rid?: string;
   status_rid?: string;
   priority_rid?: string;
   task_type?: string;
@@ -44,7 +44,7 @@ export class TaskTemplate
   public effective_start_datetime?: Date;
   public effective_end_datetime?: Date;
   public case_team_member_role_rid?: string;
-  public checklist_rid?: string;
+  public checklist_template_rid?: string;
   public status_rid?: string;
   public priority_rid?: string;
   public task_type?: string;
@@ -87,7 +87,7 @@ export class TaskTemplate
         effective_start_datetime: { type: DataTypes.DATE, allowNull: true },
         effective_end_datetime: { type: DataTypes.DATE, allowNull: true },
         case_team_member_role_rid: { type: DataTypes.STRING(50), allowNull: true },
-        checklist_rid: { type: DataTypes.STRING(50), allowNull: true },
+        checklist_template_rid: { type: DataTypes.STRING(50), allowNull: true },
         status_rid: { type: DataTypes.STRING(50), allowNull: true },
         priority_rid: { type: DataTypes.STRING(50), allowNull: true },
         task_type: { type: DataTypes.STRING(50), allowNull: true },

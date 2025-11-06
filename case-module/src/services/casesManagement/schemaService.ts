@@ -524,7 +524,7 @@ class CaseManagementSchemaService {
       effective_start_datetime : data.effective_start_datetime,
       effective_end_datetime : data.effective_end_datetime,
       case_team_member_role_rid : data.case_team_member_role_rid,
-      checklist_rid : data.checklist_rid,
+      checklist_template_rid : data.checklist_template_rid,
       status_rid : data.status_rid,
       priority_rid : data.priority_rid,
       task_type : "Milestone",
@@ -651,7 +651,7 @@ async fetchChecklistTemplateDetailsById(
    );
 
   const response: any = {
-    checklist_rid: checklistDetails?.rid,
+    checklist_template_rid: checklistDetails?.rid,
     checklist_name: checklistDetails?.checklist_name ?? "",
     checklist_description: checklistDetails?.checklist_description ?? "",
     r_number: checklistDetails.r_number ?? "",

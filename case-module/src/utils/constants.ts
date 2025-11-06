@@ -807,21 +807,40 @@ export const validColumnsForSortFilters : Record<string, string> = {
   sequence_no : "t.sequence_no"
 }
 
+export const validColumnsForFilters : Record<string, string> = {
+  r_number : "t.r_number",
+  task_name : "t.task_name",
+  milestone_rid : "t.milestone_rid",
+  checklist_template_rid : "t.checklist_template_rid",
+  priority_rid : "t.priority_rid",
+  status_rid : "t.status_rid",
+  case_team_member_role_rid : "t.case_team_member_role_rid",
+  effective_start_datetime : "t.effective_start_datetime",
+  effective_end_datetime : "t.effective_end_datetime",
+  reminder_interval : "t.reminder_interval",
+  effort_in_days : "t.effort_in_days",
+  created_datetime : "t.created_datetime",
+  modified_datetime : "t.modified_datetime",
+  created_by : "t.created_by",
+  modified_by : "t.modified_by",
+  sequence_no : "t.sequence_no"
+}
+
 export const validFilterColumnTypes : Record<string, string> = {
   r_number : "string",
   task_name : "string",
-  milestone_name : "string",
-  checklist_name : "string",
-  priority_name : "string",
-  status_name : "string",
-  role_name : "string",
+  milestone_rid : "string",
+  checklist_template_rid : "string",
+  priority_rid : "string",
+  status_rid : "string",
+  case_team_member_role_rid : "string",
   effective_start_datetime : "date",
   effective_end_datetime : "date",
   reminder_interval : "number",
   effort_in_days : "number",
   created_datetime : "date",
   modified_datetime : "date",
-  created_by_name : "string",
-  modified_by_name : "string",
+  created_by : "string",
+  modified_by : "string",
   sequence_no : "number"
 }
