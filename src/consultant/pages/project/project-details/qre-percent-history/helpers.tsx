@@ -22,31 +22,42 @@ export const numberOptions = [
   { option: 'Is-Empty', value: 'is_empty' },
 ];
 
-export const getQrePercentHistoryFilterFields = (): FieldConfig[] => {
+export const getQrePercentHistoryFilterFields = (
+  permissionMap: Record<string, { read: boolean; edit: boolean }>
+): FieldConfig[] => {
   return [
     {
       name: 'Sequence',
       value: 'version',
       type: 'number',
       operatorOption: numberOptions,
+      hide:
+        !permissionMap?.['version']?.edit && !permissionMap?.['version']?.read,
     },
     {
       name: 'Type',
       value: 'type',
       type: 'text',
       operatorOption: textOptions,
+      hide: !permissionMap?.['type']?.edit && !permissionMap?.['type']?.read,
     },
     {
       name: 'QRE Percent Score',
       value: 'qre_percent',
       type: 'number',
       operatorOption: numberOptions,
+      hide:
+        !permissionMap?.['qre_percent']?.edit &&
+        !permissionMap?.['qre_percent']?.read,
     },
     {
       name: 'Date',
       value: 'created_datetime',
       type: 'date',
       operatorOption: dateOptions,
+      hide:
+        !permissionMap?.['created_datetime']?.edit &&
+        !permissionMap?.['created_datetime']?.read,
     },
     {
       name: 'Sort Options',

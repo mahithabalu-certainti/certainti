@@ -306,9 +306,11 @@ export enum AllPermissions {
   CASES_OVERVIEW = 'cases_overview',
   CASES_TIMELINE = 'cases_timeline',
   CASES_VIEW_EDIT = 'cases_view_edit',
+  CASES_TEAM_VIEW_EDIT = 'case_team_view_edit',
   CASES_EXPORT = 'cases_export',
   CASES_CREATE = 'cases_create',
   CASES_DELETE = 'cases_delete',
+  QRE_PERCENT_HISTORY = 'projects_qre_history_view_edit',
 }
 
 export interface Country {
