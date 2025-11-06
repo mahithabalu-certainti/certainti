@@ -50,6 +50,7 @@ import {
   setupCaseHistorySequence,
 } from "../../models/caseHistory";
 import { CaseTeam, setupCaseTeamSequence } from "../../models/caseTeamModel";
+import { Jurisdiction } from "../../models/jurisdiction";
 import { log } from "console";
 
 class CaseSchemaService {
@@ -361,6 +362,10 @@ class CaseSchemaService {
         orgDbSequlize,
         schemaName
       );
+      const jurisdictionModel = await Jurisdiction.initialize(
+        orgDbSequlize,
+        schemaName
+      );
 
       await CaseModel.sync({ force: false });
       await setupCaseSequence(orgDbSequlize, schemaName);
@@ -372,6 +377,7 @@ class CaseSchemaService {
       await setupCaseHistorySequence(orgDbSequlize, schemaName);
       await caseTeamModel.sync({ force: false });
       await setupCaseTeamSequence(orgDbSequlize, schemaName);
+      await jurisdictionModel.sync({ force: false });
     } catch (err) {
       errorLog("Error creating case tables", (err as Error).message);
       return this.throwServiceError(err as Error);
