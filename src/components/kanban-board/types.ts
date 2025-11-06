@@ -3,16 +3,50 @@ export interface Task {
   title: string;
   description?: string;
   status: 'Done' | 'In Progress' | 'To Do';
+  priority?: 'Low' | 'Medium' | 'High';
   assignee: {
     name: string;
     initials: string;
     color: string;
   };
+  collaborators?: Array<{
+    name: string;
+    initials: string;
+    color: string;
+  }>;
+  tags?: string[];
+  startDate?: Date;
+  endDate?: Date;
+  attachments?: string[];
+  commentAttachments?: string[];
   commentCount: number;
   createdAt: Date;
-  dueDate?: Date;
-  priority: 'Low' | 'Medium' | 'High';
-  project?: string;
+  activities?: Activity[];
+  checklist?: ChecklistItem[];
+}
+
+export interface ChecklistItem {
+  id: string;
+  text: string;
+  completed: boolean;
+}
+
+export interface StatusOption {
+  id: string;
+  name: string;
+  color: string;
+}
+
+export interface PriorityOption {
+  id: string;
+  name: string;
+  color: string;
+}
+
+export interface TagOption {
+  id: string;
+  name: string;
+  color: string;
 }
 
 export interface KanbanColumn {
@@ -24,6 +58,10 @@ export interface KanbanColumn {
 
 export interface KanbanBoardProps {
   data: KanbanColumn[];
+  statusData?: StatusOption[];
+  priorityData?: PriorityOption[];
+  tagData?: TagOption[];
+  userData?: User[];
   isCreateTaskDisabled?: boolean;
   isCreateTaskHide?: boolean;
   isCreateKanbanDisabled?: boolean;
@@ -37,8 +75,11 @@ export interface TaskCardProps {
   task: Task;
   showCommentCount: boolean;
   showProfileIndicator: boolean;
-  onTaskEdit: (taskId: string, updatedTask: Partial<Task>) => void;
-  onTaskClick: (task: Task) => void;
+  onEditTask?: (taskId: string, newTitle: string) => void;
+  onTaskClick?: (task: Task) => void;
+  statusData?: StatusOption[];
+  priorityData?: PriorityOption[];
+  onTaskUpdate?: (taskId: string, updatedTask: Partial<Task>) => void;
 }
 
 export interface KanbanColumnProps {
@@ -55,8 +96,23 @@ export interface KanbanColumnProps {
   ) => void;
   onRenameColumn?: (columnId: string, newName: string) => void;
   onDeleteColumn?: (columnId: string) => void;
-  onTaskEdit: (taskId: string, updatedTask: Partial<Task>) => void;
-  onTaskClick: (task: Task) => void;
+  onEditTask?: (taskId: string, newTitle: string) => void;
+  onTaskClick?: (task: Task) => void;
+}
+
+export interface User {
+  id: string;
+  name: string;
+  initials: string;
+  color: string;
+}
+
+export interface Activity {
+  id: string;
+  user: string;
+  action: string;
+  link?: string;
+  date: string;
 }
 
 export interface TaskDetailModalProps {
@@ -64,4 +120,9 @@ export interface TaskDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   onTaskUpdate: (taskId: string, updatedTask: Partial<Task>) => void;
+  statusData?: StatusOption[];
+  priorityData?: PriorityOption[];
+  tagData?: TagOption[];
+  availableUsers?: User[];
+  activities?: Activity[];
 }
