@@ -19,6 +19,7 @@ import {
   ChecklistTemplateFormErrors,
   ChecklistTemplateFormQuestion,
   transformChecklistTemplatePayload,
+  transformToNewCreateTemplatePayload,
   getQuestionTableColumns,
   ChecklistTemplateFormTableColumn,
   ChecklistTemplateQuestionErrors,
@@ -26,9 +27,7 @@ import {
   getSelectStyles,
 } from './helper';
 import {
-  CalendarIcon,
   ChecklistIcon,
-  CloseIcon,
   ErrorInfoIcon,
   KeyContactAddIcon,
   KeyContactRemoveIcon,
@@ -38,16 +37,12 @@ import SkeletonForm from '../../../../components/form-builder/skeleton-form';
 import { formatDateToYYYYMMDDWithTime } from '../../../../common-utils';
 import {
   useChecklistTemplateDetails,
-  useCreateChecklistTemplate,
+  useCreateTemplate,
   useGetChecklistLevels,
   useGetChecklistStatus,
   useGetChecklistTypes,
   useUpdateChecklistTemplateDetails,
 } from '../../../service/checklist-templates/checklist-template-service';
-import dayjs from 'dayjs';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 
 const ChecklistTemplateForm: React.FC = () => {
   const { successToast } = useToast();
@@ -58,7 +53,6 @@ const ChecklistTemplateForm: React.FC = () => {
     checklist_name: '',
     description: '',
     status: '',
-    expires_on: '',
     questions: [
       {
         question_seq_num: 'SNO_1',
@@ -100,7 +94,7 @@ const ChecklistTemplateForm: React.FC = () => {
   const checklistTemplateStatus = useGetChecklistStatus();
   const checklistTemplateTypes = useGetChecklistTypes();
   const checklistTemplateLevels = useGetChecklistLevels();
-  const createChecklistTemplate = useCreateChecklistTemplate();
+  const createChecklistTemplate = useCreateTemplate();
   const updateChecklistTemplate = useUpdateChecklistTemplateDetails();
 
   const { data: templateData, isLoading } = useChecklistTemplateDetails(
@@ -126,12 +120,11 @@ const ChecklistTemplateForm: React.FC = () => {
     if (templateData && isEditView) {
       setFormData((prev) => ({
         ...prev,
-        checklist_level: templateData.checklist_level_rid,
-        checklist_type: templateData.checklist_type_rid,
+        // checklist_level: templateData.checklist_level_rid,
+        // checklist_type: templateData.checklist_type_rid,
         checklist_name: templateData.checklist_name,
         description: templateData.description,
         status: templateData.status_rid,
-        expires_on: templateData.expires_on,
         rid: templateData.rid,
         checklist_rid: templateData.r_number,
         created_by: templateData.created_by,
@@ -295,16 +288,17 @@ const ChecklistTemplateForm: React.FC = () => {
     if (!validateForm()) {
       return;
     }
-    const payload = transformChecklistTemplatePayload(
-      formData,
-      isEditView,
-      templateData
-    );
 
     if (isEditView && templateData) {
+      const payload = transformChecklistTemplatePayload(
+        formData,
+        isEditView,
+        templateData
+      );
       updateChecklistTemplate.mutate(payload);
     } else {
-      createChecklistTemplate.mutate(payload);
+      const newPayload = transformToNewCreateTemplatePayload(formData);
+      createChecklistTemplate.mutate(newPayload);
     }
   };
 
@@ -441,7 +435,6 @@ const ChecklistTemplateForm: React.FC = () => {
                   htmlFor='checklist_type'
                 >
                   Checklist Type
-                  <span className='text-red-500'> *</span>
                 </label>
 
                 <Select
@@ -516,7 +509,6 @@ const ChecklistTemplateForm: React.FC = () => {
                   htmlFor='checklist_level'
                 >
                   Checklist Level
-                  <span className='text-red-500'> *</span>
                 </label>
 
                 <Select
@@ -639,145 +631,6 @@ const ChecklistTemplateForm: React.FC = () => {
                 {errors?.status && (
                   <span className='text-[12px] text-red-400 col-span-full'>
                     {errors.status}
-                  </span>
-                )}
-              </div>
-
-              <div
-              // style={{
-              //   display: shouldHideField(
-              //     'expires_on',
-              //     isEditView,
-              //     permissionMap
-              //   )
-              //     ? 'none'
-              //     : 'block',
-              // }}
-              >
-                <label
-                  className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
-                  htmlFor='expires_on'
-                >
-                  Expires On
-                  <span className='text-red-500'> *</span>
-                </label>
-
-                <LocalizationProvider
-                  dateAdapter={AdapterDayjs}
-                  localeText={{
-                    fieldMonthPlaceholder: (params) =>
-                      params.contentType === 'digit' ? 'MM' : params.format,
-                  }}
-                >
-                  <DatePicker
-                    className={`placeholder:text-[13px] placeholder:text-[#425A76] placeholder:border border-[#CBD6E2] ${
-                      errors?.expires_on ? 'border-red-500 bg-[#FEF2F2]' : ''
-                    }`}
-                    minDate={dayjs('1950-01-01')}
-                    maxDate={dayjs()}
-                    value={
-                      formData.expires_on
-                        ? dayjs(formData.expires_on, 'YYYY-MM-DD')
-                        : null
-                    }
-                    format='YYYY-MMM-DD'
-                    referenceDate={dayjs()}
-                    // disabled={shouldDisableField(
-                    //   'expires_on',
-                    //   isEditView,
-                    //   permissionMap
-                    // )}
-                    onChange={(newValue) => {
-                      handleInputChange(
-                        'expires_on',
-                        newValue ? dayjs(newValue).format('YYYY-MM-DD') : ''
-                      );
-                    }}
-                    shouldDisableDate={(date) =>
-                      dayjs(date).isAfter(dayjs(), 'day')
-                    }
-                    slots={{
-                      openPickerIcon: () => (
-                        <CalendarIcon alt='calendar' className='w-4 h-4' />
-                      ),
-                      clearIcon: () => (
-                        <CloseIcon alt='calendar' className='w-2.5 h-2.5' />
-                      ),
-                    }}
-                    slotProps={{
-                      field: { clearable: true },
-                      clearButton: {
-                        tabIndex: -1, // disable tab focus for clear button
-                      },
-                      openPickerButton: {
-                        tabIndex: -1, // prevent focus on calendar icon
-                      },
-                      day: {
-                        sx: {
-                          '&.MuiPickersDay-today': {
-                            border: 'none',
-                            backgroundColor: 'inherit',
-                          },
-                        },
-                      },
-                      textField: {
-                        fullWidth: true,
-                        size: 'small',
-                        onKeyDown: (e) => {
-                          if (e.key.length === 1 && /[a-zA-Z]/.test(e.key)) {
-                            e.preventDefault();
-                          }
-                        },
-                        sx: {
-                          '& .MuiOutlinedInput-root': {
-                            height: '32px',
-                            borderRadius: '2px',
-                            '& input': {
-                              fontWeight: 400,
-                              fontSize: '13px',
-                              lineHeight: '21px',
-                              pl: '11px',
-                              '& ::placeholder': {
-                                color: '#7D98B6 !important',
-                              },
-                              color: 'black !important',
-                              WebkitTextFillColor: 'black !important',
-                              '&[value="YYYY-MM-DD"]': {
-                                color: '#7D98B6 !important',
-                                WebkitTextFillColor: '#7D98B6 !important',
-                              },
-                            },
-                            '&:hover .MuiOutlinedInput-notchedOutline': {
-                              border: errors?.expires_on
-                                ? '1px solid #ef4444'
-                                : '1px solid #CBD6E2',
-                            },
-                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                              border: errors?.expires_on
-                                ? '2px solid #ef4444'
-                                : '2px solid #60A5FA',
-                            },
-                            '& .MuiOutlinedInput-notchedOutline': {
-                              border: errors?.expires_on
-                                ? '1px solid #ef4444'
-                                : '1px solid #CBD6E2',
-                            },
-                            // Add this for disabled state
-                            '&.Mui-disabled': {
-                              backgroundColor: '#f3f4f6', // bg-gray-100
-                            },
-                          },
-                        },
-                        placeholder: 'YYYY-MMM-DD',
-                        error: !!errors?.expires_on,
-                      },
-                    }}
-                  />
-                </LocalizationProvider>
-
-                {errors?.expires_on && (
-                  <span className='text-[12px] text-red-400 col-span-full'>
-                    {errors.expires_on}
                   </span>
                 )}
               </div>

@@ -152,3 +152,26 @@ export interface ChecklistTypeApiResponse extends CommonApiResponse {
     checklistTypes: ChecklistTypeItem[];
   };
 }
+
+export interface ChecklistItemPayload {
+  checklist_item_name: string;
+  sequence_no: number;
+  description: string;
+  action_type: 'add' | 'edit' | 'delete';
+}
+
+export interface CreateTemplatePayload {
+  checklist_name: string;
+  checklist_description: string;
+  status_rid: string;
+  checklist_level_rid?: string;
+  checklist_type_rid?: string;
+  checklist_items: ChecklistItemPayload[];
+}
+
+export interface CreateTemplateResponse extends CommonApiResponse {
+  data: {
+    checklist_rid?: string;
+    message?: string;
+  };
+}

@@ -1,8 +1,5 @@
 import { useMutation, useQuery, UseQueryResult } from '@tanstack/react-query';
-import {
-  caseServiceApi,
-  interactionServiceApi,
-} from '../../../api/api';
+import { caseServiceApi, interactionServiceApi } from '../../../api/api';
 import {
   ChecklistLevelApiResponse,
   ChecklistStatusApiResponse,
@@ -13,6 +10,8 @@ import {
   ChecklistTemplateListResponse,
   ChecklistTypeApiResponse,
   ExportChecklistTemplateResponse,
+  CreateTemplatePayload,
+  CreateTemplateResponse,
 } from '../../types';
 import {
   ChecklistLevelsMockData,
@@ -161,6 +160,31 @@ export const useUpdateChecklistTemplateDetails = () => {
     Partial<ChecklistTemplateFormPayload>
   >({
     mutationFn: (body) => updateChecklistTemplateDetails({ ...body }),
+  });
+};
+
+export const getCreateTemplateUrl = (): string => {
+  return '/api/caseManagement/adminChecklist/create';
+};
+
+export const createTemplate = async (
+  body: CreateTemplatePayload
+): Promise<CreateTemplateResponse> => {
+  try {
+    const { data } = await caseServiceApi.post<CreateTemplateResponse>(
+      getCreateTemplateUrl(),
+      body
+    );
+    return data;
+  } catch (error) {
+    console.error('Error creating template:', error);
+    throw error;
+  }
+};
+
+export const useCreateTemplate = () => {
+  return useMutation<CreateTemplateResponse, Error, CreateTemplatePayload>({
+    mutationFn: (body) => createTemplate(body),
   });
 };
 

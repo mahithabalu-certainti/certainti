@@ -5,6 +5,7 @@ import {
   ChecklistTemplateQuestion,
   ChecklistTemplateQuestionPayload,
   QustionActionType,
+  CreateTemplatePayload,
 } from '../../../types';
 
 export const COMMON_SELECT_STYLES = {
@@ -56,7 +57,6 @@ export interface ChecklistTemplateFormData {
   checklist_name: string;
   description: string;
   status: string;
-  expires_on: string;
   questions: ChecklistTemplateFormQuestion[];
   rid?: string;
   checklist_rid?: string;
@@ -81,7 +81,6 @@ export interface ChecklistTemplateFormErrors {
   checklist_name?: string;
   description?: string;
   status?: string;
-  expires_on?: string;
   questions?: ChecklistTemplateQuestionErrors[];
 }
 
@@ -198,15 +197,6 @@ export const validateTemplateForm = (
     }
   }
 
-  if (!formData.checklist_level) {
-    newErrors.checklist_level = 'Field is required';
-    isValid = false;
-  }
-  if (!formData.checklist_type) {
-    newErrors.checklist_type = 'Field is required';
-    isValid = false;
-  }
-
   if (!REGEX_PATTERNS.MAX_2000.test(formData.description)) {
     newErrors.description = 'Description must be within 2000 characters';
     isValid = false;
@@ -214,11 +204,6 @@ export const validateTemplateForm = (
 
   if (!formData.status) {
     newErrors.status = 'Field is required';
-    isValid = false;
-  }
-
-  if (!formData.expires_on) {
-    newErrors.expires_on = 'Field is required';
     isValid = false;
   }
 
@@ -316,7 +301,6 @@ export const transformChecklistTemplatePayload = (
   const payload: ChecklistTemplateFormPayload = {
     checklist_name: formData.checklist_name,
     description: formData.description,
-    expires_on: formData.expires_on,
     checklist_level_rid: formData.checklist_level,
     checklist_type_rid: formData.checklist_type,
     status_rid: formData.status,
@@ -329,6 +313,32 @@ export const transformChecklistTemplatePayload = (
       checklist_rid: originalData.rid,
     };
   }
+
+  return payload;
+};
+
+export const transformToNewCreateTemplatePayload = (
+  formData: ChecklistTemplateFormData
+): CreateTemplatePayload => {
+  const payload: CreateTemplatePayload = {
+    checklist_name: formData.checklist_name,
+    checklist_description: formData.description,
+    status_rid: formData.status,
+    checklist_items: formData.questions.map((question, index) => ({
+      checklist_item_name: question.question,
+      sequence_no: index + 1,
+      description: question.question,
+      action_type: 'add' as const,
+    })),
+  };
+
+  // if (formData.checklist_level && formData.checklist_level.trim()) {
+  //   payload.checklist_level_rid = formData.checklist_level;
+  // }
+
+  // if (formData.checklist_type && formData.checklist_type.trim()) {
+  //   payload.checklist_type_rid = formData.checklist_type;
+  // }
 
   return payload;
 };
