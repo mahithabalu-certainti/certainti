@@ -26,6 +26,9 @@ status_name: String
 status_rid: String
 milestone_name: String
 milestone_template_rid: String
+task_type_rid : String
+task_type_name : String
+task_description : String
 }
 
 type finalTaskResponse {
@@ -43,6 +46,8 @@ checklist_template_rid: String
 case_team_member_role_rid: String
 effort_in_days: Int
 task_name : String
+task_type_rid : String
+task_description : String
 }
 
 type Mutation {

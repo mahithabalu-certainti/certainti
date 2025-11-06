@@ -137,7 +137,9 @@ const createTaskTemplateSchema = Joi.object({
   checklist_template_rid : Joi.string().allow("").optional(),
   status_rid : Joi.string().optional(),
   priority_rid : Joi.string().allow("").optional(),
-  milestone_template_rid : Joi.string().optional()
+  milestone_template_rid : Joi.string().optional(),
+  task_type_rid : Joi.string().allow("").optional(),
+  task_description : Joi.string().allow("").optional()
 });
 
 const updateTaskTemplateSchema = Joi.object({
@@ -151,7 +153,9 @@ const updateTaskTemplateSchema = Joi.object({
   checklist_template_rid : Joi.string().allow("").optional(),
   status_rid : Joi.string().optional(),
   priority_rid : Joi.string().allow("").optional(),
-  milestone_template_rid : Joi.string().optional()
+  milestone_template_rid : Joi.string().optional(),
+  task_type_rid : Joi.string().allow("").optional(),
+  task_description : Joi.string().allow("").optional()
 });
 export {
   createCaseSchema,

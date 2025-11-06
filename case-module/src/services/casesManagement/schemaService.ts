@@ -527,7 +527,7 @@ class CaseManagementSchemaService {
       checklist_template_rid : data.checklist_template_rid,
       status_rid : data.status_rid,
       priority_rid : data.priority_rid,
-      task_type : "Milestone",
+      task_type_rid : data.task_type_rid,
       milestone_template_rid : data.milestone_template_rid
     })
     return {

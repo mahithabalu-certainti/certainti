@@ -804,7 +804,9 @@ export const validColumnsForSortFilters : Record<string, string> = {
   modified_datetime : "t.modified_datetime",
   created_by_name : "CONCAT(u.first_name,' ', u.last_name)",
   modified_by_name : "CONCAT(uu.first_name,' ', uu.last_name)",
-  sequence_no : "t.sequence_no"
+  sequence_no : "t.sequence_no",
+  task_type_name : "tt.task_type_name",
+  task_description : "t.task_description"
 }
 
 export const validColumnsForFilters : Record<string, string> = {
@@ -823,7 +825,9 @@ export const validColumnsForFilters : Record<string, string> = {
   modified_datetime : "t.modified_datetime",
   created_by : "t.created_by",
   modified_by : "t.modified_by",
-  sequence_no : "t.sequence_no"
+  sequence_no : "t.sequence_no",
+  task_type_rid : "t.task_type_rid",
+  task_description : "t.task_description"
 }
 
 export const validFilterColumnTypes : Record<string, string> = {
@@ -842,5 +846,7 @@ export const validFilterColumnTypes : Record<string, string> = {
   modified_datetime : "date",
   created_by : "string",
   modified_by : "string",
-  sequence_no : "number"
+  sequence_no : "number",
+  task_type_rid : "string",
+  task_description : "string"
 }
