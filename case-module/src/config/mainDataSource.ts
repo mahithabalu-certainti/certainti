@@ -61,29 +61,19 @@ export async function initMainDbSequelize() {
     if (sequelize) {
       return sequelize;
     }
-    const { DB_NAME, DB_USER, DB_PASSWORD, DB_HOST } = await getAzureSecrets();
-
-    if (!DB_NAME || !DB_USER || !DB_PASSWORD || !DB_HOST) {
-      throw new Error("One or more required database secrets are missing.");
-    }
-
-    sequelize = new Sequelize(
-      DB_NAME,
-      DB_USER,
-      DB_PASSWORD,
+// const { DB_NAME, DB_USER, DB_PASSWORD, DB_HOST } = await getAzureSecrets();
+    // if (!DB_NAME || !DB_USER || !DB_PASSWORD || !DB_HOST) {
+    //   throw new Error("One or more required database secrets are missing.");
+    // }
+sequelize = new Sequelize(
+      "thinkrd365_main",
+      "adminUser",
+      "Foyi2*4hk0b1F@uN",
       {
-        host: DB_HOST,
+        host: "development-thinkrd365-psqlserver-centralus-main.postgres.database.azure.com",
         dialect: "postgres",
         port: 5432,
-        logging: env !== "production" ? (sql: string, timing?: any) => {
-          const cleanedSql = sql.replace(/\n\s*/g, ' ').replace(/\s+/g, ' ').trim();
-          logMessage(`[SQL Query] ${JSON.stringify({
-            query: cleanedSql,
-            timestamp: new Date().toISOString(),
-            timing: timing !== undefined ? `${timing}ms` : 'N/A'
-          })}`);
-        } : false,
-        benchmark: env !== "production",
+        logging: env !== "production",
         define: {
           freezeTableName: true,
           timestamps: false,
@@ -94,7 +84,7 @@ export async function initMainDbSequelize() {
             rejectUnauthorized: false,
           },
         },
-      }
+      },
     );
     await sequelize.authenticate();
     logMessage("Database connection established successfully.");

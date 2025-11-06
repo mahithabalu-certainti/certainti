@@ -122,40 +122,42 @@ const jurisdictionSchema = Joi.object({
   is_state_level: Joi.boolean().required(),
   is_federal_level: Joi.boolean().required(),
   states: Joi.array()
-    .items(Joi.string().trim().optional ())
-    .optional(), // We'll handle requirement manually in custom()
+    .items(Joi.string().trim().optional())
+    .optional(),
 })
-  // Custom validation
   .custom((value, helpers) => {
     const { is_state_level, is_federal_level, states } = value;
 
-    // Rule 1: Only one level should be true
-    if (is_state_level === is_federal_level) {
-      return helpers.error("any.invalidCombination");
+    // Both cannot be false
+    if (!is_state_level && !is_federal_level) {
+      return helpers.error("any.bothFalse");
     }
 
-    // Rule 2: If state level is true → must have at least one state
+    // If state level is true → states must contain at least one
     if (is_state_level) {
       if (!Array.isArray(states) || states.length === 0) {
         return helpers.error("any.missingStates");
       }
     }
 
-    // Rule 3: If federal level → states should be absent or empty
-    if (is_federal_level && states && states.length > 0) {
-      return helpers.error("any.statesNotAllowed");
+    // If state level is false → states must be empty or undefined
+    if (!is_state_level) {
+      if (Array.isArray(states) && states.length > 0) {
+        return helpers.error("any.statesNotAllowed");
+      }
     }
 
     return value;
   })
   .messages({
-    "any.invalidCombination":
-      "Either is_state_level or is_federal_level must be true, but not both.",
-    "any.missingStates": "States must contain at least one value when state level is true.",
-    "any.statesNotAllowed": "States are not allowed when federal level is true.",
+    "any.bothFalse":
+      "At least one of is_state_level or is_federal_level must be true.",
+    "any.missingStates":
+      "States must contain at least one value when state level is true.",
+    "any.statesNotAllowed":
+      "States are not allowed when state level is false.",
     "any.required": "{{#label}} is required",
   });
-
 
 const listAdminCheckListSchema = Joi.object({
  page: Joi.string().optional().pattern(/^[0-9]+$/),
