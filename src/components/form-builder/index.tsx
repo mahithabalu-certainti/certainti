@@ -1201,6 +1201,16 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 },
                 '&.Mui-disabled': {
                   backgroundColor: '#f3f4f6',
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    border: field.error
+                      ? '1px solid #ef4444 !important'
+                      : '1px solid #CBD6E2 !important',
+                    opacity: 1,
+                  },
+                  '& .MuiSelect-select': {
+                    color: '#7D98B6',
+                    WebkitTextFillColor: '#7D98B6',
+                  },
                 },
                 '& .MuiOutlinedInput-notchedOutline': {
                   border: field.error
@@ -1917,7 +1927,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           // Validate required fields
           if (field.required && !hasValue) {
             hasError = true;
-            return { ...field, error: 'Field is required' };
+            return {
+              ...field,
+              error: field.requiredErrorMessage || 'Field is required',
+            };
           }
 
           if (field.type === 'file' && logo) {

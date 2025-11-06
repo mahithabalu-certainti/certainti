@@ -226,19 +226,19 @@ const Cases: React.FC<CaseProps> = ({
 
   const headerButtons = [
     {
-      label: 'Show/Hide Fields',
-      variant: 'outlined' as const,
-      disabled: false,
-      onClick: handleColumnVisibility,
-      sx: { width: '125px', minWidth: '125px' },
-    },
-    {
       label: 'New',
       variant: 'outlined' as const,
       disabled: accountInActive,
       onClick: () => handlCreateNewCase(),
       sx: { width: '48px', minWidth: '48px' },
       hide: !isCaseCreateEnable,
+    },
+    {
+      label: 'Show/Hide Fields',
+      variant: 'outlined' as const,
+      disabled: false,
+      onClick: handleColumnVisibility,
+      sx: { width: '125px', minWidth: '125px' },
     },
   ];
 
