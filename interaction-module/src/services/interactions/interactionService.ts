@@ -840,13 +840,13 @@ export class InteractionService {
                   account_name: accountName,
                 };
                 recipient = {
-                  name: fetchInteractionDetails.recipient_name,
-                  email: fetchInteractionDetails.recipient_email,
+                  name: fetchProfSerConsultantId[0][0].key_contact_name,
+                  email: fetchProfSerConsultantId[0][0].key_contact_email,
                 };
               } else {
                 recipient = {
-                  name: fetchInteractionDetails.recipient_name,
-                  email: fetchInteractionDetails.recipient_email,
+                  name: fetchProfSerConsultantId[0][0].key_contact_name,
+                  email: fetchProfSerConsultantId[0][0].key_contact_email,
                 };
                 account = {
                   account_name: accountName,
