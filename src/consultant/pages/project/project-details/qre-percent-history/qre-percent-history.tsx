@@ -42,7 +42,6 @@ const QrePercentHistory = ({
 }: QrePercentHistoryProps) => {
   const { permission } = useSelector((state: RootState) => state.permission);
 
-  // Fix: Check permission instead of module
   const qrePercentHistoryView = checkPermission(
     permission,
     AllPermissions.QRE_PERCENT_HISTORY
@@ -53,7 +52,7 @@ const QrePercentHistory = ({
     () =>
       permission.find(
         (item) => item.name === AllPermissions.QRE_PERCENT_HISTORY
-      )?.fields ?? [], // Use the correct permission constant
+      )?.fields ?? [],
     [permission]
   );
   const permissionMap = useMemo(() => {
@@ -209,7 +208,7 @@ const QrePercentHistory = ({
   const handlePopoverClose = () => {
     setColumnAnchorEl(null);
   };
-  const filterFields = getQrePercentHistoryFilterFields();
+  const filterFields = getQrePercentHistoryFilterFields(permissionMap);
   const modalId = isModalOpen ? 'qre-percent-history' : undefined;
   if (!qrePercentHistoryView) {
     return <AccessRestricted />;
