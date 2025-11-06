@@ -1,4 +1,4 @@
-import { AdminTaskTemplatePayloadType, CreateTaskTemplateType, ICreateCases, ICreateCaseTeam, ICreateChecklist, UpdateTaskTemplateType } from "../../utils/types";
+import { AdminTaskTemplatePayloadType, CreateTaskTemplateType, ICreateCases, ICreateCaseTeam, ICreateChecklist, ICreateChecklistTemplate, UpdateTaskTemplateType } from "../../utils/types";
 
 export interface ICaseService {
   createCase(
@@ -96,13 +96,22 @@ export interface ICaseService {
     errorMessage?: string;
     data?: { users: any };
   }>;
+  createCheckList(
+    checklistRequest: ICreateChecklist,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { checklist: any };
+  }>;
 
   exportAssignedProjects (data : any) : Promise<any>
 }
 
 export interface ICaseManagementService {
     createAdminCheckList(
-    checklistRequest: ICreateChecklist,
+    checklistRequest: ICreateChecklistTemplate,
     userId: string
   ): Promise<{
     statusCode: number;

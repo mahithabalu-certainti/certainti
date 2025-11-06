@@ -98,5 +98,10 @@ routes.get(
   checkUserStatusMiddleware("NA"),
   controller.caseController.listUsersForCaseTeam
 );
+routes.post(
+  "/checklist/create",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.createCheckList
+);
 
 export default routes;

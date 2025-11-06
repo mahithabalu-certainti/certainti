@@ -13,6 +13,7 @@ import {
   FilingType,
   ICreateCases,
   ICreateCaseTeam,
+  ICreateChecklist,
 } from "../../utils/types";
 import { isValidTimezone, logMessage } from "../../utils/helpers";
 import {
@@ -1462,5 +1463,97 @@ export class CaseService {
       throw this.throwServiceError(err as Error);
     }
   }
+
+  /**
+     * Creates a new admin checklist with associated checklist items within a database transaction.
+     *
+     * @param {ICreateChecklist} caseRequest - The checklist data including template information and checklist items to create
+     * @param {string} userId - The ID of the user creating the checklist (will be set as created_by)
+     *
+     * @returns {Promise<{
+     *   statusCode: number;
+     *   message: string;
+     *   errorMessage?: string;
+     *   data?: { checklist: any };
+     * }>} - Result of the creation process with status code, message, and checklist data if successful
+     *
+     * @description
+     * This method performs the following operations within a database transaction:
+     * - Initializes a database transaction for atomic operations
+     * - Sets the created_by field to the provided userId
+     * - Creates the admin checklist record using the schema service
+     * - Creates associated checklist items linked to the new checklist
+     * - Commits the transaction on success or rolls back on any error
+     * - Returns success response with checklist data or error response with details
+     * - Logs errors and ensures proper transaction cleanup
+     */
+  
+    async createCheckList(
+      caseRequest: ICreateChecklist,
+      userId: string
+    ): Promise<{
+      statusCode: number;
+      message: string;
+      errorMessage?: string;
+      data?: { checklist: any };
+    }> {
+      // Initialize database connection and start transaction for atomic operations
+      const dbInit = await this.caseModelService.getSequelize();
+      const transaction = await dbInit.transaction();
+      try {
+        // Set the user who is creating this checklist
+        const { accountNumber } =
+        await this.caseSchemaService.fetchValidAccountNumberById(
+          caseRequest.account_rid
+        );
+
+      if (!accountNumber) {
+        logMessage(`Invalid account ID ${caseRequest.account_rid}`);
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: "Invalid account ID",
+        };
+      }
+        caseRequest.created_by = userId;
+  
+        // Create the main admin checklist record
+        const response =
+          await this.caseSchemaService.createCheckList(
+            accountNumber,
+            caseRequest,
+            transaction
+          );
+  
+        // If checklist creation was successful, manage associated checklist items (add/edit/delete)
+        if (response) {
+          await this.caseSchemaService.manageCheckListItems(
+            accountNumber,
+            caseRequest,
+            response.rid,
+            transaction
+          );
+        }
+  
+        // Commit the transaction after all operations succeed
+        await transaction.commit();
+  
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          message: STATUS_MESSAGE.adminChecklistCreated,
+          data: {
+            checklist: response,
+          },
+        };
+      } catch (err) {
+        logMessage(`Error creating admin checklist: ${err}`);
+        await transaction.rollback();
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: STATUS_MESSAGE.adminChecklistFailed,
+        };
+      }
+    }
 
 }

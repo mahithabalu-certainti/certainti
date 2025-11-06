@@ -1,6 +1,6 @@
 import { Op, Sequelize, Transaction } from "sequelize";
 import { CaseModelService } from "../caseModelsService";
-import { CreateTaskTemplateType, filterType, ICreateChecklist, ICreateChecklistItem, UpdateTaskTemplateType } from "../../utils/types";
+import { CreateTaskTemplateType, filterType, ICreateChecklistTemplate, ICreateChecklistItemTemplate, UpdateTaskTemplateType } from "../../utils/types";
 import { buildDatetimeFilterCondition, buildNumericFilterCondition, buildStringFilterCondition, errorLog, logMessage } from "../../utils/helpers";
 import { HttpStatus, STATUS_MESSAGE, filtersColumnsForCaseSummary, filterTypesForCaseSummary, filterTypesForAdminCheckList, filtersColumnsForAdminCheckList, rawQueries } from "../../utils/constants";
 import { listAllCheckList } from "../../utils/rawQueries";
@@ -19,7 +19,7 @@ import { listAllCheckList } from "../../utils/rawQueries";
 async function addChecklistItem(
   AdminCheckListItem: any,
   checklistTemplateRid: string,
-  item: ICreateChecklistItem,
+  item: ICreateChecklistItemTemplate,
   createdBy: string,
   transaction: Transaction
 ) {
@@ -52,7 +52,7 @@ async function addChecklistItem(
 async function editChecklistItem(
   AdminCheckListItem: any,
   checklistTemplateRid: string,
-  item: ICreateChecklistItem,
+  item: ICreateChecklistItemTemplate,
   createdBy: string,
   transaction: Transaction
 ) {
@@ -111,7 +111,7 @@ async function editChecklistItem(
 async function deleteChecklistItem(
   AdminCheckListItem: any,
   checklistTemplateRid: string,
-  item: ICreateChecklistItem,
+  item: ICreateChecklistItemTemplate,
   transaction: Transaction
 ) {
   // Find the item to delete
@@ -147,7 +147,7 @@ async function deleteChecklistItem(
 async function processChecklistItemByAction(
   AdminCheckListItem: any,
   checklistTemplateRid: string,
-  item: ICreateChecklistItem,
+  item: ICreateChecklistItemTemplate,
   createdBy: string,
   transaction: Transaction
 ) {
@@ -197,7 +197,7 @@ class CaseManagementSchemaService {
     this.caseModelService = new CaseModelService();
   }
   async createAdminCheckList(
-    caseRequest: ICreateChecklist,
+    caseRequest: ICreateChecklistTemplate,
     transaction: Transaction
   ) {
     // Implementation for creating checklist in the database
@@ -291,7 +291,7 @@ class CaseManagementSchemaService {
   }
 
   async manageAdminCheckListItems(
-    checklistReq: ICreateChecklist,
+    checklistReq: ICreateChecklistTemplate,
     checklistTemplateRid: string,
     transaction: Transaction
   ): Promise<any[]> {

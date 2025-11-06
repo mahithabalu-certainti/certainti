@@ -5,7 +5,7 @@ import { CaseManagementSchemaService } from "./schemaService";
 import { HttpStatus, rawQueries, STATUS_MESSAGE } from "../../utils/constants";
 import { logMessage, setTaskTemplateData } from "../../utils/helpers";
 import CaseSchemaService from "../cases/schemaService";
-import { AdminTaskTemplatePayloadType, AdminTaskTemplateResponseTypes, checkListTypes, CreateTaskTemplateType, ICreateChecklist, MilestoneTypes, priorityTypes, UpdateTaskTemplateType } from "../../utils/types";
+import { AdminTaskTemplatePayloadType, AdminTaskTemplateResponseTypes, checkListTypes, CreateTaskTemplateType, ICreateChecklist, ICreateChecklistTemplate, MilestoneTypes, priorityTypes, UpdateTaskTemplateType } from "../../utils/types";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { fetchAdminTemplates } from "../../utils/rawQueries";
 
@@ -68,7 +68,7 @@ export class CaseManagementService {
    */
 
   async createAdminCheckList(
-    caseRequest: ICreateChecklist,
+    caseRequest: ICreateChecklistTemplate,
     userId: string
   ): Promise<{
     statusCode: number;
