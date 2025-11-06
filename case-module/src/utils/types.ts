@@ -267,7 +267,7 @@ export type CreateTaskTemplateType = {
   checklist_template_rid : string,
   status_rid : string,
   priority_rid : string,
-  task_type: string,
+  task_type_rid: string,
   milestone_template_rid : string
 }
 
@@ -304,7 +304,7 @@ export type UpdateTaskTemplateType = {
   checklist_template_rid : string,
   status_rid : string,
   priority_rid : string,
-  task_type: string,
+  task_type_rid: string,
   milestone_template_rid : string
 }
 
@@ -342,4 +342,9 @@ export type AdminTaskTemplatePayloadType = {
   filter : FilterType,
   sort : string,
   sort_by : string
+}
+
+export type TaskType = {
+  rid : string,
+  task_type_name : string
 }

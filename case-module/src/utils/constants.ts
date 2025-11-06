@@ -104,6 +104,7 @@ export const STATUS_MESSAGE = {
   jurisdictionFetchedSuccess: "Jurisdiction configuration fetched successfully",
   jurisdictionFetchedFailed: "Failed to fetch jurisdiction configuration",
   jurisdictionNotFound: "No jurisdiction configuration found for this case",
+  taskTypeFetchedSuccess : "Task Type fetched successfully"
 
 };
 
@@ -718,7 +719,10 @@ export const rawQueries = {
   updateTaskTemplate(data: string[], rid: string) {
     let query = `UPDATE ${MAIN_SCHEMA_NAME}.task_template SET ${data.map((d: any) => d).join(',')} WHERE rid = '${rid}'`
     return query;
-  }
+  },
+  getTaskType() {
+    return `SELECT rid, task_type_name FROM ${MAIN_SCHEMA_NAME}.task_type ORDER BY task_type_name ASC`
+  },
 };
 
 const keyContactRole = {
@@ -799,23 +803,25 @@ export const filtersColumnsForAdminCheckList: Record<string, string> = {
 
 };
 
-export const validColumnsForSortFilters: Record<string, string> = {
-  r_number: "t.r_number",
-  task_name: "t.task_name",
-  milestone_name: "m.milestone_name",
-  checklist_name: "c.checklist_name",
-  priority_name: "p.priority_name",
-  status_name: "s.status_name",
-  role_name: "r.role_name",
-  effective_start_datetime: "t.effective_start_datetime",
-  effective_end_datetime: "t.effective_end_datetime",
-  reminder_interval: "t.reminder_interval",
-  effort_in_days: "t.effort_in_days",
-  created_datetime: "t.created_datetime",
-  modified_datetime: "t.modified_datetime",
-  created_by_name: "CONCAT(u.first_name,' ', u.last_name)",
-  modified_by_name: "CONCAT(uu.first_name,' ', uu.last_name)",
-  sequence_no: "t.sequence_no"
+export const validColumnsForSortFilters : Record<string, string> = {
+  r_number : "t.r_number",
+  task_name : "t.task_name",
+  milestone_name : "m.milestone_name",
+  checklist_name : "c.checklist_name",
+  priority_name : "p.priority_name",
+  status_name : "s.status_name",
+  role_name : "r.role_name",
+  effective_start_datetime : "t.effective_start_datetime",
+  effective_end_datetime : "t.effective_end_datetime",
+  reminder_interval : "t.reminder_interval",
+  effort_in_days : "t.effort_in_days",
+  created_datetime : "t.created_datetime",
+  modified_datetime : "t.modified_datetime",
+  created_by_name : "CONCAT(u.first_name,' ', u.last_name)",
+  modified_by_name : "CONCAT(uu.first_name,' ', uu.last_name)",
+  sequence_no : "t.sequence_no",
+  task_type_name : "tt.task_type_name",
+  task_description : "t.task_description"
 }
 
 export const validColumnsForFilters : Record<string, string> = {
@@ -834,7 +840,9 @@ export const validColumnsForFilters : Record<string, string> = {
   modified_datetime : "t.modified_datetime",
   created_by : "t.created_by",
   modified_by : "t.modified_by",
-  sequence_no : "t.sequence_no"
+  sequence_no : "t.sequence_no",
+  task_type_rid : "t.task_type_rid",
+  task_description : "t.task_description"
 }
 
 export const validFilterColumnTypes : Record<string, string> = {
@@ -853,5 +861,7 @@ export const validFilterColumnTypes : Record<string, string> = {
   modified_datetime : "date",
   created_by : "string",
   modified_by : "string",
-  sequence_no : "number"
+  sequence_no : "number",
+  task_type_rid : "string",
+  task_description : "string"
 }
