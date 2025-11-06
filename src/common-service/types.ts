@@ -204,7 +204,6 @@ export enum AllModules {
   INTERACTION_TEMPLATES = 'interaction_templates',
   EMAIL_TEMPLATES = 'email_templates',
   CASES = 'cases',
-  QRE_PERCENT_HISTORY = 'projects_qre_history_view_edit',
 }
 
 export enum AllPermissions {
@@ -311,6 +310,7 @@ export enum AllPermissions {
   CASES_EXPORT = 'cases_export',
   CASES_CREATE = 'cases_create',
   CASES_DELETE = 'cases_delete',
+  QRE_PERCENT_HISTORY = 'projects_qre_history_view_edit',
 }
 
 export interface Country {

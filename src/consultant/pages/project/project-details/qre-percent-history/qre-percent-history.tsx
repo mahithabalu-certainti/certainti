@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
-import { AllModules, AllPermissions } from '../../../../../common-service';
+import { AllPermissions } from '../../../../../common-service';
 import { QrePercentHistoryItem } from '../../../../types/qre-percent-history';
 import { useGetQrePercentHistory } from '../../../../services/qre-percent-history/qre-percent-history';
 import { BUTTON_STYLES } from '../../../../../admin/pages/manage-user-detail/styles';
@@ -40,17 +40,20 @@ const QrePercentHistory = ({
   accountID,
   projectID,
 }: QrePercentHistoryProps) => {
-  const { modules, permission } = useSelector(
-    (state: RootState) => state.permission
-  );
+  const { permission } = useSelector((state: RootState) => state.permission);
+
+  // Fix: Check permission instead of module
   const qrePercentHistoryView = checkPermission(
-    modules,
-    AllModules.QRE_PERCENT_HISTORY
+    permission,
+    AllPermissions.QRE_PERCENT_HISTORY
   );
+
+  console.log(permission);
   const qrePercentHistoryFields = useMemo(
     () =>
-      permission.find((item) => item.name === AllModules.QRE_PERCENT_HISTORY)
-        ?.fields ?? [],
+      permission.find(
+        (item) => item.name === AllPermissions.QRE_PERCENT_HISTORY
+      )?.fields ?? [], // Use the correct permission constant
     [permission]
   );
   const permissionMap = useMemo(() => {
@@ -208,7 +211,6 @@ const QrePercentHistory = ({
   };
   const filterFields = getQrePercentHistoryFilterFields();
   const modalId = isModalOpen ? 'qre-percent-history' : undefined;
-
   if (!qrePercentHistoryView) {
     return <AccessRestricted />;
   }
