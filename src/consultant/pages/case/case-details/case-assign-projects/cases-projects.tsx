@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { InteractionDetailIcon } from '../../../../../assets';
-import { SectionTabPanel } from '../../../../../components';
+import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import {
   AllPermissions,
   OverviewTabs,
@@ -9,7 +9,7 @@ import {
 } from '../../../../../common-service';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import SelectProjects from './select-project/select-projects';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { AssignProject } from '../../../../types/assign-projects';
 import { selectProjectFilterFields } from './select-project/helper';
 import { useFetchClassification } from '../../../../services/account';
@@ -22,6 +22,11 @@ import { getSelectProjectColumns } from './select-project/column';
 import AssignedProjects from './assigned-projects/assigned-projects';
 import { getAssignedProjectColumns } from './assigned-projects/column';
 import { assignedProjectFilterFields } from './assigned-projects/helper';
+import ReviewProjectsList from './review-projects/review-project';
+import {
+  useAssignProjects,
+  useRemoveProjects,
+} from '../../../../services/cases-assign-projects/assign-project-service';
 
 const InteractionsTabs: OverviewTabs[] = [
   {
@@ -38,6 +43,7 @@ const InteractionsTabs: OverviewTabs[] = [
 ];
 
 const CasesProjects: React.FC = () => {
+  const { caseId } = useParams();
   const [refreshTrigger, setRefreshTrigger] = useState<number>(Date.now());
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, string | number | boolean | string[]>
@@ -57,23 +63,100 @@ const CasesProjects: React.FC = () => {
   const Classification = useFetchClassification();
   const statusOptions = useGetStatus();
   const projectTypeOptions = useGetProjectType();
+
+  const assignProjectList = useAssignProjects();
+  const removeProjectList = useRemoveProjects();
+  const onRefreshClick = () => {
+    setRefreshTrigger(Date.now());
+  };
+  const handletoAssignprojects = () => {
+    const payload = {
+      account_rid: searchParams.get('accountID') ?? '',
+      case_rid: caseId ?? '',
+      projects: selectedRows.map((item) => ({
+        project_rid: item.project_rid,
+        project_fiscal_rid: item.rid,
+        project_group: item.project_group ?? '',
+      })),
+    };
+    assignProjectList.mutate(payload, {
+      onSuccess: (response) => {
+        if (response?.statusCode === 200) {
+          onRefreshClick();
+          setSelectedRows([]);
+        }
+      },
+    });
+    onRefreshClick();
+  };
+
+  const handleRemoveProjects = () => {
+    const payload = {
+      account_rid: searchParams.get('accountID') ?? '',
+      case_rid: caseId ?? '',
+      projects: selectedRows.map((item) => ({
+        project_rid: item.project_rid,
+        project_fiscal_rid: item.rid,
+        project_group: item.project_group ?? '',
+      })),
+    };
+    removeProjectList.mutate(payload, {
+      onSuccess: (response) => {
+        if (response?.statusCode === 200) {
+          onRefreshClick();
+          setSelectedRows([]);
+        }
+      },
+    });
+  };
+  const updateSearchParams = (callback: (params: URLSearchParams) => void) => {
+    const newParams = new URLSearchParams(searchParams);
+    callback(newParams);
+    navigate({ search: newParams.toString() }, { replace: true });
+  };
   const handleAssignProject = () => {
-    searchParams.set('assignProject', 'true');
-    navigate({ search: searchParams.toString() }, { replace: true });
+    updateSearchParams((params) =>
+      params.set('assignProject', 'assigned_to_list')
+    );
   };
-  const handletoAssignprojects = () => {};
-  const handleRemoveProjects = () => {};
+
   const handleBackToAssignedProjects = () => {
-    searchParams.delete('assignProject');
-    navigate({ search: searchParams.toString() }, { replace: true });
+    updateSearchParams((params) => params.delete('assignProject'));
   };
+
   const handleColumnVisibility = (
     event: React.MouseEvent<HTMLButtonElement>
   ) => {
     setColumnAnchorEl(event.currentTarget);
   };
-  const isAssignProject = searchParams.get('assignProject') === 'true';
-  console.log('selectedRows', selectedRows);
+  const isAssignProject = searchParams.get('assignProject');
+  const initialTab = 'assign_projects';
+
+  useEffect(() => {
+    if (
+      !searchParams.get('tab') &&
+      searchParams.get('list') === 'caseProjects'
+    ) {
+      searchParams.set('tab', initialTab);
+      navigate({ search: searchParams.toString() }, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const tabParam = searchParams.get('tab') || initialTab;
+  const handleTabChange = (value: string) => {
+    searchParams.set('tab', value);
+    navigate({ search: searchParams.toString() }, { replace: true });
+  };
+
+  const tabs = [
+    { label: 'Assign Projects', value: 'assign_projects' },
+    {
+      label: 'Review Projects',
+      value: 'review_projects',
+    },
+  ];
+
   const headerButtons = [
     {
       label: isAssignProject ? 'Assign' : 'Remove',
@@ -81,8 +164,9 @@ const CasesProjects: React.FC = () => {
       disabled: selectedRows.length === 0,
       onClick: () =>
         isAssignProject ? handletoAssignprojects() : handleRemoveProjects(),
-      sx: { width: '120px', minWidth: '120px' },
-      hide: false,
+      sx: { width: '80px', minWidth: '80px' },
+      hide: tabParam === 'assign_projects' ? false : true,
+      loading: assignProjectList.isPending || removeProjectList.isPending,
     },
     {
       label: isAssignProject ? 'Back to Assigned Projects' : 'Assign Projects',
@@ -92,8 +176,11 @@ const CasesProjects: React.FC = () => {
         isAssignProject
           ? handleBackToAssignedProjects()
           : handleAssignProject(),
-      sx: { width: '180px', minWidth: '120px' },
-      hide: false,
+      sx: {
+        width: isAssignProject ? '180px' : '130px',
+        minWidth: isAssignProject ? '180px' : '130px',
+      },
+      hide: tabParam === 'assign_projects' ? false : true,
     },
     {
       label: 'Show/Hide Fields',
@@ -103,10 +190,7 @@ const CasesProjects: React.FC = () => {
       sx: { width: '125px', minWidth: '125px' },
     },
   ];
-
-  const onRefreshClick = () => {
-    setRefreshTrigger(Date.now());
-  };
+  console.log(selectedRows);
   const handleFilter = () => {
     setShowFilter(!showFilter);
   };
@@ -265,29 +349,43 @@ const CasesProjects: React.FC = () => {
         showItemCount={true}
         buttons={headerButtons}
       />
-      <div className='border border-[#CBD6E2]'>
-        {isAssignProject ? (
-          <SelectProjects
+      <SectionHeaderTab
+        tabs={tabs}
+        onTabChange={handleTabChange}
+        defaultValue={tabParam}
+      />
+      {tabParam === 'assign_projects' ? (
+        <div className='border border-[#CBD6E2] border-t-0'>
+          {isAssignProject ? (
+            <SelectProjects
+              accountInActive={false}
+              refreshTrigger={refreshTrigger}
+              setSelectedRows={setSelectedRows}
+              currentPage={currentPage}
+              setCurrentPage={setCurrentPage}
+              visibleColumns={visibleColumns}
+              searchText={searchText}
+            />
+          ) : (
+            <AssignedProjects
+              accountInActive={false}
+              refreshTrigger={refreshTrigger}
+              setSelectedRows={setSelectedRows}
+              currentPage={currentPage}
+              setCurrentPage={setCurrentPage}
+              visibleColumns={visibleColumns}
+              searchText={searchText}
+            />
+          )}
+        </div>
+      ) : (
+        <div className='border border-[#CBD6E2] border-t-0'>
+          <ReviewProjectsList
             accountInActive={false}
-            refreshTrigger={refreshTrigger}
-            setSelectedRows={setSelectedRows}
-            currentPage={currentPage}
-            setCurrentPage={setCurrentPage}
             visibleColumns={visibleColumns}
-            searchText={searchText}
           />
-        ) : (
-          <AssignedProjects
-            accountInActive={false}
-            refreshTrigger={refreshTrigger}
-            setSelectedRows={setSelectedRows}
-            currentPage={currentPage}
-            setCurrentPage={setCurrentPage}
-            visibleColumns={visibleColumns}
-            searchText={searchText}
-          />
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

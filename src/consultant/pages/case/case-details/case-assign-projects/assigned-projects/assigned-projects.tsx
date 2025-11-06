@@ -24,7 +24,7 @@ const AssignedProjects: React.FC<AssignedProjectsProps> = ({
   visibleColumns,
   searchText,
 }) => {
-  const { caseID } = useParams();
+  const { caseId } = useParams();
   const [searchParams] = useSearchParams();
   const [rowsPerPage, setRowsPerPage] = useState(100);
   const [sortField, setSortField] = useState<string>('project_type_name');
@@ -39,7 +39,7 @@ const AssignedProjects: React.FC<AssignedProjectsProps> = ({
       sort_by: sortBy,
       search: searchText,
       filter: {},
-      case_rid: caseID,
+      case_rid: caseId,
       account_rid: accountID, // Replace with the actual account_rid
       fiscal_year: 2024,
     },

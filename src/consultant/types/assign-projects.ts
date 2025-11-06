@@ -49,3 +49,13 @@ export interface assignProjectsListResponse {
     projects: AssignProject[];
   };
 }
+export type AssignProjectList = {
+  project_rid: string;
+  project_fiscal_rid: string;
+  project_group: string;
+};
+export interface AssignProjectsParams {
+  account_rid: string;
+  case_rid: string;
+  projects: AssignProjectList[];
+}

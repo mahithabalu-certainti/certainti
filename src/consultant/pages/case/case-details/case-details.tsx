@@ -98,7 +98,7 @@ export const CaseDetails = () => {
             <CaseTeam />
           </div>
         );
-      case 'assignProjects':
+      case 'caseProjects':
         return (
           <div>
             <CasesProjects />
@@ -144,20 +144,6 @@ export const CaseDetails = () => {
         icon: CasesIcon,
       },
       {
-        name: 'Assign Projects',
-        key: 'assignProjects',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS, // ADD PERMISSION FOR CASES
-        disabled: false,
-        icon: ProjectsSideIcon,
-      },
-      {
-        name: 'Review Projects',
-        key: 'reviewProjects',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS, // ADD PERMISSION FOR CASES
-        disabled: false,
-        icon: ProjectsSideIcon,
-      },
-      {
         name: 'Case Projects',
         key: 'caseProjects',
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
@@ -200,13 +186,6 @@ export const CaseDetails = () => {
         icon: TechSummaryIcon,
       },
       {
-        name: 'Financial Workings',
-        key: 'financialWorkings',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS,
-        disabled: false,
-        icon: FinancialIcon,
-      },
-      {
         name: 'RD Credit Forms',
         key: 'rd_credit_forms',
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
@@ -219,13 +198,6 @@ export const CaseDetails = () => {
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
         icon: DetailsIcon,
-      },
-      {
-        name: 'Case Review',
-        key: 'caseReview',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS,
-        disabled: false,
-        icon: CasesIcon,
       },
       {
         name: 'Activities',

@@ -1,14 +1,18 @@
-import { useQuery, UseQueryResult } from '@tanstack/react-query';
+import { useMutation, useQuery, UseQueryResult } from '@tanstack/react-query';
 import {
   getAssignProjectsListUrl,
+  getAssignProjectsUrl,
+  getRemoveProjectsUrl,
   getSelectProjectsListUrl,
 } from '../urls/assign-projects-url';
 import {
   AssignProject,
   AssignProjectListURLParams,
   assignProjectsListResponse,
+  AssignProjectsParams,
 } from '../../types/assign-projects';
 import { caseServiceApi } from '../../../api/api';
+import { CommonApiResponse } from '../../../common-service';
 
 export const fetchAssigneprojectList = async (
   params: AssignProjectListURLParams
@@ -61,5 +65,46 @@ export const useSelectProjectsList = (
     retry: 0,
     gcTime: 0,
     // enabled: !!params.account_rid && params.reminder_specific_list,
+  });
+};
+
+export const assignProjectList = async (
+  body: Partial<AssignProjectsParams>
+): Promise<CommonApiResponse> => {
+  try {
+    const { data } = await caseServiceApi.post<CommonApiResponse>(
+      getAssignProjectsUrl(),
+      body
+    );
+    return data;
+  } catch (error) {
+    console.error('Error creating case:', error);
+    throw error;
+  }
+};
+
+export const useAssignProjects = () => {
+  return useMutation<CommonApiResponse, Error, Partial<AssignProjectsParams>>({
+    mutationFn: (body) => assignProjectList({ ...body }),
+  });
+};
+export const removeProjectList = async (
+  body: Partial<AssignProjectsParams>
+): Promise<CommonApiResponse> => {
+  try {
+    const { data } = await caseServiceApi.post<CommonApiResponse>(
+      getRemoveProjectsUrl(),
+      body
+    );
+    return data;
+  } catch (error) {
+    console.error('Error creating case:', error);
+    throw error;
+  }
+};
+
+export const useRemoveProjects = () => {
+  return useMutation<CommonApiResponse, Error, Partial<AssignProjectsParams>>({
+    mutationFn: (body) => removeProjectList({ ...body }),
   });
 };

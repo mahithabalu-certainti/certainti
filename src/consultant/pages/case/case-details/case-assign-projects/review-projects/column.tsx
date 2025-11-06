@@ -15,7 +15,7 @@ export const formatDateToYMD = (dateString: string): string => {
   const day = `${date.getDate()}`.padStart(2, '0');
   return `${year}-${month}-${day}`;
 };
-export const getAssignedProjectColumns = (
+export const getReviewdProjectColumns = (
   permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): ListTableColumn<AssignProject>[] => [
   {
@@ -29,6 +29,91 @@ export const getAssignedProjectColumns = (
     hide:
       !permissionMap?.['project_code']?.read &&
       !permissionMap?.['project_code']?.edit,
+    sx: {
+      position: 'sticky',
+      left: 0,
+      background: '#fff',
+      zIndex: 10,
+      borderRight: '1px solid #CBD6E2 !important',
+      borderBottom: '1px solid #CBD6E2 !important',
+    },
+    render: (row: AssignProject) => {
+      const displayCode = row.fiscal_year
+        ? `FY${row.fiscal_year} - ${row.project_code}`
+        : row.project_code;
+      return (
+        <span
+        //   onClick={() => onClick(row)}
+        //   className={
+        //     row.fiscal_year
+        //       ? 'cursor-pointer !text-[#1755E7] !underline hover:underline hover:text-[#1755E7]'
+        //       : ''
+        //   }
+        >
+          {displayCode}
+        </span>
+      );
+    },
+  },
+  {
+    id: 'project_basic_info',
+    label: 'Project Basic Info',
+    sortable: true,
+    sortId: 'project_basic_info',
+    width: 160,
+    hide:
+      !permissionMap?.['project_name']?.read &&
+      !permissionMap?.['project_name']?.edit,
+  },
+  {
+    id: 'project_oint_of_contact',
+    label: 'Project Point of Contact',
+    sortable: true,
+    sortId: 'project_oint_of_ontact',
+    width: 210,
+    hide:
+      !permissionMap?.['project_name']?.read &&
+      !permissionMap?.['project_name']?.edit,
+  },
+  {
+    id: ' Project_financial_details',
+    label: ' Project Financial Details',
+    sortable: true,
+    sortId: 'Project_financial_details',
+    width: 210,
+    hide:
+      !permissionMap?.['project_name']?.read &&
+      !permissionMap?.['project_name']?.edit,
+  },
+  {
+    id: 'Project_resource_information',
+    label: 'Project Resource Information',
+    sortable: true,
+    sortId: 'Project_resource_information',
+    width: 220,
+    hide:
+      !permissionMap?.['project_name']?.read &&
+      !permissionMap?.['project_name']?.edit,
+  },
+  {
+    id: 'Project_task_information',
+    label: 'Project Task Information',
+    sortable: true,
+    sortId: 'Project_task_information',
+    width: 210,
+    hide:
+      !permissionMap?.['project_name']?.read &&
+      !permissionMap?.['project_name']?.edit,
+  },
+  {
+    id: 'Project_technical_details',
+    label: 'Project Technical Details',
+    sortable: true,
+    sortId: 'Project Technical Details',
+    width: 240,
+    hide:
+      !permissionMap?.['project_name']?.read &&
+      !permissionMap?.['project_name']?.edit,
   },
   {
     id: 'project_name',
@@ -51,9 +136,6 @@ export const getAssignedProjectColumns = (
     hide:
       !permissionMap?.['project_type_rid']?.read &&
       !permissionMap?.['project_type_rid']?.edit,
-    render: (row: AssignProject) => {
-      return row.project_type_name;
-    },
   },
   {
     id: 'fiscal_year',
@@ -83,9 +165,6 @@ export const getAssignedProjectColumns = (
       !permissionMap?.['project_classification_rid']?.read &&
       !permissionMap?.['project_classification_rid']?.edit,
     width: 170,
-    render: (row: AssignProject) => {
-      return row.project_classification_name;
-    },
   },
   {
     id: 'project_client_group',
@@ -97,9 +176,6 @@ export const getAssignedProjectColumns = (
     hide:
       !permissionMap?.['project_client_group']?.read &&
       !permissionMap?.['project_client_group']?.edit,
-    render: (row: AssignProject) => {
-      return row.project_client_group;
-    },
   },
   {
     id: 'project_group',
@@ -111,16 +187,13 @@ export const getAssignedProjectColumns = (
       !permissionMap?.['project_group']?.read &&
       !permissionMap?.['project_group']?.edit,
     width: 160,
-    render: (row: AssignProject) => {
-      return row.project_group;
-    },
   },
   {
     id: 'total_effort_prj',
-    editId: 'total_effort_prj',
+    editId: 'total_effort',
     label: 'Project Effort (Hours)',
     sortable: true,
-    sortId: 'total_effort_prj',
+    sortId: 'total_effort',
     width: 170,
     hide:
       !permissionMap?.['total_effort']?.read &&
@@ -145,7 +218,6 @@ export const getAssignedProjectColumns = (
   },
   {
     id: 'total_cost_prj',
-    editId: 'total_cost_prj',
     label: 'Project Cost',
     sortable: true,
     sortId: 'total_cost_prj',
@@ -156,20 +228,13 @@ export const getAssignedProjectColumns = (
     sx: {
       textAlign: 'right',
     },
-    conditionallyEdit: [
-      {
-        key: 'total_cost_prj',
-        matchValue: [null, '0.00'],
-      },
-    ],
     render: (row: AssignProject) =>
       row.total_cost_prj
         ? costDisplay(row.total_cost_prj, row.currency_symbol)
         : '-',
   },
   {
-    id: 'total_cost_fte',
-    editId: 'total_cost_fte',
+    id: 'total_cost_fte_prj',
     label: 'FTE Cost',
     sortable: true,
     sortId: 'total_cost_fte_prj',
@@ -187,7 +252,6 @@ export const getAssignedProjectColumns = (
   },
   {
     id: 'total_cost_subcon_prj',
-    editId: 'total_cost_subcon_prj',
     label: 'SubCon Cost',
     sortable: true,
     sortId: 'total_cost_subcon_prj',
@@ -205,7 +269,6 @@ export const getAssignedProjectColumns = (
   },
   {
     id: 'total_cost_nonlabor_prj',
-    editId: 'total_cost_nonlabor_prj',
     label: 'Non-Labor Cost',
     sortable: true,
     editable:
@@ -223,43 +286,6 @@ export const getAssignedProjectColumns = (
       row.total_cost_nonlabor_prj
         ? costDisplay(row.total_cost_nonlabor_prj, row.currency_symbol)
         : '-',
-  },
-  {
-    id: 'assessment_status',
-    label: 'Assessment Status',
-    sortable: true,
-    sortId: 'assessment_status',
-    width: 180,
-    hide:
-      !permissionMap?.['assessment_status']?.read &&
-      !permissionMap?.['assessment_status']?.edit,
-  },
-  {
-    id: 'rd_percent_final',
-    label: 'QRE %',
-    sortable: true,
-    sortId: 'rd_percent_final',
-    width: 130,
-    sx: {
-      textAlign: 'right',
-    },
-    hide:
-      !permissionMap?.['qre_final']?.read &&
-      !permissionMap?.['qre_final']?.edit,
-    render: (row: AssignProject) =>
-      row.rd_percent_final ? row.rd_percent_final : '-',
-  },
-  {
-    id: 'qre_final',
-    label: 'QRE',
-    sortable: true,
-    sortId: 'qre_final',
-    width: 130,
-    sx: {
-      textAlign: 'right',
-    },
-    hide: !permissionMap?.['qre']?.read && !permissionMap?.['qre']?.edit,
-    render: (row: AssignProject) => (row.qre_final ? row.qre_final : '-'),
   },
   {
     id: 'project_point_of_contact',
@@ -315,7 +341,43 @@ export const getAssignedProjectColumns = (
       );
     },
   },
-
+  {
+    id: 'assessment_status',
+    label: 'Assessment Status',
+    sortable: true,
+    sortId: 'assessment_status',
+    width: 180,
+    hide:
+      !permissionMap?.['assessment_status']?.read &&
+      !permissionMap?.['assessment_status']?.edit,
+  },
+  {
+    id: 'rd_percent_final',
+    label: 'QRE %',
+    sortable: true,
+    sortId: 'rd_percent_final',
+    width: 130,
+    sx: {
+      textAlign: 'right',
+    },
+    hide:
+      !permissionMap?.['qre_final']?.read &&
+      !permissionMap?.['qre_final']?.edit,
+    render: (row: AssignProject) =>
+      row.rd_percent_final ? row.rd_percent_final : '-',
+  },
+  {
+    id: 'qre_final',
+    label: 'QRE',
+    sortable: true,
+    sortId: 'qre_final',
+    width: 130,
+    sx: {
+      textAlign: 'right',
+    },
+    hide: !permissionMap?.['qre']?.read && !permissionMap?.['qre']?.edit,
+    render: (row: AssignProject) => (row.qre_final ? row.qre_final : '-'),
+  },
   {
     id: 'comments',
     editId: 'comments',
