@@ -528,7 +528,7 @@ class CaseManagementSchemaService {
       status_rid : data.status_rid,
       priority_rid : data.priority_rid,
       task_type : "Milestone",
-      milestone_rid : data.milestone_rid
+      milestone_template_rid : data.milestone_template_rid
     })
     return {
       statusCode : HttpStatus.SUCCESS,

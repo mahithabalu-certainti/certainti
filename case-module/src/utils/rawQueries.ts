@@ -595,14 +595,14 @@ export const fetchAdminTemplates = (page : number, limit : number, sort : string
     t.effort_in_days, t.reminder_interval, t.effective_start_datetime,
     t.effective_end_datetime, r.role_name, t.case_team_member_role_rid,
     c.checklist_name, t.checklist_template_rid, p.priority_name, t.priority_rid,
-    s.status_name, t.status_rid, m.milestone_name, t.milestone_rid
+    s.status_name, t.status_rid, m.milestone_name, t.milestone_template_rid
     FROM
     ${MAIN_SCHEMA_NAME}.task_template t
     LEFT JOIN ${MAIN_SCHEMA_NAME}.case_priority p ON p.rid = t.priority_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.user u ON u.rid = t.created_by
     LEFT JOIN ${MAIN_SCHEMA_NAME}.user uu ON uu.rid = t.modified_by
     LEFT JOIN ${MAIN_SCHEMA_NAME}.checklist_template c ON c.rid = t.checklist_template_rid
-    LEFT JOIN ${MAIN_SCHEMA_NAME}.case_milestones m ON m.rid = t.milestone_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.milestone_template m ON m.rid = t.milestone_template_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.status s ON s.rid = t.status_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.case_team_role r ON r.rid = t.case_team_member_role_rid
     WHERE

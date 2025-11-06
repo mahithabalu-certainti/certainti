@@ -268,7 +268,7 @@ export type CreateTaskTemplateType = {
   status_rid : string,
   priority_rid : string,
   task_type: string,
-  milestone_rid : string
+  milestone_template_rid : string
 }
 
 export type priorityTypes = {
@@ -305,7 +305,7 @@ export type UpdateTaskTemplateType = {
   status_rid : string,
   priority_rid : string,
   task_type: string,
-  milestone_rid : string
+  milestone_template_rid : string
 }
 
 export type AdminTaskTemplateResponseTypes = {
@@ -330,7 +330,7 @@ export type AdminTaskTemplateResponseTypes = {
   status_name : string,
   priority_rid : string,
   priority_name : string,
-  milestone_rid : string,
+  milestone_template_rid : string,
   milestone_name : string,
   total_result: string
 }
