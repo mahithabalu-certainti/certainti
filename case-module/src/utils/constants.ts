@@ -59,7 +59,7 @@ export const mainTableFilters: Record<any, any> = {
   modified_user_name: "modified_user_name",
   filing_type_name: "filing_type_name",
   case_owner_name: "case_owner_name",
-  case_name:"case_full_name"
+  case_name: "case_full_name"
 };
 
 export const STATUS_MESSAGE = {
@@ -84,16 +84,27 @@ export const STATUS_MESSAGE = {
     "Country is not associated with the account,Please select country",
   adminChecklistCreated: "Admin checklist created successfully",
   adminChecklistFailed: "Admin checklist creation failed",
-  taskNameExistsAlready : "Taskname already exists",
-  taskCreatedSuccess : "Task Template created successfully",
-  casePrioritySuccess : "Priority fetched successfully",
-  milestonesSuccess : "Milestones fetched successfully",
-  checklistSuccess : "Checklist fetched successfully",
-  taskUpdatedSuccess : "Task Template updated successfully",
-  taskUpdateFailed : "Task Template updation failed",
-  taskTemplateSuccess : "Task Template fetched successfully",
+  accountIdMissing: "Account RID mising",
+  invalidJurisdictionLevel: "Level must be either 'state' or 'federal'.",
+  statesMissing: "States array is required when level is 'state'.",
+  invalidStatesArray: "All states must be valid non-empty strings.",
+  userIdMissingInHeader: "User ID is missing in request header.",
+  jurisdictionAddedSuccess: "Jurisdiction configuration added successfully",
+  jurisdictionAddedFailed: "Jurisdiction configuration addition failed",
+  taskNameExistsAlready: "Taskname already exists",
+  taskCreatedSuccess: "Task Template created successfully",
+  casePrioritySuccess: "Priority fetched successfully",
+  milestonesSuccess: "Milestones fetched successfully",
+  checklistSuccess: "Checklist fetched successfully",
+  taskUpdatedSuccess: "Task Template updated successfully",
+  taskUpdateFailed: "Task Template updation failed",
+  taskTemplateSuccess: "Task Template fetched successfully",
   taskTemplateExport: "Task Template export successfully",
-  checkListError : "Checklist retrieval failed"
+  checkListError: "Checklist retrieval failed",
+  jurisdictionFetchedSuccess: "Jurisdiction configuration fetched successfully",
+  jurisdictionFetchedFailed: "Failed to fetch jurisdiction configuration",
+  jurisdictionNotFound: "No jurisdiction configuration found for this case",
+
 };
 
 export const caseStatuses = {
@@ -677,14 +688,14 @@ export const rawQueries = {
   getChecklistTypes() {
     return `SELECT rid, checklist_name FROM ${MAIN_SCHEMA_NAME}.checklist_template ORDER BY created_datetime ASC`
   },
-   getUserNameByIdQuery() {
+  getUserNameByIdQuery() {
     return `
       SELECT first_name, middle_name, last_name 
       FROM ${MAIN_SCHEMA_NAME}."user" 
       WHERE rid = :userId
     `;
   },
-  fetchChecklistTemplates :  `
+  fetchChecklistTemplates: `
     SELECT 
         ct.rid,
         ct.r_number,
@@ -704,8 +715,8 @@ export const rawQueries = {
         ct.rid = :checklistId
     LIMIT 1;
   `,
-  updateTaskTemplate (data : string[], rid : string) {
-    let query = `UPDATE ${MAIN_SCHEMA_NAME}.task_template SET ${data.map((d : any) => d).join(',')} WHERE rid = '${rid}'`
+  updateTaskTemplate(data: string[], rid: string) {
+    let query = `UPDATE ${MAIN_SCHEMA_NAME}.task_template SET ${data.map((d: any) => d).join(',')} WHERE rid = '${rid}'`
     return query;
   }
 };
@@ -785,26 +796,26 @@ export const filtersColumnsForAdminCheckList: Record<string, string> = {
   createdAt: "createdAt",
   checklist_name: "checklist_name",
   checklist_description: "checklist_description"
- 
+
 };
 
-export const validColumnsForSortFilters : Record<string, string> = {
-  r_number : "t.r_number",
-  task_name : "t.task_name",
-  milestone_name : "m.milestone_name",
-  checklist_name : "c.checklist_name",
-  priority_name : "p.priority_name",
-  status_name : "s.status_name",
-  role_name : "r.role_name",
-  effective_start_datetime : "t.effective_start_datetime",
-  effective_end_datetime : "t.effective_end_datetime",
-  reminder_interval : "t.reminder_interval",
-  effort_in_days : "t.effort_in_days",
-  created_datetime : "t.created_datetime",
-  modified_datetime : "t.modified_datetime",
-  created_by_name : "CONCAT(u.first_name,' ', u.last_name)",
-  modified_by_name : "CONCAT(uu.first_name,' ', uu.last_name)",
-  sequence_no : "t.sequence_no"
+export const validColumnsForSortFilters: Record<string, string> = {
+  r_number: "t.r_number",
+  task_name: "t.task_name",
+  milestone_name: "m.milestone_name",
+  checklist_name: "c.checklist_name",
+  priority_name: "p.priority_name",
+  status_name: "s.status_name",
+  role_name: "r.role_name",
+  effective_start_datetime: "t.effective_start_datetime",
+  effective_end_datetime: "t.effective_end_datetime",
+  reminder_interval: "t.reminder_interval",
+  effort_in_days: "t.effort_in_days",
+  created_datetime: "t.created_datetime",
+  modified_datetime: "t.modified_datetime",
+  created_by_name: "CONCAT(u.first_name,' ', u.last_name)",
+  modified_by_name: "CONCAT(uu.first_name,' ', uu.last_name)",
+  sequence_no: "t.sequence_no"
 }
 
 export const validColumnsForFilters : Record<string, string> = {

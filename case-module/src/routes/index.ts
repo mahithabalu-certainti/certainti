@@ -2,6 +2,7 @@ import { Router } from "express";
 import { errorLog, successLog } from "../utils/helpers";
 import caseRoutes from "./caseRoutes";
 import caseManagementRoutes from "./caseManagementRoutes"
+import jurisdictionRoutes from "./jurisdictionRoutes";
 
 const routes: Router = Router();
 
@@ -26,6 +27,7 @@ routes.get("/health", async (req, res) => {
 
 routes.use("/cases", caseRoutes);
 routes.use("/caseManagement", caseManagementRoutes);
+routes.use("/jurisdictions", jurisdictionRoutes);
 
 
 export default routes;

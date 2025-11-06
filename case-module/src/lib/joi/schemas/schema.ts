@@ -116,6 +116,41 @@ const adminChecklistSchema = Joi.object({
     .required(),
 });
 
+const jurisdictionSchema = Joi.object({
+  account_rid: Joi.string().required(),
+  case_rid: Joi.string().required(),
+  is_state_level: Joi.boolean().required(),
+  is_federal_level: Joi.boolean().required(),
+  states: Joi.array()
+    .items(Joi.string().trim().optional())
+    .optional(),
+})
+  .custom((value, helpers) => {
+    const { is_state_level, is_federal_level, states } = value;
+
+    // If state level is true → states must contain at least one
+    if (is_state_level) {
+      if (!Array.isArray(states) || states.length === 0) {
+        return helpers.error("any.missingStates");
+      }
+    }
+
+    // If state level is false → states must be empty or undefined
+    if (!is_state_level) {
+      if (Array.isArray(states) && states.length > 0) {
+        return helpers.error("any.statesNotAllowed");
+      }
+    }
+
+    return value;
+  })
+  .messages({
+    "any.missingStates":
+      "States must contain at least one value when state level is true.",
+    "any.statesNotAllowed":
+      "States are not allowed when state level is false.",
+    "any.required": "{{#label}} is required",
+  });
 
 const listAdminCheckListSchema = Joi.object({
  page: Joi.string().optional().pattern(/^[0-9]+$/),
@@ -163,6 +198,7 @@ export {
   createCaseTeamSchema,
   listCaseTeamSchema,
   adminChecklistSchema,
+  jurisdictionSchema,
   createTaskTemplateSchema,
   updateTaskTemplateSchema,
   listAdminCheckListSchema
