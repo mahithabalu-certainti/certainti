@@ -201,7 +201,7 @@ export const CreateCases: React.FC = () => {
   const onChangeField = ({ fieldName, fieldValue }: OnChange) => {
     if (fieldName === 'case_startdate') {
       // When Start Date changes:
-      // - Planned Submission Date must be > Start Date
+      // - Planned Submission Date must be ≥ Start Date
       // - Statutory Submission Date must be ≥ Start Date
       setDateConstraints((prev) => ({
         ...prev,
