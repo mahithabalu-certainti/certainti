@@ -742,6 +742,13 @@ jobs:
         run: |
           scp -o StrictHostKeyChecking=no .env.extinteractionmodule adminuser@${{ secrets.DEVELOPMENT_BACKEND_VM_HOST }}:/tmp/
         working-directory: ext-interaction-module
+
+      - name: Install yq
+        run: |
+          sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/local/bin/yq
+          sudo chmod +x /usr/local/bin/yq
+          yq --version
+
       - name: SSH into VM and deploy
         run: |
           ssh -o StrictHostKeyChecking=no adminuser@${{ secrets.DEVELOPMENT_BACKEND_VM_HOST }} << 'EOF'
@@ -760,7 +767,8 @@ jobs:
           
             # Update only the ext-interaction-module image tag
             echo "Updating docker-compose.yml..."
-            sed -i '/ext-interaction-module:/,/image:/ s|image:.*|image: '"${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}"'/ext-interaction-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
+            # sed -i '/ext-interaction-module:/,/image:/ s|image:.*|image: '"${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}"'/ext-interaction-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
+            yq e -i '.services["ext-interaction-module"].image = "'"${{ secrets.DEVELOPMENT_ACR_LOGIN_SERVER }}"'/ext-interaction-module:${{ env.IMAGE_TAG }}"' docker-compose.yml
             echo "Docker Compose updated successfully!"
 
             # Verify the change
