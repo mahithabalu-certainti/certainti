@@ -90,7 +90,81 @@ async function addOrUpdateJurisdictionConfiguration(
   }
 }
 
+/**
+ * Controller to get jurisdiction configuration.
+ *
+ * Steps:
+ * 1. Logs incoming request
+ * 2. Validates required params (accountRid, caseRid)
+ * 3. Calls service to fetch jurisdiction data
+ * 4. Returns structured success/error responses
+ */
+async function getJurisdictionConfiguration(req: Request, res: Response): Promise<void> {
+  const methodName = "Get Jurisdiction Configuration";
+  try {
+    // Step 1: Log request
+    logMessage(
+      `[${methodName}] Request received: params=${JSON.stringify(req.params)}, userId=${req.headers["x-user-id"]}`
+    );
+
+    // Step 2: Extract parameters
+    const { accountRid, caseRid } = req.params;
+    const userId = req.headers["x-user-id"] as string;
+
+    // Validate required parameters
+    if (!userId) {
+      errorLog(methodName, "User ID missing in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    if (!accountRid || !caseRid) {
+      errorLog(methodName, "Missing accountRid or caseRid");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "Both accountRid and caseRid are required"
+      );
+      return;
+    }
+
+    // Step 3: Call service
+    const result = await jurisdictionService.getJurisdictionConfiguration(accountRid, caseRid);
+
+    // Step 4: Handle service response
+    if (result.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, result.data, result.message);
+    } else {
+      errorLog(methodName, result.message);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        result.message
+      );
+    }
+  } catch (err) {
+    // Step 5: Catch unexpected errors
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
 // Export controller
 export default {
   addOrUpdateJurisdictionConfiguration,
+  getJurisdictionConfiguration
 };
