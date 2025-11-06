@@ -315,9 +315,9 @@ export const setTaskTemplateData = (dbData : TaskTemplate, reqData : any, userId
       validUpdateQuery.push(validUpdateConditions)
     }
   }
-  if(reqData.checklist_rid) {
-    if(reqData.checklist_rid !== dbData.checklist_rid) {
-      validUpdateConditions = `checklist_rid = '${reqData.checklist_rid}'`
+  if(reqData.checklist_template_rid) {
+    if(reqData.checklist_template_rid !== dbData.checklist_template_rid) {
+      validUpdateConditions = `checklist_template_rid = '${reqData.checklist_template_rid}'`
       validUpdateQuery.push(validUpdateConditions)
     }
   }
@@ -327,9 +327,9 @@ export const setTaskTemplateData = (dbData : TaskTemplate, reqData : any, userId
       validUpdateQuery.push(validUpdateConditions)
     }
   }
-  if(reqData.milestone_rid) {
-    if(reqData.milestone_rid !== dbData.milestone_rid) {
-      validUpdateConditions = `milestone_rid = '${reqData.milestone_rid}'`
+  if(reqData.milestone_template_rid) {
+    if(reqData.milestone_template_rid !== dbData.milestone_template_rid) {
+      validUpdateConditions = `milestone_template_rid = '${reqData.milestone_template_rid}'`
       validUpdateQuery.push(validUpdateConditions)
     }
   }
