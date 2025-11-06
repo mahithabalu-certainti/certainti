@@ -204,6 +204,7 @@ export enum AllModules {
   INTERACTION_TEMPLATES = 'interaction_templates',
   EMAIL_TEMPLATES = 'email_templates',
   CASES = 'cases',
+  QRE_PERCENT_HISTORY = 'projects_qre_history_view_edit',
 }
 
 export enum AllPermissions {

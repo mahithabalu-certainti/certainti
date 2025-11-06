@@ -27,67 +27,73 @@ const ContentCell: React.FC<ContentCellProps> = ({ content }) => {
   );
 };
 
-export const getQrePercentHistoryColumns =
-  (): ListTableColumn<QrePercentHistoryItem>[] => {
-    return [
-      {
-        id: 'version',
-        sortId: 'version',
-        label: 'Sequence',
-        width: '8%',
-        sticky: true,
-        render: (row: QrePercentHistoryItem) => (
-          <div
-            style={{
-              textAlign: 'right',
-            }}
-          >{`${row.version || '-'}`}</div>
-        ),
-      },
-      {
-        id: 'type',
-        sortId: 'type',
-        label: 'Type',
-        width: '17%',
-        render: (row: QrePercentHistoryItem) => row.type || '-',
-      },
-      {
-        id: 'contents',
-        sortId: 'contents',
-        label: 'Contents',
-        width: '10%',
-        render: (row: QrePercentHistoryItem) => (
-          <div
-            style={{
-              textAlign: 'center',
-            }}
-          >
-            <ContentCell
-              content={JSON.stringify(row.qre_detailed_breakdown || {})}
-            />
-          </div>
-        ),
-      },
-      {
-        id: 'qre_percent',
-        sortId: 'qre_percent',
-        label: 'QRE Percent Score',
-        width: '13%',
-        render: (row: QrePercentHistoryItem) => (
-          <div
-            style={{
-              textAlign: 'right',
-            }}
-          >{`${row.qre_percent + '%' || '-'}`}</div>
-        ),
-      },
-      {
-        id: 'created_datetime',
-        sortId: 'created_datetime',
-        label: 'Date',
-        width: '20%',
-        render: (row: QrePercentHistoryItem) =>
-          formatDateToYYYYMMDDWithTime(row.created_datetime) || '-',
-      },
-    ];
-  };
+export const getQrePercentHistoryColumns = (
+  permissionMap: Record<string, { read: boolean; edit: boolean }>
+): ListTableColumn<QrePercentHistoryItem>[] => {
+  return [
+    {
+      id: 'version',
+      sortId: 'version',
+      label: 'Sequence',
+      width: '8%',
+      sticky: true,
+      hide: !permissionMap?.['version']?.read,
+      render: (row: QrePercentHistoryItem) => (
+        <div
+          style={{
+            textAlign: 'right',
+          }}
+        >{`${row.version || '-'}`}</div>
+      ),
+    },
+    {
+      id: 'type',
+      sortId: 'type',
+      label: 'Type',
+      width: '17%',
+      hide: !permissionMap?.['type']?.read,
+      render: (row: QrePercentHistoryItem) => row.type || '-',
+    },
+    {
+      id: 'contents',
+      sortId: 'contents',
+      label: 'Contents',
+      width: '10%',
+      hide: !permissionMap?.['contents']?.read,
+      render: (row: QrePercentHistoryItem) => (
+        <div
+          style={{
+            textAlign: 'center',
+          }}
+        >
+          <ContentCell
+            content={JSON.stringify(row.qre_detailed_breakdown || {})}
+          />
+        </div>
+      ),
+    },
+    {
+      id: 'qre_percent',
+      sortId: 'qre_percent',
+      label: 'QRE Percent Score',
+      width: '13%',
+      hide: !permissionMap?.['qre_percent']?.read,
+      render: (row: QrePercentHistoryItem) => (
+        <div
+          style={{
+            textAlign: 'right',
+          }}
+        >{`${row.qre_percent + '%' || '-'}`}</div>
+      ),
+    },
+    {
+      id: 'created_datetime',
+      sortId: 'created_datetime',
+      label: 'Date',
+      width: '20%',
+      hide: !permissionMap?.['created_datetime']?.read,
+      render: (row: QrePercentHistoryItem) =>
+        formatDateToYYYYMMDDWithTime(row.created_datetime) || '-',
+    },
+  ];
+};

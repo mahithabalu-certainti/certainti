@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
-import { AllPermissions } from '../../../../../common-service';
+import { AllModules, AllPermissions } from '../../../../../common-service';
 import { QrePercentHistoryItem } from '../../../../types/qre-percent-history';
 import { useGetQrePercentHistory } from '../../../../services/qre-percent-history/qre-percent-history';
 import { BUTTON_STYLES } from '../../../../../admin/pages/manage-user-detail/styles';
@@ -17,6 +17,10 @@ import {
   ListTable,
   ManageColumnsPopover,
 } from '../../../../../components/table';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../store/store';
+import { checkPermission } from '../../../../../common-utils';
+import { AccessRestricted } from '../../../../../components/account-restricted';
 
 const AttachmentTabs: ResourceTabs[] = [
   {
@@ -36,6 +40,26 @@ const QrePercentHistory = ({
   accountID,
   projectID,
 }: QrePercentHistoryProps) => {
+  const { modules, permission } = useSelector(
+    (state: RootState) => state.permission
+  );
+  const qrePercentHistoryView = checkPermission(
+    modules,
+    AllModules.QRE_PERCENT_HISTORY
+  );
+  const qrePercentHistoryFields = useMemo(
+    () =>
+      permission.find((item) => item.name === AllModules.QRE_PERCENT_HISTORY)
+        ?.fields ?? [],
+    [permission]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    qrePercentHistoryFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [qrePercentHistoryFields]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
   const [showFilter, setShowFilter] = useState<boolean>(false);
@@ -148,8 +172,8 @@ const QrePercentHistory = ({
   };
 
   const qrePercentHistoryColumns = useMemo(
-    () => getQrePercentHistoryColumns(),
-    []
+    () => getQrePercentHistoryColumns(permissionMap),
+    [permissionMap]
   );
 
   const [visibleColumns, setVisibleColumns] = useState<
@@ -185,6 +209,9 @@ const QrePercentHistory = ({
   const filterFields = getQrePercentHistoryFilterFields();
   const modalId = isModalOpen ? 'qre-percent-history' : undefined;
 
+  if (!qrePercentHistoryView) {
+    return <AccessRestricted />;
+  }
   return (
     <div className='w-full pt-2 pl-2 pr-4'>
       <SectionTabPanel
