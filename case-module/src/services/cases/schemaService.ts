@@ -2536,7 +2536,6 @@ class CaseSchemaService {
       checkListReq: ICreateChecklist,
       transaction: Transaction
     ) {
-      console.log("Processing checklist item:", item,"checklistRid:",checklistRid );
       switch (item.action_type) {
         case "add":
           return await addChecklistItem(

@@ -116,6 +116,24 @@ const adminChecklistSchema = Joi.object({
     .required(),
 });
 
+const updateAdminChecklistSchema = Joi.object({
+  checklist_template_rid: Joi.string().required(),
+  checklist_name: Joi.string().max(255).required(),
+  checklist_description: Joi.string().max(2000).optional().allow(""),
+  status_rid: Joi.string().required(),
+  checklist_items: Joi.array()
+    .items(
+      Joi.object({  
+        checklist_item_name: Joi.string().max(255).required(),
+        checklist_item_rid: Joi.string().optional(),
+        description: Joi.string().max(2000).optional().allow(""), 
+        action_type: Joi.string().valid("add", "edit", "delete").required(),
+      })
+    )
+    .min(1)
+    .required(),
+});
+
 const checklistSchema = Joi.object({
   attach_to: Joi.string().required(),
   attachment_level: Joi.string().required(),
@@ -226,5 +244,6 @@ export {
   jurisdictionSchema,
   createTaskTemplateSchema,
   updateTaskTemplateSchema,
-  listAdminCheckListSchema
+  listAdminCheckListSchema,
+  updateAdminChecklistSchema
 };

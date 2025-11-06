@@ -875,7 +875,6 @@ async function exportAllCasesSummary(req: Request, res: Response) {
         .format("YYYY-MMM-DD, hh:mm:ss A");
     };
     if (result.statusCode == HttpStatus.SUCCESS) {
-      console.log("Export result data:", result.data);
       const finalStructuredData =
         result?.data?.caseInfo.length < 1
           ? []
@@ -947,7 +946,6 @@ async function exportAllCasesSummary(req: Request, res: Response) {
       return;
     }
   } catch (error: any) {
-    console.log("Error in exportAllCasesSummary:", error);
     handleErrorResponse(
       res,
       HttpStatus.FAILED,
@@ -1347,7 +1345,6 @@ async function exportAllAssignedProjects(req: Request, res: Response) {
       return;
     }
   } catch (error: any) {
-    console.log("Error in exportAllCasesSummary:", error);
     handleErrorResponse(
       res,
       HttpStatus.FAILED,

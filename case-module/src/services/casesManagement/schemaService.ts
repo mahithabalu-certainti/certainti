@@ -28,14 +28,13 @@ async function addChecklistItem(
       checklist_template_rid: checklistTemplateRid,
       checklist_item_name: item.checklist_item_name,
       description: item.description,
-      sequence_no: item.sequence_no,
       created_by: createdBy,
       created_datetime: new Date(),
     },
     { transaction }
   );
   logMessage(
-    `Added new checklist item: ${item.checklist_item_name} at sequence ${item.sequence_no}`
+    `Added new checklist item: ${item.checklist_item_name}`
   );
   return result;
 }
@@ -59,7 +58,7 @@ async function editChecklistItem(
   // First, find the existing item by template_rid and sequence_no
   const existingItem = await AdminCheckListItem.findOne({
     where: {
-      rid: checklistTemplateRid,
+      rid: item.checklist_item_rid,
     },
     transaction,
   });
@@ -76,25 +75,24 @@ async function editChecklistItem(
       { transaction }
     );
     logMessage(
-      `Updated checklist item at sequence ${item.sequence_no}: ${item.checklist_item_name}`
+      `Updated checklist item at sequence : ${item.checklist_item_name}`
     );
     return result;
   } else {
     // Item doesn't exist, create it as fallback
     logMessage(
-      `Warning: Checklist item at sequence ${item.sequence_no} not found for editing`
+      `Warning: Checklist item at sequence  not found for editing`
     );
     const result = await AdminCheckListItem.create(
       {
         checklist_item_name: item.checklist_item_name,
-        sequence_no: item.sequence_no,
         created_by: createdBy,
         created_datetime: new Date(),
       },
       { transaction }
     );
     logMessage(
-      `Created new checklist item (edit fallback): ${item.checklist_item_name} at sequence ${item.sequence_no}`
+      `Created new checklist item (edit fallback): ${item.checklist_item_name}`
     );
     return result;
   }
@@ -118,7 +116,7 @@ async function deleteChecklistItem(
   const itemToDelete = await AdminCheckListItem.findOne({
     where: {
       checklist_template_rid: checklistTemplateRid,
-      sequence_no: item.sequence_no,
+      rid: item.checklist_item_rid,
     },
     transaction,
   });
@@ -126,11 +124,11 @@ async function deleteChecklistItem(
   if (itemToDelete) {
     await itemToDelete.destroy({ transaction });
     logMessage(
-      `Deleted checklist item at sequence ${item.sequence_no}: ${item.checklist_item_name}`
+      `Deleted checklist item at sequence : ${item.checklist_item_name}`
     );
   } else {
     logMessage(
-      `Warning: Checklist item at sequence ${item.sequence_no} not found for deletion`
+      `Warning: Checklist item at sequence not found for deletion`
     );
   }
 }
@@ -228,7 +226,7 @@ class CaseManagementSchemaService {
       
       // Find the checklist by RID
       const existingChecklist = await AdminChecklist.findOne({
-        where: { rid: data.rid }
+        where: { rid: data.checklist_template_rid }
       });
 
       if (!existingChecklist) {
@@ -257,7 +255,7 @@ class CaseManagementSchemaService {
       const [affectedCount] = await AdminChecklist.update(
         updateData,
         {
-          where: { rid: data.rid },
+          where: { rid: data.checklist_template_rid },
           returning: true
         }
       );
@@ -272,7 +270,7 @@ class CaseManagementSchemaService {
 
       // Fetch the updated checklist
       const updatedChecklist = await AdminChecklist.findOne({
-        where: { rid: data.rid }
+        where: { rid: data.checklist_template_rid }
       });
 
       return {
@@ -315,7 +313,6 @@ class CaseManagementSchemaService {
           processedItems.push({
             ...result,
             action_type: item.action_type,
-            sequence_no: item.sequence_no,
           });
         }
       }

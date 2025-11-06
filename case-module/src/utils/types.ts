@@ -234,6 +234,7 @@ export interface TeamMember {
 
 export interface ICreateChecklistTemplate {
   checklist_name: string;
+  checklist_template_rid?: string;
   checklist_description?: string;
   created_by: string;
   modified_by?: string;
@@ -271,7 +272,7 @@ export interface ICreateChecklistItem{
 export interface ICreateChecklistItemTemplate {
   checklist_item_name: string;
   action_type: "add" | "edit" | "delete";
-  sequence_no: number;
+  checklist_item_rid: string;
   description?: string;
   created_by: string;
   modified_by?: string;

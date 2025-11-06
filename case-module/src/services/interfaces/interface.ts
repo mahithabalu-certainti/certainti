@@ -119,6 +119,15 @@ export interface ICaseManagementService {
     errorMessage?: string;
     data?: { checklist: any };
   }>;
+  updateAdminCheckList(
+    checklistRequest: ICreateChecklistTemplate,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { checklist: any };
+  }>;
   listAdminCheckList(
     data: any,
     filters: Record<string, any>,
