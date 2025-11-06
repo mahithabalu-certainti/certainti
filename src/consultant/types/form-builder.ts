@@ -21,6 +21,7 @@ export interface FormTypeFields {
   width?: string;
   error?: string;
   placeholder?: string;
+  requiredErrorMessage?: string;
   regex?: string | RegExp;
   regexErrorMessage?: string;
   disabled?: boolean;
@@ -112,6 +113,7 @@ export interface FieldType {
   regex?: RegExp;
   regexErrorMessage?: string;
   placeholder?: string;
+  requiredErrorMessage?: string;
   disableFutureDates?: boolean;
   disabled?: boolean;
   defaultValue?: string;

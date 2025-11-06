@@ -990,20 +990,24 @@ const ListTable = <T extends RowData>({
                       ...(typeof column.sx === 'function'
                         ? filterOutBackground(column.sx())
                         : column.sx || {}),
-                      left:
-                        selectable &&
-                        actionMenuItems?.length > 0 &&
-                        isAvailableAction
-                          ? '82px'
-                          : selectable &&
-                              actionMenuItems?.length &&
-                              !isAvailableAction
-                            ? '32px'
-                            : !selectable &&
-                                actionMenuItems?.length > 0 &&
-                                isAvailableAction
-                              ? '50px'
-                              : '0px',
+                      ...(column.sticky
+                        ? {
+                            left:
+                              selectable &&
+                              actionMenuItems?.length > 0 &&
+                              isAvailableAction
+                                ? '82px'
+                                : selectable &&
+                                    actionMenuItems?.length &&
+                                    !isAvailableAction
+                                  ? '32px'
+                                  : !selectable &&
+                                      actionMenuItems?.length > 0 &&
+                                      isAvailableAction
+                                    ? '50px'
+                                    : '0px',
+                          }
+                        : {}),
                     }}
                   />
                 ) : (
@@ -1017,20 +1021,24 @@ const ListTable = <T extends RowData>({
                       ...(typeof column.sx === 'function'
                         ? filterOutBackground(column.sx())
                         : column.sx || {}),
-                      left:
-                        selectable &&
-                        actionMenuItems?.length > 0 &&
-                        isAvailableAction
-                          ? '82px'
-                          : selectable &&
-                              actionMenuItems?.length &&
-                              !isAvailableAction
-                            ? '32px'
-                            : !selectable &&
-                                actionMenuItems?.length > 0 &&
-                                isAvailableAction
-                              ? '50px'
-                              : '0px',
+                      ...(column.sticky
+                        ? {
+                            left:
+                              selectable &&
+                              actionMenuItems?.length > 0 &&
+                              isAvailableAction
+                                ? '82px'
+                                : selectable &&
+                                    actionMenuItems?.length &&
+                                    !isAvailableAction
+                                  ? '32px'
+                                  : !selectable &&
+                                      actionMenuItems?.length > 0 &&
+                                      isAvailableAction
+                                    ? '50px'
+                                    : '0px',
+                          }
+                        : {}),
                     }}
                   >
                     {column.label}
