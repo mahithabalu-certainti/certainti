@@ -58,6 +58,11 @@ routes.post(
   checkUserStatusMiddleware("NA"),
   controller.caseManagementController.ExportAdminTaskTemplateList
 );
+routes.get(
+  "/taskTemplate/taskType",
+  checkUserStatusMiddleware("NA"),
+  controller.caseManagementController.fetchAllTaskTypes
+);
 
 
 export default routes;

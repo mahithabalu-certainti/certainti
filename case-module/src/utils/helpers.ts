@@ -333,6 +333,12 @@ export const setTaskTemplateData = (dbData : TaskTemplate, reqData : any, userId
       validUpdateQuery.push(validUpdateConditions)
     }
   }
+  if(reqData.task_description) {
+    if(reqData.task_description !== dbData.task_description) {
+      validUpdateConditions = `task_description = '${reqData.task_description.replace(/'/g, "''")}'`
+      validUpdateQuery.push(validUpdateConditions)
+    }
+  }
   if(validUpdateQuery.length > 0) {
     validUpdateConditions = `modified_by = '${userId}'`
     validUpdateQuery.push(validUpdateConditions)

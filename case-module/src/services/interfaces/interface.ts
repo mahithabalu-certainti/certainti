@@ -154,4 +154,5 @@ export interface ICaseManagementService {
   updateTaskTemplate(data : UpdateTaskTemplateType, userId : string) :Promise<any>;
   fetchTaskTemplate(data : AdminTaskTemplatePayloadType, isExport : boolean, isGraphql : boolean, templateRid : string | null) : Promise<any>
   inlineEditTaskTemplate(data : any) : Promise<any>
+  fetchTaskTypeForTemplate() : Promise<any>
 }

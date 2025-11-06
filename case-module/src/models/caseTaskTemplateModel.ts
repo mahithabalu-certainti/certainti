@@ -19,8 +19,9 @@ interface CaseTaskTemplateAttributes {
   checklist_template_rid?: string;
   status_rid?: string;
   priority_rid?: string;
-  task_type?: string;
+  task_type_rid?: string;
   milestone_template_rid?: string;
+  task_description? : string
 }
 
 export interface CaseTaskTemplateCreationAttributes
@@ -47,8 +48,9 @@ export class TaskTemplate
   public checklist_template_rid?: string;
   public status_rid?: string;
   public priority_rid?: string;
-  public task_type?: string;
+  public task_type_rid?: string;
   public milestone_template_rid?: string;
+  public task_description?: string | undefined;
 
   static initialize(
     sequelize: Sequelize,
@@ -90,8 +92,9 @@ export class TaskTemplate
         checklist_template_rid: { type: DataTypes.STRING(50), allowNull: true },
         status_rid: { type: DataTypes.STRING(50), allowNull: true },
         priority_rid: { type: DataTypes.STRING(50), allowNull: true },
-        task_type: { type: DataTypes.STRING(50), allowNull: true },
+        task_type_rid: { type: DataTypes.STRING(50), allowNull: true },
         milestone_template_rid: { type: DataTypes.STRING(50), allowNull: true },
+        task_description : {type : DataTypes.TEXT(), allowNull : true}
       },
       {
         sequelize,

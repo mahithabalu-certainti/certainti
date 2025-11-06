@@ -595,7 +595,8 @@ export const fetchAdminTemplates = (page : number, limit : number, sort : string
     t.effort_in_days, t.reminder_interval, t.effective_start_datetime,
     t.effective_end_datetime, r.role_name, t.case_team_member_role_rid,
     c.checklist_name, t.checklist_template_rid, p.priority_name, t.priority_rid,
-    s.status_name, t.status_rid, m.milestone_name, t.milestone_template_rid
+    s.status_name, t.status_rid, m.milestone_name, t.milestone_template_rid,
+    t.task_type_rid, tt.task_type_name, t.task_description
     FROM
     ${MAIN_SCHEMA_NAME}.task_template t
     LEFT JOIN ${MAIN_SCHEMA_NAME}.case_priority p ON p.rid = t.priority_rid
@@ -605,6 +606,7 @@ export const fetchAdminTemplates = (page : number, limit : number, sort : string
     LEFT JOIN ${MAIN_SCHEMA_NAME}.milestone_template m ON m.rid = t.milestone_template_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.status s ON s.rid = t.status_rid
     LEFT JOIN ${MAIN_SCHEMA_NAME}.case_team_role r ON r.rid = t.case_team_member_role_rid
+    LEFT JOIN ${MAIN_SCHEMA_NAME}.task_type tt ON tt.rid = t.task_type_rid
     WHERE
     (t.task_name ILIKE '${searchValue}' OR t.r_number ILIKE '${searchValue}' OR 
     u.first_name ILIKE '${searchValue}' OR u.last_name ILIKE '${searchValue}' OR CONCAT(u.first_name,' ', u.last_name) ILIKE '${searchValue}' OR
