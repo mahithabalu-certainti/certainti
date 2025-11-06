@@ -45,7 +45,7 @@ export const EMAIL_TEMPLATES_EDIT = `${EMAIL_TEMPLATES}/edit/:templateId`;
 /** ADMIN CHECKLIST TEMPLATES ROUTES */
 export const CHECKLIST_TEMPLATES = `${ADMIN}/checklist-templates`;
 export const CHECKLIST_TEMPLATES_CREATE = `${CHECKLIST_TEMPLATES}/create`;
-export const CHECKLIST_TEMPLATES_EDIT = `${CHECKLIST_TEMPLATES}/edit/:templateId`;
+export const CHECKLIST_TEMPLATES_EDIT = `${CHECKLIST_TEMPLATES}/edit/:caseId`;
 
 /** ACCOUNT ROUTES */
 export const ACCOUNT = '/account';

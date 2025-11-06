@@ -16,7 +16,6 @@ import {
 import {
   ChecklistLevelsMockData,
   ChecklistStatusMockData,
-  ChecklistTemplateDetailsMockData,
   ChecklistTypesMockData,
 } from '../../mockdata/checklist-templates';
 import { CommonApiResponse } from '../../../common-service';
@@ -73,34 +72,68 @@ export const useChecklistTemplateList = (
 };
 
 // Details
-export const getChecklistTemplateDetailsURL = (templateId: string) => {
-  return `/api/checklistTemplates/detail/${templateId}`;
+export const getChecklistTemplateDetailsURL = (caseId: string) => {
+  return `/api/caseManagement/adminChecklist/detail/${caseId}`;
 };
 
 export const fetchChecklistTemplateDetails = async (
-  templateId: string
+  caseId: string
 ): Promise<ChecklistTemplateDetails> => {
-  //   const response =
-  //     await interactionServiceApi.get<ChecklistTemplateDetailsResponse>(
-  //       getChecklistTemplateDetailsURL(templateId)
-  //     );
-  //   return response.data.data.templateDetails;
+  try {
+    const { data } = await caseServiceApi.get(
+      getChecklistTemplateDetailsURL(caseId)
+    );
 
-  console.log('checklist-template-details-params', templateId);
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+    if (data?.data?.checklistDetails) {
+      const checklistDetails = data.data.checklistDetails;
 
-  return ChecklistTemplateDetailsMockData.data.checklistDetails;
+      return {
+        rid: checklistDetails.checklist_template_rid,
+        checklist_name: checklistDetails.checklist_name || '',
+        r_number: checklistDetails.r_number || '',
+        description: checklistDetails.checklist_description || '',
+        status_rid: checklistDetails.status_rid || '',
+        status_name: checklistDetails.status_name || '',
+        checklist_type_rid: checklistDetails.checklist_type_rid || '',
+        checklist_type_name: checklistDetails.checklist_type_name || '',
+        checklist_level_rid: checklistDetails.checklist_level_rid || '',
+        checklist_level_name: checklistDetails.checklist_level_name || '',
+        expires_on: checklistDetails.expires_on || '',
+        modified_by: checklistDetails.modified_by,
+        created_by: checklistDetails.created_by || '',
+        created_datetime: checklistDetails.created_datetime || '',
+        modified_datetime: checklistDetails.modified_datetime || '',
+        questions:
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          checklistDetails.checklist_items?.map((item: any) => ({
+            rid: item.rid,
+            question_seq_num: `Q${String(item.sequence_no).padStart(2, '0')}`,
+            question: item.checklist_item_name || '',
+            description: item.description || '',
+          })) || [],
+      };
+    }
+
+    throw new Error('Invalid response structure');
+  } catch (error) {
+    console.error('Error fetching case details:', error);
+    throw error;
+  }
 };
 
 export const useChecklistTemplateDetails = (
-  templateId: string
+  caseId: string
 ): UseQueryResult<ChecklistTemplateDetails | undefined, Error> => {
-  return useQuery<ChecklistTemplateDetails | undefined, Error>({
-    queryKey: ['checklist-template-details', templateId],
-    queryFn: () => fetchChecklistTemplateDetails(templateId),
-    retry: 0,
-    gcTime: 0,
-    enabled: !!templateId,
+  return useQuery({
+    queryKey: ['case-details', caseId],
+    queryFn: () => fetchChecklistTemplateDetails(caseId),
+    enabled: !!caseId,
+    retry: 1,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+    gcTime: 5 * 60 * 1000,
+    staleTime: 2 * 60 * 1000,
   });
 };
 
@@ -139,11 +172,11 @@ export const getUpdateChecklistTemplateUrl = (): string => {
 };
 
 export const updateChecklistTemplateDetails = async (
-  body: Partial<ChecklistTemplateFormPayload>
-): Promise<CommonApiResponse> => {
+  body: CreateTemplatePayload
+): Promise<CreateTemplateResponse> => {
   try {
-    const { data } = await interactionServiceApi.post<CommonApiResponse>(
-      getUpdateChecklistTemplateUrl(),
+    const { data } = await caseServiceApi.post<CreateTemplateResponse>(
+      getCreateTemplateUrl(),
       body
     );
     return data;
@@ -154,12 +187,8 @@ export const updateChecklistTemplateDetails = async (
 };
 
 export const useUpdateChecklistTemplateDetails = () => {
-  return useMutation<
-    CommonApiResponse,
-    Error,
-    Partial<ChecklistTemplateFormPayload>
-  >({
-    mutationFn: (body) => updateChecklistTemplateDetails({ ...body }),
+  return useMutation<CreateTemplateResponse, Error, CreateTemplatePayload>({
+    mutationFn: (body) => updateChecklistTemplateDetails(body),
   });
 };
 

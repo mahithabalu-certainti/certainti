@@ -6,6 +6,7 @@ import {
   ChecklistTemplateQuestionPayload,
   QustionActionType,
   CreateTemplatePayload,
+  ChecklistItemPayload,
 } from '../../../types';
 
 export const COMMON_SELECT_STYLES = {
@@ -245,44 +246,34 @@ export const questionsTransformPayload = (
 ): ChecklistTemplateQuestionPayload[] => {
   const transformedQuestions: ChecklistTemplateQuestionPayload[] = [];
   const retainedRids = new Set<string>();
-  const seenQuestionNos = new Set<string>();
 
-  // Process form questions first
-  formQuestions.forEach(({ question_seq_num, ...question }) => {
-    if (seenQuestionNos.has(question_seq_num)) {
-      return;
-    }
-    seenQuestionNos.add(question_seq_num);
-
+  formQuestions.forEach((question) => {
     if (isEdit && question.rid) {
       retainedRids.add(question.rid);
       transformedQuestions.push({
-        ...question,
+        rid: question.rid,
+        question: question.question,
+        description: question.description,
         action_type: QustionActionType.Edit,
       });
     } else if (!question.rid) {
       transformedQuestions.push({
-        ...question,
+        question: question.question,
+        description: question.description,
         action_type: QustionActionType.Add,
       });
     }
   });
 
   if (isEdit) {
-    existingQuestions.forEach(({ question_seq_num, ...existingQues }) => {
-      if (
-        existingQues.rid &&
-        !retainedRids.has(existingQues.rid) &&
-        !seenQuestionNos.has(question_seq_num)
-      ) {
+    existingQuestions.forEach((existingQues) => {
+      if (existingQues.rid && !retainedRids.has(existingQues.rid)) {
         transformedQuestions.push({
           rid: existingQues.rid,
           question: existingQues.question || '',
-          // notes: existingQues.notes || '',
-          // is_mandatory: existingQues.is_mandatory ?? false,
+          description: existingQues.description || '',
           action_type: QustionActionType.Delete,
         });
-        seenQuestionNos.add(question_seq_num);
       }
     });
   }
@@ -331,6 +322,59 @@ export const transformToNewCreateTemplatePayload = (
       description: question.description || question.question,
       action_type: 'add' as const,
     })),
+  };
+
+  return payload;
+};
+
+export const transformToEditTemplatePayload = (
+  formData: ChecklistTemplateFormData,
+  originalData: ChecklistTemplateDetails
+): CreateTemplatePayload => {
+  const transformedItems: ChecklistItemPayload[] = [];
+  const retainedRids = new Set<string>();
+
+  // Process current form questions
+  formData.questions.forEach((question, index) => {
+    if (question.rid) {
+      // Existing question being edited - action: "edit"
+      retainedRids.add(question.rid);
+      transformedItems.push({
+        checklist_item_name: question.question,
+        sequence_no: index + 1,
+        description: question.description || question.question,
+        action_type: 'edit' as const,
+      });
+    } else {
+      // New question being added - action: "add"
+      transformedItems.push({
+        checklist_item_name: question.question,
+        sequence_no: index + 1,
+        description: question.description || question.question,
+        action_type: 'add' as const,
+      });
+    }
+  });
+
+  // Handle deleted questions (questions that existed but are no longer in the form)
+  originalData.questions.forEach((existingQuestion) => {
+    if (existingQuestion.rid && !retainedRids.has(existingQuestion.rid)) {
+      // Question removed from form - action: "delete"
+      transformedItems.push({
+        checklist_item_name: existingQuestion.question,
+        sequence_no: 0, // Sequence doesn't matter for delete
+        description: existingQuestion.description || existingQuestion.question,
+        action_type: 'delete' as const,
+      });
+    }
+  });
+
+  // Clean payload structure matching your example
+  const payload: CreateTemplatePayload = {
+    checklist_name: formData.checklist_name,
+    checklist_description: formData.description,
+    status_rid: formData.status,
+    checklist_items: transformedItems,
   };
 
   return payload;

@@ -10,7 +10,7 @@ import {
   MenuItem,
   Tooltip,
 } from '@mui/material';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import TextButton from '../../../../components/button/text-button';
 import { useToast } from '../../../../hooks';
 import { useGetStatus } from '../../../../common-service';
@@ -19,8 +19,8 @@ import {
   ChecklistTemplateFormData,
   ChecklistTemplateFormErrors,
   ChecklistTemplateFormQuestion,
-  transformChecklistTemplatePayload,
   transformToNewCreateTemplatePayload,
+  transformToEditTemplatePayload,
   getQuestionTableColumns,
   ChecklistTemplateFormTableColumn,
   ChecklistTemplateQuestionErrors,
@@ -44,7 +44,8 @@ import {
 
 const ChecklistTemplateForm: React.FC = () => {
   const { successToast } = useToast();
-  const { templateId } = useParams();
+  const { caseId } = useParams();
+  const location = useLocation();
   const [formData, setFormData] = useState<ChecklistTemplateFormData>({
     checklist_name: '',
     description: '',
@@ -93,7 +94,7 @@ const ChecklistTemplateForm: React.FC = () => {
   const updateChecklistTemplate = useUpdateChecklistTemplateDetails();
 
   const { data: templateData, isLoading } = useChecklistTemplateDetails(
-    templateId || ''
+    caseId || ''
   );
 
   const commonSuccess =
@@ -115,22 +116,24 @@ const ChecklistTemplateForm: React.FC = () => {
     if (templateData && isEditView) {
       setFormData((prev) => ({
         ...prev,
-        checklist_name: templateData.checklist_name,
-        description: templateData.description,
-        status: templateData.status_rid,
-        rid: templateData.rid,
-        checklist_rid: templateData.r_number,
-        created_by: templateData.created_by,
-        created_on: formatDateToYYYYMMDDWithTime(templateData.created_datetime),
+        checklist_name: templateData.checklist_name || '',
+        description: templateData.description || '',
+        status: templateData.status_rid || '',
+        rid: templateData.rid || '',
+        checklist_rid: templateData.rid || '',
+        created_by: templateData.created_by || '',
+        created_on: templateData.created_datetime
+          ? formatDateToYYYYMMDDWithTime(templateData.created_datetime)
+          : '',
         updated_by: templateData.modified_by || '',
-        updated_on: formatDateToYYYYMMDDWithTime(
-          templateData.modified_datetime || ''
-        ),
+        updated_on: templateData.modified_datetime
+          ? formatDateToYYYYMMDDWithTime(templateData.modified_datetime)
+          : '',
         questions:
-          templateData.questions.length > 0
+          templateData.questions && templateData.questions.length > 0
             ? templateData.questions.map((qus, index) => ({
                 question_seq_num: qus.question_seq_num || `Q00-${index + 1}`,
-                question: qus.question.trim() || '',
+                question: (qus.question || '').trim(),
                 description: qus.description || '',
                 rid: qus.rid,
               }))
@@ -257,12 +260,11 @@ const ChecklistTemplateForm: React.FC = () => {
     }
 
     if (isEditView && templateData) {
-      const payload = transformChecklistTemplatePayload(
+      const editPayload = transformToEditTemplatePayload(
         formData,
-        isEditView,
         templateData
       );
-      updateChecklistTemplate.mutate(payload);
+      updateChecklistTemplate.mutate(editPayload);
     } else {
       const newPayload = transformToNewCreateTemplatePayload(formData);
       createChecklistTemplate.mutate(newPayload);

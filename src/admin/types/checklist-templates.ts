@@ -82,7 +82,6 @@ export interface ChecklistTemplateDetailsResponse {
   };
 }
 
-// Form types
 export enum QustionActionType {
   Add = 'add',
   Edit = 'edit',
@@ -92,8 +91,7 @@ export enum QustionActionType {
 export type ChecklistTemplateQuestionPayload = {
   rid?: string;
   question: string;
-  //   notes?: string;
-  //   is_mandatory?: boolean;
+  description: string;
   action_type: QustionActionType;
 };
 
@@ -165,8 +163,6 @@ export interface CreateTemplatePayload {
   checklist_name: string;
   checklist_description: string;
   status_rid: string;
-  checklist_level_rid?: string;
-  checklist_type_rid?: string;
   checklist_items: ChecklistItemPayload[];
 }
 

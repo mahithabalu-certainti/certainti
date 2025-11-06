@@ -100,7 +100,7 @@ export const TemplateTable: React.FC<ITemplateTableProps> = ({
 
   const handleEdit = (row: ChecklistTemplateList) => {
     const path = generatePath(CHECKLIST_TEMPLATES_EDIT, {
-      templateId: row.rid,
+      caseId: row.rid,
     });
     navigate(path);
   };
