@@ -555,7 +555,6 @@ export class CaseManagementService {
         let priorityQuery = rawQueries.getAllPriorityTypes(uniquePriorityIds)
         if(priorityQuery) {
           priority = await mainDb.query(priorityQuery) 
-          console.log(priority)
         }
         let assignedToQuery = rawQueries.getAllUsers(uniqueAssignedToIds)
         if(assignedToQuery) {
