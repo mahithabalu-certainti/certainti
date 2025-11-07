@@ -170,7 +170,7 @@ export const getGlobalCaseListColumns = (
     },
     {
       id: 'case_total_project_cost',
-      label: 'Total Case Project Cost',
+      label: 'Total Project Cost',
       width: 190,
       sortable: true,
       sortId: 'case_total_project_cost',
@@ -187,7 +187,7 @@ export const getGlobalCaseListColumns = (
     },
     {
       id: 'case_total_qre_cost',
-      label: 'Case Project QRE Cost',
+      label: 'Total QRE',
       width: 190,
       sortable: true,
       sortId: 'case_total_qre_cost',
@@ -204,7 +204,7 @@ export const getGlobalCaseListColumns = (
     },
     {
       id: 'case_total_rd_cost',
-      label: 'Case Project RD Credit',
+      label: 'Total RD Credits',
       width: 190,
       sortable: true,
       sortId: 'case_total_rd_cost',
