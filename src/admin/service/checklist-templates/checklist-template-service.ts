@@ -128,12 +128,6 @@ export const useChecklistTemplateDetails = (
     queryKey: ['case-details', caseId],
     queryFn: () => fetchChecklistTemplateDetails(caseId),
     enabled: !!caseId,
-    retry: 1,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchOnReconnect: false,
-    gcTime: 5 * 60 * 1000,
-    staleTime: 2 * 60 * 1000,
   });
 };
 
@@ -268,7 +262,10 @@ export const ExportChecklistTemplateAllList = async (
 };
 
 // Export individual checklist
-export const getChecklistTemplateExportUrl = (templateId: string, timezone: string) =>
+export const getChecklistTemplateExportUrl = (
+  templateId: string,
+  timezone: string
+) =>
   `/api/caseManagement/adminChecklist/export/${templateId}?timezone=${timezone}`;
 
 export const ExportChecklistTemplate = async (
@@ -278,10 +275,9 @@ export const ExportChecklistTemplate = async (
 ): Promise<void> => {
   try {
     const filename = `${checklistName ? checklistName + '_' : ''}template.xlsx`;
-    const response =
-      await caseServiceApi.get<ExportChecklistTemplateResponse>(
-        getChecklistTemplateExportUrl(templateId, timezone)
-      );
+    const response = await caseServiceApi.get<ExportChecklistTemplateResponse>(
+      getChecklistTemplateExportUrl(templateId, timezone)
+    );
     const base64Data = response.data?.data;
 
     if (!base64Data) {

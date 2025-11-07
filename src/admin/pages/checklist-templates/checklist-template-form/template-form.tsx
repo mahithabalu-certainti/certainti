@@ -13,7 +13,7 @@ import {
 import { useParams, useLocation } from 'react-router-dom';
 import TextButton from '../../../../components/button/text-button';
 import { useToast } from '../../../../hooks';
-import { useGetStatus } from '../../../../common-service';
+import { AllPermissions, useGetStatus } from '../../../../common-service';
 import {
   validateTemplateForm,
   ChecklistTemplateFormData,
@@ -26,6 +26,8 @@ import {
   ChecklistTemplateQuestionErrors,
   COMMON_MENU_PROPS,
   getSelectStyles,
+  shouldDisableField,
+  shouldHideField,
 } from './helper';
 import {
   ChecklistIcon,
@@ -41,6 +43,8 @@ import {
   useCreateTemplate,
   useUpdateChecklistTemplateDetails,
 } from '../../../service/checklist-templates/checklist-template-service';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../store/store';
 
 const ChecklistTemplateForm: React.FC = () => {
   const { successToast } = useToast();
@@ -71,23 +75,23 @@ const ChecklistTemplateForm: React.FC = () => {
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
 
   // Permission
-  // const { permission } = useSelector((state: RootState) => state.permission);
+  const { permission } = useSelector((state: RootState) => state.permission);
 
-  // const checklistTemplateViewEditFields = useMemo(
-  //   () =>
-  //     permission.find(
-  //       (item) => item.name === AllPermissions.CHECKLIST_TEMPLATES_VIEW_EDIT
-  //     )?.fields ?? [],
-  //   [permission]
-  // );
+  const checklistTemplateViewEditFields = useMemo(
+    () =>
+      permission.find(
+        (item) => item.name === AllPermissions.CHECKLIST_TEMPLATES_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
 
-  // const permissionMap = useMemo(() => {
-  //   const map: Record<string, { read: boolean; edit: boolean }> = {};
-  //   checklistTemplateViewEditFields.forEach((item) => {
-  //     map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
-  //   });
-  //   return map;
-  // }, [checklistTemplateViewEditFields]);
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    checklistTemplateViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [checklistTemplateViewEditFields]);
 
   const statusData = useGetStatus();
   const createChecklistTemplate = useCreateTemplate();
@@ -120,7 +124,7 @@ const ChecklistTemplateForm: React.FC = () => {
         description: templateData.description || '',
         status: templateData.status_rid || '',
         rid: templateData.rid || '',
-        checklist_rid: templateData.rid || '',
+        checklist_rid: templateData.r_number || '',
         created_by: templateData.created_by || '',
         created_on: templateData.created_datetime
           ? formatDateToYYYYMMDDWithTime(templateData.created_datetime)
@@ -132,7 +136,7 @@ const ChecklistTemplateForm: React.FC = () => {
         questions:
           templateData.questions && templateData.questions.length > 0
             ? templateData.questions.map((qus, index) => ({
-                question_seq_num: qus.question_seq_num || `Q00-${index + 1}`,
+                question_seq_num: qus.question_seq_num || `SNO-${index + 1}`,
                 question: (qus.question || '').trim(),
                 description: qus.description || '',
                 rid: qus.rid,
@@ -275,7 +279,7 @@ const ChecklistTemplateForm: React.FC = () => {
     window.history.back();
   };
 
-  const questionTableColumns = getQuestionTableColumns(isEditView);
+  const questionTableColumns = getQuestionTableColumns();
   const formLoading = isLoading || statusData.isLoading;
 
   return (
@@ -411,11 +415,11 @@ const ChecklistTemplateForm: React.FC = () => {
                   required
                   fullWidth
                   size='small'
-                  // disabled={shouldDisableField(
-                  //   'status_rid',
-                  //   isEditView,
-                  //   permissionMap
-                  // )}
+                  disabled={shouldDisableField(
+                    'status_rid',
+                    isEditView,
+                    permissionMap
+                  )}
                   className={`custom-select-no-arrow sm:text-sm ${
                     formData.status === '' ? 'text-[#7D98B6]' : 'text-black'
                   } ${errors?.status ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
@@ -455,11 +459,15 @@ const ChecklistTemplateForm: React.FC = () => {
 
             <div
               className='grid grid-cols-1 px-10 pt-4'
-              // style={{
-              //   display: shouldHideField('description', isEditView, permissionMap)
-              //     ? 'none'
-              //     : 'block',
-              // }}
+              style={{
+                display: shouldHideField(
+                  'description',
+                  isEditView,
+                  permissionMap
+                )
+                  ? 'none'
+                  : 'block',
+              }}
             >
               <label
                 htmlFor='description'
@@ -474,11 +482,11 @@ const ChecklistTemplateForm: React.FC = () => {
                 onChange={(e) =>
                   handleInputChange('description', e.target.value)
                 }
-                // disabled={shouldDisableField(
-                //   'description',
-                //   isEditView,
-                //   permissionMap
-                // )}
+                disabled={shouldDisableField(
+                  'description',
+                  isEditView,
+                  permissionMap
+                )}
                 className={`outline-none placeholder-custom-color h-[95px] w-full sm:text-sm py-2 px-3 resize-none focus:border-2 focus:border-blue-400 border border-[#CBD6E2] rounded-xs ${
                   errors?.description
                     ? 'border-red-500 bg-[#FEF2F2] focus:!bg-[#FEF2F2]'
@@ -498,16 +506,16 @@ const ChecklistTemplateForm: React.FC = () => {
 
             <div
               className='w-full mb-5 mt-5'
-              // style={{
-              //   display: shouldHideField('questions', isEditView, permissionMap)
-              //     ? 'none'
-              //     : 'block',
-              // }}
+              style={{
+                display: shouldHideField('questions', isEditView, permissionMap)
+                  ? 'none'
+                  : 'block',
+              }}
             >
               <div
                 className={`border capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#ECECEC] px-10`}
               >
-                Checkist Template Questions
+                Checkist Template Items
               </div>
               <div className='px-10'>
                 <TableContainer sx={{ overflowX: 'auto' }}>
@@ -579,17 +587,16 @@ const ChecklistTemplateForm: React.FC = () => {
                             position: 'relative',
                             p: 0,
                           }}
-                          // className={`${shouldDisableField('questions', isEditView, permissionMap) ? 'bg-[#f3f4f6] cursor-default' : ''}`}
+                          className={`${shouldDisableField('questions', isEditView, permissionMap) ? 'bg-[#f3f4f6] cursor-default' : ''}`}
                         >
                           {questionTableColumns
                             .filter((col) => !col.hide)
                             .map((col: ChecklistTemplateFormTableColumn) => {
-                              // const permissionDisabled = shouldDisableField(
-                              //   'questions',
-                              //   isEditView,
-                              //   permissionMap
-                              // );
-                              const permissionDisabled = false;
+                              const permissionDisabled = shouldDisableField(
+                                'questions',
+                                isEditView,
+                                permissionMap
+                              );
                               const isDisabled =
                                 permissionDisabled || col.disabled;
                               const isBtnDisabled =
@@ -633,7 +640,7 @@ const ChecklistTemplateForm: React.FC = () => {
                                     >
                                       <textarea
                                         name='checklist_question'
-                                        placeholder='Enter Checklist Question'
+                                        placeholder='Enter Checklist Item'
                                         autoComplete='off'
                                         className={`outline-none placeholder-custom-color w-full sm:text-sm p-2 resize-none focus:border-2 focus:border-blue-400 ${error ? 'bg-[#FEF2F2] focus:!bg-[#FEF2F2]' : ''}`}
                                         onChange={(e) =>
@@ -785,7 +792,7 @@ const ChecklistTemplateForm: React.FC = () => {
                       <KeyContactAddIcon alt='add-btn' className='w-5 h-5' />
                     </React.Suspense>
                   </span>
-                  Add New Question
+                  Add New Item
                 </button>
               </div>
             </div>

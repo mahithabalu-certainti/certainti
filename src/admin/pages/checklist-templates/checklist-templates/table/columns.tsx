@@ -9,10 +9,10 @@ export const getChecklistTemplateColumns = (
   isTemplateExportEnable?: boolean
 ): ListTableColumn<ChecklistTemplateList>[] => [
   {
-    id: 'rid',
-    sortId: 'rid',
+    id: 'r_number',
+    sortId: 'r_number',
     label: 'Checklist ID',
-    width: 330,
+    width: 160,
     sortable: true,
     sticky: true,
     hide:

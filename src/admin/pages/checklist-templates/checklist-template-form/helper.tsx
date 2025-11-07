@@ -103,18 +103,17 @@ export enum QuestionUpdate {
   Delete = 'DELETE',
 }
 
-export const getQuestionTableColumns = (
-  isEditView: boolean
-): ChecklistTemplateFormTableColumn[] => [
+export const getQuestionTableColumns = () // isEditView: boolean
+: ChecklistTemplateFormTableColumn[] => [
   {
     name: 'questionNo',
     label: 'Question No.',
     width: '10%',
-    hide: !isEditView,
+    hide: true,
   },
   {
     name: 'question',
-    label: 'Checklist Questions',
+    label: 'Checklist Items',
     width: '40%',
     required: true,
   },
@@ -315,9 +314,8 @@ export const transformToNewCreateTemplatePayload = (
     checklist_name: formData.checklist_name,
     checklist_description: formData.description,
     status_rid: formData.status,
-    checklist_items: formData.questions.map((question, index) => ({
+    checklist_items: formData.questions.map((question) => ({
       checklist_item_name: question.question,
-      sequence_no: index + 1,
       description: question.description || question.question,
       action_type: 'add' as const,
     })),
@@ -343,9 +341,7 @@ export const transformToEditTemplatePayload = (
   );
 
   payload.checklist_items = formData.questions
-    .map((q, index) => {
-      const sequence_no = index + 1;
-
+    .map((q) => {
       if (q.rid) {
         const existingQuestion = existingQuestionsMap.get(q.rid);
 
@@ -359,7 +355,6 @@ export const transformToEditTemplatePayload = (
               checklist_item_rid: q.rid,
               checklist_item_name: q.question,
               description: q.description,
-              sequence_no,
               action_type: 'edit',
             };
           } else {
@@ -367,7 +362,7 @@ export const transformToEditTemplatePayload = (
               checklist_item_rid: q.rid,
               checklist_item_name: q.question,
               description: q.description,
-              sequence_no,
+              action_type: 'edit',
             };
           }
         }
@@ -375,7 +370,6 @@ export const transformToEditTemplatePayload = (
         return {
           checklist_item_name: q.question,
           description: q.description,
-          sequence_no,
           action_type: 'add',
         };
       }
@@ -387,7 +381,6 @@ export const transformToEditTemplatePayload = (
     payload.checklist_items.push({
       checklist_item_rid: q.rid,
       checklist_item_name: q.question,
-      sequence_no: 0,
       description: q.description || '',
       action_type: 'delete',
     });

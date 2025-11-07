@@ -178,7 +178,7 @@ export const TemplateTable: React.FC<ITemplateTableProps> = ({
 
   const RestrictedColumns = [
     {
-      id: 'rid',
+      id: 'r_number',
       canHide: false,
       canDrag: false,
     },

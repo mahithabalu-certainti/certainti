@@ -156,7 +156,7 @@ export interface ChecklistTypeApiResponse extends CommonApiResponse {
 export interface ChecklistItemPayload {
   checklist_item_name: string;
   checklist_item_rid?: string;
-  sequence_no: number;
+  // sequence_no: number;
   description: string;
   action_type: 'add' | 'edit' | 'delete';
 }
