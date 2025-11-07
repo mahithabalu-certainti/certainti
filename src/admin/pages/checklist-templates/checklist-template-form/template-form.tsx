@@ -348,15 +348,15 @@ const ChecklistTemplateForm: React.FC = () => {
 
             <div className='grid md:grid-cols-3 gap-x-4 gap-y-[2px] px-10 pt-4'>
               <div
-              // style={{
-              //   display: shouldHideField(
-              //     'checklist_name',
-              //     isEditView,
-              //     permissionMap
-              //   )
-              //     ? 'none'
-              //     : 'block',
-              // }}
+                style={{
+                  display: shouldHideField(
+                    'checklist_name',
+                    isEditView,
+                    permissionMap
+                  )
+                    ? 'none'
+                    : 'block',
+                }}
               >
                 <label
                   className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
@@ -373,11 +373,11 @@ const ChecklistTemplateForm: React.FC = () => {
                   onChange={(e) =>
                     handleInputChange('checklist_name', e.target.value)
                   }
-                  // disabled={shouldDisableField(
-                  //   'checklist_name',
-                  //   isEditView,
-                  //   permissionMap
-                  // )}
+                  disabled={shouldDisableField(
+                    'checklist_name',
+                    isEditView,
+                    permissionMap
+                  )}
                   autoComplete='off'
                   className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] truncate overflow-hidden text-ellipsis whitespace-nowrap outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${errors?.checklist_name ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
                   value={formData.checklist_name}
@@ -390,15 +390,15 @@ const ChecklistTemplateForm: React.FC = () => {
               </div>
 
               <div
-              // style={{
-              //   display: shouldHideField(
-              //     'status_rid',
-              //     isEditView,
-              //     permissionMap
-              //   )
-              //     ? 'none'
-              //     : 'block',
-              // }}
+                style={{
+                  display: shouldHideField(
+                    'status_rid',
+                    isEditView,
+                    permissionMap
+                  )
+                    ? 'none'
+                    : 'block',
+                }}
               >
                 <label
                   className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
@@ -782,11 +782,11 @@ const ChecklistTemplateForm: React.FC = () => {
                   className='flex items-center cursor-pointer gap-1 bg-[#EAF0F5] h-[30px] rounded-[2px] color-[#2D3E4F] px-2 text-[12px] font-semibold disabled:bg-gray-100 disabled:opacity-75 disabled:cursor-default'
                   type='button'
                   onClick={handleAddQuestion}
-                  // disabled={shouldDisableField(
-                  //   'questions',
-                  //   isEditView,
-                  //   permissionMap
-                  // )}
+                  disabled={shouldDisableField(
+                    'questions',
+                    isEditView,
+                    permissionMap
+                  )}
                 >
                   <span>
                     <React.Suspense fallback={null}>
@@ -809,58 +809,52 @@ const ChecklistTemplateForm: React.FC = () => {
                   {
                     label: 'Record ID',
                     value: formData.rid,
-                    // hide: shouldHideField('rid', isEditView, permissionMap),
-                    hide: false,
+                    hide: shouldHideField('rid', isEditView, permissionMap),
                   },
                   {
                     label: 'Created On',
                     value: formData.created_on,
-                    // hide: shouldHideField(
-                    //   'created_datetime',
-                    //   isEditView,
-                    //   permissionMap
-                    // ),
-                    hide: false,
+                    hide: shouldHideField(
+                      'created_datetime',
+                      isEditView,
+                      permissionMap
+                    ),
                   },
                   {
                     label: 'Created By',
                     value: formData.created_by,
-                    // hide: shouldHideField(
-                    //   'created_by',
-                    //   isEditView,
-                    //   permissionMap
-                    // ),
-                    hide: false,
+                    hide: shouldHideField(
+                      'created_by',
+                      isEditView,
+                      permissionMap
+                    ),
                   },
                   {
                     label: 'Checklist ID',
                     value: formData.checklist_rid,
-                    // hide: shouldHideField(
-                    //   'r_number',
-                    //   isEditView,
-                    //   permissionMap
-                    // ),
-                    hide: false,
+                    hide: shouldHideField(
+                      'r_number',
+                      isEditView,
+                      permissionMap
+                    ),
                   },
                   {
                     label: 'Updated On',
                     value: formData.updated_on,
-                    // hide: shouldHideField(
-                    //   'modified_datetime',
-                    //   isEditView,
-                    //   permissionMap
-                    // ),
-                    hide: false,
+                    hide: shouldHideField(
+                      'modified_datetime',
+                      isEditView,
+                      permissionMap
+                    ),
                   },
                   {
                     label: 'Updated By',
                     value: formData.updated_by,
-                    // hide: shouldHideField(
-                    //   'modified_by',
-                    //   isEditView,
-                    //   permissionMap
-                    // ),
-                    hide: false,
+                    hide: shouldHideField(
+                      'modified_by',
+                      isEditView,
+                      permissionMap
+                    ),
                   },
                 ]
                   .filter((field) => !field.hide)
