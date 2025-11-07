@@ -1,5 +1,6 @@
 // Import required dependencies for Express.js controller functionality
 import { Request, Response } from "express";
+import ExcelJS from "exceljs";
 import {
   errorLog,
   generateExcelBase64,
@@ -20,6 +21,7 @@ import {
   adminChecklistSchema,
   createCaseSchema,
   createTaskTemplateSchema,
+  exportAdminCheckListByIdSchema,
   listAdminCheckListSchema,
   updateAdminChecklistSchema,
   updateTaskTemplateSchema,
@@ -414,7 +416,6 @@ async function exportAdminCheckList(req: Request, res: Response) {
         return moment
           .utc(convertedDate)
           .tz(isValidTZ ? value.timezone : "UTC")
-          .utcOffset("-012:30")
           .format("YYYY-MMM-DD, hh:mm:ss A");
        };
        if (result.statusCode === HttpStatus.SUCCESS) {
@@ -982,7 +983,7 @@ async function ExportAdminTaskTemplateList (req : Request, res : Response) {
         ? moment
             .utc(convertedDate)
             .tz(isValidTZ ? data.timezone : "UTC")
-            .utcOffset("-012:30")
+            .utcOffset("-05:30")
             .format("YYYY-MMM-DD, hh:mm:ss A")
         : null;
     };
@@ -1088,6 +1089,126 @@ async function fetchAllTaskTypes (req : Request, res : Response) {
   }
 }
 
+async function exportCheckListTemplateById(req: Request, res: Response) {
+  try {
+    const methodName = "Export Checklist By Id";
+     // Validate request body against the defined schema
+    const data = await validateRequest(req, exportAdminCheckListByIdSchema, res,"GET");
+
+    const userId = req.headers["x-user-id"] as string;
+     logMessage(`[${methodName}] Request received, ${JSON.stringify(data)} userId: ${userId}`);
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+     const { checkListRid } = req.params;
+    const result = await caseManagementService.getCheckListTemplateDetailsById(
+      checkListRid!
+    );
+    const allowedFieldsForExport =
+      await caseService.getAllowedExportFields(
+        userId,
+        "checklist_templates_view_edit"
+      );
+    const allowedFieldSet = new Set<string>();
+    for (const field of allowedFieldsForExport) {
+      if (field.read) {
+        allowedFieldSet.add(field.field_name);
+      }
+    }
+    const isValidTZ = data.timezone && isValidTimezone(data.timezone);
+    const formatDate = (date?: Date) =>
+      date
+        ? moment(date)
+            .tz(isValidTZ ? data.timezone : "UTC")
+            .format("YYYY-MM-DD, hh:mm:ss A")
+        : null;
+    const response = result.data?.checklistDetails;
+    if (result.statusCode == HttpStatus.SUCCESS) {
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("CheckList Details");
+
+      // Define mapping of field keys to labels and their corresponding values from response
+      const fieldMappings: Record<string, { label: string; value: any }> = {
+        r_number: { label: "Checklist ID", value: response?.r_number },
+        checklist_name: {
+          label: "Checklist Name",
+          value: response?.checklist_name,
+        },
+        checklist_description: {
+          label: "Checklist Description",
+          value: response?.checklist_description,
+        },
+        status_rid: { label: "Status", value: response?.status_name },
+        created_by: {
+          label: "Created By",
+          value: response?.created_user_name || response?.created_by,
+        },
+        created_datetime: {
+          label: "Created Date",
+          value: formatDate(response?.created_datetime),
+        },
+      };
+
+      // Dynamically build header rows based on allowedFieldSet and fieldMappings
+      const headerRows: [string, string][] = [];
+      Object.keys(fieldMappings).forEach((field) => {
+        if (allowedFieldSet.has(field)) {
+          const mapping = fieldMappings[field];
+          if (mapping) {
+            headerRows.push([mapping.label, String(mapping.value ?? "")]);
+          }
+        }
+      });
+
+      headerRows.forEach((row, idx) => {
+        worksheet.addRow(row);
+        worksheet.getRow(idx + 1).getCell(1).font = { bold: true };
+      });
+      if (allowedFieldSet.has("checklists")) {
+        worksheet.addRow(["Item", "Description"]);
+        worksheet.getRow(7).eachCell((cell) => {
+          cell.font = { bold: true };
+        });
+        worksheet.columns = [
+          { key: "checklist_item_name", width: 15 },
+          { key: "description", width: 50 },
+        ];
+        response.checklist_items.forEach((item: any) => {
+          const plain = item.get ? item.get({ plain: true }) : item;
+          const row = worksheet.addRow({
+            "checklist_item_name": plain.checklist_item_name,
+            description: plain.description,
+          });
+        });
+      }
+      const excelBuffer = await workbook.xlsx.writeBuffer();
+      handleSuccessResponse(res, Buffer.from(excelBuffer).toString("base64"));
+      return;
+    } else {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.dataNotAvailable,
+        data: null,
+      });
+    }
+  } catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
 // Export the controller functions for use in route definitions
 export default {
   createAdminCheckList,
@@ -1101,6 +1222,7 @@ export default {
   exportAdminCheckList,
   ExportAdminTaskTemplateList,
   getCheckListTemplateDetailsById,
+  exportCheckListTemplateById,
   fetchAllTaskTypes,
   updateAdminCheckList
 };
