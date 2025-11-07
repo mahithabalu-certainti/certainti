@@ -3681,6 +3681,31 @@ class SchemaService {
     }
   }
 
+  async fetchAccountsWithStatusByIds(accountRids: string[]) {
+    try {
+      const mainDbSequelize = await initMainDbSequelize();
+
+      // Return empty array if no account IDs provided
+      if (!accountRids || accountRids.length === 0) {
+        return [];
+      }
+
+      const accounts = await mainDbSequelize.query(
+        rawQueries.getAccountsWithStatusByRidsQuery(),
+        {
+          replacements: { accountRids },
+          type: "SELECT",
+        }
+      );
+
+      return accounts;
+    } catch (err) {
+      throw new Error(
+        "Error fetching accounts by IDs: " + (err as Error).message
+      );
+    }
+  }
+
   async getUserGroupType(userRid: string): Promise<string | null> {
     const mainDbSequelize = await initMainDbSequelize();
 

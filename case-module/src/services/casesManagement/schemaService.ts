@@ -205,6 +205,7 @@ class CaseManagementSchemaService {
         {
           checklist_name: caseRequest.checklist_name,
           checklist_description: caseRequest.checklist_description,
+          status_rid: caseRequest.status_rid,
           created_by: caseRequest.created_by,
           //modified_by: caseRequest.modified_by,
           created_datetime: new Date(),
@@ -232,8 +233,8 @@ class CaseManagementSchemaService {
       if (!existingChecklist) {
         return {
           statusCode: HttpStatus.NOT_FOUND,
-          message: "Checklist not found",
-          errorMessage: "Admin checklist with the provided RID does not exist",
+          message: STATUS_MESSAGE.checkListNotFound,
+          errorMessage: STATUS_MESSAGE.checkListNotFoundError,
         };
       }
 
@@ -498,7 +499,7 @@ class CaseManagementSchemaService {
     }
   async createTaskTemplate (data : CreateTaskTemplateType, userId : string) {
     const { TaskTemplate } = await this.caseModelService.getModels("");
-    const findSequenceOrder = await this.fetchSequenceOrder();
+    const findSequenceOrder = await this.fetchSequenceOrder(data.milestone_template_rid);
     let sequenceNumber : number = 0;
     if(findSequenceOrder.length > 0) {
       sequenceNumber = findSequenceOrder[0]?.sequence_no! + 1
@@ -525,17 +526,21 @@ class CaseManagementSchemaService {
       status_rid : data.status_rid,
       priority_rid : data.priority_rid,
       task_type_rid : data.task_type_rid,
-      milestone_template_rid : data.milestone_template_rid
+      milestone_template_rid : data.milestone_template_rid,
+      task_description : data.task_description
     })
     return {
       statusCode : HttpStatus.SUCCESS,
       statusMessage : STATUS_MESSAGE.taskCreatedSuccess
     };
   }
-  async fetchSequenceOrder () {
+  async fetchSequenceOrder (milestone_template_rid : string) {
     const { TaskTemplate } = await this.caseModelService.getModels("");
     const findSequenceOrder = await TaskTemplate.findAll({
       attributes : ['sequence_no'],
+      where : {
+        milestone_template_rid : milestone_template_rid
+      },
       order : [['created_datetime', 'DESC']],
       raw : true
     })
@@ -675,13 +680,11 @@ async fetchChecklistTemplateDetailsById(
       const items = await AdminCheckListItem.findAll({
         attributes: [
           "rid",
-          "sequence_no",
           "checklist_item_name",
           "checklist_template_rid",
           "description"
           ],
         order: [
-          ["sequence_no", "ASC"],
           ["created_datetime", "ASC"],
         ],
         where: { $checklist_template_rid$: checklistId},

@@ -1256,6 +1256,13 @@ export const rawQueries = {
     WHERE rid = :resourceSkillId
     `;
   },
+  fetchCaseById(schemaName: string) {
+    return `
+    SELECT rid,case_name
+    FROM "${schemaName}".cases
+    WHERE rid = :caseId
+    `;
+  },
   fetchProjectClassificationById() {
     return `
       SELECT rid, classification_name FROM ${MAIN_SCHEMA_NAME}.project_classification WHERE rid IN (:ids)
@@ -1926,6 +1933,13 @@ export const rawQueries = {
       SELECT * 
       FROM ${MAIN_SCHEMA_NAME}.account 
       WHERE rid IN (:accountRids)
+    `;
+  },
+  getAccountsWithStatusByRidsQuery(): string {
+    return `
+      SELECT b.rid, b.status_rid, c.status_name FROM ${MAIN_SCHEMA_NAME}.account as b
+      left join ${MAIN_SCHEMA_NAME}.status as c
+      on b.status_rid = c.rid
     `;
   },
   getUserGroupTypeByUserRidQuery(): string {

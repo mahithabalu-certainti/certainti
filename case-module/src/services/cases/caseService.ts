@@ -343,8 +343,12 @@ export class CaseService {
           rawQueries.getCaseStatusDetails(queryResult.status_rid),
           { type: QueryTypes.SELECT }
         );
-        if (getAccountDetails)
+        const [statusDetails] = await mainDb.query<CaseStatusType>(rawQueries.getStatusDetails(getAccountDetails!.status_rid), {type : QueryTypes.SELECT})
+        if (getAccountDetails) {
           queryResult.account_rnumber = getAccountDetails.r_number;
+          queryResult.account_status_rid = getAccountDetails.status_rid
+          queryResult.account_status_name = statusDetails!.status_name
+        }
         else queryResult.account_rnumber = null;
         if (getCaseFilingType)
           queryResult.filing_type_name = getCaseFilingType.filing_type_name;
@@ -1282,6 +1286,39 @@ export class CaseService {
     }
   }
 
+  /**
+   * Retrieves all available users who can be assigned as case owners.
+   *
+   * @returns {Promise<{
+   *   statusCode: number;
+   *   message: string;
+   *   errorMessage?: string;
+   *   data?: { caseOwners: any };
+   * }>} Result containing all eligible case owners or error information.
+   */
+  async getCaseOwner(
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { caseOwners: any };
+  }> {
+    try {
+      const caseOwners = await this.caseSchemaService.getCaseOwners();
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          caseOwners,
+        },
+      };
+    } catch (err) {
+      logMessage(`Error fetching case roles, ${err}`);
+      throw this.throwServiceError(err as Error);
+    }
+  }
+
   async exportAssignedProjects (data : any) {
     const result = await this.fetchProjectsForAssign(data, true, data.userId, true);
     if(result?.statusCode === HttpStatus.SUCCESS) {
@@ -1555,5 +1592,70 @@ export class CaseService {
         };
       }
     }
+
+    async updateCheckList(
+        caseRequest: ICreateChecklist,
+        userId: string
+      ): Promise<{
+        statusCode: number;
+        message: string;
+        errorMessage?: string;
+        data?: { checklist: any };
+      }> {
+        // Initialize database connection and start transaction for atomic operations
+        const dbInit = await this.caseModelService.getMainSequelize();
+        const transaction = await dbInit.transaction();
+        try {
+          // Set the user who is creating this checklist
+          caseRequest.modified_by = userId;
+           const { accountNumber } =
+        await this.caseSchemaService.fetchValidAccountNumberById(
+          caseRequest.account_rid
+        );
+
+        if (!accountNumber) {
+          logMessage(`Invalid account ID ${caseRequest.account_rid}`);
+          return {
+            statusCode: HttpStatus.FAILED,
+            message: HttpStatus.FAILED_MESSAGE,
+            errorMessage: "Invalid account ID",
+          };
+        }
+          // Create the main admin checklist record
+          const response =
+            await this.caseSchemaService.updateCheckList(
+              accountNumber,caseRequest,transaction
+            );
+    
+          // If checklist creation was successful, manage associated checklist items (add/edit/delete)
+          if (response) {
+            await this.caseSchemaService.manageCheckListItems(
+              accountNumber,
+              caseRequest,
+              caseRequest.checklist_template_rid!,
+              transaction
+            );
+          }
+    
+          // Commit the transaction after all operations succeed
+          await transaction.commit();
+    
+          return {
+            statusCode: HttpStatus.SUCCESS,
+            message: STATUS_MESSAGE.adminChecklistCreated,
+            data: {
+              checklist: response,
+            },
+          };
+        } catch (err) {
+          logMessage(`Error creating admin checklist: ${err}`);
+          await transaction.rollback();
+          return {
+            statusCode: HttpStatus.FAILED,
+            message: HttpStatus.FAILED_MESSAGE,
+            errorMessage: STATUS_MESSAGE.adminChecklistFailed,
+          };
+        }
+      }
 
 }

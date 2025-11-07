@@ -90,6 +90,12 @@ export interface ICaseService {
     errorMessage?: string;
     data?: { caseTeamMembers: any };
   }>;
+  getCaseOwner() : Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { caseOwners: any };
+  }>;
   listUsersForCaseTeam(accountRid: string): Promise<{
     statusCode: number;
     message: string;
@@ -97,6 +103,15 @@ export interface ICaseService {
     data?: { users: any };
   }>;
   createCheckList(
+    checklistRequest: ICreateChecklist,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { checklist: any };
+  }>;
+  updateCheckList(
     checklistRequest: ICreateChecklist,
     userId: string
   ): Promise<{
@@ -164,4 +179,5 @@ export interface ICaseManagementService {
   fetchTaskTemplate(data : AdminTaskTemplatePayloadType, isExport : boolean, isGraphql : boolean, templateRid : string | null) : Promise<any>
   inlineEditTaskTemplate(data : any) : Promise<any>
   fetchTaskTypeForTemplate() : Promise<any>
+  getTaskTemplateDetailsById (rid : string) : Promise<any>
 }

@@ -104,7 +104,9 @@ export const STATUS_MESSAGE = {
   jurisdictionFetchedSuccess: "Jurisdiction configuration fetched successfully",
   jurisdictionFetchedFailed: "Failed to fetch jurisdiction configuration",
   jurisdictionNotFound: "No jurisdiction configuration found for this case",
-  taskTypeFetchedSuccess : "Task Type fetched successfully"
+  taskTypeFetchedSuccess : "Task Type fetched successfully",
+  checkListNotFound:"Checklist not found",
+  checkListNotFoundError:"Checklist with the provided RID does not exist"
 
 };
 
@@ -401,6 +403,13 @@ export const rawQueries = {
     AND u.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active')
 	  order by name asc`
   },
+  getCaseOwners() {
+    return `
+      SELECT u.rid, CONCAT(u.first_name, ' ', u.last_name) AS name
+      FROM ${MAIN_SCHEMA_NAME}.user u
+        WHERE is_consultant_firm is true and u.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active')
+    ORDER BY name ASC`
+  },
   checkCaseTableExists(schemaName: string) {
     return `
     SELECT EXISTS (
@@ -439,7 +448,7 @@ export const rawQueries = {
     `;
   },
   fetchAccountDetails(accountRid: string) {
-    return `SELECT r_number, account_name, rid, country_rid, currency_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`;
+    return `SELECT r_number, account_name, rid, country_rid, currency_rid, status_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`;
   },
   getCaseFilingTypeById(filingTypeRid: string) {
     return `
@@ -723,6 +732,12 @@ export const rawQueries = {
   getTaskType() {
     return `SELECT rid, task_type_name FROM ${MAIN_SCHEMA_NAME}.task_type ORDER BY task_type_name ASC`
   },
+  getSpecificTaskType () {
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name ILIKE '%Milestone%'`
+  },
+  getStatusDetails (rid : string) {
+    return `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid = '${rid}'`
+  }
 };
 
 const keyContactRole = {

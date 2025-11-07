@@ -48,7 +48,9 @@ export type CaseHeadersColumns = {
   created_by: string | null,
   modified_by: string | null;
   created_by_name : string | null,
-  modified_by_name : string | null
+  modified_by_name : string | null,
+  account_status_rid : string,
+  account_status_name : string
 
 }
 
@@ -68,7 +70,8 @@ export type AccountType = {
   r_number : string,
   account_name : string,
   country_rid : string | null,
-  currency_rid : string | null
+  currency_rid : string | null,
+  status_rid : string
 }
 
 export type CaseOwnerType = {
@@ -236,6 +239,7 @@ export interface ICreateChecklistTemplate {
   checklist_name: string;
   checklist_template_rid?: string;
   checklist_description?: string;
+  status_rid?: string;
   created_by: string;
   modified_by?: string;
   created_datetime: Date;
@@ -246,6 +250,7 @@ export interface ICreateChecklistTemplate {
 export interface ICreateChecklist {
   
   account_rid: string;
+  checklist_rid: string;
   attach_to: string;
   attachment_level: string;
   checklist_template_rid?: string;
@@ -296,7 +301,8 @@ export type CreateTaskTemplateType = {
   status_rid : string,
   priority_rid : string,
   task_type_rid: string,
-  milestone_template_rid : string
+  milestone_template_rid : string,
+  task_description : string
 }
 
 export type priorityTypes = {
@@ -333,7 +339,8 @@ export type UpdateTaskTemplateType = {
   status_rid : string,
   priority_rid : string,
   task_type_rid: string,
-  milestone_template_rid : string
+  milestone_template_rid : string,
+  task_description : string
 }
 
 export type AdminTaskTemplateResponseTypes = {
@@ -375,4 +382,7 @@ export type AdminTaskTemplatePayloadType = {
 export type TaskType = {
   rid : string,
   task_type_name : string
+}
+export type TaskTypeResponse = {
+  rid : string
 }

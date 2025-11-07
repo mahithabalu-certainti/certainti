@@ -26,6 +26,7 @@ import {
   listCaseSummarySchema,
   listCaseTeamSchema,
   updateCaseSchema,
+  updateChecklistSchema,
 } from "../lib/joi/schemas/schema";
 import configurations from "../config/config";
 import moment from "moment";
@@ -502,15 +503,11 @@ async function exportAllCasesAccount(req: Request, res: Response) {
     }
     const isValidTZ = value.timezone && isValidTimezone(value.timezone);
     const formatDate = (date?: Date) => {
-      const offsetMs = (5 * 60 + 30) * 60 * 1000;
-      const convertedDate = new Date(date?.getTime() ?? "" + offsetMs);
-      return date
-        ? moment
-            .utc(convertedDate)
-            .tz(isValidTZ ? value.timezone : "UTC")
-            .utcOffset("-012:30")
-            .format("YYYY-MMM-DD, hh:mm:ss A")
-        : null;
+      if (!date) return null;
+      
+      return moment(date)
+        .tz(isValidTZ ? value.timezone : "UTC")
+        .format("YYYY-MMM-DD, hh:mm:ss A");
     };
     if (result.statusCode === HttpStatus.SUCCESS) {
       const finalStructuredData =
@@ -519,7 +516,7 @@ async function exportAllCasesAccount(req: Request, res: Response) {
           : result?.data?.caseInfo.map((d: any) => {
               let resultMap: { [key: string]: any } = {
                 r_number: d.r_number,
-                fiscal_year: d.fiscal_year,
+                fiscal_year: `FY-${d.fiscal_year}`,
                 status_name: d.status_name,
                 case_owner_name: d.case_owner_name,
                 filing_type_name: d.filing_type_name,
@@ -528,14 +525,7 @@ async function exportAllCasesAccount(req: Request, res: Response) {
                 case_total_rd_cost: d.case_total_rd_cost,
                 case_total_qre_cost: d.case_total_qre_cost,
                 description: d.description,
-                case_name:
-                  d.account_name ||
-                  "-" ||
-                  d.country_code ||
-                  "-" ||
-                  d.fiscal_year ||
-                  "-" ||
-                  d.case_name,
+                case_name: `${d.account_name}-${d.country_code}-${d.fiscal_year}-${d.case_name}`,
                 created_by: d.created_user_name,
                 created_datetime: formatDate(d.created_datetime),
                 modified_by: d.modified_user_name,
@@ -865,13 +855,8 @@ async function exportAllCasesSummary(req: Request, res: Response) {
       // Check if date is valid
       if (isNaN(dateObj.getTime())) return null;
 
-      const offsetMs = (5 * 60 + 30) * 60 * 1000;
-      const convertedDate = new Date(dateObj.getTime() + offsetMs);
-
-      return moment
-        .utc(convertedDate)
+      return moment(dateObj)
         .tz(isValidTZ ? value.timezone : "UTC")
-        .utcOffset("-012:30")
         .format("YYYY-MMM-DD, hh:mm:ss A");
     };
     if (result.statusCode == HttpStatus.SUCCESS) {
@@ -882,7 +867,7 @@ async function exportAllCasesSummary(req: Request, res: Response) {
               let resultMap: { [key: string]: any } = {
                 r_number: d.r_number,
                 account_name: d.account_name,
-                fiscal_year: d.fiscal_year,
+                fiscal_year: `FY-${d.fiscal_year}`,
                 status_name: d.status_name,
                 case_owner_name: d.case_owner_name,
                 filing_type_name: d.filing_type_name,
@@ -892,14 +877,7 @@ async function exportAllCasesSummary(req: Request, res: Response) {
                 case_total_rd_cost: d.case_total_rd_cost,
                 case_total_qre_cost: d.case_total_qre_cost,
                 description: d.description,
-                case_name:
-                  d.account_name ||
-                  "-" ||
-                  d.country_code ||
-                  "-" ||
-                  d.fiscal_year ||
-                  "-" ||
-                  d.case_name,
+                case_name: `${d.account_name}-${d.country_code}-${d.fiscal_year}-${d.case_name}`,
                 country_name: d.country_name,
                 created_by: d.created_user_name,
                 created_datetime: formatDate(d.created_datetime),
@@ -1446,6 +1424,65 @@ async function listUsersForCaseTeam(req: Request, res: Response): Promise<void> 
   }
 
 }
+
+/**
+ * Retrieves a list of users eligible to be assigned as case owners.
+ * 
+ * @param {Request} req - Express request object with user ID in headers
+ * @param {Response} res - Express response object for sending user data
+ * @returns {Promise<void>} Promise that resolves after sending HTTP response
+ */
+async function listUserForCaseOwner(req: Request, res: Response): Promise<void> {
+  const methodName = "List User For Case Owner";
+  try {
+    // Extract and validate user ID from request headers for authentication
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST, 
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    
+    
+    // Call the service layer to fetch users eligible for case team assignment
+    const result = await caseService.getCaseOwner();
+    
+    // Handle successful user retrieval
+    if (result.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, result.data);
+      return;
+    }
+    else {
+      // Handle service-level errors or cases where no users are found
+      errorLog(methodName, result.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        result.errorMessage
+      );
+      return;
+    }   
+  } catch (err) {
+    // Handle unexpected errors (system failures, network issues, etc.)
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+
+}
 /**
  * Controller function to handle the creation of a new admin checklist.
  *
@@ -1538,6 +1575,71 @@ async function createCheckList(req: Request, res: Response): Promise<void> {
     return;
   }
 }
+
+async function updateCheckList(req: Request, res: Response): Promise<void> {
+  const methodName = "Update admin checklist";
+  try {
+    // Log the incoming request for audit and debugging purposes
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${
+        req.headers["x-user-id"]
+      }`
+    );
+    
+    // Validate request body against the defined schema
+    const value = await validateRequest(req, updateChecklistSchema, res);
+    
+    // Extract and validate user ID from request headers
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    
+    // Ensure request body validation passed
+    if (!value) {
+      errorLog(methodName, "Request body is empty");
+      return;
+    }
+    
+    // Call the service layer to create the admin checklist
+    const cases = await caseService.updateCheckList(value, userId);
+    
+    // Handle successful checklist creation
+    if (cases.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, cases.data, cases.message);
+      return;
+    } else {
+      // Handle service-level errors (business logic failures)
+      errorLog(methodName, cases.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        cases.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    // Handle unexpected errors (system failures, network issues, etc.)
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
 export default {
   createCases,
   updateCases,
@@ -1557,5 +1659,7 @@ export default {
   listCaseTeamMembers,
   exportAllAssignedProjects,
   listUsersForCaseTeam,
-  createCheckList
+  listUserForCaseOwner,
+  createCheckList,
+  updateCheckList
 };
