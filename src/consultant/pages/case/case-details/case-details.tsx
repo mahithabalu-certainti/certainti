@@ -1,8 +1,17 @@
 import { Suspense, useEffect, useMemo, useState } from 'react';
-import { useLocation, useParams, useSearchParams } from 'react-router-dom';
+import {
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 import { useCaseDetails } from '../../../services/cases/case-service';
-import { ExportType, MenuItem, NotesListURLParams } from '../../../types';
-import { AllMenus, AllModules } from '../../../../common-service';
+import { ExportType, MenuItem, NotesListExportParams } from '../../../types';
+import {
+  AllMenus,
+  AllModules,
+  AllPermissions,
+} from '../../../../common-service';
 import { InfoSection, PageHeader, SideMenuPanel } from '../../../../components';
 import {
   AccountDetailsIcon,
@@ -23,14 +32,26 @@ import {
 import { WorkBreakDown } from './work-breakdown';
 import { CaseTeam } from './case-team';
 import { transformCaseData } from './utils';
-import { ActionsDropdownItem } from '../../../../common-utils';
+import { ActionsDropdownItem, checkPermission } from '../../../../common-utils';
 import { CaseNotes } from './case-notes';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../store/store';
+import { ExportNotesList } from '../../../services/notes/notes-service';
+import { AccessRestricted } from '../../../../components/account-restricted';
+import { ACCOUNT } from '../../../../routes';
 
 export const CaseDetails = () => {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const { caseId } = useParams();
-  const accountId = searchParams.get('accountID');
+  const accountId = searchParams.get('accountID') || '';
+  const mainSource = searchParams.get('mainSource') || '';
+  const { modules, permission } = useSelector(
+    (state: RootState) => state.permission
+  );
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
   const {
     data: caseData,
     isLoading,
@@ -46,73 +67,17 @@ export const CaseDetails = () => {
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const defaultTab = searchParams.get('list') ?? 'workBreakdown';
   const [activeKey, setActiveKey] = useState(defaultTab as string);
-  //   const [toggleEnabled, setToggleEnabled] = useState(false);
-  //   const [refreshAccountDetails, setRefreshAccountDetails] = useState<number>(
-  //     Date.now()
-  //   );
+  const [exportType, setExportType] = useState<ExportType>('notes');
 
-  //   const [tableParams, setTableParams] = useState<ExportModule>({
-  //     sortBy: 'created_datetime',
-  //     sortOrder: 'DESC',
-  //     fiscalYear: String(convertedFiscalYear),
-  //     rNumber: accountDetailsForEdit?.accountById?.r_number || '',
-  //     resourceRid: '',
-  //     filter: {},
-  //   });
-  //   const [projectParams, setProjectParams] = useState<ProjectListParams>({
-  //     sortBy: 'created_datetime',
-  //     sortOrder: 'DESC',
-  //     filters: {},
-  //     fiscalYear: String(convertedFiscalYear),
-  //     accountNumber: accountDetailsForEdit?.accountById?.r_number || '',
-  //   });
-  //   const [attachmentParams, setAttachmentParams] =
-  //     useState<AttachmentsListExportParams>({
-  //       sortBy: 'document_name',
-  //       sortOrder: 'ASC',
-  //       filters: {},
-  //       fiscalYear: convertedFiscalYear,
-  //     });
-
-  //   const [importsParams, setImportsParams] = useState<ImportsListURLParams>({
-  //     page: 1,
-  //     limit: 100,
-  //     sort: 'r_number',
-  //     sort_by: 'asc',
-  //     filters: {},
-  //     fiscal_year: convertedFiscalYear,
-  //     account_rid: accountid || '',
-  //   });
-  //   const [financialResCostParams, setFinancialResCostParams] =
-  //     useState<ProjectFinancialResourceExportParams>({
-  //       sortBy: 'project_code',
-  //       sortOrder: 'ASC',
-  //       filters: {},
-  //     });
-
-  //   const [financialProjectCostParams, setFinancialProjectCostParams] =
-  //     useState<ProjectFinancialProjectExportParams>({
-  //       sortBy: 'project_code',
-  //       sortOrder: 'ASC',
-  //       filters: {},
-  //       fiscalYear: 0,
-  //     });
-
-  const [exportType, setExportType] = useState<ExportType>('resource');
-
-  const [notesParams, setNotesParams] = useState<NotesListURLParams>({
-    page: 1,
-    limit: 100,
+  const [notesParams, setNotesParams] = useState<NotesListExportParams>({
     sortBy: 'r_number',
     sortOrder: 'ASC',
     filters: {},
   });
 
-  console.log('notesParams', notesParams, 'exportType', exportType);
-
-  //   const onRefreshClick = () => {
-  //     setRefreshAccountDetails(Date.now());
-  //   };
+  const noteView = searchParams.get('note_id');
+  const accountInActive =
+    caseData?.account_status_name?.toLowerCase() !== 'active';
 
   useEffect(() => {
     const list = searchParams.get('list');
@@ -130,6 +95,62 @@ export const CaseDetails = () => {
     }
   }, [location.state, searchParams]);
 
+  // Permissions management
+  const caseIsEnable = checkPermission(modules, AllModules.CASES);
+  const isCaseDetailsEnable = checkPermission(
+    permission,
+    AllPermissions.CASES_VIEW_EDIT
+  );
+
+  const isAttachmentExportEnable = checkPermission(
+    permission,
+    AllPermissions.ATTACHMENT_EXPORT
+  );
+
+  const isNotesExportEnable = checkPermission(
+    permission,
+    AllPermissions.NOTES_EXPORT
+  );
+
+  const handleExport = (exportType: ExportType) => {
+    if (
+      searchParams.get('list') !== 'attachments' &&
+      searchParams.get('list') !== 'notes'
+    ) {
+      return;
+    }
+
+    const notesPayload = {
+      accountRid: accountId,
+      entityId: caseId,
+      attachmentLevel: 'case',
+      timezone,
+    };
+
+    if (exportType === 'notes') {
+      ExportNotesList('notes', { ...notesParams, ...notesPayload });
+    }
+  };
+
+  const checkExport = () => {
+    const list = searchParams.get('list');
+    if (
+      searchParams.get('attachment_entity') ||
+      searchParams.get('file_id') ||
+      searchParams.get('upload')
+    ) {
+      return true;
+    }
+
+    if (list === 'attachments') {
+      return !isAttachmentExportEnable;
+    } else if (list === 'notes' && !noteView) {
+      return !isNotesExportEnable;
+    } else {
+      return true;
+    }
+  };
+
   const menuItems: ActionsDropdownItem[] = [
     {
       label: 'Manage user',
@@ -138,8 +159,8 @@ export const CaseDetails = () => {
     },
     {
       label: 'Export',
-      onClick: () => console.log('clicked'),
-      hide: false,
+      onClick: () => handleExport(exportType),
+      hide: accountInActive || checkExport(),
     },
   ];
 
@@ -168,11 +189,10 @@ export const CaseDetails = () => {
       case 'notes':
         return (
           <CaseNotes
-            accountInActive={false}
+            accountInActive={accountInActive}
             setExportType={setExportType}
             setNotesParams={setNotesParams}
-            projectFiscalYear={2025}
-            projectCode={'CM-23232'}
+            caseDetails={caseData}
           />
         );
       default:
@@ -321,8 +341,14 @@ export const CaseDetails = () => {
   }, []);
 
   const goBack = () => {
-    window.history.back();
+    if (mainSource === 'global-cases') {
+      window.history.back();
+    } else {
+      navigate(`${ACCOUNT}/details/${accountId}?list=cases`);
+    }
   };
+
+  if (!caseIsEnable || !isCaseDetailsEnable) return <AccessRestricted />;
 
   return (
     <div className='flex flex-col h-full'>

@@ -159,6 +159,7 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
       accountID: caseItem?.account_rid || '',
       account_name: caseItem?.account_name || '',
       account_number: caseItem?.account_r_number || '',
+      mainSource: 'global-cases',
     });
 
     navigate(`${path}?${queryParams.toString()}`);

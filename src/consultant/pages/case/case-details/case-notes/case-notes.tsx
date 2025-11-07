@@ -1,11 +1,21 @@
-import { generatePath, useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  generatePath,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 import {
   AllModules,
   AllPermissions,
   FilterTypes,
   OverviewTabs,
 } from '../../../../../common-service';
-import { ExportType, NotesList, NotesListURLParams } from '../../../../types';
+import {
+  CaseDetails,
+  ExportType,
+  NotesList,
+  NotesListExportParams,
+} from '../../../../types';
 import { useToast } from '../../../../../hooks';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useMutation } from '@apollo/client';
@@ -52,22 +62,20 @@ const NotesTabs: OverviewTabs[] = [
 
 interface NotesProps {
   setExportType?: (type: ExportType) => void;
-  setNotesParams: React.Dispatch<React.SetStateAction<NotesListURLParams>>;
+  setNotesParams: React.Dispatch<React.SetStateAction<NotesListExportParams>>;
   accountInActive: boolean;
-  projectFiscalYear?: number | string;
-  projectCode?: string;
+  caseDetails?: CaseDetails;
 }
 
 const CaseNotes: React.FC<NotesProps> = ({
   setExportType,
   setNotesParams,
   accountInActive,
-  projectFiscalYear,
-  projectCode,
+  caseDetails,
 }) => {
   const { errorToast } = useToast();
   const [searchParams] = useSearchParams();
-  // const { projectid: projectID } = useParams();
+  const { caseId } = useParams();
   const accountId = searchParams.get('accountID') || '';
   const navigate = useNavigate();
   const [appliedFilters, setAppliedFilters] = useState<FilterTypes>({});
@@ -95,19 +103,14 @@ const CaseNotes: React.FC<NotesProps> = ({
     client: resourceClient,
   });
 
-  const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
-    (state: RootState) => state.account
-  );
   const { permission, modules } = useSelector(
     (state: RootState) => state.permission
   );
 
-  const projectID = 'D001-551d36b6-7d41-43b4-a242-95ac37404744';
-
-  const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
   const noteId = searchParams.get('note_id');
   const viewDetails = !!noteId;
   const activeMenuPath = searchParams.get('activeMenu') || '';
+  const caseFiscalYear = caseDetails?.fiscal_year || '';
 
   // User List Api
   const { data: userListData } = useManageUserList({
@@ -124,11 +127,11 @@ const CaseNotes: React.FC<NotesProps> = ({
       sortBy: sortField,
       sortOrder: sortOrder,
       filters: appliedFilters,
-      attachmentLevel: 'project',
+      attachmentLevel: 'case',
       accountRid: accountId || '',
-      entityId: projectID || '',
+      entityId: caseId || '',
       search: searchText,
-      fiscalYear: convertedFiscalYear,
+      fiscalYear: 0,
     },
     !viewDetails,
     refreshNotes
@@ -152,6 +155,7 @@ const CaseNotes: React.FC<NotesProps> = ({
       sortOrder: sortOrder,
       filters: appliedFilters,
       search: searchText,
+      fiscalYear: 0,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -238,14 +242,14 @@ const CaseNotes: React.FC<NotesProps> = ({
 
   const handleCreate = () => {
     const path = generatePath(NOTES_CREATE, {
-      module: 'project',
+      module: 'case',
     });
     const queryParams = new URLSearchParams({
       accountId,
-      entityLevel: 'project',
-      entityId: projectID || '',
-      projectFiscalYear: projectFiscalYear?.toString() || '',
-      source: `Project > ${projectCode}`,
+      entityLevel: 'case',
+      entityId: caseId || '',
+      caseFiscalYear: caseFiscalYear?.toString() || '',
+      source: `Case > ${caseDetails?.r_number || ''}`,
       ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
     });
     navigate(`${path}?${queryParams.toString()}`);
@@ -253,14 +257,14 @@ const CaseNotes: React.FC<NotesProps> = ({
 
   const handleEdit = (row: NotesList) => {
     const path = generatePath(NOTES_EDIT, {
-      module: 'project',
+      module: 'case',
       noteId: row.rid,
     });
     const queryParams = new URLSearchParams({
       accountId,
-      entityLevel: row.attachment_level || 'project',
-      entityId: row.attach_to || '',
-      source: `Project > ${projectCode}`,
+      entityLevel: row.attachment_level || 'case',
+      entityId: row.attach_to || caseId || '',
+      source: `Case > ${caseDetails?.r_number || ''}`,
       ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
     });
     navigate(`${path}?${queryParams.toString()}`);
@@ -455,8 +459,7 @@ const CaseNotes: React.FC<NotesProps> = ({
       {viewDetails ? (
         <CaseNotesDetails
           accountInActive={accountInActive}
-          projectFiscalYear={projectFiscalYear}
-          projectCode={projectCode}
+          caseDetails={caseDetails}
         />
       ) : (
         <>

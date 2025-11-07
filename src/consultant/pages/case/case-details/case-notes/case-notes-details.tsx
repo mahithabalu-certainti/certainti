@@ -1,5 +1,10 @@
 import React, { useMemo } from 'react';
-import { generatePath, useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  generatePath,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 import { Typography } from '@mui/material';
 import { useNoteDetails } from '../../../../services/notes/notes-service';
 import { useSelector } from 'react-redux';
@@ -16,18 +21,19 @@ import DetailsSection, {
 import DetailsSectionSkeleton from '../../../../../components/skeleton-component/detailsskeleton';
 import { AllPermissions } from '../../../../../common-service';
 import { RootState } from '../../../../../store/store';
+import { CaseDetails } from '../../../../types';
 
 interface NoteDetailsProps {
   accountInActive: boolean;
-  projectCode?: string;
-  projectFiscalYear?: number | string;
+  caseDetails?: CaseDetails;
 }
 
 const CaseNotesDetails: React.FC<NoteDetailsProps> = ({
   accountInActive,
-  projectCode,
+  caseDetails,
 }) => {
   const navigate = useNavigate();
+  const { caseId } = useParams();
   const [searchParams] = useSearchParams();
   const accountId = searchParams.get('accountID') || '';
   const noteId = searchParams.get('note_id') || '';
@@ -64,14 +70,14 @@ const CaseNotesDetails: React.FC<NoteDetailsProps> = ({
 
   const handleEdit = () => {
     const path = generatePath(NOTES_EDIT, {
-      module: 'project',
+      module: 'case',
       noteId: noteId,
     });
     const queryParams = new URLSearchParams({
       accountId,
-      entityLevel: data?.attachment_level || 'project',
-      entityId: data?.attach_to || '',
-      source: `Project > ${projectCode}`,
+      entityLevel: data?.attachment_level || 'case',
+      entityId: data?.attach_to || caseId || caseDetails?.rid || '',
+      source: `Case > ${caseDetails?.r_number || ''}`,
       ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
     });
     navigate(`${path}?${queryParams.toString()}`);
