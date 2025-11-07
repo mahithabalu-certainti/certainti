@@ -4,9 +4,9 @@ import { ListTableColumn } from '../../../../../components/table/types';
 import { ChecklistTemplateList } from '../../../../types';
 
 export const getChecklistTemplateColumns = (
-  handleDownload: (row: ChecklistTemplateList) => void
-  // permissionMap: Record<string, { read: boolean; edit: boolean }>,
-  // isTemplateExportEnable?: boolean
+  handleDownload: (row: ChecklistTemplateList) => void,
+  permissionMap: Record<string, { read: boolean; edit: boolean }>,
+  isTemplateExportEnable?: boolean
 ): ListTableColumn<ChecklistTemplateList>[] => [
   {
     id: 'rid',
@@ -15,8 +15,8 @@ export const getChecklistTemplateColumns = (
     width: 330,
     sortable: true,
     sticky: true,
-    // hide:
-    //   !permissionMap?.['r_number']?.read && !permissionMap?.['r_number']?.edit,
+    hide:
+      !permissionMap?.['r_number']?.read && !permissionMap?.['r_number']?.edit,
     sx: {
       position: 'sticky',
       left: 32,
@@ -32,29 +32,9 @@ export const getChecklistTemplateColumns = (
     label: 'Checklist Name',
     width: 200,
     sortable: true,
-    // hide:
-    //   !permissionMap?.['checklist_name']?.read &&
-    //   !permissionMap?.['checklist_name']?.edit,
-  },
-  {
-    id: 'checklist_level',
-    sortId: 'checklist_level',
-    label: 'Checklist Level',
-    width: 160,
-    sortable: true,
-    // hide:
-    //   !permissionMap?.['checklist_level']?.read &&
-    //   !permissionMap?.['checklist_level']?.edit,
-  },
-  {
-    id: 'checklist_type',
-    sortId: 'checklist_type',
-    label: 'Checklist Type',
-    width: 160,
-    sortable: true,
-    // hide:
-    //   !permissionMap?.['checklist_type']?.read &&
-    //   !permissionMap?.['checklist_type']?.edit,
+    hide:
+      !permissionMap?.['checklist_name']?.read &&
+      !permissionMap?.['checklist_name']?.edit,
   },
   {
     id: 'checklist_description',
@@ -62,9 +42,9 @@ export const getChecklistTemplateColumns = (
     label: 'Description',
     width: 220,
     sortable: true,
-    // hide:
-    //   !permissionMap?.['description']?.read &&
-    //   !permissionMap?.['description']?.edit,
+    hide:
+      !permissionMap?.['description']?.read &&
+      !permissionMap?.['description']?.edit,
     render: (row: ChecklistTemplateList) => row.checklist_description || '-',
   },
   {
@@ -73,9 +53,9 @@ export const getChecklistTemplateColumns = (
     label: 'Created By',
     width: 160,
     sortable: true,
-    // hide:
-    //   !permissionMap?.['created_by']?.read &&
-    //   !permissionMap?.['created_by']?.edit,
+    hide:
+      !permissionMap?.['created_by']?.read &&
+      !permissionMap?.['created_by']?.edit,
     render: (row: ChecklistTemplateList) => row.created_user_name || '-',
   },
   {
@@ -84,9 +64,9 @@ export const getChecklistTemplateColumns = (
     label: 'Created On',
     width: 190,
     sortable: true,
-    // hide:
-    //   !permissionMap?.['created_datetime']?.read &&
-    //   !permissionMap?.['created_datetime']?.edit,
+    hide:
+      !permissionMap?.['created_datetime']?.read &&
+      !permissionMap?.['created_datetime']?.edit,
     render: (row: ChecklistTemplateList) =>
       row.created_datetime &&
       formatDateToYYYYMMDDWithTime(row.created_datetime),
@@ -97,9 +77,9 @@ export const getChecklistTemplateColumns = (
     label: 'Updated By',
     width: 160,
     sortable: true,
-    // hide:
-    //   !permissionMap?.['modified_by']?.read &&
-    //   !permissionMap?.['modified_by']?.edit,
+    hide:
+      !permissionMap?.['modified_by']?.read &&
+      !permissionMap?.['modified_by']?.edit,
     render: (row: ChecklistTemplateList) => row.modified_user_name || '-',
   },
   {
@@ -108,9 +88,9 @@ export const getChecklistTemplateColumns = (
     label: 'Updated On',
     width: 190,
     sortable: true,
-    // hide:
-    //   !permissionMap?.['modified_datetime']?.read &&
-    //   !permissionMap?.['modified_datetime']?.edit,
+    hide:
+      !permissionMap?.['modified_datetime']?.read &&
+      !permissionMap?.['modified_datetime']?.edit,
     render: (row: ChecklistTemplateList) =>
       row.modified_datetime &&
       formatDateToYYYYMMDDWithTime(row.modified_datetime),
@@ -121,16 +101,16 @@ export const getChecklistTemplateColumns = (
     label: 'Status',
     width: 100,
     sortable: true,
-    // hide:
-    //   !permissionMap?.['status_rid']?.read &&
-    //   !permissionMap?.['status_rid']?.edit,
+    hide:
+      !permissionMap?.['status_rid']?.read &&
+      !permissionMap?.['status_rid']?.edit,
   },
   {
     id: 'download',
     sortId: 'download',
     label: 'Download',
     width: 80,
-    // hide: !isTemplateExportEnable,
+    hide: !isTemplateExportEnable,
     render: (row: ChecklistTemplateList) => (
       <button
         className='flex border border-[#CBD6E2] rounded-[2px] w-[24px] h-[24px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer mx-auto'

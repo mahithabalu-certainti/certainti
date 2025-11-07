@@ -19,7 +19,7 @@ import {
   ChecklistTypesMockData,
 } from '../../mockdata/checklist-templates';
 import { CommonApiResponse } from '../../../common-service';
-
+import { buildQueryString } from '../helpers';
 // List
 export const getChecklistTemplateListUrl = (
   params: ChecklistTemplateListParams
@@ -168,7 +168,7 @@ export const useCreateChecklistTemplate = () => {
 };
 
 export const getUpdateChecklistTemplateUrl = (): string => {
-  return `/api/checklistTemplates/update`;
+  return `/api/caseManagement/adminChecklist/update`;
 };
 
 export const updateChecklistTemplateDetails = async (
@@ -176,7 +176,7 @@ export const updateChecklistTemplateDetails = async (
 ): Promise<CreateTemplateResponse> => {
   try {
     const { data } = await caseServiceApi.post<CreateTemplateResponse>(
-      getCreateTemplateUrl(),
+      getUpdateChecklistTemplateUrl(),
       body
     );
     return data;
@@ -218,19 +218,27 @@ export const useCreateTemplate = () => {
 };
 
 // Export All checklist
-export const getChecklistTemplateExportAllUrl = () =>
-  '/api/checklistTemplates/exportAll';
+export const getChecklistTemplateExportAllUrl = (
+  params: ChecklistTemplateListParams
+) => {
+  const queryParams: Record<string, unknown> = {
+    sortBy: params.sortBy || 'createdAt',
+    sortOrder: params.sortOrder || 'DESC',
+    filters: params.filters,
+    timezone: params.timezone,
+    ...(params.search && { search: params.search }),
+  };
 
+  return `/api/caseManagement/adminChecklist/export?${buildQueryString(queryParams)}`;
+};
 export const ExportChecklistTemplateAllList = async (
   params: ChecklistTemplateListParams
 ): Promise<void> => {
   try {
     const filename = `checklist_templates.xlsx`;
-    const response =
-      await interactionServiceApi.post<ExportChecklistTemplateResponse>(
-        getChecklistTemplateExportAllUrl(),
-        params
-      );
+    const response = await caseServiceApi.get<ExportChecklistTemplateResponse>(
+      getChecklistTemplateExportAllUrl(params)
+    );
     const base64Data = response.data?.data;
 
     if (!base64Data) {

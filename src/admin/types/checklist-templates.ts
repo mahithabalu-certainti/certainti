@@ -10,6 +10,7 @@ export interface ChecklistTemplateListParams {
   filters?: object;
   searchTerm?: string;
   timezone?: string;
+  search?: string;
 }
 
 // List
@@ -154,6 +155,7 @@ export interface ChecklistTypeApiResponse extends CommonApiResponse {
 
 export interface ChecklistItemPayload {
   checklist_item_name: string;
+  checklist_item_rid?: string;
   sequence_no: number;
   description: string;
   action_type: 'add' | 'edit' | 'delete';
@@ -161,6 +163,7 @@ export interface ChecklistItemPayload {
 
 export interface CreateTemplatePayload {
   checklist_name: string;
+  checklist_template_rid?: string;
   checklist_description: string;
   status_rid: string;
   checklist_items: ChecklistItemPayload[];

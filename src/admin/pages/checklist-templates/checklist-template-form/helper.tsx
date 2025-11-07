@@ -6,7 +6,6 @@ import {
   ChecklistTemplateQuestionPayload,
   QustionActionType,
   CreateTemplatePayload,
-  ChecklistItemPayload,
 } from '../../../types';
 
 export const COMMON_SELECT_STYLES = {
@@ -329,53 +328,70 @@ export const transformToNewCreateTemplatePayload = (
 
 export const transformToEditTemplatePayload = (
   formData: ChecklistTemplateFormData,
-  originalData: ChecklistTemplateDetails
+  existingTemplate: ChecklistTemplateDetails
 ): CreateTemplatePayload => {
-  const transformedItems: ChecklistItemPayload[] = [];
-  const retainedRids = new Set<string>();
-
-  // Process current form questions
-  formData.questions.forEach((question, index) => {
-    if (question.rid) {
-      // Existing question being edited - action: "edit"
-      retainedRids.add(question.rid);
-      transformedItems.push({
-        checklist_item_name: question.question,
-        sequence_no: index + 1,
-        description: question.description || question.question,
-        action_type: 'edit' as const,
-      });
-    } else {
-      // New question being added - action: "add"
-      transformedItems.push({
-        checklist_item_name: question.question,
-        sequence_no: index + 1,
-        description: question.description || question.question,
-        action_type: 'add' as const,
-      });
-    }
-  });
-
-  // Handle deleted questions (questions that existed but are no longer in the form)
-  originalData.questions.forEach((existingQuestion) => {
-    if (existingQuestion.rid && !retainedRids.has(existingQuestion.rid)) {
-      // Question removed from form - action: "delete"
-      transformedItems.push({
-        checklist_item_name: existingQuestion.question,
-        sequence_no: 0, // Sequence doesn't matter for delete
-        description: existingQuestion.description || existingQuestion.question,
-        action_type: 'delete' as const,
-      });
-    }
-  });
-
-  // Clean payload structure matching your example
   const payload: CreateTemplatePayload = {
+    checklist_template_rid: formData.rid,
     checklist_name: formData.checklist_name,
     checklist_description: formData.description,
     status_rid: formData.status,
-    checklist_items: transformedItems,
+    checklist_items: [],
   };
+
+  const existingQuestionsMap = new Map(
+    existingTemplate.questions.map((q) => [q.rid, q])
+  );
+
+  payload.checklist_items = formData.questions
+    .map((q, index) => {
+      const sequence_no = index + 1;
+
+      if (q.rid) {
+        const existingQuestion = existingQuestionsMap.get(q.rid);
+
+        if (existingQuestion) {
+          existingQuestionsMap.delete(q.rid);
+          if (
+            q.question.trim() !== existingQuestion.question.trim() ||
+            q.description.trim() !== (existingQuestion.description || '').trim()
+          ) {
+            return {
+              checklist_item_rid: q.rid,
+              checklist_item_name: q.question,
+              description: q.description,
+              sequence_no,
+              action_type: 'edit',
+            };
+          } else {
+            return {
+              checklist_item_rid: q.rid,
+              checklist_item_name: q.question,
+              description: q.description,
+              sequence_no,
+            };
+          }
+        }
+      } else if (q.question.trim() !== '') {
+        return {
+          checklist_item_name: q.question,
+          description: q.description,
+          sequence_no,
+          action_type: 'add',
+        };
+      }
+      return null;
+    })
+    .filter(Boolean) as CreateTemplatePayload['checklist_items'];
+
+  existingQuestionsMap.forEach((q) => {
+    payload.checklist_items.push({
+      checklist_item_rid: q.rid,
+      checklist_item_name: q.question,
+      sequence_no: 0,
+      description: q.description || '',
+      action_type: 'delete',
+    });
+  });
 
   return payload;
 };

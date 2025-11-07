@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FilterCondition } from '../../../../types/manage-user';
 import {
   ActionItem,
@@ -20,6 +20,10 @@ import {
   useChecklistTemplateList,
 } from '../../../../service/checklist-templates/checklist-template-service';
 import { getChecklistTemplateColumns } from './columns';
+import { checkPermission } from '../../../../../common-utils';
+import { RootState } from '../../../../../store/store';
+import { useSelector } from 'react-redux';
+import { AllPermissions } from '../../../../../common-service';
 
 interface ITemplateTableProps {
   appliedFilters: Record<string, FilterCondition>;
@@ -58,38 +62,38 @@ export const TemplateTable: React.FC<ITemplateTableProps> = ({
   }, [data?.checklistTemplates]);
 
   // Permission
-  // const { permission } = useSelector((state: RootState) => state.permission);
+  const { permission } = useSelector((state: RootState) => state.permission);
 
-  // const isChecklistTemplateExportEnable = checkPermission(
-  //   permission,
-  //   AllPermissions.CHECKLIST_TEMPLATES_EXPORT
-  // );
+  const isChecklistTemplateExportEnable = checkPermission(
+    permission,
+    AllPermissions.CHECKLIST_TEMPLATES_EXPORT
+  );
 
-  // const checklistTemplateViewEditFields = useMemo(
-  //   () =>
-  //     permission.find(
-  //       (item) => item.name === AllPermissions.CHECKLIST_TEMPLATES_VIEW_EDIT
-  //     )?.fields ?? [],
-  //   [permission]
-  // );
+  const checklistTemplateViewEditFields = useMemo(
+    () =>
+      permission.find(
+        (item) => item.name === AllPermissions.CHECKLIST_TEMPLATES_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
 
-  // const permissionMap = useMemo(() => {
-  //   const map: Record<string, { read: boolean; edit: boolean }> = {};
-  //   checklistTemplateViewEditFields.forEach((item) => {
-  //     map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
-  //   });
-  //   return map;
-  // }, [checklistTemplateViewEditFields]);
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    checklistTemplateViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [checklistTemplateViewEditFields]);
 
-  // const checklistTemplateFieldsEditable = useMemo(
-  //   () =>
-  //     permission
-  //       .find(
-  //         (item) => item.name === AllPermissions.CHECKLIST_TEMPLATES_VIEW_EDIT
-  //       )
-  //       ?.fields?.some((field) => field.edit),
-  //   [permission]
-  // );
+  const checklistTemplateFieldsEditable = useMemo(
+    () =>
+      permission
+        .find(
+          (item) => item.name === AllPermissions.CHECKLIST_TEMPLATES_VIEW_EDIT
+        )
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
 
   const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const handleDownload = (row: ChecklistTemplateList) => {
@@ -130,9 +134,9 @@ export const TemplateTable: React.FC<ITemplateTableProps> = ({
   };
 
   const checklistTemplateColumns = getChecklistTemplateColumns(
-    handleDownload
-    // permissionMap,
-    // isChecklistTemplateExportEnable
+    handleDownload,
+    permissionMap,
+    isChecklistTemplateExportEnable
   );
 
   const [columnVisibility, setColumnVisibility] = useState<
@@ -164,7 +168,7 @@ export const TemplateTable: React.FC<ITemplateTableProps> = ({
       label: 'Edit',
       onClick: (row) => handleEdit(row),
       icon: EditIcon,
-      // hide: !checklistTemplateFieldsEditable,
+      hide: !checklistTemplateFieldsEditable,
       iconStyle: {
         filter:
           'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',

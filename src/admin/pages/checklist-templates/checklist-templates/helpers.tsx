@@ -40,8 +40,8 @@ const requiredDateOptions: { label: string; value: string }[] = [
 export const getChecklistTemplateFilterFields = (
   checklistTypes: FilterSelectOption[],
   checklistLevels: FilterSelectOption[],
-  statusOptions: FilterSelectOption[]
-  // permissionMap: Record<string, { read: boolean; edit: boolean }>
+  statusOptions: FilterSelectOption[],
+  permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => {
   return [
     {
@@ -49,18 +49,18 @@ export const getChecklistTemplateFilterFields = (
       name: 'rid',
       type: 'text',
       operatorOption: textfieldOptions,
-      // hide:
-      //   !permissionMap?.['r_number']?.read &&
-      //   !permissionMap?.['r_number']?.edit,
+      hide:
+        !permissionMap?.['r_number']?.read &&
+        !permissionMap?.['r_number']?.edit,
     },
     {
       label: 'Checklist Name',
       name: 'checklist_name',
       type: 'text',
       operatorOption: textfieldOptions,
-      // hide:
-      //   !permissionMap?.['checklist_name']?.read &&
-      //   !permissionMap?.['checklist_name']?.edit,
+      hide:
+        !permissionMap?.['checklist_name']?.read &&
+        !permissionMap?.['checklist_name']?.edit,
     },
     {
       label: 'Checklist Level',
@@ -68,9 +68,9 @@ export const getChecklistTemplateFilterFields = (
       type: 'enumSelect',
       options: checklistLevels,
       operatorOption: enumOperator,
-      // hide:
-      //   !permissionMap?.['checklist_level_rid']?.read &&
-      //   !permissionMap?.['checklist_level_rid']?.edit,
+      hide:
+        !permissionMap?.['checklist_level_rid']?.read &&
+        !permissionMap?.['checklist_level_rid']?.edit,
     },
     {
       label: 'Checklist Type',
@@ -78,54 +78,54 @@ export const getChecklistTemplateFilterFields = (
       type: 'enumSelect',
       options: checklistTypes,
       operatorOption: enumOperator,
-      // hide:
-      //   !permissionMap?.['checklist_type_rid']?.read &&
-      //   !permissionMap?.['checklist_type_rid']?.edit,
+      hide:
+        !permissionMap?.['checklist_type_rid']?.read &&
+        !permissionMap?.['checklist_type_rid']?.edit,
     },
     {
       label: 'Description',
       name: 'checklist_description',
       type: 'text',
       operatorOption: nonReqTextfieldOptions,
-      // hide:
-      //   !permissionMap?.['description']?.read &&
-      //   !permissionMap?.['description']?.edit,
+      hide:
+        !permissionMap?.['description']?.read &&
+        !permissionMap?.['description']?.edit,
     },
     {
       label: 'Created By',
       name: 'created_user_name',
       type: 'text',
       operatorOption: textfieldOptions,
-      // hide:
-      //   !permissionMap?.['created_by']?.read &&
-      //   !permissionMap?.['created_by']?.edit,
+      hide:
+        !permissionMap?.['created_by']?.read &&
+        !permissionMap?.['created_by']?.edit,
     },
     {
       label: 'Created On',
       name: 'created_datetime',
       type: 'date',
       operatorOption: requiredDateOptions,
-      // hide:
-      //   !permissionMap?.['created_datetime']?.read &&
-      //   !permissionMap?.['created_datetime']?.edit,
+      hide:
+        !permissionMap?.['created_datetime']?.read &&
+        !permissionMap?.['created_datetime']?.edit,
     },
     {
       label: 'Updated By',
       name: 'modified_user_name',
       type: 'text',
       operatorOption: nonReqTextfieldOptions,
-      // hide:
-      //   !permissionMap?.['modified_by']?.read &&
-      //   !permissionMap?.['modified_by']?.edit,
+      hide:
+        !permissionMap?.['modified_by']?.read &&
+        !permissionMap?.['modified_by']?.edit,
     },
     {
       label: 'Updated On',
       name: 'modified_datetime',
       type: 'date',
       operatorOption: dateOptions,
-      // hide:
-      //   !permissionMap?.['modified_datetime']?.read &&
-      //   !permissionMap?.['modified_datetime']?.edit,
+      hide:
+        !permissionMap?.['modified_datetime']?.read &&
+        !permissionMap?.['modified_datetime']?.edit,
     },
     {
       label: 'Status',
@@ -133,9 +133,9 @@ export const getChecklistTemplateFilterFields = (
       type: 'enumSelect',
       options: statusOptions,
       operatorOption: enumOperator,
-      // hide:
-      //   !permissionMap?.['status_rid']?.read &&
-      //   !permissionMap?.['status_rid']?.edit,
+      hide:
+        !permissionMap?.['status_rid']?.read &&
+        !permissionMap?.['status_rid']?.edit,
     },
     {
       label: 'Sort Options',

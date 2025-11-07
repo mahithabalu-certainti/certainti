@@ -19,6 +19,11 @@ import {
   useGetChecklistStatus,
   useGetChecklistTypes,
 } from '../../../service/checklist-templates/checklist-template-service';
+import { AllModules, AllPermissions } from '../../../../common-service';
+import { useSelector } from 'react-redux';
+import { checkPermission } from '../../../../common-utils';
+import { RootState } from '../../../../store/store';
+import { AccessRestricted } from '../../../../components/account-restricted';
 
 const ChecklistTemplates: React.FC = () => {
   const navigate = useNavigate();
@@ -42,41 +47,41 @@ const ChecklistTemplates: React.FC = () => {
   };
   const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   // Permission
-  // const { modules, permission } = useSelector(
-  //   (state: RootState) => state.permission
-  // );
-  // const isChecklistTemplatesEnable = checkPermission(
-  //   modules,
-  //   AllModules.CHECKLIST_TEMPLATES
-  // );
-  // const isChecklistTemplateCreateEnable = checkPermission(
-  //   permission,
-  //   AllPermissions.CHECKLIST_TEMPLATES_CREATE
-  // );
-  // const isChecklistTemplateViewAllEnable = checkPermission(
-  //   permission,
-  //   AllPermissions.CHECKLIST_TEMPLATES_VIEW_EDIT
-  // );
-  // const isChecklistTemplateExportEnable = checkPermission(
-  //   permission,
-  //   AllPermissions.CHECKLIST_TEMPLATES_EXPORT
-  // );
+  const { modules, permission } = useSelector(
+    (state: RootState) => state.permission
+  );
+  const isChecklistTemplatesEnable = checkPermission(
+    modules,
+    AllModules.CHECKLIST_TEMPLATES
+  );
+  const isChecklistTemplateCreateEnable = checkPermission(
+    permission,
+    AllPermissions.CHECKLIST_TEMPLATES_CREATE
+  );
+  const isChecklistTemplateViewAllEnable = checkPermission(
+    permission,
+    AllPermissions.CHECKLIST_TEMPLATES_VIEW_EDIT
+  );
+  const isChecklistTemplateExportEnable = checkPermission(
+    permission,
+    AllPermissions.CHECKLIST_TEMPLATES_EXPORT
+  );
 
-  // const checklistTemplateViewEditFields = useMemo(
-  //   () =>
-  //     permission.find(
-  //       (item) => item.name === AllPermissions.CHECKLIST_TEMPLATES_VIEW_EDIT
-  //     )?.fields ?? [],
-  //   [permission]
-  // );
+  const checklistTemplateViewEditFields = useMemo(
+    () =>
+      permission.find(
+        (item) => item.name === AllPermissions.CHECKLIST_TEMPLATES_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
 
-  // const permissionMap = useMemo(() => {
-  //   const map: Record<string, { read: boolean; edit: boolean }> = {};
-  //   checklistTemplateViewEditFields.forEach((item) => {
-  //     map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
-  //   });
-  //   return map;
-  // }, [checklistTemplateViewEditFields]);
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    checklistTemplateViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [checklistTemplateViewEditFields]);
 
   const isModalOpen = Boolean(columnAnchorEl);
   const modalId = isModalOpen ? 'account-column-visibility-popover' : undefined;
@@ -156,15 +161,15 @@ const ChecklistTemplates: React.FC = () => {
           filters: appliedFilters,
           timezone: systemTimezone,
         }),
-      // hide: !isChecklistTemplateExportEnable,
+      hide: !isChecklistTemplateExportEnable,
     },
   ];
 
   const templateFilterfields = getChecklistTemplateFilterFields(
     memoizedChecklistTypes,
     memoizedChecklistLevel,
-    statusOptions
-    // permissionMap
+    statusOptions,
+    permissionMap
   );
 
   useEffect(() => {
@@ -182,8 +187,8 @@ const ChecklistTemplates: React.FC = () => {
     setColumnAnchorEl(event.currentTarget);
   };
 
-  // if (!isChecklistTemplatesEnable || !isChecklistTemplateViewAllEnable)
-  //   return <AccessRestricted />;
+  if (!isChecklistTemplatesEnable || !isChecklistTemplateViewAllEnable)
+    return <AccessRestricted />;
 
   return (
     <div className='flex flex-col w-full h-full'>
@@ -214,7 +219,7 @@ const ChecklistTemplates: React.FC = () => {
           </button>
           <TextButton
             label='Create Template'
-            // hide={!isChecklistTemplateCreateEnable}
+            hide={!isChecklistTemplateCreateEnable}
             onClick={() => navigate(CHECKLIST_TEMPLATES_CREATE)}
             sx={{
               width: '120px',
