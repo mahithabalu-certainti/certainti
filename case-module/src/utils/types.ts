@@ -236,6 +236,7 @@ export interface ICreateChecklistTemplate {
   checklist_name: string;
   checklist_template_rid?: string;
   checklist_description?: string;
+  status_rid?: string;
   created_by: string;
   modified_by?: string;
   created_datetime: Date;

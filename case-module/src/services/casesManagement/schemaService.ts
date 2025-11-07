@@ -205,6 +205,7 @@ class CaseManagementSchemaService {
         {
           checklist_name: caseRequest.checklist_name,
           checklist_description: caseRequest.checklist_description,
+          status_rid: caseRequest.status_rid,
           created_by: caseRequest.created_by,
           //modified_by: caseRequest.modified_by,
           created_datetime: new Date(),
