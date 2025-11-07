@@ -230,6 +230,9 @@ const updateTaskTemplateSchema = Joi.object({
   task_type_rid : Joi.string().allow("").optional(),
   task_description : Joi.string().allow("").optional()
 });
+const exportadminCheckListByIdSchema = Joi.object({
+  timezone: Joi.string().required()
+});
 export {
   createCaseSchema,
   updateCaseSchema,
@@ -245,5 +248,6 @@ export {
   createTaskTemplateSchema,
   updateTaskTemplateSchema,
   listAdminCheckListSchema,
-  updateAdminChecklistSchema
+  updateAdminChecklistSchema,
+  exportadminCheckListByIdSchema
 };
