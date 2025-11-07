@@ -9,6 +9,8 @@ export interface CaseTeamMember {
   user_role: string;
   start_date: string;
   end_date: string;
+  is_primary?: boolean;
+  status?: string;
   case_rid?: string;
   account_rid?: string;
   role_rid?: string;
