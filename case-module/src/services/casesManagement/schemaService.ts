@@ -233,7 +233,7 @@ class CaseManagementSchemaService {
         return {
           statusCode: HttpStatus.NOT_FOUND,
           message: STATUS_MESSAGE.checkListNotFound,
-          errorMessage: "Admin checklist with the provided RID does not exist",
+          errorMessage: STATUS_MESSAGE.checkListNotFoundError,
         };
       }
 
