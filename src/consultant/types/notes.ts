@@ -59,6 +59,8 @@ export type NotesList = {
   uploaded_by?: string | null;
   parent_rid?: string | null;
   currency_rid?: string | null;
+  status_name?: string;
+  status_rid?: string;
 };
 
 export interface NotesListResponse {
