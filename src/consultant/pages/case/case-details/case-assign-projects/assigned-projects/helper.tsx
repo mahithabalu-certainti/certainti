@@ -7,7 +7,7 @@ import {
 } from '../../../../account-details-sidebar/components/filter/filterType';
 import {
   fiscalOptions,
-  fiscalYearOption,
+  fiscalYearOptions,
   nonMadatoryOptions,
 } from '../../../../account-details-sidebar/sidebar-pages/projects/utils';
 
@@ -49,7 +49,7 @@ export const assignedProjectFilterFields = (
     name: 'Fiscal Year',
     value: 'fiscal_year',
     type: 'enum',
-    options: fiscalYearOption,
+    options: fiscalYearOptions,
     operatorOption: fiscalOptions,
     hide:
       !projectPermissionMap?.['fiscal_year']?.read &&

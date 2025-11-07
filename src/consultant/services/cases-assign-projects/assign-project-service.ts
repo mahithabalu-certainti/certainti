@@ -27,7 +27,7 @@ export const fetchAssigneprojectList = async (
   };
 };
 
-export const useAssingeProjectsList = (
+export const useAssignProjectsList = (
   params: AssignProjectListURLParams,
   refreshInteractions?: number
 ): UseQueryResult<{ projects: AssignProject[]; count: number }, Error> => {

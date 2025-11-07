@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { AssignProject } from '../../../../../types/assign-projects';
-import { useAssingeProjectsList } from '../../../../../services/cases-assign-projects/assign-project-service';
+import { useAssignProjectsList } from '../../../../../services/cases-assign-projects/assign-project-service';
 import { ListTable } from '../../../../../../components/table';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { CaseAssignedExportParams } from '../../../../../types';
@@ -18,6 +18,8 @@ interface AssignedProjectsProps {
   setTableParams?: React.Dispatch<
     React.SetStateAction<CaseAssignedExportParams>
   >;
+  setCount: React.Dispatch<React.SetStateAction<number>>;
+  clearSelectedRows: boolean;
 }
 
 const AssignedProjects: React.FC<AssignedProjectsProps> = ({
@@ -28,6 +30,8 @@ const AssignedProjects: React.FC<AssignedProjectsProps> = ({
   visibleColumns,
   searchText,
   setTableParams,
+  setCount,
+  clearSelectedRows,
 }) => {
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
@@ -36,7 +40,7 @@ const AssignedProjects: React.FC<AssignedProjectsProps> = ({
   const [sortBy, setSortBy] = useState<'ASC' | 'DESC'>('ASC');
   // const { permission } = useSelector((state: RootState) => state.permission);
   const accountID = searchParams.get('accountID') || '';
-  const { data, isLoading, isError } = useAssingeProjectsList(
+  const { data, isLoading, isError } = useAssignProjectsList(
     {
       page: currentPage + 1,
       limit: rowsPerPage,
@@ -51,9 +55,9 @@ const AssignedProjects: React.FC<AssignedProjectsProps> = ({
     refreshTrigger
   );
   useEffect(() => {
-    // if (setExportType) {
-    //   setExportType('project');
-    // }
+    if (data?.count) {
+      setCount(data?.count);
+    }
     setTableParams?.({
       page: currentPage + 1,
       limit: rowsPerPage, // Corrected property name
@@ -74,6 +78,8 @@ const AssignedProjects: React.FC<AssignedProjectsProps> = ({
     currentPage,
     caseId,
     accountID,
+    data?.count,
+    setCount,
   ]);
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
@@ -126,6 +132,7 @@ const AssignedProjects: React.FC<AssignedProjectsProps> = ({
         sortBy={sortField}
         sortOrder={sortBy}
         onSort={handleSortRequest}
+        clearSelectedRows={clearSelectedRows}
       />
     </div>
   );

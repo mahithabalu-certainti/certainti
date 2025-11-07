@@ -62,6 +62,8 @@ const CasesProjects: React.FC<casesProjectProps> = ({
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [searchText, setSearchText] = useState<string>('');
+  const [count, setCount] = useState<number>(0);
+  const [clearSelectedRows, setClearSelectedRows] = useState<boolean>(false);
   const [searchParams] = useSearchParams();
   const handleSorting = () => {
     setSortFilterCount(sortFilterCount + 1);
@@ -94,6 +96,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
         if (response?.statusCode === 200) {
           onRefreshClick();
           setSelectedRows([]);
+          setClearSelectedRows((prev) => !prev);
         }
       },
     });
@@ -115,6 +118,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
         if (response?.statusCode === 200) {
           onRefreshClick();
           setSelectedRows([]);
+          setClearSelectedRows((prev) => !prev);
         }
       },
     });
@@ -164,7 +168,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
   };
 
   const tabs = [
-    { label: 'Assign Projects', value: 'assign_projects' },
+    { label: 'Assigned Projects', value: 'assign_projects' },
     {
       label: 'Review Projects',
       value: 'review_projects',
@@ -359,15 +363,17 @@ const CasesProjects: React.FC<casesProjectProps> = ({
             className={`w-7 h-7 p-1 bg-[#E25A32] 'rounded-[2px]' 'rounded-full'`}
           />
         }
-        count={10}
+        count={count}
         showItemCount={true}
         buttons={headerButtons}
       />
-      <SectionHeaderTab
-        tabs={tabs}
-        onTabChange={handleTabChange}
-        defaultValue={tabParam}
-      />
+      {!isAssignProject && (
+        <SectionHeaderTab
+          tabs={tabs}
+          onTabChange={handleTabChange}
+          defaultValue={tabParam}
+        />
+      )}
       {tabParam === 'assign_projects' ? (
         <div className='border border-[#CBD6E2] border-t-0'>
           {isAssignProject ? (
@@ -379,6 +385,8 @@ const CasesProjects: React.FC<casesProjectProps> = ({
               setCurrentPage={setCurrentPage}
               visibleColumns={visibleColumns}
               searchText={searchText}
+              setCount={setCount}
+              clearSelectedRows={clearSelectedRows}
             />
           ) : (
             <AssignedProjects
@@ -390,6 +398,8 @@ const CasesProjects: React.FC<casesProjectProps> = ({
               visibleColumns={visibleColumns}
               searchText={searchText}
               setTableParams={setTableParams}
+              setCount={setCount}
+              clearSelectedRows={clearSelectedRows}
             />
           )}
         </div>

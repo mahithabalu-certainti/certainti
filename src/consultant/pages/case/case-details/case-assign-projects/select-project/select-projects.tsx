@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AssignProject } from '../../../../../types/assign-projects';
 import { ListTable } from '../../../../../../components/table';
 import { useSelectProjectsList } from '../../../../../services/cases-assign-projects/assign-project-service';
@@ -13,6 +13,8 @@ interface selectProjectProps {
   searchText: string;
   setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
   visibleColumns: any[];
+  setCount: React.Dispatch<React.SetStateAction<number>>;
+  clearSelectedRows: boolean;
 }
 
 const SelectProjects: React.FC<selectProjectProps> = ({
@@ -22,6 +24,8 @@ const SelectProjects: React.FC<selectProjectProps> = ({
   setCurrentPage,
   visibleColumns,
   searchText,
+  setCount,
+  clearSelectedRows,
 }) => {
   const { caseID } = useParams();
   const [searchParams] = useSearchParams();
@@ -43,7 +47,11 @@ const SelectProjects: React.FC<selectProjectProps> = ({
     },
     refreshTrigger
   );
-
+  useEffect(() => {
+    if (data?.count) {
+      setCount(data?.count);
+    }
+  }, [data?.count, setCount]);
   // const projectColumns = getSelectProjectColumns(permissionMap);
 
   const handlePageChange = (newPage: number) => {
@@ -98,6 +106,7 @@ const SelectProjects: React.FC<selectProjectProps> = ({
         sortBy={sortField}
         sortOrder={sortBy}
         onSort={handleSortRequest}
+        clearSelectedRows={clearSelectedRows}
       />
     </div>
   );
