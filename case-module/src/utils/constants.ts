@@ -730,6 +730,9 @@ export const rawQueries = {
   getTaskType() {
     return `SELECT rid, task_type_name FROM ${MAIN_SCHEMA_NAME}.task_type ORDER BY task_type_name ASC`
   },
+  getSpecificTaskType () {
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name ILIKE '%Milestone%'`
+  }
 };
 
 const keyContactRole = {

@@ -32,6 +32,7 @@ import {
   ICreateCaseTeam,
   ICreateChecklist,
   ICreateChecklistItem,
+  TaskTypeResponse,
   TeamMember,
 } from "../../utils/types";
 
@@ -39,6 +40,7 @@ import {
 import { Case, setupCaseSequence } from "../../models/caseModel";
 import {
   fetchCasesHeadersDatas,
+  fetchMilestoneTaskTemplate,
   fetchProjectsForCases,
   listAllCasesSummaryQuery,
 } from "../../utils/rawQueries";
@@ -56,6 +58,8 @@ import { Jurisdiction } from "../../models/jurisdiction";
 import { log } from "console";
 import { CheckList, setupCheckListSequence } from "../../models/checkListModel";
 import { CheckListItem } from "../../models/checkListItemModel";
+import { CaseTask, setupCaseTaskSequence } from "../../models/caseTaskModel";
+import { CaseMilestone, setupCaseMilestoneSequence } from "../../models/caseMilestoneModel";
 
 class CaseSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -170,6 +174,11 @@ class CaseSchemaService {
 
       // Add timeline entry for case creation
       if (casecreationResponse && casecreationResponse.rid) {
+        const fetchTaskTypeRid = await this.getTaskType();
+        if(fetchTaskTypeRid) {
+          await this.cloneDefaultMilestoneTaskTemplate(casecreationResponse.account_rid, casecreationResponse.rid,
+          casecreationResponse.filing_type_rid, fetchTaskTypeRid.rid, accountNumber, transaction, casecreationResponse.case_startdate)
+        }
         await this.addCaseManagementTimeline(
           accountNumber,
           casecreationResponse.rid,
@@ -383,6 +392,14 @@ class CaseSchemaService {
         schemaName
       );
       
+      const CaseTaskModel = CaseTask.initialise(
+        orgDbSequlize,
+        schemaName
+      )
+      const CaseMilestoneModel = CaseMilestone.initialise(
+        orgDbSequlize,
+        schemaName
+      )
 
       await CaseModel.sync({ force: false });
       await setupCaseSequence(orgDbSequlize, schemaName);
@@ -398,8 +415,13 @@ class CaseSchemaService {
       await checkListModel.sync({ force: false });
       await setupCheckListSequence(orgDbSequlize, schemaName);
       await checkListItemModel.sync({ force: false });
+      await CaseMilestoneModel.sync({ force : false});
+      await setupCaseMilestoneSequence(orgDbSequlize, schemaName);
+      await CaseTaskModel.sync({force : false});
+      await setupCaseTaskSequence(orgDbSequlize, schemaName);
     } catch (err) {
       errorLog("Error creating case tables", (err as Error).message);
+      console.log(err)
       return this.throwServiceError(err as Error);
     }
   }
@@ -2640,9 +2662,74 @@ class CaseSchemaService {
         throw new Error("Error processing checklist items: " + error);
       }
     }
-
- 
- 
+  async cloneDefaultMilestoneTaskTemplate (accountRid : string, caseRid : string, filing_type_rid : string, taskTypeRid : string, accountNumber : string, transaction : Transaction, caseStartDate : Date) {
+    const {CaseTask, CaseMilestone} = await this.caseModelService.getModels(accountNumber);
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+    }
+    const queryResult : any = await this.mainDbSequelize.query(fetchMilestoneTaskTemplate(taskTypeRid, filing_type_rid));
+    let clonedData = queryResult[0][0]
+    if(clonedData.milestone_data.length > 0) {
+      const finalMilestoneData = clonedData.milestone_data.map((d : any) => {
+        return {
+          ...d,
+          account_rid : accountRid,
+          case_rid : caseRid
+        }
+      })
+      await CaseMilestone.bulkCreate(finalMilestoneData, {transaction})
+      if(clonedData.task_data.length > 0) {
+        let startDate : Date;
+        let endDate : Date;
+        let startDateMap : Map<number, Date> = new Map();
+        let endDateMap : Map<number, Date> = new Map();
+        let startDateStorage;
+        let endDateStorage;
+        for(let d of clonedData.task_data) {
+          if(d.sequence_no === 1) {
+            const conversion = dayjs(caseStartDate)
+            const res = conversion.add(d.effort_in_days, 'days').format("YYYY-MM-DD");
+            endDate = dayjs(res).toDate()
+            startDate = caseStartDate
+            startDateStorage = startDate
+            endDateStorage = endDate
+            startDateMap.set(d.sequence_no, startDateStorage)
+            endDateMap.set(d.sequence_no, endDateStorage)
+          } 
+          else {
+            const conversion = dayjs(endDateStorage)
+            const res = conversion.add(d.effort_in_days, 'day').format("YYYY-MM-DD");
+            endDate = dayjs(res).toDate()
+            const newStartDate = conversion.add(1, 'day').format('YYYY-MM-DD')
+            startDate = dayjs(newStartDate).toDate()
+            startDateStorage = startDate
+            endDateStorage = endDate
+            startDateMap.set(d.sequence_no, startDateStorage)
+            endDateMap.set(d.sequence_no, endDateStorage)
+          }
+        }
+        const finalTaskData = clonedData.task_data.map((d : any) => {
+          return {
+            ...d,
+            effective_start_datetime : startDateMap.get(d.sequence_no),
+            effective_end_datetime : endDateMap.get(d.sequence_no),
+            account_rid : accountRid,
+            case_rid : caseRid
+          }
+        })
+        
+        await CaseTask.bulkCreate(finalTaskData, {transaction})
+      }
+    }
+  }
+  async getTaskType () {
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+    }
+    const [result] = await this.mainDbSequelize.query<TaskTypeResponse>(rawQueries.getSpecificTaskType(), {type : QueryTypes.SELECT});
+    if(result) return result
+    else return null;
+  }
 }
 
 // Utility function for optimized column sorting

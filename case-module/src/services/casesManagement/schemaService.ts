@@ -498,7 +498,7 @@ class CaseManagementSchemaService {
     }
   async createTaskTemplate (data : CreateTaskTemplateType, userId : string) {
     const { TaskTemplate } = await this.caseModelService.getModels("");
-    const findSequenceOrder = await this.fetchSequenceOrder();
+    const findSequenceOrder = await this.fetchSequenceOrder(data.milestone_template_rid);
     let sequenceNumber : number = 0;
     if(findSequenceOrder.length > 0) {
       sequenceNumber = findSequenceOrder[0]?.sequence_no! + 1
@@ -532,10 +532,13 @@ class CaseManagementSchemaService {
       statusMessage : STATUS_MESSAGE.taskCreatedSuccess
     };
   }
-  async fetchSequenceOrder () {
+  async fetchSequenceOrder (milestone_template_rid : string) {
     const { TaskTemplate } = await this.caseModelService.getModels("");
     const findSequenceOrder = await TaskTemplate.findAll({
       attributes : ['sequence_no'],
+      where : {
+        milestone_template_rid : milestone_template_rid
+      },
       order : [['created_datetime', 'DESC']],
       raw : true
     })
