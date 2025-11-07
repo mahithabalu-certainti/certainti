@@ -2,6 +2,7 @@ import otpGenerator from "otp-generator";
 import brcypt from "bcrypt";
 import jwt, { SignOptions } from "jsonwebtoken";
 import { getSecret } from "./azureSecrets";
+import { logMessage } from "./helpers";
 
 export const generateRandomOtpDigit = () => {
   return otpGenerator.generate(6, {
@@ -73,7 +74,7 @@ export async function generateNewCustomJwtKey(oldToken: string) {
       ignoreExpiration: true,
     });
   } catch (err) {
-    console.error("Token verification failed:", err);
+    logMessage(`Token verification failed: ${err}`);
     return;
   }
 
@@ -103,12 +104,12 @@ async function validateToken(token: string) {
       algorithms: ["RS256"],
       audience: CUSTOM_JWT_AUDIENCE,
     });
-    console.log("Valid token. Claims:");
+    logMessage("Valid token. Claims:");
   } catch (err: any) {
     if (err.name === "TokenExpiredError") {
-      console.log("Token expired. Generate a new one.");
+      logMessage("Token expired. Generate a new one.");
     } else {
-      console.log("Invalid token:", err.message);
+      logMessage(`Invalid token: ${err.message}`);
     }
   }
 }

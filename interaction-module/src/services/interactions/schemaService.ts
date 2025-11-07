@@ -13,9 +13,9 @@ import {
   IUpdateInteraction,
 } from "../../utils/types";
 import { Interaction } from "../../models/interaction";
-import { ALPHANUMERIC_CONDITIONS, HttpStatus, MAIN_SCHEMA_NAME, mainTableFilters, rawQueries, schedulerStatus, statusAction, techSummaryStatus } from "../../utils/constants";
+import { ALPHANUMERIC_CONDITIONS, HttpStatus, MAIN_SCHEMA_NAME, mainTableFilters, rawQueries, schedulerStatus, SCHEMANAME_PREFIX, statusAction, techSummaryStatus } from "../../utils/constants";
 import { SendEmailInfo } from "../../models/sendEmailInfo";
-import { decryptClientSecret } from "../../utils/helpers";
+import { decryptClientSecret, logMessage } from "../../utils/helpers";
 import { fetchStatusIdsForReminderList } from "../../utils/rawQueries";
 
 class InteractionSchemaService {
@@ -44,7 +44,7 @@ class InteractionSchemaService {
 
       return interaction;
     } catch (error) {
-      console.log(error);
+      logMessage(`Error Account interaction: ${error}`);
       throw new Error("Error creating interaction: " + error);
     }
   }
@@ -71,7 +71,7 @@ class InteractionSchemaService {
 
       return interaction;
     } catch (error) {
-      console.log(error);
+      logMessage(`Error creating interaction: ${error}`);
       throw new Error("Error creating interaction: " + error);
     }
   }
@@ -123,17 +123,16 @@ class InteractionSchemaService {
               );
               break;
             default:
-              console.warn(
-                `[addInteractionItems] Unknown action_type:`,
-                question.action_type
+            logMessage(
+                `[addInteractionItems] Unknown action_type: ${question.action_type}`
               );
           }
         }
       } else {
-        console.warn(`[addInteractionItems] No questions to process.`);
+        logMessage(`[addInteractionItems] No questions to process.`);
       }
     } catch (error) {
-      console.error("[addInteractionItems] Error:", error);
+      logMessage(`[addInteractionItems] Error: ${error}`);
       throw new Error(
         "Error creating interaction: " + (error as Error).message
       );
@@ -188,17 +187,16 @@ class InteractionSchemaService {
               break;
            
             default:
-              console.warn(
-                `[addInteractionItems] Unknown action_type:`,
-                question.action_type
+              logMessage(
+                `[addInteractionItems] Unknown action_type: ${question.action_type}`
               );
           }
         }
       } else {
-        console.warn(`[addInteractionItems] No questions to process.`);
+        logMessage(`[addInteractionItems] No questions to process.`);
       }
     } catch (error) {
-      console.error("[addInteractionItems] Error:", error);
+      logMessage(`[addInteractionItems] Error: ${error}`);
       throw new Error(
         "Error creating interaction: " + (error as Error).message
       );
@@ -349,6 +347,7 @@ class InteractionSchemaService {
         }
       }
     } catch (error) {
+      logMessage(`Error creating bulk interactions: ${error}`);
       throw new Error("Error creating interaction: " + error);
     }
   }
@@ -372,7 +371,6 @@ class InteractionSchemaService {
         created_by: userId, // Ensure created_by is always userId
       };
       await InteractionItem.create(item, { transaction });
-      console.log(`[addInteractionItems] Added question:`, item);
     }
   }
 
@@ -396,7 +394,7 @@ class InteractionSchemaService {
         created_by: userId, // Ensure created_by is always userId
       };
       await InteractionItem.create(item, { transaction });
-      console.log(`[addInteractionItems] Added question:`, item);
+      logMessage(`[addInteractionItems] Added question: ${JSON.stringify(item)}`);
     }
   }
 
@@ -417,7 +415,6 @@ class InteractionSchemaService {
         created_by: userId, // Ensure created_by is always userId
       };
       await InteractionTemplate.create(item);
-      console.log(`[addInteractionItems] Added question:`, item);
     }
   }
 
@@ -432,7 +429,6 @@ class InteractionSchemaService {
       where: { template_rid: interactionRid, rid: question.rid },
       transaction,
     });
-    console.log(`[addInteractionItems] Deleted question:`, question.rid);
   }
    private async handleEditQuestionTemplate(
     InteractionTemplateQuestions: any,
@@ -452,7 +448,6 @@ class InteractionSchemaService {
         transaction,
       }
     );
-    console.log(`[addInteractionItems] Edited question:`, question.rid);
   }
 
   private async handleDeleteQuestion(
@@ -516,7 +511,6 @@ class InteractionSchemaService {
       },
       { transaction }
     );
-    console.log(`[addInteractionItems] Deleted question:`, question.rid);
   }
 
    private async handleDeleteQuestionAccount(
@@ -580,7 +574,6 @@ class InteractionSchemaService {
       },
       { transaction }
     );
-    console.log(`[addInteractionItems] Deleted question:`, question.rid);
   }
 
   private async handleEditQuestionAccount(
@@ -637,7 +630,6 @@ class InteractionSchemaService {
         { transaction }
       ),
     ]);
-    console.log(`[addInteractionItems] Edited question:`, question.rid);
   }
 
   
@@ -695,7 +687,6 @@ class InteractionSchemaService {
         { transaction }
       ),
     ]);
-    console.log(`[addInteractionItems] Edited question:`, question.rid);
   }
 
   async addInteractionHistory(
@@ -815,6 +806,7 @@ class InteractionSchemaService {
         ...interactionData,
       });
     } catch (error) {
+      logMessage(`Error creating interaction summary: ${error}`);
       throw new Error(
         "Error creating interaction summary: " + (error as Error).message
       );
@@ -849,8 +841,8 @@ class InteractionSchemaService {
         }
       );
     } catch (err) {
-      console.log("Error adding timeline", err);
-      throw new Error("Error creating project resource timeline");
+      logMessage(`Error creating interaction timeline: ${err}`);
+      throw new Error("Error creating interaction timeline");
     }
   }
 
@@ -955,7 +947,7 @@ class InteractionSchemaService {
       }
 
       const [account]: any[] = await this.mainDbSequelize.query(
-        `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
+        rawQueries.fetchParentAccountforEmail,
         {
           replacements: { rid: accountId },
           type: "SELECT",
@@ -966,7 +958,7 @@ class InteractionSchemaService {
 
       if (account?.storage_type === "store_in_parent") {
         const [accountData]: any[] = await this.mainDbSequelize.query(
-          `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
+          rawQueries.fetchParentAccountforEmail,
           {
             replacements: { rid: account?.parent_account_rid },
             type: "SELECT",
@@ -982,6 +974,7 @@ class InteractionSchemaService {
         parentAccountId: account?.parent_account_rid
       };
     } catch (err) {
+      logMessage(`Error fetching account: ${err}`);
       throw new Error("Error fetching account : " + (err as Error).message);
     }
   }
@@ -1021,7 +1014,8 @@ class InteractionSchemaService {
         parentAccountId: account?.parent_account_rid
       };
     } catch (err) {
-      throw new Error("Error fetching account : " + (err as Error).message);
+      logMessage(`Error fetching account for email: ${err}`);
+      throw new Error("Error fetching account for email: " + (err as Error).message);
     }
   }
    async listAccountInteractions(
@@ -1194,7 +1188,7 @@ class InteractionSchemaService {
         count: totalResults
       };
     } catch (err) {
-      console.log(err);
+      logMessage(`Error listing technical summary: ${err}`);
       throw new Error("Error listing technical summary: " + (err as Error).message);
     }
   }
@@ -1336,7 +1330,7 @@ class InteractionSchemaService {
         count: totalResults
       };
     } catch (err) {
-      console.log(err);
+      logMessage(`Error listing technical summary: ${err}`);
       throw new Error("Error listing technical summary: " + (err as Error).message);
     }
   }
@@ -1346,7 +1340,6 @@ class InteractionSchemaService {
   } {
     let whereClause: Record<string, any> = {};
     let includeClause: Array<any> = [];
-    console.log("filters", filters);
     if (filters) {
       const filterProcessors: Record<string, Function> = {
         'r_number': (value: any) => this.processTextFilter('r_number', value, whereClause),
@@ -1787,6 +1780,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         },
       });
       if (!techSummary) {
+        logMessage(`Invalid technical summary ID: ${techSummaryId}`);
         throw new Error("Invalid technical summary ID");
       }
       techSummary.technical_summary_refinement_prompt = summaryContext;
@@ -1805,6 +1799,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         }
       );
     } catch (err) {
+      logMessage(`Error updating technical summary context: ${err}`);
       throw new Error("Error updating technical summary context" + (err as Error).message);
     }
   }
@@ -1823,7 +1818,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         if (!userId) return null;
 
         const [results]: any = await this.mainDbSequelize?.query(
-          `SELECT first_name, middle_name, last_name FROM ${MAIN_SCHEMA_NAME}."user" WHERE rid = :userId`,
+          rawQueries.getUserNameByIdQuery(),
           {
             replacements: { userId },
             type: "SELECT",
@@ -1844,6 +1839,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         modified_name: modifiedName || null,
       };
     } catch (err) {
+      logMessage(`Error adding user details: ${err}`);
       throw new Error("Error adding user details" + (err as Error).message);
     }
   }
@@ -1860,7 +1856,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
      
       if (status_rid) {
         const result = await this.mainDbSequelize.query(
-          `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid = :id`,
+          rawQueries.getStatusByIdQuery(),
           {
             replacements: {
               id: status_rid,
@@ -1880,6 +1876,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       
       //return interactionDetails;
     } catch (err) {
+      logMessage(`Error fetching geo data: ${err}`);
       throw new Error("Error fetching geo data: " + (err as Error).message);
     }
   }
@@ -1904,7 +1901,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
 
       if (interactionDetails?.dataValues?.interaction_type_rid) {
         const result = await this.mainDbSequelize.query(
-          `SELECT rid, interaction_type_name FROM ${MAIN_SCHEMA_NAME}.interaction_type WHERE rid = :id`,
+          rawQueries.getInteractionTypeByIdQuery(),
           {
             replacements: {
               id: interactionDetails.dataValues.interaction_type_rid,
@@ -1917,11 +1914,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       }
       if (interactionDetails?.dataValues?.interaction_level_rid) {
         const result = await this.mainDbSequelize.query(
-          `SELECT rid, interaction_level_name FROM ${MAIN_SCHEMA_NAME}.interaction_level WHERE rid = :id`,
+        rawQueries.fetchInteractionLevelById(interactionDetails.dataValues.interaction_level_rid),
           {
-            replacements: {
-              id: interactionDetails.dataValues.interaction_level_rid,
-            },
             type: "SELECT",
           }
         );
@@ -1930,7 +1924,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       }
       if (interactionDetails?.dataValues?.status_rid) {
         const result = await this.mainDbSequelize.query(
-          `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.interaction_status WHERE rid = :id`,
+          rawQueries.getInteractionStatusByIdQuery(),
           {
             replacements: { id: interactionDetails.dataValues.status_rid },
             type: "SELECT",
@@ -2021,6 +2015,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
 
       //return interactionDetails;
     } catch (err) {
+      logMessage(`Error fetching geo data: ${err}`);
       throw new Error("Error fetching geo data: " + (err as Error).message);
     }
   }
@@ -2187,7 +2182,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     }
 
     const interactionSource = await this.mainDbSequelize.query(
-      `Select rid, interaction_source_name from ${MAIN_SCHEMA_NAME}.interaction_source WHERE interaction_source_name = :type limit 1`,
+     rawQueries.getInteractionSourceByNameQuery(),
       {
         replacements: { type },
         type: "SELECT",
@@ -2207,7 +2202,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     }
 
     const interactionLevel = await this.mainDbSequelize.query(
-      `Select  interaction_level_name from ${MAIN_SCHEMA_NAME}.interaction_level WHERE rid = :type limit 1`,
+      rawQueries.getInteractionLevelNameByIdQuery(),
       {
         replacements: { type },
         type: "SELECT",
@@ -2227,9 +2222,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     }
 
     const interactionLevel = await this.mainDbSequelize.query(
-      `Select rid, interaction_level_name from ${MAIN_SCHEMA_NAME}.interaction_level WHERE interaction_level_name = :type limit 1`,
+      rawQueries.fetchInteractionLevelRidByName(type),
       {
-        replacements: { type },
         type: "SELECT",
       }
     );
@@ -2264,7 +2258,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     }
 
     const interactionTypes = await this.mainDbSequelize.query(
-      `Select rid, interaction_type_name from ${MAIN_SCHEMA_NAME}.interaction_type WHERE status = 'active' order by interaction_type_name ASC`,
+      rawQueries.getActiveInteractionTypesQuery(),
       {
         type: "SELECT",
       }
@@ -2280,7 +2274,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     }
 
     const interactionSource = await this.mainDbSequelize.query(
-      `Select rid, interaction_source_name from ${MAIN_SCHEMA_NAME}.interaction_source WHERE status = 'active' order by interaction_source_name ASC`,
+      rawQueries.getActiveInteractionSourcesQuery(),
       {
         type: "SELECT",
       }
@@ -2311,7 +2305,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     }
 
     const responseSource = await this.mainDbSequelize.query(
-      `Select rid, response_source_name from ${MAIN_SCHEMA_NAME}.interaction_response_source WHERE status = 'active' order by response_source_name ASC`,
+      rawQueries.getActiveInteractionResponseSourcesQuery(),
       {
         type: "SELECT",
       }
@@ -2479,10 +2473,12 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         }
       }
 
+      let status : string = ``
+
       if (responseCreated) {
         const { Interaction, InteractionSummary } =
           await this.interactionModelService.getModels(accountNumber);
-        const status =
+        status =
           statusAction[responseData.status_action as keyof typeof statusAction];
         const [statusArr]: any = await this.mainDbSequelize.query(
           rawQueries.fetchInteractionStatusByType(status)
@@ -2523,7 +2519,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
             responseData.project_fiscal_rid,
             AiAssessmentEventTracker
           );
-          console.log("isAutoTriggerEnabled", isAutoTriggerEnabled);
+            
+            logMessage(`account_rid: ${responseData.account_rid}, project_fiscal_account_id: ${responseData.project_fiscal_rid} isAutoTriggerEnabled: ${isAutoTriggerEnabled}`);
         }
 
         await Interaction.update(updateData, {
@@ -2538,8 +2535,10 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       return {
         interactionVersion,
         isAutoTriggerEnabled,
+        status
       };
     } catch (err) {
+      logMessage(`Error updating interaction response: ${err}`);
       throw new Error(
         "Error updating interaction response: " + (err as Error).message
       );
@@ -2610,6 +2609,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       );
       return await Interaction.findOne({ where: { rid: interactionId } });
     } catch (err) {
+      logMessage(`Error fetching interaction: ${err}`);
       throw new Error("Error fetching interaction: " + (err as Error).message);
     }
   }
@@ -2634,6 +2634,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         order: [["created_datetime", "DESC"]],
       });
     } catch (err) {
+      logMessage(`Error fetching interactions: ${err}`);
       throw new Error("Error fetching interactions: " + (err as Error).message);
     }
   }
@@ -2670,6 +2671,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         fileType: att.attachment_type,
       }));
     } catch (err) {
+      logMessage(`Error fetching global attachments: ${err}`);
       throw new Error(
         "Error fetching global attachments: " + (err as Error).message
       );
@@ -2758,6 +2760,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       // }
       return items;
     } catch (err) {
+      logMessage(`Error fetching interaction items: ${err}`);
       throw new Error(
         "Error fetching interaction items: " + (err as Error).message
       );
@@ -2790,6 +2793,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       });
       return items;
     } catch (err) {
+      logMessage(`Error fetching interaction items: ${err}`);
       throw new Error(
         "Error fetching interaction items: " + (err as Error).message
       );
@@ -2827,8 +2831,9 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       }
       return items;
     } catch (err) {
+      logMessage(`Error fetching questions by id: ${err}`);
       throw new Error(
-        "Error fetching interaction items: " + (err as Error).message
+        "Error fetching questions by id: " + (err as Error).message
       );
     }
   }
@@ -2844,6 +2849,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         where: { entity_rid: entityRid },
       });
     } catch (err) {
+      logMessage(`Error fetching interaction timeline: ${err}`);
       throw new Error(
         "Error fetching interaction timeline: " + (err as Error).message
       );
@@ -2874,7 +2880,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         tenantId: senderEmailInfo[0]?.tenant_id,
       }
     } catch (err) {
-        console.error(err);
+      logMessage(`Error fetching sender email info for account: ${err}`);
     }
   }
   async fetchEmailInfo(
@@ -2950,7 +2956,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       );
       const interactionCCRecipientsAccount: any[] =
         await this.orgDbSequelize.query(
-          rawQueries.fetchInteractionRecipientAccount(accountRid,statusArr.rid ,schemaName),
+          rawQueries.fetchInteractionCCRecipientAccount(accountRid,statusArr.rid ,schemaName),
           { type: "SELECT" }
         );
 
@@ -2972,6 +2978,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         ccEmails: uniqueCCEmails ?? [],
       };
     } catch (err) {
+      logMessage(`Error fetching POC email for account: ${err}`);
       throw new Error("Error fetching POC email: " + (err as Error).message);
     }
   }
@@ -3050,7 +3057,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         ccEmails: uniqueCCEmails ?? [],
       };
     } catch (err) {
-      throw new Error("Error fetching POC email: " + (err as Error).message);
+      logMessage(`Error fetching  email for account: ${err}`);
+      throw new Error("Error fetching  email for account: " + (err as Error).message);
     }
   }
   async getUserGroupType(userRid: string): Promise<string | null> {
@@ -3072,7 +3080,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       return results[0]?.group_type || null;
     } catch (error) {
       // Log the error for debugging
-      console.error("Error fetching user group type:", error);
+      logMessage(`Error fetching user group type: ${error}`);
       throw new Error("Failed to get user group type");
     }
   }
@@ -3132,7 +3140,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
 
       return Array.from(uniqueAccess.values());
     } catch (err) {
-      console.error("Error in getAccessibleAccountInfo:", err);
+      logMessage(`Error in getAccessibleAccountInfo: ${err}`);
       return [];
     }
   }
@@ -3163,7 +3171,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         email: results[0]?.email || "",
       };
     } catch (error) {
-      console.error("Error fetching user profile info:", error);
+      logMessage(`Error fetching user profile info: ${error}`);
       throw new Error("Failed to get user profile information");
     }
   }
@@ -3207,12 +3215,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       }
     }
 
-    const query = `
-    SELECT DISTINCT ps.project_rid
-    FROM ${MAIN_SCHEMA_NAME}.project_summary AS ps
-    LEFT JOIN ${MAIN_SCHEMA_NAME}.project_fiscal_summary AS pfs ON ps.project_rid = pfs.project_rid
-    ${accessControlWhere}
-  `;
+    const query = rawQueries.getProjectSummaryWithFiscalAccessQuery(accessControlWhere);
 
     const results = await this.mainDbSequelize.query(query, {
       replacements,
@@ -3264,6 +3267,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         where: { interaction_rid: interactionRid },
       });
     } catch (err) {
+      logMessage(`Error updating interaction status: ${err}`);
       throw new Error(
         "Error updating interaction status: " + (err as Error).message
       );
@@ -3325,8 +3329,9 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         where: { interaction_rid: interactionRid },
       });
     } catch (err) {
+      logMessage(`Error updating interaction remainder: ${err}`);
       throw new Error(
-        "Error updating interaction status: " + (err as Error).message
+        "Error updating interaction remainder: " + (err as Error).message
       );
     }
   }
@@ -3359,7 +3364,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       );
 
       return !!(recipientInfo && recipientInfo.key_contact_email);
-    } catch (err) {       
+    } catch (err) {   
+      logMessage(`Error checking email recipient availability: ${err}`);    
         
       throw new Error(
         "Error checking email recipient availability: " +
@@ -3416,6 +3422,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       );
       return globalInteractionAccess?.auto_send_interaction ?? false;
     } catch (err) {
+      logMessage(`Error checking global auto-send interaction access: ${err}`);
       throw new Error(
         "Error checking global auto-send interaction access: " +
           (err as Error).message
@@ -3440,6 +3447,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         );
       return accountInfo?.autosend_interaction ?? false;
     } catch (err) {
+      logMessage(`Error checking account auto-send interaction access: ${err}`);
       throw new Error(
         "Error checking global auto-send interaction access: " +
           (err as Error).message
@@ -3467,6 +3475,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         );
       return projectInfo?.auto_send_ai_interaction ?? false;
     } catch (err) {
+      logMessage(`Error checking project auto-send interaction access: ${err}`);
       throw new Error(
         "Error checking global auto-send interaction access: " +
           (err as Error).message
@@ -3507,6 +3516,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         return false;
       }
     } catch (err) {
+      logMessage(`Error checking auto-send interaction status: ${err}`);
       throw new Error(
         "Error checking auto-send interaction status: " + (err as Error).message
       );
@@ -3557,6 +3567,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         return (projectInfo?.auto_access_rd ?? false) && !!responseReceivedEvent.event_name;
       }
     } catch (err) {
+      logMessage(`Error checking auto-trigger enabled status: ${err}`);
       throw new Error(
         "Error checking auto-trigger interaction status: " +
           (err as Error).message
@@ -3644,6 +3655,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         );
       }
     } catch (err) {
+      logMessage(`Error updating Tech Summary: ${err}`);
       throw new Error("Error updating Tech Summary: " + (err as Error).message);
     }
   }
@@ -3665,7 +3677,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
 
       return projectInfo;
     } catch (err) {
-      throw new Error("Error updating QRE percent: " + (err as Error).message);
+      logMessage(`Error fetching project info: ${err}`);
+      throw new Error("Error fetching project info: " + (err as Error).message);
     }
   }
    async fetchAccountInfo(accountRid: string, accountNumber: string) {
@@ -3685,6 +3698,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
 
       return accountInfo;
     } catch (err) {
+      logMessage(`Error fetching account info: ${err}`);
       throw new Error("Error fetching account info: " + (err as Error).message);
     }
   }
@@ -3750,13 +3764,14 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
           { type: "UPDATE" }
         ),
       ]);
-      console.log("AI Processed flag updated successfully", aiResponse);
+
       if (response?.data?.transaction_id) {
         AiAssessmentAudit.update(updateData, {
           where: { transaction_id: response?.data?.transaction_id },
         });
       }
     } catch (err) {
+      logMessage(`Error updating AI processed flag: ${err}`);
       throw new Error(
         "Error updating AI processed flag: " + (err as Error).message
       );
@@ -3876,7 +3891,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         }),
       ]);
     } catch (err) {
-      console.log(err);
+      logMessage(`Error updating QRE percent: ${err}`);
       throw new Error("Error updating QRE percent: " + (err as Error).message);
     }
   }
@@ -3894,8 +3909,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         where: { transaction_id: response.data.transaction_id },
       });
     } catch (err) {
-      console.log(err);
-      throw new Error("Error updating QRE percent: " + (err as Error).message);
+      logMessage(`Error updating interaction status: ${err}`);
+      throw new Error("Error updating interaction status: " + (err as Error).message);
     }
   }
 
@@ -3907,7 +3922,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       }
 
       const [account]: any[] = await this.mainDbSequelize.query(
-        `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE r_number = :r_number`,
+       rawQueries.getAccountByRNumberQuery(),
         {
           replacements: { r_number: accountNumber },
           type: "SELECT",
@@ -3918,7 +3933,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
 
       if (account?.storage_type === "store_in_parent") {
         const [accountData]: any[] = await this.mainDbSequelize.query(
-          `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
+          rawQueries.fetchParentAccountforEmail,
           {
             replacements: { rid: account?.parent_account_rid },
             type: "SELECT",
@@ -3933,6 +3948,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
         accountName: account?.account_name,
       };
     } catch (err) {
+      logMessage(`Error fetching account : ${err}`);
       throw new Error("Error fetching account : " + (err as Error).message);
     }
   }
@@ -4124,7 +4140,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
   async fetchAccountDetails(account_number: string, parentAccountId: string, accountRid: string) {
     const {accountNumber} = await this.fetchValidAccountNumberByIdForEmail(accountRid);
   
-    const schemaName = `trd365_${accountNumber.replace(/\D/g, "")}`;
+    const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(/\D/g, "")}`;
     try {
 
       const sequelize = await initOrgSequelize();
@@ -4149,7 +4165,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
 
       return false;
     } catch (err) {
-      console.log("Errr ", err);
+      logMessage(`Error retrieving account details: ${err}`);
       throw new Error("Error retrieving account details");
     }
   }
@@ -4181,8 +4197,8 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
 
      
     } catch (error) {
-      console.log(error);
-      throw new Error("Error creating interaction: " + error);
+      logMessage(`Error creating interaction template: ${error}`);
+      throw new Error("Error creating interaction template: " + error);
     }
   }
 
@@ -4333,7 +4349,7 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
       count: totalResults
     };
   } catch (err) {
-    console.log(err);
+    logMessage(`Error listing interaction templates: ${err}`);  
     throw new Error("Error listing interaction templates: " + (err as Error).message);
   }
   }
@@ -4429,17 +4445,16 @@ const existingTemplate = await InteractionTemplate.findOne({
               );
               break;
             default:
-              console.warn(
-                `[addInteractionItems] Unknown action_type:`,
-                question.action_type
+              logMessage(
+                `[addInteractionItems] Unknown action_type: ${question.action_type}`
               );
           }
         }
       } else {
-        console.warn(`[addInteractionItems] No questions to process.`);
+        logMessage(`[addInteractionItems] No questions to process.`);
       }
     } catch (error) {
-      console.error("[addInteractionItems] Error:", error);
+      logMessage(`[addInteractionItems] Error: ${error}`);
       throw new Error(
         "Error creating interaction: " + (error as Error).message
       );
@@ -4517,8 +4532,9 @@ const existingTemplate = await InteractionTemplate.findOne({
       const plainItems = items.map((item) => item.get({ plain: true }));
       return items;
     } catch (err) {
+      logMessage(`Error fetching interaction template items: ${err}`);
       throw new Error(
-        "Error fetching interaction items: " + (err as Error).message
+        "Error fetching interaction template items: " + (err as Error).message
       );
     }
   }

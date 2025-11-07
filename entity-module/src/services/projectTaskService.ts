@@ -18,6 +18,7 @@ import currency from "currency.js";
 import Decimal from "decimal.js";
 import { ProjectTaskTimeline } from "../models/projectTaskTimeline";
 import { ProjectResource } from "../models/projectResource";
+import { errorLog, logMessage } from "../utils/helpers";
 
 export class ProjectTaskService {
   schemaService: SchemaService;
@@ -32,6 +33,32 @@ export class ProjectTaskService {
     this.resourceService = new ResourceService();
   }
 
+  /**
+ * Retrieves a paginated list of project tasks filtered and sorted based on provided criteria,
+ * including optional search and resource name filtering.
+ * 
+ * Initializes necessary database connections and models,
+ * fetches related reference data for formatting,
+ * applies filtering, sorting, and pagination on the task list,
+ * and returns the formatted tasks along with the total count.
+ * 
+ * @param {string} accountRid - The account identifier to scope the tasks.
+ * @param {string} projectRid - The project identifier to filter tasks within a specific project.
+ * @param {Record<string, any>} [filters={}] - Additional filters to apply to the tasks.
+ * @param {string} [search] - Optional search string to filter tasks by text.
+ * @param {number} [page=1] - The page number for pagination.
+ * @param {number} [limit=10] - The number of tasks to return per page.
+ * @param {string} [sortBy="created_datetime"] - The field to sort the results by.
+ * @param {string} [sortOrder="DESC"] - The order of sorting: "ASC" or "DESC".
+ * 
+ * @returns {Promise<{
+ *   statusCode: number;
+  *   message: string;
+  *   errorMessage?: string;
+  *   data?: { tasks: any[]; totalCount: number };
+  * }>} Returns an object containing status, message, optionally error message, 
+  * and data with the paginated and formatted list of tasks and total count.
+  */ 
   async listProjectTasks(
     accountRid: string,
     projectRid: string,
@@ -107,14 +134,14 @@ export class ProjectTaskService {
       });
 
       // ✅ Fetch and map related data
-      const { resourceTypeMap, currencyMap, resourceStatusMap } = await this.fetchRelatedData(
+      const { resourceTypeMap, currencyMap, resourceStatusMap, taskTypeMap, taskClassificationsMap } = await this.fetchRelatedData(
         allTasks,
         mainSequelize
       );
 
       // ✅ Format all tasks
       let formattedTasks = allTasks.map((task) =>
-        this.formatTaskData(task, resourceTypeMap, currencyMap, resourceStatusMap)
+        this.formatTaskData(task, resourceTypeMap, currencyMap, resourceStatusMap, taskTypeMap, taskClassificationsMap)
       );
 
       if (resourceFilter) {
@@ -143,7 +170,7 @@ export class ProjectTaskService {
         },
       };
     } catch (error) {
-      this.logger.error("Error in listProjectTasks:", error);
+      errorLog("projectTaskService - listProjectTasks", (error as Error).message);
       return {
         statusCode: 500,
         message: "Failed to fetch attachments",
@@ -154,6 +181,29 @@ export class ProjectTaskService {
     }
   }
 
+  /**
+ * Exports a list of project tasks for a given user, account, and project with optional filters and search.
+ * 
+ * This method fetches all matching tasks without pagination, enriches them with related reference data,
+ * filters tasks by resource name if specified, sorts them according to provided criteria, and formats
+ * them based on the allowed export fields for the user. The exported data is returned in a format
+ * suitable for export (e.g., CSV or Excel).
+ * 
+ * @param {string} userId - The ID of the user requesting the export, used to determine allowed export fields.
+ * @param {string} accountRid - The account identifier to scope the tasks.
+ * @param {string} projectRid - The project fiscal RID to filter tasks by.
+ * @param {Record<string, any>} [filters={}] - Optional filters to apply on task attributes.
+ * @param {string} [search] - Optional search text to apply across task fields.
+ * @param {string} [sortBy="created_datetime"] - The field by which to sort the tasks.
+ * @param {string} [sortOrder="DESC"] - The order of sorting: "ASC" or "DESC".
+ * 
+ * @returns {Promise<{
+ *   statusCode: number;
+  *   message: string;
+  *   errorMessage?: string;
+  *   data?: { tasks: any[]; totalCount: number };
+  * }>} An object containing the export data of tasks, total count, and status information.
+  */ 
   async listProjectTasksExport(
     userId: string,
     accountRid: string,
@@ -220,14 +270,14 @@ export class ProjectTaskService {
       });
 
       // ✅ Fetch and map related data
-      const { resourceTypeMap, currencyMap, resourceStatusMap } = await this.fetchRelatedData(
+      const { resourceTypeMap, currencyMap, resourceStatusMap, taskTypeMap, taskClassificationsMap } = await this.fetchRelatedData(
         allTasks,
         mainSequelize
       );
 
       // ✅ Format all tasks
       let formattedTasks = allTasks.map((task) =>
-        this.formatTaskData(task, resourceTypeMap, currencyMap, resourceStatusMap)
+        this.formatTaskData(task, resourceTypeMap, currencyMap, resourceStatusMap, taskTypeMap, taskClassificationsMap)
       );
 
       if (resourceFilter) {
@@ -268,6 +318,15 @@ export class ProjectTaskService {
               if (allowedFieldSet.has('resource_code')) {
                 exportRecord['Resource Code'] = task.resource_code || "-";
               }
+              if (allowedFieldSet.has('task_name')) {
+                exportRecord['Task Name'] = task.task_name || "-";
+              }
+              if (allowedFieldSet.has('task_type_rid')) {
+                exportRecord['Task Type'] = task.task_type_name || "-";
+              }
+              if (allowedFieldSet.has('task_classification_rid')) {
+                exportRecord['Task Classification'] = task.task_classification_name || "-";
+              }
               if (allowedFieldSet.has('resource_name')) {
                 exportRecord['Resource Name'] = task.resource_name || "-";
               }
@@ -278,7 +337,10 @@ export class ProjectTaskService {
                 exportRecord['Role'] = task.resource_role || "-";
               }
               if (allowedFieldSet.has('start_date')) {
-                exportRecord['Task Date'] = moment(task.start_date).format("YYYY-MM-DD") || "-";
+                exportRecord['Start Date'] = task.start_date ? moment(task.start_date).format("YYYY-MMM-DD") : "-";
+              }
+              if (allowedFieldSet.has('end_date')) {
+                exportRecord['End Date'] = task.end_date ? moment(task.end_date).format("YYYY-MMM-DD") : "-";
               }
               if (allowedFieldSet.has('total_cost_pro_task')) {
                 exportRecord['Cost'] = await this.formatNumberForExport(
@@ -311,7 +373,7 @@ export class ProjectTaskService {
         },
       };
     } catch (error) {
-      this.logger.error("Error in listProjectTasks:", error);
+      errorLog("projectTaskService - listProjectTasksExport", (error as Error).message);
       return {
         statusCode: 500,
         message: "Failed to fetch project tasks",
@@ -430,6 +492,34 @@ export class ProjectTaskService {
         : [],
     ]);
 
+    // Fetch task type
+    const taskTypeRids = allTasks
+      .map((task) => (task as any)?.task_type_rid)
+      .filter((rid) => rid);
+
+    const [taskTypes] = await Promise.all([
+      taskTypeRids.length
+        ? mainSequelize.query(rawQueries.GET_TASK_TYPES, {
+            replacements: { taskTypeRid: taskTypeRids },
+            type: "SELECT",
+          })
+        : [],
+    ]);
+
+    // Fetch task classification
+    const taskClassificationRids = allTasks
+      .map((task) => (task as any)?.task_classification_rid)
+      .filter((rid) => rid);
+
+    const [taskClassifications] = await Promise.all([
+      taskClassificationRids.length
+        ? mainSequelize.query(rawQueries.GET_TASK_CLASSIFICATION, {
+            replacements: { taskClassificationRids },
+            type: "SELECT",
+          })
+        : [],
+    ]);
+
     return {
       resourceTypeMap: new Map<string, string>(
         resourceTypes.map((type: any) => [type.rid, type.resource_type_name])
@@ -445,7 +535,19 @@ export class ProjectTaskService {
           resourceStatus.rid,
           resourceStatus.resource_status_name
         ])
-      )
+      ),
+      taskTypeMap: new Map<string, string>(
+        taskTypes.map((type: any) => [
+          type.rid,
+          type.project_task_type_name,
+        ])
+      ),
+      taskClassificationsMap: new Map<string, string>(
+        taskClassifications.map((type: any) => [
+          type.rid,
+          type.classification_name,
+        ])
+      ),
     };
   }
 
@@ -453,7 +555,9 @@ export class ProjectTaskService {
     task: any,
     resourceTypeMap: Map<string, string>,
     currencyMap: Map<string, string>,
-    resourceStatusMap : Map<string, string>
+    resourceStatusMap : Map<string, string>,
+    taskTypeMap: Map<string, string>,
+    taskClassificationMap: Map<string, string>,
   ) {
     return {
       rid: task.rid,
@@ -488,7 +592,13 @@ export class ProjectTaskService {
       modified_datetime: task.modified_datetime,
       status_rid : task.status_rid,
       status_name : resourceStatusMap.get(task.status_rid) || null,
-      project_resource_role : task.project_resource?.project_resource_role || null
+      project_resource_role : task.project_resource?.project_resource_role || null,
+      task_name: task.task_name || null,
+      task_description: task.task_description || null,
+      task_classification_rid: task.task_classification_rid || null,
+      task_classification_name: taskClassificationMap.get(task.task_classification_rid) || null,
+      task_type_rid: task.task_type_rid || null,
+      task_type_name: taskTypeMap.get(task.task_type_rid) || null,
     };
   }
 
@@ -505,7 +615,11 @@ export class ProjectTaskService {
       "created_datetime",
       "modified_datetime",
       "status_name",
-      "project_resource_role"
+      "project_resource_role",
+      "task_type_name",
+      "task_classification_name",
+      "task_name",
+      "task_description"
     ];
 
     const finalSortBy = validSortFields.includes(sortBy)
@@ -613,7 +727,42 @@ export class ProjectTaskService {
           return bName?.localeCompare(aName ?? "") ?? 0;
         }
       });
-    } else {
+    } 
+    else if (finalSortBy === "task_type_name") {
+      formattedTasks.sort((a, b) => {
+        const isANull = a.task_type_name === null || a.task_type_name === undefined;
+        const isBNull = b.task_type_name === null || b.task_type_name === undefined;
+      
+        if (isANull && isBNull) return 0;       
+        if (isANull) return 1;                  
+        if (isBNull) return -1;                 
+      
+        const nameA = a.task_type_name;
+        const nameB = b.task_type_name;
+      
+        return finalSortOrder === "ASC"
+          ? nameA.localeCompare(nameB)
+          : nameB.localeCompare(nameA);
+      });      
+    } 
+    else if(finalSortBy === "task_classification_name"){
+      formattedTasks.sort((a, b) => {
+        const isANull = a.task_classification_name === null || a.task_classification_name === undefined;
+        const isBNull = b.task_classification_name === null || b.task_classification_name === undefined;
+      
+        if (isANull && isBNull) return 0;       
+        if (isANull) return 1;                  
+        if (isBNull) return -1;                 
+      
+        const nameA = a.task_classification_name;
+        const nameB = b.task_classification_name;
+      
+        return finalSortOrder === "ASC"
+          ? nameA.localeCompare(nameB)
+          : nameB.localeCompare(nameA);
+      });    
+    }
+    else {
       formattedTasks.sort((a, b) => {
         const aVal = a[finalSortBy as keyof typeof a];
         const bVal = b[finalSortBy as keyof typeof b];
@@ -662,11 +811,31 @@ export class ProjectTaskService {
       // Replace "0.00" in pattern with our real number
       return pattern.replace("0.00", formattedNumber);
     } catch (error) {
-      console.error("Error formatting number:", error);
+      errorLog("projectTaskService - formatNumberForExport", (error as Error).message);
       return "-";
     }
   }
 
+  /**
+ * Retrieves detailed information about a specific project task by its ID,
+ * including related account, project, resource, and attachments data.
+ * 
+ * Initializes database models and associations based on the account schema,
+ * fetches the task with all related entities, and enriches the result with
+ * additional reference data such as resource types, currencies, statuses, task types, 
+ * classifications, and mapped attachments with document and user details.
+ * 
+ * @param {string} accountRid - The account identifier to scope the task.
+ * @param {string} taskRid - The unique identifier of the project task to retrieve.
+ * 
+ * @returns {Promise<{
+ *   statusCode: number;
+  *   message: string;
+  *   errorMessage?: string;
+  *   data?: any;
+  * }>} Returns an object containing status, message, optionally error message, 
+  * and data with the detailed project task information.
+  */ 
   async getProjectTaskById(
     accountRid: string,
     taskRid: string
@@ -772,7 +941,7 @@ export class ProjectTaskService {
         };
       }
 
-      const [resourceTypeData, currencyData, TaskStatusData] = await Promise.all([
+      const [resourceTypeData, currencyData, TaskStatusData, taskTyepData, taskClassificationData] = await Promise.all([
         (task as any).dataValues.resource?.resource_type_rid
           ? mainSequelize.query(rawQueries.GET_RESOURCE_TYPES, {
               replacements: {
@@ -798,11 +967,29 @@ export class ProjectTaskService {
               type: "SELECT",
             })
           : Promise.resolve([]),
+        (task as any).dataValues.task_type_rid
+        ? mainSequelize.query(rawQueries.GET_TASK_TYPES, {
+            replacements: {
+              taskTypeRid: (task as any).dataValues.task_type_rid,
+            },
+            type: "SELECT",
+          })
+        : Promise.resolve([]),
+        (task as any).dataValues.task_classification_rid
+        ? mainSequelize.query(rawQueries.GET_TASK_CLASSIFICATION, {
+            replacements: {
+              taskClassificationRids: (task as any).dataValues.task_classification_rid,
+            },
+            type: "SELECT",
+          })
+        : Promise.resolve([]),
       ]);
 
       const [resourceType] = resourceTypeData;
       const [currency] = currencyData;
-      const [taskStatus] = TaskStatusData
+      const [taskStatus] = TaskStatusData;
+      const [taskTypes] = taskTyepData; 
+      const [taskClassification] = taskClassificationData;
 
       const attachments = await this.fetchAttachmentsBytaskId(taskRid);
       let mappedAttachments = [];
@@ -915,7 +1102,13 @@ export class ProjectTaskService {
         modified_by: taskWithUserDetails.modified_name,
         status_rid : taskWithUserDetails.dataValues.status_rid,
         status_name : (taskStatus as any)?.resource_status_name,
-        project_resource_role : taskWithUserDetails.dataValues.project_resource.project_resource_role
+        project_resource_role : taskWithUserDetails.dataValues.project_resource.project_resource_role,
+        task_name: taskWithUserDetails.dataValues.task_name ?? null,
+        task_description: taskWithUserDetails.dataValues.task_description ?? null,
+        task_type_rid: taskWithUserDetails.dataValues.task_type_rid ?? null,
+        task_classification_rid: taskWithUserDetails.dataValues.task_classification_rid ?? null,
+        task_type_name: (taskTypes as any)?.project_task_type_name ?? null,
+        task_classification_name: (taskClassification as any)?.classification_name ?? null,
       };
 
       return {
@@ -924,7 +1117,7 @@ export class ProjectTaskService {
         data: formattedTask,
       };
     } catch (error) {
-      this.logger.error("Error in getProjectTaskById:", error);
+      errorLog("projectTaskService - getProjectTaskById", (error as Error).message);
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
@@ -962,7 +1155,7 @@ export class ProjectTaskService {
     // Filter logic for your input structure
     Object.entries(filters).forEach(([field, filter]) => {
       if (!filter || typeof filter !== "object") {
-        console.log(
+        logMessage(
           `Skipping filter for field ${field} due to invalid structure`
         );
         return;
@@ -972,7 +1165,7 @@ export class ProjectTaskService {
       const value = filter[operator];
 
       if (!operator || value === undefined) {
-        console.log(
+        logMessage(
           `Skipping filter for field ${field} due to missing operator or value`
         );
         return;
@@ -1080,6 +1273,7 @@ export class ProjectTaskService {
           break;
 
         case "start_date":
+        case "end_date" :
           switch (operator.toLowerCase()) {
             case "equals": {
               const date = new Date(value);
@@ -1089,7 +1283,7 @@ export class ProjectTaskService {
                 );
               }
               condition[field] = Sequelize.literal(
-                `DATE("${field}") = DATE('${date.toISOString()}')`
+                `DATE("ProjectTask".${field}) = DATE('${date.toISOString()}')`
               );
               break;
             }
@@ -1101,7 +1295,7 @@ export class ProjectTaskService {
                 );
               }
               condition[field] = Sequelize.literal(
-                `DATE("${field}") < DATE('${date.toISOString()}')`
+                `DATE("ProjectTask".${field}) < DATE('${date.toISOString()}')`
               );
               break;
             }
@@ -1113,7 +1307,7 @@ export class ProjectTaskService {
                 );
               }
               condition[field] = Sequelize.literal(
-                `DATE("${field}") > DATE('${date.toISOString()}')`
+                `DATE("ProjectTask".${field}) > DATE('${date.toISOString()}')`
               );
               break;
             }
@@ -1137,7 +1331,7 @@ export class ProjectTaskService {
               }
 
               condition[field] = Sequelize.literal(
-                `DATE("${field}") BETWEEN DATE('${startDate.toISOString()}') AND DATE('${endDate.toISOString()}')`
+                `DATE("ProjectTask".${field}) BETWEEN DATE('${startDate.toISOString()}') AND DATE('${endDate.toISOString()}')`
               );
               break;
             }
@@ -1250,8 +1444,110 @@ export class ProjectTaskService {
           });
           return; // Skip the default condition push at the end
 
+        case "task_name":
+          switch (operator.toLowerCase()) {
+            case "equals":
+              condition[field] = { [Op.iLike]: value };
+              break;
+            case "not_equals":
+              condition[field] = {
+                [Op.or]: [{ [Op.notILike]: value }, { [Op.is]: null }],
+              };
+              break;
+            case "contains":
+              condition[field] = { [Op.iLike]: `%${value}%` };
+              break;
+            case "is_empty":
+              condition[field] = {
+                [Op.or]: [{ [Op.is]: null }, { [Op.eq]: "" }],
+              };
+              break;
+          }
+          break;
+
+        case "task_description":
+          switch (operator.toLowerCase()) {
+            case "equals":
+              condition[field] = { [Op.iLike]: value };
+              break;
+            case "not_equals":
+              condition[field] = {
+                [Op.or]: [{ [Op.notILike]: value }, { [Op.is]: null }],
+              };
+              break;
+            case "contains":
+              condition[field] = { [Op.iLike]: `%${value}%` };
+              break;
+            case "is_empty":
+              condition[field] = {
+                [Op.or]: [{ [Op.is]: null }, { [Op.eq]: "" }],
+              };
+              break;
+          }
+          break;
+
+        case "task_type_rid":
+          Object.entries(filter).forEach(([op, val]) => {
+            if (val === undefined) return;
+            const nestedCondition: any = {};
+            switch (op.toLowerCase()) {
+              case "equals":
+                nestedCondition["task_type_rid"] = { [Op.eq]: val };
+                break;
+              case "not_equals":
+                nestedCondition["task_type_rid"] = {
+                  [Op.or]: [{ [Op.ne]: val }, { [Op.is]: null }],
+                };
+                break;
+              case "in":
+                nestedCondition["task_type_rid"] = {
+                  [Op.in]: Array.isArray(val) ? val : [val],
+                };
+                break;
+              case "is_empty":
+                nestedCondition["task_type_rid"] = {
+                  [Op.or]: [{ [Op.is]: null }, { [Op.eq]: "" }],
+                };
+                break;
+            }
+            if (Object.keys(nestedCondition).length > 0) {
+              whereClause[Op.and].push(nestedCondition);
+            }
+          });
+          break;
+
+        case "task_classification_rid":
+          Object.entries(filter).forEach(([op, val]) => {
+            if (val === undefined) return;
+            const nestedCondition: any = {};
+            switch (op.toLowerCase()) {
+              case "equals":
+                nestedCondition["task_classification_rid"] = { [Op.eq]: val };
+                break;
+              case "not_equals":
+                nestedCondition["task_classification_rid"] = {
+                  [Op.or]: [{ [Op.ne]: val }, { [Op.is]: null }],
+                };
+                break;
+              case "in":
+                nestedCondition["task_classification_rid"] = {
+                  [Op.in]: Array.isArray(val) ? val : [val],
+                };
+                break;
+              case "is_empty":
+                nestedCondition["task_classification_rid"] = {
+                  [Op.or]: [{ [Op.is]: null }, { [Op.eq]: "" }],
+                };
+                break;
+            }
+            if (Object.keys(nestedCondition).length > 0) {
+              whereClause[Op.and].push(nestedCondition);
+            }
+          });
+          break;
+
         default:
-          console.log(`Unhandled filter field: ${field}`);
+          logMessage(`Unhandled filter field: ${field}`);
       }
 
       if (Object.keys(condition).length > 0) {
@@ -1267,13 +1563,7 @@ export class ProjectTaskService {
       const sequelize = await initMainDbSequelize();
 
       const result = await sequelize.query(
-        `
-      SELECT 
-        a.*
-      FROM "${MAIN_SCHEMA_NAME}"."attachment_summary" a
-      WHERE a.attach_to = :task_rid
-      ORDER BY a.created_datetime DESC
-    `,
+        rawQueries.fetchAttachmentSummaryByTask(),
         {
           replacements: { task_rid },
           type: "SELECT",
@@ -1282,7 +1572,7 @@ export class ProjectTaskService {
 
       return result;
     } catch (error) {
-      this.logger.error("Error fetching attachments:", error);
+      errorLog("projectTaskService - fetchAttachmentsBytaskId", (error as Error).message);
       throw new Error("Failed to fetch attachments");
     }
   }
@@ -1298,7 +1588,7 @@ export class ProjectTaskService {
         if (!userId) return null;
 
         const [results] = await mainDbInit.query(
-          `SELECT first_name, middle_name, last_name FROM ${MAIN_SCHEMA_NAME}."user" WHERE rid = :userId`,
+          rawQueries.fetchUserById(),
           {
             replacements: { userId },
             type: "SELECT",
@@ -1323,7 +1613,7 @@ export class ProjectTaskService {
 
       return taskWithUserDetails;
     } catch (err) {
-      this.logger.error("Error adding user details:", err);
+      errorLog("projectTaskService - insertUserDetails", (err as Error).message);
       return taskData; // Return original task on error
     }
   }

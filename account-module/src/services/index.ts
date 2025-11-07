@@ -1,3 +1,4 @@
+import { errorLog } from "../utils/helpers";
 import AccountServices from "./accountService";
 import GeoDataService from "./geoDataService";
 import AccountGraphQlServices from "./graphqlServices";
@@ -24,7 +25,7 @@ class Services implements IServiceContainer {
       this.geoDataServices = geoDataServices;
       this.accountGraphqlServices = accountGraphqlServices
     } catch (error) {
-      console.error("Error initializing services:", error);
+      errorLog("Service initialization failed", error instanceof Error ? error.message : String(error));
       throw new Error("Service initialization failed");
     }
   }

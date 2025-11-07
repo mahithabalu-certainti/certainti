@@ -614,6 +614,33 @@ const updateResourceSchema = Joi.object({
   comments: Joi.string().optional().allow("").allow(null),
 });
 
+const listAllResourceSchema = Joi.object({
+  page: Joi.number()
+    .default(1),
+  limit: Joi.number()
+    .default(100),
+  fiscalYear: Joi.number().min(1000).max(9999).optional().allow(0).messages({
+    "number.base": "Fiscal year must be a number",
+    "number.min": "Fiscal year must be a 4-digit number",
+    "number.max": "Fiscal year must be a 4-digit number",
+    "any.required": "Fiscal year is required",
+  }),
+  search: Joi.string().max(255).optional(),
+    filters: Joi.object().default({}),
+  globalFilters: Joi.object().default({}),
+  sortBy: Joi.string().default("created_datetime").optional().allow(""),
+  sortOrder: Joi.string()
+    .valid("ASC", "DESC")
+    .default("DESC")
+    .optional()
+    .allow(""),
+  bothParentAndChild: Joi.boolean().optional().default(false),
+  isFromuserGroup: Joi.boolean().optional().default(false),
+    accountRid: Joi.alternatives().try(
+    Joi.string().allow('', null),
+    Joi.array().items(Joi.string())
+  ).optional(),
+});
 const listResourceSchema = Joi.object({
   page: Joi.string()
     .pattern(/^[0-9]+$/)
@@ -637,6 +664,11 @@ const listResourceSchema = Joi.object({
     .optional()
     .allow(""),
   bothParentAndChild: Joi.boolean().optional().default(false),
+  isFromuserGroup: Joi.boolean().optional().default(false),
+    accountRid: Joi.alternatives().try(
+    Joi.string().allow('', null),
+    Joi.array().items(Joi.string())
+  ).optional(),
   apiSource: Joi.string().optional().default("Project"),
   accountInteractionId: Joi.string().optional().allow(null).allow("").default(""),
 });
@@ -1288,6 +1320,7 @@ const createProjectSchema = Joi.object({
   .allow(null),
   total_fte: Joi.number().greater(0).optional().allow(null),
   total_subcon: Joi.number().greater(0).optional().allow(null),
+  total_nonlabor: Joi.number().greater(0).optional().allow(null),
   total_cost_nonlabor: Joi.string()
   .pattern(decimal18_2Regex)
   .messages({
@@ -1527,6 +1560,7 @@ const updateProjectSchema = Joi.object({
 
   total_fte: Joi.number().greater(0).optional().allow(null),
   total_subcon: Joi.number().greater(0).optional().allow(null),
+  total_nonlabor: Joi.number().greater(0).optional().allow(null),
   
   total_effort_fte: Joi.string()
   .pattern(decimal18_2Regex)
@@ -1701,12 +1735,12 @@ const createAttachmentSchema = Joi.object({
     //     }),
     attach_to: Joi.string().pattern(uuidRegex, "valid UUID").required(),
     attachment_level: Joi.string()
-        .valid('account', 'project', 'project_resource', 'project_task', 'resource', 'resource_cost', 'resource_skill')
+        .valid('account', 'project', 'project_resource', 'project_task', 'resource', 'resource_cost', 'resource_skill', 'case')
         .required()
         .messages({
             'string.empty': 'Attachment level cannot be empty',
             'any.required': 'Attachment level is required',
-            'any.only': 'Attachment level must be one of: account, project, project_resource, project_task, resource, resource_cost, resource_skill'
+            'any.only': 'Attachment level must be one of: account, project, project_resource, project_task, resource, resource_cost, resource_skill, case'
         }),
     // document_name: Joi.string()
     //     .required()
@@ -1750,21 +1784,10 @@ const createAttachmentSchema = Joi.object({
     //     }),
     fiscal_year: Joi.number()
         .integer()
-        .custom((value, helpers) => {
-            const currentYear = new Date().getFullYear();
-            const minYear = currentYear - 20;
-            
-            if (value < minYear || value > currentYear) {
-                return helpers.error('number.yearRange');
-            }
-            return value;
-        })
-        .default(() => new Date().getFullYear())
         .required()
         .messages({
             'number.base': 'Fiscal year must be a number',
             'number.integer': 'Fiscal year must be an integer',
-            'number.yearRange': `Fiscal year must be between ${new Date().getFullYear() - 20} and ${new Date().getFullYear()}`,
             'any.required': 'Fiscal year is required'
         }),
     document_category_rid: Joi.string()
@@ -1823,12 +1846,12 @@ const createAttachmentSchema = Joi.object({
 
 const listAttachmentsSchema = Joi.object({
     attachmentLevel: Joi.string()
-        .valid('account', 'project', 'project_resource', 'project_task', 'resource', 'resource_cost', 'resource_skill')
+        .valid('account', 'project', 'project_resource', 'project_task', 'resource', 'resource_cost', 'resource_skill', 'case')
         .required()
         .messages({
             'string.empty': 'Attachment level cannot be empty',
             'any.required': 'Attachment level is required',
-            'any.only': 'Attachment level must be one of: account, project, project_resource, project_task, resource, resource_cost, resource_skill'
+            'any.only': 'Attachment level must be one of: account, project, project_resource, project_task, resource, resource_cost, resource_skill, case'
         }),
     entityId: Joi.string()
         .pattern(uuidRegex, "valid UUID")
@@ -1894,12 +1917,12 @@ const listAttachmentsSchema = Joi.object({
 
 const exportListAttachmentsSchema = Joi.object({
     attachmentLevel: Joi.string()
-        .valid('account', 'project', 'project_resource', 'project_task', 'resource', 'resource_cost', 'resource_skill')
+        .valid('account', 'project', 'project_resource', 'project_task', 'resource', 'resource_cost', 'resource_skill', 'case')
         .required()
         .messages({
             'string.empty': 'Attachment level cannot be empty',
             'any.required': 'Attachment level is required',
-            'any.only': 'Attachment level must be one of: account, project, project_resource, project_task, resource, resource_cost, resource_skill'
+            'any.only': 'Attachment level must be one of: account, project, project_resource, project_task, resource, resource_cost, resource_skill, case'
         }),
     entityId: Joi.string()
         .pattern(uuidRegex, "valid UUID")
@@ -1939,6 +1962,7 @@ const exportListAttachmentsSchema = Joi.object({
     }),
     sortBy: Joi.string().default("created_datetime").optional(),
     sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
+    timezone: Joi.string().optional()
 })
 
 const listAttachmentSummarySchema = Joi.object({
@@ -2017,6 +2041,7 @@ const exportListAttachmentSummarySchema = Joi.object({
     globalFilters: Joi.string().default("{}").optional(),
     sortBy: Joi.string().default("created_datetime").optional(),
     sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
+    timezone: Joi.string().optional()
 })
 
 const getDocumentTypeAndCategorySchema = Joi.object({
@@ -2223,7 +2248,16 @@ const exportListProjectResourceSchema = Joi.object({
     .default("DESC")
     .optional()
     .allow(""),
-  timezone: Joi.string().optional()
+  timezone: Joi.string().optional(),
+  search: Joi.string()
+        .max(255)
+        .allow('')
+        .allow(null)
+        .optional()
+        .messages({
+            'string.base': 'Search must be a string',
+            'string.max': 'Search cannot exceed 255 characters'
+        })
 });
 
 const listProjectTasksSchema = Joi.object({
@@ -2368,6 +2402,11 @@ const createProjectTaskSchema = Joi.object({
   comments: Joi.string().max(2000).optional().allow("").allow(null),
   user_preference: Joi.string().max(2000).optional().allow("").allow(null),
   project_resource_rid: Joi.string().pattern(uuidRegex).required(),
+
+  task_name: Joi.string().optional().allow("").allow(null),
+  task_description: Joi.string().max(2000).optional().allow("").allow(null),
+  task_type_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
+  task_classification_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
 });
 
 const updateProjectTaskSchema = Joi.object({
@@ -2453,6 +2492,11 @@ const updateProjectTaskSchema = Joi.object({
   comments: Joi.string().max(2000).optional().allow("").allow(null),
   user_preference : Joi.string().max(2000).optional().allow("").allow(null),
   project_resource_rid: Joi.string().pattern(uuidRegex).required(),
+
+  task_name: Joi.string().optional().allow("").allow(null),
+  task_description: Joi.string().max(2000).optional().allow("").allow(null),
+  task_type_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
+  task_classification_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
 });
 
 const listResourceCostSchemaForFinancialHighlights = Joi.object({
@@ -2725,6 +2769,315 @@ const updateQreAdjutmentSchema = Joi.object({
   rd_percent_potential_ai: Joi.number().required()
 });
 
+const createNotesSchema = Joi.object({
+    account_rid: Joi.string().pattern(uuidRegex, "valid UUID").required(),
+    attach_to: Joi.string().pattern(uuidRegex, "valid UUID").required(),
+    attachment_level: Joi.string()
+        .valid('account', 'project', 'project_resource', 'project_task', 'resource', 'resource_cost', 'resource_skill', 'case')
+        .required()
+        .messages({
+            'string.empty': 'Attachment level cannot be empty',
+            'any.required': 'Attachment level is required',
+            'any.only': 'Attachment level must be one of: account, project, project_resource, project_task, resource, resource_cost, resource_skill, case'
+        }),
+    fiscal_year: Joi.number()
+        .integer()
+        .required()
+        .messages({
+            'number.base': 'Fiscal year must be a number',
+            'number.integer': 'Fiscal year must be an integer',
+            'any.required': 'Fiscal year is required'
+        }),
+    title: Joi.string()
+        .required()
+        .messages({
+            'string.empty': 'Title cannot be empty',
+            'any.required': 'Title is required'
+        }),
+    notes_owner : Joi.string()
+        .required()
+        .messages({
+            'string.empty': 'Notes Owner cannot be empty',
+            'any.required': 'Notes Owner is required',
+        }),    
+    descriptions: Joi.string()
+        .allow(null, '')
+        .when(Joi.exist(), {
+            then: Joi.string()
+                .min(1)
+                .max(2000)
+                .trim()
+                .messages({
+                    'string.min': 'descriptions must be at least 1 character long when provided',
+                    'string.max': 'descriptions must be less than or equal to 2000 characters'
+                })
+        }),
+});
+
+const listNotesSchema = Joi.object({
+    attachmentLevel: Joi.string()
+        .valid('account', 'project', 'project_resource', 'project_task', 'resource', 'resource_cost', 'resource_skill', 'case')
+        .required()
+        .messages({
+            'string.empty': 'Attachment level cannot be empty',
+            'any.required': 'Attachment level is required',
+            'any.only': 'Attachment level must be one of: account, project, project_resource, project_task, resource, resource_cost, resource_skill, case'
+        }),
+    entityId: Joi.string()
+        .pattern(uuidRegex, "valid UUID")
+        .required()
+        .messages({
+            'any.required': 'Entity ID is required',
+            'string.pattern.base': 'Entity ID must be a valid UUID'
+        }),
+    accountRid: Joi.string()
+        .pattern(uuidRegex, "valid UUID")
+        .required()
+        .messages({
+            'any.required': 'Account RID is required',
+            'string.pattern.base': 'Account RID must be a valid UUID'
+        }),
+    page: Joi.number()
+        .integer()
+        .min(1)
+        .required()
+        .messages({
+            'any.required': 'Page number is required',
+            'number.base': 'Page must be a number',
+            'number.integer': 'Page must be an integer',
+            'number.min': 'Page must be greater than or equal to 1'
+        }),
+    limit: Joi.number()
+        .integer()
+        .min(1)
+        .max(100)
+        .required()
+        .messages({
+            'any.required': 'Limit is required',
+            'number.base': 'Limit must be a number',
+            'number.integer': 'Limit must be an integer',
+            'number.min': 'Limit must be greater than or equal to 1',
+            'number.max': 'Limit cannot exceed 100'
+        }),
+    search: Joi.string()
+        .max(255)
+        .allow('')
+        .allow(null)
+        .optional()
+        .messages({
+            'string.base': 'Search must be a string',
+            'string.max': 'Search cannot exceed 255 characters'
+        }),
+    filters: Joi.string().default("{}").optional(),
+    fiscalYear: Joi.number()
+    .integer()
+    .min(1000)
+    .max(9999)
+    .allow(0)
+    .optional()
+    .messages({
+      "number.base": "Fiscal year must be a number",
+      "number.min": "Fiscal year must be a 4-digit number",
+      "number.max": "Fiscal year must be a 4-digit number",
+      "any.required": "Fiscal year is required",
+    }),
+    sortBy: Joi.string().default("created_datetime").optional(),
+    sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
+})
+
+const exportListNotesSchema = Joi.object({
+    timezone: Joi.string().optional(),
+    attachmentLevel: Joi.string()
+        .valid('account', 'project', 'project_resource', 'project_task', 'resource', 'resource_cost', 'resource_skill', 'case')
+        .required()
+        .messages({
+            'string.empty': 'Attachment level cannot be empty',
+            'any.required': 'Attachment level is required',
+            'any.only': 'Attachment level must be one of: account, project, project_resource, project_task, resource, resource_cost, resource_skill, case'
+        }),
+    entityId: Joi.string()
+        .pattern(uuidRegex, "valid UUID")
+        .required()
+        .messages({
+            'any.required': 'Entity ID is required',
+            'string.pattern.base': 'Entity ID must be a valid UUID'
+        }),
+    accountRid: Joi.string()
+        .pattern(uuidRegex, "valid UUID")
+        .required()
+        .messages({
+            'any.required': 'Account RID is required',
+            'string.pattern.base': 'Account RID must be a valid UUID'
+        }),
+    search: Joi.string()
+        .max(255)
+        .allow('')
+        .allow(null)
+        .optional()
+        .messages({
+            'string.base': 'Search must be a string',
+            'string.max': 'Search cannot exceed 255 characters'
+        }),
+    filters: Joi.string().default("{}").optional(),
+    fiscalYear: Joi.number()
+    .integer()
+    .min(1000)
+    .max(9999)
+    .allow(0)
+    .optional()
+    .messages({
+      "number.base": "Fiscal year must be a number",
+      "number.min": "Fiscal year must be a 4-digit number",
+      "number.max": "Fiscal year must be a 4-digit number",
+      "any.required": "Fiscal year is required",
+    }),
+    sortBy: Joi.string().default("created_datetime").optional(),
+    sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
+})
+
+const listNotesSummarySchema = Joi.object({
+    page: Joi.number()
+        .integer()
+        .min(1)
+        .required()
+        .messages({
+            'any.required': 'Page number is required',
+            'number.base': 'Page must be a number',
+            'number.integer': 'Page must be an integer',
+            'number.min': 'Page must be greater than or equal to 1'
+        }),
+    limit: Joi.number()
+        .integer()
+        .min(1)
+        .max(100)
+        .required()
+        .messages({
+            'any.required': 'Limit is required',
+            'number.base': 'Limit must be a number',
+            'number.integer': 'Limit must be an integer',
+            'number.min': 'Limit must be greater than or equal to 1',
+            'number.max': 'Limit cannot exceed 100'
+        }),
+    search: Joi.string()
+        .max(255)
+        .allow('')
+        .allow(null)
+        .optional()
+        .messages({
+            'string.base': 'Search must be a string',
+            'string.max': 'Search cannot exceed 255 characters'
+        }),
+    filters: Joi.string().default("{}").optional(),
+    fiscalYear: Joi.number()
+    .integer()
+    .min(1000)
+    .max(9999)
+    .allow(0)
+    .optional()
+    .messages({
+      "number.base": "Fiscal year must be a number",
+      "number.min": "Fiscal year must be a 4-digit number",
+      "number.max": "Fiscal year must be a 4-digit number",
+      "any.required": "Fiscal year is required",
+    }),
+    globalFilters: Joi.string().default("{}").optional(),
+    sortBy: Joi.string().default("created_datetime").optional(),
+    sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
+})
+
+const exportListNotesSummarySchema = Joi.object({
+    timezone: Joi.string().optional(),
+    search: Joi.string()
+        .max(255)
+        .allow('')
+        .allow(null)
+        .optional()
+        .messages({
+            'string.base': 'Search must be a string',
+            'string.max': 'Search cannot exceed 255 characters'
+        }),
+    filters: Joi.string().default("{}").optional(),
+    fiscalYear: Joi.number()
+    .integer()
+    .min(1000)
+    .max(9999)
+    .allow(0)
+    .optional()
+    .messages({
+      "number.base": "Fiscal year must be a number",
+      "number.min": "Fiscal year must be a 4-digit number",
+      "number.max": "Fiscal year must be a 4-digit number",
+      "any.required": "Fiscal year is required",
+    }),
+    globalFilters: Joi.string().default("{}").optional(),
+    sortBy: Joi.string().default("created_datetime").optional(),
+    sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
+})
+
+const listNotesByIdSchema = Joi.object({
+  rid: Joi.string()
+        .pattern(uuidRegex, "valid UUID")
+        .required()
+        .messages({
+            'any.required': 'Note RID is required',
+            'string.pattern.base': 'Note RID must be a valid UUID'
+        }),
+  account_rid: Joi.string()
+      .pattern(uuidRegex, "valid UUID")
+      .required()
+      .messages({
+          'any.required': 'Account RID is required',
+          'string.pattern.base': 'Account RID must be a valid UUID'
+      }),
+})
+
+const updateNotesSchema = Joi.object({
+    rid : Joi.string().pattern(uuidRegex, "valid UUID").required(),
+    account_rid: Joi.string().pattern(uuidRegex, "valid UUID").required(),
+    attach_to: Joi.string().pattern(uuidRegex, "valid UUID").required(),
+    is_file_deleted : Joi.boolean().optional(),
+    attachment_level: Joi.string()
+        .valid('account', 'project', 'project_resource', 'project_task', 'resource', 'resource_cost', 'resource_skill', 'case')
+        .required()
+        .messages({
+            'string.empty': 'Attachment level cannot be empty',
+            'any.required': 'Attachment level is required',
+            'any.only': 'Attachment level must be one of: account, project, project_resource, project_task, resource, resource_cost, resource_skill, case'
+        }),
+    fiscal_year: Joi.number()
+        .integer()
+        .required()
+        .messages({
+            'number.base': 'Fiscal year must be a number',
+            'number.integer': 'Fiscal year must be an integer',
+            'any.required': 'Fiscal year is required'
+        }),
+    title: Joi.string()
+        .required()
+        .messages({
+            'string.empty': 'Title cannot be empty',
+            'any.required': 'Title is required'
+        }),
+    notes_owner : Joi.string()
+        .required()
+        .messages({
+            'string.empty': 'Notes Owner cannot be empty',
+            'any.required': 'Notes Owner is required',
+        }),    
+    descriptions: Joi.string()
+        .allow(null, '')
+        .when(Joi.exist(), {
+            then: Joi.string()
+                .min(1)
+                .max(2000)
+                .trim()
+                .messages({
+                    'string.min': 'descriptions must be at least 1 character long when provided',
+                    'string.max': 'descriptions must be less than or equal to 2000 characters'
+                })
+        }),
+});
+
 export {
   listResourceSkillSchema,
   updateResourceSkillSchema,
@@ -2737,6 +3090,7 @@ export {
   createResourcesSchema,
   updateResourceSchema,
   listResourceSchema,
+  listAllResourceSchema,
   exportResourceSchema,
   exportResourceCostSchema,
   exportResourceSkillSchema,
@@ -2768,5 +3122,12 @@ export {
   exportImportedAccountLevelResources,
   exportImportedAccountLevelProjectTasks,
   updateProjectResourceStatus,
-  updateQreAdjutmentSchema
+  updateQreAdjutmentSchema,
+  exportListNotesSummarySchema,
+  listNotesSummarySchema,
+  createNotesSchema,
+  exportListNotesSchema,
+  listNotesSchema,
+  listNotesByIdSchema,
+  updateNotesSchema
 };

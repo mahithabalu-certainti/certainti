@@ -39,6 +39,7 @@ import { UserGroupEntityAccess } from "./UserGroupEntityAccessModel";
 import { PermissionObjectMapping } from "./permissionObjectMappingModel";
 import { UserGroupType } from "./userGroupTypesModel";
 import { UserGroupAccountMapping } from "./userGroupAccountMappingModel";
+import { errorLog } from "../utils/helpers";
 
 
 export const models: {
@@ -172,6 +173,6 @@ export async function initModels() {
     //await setupProfileSequence(sequelize);
     ///await setupUserSequence(sequelize);
   } catch (err) {
-    console.log("Errr loading models", err);
+    errorLog("Error loading models", (err as Error).message);
   }
 }

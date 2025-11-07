@@ -1191,7 +1191,6 @@ const updateInteractionAge = async (
 ) => {
   let interactions: any;
   let dateTimeColumn: any;
-  console.log("statusName : ", data.status_name);
   if (data.status_name === "sent") {
     dateTimeColumn = `sent_on_datetime`;
     interactions = await orgDb.query(
@@ -1373,3 +1372,15 @@ const buildDatetimeFilterConditionTemplates = (
       return '';
   }
 };
+
+export const fetchKeyContactDetailsForInteractions = (schemaName : string, entityRid : string) => {
+  return `
+    SELECT kc.key_contact_name, kc.key_contact_email
+    FROM
+    ${schemaName}.key_contact_details kc
+    WHERE
+    kc.entity_rid = '${entityRid}'
+    AND
+    kc.include_in_communication = TRUE
+  `
+}

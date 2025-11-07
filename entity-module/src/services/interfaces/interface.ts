@@ -6,6 +6,7 @@ import {
   ICreateProjectResource,
   ICreateProjectTask,
   ICreateResource,
+  IFetchNotesDetailsInput,
   IResourceCost,
   IResourceSkill,
   IUpdateProject,
@@ -16,6 +17,7 @@ import {
   IUpdateResourceCost,
   IUpdateResourceSkill,
 } from "../../utils/types";
+import { ICreateNotesSchema, IUpdateNotesSchema } from "../notes/notesSchemas";
 
 export interface IProjectGraphQlServices {
   inLineEditProject(data: any): Promise<{
@@ -335,7 +337,9 @@ export interface IProjectService {
     sortOrder: string,
     globalFilters: Record<string, string[]>,
     userId: string,
-    bothParentAndChild: boolean
+    bothParentAndChild: boolean,
+    isFromuserGroup?: boolean,
+    accountRid?: string[]
   ): Promise<{
     statusCode: number;
     message: string;
@@ -380,6 +384,7 @@ export interface IProjectService {
     errorMessage?: string;
     data?: { projects: any; count: number };
   }>;
+  fetchQreHistoryByAccountId(data : any) : Promise<any>
 }
 
 export interface IResourceGraphQlServices {
@@ -459,7 +464,8 @@ export interface IAttachmentService {
     sortBy: string,
     sortOrder: string,
     fiscalYear: number,
-    graphqlData: any
+    graphqlData: any,
+    timezone : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -491,7 +497,8 @@ export interface IAttachmentService {
     globalFilters: Record<string, any>,
     sortBy: string,
     sortOrder: string,
-    fiscalYear: number
+    fiscalYear: number,
+    timezone : string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -535,7 +542,7 @@ export interface IProjectResourceService {
     errorMessage?: string;
     data?: { projectResource: any; attachment: any };
   }>;
-  getResourceCodes(accountId: string, search: string | null): Promise<{
+  getResourceCodes(accountId: string, projectFiscalRid : string, search: string | null): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -806,7 +813,19 @@ export interface IProjectTaskIngestionService {
     message: string;
     data?: { projectTask: any };
   }>
-  listResourceCodeForProjectTask(data : any) : Promise<any>
+  listResourceCodeForProjectTask(data : any) : Promise<any>;
+  listProjectTaskTypes() : Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { projectTaskTypes: any };
+  }>;
+  listProjectTaskClassification(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { projectTaskClassification: any };
+  }>;
 }
 export interface IProjectTaskService {
   listProjectTasks(
@@ -909,4 +928,121 @@ exportListAccountLevelProjectCostFinancialHighlights(
   data?: { summaries: any[]; totalCount: number }
 }>
 fetchRegions(data : any) : Promise <any>
+}
+
+export interface INotesService {
+   createNotes(
+    notesData: ICreateNotesSchema,
+    userId: string,
+    file?: Express.Multer.File
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { notes: any };
+  }>;
+
+  getNotes(
+    userId: string,
+    attachmentLevel: string,
+    entityId: string,
+    accountRid: string,
+    page: number,
+    limit: number,
+    search: string,
+    filters: Record<string, any>,
+    sortBy: string,
+    sortOrder: string,
+    fiscalYear: number,
+    graphqlData: any
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { notes: any[]; totalCount: number };
+  }>;
+
+  exportNotes(
+    userId: string,
+    attachmentLevel: string,
+    entityId: string,
+    accountRid: string,
+    search: string,
+    filters: Record<string, any>,
+    sortBy: string,
+    sortOrder: string,
+    fiscalYear: number,
+    graphqlData: any,
+    timezone : string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { notes: any[] };
+  }>;
+
+  getNotesSummary(
+    userId: string,
+    page: number,
+    limit: number,
+    search: string,
+    filters: Record<string, any>,
+    globalFilters: Record<string, any>,
+    sortBy: string,
+    sortOrder: string,
+    fiscalYear: number
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { notes: any[]; totalCount: number };
+  }>;
+
+  exportNotesSummary(
+    userId: string,
+    search: string,
+    filters: Record<string, any>,
+    globalFilters: Record<string, any>,
+    sortBy: string,
+    sortOrder: string,
+    fiscalYear: number,
+    timezone : string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { notes: any[] };
+  }>;
+  getNotesDetailsById(data : IFetchNotesDetailsInput) : Promise<{
+    statusCode : number,
+    statusMessage : string,
+    data : any
+  }>
+  updateNotes (notesData : IUpdateNotesSchema, userId: string, file?: Express.Multer.File, isFileDeleted? : boolean) : Promise<any>
+}
+export interface ITemplates {
+  uploadTemplate(
+    file: Express.Multer.File,
+    templateId: string,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: any;
+  }>;
+  listTemplates(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: any;
+  }>;
+}
+export interface INotesGraphqlServices {
+  updateInlineNotes(data: any): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { notes: any };
+  }>;
 }

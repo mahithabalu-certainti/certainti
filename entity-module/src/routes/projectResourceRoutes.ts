@@ -30,7 +30,7 @@ routes.get(
   controller.projectResourcesController.projectResourceDetails
 );
 routes.get(
-  "/resourcecodes/:accountId",
+  "/resourcecodes/:accountId/:projectFiscalRid",
   checkUserStatusMiddleware("NA"),
   controller.projectResourcesController.resourceCodes
 );

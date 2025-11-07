@@ -1,6 +1,7 @@
 import { Sequelize } from "sequelize";
 import { IKeyContactDetail, IUpdateKeyContactDetail } from "../utils/types";
-import { MAIN_SCHEMA_NAME, primaryKeyContacts, STATUS_MESSAGE } from "../utils/constants";
+import { primaryKeyContacts, rawQueries, STATUS_MESSAGE } from "../utils/constants";
+import { logMessage } from "../utils/helpers";
 
 export class KeyContactService {
   async manageKeyContacts(
@@ -55,7 +56,7 @@ export class KeyContactService {
 
       if (keyContactIds.length > 0) {
         const keyContactRows = await mainDbSequlize.query(
-          `SELECT rid, role_name, role_map FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE rid IN (:ids)`,
+          rawQueries.fetchKeyContactsByIds(),
           {
             replacements: { ids: keyContactIds },
             type: "SELECT",
@@ -72,7 +73,7 @@ export class KeyContactService {
       }
       if (statusIds.length > 0) {
         const statusRows = await mainDbSequlize.query(
-          `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid IN (:ids)`,
+          rawQueries.fetchStatusByIds(),
           {
             replacements: { ids: statusIds },
             type: "SELECT",
@@ -180,7 +181,7 @@ export class KeyContactService {
         }
       );
     } catch (error) {
-      console.error("Error updating key contact details:", error);
+      logMessage(`Error updating key contact details: ${error instanceof Error ? error.message : error}`);
       throw error;
     }
   }
@@ -207,7 +208,7 @@ export class KeyContactService {
         entity_type: "Project",
       });
     } catch (error) {
-      console.error("Error inserting key contact details:", error);
+      logMessage(`Error inserting key contact details: ${error instanceof Error ? error.message : error}`);
       throw error;
     }
   }
@@ -235,7 +236,7 @@ export class KeyContactService {
 
       if (keyContactIds.length > 0) {
         const keyContactRows = await mainDbSequelize.query(
-          `SELECT rid, role_name, role_map FROM ${MAIN_SCHEMA_NAME}.key_contact_role WHERE rid IN (:ids)`,
+          rawQueries.fetchKeyContactsByIds(),
           {
             replacements: { ids: keyContactIds },
             type: "SELECT",
@@ -302,6 +303,7 @@ export class KeyContactService {
         };
       });
     } catch (err) {
+      logMessage(`Error enriching key roles: ${err instanceof Error ? err.message : err}`);
       throw new Error("Error enriching key roles: " + (err as Error).message);
     }
   }

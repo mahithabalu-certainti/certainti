@@ -3,6 +3,7 @@ import {constants} from "../utils/constant"
 import {Request, Response, NextFunction} from 'express';
 import { initSequelize } from "../config/dataSource";
 import { v4 as uuidv4 } from 'uuid';
+import { errorLog } from "../utils/helpers";
 /**
  * Retrieves an access token for Azure AD B2C using client credentials.
  *
@@ -90,7 +91,7 @@ const checkUserStatusMiddleware = (permissionName?: string) => {
       
       next();
   } catch (error) {
-      console.error('Error checking user status:', error);
+     errorLog("Error in checkUserStatusMiddleware:", (error as Error).message);
       res.status(constants.FAILED).json({
           error: constants.FAILED_MESSAGE,
           message: 'Failed to verify user status'

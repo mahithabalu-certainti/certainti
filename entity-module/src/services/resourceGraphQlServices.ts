@@ -4,9 +4,10 @@ import { initOrgSequelize } from "../config/orgDataSource";
 import {
   HttpStatus,
   rawQueries,
+  SCHEMANAME_PREFIX,
   STATUS_MESSAGE,
 } from "../utils/constants";
-import { setResourceFiscal, setResourcesData } from "../utils/helpers";
+import { logMessage, setResourceFiscal, setResourcesData } from "../utils/helpers";
 const services = Configurations.getInstance().getServices()
 const resourceServices = services.resourceService
 
@@ -14,6 +15,7 @@ export default class ResourceGraphQlServices {
   async inLineEditResources(data: any) {
     const mainSequelize = await initMainDbSequelize();
     const orgSequelize = await initOrgSequelize();
+    logMessage(`In-line editing resource with data: ${JSON.stringify(data)}`);
 
     const checkAccountExists: any = await mainSequelize.query(
       await rawQueries.fetchParentAccount(data.account_rid, mainSequelize)
@@ -26,7 +28,7 @@ export default class ResourceGraphQlServices {
         data : null
       };
     } else {
-      let schemaName = `"trd365_${checkAccountExists[0][0].r_number.replace(
+      let schemaName = `"${SCHEMANAME_PREFIX}${checkAccountExists[0][0].r_number.replace(
         "ACC-",
         ""
       )}"`;

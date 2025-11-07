@@ -1,0 +1,107 @@
+import { Router } from "express";
+import controller from "../controllers";
+
+import multer from "multer";
+import { checkUserStatusMiddleware } from "../middlewares/authmiddleware";
+
+const routes: Router = Router();
+routes.post(
+  "/new",
+  checkUserStatusMiddleware("cases_create"),
+  controller.caseController.createCases
+);
+routes.get(
+  "/details/:accountRid/:caseRid",
+  checkUserStatusMiddleware("cases_view_edit"),
+  controller.caseController.getCaseHeadersDetails
+);
+routes.put(
+  "/update",
+  checkUserStatusMiddleware("cases_view_edit"),
+  controller.caseController.updateCases
+);
+routes.get(
+  "/caseFilingType",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.getCaseFilingType
+);
+routes.get(
+  "/caseStatus",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.getCaseStatus
+);
+routes.get(
+  "/caseTeamRoles",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.getCaseTeamRoles
+);
+routes.get(
+  "/list",
+  checkUserStatusMiddleware("cases_view_edit"),
+  controller.caseController.listAllCasesAccount
+);
+routes.get(
+  "/list/caseSummary",
+  checkUserStatusMiddleware("cases_view_edit"),
+  controller.caseController.listAllCasesSummary
+);
+routes.get(
+  "/export",
+  checkUserStatusMiddleware("cases_export"),
+  controller.caseController.exportAllCasesAccount
+);
+routes.get(
+  "/export/caseSummary",
+  checkUserStatusMiddleware("cases_export"),
+  controller.caseController.exportAllCasesSummary
+);
+routes.post(
+  "/projects",
+  checkUserStatusMiddleware("projects_view_edit"),
+  controller.caseController.fetchProjectForAssign
+);
+routes.post(
+  "/projects/assign",
+  checkUserStatusMiddleware("projects_view_edit"),
+  controller.caseController.assignProjectToCase
+);
+
+routes.post(
+  "/assignedProjects",
+  checkUserStatusMiddleware("projects_view_edit"),
+  controller.caseController.fetchAssignedprojects
+);
+
+routes.post(
+  "/projects/delete",
+  checkUserStatusMiddleware("projects_view_edit"),
+  controller.caseController.deleteProjectFromCase
+);
+
+routes.post(
+  "/createCaseTeam",
+  checkUserStatusMiddleware("case_team_create"),
+  controller.caseController.createCaseTeam
+);
+routes.get(
+  "/caseTeam/list",
+  checkUserStatusMiddleware("case_team_view_edit"),
+  controller.caseController.listCaseTeamMembers
+);
+routes.post(
+  "/assignedProjects/export",
+  checkUserStatusMiddleware("projects_view_edit"),
+  controller.caseController.exportAllAssignedProjects
+)
+routes.get(
+  "/caseTeam/users/:accountRid",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.listUsersForCaseTeam
+);
+routes.post(
+  "/checklist/create",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.createCheckList
+);
+
+export default routes;

@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import { HttpStatus } from "../utils/constants";
-import { errorResponse, successResponse } from "../utils/apiResponse";
 import configurations from "../config/config";
 import {
   validateRequest,
@@ -8,19 +7,19 @@ import {
   errorLog,
   handleSuccessResponse,
   handleErrorResponse,
-  generateExcelBase64
+  generateExcelBase64,
+  logMessage
 } from "../utils/helpers";
 import {
   createResourceSkillSchema,
   updateResourceSkillSchema,
   listResourceSkillSchema,
-  exportResourceSkillSchema
+  exportResourceSkillSchema,
 } from "../lib/joi/schemas/schema";
 
 const logger = configurations.getInstance().getLogger();
 const services = configurations.getInstance().getServices();
 const resourceSkillService = services.resourceSkillServices;
-
 
 /**
  * Handles the request to create a resource skill.
@@ -39,6 +38,7 @@ async function createResourceSkill(req: Request, res: Response): Promise<void> {
     try {
       const value = await validateRequest(req, createResourceSkillSchema, res);
       const userId = req.headers["x-user-id"] as string;
+      logMessage(`Create Resource Skill payload received: ${JSON.stringify(value)}  User Id: ${userId}`);
       if(!userId) {
         handleErrorResponse(
           res,
@@ -82,7 +82,7 @@ async function createResourceSkill(req: Request, res: Response): Promise<void> {
     }
   }
 
-  /**
+/**
  * Handles the request to update an existing resource skill.
  *
  * @param {Request} req The request object containing details of the HTTP request.
@@ -99,6 +99,7 @@ async function updateResourceSkill(req: Request, res: Response): Promise<void> {
   try {
     const value = await validateRequest(req, updateResourceSkillSchema, res);
     const userId = req.headers["x-user-id"] as string;
+    logMessage(`Update Resource Skill payload received: ${JSON.stringify(value)}  User Id: ${userId}`);
     if(!userId) {
       handleErrorResponse(
         res,
@@ -113,7 +114,10 @@ async function updateResourceSkill(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const resourceSkill = await resourceSkillService.updateResourceSkill(value, userId);
+    const resourceSkill = await resourceSkillService.updateResourceSkill(
+      value,
+      userId
+    );
 
     if (resourceSkill.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -140,9 +144,8 @@ async function updateResourceSkill(req: Request, res: Response): Promise<void> {
       error.message
     );
     return;
-  } 
+  }
 }
-
 
 /**
  * @async
@@ -167,6 +170,8 @@ async function resourceSkill(req: Request, res: Response): Promise<void> {
     if (!value) {
       return;
     }
+    const userId = req.headers["x-user-id"] as string;
+    logMessage(`List Resource Skills payload received: ${JSON.stringify(value)} User Id: ${userId}`);
 
     // If no rid is provided, proceed with normal filtering and pagination
     let parsedFilters: Record<string, any> = {};
@@ -246,6 +251,7 @@ async function exportResourceSkill(req: Request, res: Response): Promise<void> {
       return;
     }
     const userId = req.headers["x-user-id"] as string;
+    logMessage(`Export Resource Skills payload received: ${JSON.stringify(value)} User Id: ${userId}`);
 
     // If no rid is provided, proceed with normal filtering and pagination
     let parsedFilters: Record<string, any> = {};
@@ -258,7 +264,6 @@ async function exportResourceSkill(req: Request, res: Response): Promise<void> {
       );
     }
 
-    
     const resourceSkill = await resourceSkillService.exportResourceSkillList(
       value.search,
       parsedFilters,
@@ -272,7 +277,13 @@ async function exportResourceSkill(req: Request, res: Response): Promise<void> {
 
     if (resourceSkill.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
-      handleSuccessResponse(res, await generateExcelBase64(resourceSkill?.data?.resourceSkill,"Resource Skill"));
+      handleSuccessResponse(
+        res,
+        await generateExcelBase64(
+          resourceSkill?.data?.resourceSkill,
+          "Resource Skill"
+        )
+      );
       return;
     } else {
       errorLog(methodName, resourceSkill.errorMessage);
@@ -316,6 +327,8 @@ async function resourceSkillById(req: Request, res: Response): Promise<void> {
     const { id } = req.params;
     const accountNumber = req.query.accountNumber as string;
     const result = await resourceSkillService.resourceSkillById(id,accountNumber);
+    const userId = req.headers["x-user-id"] as string;
+    logMessage(`Resource Skill by ID payload received ID: ${id} Account Number : ${accountNumber} User Id: ${userId}`);
 
     if (result.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -341,7 +354,18 @@ async function resourceSkillById(req: Request, res: Response): Promise<void> {
   }
 }
 
- async function getSkillTypes (req: Request, res: Response): Promise<void> {
+/**
+ * Handles the HTTP request to retrieve all available skill types.
+ *
+ * - Calls the `resourceSkillService.getSkillTypes` service method.
+ * - On success, returns a list of skill types in the response.
+ * - On failure, returns an appropriate error message and HTTP status.
+ *
+ * @param {Request} req - Express request object.
+ * @param {Response} res - Express response object.
+ * @returns {Promise<void>} A Promise that resolves once the response is sent.
+ */
+async function getSkillTypes(req: Request, res: Response): Promise<void> {
   const methodName = "getSkillTypes";
   try {
     const result = await resourceSkillService.getSkillTypes();
@@ -349,8 +373,7 @@ async function resourceSkillById(req: Request, res: Response): Promise<void> {
     if (result.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, result.data?.skillTypes);
-    }
-    else {
+    } else {
       errorLog(methodName, result.errorMessage);
       handleErrorResponse(
         res,
@@ -359,8 +382,7 @@ async function resourceSkillById(req: Request, res: Response): Promise<void> {
         result.errorMessage
       );
     }
-  }
-  catch (err) {
+  } catch (err) {
     const error = err as Error;
     errorLog(methodName, error.message);
     handleErrorResponse(
@@ -372,15 +394,30 @@ async function resourceSkillById(req: Request, res: Response): Promise<void> {
   }
 }
 
-  async function getSkillSubTypes (req: Request, res: Response): Promise<void> {
-    const methodName = "getSkillSubTypes";
-    try {
-      let skillTypeRids: string[] = [];
+/**
+ * Handles the HTTP request to retrieve skill subtypes based on provided skill type RIDs.
+ *
+ * - Parses the `skillTypeRids` from the query parameters, accepting formats like:
+ *   - Array (`?skillTypeRids[]=...`)
+ *   - Comma-separated string (`?skillTypeRids=rid1,rid2`)
+ *   - JSON string (`?skillTypeRids=["rid1","rid2"]`)
+ * - Calls `resourceSkillService.getSkillSubTypes` with the parsed list.
+ * - On success, returns the corresponding skill subtypes.
+ * - On failure, returns an appropriate error message and HTTP status.
+ *
+ * @param {Request} req - Express request object.
+ * @param {Response} res - Express response object.
+ * @returns {Promise<void>} A Promise that resolves once the response is sent.
+ */
+async function getSkillSubTypes(req: Request, res: Response): Promise<void> {
+  const methodName = "getSkillSubTypes";
+  try {
+    let skillTypeRids: string[] = [];
     const raw = req.query.skillTypeRids;
     if (Array.isArray(raw)) {
       skillTypeRids = raw as string[];
-    } else if (typeof raw === 'string') {
-      if (raw.trim().startsWith('[')) {
+    } else if (typeof raw === "string") {
+      if (raw.trim().startsWith("[")) {
         try {
           skillTypeRids = JSON.parse(raw);
         } catch {
@@ -388,46 +425,43 @@ async function resourceSkillById(req: Request, res: Response): Promise<void> {
         }
       } else {
         skillTypeRids = raw
-        .split(',')
-        .map(rid => rid.trim().replace(/^"|"$/g, '')) // ✅ remove quotes
-        .filter(Boolean);      
+          .split(",")
+          .map((rid) => rid.trim().replace(/^"|"$/g, "")) // ✅ remove quotes
+          .filter(Boolean);
       }
     }
-       const result = await resourceSkillService.getSkillSubTypes(skillTypeRids);
+    const result = await resourceSkillService.getSkillSubTypes(skillTypeRids);
 
-       if (result.statusCode === HttpStatus.SUCCESS) {
-         successLog(methodName);
-         handleSuccessResponse(res, result.data?.skillSubTypes);
-       }
-       else {
-         errorLog(methodName, result.errorMessage);
-         handleErrorResponse(
-           res,
-           HttpStatus.BAD_REQUEST,
-           HttpStatus.BAD_REQUEST_MESSAGE,
-           result.errorMessage
-         );
-       }
+    if (result.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, result.data?.skillSubTypes);
+    } else {
+      errorLog(methodName, result.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        result.errorMessage
+      );
     }
-    catch (err) {
-       const error = err as Error;
-       errorLog(methodName, error.message);
-       handleErrorResponse(
-         res,
-         HttpStatus.FAILED,
-         HttpStatus.FAILED_MESSAGE,
-         error.message
-       );
-    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
   }
+}
 
-
-  export default {
-    createResourceSkill,
-    updateResourceSkill,
-    resourceSkill,
-    exportResourceSkill,
-    resourceSkillById,
-    getSkillTypes,
-    getSkillSubTypes
-  }
+export default {
+  createResourceSkill,
+  updateResourceSkill,
+  resourceSkill,
+  exportResourceSkill,
+  resourceSkillById,
+  getSkillTypes,
+  getSkillSubTypes,
+};

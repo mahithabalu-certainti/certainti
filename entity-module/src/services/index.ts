@@ -16,7 +16,10 @@ import {
   IProjectTaskGraphqlServices,
   ISettingsServices,
   IFinancialHighlights,
-  IProjectTaskIngestionService
+  IProjectTaskIngestionService,
+  INotesService,
+  ITemplates,
+  INotesGraphqlServices
 } from "./interfaces/interface";
 import { ProjectService } from "./projectService";
 import ResourceCostService from "./resourceCostService";
@@ -26,6 +29,8 @@ import { AttachmentService } from "./attachmentService";
 import { ProjectResourceService } from "./projectResource/projectResourceService";
 import { ProjectTaskService } from "./projectTaskService";
 import { ProjectInjestionTaskService } from "./projectTask/projectTaskService";
+import { NotesService } from "./notes/notesService";
+import { TemplateService } from "./templates/templateService";
 
 interface IServiceContainer {
   resourceCostServices: IResourceCostService;
@@ -41,6 +46,8 @@ class Services implements IServiceContainer {
   projectResourceServices: IProjectResourceService;
   projectTaskServices: IProjectTaskService;
   projectTaskInjestionServices: IProjectTaskIngestionService;
+  templateServices: ITemplates;
+
   private logger: Logger;
   private _resourceGraphQlServices? : IResourceGraphQlServices;
   private _resourceCostGraphQlServices? : IResourceCostGraphQlService;
@@ -49,7 +56,9 @@ class Services implements IServiceContainer {
   private _importGraphqlService? : IImportListGraphqlServices;
   private _projectTaskGraphqlServices? : IProjectTaskGraphqlServices;
   private _settingService? : ISettingsServices;
-  private _financialHighlightServices? : IFinancialHighlights
+  private _financialHighlightServices? : IFinancialHighlights;
+  private _notesGraphqlServices? : INotesGraphqlServices
+  notesService : INotesService;
 
   constructor(
     logger: Logger,
@@ -58,6 +67,8 @@ class Services implements IServiceContainer {
     resourceSkillServices: IResourceSkillService = new ResourceSkillService(),
     projectResourceServices: IProjectResourceService = new ProjectResourceService(logger),
     projectTaskInjestionServices: IProjectTaskIngestionService = new ProjectInjestionTaskService(),
+    notesService : INotesService = new NotesService(logger),
+    templateServices:  ITemplates = new TemplateService()
   ) {
     try {
       this.logger = logger;
@@ -69,6 +80,8 @@ class Services implements IServiceContainer {
       this.projectResourceServices = projectResourceServices;
       this.projectTaskServices = new ProjectTaskService(this.logger);
       this.projectTaskInjestionServices = projectTaskInjestionServices;
+      this.notesService = notesService
+      this.templateServices = templateServices;
     } catch (error) {
       console.log("Error initializing service: ", error);
       throw new Error("Service Initialization failed!");
@@ -142,6 +155,14 @@ class Services implements IServiceContainer {
       this._financialHighlightServices = new FinancialHighlightsService()
     }
     return this._financialHighlightServices!
+  }
+
+  get notesGraphqlServices() : INotesGraphqlServices {
+    if(!this._notesGraphqlServices) {
+      const {default : NotesGraphqlServies} = require('../services/notes/notesGraphqlServices')
+      this._notesGraphqlServices = new NotesGraphqlServies
+    }
+    return this._notesGraphqlServices!
   }
 
 }
