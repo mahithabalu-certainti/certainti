@@ -7,25 +7,23 @@ import TextButton from '../button/text-button';
 interface Template {
   id: string;
   name: string;
+  subject: string;
   content?: string;
 }
 
-interface UserData {
-  toOptions?: string[];
-  ccOptions?: string[];
-  bccOptions?: string[];
+interface EmailModalData {
+  templates: Template[];
 }
 
-interface EmailModalData {
-  userName: string;
-  userEmail: string;
-  templates: Template[];
+interface UserData {
+  name: string;
+  email: string;
 }
 
 interface EmailModalProps {
   onClose: () => void;
   data: EmailModalData;
-  userData?: UserData;
+  userData: UserData;
 }
 
 interface AttachedFile {
@@ -84,9 +82,6 @@ export default function EmailModal({
   const [toInput, setToInput] = useState('');
   const [ccInput, setCcInput] = useState('');
   const [bccInput, setBccInput] = useState('');
-  const [showToSuggestions, setShowToSuggestions] = useState(false);
-  const [showCcSuggestions, setShowCcSuggestions] = useState(false);
-  const [showBccSuggestions, setShowBccSuggestions] = useState(false);
 
   const [attachments, setAttachments] = useState<AttachedFile[]>([]);
   const quillRef = useRef<ReactQuill>(null);
@@ -168,6 +163,7 @@ export default function EmailModal({
     if (value) {
       const selected = data.templates.find((t) => t.id === value);
       if (selected?.content) {
+        setSubject(selected?.subject);
         setContent(selected.content);
       }
     }
@@ -179,15 +175,12 @@ export default function EmailModal({
     if (field === 'to' && !to.includes(email)) {
       setTo([...to, email]);
       setToInput('');
-      setShowToSuggestions(false);
     } else if (field === 'cc' && !cc.includes(email)) {
       setCc([...cc, email]);
       setCcInput('');
-      setShowCcSuggestions(false);
     } else if (field === 'bcc' && !bcc.includes(email)) {
       setBcc([...bcc, email]);
       setBccInput('');
-      setShowBccSuggestions(false);
     }
   };
 
@@ -218,13 +211,6 @@ export default function EmailModal({
         removeRecipient('bcc', bcc[bcc.length - 1]);
       }
     }
-  };
-
-  const getFilteredSuggestions = (input: string, options?: string[]) => {
-    if (!options || !input) return [];
-    return options.filter((option) =>
-      option.toLowerCase().includes(input.toLowerCase())
-    );
   };
 
   return (
@@ -266,10 +252,10 @@ export default function EmailModal({
                   className='text-gray-700 font-medium'
                   style={{ fontSize: '13px' }}
                 >
-                  {data.userName}
+                  {userData.name}
                 </span>
                 <span className='text-gray-500' style={{ fontSize: '12px' }}>
-                  {data.userEmail}
+                  {userData.email}
                 </span>
               </div>
             </div>
@@ -359,7 +345,7 @@ export default function EmailModal({
             <div className='space-y-0'>
               <div className='px-6 py-3 border-b border-gray-100 flex items-center hover:bg-gray-50/50 transition-colors'>
                 <label className='text-gray-600 w-16 font-medium text-sm'>
-                  To
+                  To :
                 </label>
                 <div className='flex-1 flex flex-wrap gap-1 items-center'>
                   {to.map((email) => (
@@ -382,33 +368,14 @@ export default function EmailModal({
                       value={toInput}
                       onChange={(e) => {
                         setToInput(e.target.value);
-                        setShowToSuggestions(true);
                       }}
                       onKeyDown={(e) => handleKeyDown('to', e, toInput)}
-                      onBlur={() =>
-                        setTimeout(() => setShowToSuggestions(false), 200)
-                      }
+                      onBlur={() => {}}
                       className='w-full outline-none text-sm text-gray-800 placeholder-gray-400 bg-transparent'
                       placeholder={
                         to.length === 0 ? 'recipient@example.com' : ''
                       }
                     />
-                    {showToSuggestions && toInput && (
-                      <div className='absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded shadow-lg max-h-40 overflow-y-auto z-10'>
-                        {getFilteredSuggestions(
-                          toInput,
-                          userData?.toOptions
-                        ).map((email) => (
-                          <button
-                            key={email}
-                            onClick={() => addRecipient('to', email)}
-                            className='w-full text-left px-3 py-2 hover:bg-gray-50 text-sm'
-                          >
-                            {email}
-                          </button>
-                        ))}
-                      </div>
-                    )}
                   </div>
                 </div>
                 <div className='flex items-center gap-3'>
@@ -453,31 +420,12 @@ export default function EmailModal({
                         value={ccInput}
                         onChange={(e) => {
                           setCcInput(e.target.value);
-                          setShowCcSuggestions(true);
                         }}
                         onKeyDown={(e) => handleKeyDown('cc', e, ccInput)}
-                        onBlur={() =>
-                          setTimeout(() => setShowCcSuggestions(false), 200)
-                        }
+                        onBlur={() => {}}
                         className='w-full outline-none text-sm text-gray-800 placeholder-gray-400 bg-transparent'
                         placeholder={cc.length === 0 ? 'cc@example.com' : ''}
                       />
-                      {showCcSuggestions && ccInput && (
-                        <div className='absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded shadow-lg max-h-40 overflow-y-auto z-10'>
-                          {getFilteredSuggestions(
-                            ccInput,
-                            userData?.ccOptions
-                          ).map((email) => (
-                            <button
-                              key={email}
-                              onClick={() => addRecipient('cc', email)}
-                              className='w-full text-left px-3 py-2 hover:bg-gray-50 text-sm'
-                            >
-                              {email}
-                            </button>
-                          ))}
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -509,31 +457,12 @@ export default function EmailModal({
                         value={bccInput}
                         onChange={(e) => {
                           setBccInput(e.target.value);
-                          setShowBccSuggestions(true);
                         }}
                         onKeyDown={(e) => handleKeyDown('bcc', e, bccInput)}
-                        onBlur={() =>
-                          setTimeout(() => setShowBccSuggestions(false), 200)
-                        }
+                        onBlur={() => {}}
                         className='w-full outline-none text-sm text-gray-800 placeholder-gray-400 bg-transparent'
                         placeholder={bcc.length === 0 ? 'bcc@example.com' : ''}
                       />
-                      {showBccSuggestions && bccInput && (
-                        <div className='absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded shadow-lg max-h-40 overflow-y-auto z-10'>
-                          {getFilteredSuggestions(
-                            bccInput,
-                            userData?.bccOptions
-                          ).map((email) => (
-                            <button
-                              key={email}
-                              onClick={() => addRecipient('bcc', email)}
-                              className='w-full text-left px-3 py-2 hover:bg-gray-50 text-sm'
-                            >
-                              {email}
-                            </button>
-                          ))}
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -541,7 +470,7 @@ export default function EmailModal({
 
               <div className='px-6 py-3 border-b border-gray-100 flex items-center hover:bg-gray-50/50 transition-colors'>
                 <label className='text-gray-600 w-16 font-medium text-sm'>
-                  Subject
+                  Subject :
                 </label>
                 <input
                   type='text'

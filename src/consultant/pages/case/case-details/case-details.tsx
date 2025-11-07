@@ -29,8 +29,16 @@ import { WorkBreakDown } from './work-breakdown';
 import { CaseTeam } from './case-team';
 import { transformCaseData } from './utils';
 import { ActionsDropdownItem } from '../../../../common-utils';
+import { RootState } from '../../../../store/store';
+import { useSelector } from 'react-redux';
 
 export const CaseDetails = () => {
+  const { email: userEmail, name: userName } = useSelector(
+    (state: RootState) => state.auth
+  );
+  console.log(userEmail);
+  console.log(userName);
+
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const { caseId } = useParams();
@@ -107,36 +115,24 @@ export const CaseDetails = () => {
     templates: [
       {
         id: '1',
+        subject: 'Greetings',
         name: 'Welcome Email Template',
         content: 'Dear recipient,<br><br>Welcome to our platform!',
       },
       {
         id: '2',
+        subject: 'Follow up',
         name: 'Follow-up Template',
         content:
           'Hi there,<br><br>Just following up on our previous conversation.',
       },
       {
         id: '3',
+        subject: 'Meeting Scheduled',
         name: 'Meeting Invitation',
         content: 'Hello,<br><br>I would like to invite you to a meeting.',
       },
     ],
-  };
-
-  const mockUserData = {
-    toOptions: [
-      'alice@example.com',
-      'bob@example.com',
-      'charlie@example.com',
-      'david@example.com',
-    ],
-    ccOptions: [
-      'manager@example.com',
-      'team@example.com',
-      'support@example.com',
-    ],
-    bccOptions: ['admin@example.com', 'records@example.com'],
   };
 
   const renderContent = () => {
@@ -365,7 +361,7 @@ export const CaseDetails = () => {
         <EmailModal
           onClose={() => setShowModal(false)}
           data={mockData}
-          userData={mockUserData}
+          userData={{ name: userName || '', email: userEmail || '' }}
         />
       )}
     </div>
