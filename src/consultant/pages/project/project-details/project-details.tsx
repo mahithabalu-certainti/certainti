@@ -11,7 +11,6 @@ import { PageHeader, SideMenuPanel } from '../../../../components';
 import {
   // ActivitiesIcon,
   AttachmentsSideIcon,
-  CasesIcon,
   ChecklistIcon,
   DetailsIcon,
   FinancialIcon,
@@ -23,6 +22,7 @@ import {
   SettingIcon,
   TechSummaryIcon,
   ConfigIcon,
+  ActivitiesIcon,
 } from '../../../../assets';
 import { useProjectDetail, ProjectTriggerAI } from '../../../services/project';
 import {
@@ -82,6 +82,7 @@ import { useMutation } from '@apollo/client';
 import { ProjectQreAdjustmentResponse } from '../utils';
 import { Notes } from './notes';
 import { ExportNotesList } from '../../../services/notes/notes-service';
+import { QrePercentHistory } from './qre-percent-history';
 
 export const ProjectDetails = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -601,7 +602,14 @@ export const ProjectDetails = () => {
             projectCode={projectData?.project_code}
           />
         );
-
+      case 'qre-percent-history':
+        return (
+          <QrePercentHistory
+            refetchAccountDetails={refetch}
+            accountID={accountID}
+            projectID={projectID}
+          />
+        );
       case 'interactions':
         return (
           <Interactions
@@ -711,13 +719,6 @@ export const ProjectDetails = () => {
         disabled: false,
         icon: TechSummaryIcon,
       },
-      {
-        name: 'Cases',
-        key: 'cases',
-        id: AllMenus.CASES,
-        disabled: false,
-        icon: CasesIcon,
-      },
       // {
       //   name: 'Activities',
       //   key: 'activities',
@@ -725,6 +726,13 @@ export const ProjectDetails = () => {
       //   disabled: false,
       //   icon: ActivitiesIcon,
       // },
+      {
+        name: 'QRE Percent History',
+        key: 'qre-percent-history',
+        id: AllModules.ACTIVITIES,
+        disabled: false,
+        icon: ActivitiesIcon,
+      },
       {
         name: 'Notes',
         key: 'notes',

@@ -17,6 +17,7 @@ interface InfoSectionProps {
   loading?: boolean;
   error?: boolean;
   singleLineView?: boolean;
+  loadingRows?: number;
 }
 
 const InfoSection: React.FC<InfoSectionProps> = ({
@@ -25,6 +26,7 @@ const InfoSection: React.FC<InfoSectionProps> = ({
   loading = false,
   singleLineView = false,
   error,
+  loadingRows: customLoadingRows,
 }) => {
   const renderValue = (value: string | React.ReactNode) => {
     if (typeof value === 'string') {
@@ -47,7 +49,7 @@ const InfoSection: React.FC<InfoSectionProps> = ({
     return value;
   };
 
-  const loadingRows = singleLineView ? 1 : 2;
+  const loadingRows = customLoadingRows ?? (singleLineView ? 1 : 2);
   const totalColumns = 3;
 
   if (error) {

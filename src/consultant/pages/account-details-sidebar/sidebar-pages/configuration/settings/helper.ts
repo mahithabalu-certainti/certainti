@@ -76,7 +76,7 @@ export const settingsFormFields = (
           //   !permissionMap?.['support_email']?.read &&
           //   !permissionMap?.['support_email']?.edit,
           regex: REGEX_PATTERNS.EMAIL,
-          regexErrorMessage: 'Invalid email address',
+          regexErrorMessage: 'Invalid Email Address',
         }),
         createTextField('tenant_id', 'Tenant ID', {
           required: emailRequried,
