@@ -632,7 +632,7 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid : string, filingTypeRid :
   let query = 
   `
   WITH fetch_milestone_result AS (
-  SELECT m.rid, m.created_by AS "milestone_created_by", m.modified_by AS "milestone_modified_by",
+  SELECT m.r_number, m.rid, m.created_by AS "milestone_created_by", m.modified_by AS "milestone_modified_by",
   m.created_datetime AS "milestone_created_datetime", m.modified_datetime AS "milestone_modified_datetime",
   m.milestone_name, m.milestone_description, m.status_rid AS "milestone_status_rid", m.case_filing_type_rid
   FROM
@@ -655,6 +655,8 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid : string, filingTypeRid :
   ),
   aggregate_milestone AS (
   SELECT array_agg(jsonb_build_object(
+  'milestone_sequence_no', m.r_number,
+  'milestone_rid', m.rid,
   'created_by', m.milestone_created_by,
   'modified_by', m.milestone_modified_by,
   'created_datetime', m.milestone_created_datetime,
@@ -663,7 +665,7 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid : string, filingTypeRid :
   'milestone_description', m.milestone_description,
   'status_rid', m.milestone_status_rid,
   'case_filing_type_rid',m.case_filing_type_rid
-  )) AS milestone_data
+  )ORDER BY m.r_number ASC ) AS milestone_data
    FROM
    fetch_milestone_result m
   ),
@@ -686,7 +688,7 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid : string, filingTypeRid :
     'task_type_rid', t.task_type_rid,
     'milestone_template_rid', t.milestone_template_rid,
     'task_description', t.task_description
-  )ORDER BY t.sequence_no ASC ) AS task_data
+  )ORDER BY t.task_created_datetime ASC ) AS task_data
   FROM fetch_task_data t
   )
   SELECT a.*, t.* 

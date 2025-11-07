@@ -343,8 +343,12 @@ export class CaseService {
           rawQueries.getCaseStatusDetails(queryResult.status_rid),
           { type: QueryTypes.SELECT }
         );
-        if (getAccountDetails)
+        const [statusDetails] = await mainDb.query<CaseStatusType>(rawQueries.getStatusDetails(getAccountDetails!.status_rid), {type : QueryTypes.SELECT})
+        if (getAccountDetails) {
           queryResult.account_rnumber = getAccountDetails.r_number;
+          queryResult.account_status_rid = getAccountDetails.status_rid
+          queryResult.account_status_name = statusDetails!.status_name
+        }
         else queryResult.account_rnumber = null;
         if (getCaseFilingType)
           queryResult.filing_type_name = getCaseFilingType.filing_type_name;

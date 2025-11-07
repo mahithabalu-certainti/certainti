@@ -2641,8 +2641,14 @@ class CaseSchemaService {
     }
     const queryResult : any = await this.mainDbSequelize.query(fetchMilestoneTaskTemplate(taskTypeRid, filing_type_rid));
     let clonedData = queryResult[0][0]
+    let milestoneSequenceNumber : any[] = []
+    let milestoneMap : Map<string, string> = new Map();
     if(clonedData.milestone_data.length > 0) {
       const finalMilestoneData = clonedData.milestone_data.map((d : any) => {
+        milestoneMap.set(d.milestone_rid, d.milestone_sequence_no);
+        milestoneSequenceNumber.push(d.milestone_sequence_no)
+        delete d.milestone_sequence_no
+        delete d.milestone_rid
         return {
           ...d,
           account_rid : accountRid,
@@ -2657,34 +2663,86 @@ class CaseSchemaService {
         let endDateMap : Map<number, Date> = new Map();
         let startDateStorage;
         let endDateStorage;
+        let otherMileStoneStartDateStorage;
+        let otherMileStoneEndDateStorgae;
+        let validEndDate;
+        let otherStartDateMap : Map<number, Date> = new Map()
+        let otherEndDateMap : Map<number, Date> = new Map()
+
         for(let d of clonedData.task_data) {
-          if(d.sequence_no === 1) {
-            const conversion = dayjs(caseStartDate)
-            const res = conversion.add(d.effort_in_days, 'days').format("YYYY-MM-DD");
-            endDate = dayjs(res).toDate()
-            startDate = caseStartDate
-            startDateStorage = startDate
-            endDateStorage = endDate
-            startDateMap.set(d.sequence_no, startDateStorage)
-            endDateMap.set(d.sequence_no, endDateStorage)
+          if(milestoneMap.get(d.milestone_template_rid) === "1") {
+            if(d.sequence_no === 1) {
+              const conversion = dayjs(caseStartDate)
+              let res = conversion.add(d.effort_in_days, 'day');
+              let finalisedEnddate = res.format('YYYY-MM-DD')
+              endDate = dayjs(finalisedEnddate).toDate()
+              startDate = caseStartDate
+              startDateStorage = startDate
+              endDateStorage = endDate
+              startDateMap.set(d.task_name, startDateStorage)
+              endDateMap.set(d.task_name, endDateStorage)
+            } 
+            else {
+              const conversion = dayjs(endDateStorage)
+              let res = conversion.add(d.effort_in_days, 'day');
+              let finalisedEnddate = res.format('YYYY-MM-DD')
+              endDate = dayjs(finalisedEnddate).toDate()
+              const newStartDate = conversion.add(1, 'day').format('YYYY-MM-DD')
+              startDate = dayjs(newStartDate).toDate()
+              startDateStorage = startDate
+              endDateStorage = endDate
+              startDateMap.set(d.task_name, startDateStorage)
+              endDateMap.set(d.task_name, endDateStorage)
+            }
           } 
           else {
-            const conversion = dayjs(endDateStorage)
-            const res = conversion.add(d.effort_in_days, 'day').format("YYYY-MM-DD");
-            endDate = dayjs(res).toDate()
-            const newStartDate = conversion.add(1, 'day').format('YYYY-MM-DD')
-            startDate = dayjs(newStartDate).toDate()
-            startDateStorage = startDate
-            endDateStorage = endDate
-            startDateMap.set(d.sequence_no, startDateStorage)
-            endDateMap.set(d.sequence_no, endDateStorage)
-          }
+            if(milestoneMap.get(d.milestone_template_rid) === "2") {
+              validEndDate = endDateStorage
+            } else {
+              validEndDate = otherMileStoneEndDateStorgae
+            }
+            if(d.sequence_no === 1) {
+              const conversion = dayjs(validEndDate)
+              let res = conversion.add(d.effort_in_days, 'day');
+              let finalisedEnddate = res.format('YYYY-MM-DD')
+              endDate = dayjs(finalisedEnddate).toDate()
+              let day = dayjs(validEndDate)
+              day = day.add(1, 'day')
+              let finalDay = day.toDate()
+              otherMileStoneStartDateStorage = day
+              otherMileStoneEndDateStorgae = endDate
+              otherStartDateMap.set(d.task_name, finalDay)
+              otherEndDateMap.set(d.task_name, otherMileStoneEndDateStorgae)
+            } 
+            else {
+              const conversion = dayjs(otherMileStoneEndDateStorgae)
+              let res = conversion.add(d.effort_in_days, 'day');
+              let finalisedEnddate = res.format('YYYY-MM-DD')
+              endDate = dayjs(finalisedEnddate).toDate()
+              let newStartDate = dayjs(otherMileStoneEndDateStorgae)
+              newStartDate = newStartDate.add(1, 'day')
+              startDate = dayjs(newStartDate).toDate()
+              otherMileStoneStartDateStorage = startDate
+              otherMileStoneEndDateStorgae = endDate
+              otherStartDateMap.set(d.task_name, otherMileStoneStartDateStorage)
+              otherEndDateMap.set(d.task_name, otherMileStoneEndDateStorgae)
+            }
+          } 
         }
+        let mapValueHolderForStart : any;
+        let mapValueHolderForEnd : any
         const finalTaskData = clonedData.task_data.map((d : any) => {
+          if(milestoneMap.get(d.milestone_template_rid) === "1") {
+            mapValueHolderForStart = startDateMap.get(d.task_name)
+            mapValueHolderForEnd = endDateMap.get(d.task_name)
+          } else {
+            mapValueHolderForStart = otherStartDateMap.get(d.task_name)
+            mapValueHolderForEnd = otherEndDateMap.get(d.task_name)
+          }
           return {
             ...d,
-            effective_start_datetime : startDateMap.get(d.sequence_no),
-            effective_end_datetime : endDateMap.get(d.sequence_no),
+            effective_start_datetime : mapValueHolderForStart,
+            effective_end_datetime : mapValueHolderForEnd,
             account_rid : accountRid,
             case_rid : caseRid
           }
