@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useLayoutEffect,
+} from 'react';
 import {
   Select,
   MenuItem,
@@ -43,6 +49,8 @@ import {
   useGetUserOptions,
 } from '../../../../services/case-team';
 import { TableSkeleton } from '../../../../../components/table';
+import { RootState } from '../../../../../store/store';
+import { useSelector } from 'react-redux';
 import { ActivityMenuItem } from '../../../../types';
 
 const ConfigTabs: ResourceTabs[] = [
@@ -72,12 +80,37 @@ const CaseTeam: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
     CaseTeamMember[]
   >([]);
 
-  // Track if form has unsaved changes
   const [isFormChanged, setIsFormChanged] = useState(false);
-
-  // Fix cellRefs type to handle undefined values properly
   const cellRefs = useRef<Record<string, HTMLTableCellElement | null>>({});
+  const [cellWidths, setCellWidths] = useState<Record<string, number>>({});
 
+  const { permission } = useSelector((state: RootState) => state.permission);
+  //Permission
+  const casesTeamEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.CASES_TEAM_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    casesTeamEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [casesTeamEditFields]);
+  console.log('permissionMap', permissionMap);
+
+  const isCaseTeamEditable = useMemo(
+    () =>
+      permission
+        .find((item) => item.name === AllPermissions.CASES_TEAM_VIEW_EDIT)
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
+  console.log('isCaseTeamEditable', isCaseTeamEditable);
   // Compare formData.team_members with originalTeamMembers
   useEffect(() => {
     if (formData.team_members.length !== originalTeamMembers.length) {
@@ -211,6 +244,30 @@ const CaseTeam: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
       updateCaseTeamMutation.reset();
     }
   }, [updateCaseTeamMutation.isError, errorToast, updateCaseTeamMutation]);
+
+  useLayoutEffect(() => {
+    const calculateCellWidths = () => {
+      const newWidths: Record<string, number> = {};
+      Object.entries(cellRefs.current).forEach(([key, cell]) => {
+        if (cell) {
+          newWidths[key] = cell.offsetWidth;
+        }
+      });
+      setCellWidths(newWidths);
+    };
+
+    // Calculate widths after a short delay to ensure table layout is complete
+    const timer = setTimeout(calculateCellWidths, 100);
+
+    // Also recalculate on window resize
+    const handleResize = () => calculateCellWidths();
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [formData.team_members, isDataLoaded]);
 
   function handleAddTeamMember() {
     setFormData((prev) => {
@@ -412,7 +469,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
       label: 'Save',
       variant: 'contained' as const,
       onClick: handleSave,
-      hide: false,
+      hide: !isCaseTeamEditable,
       disabled: !isFormChanged || isLoading,
       loading: isLoading,
     },
@@ -563,7 +620,10 @@ const CaseTeam: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                           e.target.value
                                         )
                                       }
-                                      disabled={isDisabled}
+                                      disabled={
+                                        isDisabled ||
+                                        !permissionMap.role_rid?.edit
+                                      }
                                       size='small'
                                       fullWidth
                                       displayEmpty
@@ -597,10 +657,12 @@ const CaseTeam: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                             marginTop: '4px',
                                             maxHeight: '250px',
                                             borderRadius: '0px',
-                                            width:
-                                              cellRefs.current[
+                                            width: Math.max(
+                                              cellWidths[
                                                 `user_role-${index}`
-                                              ]?.offsetWidth || 'auto',
+                                              ] || 0,
+                                              150 // minimum width fallback
+                                            ),
                                             boxShadow:
                                               'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
                                             '& .MuiMenuItem-root': {
@@ -658,7 +720,10 @@ const CaseTeam: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                           e.target.value
                                         )
                                       }
-                                      disabled={isDisabled}
+                                      disabled={
+                                        isDisabled ||
+                                        !permissionMap.user_rid?.edit
+                                      }
                                       size='small'
                                       fullWidth
                                       displayEmpty
@@ -692,10 +757,12 @@ const CaseTeam: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                             marginTop: '4px',
                                             maxHeight: '250px',
                                             borderRadius: '0px',
-                                            width:
-                                              cellRefs.current[
+                                            width: Math.max(
+                                              cellWidths[
                                                 `user_name-${index}`
-                                              ]?.offsetWidth || 'auto',
+                                              ] || 0,
+                                              150 // minimum width fallback
+                                            ),
                                             boxShadow:
                                               'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
                                             '& .MuiMenuItem-root': {
@@ -765,7 +832,11 @@ const CaseTeam: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                           )
                                         }
                                         format='YYYY-MM-DD'
-                                        disabled={isDisabled}
+                                        disabled={
+                                          isDisabled ||
+                                          !permissionMap.effective_startdate
+                                            ?.edit
+                                        }
                                         sx={{
                                           width: '100%',
                                           backgroundColor:
@@ -932,7 +1003,10 @@ const CaseTeam: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                           )
                                         }
                                         format='YYYY-MM-DD'
-                                        disabled={isDisabled}
+                                        disabled={
+                                          isDisabled ||
+                                          !permissionMap.effective_enddate?.edit
+                                        }
                                         minDate={dayjs(member.start_date)}
                                         sx={{
                                           width: '100%',
@@ -1098,8 +1172,10 @@ const CaseTeam: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
                                         padding: 0,
                                         marginTop: '6px',
                                       }}
-                                      aria-label='Remove team member'
-                                      disabled={isBtnDisabled}
+                                      aria-label='Remove team member' // prettier-ignore
+                                      disabled={
+                                        isBtnDisabled || !isCaseTeamEditable
+                                      }
                                     >
                                       <React.Suspense fallback={null}>
                                         <KeyContactRemoveIcon
@@ -1154,7 +1230,7 @@ const CaseTeam: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
               className='flex items-center cursor-pointer gap-1 bg-[#EAF0F5] h-[30px] color-[#2D3E4F] px-2 text-[12px] font-semibold disabled:bg-gray-100 disabled:opacity-75 disabled:cursor-default'
               type='button'
               onClick={handleAddTeamMember}
-              disabled={formLoading}
+              disabled={formLoading || !isCaseTeamEditable}
             >
               <span>
                 <React.Suspense fallback={null}>

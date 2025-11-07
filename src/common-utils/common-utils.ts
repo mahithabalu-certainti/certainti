@@ -231,6 +231,7 @@ export const createSelectField = (
     required: boolean;
     width?: string;
     placeholder?: string;
+    requiredErrorMessage?: string;
     disabled?: boolean;
     clearValue?: Record<string, string>;
     onChange?: boolean;
@@ -251,6 +252,7 @@ export const createSelectField = (
   width: others.width,
   disabled: others.disabled,
   placeholder: others.placeholder,
+  requiredErrorMessage: others.requiredErrorMessage,
   clearValue: others.clearValue,
   onChange: others.onChange,
   isLoading: others.isLoading,

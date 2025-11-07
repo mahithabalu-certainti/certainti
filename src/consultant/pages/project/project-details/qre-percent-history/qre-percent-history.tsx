@@ -17,6 +17,10 @@ import {
   ListTable,
   ManageColumnsPopover,
 } from '../../../../../components/table';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../store/store';
+import { checkPermission } from '../../../../../common-utils';
+import { AccessRestricted } from '../../../../../components/account-restricted';
 
 const AttachmentTabs: ResourceTabs[] = [
   {
@@ -36,6 +40,28 @@ const QrePercentHistory = ({
   accountID,
   projectID,
 }: QrePercentHistoryProps) => {
+  const { permission } = useSelector((state: RootState) => state.permission);
+
+  const qrePercentHistoryView = checkPermission(
+    permission,
+    AllPermissions.QRE_PERCENT_HISTORY
+  );
+
+  console.log(permission);
+  const qrePercentHistoryFields = useMemo(
+    () =>
+      permission.find(
+        (item) => item.name === AllPermissions.QRE_PERCENT_HISTORY
+      )?.fields ?? [],
+    [permission]
+  );
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    qrePercentHistoryFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [qrePercentHistoryFields]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
   const [showFilter, setShowFilter] = useState<boolean>(false);
@@ -148,8 +174,8 @@ const QrePercentHistory = ({
   };
 
   const qrePercentHistoryColumns = useMemo(
-    () => getQrePercentHistoryColumns(),
-    []
+    () => getQrePercentHistoryColumns(permissionMap),
+    [permissionMap]
   );
 
   const [visibleColumns, setVisibleColumns] = useState<
@@ -182,9 +208,11 @@ const QrePercentHistory = ({
   const handlePopoverClose = () => {
     setColumnAnchorEl(null);
   };
-  const filterFields = getQrePercentHistoryFilterFields();
+  const filterFields = getQrePercentHistoryFilterFields(permissionMap);
   const modalId = isModalOpen ? 'qre-percent-history' : undefined;
-
+  if (!qrePercentHistoryView) {
+    return <AccessRestricted />;
+  }
   return (
     <div className='w-full pt-2 pl-2 pr-4'>
       <SectionTabPanel
