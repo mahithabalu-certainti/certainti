@@ -448,7 +448,7 @@ export const rawQueries = {
     `;
   },
   fetchAccountDetails(accountRid: string) {
-    return `SELECT r_number, account_name, rid, country_rid, currency_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`;
+    return `SELECT r_number, account_name, rid, country_rid, currency_rid, status_rid FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = '${accountRid}'`;
   },
   getCaseFilingTypeById(filingTypeRid: string) {
     return `
@@ -734,6 +734,9 @@ export const rawQueries = {
   },
   getSpecificTaskType () {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.task_type WHERE task_type_name ILIKE '%Milestone%'`
+  },
+  getStatusDetails (rid : string) {
+    return `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid = '${rid}'`
   }
 };
 

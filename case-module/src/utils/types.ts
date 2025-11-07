@@ -48,7 +48,9 @@ export type CaseHeadersColumns = {
   created_by: string | null,
   modified_by: string | null;
   created_by_name : string | null,
-  modified_by_name : string | null
+  modified_by_name : string | null,
+  account_status_rid : string,
+  account_status_name : string
 
 }
 
@@ -68,7 +70,8 @@ export type AccountType = {
   r_number : string,
   account_name : string,
   country_rid : string | null,
-  currency_rid : string | null
+  currency_rid : string | null,
+  status_rid : string
 }
 
 export type CaseOwnerType = {
@@ -298,7 +301,8 @@ export type CreateTaskTemplateType = {
   status_rid : string,
   priority_rid : string,
   task_type_rid: string,
-  milestone_template_rid : string
+  milestone_template_rid : string,
+  task_description : string
 }
 
 export type priorityTypes = {
@@ -335,7 +339,8 @@ export type UpdateTaskTemplateType = {
   status_rid : string,
   priority_rid : string,
   task_type_rid: string,
-  milestone_template_rid : string
+  milestone_template_rid : string,
+  task_description : string
 }
 
 export type AdminTaskTemplateResponseTypes = {
