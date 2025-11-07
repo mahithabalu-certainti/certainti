@@ -42,7 +42,6 @@ const TaskTemplateForm: React.FC = () => {
   const { data: taskTemplateData, isLoading } = useTaskTemplateDetails(
     templateId || ''
   );
-  console.log('taskTemplateTypes', taskMilestoneTypes?.data?.data);
 
   const commonSuccess =
     createTaskTemplate.isSuccess || updateTaskTemplate.isSuccess;
@@ -99,7 +98,6 @@ const TaskTemplateForm: React.FC = () => {
       })) || []
     );
   }, [taskMilestoneTypes]);
-  console.log('role', taskAssigneRoleTypes?.data?.data?.caseRoles);
   const taskPrioritytTypesTypesOptions = useMemo(() => {
     return (
       taskPrioritytTypes?.data?.data?.map((item) => ({

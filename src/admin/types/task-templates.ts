@@ -62,16 +62,14 @@ export interface TaskTemplateDetailsResponse {
   statusCode: number;
   statusCodeValue: string;
   statusMessage: string;
-  data: {
-    templateDetails: TaskTemplateDetails;
-  };
+  data: TaskTemplateDetails;
 }
 
 // Form Types
 export interface TaskTemplateFormData {
   task_name: string;
   task_type: string;
-
+  status_rid: string;
   task_description: string;
   task_type_rid: string;
   effort_in_days: string | number;
@@ -95,6 +93,8 @@ export type TaskTemplateFormPayload = {
   checklist_template_rid?: string;
   case_team_member_role_rid?: string;
   reminder_interval?: string;
+  rid?: string;
+  status_rid?: string;
 };
 
 export interface ExportTaskTemplateResponse {

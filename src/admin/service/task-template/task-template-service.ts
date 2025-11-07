@@ -1,5 +1,5 @@
 import { useMutation, useQuery, UseQueryResult } from '@tanstack/react-query';
-import { caseServiceApi, interactionServiceApi } from '../../../api/api';
+import { caseServiceApi } from '../../../api/api';
 import {
   TaskTemplateDetails,
   TaskTemplateFormPayload,
@@ -31,12 +31,6 @@ export const fetchTaskTemplateList = async (
     taskTemplates: data.data.task_templates,
     count: data.data.totalCount,
   };
-  // console.log('task-template-list-params', params);
-  // await new Promise((resolve) => setTimeout(resolve, 2000));
-  // return {
-  //   taskTemplates: TaskTemplateMockData.data.taskTemplates,
-  //   count: TaskTemplateMockData.data.totalCount,
-  // };
 };
 
 export const useTaskTemplateList = (
@@ -56,7 +50,7 @@ export const useTaskTemplateList = (
 
 // Details
 export const getTaskTemplateDetailsURL = (templateId: string) => {
-  return `/api/taskTemplates/detail/${templateId}`;
+  return `/api/caseManagement/taskTemplate/${templateId}`;
 };
 
 export const fetchTaskTemplateDetails = async (
@@ -65,11 +59,7 @@ export const fetchTaskTemplateDetails = async (
   const response = await caseServiceApi.get<TaskTemplateDetailsResponse>(
     getTaskTemplateDetailsURL(templateId)
   );
-  return response.data.data.templateDetails;
-  // console.log('task-template-details-params', templateId);
-  // await new Promise((resolve) => setTimeout(resolve, 2000));
-
-  // return TaskTemplateDetailsMockData.data.templateDetails;
+  return response.data.data;
 };
 
 export const useTaskTemplateDetails = (
@@ -115,14 +105,14 @@ export const useCreateTaskTemplate = () => {
 };
 
 export const getUpdateTaskTemplateUrl = (): string => {
-  return `/api/taskTemplates/update`;
+  return `api/caseManagement/taskTemplate/update`;
 };
 
 export const updateTaskTemplateDetails = async (
   body: Partial<TaskTemplateFormPayload>
 ): Promise<CommonApiResponse> => {
   try {
-    const { data } = await interactionServiceApi.post<CommonApiResponse>(
+    const { data } = await caseServiceApi.put<CommonApiResponse>(
       getUpdateTaskTemplateUrl(),
       body
     );

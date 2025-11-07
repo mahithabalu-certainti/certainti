@@ -50,7 +50,7 @@ export const TaskTemplateFormFieldsData = (
             //   !permissionMap?.['task_type_rid']?.edit &&
             //   !permissionMap?.['task_type_rid']?.read,
           }),
-          createSelectField('milestone_rid', 'Milestone Type', {
+          createSelectField('milestone_template_rid', 'Milestone Type', {
             options: taskMilestoneTypesOptions || [],
             placeholder: 'Choose Milestone Type',
             required: true,
@@ -126,7 +126,7 @@ export const TaskTemplateFormFieldsData = (
             //   !permissionMap?.['task_type_rid']?.edit &&
             //   !permissionMap?.['task_type_rid']?.read,
           }),
-          createSelectField('checklist_rid', 'Checklist', {
+          createSelectField('checklist_template_rid', 'Checklist', {
             options: taskCheckListTypesTypesOptions || [],
             placeholder: 'Choose Checklist Type',
             required: false,
@@ -139,7 +139,7 @@ export const TaskTemplateFormFieldsData = (
             //   !permissionMap?.['task_type_rid']?.edit &&
             //   !permissionMap?.['task_type_rid']?.read,
           }),
-          createSelectField('status', 'Status', {
+          createSelectField('status_rid', 'Status', {
             required: false,
             options: statusOptions,
             placeholder: 'Choose Status',
