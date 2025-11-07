@@ -13,11 +13,12 @@ import { useNavigate } from 'react-router-dom';
 import { ChecklistTemplateListParams } from '../../../types';
 import { CHECKLIST_TEMPLATES_CREATE } from '../../../../routes';
 import { getChecklistTemplateFilterFields } from './helpers';
+import { ExportChecklistTemplateAllList } from '../../../service/checklist-templates/checklist-template-service';
 import {
-  ExportChecklistTemplateAllList,
-  useGetChecklistStatus,
-} from '../../../service/checklist-templates/checklist-template-service';
-import { AllModules, AllPermissions } from '../../../../common-service';
+  AllModules,
+  AllPermissions,
+  useGetStatus,
+} from '../../../../common-service';
 import { useSelector } from 'react-redux';
 import { checkPermission } from '../../../../common-utils';
 import { RootState } from '../../../../store/store';
@@ -119,15 +120,15 @@ const ChecklistTemplates: React.FC = () => {
     }
   };
 
-  const checklistStatus = useGetChecklistStatus();
+  const checklistStatus = useGetStatus();
 
   const statusOptions = useMemo(
     () =>
-      checklistStatus.data?.data?.checklistStatus?.map((status) => ({
+      checklistStatus.data?.data?.status?.map((status) => ({
         label: status.status_name,
         value: status.rid,
       })) || [],
-    [checklistStatus.data?.data?.checklistStatus]
+    [checklistStatus.data?.data?.status]
   );
 
   const MENU_ITEMS = [

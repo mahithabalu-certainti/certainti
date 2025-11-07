@@ -107,45 +107,6 @@ export interface ExportChecklistTemplateResponse {
   data: string;
 }
 
-// Checklist level, status, type response structure
-
-// Checklist Status
-export interface ChecklistStatusItem {
-  rid: string;
-  status_name: string;
-  status_type?: string | null;
-}
-
-export interface ChecklistStatusApiResponse extends CommonApiResponse {
-  data: {
-    checklistStatus: ChecklistStatusItem[];
-  };
-}
-
-// Checklist Level
-export interface ChecklistLevelItem {
-  rid: string;
-  checklist_level_name: string;
-}
-
-export interface ChecklistLevelApiResponse extends CommonApiResponse {
-  data: {
-    checklistLevel: ChecklistLevelItem[];
-  };
-}
-
-// Checklist Type
-export interface ChecklistTypeItem {
-  rid: string;
-  checklist_type_name: string;
-}
-
-export interface ChecklistTypeApiResponse extends CommonApiResponse {
-  data: {
-    checklistTypes: ChecklistTypeItem[];
-  };
-}
-
 export interface ChecklistItemPayload {
   checklist_item_name: string;
   checklist_item_rid?: string;

@@ -1,23 +1,15 @@
 import { useMutation, useQuery, UseQueryResult } from '@tanstack/react-query';
 import { caseServiceApi, interactionServiceApi } from '../../../api/api';
 import {
-  ChecklistLevelApiResponse,
-  ChecklistStatusApiResponse,
   ChecklistTemplateDetails,
   ChecklistTemplateFormPayload,
   ChecklistTemplateList,
   ChecklistTemplateListParams,
   ChecklistTemplateListResponse,
-  ChecklistTypeApiResponse,
   ExportChecklistTemplateResponse,
   CreateTemplatePayload,
   CreateTemplateResponse,
 } from '../../types';
-import {
-  ChecklistLevelsMockData,
-  ChecklistStatusMockData,
-  ChecklistTypesMockData,
-} from '../../mockdata/checklist-templates';
 import { CommonApiResponse } from '../../../common-service';
 import { buildQueryString } from '../helpers';
 // List
@@ -270,104 +262,4 @@ export const ExportChecklistTemplate = async (
   } catch (error) {
     console.error('Export failed:', error);
   }
-};
-
-// Checklist ->  level, status, type
-export const getChecklistTypeUrl = (): string => {
-  return '/api/checklist/type';
-};
-
-export const fetchChecklistTypes =
-  async (): Promise<ChecklistTypeApiResponse> => {
-    try {
-      // const { data } =
-      //   await interactionServiceApi.get<ChecklistTypeApiResponse>(
-      //     getChecklistTypeUrl()
-      //   );
-      // return data;
-
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      return ChecklistTypesMockData;
-    } catch (error) {
-      console.error('Error fetching checklist types:', error);
-      throw error;
-    }
-  };
-
-export const useGetChecklistTypes = () => {
-  return useQuery<ChecklistTypeApiResponse, Error>({
-    queryKey: ['checklist-type'],
-    queryFn: () => fetchChecklistTypes(),
-    retry: 0,
-    staleTime: Infinity,
-    gcTime: Infinity,
-    refetchOnMount: false,
-    refetchOnReconnect: false,
-  });
-};
-
-export const getChecklistLevelUrl = (): string => {
-  return '/api/checklist/level';
-};
-
-export const fetchChecklistLevels =
-  async (): Promise<ChecklistLevelApiResponse> => {
-    try {
-      // const { data } =
-      //   await interactionServiceApi.get<GetChecklistLevelApiResponse>(
-      //     getChecklistLevelUrl()
-      //   );
-      // return data;
-
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      return ChecklistLevelsMockData;
-    } catch (error) {
-      console.error('Error fetching checklist levels:', error);
-      throw error;
-    }
-  };
-
-export const useGetChecklistLevels = () => {
-  return useQuery<ChecklistLevelApiResponse, Error>({
-    queryKey: ['checklist-level'],
-    queryFn: () => fetchChecklistLevels(),
-    retry: 0,
-    staleTime: Infinity,
-    gcTime: Infinity,
-    refetchOnMount: false,
-    refetchOnReconnect: false,
-  });
-};
-
-export const getChecklistStatusUrl = (): string => {
-  return '/api/checklist/status';
-};
-
-export const fetchChecklistStatus =
-  async (): Promise<ChecklistStatusApiResponse> => {
-    try {
-      // const { data } =
-      //   await interactionServiceApi.get<ChecklistStatusApiResponse>(
-      //     getChecklistStatusUrl()
-      //   );
-      // return data;
-
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      return ChecklistStatusMockData;
-    } catch (error) {
-      console.error('Error fetching checklist status:', error);
-      throw error;
-    }
-  };
-
-export const useGetChecklistStatus = () => {
-  return useQuery<ChecklistStatusApiResponse, Error>({
-    queryKey: ['checklist-status'],
-    queryFn: () => fetchChecklistStatus(),
-    retry: 0,
-    staleTime: Infinity,
-    gcTime: Infinity,
-    refetchOnMount: false,
-    refetchOnReconnect: false,
-  });
 };
