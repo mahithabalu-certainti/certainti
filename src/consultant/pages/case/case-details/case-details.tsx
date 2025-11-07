@@ -39,8 +39,6 @@ import { CaseTeam } from './case-team';
 import { transformCaseData } from './utils';
 import { ActionsDropdownItem, checkPermission } from '../../../../common-utils';
 import { CaseNotes } from './case-notes';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../../../store/store';
 import { ExportNotesList } from '../../../services/notes/notes-service';
 import { AccessRestricted } from '../../../../components/account-restricted';
 import { ACCOUNT } from '../../../../routes';
