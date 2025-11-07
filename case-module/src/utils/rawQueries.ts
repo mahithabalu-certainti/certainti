@@ -703,7 +703,7 @@ export const fetchCaseTemplateData = (schemaName : string, caseRid : string, acc
   let query = 
   `
   WITH fetch_task AS (
-  SELECT cm.rid, 
+  SELECT cm.rid, cm.account_rid, cm.case_rid,
   array_agg(jsonb_build_object(
   'rid', t.rid,
   'task_name', t.task_name,
@@ -734,7 +734,7 @@ export const fetchCaseTemplateData = (schemaName : string, caseRid : string, acc
   AND
   t.account_rid = '${accountRid}'
   GROUP BY
-  cm.rid
+  cm.rid, cm.account_rid, cm.case_rid
   )
   SELECT array_agg(jsonb_build_object(
   'rid', m.rid,
@@ -745,7 +745,7 @@ export const fetchCaseTemplateData = (schemaName : string, caseRid : string, acc
 FROM
 ${schemaName}.cases c
 LEFT JOIN ${schemaName}.case_milestone m ON m.case_rid = c.rid
-LEFT JOIN fetch_task ft ON ft.rid = m.rid
+LEFT JOIN fetch_task ft ON ft.rid = m.rid AND ft.case_rid = '${caseRid}' AND ft.account_rid = '${accountRid}'
 WHERE
 c.rid = '${caseRid}'
 AND
