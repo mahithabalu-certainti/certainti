@@ -113,6 +113,11 @@ routes.post(
   checkUserStatusMiddleware("NA"),
   controller.caseController.updateCheckList
 );
+routes.get(
+  "/workBreakdown/:accountRid/:caseRid",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.fetchCaseKanbanBoard
+);
 
 
 export default routes;

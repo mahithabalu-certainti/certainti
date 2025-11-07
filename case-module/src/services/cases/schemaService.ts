@@ -2713,14 +2713,14 @@ class CaseSchemaService {
         milestoneMap.set(d.milestone_rid, d.milestone_sequence_no);
         milestoneSequenceNumber.push(d.milestone_sequence_no)
         delete d.milestone_sequence_no
-        delete d.milestone_rid
         return {
           ...d,
           account_rid : accountRid,
-          case_rid : caseRid
+          case_rid : caseRid,
+          rid : d.milestone_rid
         }
       })
-      await CaseMilestone.bulkCreate(finalMilestoneData, {transaction})
+      const result = await CaseMilestone.bulkCreate(finalMilestoneData, {transaction})
       if(clonedData.task_data.length > 0) {
         let startDate : Date;
         let endDate : Date;

@@ -1,9 +1,10 @@
 import { Op, QueryTypes, Sequelize, Transaction } from "sequelize";
 import { CaseModelService } from "../caseModelsService";
-import { CreateTaskTemplateType, filterType, ICreateChecklistTemplate, ICreateChecklistItemTemplate, TaskType, UpdateTaskTemplateType } from "../../utils/types";
+import { CreateTaskTemplateType, filterType, ICreateChecklistTemplate, ICreateChecklistItemTemplate, TaskType, UpdateTaskTemplateType, MilestoneResponse } from "../../utils/types";
 import { buildDatetimeFilterCondition, buildNumericFilterCondition, buildStringFilterCondition, errorLog, logMessage } from "../../utils/helpers";
 import { HttpStatus, STATUS_MESSAGE, filtersColumnsForCaseSummary, filterTypesForCaseSummary, filterTypesForAdminCheckList, filtersColumnsForAdminCheckList, rawQueries } from "../../utils/constants";
-import { listAllCheckList } from "../../utils/rawQueries";
+import { fetchCaseTemplateData, listAllCheckList } from "../../utils/rawQueries";
+import { initOrgSequelize } from "../../config/orgDataSource";
 
 
 
@@ -744,6 +745,20 @@ async fetchChecklistTemplateDetailsById(
     }
     const result = await this.mainDbSequelize.query<TaskType>(rawQueries.getTaskType(), {type : QueryTypes.SELECT});
     return result;
+  }
+  async fetchKanbanBoard (schemaName : string, caseRid : string, accountRid : string) {
+    if(!this.orgDbSequelize) {
+      this.orgDbSequelize = await initOrgSequelize();
+    }
+
+    const result : any = await this.orgDbSequelize.query(fetchCaseTemplateData(schemaName,caseRid, accountRid));
+    
+    if(result[0].length > 0) {
+      return result[0][0]
+    } else {
+      return []
+    }
+
   }
 }
 export { CaseManagementSchemaService };

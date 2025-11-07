@@ -3,6 +3,7 @@ import { logMessage } from "../utils/helpers";
 import { ENV_PREFIX } from "../utils/constants";
 
 interface CaseMilestoneAttributes {
+    eid : string,
     rid : string,
     r_number? : string,
     created_by : string,
@@ -22,6 +23,7 @@ extends Optional<CaseMilestoneAttributes, "rid"> {}
 
 export class CaseMilestone extends Model<CaseMilestoneAttributes, CaseMilestoneCreationAttributes>
 implements CaseMilestoneAttributes {
+    public eid! : string;
     public rid! : string;
     public r_number? : string;
     public created_by!: string;
@@ -38,6 +40,10 @@ implements CaseMilestoneAttributes {
     static initialise(sequelize : Sequelize, schemaName : string) {
         return CaseMilestone.init({
             rid : {
+                type : DataTypes.STRING(50),
+                allowNull : true
+            },
+            eid : {
                 type : DataTypes.STRING(50),
                 defaultValue: Sequelize.literal(
                 `'${ENV_PREFIX}' || gen_random_uuid()`
