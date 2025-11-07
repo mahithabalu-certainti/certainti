@@ -144,7 +144,8 @@ export const useUpdateTaskTemplateDetails = () => {
 };
 
 // Export
-export const getTaskTemplateExportUrl = () => '/api/taskTemplates/export';
+export const getTaskTemplateExportUrl = () =>
+  '/api/caseManagement/taskTemplate/export';
 
 export const ExportTaskTemplateList = async (
   params: TaskTemplateListParams
