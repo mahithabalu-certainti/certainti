@@ -1670,7 +1670,7 @@ async function fetchCaseKanbanBoard (req : Request, res : Response) {
         statusCode: HttpStatus.SUCCESS,
         statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
         statusMessage: STATUS_MESSAGE.dataNotAvailable,
-        data: null,
+        data: [],
       });       
     }   
   } catch (error: any) {

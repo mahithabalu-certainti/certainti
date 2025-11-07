@@ -699,7 +699,7 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid : string, filingTypeRid :
   return query;
 }
 
-export const fetchCaseTemplateData = (schemaName : string, caseRid : string, account_rid : string) => {
+export const fetchCaseTemplateData = (schemaName : string, caseRid : string, accountRid : string) => {
   let query = 
   `
   WITH fetch_task AS (
@@ -721,21 +721,25 @@ export const fetchCaseTemplateData = (schemaName : string, caseRid : string, acc
   'task_type_rid', t.task_type_rid,
   'task_description', t.task_description,
   'milestone_template_rid', t.milestone_template_rid,
-  'checklists_count', (SELECT COUNT(DISTINCT chi.rid) FROM ${schemaName}.case_task ct LEFT JOIN ${schemaName}.checklists ch ON ch.checklist_template_rid = ct.checklist_template_rid LEFT JOIN ${schemaName}.checklist_items chi ON chi.case_checklist_rid = ch.rid WHERE ct.milestone_template_rid = cm.rid)
+  'checklists_count', (SELECT COUNT(DISTINCT chi.rid) FROM ${schemaName}.case_task ct LEFT JOIN ${schemaName}.checklists ch ON ch.checklist_template_rid = ct.checklist_template_rid LEFT JOIN ${schemaName}.checklist_items chi ON chi.case_checklist_rid = ch.rid WHERE ct.milestone_template_rid = cm.rid AND ct.case_rid = '${caseRid}' AND ct.account_rid = '${accountRid}')
   )ORDER BY t.sequence_no ASC) AS tasks
   FROM 
   ${schemaName}.case_milestone cm
   LEFT JOIN ${schemaName}.case_task t ON t.milestone_template_rid = cm.rid
-  LEFT JOIN ${schemaName}.case_team ct ON ct.role_rid = t.case_team_member_role_rid AND ct.case_rid = '${caseRid}' AND ct.account_rid = '${account_rid}'
+  LEFT JOIN ${schemaName}.case_team ct ON ct.role_rid = t.case_team_member_role_rid AND ct.case_rid = '${caseRid}' AND ct.account_rid = '${accountRid}'
   WHERE
   t.milestone_template_rid = cm.rid
+  AND
+  t.case_rid = '${caseRid}'
+  AND
+  t.account_rid = '${accountRid}'
   GROUP BY
   cm.rid
   )
   SELECT array_agg(jsonb_build_object(
   'rid', m.rid,
   'milestone_name', m.milestone_name,
-  'task_count', (SELECT COUNT(DISTINCT ct.rid) FROM ${schemaName}.case_task ct LEFT JOIN ${schemaName}.case_milestone cm ON ct.milestone_template_rid = cm.rid where ct.milestone_template_rid = m.rid),
+  'task_count', (SELECT COUNT(DISTINCT ct.rid) FROM ${schemaName}.case_task ct LEFT JOIN ${schemaName}.case_milestone cm ON ct.milestone_template_rid = cm.rid where ct.milestone_template_rid = m.rid AND ct.account_rid = '${accountRid}' AND ct.case_rid = '${caseRid}'),
   'tasks', ft.tasks
   ))
 FROM
@@ -745,7 +749,7 @@ LEFT JOIN fetch_task ft ON ft.rid = m.rid
 WHERE
 c.rid = '${caseRid}'
 AND
-c.account_rid = '${account_rid}'
+c.account_rid = '${accountRid}'
   `
 return query;
 }
