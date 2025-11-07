@@ -21,7 +21,7 @@ import {
   adminChecklistSchema,
   createCaseSchema,
   createTaskTemplateSchema,
-  exportadminCheckListByIdSchema,
+  exportAdminCheckListByIdSchema,
   listAdminCheckListSchema,
   updateAdminChecklistSchema,
   updateTaskTemplateSchema,
@@ -1093,7 +1093,7 @@ async function exportCheckListTemplateById(req: Request, res: Response) {
   try {
     const methodName = "Export Checklist By Id";
      // Validate request body against the defined schema
-    const data = await validateRequest(req, exportadminCheckListByIdSchema, res,"GET");
+    const data = await validateRequest(req, exportAdminCheckListByIdSchema, res,"GET");
 
     const userId = req.headers["x-user-id"] as string;
      logMessage(`[${methodName}] Request received, ${JSON.stringify(data)} userId: ${userId}`);

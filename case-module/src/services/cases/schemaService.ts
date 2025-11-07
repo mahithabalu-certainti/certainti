@@ -2570,6 +2570,43 @@ class CaseSchemaService {
       throw new Error("Error creating checklist: " + error);
     }
   }
+
+  async updateCheckList(
+    accountNumber: string,
+    caseRequest: ICreateChecklist,
+    transaction: Transaction
+  ) {
+    // Implementation for creating checklist in the database
+    try {
+      const { CheckList } = await this.caseModelService.getModels(accountNumber);
+      const existingChecklist = await CheckList.findOne({
+              where: { rid: caseRequest.checklist_rid }
+            });
+      
+            if (!existingChecklist) {
+              return {
+                statusCode: HttpStatus.NOT_FOUND,
+                message: STATUS_MESSAGE.checkListNotFound,
+                errorMessage: STATUS_MESSAGE.checkListNotFoundError,
+              };
+            }
+      const createdChecklist = await CheckList.update(
+        {
+          checklist_name: caseRequest.checklist_name,
+          checklist_description: caseRequest.checklist_description,
+          status_rid: caseRequest.status_rid,
+          modified_by: caseRequest.modified_by,
+           modified_datetime: caseRequest.modified_datetime,
+        },
+        { where: { rid: caseRequest.checklist_rid }, transaction }
+      );
+
+      return createdChecklist;
+    } catch (error) {
+      logMessage(`Error creating checklist: ${error}`);
+      throw new Error("Error creating checklist: " + error);
+    }
+  }
         /**
      * Utility function to process a single checklist item based on its action type
      * @param AdminCheckListItem - The model instance

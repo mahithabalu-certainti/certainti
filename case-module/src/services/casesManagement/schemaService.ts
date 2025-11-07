@@ -232,7 +232,7 @@ class CaseManagementSchemaService {
       if (!existingChecklist) {
         return {
           statusCode: HttpStatus.NOT_FOUND,
-          message: "Checklist not found",
+          message: STATUS_MESSAGE.checkListNotFound,
           errorMessage: "Admin checklist with the provided RID does not exist",
         };
       }
