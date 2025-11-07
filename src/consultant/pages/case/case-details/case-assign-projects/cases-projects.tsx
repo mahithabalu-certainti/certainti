@@ -27,13 +27,13 @@ import {
   useAssignProjects,
   useRemoveProjects,
 } from '../../../../services/cases-assign-projects/assign-project-service';
-import { CaseAssignedExportParams } from '../../../../types';
+import { CaseAssignedExportParams, ExportType } from '../../../../types';
 interface casesProjectProps {
   activeKey?: string;
   setTableParams?: React.Dispatch<
     React.SetStateAction<CaseAssignedExportParams>
   >;
-  // setExportType?: (type: ExportType) => void;
+  setExportType?: (type: ExportType) => void;
 }
 const InteractionsTabs: OverviewTabs[] = [
   {
@@ -49,7 +49,10 @@ const InteractionsTabs: OverviewTabs[] = [
   // },
 ];
 
-const CasesProjects: React.FC<casesProjectProps> = ({ setTableParams }) => {
+const CasesProjects: React.FC<casesProjectProps> = ({
+  setTableParams,
+  setExportType,
+}) => {
   const { caseId } = useParams();
   const [refreshTrigger, setRefreshTrigger] = useState<number>(Date.now());
   const [appliedFilters, setAppliedFilters] = useState<
@@ -140,6 +143,10 @@ const CasesProjects: React.FC<casesProjectProps> = ({ setTableParams }) => {
   const initialTab = 'assign_projects';
 
   useEffect(() => {
+    if (setExportType) {
+      setExportType('cases_projects');
+    }
+
     if (
       !searchParams.get('tab') &&
       searchParams.get('list') === 'caseProjects'

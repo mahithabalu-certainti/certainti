@@ -224,6 +224,13 @@ export const NotesTable: React.FC<NotesTableProps> = ({
         );
         break;
 
+      // Case-level notes
+      case 'case':
+        navigate(
+          `/case/details/${attachTo}?accountID=${accountId}&list=notes&note_id=${noteId}&activeMenu=notes&origin=notes`
+        );
+        break;
+
       default:
         console.warn('Unknown attachment level:', row?.attachment_level);
     }
