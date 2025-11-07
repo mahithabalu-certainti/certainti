@@ -108,5 +108,11 @@ routes.post(
   checkUserStatusMiddleware("NA"),
   controller.caseController.createCheckList
 );
+routes.post(
+  "/checklist/update",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.updateCheckList
+);
+
 
 export default routes;

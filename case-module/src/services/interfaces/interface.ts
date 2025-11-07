@@ -111,6 +111,15 @@ export interface ICaseService {
     errorMessage?: string;
     data?: { checklist: any };
   }>;
+  updateCheckList(
+    checklistRequest: ICreateChecklist,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { checklist: any };
+  }>;
 
   exportAssignedProjects (data : any) : Promise<any>
 }

@@ -205,6 +205,7 @@ class CaseManagementSchemaService {
         {
           checklist_name: caseRequest.checklist_name,
           checklist_description: caseRequest.checklist_description,
+          status_rid: caseRequest.status_rid,
           created_by: caseRequest.created_by,
           //modified_by: caseRequest.modified_by,
           created_datetime: new Date(),
@@ -232,8 +233,8 @@ class CaseManagementSchemaService {
       if (!existingChecklist) {
         return {
           statusCode: HttpStatus.NOT_FOUND,
-          message: "Checklist not found",
-          errorMessage: "Admin checklist with the provided RID does not exist",
+          message: STATUS_MESSAGE.checkListNotFound,
+          errorMessage: STATUS_MESSAGE.checkListNotFoundError,
         };
       }
 

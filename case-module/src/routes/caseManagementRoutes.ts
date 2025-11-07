@@ -28,6 +28,11 @@ routes.get(
   checkUserStatusMiddleware("checklist_templates_view_edit"),
   controller.caseManagementController.getCheckListTemplateDetailsById
 );
+routes.get(
+  "/adminChecklist/export/:checkListRid",
+  checkUserStatusMiddleware("checklist_templates_view_edit"),
+  controller.caseManagementController.exportCheckListTemplateById
+);
 routes.post(
   "/taskTemplate/create",
   checkUserStatusMiddleware("NA"),

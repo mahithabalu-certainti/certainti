@@ -104,7 +104,9 @@ export const STATUS_MESSAGE = {
   jurisdictionFetchedSuccess: "Jurisdiction configuration fetched successfully",
   jurisdictionFetchedFailed: "Failed to fetch jurisdiction configuration",
   jurisdictionNotFound: "No jurisdiction configuration found for this case",
-  taskTypeFetchedSuccess : "Task Type fetched successfully"
+  taskTypeFetchedSuccess : "Task Type fetched successfully",
+  checkListNotFound:"Checklist not found",
+  checkListNotFoundError:"Checklist with the provided RID does not exist"
 
 };
 

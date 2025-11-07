@@ -26,6 +26,7 @@ import {
   listCaseSummarySchema,
   listCaseTeamSchema,
   updateCaseSchema,
+  updateChecklistSchema,
 } from "../lib/joi/schemas/schema";
 import configurations from "../config/config";
 import moment from "moment";
@@ -1574,6 +1575,71 @@ async function createCheckList(req: Request, res: Response): Promise<void> {
     return;
   }
 }
+
+async function updateCheckList(req: Request, res: Response): Promise<void> {
+  const methodName = "Update admin checklist";
+  try {
+    // Log the incoming request for audit and debugging purposes
+    logMessage(
+      `[${methodName}] Request received, ${JSON.stringify(req.body)} userId: ${
+        req.headers["x-user-id"]
+      }`
+    );
+    
+    // Validate request body against the defined schema
+    const value = await validateRequest(req, updateChecklistSchema, res);
+    
+    // Extract and validate user ID from request headers
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    
+    // Ensure request body validation passed
+    if (!value) {
+      errorLog(methodName, "Request body is empty");
+      return;
+    }
+    
+    // Call the service layer to create the admin checklist
+    const cases = await caseService.updateCheckList(value, userId);
+    
+    // Handle successful checklist creation
+    if (cases.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleCustomResponse(res, cases.data, cases.message);
+      return;
+    } else {
+      // Handle service-level errors (business logic failures)
+      errorLog(methodName, cases.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        cases.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    // Handle unexpected errors (system failures, network issues, etc.)
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
 export default {
   createCases,
   updateCases,
@@ -1594,5 +1660,6 @@ export default {
   exportAllAssignedProjects,
   listUsersForCaseTeam,
   listUserForCaseOwner,
-  createCheckList
+  createCheckList,
+  updateCheckList
 };
