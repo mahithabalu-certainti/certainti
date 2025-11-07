@@ -539,7 +539,7 @@ export class CaseManagementService {
     if(fetchParentRnumber[0].length > 0) {
       const schemaName = rawQueries.fetchSchemaName(fetchParentRnumber[0][0].r_number);
       const result : any = await this.caseManangementSchemaService.fetchKanbanBoard(schemaName, caseRid, accountRid);
-      if(result) {
+      if(result.array_agg[0].rid !== null) {
         let uniquePriorityIds = [...new Set(result.array_agg.flatMap((d : any) => d.tasks.map((dd : any) => dd.priority_rid)))];
         let uniqueAssignedToIds = [...new Set(result.array_agg.flatMap((d : any) => d.tasks.map((dd : any) => dd.assigned_to)))]
         let uniqueTeamRoleIds = [...new Set(result.array_agg.flatMap((d : any) => d.tasks.map((dd : any) => dd.case_team_member_role_rid)))]
@@ -578,7 +578,6 @@ export class CaseManagementService {
         let teamRoleMap : Map<string, string> =new Map(teamRole?.[0]?.map((d : any) => [d.rid, d.role_name]));
         let taskTypeMap : Map<string, string> = new Map(tasktype?.[0]?.map((d : any) => [d.rid, d.task_type_name]));
         let statusMap : Map<string, string> = new Map(statusType?.[0]?.map((d : any) => [d.rid, d.status_name]));
-
         const finalStructure = result.array_agg.map((d : any) => {
           return {
             rid : d.rid,
