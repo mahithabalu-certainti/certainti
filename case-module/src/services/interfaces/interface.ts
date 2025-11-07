@@ -179,4 +179,5 @@ export interface ICaseManagementService {
   fetchTaskTemplate(data : AdminTaskTemplatePayloadType, isExport : boolean, isGraphql : boolean, templateRid : string | null) : Promise<any>
   inlineEditTaskTemplate(data : any) : Promise<any>
   fetchTaskTypeForTemplate() : Promise<any>
+  getTaskTemplateDetailsById (rid : string) : Promise<any>
 }

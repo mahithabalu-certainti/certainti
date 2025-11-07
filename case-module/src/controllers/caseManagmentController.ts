@@ -1209,6 +1209,47 @@ async function exportCheckListTemplateById(req: Request, res: Response) {
   }
 }
 
+async function fetchTaskTemplateDetails (req : Request, res : Response) {
+  const methodName = "fetchTaskTemplateDetails"
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const { rid } = req.params;
+    const result = await caseManagementService.getTaskTemplateDetailsById(rid!);
+    if(result) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.statusMessage,
+        data: result.data,
+      });      
+    } else {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.dataNotAvailable,
+        data: null,
+      });
+    }
+  } catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
 // Export the controller functions for use in route definitions
 export default {
   createAdminCheckList,
@@ -1224,5 +1265,6 @@ export default {
   getCheckListTemplateDetailsById,
   exportCheckListTemplateById,
   fetchAllTaskTypes,
-  updateAdminCheckList
+  updateAdminCheckList,
+  fetchTaskTemplateDetails
 };
