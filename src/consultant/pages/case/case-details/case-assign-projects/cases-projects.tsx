@@ -27,7 +27,14 @@ import {
   useAssignProjects,
   useRemoveProjects,
 } from '../../../../services/cases-assign-projects/assign-project-service';
-
+import { CaseAssignedExportParams } from '../../../../types';
+interface casesProjectProps {
+  activeKey?: string;
+  setTableParams?: React.Dispatch<
+    React.SetStateAction<CaseAssignedExportParams>
+  >;
+  // setExportType?: (type: ExportType) => void;
+}
 const InteractionsTabs: OverviewTabs[] = [
   {
     id: AllPermissions.INTERACTIONS_OVERVIEW, // permission need to be change
@@ -42,7 +49,7 @@ const InteractionsTabs: OverviewTabs[] = [
   // },
 ];
 
-const CasesProjects: React.FC = () => {
+const CasesProjects: React.FC<casesProjectProps> = ({ setTableParams }) => {
   const { caseId } = useParams();
   const [refreshTrigger, setRefreshTrigger] = useState<number>(Date.now());
   const [appliedFilters, setAppliedFilters] = useState<
@@ -375,6 +382,7 @@ const CasesProjects: React.FC = () => {
               setCurrentPage={setCurrentPage}
               visibleColumns={visibleColumns}
               searchText={searchText}
+              setTableParams={setTableParams}
             />
           )}
         </div>

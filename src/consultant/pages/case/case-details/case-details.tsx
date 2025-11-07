@@ -1,7 +1,10 @@
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useLocation, useParams, useSearchParams } from 'react-router-dom';
-import { useCaseDetails } from '../../../services/cases/case-service';
-import { MenuItem } from '../../../types';
+import {
+  ExportAssignedList,
+  useCaseDetails,
+} from '../../../services/cases/case-service';
+import { CaseAssignedExportParams, MenuItem } from '../../../types';
 import { AllMenus, AllModules } from '../../../../common-service';
 import { InfoSection, PageHeader, SideMenuPanel } from '../../../../components';
 import {
@@ -30,13 +33,25 @@ export const CaseDetails = () => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const { caseId } = useParams();
-  const accountId = searchParams.get('accountID');
+  const accountId = searchParams.get('accountID') || '';
+  const [caseProjectParams, setCaseProjectParams] =
+    useState<CaseAssignedExportParams>({
+      sort: 'project_type_name',
+      sort_by: 'ASC',
+      filter: {},
+      timezone: '',
+      page: 1,
+      limit: 10,
+      search: '',
+      case_rid: caseId ?? '',
+      account_id: accountId ?? '',
+    });
   const {
     data: caseData,
     isLoading,
     isError,
   } = useCaseDetails(caseId ?? '', accountId ?? '');
-
+  const isAssignProject = searchParams.get('assignProject');
   const caseHeaderDetails = useMemo(() => {
     if (caseData) {
       return transformCaseData(caseData);
@@ -62,6 +77,22 @@ export const CaseDetails = () => {
       setActiveKey(location.state.activeKey || listParam || 'workBreakdown');
     }
   }, [location.state, searchParams]);
+  const list = searchParams.get('list');
+  const checkExport = () => {
+    if (list === 'caseProjects' && !isAssignProject) {
+      return false;
+    } else {
+      return true;
+    }
+  };
+  console.log(caseProjectParams);
+  const handleExport = () => {
+    if (list !== 'caseProjects') {
+      return;
+    }
+    console.log(caseProjectParams);
+    ExportAssignedList(caseProjectParams);
+  };
 
   const menuItems: ActionsDropdownItem[] = [
     {
@@ -71,8 +102,8 @@ export const CaseDetails = () => {
     },
     {
       label: 'Export',
-      onClick: () => console.log('clicked'),
-      hide: false,
+      onClick: () => handleExport(),
+      hide: checkExport(),
     },
   ];
 
@@ -101,7 +132,7 @@ export const CaseDetails = () => {
       case 'caseProjects':
         return (
           <div>
-            <CasesProjects />
+            <CasesProjects setTableParams={setCaseProjectParams} />
           </div>
         );
       default:

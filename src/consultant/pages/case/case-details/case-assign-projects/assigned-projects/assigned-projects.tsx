@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AssignProject } from '../../../../../types/assign-projects';
 import { useAssingeProjectsList } from '../../../../../services/cases-assign-projects/assign-project-service';
 import { ListTable } from '../../../../../../components/table';
 import { useParams, useSearchParams } from 'react-router-dom';
+import { CaseAssignedExportParams } from '../../../../../types';
 
 interface AssignedProjectsProps {
   accountInActive: boolean;
@@ -14,6 +15,9 @@ interface AssignedProjectsProps {
   searchText: string;
   setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
   visibleColumns: any[];
+  setTableParams?: React.Dispatch<
+    React.SetStateAction<CaseAssignedExportParams>
+  >;
 }
 
 const AssignedProjects: React.FC<AssignedProjectsProps> = ({
@@ -23,6 +27,7 @@ const AssignedProjects: React.FC<AssignedProjectsProps> = ({
   setCurrentPage,
   visibleColumns,
   searchText,
+  setTableParams,
 }) => {
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
@@ -45,7 +50,31 @@ const AssignedProjects: React.FC<AssignedProjectsProps> = ({
     },
     refreshTrigger
   );
-
+  useEffect(() => {
+    // if (setExportType) {
+    //   setExportType('project');
+    // }
+    setTableParams?.({
+      page: currentPage + 1,
+      limit: rowsPerPage, // Corrected property name
+      sort: sortField,
+      sort_by: sortBy,
+      search: searchText,
+      filter: {},
+      case_rid: caseId,
+      account_rid: accountID, // Replace with the actual account_rid
+      fiscal_year: 2024,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    sortField,
+    sortBy,
+    searchText,
+    rowsPerPage,
+    currentPage,
+    caseId,
+    accountID,
+  ]);
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
   };
