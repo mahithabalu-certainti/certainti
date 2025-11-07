@@ -205,6 +205,7 @@ export enum AllModules {
   EMAIL_TEMPLATES = 'email_templates',
   CASES = 'cases',
   CHECKLIST_TEMPLATES = 'checklist_templates',
+  CHECKLISTS = 'checklists',
 }
 
 export enum AllPermissions {
@@ -315,6 +316,11 @@ export enum AllPermissions {
   CHECKLIST_TEMPLATES_CREATE = 'checklist_templates_create',
   CHECKLIST_TEMPLATES_VIEW_EDIT = 'checklist_templates_view_edit',
   CHECKLIST_TEMPLATES_EXPORT = 'checklist_templates_export',
+  CHECKLIST_OVERVIEW = 'checklist_overview',
+  CHECKLIST_TIMELINE = 'checklist_timeline',
+  CHECKLIST_VIEW_EDIT = 'checklist_view_edit',
+  CHECKLIST_EXPORT = 'checklist_export',
+  CHECKLIST_CREATE = 'checklist_create',
 }
 
 export interface Country {
