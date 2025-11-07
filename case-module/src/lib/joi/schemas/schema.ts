@@ -135,8 +135,10 @@ const updateAdminChecklistSchema = Joi.object({
 });
 
 const updateChecklistSchema = Joi.object({
-  case_rid: Joi.string().required(),
   account_rid: Joi.string().required(),
+  attach_to: Joi.string().required(),
+  attachment_level: Joi.string().required(),
+  fiscal_year: Joi.number().integer().min(1900).max(2100).optional(),
   checklist_name: Joi.string().max(255).required(),
   checklist_description: Joi.string().max(2000).optional().allow(""),
   status_rid: Joi.string().required(),
@@ -145,6 +147,7 @@ const updateChecklistSchema = Joi.object({
       Joi.object({  
         checklist_item_name: Joi.string().max(255).required(),
         checklist_item_rid: Joi.string().optional(),
+        status_rid: Joi.string().required(),
         description: Joi.string().max(2000).optional().allow(""), 
         action_type: Joi.string().valid("add", "edit", "delete").required(),
       })
@@ -156,16 +159,18 @@ const updateChecklistSchema = Joi.object({
 const checklistSchema = Joi.object({
   attach_to: Joi.string().required(),
   attachment_level: Joi.string().required(),
+  fiscal_year: Joi.number().integer().min(1900).max(2100).optional(),
   account_rid: Joi.string().required(),
   checklist_name: Joi.string().max(255).required(),
   checklist_description: Joi.string().max(2000).optional().allow(""),
+  checklist_template_rid: Joi.string().optional().allow("",null),
   status_rid: Joi.string().required(),
   checklist_items: Joi.array()
     .items(
       Joi.object({  
         checklist_item_name: Joi.string().max(255).required(),
         description: Joi.string().max(2000).optional().allow(""), 
-    //    status_rid: Joi.string().required(),
+        status_rid: Joi.string().optional().allow("", null),
         action_type: Joi.string().valid("add", "edit", "delete").required(),
       })
     )

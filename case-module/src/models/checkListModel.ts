@@ -5,6 +5,7 @@ import { logMessage } from "../utils/helpers";
 interface CheckListAttributes {
   rid: string;
   r_number?: string;
+  fiscal_year?: number;
   created_by: string;
   modified_by?: string;
   created_datetime?: Date;
@@ -33,6 +34,7 @@ export class CheckList
   public created_datetime?: Date;
   public modified_datetime?: Date;
   public account_rid!: string;
+  public fiscal_year?: number;
   public attach_to?: string;
   public attachment_level?: string;
   public checklist_template_rid?: string;
@@ -79,6 +81,7 @@ export class CheckList
          },
         attach_to: { type: DataTypes.STRING(50), allowNull: true },
         attachment_level: { type: DataTypes.STRING(50), allowNull: true },
+        fiscal_year: { type: DataTypes.INTEGER, allowNull: true },
         checklist_template_rid: { type: DataTypes.STRING(50), allowNull: true },
         checklist_name: { type: DataTypes.STRING(255), allowNull: false },
         checklist_description: { type: DataTypes.TEXT, allowNull: true },
