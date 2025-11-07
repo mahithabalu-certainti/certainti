@@ -268,8 +268,8 @@ export const ExportChecklistTemplateAllList = async (
 };
 
 // Export individual checklist
-export const getChecklistTemplateExportUrl = () =>
-  '/api/checklistTemplates/export';
+export const getChecklistTemplateExportUrl = (templateId: string, timezone: string) =>
+  `/api/caseManagement/adminChecklist/export/${templateId}?timezone=${timezone}`;
 
 export const ExportChecklistTemplate = async (
   templateId: string,
@@ -279,12 +279,8 @@ export const ExportChecklistTemplate = async (
   try {
     const filename = `${checklistName ? checklistName + '_' : ''}template.xlsx`;
     const response =
-      await interactionServiceApi.post<ExportChecklistTemplateResponse>(
-        getChecklistTemplateExportUrl(),
-        {
-          template_rid: templateId,
-          timezone,
-        }
+      await caseServiceApi.get<ExportChecklistTemplateResponse>(
+        getChecklistTemplateExportUrl(templateId, timezone)
       );
     const base64Data = response.data?.data;
 
