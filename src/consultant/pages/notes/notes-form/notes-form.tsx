@@ -73,7 +73,10 @@ const NotesForm: React.FC = () => {
   const accountId = searchParams.get('accountId') || '';
   const entityLevel = searchParams.get('entityLevel') || '';
   const entityId = searchParams.get('entityId') || '';
-  const projectFiscalYear = searchParams.get('projectFiscalYear') || '';
+  const entityFiscalYear =
+    searchParams.get('projectFiscalYear') ||
+    searchParams.get('caseFiscalYear') ||
+    '';
   const sourcePath = searchParams.get('source') || '';
 
   const isFromGlobalNotes = sourcePath?.toLowerCase() === 'notes';
@@ -152,7 +155,8 @@ const NotesForm: React.FC = () => {
   useEffect(() => {
     if (isEditView && noteData) {
       const disableLevel =
-        noteData?.attachment_level?.toLowerCase() === 'project';
+        noteData?.attachment_level?.toLowerCase() === 'project' ||
+        noteData?.attachment_level?.toLowerCase() === 'case';
       setDisableFiscalYear(disableLevel);
     }
   }, [noteData, isEditView]);
@@ -293,7 +297,7 @@ const NotesForm: React.FC = () => {
     const accountRid = noteData?.account_rid || accountId || '';
     const attachTo = noteData?.attach_to || entityId;
     const attachmentLevel = noteData?.attachment_level || entityLevel;
-    const fiscalYear = projectFiscalYear || data?.fiscal_year;
+    const fiscalYear = entityFiscalYear || data?.fiscal_year;
     const title = data?.title || '';
     const notesOwner = data?.notes_owner || '';
     const descriptions = data?.descriptions || '';
@@ -326,7 +330,7 @@ const NotesForm: React.FC = () => {
     isEditView,
     fiscalYears,
     userListOptions,
-    !!projectFiscalYear,
+    !!entityFiscalYear,
     disableFiscalYear,
     isFromGlobalNotes,
     permissionMap
