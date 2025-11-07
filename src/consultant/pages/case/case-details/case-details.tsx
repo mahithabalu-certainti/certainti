@@ -34,11 +34,15 @@ import { CaseTeam } from './case-team';
 import { transformCaseData } from './utils';
 import { ActionsDropdownItem, checkPermission } from '../../../../common-utils';
 import { CaseNotes } from './case-notes';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../../../store/store';
 import { ExportNotesList } from '../../../services/notes/notes-service';
 import { AccessRestricted } from '../../../../components/account-restricted';
 import { ACCOUNT } from '../../../../routes';
+import { RootState } from '../../../../store/store';
+
+import { AttachmentsListExportParams } from '../../../types/attachment';
+import { useSelector } from 'react-redux';
+import { Attachments } from './case-attachments';
+import { exportAttachmentsData } from '../../../services/attachments/attachments-service';
 
 export const CaseDetails = () => {
   const navigate = useNavigate();
@@ -78,6 +82,13 @@ export const CaseDetails = () => {
   const noteView = searchParams.get('note_id');
   const accountInActive =
     caseData?.account_status_name?.toLowerCase() !== 'active';
+
+  const [attachmentParams, setAttachmentParams] =
+    useState<AttachmentsListExportParams>({
+      sortBy: 'document_name',
+      sortOrder: 'ASC',
+      filters: {},
+    });
 
   useEffect(() => {
     const list = searchParams.get('list');
@@ -127,8 +138,20 @@ export const CaseDetails = () => {
       timezone,
     };
 
+    const attachmentPayload = {
+      accountRid: accountId,
+      entityId: caseId,
+      attachmentLevel: 'case',
+      timezone,
+    };
+
     if (exportType === 'notes') {
       ExportNotesList('notes', { ...notesParams, ...notesPayload });
+    } else if (exportType === 'attachments') {
+      exportAttachmentsData('attachments', {
+        ...attachmentParams,
+        ...attachmentPayload,
+      });
     }
   };
 
@@ -193,6 +216,14 @@ export const CaseDetails = () => {
             setExportType={setExportType}
             setNotesParams={setNotesParams}
             caseDetails={caseData}
+          />
+        );
+      case 'attachments':
+        return (
+          <Attachments
+            accountInActive={accountInActive}
+            setExportType={setExportType}
+            setAttachmentParams={setAttachmentParams}
           />
         );
       default:
