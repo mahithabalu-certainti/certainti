@@ -63,14 +63,12 @@ interface AttachmentsProps {
     React.SetStateAction<AttachmentsListExportParams>
   >;
   accountInActive: boolean;
-  refetchAccountDetails: () => void;
 }
 
 export const Attachments: React.FC<AttachmentsProps> = ({
   setExportType,
   setAttachmentParams,
   accountInActive,
-  refetchAccountDetails,
 }) => {
   const { errorToast } = useToast();
   const { caseId } = useParams();
@@ -107,10 +105,6 @@ export const Attachments: React.FC<AttachmentsProps> = ({
   const [updateAttachment] = useMutation(ATTACHMENT_UPDATE, {
     client: resourceClient,
   });
-  const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
-    (state: RootState) => state.account
-  );
-  const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
   const { data, isLoading, isError } = useAttachmentList(
     {
@@ -123,7 +117,7 @@ export const Attachments: React.FC<AttachmentsProps> = ({
       accountRid: accountId,
       entityId: caseId || '',
       search: searchText,
-      fiscalYear: convertedFiscalYear,
+      fiscalYear: 0,
     },
     refreshAttachments
   );
@@ -143,11 +137,11 @@ export const Attachments: React.FC<AttachmentsProps> = ({
       sortBy: sortField,
       sortOrder: sortOrder,
       filters: appliedFilters,
-      fiscalYear: convertedFiscalYear,
       search: searchText,
+      fiscalYear: 0,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sortField, sortOrder, appliedFilters, convertedFiscalYear, searchText]);
+  }, [sortField, sortOrder, appliedFilters, searchText]);
   const minYear = 1950;
   const currentYear = new Date().getFullYear();
   const fiscalYears = getFiscalYears(currentYear - minYear + 1);
@@ -179,7 +173,6 @@ export const Attachments: React.FC<AttachmentsProps> = ({
   };
   const onRefreshClick = () => {
     setRefreshAttachments(Date.now());
-    refetchAccountDetails();
   };
 
   const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {

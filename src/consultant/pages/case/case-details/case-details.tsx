@@ -38,11 +38,11 @@ import { ExportNotesList } from '../../../services/notes/notes-service';
 import { AccessRestricted } from '../../../../components/account-restricted';
 import { ACCOUNT } from '../../../../routes';
 import { RootState } from '../../../../store/store';
-import { AccountState } from '../../../../store/type';
 
 import { AttachmentsListExportParams } from '../../../types/attachment';
 import { useSelector } from 'react-redux';
-import { Attachments } from './attachments';
+import { Attachments } from './case-attachments';
+import { exportAttachmentsData } from '../../../services/attachments/attachments-service';
 
 export const CaseDetails = () => {
   const navigate = useNavigate();
@@ -69,11 +69,6 @@ export const CaseDetails = () => {
     return [];
   }, [caseData]);
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
-  const { fiscalYear } = useSelector<RootState, AccountState>(
-    (state: RootState) => state.account
-  );
-  const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
-
   const defaultTab = searchParams.get('list') ?? 'workBreakdown';
   const [activeKey, setActiveKey] = useState(defaultTab as string);
   const [exportType, setExportType] = useState<ExportType>('notes');
@@ -87,18 +82,13 @@ export const CaseDetails = () => {
   const noteView = searchParams.get('note_id');
   const accountInActive =
     caseData?.account_status_name?.toLowerCase() !== 'active';
-  const [, setRefreshCaseDetails] = useState<number>(Date.now());
 
-  const [, setAttachmentParams] = useState<AttachmentsListExportParams>({
-    sortBy: 'document_name',
-    sortOrder: 'ASC',
-    filters: {},
-    fiscalYear: convertedFiscalYear,
-  });
-
-  const onRefreshClick = () => {
-    setRefreshCaseDetails(Date.now());
-  };
+  const [attachmentParams, setAttachmentParams] =
+    useState<AttachmentsListExportParams>({
+      sortBy: 'document_name',
+      sortOrder: 'ASC',
+      filters: {},
+    });
 
   useEffect(() => {
     const list = searchParams.get('list');
@@ -148,8 +138,20 @@ export const CaseDetails = () => {
       timezone,
     };
 
+    const attachmentPayload = {
+      accountRid: accountId,
+      entityId: caseId,
+      attachmentLevel: 'case',
+      timezone,
+    };
+
     if (exportType === 'notes') {
       ExportNotesList('notes', { ...notesParams, ...notesPayload });
+    } else if (exportType === 'attachments') {
+      exportAttachmentsData('attachments', {
+        ...attachmentParams,
+        ...attachmentPayload,
+      });
     }
   };
 
@@ -219,10 +221,9 @@ export const CaseDetails = () => {
       case 'attachments':
         return (
           <Attachments
-            accountInActive={false}
+            accountInActive={accountInActive}
             setExportType={setExportType}
             setAttachmentParams={setAttachmentParams}
-            refetchAccountDetails={onRefreshClick}
           />
         );
       default:
