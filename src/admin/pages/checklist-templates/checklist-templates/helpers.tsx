@@ -63,26 +63,6 @@ export const getChecklistTemplateFilterFields = (
         !permissionMap?.['checklist_name']?.edit,
     },
     {
-      label: 'Checklist Level',
-      name: 'checklist_level_rid',
-      type: 'enumSelect',
-      options: checklistLevels,
-      operatorOption: enumOperator,
-      hide:
-        !permissionMap?.['checklist_level_rid']?.read &&
-        !permissionMap?.['checklist_level_rid']?.edit,
-    },
-    {
-      label: 'Checklist Type',
-      name: 'checklist_type_rid',
-      type: 'enumSelect',
-      options: checklistTypes,
-      operatorOption: enumOperator,
-      hide:
-        !permissionMap?.['checklist_type_rid']?.read &&
-        !permissionMap?.['checklist_type_rid']?.edit,
-    },
-    {
       label: 'Description',
       name: 'checklist_description',
       type: 'text',
