@@ -1,10 +1,14 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { TaskTemplateIcon } from '../../../../assets';
 import SingleSkeleton from '../../../../components/skeleton-component/singleskeleton';
 import { useToast } from '../../../../hooks';
 import { useLocation, useParams } from 'react-router-dom';
 import {
   useCreateTaskTemplate,
+  useGetTaskAssigneRoleTypes,
+  useGetTaskCheckListTypes,
+  useGetTaskMilestoneTypes,
+  useGetTaskPriorityTypes,
   useGetTaskTemplateTypes,
   useTaskTemplateDetails,
   useUpdateTaskTemplateDetails,
@@ -13,26 +17,32 @@ import { formatDateToYYYYMMDDWithTime } from '../../../../common-utils';
 import { TaskTemplateFormData } from '../../../types';
 import SkeletonForm from '../../../../components/form-builder/skeleton-form';
 import { FormBuilder } from '../../../../components';
-import { Layout } from '../../../../common-service';
+import { Layout, OnChange, useGetStatus } from '../../../../common-service';
 import TextButton from '../../../../components/button/text-button';
 import { transformTaskTemplatePayload } from './utils';
 import { TaskTemplateFormFieldsData } from './form-data';
+import { SelectOption } from '../../../../consultant/types';
 
 const TaskTemplateForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
-
+  const [taskType, setTaskType] = useState(false);
   const { successToast } = useToast();
   const location = useLocation();
   const { templateId } = useParams();
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
-
+  const statusOptions = useGetStatus();
   const taskTemplateTypes = useGetTaskTemplateTypes();
+  const taskMilestoneTypes = useGetTaskMilestoneTypes();
+  const taskPrioritytTypes = useGetTaskPriorityTypes();
+  const taskCheckListTypes = useGetTaskCheckListTypes();
+  const taskAssigneRoleTypes = useGetTaskAssigneRoleTypes();
   const createTaskTemplate = useCreateTaskTemplate();
   const updateTaskTemplate = useUpdateTaskTemplateDetails();
 
   const { data: taskTemplateData, isLoading } = useTaskTemplateDetails(
     templateId || ''
   );
+  console.log('taskTemplateTypes', taskMilestoneTypes?.data?.data);
 
   const commonSuccess =
     createTaskTemplate.isSuccess || updateTaskTemplate.isSuccess;
@@ -74,12 +84,55 @@ const TaskTemplateForm: React.FC = () => {
 
   const taskTemplateTypesOptions = useMemo(() => {
     return (
-      taskTemplateTypes?.data?.data?.taskTemplateType?.map((item) => ({
+      taskTemplateTypes?.data?.data?.map((item) => ({
         value: item.rid,
         label: item.task_type_name,
       })) || []
     );
   }, [taskTemplateTypes]);
+
+  const taskMilestoneTypesOptions = useMemo(() => {
+    return (
+      taskMilestoneTypes?.data?.data?.map((item) => ({
+        value: item.rid,
+        label: item.milestone_name,
+      })) || []
+    );
+  }, [taskMilestoneTypes]);
+  console.log('role', taskAssigneRoleTypes?.data?.data?.caseRoles);
+  const taskPrioritytTypesTypesOptions = useMemo(() => {
+    return (
+      taskPrioritytTypes?.data?.data?.map((item) => ({
+        value: item.rid,
+        label: item.priority_name,
+      })) || []
+    );
+  }, [taskPrioritytTypes]);
+  const taskCheckListTypesTypesOptions = useMemo(() => {
+    return (
+      taskCheckListTypes?.data?.data?.map((item) => ({
+        value: item.rid,
+        label: item.checklist_name,
+      })) || []
+    );
+  }, [taskCheckListTypes]);
+  const taskAssigneRoleTypesTypesOptions = useMemo(() => {
+    return (
+      taskAssigneRoleTypes?.data?.data?.caseRoles?.map((item) => ({
+        value: item.rid,
+        label: item.role_name,
+      })) || []
+    );
+  }, [taskAssigneRoleTypes]);
+  const memoizedStatus: SelectOption[] = useMemo(
+    () =>
+      statusOptions?.data?.data?.status.map((status) => ({
+        label: status?.status_name,
+        value: status?.rid,
+        desc: status?.status_description,
+      })) || [],
+    [statusOptions?.data?.data?.status]
+  );
 
   const submitData = (formValues: Partial<TaskTemplateFormData>) => {
     const payload = transformTaskTemplatePayload(
@@ -97,14 +150,32 @@ const TaskTemplateForm: React.FC = () => {
   const handleExternalSubmit = () => {
     formRef.current?.requestSubmit();
   };
+  const onChangeField = (data: OnChange) => {
+    if (data.fieldName === 'task_type_rid') {
+      const targetId = 'D001-43aaca8b-0c9a-4165-bf6a-93cada5c11d1';
+      const isMatch = data.fieldValue === targetId;
+      setTaskType(isMatch);
+    }
+  };
 
   const goBack = () => {
     window.history.back();
   };
-
+  const defaultActiveValue = useMemo(() => {
+    const activeOption = memoizedStatus.find(
+      (option) => option?.label?.toLowerCase() === 'active'
+    );
+    return activeOption?.value || '';
+  }, [memoizedStatus]);
   const formConfig = TaskTemplateFormFieldsData(
     isEditView,
-    taskTemplateTypesOptions
+    taskTemplateTypesOptions,
+    taskMilestoneTypesOptions,
+    taskPrioritytTypesTypesOptions,
+    taskCheckListTypesTypesOptions,
+    taskAssigneRoleTypesTypesOptions,
+    memoizedStatus,
+    taskType
   );
 
   const formLoading = isLoading || taskTemplateTypes.isPending;
@@ -174,11 +245,14 @@ const TaskTemplateForm: React.FC = () => {
                 ? {
                     ...taskTemplateFormData,
                   }
-                : {}
+                : {
+                    status: defaultActiveValue,
+                    reminder_interval: 2,
+                  }
             }
             outData={submitData}
             formRef={formRef}
-            // onChange={onChangeField}
+            onChange={onChangeField}
             layout={Layout.TYPE_1}
           />
         )}

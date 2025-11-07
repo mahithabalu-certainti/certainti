@@ -1,5 +1,5 @@
 import { useMutation, useQuery, UseQueryResult } from '@tanstack/react-query';
-import { interactionServiceApi } from '../../../api/api';
+import { caseServiceApi, interactionServiceApi } from '../../../api/api';
 import {
   TaskTemplateDetails,
   TaskTemplateFormPayload,
@@ -7,33 +7,36 @@ import {
   TaskTemplateListParams,
   ExportTaskTemplateResponse,
   TaskTemplateTypeResponse,
+  TaskTemplateListResponse,
+  TaskAssigneRoleTypeResponse,
+  TaskMilestoneTypeResponse,
+  TaskPiriorityTypeResponse,
+  TaskCheckListTypeResponse,
+  TaskTemplateDetailsResponse,
 } from '../../types';
 import { CommonApiResponse } from '../../../common-service';
-import {
-  TaskTemplateDetailsMockData,
-  TaskTemplateMockData,
-  TaskTemplateTypeMockData,
-} from '../../mockdata/task-templates';
 
-export const getTaskTemplateListUrl = () => '/api/taskTemplates/list';
+export const getTaskTemplateListUrl = () =>
+  '/api/caseManagement/taskTemplate/list';
 
 export const fetchTaskTemplateList = async (
   params: TaskTemplateListParams
 ): Promise<{ taskTemplates: TaskTemplateList[]; count: number }> => {
-  // const { data } = await interactionServiceApi.post<TaskTemplateListResponse>(
-  //   getTaskTemplateListUrl(),
-  //   params
-  // );
-  // return {
-  //   taskTemplates: data.data.taskTemplates,
-  //   count: data.data.totalCount,
-  // };
-  console.log('task-template-list-params', params);
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  const { data } = await caseServiceApi.post<TaskTemplateListResponse>(
+    getTaskTemplateListUrl(),
+    params
+  );
+  console.log('data', data);
   return {
-    taskTemplates: TaskTemplateMockData.data.taskTemplates,
-    count: TaskTemplateMockData.data.totalCount,
+    taskTemplates: data.data.task_templates,
+    count: data.data.totalCount,
   };
+  // console.log('task-template-list-params', params);
+  // await new Promise((resolve) => setTimeout(resolve, 2000));
+  // return {
+  //   taskTemplates: TaskTemplateMockData.data.taskTemplates,
+  //   count: TaskTemplateMockData.data.totalCount,
+  // };
 };
 
 export const useTaskTemplateList = (
@@ -59,15 +62,14 @@ export const getTaskTemplateDetailsURL = (templateId: string) => {
 export const fetchTaskTemplateDetails = async (
   templateId: string
 ): Promise<TaskTemplateDetails> => {
-  // const response =
-  //   await interactionServiceApi.get<TaskTemplateDetailsResponse>(
-  //     getTaskTemplateDetailsURL(templateId)
-  //   );
-  // return response.data.data.templateDetails;
-  console.log('task-template-details-params', templateId);
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  const response = await caseServiceApi.get<TaskTemplateDetailsResponse>(
+    getTaskTemplateDetailsURL(templateId)
+  );
+  return response.data.data.templateDetails;
+  // console.log('task-template-details-params', templateId);
+  // await new Promise((resolve) => setTimeout(resolve, 2000));
 
-  return TaskTemplateDetailsMockData.data.templateDetails;
+  // return TaskTemplateDetailsMockData.data.templateDetails;
 };
 
 export const useTaskTemplateDetails = (
@@ -84,14 +86,14 @@ export const useTaskTemplateDetails = (
 
 // Create & Edit
 export const getCreateTaskTemplateUrl = (): string => {
-  return `/api/taskTemplates/new`;
+  return `/api/caseManagement/taskTemplate/create`;
 };
 
 export const createTaskTemplate = async (
   body: Partial<TaskTemplateFormPayload>
 ): Promise<CommonApiResponse> => {
   try {
-    const { data } = await interactionServiceApi.post<CommonApiResponse>(
+    const { data } = await caseServiceApi.post<CommonApiResponse>(
       getCreateTaskTemplateUrl(),
       body
     );
@@ -149,11 +151,10 @@ export const ExportTaskTemplateList = async (
 ): Promise<void> => {
   try {
     const filename = `task_templates.xlsx`;
-    const response =
-      await interactionServiceApi.post<ExportTaskTemplateResponse>(
-        getTaskTemplateExportUrl(),
-        params
-      );
+    const response = await caseServiceApi.post<ExportTaskTemplateResponse>(
+      getTaskTemplateExportUrl(),
+      params
+    );
     const base64Data = response.data?.data;
 
     if (!base64Data) {
@@ -182,19 +183,16 @@ export const ExportTaskTemplateList = async (
   }
 };
 // Task template type
-export const getTaskTemplateTypeUrl = (): string => '/api/taskTemplates/type';
+export const getTaskTemplateTypeUrl = (): string =>
+  '/api/caseManagement/taskTemplate/taskType';
 
 export const fetchTaskTemplateTypes =
   async (): Promise<TaskTemplateTypeResponse> => {
     try {
-      //   const { data } =
-      //     await interactionServiceApi.get<TaskTemplateTypeResponse>(
-      //       getTaskTemplateTypeUrl()
-      //     );
-      //   return data;
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      return TaskTemplateTypeMockData;
+      const { data } = await caseServiceApi.get<TaskTemplateTypeResponse>(
+        getTaskTemplateTypeUrl()
+      );
+      return data;
     } catch (error) {
       console.error('Error fetching task template types:', error);
       throw error;
@@ -205,6 +203,119 @@ export const useGetTaskTemplateTypes = () => {
   return useQuery<TaskTemplateTypeResponse, Error>({
     queryKey: ['task-template-types'],
     queryFn: fetchTaskTemplateTypes,
+    retry: 0,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  });
+};
+
+// Task milestone type
+export const getTaskMilestoneTypeUrl = (): string =>
+  '/api/caseManagement/caseMilestones';
+
+export const fetchTaskMilestoneTypes =
+  async (): Promise<TaskMilestoneTypeResponse> => {
+    try {
+      const { data } = await caseServiceApi.get<TaskMilestoneTypeResponse>(
+        getTaskMilestoneTypeUrl()
+      );
+      return data;
+    } catch (error) {
+      console.error('Error fetching task template types:', error);
+      throw error;
+    }
+  };
+
+export const useGetTaskMilestoneTypes = () => {
+  return useQuery<TaskMilestoneTypeResponse, Error>({
+    queryKey: ['task-milestone-types'],
+    queryFn: fetchTaskMilestoneTypes,
+    retry: 0,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  });
+};
+// Task priority type
+export const getTaskPriorityTypeUrl = (): string =>
+  '/api/caseManagement/priority';
+
+export const fetchTaskPriorityTypes =
+  async (): Promise<TaskPiriorityTypeResponse> => {
+    try {
+      const { data } = await caseServiceApi.get<TaskPiriorityTypeResponse>(
+        getTaskPriorityTypeUrl()
+      );
+      return data;
+    } catch (error) {
+      console.error('Error fetching task template types:', error);
+      throw error;
+    }
+  };
+
+export const useGetTaskPriorityTypes = () => {
+  return useQuery<TaskPiriorityTypeResponse, Error>({
+    queryKey: ['task-priority-types'],
+    queryFn: fetchTaskPriorityTypes,
+    retry: 0,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  });
+};
+// Task checklist type
+export const getTaskChecklistTypeUrl = (): string =>
+  '/api/caseManagement/checklist';
+
+export const fetchTaskCheckListTypes =
+  async (): Promise<TaskCheckListTypeResponse> => {
+    try {
+      const { data } = await caseServiceApi.get<TaskCheckListTypeResponse>(
+        getTaskChecklistTypeUrl()
+      );
+      return data;
+    } catch (error) {
+      console.error('Error fetching task template types:', error);
+      throw error;
+    }
+  };
+
+export const useGetTaskCheckListTypes = () => {
+  return useQuery<TaskCheckListTypeResponse, Error>({
+    queryKey: ['task-checklist-types'],
+    queryFn: fetchTaskCheckListTypes,
+    retry: 0,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  });
+};
+// Task assign role type
+export const getTaskAssignerRoleTypeUrl = (): string =>
+  '/api/cases/caseTeamRoles';
+
+export const fetchTaskAssigneRoleTypes =
+  async (): Promise<TaskAssigneRoleTypeResponse> => {
+    try {
+      const { data } = await caseServiceApi.get<TaskAssigneRoleTypeResponse>(
+        getTaskAssignerRoleTypeUrl()
+      );
+      return data;
+    } catch (error) {
+      console.error('Error fetching task template types:', error);
+      throw error;
+    }
+  };
+
+export const useGetTaskAssigneRoleTypes = () => {
+  return useQuery<TaskAssigneRoleTypeResponse, Error>({
+    queryKey: ['task-assignerole-types'],
+    queryFn: fetchTaskAssigneRoleTypes,
     retry: 0,
     staleTime: Infinity,
     gcTime: Infinity,

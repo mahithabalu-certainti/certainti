@@ -23,9 +23,56 @@ export const getTaskTemplateColumns =
     },
     {
       id: 'task_name',
+      // editable:'task_name',
       sortId: 'task_name',
       label: 'Task Name',
       width: 160,
+      sortable: true,
+    },
+    {
+      id: 'efforts',
+      sortId: 'efforts',
+      label: 'Efforts In Days',
+      width: 140,
+      sortable: true,
+      render: (row) =>
+        row.efforts !== null && row.efforts !== undefined ? row.efforts : '-',
+    },
+    {
+      id: 'reminder_interval',
+      sortId: 'reminder_interval',
+      label: 'Reminder Interval',
+      width: 150,
+      sortable: true,
+      render: (row) =>
+        row.efforts !== null && row.efforts !== undefined ? row.efforts : '-',
+    },
+    {
+      id: 'milestone_type_rid',
+      sortId: 'milestone_type_rid',
+      label: 'Milestone Name',
+      width: 150,
+      sortable: true,
+    },
+    {
+      id: 'case_team_member_role_rid',
+      sortId: 'case_team_member_role_rid',
+      label: 'Assinge Role',
+      width: 120,
+      sortable: true,
+    },
+    {
+      id: 'priority_rid',
+      sortId: 'priority_rid',
+      label: 'Priority',
+      width: 120,
+      sortable: true,
+    },
+    {
+      id: 'checklist_template_rid',
+      sortId: 'checklist_template_rid',
+      label: 'Checklist',
+      width: 120,
       sortable: true,
     },
     {
@@ -34,23 +81,6 @@ export const getTaskTemplateColumns =
       label: 'Task Description',
       width: 300,
       sortable: true,
-    },
-    {
-      id: 'task_type',
-      sortId: 'task_type',
-      label: 'Task Type',
-      width: 140,
-      sortable: true,
-      render: (row) => row.task_type_name || '-',
-    },
-    {
-      id: 'efforts',
-      sortId: 'efforts',
-      label: 'Efforts (Hrs)',
-      width: 120,
-      sortable: true,
-      render: (row) =>
-        row.efforts !== null && row.efforts !== undefined ? row.efforts : '-',
     },
     {
       id: 'created_user_name',

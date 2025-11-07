@@ -41,11 +41,10 @@ export const TaskTemplateTable: React.FC<ITaskTemplateTableProps> = ({
   );
 
   const { data, isLoading, isError } = useTaskTemplateList(
-    { ...tableParams, filters: appliedFilters },
+    { ...tableParams, filter: appliedFilters },
     refreshTrigger
   );
   const totalItems = data?.count || 0;
-
   useEffect(() => {
     if (data?.taskTemplates) {
       setTaskTemplateList(data?.taskTemplates || []);
@@ -173,8 +172,8 @@ export const TaskTemplateTable: React.FC<ITaskTemplateTableProps> = ({
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
         // Sorting
-        sortBy={tableParams.sortBy}
-        sortOrder={tableParams.sortOrder}
+        sortBy={tableParams.sort}
+        sortOrder={tableParams.sort_by}
         onSort={handleSort}
       />
     </>

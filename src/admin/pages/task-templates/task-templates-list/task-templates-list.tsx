@@ -23,8 +23,9 @@ const TaskTemplates: React.FC = () => {
   const [tableParams, setTableParams] = useState<TaskTemplateListParams>({
     page: page,
     limit: 100,
-    sortBy: 'r_number',
-    sortOrder: 'ASC',
+    sort_by: 'ASC',
+    sort: '',
+    search: '',
   });
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [refreshTrigger, setRefreshTrigger] = useState<number>();
@@ -82,7 +83,7 @@ const TaskTemplates: React.FC = () => {
       onClick: () =>
         ExportTaskTemplateList({
           ...tableParams,
-          filters: appliedFilters,
+          filter: appliedFilters,
           timezone: systemTimezone,
         }),
     },
