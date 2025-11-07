@@ -38,8 +38,6 @@ const requiredDateOptions: { label: string; value: string }[] = [
 ];
 
 export const getChecklistTemplateFilterFields = (
-  checklistTypes: FilterSelectOption[],
-  checklistLevels: FilterSelectOption[],
   statusOptions: FilterSelectOption[],
   permissionMap: Record<string, { read: boolean; edit: boolean }>
 ): FieldConfig[] => {

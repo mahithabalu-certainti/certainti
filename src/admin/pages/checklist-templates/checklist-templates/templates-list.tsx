@@ -15,9 +15,7 @@ import { CHECKLIST_TEMPLATES_CREATE } from '../../../../routes';
 import { getChecklistTemplateFilterFields } from './helpers';
 import {
   ExportChecklistTemplateAllList,
-  useGetChecklistLevels,
   useGetChecklistStatus,
-  useGetChecklistTypes,
 } from '../../../service/checklist-templates/checklist-template-service';
 import { AllModules, AllPermissions } from '../../../../common-service';
 import { useSelector } from 'react-redux';
@@ -121,8 +119,6 @@ const ChecklistTemplates: React.FC = () => {
     }
   };
 
-  const checklistTypes = useGetChecklistTypes();
-  const checklistLevel = useGetChecklistLevels();
   const checklistStatus = useGetChecklistStatus();
 
   const statusOptions = useMemo(
@@ -132,24 +128,6 @@ const ChecklistTemplates: React.FC = () => {
         value: status.rid,
       })) || [],
     [checklistStatus.data?.data?.checklistStatus]
-  );
-
-  const memoizedChecklistTypes = useMemo(
-    () =>
-      checklistTypes.data?.data?.checklistTypes?.map((type) => ({
-        label: type.checklist_type_name,
-        value: type.rid,
-      })) || [],
-    [checklistTypes.data?.data?.checklistTypes]
-  );
-
-  const memoizedChecklistLevel = useMemo(
-    () =>
-      checklistLevel.data?.data?.checklistLevel?.map((status) => ({
-        label: status.checklist_level_name,
-        value: status.rid,
-      })) || [],
-    [checklistLevel.data?.data?.checklistLevel]
   );
 
   const MENU_ITEMS = [
@@ -166,8 +144,6 @@ const ChecklistTemplates: React.FC = () => {
   ];
 
   const templateFilterfields = getChecklistTemplateFilterFields(
-    memoizedChecklistTypes,
-    memoizedChecklistLevel,
     statusOptions,
     permissionMap
   );

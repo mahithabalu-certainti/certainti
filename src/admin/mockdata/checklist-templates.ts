@@ -1,74 +1,9 @@
 import {
   ChecklistTemplateDetailsResponse,
-  ChecklistTemplateListResponse,
   ChecklistLevelApiResponse,
   ChecklistStatusApiResponse,
   ChecklistTypeApiResponse,
 } from '../types';
-
-export const ChecklistTemplatesMockData: ChecklistTemplateListResponse = {
-  statusCode: 200,
-  statusCodeValue: 'Success',
-  statusMessage: 'Operation completed successfully!',
-  data: {
-    page: 1,
-    limit: 100,
-    totalCount: 3,
-    checklists: [
-      {
-        rid: 'D001-7a13b410-ba31-43b0-b260-4a61fddd2d97',
-        r_number: 'CHK-0000000001',
-        checklist_name: 'Client Onboarding Checklist',
-        checklist_type: 'Internal Audit',
-        checklist_level: 'Account',
-        description:
-          'Checklist used to ensure all required steps are completed during client onboarding.',
-        status: 'D001-sts-0001',
-        status_name: 'Active',
-        created_by: 'D001-09c06141-8832-472f-9a88-74cd917a45bb',
-        modified_by: 'D001-09c06141-8832-472f-9a88-74cd917a45bb',
-        created_user_name: 'Super User Certainti',
-        modified_user_name: 'Super User Certainti',
-        created_datetime: '2025-10-07T12:50:44.769+00:00',
-        modified_datetime: '2025-10-07T13:15:22.668+00:00',
-      },
-      {
-        rid: 'D001-9c52e812-ff87-42c1-b2f3-6612accc4e10',
-        r_number: 'CHK-0000000002',
-        checklist_name: 'Project Closure Checklist',
-        checklist_type: 'External Audit',
-        checklist_level: 'Project',
-        description:
-          'Ensures all deliverables, documentation, and feedback are finalized before project closure.',
-        status: 'D001-sts-0001',
-        status_name: 'Active',
-        created_by: 'D001-12c06141-8832-472f-9a88-74cd917a45bb',
-        modified_by: null,
-        created_user_name: 'Quality Manager',
-        modified_user_name: null,
-        created_datetime: '2025-10-05T09:32:44.769+00:00',
-        modified_datetime: null,
-      },
-      {
-        rid: 'D001-22c3a510-7712-43d1-a1c1-2e92bdcd1f44',
-        r_number: 'CHK-0000000003',
-        checklist_name: 'Security Audit Checklist',
-        checklist_type: 'Compliance',
-        checklist_level: 'Interaction',
-        description:
-          'Verifies security controls, access management, and data protection compliance across systems.',
-        status: 'D001-sts-0002',
-        status_name: 'Inactive',
-        created_by: 'D001-14d08141-8832-472f-9a88-74cd917a45bb',
-        modified_by: 'D001-22f09141-8832-472f-9a88-74cd917a45bb',
-        created_user_name: 'Compliance Admin',
-        modified_user_name: 'System Admin',
-        created_datetime: '2025-09-25T07:45:44.769+00:00',
-        modified_datetime: '2025-09-28T10:10:17.668+00:00',
-      },
-    ],
-  },
-};
 
 export const ChecklistTemplateDetailsMockData: ChecklistTemplateDetailsResponse =
   {
