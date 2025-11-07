@@ -168,6 +168,7 @@ export interface ConditionMenuItem<T extends RowData> {
   onClick: (row: T) => void;
   hide?: boolean;
   icon?: React.ElementType;
+  loading?: boolean;
   className?: string;
   iconStyle?: React.CSSProperties;
   disabled?: boolean;

@@ -979,57 +979,87 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     switch (field.type) {
       case 'text':
         return (
-          <input
-            type={field.type}
-            name={field.name}
-            placeholder={field.placeholder}
-            autoComplete='off'
-            className={
-              'placeholder-custom-color placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ' +
-              isError +
-              fieldDisabled +
-              (field.disabled
-                ? ' truncate overflow-hidden text-ellipsis whitespace-nowrap'
-                : '')
-            }
-            disabled={field.disabled}
-            onChange={(e) => {
-              const inputValue = e.target.value;
-              if (field.formatCostValue) {
-                const cleanValue = removeFormatCostValue(inputValue);
-                // Only format if it's a valid number
-                if (/^\d*\.?\d*$/.test(cleanValue)) {
-                  const formattedValue = formatCostValue(cleanValue);
-                  // Update the input display value
-                  e.target.value = formattedValue;
-                  // Store the clean value in form data for processing
-                  handleChange(cleanValue);
+          <div
+            className={`flex items-center w-full rounded-xs 
+    ${field.prefixValue ? 'focus-within:border focus-within:border-blue-400' : ''} 
+    ${field.error ? '' : 'border border-transparent'}
+  `}
+          >
+            {field.prefixValue && (
+              <Tooltip
+                title={field.prefixValue}
+                placement='top'
+                arrow
+                disableInteractive
+              >
+                <div
+                  className={`flex-shrink-0 max-w-[35%] pl-3 pr-1 py-1.5 h-[32px] flex items-center text-[13px]
+        rounded-l-xs border border-r overflow-hidden text-ellipsis whitespace-nowrap cursor-default
+        ${
+          field.error
+            ? 'border-red-500 bg-gray-100 text-gray-600'
+            : 'border-[#CBD6E2] bg-gray-100 text-gray-600'
+        }
+      `}
+                >
+                  <span className='block overflow-hidden text-ellipsis whitespace-nowrap'>
+                    {field.prefixValue}
+                  </span>
+                </div>
+              </Tooltip>
+            )}
+
+            <input
+              type={field.type}
+              name={field.name}
+              placeholder={field.placeholder}
+              autoComplete='off'
+              className={`placeholder-[#7D98B6] outline-none w-full sm:text-sm px-3 h-[32px]
+      ${field.prefixValue ? 'border-y border-r border-[#CBD6E2] rounded-r-xs' : 'border border-[#CBD6E2] rounded-xs focus:border-2 focus:border-blue-400'}
+      ${isError} ${fieldDisabled} ${
+        field.disabled
+          ? ' truncate overflow-hidden text-ellipsis whitespace-nowrap'
+          : ''
+      }`}
+              disabled={field.disabled}
+              onChange={(e) => {
+                const inputValue = e.target.value;
+                if (field.formatCostValue) {
+                  const cleanValue = removeFormatCostValue(inputValue);
+                  // Only format if it's a valid number
+                  if (/^\d*\.?\d*$/.test(cleanValue)) {
+                    const formattedValue = formatCostValue(cleanValue);
+                    // Update the input display value
+                    e.target.value = formattedValue;
+                    // Store the clean value in form data for processing
+                    handleChange(cleanValue);
+                  } else {
+                    handleChange(inputValue);
+                  }
                 } else {
                   handleChange(inputValue);
                 }
-              } else {
-                handleChange(inputValue);
-              }
-            }}
-            onBlur={(e) => {
-              if (field.formatCostValue) {
-                // Reformat on blur to ensure proper formatting
-                const inputValue = e.target.value;
-                const cleanValue = removeFormatCostValue(inputValue);
-                if (/^\d*\.?\d*$/.test(cleanValue) && cleanValue !== '') {
-                  const formattedValue = formatCostValue(cleanValue);
-                  e.target.value = formattedValue;
+              }}
+              onBlur={(e) => {
+                if (field.formatCostValue) {
+                  // Reformat on blur to ensure proper formatting
+                  const inputValue = e.target.value;
+                  const cleanValue = removeFormatCostValue(inputValue);
+                  if (/^\d*\.?\d*$/.test(cleanValue) && cleanValue !== '') {
+                    const formattedValue = formatCostValue(cleanValue);
+                    e.target.value = formattedValue;
+                  }
                 }
+              }}
+              value={
+                field.formatCostValue && fieldValue
+                  ? formatCostValue(fieldValue)
+                  : field.formatCostValue && field.defaultValue
+                    ? formatCostValue(field.defaultValue)
+                    : fieldValue || field.defaultValue || ''
               }
-            }}
-            value={
-              field.formatCostValue && fieldValue
-                ? formatCostValue(fieldValue)
-                : field.formatCostValue && field.defaultValue
-                  ? formatCostValue(field.defaultValue)
-                  : fieldValue || field.defaultValue || ''
-            }
-          />
+            />
+          </div>
         );
       case 'file':
         return (
@@ -1171,6 +1201,16 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 },
                 '&.Mui-disabled': {
                   backgroundColor: '#f3f4f6',
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    border: field.error
+                      ? '1px solid #ef4444 !important'
+                      : '1px solid #CBD6E2 !important',
+                    opacity: 1,
+                  },
+                  '& .MuiSelect-select': {
+                    color: '#7D98B6',
+                    WebkitTextFillColor: '#7D98B6',
+                  },
                 },
                 '& .MuiOutlinedInput-notchedOutline': {
                   border: field.error
@@ -1887,7 +1927,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           // Validate required fields
           if (field.required && !hasValue) {
             hasError = true;
-            return { ...field, error: 'Field is required' };
+            return {
+              ...field,
+              error: field.requiredErrorMessage || 'Field is required',
+            };
           }
 
           if (field.type === 'file' && logo) {
@@ -1943,6 +1986,113 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               if (!validation.isValid) {
                 hasError = true;
                 return { ...field, error: validation.error };
+              }
+            }
+          }
+
+          // Enhanced Date Validation for Case Dates
+          if (field.type === 'date' && constructFormData[field.name]) {
+            const dateValue = constructFormData[field.name] as string;
+
+            // Basic date format validation
+            if (!isValidDate(dateValue, 'YYYY-MM-DD')) {
+              hasError = true;
+              return {
+                ...field,
+                error: 'Please enter a valid date in YYYY-MM-DD format',
+              };
+            }
+
+            // Case-specific date validation
+            if (field.name === 'case_startdate') {
+              const plannedDate = constructFormData[
+                'planned_submission_date'
+              ] as string;
+              const statutoryDate = constructFormData[
+                'statutory_submission_date'
+              ] as string;
+
+              // Start Date must be ≤ Planned Submission Date
+              if (plannedDate && dayjs(dateValue).isAfter(dayjs(plannedDate))) {
+                hasError = true;
+                return {
+                  ...field,
+                  error:
+                    'Start Date must be before or equal to Planned Submission Date',
+                };
+              }
+
+              // Start Date must be ≤ Statutory Submission Date
+              if (
+                statutoryDate &&
+                dayjs(dateValue).isAfter(dayjs(statutoryDate))
+              ) {
+                hasError = true;
+                return {
+                  ...field,
+                  error:
+                    'Start Date must be before or equal to Statutory Submission Date',
+                };
+              }
+            }
+
+            if (field.name === 'planned_submission_date') {
+              const startDate = constructFormData['case_startdate'] as string;
+              const statutoryDate = constructFormData[
+                'statutory_submission_date'
+              ] as string;
+
+              // Planned Submission Date must be ≥ Start Date
+              if (startDate && dayjs(dateValue).isBefore(dayjs(startDate))) {
+                hasError = true;
+                return {
+                  ...field,
+                  error:
+                    'Planned Submission Date must be after or equal to Start Date', // Updated error message
+                };
+              }
+
+              // Planned Submission Date must be ≤ Statutory Submission Date
+              if (
+                statutoryDate &&
+                dayjs(dateValue).isAfter(dayjs(statutoryDate))
+              ) {
+                hasError = true;
+                return {
+                  ...field,
+                  error:
+                    'Planned Submission Date must be before or equal to Statutory Submission Date',
+                };
+              }
+            }
+
+            if (field.name === 'statutory_submission_date') {
+              const startDate = constructFormData['case_startdate'] as string;
+              const plannedDate = constructFormData[
+                'planned_submission_date'
+              ] as string;
+
+              // Statutory Submission Date must be ≥ Start Date
+              if (startDate && dayjs(dateValue).isBefore(dayjs(startDate))) {
+                hasError = true;
+                return {
+                  ...field,
+                  error:
+                    'Statutory Submission Date must be after or equal to Start Date',
+                };
+              }
+
+              // Statutory Submission Date must be ≥ Planned Submission Date
+              if (
+                plannedDate &&
+                dayjs(dateValue).isBefore(dayjs(plannedDate))
+              ) {
+                hasError = true;
+                return {
+                  ...field,
+                  error:
+                    'Statutory Submission Date must be after or equal to Planned Submission Date',
+                };
               }
             }
           }

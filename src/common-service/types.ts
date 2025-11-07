@@ -203,6 +203,7 @@ export enum AllModules {
   INTERACTIONS = 'interactions',
   INTERACTION_TEMPLATES = 'interaction_templates',
   EMAIL_TEMPLATES = 'email_templates',
+  CASES = 'cases',
 }
 
 export enum AllPermissions {
@@ -302,6 +303,14 @@ export enum AllPermissions {
   EMAIL_TEMPLATES_CREATE = 'email_templates_create',
   EMAIL_TEMPLATES_VIEW_EDIT = 'email_templates_view_edit',
   EMAIL_TEMPLATES_EXPORT = 'email_templates_export',
+  CASES_OVERVIEW = 'cases_overview',
+  CASES_TIMELINE = 'cases_timeline',
+  CASES_VIEW_EDIT = 'cases_view_edit',
+  CASES_TEAM_VIEW_EDIT = 'case_team_view_edit',
+  CASES_EXPORT = 'cases_export',
+  CASES_CREATE = 'cases_create',
+  CASES_DELETE = 'cases_delete',
+  QRE_PERCENT_HISTORY = 'projects_qre_history_view_edit',
 }
 
 export interface Country {

@@ -321,6 +321,7 @@ export interface accountByIdProps {
     industry_name: string;
   };
   business_details: string;
+  country_rid?: string;
   is_parent: boolean;
   parent_account: {
     account_name: string;
@@ -331,6 +332,7 @@ export interface accountByIdProps {
   annual_revenue: string;
   country: {
     country_name: string;
+    country_code: string;
   };
   region_details: {
     state_name: string;

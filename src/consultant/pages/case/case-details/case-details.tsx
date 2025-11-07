@@ -1,9 +1,6 @@
 import { Suspense, useEffect, useMemo, useState } from 'react';
-import { useLocation, useSearchParams } from 'react-router-dom';
-// import { AccountState } from '../../../../store/type';
-// import { RootState } from '../../../../store/store';
-// import { useSelector } from 'react-redux';
-import { ActionsDropdownItem } from '../../../../common-utils';
+import { useLocation, useParams, useSearchParams } from 'react-router-dom';
+import { useCaseDetails } from '../../../services/cases/case-service';
 import { ExportType, MenuItem, NotesListURLParams } from '../../../types';
 import { AllMenus, AllModules } from '../../../../common-service';
 import { InfoSection, PageHeader, SideMenuPanel } from '../../../../components';
@@ -20,29 +17,33 @@ import {
   NotesSideIcon,
   ProjectsSideIcon,
   ResourcesIcon,
+  SettingIcon,
   TechSummaryIcon,
 } from '../../../../assets';
 import { WorkBreakDown } from './work-breakdown';
-import { DisplayColumn } from '../../account-details/utils';
 import { CaseTeam } from './case-team';
+import { transformCaseData } from './utils';
+import { ActionsDropdownItem } from '../../../../common-utils';
 import { CaseNotes } from './case-notes';
 
 export const CaseDetails = () => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
-  //   const navigate = useNavigate();
+  const { caseId } = useParams();
+  const accountId = searchParams.get('accountID');
+  const {
+    data: caseData,
+    isLoading,
+    isError,
+  } = useCaseDetails(caseId ?? '', accountId ?? '');
 
-  const [caseDetails] = useState<DisplayColumn[]>([]);
-  //   const [accountDetailsForEdit, setAccountDetailsForEdit] =
-  //     useState<AccountFieldsApiResponse['data']>();
-  //   const { caseid } = useParams();
+  const caseHeaderDetails = useMemo(() => {
+    if (caseData) {
+      return transformCaseData(caseData);
+    }
+    return [];
+  }, [caseData]);
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
-  //   const { fiscalYear } = useSelector<RootState, AccountState>(
-  //     (state: RootState) => state.account
-  //   );
-  //   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
-  //   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
   const defaultTab = searchParams.get('list') ?? 'workBreakdown';
   const [activeKey, setActiveKey] = useState(defaultTab as string);
   //   const [toggleEnabled, setToggleEnabled] = useState(false);
@@ -128,11 +129,6 @@ export const CaseDetails = () => {
       setActiveKey(location.state.activeKey || listParam || 'workBreakdown');
     }
   }, [location.state, searchParams]);
-  // useEffect(() => {
-  //   if (data?.data) {
-  //     setCaseDetails(transformAccountData(data?.data, permissionMap));
-  //   }
-  // }, [data, permissionMap]);
 
   const menuItems: ActionsDropdownItem[] = [
     {
@@ -147,12 +143,6 @@ export const CaseDetails = () => {
     },
   ];
 
-  //   const handleEditAccount = () => {
-  //     navigate(ACCOUNT + '/edit/' + data?.data?.accountById?.rid, {
-  //       state: { accountDetailsForEdit },
-  //     });
-  //   };
-
   const handleActionsClick = () => {
     console.log('Actions clicked');
   };
@@ -160,7 +150,6 @@ export const CaseDetails = () => {
   const handleSettingsClick = () => {
     console.log('Settings clicked');
   };
-  // Set active key from location stat
 
   const renderContent = () => {
     switch (activeKey) {
@@ -205,32 +194,11 @@ export const CaseDetails = () => {
         icon: ProjectsSideIcon,
       },
       {
-        name: 'Financial Workings',
-        key: 'financialWorkings',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS,
-        disabled: false,
-        icon: FinancialIcon,
-      },
-      {
-        name: 'Case Review',
-        key: 'caseReview',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS,
-        disabled: false,
-        icon: CasesIcon,
-      },
-      {
         name: 'Case Team',
         key: 'caseTeam',
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
         icon: CasesIcon,
-      },
-      {
-        name: 'Assign Projects',
-        key: 'assignProjects',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS,
-        disabled: false,
-        icon: ProjectsSideIcon,
       },
       {
         name: 'Case Projects',
@@ -254,7 +222,14 @@ export const CaseDetails = () => {
         icon: ProjectsSideIcon,
       },
       {
-        name: 'Interaction',
+        name: 'Historical Submission',
+        key: 'historical_submission',
+        id: AllModules.PROJECT_INTERACTIONS,
+        disabled: false,
+        icon: InteractionsIcon,
+      },
+      {
+        name: 'Interactions',
         key: 'interaction',
         id: AllModules.PROJECT_INTERACTIONS,
         disabled: false,
@@ -268,6 +243,20 @@ export const CaseDetails = () => {
         icon: TechSummaryIcon,
       },
       {
+        name: 'Financial Workings',
+        key: 'financialWorkings',
+        id: AllMenus.FINANCIAL_HIGHLIGHTS,
+        disabled: false,
+        icon: FinancialIcon,
+      },
+      {
+        name: 'RD Credit Forms',
+        key: 'rd_credit_forms',
+        id: AllMenus.FINANCIAL_HIGHLIGHTS,
+        disabled: false,
+        icon: DetailsIcon,
+      },
+      {
         name: 'Dossier',
         key: 'dossier',
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
@@ -275,11 +264,11 @@ export const CaseDetails = () => {
         icon: DetailsIcon,
       },
       {
-        name: 'Survey',
-        key: 'survey',
+        name: 'Case Review',
+        key: 'caseReview',
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
-        icon: ChecklistIcon,
+        icon: CasesIcon,
       },
       {
         name: 'Activities',
@@ -309,6 +298,24 @@ export const CaseDetails = () => {
         disabled: false,
         icon: ChecklistIcon,
       },
+      {
+        name: 'Settings',
+        key: 'settings',
+        id: AllMenus.CONFIGURATION,
+        disabled: false,
+        hide: false,
+        icon: SettingIcon,
+        subMenu: [
+          {
+            name: 'Jurisdiction Configuration',
+            key: 'jurisdiction_configuration',
+            id: AllMenus.MANAGE_ACCOUNT_ACCESS,
+            disabled: false,
+            hide: false,
+            icon: ResourcesIcon,
+          },
+        ],
+      },
     ];
     return allMenus;
   }, []);
@@ -322,24 +329,17 @@ export const CaseDetails = () => {
       <div className='flex h-[60px]'>
         <PageHeader
           variant='sub'
-          placeholder='Case ID'
+          placeholder={'Case ID'}
           icon={
             <AccountDetailsIcon
               className='h-6 w-6 rounded'
               style={{ backgroundColor: '#4B9BFF' }}
             />
           }
-          title={'5005003'}
+          title={caseData?.r_number || ''}
+          isLoading={isLoading}
           totalRecords={5}
           actionItems={menuItems}
-          //   primaryButton={
-          //     isAccountFieldsEditable
-          //       ? {
-          //           label: 'Edit',
-          //           onClick: handleEditAccount,
-          //         }
-          //       : undefined
-          //   }
           onActionsClick={handleActionsClick}
           onSettingsClick={handleSettingsClick}
           showActions={false}
@@ -349,10 +349,11 @@ export const CaseDetails = () => {
         />
       </div>
       <InfoSection
-        columns={caseDetails}
-        loading={false}
-        error={undefined}
-        singleLineView={true}
+        columns={caseHeaderDetails}
+        loading={isLoading}
+        loadingRows={4}
+        error={isError}
+        className={!isError ? 'max-h-[140px] min-h-[140px]' : ''}
       />
       <div className='flex flex-1 flex-row w-full'>
         <div
@@ -374,7 +375,10 @@ export const CaseDetails = () => {
         </div>
         <div
           className='flex-1'
-          style={{ maxHeight: 'calc(100vh - 140px)', overflow: 'auto' }}
+          style={{
+            maxHeight: 'calc(100vh - 140px)',
+            overflow: 'auto',
+          }}
         >
           <Suspense fallback={null}>{renderContent()}</Suspense>
         </div>
