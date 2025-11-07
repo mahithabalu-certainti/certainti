@@ -1,4 +1,4 @@
-import { AdminTaskTemplatePayloadType, CreateTaskTemplateType, ICreateCases, ICreateCaseTeam, ICreateChecklist, ICreateChecklistTemplate, UpdateTaskTemplateType } from "../../utils/types";
+import { AdminTaskTemplatePayloadType, CreateTaskTemplateType, ICreateCases, ICreateCaseTeam, ICreateChecklist, ICreateChecklistTemplate, MilestoneResponse, UpdateTaskTemplateType } from "../../utils/types";
 
 export interface ICaseService {
   createCase(
@@ -179,5 +179,9 @@ export interface ICaseManagementService {
   fetchTaskTemplate(data : AdminTaskTemplatePayloadType, isExport : boolean, isGraphql : boolean, templateRid : string | null) : Promise<any>
   inlineEditTaskTemplate(data : any) : Promise<any>
   fetchTaskTypeForTemplate() : Promise<any>
-  getTaskTemplateDetailsById (rid : string) : Promise<any>
+  getTaskTemplateDetailsById (rid : string) : Promise<any>,
+  fetchKanbanBoardForCase(accountRid : string, caseRid : string): Promise<{
+    statusCode: number;
+    data: MilestoneResponse[];
+}>
 }

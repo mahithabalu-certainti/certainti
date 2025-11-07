@@ -386,3 +386,31 @@ export type TaskType = {
 export type TaskTypeResponse = {
   rid : string
 }
+
+export interface TaskData {
+  rid: string;
+  task_name: string;
+  r_number: string;
+  created_by: string;
+  sequence_no: number | null;
+  effort_in_days: number | null;
+  reminder_interval: number | null;
+  effective_start_datetime: string | Date | null;
+  effective_end_datetime: string | Date | null;
+  case_team_member_role_rid: string | null;
+  assigned_to: string | null;
+  status_rid: string | null;
+  priority_rid: string | null;
+  task_type_rid: string | null;
+  task_description: string | null;
+  checklists_count: number;
+}
+
+export interface MilestoneData {
+  rid: string;
+  milestone_name: string;
+  task_count: number;
+  tasks: TaskData[] | null;
+}
+
+export type MilestoneResponse = MilestoneData[];

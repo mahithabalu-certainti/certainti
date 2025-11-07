@@ -699,3 +699,54 @@ export const fetchMilestoneTaskTemplate = (taskTypeRid : string, filingTypeRid :
   return query;
 }
 
+export const fetchCaseTemplateData = (schemaName : string, caseRid : string, account_rid : string) => {
+  let query = 
+  `
+  WITH fetch_task AS (
+  SELECT cm.rid, 
+  array_agg(jsonb_build_object(
+  'rid', t.rid,
+  'task_name', t.task_name,
+  'r_number', t.r_number,
+  'created_by', t.created_by,
+  'sequence_no', t.sequence_no,
+  'effort_in_days', t.effort_in_days,
+  'reminder_interval', t.reminder_interval,
+  'effective_start_datetime', t.effective_start_datetime,
+  'effective_end_datetime', t.effective_end_datetime,
+  'case_team_member_role_rid', t.case_team_member_role_rid,
+  'assigned_to', ct.user_rid,
+  'status_rid', t.status_rid,
+  'priority_rid', t.priority_rid,
+  'task_type_rid', t.task_type_rid,
+  'task_description', t.task_description,
+  'milestone_template_rid', t.milestone_template_rid,
+  'checklists_count', (SELECT COUNT(DISTINCT chi.rid) FROM ${schemaName}.case_task ct LEFT JOIN ${schemaName}.checklists ch ON ch.checklist_template_rid = ct.checklist_template_rid LEFT JOIN ${schemaName}.checklist_items chi ON chi.case_checklist_rid = ch.rid WHERE ct.milestone_template_rid = cm.rid)
+  )ORDER BY t.sequence_no ASC) AS tasks
+  FROM 
+  ${schemaName}.case_milestone cm
+  LEFT JOIN ${schemaName}.case_task t ON t.milestone_template_rid = cm.rid
+  LEFT JOIN ${schemaName}.case_team ct ON ct.role_rid = t.case_team_member_role_rid AND ct.case_rid = '${caseRid}' AND ct.account_rid = '${account_rid}'
+  WHERE
+  t.milestone_template_rid = cm.rid
+  GROUP BY
+  cm.rid
+  )
+  SELECT array_agg(jsonb_build_object(
+  'rid', m.rid,
+  'milestone_name', m.milestone_name,
+  'task_count', (SELECT COUNT(DISTINCT ct.rid) FROM ${schemaName}.case_task ct LEFT JOIN ${schemaName}.case_milestone cm ON ct.milestone_template_rid = cm.rid where ct.milestone_template_rid = m.rid),
+  'tasks', ft.tasks
+  ))
+FROM
+${schemaName}.cases c
+LEFT JOIN ${schemaName}.case_milestone m ON m.case_rid = c.rid
+LEFT JOIN fetch_task ft ON ft.rid = m.rid
+WHERE
+c.rid = '${caseRid}'
+AND
+c.account_rid = '${account_rid}'
+  `
+return query;
+}
+

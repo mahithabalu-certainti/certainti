@@ -106,7 +106,8 @@ export const STATUS_MESSAGE = {
   jurisdictionNotFound: "No jurisdiction configuration found for this case",
   taskTypeFetchedSuccess : "Task Type fetched successfully",
   checkListNotFound:"Checklist not found",
-  checkListNotFoundError:"Checklist with the provided RID does not exist"
+  checkListNotFoundError:"Checklist with the provided RID does not exist",
+  caseBreakdownSuccess : "Work Breakdown fetched successfully"
 
 };
 
@@ -737,6 +738,41 @@ export const rawQueries = {
   },
   getStatusDetails (rid : string) {
     return `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid = '${rid}'`
+  },
+  getAllPriorityTypes (rid : any[]) {
+    let ids : string[] = []
+    if(rid.length > 0) {
+      ids.push(`${rid.map((d : any) => `'${d}'`).join(',')}`)
+      return `SELECT rid, priority_name FROM ${MAIN_SCHEMA_NAME}.case_priority WHERE rid IN (${ids})`
+    }
+  },
+  getAllUsers (rid : any[]) {
+    let ids : string[] = []
+    if(rid.length > 0) {
+      ids.push(`${rid.map((d : any) => `'${d}'`).join(',')}`)
+      return `SELECT rid, CONCAT(first_name,' ', last_name) AS name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (${ids})`
+    }
+  },
+  getAllTeamRoles (rid : any[]) {
+    let ids : string[] = []
+    if(rid.length > 0) {
+      ids.push(`${rid.map((d : any) => `'${d}'`).join(',')}`)
+      return `SELECT rid, role_name FROM ${MAIN_SCHEMA_NAME}.case_team_role WHERE rid IN (${ids})`
+    }
+  },
+  getAllTaskTypes (rid : any[]) {
+    let ids : string[] = []
+    if(rid.length > 0) {
+      ids.push(`${rid.map((d : any) => `'${d}'`).join(',')}`)
+      return `SELECT rid, task_type_name FROM ${MAIN_SCHEMA_NAME}.task_type WHERE rid IN (${ids})`
+    }
+  },
+  getAllStatus (rid : any[]) {
+    let ids : string[] = []
+    if(rid.length > 0) {
+      ids.push(`${rid.map((d : any) => `'${d}'`).join(',')}`)
+      return `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid IN (${ids})`
+    }
   }
 };
 
