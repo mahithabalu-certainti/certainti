@@ -516,4 +516,21 @@ export class CaseManagementService {
       }      
     }
   }
+  async getTaskTemplateDetailsById (rid : string) {
+    const mainDb = await this.getMainDb();
+    const result = await mainDb.query<AdminTaskTemplateResponseTypes>(fetchAdminTemplates(1,1, '', '', {},'', false, true, rid), {type : QueryTypes.SELECT});
+    if(result.length > 0) {
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        statusMessage : STATUS_MESSAGE.taskTemplateSuccess,
+        data : result[0]
+      }
+    } else {
+      return {
+        statusCode : HttpStatus.NOT_FOUND,
+        statusMessage : STATUS_MESSAGE.dataNotAvailable,
+        data : null
+      }
+    }
+  }
 }
