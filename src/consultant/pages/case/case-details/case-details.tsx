@@ -27,9 +27,10 @@ import { ActionsDropdownItem } from '../../../../common-utils';
 import { ExportType } from '../../../types';
 import { RootState } from '../../../../store/store';
 import { AccountState } from '../../../../store/type';
-import { Attachments } from './attachments';
+
 import { AttachmentsListExportParams } from '../../../types/attachment';
 import { useSelector } from 'react-redux';
+import { Attachments } from './attachments';
 
 export const CaseDetails = () => {
   const [searchParams] = useSearchParams();

@@ -1,46 +1,53 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { BUTTON_STYLES } from '../../../../admin/pages/manage-user-detail/styles';
-import { ListTable, ManageColumnsPopover } from '../../../../components/table';
+import {
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
+import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import {
   AllModules,
   AllPermissions,
   useGetAllDocumentInfo,
   useGetDocumentCategoryType,
-} from '../../../../common-service';
-import Uploads from '../../../../components/Attachments/upload';
-import { useLocation, useSearchParams } from 'react-router-dom';
-import { ExportType, SelectOption } from '../../../types';
-import { useAttachmentList } from '../../../services/attachments/attachments-service';
+} from '../../../../../common-service';
+import { ExportType, SelectOption } from '../../../../types';
 import {
   AttachmentList,
   AttachmentsListExportParams,
-} from '../../../types/attachment';
-import { SectionTabPanel } from '../../../../components';
-import { checkPermission, getFiscalYears } from '../../../../common-utils';
+} from '../../../../types/attachment';
+import { useToast } from '../../../../../hooks';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../store/store';
+import { useMutation } from '@apollo/client';
+import { ATTACHMENT_UPDATE } from '../../../../../api/graphql/queries/attachment-query';
+import { resourceClient } from '../../../../../api/graphql/clients/client';
+import { useAttachmentList } from '../../../../services/attachments/attachments-service';
+import { checkPermission, getFiscalYears } from '../../../../../common-utils';
+import { BUTTON_STYLES } from '../../../../../admin/pages/manage-user-detail/styles';
+import { FilterValue } from '../../../../types/account-filter';
 import {
   getAttachmentsFilterFields,
   getAttachmentTableColumns,
-} from '../../../../components/Attachments/helpers';
+} from '../../../../../components/Attachments/helpers';
 import {
   CellEditData,
   FieldChangeEvent,
   FieldChangeValue,
   ListTableColumn,
   ShowHideTableColumn,
-} from '../../../../components/table/types';
-import { ATTACHMENT_UPDATE } from '../../../../api/graphql/queries/attachment-query';
-import { resourceClient } from '../../../../api/graphql/clients/client';
-import { useMutation } from '@apollo/client';
-import { useToast } from '../../../../hooks';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../../../store/store';
-import { FilterValue } from '../../account-details-sidebar/components/filter/filterType';
-import { AccessRestricted } from '../../../../components/account-restricted';
-import { AttachmentsSideIcon } from '../../../../assets';
-import { ResourceTabs } from '../../account-details-sidebar/sidebar-pages/resources/resources';
-import ResourceTableHeader from '../../account-details-sidebar/sidebar-pages/resources/resource-table-header';
+} from '../../../../../components/table/types';
+import { AccessRestricted } from '../../../../../components/account-restricted';
+import { SectionTabPanel } from '../../../../../components';
+import Uploads from '../../../../../components/Attachments/upload';
+import ResourceTableHeader from '../../../account-details-sidebar/sidebar-pages/resources/resource-table-header';
+import { AttachmentsSideIcon } from '../../../../../assets';
+import {
+  ListTable,
+  ManageColumnsPopover,
+} from '../../../../../components/table';
 
 const AttachmentTabs: ResourceTabs[] = [
   {
@@ -70,6 +77,7 @@ export const Attachments: React.FC<AttachmentsProps> = ({
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const accountId = searchParams.get('accountID') || '';
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
   const { permission, modules } = useSelector(
     (state: RootState) => state.permission
@@ -111,9 +119,9 @@ export const Attachments: React.FC<AttachmentsProps> = ({
       sortBy: sortField,
       sortOrder: sortOrder,
       filters: appliedFilters,
-      attachmentLevel: 'account',
-      accountRid: 'D001-61c08383-92ec-4b84-97b5-337993d8144f',
-      entityId: caseId || 'D001-61c08383-92ec-4b84-97b5-337993d8144f',
+      attachmentLevel: 'case',
+      accountRid: accountId,
+      entityId: caseId || '',
       search: searchText,
       fiscalYear: convertedFiscalYear,
     },
@@ -358,7 +366,7 @@ export const Attachments: React.FC<AttachmentsProps> = ({
       },
       {
         rid: rowId,
-        account_rid: rowData.account_rid, // This needs to be handled for cases
+        account_rid: rowData.account_rid,
       }
     );
 
@@ -449,7 +457,7 @@ export const Attachments: React.FC<AttachmentsProps> = ({
       />
       {showUploads ? (
         <Uploads
-          accountId={caseId}
+          accountId={accountId}
           attachID={caseId}
           onUploadSuccess={onRefreshClick}
         />
