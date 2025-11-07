@@ -121,9 +121,9 @@ const ChecklistTemplateForm: React.FC = () => {
       setFormData((prev) => ({
         ...prev,
         checklist_name: templateData.checklist_name || '',
-        description: templateData.description || '',
+        description: templateData.checklist_description || '',
         status: templateData.status_rid || '',
-        rid: templateData.rid || '',
+        rid: templateData.checklist_template_rid || '',
         checklist_rid: templateData.r_number || '',
         created_by: templateData.created_by || '',
         created_on: templateData.created_datetime
@@ -134,10 +134,11 @@ const ChecklistTemplateForm: React.FC = () => {
           ? formatDateToYYYYMMDDWithTime(templateData.modified_datetime)
           : '',
         questions:
-          templateData.questions && templateData.questions.length > 0
-            ? templateData.questions.map((qus, index) => ({
-                question_seq_num: qus.question_seq_num || `SNO-${index + 1}`,
-                question: (qus.question || '').trim(),
+          templateData.checklist_items &&
+          templateData.checklist_items.length > 0
+            ? templateData.checklist_items.map((qus, index) => ({
+                question_seq_num: qus.sequence_no || `SNO-${index + 1}`,
+                question: (qus.checklist_item_name || '').trim(),
                 description: qus.description || '',
                 rid: qus.rid,
               }))

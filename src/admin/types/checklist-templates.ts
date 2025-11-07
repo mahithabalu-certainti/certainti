@@ -45,33 +45,26 @@ export interface ChecklistTemplateListResponse {
 }
 
 // Details
-export interface ChecklistTemplateQuestion {
+export interface ChecklistItem {
   rid: string;
-  question_seq_num: string;
-  question: string;
-  description?: string;
-  //   notes?: string;
-  //   is_mandatory?: boolean;
-  //   is_editable?: boolean;
+  checklist_item_name: string;
+  checklist_template_rid: string;
+  description: string;
+  sequence_no?: string;
 }
 
 export interface ChecklistTemplateDetails {
-  rid: string;
+  checklist_template_rid: string;
   checklist_name: string;
+  checklist_description: string;
   r_number: string;
-  checklist_type_rid: string;
-  checklist_type_name: string;
-  checklist_level_rid: string;
-  checklist_level_name: string;
-  description: string;
   status_rid: string;
   status_name: string;
   modified_by: string | null;
   created_by: string;
   created_datetime: string;
   modified_datetime: string | null;
-  expires_on: string;
-  questions: ChecklistTemplateQuestion[];
+  checklist_items: ChecklistItem[];
 }
 
 export interface ChecklistTemplateDetailsResponse {

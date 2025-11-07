@@ -2,10 +2,10 @@ import { REGEX_PATTERNS } from '../../../../common-utils';
 import {
   ChecklistTemplateDetails,
   ChecklistTemplateFormPayload,
-  ChecklistTemplateQuestion,
   ChecklistTemplateQuestionPayload,
   QustionActionType,
   CreateTemplatePayload,
+  ChecklistItem,
 } from '../../../types';
 
 export const COMMON_SELECT_STYLES = {
@@ -240,7 +240,7 @@ export const validateTemplateForm = (
 export const questionsTransformPayload = (
   formQuestions: ChecklistTemplateFormQuestion[],
   isEdit: boolean = false,
-  existingQuestions: ChecklistTemplateQuestion[] = []
+  existingQuestions: ChecklistItem[] = []
 ): ChecklistTemplateQuestionPayload[] => {
   const transformedQuestions: ChecklistTemplateQuestionPayload[] = [];
   const retainedRids = new Set<string>();
@@ -268,7 +268,7 @@ export const questionsTransformPayload = (
       if (existingQues.rid && !retainedRids.has(existingQues.rid)) {
         transformedQuestions.push({
           rid: existingQues.rid,
-          question: existingQues.question || '',
+          question: existingQues.checklist_item_name || '',
           description: existingQues.description || '',
           action_type: QustionActionType.Delete,
         });
@@ -287,7 +287,7 @@ export const transformChecklistTemplatePayload = (
   const transformedQuestions = questionsTransformPayload(
     formData.questions,
     isEditView,
-    originalData?.questions || []
+    originalData?.checklist_items || []
   );
 
   const payload: ChecklistTemplateFormPayload = {
@@ -300,7 +300,7 @@ export const transformChecklistTemplatePayload = (
   if (isEditView && originalData) {
     return {
       ...payload,
-      checklist_rid: originalData.rid,
+      checklist_rid: originalData.checklist_template_rid,
     };
   }
 
@@ -337,7 +337,7 @@ export const transformToEditTemplatePayload = (
   };
 
   const existingQuestionsMap = new Map(
-    existingTemplate.questions.map((q) => [q.rid, q])
+    existingTemplate.checklist_items.map((q) => [q.rid, q])
   );
 
   payload.checklist_items = formData.questions
@@ -348,7 +348,7 @@ export const transformToEditTemplatePayload = (
         if (existingQuestion) {
           existingQuestionsMap.delete(q.rid);
           if (
-            q.question.trim() !== existingQuestion.question.trim() ||
+            q.question.trim() !== existingQuestion.checklist_item_name.trim() ||
             q.description.trim() !== (existingQuestion.description || '').trim()
           ) {
             return {
@@ -380,7 +380,7 @@ export const transformToEditTemplatePayload = (
   existingQuestionsMap.forEach((q) => {
     payload.checklist_items.push({
       checklist_item_rid: q.rid,
-      checklist_item_name: q.question,
+      checklist_item_name: q.checklist_item_name,
       description: q.description || '',
       action_type: 'delete',
     });
