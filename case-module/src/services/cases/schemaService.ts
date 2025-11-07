@@ -330,8 +330,12 @@ class CaseSchemaService {
 
       if (historyChanges.length === 0) return;
 
-      await CaseHistory.bulkCreate(historyChanges);
+      // Use individual create operations to avoid sequence conflicts
+      for (const historyChange of historyChanges) {
+        await CaseHistory.create(historyChange);
+      }
     } catch (err) {
+      logMessage(`Error updating project history : ${JSON.stringify(err)}`);
       errorLog("Error updating project history : " + (err as Error).message);
       throw new Error(
         "Error updating project history : " + (err as Error).message
@@ -2469,6 +2473,30 @@ class CaseSchemaService {
       return [];
     }
   }
+  async getCaseOwners(
+) {
+   try {
+      if (!this.mainDbSequelize) {
+        this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+      }
+      const users = await this.mainDbSequelize.query(
+        rawQueries.getCaseOwners(),
+        {
+          type: "SELECT",
+        }
+      );
+      return users;
+    } catch (err) {
+      logMessage(`Error in fetching users for case team: ${err}`);
+      errorLog(
+        "Error in fetching users for case team:",
+        (err as Error).message
+      );
+      return [];
+    }
+  }
+
+  
 
   async listUsersForCaseTeam(accountRid: string) {
     try {

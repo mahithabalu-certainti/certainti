@@ -98,6 +98,11 @@ routes.get(
   checkUserStatusMiddleware("NA"),
   controller.caseController.listUsersForCaseTeam
 );
+routes.get(
+  "/caseOwners",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.listUserForCaseOwner
+);
 routes.post(
   "/checklist/create",
   checkUserStatusMiddleware("NA"),
