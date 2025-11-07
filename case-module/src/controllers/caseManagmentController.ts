@@ -414,7 +414,6 @@ async function exportAdminCheckList(req: Request, res: Response) {
         return moment
           .utc(convertedDate)
           .tz(isValidTZ ? value.timezone : "UTC")
-          .utcOffset("-012:30")
           .format("YYYY-MMM-DD, hh:mm:ss A");
        };
        if (result.statusCode === HttpStatus.SUCCESS) {
@@ -982,7 +981,7 @@ async function ExportAdminTaskTemplateList (req : Request, res : Response) {
         ? moment
             .utc(convertedDate)
             .tz(isValidTZ ? data.timezone : "UTC")
-            .utcOffset("-012:30")
+            .utcOffset("-05:30")
             .format("YYYY-MMM-DD, hh:mm:ss A")
         : null;
     };

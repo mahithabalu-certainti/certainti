@@ -401,6 +401,13 @@ export const rawQueries = {
     AND u.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active')
 	  order by name asc`
   },
+  getCaseOwners() {
+    return `
+      SELECT u.rid, CONCAT(u.first_name, ' ', u.last_name) AS name
+      FROM ${MAIN_SCHEMA_NAME}.user u
+        WHERE is_consultant_firm is true and u.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active')
+    ORDER BY name ASC`
+  },
   checkCaseTableExists(schemaName: string) {
     return `
     SELECT EXISTS (

@@ -1282,6 +1282,39 @@ export class CaseService {
     }
   }
 
+  /**
+   * Retrieves all available users who can be assigned as case owners.
+   *
+   * @returns {Promise<{
+   *   statusCode: number;
+   *   message: string;
+   *   errorMessage?: string;
+   *   data?: { caseOwners: any };
+   * }>} Result containing all eligible case owners or error information.
+   */
+  async getCaseOwner(
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { caseOwners: any };
+  }> {
+    try {
+      const caseOwners = await this.caseSchemaService.getCaseOwners();
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          caseOwners,
+        },
+      };
+    } catch (err) {
+      logMessage(`Error fetching case roles, ${err}`);
+      throw this.throwServiceError(err as Error);
+    }
+  }
+
   async exportAssignedProjects (data : any) {
     const result = await this.fetchProjectsForAssign(data, true, data.userId, true);
     if(result?.statusCode === HttpStatus.SUCCESS) {

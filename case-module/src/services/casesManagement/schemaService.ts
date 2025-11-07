@@ -678,13 +678,11 @@ async fetchChecklistTemplateDetailsById(
       const items = await AdminCheckListItem.findAll({
         attributes: [
           "rid",
-          "sequence_no",
           "checklist_item_name",
           "checklist_template_rid",
           "description"
           ],
         order: [
-          ["sequence_no", "ASC"],
           ["created_datetime", "ASC"],
         ],
         where: { $checklist_template_rid$: checklistId},
