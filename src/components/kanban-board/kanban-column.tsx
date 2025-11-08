@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { KanbanColumnProps } from './types';
+import { KanbanColumnProps, TaskDetails } from './types';
 import { useDroppable } from '@dnd-kit/core';
 import { AddIcon, ChevronDownIcon } from '../../assets';
 import {
@@ -15,6 +15,7 @@ interface ExtendedKanbanColumnProps extends KanbanColumnProps {
 
 const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
   column,
+  taskDetails,
   showTaskCount,
   showCommentCount,
   showProfileIndicator,
@@ -90,7 +91,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
 
   const handleAddTaskAtTop = () => {
     if (newTaskTitle.trim()) {
-      const newTask = {
+      const newTask: TaskDetails = {
         id: Date.now().toString(),
         title: newTaskTitle,
         status: 'To Do' as const,
@@ -111,7 +112,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
 
   const handleAddTaskAtBottom = () => {
     if (newBottomTaskTitle.trim()) {
-      const newTask = {
+      const newTask: TaskDetails = {
         id: Date.now().toString(),
         title: newBottomTaskTitle,
         status: 'To Do' as const,
@@ -286,15 +287,16 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
       )}
 
       <SortableContext
-        items={column.tasks.map((t) => t.id)}
+        items={column.tasks.map((t) => t.taskId)}
         strategy={verticalListSortingStrategy}
         disabled={!isDragable && !isDragablebetweenBoards}
       >
         <div className='space-y-2 mb-2'>
           {column.tasks.map((task) => (
             <TaskCard
-              key={task.id}
+              key={task.taskId}
               task={task}
+              taskDetails={taskDetails[task.taskId]}
               showCommentCount={showCommentCount}
               showProfileIndicator={showProfileIndicator}
               onEditTask={onEditTask}

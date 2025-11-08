@@ -16,7 +16,7 @@ export interface Activity {
   link?: string;
 }
 
-export interface Task {
+export interface TaskDetails {
   id: string;
   title: string;
   status: 'To Do' | 'In Progress' | 'Done';
@@ -35,15 +35,22 @@ export interface Task {
   activities?: Activity[];
 }
 
+export interface KanbanTask {
+  taskId: string;
+  rid?: string;
+}
+
 export interface KanbanColumn {
   id: string;
   name: string;
-  tasks: Task[];
+  tasks: KanbanTask[];
   taskCount: number;
+  rid?: string;
 }
 
 export interface KanbanBoardProps {
   data: KanbanColumn[];
+  taskDetails: Record<string, TaskDetails>;
   isCreateTaskDisabled?: boolean;
   isCreateTaskHide?: boolean;
   showCommentCount?: boolean;
@@ -58,18 +65,20 @@ export interface KanbanBoardProps {
 }
 
 export interface TaskCardProps {
-  task: Task;
+  task: KanbanTask;
+  taskDetails: TaskDetails;
   showCommentCount?: boolean;
   showProfileIndicator?: boolean;
   onEditTask?: (taskId: string, newTitle: string) => void;
-  onTaskClick?: (task: Task) => void;
+  onTaskClick?: (task: TaskDetails) => void;
   statusData?: Array<{ id: string; name: string; color: string }>;
   priorityData?: Array<{ id: string; name: string; color: string }>;
-  onTaskUpdate?: (taskId: string, updatedTask: Partial<Task>) => void;
+  onTaskUpdate?: (taskId: string, updatedTask: Partial<TaskDetails>) => void;
 }
 
 export interface KanbanColumnProps {
   column: KanbanColumn;
+  taskDetails: Record<string, TaskDetails>;
   showTaskCount?: boolean;
   showCommentCount?: boolean;
   showProfileIndicator?: boolean;
@@ -77,23 +86,38 @@ export interface KanbanColumnProps {
   isCreateTaskHide?: boolean;
   onAddTask: (
     columnId: string,
-    task?: Task,
+    task?: TaskDetails,
     position?: 'top' | 'bottom'
   ) => void;
   onRenameColumn?: (columnId: string, newName: string) => void;
   onDeleteColumn?: (columnId: string) => void;
   onEditTask?: (taskId: string, newTitle: string) => void;
-  onTaskClick?: (task: Task) => void;
+  onTaskClick?: (task: TaskDetails) => void;
 }
 
+export type TaskField =
+  | 'status'
+  | 'assignee'
+  | 'tags'
+  | 'priority'
+  | 'startDate'
+  | 'endDate'
+  | 'description'
+  | 'checklist'
+  | 'attachments'
+  | 'comments';
+
 export interface TaskDetailModalProps {
-  task: Task | null;
+  task: TaskDetails | null;
   isOpen: boolean;
   onClose: () => void;
-  onTaskUpdate: (taskId: string, updatedTask: Partial<Task>) => void;
+  onTaskUpdate: (taskId: string, updatedTask: Partial<TaskDetails>) => void;
   statusData?: Array<{ id: string; name: string; color: string }>;
   priorityData?: Array<{ id: string; name: string; color: string }>;
   tagData?: Array<{ id: string; name: string; color: string }>;
   availableUsers?: User[];
   activities?: Activity[];
+  fieldConfig?: Partial<
+    Record<TaskField, { isDisabled?: boolean; isHidden?: boolean }>
+  >;
 }

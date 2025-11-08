@@ -8,7 +8,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import KanbanBoard from '../../../../../components/kanban-board/kanban-board';
 import {
   mockUserData,
-  mockKanbanData,
+  mockKanbanColumnData,
+  mockTaskDetailsData,
 } from '../../../../../components/kanban-board/mock-data';
 
 const ConfigTabs: ResourceTabs[] = [
@@ -138,7 +139,8 @@ const WorkBreakDown = () => {
       <div className='border border-t-0 border-[#CBD6E2]'>
         {tabParam === 'milestone' && (
           <KanbanBoard
-            data={mockKanbanData}
+            data={mockKanbanColumnData}
+            taskDetails={mockTaskDetailsData}
             isCreateTaskDisabled={true}
             isCreateTaskHide={false}
             showCommentCount={true}

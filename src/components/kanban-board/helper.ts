@@ -1,4 +1,4 @@
-import { Assignee, User } from './types';
+import { Assignee, TaskDetails, User } from './types';
 
 export const generateInitials = (name: string): string => {
   if (!name) return 'U';
@@ -52,4 +52,33 @@ export const enrichUser = (user: User): User => {
 
 export const enrichUsers = (users: User[]): User[] => {
   return users.map(enrichUser);
+};
+
+export const enrichTaskDetails = (
+  task: TaskDetails,
+  users: User[]
+): TaskDetails => {
+  const enrichedAssignee =
+    users.find((u) => u.name === task.assignee.name) || task.assignee;
+
+  const enrichedCollaborators =
+    task.collaborators?.map(
+      (collaborator) =>
+        users.find((u) => u.name === collaborator.name) || collaborator
+    ) || [];
+
+  return {
+    ...task,
+    assignee: {
+      ...task.assignee,
+      initials:
+        enrichedAssignee.initials || generateInitials(enrichedAssignee.name),
+      color: enrichedAssignee.color || generateColorFromName(enrichedAssignee.name),
+    },
+    collaborators: enrichedCollaborators.map((c) => ({
+      ...c,
+      initials: c.initials || generateInitials(c.name),
+      color: c.color || generateColorFromName(c.name),
+    })),
+  };
 };

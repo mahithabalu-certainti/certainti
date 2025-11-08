@@ -1,4 +1,4 @@
-import { KanbanColumn, User, Task } from './types';
+import { KanbanColumn, User, TaskDetails } from './types';
 
 export const mockUserData: User[] = [
   { id: '1', name: 'John Doe', initials: 'JD', color: '#3B82F6' },
@@ -8,7 +8,7 @@ export const mockUserData: User[] = [
   { id: '5', name: 'David Brown', initials: 'DB', color: '#8B5CF6' },
 ];
 
-export const mockTaskDetails: Record<string, Task> = {
+export const mockTaskDetailsData: Record<string, TaskDetails> = {
   'task-1': {
     id: 'task-1',
     title: 'Design homepage wireframes',
@@ -306,171 +306,36 @@ export const mockTaskDetails: Record<string, Task> = {
   },
 };
 
-export const mockKanbanData: KanbanColumn[] = [
+export const mockKanbanColumnData: KanbanColumn[] = [
   {
     id: 'todo',
-    // rid: 'col-001',
+    rid: 'col-001',
     name: 'To Do',
     taskCount: 3,
     tasks: [
-      {
-        id: 'task-1',
-        title: 'Design homepage wireframes',
-        status: 'To Do',
-        priority: 'High',
-        assignee: { name: 'John Doe', initials: 'JD', color: '#3B82F6' },
-        commentCount: 5,
-        createdAt: new Date('2025-10-28'),
-      },
-      {
-        id: 'task-2',
-        title: 'Set up development environment',
-        status: 'To Do',
-        priority: 'Medium',
-        assignee: { name: 'Mike Johnson', initials: 'MJ', color: '#F59E0B' },
-        commentCount: 2,
-        createdAt: new Date('2025-10-30'),
-        checklist: [
-          { id: '2-1', text: 'Install Node.js and npm', completed: true },
-          {
-            id: '2-2',
-            text: 'Set up code editor with extensions',
-            completed: true,
-          },
-          { id: '2-3', text: 'Configure Git repository', completed: false },
-          { id: '2-4', text: 'Install project dependencies', completed: false },
-          { id: '2-5', text: 'Set up database connection', completed: false },
-          {
-            id: '2-6',
-            text: 'Configure environment variables',
-            completed: false,
-          },
-          { id: '2-7', text: 'Test development server', completed: false },
-        ],
-      },
-      {
-        id: 'task-3',
-        title: 'Research competitor analysis',
-        status: 'To Do',
-        priority: 'Low',
-        assignee: { name: 'Sarah Wilson', initials: 'SW', color: '#EF4444' },
-        commentCount: 1,
-        createdAt: new Date('2025-11-01'),
-      },
+      { taskId: 'task-1', rid: 'task-001' },
+      { taskId: 'task-2', rid: 'task-002' },
+      { taskId: 'task-3', rid: 'task-003' },
     ],
   },
   {
     id: 'in-progress',
-    // rid: 'col-002',
+    rid: 'col-002',
     name: 'In Progress',
     taskCount: 2,
     tasks: [
-      {
-        id: 'task-4',
-        title: 'Implement user authentication',
-        status: 'In Progress',
-        priority: 'High',
-        assignee: { name: 'David Brown', initials: 'DB', color: '#8B5CF6' },
-        commentCount: 8,
-        createdAt: new Date('2025-10-25'),
-        checklist: [
-          {
-            id: '4-1',
-            text: 'Review technical specifications',
-            completed: true,
-          },
-          { id: '4-2', text: 'Set up JWT token generation', completed: true },
-          { id: '4-3', text: 'Implement password encryption', completed: true },
-          { id: '4-4', text: 'Create login API endpoint', completed: false },
-          {
-            id: '4-5',
-            text: 'Add token validation middleware',
-            completed: false,
-          },
-          { id: '4-6', text: 'Test authentication flow', completed: false },
-          {
-            id: '4-7',
-            text: 'Add password reset functionality',
-            completed: false,
-          },
-          { id: '4-8', text: 'Implement session management', completed: false },
-        ],
-      },
-      {
-        id: 'task-5',
-        title: 'Create product landing page',
-        status: 'In Progress',
-        priority: 'Medium',
-        assignee: { name: 'Jane Smith', initials: 'JS', color: '#10B981' },
-        commentCount: 3,
-        createdAt: new Date('2025-10-28'),
-        checklist: [
-          { id: '5-1', text: 'Design landing page layout', completed: true },
-          { id: '5-2', text: 'Create hero section', completed: true },
-          { id: '5-3', text: 'Add product features section', completed: false },
-          { id: '5-4', text: 'Implement contact form', completed: false },
-          { id: '5-5', text: 'Add testimonials section', completed: false },
-          { id: '5-6', text: 'Optimize for mobile devices', completed: false },
-        ],
-      },
+      { taskId: 'task-4', rid: 'task-004' },
+      { taskId: 'task-5', rid: 'task-005' },
     ],
   },
   {
     id: 'done',
-    // rid: 'col-003',
+    rid: 'col-003',
     name: 'Done',
     taskCount: 2,
     tasks: [
-      {
-        id: 'task-6',
-        title: 'Database schema design',
-        status: 'Done',
-        priority: 'High',
-        assignee: { name: 'Mike Johnson', initials: 'MJ', color: '#F59E0B' },
-        commentCount: 12,
-        createdAt: new Date('2025-10-15'),
-        checklist: [
-          { id: '6-1', text: 'Analyze data requirements', completed: true },
-          { id: '6-2', text: 'Design user tables', completed: true },
-          { id: '6-3', text: 'Create content storage schema', completed: true },
-          { id: '6-4', text: 'Add indexes for performance', completed: true },
-          {
-            id: '6-5',
-            text: 'Set up foreign key constraints',
-            completed: true,
-          },
-          { id: '6-6', text: 'Test database migrations', completed: true },
-          { id: '6-7', text: 'Generate ER diagram', completed: true },
-        ],
-      },
-      {
-        id: 'task-7',
-        title: 'Project requirements gathering',
-        status: 'Done',
-        assignee: { name: 'Sarah Wilson', initials: 'SW', color: '#EF4444' },
-        commentCount: 6,
-        createdAt: new Date('2025-10-10'),
-        checklist: [
-          {
-            id: '7-1',
-            text: 'Conduct stakeholder interviews',
-            completed: true,
-          },
-          {
-            id: '7-2',
-            text: 'Document functional requirements',
-            completed: true,
-          },
-          {
-            id: '7-3',
-            text: 'Define technical specifications',
-            completed: true,
-          },
-          { id: '7-4', text: 'Create user stories', completed: true },
-          { id: '7-5', text: 'Set project timeline', completed: true },
-          { id: '7-6', text: 'Get stakeholder approval', completed: true },
-        ],
-      },
+      { taskId: 'task-6', rid: 'task-006' },
+      { taskId: 'task-7', rid: 'task-007' },
     ],
   },
 ];

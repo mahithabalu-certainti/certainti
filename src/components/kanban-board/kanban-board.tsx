@@ -2,7 +2,8 @@ import { lazy, Suspense, useMemo, useState } from 'react';
 import {
   KanbanBoardProps,
   KanbanColumn as KanbanColumnTypes,
-  Task,
+  TaskDetails,
+  TaskField,
 } from './types';
 import {
   closestCorners,
@@ -17,11 +18,13 @@ import {
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import KanbanColumn from './kanban-column';
 import { AddIcon } from '../../assets';
+import { enrichTaskDetails } from './helper';
 
 const TaskDetailModal = lazy(() => import('./task-detail-modal'));
 
 const KanbanBoard: React.FC<KanbanBoardProps> = ({
   data,
+  taskDetails: initialTaskDetails,
   isCreateTaskDisabled = false,
   isCreateTaskHide = false,
   showCommentCount = true,
@@ -35,10 +38,20 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   isDragablebetweenBoards = false,
 }) => {
   const [columns, setColumns] = useState<KanbanColumnTypes[]>(data);
+  const [taskDetails, setTaskDetails] =
+    useState<Record<string, TaskDetails>>(initialTaskDetails);
   const [isCreatingSection, setIsCreatingSection] = useState(false);
   const [newSectionName, setNewSectionName] = useState('');
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [selectedTask, setSelectedTask] = useState<TaskDetails | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const fieldConfig: Partial<
+    Record<TaskField, { isDisabled?: boolean; isHidden?: boolean }>
+  > = {
+    // Example configuration:
+    // priority: { isDisabled: true },
+    // description: { isHidden: true },
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -49,24 +62,26 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
   const handleAddTask = (
     columnId: string,
-    task?: Task,
+    task?: TaskDetails,
     position: 'top' | 'bottom' = 'bottom'
   ) => {
     if (task) {
-      setColumns(
-        columns.map((column) =>
+      const newTask = { taskId: task.id, rid: `task-${Date.now()}` };
+      setColumns((prev) =>
+        prev.map((column) =>
           column.id === columnId
             ? {
                 ...column,
                 tasks:
                   position === 'top'
-                    ? [task, ...column.tasks]
-                    : [...column.tasks, task],
+                    ? [newTask, ...column.tasks]
+                    : [...column.tasks, newTask],
                 taskCount: column.taskCount + 1,
               }
             : column
         )
       );
+      setTaskDetails((prev) => ({ ...prev, [task.id]: task }));
     }
   };
 
@@ -119,20 +134,21 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
     }
   };
 
-  const handleTaskClick = (task: Task) => {
-    setSelectedTask(task);
+  const handleTaskClick = (task: TaskDetails) => {
+    const enrichedTask = enrichTaskDetails(task, userData);
+    setSelectedTask(enrichedTask);
     setIsModalOpen(true);
   };
 
-  const handleTaskUpdate = (taskId: string, updatedTask: Partial<Task>) => {
-    setColumns(
-      columns.map((column) => ({
-        ...column,
-        tasks: column.tasks.map((task) =>
-          task.id === taskId ? { ...task, ...updatedTask } : task
-        ),
-      }))
-    );
+  const handleTaskUpdate = (
+    taskId: string,
+    updatedTask: Partial<TaskDetails>
+  ) => {
+    setTaskDetails((prev) => ({
+      ...prev,
+      [taskId]: { ...prev[taskId], ...updatedTask },
+    }));
+
     if (selectedTask && selectedTask.id === taskId) {
       setSelectedTask({ ...selectedTask, ...updatedTask });
     }
@@ -151,57 +167,46 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
     const { active, over } = event;
     if (!over) return;
 
-    // Find source and target columns
-    let sourceColumnId: string | null = null;
-    let targetColumnId: string | null = null;
+    const activeId = active.id.toString();
+    const overId = over.id.toString();
 
-    for (const column of columns) {
-      if (column.tasks.some((t) => t.id === active.id)) {
-        sourceColumnId = column.id;
-      }
-      if (column.tasks.some((t) => t.id === over.id)) {
-        targetColumnId = column.id;
-      }
+    const activeColumn = columns.find((col) =>
+      col.tasks.some((t) => t.taskId === activeId)
+    );
+    const overColumn = columns.find((col) => {
+      if (col.tasks.some((t) => t.taskId === overId)) return true;
+      return col.id === overId;
+    });
+
+    if (!activeColumn || !overColumn || activeColumn.id === overColumn.id) {
+      return;
     }
 
-    // Also check if over id is a column itself (dropping onto empty space)
-    if (columns.some((c) => c.id === over.id)) {
-      targetColumnId = over.id as string;
-    }
+    setColumns((prev) => {
+      const activeTaskIndex = activeColumn.tasks.findIndex(
+        (t) => t.taskId === activeId
+      );
+      const [movedTask] = activeColumn.tasks.splice(activeTaskIndex, 1);
 
-    if (!sourceColumnId || !targetColumnId) return;
-    if (sourceColumnId === targetColumnId) return;
+      const overTaskIndex = overColumn.tasks.findIndex(
+        (t) => t.taskId === overId
+      );
+      if (overTaskIndex !== -1) {
+        overColumn.tasks.splice(overTaskIndex, 0, movedTask);
+      } else {
+        overColumn.tasks.push(movedTask);
+      }
 
-    // Move task between columns
-    const sourceColumn = columns.find((c) => c.id === sourceColumnId);
-    const targetColumn = columns.find((c) => c.id === targetColumnId);
-
-    if (!sourceColumn || !targetColumn) return;
-
-    const taskIndex = sourceColumn.tasks.findIndex((t) => t.id === active.id);
-    if (taskIndex === -1) return;
-
-    const [movedTask] = sourceColumn.tasks.splice(taskIndex, 1);
-
-    setColumns([
-      ...columns.map((col) => {
-        if (col.id === sourceColumnId) {
-          return {
-            ...col,
-            tasks: sourceColumn.tasks,
-            taskCount: col.taskCount - 1,
-          };
+      return prev.map((col) => {
+        if (col.id === activeColumn.id) {
+          return { ...col, taskCount: col.tasks.length };
         }
-        if (col.id === targetColumnId) {
-          return {
-            ...col,
-            tasks: [...targetColumn.tasks, movedTask],
-            taskCount: col.taskCount + 1,
-          };
+        if (col.id === overColumn.id) {
+          return { ...col, taskCount: col.tasks.length };
         }
         return col;
-      }),
-    ]);
+      });
+    });
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -210,82 +215,41 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
     const { active, over } = event;
     if (!over) return;
 
-    let sourceColumnId: string | null = null;
-    let targetColumnId: string | null = null;
-    let overTaskId: string | null = null;
+    const activeId = active.id.toString();
+    const overId = over.id.toString();
 
-    // Find which column the dragged task belongs to
-    for (const column of columns) {
-      if (column.tasks.some((t) => t.id === active.id)) {
-        sourceColumnId = column.id;
-      }
-    }
+    const activeColumn = columns.find((col) =>
+      col.tasks.some((t) => t.taskId === activeId)
+    );
+    const overColumn = columns.find((col) => {
+      if (col.tasks.some((t) => t.taskId === overId)) return true;
+      return col.id === overId;
+    });
 
-    if (!sourceColumnId) return;
+    if (!activeColumn) return;
 
-    // Check if dropped on another task (within same column)
-    for (const column of columns) {
-      if (column.tasks.some((t) => t.id === over.id)) {
-        targetColumnId = column.id;
-        overTaskId = over.id as string;
-        break;
-      }
-    }
-
-    // Check if dropped on a column (empty space)
-    if (!targetColumnId && columns.some((c) => c.id === over.id)) {
-      targetColumnId = over.id as string;
-    }
-
-    if (!targetColumnId) return;
-
-    const sourceColumn = columns.find((c) => c.id === sourceColumnId)!;
-    const targetColumn = columns.find((c) => c.id === targetColumnId)!;
-
-    // Same column reordering (isDragable)
-    if (sourceColumnId === targetColumnId && isDragable) {
-      const activeIndex = sourceColumn.tasks.findIndex(
-        (t) => t.id === active.id
+    // Same column reordering
+    if (overColumn && activeColumn.id === overColumn.id && isDragable) {
+      const activeIndex = activeColumn.tasks.findIndex(
+        (t) => t.taskId === activeId
       );
-      const overIndex = overTaskId
-        ? sourceColumn.tasks.findIndex((t) => t.id === overTaskId)
-        : sourceColumn.tasks.length - 1;
+      const overIndex = activeColumn.tasks.findIndex(
+        (t) => t.taskId === overId
+      );
 
-      if (activeIndex !== -1 && overIndex !== -1 && activeIndex !== overIndex) {
-        const newTasks = arrayMove(sourceColumn.tasks, activeIndex, overIndex);
-        setColumns(
-          columns.map((col) =>
-            col.id === sourceColumnId ? { ...col, tasks: newTasks } : col
-          )
+      if (activeIndex !== overIndex) {
+        setColumns((prev) =>
+          prev.map((col) => {
+            if (col.id === activeColumn.id) {
+              return {
+                ...col,
+                tasks: arrayMove(col.tasks, activeIndex, overIndex),
+              };
+            }
+            return col;
+          })
         );
       }
-    }
-    // Cross-column moving (isDragablebetweenBoards)
-    else if (sourceColumnId !== targetColumnId && isDragablebetweenBoards) {
-      const taskIndex = sourceColumn.tasks.findIndex((t) => t.id === active.id);
-      if (taskIndex === -1) return;
-
-      const [movedTask] = sourceColumn.tasks.splice(taskIndex, 1);
-
-      setColumns(
-        columns.map((col) => {
-          if (col.id === sourceColumnId) {
-            return {
-              ...col,
-              tasks: sourceColumn.tasks,
-              taskCount: col.taskCount - 1,
-            };
-          }
-          if (col.id === targetColumnId) {
-            return {
-              ...col,
-              tasks: [...targetColumn.tasks, movedTask],
-              taskCount: col.taskCount + 1,
-            };
-          }
-          return col;
-        })
-      );
     }
   };
 
@@ -307,6 +271,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
                 <KanbanColumn
                   key={column.id}
                   column={column}
+                  taskDetails={taskDetails}
                   showTaskCount={showTaskCount}
                   showCommentCount={showCommentCount}
                   showProfileIndicator={showProfileIndicator}
@@ -368,6 +333,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
               tagData={tagData}
               availableUsers={userData}
               activities={selectedTask?.activities || []}
+              fieldConfig={fieldConfig}
             />
           )}
         </Suspense>
@@ -383,6 +349,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
             <KanbanColumn
               key={column.id}
               column={column}
+              taskDetails={taskDetails}
               showTaskCount={showTaskCount}
               showCommentCount={showCommentCount}
               showProfileIndicator={showProfileIndicator}
@@ -444,6 +411,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
             tagData={tagData}
             availableUsers={userData}
             activities={selectedTask?.activities || []}
+            fieldConfig={fieldConfig}
           />
         )}
       </Suspense>

@@ -12,11 +12,12 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   isOpen,
   onClose,
   onTaskUpdate,
-  statusData,
-  priorityData,
-  tagData,
+  statusData = [],
+  priorityData = [],
+  tagData = [],
   availableUsers = [],
   activities = [],
+  fieldConfig = {},
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedTask, setEditedTask] = useState(task);
@@ -346,79 +347,147 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
           </div>
 
           {/* Assignee */}
-          <div className='flex items-center justify-between'>
-            <span className='text-sm font-medium text-gray-600'>Assignee</span>
-            <div className='w-[200px]'>
-              <Select
-                name='assignee'
-                className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
-                onChange={(event: SelectChangeEvent<string>) => {
-                  const selectedUser = availableUsers.find(
-                    (user) => user.id === event.target.value
-                  );
-                  if (selectedUser) {
-                    handleAssigneeChange({
-                      name: selectedUser.name,
-                      initials: selectedUser.initials ?? '',
-                      color: selectedUser.color ?? '',
-                    });
-                  }
-                }}
-                value={getAssigneeForSelect()}
-                displayEmpty
-                fullWidth
-                size='small'
-                MenuProps={{
-                  PaperProps: {
-                    sx: {
-                      maxWidth: 300,
-                      maxHeight: 300,
-                      marginTop: '4px',
-                      zIndex: 40, // Lower than modal header (z-50)
-                      boxShadow:
-                        'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
-                      '& .MuiMenuItem-root': {
-                        fontSize: '13px',
-                        padding: '6px 12px',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
+          {!fieldConfig.assignee?.isHidden && (
+            <div className='flex items-center justify-between'>
+              <span className='text-sm font-medium text-gray-600'>
+                Assignee
+              </span>
+              <div className='w-[200px]'>
+                <Select
+                  name='assignee'
+                  disabled={fieldConfig.assignee?.isDisabled}
+                  className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
+                  onChange={(event: SelectChangeEvent<string>) => {
+                    const selectedUser = availableUsers.find(
+                      (user) => user.id === event.target.value
+                    );
+                    if (selectedUser) {
+                      handleAssigneeChange({
+                        name: selectedUser.name,
+                        initials: selectedUser.initials ?? '',
+                        color: selectedUser.color ?? '',
+                      });
+                    }
+                  }}
+                  value={getAssigneeForSelect()}
+                  displayEmpty
+                  fullWidth
+                  size='small'
+                  MenuProps={{
+                    PaperProps: {
+                      sx: {
+                        maxWidth: 300,
+                        maxHeight: 300,
+                        marginTop: '4px',
+                        zIndex: 40, // Lower than modal header (z-50)
+                        boxShadow:
+                          'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
+                        '& .MuiMenuItem-root': {
+                          fontSize: '13px',
+                          padding: '6px 12px',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        },
                       },
                     },
-                  },
-                }}
-                sx={{
-                  height: '32px',
-                  fontSize: '13px',
-                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    border: '2px solid #60A5FA',
-                  },
-                  '& .MuiOutlinedInput-root': {
-                    '&.Mui-focused': {
-                      boxShadow: 'none',
+                  }}
+                  sx={{
+                    height: '32px',
+                    fontSize: '13px',
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      border: '2px solid #60A5FA',
                     },
-                  },
-                  '.MuiSelect-select': {
-                    padding: '6px 6px',
-                    color: !editedTask?.assignee ? '#7D98B6' : 'black',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                  },
-                  '& .MuiOutlinedInput-notchedOutline': {
-                    border: '1px solid #CBD6E2',
-                    borderRadius: '2px',
-                  },
-                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                    border: '1px solid #CBD6E2',
-                  },
-                  '& svg': {
-                    color: '#7D98B6',
-                  },
-                }}
-                renderValue={() => {
-                  // Always show the task's assignee if it exists, regardless of availableUsers
-                  if (editedTask?.assignee) {
+                    '& .MuiOutlinedInput-root': {
+                      '&.Mui-focused': {
+                        boxShadow: 'none',
+                      },
+                    },
+                    '.MuiSelect-select': {
+                      padding: '6px 6px',
+                      color: !editedTask?.assignee ? '#7D98B6' : 'black',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                    },
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      border: '1px solid #CBD6E2',
+                      borderRadius: '2px',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      border: '1px solid #CBD6E2',
+                    },
+                    '& svg': {
+                      color: '#7D98B6',
+                    },
+                  }}
+                  renderValue={() => {
+                    // Always show the task's assignee if it exists, regardless of availableUsers
+                    if (editedTask?.assignee) {
+                      return (
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: '20px',
+                              height: '20px',
+                              borderRadius: '50%',
+                              backgroundColor: editedTask.assignee.color,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '10px',
+                              fontWeight: '600',
+                              color: 'white',
+                            }}
+                          >
+                            {editedTask.assignee.initials}
+                          </div>
+                          <span style={{ fontSize: '13px', color: 'black' }}>
+                            {editedTask.assignee.name}
+                          </span>
+                        </div>
+                      );
+                    }
+
                     return (
+                      <span
+                        style={{
+                          color: '#7D98B6',
+                          fontSize: '13px',
+                          fontWeight: '400',
+                        }}
+                      >
+                        Select User
+                      </span>
+                    );
+                  }}
+                >
+                  <MenuItem
+                    value=''
+                    sx={{
+                      color: '#425A76',
+                      fontSize: '13px',
+                      fontWeight: '500',
+                    }}
+                  >
+                    Select User
+                  </MenuItem>
+                  {availableUsers.map((user) => (
+                    <MenuItem
+                      sx={{
+                        color: '#425A76',
+                        fontSize: '13px',
+                        fontWeight: '500',
+                      }}
+                      key={user.id}
+                      value={user.id}
+                      title={user.name}
+                    >
                       <div
                         style={{
                           display: 'flex',
@@ -431,7 +500,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                             width: '20px',
                             height: '20px',
                             borderRadius: '50%',
-                            backgroundColor: editedTask.assignee.color,
+                            backgroundColor: user.color,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -440,489 +509,228 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                             color: 'white',
                           }}
                         >
-                          {editedTask.assignee.initials}
+                          {user.initials}
                         </div>
-                        <span style={{ fontSize: '13px', color: 'black' }}>
-                          {editedTask.assignee.name}
-                        </span>
+                        {user.name}
                       </div>
-                    );
-                  }
-
-                  return (
-                    <span
-                      style={{
-                        color: '#7D98B6',
-                        fontSize: '13px',
-                        fontWeight: '400',
-                      }}
-                    >
-                      Select User
-                    </span>
-                  );
-                }}
-              >
-                <MenuItem
-                  value=''
-                  sx={{
-                    color: '#425A76',
-                    fontSize: '13px',
-                    fontWeight: '500',
-                  }}
-                >
-                  Select User
-                </MenuItem>
-                {availableUsers.map((user) => (
-                  <MenuItem
-                    sx={{
-                      color: '#425A76',
-                      fontSize: '13px',
-                      fontWeight: '500',
-                    }}
-                    key={user.id}
-                    value={user.id}
-                    title={user.name}
-                  >
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: '20px',
-                          height: '20px',
-                          borderRadius: '50%',
-                          backgroundColor: user.color,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '10px',
-                          fontWeight: '600',
-                          color: 'white',
-                        }}
-                      >
-                        {user.initials}
-                      </div>
-                      {user.name}
-                    </div>
-                  </MenuItem>
-                ))}
-              </Select>
+                    </MenuItem>
+                  ))}
+                </Select>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Date Range */}
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <div className='grid grid-cols-2 gap-4'>
-              <div>
-                <label className='block text-xs font-medium text-gray-600 mb-1'>
-                  Start Date
-                </label>
-                <DatePicker
-                  value={formatDateForInput(editedTask?.startDate)}
-                  onChange={(newValue) =>
-                    handleStartDateChange(
-                      newValue ? dayjs(newValue).format('YYYY-MM-DD') : ''
-                    )
-                  }
-                  format='YYYY-MMM-DD'
-                  slots={{
-                    openPickerIcon: () => <CalendarIcon className='w-4 h-4' />,
-                    clearIcon: () => <CloseIcon className='w-2.5 h-2.5' />,
-                  }}
-                  slotProps={{
-                    field: { clearable: true },
-                    clearButton: {
-                      tabIndex: -1,
-                    },
-                    openPickerButton: {
-                      tabIndex: -1,
-                    },
-                    popper: {
-                      placement: 'bottom-start',
-                      sx: {
-                        '& .MuiPaper-root': {
-                          width: 'auto !important',
-                          minWidth: '280px !important',
-                          maxWidth: '320px !important',
-                        },
+              {!fieldConfig.startDate?.isHidden && (
+                <div>
+                  <label className='block text-xs font-medium text-gray-600 mb-1'>
+                    Start Date
+                  </label>
+                  <DatePicker
+                    disabled={fieldConfig.startDate?.isDisabled}
+                    value={formatDateForInput(editedTask?.startDate)}
+                    onChange={(newValue) =>
+                      handleStartDateChange(
+                        newValue ? dayjs(newValue).format('YYYY-MM-DD') : ''
+                      )
+                    }
+                    format='YYYY-MMM-DD'
+                    slots={{
+                      openPickerIcon: () => (
+                        <CalendarIcon className='w-4 h-4' />
+                      ),
+                      clearIcon: () => <CloseIcon className='w-2.5 h-2.5' />,
+                    }}
+                    slotProps={{
+                      field: { clearable: true },
+                      clearButton: {
+                        tabIndex: -1,
                       },
-                      modifiers: [
-                        {
-                          name: 'flip',
-                          enabled: true,
-                          options: {
-                            altBoundary: true,
-                            rootBoundary: 'viewport',
-                            padding: 8,
+                      openPickerButton: {
+                        tabIndex: -1,
+                      },
+                      popper: {
+                        placement: 'bottom-start',
+                        sx: {
+                          '& .MuiPaper-root': {
+                            width: 'auto !important',
+                            minWidth: '280px !important',
+                            maxWidth: '320px !important',
                           },
                         },
-                        {
-                          name: 'preventOverflow',
-                          enabled: true,
-                          options: {
-                            altAxis: true,
-                            altBoundary: true,
-                            tether: true,
-                            rootBoundary: 'viewport',
-                            padding: 8,
-                          },
-                        },
-                        {
-                          name: 'offset',
-                          options: {
-                            offset: [0, 4],
-                          },
-                        },
-                      ],
-                    },
-                    textField: {
-                      fullWidth: true,
-                      size: 'small',
-                      sx: {
-                        '& .MuiOutlinedInput-root': {
-                          height: '32px',
-                          borderRadius: '2px',
-                          '& input': {
-                            fontWeight: 400,
-                            fontSize: '13px',
-                            lineHeight: '21px',
-                            pl: '11px',
-                            '& ::placeholder': {
-                              color: '#7D98B6 !important',
+                        modifiers: [
+                          {
+                            name: 'flip',
+                            enabled: true,
+                            options: {
+                              altBoundary: true,
+                              rootBoundary: 'viewport',
+                              padding: 8,
                             },
-                            color: 'black !important',
-                            WebkitTextFillColor: 'black !important',
                           },
-                          '&:hover .MuiOutlinedInput-notchedOutline': {
-                            border: '1px solid #CBD6E2',
-                          },
-                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                            border: '2px solid #60A5FA',
-                          },
-                        },
-                      },
-                      placeholder: 'Select start date',
-                    },
-                  }}
-                />
-              </div>
-              <div>
-                <label className='block text-xs font-medium text-gray-600 mb-1'>
-                  Due Date
-                </label>
-                <DatePicker
-                  value={formatDateForInput(editedTask?.endDate)}
-                  onChange={(newValue) =>
-                    handleEndDateChange(
-                      newValue ? dayjs(newValue).format('YYYY-MM-DD') : ''
-                    )
-                  }
-                  minDate={getMinEndDate()}
-                  format='YYYY-MMM-DD'
-                  slots={{
-                    openPickerIcon: () => <CalendarIcon className='w-4 h-4' />,
-                    clearIcon: () => <CloseIcon className='w-2.5 h-2.5' />,
-                  }}
-                  slotProps={{
-                    field: { clearable: true },
-                    clearButton: {
-                      tabIndex: -1,
-                    },
-                    openPickerButton: {
-                      tabIndex: -1,
-                    },
-                    popper: {
-                      placement: 'bottom-start',
-                      sx: {
-                        '& .MuiPaper-root': {
-                          width: 'auto !important',
-                          minWidth: '280px !important',
-                          maxWidth: '320px !important',
-                        },
-                      },
-                      modifiers: [
-                        {
-                          name: 'flip',
-                          enabled: true,
-                          options: {
-                            altBoundary: true,
-                            rootBoundary: 'viewport',
-                            padding: 8,
-                          },
-                        },
-                        {
-                          name: 'preventOverflow',
-                          enabled: true,
-                          options: {
-                            altAxis: true,
-                            altBoundary: true,
-                            tether: true,
-                            rootBoundary: 'viewport',
-                            padding: 8,
-                          },
-                        },
-                        {
-                          name: 'offset',
-                          options: {
-                            offset: [0, 4],
-                          },
-                        },
-                      ],
-                    },
-                    textField: {
-                      fullWidth: true,
-                      size: 'small',
-                      sx: {
-                        '& .MuiOutlinedInput-root': {
-                          height: '32px',
-                          borderRadius: '2px',
-                          '& input': {
-                            fontWeight: 400,
-                            fontSize: '13px',
-                            lineHeight: '21px',
-                            pl: '11px',
-                            '& ::placeholder': {
-                              color: '#7D98B6 !important',
+                          {
+                            name: 'preventOverflow',
+                            enabled: true,
+                            options: {
+                              altAxis: true,
+                              altBoundary: true,
+                              tether: true,
+                              rootBoundary: 'viewport',
+                              padding: 8,
                             },
-                            color: 'black !important',
-                            WebkitTextFillColor: 'black !important',
                           },
-                          '&:hover .MuiOutlinedInput-notchedOutline': {
-                            border: '1px solid #CBD6E2',
+                          {
+                            name: 'offset',
+                            options: {
+                              offset: [0, 4],
+                            },
                           },
-                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                            border: '2px solid #60A5FA',
+                        ],
+                      },
+                      textField: {
+                        fullWidth: true,
+                        size: 'small',
+                        sx: {
+                          '& .MuiOutlinedInput-root': {
+                            height: '32px',
+                            borderRadius: '2px',
+                            '& input': {
+                              fontWeight: 400,
+                              fontSize: '13px',
+                              lineHeight: '21px',
+                              pl: '11px',
+                              '& ::placeholder': {
+                                color: '#7D98B6 !important',
+                              },
+                              color: 'black !important',
+                              WebkitTextFillColor: 'black !important',
+                            },
+                            '&:hover .MuiOutlinedInput-notchedOutline': {
+                              border: '1px solid #CBD6E2',
+                            },
+                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                              border: '2px solid #60A5FA',
+                            },
                           },
                         },
+                        placeholder: 'Select start date',
                       },
-                      placeholder: 'Select end date',
-                    },
-                  }}
-                />
-              </div>
+                    }}
+                  />
+                </div>
+              )}
+              {!fieldConfig.endDate?.isHidden && (
+                <div>
+                  <label className='block text-xs font-medium text-gray-600 mb-1'>
+                    Due Date
+                  </label>
+                  <DatePicker
+                    disabled={fieldConfig.endDate?.isDisabled}
+                    value={formatDateForInput(editedTask?.endDate)}
+                    onChange={(newValue) =>
+                      handleEndDateChange(
+                        newValue ? dayjs(newValue).format('YYYY-MM-DD') : ''
+                      )
+                    }
+                    minDate={getMinEndDate()}
+                    format='YYYY-MMM-DD'
+                    slots={{
+                      openPickerIcon: () => (
+                        <CalendarIcon className='w-4 h-4' />
+                      ),
+                      clearIcon: () => <CloseIcon className='w-2.5 h-2.5' />,
+                    }}
+                    slotProps={{
+                      field: { clearable: true },
+                      clearButton: {
+                        tabIndex: -1,
+                      },
+                      openPickerButton: {
+                        tabIndex: -1,
+                      },
+                      popper: {
+                        placement: 'bottom-start',
+                        sx: {
+                          '& .MuiPaper-root': {
+                            width: 'auto !important',
+                            minWidth: '280px !important',
+                            maxWidth: '320px !important',
+                          },
+                        },
+                        modifiers: [
+                          {
+                            name: 'flip',
+                            enabled: true,
+                            options: {
+                              altBoundary: true,
+                              rootBoundary: 'viewport',
+                              padding: 8,
+                            },
+                          },
+                          {
+                            name: 'preventOverflow',
+                            enabled: true,
+                            options: {
+                              altAxis: true,
+                              altBoundary: true,
+                              tether: true,
+                              rootBoundary: 'viewport',
+                              padding: 8,
+                            },
+                          },
+                          {
+                            name: 'offset',
+                            options: {
+                              offset: [0, 4],
+                            },
+                          },
+                        ],
+                      },
+                      textField: {
+                        fullWidth: true,
+                        size: 'small',
+                        sx: {
+                          '& .MuiOutlinedInput-root': {
+                            height: '32px',
+                            borderRadius: '2px',
+                            '& input': {
+                              fontWeight: 400,
+                              fontSize: '13px',
+                              lineHeight: '21px',
+                              pl: '11px',
+                              '& ::placeholder': {
+                                color: '#7D98B6 !important',
+                              },
+                              color: 'black !important',
+                              WebkitTextFillColor: 'black !important',
+                            },
+                            '&:hover .MuiOutlinedInput-notchedOutline': {
+                              border: '1px solid #CBD6E2',
+                            },
+                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                              border: '2px solid #60A5FA',
+                            },
+                          },
+                        },
+                        placeholder: 'Select end date',
+                      },
+                    }}
+                  />
+                </div>
+              )}
             </div>
           </LocalizationProvider>
 
           <div>
-            <h3 className='text-sm font-semibold text-gray-700 mb-3'>Fields</h3>
+            <h3 className='text-sm font-semibold text-gray-700 mb-3'>
+              Fields
+            </h3>
             <div className='border border-gray-200 rounded-lg divide-y divide-gray-200'>
               {/* Status Row */}
-              <div className='flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors'>
-                <div className='flex items-center gap-2'>
-                  <svg
-                    width='16'
-                    height='16'
-                    viewBox='0 0 24 24'
-                    fill='none'
-                    stroke='currentColor'
-                    strokeWidth='2'
-                    className='text-gray-500'
-                  >
-                    <polyline points='22 12 18 12 15 21 9 3 6 12 2 12'></polyline>
-                  </svg>
-                  <span className='text-sm text-gray-700'>Status</span>
-                </div>
-                <div className='w-[140px]'>
-                  <Select
-                    name='status'
-                    className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
-                    onChange={handleStatusChange}
-                    value={editedTask?.status || ''}
-                    displayEmpty
-                    fullWidth
-                    size='small'
-                    MenuProps={{
-                      PaperProps: {
-                        sx: {
-                          maxWidth: 300,
-                          maxHeight: 300,
-                          marginTop: '4px',
-                          zIndex: 40, // Lower than modal header (z-50)
-                          boxShadow:
-                            'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
-                          '& .MuiMenuItem-root': {
-                            fontSize: '13px',
-                            padding: '6px 12px',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                          },
-                        },
-                      },
-                    }}
-                    sx={{
-                      height: '32px',
-                      fontSize: '13px',
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        border: '2px solid #60A5FA',
-                      },
-                      '& .MuiOutlinedInput-root': {
-                        '&.Mui-focused': {
-                          boxShadow: 'none',
-                        },
-                      },
-                      '.MuiSelect-select': {
-                        padding: '6px 6px',
-                        color: !editedTask?.status ? '#7D98B6' : 'black',
-                      },
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        border: '1px solid #CBD6E2',
-                        borderRadius: '2px',
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        border: '1px solid #CBD6E2',
-                      },
-                      '& svg': {
-                        color: '#7D98B6',
-                      },
-                    }}
-                  >
-                    <MenuItem
-                      value=''
-                      sx={{
-                        color: '#425A76',
-                        fontSize: '13px',
-                        fontWeight: '500',
-                      }}
-                    >
-                      Select Status
-                    </MenuItem>
-                    {(
-                      statusData || [
-                        { id: '1', name: 'To Do', color: '#gray' },
-                        { id: '2', name: 'In Progress', color: '#blue' },
-                        { id: '3', name: 'Done', color: '#green' },
-                      ]
-                    ).map((status) => (
-                      <MenuItem
-                        sx={{
-                          color: '#425A76',
-                          fontSize: '13px',
-                          fontWeight: '500',
-                        }}
-                        key={status.id}
-                        value={status.name}
-                        title={status.name}
-                      >
-                        {status.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </div>
-              </div>
-
-              {/* Priority Row */}
-              <div className='flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors'>
-                <div className='flex items-center gap-2'>
-                  <svg
-                    width='16'
-                    height='16'
-                    viewBox='0 0 24 24'
-                    fill='none'
-                    stroke='currentColor'
-                    strokeWidth='2'
-                    className='text-gray-500'
-                  >
-                    <path d='M3 13h2v8H3z'></path>
-                    <path d='M9 3h2v18H9z'></path>
-                    <path d='M15 8h2v13h-2z'></path>
-                  </svg>
-                  <span className='text-sm text-gray-700'>Priority</span>
-                </div>
-                <div className='w-[140px]'>
-                  <Select
-                    name='priority'
-                    className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
-                    onChange={handlePriorityChange}
-                    value={editedTask?.priority || ''}
-                    displayEmpty
-                    fullWidth
-                    size='small'
-                    MenuProps={{
-                      PaperProps: {
-                        sx: {
-                          maxWidth: 300,
-                          maxHeight: 300,
-                          marginTop: '4px',
-                          zIndex: 40, // Lower than modal header (z-50)
-                          boxShadow:
-                            'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
-                          '& .MuiMenuItem-root': {
-                            fontSize: '13px',
-                            padding: '6px 12px',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                          },
-                        },
-                      },
-                    }}
-                    sx={{
-                      height: '32px',
-                      fontSize: '13px',
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        border: '2px solid #60A5FA',
-                      },
-                      '& .MuiOutlinedInput-root': {
-                        '&.Mui-focused': {
-                          boxShadow: 'none',
-                        },
-                      },
-                      '.MuiSelect-select': {
-                        padding: '6px 6px',
-                        color: !editedTask?.priority ? '#7D98B6' : 'black',
-                      },
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        border: '1px solid #CBD6E2',
-                        borderRadius: '2px',
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        border: '1px solid #CBD6E2',
-                      },
-                      '& svg': {
-                        color: '#7D98B6',
-                      },
-                    }}
-                  >
-                    <MenuItem
-                      value=''
-                      sx={{
-                        color: '#425A76',
-                        fontSize: '13px',
-                        fontWeight: '500',
-                      }}
-                    >
-                      Select Priority
-                    </MenuItem>
-                    {(
-                      priorityData || [
-                        { id: '1', name: 'Low', color: '#gray' },
-                        { id: '2', name: 'Medium', color: '#yellow' },
-                        { id: '3', name: 'High', color: '#red' },
-                      ]
-                    ).map((priority) => (
-                      <MenuItem
-                        sx={{
-                          color: '#425A76',
-                          fontSize: '13px',
-                          fontWeight: '500',
-                        }}
-                        key={priority.id}
-                        value={priority.name}
-                        title={priority.name}
-                      >
-                        {priority.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </div>
-              </div>
-
-              {/* Tags Row */}
-              <div className='px-4 py-3 hover:bg-gray-50 transition-colors'>
-                <div className='flex items-center justify-between mb-3'>
+              {!fieldConfig.status?.isHidden && (
+                <div className='flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors'>
                   <div className='flex items-center gap-2'>
                     <svg
                       width='16'
@@ -933,38 +741,27 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                       strokeWidth='2'
                       className='text-gray-500'
                     >
-                      <path d='M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z'></path>
-                      <line x1='7' y1='7' x2='7.01' y2='7'></line>
+                      <polyline points='22 12 18 12 15 21 9 3 6 12 2 12'></polyline>
                     </svg>
-                    <span className='text-sm text-gray-700'>Tags</span>
+                    <span className='text-sm text-gray-700'>Status</span>
                   </div>
                   <div className='w-[140px]'>
                     <Select
-                      name='tags'
+                      name='status'
+                      disabled={fieldConfig.status?.isDisabled}
                       className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
-                      onChange={(event: SelectChangeEvent<string[]>) => {
-                        const selectedTags = event.target.value as string[];
-                        setEditedTask((prev) =>
-                          prev ? { ...prev, tags: selectedTags } : null
-                        );
-                      }}
-                      value={editedTask?.tags || []}
+                      onChange={handleStatusChange}
+                      value={editedTask?.status || ''}
                       displayEmpty
                       fullWidth
                       size='small'
-                      multiple
-                      renderValue={() => (
-                        <span style={{ color: '#7D98B6', fontSize: '13px' }}>
-                          Add Tags
-                        </span>
-                      )}
                       MenuProps={{
                         PaperProps: {
                           sx: {
                             maxWidth: 300,
                             maxHeight: 300,
                             marginTop: '4px',
-                            zIndex: 40,
+                            zIndex: 40, // Lower than modal header (z-50)
                             boxShadow:
                               'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
                             '& .MuiMenuItem-root': {
@@ -989,11 +786,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                         },
                         '.MuiSelect-select': {
                           padding: '6px 6px',
-                          color: '#7D98B6',
-                          display: 'flex',
-                          alignItems: 'center',
-                          minHeight: '20px',
-                          overflow: 'hidden',
+                          color: !editedTask?.status ? '#7D98B6' : 'black',
                         },
                         '& .MuiOutlinedInput-notchedOutline': {
                           border: '1px solid #CBD6E2',
@@ -1007,84 +800,303 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                         },
                       }}
                     >
-                      {(
-                        tagData || [
-                          { id: '1', name: 'Bug', color: '#red' },
-                          { id: '2', name: 'Feature', color: '#blue' },
-                          { id: '3', name: 'Enhancement', color: '#green' },
-                        ]
-                      ).map((tag) => (
+                      <MenuItem
+                        value=''
+                        sx={{
+                          color: '#425A76',
+                          fontSize: '13px',
+                          fontWeight: '500',
+                        }}
+                      >
+                        Select Status
+                      </MenuItem>
+                      {statusData.map((status) => (
                         <MenuItem
                           sx={{
                             color: '#425A76',
                             fontSize: '13px',
                             fontWeight: '500',
-                            backgroundColor: editedTask?.tags?.includes(
-                              tag.name
-                            )
-                              ? '#EBF8FF'
-                              : 'inherit',
                           }}
-                          key={tag.id}
-                          value={tag.name}
-                          title={tag.name}
+                          key={status.id}
+                          value={status.name}
+                          title={status.name}
                         >
-                          <div
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '8px',
-                              width: '100%',
-                            }}
-                          >
-                            <input
-                              type='checkbox'
-                              checked={
-                                editedTask?.tags?.includes(tag.name) || false
-                              }
-                              onChange={() => {}}
-                              style={{ margin: 0, pointerEvents: 'none' }}
-                            />
-                            <span style={{ flex: 1 }}>{tag.name}</span>
-                          </div>
+                          {status.name}
                         </MenuItem>
                       ))}
                     </Select>
                   </div>
                 </div>
+              )}
 
-                {/* Horizontal Tags Display */}
-                {editedTask?.tags && editedTask.tags.length > 0 && (
-                  <div className='flex flex-wrap items-center gap-2 mt-2'>
-                    {editedTask.tags.map((tag, index) => (
-                      <div
-                        key={index}
-                        className='inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium hover:bg-blue-200 transition-colors group'
-                      >
-                        <span>{tag}</span>
-                        <button
-                          onClick={() => {
-                            const newTags =
-                              editedTask.tags?.filter((t) => t !== tag) || [];
-                            setEditedTask((prev) =>
-                              prev ? { ...prev, tags: newTags } : null
-                            );
-                          }}
-                          className='ml-1 text-blue-600 hover:text-red-600 transition-colors'
-                          title={`Remove ${tag}`}
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
+              {/* Priority Row */}
+              {!fieldConfig.priority?.isHidden && (
+                <div className='flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors'>
+                  <div className='flex items-center gap-2'>
+                    <svg
+                      width='16'
+                      height='16'
+                      viewBox='0 0 24 24'
+                      fill='none'
+                      stroke='currentColor'
+                      strokeWidth='2'
+                      className='text-gray-500'
+                    >
+                      <path d='M3 13h2v8H3z'></path>
+                      <path d='M9 3h2v18H9z'></path>
+                      <path d='M15 8h2v13h-2z'></path>
+                    </svg>
+                    <span className='text-sm text-gray-700'>Priority</span>
                   </div>
-                )}
-              </div>
+                  <div className='w-[140px]'>
+                    <Select
+                      name='priority'
+                      disabled={fieldConfig.priority?.isDisabled}
+                      className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
+                      onChange={handlePriorityChange}
+                      value={editedTask?.priority || ''}
+                      displayEmpty
+                      fullWidth
+                      size='small'
+                      MenuProps={{
+                        PaperProps: {
+                          sx: {
+                            maxWidth: 300,
+                            maxHeight: 300,
+                            marginTop: '4px',
+                            zIndex: 40, // Lower than modal header (z-50)
+                            boxShadow:
+                              'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
+                            '& .MuiMenuItem-root': {
+                              fontSize: '13px',
+                              padding: '6px 12px',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                            },
+                          },
+                        },
+                      }}
+                      sx={{
+                        height: '32px',
+                        fontSize: '13px',
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          border: '2px solid #60A5FA',
+                        },
+                        '& .MuiOutlinedInput-root': {
+                          '&.Mui-focused': {
+                            boxShadow: 'none',
+                          },
+                        },
+                        '.MuiSelect-select': {
+                          padding: '6px 6px',
+                          color: !editedTask?.priority ? '#7D98B6' : 'black',
+                        },
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          border: '1px solid #CBD6E2',
+                          borderRadius: '2px',
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          border: '1px solid #CBD6E2',
+                        },
+                        '& svg': {
+                          color: '#7D98B6',
+                        },
+                      }}
+                    >
+                      <MenuItem
+                        value=''
+                        sx={{
+                          color: '#425A76',
+                          fontSize: '13px',
+                          fontWeight: '500',
+                        }}
+                      >
+                        Select Priority
+                      </MenuItem>
+                      {priorityData.map((priority) => (
+                        <MenuItem
+                          sx={{
+                            color: '#425A76',
+                            fontSize: '13px',
+                            fontWeight: '500',
+                          }}
+                          key={priority.id}
+                          value={priority.name}
+                          title={priority.name}
+                        >
+                          {priority.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </div>
+                </div>
+              )}
+
+              {/* Tags Row */}
+              {!fieldConfig.tags?.isHidden && (
+                <div className='px-4 py-3 hover:bg-gray-50 transition-colors'>
+                  <div className='flex items-center justify-between mb-3'>
+                    <div className='flex items-center gap-2'>
+                      <svg
+                        width='16'
+                        height='16'
+                        viewBox='0 0 24 24'
+                        fill='none'
+                        stroke='currentColor'
+                        strokeWidth='2'
+                        className='text-gray-500'
+                      >
+                        <path d='M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z'></path>
+                        <line x1='7' y1='7' x2='7.01' y2='7'></line>
+                      </svg>
+                      <span className='text-sm text-gray-700'>Tags</span>
+                    </div>
+                    <div className='w-[140px]'>
+                      <Select
+                        name='tags'
+                        disabled={fieldConfig.tags?.isDisabled}
+                        className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
+                        onChange={(event: SelectChangeEvent<string[]>) => {
+                          const selectedTags = event.target.value as string[];
+                          setEditedTask((prev) =>
+                            prev ? { ...prev, tags: selectedTags } : null
+                          );
+                        }}
+                        value={editedTask?.tags || []}
+                        displayEmpty
+                        fullWidth
+                        size='small'
+                        multiple
+                        renderValue={() => (
+                          <span
+                            style={{ color: '#7D98B6', fontSize: '13px' }}
+                          >
+                            Add Tags
+                          </span>
+                        )}
+                        MenuProps={{
+                          PaperProps: {
+                            sx: {
+                              maxWidth: 300,
+                              maxHeight: 300,
+                              marginTop: '4px',
+                              zIndex: 40,
+                              boxShadow:
+                                'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
+                              '& .MuiMenuItem-root': {
+                                fontSize: '13px',
+                                padding: '6px 12px',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                              },
+                            },
+                          },
+                        }}
+                        sx={{
+                          height: '32px',
+                          fontSize: '13px',
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            border: '2px solid #60A5FA',
+                          },
+                          '& .MuiOutlinedInput-root': {
+                            '&.Mui-focused': {
+                              boxShadow: 'none',
+                            },
+                          },
+                          '.MuiSelect-select': {
+                            padding: '6px 6px',
+                            color: '#7D98B6',
+                            display: 'flex',
+                            alignItems: 'center',
+                            minHeight: '20px',
+                            overflow: 'hidden',
+                          },
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            border: '1px solid #CBD6E2',
+                            borderRadius: '2px',
+                          },
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            border: '1px solid #CBD6E2',
+                          },
+                          '& svg': {
+                            color: '#7D98B6',
+                          },
+                        }}
+                      >
+                        {tagData.map((tag) => (
+                          <MenuItem
+                            sx={{
+                              color: '#425A76',
+                              fontSize: '13px',
+                              fontWeight: '500',
+                              backgroundColor: editedTask?.tags?.includes(
+                                tag.name
+                              )
+                                ? '#EBF8FF'
+                                : 'inherit',
+                            }}
+                            key={tag.id}
+                            value={tag.name}
+                            title={tag.name}
+                          >
+                            <div
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                width: '100%',
+                              }}
+                            >
+                              <input
+                                type='checkbox'
+                                checked={
+                                  editedTask?.tags?.includes(tag.name) || false
+                                }
+                                onChange={() => {}}
+                                style={{ margin: 0, pointerEvents: 'none' }}
+                              />
+                              <span style={{ flex: 1 }}>{tag.name}</span>
+                            </div>
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </div>
+                  </div>
+
+                  {/* Horizontal Tags Display */}
+                  {editedTask?.tags && editedTask.tags.length > 0 && (
+                    <div className='flex flex-wrap items-center gap-2 mt-2'>
+                      {editedTask.tags.map((tag, index) => (
+                        <div
+                          key={index}
+                          className='inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium hover:bg-blue-200 transition-colors group'
+                        >
+                          <span>{tag}</span>
+                          <button
+                            onClick={() => {
+                              const newTags =
+                                editedTask.tags?.filter((t) => t !== tag) ||
+                                [];
+                              setEditedTask((prev) =>
+                                prev ? { ...prev, tags: newTags } : null
+                              );
+                            }}
+                            className='ml-1 text-blue-600 hover:text-red-600 transition-colors'
+                            title={`Remove ${tag}`}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
           {/* TC Checklist Section */}
-          {tcChecklistItems.length > 0 && (
+          {!fieldConfig.checklist?.isHidden && tcChecklistItems.length > 0 && (
             <div>
               <div className='flex items-center justify-between mb-3'>
                 <h3 className='text-sm font-semibold text-gray-700'>
@@ -1153,6 +1165,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                         checked={item.completed}
                         onChange={() => handleTcChecklistToggle(item.id)}
                         className='w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 focus:ring-2 cursor-pointer'
+                        disabled={fieldConfig.checklist?.isDisabled}
                       />
                       <span
                         className={`flex-1 text-sm transition-all duration-200 cursor-pointer ${
@@ -1161,7 +1174,10 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                             : 'text-gray-700'
                         }`}
                         style={{ fontSize: '13px' }}
-                        onClick={() => handleTcChecklistToggle(item.id)}
+                        onClick={() =>
+                          !fieldConfig.checklist?.isDisabled &&
+                          handleTcChecklistToggle(item.id)
+                        }
                       >
                         {item.text}
                       </span>
@@ -1192,185 +1208,204 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
             </div>
           )}
 
-          <div>
-            <h3 className='text-sm font-semibold text-gray-700 mb-3'>
-              Description
-            </h3>
-            <textarea
-              value={editedTask?.description || ''}
-              onChange={handleDescriptionChange}
-              placeholder=''
-              className='w-full bg-white border border-gray-300 rounded-lg p-3 text-sm resize-none focus:border-blue-500 focus:outline-none text-gray-900 placeholder-gray-500 min-h-[100px]'
-            />
-          </div>
-
-          <div>
-            <h3 className='text-sm font-semibold text-gray-700 mb-3'>
-              Attachments
-            </h3>
-            <div className='border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors cursor-pointer bg-gray-50'>
-              <input
-                type='file'
-                multiple
-                accept='*/*'
-                onChange={handleAttachmentChange}
-                className='hidden'
-                id='attachments-input'
+          {!fieldConfig.description?.isHidden && (
+            <div>
+              <h3 className='text-sm font-semibold text-gray-700 mb-3'>
+                Description
+              </h3>
+              <textarea
+                value={editedTask?.description || ''}
+                onChange={handleDescriptionChange}
+                placeholder=''
+                className='w-full bg-white border border-gray-300 rounded-lg p-3 text-sm resize-none focus:border-blue-500 focus:outline-none text-gray-900 placeholder-gray-500 min-h-[100px]'
+                disabled={fieldConfig.description?.isDisabled}
               />
-              <label
-                htmlFor='attachments-input'
-                className='cursor-pointer block'
-              >
-                <p className='text-sm text-gray-600'>
-                  📎 Click to upload attachments
-                </p>
-              </label>
             </div>
-            {editedTask?.attachments && editedTask.attachments.length > 0 && (
-              <div className='mt-3 space-y-2'>
-                {editedTask.attachments.map((file, idx) => (
-                  <div
-                    key={idx}
-                    className='text-xs text-gray-600 bg-gray-50 p-2 rounded flex items-center gap-2'
-                  >
-                    <span>📎</span> {file}
-                    <button
-                      onClick={() => handleRemoveAttachment(idx)}
-                      className='ml-auto text-red-500 hover:text-red-700 transition-colors'
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))}
+          )}
+
+          {!fieldConfig.attachments?.isHidden && (
+            <div>
+              <h3 className='text-sm font-semibold text-gray-700 mb-3'>
+                Attachments
+              </h3>
+              <div className='border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors cursor-pointer bg-gray-50'>
+                <input
+                  type='file'
+                  multiple
+                  accept='*/*'
+                  onChange={handleAttachmentChange}
+                  className='hidden'
+                  id='attachments-input'
+                  disabled={fieldConfig.attachments?.isDisabled}
+                />
+                <label
+                  htmlFor='attachments-input'
+                  className='cursor-pointer block'
+                >
+                  <p className='text-sm text-gray-600'>
+                    📎 Click to upload attachments
+                  </p>
+                </label>
               </div>
-            )}
-          </div>
-
-          {/* Comments and Activity Section */}
-          <div className='border-t border-gray-200 pt-6'>
-            <div className='flex gap-6 mb-4 border-b border-gray-200'>
-              <button
-                onClick={() => setActiveTab('comments')}
-                className={`text-sm font-medium pb-3 transition-colors ${
-                  activeTab === 'comments'
-                    ? 'text-gray-900 border-b-2 border-blue-500'
-                    : 'text-gray-600 hover:text-gray-800'
-                }`}
-              >
-                Comments
-              </button>
-              <button
-                onClick={() => setActiveTab('activity')}
-                className={`text-sm font-medium pb-3 transition-colors ${
-                  activeTab === 'activity'
-                    ? 'text-gray-900 border-b-2 border-blue-500'
-                    : 'text-gray-600 hover:text-gray-800'
-                }`}
-              >
-                All Activity
-              </button>
-            </div>
-
-            {/* Comments Tab */}
-            {activeTab === 'comments' && (
-              <div className='space-y-4'>
-                {/* Only show comments UI, not activity feed here */}
-                <div className='flex items-start gap-3 mt-6 pt-4 border-t border-gray-200'>
-                  <div
-                    className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 text-white'
-                    style={{ backgroundColor: task.assignee?.color || '#999' }}
-                  >
-                    {task.assignee?.initials || '?'}
-                  </div>
-                  <div className='flex-1 space-y-3'>
-                    <textarea
-                      value={comment}
-                      onChange={(e) => setComment(e.target.value)}
-                      placeholder='Add a comment'
-                      className='w-full bg-white border border-gray-300 rounded-lg p-3 text-sm resize-none focus:border-blue-500 focus:outline-none text-gray-900 placeholder-gray-500 min-h-[80px]'
-                    />
-                    <div className='border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors cursor-pointer bg-gray-50'>
-                      <input
-                        type='file'
-                        multiple
-                        onChange={handleCommentAttachmentChange}
-                        className='hidden'
-                        id='comment-attachments-input'
-                      />
-                      <label
-                        htmlFor='comment-attachments-input'
-                        className='cursor-pointer block'
+              {editedTask?.attachments &&
+                editedTask.attachments.length > 0 && (
+                  <div className='mt-3 space-y-2'>
+                    {editedTask.attachments.map((file, idx) => (
+                      <div
+                        key={idx}
+                        className='text-xs text-gray-600 bg-gray-50 p-2 rounded flex items-center gap-2'
                       >
-                        <p className='text-xs text-gray-600'>
-                          📎 Click to upload attachments
-                        </p>
-                      </label>
-                    </div>
-                    {editedTask?.commentAttachments &&
-                      editedTask.commentAttachments.length > 0 && (
-                        <div className='space-y-1'>
-                          {editedTask.commentAttachments.map((file, idx) => (
-                            <div
-                              key={idx}
-                              className='text-xs text-gray-600 bg-gray-50 p-2 rounded flex items-center gap-2'
-                            >
-                              <span>📎</span> {file}
-                              <button
-                                onClick={() =>
-                                  handleRemoveCommentAttachment(idx)
-                                }
-                                className='ml-auto text-red-500 hover:text-red-700 transition-colors'
-                              >
-                                Remove
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'activity' && (
-              <div className='space-y-3'>
-                {(task?.activities || []).length > 0 ? (
-                  (task?.activities || []).map((activity, idx) => (
-                    <div
-                      key={activity.id || idx}
-                      className='flex gap-3 pb-3 border-b border-gray-200 last:border-b-0'
-                    >
-                      <div className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 bg-amber-500 text-white'>
-                        {activity.user
-                          .split(' ')
-                          .map((n) => n[0])
-                          .join('')}
+                        <span>📎</span> {file}
+                        <button
+                          onClick={() => handleRemoveAttachment(idx)}
+                          className='ml-auto text-red-500 hover:text-red-700 transition-colors'
+                          disabled={fieldConfig.attachments?.isDisabled}
+                        >
+                          Remove
+                        </button>
                       </div>
-                      <div className='flex-1'>
-                        <p className='text-sm text-gray-700'>
-                          <span className='font-semibold'>{activity.user}</span>{' '}
-                          {activity.action}
-                          {activity.link && (
-                            <span className='text-blue-600'>
-                              {' '}
-                              {activity.link}
-                            </span>
-                          )}
-                        </p>
-                        <p className='text-xs text-gray-500 mt-1'>
-                          {activity.date}
-                        </p>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className='text-center py-4'>
-                    <p className='text-sm text-gray-500'>No activities yet</p>
+                    ))}
                   </div>
                 )}
+            </div>
+          )}
+
+          {/* Comments and Activity Section */}
+          {!fieldConfig.comments?.isHidden && (
+            <div className='border-t border-gray-200 pt-6'>
+              <div className='flex gap-6 mb-4 border-b border-gray-200'>
+                <button
+                  onClick={() => setActiveTab('comments')}
+                  className={`text-sm font-medium pb-3 transition-colors ${
+                    activeTab === 'comments'
+                      ? 'text-gray-900 border-b-2 border-blue-500'
+                      : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                >
+                  Comments
+                </button>
+                <button
+                  onClick={() => setActiveTab('activity')}
+                  className={`text-sm font-medium pb-3 transition-colors ${
+                    activeTab === 'activity'
+                      ? 'text-gray-900 border-b-2 border-blue-500'
+                      : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                >
+                  All Activity
+                </button>
               </div>
-            )}
-          </div>
+
+              {/* Comments Tab */}
+              {activeTab === 'comments' && (
+                <div className='space-y-4'>
+                  {/* Only show comments UI, not activity feed here */}
+                  <div className='flex items-start gap-3 mt-6 pt-4 border-t border-gray-200'>
+                    <div
+                      className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 text-white'
+                      style={{
+                        backgroundColor: task.assignee?.color || '#999',
+                      }}
+                    >
+                      {task.assignee?.initials || '?'}
+                    </div>
+                    <div className='flex-1 space-y-3'>
+                      <textarea
+                        value={comment}
+                        onChange={(e) => setComment(e.target.value)}
+                        placeholder='Add a comment'
+                        className='w-full bg-white border border-gray-300 rounded-lg p-3 text-sm resize-none focus:border-blue-500 focus:outline-none text-gray-900 placeholder-gray-500 min-h-[80px]'
+                        disabled={fieldConfig.comments?.isDisabled}
+                      />
+                      <div className='border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors cursor-pointer bg-gray-50'>
+                        <input
+                          type='file'
+                          multiple
+                          onChange={handleCommentAttachmentChange}
+                          className='hidden'
+                          id='comment-attachments-input'
+                          disabled={fieldConfig.comments?.isDisabled}
+                        />
+                        <label
+                          htmlFor='comment-attachments-input'
+                          className='cursor-pointer block'
+                        >
+                          <p className='text-xs text-gray-600'>
+                            📎 Click to upload attachments
+                          </p>
+                        </label>
+                      </div>
+                      {editedTask?.commentAttachments &&
+                        editedTask.commentAttachments.length > 0 && (
+                          <div className='space-y-1'>
+                            {editedTask.commentAttachments.map((file, idx) => (
+                              <div
+                                key={idx}
+                                className='text-xs text-gray-600 bg-gray-50 p-2 rounded flex items-center gap-2'
+                              >
+                                <span>📎</span> {file}
+                                <button
+                                  onClick={() =>
+                                    handleRemoveCommentAttachment(idx)
+                                  }
+                                  className='ml-auto text-red-500 hover:text-red-700 transition-colors'
+                                  disabled={fieldConfig.comments?.isDisabled}
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'activity' && (
+                <div className='space-y-3'>
+                  {(task?.activities || []).length > 0 ? (
+                    (task?.activities || []).map((activity, idx) => (
+                      <div
+                        key={activity.id || idx}
+                        className='flex gap-3 pb-3 border-b border-gray-200 last:border-b-0'
+                      >
+                        <div className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 bg-amber-500 text-white'>
+                          {activity.user
+                            .split(' ')
+                            .map((n) => n[0])
+                            .join('')}
+                        </div>
+                        <div className='flex-1'>
+                          <p className='text-sm text-gray-700'>
+                            <span className='font-semibold'>
+                              {activity.user}
+                            </span>{' '}
+                            {activity.action}
+                            {activity.link && (
+                              <span className='text-blue-600'>
+                                {' '}
+                                {activity.link}
+                              </span>
+                            )}
+                          </p>
+                          <p className='text-xs text-gray-500 mt-1'>
+                            {activity.date}
+                          </p>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className='text-center py-4'>
+                      <p className='text-sm text-gray-500'>
+                        No activities yet
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Collaborators Section - Moved after comments */}
           <div className='border-t border-gray-200 pt-6 relative'>
