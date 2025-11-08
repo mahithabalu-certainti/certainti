@@ -32,6 +32,33 @@ const WorkBreakDown = () => {
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, string | number | boolean | string[]>
   >({});
+  const statusData = [
+    { id: '1', name: 'To Do', color: '#gray' },
+    { id: '2', name: 'In Progress', color: '#blue' },
+    { id: '3', name: 'Done', color: '#green' },
+  ];
+
+  const priorityData = [
+    { id: '1', name: 'Low', color: '#gray' },
+    { id: '2', name: 'Medium', color: '#yellow' },
+    { id: '3', name: 'High', color: '#red' },
+  ];
+
+  const tagData = [
+    { id: '1', name: 'Bug', color: '#red' },
+    { id: '2', name: 'Feature', color: '#blue' },
+    { id: '3', name: 'Enhancement', color: '#green' },
+    { id: '4', name: 'Design', color: '#purple' },
+    { id: '5', name: 'UI/UX', color: '#pink' },
+    { id: '6', name: 'Development', color: '#orange' },
+    { id: '7', name: 'Setup', color: '#teal' },
+    { id: '8', name: 'Backend', color: '#indigo' },
+    { id: '9', name: 'Security', color: '#red' },
+    { id: '10', name: 'Frontend', color: '#blue' },
+    { id: '11', name: 'Marketing', color: '#green' },
+    { id: '12', name: 'Database', color: '#purple' },
+    { id: '13', name: 'Planning', color: '#gray' },
+  ];
 
   useEffect(() => {
     if (
@@ -112,12 +139,17 @@ const WorkBreakDown = () => {
         {tabParam === 'milestone' && (
           <KanbanBoard
             data={mockKanbanData}
-            userData={mockUserData}
+            isCreateTaskDisabled={true}
+            isCreateTaskHide={false}
             showCommentCount={true}
             showTaskCount={true}
             showProfileIndicator={true}
-            isCreateTaskHide={true}
-            isCreateTaskDisabled={true}
+            isDragable={true}
+            isDragablebetweenBoards={true}
+            statusData={statusData}
+            priorityData={priorityData}
+            tagData={tagData}
+            userData={mockUserData}
           />
         )}
         {tabParam === 'case_task' && (

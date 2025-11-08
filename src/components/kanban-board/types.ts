@@ -1,52 +1,38 @@
+export interface Assignee {
+  name: string;
+  initials: string;
+  color: string;
+}
+
+export interface User extends Assignee {
+  id: string;
+}
+
+export interface Activity {
+  id?: string;
+  user: string;
+  action: string;
+  date: string;
+  link?: string;
+}
+
 export interface Task {
   id: string;
   title: string;
-  description?: string;
-  status: 'Done' | 'In Progress' | 'To Do';
+  status: 'To Do' | 'In Progress' | 'Done';
   priority?: 'Low' | 'Medium' | 'High';
-  assignee: {
-    name: string;
-    initials: string;
-    color: string;
-  };
-  collaborators?: Array<{
-    name: string;
-    initials: string;
-    color: string;
-  }>;
+  assignee: Assignee;
+  commentCount: number;
+  createdAt: Date;
+  description?: string;
+  checklist?: Array<{ id: string; text: string; completed: boolean }>;
   tags?: string[];
+  collaborators?: Assignee[];
   startDate?: Date;
   endDate?: Date;
   attachments?: string[];
   commentAttachments?: string[];
-  commentCount: number;
-  createdAt: Date;
   activities?: Activity[];
-  checklist?: ChecklistItem[];
-}
-
-export interface ChecklistItem {
-  id: string;
-  text: string;
-  completed: boolean;
-}
-
-export interface StatusOption {
-  id: string;
-  name: string;
-  color: string;
-}
-
-export interface PriorityOption {
-  id: string;
-  name: string;
-  color: string;
-}
-
-export interface TagOption {
-  id: string;
-  name: string;
-  color: string;
 }
 
 export interface KanbanColumn {
@@ -58,37 +44,37 @@ export interface KanbanColumn {
 
 export interface KanbanBoardProps {
   data: KanbanColumn[];
-  statusData?: StatusOption[];
-  priorityData?: PriorityOption[];
-  tagData?: TagOption[];
-  userData?: User[];
   isCreateTaskDisabled?: boolean;
   isCreateTaskHide?: boolean;
-  isCreateKanbanDisabled?: boolean;
-  isCreateKanbanHide?: boolean;
   showCommentCount?: boolean;
   showTaskCount?: boolean;
   showProfileIndicator?: boolean;
+  statusData?: Array<{ id: string; name: string; color: string }>;
+  priorityData?: Array<{ id: string; name: string; color: string }>;
+  tagData?: Array<{ id: string; name: string; color: string }>;
+  userData?: User[];
+  isDragable?: boolean;
+  isDragablebetweenBoards?: boolean;
 }
 
 export interface TaskCardProps {
   task: Task;
-  showCommentCount: boolean;
-  showProfileIndicator: boolean;
+  showCommentCount?: boolean;
+  showProfileIndicator?: boolean;
   onEditTask?: (taskId: string, newTitle: string) => void;
   onTaskClick?: (task: Task) => void;
-  statusData?: StatusOption[];
-  priorityData?: PriorityOption[];
+  statusData?: Array<{ id: string; name: string; color: string }>;
+  priorityData?: Array<{ id: string; name: string; color: string }>;
   onTaskUpdate?: (taskId: string, updatedTask: Partial<Task>) => void;
 }
 
 export interface KanbanColumnProps {
   column: KanbanColumn;
-  showTaskCount: boolean;
-  showCommentCount: boolean;
-  showProfileIndicator: boolean;
-  isCreateTaskDisabled: boolean;
-  isCreateTaskHide: boolean;
+  showTaskCount?: boolean;
+  showCommentCount?: boolean;
+  showProfileIndicator?: boolean;
+  isCreateTaskDisabled?: boolean;
+  isCreateTaskHide?: boolean;
   onAddTask: (
     columnId: string,
     task?: Task,
@@ -100,29 +86,14 @@ export interface KanbanColumnProps {
   onTaskClick?: (task: Task) => void;
 }
 
-export interface User {
-  id: string;
-  name: string;
-  initials: string;
-  color: string;
-}
-
-export interface Activity {
-  id: string;
-  user: string;
-  action: string;
-  link?: string;
-  date: string;
-}
-
 export interface TaskDetailModalProps {
   task: Task | null;
   isOpen: boolean;
   onClose: () => void;
   onTaskUpdate: (taskId: string, updatedTask: Partial<Task>) => void;
-  statusData?: StatusOption[];
-  priorityData?: PriorityOption[];
-  tagData?: TagOption[];
+  statusData?: Array<{ id: string; name: string; color: string }>;
+  priorityData?: Array<{ id: string; name: string; color: string }>;
+  tagData?: Array<{ id: string; name: string; color: string }>;
   availableUsers?: User[];
   activities?: Activity[];
 }

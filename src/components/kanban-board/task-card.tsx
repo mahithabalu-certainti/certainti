@@ -1,10 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import { TaskCardProps } from './types';
-import { PencilIcon, CommentIcon } from '../../assets';
-import CustomChecklistIcon from './CustomChecklistIcon';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { MenuItem, Select, SelectChangeEvent } from '@mui/material';
+import { ChecklistIcon, CommentIcon } from '../../assets';
 
-const TaskCard: React.FC<TaskCardProps> = ({
+interface ExtendedTaskCardProps extends TaskCardProps {
+  isDragable?: boolean;
+  isDragablebetweenBoards?: boolean;
+}
+
+const TaskCard: React.FC<ExtendedTaskCardProps> = ({
   task,
   showCommentCount,
   showProfileIndicator,
@@ -13,10 +19,31 @@ const TaskCard: React.FC<TaskCardProps> = ({
   statusData,
   priorityData,
   onTaskUpdate,
+  isDragable = false,
+  isDragablebetweenBoards = false,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: task.id,
+    data: { type: 'Task', task },
+    disabled: !isDragable && !isDragablebetweenBoards,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -110,7 +137,6 @@ const TaskCard: React.FC<TaskCardProps> = ({
     }
   };
 
-  // Calculate checklist progress
   const getChecklistProgress = () => {
     if (!task.checklist || task.checklist.length === 0) return null;
 
@@ -131,7 +157,13 @@ const TaskCard: React.FC<TaskCardProps> = ({
 
   return (
     <div
+      ref={setNodeRef}
+      style={style}
+      {...(isDragable || isDragablebetweenBoards
+        ? { ...attributes, ...listeners }
+        : {})}
       onClick={() => onTaskClick?.(task)}
+      onDoubleClick={() => onTaskClick?.(task)}
       className='bg-white border border-slate-200 rounded-lg p-3 mb-2 hover:bg-slate-50 transition-colors duration-200 group cursor-pointer'
     >
       <div className='flex items-center gap-1 mb-3'>
@@ -162,7 +194,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
               className='opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 rounded hover:bg-slate-200 ml-2'
               title='Edit task'
             >
-              <PencilIcon
+              <CommentIcon
                 size={14}
                 className='text-slate-500 hover:text-slate-700'
               />
@@ -171,9 +203,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
         </div>
       </div>
 
-      {/* Select Options Row - Two selects in one row */}
       <div className='flex items-center gap-2 mb-3'>
-        {/* Status Select */}
         <div className='w-[80px]' onClick={(e) => e.stopPropagation()}>
           <Select
             name='status'
@@ -264,7 +294,6 @@ const TaskCard: React.FC<TaskCardProps> = ({
           </Select>
         </div>
 
-        {/* Priority Select */}
         <div className='w-[80px]' onClick={(e) => e.stopPropagation()}>
           <Select
             name='priority'
@@ -372,7 +401,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
       </div>
 
       <div className='flex items-center justify-between'>
-        {showProfileIndicator && (
+        {showProfileIndicator && task.assignee && (
           <div
             className='w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-semibold border border-white shadow-sm'
             style={{
@@ -385,17 +414,15 @@ const TaskCard: React.FC<TaskCardProps> = ({
         )}
 
         <div className='flex items-center gap-2 ml-auto'>
-          {/* Progress Indicator for Checklist */}
           {checklistProgress && (
             <div className='flex items-center gap-1 text-gray-400'>
-              <CustomChecklistIcon className='w-3 h-3 text-gray-400' />
+              <ChecklistIcon className='w-3 h-3 text-gray-400' />
               <span className='text-[11px]'>
                 {checklistProgress.completed}/{checklistProgress.total}
               </span>
             </div>
           )}
 
-          {/* Comments Count */}
           {showCommentCount && (
             <div className='flex items-center gap-1 text-gray-400'>
               <CommentIcon className='w-3 h-3 text-gray-400' />

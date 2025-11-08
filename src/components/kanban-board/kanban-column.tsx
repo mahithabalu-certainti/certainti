@@ -1,9 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
 import { KanbanColumnProps } from './types';
-import { AddIcon, ArrowDownIcon } from '../../assets';
+import { useDroppable } from '@dnd-kit/core';
+import { AddIcon, ChevronDownIcon } from '../../assets';
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 import TaskCard from './task-card';
 
-const KanbanColumn: React.FC<KanbanColumnProps> = ({
+interface ExtendedKanbanColumnProps extends KanbanColumnProps {
+  isDragable?: boolean;
+  isDragablebetweenBoards?: boolean;
+}
+
+const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
   column,
   showTaskCount,
   showCommentCount,
@@ -14,7 +24,9 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
   onRenameColumn,
   onDeleteColumn,
   onEditTask,
-  onTaskClick, // add onTaskClick prop
+  onTaskClick,
+  isDragable = false,
+  isDragablebetweenBoards = false,
 }) => {
   const [isAddingTaskAtTop, setIsAddingTaskAtTop] = useState(false);
   const [isAddingTaskAtBottom, setIsAddingTaskAtBottom] = useState(false);
@@ -28,6 +40,11 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
   const bottomInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const columnNameRef = useRef<HTMLInputElement>(null);
+
+  const { setNodeRef } = useDroppable({
+    id: column.id,
+    data: { type: 'Column', column },
+  });
 
   useEffect(() => {
     if (isAddingTaskAtTop && inputRef.current) {
@@ -144,7 +161,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
     ) {
       onRenameColumn(column.id, columnName.trim());
     } else {
-      setColumnName(column.name); // Reset if no change or empty
+      setColumnName(column.name);
     }
     setIsRenamingColumn(false);
   };
@@ -166,7 +183,10 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
   };
 
   return (
-    <div className='bg-[#f5f5f5] rounded-lg p-4 w-80 flex-shrink-0'>
+    <div
+      ref={setNodeRef}
+      className='bg-[#f5f5f5] rounded-lg p-4 w-80 flex-shrink-0'
+    >
       <div
         className='bg-white border border-slate-200 rounded-lg p-3 mb-2 flex items-center justify-between group'
         onMouseEnter={() => setIsHoveringHeader(true)}
@@ -219,7 +239,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
                 className='opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 rounded hover:bg-slate-100 cursor-pointer'
                 title='More options'
               >
-                <ArrowDownIcon
+                <ChevronDownIcon
                   size={16}
                   className='text-slate-500 hover:text-slate-700'
                 />
@@ -265,18 +285,26 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
         </div>
       )}
 
-      <div className='space-y-2 mb-2'>
-        {column.tasks.map((task) => (
-          <TaskCard
-            key={task.id}
-            task={task}
-            showCommentCount={showCommentCount}
-            showProfileIndicator={showProfileIndicator}
-            onEditTask={onEditTask}
-            onTaskClick={onTaskClick} // add onTaskClick handler to open task detail modal
-          />
-        ))}
-      </div>
+      <SortableContext
+        items={column.tasks.map((t) => t.id)}
+        strategy={verticalListSortingStrategy}
+        disabled={!isDragable && !isDragablebetweenBoards}
+      >
+        <div className='space-y-2 mb-2'>
+          {column.tasks.map((task) => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              showCommentCount={showCommentCount}
+              showProfileIndicator={showProfileIndicator}
+              onEditTask={onEditTask}
+              onTaskClick={onTaskClick}
+              isDragable={isDragable}
+              isDragablebetweenBoards={isDragablebetweenBoards}
+            />
+          ))}
+        </div>
+      </SortableContext>
 
       {isAddingTaskAtBottom && (
         <div className='mb-2'>

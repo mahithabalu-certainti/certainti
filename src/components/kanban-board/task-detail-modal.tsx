@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { TaskDetailModalProps } from './types';
-import { CloseIcon, CalendarIcon } from '../../assets';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { MenuItem, Select, SelectChangeEvent } from '@mui/material';
 import dayjs from 'dayjs';
+import { CalendarIcon, CloseIcon } from '../../assets';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 
 const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   task,
@@ -50,7 +50,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     console.log('Activities prop:', activities);
   }, [task, activities]);
 
-  if (!task) return null;
+  if (!task || !task.assignee) return null;
 
   const handleSave = () => {
     if (editedTask) {
@@ -357,7 +357,11 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                     (user) => user.id === event.target.value
                   );
                   if (selectedUser) {
-                    handleAssigneeChange(selectedUser);
+                    handleAssigneeChange({
+                      name: selectedUser.name,
+                      initials: selectedUser.initials ?? '',
+                      color: selectedUser.color ?? '',
+                    });
                   }
                 }}
                 value={getAssigneeForSelect()}
@@ -526,12 +530,8 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                   }
                   format='YYYY-MMM-DD'
                   slots={{
-                    openPickerIcon: () => (
-                      <CalendarIcon alt='calendar' className='w-4 h-4' />
-                    ),
-                    clearIcon: () => (
-                      <CloseIcon alt='calendar' className='w-2.5 h-2.5' />
-                    ),
+                    openPickerIcon: () => <CalendarIcon className='w-4 h-4' />,
+                    clearIcon: () => <CloseIcon className='w-2.5 h-2.5' />,
                   }}
                   slotProps={{
                     field: { clearable: true },
@@ -624,12 +624,8 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                   minDate={getMinEndDate()}
                   format='YYYY-MMM-DD'
                   slots={{
-                    openPickerIcon: () => (
-                      <CalendarIcon alt='calendar' className='w-4 h-4' />
-                    ),
-                    clearIcon: () => (
-                      <CloseIcon alt='calendar' className='w-2.5 h-2.5' />
-                    ),
+                    openPickerIcon: () => <CalendarIcon className='w-4 h-4' />,
+                    clearIcon: () => <CloseIcon className='w-2.5 h-2.5' />,
                   }}
                   slotProps={{
                     field: { clearable: true },
@@ -1141,11 +1137,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
               {/* Checklist Items */}
               <div className='border border-gray-200 rounded-lg'>
                 <div
-                  className={`space-y-0 ${
-                    getFilteredChecklistItems().length > 6
-                      ? 'max-h-64 overflow-y-auto'
-                      : ''
-                  }`}
+                  className={`space-y-0 ${getFilteredChecklistItems().length > 6 ? 'max-h-64 overflow-y-auto' : ''}`}
                 >
                   {getFilteredChecklistItems().map((item, index) => (
                     <div
@@ -1286,9 +1278,9 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                 <div className='flex items-start gap-3 mt-6 pt-4 border-t border-gray-200'>
                   <div
                     className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 text-white'
-                    style={{ backgroundColor: task.assignee.color }}
+                    style={{ backgroundColor: task.assignee?.color || '#999' }}
                   >
-                    {task.assignee.initials}
+                    {task.assignee?.initials || '?'}
                   </div>
                   <div className='flex-1 space-y-3'>
                     <textarea
@@ -1395,9 +1387,14 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                     const selectedUsers = availableUsers.filter((user) =>
                       selectedUserIds.includes(user.id)
                     );
-                    setSelectedCollaborators(selectedUsers);
+                    const collaborators = selectedUsers.map((user) => ({
+                      name: user.name,
+                      initials: user.initials ?? '',
+                      color: user.color ?? '',
+                    }));
+                    setSelectedCollaborators(collaborators);
                     setEditedTask((prev) =>
-                      prev ? { ...prev, collaborators: selectedUsers } : null
+                      prev ? { ...prev, collaborators } : null
                     );
                   }}
                   value={selectedCollaborators
