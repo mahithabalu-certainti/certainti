@@ -1,18 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
-import { TaskCardProps } from './types';
+import { TaskCardProps, Task } from './types';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { MenuItem, Select, SelectChangeEvent } from '@mui/material';
-import { ChecklistIcon, CommentIcon } from '../../assets';
+import { CommentIcon, CustomChecklistIcon } from '../../assets';
+import { enrichTask } from './helper';
 
 interface ExtendedTaskCardProps extends TaskCardProps {
   isDragable?: boolean;
   isDragablebetweenBoards?: boolean;
+  onFetchTaskDetails?: (taskId: string) => Promise<Task | null>;
 }
 
 const TaskCard: React.FC<ExtendedTaskCardProps> = ({
-  task,
-  taskDetails,
+  taskId,
   showCommentCount,
   showProfileIndicator,
   onEditTask,
@@ -22,9 +23,12 @@ const TaskCard: React.FC<ExtendedTaskCardProps> = ({
   onTaskUpdate,
   isDragable = false,
   isDragablebetweenBoards = false,
+  onFetchTaskDetails,
 }) => {
+  const [task, setTask] = useState<Task | null>(null);
+  const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
-  const [editTitle, setEditTitle] = useState(taskDetails.title);
+  const [editTitle, setEditTitle] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -35,8 +39,8 @@ const TaskCard: React.FC<ExtendedTaskCardProps> = ({
     transition,
     isDragging,
   } = useSortable({
-    id: task.taskId,
-    data: { type: 'Task', task: taskDetails },
+    id: taskId,
+    data: { type: 'Task', taskId },
     disabled: !isDragable && !isDragablebetweenBoards,
   });
 
@@ -47,6 +51,22 @@ const TaskCard: React.FC<ExtendedTaskCardProps> = ({
   };
 
   useEffect(() => {
+    const loadTask = async () => {
+      if (onFetchTaskDetails) {
+        setLoading(true);
+        const taskData = await onFetchTaskDetails(taskId);
+        if (taskData) {
+          const enrichedTask = enrichTask(taskData);
+          setTask(enrichedTask);
+          setEditTitle(enrichedTask.title);
+        }
+        setLoading(false);
+      }
+    };
+    loadTask();
+  }, [taskId, onFetchTaskDetails]);
+
+  useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus();
       inputRef.current.select();
@@ -54,8 +74,10 @@ const TaskCard: React.FC<ExtendedTaskCardProps> = ({
   }, [isEditing]);
 
   useEffect(() => {
-    setEditTitle(taskDetails.title);
-  }, [taskDetails.title]);
+    if (task) {
+      setEditTitle(task.title);
+    }
+  }, [task]);
 
   const getColor = (type: 'status' | 'priority', value: string) => {
     const colors = {
@@ -104,7 +126,7 @@ const TaskCard: React.FC<ExtendedTaskCardProps> = ({
     event: SelectChangeEvent<'Done' | 'In Progress' | 'To Do'>
   ) => {
     if (onTaskUpdate) {
-      onTaskUpdate(task.taskId, {
+      onTaskUpdate(taskId, {
         status: event.target.value as 'Done' | 'In Progress' | 'To Do',
       });
     }
@@ -114,7 +136,7 @@ const TaskCard: React.FC<ExtendedTaskCardProps> = ({
     event: SelectChangeEvent<'Low' | 'Medium' | 'High'>
   ) => {
     if (onTaskUpdate) {
-      onTaskUpdate(task.taskId, {
+      onTaskUpdate(taskId, {
         priority: event.target.value as 'Low' | 'Medium' | 'High',
       });
     }
@@ -123,12 +145,13 @@ const TaskCard: React.FC<ExtendedTaskCardProps> = ({
   const handleSaveEdit = () => {
     if (
       editTitle.trim() &&
-      editTitle.trim() !== taskDetails.title &&
+      task &&
+      editTitle.trim() !== task.title &&
       onEditTask
     ) {
-      onEditTask(task.taskId, editTitle.trim());
-    } else {
-      setEditTitle(taskDetails.title);
+      onEditTask(taskId, editTitle.trim());
+    } else if (task) {
+      setEditTitle(task.title);
     }
     setIsEditing(false);
   };
@@ -137,19 +160,20 @@ const TaskCard: React.FC<ExtendedTaskCardProps> = ({
     if (e.key === 'Enter') {
       handleSaveEdit();
     } else if (e.key === 'Escape') {
-      setEditTitle(taskDetails.title);
+      if (task) {
+        setEditTitle(task.title);
+      }
       setIsEditing(false);
     }
   };
 
   const getChecklistProgress = () => {
-    if (!taskDetails.checklist || taskDetails.checklist.length === 0)
-      return null;
+    if (!task || !task.checklist || task.checklist.length === 0) return null;
 
-    const completedItems = taskDetails.checklist.filter(
+    const completedItems = task.checklist.filter(
       (item) => item.completed
     ).length;
-    const totalItems = taskDetails.checklist.length;
+    const totalItems = task.checklist.length;
     const percentage = Math.round((completedItems / totalItems) * 100);
 
     return {
@@ -161,6 +185,21 @@ const TaskCard: React.FC<ExtendedTaskCardProps> = ({
 
   const checklistProgress = getChecklistProgress();
 
+  if (loading || !task) {
+    return (
+      <div
+        ref={setNodeRef}
+        style={style}
+        className='bg-white border border-slate-200 rounded-lg p-3 mb-2'
+      >
+        <div className='animate-pulse'>
+          <div className='h-4 bg-slate-200 rounded w-3/4 mb-2'></div>
+          <div className='h-3 bg-slate-200 rounded w-1/2'></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       ref={setNodeRef}
@@ -168,8 +207,8 @@ const TaskCard: React.FC<ExtendedTaskCardProps> = ({
       {...(isDragable || isDragablebetweenBoards
         ? { ...attributes, ...listeners }
         : {})}
-      onClick={() => onTaskClick?.(taskDetails)}
-      onDoubleClick={() => onTaskClick?.(taskDetails)}
+      onClick={() => onTaskClick?.(taskId)}
+      onDoubleClick={() => onTaskClick?.(taskId)}
       className='bg-white border border-slate-200 rounded-lg p-3 mb-2 hover:bg-slate-50 transition-colors duration-200 group cursor-pointer'
     >
       <div className='flex items-center gap-1 mb-3'>
@@ -187,7 +226,7 @@ const TaskCard: React.FC<ExtendedTaskCardProps> = ({
             />
           ) : (
             <h3 className='text-slate-800 text-[13px] font-medium leading-relaxed flex-1'>
-              {taskDetails.title}
+              {task.title}
             </h3>
           )}
 
@@ -215,7 +254,7 @@ const TaskCard: React.FC<ExtendedTaskCardProps> = ({
             name='status'
             className='custom-select-no-arrow w-full h-full'
             onChange={handleStatusChange}
-            value={taskDetails.status || ''}
+            value={task.status || ''}
             displayEmpty
             fullWidth
             size='small'
@@ -254,24 +293,20 @@ const TaskCard: React.FC<ExtendedTaskCardProps> = ({
               '.MuiSelect-select': {
                 padding: '4px 4px 4px 8px !important',
                 minHeight: 'unset !important',
-                color: taskDetails.status
-                  ? `${getColor('status', taskDetails.status).text} !important`
+                color: task.status
+                  ? `${getColor('status', task.status).text} !important`
                   : '#7D98B6 !important',
-                backgroundColor: taskDetails.status
-                  ? `${getColor('status', taskDetails.status).bg} !important`
+                backgroundColor: task.status
+                  ? `${getColor('status', task.status).bg} !important`
                   : 'transparent !important',
                 fontSize: '11px !important',
                 fontWeight: '500',
                 '&.Mui-disabled': {
-                  WebkitTextFillColor: taskDetails.status
-                    ? `${
-                        getColor('status', taskDetails.status).text
-                      } !important`
+                  WebkitTextFillColor: task.status
+                    ? `${getColor('status', task.status).text} !important`
                     : '#7D98B6 !important',
-                  backgroundColor: taskDetails.status
-                    ? `${
-                        getColor('status', taskDetails.status).bg
-                      } !important`
+                  backgroundColor: task.status
+                    ? `${getColor('status', task.status).bg} !important`
                     : 'transparent !important',
                 },
               },
@@ -309,7 +344,7 @@ const TaskCard: React.FC<ExtendedTaskCardProps> = ({
             name='priority'
             className='custom-select-no-arrow w-full h-full'
             onChange={handlePriorityChange}
-            value={taskDetails.priority || ''}
+            value={task.priority || ''}
             displayEmpty
             fullWidth
             size='small'
@@ -348,28 +383,20 @@ const TaskCard: React.FC<ExtendedTaskCardProps> = ({
               '.MuiSelect-select': {
                 padding: '4px 4px 4px 8px !important',
                 minHeight: 'unset !important',
-                color: taskDetails.priority
-                  ? `${
-                      getColor('priority', taskDetails.priority).text
-                    } !important`
+                color: task.priority
+                  ? `${getColor('priority', task.priority).text} !important`
                   : '#7D98B6 !important',
-                backgroundColor: taskDetails.priority
-                  ? `${
-                      getColor('priority', taskDetails.priority).bg
-                    } !important`
+                backgroundColor: task.priority
+                  ? `${getColor('priority', task.priority).bg} !important`
                   : 'transparent !important',
                 fontSize: '11px !important',
                 fontWeight: '500',
                 '&.Mui-disabled': {
-                  WebkitTextFillColor: taskDetails.priority
-                    ? `${
-                        getColor('priority', taskDetails.priority).text
-                      } !important`
+                  WebkitTextFillColor: task.priority
+                    ? `${getColor('priority', task.priority).text} !important`
                     : '#7D98B6 !important',
-                  backgroundColor: taskDetails.priority
-                    ? `${
-                        getColor('priority', taskDetails.priority).bg
-                      } !important`
+                  backgroundColor: task.priority
+                    ? `${getColor('priority', task.priority).bg} !important`
                     : 'transparent !important',
                 },
               },
@@ -419,22 +446,22 @@ const TaskCard: React.FC<ExtendedTaskCardProps> = ({
       </div>
 
       <div className='flex items-center justify-between'>
-        {showProfileIndicator && taskDetails.assignee && (
+        {showProfileIndicator && task.assignee && (
           <div
             className='w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-semibold border border-white shadow-sm'
             style={{
-              backgroundColor: getAssigneeColor(taskDetails.assignee.color),
+              backgroundColor: getAssigneeColor(task.assignee.color),
               color: '#374151',
             }}
           >
-            {taskDetails.assignee.initials}
+            {task.assignee.initials}
           </div>
         )}
 
         <div className='flex items-center gap-2 ml-auto'>
           {checklistProgress && (
             <div className='flex items-center gap-1 text-gray-400'>
-              <ChecklistIcon className='w-3 h-3 text-gray-400' />
+              <CustomChecklistIcon className='w-3 h-3 text-gray-400' />
               <span className='text-[11px]'>
                 {checklistProgress.completed}/{checklistProgress.total}
               </span>
@@ -444,7 +471,7 @@ const TaskCard: React.FC<ExtendedTaskCardProps> = ({
           {showCommentCount && (
             <div className='flex items-center gap-1 text-gray-400'>
               <CommentIcon className='w-3 h-3 text-gray-400' />
-              <span className='text-[11px]'>{taskDetails.commentCount}</span>
+              <span className='text-[11px]'>{task.commentCount}</span>
             </div>
           )}
         </div>

@@ -16,7 +16,7 @@ export interface Activity {
   link?: string;
 }
 
-export interface TaskDetails {
+export interface Task {
   id: string;
   title: string;
   status: 'To Do' | 'In Progress' | 'Done';
@@ -35,22 +35,49 @@ export interface TaskDetails {
   activities?: Activity[];
 }
 
-export interface KanbanTask {
+export interface TaskCard {
   taskId: string;
-  rid?: string;
 }
 
 export interface KanbanColumn {
   id: string;
+  rid: string;
   name: string;
-  tasks: KanbanTask[];
+  tasks: TaskCard[];
   taskCount: number;
-  rid?: string;
+}
+
+export interface FieldVisibility {
+  assignee?: boolean;
+  status?: boolean;
+  priority?: boolean;
+  tags?: boolean;
+  startDate?: boolean;
+  endDate?: boolean;
+  description?: boolean;
+  attachments?: boolean;
+  comments?: boolean;
+  collaborators?: boolean;
+  checklist?: boolean;
+  activities?: boolean;
+}
+
+export interface FieldDisabled {
+  assignee?: boolean;
+  status?: boolean;
+  priority?: boolean;
+  tags?: boolean;
+  startDate?: boolean;
+  endDate?: boolean;
+  description?: boolean;
+  attachments?: boolean;
+  comments?: boolean;
+  collaborators?: boolean;
+  checklist?: boolean;
 }
 
 export interface KanbanBoardProps {
   data: KanbanColumn[];
-  taskDetails: Record<string, TaskDetails>;
   isCreateTaskDisabled?: boolean;
   isCreateTaskHide?: boolean;
   showCommentCount?: boolean;
@@ -62,23 +89,24 @@ export interface KanbanBoardProps {
   userData?: User[];
   isDragable?: boolean;
   isDragablebetweenBoards?: boolean;
+  onFetchTaskDetails?: (taskId: string) => Promise<Task | null>;
+  fieldVisibility?: FieldVisibility;
+  fieldDisabled?: FieldDisabled;
 }
 
 export interface TaskCardProps {
-  task: KanbanTask;
-  taskDetails: TaskDetails;
+  taskId: string;
   showCommentCount?: boolean;
   showProfileIndicator?: boolean;
   onEditTask?: (taskId: string, newTitle: string) => void;
-  onTaskClick?: (task: TaskDetails) => void;
+  onTaskClick?: (taskId: string) => void;
   statusData?: Array<{ id: string; name: string; color: string }>;
   priorityData?: Array<{ id: string; name: string; color: string }>;
-  onTaskUpdate?: (taskId: string, updatedTask: Partial<TaskDetails>) => void;
+  onTaskUpdate?: (taskId: string, updatedTask: Partial<Task>) => void;
 }
 
 export interface KanbanColumnProps {
   column: KanbanColumn;
-  taskDetails: Record<string, TaskDetails>;
   showTaskCount?: boolean;
   showCommentCount?: boolean;
   showProfileIndicator?: boolean;
@@ -86,38 +114,29 @@ export interface KanbanColumnProps {
   isCreateTaskHide?: boolean;
   onAddTask: (
     columnId: string,
-    task?: TaskDetails,
+    task?: TaskCard,
     position?: 'top' | 'bottom'
   ) => void;
   onRenameColumn?: (columnId: string, newName: string) => void;
   onDeleteColumn?: (columnId: string) => void;
   onEditTask?: (taskId: string, newTitle: string) => void;
-  onTaskClick?: (task: TaskDetails) => void;
+  onTaskClick?: (taskId: string) => void;
+  statusData?: Array<{ id: string; name: string; color: string }>;
+  priorityData?: Array<{ id: string; name: string; color: string }>;
+  onTaskUpdate?: (taskId: string, updatedTask: Partial<Task>) => void;
+  onFetchTaskDetails?: (taskId: string) => Promise<Task | null>;
 }
 
-export type TaskField =
-  | 'status'
-  | 'assignee'
-  | 'tags'
-  | 'priority'
-  | 'startDate'
-  | 'endDate'
-  | 'description'
-  | 'checklist'
-  | 'attachments'
-  | 'comments';
-
 export interface TaskDetailModalProps {
-  task: TaskDetails | null;
+  taskId: string | null;
   isOpen: boolean;
   onClose: () => void;
-  onTaskUpdate: (taskId: string, updatedTask: Partial<TaskDetails>) => void;
+  onTaskUpdate: (taskId: string, updatedTask: Partial<Task>) => void;
   statusData?: Array<{ id: string; name: string; color: string }>;
   priorityData?: Array<{ id: string; name: string; color: string }>;
   tagData?: Array<{ id: string; name: string; color: string }>;
   availableUsers?: User[];
-  activities?: Activity[];
-  fieldConfig?: Partial<
-    Record<TaskField, { isDisabled?: boolean; isHidden?: boolean }>
-  >;
+  onFetchTaskDetails?: (taskId: string) => Promise<Task | null>;
+  fieldVisibility?: FieldVisibility;
+  fieldDisabled?: FieldDisabled;
 }

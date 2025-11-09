@@ -1,4 +1,4 @@
-import { Assignee, TaskDetails, User } from './types';
+import { Assignee, User, Task } from './types';
 
 export const generateInitials = (name: string): string => {
   if (!name) return 'U';
@@ -54,31 +54,32 @@ export const enrichUsers = (users: User[]): User[] => {
   return users.map(enrichUser);
 };
 
-export const enrichTaskDetails = (
-  task: TaskDetails,
-  users: User[]
-): TaskDetails => {
-  const enrichedAssignee =
-    users.find((u) => u.name === task.assignee.name) || task.assignee;
-
-  const enrichedCollaborators =
-    task.collaborators?.map(
-      (collaborator) =>
-        users.find((u) => u.name === collaborator.name) || collaborator
-    ) || [];
-
+// Helper to enrich assignee with initials and color if missing
+export const enrichAssignee = (assignee: {
+  name: string;
+  initials?: string;
+  color?: string;
+}): Assignee => {
   return {
-    ...task,
-    assignee: {
-      ...task.assignee,
-      initials:
-        enrichedAssignee.initials || generateInitials(enrichedAssignee.name),
-      color: enrichedAssignee.color || generateColorFromName(enrichedAssignee.name),
-    },
-    collaborators: enrichedCollaborators.map((c) => ({
-      ...c,
-      initials: c.initials || generateInitials(c.name),
-      color: c.color || generateColorFromName(c.name),
-    })),
+    name: assignee.name,
+    initials: assignee.initials || generateInitials(assignee.name),
+    color: assignee.color || generateColorFromName(assignee.name),
   };
+};
+
+// Helper to enrich task with complete assignee and collaborator data
+export const enrichTask = (task: Task): Task => {
+  const enrichedTask = { ...task };
+
+  // Enrich assignee
+  if (enrichedTask.assignee) {
+    enrichedTask.assignee = enrichAssignee(enrichedTask.assignee);
+  }
+
+  // Enrich collaborators
+  if (enrichedTask.collaborators && enrichedTask.collaborators.length > 0) {
+    enrichedTask.collaborators = enrichedTask.collaborators.map(enrichAssignee);
+  }
+
+  return enrichedTask;
 };

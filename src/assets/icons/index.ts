@@ -126,6 +126,7 @@ const icons = {
   editTaskIcon: () => import('./editTaskIcon.svg?react'),
   pencilIcon: () => import('./PencilIcon.svg?react'),
   commentIcon: () => import('./comment-icon.svg?react'),
+  customChecklistIcon: () => import('./ChecklistIcon.svg?react'),
 };
 
 function createLazySvgIcon(name: keyof typeof icons) {
@@ -259,3 +260,4 @@ export const InfoIcon = createLazySvgIcon('infoIcon');
 export const EditTaskIcon = createLazySvgIcon('editTaskIcon');
 export const PencilIcon = createLazySvgIcon('pencilIcon');
 export const CommentIcon = createLazySvgIcon('commentIcon');
+export const CustomChecklistIcon = createLazySvgIcon('customChecklistIcon');

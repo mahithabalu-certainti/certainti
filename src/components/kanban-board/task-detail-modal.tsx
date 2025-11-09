@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
-import { TaskDetailModalProps } from './types';
+import { TaskDetailModalProps, Task } from './types';
 import { MenuItem, Select, SelectChangeEvent } from '@mui/material';
 import dayjs from 'dayjs';
 import { CalendarIcon, CloseIcon } from '../../assets';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { enrichTask, enrichUser } from './helper';
 
 const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
-  task,
+  taskId,
   isOpen,
   onClose,
   onTaskUpdate,
@@ -16,58 +17,102 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   priorityData = [],
   tagData = [],
   availableUsers = [],
-  activities = [],
-  fieldConfig = {},
+  onFetchTaskDetails,
+  fieldVisibility = {},
+  fieldDisabled = {},
 }) => {
+  const [task, setTask] = useState<Task | null>(null);
+  const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [editedTask, setEditedTask] = useState(task);
+  const [editedTask, setEditedTask] = useState<Task | null>(null);
   const [comment, setComment] = useState('');
-  const [selectedCollaborators, setSelectedCollaborators] = useState<
-    Array<{ name: string; initials: string; color: string }>
-  >([]);
   const [activeTab, setActiveTab] = useState<'comments' | 'activity'>(
     'comments'
   );
-
-  // TC Checklist state
-  const [tcChecklistItems, setTcChecklistItems] = useState<
-    Array<{ id: string; text: string; completed: boolean }>
-  >([]);
   const [hideCheckedItems, setHideCheckedItems] = useState(false);
 
-  useEffect(() => {
-    setEditedTask(task);
-    if (task?.collaborators) {
-      setSelectedCollaborators(task.collaborators);
-    }
-    // Initialize checklist from task data
-    if (task?.checklist) {
-      setTcChecklistItems(task.checklist);
-    } else {
-      setTcChecklistItems([]);
-    }
-    // Debug: Log activities to see what's being passed
-    console.log('Task activities:', task?.activities);
-    console.log('Activities prop:', activities);
-  }, [task, activities]);
+  const enrichedUsers = availableUsers.map(enrichUser);
 
-  if (!task || !task.assignee) return null;
+  useEffect(() => {
+    const fetchTask = async () => {
+      if (!taskId || !onFetchTaskDetails) {
+        setTask(null);
+        setEditedTask(null);
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const fetchedTask = await onFetchTaskDetails(taskId);
+        if (fetchedTask) {
+          const enrichedTask = enrichTask(fetchedTask);
+          setTask(enrichedTask);
+          setEditedTask(enrichedTask);
+        } else {
+          setTask(null);
+          setEditedTask(null);
+        }
+      } catch (error) {
+        console.error('Error fetching task details:', error);
+        setTask(null);
+        setEditedTask(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (isOpen) {
+      fetchTask();
+    }
+  }, [taskId, isOpen, onFetchTaskDetails]);
+
+  if (!isOpen || !taskId) return null;
+
+  if (loading) {
+    return (
+      <div
+        className='fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl z-50 flex items-center justify-center'
+        style={{ top: '38.1px' }}
+      >
+        <div className='animate-pulse text-center'>
+          <div className='h-8 w-48 bg-slate-200 rounded mx-auto mb-4'></div>
+          <div className='h-4 w-32 bg-slate-200 rounded mx-auto'></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!task || !editedTask) {
+    return (
+      <div
+        className='fixed right-0 bottom-0 w-[650px] bg-white text-gray-900 shadow-2xl z-50 flex items-center justify-center'
+        style={{ top: '38.1px' }}
+      >
+        <div className='text-center text-gray-500'>
+          <p>Task not found</p>
+          <button
+            onClick={onClose}
+            className='mt-4 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded text-sm'
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const handleSave = () => {
-    if (editedTask) {
-      onTaskUpdate(task.id, editedTask);
+    if (editedTask && taskId) {
+      onTaskUpdate(taskId, editedTask);
       setIsEditing(false);
     }
   };
 
   const handleMarkComplete = () => {
-    setEditedTask((prev) =>
-      prev
-        ? { ...prev, status: 'Done' as 'Done' | 'In Progress' | 'To Do' }
-        : null
-    );
-    if (editedTask) {
-      onTaskUpdate(task.id, { ...editedTask, status: 'Done' });
+    if (editedTask && taskId) {
+      const updatedTask = { ...editedTask, status: 'Done' as const };
+      setEditedTask(updatedTask);
+      onTaskUpdate(taskId, { status: 'Done' });
     }
   };
 
@@ -106,10 +151,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     const newStartDate = date ? new Date(date) : undefined;
     setEditedTask((prev) => {
       if (!prev) return null;
-
       const updatedTask = { ...prev, startDate: newStartDate };
-
-      // If end date exists and is not greater than new start date, clear it
       if (
         updatedTask.endDate &&
         newStartDate &&
@@ -117,7 +159,6 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
       ) {
         updatedTask.endDate = undefined;
       }
-
       return updatedTask;
     });
   };
@@ -126,13 +167,9 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     const newEndDate = date ? new Date(date) : undefined;
     setEditedTask((prev) => {
       if (!prev) return null;
-
-      // Validate that end date is greater than start date
       if (newEndDate && prev.startDate && newEndDate <= prev.startDate) {
-        // Don't update if end date is not greater than start date
         return prev;
       }
-
       return { ...prev, endDate: newEndDate };
     });
   };
@@ -201,56 +238,38 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     );
   };
 
-  const handleToggleCollaborator = (user: {
-    name: string;
-    initials: string;
-    color: string;
-  }) => {
-    const isAlreadySelected = selectedCollaborators.find(
-      (c) => c.name === user.name
+  const handleAssigneeChange = (event: SelectChangeEvent<string>) => {
+    const selectedUser = enrichedUsers.find(
+      (user) => user.id === event.target.value
     );
-
-    if (isAlreadySelected) {
-      // Remove collaborator if already selected
-      const updated = selectedCollaborators.filter((c) => c.name !== user.name);
-      setSelectedCollaborators(updated);
-      setEditedTask((prev) =>
-        prev ? { ...prev, collaborators: updated } : null
-      );
-    } else {
-      // Add collaborator if not selected
-      setSelectedCollaborators([...selectedCollaborators, user]);
+    if (selectedUser) {
       setEditedTask((prev) =>
         prev
-          ? { ...prev, collaborators: [...(prev.collaborators || []), user] }
+          ? {
+              ...prev,
+              assignee: {
+                name: selectedUser.name,
+                initials: selectedUser.initials,
+                color: selectedUser.color,
+              },
+            }
           : null
       );
     }
   };
 
-  const handleAssigneeChange = (user: {
-    name: string;
-    initials: string;
-    color: string;
-  }) => {
-    setEditedTask((prev) => (prev ? { ...prev, assignee: user } : null));
-  };
-
-  // Find the assignee in availableUsers or create a temporary user object
   const getAssigneeForSelect = () => {
     if (!editedTask?.assignee) return '';
-
-    const foundUser = availableUsers.find(
+    const foundUser = enrichedUsers.find(
       (u) => u.name === editedTask.assignee.name
     );
-
     return foundUser?.id || '';
   };
 
   const getMinEndDate = () => {
     if (editedTask?.startDate) {
       const minDate = new Date(editedTask.startDate);
-      minDate.setDate(minDate.getDate() + 1); // End date must be at least 1 day after start date
+      minDate.setDate(minDate.getDate() + 1);
       return dayjs(minDate);
     }
     return undefined;
@@ -261,33 +280,54 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     return date instanceof Date ? dayjs(date) : dayjs(date);
   };
 
-  // TC Checklist helper functions
-  const handleTcChecklistToggle = (itemId: string) => {
-    const updatedItems = tcChecklistItems.map((item) =>
+  const handleChecklistToggle = (itemId: string) => {
+    const updatedChecklist = (editedTask.checklist || []).map((item) =>
       item.id === itemId ? { ...item, completed: !item.completed } : item
     );
-    setTcChecklistItems(updatedItems);
 
-    // Update the task with the new checklist
-    if (editedTask) {
-      const updatedTask = { ...editedTask, checklist: updatedItems };
-      setEditedTask(updatedTask);
-      onTaskUpdate(task.id, { checklist: updatedItems });
+    setEditedTask((prev) =>
+      prev ? { ...prev, checklist: updatedChecklist } : null
+    );
+    if (taskId) {
+      onTaskUpdate(taskId, { checklist: updatedChecklist });
     }
   };
 
   const getCompletionPercentage = () => {
-    const completedItems = tcChecklistItems.filter(
-      (item) => item.completed
-    ).length;
-    const totalItems = tcChecklistItems.length;
-    return totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+    const checklist = editedTask.checklist || [];
+    if (checklist.length === 0) return 0;
+    const completedItems = checklist.filter((item) => item.completed).length;
+    return Math.round((completedItems / checklist.length) * 100);
   };
 
   const getFilteredChecklistItems = () => {
+    const checklist = editedTask.checklist || [];
     return hideCheckedItems
-      ? tcChecklistItems.filter((item) => !item.completed)
-      : tcChecklistItems;
+      ? checklist.filter((item) => !item.completed)
+      : checklist;
+  };
+
+  const handleCollaboratorsChange = (event: SelectChangeEvent<string[]>) => {
+    const selectedUserIds = event.target.value as string[];
+    const selectedUsers = enrichedUsers.filter((user) =>
+      selectedUserIds.includes(user.id)
+    );
+    const collaborators = selectedUsers.map((user) => ({
+      name: user.name,
+      initials: user.initials,
+      color: user.color,
+    }));
+    setEditedTask((prev) => (prev ? { ...prev, collaborators } : null));
+  };
+
+  const getCollaboratorsForSelect = () => {
+    const collaborators = editedTask.collaborators || [];
+    return collaborators
+      .map((collab) => {
+        const user = enrichedUsers.find((u) => u.name === collab.name);
+        return user?.id || '';
+      })
+      .filter((id) => id !== '');
   };
 
   return (
@@ -298,7 +338,6 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
         }`}
         style={{ top: '38.1px' }}
       >
-        {/* Header */}
         <div className='sticky top-0 flex items-center justify-between p-4 border-b border-gray-200 bg-white z-50 shadow-sm'>
           <button
             onClick={handleMarkComplete}
@@ -318,9 +357,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
           </div>
         </div>
 
-        {/* Content */}
         <div className='p-6 space-y-6'>
-          {/* Task Title */}
           <div>
             {isEditing ? (
               <input
@@ -346,8 +383,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
             )}
           </div>
 
-          {/* Assignee */}
-          {!fieldConfig.assignee?.isHidden && (
+          {!fieldVisibility.assignee && (
             <div className='flex items-center justify-between'>
               <span className='text-sm font-medium text-gray-600'>
                 Assignee
@@ -355,20 +391,9 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
               <div className='w-[200px]'>
                 <Select
                   name='assignee'
-                  disabled={fieldConfig.assignee?.isDisabled}
+                  disabled={fieldDisabled.assignee}
                   className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
-                  onChange={(event: SelectChangeEvent<string>) => {
-                    const selectedUser = availableUsers.find(
-                      (user) => user.id === event.target.value
-                    );
-                    if (selectedUser) {
-                      handleAssigneeChange({
-                        name: selectedUser.name,
-                        initials: selectedUser.initials ?? '',
-                        color: selectedUser.color ?? '',
-                      });
-                    }
-                  }}
+                  onChange={handleAssigneeChange}
                   value={getAssigneeForSelect()}
                   displayEmpty
                   fullWidth
@@ -379,7 +404,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                         maxWidth: 300,
                         maxHeight: 300,
                         marginTop: '4px',
-                        zIndex: 40, // Lower than modal header (z-50)
+                        zIndex: 40,
                         boxShadow:
                           'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
                         '& .MuiMenuItem-root': {
@@ -421,7 +446,6 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                     },
                   }}
                   renderValue={() => {
-                    // Always show the task's assignee if it exists, regardless of availableUsers
                     if (editedTask?.assignee) {
                       return (
                         <div
@@ -453,7 +477,6 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                         </div>
                       );
                     }
-
                     return (
                       <span
                         style={{
@@ -477,7 +500,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                   >
                     Select User
                   </MenuItem>
-                  {availableUsers.map((user) => (
+                  {enrichedUsers.map((user) => (
                     <MenuItem
                       sx={{
                         color: '#425A76',
@@ -520,16 +543,15 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
             </div>
           )}
 
-          {/* Date Range */}
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <div className='grid grid-cols-2 gap-4'>
-              {!fieldConfig.startDate?.isHidden && (
+              {!fieldVisibility.startDate && (
                 <div>
                   <label className='block text-xs font-medium text-gray-600 mb-1'>
                     Start Date
                   </label>
                   <DatePicker
-                    disabled={fieldConfig.startDate?.isDisabled}
+                    disabled={fieldDisabled.startDate}
                     value={formatDateForInput(editedTask?.startDate)}
                     onChange={(newValue) =>
                       handleStartDateChange(
@@ -545,12 +567,8 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                     }}
                     slotProps={{
                       field: { clearable: true },
-                      clearButton: {
-                        tabIndex: -1,
-                      },
-                      openPickerButton: {
-                        tabIndex: -1,
-                      },
+                      clearButton: { tabIndex: -1 },
+                      openPickerButton: { tabIndex: -1 },
                       popper: {
                         placement: 'bottom-start',
                         sx: {
@@ -581,12 +599,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                               padding: 8,
                             },
                           },
-                          {
-                            name: 'offset',
-                            options: {
-                              offset: [0, 4],
-                            },
-                          },
+                          { name: 'offset', options: { offset: [0, 4] } },
                         ],
                       },
                       textField: {
@@ -621,13 +634,13 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                   />
                 </div>
               )}
-              {!fieldConfig.endDate?.isHidden && (
+              {!fieldVisibility.endDate && (
                 <div>
                   <label className='block text-xs font-medium text-gray-600 mb-1'>
                     Due Date
                   </label>
                   <DatePicker
-                    disabled={fieldConfig.endDate?.isDisabled}
+                    disabled={fieldDisabled.endDate}
                     value={formatDateForInput(editedTask?.endDate)}
                     onChange={(newValue) =>
                       handleEndDateChange(
@@ -644,12 +657,8 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                     }}
                     slotProps={{
                       field: { clearable: true },
-                      clearButton: {
-                        tabIndex: -1,
-                      },
-                      openPickerButton: {
-                        tabIndex: -1,
-                      },
+                      clearButton: { tabIndex: -1 },
+                      openPickerButton: { tabIndex: -1 },
                       popper: {
                         placement: 'bottom-start',
                         sx: {
@@ -680,12 +689,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                               padding: 8,
                             },
                           },
-                          {
-                            name: 'offset',
-                            options: {
-                              offset: [0, 4],
-                            },
-                          },
+                          { name: 'offset', options: { offset: [0, 4] } },
                         ],
                       },
                       textField: {
@@ -724,12 +728,9 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
           </LocalizationProvider>
 
           <div>
-            <h3 className='text-sm font-semibold text-gray-700 mb-3'>
-              Fields
-            </h3>
+            <h3 className='text-sm font-semibold text-gray-700 mb-3'>Fields</h3>
             <div className='border border-gray-200 rounded-lg divide-y divide-gray-200'>
-              {/* Status Row */}
-              {!fieldConfig.status?.isHidden && (
+              {!fieldVisibility.status && (
                 <div className='flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors'>
                   <div className='flex items-center gap-2'>
                     <svg
@@ -748,7 +749,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                   <div className='w-[140px]'>
                     <Select
                       name='status'
-                      disabled={fieldConfig.status?.isDisabled}
+                      disabled={fieldDisabled.status}
                       className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
                       onChange={handleStatusChange}
                       value={editedTask?.status || ''}
@@ -761,7 +762,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                             maxWidth: 300,
                             maxHeight: 300,
                             marginTop: '4px',
-                            zIndex: 40, // Lower than modal header (z-50)
+                            zIndex: 40,
                             boxShadow:
                               'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
                             '& .MuiMenuItem-root': {
@@ -829,8 +830,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                 </div>
               )}
 
-              {/* Priority Row */}
-              {!fieldConfig.priority?.isHidden && (
+              {!fieldVisibility.priority && (
                 <div className='flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors'>
                   <div className='flex items-center gap-2'>
                     <svg
@@ -851,7 +851,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                   <div className='w-[140px]'>
                     <Select
                       name='priority'
-                      disabled={fieldConfig.priority?.isDisabled}
+                      disabled={fieldDisabled.priority}
                       className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
                       onChange={handlePriorityChange}
                       value={editedTask?.priority || ''}
@@ -864,7 +864,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                             maxWidth: 300,
                             maxHeight: 300,
                             marginTop: '4px',
-                            zIndex: 40, // Lower than modal header (z-50)
+                            zIndex: 40,
                             boxShadow:
                               'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
                             '& .MuiMenuItem-root': {
@@ -932,8 +932,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                 </div>
               )}
 
-              {/* Tags Row */}
-              {!fieldConfig.tags?.isHidden && (
+              {!fieldVisibility.tags && (
                 <div className='px-4 py-3 hover:bg-gray-50 transition-colors'>
                   <div className='flex items-center justify-between mb-3'>
                     <div className='flex items-center gap-2'>
@@ -954,7 +953,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                     <div className='w-[140px]'>
                       <Select
                         name='tags'
-                        disabled={fieldConfig.tags?.isDisabled}
+                        disabled={fieldDisabled.tags}
                         className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
                         onChange={(event: SelectChangeEvent<string[]>) => {
                           const selectedTags = event.target.value as string[];
@@ -968,9 +967,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                         size='small'
                         multiple
                         renderValue={() => (
-                          <span
-                            style={{ color: '#7D98B6', fontSize: '13px' }}
-                          >
+                          <span style={{ color: '#7D98B6', fontSize: '13px' }}>
                             Add Tags
                           </span>
                         )}
@@ -1063,7 +1060,6 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                     </div>
                   </div>
 
-                  {/* Horizontal Tags Display */}
                   {editedTask?.tags && editedTask.tags.length > 0 && (
                     <div className='flex flex-wrap items-center gap-2 mt-2'>
                       {editedTask.tags.map((tag, index) => (
@@ -1075,8 +1071,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                           <button
                             onClick={() => {
                               const newTags =
-                                editedTask.tags?.filter((t) => t !== tag) ||
-                                [];
+                                editedTask.tags?.filter((t) => t !== tag) || [];
                               setEditedTask((prev) =>
                                 prev ? { ...prev, tags: newTags } : null
                               );
@@ -1095,120 +1090,126 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
             </div>
           </div>
 
-          {/* TC Checklist Section */}
-          {!fieldConfig.checklist?.isHidden && tcChecklistItems.length > 0 && (
-            <div>
-              <div className='flex items-center justify-between mb-3'>
-                <h3 className='text-sm font-semibold text-gray-700'>
-                  TC Checklist
-                </h3>
-                <div className='flex items-center gap-2'>
-                  <button
-                    onClick={() => setHideCheckedItems(!hideCheckedItems)}
-                    style={{
-                      height: '24px !important',
-                      color: '#425A76',
-                      border: '1px solid #CBD6E2',
-                      boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
-                      background:
-                        'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
-                      textTransform: 'none',
-                      fontSize: '13px',
-                      fontWeight: 400,
-                      padding: '0px 8px',
-                      borderRadius: '2px',
-                      cursor: 'pointer',
-                    }}
-                    className='transition-colors hover:text-[#425A76]'
-                  >
-                    {hideCheckedItems
-                      ? 'Show Checked Items'
-                      : 'Hide Checked Items'}
-                  </button>
-                </div>
-              </div>
-
-              {/* Progress Bar - Only show when there are checklist items */}
-              <div className='mb-4'>
-                <div className='flex items-center justify-between text-xs text-gray-600 mb-1'>
-                  <span>Progress</span>
-                  <span>{getCompletionPercentage()}% Complete</span>
-                </div>
-                <div className='w-full bg-gray-200 rounded-full h-2'>
-                  <div
-                    className='bg-emerald-500 h-2 rounded-full transition-all duration-300 ease-in-out'
-                    style={{ width: `${getCompletionPercentage()}%` }}
-                  ></div>
-                </div>
-                <div className='text-xs text-gray-500 mt-1'>
-                  {tcChecklistItems.filter((item) => item.completed).length} of{' '}
-                  {tcChecklistItems.length} items completed
-                </div>
-              </div>
-
-              {/* Checklist Items */}
-              <div className='border border-gray-200 rounded-lg'>
-                <div
-                  className={`space-y-0 ${getFilteredChecklistItems().length > 6 ? 'max-h-64 overflow-y-auto' : ''}`}
-                >
-                  {getFilteredChecklistItems().map((item, index) => (
-                    <div
-                      key={item.id}
-                      className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${
-                        index !== getFilteredChecklistItems().length - 1
-                          ? 'border-b border-gray-200'
-                          : ''
-                      }`}
+          {!fieldVisibility.checklist &&
+            editedTask.checklist &&
+            editedTask.checklist.length > 0 && (
+              <div>
+                <div className='flex items-center justify-between mb-3'>
+                  <h3 className='text-sm font-semibold text-gray-700'>
+                    TC Checklist
+                  </h3>
+                  <div className='flex items-center gap-2'>
+                    <button
+                      onClick={() => setHideCheckedItems(!hideCheckedItems)}
+                      style={{
+                        height: '24px !important',
+                        color: '#425A76',
+                        border: '1px solid #CBD6E2',
+                        boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
+                        background:
+                          'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
+                        textTransform: 'none',
+                        fontSize: '13px',
+                        fontWeight: 400,
+                        padding: '0px 8px',
+                        borderRadius: '2px',
+                        cursor: 'pointer',
+                      }}
+                      className='transition-colors hover:text-[#425A76]'
                     >
-                      <input
-                        type='checkbox'
-                        checked={item.completed}
-                        onChange={() => handleTcChecklistToggle(item.id)}
-                        className='w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 focus:ring-2 cursor-pointer'
-                        disabled={fieldConfig.checklist?.isDisabled}
-                      />
-                      <span
-                        className={`flex-1 text-sm transition-all duration-200 cursor-pointer ${
-                          item.completed
-                            ? 'line-through text-gray-500'
-                            : 'text-gray-700'
-                        }`}
-                        style={{ fontSize: '13px' }}
-                        onClick={() =>
-                          !fieldConfig.checklist?.isDisabled &&
-                          handleTcChecklistToggle(item.id)
-                        }
-                      >
-                        {item.text}
-                      </span>
-                      {item.completed && (
-                        <svg
-                          className='w-4 h-4 text-emerald-500'
-                          fill='currentColor'
-                          viewBox='0 0 20 20'
-                        >
-                          <path
-                            fillRule='evenodd'
-                            d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z'
-                            clipRule='evenodd'
-                          />
-                        </svg>
-                      )}
-                    </div>
-                  ))}
+                      {hideCheckedItems
+                        ? 'Show Checked Items'
+                        : 'Hide Checked Items'}
+                    </button>
+                  </div>
+                </div>
 
-                  {getFilteredChecklistItems().length === 0 &&
-                    hideCheckedItems && (
-                      <div className='px-4 py-6 text-center text-gray-500 text-sm'>
-                        All items are completed
+                <div className='mb-4'>
+                  <div className='flex items-center justify-between text-xs text-gray-600 mb-1'>
+                    <span>Progress</span>
+                    <span>{getCompletionPercentage()}% Complete</span>
+                  </div>
+                  <div className='w-full bg-gray-200 rounded-full h-2'>
+                    <div
+                      className='bg-emerald-500 h-2 rounded-full transition-all duration-300 ease-in-out'
+                      style={{ width: `${getCompletionPercentage()}%` }}
+                    ></div>
+                  </div>
+                  <div className='text-xs text-gray-500 mt-1'>
+                    {
+                      editedTask.checklist.filter((item) => item.completed)
+                        .length
+                    }{' '}
+                    of {editedTask.checklist.length} items completed
+                  </div>
+                </div>
+
+                <div className='border border-gray-200 rounded-lg'>
+                  <div
+                    className={`space-y-0 ${
+                      getFilteredChecklistItems().length > 6
+                        ? 'max-h-64 overflow-y-auto'
+                        : ''
+                    }`}
+                  >
+                    {getFilteredChecklistItems().map((item, index) => (
+                      <div
+                        key={item.id}
+                        className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${
+                          index !== getFilteredChecklistItems().length - 1
+                            ? 'border-b border-gray-200'
+                            : ''
+                        }`}
+                      >
+                        <input
+                          type='checkbox'
+                          checked={item.completed}
+                          onChange={() => handleChecklistToggle(item.id)}
+                          className='w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 focus:ring-2 cursor-pointer'
+                          disabled={fieldDisabled.checklist}
+                        />
+                        <span
+                          className={`flex-1 text-sm transition-all duration-200 cursor-pointer ${
+                            item.completed
+                              ? 'line-through text-gray-500'
+                              : 'text-gray-700'
+                          }`}
+                          style={{ fontSize: '13px' }}
+                          onClick={() =>
+                            !fieldDisabled.checklist &&
+                            handleChecklistToggle(item.id)
+                          }
+                        >
+                          {item.text}
+                        </span>
+                        {item.completed && (
+                          <svg
+                            className='w-4 h-4 text-emerald-500'
+                            fill='currentColor'
+                            viewBox='0 0 20 20'
+                          >
+                            <path
+                              fillRule='evenodd'
+                              d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z'
+                              clipRule='evenodd'
+                            />
+                          </svg>
+                        )}
                       </div>
-                    )}
+                    ))}
+
+                    {getFilteredChecklistItems().length === 0 &&
+                      hideCheckedItems && (
+                        <div className='px-4 py-6 text-center text-gray-500 text-sm'>
+                          All items are completed
+                        </div>
+                      )}
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {!fieldConfig.description?.isHidden && (
+          {!fieldVisibility.description && (
             <div>
               <h3 className='text-sm font-semibold text-gray-700 mb-3'>
                 Description
@@ -1218,12 +1219,12 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                 onChange={handleDescriptionChange}
                 placeholder=''
                 className='w-full bg-white border border-gray-300 rounded-lg p-3 text-sm resize-none focus:border-blue-500 focus:outline-none text-gray-900 placeholder-gray-500 min-h-[100px]'
-                disabled={fieldConfig.description?.isDisabled}
+                disabled={fieldDisabled.description}
               />
             </div>
           )}
 
-          {!fieldConfig.attachments?.isHidden && (
+          {!fieldVisibility.attachments && (
             <div>
               <h3 className='text-sm font-semibold text-gray-700 mb-3'>
                 Attachments
@@ -1236,7 +1237,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                   onChange={handleAttachmentChange}
                   className='hidden'
                   id='attachments-input'
-                  disabled={fieldConfig.attachments?.isDisabled}
+                  disabled={fieldDisabled.attachments}
                 />
                 <label
                   htmlFor='attachments-input'
@@ -1247,31 +1248,29 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                   </p>
                 </label>
               </div>
-              {editedTask?.attachments &&
-                editedTask.attachments.length > 0 && (
-                  <div className='mt-3 space-y-2'>
-                    {editedTask.attachments.map((file, idx) => (
-                      <div
-                        key={idx}
-                        className='text-xs text-gray-600 bg-gray-50 p-2 rounded flex items-center gap-2'
+              {editedTask?.attachments && editedTask.attachments.length > 0 && (
+                <div className='mt-3 space-y-2'>
+                  {editedTask.attachments.map((file, idx) => (
+                    <div
+                      key={idx}
+                      className='text-xs text-gray-600 bg-gray-50 p-2 rounded flex items-center gap-2'
+                    >
+                      <span>📎</span> {file}
+                      <button
+                        onClick={() => handleRemoveAttachment(idx)}
+                        className='ml-auto text-red-500 hover:text-red-700 transition-colors'
+                        disabled={fieldDisabled.attachments}
                       >
-                        <span>📎</span> {file}
-                        <button
-                          onClick={() => handleRemoveAttachment(idx)}
-                          className='ml-auto text-red-500 hover:text-red-700 transition-colors'
-                          disabled={fieldConfig.attachments?.isDisabled}
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
-          {/* Comments and Activity Section */}
-          {!fieldConfig.comments?.isHidden && (
+          {!fieldVisibility.comments && (
             <div className='border-t border-gray-200 pt-6'>
               <div className='flex gap-6 mb-4 border-b border-gray-200'>
                 <button
@@ -1296,10 +1295,8 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                 </button>
               </div>
 
-              {/* Comments Tab */}
               {activeTab === 'comments' && (
                 <div className='space-y-4'>
-                  {/* Only show comments UI, not activity feed here */}
                   <div className='flex items-start gap-3 mt-6 pt-4 border-t border-gray-200'>
                     <div
                       className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 text-white'
@@ -1315,7 +1312,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                         onChange={(e) => setComment(e.target.value)}
                         placeholder='Add a comment'
                         className='w-full bg-white border border-gray-300 rounded-lg p-3 text-sm resize-none focus:border-blue-500 focus:outline-none text-gray-900 placeholder-gray-500 min-h-[80px]'
-                        disabled={fieldConfig.comments?.isDisabled}
+                        disabled={fieldDisabled.comments}
                       />
                       <div className='border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors cursor-pointer bg-gray-50'>
                         <input
@@ -1324,7 +1321,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                           onChange={handleCommentAttachmentChange}
                           className='hidden'
                           id='comment-attachments-input'
-                          disabled={fieldConfig.comments?.isDisabled}
+                          disabled={fieldDisabled.comments}
                         />
                         <label
                           htmlFor='comment-attachments-input'
@@ -1349,7 +1346,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                                     handleRemoveCommentAttachment(idx)
                                   }
                                   className='ml-auto text-red-500 hover:text-red-700 transition-colors'
-                                  disabled={fieldConfig.comments?.isDisabled}
+                                  disabled={fieldDisabled.comments}
                                 >
                                   Remove
                                 </button>
@@ -1397,9 +1394,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                     ))
                   ) : (
                     <div className='text-center py-4'>
-                      <p className='text-sm text-gray-500'>
-                        No activities yet
-                      </p>
+                      <p className='text-sm text-gray-500'>No activities yet</p>
                     </div>
                   )}
                 </div>
@@ -1407,226 +1402,211 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
             </div>
           )}
 
-          {/* Collaborators Section - Moved after comments */}
-          <div className='border-t border-gray-200 pt-6 relative'>
-            <div className='flex items-center justify-between mb-3'>
-              <h3 className='text-sm font-semibold text-gray-700'>
-                Collaborators
-              </h3>
-              <div className='w-[200px] relative'>
-                <Select
-                  name='collaborators'
-                  className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
-                  onChange={(event: SelectChangeEvent<string[]>) => {
-                    const selectedUserIds = event.target.value as string[];
-                    const selectedUsers = availableUsers.filter((user) =>
-                      selectedUserIds.includes(user.id)
-                    );
-                    const collaborators = selectedUsers.map((user) => ({
-                      name: user.name,
-                      initials: user.initials ?? '',
-                      color: user.color ?? '',
-                    }));
-                    setSelectedCollaborators(collaborators);
-                    setEditedTask((prev) =>
-                      prev ? { ...prev, collaborators } : null
-                    );
-                  }}
-                  value={selectedCollaborators
-                    .map((collab) => {
-                      const user = availableUsers.find(
-                        (u) => u.name === collab.name
-                      );
-                      return user?.id || '';
-                    })
-                    .filter((id) => id !== '')}
-                  displayEmpty
-                  fullWidth
-                  size='small'
-                  multiple
-                  renderValue={() => (
-                    <span
-                      style={{
-                        color: '#7D98B6',
-                        fontSize: '13px',
-                        fontWeight: '400',
-                      }}
-                    >
-                      Add Collaborators
-                    </span>
-                  )}
-                  MenuProps={{
-                    anchorOrigin: {
-                      vertical: 'top',
-                      horizontal: 'left',
-                    },
-                    transformOrigin: {
-                      vertical: 'bottom',
-                      horizontal: 'left',
-                    },
-                    PaperProps: {
-                      sx: {
-                        maxWidth: 300,
-                        maxHeight: 300,
-                        marginBottom: '8px',
-                        zIndex: 9999,
-                        boxShadow:
-                          'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
-                        '& .MuiMenuItem-root': {
-                          fontSize: '13px',
-                          padding: '6px 12px',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        },
-                      },
-                    },
-                    slotProps: {
-                      paper: {
-                        style: {
-                          marginBottom: '8px',
-                        },
-                      },
-                    },
-                  }}
-                  sx={{
-                    height: '32px',
-                    fontSize: '13px',
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                      border: '2px solid #60A5FA',
-                    },
-                    '& .MuiOutlinedInput-root': {
-                      '&.Mui-focused': {
-                        boxShadow: 'none',
-                      },
-                    },
-                    '.MuiSelect-select': {
-                      padding: '6px 6px',
-                      color: '#7D98B6',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      minHeight: '20px',
-                      overflow: 'hidden',
-                    },
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      border: '1px solid #CBD6E2',
-                      borderRadius: '2px',
-                    },
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      border: '1px solid #CBD6E2',
-                    },
-                    '& svg': {
-                      color: '#7D98B6',
-                    },
-                  }}
-                >
-                  {availableUsers.map((user) => (
-                    <MenuItem
-                      sx={{
-                        color: '#425A76',
-                        fontSize: '13px',
-                        fontWeight: '500',
-                        backgroundColor: selectedCollaborators.find(
-                          (c) => c.name === user.name
-                        )
-                          ? '#EBF8FF'
-                          : 'inherit',
-                      }}
-                      key={user.id}
-                      value={user.id}
-                      title={user.name}
-                    >
-                      <div
+          {!fieldVisibility.collaborators && (
+            <div className='border-t border-gray-200 pt-6 relative'>
+              <div className='flex items-center justify-between mb-3'>
+                <h3 className='text-sm font-semibold text-gray-700'>
+                  Collaborators
+                </h3>
+                <div className='w-[200px] relative'>
+                  <Select
+                    name='collaborators'
+                    className='custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]'
+                    onChange={handleCollaboratorsChange}
+                    value={getCollaboratorsForSelect()}
+                    displayEmpty
+                    fullWidth
+                    size='small'
+                    multiple
+                    renderValue={() => (
+                      <span
                         style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          width: '100%',
+                          color: '#7D98B6',
+                          fontSize: '13px',
+                          fontWeight: '400',
                         }}
                       >
-                        <input
-                          type='checkbox'
-                          checked={
-                            selectedCollaborators.find(
-                              (c) => c.name === user.name
-                            ) !== undefined
-                          }
-                          onChange={() => {}}
-                          style={{ margin: 0, pointerEvents: 'none' }}
-                        />
-                        <div
-                          style={{
-                            width: '20px',
-                            height: '20px',
-                            borderRadius: '50%',
-                            backgroundColor: user.color,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '10px',
-                            fontWeight: '600',
-                            color: 'white',
+                        Add Collaborators
+                      </span>
+                    )}
+                    MenuProps={{
+                      anchorOrigin: {
+                        vertical: 'top',
+                        horizontal: 'left',
+                      },
+                      transformOrigin: {
+                        vertical: 'bottom',
+                        horizontal: 'left',
+                      },
+                      PaperProps: {
+                        sx: {
+                          maxWidth: 300,
+                          maxHeight: 300,
+                          marginBottom: '8px',
+                          zIndex: 9999,
+                          boxShadow:
+                            'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
+                          '& .MuiMenuItem-root': {
+                            fontSize: '13px',
+                            padding: '6px 12px',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                          },
+                        },
+                      },
+                      slotProps: {
+                        paper: {
+                          style: {
+                            marginBottom: '8px',
+                          },
+                        },
+                      },
+                    }}
+                    sx={{
+                      height: '32px',
+                      fontSize: '13px',
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        border: '2px solid #60A5FA',
+                      },
+                      '& .MuiOutlinedInput-root': {
+                        '&.Mui-focused': {
+                          boxShadow: 'none',
+                        },
+                      },
+                      '.MuiSelect-select': {
+                        padding: '6px 6px',
+                        color: '#7D98B6',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        minHeight: '20px',
+                        overflow: 'hidden',
+                      },
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        border: '1px solid #CBD6E2',
+                        borderRadius: '2px',
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        border: '1px solid #CBD6E2',
+                      },
+                      '& svg': {
+                        color: '#7D98B6',
+                      },
+                    }}
+                  >
+                    {enrichedUsers.map((user) => {
+                      const isSelected =
+                        editedTask.collaborators?.find(
+                          (c) => c.name === user.name
+                        ) !== undefined;
+                      return (
+                        <MenuItem
+                          sx={{
+                            color: '#425A76',
+                            fontSize: '13px',
+                            fontWeight: '500',
+                            backgroundColor: isSelected ? '#EBF8FF' : 'inherit',
                           }}
+                          key={user.id}
+                          value={user.id}
+                          title={user.name}
                         >
-                          {user.initials}
-                        </div>
-                        <span style={{ flex: 1 }}>{user.name}</span>
-                      </div>
-                    </MenuItem>
-                  ))}
-                </Select>
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              width: '100%',
+                            }}
+                          >
+                            <input
+                              type='checkbox'
+                              checked={isSelected}
+                              onChange={() => {}}
+                              style={{ margin: 0, pointerEvents: 'none' }}
+                            />
+                            <div
+                              style={{
+                                width: '20px',
+                                height: '20px',
+                                borderRadius: '50%',
+                                backgroundColor: user.color,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '10px',
+                                fontWeight: '600',
+                                color: 'white',
+                              }}
+                            >
+                              {user.initials}
+                            </div>
+                            <span style={{ flex: 1 }}>{user.name}</span>
+                          </div>
+                        </MenuItem>
+                      );
+                    })}
+                  </Select>
+                </div>
+              </div>
+
+              <div className='flex items-center -space-x-2'>
+                {(editedTask.collaborators || []).map((collab, index) => (
+                  <div
+                    key={collab.name}
+                    className={`relative group transition-transform duration-200 hover:scale-110 hover:z-10 hover:-translate-y-2 ${
+                      index < (editedTask.collaborators?.length || 0) - 1
+                        ? 'peer'
+                        : ''
+                    }`}
+                    title={collab.name}
+                    onMouseEnter={() => {
+                      const nextProfile = document.querySelector(
+                        `[data-profile-index="${index + 1}"]`
+                      ) as HTMLElement;
+                      if (nextProfile) {
+                        nextProfile.style.transform = 'translateX(8px)';
+                      }
+                    }}
+                    onMouseLeave={() => {
+                      const nextProfile = document.querySelector(
+                        `[data-profile-index="${index + 1}"]`
+                      ) as HTMLElement;
+                      if (nextProfile) {
+                        nextProfile.style.transform = 'translateX(0)';
+                      }
+                    }}
+                    data-profile-index={index}
+                  >
+                    <div
+                      className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold cursor-pointer text-white border-2 border-white shadow-md transition-all duration-300 ease-in-out group-hover:shadow-xl group-hover:border-blue-200'
+                      style={{ backgroundColor: collab.color }}
+                    >
+                      {collab.initials}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const updatedCollabs =
+                            editedTask.collaborators?.filter(
+                              (c) => c.name !== collab.name
+                            ) || [];
+                          setEditedTask((prev) =>
+                            prev
+                              ? { ...prev, collaborators: updatedCollabs }
+                              : null
+                          );
+                        }}
+                        className='absolute -top-1 -right-1 w-4 h-4 bg-red-500 hover:bg-red-600 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out scale-0 group-hover:scale-100 shadow-sm'
+                        title={`Remove ${collab.name}`}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-
-            {/* Overlapping Profile Indicators */}
-            <div className='flex items-center -space-x-2'>
-              {selectedCollaborators.map((collab, index) => (
-                <div
-                  key={collab.name}
-                  className={`relative group transition-transform duration-200 hover:scale-110 hover:z-10 hover:-translate-y-2 ${
-                    index < selectedCollaborators.length - 1 ? 'peer' : ''
-                  }`}
-                  title={collab.name}
-                  onMouseEnter={() => {
-                    // Move the next profile to the right when this one is hovered
-                    const nextProfile = document.querySelector(
-                      `[data-profile-index="${index + 1}"]`
-                    ) as HTMLElement;
-                    if (nextProfile) {
-                      nextProfile.style.transform = 'translateX(8px)';
-                    }
-                  }}
-                  onMouseLeave={() => {
-                    // Reset the next profile position when hover ends
-                    const nextProfile = document.querySelector(
-                      `[data-profile-index="${index + 1}"]`
-                    ) as HTMLElement;
-                    if (nextProfile) {
-                      nextProfile.style.transform = 'translateX(0)';
-                    }
-                  }}
-                  data-profile-index={index}
-                >
-                  <div
-                    className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold cursor-pointer text-white border-2 border-white shadow-md transition-all duration-300 ease-in-out group-hover:shadow-xl group-hover:border-blue-200'
-                    style={{ backgroundColor: collab.color }}
-                  >
-                    {collab.initials}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleToggleCollaborator(collab);
-                      }}
-                      className='absolute -top-1 -right-1 w-4 h-4 bg-red-500 hover:bg-red-600 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out scale-0 group-hover:scale-100 shadow-sm'
-                      title={`Remove ${collab.name}`}
-                    >
-                      ×
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </>

@@ -1,4 +1,4 @@
-import { KanbanColumn, User, TaskDetails } from './types';
+import { KanbanColumn, User, Task } from './types';
 
 export const mockUserData: User[] = [
   { id: '1', name: 'John Doe', initials: 'JD', color: '#3B82F6' },
@@ -8,7 +8,8 @@ export const mockUserData: User[] = [
   { id: '5', name: 'David Brown', initials: 'DB', color: '#8B5CF6' },
 ];
 
-export const mockTaskDetailsData: Record<string, TaskDetails> = {
+// Separate mock data for complete task details
+export const mockTaskDetails: Record<string, Task> = {
   'task-1': {
     id: 'task-1',
     title: 'Design homepage wireframes',
@@ -291,7 +292,7 @@ export const mockTaskDetailsData: Record<string, TaskDetails> = {
         date: '24 days ago',
       },
       {
-        id: '7-activity-2',
+        id: 'task-7-activity-2',
         user: 'John Doe',
         action: 'added stakeholder feedback',
         date: '20 days ago',
@@ -306,36 +307,41 @@ export const mockTaskDetailsData: Record<string, TaskDetails> = {
   },
 };
 
-export const mockKanbanColumnData: KanbanColumn[] = [
+// Updated KanbanColumn data with rid and only taskIds
+export const mockKanbanData: KanbanColumn[] = [
   {
     id: 'todo',
     rid: 'col-001',
     name: 'To Do',
     taskCount: 3,
-    tasks: [
-      { taskId: 'task-1', rid: 'task-001' },
-      { taskId: 'task-2', rid: 'task-002' },
-      { taskId: 'task-3', rid: 'task-003' },
-    ],
+    tasks: [{ taskId: 'task-1' }, { taskId: 'task-2' }, { taskId: 'task-3' }],
   },
   {
     id: 'in-progress',
     rid: 'col-002',
     name: 'In Progress',
     taskCount: 2,
-    tasks: [
-      { taskId: 'task-4', rid: 'task-004' },
-      { taskId: 'task-5', rid: 'task-005' },
-    ],
+    tasks: [{ taskId: 'task-4' }, { taskId: 'task-5' }],
   },
   {
     id: 'done',
     rid: 'col-003',
     name: 'Done',
     taskCount: 2,
-    tasks: [
-      { taskId: 'task-6', rid: 'task-006' },
-      { taskId: 'task-7', rid: 'task-007' },
-    ],
+    tasks: [{ taskId: 'task-6' }, { taskId: 'task-7' }],
   },
 ];
+
+// Mock function to simulate API call for fetching task details
+export const fetchTaskDetails = async (
+  taskId: string
+): Promise<Task | null> => {
+  // Simulate API delay
+  await new Promise((resolve) => setTimeout(resolve, 100));
+
+  const task = mockTaskDetails[taskId];
+  if (!task) return null;
+
+  // Return task (helper functions will enrich it with initials/colors if needed)
+  return task;
+};

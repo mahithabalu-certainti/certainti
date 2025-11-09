@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { KanbanColumnProps, TaskDetails } from './types';
+import { KanbanColumnProps, TaskCard } from './types';
 import { useDroppable } from '@dnd-kit/core';
 import { AddIcon, ChevronDownIcon } from '../../assets';
 import {
   SortableContext,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import TaskCard from './task-card';
+import TaskCardComponent from './task-card';
 
 interface ExtendedKanbanColumnProps extends KanbanColumnProps {
   isDragable?: boolean;
@@ -15,7 +15,6 @@ interface ExtendedKanbanColumnProps extends KanbanColumnProps {
 
 const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
   column,
-  taskDetails,
   showTaskCount,
   showCommentCount,
   showProfileIndicator,
@@ -28,6 +27,10 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
   onTaskClick,
   isDragable = false,
   isDragablebetweenBoards = false,
+  statusData,
+  priorityData,
+  onTaskUpdate,
+  onFetchTaskDetails,
 }) => {
   const [isAddingTaskAtTop, setIsAddingTaskAtTop] = useState(false);
   const [isAddingTaskAtBottom, setIsAddingTaskAtBottom] = useState(false);
@@ -91,17 +94,8 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
 
   const handleAddTaskAtTop = () => {
     if (newTaskTitle.trim()) {
-      const newTask: TaskDetails = {
-        id: Date.now().toString(),
-        title: newTaskTitle,
-        status: 'To Do' as const,
-        assignee: {
-          name: 'New User',
-          initials: 'NU',
-          color: '#8B5CF6',
-        },
-        commentCount: 0,
-        createdAt: new Date(),
+      const newTask: TaskCard = {
+        taskId: `task-${Date.now()}`,
       };
 
       onAddTask(column.id, newTask, 'top');
@@ -112,17 +106,8 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
 
   const handleAddTaskAtBottom = () => {
     if (newBottomTaskTitle.trim()) {
-      const newTask: TaskDetails = {
-        id: Date.now().toString(),
-        title: newBottomTaskTitle,
-        status: 'To Do' as const,
-        assignee: {
-          name: 'New User',
-          initials: 'NU',
-          color: '#8B5CF6',
-        },
-        commentCount: 0,
-        createdAt: new Date(),
+      const newTask: TaskCard = {
+        taskId: `task-${Date.now()}`,
       };
 
       onAddTask(column.id, newTask, 'bottom');
@@ -292,17 +277,20 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
         disabled={!isDragable && !isDragablebetweenBoards}
       >
         <div className='space-y-2 mb-2'>
-          {column.tasks.map((task) => (
-            <TaskCard
-              key={task.taskId}
-              task={task}
-              taskDetails={taskDetails[task.taskId]}
+          {column.tasks.map((taskCard) => (
+            <TaskCardComponent
+              key={taskCard.taskId}
+              taskId={taskCard.taskId}
               showCommentCount={showCommentCount}
               showProfileIndicator={showProfileIndicator}
               onEditTask={onEditTask}
               onTaskClick={onTaskClick}
               isDragable={isDragable}
               isDragablebetweenBoards={isDragablebetweenBoards}
+              statusData={statusData}
+              priorityData={priorityData}
+              onTaskUpdate={onTaskUpdate}
+              onFetchTaskDetails={onFetchTaskDetails}
             />
           ))}
         </div>
