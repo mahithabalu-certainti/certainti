@@ -107,11 +107,11 @@ implements CaseTaskAttributes {
                 allowNull : true
             },
             effective_start_datetime : {
-                type : DataTypes.DATE,
+                type : DataTypes.DATEONLY,
                 allowNull : true
             },
             effective_end_datetime : {
-                type : DataTypes.DATE,
+                type : DataTypes.DATEONLY,
                 allowNull : true
             },
             case_team_member_role_rid : {

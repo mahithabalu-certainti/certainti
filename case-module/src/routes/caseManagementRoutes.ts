@@ -73,6 +73,11 @@ routes.get(
   checkUserStatusMiddleware("NA"),
   controller.caseManagementController.fetchAllTaskTypes
 );
+routes.get(
+  "/taskTemplate/:rid",
+  checkUserStatusMiddleware("NA"),
+  controller.caseManagementController.fetchTaskTemplateDetails
+);
 
 
 export default routes;

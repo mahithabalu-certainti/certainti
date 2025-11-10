@@ -35,6 +35,7 @@ import moment from "moment";
 
 const services = configurations.getInstance().getServices();
 const caseService = services.caseService;
+const caseManagementService = services.caseManagementService;
 /**
  * Handles the creation of a new case based on the incoming HTTP request.
  *
@@ -1643,6 +1644,47 @@ async function updateCheckList(req: Request, res: Response): Promise<void> {
   }
 }
 
+async function fetchCaseKanbanBoard (req : Request, res : Response) {
+  const methodName = "fetchCaseKanbanBoard";
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const { accountRid, caseRid } = req.params;
+    const result = await caseManagementService.fetchKanbanBoardForCase(accountRid!, caseRid!);
+    if(result.statusCode == HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.caseBreakdownSuccess,
+        data: result.data,
+      });      
+    } else {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.dataNotAvailable,
+        data: [],
+      });       
+    }   
+  } catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
 async function getCheckListDetailsById(
   req: Request,
   res: Response
@@ -1786,6 +1828,7 @@ export default {
   listUserForCaseOwner,
   createCheckList,
   updateCheckList,
+  fetchCaseKanbanBoard,
   getCheckListDetailsById,
   getAllChecklists,
 };

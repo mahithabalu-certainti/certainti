@@ -1174,7 +1174,9 @@ export class NotesService {
         const accountRids = [...new Set(attachmentsRaw.map(a => a.account_rid))];
         const accounts = await this.schemaService.fetchAccountsByIds(accountRids);
         const accountMap = new Map(accounts.map((a: any) => [a.rid, a]));
-    
+        const accountStatus = await this.schemaService.fetchAccountsWithStatusByIds(accountRids);
+        const accountStatusMap = new Map(accountStatus.map((a: any) => [a.rid, a]));
+
         const schemaNumberMap = new Map<string, string>();
     
         await Promise.all(
@@ -1229,17 +1231,23 @@ export class NotesService {
         ]);
         const userMap = new Map(users.map((u: any) => [u.rid, u.full_name]));
     
-        let attachments = await Promise.all(attachmentsRaw.map(async att => ({
-          ...att.get({ plain: true }),
-          created_by_name: userMap.get(att.created_by) || att.created_by,
-          modified_by_name: userMap.get(att.modified_by) || att.modified_by,
-          attached_to: attachmentDisplayNames[att.rid] || att.attach_to,
-          notes_owner_name: userMap.get(att.notes_owner) || att.notes_owner,
-          browse_file : att.browse_file !== '' && att.browse_file !== null && att.browse_file !== undefined ? await generateSasUrl(att.browse_file) : null,
-          parent_rid : parentDisplayRid[att.attach_to],
-          currency_rid : currencyDisplayRid[att.attach_to]
-        })));
-    
+        let attachments = await Promise.all(attachmentsRaw.map(async att => {
+
+          const accountStatusInfo = accountStatusMap.get(att.account_rid);
+          return {
+            ...att.get({ plain: true }),
+            created_by_name: userMap.get(att.created_by) || att.created_by,
+            modified_by_name: userMap.get(att.modified_by) || att.modified_by,
+            attached_to: attachmentDisplayNames[att.rid] || att.attach_to,
+            notes_owner_name: userMap.get(att.notes_owner) || att.notes_owner,
+            browse_file: att.browse_file !== '' && att.browse_file !== null && att.browse_file !== undefined ? await generateSasUrl(att.browse_file) : null,
+            parent_rid: parentDisplayRid[att.attach_to],
+            currency_rid: currencyDisplayRid[att.attach_to],
+            status_rid: accountStatusInfo?.status_rid || null,
+            status_name: accountStatusInfo?.status_name || null
+          };
+        }));
+
         // Filters: attached_to
         if (attachedToFilter) {
           attachments = attachments.filter(att => {
@@ -1896,6 +1904,12 @@ private async getAttachmentDisplayNames(attachments: any[], schemaNumber: string
           const resourceSkill = await this.projectIngestionService.fetchResourceSkillById(schemaNumber, attachment.attach_to);
           displayNames[attachment.rid] = (resourceSkill as { r_number?: string })?.r_number || attachment.attach_to;
           parentRid[attachment.attach_to] = (resourceSkill as {resource_rid? : string})?.resource_rid || ''
+          currencyRid[attachment.attach_to] = ''
+          break;       
+        case 'case': 
+          const cases = await this.projectIngestionService.fetchCaseById(schemaNumber, attachment.attach_to);
+          displayNames[attachment.rid] = (cases as { case_name?: string })?.case_name || attachment.attach_to;
+          parentRid[attachment.attach_to] = ''
           currencyRid[attachment.attach_to] = ''
           break;       
         default:

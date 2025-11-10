@@ -1645,6 +1645,8 @@ export class AttachmentService {
       ];
       const accounts = await this.schemaService.fetchAccountsByIds(accountRids);
       const accountMap = new Map(accounts.map((a: any) => [a.rid, a]));
+      const accountStatus = await this.schemaService.fetchAccountsWithStatusByIds(accountRids);
+      const accountStatusMap = new Map(accountStatus.map((a: any) => [a.rid, a]));
 
       const schemaNumberMap = new Map<string, string>();
 
@@ -1735,14 +1737,22 @@ export class AttachmentService {
       );
       const userMap = new Map(users.map((u: any) => [u.rid, u.full_name]));
 
-    let attachments = await Promise.all(attachmentsRaw.map(async att => ({
+    let attachments = await Promise.all(attachmentsRaw.map(async att => {
+
+      const accountStatusInfo = accountStatusMap.get(att.account_rid);
+
+      return {
       ...att.get({ plain: true }),
       document_type: documentTypeMap.get(att.document_type_rid) || null,
       document_category: documentCategoryMap.get(att.document_category_rid) || null,
       uploaded_by: userMap.get(att.created_by) || att.created_by,
       attached_to: attachmentDisplayNames[att.rid] || att.attach_to,
-      browse_file : await generateSasUrl(att.browse_file)
-    })));
+      browse_file : await generateSasUrl(att.browse_file),
+      status_rid: accountStatusInfo?.status_rid || null,
+      status_name: accountStatusInfo?.status_name || null
+      }
+
+    }));
 
       // Filters: attached_to
       if (attachedToFilter) {

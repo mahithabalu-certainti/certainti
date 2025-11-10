@@ -516,4 +516,115 @@ export class CaseManagementService {
       }      
     }
   }
+  async getTaskTemplateDetailsById (rid : string) {
+    const mainDb = await this.getMainDb();
+    const result = await mainDb.query<AdminTaskTemplateResponseTypes>(fetchAdminTemplates(1,1, '', '', {},'', false, true, rid), {type : QueryTypes.SELECT});
+    if(result.length > 0) {
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        statusMessage : STATUS_MESSAGE.taskTemplateSuccess,
+        data : result[0]
+      }
+    } else {
+      return {
+        statusCode : HttpStatus.NOT_FOUND,
+        statusMessage : STATUS_MESSAGE.dataNotAvailable,
+        data : null
+      }
+    }
+  }
+  async fetchKanbanBoardForCase (accountRid : string, caseRid : string) {
+    const mainDb = await this.getMainDb();
+    const fetchParentRnumber : any = await mainDb.query(await rawQueries.fetchParentAccount(accountRid, mainDb));
+    if(fetchParentRnumber[0].length > 0) {
+      const schemaName = rawQueries.fetchSchemaName(fetchParentRnumber[0][0].r_number);
+      const result : any = await this.caseManangementSchemaService.fetchKanbanBoard(schemaName, caseRid, accountRid);
+      if(result.array_agg[0].rid !== null) {
+        let uniquePriorityIds = [...new Set(result.array_agg.flatMap((d : any) => d.tasks.map((dd : any) => dd.priority_rid)))];
+        let uniqueAssignedToIds = [...new Set(result.array_agg.flatMap((d : any) => d.tasks.map((dd : any) => dd.assigned_to)))]
+        let uniqueTeamRoleIds = [...new Set(result.array_agg.flatMap((d : any) => d.tasks.map((dd : any) => dd.case_team_member_role_rid)))]
+        let uniqueTaskTypeIds = [...new Set(result.array_agg.flatMap((d : any) => d.tasks.map((dd : any) => dd.task_type_rid)))]
+        let statusIds = [...new Set(result.array_agg.flatMap((d : any) => d.tasks.map((dd : any) => dd.status_rid)))]
+
+        let priority;
+        let assignedTo;
+        let teamRole;
+        let tasktype;
+        let statusType;
+
+        let priorityQuery = rawQueries.getAllPriorityTypes(uniquePriorityIds)
+        if(priorityQuery) {
+          priority = await mainDb.query(priorityQuery) 
+        }
+        let assignedToQuery = rawQueries.getAllUsers(uniqueAssignedToIds)
+        if(assignedToQuery) {
+          assignedTo = await mainDb.query(assignedToQuery) 
+        }
+        let teamRoleQuery = rawQueries.getAllTeamRoles(uniqueTeamRoleIds)
+        if(teamRoleQuery) {
+          teamRole = await mainDb.query(teamRoleQuery)
+        }
+        let taskTypeQuery = rawQueries.getAllTaskTypes(uniqueTaskTypeIds);
+        if(taskTypeQuery) {
+          tasktype = await mainDb.query(taskTypeQuery)
+        }
+        let statusQuery = rawQueries.getAllStatus(statusIds)
+        if(statusQuery) {
+          statusType = await mainDb.query(statusQuery)
+        }
+        let priorityMap : Map<string, string> = new Map(priority?.[0]?.map((d : any) => [d.rid, d.priority_name]));
+        let assignedToMap : Map<string, string> = new Map(assignedTo?.[0]?.map((d : any) => [d.rid, d.name]));
+        let teamRoleMap : Map<string, string> =new Map(teamRole?.[0]?.map((d : any) => [d.rid, d.role_name]));
+        let taskTypeMap : Map<string, string> = new Map(tasktype?.[0]?.map((d : any) => [d.rid, d.task_type_name]));
+        let statusMap : Map<string, string> = new Map(statusType?.[0]?.map((d : any) => [d.rid, d.status_name]));
+        const finalStructure = result.array_agg.map((d : any) => {
+          return {
+            rid : d.rid,
+            milestone_name : d.milestone_name,
+            task_count : d.task_count,
+            tasks : d.tasks.map((d : any) => {
+              return {
+                rid: d.rid,
+                r_number: d.r_number,
+                task_name: d.task_name,
+                created_by: d.created_by,
+                status_rid: d.status_rid,
+                assigned_to: d.assigned_to,
+                sequence_no: d.sequence_no,
+                priority_rid: d.priority_rid,
+                task_type_rid: d.task_type_rid,
+                effort_in_days: d.effort_in_days,
+                checklists_count: d.checklists_count,
+                task_description: d.task_description,
+                reminder_interval: d.reminder_interval,
+                effective_end_datetime: d.effective_end_datetime,
+                effective_start_datetime: d.effective_start_datetime,
+                case_team_member_role_rid: d.case_team_member_role_rid,
+                milestone_template_rid: d.milestone_template_rid,
+                priority_name : priorityMap.get(d.priority_rid) || null,
+                assigned_to_name : assignedToMap.get(d.assigned_to) || null,
+                case_team_member_role_name : teamRoleMap.get(d.case_team_member_role_rid) || null,
+                task_type_name : taskTypeMap.get(d.task_type_rid) || null,
+                status_name : statusMap.get(d.status_rid) || null
+              }
+            })
+          }
+        })
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          data : finalStructure
+        }
+      } else {
+        return {
+        statusCode : HttpStatus.NOT_FOUND,
+        data : []
+        }
+      }
+    } else {
+        return {
+        statusCode : HttpStatus.FAILED,
+        data : []
+        }
+    }
+  }
 }

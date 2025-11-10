@@ -2813,6 +2813,24 @@ class ProjectIngestionService {
     return result[0];
   }
 
+  async fetchCaseById(accountNumber: string, caseId: string) {
+    const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+      /\D/g,
+      ""
+    )}`;
+
+    const query = rawQueries.fetchCaseById(schemaName);
+
+    const sequelize = await this.getSequelize();
+    const result = await sequelize.query(query, {
+      replacements: { caseId },
+      type: "SELECT",
+      raw: true,
+    });
+
+    return result[0];
+  }
+
   async insertProjectClassification(
     projects: any[],
     mainDbSequelize: Sequelize
