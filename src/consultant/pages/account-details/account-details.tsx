@@ -122,6 +122,7 @@ export const AccountDetails = () => {
   const interactionRID = searchParams.get('interaction_rid');
   const interactionsView = !!interactionId || !!interactionRID;
   const noteView = searchParams.get('note_id');
+  const checklistView = searchParams.get('checklist_id');
 
   // Permission Mangement
   const accountIsEnable = checkPermission(modules, AllModules.ACCOUNTS);
@@ -167,6 +168,11 @@ export const AccountDetails = () => {
     permission,
     AllPermissions.NOTES_EXPORT
   );
+
+  // const isChecklistsExportEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.CHECKLIST_EXPORT
+  // );
 
   const isCasesExportEnable = checkPermission(
     permission,
@@ -413,6 +419,19 @@ export const AccountDetails = () => {
       }),
     };
 
+    const checklistsPayload = {
+      accountRid: accountid || rNumber,
+      entityId: exportType === 'checklist' ? accountid || rNumber : resourceRid,
+      attachmentLevel: exportType === 'checklist' ? 'account' : 'resource',
+      ...(exportType === 'resource_checklist' && {
+        sortBy: tableParams.sortBy,
+        sortOrder: tableParams.sortOrder as 'ASC' | 'DESC' | undefined,
+        fiscalYear: convertedFiscalYear,
+        filters: filter,
+        search,
+      }),
+    };
+
     const financialPayload = {
       accountNumber: accountDetailsForEdit?.accountById?.r_number,
       accountRid: accountid,
@@ -439,7 +458,10 @@ export const AccountDetails = () => {
     } else if (exportType === 'notes' || exportType === 'resource_notes') {
       ExportNotesList('notes', { ...notesParams, ...notesPayload });
     } else if (exportType === 'checklist') {
-      ExportChecklistList('checklist', { ...checklistParams });
+      ExportChecklistList('checklist', {
+        ...checklistParams,
+        ...checklistsPayload,
+      });
     } else if (exportType === 'imports') {
       exportImportsData(importsParams);
     } else if (exportType === 'cases') {
@@ -583,7 +605,9 @@ export const AccountDetails = () => {
       return !isAttachmentExportEnable;
     } else if (list === 'resources' && tab === 'notes' && !noteView) {
       return !isNotesExportEnable;
-    } else if (list === 'checklist') {
+    } else if (list === 'resources' && tab === 'checklists' && !checklistView) {
+      return false;
+    } else if (list === 'checklist' && !checklistView) {
       return false;
     } else if (list === 'projects') {
       return !isProjectExportEnable;
@@ -760,6 +784,7 @@ export const AccountDetails = () => {
             setExportType={setExportType}
             setChecklistParams={setChecklistParams}
             accountInActive={accountInActive}
+            accountDetails={{ ...data?.data } as accountDetailsProps}
           />
         );
       case 'timesheet':
@@ -871,7 +896,7 @@ export const AccountDetails = () => {
         icon: AttachmentsSideIcon,
       },
       {
-        name: 'Checklist',
+        name: 'Checklists',
         key: 'checklist',
         id: AllMenus.CHECKLISTS,
         disabled: disable,

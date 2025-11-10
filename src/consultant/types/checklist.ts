@@ -1,3 +1,5 @@
+import { CommonApiResponse } from '../../common-service';
+
 interface GlobalFilters {
   [key: string]: string[];
 }
@@ -62,45 +64,90 @@ export interface ChecklistListResponse {
 }
 
 //Details
-export interface ChecklistDetails {
+
+export interface ChecklistItemDetails {
   rid: string;
+  sequence_no?: string;
+  checklist_item_name: string;
+  status_rid: string | null;
+  checklist_item_description: string | null;
+}
+
+export interface ChecklistDetails {
+  checklist_rid: string;
+  checklist_name: string;
+  checklist_description: string;
   r_number: string;
-  title: string;
-  descriptions: string;
-  checklist_owner: string;
-  checklist_owner_name: string;
-  created_by: string;
-  modified_by: string;
+  status_rid: string;
+  status_name: string;
   account_rid: string;
-  browse_file: string;
-  created_datetime: string;
-  modified_datetime: string;
-  document_name: string;
   fiscal_year: number;
   attached_to: string;
   attach_to: string;
-  format: string;
-  size_in_mb: string;
   attachment_level: string;
-  created_by_name: string;
-  modified_by_name: string;
+  modified_by: string | null;
+  created_by: string;
+  created_datetime: string;
+  modified_datetime: string | null;
+  checklist_items: ChecklistItemDetails[];
 }
 
 export interface ChecklistDetailsResponse {
   statusCode: number;
   statusCodeValue: string;
   statusMessage: string;
-  data: ChecklistDetails;
+  data: {
+    checklistDetails: ChecklistDetails;
+  };
 }
 
 //Form types
-export interface ChecklistFormDataPayload {
-  rid: string;
-  attachment: File;
-  attachment_level: string;
+
+export enum ItemActionType {
+  Add = 'add',
+  Edit = 'edit',
+  Delete = 'delete',
+}
+
+export type ChecklistItem = {
+  rid?: string;
+  checklist_item_name: string;
+  description: string;
+  status_rid?: string;
+  action_type: ItemActionType;
+};
+
+export type ChecklistFormPayload = {
+  checklist_rid?: string;
+  account_rid: string;
+  checklist_name: string;
+  checklist_template_rid?: string;
+  fiscal_year?: string;
+  checklist_description: string;
   attach_to: string;
-  fiscal_year?: string | number;
-  title: string;
-  checklist_owner: string;
-  descriptions: string;
+  attachment_level: string;
+  status_rid: string;
+  checklist_items: ChecklistItem[];
+};
+
+export interface ChecklistFormResponse extends CommonApiResponse {
+  data: {
+    checklist_rid?: string;
+    message?: string;
+  };
+}
+
+// Checklist status
+export interface ChecklistStatus {
+  rid: string;
+  status_name: string;
+}
+
+export interface ChecklistStatusResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    checklistStatus: ChecklistStatus[];
+  };
 }

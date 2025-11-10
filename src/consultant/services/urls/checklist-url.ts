@@ -14,7 +14,7 @@ export const ChecklistListURL = ({
   isGlobal,
   search,
 }: ChecklistListURLParams) => {
-  const baseUrl = `/api/checklist/list${isGlobal ? `/summary` : ''}`;
+  const baseUrl = `/api/cases/checklist/list${isGlobal ? `/summary` : ''}`;
   const searchParams = new URLSearchParams();
 
   searchParams.set('page', page.toString());
@@ -47,8 +47,8 @@ export const ChecklistListURL = ({
   return `${baseUrl}?${searchParams.toString()}`;
 };
 
-export const createChecklistUrl = () => `/api/checklist/upload/checklist`;
-export const updateChecklistUrl = () => `/api/checklist/update`;
+export const getCreateChecklistUrl = () => `/api/cases/checklist/create`;
+export const getUpdateChecklistUrl = () => `/api/cases/checklist/update`;
 
 export const ChecklistExportListURL = ({
   sortBy,
@@ -65,7 +65,7 @@ export const ChecklistExportListURL = ({
 }: ChecklistListExportParams): string => {
   const baseUrl = isGlobal
     ? `/api/checklist/list/summary/export`
-    : `/api/checklist/list/export`;
+    : `/api/cases/checklist/export`;
 
   const searchParams = new URLSearchParams();
 

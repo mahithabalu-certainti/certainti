@@ -21,7 +21,11 @@ import {
   ShowHideTableColumn,
 } from '../../../../../../components/table/types';
 import { resourceClient } from '../../../../../../api/graphql/clients/client';
-import { NOTES_CREATE, RESOURCECOST } from '../../../../../../routes';
+import {
+  CHECKLIST_CREATE,
+  NOTES_CREATE,
+  RESOURCECOST,
+} from '../../../../../../routes';
 import {
   ListTable,
   ManageColumnsPopover,
@@ -201,6 +205,11 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
     AllPermissions.NOTES_CREATE
   );
 
+  // const isChecklistCreateEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.CHECKLIST_CREATE
+  // );
+
   const handleEdit = (cost: ResourceCostList) => {
     const data = convertResourceCost(cost);
     navigate(RESOURCECOST + '/edit/' + cost.r_number, {
@@ -353,6 +362,21 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
     navigate(`${path}?${queryParams.toString()}`);
   };
 
+  const handleCreateChecklist = (rowId: string) => {
+    const accountId = accountid ?? '';
+    const path = generatePath(CHECKLIST_CREATE, {
+      module: 'account',
+    });
+    const queryParams = new URLSearchParams({
+      accountId,
+      entityLevel: 'resource_cost',
+      entityId: rowId || '',
+      source: `Resource > ${resourceNumber}`,
+      ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
+    });
+    navigate(`${path}?${queryParams.toString()}`);
+  };
+
   const resourceCostColumns = useMemo(
     () =>
       getResourceCostColumns(
@@ -362,11 +386,13 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
         accountInActive,
         handleAttachmentClick,
         handleCreateNote,
+        handleCreateChecklist,
         resourceInActive,
         attachmentCreateEnable,
         handleGetFiscalYear,
         fiscalDate,
         isNoteCreateEnable
+        // isChecklistCreateEnable,
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [accountInActive, fiscalDate, resourceInActive]

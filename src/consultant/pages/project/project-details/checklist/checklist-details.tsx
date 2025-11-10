@@ -12,28 +12,31 @@ import DetailsSection, {
 } from '../../../../../components/details-section/details';
 import { formatDateToYYYYMMDDWithTime } from '../../../../../common-utils';
 import SectionHeader from '../../../../../components/details-section/section-header';
+import { ChecklistIcon } from '../../../../../assets';
 import DetailsSectionSkeleton from '../../../../../components/skeleton-component/detailsskeleton';
 import { Typography } from '@mui/material';
-import { ChecklistIcon } from '../../../../../assets';
 
 interface ChecklistDetailsProps {
-  accountInActive: boolean;
-  accountName: string;
+  accountOrProjectInActive: boolean;
+  projectFiscalYear?: number | string;
+  projectCode?: string;
 }
 
 const ChecklistDetails: React.FC<ChecklistDetailsProps> = ({
-  accountInActive,
-  accountName,
+  accountOrProjectInActive,
+  projectFiscalYear,
+  projectCode,
 }) => {
   const navigate = useNavigate();
-  const { accountid } = useParams();
   const [searchParams] = useSearchParams();
+  const { projectid: projectId } = useParams();
+  const accountId = searchParams.get('accountID') || '';
   const checklistId = searchParams.get('checklist_id') || '';
   const originPath = searchParams.get('origin') || '';
   const activeMenuPath = searchParams.get('activeMenu') || '';
 
   const { data, isLoading, error } = useChecklistDetails(
-    accountid,
+    accountId,
     checklistId,
     true
   );
@@ -66,16 +69,16 @@ const ChecklistDetails: React.FC<ChecklistDetailsProps> = ({
   // }, [checklistEditFields]);
 
   const handleEdit = () => {
-    const accountId = accountid ?? '';
     const path = generatePath(CHECKLIST_EDIT, {
-      module: 'account',
+      module: 'project',
       checklistId,
     });
     const queryParams = new URLSearchParams({
       accountId,
-      entityLevel: data?.attachment_level || 'account',
-      entityId: data?.attach_to || accountId,
-      source: `Account > ${accountName}`,
+      entityLevel: data?.attachment_level || 'project',
+      entityId: data?.attach_to || projectId || '',
+      source: `Project > ${projectCode}`,
+      projectFiscalYear: projectFiscalYear?.toString() || '',
       ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
     });
     navigate(`${path}?${queryParams.toString()}`);
@@ -84,7 +87,7 @@ const ChecklistDetails: React.FC<ChecklistDetailsProps> = ({
   const handleBackClick = () => {
     searchParams.delete('checklist_id');
     if (originPath === 'checklist') {
-      navigate(CHECKLIST);
+      navigate(CHECKLIST, { replace: true });
     } else {
       navigate({ search: searchParams.toString() }, { replace: true });
     }
@@ -94,7 +97,7 @@ const ChecklistDetails: React.FC<ChecklistDetailsProps> = ({
     {
       label: 'Edit',
       variant: 'outlined' as const,
-      disabled: accountInActive,
+      disabled: accountOrProjectInActive,
       onClick: handleEdit,
       sx: { width: '48px', minWidth: '48px' },
       // hide: !checklistFieldsEditable,

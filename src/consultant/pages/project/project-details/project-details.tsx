@@ -36,6 +36,7 @@ import {
   ProjectTriggerAIPayload,
 } from '../../../types/project';
 import {
+  ChecklistListExportParams,
   ExportType,
   FiscalDates,
   FormFiscalDateType,
@@ -83,6 +84,8 @@ import { ProjectQreAdjustmentResponse } from '../utils';
 import { Notes } from './notes';
 import { ExportNotesList } from '../../../services/notes/notes-service';
 import { QrePercentHistory } from './qre-percent-history';
+import { ExportChecklistList } from '../../../services/checklist/checklist-service';
+import { Checklist } from './checklist';
 
 export const ProjectDetails = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -146,6 +149,13 @@ export const ProjectDetails = () => {
     filters: {},
   });
 
+  const [checklistParams, setChecklistParams] =
+    useState<ChecklistListExportParams>({
+      sortBy: 'r_number',
+      sortOrder: 'ASC',
+      filters: {},
+    });
+
   const [fiscalDate, setFiscalDate] = useState<FormFiscalDateType>({
     year: 0,
   });
@@ -196,6 +206,7 @@ export const ProjectDetails = () => {
   const interactionsView = !!interactionId || !!interactionRID;
   const technicalSummaryId = searchParams.get('technical_summary_id');
   const noteView = searchParams.get('note_id');
+  const checklistView = searchParams.get('checklist_id');
 
   const { data, isLoading, isError, refetch, isPending } = useProjectDetail(
     accountID,
@@ -312,6 +323,8 @@ export const ProjectDetails = () => {
       return !isAttachmentExportEnable;
     } else if (list === 'notes' && !noteView) {
       return !isNotesExportEnable;
+    } else if (list === 'checklist' && !checklistView) {
+      return false;
     } else if (list === 'projectsTask') {
       return !isTaskExportViewEnable;
     } else if (list === 'financial' && tab === 'resource_cost') {
@@ -344,6 +357,7 @@ export const ProjectDetails = () => {
     if (
       list !== 'attachments' &&
       list !== 'notes' &&
+      list !== 'checklist' &&
       list !== 'financial' &&
       list !== 'projectResources' &&
       list !== 'projectsTask' &&
@@ -375,6 +389,19 @@ export const ProjectDetails = () => {
       ExportNotesList('notes', {
         ...notesParams,
         ...notePayload,
+      });
+      return;
+    }
+
+    if (list === 'checklist' && exportType === 'checklist') {
+      const checklistPayload = {
+        accountRid: accountID,
+        entityId: projectID,
+        attachmentLevel: 'project',
+      };
+      ExportChecklistList('checklist', {
+        ...checklistParams,
+        ...checklistPayload,
       });
       return;
     }
@@ -652,8 +679,16 @@ export const ProjectDetails = () => {
             projectFiscalYear={projectData?.fiscal_year}
           />
         );
-      case 'checklists':
-        return <NotFound />;
+      case 'checklist':
+        return (
+          <Checklist
+            setExportType={setExportType}
+            setChecklistParams={setChecklistParams}
+            accountOrProjectInActive={accountInActive || projectInActive}
+            projectFiscalYear={projectData?.fiscal_year}
+            projectCode={projectData?.project_code}
+          />
+        );
       case 'configuration':
         return <Configuration />;
       default:
@@ -749,7 +784,7 @@ export const ProjectDetails = () => {
       },
       {
         name: 'Checklists',
-        key: 'checklists',
+        key: 'checklist',
         id: AllMenus.CHECKLISTS,
         disabled: false,
         icon: ChecklistIcon,

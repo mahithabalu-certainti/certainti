@@ -522,7 +522,8 @@ export type ExportType =
   | 'resource_notes'
   | 'notes'
   | 'cases'
-  | 'checklist';
+  | 'checklist'
+  | 'resource_checklist';
 
 export type FinancialSummaryFlag = 'all' | 'rd_qualified';
 

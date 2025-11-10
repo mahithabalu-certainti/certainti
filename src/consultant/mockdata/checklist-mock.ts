@@ -1,4 +1,4 @@
-import { ChecklistListResponse } from '../types';
+import { ChecklistDetailsResponse, ChecklistListResponse } from '../types';
 
 export const ChecklistListMockData: ChecklistListResponse = {
   statusCode: 200,
@@ -88,5 +88,57 @@ export const ChecklistListMockData: ChecklistListResponse = {
       },
     ],
     totalCount: 5,
+  },
+};
+
+export const ChecklistDetailsMockData: ChecklistDetailsResponse = {
+  statusCode: 200,
+  statusCodeValue: 'OK',
+  statusMessage: 'Checklist details fetched successfully',
+  data: {
+    checklistDetails: {
+      checklist_rid: 'D001-1a2b3c4d-0001',
+      r_number: 'CTS-0000000101',
+      checklist_name: 'Project Initiation Checklist',
+      checklist_description:
+        'Checklist for ensuring all project initiation steps are completed before kickoff.',
+      status_rid: 'D001-5c952c6a-7f05-4e99-be04-97ea50bcf87b',
+      status_name: 'Active',
+      account_rid: 'D001-acc-001',
+      fiscal_year: 2025,
+      attached_to: 'Brilliant Tech',
+      attach_to: 'D001-acc-001',
+      attachment_level: 'account',
+      created_by: 'D001-user-001',
+      modified_by: 'D001-user-002',
+      created_datetime: '2025-10-01T09:15:00.000Z',
+      modified_datetime: '2025-10-05T10:30:00.000Z',
+      checklist_items: [
+        {
+          rid: 'D001-item-0001',
+          sequence_no: '1',
+          checklist_item_name: 'Define Project Scope',
+          status_rid: 'D001-5fd406be-1d34-4f5a-be2a-f5ff28359786',
+          checklist_item_description:
+            'Ensure the project scope and objectives are clearly defined and documented.',
+        },
+        {
+          rid: 'D001-item-0002',
+          sequence_no: '2',
+          checklist_item_name: 'Identify Stakeholders',
+          status_rid: 'D001-8c8456ee-8a19-4be8-a37a-0a1b54c1ba16',
+          checklist_item_description:
+            'List all stakeholders and confirm their roles and responsibilities.',
+        },
+        {
+          rid: 'D001-item-0003',
+          sequence_no: '3',
+          checklist_item_name: 'Establish Project Timeline',
+          status_rid: null,
+          checklist_item_description:
+            'Create a high-level timeline with major milestones and deadlines.',
+        },
+      ],
+    },
   },
 };

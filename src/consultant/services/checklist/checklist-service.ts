@@ -1,62 +1,41 @@
-import {
-  useMutation,
-  UseMutationOptions,
-  UseMutationResult,
-  useQuery,
-  UseQueryResult,
-} from '@tanstack/react-query';
+import { useMutation, useQuery, UseQueryResult } from '@tanstack/react-query';
 import {
   ChecklistListURLParams,
   ChecklistList,
   ChecklistDetails,
   ChecklistListExportParams,
-  ChecklistDetailsResponse,
+  ChecklistFormPayload,
+  ChecklistStatusResponse,
 } from '../../types/checklist';
-import { resourceServiceApi } from '../../../api/api';
+import { caseServiceApi } from '../../../api/api';
 import {
-  createChecklistUrl,
   ChecklistExportListURL,
-  updateChecklistUrl,
+  getCreateChecklistUrl,
+  getUpdateChecklistUrl,
 } from '../urls/checklist-url';
-import { ChecklistListMockData } from '../../mockdata/checklist-mock';
-
-// Generic mutation service for POST/PUT/PATCH/DELETE
-const useApiMutationService = <T, V = void>(
-  endpoint: string,
-  method: 'post' | 'put' | 'patch' | 'delete' = 'post',
-  options?: UseMutationOptions<T, Error, V>
-): UseMutationResult<T, Error, V> => {
-  return useMutation<T, Error, V>({
-    mutationFn: async (data) => {
-      const isFormData = data instanceof FormData;
-
-      const response = await resourceServiceApi.request<T>({
-        url: endpoint,
-        method,
-        data,
-        headers: isFormData
-          ? { 'Content-Type': 'multipart/form-data' }
-          : { 'Content-Type': 'application/json' },
-      });
-
-      return response.data;
-    },
-    ...options,
-  });
-};
+import { CommonApiResponse } from '../../../common-service';
+import {
+  ChecklistTemplateList,
+  ChecklistTemplateListParams,
+  ChecklistTemplateDetails,
+} from '../../../admin/types';
+import {
+  ChecklistDetailsMockData,
+  ChecklistListMockData,
+} from '../../mockdata/checklist-mock';
 
 // -------------------- LIST FETCHING --------------------
 
 export const fetchChecklistList = async (
   params: ChecklistListURLParams
 ): Promise<{ checklists: ChecklistList[]; count: number }> => {
-  //   const response = await resourceServiceApi.get<ChecklistListResponse>(
-  //     ChecklistListURL(params)
-  //   );
-  //   return {
-  //       checklists: response.data.data.checklists,
-  //       count: response.data.data.totalCount,
-  //     };
+  // const response = await caseServiceApi.get<ChecklistListResponse>(
+  //   ChecklistListURL(params)
+  // );
+  // return {
+  //   checklists: response.data.data.checklists,
+  //   count: response.data.data.totalCount,
+  // };
   console.log('Checklist List params:', params);
   await new Promise((resolve) => setTimeout(resolve, 2000));
   return {
@@ -98,38 +77,158 @@ export const useAllChecklistList = (
 // -------------------- DETAILS FETCHING --------------------
 
 const fetchChecklistDetails = async (
-  entityId: string,
+  accountId: string,
   checklistId: string
 ): Promise<ChecklistDetails> => {
-  const response = await resourceServiceApi.get<ChecklistDetailsResponse>(
-    `/api/checklist/list/details?account_rid=${entityId}&rid=${checklistId}`
-  );
+  // const response = await caseServiceApi.get<ChecklistDetailsResponse>(
+  //   `/api/cases/checklist/detail/${checklistId}?account_rid=${accountId}`
+  // );
 
-  return response.data.data;
+  // return response.data.data.checklistDetails;
+  console.log('check;list-details', accountId, checklistId);
+  await new Promise((resolve) => setTimeout(resolve, 2000));
+  return ChecklistDetailsMockData.data.checklistDetails;
 };
 
 export const useChecklistDetails = (
-  entityId?: string,
+  accountId?: string,
   checklistId?: string,
   isEnable?: boolean
 ): UseQueryResult<ChecklistDetails | undefined, Error> => {
   return useQuery<ChecklistDetails | undefined, Error>({
-    queryKey: ['checklist-details', entityId, checklistId, isEnable],
-    queryFn: () => fetchChecklistDetails(entityId!, checklistId!),
+    queryKey: ['checklist-details', accountId, checklistId, isEnable],
+    queryFn: () => fetchChecklistDetails(accountId!, checklistId!),
     retry: 0,
     gcTime: 0,
-    enabled: !!checklistId && !!entityId && isEnable,
+    enabled: !!checklistId && !!accountId && isEnable,
   });
 };
 
 // -------------------- CREATE / UPDATE --------------------
 
-export const useCreateChecklist = () => {
-  return useApiMutationService<unknown, FormData>(createChecklistUrl(), 'post');
+export const createChecklist = async (
+  body: Partial<ChecklistFormPayload>
+): Promise<CommonApiResponse> => {
+  try {
+    const { data } = await caseServiceApi.post<CommonApiResponse>(
+      getCreateChecklistUrl(),
+      body
+    );
+    return data;
+  } catch (error) {
+    console.error('Error creating checklist:', error);
+    throw error;
+  }
 };
 
-export const useUpdateChecklist = () => {
-  return useApiMutationService<unknown, FormData>(updateChecklistUrl(), 'put');
+export const useCreateChecklist = () => {
+  return useMutation<CommonApiResponse, Error, Partial<ChecklistFormPayload>>({
+    mutationFn: (body) => createChecklist({ ...body }),
+  });
+};
+
+export const updateChecklistDetails = async (
+  body: Partial<ChecklistFormPayload>
+): Promise<CommonApiResponse> => {
+  try {
+    const { data } = await caseServiceApi.post<CommonApiResponse>(
+      getUpdateChecklistUrl(),
+      body
+    );
+    return data;
+  } catch (error) {
+    console.error('Error updating checklist details:', error);
+    throw error;
+  }
+};
+
+export const useUpdateChecklistDetails = () => {
+  return useMutation<CommonApiResponse, Error, Partial<ChecklistFormPayload>>({
+    mutationFn: (body) => updateChecklistDetails(body),
+  });
+};
+
+// -------------------- CHECKLIST TEMPLATES --------------------
+
+// List checklist templates for consultant
+export const getConsultantChecklistTemplateListUrl = (
+  params: ChecklistTemplateListParams
+) => {
+  const queryParams = new URLSearchParams();
+  queryParams.append('page', params.page.toString());
+  queryParams.append('limit', params.limit.toString());
+
+  if (params.sortBy) {
+    queryParams.append('sortBy', params.sortBy);
+  }
+  if (params.sortOrder) {
+    queryParams.append('sortOrder', params.sortOrder);
+  }
+  if (params.filters) {
+    queryParams.append('filters', JSON.stringify(params.filters));
+  }
+
+  return `/api/caseManagement/adminChecklist/list?${queryParams.toString()}`;
+};
+
+export const fetchConsultantChecklistTemplateList = async (
+  params: ChecklistTemplateListParams
+): Promise<{ checklistTemplates: ChecklistTemplateList[]; count: number }> => {
+  const { data } = await caseServiceApi.get(
+    getConsultantChecklistTemplateListUrl(params)
+  );
+  return {
+    checklistTemplates: data.data.checklist,
+    count: data.data.count,
+  };
+};
+
+export const useConsultantChecklistTemplateList = (
+  params: ChecklistTemplateListParams,
+  isEnabled: boolean,
+  refresh?: number
+): UseQueryResult<
+  { checklistTemplates: ChecklistTemplateList[]; count: number },
+  Error
+> => {
+  return useQuery<
+    { checklistTemplates: ChecklistTemplateList[]; count: number },
+    Error
+  >({
+    queryKey: ['consultant-checklist-template-list', params, refresh],
+    queryFn: () => fetchConsultantChecklistTemplateList(params),
+    retry: 0,
+    gcTime: 0,
+    enabled: !!isEnabled,
+  });
+};
+
+// Details for consultant checklist template
+export const getConsultantChecklistTemplateDetailsURL = (
+  templateId: string
+) => {
+  return `/api/caseManagement/adminChecklist/detail/${templateId}`;
+};
+
+export const fetchConsultantChecklistTemplateDetails = async (
+  templateId: string
+): Promise<ChecklistTemplateDetails> => {
+  const response = await caseServiceApi.get(
+    getConsultantChecklistTemplateDetailsURL(templateId)
+  );
+  return response.data.data.checklistDetails;
+};
+
+export const useConsultantChecklistTemplateDetails = (
+  templateId: string
+): UseQueryResult<ChecklistTemplateDetails | undefined, Error> => {
+  return useQuery({
+    queryKey: ['consultant-checklist-template-details', templateId],
+    queryFn: () => fetchConsultantChecklistTemplateDetails(templateId),
+    enabled: !!templateId,
+    retry: 0,
+    gcTime: 0,
+  });
 };
 
 // -------------------- EXPORT --------------------
@@ -148,7 +247,7 @@ export const ExportChecklistList = async (
     : `${params.attachmentLevel}_checklist_records.xlsx`;
 
   try {
-    const response = await resourceServiceApi.get(url);
+    const response = await caseServiceApi.get(url);
     const base64Data = response.data?.data;
 
     if (!base64Data) {
@@ -175,4 +274,35 @@ export const ExportChecklistList = async (
   } catch (error) {
     console.error('Export failed:', error);
   }
+};
+
+// -------------------- CHECKLIST STATUS --------------------
+
+export const getChecklistStatusUrl = (): string => {
+  return `/api/cases/checkListStatus`;
+};
+
+export const fetchChecklistStatus =
+  async (): Promise<ChecklistStatusResponse> => {
+    try {
+      const { data } = await caseServiceApi.get<ChecklistStatusResponse>(
+        getChecklistStatusUrl()
+      );
+      return data;
+    } catch (error) {
+      console.error('Error fetching checklist status list:', error);
+      throw error;
+    }
+  };
+
+export const useGetChecklistStatus = () => {
+  return useQuery<ChecklistStatusResponse, Error>({
+    queryKey: ['get-checklist-status'],
+    queryFn: () => fetchChecklistStatus(),
+    retry: 0,
+    staleTime: Infinity, // Cache data forever until manually invalidated
+    gcTime: Infinity, // Never delete from cache
+    refetchOnMount: false, // Don't refetch on component mount
+    refetchOnReconnect: false, // Don't refetch on reconnect
+  });
 };

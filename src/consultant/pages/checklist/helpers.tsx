@@ -139,6 +139,7 @@ export const getChecklistFilterFields =
 
 export const getChecklistTableColumns = (
   // permissionMap: Record<string, { read: boolean; edit: boolean }>,
+  inActiveEntity: boolean,
   handleChecklistView?: (rowId: string) => void
 ): ListTableColumn<ChecklistList>[] => [
   {

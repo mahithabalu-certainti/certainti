@@ -6,7 +6,12 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 import { useCaseDetails } from '../../../services/cases/case-service';
-import { ExportType, MenuItem, NotesListExportParams } from '../../../types';
+import {
+  ChecklistListExportParams,
+  ExportType,
+  MenuItem,
+  NotesListExportParams,
+} from '../../../types';
 import {
   AllMenus,
   AllModules,
@@ -43,6 +48,8 @@ import { AttachmentsListExportParams } from '../../../types/attachment';
 import { useSelector } from 'react-redux';
 import { Attachments } from './case-attachments';
 import { exportAttachmentsData } from '../../../services/attachments/attachments-service';
+import { ExportChecklistList } from '../../../services/checklist/checklist-service';
+import { Checklist } from './checklist';
 
 export const CaseDetails = () => {
   const navigate = useNavigate();
@@ -80,12 +87,20 @@ export const CaseDetails = () => {
   });
 
   const noteView = searchParams.get('note_id');
+  const checklistView = searchParams.get('checklist_id');
   const accountInActive =
     caseData?.account_status_name?.toLowerCase() !== 'active';
 
   const [attachmentParams, setAttachmentParams] =
     useState<AttachmentsListExportParams>({
       sortBy: 'document_name',
+      sortOrder: 'ASC',
+      filters: {},
+    });
+
+  const [checklistParams, setChecklistParams] =
+    useState<ChecklistListExportParams>({
+      sortBy: 'r_number',
       sortOrder: 'ASC',
       filters: {},
     });
@@ -126,7 +141,8 @@ export const CaseDetails = () => {
   const handleExport = (exportType: ExportType) => {
     if (
       searchParams.get('list') !== 'attachments' &&
-      searchParams.get('list') !== 'notes'
+      searchParams.get('list') !== 'notes' &&
+      searchParams.get('list') !== 'checklist'
     ) {
       return;
     }
@@ -152,6 +168,16 @@ export const CaseDetails = () => {
         ...attachmentParams,
         ...attachmentPayload,
       });
+    } else if (exportType === 'checklist') {
+      const checklistPayload = {
+        accountRid: accountId,
+        entityId: caseId,
+        attachmentLevel: 'case',
+      };
+      ExportChecklistList('checklist', {
+        ...checklistParams,
+        ...checklistPayload,
+      });
     }
   };
 
@@ -169,6 +195,8 @@ export const CaseDetails = () => {
       return !isAttachmentExportEnable;
     } else if (list === 'notes' && !noteView) {
       return !isNotesExportEnable;
+    } else if (list === 'checklist' && !checklistView) {
+      return false;
     } else {
       return true;
     }
@@ -224,6 +252,15 @@ export const CaseDetails = () => {
             accountInActive={accountInActive}
             setExportType={setExportType}
             setAttachmentParams={setAttachmentParams}
+          />
+        );
+      case 'checklist':
+        return (
+          <Checklist
+            setExportType={setExportType}
+            setChecklistParams={setChecklistParams}
+            accountInActive={accountInActive}
+            caseDetails={caseData}
           />
         );
       default:
@@ -343,7 +380,7 @@ export const CaseDetails = () => {
         icon: AttachmentsSideIcon,
       },
       {
-        name: 'Checklist',
+        name: 'Checklists',
         key: 'checklist',
         id: AllMenus.CHECKLISTS,
         disabled: false,

@@ -1,3 +1,4 @@
+import React, { useEffect, useState } from 'react';
 import {
   generatePath,
   useNavigate,
@@ -9,30 +10,28 @@ import {
   FilterTypes,
   OverviewTabs,
 } from '../../../../../common-service';
-import React, { useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../../../../store/store';
-import { useChecklistList } from '../../../../services/checklist/checklist-service';
 import {
-  ListTable,
-  ManageColumnsPopover,
-} from '../../../../../components/table';
-import SectionHeader from '../../../../../components/details-section/section-header';
-import { SectionTabPanel } from '../../../../../components';
-import { ShowHideTableColumn } from '../../../../../components/table/types';
-import {
+  CaseDetails,
   ChecklistList,
   ChecklistListExportParams,
   ExportType,
 } from '../../../../types';
+import { useChecklistList } from '../../../../services/checklist/checklist-service';
+import { CHECKLIST_CREATE, CHECKLIST_EDIT } from '../../../../../routes';
 import {
   getChecklistFilterFields,
   getChecklistTableColumns,
 } from '../../../checklist/helpers';
-import { CHECKLIST_CREATE, CHECKLIST_EDIT } from '../../../../../routes';
+import { ShowHideTableColumn } from '../../../../../components/table/types';
+import { SectionTabPanel } from '../../../../../components';
 import ChecklistDetails from './checklist-details';
-import { accountDetailsProps } from '../../../account-details/utils';
+import SectionHeader from '../../../../../components/details-section/section-header';
 import { ChecklistIcon } from '../../../../../assets';
+import {
+  ListTable,
+  ManageColumnsPopover,
+} from '../../../../../components/table';
+
 const ChecklistTabs: OverviewTabs[] = [
   {
     id: AllPermissions.CHECKLIST_OVERVIEW,
@@ -48,18 +47,19 @@ interface ChecklistProps {
     React.SetStateAction<ChecklistListExportParams>
   >;
   accountInActive: boolean;
-  accountDetails?: accountDetailsProps;
+  caseDetails?: CaseDetails;
 }
 
 const Checklist: React.FC<ChecklistProps> = ({
   setExportType,
   setChecklistParams,
   accountInActive,
-  accountDetails,
+  caseDetails,
 }) => {
   // const { errorToast } = useToast();
-  const { accountid } = useParams();
   const [searchParams] = useSearchParams();
+  const { caseId } = useParams();
+  const accountId = searchParams.get('accountID') || '';
   const navigate = useNavigate();
 
   const [appliedFilters, setAppliedFilters] = useState<FilterTypes>({});
@@ -87,15 +87,10 @@ const Checklist: React.FC<ChecklistProps> = ({
   //   client: resourceClient,
   // });
 
-  const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
-    (state: RootState) => state.account
-  );
-
   // const { permission, modules } = useSelector(
   //   (state: RootState) => state.permission
   // );
 
-  const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
   const checklistId = searchParams.get('checklist_id');
   const viewDetails = !!checklistId;
   const activeMenuPath = searchParams.get('activeMenu') || '';
@@ -108,11 +103,11 @@ const Checklist: React.FC<ChecklistProps> = ({
       sortBy: sortField,
       sortOrder: sortOrder,
       filters: appliedFilters,
-      attachmentLevel: 'account',
-      accountRid: accountid || '',
-      entityId: accountid || '',
+      attachmentLevel: 'case',
+      accountRid: accountId || '',
+      entityId: caseId || '',
       search: searchText,
-      fiscalYear: convertedFiscalYear,
+      fiscalYear: 0,
     },
     !viewDetails,
     refreshChecklist
@@ -134,11 +129,11 @@ const Checklist: React.FC<ChecklistProps> = ({
       sortBy: sortField,
       sortOrder: sortOrder,
       filters: appliedFilters,
-      fiscalYear: convertedFiscalYear,
+      fiscalYear: 0,
       search: searchText,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appliedFilters, sortField, sortOrder, convertedFiscalYear, searchText]);
+  }, [appliedFilters, sortField, sortOrder, 0, searchText]);
 
   // Permissions management
   // const isChecklistExportEnable = checkPermission(
@@ -202,33 +197,31 @@ const Checklist: React.FC<ChecklistProps> = ({
   };
 
   const handleCreate = () => {
-    const accountId = accountid ?? '';
-    const accountName = accountDetails?.accountById?.account_name || '';
     const path = generatePath(CHECKLIST_CREATE, {
-      module: 'account',
+      module: 'case',
     });
     const queryParams = new URLSearchParams({
       accountId,
-      entityLevel: 'account',
-      entityId: accountId,
-      source: `Account > ${accountName}`,
+      entityLevel: 'case',
+      entityId: caseId || '',
+      caseFiscalYear: caseDetails?.fiscal_year?.toString() || '',
+      source: `Case > ${caseDetails?.r_number || ''}`,
       ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
 
   const handleEdit = (row: ChecklistList) => {
-    const accountId = accountid ?? '';
-    const accountName = accountDetails?.accountById?.account_name || '';
     const path = generatePath(CHECKLIST_EDIT, {
-      module: 'account',
+      module: 'case',
       checklistId: row.rid,
     });
     const queryParams = new URLSearchParams({
       accountId,
-      entityLevel: row.attachment_level || 'account',
-      entityId: row.attach_to || accountId,
-      source: `Account > ${accountName}`,
+      entityLevel: row.attachment_level || 'case',
+      entityId: row.attach_to || caseId || '',
+      caseFiscalYear: caseDetails?.fiscal_year?.toString() || '',
+      source: `Case > ${caseDetails?.r_number || ''}`,
       ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
     });
     navigate(`${path}?${queryParams.toString()}`);
@@ -290,7 +283,7 @@ const Checklist: React.FC<ChecklistProps> = ({
 
   const handlePopoverClose = () => setColumnAnchorEl(null);
   const modalId = isModalOpen
-    ? 'account-checklist-list-column-visibility-popover'
+    ? 'case-checklist-list-column-visibility-popover'
     : undefined;
 
   const RestrictedColumns = [
@@ -382,7 +375,7 @@ const Checklist: React.FC<ChecklistProps> = ({
       {viewDetails ? (
         <ChecklistDetails
           accountInActive={accountInActive}
-          accountName={accountDetails?.accountById?.account_name || ''}
+          caseDetails={caseDetails}
         />
       ) : (
         <>
@@ -420,7 +413,7 @@ const Checklist: React.FC<ChecklistProps> = ({
               tableStyle={{
                 borderBottom: '1px solid #CBD6E2',
                 height: '100%',
-                maxHeight: 'calc(100vh - 320px)',
+                maxHeight: 'calc(100vh - 380px)',
                 overflow: 'auto',
               }}
               stickyHeader={true}

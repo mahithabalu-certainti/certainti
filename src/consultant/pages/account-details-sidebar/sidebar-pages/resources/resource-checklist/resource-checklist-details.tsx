@@ -5,40 +5,39 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom';
-import { useChecklistDetails } from '../../../../services/checklist/checklist-service';
-import { CHECKLIST, CHECKLIST_EDIT } from '../../../../../routes';
+import { Typography } from '@mui/material';
+import { useChecklistDetails } from '../../../../../services/checklist/checklist-service';
+import { CHECKLIST, CHECKLIST_EDIT } from '../../../../../../routes';
 import DetailsSection, {
   DetailItem,
-} from '../../../../../components/details-section/details';
-import { formatDateToYYYYMMDDWithTime } from '../../../../../common-utils';
-import SectionHeader from '../../../../../components/details-section/section-header';
-import DetailsSectionSkeleton from '../../../../../components/skeleton-component/detailsskeleton';
-import { Typography } from '@mui/material';
-import { ChecklistIcon } from '../../../../../assets';
+} from '../../../../../../components/details-section/details';
+import { formatDateToYYYYMMDDWithTime } from '../../../../../../common-utils';
+import SectionHeader from '../../../../../../components/details-section/section-header';
+import { ChecklistIcon } from '../../../../../../assets';
+import DetailsSectionSkeleton from '../../../../../../components/skeleton-component/detailsskeleton';
 
 interface ChecklistDetailsProps {
   accountInActive: boolean;
-  accountName: string;
+  resourceNumber?: string;
 }
 
-const ChecklistDetails: React.FC<ChecklistDetailsProps> = ({
+const ResourceChecklistDetails: React.FC<ChecklistDetailsProps> = ({
   accountInActive,
-  accountName,
+  resourceNumber,
 }) => {
   const navigate = useNavigate();
-  const { accountid } = useParams();
   const [searchParams] = useSearchParams();
+  const { accountid } = useParams();
   const checklistId = searchParams.get('checklist_id') || '';
   const originPath = searchParams.get('origin') || '';
   const activeMenuPath = searchParams.get('activeMenu') || '';
 
+  // const { permission } = useSelector((state: RootState) => state.permission);
   const { data, isLoading, error } = useChecklistDetails(
     accountid,
     checklistId,
     true
   );
-
-  // const { permission } = useSelector((state: RootState) => state.permission);
 
   // Permissions
   // const checklistEditFields = useMemo(
@@ -66,16 +65,15 @@ const ChecklistDetails: React.FC<ChecklistDetailsProps> = ({
   // }, [checklistEditFields]);
 
   const handleEdit = () => {
-    const accountId = accountid ?? '';
     const path = generatePath(CHECKLIST_EDIT, {
       module: 'account',
-      checklistId,
+      checklistId: checklistId,
     });
     const queryParams = new URLSearchParams({
-      accountId,
-      entityLevel: data?.attachment_level || 'account',
-      entityId: data?.attach_to || accountId,
-      source: `Account > ${accountName}`,
+      accountId: accountid || '',
+      entityLevel: data?.attachment_level || 'resource',
+      entityId: data?.attach_to || '',
+      source: `Resource > ${resourceNumber}`,
       ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
     });
     navigate(`${path}?${queryParams.toString()}`);
@@ -95,14 +93,14 @@ const ChecklistDetails: React.FC<ChecklistDetailsProps> = ({
       label: 'Edit',
       variant: 'outlined' as const,
       disabled: accountInActive,
-      onClick: handleEdit,
+      onClick: () => handleEdit(),
       sx: { width: '48px', minWidth: '48px' },
       // hide: !checklistFieldsEditable,
     },
     {
       label: 'Back To Checklist',
       variant: 'contained' as const,
-      onClick: handleBackClick,
+      onClick: () => handleBackClick(),
       sx: { width: '125px', minWidth: '125px' },
     },
   ];
@@ -184,22 +182,21 @@ const ChecklistDetails: React.FC<ChecklistDetailsProps> = ({
   // const auditDetails = applyHidePermission(auditInfo, permissionMap);
 
   return (
-    <div className='border border-[#CBD6E2]'>
+    <div>
       <SectionHeader
         title='Checklist'
         subValue={data?.r_number || ''}
         titleIcon={
           <ChecklistIcon
             alt='checklist-icon'
-            className='w-6 h-6 p-1 [&>path]:stroke-white bg-[#FFB46E] rounded-[2px]'
+            className={`w-7 h-7 p-1 [&>path]:stroke-white bg-[#FFB46E] rounded-[2px]`}
           />
         }
         className='rounded-tl-[2px] h-[40px] rounded-tr-[2px]'
         buttons={headerButtons}
       />
-
       {isLoading ? (
-        <DetailsSectionSkeleton className='p-0 m-0' />
+        <DetailsSectionSkeleton className='p-0 m-0' sectionCount={2} />
       ) : error ? (
         <div className='flex items-center justify-center h-64 p-4'>
           <Typography variant='h6' color='error' className='mb-2'>
@@ -231,4 +228,4 @@ const ChecklistDetails: React.FC<ChecklistDetailsProps> = ({
   );
 };
 
-export default ChecklistDetails;
+export default ResourceChecklistDetails;
