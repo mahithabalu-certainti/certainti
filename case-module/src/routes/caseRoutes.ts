@@ -113,6 +113,16 @@ routes.post(
   checkUserStatusMiddleware("NA"),
   controller.caseController.updateCheckList
 );
+routes.get(
+  "/checklist/detail/:checkListRid",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.getCheckListDetailsById
+);
+routes.get(
+  "/checklist/list",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.getAllChecklists
+);
 
 
 export default routes;

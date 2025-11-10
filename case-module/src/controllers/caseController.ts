@@ -17,6 +17,7 @@ import {
   STATUS_MESSAGE,
 } from "../utils/constants";
 import {
+  checklistByIdSchema,
   checklistSchema,
   createCaseSchema,
   createCaseTeamSchema,
@@ -25,6 +26,7 @@ import {
   listCasesAccountSchema,
   listCaseSummarySchema,
   listCaseTeamSchema,
+  listCheckListSchema,
   updateCaseSchema,
   updateChecklistSchema,
 } from "../lib/joi/schemas/schema";
@@ -1640,6 +1642,128 @@ async function updateCheckList(req: Request, res: Response): Promise<void> {
     return;
   }
 }
+
+async function getCheckListDetailsById(
+  req: Request,
+  res: Response
+): Promise<void> {
+  const methodName = "Get checklist  details";
+  try {
+    const { checkListRid } = req.params;
+    const userId = req.headers["x-user-id"] as string;
+    const value = await validateRequest(req, checklistByIdSchema, res,"GET");
+    
+    logMessage(`[${methodName}] Request received,  checkListRid: ${checkListRid} userId: ${userId}`);
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    if (!checkListRid) {
+      errorLog(methodName, "CheckList ID is required in params");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "CheckList ID is required in params"
+      );
+      return;
+    }
+    let checkListResponse;
+   checkListResponse =
+        await caseService.getCheckListDetailsById(
+          checkListRid,value
+        );
+
+    if (checkListResponse.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, checkListResponse.data);
+      return;
+    } else {
+      errorLog(methodName, checkListResponse.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        checkListResponse.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+async function getAllChecklists(req: Request, res: Response): Promise<void> {
+  const methodName = "get all checklists";
+  try {
+
+    const value = await validateRequest(req, listCheckListSchema, res, "GET");
+     if (!value) {
+      return;    }
+    const userId = req.headers['x-user-id'] as string;
+
+    if (!userId) {
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User id is required"
+      );
+      return;
+    }
+
+    // Before calling buildRawWhereClause
+    if (typeof value.filters === 'string') {
+      try {
+        value.filters = JSON.parse(value.filters);
+      } catch (err) {
+        console.error('Invalid filters JSON:', value.filters);
+        value.filters = {};
+      }
+    }
+    const attachments = await caseService.getAllChecklists(userId,value.attachmentLevel,value.entityId,value.accountRid,value.page,value.limit,value.search,value.filters,value.sortBy,value.sortOrder,value.fiscalYear, {});
+
+    if (attachments.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, attachments.data);
+      return;
+    } else {
+      errorLog(methodName, attachments.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        attachments.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
 export default {
   createCases,
   updateCases,
@@ -1661,5 +1785,7 @@ export default {
   listUsersForCaseTeam,
   listUserForCaseOwner,
   createCheckList,
-  updateCheckList
+  updateCheckList,
+  getCheckListDetailsById,
+  getAllChecklists,
 };

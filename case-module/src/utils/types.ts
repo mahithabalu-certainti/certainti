@@ -265,7 +265,7 @@ export interface ICreateChecklistItem{
   checklist_item_name: string;
   action_type: "add" | "edit" | "delete";
   status_rid: string;
-  description?: string;
+  checklist_item_description?: string;
   created_by: string;
   modified_by?: string;
   created_datetime: Date;

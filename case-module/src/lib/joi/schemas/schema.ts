@@ -135,6 +135,7 @@ const updateAdminChecklistSchema = Joi.object({
 });
 
 const updateChecklistSchema = Joi.object({
+  checklist_rid: Joi.string().required(),
   account_rid: Joi.string().required(),
   attach_to: Joi.string().required(),
   attachment_level: Joi.string().required(),
@@ -156,6 +157,10 @@ const updateChecklistSchema = Joi.object({
     .required(),
 });
 
+const checklistByIdSchema = Joi.object({
+  account_rid: Joi.string().required()
+});
+
 const checklistSchema = Joi.object({
   attach_to: Joi.string().required(),
   attachment_level: Joi.string().required(),
@@ -169,7 +174,7 @@ const checklistSchema = Joi.object({
     .items(
       Joi.object({  
         checklist_item_name: Joi.string().max(255).required(),
-        description: Joi.string().max(2000).optional().allow(""), 
+        checklist_item_description: Joi.string().max(2000).optional().allow(""), 
         status_rid: Joi.string().optional().allow("", null),
         action_type: Joi.string().valid("add", "edit", "delete").required(),
       })
@@ -177,6 +182,75 @@ const checklistSchema = Joi.object({
     .min(1)
     .required(),
 });
+
+const listCheckListSchema = Joi.object({
+    attachmentLevel: Joi.string()
+        .valid('account', 'project', 'project_resource', 'project_task', 'resource', 'resource_cost', 'resource_skill', 'case')
+        .required()
+        .messages({
+            'string.empty': 'Attachment level cannot be empty',
+            'any.required': 'Attachment level is required',
+            'any.only': 'Attachment level must be one of: account, project, project_resource, project_task, resource, resource_cost, resource_skill, case'
+        }),
+    entityId: Joi.string()
+        .required()
+        .messages({
+            'any.required': 'Entity ID is required',
+            'string.pattern.base': 'Entity ID must be a valid UUID'
+        }),
+    accountRid: Joi.string()
+        .required()
+        .messages({
+            'any.required': 'Account RID is required',
+            'string.pattern.base': 'Account RID must be a valid UUID'
+        }),
+    page: Joi.number()
+        .integer()
+        .min(1)
+        .required()
+        .messages({
+            'any.required': 'Page number is required',
+            'number.base': 'Page must be a number',
+            'number.integer': 'Page must be an integer',
+            'number.min': 'Page must be greater than or equal to 1'
+        }),
+    limit: Joi.number()
+        .integer()
+        .min(1)
+        .max(100)
+        .required()
+        .messages({
+            'any.required': 'Limit is required',
+            'number.base': 'Limit must be a number',
+            'number.integer': 'Limit must be an integer',
+            'number.min': 'Limit must be greater than or equal to 1',
+            'number.max': 'Limit cannot exceed 100'
+        }),
+    search: Joi.string()
+        .max(255)
+        .allow('')
+        .allow(null)
+        .optional()
+        .messages({
+            'string.base': 'Search must be a string',
+            'string.max': 'Search cannot exceed 255 characters'
+        }),
+    filters: Joi.string().default("{}").optional(),
+    fiscalYear: Joi.number()
+    .integer()
+    .min(1000)
+    .max(9999)
+    .allow(0)
+    .optional()
+    .messages({
+      "number.base": "Fiscal year must be a number",
+      "number.min": "Fiscal year must be a 4-digit number",
+      "number.max": "Fiscal year must be a 4-digit number",
+      "any.required": "Fiscal year is required",
+    }),
+    sortBy: Joi.string().default("created_datetime").optional(),
+    sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
+})
 
 const jurisdictionSchema = Joi.object({
   account_rid: Joi.string().required(),
@@ -274,5 +348,7 @@ export {
   listAdminCheckListSchema,
   updateAdminChecklistSchema,
   updateChecklistSchema,
-  exportAdminCheckListByIdSchema
+  exportAdminCheckListByIdSchema,
+  checklistByIdSchema,
+  listCheckListSchema
 };
