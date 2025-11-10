@@ -1868,7 +1868,7 @@ async function getAllChecklists(req: Request, res: Response): Promise<void> {
   const methodName = "get all checklists";
   try {
 
-    const value = await validateRequest(req, exportCheckListSchema, res, "GET");
+    const value = await validateRequest(req, listCheckListSchema, res, "GET");
      if (!value) {
       return;    }
     const userId = req.headers['x-user-id'] as string;

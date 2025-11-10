@@ -39,6 +39,7 @@ import {
 // Define filterType interface
 import { Case, setupCaseSequence } from "../../models/caseModel";
 import {
+  fetchCaseDetails,
   fetchCasesHeadersDatas,
   fetchMilestoneTaskTemplate,
   fetchProjectsForCases,
@@ -2753,11 +2754,13 @@ class CaseSchemaService {
      const { CheckList } = await this.caseModelService.getModels(
       accountNumber
     );
-    let checklistDetails = await CheckList.findOne({
-      where: {
-        rid: checklistId
-      },
-    });
+    if(!this.orgDbSequelize)
+    {
+      this.orgDbSequelize = await this.caseModelService.getSequelize();
+    }
+    const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
+    const [checklistDetails] : any[] = await this.orgDbSequelize.query(fetchCaseDetails(schemaName,checklistId),{ type: 'SELECT' });
+    
     if(!checklistDetails){
       throw new Error("Checklist not found");
     }
@@ -2767,22 +2770,24 @@ class CaseSchemaService {
     );
   
      const userInfo = await this.insertUserDetails(
-       checklistDetails.dataValues.created_by ?? "",
-       checklistDetails.dataValues.modified_by ?? ""
-     );
+       checklistDetails.created_by ?? "",
+       checklistDetails.modified_by ?? ""
+     )
   
     const response: any = {
-
+      attach_to:checklistDetails?.attach_to ?? "",
+      attachment_level: checklistDetails?.attachment_level ?? "",
+      attached_to: checklistDetails?.attached_to ?? "",
       checklist_rid: checklistDetails?.rid,
       checklist_name: checklistDetails?.checklist_name ?? "",
       checklist_description: checklistDetails?.checklist_description ?? "",
-      r_number: checklistDetails.dataValues.r_number ?? "",
-      status_rid: checklistDetails.dataValues.status_rid ?? "",
+      r_number: checklistDetails.r_number ?? "",
+      status_rid: checklistDetails.status_rid ?? "",
      // status_name: checklistDetails.dataValues.status_name ?? "",
-      modified_by: userInfo.modified_name ?? checklistDetails.dataValues.modified_by,
-      created_by: userInfo.created_name ?? checklistDetails.dataValues.created_by,
-      created_datetime: checklistDetails.dataValues.created_datetime ?? null,
-      modified_datetime: checklistDetails.dataValues.modified_datetime ?? null,
+      modified_by: userInfo.modified_name ?? checklistDetails.modified_by,
+      created_by: userInfo.created_name ?? checklistDetails.created_by,
+      created_datetime: checklistDetails.created_datetime ?? null,
+      modified_datetime: checklistDetails.modified_datetime ?? null,
       checklist_items: checklistItems ?? [],
     };
   
