@@ -295,6 +295,7 @@ const exportCheckListSchema = Joi.object({
       "number.max": "Fiscal year must be a 4-digit number",
       "any.required": "Fiscal year is required",
     }),
+    timezone: Joi.string().optional(),
     sortBy: Joi.string().default("created_datetime").optional(),
     sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
 })
