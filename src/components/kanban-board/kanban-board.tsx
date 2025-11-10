@@ -1,5 +1,5 @@
 import type React from 'react';
-import { lazy, Suspense, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import type {
   KanbanBoardProps,
   KanbanColumn as KanbanColumnTypes,
@@ -21,6 +21,37 @@ import { AddIcon } from '../../assets';
 
 const TaskDetailModal = lazy(() => import('./task-detail-modal'));
 
+const LoadingSkeleton: React.FC = () => (
+  <div
+    className='min-h-screen p-4 font-[13px]'
+    style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
+  >
+    <div className='max-w-full overflow-x-auto'>
+      <div className='flex items-start gap-6 pb-6'>
+        {[1, 2, 3, 4].map((i) => (
+          <div
+            key={i}
+            className='bg-[#f5f5f5] rounded-lg p-4 w-80 flex-shrink-0'
+          >
+            <div className='bg-white border border-slate-200 rounded-lg p-3 mb-2 animate-pulse'>
+              <div className='h-4 bg-slate-200 rounded w-3/4'></div>
+            </div>
+            {[1, 2, 3].map((j) => (
+              <div
+                key={j}
+                className='bg-white border border-slate-200 rounded-lg p-3 mb-2 animate-pulse'
+              >
+                <div className='h-4 bg-slate-200 rounded w-3/4 mb-2'></div>
+                <div className='h-3 bg-slate-200 rounded w-1/2'></div>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
 const KanbanBoard: React.FC<KanbanBoardProps> = ({
   data,
   isCreateTaskDisabled = false,
@@ -34,6 +65,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   userData = [],
   isDragable = false,
   isDragablebetweenBoards = false,
+  isLoading = false,
   onFetchTaskDetails,
   fieldVisibility = {},
   fieldDisabled = {},
@@ -43,6 +75,10 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   const [newSectionName, setNewSectionName] = useState('');
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    setColumns(data);
+  }, [data]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -299,6 +335,10 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   };
 
   const memoizedColumns = useMemo(() => columns, [columns]);
+
+  if (isLoading) {
+    return <LoadingSkeleton />;
+  }
 
   if (isDragable || isDragablebetweenBoards) {
     return (

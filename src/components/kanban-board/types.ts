@@ -113,6 +113,7 @@ export interface KanbanBoardProps {
   onFetchTaskDetails?: (taskId: string) => Promise<Task | null>;
   fieldVisibility?: FieldVisibility;
   fieldDisabled?: FieldDisabled;
+  isLoading?: boolean;
 }
 
 export interface TaskCardProps {
