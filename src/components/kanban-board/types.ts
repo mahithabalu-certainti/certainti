@@ -16,6 +16,12 @@ export interface Activity {
   link?: string;
 }
 
+// New interface for simple status options (active/inactive)
+export interface StatusOption {
+  label: string;
+  value: string;
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -105,6 +111,7 @@ export interface KanbanBoardProps {
   showTaskCount?: boolean;
   showProfileIndicator?: boolean;
   statusData?: Array<{ id: string; name: string; color: string }>;
+  statusOptions?: StatusOption[]; // New prop for active/inactive status
   priorityData?: Array<{ id: string; name: string; color: string }>;
   tagData?: Array<{ id: string; name: string; color: string }>;
   userData?: User[];
@@ -123,6 +130,7 @@ export interface TaskCardProps {
   onEditTask?: (taskId: string, newTitle: string) => void;
   onTaskClick?: (taskId: string) => void;
   statusData?: Array<{ id: string; name: string; color: string }>;
+  statusOptions?: StatusOption[]; // New prop for active/inactive status
   priorityData?: Array<{ id: string; name: string; color: string }>;
   onTaskUpdate?: (taskId: string, updatedTask: Partial<Task>) => void;
 }
@@ -144,6 +152,7 @@ export interface KanbanColumnProps {
   onEditTask?: (taskId: string, newTitle: string) => void;
   onTaskClick?: (taskId: string) => void;
   statusData?: Array<{ id: string; name: string; color: string }>;
+  statusOptions?: StatusOption[]; // New prop for active/inactive status
   priorityData?: Array<{ id: string; name: string; color: string }>;
   onTaskUpdate?: (taskId: string, updatedTask: Partial<Task>) => void;
   onFetchTaskDetails?: (taskId: string) => Promise<Task | null>;
@@ -155,6 +164,7 @@ export interface TaskDetailModalProps {
   onClose: () => void;
   onTaskUpdate: (taskId: string, updatedTask: Partial<Task>) => void;
   statusData?: Array<{ id: string; name: string; color: string }>;
+  statusOptions?: StatusOption[]; // New prop for active/inactive status
   priorityData?: Array<{ id: string; name: string; color: string }>;
   tagData?: Array<{ id: string; name: string; color: string }>;
   availableUsers?: User[];

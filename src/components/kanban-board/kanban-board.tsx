@@ -60,6 +60,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   showTaskCount = true,
   showProfileIndicator = true,
   statusData,
+  statusOptions, // New prop for active/inactive status
   priorityData,
   tagData,
   userData = [],
@@ -86,6 +87,21 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  // Function to determine which status data to use
+  const getEffectiveStatusData = () => {
+    if (statusOptions) {
+      // Convert statusOptions to the expected format for backward compatibility
+      return statusOptions.map((option) => ({
+        id: option.value,
+        name: option.label,
+        color: option.value.toLowerCase() === 'active' ? '#10B981' : '#EF4444', // green for active, red for inactive
+      }));
+    }
+    return statusData;
+  };
+
+  const effectiveStatusData = getEffectiveStatusData();
 
   const handleAddTask = (
     columnId: string,
@@ -370,7 +386,8 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   onTaskClick={handleTaskClick}
                   isDragable={isDragable}
                   isDragablebetweenBoards={isDragablebetweenBoards}
-                  statusData={statusData}
+                  statusData={effectiveStatusData}
+                  statusOptions={statusOptions}
                   priorityData={priorityData}
                   onTaskUpdate={handleTaskUpdate}
                   onFetchTaskDetails={onFetchTaskDetails}
@@ -446,7 +463,8 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
               isOpen={isModalOpen}
               onClose={() => setIsModalOpen(false)}
               onTaskUpdate={handleTaskUpdate}
-              statusData={statusData}
+              statusData={effectiveStatusData}
+              statusOptions={statusOptions}
               priorityData={priorityData}
               tagData={tagData}
               availableUsers={userData}
@@ -482,7 +500,8 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
               onTaskClick={handleTaskClick}
               isDragable={isDragable}
               isDragablebetweenBoards={isDragablebetweenBoards}
-              statusData={statusData}
+              statusData={effectiveStatusData}
+              statusOptions={statusOptions}
               priorityData={priorityData}
               onTaskUpdate={handleTaskUpdate}
               onFetchTaskDetails={onFetchTaskDetails}
@@ -557,7 +576,8 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
             isOpen={isModalOpen}
             onClose={() => setIsModalOpen(false)}
             onTaskUpdate={handleTaskUpdate}
-            statusData={statusData}
+            statusData={effectiveStatusData}
+            statusOptions={statusOptions}
             priorityData={priorityData}
             tagData={tagData}
             availableUsers={userData}

@@ -4,13 +4,13 @@ import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import { AllPermissions } from '../../../../../common-service';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import KanbanBoard from '../../../../../components/kanban-board/kanban-board';
 import {
   mockUserData,
-  mockKanbanData,
   mockTaskDetails,
 } from '../../../../../components/kanban-board/mock-data';
+import { useGetWorkBreakdownList } from '../../../../../hooks/use-work-breakdown';
 
 const ConfigTabs: ResourceTabs[] = [
   {
@@ -29,15 +29,31 @@ const ConfigTabs: ResourceTabs[] = [
 const WorkBreakDown = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { caseId } = useParams<{
+    caseId: string;
+  }>();
+  const accountId = searchParams.get('accountID');
+
+  const {
+    data: kanbanData,
+    isLoading,
+    isError,
+  } = useGetWorkBreakdownList(accountId || '', caseId || '');
+  // const status = useGetStatus();
+
+  // const statusOptions = useMemo(
+  //   () =>
+  //     status.data?.data?.status.map((status) => ({
+  //       label: status.status_name,
+  //       value: status.rid,
+  //     })) || [],
+  //   [status.data?.data?.status]
+  // );
+
   const tabParam = searchParams.get('tab') || 'milestone';
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, string | number | boolean | string[]>
   >({});
-  const statusData = [
-    { id: '1', name: 'To Do', color: '#gray' },
-    { id: '2', name: 'In Progress', color: '#blue' },
-    { id: '3', name: 'Done', color: '#green' },
-  ];
 
   const priorityData = [
     { id: '1', name: 'Low', color: '#gray' },
@@ -99,7 +115,6 @@ const WorkBreakDown = () => {
 
   const handleTabChange = (value: string) => {
     searchParams.set('tab', value);
-    // setSearchParams(searchParams);
     navigate(`?${searchParams.toString()}`, { replace: true });
   };
 
@@ -138,24 +153,37 @@ const WorkBreakDown = () => {
 
       <div className='border border-t-0 border-[#CBD6E2]'>
         {tabParam === 'milestone' && (
-          <KanbanBoard
-            data={mockKanbanData}
-            onFetchTaskDetails={(taskId: string) => {
-              const task = mockTaskDetails[taskId];
-              return Promise.resolve(task ?? null);
-            }}
-            isCreateTaskDisabled={true}
-            isCreateTaskHide={true}
-            showCommentCount={true}
-            showTaskCount={true}
-            showProfileIndicator={true}
-            isDragable={true}
-            isDragablebetweenBoards={true}
-            statusData={statusData}
-            priorityData={priorityData}
-            tagData={tagData}
-            userData={mockUserData}
-          />
+          <>
+            {isError ? (
+              <div className='flex items-center justify-center h-full p-40 text-red-500'>
+                Error loading data.
+              </div>
+            ) : kanbanData?.data && kanbanData.data.length === 0 ? (
+              <div className='flex items-center justify-center h-full p-40 text-gray-500'>
+                {kanbanData.statusMessage || 'No data available'}
+              </div>
+            ) : (
+              <KanbanBoard
+                data={kanbanData?.data || []}
+                onFetchTaskDetails={(taskId: string) => {
+                  const task = mockTaskDetails[taskId];
+                  return Promise.resolve(task ?? null);
+                }}
+                isCreateTaskDisabled={true}
+                isCreateTaskHide={true}
+                showCommentCount={true}
+                showTaskCount={true}
+                showProfileIndicator={true}
+                isDragable={true}
+                isDragablebetweenBoards={true}
+                isLoading={isLoading}
+                statusData={[]}
+                priorityData={priorityData}
+                tagData={tagData}
+                userData={mockUserData}
+              />
+            )}
+          </>
         )}
         {tabParam === 'case_task' && (
           <div className='flex items-center justify-center h-full'>

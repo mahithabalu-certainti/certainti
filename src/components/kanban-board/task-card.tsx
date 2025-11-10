@@ -18,8 +18,9 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
   showProfileIndicator,
   onEditTask,
   onTaskClick,
-  // statusData,
-  // priorityData,
+  // statusData, // Removed unused prop
+  statusOptions,
+  // priorityData, // Removed unused prop - using hardcoded priority colors
   // onTaskUpdate,
   isDragable = false,
   isDragablebetweenBoards = false,
@@ -62,12 +63,24 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
   }, [taskData]);
 
   const getColor = (type: 'status' | 'priority', value: string) => {
+    if (type === 'status' && statusOptions) {
+      // Use the new active/inactive status options with predefined colors
+      const isActive = value.toLowerCase() === 'active';
+      return {
+        bg: isActive ? '#DCFCE7' : '#FEE2E2', // light green for active, light red for inactive
+        text: isActive ? '#15803D' : '#DC2626', // dark green for active, dark red for inactive
+        border: isActive ? '#BBF7D0' : '#FECACA', // green border for active, red border for inactive
+      };
+    }
+
+    // Fallback to original color mapping for backward compatibility
     const colors = {
       status: {
-        Active: { bg: '#EFF6FF', text: '#3730A3', border: '#DBEAFE' },
+        Active: { bg: '#DCFCE7', text: '#15803D', border: '#BBF7D0' }, // green theme
         'To Do': { bg: '#F8FAFC', text: '#475569', border: '#E2E8F0' },
         'In Progress': { bg: '#EFF6FF', text: '#3730A3', border: '#DBEAFE' },
         Done: { bg: '#F0FDF4', text: '#166534', border: '#DCFCE7' },
+        Inactive: { bg: '#FEE2E2', text: '#DC2626', border: '#FECACA' }, // red theme
       },
       priority: {
         Low: { bg: '#F9FAFB', text: '#374151', border: '#E5E7EB' },
@@ -156,7 +169,10 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
               style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
             />
           ) : (
-            <h3 className='text-slate-800 text-[13px] font-medium leading-relaxed flex-1' style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}>
+            <h3
+              className='text-slate-800 text-[13px] font-medium leading-relaxed flex-1'
+              style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
+            >
               {taskData.task_name}
             </h3>
           )}
@@ -230,14 +246,24 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
           {taskData.checklists_count > 0 && (
             <div className='flex items-center gap-1 text-gray-400'>
               <CustomChecklistIcon className='w-3 h-3 text-gray-400' />
-              <span className='text-[13px]' style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}>{taskData.checklists_count}</span>
+              <span
+                className='text-[13px]'
+                style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
+              >
+                {taskData.checklists_count}
+              </span>
             </div>
           )}
 
           {showCommentCount && (
             <div className='flex items-center gap-1 text-gray-400'>
               <CommentIcon className='w-3 h-3 text-gray-400' />
-              <span className='text-[13px]' style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}>0</span>
+              <span
+                className='text-[13px]'
+                style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
+              >
+                0
+              </span>
             </div>
           )}
         </div>

@@ -29,6 +29,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
   isDragable = false,
   isDragablebetweenBoards = false,
   statusData,
+  statusOptions, // New prop for active/inactive status
   priorityData,
   onTaskUpdate,
   // onFetchTaskDetails,
@@ -341,6 +342,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
               isDragable={isDragable}
               isDragablebetweenBoards={isDragablebetweenBoards}
               statusData={statusData}
+              statusOptions={statusOptions}
               priorityData={priorityData}
               onTaskUpdate={onTaskUpdate}
               // onFetchTaskDetails={onFetchTaskDetails}
