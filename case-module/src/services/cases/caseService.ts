@@ -1877,7 +1877,6 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
         }
         else {
           const result = await this.caseSchemaService.updateUserLevelTask(data, fetchParentNumber[0][0].r_number, transaction);
-          console.log("Result =====> ", result)
           if(result.statusCode === HttpStatus.SUCCESS) {
             await transaction.commit()
           }
