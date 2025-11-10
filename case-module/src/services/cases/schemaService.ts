@@ -3829,6 +3829,47 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         })
         
         await CaseTask.bulkCreate(finalTaskData, {transaction})
+        await this.cloneDefaultChecklistTemplate(accountRid, caseRid, filing_type_rid, accountNumber, transaction,finalTaskData)
+      }
+    }
+  }
+  async cloneDefaultChecklistTemplate (accountRid : string, caseRid : string, filing_type_rid : string, accountNumber : string, transaction : Transaction,finalTaskData:any) {
+    const {CheckList, CheckListItem,AdminCheckListItem,AdminChecklist} = await this.caseModelService.getModels(accountNumber);
+
+    // Iterate over finalTaskData and clone checklist if checklist_template_rid is non-empty
+    for (const task of finalTaskData) {
+      if (task.checklist_template_rid && String(task.checklist_template_rid).trim() !== "") {
+        const templateChecklist = await AdminChecklist.findOne({
+          where: { rid: task.checklist_template_rid },
+        });
+        if (templateChecklist) {
+          const checklistData = {
+            attach_to: caseRid,
+            attachment_level: "case",
+            checklist_name: templateChecklist.checklist_name,
+            checklist_description: templateChecklist.checklist_description,
+            checklist_template_rid:task.checklist_template_rid,
+            account_rid: accountRid,
+            created_datetime: new Date(),
+            created_by: task.created_by,
+          };
+          const newChecklist = await CheckList.create(checklistData, { transaction });
+
+          const templateItems = await AdminCheckListItem.findAll({
+            where: { checklist_template_rid: task.checklist_template_rid },
+          });
+          for (const item of templateItems) {
+            const itemData = {
+              checklist_item_name: item.checklist_item_name,
+              checklist_item_description: item.description,
+              account_rid: accountRid,
+              checklist_rid: newChecklist.rid,
+              created_datetime: new Date(),
+              created_by: task.created_by,
+            };
+            await CheckListItem.create(itemData, { transaction });
+          }
+        }
       }
     }
   }

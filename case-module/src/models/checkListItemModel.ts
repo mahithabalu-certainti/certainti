@@ -76,8 +76,8 @@ export class CheckListItem
             fields: ["rid"],
           },
           {
-            name: "idx_checklist_items_case_checklist_rid",
-            fields: ["case_checklist_rid"],
+            name: "idx_checklist_items_checklist_rid",
+            fields: ["checklist_rid"],
           },
           {
             name: "idx_checklist_items_status_rid",
