@@ -1634,7 +1634,7 @@ export class CaseService {
             await this.caseSchemaService.manageCheckListItems(
               accountNumber,
               caseRequest,
-              caseRequest.checklist_template_rid!,
+              caseRequest.checklist_rid!,
               transaction
             );
           }
