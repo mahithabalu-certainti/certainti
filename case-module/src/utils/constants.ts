@@ -82,8 +82,8 @@ export const STATUS_MESSAGE = {
   caseIdMissing: "Case ID is required",
   countryValidationFailed:
     "Country is not associated with the account,Please select country",
-  adminChecklistCreated: "Admin checklist created successfully",
-  adminChecklistFailed: "Admin checklist creation failed",
+  adminChecklistCreated: "Checklist created successfully",
+  adminChecklistFailed: "Checklist creation failed",
   accountIdMissing: "Account RID mising",
   invalidJurisdictionLevel: "Level must be either 'state' or 'federal'.",
   statesMissing: "States array is required when level is 'state'.",
@@ -321,6 +321,60 @@ export const adminCheckListMappings = [
   },
   //{ permissionField: 'modified_by', exportField: 'Updated By', dataField: 'modified_by' },
   //{ permissionField: 'modified_datetime', exportField: 'Updated On', dataField: 'modified_datetime' }
+];
+
+export const checklistsFieldMappings = [
+  {
+    permissionField: "r_number",
+    exportField: "Checklist ID",
+    dataField: "r_number",
+  },
+  {
+    permissionField: "attachment_level",
+    exportField: "Related Entity",
+    dataField: "attachment_level",
+  },
+  {
+    permissionField: "attach_to",
+    exportField: "Related To ID",
+    dataField: "attach_to",
+  },
+  {
+    permissionField: "attached_to",
+    exportField: "Related To Name",
+    dataField: "attached_to",
+  },
+  {
+    permissionField: "fiscal_year",
+    exportField: "Fiscal Year",
+    dataField: "fiscal_year",
+  },
+   {
+    permissionField: "checklist_name",
+    exportField: "Checklist Name",
+    dataField: "checklist_name",
+  },
+   {
+    permissionField: "created_by",
+    exportField: "Created By",
+    dataField: "created_by_name",
+  },
+  {
+    permissionField: "created_datetime",
+    exportField: "Created On",
+    dataField: "created_datetime",
+  },
+  {
+    permissionField: "updated_by",
+    exportField: "Updated By",
+    dataField: "modified_by_name",
+  },
+  {
+    permissionField: "updated_datetime",
+    exportField: "Updated On",
+    dataField: "updated_datetime",
+  }
+          
 ];
 
 export const rawQueries = {
@@ -773,9 +827,134 @@ export const rawQueries = {
       ids.push(`${rid.map((d : any) => `'${d}'`).join(',')}`)
       return `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid IN (${ids})`
     }
+  },
+  getAllProjectsByAccountId(schemaName: string,accountRid: string) {
+    return `SELECT rid, project_name FROM ${schemaName}.project WHERE account_rid = '${accountRid}'
+    ORDER BY project_name ASC`
+  },
+  fetchProjectResourceAndFiscal(schemaName: string) {
+  return `
+    SELECT 
+      ps.rid,
+      ps.project_fiscal_rid
+    FROM "${schemaName}".project_resource ps
+    WHERE ps.project_fiscal_rid IN (:projectIds)
+    ORDER BY ps.created_datetime DESC
+  `;
+ },
+  checkProjectTaskExists(schemaName: string) {
+    return `
+      SELECT EXISTS (
+        SELECT 1 
+        FROM information_schema.tables 
+        WHERE table_schema = '${schemaName}'
+        AND table_name = 'project_task'
+      );
+    `;
+  },
+  fetchProjectTaskAndFiscal(schemaName: string) {
+    return `
+      SELECT 
+        pt.rid,
+        pt.project_resource_code
+      FROM "${schemaName}".project_task pt
+      WHERE pt.project_fiscal_rid IN (:projectIds)
+      ORDER BY pt.created_datetime DESC
+    `;
+  },
+  getResourcesByAccountQuery(schemaName: string): string {
+    return `
+      SELECT 
+        r.rid
+      FROM "${schemaName}".resources r
+      WHERE r.account_rid = :accountRid
+      ORDER BY r.created_datetime DESC
+    `;
+  },
+  getLatestResourceCostEntriesQuery(schemaName: string): string {
+    return `
+      SELECT 
+        rc.rid,
+        rc.resource_rid
+      FROM "${schemaName}".resource_cost rc
+      WHERE rc.resource_rid IN (:resourceIds)
+      ORDER BY rc.created_datetime DESC
+    `;
+  },
+  getLatestResourceSkillsQuery(schemaName: string): string {
+    return `
+      SELECT 
+        rs.rid,
+        rs.resource_rid
+      FROM "${schemaName}".resource_skill rs
+      WHERE rs.resource_rid IN (:resourceIds)
+      ORDER BY rs.created_datetime DESC
+    `;
+  },
+  fetchProjectResourceById(schemaName: string) {
+    return `
+      SELECT pr.rid,pr.r_number,pr.project_rid,pr.project_fiscal_rid, pf.currency_rid 
+      FROM "${schemaName}".project_resource pr
+      LEFT JOIN "${schemaName}".project_fiscal pf ON pf.rid = pr.project_fiscal_rid
+      WHERE pr.rid = :projectResourceId
+    `;
+  },
+  getAccountWithStatusByRidQuery(): string {
+      return `
+        SELECT 
+          ${MAIN_SCHEMA_NAME}.account.*, 
+          ${MAIN_SCHEMA_NAME}.status.status_description AS status  
+        FROM ${MAIN_SCHEMA_NAME}.account
+        LEFT JOIN ${MAIN_SCHEMA_NAME}.status 
+          ON ${MAIN_SCHEMA_NAME}.account.status_rid = ${MAIN_SCHEMA_NAME}.status.rid
+        WHERE ${MAIN_SCHEMA_NAME}.account.rid = :rid
+      `;
+    },
+  fetchProjectTaskById(schemaName: string) {
+    return `
+      SELECT pt.rid,pt.r_number, pf.currency_rid, pt.project_fiscal_rid 
+      FROM "${schemaName}".project_task pt
+      LEFT JOIN "${schemaName}".project_fiscal pf ON pf.rid = pt.project_fiscal_rid
+      WHERE pt.rid = :projectTaskId
+    `;
+  },
+  fetchResourceById(schemaName: string) {
+    return `
+      SELECT rid,resource_code 
+      FROM "${schemaName}".resources
+      WHERE rid = :resourceId
+    `;
+  },
+  fetchResourceCostById(schemaName: string) {
+    return `
+      SELECT rid,r_number,resource_rid
+      FROM "${schemaName}".resource_cost
+      WHERE rid = :resourceCostId
+    `;
+  },
+  fetchResourceSkillById(schemaName: string) {
+    return `
+    SELECT rid,r_number,resource_rid
+    FROM "${schemaName}".resource_skill
+    WHERE rid = :resourceSkillId
+    `;
+  },
+  fetchCaseById(schemaName: string) {
+    return `
+    SELECT rid,r_number,resource_rid
+    FROM "${schemaName}".case
+    WHERE rid = :caseId
+    `;
+  },
+  fetchProjectInfoById(schemaName: string){
+    return `SELECT rid, project_code, currency_rid FROM ${schemaName}.project_fiscal WHERE rid = :projectId LIMIT 1`;
+  },
+  listUsersByIds(userIds: any)
+  {
+    return `SELECT rid, CONCAT(first_name, ' ', last_name) as full_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (:userIds)`
   }
 };
-
+// AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
 const keyContactRole = {
   pocName: "Project Point of Contact",
   tPocName: "Project Technical Point of Contact",

@@ -120,6 +120,35 @@ export interface ICaseService {
     errorMessage?: string;
     data?: { checklist: any };
   }>;
+   getCheckListDetailsById(
+    checkListRid: string,
+    value:any
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { checklistDetails: any };
+  }>;
+   getAllChecklists(
+    userId: string,
+    attachmentLevel: string,
+    entityId: string,
+    accountRid: string,
+    page: number,
+    limit: number,
+    search: string,
+    filters: Record<string, any>,
+    sortBy: string,
+    sortOrder: string,
+    fiscalYear: number,
+    apiType: string,
+    graphqlData: any
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { checklists: any[]; totalCount: number };
+  }>;
 
   exportAssignedProjects (data : any) : Promise<any>
 }

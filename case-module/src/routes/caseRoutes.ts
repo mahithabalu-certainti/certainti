@@ -114,6 +114,21 @@ routes.post(
   controller.caseController.updateCheckList
 );
 routes.get(
+  "/checklist/detail/:checkListRid",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.getCheckListDetailsById
+);
+routes.get(
+  "/checklist/list",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.getAllChecklists
+);
+routes.get(
+  "/checklist/export",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.exportAllChecklists
+);
+routes.get(
   "/workBreakdown/:accountRid/:caseRid",
   checkUserStatusMiddleware("NA"),
   controller.caseController.fetchCaseKanbanBoard

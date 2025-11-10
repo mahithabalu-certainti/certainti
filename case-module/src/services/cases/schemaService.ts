@@ -871,11 +871,134 @@ class CaseSchemaService {
       ? { [Op.and]: [whereClause, searchCondition] }
       : searchCondition;
   }
+  private buildRawWhereClause(
+      filters: Record<string, any>,
+      search?: string
+    ): { whereClause: any } {
+    
+      const whereClause: any = {
+        [Op.and]: []
+      };
+    
+      // Search logic
+      if (search) {
+        whereClause[Op.and].push({
+          [Op.or]: [
+            { checklist_name: { [Op.iLike]: `%${search}%` } },
+            { r_number: { [Op.iLike]: `%${search}%` } },
+            { descriptions : { [Op.iLike]: `%${search}%` } },
+            { title : { [Op.iLike]: `%${search}%` } },
+            { attachment_level : { [Op.iLike]: `%${search}%` } }
+          ]
+        });
+      }
+    
+      // Filter logic for your input structure
+      Object.entries(filters).forEach(([field, filter]) => {
+        if (!filter || typeof filter !== 'object') {
+          console.log(`Skipping filter for field ${field} due to invalid structure`);
+          return;
+        }
+
+        const operator = Object.keys(filter)[0];
+        const value = operator ? filter[operator] : undefined;
+
+        if (!operator || value === undefined) {
+          console.log(`Skipping filter for field ${field} due to missing operator or value`);
+          return;
+        }
+
+        const condition: any = {};
+
+        switch (field) {
+          case 'checklist_name':
+          case 'attachment_level':  
+          case 'descriptions':
+          case 'attached_to':
+          case 'attach_to':
+          case 'r_number':
+            switch (operator.toLowerCase()) {
+              case 'equals': condition[field] = { [Op.iLike]: value }; break;
+              case 'not_equals': condition[field] = { [Op.or]: [{ [Op.notILike]: value }, { [Op.is]: null }] }; break;          
+              case 'contains': condition[field] = { [Op.iLike]: `%${value}%` }; break;
+              case 'is_empty': condition[field] = { [Op.or]: [{ [Op.is]: null }, { [Op.eq]: '' }] }; break;
+              case 'in': condition[field] = { [Op.in]: Array.isArray(value) ? value : [value] }; break;
+            }
+            break;
+          case 'created_datetime':
+          case 'modified_datetime':
+            switch (operator.toLowerCase()) {
+              case 'equals': {
+                const date = new Date(value);
+                condition[field] = Sequelize.literal(`DATE("${field}") = DATE('${date.toISOString()}')`);
+                break;
+              }
+              case 'before': {
+                const date = new Date(value);
+                condition[field] = Sequelize.literal(`DATE("${field}") < DATE('${date.toISOString()}')`);
+                break;
+              }
+              case 'after': {
+                const date = new Date(value);
+                condition[field] = Sequelize.literal(`DATE("${field}") > DATE('${date.toISOString()}')`);
+                break;
+              }
+              case 'between': {
+                if (Array.isArray(value)) {
+                  const startDate = new Date(value[0]);
+                  const endDate = new Date(value[1]);
+                  condition[field] = Sequelize.literal(
+                    `DATE("${field}") BETWEEN DATE('${startDate.toISOString()}') AND DATE('${endDate.toISOString()}')`
+                  );
+                }
+                break;
+              }
+              case 'is_empty': condition[field] = { [Op.is]: null }; break;
+            }
+            break;
+          case 'fiscal_year':  
+            switch (operator.toLowerCase()) {
+              case 'equals': condition[field] = { [Op.eq]: value }; break;
+              case 'not_equals': condition[field] = { [Op.or]: [{ [Op.ne]: value }, { [Op.is]: null }] }; break;          
+              case 'in': condition[field] = { [Op.in]: Array.isArray(value) ? value : [value] }; break;
+              case 'is_empty': condition[field] = { [Op.or]: [{ [Op.is]: null }, { [Op.eq]: '' }] }; break;
+            }
+            break;
+
+          default:
+            console.log(`Unhandled filter field: ${field}`);
+        }
+
+        if (Object.keys(condition).length > 0) {
+          whereClause[Op.and].push(condition);
+        }
+      });
+    
+      return { whereClause: whereClause[Op.and].length > 0 ? whereClause : {} };
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   private buildWhereClause(
     filters: Record<string, any>,
     search?: string
   ): {
+   
     whereClause: Record<string, any>;
   } {
     let whereClause: Record<string, any> = {};
@@ -945,6 +1068,7 @@ class CaseSchemaService {
     if (typeof value === "string") {
       // Simple string value - treat as equals
       whereClause[field] = value;
+      
     } else if (typeof value === "object") {
       if (value.equals !== undefined) {
         whereClause[field] = Sequelize.where(
@@ -2571,7 +2695,7 @@ class CaseSchemaService {
     }
   }
 
-  async updateCheckList(
+ async updateCheckList(
     accountNumber: string,
     caseRequest: ICreateChecklist,
     transaction: Transaction
@@ -2603,10 +2727,901 @@ class CaseSchemaService {
 
       return createdChecklist;
     } catch (error) {
-      logMessage(`Error creating checklist: ${error}`);
-      throw new Error("Error creating checklist: " + error);
+      logMessage(`Error updating checklist: ${error}`);
+      throw new Error("Error updating checklist: " + error);
     }
   }
+
+ async fetchChecklistDetailsById(
+    checklistId: string,
+    accountNumber: string
+  ) {
+     const { CheckList } = await this.caseModelService.getModels(
+      accountNumber
+    );
+    let checklistDetails = await CheckList.findOne({
+      where: {
+        rid: checklistId
+      },
+    });
+    if(!checklistDetails){
+      throw new Error("Checklist not found");
+    }
+  
+    let checklistItems = await this.fetchChecklistItems(
+      checklistId,accountNumber
+    );
+  
+     const userInfo = await this.insertUserDetails(
+       checklistDetails.dataValues.created_by ?? "",
+       checklistDetails.dataValues.modified_by ?? ""
+     );
+  
+    const response: any = {
+
+      checklist_rid: checklistDetails?.rid,
+      checklist_name: checklistDetails?.checklist_name ?? "",
+      checklist_description: checklistDetails?.checklist_description ?? "",
+      r_number: checklistDetails.dataValues.r_number ?? "",
+      status_rid: checklistDetails.dataValues.status_rid ?? "",
+     // status_name: checklistDetails.dataValues.status_name ?? "",
+      modified_by: userInfo.modified_name ?? checklistDetails.dataValues.modified_by,
+      created_by: userInfo.created_name ?? checklistDetails.dataValues.created_by,
+      created_datetime: checklistDetails.dataValues.created_datetime ?? null,
+      modified_datetime: checklistDetails.dataValues.modified_datetime ?? null,
+      checklist_items: checklistItems ?? [],
+    };
+  
+    return response;
+    }
+ async fetchChecklists(
+  accountNumber: string,
+  fiscalYear: number,
+  attachmentLevel?: string,
+  entityId?: string,
+  accountRid?: string,
+  page: number = 1,
+  limit: number = 10,
+  search?: string,
+  filters: Record<string, any> = {},
+  sortBy: string = 'created_datetime',
+  sortOrder: string = 'DESC',
+  apiType: string = "list",
+  graphqlData? : any
+) {
+  try {
+      const {
+          CheckList,
+        } = await this.caseModelService.getModels(accountNumber);
+       let allChecklists: any[] = [];
+    
+        // Handle attached_to and uploaded_by filters separately
+        let attachedToFilter;
+        let createdByFilter;
+        let modifiedByFilter;
+        let notesOwnerFilter;
+        if (filters.attached_to) {
+          attachedToFilter = filters.attached_to;
+          delete filters.attached_to;
+        }
+        if (filters.created_by_name) {
+          createdByFilter = filters.created_by_name;
+          delete filters.created_by_name;
+        }
+        if (filters.modified_by_name) {
+          modifiedByFilter = filters.modified_by_name;
+          delete filters.modified_by_name;
+        }
+    
+        const { whereClause } = this.buildRawWhereClause(filters, search);
+        if (fiscalYear !== 0) {
+          if (!whereClause[Op.and] || !Array.isArray(whereClause[Op.and])) {
+            whereClause[Op.and] = [];
+          }
+          whereClause[Op.and].push({ fiscal_year: fiscalYear });
+      }
+        const fetchAttachments = async (model: any, level: string, attachToIds: string[]) => {
+                if (attachToIds.length === 0) return [];
+                let where;
+                if(graphqlData?.notes_rid) {
+                  console.log("Doc Id : ", graphqlData.notes_rid)
+                  where = {
+                    rid : graphqlData.notes_rid,
+                    attachment_level : level,
+                    attach_to : { [Op.in]: attachToIds }
+                  };
+                
+                  let arrayData = []
+                  arrayData.push(await model.findOne({ where }))
+                  return arrayData
+                } else {
+                  where = {
+                    [Op.and]: [
+                      { attachment_level: level },
+                      { attach_to: { [Op.in]: attachToIds } },
+                      ...(whereClause[Op.and] || [])
+                    ]
+                  };
+                  return model.findAll({ where });
+                }
+              };
+         // 🔷 Optimized project resource + task attachments fetch for multiple projects
+        const fetchProjectResourceTaskAttachmentsBulk = async (model: any, projectIds: string[]) => {
+          let projectChildAttachments: any[] = [];
+          if (projectIds.length === 0) return projectChildAttachments;
+    
+          // 🔹 Fetch all project_resources under projects in one call
+          const projectResources = await this.getProjectResourcesByProjectIds(accountNumber, projectIds);
+          const projectResourceIds = projectResources.map(r => r.rid);
+    
+          if (projectResourceIds.length > 0) {
+            const projectResourceAttachments = await fetchAttachments(model, 'project_resource', projectResourceIds);
+            projectChildAttachments.push(...projectResourceAttachments);
+          }
+            
+            // 🔹 Fetch all project_tasks under projects in one call
+            const projectTasks = await this.getProjectTasksByProjectIds(accountNumber, projectIds);
+            const projectTaskIds = projectTasks.map(t => t.rid);
+    
+            if (projectTaskIds.length > 0) {
+              const projectTaskAttachments = await fetchAttachments(model, 'project_task', projectTaskIds);
+              projectChildAttachments.push(...projectTaskAttachments);
+            }
+    
+          return projectChildAttachments;
+        };
+       
+          // 🔷 Optimized resource cost and skill attachments fetch for multiple resources
+        const fetchResourceCostSkillAttachmentsBulk = async (model: any, resourceIds: string[]) => {
+          let resourceCostSkillAttachments: any[] = [];
+          if (resourceIds.length === 0) return resourceCostSkillAttachments;
+    
+          // 🔹 Fetch all resource_costs in one call
+          const resourceCosts = await this.getResourceCostsByResourceIds(accountNumber, resourceIds);
+          const allResourceCostIds = resourceCosts.map(rc => rc.rid);
+          if (allResourceCostIds.length > 0) {
+            const resourceCostAttachments = await fetchAttachments(model, 'resource_cost', allResourceCostIds);
+            resourceCostSkillAttachments.push(...resourceCostAttachments);
+          }
+    
+          // 🔹 Fetch all resource_skills in one call
+          const resourceSkills = await this.getResourceSkillsByResourceIds(accountNumber, resourceIds);
+          const allResourceSkillIds = resourceSkills.map(rs => rs.rid);
+          if (allResourceSkillIds.length > 0) {
+            const resourceSkillAttachments = await fetchAttachments(model, 'resource_skill', allResourceSkillIds);
+            resourceCostSkillAttachments.push(...resourceSkillAttachments);
+          }
+    
+          return resourceCostSkillAttachments;
+        };
+         if (attachmentLevel === 'case' && entityId) {
+          const caseAttachments = await fetchAttachments(CheckList, 'case', [entityId]);
+          allChecklists.push(...caseAttachments);
+        }
+        else if (attachmentLevel === 'account' && entityId) {
+          const accountAttachments = await fetchAttachments(CheckList, 'account', [entityId]);
+          allChecklists.push(...accountAttachments);
+          const caseAttachments = await fetchAttachments(CheckList, 'case', [entityId]);
+          allChecklists.push(...caseAttachments);
+    
+          const projects = await this.getProjectsByAccountId(accountNumber, entityId);
+          const projectIds = projects.map((p: { rid: any; }) => p.rid);
+          if (projectIds.length > 0) {
+            const projectAttachments = await fetchAttachments(CheckList, 'project', projectIds);
+            allChecklists.push(...projectAttachments);
+    
+            const projectChildAttachments = await fetchProjectResourceTaskAttachmentsBulk(CheckList, projectIds);
+            allChecklists.push(...projectChildAttachments);
+          }
+    
+          const resources = await this.getResourcesByAccountId(accountNumber, entityId);
+          const resourceIds = resources.map(r => (r as { rid: string }).rid);
+          if (resourceIds.length > 0) {
+            const resourceAttachments = await fetchAttachments(CheckList, 'resource', resourceIds);
+            allChecklists.push(...resourceAttachments);
+    
+            const resourceCostSkillAttachments = await fetchResourceCostSkillAttachmentsBulk(CheckList, resourceIds);
+            allChecklists.push(...resourceCostSkillAttachments);
+          }
+        }
+        else if (attachmentLevel === 'project' && entityId) {
+        const projectAttachments = await fetchAttachments(CheckList, 'project', [entityId]);
+        allChecklists.push(...projectAttachments);
+  
+        const projectChildAttachments = await fetchProjectResourceTaskAttachmentsBulk(CheckList, [entityId]);
+        allChecklists.push(...projectChildAttachments);
+      }
+       // 🔷 Project_resource logic
+        else if (attachmentLevel === 'project_resource' && entityId) {
+          const projectResourceAttachments = await fetchAttachments(CheckList, 'project_resource', [entityId]);
+          allChecklists.push(...projectResourceAttachments);
+          const projectResource = await this.fetchProjectResourceById(accountNumber, entityId);
+          const projectTasks = await this.getProjectTasksByProjectIds(accountNumber, [(projectResource as any)?.project_fiscal_rid]);
+          const projectTaskIds = projectTasks.map(t => t.rid);
+          if (projectTaskIds.length > 0) {
+            const projectTaskAttachments = await fetchAttachments(CheckList, 'project_task', projectTaskIds);
+            allChecklists.push(...projectTaskAttachments);
+          }
+        }
+    
+        // 🔷 Resource logic
+        else if (attachmentLevel === 'resource' && entityId) {
+          const resourceAttachments = await fetchAttachments(CheckList, 'resource', [entityId]);
+          allChecklists.push(...resourceAttachments);
+    
+          const resourceCostSkillAttachments = await fetchResourceCostSkillAttachmentsBulk(CheckList, [entityId]);
+          allChecklists.push(...resourceCostSkillAttachments);
+        }
+         else {
+          if (!whereClause[Op.and] || !Array.isArray(whereClause[Op.and])) {
+            whereClause[Op.and] = [];
+          }
+          if (entityId) {
+            whereClause[Op.and].push({ attach_to: entityId });
+          } else if (attachmentLevel) {
+            whereClause[Op.and].push({ attachment_level: attachmentLevel });
+          }
+    
+          try {
+            const result = await CheckList.findAll({ where: whereClause });
+            allChecklists.push(...result);
+          } catch (error) {
+            console.error('Error fetching attachments:', error);
+            throw new Error('Failed to fetch attachments');
+          }
+        }
+         // 🔷 Fetch display names
+        if(graphqlData?.document_rid) {
+          allChecklists = allChecklists.filter((d : any) => d != null)
+        }
+        const {displayNames} = await this.getAttachmentDisplayNames(allChecklists, accountNumber);
+         if (attachedToFilter) {
+          allChecklists = allChecklists.filter(attachment => {
+            let displayName = displayNames[attachment.rid] || String(attachment.attach_to) || '';
+            const displayValue = displayName.toLowerCase();
+            const operator = Object.keys(attachedToFilter)[0];
+            const filterValue = (operator ? attachedToFilter[operator] || '' : '').toLowerCase();
+            switch (operator) {
+              case 'contains': return displayValue.includes(filterValue);
+              case 'equals': return displayValue === filterValue;
+              case 'not_equals': return displayValue !== filterValue || displayValue === null;
+              default: return false;
+            }
+          });
+        }
+    
+        // 🔷 Sort
+        const validSortFields = ['checklist_name', 'r_number', 'attachment_level', 'attached_to', 'created_datetime', 'descriptions', 'created_by_name', 'fiscal_year', 'modified_by_name', 'modified_datetime'];
+        const finalSortBy = validSortFields.includes(sortBy) ? sortBy : 'created_datetime';
+        const finalSortOrder = ['ASC', 'DESC'].includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
+    
+        allChecklists.sort((a, b) => {
+          // Special handling for created_datetime
+          if (finalSortBy === 'created_datetime') {
+            const aDate = new Date(a[finalSortBy]).getTime();
+            const bDate = new Date(b[finalSortBy]).getTime();
+            return finalSortOrder === 'ASC' ? aDate - bDate : bDate - aDate;
+          }
+    
+          let aVal = finalSortBy === 'attached_to' ? (displayNames[a.rid] ?? '') : (a[finalSortBy] ?? '');
+          let bVal = finalSortBy === 'attached_to' ? (displayNames[b.rid] ?? '') : (b[finalSortBy] ?? '');
+    
+          // Convert to string safely
+          aVal = typeof aVal === 'string' ? aVal.toLowerCase() : String(aVal).toLowerCase();
+          bVal = typeof bVal === 'string' ? bVal.toLowerCase() : String(bVal).toLowerCase();
+    
+          const aEmpty = !aVal || aVal.trim() === '';
+          const bEmpty = !bVal || bVal.trim() === '';
+    
+          if (aEmpty && bEmpty) return 0; // Both empty – equal
+          if (aEmpty) return finalSortOrder === 'ASC' ? 1 : -1; // a empty comes last in ASC, first in DESC
+          if (bEmpty) return finalSortOrder === 'ASC' ? -1 : 1; // b empty comes last in ASC, first in DESC
+    
+          // Both non-empty, normal comparison
+          return finalSortOrder === 'ASC' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+        });
+         const paginatedAttachments = allChecklists
+            
+        // 🔷 Map document types and users
+        const userIds = [...new Set(paginatedAttachments.flatMap(att => [att.created_by,att.modified_by, att.notes_owner]))];
+    
+        const mainSequelize = await initMainDbSequelize();
+        const [users] = await Promise.all([
+          userIds.length > 0 ? mainSequelize.query(
+            rawQueries.listUsersByIds(userIds),
+            { replacements: { userIds }, type: 'SELECT' }
+          ) : Promise.resolve([]),
+        ]);
+         const userMap = new Map(users.map((u: any) => [u.rid, u.full_name]));
+
+        let checklists : any[]
+        if(graphqlData.notes_rid) {
+                  checklists = await Promise.all(paginatedAttachments.map(async attachment => {
+                    return {
+                      ...attachment.get({ plain: true }),
+                      created_by_name: userMap.get(attachment.created_by) || attachment.created_by,
+                      modified_by_name: userMap.get(attachment.modified_by) || attachment.modified_by,
+                      attached_to: displayNames[attachment.rid] || attachment.attach_to,
+                        }
+                  }));
+                } 
+        else {
+          checklists = await Promise.all(paginatedAttachments.map(async attachment => ({
+          ...attachment.get({ plain: true }),
+          created_by_name: userMap.get(attachment.created_by) || attachment.created_by,
+          modified_by_name: userMap.get(attachment.modified_by) || attachment.modified_by,
+          attached_to: displayNames[attachment.rid] || attachment.attach_to,
+        })))};
+        if (sortBy === 'created_by_name') {
+          checklists.sort((a, b) => {
+            const aType = a.created_by_name || '';
+            const bType = b.created_by_name || '';
+            const aEmpty = !aType || aType.trim() === '';
+            const bEmpty = !bType || bType.trim() === '';
+            
+            if (aEmpty && bEmpty) return 0;
+            if (aEmpty) return finalSortOrder === 'ASC' ? 1 : -1;
+            if (bEmpty) return finalSortOrder === 'ASC' ? -1 : 1;
+            
+            return finalSortOrder === 'ASC' ? 
+              aType.localeCompare(bType) : 
+              bType.localeCompare(aType);
+          });
+        }
+
+        if (sortBy === 'modified_by_name') {
+          checklists.sort((a, b) => {
+            const aType = a.modified_by_name || '';
+            const bType = b.modified_by_name || '';
+            const aEmpty = !aType || aType.trim() === '';
+            const bEmpty = !bType || bType.trim() === '';
+            
+            if (aEmpty && bEmpty) return 0;
+            if (aEmpty) return finalSortOrder === 'ASC' ? 1 : -1;
+            if (bEmpty) return finalSortOrder === 'ASC' ? -1 : 1;
+            
+            return finalSortOrder === 'ASC' ? 
+              aType.localeCompare(bType) : 
+              bType.localeCompare(aType);
+          });
+        }
+        if (createdByFilter) {
+          let filterValue;
+            checklists = checklists.filter(checklist => {
+            const uploadedBy = checklist.created_by_name?.toLowerCase() || '';
+            const operator = Object.keys(createdByFilter)[0];
+            if(operator === 'is_empty') filterValue = ''
+            else filterValue = (operator ? createdByFilter[operator] || '' : '').toLowerCase();
+            switch (operator) {
+              case 'contains': return uploadedBy.includes(filterValue);
+              case 'equals': return uploadedBy === filterValue;
+              case 'not_equals': return uploadedBy !== filterValue;
+              case 'is_empty': return uploadedBy === null || uploadedBy === ''
+              default: return false;
+            }
+          });
+        }
+        if (modifiedByFilter) {
+          let filterValue;
+            checklists = checklists.filter(checklist => {
+            const uploadedBy = checklist.modified_by_name?.toLowerCase() || '';
+            const operator = Object.keys(modifiedByFilter)[0];
+            if(operator === 'is_empty') filterValue = ''
+            else filterValue = (operator && modifiedByFilter[operator] ? modifiedByFilter[operator] : '').toLowerCase();
+            switch (operator) {
+              case 'contains': return uploadedBy.includes(filterValue);
+              case 'equals': return uploadedBy === filterValue;
+              case 'not_equals': return uploadedBy !== filterValue
+              case 'is_empty': return uploadedBy === null || uploadedBy === ''
+              default: return false;
+            }
+          });
+        }
+        const totalCount = checklists.length;
+        if(apiType === 'download') {
+          return {
+            checklists,
+            totalCount,
+          }
+        }
+        checklists = checklists.slice((page - 1) * limit, page * limit);
+        return {
+          checklists,
+          totalCount,
+        }
+    
+
+  }
+  catch (err) { 
+    console.log(err)
+    logMessage(`Error in fetch cases checklists: ${err}`);
+    errorLog("Error in fetch cases checklists:", (err as Error).message);
+    return [];
+  }
+}
+  private async getAttachmentDisplayNames(attachments: any[], schemaNumber: string): Promise<any> {
+  const displayNames: Record<string, string> = {};
+  let parentRid : Record<string, string> = {}
+  let currencyRid : Record<string, string> = {}
+  for (const attachment of attachments) {
+    try {
+      switch (attachment.attachment_level) {
+        case 'case':
+          const caseData = await this.fetchCaseById(schemaNumber,attachment.attach_to);
+          displayNames[attachment.rid] = caseData?.case_name || attachment.attach_to;
+          parentRid[attachment.attach_to] = ''
+          currencyRid[attachment.attach_to] = ''
+          break;
+        case 'account':
+          const account = await this.fetchAccountById(attachment.attach_to);
+          displayNames[attachment.rid] = account?.account_name || attachment.attach_to;
+          parentRid[attachment.attach_to] = ''
+          currencyRid[attachment.attach_to] = ''
+          break;
+        case 'project':
+          const project = await this.fetchProjectInfoById(schemaNumber, attachment.attach_to);
+          displayNames[attachment.rid] = project?.project_code || attachment.attach_to;
+          parentRid[attachment.attach_to] =''
+          currencyRid[attachment.attach_to] = project?.currency_rid || ''
+          break;
+        case 'project_resource':
+          const projectResource = await this.fetchProjectResourceById(schemaNumber, attachment.attach_to);
+          displayNames[attachment.rid] = (projectResource as { r_number?: string })?.r_number || attachment.attach_to;
+          parentRid[attachment.attach_to] = (projectResource as {project_fiscal_rid? : string})?.project_fiscal_rid || ''
+          currencyRid[attachment.attach_to] = (projectResource as {currency_rid? : string})?.currency_rid || ''
+          break;
+        case 'project_task':
+          const projectTask = await this.fetchProjectTaskById(schemaNumber, attachment.attach_to);
+          displayNames[attachment.rid] = (projectTask as { r_number?: string })?.r_number || attachment.attach_to;
+          parentRid[attachment.attach_to] = (projectTask as {project_fiscal_rid? : string})?.project_fiscal_rid || ''
+          currencyRid[attachment.attach_to] = (projectTask as {currency_rid? : string})?.currency_rid || ''
+          break;
+        case 'resource':
+          const resource = await this.fetchResourceById(schemaNumber, attachment.attach_to);
+          displayNames[attachment.rid] = (resource as { resource_code?: string })?.resource_code || attachment.attach_to;
+          parentRid[attachment.attach_to] = ''
+          currencyRid[attachment.attach_to] = ''
+          break;
+        case 'resource_cost':
+          const resourceCost = await this.fetchResourceCostById(schemaNumber, attachment.attach_to);
+          displayNames[attachment.rid] = (resourceCost as { r_number?: string })?.r_number || attachment.attach_to;
+          parentRid[attachment.attach_to] = (resourceCost as {resource_rid? : string})?.resource_rid || attachment.attach_to
+          currencyRid[attachment.attach_to] = ''
+          break;
+        case 'resource_skill': 
+          const resourceSkill = await this.fetchResourceSkillById(schemaNumber, attachment.attach_to);
+          displayNames[attachment.rid] = (resourceSkill as { r_number?: string })?.r_number || attachment.attach_to;
+          parentRid[attachment.attach_to] = (resourceSkill as {resource_rid? : string})?.resource_rid || ''
+          currencyRid[attachment.attach_to] = ''
+          break;       
+        default:
+          displayNames[attachment.rid] = attachment.attach_to;
+      }
+    } catch (err) {
+      console.error(`Error fetching display name for attachment ${attachment.rid}:`, err);
+      displayNames[attachment.rid] = attachment.attach_to;
+    }
+  }
+
+  
+  
+  return {
+    displayNames,
+    parentRid,
+    currencyRid
+  };
+}
+
+async fetchAccountById(accountId: string) {
+    try {
+      if (!this.mainDbSequelize) {
+        this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+      }
+      const [accountData]: any[] = await this.mainDbSequelize.query(
+        rawQueries.getAccountWithStatusByRidQuery(),
+        {
+          replacements: { rid: accountId },
+          type: "SELECT",
+        }
+      );
+
+      return accountData;
+    } catch (err) {
+      errorLog("Error fetching Accounts: " + (err as Error).message);
+      throw new Error("Error fetching Accounts: " + (err as Error).message);
+    }
+  }
+async fetchCaseById(schemaNumber: string, caseId: string) {
+    try {
+      if (!this.orgDbSequelize) {
+        this.orgDbSequelize = await this.caseModelService.getMainSequelize();
+      }
+      const [caseData]: any[] = await this.orgDbSequelize.query(
+        rawQueries.fetchCaseById(schemaNumber),
+        {
+          replacements: { rid: caseId },
+          type: "SELECT",
+        }
+      );
+
+      return caseData;
+    } catch (err) {
+      errorLog("Error fetching Cases: " + (err as Error).message);
+      throw new Error("Error fetching Cases: " + (err as Error).message);
+    }
+  }
+async fetchProjectInfoById(accountNumber: string, projectId: string) {
+    const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
+    const query = rawQueries.fetchProjectInfoById(schemaName);
+    if (!this.orgDbSequelize) {
+      this.orgDbSequelize = await this.caseModelService.getSequelize();
+    }
+    const [result]: any[] = await this.orgDbSequelize.query(query, {
+      replacements: { projectId },
+      type: "SELECT",
+    });
+    return result || null;
+  }
+async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
+  const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+    /\D/g,
+    ""
+  )}`;
+
+  const query = rawQueries.fetchProjectTaskById(schemaName);
+
+  if(!this.orgDbSequelize) {
+        this.orgDbSequelize = await this.caseModelService.getSequelize(
+        );
+      }
+  const result = await this.orgDbSequelize.query(query, {
+    replacements: { projectTaskId },
+    type: "SELECT",
+    raw: true,
+  });
+  return result[0];
+}
+  async fetchResourceById(accountNumber: string, resourceId: string) {
+    const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+      /\D/g,
+      ""
+    )}`;
+
+    const query = rawQueries.fetchResourceById(schemaName);
+
+    if(!this.orgDbSequelize) {
+        this.orgDbSequelize = await this.caseModelService.getSequelize(
+        );
+      }
+    const result = await this.orgDbSequelize.query(query, {
+      replacements: { resourceId },
+      type: "SELECT",
+      raw: true,
+    });
+
+    return result[0];
+  }
+
+  async fetchResourceCostById(accountNumber: string, resourceCostId: string) {
+    const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+      /\D/g,
+      ""
+    )}`;
+
+    const query = rawQueries.fetchResourceCostById(schemaName);
+
+    if(!this.orgDbSequelize) {
+        this.orgDbSequelize = await this.caseModelService.getSequelize( 
+        );
+      } 
+    const result = await this.orgDbSequelize.query(query, {
+      replacements: { resourceCostId },
+      type: "SELECT",
+      raw: true,
+    });
+
+    return result[0];
+  }
+
+  async fetchResourceSkillById(accountNumber: string, resourceSkillId: string) {
+    const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+      /\D/g,
+      ""
+    )}`;
+
+    const query = rawQueries.fetchResourceSkillById(schemaName);
+
+    if(!this.orgDbSequelize) {
+        this.orgDbSequelize = await this.caseModelService.getSequelize(
+        );
+      }
+    const result = await this.orgDbSequelize.query(query, {
+      replacements: { resourceSkillId },
+      type: "SELECT",
+      raw: true,
+    });
+
+    return result[0];
+  }
+  /**
+   * Fetches project resources for multiple project IDs using a single SQL query
+   *
+   * @param {string} accountNumber - Account number to determine schema
+   * @param {string[]} projectIds - Array of project IDs
+   * @returns {Promise<any[]>} - Project_resources data
+   */
+  async getProjectResourcesByProjectIds(
+    accountNumber: string,
+    projectIds: string[]
+  ): Promise<any[]> {
+    try {
+      if (projectIds.length === 0) return [];
+
+      const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+        /\D/g,
+        ""
+      )}`;
+
+      const query = rawQueries.fetchProjectResourceAndFiscal(schemaName);
+
+       if(!this.orgDbSequelize) {
+        this.orgDbSequelize = await this.caseModelService.getSequelize(
+        );
+      }
+      const results = await this.orgDbSequelize.query(query, {
+        replacements: { projectIds },
+        type: "SELECT",
+      });
+
+      return results;
+    } catch (error) {
+      console.error("Error fetching project resources (bulk):", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Fetches project tasks for multiple project IDs using a single SQL query
+   *
+   * @param {string} accountNumber - Account number to determine schema
+   * @param {string[]} projectIds - Array of project IDs
+   * @returns {Promise<any[]>} - Project_task data
+   */
+  async getProjectTasksByProjectIds(
+    accountNumber: string,
+    projectIds: string[]
+  ): Promise<any[]> {
+    try {
+      if (!projectIds?.length) return [];
+
+      const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+        /\D/g,
+        ""
+      )}`;
+       if(!this.orgDbSequelize) {
+        this.orgDbSequelize = await this.caseModelService.getSequelize(
+        );
+      }
+
+      // Check if project_task table exists
+      const checkTableQuery = rawQueries.checkProjectTaskExists(schemaName);
+
+      const [tableExists] = await this.orgDbSequelize.query(checkTableQuery, {
+        type: "SELECT",
+      });
+
+      if ((tableExists as any).exists === false) {
+        return [];
+      }
+
+      const query = rawQueries.fetchProjectTaskAndFiscal(schemaName);
+
+      const results = await this.orgDbSequelize.query(query, {
+        replacements: { projectIds },
+        type: "SELECT",
+      });
+
+      return results;
+    } catch (error) {
+      console.error("Error fetching project tasks:", error);
+      throw error;
+    }
+  }
+
+    async getResourceSkillsByResourceIds(
+    accountNumber: string,
+    resourceIds: string[]
+  ): Promise<any[]> {
+    try {
+      if (resourceIds.length === 0) return [];
+
+      const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+        /\D/g,
+        ""
+      )}`;
+
+      const query = rawQueries.getLatestResourceSkillsQuery(schemaName);
+
+       if(!this.orgDbSequelize) {
+        this.orgDbSequelize = await this.caseModelService.getSequelize(
+        );
+      }
+      const results = await this.orgDbSequelize.query(query, {
+        replacements: { resourceIds },
+        type: "SELECT",
+      });
+
+    return results;
+
+  } catch (error) {
+    errorLog("Error fetching resource skills by resource IDs: " + (error as Error).message);
+    throw error;
+  }
+}
+
+   async getResourceCostsByResourceIds(
+    accountNumber: string,
+    resourceIds: string[]
+  ): Promise<any[]> {
+    try {
+      if (resourceIds.length === 0) return [];
+
+      const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+        /\D/g,
+        ""
+      )}`;
+
+      const query = rawQueries.getLatestResourceCostEntriesQuery(schemaName);
+
+       if(!this.orgDbSequelize) {
+        this.orgDbSequelize = await this.caseModelService.getSequelize(
+        );
+      }
+      const results = await this.orgDbSequelize.query(query, {
+        replacements: { resourceIds },
+        type: "SELECT",
+      });
+
+    return results;
+
+  } catch (error) {
+    errorLog(`Error fetching resource costs by resource IDs: ${(error as Error).message}`);
+    throw error;
+  }
+}
+
+ async fetchProjectResourceById(
+    accountNumber: string,
+    projectResourceId: string
+  ) {
+    const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+      /\D/g,
+      ""
+    )}`;
+
+    const query = rawQueries.fetchProjectResourceById(schemaName);
+    if(!this.orgDbSequelize) {
+        this.orgDbSequelize = await this.caseModelService.getSequelize(
+        );
+      }
+    const result = await this.orgDbSequelize.query(query, {
+      replacements: { projectResourceId },
+      type: "SELECT",
+      raw: true,
+    });
+    return result[0];
+  }
+
+  async getResourcesByAccountId(accountNumber: string, accountRid: string) {
+      try {
+        const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, '')}`;
+  
+        const query = rawQueries.getResourcesByAccountQuery(schemaName);
+        if(!this.orgDbSequelize) {
+              this.orgDbSequelize = await this.caseModelService.getSequelize(
+              );
+            }
+        const results = await this.orgDbSequelize.query(query, {
+          replacements: { accountRid },
+          type: 'SELECT'
+        });
+  
+        return results;
+  
+      } catch (error) {
+        errorLog("Error fetching resources by account ID:", (error as Error).message);
+        throw error;
+      }
+    }
+
+ async getProjectsByAccountId(accountNumber: string, accountRid: string) {
+      if(!this.orgDbSequelize) {
+        this.orgDbSequelize = await this.caseModelService.getSequelize(
+        );
+      }
+       const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(
+        /\D/g,
+        ""
+      )}`;
+      const [results]: any[] = await this.orgDbSequelize.query(
+        rawQueries.getAllProjectsByAccountId(
+          schemaName,
+          accountRid
+        )
+      );
+      return results;
+  }
+
+      async fetchChecklistItems(
+        checklistId: string,
+        accountNumber: string
+      ) {
+        try {
+          const {
+            CheckListItem,
+          } = await this.caseModelService.getModels(accountNumber);
+          // Convert Sequelize instances to plain objects
+    
+          const items = await CheckListItem.findAll({
+            attributes: [
+              "rid",
+              "checklist_item_name",
+              "status_rid",
+              "checklist_item_description"
+              ],
+            order: [
+              ["created_datetime", "ASC"],
+            ],
+            where: { checklist_rid: checklistId },
+          });
+          return items;
+        } catch (err) {
+          logMessage(`Error fetching checklist items: ${err}`);
+          throw new Error(
+            "Error fetching checklist items: " + (err as Error).message
+          );
+        }
+      }
+    
+      async insertUserDetails(
+        createdById: string,
+        modifiedById: string
+      ): Promise<any> {
+        try {
+          if (!this.mainDbSequelize) {
+            this.mainDbSequelize =
+              await this.caseModelService.getMainSequelize();
+          }
+    
+          const getUserFullName = async (userId: string) => {
+            if (!userId) return null;
+    
+            const [results]: any = await this.mainDbSequelize?.query(
+              rawQueries.getUserNameByIdQuery(),
+              {
+                replacements: { userId },
+                type: "SELECT",
+              }
+            );
+    
+            if (!results) return null;
+    
+            const { first_name, middle_name, last_name } = results as any;
+            return [first_name, middle_name, last_name].filter(Boolean).join(" ");
+          };
+    
+          const createdName = await getUserFullName(createdById);
+          const modifiedName = await getUserFullName(modifiedById);
+    
+          return {
+            created_name: createdName || null,
+            modified_name: modifiedName || null,
+          };
+        } catch (err) {
+          logMessage(`Error adding user details: ${err}`);
+          throw new Error("Error adding user details" + (err as Error).message);
+        }
+      }
         /**
      * Utility function to process a single checklist item based on its action type
      * @param AdminCheckListItem - The model instance
@@ -2814,6 +3829,47 @@ class CaseSchemaService {
         })
         
         await CaseTask.bulkCreate(finalTaskData, {transaction})
+        await this.cloneDefaultChecklistTemplate(accountRid, caseRid, filing_type_rid, accountNumber, transaction,finalTaskData)
+      }
+    }
+  }
+  async cloneDefaultChecklistTemplate (accountRid : string, caseRid : string, filing_type_rid : string, accountNumber : string, transaction : Transaction,finalTaskData:any) {
+    const {CheckList, CheckListItem,AdminCheckListItem,AdminChecklist} = await this.caseModelService.getModels(accountNumber);
+
+    // Iterate over finalTaskData and clone checklist if checklist_template_rid is non-empty
+    for (const task of finalTaskData) {
+      if (task.checklist_template_rid && String(task.checklist_template_rid).trim() !== "") {
+        const templateChecklist = await AdminChecklist.findOne({
+          where: { rid: task.checklist_template_rid },
+        });
+        if (templateChecklist) {
+          const checklistData = {
+            attach_to: caseRid,
+            attachment_level: "case",
+            checklist_name: templateChecklist.checklist_name,
+            checklist_description: templateChecklist.checklist_description,
+            checklist_template_rid:task.checklist_template_rid,
+            account_rid: accountRid,
+            created_datetime: new Date(),
+            created_by: task.created_by,
+          };
+          const newChecklist = await CheckList.create(checklistData, { transaction });
+
+          const templateItems = await AdminCheckListItem.findAll({
+            where: { checklist_template_rid: task.checklist_template_rid },
+          });
+          for (const item of templateItems) {
+            const itemData = {
+              checklist_item_name: item.checklist_item_name,
+              checklist_item_description: item.description,
+              account_rid: accountRid,
+              checklist_rid: newChecklist.rid,
+              created_datetime: new Date(),
+              created_by: task.created_by,
+            };
+            await CheckListItem.create(itemData, { transaction });
+          }
+        }
       }
     }
   }
@@ -2972,9 +4028,9 @@ async function addChecklistItem(
   const result = await CheckListItem.create(
     {
       account_rid: accountRid,
-      case_checklist_rid: checklistRid,
+      checklist_rid: checklistRid,
       checklist_item_name: item.checklist_item_name,
-      description: item.description,
+      description: item.checklist_item_description,
       status_rid: item.status_rid,
       created_by: createdBy,
       created_datetime: new Date(),
@@ -3016,7 +4072,7 @@ async function editChecklistItem(
     const result = await existingItem.update(
       {
         checklist_item_name: item.checklist_item_name,
-        description: item.description,
+        checklist_item_description: item.checklist_item_description,
         status_rid: item.status_rid,
         modified_by: createdBy,
         modified_datetime: new Date(),
