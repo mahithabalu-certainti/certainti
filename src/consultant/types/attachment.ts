@@ -23,6 +23,8 @@ export type AttachmentList = {
   document_type: string;
   uploaded_by: string;
   attached_to: string;
+  status_name?: string;
+  status_rid?: string;
 };
 
 export interface globalFilters {
