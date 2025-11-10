@@ -35,7 +35,7 @@ const accountServices = services.accountServices;
 async function accounts(req: Request, res: Response): Promise<void> {
   const methodName = "list user";
   try {
-    const value = await validateRequest(req, listAccountSchema, res, "GET");
+    const value = await validateRequest(req, listAccountSchema, res, "POST");
     let parsedFilters: Record<string, any> = {};
     let parsedGlobalFilters: Record<string, string[]> = {};
 
