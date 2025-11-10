@@ -11,7 +11,7 @@ export const NotesFormData = (
   isEditView: boolean,
   fiscalYears: { label: string; value: string }[],
   userListOptions: { value: string; label: string }[],
-  projectFiscalYear?: boolean,
+  entityFiscalYear?: boolean,
   disableFiscalYear?: boolean,
   isFromGlobalNotes?: boolean,
   permissionMap?: Record<string, { read: boolean; edit: boolean }>
@@ -90,7 +90,7 @@ export const NotesFormData = (
             required: true,
             hide:
               disableFiscalYear ||
-              projectFiscalYear ||
+              entityFiscalYear ||
               (isEditView &&
                 !permissionMap?.['fiscal_year']?.read &&
                 !permissionMap?.['fiscal_year']?.edit),
@@ -131,7 +131,7 @@ export const NotesFormData = (
       isEditView,
       isFromGlobalNotes,
       permissionMap,
-      projectFiscalYear,
+      entityFiscalYear,
       userListOptions,
     ]
   );

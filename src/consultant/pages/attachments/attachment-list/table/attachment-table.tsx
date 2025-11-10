@@ -71,30 +71,16 @@ export const AttachmentTable: React.FC<IAttachmentTableProps> = ({
   const [updateAttachment] = useMutation(ATTACHMENT_UPDATE, {
     client: resourceClient,
   });
-
-  useEffect(() => {
-    const newFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
-
-    if (
-      tableParams.fiscalYear === newFiscalYear &&
-      JSON.stringify(tableParams.filters) === JSON.stringify(appliedFilters)
-    ) {
-      return;
-    }
-
-    setTableParams((prev) => ({
-      ...prev,
-      page: 1,
-      filters: appliedFilters,
-      fiscalYear: newFiscalYear,
-      globalFilters: reshapeGlobalFilter(filters as FilterState),
-      search: searchValue,
-    }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appliedFilters, fiscalYear, filters]);
+  const newFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
   const { data, isLoading, isError } = useAllAttachmentList(
-    tableParams,
+    {
+      ...tableParams,
+      filters: appliedFilters,
+      globalFilters: reshapeGlobalFilter(filters as FilterState),
+      search: searchValue,
+      fiscalYear: newFiscalYear,
+    },
     refreshTrigger
   );
   const totalItems = data?.count || 0;
@@ -177,7 +163,9 @@ export const AttachmentTable: React.FC<IAttachmentTableProps> = ({
     handleDownload,
     permissionMap,
     isAttachmentExportEnable,
-    fieldOptions?.docTypesLoading
+    fieldOptions?.docTypesLoading,
+    undefined,
+    true
   );
 
   const handleFieldChange = async (event: FieldChangeEvent) => {
