@@ -22,6 +22,7 @@ import {
   checklistSchema,
   createCaseSchema,
   createCaseTeamSchema,
+  createTaskSchema,
   exportCasesAccountSchema,
   exportCaseSummarySchema,
   exportCheckListSchema,
@@ -31,6 +32,7 @@ import {
   listCheckListSchema,
   updateCaseSchema,
   updateChecklistSchema,
+  updateTaskSchema,
 } from "../lib/joi/schemas/schema";
 import configurations from "../config/config";
 import moment from "moment";
@@ -1993,6 +1995,147 @@ async function exportAllChecklists(req: Request, res: Response): Promise<void> {
     return;
   }
 }
+
+/**
+ * Controller function to handle the creation of a user-level task.
+ *
+ * This async function processes HTTP requests for creating a new task by:
+ * - Validating the incoming request using the defined schema
+ * - Ensuring that a valid user ID is present in the request headers
+ * - Delegating the task creation logic to the `caseService.createUserLevelTask` method
+ * - Returning appropriate HTTP responses based on the service result (success, bad request, or failure)
+ *
+ * Error handling:
+ * - Logs and returns a `BAD_REQUEST` response if validation or internal errors occur
+ *
+ * @param {Request} req - Express request object containing the request body and headers
+ * @param {Response} res - Express response object used to send the API response
+ * @returns {Promise<void>} - Resolves after sending the HTTP response
+ * @throws {Error} - Captures and handles any runtime or validation errors
+ */
+async function createTask (req : Request, res : Response) {
+  const methodName = "Create Task";
+  try {
+  const value = await validateRequest(req, createTaskSchema, res, "POST");
+    if (!value) {
+      return;    }
+    const userId = req.headers['x-user-id'] as string;
+
+    if (!userId) {
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User id is required"
+      );
+      return;
+    }
+    const data = req.body;
+    data.created_by = userId
+    const result = await caseService.createUserLevelTask(data);
+    if(result.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.statusMessage,
+        data: result.data,
+      });       
+    } else if(result.statusCode === HttpStatus.BAD_REQUEST) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.statusMessage,
+        data: result.data,
+      }); 
+    } else if(result.statusCode === HttpStatus.FAILED) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.FAILED,
+        statusCodeValue: HttpStatus.FAILED_MESSAGE,
+        statusMessage: result.statusMessage,
+        data: result.data,
+      }); 
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+/**
+ * Controller function to handle updating an existing user-level task.
+ *
+ * This async function processes HTTP PUT requests for updating task details by:
+ * - Validating the request body against the `updateTaskSchema`
+ * - Ensuring a valid user ID is present in the request headers
+ * - Adding the `modified_by` field based on the user ID
+ * - Delegating update logic to the `caseService.updateUserLevelTask` method
+ * - Returning appropriate responses based on the service execution result
+ *
+ * Error handling:
+ * - Logs and returns a `BAD_REQUEST` response if validation fails or any runtime error occurs
+ *
+ * @param {Request} req - Express request object containing the updated task data and headers
+ * @param {Response} res - Express response object used to send the API response
+ * @returns {Promise<void>} - Resolves after sending the HTTP response to the client
+ * @throws {Error} - Captures and handles any validation or service-related errors
+ */
+async function updateTask (req : Request, res : Response) {
+  const methodName = "Create Task";
+  try {
+  const value = await validateRequest(req, updateTaskSchema, res, "PUT");
+    if (!value) {
+      return;    }
+    const userId = req.headers['x-user-id'] as string;
+
+    if (!userId) {
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User id is required"
+      );
+      return;
+    }
+    const data = req.body;
+    data.modified_by = userId
+    const result = await caseService.updateUserLevelTask(data);
+    if(result!.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result!.statusMessage
+      });       
+    } else if(result!.statusCode === HttpStatus.BAD_REQUEST) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result!.statusMessage,
+      }); 
+    } else if(result!.statusCode === HttpStatus.FAILED) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.FAILED,
+        statusCodeValue: HttpStatus.FAILED_MESSAGE,
+        statusMessage: result!.statusMessage,
+      }); 
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
 export default {
   createCases,
   updateCases,
@@ -2018,5 +2161,7 @@ export default {
   fetchCaseKanbanBoard,
   getCheckListDetailsById,
   getAllChecklists,
-  exportAllChecklists
+  exportAllChecklists,
+  createTask,
+  updateTask
 };

@@ -23,10 +23,11 @@ import {
   SCHEMANAME_PREFIX,
   STATUS_MESSAGE,
 } from "../../utils/constants";
-import { buildDatetimeFilterCondition, buildNumericFilterCondition, buildStringFilterCondition, errorLog, logMessage } from "../../utils/helpers";
+import { buildDatetimeFilterCondition, buildNumericFilterCondition, buildStringFilterCondition, errorLog, getColumnsNamesForTaskUpdate, logMessage } from "../../utils/helpers";
 import {
   assignProjectType,
   CaseHeadersColumns,
+  CreateCaseTaskType,
   filterType,
   ICreateCases,
   ICreateCaseTeam,
@@ -34,6 +35,7 @@ import {
   ICreateChecklistItem,
   TaskTypeResponse,
   TeamMember,
+  UpdateCaseTaskType,
 } from "../../utils/types";
 
 // Define filterType interface
@@ -3880,6 +3882,173 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     const [result] = await this.mainDbSequelize.query<TaskTypeResponse>(rawQueries.getSpecificTaskType(), {type : QueryTypes.SELECT});
     if(result) return result
     else return null;
+  }
+  async createUserLevelTask (data : CreateCaseTaskType, accountNumber : string, transaction : Transaction) {
+    const {CaseTask, CaseTimeline} = await this.caseModelService.getModels(accountNumber);
+    const fetchSequenceNumber = await this.fetchSequenceOrder(data.milestone_template_rid, accountNumber);
+    let sequenceNo : number = 0;
+    if(fetchSequenceNumber.length > 0) {
+      sequenceNo = fetchSequenceNumber[0]?.sequence_no! + 1
+    } else {
+      sequenceNo = 0
+    }
+    const createdTaskResult = await CaseTask.create({
+      created_by : data.created_by,
+      created_datetime : new Date(),
+      task_name : data.task_name,
+      sequence_no : sequenceNo,
+      effort_in_days : data.effort_in_days,
+      reminder_interval : data.reminder_interval,
+      effective_start_datetime : data.effective_start_datetime,
+      effective_end_datetime : data.effective_end_datetime,
+      case_team_member_role_rid : data.case_team_member_role_rid,
+      status_rid : data.status_rid,
+      priority_rid : data.priority_rid,
+      milestone_template_rid : data.milestone_template_rid,
+      checklist_template_rid : data.checklist_template_rid,
+      account_rid : data.account_rid,
+      case_rid : data.case_rid,
+      task_type_rid : data.task_type_rid,
+      task_description : data.task_description,
+      task_status_rid : data.task_status_rid
+    }, {transaction});
+    if(createdTaskResult) {
+      await CaseTimeline.create({
+        created_by : data.created_by,
+        created_datetime : new Date(),
+        account_rid : data.account_rid,
+        entity_rid : createdTaskResult.rid,
+        event_name : "Task Created",
+        event_type : "ui handler",
+        event_status : "success",
+        event_datetime : new Date(),
+        description : `Task created with title : ${createdTaskResult.task_name}`
+      }, {transaction}) 
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        data : createdTaskResult
+      }
+    } else {
+      return {
+        statusCode : HttpStatus.FAILED,
+        data : {}
+      }      
+    }
+  }
+
+  async updateUserLevelTask (data : UpdateCaseTaskType, accountNumber : string, transaction : Transaction) {
+    const {CaseTask, CaseTimeline, CaseHistory} = await this.caseModelService.getModels(accountNumber);
+    const checkCaseExists = await this.isCaseExistsForAccount(data.account_rid, data.case_rid, accountNumber);
+    if(!checkCaseExists) {
+      return {
+        statusCode : HttpStatus.BAD_REQUEST,
+        statusMessage : STATUS_MESSAGE.caseNotFound
+      } 
+    } else {
+      const isTaskExists = await this.findTaskById(data.rid, accountNumber);
+      if(!isTaskExists) {
+        return {
+          statusCode : HttpStatus.BAD_REQUEST,
+          statusMessage : STATUS_MESSAGE.taskNotFound
+        } 
+      } else {
+        const [updatedResult] = await CaseTask.update(data, {
+          where : {
+            rid : data.rid
+          }, transaction
+        });
+        if(updatedResult == 1) {
+          const fetchUpdatedColumns = getColumnsNamesForTaskUpdate(data, isTaskExists);
+          if(fetchUpdatedColumns.length > 0) {
+            let updatedColumnsStorage : string[] = []
+            let oldValue : string;
+            let newValue : string;
+            let columnName : string;
+            let combinedColumns : string = ``
+            for(let c of fetchUpdatedColumns) {
+              oldValue = (isTaskExists as any)[c]
+              newValue = (data as any)[c]
+              columnName = c
+              await CaseHistory.create({
+                created_by : data.modified_by,
+                created_datetime : new Date(),
+                case_rid : data.case_rid,
+                attribute_name : columnName,
+                old_value : oldValue,
+                new_value : newValue
+              })
+              updatedColumnsStorage.push(`${oldValue} changed to ${newValue}`);
+            }
+            if(updatedColumnsStorage.length > 0) {
+              combinedColumns = updatedColumnsStorage.join(', ')
+            }
+            await CaseTimeline.create({
+              created_by : data.modified_by,
+              created_datetime : new Date(),
+              account_rid : data.account_rid,
+              entity_rid : data.rid,
+              event_name : "Task Updated",
+              event_type : "ui handler",
+              event_status : "success",
+              event_datetime : new Date(),
+              description : `Task Updated : ${combinedColumns}`
+            })
+          }
+          
+          return {
+            statusCode : HttpStatus.SUCCESS,
+            statusMessage : STATUS_MESSAGE.taskUpdatedSuccess
+          } 
+        } else {
+          return {
+            statusCode : HttpStatus.FAILED,
+            statusMessage : STATUS_MESSAGE.taskUpdateFailed
+          } 
+        }
+      }
+    }
+  }
+
+
+  async fetchSequenceOrder (milestone_template_rid : string, accountNumber : string) {
+    const { CaseTask } = await this.caseModelService.getModels(accountNumber);
+    const findSequenceOrder = await CaseTask.findAll({
+      attributes : ['sequence_no'],
+      where : {
+        milestone_template_rid : milestone_template_rid
+      },
+      order : [['created_datetime', 'DESC']],
+      raw : true
+    })
+    return findSequenceOrder;
+  }
+  async findTaskById (rid : string, accountNumber : string) {
+    const { CaseTask } = await this.caseModelService.getModels(accountNumber);
+    const checkTaskExists = await CaseTask.findOne({
+      where : {
+        rid : rid
+      }, 
+      raw : true
+    })
+    if(checkTaskExists) return checkTaskExists
+    else return null
+  }
+  async checkTaskNameExistsForUpdate (data : UpdateCaseTaskType, accountNumber : string) {
+    const { CaseTask } = await this.caseModelService.getModels(accountNumber)
+    const checkTaskExists = await CaseTask.findOne({
+      attributes : ['rid'],
+      where : {
+        task_name : {
+          [Op.iLike] : data.task_name
+        },
+        rid : {
+          [Op.notIn] : [data.rid]
+        }
+      }, 
+      raw : true
+    })
+    if(checkTaskExists) return checkTaskExists
+    else return null
   }
 }
 

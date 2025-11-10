@@ -545,12 +545,14 @@ export class CaseManagementService {
         let uniqueTeamRoleIds = [...new Set(result.array_agg.flatMap((d : any) => d.tasks.map((dd : any) => dd.case_team_member_role_rid)))]
         let uniqueTaskTypeIds = [...new Set(result.array_agg.flatMap((d : any) => d.tasks.map((dd : any) => dd.task_type_rid)))]
         let statusIds = [...new Set(result.array_agg.flatMap((d : any) => d.tasks.map((dd : any) => dd.status_rid)))]
+        let taskStatusIds = [...new Set(result.array_agg.flatMap((d : any) => d.tasks.map((a : any) => a.task_status_rid)))];
 
         let priority;
         let assignedTo;
         let teamRole;
         let tasktype;
         let statusType;
+        let taskStatusType;
 
         let priorityQuery = rawQueries.getAllPriorityTypes(uniquePriorityIds)
         if(priorityQuery) {
@@ -572,11 +574,17 @@ export class CaseManagementService {
         if(statusQuery) {
           statusType = await mainDb.query(statusQuery)
         }
+        let taskStatusQuery = rawQueries.getAllTaskStatus(taskStatusIds);
+        if(taskStatusQuery) {
+          taskStatusType = await mainDb.query(taskStatusQuery)
+        }
+
         let priorityMap : Map<string, string> = new Map(priority?.[0]?.map((d : any) => [d.rid, d.priority_name]));
         let assignedToMap : Map<string, string> = new Map(assignedTo?.[0]?.map((d : any) => [d.rid, d.name]));
         let teamRoleMap : Map<string, string> =new Map(teamRole?.[0]?.map((d : any) => [d.rid, d.role_name]));
         let taskTypeMap : Map<string, string> = new Map(tasktype?.[0]?.map((d : any) => [d.rid, d.task_type_name]));
         let statusMap : Map<string, string> = new Map(statusType?.[0]?.map((d : any) => [d.rid, d.status_name]));
+        let taskStatusMap : Map<string, string> = new Map(taskStatusType?.[0]?.map((d : any) => [d.rid, d.task_status_name]));
         const finalStructure = result.array_agg.map((d : any) => {
           return {
             rid : d.rid,
@@ -605,7 +613,9 @@ export class CaseManagementService {
                 assigned_to_name : assignedToMap.get(d.assigned_to) || null,
                 case_team_member_role_name : teamRoleMap.get(d.case_team_member_role_rid) || null,
                 task_type_name : taskTypeMap.get(d.task_type_rid) || null,
-                status_name : statusMap.get(d.status_rid) || null
+                status_name : statusMap.get(d.status_rid) || null,
+                task_status_rid : d.task_status_rid,
+                task_status_name : taskStatusMap.get(d.task_status_rid) || null
               }
             })
           }

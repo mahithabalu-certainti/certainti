@@ -414,3 +414,45 @@ export interface MilestoneData {
 }
 
 export type MilestoneResponse = MilestoneData[];
+
+export type CreateCaseTaskType = {
+  created_by : string,
+  created_datetime : Date,
+  task_name : string,
+  sequence_no : number,
+  effort_in_days : number,
+  reminder_interval : number, 
+  effective_start_datetime : Date,
+  effective_end_datetime : Date,
+  case_team_member_role_rid : string,
+  task_status_rid : string,
+  priority_rid : string,
+  milestone_template_rid : string,
+  checklist_template_rid : string,
+  account_rid : string,
+  case_rid: string,
+  task_type_rid : string,
+  task_description : string,
+  status_rid : string
+}
+
+export type UpdateCaseTaskType = {
+  rid : string
+  modified_by : string,
+  modified_datetime : Date,
+  task_name : string,
+  sequence_no : number,
+  effort_in_days : number,
+  reminder_interval : number, 
+  effective_start_datetime : Date,
+  effective_end_datetime : Date,
+  case_team_member_role_rid : string,
+  task_status_rid : string,
+  priority_rid : string,
+  milestone_template_rid : string,
+  checklist_template_rid : string,
+  account_rid : string,
+  case_rid: string,
+  task_type_rid : string,
+  task_description : string
+}

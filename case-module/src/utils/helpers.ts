@@ -1,5 +1,5 @@
 import Joi from "joi";
-import { Request, Response } from "express";
+import e, { Request, Response } from "express";
 import { errorResponse, successResponse } from "./apiResponse";
 import { ALPHANUMERIC_CONDITIONS, HttpStatus } from "./constants";
 import configurations from "../config/config";
@@ -7,8 +7,9 @@ import ExcelJS from 'exceljs'
 import { getSecret } from "./azureSecrets";
 import crypto from "crypto";
 import moment from "moment-timezone";
-import { CreateTaskTemplateType, UpdateTaskTemplateType } from "./types";
+import { CreateTaskTemplateType, UpdateCaseTaskType, UpdateTaskTemplateType } from "./types";
 import { TaskTemplate } from "../models/caseTaskTemplateModel";
+import { CaseTask } from "../models/caseTaskModel";
 
 function getLogger() {
   return configurations.getInstance().getLogger();
@@ -346,4 +347,33 @@ export const setTaskTemplateData = (dbData : TaskTemplate, reqData : any, userId
     validUpdateQuery.push(validUpdateConditions)
   }
   return validUpdateQuery
+}
+export const getColumnsNamesForTaskUpdate = (data : UpdateCaseTaskType, dbData : CaseTask) => {
+  let columns : string[] = [];
+  if(data.case_team_member_role_rid !== dbData.case_team_member_role_rid) 
+    columns.push(`case_team_member_role_rid`)
+  if(data.checklist_template_rid !== dbData.checklist_template_rid)
+    columns.push(`checklist_template_rid`)
+  if(data.effective_end_datetime !== dbData.effective_end_datetime) 
+    columns.push(`effective_end_datetime`)
+  if(data.effective_start_datetime !== dbData.effective_start_datetime)
+    columns.push(`effective_start_datetime`)
+  if(data.effort_in_days !== dbData.effort_in_days) 
+    columns.push(`effort_in_days`)
+  if(data.milestone_template_rid !== dbData.milestone_template_rid) 
+    columns.push(`milestone_template_rid`)
+  if(data.priority_rid !== dbData.priority_rid)
+    columns.push(`priority_rid`)
+  if(data.reminder_interval !== dbData.reminder_interval) 
+    columns.push(`reminder_interval`)
+  if(data.task_description !== dbData.task_description)
+    columns.push(`task_description`)
+  if(data.task_name !== dbData.task_name)
+    columns.push(`task_name`)
+  if(data.task_status_rid !== dbData.task_status_rid)
+    columns.push(`task_status_rid`)
+  if(data.task_type_rid !== dbData.task_type_rid)
+    columns.push(`task_type_rid`)
+
+  return columns;
 }
