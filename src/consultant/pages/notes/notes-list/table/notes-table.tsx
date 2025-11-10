@@ -171,7 +171,8 @@ export const NotesTable: React.FC<NotesTableProps> = ({
   const actionMenuItems = [
     {
       label: 'Edit',
-      // disabled: accountInActive,
+      disabled: (row: NotesList) =>
+        row?.status_name?.toLowerCase() !== 'active',
       onClick: (row: NotesList) => handleEdit(row),
       hide: !notesFieldsEditable,
     },
@@ -243,7 +244,8 @@ export const NotesTable: React.FC<NotesTableProps> = ({
     isNotesExportEnable,
     permissionMap,
     userListOptions,
-    handleViewGlobalNoteDetails
+    handleViewGlobalNoteDetails,
+    true
   );
 
   const handlePopoverClose = () => {
