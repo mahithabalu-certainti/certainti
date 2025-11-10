@@ -51,6 +51,7 @@ import { FormFiscalDateType } from '../../../types';
 import SearchBar from '../../../../components/search/search-bar';
 import { getNotesFilterFields } from '../../notes/helpers';
 import { useManageUserList } from '../../../../admin/service';
+import { getChecklistFilterFields } from '../../checklist/helpers';
 interface TabProps {
   resourceTab?: ResourceTabs[];
   filterVisibility: boolean;
@@ -298,6 +299,21 @@ const TabPanel: React.FC<TabProps> = ({
     return map;
   }, [resourceNotesEditFields]);
 
+  // const resourceChecklistsEditFields = useMemo(
+  //   () =>
+  //     permission?.find((item) => item.name === AllPermissions.CHECKLIST_VIEW_EDIT)
+  //       ?.fields ?? [],
+  //   [permission]
+  // );
+
+  // const resourceChecklistsPermissionMap = useMemo(() => {
+  //   const map: Record<string, { read: boolean; edit: boolean }> = {};
+  //   resourceChecklistsEditFields.forEach((item) => {
+  //     map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+  //   });
+  //   return map;
+  // }, [resourceChecklistsEditFields]);
+
   const resourcepermissionMap = useMemo(() => {
     const map: Record<string, { read: boolean; edit: boolean }> = {};
     resourceViewEditFields.forEach((item) => {
@@ -510,6 +526,7 @@ const TabPanel: React.FC<TabProps> = ({
       return getAttachmentsFilterFields(fieldOptions, attachmentPermissionMap);
     if (value === 'notes')
       return getNotesFilterFields(resourceNotesPermissionMap, userListOptions);
+    if (value === 'checklists') return getChecklistFilterFields();
     return value === 'cost'
       ? getCostFilterFields(
           memoizedCurrency,
