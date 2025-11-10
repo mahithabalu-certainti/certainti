@@ -20,6 +20,7 @@ interface AssignedProjectsProps {
   >;
   setCount: React.Dispatch<React.SetStateAction<number>>;
   clearSelectedRows: boolean;
+  fiscalYear: number;
 }
 
 const AssignedProjects: React.FC<AssignedProjectsProps> = ({
@@ -32,6 +33,7 @@ const AssignedProjects: React.FC<AssignedProjectsProps> = ({
   setTableParams,
   setCount,
   clearSelectedRows,
+  fiscalYear,
 }) => {
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
@@ -50,7 +52,7 @@ const AssignedProjects: React.FC<AssignedProjectsProps> = ({
       filter: {},
       case_rid: caseId,
       account_rid: accountID, // Replace with the actual account_rid
-      fiscal_year: 2024,
+      fiscal_year: fiscalYear,
     },
     refreshTrigger
   );

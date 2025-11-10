@@ -104,6 +104,7 @@ export const CaseDetails = () => {
       case_rid: caseId ?? '',
       account_id: accountId ?? '',
     });
+  const fiscalYear = caseData?.fiscal_year ?? 0;
   const [attachmentParams, setAttachmentParams] =
     useState<AttachmentsListExportParams>({
       sortBy: 'document_name',
@@ -254,6 +255,8 @@ export const CaseDetails = () => {
         return (
           <div>
             <CasesProjects
+              fiscalYear={fiscalYear}
+              accountInActive={accountInActive}
               setTableParams={setCaseProjectParams}
               setExportType={setExportType}
             />

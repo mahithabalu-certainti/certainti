@@ -15,6 +15,7 @@ interface selectProjectProps {
   visibleColumns: any[];
   setCount: React.Dispatch<React.SetStateAction<number>>;
   clearSelectedRows: boolean;
+  fiscalYear: number;
 }
 
 const SelectProjects: React.FC<selectProjectProps> = ({
@@ -26,13 +27,15 @@ const SelectProjects: React.FC<selectProjectProps> = ({
   searchText,
   setCount,
   clearSelectedRows,
+  fiscalYear,
 }) => {
-  const { caseID } = useParams();
+  const { caseId } = useParams();
   const [searchParams] = useSearchParams();
   const [rowsPerPage, setRowsPerPage] = useState(100);
   const [sortField, setSortField] = useState<string>('project_type_name');
   const [sortBy, setSortBy] = useState<'ASC' | 'DESC'>('ASC');
   const accountID = searchParams.get('accountID') || '';
+  console.log(caseId, 'caseId');
   const { data, isLoading, isError } = useSelectProjectsList(
     {
       page: currentPage + 1,
@@ -41,9 +44,9 @@ const SelectProjects: React.FC<selectProjectProps> = ({
       sort_by: sortBy,
       search: searchText,
       filter: {},
-      case_rid: caseID,
+      case_rid: caseId,
       account_rid: accountID,
-      fiscal_year: 2024,
+      fiscal_year: fiscalYear,
     },
     refreshTrigger
   );

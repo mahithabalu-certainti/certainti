@@ -38,6 +38,8 @@ import { useGetResourceType } from '../../../../services/resource-list';
 import { FilterValue } from '../../../../types/account-filter';
 interface casesProjectProps {
   activeKey?: string;
+  fiscalYear: number;
+  accountInActive: boolean;
   setTableParams?: React.Dispatch<
     React.SetStateAction<CaseAssignedExportParams>
   >;
@@ -58,6 +60,8 @@ const InteractionsTabs: OverviewTabs[] = [
 ];
 
 const CasesProjects: React.FC<casesProjectProps> = ({
+  fiscalYear,
+  accountInActive,
   setTableParams,
   setExportType,
 }) => {
@@ -209,7 +213,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
     {
       label: isAssignProject ? 'Assign' : 'Remove',
       variant: 'outlined' as const,
-      disabled: selectedRows.length === 0,
+      disabled: selectedRows.length === 0 || accountInActive,
       onClick: () =>
         isAssignProject ? handletoAssignprojects() : handleRemoveProjects(),
       sx: { width: '80px', minWidth: '80px' },
@@ -504,6 +508,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
               searchText={searchText}
               setCount={setCount}
               clearSelectedRows={clearSelectedRows}
+              fiscalYear={fiscalYear}
             />
           ) : (
             <AssignedProjects
@@ -517,6 +522,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
               setTableParams={setTableParams}
               setCount={setCount}
               clearSelectedRows={clearSelectedRows}
+              fiscalYear={fiscalYear}
             />
           )}
         </div>
