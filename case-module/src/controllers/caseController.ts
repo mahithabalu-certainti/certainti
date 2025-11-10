@@ -344,6 +344,57 @@ async function getCaseStatus(req: Request, res: Response): Promise<void> {
 }
 
 /**
+ * Retrieves the list of available checklist statuses from the system.
+ *
+ * This controller method performs the following steps:
+ * 1. Calls the `getChecklistStatus` method from the `caseService`, which fetches all defined checklist statuses.
+ * 2. If the service responds with success, logs the success event and sends an HTTP 200 response with the status data.
+ * 3. If the service responds with a failure status code, logs the error and returns a `BAD_REQUEST` response with the error message.
+ * 4. Handles and logs any unexpected exceptions and returns a generic `BAD_REQUEST` response with the exception message.
+ *
+ * @param {Request} req - Express request object (not used directly in this function).
+ * @param {Response} res - Express response object used to send the HTTP response with checklist status data.
+ *
+ * @returns {Promise<void>} - A Promise that resolves after the HTTP response is sent.
+ *
+ * @description
+ * - Used for populating dropdown options in the frontend for checklist status selection.
+ * - Returns all available statuses that can be assigned to checklists (e.g., Pending, Completed, In Review).
+ * - Provides standardized error handling and logging for debugging purposes.
+ * - Essential for checklist workflow management and status tracking.
+ */
+async function getChecklistStatus(req: Request, res: Response): Promise<void> {
+  const methodName = "Get Checklist Status";
+  try {
+    const checklistStatus = await caseService.getChecklistStatus();
+    if (checklistStatus.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, checklistStatus.data);
+      return;
+    } else {
+      errorLog(methodName, checklistStatus.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        checklistStatus.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+/**
  * Lists all cases for a specific account with filtering, sorting, and pagination support.
  *
  * This controller method performs the following steps:
@@ -1819,7 +1870,7 @@ async function getAllChecklists(req: Request, res: Response): Promise<void> {
   const methodName = "get all checklists";
   try {
 
-    const value = await validateRequest(req, exportCheckListSchema, res, "GET");
+    const value = await validateRequest(req, listCheckListSchema, res, "GET");
      if (!value) {
       return;    }
     const userId = req.headers['x-user-id'] as string;
@@ -2163,5 +2214,6 @@ export default {
   getAllChecklists,
   exportAllChecklists,
   createTask,
-  updateTask
+  updateTask,
+  getChecklistStatus
 };

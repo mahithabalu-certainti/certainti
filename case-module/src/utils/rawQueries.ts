@@ -755,3 +755,95 @@ c.account_rid = '${accountRid}'
 return query;
 }
 
+  export const fetchCaseDetails = (schemaName : string, rid : string) => {
+    return `
+    SELECT 
+    c.rid, c.checklist_description,
+    c.created_by, c.modified_by, c.account_rid, 
+    c.created_datetime, c.modified_datetime,
+    c.checklist_name, c.fiscal_year, e.name AS attached_to, 
+    c.attachment_level, c.r_number, c.attach_to
+    FROM
+    ${schemaName}.checklists c
+    LEFT JOIN LATERAL (
+    SELECT ad.account_rid, ad.account_name AS name 
+    FROM ${schemaName}.account_details ad 
+    WHERE
+    LOWER(c.attachment_level) = 'account'
+    AND
+    ad.account_rid = c.attach_to
+
+    UNION ALL
+
+    SELECT pf.rid, pf.project_code AS name 
+    FROM
+    ${schemaName}.project_fiscal pf
+    WHERE
+    LOWER(c.attachment_level) = 'project'
+    AND
+    pf.rid = c.attach_to
+
+    UNION ALL
+
+    SELECT cd.rid, cd.case_name AS name 
+    FROM
+    ${schemaName}.cases cd
+    WHERE
+    LOWER(c.attachment_level) = 'case'
+    AND
+    cd.rid = c.attach_to
+
+    UNION ALL
+
+    SELECT r.rid, r.resource_code AS name
+    FROM
+    ${schemaName}.resources r
+    WHERE
+    LOWER(c.attachment_level) = 'resource'
+    AND
+    r.rid = c.attach_to
+    
+    UNION ALL
+
+    SELECT rc.rid, rc.r_number AS name
+    FROM
+    ${schemaName}.resource_cost rc
+    WHERE
+    LOWER(c.attachment_level) = 'resource_cost'
+    AND
+    rc.rid = c.attach_to
+
+    UNION ALL
+
+    SELECT rs.rid, rs.r_number AS name
+    FROM
+    ${schemaName}.resource_skill rs
+    WHERE
+    LOWER(c.attachment_level) = 'resource_skill'
+    AND
+    rs.rid = c.attach_to
+    UNION ALL
+
+    SELECT pt.rid, pt.r_number AS name
+    FROM
+    ${schemaName}.project_task pt
+    WHERE
+    LOWER(c.attachment_level) = 'project_task'
+    AND
+    pt.rid = c.attach_to
+
+    UNION ALL
+
+    SELECT pr.rid, pr.r_number AS name
+    FROM
+    ${schemaName}.project_resource pr
+    WHERE
+    LOWER(c.attachment_level) = 'project_resource'
+    AND
+    pr.rid = c.attach_to
+    ) e ON true
+    WHERE
+    c.rid = '${rid}'
+    `
+  }
+
