@@ -61,7 +61,7 @@ export const fetchGlobalAccounts = async (): Promise<{
 export const fetchAccounts = async (
   params: AccountListURLParams = {}
 ): Promise<{ accounts: AccountList[]; count: number; totalResult: number }> => {
-  const response = await accountServiceApi.get<AccountListResponse>(
+  const response = await accountServiceApi.post<AccountListResponse>(
     AccountListURL(params)
   );
   return {
