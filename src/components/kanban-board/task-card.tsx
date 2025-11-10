@@ -1,34 +1,32 @@
+import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { TaskCardProps, Task } from './types';
+import type { TaskCardProps, TaskCard } from './types';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { MenuItem, Select, SelectChangeEvent } from '@mui/material';
 import { CommentIcon, CustomChecklistIcon } from '../../assets';
-import { enrichTask } from './helper';
 
 interface ExtendedTaskCardProps extends TaskCardProps {
   isDragable?: boolean;
   isDragablebetweenBoards?: boolean;
-  onFetchTaskDetails?: (taskId: string) => Promise<Task | null>;
+  taskData?: TaskCard;
 }
 
-const TaskCard: React.FC<ExtendedTaskCardProps> = ({
+const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
   taskId,
+  taskData,
   showCommentCount,
   showProfileIndicator,
   onEditTask,
   onTaskClick,
-  statusData,
-  priorityData,
-  onTaskUpdate,
+  // statusData,
+  // priorityData,
+  // onTaskUpdate,
   isDragable = false,
   isDragablebetweenBoards = false,
-  onFetchTaskDetails,
+  // onFetchTaskDetails,
 }) => {
-  const [task, setTask] = useState<Task | null>(null);
-  const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
-  const [editTitle, setEditTitle] = useState('');
+  const [editTitle, setEditTitle] = useState(taskData?.task_name || '');
   const inputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -51,22 +49,6 @@ const TaskCard: React.FC<ExtendedTaskCardProps> = ({
   };
 
   useEffect(() => {
-    const loadTask = async () => {
-      if (onFetchTaskDetails) {
-        setLoading(true);
-        const taskData = await onFetchTaskDetails(taskId);
-        if (taskData) {
-          const enrichedTask = enrichTask(taskData);
-          setTask(enrichedTask);
-          setEditTitle(enrichedTask.title);
-        }
-        setLoading(false);
-      }
-    };
-    loadTask();
-  }, [taskId, onFetchTaskDetails]);
-
-  useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus();
       inputRef.current.select();
@@ -74,14 +56,15 @@ const TaskCard: React.FC<ExtendedTaskCardProps> = ({
   }, [isEditing]);
 
   useEffect(() => {
-    if (task) {
-      setEditTitle(task.title);
+    if (taskData) {
+      setEditTitle(taskData.task_name);
     }
-  }, [task]);
+  }, [taskData]);
 
   const getColor = (type: 'status' | 'priority', value: string) => {
     const colors = {
       status: {
+        Active: { bg: '#EFF6FF', text: '#3730A3', border: '#DBEAFE' },
         'To Do': { bg: '#F8FAFC', text: '#475569', border: '#E2E8F0' },
         'In Progress': { bg: '#EFF6FF', text: '#3730A3', border: '#DBEAFE' },
         Done: { bg: '#F0FDF4', text: '#166534', border: '#DCFCE7' },
@@ -104,54 +87,16 @@ const TaskCard: React.FC<ExtendedTaskCardProps> = ({
     );
   };
 
-  const getAssigneeColor = (originalColor: string) => {
-    const assigneeColors = [
-      '#E0F2FE',
-      '#F0FDF4',
-      '#FEF3C7',
-      '#E7E5E4',
-      '#F3E8FF',
-      '#FCE7F3',
-    ];
-
-    const hash = originalColor.split('').reduce((a, b) => {
-      a = (a << 5) - a + b.charCodeAt(0);
-      return a & a;
-    }, 0);
-
-    return assigneeColors[Math.abs(hash) % assigneeColors.length];
-  };
-
-  const handleStatusChange = (
-    event: SelectChangeEvent<'Done' | 'In Progress' | 'To Do'>
-  ) => {
-    if (onTaskUpdate) {
-      onTaskUpdate(taskId, {
-        status: event.target.value as 'Done' | 'In Progress' | 'To Do',
-      });
-    }
-  };
-
-  const handlePriorityChange = (
-    event: SelectChangeEvent<'Low' | 'Medium' | 'High'>
-  ) => {
-    if (onTaskUpdate) {
-      onTaskUpdate(taskId, {
-        priority: event.target.value as 'Low' | 'Medium' | 'High',
-      });
-    }
-  };
-
   const handleSaveEdit = () => {
     if (
       editTitle.trim() &&
-      task &&
-      editTitle.trim() !== task.title &&
+      taskData &&
+      editTitle.trim() !== taskData.task_name &&
       onEditTask
     ) {
       onEditTask(taskId, editTitle.trim());
-    } else if (task) {
-      setEditTitle(task.title);
+    } else if (taskData) {
+      setEditTitle(taskData.task_name);
     }
     setIsEditing(false);
   };
@@ -160,32 +105,14 @@ const TaskCard: React.FC<ExtendedTaskCardProps> = ({
     if (e.key === 'Enter') {
       handleSaveEdit();
     } else if (e.key === 'Escape') {
-      if (task) {
-        setEditTitle(task.title);
+      if (taskData) {
+        setEditTitle(taskData.task_name);
       }
       setIsEditing(false);
     }
   };
 
-  const getChecklistProgress = () => {
-    if (!task || !task.checklist || task.checklist.length === 0) return null;
-
-    const completedItems = task.checklist.filter(
-      (item) => item.completed
-    ).length;
-    const totalItems = task.checklist.length;
-    const percentage = Math.round((completedItems / totalItems) * 100);
-
-    return {
-      completed: completedItems,
-      total: totalItems,
-      percentage,
-    };
-  };
-
-  const checklistProgress = getChecklistProgress();
-
-  if (loading || !task) {
+  if (!taskData) {
     return (
       <div
         ref={setNodeRef}
@@ -199,6 +126,9 @@ const TaskCard: React.FC<ExtendedTaskCardProps> = ({
       </div>
     );
   }
+
+  const statusColor = getColor('status', taskData.status_name);
+  const priorityColor = getColor('priority', taskData.priority_name);
 
   return (
     <div
@@ -223,10 +153,11 @@ const TaskCard: React.FC<ExtendedTaskCardProps> = ({
               onKeyDown={handleKeyPress}
               onBlur={handleSaveEdit}
               className='flex-1 bg-white text-slate-800 text-[13px] font-medium px-2 py-1 rounded border border-slate-300 focus:border-blue-500 focus:outline-none'
+              style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
             />
           ) : (
-            <h3 className='text-slate-800 text-[13px] font-medium leading-relaxed flex-1'>
-              {task.title}
+            <h3 className='text-slate-800 text-[13px] font-medium leading-relaxed flex-1' style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}>
+              {taskData.task_name}
             </h3>
           )}
 
@@ -249,229 +180,64 @@ const TaskCard: React.FC<ExtendedTaskCardProps> = ({
       </div>
 
       <div className='flex items-center gap-2 mb-3'>
-        <div className='w-[80px]' onClick={(e) => e.stopPropagation()}>
-          <Select
-            name='status'
-            className='custom-select-no-arrow w-full h-full'
-            onChange={handleStatusChange}
-            value={task.status || ''}
-            displayEmpty
-            fullWidth
-            size='small'
-            disabled={true}
-            MenuProps={{
-              PaperProps: {
-                sx: {
-                  maxWidth: 300,
-                  maxHeight: 300,
-                  marginTop: '4px',
-                  zIndex: 40,
-                  boxShadow:
-                    'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
-                  '& .MuiMenuItem-root': {
-                    fontSize: '11px',
-                    padding: '4px 8px',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  },
-                },
-              },
-            }}
-            sx={{
-              height: '28px',
-              fontSize: '11px',
-              '& .MuiSelect-icon': {
-                display: 'none',
-              },
-              '& .MuiOutlinedInput-root': {
-                '&.Mui-disabled': {
-                  '& .MuiOutlinedInput-notchedOutline': {
-                    border: '0.5px solid #E2E8F0',
-                  },
-                },
-              },
-              '.MuiSelect-select': {
-                padding: '4px 4px 4px 8px !important',
-                minHeight: 'unset !important',
-                color: task.status
-                  ? `${getColor('status', task.status).text} !important`
-                  : '#7D98B6 !important',
-                backgroundColor: task.status
-                  ? `${getColor('status', task.status).bg} !important`
-                  : 'transparent !important',
-                fontSize: '11px !important',
-                fontWeight: '500',
-                '&.Mui-disabled': {
-                  WebkitTextFillColor: task.status
-                    ? `${getColor('status', task.status).text} !important`
-                    : '#7D98B6 !important',
-                  backgroundColor: task.status
-                    ? `${getColor('status', task.status).bg} !important`
-                    : 'transparent !important',
-                },
-              },
-              '& .MuiOutlinedInput-notchedOutline': {
-                border: '0.5px solid #E2E8F0',
-                borderRadius: '4px',
-              },
-            }}
-          >
-            {(
-              statusData || [
-                { id: '1', name: 'To Do', color: '#gray' },
-                { id: '2', name: 'In Progress', color: '#blue' },
-                { id: '3', name: 'Done', color: '#green' },
-              ]
-            ).map((status) => (
-              <MenuItem
-                sx={{
-                  color: '#425A76',
-                  fontSize: '11px',
-                  fontWeight: '500',
-                }}
-                key={status.id}
-                value={status.name}
-                title={status.name}
-              >
-                {status.name}
-              </MenuItem>
-            ))}
-          </Select>
+        <div
+          className='w-auto px-3 py-1 rounded text-[11px] font-medium'
+          style={{
+            backgroundColor: statusColor.bg,
+            color: statusColor.text,
+            border: `0.5px solid ${statusColor.border}`,
+            fontFamily: "'Mulish', 'Lexend', sans-serif",
+            fontSize: '13px',
+          }}
+        >
+          {taskData.status_name}
         </div>
 
-        <div className='w-[80px]' onClick={(e) => e.stopPropagation()}>
-          <Select
-            name='priority'
-            className='custom-select-no-arrow w-full h-full'
-            onChange={handlePriorityChange}
-            value={task.priority || ''}
-            displayEmpty
-            fullWidth
-            size='small'
-            disabled={true}
-            MenuProps={{
-              PaperProps: {
-                sx: {
-                  maxWidth: 300,
-                  maxHeight: 300,
-                  marginTop: '4px',
-                  zIndex: 40,
-                  boxShadow:
-                    'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
-                  '& .MuiMenuItem-root': {
-                    fontSize: '11px',
-                    padding: '4px 8px',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  },
-                },
-              },
-            }}
-            sx={{
-              height: '28px',
-              fontSize: '11px',
-              '& .MuiSelect-icon': {
-                display: 'none',
-              },
-              '& .MuiOutlinedInput-root': {
-                '&.Mui-disabled': {
-                  '& .MuiOutlinedInput-notchedOutline': {
-                    border: '0.5px solid #E2E8F0',
-                  },
-                },
-              },
-              '.MuiSelect-select': {
-                padding: '4px 4px 4px 8px !important',
-                minHeight: 'unset !important',
-                color: task.priority
-                  ? `${getColor('priority', task.priority).text} !important`
-                  : '#7D98B6 !important',
-                backgroundColor: task.priority
-                  ? `${getColor('priority', task.priority).bg} !important`
-                  : 'transparent !important',
-                fontSize: '11px !important',
-                fontWeight: '500',
-                '&.Mui-disabled': {
-                  WebkitTextFillColor: task.priority
-                    ? `${getColor('priority', task.priority).text} !important`
-                    : '#7D98B6 !important',
-                  backgroundColor: task.priority
-                    ? `${getColor('priority', task.priority).bg} !important`
-                    : 'transparent !important',
-                },
-              },
-              '& .MuiOutlinedInput-notchedOutline': {
-                border: '0.5px solid #E2E8F0',
-                borderRadius: '4px',
-              },
-            }}
-            renderValue={(value) => {
-              if (!value)
-                return (
-                  <span style={{ color: '#7D98B6', fontSize: '11px' }}>
-                    Priority
-                  </span>
-                );
-              return value;
-            }}
-          >
-            <MenuItem
-              value=''
-              sx={{ color: '#425A76', fontSize: '11px', fontWeight: '500' }}
-            >
-              Select Priority
-            </MenuItem>
-            {(
-              priorityData || [
-                { id: '1', name: 'Low', color: '#gray' },
-                { id: '2', name: 'Medium', color: '#yellow' },
-                { id: '3', name: 'High', color: '#red' },
-              ]
-            ).map((priority) => (
-              <MenuItem
-                sx={{
-                  color: '#425A76',
-                  fontSize: '11px',
-                  fontWeight: '500',
-                }}
-                key={priority.id}
-                value={priority.name}
-                title={priority.name}
-              >
-                {priority.name}
-              </MenuItem>
-            ))}
-          </Select>
+        <div
+          className='w-auto px-3 py-1 rounded text-[11px] font-medium'
+          style={{
+            backgroundColor: priorityColor.bg,
+            color: priorityColor.text,
+            border: `0.5px solid ${priorityColor.border}`,
+            fontFamily: "'Mulish', 'Lexend', sans-serif",
+            fontSize: '13px',
+          }}
+        >
+          {taskData.priority_name}
         </div>
       </div>
 
       <div className='flex items-center justify-between'>
-        {showProfileIndicator && task.assignee && (
+        {showProfileIndicator && taskData.assigned_to_name && (
           <div
             className='w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-semibold border border-white shadow-sm'
             style={{
-              backgroundColor: getAssigneeColor(task.assignee.color),
+              backgroundColor: '#E0F2FE',
               color: '#374151',
+              fontFamily: "'Mulish', 'Lexend', sans-serif",
+              fontSize: '13px',
             }}
+            title={taskData.assigned_to_name}
           >
-            {task.assignee.initials}
+            {taskData.assigned_to_name
+              .split(' ')
+              .map((n) => n[0])
+              .join('')}
           </div>
         )}
 
         <div className='flex items-center gap-2 ml-auto'>
-          {checklistProgress && (
+          {taskData.checklists_count > 0 && (
             <div className='flex items-center gap-1 text-gray-400'>
               <CustomChecklistIcon className='w-3 h-3 text-gray-400' />
-              <span className='text-[11px]'>
-                {checklistProgress.completed}/{checklistProgress.total}
-              </span>
+              <span className='text-[13px]' style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}>{taskData.checklists_count}</span>
             </div>
           )}
 
           {showCommentCount && (
             <div className='flex items-center gap-1 text-gray-400'>
               <CommentIcon className='w-3 h-3 text-gray-400' />
-              <span className='text-[11px]'>{task.commentCount}</span>
+              <span className='text-[13px]' style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}>0</span>
             </div>
           )}
         </div>
@@ -480,4 +246,4 @@ const TaskCard: React.FC<ExtendedTaskCardProps> = ({
   );
 };
 
-export default TaskCard;
+export default TaskCardComponent;

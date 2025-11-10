@@ -150,7 +150,7 @@ const WorkBreakDown = () => {
             showTaskCount={true}
             showProfileIndicator={true}
             isDragable={true}
-            isDragablebetweenBoards={false}
+            isDragablebetweenBoards={true}
             statusData={statusData}
             priorityData={priorityData}
             tagData={tagData}

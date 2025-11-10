@@ -54,7 +54,6 @@ export const enrichUsers = (users: User[]): User[] => {
   return users.map(enrichUser);
 };
 
-// Helper to enrich assignee with initials and color if missing
 export const enrichAssignee = (assignee: {
   name: string;
   initials?: string;
@@ -67,16 +66,13 @@ export const enrichAssignee = (assignee: {
   };
 };
 
-// Helper to enrich task with complete assignee and collaborator data
 export const enrichTask = (task: Task): Task => {
   const enrichedTask = { ...task };
 
-  // Enrich assignee
   if (enrichedTask.assignee) {
     enrichedTask.assignee = enrichAssignee(enrichedTask.assignee);
   }
 
-  // Enrich collaborators
   if (enrichedTask.collaborators && enrichedTask.collaborators.length > 0) {
     enrichedTask.collaborators = enrichedTask.collaborators.map(enrichAssignee);
   }

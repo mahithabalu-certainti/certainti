@@ -1,5 +1,6 @@
+import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { KanbanColumnProps, TaskCard } from './types';
+import type { KanbanColumnProps, TaskCard } from './types';
 import { useDroppable } from '@dnd-kit/core';
 import { AddIcon, ChevronDownIcon } from '../../assets';
 import {
@@ -30,7 +31,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
   statusData,
   priorityData,
   onTaskUpdate,
-  onFetchTaskDetails,
+  // onFetchTaskDetails,
 }) => {
   const [isAddingTaskAtTop, setIsAddingTaskAtTop] = useState(false);
   const [isAddingTaskAtBottom, setIsAddingTaskAtBottom] = useState(false);
@@ -39,14 +40,14 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
   const [, setIsHoveringHeader] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isRenamingColumn, setIsRenamingColumn] = useState(false);
-  const [columnName, setColumnName] = useState(column.name);
+  const [columnName, setColumnName] = useState(column.milestone_name);
   const inputRef = useRef<HTMLInputElement>(null);
   const bottomInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const columnNameRef = useRef<HTMLInputElement>(null);
 
   const { setNodeRef } = useDroppable({
-    id: column.id,
+    id: column.rid,
     data: { type: 'Column', column },
   });
 
@@ -70,8 +71,8 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
   }, [isRenamingColumn]);
 
   useEffect(() => {
-    setColumnName(column.name);
-  }, [column.name]);
+    setColumnName(column.milestone_name);
+  }, [column.milestone_name]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -95,10 +96,31 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
   const handleAddTaskAtTop = () => {
     if (newTaskTitle.trim()) {
       const newTask: TaskCard = {
-        taskId: `task-${Date.now()}`,
+        rid: `task-${Date.now()}`,
+        r_number: `T-${Date.now()}`,
+        task_name: newTaskTitle.trim(),
+        created_by: '',
+        status_rid: '',
+        assigned_to: null,
+        sequence_no: 1,
+        priority_rid: '',
+        task_type_rid: '',
+        effort_in_days: 0,
+        checklists_count: 0,
+        task_description: null,
+        reminder_interval: 0,
+        effective_end_datetime: '',
+        effective_start_datetime: '',
+        case_team_member_role_rid: '',
+        milestone_template_rid: column.rid,
+        priority_name: 'Medium',
+        assigned_to_name: null,
+        case_team_member_role_name: '',
+        task_type_name: '',
+        status_name: 'Active',
       };
 
-      onAddTask(column.id, newTask, 'top');
+      onAddTask(column.rid, newTask, 'top');
       setNewTaskTitle('');
       setIsAddingTaskAtTop(false);
     }
@@ -107,10 +129,31 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
   const handleAddTaskAtBottom = () => {
     if (newBottomTaskTitle.trim()) {
       const newTask: TaskCard = {
-        taskId: `task-${Date.now()}`,
+        rid: `task-${Date.now()}`,
+        r_number: `T-${Date.now()}`,
+        task_name: newBottomTaskTitle.trim(),
+        created_by: '',
+        status_rid: '',
+        assigned_to: null,
+        sequence_no: column.tasks.length + 1,
+        priority_rid: '',
+        task_type_rid: '',
+        effort_in_days: 0,
+        checklists_count: 0,
+        task_description: null,
+        reminder_interval: 0,
+        effective_end_datetime: '',
+        effective_start_datetime: '',
+        case_team_member_role_rid: '',
+        milestone_template_rid: column.rid,
+        priority_name: 'Medium',
+        assigned_to_name: null,
+        case_team_member_role_name: '',
+        task_type_name: '',
+        status_name: 'Active',
       };
 
-      onAddTask(column.id, newTask, 'bottom');
+      onAddTask(column.rid, newTask, 'bottom');
       setNewBottomTaskTitle('');
       setIsAddingTaskAtBottom(false);
     }
@@ -142,12 +185,12 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
   const handleSaveColumnName = () => {
     if (
       columnName.trim() &&
-      columnName.trim() !== column.name &&
+      columnName.trim() !== column.milestone_name &&
       onRenameColumn
     ) {
-      onRenameColumn(column.id, columnName.trim());
+      onRenameColumn(column.rid, columnName.trim());
     } else {
-      setColumnName(column.name);
+      setColumnName(column.milestone_name);
     }
     setIsRenamingColumn(false);
   };
@@ -156,14 +199,14 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
     if (e.key === 'Enter') {
       handleSaveColumnName();
     } else if (e.key === 'Escape') {
-      setColumnName(column.name);
+      setColumnName(column.milestone_name);
       setIsRenamingColumn(false);
     }
   };
 
   const handleDeleteColumn = () => {
     if (onDeleteColumn) {
-      onDeleteColumn(column.id);
+      onDeleteColumn(column.rid);
     }
     setIsDropdownOpen(false);
   };
@@ -172,6 +215,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
     <div
       ref={setNodeRef}
       className='bg-[#f5f5f5] rounded-lg p-4 w-80 flex-shrink-0'
+      style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
     >
       <div
         className='bg-white border border-slate-200 rounded-lg p-3 mb-2 flex items-center justify-between group'
@@ -188,15 +232,22 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
               onKeyDown={handleColumnNameKeyPress}
               onBlur={handleSaveColumnName}
               className='bg-white text-slate-800 text-[13px] font-semibold px-2 py-1 rounded border border-slate-300 focus:border-blue-500 focus:outline-none min-w-0'
+              style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
             />
           ) : (
-            <h2 className='text-slate-800 text-[13px] font-semibold'>
-              {column.name}
+            <h2
+              className='text-slate-800 text-[13px] font-semibold'
+              style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
+            >
+              {column.milestone_name}
             </h2>
           )}
           {showTaskCount && (
-            <span className='bg-slate-100 text-slate-600 px-2 py-1 rounded-full text-[13px]'>
-              {column.taskCount}
+            <span
+              className='bg-slate-100 text-slate-600 px-2 py-1 rounded-full text-[13px]'
+              style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
+            >
+              {column.task_count}
             </span>
           )}
         </div>
@@ -267,20 +318,22 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
             }}
             placeholder='Enter task name'
             className='w-full p-3 bg-white text-slate-800 rounded-lg border border-slate-300 focus:border-blue-500 focus:outline-none text-[13px] placeholder-slate-500'
+            style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
           />
         </div>
       )}
 
       <SortableContext
-        items={column.tasks.map((t) => t.taskId)}
+        items={column.tasks.map((t) => t.rid)}
         strategy={verticalListSortingStrategy}
         disabled={!isDragable && !isDragablebetweenBoards}
       >
         <div className='space-y-2 mb-2'>
           {column.tasks.map((taskCard) => (
             <TaskCardComponent
-              key={taskCard.taskId}
-              taskId={taskCard.taskId}
+              key={taskCard.rid}
+              taskId={taskCard.rid}
+              taskData={taskCard}
               showCommentCount={showCommentCount}
               showProfileIndicator={showProfileIndicator}
               onEditTask={onEditTask}
@@ -290,7 +343,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
               statusData={statusData}
               priorityData={priorityData}
               onTaskUpdate={onTaskUpdate}
-              onFetchTaskDetails={onFetchTaskDetails}
+              // onFetchTaskDetails={onFetchTaskDetails}
             />
           ))}
         </div>
@@ -311,6 +364,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
             }}
             placeholder='Enter task name'
             className='w-full p-3 bg-white text-slate-800 rounded-lg border border-slate-300 focus:border-blue-500 focus:outline-none text-[13px] placeholder-slate-500'
+            style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
           />
         </div>
       )}
@@ -324,6 +378,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
               ? 'border-slate-300 text-slate-400 cursor-not-allowed'
               : 'border-slate-300 text-slate-500 hover:border-slate-400 hover:text-slate-600'
           }`}
+          style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
         >
           <AddIcon size={18} />
           <span className='text-[13px] font-medium'>Add Task</span>
