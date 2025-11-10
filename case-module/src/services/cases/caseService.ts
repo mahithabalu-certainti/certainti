@@ -9,11 +9,13 @@ import {
   CaseOwnerType,
   CaseStatusType,
   CountryType,
+  CreateCaseTaskType,
   CurrencyType,
   FilingType,
   ICreateCases,
   ICreateCaseTeam,
   ICreateChecklist,
+  UpdateCaseTaskType,
 } from "../../utils/types";
 import { isValidTimezone, logMessage } from "../../utils/helpers";
 import {
@@ -25,9 +27,11 @@ import {
 import { query } from "express";
 import currency from "currency.js";
 import moment from "moment";
+import { CaseManagementSchemaService } from "../casesManagement/schemaService";
 export class CaseService {
   private caseSchemaService: CaseSchemaService;
   private caseModelService: CaseModelService; // Assuming this is defined somewhere in your code
+  private caseManagementService : CaseManagementSchemaService
   private logger: Logger;
   private orgDbSequelize: Sequelize | null = null;
   private mainDbSequelize: Sequelize | null = null;
@@ -36,6 +40,7 @@ export class CaseService {
     this.logger = logger;
     this.caseSchemaService = new CaseSchemaService();
     this.caseModelService = new CaseModelService(); // Initialize your model service here
+    this.caseManagementService = new CaseManagementSchemaService()
   }
 
   private async getMainDb() {
@@ -1798,6 +1803,103 @@ export class CaseService {
       }
     }
 
+  async createUserLevelTask (data : CreateCaseTaskType) {
+    const mainDb = await this.getMainDb();
+    const dbInit = await this.caseModelService.getSequelize()
+    const transaction = await dbInit.transaction()
+    try {
+      const fetchParentNumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+      if(fetchParentNumber[0].length > 0) {
+      const isTaskNameExists = await this.caseManagementService.checkTaskExists(data);
+      if(isTaskNameExists) {
+        return {
+          statusCode : HttpStatus.BAD_REQUEST,
+          statusMessage : STATUS_MESSAGE.taskNameExistsAlready,
+          data : null
+        }
+      } else {
+          const isCaseExists = await this.caseSchemaService.isCaseExistsForAccount(data.account_rid, data.case_rid, fetchParentNumber[0][0].r_number);
+          if(isCaseExists) {
+          const result = await this.caseSchemaService.createUserLevelTask(data, fetchParentNumber[0][0].r_number, transaction);
+          if(result.statusCode === HttpStatus.SUCCESS) {
+            await transaction.commit()
+            return {
+              statusCode : HttpStatus.SUCCESS,
+              statusMessage : STATUS_MESSAGE.userLevelTaskCreatedSuccess,
+              data : result.data
+            }
+          } else {
+            return {
+              statusCode : HttpStatus.FAILED,
+              statusMessage : STATUS_MESSAGE.taskCreateFailed,
+              data : null
+            }
+          }
+        } else {
+            return {
+              statusCode : HttpStatus.NOT_FOUND,
+              statusMessage : STATUS_MESSAGE.dataNotAvailable,
+              data : null
+            }
+        }
+      }
+    } else {
+        return {
+          statusCode : HttpStatus.NOT_FOUND,
+          statusMessage : STATUS_MESSAGE.accountNotFound,
+          data : null
+        }   
+    } 
+  } 
+  catch (error) {
+    console.log(error)
+    await transaction.rollback()
+    return {
+      statusCode : HttpStatus.FAILED,
+      statusMessage : STATUS_MESSAGE.taskCreateFailed,
+      data : null
+    }  
+  }
+}
+async updateUserLevelTask (data : UpdateCaseTaskType) {
+    const mainDb = await this.getMainDb();
+    const dbInit = await this.caseModelService.getSequelize()
+    const transaction = await dbInit.transaction()
+    try {
+      const fetchParentNumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+      if(fetchParentNumber[0].length > 0) {
+        const isTaskNameExists = await this.caseSchemaService.checkTaskNameExistsForUpdate(data, fetchParentNumber[0][0].r_number);
+        if(isTaskNameExists) {
+          return {
+            statusCode : HttpStatus.BAD_REQUEST,
+            statusMessage : STATUS_MESSAGE.taskNameExistsAlready
+          }         
+        }
+        else {
+          const result = await this.caseSchemaService.updateUserLevelTask(data, fetchParentNumber[0][0].r_number, transaction);
+          if(result.statusCode === HttpStatus.SUCCESS) {
+            await transaction.commit()
+          }
+          return {
+            statusCode : result.statusCode,
+            statusMessage : result.statusMessage
+          }
+        }
+      } else {
+        return {
+          statusCode : HttpStatus.FAILED,
+          statusMessage : STATUS_MESSAGE.accountNotFound
+        }
+      }
+    } catch (error) {
+      await transaction.rollback()
+      console.log(error)
+      return {
+        statusCode : HttpStatus.FAILED,
+        statusMessage : STATUS_MESSAGE.taskUpdatedFailed
+      }
+    }  
+}
     async getCheckListForTask(
       accountNumber: string,
       caseRid: string

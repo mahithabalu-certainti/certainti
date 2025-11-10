@@ -1,4 +1,5 @@
-import { AdminTaskTemplatePayloadType, CreateTaskTemplateType, ICreateCases, ICreateCaseTeam, ICreateChecklist, ICreateChecklistTemplate, MilestoneResponse, UpdateTaskTemplateType } from "../../utils/types";
+import { CaseTask } from "../../models/caseTaskModel";
+import { AdminTaskTemplatePayloadType, CreateCaseTaskType, CreateTaskTemplateType, ICreateCases, ICreateCaseTeam, ICreateChecklist, ICreateChecklistTemplate, MilestoneResponse, UpdateCaseTaskType, UpdateTaskTemplateType } from "../../utils/types";
 
 export interface ICaseService {
   createCase(
@@ -156,7 +157,20 @@ export interface ICaseService {
     data?: { checklists: any[]; totalCount: number };
   }>;
 
-  exportAssignedProjects (data : any) : Promise<any>
+  exportAssignedProjects (data : any) : Promise<any>,
+  createUserLevelTask(data : CreateCaseTaskType): Promise<{
+    statusCode: number;
+    statusMessage: string;
+    data: null;
+} | {
+    statusCode: number;
+    statusMessage: string;
+    data: CaseTask | {};
+}>
+updateUserLevelTask(data : UpdateCaseTaskType): Promise<{
+    statusCode: number;
+    statusMessage: string;
+} | undefined>
 }
 
 export interface ICaseManagementService {

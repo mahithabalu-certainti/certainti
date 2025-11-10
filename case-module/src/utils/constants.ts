@@ -107,7 +107,14 @@ export const STATUS_MESSAGE = {
   taskTypeFetchedSuccess : "Task Type fetched successfully",
   checkListNotFound:"Checklist not found",
   checkListNotFoundError:"Checklist with the provided RID does not exist",
-  caseBreakdownSuccess : "Work Breakdown fetched successfully"
+  caseBreakdownSuccess : "Work Breakdown fetched successfully",
+  userLevelTaskCreatedSuccess : "Task created successfully",
+  userLevelTaskUpdatedSuccess : "Task updated successfully",
+  taskCreateFailed: "Task creation failed",
+  accountNotFound : "Account not found",
+  caseNotFound : "Case not found",
+  taskNotFound : "Task not founds",
+  taskUpdatedFailed: "Task updation failed"
 
 };
 
@@ -834,6 +841,13 @@ export const rawQueries = {
     if(rid.length > 0) {
       ids.push(`${rid.map((d : any) => `'${d}'`).join(',')}`)
       return `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid IN (${ids})`
+    }
+  },
+  getAllTaskStatus (rid : any[]) {
+    let ids : string[] = []
+    if(rid.length > 0) {
+      ids.push(`${rid.map((d : any) => `'${d}'`).join(',')}`)
+      return `SELECT rid, task_status_name FROM ${MAIN_SCHEMA_NAME}.case_task_status WHERE rid IN (${ids})`
     }
   },
   getAllProjectsByAccountId(schemaName: string,accountRid: string) {
