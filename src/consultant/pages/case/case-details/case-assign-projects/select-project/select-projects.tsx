@@ -76,7 +76,7 @@ const SelectProjects: React.FC<selectProjectProps> = ({
   };
   const getRowId = (row: AssignProject) => row.rid;
   return (
-    <div>
+    <div className='border border-[#CBD6E2] border-tss'>
       <ListTable
         data={data?.projects || []}
         columns={visibleColumns}

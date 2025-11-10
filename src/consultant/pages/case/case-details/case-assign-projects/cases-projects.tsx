@@ -5,6 +5,7 @@ import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import {
   AllPermissions,
   OverviewTabs,
+  useGetAllCountries,
   useGetStatus,
 } from '../../../../../common-service';
 import SectionHeader from '../../../../../components/details-section/section-header';
@@ -12,7 +13,10 @@ import SelectProjects from './select-project/select-projects';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { AssignProject } from '../../../../types/assign-projects';
 import { selectProjectFilterFields } from './select-project/helper';
-import { useFetchClassification } from '../../../../services/account';
+import {
+  useFetchClassification,
+  useFetchState,
+} from '../../../../services/account';
 import { useGetProjectType } from '../../../../services/project';
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
@@ -28,6 +32,10 @@ import {
   useRemoveProjects,
 } from '../../../../services/cases-assign-projects/assign-project-service';
 import { CaseAssignedExportParams, ExportType } from '../../../../types';
+import ProjectTab from './projects-tab';
+import { getProjectFinancialResCostFields } from '../../../project/project-details/financial-highlights/helpers';
+import { useGetResourceType } from '../../../../services/resource-list';
+import { FilterValue } from '../../../../types/account-filter';
 interface casesProjectProps {
   activeKey?: string;
   setTableParams?: React.Dispatch<
@@ -63,6 +71,7 @@ const CasesProjects: React.FC<casesProjectProps> = ({
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [searchText, setSearchText] = useState<string>('');
   const [count, setCount] = useState<number>(0);
+  const [currentCountry, setCurrentCountry] = useState<string>('');
   const [clearSelectedRows, setClearSelectedRows] = useState<boolean>(false);
   const [searchParams] = useSearchParams();
   const handleSorting = () => {
@@ -144,6 +153,8 @@ const CasesProjects: React.FC<casesProjectProps> = ({
     setColumnAnchorEl(event.currentTarget);
   };
   const isAssignProject = searchParams.get('assignProject');
+  const projectDetailTab = searchParams.get('detailstab');
+
   const initialTab = 'assign_projects';
 
   useEffect(() => {
@@ -174,6 +185,25 @@ const CasesProjects: React.FC<casesProjectProps> = ({
       value: 'review_projects',
     },
   ];
+  const initialDetailsTab = 'projects_details';
+
+  const DetailsTabParam = searchParams.get('detailstab') || initialDetailsTab;
+  const handleDetailsTabChange = (value: string) => {
+    searchParams.set('detailstab', value);
+    navigate({ search: searchParams.toString() }, { replace: true });
+  };
+  const detailsTabs = [
+    { label: 'Project Details', value: 'projects_details' },
+    {
+      label: 'Project Fininacial Summary',
+      value: 'project_financial_summary',
+    },
+    { label: 'Resource Cost', value: 'resource_cost' },
+  ];
+  const handleBackTocasesProjects = () => {
+    searchParams.delete('detailstab');
+    navigate({ search: searchParams.toString() }, { replace: true });
+  };
 
   const headerButtons = [
     {
@@ -183,7 +213,11 @@ const CasesProjects: React.FC<casesProjectProps> = ({
       onClick: () =>
         isAssignProject ? handletoAssignprojects() : handleRemoveProjects(),
       sx: { width: '80px', minWidth: '80px' },
-      hide: tabParam === 'assign_projects' ? false : true,
+      hide: projectDetailTab
+        ? true
+        : tabParam === 'assign_projects'
+          ? false
+          : true,
       loading: assignProjectList.isPending || removeProjectList.isPending,
     },
     {
@@ -198,17 +232,30 @@ const CasesProjects: React.FC<casesProjectProps> = ({
         width: isAssignProject ? '180px' : '130px',
         minWidth: isAssignProject ? '180px' : '130px',
       },
-      hide: tabParam === 'assign_projects' ? false : true,
+      hide: projectDetailTab
+        ? true
+        : tabParam === 'assign_projects'
+          ? false
+          : true,
     },
     {
       label: 'Show/Hide Fields',
       variant: 'outlined' as const,
       disabled: false,
       onClick: handleColumnVisibility,
+      hide: projectDetailTab ? true : false,
       sx: { width: '125px', minWidth: '125px' },
     },
+    {
+      label: 'Back to Case projects',
+      variant: 'outlined' as const,
+      disabled: false,
+      hide: !projectDetailTab,
+      onClick: handleBackTocasesProjects,
+      sx: { width: '150px', minWidth: '150px' },
+    },
   ];
-  console.log(selectedRows);
+
   const handleFilter = () => {
     setShowFilter(!showFilter);
   };
@@ -236,7 +283,14 @@ const CasesProjects: React.FC<casesProjectProps> = ({
       })) || [],
     [Classification.data?.data.projectClassifications]
   );
-
+  const handleFilterChange = (fieldName: string, value: FilterValue) => {
+    if (fieldName === 'country_rid' && value) {
+      setCurrentCountry(String(value));
+    }
+  };
+  const countriesList = useGetAllCountries();
+  const region = useFetchState(currentCountry);
+  const resourceTypeOptions = useGetResourceType();
   const memoizedStatus = useMemo(
     () =>
       statusOptions?.data?.data?.status.map((status) => ({
@@ -253,6 +307,39 @@ const CasesProjects: React.FC<casesProjectProps> = ({
         value: item.rid,
       })) || [],
     [projectTypeOptions?.data?.data?.projectType]
+  );
+
+  const memoizedResourceType = useMemo(
+    () =>
+      resourceTypeOptions?.data?.data?.resouceType.map((item) => ({
+        option: item.resource_type_name,
+        value: item.rid,
+      })) || [],
+    [resourceTypeOptions?.data?.data?.resouceType]
+  );
+
+  const memoizedCountry = useMemo(() => {
+    return (
+      countriesList.data?.data.country.map((item) => ({
+        option: item.country_name,
+        value: item.rid,
+      })) || []
+    );
+  }, [countriesList]);
+
+  const memoizedRegion = useMemo(
+    () =>
+      region.data?.data.states.map((state) => ({
+        option: state.state_name,
+        value: state.rid,
+      })) || [],
+    [region.data?.data.states]
+  );
+
+  const filterFields = getProjectFinancialResCostFields(
+    memoizedCountry,
+    memoizedRegion,
+    memoizedResourceType
   );
   const projectFilterFields = isAssignProject
     ? selectProjectFilterFields(
@@ -287,9 +374,14 @@ const CasesProjects: React.FC<casesProjectProps> = ({
     });
     return map;
   }, [projectViewEditlistFields]);
+  const handleProjectDetails = (data: AssignProject) => {
+    searchParams.set('detailstab', 'projects_details');
+    searchParams.set('projectID', data.rid);
+    navigate({ search: searchParams.toString() }, { replace: true });
+  };
   const caseColumns = isAssignProject
     ? getAssignedProjectColumns(permissionMap)
-    : getSelectProjectColumns(permissionMap);
+    : getSelectProjectColumns(permissionMap, handleProjectDetails);
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >(Object.fromEntries(caseColumns.map((col) => [col.id, !col.hide])));
@@ -324,6 +416,13 @@ const CasesProjects: React.FC<casesProjectProps> = ({
   const isModalOpen = Boolean(columnAnchorEl);
   const modalId = isModalOpen ? 'case-column-visibility-popover' : undefined;
 
+  const visbleIcons =
+    projectDetailTab === 'projects_details'
+      ? false
+      : projectDetailTab === 'project_financial_summary'
+        ? false
+        : true;
+
   return (
     <div className='w-full pt-2 pl-2 pr-4'>
       <ManageColumnsPopover
@@ -337,8 +436,8 @@ const CasesProjects: React.FC<casesProjectProps> = ({
       />
       <SectionTabPanel
         tabs={InteractionsTabs}
-        filterMenu={projectFilterFields}
-        filterVisibility={true}
+        filterMenu={projectDetailTab ? filterFields : projectFilterFields}
+        filterVisibility={visbleIcons}
         showFilter={showFilter}
         contextKey={isAssignProject ? 'select-projects' : 'assigned-projects'}
         appliedFilters={appliedFilters}
@@ -348,15 +447,16 @@ const CasesProjects: React.FC<casesProjectProps> = ({
         handleSorting={handleSorting}
         sortFilterCount={sortFilterCount}
         setSortFilterCount={setSortFilterCount}
-        showRefresh={true}
+        showRefresh={visbleIcons}
         onRefreshClick={onRefreshClick}
-        showSearch={true}
+        onFilterChange={handleFilterChange}
+        showSearch={visbleIcons}
         searchDisabled={false}
         searchPlaceholder='Search'
         onSearch={(text) => setSearchText(text)}
       />
       <SectionHeader
-        title={isAssignProject ? 'Assign Projects' : 'Assigned Projects'}
+        title={isAssignProject ? 'Assign Projects' : 'Case Projects'}
         titleIcon={
           <InteractionDetailIcon
             alt='financial-header-icon'
@@ -367,14 +467,31 @@ const CasesProjects: React.FC<casesProjectProps> = ({
         showItemCount={true}
         buttons={headerButtons}
       />
-      {!isAssignProject && (
+      {!isAssignProject && !projectDetailTab && (
         <SectionHeaderTab
           tabs={tabs}
           onTabChange={handleTabChange}
           defaultValue={tabParam}
         />
       )}
-      {tabParam === 'assign_projects' ? (
+      {projectDetailTab && (
+        <SectionHeaderTab
+          tabs={detailsTabs}
+          onTabChange={handleDetailsTabChange}
+          defaultValue={DetailsTabParam}
+        />
+      )}
+      {projectDetailTab ? (
+        <div>
+          <ProjectTab
+            refreshTrigger={refreshTrigger}
+            setCount={setCount}
+            searchText={searchText}
+            currentPage={currentPage}
+            appliedFilters={appliedFilters}
+          />
+        </div>
+      ) : tabParam === 'assign_projects' ? (
         <div className='border border-[#CBD6E2] border-t-0'>
           {isAssignProject ? (
             <SelectProjects

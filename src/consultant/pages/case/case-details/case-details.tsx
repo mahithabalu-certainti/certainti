@@ -67,6 +67,7 @@ export const CaseDetails = () => {
     isError,
   } = useCaseDetails(caseId ?? '', accountId ?? '');
   const isAssignProject = searchParams.get('assignProject');
+  const projectDetails = searchParams.get('detailstab');
   const caseHeaderDetails = useMemo(() => {
     if (caseData) {
       return transformCaseData(caseData);
@@ -185,7 +186,7 @@ export const CaseDetails = () => {
       return !isAttachmentExportEnable;
     } else if (list === 'notes' && !noteView) {
       return !isNotesExportEnable;
-    } else if (list === 'caseProjects' && !isAssignProject) {
+    } else if (list === 'caseProjects' && !isAssignProject && !projectDetails) {
       return false;
     } else {
       return true;
@@ -292,15 +293,15 @@ export const CaseDetails = () => {
         icon: CasesIcon,
       },
       {
-        name: 'Case Project Resource',
-        key: 'caseProjectResource',
+        name: 'Project Resource',
+        key: 'projectResource',
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
         icon: ResourcesIcon,
       },
       {
-        name: 'Case - Project Task',
-        key: 'caseProjectTask',
+        name: 'Project Task',
+        key: 'projectTask',
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
         icon: ProjectsSideIcon,

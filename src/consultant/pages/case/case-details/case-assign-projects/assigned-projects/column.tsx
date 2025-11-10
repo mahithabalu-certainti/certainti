@@ -20,7 +20,7 @@ export const getAssignedProjectColumns = (
 ): ListTableColumn<AssignProject>[] => [
   {
     id: 'project_code',
-    editId: 'project_code',
+    // editId: 'project_code',
     label: 'Project Code',
     sortable: true,
     sortId: 'project_code',
@@ -30,6 +30,7 @@ export const getAssignedProjectColumns = (
       !permissionMap?.['project_code']?.read &&
       !permissionMap?.['project_code']?.edit,
   },
+
   {
     id: 'project_name',
     editId: 'project_name',
