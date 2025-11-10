@@ -252,6 +252,53 @@ const listCheckListSchema = Joi.object({
     sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
 })
 
+const exportCheckListSchema = Joi.object({
+    attachmentLevel: Joi.string()
+        .valid('account', 'project', 'project_resource', 'project_task', 'resource', 'resource_cost', 'resource_skill', 'case')
+        .required()
+        .messages({
+            'string.empty': 'Attachment level cannot be empty',
+            'any.required': 'Attachment level is required',
+            'any.only': 'Attachment level must be one of: account, project, project_resource, project_task, resource, resource_cost, resource_skill, case'
+        }),
+    entityId: Joi.string()
+        .required()
+        .messages({
+            'any.required': 'Entity ID is required',
+            'string.pattern.base': 'Entity ID must be a valid UUID'
+        }),
+    accountRid: Joi.string()
+        .required()
+        .messages({
+            'any.required': 'Account RID is required',
+            'string.pattern.base': 'Account RID must be a valid UUID'
+        }),
+    search: Joi.string()
+        .max(255)
+        .allow('')
+        .allow(null)
+        .optional()
+        .messages({
+            'string.base': 'Search must be a string',
+            'string.max': 'Search cannot exceed 255 characters'
+        }),
+    filters: Joi.string().default("{}").optional(),
+    fiscalYear: Joi.number()
+    .integer()
+    .min(1000)
+    .max(9999)
+    .allow(0)
+    .optional()
+    .messages({
+      "number.base": "Fiscal year must be a number",
+      "number.min": "Fiscal year must be a 4-digit number",
+      "number.max": "Fiscal year must be a 4-digit number",
+      "any.required": "Fiscal year is required",
+    }),
+    sortBy: Joi.string().default("created_datetime").optional(),
+    sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
+})
+
 const jurisdictionSchema = Joi.object({
   account_rid: Joi.string().required(),
   case_rid: Joi.string().required(),
@@ -350,5 +397,6 @@ export {
   updateChecklistSchema,
   exportAdminCheckListByIdSchema,
   checklistByIdSchema,
-  listCheckListSchema
+  listCheckListSchema,
+  exportCheckListSchema
 };

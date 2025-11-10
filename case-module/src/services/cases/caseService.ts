@@ -1721,6 +1721,7 @@ export class CaseService {
       sortBy: string = 'created_datetime',
       sortOrder: string = 'DESC',
       fiscalYear: number = 0,
+      apiType: string = 'list',
       graphqlData? : any
     ): Promise<{
       statusCode: number;
@@ -1755,6 +1756,7 @@ export class CaseService {
           filters,
           sortBy,
           sortOrder,
+          apiType,
           graphqlData
         );
   

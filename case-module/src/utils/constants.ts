@@ -323,6 +323,60 @@ export const adminCheckListMappings = [
   //{ permissionField: 'modified_datetime', exportField: 'Updated On', dataField: 'modified_datetime' }
 ];
 
+export const checklistsFieldMappings = [
+  {
+    permissionField: "r_number",
+    exportField: "Checklist ID",
+    dataField: "r_number",
+  },
+  {
+    permissionField: "attachment_level",
+    exportField: "Related Entity",
+    dataField: "attachment_level",
+  },
+  {
+    permissionField: "attach_to",
+    exportField: "Related To ID",
+    dataField: "attach_to",
+  },
+  {
+    permissionField: "attached_to",
+    exportField: "Related To Name",
+    dataField: "attached_to",
+  },
+  {
+    permissionField: "fiscal_year",
+    exportField: "Fiscal Year",
+    dataField: "fiscal_year",
+  },
+   {
+    permissionField: "checklist_name",
+    exportField: "Checklist Name",
+    dataField: "checklist_name",
+  },
+   {
+    permissionField: "created_by",
+    exportField: "Created By",
+    dataField: "created_by_name",
+  },
+  {
+    permissionField: "created_datetime",
+    exportField: "Created On",
+    dataField: "created_datetime",
+  },
+  {
+    permissionField: "updated_by",
+    exportField: "Updated By",
+    dataField: "modified_by_name",
+  },
+  {
+    permissionField: "updated_datetime",
+    exportField: "Updated On",
+    dataField: "updated_datetime",
+  }
+          
+];
+
 export const rawQueries = {
   fetchParentAccountDetails: `SELECT * FROM ${MAIN_SCHEMA_NAME}.account WHERE rid = :rid`,
   async fetchParentAccount(

@@ -141,6 +141,7 @@ export interface ICaseService {
     sortBy: string,
     sortOrder: string,
     fiscalYear: number,
+    apiType: string,
     graphqlData: any
   ): Promise<{
     statusCode: number;

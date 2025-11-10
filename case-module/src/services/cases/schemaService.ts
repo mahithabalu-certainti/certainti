@@ -2786,6 +2786,7 @@ class CaseSchemaService {
   filters: Record<string, any> = {},
   sortBy: string = 'created_datetime',
   sortOrder: string = 'DESC',
+  apiType: string = "list",
   graphqlData? : any
 ) {
   try {
@@ -3117,6 +3118,12 @@ class CaseSchemaService {
           });
         }
         const totalCount = checklists.length;
+        if(apiType === 'download') {
+          return {
+            checklists,
+            totalCount,
+          }
+        }
         checklists = checklists.slice((page - 1) * limit, page * limit);
         return {
           checklists,

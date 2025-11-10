@@ -124,6 +124,11 @@ routes.get(
   controller.caseController.getAllChecklists
 );
 routes.get(
+  "/checklist/export",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.exportAllChecklists
+);
+routes.get(
   "/workBreakdown/:accountRid/:caseRid",
   checkUserStatusMiddleware("NA"),
   controller.caseController.fetchCaseKanbanBoard
