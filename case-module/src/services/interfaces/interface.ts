@@ -35,6 +35,12 @@ export interface ICaseService {
     errorMessage?: string;
     data?: { caseStatus: any };
   }>;
+  getChecklistStatus(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { checklistStatus: any };
+  }>;
   fetchProjectsForAssign(
     data: any,
     assignedProjects: boolean,

@@ -1254,6 +1254,20 @@ class CaseSchemaService {
     return caseStatus;
   }
 
+  async getChecklistStatus() {
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+    }
+    const caseStatus = await this.mainDbSequelize.query(
+      rawQueries.getChecklistStatus(),
+      {
+        type: "SELECT",
+      }
+    );
+
+    return caseStatus;
+  }
+
   async getCasesHeadersSectionList(
     caseRid: string,
     schemaName: string,
@@ -3873,6 +3887,48 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       }
     }
   }
+
+  async fetchCheckListForTask (accountNumber : string, caseRid : string) {
+    try {
+      const {CheckList, CheckListItem} = await this.caseModelService.getModels(accountNumber);
+      const checklistData = await CheckList.findOne({
+        where : {rid : caseRid}
+      })
+        const checklistItems = await CheckListItem.findAll({
+          attributes: ["checklist_item_name", "checklist_item_description", "status_rid"],
+          where: { checklist_rid: checklistData?.rid }
+        })
+
+      // Fetch status names for each status_rid
+      const statusRids = [...new Set(checklistItems.map(item => item.status_rid).filter(Boolean))].filter((rid): rid is string => typeof rid === 'string');
+      let statusMap: Record<string, string> = {};
+      if (statusRids.length > 0) {
+        if (!this.mainDbSequelize) {
+          this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+        }
+        const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
+        const statusQuery = rawQueries.fetchCheckListStatusNamesByRids(schemaName, statusRids);
+        const statusResults = await this.mainDbSequelize.query(statusQuery, { type: "SELECT" });
+        statusMap = Object.fromEntries(statusResults.map((s: any) => [s.rid, s.status_name]));
+      }
+
+      // Attach status_name to each checklist item
+      const response = checklistItems.map(item => ({
+        ...item.get ? item.get({ plain: true }) : item,
+        status_name: item.status_rid ? statusMap[item.status_rid] || null : null
+      }));
+
+      return {
+        checklistData,
+        checklistItems: response
+      }
+    } catch (err) {
+      logMessage(`Error fetching checklist for task: ${err}`);
+      throw new Error(    
+        "Error fetching checklist for task: " + (err as Error).message
+      );
+    }
+  } 
   async getTaskType () {
     if (!this.mainDbSequelize) {
       this.mainDbSequelize = await this.caseModelService.getMainSequelize();

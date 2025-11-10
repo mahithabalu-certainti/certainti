@@ -441,6 +441,14 @@ export const rawQueries = {
       ORDER BY status_name ASC
     `;
   },
+  getChecklistStatus() {
+    return `
+      SELECT rid, status_name 
+      FROM ${MAIN_SCHEMA_NAME}.checklist_status
+      WHERE status = 'active'
+      ORDER BY status_name ASC
+    `;
+  },
   getCaseTeamRoles() {
     return `
       SELECT rid, role_name 
@@ -952,7 +960,11 @@ export const rawQueries = {
   listUsersByIds(userIds: any)
   {
     return `SELECT rid, CONCAT(first_name, ' ', last_name) as full_name FROM ${MAIN_SCHEMA_NAME}.user WHERE rid IN (:userIds)`
-  }
+  },
+  fetchCheckListStatusNamesByRids(schemaName: string, statusRids: string[]) {
+  const ridsList = statusRids.map(rid => `'${rid}'`).join(",");
+  return `SELECT rid, status_name FROM ${schemaName}.checklist_status WHERE rid IN (${ridsList})`;
+  },
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
 const keyContactRole = {

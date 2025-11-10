@@ -31,6 +31,11 @@ routes.get(
   controller.caseController.getCaseStatus
 );
 routes.get(
+  "/checkListStatus",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.getChecklistStatus
+);
+routes.get(
   "/caseTeamRoles",
   checkUserStatusMiddleware("NA"),
   controller.caseController.getCaseTeamRoles

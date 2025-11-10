@@ -429,6 +429,27 @@ export class CaseService {
     }
   }
 
+  async getChecklistStatus(): Promise<{
+  statusCode: number;
+  message: string;
+  errorMessage?: string;
+  data?: { checklistStatus: any };
+}> {
+  try {
+    const checklistStatus = await this.caseSchemaService.getChecklistStatus();
+    return {
+      statusCode: HttpStatus.SUCCESS,
+      message: HttpStatus.SUCCESS_MESSAGE,
+      data: {
+        checklistStatus,
+      },
+    };
+  } catch (err) {
+    logMessage(`Error fetching case status, ${err}`);
+    throw this.throwServiceError(err as Error);
+  }
+}
+
   /**
    * Retrieves the default status RID for newly created cases.
    *
@@ -1776,5 +1797,31 @@ export class CaseService {
         };
       }
     }
+
+    async getCheckListForTask(
+      accountNumber: string,
+      caseRid: string
+    )
+    {
+      try { 
+        const checklistDetails =
+        await this.caseSchemaService.fetchCheckListForTask(
+          accountNumber,
+          caseRid
+        );    
+        return {
+          checklist_name: checklistDetails.checklistData?.checklist_name,
+          checklist_items: checklistDetails.checklistItems
+        };
+      } catch (err) {
+        logMessage(`Error fetching checklist for task, ${err}`);
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: STATUS_MESSAGE.checkListError,
+        };
+      }
+    }
+
 
 }
