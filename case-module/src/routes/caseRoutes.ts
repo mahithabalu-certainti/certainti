@@ -138,6 +138,15 @@ routes.get(
   checkUserStatusMiddleware("NA"),
   controller.caseController.fetchCaseKanbanBoard
 );
-
+routes.post(
+  "/task/create",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.createTask
+);
+routes.put(
+  '/task/update',
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.updateTask
+)
 
 export default routes;

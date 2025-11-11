@@ -25,7 +25,8 @@ interface CaseTaskAttributes {
     account_rid : string,
     case_rid : string,
     task_type_rid : string,
-    task_description? : string
+    task_description? : string,
+    task_status_rid : string
 }
 
 export interface CaseTaskCreationAttributesModel 
@@ -56,6 +57,7 @@ implements CaseTaskAttributes {
     public case_rid! : string
     public task_type_rid! : string
     public task_description? : string
+    public task_status_rid! : string
 
     static initialise(sequelize : Sequelize, schemaName : string) {
         return CaseTask.init({
@@ -148,6 +150,10 @@ implements CaseTaskAttributes {
             },
             task_description : {
                 type : DataTypes.STRING(2000),
+                allowNull : true
+            },
+            task_status_rid : {
+                type : DataTypes.STRING(50),
                 allowNull : true
             }
         }, {

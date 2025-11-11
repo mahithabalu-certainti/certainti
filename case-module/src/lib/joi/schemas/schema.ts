@@ -379,6 +379,43 @@ const updateTaskTemplateSchema = Joi.object({
 const exportAdminCheckListByIdSchema = Joi.object({
   timezone: Joi.string().required()
 });
+
+const createTaskSchema = Joi.object({
+  task_name: Joi.string().max(255).required(),
+  effort_in_days : Joi.number().optional(),
+  reminder_interval: Joi.number().optional(),
+  effective_start_datetime : Joi.string().optional(),
+  effective_end_datetime : Joi.string().optional(),
+  case_team_member_role_rid : Joi.string().optional(),
+  checklist_template_rid : Joi.string().allow("").optional(),
+  status_rid : Joi.string().optional(),
+  priority_rid : Joi.string().allow("").optional(),
+  milestone_template_rid : Joi.string().optional(),
+  task_type_rid : Joi.string().allow("").optional(),
+  task_description : Joi.string().allow("").optional(),
+  task_status_rid : Joi.string().allow("").optional(),
+  account_rid : Joi.string().max(255).required(),
+  case_rid : Joi.string().max(255).required()
+});
+
+const updateTaskSchema = Joi.object({
+  rid : Joi.string().max(255).required(),
+  task_name: Joi.string().max(255).required(),
+  effort_in_days : Joi.number().optional(),
+  reminder_interval: Joi.number().optional(),
+  effective_start_datetime : Joi.string().required(),
+  effective_end_datetime : Joi.string().required(),
+  case_team_member_role_rid : Joi.string().required(),
+  checklist_template_rid : Joi.string().allow("").optional(),
+  status_rid : Joi.string().optional(),
+  priority_rid : Joi.string().allow("").optional(),
+  milestone_template_rid : Joi.string().optional(),
+  task_type_rid : Joi.string().allow("").optional(),
+  task_description : Joi.string().allow("").optional(),
+  task_status_rid : Joi.string().allow("").optional(),
+  account_rid : Joi.string().max(255).required(),
+  case_rid : Joi.string().max(255).required()
+});
 export {
   createCaseSchema,
   updateCaseSchema,
@@ -399,5 +436,7 @@ export {
   exportAdminCheckListByIdSchema,
   checklistByIdSchema,
   listCheckListSchema,
-  exportCheckListSchema
+  exportCheckListSchema,
+  createTaskSchema,
+  updateTaskSchema
 };
