@@ -82,6 +82,8 @@ const createCaseTeamSchema = Joi.object({
         role_rid: Joi.string().required(),
         effective_from: Joi.date().required(),
         effective_to: Joi.date().required(),
+        is_primary: Joi.boolean().required(),
+        status_rid: Joi.string().required(),
         action_type: Joi.string().valid("add", "edit", "delete").required(),
       })
     )
@@ -149,7 +151,7 @@ const updateChecklistSchema = Joi.object({
         checklist_item_name: Joi.string().max(255).required(),
         checklist_item_rid: Joi.string().optional(),
         status_rid: Joi.string().required(),
-        description: Joi.string().max(2000).optional().allow(""), 
+        checklist_item_description: Joi.string().max(2000).optional().allow(""), 
         action_type: Joi.string().valid("add", "edit", "delete").required(),
       })
     )
