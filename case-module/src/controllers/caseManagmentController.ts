@@ -903,11 +903,11 @@ async function fetchAdminTaskTemplateList (req : Request, res : Response) {
     }
     const data = req.body;
     let result = await caseManagementService.fetchTaskTemplate(data, false, false, null);
-    let totalRecord = parseInt(result.data[0].total_result)
-    result.data.forEach((d : any) => {
-      delete d.total_result
-    })
     if(result.statusCode == HttpStatus.SUCCESS) {
+      let totalRecord = parseInt(result.data[0].total_result)
+      result.data.forEach((d : any) => {
+        delete d.total_result
+      })
       const finalData = {
         page : data.page,
         limit : data.limit,

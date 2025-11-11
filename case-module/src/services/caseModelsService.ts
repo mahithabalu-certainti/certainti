@@ -1,7 +1,7 @@
 import { Sequelize } from "sequelize";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { initMainDbSequelize } from "../config/mainDataSource";
-import { SCHEMANAME_PREFIX } from "../utils/constants";
+import { MAIN_SCHEMA_NAME, SCHEMANAME_PREFIX } from "../utils/constants";
 import { Case } from "../models/caseModel";
 import { CaseSummary } from "../models/caseSummaryModel";
 import { CaseProject } from "../models/caseProjectsModel";
@@ -16,6 +16,9 @@ import { CheckList } from "../models/checkListModel";
 import { CheckListItem } from "../models/checkListItemModel";
 import { CaseMilestone } from "../models/caseMilestoneModel";
 import { CaseTask } from "../models/caseTaskModel";
+import { TaskCollaborators } from "../models/taskCollaboratorsModel";
+import { TaskTag } from "../models/TaskTagsModel";
+import { Tags } from "../models/tagsModel";
 
 export class CaseModelService {
   orgDbSequelize: Sequelize | null = null;
@@ -31,6 +34,9 @@ export class CaseModelService {
       TaskTemplate: ReturnType<typeof TaskTemplate.initialize>
       CaseMilestone: ReturnType<typeof CaseMilestone.initialise>
       CaseTask : ReturnType<typeof CaseTask.initialise>
+      TaskCollaborators : ReturnType<typeof TaskCollaborators.initialise>
+      TaskTag : ReturnType<typeof TaskTag.initialise>
+      Tags : ReturnType<typeof Tags.initialise>
     }
   > = new Map();
 
@@ -72,6 +78,9 @@ export class CaseModelService {
     const CheckListItemModel = CheckListItem.initialize(sequelize, schemaName);
     const CaseMilestoneModel = CaseMilestone.initialise(sequelize, schemaName);
     const CaseTaskModel = CaseTask.initialise(sequelize, schemaName)
+    const TaskCollaboratorsModel = TaskCollaborators.initialise(sequelize, schemaName)
+    const TaskTagModel = TaskTag.initialise(sequelize, schemaName)
+    const TagsModel = Tags.initialise(mainDbSequelize, MAIN_SCHEMA_NAME)
     const models = {
       Case: CaseModel,
       CaseSummary: CaseSummaryModel,
@@ -86,7 +95,10 @@ export class CaseModelService {
       CheckListItem: CheckListItemModel,
       Jurisdiction: JurisdictionModel,
       CaseMilestone: CaseMilestoneModel,
-      CaseTask : CaseTaskModel
+      CaseTask : CaseTaskModel,
+      TaskCollaborators : TaskCollaboratorsModel,
+      TaskTag : TaskTagModel,
+      Tags : TagsModel
     };
 
     this.modelCache.set(schemaName, models);
