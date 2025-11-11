@@ -27,7 +27,7 @@ interface FinancialResourceCostProps {
   currentPage: number;
   appliedFilters: Record<string, string | number | boolean | string[]>;
   setCount: (value: number) => void;
-  setResCostExportParams: (
+  setResCostExportParams?: (
     params: ProjectFinancialResourceExportParams
   ) => void;
   setExportType?: (type: ExportType) => void;
@@ -51,11 +51,12 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
   searchValue,
 }) => {
   const { projectid: projectId } = useParams();
+
   const [searchParams] = useSearchParams();
   const accountId = searchParams.get('accountID') || '';
+  const projectID = searchParams.get('projectID') || '';
   const fiscalYear = projectDetails?.fiscal_year;
   const currencySymbol = projectDetails?.currency_symbol;
-
   const [resourceCostList, setResourceCostList] = useState<
     ProjectFinancialResourceCostList[]
   >([]);
@@ -77,7 +78,7 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
       sortBy: tableParams.sortBy,
       sortOrder: tableParams.sortOrder,
       filters: tableParams.filters,
-      projectRid: projectId,
+      projectRid: projectId || projectID,
       accountRid: accountId,
       fiscalYear: fiscalYear,
       accountNumber: projectDetails?.account_number,
@@ -109,7 +110,7 @@ const ResourceCost: React.FC<FinancialResourceCostProps> = ({
       setExportType('financial');
     }
 
-    setResCostExportParams({
+    setResCostExportParams?.({
       sortBy: tableParams.sortBy,
       sortOrder: tableParams.sortOrder,
       filters: appliedFilters,

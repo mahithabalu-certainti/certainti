@@ -200,6 +200,19 @@ export interface CaseListExportParams {
   isGlobal?: boolean;
   search?: string;
 }
+export interface CaseAssignedExportParams {
+  page: number;
+  limit: number;
+  sort: string;
+  sort_by: 'ASC' | 'DESC';
+  filter?: object;
+  account_rid?: string;
+  case_rid?: string;
+  fiscal_year?: number;
+  search?: string;
+  timezone?: string;
+  account_id?: string;
+}
 export interface ExportCaseListResponse {
   statusCode: number;
   statusMessage: string;
@@ -219,6 +232,14 @@ export interface CaseFilingTypeResponse {
   statusMessage: string;
   data: {
     caseFilingType: CaseFilingType[];
+  };
+}
+export interface CaseExportResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    data: string;
   };
 }
 
