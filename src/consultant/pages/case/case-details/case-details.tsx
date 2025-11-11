@@ -52,6 +52,7 @@ import { AttachmentsListExportParams } from '../../../types/attachment';
 import { useSelector } from 'react-redux';
 import { Attachments } from './case-attachments';
 import { exportAttachmentsData } from '../../../services/attachments/attachments-service';
+import { CaseProjectResource } from './case-project-resource';
 
 export const CaseDetails = () => {
   const navigate = useNavigate();
@@ -279,6 +280,8 @@ export const CaseDetails = () => {
             setAttachmentParams={setAttachmentParams}
           />
         );
+      case 'projectResource':
+        return <CaseProjectResource accountInActive={accountInActive} />;
       default:
         return (
           <div className='flex items-center justify-center h-full'>
