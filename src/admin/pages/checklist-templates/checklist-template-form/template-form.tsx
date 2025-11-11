@@ -58,9 +58,8 @@ const ChecklistTemplateForm: React.FC = () => {
       {
         question_seq_num: 'SNO_1',
         question: '',
+        comments: '',
         description: '',
-        // is_mandatory: false,
-        // notes: '',
       },
     ],
     rid: '',
@@ -139,6 +138,7 @@ const ChecklistTemplateForm: React.FC = () => {
             ? templateData.checklist_items.map((qus, index) => ({
                 question_seq_num: qus.sequence_no || `SNO-${index + 1}`,
                 question: (qus.checklist_item_name || '').trim(),
+                comments: qus.description || '',
                 description: qus.description || '',
                 rid: qus.rid,
               }))
@@ -146,6 +146,7 @@ const ChecklistTemplateForm: React.FC = () => {
                 {
                   question_seq_num: 'SNO_1',
                   question: '',
+                  comments: '',
                   description: '',
                 },
               ],
@@ -216,6 +217,7 @@ const ChecklistTemplateForm: React.FC = () => {
         {
           question_seq_num: `SNO_${prev.questions.length + 1}`,
           question: '',
+          comments: '',
           description: '',
         },
       ],
@@ -230,6 +232,7 @@ const ChecklistTemplateForm: React.FC = () => {
       updatedQuestions.push({
         question_seq_num: 'SNO_1',
         question: '',
+        comments: '',
         description: '',
       });
     }
@@ -685,23 +688,23 @@ const ChecklistTemplateForm: React.FC = () => {
                                     </div>
                                   )}
 
-                                  {col.name === 'description' && (
+                                  {col.name === 'comments' && (
                                     <div
                                       className={`flex relative ${error ? 'bg-[#FEF2F2]' : ''}`}
                                     >
                                       <textarea
-                                        name='checklist_description'
-                                        placeholder='Enter Description'
+                                        name='checklist_comments'
+                                        placeholder='Enter Comments'
                                         autoComplete='off'
                                         className={`outline-none placeholder-custom-color w-full sm:text-sm p-2 resize-none focus:border-2 focus:border-blue-400 ${error ? 'bg-[#FEF2F2] focus:!bg-[#FEF2F2]' : ''}`}
                                         onChange={(e) =>
                                           handleQuestionChange(
                                             index,
-                                            'description',
+                                            'comments',
                                             e.target.value
                                           )
                                         }
-                                        value={question.description}
+                                        value={question.comments}
                                         disabled={isDisabled}
                                         style={{
                                           scrollbarWidth: 'thin',
