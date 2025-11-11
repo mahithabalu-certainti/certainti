@@ -1,5 +1,5 @@
 import { CaseTask } from "../../models/caseTaskModel";
-import { AdminTaskTemplatePayloadType, CreateCaseTaskType, CreateTaskTemplateType, ICreateCases, ICreateCaseTeam, ICreateChecklist, ICreateChecklistTemplate, MilestoneResponse, UpdateCaseTaskType, UpdateTaskTemplateType } from "../../utils/types";
+import { AdminTaskTemplatePayloadType, CaseTaskQueryType, CreateCaseTaskType, CreateTaskTemplateType, ICreateCases, ICreateCaseTeam, ICreateChecklist, ICreateChecklistTemplate, MilestoneResponse, UpdateCaseTaskType, UpdateTaskTemplateType } from "../../utils/types";
 
 export interface ICaseService {
   createCase(
@@ -171,6 +171,10 @@ updateUserLevelTask(data : UpdateCaseTaskType): Promise<{
     statusCode: number;
     statusMessage: string;
 } | undefined>
+taskListForCases(data : any) : Promise<{
+    statusCode: number;
+    data: CaseTaskQueryType[];
+}>
 }
 
 export interface ICaseManagementService {

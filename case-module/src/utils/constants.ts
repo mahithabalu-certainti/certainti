@@ -114,7 +114,8 @@ export const STATUS_MESSAGE = {
   accountNotFound : "Account not found",
   caseNotFound : "Case not found",
   taskNotFound : "Task not founds",
-  taskUpdatedFailed: "Task updation failed"
+  taskUpdatedFailed: "Task updation failed",
+  userLevelTaskFetchSuccess : "Task fetched successfully"
 
 };
 
@@ -843,7 +844,7 @@ export const rawQueries = {
       return `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid IN (${ids})`
     }
   },
-  getAllTaskStatus (rid : any[]) {
+  getAllTaskStatus (rid : any) {
     let ids : string[] = []
     if(rid.length > 0) {
       ids.push(`${rid.map((d : any) => `'${d}'`).join(',')}`)
@@ -1120,4 +1121,26 @@ export const validFilterColumnTypes : Record<string, string> = {
   sequence_no : "number",
   task_type_rid : "string",
   task_description : "string"
+}
+
+export const sortByColumnsCaseTask : any = {
+  task_name : `task_name`,
+  effective_start_datetime : `effective_start_datetime`,
+  effective_end_datetime : `effective_end_datetime`
+}
+
+export const filterColumnsCaseTask = {
+  task_name : `task_name`,
+  assigned_to : `assigned_to`,
+  effective_start_datetime : `effective_start_datetime`,
+  effective_end_datetime : `effective_end_datetime`,
+  task_status_rid : `task_status_rid`
+}
+
+export const filterColumnsCaseTaskTypes : any = {
+  task_name : `string`,
+  assigned_to : `string`,
+  effective_start_datetime : `date`,
+  effective_end_datetime : `date`,
+  task_status_rid : `string`
 }
