@@ -204,6 +204,7 @@ export enum AllModules {
   INTERACTION_TEMPLATES = 'interaction_templates',
   EMAIL_TEMPLATES = 'email_templates',
   CASES = 'cases',
+  CHECKLIST_TEMPLATES = 'checklist_templates',
 }
 
 export enum AllPermissions {
@@ -306,9 +307,14 @@ export enum AllPermissions {
   CASES_OVERVIEW = 'cases_overview',
   CASES_TIMELINE = 'cases_timeline',
   CASES_VIEW_EDIT = 'cases_view_edit',
+  CASES_TEAM_VIEW_EDIT = 'case_team_view_edit',
   CASES_EXPORT = 'cases_export',
   CASES_CREATE = 'cases_create',
   CASES_DELETE = 'cases_delete',
+  QRE_PERCENT_HISTORY = 'projects_qre_history_view_edit',
+  CHECKLIST_TEMPLATES_CREATE = 'checklist_templates_create',
+  CHECKLIST_TEMPLATES_VIEW_EDIT = 'checklist_templates_view_edit',
+  CHECKLIST_TEMPLATES_EXPORT = 'checklist_templates_export',
 }
 
 export interface Country {

@@ -20,7 +20,6 @@ import {
 } from '../../types';
 import {
   AccountDetailUrl,
-  AccountListURL,
   CityUrl,
   ClassificationUrl,
   ColorCodeUrl,
@@ -61,8 +60,9 @@ export const fetchGlobalAccounts = async (): Promise<{
 export const fetchAccounts = async (
   params: AccountListURLParams = {}
 ): Promise<{ accounts: AccountList[]; count: number; totalResult: number }> => {
-  const response = await accountServiceApi.get<AccountListResponse>(
-    AccountListURL(params)
+  const response = await accountServiceApi.post<AccountListResponse>(
+    '/api/accounts/list',
+    params
   );
   return {
     accounts: response.data.data.account.data,

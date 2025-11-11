@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { useToast } from '../../../../hooks';
-import { useManageUserList } from '../../../../admin/service';
 import {
   AllPermissions,
   Layout,
@@ -17,6 +16,7 @@ import {
   useCaseDetails,
   useCreateCase,
   useGetCaseFilingTypes,
+  useGetCaseOwners,
   useUpdateCaseDetails,
 } from '../../../services/cases/case-service';
 import { CaseIcon } from '../../../../assets';
@@ -63,20 +63,13 @@ export const CreateCases: React.FC = () => {
   const countryRid = searchParams.get('country_rid') || '';
   const countryCode = searchParams.get('country_code') || '';
 
-  // User List Api
-  const { data: userListData, isLoading: userListLoading } = useManageUserList({
-    page: 1,
-    limit: 2000,
-    sortBy: 'first_name',
-    sortOrder: 'ASC',
-  });
-
   const { data: caseData, isLoading } = useCaseDetails(caseId || '', accountId);
 
   const updateCase = useUpdateCaseDetails();
   const createCase = useCreateCase();
   const caseFillingTypes = useGetCaseFilingTypes();
   const allCountries = useGetAllCountries();
+  const caseOwners = useGetCaseOwners();
 
   const commonSuccess = createCase.isSuccess || updateCase.isSuccess;
 
@@ -141,14 +134,14 @@ export const CreateCases: React.FC = () => {
     }
   }, [accountName, caseData, countryCode, currentYear, isEditView]);
 
-  const userListOptions = useMemo(() => {
+  const caseOwnersOptions = useMemo(() => {
     return (
-      userListData?.data?.users?.map((item) => ({
+      caseOwners?.data?.data?.caseOwners?.map((item) => ({
         value: item.rid,
-        label: `${item.first_name} ${item.last_name}`,
+        label: item.name || '',
       })) || []
     );
-  }, [userListData]);
+  }, [caseOwners]);
 
   const caseFilingTypesOptions = useMemo(() => {
     return (
@@ -201,7 +194,7 @@ export const CreateCases: React.FC = () => {
   const onChangeField = ({ fieldName, fieldValue }: OnChange) => {
     if (fieldName === 'case_startdate') {
       // When Start Date changes:
-      // - Planned Submission Date must be > Start Date
+      // - Planned Submission Date must be ≥ Start Date
       // - Statutory Submission Date must be ≥ Start Date
       setDateConstraints((prev) => ({
         ...prev,
@@ -266,14 +259,14 @@ export const CreateCases: React.FC = () => {
     permissionMap,
     accountPermissionMap,
     caseFilingTypesOptions,
-    userListOptions,
+    caseOwnersOptions,
     countryOptions,
     dateConstraints,
     caseNamePrefix
   );
 
   const formLoading =
-    userListLoading || isLoading || caseFillingTypes.isPending;
+    caseOwners.isLoading || isLoading || caseFillingTypes.isPending;
 
   return (
     <>

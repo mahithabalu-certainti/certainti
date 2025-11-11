@@ -3,7 +3,7 @@ import { FieldConfig } from '../../account-details-sidebar/components/filter/fil
 import {
   // dateOptions,
   enumOptions,
-  fiscalYearOption,
+  fiscalYearOptions,
   numberOptions,
   textOptions,
   fiscalOptions,
@@ -59,7 +59,7 @@ export const getAllProjectFilterFields = (
     name: 'Fiscal Year',
     value: 'fiscal_year',
     type: 'enum',
-    options: fiscalYearOption,
+    options: fiscalYearOptions,
     operatorOption: fiscalOptions,
     hide:
       !projectPermissionMap?.['fiscal_year']?.read &&

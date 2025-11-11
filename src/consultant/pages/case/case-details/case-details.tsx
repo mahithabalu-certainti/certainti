@@ -1,8 +1,25 @@
 import { Suspense, useEffect, useMemo, useState } from 'react';
-import { useLocation, useParams, useSearchParams } from 'react-router-dom';
-import { useCaseDetails } from '../../../services/cases/case-service';
-import { MenuItem } from '../../../types';
-import { AllMenus, AllModules } from '../../../../common-service';
+import {
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
+import {
+  ExportAssignedList,
+  useCaseDetails,
+} from '../../../services/cases/case-service';
+import {
+  CaseAssignedExportParams,
+  ExportType,
+  MenuItem,
+  NotesListExportParams,
+} from '../../../types';
+import {
+  AllMenus,
+  AllModules,
+  AllPermissions,
+} from '../../../../common-service';
 import { InfoSection, PageHeader, SideMenuPanel } from '../../../../components';
 import {
   AccountDetailsIcon,
@@ -22,20 +39,39 @@ import {
 } from '../../../../assets';
 import { WorkBreakDown } from './work-breakdown';
 import { CaseTeam } from './case-team';
+import CasesProjects from './case-assign-projects/cases-projects';
 import { transformCaseData } from './utils';
-import { ActionsDropdownItem } from '../../../../common-utils';
+import { ActionsDropdownItem, checkPermission } from '../../../../common-utils';
+import { CaseNotes } from './case-notes';
+import { ExportNotesList } from '../../../services/notes/notes-service';
+import { AccessRestricted } from '../../../../components/account-restricted';
+import { ACCOUNT } from '../../../../routes';
+import { RootState } from '../../../../store/store';
+
+import { AttachmentsListExportParams } from '../../../types/attachment';
+import { useSelector } from 'react-redux';
+import { Attachments } from './case-attachments';
+import { exportAttachmentsData } from '../../../services/attachments/attachments-service';
 
 export const CaseDetails = () => {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const { caseId } = useParams();
-  const accountId = searchParams.get('accountID');
+  const accountId = searchParams.get('accountID') || '';
+  const mainSource = searchParams.get('mainSource') || '';
+  const { modules, permission } = useSelector(
+    (state: RootState) => state.permission
+  );
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
   const {
     data: caseData,
     isLoading,
     isError,
   } = useCaseDetails(caseId ?? '', accountId ?? '');
-
+  const isAssignProject = searchParams.get('assignProject');
+  const projectDetails = searchParams.get('detailstab');
   const caseHeaderDetails = useMemo(() => {
     if (caseData) {
       return transformCaseData(caseData);
@@ -45,6 +81,36 @@ export const CaseDetails = () => {
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const defaultTab = searchParams.get('list') ?? 'workBreakdown';
   const [activeKey, setActiveKey] = useState(defaultTab as string);
+  const [exportType, setExportType] = useState<ExportType>('notes');
+
+  const [notesParams, setNotesParams] = useState<NotesListExportParams>({
+    sortBy: 'r_number',
+    sortOrder: 'ASC',
+    filters: {},
+  });
+
+  const noteView = searchParams.get('note_id');
+  const accountInActive =
+    caseData?.account_status_name?.toLowerCase() !== 'active';
+  const [caseProjectParams, setCaseProjectParams] =
+    useState<CaseAssignedExportParams>({
+      sort: 'project_type_name',
+      sort_by: 'ASC',
+      filter: {},
+      timezone: '',
+      page: 1,
+      limit: 10,
+      search: '',
+      case_rid: caseId ?? '',
+      account_id: accountId ?? '',
+    });
+  const fiscalYear = caseData?.fiscal_year ?? 0;
+  const [attachmentParams, setAttachmentParams] =
+    useState<AttachmentsListExportParams>({
+      sortBy: 'document_name',
+      sortOrder: 'ASC',
+      filters: {},
+    });
 
   useEffect(() => {
     const list = searchParams.get('list');
@@ -61,6 +127,94 @@ export const CaseDetails = () => {
       setActiveKey(location.state.activeKey || listParam || 'workBreakdown');
     }
   }, [location.state, searchParams]);
+  const list = searchParams.get('list');
+  // const checkExport = () => {
+  //   if (list === 'caseProjects' && !isAssignProject) {
+  //     return false;
+  //   } else {
+  //     return true;
+  //   }
+  // };
+
+  // const handleExport = () => {
+  //   if (list !== 'caseProjects') {
+  //     return;
+  //   }
+  //   ExportAssignedList(caseProjectParams);
+  // };
+
+  // Permissions management
+  const caseIsEnable = checkPermission(modules, AllModules.CASES);
+  const isCaseDetailsEnable = checkPermission(
+    permission,
+    AllPermissions.CASES_VIEW_EDIT
+  );
+
+  const isAttachmentExportEnable = checkPermission(
+    permission,
+    AllPermissions.ATTACHMENT_EXPORT
+  );
+
+  const isNotesExportEnable = checkPermission(
+    permission,
+    AllPermissions.NOTES_EXPORT
+  );
+
+  const handleExport = (exportType: ExportType) => {
+    if (
+      searchParams.get('list') !== 'attachments' &&
+      searchParams.get('list') !== 'notes' &&
+      searchParams.get('list') !== 'caseProjects'
+    ) {
+      return;
+    }
+
+    const notesPayload = {
+      accountRid: accountId,
+      entityId: caseId,
+      attachmentLevel: 'case',
+      timezone,
+    };
+
+    const attachmentPayload = {
+      accountRid: accountId,
+      entityId: caseId,
+      attachmentLevel: 'case',
+      timezone,
+    };
+
+    if (exportType === 'notes') {
+      ExportNotesList('notes', { ...notesParams, ...notesPayload });
+    } else if (exportType === 'attachments') {
+      exportAttachmentsData('attachments', {
+        ...attachmentParams,
+        ...attachmentPayload,
+      });
+    } else if (list === 'caseProjects') {
+      ExportAssignedList(caseProjectParams);
+    }
+  };
+
+  const checkExport = () => {
+    const list = searchParams.get('list');
+    if (
+      searchParams.get('attachment_entity') ||
+      searchParams.get('file_id') ||
+      searchParams.get('upload')
+    ) {
+      return true;
+    }
+
+    if (list === 'attachments') {
+      return !isAttachmentExportEnable;
+    } else if (list === 'notes' && !noteView) {
+      return !isNotesExportEnable;
+    } else if (list === 'caseProjects' && !isAssignProject && !projectDetails) {
+      return false;
+    } else {
+      return true;
+    }
+  };
 
   const menuItems: ActionsDropdownItem[] = [
     {
@@ -70,8 +224,8 @@ export const CaseDetails = () => {
     },
     {
       label: 'Export',
-      onClick: () => console.log('clicked'),
-      hide: false,
+      onClick: () => handleExport(exportType),
+      hide: accountInActive || checkExport(),
     },
   ];
 
@@ -97,6 +251,34 @@ export const CaseDetails = () => {
             <CaseTeam />
           </div>
         );
+      case 'caseProjects':
+        return (
+          <div>
+            <CasesProjects
+              fiscalYear={fiscalYear}
+              accountInActive={accountInActive}
+              setTableParams={setCaseProjectParams}
+              setExportType={setExportType}
+            />
+          </div>
+        );
+      case 'notes':
+        return (
+          <CaseNotes
+            accountInActive={accountInActive}
+            setExportType={setExportType}
+            setNotesParams={setNotesParams}
+            caseDetails={caseData}
+          />
+        );
+      case 'attachments':
+        return (
+          <Attachments
+            accountInActive={accountInActive}
+            setExportType={setExportType}
+            setAttachmentParams={setAttachmentParams}
+          />
+        );
       default:
         return (
           <div className='flex items-center justify-center h-full'>
@@ -111,14 +293,28 @@ export const CaseDetails = () => {
       {
         name: 'Work Breakdown',
         key: 'workBreakdown',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS,
+        id: AllMenus.FINANCIAL_HIGHLIGHTS, // ADD PERMISSION FOR CASES
         disabled: false,
         icon: ProjectsSideIcon,
       },
       {
+        name: 'Financial Workings',
+        key: 'financialWorkings',
+        id: AllMenus.FINANCIAL_HIGHLIGHTS, // ADD PERMISSION FOR CASES
+        disabled: false,
+        icon: FinancialIcon,
+      },
+      {
+        name: 'Case Review',
+        key: 'caseReview',
+        id: AllMenus.FINANCIAL_HIGHLIGHTS, // ADD PERMISSION FOR CASES
+        disabled: false,
+        icon: CasesIcon,
+      },
+      {
         name: 'Case Team',
         key: 'caseTeam',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS,
+        id: AllMenus.FINANCIAL_HIGHLIGHTS, // ADD PERMISSION FOR CASES
         disabled: false,
         icon: CasesIcon,
       },
@@ -130,15 +326,15 @@ export const CaseDetails = () => {
         icon: CasesIcon,
       },
       {
-        name: 'Case Project Resource',
-        key: 'caseProjectResource',
+        name: 'Project Resource',
+        key: 'projectResource',
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
         icon: ResourcesIcon,
       },
       {
-        name: 'Case - Project Task',
-        key: 'caseProjectTask',
+        name: 'Project Task',
+        key: 'projectTask',
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
         icon: ProjectsSideIcon,
@@ -165,13 +361,6 @@ export const CaseDetails = () => {
         icon: TechSummaryIcon,
       },
       {
-        name: 'Financial Workings',
-        key: 'financialWorkings',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS,
-        disabled: false,
-        icon: FinancialIcon,
-      },
-      {
         name: 'RD Credit Forms',
         key: 'rd_credit_forms',
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
@@ -184,13 +373,6 @@ export const CaseDetails = () => {
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
         icon: DetailsIcon,
-      },
-      {
-        name: 'Case Review',
-        key: 'caseReview',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS,
-        disabled: false,
-        icon: CasesIcon,
       },
       {
         name: 'Activities',
@@ -243,8 +425,14 @@ export const CaseDetails = () => {
   }, []);
 
   const goBack = () => {
-    window.history.back();
+    if (mainSource === 'global-cases') {
+      window.history.back();
+    } else {
+      navigate(`${ACCOUNT}/details/${accountId}?list=cases`);
+    }
   };
+
+  if (!caseIsEnable || !isCaseDetailsEnable) return <AccessRestricted />;
 
   return (
     <div className='flex flex-col h-full'>

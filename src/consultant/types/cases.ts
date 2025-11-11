@@ -112,7 +112,7 @@ export interface CaseDetails {
   case_owner_rid: string;
   fiscal_year: number;
   status_rid: string;
-  case_total_projects: number | null;
+  case_total_projects: string | number | null;
   case_total_project_cost: string | null;
   case_total_rd_cost: string | null;
   case_total_qre_cost: string | null;
@@ -136,9 +136,11 @@ export interface CaseDetails {
   currency_code: string;
   currency_rid: string;
   case_completion_percentage: string | null;
-  case_total_qualified_projects: string | null;
+  case_total_qualified_projects: string | number | null;
   case_total_qualified_project_cost: string | null;
   country_code?: string;
+  account_status_name?: string;
+  account_status_rid?: string;
 }
 
 export interface CaseDetailsResponse {
@@ -198,6 +200,19 @@ export interface CaseListExportParams {
   isGlobal?: boolean;
   search?: string;
 }
+export interface CaseAssignedExportParams {
+  page: number;
+  limit: number;
+  sort: string;
+  sort_by: 'ASC' | 'DESC';
+  filter?: object;
+  account_rid?: string;
+  case_rid?: string;
+  fiscal_year?: number;
+  search?: string;
+  timezone?: string;
+  account_id?: string;
+}
 export interface ExportCaseListResponse {
   statusCode: number;
   statusMessage: string;
@@ -219,6 +234,14 @@ export interface CaseFilingTypeResponse {
     caseFilingType: CaseFilingType[];
   };
 }
+export interface CaseExportResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    data: string;
+  };
+}
 
 //Case status
 export interface CaseStatus {
@@ -232,5 +255,19 @@ export interface CaseStatusResponse {
   statusMessage: string;
   data: {
     caseStatus: CaseStatus[];
+  };
+}
+
+export interface CaseOwner {
+  rid: string;
+  name: string;
+}
+
+export interface CaseOwnersResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    caseOwners: CaseOwner[];
   };
 }

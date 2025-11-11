@@ -5,3 +5,4 @@ export * from './manage-user-group';
 export * from './interaction-templates';
 export * from './email-templates';
 export * from './task-templates';
+export * from './checklist-templates';

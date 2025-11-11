@@ -12,7 +12,7 @@ import { generateCaseNamePrefixValue } from '../../../../case/helper';
 
 export const getCaseListColumns = (
   handleViewCaseDetails: (caseItem: CaseList) => void,
-  userListOptions: { value: string; label: string }[],
+  caseOwnersOptions: { value: string; label: string }[],
   caseFilingTypesOptions: { value: string; label: string }[],
   accountInActive: boolean,
   accountData: {
@@ -144,7 +144,7 @@ export const getCaseListColumns = (
         type: 'select',
         required: true,
         placeholder: 'Choose Case Owner',
-        options: userListOptions,
+        options: caseOwnersOptions,
         getFieldData: (rowData: DependencyRowData) => {
           return String(rowData.case_owner_rid || '');
         },
@@ -152,7 +152,7 @@ export const getCaseListColumns = (
     },
     {
       id: 'case_total_project_cost',
-      label: 'Total Case Project Cost',
+      label: 'Total Project Cost',
       width: 180,
       sortable: true,
       sortId: 'case_total_project_cost',
@@ -169,7 +169,7 @@ export const getCaseListColumns = (
     },
     {
       id: 'case_total_qre_cost',
-      label: 'Case Project QRE Cost',
+      label: 'Total QRE',
       width: 180,
       sortable: true,
       sortId: 'case_total_qre_cost',
@@ -186,7 +186,7 @@ export const getCaseListColumns = (
     },
     {
       id: 'case_total_rd_cost',
-      label: 'Case Project RD Credit',
+      label: 'Total RD Credits',
       width: 180,
       sortable: true,
       sortId: 'case_total_rd_cost',
