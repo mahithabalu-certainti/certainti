@@ -232,6 +232,8 @@ export interface TeamMember {
   case_team_rid?: string;
   effective_from: Date;
   effective_to: Date;
+  is_primary: boolean;
+  status_rid: string;
   action_type: "add" | "edit" | "delete";
 }
 
@@ -253,7 +255,7 @@ export interface ICreateChecklist {
   checklist_rid: string;
   attach_to: string;
   attachment_level: string;
-  checklist_template_rid?: string;
+  checklist_template_rid?: string | null;
   checklist_name: string;
   checklist_description?: string;
   status_rid?: string;
