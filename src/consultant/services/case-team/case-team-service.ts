@@ -11,6 +11,7 @@ export interface CaseTeamMember {
   end_date: string;
   is_primary?: boolean;
   status?: string;
+  status_rid?: string;
   case_rid?: string;
   account_rid?: string;
   role_rid?: string;
@@ -50,6 +51,8 @@ export interface CaseTeamMemberPayload {
   role_rid: string;
   effective_from: string;
   effective_to: string;
+  is_primary?: boolean;
+  status_rid?: string;
   action_type: 'add' | 'edit' | 'delete';
 }
 export interface RoleOption {

@@ -116,7 +116,9 @@ const CaseTeam = () => {
         a.user_name !== b.user_name ||
         a.user_role !== b.user_role ||
         a.start_date !== b.start_date ||
-        a.end_date !== b.end_date
+        a.end_date !== b.end_date ||
+        a.is_primary !== b.is_primary ||
+        a.status_rid !== b.status_rid
       ) {
         setIsFormChanged(true);
         return;
@@ -181,6 +183,10 @@ const CaseTeam = () => {
           const roleOption = roleOptionsQuery.data?.find(
             (r) => r.rid === user.role_rid
           );
+          const statusOption = statusOptionsQuery.data?.data?.status?.find(
+            (s: { rid: string; status_name: string }) =>
+              s.rid === user.status_rid
+          );
 
           return {
             ...user,
@@ -189,6 +195,9 @@ const CaseTeam = () => {
             user_role: roleOption?.role_name || '',
             start_date: user.effective_startdate || '',
             end_date: user.effective_enddate || '',
+            is_primary: user.is_primary || false,
+            status: statusOption?.status_name || '',
+            status_rid: user.status_rid || '',
           };
         }
       );
@@ -207,6 +216,7 @@ const CaseTeam = () => {
                 end_date: '',
                 is_primary: false,
                 status: '',
+                status_rid: '',
               },
             ]
           : teamMembers;
@@ -216,7 +226,12 @@ const CaseTeam = () => {
       });
       setIsDataLoaded(true);
     }
-  }, [caseTeamQuery.data, userOptionsQuery.data, roleOptionsQuery.data]);
+  }, [
+    caseTeamQuery.data,
+    userOptionsQuery.data,
+    roleOptionsQuery.data,
+    statusOptionsQuery.data,
+  ]);
 
   useEffect(() => {
     if (updateCaseTeamMutation.isSuccess) {
@@ -283,6 +298,7 @@ const CaseTeam = () => {
             end_date: '',
             is_primary: false,
             status: '',
+            status_rid: '',
           },
         ],
       };
@@ -316,14 +332,27 @@ const CaseTeam = () => {
       };
     });
 
+    // Clear errors for the specific field being changed
     setErrors((prev) => {
       const newMemberErrors = [...(prev.team_members || [])];
-      if (newMemberErrors[index]) {
+      if (!newMemberErrors[index]) {
+        newMemberErrors[index] = {};
+      }
+
+      // Clear the error for the specific field
+      newMemberErrors[index] = {
+        ...newMemberErrors[index],
+        [field]: undefined,
+      };
+
+      // If clearing user_role, also clear is_primary error as it depends on role
+      if (field === 'user_role') {
         newMemberErrors[index] = {
           ...newMemberErrors[index],
-          [field]: undefined,
+          is_primary: undefined,
         };
       }
+
       return {
         ...prev,
         team_members: newMemberErrors,
@@ -339,16 +368,19 @@ const CaseTeam = () => {
     formData.team_members.forEach((member, index) => {
       const memberError: CaseTeamMemberErrors = {};
 
+      // User name validation
       if (!member.user_name.trim()) {
         memberError.user_name = 'User name is required';
         isValid = false;
       }
 
+      // User role validation
       if (!member.user_role.trim()) {
         memberError.user_role = 'User role is required';
         isValid = false;
       }
 
+      // Start date validation
       if (!member.start_date) {
         memberError.start_date = 'Start date is required';
         isValid = false;
@@ -357,9 +389,32 @@ const CaseTeam = () => {
         isValid = false;
       }
 
+      // End date validation
       if (!member.end_date) {
         memberError.end_date = 'End date is required';
         isValid = false;
+      }
+
+      // Status validation (required field)
+      if (!member.status || !member.status.trim()) {
+        memberError.status = 'Status is required';
+        isValid = false;
+      }
+
+      // Primary checkbox validation - check if trying to set primary when another user in same role is already primary
+      if (member.is_primary && member.user_role) {
+        const existingPrimary = formData.team_members.find(
+          (m, i) =>
+            i !== index &&
+            m.user_role === member.user_role &&
+            m.user_role !== '' &&
+            m.is_primary
+        );
+
+        if (existingPrimary) {
+          memberError.is_primary = `Only one primary contact allowed per role.`;
+          isValid = false;
+        }
       }
 
       memberErrors[index] = memberError;
@@ -400,7 +455,9 @@ const CaseTeam = () => {
           originalMember.user_name !== member.user_name ||
           originalMember.user_role !== member.user_role ||
           originalMember.start_date !== member.start_date ||
-          originalMember.end_date !== member.end_date;
+          originalMember.end_date !== member.end_date ||
+          originalMember.is_primary !== member.is_primary ||
+          originalMember.status_rid !== member.status_rid;
 
         actionType = hasChanges ? 'edit' : 'add';
         caseTeamRid = originalMember.rid;
@@ -412,6 +469,8 @@ const CaseTeam = () => {
         role_rid: roleOption?.rid || '',
         effective_from: member.start_date,
         effective_to: member.end_date,
+        is_primary: member.is_primary || false,
+        status_rid: member.status_rid || '',
         action_type: actionType,
       };
     });
@@ -439,6 +498,8 @@ const CaseTeam = () => {
         role_rid: roleOption?.rid || '',
         effective_from: member.start_date,
         effective_to: member.end_date,
+        is_primary: member.is_primary || false,
+        status_rid: member.status_rid || '',
         action_type: 'delete' as const,
       };
     });
@@ -811,22 +872,53 @@ const CaseTeam = () => {
                                   <div className='p-1 flex justify-center items-center'>
                                     <Checkbox
                                       checked={member.is_primary || false}
-                                      onChange={(e) =>
+                                      onChange={(e) => {
+                                        const isChecking = e.target.checked;
+
+                                        // Check if trying to set primary when another user in same role is already primary
+                                        if (isChecking && member.user_role) {
+                                          const existingPrimary =
+                                            formData.team_members.find(
+                                              (m, i) =>
+                                                i !== index &&
+                                                m.user_role ===
+                                                  member.user_role &&
+                                                m.user_role !== '' &&
+                                                m.is_primary
+                                            );
+
+                                          if (existingPrimary) {
+                                            // Set error and don't update the checkbox
+                                            setErrors((prev) => {
+                                              const newMemberErrors = [
+                                                ...(prev.team_members || []),
+                                              ];
+                                              if (!newMemberErrors[index]) {
+                                                newMemberErrors[index] = {};
+                                              }
+                                              newMemberErrors[index] = {
+                                                ...newMemberErrors[index],
+                                                is_primary:
+                                                  'Only one primary contact allowed per role.',
+                                              };
+                                              return {
+                                                ...prev,
+                                                team_members: newMemberErrors,
+                                              };
+                                            });
+                                            return; // Don't update the checkbox state
+                                          }
+                                        }
+
+                                        // If validation passes or unchecking, update normally
                                         handleTeamMemberChange(
                                           index,
                                           'is_primary',
-                                          e.target.checked
-                                        )
-                                      }
+                                          isChecking
+                                        );
+                                      }}
                                       disabled={
-                                        isDisabled || 
-                                        !isCaseTeamEditable || 
-                                        (!member.is_primary && formData.team_members.some((m, i) => 
-                                          i !== index && 
-                                          m.user_role === member.user_role && 
-                                          m.user_role !== '' && 
-                                          m.is_primary
-                                        ))
+                                        isDisabled || !isCaseTeamEditable
                                       }
                                       size='small'
                                       sx={{
@@ -847,13 +939,54 @@ const CaseTeam = () => {
                                   <div className='p-1'>
                                     <Select
                                       value={member.status || ''}
-                                      onChange={(e) =>
-                                        handleTeamMemberChange(
-                                          index,
-                                          'status',
-                                          e.target.value
-                                        )
-                                      }
+                                      onChange={(e) => {
+                                        const selectedStatusName =
+                                          e.target.value;
+                                        const selectedStatus =
+                                          statusOptionsQuery.data?.data?.status?.find(
+                                            (s: {
+                                              rid: string;
+                                              status_name: string;
+                                            }) =>
+                                              s.status_name ===
+                                              selectedStatusName
+                                          );
+
+                                        // Update both status and status_rid
+                                        setFormData((prev) => {
+                                          const updatedMembers = [
+                                            ...prev.team_members,
+                                          ];
+                                          updatedMembers[index] = {
+                                            ...updatedMembers[index],
+                                            status: selectedStatusName,
+                                            status_rid:
+                                              selectedStatus?.rid || '',
+                                          };
+                                          return {
+                                            ...prev,
+                                            team_members: updatedMembers,
+                                          };
+                                        });
+
+                                        // Clear status error when a status is selected
+                                        setErrors((prev) => {
+                                          const newMemberErrors = [
+                                            ...(prev.team_members || []),
+                                          ];
+                                          if (!newMemberErrors[index]) {
+                                            newMemberErrors[index] = {};
+                                          }
+                                          newMemberErrors[index] = {
+                                            ...newMemberErrors[index],
+                                            status: undefined,
+                                          };
+                                          return {
+                                            ...prev,
+                                            team_members: newMemberErrors,
+                                          };
+                                        });
+                                      }}
                                       disabled={
                                         isDisabled || !isCaseTeamEditable
                                       }

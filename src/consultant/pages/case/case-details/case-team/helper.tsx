@@ -13,6 +13,8 @@ export interface CaseTeamMemberErrors {
   user_role?: string;
   start_date?: string;
   end_date?: string;
+  is_primary?: string;
+  status?: string;
 }
 
 export interface CaseTeamTableColumn {
