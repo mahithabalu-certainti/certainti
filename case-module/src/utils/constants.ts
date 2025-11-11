@@ -963,8 +963,8 @@ export const rawQueries = {
   },
   fetchCaseById(schemaName: string) {
     return `
-    SELECT rid,r_number,resource_rid
-    FROM "${schemaName}".case
+    SELECT rid,r_number,case_name,account_rid ,fiscal_year
+    FROM "${schemaName}".cases
     WHERE rid = :caseId
     `;
   },
@@ -979,6 +979,9 @@ export const rawQueries = {
   const ridsList = statusRids.map(rid => `'${rid}'`).join(",");
   return `SELECT rid, status_name FROM ${schemaName}.checklist_status WHERE rid IN (${ridsList})`;
   },
+  fetchCaseInfo(schemaName: string, caseRid: string) {
+    return `SELECT rid, r_number, case_name, account_rid, fiscal_year FROM ${schemaName}.cases WHERE rid = '${caseRid}' LIMIT 1`;
+  }
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
 const keyContactRole = {

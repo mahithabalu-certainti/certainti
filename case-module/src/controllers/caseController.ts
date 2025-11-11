@@ -1968,7 +1968,7 @@ async function exportAllChecklists(req: Request, res: Response): Promise<void> {
     const checklists = await caseService.getAllChecklists(userId,value.attachmentLevel,value.entityId,value.accountRid,value.page,value.limit,value.search,value.filters,value.sortBy,value.sortOrder,value.fiscalYear,"list", {});
     const fields = await caseService.getAllowedExportFields(
       userId,
-      "checklist_view_edit"
+      "checklists_view_edit"
     );
     const allowedFieldSet = new Set<string>();
     for (const field of fields) {

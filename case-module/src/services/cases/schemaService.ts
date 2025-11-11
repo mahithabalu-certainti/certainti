@@ -2751,7 +2751,8 @@ class CaseSchemaService {
 
  async fetchChecklistDetailsById(
     checklistId: string,
-    accountNumber: string
+    accountNumber: string,
+    accountRid: string
   ) {
      const { CheckList } = await this.caseModelService.getModels(
       accountNumber
@@ -2759,6 +2760,10 @@ class CaseSchemaService {
     if(!this.orgDbSequelize)
     {
       this.orgDbSequelize = await this.caseModelService.getSequelize();
+    }
+    if(!this.mainDbSequelize)
+    {
+      this.mainDbSequelize = await this.caseModelService.getMainSequelize();
     }
     const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(/\D/g, "")}`;
     const [checklistDetails] : any[] = await this.orgDbSequelize.query(fetchCaseDetails(schemaName,checklistId),{ type: 'SELECT' });
@@ -2775,11 +2780,35 @@ class CaseSchemaService {
        checklistDetails.created_by ?? "",
        checklistDetails.modified_by ?? ""
      )
+
+
+    const [accountInfo]: any[] = await this.mainDbSequelize.query(
+      rawQueries.fetchAccountAndCountryDetails(accountRid),
+      {
+        type: "SELECT",
+      }
+    );
+    let attached_to = checklistDetails?.attached_to ?? "";
+    if(checklistDetails?.attach_to === 'case' ){
+          const [caseInfo]: any[] = await this.mainDbSequelize.query(
+          rawQueries.fetchCaseInfo(accountNumber, accountRid),
+          {
+            type: "SELECT",
+          }
+        );
+       // Compose case name: accountName-countryCode-fiscalYear-caseName
+        const accountName = accountInfo.account_name || "";
+        const countryCode = accountInfo.country_code || "";
+        const fiscalYear =  caseInfo.fiscal_year || "";
+        const originalCaseName = caseInfo.case_name || "";
+        const composedCaseName = `${accountName}-${countryCode}-${fiscalYear}-${originalCaseName}`;
+        attached_to = composedCaseName;
+    }
   
     const response: any = {
       attach_to:checklistDetails?.attach_to ?? "",
       attachment_level: checklistDetails?.attachment_level ?? "",
-      attached_to: checklistDetails?.attached_to ?? "",
+      attached_to: attached_to ?? "",
       checklist_rid: checklistDetails?.rid,
       checklist_name: checklistDetails?.checklist_name ?? "",
       checklist_description: checklistDetails?.checklist_description ?? "",
@@ -3254,18 +3283,34 @@ async fetchAccountById(accountId: string) {
   }
 async fetchCaseById(schemaNumber: string, caseId: string) {
     try {
+      const schemaName = `${MAIN_SCHEMA_NAME}_${schemaNumber.replace(/\D/g, "")}`;
       if (!this.orgDbSequelize) {
-        this.orgDbSequelize = await this.caseModelService.getMainSequelize();
+        this.orgDbSequelize = await this.caseModelService.getSequelize();
       }
-      const [caseData]: any[] = await this.orgDbSequelize.query(
-        rawQueries.fetchCaseById(schemaNumber),
+       if (!this.mainDbSequelize) {
+        this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+      }
+      let [caseData]: any[] = await this.orgDbSequelize.query(
+        rawQueries.fetchCaseById(schemaName),
         {
-          replacements: { rid: caseId },
+          replacements: { caseId },
           type: "SELECT",
         }
       );
-
-      return caseData;
+      const [accountInfo]: any[] = await this.mainDbSequelize.query(
+        rawQueries.fetchAccountAndCountryDetails(caseData.account_rid),
+        {
+          type: "SELECT",
+        }
+      );
+  // Compose case name: accountName-countryCode-fiscalYear-caseName
+  const accountName = accountInfo.account_name || "";
+  const countryCode = accountInfo.country_code || "";
+  const fiscalYear = caseData.fiscal_year || "";
+  const originalCaseName = caseData.case_name || "";
+  const composedCaseName = `${accountName}-${countryCode}-${fiscalYear}-${originalCaseName}`;
+  caseData.case_name = composedCaseName;
+  return caseData;
     } catch (err) {
       errorLog("Error fetching Cases: " + (err as Error).message);
       throw new Error("Error fetching Cases: " + (err as Error).message);
