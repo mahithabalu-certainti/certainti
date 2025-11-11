@@ -889,6 +889,7 @@ return query;
                   filterQueryArray.push(`ct.${validKey} IS NULL`)
                 if(cond === 'in')
                   filterQueryArray.push(`ct.${validKey} IN (${values.map((d : any) => `'${d}'`).join(',')})`)
+                break;
               }
               case "date" : {
                 if(cond === 'equals') 
@@ -901,7 +902,10 @@ return query;
                   filterQueryArray.push(`ct.${validKey} IS NULL`)
                 if(cond === 'between')
                   filterQueryArray.push(`ct.${validKey} BETWEEN ${values.map((d : any) => `'${d}'`).join(' AND ')}`)
+                break;
               }
+              default : 
+              break;
             }
           }
         }
@@ -916,17 +920,15 @@ return query;
     } else {
       combinedQueryString = ` `
     }
-
     let query =
     `
     WITH fetch_case_task AS (
     SELECT 
-    ct.rid, ct.task_name, ctm.user_rid AS assigned_to, 
+    ct.rid, ct.task_name, ct.assigned_to, 
     ct.effective_start_datetime, 
     ct.effective_end_datetime, ct.task_status_rid
     FROM
-    ${schemaName}.case_task ct 
-    LEFT JOIN ${schemaName}.case_team ctm ON ctm.role_rid = ct.case_team_member_role_rid AND ctm.case_rid = '${caseRid}' AND ctm.account_rid = '${accountRid}'
+    ${schemaName}.case_task ct
     WHERE
     ct.case_rid = '${caseRid}'
     AND
