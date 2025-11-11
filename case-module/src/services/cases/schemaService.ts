@@ -66,6 +66,7 @@ import { CheckList, setupCheckListSequence } from "../../models/checkListModel";
 import { CheckListItem } from "../../models/checkListItemModel";
 import { CaseTask, setupCaseTaskSequence } from "../../models/caseTaskModel";
 import { CaseMilestone, setupCaseMilestoneSequence } from "../../models/caseMilestoneModel";
+import { setupTaskCollaboratorsSequence, TaskCollaborators } from "../../models/taskCollaboratorsModel";
 
 class CaseSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -181,9 +182,11 @@ class CaseSchemaService {
       // Add timeline entry for case creation
       if (casecreationResponse && casecreationResponse.rid) {
         const fetchTaskTypeRid = await this.getTaskType();
+        const fetchTaskStatusRid = await this.getTaskStatus()
         if(fetchTaskTypeRid) {
           await this.cloneDefaultMilestoneTaskTemplate(casecreationResponse.account_rid, casecreationResponse.rid,
-          casecreationResponse.filing_type_rid, fetchTaskTypeRid.rid, accountNumber, transaction, casecreationResponse.case_startdate)
+          casecreationResponse.filing_type_rid, fetchTaskTypeRid.rid, accountNumber, transaction, casecreationResponse.case_startdate,
+        fetchTaskStatusRid?.rid!)
         }
         await this.addCaseManagementTimeline(
           accountNumber,
@@ -406,6 +409,10 @@ class CaseSchemaService {
         orgDbSequlize,
         schemaName
       )
+      const TaskCollaboratorsModel = TaskCollaborators.initialise(
+        orgDbSequlize,
+        schemaName
+      )
 
       await CaseModel.sync({ force: false });
       await setupCaseSequence(orgDbSequlize, schemaName);
@@ -425,6 +432,8 @@ class CaseSchemaService {
       await setupCaseMilestoneSequence(orgDbSequlize, schemaName);
       await CaseTaskModel.sync({force : false});
       await setupCaseTaskSequence(orgDbSequlize, schemaName);
+      await TaskCollaboratorsModel.sync({force : false});
+      await setupTaskCollaboratorsSequence(orgDbSequlize, schemaName)
     } catch (err) {
       errorLog("Error creating case tables", (err as Error).message);
       console.log(err)
@@ -3783,7 +3792,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         throw new Error("Error processing checklist items: " + error);
       }
     }
-  async cloneDefaultMilestoneTaskTemplate (accountRid : string, caseRid : string, filing_type_rid : string, taskTypeRid : string, accountNumber : string, transaction : Transaction, caseStartDate : Date) {
+  async cloneDefaultMilestoneTaskTemplate (accountRid : string, caseRid : string, filing_type_rid : string, taskTypeRid : string, accountNumber : string, transaction : Transaction, caseStartDate : Date, taskStatusRid : string) {
     const {CaseTask, CaseMilestone} = await this.caseModelService.getModels(accountNumber);
     if (!this.mainDbSequelize) {
       this.mainDbSequelize = await this.caseModelService.getMainSequelize();
@@ -3893,7 +3902,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             effective_start_datetime : mapValueHolderForStart,
             effective_end_datetime : mapValueHolderForEnd,
             account_rid : accountRid,
-            case_rid : caseRid
+            case_rid : caseRid,
+            task_status_rid : taskStatusRid
           }
         })
         
@@ -3989,6 +3999,14 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       this.mainDbSequelize = await this.caseModelService.getMainSequelize();
     }
     const [result] = await this.mainDbSequelize.query<TaskTypeResponse>(rawQueries.getSpecificTaskType(), {type : QueryTypes.SELECT});
+    if(result) return result
+    else return null;
+  }
+  async getTaskStatus () {
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+    }
+    const [result] = await this.mainDbSequelize.query<TaskTypeResponse>(rawQueries.getSpecificTaskStatus(), {type : QueryTypes.SELECT});
     if(result) return result
     else return null;
   }

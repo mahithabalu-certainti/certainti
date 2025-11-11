@@ -16,6 +16,7 @@ import { CheckList } from "../models/checkListModel";
 import { CheckListItem } from "../models/checkListItemModel";
 import { CaseMilestone } from "../models/caseMilestoneModel";
 import { CaseTask } from "../models/caseTaskModel";
+import { TaskCollaborators } from "../models/taskCollaboratorsModel";
 
 export class CaseModelService {
   orgDbSequelize: Sequelize | null = null;
@@ -31,6 +32,7 @@ export class CaseModelService {
       TaskTemplate: ReturnType<typeof TaskTemplate.initialize>
       CaseMilestone: ReturnType<typeof CaseMilestone.initialise>
       CaseTask : ReturnType<typeof CaseTask.initialise>
+      TaskCollaborators : ReturnType<typeof TaskCollaborators.initialise>
     }
   > = new Map();
 
@@ -72,6 +74,7 @@ export class CaseModelService {
     const CheckListItemModel = CheckListItem.initialize(sequelize, schemaName);
     const CaseMilestoneModel = CaseMilestone.initialise(sequelize, schemaName);
     const CaseTaskModel = CaseTask.initialise(sequelize, schemaName)
+    const TaskCollaboratorsModel = TaskCollaborators.initialise(sequelize, schemaName)
     const models = {
       Case: CaseModel,
       CaseSummary: CaseSummaryModel,
@@ -86,7 +89,8 @@ export class CaseModelService {
       CheckListItem: CheckListItemModel,
       Jurisdiction: JurisdictionModel,
       CaseMilestone: CaseMilestoneModel,
-      CaseTask : CaseTaskModel
+      CaseTask : CaseTaskModel,
+      TaskCollaborators : TaskCollaboratorsModel
     };
 
     this.modelCache.set(schemaName, models);
