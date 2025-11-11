@@ -249,7 +249,7 @@ const ResourceChecklistList: React.FC<ResourceChecklistListProps> = ({
 
   const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
     const previousChecklist = [...checklistList];
-    const rowData = checklistList.find((checklist) => checklist.rid === rowId);
+    const rowData = checklistList.find((item) => item.rid === rowId);
     if (!rowData) {
       return;
     }
@@ -267,8 +267,8 @@ const ResourceChecklistList: React.FC<ResourceChecklistListProps> = ({
       {
         rid: rowId,
         account_rid: rowData?.account_rid,
-        entityId: rowData?.attach_to,
-        entityLevel: rowData?.attachment_level,
+        entity_id: rowData?.attach_to,
+        attachement_level: rowData?.attachment_level,
       }
     );
 
@@ -276,26 +276,20 @@ const ResourceChecklistList: React.FC<ResourceChecklistListProps> = ({
       const res = await updateChecklist({
         variables: { data: updateData },
       });
-      const result = res.data?.updateChecklistInline;
+      const result = res.data?.updateCheckListInline;
       if (result?.statusCode === 200 && result.data) {
-        const updateChecklist = result.data;
+        const updatedItem = result.data;
         setChecklistList((prev) =>
-          prev.map((checklist) => {
-            if (checklist.rid === updateChecklist.rid) {
-              return {
-                ...checklist,
-                ...updateChecklist,
-              };
-            }
-            return checklist;
-          })
+          prev.map((item) =>
+            item.rid === updatedItem.rid ? { ...item, ...updatedItem } : item
+          )
         );
       } else {
-        errorToast(result?.statusMessage || 'Failed to update filed');
+        errorToast(result?.statusMessage || 'Failed to update field');
         setChecklistList(previousChecklist);
       }
     } catch (error) {
-      errorToast((error as Error)?.message || 'Failed to update filed');
+      errorToast((error as Error)?.message || 'Failed to update field');
       setChecklistList(previousChecklist);
     }
   };

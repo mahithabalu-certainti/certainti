@@ -340,8 +340,8 @@ const Checklist: React.FC<ChecklistProps> = ({
       {
         rid: rowId,
         account_rid: rowData?.account_rid,
-        entityId: rowData?.attach_to,
-        entityLevel: rowData?.attachment_level,
+        entity_id: rowData?.attach_to,
+        attachement_level: rowData?.attachment_level,
       }
     );
 
@@ -349,7 +349,7 @@ const Checklist: React.FC<ChecklistProps> = ({
       const res = await updateChecklist({
         variables: { data: updateData },
       });
-      const result = res.data?.updateChecklistInline;
+      const result = res.data?.updateCheckListInline;
       if (result?.statusCode === 200 && result.data) {
         const updatedItem = result.data;
         setChecklistList((prev) =>

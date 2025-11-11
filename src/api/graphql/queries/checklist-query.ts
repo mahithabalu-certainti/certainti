@@ -9,19 +9,22 @@ export const CHECKLIST_UPDATE = gql`
       data {
         rid
         r_number
+        checklist_name
+        checklist_description
+        checklist_template_rid
         created_datetime
         created_by
         modified_datetime
         modified_by
         account_rid
-        checklist_name
         attach_to
         attachment_level
         fiscal_year
-        descriptions
-        attached_to
+        assigned_to
+        status_rid
         created_by_name
         modified_by_name
+        attached_to
       }
     }
   }
