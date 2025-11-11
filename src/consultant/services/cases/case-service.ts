@@ -11,6 +11,7 @@ import {
   CaseListExportParams,
   CaseListParams,
   CaseListResponse,
+  CaseOwnersResponse,
   CaseStatusResponse,
   ExportCaseListResponse,
 } from '../../types/cases';
@@ -245,5 +246,29 @@ export const useGetCaseStatuses = () => {
     gcTime: Infinity,
     refetchOnMount: false,
     refetchOnReconnect: false,
+  });
+};
+
+// Case owners list
+export const getCaseOwnersUrl = (): string => '/api/cases/caseOwners';
+
+export const fetchCaseOwners = async (): Promise<CaseOwnersResponse> => {
+  try {
+    const { data } =
+      await caseServiceApi.get<CaseOwnersResponse>(getCaseOwnersUrl());
+    return data;
+  } catch (error) {
+    console.error('Error fetching case owners:', error);
+    throw error;
+  }
+};
+
+export const useGetCaseOwners = () => {
+  return useQuery<CaseOwnersResponse, Error>({
+    queryKey: ['case-owners'],
+    queryFn: fetchCaseOwners,
+    retry: 0,
+    gcTime: 0,
+    enabled: true,
   });
 };

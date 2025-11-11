@@ -236,3 +236,17 @@ export interface CaseStatusResponse {
     caseStatus: CaseStatus[];
   };
 }
+
+export interface CaseOwner {
+  rid: string;
+  name: string;
+}
+
+export interface CaseOwnersResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    caseOwners: CaseOwner[];
+  };
+}
