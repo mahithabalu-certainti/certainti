@@ -12,7 +12,7 @@ import { generateCaseNamePrefixValue } from '../../../../case/helper';
 
 export const getCaseListColumns = (
   handleViewCaseDetails: (caseItem: CaseList) => void,
-  userListOptions: { value: string; label: string }[],
+  caseOwnersOptions: { value: string; label: string }[],
   caseFilingTypesOptions: { value: string; label: string }[],
   accountInActive: boolean,
   accountData: {
@@ -144,7 +144,7 @@ export const getCaseListColumns = (
         type: 'select',
         required: true,
         placeholder: 'Choose Case Owner',
-        options: userListOptions,
+        options: caseOwnersOptions,
         getFieldData: (rowData: DependencyRowData) => {
           return String(rowData.case_owner_rid || '');
         },
