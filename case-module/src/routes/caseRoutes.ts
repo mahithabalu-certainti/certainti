@@ -147,6 +147,11 @@ routes.put(
   '/task/update',
   checkUserStatusMiddleware("NA"),
   controller.caseController.updateTask
+);
+routes.post(
+  "/task/list",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.fetchCaseTaskList
 )
 
 export default routes;

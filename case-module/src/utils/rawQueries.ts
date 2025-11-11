@@ -1,4 +1,4 @@
-import { MAIN_SCHEMA_NAME, validColumnsForFilters, validColumnsForSortFilters, validFilterColumnTypes } from "./constants";
+import { filterColumnsCaseTask, filterColumnsCaseTaskTypes, MAIN_SCHEMA_NAME, sortByColumnsCaseTask, validColumnsForFilters, validColumnsForSortFilters, validFilterColumnTypes } from "./constants";
 import {
   FilterType,
   validColumns,
@@ -847,3 +847,102 @@ return query;
     `
   }
 
+  export const fetchCaseSpecificTaskQuery = (page : number, limit : number, search : string, sort : string, sortBy : string, filter : FilterType, doSorting : boolean, caseRid : string, accountRid : string, schemaName : string) => {
+    let searchValue : string = ``
+    let sortValue : string = ``
+    let filterQueryArray : string[] = []
+    let combinedQueryString : string = ``
+    let andOperator : string = ``
+    let validKey : string = ``
+
+    let offset = (page - 1) * limit;
+    let pagination = `LIMIT ${limit} OFFSET ${offset}`
+
+    if(search) searchValue = `%${search}%`
+    else searchValue = `%%`
+
+    if(doSorting) {
+      if(sort.includes(sortByColumnsCaseTask[sort])) {
+        sortValue = `ORDER BY ct.${sortByColumnsCaseTask[sort]} ${sortBy}`
+      } else {
+        sortValue = `ORDER BY ct.task_name ASC`
+      }
+    } else {
+      sortValue = ` `
+    }
+
+    if(Object.keys(filter).length > 0) {
+      andOperator = ` AND `
+      for(let [key, conditions] of Object.entries(filter)) {
+        if(Object.keys(filterColumnsCaseTask).includes(key)) {
+          validKey = key;
+          for(let [cond, values] of Object.entries(conditions)) {
+            switch (filterColumnsCaseTaskTypes[validKey]) {
+              case "string" : {
+                if(cond === 'equals') 
+                  filterQueryArray.push(`LOWER(ct.${validKey}) = '${values.toLowerCase()}'`)
+                if(cond === 'not_equals')
+                  filterQueryArray.push(`LOWER(ct.${validKey}) != '${values.toLowerCase()}'`)
+                if(cond === 'contains')
+                  filterQueryArray.push(`ct.${validKey} ILIKE '%${values}%'`)
+                if(cond === 'is_empty') 
+                  filterQueryArray.push(`ct.${validKey} IS NULL`)
+                if(cond === 'in')
+                  filterQueryArray.push(`ct.${validKey} IN (${values.map((d : any) => `'${d}'`).join(',')})`)
+                break;
+              }
+              case "date" : {
+                if(cond === 'equals') 
+                  filterQueryArray.push(`ct.${validKey} = '${values}'`)
+                if(cond === 'before')
+                  filterQueryArray.push(`ct.${validKey} < '${values}'`)
+                if(cond === 'after')
+                  filterQueryArray.push(`ct.${validKey} > '${values}'`)
+                if(cond === 'is_empty')
+                  filterQueryArray.push(`ct.${validKey} IS NULL`)
+                if(cond === 'between')
+                  filterQueryArray.push(`ct.${validKey} BETWEEN ${values.map((d : any) => `'${d}'`).join(' AND ')}`)
+                break;
+              }
+              default : 
+              break;
+            }
+          }
+        }
+      }
+    } else {
+      filterQueryArray = []
+      andOperator = ` `
+    }
+
+    if(filterQueryArray.length > 0) {
+      combinedQueryString = filterQueryArray.join(' AND ')
+    } else {
+      combinedQueryString = ` `
+    }
+    let query =
+    `
+    WITH fetch_case_task AS (
+    SELECT 
+    ct.rid, ct.task_name, ct.assigned_to, 
+    ct.effective_start_datetime, 
+    ct.effective_end_datetime, ct.task_status_rid
+    FROM
+    ${schemaName}.case_task ct
+    WHERE
+    ct.case_rid = '${caseRid}'
+    AND
+    ct.account_rid = '${accountRid}'
+    AND
+    ct.task_name ILIKE '${searchValue}'
+    ${andOperator}
+    ${combinedQueryString}
+    ${sortValue}),
+    count_results AS (
+    SELECT f.*, COUNT(f.rid) OVER() AS total_result FROM fetch_case_task f
+    )
+
+    SELECT c.* FROM count_results c ${pagination}
+    `
+    return query;
+  }

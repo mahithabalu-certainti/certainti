@@ -2072,10 +2072,10 @@ export const fetchResCodeWithPrjResRole = (
                 filterQueryConditions.push(`q.${validColumns} < ${values}`)
                 break;
               case "between" :
-                filterQueryConditions.push(`q.${validColumns} BETWEEN ${values.map((d : any) => `${d}`).join(',')}`)
+                filterQueryConditions.push(`q.${validColumns} BETWEEN ${values.map((d : any) => `${d}`).join(' AND ')}`)
                 break;
               case "is_empty" :
-                filterQueryConditions.push(`q.${validColumns} IS EMPTY`)
+                filterQueryConditions.push(`q.${validColumns} IS NULL`)
                 break;
               default:
                 break;
@@ -2086,16 +2086,16 @@ export const fetchResCodeWithPrjResRole = (
                 filterQueryConditions.push(`DATE(q.${validColumns}) = '${values}'`)
                 break;
               case "after" :
-                filterQueryConditions.push(`q.${validColumns} > ${values}`)
+                filterQueryConditions.push(`q.${validColumns} > '${values}'`)
                 break;
               case "before" :
-                filterQueryConditions.push(`q.${validColumns} < ${values}`)
+                filterQueryConditions.push(`q.${validColumns} < '${values}'`)
                 break;
               case "between" :
                 filterQueryConditions.push(`DATE(q.${validColumns}) BETWEEN ${values.map((d : any) => `'${d}'`).join(' AND ')}`)
                 break;
               case "is_empty" :
-                filterQueryConditions.push(`DATE(q.${validColumns}) IS EMPTY`)
+                filterQueryConditions.push(`DATE(q.${validColumns}) IS NULL`)
                 break;
               default:
                 break;
@@ -2108,7 +2108,7 @@ export const fetchResCodeWithPrjResRole = (
     }
     let finalListOfCondtions;
     if(filterQueryConditions.length > 0) {
-      finalListOfCondtions = filterQueryConditions.map((d : any) => d).join('AND')
+      finalListOfCondtions = filterQueryConditions.map((d : any) => d).join(' AND ')
     } else {
       finalListOfCondtions = ``
     }
@@ -2125,8 +2125,7 @@ export const fetchResCodeWithPrjResRole = (
       q.account_rid = '${accountRid}'
       AND
       q.project_fiscal_rid = '${projectFiscalRid}'
-      ${and}
-      ${finalListOfCondtions}
+      ${finalListOfCondtions ? ` AND ${finalListOfCondtions}` : ''}
       ${sortValue}
     ),
     paginated_result AS (

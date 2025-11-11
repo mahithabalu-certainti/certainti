@@ -27,7 +27,9 @@ import { buildDatetimeFilterCondition, buildNumericFilterCondition, buildStringF
 import {
   assignProjectType,
   CaseHeadersColumns,
+  CaseTaskQueryType,
   CreateCaseTaskType,
+  FilterType,
   filterType,
   ICreateCases,
   ICreateCaseTeam,
@@ -43,6 +45,7 @@ import { Case, setupCaseSequence } from "../../models/caseModel";
 import {
   fetchCaseDetails,
   fetchCasesHeadersDatas,
+  fetchCaseSpecificTaskQuery,
   fetchMilestoneTaskTemplate,
   fetchProjectsForCases,
   listAllCasesSummaryQuery,
@@ -4162,6 +4165,17 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     })
     if(checkTaskExists) return checkTaskExists
     else return null
+  }
+  async fetchTaskForCases (page : number, limit : number, search : string, sort : string, sortBy : string, filter : FilterType, doSorting : boolean, caseRid : string, accountRid : string, schemaName : string) {
+    if(!this.orgDbSequelize) {
+      this.orgDbSequelize = await initOrgSequelize()
+    }
+    const result = await this.orgDbSequelize.query<CaseTaskQueryType>(fetchCaseSpecificTaskQuery(page, limit, search, sort, sortBy, filter, doSorting, caseRid, accountRid, schemaName), {type : QueryTypes.SELECT});
+    if(result.length > 0) {
+      return result;
+    } else {
+      return []
+    }
   }
 }
 
