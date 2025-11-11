@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   CaseTaskType,
   useGetCaseTaskList,
@@ -13,49 +13,77 @@ import {
   ListTableColumn,
   ShowHideTableColumn,
 } from '../../../../../../components/table/types';
+import {
+  ConfigAssignGroupsListParms,
+  ConfigAssignUserListParms,
+} from '../../../../../types';
+// import { useToast } from '../../../../../../hooks';
 
 interface CaseTaskProps {
-  refresh?: number;
+  reFetchData: number;
+  // setCount: (value: number) => void;
+  filterParams: ConfigAssignGroupsListParms | ConfigAssignUserListParms;
+  columnAnchorEl: HTMLButtonElement | null;
+  setColumnAnchorEl: React.Dispatch<
+    React.SetStateAction<HTMLButtonElement | null>
+  >;
   searchValue?: string;
 }
 
-const CaseTask: React.FC<CaseTaskProps> = ({ refresh, searchValue }) => {
-  const [currentPage, setCurrentPage] = useState<number>(0);
-  const [rowsPerPage, setRowsPerPage] = useState(100);
+const CaseTask: React.FC<CaseTaskProps> = ({
+  reFetchData,
+  // setCount,
+  filterParams,
+  columnAnchorEl,
+  setColumnAnchorEl,
+  searchValue,
+}) => {
+  // const { accountid } = useParams();
   const [searchParams] = useSearchParams();
-  const { accountid } = useParams();
   const caseId = searchParams.get('case_rid') || '';
-  const [columnAnchorEl, setColumnAnchorEl] =
-    React.useState<HTMLButtonElement | null>(null);
-
-  const isModalOpen = Boolean(columnAnchorEl);
-  // const handleColumnVisibility = (
-  //   event: React.MouseEvent<HTMLButtonElement>
-  // ) => {
-  //   setColumnAnchorEl(event.currentTarget);
-  // };
+  // const { successToast, errorToast } = useToast();
+  const [tableParams, setTableParams] = useState({
+    sortBy: 'first_name',
+    sortOrder: 'ASC',
+    // entity_type: 'ACCOUNT',
+    page: filterParams.page + 1,
+    limit: 100,
+    search: searchValue,
+    filters: filterParams.filters,
+    case_rid: caseId,
+  });
 
   const { data, isLoading, isError } = useGetCaseTaskList(
-    {
-      page: currentPage + 1,
-      limit: rowsPerPage,
-      search: searchValue,
-      account_rid: accountid,
-      case_rid: caseId,
-    },
-    refresh
+    // accountid || '',
+    tableParams,
+    reFetchData
   );
+
+  useEffect(() => {
+    setTableParams((prev) => ({
+      ...prev,
+      page: 1,
+      filters: filterParams.filters,
+      search: searchValue,
+    }));
+  }, [filterParams.filters, searchValue]);
 
   const getRowId = (row: CaseTaskType) => row.rid;
   const caseTaskColumns = getCaseTaskListColumns();
 
-  const handleRowsPerPageChange = (newPageSize: number) => {
-    setRowsPerPage(newPageSize);
-    setCurrentPage(1);
+  const handlePageChange = (newPage: number) => {
+    setTableParams((prev) => ({
+      ...prev,
+      page: newPage + 1,
+    }));
   };
 
-  const handlePageChange = (newPage: number) => {
-    setCurrentPage(newPage);
+  const handleRowsPerPageChange = (newLimit: number) => {
+    setTableParams((prev) => ({
+      ...prev,
+      limit: newLimit,
+      page: 1,
+    }));
   };
 
   const RestrictedColumns = [
@@ -81,7 +109,7 @@ const CaseTask: React.FC<CaseTaskProps> = ({ refresh, searchValue }) => {
   const handlePopoverClose = () => {
     setColumnAnchorEl(null);
   };
-
+  const isModalOpen = Boolean(columnAnchorEl);
   const modalId = isModalOpen
     ? 'case-task-list-column-visibility-popover'
     : undefined;
@@ -116,8 +144,8 @@ const CaseTask: React.FC<CaseTaskProps> = ({ refresh, searchValue }) => {
           loadindRowCount={4}
           error={isError ? 'Failed to load data' : undefined}
           rowsPerPageOptions={[25, 50, 100]}
-          rowsPerPage={rowsPerPage}
-          currentPage={currentPage}
+          rowsPerPage={tableParams.limit}
+          currentPage={(tableParams.page ?? 1) - 1}
           totalItems={data?.data.totalRecords || 0}
           onPageChange={handlePageChange}
           onRowsPerPageChange={handleRowsPerPageChange}

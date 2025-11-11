@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { CaseIcon } from '../../../../../assets';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
@@ -33,6 +33,14 @@ const WorkBreakDown = () => {
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, string | number | boolean | string[]>
   >({});
+  const [showFilter, setShowFilter] = useState<boolean>(false);
+  const [currentPage, setCurrentPage] = useState<number>(0);
+  const [reFetchData, setReFetchData] = useState<number>(Date.now());
+  // const [count, setCount] = useState<number>(0);
+  const [columnAnchorEl, setColumnAnchorEl] =
+    React.useState<HTMLButtonElement | null>(null);
+  const [seachText, setSearchText] = useState('');
+  const [resetSearch, setResetSearch] = useState(false);
 
   useEffect(() => {
     if (
@@ -45,16 +53,13 @@ const WorkBreakDown = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  // const headerButtons = [
-  //   {
-  //     label: 'Edit',
-  //     variant: 'contained' as const,
-  //     onClick: () => console.log('clicked'),
-  //     hide: false,
-  //     disabled: false,
-  //     loading: false,
-  //   },
-  // ];
+  const handleFilter = () => {
+    setShowFilter(!showFilter);
+  };
+
+  const handleSearchReset = () => {
+    setResetSearch(false);
+  };
 
   const getTitleIcon = () => {
     return (
@@ -76,30 +81,57 @@ const WorkBreakDown = () => {
     navigate(`?${searchParams.toString()}`, { replace: true });
   };
 
+  const onRefreshClick = () => {
+    setReFetchData(Date.now());
+  };
+
+  const handleColumnVisibility = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setColumnAnchorEl(event.currentTarget);
+  };
+
+  const headerButtons = [
+    {
+      label: 'Show/Hide Fields',
+      variant: 'outlined' as const,
+      disabled: false,
+      onClick: handleColumnVisibility,
+      sx: { width: '125px', minWidth: '125px' },
+      hide: tabParam !== 'case_task',
+    },
+  ];
+
   return (
     <>
       <SectionTabPanel
         tabs={ConfigTabs}
         // filterMenu={filterFields}
-        filterVisibility={false}
-        showFilter={true}
+        filterVisibility={tabParam !== 'milestone'}
+        showFilter={showFilter}
         contextKey={`case`}
         appliedFilters={appliedFilters}
         setAppliedFilters={setAppliedFilters}
-        setCurrentPage={() => 0}
-        handleFilter={() => {}}
+        setCurrentPage={setCurrentPage}
+        handleFilter={handleFilter}
         handleSorting={() => {}}
         sortFilterCount={0}
         setSortFilterCount={() => {}}
-        showRefresh={false}
-        // onRefreshClick={onRefreshClick}
+        showRefresh={tabParam === 'case_task' ? true : false}
+        onRefreshClick={onRefreshClick}
         // hideTabPanel={hideSection}
+        showSearch={tabParam === 'case_task' ? true : false}
+        searchDisabled={false}
+        searchPlaceholder='Search'
+        onSearch={(text) => setSearchText(text)}
+        searchReset={resetSearch}
+        onSearchReset={handleSearchReset}
       />
       <SectionHeader
         title={'Action Items'}
         titleIcon={getTitleIcon()}
-        buttons={[]}
-        count={0}
+        buttons={headerButtons}
+        // count={count}
         showItemCount={false}
         hideSection={false}
       />
@@ -121,7 +153,21 @@ const WorkBreakDown = () => {
             isCreateTaskDisabled={true}
           />
         )}
-        {tabParam === 'case_task' && <CaseTask />}
+        {tabParam === 'case_task' && (
+          <CaseTask
+            reFetchData={reFetchData}
+            // setCount={setCount}
+            filterParams={{
+              page: currentPage,
+              filters: appliedFilters,
+              limit: 100,
+              entity_type: '',
+            }}
+            setColumnAnchorEl={setColumnAnchorEl}
+            columnAnchorEl={columnAnchorEl}
+            searchValue={seachText}
+          />
+        )}
       </div>
     </>
   );
