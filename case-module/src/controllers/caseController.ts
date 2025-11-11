@@ -2187,6 +2187,81 @@ async function updateTask (req : Request, res : Response) {
     return;
   }
 }
+
+/**
+ * Controller function to fetch the list of tasks associated with a case.
+ *
+ * This async function processes HTTP requests to retrieve all tasks linked to one or more cases by:
+ * - Validating that a valid user ID exists in the request headers
+ * - Extracting request body parameters (like filters or case identifiers)
+ * - Delegating task retrieval logic to the `caseService.taskListForCases` method
+ * - Returning the list of tasks or an empty array if no data is found
+ *
+ * Error handling:
+ * - Returns a `BAD_REQUEST` response if the user ID is missing
+ * - Catches and handles any runtime or service-level errors with a `FAILED` response
+ *
+ * @param {Request} req - Express request object containing case filters or parameters in the body and user ID in headers
+ * @param {Response} res - Express response object used to send the list of case tasks or an error message
+ * @returns {Promise<void>} - Resolves after sending the HTTP response
+ * @throws {Error} - Captures and handles service or validation errors gracefully
+ */
+async function fetchCaseTaskList (req : Request, res : Response) {
+  const methodName = "fetchCaseTaskList";
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const data = req.body;
+    const result = await caseService.taskListForCases(data);
+    if(result.statusCode == HttpStatus.SUCCESS) {
+      let total = parseInt(result.data[0]?.total_result!);
+      result.data.forEach((d : any) => {
+        delete d.total_result
+      })
+      const finalData = {
+        page : data.page,
+        limit : data.limit,
+        total_result : total,
+        data : result.data
+      }
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.userLevelTaskFetchSuccess,
+        data: finalData,
+      });      
+    } else {
+      const finalData = {
+        page : data.page,
+        limit : data.limit,
+        total_result : 0,
+        data : []
+      }
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.dataNotAvailable,
+        data: finalData,
+      });       
+    }   
+  } catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
 export default {
   createCases,
   updateCases,
@@ -2215,5 +2290,6 @@ export default {
   exportAllChecklists,
   createTask,
   updateTask,
-  getChecklistStatus
+  getChecklistStatus,
+  fetchCaseTaskList
 };

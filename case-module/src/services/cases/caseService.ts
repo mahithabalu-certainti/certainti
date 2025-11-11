@@ -1925,5 +1925,77 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       }
     }
 
+    async taskListForCases (data : any) {
+      const mainDb = await this.getMainDb();
+
+      let fetchParentRnumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+      let schemaName = rawQueries.fetchSchemaName(fetchParentRnumber[0][0].r_number);
+      let doSorting : boolean;
+      if(data.sort === 'assigned_to' || data.sort === 'task_status_name') doSorting = false 
+      else doSorting = true
+      const result = await this.caseSchemaService.fetchTaskForCases(data.page, data.limit, data.search, data.sort, data.sort_by, data.filter, doSorting, data.case_rid, data.account_rid, schemaName);
+      if(result.length > 0) {
+        let allFilteredUsers;
+        let allCaseTaskStatus;
+        const userIds = [...new Set(result.map((d : any) => d.assigned_to))];
+        const taskStatusIds = [...new Set(result.map((d : any) => d.task_status_rid))];
+        let fetchStatusQuery = rawQueries.getAllTaskStatus(taskStatusIds)
+        let fetchUserQuery = rawQueries.getAllUsers(userIds)
+        if(fetchStatusQuery) 
+          allCaseTaskStatus = await mainDb.query(fetchStatusQuery)
+        if(fetchUserQuery)
+          allFilteredUsers = await mainDb.query(fetchUserQuery)
+
+        const userMap : Map<string, string> = new Map(allFilteredUsers?.[0].map((d : any) => [d.rid, d.name]));
+        const taskStatusMap : Map<string, string> = new Map(allCaseTaskStatus?.[0].map((d : any) => [d.rid, d.task_status_name]));
+
+        let mapResult = result.map((d : any) => {
+          return {
+            ...d,
+            task_status_name : taskStatusMap.get(d.task_status_rid) || null,
+            assigned_to_name : userMap.get(d.assigned_to) || null
+          }
+        });
+        
+        if(data.sort === 'task_status_name' && data.sort_by === 'DESC') {
+          mapResult = mapResult.sort((b, a) => {
+            const taskNameA = a.task_status_name || ""
+            const taskNameB = b.task_status_name || ""
+            return taskNameB.localeCompare(taskNameA)
+          })
+        } 
+        else if(data.sort === 'task_status_name' && data.sort_by === 'ASC') {
+          mapResult = mapResult.sort((a, b) => {
+            const taskNameA = a.task_status_name || ""
+            const taskNameB = b.task_status_name || ""
+            return taskNameA.localeCompare(taskNameB)
+          })
+        }
+        else if(data.sort === 'assigned_to_name' && data.sort_by === 'DESC') {
+          mapResult = mapResult.sort((b, a) => {
+            const taskNameA = a.assigned_to_name || ""
+            const taskNameB = b.assigned_to_name || ""           
+            return taskNameB.localeCompare(taskNameA)
+          })
+        }
+        else if(data.sort === 'assigned_to_name' && data.sort_by === 'ASC') {
+          mapResult = mapResult.sort((a, b) => {
+            const taskNameA = a.assigned_to_name || ""
+            const taskNameB = b.assigned_to_name || ""             
+            return taskNameA.localeCompare(taskNameB)
+          })
+        }
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          data : mapResult
+        }
+      } else {
+        return {
+          statusCode : HttpStatus.NOT_FOUND,
+          data : []
+        }
+      }
+    }
+
 
 }

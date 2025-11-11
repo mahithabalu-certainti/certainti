@@ -456,3 +456,13 @@ export type UpdateCaseTaskType = {
   task_type_rid : string,
   task_description : string
 }
+
+export type CaseTaskQueryType = {
+  rid : string,
+  task_name : string,
+  assigned_to : string,
+  effective_start_datetime : Date,
+  effective_end_datetime : Date,
+  task_status_rid : string,
+  total_result : string
+}
