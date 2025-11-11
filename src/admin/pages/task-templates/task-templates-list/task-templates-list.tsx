@@ -1,4 +1,4 @@
-import React, { Suspense, useState } from 'react';
+import React, { Suspense, useMemo, useState } from 'react';
 import { FilterCondition } from '../../../types/manage-user';
 import {
   NewFilterIcon,
@@ -11,8 +11,17 @@ import { useNavigate } from 'react-router-dom';
 import { TaskTemplateListParams } from '../../../types';
 import { TASK_TEMPLATES_CREATE } from '../../../../routes';
 import { getTaskTemplateFilterFields } from './helpers';
-import { ExportTaskTemplateList } from '../../../service/task-template/task-template-service';
+import {
+  ExportTaskTemplateList,
+  useGetTaskAssigneRoleTypes,
+  useGetTaskCheckListTypes,
+  useGetTaskMilestoneTypes,
+  useGetTaskPriorityTypes,
+  useGetTaskTemplateTypes,
+} from '../../../service/task-template/task-template-service';
 import { TaskTemplateTable } from './table/task-templates-table';
+import { SelectOption } from '../../../../consultant/types';
+import { useGetStatus } from '../../../../common-service';
 
 const TaskTemplates: React.FC = () => {
   const navigate = useNavigate();
@@ -27,6 +36,7 @@ const TaskTemplates: React.FC = () => {
     sort: '',
     search: '',
   });
+  console.log('tableParams', tableParams);
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [refreshTrigger, setRefreshTrigger] = useState<number>();
   const [columnAnchorEl, setColumnAnchorEl] =
@@ -55,24 +65,24 @@ const TaskTemplates: React.FC = () => {
   const isFilterOpen = Boolean(anchorEl);
   const filterId = isFilterOpen ? 'task-template-filter-popover' : undefined;
 
-  const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
+  const handleSorting = (sort: string, sort_by: 'asc' | 'desc') => {
     const defaultSortField = 'r_number';
     const defaultSortOrder = 'ASC';
-    const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
+    const apiOrder = sort_by === 'asc' ? 'ASC' : 'DESC';
 
-    if (!sortBy) {
+    if (!sort) {
       setSortFilterCount(0);
       setTableParams((prev) => ({
         ...prev,
-        sortBy: defaultSortField,
-        sortOrder: defaultSortOrder,
+        sort: defaultSortField,
+        sort_by: defaultSortOrder,
       }));
     } else {
       setSortFilterCount(1);
       setTableParams((prev) => ({
         ...prev,
-        sortBy,
-        sortOrder: apiOrder,
+        sort,
+        sort_by: apiOrder,
       }));
     }
   };
@@ -88,8 +98,71 @@ const TaskTemplates: React.FC = () => {
         }),
     },
   ];
+  const statusOptions = useGetStatus();
+  const taskTemplateTypes = useGetTaskTemplateTypes();
+  const taskMilestoneTypes = useGetTaskMilestoneTypes();
+  const taskPrioritytTypes = useGetTaskPriorityTypes();
+  const taskCheckListTypes = useGetTaskCheckListTypes();
+  const taskAssigneRoleTypes = useGetTaskAssigneRoleTypes();
+  const taskTemplateTypesOptions = useMemo(() => {
+    return (
+      taskTemplateTypes?.data?.data?.map((item) => ({
+        value: item.rid,
+        label: item.task_type_name,
+      })) || []
+    );
+  }, [taskTemplateTypes]);
 
-  const taskTemplateFilterFields = getTaskTemplateFilterFields();
+  const taskMilestoneTypesOptions = useMemo(() => {
+    return (
+      taskMilestoneTypes?.data?.data?.map((item) => ({
+        value: item.rid,
+        label: item.milestone_name,
+      })) || []
+    );
+  }, [taskMilestoneTypes]);
+  const taskPrioritytTypesTypesOptions = useMemo(() => {
+    return (
+      taskPrioritytTypes?.data?.data?.map((item) => ({
+        value: item.rid,
+        label: item.priority_name,
+      })) || []
+    );
+  }, [taskPrioritytTypes]);
+  const taskCheckListTypesTypesOptions = useMemo(() => {
+    return (
+      taskCheckListTypes?.data?.data?.map((item) => ({
+        value: item.rid,
+        label: item.checklist_name,
+      })) || []
+    );
+  }, [taskCheckListTypes]);
+  const taskAssigneRoleTypesTypesOptions = useMemo(() => {
+    return (
+      taskAssigneRoleTypes?.data?.data?.caseRoles?.map((item) => ({
+        value: item.rid,
+        label: item.role_name,
+      })) || []
+    );
+  }, [taskAssigneRoleTypes]);
+  const memoizedStatus: SelectOption[] = useMemo(
+    () =>
+      statusOptions?.data?.data?.status.map((status) => ({
+        label: status?.status_name,
+        value: status?.rid,
+        desc: status?.status_description,
+      })) || [],
+    [statusOptions?.data?.data?.status]
+  );
+
+  const taskTemplateFilterFields = getTaskTemplateFilterFields(
+    taskTemplateTypesOptions,
+    taskMilestoneTypesOptions,
+    taskPrioritytTypesTypesOptions,
+    taskCheckListTypesTypesOptions,
+    taskAssigneRoleTypesTypesOptions,
+    memoizedStatus
+  );
 
   const handleColumnVisibility = (
     event: React.MouseEvent<HTMLButtonElement>

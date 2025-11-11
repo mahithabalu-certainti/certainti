@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { FilterCondition } from '../../../../types/manage-user';
 import {
   ActionItem,
-  ListTableColumn,
+  CellEditData,
+  FieldChangeValue,
   ShowHideTableColumn,
 } from '../../../../../components/table/types';
 import { EditIcon } from '../../../../../assets';
@@ -14,7 +15,19 @@ import { getTaskTemplateColumns } from './columns';
 import { TaskTemplateList, TaskTemplateListParams } from '../../../../types';
 import { generatePath, useNavigate } from 'react-router-dom';
 import { TASK_TEMPLATES_EDIT } from '../../../../../routes';
-import { useTaskTemplateList } from '../../../../service/task-template/task-template-service';
+import {
+  useGetTaskAssigneRoleTypes,
+  useGetTaskCheckListTypes,
+  useGetTaskMilestoneTypes,
+  useGetTaskPriorityTypes,
+  useTaskTemplateList,
+} from '../../../../service/task-template/task-template-service';
+import { TASK_TEMPLATE } from '../../../../../api/graphql/queries/task-template-query';
+import { useMutation } from '@apollo/client';
+import { caseClient } from '../../../../../api/graphql/clients/client';
+import { useToast } from '../../../../../hooks';
+import { useGetStatus } from '../../../../../common-service';
+import { SelectOption } from '../../../../../consultant/types';
 
 interface ITaskTemplateTableProps {
   appliedFilters: Record<string, FilterCondition>;
@@ -36,14 +49,18 @@ export const TaskTemplateTable: React.FC<ITaskTemplateTableProps> = ({
   setColumnAnchorEl,
 }) => {
   const navigate = useNavigate();
+  const { errorToast } = useToast();
   const [taskTemplateList, setTaskTemplateList] = useState<TaskTemplateList[]>(
     []
   );
-
+  const [updateTaskTemplate] = useMutation(TASK_TEMPLATE, {
+    client: caseClient,
+  });
   const { data, isLoading, isError } = useTaskTemplateList(
     { ...tableParams, filter: appliedFilters },
     refreshTrigger
   );
+
   const totalItems = data?.count || 0;
   useEffect(() => {
     if (data?.taskTemplates) {
@@ -60,12 +77,12 @@ export const TaskTemplateTable: React.FC<ITaskTemplateTableProps> = ({
     navigate(path);
   };
 
-  const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
-    const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
+  const handleSort = (sort: string, sort_by: 'asc' | 'desc') => {
+    const apiOrder = sort_by === 'asc' ? 'ASC' : 'DESC';
     setTableParams((prev) => ({
       ...prev,
-      sortBy,
-      sortOrder: apiOrder,
+      sort,
+      sort_by: apiOrder,
     }));
   };
 
@@ -83,17 +100,80 @@ export const TaskTemplateTable: React.FC<ITaskTemplateTableProps> = ({
       page: 1,
     }));
   };
+  const statusOptions = useGetStatus();
 
-  const templateColumns = useMemo(() => getTaskTemplateColumns(), []);
+  const taskMilestoneTypes = useGetTaskMilestoneTypes();
+  const taskPrioritytTypes = useGetTaskPriorityTypes();
+  const taskCheckListTypes = useGetTaskCheckListTypes();
+  const taskAssigneRoleTypes = useGetTaskAssigneRoleTypes();
 
-  const [visibleColumns, setVisibleColumns] = useState<
-    ListTableColumn<TaskTemplateList>[]
-  >(templateColumns.filter((col) => !col.hide));
+  const taskMilestoneTypesOptions = useMemo(() => {
+    return (
+      taskMilestoneTypes?.data?.data?.map((item) => ({
+        value: item.rid,
+        label: item.milestone_name,
+      })) || []
+    );
+  }, [taskMilestoneTypes]);
+  const taskPrioritytTypesTypesOptions = useMemo(() => {
+    return (
+      taskPrioritytTypes?.data?.data?.map((item) => ({
+        value: item.rid,
+        label: item.priority_name,
+      })) || []
+    );
+  }, [taskPrioritytTypes]);
+  const taskCheckListTypesTypesOptions = useMemo(() => {
+    return (
+      taskCheckListTypes?.data?.data?.map((item) => ({
+        value: item.rid,
+        label: item.checklist_name,
+      })) || []
+    );
+  }, [taskCheckListTypes]);
+  const taskAssigneRoleTypesTypesOptions = useMemo(() => {
+    return (
+      taskAssigneRoleTypes?.data?.data?.caseRoles?.map((item) => ({
+        value: item.rid,
+        label: item.role_name,
+      })) || []
+    );
+  }, [taskAssigneRoleTypes]);
+  const memoizedStatus: SelectOption[] = useMemo(
+    () =>
+      statusOptions?.data?.data?.status.map((status) => ({
+        label: status?.status_name,
+        value: status?.rid,
+        desc: status?.status_description,
+      })) || [],
+    [statusOptions?.data?.data?.status]
+  );
 
-  useEffect(() => {
-    const updatedColumns = templateColumns.filter((col) => !col.hide);
-    setVisibleColumns(updatedColumns);
-  }, [templateColumns]);
+  const taskColumns = getTaskTemplateColumns(
+    taskMilestoneTypesOptions,
+    taskPrioritytTypesTypesOptions,
+    taskCheckListTypesTypesOptions,
+    taskAssigneRoleTypesTypesOptions,
+    memoizedStatus
+  );
+  const [columnOrder, setColumnOrder] = useState(
+    taskColumns.map((col) => col.id)
+  );
+  const [columnVisibility, setColumnVisibility] = useState<
+    Record<string, boolean>
+  >(Object.fromEntries(taskColumns.map((col) => [col.id, !col.hide])));
+
+  const visibleColumns = columnOrder
+    .map((id) => taskColumns.find((col) => col.id === id)!)
+    .filter((col) => columnVisibility[col.id]);
+
+  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
+    const newVisibility = Object.fromEntries(
+      updatedColumns.map((col) => [col.id, !col.hide])
+    );
+    setColumnVisibility(newVisibility);
+    setColumnOrder(updatedColumns.map((col) => col.id));
+  };
 
   const actionButtons: ActionItem<TaskTemplateList>[] = [
     {
@@ -115,16 +195,50 @@ export const TaskTemplateTable: React.FC<ITaskTemplateTableProps> = ({
     },
   ];
 
-  const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
-    setVisibleColumns(
-      updatedColumns.filter(
-        (col) => !col.hide
-      ) as ListTableColumn<TaskTemplateList>[]
-    );
-  };
-
   const handlePopoverClose = () => {
     setColumnAnchorEl(null);
+  };
+
+  const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
+    const previousTaskTemplateList = [...taskTemplateList];
+
+    const matchedTask = taskTemplateList.find((task) => task.rid === rowId);
+    if (!matchedTask) {
+      return;
+    }
+
+    const updateData = updates.reduce<Record<string, FieldChangeValue>>(
+      (usr, item) => {
+        const key = item.editId || item.columnId;
+        usr[key] = item.value;
+        return usr;
+      },
+      {
+        rid: rowId,
+      }
+    );
+
+    try {
+      const res = await updateTaskTemplate({
+        variables: { data: updateData },
+      });
+      console.log('res', res);
+      const result = res.data?.UpdateTaskTemplateInline;
+      if (result?.statusCode === 200 && result.data) {
+        const updatedItem = result.data;
+        setTaskTemplateList((prev) =>
+          prev.map((item) =>
+            item.rid === updatedItem.rid ? { ...item, ...updatedItem } : item
+          )
+        );
+      } else {
+        errorToast(result?.message || 'Failed to update field');
+        setTaskTemplateList(previousTaskTemplateList);
+      }
+    } catch (error) {
+      errorToast((error as Error)?.message || 'Failed to update field');
+      setTaskTemplateList(previousTaskTemplateList);
+    }
   };
 
   const isModalOpen = Boolean(columnAnchorEl);
@@ -139,7 +253,7 @@ export const TaskTemplateTable: React.FC<ITaskTemplateTableProps> = ({
         open={isModalOpen}
         popoverId={modalId}
         onClose={handlePopoverClose}
-        columns={templateColumns}
+        columns={taskColumns}
         onColumnsChange={handleColumnsChange}
         columnRestrictions={RestrictedColumns}
       />
@@ -153,6 +267,7 @@ export const TaskTemplateTable: React.FC<ITaskTemplateTableProps> = ({
           maxHeight: 'calc(100vh - 190px)',
           overflow: 'auto',
         }}
+        onCellEdit={handleCellEdit}
         stickyHeader={true}
         stickyColumnsCount={2}
         // Selection

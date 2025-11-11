@@ -26,7 +26,7 @@ export const TaskTemplateFormFieldsData = (
         fields: [
           createTextField('task_name', 'Task Name', {
             required: true,
-            placeholder: 'Enter Task Title',
+            placeholder: 'Enter Task Name',
             // disabled:
             //   isEditView &&
             //   !permissionMap?.['task_name']?.edit &&
@@ -82,7 +82,7 @@ export const TaskTemplateFormFieldsData = (
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             // regexErrorMessage:
             //   'Only positive numbers allowed, up to 16 digits and 2 decimal places',
-            // placeholder: 'Enter Efforts In Role',
+            placeholder: 'Enter Efforts In Days',
             required: true,
             onChange: true,
             formatCostValue: true,
@@ -97,10 +97,10 @@ export const TaskTemplateFormFieldsData = (
             //   !permissionMap?.['efforts']?.edit,
           }),
           createTextField('reminder_interval', 'Reminder Interval', {
-            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-            regexErrorMessage:
-              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
-            placeholder: 'Enter Efforts In Role',
+            // regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            // regexErrorMessage:
+            //   'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            placeholder: 'Enter Reminder Interval',
             required: false,
             onChange: true,
             formatCostValue: true,

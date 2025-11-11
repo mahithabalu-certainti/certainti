@@ -29,7 +29,7 @@ export const fetchTaskTemplateList = async (
   console.log('data', data);
   return {
     taskTemplates: data.data.task_templates,
-    count: data.data.totalCount,
+    count: data.data.total_result,
   };
 };
 

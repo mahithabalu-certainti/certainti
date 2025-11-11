@@ -14,7 +14,8 @@ export interface TaskTemplateListParams {
 export type TaskTemplateList = {
   rid: string;
   r_number: string;
-
+  effort_in_days: number;
+  reminder_interval: number;
   task_name: string;
   task_description: string;
 
@@ -29,6 +30,8 @@ export type TaskTemplateList = {
   modified_user_name: string | null;
   created_datetime: string;
   modified_datetime: string | null;
+  modified_by_name: string | null;
+  created_by_name: string;
 };
 
 export interface TaskTemplateListResponse {
@@ -38,7 +41,7 @@ export interface TaskTemplateListResponse {
   data: {
     page: number;
     limit: number;
-    totalCount: number;
+    total_result: number;
     task_templates: TaskTemplateList[];
   };
 }
