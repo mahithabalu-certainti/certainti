@@ -1,77 +1,17 @@
-import { PROJECT_TYPE } from '../../../../../common-utils';
-import { FilterSelectOption } from '../../../../types/account-filter';
-import { fiscalYears } from '../../../resource-form/form-data';
-import { FieldConfig } from '../../components/filter/filterType';
+import { FilterSelectOption } from '../../../../../types/account-filter';
+import {
+  enumOptions,
+  FieldConfig,
+  numberOptions,
+  textOptions,
+} from '../../../../account-details-sidebar/components/filter/filterType';
+import {
+  fiscalOptions,
+  fiscalYearOptions,
+  nonMadatoryOptions,
+} from '../../../../account-details-sidebar/sidebar-pages/projects/utils';
 
-export const statusOptions: { option: string; value: string }[] = [
-  { option: 'Active', value: 'Active' },
-  { option: 'In-Active', value: 'Inactive' },
-];
-export const fiscalYearOptions = fiscalYears.map((year) => ({
-  option: year.label,
-  value: year.value,
-}));
-export const projectTypeOptions = PROJECT_TYPE.map((year) => ({
-  option: year.label,
-  value: year.value,
-}));
-export const numberOptions: { option: string; value: string }[] = [
-  { option: 'Equals', value: 'equals' },
-  { option: 'Not-Equals', value: 'not_equals' },
-  { option: 'Less-Than', value: 'less_than' },
-  { option: 'Greater-Than', value: 'greater_than' },
-  { option: 'Between', value: 'between' },
-  { option: 'Is-Empty', value: 'is_empty' },
-];
-export const effortNumberOptions: { option: string; value: string }[] = [
-  { option: 'Equals', value: 'equals' },
-  { option: 'Not-Equals', value: 'not_equals' },
-  { option: 'Less-Than', value: 'less_than' },
-  { option: 'Greater-Than', value: 'greater_than' },
-  { option: 'Between', value: 'between' },
-];
-
-export const booleanOptions: { option: string; value: string }[] = [
-  { option: 'IsTrue', value: 'isTrue' },
-  { option: 'IsFalse', value: 'isFalse' },
-  { option: 'Is-Empty', value: 'is_empty' },
-];
-
-export const textOptions: { option: string; value: string }[] = [
-  { option: 'Equals', value: 'equals' },
-  { option: 'Not-Equals', value: 'not_equals' },
-  { option: 'Contains', value: 'contains' },
-  // { option: 'Not-Contains', value: 'not_contains' },
-  // { option: 'Is-Empty', value: 'is_empty' },
-];
-export const nonMadatoryOptions: { option: string; value: string }[] = [
-  { option: 'Equals', value: 'equals' },
-  { option: 'Not-Equals', value: 'not_equals' },
-  { option: 'Contains', value: 'contains' },
-  { option: 'Is-Empty', value: 'is_empty' },
-];
-export const fiscalOptions: { option: string; value: string }[] = [
-  { option: 'Equals', value: 'equals' },
-  { option: 'Not-Equals', value: 'not_equals' },
-  { option: 'In', value: 'in' },
-];
-
-export const enumOptions: { option: string; value: string }[] = [
-  { option: 'Equals', value: 'equals' },
-  { option: 'Not-Equals', value: 'not_equals' },
-  { option: 'In', value: 'in' },
-  { option: 'Is-Empty', value: 'is_empty' },
-];
-
-export const dateOptions: { option: string; value: string }[] = [
-  { option: 'Equals', value: 'equals' },
-  { option: 'Before', value: 'before' },
-  { option: 'After', value: 'after' },
-  { option: 'Between', value: 'between' },
-  { option: 'Is-Empty', value: 'is_empty' },
-];
-
-export const projectFilterFields = (
+export const selectProjectFilterFields = (
   classificationOption: FilterSelectOption[],
   projectTypeOptions: { option: string; value: string }[],
   statusOptions: { option: string; value: string }[],
