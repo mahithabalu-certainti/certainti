@@ -1,8 +1,17 @@
 import { Suspense, useEffect, useMemo, useState } from 'react';
-import { useLocation, useParams, useSearchParams } from 'react-router-dom';
+import {
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 import { useCaseDetails } from '../../../services/cases/case-service';
-import { MenuItem } from '../../../types';
-import { AllMenus, AllModules } from '../../../../common-service';
+import { ExportType, MenuItem, NotesListExportParams } from '../../../types';
+import {
+  AllMenus,
+  AllModules,
+  AllPermissions,
+} from '../../../../common-service';
 import { InfoSection, PageHeader, SideMenuPanel } from '../../../../components';
 import {
   AccountDetailsIcon,
@@ -23,13 +32,30 @@ import {
 import { WorkBreakDown } from './work-breakdown';
 import { CaseTeam } from './case-team';
 import { transformCaseData } from './utils';
-import { ActionsDropdownItem } from '../../../../common-utils';
+import { ActionsDropdownItem, checkPermission } from '../../../../common-utils';
+import { CaseNotes } from './case-notes';
+import { ExportNotesList } from '../../../services/notes/notes-service';
+import { AccessRestricted } from '../../../../components/account-restricted';
+import { ACCOUNT } from '../../../../routes';
+import { RootState } from '../../../../store/store';
+
+import { AttachmentsListExportParams } from '../../../types/attachment';
+import { useSelector } from 'react-redux';
+import { Attachments } from './case-attachments';
+import { exportAttachmentsData } from '../../../services/attachments/attachments-service';
 
 export const CaseDetails = () => {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const { caseId } = useParams();
-  const accountId = searchParams.get('accountID');
+  const accountId = searchParams.get('accountID') || '';
+  const mainSource = searchParams.get('mainSource') || '';
+  const { modules, permission } = useSelector(
+    (state: RootState) => state.permission
+  );
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
   const {
     data: caseData,
     isLoading,
@@ -45,6 +71,24 @@ export const CaseDetails = () => {
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const defaultTab = searchParams.get('list') ?? 'workBreakdown';
   const [activeKey, setActiveKey] = useState(defaultTab as string);
+  const [exportType, setExportType] = useState<ExportType>('notes');
+
+  const [notesParams, setNotesParams] = useState<NotesListExportParams>({
+    sortBy: 'r_number',
+    sortOrder: 'ASC',
+    filters: {},
+  });
+
+  const noteView = searchParams.get('note_id');
+  const accountInActive =
+    caseData?.account_status_name?.toLowerCase() !== 'active';
+
+  const [attachmentParams, setAttachmentParams] =
+    useState<AttachmentsListExportParams>({
+      sortBy: 'document_name',
+      sortOrder: 'ASC',
+      filters: {},
+    });
 
   useEffect(() => {
     const list = searchParams.get('list');
@@ -62,6 +106,74 @@ export const CaseDetails = () => {
     }
   }, [location.state, searchParams]);
 
+  // Permissions management
+  const caseIsEnable = checkPermission(modules, AllModules.CASES);
+  const isCaseDetailsEnable = checkPermission(
+    permission,
+    AllPermissions.CASES_VIEW_EDIT
+  );
+
+  const isAttachmentExportEnable = checkPermission(
+    permission,
+    AllPermissions.ATTACHMENT_EXPORT
+  );
+
+  const isNotesExportEnable = checkPermission(
+    permission,
+    AllPermissions.NOTES_EXPORT
+  );
+
+  const handleExport = (exportType: ExportType) => {
+    if (
+      searchParams.get('list') !== 'attachments' &&
+      searchParams.get('list') !== 'notes'
+    ) {
+      return;
+    }
+
+    const notesPayload = {
+      accountRid: accountId,
+      entityId: caseId,
+      attachmentLevel: 'case',
+      timezone,
+    };
+
+    const attachmentPayload = {
+      accountRid: accountId,
+      entityId: caseId,
+      attachmentLevel: 'case',
+      timezone,
+    };
+
+    if (exportType === 'notes') {
+      ExportNotesList('notes', { ...notesParams, ...notesPayload });
+    } else if (exportType === 'attachments') {
+      exportAttachmentsData('attachments', {
+        ...attachmentParams,
+        ...attachmentPayload,
+      });
+    }
+  };
+
+  const checkExport = () => {
+    const list = searchParams.get('list');
+    if (
+      searchParams.get('attachment_entity') ||
+      searchParams.get('file_id') ||
+      searchParams.get('upload')
+    ) {
+      return true;
+    }
+
+    if (list === 'attachments') {
+      return !isAttachmentExportEnable;
+    } else if (list === 'notes' && !noteView) {
+      return !isNotesExportEnable;
+    } else {
+      return true;
+    }
+  };
+
   const menuItems: ActionsDropdownItem[] = [
     {
       label: 'Manage user',
@@ -70,8 +182,8 @@ export const CaseDetails = () => {
     },
     {
       label: 'Export',
-      onClick: () => console.log('clicked'),
-      hide: false,
+      onClick: () => handleExport(exportType),
+      hide: accountInActive || checkExport(),
     },
   ];
 
@@ -96,6 +208,23 @@ export const CaseDetails = () => {
           <div className='w-full pr-4 pl-2 py-2'>
             <CaseTeam />
           </div>
+        );
+      case 'notes':
+        return (
+          <CaseNotes
+            accountInActive={accountInActive}
+            setExportType={setExportType}
+            setNotesParams={setNotesParams}
+            caseDetails={caseData}
+          />
+        );
+      case 'attachments':
+        return (
+          <Attachments
+            accountInActive={accountInActive}
+            setExportType={setExportType}
+            setAttachmentParams={setAttachmentParams}
+          />
         );
       default:
         return (
@@ -243,8 +372,14 @@ export const CaseDetails = () => {
   }, []);
 
   const goBack = () => {
-    window.history.back();
+    if (mainSource === 'global-cases') {
+      window.history.back();
+    } else {
+      navigate(`${ACCOUNT}/details/${accountId}?list=cases`);
+    }
   };
+
+  if (!caseIsEnable || !isCaseDetailsEnable) return <AccessRestricted />;
 
   return (
     <div className='flex flex-col h-full'>

@@ -198,7 +198,8 @@ export const getNotesTableColumns = (
   isNotesExportEnable?: boolean,
   permissionMap?: Record<string, { read: boolean; edit: boolean }>,
   userListOptions?: { value: string; label: string }[],
-  handleViewGlobalNoteDetails?: (row: NotesList) => void
+  handleViewGlobalNoteDetails?: (row: NotesList) => void,
+  isFromGlobal?: boolean
 ): ListTableColumn<NotesList>[] => [
   {
     id: 'r_number',
@@ -267,6 +268,9 @@ export const getNotesTableColumns = (
         },
       ],
     },
+    ...(isFromGlobal
+      ? { conditionallyEdit: [{ key: 'status_name', matchValue: ['Active'] }] }
+      : {}),
     hide: !permissionMap?.['title']?.edit && !permissionMap?.['title']?.read,
   },
   {
@@ -289,6 +293,9 @@ export const getNotesTableColumns = (
         return String(rowData?.notes_owner || '');
       },
     },
+    ...(isFromGlobal
+      ? { conditionallyEdit: [{ key: 'status_name', matchValue: ['Active'] }] }
+      : {}),
     hide:
       !permissionMap?.['notes_owner']?.edit &&
       !permissionMap?.['notes_owner']?.read,
@@ -346,6 +353,9 @@ export const getNotesTableColumns = (
           'resource_skill',
         ],
       },
+      ...(isFromGlobal
+        ? [{ key: 'status_name' as keyof NotesList, matchValue: ['Active'] }]
+        : []),
     ],
     field: {
       type: 'select',

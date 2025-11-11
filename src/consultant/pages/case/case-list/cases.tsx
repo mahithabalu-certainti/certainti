@@ -8,10 +8,10 @@ import {
 import { CaseListParams, FilterState } from '../../../types';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
-import { useManageUserList } from '../../../../admin/service';
 import {
   ExportCaseList,
   useGetCaseFilingTypes,
+  useGetCaseOwners,
   useGetCaseStatuses,
 } from '../../../services/cases/case-service';
 import { checkPermission, reshapeGlobalFilter } from '../../../../common-utils';
@@ -58,26 +58,19 @@ const Cases: React.FC = () => {
 
   const newFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
-  // User List Api
-  const { data: userListData } = useManageUserList({
-    page: 1,
-    limit: 2000,
-    sortBy: 'first_name',
-    sortOrder: 'ASC',
-  });
-
   const caseFillingTypes = useGetCaseFilingTypes();
   const caseStatus = useGetCaseStatuses();
   const allCountries = useGetAllCountries();
+  const caseOwners = useGetCaseOwners();
 
-  const userListOptions = useMemo(() => {
+  const caseOwnersOptions = useMemo(() => {
     return (
-      userListData?.data?.users?.map((item) => ({
+      caseOwners?.data?.data?.caseOwners?.map((item) => ({
         value: item.rid,
-        label: `${item.first_name} ${item.last_name}`,
+        label: item.name || '',
       })) || []
     );
-  }, [userListData]);
+  }, [caseOwners]);
 
   const caseFilingTypesOptions = useMemo(() => {
     return (
@@ -227,7 +220,7 @@ const Cases: React.FC = () => {
   const filterFields = getGlobalCasesFilterFields(
     caseStatusOptions,
     caseFilingTypesOptions,
-    userListOptions,
+    caseOwnersOptions,
     memoizedContry,
     permissionMap,
     accountPermissionMap
@@ -344,7 +337,7 @@ const Cases: React.FC = () => {
           columnAnchorEl={columnAnchorEl}
           searchText={searchText}
           caseFilingTypesOptions={caseFilingTypesOptions}
-          userListOptions={userListOptions}
+          caseOwnersOptions={caseOwnersOptions}
         />
       </div>
     </div>
