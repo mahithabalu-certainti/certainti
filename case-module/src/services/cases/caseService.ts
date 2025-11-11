@@ -15,6 +15,7 @@ import {
   ICreateCases,
   ICreateCaseTeam,
   ICreateChecklist,
+  TaskTypeResponse,
   UpdateCaseTaskType,
 } from "../../utils/types";
 import { isValidTimezone, logMessage } from "../../utils/helpers";
@@ -1818,29 +1819,32 @@ export class CaseService {
           data : null
         }
       } else {
-          const isCaseExists = await this.caseSchemaService.isCaseExistsForAccount(data.account_rid, data.case_rid, fetchParentNumber[0][0].r_number);
-          if(isCaseExists) {
-          const result = await this.caseSchemaService.createUserLevelTask(data, fetchParentNumber[0][0].r_number, transaction);
-          if(result.statusCode === HttpStatus.SUCCESS) {
-            await transaction.commit()
-            return {
-              statusCode : HttpStatus.SUCCESS,
-              statusMessage : STATUS_MESSAGE.userLevelTaskCreatedSuccess,
-              data : result.data
-            }
-          } else {
-            return {
-              statusCode : HttpStatus.FAILED,
-              statusMessage : STATUS_MESSAGE.taskCreateFailed,
-              data : null
-            }
+        const isCaseExists = await this.caseSchemaService.isCaseExistsForAccount(data.account_rid, data.case_rid, fetchParentNumber[0][0].r_number);
+        if(isCaseExists) {
+        const [getTaskStatus] = await mainDb.query<TaskTypeResponse>(rawQueries.getSpecificTaskStatus(), {type : QueryTypes.SELECT})
+        data.task_status_rid = getTaskStatus?.rid! || ''
+        const result = await this.caseSchemaService.createUserLevelTask(data, fetchParentNumber[0][0].r_number, transaction);
+        if(result.statusCode === HttpStatus.SUCCESS) {
+          await transaction.commit()
+          return {
+            statusCode : HttpStatus.SUCCESS,
+            statusMessage : STATUS_MESSAGE.userLevelTaskCreatedSuccess,
+            data : result.data
           }
         } else {
-            return {
-              statusCode : HttpStatus.NOT_FOUND,
-              statusMessage : STATUS_MESSAGE.dataNotAvailable,
-              data : null
-            }
+          return {
+            statusCode : HttpStatus.FAILED,
+            statusMessage : STATUS_MESSAGE.taskCreateFailed,
+            data : null
+          }
+        }
+        } 
+        else {
+          return {
+            statusCode : HttpStatus.NOT_FOUND,
+            statusMessage : STATUS_MESSAGE.dataNotAvailable,
+            data : null
+          }
         }
       }
     } else {
