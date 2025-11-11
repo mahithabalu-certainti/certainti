@@ -242,7 +242,7 @@ export const CaseDetails = () => {
       case 'workBreakdown':
         return (
           <div className='w-full pr-4 pl-2 py-2'>
-            <WorkBreakDown />
+            <WorkBreakDown caseId={caseId} />
           </div>
         );
       case 'caseTeam':

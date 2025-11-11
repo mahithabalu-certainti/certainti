@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { CaseIcon } from '../../../../../assets';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
-import { AllPermissions } from '../../../../../common-service';
+import { AllPermissions, useGetStatus } from '../../../../../common-service';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import KanbanBoard from '../../../../../components/kanban-board/kanban-board';
 import {
@@ -11,6 +11,7 @@ import {
   mockKanbanData,
 } from '../../../../../components/kanban-board/mock-data';
 import { CaseTask } from './case-task';
+import { getAssignGroupsFilterFields } from './case-task/helper';
 
 const ConfigTabs: ResourceTabs[] = [
   {
@@ -26,7 +27,7 @@ const ConfigTabs: ResourceTabs[] = [
   // },
 ];
 
-const WorkBreakDown = () => {
+const WorkBreakDown = ({ caseId }: { caseId: string | undefined }) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const tabParam = searchParams.get('tab') || 'milestone';
@@ -36,7 +37,7 @@ const WorkBreakDown = () => {
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [reFetchData, setReFetchData] = useState<number>(Date.now());
-  // const [count, setCount] = useState<number>(0);
+  const [count, setCount] = useState<number>(0);
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
   const [seachText, setSearchText] = useState('');
@@ -60,6 +61,22 @@ const WorkBreakDown = () => {
   const handleSearchReset = () => {
     setResetSearch(false);
   };
+
+  const statusOptions = useGetStatus();
+
+  const memoizedStatus = useMemo(
+    () =>
+      statusOptions?.data?.data?.status.map((status) => ({
+        option: status.status_name,
+        value: status.rid,
+      })) || [],
+    [statusOptions?.data?.data?.status]
+  );
+
+  const filterFields =
+    tabParam === 'case_task'
+      ? getAssignGroupsFilterFields(memoizedStatus)
+      : undefined;
 
   const getTitleIcon = () => {
     return (
@@ -106,7 +123,7 @@ const WorkBreakDown = () => {
     <>
       <SectionTabPanel
         tabs={ConfigTabs}
-        // filterMenu={filterFields}
+        filterMenu={filterFields}
         filterVisibility={tabParam !== 'milestone'}
         showFilter={showFilter}
         contextKey={`case`}
@@ -131,8 +148,8 @@ const WorkBreakDown = () => {
         title={'Action Items'}
         titleIcon={getTitleIcon()}
         buttons={headerButtons}
-        // count={count}
-        showItemCount={false}
+        count={count}
+        showItemCount={tabParam === 'case_task'}
         hideSection={false}
       />
       <SectionHeaderTab
@@ -155,8 +172,9 @@ const WorkBreakDown = () => {
         )}
         {tabParam === 'case_task' && (
           <CaseTask
+            caseId={caseId}
             reFetchData={reFetchData}
-            // setCount={setCount}
+            setCount={setCount}
             filterParams={{
               page: currentPage,
               filters: appliedFilters,

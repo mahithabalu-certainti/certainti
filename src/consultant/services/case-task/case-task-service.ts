@@ -1,31 +1,41 @@
 import { useQuery } from '@tanstack/react-query';
-import { interactionServiceApi } from '../../../api/api';
+import { caseServiceApi } from '../../../api/api';
 
 // Case Task Types
 export interface CaseTaskListParams {
+  case_rid: string;
+  account_rid: string;
   page: number;
   limit: number;
   search?: string;
-  account_rid?: string;
-  case_rid: string;
+  sort?: string;
+  sort_by?: 'ASC' | 'DESC';
+  filter?: {
+    assigned_to?: {
+      equals?: string;
+    };
+    [key: string]: unknown;
+  };
 }
 
 export interface CaseTaskType {
   rid: string;
   task_name: string;
   description?: string;
-  status?: string;
+  task_status_name?: string;
   assigned_to?: string;
-  start_date?: string;
-  due_date?: string;
+  effective_start_datetime?: string;
+  effective_end_datetime?: string;
   created_date?: string;
   priority?: string;
   progress?: number;
   [key: string]: unknown;
+  total_result: string;
 }
 
 export interface CaseTaskApiResponse {
   data: {
+    total_result: number;
     data: CaseTaskType[];
     totalRecords: number;
     currentPage: number;
@@ -36,13 +46,13 @@ export interface CaseTaskApiResponse {
 }
 
 // Case Task URL
-export const getCaseTaskListUrl = () => '/case-tasks/list';
+export const getCaseTaskListUrl = () => '/api/cases/task/list';
 
 // Fetch Case Task List
 export const fetchCaseTaskList = async (
   params: CaseTaskListParams
 ): Promise<CaseTaskApiResponse> => {
-  const { data } = await interactionServiceApi.post<CaseTaskApiResponse>(
+  const { data } = await caseServiceApi.post<CaseTaskApiResponse>(
     getCaseTaskListUrl(),
     params
   );
@@ -52,7 +62,11 @@ export const fetchCaseTaskList = async (
 // Custom Hook for Case Tasks
 export const useGetCaseTaskList = (
   params: CaseTaskListParams,
-  refreshTrigger?: number
+  refreshTrigger?: number,
+  options?: {
+    onSuccess?: (data: CaseTaskApiResponse) => void;
+    onError?: (error: Error) => void;
+  }
 ) => {
   return useQuery<CaseTaskApiResponse, Error>({
     queryKey: ['caseTask', params, refreshTrigger],
@@ -60,6 +74,7 @@ export const useGetCaseTaskList = (
     staleTime: 0, // No cache
     gcTime: 0, // Immediately remove from cache
     retry: 0,
-    enabled: !!params.case_rid,
+    enabled: !!(params.case_rid && params.account_rid),
+    ...options,
   });
 };

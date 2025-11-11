@@ -12,16 +12,18 @@ import {
 import {
   ListTableColumn,
   ShowHideTableColumn,
+  SortOrder,
 } from '../../../../../../components/table/types';
 import {
   ConfigAssignGroupsListParms,
   ConfigAssignUserListParms,
 } from '../../../../../types';
-// import { useToast } from '../../../../../../hooks';
+import { useToast } from '../../../../../../hooks';
 
 interface CaseTaskProps {
   reFetchData: number;
-  // setCount: (value: number) => void;
+  caseId?: string;
+  setCount: (value: number) => void;
   filterParams: ConfigAssignGroupsListParms | ConfigAssignUserListParms;
   columnAnchorEl: HTMLButtonElement | null;
   setColumnAnchorEl: React.Dispatch<
@@ -32,58 +34,78 @@ interface CaseTaskProps {
 
 const CaseTask: React.FC<CaseTaskProps> = ({
   reFetchData,
-  // setCount,
+  caseId,
+  setCount,
   filterParams,
   columnAnchorEl,
   setColumnAnchorEl,
   searchValue,
 }) => {
-  // const { accountid } = useParams();
   const [searchParams] = useSearchParams();
-  const caseId = searchParams.get('case_rid') || '';
-  // const { successToast, errorToast } = useToast();
-  const [tableParams, setTableParams] = useState({
-    sortBy: 'first_name',
-    sortOrder: 'ASC',
-    // entity_type: 'ACCOUNT',
-    page: filterParams.page + 1,
+  const accountID = searchParams.get('accountID') || '';
+
+  const { errorToast } = useToast();
+  const [pagination, setPagination] = useState({
+    page: 1,
     limit: 100,
-    search: searchValue,
-    filters: filterParams.filters,
-    case_rid: caseId,
   });
 
-  const { data, isLoading, isError } = useGetCaseTaskList(
-    // accountid || '',
+  const [sorting, setSorting] = useState({
+    sort: 'task_name',
+    sort_by: 'DESC' as 'ASC' | 'DESC',
+  });
+
+  const tableParams = {
+    case_rid: caseId || '',
+    account_rid: accountID,
+    page: pagination.page,
+    limit: pagination.limit,
+    search: searchValue || '',
+    sort: sorting.sort,
+    sort_by: sorting.sort_by,
+    filter: filterParams.filters as { [key: string]: unknown } | undefined,
+  };
+
+  const { data, isLoading, isError, error } = useGetCaseTaskList(
     tableParams,
     reFetchData
   );
 
   useEffect(() => {
-    setTableParams((prev) => ({
-      ...prev,
-      page: 1,
-      filters: filterParams.filters,
-      search: searchValue,
-    }));
-  }, [filterParams.filters, searchValue]);
+    if (isError) {
+      errorToast((error as Error)?.message || 'Failed to load case tasks.');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isError, error]);
 
+  useEffect(() => {
+    if (data) {
+      setCount(data?.data?.total_result || 0);
+    }
+  }, [data, setCount]);
   const getRowId = (row: CaseTaskType) => row.rid;
   const caseTaskColumns = getCaseTaskListColumns();
 
   const handlePageChange = (newPage: number) => {
-    setTableParams((prev) => ({
+    setPagination((prev) => ({
       ...prev,
       page: newPage + 1,
     }));
   };
 
   const handleRowsPerPageChange = (newLimit: number) => {
-    setTableParams((prev) => ({
-      ...prev,
+    setPagination({
       limit: newLimit,
       page: 1,
-    }));
+    });
+  };
+
+  const handleSort = (field: string, order: SortOrder) => {
+    const apiSortOrder = order.toUpperCase() as 'ASC' | 'DESC';
+    setSorting({
+      sort: field,
+      sort_by: apiSortOrder,
+    });
   };
 
   const RestrictedColumns = [
@@ -143,12 +165,15 @@ const CaseTask: React.FC<CaseTaskProps> = ({
           loading={isLoading}
           loadindRowCount={4}
           error={isError ? 'Failed to load data' : undefined}
-          rowsPerPageOptions={[25, 50, 100]}
+          rowsPerPageOptions={[5, 25, 50, 100]}
           rowsPerPage={tableParams.limit}
           currentPage={(tableParams.page ?? 1) - 1}
-          totalItems={data?.data.totalRecords || 0}
+          totalItems={data?.data.total_result || 0}
           onPageChange={handlePageChange}
           onRowsPerPageChange={handleRowsPerPageChange}
+          sortBy={tableParams.sort}
+          sortOrder={tableParams.sort_by}
+          onSort={handleSort}
         />
       </div>
     </>
