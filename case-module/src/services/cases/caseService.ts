@@ -1702,7 +1702,7 @@ export class CaseService {
         }
       const checklistDetails =
         await this.caseSchemaService.fetchChecklistDetailsById(
-          checkListRid,accountNumber
+          checkListRid,accountNumber,caseRequest.account_rid
         );
   
       if (!checklistDetails) {
