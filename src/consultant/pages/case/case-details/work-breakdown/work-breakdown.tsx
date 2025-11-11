@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
-import { ActionItemsIcon } from '../../../../../assets';
+import { CaseIcon } from '../../../../../assets';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import { AllPermissions } from '../../../../../common-service';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import KanbanBoard from '../../../../../components/kanban-board/kanban-board';
-import { mockKanbanData } from './mockData';
+import {
+  mockUserData,
+  mockKanbanData,
+} from '../../../../../components/kanban-board/mock-data';
 import { CaseTask } from './case-task';
 
 const ConfigTabs: ResourceTabs[] = [
@@ -54,7 +57,12 @@ const WorkBreakDown = () => {
   // ];
 
   const getTitleIcon = () => {
-    return <ActionItemsIcon alt='action-items-icon' />;
+    return (
+      <CaseIcon
+        alt='case-icon'
+        className={`w-6 h-6 p-[5px] [&>path]:stroke-[#4ce547] bg-[#D2FFE3] !rounded-lg`}
+      />
+    );
   };
 
   const tabs = [
@@ -105,11 +113,12 @@ const WorkBreakDown = () => {
         {tabParam === 'milestone' && (
           <KanbanBoard
             data={mockKanbanData}
+            userData={mockUserData}
             showCommentCount={true}
             showTaskCount={true}
             showProfileIndicator={true}
-            isCreateTaskDisabled={false}
-            isCreateTaskHide={false}
+            isCreateTaskHide={true}
+            isCreateTaskDisabled={true}
           />
         )}
         {tabParam === 'case_task' && <CaseTask />}

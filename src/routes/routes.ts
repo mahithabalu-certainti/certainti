@@ -11,7 +11,6 @@ export const MANAGE_SETTINGS = '/manage-settings';
 export const MANAGE_GEO_BASED_RULE = '/manage-geo-based-rule';
 export const SURVEY_TEMPLATES = '/survey-templates';
 export const TASK_TEMPLATES = '/task-templates';
-export const CHECKLIST_TEMPLATES = '/checklist-templates';
 
 /** ADMIN ROUTES */
 export const ADMIN = '/admin';
@@ -42,6 +41,11 @@ export const IMPORT_TEMPLATES = `${ADMIN}/import-templates`;
 export const EMAIL_TEMPLATES = `${ADMIN}/email-templates`;
 export const EMAIL_TEMPLATES_CREATE = `${EMAIL_TEMPLATES}/create`;
 export const EMAIL_TEMPLATES_EDIT = `${EMAIL_TEMPLATES}/edit/:templateId`;
+
+/** ADMIN CHECKLIST TEMPLATES ROUTES */
+export const CHECKLIST_TEMPLATES = `${ADMIN}/checklist-templates`;
+export const CHECKLIST_TEMPLATES_CREATE = `${CHECKLIST_TEMPLATES}/create`;
+export const CHECKLIST_TEMPLATES_EDIT = `${CHECKLIST_TEMPLATES}/edit/:caseId`;
 
 /** ACCOUNT ROUTES */
 export const ACCOUNT = '/account';

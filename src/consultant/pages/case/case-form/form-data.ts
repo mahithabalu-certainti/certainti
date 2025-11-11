@@ -118,6 +118,8 @@ export const CaseFormData = (
             placeholder: 'Choose Country',
             required: true,
             disabled: true,
+            requiredErrorMessage:
+              'Field is required. Please select a country at the account level.',
             hide:
               isEditView &&
               !accountPermissionMap?.['currency_rid']?.read &&

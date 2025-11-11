@@ -36,7 +36,7 @@ interface ICaseTableProps {
   >;
   searchText: string;
   caseFilingTypesOptions: { value: string; label: string }[];
-  userListOptions: { value: string; label: string }[];
+  caseOwnersOptions: { value: string; label: string }[];
 }
 
 export const CaseListTable: React.FC<ICaseTableProps> = ({
@@ -48,7 +48,7 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
   setColumnAnchorEl,
   columnAnchorEl,
   searchText,
-  userListOptions,
+  caseOwnersOptions,
   caseFilingTypesOptions,
 }) => {
   const { errorToast } = useToast();
@@ -159,6 +159,7 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
       accountID: caseItem?.account_rid || '',
       account_name: caseItem?.account_name || '',
       account_number: caseItem?.account_r_number || '',
+      mainSource: 'global-cases',
     });
 
     navigate(`${path}?${queryParams.toString()}`);
@@ -166,7 +167,7 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
 
   const globalCaseColumns = getGlobalCaseListColumns(
     handleViewCaseDetails,
-    userListOptions,
+    caseOwnersOptions,
     caseFilingTypesOptions,
     permissionMap,
     accountPermissionMap

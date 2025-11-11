@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useLayoutEffect } from 'react';
 import {
   Select,
   MenuItem,
@@ -27,7 +27,7 @@ import SectionHeader from '../../../../../components/details-section/section-hea
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import { AllPermissions } from '../../../../../common-service';
 import { useToast } from '../../../../../hooks';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useParams } from 'react-router-dom';
 import {
   getCaseTeamTableColumns,
   CaseTeamFormData,
@@ -43,6 +43,8 @@ import {
   useGetUserOptions,
 } from '../../../../services/case-team';
 import { TableSkeleton } from '../../../../../components/table';
+import { RootState } from '../../../../../store/store';
+import { useSelector } from 'react-redux';
 
 const ConfigTabs: ResourceTabs[] = [
   {
@@ -54,6 +56,7 @@ const ConfigTabs: ResourceTabs[] = [
 
 const CaseTeam = () => {
   const [searchParams] = useSearchParams();
+  const { caseId } = useParams();
   const { successToast, errorToast } = useToast();
 
   const [formData, setFormData] = useState<CaseTeamFormData>({
@@ -62,13 +65,69 @@ const CaseTeam = () => {
   const [errors, setErrors] = useState<CaseTeamFormErrors>({});
   const [isLoading, setIsLoading] = useState(false);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
+  const [originalTeamMembers, setOriginalTeamMembers] = useState<
+    CaseTeamMember[]
+  >([]);
 
-  const caseId = searchParams.get('caseId') || 'case_123';
+  const [isFormChanged, setIsFormChanged] = useState(false);
+  const cellRefs = useRef<Record<string, HTMLTableCellElement | null>>({});
+  const [cellWidths, setCellWidths] = useState<Record<string, number>>({});
 
-  const caseTeamQuery = useGetCaseTeam(caseId);
+  const { permission } = useSelector((state: RootState) => state.permission);
+  //Permission
+  const casesTeamEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.CASES_TEAM_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    casesTeamEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [casesTeamEditFields]);
+  console.log('permissionMap', permissionMap);
+
+  const isCaseTeamEditable = useMemo(
+    () =>
+      permission
+        .find((item) => item.name === AllPermissions.CASES_TEAM_VIEW_EDIT)
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
+  console.log('isCaseTeamEditable', isCaseTeamEditable);
+  // Compare formData.team_members with originalTeamMembers
+  useEffect(() => {
+    if (formData.team_members.length !== originalTeamMembers.length) {
+      setIsFormChanged(true);
+      return;
+    }
+    for (let i = 0; i < formData.team_members.length; i++) {
+      const a = formData.team_members[i];
+      const b = originalTeamMembers[i];
+      if (
+        a.user_name !== b.user_name ||
+        a.user_role !== b.user_role ||
+        a.start_date !== b.start_date ||
+        a.end_date !== b.end_date
+      ) {
+        setIsFormChanged(true);
+        return;
+      }
+    }
+    setIsFormChanged(false);
+  }, [formData.team_members, originalTeamMembers]);
+
+  const accountId = searchParams.get('accountID') || '';
+
+  const caseTeamQuery = useGetCaseTeam(caseId, accountId);
   const updateCaseTeamMutation = useUpdateCaseTeam();
   const roleOptionsQuery = useGetRoleOptions();
-  const userOptionsQuery = useGetUserOptions();
+  const userOptionsQuery = useGetUserOptions(accountId);
 
   const teamTableColumns = getCaseTeamTableColumns();
   const formLoading = caseTeamQuery.isLoading || !isDataLoaded;
@@ -91,7 +150,7 @@ const CaseTeam = () => {
   };
 
   const getAvailableUserOptions = (currentIndex: number) => {
-    const allUsers = userOptionsQuery.data?.map((user) => user.user_name) || [];
+    const allUsers = userOptionsQuery.data?.map((user) => user.name) || [];
     const currentRole = formData.team_members[currentIndex]?.user_role;
 
     if (!currentRole) {
@@ -108,35 +167,96 @@ const CaseTeam = () => {
   };
 
   useEffect(() => {
-    if (caseTeamQuery.data && !isDataLoaded) {
-      setFormData({
-        team_members: caseTeamQuery.data.team_members.map(
-          (user: CaseTeamMember) => ({
+    // Process data whenever we have case team data and dropdown options are available
+    if (caseTeamQuery.data && userOptionsQuery.data && roleOptionsQuery.data) {
+      const teamMembers = caseTeamQuery.data.team_members.map(
+        (user: CaseTeamMember) => {
+          const userOption = userOptionsQuery.data?.find(
+            (u) => u.rid === user.user_rid
+          );
+          const roleOption = roleOptionsQuery.data?.find(
+            (r) => r.rid === user.role_rid
+          );
+
+          return {
             ...user,
-            user_id: user.user_id || '',
-            user_name: user.user_name || '',
-            user_role: user.user_role || '',
-            start_date: user.start_date || '',
-            end_date: user.end_date || '',
-          })
-        ),
+            user_id: user.rid || '',
+            user_name: userOption?.name || '',
+            user_role: roleOption?.role_name || '',
+            start_date: user.effective_startdate || '',
+            end_date: user.effective_enddate || '',
+          };
+        }
+      );
+
+      // Always update the state when we have fresh data
+      setOriginalTeamMembers([...teamMembers]);
+
+      const finalTeamMembers =
+        teamMembers.length === 0
+          ? [
+              {
+                user_id: 'MEM_1',
+                user_name: '',
+                user_role: '',
+                start_date: '',
+                end_date: '',
+              },
+            ]
+          : teamMembers;
+
+      setFormData({
+        team_members: finalTeamMembers,
       });
       setIsDataLoaded(true);
     }
-  }, [caseTeamQuery.data, isDataLoaded]);
+  }, [caseTeamQuery.data, userOptionsQuery.data, roleOptionsQuery.data]);
 
   useEffect(() => {
     if (updateCaseTeamMutation.isSuccess) {
       successToast('Case team updated successfully');
+      // Reset the mutation state and reload data
+      setIsDataLoaded(false);
+      updateCaseTeamMutation.reset();
       caseTeamQuery.refetch();
     }
-  }, [updateCaseTeamMutation.isSuccess]);
+  }, [
+    updateCaseTeamMutation.isSuccess,
+    successToast,
+    updateCaseTeamMutation,
+    caseTeamQuery,
+  ]);
 
   useEffect(() => {
     if (updateCaseTeamMutation.isError) {
       errorToast('Failed to update case team');
+      updateCaseTeamMutation.reset();
     }
-  }, [updateCaseTeamMutation.isError]);
+  }, [updateCaseTeamMutation.isError, errorToast, updateCaseTeamMutation]);
+
+  useLayoutEffect(() => {
+    const calculateCellWidths = () => {
+      const newWidths: Record<string, number> = {};
+      Object.entries(cellRefs.current).forEach(([key, cell]) => {
+        if (cell) {
+          newWidths[key] = cell.offsetWidth;
+        }
+      });
+      setCellWidths(newWidths);
+    };
+
+    // Calculate widths after a short delay to ensure table layout is complete
+    const timer = setTimeout(calculateCellWidths, 100);
+
+    // Also recalculate on window resize
+    const handleResize = () => calculateCellWidths();
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [formData.team_members, isDataLoaded]);
 
   function handleAddTeamMember() {
     setFormData((prev) => {
@@ -248,21 +368,84 @@ const CaseTeam = () => {
     }
 
     setIsLoading(true);
+    const validMembers = formData.team_members.filter(
+      (member) => member.user_name.trim() && member.user_role.trim()
+    );
+    const teamMembersPayload = validMembers.map((member) => {
+      const userOption = userOptionsQuery.data?.find(
+        (user) => user.name === member.user_name
+      );
+      const roleOption = roleOptionsQuery.data?.find(
+        (role) => role.role_name === member.user_role
+      );
+
+      const originalMember = originalTeamMembers.find(
+        (orig) =>
+          orig.user_id === member.user_id && !member.user_id.startsWith('MEM_')
+      );
+
+      let actionType: 'add' | 'edit' | 'delete' = 'add';
+      let caseTeamRid: string | undefined;
+
+      if (originalMember) {
+        const hasChanges =
+          originalMember.user_name !== member.user_name ||
+          originalMember.user_role !== member.user_role ||
+          originalMember.start_date !== member.start_date ||
+          originalMember.end_date !== member.end_date;
+
+        actionType = hasChanges ? 'edit' : 'add';
+        caseTeamRid = originalMember.rid;
+      }
+
+      return {
+        ...(caseTeamRid && { case_team_rid: caseTeamRid }),
+        user_rid: userOption?.rid || '',
+        role_rid: roleOption?.rid || '',
+        effective_from: member.start_date,
+        effective_to: member.end_date,
+        action_type: actionType,
+      };
+    });
+
+    const deletedMembers = originalTeamMembers.filter(
+      (original) =>
+        !validMembers.some(
+          (current) =>
+            current.user_id === original.user_id &&
+            !current.user_id.startsWith('MEM_')
+        )
+    );
+
+    const deletePayloads = deletedMembers.map((member) => {
+      const userOption = userOptionsQuery.data?.find(
+        (user) => user.name === member.user_name
+      );
+      const roleOption = roleOptionsQuery.data?.find(
+        (role) => role.role_name === member.user_role
+      );
+
+      return {
+        case_team_rid: member.rid || '',
+        user_rid: userOption?.rid || '',
+        role_rid: roleOption?.rid || '',
+        effective_from: member.start_date,
+        effective_to: member.end_date,
+        action_type: 'delete' as const,
+      };
+    });
 
     const payload = {
-      case_rid: caseId,
-      team_members: formData.team_members.map((member) => ({
-        user_id: member.user_id,
-        user_name: member.user_name,
-        user_role: member.user_role,
-        start_date: member.start_date,
-        end_date: member.end_date,
-      })),
+      case_rid: caseId || '',
+      account_rid: accountId,
+      team_members: [...teamMembersPayload, ...deletePayloads],
     };
 
     updateCaseTeamMutation.mutate(payload, {
       onSuccess: () => {
         setIsLoading(false);
+        // Don't manually update originalTeamMembers here - let the API response handle it
+        // The useEffect will handle updating the state when fresh data comes from the API
       },
       onError: () => {
         setIsLoading(false);
@@ -275,8 +458,8 @@ const CaseTeam = () => {
       label: 'Save',
       variant: 'contained' as const,
       onClick: handleSave,
-      hide: false,
-      disabled: false,
+      hide: !isCaseTeamEditable,
+      disabled: !isFormChanged || isLoading,
       loading: isLoading,
     },
   ];
@@ -310,7 +493,7 @@ const CaseTeam = () => {
         hideSection={false}
       />
 
-      <div className='flex flex-col gap-0 border border-[#CBD6E2] rounded-[2px] pt-5'>
+      <div className='flex flex-col gap-0 border border-[#CBD6E2] pt-5'>
         <div className='w-full mb-5'>
           <div className='px-4'>
             <TableContainer sx={{ overflowX: 'auto' }}>
@@ -375,16 +558,6 @@ const CaseTeam = () => {
                 >
                   {formLoading ? (
                     <TableSkeleton rowsPerPage={4} columnsCount={5} />
-                  ) : formData.team_members.length === 0 ? (
-                    <TableRow>
-                      <TableCell
-                        colSpan={teamTableColumns.length}
-                        align='center'
-                      >
-                        No team members available. Click "Add Case Team Member"
-                        to add one.
-                      </TableCell>
-                    </TableRow>
                   ) : (
                     formData.team_members.map((member, index) => (
                       <TableRow
@@ -408,6 +581,11 @@ const CaseTeam = () => {
                             return (
                               <TableCell
                                 key={`${col.name}-${index}`}
+                                ref={(el: HTMLTableCellElement | null) => {
+                                  if (el)
+                                    cellRefs.current[`${col.name}-${index}`] =
+                                      el;
+                                }}
                                 style={{
                                   width: col.width,
                                   textAlign: col.align ?? 'left',
@@ -429,7 +607,10 @@ const CaseTeam = () => {
                                           e.target.value
                                         )
                                       }
-                                      disabled={isDisabled}
+                                      disabled={
+                                        isDisabled ||
+                                        !permissionMap.role_rid?.edit
+                                      }
                                       size='small'
                                       fullWidth
                                       displayEmpty
@@ -461,8 +642,12 @@ const CaseTeam = () => {
                                         PaperProps: {
                                           sx: {
                                             marginTop: '4px',
-                                            minWidth: 'fit-content',
-                                            width: 'auto',
+                                            maxHeight: '250px',
+                                            borderRadius: '0px',
+                                            width: Math.max(
+                                              cellWidths[`user_role-${index}`] || 0,
+                                              150 // minimum width fallback
+                                            ),
                                             boxShadow:
                                               'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
                                             '& .MuiMenuItem-root': {
@@ -520,7 +705,10 @@ const CaseTeam = () => {
                                           e.target.value
                                         )
                                       }
-                                      disabled={isDisabled}
+                                      disabled={
+                                        isDisabled ||
+                                        !permissionMap.user_rid?.edit
+                                      }
                                       size='small'
                                       fullWidth
                                       displayEmpty
@@ -552,8 +740,12 @@ const CaseTeam = () => {
                                         PaperProps: {
                                           sx: {
                                             marginTop: '4px',
-                                            minWidth: 'fit-content',
-                                            width: 'auto',
+                                            maxHeight: '250px',
+                                            borderRadius: '0px',
+                                            width: Math.max(
+                                              cellWidths[`user_name-${index}`] || 0,
+                                              150 // minimum width fallback
+                                            ),
                                             boxShadow:
                                               'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
                                             '& .MuiMenuItem-root': {
@@ -623,7 +815,11 @@ const CaseTeam = () => {
                                           )
                                         }
                                         format='YYYY-MM-DD'
-                                        disabled={isDisabled}
+                                        disabled={
+                                          isDisabled ||
+                                          !permissionMap.effective_startdate
+                                            ?.edit
+                                        }
                                         sx={{
                                           width: '100%',
                                           backgroundColor:
@@ -675,7 +871,7 @@ const CaseTeam = () => {
                                                 'transparent !important',
                                             },
                                           '& .MuiInputBase-input': {
-                                            fontSize: '13px', // Changed back to 13px
+                                            fontSize: '13px',
                                             padding: '5px 2px',
                                             height: '20px',
                                             color: member.start_date
@@ -684,7 +880,7 @@ const CaseTeam = () => {
                                             backgroundColor:
                                               'transparent !important',
                                             '&::placeholder': {
-                                              fontSize: '13px', // Changed back to 13px
+                                              fontSize: '13px',
                                               color: '#7D98B6 !important',
                                               opacity: 1,
                                             },
@@ -731,9 +927,21 @@ const CaseTeam = () => {
                                                 return false;
                                               },
                                             },
+                                            InputLabelProps: {
+                                              shrink: true,
+                                            },
                                           },
                                           inputAdornment: {
                                             position: 'end',
+                                          },
+                                          popper: {
+                                            sx: {
+                                              '& .MuiPaper-root': {
+                                                marginTop: '7px',
+                                                marginLeft: '-10px',
+                                                borderRadius: '0px',
+                                              },
+                                            },
                                           },
                                         }}
                                         slots={{
@@ -778,7 +986,10 @@ const CaseTeam = () => {
                                           )
                                         }
                                         format='YYYY-MM-DD'
-                                        disabled={isDisabled}
+                                        disabled={
+                                          isDisabled ||
+                                          !permissionMap.effective_enddate?.edit
+                                        }
                                         minDate={dayjs(member.start_date)}
                                         sx={{
                                           width: '100%',
@@ -887,9 +1098,21 @@ const CaseTeam = () => {
                                                 return false;
                                               },
                                             },
+                                            InputLabelProps: {
+                                              shrink: true,
+                                            },
                                           },
                                           inputAdornment: {
                                             position: 'end',
+                                          },
+                                          popper: {
+                                            sx: {
+                                              '& .MuiPaper-root': {
+                                                marginTop: '7px',
+                                                marginLeft: '-10px',
+                                                borderRadius: '0px',
+                                              },
+                                            },
                                           },
                                         }}
                                         slots={{
@@ -932,8 +1155,10 @@ const CaseTeam = () => {
                                         padding: 0,
                                         marginTop: '6px',
                                       }}
-                                      aria-label='Remove team member'
-                                      disabled={isBtnDisabled}
+                                      aria-label='Remove team member' // prettier-ignore
+                                      disabled={
+                                        isBtnDisabled || !isCaseTeamEditable
+                                      }
                                     >
                                       <React.Suspense fallback={null}>
                                         <KeyContactRemoveIcon
@@ -985,10 +1210,10 @@ const CaseTeam = () => {
 
           <div className='mt-2 pl-4'>
             <button
-              className='flex items-center cursor-pointer gap-1 bg-[#EAF0F5] h-[30px] rounded-[2px] color-[#2D3E4F] px-2 text-[12px] font-semibold disabled:bg-gray-100 disabled:opacity-75 disabled:cursor-default'
+              className='flex items-center cursor-pointer gap-1 bg-[#EAF0F5] h-[30px] color-[#2D3E4F] px-2 text-[12px] font-semibold disabled:bg-gray-100 disabled:opacity-75 disabled:cursor-default'
               type='button'
               onClick={handleAddTeamMember}
-              disabled={formLoading}
+              disabled={formLoading || !isCaseTeamEditable}
             >
               <span>
                 <React.Suspense fallback={null}>

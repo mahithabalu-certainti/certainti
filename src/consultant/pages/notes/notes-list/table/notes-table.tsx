@@ -171,7 +171,8 @@ export const NotesTable: React.FC<NotesTableProps> = ({
   const actionMenuItems = [
     {
       label: 'Edit',
-      // disabled: accountInActive,
+      disabled: (row: NotesList) =>
+        row?.status_name?.toLowerCase() !== 'active',
       onClick: (row: NotesList) => handleEdit(row),
       hide: !notesFieldsEditable,
     },
@@ -224,6 +225,13 @@ export const NotesTable: React.FC<NotesTableProps> = ({
         );
         break;
 
+      // Case-level notes
+      case 'case':
+        navigate(
+          `/case/details/${attachTo}?accountID=${accountId}&list=notes&note_id=${noteId}&activeMenu=notes&origin=notes`
+        );
+        break;
+
       default:
         console.warn('Unknown attachment level:', row?.attachment_level);
     }
@@ -236,7 +244,8 @@ export const NotesTable: React.FC<NotesTableProps> = ({
     isNotesExportEnable,
     permissionMap,
     userListOptions,
-    handleViewGlobalNoteDetails
+    handleViewGlobalNoteDetails,
+    true
   );
 
   const handlePopoverClose = () => {
