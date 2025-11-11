@@ -42,13 +42,16 @@ async function accounts(req: Request, res: Response): Promise<void> {
     if (!value) {
       return;
     }
-
     try {
-      if (value.filters) {
+      if (value.filters && typeof value.filters === 'string') {
         parsedFilters = JSON.parse(value.filters);
+      } else if (value.filters && typeof value.filters === 'object') {
+        parsedFilters = value.filters;
       }
-      if (value.globalFilters) {
+      if (value.globalFilters && typeof value.globalFilters === 'string') {
         parsedGlobalFilters = JSON.parse(value.globalFilters);
+      } else if (value.globalFilters && typeof value.globalFilters === 'object') {
+        parsedGlobalFilters = value.globalFilters;
       }
     } catch (error) {
       errorLog(

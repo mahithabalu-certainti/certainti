@@ -254,6 +254,7 @@ const listOrgAccountSchema = Joi.object({
   sortBy: Joi.string().optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("ASC")
 });
+
 const listAccountSchema = Joi.object({
   page: Joi.alternatives()
     .try(
@@ -273,15 +274,20 @@ const listAccountSchema = Joi.object({
       Joi.string().max(255).optional()
     )
     .optional(),
-  filters: Joi.string().default("{}"),
-  sortBy: Joi.string().default("createdAt"),
-  sortOrder: Joi.string().valid("ASC", "DESC").default("DESC"),
-    globalFilters: Joi.alternatives()
+  filters: Joi.alternatives()
     .try(
       Joi.object(),
       Joi.string()
     )
-    .default("{}"),
+    .default({}),
+  sortBy: Joi.string().default("createdAt"),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("DESC"),
+  globalFilters: Joi.alternatives()
+    .try(
+      Joi.object(),
+      Joi.string()
+    )
+    .default({}),
   fiscalYear: Joi.alternatives()
   .try(
     Joi.string().valid("FY-All"),  // Allow "FY-All"
