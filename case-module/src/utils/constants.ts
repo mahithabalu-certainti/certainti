@@ -337,6 +337,11 @@ export const checklistsFieldMappings = [
     dataField: "r_number",
   },
   {
+    permissionField: "checklist_name",
+    exportField: "Checklist Name",
+    dataField: "checklist_name",
+  },
+  {
     permissionField: "attachment_level",
     exportField: "Related Entity",
     dataField: "attachment_level",
@@ -356,11 +361,7 @@ export const checklistsFieldMappings = [
     exportField: "Fiscal Year",
     dataField: "fiscal_year",
   },
-   {
-    permissionField: "checklist_name",
-    exportField: "Checklist Name",
-    dataField: "checklist_name",
-  },
+   
    {
     permissionField: "created_by",
     exportField: "Created By",

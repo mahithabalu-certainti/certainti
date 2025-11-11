@@ -345,7 +345,7 @@ export const listAllCasesSummaryQuery = (
     LEFT JOIN ${MAIN_SCHEMA_NAME}.currency usd_curr ON usd_curr.currency_code = 'USD'
     LEFT JOIN ${MAIN_SCHEMA_NAME}.status accountStatus ON accountStatus.rid = a.status_rid
     WHERE
-    (cs.r_number ILIKE '${searchValue}' OR CONCAT(a.account_name, '-', c.country_name, '-',cs.fiscal_year,'-',cs.case_name) ILIKE '${searchValue}')
+    (cs.r_number ILIKE '${searchValue}' OR CONCAT(a.account_name, '-', c.country_code, '-',cs.fiscal_year,'-',cs.case_name) ILIKE '${searchValue}')
     ${joinedConditions}
     ),
     paginated_data AS (
