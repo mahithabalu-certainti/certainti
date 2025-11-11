@@ -5,6 +5,7 @@ import { buildDatetimeFilterCondition, buildNumericFilterCondition, buildStringF
 import { HttpStatus, STATUS_MESSAGE, filtersColumnsForCaseSummary, filterTypesForCaseSummary, filterTypesForAdminCheckList, filtersColumnsForAdminCheckList, rawQueries } from "../../utils/constants";
 import { fetchCaseTemplateData, listAllCheckList } from "../../utils/rawQueries";
 import { initOrgSequelize } from "../../config/orgDataSource";
+import { initMainDbSequelize } from "../../config/mainDataSource";
 
 
 
@@ -499,13 +500,21 @@ class CaseManagementSchemaService {
       }
     }
   async createTaskTemplate (data : CreateTaskTemplateType, userId : string) {
+    if(!this.mainDbSequelize) {
+      this.mainDbSequelize = await initMainDbSequelize();
+    }
     const { TaskTemplate } = await this.caseModelService.getModels("");
-    const findSequenceOrder = await this.fetchSequenceOrder(data.milestone_template_rid);
-    let sequenceNumber : number = 0;
-    if(findSequenceOrder.length > 0) {
-      sequenceNumber = findSequenceOrder[0]?.sequence_no! + 1
+    let sequenceNumber : any
+    const getTaskType : any = await this.mainDbSequelize.query(rawQueries.getTaskTypeRid(data.task_type_rid));
+    if(getTaskType[0][0].task_type_name === 'Milestone') {
+      const findSequenceOrder = await this.fetchSequenceOrder(data.milestone_template_rid);
+      if(findSequenceOrder.length > 0) {
+        sequenceNumber = findSequenceOrder[0]?.sequence_no! + 1
+      } else {
+        sequenceNumber = sequenceNumber + 1
+      }
     } else {
-      sequenceNumber = sequenceNumber + 1
+      sequenceNumber = null
     }
     const checkTaskNameExists = await this.checkTaskExists(data);
     if(checkTaskNameExists) {

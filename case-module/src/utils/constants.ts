@@ -992,6 +992,9 @@ export const rawQueries = {
   },
   getActiveStatusId () {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.status where status_name ILIKE '%Active%'`
+  },
+  getTaskTypeRid (rid : string) {
+    return `SELECT task_type_name FROM ${MAIN_SCHEMA_NAME}.task_type WHERE rid = '${rid}'`
   }
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
