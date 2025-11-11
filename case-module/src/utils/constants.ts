@@ -115,7 +115,10 @@ export const STATUS_MESSAGE = {
   caseNotFound : "Case not found",
   taskNotFound : "Task not founds",
   taskUpdatedFailed: "Task updation failed",
-  userLevelTaskFetchSuccess : "Task fetched successfully"
+  userLevelTaskFetchSuccess : "Task fetched successfully",
+  tagsCreatedSuccesfully : "Tags added successfully",
+  tagMappedAlready : "Tag already added",
+  tagsListedSuccess : "Tags listed successfully"
 
 };
 
@@ -987,6 +990,9 @@ export const rawQueries = {
   getSpecificTaskStatus () {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.case_task_status WHERE task_status_name ILIKE '%To Do%'`
   },
+  getActiveStatusId () {
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.status where status_name ILIKE '%Active%'`
+  }
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
 const keyContactRole = {

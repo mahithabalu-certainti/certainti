@@ -67,6 +67,8 @@ import { CheckListItem } from "../../models/checkListItemModel";
 import { CaseTask, setupCaseTaskSequence } from "../../models/caseTaskModel";
 import { CaseMilestone, setupCaseMilestoneSequence } from "../../models/caseMilestoneModel";
 import { setupTaskCollaboratorsSequence, TaskCollaborators } from "../../models/taskCollaboratorsModel";
+import { setupTaskTagSequence, TaskTag } from "../../models/TaskTagsModel";
+import { Tags } from "../../models/tagsModel";
 
 class CaseSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -413,6 +415,10 @@ class CaseSchemaService {
         orgDbSequlize,
         schemaName
       )
+      const TaskTagsModel = TaskTag.initialise(
+        orgDbSequlize,
+        schemaName
+      )
 
       await CaseModel.sync({ force: false });
       await setupCaseSequence(orgDbSequlize, schemaName);
@@ -434,6 +440,8 @@ class CaseSchemaService {
       await setupCaseTaskSequence(orgDbSequlize, schemaName);
       await TaskCollaboratorsModel.sync({force : false});
       await setupTaskCollaboratorsSequence(orgDbSequlize, schemaName)
+      await TaskTagsModel.sync({force : false})
+      await setupTaskTagSequence(orgDbSequlize, schemaName)
     } catch (err) {
       errorLog("Error creating case tables", (err as Error).message);
       console.log(err)
@@ -4228,6 +4236,116 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         case_rid : caseRid,
         task_rid : taskRid
       }, raw : true
+    });
+    if(result) return result;
+    else return null;
+  }
+  async createOrUpdateTags (taskRid : string, accountRid : string, caseRid : string, tagRid : string, isNewTag : boolean, accountNumber : string, userId : string, activeStatusRid : string) {
+    const {Tags, TaskTag} = await this.caseModelService.getModels(accountNumber)
+
+    if(isNewTag) {
+      const isTagExists = await this.isTagAlreadyExists(tagRid)
+      if(!isTagExists) {
+        const result = await Tags.create({
+          tag_name : tagRid,
+          created_by : userId,
+          created_datetime : new Date(),
+          status_rid : activeStatusRid
+        })
+        if(result) {
+          const finalResult = await TaskTag.create({
+            task_rid : taskRid,
+            account_rid : accountRid,
+            case_rid : caseRid,
+            tag_rid : result.dataValues.rid,
+            created_by : userId,
+            created_datetime : new Date()
+          })
+        if(finalResult) {
+          return {
+            statusCode : HttpStatus.SUCCESS,
+            data : finalResult
+          }
+        } else {
+          return {
+            statusCode : HttpStatus.FAILED,
+            data : null
+          }
+        }
+      } 
+      else {
+        return {
+            statusCode : HttpStatus.FAILED,
+            data : null
+          }
+        }
+      } else {
+        return {
+            statusCode : HttpStatus.FAILED,
+            data : STATUS_MESSAGE.tagMappedAlready
+        } 
+      }
+    } 
+    else {
+      const isTagMapped = await this.isTagAlreadyMapped(accountNumber, taskRid, accountRid, caseRid, tagRid);
+      if(!isTagMapped) {
+        const finalResult = await TaskTag.create({
+          task_rid : taskRid,
+          account_rid : accountRid,
+          case_rid : caseRid,
+          tag_rid : tagRid,
+          created_by : userId,
+          created_datetime : new Date()
+        })
+        if(finalResult) {
+          return {
+            statusCode : HttpStatus.SUCCESS,
+            data : finalResult
+        } 
+        } else {
+          return {
+            statusCode : HttpStatus.FAILED,
+            data : null
+        } 
+        }
+      } else {
+        return {
+            statusCode : HttpStatus.FAILED,
+            data : STATUS_MESSAGE.tagMappedAlready
+        } 
+      }
+    }
+  }
+  async fetchAllTags () {
+    const {Tags} = await this.caseModelService.getModels("")
+    const result = await Tags.findAll({
+      attributes : ['rid', 'tag_name'],
+      order : [['tag_name', 'ASC']]
+    })
+    if(result.length > 0) return result
+    else return []
+  }
+  async isTagAlreadyMapped (accountNumber : string, taskRid : string, accountRid : string, caseRid : string, tagRid : string) {
+    const {TaskTag} = await this.caseModelService.getModels(accountNumber);
+    const result = await TaskTag.findOne({
+      where : {
+        account_rid : accountRid,
+        task_rid : taskRid,
+        case_rid : caseRid,
+        tag_rid : tagRid
+      }
+    });
+    if(result) return result;
+    else return null;
+  }
+  async isTagAlreadyExists (tagRid : string) {
+    const {Tags} = await this.caseModelService.getModels("");
+    const result = await Tags.findOne({
+      where : {
+        tag_name : {
+          [Op.iLike] : tagRid
+        }
+      }
     });
     if(result) return result;
     else return null;

@@ -2001,5 +2001,42 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       }
     }
 
+    async createOrMapTags (data : any) {
+      const mainDb = await this.getMainDb();
+      const dbInit = await this.caseModelService.getSequelize();
+      const transaction = await dbInit.transaction();
+      const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+      const getActiveStatusId : any = await mainDb.query(rawQueries.getActiveStatusId());
+      const result = await this.caseSchemaService.createOrUpdateTags(data.task_rid, data.account_rid,
+        data.case_rid, data.tag_rid, data.is_new_tag, fetchParent[0][0].r_number, data.userId, getActiveStatusId[0][0].rid
+      )
+      if(result.statusCode == HttpStatus.SUCCESS) {
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          data : result.data
+        }
+      } else {
+        return {
+          statusCode : HttpStatus.FAILED,
+          data : result.data
+        }
+      }
+    }
+
+    async fetchTagsForDropdown () {
+      const result = await this.caseSchemaService.fetchAllTags();
+      if(result.length > 0) {
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          data : result
+        }
+      } else {
+        return {
+          statusCode : HttpStatus.NOT_FOUND,
+          data : []
+        }
+      }
+    }
+
 
 }

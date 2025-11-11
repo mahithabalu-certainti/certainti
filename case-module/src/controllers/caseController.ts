@@ -2262,6 +2262,124 @@ async function fetchCaseTaskList (req : Request, res : Response) {
     );
   }
 }
+
+/**
+ * Controller function to handle the creation or mapping of tags to cases or entities.
+ *
+ * This async function processes HTTP requests to either create new tags or map existing ones by:
+ * - Validating that a valid user ID exists in the request headers
+ * - Extracting tag-related data from the request body
+ * - Delegating the business logic to `caseService.createOrMapTags`
+ * - Returning a success response with created/mapped tags or a fallback message if no data is available
+ *
+ * Error handling:
+ * - Returns a `BAD_REQUEST` response if the user ID is missing
+ * - Catches and handles runtime or service-level errors gracefully with a `FAILED` response
+ *
+ * @param {Request} req - Express request object containing tag creation/mapping data and user ID in headers
+ * @param {Response} res - Express response object used to send the operation result back to the client
+ * @returns {Promise<void>} - Resolves after sending the HTTP response
+ * @throws {Error} - Captures and logs any validation or runtime errors
+ */
+async function createOrMapTags (req : Request, res : Response) {
+  const methodName = "createOrMapTags"
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const data = req.body; 
+    data.userId = userId  
+    const result = await caseService.createOrMapTags(data);
+    if(result.statusCode == HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.tagsCreatedSuccesfully,
+        data: result.data,
+      });        
+    } else {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.data,
+        data: null
+      });  
+    }
+  } catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
+/**
+ * Controller function to fetch all available tags for dropdown or selection purposes.
+ *
+ * This async function processes HTTP requests to retrieve the complete list of tags by:
+ * - Validating that a valid user ID exists in the request headers
+ * - Delegating the tag retrieval logic to `caseService.fetchTagsForDropdown`
+ * - Returning the list of tags with a success message or an empty response if no data is found
+ *
+ * Error handling:
+ * - Returns a `BAD_REQUEST` response if the user ID is missing in headers
+ * - Catches and handles any runtime or service-level errors gracefully with a `FAILED` response
+ *
+ * @param {Request} req - Express request object containing user ID in headers
+ * @param {Response} res - Express response object used to send the list of available tags or an error message
+ * @returns {Promise<void>} - Resolves after sending the HTTP response to the client
+ * @throws {Error} - Captures and logs any runtime or validation errors
+ */
+async function fetchAllTags(req : Request, res : Response) {
+  const methodName = "fetchAllTags";
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const result = await caseService.fetchTagsForDropdown()
+    if(result.statusCode == HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.tagsListedSuccess,
+        data: result.data,
+      });   
+    } else {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.dataNotAvailable,
+        data: result.data,
+      });
+    }    
+  } catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
 export default {
   createCases,
   updateCases,
@@ -2291,5 +2409,7 @@ export default {
   createTask,
   updateTask,
   getChecklistStatus,
-  fetchCaseTaskList
+  fetchCaseTaskList,
+  createOrMapTags,
+  fetchAllTags
 };
