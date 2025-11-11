@@ -137,8 +137,7 @@ const tabs: TabMenus[] = [
     label: 'Checklists',
     value: 'checklists',
     hide: false,
-    // id: AllPermissions.CHECKLIST_VIEW_EDIT,
-    id: AllPermissions.NOTES_VIEW_EDIT,
+    id: AllPermissions.CHECKLIST_VIEW_EDIT,
   },
 ];
 
@@ -558,10 +557,10 @@ const Resource: React.FC<ResourceProps> = ({
     AllPermissions.NOTES_CREATE
   );
 
-  // const isChecklistCreateEnable = checkPermission(
-  //   permission || [],
-  //   AllPermissions.CHECKLIST_CREATE
-  // );
+  const isChecklistCreateEnable = checkPermission(
+    permission || [],
+    AllPermissions.CHECKLIST_CREATE
+  );
 
   const handleBackClick = () => {
     if (source === 'timesheet') {
@@ -653,8 +652,7 @@ const Resource: React.FC<ResourceProps> = ({
       variant: 'outlined' as const,
       onClick: () => handleCreateChecklist(),
       sx: { ...BUTTON_STYLES, width: '105px', minWidth: '105px' },
-      hide: value !== 'details',
-      // || !isChecklistCreateEnable,
+      hide: value !== 'details' || !isChecklistCreateEnable,
       disabled: accountInActive ? accountInActive : resourceInActive,
     },
     {

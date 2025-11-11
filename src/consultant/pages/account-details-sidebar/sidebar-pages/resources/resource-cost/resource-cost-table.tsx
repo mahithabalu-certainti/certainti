@@ -205,10 +205,10 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
     AllPermissions.NOTES_CREATE
   );
 
-  // const isChecklistCreateEnable = checkPermission(
-  //   permission,
-  //   AllPermissions.CHECKLIST_CREATE
-  // );
+  const isChecklistCreateEnable = checkPermission(
+    permission,
+    AllPermissions.CHECKLIST_CREATE
+  );
 
   const handleEdit = (cost: ResourceCostList) => {
     const data = convertResourceCost(cost);
@@ -391,8 +391,8 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
         attachmentCreateEnable,
         handleGetFiscalYear,
         fiscalDate,
-        isNoteCreateEnable
-        // isChecklistCreateEnable,
+        isNoteCreateEnable,
+        isChecklistCreateEnable
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [accountInActive, fiscalDate, resourceInActive]

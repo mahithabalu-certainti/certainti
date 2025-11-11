@@ -169,10 +169,10 @@ export const AccountDetails = () => {
     AllPermissions.NOTES_EXPORT
   );
 
-  // const isChecklistsExportEnable = checkPermission(
-  //   permission,
-  //   AllPermissions.CHECKLIST_EXPORT
-  // );
+  const isChecklistsExportEnable = checkPermission(
+    permission,
+    AllPermissions.CHECKLIST_EXPORT
+  );
 
   const isCasesExportEnable = checkPermission(
     permission,
@@ -457,7 +457,10 @@ export const AccountDetails = () => {
       });
     } else if (exportType === 'notes' || exportType === 'resource_notes') {
       ExportNotesList('notes', { ...notesParams, ...notesPayload });
-    } else if (exportType === 'checklist') {
+    } else if (
+      exportType === 'checklist' ||
+      exportType === 'resource_checklist'
+    ) {
       ExportChecklistList('checklist', {
         ...checklistParams,
         ...checklistsPayload,
@@ -606,9 +609,9 @@ export const AccountDetails = () => {
     } else if (list === 'resources' && tab === 'notes' && !noteView) {
       return !isNotesExportEnable;
     } else if (list === 'resources' && tab === 'checklists' && !checklistView) {
-      return false;
+      return !isChecklistsExportEnable;
     } else if (list === 'checklist' && !checklistView) {
-      return false;
+      return !isChecklistsExportEnable;
     } else if (list === 'projects') {
       return !isProjectExportEnable;
     } else if (list === 'attachments') {

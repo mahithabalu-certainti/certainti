@@ -318,7 +318,7 @@ export enum AllPermissions {
   CHECKLIST_TEMPLATES_EXPORT = 'checklist_templates_export',
   CHECKLIST_OVERVIEW = 'checklist_overview',
   CHECKLIST_TIMELINE = 'checklist_timeline',
-  CHECKLIST_VIEW_EDIT = 'checklist_view_edit',
+  CHECKLIST_VIEW_EDIT = 'checklists_view_edit',
   CHECKLIST_EXPORT = 'checklist_export',
   CHECKLIST_CREATE = 'checklist_create',
 }

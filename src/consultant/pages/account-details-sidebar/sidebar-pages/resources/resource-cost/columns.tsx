@@ -37,8 +37,8 @@ export const getResourceCostColumns = (
   attachmentCreateEnable?: boolean,
   handleGetFiscalYear?: (year: string) => void,
   fiscalDate?: FormFiscalDateType,
-  isNoteCreateEnable?: boolean
-  // isChecklistCreateEnable?: boolean
+  isNoteCreateEnable?: boolean,
+  isChecklistCreateEnable?: boolean
 ): ListTableColumn<ResourceCostList>[] => [
   {
     id: 'fiscal_year',
@@ -514,7 +514,7 @@ export const getResourceCostColumns = (
     label: 'Checklists',
     width: 80,
     sortable: false,
-    // hide: !isChecklistCreateEnable,
+    hide: !isChecklistCreateEnable,
     sx: {
       textAlign: 'center',
     },

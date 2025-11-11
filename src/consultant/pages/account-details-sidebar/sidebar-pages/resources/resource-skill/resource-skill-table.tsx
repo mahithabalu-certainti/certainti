@@ -145,10 +145,10 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
     AllPermissions.NOTES_CREATE
   );
 
-  // const isChecklistCreateEnable = checkPermission(
-  //   permission,
-  //   AllPermissions.CHECKLIST_CREATE
-  // );
+  const isChecklistCreateEnable = checkPermission(
+    permission,
+    AllPermissions.CHECKLIST_CREATE
+  );
 
   //permissions
   const skillViewEditFields = useMemo(
@@ -304,8 +304,8 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
         handleCreateChecklist,
         resourceInActive,
         attachmentCreateEnable,
-        isNoteCreateEnable
-        // isChecklistCreateEnable,
+        isNoteCreateEnable,
+        isChecklistCreateEnable
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [accountInActive, memoizedSkillSubType, resourceInActive]

@@ -107,6 +107,7 @@ export interface BasePayload {
   account_rid: string;
   attach_to: string;
   attachment_level: string;
+  fiscal_year?: string | number;
   checklist_template_rid?: string;
 }
 
@@ -124,14 +125,14 @@ export const getChecklistTableColumns = (
   {
     name: 'checklist_item_name',
     label: 'Checklist Item Name',
-    width: isEditView ? '30%' : '34%',
+    width: isEditView ? '40%' : '44%',
     required: true,
     hide: false,
   },
   {
     name: 'description',
-    label: 'Description',
-    width: isEditView ? '50%' : '60%',
+    label: 'Comments',
+    width: isEditView ? '40%' : '50%',
     required: false,
     hide: false,
   },
@@ -139,7 +140,7 @@ export const getChecklistTableColumns = (
     name: 'status',
     label: 'Status',
     width: '14%',
-    required: false,
+    required: true,
     hide: !isEditView,
   },
   {
@@ -186,7 +187,8 @@ export const shouldDisableField = (
 
 export const validateChecklistForm = (
   formData: ChecklistFormData,
-  ignoreFiscalYear: boolean
+  ignoreFiscalYear: boolean,
+  isEditView: boolean
 ): { isValid: boolean; errors: ChecklistFormErrors } => {
   let isValid = true;
   const newErrors: ChecklistFormErrors = {};
@@ -245,8 +247,12 @@ export const validateChecklistForm = (
     }
 
     if (!REGEX_PATTERNS.MAX_2000.test(item.description)) {
-      currentItemErrors.description =
-        'Description must be within 2000 characters';
+      currentItemErrors.description = 'Comments must be within 2000 characters';
+      isValid = false;
+    }
+
+    if (isEditView && !item.status) {
+      currentItemErrors.status = 'Field is required';
       isValid = false;
     }
 
@@ -270,17 +276,17 @@ export const checklistItemsTransformPayload = (
     if (isEdit && item.rid) {
       retainedRids.add(item.rid);
       transformedItems.push({
-        rid: item.rid,
+        // rid: item.rid,
         checklist_item_name: item.checklist_item_name,
-        description: item.description,
+        checklist_item_description: item.description,
         status_rid: item.status || '',
         action_type: ItemActionType.Edit,
       });
     } else if (!item.rid && item.checklist_item_name.trim()) {
       transformedItems.push({
         checklist_item_name: item.checklist_item_name,
-        description: item.description,
-        // status_rid: item.status || '',
+        checklist_item_description: item.description,
+        status_rid: item.status || '',
         action_type: ItemActionType.Add,
       });
     }
@@ -290,9 +296,10 @@ export const checklistItemsTransformPayload = (
     existingItems.forEach((existingItem) => {
       if (existingItem.rid && !retainedRids.has(existingItem.rid)) {
         transformedItems.push({
-          rid: existingItem.rid,
+          // rid: existingItem.rid,
           checklist_item_name: existingItem.checklist_item_name || '',
-          description: existingItem.checklist_item_description || '',
+          checklist_item_description:
+            existingItem.checklist_item_description || '',
           status_rid: existingItem.status_rid || '',
           action_type: ItemActionType.Delete,
         });
@@ -345,5 +352,43 @@ export const getSelectStyles = (hasError: boolean, isEmpty: boolean) => ({
   },
   '&:hover .MuiOutlinedInput-notchedOutline': {
     border: hasError ? '1px solid #ef4444' : '1px solid #CBD6E2',
+  },
+});
+
+export const getAutocompleteStyles = (hasError: boolean, isEmpty: boolean) => ({
+  height: '25px',
+  fontSize: '12px',
+  width: '160px',
+
+  '& .MuiOutlinedInput-root': {
+    height: '25px !important',
+    padding: '0 4px',
+    '& fieldset': {
+      border: hasError ? '1px solid #ef4444' : '1px solid #CBD6E2',
+      borderRadius: '2px',
+    },
+    '&:hover fieldset': {
+      border: hasError ? '1px solid #ef4444' : '1px solid #CBD6E2',
+    },
+    '&.Mui-focused fieldset': {
+      border: '2px solid #60A5FA',
+    },
+    '&.Mui-focused': {
+      boxShadow: 'none',
+    },
+  },
+
+  '& .MuiInputBase-input': {
+    padding: '6px',
+    color: isEmpty ? '#7D98B6' : 'black',
+    fontSize: '12px',
+  },
+
+  '& .MuiSvgIcon-root': {
+    color: '#7D98B6',
+  },
+
+  '&.Mui-disabled': {
+    backgroundColor: '#f3f4f6',
   },
 });

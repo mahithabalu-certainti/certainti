@@ -91,6 +91,7 @@ export const ProjectResources = ({
   setAttachmentParams,
   projectCode,
   accountOrProjectInActive,
+  projectFiscalYear,
 }: {
   projectID?: string;
   accountData?: {
@@ -105,6 +106,7 @@ export const ProjectResources = ({
   >;
   projectCode?: string;
   accountOrProjectInActive?: boolean;
+  projectFiscalYear?: number | string;
 }) => {
   const { errorToast } = useToast();
   const [showFilter, setShowFilter] = useState<boolean>(false);
@@ -404,10 +406,10 @@ export const ProjectResources = ({
     AllPermissions.NOTES_CREATE
   );
 
-  // const isChecklistCreateEnable = checkPermission(
-  //   permission,
-  //   AllPermissions.CHECKLIST_CREATE
-  // );
+  const isChecklistCreateEnable = checkPermission(
+    permission,
+    AllPermissions.CHECKLIST_CREATE
+  );
 
   const handleOpen = () => {
     const newParams = new URLSearchParams(searchParams);
@@ -441,6 +443,7 @@ export const ProjectResources = ({
       accountId: accountID,
       entityLevel: 'project_resource',
       entityId: projectResourceId || '',
+      projectFiscalYear: projectFiscalYear?.toString() || '',
       source: `Project Resource > ${resourceData?.r_number}`,
       ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
     });
@@ -456,6 +459,7 @@ export const ProjectResources = ({
       accountId: accountID,
       entityLevel: 'project_resource',
       entityId: projectResourceId || '',
+      projectFiscalYear: projectFiscalYear?.toString() || '',
       source: `Project Resource > ${resourceData?.r_number}`,
       ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
     });
@@ -489,8 +493,7 @@ export const ProjectResources = ({
       onClick: () => handleCreateChecklist(),
       disabled: accountOrProjectInActive,
       sx: { ...BUTTON_STYLES, width: '105px', minWidth: '105px' },
-      hide: !viewDetails,
-      //  || !isChecklistCreateEnable,
+      hide: !viewDetails || !isChecklistCreateEnable,
     },
     {
       label: viewDetails ? 'Edit' : 'New',
@@ -801,6 +804,7 @@ export const ProjectResources = ({
             accountId={accountID}
             attachID={resID}
             onUploadSuccess={handleDetailReFetch}
+            projectFiscalYear={projectFiscalYear}
           />
         ) : (
           <>

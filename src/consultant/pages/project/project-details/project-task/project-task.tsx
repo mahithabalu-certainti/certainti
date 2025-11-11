@@ -96,6 +96,7 @@ export const ProjectTask = ({
   setProjectTaskParams,
   projectCode,
   accountOrProjectInActive,
+  projectFiscalYear,
 }: {
   projectID?: string;
   accountData?: {
@@ -110,6 +111,7 @@ export const ProjectTask = ({
   >;
   projectCode?: string;
   accountOrProjectInActive?: boolean;
+  projectFiscalYear?: number | string;
 }) => {
   const { errorToast } = useToast();
   const [showFilter, setShowFilter] = useState<boolean>(false);
@@ -181,10 +183,10 @@ export const ProjectTask = ({
     AllPermissions.NOTES_CREATE
   );
 
-  // const isChecklistCreateEnable = checkPermission(
-  //   permission,
-  //   AllPermissions.CHECKLIST_CREATE
-  // );
+  const isChecklistCreateEnable = checkPermission(
+    permission,
+    AllPermissions.CHECKLIST_CREATE
+  );
 
   const projectViewEditFields = useMemo(
     () =>
@@ -334,6 +336,7 @@ export const ProjectTask = ({
       accountId: accountID,
       entityLevel: 'project_task',
       entityId: projectTaskId || '',
+      projectFiscalYear: projectFiscalYear?.toString() || '',
       source: `Project Task > ${resourceData?.r_number || row?.r_number}`,
       ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
     });
@@ -349,6 +352,7 @@ export const ProjectTask = ({
       accountId: accountID,
       entityLevel: 'project_task',
       entityId: projectTaskId || '',
+      projectFiscalYear: projectFiscalYear?.toString() || '',
       source: `Project Task > ${resourceData?.r_number || row?.r_number}`,
       ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
     });
@@ -387,8 +391,7 @@ export const ProjectTask = ({
       onClick: () => handleCreateChecklist(),
       disabled: accountOrProjectInActive,
       sx: { ...BUTTON_STYLES, width: '105px', minWidth: '105px' },
-      hide: !viewDetails,
-      // || !isChecklistCreateEnable,
+      hide: !viewDetails || !isChecklistCreateEnable,
     },
     {
       label: viewDetails ? 'Edit' : 'New',
@@ -557,8 +560,8 @@ export const ProjectTask = ({
     accountOrProjectInActive,
     fiscalDatesArg,
     isAttachmentCreateEnable,
-    isNoteCreateEnable
-    // isChecklistCreateEnable,
+    isNoteCreateEnable,
+    isChecklistCreateEnable
   );
   const onRefreshClick = () => {
     setRefreshProjectsTrigger(Date.now());
@@ -741,6 +744,7 @@ export const ProjectTask = ({
           accountId={accountID}
           attachID={taskId || selectedRowId}
           onUploadSuccess={taskDetailPageRefresh}
+          projectFiscalYear={projectFiscalYear}
         />
       ) : (
         <>

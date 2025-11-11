@@ -11,11 +11,12 @@ import {
   Tooltip,
   Autocomplete,
   TextField,
+  Skeleton,
 } from '@mui/material';
 import { useParams, useLocation, useSearchParams } from 'react-router-dom';
 import TextButton from '../../../../components/button/text-button';
 import { useToast } from '../../../../hooks';
-import { useGetStatus } from '../../../../common-service';
+import { AllPermissions, useGetStatus } from '../../../../common-service';
 import {
   validateChecklistForm,
   ChecklistFormData,
@@ -28,6 +29,9 @@ import {
   getSelectStyles,
   transformChecklistTemplatePayload,
   BasePayload,
+  getAutocompleteStyles,
+  shouldHideField,
+  shouldDisableField,
 } from './helper';
 import {
   ChecklistIcon,
@@ -45,13 +49,15 @@ import {
   useChecklistDetails,
   useCreateChecklist,
   useUpdateChecklistDetails,
-  useConsultantChecklistTemplateList,
-  useConsultantChecklistTemplateDetails,
   useGetChecklistStatus,
+  useGetChecklistTemplateItems,
+  useChecklistTemplateItemDetails,
 } from '../../../services/checklist/checklist-service';
 import FormFiscalYearDropdown from '../../../../components/fiscal-dropdown/form-fiscal-dropdown';
 import ConfirmationPopup from '../../../../common-utils/confirmation-popup';
 import { ArrowDropDownIcon } from '@mui/x-date-pickers/icons';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../store/store';
 
 const ChecklistForm: React.FC = () => {
   const { successToast } = useToast();
@@ -114,22 +120,23 @@ const ChecklistForm: React.FC = () => {
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
 
   // Permission
-  // const { permission } = useSelector((state: RootState) => state.permission);
+  const { permission } = useSelector((state: RootState) => state.permission);
 
-  // const checklistViewEditFields = useMemo(
-  //   () =>
-  //     permission.find((item) => item.name === AllPermissions.CHECKLIST_OVERVIEW)
-  //       ?.fields ?? [],
-  //   [permission]
-  // );
+  const checklistViewEditFields = useMemo(
+    () =>
+      permission.find(
+        (item) => item.name === AllPermissions.CHECKLIST_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
 
-  // const permissionMap = useMemo(() => {
-  //   const map: Record<string, { read: boolean; edit: boolean }> = {};
-  //   checklistViewEditFields.forEach((item) => {
-  //     map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
-  //   });
-  //   return map;
-  // }, [checklistViewEditFields]);
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    checklistViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [checklistViewEditFields]);
 
   const statusData = useGetStatus();
   const checklistStatus = useGetChecklistStatus();
@@ -137,34 +144,24 @@ const ChecklistForm: React.FC = () => {
   const updateChecklist = useUpdateChecklistDetails();
 
   const { data: checklistData, isLoading } = useChecklistDetails(
-    entityId,
+    accountId,
     checklistId || '',
     isEditView && !!checklistId
   );
 
-  // Template dropdown functionality
-  const checklistTemplates = useConsultantChecklistTemplateList(
-    {
-      page: 1,
-      limit: 1000,
-      sortBy: 'checklist_name',
-      sortOrder: 'ASC',
-      filters: {},
-    },
-    !isEditView
-  );
+  // Template dropdown
+  const checklistTemplates = useGetChecklistTemplateItems();
 
-  const { data: templateDetails } = useConsultantChecklistTemplateDetails(
-    currentTemplate.value
-  );
+  const { data: templateDetails, isLoading: templateLoading } =
+    useChecklistTemplateItemDetails(currentTemplate.value);
 
   const templateOptions = useMemo(
     () =>
-      checklistTemplates.data?.checklistTemplates.map((template) => ({
+      checklistTemplates.data?.data.map((template) => ({
         label: template.checklist_name,
         value: template.rid,
       })) || [],
-    [checklistTemplates.data?.checklistTemplates]
+    [checklistTemplates.data?.data]
   );
 
   const minYear = 1950;
@@ -229,6 +226,8 @@ const ChecklistForm: React.FC = () => {
     if (isEditView && checklistData) {
       const disableLevel =
         checklistData?.attachment_level?.toLowerCase() === 'project' ||
+        checklistData?.attachment_level?.toLowerCase() === 'project_resource' ||
+        checklistData?.attachment_level?.toLowerCase() === 'project_task' ||
         checklistData?.attachment_level?.toLowerCase() === 'case';
       setDisableFiscalYear(disableLevel);
     }
@@ -239,10 +238,9 @@ const ChecklistForm: React.FC = () => {
     if (templateDetails && currentTemplate.value) {
       setFormData((prev) => ({
         ...prev,
-        checklist_name: templateDetails.checklist_name || prev.checklist_name,
-        checklist_description:
-          templateDetails.checklist_description || prev.checklist_description,
-        status: templateDetails?.status_rid || prev.status,
+        checklist_name: templateDetails.checklist_name,
+        checklist_description: templateDetails.checklist_description,
+        status: templateDetails?.status_rid,
         checklist_items:
           templateDetails.checklist_items &&
           templateDetails.checklist_items.length > 0
@@ -376,7 +374,8 @@ const ChecklistForm: React.FC = () => {
     const ignoreFiscalYear = disableFiscalYear || !!entityFiscalYear;
     const { isValid, errors: validationErrors } = validateChecklistForm(
       formData,
-      ignoreFiscalYear
+      ignoreFiscalYear,
+      isEditView
     );
     setErrors(validationErrors);
     return isValid;
@@ -392,6 +391,10 @@ const ChecklistForm: React.FC = () => {
       account_rid: accountId,
       attach_to: entityId,
       attachment_level: entityLevel,
+      fiscal_year:
+        Number(entityFiscalYear) ||
+        formData.fiscalYear ||
+        checklistData?.fiscal_year,
       ...(!isEditView && currentTemplate.value
         ? {
             checklist_template_rid: currentTemplate.value,
@@ -418,14 +421,16 @@ const ChecklistForm: React.FC = () => {
 
   const checklistTableColumns = getChecklistTableColumns(isEditView);
   const formLoading =
-    isLoading ||
-    statusData.isLoading ||
-    checklistStatus.isLoading ||
-    checklistTemplates.isLoading;
+    isLoading || statusData.isLoading || checklistStatus.isLoading;
+
+  const hideFiscalYear =
+    disableFiscalYear ||
+    !!entityFiscalYear ||
+    shouldHideField('fiscal_year', isEditView, permissionMap);
 
   return (
     <React.Suspense fallback={null}>
-      <div>
+      <div className={`${templateLoading ? 'pointer-events-none' : ''}`}>
         <div className='h-[50px] flex items-center justify-between px-10 sticky top-0 z-10 bg-white border-b border-[#CBD6E2]'>
           <div className='flex items-center w-[80%] max-w-[80%]'>
             <ChecklistIcon
@@ -450,87 +455,77 @@ const ChecklistForm: React.FC = () => {
             </div>
           </div>
           <div className='flex gap-3'>
-            {!isEditView && (
-              <Autocomplete
-                disableClearable
-                forcePopupIcon
-                popupIcon={<ArrowDropDownIcon />}
-                slotProps={{ paper: { style: { fontSize: '12px' } } }}
-                options={templateOptions}
-                size='small'
-                sx={{
-                  height: '24px',
-                  fontSize: '10px',
-                  width: '160px',
-                  '&.MuiAutocomplete-root .MuiOutlinedInput-root': {
-                    height: '24px',
-                  },
-                  '& .MuiInputBase-input::placeholder': {
-                    color: '#7D98B6',
-                    opacity: 1,
-                  },
-                  '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline':
-                    {
-                      border: '2px solid #60A5FA',
+            {!isEditView &&
+              (checklistTemplates?.isLoading ? (
+                <Skeleton
+                  variant='rounded'
+                  width='160px'
+                  height={25}
+                  sx={{ borderRadius: '2px' }}
+                />
+              ) : (
+                <Autocomplete
+                  disableClearable
+                  forcePopupIcon
+                  popupIcon={<ArrowDropDownIcon />}
+                  slotProps={{
+                    paper: { style: { fontSize: '12px' } },
+                    popupIndicator: {
+                      disableRipple: true,
+                      disableFocusRipple: true,
+                      sx: {
+                        transition: 'transform 0.25s ease-in-out',
+                        backgroundColor: 'transparent !important',
+                        '&:hover': {
+                          backgroundColor: 'transparent !important',
+                        },
+                        '&.MuiAutocomplete-popupIndicatorOpen': {
+                          transform: 'rotate(180deg)',
+                        },
+                      },
                     },
-                  '& .MuiOutlinedInput-root': {
-                    '&.Mui-focused': {
-                      boxShadow: 'none',
-                    },
-                  },
-                  '.MuiSelect-select': {
-                    padding: '6px 6px',
-                    color: currentTemplate.value === '' ? '#7D98B6' : 'black',
-                  },
-                  '&.Mui-disabled': {
-                    backgroundColor: '#f3f4f6',
-                  },
-                  '& .MuiOutlinedInput-notchedOutline': {
-                    border: '1px solid #CBD6E2',
-                    borderRadius: '2px',
-                  },
-                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                    border: '1px solid #CBD6E2',
-                  },
-                  '& svg': {
-                    color: '#7D98B6',
-                  },
-                }}
-                onChange={(_e, newValue) => {
-                  if (currentTemplate.value) {
-                    //If template already choose
-                    setConfirmationState({
-                      isOpen: true,
-                      message:
-                        'The current checklist items will be replaced with template items. Are you sure you want to continue?',
-                      onConfirm: () => {
-                        setCurrentTemplate(newValue);
-                      },
-                      onCancel: () => {
-                        setCurrentTemplate(currentTemplate);
-                      },
-                    });
-                  } else {
-                    setCurrentTemplate(newValue);
-                  }
-                }}
-                value={currentTemplate}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    variant='outlined'
-                    size='small'
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 0,
-                        fontSize: '12px',
-                      },
-                    }}
-                    placeholder={currentTemplate.label}
-                  />
-                )}
-              />
-            )}
+                  }}
+                  options={templateOptions}
+                  size='small'
+                  sx={getAutocompleteStyles(
+                    false,
+                    currentTemplate.value === ''
+                  )}
+                  onChange={(_e, newValue) => {
+                    if (currentTemplate.value) {
+                      setConfirmationState({
+                        isOpen: true,
+                        message:
+                          'The current checklist items will be replaced with template items. Are you sure you want to continue?',
+                        onConfirm: () => {
+                          setCurrentTemplate(newValue);
+                        },
+                        onCancel: () => {
+                          setCurrentTemplate(currentTemplate);
+                        },
+                      });
+                    } else {
+                      setCurrentTemplate(newValue);
+                    }
+                  }}
+                  value={currentTemplate}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      variant='outlined'
+                      size='small'
+                      placeholder={currentTemplate.label || 'Choose Template'}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: 0,
+                          fontSize: '12px',
+                          height: '25px',
+                        },
+                      }}
+                    />
+                  )}
+                />
+              ))}
             <TextButton
               label='Save'
               loading={createChecklist.isPending || updateChecklist.isPending}
@@ -566,15 +561,15 @@ const ChecklistForm: React.FC = () => {
 
               <div className='grid md:grid-cols-3 gap-x-4 gap-y-[2px] px-10 pt-4'>
                 <div
-                // style={{
-                //   display: shouldHideField(
-                //     'checklist_name',
-                //     isEditView,
-                //     permissionMap
-                //   )
-                //     ? 'none'
-                //     : 'block',
-                // }}
+                  style={{
+                    display: shouldHideField(
+                      'checklist_name',
+                      isEditView,
+                      permissionMap
+                    )
+                      ? 'none'
+                      : 'block',
+                  }}
                 >
                   <label
                     className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
@@ -591,11 +586,11 @@ const ChecklistForm: React.FC = () => {
                     onChange={(e) =>
                       handleInputChange('checklist_name', e.target.value)
                     }
-                    // disabled={shouldDisableField(
-                    //   'checklist_name',
-                    //   isEditView,
-                    //   permissionMap
-                    // )}
+                    disabled={shouldDisableField(
+                      'checklist_name',
+                      isEditView,
+                      permissionMap
+                    )}
                     autoComplete='off'
                     className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] truncate overflow-hidden text-ellipsis whitespace-nowrap outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${errors?.checklist_name ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
                     value={formData.checklist_name}
@@ -607,18 +602,7 @@ const ChecklistForm: React.FC = () => {
                   )}
                 </div>
 
-                <div
-                  className={`${disableFiscalYear || !!entityFiscalYear ? 'hidden' : 'block'}`}
-                  // style={{
-                  //   display: shouldHideField(
-                  //     'fiscal_year',
-                  //     isEditView,
-                  //     permissionMap
-                  //   )
-                  //     ? 'none'
-                  //     : 'block',
-                  // }}
-                >
+                <div className={hideFiscalYear ? 'hidden' : 'block'}>
                   <label
                     className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
                     htmlFor='fiscal_year'
@@ -644,7 +628,14 @@ const ChecklistForm: React.FC = () => {
                         };
                       });
                     }}
-                    disabled={disableFiscalYear}
+                    disabled={
+                      disableFiscalYear ||
+                      shouldDisableField(
+                        'fiscal_year',
+                        isEditView,
+                        permissionMap
+                      )
+                    }
                   />
                   {errors?.fiscalYear && (
                     <span className='text-[12px] text-red-400 col-span-full'>
@@ -729,15 +720,15 @@ const ChecklistForm: React.FC = () => {
 
               <div
                 className='grid grid-cols-1 px-10 pt-4'
-                // style={{
-                //   display: shouldHideField(
-                //     'checklist_description',
-                //     isEditView,
-                //     permissionMap
-                //   )
-                //     ? 'none'
-                //     : 'block',
-                // }}
+                style={{
+                  display: shouldHideField(
+                    'descriptions',
+                    isEditView,
+                    permissionMap
+                  )
+                    ? 'none'
+                    : 'block',
+                }}
               >
                 <label
                   htmlFor='checklist_description'
@@ -752,12 +743,12 @@ const ChecklistForm: React.FC = () => {
                   onChange={(e) =>
                     handleInputChange('checklist_description', e.target.value)
                   }
-                  // disabled={shouldDisableField(
-                  //   'checklist_description',
-                  //   isEditView,
-                  //   permissionMap
-                  // )}
-                  className={`outline-none placeholder-custom-color h-[95px] w-full sm:text-sm py-2 px-3 resize-none focus:border-2 focus:border-blue-400 border border-[#CBD6E2] rounded-xs ${
+                  disabled={shouldDisableField(
+                    'descriptions',
+                    isEditView,
+                    permissionMap
+                  )}
+                  className={`outline-none placeholder-custom-color h-[95px] w-full sm:text-sm py-2 px-3 resize-none focus:border-2 focus:border-blue-400 border border-[#CBD6E2] rounded-xs disabled:bg-gray-100 ${
                     errors?.checklist_description
                       ? 'border-red-500 bg-[#FEF2F2] focus:!bg-[#FEF2F2]'
                       : ''
@@ -910,7 +901,7 @@ const ChecklistForm: React.FC = () => {
                                           name='checklist_item_name'
                                           placeholder='Enter Checklist Item Name'
                                           autoComplete='off'
-                                          className={`outline-none placeholder-custom-color w-full sm:text-sm p-2 resize-none focus:border-2 focus:border-blue-400 ${error ? 'bg-[#FEF2F2] focus:!bg-[#FEF2F2]' : ''}`}
+                                          className={`outline-none placeholder-custom-color w-full sm:text-sm p-2 resize-none focus:border-2 focus:border-blue-400 disabled:bg-gray-100 ${error ? 'bg-[#FEF2F2] focus:!bg-[#FEF2F2]' : ''}`}
                                           value={item.checklist_item_name}
                                           onChange={(e) =>
                                             handleItemChange(
@@ -959,9 +950,9 @@ const ChecklistForm: React.FC = () => {
                                       >
                                         <textarea
                                           name='description'
-                                          placeholder='Enter Description'
+                                          placeholder='Enter Comments'
                                           autoComplete='off'
-                                          className={`outline-none placeholder-custom-color w-full sm:text-sm p-2 resize-none focus:border-2 focus:border-blue-400 ${error ? 'bg-[#FEF2F2] focus:!bg-[#FEF2F2]' : ''}`}
+                                          className={`outline-none placeholder-custom-color w-full sm:text-sm p-2 resize-none focus:border-2 focus:border-blue-400 disabled:bg-gray-100 ${error ? 'bg-[#FEF2F2] focus:!bg-[#FEF2F2]' : ''}`}
                                           value={item.description}
                                           onChange={(e) =>
                                             handleItemChange(
@@ -1005,7 +996,9 @@ const ChecklistForm: React.FC = () => {
                                     )}
 
                                     {col.name === 'status' && (
-                                      <div className='px-2 py-1'>
+                                      <div
+                                        className={`flex relative items-center ${error ? 'bg-[#FEF2F2]' : ''}`}
+                                      >
                                         <Select
                                           value={item.status || ''}
                                           onChange={(e) =>
@@ -1025,10 +1018,32 @@ const ChecklistForm: React.FC = () => {
                                               : 'text-black'
                                           }`}
                                           MenuProps={COMMON_MENU_PROPS}
-                                          sx={getSelectStyles(
-                                            false,
-                                            item.status === ''
-                                          )}
+                                          sx={{
+                                            ...getSelectStyles(
+                                              false,
+                                              item.status === ''
+                                            ),
+                                            height: '100%',
+                                            padding: '9px 4px',
+                                            border: 'none !important',
+                                            '& .MuiOutlinedInput-notchedOutline':
+                                              {
+                                                border: 'none !important',
+                                              },
+                                            '&:hover .MuiOutlinedInput-notchedOutline':
+                                              {
+                                                border: 'none !important',
+                                              },
+                                            '&.Mui-focused .MuiOutlinedInput-notchedOutline':
+                                              {
+                                                border:
+                                                  '1px solid #60A5FA !important',
+                                                borderRadius: '0px !important',
+                                              },
+                                            '& .MuiSelect-icon': {
+                                              right: error ? '16px' : '10px',
+                                            },
+                                          }}
                                         >
                                           <MenuItem
                                             value=''
@@ -1057,6 +1072,31 @@ const ChecklistForm: React.FC = () => {
                                             )
                                           )}
                                         </Select>
+
+                                        {error && (
+                                          <Tooltip
+                                            title={error}
+                                            arrow
+                                            placement='top'
+                                            slotProps={{
+                                              tooltip: {
+                                                sx: {
+                                                  backgroundColor: '#FEF2F2',
+                                                  mr: 1,
+                                                },
+                                              },
+                                            }}
+                                          >
+                                            <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
+                                              <React.Suspense fallback={null}>
+                                                <ErrorInfoIcon
+                                                  alt='error'
+                                                  className='w-5 h-3.5'
+                                                />
+                                              </React.Suspense>
+                                            </span>
+                                          </Tooltip>
+                                        )}
                                       </div>
                                     )}
 
@@ -1134,58 +1174,52 @@ const ChecklistForm: React.FC = () => {
                     {
                       label: 'Record ID',
                       value: formData.rid,
-                      // hide: shouldHideField('rid', isEditView, permissionMap),
-                      hide: false,
+                      hide: shouldHideField('rid', isEditView, permissionMap),
                     },
                     {
                       label: 'Created On',
                       value: formData.created_on,
-                      // hide: shouldHideField(
-                      //   'created_datetime',
-                      //   isEditView,
-                      //   permissionMap
-                      // ),
-                      hide: false,
+                      hide: shouldHideField(
+                        'created_datetime',
+                        isEditView,
+                        permissionMap
+                      ),
                     },
                     {
                       label: 'Created By',
                       value: formData.created_by,
-                      // hide: shouldHideField(
-                      //   'created_by',
-                      //   isEditView,
-                      //   permissionMap
-                      // ),
-                      hide: false,
+                      hide: shouldHideField(
+                        'created_by_name',
+                        isEditView,
+                        permissionMap
+                      ),
                     },
                     {
                       label: 'Checklist ID',
                       value: formData.checklist_rid,
-                      // hide: shouldHideField(
-                      //   'r_number',
-                      //   isEditView,
-                      //   permissionMap
-                      // ),
-                      hide: false,
+                      hide: shouldHideField(
+                        'r_number',
+                        isEditView,
+                        permissionMap
+                      ),
                     },
                     {
                       label: 'Updated On',
                       value: formData.updated_on,
-                      // hide: shouldHideField(
-                      //   'modified_datetime',
-                      //   isEditView,
-                      //   permissionMap
-                      // ),
-                      hide: false,
+                      hide: shouldHideField(
+                        'modified_datetime',
+                        isEditView,
+                        permissionMap
+                      ),
                     },
                     {
                       label: 'Updated By',
                       value: formData.updated_by,
-                      // hide: shouldHideField(
-                      //   'modified_by',
-                      //   isEditView,
-                      //   permissionMap
-                      // ),
-                      hide: false,
+                      hide: shouldHideField(
+                        'modified_by_name',
+                        isEditView,
+                        permissionMap
+                      ),
                     },
                   ]
                     .filter((field) => !field.hide)
@@ -1194,7 +1228,7 @@ const ChecklistForm: React.FC = () => {
                         <label className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px] md:text-left mt-1 block'>
                           {field.label}
                         </label>
-                        <div className='placeholder-[#7D98B6] bg-gray-100 text-black w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs flex items-center cursor-not-allowed select-none text-nowrap overflow-hidden'>
+                        <div className='placeholder-[#7D98B6] bg-gray-100 text-black w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs flex items-center cursor-default text-nowrap overflow-hidden'>
                           <span className='overflow-hidden text-ellipsis whitespace-nowrap'>
                             {field.value || '-'}
                           </span>

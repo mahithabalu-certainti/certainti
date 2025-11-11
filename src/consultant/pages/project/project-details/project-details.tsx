@@ -310,6 +310,11 @@ export const ProjectDetails = () => {
     AllPermissions.NOTES_EXPORT
   );
 
+  const isChecklistsExportEnable = checkPermission(
+    permission,
+    AllPermissions.CHECKLIST_EXPORT
+  );
+
   const checkExport = () => {
     const list = searchParams.get('list');
     const tab = searchParams.get('tab');
@@ -324,7 +329,7 @@ export const ProjectDetails = () => {
     } else if (list === 'notes' && !noteView) {
       return !isNotesExportEnable;
     } else if (list === 'checklist' && !checklistView) {
-      return false;
+      return !isChecklistsExportEnable;
     } else if (list === 'projectsTask') {
       return !isTaskExportViewEnable;
     } else if (list === 'financial' && tab === 'resource_cost') {
@@ -611,6 +616,7 @@ export const ProjectDetails = () => {
             setExportType={setExportType}
             setAttachmentParams={setProjectResourceParams}
             projectCode={projectData?.project_code}
+            projectFiscalYear={projectData?.fiscal_year}
           />
         );
       case 'projectsTask':
@@ -627,6 +633,7 @@ export const ProjectDetails = () => {
             setExportType={setExportType}
             setProjectTaskParams={setProjectTaskParams}
             projectCode={projectData?.project_code}
+            projectFiscalYear={projectData?.fiscal_year}
           />
         );
       case 'qre-percent-history':
@@ -655,8 +662,6 @@ export const ProjectDetails = () => {
             setTechnicalSummaryParams={setTechnicalSummaryParams}
           />
         );
-      case 'cases':
-        return <NotFound />;
       case 'activities':
         return <NotFound />;
       case 'notes':

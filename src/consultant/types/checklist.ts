@@ -40,6 +40,8 @@ export type ChecklistList = {
   rid: string;
   r_number: string;
   checklist_name: string;
+  checklist_description: string | null;
+  checklist_template_rid: string | null;
   created_datetime: string;
   created_by: string;
   modified_datetime: string | null;
@@ -48,6 +50,8 @@ export type ChecklistList = {
   attach_to: string;
   attachment_level: string;
   fiscal_year: string | number | null;
+  assigned_to: string | null;
+  status_rid: string | null;
   created_by_name: string;
   modified_by_name: string | null;
   attached_to: string;
@@ -112,7 +116,7 @@ export enum ItemActionType {
 export type ChecklistItem = {
   rid?: string;
   checklist_item_name: string;
-  description: string;
+  checklist_item_description: string;
   status_rid?: string;
   action_type: ItemActionType;
 };
@@ -122,7 +126,7 @@ export type ChecklistFormPayload = {
   account_rid: string;
   checklist_name: string;
   checklist_template_rid?: string;
-  fiscal_year?: string;
+  fiscal_year?: string | number;
   checklist_description: string;
   attach_to: string;
   attachment_level: string;
@@ -150,4 +154,17 @@ export interface ChecklistStatusResponse {
   data: {
     checklistStatus: ChecklistStatus[];
   };
+}
+
+// Checklist templates list
+export interface ChecklistTemplateItem {
+  rid: string;
+  checklist_name: string;
+}
+
+export interface ChecklistTemplateItemsResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: ChecklistTemplateItem[];
 }

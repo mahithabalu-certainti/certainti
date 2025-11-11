@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   generatePath,
   useNavigate,
@@ -11,10 +11,16 @@ import { CHECKLIST, CHECKLIST_EDIT } from '../../../../../../routes';
 import DetailsSection, {
   DetailItem,
 } from '../../../../../../components/details-section/details';
-import { formatDateToYYYYMMDDWithTime } from '../../../../../../common-utils';
+import {
+  applyHidePermission,
+  formatDateToYYYYMMDDWithTime,
+} from '../../../../../../common-utils';
 import SectionHeader from '../../../../../../components/details-section/section-header';
 import { ChecklistIcon } from '../../../../../../assets';
 import DetailsSectionSkeleton from '../../../../../../components/skeleton-component/detailsskeleton';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../../store/store';
+import { AllPermissions } from '../../../../../../common-service';
 
 interface ChecklistDetailsProps {
   accountInActive: boolean;
@@ -32,7 +38,7 @@ const ResourceChecklistDetails: React.FC<ChecklistDetailsProps> = ({
   const originPath = searchParams.get('origin') || '';
   const activeMenuPath = searchParams.get('activeMenu') || '';
 
-  // const { permission } = useSelector((state: RootState) => state.permission);
+  const { permission } = useSelector((state: RootState) => state.permission);
   const { data, isLoading, error } = useChecklistDetails(
     accountid,
     checklistId,
@@ -40,29 +46,29 @@ const ResourceChecklistDetails: React.FC<ChecklistDetailsProps> = ({
   );
 
   // Permissions
-  // const checklistEditFields = useMemo(
-  //   () =>
-  //     permission?.find(
-  //       (item) => item.name === AllPermissions.CHECKLIST_VIEW_EDIT
-  //     )?.fields ?? [],
-  //   [permission]
-  // );
+  const checklistEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.CHECKLIST_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
 
-  // const checklistFieldsEditable = useMemo(
-  //   () =>
-  //     permission
-  //       .find((item) => item.name === AllPermissions.CHECKLIST_VIEW_EDIT)
-  //       ?.fields?.some((field) => field.edit),
-  //   [permission]
-  // );
+  const checklistFieldsEditable = useMemo(
+    () =>
+      permission
+        .find((item) => item.name === AllPermissions.CHECKLIST_VIEW_EDIT)
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
 
-  // const permissionMap = useMemo(() => {
-  //   const map: Record<string, { read: boolean; edit: boolean }> = {};
-  //   checklistEditFields.forEach((item) => {
-  //     map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
-  //   });
-  //   return map;
-  // }, [checklistEditFields]);
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    checklistEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [checklistEditFields]);
 
   const handleEdit = () => {
     const path = generatePath(CHECKLIST_EDIT, {
@@ -95,7 +101,7 @@ const ResourceChecklistDetails: React.FC<ChecklistDetailsProps> = ({
       disabled: accountInActive,
       onClick: () => handleEdit(),
       sx: { width: '48px', minWidth: '48px' },
-      // hide: !checklistFieldsEditable,
+      hide: !checklistFieldsEditable,
     },
     {
       label: 'Back To Checklist',
@@ -109,7 +115,7 @@ const ResourceChecklistDetails: React.FC<ChecklistDetailsProps> = ({
     {
       label: 'Record ID',
       value: data?.checklist_rid || checklistId,
-      key: 'checklist_rid',
+      key: 'rid',
     },
     {
       label: 'Checklist ID',
@@ -124,7 +130,7 @@ const ResourceChecklistDetails: React.FC<ChecklistDetailsProps> = ({
     {
       label: 'Created By',
       value: data?.created_by || '',
-      key: 'created_by',
+      key: 'created_by_name',
     },
     {
       label: 'Updated On',
@@ -134,7 +140,7 @@ const ResourceChecklistDetails: React.FC<ChecklistDetailsProps> = ({
     {
       label: 'Updated By',
       value: data?.modified_by || '',
-      key: 'modified_by',
+      key: 'modified_by_name',
     },
   ];
 
@@ -159,27 +165,22 @@ const ResourceChecklistDetails: React.FC<ChecklistDetailsProps> = ({
       value: data?.attached_to,
       key: 'attached_to',
     },
-    {
-      label: 'Fiscal Year',
-      value: `FY-${data?.fiscal_year}`,
-      key: 'fiscal_year',
-    },
   ];
 
   const checklistDescription: DetailItem[] = [
     {
       label: 'Checklist Description',
       value: data?.checklist_description || '',
-      key: 'checklist_description',
+      key: 'descriptions',
     },
   ];
 
-  // const basicDetails = applyHidePermission(basicInfo, permissionMap);
-  // const checklistDescriptionDetails = applyHidePermission(
-  //   checklistDescription,
-  //   permissionMap
-  // );
-  // const auditDetails = applyHidePermission(auditInfo, permissionMap);
+  const basicDetails = applyHidePermission(basicInfo, permissionMap);
+  const checklistDescriptionDetails = applyHidePermission(
+    checklistDescription,
+    permissionMap
+  );
+  const auditDetails = applyHidePermission(auditInfo, permissionMap);
 
   return (
     <div>
@@ -207,18 +208,18 @@ const ResourceChecklistDetails: React.FC<ChecklistDetailsProps> = ({
         <>
           <DetailsSection
             title='Basic Information'
-            data={basicInfo}
+            data={basicDetails}
             customStyle='pt-0 mt-0'
           />
           <DetailsSection
             title=''
-            data={checklistDescription}
+            data={checklistDescriptionDetails}
             fullColumn={true}
             customStyle='pt-[1px]'
           />
           <DetailsSection
             title='Audit Information'
-            data={auditInfo}
+            data={auditDetails}
             customStyle='pt-0 mt-0'
             isAudit={true}
           />

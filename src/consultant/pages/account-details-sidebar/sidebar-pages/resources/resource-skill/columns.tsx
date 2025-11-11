@@ -22,8 +22,8 @@ export const getResourceSkillColumns = (
   handleCreateChecklist?: (row: string) => void,
   resourceInActive?: boolean,
   attachmentCreateEnable?: boolean,
-  isNoteCreateEnable?: boolean
-  // isChecklistCreateEnable?: boolean,
+  isNoteCreateEnable?: boolean,
+  isChecklistCreateEnable?: boolean
 ): ListTableColumn<ResourceSkillList>[] => [
   {
     id: 'start_date',
@@ -426,7 +426,7 @@ export const getResourceSkillColumns = (
     sx: {
       textAlign: 'center',
     },
-    // hide: !isChecklistCreateEnable,
+    hide: !isChecklistCreateEnable,
     render: (row) => (
       <TextButton
         label='Add'

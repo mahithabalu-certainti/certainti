@@ -6,41 +6,31 @@ import {
   ChecklistListExportParams,
   ChecklistFormPayload,
   ChecklistStatusResponse,
+  ChecklistListResponse,
+  ChecklistDetailsResponse,
+  ChecklistTemplateItemsResponse,
 } from '../../types/checklist';
 import { caseServiceApi } from '../../../api/api';
 import {
   ChecklistExportListURL,
+  ChecklistListURL,
   getCreateChecklistUrl,
   getUpdateChecklistUrl,
 } from '../urls/checklist-url';
 import { CommonApiResponse } from '../../../common-service';
-import {
-  ChecklistTemplateList,
-  ChecklistTemplateListParams,
-  ChecklistTemplateDetails,
-} from '../../../admin/types';
-import {
-  ChecklistDetailsMockData,
-  ChecklistListMockData,
-} from '../../mockdata/checklist-mock';
+import { ChecklistTemplateDetails } from '../../../admin/types';
 
 // -------------------- LIST FETCHING --------------------
 
 export const fetchChecklistList = async (
   params: ChecklistListURLParams
 ): Promise<{ checklists: ChecklistList[]; count: number }> => {
-  // const response = await caseServiceApi.get<ChecklistListResponse>(
-  //   ChecklistListURL(params)
-  // );
-  // return {
-  //   checklists: response.data.data.checklists,
-  //   count: response.data.data.totalCount,
-  // };
-  console.log('Checklist List params:', params);
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  const response = await caseServiceApi.get<ChecklistListResponse>(
+    ChecklistListURL(params)
+  );
   return {
-    checklists: ChecklistListMockData.data.checklists,
-    count: ChecklistListMockData.data.totalCount,
+    checklists: response.data.data.checklists,
+    count: response.data.data.totalCount,
   };
 };
 
@@ -80,14 +70,11 @@ const fetchChecklistDetails = async (
   accountId: string,
   checklistId: string
 ): Promise<ChecklistDetails> => {
-  // const response = await caseServiceApi.get<ChecklistDetailsResponse>(
-  //   `/api/cases/checklist/detail/${checklistId}?account_rid=${accountId}`
-  // );
+  const response = await caseServiceApi.get<ChecklistDetailsResponse>(
+    `/api/cases/checklist/detail/${checklistId}?account_rid=${accountId}`
+  );
 
-  // return response.data.data.checklistDetails;
-  console.log('check;list-details', accountId, checklistId);
-  await new Promise((resolve) => setTimeout(resolve, 2000));
-  return ChecklistDetailsMockData.data.checklistDetails;
+  return response.data.data.checklistDetails;
 };
 
 export const useChecklistDetails = (
@@ -148,86 +135,57 @@ export const useUpdateChecklistDetails = () => {
   });
 };
 
-// -------------------- CHECKLIST TEMPLATES --------------------
+// -------------------- CHECKLIST TEMPLATES ITEMS LIST --------------------
 
-// List checklist templates for consultant
-export const getConsultantChecklistTemplateListUrl = (
-  params: ChecklistTemplateListParams
-) => {
-  const queryParams = new URLSearchParams();
-  queryParams.append('page', params.page.toString());
-  queryParams.append('limit', params.limit.toString());
+export const getChecklistTemplateItemsUrl = (): string =>
+  '/api/caseManagement/checklist';
 
-  if (params.sortBy) {
-    queryParams.append('sortBy', params.sortBy);
-  }
-  if (params.sortOrder) {
-    queryParams.append('sortOrder', params.sortOrder);
-  }
-  if (params.filters) {
-    queryParams.append('filters', JSON.stringify(params.filters));
-  }
-
-  return `/api/caseManagement/adminChecklist/list?${queryParams.toString()}`;
-};
-
-export const fetchConsultantChecklistTemplateList = async (
-  params: ChecklistTemplateListParams
-): Promise<{ checklistTemplates: ChecklistTemplateList[]; count: number }> => {
-  const { data } = await caseServiceApi.get(
-    getConsultantChecklistTemplateListUrl(params)
-  );
-  return {
-    checklistTemplates: data.data.checklist,
-    count: data.data.count,
+export const fetchChecklistTemplateItems =
+  async (): Promise<ChecklistTemplateItemsResponse> => {
+    try {
+      const { data } = await caseServiceApi.get<ChecklistTemplateItemsResponse>(
+        getChecklistTemplateItemsUrl()
+      );
+      return data;
+    } catch (error) {
+      console.error('Error fetching checklist template items:', error);
+      throw error;
+    }
   };
-};
 
-export const useConsultantChecklistTemplateList = (
-  params: ChecklistTemplateListParams,
-  isEnabled: boolean,
-  refresh?: number
-): UseQueryResult<
-  { checklistTemplates: ChecklistTemplateList[]; count: number },
-  Error
-> => {
-  return useQuery<
-    { checklistTemplates: ChecklistTemplateList[]; count: number },
-    Error
-  >({
-    queryKey: ['consultant-checklist-template-list', params, refresh],
-    queryFn: () => fetchConsultantChecklistTemplateList(params),
+export const useGetChecklistTemplateItems = () => {
+  return useQuery<ChecklistTemplateItemsResponse, Error>({
+    queryKey: ['checklist-template-items'],
+    queryFn: fetchChecklistTemplateItems,
     retry: 0,
     gcTime: 0,
-    enabled: !!isEnabled,
+    enabled: true,
   });
 };
 
-// Details for consultant checklist template
-export const getConsultantChecklistTemplateDetailsURL = (
-  templateId: string
-) => {
+// Details for checklist template item
+export const getChecklistTemplateItemDetailsURL = (templateId: string) => {
   return `/api/caseManagement/adminChecklist/detail/${templateId}`;
 };
 
-export const fetchConsultantChecklistTemplateDetails = async (
+export const fetchChecklistTemplateItemDetails = async (
   templateId: string
 ): Promise<ChecklistTemplateDetails> => {
   const response = await caseServiceApi.get(
-    getConsultantChecklistTemplateDetailsURL(templateId)
+    getChecklistTemplateItemDetailsURL(templateId)
   );
   return response.data.data.checklistDetails;
 };
 
-export const useConsultantChecklistTemplateDetails = (
+export const useChecklistTemplateItemDetails = (
   templateId: string
 ): UseQueryResult<ChecklistTemplateDetails | undefined, Error> => {
   return useQuery({
-    queryKey: ['consultant-checklist-template-details', templateId],
-    queryFn: () => fetchConsultantChecklistTemplateDetails(templateId),
-    enabled: !!templateId,
+    queryKey: ['checklist-template-item-details', templateId],
+    queryFn: () => fetchChecklistTemplateItemDetails(templateId),
     retry: 0,
     gcTime: 0,
+    enabled: !!templateId,
   });
 };
 

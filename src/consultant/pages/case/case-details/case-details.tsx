@@ -138,6 +138,11 @@ export const CaseDetails = () => {
     AllPermissions.NOTES_EXPORT
   );
 
+  const isChecklistsExportEnable = checkPermission(
+    permission,
+    AllPermissions.CHECKLIST_EXPORT
+  );
+
   const handleExport = (exportType: ExportType) => {
     if (
       searchParams.get('list') !== 'attachments' &&
@@ -196,7 +201,7 @@ export const CaseDetails = () => {
     } else if (list === 'notes' && !noteView) {
       return !isNotesExportEnable;
     } else if (list === 'checklist' && !checklistView) {
-      return false;
+      return !isChecklistsExportEnable;
     } else {
       return true;
     }

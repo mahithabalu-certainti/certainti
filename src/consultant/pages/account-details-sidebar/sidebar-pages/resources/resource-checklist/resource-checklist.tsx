@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ListTable,
   ManageColumnsPopover,
@@ -10,14 +10,28 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 import { ChecklistList } from '../../../../../types';
-import { ShowHideTableColumn } from '../../../../../../components/table/types';
+import {
+  CellEditData,
+  FieldChangeValue,
+  ShowHideTableColumn,
+} from '../../../../../../components/table/types';
 import { RootState } from '../../../../../../store/store';
 import { useSelector } from 'react-redux';
 import { useChecklistList } from '../../../../../services/checklist/checklist-service';
 import { getChecklistTableColumns } from '../../../../checklist/helpers';
 import { CHECKLIST_EDIT } from '../../../../../../routes';
-import { FilterTypes } from '../../../../../../common-service';
+import {
+  AllModules,
+  AllPermissions,
+  FilterTypes,
+} from '../../../../../../common-service';
 import ResourceChecklistDetails from './resource-checklist-details';
+import { checkPermission } from '../../../../../../common-utils';
+import { AccessRestricted } from '../../../../../../components/account-restricted';
+import { useToast } from '../../../../../../hooks';
+import { useMutation } from '@apollo/client';
+import { CHECKLIST_UPDATE } from '../../../../../../api/graphql/queries/checklist-query';
+import { caseClient } from '../../../../../../api/graphql/clients/client';
 
 interface ResourceChecklistListProps {
   fiscalYear?: number;
@@ -60,23 +74,23 @@ const ResourceChecklistList: React.FC<ResourceChecklistListProps> = ({
   resourceNumber,
   resourceInActive,
 }) => {
-  // const { errorToast } = useToast();
+  const { errorToast } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { accountid } = useParams();
   const [rowsPerPage, setRowsPerPage] = useState<number>(100);
   const [checklistList, setChecklistList] = useState<ChecklistList[]>([]);
 
-  // const [updateChecklist] = useMutation(CHECKLIST_UPDATE, {
-  //   client: resourceClient,
-  // });
+  const [updateChecklist] = useMutation(CHECKLIST_UPDATE, {
+    client: caseClient,
+  });
 
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
     (state: RootState) => state.account
   );
-  // const { permission, modules } = useSelector(
-  //   (state: RootState) => state.permission
-  // );
+  const { permission, modules } = useSelector(
+    (state: RootState) => state.permission
+  );
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
   const checklistId = searchParams.get('checklist_id');
   const viewDetails = !!checklistId;
@@ -111,41 +125,36 @@ const ResourceChecklistList: React.FC<ResourceChecklistListProps> = ({
       'active' || resourceInActive;
 
   // Permissions
-  // const isChecklistExportEnable = checkPermission(
-  //   permission,
-  //   AllPermissions.CHECKLIST_EXPORT
-  // );
+  const checklistEnable = checkPermission(modules, AllModules.CHECKLISTS);
 
-  // const checklistEnable = checkPermission(modules, AllModules.CHECKLISTS);
+  const isChecklistViewEnable = checkPermission(
+    permission,
+    AllPermissions.CHECKLIST_VIEW_EDIT
+  );
 
-  // const isChecklistViewEnable = checkPermission(
-  //   permission,
-  //   AllPermissions.CHECKLIST_VIEW_EDIT
-  // );
+  const checklistEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.CHECKLIST_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
 
-  // const checklistEditFields = useMemo(
-  //   () =>
-  //     permission?.find(
-  //       (item) => item.name === AllPermissions.CHECKLIST_VIEW_EDIT
-  //     )?.fields ?? [],
-  //   [permission]
-  // );
+  const checklistFieldsEditable = useMemo(
+    () =>
+      permission
+        .find((item) => item.name === AllPermissions.CHECKLIST_VIEW_EDIT)
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
 
-  // const checklistFieldsEditable = useMemo(
-  //   () =>
-  //     permission
-  //       .find((item) => item.name === AllPermissions.CHECKLIST_VIEW_EDIT)
-  //       ?.fields?.some((field) => field.edit),
-  //   [permission]
-  // );
-
-  // const permissionMap = useMemo(() => {
-  //   const map: Record<string, { read: boolean; edit: boolean }> = {};
-  //   checklistEditFields.forEach((item) => {
-  //     map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
-  //   });
-  //   return map;
-  // }, [checklistEditFields]);
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    checklistEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [checklistEditFields]);
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
@@ -171,6 +180,7 @@ const ResourceChecklistList: React.FC<ResourceChecklistListProps> = ({
   };
 
   const checklistColumns = getChecklistTableColumns(
+    permissionMap,
     accountInActive,
     handleChecklistView
   );
@@ -233,60 +243,64 @@ const ResourceChecklistList: React.FC<ResourceChecklistListProps> = ({
       label: 'Edit',
       disabled: accountInActive,
       onClick: (row: ChecklistList) => handleEdit(row),
-      // hide: !checklistFieldsEditable,
+      hide: !checklistFieldsEditable,
     },
   ];
 
-  // const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
-  //   const previousChecklist = [...checklistList];
-  //   // Find account_id
-  //   const rowData = checklistList.find((checklist) => checklist.rid === rowId);
+  const handleCellEdit = async (rowId: string, updates: CellEditData[]) => {
+    const previousChecklist = [...checklistList];
+    const rowData = checklistList.find((checklist) => checklist.rid === rowId);
+    if (!rowData) {
+      return;
+    }
 
-  //   const updateData = updates.reduce<Record<string, FieldChangeValue>>(
-  //     (acc, item) => {
-  //       let value = item.value;
-  //       if (item.columnId === 'fiscal_year' && typeof value === 'string') {
-  //         const numValue = Number(value);
-  //         value = !isNaN(numValue) ? numValue : value;
-  //       }
-  //       acc[item.editId || item.columnId] = value;
-  //       return acc;
-  //     },
-  //     {
-  //       rid: rowId,
-  //       account_rid: rowData?.account_rid,
-  //     }
-  //   );
+    const updateData = updates.reduce<Record<string, FieldChangeValue>>(
+      (acc, item) => {
+        let value = item.value;
+        if (item.columnId === 'fiscal_year' && typeof value === 'string') {
+          const numValue = Number(value);
+          value = !isNaN(numValue) ? numValue : value;
+        }
+        acc[item.editId || item.columnId] = value;
+        return acc;
+      },
+      {
+        rid: rowId,
+        account_rid: rowData?.account_rid,
+        entityId: rowData?.attach_to,
+        entityLevel: rowData?.attachment_level,
+      }
+    );
 
-  //   try {
-  //     const res = await updateChecklist({
-  //       variables: { data: updateData },
-  //     });
-  //     const result = res.data?.updateChecklistInline;
-  //     if (result?.statusCode === 200 && result.data) {
-  //       const updateChecklist = result.data;
-  //       setChecklistList((prev) =>
-  //         prev.map((checklist) => {
-  //           if (checklist.rid === updateChecklist.rid) {
-  //             return {
-  //               ...checklist,
-  //               ...updateChecklist,
-  //             };
-  //           }
-  //           return checklist;
-  //         })
-  //       );
-  //     } else {
-  //       errorToast(result?.statusMessage || 'Failed to update filed');
-  //       setChecklistList(previousChecklist);
-  //     }
-  //   } catch (error) {
-  //     errorToast((error as Error)?.message || 'Failed to update filed');
-  //     setChecklistList(previousChecklist);
-  //   }
-  // };
+    try {
+      const res = await updateChecklist({
+        variables: { data: updateData },
+      });
+      const result = res.data?.updateChecklistInline;
+      if (result?.statusCode === 200 && result.data) {
+        const updateChecklist = result.data;
+        setChecklistList((prev) =>
+          prev.map((checklist) => {
+            if (checklist.rid === updateChecklist.rid) {
+              return {
+                ...checklist,
+                ...updateChecklist,
+              };
+            }
+            return checklist;
+          })
+        );
+      } else {
+        errorToast(result?.statusMessage || 'Failed to update filed');
+        setChecklistList(previousChecklist);
+      }
+    } catch (error) {
+      errorToast((error as Error)?.message || 'Failed to update filed');
+      setChecklistList(previousChecklist);
+    }
+  };
 
-  // if (!checklistEnable || !isChecklistViewEnable) return <AccessRestricted />;
+  if (!checklistEnable || !isChecklistViewEnable) return <AccessRestricted />;
 
   return (
     <>
@@ -334,7 +348,7 @@ const ResourceChecklistList: React.FC<ResourceChecklistListProps> = ({
             sortBy={orderBy}
             sortOrder={order.toUpperCase() as 'ASC' | 'DESC'}
             onSort={handleSortRequest}
-            // onCellEdit={handleCellEdit}
+            onCellEdit={handleCellEdit}
           />
         </div>
       )}

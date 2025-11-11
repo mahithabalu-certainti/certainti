@@ -299,20 +299,21 @@ const TabPanel: React.FC<TabProps> = ({
     return map;
   }, [resourceNotesEditFields]);
 
-  // const resourceChecklistsEditFields = useMemo(
-  //   () =>
-  //     permission?.find((item) => item.name === AllPermissions.CHECKLIST_VIEW_EDIT)
-  //       ?.fields ?? [],
-  //   [permission]
-  // );
+  const resourceChecklistsEditFields = useMemo(
+    () =>
+      permission?.find(
+        (item) => item.name === AllPermissions.CHECKLIST_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
 
-  // const resourceChecklistsPermissionMap = useMemo(() => {
-  //   const map: Record<string, { read: boolean; edit: boolean }> = {};
-  //   resourceChecklistsEditFields.forEach((item) => {
-  //     map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
-  //   });
-  //   return map;
-  // }, [resourceChecklistsEditFields]);
+  const resourceChecklistsPermissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    resourceChecklistsEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [resourceChecklistsEditFields]);
 
   const resourcepermissionMap = useMemo(() => {
     const map: Record<string, { read: boolean; edit: boolean }> = {};
@@ -526,7 +527,8 @@ const TabPanel: React.FC<TabProps> = ({
       return getAttachmentsFilterFields(fieldOptions, attachmentPermissionMap);
     if (value === 'notes')
       return getNotesFilterFields(resourceNotesPermissionMap, userListOptions);
-    if (value === 'checklists') return getChecklistFilterFields();
+    if (value === 'checklists')
+      return getChecklistFilterFields(resourceChecklistsPermissionMap);
     return value === 'cost'
       ? getCostFilterFields(
           memoizedCurrency,
@@ -560,6 +562,7 @@ const TabPanel: React.FC<TabProps> = ({
     attachmentPermissionMap,
     resourceNotesPermissionMap,
     userListOptions,
+    resourceChecklistsPermissionMap,
     memoizedCurrency,
     resourceCostpermissionMap,
     memoizedSkillType,

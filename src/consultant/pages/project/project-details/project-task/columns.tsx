@@ -36,8 +36,8 @@ export const getProjectTaskColumns = (
   accountOrProjectInActive?: boolean,
   fiscalDate?: FormFiscalDateType,
   isAttachmentCreateEnable?: boolean,
-  isNoteCreateEnable?: boolean
-  // isChecklistCreateEnable?: boolean
+  isNoteCreateEnable?: boolean,
+  isChecklistCreateEnable?: boolean
 ): ListTableColumn<ProjectTaskListType>[] => [
   {
     id: 'resource_code',
@@ -429,7 +429,7 @@ export const getProjectTaskColumns = (
     label: 'Checklists',
     width: 80,
     sortable: false,
-    // hide: !isChecklistCreateEnable,
+    hide: !isChecklistCreateEnable,
     sx: {
       textAlign: 'center',
     },
