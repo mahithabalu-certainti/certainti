@@ -4071,7 +4071,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
   }
 
   async updateUserLevelTask (data : UpdateCaseTaskType, accountNumber : string, transaction : Transaction) {
-    const {CaseTask, CaseTimeline, CaseHistory} = await this.caseModelService.getModels(accountNumber);
+    const {CaseTask, CaseTimeline, CaseHistory, TaskCollaborators} = await this.caseModelService.getModels(accountNumber);
     const checkCaseExists = await this.isCaseExistsForAccount(data.account_rid, data.case_rid, accountNumber);
     if(!checkCaseExists) {
       return {
@@ -4091,6 +4091,20 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             rid : data.rid
           }, transaction
         });
+        const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber);
+        if(!checkIsDifferentCollaborator) {
+          const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.modified_by, data.case_rid, data.account_rid, data.rid, accountNumber);
+          if(!checkCollaboratorExists) {
+            await TaskCollaborators.create({
+              case_rid : data.case_rid,
+              account_rid : data.account_rid,
+              task_rid : data.rid,
+              assigned_to : data.modified_by,
+              created_by : data.modified_by,
+              created_datetime : new Date()
+            }, {transaction});
+          }
+        }
         if(updatedResult == 1) {
           const fetchUpdatedColumns = getColumnsNamesForTaskUpdate(data, isTaskExists);
           if(fetchUpdatedColumns.length > 0) {
@@ -4194,6 +4208,29 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     } else {
       return []
     }
+  }
+  async isNewCollaborator (rid : string, accountNumber : string) {
+    const {CaseTask} = await this.caseModelService.getModels(accountNumber);
+    const result = await CaseTask.findOne({
+      where : {
+        assigned_to : rid
+      }, raw : true
+    });
+    if(result) return result;
+    else return null
+  }
+  async isCollaboratorAlreadyAdded (assignedTo : string, caseRid : string, accountRid : string, taskRid : string, accountNumber : string) {
+    const {TaskCollaborators} = await this.caseModelService.getModels(accountNumber);
+    const result = await TaskCollaborators.findOne({
+      where : {
+        assigned_to : assignedTo,
+        account_rid : accountRid,
+        case_rid : caseRid,
+        task_rid : taskRid
+      }, raw : true
+    });
+    if(result) return result;
+    else return null;
   }
 }
 

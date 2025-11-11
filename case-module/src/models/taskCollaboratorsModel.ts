@@ -4,8 +4,8 @@ import { logMessage } from "../utils/helpers"
 
 interface CreateCollaboratorsAttributes {
     rid : string
-    r_number : string
-    created_by : string
+    r_number? : string
+    created_by? : string
     modified_by? : string
     created_datetime : Date
     modified_datetime? : Date
@@ -15,14 +15,15 @@ interface CreateCollaboratorsAttributes {
     assigned_to : string
 }
 
-export interface CreateCollaborators extends Optional<CreateCollaboratorsAttributes, "rid"> {}
+export interface CreateCollaborators 
+extends Optional<CreateCollaboratorsAttributes, "rid"> {}
 
 export class TaskCollaborators 
-extends Model<CreateCollaborators, CreateCollaboratorsAttributes>
+extends Model<CreateCollaboratorsAttributes, CreateCollaborators>
 implements  CreateCollaboratorsAttributes {
     public rid! : string
-    public r_number! : string
-    public created_by! : string
+    public r_number? : string
+    public created_by? : string
     public modified_by? : string
     public created_datetime! : Date
     public modified_datetime? : Date
