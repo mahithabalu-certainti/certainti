@@ -84,6 +84,10 @@ export const STATUS_MESSAGE = {
     "Country is not associated with the account,Please select country",
   adminChecklistCreated: "Checklist created successfully",
   adminChecklistFailed: "Checklist creation failed",
+  emailCreatedSuccess: "Email Template created successfully",
+  emailCreationFailed: "Email Template creation failed",
+  emailUpdatedSuccess: "Email Template updated successfully",
+  emailUpdateFailed: "Email Template update failed",
   accountIdMissing: "Account RID mising",
   invalidJurisdictionLevel: "Level must be either 'state' or 'federal'.",
   statesMissing: "States array is required when level is 'state'.",
@@ -487,6 +491,12 @@ export const rawQueries = {
       FROM ${MAIN_SCHEMA_NAME}.user u
         WHERE is_consultant_firm is true and u.status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active')
     ORDER BY name ASC`
+  },
+  getEmailPlaceHolders() {
+    return `
+      SELECT rid,placeholder_key
+      FROM ${MAIN_SCHEMA_NAME}.email_placeholder 
+    ORDER BY placeholder_key ASC`
   },
   checkCaseTableExists(schemaName: string) {
     return `
