@@ -71,6 +71,9 @@ import {
   EMAIL_TEMPLATES_EDIT,
   CASE_CREATE,
   CASE_EDIT,
+  TASK_TEMPLATES,
+  TASK_TEMPLATES_CREATE,
+  TASK_TEMPLATES_EDIT,
   CHECKLIST_TEMPLATES,
   CHECKLIST_TEMPLATES_CREATE,
   CHECKLIST_TEMPLATES_EDIT,
@@ -219,6 +222,18 @@ const ChecklistTemplateForm = lazy(
     import(
       './admin/pages/checklist-templates/checklist-template-form/template-form'
     )
+);
+
+const TaskTemplateList = lazy(
+  () =>
+    import(
+      './admin/pages/task-templates/task-templates-list/task-templates-list'
+    )
+);
+
+const TaskTemplateForm = lazy(
+  () =>
+    import('./admin/pages/task-templates/task-template-form/task-template-form')
 );
 
 const CheckListForm = lazy(
@@ -418,6 +433,15 @@ export const App: React.FC<IApp> = ({ instance }) => {
                   <Route
                     path={CHECKLIST_TEMPLATES_EDIT}
                     element={<ChecklistTemplateForm />}
+                  />
+                  <Route path={TASK_TEMPLATES} element={<TaskTemplateList />} />
+                  <Route
+                    path={TASK_TEMPLATES_CREATE}
+                    element={<TaskTemplateForm />}
+                  />
+                  <Route
+                    path={TASK_TEMPLATES_EDIT}
+                    element={<TaskTemplateForm />}
                   />
                 </Route>
                 {/* Page not found */}

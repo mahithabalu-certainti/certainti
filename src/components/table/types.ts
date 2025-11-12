@@ -151,7 +151,7 @@ export type ListTableColumn<T> = {
   field?: TableField;
   conditionallyEdit?: {
     key: keyof T;
-    matchValue: string | number | null | (string | number | null)[];
+    matchValue: string | number | null | (string | number | null)[] | boolean;
   }[];
 };
 

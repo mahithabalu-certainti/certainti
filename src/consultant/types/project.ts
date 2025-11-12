@@ -216,6 +216,7 @@ export type Project = {
   _level?: number;
   currency_rid?: string;
   rd_percent_final?: string;
+  is_project_exists: boolean;
 };
 export type ProjectFiscalSummary = {
   account_status_name?: string;
