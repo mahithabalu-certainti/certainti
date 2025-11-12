@@ -32,8 +32,8 @@ input checkListInlineInput {
 	account_rid: String!
 	fiscal_year: Int
 	checklist_name: String
-	attachmentLevel: String
-	entityId: String
+	attachment_level: String
+	entity_id: String
 }
 
 type Mutation {

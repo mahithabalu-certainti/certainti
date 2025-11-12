@@ -48,10 +48,10 @@ export const checkListResolver: IResolvers = {
             if (checklistListResult.statusCode === HttpStatus.SUCCESS &&
                 checklistListResult.data?.checklistDetails) {
                 let latestData = {
-                     "rid": checklistListResult.data.checklistDetails.rid,
+                     "rid": checklistListResult.data.checklistDetails.checklist_rid,
                 "r_number": checklistListResult.data.checklistDetails.r_number,
-                "created_by":   checklistListResult.data.checklistDetails.created_by,
-                "modified_by": checklistListResult.data.checklistDetails.modified_by,
+                "created_by_name":   checklistListResult.data.checklistDetails.created_by,
+                "modified_by_name": checklistListResult.data.checklistDetails.modified_by,
                 "created_datetime": checklistListResult.data.checklistDetails.created_datetime,
                 "modified_datetime": checklistListResult.data.checklistDetails.modified_datetime,
                 "account_rid": checklistListResult.data.checklistDetails.account_rid,
@@ -60,8 +60,8 @@ export const checkListResolver: IResolvers = {
                 "fiscal_year": checklistListResult.data.checklistDetails.fiscal_year,
                 "checklist_name": checklistListResult.data.checklistDetails.checklist_name,
                 "status_rid": checklistListResult.data.checklistDetails.status_rid,
-                "created_by_name":checklistListResult.data.checklistDetails.created_by_name,
-                "modified_by_name": checklistListResult.data.checklistDetails.modified_by_name,
+                //"created_by_name":checklistListResult.data.checklistDetails.created_by_name,
+               // "modified_by_name": checklistListResult.data.checklistDetails.modified_by_name,
                 "attached_to": checklistListResult.data.checklistDetails.attached_to,
                 }
                 console.log("latestData", latestData);
@@ -70,7 +70,7 @@ export const checkListResolver: IResolvers = {
                 statusCode: HttpStatus.SUCCESS,
                 statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
                 statusMessage: result.message,
-                data: checklistListResult.data.checklistDetails,
+                data: latestData
               };
             } else {
               // Fallback to original update result if fetching fails
