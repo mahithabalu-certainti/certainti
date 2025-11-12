@@ -248,14 +248,7 @@ export const getAttachmentTableColumns = (
     conditionallyEdit: [
       {
         key: 'attachment_level',
-        matchValue: [
-          'account',
-          'project_resource',
-          'project_task',
-          'resource',
-          'resource_cost',
-          'resource_skill',
-        ],
+        matchValue: ['account', 'resource', 'resource_cost', 'resource_skill'],
       },
       ...(isFromGlobal
         ? [
