@@ -153,7 +153,8 @@ export const filtersColumns : Record<string, string> =
 
 export const interactionFlag = {
   account : "account",
-  project : "project"
+  project : "project",
+  case : "case"
 }
 
 export const mainTableFilters : Record<any, any> = {
@@ -339,6 +340,22 @@ export const rawQueries = {
   fetchProjectInfo(rid: string, schemaName: string) {
     return `
     SELECT rid, project_name,project_code,r_number,fiscal_year,project_rid,max_ai_interaction FROM ${schemaName}.project_fiscal WHERE rid = '${rid}'`;
+  },
+  fetchKeyContactsByCaseId(caseRid: string, schemaName: string) {
+  return `
+    SELECT 
+      a.project_rid, 
+      project_code, 
+      project_name, 
+      key_contact_name, 
+      key_contact_email
+    FROM ${schemaName}.case_projects as a
+    LEFT JOIN ${schemaName}.project as b
+      ON a.project_rid = b.rid
+    LEFT JOIN ${schemaName}.key_contact_details as c
+      ON b.rid = c.entity_rid
+    WHERE case_rid = '${caseRid}'
+  `;
   },
   fetchProjectsByAccount(accountRid: string, schemaName: string,status_rid:string) {
     return `

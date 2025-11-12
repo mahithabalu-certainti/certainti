@@ -577,6 +577,105 @@ async function getInteractionDetailsById(
 }
 
 /**
+ * Retrieves key contacts by case ID and account ID.
+ *
+ * This controller method performs the following steps:
+ * 1. Logs the incoming request parameters for visibility.
+ * 2. Extracts `caseId` and `accountId` from request parameters.
+ * 3. Retrieves the `x-user-id` from headers to validate the requester.
+ * 4. Validates that required fields (`userId`, `caseId`, `accountId`) are present.
+ * 5. Calls the `interactionService.getKeyContactsByCaseId()` method to fetch the data.
+ * 6. Returns a success response if the service returns successfully.
+ * 7. Handles errors and edge cases by logging and returning a `BAD_REQUEST` response.
+ *
+ * @param {Request} req - Express request object containing route parameters and headers.
+ * @param {Response} res - Express response object used to send results back to the client.
+ *
+ * @returns {Promise<void>} - A Promise that resolves once the response has been sent.
+ *
+ * @throws {Error} - Handles and logs any unexpected errors and responds with a 400 status code.
+ */
+async function getKeyContactsByCaseId(
+  req: Request,
+  res: Response
+): Promise<void> {
+  const methodName = "Get key contacts by case ID";
+  try {
+    const { accountId, caseId } = req.params;
+    const userId = req.headers["x-user-id"] as string;
+    logMessage(`[${methodName}] Request received, caseId: ${caseId}, accountId: ${accountId}, userId: ${userId}`);
+
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    if (!caseId) {
+      errorLog(methodName, "caseId required in params");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "caseId is required in params"
+      );
+      return;
+    }
+
+    if (!accountId) {
+      errorLog(methodName, "accountId required in params");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "accountId is required in params"
+      );
+      return;
+    }
+
+    const keyContacts = await interactionService.getKeyContactsByCaseId(
+      caseId,
+      accountId
+    );
+
+    console.log(
+      `[${methodName}] Service response:`,
+      JSON.stringify(keyContacts)
+    );
+    
+    if (keyContacts.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, keyContacts.data);
+      return;
+    } else {
+      errorLog(methodName, keyContacts.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        keyContacts.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+/**
  * Retrieves technical summary details using the provided summary and account RIDs.
  *
  * This controller method performs the following operations:
@@ -2479,6 +2578,7 @@ export default {
   getInteractionLevel,
   getResponseSource,
   getInteractionDetailsById,
+  getKeyContactsByCaseId,
   getInteractionQuestionsById,
   sendInteraction,
   uploadAttachmentToAzure,

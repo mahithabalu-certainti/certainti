@@ -1701,6 +1701,30 @@ private createProjectCountCondition(operator: string, value: number,schemaName: 
     return interactionDetails;
   }
 
+  async fetchKeyContactsByCaseId(
+    accountNumber: string,
+    caseRid: string
+  ) {
+    const schemaName = `${MAIN_SCHEMA_NAME}_${accountNumber.replace(
+      /\D/g,
+      ""
+    )}`;
+
+    if (!this.orgDbSequelize) {
+      this.orgDbSequelize = await this.interactionModelService.getSequelize();
+    }
+
+    const result = await this.orgDbSequelize.query(
+      rawQueries.fetchKeyContactsByCaseId(
+        caseRid,
+        schemaName
+      ),
+      { type: "SELECT" }
+    );
+
+    return result;
+  }
+
    async fetchAccountInteractionDetailsById(
     accountNumber: string,
     interactionRid: string

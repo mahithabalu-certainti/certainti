@@ -1162,6 +1162,48 @@ export class InteractionService {
     }
   }
 
+  async getKeyContactsByCaseId(
+    caseRid: string,
+    accountRid: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { keyContacts: any };
+  }> {
+    try {
+      const { accountNumber } =
+        await this.interactionSchemaService.fetchValidAccountNumberById(
+          accountRid
+        );
+
+      if (!accountNumber) {
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: "Invalid account ID",
+        };
+      }
+
+      const keyContacts =
+        await this.interactionSchemaService.fetchKeyContactsByCaseId(
+          accountNumber,
+          caseRid
+        );
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          keyContacts,
+        },
+      };
+    } catch (err) {
+      logMessage(`Error fetching key contacts, ${err}`);
+      throw this.throwServiceError(err as Error);
+    }
+  }
+
   async getAccountInteractionDetailsById(
     interactionRid: string,
     accountRid: string
@@ -1940,6 +1982,7 @@ export class InteractionService {
         data.account_rid,
         data.project_rid,
         data.project_fiscal_rid,
+        data.case_rid,
         data.fiscal_year,
         data.sort,
         data.sort_by,
@@ -1958,7 +2001,13 @@ export class InteractionService {
     );
     let hasEmailRecipient = false;
     let entityRid: string = "";
-    entityRid = data.flag === "project" ? data.project_fiscal_rid : data.account_rid
+    if (data.flag === "project") {
+      entityRid = data.project_fiscal_rid;
+    } else if (data.flag === "case") {
+      entityRid = ""; 
+    } else {
+      entityRid = data.account_rid;
+    }
     const keyContactData : any = await orgDb.query(fetchKeyContactDetailsForInteractions(schemaName, entityRid))
       const keyContactDetails =
         keyContactData[0][0] !== null ? keyContactData[0][0] : null;
