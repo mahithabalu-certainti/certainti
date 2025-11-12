@@ -19,6 +19,9 @@ import { CaseTask } from "../models/caseTaskModel";
 import { TaskCollaborators } from "../models/taskCollaboratorsModel";
 import { Tags } from "../models/tagsModel";
 import { TaskTag } from "../models/taskTagsModel";
+import { TaskComments } from "../models/taskCommentsModel";
+import { CommentsAttachments } from "../models/commentsAttachmentModel";
+import { TaskAttachments } from "../models/taskAttachmentModel";
 
 export class CaseModelService {
   orgDbSequelize: Sequelize | null = null;
@@ -37,6 +40,9 @@ export class CaseModelService {
       TaskCollaborators : ReturnType<typeof TaskCollaborators.initialise>
       TaskTag : ReturnType<typeof TaskTag.initialise>
       Tags : ReturnType<typeof Tags.initialise>
+      TaskComments : ReturnType<typeof TaskComments.initialise>
+      CommentsAttachments : ReturnType<typeof CommentsAttachments.initialise>
+      TaskAttachments : ReturnType<typeof TaskAttachments.initialise>
     }
   > = new Map();
 
@@ -81,6 +87,9 @@ export class CaseModelService {
     const TaskCollaboratorsModel = TaskCollaborators.initialise(sequelize, schemaName)
     const TaskTagModel = TaskTag.initialise(sequelize, schemaName)
     const TagsModel = Tags.initialise(mainDbSequelize, MAIN_SCHEMA_NAME)
+    const TaskCommentsModel = TaskComments.initialise(sequelize, schemaName)
+    const CommentsAttachmentsModel = CommentsAttachments.initialise(sequelize, schemaName)
+    const TaskAttachmentsModel = TaskAttachments.initialise(sequelize, schemaName)
     const models = {
       Case: CaseModel,
       CaseSummary: CaseSummaryModel,
@@ -98,7 +107,10 @@ export class CaseModelService {
       CaseTask : CaseTaskModel,
       TaskCollaborators : TaskCollaboratorsModel,
       TaskTag : TaskTagModel,
-      Tags : TagsModel
+      Tags : TagsModel,
+      TaskComments : TaskCommentsModel,
+      CommentsAttachments : CommentsAttachmentsModel,
+      TaskAttachments : TaskAttachmentsModel
     };
 
     this.modelCache.set(schemaName, models);

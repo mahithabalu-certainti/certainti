@@ -6,6 +6,7 @@ import { CaseModelService } from "../caseModelsService";
 import CaseSchemaService from "./schemaService";
 import {
   AccountType,
+  AddCommentsType,
   CaseOwnerType,
   CaseStatusType,
   CountryType,
@@ -1811,7 +1812,7 @@ export class CaseService {
     try {
       const fetchParentNumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
       if(fetchParentNumber[0].length > 0) {
-      const isTaskNameExists = await this.caseManagementService.checkTaskExists(data);
+      const isTaskNameExists = await this.caseManagementService.checkTaskExists(data, data.task_type_rid);
       if(isTaskNameExists) {
         return {
           statusCode : HttpStatus.BAD_REQUEST,
@@ -2037,6 +2038,16 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
         }
       }
     }
-
-
+    async addCommentsToTask (data : AddCommentsType, userId : string, files? : Express.Multer.File[]) {
+      const mainDb = await this.getMainDb();
+      const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+      data.created_by = userId
+      const fetchTaskDetails = await this.caseSchemaService.findTaskById(data.task_rid, fetchParent[0][0].r_number);
+      const result = await this.caseSchemaService.addComments(data, fetchParent[0][0].r_number, fetchTaskDetails?.r_number!, files);
+      if(result.statusCode == HttpStatus.SUCCESS) {
+        return result
+      } else {
+        return result
+      }
+    }
 }

@@ -2380,6 +2380,71 @@ async function fetchAllTags(req : Request, res : Response) {
   }
 }
 
+/**
+ * Controller function to add comments to a specific task.
+ *
+ * This async function processes HTTP requests for adding comments by:
+ * - Validating that a valid user ID is present in the request headers
+ * - Extracting comment details and task identifiers from the request body
+ * - Delegating comment creation logic to `caseService.addCommentsToTask`
+ * - Returning success or failure responses based on the service execution result
+ *
+ * Error handling:
+ * - Returns a `BAD_REQUEST` response if the user ID is missing
+ * - Catches and handles runtime or service-level errors gracefully with a `FAILED` response
+ *
+ * @param {Request} req - Express request object containing task and comment data in the body, and user ID in headers
+ * @param {Response} res - Express response object used to send success or failure responses
+ * @returns {Promise<void>} - Resolves after sending the HTTP response
+ * @throws {Error} - Captures and logs any validation or runtime errors
+ */
+async function addCommentsToSpecificTask (req : Request, res : Response) {
+  const methodName = "addCommentsToSpecificTask";
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const data = req.body;
+    let fileArray : Express.Multer.File[] | [];
+    if(Array.isArray(req.files)) {
+      fileArray = req.files
+    } else {
+      fileArray = []
+    }
+    const result = await caseService.addCommentsToTask(data, userId, fileArray);
+    if(result.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.commentsAddedSuccess,
+        data: result.data,
+      }); 
+    } else {
+      return res.status(HttpStatus.FAILED).json({
+        statusCode: HttpStatus.FAILED,
+        statusCodeValue: HttpStatus.FAILED_MESSAGE,
+        statusMessage: STATUS_MESSAGE.commentsFailed,
+        data: result.data,
+      }); 
+    }
+  } catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
 export default {
   createCases,
   updateCases,
@@ -2411,5 +2476,6 @@ export default {
   getChecklistStatus,
   fetchCaseTaskList,
   createOrMapTags,
-  fetchAllTags
+  fetchAllTags,
+  addCommentsToSpecificTask
 };
