@@ -74,6 +74,8 @@ import {
   CHECKLIST_TEMPLATES,
   CHECKLIST_TEMPLATES_CREATE,
   CHECKLIST_TEMPLATES_EDIT,
+  CHECKLIST_CREATE,
+  CHECKLIST_EDIT,
 } from './routes';
 import { RootState } from './store/store';
 import ProjectTaskForm from './consultant/pages/project/project-details/project-task/form/project-task-form';
@@ -219,6 +221,10 @@ const ChecklistTemplateForm = lazy(
     )
 );
 
+const CheckListForm = lazy(
+  () => import('./consultant/pages/checklist/checklist-form/checklist-form')
+);
+
 // Loading component for Suspense fallback
 const Loading = () => (
   <div className='flex h-screen w-full items-center justify-center'>
@@ -326,6 +332,8 @@ export const App: React.FC<IApp> = ({ instance }) => {
                   <Route path={NOTES_CREATE} element={<NotesForm />} />
                   <Route path={NOTES_EDIT} element={<NotesForm />} />
                   <Route path={GLOBAL_NOTES_EDIT} element={<NotesForm />} />
+                  <Route path={CHECKLIST_CREATE} element={<CheckListForm />} />
+                  <Route path={CHECKLIST_EDIT} element={<CheckListForm />} />
                   {/* Page not found */}
                   <Route path={NOT_MATCH} element={<NotFound />} />
                 </Route>

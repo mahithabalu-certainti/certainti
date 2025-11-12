@@ -100,6 +100,12 @@ export const NOTES_CREATE = `${NOTES_BASE}/create`;
 export const NOTES_EDIT = `${NOTES_BASE}/edit/:noteId`;
 export const GLOBAL_NOTES_EDIT = `${NOTES}/edit/:noteId`;
 
+// Checklist routes
+export const CHECKLIST = '/checklist';
+export const CHECKLIST_BASE = `/:module/checklist`;
+export const CHECKLIST_CREATE = `${CHECKLIST_BASE}/create`;
+export const CHECKLIST_EDIT = `${CHECKLIST_BASE}/edit/:checklistId`;
+
 // ATTACHMENT ROUTES
 export const ATTACHMENTS = '/attachments';
 
