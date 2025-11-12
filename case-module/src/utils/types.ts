@@ -263,11 +263,13 @@ export interface ICreateChecklist {
   modified_by?: string;
   created_datetime: Date;
   modified_datetime?: Date;
+  fiscal_year: number;
   checklist_items: ICreateChecklistItem[];
 }
 
 export interface ICreateChecklistItem{
   checklist_item_name: string;
+  checklist_item_rid: string;
   action_type: "add" | "edit" | "delete";
   status_rid: string;
   checklist_item_description?: string;
