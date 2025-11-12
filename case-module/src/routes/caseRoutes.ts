@@ -175,5 +175,21 @@ routes.post(
   checkUserStatusMiddleware("NA"),
   controller.caseController.exportCaseTask
 )
+routes.put(
+  "/comments/update",
+  checkUserStatusMiddleware("NA"),
+  upload.array('files'),
+  controller.caseController.updateTaskComments
+)
+routes.post(
+  "/comments/delete",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.deleteTaskComments
+)
+routes.post(
+  "/comments/list",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.fetchTaskCommentsList
+)
 
 export default routes;

@@ -16,6 +16,7 @@ interface TaskAttachmentsAttributes {
     document_name : string
     format : string
     size : string
+    is_file_deleted : boolean
 }
 
 export interface TaskAttachmentsCreationAttributes 
@@ -37,6 +38,7 @@ implements TaskAttachmentsAttributes {
     public document_name! : string
     public format! : string
     public size! : string
+    public is_file_deleted! : boolean
 
     static initialise (sequelize : Sequelize, schemaName : string) {
         return TaskAttachments.init({
@@ -95,6 +97,11 @@ implements TaskAttachmentsAttributes {
             format : {
                 type : DataTypes.STRING(50),
                 allowNull : true
+            },
+            is_file_deleted : {
+                type : DataTypes.BOOLEAN,
+                allowNull : true,
+                defaultValue : false
             }
         }, {
             sequelize,

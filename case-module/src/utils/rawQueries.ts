@@ -951,3 +951,53 @@ return query;
     `
     return query;
   }
+
+  export const fetchTaskComments = (taskRid : string, accountRid : string, caseRid : string, schemaName : string) => {
+    let query = 
+    `
+    WITH fetch_task_comments AS (
+    SELECT tc.rid, tc.comments, tc.account_rid, tc.case_rid, tc.task_rid
+    FROM ${schemaName}.task_comments tc
+    WHERE
+    tc.account_rid = '${accountRid}'
+    AND
+    tc.case_rid = '${caseRid}'
+    AND
+    tc.task_rid = '${taskRid}'    
+    ),
+
+    fetch_comments_attachments AS (
+    SELECT
+    ca.comments_rid, 
+    array_agg(jsonb_build_object(
+    'rid', ca.rid,
+    'comments_rid', ca.comments_rid,
+    'browse_file', ca.browse_file,
+    'size', ca.size,
+    'format', ca.format,
+    'document_name', ca.document_name,
+    'is_file_deleted', ca.is_file_deleted
+    )) AS comments_attachments
+    FROM
+    ${schemaName}.comments_attachments ca
+    LEFT JOIN fetch_task_comments ftc ON ftc.rid = ca.comments_rid
+    WHERE
+    ca.comments_rid = ftc.rid
+    GROUP BY ca.comments_rid
+    )
+
+    SELECT 
+    array_agg(jsonb_build_object(
+    'rid', tc.rid,
+    'comments', tc.comments,
+    'account_rid', tc.account_rid,
+    'case_rid', tc.case_rid,
+    'task_rid', tc.task_rid,
+    'comments_attachments', ca.comments_attachments
+    )) AS comments
+    FROM
+    fetch_task_comments tc
+    LEFT JOIN fetch_comments_attachments ca ON ca.comments_rid = tc.rid
+    `
+    return query;
+  }

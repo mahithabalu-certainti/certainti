@@ -23,13 +23,14 @@ import {
   SCHEMANAME_PREFIX,
   STATUS_MESSAGE,
 } from "../../utils/constants";
-import { buildDatetimeFilterCondition, buildNumericFilterCondition, buildStringFilterCondition, errorLog, getColumnsNamesForTaskUpdate, logMessage, uploadToAzureBlob } from "../../utils/helpers";
+import { buildDatetimeFilterCondition, buildNumericFilterCondition, buildStringFilterCondition, deleteFromAzureBlob, errorLog, getColumnsNamesForTaskCommentsUpdate, getColumnsNamesForTaskUpdate, logMessage, uploadToAzureBlob } from "../../utils/helpers";
 import {
   AddCommentsType,
   assignProjectType,
   CaseHeadersColumns,
   CaseTaskQueryType,
   CreateCaseTaskType,
+  DeleteCommentsType,
   FilterType,
   filterType,
   ICreateCases,
@@ -39,6 +40,7 @@ import {
   TaskTypeResponse,
   TeamMember,
   UpdateCaseTaskType,
+  UpdateCommentsType,
 } from "../../utils/types";
 
 // Define filterType interface
@@ -4476,7 +4478,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     else return null;
   }
   async addComments (data : AddCommentsType, accountNumber : string,  taskNumber : string, files? : Express.Multer.File[]) {
-    const {TaskComments, CommentsAttachments, TaskAttachments} = await this.caseModelService.getModels(accountNumber);
+    const {TaskComments, CommentsAttachments, TaskAttachments, CaseTimeline, TaskCollaborators} = await this.caseModelService.getModels(accountNumber);
     const createComments = await TaskComments.create({
       created_by : data.created_by,
       created_datetime : new Date(),
@@ -4514,7 +4516,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
               browse_file : uploadFile.url,
               size : uploadFile.size.toString(),
               format : uploadFile.extension,
-              document_name : uploadFile.name
+              document_name : uploadFile.name,
+              is_file_deleted : false
             })
             await TaskAttachments.create({
               created_by : data.created_by,
@@ -4525,11 +4528,23 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
               browse_file : uploadFile.url,
               size : uploadFile.size.toString(),
               format : uploadFile.extension,
-              document_name : uploadFile.name
+              document_name : uploadFile.name,
+              is_file_deleted : false
             }) 
           }
         }
       }
+      await CaseTimeline.create({
+        created_by : data.created_by,
+        created_datetime : new Date(),
+        account_rid : data.account_rid,
+        entity_rid : createComments.dataValues.rid,
+        event_name : "Task Comments Created",
+        event_type : "ui handler",
+        event_status : "success",
+        event_datetime : new Date(),
+        description : `Task Comments : ${createComments.comments}`
+      }) 
       return {
         statusCode : HttpStatus.SUCCESS,
         statusMessage : STATUS_MESSAGE.commentsAddedSuccess,
@@ -4538,8 +4553,236 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     } else {
       return {
         statusCode : HttpStatus.FAILED,
-        statusMessage : STATUS_MESSAGE.commentsAddedSuccess,
+        statusMessage : STATUS_MESSAGE.commentsFailed,
         data : null
+      }
+    }
+  }
+
+  async updateComments (data : UpdateCommentsType, accountNumber : string,  taskNumber : string, files? : Express.Multer.File[]) {
+    const {TaskComments, CommentsAttachments, TaskAttachments, TaskCollaborators, CaseHistory, CaseTimeline} = await this.caseModelService.getModels(accountNumber);
+    const isCommentExists = await TaskComments.findOne({
+      where : {
+        rid : data.rid
+      }
+    })
+    if(isCommentExists) {
+      const [updateComments] = await TaskComments.update(data, {
+        where : {
+          rid : data.rid
+        }
+      });
+      if(updateComments === 1) {
+        const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber);
+        if(!checkIsDifferentCollaborator) {
+          const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.modified_by, data.case_rid, data.account_rid, data.task_rid, accountNumber);
+          if(!checkCollaboratorExists) {
+            await TaskCollaborators.create({
+              case_rid : data.case_rid,
+              account_rid : data.account_rid,
+              task_rid : data.task_rid,
+              assigned_to : data.modified_by,
+              created_by : data.modified_by,
+              created_datetime : new Date()
+            });
+          }
+        }
+        if(files != undefined) {
+          for(let f of files) {
+            const uploadFile = await uploadToAzureBlob(f, data.account_rid, taskNumber, "cases");
+            if(uploadFile) {
+              await CommentsAttachments.create({
+                created_by : data.modified_by,
+                created_datetime : new Date(),
+                case_rid : data.case_rid,
+                account_rid : data.account_rid,
+                task_rid : data.task_rid,
+                comments_rid : data.rid,
+                browse_file : uploadFile.url,
+                size : uploadFile.size.toString(),
+                format : uploadFile.extension,
+                document_name : uploadFile.name,
+                is_file_deleted : false
+              })
+              await TaskAttachments.create({
+                created_by : data.modified_by,
+                created_datetime : new Date(),
+                case_rid : data.case_rid,
+                account_rid : data.account_rid,
+                task_rid : data.task_rid,
+                browse_file : uploadFile.url,
+                size : uploadFile.size.toString(),
+                format : uploadFile.extension,
+                document_name : uploadFile.name,
+                is_file_deleted : false
+              }) 
+            }
+          }
+        } else {
+          if(data.deleted_file_ids.length > 0) {
+            for(let id of data.deleted_file_ids) {
+              const fetchCommentsAttachmentDetails = await CommentsAttachments.findOne({
+                where : {
+                  rid : id
+                }, raw : true
+              });
+              if(fetchCommentsAttachmentDetails) {
+                const checkTaskAttachmentExists = await TaskAttachments.findOne({
+                  where : {
+                    browse_file : fetchCommentsAttachmentDetails.browse_file,
+                    is_file_deleted : false
+                  }, raw : true
+                })
+                if(checkTaskAttachmentExists) {
+                  await CommentsAttachments.update({is_file_deleted : true},{where : {rid : id}})
+                } 
+                else {
+                  await deleteFromAzureBlob(fetchCommentsAttachmentDetails.browse_file);
+                  await CommentsAttachments.update({is_file_deleted : true},{where : {rid : id}})
+                }
+              }
+            }
+          }
+        }
+        const fetchUpdatedColumns = getColumnsNamesForTaskCommentsUpdate(data, isCommentExists);
+          if(fetchUpdatedColumns.length > 0) {
+            let updatedColumnsStorage : string[] = []
+            let oldValue : string;
+            let newValue : string;
+            let columnName : string;
+            let combinedColumns : string = ``
+            for(let c of fetchUpdatedColumns) {
+              oldValue = (isCommentExists as any)[c]
+              newValue = (data as any)[c]
+              columnName = c
+              await CaseHistory.create({
+                created_by : data.modified_by,
+                created_datetime : new Date(),
+                case_rid : data.case_rid,
+                attribute_name : columnName,
+                old_value : oldValue,
+                new_value : newValue
+              })
+              updatedColumnsStorage.push(`${oldValue} changed to ${newValue}`);
+            }
+            if(updatedColumnsStorage.length > 0) {
+              combinedColumns = updatedColumnsStorage.join(', ')
+            }
+            await CaseTimeline.create({
+              created_by : data.modified_by,
+              created_datetime : new Date(),
+              account_rid : data.account_rid,
+              entity_rid : data.rid,
+              event_name : "Task Comments Updated",
+              event_type : "ui handler",
+              event_status : "success",
+              event_datetime : new Date(),
+              description : `Task Comments Updated : ${combinedColumns}`
+            })
+          }
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          statusMessage : STATUS_MESSAGE.commentsUpdatedSuccess,
+        }
+      } else {
+        return {
+          statusCode : HttpStatus.FAILED,
+          statusMessage : STATUS_MESSAGE.commentsFailedUpdate,
+        }
+      }
+    }
+  }
+
+  async deleteComments (data : DeleteCommentsType, accountNumber : string) {
+      const {TaskComments, CommentsAttachments, TaskAttachments} = await this.caseModelService.getModels(accountNumber);
+      const isCommentExists = await TaskComments.findOne({
+        where : {
+          rid : data.rid
+        }
+      })
+      if(isCommentExists) {
+        if(data.deleted_file_ids.length > 0) {
+          for(let id of data.deleted_file_ids) {
+            const fetchCommentsAttachmentDetails = await CommentsAttachments.findOne({
+              where : {
+                rid : id
+              }, raw : true
+            });
+            if(fetchCommentsAttachmentDetails) {
+              const checkTaskAttachmentExists = await TaskAttachments.findOne({
+                where : {
+                  browse_file : fetchCommentsAttachmentDetails.browse_file,
+                  is_file_deleted : false
+                }, raw : true
+              })
+              if(checkTaskAttachmentExists) {
+                await CommentsAttachments.update({is_file_deleted : true},{where : {rid : id}})
+              } 
+              else {
+                await deleteFromAzureBlob(fetchCommentsAttachmentDetails.browse_file);
+                await CommentsAttachments.update({is_file_deleted : true},{where : {rid : id}})
+              }
+            }
+          }
+        } else {
+          const fetchCommentsAttachmentDetails = await CommentsAttachments.findAll({
+            where : {
+              account_rid : data.account_rid,
+              case_rid : data.case_rid,
+              task_rid : data.task_rid,
+              comments_rid : data.rid 
+            }, raw : true
+          });
+          console.log("fetchCommentsAttachmentDetails ==== >", fetchCommentsAttachmentDetails)
+          if(fetchCommentsAttachmentDetails.length > 0) {
+            for(let d of fetchCommentsAttachmentDetails) {
+              const checkIsTaskAttachmentDeleted = await TaskAttachments.findOne({
+                where : {
+                  browse_file : d.browse_file,
+                  is_file_deleted : false
+                }, raw : true
+              })
+              if(checkIsTaskAttachmentDeleted) {
+                await CommentsAttachments.update({is_file_deleted : true},{where : {rid : d.rid}})
+              } else {
+                await deleteFromAzureBlob(d.browse_file);
+                await CommentsAttachments.update({is_file_deleted : true},{where : {rid : d.rid}})
+              }
+            }
+          }
+        }
+        const deleteComments = await TaskComments.destroy({ where : {rid : data.rid}});
+        if(deleteComments === 1) {
+        const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber);
+        if(!checkIsDifferentCollaborator) {
+          const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.modified_by, data.case_rid, data.account_rid, data.task_rid, accountNumber);
+          if(!checkCollaboratorExists) {
+            await TaskCollaborators.create({
+              case_rid : data.case_rid,
+              account_rid : data.account_rid,
+              task_rid : data.task_rid,
+              assigned_to : data.modified_by,
+              created_by : data.modified_by,
+              created_datetime : new Date()
+            });
+          }
+        }
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          statusMessage : STATUS_MESSAGE.commentsDeletedSuccess,
+        }
+      }
+      else {
+        return {
+          statusCode : HttpStatus.FAILED,
+          statusMessage : STATUS_MESSAGE.commentsFaileDDelete,
+        }
+      }
+    } 
+    else {
+      return {
+        statusCode : HttpStatus.NOT_FOUND,
+        statusMessage : STATUS_MESSAGE.dataNotAvailable,
       }
     }
   }

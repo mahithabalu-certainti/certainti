@@ -125,8 +125,12 @@ export const STATUS_MESSAGE = {
   tagsListedSuccess : "Tags listed successfully",
   commentsAddedSuccess : "Comments added successfully",
   commentsFailed : "Failed to create comments",
-  taskExportedSuccess : "Case Task exported successfully"
-
+  taskExportedSuccess : "Case Task exported successfully",
+  commentsUpdatedSuccess : "Comments updated successfully",
+  commentsFailedUpdate : "Failed to update comments",
+  commentsDeletedSuccess : "Comments deleted successfully",
+  commentsFaileDDelete : "Failed to delete comments",
+  commentsFetchedSuccess : "Task Comments fetched successfully"
 };
 
 export const caseStatuses = {
