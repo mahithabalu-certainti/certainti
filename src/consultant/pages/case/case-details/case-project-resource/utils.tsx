@@ -1,5 +1,4 @@
 import { PROJECT_TYPE } from '../../../../../common-utils';
-import { FilterSelectOption } from '../../../../types/account-filter';
 import { FieldConfig } from '../../../account-details-sidebar/components/filter/filterType';
 import { fiscalYears } from '../../../resource-form/form-data';
 
@@ -71,197 +70,90 @@ export const dateOptions: { option: string; value: string }[] = [
   { option: 'Is-Empty', value: 'is_empty' },
 ];
 
-export const projectFilterFields = (
-  classificationOption: FilterSelectOption[],
-  projectTypeOptions: { option: string; value: string }[],
-  statusOptions: { option: string; value: string }[],
-  projectPermissionMap?: Record<string, { read: boolean; edit: boolean }>
-): FieldConfig[] => [
+export const caseProjectResourceFilterFields = (): FieldConfig[] => [
+  {
+    name: 'Resource Code',
+    value: 'resource_code',
+    type: 'text',
+    operatorOption: textOptions,
+  },
+  {
+    name: 'Resource Name',
+    value: 'resource_name',
+    type: 'text',
+    operatorOption: nonMadatoryOptions,
+  },
   {
     name: 'Project Code',
     value: 'project_code',
     type: 'text',
     operatorOption: textOptions,
-    hide:
-      !projectPermissionMap?.['project_code']?.read &&
-      !projectPermissionMap?.['project_code']?.edit,
   },
   {
-    name: 'Name',
+    name: 'Project Name',
     value: 'project_name',
     type: 'text',
     operatorOption: nonMadatoryOptions,
-    hide:
-      !projectPermissionMap?.['project_name']?.read &&
-      !projectPermissionMap?.['project_name']?.edit,
   },
   {
-    name: 'Project Type',
-    value: 'project_type_rid',
-    type: 'enum',
-    options: projectTypeOptions,
-    operatorOption: fiscalOptions,
-    hide:
-      !projectPermissionMap?.['project_type_rid']?.read &&
-      !projectPermissionMap?.['project_type_rid']?.edit,
+    name: 'Resource Country',
+    value: 'resource_country',
+    type: 'text',
+    operatorOption: textOptions,
   },
   {
-    name: 'Fiscal Year',
-    value: 'fiscal_year',
-    type: 'enum',
-    options: fiscalYearOptions,
-    operatorOption: fiscalOptions,
-    hide:
-      !projectPermissionMap?.['fiscal_year']?.read &&
-      !projectPermissionMap?.['fiscal_year']?.edit,
+    name: 'Resource Region',
+    value: 'resource_region',
+    type: 'text',
+    operatorOption: textOptions,
   },
   {
-    name: 'Project Classification',
-    value: 'classification_name',
-    type: 'enum',
-    options: classificationOption.map((item) => ({
-      option: item.label,
-      value: item.value,
-    })),
-    operatorOption: enumOptions,
-    hide:
-      !projectPermissionMap?.['project_classification_rid']?.read &&
-      !projectPermissionMap?.['project_classification_rid']?.edit,
-  },
-  {
-    name: 'Customer Group',
-    value: 'project_client_group',
+    name: 'Project Resource Role',
+    value: 'project_resource_role',
     type: 'text',
     operatorOption: nonMadatoryOptions,
-    hide:
-      !projectPermissionMap?.['project_client_group']?.read &&
-      !projectPermissionMap?.['project_client_group']?.edit,
   },
   {
-    name: 'Project Group',
-    value: 'project_group',
+    name: 'Resource Type',
+    value: 'resource_type',
     type: 'text',
-    operatorOption: nonMadatoryOptions,
-    hide:
-      !projectPermissionMap?.['project_group']?.read &&
-      !projectPermissionMap?.['project_group']?.edit,
+    operatorOption: textOptions,
+    // options: [
+    //   { option: 'FTE', value: 'FTE' },
+    //   { option: 'SubCon', value: 'SubCon' },
+    //   { option: 'Non-Labor', value: 'Non-Labor' },
+    // ],
+    // operatorOption: enumOptions,
   },
   {
-    name: 'Project Effort (Hours)',
-    value: 'total_effort',
+    name: 'Effort (Hours)',
+    value: 'effort_hours',
     type: 'number',
     operatorOption: numberOptions,
-    hide:
-      !projectPermissionMap?.['total_effort']?.read &&
-      !projectPermissionMap?.['total_effort']?.edit,
   },
   {
-    name: 'Project Cost',
-    value: 'total_cost',
+    name: 'Net Resource Cost',
+    value: 'net_resource_cost',
     type: 'number',
     operatorOption: numberOptions,
-    hide:
-      !projectPermissionMap?.['total_cost']?.read &&
-      !projectPermissionMap?.['total_cost']?.edit,
   },
   {
-    name: 'FTE Cost',
-    value: 'total_cost_fte',
-    type: 'number',
-    operatorOption: numberOptions,
-    hide:
-      !projectPermissionMap?.['total_cost_fte']?.read &&
-      !projectPermissionMap?.['total_cost_fte']?.edit,
-  },
-  {
-    name: 'SubCon Cost',
-    value: 'total_cost_subcon',
-    type: 'number',
-    operatorOption: numberOptions,
-    hide:
-      !projectPermissionMap?.['total_cost_subcon']?.read &&
-      !projectPermissionMap?.['total_cost_subcon']?.edit,
-  },
-  {
-    name: 'Non-Labor Cost',
-    value: 'total_cost_nonlabor',
-    type: 'number',
-    operatorOption: numberOptions,
-    hide:
-      !projectPermissionMap?.['total_cost_nonlabor']?.read &&
-      !projectPermissionMap?.['total_cost_nonlabor']?.edit,
-  },
-  {
-    name: 'Assessment Status',
-    value: 'assessment_status',
-    type: 'enum',
-    options: statusOptions,
-    operatorOption: enumOptions,
-    hide:
-      !projectPermissionMap?.['assessment_status']?.read &&
-      !projectPermissionMap?.['assessment_status']?.edit,
-  },
-  {
-    name: 'QRE Percent Final',
-    value: 'rd_percent_final',
-    type: 'number',
-    operatorOption: numberOptions,
-    hide:
-      !projectPermissionMap?.['qre']?.read &&
-      !projectPermissionMap?.['qre']?.edit,
-  },
-  {
-    name: 'QRE Final',
+    name: 'QRE Final (%)',
     value: 'qre_final',
     type: 'number',
     operatorOption: numberOptions,
-    hide:
-      !projectPermissionMap?.['qre_final']?.read &&
-      !projectPermissionMap?.['qre_final']?.edit,
-  },
-  {
-    name: 'Project Point of Contact',
-    value: 'project_point_of_contact',
-    type: 'text',
-    operatorOption: nonMadatoryOptions,
-    hide:
-      !projectPermissionMap?.['project_point_of_contact']?.read &&
-      !projectPermissionMap?.['project_point_of_contact']?.edit,
-  },
-  {
-    name: 'Technical Point of Contact',
-    value: 'technical_point_of_contact',
-    type: 'text',
-    operatorOption: nonMadatoryOptions,
-    hide:
-      !projectPermissionMap?.['technical_point_of_contact']?.read &&
-      !projectPermissionMap?.['technical_point_of_contact']?.edit,
   },
   {
     name: 'Comments',
     value: 'comments',
     type: 'text',
     operatorOption: nonMadatoryOptions,
-    hide:
-      !projectPermissionMap?.['comments']?.read &&
-      !projectPermissionMap?.['comments']?.edit,
   },
   {
-    name: 'Last Modified',
-    value: 'modified_datetime',
-    type: 'date',
-    hide:
-      !projectPermissionMap?.['modified_datetime']?.read &&
-      !projectPermissionMap?.['modified_datetime']?.edit,
-  },
-  {
-    name: 'Project ID',
-    value: 'r_number',
+    name: 'Project Resource ID',
+    value: 'project_resource_id',
     type: 'text',
     operatorOption: textOptions,
-    hide:
-      !projectPermissionMap?.['r_number']?.read &&
-      !projectPermissionMap?.['r_number']?.edit,
   },
   {
     name: 'Sort Options',

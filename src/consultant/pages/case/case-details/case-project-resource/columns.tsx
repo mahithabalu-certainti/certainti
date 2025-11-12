@@ -1,7 +1,10 @@
 import { costDisplay } from '../../../../../common-utils';
-import { ListTableColumn } from '../../../../../components/table/types';
+import {
+  ListTableColumn,
+  RowData,
+} from '../../../../../components/table/types';
 
-export interface CaseProjectResourceRow {
+export interface CaseProjectResourceRow extends RowData {
   rid: string;
   account_rid: string;
   r_number: string;
@@ -28,6 +31,14 @@ export const getCaseProjectResourceColumns =
       label: 'Resource Code',
       width: 160,
       sortable: true,
+      sx: {
+        position: 'sticky',
+        left: 0,
+        background: '#fff',
+        zIndex: 10,
+        borderRight: '1px solid #CBD6E2',
+        borderBottom: '1px solid #CBD6E2 !important',
+      },
     },
     {
       id: 'resource_name',
