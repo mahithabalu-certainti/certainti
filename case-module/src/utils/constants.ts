@@ -122,7 +122,9 @@ export const STATUS_MESSAGE = {
   userLevelTaskFetchSuccess : "Task fetched successfully",
   tagsCreatedSuccesfully : "Tags added successfully",
   tagMappedAlready : "Tag already added",
-  tagsListedSuccess : "Tags listed successfully"
+  tagsListedSuccess : "Tags listed successfully",
+  commentsAddedSuccess : "Comments added successfully",
+  commentsFailed : "Failed to create comments"
 
 };
 
@@ -1004,7 +1006,7 @@ export const rawQueries = {
     return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.status where status_name ILIKE '%Active%'`
   },
   getTaskTypeRid (rid : string) {
-    return `SELECT task_type_name FROM ${MAIN_SCHEMA_NAME}.task_type WHERE rid = '${rid}'`
+    return `SELECT rid, task_type_name FROM ${MAIN_SCHEMA_NAME}.task_type WHERE rid = '${rid}'`
   },
   fetchChecklistStatusByName(statusName: string) {
     return `

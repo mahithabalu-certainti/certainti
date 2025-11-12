@@ -23,8 +23,9 @@ import {
   SCHEMANAME_PREFIX,
   STATUS_MESSAGE,
 } from "../../utils/constants";
-import { buildDatetimeFilterCondition, buildNumericFilterCondition, buildStringFilterCondition, errorLog, getColumnsNamesForTaskUpdate, logMessage } from "../../utils/helpers";
+import { buildDatetimeFilterCondition, buildNumericFilterCondition, buildStringFilterCondition, errorLog, getColumnsNamesForTaskUpdate, logMessage, uploadToAzureBlob } from "../../utils/helpers";
 import {
+  AddCommentsType,
   assignProjectType,
   CaseHeadersColumns,
   CaseTaskQueryType,
@@ -69,6 +70,9 @@ import { CaseMilestone, setupCaseMilestoneSequence } from "../../models/caseMile
 import { setupTaskCollaboratorsSequence, TaskCollaborators } from "../../models/taskCollaboratorsModel";
 import { setupTaskTagSequence, TaskTag } from "../../models/taskTagsModel";
 import { Tags } from "../../models/tagsModel";
+import { setupTaskCommentsSequence, TaskComments } from "../../models/taskCommentsModel";
+import { CommentsAttachments, setupCommentsAttachmentsSequence } from "../../models/commentsAttachmentModel";
+import { setupTaskAttachmentsSequence, TaskAttachments } from "../../models/taskAttachmentModel";
 
 class CaseSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -420,6 +424,19 @@ class CaseSchemaService {
         schemaName
       )
 
+      const TaskCommentsModel = TaskComments.initialise(
+        orgDbSequlize,
+        schemaName
+      )
+      const CommentsAttachmentsModel = CommentsAttachments.initialise(
+        orgDbSequlize,
+        schemaName
+      )
+      const TaskAttachmentsModel = TaskAttachments.initialise(
+        orgDbSequlize,
+        schemaName
+      )
+
       await CaseModel.sync({ force: false });
       await setupCaseSequence(orgDbSequlize, schemaName);
       await CaseProjectModel.sync({ force: false });
@@ -442,6 +459,12 @@ class CaseSchemaService {
       await setupTaskCollaboratorsSequence(orgDbSequlize, schemaName)
       await TaskTagsModel.sync({force : false})
       await setupTaskTagSequence(orgDbSequlize, schemaName)
+      await TaskCommentsModel.sync({force : false})
+      await setupTaskCommentsSequence(orgDbSequlize, schemaName)
+      await CommentsAttachmentsModel.sync({force : false})
+      await setupCommentsAttachmentsSequence(orgDbSequlize, schemaName)
+      await TaskAttachmentsModel.sync({force : false})
+      await setupTaskAttachmentsSequence(orgDbSequlize, schemaName)
     } catch (err) {
       errorLog("Error creating case tables", (err as Error).message);
       console.log(err)
@@ -4451,6 +4474,74 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     });
     if(result) return result;
     else return null;
+  }
+  async addComments (data : AddCommentsType, accountNumber : string,  taskNumber : string, files? : Express.Multer.File[]) {
+    const {TaskComments, CommentsAttachments, TaskAttachments} = await this.caseModelService.getModels(accountNumber);
+    const createComments = await TaskComments.create({
+      created_by : data.created_by,
+      created_datetime : new Date(),
+      account_rid : data.account_rid,
+      case_rid : data.case_rid,
+      task_rid : data.task_rid,
+      comments : data.comments
+    });
+    if(createComments) {
+      const checkIsDifferentCollaborator = await this.isNewCollaborator(data.created_by, accountNumber);
+      if(!checkIsDifferentCollaborator) {
+        const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.created_by, data.case_rid, data.account_rid, data.task_rid, accountNumber);
+        if(!checkCollaboratorExists) {
+          await TaskCollaborators.create({
+            case_rid : data.case_rid,
+            account_rid : data.account_rid,
+            task_rid : data.task_rid,
+            assigned_to : data.created_by,
+            created_by : data.created_by,
+            created_datetime : new Date()
+          });
+        }
+      }
+      if(files != undefined) {
+        for(let f of files) {
+          const uploadFile = await uploadToAzureBlob(f, data.account_rid, taskNumber, "cases");
+          if(uploadFile) {
+            await CommentsAttachments.create({
+              created_by : data.created_by,
+              created_datetime : new Date(),
+              case_rid : data.case_rid,
+              account_rid : data.account_rid,
+              task_rid : data.task_rid,
+              comments_rid : createComments.dataValues.rid,
+              browse_file : uploadFile.url,
+              size : uploadFile.size.toString(),
+              format : uploadFile.extension,
+              document_name : uploadFile.name
+            })
+            await TaskAttachments.create({
+              created_by : data.created_by,
+              created_datetime : new Date(),
+              case_rid : data.case_rid,
+              account_rid : data.account_rid,
+              task_rid : data.task_rid,
+              browse_file : uploadFile.url,
+              size : uploadFile.size.toString(),
+              format : uploadFile.extension,
+              document_name : uploadFile.name
+            }) 
+          }
+        }
+      }
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        statusMessage : STATUS_MESSAGE.commentsAddedSuccess,
+        data : createComments
+      }
+    } else {
+      return {
+        statusCode : HttpStatus.FAILED,
+        statusMessage : STATUS_MESSAGE.commentsAddedSuccess,
+        data : null
+      }
+    }
   }
 }
 

@@ -7,7 +7,10 @@ import { CheckListItem } from "./checkListItemModel";
 import { Jurisdiction } from "./jurisdiction";
 import { logMessage } from "../utils/helpers";
 import { TaskCollaborators } from "./taskCollaboratorsModel";
-import { TaskTag } from "./TaskTagsModel";
+import { TaskTag } from "./taskTagsModel";
+import { TaskComments } from "./taskCommentsModel";
+import { CommentsAttachments } from "./commentsAttachmentModel";
+import { TaskAttachments } from "./taskAttachmentModel";
 
 export const models = {
   Case,
@@ -17,7 +20,10 @@ export const models = {
   CheckListItem,
   Jurisdiction,
   TaskCollaborators,
-  TaskTag
+  TaskTag,
+  TaskComments,
+  CommentsAttachments,
+  TaskAttachments
 };
 
 export async function initModels() {

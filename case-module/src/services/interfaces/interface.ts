@@ -1,5 +1,8 @@
 import { CaseTask } from "../../models/caseTaskModel";
 import { Tags } from "../../models/tagsModel";
+import { TaskComments } from "../../models/taskCommentsModel";
+import { TaskTag } from "../../models/taskTagsModel";
+import { AddCommentsType, AdminTaskTemplatePayloadType, CaseTaskQueryType, CreateCaseTaskType, CreateTaskTemplateType, ICreateCases, ICreateCaseTeam, ICreateChecklist, ICreateChecklistTemplate, MilestoneResponse, UpdateCaseTaskType, UpdateTaskTemplateType } from "../../utils/types";
 import { TaskTag } from "../../models/taskTagsModel";
 import { AdminTaskTemplatePayloadType, CaseTaskQueryType, CreateCaseTaskType, CreateTaskTemplateType, ICreateCases, ICreateCaseTeam, ICreateChecklist, ICreateChecklistTemplate, ICreateEmailTemplate, MilestoneResponse, UpdateCaseTaskType, UpdateTaskTemplateType } from "../../utils/types";
 
@@ -184,6 +187,15 @@ createOrMapTags(data : any) : Promise<{
 fetchTagsForDropdown() : Promise<{
     statusCode: number;
     data: Tags[];
+}>
+addCommentsToTask(data : AddCommentsType, userId : string, files? : Express.Multer.File[]) : Promise<{
+    statusCode: number;
+    statusMessage: string;
+    data: TaskComments;
+} | {
+    statusCode: number;
+    statusMessage: string;
+    data: null;
 }>
 }
 

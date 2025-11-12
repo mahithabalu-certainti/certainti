@@ -10,6 +10,7 @@ import moment from "moment-timezone";
 import { CreateTaskTemplateType, UpdateCaseTaskType, UpdateTaskTemplateType } from "./types";
 import { TaskTemplate } from "../models/caseTaskTemplateModel";
 import { CaseTask } from "../models/caseTaskModel";
+import { BlobServiceClient } from "@azure/storage-blob";
 
 function getLogger() {
   return configurations.getInstance().getLogger();
@@ -376,4 +377,92 @@ export const getColumnsNamesForTaskUpdate = (data : UpdateCaseTaskType, dbData :
     columns.push(`task_type_rid`)
 
   return columns;
+}
+
+export async function uploadToAzureBlob(
+  file: Express.Multer.File,
+  account_id: string,
+  task_number : string,
+  flag? : string
+): Promise<{
+  url: string;
+  name: string;
+  extension: string;
+  size: number;
+}> {
+  try {
+    // Validate input
+    if (!file) {
+      throw new Error("File is required");
+    }
+    if (!account_id) {
+      throw new Error("Account ID is required");
+    }
+
+    // Get connection string from secrets manager
+    const connectionString = await getSecret( process.env.AZURE_STORAGE_CONNECTION_STRING as string);
+    // const connectionString = "storage-account-connection-string";
+    // const connectionString = await getSecret("storage-account-connection-string");
+    const containerName = "account";
+
+    if (!connectionString) {
+      throw new Error("Azure storage connection string is required");
+    }
+
+    // Create clients
+    const blobServiceClient =
+      BlobServiceClient.fromConnectionString(connectionString);
+    const containerClient = blobServiceClient.getContainerClient(containerName);
+
+    // Ensure container exists with public blob access
+    await containerClient.createIfNotExists();
+
+    // Sanitize filename and remove extension
+    // Process filename
+    const originalExtension = file.originalname.includes(".")
+      ? file.originalname.substring(file.originalname.lastIndexOf("."))
+      : "";
+    const baseName = file.originalname.replace(/\.[^/.]+$/, ""); // Remove extension
+    const sanitizedBaseName = baseName.replace(/[^a-zA-Z0-9\-_]/g, ""); // More strict sanitization
+
+    // Create unique blob name with timestamp
+    let timestamp = Date.now();
+    let blobName;
+    if(flag === "cases"){
+      blobName = `${account_id}/cases/${task_number}/${timestamp}-${sanitizedBaseName}${originalExtension}`;
+    } else {
+      blobName = `${account_id}/attachments/${timestamp}-${sanitizedBaseName}${originalExtension}`;
+    }
+    
+    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+
+    // Upload file with content type
+    const uploadOptions = {
+      blobHTTPHeaders: {
+        blobContentType: file.mimetype || "application/octet-stream",
+      },
+    };
+
+    await blockBlobClient.uploadData(file.buffer, uploadOptions);
+
+    // Get properties for additional metadata
+    const properties = await blockBlobClient.getProperties();
+
+    // Convert size from bytes to megabytes and round to 2 decimal places
+    const sizeInMB = parseFloat((file.size / (1024 * 1024)).toFixed(2));
+
+    return {
+      url: blockBlobClient.url,
+      name: sanitizedBaseName,
+      extension: originalExtension,
+      size: sizeInMB,
+    };
+  } catch (error) {
+    console.error("Azure Blob upload failed:", error);
+    throw new Error(
+      `File upload failed: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`
+    );
+  }
 }

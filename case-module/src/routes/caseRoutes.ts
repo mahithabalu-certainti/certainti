@@ -5,6 +5,7 @@ import multer from "multer";
 import { checkUserStatusMiddleware } from "../middlewares/authmiddleware";
 
 const routes: Router = Router();
+const upload = multer({storage : multer.memoryStorage()})
 routes.post(
   "/new",
   checkUserStatusMiddleware("cases_create"),
@@ -163,5 +164,10 @@ routes.get(
   checkUserStatusMiddleware("NA"),
   controller.caseController.fetchAllTags
 )
-
+routes.post(
+  "/comments/add",
+  checkUserStatusMiddleware("NA"),
+  upload.array('files'),
+  controller.caseController.addCommentsToSpecificTask
+)
 export default routes;

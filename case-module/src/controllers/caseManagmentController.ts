@@ -614,7 +614,7 @@ async function createTaskTemplate (req : Request, res : Response) : Promise<any>
       }`
     );
     // Validate request body against the defined schema
-    const value = await validateRequest(req, createTaskTemplateSchema, res);
+    const value = req.body
      const userId = req.headers["x-user-id"] as string;
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");
@@ -799,7 +799,7 @@ async function updateTaskTemplate (req : Request, res : Response) : Promise<any>
       }`
     );
     // Validate request body against the defined schema
-    const value = await validateRequest(req, updateTaskTemplateSchema, res);
+    const value = req.body;
      const userId = req.headers["x-user-id"] as string;
     if (!userId) {
       errorLog(methodName, "User ID is required in headers");

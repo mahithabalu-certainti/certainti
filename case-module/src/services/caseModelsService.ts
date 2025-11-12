@@ -19,7 +19,10 @@ import { CaseTask } from "../models/caseTaskModel";
 import { TaskCollaborators } from "../models/taskCollaboratorsModel";
 import { Tags } from "../models/tagsModel";
 import { TaskTag } from "../models/taskTagsModel";
-import { EmailTemplate } from "../models/emailTemplateModel";
+import { EmailTemplate } from "../models/emailTemplateModel";import { TaskComments } from "../models/taskCommentsModel";
+import { CommentsAttachments } from "../models/commentsAttachmentModel";
+import { TaskAttachments } from "../models/taskAttachmentModel";
+
 export class CaseModelService {
   orgDbSequelize: Sequelize | null = null;
   mainDbSequelize: Sequelize | null = null;
@@ -38,6 +41,9 @@ export class CaseModelService {
       TaskTag : ReturnType<typeof TaskTag.initialise>
       Tags : ReturnType<typeof Tags.initialise>
       EmailTemplate?: ReturnType<typeof EmailTemplate.initialize>
+      TaskComments : ReturnType<typeof TaskComments.initialise>
+      CommentsAttachments : ReturnType<typeof CommentsAttachments.initialise>
+      TaskAttachments : ReturnType<typeof TaskAttachments.initialise>
     }
   > = new Map();
 
@@ -83,6 +89,9 @@ export class CaseModelService {
     const TaskTagModel = TaskTag.initialise(sequelize, schemaName)
     const TagsModel = Tags.initialise(mainDbSequelize, MAIN_SCHEMA_NAME)
     const EmailTemplateModel = EmailTemplate.initialize(mainDbSequelize, MAIN_SCHEMA_NAME);
+    const TaskCommentsModel = TaskComments.initialise(sequelize, schemaName)
+    const CommentsAttachmentsModel = CommentsAttachments.initialise(sequelize, schemaName)
+    const TaskAttachmentsModel = TaskAttachments.initialise(sequelize, schemaName)
     const models = {
       Case: CaseModel,
       CaseSummary: CaseSummaryModel,
@@ -101,7 +110,10 @@ export class CaseModelService {
       TaskCollaborators : TaskCollaboratorsModel,
       TaskTag : TaskTagModel,
       Tags : TagsModel,
-      EmailTemplate: EmailTemplateModel
+      EmailTemplate: EmailTemplateModel,
+      TaskComments : TaskCommentsModel,
+      CommentsAttachments : CommentsAttachmentsModel,
+      TaskAttachments : TaskAttachmentsModel
     };
 
     this.modelCache.set(schemaName, models);
