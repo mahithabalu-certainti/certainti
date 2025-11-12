@@ -7,6 +7,7 @@ import {
 } from 'react-router-dom';
 import {
   ExportAssignedList,
+  ExportCaseTaskList,
   useCaseDetails,
 } from '../../../services/cases/case-service';
 import {
@@ -108,6 +109,17 @@ export const CaseDetails = () => {
       case_rid: caseId ?? '',
       account_id: accountId ?? '',
     });
+  const [caseTaskParams, setCaseTaskParams] = useState({
+    sort: 'task_name',
+    sort_by: 'ASC' as 'ASC' | 'DESC',
+    filter: {},
+    timezone: '',
+    page: 1,
+    limit: 10,
+    search: '',
+    case_rid: caseId ?? '',
+    account_id: accountId ?? '',
+  });
   const fiscalYear = caseData?.fiscal_year ?? 0;
   const [attachmentParams, setAttachmentParams] =
     useState<AttachmentsListExportParams>({
@@ -167,7 +179,9 @@ export const CaseDetails = () => {
       searchParams.get('list') !== 'attachments' &&
       searchParams.get('list') !== 'notes' &&
       searchParams.get('list') !== 'checklist' &&
-      searchParams.get('list') !== 'caseProjects'
+      searchParams.get('list') !== 'caseProjects' &&
+      searchParams.get('list') !== 'workBreakdown' &&
+      searchParams.get('tab') !== 'case_task'
     ) {
       return;
     }
@@ -205,6 +219,8 @@ export const CaseDetails = () => {
       });
     } else if (list === 'caseProjects') {
       ExportAssignedList(caseProjectParams);
+    } else if (exportType === 'case_task') {
+      ExportCaseTaskList(caseTaskParams);
     }
   };
 
@@ -225,6 +241,8 @@ export const CaseDetails = () => {
     } else if (list === 'checklist' && !checklistView) {
       return !isChecklistsExportEnable;
     } else if (list === 'caseProjects' && !isAssignProject && !projectDetails) {
+      return false;
+    } else if (searchParams.get('tab') === 'case_task') {
       return false;
     } else {
       return true;
@@ -257,7 +275,16 @@ export const CaseDetails = () => {
       case 'workBreakdown':
         return (
           <div className='w-full pr-4 pl-2 py-2'>
-            <WorkBreakDown />
+            <WorkBreakDown
+              caseId={caseId}
+              setExportType={setExportType}
+              setCaseTaskParams={(params: Record<string, unknown>) =>
+                setCaseTaskParams((prev) => ({
+                  ...prev,
+                  ...params,
+                }))
+              }
+            />
           </div>
         );
       case 'caseTeam':
