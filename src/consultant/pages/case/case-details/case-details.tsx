@@ -7,6 +7,7 @@ import {
 } from 'react-router-dom';
 import {
   ExportAssignedList,
+  ExportCaseTaskList,
   useCaseDetails,
 } from '../../../services/cases/case-service';
 import {
@@ -106,7 +107,7 @@ export const CaseDetails = () => {
     });
   const [caseTaskParams, setCaseTaskParams] = useState({
     sort: 'task_name',
-    sort_by: 'ASC',
+    sort_by: 'ASC' as 'ASC' | 'DESC',
     filter: {},
     timezone: '',
     page: 1,
@@ -205,7 +206,7 @@ export const CaseDetails = () => {
     } else if (list === 'caseProjects') {
       ExportAssignedList(caseProjectParams);
     } else if (exportType === 'case_task') {
-      console.log('export called ', caseTaskParams);
+      ExportCaseTaskList(caseTaskParams);
     }
   };
 
