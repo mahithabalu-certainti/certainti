@@ -505,40 +505,50 @@ class CaseManagementSchemaService {
     }
     const { TaskTemplate } = await this.caseModelService.getModels("");
     let sequenceNumber : any
+    let dynamicData;
     const getTaskType : any = await this.mainDbSequelize.query(rawQueries.getTaskTypeRid(data.task_type_rid));
     if(getTaskType[0][0].task_type_name === 'Milestone') {
+      const checkTaskNameExists = await this.checkTaskExists(data, getTaskType[0][0].rid);
+      if(checkTaskNameExists) {
+        return {
+          statusCode : HttpStatus.BAD_REQUEST,
+          statusMessage : STATUS_MESSAGE.taskNameExistsAlready
+        }
+    }
       const findSequenceOrder = await this.fetchSequenceOrder(data.milestone_template_rid);
       if(findSequenceOrder.length > 0) {
         sequenceNumber = findSequenceOrder[0]?.sequence_no! + 1
       } else {
         sequenceNumber = sequenceNumber + 1
       }
+      dynamicData = {
+        created_by : userId,
+        task_name : data.task_name,
+        sequence_no : sequenceNumber,
+        effort_in_days : data.effort_in_days,
+        reminder_interval : data.reminder_interval,
+        effective_start_datetime : data.effective_start_datetime,
+        effective_end_datetime : data.effective_end_datetime,
+        case_team_member_role_rid : data.case_team_member_role_rid,
+        checklist_template_rid : data.checklist_template_rid,
+        status_rid : data.status_rid,
+        priority_rid : data.priority_rid,
+        task_type_rid : data.task_type_rid,
+        milestone_template_rid : data.milestone_template_rid,
+        task_description : data.task_description
+      }
     } else {
       sequenceNumber = null
-    }
-    const checkTaskNameExists = await this.checkTaskExists(data);
-    if(checkTaskNameExists) {
-      return {
-        statusCode : HttpStatus.BAD_REQUEST,
-        statusMessage : STATUS_MESSAGE.taskNameExistsAlready
+      dynamicData = {
+        created_by : userId,
+        task_name : data.task_name,
+        sequence_no : sequenceNumber,
+        task_description : data.task_description,
+        checklist_template_rid : data.checklist_template_rid,
+        priority_rid : data.priority_rid,
       }
     }
-    await TaskTemplate.create({
-      created_by : userId,
-      task_name : data.task_name,
-      sequence_no : sequenceNumber,
-      effort_in_days : data.effort_in_days,
-      reminder_interval : data.reminder_interval,
-      effective_start_datetime : data.effective_start_datetime,
-      effective_end_datetime : data.effective_end_datetime,
-      case_team_member_role_rid : data.case_team_member_role_rid,
-      checklist_template_rid : data.checklist_template_rid,
-      status_rid : data.status_rid,
-      priority_rid : data.priority_rid,
-      task_type_rid : data.task_type_rid,
-      milestone_template_rid : data.milestone_template_rid,
-      task_description : data.task_description
-    })
+    await TaskTemplate.create(dynamicData)
     return {
       statusCode : HttpStatus.SUCCESS,
       statusMessage : STATUS_MESSAGE.taskCreatedSuccess
@@ -556,14 +566,15 @@ class CaseManagementSchemaService {
     })
     return findSequenceOrder;
   }
-  async checkTaskExists (data : any) {
+  async checkTaskExists (data : any, taskTypeRid : string) {
     const { TaskTemplate } = await this.caseModelService.getModels("");
     const checkTaskNameExists = await TaskTemplate.findOne({
       attributes : ['task_name'],
       where : {
         task_name : {
           [Op.iLike] : data.task_name
-        }
+        },
+        task_type_rid : taskTypeRid
       },raw : true
     })
     return checkTaskNameExists

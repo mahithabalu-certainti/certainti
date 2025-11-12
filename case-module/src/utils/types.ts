@@ -470,3 +470,13 @@ export type CaseTaskQueryType = {
   task_status_rid : string,
   total_result : string
 }
+
+export type AddCommentsType = {
+  created_by : string
+  created_datetime : Date
+  case_rid : string
+  account_rid : string
+  task_rid : string
+  comments : string
+}
+
