@@ -1,8 +1,10 @@
 import { useMutation, useQuery, UseQueryResult } from '@tanstack/react-query';
 import { caseServiceApi } from '../../../api/api';
 import {
+  CaseAssignedExportParams,
   CaseDetails,
   CaseDetailsResponse,
+  CaseExportResponse,
   CaseFilingTypeResponse,
   CaseFormPayload,
   CaseGlobalList,
@@ -11,6 +13,7 @@ import {
   CaseListExportParams,
   CaseListParams,
   CaseListResponse,
+  CaseOwnersResponse,
   CaseStatusResponse,
   ExportCaseListResponse,
 } from '../../types/cases';
@@ -193,6 +196,51 @@ export const ExportCaseList = async (
     console.error('Export failed:', error);
   }
 };
+// Export
+
+export const getCasesProjectExportUrl = () =>
+  '/api/cases/assignedProjects/export';
+
+export const ExportAssignedList = async (
+  params: CaseAssignedExportParams
+): Promise<void> => {
+  try {
+    const filename = `case-projects.xlsx`;
+    const response = await caseServiceApi.post<CaseExportResponse>(
+      getCasesProjectExportUrl(),
+      params
+    );
+    console.log('response', response);
+    const base64Data = response.data?.data;
+
+    if (!base64Data) {
+      console.error('No base64 data found in the response.');
+      return;
+    }
+    if (typeof base64Data !== 'string' || !base64Data) {
+      console.error('No base64 data found in the response.');
+      return;
+    }
+    const binary = atob(base64Data);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+
+    const blob = new Blob([bytes], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Export failed:', error);
+  }
+};
 
 // Case filling type
 export const getCaseFilingTypeUrl = (): string => '/api/cases/caseFilingType';
@@ -245,5 +293,29 @@ export const useGetCaseStatuses = () => {
     gcTime: Infinity,
     refetchOnMount: false,
     refetchOnReconnect: false,
+  });
+};
+
+// Case owners list
+export const getCaseOwnersUrl = (): string => '/api/cases/caseOwners';
+
+export const fetchCaseOwners = async (): Promise<CaseOwnersResponse> => {
+  try {
+    const { data } =
+      await caseServiceApi.get<CaseOwnersResponse>(getCaseOwnersUrl());
+    return data;
+  } catch (error) {
+    console.error('Error fetching case owners:', error);
+    throw error;
+  }
+};
+
+export const useGetCaseOwners = () => {
+  return useQuery<CaseOwnersResponse, Error>({
+    queryKey: ['case-owners'],
+    queryFn: fetchCaseOwners,
+    retry: 0,
+    gcTime: 0,
+    enabled: true,
   });
 };

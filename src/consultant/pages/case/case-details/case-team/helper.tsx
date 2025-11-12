@@ -13,6 +13,8 @@ export interface CaseTeamMemberErrors {
   user_role?: string;
   start_date?: string;
   end_date?: string;
+  is_primary?: string;
+  status?: string;
 }
 
 export interface CaseTeamTableColumn {
@@ -29,56 +31,45 @@ export const getCaseTeamTableColumns = (): CaseTeamTableColumn[] => [
   {
     name: 'user_role',
     label: 'User Role',
-    width: '25%',
+    width: '15%',
     required: true,
   },
   {
     name: 'user_name',
     label: 'User Name',
-    width: '25%',
+    width: '15%',
+    required: true,
+  },
+  {
+    name: 'is_primary',
+    label: 'Is Primary',
+    width: '5%',
+    align: 'center',
+    required: false,
+  },
+  {
+    name: 'status',
+    label: 'Status',
+    width: '15%',
     required: true,
   },
   {
     name: 'start_date',
     label: 'Start Date',
-    width: '20%',
+    width: '25%',
     required: true,
   },
   {
     name: 'end_date',
     label: 'End Date',
-    width: '20%',
+    width: '25%',
     required: true,
   },
   {
     name: 'action',
     label: 'Action',
-    width: '10%',
+    width: '5%',
     align: 'center',
     hide: false,
-  },
-];
-
-export const getCaseTeamListColumns = () => [
-  {
-    name: 'user_name',
-    label: 'Team Member',
-    width: '25%',
-    sortable: true,
-  },
-  {
-    name: 'user_role',
-    label: 'Role',
-    width: '20%',
-    sortable: true,
-  },
-  {
-    name: 'status',
-    label: 'Status',
-    width: '10%',
-    sortable: true,
-    render: (value: string) => (
-      <span className={`status-badge ${value.toLowerCase()}`}>{value}</span>
-    ),
   },
 ];
