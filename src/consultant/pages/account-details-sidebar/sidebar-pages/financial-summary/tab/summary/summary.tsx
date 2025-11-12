@@ -216,7 +216,7 @@ export const Summary: React.FC<Summary> = ({ fiscalYear, accountDetails }) => {
           loading={isPending || !fiscalYear}
           error={isError ? 'Failed to load data' : undefined}
           showEmptyRow={false}
-          loadindRowCount={1}
+          loadingRowCount={1}
         />
       </div>
       <ListTable
@@ -238,7 +238,7 @@ export const Summary: React.FC<Summary> = ({ fiscalYear, accountDetails }) => {
         loading={isPending || !fiscalYear}
         error={isError ? 'Failed to load data' : undefined}
         showEmptyRow={false}
-        loadindRowCount={5}
+        loadingRowCount={5}
       />
       <ListTable
         data={claimJurisdiction}
@@ -259,7 +259,7 @@ export const Summary: React.FC<Summary> = ({ fiscalYear, accountDetails }) => {
         loading={isPending || !fiscalYear}
         error={isError ? 'Failed to load data' : undefined}
         showEmptyRow={false}
-        loadindRowCount={3}
+        loadingRowCount={3}
       />
     </div>
   );
