@@ -4331,11 +4331,11 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     if(checkTaskExists) return checkTaskExists
     else return null
   }
-  async fetchTaskForCases (page : number, limit : number, search : string, sort : string, sortBy : string, filter : FilterType, doSorting : boolean, caseRid : string, accountRid : string, schemaName : string) {
+  async fetchTaskForCases (page : number, limit : number, search : string, sort : string, sortBy : string, filter : FilterType, doSorting : boolean, caseRid : string, accountRid : string, schemaName : string, isExport : boolean) {
     if(!this.orgDbSequelize) {
       this.orgDbSequelize = await initOrgSequelize()
     }
-    const result = await this.orgDbSequelize.query<CaseTaskQueryType>(fetchCaseSpecificTaskQuery(page, limit, search, sort, sortBy, filter, doSorting, caseRid, accountRid, schemaName), {type : QueryTypes.SELECT});
+    const result = await this.orgDbSequelize.query<CaseTaskQueryType>(fetchCaseSpecificTaskQuery(page, limit, search, sort, sortBy, filter, doSorting, caseRid, accountRid, schemaName, isExport), {type : QueryTypes.SELECT});
     if(result.length > 0) {
       return result;
     } else {

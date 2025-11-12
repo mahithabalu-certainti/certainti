@@ -170,4 +170,10 @@ routes.post(
   upload.array('files'),
   controller.caseController.addCommentsToSpecificTask
 )
+routes.post(
+  "/task/export",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.exportCaseTask
+)
+
 export default routes;

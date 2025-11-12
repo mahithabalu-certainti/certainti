@@ -2221,7 +2221,7 @@ async function fetchCaseTaskList (req : Request, res : Response) {
       return;
     }
     const data = req.body;
-    const result = await caseService.taskListForCases(data);
+    const result = await caseService.taskListForCases(data, false);
     if(result.statusCode == HttpStatus.SUCCESS) {
       let total = parseInt(result.data[0]?.total_result!);
       result.data.forEach((d : any) => {
@@ -2445,6 +2445,65 @@ async function addCommentsToSpecificTask (req : Request, res : Response) {
   }
 }
 
+/**
+ * Controller function to handle exporting case tasks.
+ *
+ * This async function processes HTTP requests for exporting case tasks by:
+ * - Validating that a valid user ID is present in the request headers
+ * - Extracting export filters and parameters from the request body
+ * - Delegating export logic to the `caseService.exportTask` method
+ * - Returning a success response with exported data (file/records) or a message if no data is found
+ *
+ * Error handling:
+ * - Returns a `BAD_REQUEST` response if the user ID is missing
+ * - Catches and handles any runtime or service-level errors gracefully with a `FAILED` response
+ *
+ * @param {Request} req - Express request object containing export parameters and user ID in headers
+ * @param {Response} res - Express response object used to send the export result or error message
+ * @returns {Promise<void>} - Resolves after sending the HTTP response
+ * @throws {Error} - Captures and logs any validation or runtime errors
+ */
+async function exportCaseTask (req : Request, res : Response) {
+  const methodName = "exportCaseTask";
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const data = req.body;
+    const result = await caseService.exportTask(data, userId);
+    if(result.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.taskExportedSuccess,
+        data: result.data,
+      }); 
+    } else {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.dataNotAvailable,
+        data: result.data,
+      }); 
+    }
+  } catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
 export default {
   createCases,
   updateCases,
@@ -2477,5 +2536,6 @@ export default {
   fetchCaseTaskList,
   createOrMapTags,
   fetchAllTags,
-  addCommentsToSpecificTask
+  addCommentsToSpecificTask,
+  exportCaseTask
 };

@@ -124,7 +124,8 @@ export const STATUS_MESSAGE = {
   tagMappedAlready : "Tag already added",
   tagsListedSuccess : "Tags listed successfully",
   commentsAddedSuccess : "Comments added successfully",
-  commentsFailed : "Failed to create comments"
+  commentsFailed : "Failed to create comments",
+  taskExportedSuccess : "Case Task exported successfully"
 
 };
 
