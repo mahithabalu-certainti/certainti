@@ -276,7 +276,7 @@ export const checklistItemsTransformPayload = (
     if (isEdit && item.rid) {
       retainedRids.add(item.rid);
       transformedItems.push({
-        // rid: item.rid,
+        checklist_item_rid: item.rid,
         checklist_item_name: item.checklist_item_name,
         checklist_item_description: item.description,
         status_rid: item.status || '',
@@ -296,7 +296,7 @@ export const checklistItemsTransformPayload = (
     existingItems.forEach((existingItem) => {
       if (existingItem.rid && !retainedRids.has(existingItem.rid)) {
         transformedItems.push({
-          // rid: existingItem.rid,
+          checklist_item_rid: existingItem.rid,
           checklist_item_name: existingItem.checklist_item_name || '',
           checklist_item_description:
             existingItem.checklist_item_description || '',

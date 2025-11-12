@@ -114,7 +114,7 @@ export enum ItemActionType {
 }
 
 export type ChecklistItem = {
-  rid?: string;
+  checklist_item_rid?: string;
   checklist_item_name: string;
   checklist_item_description: string;
   status_rid?: string;
