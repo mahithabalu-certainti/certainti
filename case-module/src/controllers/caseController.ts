@@ -2504,6 +2504,127 @@ async function exportCaseTask (req : Request, res : Response) {
   }
 }
 
+/**
+ * Controller function to handle updating comments for a specific task.
+ *
+ * This async function processes HTTP requests to update an existing comment associated with a case task by:
+ * - Validating that a valid user ID is provided in the request headers
+ * - Extracting updated comment data and task identifiers from the request body
+ * - Calling the `caseService.updateComments` method to perform the update in the database
+ * - Returning a success response with an appropriate status message based on the operation result
+ *
+ * Error handling:
+ * - Returns a `BAD_REQUEST` response if the user ID is missing
+ * - Catches and handles runtime or service-level errors gracefully with a `FAILED` response
+ *
+ * @param {Request} req - Express request object containing updated comment data and user ID in headers
+ * @param {Response} res - Express response object used to send the update result or error message
+ * @returns {Promise<void>} - Resolves after sending the HTTP response
+ * @throws {Error} - Captures and logs any validation or runtime errors
+ */
+async function updateTaskComments (req : Request, res : Response) {
+  const methodName = "updateTaskComments";
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const data = req.body;
+    data.deleted_file_ids = JSON.parse(data.deleted_file_ids)
+    const result = await caseService.updateComments(data, userId);
+    if(result.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.statusMessage,
+      }); 
+    } else {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.statusMessage,
+      }); 
+    }
+  } catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
+/**
+ * Controller function to handle deleting comments from a specific task.
+ *
+ * This async function processes HTTP DELETE requests to remove a comment associated with a case task by:
+ * - Validating that a valid user ID is provided in the request headers
+ * - Extracting the comment ID and task information from the request body
+ * - Invoking the `caseService.deleteComments` method to perform the deletion in the database
+ * - Returning an appropriate success or failure response based on the operation outcome
+ *
+ * Error handling:
+ * - Returns a `BAD_REQUEST` response if the user ID is missing
+ * - Returns a `FAILED` response if the comment deletion fails
+ * - Catches and handles runtime or service-level errors gracefully
+ *
+ * @param {Request} req - Express request object containing comment details and user ID in headers
+ * @param {Response} res - Express response object used to send the deletion result or error message
+ * @returns {Promise<void>} - Resolves after sending the HTTP response
+ * @throws {Error} - Captures and logs any validation or runtime errors
+ */
+async function deleteTaskComments (req : Request, res : Response) {
+  const methodName = "deleteTaskComments";
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const data = req.body;
+    const result = await caseService.deleteComments(data, userId);
+    if(result.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.statusMessage,
+      }); 
+    } else if(result.statusCode === HttpStatus.FAILED){
+      return res.status(HttpStatus.FAILED).json({
+        statusCode: HttpStatus.FAILED,
+        statusCodeValue: HttpStatus.FAILED_MESSAGE,
+        statusMessage: result.statusMessage,
+      }); 
+    } else {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.statusMessage,
+      });
+    }
+  } catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
 export default {
   createCases,
   updateCases,
@@ -2537,5 +2658,7 @@ export default {
   createOrMapTags,
   fetchAllTags,
   addCommentsToSpecificTask,
-  exportCaseTask
+  exportCaseTask,
+  updateTaskComments,
+  deleteTaskComments
 };

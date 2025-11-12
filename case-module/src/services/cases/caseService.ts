@@ -12,12 +12,14 @@ import {
   CountryType,
   CreateCaseTaskType,
   CurrencyType,
+  DeleteCommentsType,
   FilingType,
   ICreateCases,
   ICreateCaseTeam,
   ICreateChecklist,
   TaskTypeResponse,
   UpdateCaseTaskType,
+  UpdateCommentsType,
 } from "../../utils/types";
 import { generateExcelBase64, isValidTimezone, logMessage } from "../../utils/helpers";
 import {
@@ -2083,6 +2085,41 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
           statusCode : HttpStatus.SUCCESS,
           data : null
         };;
+      }
+    }
+    async updateComments (data : UpdateCommentsType, userId : string) {
+      const mainDb = await this.getMainDb();
+      const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+      data.modified_by = userId
+      const fetchTaskDetails = await this.caseSchemaService.findTaskById(data.task_rid, fetchParent[0][0].r_number);
+      const result = await this.caseSchemaService.updateComments(data, fetchParent[0][0].r_number, fetchTaskDetails?.r_number!);
+      if(result?.statusCode === HttpStatus.SUCCESS) {
+        return {
+          statusCode : result.statusCode,
+          statusMessage : result.statusMessage
+        }
+      } else {
+        return {
+          statusCode : HttpStatus.FAILED,
+          statusMessage : STATUS_MESSAGE.commentsFailedUpdate
+        }
+      }
+    }
+    async deleteComments (data : DeleteCommentsType, userId : string) {
+      const mainDb = await this.getMainDb();
+      const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+      data.modified_by = userId
+      const result = await this.caseSchemaService.deleteComments(data, fetchParent[0][0].r_number);
+      if(result?.statusCode === HttpStatus.SUCCESS) {
+        return {
+          statusCode : result.statusCode,
+          statusMessage : result.statusMessage
+        }
+      } else {
+        return {
+          statusCode : HttpStatus.FAILED,
+          statusMessage : STATUS_MESSAGE.commentsFailedUpdate
+        }
       }
     }
 }
