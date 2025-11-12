@@ -174,10 +174,11 @@ export const CaseDetails = () => {
 
   const handleExport = (exportType: ExportType) => {
     if (
-      searchParams.get('list') !== 'attachments' &&
-      searchParams.get('list') !== 'notes' &&
-      searchParams.get('list') !== 'caseProjects' &&
-      searchParams.get('list') !== 'workBreakdown'
+      !(searchParams.get('list') === 'attachments' ||
+        searchParams.get('list') === 'notes' ||
+        searchParams.get('list') === 'caseProjects' ||
+        searchParams.get('list') === 'workBreakdown' ||
+        searchParams.get('tab') === 'case_task')
     ) {
       return;
     }
@@ -226,10 +227,7 @@ export const CaseDetails = () => {
       return !isNotesExportEnable;
     } else if (list === 'caseProjects' && !isAssignProject && !projectDetails) {
       return false;
-    } else if (
-      list === 'workBreakdown' &&
-      searchParams.get('tab') === 'case_task'
-    ) {
+    } else if (searchParams.get('tab') === 'case_task') {
       return false;
     } else {
       return true;
