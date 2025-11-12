@@ -66,6 +66,9 @@ import { CheckList, setupCheckListSequence } from "../../models/checkListModel";
 import { CheckListItem } from "../../models/checkListItemModel";
 import { CaseTask, setupCaseTaskSequence } from "../../models/caseTaskModel";
 import { CaseMilestone, setupCaseMilestoneSequence } from "../../models/caseMilestoneModel";
+import { setupTaskCollaboratorsSequence, TaskCollaborators } from "../../models/taskCollaboratorsModel";
+import { setupTaskTagSequence, TaskTag } from "../../models/TaskTagsModel";
+import { Tags } from "../../models/tagsModel";
 
 class CaseSchemaService {
   private orgDbSequelize: Sequelize | null = null;
@@ -181,9 +184,11 @@ class CaseSchemaService {
       // Add timeline entry for case creation
       if (casecreationResponse && casecreationResponse.rid) {
         const fetchTaskTypeRid = await this.getTaskType();
+        const fetchTaskStatusRid = await this.getTaskStatus()
         if(fetchTaskTypeRid) {
           await this.cloneDefaultMilestoneTaskTemplate(casecreationResponse.account_rid, casecreationResponse.rid,
-          casecreationResponse.filing_type_rid, fetchTaskTypeRid.rid, accountNumber, transaction, casecreationResponse.case_startdate)
+          casecreationResponse.filing_type_rid, fetchTaskTypeRid.rid, accountNumber, transaction, casecreationResponse.case_startdate,
+        fetchTaskStatusRid?.rid!)
         }
         await this.addCaseManagementTimeline(
           accountNumber,
@@ -406,6 +411,14 @@ class CaseSchemaService {
         orgDbSequlize,
         schemaName
       )
+      const TaskCollaboratorsModel = TaskCollaborators.initialise(
+        orgDbSequlize,
+        schemaName
+      )
+      const TaskTagsModel = TaskTag.initialise(
+        orgDbSequlize,
+        schemaName
+      )
 
       await CaseModel.sync({ force: false });
       await setupCaseSequence(orgDbSequlize, schemaName);
@@ -425,6 +438,10 @@ class CaseSchemaService {
       await setupCaseMilestoneSequence(orgDbSequlize, schemaName);
       await CaseTaskModel.sync({force : false});
       await setupCaseTaskSequence(orgDbSequlize, schemaName);
+      await TaskCollaboratorsModel.sync({force : false});
+      await setupTaskCollaboratorsSequence(orgDbSequlize, schemaName)
+      await TaskTagsModel.sync({force : false})
+      await setupTaskTagSequence(orgDbSequlize, schemaName)
     } catch (err) {
       errorLog("Error creating case tables", (err as Error).message);
       console.log(err)
@@ -3875,7 +3892,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         throw new Error("Error processing checklist items: " + error);
       }
     }
-  async cloneDefaultMilestoneTaskTemplate (accountRid : string, caseRid : string, filing_type_rid : string, taskTypeRid : string, accountNumber : string, transaction : Transaction, caseStartDate : Date) {
+  async cloneDefaultMilestoneTaskTemplate (accountRid : string, caseRid : string, filing_type_rid : string, taskTypeRid : string, accountNumber : string, transaction : Transaction, caseStartDate : Date, taskStatusRid : string) {
     const {CaseTask, CaseMilestone} = await this.caseModelService.getModels(accountNumber);
     if (!this.mainDbSequelize) {
       this.mainDbSequelize = await this.caseModelService.getMainSequelize();
@@ -3985,7 +4002,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             effective_start_datetime : mapValueHolderForStart,
             effective_end_datetime : mapValueHolderForEnd,
             account_rid : accountRid,
-            case_rid : caseRid
+            case_rid : caseRid,
+            task_status_rid : taskStatusRid
           }
         })
         
@@ -4084,6 +4102,14 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     if(result) return result
     else return null;
   }
+  async getTaskStatus () {
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+    }
+    const [result] = await this.mainDbSequelize.query<TaskTypeResponse>(rawQueries.getSpecificTaskStatus(), {type : QueryTypes.SELECT});
+    if(result) return result
+    else return null;
+  }
   async createUserLevelTask (data : CreateCaseTaskType, accountNumber : string, transaction : Transaction) {
     const {CaseTask, CaseTimeline} = await this.caseModelService.getModels(accountNumber);
     const fetchSequenceNumber = await this.fetchSequenceOrder(data.milestone_template_rid, accountNumber);
@@ -4138,7 +4164,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
   }
 
   async updateUserLevelTask (data : UpdateCaseTaskType, accountNumber : string, transaction : Transaction) {
-    const {CaseTask, CaseTimeline, CaseHistory} = await this.caseModelService.getModels(accountNumber);
+    const {CaseTask, CaseTimeline, CaseHistory, TaskCollaborators} = await this.caseModelService.getModels(accountNumber);
     const checkCaseExists = await this.isCaseExistsForAccount(data.account_rid, data.case_rid, accountNumber);
     if(!checkCaseExists) {
       return {
@@ -4158,6 +4184,20 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             rid : data.rid
           }, transaction
         });
+        const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber);
+        if(!checkIsDifferentCollaborator) {
+          const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.modified_by, data.case_rid, data.account_rid, data.rid, accountNumber);
+          if(!checkCollaboratorExists) {
+            await TaskCollaborators.create({
+              case_rid : data.case_rid,
+              account_rid : data.account_rid,
+              task_rid : data.rid,
+              assigned_to : data.modified_by,
+              created_by : data.modified_by,
+              created_datetime : new Date()
+            }, {transaction});
+          }
+        }
         if(updatedResult == 1) {
           const fetchUpdatedColumns = getColumnsNamesForTaskUpdate(data, isTaskExists);
           if(fetchUpdatedColumns.length > 0) {
@@ -4261,6 +4301,139 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     } else {
       return []
     }
+  }
+  async isNewCollaborator (rid : string, accountNumber : string) {
+    const {CaseTask} = await this.caseModelService.getModels(accountNumber);
+    const result = await CaseTask.findOne({
+      where : {
+        assigned_to : rid
+      }, raw : true
+    });
+    if(result) return result;
+    else return null
+  }
+  async isCollaboratorAlreadyAdded (assignedTo : string, caseRid : string, accountRid : string, taskRid : string, accountNumber : string) {
+    const {TaskCollaborators} = await this.caseModelService.getModels(accountNumber);
+    const result = await TaskCollaborators.findOne({
+      where : {
+        assigned_to : assignedTo,
+        account_rid : accountRid,
+        case_rid : caseRid,
+        task_rid : taskRid
+      }, raw : true
+    });
+    if(result) return result;
+    else return null;
+  }
+  async createOrUpdateTags (taskRid : string, accountRid : string, caseRid : string, tagRid : string, isNewTag : boolean, accountNumber : string, userId : string, activeStatusRid : string) {
+    const {Tags, TaskTag} = await this.caseModelService.getModels(accountNumber)
+
+    if(isNewTag) {
+      const isTagExists = await this.isTagAlreadyExists(tagRid)
+      if(!isTagExists) {
+        const result = await Tags.create({
+          tag_name : tagRid,
+          created_by : userId,
+          created_datetime : new Date(),
+          status_rid : activeStatusRid
+        })
+        if(result) {
+          const finalResult = await TaskTag.create({
+            task_rid : taskRid,
+            account_rid : accountRid,
+            case_rid : caseRid,
+            tag_rid : result.dataValues.rid,
+            created_by : userId,
+            created_datetime : new Date()
+          })
+        if(finalResult) {
+          return {
+            statusCode : HttpStatus.SUCCESS,
+            data : finalResult
+          }
+        } else {
+          return {
+            statusCode : HttpStatus.FAILED,
+            data : null
+          }
+        }
+      } 
+      else {
+        return {
+            statusCode : HttpStatus.FAILED,
+            data : null
+          }
+        }
+      } else {
+        return {
+            statusCode : HttpStatus.FAILED,
+            data : STATUS_MESSAGE.tagMappedAlready
+        } 
+      }
+    } 
+    else {
+      const isTagMapped = await this.isTagAlreadyMapped(accountNumber, taskRid, accountRid, caseRid, tagRid);
+      if(!isTagMapped) {
+        const finalResult = await TaskTag.create({
+          task_rid : taskRid,
+          account_rid : accountRid,
+          case_rid : caseRid,
+          tag_rid : tagRid,
+          created_by : userId,
+          created_datetime : new Date()
+        })
+        if(finalResult) {
+          return {
+            statusCode : HttpStatus.SUCCESS,
+            data : finalResult
+        } 
+        } else {
+          return {
+            statusCode : HttpStatus.FAILED,
+            data : null
+        } 
+        }
+      } else {
+        return {
+            statusCode : HttpStatus.FAILED,
+            data : STATUS_MESSAGE.tagMappedAlready
+        } 
+      }
+    }
+  }
+  async fetchAllTags () {
+    const {Tags} = await this.caseModelService.getModels("")
+    const result = await Tags.findAll({
+      attributes : ['rid', 'tag_name'],
+      order : [['tag_name', 'ASC']]
+    })
+    if(result.length > 0) return result
+    else return []
+  }
+  async isTagAlreadyMapped (accountNumber : string, taskRid : string, accountRid : string, caseRid : string, tagRid : string) {
+    const {TaskTag} = await this.caseModelService.getModels(accountNumber);
+    const result = await TaskTag.findOne({
+      where : {
+        account_rid : accountRid,
+        task_rid : taskRid,
+        case_rid : caseRid,
+        tag_rid : tagRid
+      }
+    });
+    if(result) return result;
+    else return null;
+  }
+  async isTagAlreadyExists (tagRid : string) {
+    const {Tags} = await this.caseModelService.getModels("");
+    const result = await Tags.findOne({
+      where : {
+        tag_name : {
+          [Op.iLike] : tagRid
+        }
+      }
+    });
+    if(result) return result;
+    else return null;
   }
 }
 

@@ -1,4 +1,6 @@
 import { CaseTask } from "../../models/caseTaskModel";
+import { Tags } from "../../models/tagsModel";
+import { TaskTag } from "../../models/TaskTagsModel";
 import { AdminTaskTemplatePayloadType, CaseTaskQueryType, CreateCaseTaskType, CreateTaskTemplateType, ICreateCases, ICreateCaseTeam, ICreateChecklist, ICreateChecklistTemplate, MilestoneResponse, UpdateCaseTaskType, UpdateTaskTemplateType } from "../../utils/types";
 
 export interface ICaseService {
@@ -174,6 +176,14 @@ updateUserLevelTask(data : UpdateCaseTaskType): Promise<{
 taskListForCases(data : any) : Promise<{
     statusCode: number;
     data: CaseTaskQueryType[];
+}>
+createOrMapTags(data : any) : Promise<{
+    statusCode: number;
+    data: string | TaskTag | null;
+}>
+fetchTagsForDropdown() : Promise<{
+    statusCode: number;
+    data: Tags[];
 }>
 }
 

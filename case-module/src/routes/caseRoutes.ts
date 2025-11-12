@@ -153,5 +153,15 @@ routes.post(
   checkUserStatusMiddleware("NA"),
   controller.caseController.fetchCaseTaskList
 )
+routes.post(
+  "/tag/add",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.createOrMapTags
+)
+routes.get(
+  "/tag/list",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.fetchAllTags
+)
 
 export default routes;

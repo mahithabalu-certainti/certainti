@@ -350,15 +350,15 @@ const listAdminCheckListSchema = Joi.object({
 
 const createTaskTemplateSchema = Joi.object({
   task_name: Joi.string().max(255).required(),
-  effort_in_days : Joi.number().optional(),
-  reminder_interval: Joi.number().optional(),
-  effective_start_datetime : Joi.string().optional(),
-  effective_end_datetime : Joi.string().optional(),
-  case_team_member_role_rid : Joi.string().optional(),
+  effort_in_days : Joi.number().allow("").optional(),
+  reminder_interval: Joi.number().allow("").optional(),
+  effective_start_datetime : Joi.string().allow("").optional(),
+  effective_end_datetime : Joi.string().allow("").optional(),
+  case_team_member_role_rid : Joi.string().allow("").optional(),
   checklist_template_rid : Joi.string().allow("").optional(),
-  status_rid : Joi.string().optional(),
+  status_rid : Joi.string().allow("").optional(),
   priority_rid : Joi.string().allow("").optional(),
-  milestone_template_rid : Joi.string().optional(),
+  milestone_template_rid : Joi.string().allow("").optional(),
   task_type_rid : Joi.string().allow("").optional(),
   task_description : Joi.string().allow("").optional()
 });
@@ -366,15 +366,15 @@ const createTaskTemplateSchema = Joi.object({
 const updateTaskTemplateSchema = Joi.object({
   rid : Joi.string().max(255).required(),
   task_name: Joi.string().max(255).required(),
-  effort_in_days : Joi.number().optional(),
-  reminder_interval: Joi.number().optional(),
-  effective_start_datetime : Joi.string().optional(),
-  effective_end_datetime : Joi.string().optional(),
-  case_team_member_role_rid : Joi.string().optional(),
+  effort_in_days : Joi.number().allow("").optional(),
+  reminder_interval: Joi.number().allow("").optional(),
+  effective_start_datetime : Joi.string().allow("").optional(),
+  effective_end_datetime : Joi.string().allow("").optional(),
+  case_team_member_role_rid : Joi.string().allow("").optional(),
   checklist_template_rid : Joi.string().allow("").optional(),
-  status_rid : Joi.string().optional(),
+  status_rid : Joi.string().allow("").optional(),
   priority_rid : Joi.string().allow("").optional(),
-  milestone_template_rid : Joi.string().optional(),
+  milestone_template_rid : Joi.string().allow("").optional(),
   task_type_rid : Joi.string().allow("").optional(),
   task_description : Joi.string().allow("").optional()
 });
