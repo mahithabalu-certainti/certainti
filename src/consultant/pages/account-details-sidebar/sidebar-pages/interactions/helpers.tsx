@@ -1,5 +1,5 @@
 import { FieldConfig } from '../../../account-details-sidebar/components/filter/filterType';
-import { fiscalYearOption } from '../projects/utils';
+import { fiscalYearOptions } from '../projects/utils';
 
 const textOptions = [
   { option: 'Equals', value: 'equals' },
@@ -57,7 +57,7 @@ export const getInteractionFilterFields = (
       name: 'Fiscal year',
       value: 'fiscal_year',
       type: 'enum',
-      options: fiscalYearOption,
+      options: fiscalYearOptions,
       operatorOption: enumOptions,
       hide:
         !permissionMap?.['fiscal_year']?.edit &&
@@ -237,7 +237,7 @@ export const getInteractionModelFilterFields = (
       name: 'Fiscal year',
       value: 'fiscal_year',
       type: 'enum',
-      options: fiscalYearOption,
+      options: fiscalYearOptions,
       operatorOption: enumOptions,
       hide:
         !permissionMap?.['fiscal_year']?.edit &&

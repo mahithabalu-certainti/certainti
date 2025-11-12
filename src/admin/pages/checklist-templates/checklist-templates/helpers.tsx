@@ -66,8 +66,8 @@ export const getChecklistTemplateFilterFields = (
       type: 'text',
       operatorOption: nonReqTextfieldOptions,
       hide:
-        !permissionMap?.['description']?.read &&
-        !permissionMap?.['description']?.edit,
+        !permissionMap?.['checklist_description']?.read &&
+        !permissionMap?.['checklist_description']?.edit,
     },
     {
       label: 'Created By',

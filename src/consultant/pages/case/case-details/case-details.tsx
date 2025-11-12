@@ -5,9 +5,12 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom';
-import { useCaseDetails } from '../../../services/cases/case-service';
 import {
-  ChecklistListExportParams,
+  ExportAssignedList,
+  useCaseDetails,
+} from '../../../services/cases/case-service';
+import {
+  CaseAssignedExportParams,
   ExportType,
   MenuItem,
   NotesListExportParams,
@@ -36,6 +39,7 @@ import {
 } from '../../../../assets';
 import { WorkBreakDown } from './work-breakdown';
 import { CaseTeam } from './case-team';
+import CasesProjects from './case-assign-projects/cases-projects';
 import { transformCaseData } from './utils';
 import { ActionsDropdownItem, checkPermission } from '../../../../common-utils';
 import { CaseNotes } from './case-notes';
@@ -68,7 +72,8 @@ export const CaseDetails = () => {
     isLoading,
     isError,
   } = useCaseDetails(caseId ?? '', accountId ?? '');
-
+  const isAssignProject = searchParams.get('assignProject');
+  const projectDetails = searchParams.get('detailstab');
   const caseHeaderDetails = useMemo(() => {
     if (caseData) {
       return transformCaseData(caseData);
@@ -90,7 +95,19 @@ export const CaseDetails = () => {
   const checklistView = searchParams.get('checklist_id');
   const accountInActive =
     caseData?.account_status_name?.toLowerCase() !== 'active';
-
+  const [caseProjectParams, setCaseProjectParams] =
+    useState<CaseAssignedExportParams>({
+      sort: 'project_type_name',
+      sort_by: 'ASC',
+      filter: {},
+      timezone: '',
+      page: 1,
+      limit: 10,
+      search: '',
+      case_rid: caseId ?? '',
+      account_id: accountId ?? '',
+    });
+  const fiscalYear = caseData?.fiscal_year ?? 0;
   const [attachmentParams, setAttachmentParams] =
     useState<AttachmentsListExportParams>({
       sortBy: 'document_name',
@@ -120,6 +137,21 @@ export const CaseDetails = () => {
       setActiveKey(location.state.activeKey || listParam || 'workBreakdown');
     }
   }, [location.state, searchParams]);
+  const list = searchParams.get('list');
+  // const checkExport = () => {
+  //   if (list === 'caseProjects' && !isAssignProject) {
+  //     return false;
+  //   } else {
+  //     return true;
+  //   }
+  // };
+
+  // const handleExport = () => {
+  //   if (list !== 'caseProjects') {
+  //     return;
+  //   }
+  //   ExportAssignedList(caseProjectParams);
+  // };
 
   // Permissions management
   const caseIsEnable = checkPermission(modules, AllModules.CASES);
@@ -147,7 +179,8 @@ export const CaseDetails = () => {
     if (
       searchParams.get('list') !== 'attachments' &&
       searchParams.get('list') !== 'notes' &&
-      searchParams.get('list') !== 'checklist'
+      searchParams.get('list') !== 'checklist' &&
+      searchParams.get('list') !== 'caseProjects'
     ) {
       return;
     }
@@ -183,6 +216,8 @@ export const CaseDetails = () => {
         ...checklistParams,
         ...checklistPayload,
       });
+    } else if (list === 'caseProjects') {
+      ExportAssignedList(caseProjectParams);
     }
   };
 
@@ -202,6 +237,8 @@ export const CaseDetails = () => {
       return !isNotesExportEnable;
     } else if (list === 'checklist' && !checklistView) {
       return !isChecklistsExportEnable;
+    } else if (list === 'caseProjects' && !isAssignProject && !projectDetails) {
+      return false;
     } else {
       return true;
     }
@@ -240,6 +277,17 @@ export const CaseDetails = () => {
         return (
           <div className='w-full pr-4 pl-2 py-2'>
             <CaseTeam />
+          </div>
+        );
+      case 'caseProjects':
+        return (
+          <div>
+            <CasesProjects
+              fiscalYear={fiscalYear}
+              accountInActive={accountInActive}
+              setTableParams={setCaseProjectParams}
+              setExportType={setExportType}
+            />
           </div>
         );
       case 'notes':
@@ -282,14 +330,28 @@ export const CaseDetails = () => {
       {
         name: 'Work Breakdown',
         key: 'workBreakdown',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS,
+        id: AllMenus.FINANCIAL_HIGHLIGHTS, // ADD PERMISSION FOR CASES
         disabled: false,
         icon: ProjectsSideIcon,
       },
       {
+        name: 'Financial Workings',
+        key: 'financialWorkings',
+        id: AllMenus.FINANCIAL_HIGHLIGHTS, // ADD PERMISSION FOR CASES
+        disabled: false,
+        icon: FinancialIcon,
+      },
+      {
+        name: 'Case Review',
+        key: 'caseReview',
+        id: AllMenus.FINANCIAL_HIGHLIGHTS, // ADD PERMISSION FOR CASES
+        disabled: false,
+        icon: CasesIcon,
+      },
+      {
         name: 'Case Team',
         key: 'caseTeam',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS,
+        id: AllMenus.FINANCIAL_HIGHLIGHTS, // ADD PERMISSION FOR CASES
         disabled: false,
         icon: CasesIcon,
       },
@@ -301,15 +363,15 @@ export const CaseDetails = () => {
         icon: CasesIcon,
       },
       {
-        name: 'Case Project Resource',
-        key: 'caseProjectResource',
+        name: 'Project Resource',
+        key: 'projectResource',
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
         icon: ResourcesIcon,
       },
       {
-        name: 'Case - Project Task',
-        key: 'caseProjectTask',
+        name: 'Project Task',
+        key: 'projectTask',
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
         icon: ProjectsSideIcon,
@@ -336,13 +398,6 @@ export const CaseDetails = () => {
         icon: TechSummaryIcon,
       },
       {
-        name: 'Financial Workings',
-        key: 'financialWorkings',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS,
-        disabled: false,
-        icon: FinancialIcon,
-      },
-      {
         name: 'RD Credit Forms',
         key: 'rd_credit_forms',
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
@@ -355,13 +410,6 @@ export const CaseDetails = () => {
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
         icon: DetailsIcon,
-      },
-      {
-        name: 'Case Review',
-        key: 'caseReview',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS,
-        disabled: false,
-        icon: CasesIcon,
       },
       {
         name: 'Activities',

@@ -1,7 +1,7 @@
 import { FieldConfig } from '../../account-details-sidebar/components/filter/filterType';
 import {
   fiscalOptions,
-  fiscalYearOption,
+  fiscalYearOptions,
 } from '../../account-details-sidebar/sidebar-pages/projects/utils';
 
 const textOptions = [
@@ -78,7 +78,7 @@ export const getInteractionFilterFields = (
       name: 'Fiscal Year',
       value: 'fiscal_year',
       type: 'enum',
-      options: fiscalYearOption,
+      options: fiscalYearOptions,
       operatorOption: fiscalOptions,
       hide:
         !permissionMap?.['fiscal_year']?.edit &&
