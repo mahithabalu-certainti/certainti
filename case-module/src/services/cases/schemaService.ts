@@ -2813,9 +2813,70 @@ class CaseSchemaService {
         const composedCaseName = `${accountName}-${countryCode}-${fiscalYear}-${originalCaseName}`;
         attached_to = composedCaseName;
     }
-  
+   
+    // Fetch fiscal_year based on attach_to
+    let fiscal_year = null;
+    const attachTo = checklistDetails?.attach_to;
+    const attachmentLevel = checklistDetails?.attachment_level;
+    if (attachmentLevel === 'case' && attachTo) {
+      const [caseInfo]: any[] = await this.orgDbSequelize.query(
+        rawQueries.fetchCaseInfo(schemaName, attachTo),
+        { type: "SELECT" }
+      );
+      fiscal_year = caseInfo?.fiscal_year ?? null;
+    } else if (attachmentLevel === 'account' && attachTo) {
+      fiscal_year = checklistDetails?.fiscal_year ?? null;
+    } else if (attachmentLevel === 'project' && attachTo) {
+      const project = await this.fetchProjectInfoById(schemaName, attachTo);
+      fiscal_year = project?.fiscal_year ?? null;
+    }
+    else if (attachmentLevel === 'project_resource' && attachTo) {
+      let projectResource:any = await this.fetchProjectResourceById(schemaName, attachTo);
+      if (Array.isArray(projectResource)) projectResource = projectResource[0];
+      if (projectResource && projectResource.project_fiscal_rid) {
+        const project = await this.fetchProjectInfoById(schemaName, projectResource.project_fiscal_rid);
+        fiscal_year = project?.fiscal_year ?? null;
+      }
+    } else if (attachmentLevel === 'project_task' && attachTo) {
+      let projectTask :any = await this.fetchProjectTaskById(accountNumber, attachTo);
+      if (Array.isArray(projectTask)) projectTask = projectTask[0];
+      if (projectTask && projectTask.project_fiscal_rid) {
+        const project = await this.fetchProjectInfoById(accountNumber, projectTask.project_fiscal_rid);
+        fiscal_year = project?.fiscal_year ?? null;
+      }
+    } else if (attachmentLevel === 'resource' && attachTo) {
+      let resource:any = await this.fetchResourceById(accountNumber, attachTo);
+      if (Array.isArray(resource)) resource = resource[0];
+      if (resource && resource.project_fiscal_rid) {
+        const project = await this.fetchProjectInfoById(accountNumber, resource.project_fiscal_rid);
+        fiscal_year = project?.fiscal_year ?? null;
+      }
+    } else if (attachmentLevel === 'resource_cost' && attachTo) {
+      let resourceCost:any = await this.fetchResourceCostById(accountNumber, attachTo);
+      if (Array.isArray(resourceCost)) resourceCost = resourceCost[0];
+      if (resourceCost && resourceCost.resource_rid) {
+        let resource :any = await this.fetchResourceById(accountNumber, resourceCost.resource_rid);
+        if (Array.isArray(resource)) resource = resource[0];
+        if (resource && resource.project_fiscal_rid) {
+          const project = await this.fetchProjectInfoById(accountNumber, resource.project_fiscal_rid);
+          fiscal_year = project?.fiscal_year ?? null;
+        }
+      }
+    } else if (attachmentLevel === 'resource_skill' && attachTo) {
+      let resourceSkill:any = await this.fetchResourceSkillById(accountNumber, attachTo);
+      if (Array.isArray(resourceSkill)) resourceSkill = resourceSkill[0];
+      if (resourceSkill && resourceSkill.resource_rid) {
+        let resource:any = await this.fetchResourceById(accountNumber, resourceSkill.resource_rid);
+        if (Array.isArray(resource)) resource = resource[0];
+        if (resource && resource.project_fiscal_rid) {
+          const project = await this.fetchProjectInfoById(accountNumber, resource.project_fiscal_rid);
+          fiscal_year = project?.fiscal_year ?? null;
+        }
+      }
+    } 
+
     const response: any = {
-      attach_to:checklistDetails?.attach_to ?? "",
+      attach_to: checklistDetails?.attach_to ?? "",
       attachment_level: checklistDetails?.attachment_level ?? "",
       attached_to: attached_to ?? "",
       checklist_rid: checklistDetails?.rid,
@@ -2824,7 +2885,8 @@ class CaseSchemaService {
       r_number: checklistDetails.r_number ?? "",
       status_rid: checklistDetails.status_rid ?? "",
       account_rid: checklistDetails.account_rid ?? "",
-     // status_name: checklistDetails.dataValues.status_name ?? "",
+      fiscal_year,
+      // status_name: checklistDetails.dataValues.status_name ?? "",
       modified_by: userInfo.modified_name ?? checklistDetails.modified_by,
       created_by: userInfo.created_name ?? checklistDetails.created_by,
       created_datetime: checklistDetails.created_datetime ?? null,
@@ -2883,18 +2945,6 @@ class CaseSchemaService {
         const fetchAttachments = async (model: any, level: string, attachToIds: string[]) => {
                 if (attachToIds.length === 0) return [];
                 let where;
-                if(graphqlData?.notes_rid) {
-                  console.log("Doc Id : ", graphqlData.notes_rid)
-                  where = {
-                    rid : graphqlData.notes_rid,
-                    attachment_level : level,
-                    attach_to : { [Op.in]: attachToIds }
-                  };
-                
-                  let arrayData = []
-                  arrayData.push(await model.findOne({ where }))
-                  return arrayData
-                } else {
                   where = {
                     [Op.and]: [
                       { attachment_level: level },
@@ -2903,7 +2953,7 @@ class CaseSchemaService {
                     ]
                   };
                   return model.findAll({ where });
-                }
+                
               };
          // 🔷 Optimized project resource + task attachments fetch for multiple projects
         const fetchProjectResourceTaskAttachmentsBulk = async (model: any, projectIds: string[]) => {
@@ -3095,23 +3145,58 @@ class CaseSchemaService {
          const userMap = new Map(users.map((u: any) => [u.rid, u.full_name]));
 
         let checklists : any[]
-        if(graphqlData.notes_rid) {
-                  checklists = await Promise.all(paginatedAttachments.map(async attachment => {
-                    return {
-                      ...attachment.get({ plain: true }),
-                      created_by_name: userMap.get(attachment.created_by) || attachment.created_by,
-                      modified_by_name: userMap.get(attachment.modified_by) || attachment.modified_by,
-                      attached_to: displayNames[attachment.rid] || attachment.attach_to,
-                        }
-                  }));
-                } 
-        else {
-          checklists = await Promise.all(paginatedAttachments.map(async attachment => ({
-          ...attachment.get({ plain: true }),
-          created_by_name: userMap.get(attachment.created_by) || attachment.created_by,
-          modified_by_name: userMap.get(attachment.modified_by) || attachment.modified_by,
-          attached_to: displayNames[attachment.rid] || attachment.attach_to,
-        })))};
+        // Enhanced fiscal_year enrichment for all checklist types
+        const getFiscalYearForChecklist = async (attachment: any) => {
+          // CASE: fetch from Case model
+          if (attachment.attachment_level === 'case' && attachment.attach_to) {
+            const caseData = await this.fetchCaseById(accountNumber, attachment.attach_to);
+            return caseData?.fiscal_year ?? null;
+          }
+          // ACCOUNT: use fiscal_year from checklist model itself
+          if (attachment.attachment_level === 'account') {
+            return attachment.fiscal_year ?? null;
+          }
+          // PROJECT: fetch from project info (project fiscal_year)
+          if (attachment.attachment_level === 'project' && attachment.attach_to) {
+            const project = await this.fetchProjectInfoById(accountNumber, attachment.attach_to);
+            return project?.fiscal_year ?? null;
+          }
+          // PROJECT_RESOURCE: fetch project_resource, then project fiscal_year
+          if (attachment.attachment_level === 'project_resource' && attachment.attach_to) {
+            let projectResource:any = await this.fetchProjectResourceById(accountNumber, attachment.attach_to);
+            if (Array.isArray(projectResource)) projectResource = projectResource[0];
+            if (projectResource && projectResource.project_fiscal_rid) {
+              const project = await this.fetchProjectInfoById(accountNumber, projectResource.project_fiscal_rid);
+              return project?.fiscal_year ?? null;
+            }
+            return null;
+          }
+          // PROJECT_TASK: fetch project_task, then project fiscal_year
+          if (attachment.attachment_level === 'project_task' && attachment.attach_to) {
+            let projectTask:any = await this.fetchProjectTaskById(accountNumber, attachment.attach_to);
+            if (Array.isArray(projectTask)) projectTask = projectTask[0];
+            if (projectTask && projectTask.project_fiscal_rid) {
+              const project = await this.fetchProjectInfoById(accountNumber, projectTask.project_fiscal_rid);
+              return project?.fiscal_year ?? null;
+            }
+            return null;
+          }
+          
+
+          // Default: fallback to null
+          return null;
+        };
+
+          checklists = await Promise.all(paginatedAttachments.map(async attachment => {
+            const fiscal_year = await getFiscalYearForChecklist(attachment);
+            return {
+              ...attachment.get({ plain: true }),
+              created_by_name: userMap.get(attachment.created_by) || attachment.created_by,
+              modified_by_name: userMap.get(attachment.modified_by) || attachment.modified_by,
+              attached_to: displayNames[attachment.rid] || attachment.attach_to,
+              fiscal_year,
+            }
+          }));
         if (sortBy === 'created_by_name') {
           checklists.sort((a, b) => {
             const aType = a.created_by_name || '';
