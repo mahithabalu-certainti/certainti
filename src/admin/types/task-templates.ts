@@ -59,6 +59,8 @@ export interface TaskTemplateDetails {
   modified_by: string | null;
   created_datetime: string;
   modified_datetime: string | null;
+  created_by_name: string | null;
+  modified_by_name: string | null;
 }
 
 export interface TaskTemplateDetailsResponse {
@@ -141,7 +143,7 @@ export interface TaskMilestoneTypeResponse {
   statusMessage: string;
   data: TaskMileStoneType[];
 }
-export interface TaskPiriorityTypeResponse {
+export interface TaskPriorityTypeResponse {
   statusCode: number;
   statusCodeValue: string;
   statusMessage: string;

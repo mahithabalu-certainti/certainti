@@ -16,7 +16,7 @@ import { TaskTemplateList, TaskTemplateListParams } from '../../../../types';
 import { generatePath, useNavigate } from 'react-router-dom';
 import { TASK_TEMPLATES_EDIT } from '../../../../../routes';
 import {
-  useGetTaskAssigneRoleTypes,
+  useGetTaskAssignRoleTypes,
   useGetTaskCheckListTypes,
   useGetTaskMilestoneTypes,
   useGetTaskPriorityTypes,
@@ -105,7 +105,7 @@ export const TaskTemplateTable: React.FC<ITaskTemplateTableProps> = ({
   const taskMilestoneTypes = useGetTaskMilestoneTypes();
   const taskPrioritytTypes = useGetTaskPriorityTypes();
   const taskCheckListTypes = useGetTaskCheckListTypes();
-  const taskAssigneRoleTypes = useGetTaskAssigneRoleTypes();
+  const taskAssignRoleTypes = useGetTaskAssignRoleTypes();
 
   const taskMilestoneTypesOptions = useMemo(() => {
     return (
@@ -133,12 +133,12 @@ export const TaskTemplateTable: React.FC<ITaskTemplateTableProps> = ({
   }, [taskCheckListTypes]);
   const taskAssigneRoleTypesTypesOptions = useMemo(() => {
     return (
-      taskAssigneRoleTypes?.data?.data?.caseRoles?.map((item) => ({
+      taskAssignRoleTypes?.data?.data?.caseRoles?.map((item) => ({
         value: item.rid,
         label: item.role_name,
       })) || []
     );
-  }, [taskAssigneRoleTypes]);
+  }, [taskAssignRoleTypes]);
   const memoizedStatus: SelectOption[] = useMemo(
     () =>
       statusOptions?.data?.data?.status.map((status) => ({

@@ -10,7 +10,7 @@ import {
   TaskTemplateListResponse,
   TaskAssigneRoleTypeResponse,
   TaskMilestoneTypeResponse,
-  TaskPiriorityTypeResponse,
+  TaskPriorityTypeResponse,
   TaskCheckListTypeResponse,
   TaskTemplateDetailsResponse,
 } from '../../types';
@@ -235,9 +235,9 @@ export const getTaskPriorityTypeUrl = (): string =>
   '/api/caseManagement/priority';
 
 export const fetchTaskPriorityTypes =
-  async (): Promise<TaskPiriorityTypeResponse> => {
+  async (): Promise<TaskPriorityTypeResponse> => {
     try {
-      const { data } = await caseServiceApi.get<TaskPiriorityTypeResponse>(
+      const { data } = await caseServiceApi.get<TaskPriorityTypeResponse>(
         getTaskPriorityTypeUrl()
       );
       return data;
@@ -248,7 +248,7 @@ export const fetchTaskPriorityTypes =
   };
 
 export const useGetTaskPriorityTypes = () => {
-  return useQuery<TaskPiriorityTypeResponse, Error>({
+  return useQuery<TaskPriorityTypeResponse, Error>({
     queryKey: ['task-priority-types'],
     queryFn: fetchTaskPriorityTypes,
     retry: 0,
@@ -287,14 +287,14 @@ export const useGetTaskCheckListTypes = () => {
   });
 };
 // Task assign role type
-export const getTaskAssignerRoleTypeUrl = (): string =>
+export const getTaskAssignRoleTypeUrl = (): string =>
   '/api/cases/caseTeamRoles';
 
-export const fetchTaskAssigneRoleTypes =
+export const fetchTaskAssignRoleTypes =
   async (): Promise<TaskAssigneRoleTypeResponse> => {
     try {
       const { data } = await caseServiceApi.get<TaskAssigneRoleTypeResponse>(
-        getTaskAssignerRoleTypeUrl()
+        getTaskAssignRoleTypeUrl()
       );
       return data;
     } catch (error) {
@@ -303,10 +303,10 @@ export const fetchTaskAssigneRoleTypes =
     }
   };
 
-export const useGetTaskAssigneRoleTypes = () => {
+export const useGetTaskAssignRoleTypes = () => {
   return useQuery<TaskAssigneRoleTypeResponse, Error>({
     queryKey: ['task-assignerole-types'],
-    queryFn: fetchTaskAssigneRoleTypes,
+    queryFn: fetchTaskAssignRoleTypes,
     retry: 0,
     staleTime: Infinity,
     gcTime: Infinity,

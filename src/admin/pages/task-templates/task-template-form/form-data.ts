@@ -13,7 +13,7 @@ export const TaskTemplateFormFieldsData = (
   taskMilestoneTypesOptions: SelectOption[],
   taskPrioritytTypesTypesOptions: SelectOption[],
   taskCheckListTypesTypesOptions: SelectOption[],
-  taskAssigneRoleTypesTypesOptions: SelectOption[],
+  taskAssignRoleTypesTypesOptions: SelectOption[],
   statusOptions: SelectOption[],
   taskType: boolean
   // permissionMap: Record<string, { read: boolean; edit: boolean }>,
@@ -64,9 +64,9 @@ export const TaskTemplateFormFieldsData = (
             //   !permissionMap?.['task_type_rid']?.edit &&
             //   !permissionMap?.['task_type_rid']?.read,
           }),
-          createSelectField('case_team_member_role_rid', 'Assinge Role', {
-            options: taskAssigneRoleTypesTypesOptions || [],
-            placeholder: 'Choose Assinge Role',
+          createSelectField('case_team_member_role_rid', 'Assing Role', {
+            options: taskAssignRoleTypesTypesOptions || [],
+            placeholder: 'Choose Assing Role',
             required: false,
             hide: taskType,
             // disabled:

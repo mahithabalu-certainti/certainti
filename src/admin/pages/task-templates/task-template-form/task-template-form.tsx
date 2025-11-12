@@ -5,7 +5,7 @@ import { useToast } from '../../../../hooks';
 import { useLocation, useParams } from 'react-router-dom';
 import {
   useCreateTaskTemplate,
-  useGetTaskAssigneRoleTypes,
+  useGetTaskAssignRoleTypes,
   useGetTaskCheckListTypes,
   useGetTaskMilestoneTypes,
   useGetTaskPriorityTypes,
@@ -35,7 +35,7 @@ const TaskTemplateForm: React.FC = () => {
   const taskMilestoneTypes = useGetTaskMilestoneTypes();
   const taskPrioritytTypes = useGetTaskPriorityTypes();
   const taskCheckListTypes = useGetTaskCheckListTypes();
-  const taskAssigneRoleTypes = useGetTaskAssigneRoleTypes();
+  const taskAssignRoleTypes = useGetTaskAssignRoleTypes();
   const createTaskTemplate = useCreateTaskTemplate();
   const updateTaskTemplate = useUpdateTaskTemplateDetails();
 
@@ -70,12 +70,12 @@ const TaskTemplateForm: React.FC = () => {
         created_on: formatDateToYYYYMMDDWithTime(
           taskTemplateData.created_datetime
         ),
-        created_by: taskTemplateData.created_by || '',
+        created_by: taskTemplateData.created_by_name || '',
         template_id: taskTemplateData.r_number || '',
         updated_on: taskTemplateData.modified_datetime
           ? formatDateToYYYYMMDDWithTime(taskTemplateData.modified_datetime)
           : '-',
-        updated_by: taskTemplateData.modified_by || '-',
+        updated_by: taskTemplateData.modified_by_name || '-',
       }),
     }),
     [taskTemplateData]
@@ -114,14 +114,14 @@ const TaskTemplateForm: React.FC = () => {
       })) || []
     );
   }, [taskCheckListTypes]);
-  const taskAssigneRoleTypesTypesOptions = useMemo(() => {
+  const taskAssignRoleTypesTypesOptions = useMemo(() => {
     return (
-      taskAssigneRoleTypes?.data?.data?.caseRoles?.map((item) => ({
+      taskAssignRoleTypes?.data?.data?.caseRoles?.map((item) => ({
         value: item.rid,
         label: item.role_name,
       })) || []
     );
-  }, [taskAssigneRoleTypes]);
+  }, [taskAssignRoleTypes]);
   const memoizedStatus: SelectOption[] = useMemo(
     () =>
       statusOptions?.data?.data?.status.map((status) => ({
@@ -171,7 +171,7 @@ const TaskTemplateForm: React.FC = () => {
     taskMilestoneTypesOptions,
     taskPrioritytTypesTypesOptions,
     taskCheckListTypesTypesOptions,
-    taskAssigneRoleTypesTypesOptions,
+    taskAssignRoleTypesTypesOptions,
     memoizedStatus,
     taskType
   );
