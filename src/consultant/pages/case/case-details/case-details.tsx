@@ -178,6 +178,7 @@ export const CaseDetails = () => {
     if (
       searchParams.get('list') !== 'attachments' &&
       searchParams.get('list') !== 'notes' &&
+      searchParams.get('list') !== 'checklist' &&
       searchParams.get('list') !== 'caseProjects' &&
       searchParams.get('list') !== 'workBreakdown' &&
       searchParams.get('tab') !== 'case_task'
