@@ -11,6 +11,7 @@ import {
 } from '../../../services/cases/case-service';
 import {
   CaseAssignedExportParams,
+  ChecklistListExportParams,
   ExportType,
   MenuItem,
   NotesListExportParams,
@@ -52,6 +53,8 @@ import { AttachmentsListExportParams } from '../../../types/attachment';
 import { useSelector } from 'react-redux';
 import { Attachments } from './case-attachments';
 import { exportAttachmentsData } from '../../../services/attachments/attachments-service';
+import { ExportChecklistList } from '../../../services/checklist/checklist-service';
+import { Checklist } from './checklist';
 
 export const CaseDetails = () => {
   const navigate = useNavigate();
@@ -90,6 +93,7 @@ export const CaseDetails = () => {
   });
 
   const noteView = searchParams.get('note_id');
+  const checklistView = searchParams.get('checklist_id');
   const accountInActive =
     caseData?.account_status_name?.toLowerCase() !== 'active';
   const [caseProjectParams, setCaseProjectParams] =
@@ -112,6 +116,13 @@ export const CaseDetails = () => {
       filters: {},
     });
 
+  const [checklistParams, setChecklistParams] =
+    useState<ChecklistListExportParams>({
+      sortBy: 'r_number',
+      sortOrder: 'ASC',
+      filters: {},
+    });
+
   useEffect(() => {
     const list = searchParams.get('list');
     if (list) {
@@ -128,20 +139,6 @@ export const CaseDetails = () => {
     }
   }, [location.state, searchParams]);
   const list = searchParams.get('list');
-  // const checkExport = () => {
-  //   if (list === 'caseProjects' && !isAssignProject) {
-  //     return false;
-  //   } else {
-  //     return true;
-  //   }
-  // };
-
-  // const handleExport = () => {
-  //   if (list !== 'caseProjects') {
-  //     return;
-  //   }
-  //   ExportAssignedList(caseProjectParams);
-  // };
 
   // Permissions management
   const caseIsEnable = checkPermission(modules, AllModules.CASES);
@@ -160,10 +157,16 @@ export const CaseDetails = () => {
     AllPermissions.NOTES_EXPORT
   );
 
+  const isChecklistsExportEnable = checkPermission(
+    permission,
+    AllPermissions.CHECKLIST_EXPORT
+  );
+
   const handleExport = (exportType: ExportType) => {
     if (
       searchParams.get('list') !== 'attachments' &&
       searchParams.get('list') !== 'notes' &&
+      searchParams.get('list') !== 'checklist' &&
       searchParams.get('list') !== 'caseProjects'
     ) {
       return;
@@ -190,6 +193,16 @@ export const CaseDetails = () => {
         ...attachmentParams,
         ...attachmentPayload,
       });
+    } else if (exportType === 'checklist') {
+      const checklistPayload = {
+        accountRid: accountId,
+        entityId: caseId,
+        attachmentLevel: 'case',
+      };
+      ExportChecklistList('checklist', {
+        ...checklistParams,
+        ...checklistPayload,
+      });
     } else if (list === 'caseProjects') {
       ExportAssignedList(caseProjectParams);
     }
@@ -209,6 +222,8 @@ export const CaseDetails = () => {
       return !isAttachmentExportEnable;
     } else if (list === 'notes' && !noteView) {
       return !isNotesExportEnable;
+    } else if (list === 'checklist' && !checklistView) {
+      return !isChecklistsExportEnable;
     } else if (list === 'caseProjects' && !isAssignProject && !projectDetails) {
       return false;
     } else {
@@ -279,6 +294,15 @@ export const CaseDetails = () => {
             setAttachmentParams={setAttachmentParams}
           />
         );
+      case 'checklist':
+        return (
+          <Checklist
+            setExportType={setExportType}
+            setChecklistParams={setChecklistParams}
+            accountInActive={accountInActive}
+            caseDetails={caseData}
+          />
+        );
       default:
         return (
           <div className='flex items-center justify-center h-full'>
@@ -293,28 +317,28 @@ export const CaseDetails = () => {
       {
         name: 'Work Breakdown',
         key: 'workBreakdown',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS, // ADD PERMISSION FOR CASES
+        id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
         icon: ProjectsSideIcon,
       },
       {
         name: 'Financial Workings',
         key: 'financialWorkings',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS, // ADD PERMISSION FOR CASES
+        id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
         icon: FinancialIcon,
       },
       {
         name: 'Case Review',
         key: 'caseReview',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS, // ADD PERMISSION FOR CASES
+        id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
         icon: CasesIcon,
       },
       {
         name: 'Case Team',
         key: 'caseTeam',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS, // ADD PERMISSION FOR CASES
+        id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
         icon: CasesIcon,
       },
@@ -396,7 +420,7 @@ export const CaseDetails = () => {
         icon: AttachmentsSideIcon,
       },
       {
-        name: 'Checklist',
+        name: 'Checklists',
         key: 'checklist',
         id: AllMenus.CHECKLISTS,
         disabled: false,

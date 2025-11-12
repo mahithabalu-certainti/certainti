@@ -43,8 +43,8 @@ export const getChecklistTemplateColumns = (
     width: 220,
     sortable: true,
     hide:
-      !permissionMap?.['description']?.read &&
-      !permissionMap?.['description']?.edit,
+      !permissionMap?.['checklist_description']?.read &&
+      !permissionMap?.['checklist_description']?.edit,
     render: (row: ChecklistTemplateList) => row.checklist_description || '-',
   },
   {
