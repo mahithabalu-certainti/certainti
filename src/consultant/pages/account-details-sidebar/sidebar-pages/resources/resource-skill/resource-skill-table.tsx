@@ -83,7 +83,7 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   columnAnchorEl,
   setColumnAnchorEl,
   searchValue,
-  resourceNumber,
+  // resourceNumber,
 }) => {
   const navigate = useNavigate();
   const { accountid } = useParams();
@@ -258,7 +258,7 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
     setSelectedRowId(rowId);
   };
 
-  const handleCreateNote = (rowId: string) => {
+  const handleCreateNote = (row: ResourceSkillList) => {
     const accountId = accountid ?? '';
     const path = generatePath(NOTES_CREATE, {
       module: 'account',
@@ -266,14 +266,14 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
     const queryParams = new URLSearchParams({
       accountId,
       entityLevel: 'resource_skill',
-      entityId: rowId,
-      source: `Resource > ${resourceNumber}`,
+      entityId: row.rid || '',
+      source: `Resource Skill > ${row.r_number}`,
       ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
 
-  const handleCreateChecklist = (rowId: string) => {
+  const handleCreateChecklist = (row: ResourceSkillList) => {
     const accountId = accountid ?? '';
     const path = generatePath(CHECKLIST_CREATE, {
       module: 'account',
@@ -281,8 +281,8 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
     const queryParams = new URLSearchParams({
       accountId,
       entityLevel: 'resource_skill',
-      entityId: rowId || '',
-      source: `Resource > ${resourceNumber}`,
+      entityId: row.rid || '',
+      source: `Resource Skill > ${row.r_number}`,
       ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
     });
     navigate(`${path}?${queryParams.toString()}`);

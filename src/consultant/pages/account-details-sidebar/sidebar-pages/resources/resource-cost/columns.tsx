@@ -31,8 +31,8 @@ export const getResourceCostColumns = (
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
   accountInActive: boolean,
   handleAttachmentClick?: (rowId: string) => void,
-  handleCreateNote?: (rowId: string) => void,
-  handleCreateChecklist?: (rowId: string) => void,
+  handleCreateNote?: (row: ResourceCostList) => void,
+  handleCreateChecklist?: (row: ResourceCostList) => void,
   resourceInActive?: boolean,
   attachmentCreateEnable?: boolean,
   handleGetFiscalYear?: (year: string) => void,
@@ -504,7 +504,7 @@ export const getResourceCostColumns = (
         label='Add'
         disabled={accountInActive ? accountInActive : resourceInActive}
         sx={{ width: '45px', minWidth: '45px', maxWidth: '45px' }}
-        onClick={() => handleCreateNote?.(row.rid ?? '')}
+        onClick={() => handleCreateNote?.(row)}
       />
     ),
   },
@@ -523,7 +523,7 @@ export const getResourceCostColumns = (
         label='Add'
         disabled={accountInActive ? accountInActive : resourceInActive}
         sx={{ width: '45px', minWidth: '45px', maxWidth: '45px' }}
-        onClick={() => handleCreateChecklist?.(row.rid ?? '')}
+        onClick={() => handleCreateChecklist?.(row)}
       />
     ),
   },

@@ -18,8 +18,8 @@ export const getResourceSkillColumns = (
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
   accountInActive: boolean,
   handleAttachmentClick?: (rowId: string) => void,
-  handleCreateNote?: (row: string) => void,
-  handleCreateChecklist?: (row: string) => void,
+  handleCreateNote?: (row: ResourceSkillList) => void,
+  handleCreateChecklist?: (row: ResourceSkillList) => void,
   resourceInActive?: boolean,
   attachmentCreateEnable?: boolean,
   isNoteCreateEnable?: boolean,
@@ -413,7 +413,7 @@ export const getResourceSkillColumns = (
         label='Add'
         disabled={accountInActive ? accountInActive : resourceInActive}
         sx={{ width: '45px', minWidth: '45px', maxWidth: '45px' }}
-        onClick={() => handleCreateNote?.(row.rid ?? '')}
+        onClick={() => handleCreateNote?.(row)}
       />
     ),
   },
@@ -432,7 +432,7 @@ export const getResourceSkillColumns = (
         label='Add'
         disabled={accountInActive ? accountInActive : resourceInActive}
         sx={{ width: '45px', minWidth: '45px', maxWidth: '45px' }}
-        onClick={() => handleCreateChecklist?.(row.rid ?? '')}
+        onClick={() => handleCreateChecklist?.(row)}
       />
     ),
   },

@@ -11,6 +11,7 @@ import {
 } from '../../../services/cases/case-service';
 import {
   CaseAssignedExportParams,
+  ChecklistListExportParams,
   ExportType,
   MenuItem,
   NotesListExportParams,
@@ -138,20 +139,6 @@ export const CaseDetails = () => {
     }
   }, [location.state, searchParams]);
   const list = searchParams.get('list');
-  // const checkExport = () => {
-  //   if (list === 'caseProjects' && !isAssignProject) {
-  //     return false;
-  //   } else {
-  //     return true;
-  //   }
-  // };
-
-  // const handleExport = () => {
-  //   if (list !== 'caseProjects') {
-  //     return;
-  //   }
-  //   ExportAssignedList(caseProjectParams);
-  // };
 
   // Permissions management
   const caseIsEnable = checkPermission(modules, AllModules.CASES);
@@ -330,28 +317,28 @@ export const CaseDetails = () => {
       {
         name: 'Work Breakdown',
         key: 'workBreakdown',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS, // ADD PERMISSION FOR CASES
+        id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
         icon: ProjectsSideIcon,
       },
       {
         name: 'Financial Workings',
         key: 'financialWorkings',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS, // ADD PERMISSION FOR CASES
+        id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
         icon: FinancialIcon,
       },
       {
         name: 'Case Review',
         key: 'caseReview',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS, // ADD PERMISSION FOR CASES
+        id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
         icon: CasesIcon,
       },
       {
         name: 'Case Team',
         key: 'caseTeam',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS, // ADD PERMISSION FOR CASES
+        id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
         icon: CasesIcon,
       },
