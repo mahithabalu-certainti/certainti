@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useRef, useMemo, useLayoutEffect } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useLayoutEffect,
+} from 'react';
 import {
   Select,
   MenuItem,
@@ -9,6 +15,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Checkbox,
 } from '@mui/material';
 import {
   ActionItemsIcon,
@@ -25,7 +32,7 @@ import dayjs from 'dayjs';
 import { SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
-import { AllPermissions } from '../../../../../common-service';
+import { AllPermissions, useGetStatus } from '../../../../../common-service';
 import { useToast } from '../../../../../hooks';
 import { useSearchParams, useParams } from 'react-router-dom';
 import {
@@ -58,7 +65,6 @@ const CaseTeam = () => {
   const [searchParams] = useSearchParams();
   const { caseId } = useParams();
   const { successToast, errorToast } = useToast();
-
   const [formData, setFormData] = useState<CaseTeamFormData>({
     team_members: [],
   });
@@ -68,7 +74,6 @@ const CaseTeam = () => {
   const [originalTeamMembers, setOriginalTeamMembers] = useState<
     CaseTeamMember[]
   >([]);
-
   const [isFormChanged, setIsFormChanged] = useState(false);
   const cellRefs = useRef<Record<string, HTMLTableCellElement | null>>({});
   const [cellWidths, setCellWidths] = useState<Record<string, number>>({});
@@ -90,7 +95,6 @@ const CaseTeam = () => {
     });
     return map;
   }, [casesTeamEditFields]);
-  console.log('permissionMap', permissionMap);
 
   const isCaseTeamEditable = useMemo(
     () =>
@@ -99,8 +103,7 @@ const CaseTeam = () => {
         ?.fields?.some((field) => field.edit),
     [permission]
   );
-  console.log('isCaseTeamEditable', isCaseTeamEditable);
-  // Compare formData.team_members with originalTeamMembers
+
   useEffect(() => {
     if (formData.team_members.length !== originalTeamMembers.length) {
       setIsFormChanged(true);
@@ -113,7 +116,9 @@ const CaseTeam = () => {
         a.user_name !== b.user_name ||
         a.user_role !== b.user_role ||
         a.start_date !== b.start_date ||
-        a.end_date !== b.end_date
+        a.end_date !== b.end_date ||
+        a.is_primary !== b.is_primary ||
+        a.status_rid !== b.status_rid
       ) {
         setIsFormChanged(true);
         return;
@@ -128,6 +133,7 @@ const CaseTeam = () => {
   const updateCaseTeamMutation = useUpdateCaseTeam();
   const roleOptionsQuery = useGetRoleOptions();
   const userOptionsQuery = useGetUserOptions(accountId);
+  const statusOptionsQuery = useGetStatus();
 
   const teamTableColumns = getCaseTeamTableColumns();
   const formLoading = caseTeamQuery.isLoading || !isDataLoaded;
@@ -177,6 +183,10 @@ const CaseTeam = () => {
           const roleOption = roleOptionsQuery.data?.find(
             (r) => r.rid === user.role_rid
           );
+          const statusOption = statusOptionsQuery.data?.data?.status?.find(
+            (s: { rid: string; status_name: string }) =>
+              s.rid === user.status_rid
+          );
 
           return {
             ...user,
@@ -185,6 +195,9 @@ const CaseTeam = () => {
             user_role: roleOption?.role_name || '',
             start_date: user.effective_startdate || '',
             end_date: user.effective_enddate || '',
+            is_primary: user.is_primary || false,
+            status: statusOption?.status_name || '',
+            status_rid: user.status_rid || '',
           };
         }
       );
@@ -201,6 +214,9 @@ const CaseTeam = () => {
                 user_role: '',
                 start_date: '',
                 end_date: '',
+                is_primary: false,
+                status: '',
+                status_rid: '',
               },
             ]
           : teamMembers;
@@ -210,7 +226,12 @@ const CaseTeam = () => {
       });
       setIsDataLoaded(true);
     }
-  }, [caseTeamQuery.data, userOptionsQuery.data, roleOptionsQuery.data]);
+  }, [
+    caseTeamQuery.data,
+    userOptionsQuery.data,
+    roleOptionsQuery.data,
+    statusOptionsQuery.data,
+  ]);
 
   useEffect(() => {
     if (updateCaseTeamMutation.isSuccess) {
@@ -275,6 +296,9 @@ const CaseTeam = () => {
             user_role: '',
             start_date: '',
             end_date: '',
+            is_primary: false,
+            status: '',
+            status_rid: '',
           },
         ],
       };
@@ -308,14 +332,27 @@ const CaseTeam = () => {
       };
     });
 
+    // Clear errors for the specific field being changed
     setErrors((prev) => {
       const newMemberErrors = [...(prev.team_members || [])];
-      if (newMemberErrors[index]) {
+      if (!newMemberErrors[index]) {
+        newMemberErrors[index] = {};
+      }
+
+      // Clear the error for the specific field
+      newMemberErrors[index] = {
+        ...newMemberErrors[index],
+        [field]: undefined,
+      };
+
+      // If clearing user_role, also clear is_primary error as it depends on role
+      if (field === 'user_role') {
         newMemberErrors[index] = {
           ...newMemberErrors[index],
-          [field]: undefined,
+          is_primary: undefined,
         };
       }
+
       return {
         ...prev,
         team_members: newMemberErrors,
@@ -331,16 +368,19 @@ const CaseTeam = () => {
     formData.team_members.forEach((member, index) => {
       const memberError: CaseTeamMemberErrors = {};
 
+      // User name validation
       if (!member.user_name.trim()) {
         memberError.user_name = 'User name is required';
         isValid = false;
       }
 
+      // User role validation
       if (!member.user_role.trim()) {
         memberError.user_role = 'User role is required';
         isValid = false;
       }
 
+      // Start date validation
       if (!member.start_date) {
         memberError.start_date = 'Start date is required';
         isValid = false;
@@ -349,9 +389,32 @@ const CaseTeam = () => {
         isValid = false;
       }
 
+      // End date validation
       if (!member.end_date) {
         memberError.end_date = 'End date is required';
         isValid = false;
+      }
+
+      // Status validation (required field)
+      if (!member.status || !member.status.trim()) {
+        memberError.status = 'Status is required';
+        isValid = false;
+      }
+
+      // Primary checkbox validation - check if trying to set primary when another user in same role is already primary
+      if (member.is_primary && member.user_role) {
+        const existingPrimary = formData.team_members.find(
+          (m, i) =>
+            i !== index &&
+            m.user_role === member.user_role &&
+            m.user_role !== '' &&
+            m.is_primary
+        );
+
+        if (existingPrimary) {
+          memberError.is_primary = `Only one primary contact allowed per role.`;
+          isValid = false;
+        }
       }
 
       memberErrors[index] = memberError;
@@ -392,7 +455,9 @@ const CaseTeam = () => {
           originalMember.user_name !== member.user_name ||
           originalMember.user_role !== member.user_role ||
           originalMember.start_date !== member.start_date ||
-          originalMember.end_date !== member.end_date;
+          originalMember.end_date !== member.end_date ||
+          originalMember.is_primary !== member.is_primary ||
+          originalMember.status_rid !== member.status_rid;
 
         actionType = hasChanges ? 'edit' : 'add';
         caseTeamRid = originalMember.rid;
@@ -404,6 +469,8 @@ const CaseTeam = () => {
         role_rid: roleOption?.rid || '',
         effective_from: member.start_date,
         effective_to: member.end_date,
+        is_primary: member.is_primary || false,
+        status_rid: member.status_rid || '',
         action_type: actionType,
       };
     });
@@ -431,6 +498,8 @@ const CaseTeam = () => {
         role_rid: roleOption?.rid || '',
         effective_from: member.start_date,
         effective_to: member.end_date,
+        is_primary: member.is_primary || false,
+        status_rid: member.status_rid || '',
         action_type: 'delete' as const,
       };
     });
@@ -496,8 +565,11 @@ const CaseTeam = () => {
       <div className='flex flex-col gap-0 border border-[#CBD6E2] pt-5'>
         <div className='w-full mb-5'>
           <div className='px-4'>
-            <TableContainer sx={{ overflowX: 'auto' }}>
-              <Table className='border-l border-t border-[#CBD6E2]'>
+            <TableContainer sx={{ overflowX: 'auto', width: '100%' }}>
+              <Table
+                className='border-l border-t border-[#CBD6E2]'
+                sx={{ minWidth: 800 }}
+              >
                 <TableHead
                   sx={{
                     '& .MuiTableCell-root': {
@@ -557,7 +629,7 @@ const CaseTeam = () => {
                   }}
                 >
                   {formLoading ? (
-                    <TableSkeleton rowsPerPage={4} columnsCount={5} />
+                    <TableSkeleton rowsPerPage={4} columnsCount={7} />
                   ) : (
                     formData.team_members.map((member, index) => (
                       <TableRow
@@ -645,7 +717,9 @@ const CaseTeam = () => {
                                             maxHeight: '250px',
                                             borderRadius: '0px',
                                             width: Math.max(
-                                              cellWidths[`user_role-${index}`] || 0,
+                                              cellWidths[
+                                                `user_role-${index}`
+                                              ] || 0,
                                               150 // minimum width fallback
                                             ),
                                             boxShadow:
@@ -743,7 +817,9 @@ const CaseTeam = () => {
                                             maxHeight: '250px',
                                             borderRadius: '0px',
                                             width: Math.max(
-                                              cellWidths[`user_name-${index}`] || 0,
+                                              cellWidths[
+                                                `user_name-${index}`
+                                              ] || 0,
                                               150 // minimum width fallback
                                             ),
                                             boxShadow:
@@ -792,8 +868,221 @@ const CaseTeam = () => {
                                   </div>
                                 )}
 
+                                {col.name === 'is_primary' && (
+                                  <div className='p-1 flex justify-center items-center'>
+                                    <Checkbox
+                                      checked={member.is_primary || false}
+                                      onChange={(e) => {
+                                        const isChecking = e.target.checked;
+
+                                        // Check if trying to set primary when another user in same role is already primary
+                                        if (isChecking && member.user_role) {
+                                          const existingPrimary =
+                                            formData.team_members.find(
+                                              (m, i) =>
+                                                i !== index &&
+                                                m.user_role ===
+                                                  member.user_role &&
+                                                m.user_role !== '' &&
+                                                m.is_primary
+                                            );
+
+                                          if (existingPrimary) {
+                                            // Set error and don't update the checkbox
+                                            setErrors((prev) => {
+                                              const newMemberErrors = [
+                                                ...(prev.team_members || []),
+                                              ];
+                                              if (!newMemberErrors[index]) {
+                                                newMemberErrors[index] = {};
+                                              }
+                                              newMemberErrors[index] = {
+                                                ...newMemberErrors[index],
+                                                is_primary:
+                                                  'Only one primary contact allowed per role.',
+                                              };
+                                              return {
+                                                ...prev,
+                                                team_members: newMemberErrors,
+                                              };
+                                            });
+                                            return; // Don't update the checkbox state
+                                          }
+                                        }
+
+                                        // If validation passes or unchecking, update normally
+                                        handleTeamMemberChange(
+                                          index,
+                                          'is_primary',
+                                          isChecking
+                                        );
+                                      }}
+                                      disabled={
+                                        isDisabled || !isCaseTeamEditable
+                                      }
+                                      size='small'
+                                      sx={{
+                                        padding: 0,
+                                        color: '#60A5FA',
+                                        '&.Mui-checked': {
+                                          color: '#60A5FA',
+                                        },
+                                        '&.Mui-disabled': {
+                                          color: '#CBD6E2',
+                                        },
+                                      }}
+                                    />
+                                  </div>
+                                )}
+
+                                {col.name === 'status' && (
+                                  <div className='p-1'>
+                                    <Select
+                                      value={member.status || ''}
+                                      onChange={(e) => {
+                                        const selectedStatusName =
+                                          e.target.value;
+                                        const selectedStatus =
+                                          statusOptionsQuery.data?.data?.status?.find(
+                                            (s: {
+                                              rid: string;
+                                              status_name: string;
+                                            }) =>
+                                              s.status_name ===
+                                              selectedStatusName
+                                          );
+
+                                        // Update both status and status_rid
+                                        setFormData((prev) => {
+                                          const updatedMembers = [
+                                            ...prev.team_members,
+                                          ];
+                                          updatedMembers[index] = {
+                                            ...updatedMembers[index],
+                                            status: selectedStatusName,
+                                            status_rid:
+                                              selectedStatus?.rid || '',
+                                          };
+                                          return {
+                                            ...prev,
+                                            team_members: updatedMembers,
+                                          };
+                                        });
+
+                                        // Clear status error when a status is selected
+                                        setErrors((prev) => {
+                                          const newMemberErrors = [
+                                            ...(prev.team_members || []),
+                                          ];
+                                          if (!newMemberErrors[index]) {
+                                            newMemberErrors[index] = {};
+                                          }
+                                          newMemberErrors[index] = {
+                                            ...newMemberErrors[index],
+                                            status: undefined,
+                                          };
+                                          return {
+                                            ...prev,
+                                            team_members: newMemberErrors,
+                                          };
+                                        });
+                                      }}
+                                      disabled={
+                                        isDisabled || !isCaseTeamEditable
+                                      }
+                                      size='small'
+                                      fullWidth
+                                      displayEmpty
+                                      className='h-[28px]'
+                                      sx={{
+                                        width: '100%',
+                                        '& .MuiSelect-select': {
+                                          fontSize: '13px',
+                                          fontWeight: 500,
+                                          color: member.status
+                                            ? '#425A76'
+                                            : '#7D98B6',
+                                          padding: '4px 6px',
+                                        },
+                                        '& .MuiOutlinedInput-notchedOutline': {
+                                          border: 'none',
+                                          borderColor: '#CBD6E2',
+                                        },
+                                        '&:hover .MuiOutlinedInput-notchedOutline':
+                                          {
+                                            borderColor: '#CBD6E2',
+                                          },
+                                        '&.Mui-focused .MuiOutlinedInput-notchedOutline':
+                                          {
+                                            borderColor: '#CBD6E2',
+                                          },
+                                      }}
+                                      MenuProps={{
+                                        PaperProps: {
+                                          sx: {
+                                            marginTop: '4px',
+                                            maxHeight: '250px',
+                                            borderRadius: '0px',
+                                            width: Math.max(
+                                              cellWidths[`status-${index}`] ||
+                                                0,
+                                              150 // minimum width fallback
+                                            ),
+                                            boxShadow:
+                                              'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
+                                            '& .MuiMenuItem-root': {
+                                              fontSize: '13px',
+                                              fontWeight: 500,
+                                              padding: '6px 12px',
+                                              '&[data-value=""]': {
+                                                color: '#7D98B6',
+                                              },
+                                              '&:not([data-value=""])': {
+                                                color: '#425A76',
+                                              },
+                                            },
+                                          },
+                                        },
+                                      }}
+                                    >
+                                      <MenuItem
+                                        value=''
+                                        sx={{
+                                          fontSize: '13px',
+                                          color: '#7D98B6 !important',
+                                          fontWeight: 500,
+                                        }}
+                                      >
+                                        Choose Status
+                                      </MenuItem>
+                                      {statusOptionsQuery.data?.data?.status?.map(
+                                        (status: {
+                                          rid: string;
+                                          status_name: string;
+                                          status_description?: string;
+                                        }) => (
+                                          <MenuItem
+                                            key={status.rid}
+                                            value={status.status_name}
+                                            sx={{
+                                              fontSize: '13px',
+                                              color: '#425A76 !important',
+                                              fontWeight: 500,
+                                            }}
+                                          >
+                                            {status.status_name}
+                                          </MenuItem>
+                                        )
+                                      )}
+                                    </Select>
+                                  </div>
+                                )}
+
                                 {col.name === 'start_date' && (
-                                  <div onKeyDown={(e) => e.stopPropagation()}>
+                                  <div
+                                    onKeyDown={(e) => e.stopPropagation()}
+                                    className='w-full min-w-[140px]'
+                                  >
                                     <LocalizationProvider
                                       dateAdapter={AdapterDayjs}
                                     >
@@ -822,6 +1111,7 @@ const CaseTeam = () => {
                                         }
                                         sx={{
                                           width: '100%',
+                                          minWidth: '140px',
                                           backgroundColor:
                                             'transparent !important',
                                           margin: 0,
@@ -829,6 +1119,7 @@ const CaseTeam = () => {
                                           '& .MuiOutlinedInput-root': {
                                             height: '28px',
                                             borderRadius: '2px',
+                                            minWidth: '140px',
                                             backgroundColor:
                                               'transparent !important',
                                             '&.Mui-disabled': {
@@ -871,16 +1162,22 @@ const CaseTeam = () => {
                                                 'transparent !important',
                                             },
                                           '& .MuiInputBase-input': {
-                                            fontSize: '13px',
-                                            padding: '5px 2px',
+                                            fontSize: '12px',
+                                            fontWeight: 500,
+                                            padding: '4px 6px',
                                             height: '20px',
+                                            minWidth: '100px',
+                                            textAlign: 'left',
                                             color: member.start_date
                                               ? '#425A76'
                                               : '#7D98B6',
                                             backgroundColor:
                                               'transparent !important',
+                                            whiteSpace: 'nowrap',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
                                             '&::placeholder': {
-                                              fontSize: '13px',
+                                              fontSize: '12px',
                                               color: '#7D98B6 !important',
                                               opacity: 1,
                                             },
@@ -900,8 +1197,8 @@ const CaseTeam = () => {
                                             },
                                           },
                                           '& .MuiInputAdornment-root': {
-                                            marginLeft: '0px',
-                                            gap: '0px',
+                                            marginLeft: '2px',
+                                            gap: '2px',
                                             backgroundColor:
                                               'transparent !important',
                                           },
@@ -917,7 +1214,7 @@ const CaseTeam = () => {
                                           textField: {
                                             size: 'small',
                                             error: !!error,
-                                            placeholder: 'Choose Start Date',
+                                            placeholder: 'Start Date',
                                             InputProps: {
                                               disabled: true,
                                               onPaste: (
@@ -948,13 +1245,13 @@ const CaseTeam = () => {
                                           openPickerIcon: () => (
                                             <CalendarIcon
                                               alt='calendar'
-                                              className='w-3 h-3'
+                                              className='w-3 h-3 flex-shrink-0'
                                             />
                                           ),
                                           clearIcon: () => (
                                             <CloseIcon
                                               alt='calendar'
-                                              className='w-[9px] h-[9px]'
+                                              className='w-[9px] h-[9px] flex-shrink-0'
                                             />
                                           ),
                                         }}
@@ -964,7 +1261,10 @@ const CaseTeam = () => {
                                 )}
 
                                 {col.name === 'end_date' && (
-                                  <div onKeyDown={(e) => e.stopPropagation()}>
+                                  <div
+                                    onKeyDown={(e) => e.stopPropagation()}
+                                    className='w-full min-w-[140px]'
+                                  >
                                     <LocalizationProvider
                                       dateAdapter={AdapterDayjs}
                                     >
@@ -993,6 +1293,7 @@ const CaseTeam = () => {
                                         minDate={dayjs(member.start_date)}
                                         sx={{
                                           width: '100%',
+                                          minWidth: '140px',
                                           backgroundColor:
                                             'transparent !important',
                                           margin: 0,
@@ -1000,6 +1301,7 @@ const CaseTeam = () => {
                                           '& .MuiOutlinedInput-root': {
                                             height: '28px',
                                             borderRadius: '2px',
+                                            minWidth: '140px',
                                             backgroundColor:
                                               'transparent !important',
                                             '&.Mui-disabled': {
@@ -1042,16 +1344,22 @@ const CaseTeam = () => {
                                                 'transparent !important',
                                             },
                                           '& .MuiInputBase-input': {
-                                            fontSize: '13px', // Changed back to 13px
-                                            padding: '5px 2px',
+                                            fontSize: '12px',
+                                            fontWeight: 500,
+                                            padding: '4px 6px',
                                             height: '20px',
+                                            minWidth: '100px',
+                                            textAlign: 'left',
                                             color: member.end_date
                                               ? '#425A76'
                                               : '#7D98B6',
                                             backgroundColor:
                                               'transparent !important',
+                                            whiteSpace: 'nowrap',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
                                             '&::placeholder': {
-                                              fontSize: '13px', // Changed back to 13px
+                                              fontSize: '12px',
                                               color: '#7D98B6 !important',
                                               opacity: 1,
                                             },
@@ -1071,8 +1379,8 @@ const CaseTeam = () => {
                                             },
                                           },
                                           '& .MuiInputAdornment-root': {
-                                            marginLeft: '0px',
-                                            gap: '0px',
+                                            marginLeft: '2px',
+                                            gap: '2px',
                                             backgroundColor:
                                               'transparent !important',
                                           },
@@ -1088,7 +1396,7 @@ const CaseTeam = () => {
                                           textField: {
                                             size: 'small',
                                             error: !!error,
-                                            placeholder: 'Choose End Date',
+                                            placeholder: 'End Date',
                                             InputProps: {
                                               disabled: true,
                                               onPaste: (
@@ -1119,13 +1427,13 @@ const CaseTeam = () => {
                                           openPickerIcon: () => (
                                             <CalendarIcon
                                               alt='calendar'
-                                              className='w-3 h-3'
+                                              className='w-3 h-3 flex-shrink-0'
                                             />
                                           ),
                                           clearIcon: () => (
                                             <CloseIcon
                                               alt='calendar'
-                                              className='w-[9px] h-[9px]'
+                                              className='w-[9px] h-[9px] flex-shrink-0'
                                             />
                                           ),
                                         }}
