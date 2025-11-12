@@ -19,7 +19,7 @@ import {
   TaskTypeResponse,
   UpdateCaseTaskType,
 } from "../../utils/types";
-import { isValidTimezone, logMessage } from "../../utils/helpers";
+import { generateExcelBase64, isValidTimezone, logMessage } from "../../utils/helpers";
 import {
   caseStatuses,
   HttpStatus,
@@ -1930,7 +1930,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       }
     }
 
-    async taskListForCases (data : any) {
+    async taskListForCases (data : any, isExport : boolean) {
       const mainDb = await this.getMainDb();
 
       let fetchParentRnumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
@@ -1938,7 +1938,7 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       let doSorting : boolean;
       if(data.sort === 'assigned_to' || data.sort === 'task_status_name') doSorting = false 
       else doSorting = true
-      const result = await this.caseSchemaService.fetchTaskForCases(data.page, data.limit, data.search, data.sort, data.sort_by, data.filter, doSorting, data.case_rid, data.account_rid, schemaName);
+      const result = await this.caseSchemaService.fetchTaskForCases(data.page, data.limit, data.search, data.sort, data.sort_by, data.filter, doSorting, data.case_rid, data.account_rid, schemaName, isExport);
       if(result.length > 0) {
         let allFilteredUsers;
         let allCaseTaskStatus;
@@ -2048,6 +2048,41 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
         return result
       } else {
         return result
+      }
+    }
+    async exportTask (data : any, userId : string) {
+      const result = await this.taskListForCases(data, true);
+      if(result.statusCode === HttpStatus.SUCCESS) {
+        const fields = await this.getAllowedExportFields(userId,"admin_checklist_view_edit");
+        const allowedFieldSet = new Set<string>();
+        for (const field of fields) {
+          if (field.read) {
+            allowedFieldSet.add(field.field_name);
+          }
+        }
+        const finalData = result.data.map((d : any) => {
+          return {
+            "Task Name" : d.task_name,
+            "Assigned To" : d.assigned_to || "-",
+            "Start Date" : d.effective_start_datetime || "-",
+            "End Date": d.effective_end_datetime || "-",
+            "Status": d.task_status_name || "-",
+          }
+        })
+        const generateBase64Response = await generateExcelBase64(
+              finalData,
+              "Case Task"
+            );
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          data : generateBase64Response
+        };
+      } 
+      else {
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          data : null
+        };;
       }
     }
 }

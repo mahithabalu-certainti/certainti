@@ -174,7 +174,7 @@ updateUserLevelTask(data : UpdateCaseTaskType): Promise<{
     statusCode: number;
     statusMessage: string;
 } | undefined>
-taskListForCases(data : any) : Promise<{
+taskListForCases(data : any, isExport : boolean) : Promise<{
     statusCode: number;
     data: CaseTaskQueryType[];
 }>
@@ -193,6 +193,13 @@ addCommentsToTask(data : AddCommentsType, userId : string, files? : Express.Mult
 } | {
     statusCode: number;
     statusMessage: string;
+    data: null;
+}>
+exportTask(data : any, userId : string) : Promise<{
+    statusCode: number;
+    data: string;
+} | {
+    statusCode: number;
     data: null;
 }>
 }
