@@ -55,6 +55,7 @@ import { Attachments } from './case-attachments';
 import { exportAttachmentsData } from '../../../services/attachments/attachments-service';
 import { ExportChecklistList } from '../../../services/checklist/checklist-service';
 import { Checklist } from './checklist';
+import { CaseProjectTask } from './case-project-task';
 
 export const CaseDetails = () => {
   const navigate = useNavigate();
@@ -277,6 +278,16 @@ export const CaseDetails = () => {
             />
           </div>
         );
+      case 'projectTask':
+        return (
+          <div>
+            <CaseProjectTask
+              accountInActive={accountInActive}
+              // setTableParams={setCaseProjectParams}
+              setExportType={setExportType}
+            />
+          </div>
+        );
       case 'notes':
         return (
           <CaseNotes
@@ -350,14 +361,14 @@ export const CaseDetails = () => {
         icon: CasesIcon,
       },
       {
-        name: 'Project Resource',
+        name: 'Case Project Resource',
         key: 'projectResource',
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
         icon: ResourcesIcon,
       },
       {
-        name: 'Project Task',
+        name: 'Case Project Task',
         key: 'projectTask',
         id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
