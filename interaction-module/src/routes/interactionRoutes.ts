@@ -27,6 +27,11 @@ routes.get(
   controller.interactionsController.getInteractionDetailsById
 );
 routes.get(
+  "/case/keyContact/:accountId/:caseId",
+  checkUserStatusMiddleware("NA"),
+  controller.interactionsController.getKeyContactsByCaseId
+);
+routes.get(
   "/questionsInfo/:accountId/:interactionRid",
   checkUserStatusMiddleware("interactions_view_edit"),
   controller.interactionsController.getInteractionQuestionsById
