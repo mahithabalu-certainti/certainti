@@ -67,7 +67,7 @@ import { CheckListItem } from "../../models/checkListItemModel";
 import { CaseTask, setupCaseTaskSequence } from "../../models/caseTaskModel";
 import { CaseMilestone, setupCaseMilestoneSequence } from "../../models/caseMilestoneModel";
 import { setupTaskCollaboratorsSequence, TaskCollaborators } from "../../models/taskCollaboratorsModel";
-import { setupTaskTagSequence, TaskTag } from "../../models/TaskTagsModel";
+import { setupTaskTagSequence, TaskTag } from "../../models/taskTagsModel";
 import { Tags } from "../../models/tagsModel";
 
 class CaseSchemaService {

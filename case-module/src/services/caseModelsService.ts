@@ -17,8 +17,8 @@ import { CheckListItem } from "../models/checkListItemModel";
 import { CaseMilestone } from "../models/caseMilestoneModel";
 import { CaseTask } from "../models/caseTaskModel";
 import { TaskCollaborators } from "../models/taskCollaboratorsModel";
-import { TaskTag } from "../models/TaskTagsModel";
 import { Tags } from "../models/tagsModel";
+import { TaskTag } from "../models/taskTagsModel";
 
 export class CaseModelService {
   orgDbSequelize: Sequelize | null = null;
