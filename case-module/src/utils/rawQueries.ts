@@ -762,7 +762,7 @@ return query;
     c.created_by, c.modified_by, c.account_rid, 
     c.created_datetime, c.modified_datetime,
     c.checklist_name, c.fiscal_year, e.name AS attached_to, 
-    c.attachment_level, c.r_number, c.attach_to
+    c.attachment_level, c.r_number, c.attach_to, c.status_rid
     FROM
     ${schemaName}.checklists c
     LEFT JOIN LATERAL (

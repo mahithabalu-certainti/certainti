@@ -14,7 +14,8 @@ checklist_name: String
 attach_to: String
 attachment_level: String
 fiscal_year: Int
-descriptions: String
+checklist_description: String
+checklist_template_rid:String
 attached_to: String
 created_by_name : String
 modified_by_name : String

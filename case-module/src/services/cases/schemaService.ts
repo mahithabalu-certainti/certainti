@@ -2722,6 +2722,7 @@ class CaseSchemaService {
           checklist_name: caseRequest.checklist_name,
           checklist_description: caseRequest.checklist_description,
           checklist_template_rid: caseRequest?.checklist_template_rid || "",
+          fiscal_year:caseRequest.fiscal_year,
           created_by: caseRequest.created_by,
           //modified_by: caseRequest.modified_by,
           created_datetime: new Date(),
@@ -2810,6 +2811,13 @@ class CaseSchemaService {
 
     const [accountInfo]: any[] = await this.mainDbSequelize.query(
       rawQueries.fetchAccountAndCountryDetails(accountRid),
+      {
+        type: "SELECT",
+      }
+    );
+
+    const [statusInfo]: any[] = await this.mainDbSequelize.query(
+      rawQueries.getStatusDetails(checklistDetails?.status_rid ?? ""),
       {
         type: "SELECT",
       }
@@ -2903,7 +2911,7 @@ class CaseSchemaService {
       status_rid: checklistDetails.status_rid ?? "",
       account_rid: checklistDetails.account_rid ?? "",
       fiscal_year,
-      // status_name: checklistDetails.dataValues.status_name ?? "",
+      status_name: statusInfo?.status_name ?? "",
       modified_by: userInfo.modified_name ?? checklistDetails.modified_by,
       created_by: userInfo.created_name ?? checklistDetails.created_by,
       created_datetime: checklistDetails.created_datetime ?? null,
@@ -3816,6 +3824,13 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       checkListReq: ICreateChecklist,
       transaction: Transaction
     ) {
+      if (!this.mainDbSequelize) {
+        this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+      }
+      const [checkListStatus]:any[] = await this.mainDbSequelize.query(
+        rawQueries.fetchChecklistStatusByName("Open"),
+        { type: "SELECT" }
+      );
       switch (item.action_type) {
         case "add":
           return await addChecklistItem(
@@ -3824,6 +3839,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             item,
             checkListReq.created_by,
             checkListReq.account_rid,
+            checkListStatus?.rid,
             transaction
           );
     
@@ -4577,6 +4593,7 @@ async function addChecklistItem(
   item: ICreateChecklistItem,
   createdBy: string,
   accountRid:string,
+  statusRid:string,
   transaction: Transaction
 ) {
   const result = await CheckListItem.create(
@@ -4584,8 +4601,8 @@ async function addChecklistItem(
       account_rid: accountRid,
       checklist_rid: checklistRid,
       checklist_item_name: item.checklist_item_name,
-      description: item.checklist_item_description,
-      status_rid: item.status_rid,
+      checklist_item_description: item.checklist_item_description,
+      status_rid: statusRid,
       created_by: createdBy,
       created_datetime: new Date(),
     },
@@ -4613,10 +4630,11 @@ async function editChecklistItem(
   createdBy: string,
   transaction: Transaction
 ) {
+  console.log("Editing checklist item:", item, checklistRid);
   // First, find the existing item by template_rid and sequence_no
   const existingItem = await CheckListItem.findOne({
     where: {
-      rid: checklistRid,
+      rid: item.checklist_item_rid,
     },
     transaction,
   });
