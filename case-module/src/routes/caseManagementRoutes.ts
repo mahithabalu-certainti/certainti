@@ -78,6 +78,20 @@ routes.get(
   checkUserStatusMiddleware("NA"),
   controller.caseManagementController.fetchTaskTemplateDetails
 );
-
+routes.post(
+  "/emailTemplate/create",
+  checkUserStatusMiddleware("NA"),
+  controller.caseManagementController.createEmailTemplate
+);
+routes.post(
+  "/emailTemplate/update",
+  checkUserStatusMiddleware("NA"),
+  controller.caseManagementController.updateEmailTemplate
+);
+routes.get(
+  "/emailPlaceHolders",
+  checkUserStatusMiddleware("NA"),
+  controller.caseManagementController.getEmailPlaceHolders
+);
 
 export default routes;

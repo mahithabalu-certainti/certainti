@@ -1,6 +1,6 @@
 import { Op, QueryTypes, Sequelize, Transaction } from "sequelize";
 import { CaseModelService } from "../caseModelsService";
-import { CreateTaskTemplateType, filterType, ICreateChecklistTemplate, ICreateChecklistItemTemplate, TaskType, UpdateTaskTemplateType, MilestoneResponse } from "../../utils/types";
+import { CreateTaskTemplateType, filterType, ICreateChecklistTemplate, ICreateChecklistItemTemplate, TaskType, UpdateTaskTemplateType, MilestoneResponse, ICreateEmailTemplate } from "../../utils/types";
 import { buildDatetimeFilterCondition, buildNumericFilterCondition, buildStringFilterCondition, errorLog, logMessage } from "../../utils/helpers";
 import { HttpStatus, STATUS_MESSAGE, filtersColumnsForCaseSummary, filterTypesForCaseSummary, filterTypesForAdminCheckList, filtersColumnsForAdminCheckList, rawQueries } from "../../utils/constants";
 import { fetchCaseTemplateData, listAllCheckList } from "../../utils/rawQueries";
@@ -780,5 +780,86 @@ async fetchChecklistTemplateDetailsById(
     }
 
   }
+  async createEmailTemplate(
+    emailRequest: ICreateEmailTemplate
+  ) {
+    // Implementation for creating checklist in the database
+    try {
+      const { EmailTemplate } = await this.caseModelService.getModels("");
+      const emailTemplate = await EmailTemplate.create(
+        {
+          template_name: emailRequest.template_name,
+          description: emailRequest.description,
+          status_rid: emailRequest.status_rid,
+          created_by: emailRequest.created_by!,
+          subject: emailRequest.subject,
+          body_html: emailRequest.body_html,
+          created_datetime: new Date(),
+          category_rid: emailRequest.category_rid
+        }
+      );
+
+      return emailTemplate;
+    } catch (error) {
+      logMessage(`Error creating email template: ${error}`);
+      throw new Error("Error creating email template: " + error);
+    }
+  }
+
+  async updateEmailTemplate(
+    emailRequest: ICreateEmailTemplate
+  ) {
+    // Implementation for creating checklist in the database
+    try {
+      const { EmailTemplate } = await this.caseModelService.getModels("");
+      const emailTemplate = await EmailTemplate.update(
+        {
+          template_name: emailRequest.template_name,
+          description: emailRequest.description,
+          status_rid: emailRequest.status_rid,
+          modified_by: emailRequest.modified_by,
+          subject: emailRequest.subject,
+          body_html: emailRequest.body_html,
+          modified_datetime: new Date(),
+          category_rid: emailRequest.category_rid
+        },
+        {
+          where: {
+            rid: emailRequest.email_template_rid
+          }
+        } 
+      );
+
+      return emailTemplate;
+    } catch (error) {
+      logMessage(`Error updating email template: ${error}`);
+      throw new Error("Error updating email template: " + error);
+    }
+  }
+
+  async getEmailPlaceHolders(
+  ) {
+     try {
+        if (!this.mainDbSequelize) {
+          this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+        }
+        const users = await this.mainDbSequelize.query(
+          rawQueries.getEmailPlaceHolders(),
+          {
+            type: "SELECT",
+          }
+        );
+        return users;
+      } catch (err) {
+        logMessage(`Error in fetching users for case team: ${err}`);
+        errorLog(
+          "Error in fetching users for case team:",
+          (err as Error).message
+        );
+        return [];
+      }
+    }
+
 }
+
 export { CaseManagementSchemaService };
