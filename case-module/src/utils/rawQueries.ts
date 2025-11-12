@@ -847,16 +847,21 @@ return query;
     `
   }
 
-  export const fetchCaseSpecificTaskQuery = (page : number, limit : number, search : string, sort : string, sortBy : string, filter : FilterType, doSorting : boolean, caseRid : string, accountRid : string, schemaName : string) => {
+  export const fetchCaseSpecificTaskQuery = (page : number, limit : number, search : string, sort : string, sortBy : string, filter : FilterType, doSorting : boolean, caseRid : string, accountRid : string, schemaName : string, isExport : boolean) => {
     let searchValue : string = ``
     let sortValue : string = ``
     let filterQueryArray : string[] = []
     let combinedQueryString : string = ``
     let andOperator : string = ``
     let validKey : string = ``
+    let pagination : string = ``
 
-    let offset = (page - 1) * limit;
-    let pagination = `LIMIT ${limit} OFFSET ${offset}`
+    if(!isExport) {
+      let offset = (page - 1) * limit;
+      pagination = `LIMIT ${limit} OFFSET ${offset}`
+    } else {
+      pagination = ` `
+    }
 
     if(search) searchValue = `%${search}%`
     else searchValue = `%%`
