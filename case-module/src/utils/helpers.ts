@@ -10,8 +10,15 @@ import moment from "moment-timezone";
 import { CreateTaskTemplateType, UpdateCaseTaskType, UpdateCommentsType, UpdateTaskTemplateType } from "./types";
 import { TaskTemplate } from "../models/caseTaskTemplateModel";
 import { CaseTask } from "../models/caseTaskModel";
-import { BlobServiceClient } from "@azure/storage-blob";
 import { TaskComments } from "../models/taskCommentsModel";
+import {
+  BlobServiceClient,
+  StorageSharedKeyCredential,
+  generateBlobSASQueryParameters,
+  BlobSASPermissions,
+  SASProtocol
+} from "@azure/storage-blob";
+import { parse } from "url";
 
 function getLogger() {
   return configurations.getInstance().getLogger();
@@ -502,4 +509,56 @@ export const getColumnsNamesForTaskCommentsUpdate = (data : UpdateCommentsType, 
   if(data.comments !== dbData.comments) 
     columns.push(`comments`)
   return columns;
+}
+
+export async function generateSasUrl(blobUrl: string, expiryMinutes = 15): Promise<string> {
+  try {
+    const connectionString = await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
+    // const connectionString = "storage-account-connection-string";
+    // const connectionString = await getSecret("storage-account-connection-string");
+    // const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING as string
+
+    if (!connectionString) {
+      throw new Error("Azure storage connection string is required");
+    }
+
+    const parsedUrl = parse(blobUrl);
+    const hostnameParts = parsedUrl.hostname?.split(".") || [];
+    const accountName = hostnameParts[0];
+    const pathParts = parsedUrl.pathname?.replace(/^\/+/, "").split("/") || [];
+
+    if (pathParts.length < 2) {
+      throw new Error("Invalid blob URL format");
+    }
+
+    const containerName : any = pathParts[0];
+    const blobName = pathParts.slice(1).join("/");
+
+    const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+    const credential = (blobServiceClient as any).credential as StorageSharedKeyCredential;
+
+    if (!credential) {
+      throw new Error("StorageSharedKeyCredential missing from BlobServiceClient");
+    }
+
+    const expiresOn = new Date();
+    expiresOn.setMinutes(expiresOn.getMinutes() + expiryMinutes);
+
+    const sasToken = generateBlobSASQueryParameters(
+      {
+        containerName,
+        blobName,
+        permissions: BlobSASPermissions.parse("r"),
+        expiresOn,
+        protocol: SASProtocol.Https
+      },
+      credential
+    ).toString();
+
+    const sasUrl = `${blobUrl}?${sasToken}`;
+    return sasUrl;
+  } catch (error) {
+    logMessage(`Error generating SAS URL: ${error}`);
+    throw new Error(`SAS URL generation failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+  }
 }

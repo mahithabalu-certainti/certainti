@@ -186,5 +186,10 @@ routes.post(
   checkUserStatusMiddleware("NA"),
   controller.caseController.deleteTaskComments
 )
+routes.post(
+  "/comments/list",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.fetchTaskCommentsList
+)
 
 export default routes;

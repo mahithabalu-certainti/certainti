@@ -126,7 +126,7 @@ export const STATUS_MESSAGE = {
   commentsFailedUpdate : "Failed to update comments",
   commentsDeletedSuccess : "Comments deleted successfully",
   commentsFaileDDelete : "Failed to delete comments",
-
+  commentsFetchedSuccess : "Task Comments fetched successfully"
 };
 
 export const caseStatuses = {

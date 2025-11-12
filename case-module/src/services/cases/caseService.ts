@@ -9,6 +9,7 @@ import {
   AddCommentsType,
   CaseOwnerType,
   CaseStatusType,
+  CommentsListType,
   CountryType,
   CreateCaseTaskType,
   CurrencyType,
@@ -21,7 +22,7 @@ import {
   UpdateCaseTaskType,
   UpdateCommentsType,
 } from "../../utils/types";
-import { generateExcelBase64, isValidTimezone, logMessage } from "../../utils/helpers";
+import { generateExcelBase64, generateSasUrl, isValidTimezone, logMessage } from "../../utils/helpers";
 import {
   caseStatuses,
   HttpStatus,
@@ -32,6 +33,7 @@ import { query } from "express";
 import currency from "currency.js";
 import moment from "moment";
 import { CaseManagementSchemaService } from "../casesManagement/schemaService";
+import { fetchTaskComments } from "../../utils/rawQueries";
 export class CaseService {
   private caseSchemaService: CaseSchemaService;
   private caseModelService: CaseModelService; // Assuming this is defined somewhere in your code
@@ -2119,6 +2121,32 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
         return {
           statusCode : HttpStatus.FAILED,
           statusMessage : STATUS_MESSAGE.commentsFailedUpdate
+        }
+      }
+    }
+    async fetchTaskComment (data : CommentsListType) : Promise<any> {
+      const mainDb = await this.getMainDb()
+      const orgDb = await this.getOrgDb();
+
+      const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+      let schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number);
+      
+      const result : any = await orgDb.query(fetchTaskComments(data.task_rid, data.account_rid, data.case_rid, schemaName));
+      if(result[0].length > 0) {
+        let finalData = await Promise.all(result[0][0].comments.map((d : any) => d.comments_attachments == null ? [] : d.comments_attachments.map(async (da : any) => {
+          return {
+            ...da,
+            browse_file : da.browse_file ? await generateSasUrl(da.browse_file) : null
+          }
+        })))
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          data : result[0][0].comments
+        }
+      } else {
+        return {
+          statusCode : HttpStatus.NOT_FOUND,
+          data : []
         }
       }
     }

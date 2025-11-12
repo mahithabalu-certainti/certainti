@@ -2625,6 +2625,66 @@ async function deleteTaskComments (req : Request, res : Response) {
     );
   }
 }
+
+/**
+ * Controller function to handle fetching comments for a specific task.
+ *
+ * This async function processes HTTP requests to retrieve all comments associated with a given task by:
+ * - Validating that a valid user ID is present in the request headers
+ * - Extracting task identifiers or filter parameters from the request body
+ * - Delegating the comment retrieval logic to the `caseService.fetchTaskComment` method
+ * - Returning a success response with the fetched comments or a message if no comments are found
+ *
+ * Error handling:
+ * - Returns a `BAD_REQUEST` response if the user ID is missing
+ * - Returns a `FAILED` response in case of runtime or service-level errors
+ * - Logs all errors for debugging and traceability
+ *
+ * @param {Request} req - Express request object containing task identification details and user ID in headers
+ * @param {Response} res - Express response object used to send the list of comments or an error message
+ * @returns {Promise<void>} - Resolves after sending the HTTP response
+ * @throws {Error} - Captures and handles validation or runtime exceptions
+ */
+async function fetchTaskCommentsList (req : Request, res : Response) {
+  const methodName = "fetchTaskCommentsList";
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const data = req.body;
+    const result = await caseService.fetchTaskComment(data);
+    if(result.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.commentsFetchedSuccess,
+        data : result.data
+      }); 
+    } else {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.dataNotAvailable,
+        data : []
+      });
+    }
+  } catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
 export default {
   createCases,
   updateCases,
@@ -2660,5 +2720,6 @@ export default {
   addCommentsToSpecificTask,
   exportCaseTask,
   updateTaskComments,
-  deleteTaskComments
+  deleteTaskComments,
+  fetchTaskCommentsList
 };

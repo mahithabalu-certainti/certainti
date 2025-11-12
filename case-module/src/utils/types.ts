@@ -498,3 +498,9 @@ export type DeleteCommentsType = {
   rid : string
   deleted_file_ids : string[]
 }
+
+export type CommentsListType = {
+  account_rid : string
+  case_rid : string
+  task_rid : string
+}
