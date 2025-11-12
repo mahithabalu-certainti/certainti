@@ -2724,6 +2724,7 @@ class CaseSchemaService {
           checklist_template_rid: caseRequest?.checklist_template_rid || "",
           fiscal_year:caseRequest.fiscal_year,
           created_by: caseRequest.created_by,
+          status_rid: caseRequest.status_rid,
           //modified_by: caseRequest.modified_by,
           created_datetime: new Date(),
           //  modified_datetime: caseRequest.modified_datetime,

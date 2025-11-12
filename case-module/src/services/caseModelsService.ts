@@ -19,7 +19,7 @@ import { CaseTask } from "../models/caseTaskModel";
 import { TaskCollaborators } from "../models/taskCollaboratorsModel";
 import { Tags } from "../models/tagsModel";
 import { TaskTag } from "../models/taskTagsModel";
-
+import { EmailTemplate } from "../models/emailTemplateModel";
 export class CaseModelService {
   orgDbSequelize: Sequelize | null = null;
   mainDbSequelize: Sequelize | null = null;
@@ -37,6 +37,7 @@ export class CaseModelService {
       TaskCollaborators : ReturnType<typeof TaskCollaborators.initialise>
       TaskTag : ReturnType<typeof TaskTag.initialise>
       Tags : ReturnType<typeof Tags.initialise>
+      EmailTemplate?: ReturnType<typeof EmailTemplate.initialize>
     }
   > = new Map();
 
@@ -81,6 +82,7 @@ export class CaseModelService {
     const TaskCollaboratorsModel = TaskCollaborators.initialise(sequelize, schemaName)
     const TaskTagModel = TaskTag.initialise(sequelize, schemaName)
     const TagsModel = Tags.initialise(mainDbSequelize, MAIN_SCHEMA_NAME)
+    const EmailTemplateModel = EmailTemplate.initialize(mainDbSequelize, MAIN_SCHEMA_NAME);
     const models = {
       Case: CaseModel,
       CaseSummary: CaseSummaryModel,
@@ -98,7 +100,8 @@ export class CaseModelService {
       CaseTask : CaseTaskModel,
       TaskCollaborators : TaskCollaboratorsModel,
       TaskTag : TaskTagModel,
-      Tags : TagsModel
+      Tags : TagsModel,
+      EmailTemplate: EmailTemplateModel
     };
 
     this.modelCache.set(schemaName, models);

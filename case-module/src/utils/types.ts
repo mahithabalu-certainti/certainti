@@ -470,3 +470,15 @@ export type CaseTaskQueryType = {
   task_status_rid : string,
   total_result : string
 }
+
+export type ICreateEmailTemplate = {
+  template_name: string;
+  description?: string; 
+  created_by?: string;
+  modified_by?: string;
+  status_rid?: string;
+  category_rid?: string;
+  subject: string;
+  body_html?: string;
+  email_template_rid:string;
+}

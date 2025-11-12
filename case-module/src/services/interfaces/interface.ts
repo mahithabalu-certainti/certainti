@@ -1,7 +1,7 @@
 import { CaseTask } from "../../models/caseTaskModel";
 import { Tags } from "../../models/tagsModel";
-import { TaskTag } from "../../models/TaskTagsModel";
-import { AdminTaskTemplatePayloadType, CaseTaskQueryType, CreateCaseTaskType, CreateTaskTemplateType, ICreateCases, ICreateCaseTeam, ICreateChecklist, ICreateChecklistTemplate, MilestoneResponse, UpdateCaseTaskType, UpdateTaskTemplateType } from "../../utils/types";
+import { TaskTag } from "../../models/taskTagsModel";
+import { AdminTaskTemplatePayloadType, CaseTaskQueryType, CreateCaseTaskType, CreateTaskTemplateType, ICreateCases, ICreateCaseTeam, ICreateChecklist, ICreateChecklistTemplate, ICreateEmailTemplate, MilestoneResponse, UpdateCaseTaskType, UpdateTaskTemplateType } from "../../utils/types";
 
 export interface ICaseService {
   createCase(
@@ -196,6 +196,30 @@ export interface ICaseManagementService {
     message: string;
     errorMessage?: string;
     data?: { checklist: any };
+  }>;
+  createEmailTemplate(
+    emailRequest: ICreateEmailTemplate,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { emailTemplate: any };
+  }>;
+  updateEmailTemplate(
+    emailRequest: ICreateEmailTemplate,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { emailTemplate: any };
+  }>;
+  getEmailPlaceHolders() : Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { placeHolders: any };
   }>;
   updateAdminCheckList(
     checklistRequest: ICreateChecklistTemplate,

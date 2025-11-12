@@ -5,7 +5,7 @@ import { CaseManagementSchemaService } from "./schemaService";
 import { HttpStatus, rawQueries, STATUS_MESSAGE } from "../../utils/constants";
 import { logMessage, setTaskTemplateData } from "../../utils/helpers";
 import CaseSchemaService from "../cases/schemaService";
-import { AdminTaskTemplatePayloadType, AdminTaskTemplateResponseTypes, checkListTypes, CreateTaskTemplateType, ICreateChecklist, ICreateChecklistTemplate, MilestoneTypes, priorityTypes, UpdateTaskTemplateType } from "../../utils/types";
+import { AdminTaskTemplatePayloadType, AdminTaskTemplateResponseTypes, checkListTypes, CreateTaskTemplateType, ICreateChecklist, ICreateChecklistTemplate, ICreateEmailTemplate, MilestoneTypes, priorityTypes, UpdateTaskTemplateType } from "../../utils/types";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 import { fetchAdminTemplates } from "../../utils/rawQueries";
 
@@ -637,4 +637,124 @@ export class CaseManagementService {
         }
     }
   }
+ async createEmailTemplate(
+    emailRequest: ICreateEmailTemplate,
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { emailTemplate: any };
+  }> {
+    try {
+      // Set the user who is creating this checklist
+     emailRequest.created_by = userId;
+     const response =
+        await this.caseManangementSchemaService.createEmailTemplate(
+          emailRequest
+        );
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: STATUS_MESSAGE.emailCreatedSuccess,
+        data: {
+          emailTemplate: response,
+        },
+      };
+    } catch (err) {
+      logMessage(`Error creating email template: ${err}`);
+      return {
+  
+      statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: STATUS_MESSAGE.emailCreationFailed,
+      };
+    }
+  }
+ async updateEmailTemplate(
+  emailRequest: ICreateEmailTemplate,
+  userId: string
+): Promise<{
+  statusCode: number;
+  message: string;
+  errorMessage?: string;
+  data?: { emailTemplate: any };
+}> {
+  try {
+    // Set the user who is creating this checklist
+    emailRequest.modified_by = userId;
+    const response =
+      await this.caseManangementSchemaService.updateEmailTemplate(
+        emailRequest
+      );
+
+    return {
+      statusCode: HttpStatus.SUCCESS,
+      message: STATUS_MESSAGE.emailUpdatedSuccess,
+      data: {
+        emailTemplate: response,
+      },
+    };
+  } catch (err) {
+    logMessage(`Error updating email templates: ${err}`);
+    return {
+      statusCode: HttpStatus.FAILED,
+      message: HttpStatus.FAILED_MESSAGE,
+      errorMessage: STATUS_MESSAGE.emailUpdateFailed,
+    };
+  }
+}   
+ async getEmailPlaceHolders(
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { placeHolders: any };
+  }> {
+    try {
+      const placeHolders = await this.caseManangementSchemaService.getEmailPlaceHolders();
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          placeHolders,
+        },
+      };
+    } catch (err) {
+      logMessage(`Error fetching case roles, ${err}`);
+      throw this.throwServiceError(err as Error);
+    }
+  }
+
+    /**
+     * Formats an error response to be returned from service methods.
+     *
+     * @param {Error} err - The caught error object containing error details.
+     *
+     * @returns {{
+     *   statusCode: number;
+     *   message: string;
+     *   errorMessage: string;
+     * }} - Standardized error response object with consistent structure.
+     *
+     * @description
+     * - Converts any caught error into a standardized service error format.
+     * - Sets status code to FAILED (500) for consistent error handling.
+     * - Preserves the original error message for debugging purposes.
+     * - Used across all service methods to maintain consistent error response structure.
+     * - Ensures all service errors follow the same format for frontend consumption.
+     */
+    throwServiceError(err: Error): {
+      statusCode: number;
+      message: string;
+      errorMessage: string;
+    } {
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: err.message,
+      };
+    }
+
 }
