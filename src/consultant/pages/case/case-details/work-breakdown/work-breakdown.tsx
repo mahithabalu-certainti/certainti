@@ -12,6 +12,7 @@ import {
 } from '../../../../../components/kanban-board/mock-data';
 import { CaseTask } from './case-task';
 import { getAssignGroupsFilterFields } from './case-task/helper';
+import { ExportType } from '../../../../types';
 
 const ConfigTabs: ResourceTabs[] = [
   {
@@ -26,8 +27,15 @@ const ConfigTabs: ResourceTabs[] = [
   //   disable: true,
   // },
 ];
-
-const WorkBreakDown = ({ caseId }: { caseId: string | undefined }) => {
+const WorkBreakDown = ({
+  caseId,
+  setExportType,
+  setCaseTaskParams,
+}: {
+  caseId: string | undefined;
+  setExportType: (type: ExportType) => void;
+  setCaseTaskParams: (params: Record<string, unknown>) => void;
+}) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const tabParam = searchParams.get('tab') || 'milestone';
@@ -184,6 +192,8 @@ const WorkBreakDown = ({ caseId }: { caseId: string | undefined }) => {
             setColumnAnchorEl={setColumnAnchorEl}
             columnAnchorEl={columnAnchorEl}
             searchValue={seachText}
+            setExportType={setExportType}
+            setCaseTaskParams={setCaseTaskParams}
           />
         )}
       </div>

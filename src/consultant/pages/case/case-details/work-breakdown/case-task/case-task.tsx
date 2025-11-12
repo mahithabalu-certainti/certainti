@@ -20,6 +20,19 @@ import {
 } from '../../../../../types';
 import { useToast } from '../../../../../../hooks';
 
+import { ExportType } from '../../../../../types';
+
+type CaseTaskParamsType = {
+  case_rid: string;
+  account_rid: string;
+  page: number;
+  limit: number;
+  search: string;
+  sort: string;
+  sort_by: 'ASC' | 'DESC';
+  filter?: { [key: string]: unknown };
+};
+
 interface CaseTaskProps {
   reFetchData: number;
   caseId?: string;
@@ -30,6 +43,8 @@ interface CaseTaskProps {
     React.SetStateAction<HTMLButtonElement | null>
   >;
   searchValue?: string;
+  setExportType?: (type: ExportType) => void;
+  setCaseTaskParams?: (params: CaseTaskParamsType) => void;
 }
 
 const CaseTask: React.FC<CaseTaskProps> = ({
@@ -40,6 +55,8 @@ const CaseTask: React.FC<CaseTaskProps> = ({
   columnAnchorEl,
   setColumnAnchorEl,
   searchValue,
+  setExportType,
+  setCaseTaskParams,
 }) => {
   const [searchParams] = useSearchParams();
   const accountID = searchParams.get('accountID') || '';
@@ -55,21 +72,45 @@ const CaseTask: React.FC<CaseTaskProps> = ({
     sort_by: 'DESC' as 'ASC' | 'DESC',
   });
 
-  const tableParams = {
-    case_rid: caseId || '',
-    account_rid: accountID,
-    page: pagination.page,
-    limit: pagination.limit,
-    search: searchValue || '',
-    sort: sorting.sort,
-    sort_by: sorting.sort_by,
-    filter: filterParams.filters as { [key: string]: unknown } | undefined,
-  };
+  const tableParams = React.useMemo(
+    () => ({
+      case_rid: caseId || '',
+      account_rid: accountID,
+      page: pagination.page,
+      limit: pagination.limit,
+      search: searchValue || '',
+      sort: sorting.sort,
+      sort_by: sorting.sort_by,
+      filter: filterParams.filters as { [key: string]: unknown } | undefined,
+    }),
+    [
+      caseId,
+      accountID,
+      pagination.page,
+      pagination.limit,
+      searchValue,
+      sorting.sort,
+      sorting.sort_by,
+      filterParams.filters,
+    ]
+  );
 
   const { data, isLoading, isError, error } = useGetCaseTaskList(
     tableParams,
     reFetchData
   );
+
+  useEffect(() => {
+    if (setCaseTaskParams) {
+      setCaseTaskParams(tableParams);
+    }
+  }, [setCaseTaskParams, tableParams]);
+
+  useEffect(() => {
+    if (setExportType) {
+      setExportType('case_task');
+    }
+  }, [setExportType]);
 
   useEffect(() => {
     if (isError) {

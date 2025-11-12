@@ -104,6 +104,17 @@ export const CaseDetails = () => {
       case_rid: caseId ?? '',
       account_id: accountId ?? '',
     });
+  const [caseTaskParams, setCaseTaskParams] = useState({
+    sort: 'task_name',
+    sort_by: 'ASC',
+    filter: {},
+    timezone: '',
+    page: 1,
+    limit: 10,
+    search: '',
+    case_rid: caseId ?? '',
+    account_id: accountId ?? '',
+  });
   const fiscalYear = caseData?.fiscal_year ?? 0;
   const [attachmentParams, setAttachmentParams] =
     useState<AttachmentsListExportParams>({
@@ -164,7 +175,8 @@ export const CaseDetails = () => {
     if (
       searchParams.get('list') !== 'attachments' &&
       searchParams.get('list') !== 'notes' &&
-      searchParams.get('list') !== 'caseProjects'
+      searchParams.get('list') !== 'caseProjects' &&
+      searchParams.get('list') !== 'workBreakdown'
     ) {
       return;
     }
@@ -192,6 +204,8 @@ export const CaseDetails = () => {
       });
     } else if (list === 'caseProjects') {
       ExportAssignedList(caseProjectParams);
+    } else if (exportType === 'case_task') {
+      console.log('export called ', caseTaskParams);
     }
   };
 
@@ -210,6 +224,11 @@ export const CaseDetails = () => {
     } else if (list === 'notes' && !noteView) {
       return !isNotesExportEnable;
     } else if (list === 'caseProjects' && !isAssignProject && !projectDetails) {
+      return false;
+    } else if (
+      list === 'workBreakdown' &&
+      searchParams.get('tab') === 'case_task'
+    ) {
       return false;
     } else {
       return true;
@@ -242,7 +261,16 @@ export const CaseDetails = () => {
       case 'workBreakdown':
         return (
           <div className='w-full pr-4 pl-2 py-2'>
-            <WorkBreakDown caseId={caseId} />
+            <WorkBreakDown
+              caseId={caseId}
+              setExportType={setExportType}
+              setCaseTaskParams={(params: Record<string, unknown>) =>
+                setCaseTaskParams((prev) => ({
+                  ...prev,
+                  ...params,
+                }))
+              }
+            />
           </div>
         );
       case 'caseTeam':
