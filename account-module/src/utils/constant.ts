@@ -1145,7 +1145,8 @@ export const rawQueries = {
         target_ai_records_processed INT,
         target_ai_error_records_count INT,
         total_staging_warning_count INT,
-        fiscal_year INT
+        fiscal_year INT,
+        email_status varchar(20)
       );
     `;
   },
