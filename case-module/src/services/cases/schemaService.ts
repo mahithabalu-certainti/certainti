@@ -64,7 +64,7 @@ import {
 } from "../../models/caseHistory";
 import { CaseTeam, setupCaseTeamSequence } from "../../models/caseTeamModel";
 import { Jurisdiction } from "../../models/jurisdiction";
-import { CaseHistorySubmission, setupCaseHistorySubmissionSequence } from "../../models/CaseHistorySubmissionModel";
+import { CaseHistorySubmission, setupCaseHistorySubmissionSequence } from "../../models/caseHistorySubmissionModel";
 import { log } from "console";
 import { CheckList, setupCheckListSequence } from "../../models/checkListModel";
 import { CheckListItem } from "../../models/checkListItemModel";

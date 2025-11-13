@@ -86,7 +86,7 @@ const createHistoricalSubmissionSchema = Joi.object({
         total_qre: Joi.number().precision(2).required(),
         total_rd_credits: Joi.number().precision(2).required(),
         annual_gross_receipts: Joi.number().precision(2).optional(),
-        eid: Joi.string().required(),
+        eid: Joi.string().optional(),
         action_type: Joi.string().valid("add", "edit", "delete").required(),
       })
     )

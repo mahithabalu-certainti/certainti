@@ -67,7 +67,7 @@ export class CaseHistorySubmission
         },
         eid: {
           type: DataTypes.STRING(120),
-          allowNull: false,
+          allowNull: true,
         },
         created_by: {
           type: DataTypes.STRING(50),

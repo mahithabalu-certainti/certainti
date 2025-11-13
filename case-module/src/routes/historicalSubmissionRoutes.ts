@@ -6,12 +6,12 @@ const routes: Router = Router()
 
 routes.post(
     "/add",
-    checkUserStatusMiddleware("case_jurisdiction_settings_view_edit"),
+    checkUserStatusMiddleware("NA"),
     controller.historicalSubmissionController.createHistoricalSubmission
 );
 routes.get(
     "/list",
-    checkUserStatusMiddleware("case_jurisdiction_settings_view_edit"),
+    checkUserStatusMiddleware("NA"),
     controller.historicalSubmissionController.listHistoricalSubmission
 );
 export default routes

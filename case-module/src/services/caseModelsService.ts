@@ -19,7 +19,7 @@ import { CaseTask } from "../models/caseTaskModel";
 import { TaskCollaborators } from "../models/taskCollaboratorsModel";
 import { Tags } from "../models/tagsModel";
 import { TaskTag } from "../models/taskTagsModel";
-import { CaseHistorySubmission } from "../models/CaseHistorySubmissionModel";
+import { CaseHistorySubmission } from "../models/caseHistorySubmissionModel";
 import { EmailTemplate } from "../models/emailTemplateModel";import { TaskComments } from "../models/taskCommentsModel";
 import { CommentsAttachments } from "../models/commentsAttachmentModel";
 import { TaskAttachments } from "../models/taskAttachmentModel";
