@@ -193,7 +193,8 @@ const exportEmailTemplateSchema = Joi.object({
   filters: Joi.string().default("{}"),
   search: Joi.string().max(255).optional(),
   sortBy: Joi.string().optional(),
-  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC")
+  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
+  timezone: Joi.string().optional()
 }); 
 
 

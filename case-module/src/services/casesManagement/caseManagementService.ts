@@ -776,6 +776,30 @@ async listEmailTemplates (
       throw this.throwServiceError(err as Error);
     }
   }
+
+  async getEmailTemplateCategory(
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { categories: any };
+  }> {
+    try {
+      const categories = await this.caseManangementSchemaService.getEmailTemplateCategory();
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          categories,
+        },
+      };
+    } catch (err) {
+      logMessage(`Error fetching case roles, ${err}`);
+      throw this.throwServiceError(err as Error);
+    }
+  }
+
+
   async getEmailCategoryPlaceHolders(templateRid: string): Promise<{
   statusCode: number;
   message: string;

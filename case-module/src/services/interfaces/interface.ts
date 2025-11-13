@@ -310,6 +310,12 @@ export interface ICaseManagementService {
     errorMessage?: string;
     data?: { placeholders: any };
   }>;
+  getEmailTemplateCategory() : Promise<{
+    statusCode: number;
+    message: string; 
+    errorMessage?: string;
+    data?: { categories: any };
+  }>;
   createTaskTemplate(data : CreateTaskTemplateType, userId : string) :Promise<any>;
   getAllPriority() : Promise<any>
   getMilestones() : Promise<any>

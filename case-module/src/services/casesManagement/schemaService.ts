@@ -1136,6 +1136,29 @@ async fetchEmailCategoryPlaceHolders(categoryRid: string
       return [];
     }
   }
+async getEmailTemplateCategory(
+  ) {
+     try {
+        if (!this.mainDbSequelize) {
+          this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+        }
+        const users = await this.mainDbSequelize.query(
+          rawQueries.getEmailTemplateCategory(),
+          {
+            type: "SELECT",
+          }
+        );
+        return users;
+      } catch (err) {
+        logMessage(`Error in fetching users for case team: ${err}`);
+        errorLog(
+          "Error in fetching users for case team:",
+          (err as Error).message
+        );
+        return [];
+      }
+    }
+
 }
 
 export { CaseManagementSchemaService };
