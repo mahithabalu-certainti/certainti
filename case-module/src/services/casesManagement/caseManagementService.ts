@@ -649,6 +649,14 @@ export class CaseManagementService {
     try {
       // Set the user who is creating this checklist
      emailRequest.created_by = userId;
+      const isUnique = await this.caseManangementSchemaService.checkIsEmailTemplateUnique(emailRequest);
+      if (!isUnique) {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: `An template with the name "${emailRequest.template_name}" already exists. Please choose a different name.`,
+        };
+      }
      const response =
         await this.caseManangementSchemaService.createEmailTemplate(
           emailRequest
@@ -683,6 +691,15 @@ export class CaseManagementService {
   try {
     // Set the user who is creating this checklist
     emailRequest.modified_by = userId;
+    const isUnique = await this.caseManangementSchemaService.checkisExistingTemplateUnique(emailRequest);
+    console.log("isUnique", isUnique);
+    if (!isUnique) {
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: HttpStatus.BAD_REQUEST_MESSAGE,
+        errorMessage: `A template with the name "${emailRequest.template_name}" and category already exists. Please choose a different name or category.`,
+      };
+    }
     const response =
       await this.caseManangementSchemaService.updateEmailTemplate(
         emailRequest
@@ -703,7 +720,40 @@ export class CaseManagementService {
       errorMessage: STATUS_MESSAGE.emailUpdateFailed,
     };
   }
-}   
+}
+async listEmailTemplates (
+    data: any,
+    filters: Record<string, any>,
+    userId: string,
+    apiType: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { emailTemplates: any; count: number };
+  }> {
+    const result = await this.caseManangementSchemaService.listEmailTemplates(data.page,data.limit,apiType,filters,data.search, data.sortBy, data.sortOrder);
+  if (result != null) {
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          emailTemplates: result,
+          count: result[0]?.total_records || 0,
+        },
+      };
+    } else {
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.NOT_FOUND_MESSAGE,
+        data: {
+          emailTemplates: null,
+          count: 0,
+        },
+      };
+    }
+  }
+     
  async getEmailPlaceHolders(
   ): Promise<{
     statusCode: number;
@@ -725,6 +775,71 @@ export class CaseManagementService {
       logMessage(`Error fetching case roles, ${err}`);
       throw this.throwServiceError(err as Error);
     }
+  }
+  async getEmailCategoryPlaceHolders(templateRid: string): Promise<{
+  statusCode: number;
+  message: string;
+  errorMessage?: string;
+  data?: { placeholders: any };
+  }> {
+  try {
+  const result =
+    await this.caseManangementSchemaService.fetchEmailCategoryPlaceHolders(
+      templateRid
+    );
+      return {
+    statusCode: HttpStatus.SUCCESS,
+    message: HttpStatus.SUCCESS_MESSAGE,
+    data: {
+        placeholders: result,
+    },
+  };
+  }
+  catch (err) {
+    logMessage(`Error fetching email template details, ${err}`);
+    return {
+      statusCode: HttpStatus.FAILED,
+      message: HttpStatus.FAILED_MESSAGE,
+      errorMessage: STATUS_MESSAGE.checkListError,
+    };
+  }
+  }
+
+  async getEmailTemplateDetailsById(templateRid: string): Promise<{
+  statusCode: number;
+  message: string;
+  errorMessage?: string;
+  data?: { emailTemplateDetails: any };
+  }> {
+  try {
+  const emailTemplateDetails =
+    await this.caseManangementSchemaService.fetchEmailTemplateDetailsById(
+      templateRid
+    );
+
+  if (!emailTemplateDetails) {
+    return {
+      statusCode: HttpStatus.FAILED,
+      message: HttpStatus.FAILED_MESSAGE,
+      errorMessage: "Invalid Email Template ID",
+    };
+  }
+
+  return {
+    statusCode: HttpStatus.SUCCESS,
+    message: HttpStatus.SUCCESS_MESSAGE,
+    data: {
+      emailTemplateDetails,
+    },
+  };
+  } catch (err) {
+  logMessage(`Error fetching email template details, ${err}`);
+    return {
+      statusCode: HttpStatus.FAILED,
+      message: HttpStatus.FAILED_MESSAGE,
+      errorMessage: STATUS_MESSAGE.checkListError,
+    };
+  }
   }
 
     /**

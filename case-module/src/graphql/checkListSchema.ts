@@ -20,6 +20,7 @@ checklist_template_rid:String
 attached_to: String
 created_by_name : String
 modified_by_name : String
+assigned_to: String
 }
 
 type checkListFinalresponse {
