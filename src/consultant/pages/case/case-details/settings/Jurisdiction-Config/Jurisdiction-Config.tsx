@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Box } from '@mui/material';
 import { jurisdictionConfigFormFields } from './helper';
 import { FormBuilder } from '../../../../../../components';
@@ -49,7 +49,6 @@ const JurisdictionConfig: React.FC<JurisdictionConfigProps> = ({
   const states = useFetchState(cuurrency_rid);
 
   const configDetails = data?.data;
-  // console.log('states', configDetails);
   const memoizedState: SelectOption[] = useMemo(
     () =>
       states.data?.data.states.map((state) => ({
@@ -69,16 +68,6 @@ const JurisdictionConfig: React.FC<JurisdictionConfigProps> = ({
   //     )?.fields ?? [],
   //   [permission]
   // );
-
-  // useEffect(() => {
-  //   const formConfig = jurisdictionConfigFormFields(permissionMap);
-
-  //   const allFieldsDisabled = formConfig.every((section) =>
-  //     section.fields.every((field) => field.disabled === true)
-  //   );
-  //   setIsSaveDisable(allFieldsDisabled);
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, []);
 
   // const permissionMap = useMemo(() => {
   //   const map: Record<string, { read: boolean; edit: boolean }> = {};
@@ -107,7 +96,12 @@ const JurisdictionConfig: React.FC<JurisdictionConfigProps> = ({
     }),
     [configDetails]
   );
-
+  useEffect(() => {
+    if (configDetails) {
+      setStateRequried(!!configDetails.is_state_level);
+      setIdfedralRequried(!!configDetails.is_federal_level);
+    }
+  }, [configDetails]);
   const handleFormSubmit = (data: object) => {
     const formData = data as FormValues;
 
@@ -151,13 +145,11 @@ const JurisdictionConfig: React.FC<JurisdictionConfigProps> = ({
 
   const onChangeField = (data: OnChange) => {
     if (data.fieldName === 'is_state_level') {
-      console.log('data', data);
       setStateRequried(
         !!(Array.isArray(data.fieldValue) && data.fieldValue.length > 0)
       );
     }
     if (data.fieldName === 'is_federal_level') {
-      console.log('data', data);
       setIdfedralRequried(
         !!(Array.isArray(data.fieldValue) && data.fieldValue.length > 0)
       );
