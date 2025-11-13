@@ -1058,3 +1058,22 @@ return query;
     `
     return query;
   }
+
+  export const fetchTaskActivities = (page : number, limit : number ,schemaName : string, caseRid : string, taskRid : string) => {
+    const offset = (page - 1) * limit;
+    let pagination = `LIMIT ${limit} OFFSET ${offset}`
+
+    let query = 
+    `
+    SELECT 
+    rid, r_number, created_by, case_rid, created_datetime, attribute_name, old_value, new_value, task_rid
+    FROM ${schemaName}.case_history
+    WHERE
+    task_rid = '${taskRid}'
+    AND
+    case_rid = '${caseRid}'
+    ORDER BY created_datetime ASC
+    ${pagination}
+    `
+    return query;
+  }

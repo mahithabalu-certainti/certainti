@@ -87,7 +87,7 @@ export class CaseModelService {
     const CaseTaskModel = CaseTask.initialise(sequelize, schemaName)
     const TaskCollaboratorsModel = TaskCollaborators.initialise(sequelize, schemaName)
     const TaskTagModel = TaskTag.initialise(sequelize, schemaName)
-    const TagsModel = Tags.initialise(mainDbSequelize, MAIN_SCHEMA_NAME)
+    const TagsModel = Tags.initialise(mainDbSequelize, "")
     const EmailTemplateModel = EmailTemplate.initialize(mainDbSequelize, MAIN_SCHEMA_NAME);
     const TaskCommentsModel = TaskComments.initialise(sequelize, schemaName)
     const CommentsAttachmentsModel = CommentsAttachments.initialise(sequelize, schemaName)

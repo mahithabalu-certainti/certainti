@@ -4206,7 +4206,10 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
   }
 
   async updateUserLevelTask (data : UpdateCaseTaskType, accountNumber : string, transaction : Transaction) {
-    const {CaseTask, CaseTimeline, CaseHistory, TaskCollaborators} = await this.caseModelService.getModels(accountNumber);
+    if(!this.mainDbSequelize) {
+      this.mainDbSequelize = await initMainDbSequelize()
+    }
+    const {CaseTask, CaseTimeline, CaseHistory, TaskCollaborators, CaseTeam} = await this.caseModelService.getModels(accountNumber);
     const checkCaseExists = await this.isCaseExistsForAccount(data.account_rid, data.case_rid, accountNumber);
     if(!checkCaseExists) {
       return {
@@ -4248,17 +4251,58 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             let newValue : string;
             let columnName : string;
             let combinedColumns : string = ``
+            let columnMapping : Map<string, string> = new Map()
+            let newValueString;
+            let oldValueString;
+
             for(let c of fetchUpdatedColumns) {
               oldValue = (isTaskExists as any)[c]
               newValue = (data as any)[c]
               columnName = c
+
+              if(columnName == "case_team_member_role_rid") {
+                const result : any = await this.mainDbSequelize.query(rawQueries.fetchCaseTeamRole(oldValue, newValue))
+                for(let r of result[0]) {
+                  columnMapping.set(r.rid, r.role_name)
+                }
+                oldValueString = columnMapping.get(oldValue)
+                newValueString = columnMapping.get(newValue)
+              }
+              else if(columnName === "checklist_template_rid") {
+                const result : any = await this.mainDbSequelize.query(rawQueries.fetchCheckLists(oldValue, newValue));
+                for(let r of result[0]) {
+                  columnMapping.set(r.rid, r.checklist_name)
+                }
+                oldValueString = columnMapping.get(oldValue)
+                newValueString = columnMapping.get(newValue)
+              }
+              else if(columnName === "priority_rid") {
+                const result : any = await this.mainDbSequelize.query(rawQueries.fetchPriority(oldValue, newValue));
+                for(let r of result[0]) {
+                  columnMapping.set(r.rid, r.priority_name)
+                }
+                oldValueString = columnMapping.get(oldValue)
+                newValueString = columnMapping.get(newValue)
+              }
+              else if(columnName === "task_status_rid") {
+                const result : any = await this.mainDbSequelize.query(rawQueries.fetchTaskStatus(oldValue, newValue));
+                for(let r of result[0]) {
+                  columnMapping.set(r.rid, r.task_status_name)
+                }
+                oldValueString = columnMapping.get(oldValue)
+                newValueString = columnMapping.get(newValue)
+              } else {
+                oldValueString = oldValue
+                newValueString = newValue
+              }
               await CaseHistory.create({
                 created_by : data.modified_by,
                 created_datetime : new Date(),
                 case_rid : data.case_rid,
                 attribute_name : columnName,
-                old_value : oldValue,
-                new_value : newValue
+                old_value : oldValueString,
+                new_value : newValueString,
+                task_rid : data.rid
               })
               updatedColumnsStorage.push(`${oldValue} changed to ${newValue}`);
             }
@@ -4368,10 +4412,16 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
     else return null;
   }
   async createOrUpdateTags (taskRid : string, accountRid : string, caseRid : string, tagRid : string, isNewTag : boolean, accountNumber : string, userId : string, activeStatusRid : string) {
-    const {Tags, TaskTag} = await this.caseModelService.getModels(accountNumber)
+    const {Tags, TaskTag, CaseHistory, CaseTimeline} = await this.caseModelService.getModels(accountNumber)
 
     if(isNewTag) {
-      const isTagExists = await this.isTagAlreadyExists(tagRid)
+      const isTagExists = await Tags.findOne({
+        where : {
+          tag_name : {
+            [Op.iLike] : tagRid
+          }
+        }
+      });
       if(!isTagExists) {
         const result = await Tags.create({
           tag_name : tagRid,
@@ -4389,6 +4439,26 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             created_datetime : new Date()
           })
         if(finalResult) {
+          await CaseTimeline.create({
+            created_by : userId,
+            created_datetime : new Date(),
+            account_rid : accountRid,
+            entity_rid : finalResult.dataValues.rid,
+            event_name : `Tag added for Task`,
+            event_type : "ui handler",
+            event_status : "success",
+            event_datetime : new Date(),
+            description : `Tag added for task : ${result.tag_name}`
+            
+          })
+          await CaseHistory.create({
+            case_rid : caseRid,
+            created_by : userId,
+            created_datetime : new Date(),
+            attribute_name : "tag_rid",
+            new_value : result.tag_name,
+            task_rid : taskRid
+          })
           return {
             statusCode : HttpStatus.SUCCESS,
             data : finalResult
@@ -4414,6 +4484,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       }
     } 
     else {
+      const tagDetails = await Tags.findOne({where : {rid : tagRid}})
       const isTagMapped = await this.isTagAlreadyMapped(accountNumber, taskRid, accountRid, caseRid, tagRid);
       if(!isTagMapped) {
         const finalResult = await TaskTag.create({
@@ -4424,6 +4495,25 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           created_by : userId,
           created_datetime : new Date()
         })
+        await CaseTimeline.create({
+            created_by : userId,
+            created_datetime : new Date(),
+            account_rid : accountRid,
+            entity_rid : finalResult.dataValues.rid,
+            event_name : `Tag added for Task`,
+            event_type : "ui handler",
+            event_status : "success",
+            event_datetime : new Date(),
+            description : `Tag added for task : ${tagDetails!.tag_name}`
+          })
+          await CaseHistory.create({
+            case_rid : caseRid,
+            created_by : userId,
+            created_datetime : new Date(),
+            attribute_name : "tag_rid",
+            new_value : tagDetails!.tag_name,
+            task_rid : taskRid
+          }) 
         if(finalResult) {
           return {
             statusCode : HttpStatus.SUCCESS,
@@ -4460,18 +4550,6 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
         task_rid : taskRid,
         case_rid : caseRid,
         tag_rid : tagRid
-      }
-    });
-    if(result) return result;
-    else return null;
-  }
-  async isTagAlreadyExists (tagRid : string) {
-    const {Tags} = await this.caseModelService.getModels("");
-    const result = await Tags.findOne({
-      where : {
-        tag_name : {
-          [Op.iLike] : tagRid
-        }
       }
     });
     if(result) return result;
@@ -4532,6 +4610,14 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
               is_file_deleted : false,
               comments_rid : createComments.dataValues.rid
             }) 
+            await CaseHistory.create({
+                created_by : data.created_by,
+                created_datetime : new Date(),
+                case_rid : data.case_rid,
+                attribute_name : "comments_attachments",
+                new_value : uploadFile.url,
+                task_rid : data.task_rid
+            })
           }
         }
       }
@@ -4573,7 +4659,6 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           rid : data.rid
         }
       });
-      console.log("updateComments ==== > ", updateComments)
       if(updateComments === 1) {
         const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber);
         if(!checkIsDifferentCollaborator) {
@@ -4624,7 +4709,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 created_datetime : new Date(),
                 case_rid : data.case_rid,
                 attribute_name : "comments_attachments",
-                new_value : uploadFile.url
+                new_value : uploadFile.url,
+                task_rid : data.task_rid
               })
             }
           }
@@ -4679,7 +4765,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 case_rid : data.case_rid,
                 attribute_name : columnName,
                 old_value : oldValue,
-                new_value : newValue
+                new_value : newValue,
+                task_rid : data.task_rid
               })
               updatedColumnsStorage.push(`${oldValue} changed to ${newValue}`);
             }
@@ -4746,7 +4833,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                   event_status : "success",
                   event_datetime : new Date(),
                   description : `Task Comments : ${fetchCommentsAttachmentDetails.document_name}`
-                }) 
+                })
               } 
             }
           }
@@ -4868,7 +4955,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
               created_datetime : new Date(),
               case_rid : data.case_rid,
               attribute_name : "task_attachments",
-              new_value : uploadFile.url
+              new_value : uploadFile.url,
+              task_rid : data.task_rid
             })
           }
         }
@@ -4884,7 +4972,6 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
   }
 
   async deleteAttachment (accountNumber : string, data : any, userId : string) {
-    console.log("AccountNumber ====> ", accountNumber)
     const {TaskAttachments} = await this.caseModelService.getModels(accountNumber)
     const findTaskDetails = await this.findTaskById(data.task_rid, accountNumber);
     const checkIsFileExists = await TaskAttachments.findOne({

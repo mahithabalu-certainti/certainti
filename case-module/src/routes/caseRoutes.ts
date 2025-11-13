@@ -207,4 +207,9 @@ routes.post(
   checkUserStatusMiddleware("NA"),
   controller.caseController.listTaskAttachments
 )
+routes.post(
+  "/task/activity/list",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.fetchTaskActivity
+)
 export default routes;
