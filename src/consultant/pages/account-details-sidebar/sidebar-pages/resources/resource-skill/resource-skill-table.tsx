@@ -18,7 +18,11 @@ import {
 import { useMutation } from '@apollo/client';
 import { UPDATE_RESOURCE_SKILL } from '../../../../../../api/graphql/queries/resource-query';
 import { resourceClient } from '../../../../../../api/graphql/clients/client';
-import { NOTES_CREATE, RESOURCESKILL } from '../../../../../../routes';
+import {
+  CHECKLIST_CREATE,
+  NOTES_CREATE,
+  RESOURCESKILL,
+} from '../../../../../../routes';
 import {
   ListTable,
   ManageColumnsPopover,
@@ -79,7 +83,7 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   columnAnchorEl,
   setColumnAnchorEl,
   searchValue,
-  resourceNumber,
+  // resourceNumber,
 }) => {
   const navigate = useNavigate();
   const { accountid } = useParams();
@@ -139,6 +143,11 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   const isNoteCreateEnable = checkPermission(
     permission,
     AllPermissions.NOTES_CREATE
+  );
+
+  const isChecklistCreateEnable = checkPermission(
+    permission,
+    AllPermissions.CHECKLIST_CREATE
   );
 
   //permissions
@@ -249,7 +258,7 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
     setSelectedRowId(rowId);
   };
 
-  const handleCreateNote = (rowId: string) => {
+  const handleCreateNote = (row: ResourceSkillList) => {
     const accountId = accountid ?? '';
     const path = generatePath(NOTES_CREATE, {
       module: 'account',
@@ -257,8 +266,23 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
     const queryParams = new URLSearchParams({
       accountId,
       entityLevel: 'resource_skill',
-      entityId: rowId,
-      source: `Resource > ${resourceNumber}`,
+      entityId: row.rid || '',
+      source: `Resource Skill > ${row.r_number}`,
+      ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
+    });
+    navigate(`${path}?${queryParams.toString()}`);
+  };
+
+  const handleCreateChecklist = (row: ResourceSkillList) => {
+    const accountId = accountid ?? '';
+    const path = generatePath(CHECKLIST_CREATE, {
+      module: 'account',
+    });
+    const queryParams = new URLSearchParams({
+      accountId,
+      entityLevel: 'resource_skill',
+      entityId: row.rid || '',
+      source: `Resource Skill > ${row.r_number}`,
       ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
     });
     navigate(`${path}?${queryParams.toString()}`);
@@ -277,9 +301,11 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
         accountInActive,
         handleAttachmentClick,
         handleCreateNote,
+        handleCreateChecklist,
         resourceInActive,
         attachmentCreateEnable,
-        isNoteCreateEnable
+        isNoteCreateEnable,
+        isChecklistCreateEnable
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [accountInActive, memoizedSkillSubType, resourceInActive]

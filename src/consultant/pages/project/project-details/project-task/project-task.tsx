@@ -14,6 +14,7 @@ import {
   useUpdateProjectTaskStatus,
 } from '../../../../services/project/project-task-service';
 import {
+  CHECKLIST_CREATE,
   NOTES_CREATE,
   PROJECT_TASK,
   PROJECT_TASK_EDIT,
@@ -95,6 +96,7 @@ export const ProjectTask = ({
   setProjectTaskParams,
   projectCode,
   accountOrProjectInActive,
+  projectFiscalYear,
 }: {
   projectID?: string;
   accountData?: {
@@ -109,6 +111,7 @@ export const ProjectTask = ({
   >;
   projectCode?: string;
   accountOrProjectInActive?: boolean;
+  projectFiscalYear?: number | string;
 }) => {
   const { errorToast } = useToast();
   const [showFilter, setShowFilter] = useState<boolean>(false);
@@ -178,6 +181,11 @@ export const ProjectTask = ({
   const isNoteCreateEnable = checkPermission(
     permission,
     AllPermissions.NOTES_CREATE
+  );
+
+  const isChecklistCreateEnable = checkPermission(
+    permission,
+    AllPermissions.CHECKLIST_CREATE
   );
 
   const projectViewEditFields = useMemo(
@@ -322,17 +330,35 @@ export const ProjectTask = ({
   const handleCreateNote = (row?: ProjectTaskListType) => {
     const projectTaskId = row?.rid || searchParams.get('pro_task_id');
     const path = generatePath(NOTES_CREATE, {
-      module: 'account',
+      module: 'project',
     });
     const queryParams = new URLSearchParams({
       accountId: accountID,
       entityLevel: 'project_task',
       entityId: projectTaskId || '',
+      projectFiscalYear: projectFiscalYear?.toString() || '',
       source: `Project Task > ${resourceData?.r_number || row?.r_number}`,
       ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
+
+  const handleCreateChecklist = (row?: ProjectTaskListType) => {
+    const projectTaskId = row?.rid || searchParams.get('pro_task_id');
+    const path = generatePath(CHECKLIST_CREATE, {
+      module: 'project',
+    });
+    const queryParams = new URLSearchParams({
+      accountId: accountID,
+      entityLevel: 'project_task',
+      entityId: projectTaskId || '',
+      projectFiscalYear: projectFiscalYear?.toString() || '',
+      source: `Project Task > ${resourceData?.r_number || row?.r_number}`,
+      ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
+    });
+    navigate(`${path}?${queryParams.toString()}`);
+  };
+
   const handleAttachmentClick = (rowId: string) => {
     const newParams = new URLSearchParams(searchParams);
     newParams.set('attachment_entity', 'project_task');
@@ -358,6 +384,14 @@ export const ProjectTask = ({
       disabled: accountOrProjectInActive,
       sx: { ...BUTTON_STYLES, width: '80px', minWidth: '80px' },
       hide: !viewDetails || !isNoteCreateEnable,
+    },
+    {
+      label: 'Add Checklist',
+      variant: 'outlined' as const,
+      onClick: () => handleCreateChecklist(),
+      disabled: accountOrProjectInActive,
+      sx: { ...BUTTON_STYLES, width: '105px', minWidth: '105px' },
+      hide: !viewDetails || !isChecklistCreateEnable,
     },
     {
       label: viewDetails ? 'Edit' : 'New',
@@ -518,6 +552,7 @@ export const ProjectTask = ({
     handleProjectTaskClick,
     handleAttachmentClick,
     handleCreateNote,
+    handleCreateChecklist,
     memoizedProjectResourceCode,
     memoizedProjectResourceType,
     memoizedProjectResourceClassification,
@@ -525,7 +560,8 @@ export const ProjectTask = ({
     accountOrProjectInActive,
     fiscalDatesArg,
     isAttachmentCreateEnable,
-    isNoteCreateEnable
+    isNoteCreateEnable,
+    isChecklistCreateEnable
   );
   const onRefreshClick = () => {
     setRefreshProjectsTrigger(Date.now());
@@ -708,6 +744,7 @@ export const ProjectTask = ({
           accountId={accountID}
           attachID={taskId || selectedRowId}
           onUploadSuccess={taskDetailPageRefresh}
+          projectFiscalYear={projectFiscalYear}
         />
       ) : (
         <>
