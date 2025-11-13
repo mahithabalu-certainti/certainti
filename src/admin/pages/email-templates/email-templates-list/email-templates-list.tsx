@@ -1,10 +1,5 @@
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useMemo, useState } from 'react';
 import { FilterCondition } from '../../../types/manage-user';
-import {
-  formatFilterForApi,
-  getStoredFilters,
-} from '../../../../components/filter-component/utils';
-import { FilterState } from '../../../../consultant/types/account-filter';
 import {
   NewFilterIcon,
   RefreshIcon,
@@ -18,6 +13,15 @@ import { EMAIL_TEMPLATES_CREATE } from '../../../../routes';
 import { EmailTemplateTable } from './table/email-templates-table';
 import { getEmailTemplateFilterFields } from './helpers';
 import { ExportEmailTemplateList } from '../../../service/email-template/email-template-service';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../store/store';
+import { checkPermission } from '../../../../common-utils';
+import {
+  AllModules,
+  AllPermissions,
+  useGetStatus,
+} from '../../../../common-service';
+import { AccessRestricted } from '../../../../components/account-restricted';
 
 const EmailTemplates: React.FC = () => {
   const navigate = useNavigate();
@@ -42,41 +46,53 @@ const EmailTemplates: React.FC = () => {
   const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   // Permission
-  // const { modules, permission } = useSelector(
-  //   (state: RootState) => state.permission
-  // );
-  // const isEmailTemplatesEnable = checkPermission(
-  //   modules,
-  //   AllModules.EMAIL_TEMPLATES
-  // );
-  // const isEmailTemplateCreateEnable = checkPermission(
-  //   permission,
-  //   AllPermissions.EMAIL_TEMPLATES_CREATE
-  // );
-  // const isEmailTemplateViewAllEnable = checkPermission(
-  //   permission,
-  //   AllPermissions.EMAIL_TEMPLATES_VIEW_EDIT
-  // );
-  // const isEmailTemplateExportEnable = checkPermission(
-  //   permission,
-  //   AllPermissions.EMAIL_TEMPLATES_EXPORT
-  // );
+  const { modules, permission } = useSelector(
+    (state: RootState) => state.permission
+  );
 
-  // const emailTemplateViewEditFields = useMemo(
-  //   () =>
-  //     permission.find(
-  //       (item) => item.name === AllPermissions.EMAIL_TEMPLATES_VIEW_EDIT
-  //     )?.fields ?? [],
-  //   [permission]
-  // );
+  const isEmailTemplatesEnable = checkPermission(
+    modules,
+    AllModules.EMAIL_TEMPLATES
+  );
+  const isEmailTemplateCreateEnable = checkPermission(
+    permission,
+    AllPermissions.EMAIL_TEMPLATES_CREATE
+  );
+  const isEmailTemplateViewAllEnable = checkPermission(
+    permission,
+    AllPermissions.EMAIL_TEMPLATES_VIEW_EDIT
+  );
+  const isEmailTemplateExportEnable = checkPermission(
+    permission,
+    AllPermissions.EMAIL_TEMPLATES_EXPORT
+  );
 
-  // const permissionMap = useMemo(() => {
-  //   const map: Record<string, { read: boolean; edit: boolean }> = {};
-  //   emailTemplateViewEditFields.forEach((item) => {
-  //     map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
-  //   });
-  //   return map;
-  // }, [emailTemplateViewEditFields]);
+  const emailTemplateViewEditFields = useMemo(
+    () =>
+      permission.find(
+        (item) => item.name === AllPermissions.EMAIL_TEMPLATES_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    emailTemplateViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [emailTemplateViewEditFields]);
+
+  const emailTemplateStatus = useGetStatus();
+
+  const statusOptions = useMemo(
+    () =>
+      emailTemplateStatus.data?.data?.status.map((status) => ({
+        label: status.status_name,
+        value: status.rid,
+      })) || [],
+    [emailTemplateStatus.data?.data?.status]
+  );
 
   const isModalOpen = Boolean(columnAnchorEl);
   const modalId = isModalOpen
@@ -125,20 +141,14 @@ const EmailTemplates: React.FC = () => {
           filters: appliedFilters,
           timezone: systemTimezone,
         }),
-      // hide: !isEmailTemplateExportEnable,
+      hide: !isEmailTemplateExportEnable,
     },
   ];
 
-  const emailTemplateFilterfields = getEmailTemplateFilterFields();
-
-  useEffect(() => {
-    const saved = getStoredFilters();
-    if (saved) {
-      setAppliedFilters(
-        formatFilterForApi(saved as Record<string, FilterState>)
-      );
-    }
-  }, []);
+  const emailTemplateFilterfields = getEmailTemplateFilterFields(
+    permissionMap,
+    statusOptions
+  );
 
   const handleColumnVisibility = (
     event: React.MouseEvent<HTMLButtonElement>
@@ -146,8 +156,8 @@ const EmailTemplates: React.FC = () => {
     setColumnAnchorEl(event.currentTarget);
   };
 
-  // if (!isEmailInteractionTemplatesEnable || !isEmailTemplateViewAllEnable)
-  //   return <AccessRestricted />;
+  if (!isEmailTemplatesEnable || !isEmailTemplateViewAllEnable)
+    return <AccessRestricted />;
 
   return (
     <div className='flex flex-col w-full h-full'>
@@ -178,7 +188,7 @@ const EmailTemplates: React.FC = () => {
           </button>
           <TextButton
             label='Create Template'
-            // hide={!isEmailTemplateCreateEnable}
+            hide={!isEmailTemplateCreateEnable}
             onClick={() => navigate(EMAIL_TEMPLATES_CREATE)}
             sx={{
               width: '120px',
@@ -250,6 +260,7 @@ const EmailTemplates: React.FC = () => {
           refreshTrigger={refreshTrigger}
           setColumnAnchorEl={setColumnAnchorEl}
           columnAnchorEl={columnAnchorEl}
+          statusOptions={statusOptions}
         />
       </div>
     </div>

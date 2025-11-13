@@ -340,7 +340,7 @@ const Checklist: React.FC<ChecklistProps> = ({
         rid: rowId,
         account_rid: rowData?.account_rid,
         entity_id: rowData?.attach_to,
-        attachement_level: rowData?.attachment_level,
+        attachment_level: rowData?.attachment_level,
       }
     );
 

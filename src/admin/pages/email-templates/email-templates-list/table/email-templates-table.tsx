@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { FilterCondition } from '../../../../types/manage-user';
 import {
   ActionItem,
-  ListTableColumn,
   ShowHideTableColumn,
 } from '../../../../../components/table/types';
 import { EditIcon } from '../../../../../assets';
@@ -15,6 +14,9 @@ import { EmailTemplateList, EmailTemplateListParams } from '../../../../types';
 import { generatePath, useNavigate } from 'react-router-dom';
 import { EMAIL_TEMPLATES_EDIT } from '../../../../../routes';
 import { useEmailTemplateList } from '../../../../service/email-template/email-template-service';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../store/store';
+import { AllPermissions } from '../../../../../common-service';
 
 interface IEmailTemplateTableProps {
   appliedFilters: Record<string, FilterCondition>;
@@ -25,6 +27,7 @@ interface IEmailTemplateTableProps {
   setColumnAnchorEl: React.Dispatch<
     React.SetStateAction<HTMLButtonElement | null>
   >;
+  statusOptions: { label: string; value: string }[];
 }
 
 export const EmailTemplateTable: React.FC<IEmailTemplateTableProps> = ({
@@ -34,6 +37,7 @@ export const EmailTemplateTable: React.FC<IEmailTemplateTableProps> = ({
   refreshTrigger,
   columnAnchorEl,
   setColumnAnchorEl,
+  // statusOptions,
 }) => {
   const navigate = useNavigate();
   const [emailTemplateList, setEmailTemplateList] = useState<
@@ -53,33 +57,31 @@ export const EmailTemplateTable: React.FC<IEmailTemplateTableProps> = ({
   }, [data?.emailTemplates]);
 
   // Permission
-  // const { permission } = useSelector((state: RootState) => state.permission);
+  const { permission } = useSelector((state: RootState) => state.permission);
 
-  // const emailTemplateViewEditFields = useMemo(
-  //   () =>
-  //     permission.find(
-  //       (item) => item.name === AllPermissions.EMAIL_TEMPLATES_VIEW_EDIT
-  //     )?.fields ?? [],
-  //   [permission]
-  // );
+  const emailTemplateViewEditFields = useMemo(
+    () =>
+      permission.find(
+        (item) => item.name === AllPermissions.EMAIL_TEMPLATES_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
 
-  // const permissionMap = useMemo(() => {
-  //   const map: Record<string, { read: boolean; edit: boolean }> = {};
-  //   emailTemplateViewEditFields.forEach((item) => {
-  //     map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
-  //   });
-  //   return map;
-  // }, [emailTemplateViewEditFields]);
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    emailTemplateViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [emailTemplateViewEditFields]);
 
-  // const emailTemplateFieldsEditable = useMemo(
-  //   () =>
-  //     permission
-  //       .find(
-  //         (item) => item.name === AllPermissions.EMAIL_TEMPLATES_VIEW_EDIT
-  //       )
-  //       ?.fields?.some((field) => field.edit),
-  //   [permission]
-  // );
+  const emailTemplateFieldsEditable = useMemo(
+    () =>
+      permission
+        .find((item) => item.name === AllPermissions.EMAIL_TEMPLATES_VIEW_EDIT)
+        ?.fields?.some((field) => field.edit),
+    [permission]
+  );
 
   const getRowId = (row: EmailTemplateList) => row.rid;
 
@@ -114,23 +116,14 @@ export const EmailTemplateTable: React.FC<IEmailTemplateTableProps> = ({
     }));
   };
 
-  const templateColumns = useMemo(() => getEmailTemplateColumns(), []);
-
-  const [visibleColumns, setVisibleColumns] = useState<
-    ListTableColumn<EmailTemplateList>[]
-  >(templateColumns.filter((col) => !col.hide));
-
-  useEffect(() => {
-    const updatedColumns = templateColumns.filter((col) => !col.hide);
-    setVisibleColumns(updatedColumns);
-  }, [templateColumns]);
+  const templateColumns = getEmailTemplateColumns(permissionMap);
 
   const actionButtons: ActionItem<EmailTemplateList>[] = [
     {
       label: 'Edit',
       onClick: (row) => handleEdit(row),
       icon: EditIcon,
-      // hide: !emailTemplateFieldsEditable,
+      hide: !emailTemplateFieldsEditable,
       iconStyle: {
         filter:
           'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
@@ -138,30 +131,36 @@ export const EmailTemplateTable: React.FC<IEmailTemplateTableProps> = ({
     },
   ];
 
+  const isModalOpen = Boolean(columnAnchorEl);
+
+  const handlePopoverClose = () => setColumnAnchorEl(null);
+  const modalId = isModalOpen
+    ? 'case-checklist-list-column-visibility-popover'
+    : undefined;
+
   const RestrictedColumns = [
-    {
-      id: 'r_number',
-      canHide: false,
-      canDrag: false,
-    },
+    { id: 'r_number', canHide: false, canDrag: false },
   ];
 
+  const [columnVisibility, setColumnVisibility] = useState<
+    Record<string, boolean>
+  >(Object.fromEntries(templateColumns.map((col) => [col.id, !col.hide])));
+
+  const [columnOrder, setColumnOrder] = useState(
+    templateColumns.map((col) => col.id)
+  );
+
   const handleColumnsChange = (updatedColumns: ShowHideTableColumn[]) => {
-    setVisibleColumns(
-      updatedColumns.filter(
-        (col) => !col.hide
-      ) as ListTableColumn<EmailTemplateList>[]
+    const newVisibility = Object.fromEntries(
+      updatedColumns.map((col) => [col.id, !col.hide])
     );
+    setColumnVisibility(newVisibility);
+    setColumnOrder(updatedColumns.map((col) => col.id));
   };
 
-  const handlePopoverClose = () => {
-    setColumnAnchorEl(null);
-  };
-
-  const isModalOpen = Boolean(columnAnchorEl);
-  const modalId = isModalOpen
-    ? 'email-template-column-visibility-popover'
-    : undefined;
+  const visibleColumns = columnOrder
+    .map((id) => templateColumns.find((col) => col.id === id)!)
+    .filter((col) => columnVisibility[col.id]);
 
   return (
     <>
