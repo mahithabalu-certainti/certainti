@@ -202,7 +202,7 @@ exportTask(data : any, userId : string) : Promise<{
     statusCode: number;
     data: null;
 }>
-updateComments(data : UpdateCommentsType, userId : string) : Promise<{
+updateComments(data : UpdateCommentsType, userId : string, files? : Express.Multer.File[]) : Promise<{
     statusCode: number;
     statusMessage: string;
 }>
@@ -211,6 +211,19 @@ deleteComments(data : DeleteCommentsType, userId : string) : Promise<{
     statusMessage: string;
 }>
 fetchTaskComment(data : CommentsListType) : Promise<any>
+addTaskLevelAttachment (data : any, userId : string, files : Express.Multer.File[]) : Promise<{
+    statusCode: number;
+    statusMessage: string;
+}>
+deleteTaskLevelAttachment (data : any, userId : string) : Promise<{
+    statusCode: number;
+    statusMessage: string;
+}>
+listTaskLevelAttachment (data : any) : Promise<{
+    statusCode: number;
+    statusCodeValue: string;
+    data: any[];
+}>
 }
 
 export interface ICaseManagementService {

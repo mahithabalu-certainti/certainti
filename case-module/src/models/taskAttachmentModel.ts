@@ -17,6 +17,7 @@ interface TaskAttachmentsAttributes {
     format : string
     size : string
     is_file_deleted : boolean
+    comments_rid? : string
 }
 
 export interface TaskAttachmentsCreationAttributes 
@@ -39,6 +40,7 @@ implements TaskAttachmentsAttributes {
     public format! : string
     public size! : string
     public is_file_deleted! : boolean
+    public comments_rid? : string
 
     static initialise (sequelize : Sequelize, schemaName : string) {
         return TaskAttachments.init({
@@ -102,6 +104,10 @@ implements TaskAttachmentsAttributes {
                 type : DataTypes.BOOLEAN,
                 allowNull : true,
                 defaultValue : false
+            },
+            comments_rid : {
+                type : DataTypes.STRING(50),
+                allowNull : true
             }
         }, {
             sequelize,
