@@ -226,7 +226,12 @@ listTaskLevelAttachment (data : any) : Promise<{
 }>
 fetchAllTaskActivities (data : any) : Promise<{
     statusCode: number;
-    data: ActivityType[];
+    data: {
+        page: any;
+        limit: any;
+        total_result: number;
+        data: any[];
+    };
 }>
 }
 

@@ -525,5 +525,6 @@ export type ActivityType = {
   attribute_name : string
   old_value : string
   new_value : string
-  task_rid : string
+  task_rid : string,
+  total_result : string
 }

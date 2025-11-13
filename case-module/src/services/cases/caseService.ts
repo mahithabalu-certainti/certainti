@@ -2192,21 +2192,34 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
         const userIds = [...new Set(result.map((d : any) => d.created_by))];
         const findUsers : any = await mainDb.query(rawQueries.getOwnerDetails(userIds));
         const mapUser : Map<string, string> = new Map(findUsers[0].map((d : any) => [d.rid, d.name]));
-
-        const finalData = result.map((d : any) => {
+        const total = parseInt(result[0]!.total_result)
+        const structuredResult = result.map((d : any) => {
+          delete d.total_result
           return {
             ...d,
             created_by_name : mapUser.get(d.created_by) || null
           }
         })
+        const finalData = {
+          page : data.page,
+          limit : data.limit,
+          total_result : total,
+          data : structuredResult
+        }
         return {
           statusCode : HttpStatus.SUCCESS,
           data : finalData
         }
       } else {
+        const finalData = {
+          page : data.page,
+          limit : data.limit,
+          total_result : 0,
+          data : []
+        }
         return {
           statusCode : HttpStatus.NOT_FOUND,
-          data : []
+          data : finalData
         }
       }
 
