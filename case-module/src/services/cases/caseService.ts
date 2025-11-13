@@ -2131,10 +2131,12 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
       let schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number);
       
-      const result : any = await orgDb.query(fetchTaskComments(data.task_rid, data.account_rid, data.case_rid, schemaName));
+      const result : any = await orgDb.query(fetchTaskComments(data.page, data.limit, data.task_rid, data.account_rid, data.case_rid, schemaName));
       if(result[0][0].comments !== null) {
-        const finalData = await Promise.all(
+        const total = result[0][0].comments[0].total_result
+        const structuredData = await Promise.all(
         (result[0][0].comments || []).map(async (d: any) => {
+          delete d.total_result
             const updatedAttachments = await Promise.all(
               (d.comments_attachments || []).map(async (da: any) => ({
                 ...da,
@@ -2147,14 +2149,26 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
             };
           })
         );
+        const finalData = {
+          page : data.page,
+          limit : data.limit,
+          total_result : total,
+          data : structuredData
+        }
         return {
           statusCode : HttpStatus.SUCCESS,
           data : finalData
         }
       } else {
+        const finalData = {
+          page : data.page,
+          limit : data.limit,
+          total_result : 0,
+          data : []
+        }
         return {
           statusCode : HttpStatus.NOT_FOUND,
-          data : []
+          data : finalData
         }
       }
     }

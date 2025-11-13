@@ -1009,18 +1009,34 @@ return query;
     return query;
   }
 
-  export const fetchTaskComments = (taskRid : string, accountRid : string, caseRid : string, schemaName : string) => {
+  export const fetchTaskComments = (page : number, limit : number, taskRid : string, accountRid : string, caseRid : string, schemaName : string) => {
+    let offset = (page - 1) * limit;
+    let pagination = `LIMIT ${limit} OFFSET ${offset}`
     let query = 
     `
-    WITH fetch_task_comments AS (
-    SELECT tc.rid, tc.comments, tc.account_rid, tc.case_rid, tc.task_rid
+    WITH calculate_total_result AS(
+    SELECT tc.rid, COUNT(tc.*) OVER() AS total_result
     FROM ${schemaName}.task_comments tc
     WHERE
     tc.account_rid = '${accountRid}'
     AND
     tc.case_rid = '${caseRid}'
     AND
-    tc.task_rid = '${taskRid}'    
+    tc.task_rid = '${taskRid}'
+    ), 
+    
+    fetch_task_comments AS (
+    SELECT tc.rid, tc.comments, tc.account_rid, tc.case_rid, tc.task_rid, c.total_result
+    FROM ${schemaName}.task_comments tc
+    LEFT JOIN calculate_total_result c ON c.rid = tc.rid
+    WHERE
+    tc.account_rid = '${accountRid}'
+    AND
+    tc.case_rid = '${caseRid}'
+    AND
+    tc.task_rid = '${taskRid}'
+    ORDER BY tc.created_datetime ASC 
+    ${pagination} 
     ),
 
     fetch_comments_attachments AS (
@@ -1050,6 +1066,7 @@ return query;
     'account_rid', tc.account_rid,
     'case_rid', tc.case_rid,
     'task_rid', tc.task_rid,
+    'total_result', tc.total_result,
     'comments_attachments', ca.comments_attachments
     )) AS comments
     FROM

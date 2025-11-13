@@ -222,7 +222,12 @@ deleteTaskLevelAttachment (data : any, userId : string) : Promise<{
 listTaskLevelAttachment (data : any) : Promise<{
     statusCode: number;
     statusCodeValue: string;
-    data: any[];
+    data: {
+        page: any;
+        limit: any;
+        total_result: number;
+        data: any[];
+    };
 }>
 fetchAllTaskActivities (data : any) : Promise<{
     statusCode: number;

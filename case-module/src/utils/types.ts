@@ -511,6 +511,8 @@ export type DeleteCommentsType = {
 }
 
 export type CommentsListType = {
+  page : number
+  limit : number
   account_rid : string
   case_rid : string
   task_rid : string
