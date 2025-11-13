@@ -111,27 +111,27 @@ routes.get(
 );
 routes.post(
   "/checklist/create",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("checklist_create"),
   controller.caseController.createCheckList
 );
 routes.post(
   "/checklist/update",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("checklists_view_edit"),
   controller.caseController.updateCheckList
 );
 routes.get(
   "/checklist/detail/:checkListRid",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("checklists_view_edit"),
   controller.caseController.getCheckListDetailsById
 );
 routes.get(
   "/checklist/list",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("checklists_view_edit"),
   controller.caseController.getAllChecklists
 );
 routes.get(
   "/checklist/export",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("checklists_view_edit"),
   controller.caseController.exportAllChecklists
 );
 routes.get(
