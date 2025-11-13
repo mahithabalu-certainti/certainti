@@ -80,12 +80,12 @@ routes.get(
 );
 routes.post(
   "/emailTemplate/create",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("email_templates_create"),
   controller.caseManagementController.createEmailTemplate
 );
 routes.post(
   "/emailTemplate/update",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("email_templates_view_edit"),
   controller.caseManagementController.updateEmailTemplate
 );
 routes.get(
@@ -93,5 +93,26 @@ routes.get(
   checkUserStatusMiddleware("NA"),
   controller.caseManagementController.getEmailPlaceHolders
 );
+routes.get(
+  "/emailTemplate/detail/:emailTemplateRid",
+  checkUserStatusMiddleware("email_templates_view_edit"),
+  controller.caseManagementController.getEmailTemplateDetailsById
+);
+routes.get(
+  "/emailTemplate/list",
+  checkUserStatusMiddleware("email_templates_view_edit"),
+  controller.caseManagementController.listEmailTemplates
+);
+routes.get(
+  "/emailTemplate/export",
+  checkUserStatusMiddleware("email_templates_view_edit"),
+  controller.caseManagementController.exportEmailTemplates
+);
+routes.get(
+  "/categoryPlaceHolders/:categoryRid",
+  checkUserStatusMiddleware("NA"),
+  controller.caseManagementController.getEmailCategoryPlaceHolders
+);
+
 
 export default routes;

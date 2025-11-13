@@ -179,6 +179,24 @@ const updateEmailTemplateSchema = Joi.object({
   status_rid: Joi.string().required(),
 });
 
+
+const listEmailTemplateSchema = Joi.object({
+  page: Joi.string().optional().pattern(/^[0-9]+$/),
+  limit: Joi.string().optional().pattern(/^[0-9]+$/),
+  filters: Joi.string().default("{}"),
+  search: Joi.string().max(255).optional(),
+  sortBy: Joi.string().optional(),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC")
+}); 
+
+const exportEmailTemplateSchema = Joi.object({
+  filters: Joi.string().default("{}"),
+  search: Joi.string().max(255).optional(),
+  sortBy: Joi.string().optional(),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC")
+}); 
+
+
 const checklistByIdSchema = Joi.object({
   account_rid: Joi.string().required()
 });
@@ -462,5 +480,7 @@ export {
   createTaskSchema,
   updateTaskSchema,
   createEmailTemplateSchema,
-  updateEmailTemplateSchema
+  updateEmailTemplateSchema,
+  listEmailTemplateSchema,
+  exportEmailTemplateSchema
 };

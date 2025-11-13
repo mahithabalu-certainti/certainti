@@ -247,6 +247,17 @@ export interface ICaseManagementService {
     errorMessage?: string;
     data?: { placeHolders: any };
   }>;
+  listEmailTemplates(
+    data: any,
+    filters: Record<string, any>,
+    userId: string,
+    apiType: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { emailTemplates: any; count: number };
+  }>;
   updateAdminCheckList(
     checklistRequest: ICreateChecklistTemplate,
     userId: string
@@ -283,6 +294,21 @@ export interface ICaseManagementService {
     message: string;
     errorMessage?: string;
     data?: { checklistDetails: any };
+  }>;
+  getEmailTemplateDetailsById(
+    templateRid: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { emailTemplateDetails: any };
+  }>;
+  getEmailCategoryPlaceHolders
+  (categoryRid : string) : Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { placeholders: any };
   }>;
   createTaskTemplate(data : CreateTaskTemplateType, userId : string) :Promise<any>;
   getAllPriority() : Promise<any>

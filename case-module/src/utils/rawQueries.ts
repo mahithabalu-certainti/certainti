@@ -447,6 +447,59 @@ export const listAllCheckList = (
         paginated_datas i
     `;
 
+export const listAllEmailTemplates = (
+  searchValue: string,
+  whereKey: string,
+  joinedConditions: string,
+  sortValue: string,
+  pagination: string
+) =>  `
+    WITH fetch_email_templates AS (
+        SELECT
+            et.rid, et.r_number,
+            et.status_rid,s.status_name,
+            et.created_by, et.modified_by,
+            et.created_datetime, et.modified_datetime,
+            COUNT(et.rid) OVER() AS total_records,
+            et.template_name,
+            et.description,
+            uc.first_name || ' ' || uc.last_name AS created_user_name,
+            um.first_name || ' ' || um.last_name AS modified_user_name
+
+            FROM
+            ${MAIN_SCHEMA_NAME}.email_template et
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.status s ON s.rid = et.status_rid
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.user uc ON uc.rid = et.created_by
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.user um ON um.rid = et.modified_by
+              WHERE
+    (et.r_number ILIKE '${searchValue}' OR et.template_name ILIKE '${searchValue}')
+    ${joinedConditions}
+    ),
+    paginated_datas AS (
+    SELECT * FROM fetch_email_templates ${sortValue} ${pagination}
+    
+    )
+        SELECT 
+        array_agg(jsonb_build_object(
+        'rid', i.rid,
+        'r_number', i.r_number,
+        'status', i.status_rid,
+        'status_name', i.status_name,
+        'created_by', i.created_by,
+        'modified_by', i.modified_by,
+        'created_datetime', i.created_datetime,
+        'modified_datetime', i.modified_datetime,
+        'description', i.description,
+        'template_name', i.template_name,
+        'total_records', i.total_records,
+        'created_user_name', i.created_user_name,
+        'modified_user_name', i.modified_user_name
+        ) ) AS admin_checklists
+
+        FROM
+        paginated_datas i
+    `;
+
 export const fetchAdminTemplates = (page : number, limit : number, sort : string, sortBy : string, filter : FilterType, search : string, isExport : boolean, isGraphql : boolean, templateRid : string | null) => {
   let pagination : string = ``
   if(isExport) pagination = ` `
