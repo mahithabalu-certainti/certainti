@@ -24,6 +24,7 @@ export const fetchInteractionForProjectLevelQuery = (
   account_rid: string,
   project_id: string,
   project_fiscal_rid: string,
+  case_rid: string,
   fiscal_year: number,
   sort: string,
   sortBy: string,
@@ -67,6 +68,18 @@ export const fetchInteractionForProjectLevelQuery = (
     aggregatedQuery = `
         ,'key_contact_name', i.key_contact_name,
         'key_contact_email', i.key_contact_email`
+  } else if (flag == interactionFlag.case) {
+    accountLevelkeyContactQuery = `kcd.key_contact_name, kcd.key_contact_email,`
+    aggregatedQuery = `
+        ,'key_contact_name', i.key_contact_name,
+        'key_contact_email', i.key_contact_email`
+    whereConditions = `
+        i.account_rid = '${account_rid}' 
+        AND i.project_rid IN (
+          SELECT project_rid 
+          FROM ${schemaName}.case_projects 
+          WHERE case_rid = '${case_rid}'
+        )`;
   } else {
     accountLevelkeyContactQuery = `kcd.key_contact_name, kcd.key_contact_email,`
     aggregatedQuery = `

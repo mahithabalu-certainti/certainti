@@ -491,3 +491,27 @@ export type AddCommentsType = {
   comments : string
 }
 
+export type UpdateCommentsType = {
+  modified_by : string
+  modified_datetime : Date
+  case_rid : string
+  account_rid : string
+  task_rid : string
+  rid : string,
+  comments : string,
+  deleted_file_ids : string[]
+}
+export type DeleteCommentsType = {
+  modified_by : string
+  case_rid : string
+  account_rid : string
+  task_rid : string
+  rid : string
+  deleted_file_ids : string[]
+}
+
+export type CommentsListType = {
+  account_rid : string
+  case_rid : string
+  task_rid : string
+}

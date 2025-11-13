@@ -2,7 +2,7 @@ import { CaseTask } from "../../models/caseTaskModel";
 import { Tags } from "../../models/tagsModel";
 import { TaskComments } from "../../models/taskCommentsModel";
 import { TaskTag } from "../../models/taskTagsModel";
-import { AddCommentsType, AdminTaskTemplatePayloadType, CaseTaskQueryType, CreateCaseTaskType, CreateTaskTemplateType, ICreateCases, ICreateCaseTeam, ICreateChecklist, ICreateChecklistTemplate, ICreateEmailTemplate, MilestoneResponse, UpdateCaseTaskType, UpdateTaskTemplateType } from "../../utils/types";
+import { AddCommentsType, AdminTaskTemplatePayloadType, CaseTaskQueryType, CreateCaseTaskType, CreateTaskTemplateType, ICreateCases, ICreateCaseTeam, ICreateChecklist, ICreateChecklistTemplate, ICreateEmailTemplate, MilestoneResponse, UpdateCaseTaskType, UpdateTaskTemplateType, UpdateCommentsType, DeleteCommentsType, CommentsListType } from "../../utils/types";
 
 export interface ICaseService {
   createCase(
@@ -202,6 +202,15 @@ exportTask(data : any, userId : string) : Promise<{
     statusCode: number;
     data: null;
 }>
+updateComments(data : UpdateCommentsType, userId : string) : Promise<{
+    statusCode: number;
+    statusMessage: string;
+}>
+deleteComments(data : DeleteCommentsType, userId : string) : Promise<{
+    statusCode: number;
+    statusMessage: string;
+}>
+fetchTaskComment(data : CommentsListType) : Promise<any>
 }
 
 export interface ICaseManagementService {

@@ -126,6 +126,11 @@ export const STATUS_MESSAGE = {
   commentsAddedSuccess : "Comments added successfully",
   commentsFailed : "Failed to create comments",
   taskExportedSuccess : "Case Task exported successfully",
+  commentsUpdatedSuccess : "Comments updated successfully",
+  commentsFailedUpdate : "Failed to update comments",
+  commentsDeletedSuccess : "Comments deleted successfully",
+  commentsFaileDDelete : "Failed to delete comments",
+  commentsFetchedSuccess : "Task Comments fetched successfully",
   categoryPlaceHolderSuccess : "Placeholders fetched successfully",
   categoryPlaceHolderFailed : "Failed to fetch Placeholders",
 

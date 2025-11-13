@@ -111,19 +111,11 @@ export class JurisdictionService {
         where: { account_rid: accountRid, case_rid: caseRid },
       });
 
-      if (!jurisdiction) {
-        return {
-          statusCode: HttpStatus.NOT_FOUND,
-          message: STATUS_MESSAGE.jurisdictionNotFound || "Jurisdiction configuration not found",
-          data: null,
-        };
-      }
-
       // Step 4: Return success response
       return {
         statusCode: HttpStatus.SUCCESS,
         message: STATUS_MESSAGE.jurisdictionFetchedSuccess || "Jurisdiction configuration fetched successfully",
-        data: jurisdiction,
+        data: jurisdiction || {},
       };
     } catch (error) {
       logMessage(`Error fetching jurisdiction configuration: ${error}`);
