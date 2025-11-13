@@ -2089,12 +2089,12 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
         };;
       }
     }
-    async updateComments (data : UpdateCommentsType, userId : string) {
+    async updateComments (data : UpdateCommentsType, userId : string, files? : Express.Multer.File[]) {
       const mainDb = await this.getMainDb();
       const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
       data.modified_by = userId
       const fetchTaskDetails = await this.caseSchemaService.findTaskById(data.task_rid, fetchParent[0][0].r_number);
-      const result = await this.caseSchemaService.updateComments(data, fetchParent[0][0].r_number, fetchTaskDetails?.r_number!);
+      const result = await this.caseSchemaService.updateComments(data, fetchParent[0][0].r_number, fetchTaskDetails?.r_number!, files);
       if(result?.statusCode === HttpStatus.SUCCESS) {
         return {
           statusCode : result.statusCode,
@@ -2132,16 +2132,24 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       let schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number);
       
       const result : any = await orgDb.query(fetchTaskComments(data.task_rid, data.account_rid, data.case_rid, schemaName));
-      if(result[0].length > 0) {
-        let finalData = await Promise.all(result[0][0].comments.map((d : any) => d.comments_attachments == null ? [] : d.comments_attachments.map(async (da : any) => {
-          return {
-            ...da,
-            browse_file : da.browse_file ? await generateSasUrl(da.browse_file) : null
-          }
-        })))
+      if(result[0][0].comments !== null) {
+        const finalData = await Promise.all(
+        (result[0][0].comments || []).map(async (d: any) => {
+            const updatedAttachments = await Promise.all(
+              (d.comments_attachments || []).map(async (da: any) => ({
+                ...da,
+                browse_file: da.browse_file ? await generateSasUrl(da.browse_file) : null,
+              }))
+            );
+            return {
+              ...d,
+              comments_attachments: updatedAttachments,
+            };
+          })
+        );
         return {
           statusCode : HttpStatus.SUCCESS,
-          data : result[0][0].comments
+          data : finalData
         }
       } else {
         return {

@@ -202,7 +202,7 @@ exportTask(data : any, userId : string) : Promise<{
     statusCode: number;
     data: null;
 }>
-updateComments(data : UpdateCommentsType, userId : string) : Promise<{
+updateComments(data : UpdateCommentsType, userId : string, files? : Express.Multer.File[]) : Promise<{
     statusCode: number;
     statusMessage: string;
 }>

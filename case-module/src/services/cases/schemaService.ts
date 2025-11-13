@@ -4529,7 +4529,8 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
               size : uploadFile.size.toString(),
               format : uploadFile.extension,
               document_name : uploadFile.name,
-              is_file_deleted : false
+              is_file_deleted : false,
+              comments_rid : createComments.dataValues.rid
             }) 
           }
         }
@@ -4572,6 +4573,7 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           rid : data.rid
         }
       });
+      console.log("updateComments ==== > ", updateComments)
       if(updateComments === 1) {
         const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber);
         if(!checkIsDifferentCollaborator) {
@@ -4614,8 +4616,16 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 size : uploadFile.size.toString(),
                 format : uploadFile.extension,
                 document_name : uploadFile.name,
-                is_file_deleted : false
-              }) 
+                is_file_deleted : false,
+                comments_rid : data.rid
+              })
+              await CaseHistory.create({
+                created_by : data.modified_by,
+                created_datetime : new Date(),
+                case_rid : data.case_rid,
+                attribute_name : "comments_attachments",
+                new_value : uploadFile.url
+              })
             }
           }
         } else {
@@ -4627,18 +4637,26 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
                 }, raw : true
               });
               if(fetchCommentsAttachmentDetails) {
-                const checkTaskAttachmentExists = await TaskAttachments.findOne({
-                  where : {
-                    browse_file : fetchCommentsAttachmentDetails.browse_file,
-                    is_file_deleted : false
-                  }, raw : true
-                })
-                if(checkTaskAttachmentExists) {
-                  await CommentsAttachments.update({is_file_deleted : true},{where : {rid : id}})
-                } 
-                else {
-                  await deleteFromAzureBlob(fetchCommentsAttachmentDetails.browse_file);
-                  await CommentsAttachments.update({is_file_deleted : true},{where : {rid : id}})
+                await deleteFromAzureBlob(fetchCommentsAttachmentDetails.browse_file);
+                const [commentsAttachmentRes] = await CommentsAttachments.update({is_file_deleted : true},{where : {rid : id}})
+                if(commentsAttachmentRes === 1) {
+                  await TaskAttachments.update({is_file_deleted : true},{
+                    where : {
+                      browse_file : fetchCommentsAttachmentDetails.browse_file,
+                      is_file_deleted : false,
+                    }
+                  })
+                  await CaseTimeline.create({
+                    created_by : data.modified_by,
+                    created_datetime : new Date(),
+                    account_rid : data.account_rid,
+                    entity_rid : fetchCommentsAttachmentDetails.rid,
+                    event_name : "Task Comments Attachments deleted",
+                    event_type : "ui handler",
+                    event_status : "success",
+                    event_datetime : new Date(),
+                    description : `Task Comments : ${fetchCommentsAttachmentDetails.document_name}`
+                  }) 
                 }
               }
             }
@@ -4709,19 +4727,27 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
               }, raw : true
             });
             if(fetchCommentsAttachmentDetails) {
-              const checkTaskAttachmentExists = await TaskAttachments.findOne({
-                where : {
-                  browse_file : fetchCommentsAttachmentDetails.browse_file,
-                  is_file_deleted : false
-                }, raw : true
-              })
-              if(checkTaskAttachmentExists) {
-                await CommentsAttachments.update({is_file_deleted : true},{where : {rid : id}})
+              await deleteFromAzureBlob(fetchCommentsAttachmentDetails.browse_file);
+              const [deleteCommentsAttachRes] = await CommentsAttachments.update({is_file_deleted : true},{where : {rid : id}})
+              if(deleteCommentsAttachRes === 1) {
+                await TaskAttachments.update({is_file_deleted : true},{
+                  where : {
+                    browse_file : fetchCommentsAttachmentDetails.browse_file,
+                    is_file_deleted : false
+                  },
+                })
+                await CaseTimeline.create({
+                  created_by : data.modified_by,
+                  created_datetime : new Date(),
+                  account_rid : data.account_rid,
+                  entity_rid : fetchCommentsAttachmentDetails.rid,
+                  event_name : "Task Comments Attachments deleted",
+                  event_type : "ui handler",
+                  event_status : "success",
+                  event_datetime : new Date(),
+                  description : `Task Comments : ${fetchCommentsAttachmentDetails.document_name}`
+                }) 
               } 
-              else {
-                await deleteFromAzureBlob(fetchCommentsAttachmentDetails.browse_file);
-                await CommentsAttachments.update({is_file_deleted : true},{where : {rid : id}})
-              }
             }
           }
         } else {
@@ -4735,18 +4761,26 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           });
           if(fetchCommentsAttachmentDetails.length > 0) {
             for(let d of fetchCommentsAttachmentDetails) {
-              const checkIsTaskAttachmentDeleted = await TaskAttachments.findOne({
+              await deleteFromAzureBlob(d.browse_file);
+              const [deleteCommentsAttach] = await CommentsAttachments.update({is_file_deleted : true},{where : {rid : d.rid}})
+              if(deleteCommentsAttach == 1) {
+                await TaskAttachments.update({is_file_deleted : true},{
                 where : {
                   browse_file : d.browse_file,
                   is_file_deleted : false
-                }, raw : true
+                }
               })
-              if(checkIsTaskAttachmentDeleted) {
-                await CommentsAttachments.update({is_file_deleted : true},{where : {rid : d.rid}})
-              } else {
-                await deleteFromAzureBlob(d.browse_file);
-                await CommentsAttachments.update({is_file_deleted : true},{where : {rid : d.rid}})
-              }
+              await CaseTimeline.create({
+                created_by : data.modified_by,
+                created_datetime : new Date(),
+                account_rid : data.account_rid,
+                entity_rid : d.rid,
+                event_name : "Task Comments Attachments deleted",
+                event_type : "ui handler",
+                event_status : "success",
+                event_datetime : new Date(),
+                description : `Task Comments : ${d.document_name}`
+              }) 
             }
           }
         }
@@ -4787,15 +4821,17 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           statusCode : HttpStatus.FAILED,
           statusMessage : STATUS_MESSAGE.commentsFaileDDelete,
         }
-      }
-    } else {
-        return {
-          statusCode : HttpStatus.NOT_FOUND,
-          statusMessage : STATUS_MESSAGE.dataNotAvailable,
         }
       }
-    } 
+    }  
+    else {
+      return {
+        statusCode : HttpStatus.NOT_FOUND,
+        statusMessage : STATUS_MESSAGE.dataNotAvailable,
+      }
+    }
   }
+}
 
 // Utility function for optimized column sorting
 const getSortColumn = (sortField: string): string => {

@@ -2537,8 +2537,14 @@ async function updateTaskComments (req : Request, res : Response) {
       return;
     }
     const data = req.body;
+     let fileArray : Express.Multer.File[] | [];
+    if(Array.isArray(req.files)) {
+      fileArray = req.files
+    } else {
+      fileArray = []
+    }
     data.deleted_file_ids = JSON.parse(data.deleted_file_ids)
-    const result = await caseService.updateComments(data, userId);
+    const result = await caseService.updateComments(data, userId, fileArray);
     if(result.statusCode === HttpStatus.SUCCESS) {
       return res.status(HttpStatus.SUCCESS).json({
         statusCode: HttpStatus.SUCCESS,
