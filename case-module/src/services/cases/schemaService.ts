@@ -64,6 +64,7 @@ import {
 } from "../../models/caseHistory";
 import { CaseTeam, setupCaseTeamSequence } from "../../models/caseTeamModel";
 import { Jurisdiction } from "../../models/jurisdiction";
+import { CaseHistorySubmission, setupCaseHistorySubmissionSequence } from "../../models/CaseHistorySubmissionModel";
 import { log } from "console";
 import { CheckList, setupCheckListSequence } from "../../models/checkListModel";
 import { CheckListItem } from "../../models/checkListItemModel";
@@ -400,6 +401,10 @@ class CaseSchemaService {
         orgDbSequlize,
         schemaName
       );
+      const caseHistorySubmissionModel = await CaseHistorySubmission.initialize(
+        orgDbSequlize,
+        schemaName
+      );
       const checkListModel = await CheckList.initialize(  
         orgDbSequlize,
         schemaName
@@ -467,6 +472,8 @@ class CaseSchemaService {
       await setupCommentsAttachmentsSequence(orgDbSequlize, schemaName)
       await TaskAttachmentsModel.sync({force : false})
       await setupTaskAttachmentsSequence(orgDbSequlize, schemaName)
+      await caseHistorySubmissionModel.sync({ force: false });
+      await setupCaseHistorySubmissionSequence(orgDbSequlize, schemaName);
     } catch (err) {
       errorLog("Error creating case tables", (err as Error).message);
       console.log(err)

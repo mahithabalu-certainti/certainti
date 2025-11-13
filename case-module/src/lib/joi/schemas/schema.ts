@@ -71,6 +71,39 @@ const exportCaseSummarySchema = Joi.object({
   timezone: Joi.string().optional()
 });
 
+const createHistoricalSubmissionSchema = Joi.object({
+  account_rid: Joi.string().required(),
+  case_rid: Joi.string().required(),
+  historical_submissions: Joi.array()
+    .items(
+      Joi.object({
+        history_submission_rid: Joi.string().optional(),
+        fiscal_year: Joi.string().required(),
+        total_project: Joi.number().integer().required(),
+        total_qualified_project: Joi.number().integer().required(),
+        total_project_cost: Joi.number().precision(2).required(),
+        total_qualified_project_cost: Joi.number().precision(2).required(),
+        total_qre: Joi.number().precision(2).required(),
+        total_rd_credits: Joi.number().precision(2).required(),
+        annual_gross_receipts: Joi.number().precision(2).optional(),
+        eid: Joi.string().required(),
+        action_type: Joi.string().valid("add", "edit", "delete").required(),
+      })
+    )
+    .min(1)
+    .required(),
+});
+
+const listHistoricalSubmissionSchema = Joi.object({
+  account_rid: Joi.string().required(),
+  case_rid: Joi.string().required(),
+  page: Joi.string().optional().pattern(/^[0-9]+$/),
+  limit: Joi.string().optional().pattern(/^[0-9]+$/),
+  filters: Joi.string().default("{}"),
+  sortBy: Joi.string().optional(),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("ASC"),
+});
+
 const createCaseTeamSchema = Joi.object({
   account_rid: Joi.string().required(),
   case_rid: Joi.string().required(),
@@ -462,5 +495,7 @@ export {
   createTaskSchema,
   updateTaskSchema,
   createEmailTemplateSchema,
-  updateEmailTemplateSchema
+  updateEmailTemplateSchema,
+  listHistoricalSubmissionSchema,
+  createHistoricalSubmissionSchema
 };
