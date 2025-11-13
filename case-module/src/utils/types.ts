@@ -539,3 +539,16 @@ export type CommentsListType = {
   case_rid : string
   task_rid : string
 }
+
+export type ActivityType = {
+  rid : string
+  r_number : string
+  case_rid : string
+  created_by : string
+  created_datetime : Date
+  attribute_name : string
+  old_value : string
+  new_value : string
+  task_rid : string,
+  total_result : string
+}

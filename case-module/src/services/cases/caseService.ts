@@ -6,6 +6,7 @@ import { CaseModelService } from "../caseModelsService";
 import CaseSchemaService from "./schemaService";
 import {
   AccountType,
+  ActivityType,
   AddCommentsType,
   CaseOwnerType,
   CaseStatusType,
@@ -33,7 +34,7 @@ import { query } from "express";
 import currency from "currency.js";
 import moment from "moment";
 import { CaseManagementSchemaService } from "../casesManagement/schemaService";
-import { fetchTaskComments } from "../../utils/rawQueries";
+import { fetchTaskActivities, fetchTaskComments } from "../../utils/rawQueries";
 export class CaseService {
   private caseSchemaService: CaseSchemaService;
   private caseModelService: CaseModelService; // Assuming this is defined somewhere in your code
@@ -2009,7 +2010,6 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
     async createOrMapTags (data : any) {
       const mainDb = await this.getMainDb();
       const dbInit = await this.caseModelService.getSequelize();
-      const transaction = await dbInit.transaction();
       const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
       const getActiveStatusId : any = await mainDb.query(rawQueries.getActiveStatusId());
       const result = await this.caseSchemaService.createOrUpdateTags(data.task_rid, data.account_rid,
@@ -2089,12 +2089,12 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
         };;
       }
     }
-    async updateComments (data : UpdateCommentsType, userId : string) {
+    async updateComments (data : UpdateCommentsType, userId : string, files? : Express.Multer.File[]) {
       const mainDb = await this.getMainDb();
       const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
       data.modified_by = userId
       const fetchTaskDetails = await this.caseSchemaService.findTaskById(data.task_rid, fetchParent[0][0].r_number);
-      const result = await this.caseSchemaService.updateComments(data, fetchParent[0][0].r_number, fetchTaskDetails?.r_number!);
+      const result = await this.caseSchemaService.updateComments(data, fetchParent[0][0].r_number, fetchTaskDetails?.r_number!, files);
       if(result?.statusCode === HttpStatus.SUCCESS) {
         return {
           statusCode : result.statusCode,
@@ -2132,16 +2132,24 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       let schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number);
       
       const result : any = await orgDb.query(fetchTaskComments(data.task_rid, data.account_rid, data.case_rid, schemaName));
-      if(result[0].length > 0) {
-        let finalData = await Promise.all(result[0][0].comments.map((d : any) => d.comments_attachments == null ? [] : d.comments_attachments.map(async (da : any) => {
-          return {
-            ...da,
-            browse_file : da.browse_file ? await generateSasUrl(da.browse_file) : null
-          }
-        })))
+      if(result[0][0].comments !== null) {
+        const finalData = await Promise.all(
+        (result[0][0].comments || []).map(async (d: any) => {
+            const updatedAttachments = await Promise.all(
+              (d.comments_attachments || []).map(async (da: any) => ({
+                ...da,
+                browse_file: da.browse_file ? await generateSasUrl(da.browse_file) : null,
+              }))
+            );
+            return {
+              ...d,
+              comments_attachments: updatedAttachments,
+            };
+          })
+        );
         return {
           statusCode : HttpStatus.SUCCESS,
-          data : result[0][0].comments
+          data : finalData
         }
       } else {
         return {
@@ -2149,5 +2157,71 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
           data : []
         }
       }
+    }
+
+    async addTaskLevelAttachment (data : any, userId : string, files : Express.Multer.File[]) {
+      const mainDb = await this.getMainDb();
+      const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+      const result = await this.caseSchemaService.addAttachmentForTask(data, fetchParent[0][0].r_number, files, userId);
+      return result;
+    }
+
+    async deleteTaskLevelAttachment (data : any, userId : string) {
+      const mainDb = await this.getMainDb();
+      const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+      const result = await this.caseSchemaService.deleteAttachment(fetchParent[0][0].r_number,data, userId);
+      return result;
+    }
+
+    async listTaskLevelAttachment (data : any) {
+      const mainDb = await this.getMainDb();
+      const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+      const result = await this.caseSchemaService.listTaskLevelAttachments(fetchParent[0][0].r_number, data);
+      return result;
+    }
+
+    async fetchAllTaskActivities (data : any) {
+      const mainDb = await this.getMainDb();
+      const orgDb = await this.getOrgDb();
+
+      const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+      let schemaName = rawQueries.fetchSchemaName(fetchParent[0][0].r_number);
+
+      const result = await orgDb.query<ActivityType>(fetchTaskActivities(data.page, data.limit, schemaName, data.case_rid, data.task_rid), {type : QueryTypes.SELECT});
+      if(result.length > 0) {
+        const userIds = [...new Set(result.map((d : any) => d.created_by))];
+        const findUsers : any = await mainDb.query(rawQueries.getOwnerDetails(userIds));
+        const mapUser : Map<string, string> = new Map(findUsers[0].map((d : any) => [d.rid, d.name]));
+        const total = parseInt(result[0]!.total_result)
+        const structuredResult = result.map((d : any) => {
+          delete d.total_result
+          return {
+            ...d,
+            created_by_name : mapUser.get(d.created_by) || null
+          }
+        })
+        const finalData = {
+          page : data.page,
+          limit : data.limit,
+          total_result : total,
+          data : structuredResult
+        }
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          data : finalData
+        }
+      } else {
+        const finalData = {
+          page : data.page,
+          limit : data.limit,
+          total_result : 0,
+          data : []
+        }
+        return {
+          statusCode : HttpStatus.NOT_FOUND,
+          data : finalData
+        }
+      }
+
     }
 }

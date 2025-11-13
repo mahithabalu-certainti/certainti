@@ -2,7 +2,7 @@ import { CaseTask } from "../../models/caseTaskModel";
 import { Tags } from "../../models/tagsModel";
 import { TaskComments } from "../../models/taskCommentsModel";
 import { TaskTag } from "../../models/taskTagsModel";
-import { AddCommentsType, AdminTaskTemplatePayloadType, CaseTaskQueryType, CreateCaseTaskType, CreateTaskTemplateType, ICreateCases, ICreateCaseTeam, ICreateChecklist, ICreateChecklistTemplate, ICreateEmailTemplate, MilestoneResponse, UpdateCaseTaskType, UpdateTaskTemplateType, UpdateCommentsType, DeleteCommentsType, CommentsListType } from "../../utils/types";
+import { AddCommentsType, AdminTaskTemplatePayloadType, CaseTaskQueryType, CreateCaseTaskType, CreateTaskTemplateType, ICreateCases, ICreateCaseTeam, ICreateChecklist, ICreateChecklistTemplate, ICreateEmailTemplate, MilestoneResponse, UpdateCaseTaskType, UpdateTaskTemplateType, UpdateCommentsType, DeleteCommentsType, CommentsListType, ActivityType } from "../../utils/types";
 
 export interface ICaseService {
   createCase(
@@ -202,7 +202,7 @@ exportTask(data : any, userId : string) : Promise<{
     statusCode: number;
     data: null;
 }>
-updateComments(data : UpdateCommentsType, userId : string) : Promise<{
+updateComments(data : UpdateCommentsType, userId : string, files? : Express.Multer.File[]) : Promise<{
     statusCode: number;
     statusMessage: string;
 }>
@@ -211,6 +211,28 @@ deleteComments(data : DeleteCommentsType, userId : string) : Promise<{
     statusMessage: string;
 }>
 fetchTaskComment(data : CommentsListType) : Promise<any>
+addTaskLevelAttachment (data : any, userId : string, files : Express.Multer.File[]) : Promise<{
+    statusCode: number;
+    statusMessage: string;
+}>
+deleteTaskLevelAttachment (data : any, userId : string) : Promise<{
+    statusCode: number;
+    statusMessage: string;
+}>
+listTaskLevelAttachment (data : any) : Promise<{
+    statusCode: number;
+    statusCodeValue: string;
+    data: any[];
+}>
+fetchAllTaskActivities (data : any) : Promise<{
+    statusCode: number;
+    data: {
+        page: any;
+        limit: any;
+        total_result: number;
+        data: any[];
+    };
+}>
 }
 
 export interface ICaseManagementService {
@@ -246,6 +268,17 @@ export interface ICaseManagementService {
     message: string;
     errorMessage?: string;
     data?: { placeHolders: any };
+  }>;
+  listEmailTemplates(
+    data: any,
+    filters: Record<string, any>,
+    userId: string,
+    apiType: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { emailTemplates: any; count: number };
   }>;
   updateAdminCheckList(
     checklistRequest: ICreateChecklistTemplate,
@@ -283,6 +316,27 @@ export interface ICaseManagementService {
     message: string;
     errorMessage?: string;
     data?: { checklistDetails: any };
+  }>;
+  getEmailTemplateDetailsById(
+    templateRid: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { emailTemplateDetails: any };
+  }>;
+  getEmailCategoryPlaceHolders
+  (categoryRid : string) : Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { placeholders: any };
+  }>;
+  getEmailTemplateCategory() : Promise<{
+    statusCode: number;
+    message: string; 
+    errorMessage?: string;
+    data?: { categories: any };
   }>;
   createTaskTemplate(data : CreateTaskTemplateType, userId : string) :Promise<any>;
   getAllPriority() : Promise<any>

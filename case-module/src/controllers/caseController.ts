@@ -2537,8 +2537,14 @@ async function updateTaskComments (req : Request, res : Response) {
       return;
     }
     const data = req.body;
+    let fileArray : Express.Multer.File[] | [];
+    if(Array.isArray(req.files)) {
+      fileArray = req.files
+    } else {
+      fileArray = []
+    }
     data.deleted_file_ids = JSON.parse(data.deleted_file_ids)
-    const result = await caseService.updateComments(data, userId);
+    const result = await caseService.updateComments(data, userId, fileArray);
     if(result.statusCode === HttpStatus.SUCCESS) {
       return res.status(HttpStatus.SUCCESS).json({
         statusCode: HttpStatus.SUCCESS,
@@ -2685,6 +2691,274 @@ async function fetchTaskCommentsList (req : Request, res : Response) {
     );
   }
 }
+
+/**
+ * Controller function to handle adding attachments to a specific task.
+ *
+ * This async function processes HTTP requests that upload and associate one or more files with a case task by:
+ * - Validating that a valid user ID is present in the request headers
+ * - Extracting file(s) from the `req.files` object (handled via Multer middleware)
+ * - Extracting task-related metadata from the request body
+ * - Delegating the upload and association logic to the `caseService.addTaskLevelAttachment` method
+ * - Returning a success or failure response based on the result of the service operation
+ *
+ * File handling:
+ * - Supports multiple file uploads via `upload.array()` in the route definition
+ * - Ensures a fallback to an empty array if no files are uploaded
+ *
+ * Error handling:
+ * - Returns a `BAD_REQUEST` response if the user ID is missing
+ * - Returns a `FAILED` response if attachment upload or mapping fails
+ * - Catches and handles runtime or service-level errors gracefully
+ *
+ * @param {Request} req - Express request object containing task details, uploaded files, and user ID in headers
+ * @param {Response} res - Express response object used to send the upload result or error message
+ * @returns {Promise<void>} - Resolves after sending the HTTP response
+ * @throws {Error} - Captures and logs any validation, upload, or runtime errors
+ */
+async function addTaskAttachments (req : Request, res : Response) {
+  const methodName = "addTaskAttachments"
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const data = req.body;
+    let fileArray : Express.Multer.File[] | [];
+    if(Array.isArray(req.files)) {
+      fileArray = req.files
+    } else {
+      fileArray = []
+    }
+    const result = await caseService.addTaskLevelAttachment(data, userId, fileArray);
+    if(result.statusCode == HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.statusMessage,
+      });
+    } else {
+      return res.status(HttpStatus.FAILED).json({
+        statusCode: HttpStatus.FAILED,
+        statusCodeValue: HttpStatus.FAILED_MESSAGE,
+        statusMessage: result.statusMessage,
+      });
+    }
+  } catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
+/**
+ * Controller function to handle deleting attachments from a specific task.
+ *
+ * This async function processes HTTP DELETE requests to remove one or more attachments linked to a case task by:
+ * - Validating that a valid user ID is provided in the request headers
+ * - Extracting task and attachment identifiers from the request body
+ * - Delegating the deletion logic to the `caseService.deleteTaskLevelAttachment` method
+ * - Returning an appropriate HTTP response based on whether the deletion succeeded, failed, or if the attachment was not found
+ *
+ * Error handling:
+ * - Returns a `BAD_REQUEST` response if the user ID is missing
+ * - Returns a `FAILED` response if the deletion operation encounters errors
+ * - Gracefully handles `NOT_FOUND` scenarios where no attachments match the provided identifiers
+ * - Catches and handles unexpected runtime or service-level errors
+ *
+ * @param {Request} req - Express request object containing attachment and task identifiers, and user ID in headers
+ * @param {Response} res - Express response object used to send the deletion result or error message
+ * @returns {Promise<void>} - Resolves after sending the HTTP response
+ * @throws {Error} - Captures and logs any validation or runtime errors
+ */
+async function deleteTaskAttachments (req : Request, res : Response) {
+  const methodName = "deleteTaskAttachments"
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const data = req.body;
+    const result = await caseService.deleteTaskLevelAttachment(data, userId);
+    if(result.statusCode == HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.statusMessage,
+      });
+    } 
+    else if(result.statusCode === HttpStatus.NOT_FOUND) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: result.statusMessage,
+      });
+    }
+    else {
+      return res.status(HttpStatus.FAILED).json({
+        statusCode: HttpStatus.FAILED,
+        statusCodeValue: HttpStatus.FAILED_MESSAGE,
+        statusMessage: result.statusMessage,
+      });
+    }
+  } catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
+/**
+ * Controller function to handle fetching the list of attachments for a specific task.
+ *
+ * This async function processes HTTP requests to retrieve all attachments linked to a particular case task by:
+ * - Validating that a valid user ID is provided in the request headers
+ * - Extracting the necessary identifiers from the request body
+ * - Invoking the `caseService.listTaskLevelAttachment` method to fetch attachments from the database
+ * - Returning the list of attachments with appropriate HTTP status and messages
+ *
+ * Response handling:
+ * - Returns `SUCCESS` with the list of attachments when found
+ * - Returns `SUCCESS` with an `attachmentNotFound` message when no attachments exist for the given task
+ *
+ * Error handling:
+ * - Returns a `BAD_REQUEST` response if the user ID is missing in the headers
+ * - Returns a `FAILED` response in case of service or runtime errors
+ *
+ * @param {Request} req - Express request object containing task identifiers in the body and user ID in headers
+ * @param {Response} res - Express response object used to return the attachment list or error message
+ * @returns {Promise<void>} - Resolves after sending the HTTP response
+ * @throws {Error} - Captures and logs any runtime or validation errors
+ */
+async function listTaskAttachments (req : Request, res : Response) {
+  const methodName = "listTaskAttachments"
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const data = req.body;
+    const result = await caseService.listTaskLevelAttachment(data);
+    if(result.statusCode == HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.attachementTaskListSuccess,
+        data : result.data
+      });
+    } 
+    else {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.attachmentNotFound,
+        data : result.data
+      });
+    }
+  } catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
+/**
+ * Controller function to fetch all activity logs related to a specific task.
+ *
+ * This asynchronous function handles incoming requests to retrieve the complete activity history
+ * of a case task (e.g., updates, comments, attachments, and other events).  
+ * It validates user authentication, delegates the data retrieval to the service layer, and 
+ * returns an appropriate structured response.
+ *
+ * Workflow:
+ * 1. Validates that `x-user-id` is present in the request headers.
+ * 2. Extracts task-related identifiers or filters from the request body.
+ * 3. Invokes `caseService.fetchAllTaskActivities` to fetch task activity details.
+ * 4. Responds with:
+ *    - `SUCCESS` and `activitiesFetchedSuccess` when data is found.
+ *    - `SUCCESS` and `dataNotAvailable` when no activity data exists.
+ *
+ * Error handling:
+ * - Returns `BAD_REQUEST` if the user ID header is missing.
+ * - Returns `FAILED` if an exception occurs during processing.
+ *
+ * @param {Request} req - Express request object containing user ID in headers and task filter details in the body.
+ * @param {Response} res - Express response object used to return task activity data or error messages.
+ * @returns {Promise<void>} - Resolves when the response has been sent.
+ * @throws {Error} - Logs and handles unexpected runtime or service-layer errors.
+ */
+async function fetchTaskActivity (req : Request, res : Response) {
+  const methodName = "fetchTaskActivity"
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const data = req.body;
+    const result = await caseService.fetchAllTaskActivities(data);
+    if(result.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.activitiesFetchedSuccess,
+        data : result.data
+      });
+    } else {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.dataNotAvailable,
+        data : result.data
+      });
+    }
+
+  }
+  catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
 export default {
   createCases,
   updateCases,
@@ -2721,5 +2995,9 @@ export default {
   exportCaseTask,
   updateTaskComments,
   deleteTaskComments,
-  fetchTaskCommentsList
+  fetchTaskCommentsList,
+  addTaskAttachments,
+  deleteTaskAttachments,
+  listTaskAttachments,
+  fetchTaskActivity
 };
