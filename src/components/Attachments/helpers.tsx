@@ -184,7 +184,8 @@ export const getAttachmentTableColumns = (
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
   isAttachmentExportEnable?: boolean,
   typeLoading?: boolean,
-  accountOrProjectInActive?: boolean
+  accountOrProjectInActive?: boolean,
+  isFromGlobal?: boolean
 ): ListTableColumn<AttachmentList>[] => [
   {
     id: 'document_name',
@@ -247,15 +248,16 @@ export const getAttachmentTableColumns = (
     conditionallyEdit: [
       {
         key: 'attachment_level',
-        matchValue: [
-          'account',
-          'project_resource',
-          'project_task',
-          'resource',
-          'resource_cost',
-          'resource_skill',
-        ],
+        matchValue: ['account', 'resource', 'resource_cost', 'resource_skill'],
       },
+      ...(isFromGlobal
+        ? [
+            {
+              key: 'status_name' as keyof AttachmentList,
+              matchValue: ['Active'],
+            },
+          ]
+        : []),
     ],
   },
   {
@@ -272,6 +274,9 @@ export const getAttachmentTableColumns = (
     hide:
       !permissionMap?.['document_category_rid']?.edit &&
       !permissionMap?.['document_category_rid']?.read,
+    ...(isFromGlobal
+      ? { conditionallyEdit: [{ key: 'status_name', matchValue: ['Active'] }] }
+      : {}),
     render: (row: AttachmentList) =>
       row.document_category_others
         ? `${row.document_category} - ${row.document_category_others}`
@@ -388,6 +393,9 @@ export const getAttachmentTableColumns = (
     hide:
       !permissionMap?.['document_type_rid']?.edit &&
       !permissionMap?.['document_type_rid']?.read,
+    ...(isFromGlobal
+      ? { conditionallyEdit: [{ key: 'status_name', matchValue: ['Active'] }] }
+      : {}),
     render: (row: AttachmentList) =>
       row.document_type_others
         ? `${row.document_type} - ${row.document_type_others}`

@@ -11,7 +11,6 @@ import { PageHeader, SideMenuPanel } from '../../../../components';
 import {
   // ActivitiesIcon,
   AttachmentsSideIcon,
-  CasesIcon,
   ChecklistIcon,
   DetailsIcon,
   FinancialIcon,
@@ -23,6 +22,7 @@ import {
   SettingIcon,
   TechSummaryIcon,
   ConfigIcon,
+  ActivitiesIcon,
 } from '../../../../assets';
 import { useProjectDetail, ProjectTriggerAI } from '../../../services/project';
 import {
@@ -36,6 +36,7 @@ import {
   ProjectTriggerAIPayload,
 } from '../../../types/project';
 import {
+  ChecklistListExportParams,
   ExportType,
   FiscalDates,
   FormFiscalDateType,
@@ -82,6 +83,9 @@ import { useMutation } from '@apollo/client';
 import { ProjectQreAdjustmentResponse } from '../utils';
 import { Notes } from './notes';
 import { ExportNotesList } from '../../../services/notes/notes-service';
+import { QrePercentHistory } from './qre-percent-history';
+import { ExportChecklistList } from '../../../services/checklist/checklist-service';
+import { Checklist } from './checklist';
 
 export const ProjectDetails = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -145,6 +149,13 @@ export const ProjectDetails = () => {
     filters: {},
   });
 
+  const [checklistParams, setChecklistParams] =
+    useState<ChecklistListExportParams>({
+      sortBy: 'r_number',
+      sortOrder: 'ASC',
+      filters: {},
+    });
+
   const [fiscalDate, setFiscalDate] = useState<FormFiscalDateType>({
     year: 0,
   });
@@ -195,6 +206,7 @@ export const ProjectDetails = () => {
   const interactionsView = !!interactionId || !!interactionRID;
   const technicalSummaryId = searchParams.get('technical_summary_id');
   const noteView = searchParams.get('note_id');
+  const checklistView = searchParams.get('checklist_id');
 
   const { data, isLoading, isError, refetch, isPending } = useProjectDetail(
     accountID,
@@ -298,6 +310,11 @@ export const ProjectDetails = () => {
     AllPermissions.NOTES_EXPORT
   );
 
+  const isChecklistsExportEnable = checkPermission(
+    permission,
+    AllPermissions.CHECKLIST_EXPORT
+  );
+
   const checkExport = () => {
     const list = searchParams.get('list');
     const tab = searchParams.get('tab');
@@ -311,6 +328,8 @@ export const ProjectDetails = () => {
       return !isAttachmentExportEnable;
     } else if (list === 'notes' && !noteView) {
       return !isNotesExportEnable;
+    } else if (list === 'checklist' && !checklistView) {
+      return !isChecklistsExportEnable;
     } else if (list === 'projectsTask') {
       return !isTaskExportViewEnable;
     } else if (list === 'financial' && tab === 'resource_cost') {
@@ -343,6 +362,7 @@ export const ProjectDetails = () => {
     if (
       list !== 'attachments' &&
       list !== 'notes' &&
+      list !== 'checklist' &&
       list !== 'financial' &&
       list !== 'projectResources' &&
       list !== 'projectsTask' &&
@@ -374,6 +394,19 @@ export const ProjectDetails = () => {
       ExportNotesList('notes', {
         ...notesParams,
         ...notePayload,
+      });
+      return;
+    }
+
+    if (list === 'checklist' && exportType === 'checklist') {
+      const checklistPayload = {
+        accountRid: accountID,
+        entityId: projectID,
+        attachmentLevel: 'project',
+      };
+      ExportChecklistList('checklist', {
+        ...checklistParams,
+        ...checklistPayload,
       });
       return;
     }
@@ -583,6 +616,7 @@ export const ProjectDetails = () => {
             setExportType={setExportType}
             setAttachmentParams={setProjectResourceParams}
             projectCode={projectData?.project_code}
+            projectFiscalYear={projectData?.fiscal_year}
           />
         );
       case 'projectsTask':
@@ -599,9 +633,17 @@ export const ProjectDetails = () => {
             setExportType={setExportType}
             setProjectTaskParams={setProjectTaskParams}
             projectCode={projectData?.project_code}
+            projectFiscalYear={projectData?.fiscal_year}
           />
         );
-
+      case 'qre-percent-history':
+        return (
+          <QrePercentHistory
+            refetchAccountDetails={refetch}
+            accountID={accountID}
+            projectID={projectID}
+          />
+        );
       case 'interactions':
         return (
           <Interactions
@@ -620,8 +662,6 @@ export const ProjectDetails = () => {
             setTechnicalSummaryParams={setTechnicalSummaryParams}
           />
         );
-      case 'cases':
-        return <NotFound />;
       case 'activities':
         return <NotFound />;
       case 'notes':
@@ -644,8 +684,16 @@ export const ProjectDetails = () => {
             projectFiscalYear={projectData?.fiscal_year}
           />
         );
-      case 'checklists':
-        return <NotFound />;
+      case 'checklist':
+        return (
+          <Checklist
+            setExportType={setExportType}
+            setChecklistParams={setChecklistParams}
+            accountOrProjectInActive={accountInActive || projectInActive}
+            projectFiscalYear={projectData?.fiscal_year}
+            projectCode={projectData?.project_code}
+          />
+        );
       case 'configuration':
         return <Configuration />;
       default:
@@ -711,13 +759,6 @@ export const ProjectDetails = () => {
         disabled: false,
         icon: TechSummaryIcon,
       },
-      {
-        name: 'Cases',
-        key: 'cases',
-        id: AllMenus.CASES,
-        disabled: false,
-        icon: CasesIcon,
-      },
       // {
       //   name: 'Activities',
       //   key: 'activities',
@@ -725,6 +766,13 @@ export const ProjectDetails = () => {
       //   disabled: false,
       //   icon: ActivitiesIcon,
       // },
+      {
+        name: 'QRE Percent History',
+        key: 'qre-percent-history',
+        id: AllModules.ACTIVITIES,
+        disabled: false,
+        icon: ActivitiesIcon,
+      },
       {
         name: 'Notes',
         key: 'notes',
@@ -741,7 +789,7 @@ export const ProjectDetails = () => {
       },
       {
         name: 'Checklists',
-        key: 'checklists',
+        key: 'checklist',
         id: AllMenus.CHECKLISTS,
         disabled: false,
         icon: ChecklistIcon,

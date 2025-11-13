@@ -195,6 +195,12 @@ export const getProjectColumns = (
       placeholder: '',
       options: fiscalYears,
     },
+    conditionallyEdit: [
+      {
+        key: 'is_project_exists' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'classification_name',

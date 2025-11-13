@@ -15,6 +15,7 @@ import {
   useUpdateProjectResourceStatus,
 } from '../../../../services/project-resources/project-resource-service';
 import {
+  CHECKLIST_CREATE,
   NOTES_CREATE,
   PROJECT_RESOURCE_CREATE,
   PROJECT_RESOURCE_EDIT,
@@ -58,6 +59,11 @@ import { useFetchState } from '../../../../services/account';
 import { AttachmentsListExportParams } from '../../../../types/attachment';
 import Uploads from '../../../../../components/Attachments/upload';
 
+enum ActionEnum {
+  ACCEPT = 'accept',
+  REJECT = 'reject',
+}
+
 const BUTTON_STYLES = {
   height: '24px !important',
   fontSize: '13px',
@@ -85,6 +91,7 @@ export const ProjectResources = ({
   setAttachmentParams,
   projectCode,
   accountOrProjectInActive,
+  projectFiscalYear,
 }: {
   projectID?: string;
   accountData?: {
@@ -99,6 +106,7 @@ export const ProjectResources = ({
   >;
   projectCode?: string;
   accountOrProjectInActive?: boolean;
+  projectFiscalYear?: number | string;
 }) => {
   const { errorToast } = useToast();
   const [showFilter, setShowFilter] = useState<boolean>(false);
@@ -122,7 +130,7 @@ export const ProjectResources = ({
   const [currentCountry, setCurrentCountry] = useState<string>('');
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
-
+  const [actionFlag, setActionFlag] = useState<null | ActionEnum>(null);
   const isModalOpen = Boolean(columnAnchorEl);
   const handleColumnVisibility = (
     event: React.MouseEvent<HTMLButtonElement>
@@ -398,6 +406,11 @@ export const ProjectResources = ({
     AllPermissions.NOTES_CREATE
   );
 
+  const isChecklistCreateEnable = checkPermission(
+    permission,
+    AllPermissions.CHECKLIST_CREATE
+  );
+
   const handleOpen = () => {
     const newParams = new URLSearchParams(searchParams);
     newParams.set('attachment_entity', 'project_resource');
@@ -424,12 +437,29 @@ export const ProjectResources = ({
   const handleCreateNote = () => {
     const projectResourceId = searchParams.get('pro_res_id');
     const path = generatePath(NOTES_CREATE, {
-      module: 'account',
+      module: 'project',
     });
     const queryParams = new URLSearchParams({
       accountId: accountID,
       entityLevel: 'project_resource',
       entityId: projectResourceId || '',
+      projectFiscalYear: projectFiscalYear?.toString() || '',
+      source: `Project Resource > ${resourceData?.r_number}`,
+      ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
+    });
+    navigate(`${path}?${queryParams.toString()}`);
+  };
+
+  const handleCreateChecklist = () => {
+    const projectResourceId = searchParams.get('pro_res_id');
+    const path = generatePath(CHECKLIST_CREATE, {
+      module: 'project',
+    });
+    const queryParams = new URLSearchParams({
+      accountId: accountID,
+      entityLevel: 'project_resource',
+      entityId: projectResourceId || '',
+      projectFiscalYear: projectFiscalYear?.toString() || '',
       source: `Project Resource > ${resourceData?.r_number}`,
       ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
     });
@@ -456,6 +486,14 @@ export const ProjectResources = ({
       disabled: accountOrProjectInActive,
       sx: { ...BUTTON_STYLES, width: '80px', minWidth: '80px' },
       hide: !viewDetails || !isNoteCreateEnable,
+    },
+    {
+      label: 'Add Checklist',
+      variant: 'outlined' as const,
+      onClick: () => handleCreateChecklist(),
+      disabled: accountOrProjectInActive,
+      sx: { ...BUTTON_STYLES, width: '105px', minWidth: '105px' },
+      hide: !viewDetails || !isChecklistCreateEnable,
     },
     {
       label: viewDetails ? 'Edit' : 'New',
@@ -659,6 +697,7 @@ export const ProjectResources = ({
     .map((id) => projectResourcesColumns.find((col) => col.id === id)!)
     .filter((col) => columnVisibility[col.id]);
   const handleAccept = (row: ProjectResourcesListType) => {
+    setActionFlag(ActionEnum.ACCEPT);
     const payload = {
       rid: row?.rid || '',
       accountId: accountData?.accountID || '',
@@ -670,11 +709,13 @@ export const ProjectResources = ({
       onSuccess: (data) => {
         successToast(data?.statusMessage || 'Status updated successfully');
         refetch();
+        setActionFlag(null);
       },
     });
   };
 
   const handleReject = (row: ProjectResourcesListType) => {
+    setActionFlag(ActionEnum.REJECT);
     const payload = {
       rid: row?.rid || '',
       accountId: accountData?.accountID || '',
@@ -686,6 +727,7 @@ export const ProjectResources = ({
       onSuccess: (data) => {
         successToast(data?.statusMessage || 'Status updated successfully');
         refetch();
+        setActionFlag(null);
       },
     });
   };
@@ -711,15 +753,21 @@ export const ProjectResources = ({
         label: statusLabel ? `Accept ${statusLabel}` : 'Accept',
         onClick: handleAccept,
         icon: AcceptIcon,
+        loading:
+          actionFlag === ActionEnum.ACCEPT && updateStatusAccept.isPending,
+        disabled: updateStatusAccept.isPending,
         className:
-          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer h-[24px] bg-[#3EA72F1A] hover:bg-[#3EA72F] hover:text-[#fff]',
+          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer h-[24px] bg-[#3EA72F1A] hover:bg-[#3EA72F] hover:text-[#fff] min-w-[140px] max-w-[140px] disabled:opacity-60 disabled:cursor-default',
       },
       {
         label: statusLabel ? `Reject ${statusLabel}` : 'Reject',
         onClick: handleReject,
         icon: RejectIcon,
+        loading:
+          actionFlag === ActionEnum.REJECT && updateStatusAccept.isPending,
+        disabled: updateStatusAccept.isPending,
         className:
-          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer h-[24px] bg-[#FF3C031A] hover:bg-[#FF3C03] hover:text-[#fff]',
+          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer h-[24px] bg-[#FF3C031A] hover:bg-[#FF3C03] hover:text-[#fff]min-w-[140px] max-w-[140px] disabled:opacity-60 disabled:cursor-default',
       },
     ];
   };
@@ -756,6 +804,7 @@ export const ProjectResources = ({
             accountId={accountID}
             attachID={resID}
             onUploadSuccess={handleDetailReFetch}
+            projectFiscalYear={projectFiscalYear}
           />
         ) : (
           <>

@@ -77,7 +77,7 @@ const ListTable = <T extends RowData>({
   conditionMenuItems,
   // State
   loading = false,
-  loadindRowCount,
+  loadingRowCount,
   error,
   // Pagination
   rowsPerPageOptions = [5, 10, 25, 50, 100],
@@ -990,20 +990,24 @@ const ListTable = <T extends RowData>({
                       ...(typeof column.sx === 'function'
                         ? filterOutBackground(column.sx())
                         : column.sx || {}),
-                      left:
-                        selectable &&
-                        actionMenuItems?.length > 0 &&
-                        isAvailableAction
-                          ? '82px'
-                          : selectable &&
-                              actionMenuItems?.length &&
-                              !isAvailableAction
-                            ? '32px'
-                            : !selectable &&
-                                actionMenuItems?.length > 0 &&
-                                isAvailableAction
-                              ? '50px'
-                              : '0px',
+                      ...(column.sticky
+                        ? {
+                            left:
+                              selectable &&
+                              actionMenuItems?.length > 0 &&
+                              isAvailableAction
+                                ? '82px'
+                                : selectable &&
+                                    actionMenuItems?.length &&
+                                    !isAvailableAction
+                                  ? '32px'
+                                  : !selectable &&
+                                      actionMenuItems?.length > 0 &&
+                                      isAvailableAction
+                                    ? '50px'
+                                    : '0px',
+                          }
+                        : {}),
                     }}
                   />
                 ) : (
@@ -1017,20 +1021,24 @@ const ListTable = <T extends RowData>({
                       ...(typeof column.sx === 'function'
                         ? filterOutBackground(column.sx())
                         : column.sx || {}),
-                      left:
-                        selectable &&
-                        actionMenuItems?.length > 0 &&
-                        isAvailableAction
-                          ? '82px'
-                          : selectable &&
-                              actionMenuItems?.length &&
-                              !isAvailableAction
-                            ? '32px'
-                            : !selectable &&
-                                actionMenuItems?.length > 0 &&
-                                isAvailableAction
-                              ? '50px'
-                              : '0px',
+                      ...(column.sticky
+                        ? {
+                            left:
+                              selectable &&
+                              actionMenuItems?.length > 0 &&
+                              isAvailableAction
+                                ? '82px'
+                                : selectable &&
+                                    actionMenuItems?.length &&
+                                    !isAvailableAction
+                                  ? '32px'
+                                  : !selectable &&
+                                      actionMenuItems?.length > 0 &&
+                                      isAvailableAction
+                                    ? '50px'
+                                    : '0px',
+                          }
+                        : {}),
                     }}
                   >
                     {column.label}
@@ -1074,7 +1082,7 @@ const ListTable = <T extends RowData>({
             {loading && (
               <TableSkeleton
                 rowsPerPage={
-                  loadindRowCount ||
+                  loadingRowCount ||
                   (component === 'account'
                     ? 20
                     : rowsPerPage > 20
@@ -1655,20 +1663,28 @@ const ListTable = <T extends RowData>({
                                   <button
                                     key={index}
                                     onClick={() => item.onClick(row)}
-                                    disabled={item.disabled}
+                                    disabled={item.disabled || item.loading}
                                     className={item.className}
                                   >
-                                    {item.icon && (
-                                      <item.icon
-                                        alt='actionIcon'
-                                        style={{
-                                          width: '14px',
-                                          height: '14px',
-                                          ...item.iconStyle,
-                                        }}
-                                      />
+                                    {item.loading ? (
+                                      <span className='w-full  flex items-center justify-center'>
+                                        <CircularProgress size='14px' />
+                                      </span>
+                                    ) : (
+                                      <>
+                                        {item.icon && (
+                                          <item.icon
+                                            alt='actionIcon'
+                                            style={{
+                                              width: '14px',
+                                              height: '14px',
+                                              ...item.iconStyle,
+                                            }}
+                                          />
+                                        )}
+                                        {item.label}
+                                      </>
                                     )}
-                                    {item.label}
                                   </button>
                                 );
                               })}

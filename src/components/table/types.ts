@@ -151,7 +151,7 @@ export type ListTableColumn<T> = {
   field?: TableField;
   conditionallyEdit?: {
     key: keyof T;
-    matchValue: string | number | null | (string | number | null)[];
+    matchValue: string | number | null | (string | number | null)[] | boolean;
   }[];
 };
 
@@ -168,6 +168,7 @@ export interface ConditionMenuItem<T extends RowData> {
   onClick: (row: T) => void;
   hide?: boolean;
   icon?: React.ElementType;
+  loading?: boolean;
   className?: string;
   iconStyle?: React.CSSProperties;
   disabled?: boolean;
@@ -223,7 +224,7 @@ export interface ListTableProps<T extends RowData> {
   conditionMenuItems?: (row: T) => ConditionMenuItem<T>[];
   // State
   loading?: boolean;
-  loadindRowCount?: number;
+  loadingRowCount?: number;
   error?: string;
   // Pagination
   rowsPerPageOptions?: number[];

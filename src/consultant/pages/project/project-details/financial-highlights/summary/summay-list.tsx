@@ -54,6 +54,7 @@ const SummayListTable: React.FC<FinancialSummaryProps> = ({
   >([]);
   const { projectid: projectId } = useParams();
   const [searchParams] = useSearchParams();
+  const projectID = searchParams.get('projectID') || '';
   const accountId = searchParams.get('accountID') || '';
   const fiscalYear = projectDetails?.fiscal_year;
   const currencySymbol = projectDetails?.currency_symbol;
@@ -79,7 +80,7 @@ const SummayListTable: React.FC<FinancialSummaryProps> = ({
 
   const { data, isLoading, isError } = useProjectFinancialSummary({
     account_rid: accountId,
-    project_fiscal_rid: projectId || '',
+    project_fiscal_rid: projectId || projectID || '',
     fiscal_year: fiscalYear,
   });
 
@@ -154,7 +155,7 @@ const SummayListTable: React.FC<FinancialSummaryProps> = ({
         variables: {
           data: {
             account_rid: accountId,
-            rid: projectId,
+            rid: projectId || projectID || '',
             rd_percent_potential_ai: newValueNum,
           },
         },
@@ -229,7 +230,7 @@ const SummayListTable: React.FC<FinancialSummaryProps> = ({
           loading={isLoading || !fiscalYear}
           error={isError ? 'Failed to load data' : undefined}
           showEmptyRow={false}
-          loadindRowCount={1}
+          loadingRowCount={1}
         />
       </div>
       <div className={hideDetailedMetric ? 'hidden' : 'block'}>
@@ -252,7 +253,7 @@ const SummayListTable: React.FC<FinancialSummaryProps> = ({
           loading={isLoading || !fiscalYear}
           error={isError ? 'Failed to load data' : undefined}
           showEmptyRow={false}
-          loadindRowCount={5}
+          loadingRowCount={5}
         />
       </div>
       <div className={hideClaimJurisdiction ? 'hidden' : 'block'}>
@@ -275,7 +276,7 @@ const SummayListTable: React.FC<FinancialSummaryProps> = ({
           loading={isLoading || !fiscalYear}
           error={isError ? 'Failed to load data' : undefined}
           showEmptyRow={false}
-          loadindRowCount={3}
+          loadingRowCount={3}
         />
       </div>
       <div className={hideRdPercent ? 'hidden' : 'block'}>
@@ -298,7 +299,7 @@ const SummayListTable: React.FC<FinancialSummaryProps> = ({
           loading={isLoading || !fiscalYear}
           error={isError ? 'Failed to load data' : undefined}
           showEmptyRow={false}
-          loadindRowCount={1}
+          loadingRowCount={1}
           onCellEdit={handleRdPercentCellEdit}
         />
       </div>
@@ -324,7 +325,7 @@ const SummayListTable: React.FC<FinancialSummaryProps> = ({
           loading={isLoading || !fiscalYear}
           error={isError ? 'Failed to load data' : undefined}
           showEmptyRow={false}
-          loadindRowCount={1}
+          loadingRowCount={1}
         />
       </div>
       <div className={hideRdCreditsColumns ? 'hidden' : 'block'}>
@@ -349,7 +350,7 @@ const SummayListTable: React.FC<FinancialSummaryProps> = ({
           loading={isLoading || !fiscalYear}
           error={isError ? 'Failed to load data' : undefined}
           showEmptyRow={false}
-          loadindRowCount={1}
+          loadingRowCount={1}
         />
       </div>
       <div className={`${hideClaimStatus ? 'hidden' : 'block'}`}>

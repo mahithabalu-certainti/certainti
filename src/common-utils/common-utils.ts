@@ -48,6 +48,7 @@ export const createTextField = (
     anyOneRequired?: boolean;
     hide?: boolean;
     defaultValue?: string;
+    prefixValue?: string;
     errorHandling?: ErrorHandling[];
     resetDependsFields?: string[];
     clearValue?: Record<string, string>;
@@ -80,6 +81,7 @@ export const createTextField = (
   defaultValue: options.defaultValue,
   resetDependsFields: options.resetDependsFields,
   formatCostValue: options.formatCostValue,
+  prefixValue: options.prefixValue,
 });
 
 export const createPhoneInputField = (
@@ -133,6 +135,8 @@ export const createCheckboxField = (
     required?: boolean;
     checkboxOptions: SelectOption[];
     defaultValue?: string;
+    onChange?: boolean;
+    resetDependsFields?: string[];
   }
 ): FieldType => ({
   type: 'checkbox',
@@ -141,6 +145,8 @@ export const createCheckboxField = (
   required: options.required ?? false,
   options: options.checkboxOptions,
   defaultValue: options.defaultValue,
+  onChange: options.onChange,
+  resetDependsFields: options.resetDependsFields,
 });
 
 export const createRadioField = (
@@ -229,6 +235,7 @@ export const createSelectField = (
     required: boolean;
     width?: string;
     placeholder?: string;
+    requiredErrorMessage?: string;
     disabled?: boolean;
     clearValue?: Record<string, string>;
     onChange?: boolean;
@@ -249,6 +256,7 @@ export const createSelectField = (
   width: others.width,
   disabled: others.disabled,
   placeholder: others.placeholder,
+  requiredErrorMessage: others.requiredErrorMessage,
   clearValue: others.clearValue,
   onChange: others.onChange,
   isLoading: others.isLoading,
@@ -258,6 +266,44 @@ export const createSelectField = (
   assignDefaultValue: others.assignDefaultValue,
   dependantLabel: others.dependantLabel,
   isFiscalYear: others.isFiscalYear,
+});
+export const createMultiSelectField = (
+  name: string,
+  label: string,
+  others: {
+    options: SelectOption[];
+    required: boolean;
+    width?: string;
+    placeholder?: string;
+    requiredErrorMessage?: string;
+    disabled?: boolean;
+    clearValue?: Record<string, string>;
+    onChange?: boolean;
+    isLoading?: boolean;
+    hide?: boolean;
+    resetDependsFields?: string[];
+    defaultValue?: string;
+    assignDefaultValue?: boolean;
+    dependantLabel?: string;
+  }
+): FieldType => ({
+  type: 'multiSelect',
+  name,
+  label,
+  required: others.required,
+  options: others.options,
+  width: others.width,
+  disabled: others.disabled,
+  placeholder: others.placeholder,
+  requiredErrorMessage: others.requiredErrorMessage,
+  clearValue: others.clearValue,
+  onChange: others.onChange,
+  isLoading: others.isLoading,
+  hide: others.hide,
+  defaultValue: others.defaultValue,
+  resetDependsFields: others.resetDependsFields,
+  assignDefaultValue: others.assignDefaultValue,
+  dependantLabel: others.dependantLabel,
 });
 
 export const createAutoCompleteField = (
@@ -356,8 +402,10 @@ export const createDateField = (
     disabled?: boolean;
     hide?: boolean;
     disableFutureDates?: boolean;
+    resetDependsFields?: string[];
     minDate?: Date;
     maxDate?: Date;
+    onChange?: boolean;
     endDateValue?: boolean;
     startDateLabel?: string;
     endDateLabel?: string;
@@ -377,6 +425,7 @@ export const createDateField = (
   maxDate: others.maxDate,
   disabled: others.disabled,
   hide: others.hide,
+  onChange: others.onChange,
   disableFutureDates: others.disableFutureDates,
   greaterThan: others.greaterThan,
   dateRangeError: others.dateRangeError,
@@ -386,6 +435,7 @@ export const createDateField = (
   endDateLabel: others.endDateLabel,
   errorMessage: others.errorMessage,
   clearDate: others.clearDate,
+  resetDependsFields: others.resetDependsFields,
 });
 
 export const createFiscalDateField = (

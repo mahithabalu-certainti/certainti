@@ -42,10 +42,10 @@ export const getProjectResourcesColumns = (
     sortId: 'resource_code',
     width: '160px',
     sticky: true,
-    editable:
-      permissionMap?.['resource_code']?.read &&
-      permissionMap?.['resource_code']?.edit &&
-      !accountOrProjectInActive,
+    // editable:
+    //   permissionMap?.['resource_code']?.read &&
+    //   permissionMap?.['resource_code']?.edit &&
+    //   !accountOrProjectInActive,
     hide:
       !permissionMap?.['resource_code']?.read &&
       !permissionMap?.['resource_code']?.edit,

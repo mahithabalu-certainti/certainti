@@ -21,6 +21,7 @@ export interface FormTypeFields {
   width?: string;
   error?: string;
   placeholder?: string;
+  requiredErrorMessage?: string;
   regex?: string | RegExp;
   regexErrorMessage?: string;
   disabled?: boolean;
@@ -29,6 +30,7 @@ export interface FormTypeFields {
   clearValue?: Record<string, string>;
   defaultSelect?: Record<string, string>;
   resetDependsFields?: string[];
+  prefixValue?: string;
   disableFutureDates?: boolean;
   lengthRequired?: {
     key: string;
@@ -56,12 +58,13 @@ export interface FormTypeFields {
   isFiscalYear?: boolean;
   showCreateBtn?: boolean;
   formatCostValue?: boolean;
-  clearDate?: string
+  clearDate?: string;
 }
 
 export type InputType =
   | 'text'
   | 'select'
+  | 'multiSelect'
   | 'expandselect'
   | 'autocomplete'
   | 'textarea'
@@ -89,7 +92,7 @@ export interface SelectResourceOption {
   resource_type_rid?: string;
   resource_type_name?: string;
   start_date?: string;
-  end_date?: string
+  end_date?: string;
 }
 export interface ErrorHandling {
   regex: RegExp;
@@ -111,6 +114,7 @@ export interface FieldType {
   regex?: RegExp;
   regexErrorMessage?: string;
   placeholder?: string;
+  requiredErrorMessage?: string;
   disableFutureDates?: boolean;
   disabled?: boolean;
   defaultValue?: string;
@@ -123,6 +127,7 @@ export interface FieldType {
   startValue?: boolean;
   endDateValue?: boolean;
   errorMessage?: string;
+  prefixValue?: string;
   startDateLabel?: string;
   endDateLabel?: string;
   hide?: boolean;
@@ -144,7 +149,7 @@ export interface FieldType {
   isFiscalYear?: boolean;
   showCreateBtn?: boolean;
   formatCostValue?: boolean;
-  clearDate?: string
+  clearDate?: string;
 }
 
 export type AllowedCountry =
