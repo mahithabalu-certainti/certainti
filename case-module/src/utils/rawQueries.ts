@@ -459,7 +459,7 @@ export const listAllEmailTemplates = (
             et.rid, et.r_number,
             et.status_rid,s.status_name,
             et.created_by, et.modified_by,
-            et.created_datetime, et.P,
+            et.created_datetime, et.modified_datetime,
             COUNT(et.rid) OVER() AS total_records,
             et.template_name,
             et.description,et.category_rid,etc.category_name,

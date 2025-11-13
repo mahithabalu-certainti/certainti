@@ -551,13 +551,13 @@ export const rawQueries = {
   },
   getEmailPlaceHolders() {
     return `
-      SELECT rid,placeholder_key
+      SELECT rid,placeholder_key,display_name
       FROM ${MAIN_SCHEMA_NAME}.email_placeholder 
     ORDER BY placeholder_key ASC`
   },
   getEmailCategoryPlaceHolders(categoryRid : string) {  
     return `
-      SELECT ec.rid,placeholder_rid,ep.placeholder_key
+      SELECT ec.rid,placeholder_rid,ep.placeholder_key,applicable_to
       FROM ${MAIN_SCHEMA_NAME}.email_category_placeholder  ec
       LEFT JOIN ${MAIN_SCHEMA_NAME}.email_placeholder ep ON ep.rid = ec.placeholder_rid
       WHERE category_rid = '${categoryRid}'
