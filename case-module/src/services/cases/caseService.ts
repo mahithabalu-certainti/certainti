@@ -2158,4 +2158,25 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
         }
       }
     }
+
+    async addTaskLevelAttachment (data : any, userId : string, files : Express.Multer.File[]) {
+      const mainDb = await this.getMainDb();
+      const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+      const result = await this.caseSchemaService.addAttachmentForTask(data, fetchParent[0][0].r_number, files, userId);
+      return result;
+    }
+
+    async deleteTaskLevelAttachment (data : any, userId : string) {
+      const mainDb = await this.getMainDb();
+      const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+      const result = await this.caseSchemaService.deleteAttachment(fetchParent[0][0].r_number,data, userId);
+      return result;
+    }
+
+    async listTaskLevelAttachment (data : any) {
+      const mainDb = await this.getMainDb();
+      const fetchParent : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+      const result = await this.caseSchemaService.listTaskLevelAttachments(fetchParent[0][0].r_number, data);
+      return result;
+    }
 }

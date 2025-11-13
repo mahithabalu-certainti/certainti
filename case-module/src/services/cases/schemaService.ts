@@ -23,7 +23,7 @@ import {
   SCHEMANAME_PREFIX,
   STATUS_MESSAGE,
 } from "../../utils/constants";
-import { buildDatetimeFilterCondition, buildNumericFilterCondition, buildStringFilterCondition, deleteFromAzureBlob, errorLog, getColumnsNamesForTaskCommentsUpdate, getColumnsNamesForTaskUpdate, logMessage, uploadToAzureBlob } from "../../utils/helpers";
+import { buildDatetimeFilterCondition, buildNumericFilterCondition, buildStringFilterCondition, deleteFromAzureBlob, errorLog, generateSasUrl, getColumnsNamesForTaskCommentsUpdate, getColumnsNamesForTaskUpdate, logMessage, uploadToAzureBlob } from "../../utils/helpers";
 import {
   AddCommentsType,
   assignProjectType,
@@ -4828,6 +4828,130 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       return {
         statusCode : HttpStatus.NOT_FOUND,
         statusMessage : STATUS_MESSAGE.dataNotAvailable,
+      }
+    }
+  }
+
+  async addAttachmentForTask (data : any, accountNumber : string, files : Express.Multer.File[], userId : string) {
+    const {TaskAttachments} = await this.caseModelService.getModels(accountNumber)
+    const findTaskDetails = await this.findTaskById(data.task_rid, accountNumber);
+    if(files != undefined) {
+      if(Array.isArray(files)) {
+        for(let f of files) {
+          const uploadFile = await uploadToAzureBlob(f, data.account_rid, findTaskDetails?.r_number!, "cases");
+          if(uploadFile) {
+            const result = await TaskAttachments.create({
+              case_rid : data.case_rid,
+              account_rid : data.account_rid,
+              task_rid : data.task_rid,
+              browse_file : uploadFile.url,
+              document_name : uploadFile.name,
+              size : uploadFile.size.toString(),
+              format : uploadFile.extension,
+              is_file_deleted : false,
+              created_by : userId,
+              created_datetime : new Date()
+            })
+            await CaseTimeline.create({
+              created_by : userId,
+              created_datetime : new Date(),
+              account_rid : data.account_rid,
+              entity_rid : result.dataValues.rid,
+              event_name : `Attachment added for task ${findTaskDetails?.task_name}`,
+              event_type : "ui handler",
+              event_status : "success",
+              event_datetime : new Date(),
+              description : `Task Attachments Added : ${uploadFile.url}`
+          })
+          await CaseHistory.create({
+              created_by : userId,
+              created_datetime : new Date(),
+              case_rid : data.case_rid,
+              attribute_name : "task_attachments",
+              new_value : uploadFile.url
+            })
+          }
+        }
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          statusMessage : STATUS_MESSAGE.attachmentUploadedSuccess
+        }
+      }
+    } return {
+      statusCode : HttpStatus.FAILED,
+      statusMessage : STATUS_MESSAGE.fileNotFound
+    }
+  }
+
+  async deleteAttachment (accountNumber : string, data : any, userId : string) {
+    console.log("AccountNumber ====> ", accountNumber)
+    const {TaskAttachments} = await this.caseModelService.getModels(accountNumber)
+    const findTaskDetails = await this.findTaskById(data.task_rid, accountNumber);
+    const checkIsFileExists = await TaskAttachments.findOne({
+      where : {
+        rid : data.rid,
+        is_file_deleted : false
+      }
+    });
+    if(checkIsFileExists) {
+      await deleteFromAzureBlob(data.url);
+      const [updateFile] = await TaskAttachments.update({is_file_deleted : true, modified_by : userId, modified_datetime : new Date()}, {where : {rid : data.rid}});
+      if(updateFile === 1) {
+        await CaseTimeline.create({
+          created_by : userId,
+          created_datetime : new Date(),
+          account_rid : data.account_rid,
+          entity_rid : checkIsFileExists.rid,
+          event_name : `Attachment deleted for task ${findTaskDetails?.task_name}`,
+          event_type : "ui handler",
+          event_status : "success",
+          event_datetime : new Date(),
+          description : `Task Attachments Deleted : ${checkIsFileExists.document_name}`
+      })
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          statusMessage : STATUS_MESSAGE.attachmentDeletedSuccess
+        }
+      } else {
+        return {
+          statusCode : HttpStatus.FAILED,
+          statusMessage : STATUS_MESSAGE.attachmentDeleteFailed
+        }
+      }
+    } else {
+      return {
+          statusCode : HttpStatus.NOT_FOUND,
+          statusMessage : STATUS_MESSAGE.attachmentNotFound
+       }
+    }
+  }
+
+  async listTaskLevelAttachments (accountNumber : string, data : any) {
+    const {TaskAttachments} = await this.caseModelService.getModels(accountNumber)
+    const fetchAllTaskAttachments = await TaskAttachments.findAll({
+      where : {
+        account_rid : data.account_rid,
+        case_rid : data.case_rid,
+        task_rid : data.task_rid
+      }, raw : true
+    }); 
+    if(fetchAllTaskAttachments.length > 0) {
+      const finalData = await Promise.all(fetchAllTaskAttachments.map(async (d : any) => {
+        return {
+          ...d,
+          browse_file : await generateSasUrl(d.browse_file)
+        }
+      }))
+      return {
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        data : finalData
+      }
+    } else {
+      return {
+        statusCode : HttpStatus.NOT_FOUND,
+        statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
+        data : []
       }
     }
   }

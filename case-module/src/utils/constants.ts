@@ -130,7 +130,13 @@ export const STATUS_MESSAGE = {
   commentsFailedUpdate : "Failed to update comments",
   commentsDeletedSuccess : "Comments deleted successfully",
   commentsFaileDDelete : "Failed to delete comments",
-  commentsFetchedSuccess : "Task Comments fetched successfully"
+  commentsFetchedSuccess : "Task Comments fetched successfully",
+  fileNotFound : "No file attached",
+  attachmentUploadedSuccess : "Attachment uploaded successfully",
+  attachmentDeletedSuccess : "Attachment deleted successfully",
+  attachmentDeleteFailed : "Attachment deletion failed",
+  attachmentNotFound : "Attachment not found",
+  attachementTaskListSuccess : "Task Attachments fetched successfully"
 };
 
 export const caseStatuses = {
