@@ -1,9 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from 'react';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
 import { AllPermissions } from '../../../../../common-service';
 import { ExportType } from '../../../../types';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import { useCaseProjectResourceList } from '../../../../services/case-project-resource/case-project-resource-service';
@@ -20,10 +19,12 @@ import {
   ManageColumnsPopover,
 } from '../../../../../components/table';
 import {
-  CaseProjectResourceRow,
+  CaseProjectResourceRowType,
   getCaseProjectResourceColumns,
 } from './columns';
 import { caseProjectResourceFilterFields } from './utils';
+import CaseProjectResourceDetails from './case-project-resource-details/case-project-resource-details';
+import { CaseProjectResourceRow } from '../../../../types/case-project-resource';
 
 const AttachmentTabs: ResourceTabs[] = [
   {
@@ -32,12 +33,8 @@ const AttachmentTabs: ResourceTabs[] = [
     hide: false,
   },
 ];
-
 interface AttachmentsProps {
   setExportType?: (type: ExportType) => void;
-  // setAttachmentParams?: React.Dispatch<
-  //   React.SetStateAction<AttachmentsListExportParams>
-  // >;
   accountInActive?: boolean;
   refetchAccountDetails?: () => void;
 }
@@ -45,7 +42,10 @@ interface AttachmentsProps {
 const CaseProjectResource: React.FC<AttachmentsProps> = () => {
   const { accountid, caseId } = useParams();
   const [searchParams] = useSearchParams();
-  const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
+  const navigate = useNavigate();
+  const [appliedFilters, setAppliedFilters] = useState<
+    Record<string, string | number | boolean | string[]>
+  >({});
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [refreshAttachments, setRefreshAttachments] = useState<number>(
@@ -56,12 +56,19 @@ const CaseProjectResource: React.FC<AttachmentsProps> = () => {
   const [sortField, setSortField] = useState<string>('document_name');
   const [totalItems, setTotalItems] = useState<number>(0);
   const [resourceRowList, setResourceRowList] = useState<
-    CaseProjectResourceRow[]
+    CaseProjectResourceRowType[]
   >([]);
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
   const [searchText, setSearchText] = useState('');
+  const [viewResourceList, setViewResourceList] = useState<boolean>(true);
+  const [showBackArrow, setShowBackArrow] = useState<boolean>(false);
+  const [resourceData, setResourceData] =
+    useState<CaseProjectResourceRow | null>(null);
+  const [resourceNumber, setResourceNumber] = useState<string | undefined>(
+    undefined
+  );
 
   const isModalOpen = Boolean(columnAnchorEl);
   const handleColumnVisibility = (
@@ -90,27 +97,38 @@ const CaseProjectResource: React.FC<AttachmentsProps> = () => {
   );
 
   useEffect(() => {
-    if (data?.data?.count) {
-      setTotalItems(data?.data?.count || 0);
-      setResourceRowList([]);
+    if (data?.data?.projectResources) {
+      setResourceRowList(data.data.projectResources);
+      setTotalItems(data.data.totalCount || 0);
     } else {
       setResourceRowList([]);
+      setTotalItems(0);
     }
   }, [data]);
 
-  // useEffect(() => {
-  //   if (setExportType) {
-  //     setExportType('attachments');
-  //   }
-  //   setAttachmentParams({
-  //     sortBy: sortField,
-  //     sortOrder: sortOrder,
-  //     filters: appliedFilters,
-  //     fiscalYear: convertedFiscalYear,
-  //     search: searchText,
-  //   });
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [sortField, sortOrder, appliedFilters, convertedFiscalYear, searchText]);
+  useEffect(() => {
+    if (!viewResourceList && resourceData?.rid) {
+      const newSearchParams = new URLSearchParams(searchParams);
+      newSearchParams.set('resource_id', resourceData.rid);
+      newSearchParams.set('tab', 'details');
+      navigate({ search: newSearchParams.toString() }, { replace: true });
+    }
+  }, [resourceData?.rid, viewResourceList, searchParams, navigate]);
+
+  useEffect(() => {
+    const resourceId = searchParams.get('resource_id');
+    if (resourceId && resourceRowList.length > 0) {
+      const foundResource = resourceRowList.find(
+        (resource) => resource.rid === resourceId
+      );
+      if (foundResource) {
+        setResourceData(foundResource);
+        setViewResourceList(false);
+        setShowBackArrow(true);
+        setResourceNumber(foundResource.resource_code ?? undefined);
+      }
+    }
+  }, [searchParams, resourceRowList]);
 
   const showUploads = searchParams.get('attachment_entity') === 'account';
 
@@ -120,6 +138,19 @@ const CaseProjectResource: React.FC<AttachmentsProps> = () => {
   const onRefreshClick = () => {
     setRefreshAttachments(Date.now());
   };
+
+  const handleCaseProjectResourceClick = React.useCallback(
+    (row: CaseProjectResourceRowType) => {
+      setResourceData(row);
+      setViewResourceList(false);
+      setShowBackArrow(true);
+      setShowFilter(false);
+      setAppliedFilters({});
+      setSortFilterCount(0);
+      setResourceNumber(row.resource_code ?? undefined);
+    },
+    []
+  );
 
   const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
     const defaultSortField = 'document_name';
@@ -137,6 +168,19 @@ const CaseProjectResource: React.FC<AttachmentsProps> = () => {
     }
   };
 
+  const handleBackClick = () => {
+    setViewResourceList(true);
+    setShowBackArrow(false);
+    setShowFilter(false);
+    setResourceData(null);
+    setAppliedFilters({});
+    setSortFilterCount(0);
+    const newSearchParams = new URLSearchParams(searchParams);
+    newSearchParams.delete('resource_id');
+    newSearchParams.delete('tab');
+    navigate({ search: newSearchParams.toString() }, { replace: true });
+  };
+
   const headerButtons = [
     {
       label: 'Show/Hide Fields',
@@ -144,7 +188,15 @@ const CaseProjectResource: React.FC<AttachmentsProps> = () => {
       disabled: false,
       onClick: handleColumnVisibility,
       sx: { ...BUTTON_STYLES, width: '125px', minWidth: '125px' },
-      hide: false,
+      hide: !viewResourceList && resourceData ? true : false,
+    },
+    {
+      label: 'Back to Project Resource',
+      variant: 'outlined' as const,
+      disabled: false,
+      onClick: handleBackClick,
+      sx: { ...BUTTON_STYLES, width: '180px', minWidth: '125px' },
+      hide: !viewResourceList && resourceData ? false : true,
     },
   ];
 
@@ -162,10 +214,13 @@ const CaseProjectResource: React.FC<AttachmentsProps> = () => {
     setSortField(property);
   };
 
-  const attachmentColumns = useMemo(() => getCaseProjectResourceColumns(), []);
+  const attachmentColumns = useMemo(
+    () => getCaseProjectResourceColumns(handleCaseProjectResourceClick),
+    [handleCaseProjectResourceClick]
+  );
 
   const [visibleColumns, setVisibleColumns] = useState<
-    ListTableColumn<CaseProjectResourceRow>[]
+    ListTableColumn<CaseProjectResourceRowType>[]
   >(getCaseProjectResourceColumns().filter((col) => !col.hide));
 
   useEffect(() => {
@@ -175,7 +230,7 @@ const CaseProjectResource: React.FC<AttachmentsProps> = () => {
 
   const attachmentsFilterFields = caseProjectResourceFilterFields();
 
-  const getRowId = (row: CaseProjectResourceRow) => row.rid;
+  const getRowId = (row: CaseProjectResourceRowType) => row.rid || '';
 
   const RestrictedColumns = [
     {
@@ -189,7 +244,7 @@ const CaseProjectResource: React.FC<AttachmentsProps> = () => {
     setVisibleColumns(
       updatedColumns.filter(
         (col) => !col.hide
-      ) as ListTableColumn<CaseProjectResourceRow>[]
+      ) as ListTableColumn<CaseProjectResourceRowType>[]
     );
   };
 
@@ -227,6 +282,8 @@ const CaseProjectResource: React.FC<AttachmentsProps> = () => {
           value={'projectResource'}
           title='Project Resource'
           count={totalItems}
+          showCount={!viewResourceList && resourceData ? false : true}
+          resourceNumber={resourceNumber}
           titleIcon={
             <ProjectsIcon
               alt='attachment-header-icon'
@@ -234,49 +291,60 @@ const CaseProjectResource: React.FC<AttachmentsProps> = () => {
             />
           }
           headerButtons={headerButtons}
+          showBackArrow={showBackArrow}
+          onBackClick={handleBackClick}
           iconBg='#D8E9FF'
-          bgType='circle'
+          bgType={showBackArrow ? 'react' : 'circle'}
         />
-        <div className='border border-[#CBD6E2]'>
-          <ManageColumnsPopover
-            anchorEl={columnAnchorEl}
-            open={isModalOpen}
-            popoverId={modalId}
-            onClose={handlePopoverClose}
-            columns={attachmentColumns}
-            onColumnsChange={handleColumnsChange}
-            columnRestrictions={RestrictedColumns}
+
+        {!viewResourceList && resourceData ? (
+          <CaseProjectResourceDetails
+            resource={resourceData}
+            isLoading={isLoading}
+            error={isError ? 'Failed to load Attachment data' : null}
           />
-          <ListTable
-            data={resourceRowList}
-            columns={visibleColumns}
-            getRowId={getRowId}
-            hoverHighlight={false}
-            tableStyle={{
-              borderBottom: '1px solid #CBD6E2',
-              height: '100%',
-              maxHeight: 'calc(100vh - 320px)',
-              overflow: 'auto',
-            }}
-            stickyHeader={true}
-            stickyColumnsCount={1}
-            selectable={false}
-            actionWidth={80}
-            actionDisplayMode='dropdown'
-            actionMenuItems={[]}
-            loading={isLoading}
-            error={isError ? 'Failed to load Attachment data' : undefined}
-            rowsPerPageOptions={[25, 50, 100]}
-            rowsPerPage={rowsPerPage}
-            currentPage={currentPage}
-            totalItems={totalItems}
-            onPageChange={handlePageChange}
-            onRowsPerPageChange={handleRowsPerPageChange}
-            sortBy={sortField}
-            sortOrder={sortOrder}
-            onSort={handleSortRequest}
-          />
-        </div>
+        ) : (
+          <div className='border border-[#CBD6E2]'>
+            <ManageColumnsPopover
+              anchorEl={columnAnchorEl}
+              open={isModalOpen}
+              popoverId={modalId}
+              onClose={handlePopoverClose}
+              columns={attachmentColumns}
+              onColumnsChange={handleColumnsChange}
+              columnRestrictions={RestrictedColumns}
+            />
+            <ListTable
+              data={resourceRowList}
+              columns={visibleColumns}
+              getRowId={getRowId}
+              hoverHighlight={false}
+              tableStyle={{
+                borderBottom: '1px solid #CBD6E2',
+                height: '100%',
+                maxHeight: 'calc(100vh - 320px)',
+                overflow: 'auto',
+              }}
+              stickyHeader={true}
+              stickyColumnsCount={1}
+              selectable={false}
+              actionWidth={80}
+              actionDisplayMode='dropdown'
+              actionMenuItems={[]}
+              loading={isLoading}
+              error={isError ? 'Failed to load Attachment data' : undefined}
+              rowsPerPageOptions={[25, 50, 100]}
+              rowsPerPage={rowsPerPage}
+              currentPage={currentPage}
+              totalItems={totalItems}
+              onPageChange={handlePageChange}
+              onRowsPerPageChange={handleRowsPerPageChange}
+              sortBy={sortField}
+              sortOrder={sortOrder}
+              onSort={handleSortRequest}
+            />
+          </div>
+        )}
       </>
     </div>
   );
