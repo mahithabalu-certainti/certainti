@@ -15,22 +15,22 @@ export const jurisdictionConfigFormFields = (
       sectionName: '',
       fillType: 'half',
       fields: [
-        createCheckboxField('is_federal_level', 'Federal Level', {
+        createCheckboxField('is_federal_level', 'Federal Level Submission', {
           required: false,
           checkboxOptions: [
             {
-              label: ` ${isFedral ? 'Disable' : 'Enable'} Federal Level`,
+              label: ` ${isFedral ? 'Disable' : 'Enable'} Federal Level Submission`,
               value: 'is_federal_level',
             },
           ],
         }),
-        createCheckboxField('is_state_level', 'State Level', {
+        createCheckboxField('is_state_level', 'State Level Submission', {
           required: false,
           onChange: true,
           resetDependsFields: isEnable ? ['states'] : [],
           checkboxOptions: [
             {
-              label: ` ${isEnable ? 'Disable' : 'Enable'}  State Level`,
+              label: ` ${isEnable ? 'Disable' : 'Enable'}  State Level Submission`,
               value: 'is_state_level',
             },
           ],
@@ -39,7 +39,7 @@ export const jurisdictionConfigFormFields = (
           options: memoizedState || [],
           placeholder: 'Choose Region',
           required: false,
-
+          disabled: !isEnable,
           // isLoading: stateLoading,
           // hide:
           //   isEditView &&
