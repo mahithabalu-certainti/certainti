@@ -1058,3 +1058,26 @@ return query;
     `
     return query;
   }
+
+  export const fetchTaskActivities = (page : number, limit : number ,schemaName : string, caseRid : string, taskRid : string) => {
+    const offset = (page - 1) * limit;
+    let pagination = `LIMIT ${limit} OFFSET ${offset}`
+
+    let query = 
+    `
+    WITH fetch_data AS (SELECT 
+    rid, r_number, created_by, case_rid, created_datetime, attribute_name, old_value, new_value, task_rid
+    FROM ${schemaName}.case_history
+    WHERE
+    task_rid = '${taskRid}'
+    AND
+    case_rid = '${caseRid}'
+    ORDER BY created_datetime ASC),
+    calculate_total AS (
+    SELECT f.*, COUNT(f.rid) OVER() AS total_result FROM fetch_data f
+    )
+    SELECT * FROM calculate_total ${pagination}
+    
+    `
+    return query;
+  }
