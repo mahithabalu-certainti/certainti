@@ -35,7 +35,7 @@ const JurisdictionConfig: React.FC<JurisdictionConfigProps> = ({
 }) => {
   const { successToast } = useToast();
   const [stateRequried, setStateRequried] = useState<boolean>(false);
-  const [fedralRequried, setIdfedralRequried] = useState<boolean>(false);
+  // const [fedralRequried, setIdfedralRequried] = useState<boolean>(false);
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
   const updateconfig = useUpdateJurisdictionConfig();
@@ -99,7 +99,6 @@ const JurisdictionConfig: React.FC<JurisdictionConfigProps> = ({
   useEffect(() => {
     if (configDetails) {
       setStateRequried(!!configDetails.is_state_level);
-      setIdfedralRequried(!!configDetails.is_federal_level);
     }
   }, [configDetails]);
   const handleFormSubmit = (data: object) => {
@@ -149,11 +148,6 @@ const JurisdictionConfig: React.FC<JurisdictionConfigProps> = ({
         !!(Array.isArray(data.fieldValue) && data.fieldValue.length > 0)
       );
     }
-    if (data.fieldName === 'is_federal_level') {
-      setIdfedralRequried(
-        !!(Array.isArray(data.fieldValue) && data.fieldValue.length > 0)
-      );
-    }
   };
 
   return (
@@ -182,8 +176,7 @@ const JurisdictionConfig: React.FC<JurisdictionConfigProps> = ({
             data={jurisdictionConfigFormFields(
               // permissionMap,
               memoizedState,
-              stateRequried,
-              fedralRequried
+              stateRequried
             )}
             formRef={formRef}
             outData={handleFormSubmit}

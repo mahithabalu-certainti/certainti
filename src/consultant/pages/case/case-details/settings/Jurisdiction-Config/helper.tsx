@@ -7,8 +7,7 @@ import { FormType, SelectOption } from '../../../../../types';
 export const jurisdictionConfigFormFields = (
   // permissionMap?: Record<string, { read: boolean; edit: boolean }>,
   memoizedState?: SelectOption[],
-  isEnable?: boolean,
-  isFedral?: boolean
+  isEnable?: boolean
 ): FormType[] => {
   return [
     {
@@ -19,7 +18,7 @@ export const jurisdictionConfigFormFields = (
           required: false,
           checkboxOptions: [
             {
-              label: ` ${isFedral ? 'Disable' : 'Enable'} Federal Level Submission`,
+              label: `Enable Federal Level Submission`,
               value: 'is_federal_level',
             },
           ],
@@ -30,7 +29,7 @@ export const jurisdictionConfigFormFields = (
           resetDependsFields: isEnable ? ['states'] : [],
           checkboxOptions: [
             {
-              label: ` ${isEnable ? 'Disable' : 'Enable'}  State Level Submission`,
+              label: `Enable State Level Submission`,
               value: 'is_state_level',
             },
           ],
