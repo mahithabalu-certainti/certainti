@@ -4733,7 +4733,6 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
               comments_rid : data.rid 
             }, raw : true
           });
-          console.log("fetchCommentsAttachmentDetails ==== >", fetchCommentsAttachmentDetails)
           if(fetchCommentsAttachmentDetails.length > 0) {
             for(let d of fetchCommentsAttachmentDetails) {
               const checkIsTaskAttachmentDeleted = await TaskAttachments.findOne({
@@ -4751,6 +4750,17 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
             }
           }
         }
+        await CaseTimeline.create({
+          created_by : data.modified_by,
+          created_datetime : new Date(),
+          account_rid : data.account_rid,
+          entity_rid : data.rid,
+          event_name : "Task Comment Deleted",
+          event_type : "ui handler",
+          event_status : "success",
+          event_datetime : new Date(),
+          description : `Task Comments Deleted : ${isCommentExists.comments}`
+          })
         const deleteComments = await TaskComments.destroy({ where : {rid : data.rid}});
         if(deleteComments === 1) {
         const checkIsDifferentCollaborator = await this.isNewCollaborator(data.modified_by, accountNumber);
@@ -4778,15 +4788,14 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
           statusMessage : STATUS_MESSAGE.commentsFaileDDelete,
         }
       }
-    } 
-    else {
-      return {
-        statusCode : HttpStatus.NOT_FOUND,
-        statusMessage : STATUS_MESSAGE.dataNotAvailable,
+    } else {
+        return {
+          statusCode : HttpStatus.NOT_FOUND,
+          statusMessage : STATUS_MESSAGE.dataNotAvailable,
+        }
       }
-    }
+    } 
   }
-}
 
 // Utility function for optimized column sorting
 const getSortColumn = (sortField: string): string => {
