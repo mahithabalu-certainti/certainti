@@ -131,6 +131,12 @@ export const STATUS_MESSAGE = {
   commentsDeletedSuccess : "Comments deleted successfully",
   commentsFaileDDelete : "Failed to delete comments",
   commentsFetchedSuccess : "Task Comments fetched successfully",
+  fileNotFound : "No file attached",
+  attachmentUploadedSuccess : "Attachment uploaded successfully",
+  attachmentDeletedSuccess : "Attachment deleted successfully",
+  attachmentDeleteFailed : "Attachment deletion failed",
+  attachmentNotFound : "Attachment not found",
+  attachementTaskListSuccess : "Task Attachments fetched successfully",
   categoryPlaceHolderSuccess : "Placeholders fetched successfully",
   categoryPlaceHolderFailed : "Failed to fetch Placeholders",
 

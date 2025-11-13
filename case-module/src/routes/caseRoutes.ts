@@ -165,7 +165,7 @@ routes.get(
   controller.caseController.fetchAllTags
 )
 routes.post(
-  "/comments/add",
+  "/task/comments/add",
   checkUserStatusMiddleware("NA"),
   upload.array('files'),
   controller.caseController.addCommentsToSpecificTask
@@ -176,20 +176,35 @@ routes.post(
   controller.caseController.exportCaseTask
 )
 routes.put(
-  "/comments/update",
+  "/task/comments/update",
   checkUserStatusMiddleware("NA"),
   upload.array('files'),
   controller.caseController.updateTaskComments
 )
 routes.post(
-  "/comments/delete",
+  "/task/comments/delete",
   checkUserStatusMiddleware("NA"),
   controller.caseController.deleteTaskComments
 )
 routes.post(
-  "/comments/list",
+  "/task/comments/list",
   checkUserStatusMiddleware("NA"),
   controller.caseController.fetchTaskCommentsList
 )
-
+routes.post(
+  "/task/attachments/add",
+  checkUserStatusMiddleware("NA"),
+  upload.array('files'),
+  controller.caseController.addTaskAttachments
+)
+routes.post(
+  "/task/attachments/delete",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.deleteTaskAttachments
+)
+routes.post(
+  "/task/attachments/list",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.listTaskAttachments
+)
 export default routes;

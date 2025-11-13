@@ -777,7 +777,8 @@ export const fetchCaseTemplateData = (schemaName : string, caseRid : string, acc
   'task_type_rid', t.task_type_rid,
   'task_description', t.task_description,
   'milestone_template_rid', t.milestone_template_rid,
-  'checklists_count', (SELECT COUNT(DISTINCT chi.rid) FROM ${schemaName}.case_task ct LEFT JOIN ${schemaName}.checklists ch ON ch.checklist_template_rid = ct.checklist_template_rid LEFT JOIN ${schemaName}.checklist_items chi ON chi.checklist_rid = ch.rid WHERE ct.milestone_template_rid = cm.rid AND ct.case_rid = '${caseRid}' AND ct.account_rid = '${accountRid}'),
+  'checklists_count', (SELECT COUNT(DISTINCT chi.rid) FROM ${schemaName}.case_task ct LEFT JOIN ${schemaName}.checklists ch ON ch.checklist_template_rid = ct.checklist_template_rid LEFT JOIN ${schemaName}.checklist_items chi ON chi.checklist_rid = ch.rid WHERE ct.milestone_template_rid = cm.rid AND ct.case_rid = '${caseRid}' AND ct.account_rid = '${accountRid}' AND ct.rid = t.rid AND (ct.checklist_template_rid IS NOT NULL AND ct.checklist_template_rid != '')),
+  'comments_count', (SELECT COUNT(DISTINCT tc.rid) from ${schemaName}.task_comments tc WHERE tc.task_rid = t.rid),
   'task_status_rid', t.task_status_rid
   )ORDER BY t.sequence_no ASC) AS tasks
   FROM 
