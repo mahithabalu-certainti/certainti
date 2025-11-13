@@ -1,15 +1,18 @@
-import { useEffect, useState } from 'react';
-import { CaseIcon, ComingSoon } from '../../../../../assets';
+import React, { useEffect, useMemo, useState } from 'react';
+import { CaseIcon } from '../../../../../assets';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
 import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/resources/resources';
-import { AllPermissions } from '../../../../../common-service';
+import { AllPermissions, useGetStatus } from '../../../../../common-service';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import KanbanBoard from '../../../../../components/kanban-board/kanban-board';
 import {
   mockUserData,
   mockKanbanData,
 } from '../../../../../components/kanban-board/mock-data';
+import { CaseTask } from './case-task';
+import { getAssignGroupsFilterFields } from './case-task/helper';
+import { ExportType } from '../../../../types';
 import { ActivityMenuItem } from '../../../../types';
 
 const ConfigTabs: ResourceTabs[] = [
@@ -25,18 +28,33 @@ const ConfigTabs: ResourceTabs[] = [
   //   disable: true,
   // },
 ];
-
 interface WorkBreakDownProps {
   activityMenuItems: ActivityMenuItem[];
+  caseId: string | undefined;
+  setExportType: (type: ExportType) => void;
+  setCaseTaskParams: (params: Record<string, unknown>) => void;
 }
 
-const WorkBreakDown: React.FC<WorkBreakDownProps> = ({ activityMenuItems }) => {
+const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
+  caseId,
+  setExportType,
+  setCaseTaskParams,
+  activityMenuItems,
+}) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const tabParam = searchParams.get('tab') || 'milestone';
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, string | number | boolean | string[]>
   >({});
+  const [showFilter, setShowFilter] = useState<boolean>(false);
+  const [currentPage, setCurrentPage] = useState<number>(0);
+  const [reFetchData, setReFetchData] = useState<number>(Date.now());
+  const [count, setCount] = useState<number>(0);
+  const [columnAnchorEl, setColumnAnchorEl] =
+    React.useState<HTMLButtonElement | null>(null);
+  const [seachText, setSearchText] = useState('');
+  const [resetSearch, setResetSearch] = useState(false);
 
   useEffect(() => {
     if (
@@ -49,16 +67,29 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({ activityMenuItems }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  // const headerButtons = [
-  //   {
-  //     label: 'Edit',
-  //     variant: 'contained' as const,
-  //     onClick: () => console.log('clicked'),
-  //     hide: false,
-  //     disabled: false,
-  //     loading: false,
-  //   },
-  // ];
+  const handleFilter = () => {
+    setShowFilter(!showFilter);
+  };
+
+  const handleSearchReset = () => {
+    setResetSearch(false);
+  };
+
+  const statusOptions = useGetStatus();
+
+  const memoizedStatus = useMemo(
+    () =>
+      statusOptions?.data?.data?.status.map((status) => ({
+        option: status.status_name,
+        value: status.rid,
+      })) || [],
+    [statusOptions?.data?.data?.status]
+  );
+
+  const filterFields =
+    tabParam === 'case_task'
+      ? getAssignGroupsFilterFields(memoizedStatus)
+      : undefined;
 
   const getTitleIcon = () => {
     return (
@@ -80,31 +111,60 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({ activityMenuItems }) => {
     navigate(`?${searchParams.toString()}`, { replace: true });
   };
 
+  const onRefreshClick = () => {
+    setReFetchData(Date.now());
+  };
+
+  const handleColumnVisibility = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setColumnAnchorEl(event.currentTarget);
+  };
+
+  const headerButtons = [
+    {
+      label: 'Show/Hide Fields',
+      variant: 'outlined' as const,
+      disabled: false,
+      onClick: handleColumnVisibility,
+      sx: { width: '125px', minWidth: '125px' },
+      hide: tabParam !== 'case_task',
+    },
+  ];
+
   return (
     <>
       <SectionTabPanel
         tabs={ConfigTabs}
-        // filterMenu={filterFields}
-        filterVisibility={false}
-        showFilter={true}
+        filterMenu={filterFields}
+        filterVisibility={tabParam !== 'milestone'}
+        showFilter={showFilter}
         contextKey={`case`}
         appliedFilters={appliedFilters}
         setAppliedFilters={setAppliedFilters}
-        setCurrentPage={() => 0}
-        handleFilter={() => {}}
+        setCurrentPage={setCurrentPage}
+        handleFilter={handleFilter}
         handleSorting={() => {}}
         sortFilterCount={0}
         setSortFilterCount={() => {}}
-        showRefresh={false}
+        showRefresh={tabParam === 'case_task' ? true : false}
+        onRefreshClick={onRefreshClick}
+        // hideTabPanel={hideSection}
+        showSearch={tabParam === 'case_task' ? true : false}
+        searchDisabled={false}
+        searchPlaceholder='Search'
+        onSearch={(text) => setSearchText(text)}
+        searchReset={resetSearch}
+        onSearchReset={handleSearchReset}
         showAddActivity={true}
         activityMenuItems={activityMenuItems}
       />
       <SectionHeader
         title={'Action Items'}
         titleIcon={getTitleIcon()}
-        buttons={[]}
-        count={0}
-        showItemCount={false}
+        buttons={headerButtons}
+        count={count}
+        showItemCount={tabParam === 'case_task'}
         hideSection={false}
       />
       <SectionHeaderTab
@@ -126,9 +186,22 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({ activityMenuItems }) => {
           />
         )}
         {tabParam === 'case_task' && (
-          <div className='flex items-center justify-center h-full'>
-            <ComingSoon alt='comingSoon' />
-          </div>
+          <CaseTask
+            caseId={caseId}
+            reFetchData={reFetchData}
+            setCount={setCount}
+            filterParams={{
+              page: currentPage,
+              filters: appliedFilters,
+              limit: 100,
+              entity_type: '',
+            }}
+            setColumnAnchorEl={setColumnAnchorEl}
+            columnAnchorEl={columnAnchorEl}
+            searchValue={seachText}
+            setExportType={setExportType}
+            setCaseTaskParams={setCaseTaskParams}
+          />
         )}
       </div>
     </>

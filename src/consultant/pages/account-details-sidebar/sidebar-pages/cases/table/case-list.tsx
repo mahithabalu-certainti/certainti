@@ -40,7 +40,7 @@ interface ICaseTableProps {
   searchText: string;
   accountInActive: boolean;
   caseFilingTypesOptions: { value: string; label: string }[];
-  userListOptions: { value: string; label: string }[];
+  caseOwnersOptions: { value: string; label: string }[];
 }
 
 export const CaseListTable: React.FC<ICaseTableProps> = ({
@@ -55,7 +55,7 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
   searchText,
   accountInActive,
   caseFilingTypesOptions,
-  userListOptions,
+  caseOwnersOptions,
 }) => {
   const { errorToast } = useToast();
   const navigate = useNavigate();
@@ -171,7 +171,7 @@ export const CaseListTable: React.FC<ICaseTableProps> = ({
 
   const caseColumns = getCaseListColumns(
     handleViewCaseDetails,
-    userListOptions,
+    caseOwnersOptions,
     caseFilingTypesOptions,
     accountInActive,
     accountData,

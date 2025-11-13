@@ -200,6 +200,33 @@ export interface CaseListExportParams {
   isGlobal?: boolean;
   search?: string;
 }
+export interface CaseTaskExportParams {
+  page: number;
+  limit: number;
+  sort: string;
+  sort_by: 'ASC' | 'DESC';
+  filter?: object;
+  account_rid?: string;
+  case_rid?: string;
+  fiscal_year?: number;
+  search?: string;
+  timezone?: string;
+  account_id?: string;
+}
+
+export interface CaseAssignedExportParams {
+  page: number;
+  limit: number;
+  sort: string;
+  sort_by: 'ASC' | 'DESC';
+  filter?: object;
+  account_rid?: string;
+  case_rid?: string;
+  fiscal_year?: number;
+  search?: string;
+  timezone?: string;
+  account_id?: string;
+}
 export interface ExportCaseListResponse {
   statusCode: number;
   statusMessage: string;
@@ -221,6 +248,14 @@ export interface CaseFilingTypeResponse {
     caseFilingType: CaseFilingType[];
   };
 }
+export interface CaseExportResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    data: string;
+  };
+}
 
 //Case status
 export interface CaseStatus {
@@ -234,5 +269,19 @@ export interface CaseStatusResponse {
   statusMessage: string;
   data: {
     caseStatus: CaseStatus[];
+  };
+}
+
+export interface CaseOwner {
+  rid: string;
+  name: string;
+}
+
+export interface CaseOwnersResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    caseOwners: CaseOwner[];
   };
 }

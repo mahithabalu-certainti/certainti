@@ -61,6 +61,7 @@ export const getCaseExportListURL = (
 
   const searchParams = new URLSearchParams();
   if (accountId) searchParams.set('account_rid', accountId);
+
   if (fiscalYear !== undefined && fiscalYear !== null) {
     searchParams.set('fiscal_year', fiscalYear.toString());
   }
@@ -80,3 +81,35 @@ export const getCaseExportListURL = (
   const queryString = searchParams.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 };
+// export const getAssignedListExportURL = ({
+//   sort,
+//   sort_by,
+//   filter,
+//   timezone,
+//   page,
+//   limit,
+//   search,
+//   case_rid,
+//   account_id,
+// }: CaseAssignedExportParams): string => {
+//   const baseUrl = '/api/cases/assignedProjects/export';
+
+//   const searchParams = new URLSearchParams();
+//   if (account_id) searchParams.set('account_rid', account_id);
+//   if (case_rid) searchParams.set('case_rid', case_rid);
+//   // if (fiscalYear !== undefined && fiscalYear !== null) {
+//   //   searchParams.set('fiscal_year', fiscalYear.toString());
+//   // }
+//   if (filter && Object.keys(filter).length > 0) {
+//     searchParams.set('filters', JSON.stringify(filter));
+//   }
+//   if (sort_by) searchParams.set('sortBy', sort_by);
+//   if (sort) searchParams.set('sortOrder', sort);
+//   if (search) {
+//     searchParams.set('search', search);
+//   }
+//   if (timezone) searchParams.set('timezone', timezone);
+
+//   const queryString = searchParams.toString();
+//   return queryString ? `${baseUrl}?${queryString}` : baseUrl;
+// };
