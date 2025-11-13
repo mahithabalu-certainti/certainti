@@ -64,6 +64,7 @@ export interface FormTypeFields {
 export type InputType =
   | 'text'
   | 'select'
+  | 'multiSelect'
   | 'expandselect'
   | 'autocomplete'
   | 'textarea'

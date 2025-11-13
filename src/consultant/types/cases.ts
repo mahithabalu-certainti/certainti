@@ -179,6 +179,14 @@ export interface CaseFormPayload {
   statutory_submission_date: string;
 }
 
+export interface updateCaseJurisdictionPayload {
+  case_rid: string;
+  account_rid: string;
+  is_federal_level: boolean;
+  is_state_level: boolean;
+  states: string[];
+}
+
 export interface CreateCaseApiResponse {
   statusCode: number;
   statusCodeValue: string;
