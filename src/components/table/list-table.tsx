@@ -77,7 +77,7 @@ const ListTable = <T extends RowData>({
   conditionMenuItems,
   // State
   loading = false,
-  loadindRowCount,
+  loadingRowCount,
   error,
   // Pagination
   rowsPerPageOptions = [5, 10, 25, 50, 100],
@@ -1082,7 +1082,7 @@ const ListTable = <T extends RowData>({
             {loading && (
               <TableSkeleton
                 rowsPerPage={
-                  loadindRowCount ||
+                  loadingRowCount ||
                   (component === 'account'
                     ? 20
                     : rowsPerPage > 20
