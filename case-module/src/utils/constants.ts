@@ -348,6 +348,56 @@ export const adminCheckListMappings = [
   //{ permissionField: 'modified_datetime', exportField: 'Updated On', dataField: 'modified_datetime' }
 ];
 
+export const emailTemplateMappings = [
+  {
+    permissionField: "r_number",
+    exportField: "Template ID",
+    dataField: "r_number",
+  },
+  {
+    permissionField: "email_template_name",
+    exportField: "Template Name",
+    dataField: "email_template_name",
+  },
+  {
+    permissionField: "description",
+    exportField: "Description",
+    dataField: "description",
+  },
+  {
+    permissionField: "category_rid",
+    exportField: "Category",
+    dataField: "category_rid",
+  },
+  {
+    permissionField: "created_by",
+    exportField: "Created By",
+    dataField: "created_by",
+  },
+  {
+    permissionField: "created_datetime",
+    exportField: "Created On",
+    dataField: "created_datetime",
+  },
+  {
+    permissionField: "modified_by",
+    exportField: "Updated By",
+    dataField: "modified_by",
+  },
+  {
+    permissionField: "modified_datetime",
+    exportField: "Updated On",
+    dataField: "modified_datetime",
+  },
+  {
+    permissionField: "status_rid",
+    exportField: "Status",
+    dataField: "status_name",
+  },
+  //{ permissionField: 'modified_by', exportField: 'Updated By', dataField: 'modified_by' },
+  //{ permissionField: 'modified_datetime', exportField: 'Updated On', dataField: 'modified_datetime' }
+];
+
 export const checklistsFieldMappings = [
   {
     permissionField: "r_number",
@@ -866,6 +916,9 @@ export const rawQueries = {
   },
   getCategoryDetails (rid : string) {
     return `SELECT rid, category_name FROM ${MAIN_SCHEMA_NAME}.email_template_category WHERE rid = '${rid}'`
+  },
+  getEmailTemplateCategory() {
+    return `SELECT rid, category_name FROM ${MAIN_SCHEMA_NAME}.email_template_category ORDER BY category_name ASC`
   },
   getAllPriorityTypes (rid : any[]) {
     let ids : string[] = []

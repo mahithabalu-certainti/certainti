@@ -113,6 +113,11 @@ routes.get(
   checkUserStatusMiddleware("NA"),
   controller.caseManagementController.getEmailCategoryPlaceHolders
 );
+routes.get(
+  "/emailTemplate/categories",
+  checkUserStatusMiddleware("NA"),
+  controller.caseManagementController.getEmailTemplateCategory
+);
 
 
 export default routes;

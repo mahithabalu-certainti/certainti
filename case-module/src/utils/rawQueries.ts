@@ -459,15 +459,16 @@ export const listAllEmailTemplates = (
             et.rid, et.r_number,
             et.status_rid,s.status_name,
             et.created_by, et.modified_by,
-            et.created_datetime, et.modified_datetime,
+            et.created_datetime, et.P,
             COUNT(et.rid) OVER() AS total_records,
             et.template_name,
-            et.description,
+            et.description,et.category_rid,etc.category_name,
             uc.first_name || ' ' || uc.last_name AS created_user_name,
             um.first_name || ' ' || um.last_name AS modified_user_name
 
             FROM
             ${MAIN_SCHEMA_NAME}.email_template et
+            LEFT JOIN ${MAIN_SCHEMA_NAME}.email_template_category etc ON etc.rid = et.category_rid
             LEFT JOIN ${MAIN_SCHEMA_NAME}.status s ON s.rid = et.status_rid
             LEFT JOIN ${MAIN_SCHEMA_NAME}.user uc ON uc.rid = et.created_by
             LEFT JOIN ${MAIN_SCHEMA_NAME}.user um ON um.rid = et.modified_by
@@ -493,7 +494,9 @@ export const listAllEmailTemplates = (
         'template_name', i.template_name,
         'total_records', i.total_records,
         'created_user_name', i.created_user_name,
-        'modified_user_name', i.modified_user_name
+        'modified_user_name', i.modified_user_name,
+        'category_name', i.category_name,
+        'category_rid',i.category_rid
         ) ) AS admin_checklists
 
         FROM

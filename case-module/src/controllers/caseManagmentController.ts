@@ -14,6 +14,7 @@ import {
 } from "../utils/helpers";
 import {
   adminCheckListMappings,
+  emailTemplateMappings,
   HttpStatus,
   STATUS_MESSAGE,
 } from "../utils/constants";
@@ -1417,6 +1418,40 @@ async function getEmailPlaceHolders(req : Request, res : Response) {
   }
 }
 
+async function getEmailTemplateCategory(req : Request, res : Response) {
+  const methodName = "Get Email PlaceHolders";
+  try {
+    const result = await caseManagementService.getEmailTemplateCategory();
+    if(result.statusCode == HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.categoryPlaceHolderSuccess,
+        data : result.data
+      })
+    } else {
+      return res.status(HttpStatus.SUCCESS).send({
+        statusCode : HttpStatus.SUCCESS,
+        statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
+        statusMessage : STATUS_MESSAGE.dataNotAvailable,
+        data : []
+      })    
+    }
+  } catch (err) {
+    // Handle unexpected errors (system failures, network issues, etc.)
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+
 async function listEmailTemplates(req: Request, res: Response) {
   try {
     const methodName = "List Email Templates";
@@ -1548,8 +1583,9 @@ async function exportEmailTemplates(req: Request, res: Response) {
                  let resultMap: { [key: string]: any } = {
                    r_number: d.r_number,
                    status_name: d.status_name,
-                   template_name: d.template_name,
+                   email_template_name: d.template_name,
                    description: d.description,
+                   category_rid: d.category_name,
                    created_by: d.created_user_name,
                    created_datetime: formatDate(d?.created_datetime),
                    modified_by: d.modified_user_name,
@@ -1561,7 +1597,7 @@ async function exportEmailTemplates(req: Request, res: Response) {
    
                  // Build exportRecord using allowed fields and resultMap
                  const exportRecord: Record<string, any> = {};
-                 adminCheckListMappings.forEach((mapping) => {
+                 emailTemplateMappings.forEach((mapping) => {
                    if (allowedFieldSet.has(mapping.permissionField)) {
                      exportRecord[mapping.exportField] =
                        resultMap[mapping.dataField];
@@ -1724,5 +1760,6 @@ export default {
   listEmailTemplates,
   getEmailTemplateDetailsById,
   exportEmailTemplates,
-  getEmailCategoryPlaceHolders
+  getEmailCategoryPlaceHolders,
+  getEmailTemplateCategory
 };
