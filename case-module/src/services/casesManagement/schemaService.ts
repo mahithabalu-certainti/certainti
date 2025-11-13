@@ -1,9 +1,9 @@
-import { Op, QueryTypes, Sequelize, Transaction } from "sequelize";
+import { col, fn, Op, QueryTypes, Sequelize, Transaction, where } from "sequelize";
 import { CaseModelService } from "../caseModelsService";
 import { CreateTaskTemplateType, filterType, ICreateChecklistTemplate, ICreateChecklistItemTemplate, TaskType, UpdateTaskTemplateType, MilestoneResponse, ICreateEmailTemplate } from "../../utils/types";
 import { buildDatetimeFilterCondition, buildNumericFilterCondition, buildStringFilterCondition, errorLog, logMessage } from "../../utils/helpers";
-import { HttpStatus, STATUS_MESSAGE, filtersColumnsForCaseSummary, filterTypesForCaseSummary, filterTypesForAdminCheckList, filtersColumnsForAdminCheckList, rawQueries } from "../../utils/constants";
-import { fetchCaseTemplateData, listAllCheckList } from "../../utils/rawQueries";
+import { HttpStatus, STATUS_MESSAGE, filtersColumnsForCaseSummary, filterTypesForCaseSummary, filterTypesForAdminCheckList, filtersColumnsForAdminCheckList, rawQueries, filterTypesForEmailTemplate, filtersColumnsForEmailTemplate } from "../../utils/constants";
+import { fetchCaseTemplateData, listAllCheckList, listAllEmailTemplates } from "../../utils/rawQueries";
 import { initOrgSequelize } from "../../config/orgDataSource";
 import { initMainDbSequelize } from "../../config/mainDataSource";
 
@@ -343,6 +343,22 @@ class CaseManagementSchemaService {
     return sortMapping[sortField] || "r_number";
   };
 
+  getSortColumnForEmailTemplate = (sortField: string): string => {
+    const sortMapping: Record<string, string> = {
+      r_number: "r_number",
+      created_datetime: "created_datetime",
+      modified_datetime: "modified_datetime",
+      status_name: "status_name",
+      created_user_name: "created_user_name",
+      updated_user_name: "modified_user_name",
+      template_name: "template_name",
+      description: "description",
+      createdAt: "created_datetime"
+    };
+
+    return sortMapping[sortField] || "r_number";
+  };
+
   /**
    * Simplified filter processing for cases
    * @param filters - Filter object
@@ -423,6 +439,76 @@ class CaseManagementSchemaService {
     }
   }
   
+  filterForEmailTemplate(
+    filters: filterType,
+    andConditions: string,
+    filteredQueryArray: string[],
+    filterTypes: any,
+    filterColumns: any
+  ) {
+    let filteredColumns: string | undefined;
+    if (filters && Object.keys(filters).length > 0) {
+      for (let [key, conditions] of Object.entries(filters)) {
+        if (Object.keys(filterTypes).includes(key)) {
+          filteredColumns = filterColumns[key];
+          andConditions = ` AND `;
+        }
+        for (let [condition, values] of Object.entries(conditions)) {
+          switch (filterTypes[key]) {
+            case "string": {
+              let dynamicReference = `et`;
+  
+              const stringCondition = buildStringFilterCondition(
+                condition,
+                values,
+                filteredColumns!,
+                dynamicReference
+              );
+              if (stringCondition) {
+                filteredQueryArray.push(stringCondition);
+              }
+              break;
+            }
+            case "number": {
+              const numericCondition = buildNumericFilterCondition(
+                condition,
+                values,
+                filteredColumns!
+              );
+              if (numericCondition) {
+                filteredQueryArray.push(numericCondition);
+              }
+              break;
+            }
+            case "datetime": {
+              let dynamicReference = `et`;
+              const datetimeCondition = buildDatetimeFilterCondition(
+                condition,
+                values,
+                filteredColumns!,
+                dynamicReference
+              );
+              if (datetimeCondition) {
+                filteredQueryArray.push(datetimeCondition);
+              }
+              break;
+            }
+          }
+        }
+      }
+      return {
+        filteredQueryArray,
+        andConditions,
+      };
+    } else {
+      filteredQueryArray = [];
+      andConditions = ` `;
+      return {
+        filteredQueryArray,
+        andConditions,
+      };
+    }
+  }
 
    async listAdminCheckList(
       page: number,
@@ -806,6 +892,43 @@ async fetchChecklistTemplateDetailsById(
     }
   }
 
+   async checkIsEmailTemplateUnique(
+    emailReq: any
+  ): Promise<boolean> {
+    const { EmailTemplate } = await this.caseModelService.getModels("");
+    const response = await EmailTemplate.findOne({
+      where: {
+        [Op.and]: [
+          where(
+            fn("LOWER", col("template_name")),
+            Op.eq,
+            emailReq.template_name.toLowerCase()
+          ),
+          { category_rid: emailReq.category_rid }
+        ]
+      }
+    });
+    return !response;
+  }
+
+   async  checkisExistingTemplateUnique(emailReq: any): Promise<boolean> {
+  const { EmailTemplate } = await this.caseModelService.getModels("");
+  const response = await EmailTemplate.findOne({
+    where: {
+      [Op.and]: [
+        where(
+          fn("LOWER", col("template_name")),
+          Op.eq,
+          emailReq.template_name.toLowerCase()
+        ),
+        { category_rid: emailReq.category_rid },
+        { rid: { [Op.ne]: emailReq.email_template_rid } },
+      ]
+    }
+  });
+  return !response;
+}
+
   async updateEmailTemplate(
     emailRequest: ICreateEmailTemplate
   ) {
@@ -845,6 +968,182 @@ async fetchChecklistTemplateDetailsById(
         }
         const users = await this.mainDbSequelize.query(
           rawQueries.getEmailPlaceHolders(),
+          {
+            type: "SELECT",
+          }
+        );
+        return users;
+      } catch (err) {
+        logMessage(`Error in fetching users for case team: ${err}`);
+        errorLog(
+          "Error in fetching users for case team:",
+          (err as Error).message
+        );
+        return [];
+      }
+    }
+  async listEmailTemplates(
+  page: number,
+  limit: number,
+  apiType: string,
+  filters: filterType,
+  search: string,
+  sortBy: string,
+  sortOrder: string,
+) {
+  try {
+    // Ensure filters is not null or undefined
+    filters = filters || {};
+    let offset = (page - 1) * limit;
+    let pagination = `LIMIT ${limit} OFFSET ${offset}`;
+    if (apiType === "download") {
+      pagination = ``;
+    }
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+    }
+    let filteredQueryArray: string[] = [];
+    let andConditions = ``;
+    let filterQueryValues;
+    let whereKey: string = ``;
+    let sortValue;
+    let searchValue: string;
+    let filterDatas = this.filterForEmailTemplate(
+      filters,
+      andConditions,
+      filteredQueryArray,
+      filterTypesForEmailTemplate,
+      filtersColumnsForEmailTemplate
+    );
+    // Optimize filter query processing
+    filterQueryValues = filterDatas?.filteredQueryArray?.length
+      ? filterDatas.filteredQueryArray.join(" AND ")
+      : "";
+
+    
+    searchValue = search ? `%${search}%` : `%%`;
+    whereKey = `1 = 1`;
+
+    // Optimized conditions joining
+    const conditions = [
+      filterQueryValues,
+    ].filter(Boolean);
+
+    const joinedConditions =
+      conditions.length > 0 ? " AND " + conditions.join(" AND ") : "";
+
+    // Optimized sorting logic using extracted utility function
+    const sortColumn = this.getSortColumnForEmailTemplate(sortBy);
+    const sortDirection = sortOrder || "ASC";
+    logMessage(
+      `Sorting by column: ${sortColumn}, direction: ${sortDirection}`
+    );
+    sortValue = `ORDER BY ${sortColumn} ${sortDirection}`;
+    let caseSummaryQuery = await listAllEmailTemplates(
+      searchValue,
+      whereKey,
+      joinedConditions,
+      sortValue,
+      pagination
+    );
+    const [result]: any[] = await this.mainDbSequelize.query(
+      caseSummaryQuery,
+      { type: "SELECT" }
+    );
+    return result.admin_checklists;
+  } catch (err) {
+    logMessage(`Error in fetching email template: ${err}`);
+    errorLog("Error in fetching email template:", (err as Error).message);
+    return [];
+  }
+}
+
+async fetchEmailTemplateDetailsById(
+  emailTemplateId: string
+) {``
+  if (!this.mainDbSequelize) {
+    this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+  }
+
+  const [emailTemplateDetails] = await this.mainDbSequelize.query(rawQueries.fetchEmailTemplates, {
+    replacements: { emailTemplateId },
+    type: "SELECT"
+  }) as [any[], any];
+
+  if (!emailTemplateDetails || emailTemplateDetails.length === 0) {
+    return null;
+  }
+
+  const emailTemplateDetailsResult = emailTemplateDetails as any;
+
+   const userInfo = await this.insertUserDetails(
+     emailTemplateDetailsResult.created_by ?? "",
+     emailTemplateDetailsResult.modified_by ?? ""
+   );
+
+   const [statusInfo]: any[] = await this.mainDbSequelize.query(
+         rawQueries.getStatusDetails(emailTemplateDetailsResult?.status_rid ?? ""),
+         {
+           type: "SELECT",
+         }
+       );
+   const [categoryInfo]: any[] = await this.mainDbSequelize.query(
+         rawQueries.getCategoryDetails(emailTemplateDetailsResult?.category_rid ?? ""),
+         {
+           type: "SELECT",
+         }
+       );
+
+  const response: any = {
+    email_template_rid: emailTemplateDetailsResult?.rid,
+    email_template_name: emailTemplateDetailsResult?.template_name ?? "",
+    email_template_description: emailTemplateDetailsResult?.description ?? "",
+    r_number: emailTemplateDetailsResult.r_number ?? "",
+    status_rid: emailTemplateDetailsResult.status_rid ?? "",
+    status_name: statusInfo.status_name ?? "",
+    subject: emailTemplateDetailsResult.subject ?? "",
+    body_html: emailTemplateDetailsResult.body_html ?? "",
+    category_rid: emailTemplateDetailsResult.category_rid ?? "",
+    category_name: categoryInfo.category_name ?? "",
+    modified_by: userInfo.modified_name ?? emailTemplateDetailsResult.modified_by,
+    created_by: userInfo.created_name ?? emailTemplateDetailsResult.created_by,
+    created_datetime: emailTemplateDetailsResult.created_datetime ?? null,
+    modified_datetime: emailTemplateDetailsResult.modified_datetime ?? null
+  };
+
+  return response;
+  }
+
+async fetchEmailCategoryPlaceHolders(categoryRid: string
+) {
+    try {
+      if (!this.mainDbSequelize) {
+        this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+      }
+      const response = await this.mainDbSequelize.query(
+        rawQueries.getEmailCategoryPlaceHolders(categoryRid),
+        {
+          type: "SELECT",
+        }
+      );
+      return response;
+    } catch (err) {
+      logMessage(`Error in fetching users for case team: ${err}`);
+      errorLog(
+        "Error in fetching users for case team:",
+        (err as Error).message
+      );
+      return [];
+    }
+  }
+async getEmailTemplateCategory(
+  ) {
+     try {
+        if (!this.mainDbSequelize) {
+          this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+        }
+        const users = await this.mainDbSequelize.query(
+          rawQueries.getEmailTemplateCategory(),
           {
             type: "SELECT",
           }

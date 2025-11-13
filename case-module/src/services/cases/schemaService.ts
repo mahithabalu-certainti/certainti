@@ -2790,7 +2790,7 @@ class CaseSchemaService {
           status_rid: caseRequest.status_rid,
           checklist_template_rid: caseRequest?.checklist_template_rid || "",
           modified_by: caseRequest.modified_by,
-           modified_datetime: caseRequest.modified_datetime,
+          modified_datetime: new Date(),
         },
         { where: { rid: caseRequest.checklist_rid }, transaction }
       );
@@ -5197,7 +5197,7 @@ async function deleteChecklistItem(
   // Find the item to delete
   const itemToDelete = await CheckListItem.findOne({
     where: {
-      rid: checklistRid
+      rid: item.checklist_item_rid
     },
     transaction,
   });

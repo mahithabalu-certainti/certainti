@@ -136,7 +136,10 @@ export const STATUS_MESSAGE = {
   attachmentDeletedSuccess : "Attachment deleted successfully",
   attachmentDeleteFailed : "Attachment deletion failed",
   attachmentNotFound : "Attachment not found",
-  attachementTaskListSuccess : "Task Attachments fetched successfully"
+  attachementTaskListSuccess : "Task Attachments fetched successfully",
+  categoryPlaceHolderSuccess : "Placeholders fetched successfully",
+  categoryPlaceHolderFailed : "Failed to fetch Placeholders",
+
 };
 
 export const caseStatuses = {
@@ -351,6 +354,56 @@ export const adminCheckListMappings = [
   //{ permissionField: 'modified_datetime', exportField: 'Updated On', dataField: 'modified_datetime' }
 ];
 
+export const emailTemplateMappings = [
+  {
+    permissionField: "r_number",
+    exportField: "Template ID",
+    dataField: "r_number",
+  },
+  {
+    permissionField: "email_template_name",
+    exportField: "Template Name",
+    dataField: "email_template_name",
+  },
+  {
+    permissionField: "description",
+    exportField: "Description",
+    dataField: "description",
+  },
+  {
+    permissionField: "category_rid",
+    exportField: "Category",
+    dataField: "category_rid",
+  },
+  {
+    permissionField: "created_by",
+    exportField: "Created By",
+    dataField: "created_by",
+  },
+  {
+    permissionField: "created_datetime",
+    exportField: "Created On",
+    dataField: "created_datetime",
+  },
+  {
+    permissionField: "modified_by",
+    exportField: "Updated By",
+    dataField: "modified_by",
+  },
+  {
+    permissionField: "modified_datetime",
+    exportField: "Updated On",
+    dataField: "modified_datetime",
+  },
+  {
+    permissionField: "status_rid",
+    exportField: "Status",
+    dataField: "status_name",
+  },
+  //{ permissionField: 'modified_by', exportField: 'Updated By', dataField: 'modified_by' },
+  //{ permissionField: 'modified_datetime', exportField: 'Updated On', dataField: 'modified_datetime' }
+];
+
 export const checklistsFieldMappings = [
   {
     permissionField: "r_number",
@@ -506,6 +559,14 @@ export const rawQueries = {
     return `
       SELECT rid,placeholder_key
       FROM ${MAIN_SCHEMA_NAME}.email_placeholder 
+    ORDER BY placeholder_key ASC`
+  },
+  getEmailCategoryPlaceHolders(categoryRid : string) {  
+    return `
+      SELECT ec.rid,placeholder_rid,ep.placeholder_key
+      FROM ${MAIN_SCHEMA_NAME}.email_category_placeholder  ec
+      LEFT JOIN ${MAIN_SCHEMA_NAME}.email_placeholder ep ON ep.rid = ec.placeholder_rid
+      WHERE category_rid = '${categoryRid}'
     ORDER BY placeholder_key ASC`
   },
   checkCaseTableExists(schemaName: string) {
@@ -823,6 +884,29 @@ export const rawQueries = {
         ct.rid = :checklistId
     LIMIT 1;
   `,
+  fetchEmailTemplates: `
+    SELECT 
+        et.rid,
+        et.r_number,
+        et.template_name,
+        et.description,
+        et.subject,
+        et.body_html,
+        et.category_rid,
+        et.status_rid,
+        s.status_name AS status_name,
+        et.created_by,
+        et.modified_by,
+        et.created_datetime,
+        et.modified_datetime
+    FROM 
+        ${MAIN_SCHEMA_NAME}.email_template et
+    LEFT JOIN 
+        ${MAIN_SCHEMA_NAME}.status s ON et.status_rid = s.rid
+        WHERE 
+        et.rid = :emailTemplateId
+    LIMIT 1;
+  `,
   updateTaskTemplate(data: string[], rid: string) {
     let query = `UPDATE ${MAIN_SCHEMA_NAME}.task_template SET ${data.map((d: any) => d).join(',')} WHERE rid = '${rid}'`
     return query;
@@ -835,6 +919,12 @@ export const rawQueries = {
   },
   getStatusDetails (rid : string) {
     return `SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.status WHERE rid = '${rid}'`
+  },
+  getCategoryDetails (rid : string) {
+    return `SELECT rid, category_name FROM ${MAIN_SCHEMA_NAME}.email_template_category WHERE rid = '${rid}'`
+  },
+  getEmailTemplateCategory() {
+    return `SELECT rid, category_name FROM ${MAIN_SCHEMA_NAME}.email_template_category ORDER BY category_name ASC`
   },
   getAllPriorityTypes (rid : any[]) {
     let ids : string[] = []
@@ -1100,6 +1190,32 @@ export const filtersColumnsForAdminCheckList: Record<string, string> = {
   createdAt: "createdAt",
   checklist_name: "checklist_name",
   checklist_description: "checklist_description"
+
+};
+
+export const filterTypesForEmailTemplate: Record<string, any> = {
+  r_number: "string",
+  created_datetime: "datetime",
+  modified_datetime: "datetime",
+  created_user_name: "string",
+  updated_user_name: "string",
+  status_rid: "string",
+  template_name: "string",
+  description: "string",
+  createdAt: "datetime"
+};
+
+export const filtersColumnsForEmailTemplate: Record<string, string> = {
+  r_number: "r_number",
+  created_datetime: "created_datetime",
+  modified_datetime: "modified_datetime",
+  created_user_name: "created_user_name",
+  updated_user_name: "updated_user_name",
+  status_rid: "status_rid",
+  status_name: "status_name",
+  createdAt: "createdAt",
+  template_name: "template_name",
+  description: "description"
 
 };
 
