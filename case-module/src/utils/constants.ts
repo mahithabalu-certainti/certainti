@@ -131,6 +131,8 @@ export const STATUS_MESSAGE = {
   commentsDeletedSuccess : "Comments deleted successfully",
   commentsFaileDDelete : "Failed to delete comments",
   commentsFetchedSuccess : "Task Comments fetched successfully",
+  historicalSubmissionCreated: "Historical submission created successfully",
+  historicalSubmissionCreationFailed: "Historical submission creation failed",
   fileNotFound : "No file attached",
   attachmentUploadedSuccess : "Attachment uploaded successfully",
   attachmentDeletedSuccess : "Attachment deleted successfully",
@@ -1087,6 +1089,13 @@ export const rawQueries = {
     SELECT rid,r_number,case_name,account_rid ,fiscal_year
     FROM "${schemaName}".cases
     WHERE rid = :caseId
+    `;
+  },
+  fetchCasesByIds(schemaName: string) {
+    return `
+    SELECT rid,r_number,case_name,account_rid ,fiscal_year
+    FROM "${schemaName}".cases
+    WHERE rid in (:caseIds)
     `;
   },
   fetchProjectInfoById(schemaName: string){

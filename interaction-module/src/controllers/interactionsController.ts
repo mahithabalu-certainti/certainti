@@ -639,8 +639,8 @@ async function getKeyContactsByCaseId(
     }
 
     const keyContacts = await interactionService.getKeyContactsByCaseId(
-      caseId,
-      accountId
+      caseId as string,
+      accountId as string 
     );
 
     console.log(
