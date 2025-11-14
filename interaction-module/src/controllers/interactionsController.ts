@@ -601,7 +601,7 @@ async function getKeyContactsByCaseId(
 ): Promise<void> {
   const methodName = "Get key contacts by case ID";
   try {
-    const { accountId, caseId } = req.params;
+    const { accountId, caseId } = req.query;
     const userId = req.headers["x-user-id"] as string;
     logMessage(`[${methodName}] Request received, caseId: ${caseId}, accountId: ${accountId}, userId: ${userId}`);
 
