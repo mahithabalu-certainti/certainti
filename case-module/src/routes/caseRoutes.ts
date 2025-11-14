@@ -227,5 +227,15 @@ routes.get(
   checkUserStatusMiddleware("NA"),
   controller.caseController.fetchCaseTaskStatus
 )
+routes.post(
+  "/task/collaborator/add",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.addCollaborators
+)
+routes.post(
+  "/task/collaborator/list",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.listCollaborators
+)
 
 export default routes;

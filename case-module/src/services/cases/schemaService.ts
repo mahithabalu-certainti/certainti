@@ -5064,6 +5064,59 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
       }
     }
   }
+  async addCollaborators (data : any,accountNumber : string) {
+    const {TaskCollaborators} = await this.caseModelService.getModels(accountNumber);
+    const checkIsDifferentCollaborator = await this.isNewCollaborator(data.user_rid, accountNumber);
+    if(!checkIsDifferentCollaborator) {
+      const checkCollaboratorExists = await this.isCollaboratorAlreadyAdded(data.user_rid, data.case_rid, data.account_rid, data.rid, accountNumber);
+      if(!checkCollaboratorExists) {
+        const result = await TaskCollaborators.create({
+          case_rid : data.case_rid,
+          account_rid : data.account_rid,
+          task_rid : data.rid,
+          assigned_to : data.user_rid,
+          created_by : data.created_by,
+          created_datetime : new Date()
+        });
+        if(result) {
+          return {
+            statusCode : HttpStatus.SUCCESS,
+            statusMessage : STATUS_MESSAGE.collaboratorsAddedSuccesss
+          }
+        } else {
+          return {
+            statusCode : HttpStatus.FAILED,
+            statusMessage : STATUS_MESSAGE.collaboratorAddedFailed
+          }
+        }
+      } else {
+        return {
+          statusCode : HttpStatus.BAD_REQUEST,
+          statusMessage : STATUS_MESSAGE.collaboratorAlreadyAdded
+        }
+      }
+    } 
+    else {
+      return {
+        statusCode : HttpStatus.BAD_REQUEST,
+        statusMessage : STATUS_MESSAGE.collaboratorAlreadyAdded
+      }
+    } 
+  }
+  async fetchCollaboratorsList (accountNumber : string, data : any) {
+    const {TaskCollaborators} = await this.caseModelService.getModels(accountNumber);
+    const result = await TaskCollaborators.findAll({
+      attributes : ['assigned_to'],
+      where : {
+        case_rid : data.case_rid,
+        account_rid : data.account_rid,
+        task_rid : data.rid
+      },
+      raw : true
+    });
+    if(result.length > 0) return result;
+    else return []
+  }
 }
 
 // Utility function for optimized column sorting
