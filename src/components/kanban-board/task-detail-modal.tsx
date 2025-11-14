@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { TaskDetailModalProps, Task, Activity } from './types';
+import { TaskDetailModalProps, Task, Activity, Comment } from './types';
 import { MenuItem, Select, SelectChangeEvent } from '@mui/material';
 import dayjs from 'dayjs';
 import { CalendarIcon, CloseIcon } from '../../assets';
@@ -19,11 +19,13 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   availableUsers = [],
   onFetchTaskDetails,
   onFetchTaskActivities,
+  onFetchTaskComments,
   fieldVisibility = {},
   fieldDisabled = {},
 }) => {
   const [task, setTask] = useState<Task | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedTask, setEditedTask] = useState<Task | null>(null);
@@ -33,6 +35,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   );
   const [hideCheckedItems, setHideCheckedItems] = useState(false);
   const activitiesFetchedRef = useRef<string | null>(null);
+  const commentsFetchedRef = useRef<string | null>(null);
 
   const enrichedUsers = availableUsers.map(enrichUserOption);
 
@@ -118,6 +121,52 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
       fetchActivities();
     }
   }, [taskId, isOpen, onFetchTaskActivities]);
+
+  // Fetch comments separately - with deduplication
+  useEffect(() => {
+    const fetchComments = async () => {
+      if (!taskId || !onFetchTaskComments) {
+        console.warn('Missing taskId or onFetchTaskComments:', {
+          taskId,
+          hasCallback: !!onFetchTaskComments,
+        });
+        setComments([]);
+        return;
+      }
+
+      // Prevent duplicate calls using ref
+      if (commentsFetchedRef.current === taskId) {
+        console.log('Comments already fetched for taskId:', taskId);
+        return;
+      }
+
+      console.log('Fetching comments for taskId:', taskId);
+      commentsFetchedRef.current = taskId;
+
+      try {
+        const fetchedComments = await onFetchTaskComments(taskId);
+        console.log('Fetched comments:', fetchedComments);
+
+        if (fetchedComments && Array.isArray(fetchedComments)) {
+          setComments(fetchedComments);
+          console.log(
+            'Comments set successfully, count:',
+            fetchedComments.length
+          );
+        } else {
+          console.warn('Comments response is not an array:', fetchedComments);
+          setComments([]);
+        }
+      } catch (error) {
+        console.error('Error fetching task comments:', error);
+        setComments([]);
+      }
+    };
+
+    if (isOpen && taskId) {
+      fetchComments();
+    }
+  }, [taskId, isOpen, onFetchTaskComments]);
 
   if (!isOpen || !taskId) return null;
 
@@ -1377,7 +1426,58 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
 
               {activeTab === 'comments' && (
                 <div className='space-y-4'>
-                  <div className='flex items-start gap-3 mt-6 pt-4 border-t border-gray-200'>
+                  {comments.length > 0 && (
+                    <div className='space-y-3 max-h-[220px] overflow-y-auto pr-2 mb-4 border border-gray-200 rounded-lg p-3'>
+                      {comments.map((comment, idx) => (
+                        <div
+                          key={comment.id || idx}
+                          className='flex gap-3 pb-3 border-b border-gray-200 last:border-b-0'
+                        >
+                          <div
+                            className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 text-white'
+                            style={{
+                              backgroundColor: comment.color || '#999',
+                              fontSize: '8px',
+                            }}
+                          >
+                            {comment.initials ||
+                              comment.user
+                                .split(' ')
+                                .map((n) => n[0])
+                                .join('')}
+                          </div>
+                          <div className='flex-1'>
+                            <p className='text-sm font-semibold text-gray-700'>
+                              {comment.user}
+                            </p>
+                            <p className='text-sm text-gray-600 mt-1'>
+                              {comment.text}
+                            </p>
+                            {comment.attachments &&
+                              comment.attachments.length > 0 && (
+                                <div className='mt-2 space-y-1'>
+                                  {comment.attachments.map(
+                                    (attachment, idx) => (
+                                      <div
+                                        key={idx}
+                                        className='text-xs text-gray-500 bg-gray-50 p-1 rounded inline-block'
+                                      >
+                                        📎 {attachment}
+                                      </div>
+                                    )
+                                  )}
+                                </div>
+                              )}
+                            <p className='text-xs text-gray-500 mt-2'>
+                              {comment.date}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className='flex items-start gap-3'>
                     <div
                       className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 text-white'
                       style={{
@@ -1441,7 +1541,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
               )}
 
               {activeTab === 'activity' && (
-                <div className='space-y-3'>
+                <div className='space-y-3 max-h-[190px] overflow-y-auto pr-2'>
                   {activities.length > 0 ? (
                     activities.map((activity, idx) => (
                       <div

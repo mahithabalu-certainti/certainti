@@ -16,6 +16,16 @@ export interface Activity {
   link?: string;
 }
 
+export interface Comment {
+  id?: string;
+  user: string;
+  text: string;
+  date: string;
+  initials?: string;
+  color?: string;
+  attachments?: string[];
+}
+
 // New interface for simple status options (active/inactive)
 export interface StatusOption {
   label: string;
@@ -179,6 +189,7 @@ export interface TaskDetailModalProps {
   availableUsers?: UserOption[];
   onFetchTaskDetails?: (taskId: string) => Promise<Task | null>;
   onFetchTaskActivities?: (taskId: string) => Promise<Activity[]>;
+  onFetchTaskComments?: (taskId: string) => Promise<Comment[]>;
   fieldVisibility?: FieldVisibility;
   fieldDisabled?: FieldDisabled;
 }
