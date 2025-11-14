@@ -77,7 +77,7 @@ const createHistoricalSubmissionSchema = Joi.object({
     .items(
       Joi.object({
         history_submission_rid: Joi.string().optional(),
-        fiscal_year: Joi.string().required(),
+        fiscal_year: Joi.number().required(),
         total_project: Joi.number().integer().required(),
         total_qualified_project: Joi.number().integer().required(),
         total_project_cost: Joi.number().precision(2).required(),

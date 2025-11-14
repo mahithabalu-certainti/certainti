@@ -91,7 +91,7 @@ export class CaseHistorySubmission
           allowNull: false,
         },
         fiscal_year: {
-          type: DataTypes.STRING(10),
+          type: DataTypes.INTEGER,
           allowNull: false,
         },
         total_project: {
