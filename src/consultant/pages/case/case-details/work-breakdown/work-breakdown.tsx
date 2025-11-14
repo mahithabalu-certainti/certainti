@@ -6,11 +6,9 @@ import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/res
 import { AllPermissions } from '../../../../../common-service';
 import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import KanbanBoard from '../../../../../components/kanban-board/kanban-board';
-import {
-  mockUserData,
-  mockTaskDetails,
-} from '../../../../../components/kanban-board/mock-data';
+import { mockUserData } from '../../../../../components/kanban-board/mock-data';
 import { useGetWorkBreakdownList } from '../../../../../hooks/use-work-breakdown';
+import { getTaskDetail } from '../../../../services/work-breakdown/work-breakdown-service';
 
 const ConfigTabs: ResourceTabs[] = [
   {
@@ -56,9 +54,16 @@ const WorkBreakDown = () => {
   >({});
 
   const priorityData = [
-    { id: '1', name: 'Low', color: '#gray' },
-    { id: '2', name: 'Medium', color: '#yellow' },
-    { id: '3', name: 'High', color: '#red' },
+    { id: '1', name: 'Lowest', color: '#gray' },
+    { id: '2', name: 'Low', color: '#lightblue' },
+    { id: '3', name: 'Medium', color: '#yellow' },
+    { id: '4', name: 'High', color: '#orange' },
+    { id: '5', name: 'Highest', color: '#red' },
+  ];
+
+  const statusData = [
+    { id: '1', name: 'Active', color: '#10b981' },
+    { id: '2', name: 'Inactive', color: '#ef4444' },
   ];
 
   const tagData = [
@@ -118,6 +123,22 @@ const WorkBreakDown = () => {
     navigate(`?${searchParams.toString()}`, { replace: true });
   };
 
+  const handleFetchTaskDetails = async (taskId: string) => {
+    console.log('handleFetchTaskDetails called for taskId:', taskId);
+    if (!accountId || !caseId) {
+      console.warn('Account ID or Case ID is missing');
+      return null;
+    }
+
+    try {
+      const taskData = await getTaskDetail(accountId, caseId, taskId);
+      return taskData;
+    } catch (error) {
+      console.error('Failed to fetch task details:', error);
+      return null;
+    }
+  };
+
   return (
     <>
       <SectionTabPanel
@@ -165,10 +186,7 @@ const WorkBreakDown = () => {
             ) : (
               <KanbanBoard
                 data={kanbanData?.data || []}
-                onFetchTaskDetails={(taskId: string) => {
-                  const task = mockTaskDetails[taskId];
-                  return Promise.resolve(task ?? null);
-                }}
+                onFetchTaskDetails={handleFetchTaskDetails}
                 isCreateTaskDisabled={true}
                 isCreateTaskHide={true}
                 showCommentCount={true}
@@ -177,7 +195,7 @@ const WorkBreakDown = () => {
                 isDragable={true}
                 isDragablebetweenBoards={true}
                 isLoading={isLoading}
-                statusData={[]}
+                statusData={statusData}
                 priorityData={priorityData}
                 tagData={tagData}
                 userData={mockUserData}
