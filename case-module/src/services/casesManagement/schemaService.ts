@@ -990,6 +990,7 @@ async fetchChecklistTemplateDetailsById(
   search: string,
   sortBy: string,
   sortOrder: string,
+  email_template_rid?: string,
 ) {
   try {
     // Ensure filters is not null or undefined
@@ -1008,6 +1009,7 @@ async fetchChecklistTemplateDetailsById(
     let whereKey: string = ``;
     let sortValue;
     let searchValue: string;
+    let templateQuery: string = ``;
     let filterDatas = this.filterForEmailTemplate(
       filters,
       andConditions,
@@ -1024,9 +1026,14 @@ async fetchChecklistTemplateDetailsById(
     searchValue = search ? `%${search}%` : `%%`;
     whereKey = `1 = 1`;
 
+    if (apiType === "graphql") {
+        templateQuery = ` et.rid = '${email_template_rid}'`;
+      }
+
     // Optimized conditions joining
     const conditions = [
       filterQueryValues,
+      templateQuery
     ].filter(Boolean);
 
     const joinedConditions =

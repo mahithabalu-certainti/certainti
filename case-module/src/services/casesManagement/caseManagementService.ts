@@ -726,15 +726,16 @@ async listEmailTemplates (
     data: any,
     filters: Record<string, any>,
     userId: string,
-    apiType: string
+    apiType: string,
+    emailTemplateRid?: string
   ): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
     data?: { emailTemplates: any; count: number };
   }> {
-    const result = await this.caseManangementSchemaService.listEmailTemplates(data.page,data.limit,apiType,filters,data.search, data.sortBy, data.sortOrder);
-  if (result != null) {
+    const result = await this.caseManangementSchemaService.listEmailTemplates(data.page,data.limit,apiType,filters,data.search, data.sortBy, data.sortOrder,emailTemplateRid);
+    if (result != null) {
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
