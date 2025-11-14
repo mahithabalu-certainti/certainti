@@ -5021,31 +5021,46 @@ async fetchProjectTaskById(accountNumber: string, projectTaskId: string) {
   }
 
   async listTaskLevelAttachments (accountNumber : string, data : any) {
+    let offset = (data.page - 1) * data.limit;
     const {TaskAttachments} = await this.caseModelService.getModels(accountNumber)
-    const fetchAllTaskAttachments = await TaskAttachments.findAll({
+    let fetchAllTaskAttachments = await TaskAttachments.findAll({
       where : {
         account_rid : data.account_rid,
         case_rid : data.case_rid,
         task_rid : data.task_rid
-      }, raw : true
+      }, raw : true,
     }); 
     if(fetchAllTaskAttachments.length > 0) {
-      const finalData = await Promise.all(fetchAllTaskAttachments.map(async (d : any) => {
+      const total = fetchAllTaskAttachments.length
+      fetchAllTaskAttachments = fetchAllTaskAttachments.slice(offset, data.page * data.limit);
+      const structuredDate = await Promise.all(fetchAllTaskAttachments.map(async (d : any) => {
         return {
           ...d,
           browse_file : await generateSasUrl(d.browse_file)
         }
       }))
+      const finalData = {
+        page : data.page,
+        limit : data.limit,
+        total_result : total,
+        data : structuredDate
+      }
       return {
         statusCode : HttpStatus.SUCCESS,
         statusCodeValue : HttpStatus.SUCCESS_MESSAGE,
         data : finalData
       }
     } else {
+      const finalData = {
+        page : data.page,
+        limit : data.limit,
+        total_result : 0,
+        data : []
+      }
       return {
         statusCode : HttpStatus.NOT_FOUND,
         statusCodeValue : HttpStatus.NOT_FOUND_MESSAGE,
-        data : []
+        data : finalData
       }
     }
   }

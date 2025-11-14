@@ -141,7 +141,9 @@ export const STATUS_MESSAGE = {
   attachementTaskListSuccess : "Task Attachments fetched successfully",
   categoryPlaceHolderSuccess : "Placeholders fetched successfully",
   categoryPlaceHolderFailed : "Failed to fetch Placeholders",
-  activitiesFetchedSuccess : "Task Activities fetched successfully"
+  activitiesFetchedSuccess : "Task Activities fetched successfully",
+  casePriorityListedSuccess : "Case Task Priority fetched successfully",
+  caseTaskStatusListedSuccess : "Case Task Status fetched successfully"
 
 };
 
@@ -1142,8 +1144,10 @@ export const rawQueries = {
     if(oldRid === null) oldRid = ''
     if(newRid === null) newRid = ''
     return `SELECT rid, task_status_name FROM ${MAIN_SCHEMA_NAME}.case_task_status WHERE rid IN ('${oldRid}', '${newRid}')`
+  },
+  fetchChecklistStatus () {
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.checklist_status WHERE status_name ILIKE '%Done%'`
   }
-
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
 const keyContactRole = {
