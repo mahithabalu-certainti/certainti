@@ -1176,3 +1176,6 @@ return query;
     console.log(query)
     return query;
   }
+  export const listAllTaskStatus = () => {
+    return `SELECT rid, task_status_name FROM ${MAIN_SCHEMA_NAME}.case_task_status ORDER BY task_status_level ASC`
+  }

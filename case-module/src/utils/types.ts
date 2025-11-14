@@ -569,3 +569,7 @@ export type TaskCardDetailsType = {
 export type TaskCardResponse ={
   task_details :TaskCardDetailsType
 }
+export type caseTaskStatusTypes = {
+  rid : string,
+  task_status_name : string
+}

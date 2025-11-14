@@ -139,7 +139,9 @@ export const STATUS_MESSAGE = {
   attachementTaskListSuccess : "Task Attachments fetched successfully",
   categoryPlaceHolderSuccess : "Placeholders fetched successfully",
   categoryPlaceHolderFailed : "Failed to fetch Placeholders",
-  activitiesFetchedSuccess : "Task Activities fetched successfully"
+  activitiesFetchedSuccess : "Task Activities fetched successfully",
+  casePriorityListedSuccess : "Case Task Priority fetched successfully",
+  caseTaskStatusListedSuccess : "Case Task Status fetched successfully"
 
 };
 

@@ -10,6 +10,7 @@ import {
   AddCommentsType,
   CaseOwnerType,
   CaseStatusType,
+  caseTaskStatusTypes,
   ChecklistItems,
   CommentsListType,
   CountryType,
@@ -20,6 +21,7 @@ import {
   ICreateCases,
   ICreateCaseTeam,
   ICreateChecklist,
+  priorityTypes,
   TaskCardDetailsType,
   TaskCardResponse,
   TaskTypeResponse,
@@ -38,7 +40,7 @@ import { query } from "express";
 import currency from "currency.js";
 import moment from "moment";
 import { CaseManagementSchemaService } from "../casesManagement/schemaService";
-import { fetchTaskActivities, fetchTaskComments, taskCardDetails } from "../../utils/rawQueries";
+import { fetchTaskActivities, fetchTaskComments, listAllTaskStatus, taskCardDetails } from "../../utils/rawQueries";
 export class CaseService {
   private caseSchemaService: CaseSchemaService;
   private caseModelService: CaseModelService; // Assuming this is defined somewhere in your code
@@ -2338,9 +2340,16 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
           data : null
         }
       }
+    }
+    async getCasePriortyList () {
+      const mainDb = await this.getMainDb();
+      const result = await mainDb.query<priorityTypes>(rawQueries.getPriorityTypes(), {type : QueryTypes.SELECT});
+      return result;
+    }
 
-
-
-
+    async getCaseTaskStatusList () {
+      const mainDb = await this.getMainDb();
+      const result = await mainDb.query<caseTaskStatusTypes>(listAllTaskStatus(), {type : QueryTypes.SELECT});
+      return result;
     }
 }

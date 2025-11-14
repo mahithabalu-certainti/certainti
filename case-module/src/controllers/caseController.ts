@@ -3027,6 +3027,135 @@ async function fetchTaskDetails (req : Request, res : Response) {
   }
 }
 
+/**
+ * Controller to fetch the list of available case priority options.
+ *
+ * This endpoint retrieves predefined priority levels used for case/task
+ * management (e.g., High, Medium, Low).  
+ * It ensures authentication, fetches priority data through the service layer,
+ * and returns an appropriate response based on data availability.
+ *
+ * Workflow:
+ * 1. Validates that `x-user-id` is present in the request headers.
+ * 2. Calls `caseService.getCasePriortyList()` to retrieve priority values.
+ * 3. Responds with:
+ *    - `SUCCESS` and `casePriorityListedSuccess` if priorities exist.
+ *    - `SUCCESS` and `dataNotAvailable` with an empty list if no priorities exist.
+ *
+ * Error Handling:
+ * - Returns `BAD_REQUEST` if user ID is missing.
+ * - Returns `FAILED` for unexpected server or runtime errors.
+ *
+ * @param {Request} req - Express request object containing user headers.
+ * @param {Response} res - Express response object for sending the result.
+ * @returns {Promise<void>} - Sends JSON response and resolves.
+ */
+async function fetchCasePriority (req : Request, res : Response) {
+  const methodName = "fetchCasePriority"
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const result = await caseService.getCasePriortyList();
+    if(result.length > 0) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.casePriorityListedSuccess,
+        data : result
+      });
+    } else {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.dataNotAvailable,
+        data : []
+      });
+    }
+
+  }
+  catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
+/**
+ * Controller to fetch the list of task status values for cases.
+ *
+ * This endpoint retrieves the available task status options used in
+ * the case/task workflow (e.g., Open, In Progress, Completed).
+ * It ensures that the user is authenticated, calls the service layer
+ * to fetch the task status list, and returns a consistent JSON response.
+ *
+ * Workflow:
+ * 1. Confirms that the `x-user-id` header is provided.
+ * 2. Invokes `caseService.getCaseTaskStatusList()` to fetch status metadata.
+ * 3. Responds with:
+ *    - `SUCCESS` and `caseTaskStatusListedSuccess` when data exists.
+ *    - `SUCCESS` and `dataNotAvailable` with an empty list when no statuses are found.
+ *
+ * Error Handling:
+ * - Returns `BAD_REQUEST` when the user ID is missing.
+ * - Returns `FAILED` with a descriptive message in case of unexpected errors.
+ *
+ * @param {Request} req - Express request object containing user ID in headers
+ * @param {Response} res - Express response object used to send the result
+ * @returns {Promise<void>} - Resolves after sending the HTTP response
+ */
+async function fetchCaseTaskStatus (req : Request, res : Response) {
+  const methodName = "fetchCaseTaskStatus"
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const result = await caseService.getCaseTaskStatusList();
+    if(result.length > 0) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.caseTaskStatusListedSuccess,
+        data : result
+      });
+    } else {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.dataNotAvailable,
+        data : []
+      });
+    }
+
+  }
+  catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
 export default {
   createCases,
   updateCases,
@@ -3068,5 +3197,7 @@ export default {
   deleteTaskAttachments,
   listTaskAttachments,
   fetchTaskActivity,
-  fetchTaskDetails
+  fetchTaskDetails,
+  fetchCaseTaskStatus,
+  fetchCasePriority
 };

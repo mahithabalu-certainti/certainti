@@ -217,5 +217,15 @@ routes.post(
   checkUserStatusMiddleware("NA"),
   controller.caseController.fetchTaskDetails
 )
+routes.get(
+  "/task/priority",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.fetchCasePriority
+)
+routes.get(
+  "/task/status",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.fetchCaseTaskStatus
+)
 
 export default routes;
