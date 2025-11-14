@@ -23,7 +23,12 @@ import {
   AllModules,
   AllPermissions,
 } from '../../../../common-service';
-import { InfoSection, PageHeader, SideMenuPanel } from '../../../../components';
+import {
+  InfoSection,
+  PageHeader,
+  SideMenuPanel,
+  EmailModal,
+} from '../../../../components';
 import {
   AccountDetailsIcon,
   ActivitiesIcon,
@@ -62,6 +67,12 @@ import { CaseInteractions } from './case-interactions';
 
 export const CaseDetails = () => {
   const navigate = useNavigate();
+  const { email: userEmail, name: userName } = useSelector(
+    (state: RootState) => state.auth
+  );
+  console.log(userEmail);
+  console.log(userName);
+
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const { caseId } = useParams();
@@ -137,6 +148,7 @@ export const CaseDetails = () => {
       sortOrder: 'ASC',
       filters: {},
     });
+  const [showModal, setShowModal] = useState(false);
 
   const [, setInteractionsParams] = useState<InteractionListExportParams>({
     sortBy: '',
@@ -281,6 +293,44 @@ export const CaseDetails = () => {
     console.log('Settings clicked');
   };
 
+  const handleDraftEmail = () => {
+    setShowModal(true);
+  };
+
+  const activityMenuItems = [
+    { label: 'Create Task', onClick: () => console.log('Task') },
+    { label: 'Draft Email', onClick: handleDraftEmail },
+    { label: 'Schedule Meeting', onClick: () => console.log('Meeting') },
+    { label: 'Log a call', onClick: () => console.log('Call') },
+  ];
+
+  // Mock data for email modal
+  const mockData = {
+    userName: 'John Doe',
+    userEmail: 'john.doe@example.com',
+    templates: [
+      {
+        id: '1',
+        subject: 'Greetings',
+        name: 'Welcome Email Template',
+        content: 'Dear recipient,<br><br>Welcome to our platform!',
+      },
+      {
+        id: '2',
+        subject: 'Follow up',
+        name: 'Follow-up Template',
+        content:
+          'Hi there,<br><br>Just following up on our previous conversation.',
+      },
+      {
+        id: '3',
+        subject: 'Meeting Scheduled',
+        name: 'Meeting Invitation',
+        content: 'Hello,<br><br>I would like to invite you to a meeting.',
+      },
+    ],
+  };
+
   const renderContent = () => {
     switch (activeKey) {
       case 'workBreakdown':
@@ -295,13 +345,14 @@ export const CaseDetails = () => {
                   ...params,
                 }))
               }
+              activityMenuItems={activityMenuItems}
             />
           </div>
         );
       case 'caseTeam':
         return (
           <div className='w-full pr-4 pl-2 py-2'>
-            <CaseTeam />
+            <CaseTeam activityMenuItems={activityMenuItems} />
           </div>
         );
       case 'caseProjects':
@@ -567,6 +618,13 @@ export const CaseDetails = () => {
           <Suspense fallback={null}>{renderContent()}</Suspense>
         </div>
       </div>
+      {showModal && (
+        <EmailModal
+          onClose={() => setShowModal(false)}
+          data={mockData}
+          userData={{ name: userName || '', email: userEmail || '' }}
+        />
+      )}
     </div>
   );
 };

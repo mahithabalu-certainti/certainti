@@ -52,6 +52,7 @@ import {
 import { TableSkeleton } from '../../../../../components/table';
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
+import { ActivityMenuItem } from '../../../../types';
 
 const ConfigTabs: ResourceTabs[] = [
   {
@@ -61,7 +62,11 @@ const ConfigTabs: ResourceTabs[] = [
   },
 ];
 
-const CaseTeam = () => {
+interface CaseTeamProps {
+  activityMenuItems: ActivityMenuItem[];
+}
+
+const CaseTeam: React.FC<CaseTeamProps> = ({ activityMenuItems }) => {
   const [searchParams] = useSearchParams();
   const { caseId } = useParams();
   const { successToast, errorToast } = useToast();
@@ -552,6 +557,8 @@ const CaseTeam = () => {
         sortFilterCount={0}
         setSortFilterCount={() => {}}
         showRefresh={false}
+        showAddActivity={true}
+        activityMenuItems={activityMenuItems}
       />
       <SectionHeader
         title={'Case Team'}

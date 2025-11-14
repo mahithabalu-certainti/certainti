@@ -1,38 +1,33 @@
 import { useMutation, useQuery, UseQueryResult } from '@tanstack/react-query';
-import { interactionServiceApi } from '../../../api/api';
+import { caseServiceApi } from '../../../api/api';
 import {
+  CategoryPlaceholderResponse,
+  EmailCategoryResponse,
+  EmailPlaceholderResponse,
   EmailTemplateDetails,
-  //   EmailTemplateDetailsResponse,
+  EmailTemplateDetailsResponse,
   EmailTemplateFormPayload,
   EmailTemplateList,
   EmailTemplateListParams,
+  EmailTemplateListResponse,
   ExportEmailTemplateResponse,
-  //   EmailTemplateListResponse,
 } from '../../types';
 import { CommonApiResponse } from '../../../common-service';
 import {
-  EmailTemplateDetailsMockData,
-  EmailTemplateMockData,
-} from '../../mockdata/email-templates';
+  getEmailTemplateExportUrl,
+  getEmailTemplateListUrl,
+} from './email-template-url';
 
-export const getEmailTemplateListUrl = () => '/api/emailTemplates/list';
-
+// List
 export const fetchEmailTemplateList = async (
   params: EmailTemplateListParams
 ): Promise<{ emailTemplates: EmailTemplateList[]; count: number }> => {
-  //   const { data } = await interactionServiceApi.post<EmailTemplateListResponse>(
-  //     getEmailTemplateListUrl(),
-  //     params
-  //   );
-  //   return {
-  //     emailTemplates: data.data.emailTemplates,
-  //     count: data.data.totalCount,
-  //   };
-  console.log('email-template-list-params', params);
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  const { data } = await caseServiceApi.get<EmailTemplateListResponse>(
+    getEmailTemplateListUrl(params)
+  );
   return {
-    emailTemplates: EmailTemplateMockData.data.emailTemplates,
-    count: EmailTemplateMockData.data.totalCount,
+    emailTemplates: data.data.emailTemplates,
+    count: data.data.count,
   };
 };
 
@@ -56,22 +51,17 @@ export const useEmailTemplateList = (
 
 // Details
 export const getEmailTemplateDetailsURL = (templateId: string) => {
-  return `/api/emailTemplates/detail/${templateId}`;
+  return `/api/caseManagement/emailTemplate/detail/${templateId}`;
 };
 
 export const fetchEmailTemplateDetails = async (
   templateId: string
 ): Promise<EmailTemplateDetails> => {
-  //   const response =
-  //     await interactionServiceApi.get<EmailTemplateDetailsResponse>(
-  //       getEmailTemplateDetailsURL(templateId)
-  //     );
+  const response = await caseServiceApi.get<EmailTemplateDetailsResponse>(
+    getEmailTemplateDetailsURL(templateId)
+  );
 
-  //   return response.data.data.templateDetails;
-  console.log('email-template-details-params', templateId);
-  await new Promise((resolve) => setTimeout(resolve, 2000));
-
-  return EmailTemplateDetailsMockData.data.templateDetails;
+  return response.data.data.emailTemplateDetails;
 };
 
 export const useEmailTemplateDetails = (
@@ -88,14 +78,14 @@ export const useEmailTemplateDetails = (
 
 // Create & Edit
 export const getCreateEmailTemplateUrl = (): string => {
-  return `/api/emailTemplates/new`;
+  return `/api/caseManagement/emailTemplate/create`;
 };
 
 export const createEmailTemplate = async (
   body: Partial<EmailTemplateFormPayload>
 ): Promise<CommonApiResponse> => {
   try {
-    const { data } = await interactionServiceApi.post<CommonApiResponse>(
+    const { data } = await caseServiceApi.post<CommonApiResponse>(
       getCreateEmailTemplateUrl(),
       body
     );
@@ -117,14 +107,14 @@ export const useCreateEmailTemplate = () => {
 };
 
 export const getUpdateEmailTemplateUrl = (): string => {
-  return `/api/emailTemplates/update`;
+  return `/api/caseManagement/emailTemplate/update`;
 };
 
 export const updateEmailTemplateDetails = async (
   body: Partial<EmailTemplateFormPayload>
 ): Promise<CommonApiResponse> => {
   try {
-    const { data } = await interactionServiceApi.post<CommonApiResponse>(
+    const { data } = await caseServiceApi.post<CommonApiResponse>(
       getUpdateEmailTemplateUrl(),
       body
     );
@@ -146,18 +136,14 @@ export const useUpdateEmailTemplateDetails = () => {
 };
 
 // Export
-export const getEmailTemplateExportUrl = () => '/api/emailTemplates/export';
-
 export const ExportEmailTemplateList = async (
   params: EmailTemplateListParams
 ): Promise<void> => {
   try {
     const filename = `email_templates.xlsx`;
-    const response =
-      await interactionServiceApi.post<ExportEmailTemplateResponse>(
-        getEmailTemplateExportUrl(),
-        params
-      );
+    const response = await caseServiceApi.get<ExportEmailTemplateResponse>(
+      getEmailTemplateExportUrl(params)
+    );
     const base64Data = response.data?.data;
 
     if (!base64Data) {
@@ -184,4 +170,90 @@ export const ExportEmailTemplateList = async (
   } catch (error) {
     console.error('Export failed:', error);
   }
+};
+
+// Email Placeholders
+export const getEmailPlaceholderUrl = (): string => {
+  return `/api/caseManagement/emailPlaceHolders`;
+};
+
+export const fetchEmailPlaceholder =
+  async (): Promise<EmailPlaceholderResponse> => {
+    try {
+      const { data } = await caseServiceApi.get<EmailPlaceholderResponse>(
+        getEmailPlaceholderUrl()
+      );
+      return data;
+    } catch (error) {
+      console.error('Error fetching email placeholder list:', error);
+      throw error;
+    }
+  };
+
+export const useGetEmailPlaceholder = () => {
+  return useQuery<EmailPlaceholderResponse, Error>({
+    queryKey: ['get-email-placeholder-list'],
+    queryFn: () => fetchEmailPlaceholder(),
+    retry: 0,
+    gcTime: 0,
+    enabled: true,
+  });
+};
+
+// Category Placeholders
+export const getCategoryPlaceholderUrl = (categoryId: string): string => {
+  return `/api/caseManagement/categoryPlaceHolders/${categoryId}`;
+};
+
+export const fetchCategoryPlaceholder = async (
+  categoryId: string
+): Promise<CategoryPlaceholderResponse> => {
+  try {
+    const { data } = await caseServiceApi.get<CategoryPlaceholderResponse>(
+      getCategoryPlaceholderUrl(categoryId)
+    );
+    return data;
+  } catch (error) {
+    console.error('Error fetching category placeholder list:', error);
+    throw error;
+  }
+};
+
+export const useGetCategoryPlaceholder = (categoryId: string) => {
+  return useQuery<CategoryPlaceholderResponse, Error>({
+    queryKey: ['get-category-placeholder-list', categoryId],
+    queryFn: () => fetchCategoryPlaceholder(categoryId),
+    retry: 0,
+    gcTime: 0,
+    enabled: !!categoryId,
+  });
+};
+
+// Email Category List
+export const getEmailCategoryUrl = (): string => {
+  return `/api/caseManagement/emailTemplate/categories`;
+};
+
+export const fetchEmailCategory = async (): Promise<EmailCategoryResponse> => {
+  try {
+    const { data } = await caseServiceApi.get<EmailCategoryResponse>(
+      getEmailCategoryUrl()
+    );
+    return data;
+  } catch (error) {
+    console.error('Error fetching email category list:', error);
+    throw error;
+  }
+};
+
+export const useGetEmailCategory = () => {
+  return useQuery<EmailCategoryResponse, Error>({
+    queryKey: ['get-email-category-list'],
+    queryFn: () => fetchEmailCategory(),
+    retry: 0,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  });
 };

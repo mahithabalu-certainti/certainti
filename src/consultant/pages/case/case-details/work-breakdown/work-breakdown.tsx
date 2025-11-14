@@ -13,6 +13,7 @@ import {
 import { CaseTask } from './case-task';
 import { getAssignGroupsFilterFields } from './case-task/helper';
 import { ExportType } from '../../../../types';
+import { ActivityMenuItem } from '../../../../types';
 
 const ConfigTabs: ResourceTabs[] = [
   {
@@ -27,14 +28,18 @@ const ConfigTabs: ResourceTabs[] = [
   //   disable: true,
   // },
 ];
-const WorkBreakDown = ({
-  caseId,
-  setExportType,
-  setCaseTaskParams,
-}: {
+interface WorkBreakDownProps {
+  activityMenuItems: ActivityMenuItem[];
   caseId: string | undefined;
   setExportType: (type: ExportType) => void;
   setCaseTaskParams: (params: Record<string, unknown>) => void;
+}
+
+const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
+  caseId,
+  setExportType,
+  setCaseTaskParams,
+  activityMenuItems,
 }) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -151,6 +156,8 @@ const WorkBreakDown = ({
         onSearch={(text) => setSearchText(text)}
         searchReset={resetSearch}
         onSearchReset={handleSearchReset}
+        showAddActivity={true}
+        activityMenuItems={activityMenuItems}
       />
       <SectionHeader
         title={'Action Items'}

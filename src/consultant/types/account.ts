@@ -554,3 +554,10 @@ export interface FinancialStateProps {
   countryId: string;
   fiscalYear: string;
 }
+
+export interface ActivityMenuItem {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  hide?: boolean;
+}
