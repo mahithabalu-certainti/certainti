@@ -871,6 +871,16 @@ const CaseInteractionForm = () => {
                       value={caseLevelProjectCode}
                       disabled={isEditView}
                       size='small'
+                      renderValue={(selected) => {
+                        if (!selected) {
+                          return (
+                            <span style={{ color: '#9ca3af' }}>
+                              Choose Project
+                            </span>
+                          ); // <-- placeholder
+                        }
+                        return selected;
+                      }}
                       MenuProps={{
                         PaperProps: {
                           sx: {
@@ -918,22 +928,25 @@ const CaseInteractionForm = () => {
                         setCaseLevelProjectCode(e.target.value);
                       }}
                     >
-                      {memoizedProjectOptions.map((it, i) => {
-                        return (
-                          <MenuItem
-                            sx={{
-                              color: '#425A76',
-                              fontSize: '13px',
-                              fontWeight: '500',
-                            }}
-                            value={it.value}
-                            title={it.value}
-                            key={i}
-                          >
-                            {it.option}
-                          </MenuItem>
-                        );
-                      })}
+                      {/* Placeholder MenuItem for internal value */}
+                      <MenuItem value='' disabled style={{ display: 'none' }}>
+                        Select Project
+                      </MenuItem>
+
+                      {memoizedProjectOptions.map((it, i) => (
+                        <MenuItem
+                          sx={{
+                            color: '#425A76',
+                            fontSize: '13px',
+                            fontWeight: '500',
+                          }}
+                          value={it.value}
+                          title={it.value}
+                          key={i}
+                        >
+                          {it.option}
+                        </MenuItem>
+                      ))}
                     </Select>
                   )}
                 </div>
