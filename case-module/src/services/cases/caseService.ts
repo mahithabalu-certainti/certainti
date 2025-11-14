@@ -2352,4 +2352,36 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       const result = await mainDb.query<caseTaskStatusTypes>(listAllTaskStatus(), {type : QueryTypes.SELECT});
       return result;
     }
+
+    async addCollaboratorToTask (data : any) {
+      const mainDb = await this.getMainDb();
+      const parentNumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+      const result = await this.caseSchemaService.addCollaborators(data, parentNumber[0][0].r_number);
+      return result;
+    }
+    async getCollaboratorsList (data : any) {
+      const mainDb = await this.getMainDb();
+      const orgDb = await this.getOrgDb();
+      const parentNumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb)); 
+      let result = await this.caseSchemaService.fetchCollaboratorsList(parentNumber[0][0].r_number, data);
+      if(result.length > 0) {
+        let userLists;
+        let userMap : Map<string, string>
+        const uniqueIds = [...new Set(result.map((d : any) => d.assigned_to))];
+        if(uniqueIds.length > 0) {
+          userLists = await mainDb.query(rawQueries.getOwnerDetails(uniqueIds));
+          userMap = new Map(userLists[0].map((d : any) => [d.rid, d.name]));
+          result = result.map((d : any) => {
+            return {
+              ...d,
+              assigned_to_name : userMap.get(d.assigned_to)
+            }
+          });
+          return result;
+        } else {
+          return []
+        }
+      }
+      else return []
+    }
 }

@@ -3156,6 +3156,148 @@ async function fetchCaseTaskStatus (req : Request, res : Response) {
     );
   }
 }
+
+/**
+ * Controller to add collaborators to a specific task.
+ *
+ * This function handles HTTP requests for assigning collaborators to a task.
+ * It performs validation, enriches the request data with metadata, and then
+ * delegates the core logic to `caseService.addCollaboratorToTask()`.
+ *
+ * Key Responsibilities:
+ * - Validates the presence of a valid `x-user-id` header
+ * - Injects `created_by` into the request body for auditing purposes
+ * - Calls the service to add collaborators to the task
+ * - Returns success, validation error, or failure responses accordingly
+ *
+ * Response Behavior:
+ * - **SUCCESS** → Responds with a success message when collaborators are added
+ * - **BAD_REQUEST** → Responds when required data is missing or invalid
+ * - **FAILED** → Responds to unexpected service-level or internal errors
+ *
+ * Error Handling:
+ * - Missing user ID → Returns `BAD_REQUEST`
+ * - Any internal exception → Returns `FAILED` with the error message
+ *
+ * @param {Request} req - Express request containing collaborator data and user ID in headers
+ * @param {Response} res - Express response used to send the outcome
+ * @returns {Promise<void>} - Completes after responding to the client
+ */
+async function addCollaborators (req : Request, res : Response) {
+  const methodName = "addCollaborators"
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const data = req.body;
+    data.created_by = userId
+    const result = await caseService.addCollaboratorToTask(data);
+    if(result.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.caseTaskStatusListedSuccess,
+      });
+    } else if (result.statusCode === HttpStatus.BAD_REQUEST) {
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        statusCode: HttpStatus.BAD_REQUEST,
+        statusCodeValue: HttpStatus.BAD_REQUEST_MESSAGE,
+        statusMessage: result.statusMessage
+      });
+    } else {
+      return res.status(HttpStatus.FAILED).json({
+        statusCode: HttpStatus.FAILED,
+        statusCodeValue: HttpStatus.FAILED_MESSAGE,
+        statusMessage: result.statusMessage
+      });
+    }
+
+  }
+  catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
+/**
+ * Controller to list collaborators for a specific case or task.
+ *
+ * This function handles HTTP requests to fetch the list of collaborators
+ * associated with the provided input criteria. It validates required headers,
+ * forwards the request data to the service layer, and formats the response
+ * consistently.
+ *
+ * Key Responsibilities:
+ * - Validates the presence of a valid `x-user-id` header
+ * - Delegates the retrieval logic to `caseService.getCollaboratorsList()`
+ * - Returns collaborator list data if available, otherwise an empty array
+ *
+ * Response Behavior:
+ * - **SUCCESS** → Returns the collaborators list or an empty array with a success message
+ * - **BAD_REQUEST** → Triggered when the required header `x-user-id` is missing
+ * - **FAILED** → Triggered for service-level or unexpected internal errors
+ *
+ * Error Handling:
+ * - Missing `x-user-id` → Responds with `BAD_REQUEST`
+ * - Exceptions thrown by the service → Responds with `FAILED` and error details
+ *
+ * @param {Request} req - Express request containing filtering data in body and user ID in headers
+ * @param {Response} res - Express response used to return the API result
+ * @returns {Promise<void>} - Resolves after sending an HTTP response
+ */
+async function listCollaborators (req : Request, res : Response) {
+  const methodName = "listCollaborators"
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const data = req.body;
+    const result : any = await caseService.getCollaboratorsList(data);
+    if(result?.length > 0) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.collaboratorsListedSuccess,
+        data : result
+      });
+    } else {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.dataNotAvailable,
+        data : []
+      });
+    }
+  }
+  catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
 export default {
   createCases,
   updateCases,
@@ -3199,5 +3341,7 @@ export default {
   fetchTaskActivity,
   fetchTaskDetails,
   fetchCaseTaskStatus,
-  fetchCasePriority
+  fetchCasePriority,
+  addCollaborators,
+  listCollaborators
 };
