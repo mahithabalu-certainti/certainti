@@ -1,7 +1,7 @@
 import { col, fn, Op, QueryTypes, Sequelize, Transaction, where } from "sequelize";
 import { CaseModelService } from "../caseModelsService";
 import { CreateTaskTemplateType, filterType, ICreateChecklistTemplate, ICreateChecklistItemTemplate, TaskType, UpdateTaskTemplateType, MilestoneResponse, ICreateEmailTemplate } from "../../utils/types";
-import { buildDatetimeFilterCondition, buildNumericFilterCondition, buildStringFilterCondition, errorLog, logMessage } from "../../utils/helpers";
+import { buildDatetimeFilterCondition, buildDatetimeFilterConditionTemplates, buildNumericFilterCondition, buildStringFilterCondition, errorLog, logMessage } from "../../utils/helpers";
 import { HttpStatus, STATUS_MESSAGE, filtersColumnsForCaseSummary, filterTypesForCaseSummary, filterTypesForAdminCheckList, filtersColumnsForAdminCheckList, rawQueries, filterTypesForEmailTemplate, filtersColumnsForEmailTemplate } from "../../utils/constants";
 import { fetchCaseTemplateData, listAllCheckList, listAllEmailTemplates } from "../../utils/rawQueries";
 import { initOrgSequelize } from "../../config/orgDataSource";
@@ -332,9 +332,9 @@ class CaseManagementSchemaService {
       r_number: "r_number",
       created_datetime: "created_datetime",
       modified_datetime: "modified_datetime",
-      status_name: "status_name",
+      status_rid: "status_name",
       created_user_name: "created_user_name",
-      updated_user_name: "modified_user_name",
+      modified_user_name: "modified_user_name",
       checklist_name: "checklist_name",
       checklist_description: "checklist_description",
       createdAt: "created_datetime"
@@ -348,9 +348,9 @@ class CaseManagementSchemaService {
       r_number: "r_number",
       created_datetime: "created_datetime",
       modified_datetime: "modified_datetime",
-      status_name: "status_name",
+      status_rid: "status_name",
       created_user_name: "created_user_name",
-      updated_user_name: "modified_user_name",
+      modified_user_name: "modified_user_name",
       template_name: "template_name",
       description: "description",
       createdAt: "created_datetime"
@@ -411,7 +411,7 @@ class CaseManagementSchemaService {
             }
             case "datetime": {
               let dynamicReference = `ct`;
-              const datetimeCondition = buildDatetimeFilterCondition(
+              const datetimeCondition = buildDatetimeFilterConditionTemplates(
                 condition,
                 values,
                 filteredColumns!,
@@ -482,7 +482,7 @@ class CaseManagementSchemaService {
             }
             case "datetime": {
               let dynamicReference = `et`;
-              const datetimeCondition = buildDatetimeFilterCondition(
+              const datetimeCondition = buildDatetimeFilterConditionTemplates(
                 condition,
                 values,
                 filteredColumns!,
