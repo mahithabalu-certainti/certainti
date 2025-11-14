@@ -36,7 +36,8 @@ const requiredDateOptions: { label: string; value: string }[] = [
 
 export const getEmailTemplateFilterFields = (
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
-  statusOptions: { label: string; value: string }[]
+  statusOptions: { label: string; value: string }[],
+  categoryOptions: { label: string; value: string }[]
 ): FieldConfig[] => {
   return [
     {
@@ -67,14 +68,14 @@ export const getEmailTemplateFilterFields = (
         !permissionMap?.['description']?.edit,
     },
     {
-      label: 'Status',
-      name: 'status_rid',
+      label: 'Category',
+      name: 'category_rid',
       type: 'enumSelect',
-      options: statusOptions,
+      options: categoryOptions,
       operatorOption: enumOperator,
       hide:
-        !permissionMap?.['status_rid']?.read &&
-        !permissionMap?.['status_rid']?.edit,
+        !permissionMap?.['category_rid']?.read &&
+        !permissionMap?.['category_rid']?.edit,
     },
     {
       label: 'Created By',
@@ -111,6 +112,16 @@ export const getEmailTemplateFilterFields = (
       hide:
         !permissionMap?.['modified_datetime']?.read &&
         !permissionMap?.['modified_datetime']?.edit,
+    },
+    {
+      label: 'Status',
+      name: 'status_rid',
+      type: 'enumSelect',
+      options: statusOptions,
+      operatorOption: enumOperator,
+      hide:
+        !permissionMap?.['status_rid']?.read &&
+        !permissionMap?.['status_rid']?.edit,
     },
     {
       label: 'Sort Options',

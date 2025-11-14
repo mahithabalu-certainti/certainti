@@ -139,6 +139,11 @@
   text-align: left !important;
 }
 
+.email-body-editor .ql-editor {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
 /* markdown */
 .markdown p {
   line-height: 25px;

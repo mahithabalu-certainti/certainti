@@ -24,10 +24,12 @@ import {
   COMMON_MENU_PROPS,
   getSelectStyles,
   normalizeQuillValue,
+  shouldDisableField,
+  shouldHideField,
   transformEmailTemplatePayload,
   validateEmailTemplateForm,
 } from './helper';
-import { useGetStatus } from '../../../../common-service';
+import { AllPermissions, useGetStatus } from '../../../../common-service';
 import { useParams } from 'react-router-dom';
 import {
   useCreateEmailTemplate,
@@ -39,6 +41,8 @@ import {
 } from '../../../service/email-template/email-template-service';
 import { useToast } from '../../../../hooks';
 import { formatDateToYYYYMMDDWithTime } from '../../../../common-utils';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../store/store';
 
 // Types for placeholder suggestions
 interface PlaceholderSuggestion {
@@ -75,6 +79,8 @@ const EmailTemplateForm: React.FC = () => {
 
   const [errors, setErrors] = useState<EmailTemplateFormErrors>({});
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
+
+  const { permission } = useSelector((state: RootState) => state.permission);
 
   // Refs for Quill and mention popover
   const quillRef = useRef<ReactQuill>(null);
@@ -149,6 +155,23 @@ const EmailTemplateForm: React.FC = () => {
       })) || [],
     [emailCategory.data?.data?.categories]
   );
+
+  // Permission
+  const emailTemplateViewEditFields = useMemo(
+    () =>
+      permission.find(
+        (item) => item.name === AllPermissions.EMAIL_TEMPLATES_VIEW_EDIT
+      )?.fields ?? [],
+    [permission]
+  );
+
+  const permissionMap = useMemo(() => {
+    const map: Record<string, { read: boolean; edit: boolean }> = {};
+    emailTemplateViewEditFields.forEach((item) => {
+      map[item.name] = { read: item.read ?? false, edit: item.edit ?? false };
+    });
+    return map;
+  }, [emailTemplateViewEditFields]);
 
   useEffect(() => {
     if (commonSuccess) {
@@ -822,6 +845,11 @@ const EmailTemplateForm: React.FC = () => {
   };
 
   const formLoading = emailTemplateStatus.isPending || isLoading;
+  const emailBodyDisabled = shouldDisableField(
+    'body_html',
+    isEditView,
+    permissionMap
+  );
 
   return (
     <div>
@@ -884,7 +912,17 @@ const EmailTemplateForm: React.FC = () => {
               Template Information
             </div>
             <div className='grid md:grid-cols-3 gap-x-4 gap-y-[2px] px-10 pt-4'>
-              <div>
+              <div
+                style={{
+                  display: shouldHideField(
+                    'email_template_name',
+                    isEditView,
+                    permissionMap
+                  )
+                    ? 'none'
+                    : 'block',
+                }}
+              >
                 <label
                   className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
                   htmlFor='template_name'
@@ -901,6 +939,11 @@ const EmailTemplateForm: React.FC = () => {
                   onChange={(e) =>
                     handleInputChange('templateName', e.target.value)
                   }
+                  disabled={shouldDisableField(
+                    'email_template_name',
+                    isEditView,
+                    permissionMap
+                  )}
                   autoComplete='off'
                   className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] truncate overflow-hidden text-ellipsis whitespace-nowrap outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${errors?.templateName ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
                 />
@@ -911,7 +954,14 @@ const EmailTemplateForm: React.FC = () => {
                 )}
               </div>
 
-              <div className='relative'>
+              <div
+                className='relative'
+                style={{
+                  display: shouldHideField('subject', isEditView, permissionMap)
+                    ? 'none'
+                    : 'block',
+                }}
+              >
                 <label
                   htmlFor='subject'
                   className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'
@@ -926,6 +976,11 @@ const EmailTemplateForm: React.FC = () => {
                   placeholder='Enter Subject'
                   value={formData.subject}
                   onChange={handleSubjectChange}
+                  disabled={shouldDisableField(
+                    'subject',
+                    isEditView,
+                    permissionMap
+                  )}
                   autoComplete='off'
                   className={`placeholder-custom-color disabled:bg-gray-100 placeholder-[#7D98B6] truncate overflow-hidden text-ellipsis whitespace-nowrap outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ${errors?.subject ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
                 />
@@ -1029,7 +1084,17 @@ const EmailTemplateForm: React.FC = () => {
                 </Popover>
               </div>
 
-              <div>
+              <div
+                style={{
+                  display: shouldHideField(
+                    'category_rid',
+                    isEditView,
+                    permissionMap
+                  )
+                    ? 'none'
+                    : 'block',
+                }}
+              >
                 <label
                   className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
                   htmlFor='category'
@@ -1051,6 +1116,11 @@ const EmailTemplateForm: React.FC = () => {
                   className={`custom-select-no-arrow sm:text-sm ${
                     formData.category === '' ? 'text-[#7D98B6]' : 'text-black'
                   } ${errors?.category ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
+                  disabled={shouldDisableField(
+                    'category_rid',
+                    isEditView,
+                    permissionMap
+                  )}
                   MenuProps={COMMON_MENU_PROPS}
                   sx={getSelectStyles(
                     !!errors?.category,
@@ -1087,7 +1157,17 @@ const EmailTemplateForm: React.FC = () => {
                 )}
               </div>
 
-              <div>
+              <div
+                style={{
+                  display: shouldHideField(
+                    'status_rid',
+                    isEditView,
+                    permissionMap
+                  )
+                    ? 'none'
+                    : 'block',
+                }}
+              >
                 <label
                   className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
                   htmlFor='status'
@@ -1107,6 +1187,11 @@ const EmailTemplateForm: React.FC = () => {
                   className={`custom-select-no-arrow sm:text-sm ${
                     formData.status === '' ? 'text-[#7D98B6]' : 'text-black'
                   } ${errors?.status ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
+                  disabled={shouldDisableField(
+                    'status_rid',
+                    isEditView,
+                    permissionMap
+                  )}
                   MenuProps={COMMON_MENU_PROPS}
                   sx={getSelectStyles(!!errors?.status, formData.status === '')}
                 >
@@ -1140,7 +1225,18 @@ const EmailTemplateForm: React.FC = () => {
                 )}
               </div>
             </div>
-            <div className='grid grid-cols-1 px-10 pt-4'>
+            <div
+              className='grid grid-cols-1 px-10 pt-4'
+              style={{
+                display: shouldHideField(
+                  'description',
+                  isEditView,
+                  permissionMap
+                )
+                  ? 'none'
+                  : 'block',
+              }}
+            >
               <label
                 htmlFor='description'
                 className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'
@@ -1160,6 +1256,11 @@ const EmailTemplateForm: React.FC = () => {
                     ? 'border-red-500 bg-[#FEF2F2] focus:!bg-[#FEF2F2]'
                     : ''
                 }`}
+                disabled={shouldDisableField(
+                  'description',
+                  isEditView,
+                  permissionMap
+                )}
                 style={{
                   scrollbarWidth: 'thin',
                   scrollbarColor: '#9ca3af transparent',
@@ -1173,36 +1274,56 @@ const EmailTemplateForm: React.FC = () => {
             </div>
 
             {/* Email Body */}
-            <div className='email-template-editor grid grid-cols-1 px-10 pt-4 relative'>
+            <div
+              className='email-template-editor grid grid-cols-1 px-10 pt-4 relative'
+              style={{
+                display: shouldHideField('body_html', isEditView, permissionMap)
+                  ? 'none'
+                  : 'block',
+              }}
+            >
               <label
                 htmlFor='email_body'
                 className='text-[13px] text-[#2D3E4F] font-semibold leading-[21px]'
               >
                 Email Body<span className='text-red-500'> *</span>
               </label>
-              <div className='w-full relative' ref={quillContainerRef}>
+              <div
+                className='email-body-editor w-full relative'
+                ref={quillContainerRef}
+              >
                 <ReactQuill
                   ref={quillRef}
                   value={formData.emailBody}
                   onChange={handleEmailBodyChange}
                   theme='snow'
-                  className={`rounded-[2px] ${errors?.emailBody ? 'border border-red-500 bg-[#FEF2F2]' : 'bg-white'}`}
+                  readOnly={emailBodyDisabled}
+                  placeholder='Enter Email Body'
+                  className={`rounded-[2px] ${
+                    errors?.emailBody
+                      ? 'border border-red-500 bg-[#FEF2F2]'
+                      : emailBodyDisabled
+                        ? 'bg-gray-100 cursor-default'
+                        : 'bg-white'
+                  }`}
                   modules={{
-                    toolbar: [
-                      [{ header: [1, 2, 3, 4, 5, 6, false] }],
-                      [{ font: [] }],
-                      [{ size: [] }],
-                      ['bold', 'italic', 'underline', 'strike'],
-                      [{ color: [] }, { background: [] }],
-                      [{ script: 'sub' }, { script: 'super' }],
-                      ['blockquote', 'code-block'],
-                      [{ list: 'ordered' }, { list: 'bullet' }],
-                      [{ indent: '-1' }, { indent: '+1' }],
-                      [{ direction: 'rtl' }],
-                      [{ align: [] }],
-                      ['link', 'image', 'video'],
-                      ['clean'],
-                    ],
+                    toolbar: emailBodyDisabled
+                      ? false // disable toolbar
+                      : [
+                          [{ header: [1, 2, 3, 4, 5, 6, false] }],
+                          [{ font: [] }],
+                          [{ size: [] }],
+                          ['bold', 'italic', 'underline', 'strike'],
+                          [{ color: [] }, { background: [] }],
+                          [{ script: 'sub' }, { script: 'super' }],
+                          ['blockquote', 'code-block'],
+                          [{ list: 'ordered' }, { list: 'bullet' }],
+                          [{ indent: '-1' }, { indent: '+1' }],
+                          [{ direction: 'rtl' }],
+                          [{ align: [] }],
+                          ['link', 'image', 'video'],
+                          ['clean'],
+                        ],
                   }}
                   formats={[
                     'header',
@@ -1339,32 +1460,52 @@ const EmailTemplateForm: React.FC = () => {
                   {
                     label: 'Record ID',
                     value: formData.rid,
-                    hide: false,
+                    hide: shouldHideField('rid', isEditView, permissionMap),
                   },
                   {
                     label: 'Created On',
                     value: formData.created_on,
-                    hide: false,
+                    hide: shouldHideField(
+                      'created_datetime',
+                      isEditView,
+                      permissionMap
+                    ),
                   },
                   {
                     label: 'Created By',
                     value: formData.created_by,
-                    hide: false,
+                    hide: shouldHideField(
+                      'created_by',
+                      isEditView,
+                      permissionMap
+                    ),
                   },
                   {
                     label: 'Template ID',
                     value: formData.template_rid,
-                    hide: false,
+                    hide: shouldHideField(
+                      'r_number',
+                      isEditView,
+                      permissionMap
+                    ),
                   },
                   {
                     label: 'Updated On',
                     value: formData.updated_on,
-                    hide: false,
+                    hide: shouldHideField(
+                      'modified_datetime',
+                      isEditView,
+                      permissionMap
+                    ),
                   },
                   {
                     label: 'Updated By',
                     value: formData.updated_by,
-                    hide: false,
+                    hide: shouldHideField(
+                      'modified_by',
+                      isEditView,
+                      permissionMap
+                    ),
                   },
                 ]
                   .filter((field) => !field.hide)

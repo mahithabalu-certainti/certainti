@@ -28,6 +28,7 @@ interface IEmailTemplateTableProps {
     React.SetStateAction<HTMLButtonElement | null>
   >;
   statusOptions: { label: string; value: string }[];
+  categoryOptions: { label: string; value: string }[];
 }
 
 export const EmailTemplateTable: React.FC<IEmailTemplateTableProps> = ({
@@ -38,6 +39,7 @@ export const EmailTemplateTable: React.FC<IEmailTemplateTableProps> = ({
   columnAnchorEl,
   setColumnAnchorEl,
   // statusOptions,
+  // categoryOptions,
 }) => {
   const navigate = useNavigate();
   const [emailTemplateList, setEmailTemplateList] = useState<
@@ -186,14 +188,14 @@ export const EmailTemplateTable: React.FC<IEmailTemplateTableProps> = ({
         stickyHeader={true}
         stickyColumnsCount={2}
         // Selection
-        selectable={true}
+        selectable={false}
         // Actions
         actionWidth={60}
         actionDisplayMode='dropdown'
         actionMenuItems={actionButtons}
         // State
         loading={isLoading}
-        error={isError ? 'Failed to load email template' : undefined}
+        error={isError ? 'Failed to load email templates' : undefined}
         // Pagination
         rowsPerPageOptions={[25, 50, 100]}
         rowsPerPage={tableParams.limit}

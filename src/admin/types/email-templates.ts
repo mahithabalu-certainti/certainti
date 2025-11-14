@@ -25,6 +25,8 @@ export type EmailTemplateList = {
   modified_datetime: string | null;
   description: string;
   total_records: number;
+  category_rid: string;
+  category_name: string;
 };
 
 export interface EmailTemplateListResponse {

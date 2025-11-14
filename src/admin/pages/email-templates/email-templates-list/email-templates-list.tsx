@@ -12,7 +12,10 @@ import { EmailTemplateListParams } from '../../../types';
 import { EMAIL_TEMPLATES_CREATE } from '../../../../routes';
 import { EmailTemplateTable } from './table/email-templates-table';
 import { getEmailTemplateFilterFields } from './helpers';
-import { ExportEmailTemplateList } from '../../../service/email-template/email-template-service';
+import {
+  ExportEmailTemplateList,
+  useGetEmailCategory,
+} from '../../../service/email-template/email-template-service';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { checkPermission } from '../../../../common-utils';
@@ -84,6 +87,7 @@ const EmailTemplates: React.FC = () => {
   }, [emailTemplateViewEditFields]);
 
   const emailTemplateStatus = useGetStatus();
+  const emailCategory = useGetEmailCategory();
 
   const statusOptions = useMemo(
     () =>
@@ -92,6 +96,15 @@ const EmailTemplates: React.FC = () => {
         value: status.rid,
       })) || [],
     [emailTemplateStatus.data?.data?.status]
+  );
+
+  const categoryOptions = useMemo(
+    () =>
+      emailCategory.data?.data?.categories.map((status) => ({
+        label: status.category_name,
+        value: status.rid,
+      })) || [],
+    [emailCategory.data?.data?.categories]
   );
 
   const isModalOpen = Boolean(columnAnchorEl);
@@ -147,7 +160,8 @@ const EmailTemplates: React.FC = () => {
 
   const emailTemplateFilterfields = getEmailTemplateFilterFields(
     permissionMap,
-    statusOptions
+    statusOptions,
+    categoryOptions
   );
 
   const handleColumnVisibility = (
@@ -261,6 +275,7 @@ const EmailTemplates: React.FC = () => {
           setColumnAnchorEl={setColumnAnchorEl}
           columnAnchorEl={columnAnchorEl}
           statusOptions={statusOptions}
+          categoryOptions={categoryOptions}
         />
       </div>
     </div>

@@ -44,14 +44,14 @@ export const getEmailTemplateColumns = (
       !permissionMap?.['description']?.edit,
   },
   {
-    id: 'status_name',
-    sortId: 'status_rid',
-    label: 'Status',
-    width: 100,
+    id: 'category_name',
+    sortId: 'category_rid',
+    label: 'Category',
+    width: 140,
     sortable: true,
     hide:
-      !permissionMap?.['status_rid']?.read &&
-      !permissionMap?.['status_rid']?.edit,
+      !permissionMap?.['category_rid']?.read &&
+      !permissionMap?.['category_rid']?.edit,
   },
   {
     id: 'created_user_name',
@@ -100,5 +100,15 @@ export const getEmailTemplateColumns = (
       row.modified_datetime
         ? formatDateToYYYYMMDDWithTime(row.modified_datetime)
         : '-',
+  },
+  {
+    id: 'status_name',
+    sortId: 'status_rid',
+    label: 'Status',
+    width: 100,
+    sortable: true,
+    hide:
+      !permissionMap?.['status_rid']?.read &&
+      !permissionMap?.['status_rid']?.edit,
   },
 ];
