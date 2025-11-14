@@ -19,6 +19,7 @@ import { CaseTask } from "../models/caseTaskModel";
 import { TaskCollaborators } from "../models/taskCollaboratorsModel";
 import { Tags } from "../models/tagsModel";
 import { TaskTag } from "../models/taskTagsModel";
+import { CaseHistorySubmission } from "../models/caseHistorySubmissionModel";
 import { EmailTemplate } from "../models/emailTemplateModel";import { TaskComments } from "../models/taskCommentsModel";
 import { CommentsAttachments } from "../models/commentsAttachmentModel";
 import { TaskAttachments } from "../models/taskAttachmentModel";
@@ -44,6 +45,7 @@ export class CaseModelService {
       TaskComments : ReturnType<typeof TaskComments.initialise>
       CommentsAttachments : ReturnType<typeof CommentsAttachments.initialise>
       TaskAttachments : ReturnType<typeof TaskAttachments.initialise>
+      CaseHistorySubmission: ReturnType<typeof CaseHistorySubmission.initialize>;
     }
   > = new Map();
 
@@ -87,11 +89,13 @@ export class CaseModelService {
     const CaseTaskModel = CaseTask.initialise(sequelize, schemaName)
     const TaskCollaboratorsModel = TaskCollaborators.initialise(sequelize, schemaName)
     const TaskTagModel = TaskTag.initialise(sequelize, schemaName)
-    const TagsModel = Tags.initialise(mainDbSequelize, MAIN_SCHEMA_NAME)
+    const TagsModel = Tags.initialise(mainDbSequelize, "")
     const EmailTemplateModel = EmailTemplate.initialize(mainDbSequelize, MAIN_SCHEMA_NAME);
     const TaskCommentsModel = TaskComments.initialise(sequelize, schemaName)
     const CommentsAttachmentsModel = CommentsAttachments.initialise(sequelize, schemaName)
     const TaskAttachmentsModel = TaskAttachments.initialise(sequelize, schemaName)
+    const CaseHistorySubmissionModel = CaseHistorySubmission.initialize(sequelize, schemaName);
+
     const models = {
       Case: CaseModel,
       CaseSummary: CaseSummaryModel,
@@ -113,7 +117,8 @@ export class CaseModelService {
       EmailTemplate: EmailTemplateModel,
       TaskComments : TaskCommentsModel,
       CommentsAttachments : CommentsAttachmentsModel,
-      TaskAttachments : TaskAttachmentsModel
+      TaskAttachments : TaskAttachmentsModel,
+      CaseHistorySubmission: CaseHistorySubmissionModel
     };
 
     this.modelCache.set(schemaName, models);

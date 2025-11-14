@@ -1,8 +1,9 @@
 import { CaseTask } from "../../models/caseTaskModel";
 import { Tags } from "../../models/tagsModel";
+import { TaskCollaborators } from "../../models/taskCollaboratorsModel";
 import { TaskComments } from "../../models/taskCommentsModel";
 import { TaskTag } from "../../models/taskTagsModel";
-import { AddCommentsType, AdminTaskTemplatePayloadType, CaseTaskQueryType, CreateCaseTaskType, CreateTaskTemplateType, ICreateCases, ICreateCaseTeam, ICreateChecklist, ICreateChecklistTemplate, ICreateEmailTemplate, MilestoneResponse, UpdateCaseTaskType, UpdateTaskTemplateType, UpdateCommentsType, DeleteCommentsType, CommentsListType } from "../../utils/types";
+import { AddCommentsType, AdminTaskTemplatePayloadType, CaseTaskQueryType, CreateCaseTaskType, CreateTaskTemplateType, ICreateCases, ICreateCaseTeam, ICreateChecklist, ICreateChecklistTemplate, ICreateEmailTemplate, MilestoneResponse, UpdateCaseTaskType, UpdateTaskTemplateType, UpdateCommentsType, DeleteCommentsType, CommentsListType, ActivityType, TaskCardDetailsType, priorityTypes, caseTaskStatusTypes } from "../../utils/types";
 
 export interface ICaseService {
   createCase(
@@ -222,8 +223,30 @@ deleteTaskLevelAttachment (data : any, userId : string) : Promise<{
 listTaskLevelAttachment (data : any) : Promise<{
     statusCode: number;
     statusCodeValue: string;
-    data: any[];
+    data: {
+        page: any;
+        limit: any;
+        total_result: number;
+        data: any[];
+    };
 }>
+fetchAllTaskActivities (data : any) : Promise<{
+    statusCode: number;
+    data: {
+        page: any;
+        limit: any;
+        total_result: number;
+        data: any[];
+    };
+}>
+fetchTaskCardDetailsList (data : any) :Promise<any>
+getCasePriortyList () :  Promise<priorityTypes[]>
+getCaseTaskStatusList () : Promise<caseTaskStatusTypes[]>
+addCollaboratorToTask (data : any) : Promise<{
+    statusCode: number;
+    statusMessage: string;
+}>
+getCollaboratorsList(data : any) : Promise<TaskCollaborators[] | undefined>
 getReviewProjects( 
   data: any, 
   filters: Record<string, any>,

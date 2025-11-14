@@ -207,6 +207,37 @@ routes.post(
   checkUserStatusMiddleware("NA"),
   controller.caseController.listTaskAttachments
 )
+routes.post(
+  "/task/activity/list",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.fetchTaskActivity
+)
+routes.post(
+  "/task/details",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.fetchTaskDetails
+)
+routes.get(
+  "/task/priority",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.fetchCasePriority
+)
+routes.get(
+  "/task/status",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.fetchCaseTaskStatus
+)
+routes.post(
+  "/task/collaborator/add",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.addCollaborators
+)
+routes.post(
+  "/task/collaborator/list",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.listCollaborators
+)
+
 routes.get(
   "/reviewProjects/:accountRid/:caseRid",
   checkUserStatusMiddleware("projects_view_edit"),

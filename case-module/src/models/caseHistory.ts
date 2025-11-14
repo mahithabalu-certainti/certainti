@@ -13,6 +13,7 @@ export interface CaseHistoryAttributes {
   attribute_name: string;
   old_value?: string;
   new_value?: string;
+  task_rid? : string
 }
 
 export interface CaseHistoryCreationAttributes
@@ -35,6 +36,7 @@ export class CaseHistory
   public attribute_name!: string;
   public old_value?: string;
   public new_value?: string;
+  public task_rid? : string;
 
   static initialize(sequelize: Sequelize, schemaName: string) {
     return CaseHistory.init(
@@ -89,6 +91,10 @@ export class CaseHistory
           type: DataTypes.STRING(2000),
           allowNull: true,
         },
+        task_rid : {
+          type : DataTypes.STRING(50),
+          allowNull : true
+        }
       },
       {
         sequelize,

@@ -134,6 +134,8 @@ export const STATUS_MESSAGE = {
   commentsDeletedSuccess : "Comments deleted successfully",
   commentsFaileDDelete : "Failed to delete comments",
   commentsFetchedSuccess : "Task Comments fetched successfully",
+  historicalSubmissionCreated: "Historical submission created successfully",
+  historicalSubmissionCreationFailed: "Historical submission creation failed",
   fileNotFound : "No file attached",
   attachmentUploadedSuccess : "Attachment uploaded successfully",
   attachmentDeletedSuccess : "Attachment deleted successfully",
@@ -142,6 +144,13 @@ export const STATUS_MESSAGE = {
   attachementTaskListSuccess : "Task Attachments fetched successfully",
   categoryPlaceHolderSuccess : "Placeholders fetched successfully",
   categoryPlaceHolderFailed : "Failed to fetch Placeholders",
+  activitiesFetchedSuccess : "Task Activities fetched successfully",
+  casePriorityListedSuccess : "Case Task Priority fetched successfully",
+  caseTaskStatusListedSuccess : "Case Task Status fetched successfully",
+  collaboratorAlreadyAdded : "Requested Collaborator already added",
+  collaboratorsAddedSuccesss : "Collaborator added successfully",
+  collaboratorAddedFailed : "Failed to add collaborator",
+  collaboratorsListedSuccess : "Collaborators fetched successfully"
 
 };
 
@@ -1103,6 +1112,13 @@ export const rawQueries = {
     WHERE rid = :caseId
     `;
   },
+  fetchCasesByIds(schemaName: string) {
+    return `
+    SELECT rid,r_number,case_name,account_rid ,fiscal_year
+    FROM "${schemaName}".cases
+    WHERE rid in (:caseIds)
+    `;
+  },
   fetchProjectInfoById(schemaName: string){
     return `SELECT rid, project_code, currency_rid FROM ${schemaName}.project_fiscal WHERE rid = :projectId LIMIT 1`;
   },
@@ -1129,6 +1145,29 @@ export const rawQueries = {
   fetchChecklistStatusByName(statusName: string) {
     return `
     SELECT rid, status_name FROM ${MAIN_SCHEMA_NAME}.checklist_status WHERE status_name = '${statusName}'`;
+  },
+  fetchCaseTeamRole (oldRid : string, newRid : string) {
+    if(oldRid === null) oldRid = ''
+    if(newRid === null) newRid = ''
+    return `SELECT rid, role_name FROM ${MAIN_SCHEMA_NAME}.case_team_role WHERE rid IN ('${oldRid}', '${newRid}')`
+  },
+  fetchCheckLists(oldRid : string, newRid : string) {
+    if(oldRid === null) oldRid = ''
+    if(newRid === null) newRid = ''
+    return `SELECT rid, checklist_name FROM ${MAIN_SCHEMA_NAME}.checklist_template WHERE rid IN ('${oldRid}', '${newRid}')`
+  },
+  fetchPriority(oldRid : string, newRid : string) {
+    if(oldRid === null) oldRid = ''
+    if(newRid === null) newRid = ''
+    return `SELECT rid, priority_name FROM ${MAIN_SCHEMA_NAME}.case_priority WHERE rid IN ('${oldRid}', '${newRid}')`
+  },
+  fetchTaskStatus(oldRid : string, newRid : string) {
+    if(oldRid === null) oldRid = ''
+    if(newRid === null) newRid = ''
+    return `SELECT rid, task_status_name FROM ${MAIN_SCHEMA_NAME}.case_task_status WHERE rid IN ('${oldRid}', '${newRid}')`
+  },
+  fetchChecklistStatus () {
+    return `SELECT rid FROM ${MAIN_SCHEMA_NAME}.checklist_status WHERE status_name ILIKE '%Done%'`
   }
 };
 // AND status_rid = (SELECT rid FROM ${MAIN_SCHEMA_NAME}.status WHERE status_description = 'active') 
