@@ -36,7 +36,8 @@ export class HistoricalSubmissionSchemaService {
   private async processDeleteOperations(
     CaseHistorySubmission: any,
     deleteOperations: CaseHistorySubmission[],
-    results: any[]
+    results: any[],
+    historySubmissionRequest: ICreateHistoricalSubmission
   ): Promise<void> {
     logMessage(`Processing ${deleteOperations.length} delete operations for historical submissions...`);
 
@@ -52,6 +53,7 @@ export class HistoricalSubmissionSchemaService {
           action: "deleted",
           affectedRows: deletedRowsCount,
           fiscal_year: submission.fiscal_year,
+          case_rid: historySubmissionRequest.case_rid,
           status: "success",
         });
       } catch (submissionError) {
@@ -62,6 +64,7 @@ export class HistoricalSubmissionSchemaService {
           action: "delete",
           fiscal_year: submission.fiscal_year,
           status: "failed",
+          case_rid: historySubmissionRequest.case_rid,
           error: (submissionError as Error).message,
         });
       }
@@ -106,7 +109,7 @@ export class HistoricalSubmissionSchemaService {
           action: "updated",
           affectedRows: updatedRowsCount,
           fiscal_year: submission.fiscal_year,
-          case_rid: submission.case_rid,
+          case_rid: historySubmissionRequest.case_rid,
           status: "success",
         });
       } catch (submissionError) {
@@ -116,7 +119,7 @@ export class HistoricalSubmissionSchemaService {
         results.push({
           action: "edit",
           fiscal_year: submission.fiscal_year,
-          case_rid: submission.case_rid,
+          case_rid: historySubmissionRequest.case_rid,
           status: "failed",
           error: (submissionError as Error).message,
         });
@@ -156,7 +159,7 @@ export class HistoricalSubmissionSchemaService {
           action: "inserted",
           data: newSubmission,
           fiscal_year: submission.fiscal_year,
-          case_rid: submission.case_rid,
+          case_rid: historySubmissionRequest.case_rid,
           status: "success",
         });
       } catch (submissionError) {
@@ -166,7 +169,7 @@ export class HistoricalSubmissionSchemaService {
         results.push({
           action: "add",
           fiscal_year: submission.fiscal_year,
-          case_rid: submission.case_rid,
+          case_rid: historySubmissionRequest.case_rid,
           status: "failed",
           error: (submissionError as Error).message,
         });
@@ -212,7 +215,7 @@ export class HistoricalSubmissionSchemaService {
       const caseDetails = await this.orgDbSequelize.query(
         rawQueries.fetchCasesByIds(schemaName),
         {
-          replacements: { allCaseRids },
+          replacements: {caseIds: allCaseRids.join(",") },
           type: "SELECT",
         }
       );
@@ -423,7 +426,8 @@ export class HistoricalSubmissionSchemaService {
       await this.processDeleteOperations(
         CaseHistorySubmission,
         operationGroups.deleteOperations,
-        results
+        results,
+        submissionRequest,
       );
       await this.processEditOperations(
         CaseHistorySubmission,

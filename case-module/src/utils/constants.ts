@@ -1093,7 +1093,7 @@ export const rawQueries = {
     return `
     SELECT rid,r_number,case_name,account_rid ,fiscal_year
     FROM "${schemaName}".cases
-    WHERE rid in :caseId
+    WHERE rid in (:caseIds)
     `;
   },
   fetchProjectInfoById(schemaName: string){
