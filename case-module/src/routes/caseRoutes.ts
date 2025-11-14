@@ -212,4 +212,10 @@ routes.post(
   checkUserStatusMiddleware("NA"),
   controller.caseController.fetchTaskActivity
 )
+routes.post(
+  "/task/details",
+  checkUserStatusMiddleware("NA"),
+  controller.caseController.fetchTaskDetails
+)
+
 export default routes;

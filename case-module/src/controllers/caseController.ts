@@ -2959,6 +2959,74 @@ async function fetchTaskActivity (req : Request, res : Response) {
     );
   }
 }
+
+/**
+ * Controller to fetch detailed information related to a specific task.
+ *
+ * This function retrieves task card details (such as metadata, assigned users,
+ * priority, due dates, and related case/task attributes) via the service layer.
+ * It ensures user authentication, processes request payload, and responds with
+ * appropriate status messages and data.
+ *
+ * Workflow:
+ * 1. Validates that `x-user-id` exists in the request headers.
+ * 2. Extracts required task identifiers and filters from the request body.
+ * 3. Calls `caseService.fetchTaskCardDetailsList` to fetch task-level details.
+ * 4. Responds with:
+ *    - `SUCCESS` and `activitiesFetchedSuccess` if data exists.
+ *    - `SUCCESS` and `dataNotAvailable` if no matching task details are found.
+ *
+ * Error Handling:
+ * - Returns `BAD_REQUEST` if missing user ID.
+ * - Returns `FAILED` for any unexpected errors.
+ *
+ * @param {Request} req - Express request object containing headers and task detail input.
+ * @param {Response} res - Express response object used to return result data or error messages.
+ * @returns {Promise<void>} - Sends the API response and resolves.
+ */
+async function fetchTaskDetails (req : Request, res : Response) {
+  const methodName = "fetchTaskDetails"
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    if (!userId) {
+      errorLog(methodName, "User ID is required in headers");
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+    const data = req.body;
+    const result = await caseService.fetchTaskCardDetailsList(data);
+    if(result.statusCode === HttpStatus.SUCCESS) {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.activitiesFetchedSuccess,
+        data : result.data
+      });
+    } else {
+      return res.status(HttpStatus.SUCCESS).json({
+        statusCode: HttpStatus.SUCCESS,
+        statusCodeValue: HttpStatus.SUCCESS_MESSAGE,
+        statusMessage: STATUS_MESSAGE.dataNotAvailable,
+        data : result.data
+      });
+    }
+
+  }
+  catch (error: any) {
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
 export default {
   createCases,
   updateCases,
@@ -2999,5 +3067,6 @@ export default {
   addTaskAttachments,
   deleteTaskAttachments,
   listTaskAttachments,
-  fetchTaskActivity
+  fetchTaskActivity,
+  fetchTaskDetails
 };

@@ -10,6 +10,7 @@ import {
   AddCommentsType,
   CaseOwnerType,
   CaseStatusType,
+  ChecklistItems,
   CommentsListType,
   CountryType,
   CreateCaseTaskType,
@@ -19,6 +20,8 @@ import {
   ICreateCases,
   ICreateCaseTeam,
   ICreateChecklist,
+  TaskCardDetailsType,
+  TaskCardResponse,
   TaskTypeResponse,
   UpdateCaseTaskType,
   UpdateCommentsType,
@@ -29,12 +32,13 @@ import {
   HttpStatus,
   STATUS_MESSAGE,
   rawQueries,
+  MAIN_SCHEMA_NAME,
 } from "../../utils/constants";
 import { query } from "express";
 import currency from "currency.js";
 import moment from "moment";
 import { CaseManagementSchemaService } from "../casesManagement/schemaService";
-import { fetchTaskActivities, fetchTaskComments } from "../../utils/rawQueries";
+import { fetchTaskActivities, fetchTaskComments, taskCardDetails } from "../../utils/rawQueries";
 export class CaseService {
   private caseSchemaService: CaseSchemaService;
   private caseModelService: CaseModelService; // Assuming this is defined somewhere in your code
@@ -2236,6 +2240,107 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
           data : finalData
         }
       }
+
+    }
+    async fetchTaskCardDetailsList (data : any) {
+      const mainDb = await this.getMainDb();
+      const orgDb = await this.getOrgDb();
+
+      const parentNumber : any = await mainDb.query(await rawQueries.fetchParentAccount(data.account_rid, mainDb));
+      let schemaName = rawQueries.fetchSchemaName(parentNumber[0][0].r_number);
+      const fetchChecklistStatusRid : any = await mainDb.query(rawQueries.fetchChecklistStatus());
+
+      const result = await orgDb.query<TaskCardResponse>(taskCardDetails(schemaName, data.task_rid, data.account_rid, data.case_rid, fetchChecklistStatusRid[0][0].rid),{type : QueryTypes.SELECT});
+      if(result.length > 0) {
+        let userIds : Record<string, string> = {
+          created_by : result[0]?.task_details.created_by!,
+          assigned_to : result[0]?.task_details.assigned_to!,
+          modified_by : result[0]?.task_details.modified_by!,
+        }
+        let priorityId = {
+          priority_id : result[0]?.task_details.priority_rid!
+        }
+        let taskStatusID = {
+          task_status_rid : result[0]?.task_details.task_status_rid
+        } 
+        let priority;
+        let taskStatusType;
+        const priorityIds : string[] = [];
+        const taskStatusIds : string[] = [];
+
+        let checklistItemsStatusIds = [...new Set(result[0]?.task_details.checklists.checklist_items.map((d : ChecklistItems) => d.status_rid))]
+        const uniqueUserIds = [...new Set(Object.values(userIds))];
+        
+        priorityIds.push(priorityId.priority_id)
+        taskStatusIds.push(taskStatusID.task_status_rid!)
+        const getUsers = await mainDb.query(rawQueries.getOwnerDetails(uniqueUserIds))
+        const fetchPriorityQuery = rawQueries.getAllPriorityTypes(priorityIds)
+        const checkListStatusName : any = await mainDb.query(rawQueries.fetchCheckListStatusNamesByRids(MAIN_SCHEMA_NAME, checklistItemsStatusIds))
+        if(fetchPriorityQuery) {
+          priority = await mainDb.query(fetchPriorityQuery)
+        }
+        let taskStatusQuery = rawQueries.getAllTaskStatus(taskStatusIds);
+        if(taskStatusQuery) {
+          taskStatusType = await mainDb.query(taskStatusQuery)
+        }
+
+        let taskStatusMap : Map<string, string> = new Map(taskStatusType?.[0]?.map((d : any) => [d.rid, d.task_status_name]));
+        let priorityMap : Map<string, string> = new Map(priority?.[0]?.map((d : any) => [d.rid, d.priority_name]));
+        let assignedToMap : Map<string, string> = new Map(getUsers?.[0]?.map((d : any) => [d.rid, d.name]));
+        let checkListItemsMap : Map<string, string> = new Map(checkListStatusName?.[0]?.map((d : any) => [d.rid, d.status_name]));
+
+        const resData = result[0]
+        let finalStruture = {
+          rid : resData?.task_details.rid,
+          r_number : resData?.task_details.r_number,
+          task_name : resData?.task_details.task_name,
+          created_by : resData?.task_details.created_by,
+          created_by_name : assignedToMap.get(resData?.task_details.created_by!) || null,
+          assigned_to : resData?.task_details.assigned_to,
+          assigned_to_name :  assignedToMap.get(resData?.task_details.assigned_to!) || null,
+          modified_by : resData?.task_details.modified_by,
+          modified_by_name : assignedToMap.get(resData?.task_details.modified_by!) || null,
+          priority_rid : resData?.task_details.priority_rid,
+
+          priority_name : priorityMap.get(resData?.task_details.priority_rid!) || null,
+          task_status_rid : resData?.task_details.task_status_rid,
+          task_status_name : taskStatusMap.get(resData?.task_details.task_status_rid!) || null,
+          created_datetime : new Date(resData?.task_details.created_datetime!).toISOString(),
+          task_description : resData?.task_details.task_description,
+          effective_start_datetime : resData?.task_details.effective_start_datetime,
+          effective_end_datetime : resData?.task_details.effective_end_datetime,
+          checklists : {
+            rid : resData?.task_details.checklists.rid,
+            task_rid: resData?.task_details.checklists.task_rid,
+            checklist_name : resData?.task_details.checklists.checklist_name,
+            checklist_description : resData?.task_details.checklists.checklist_description,
+            checklist_items_count : resData?.task_details.checklists.checklist_items_count,
+            completed_items_count : resData?.task_details.checklists.completed_items_count,
+            checklist_items : resData?.task_details.checklists.checklist_items.map((d : ChecklistItems) => {
+              return {
+                rid : d.rid,
+                status_rid : d.status_rid,
+                checklist_item_status_name : checkListItemsMap.get(d.status_rid) || null,
+                checklist_item_name : d.checklist_item_name,
+                checklist_item_description : d.checklist_item_description
+              }
+
+            })
+          }
+        }
+        return {
+          statusCode : HttpStatus.SUCCESS,
+          data : finalStruture
+        }
+      } else {
+        return {
+          statusCode : HttpStatus.NOT_FOUND,
+          data : null
+        }
+      }
+
+
+
 
     }
 }
