@@ -27,7 +27,7 @@ routes.get(
   controller.interactionsController.getInteractionDetailsById
 );
 routes.get(
-  "/case/keyContact/:accountId/:caseId",
+  "/case/keyContact",
   checkUserStatusMiddleware("NA"),
   controller.interactionsController.getKeyContactsByCaseId
 );
