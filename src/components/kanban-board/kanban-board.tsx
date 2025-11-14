@@ -60,7 +60,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   showTaskCount = true,
   showProfileIndicator = true,
   statusData,
-  statusOptions, // New prop for active/inactive status
+  statusOptions,
   priorityData,
   tagData,
   userData = [],
@@ -68,6 +68,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   isDragablebetweenBoards = false,
   isLoading = false,
   onFetchTaskDetails,
+  onFetchTaskActivities,
   fieldVisibility = {},
   fieldDisabled = {},
 }) => {
@@ -95,7 +96,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
       return statusOptions.map((option) => ({
         id: option.value,
         name: option.label,
-        color: option.value.toLowerCase() === 'active' ? '#10B981' : '#EF4444', // green for active, red for inactive
+        color: option.value.toLowerCase() === 'active' ? '#10B981' : '#EF4444',
       }));
     }
     return statusData;
@@ -469,6 +470,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
               tagData={tagData}
               availableUsers={userData}
               onFetchTaskDetails={onFetchTaskDetails}
+              onFetchTaskActivities={onFetchTaskActivities}
               fieldVisibility={fieldVisibility}
               fieldDisabled={fieldDisabled}
             />
@@ -582,6 +584,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
             tagData={tagData}
             availableUsers={userData}
             onFetchTaskDetails={onFetchTaskDetails}
+            onFetchTaskActivities={onFetchTaskActivities}
             fieldVisibility={fieldVisibility}
             fieldDisabled={fieldDisabled}
           />

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { CaseIcon, ComingSoon } from '../../../../../assets';
 import { SectionHeaderTab, SectionTabPanel } from '../../../../../components';
 import SectionHeader from '../../../../../components/details-section/section-header';
@@ -7,8 +7,14 @@ import { AllPermissions } from '../../../../../common-service';
 import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import KanbanBoard from '../../../../../components/kanban-board/kanban-board';
 import { useGetWorkBreakdownList } from '../../../../../hooks/use-work-breakdown';
-import { getTaskDetail } from '../../../../services/work-breakdown/work-breakdown-service';
-import { useGetUserOptions } from '../../../../services/case-team/case-team-service';
+import {
+  getTaskDetail,
+  fetchTaskActivities,
+} from '../../../../services/work-breakdown/work-breakdown-service';
+import {
+  useGetUserOptions,
+  useGetTagOptions,
+} from '../../../../services/case-team/case-team-service';
 
 const ConfigTabs: ResourceTabs[] = [
   {
@@ -37,8 +43,9 @@ const WorkBreakDown = () => {
     isLoading,
     isError,
   } = useGetWorkBreakdownList(accountId || '', caseId || '');
-  
+
   const userOptionsQuery = useGetUserOptions(accountId || '');
+  const tagOptionsQuery = useGetTagOptions();
 
   const tabParam = searchParams.get('tab') || 'milestone';
   const [appliedFilters, setAppliedFilters] = useState<
@@ -58,21 +65,11 @@ const WorkBreakDown = () => {
     { id: '2', name: 'Inactive', color: '#ef4444' },
   ];
 
-  const tagData = [
-    { id: '1', name: 'Bug', color: '#red' },
-    { id: '2', name: 'Feature', color: '#blue' },
-    { id: '3', name: 'Enhancement', color: '#green' },
-    { id: '4', name: 'Design', color: '#purple' },
-    { id: '5', name: 'UI/UX', color: '#pink' },
-    { id: '6', name: 'Development', color: '#orange' },
-    { id: '7', name: 'Setup', color: '#teal' },
-    { id: '8', name: 'Backend', color: '#indigo' },
-    { id: '9', name: 'Security', color: '#red' },
-    { id: '10', name: 'Frontend', color: '#blue' },
-    { id: '11', name: 'Marketing', color: '#green' },
-    { id: '12', name: 'Database', color: '#purple' },
-    { id: '13', name: 'Planning', color: '#gray' },
-  ];
+  const tagData = (tagOptionsQuery.data || []).map((tag) => ({
+    id: tag.rid,
+    name: tag.tag_name,
+    color: '#3B82F6',
+  }));
 
   useEffect(() => {
     if (
@@ -115,21 +112,63 @@ const WorkBreakDown = () => {
     navigate(`?${searchParams.toString()}`, { replace: true });
   };
 
-  const handleFetchTaskDetails = async (taskId: string) => {
-    console.log('handleFetchTaskDetails called for taskId:', taskId);
-    if (!accountId || !caseId) {
-      console.warn('Account ID or Case ID is missing');
-      return null;
-    }
+  const handleFetchTaskDetails = useCallback(
+    async (taskId: string) => {
+      console.log('handleFetchTaskDetails called for taskId:', taskId);
+      if (!accountId || !caseId) {
+        console.warn('Account ID or Case ID is missing');
+        return null;
+      }
 
-    try {
-      const taskData = await getTaskDetail(accountId, caseId, taskId);
-      return taskData;
-    } catch (error) {
-      console.error('Failed to fetch task details:', error);
-      return null;
-    }
-  };
+      try {
+        const taskData = await getTaskDetail(accountId, caseId, taskId);
+        return taskData;
+      } catch (error) {
+        console.error('Failed to fetch task details:', error);
+        return null;
+      }
+    },
+    [accountId, caseId]
+  );
+
+  const handleFetchTaskActivities = useCallback(
+    async (taskId: string) => {
+      if (!accountId || !caseId) {
+        console.warn('Missing Account ID or Case ID is missing');
+        return [];
+      }
+
+      try {
+        const activitiesData = await fetchTaskActivities(
+          accountId,
+          caseId,
+          taskId
+        );
+
+        const transformedActivities = activitiesData.map((activity) => ({
+          id: activity.rid,
+          user: activity.created_by_name,
+          action: `changed ${activity.attribute_name} from "${activity.old_value}" to "${activity.new_value}"`,
+          date: new Date(activity.created_datetime).toLocaleDateString(
+            'en-US',
+            {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            }
+          ),
+        }));
+
+        return transformedActivities;
+      } catch (error) {
+        console.error('Failed to fetch task activities:', error);
+        return [];
+      }
+    },
+    [accountId, caseId]
+  );
 
   return (
     <>
@@ -179,6 +218,7 @@ const WorkBreakDown = () => {
               <KanbanBoard
                 data={kanbanData?.data || []}
                 onFetchTaskDetails={handleFetchTaskDetails}
+                onFetchTaskActivities={handleFetchTaskActivities}
                 showCommentCount={true}
                 showTaskCount={true}
                 showProfileIndicator={true}

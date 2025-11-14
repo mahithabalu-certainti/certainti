@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { TaskDetailModalProps, Task } from './types';
+import { useEffect, useState, useRef } from 'react';
+import { TaskDetailModalProps, Task, Activity } from './types';
 import { MenuItem, Select, SelectChangeEvent } from '@mui/material';
 import dayjs from 'dayjs';
 import { CalendarIcon, CloseIcon } from '../../assets';
@@ -18,10 +18,12 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   tagData = [],
   availableUsers = [],
   onFetchTaskDetails,
+  onFetchTaskActivities,
   fieldVisibility = {},
   fieldDisabled = {},
 }) => {
   const [task, setTask] = useState<Task | null>(null);
+  const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedTask, setEditedTask] = useState<Task | null>(null);
@@ -30,6 +32,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     'comments'
   );
   const [hideCheckedItems, setHideCheckedItems] = useState(false);
+  const activitiesFetchedRef = useRef<string | null>(null);
 
   const enrichedUsers = availableUsers.map(enrichUserOption);
 
@@ -38,6 +41,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
       if (!taskId || !onFetchTaskDetails) {
         setTask(null);
         setEditedTask(null);
+        setActivities([]);
         return;
       }
 
@@ -65,6 +69,55 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
       fetchTask();
     }
   }, [taskId, isOpen, onFetchTaskDetails]);
+
+  // Fetch activities separately - with deduplication
+  useEffect(() => {
+    const fetchActivities = async () => {
+      if (!taskId || !onFetchTaskActivities) {
+        console.warn('Missing taskId or onFetchTaskActivities:', {
+          taskId,
+          hasCallback: !!onFetchTaskActivities,
+        });
+        setActivities([]);
+        return;
+      }
+
+      // Prevent duplicate calls using ref
+      if (activitiesFetchedRef.current === taskId) {
+        console.log('Activities already fetched for taskId:', taskId);
+        return;
+      }
+
+      console.log('Fetching activities for taskId:', taskId);
+      activitiesFetchedRef.current = taskId;
+
+      try {
+        const fetchedActivities = await onFetchTaskActivities(taskId);
+        console.log('Fetched activities:', fetchedActivities);
+
+        if (fetchedActivities && Array.isArray(fetchedActivities)) {
+          setActivities(fetchedActivities);
+          console.log(
+            'Activities set successfully, count:',
+            fetchedActivities.length
+          );
+        } else {
+          console.warn(
+            'Activities response is not an array:',
+            fetchedActivities
+          );
+          setActivities([]);
+        }
+      } catch (error) {
+        console.error('Error fetching task activities:', error);
+        setActivities([]);
+      }
+    };
+
+    if (isOpen && taskId) {
+      fetchActivities();
+    }
+  }, [taskId, isOpen, onFetchTaskActivities]);
 
   if (!isOpen || !taskId) return null;
 
@@ -433,6 +486,20 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px',
+                      width: '100%',
+                      overflow: 'auto',
+                      overflowY: 'hidden',
+                      scrollBehavior: 'smooth',
+                      '&::-webkit-scrollbar': {
+                        height: '4px',
+                      },
+                      '&::-webkit-scrollbar-track': {
+                        background: 'transparent',
+                      },
+                      '&::-webkit-scrollbar-thumb': {
+                        background: '#CBD6E2',
+                        borderRadius: '2px',
+                      },
                     },
                     '& .MuiOutlinedInput-notchedOutline': {
                       border: '1px solid #CBD6E2',
@@ -443,6 +510,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                     },
                     '& svg': {
                       color: '#7D98B6',
+                      flexShrink: 0,
                     },
                   }}
                   renderValue={() => {
@@ -453,6 +521,8 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                             display: 'flex',
                             alignItems: 'center',
                             gap: '8px',
+                            width: '100%',
+                            minWidth: 0,
                           }}
                         >
                           <div
@@ -467,11 +537,21 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                               fontSize: '9px',
                               fontWeight: '600',
                               color: 'white',
+                              flexShrink: 0,
                             }}
                           >
                             {editedTask.assignee.initials}
                           </div>
-                          <span style={{ fontSize: '13px', color: 'black' }}>
+                          <span
+                            style={{
+                              fontSize: '13px',
+                              color: 'black',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              minWidth: 0,
+                            }}
+                          >
                             {editedTask.assignee.name}
                           </span>
                         </div>
@@ -1362,8 +1442,8 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
 
               {activeTab === 'activity' && (
                 <div className='space-y-3'>
-                  {(task?.activities || []).length > 0 ? (
-                    (task?.activities || []).map((activity, idx) => (
+                  {activities.length > 0 ? (
+                    activities.map((activity, idx) => (
                       <div
                         key={activity.id || idx}
                         className='flex gap-3 pb-3 border-b border-gray-200 last:border-b-0'
@@ -1484,7 +1564,20 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                         alignItems: 'center',
                         gap: '8px',
                         minHeight: '20px',
-                        overflow: 'hidden',
+                        width: '100%',
+                        overflow: 'auto',
+                        overflowY: 'hidden',
+                        scrollBehavior: 'smooth',
+                        '&::-webkit-scrollbar': {
+                          height: '4px',
+                        },
+                        '&::-webkit-scrollbar-track': {
+                          background: 'transparent',
+                        },
+                        '&::-webkit-scrollbar-thumb': {
+                          background: '#CBD6E2',
+                          borderRadius: '2px',
+                        },
                       },
                       '& .MuiOutlinedInput-notchedOutline': {
                         border: '1px solid #CBD6E2',
@@ -1495,6 +1588,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                       },
                       '& svg': {
                         color: '#7D98B6',
+                        flexShrink: 0,
                       },
                     }}
                   >
@@ -1541,11 +1635,21 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                                 fontSize: '8px',
                                 fontWeight: '600',
                                 color: 'white',
+                                flexShrink: 0,
                               }}
                             >
                               {user.initials}
                             </div>
-                            <span style={{ flex: 1 }}>{user.name}</span>
+                            <span
+                              style={{
+                                flex: 1,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {user.name}
+                            </span>
                           </div>
                         </MenuItem>
                       );

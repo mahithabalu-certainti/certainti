@@ -79,6 +79,18 @@ export interface UserOptionsResponse extends CommonApiResponse {
     users: UserOption[];
   };
 }
+
+export interface TagOption {
+  rid: string;
+  tag_name: string;
+  tag_description?: string;
+  status?: string;
+}
+
+export interface TagOptionsResponse extends CommonApiResponse {
+  data: TagOption[];
+}
+
 const fetchCaseTeam = async (
   caseId: string,
   accountId: string
@@ -152,6 +164,22 @@ const fetchUserOptions = async (accountId: string): Promise<UserOption[]> => {
   }
 };
 
+const fetchTagOptions = async (): Promise<TagOption[]> => {
+  try {
+    const response = await caseServiceApi.get<TagOptionsResponse>(
+      '/api/cases/tag/list'
+    );
+
+    if (response.data?.data) {
+      return response.data.data;
+    }
+    return [];
+  } catch (error) {
+    console.error('Error fetching tag options:', error);
+    return [];
+  }
+};
+
 export const useGetCaseTeam = (
   caseId?: string,
   accountId?: string
@@ -189,6 +217,19 @@ export const useGetUserOptions = (
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     enabled: enabled && !!accountId,
+  });
+};
+
+export const useGetTagOptions = (
+  enabled: boolean = true
+): UseQueryResult<TagOption[] | undefined, Error> => {
+  return useQuery<TagOption[] | undefined, Error>({
+    queryKey: ['case-tag-options'],
+    queryFn: () => fetchTagOptions(),
+    retry: 0,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    enabled,
   });
 };
 

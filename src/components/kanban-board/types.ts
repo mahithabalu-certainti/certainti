@@ -126,6 +126,7 @@ export interface KanbanBoardProps {
   isDragable?: boolean;
   isDragablebetweenBoards?: boolean;
   onFetchTaskDetails?: (taskId: string) => Promise<Task | null>;
+  onFetchTaskActivities?: (taskId: string) => Promise<Activity[]>;
   fieldVisibility?: FieldVisibility;
   fieldDisabled?: FieldDisabled;
   isLoading?: boolean;
@@ -177,6 +178,7 @@ export interface TaskDetailModalProps {
   tagData?: Array<{ id: string; name: string; color: string }>;
   availableUsers?: UserOption[];
   onFetchTaskDetails?: (taskId: string) => Promise<Task | null>;
+  onFetchTaskActivities?: (taskId: string) => Promise<Activity[]>;
   fieldVisibility?: FieldVisibility;
   fieldDisabled?: FieldDisabled;
 }

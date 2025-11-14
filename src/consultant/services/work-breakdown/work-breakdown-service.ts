@@ -261,3 +261,59 @@ export const fetchTaskDetail = async (
     throw error;
   }
 };
+
+export interface TaskActivity {
+  rid: string;
+  r_number: string;
+  created_by: string;
+  case_rid: string;
+  created_datetime: string;
+  attribute_name: string;
+  old_value: string | null;
+  new_value: string;
+  task_rid: string;
+  created_by_name: string;
+}
+
+export interface TaskActivitiesData {
+  page: number;
+  limit: number;
+  total_result: number;
+  data: TaskActivity[];
+}
+
+export interface TaskActivitiesResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: TaskActivitiesData;
+}
+
+export const fetchTaskActivities = async (
+  accountId: string,
+  caseId: string,
+  taskId: string
+): Promise<TaskActivity[]> => {
+  try {
+    const payload = {
+      page: 1,
+      limit: 100,
+      account_rid: accountId,
+      case_rid: caseId,
+      task_rid: taskId,
+    };
+
+    const response = await caseServiceApi.post<TaskActivitiesResponse>(
+      '/api/cases/task/activity/list',
+      payload
+    );
+
+    if (response.data?.data?.data) {
+      return response.data.data.data;
+    }
+    return [];
+  } catch (error) {
+    console.error(`Error fetching task activities for ${taskId}:`, error);
+    return [];
+  }
+};
