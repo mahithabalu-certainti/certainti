@@ -327,7 +327,6 @@ export const CaseDetails = () => {
         return (
           <div className='w-full pr-4 pl-2 py-2'>
             <WorkBreakDown
-              caseId={caseId}
               setExportType={setExportType}
               setCaseTaskParams={(params: Record<string, unknown>) =>
                 setCaseTaskParams((prev) => ({
