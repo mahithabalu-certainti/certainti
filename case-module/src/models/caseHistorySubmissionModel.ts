@@ -10,7 +10,7 @@ interface CaseHistorySubmissionAttributes {
   modified_by?: string;
   created_datetime?: Date;
   modified_datetime?: Date;
-  case_rid: string;
+  account_rid: string;
   fiscal_year: string;
   total_project: number;
   total_qualified_project: number;
@@ -35,7 +35,7 @@ export class CaseHistorySubmission
   public modified_by?: string;
   public created_datetime?: Date;
   public modified_datetime?: Date;
-  public case_rid!: string;
+  public account_rid!: string;
   public fiscal_year!: string;
   public total_project!: number;
   public total_qualified_project!: number;
@@ -86,7 +86,7 @@ export class CaseHistorySubmission
           type: DataTypes.DATE,
           allowNull: true,
         },
-        case_rid: {
+        account_rid: {
           type: DataTypes.STRING(50),
           allowNull: false,
         },
@@ -131,13 +131,13 @@ export class CaseHistorySubmission
         underscored: true,
         indexes: [
           {
-            fields: ["case_rid"],
-            name: "idx_case_history_submission_case_rid",
+            fields: ["account_rid"],
+            name: "idx_case_history_submission_account_rid",
           },
           {
-            fields: ["case_rid", "fiscal_year"],
+            fields: ["account_rid", "fiscal_year"],
             unique: true,
-            name: "case_history_submission_case_year_ukey",
+            name: "case_history_submission_account_year_ukey",
           },
         ],
       }

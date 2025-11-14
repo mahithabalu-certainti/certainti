@@ -1,4 +1,4 @@
-import { Sequelize, Transaction } from "sequelize";
+import { Sequelize, Transaction, Op } from "sequelize";
 import { CaseModelService } from "../caseModelsService";
 import CaseSchemaService from "../cases/schemaService";
 import { logMessage, errorLog } from "../../utils/helpers";
@@ -14,6 +14,28 @@ export class HistoricalSubmissionSchemaService {
   constructor() {
     this.caseModelService = new CaseModelService();
     this.caseSchemaService = new CaseSchemaService();
+  }
+
+  private async checkUniqueFiscalYear(
+    CaseHistorySubmission: any,
+    account_rid: string,
+    fiscal_year: string,
+    excludeRid?: string
+  ): Promise<boolean> {
+    const whereClause: any = {
+      account_rid,
+      fiscal_year
+    };
+
+    if (excludeRid) {
+      whereClause.rid = { [Op.ne]: excludeRid };
+    }
+
+    const existing = await CaseHistorySubmission.findOne({
+      where: whereClause
+    });
+
+    return !existing;
   }
 
   /**
@@ -53,7 +75,7 @@ export class HistoricalSubmissionSchemaService {
           action: "deleted",
           affectedRows: deletedRowsCount,
           fiscal_year: submission.fiscal_year,
-          case_rid: historySubmissionRequest.case_rid,
+          account_rid: historySubmissionRequest.account_rid,
           status: "success",
         });
       } catch (submissionError) {
@@ -64,7 +86,7 @@ export class HistoricalSubmissionSchemaService {
           action: "delete",
           fiscal_year: submission.fiscal_year,
           status: "failed",
-          case_rid: historySubmissionRequest.case_rid,
+          account_rid: historySubmissionRequest.account_rid,
           error: (submissionError as Error).message,
         });
       }
@@ -85,6 +107,24 @@ export class HistoricalSubmissionSchemaService {
 
     for (const submission of editOperations) {
       try {
+        const isUnique = await this.checkUniqueFiscalYear(
+          CaseHistorySubmission,
+          historySubmissionRequest.account_rid,
+          submission.fiscal_year,
+          submission.history_submission_rid 
+        );
+
+        if (!isUnique) {
+          results.push({
+            action: "edit",
+            fiscal_year: submission.fiscal_year,
+            account_rid: historySubmissionRequest.account_rid,
+            status: "failed",
+            error: "Another submission already exists for this account and fiscal year"
+          });
+          continue;
+        }
+
         const [updatedRowsCount] = await CaseHistorySubmission.update(
           {
             fiscal_year: submission.fiscal_year,
@@ -109,7 +149,7 @@ export class HistoricalSubmissionSchemaService {
           action: "updated",
           affectedRows: updatedRowsCount,
           fiscal_year: submission.fiscal_year,
-          case_rid: historySubmissionRequest.case_rid,
+          account_rid: historySubmissionRequest.account_rid,
           status: "success",
         });
       } catch (submissionError) {
@@ -119,7 +159,7 @@ export class HistoricalSubmissionSchemaService {
         results.push({
           action: "edit",
           fiscal_year: submission.fiscal_year,
-          case_rid: historySubmissionRequest.case_rid,
+          account_rid: historySubmissionRequest.account_rid,
           status: "failed",
           error: (submissionError as Error).message,
         });
@@ -141,8 +181,25 @@ export class HistoricalSubmissionSchemaService {
 
     for (const submission of addOperations) {
       try {
+        const isUnique = await this.checkUniqueFiscalYear(
+          CaseHistorySubmission,
+          historySubmissionRequest.account_rid,
+          submission.fiscal_year
+        );
+
+        if (!isUnique) {
+          results.push({
+            action: "add",
+            fiscal_year: submission.fiscal_year,
+            account_rid: historySubmissionRequest.account_rid,
+            status: "failed",
+            error: "A submission already exists for this account and fiscal year"
+          });
+          continue;
+        }
+
         const newSubmission = await CaseHistorySubmission.create({
-          case_rid: historySubmissionRequest.case_rid,
+          account_rid: historySubmissionRequest.account_rid,
           fiscal_year: submission.fiscal_year,
           total_project: submission.total_project,
           total_qualified_project: submission.total_qualified_project,
@@ -159,7 +216,7 @@ export class HistoricalSubmissionSchemaService {
           action: "inserted",
           data: newSubmission,
           fiscal_year: submission.fiscal_year,
-          case_rid: historySubmissionRequest.case_rid,
+          account_rid: historySubmissionRequest.account_rid,
           status: "success",
         });
       } catch (submissionError) {
@@ -169,132 +226,12 @@ export class HistoricalSubmissionSchemaService {
         results.push({
           action: "add",
           fiscal_year: submission.fiscal_year,
-          case_rid: historySubmissionRequest.case_rid,
+          account_rid: historySubmissionRequest.account_rid,
           status: "failed",
           error: (submissionError as Error).message,
         });
       }
     }
-  }
-
-  /**
-   * Generates a descriptive summary of history submission operations for timeline
-   */
-  private async generateTimelineDescription(results: any[], accountNumber: string): Promise<string> {
-    const successful = results.filter((r) => r.status === "success");
-    const failed = results.filter((r) => r.status === "failed");
-    const skipped = results.filter((r) => r.status === "skipped");
-
-    const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(
-      /\D/g,
-      ""
-    )}`;
-
-    const allCaseRids = [
-      ...new Set(
-        [
-          ...successful.map((r) => r.case_rid),
-          ...failed.map((r) => r.case_rid),
-          ...skipped.map((r) => r.case_rid),
-        ].filter(Boolean)
-      ),
-    ];
-
-    // Early return if no operations to process
-    if (allCaseRids.length === 0) {
-      return "No history submission operations performed";
-    }
-
-    if (!this.orgDbSequelize) {
-      this.orgDbSequelize = await this.caseModelService.getSequelize();
-    }
-
-    // Fetch case details
-    let caseDetailsMap = new Map();
-    try {
-      const caseDetails = await this.orgDbSequelize.query(
-        rawQueries.fetchCasesByIds(schemaName),
-        {
-          replacements: {caseIds: allCaseRids.join(",") },
-          type: "SELECT",
-        }
-      );
-
-      // Convert array to map for easy lookup
-      caseDetailsMap = new Map(
-        caseDetails.map((caseDetail: any) => [caseDetail.rid, caseDetail])
-      );
-    } catch (error) {
-      logMessage(`Error fetching case details: ${error}`);
-      // Continue with empty map if case details fetch fails
-    }
-
-    const summaryParts: string[] = [];
-
-    // Group successful operations by action type
-    const successfulByAction = {
-      added: successful.filter((r) => r.action === "inserted"),
-      updated: successful.filter((r) => r.action === "updated"),
-      deleted: successful.filter((r) => r.action === "deleted"),
-    };
-
-    // Helper function to get fiscal year summaries
-    const getFiscalYearSummaries = (operations: any[]): string => {
-      if (operations.length === 0) return "";
-
-      return operations
-        .map((r) => {
-          const caseDetail = caseDetailsMap.get(r.case_rid);
-          const caseName = caseDetail ? caseDetail.case_name : `Case ${r.case_rid}`;
-          return `${caseName} for FY ${r.fiscal_year}`;
-        })
-        .join(", ");
-    };
-
-    // Add success descriptions with fiscal years
-    if (successfulByAction.added.length > 0) {
-      const fiscalYearDetails = getFiscalYearSummaries(successfulByAction.added);
-      if (fiscalYearDetails) {
-        summaryParts.push(`Added history submissions for: ${fiscalYearDetails}`);
-      }
-    }
-
-    if (successfulByAction.updated.length > 0) {
-      const fiscalYearDetails = getFiscalYearSummaries(successfulByAction.updated);
-      if (fiscalYearDetails) {
-        summaryParts.push(`Updated history submissions for: ${fiscalYearDetails}`);
-      }
-    }
-
-    if (successfulByAction.deleted.length > 0) {
-      const fiscalYearDetails = getFiscalYearSummaries(successfulByAction.deleted);
-      if (fiscalYearDetails) {
-        summaryParts.push(`Deleted history submissions for: ${fiscalYearDetails}`);
-      }
-    }
-
-    // Add failure details with fiscal years if any
-    if (failed.length > 0) {
-      const failedFiscalYears = getFiscalYearSummaries(failed);
-      if (failedFiscalYears) {
-        summaryParts.push(`Failed operations for: ${failedFiscalYears}`);
-      }
-    }
-
-    // Add skip details with fiscal years if any
-    if (skipped.length > 0) {
-      const skippedFiscalYears = getFiscalYearSummaries(skipped);
-      if (skippedFiscalYears) {
-        summaryParts.push(`Skipped operations for: ${skippedFiscalYears}`);
-      }
-    }
-
-    // Return formatted description
-    if (summaryParts.length === 0) {
-      return "No history submission operations performed";
-    }
-
-    return summaryParts.join("; ") + ".";
   }
 
   /**
@@ -329,49 +266,10 @@ export class HistoricalSubmissionSchemaService {
       results: results,
       validationErrors: failedOperations.map((r) => ({
         fiscal_year: r.fiscal_year,
-        case_rid: r.case_rid,
+        account_rid: r.account_rid,
         error: r.error,
       })),
     };
-  }
-
-  /**
-   * Generates timeline entry for historical submission operations
-   */
-  private async addHistoricalSubmissionTimelineEntry(
-    accountNumber: string,
-    caseRid: string,
-    accountRid: string,
-    results: any[],
-    userId: string,
-    eventStatus: string,
-    eventName: string = "",
-    eventType: string = "",
-    errorMessage?: string
-  ) {
-    try {
-      let description = "";
-
-      if (errorMessage) {
-        description = `${errorMessage}`;
-      } else {
-        const summary = await this.generateTimelineDescription(results, accountNumber);
-        description = `${summary}`;
-      }
-
-      await this.caseSchemaService.addCaseTimeline(
-        accountNumber,
-        caseRid,
-        accountRid,
-        description,
-        userId,
-        eventStatus,
-        eventName,
-        eventType
-      );
-    } catch (err) {
-      logMessage(`Error adding historical submission timeline entry: ${err}`);
-    }
   }
 
   async listHistoricalSubmission(
@@ -383,7 +281,7 @@ export class HistoricalSubmissionSchemaService {
     try {
       const { CaseHistorySubmission } = await this.caseModelService.getModels(accountNumber);
       const whereConditions: any = {
-        case_rid: data.case_rid,
+        account_rid: data.account_rid,
       };
       const queryOptions: any = {
         where: whereConditions,
@@ -406,16 +304,6 @@ export class HistoricalSubmissionSchemaService {
     try {
       const { CaseHistorySubmission } = await this.caseModelService.getModels(accountNumber);
       const results: any[] = [];
-
-      // Check if historical submissions already exist for this case
-      const existingSubmissions = await CaseHistorySubmission.findAll({
-        where: {
-          case_rid: submissionRequest.case_rid,
-        },
-        raw: true,
-      });
-
-      const hasExistingSubmissions = existingSubmissions.length > 0;
 
       // Group operations by type for ordered processing
       const operationGroups = this.groupHistoricalSubmissionsByActionType(
@@ -447,54 +335,9 @@ export class HistoricalSubmissionSchemaService {
       // Generate response summary
       const response = this.generateHistorySubmissionResponse(results);
 
-      // Determine event name based on existing submissions and operations
-      let eventName = "Historical Submission Management";
-      if (!hasExistingSubmissions && operationGroups.addOperations.length > 0) {
-        eventName = "Historical Submission Added";
-      } else if (
-        hasExistingSubmissions &&
-        (operationGroups.editOperations.length > 0 ||
-          operationGroups.deleteOperations.length > 0 ||
-          operationGroups.addOperations.length > 0)
-      ) {
-        eventName = "Historical Submission Updated";
-      }
-
-      // Add timeline entry for the submission management request
-      await this.addHistoricalSubmissionTimelineEntry(
-        accountNumber,
-        submissionRequest.case_rid,
-        submissionRequest.account_rid,
-        results,
-        userId,
-        response.success ? "success" : "partial_success",
-        eventName,
-        "ui_handler"
-      );
-
       return response;
     } catch (error) {
       logMessage(`Error managing historical submissions: ${error}`);
-
-      // Add timeline entry for failed operation
-      try {
-        await this.addHistoricalSubmissionTimelineEntry(
-          accountNumber,
-          submissionRequest.case_rid,
-          submissionRequest.account_rid,
-          [],
-          userId,
-          "failed",
-          "Historical Submission Management Failed",
-          "historical_submission_management",
-          `Error: ${(error as Error).message}`
-        );
-      } catch (timelineError) {
-        logMessage(
-          `Error adding timeline for failed operation: ${timelineError}`
-        );
-      }
-
       throw new Error("Error managing historical submissions: " + error);
     }
   }

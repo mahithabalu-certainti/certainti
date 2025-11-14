@@ -73,7 +73,6 @@ const exportCaseSummarySchema = Joi.object({
 
 const createHistoricalSubmissionSchema = Joi.object({
   account_rid: Joi.string().required(),
-  case_rid: Joi.string().required(),
   historical_submissions: Joi.array()
     .items(
       Joi.object({
@@ -96,7 +95,6 @@ const createHistoricalSubmissionSchema = Joi.object({
 
 const listHistoricalSubmissionSchema = Joi.object({
   account_rid: Joi.string().required(),
-  case_rid: Joi.string().required(),
   page: Joi.string().optional().pattern(/^[0-9]+$/),
   limit: Joi.string().optional().pattern(/^[0-9]+$/),
   filters: Joi.string().default("{}"),

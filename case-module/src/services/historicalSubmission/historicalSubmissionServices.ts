@@ -154,7 +154,7 @@ export class HistoricalSubmissionService {
   }> {
     try {
       submissionRequest.created_by = userId;
-      const { accountNumber, parentAccountId } =
+      const { accountNumber } =
         await this.caseSchemaService.fetchValidAccountNumberById(
           submissionRequest.account_rid
         );
