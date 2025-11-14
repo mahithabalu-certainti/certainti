@@ -15,7 +15,9 @@ import { CaseModelService } from "../caseModelsService";
 import {
   ALPHANUMERIC_CONDITIONS,
   filtersColumnsForCaseSummary,
+  filtersColumnsForReviewProjects,
   filterTypesForCaseSummary,
+  filterTypesForReviewProjects,
   HttpStatus,
   MAIN_SCHEMA_NAME,
   mainTableFilters,
@@ -52,6 +54,7 @@ import {
   fetchMilestoneTaskTemplate,
   fetchProjectsForCases,
   listAllCasesSummaryQuery,
+  listReviewProjectsInfo,
 } from "../../utils/rawQueries";
 import { CaseProject } from "../../models/caseProjectsModel";
 import {
@@ -602,6 +605,7 @@ class CaseSchemaService {
           count: 0,
         };
       }
+      
       let createdByIds: any[] = [
         ...new Set(caseDetails.map((caseDetail: any) => caseDetail.created_by)),
       ];
@@ -1363,6 +1367,310 @@ class CaseSchemaService {
     );
     return result[0];
   }
+
+  async listReviewProjectsInfo(
+    accountNumber: string,
+    caseRid: string,
+    filters: Record<string, any>,
+    fiscalYear: number =0,
+    apiType: string,
+    page: number = 1,
+    limit: number = 100,
+    sortBy: string,
+    sortOrder: string,
+    search: string = ""
+ 
+) {
+   const schemaName = `${SCHEMANAME_PREFIX}${accountNumber.replace(
+        /\D/g,
+        ""
+      )}`;
+    console.log("schemaName", schemaName);
+    
+    filters = filters || {};
+    let offset = (page - 1) * limit;
+    let pagination = `LIMIT ${limit} OFFSET ${offset}`;
+      if (apiType === "download") {
+        pagination = ``;
+      }
+    if (!this.orgDbSequelize) {
+      this.orgDbSequelize = await this.caseModelService.getSequelize();
+    }
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await this.caseModelService.getMainSequelize();
+    }
+    let [pointOfContactRoleid]:any[] = await this.mainDbSequelize.query(
+        rawQueries.fetchPOCRoleId()
+      );
+    console.log("pointOfContactRoleiddd", pointOfContactRoleid);
+    let filteredQueryArray: string[] = [];
+    let andConditions = ``;
+    let filterQueryValues;
+    let whereKey: string = ``;
+    let fiscalYearQuery: string = ``;
+    let sortValue;
+    let searchValue: string;
+    let disablePagination: boolean = false;
+    let createdByFilter;
+    let totalResults: number = 0;
+    let createdByConditions;
+    let modifiedByFilter;
+    let modifiedByConditions;
+    let industryFilter;
+    let industryConditions;
+    let classificationFilter;
+    let classificationConditions;
+      const detectConditions = (filters: any) => {
+      if (!filters) return null;
+      for (let conditions of Object.values(ALPHANUMERIC_CONDITIONS)) {
+        if (Object.keys(filters).includes(conditions)) return conditions;
+      }
+      return null;
+    };
+
+    if (filters?.created_user_name) {
+      createdByFilter = filters.created_user_name;
+      createdByConditions = detectConditions(createdByFilter);
+    }
+    if (filters?.updated_user_name) {
+      modifiedByFilter = filters.updated_user_name;
+      modifiedByConditions = detectConditions(modifiedByFilter);
+    }
+    if (filters?.industry_name) {
+      industryFilter = filters.industry_name;
+      industryConditions = detectConditions(industryFilter);
+    }
+    if (filters?.project_classification_name) {
+      classificationFilter = filters.project_classification_name;
+      classificationConditions = detectConditions(classificationFilter);
+    }
+
+
+      [
+      "created_user_name",
+      "updated_user_name",
+      "industry_name",
+      "project_classification_name",
+      "project_type_name",
+      "status_name",
+    ].forEach((key) => {
+      if (filters[key]) {
+        disablePagination = true;
+        delete filters[key];
+      }
+    });
+    if (mainTableFilters[filters.sort] !== undefined) {
+      disablePagination = true;
+    }
+      let filterDatas = filterForReviewProjects(
+        filters,
+        andConditions,
+        filteredQueryArray,
+        filterTypesForReviewProjects,
+        filtersColumnsForReviewProjects
+      );
+      // Optimize filter query processing
+      filterQueryValues = filterDatas?.filteredQueryArray?.length
+        ? filterDatas.filteredQueryArray.join(" AND ")
+        : "";
+      if (fiscalYear == 0) fiscalYearQuery = ``;
+      else fiscalYearQuery = ` pf.fiscal_year = ${fiscalYear}`;
+      searchValue = search ? `%${search}%` : `%%`;
+      whereKey = `1 = 1`;
+      const conditions = [
+        fiscalYearQuery,
+        filterQueryValues
+      ].filter(Boolean);
+
+      const joinedConditions =
+        conditions.length > 0 ? " AND " + conditions.join(" AND ") : "";
+
+      // Optimized sorting logic using extracted utility function
+      const sortColumn = getSortColumnForReviewProjects(sortBy);
+      const sortDirection = sortOrder || "ASC";
+      logMessage(
+        `Sorting by column: ${sortColumn}, direction: ${sortDirection}`
+      );
+      sortValue = `ORDER BY ${sortColumn} ${sortDirection}`;
+      let projectQuery = await listReviewProjectsInfo(
+        searchValue,
+        whereKey,
+        joinedConditions,
+        sortValue,
+        pagination,
+        schemaName,
+        pointOfContactRoleid
+      );
+      console.log("projectQuery", projectQuery);
+      const [projectInfo]: any[] = await this.orgDbSequelize.query(
+        projectQuery,
+        { type: "SELECT" }
+      );
+       let result = projectInfo.cases_summary;
+      
+      let createdByIds: any[] = [
+        ...new Set(result.map((projectInfo: any) => projectInfo.created_by)),
+      ];
+      let modifiedByIds: any[] = [
+        ...new Set(
+          result.map((projectInfo: any) => projectInfo.modified_by)
+        ),
+      ];
+      let statusIds: any[] = [
+        ...new Set(result.map((projectInfo: any) => projectInfo.status_rid)),
+      ];
+      let industryIds: any[] = [
+        ...new Set(result.map((projectInfo: any) => projectInfo.industry_rid)),
+      ];
+      let classificationIds: any[] = [
+        ...new Set(result.map((projectInfo: any) => projectInfo.classification_rid)),
+      ];
+      let fetchCreatedByUsers = await this.mainDbSequelize.query(
+        rawQueries.fetchUser(createdByIds)
+      );
+      let fetchModifiedByUsers = await this.mainDbSequelize.query(
+        rawQueries.fetchUser(modifiedByIds)
+      );
+      let fetchStatusInfo = await this.mainDbSequelize.query(
+        rawQueries.fetchStatus(statusIds)
+      );
+      let fetchIndustryInfo = await this.mainDbSequelize.query(
+        rawQueries.fetchIndustry(industryIds)
+      );
+      let fetchClassificationInfo = await this.mainDbSequelize.query(
+        rawQueries.fetchClassification(classificationIds)
+      );
+      let createdMap: Map<string, string> = new Map(
+        fetchCreatedByUsers[0].map((user: any) => [
+          user.rid,
+          `${user.first_name} ${user.last_name}`,
+        ])
+      );
+      let modifiedMap: Map<string, string> = new Map(
+        fetchModifiedByUsers[0].map((user: any) => [
+          user.rid,
+          `${user.first_name} ${user.last_name}`,
+        ])
+      );
+      let statusMap: Map<string, string> = new Map(
+        fetchStatusInfo[0].map((status: any) => [status.rid, status.name])
+      );
+      let industryMap: Map<string, string> = new Map(
+        fetchIndustryInfo[0].map((industry: any) => [industry.rid, industry.name])
+      );
+      let classificationMap: Map<string, string> = new Map(
+        fetchClassificationInfo[0].map((classification: any) => [classification.rid, classification.name])
+      );
+      let finalData =
+              Array.isArray(result) && result.length > 0
+                ? result.map((d: any) => {
+                    return {
+                      ...d,
+                      project_type_rid: d.project_type_rid,
+                      created_user_name: createdMap.get(d.created_by) || null,
+                      modified_user_name: modifiedMap.get(d.modified_by) || null,
+                      status_name: statusMap.get(d.status_rid) || null,
+                      industry_name: industryMap.get(d.industry_rid) || null,
+                      project_classification_name: classificationMap.get(d.classification_rid) || null,
+                    };
+                  })
+                : [];
+          const applyFilters = (
+        data: any[],
+        conditions: any,
+        value: any,
+        field: any
+      ) => {
+        if (!conditions || !field) return data;
+        const val = value[conditions];
+        switch (conditions) {
+          case ALPHANUMERIC_CONDITIONS.equals:
+            return data.filter(
+              (d: any) => d[field]?.toLowerCase() === val?.toLowerCase()
+            );
+          case ALPHANUMERIC_CONDITIONS.notEquals:
+            return data.filter(
+              (d: any) => d[field]?.toLowerCase() != val?.toLowerCase()
+            );
+          case ALPHANUMERIC_CONDITIONS.contains:
+            return data.filter((d: any) =>
+              d[field]?.toLowerCase().includes(val?.toLowerCase())
+            );
+          case ALPHANUMERIC_CONDITIONS.isEmpty:
+            return data.filter((d: any) => d[field] == null);
+          default:
+            return data;
+        }
+      };
+      if (createdByConditions != null && createdByConditions != undefined)
+        finalData = applyFilters(
+          finalData,
+          createdByConditions,
+          createdByFilter,
+          "created_user_name"
+        );
+      if (modifiedByConditions != null && modifiedByConditions != undefined)
+        finalData = applyFilters(
+          finalData,
+          modifiedByConditions,
+          modifiedByFilter,
+          "modified_user_name"
+        );
+      if (industryConditions != null && industryConditions != undefined)
+        finalData = applyFilters(
+          finalData,
+          industryConditions,
+          industryFilter,
+          "industry_name"
+        );
+      if (classificationConditions != null && classificationConditions != undefined)
+        finalData = applyFilters(
+          finalData,
+          classificationConditions,
+          classificationFilter,
+          "project_classification_name"
+        );
+     if (
+        mainTableFilters[sortBy] != undefined &&
+        sortOrder.toLowerCase() == "asc"
+      ) {
+        finalData = finalData.sort((a: any, b: any) => {
+          if (!a?.[sortBy]) return 1;
+          if (!b?.[sortBy]) return -1;
+          return a[sortBy].localeCompare(b[sortBy]);
+        });
+      } else if (
+        mainTableFilters[sortBy] != undefined &&
+        sortOrder.toLowerCase() == "desc"
+      ) {
+        finalData = finalData.sort((a: any, b: any) => {
+          if (!b?.[sortBy]) return 1;
+          if (!a?.[sortBy]) return -1;
+          return b[sortBy].localeCompare(a[sortBy]);
+        });
+      }
+
+      totalResults = disablePagination
+        ? finalData.length
+        : (result && result[0] && result[0].total_records ? result[0].total_records : finalData.length);
+      let finalPaginatedData: any[] = [];
+      if (apiType === "download") {
+        finalPaginatedData = finalData;
+      } else {
+        finalPaginatedData = disablePagination
+          ? finalData.slice(
+              (page - 1) * limit,
+              page * limit
+            )
+          : finalData;
+      }        
+    
+      return {
+        data: finalPaginatedData,
+        count: totalResults,
+      };
+
+}
 
   async assignProjectToCase(
     data: assignProjectType,
@@ -4985,8 +5293,114 @@ const getSortColumn = (sortField: string): string => {
   return sortMapping[sortField] || "c.r_number";
 };
 
+const getSortColumnForReviewProjects = (sortField: string): string => {
+  const sortMapping: Record<string, string> = {
+    r_number: "c.r_number",
+    created_datetime: "c.created_datetime",
+    modified_datetime: "c.modified_datetime",
+    fiscal_year: "c.fiscal_year",
+    createdAt: "c.created_datetime",
+    total_resources_prj: "c.total_resources_prj",
+    total_cost_prj: "c.total_cost_prj",
+    total_cost_nonlabor_prj: "c.total_cost_nonlabor_prj",
+    total_cost_subcon_prj: "c.total_cost_subcon_prj",
+    total_cost_fte_prj: "c.total_cost_fte_prj",
+    total_effort_prj: "c.total_effort_prj",
+    total_effort_subcon_prj: "c.total_effort_subcon_prj",
+    total_effort_fte_prj: "c.total_effort_fte_prj",
+    total_subcon_prj: "c.total_subcon_prj",
+    total_nonlabor_prj: "c.total_nonlabor_prj",
+    total_fte_prj: "c.total_fte_prj",
+    project_group: "c.project_group",
+    project_name: "c.project_name",
+    project_code: "c.project_code",
+    total_tasks: "total_tasks",
+    total_technical_summaries: "total_technical_summaries",
+
+
+  };
+
+  return sortMapping[sortField] || "c.r_number";
+};
+
 export default CaseSchemaService;
 function filterForCases(
+  filters: filterType,
+  andConditions: string,
+  filteredQueryArray: string[],
+  filterTypes: any,
+  filterColumns: any
+) {
+  let filteredColumns: string | undefined;
+  if (filters && Object.keys(filters).length > 0) {
+    for (let [key, conditions] of Object.entries(filters)) {
+      if (Object.keys(filterTypes).includes(key)) {
+        filteredColumns = filterColumns[key];
+        andConditions = ` AND `;
+      }
+      for (let [condition, values] of Object.entries(conditions)) {
+        switch (filterTypes[key]) {
+          case "string": {
+            let dynamicReference = ``;
+
+            if (filteredColumns == "account_name") dynamicReference = `a`;
+            else if (filteredColumns == "country_name") dynamicReference = `c`;
+            else if (filteredColumns == "case_full_name") dynamicReference = ``;
+            else dynamicReference = `cs`;
+
+            const stringCondition = buildStringFilterCondition(
+              condition,
+              values,
+              filteredColumns!,
+              dynamicReference
+            );
+            if (stringCondition) {
+              filteredQueryArray.push(stringCondition);
+            }
+            break;
+          }
+          case "number": {
+            const numericCondition = buildNumericFilterCondition(
+              condition,
+              values,
+              filteredColumns!
+            );
+            if (numericCondition) {
+              filteredQueryArray.push(numericCondition);
+            }
+            break;
+          }
+          case "datetime": {
+            let dynamicReference = `cs`;
+            const datetimeCondition = buildDatetimeFilterCondition(
+              condition,
+              values,
+              filteredColumns!,
+              dynamicReference
+            );
+            if (datetimeCondition) {
+              filteredQueryArray.push(datetimeCondition);
+            }
+            break;
+          }
+        }
+      }
+    }
+    return {
+      filteredQueryArray,
+      andConditions,
+    };
+  } else {
+    filteredQueryArray = [];
+    andConditions = ` `;
+    return {
+      filteredQueryArray,
+      andConditions,
+    };
+  }
+}
+
+function filterForReviewProjects(
   filters: filterType,
   andConditions: string,
   filteredQueryArray: string[],

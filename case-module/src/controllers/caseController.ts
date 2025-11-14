@@ -1145,6 +1145,61 @@ async function deleteProjectFromCase(
     return;
   }
 }
+
+
+async function getReviewProjects(req: Request, res: Response): Promise<void> {
+  const methodName = "List Case Team Members";
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    const { accountRid, caseRid } = req.params;
+    console.log("accountRid, caseRid", accountRid, caseRid);
+    const value = await validateRequest(req, listCaseTeamSchema, res, "GET");
+    if (!value) return;
+    let parsedFilters: Record<string, any> = {};
+    try {
+      parsedFilters = JSON.parse(value.filters);
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+    const reviewProjects = await caseService.getReviewProjects(
+      value,
+      parsedFilters,
+      userId,
+      "list",
+      accountRid!,
+      caseRid!,
+    );
+    if (reviewProjects.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, reviewProjects.data);
+      return;
+    } else {
+      errorLog(methodName, reviewProjects.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        reviewProjects.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+
 /**
  * Handles the creation and management of case team members based on the incoming HTTP request.
  *
@@ -2864,5 +2919,6 @@ export default {
   fetchTaskCommentsList,
   addTaskAttachments,
   deleteTaskAttachments,
-  listTaskAttachments
+  listTaskAttachments,
+  getReviewProjects
 };

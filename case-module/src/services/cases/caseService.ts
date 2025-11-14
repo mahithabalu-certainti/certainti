@@ -2179,4 +2179,61 @@ async updateUserLevelTask (data : UpdateCaseTaskType) {
       const result = await this.caseSchemaService.listTaskLevelAttachments(fetchParent[0][0].r_number, data);
       return result;
     }
+
+    async getReviewProjects(
+    data: any,
+    filters: Record<string, any>,
+    userId: string,
+    apiType: string,
+    accountRid: string,
+    caseRid: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { reviewProjects: any ,count: number };
+  }> {
+    try {
+      console.log("In service getReviewProjects",accountRid);
+      const { accountNumber } =
+        await this.caseSchemaService.fetchValidAccountNumberById(
+          accountRid
+        );
+
+      if (!accountNumber) {
+        logMessage(`Invalid account ID ${accountRid}`);
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: "Invalid account ID",
+        };
+      }
+      const response :any= await this.caseSchemaService.listReviewProjectsInfo(
+        accountNumber,
+        caseRid,
+        filters,
+        data.fiscalYear,
+        apiType,
+        data.page,
+        data.limit,
+        data.sortBy,
+        data.sortOrder,
+        data.search
+      );
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          reviewProjects:response.data,
+          count: response.count,
+        },
+      };
+    } catch (err) {
+      console.log(err)
+      logMessage(`Error fetching review project info, ${err}`);
+      throw this.throwServiceError(err as Error);
+    }
+  }
+
 }

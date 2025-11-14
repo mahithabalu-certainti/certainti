@@ -394,6 +394,109 @@ export const listAllCasesSummaryQuery = (
         FROM
         paginated_data c`;
 
+  export const listReviewProjectsInfo = (
+  searchValue: string,
+  whereKey: string,
+  joinedConditions: string,
+  sortValue: string,
+  pagination: string,
+  schemaName: string,
+  pointOfContactRoleid: string
+) => `
+    WITH fetch_all_cases AS 
+    (select pf.rid,pf.project_rid,pf.account_rid,pf.r_number,pf.created_by,pf.modified_by,pf.created_datetime,pf.modified_datetime,
+pf.project_code,pf.fiscal_year,pf.project_name,pf.project_type_rid,pf.project_classification_rid,pf.project_classification_other,
+pf.project_group,pf.industry_rid,pf.industry_name,pf.status_rid,pf.total_fte_prj,pf.total_subcon_prj,pf.total_nonlabor_prj,
+pf.total_effort_fte_prj,pf.total_effort_subcon_prj,
+pf.total_effort_prj,
+pf.total_cost_fte_prj,pf.total_cost_subcon_prj,pf.total_cost_nonlabor_prj,pf.total_cost_prj,
+pf.total_resources_prj,
+COUNT(pt.rid) AS total_tasks,
+COUNT(ats.rid) AS total_technical_summaries,primary_contact.key_contact_name AS project_point_of_contact,
+	primary_contact.key_contact_email as project_point_of_contact_email
+from ${schemaName}.project_fiscal pf
+LEFT JOIN ${schemaName}.project_task pt ON pt.project_fiscal_rid = pf.rid
+LEFT JOIN ${schemaName}.ai_technical_summary ats ON ats.project_fiscal_rid = pf.rid
+LEFT JOIN LATERAL (
+  SELECT kcd.key_contact_name,
+         kcd.key_contact_email
+  FROM ${schemaName}.key_contact_details kcd
+  WHERE 
+        kcd.entity_rid = pf.rid
+    AND kcd.is_primary_contact = true
+    AND kcd.key_contact_role= '"${pointOfContactRoleid}"'
+  LIMIT 1
+) AS primary_contact ON true
+
+    WHERE
+    (pf.r_number ILIKE '${searchValue}' OR pf.project_code ILIKE '${searchValue}' OR pf.project_name ILIKE '${searchValue}'
+    ${joinedConditions}
+    )
+    AND pf.rid IN (
+      SELECT project_fiscal_rid 
+      FROM ${schemaName}.case_projects
+    ) 
+AND (
+      pf.project_name IS NULL OR pf.project_name = ''
+      OR pf.project_code IS NULL OR pf.project_code = ''
+      OR pf.fiscal_year IS NULL
+      OR pf.industry_rid IS NULL
+      OR pf.total_cost_prj IS NULL
+      OR pf.total_resources_prj IS NULL
+      OR pf.total_effort_prj IS NULL
+      OR pf.project_type_rid IS NULL
+      OR pf.project_classification_rid IS NULL
+      OR primary_contact.key_contact_name IS NULL OR primary_contact.key_contact_name = ''
+      OR primary_contact.key_contact_email IS NULL OR primary_contact.key_contact_email = ''
+      or pf.status_rid IS NULL 
+      or pf.total_fte_prj IS NULL
+      or pf.total_subcon_prj IS NULL
+      or pf.total_nonlabor_prj IS NULL
+      or pf.total_effort_fte_prj IS NULL
+      or pf.total_effort_subcon_prj IS NULL
+      or pf.total_cost_fte_prj IS NULL
+      or pf.total_cost_subcon_prj IS NULL
+      or pf.total_cost_nonlabor_prj IS NULL
+    )
+      GROUP BY pf.rid ,primary_contact.key_contact_name,primary_contact.key_contact_email
+    ),
+    paginated_data AS (
+    SELECT * FROM fetch_all_cases c ${sortValue} ${pagination}
+    )
+    SELECT 
+        array_agg(jsonb_build_object(
+            'rid', c.rid,
+            'r_number', c.r_number,
+            'status_rid', c.status_rid,
+            'created_by', c.created_by,
+            'modified_by', c.modified_by,
+            'created_datetime', c.created_datetime,
+            'modified_datetime', c.modified_datetime,
+            'account_rid', c.account_rid,
+            'fiscal_year', c.fiscal_year,
+            'project_type_rid', c.project_type_rid,
+            'project_classification_rid', c.project_classification_rid,
+            'industry_rid', c.industry_rid,
+            'total_fte_prj', c.total_fte_prj,
+            'total_subcon_prj', c.total_subcon_prj,
+            'total_nonlabor_prj', c.total_nonlabor_prj,
+            'total_effort_fte_prj', c.total_effort_fte_prj,
+            'total_effort_subcon_prj', c.total_effort_subcon_prj,
+            'total_effort_prj', c.total_effort_prj,
+            'total_cost_fte_prj', c.total_cost_fte_prj,
+            'total_cost_subcon_prj', c.total_cost_subcon_prj,
+            'total_cost_nonlabor_prj', c.total_cost_nonlabor_prj,
+            'total_cost_prj', c.total_cost_prj,
+            'total_resources_prj', c.total_resources_prj,
+            'total_tasks', c.total_tasks,
+            'total_technical_summaries', c.total_technical_summaries,
+            'project_point_of_contact', c.project_point_of_contact,
+            'project_point_of_contact_email', c.project_point_of_contact_email
+        )) AS cases_summary
+
+        FROM
+        paginated_data c`;
+
 export const listAllCheckList = (
   searchValue: string,
   whereKey: string,
@@ -415,9 +518,10 @@ export const listAllCheckList = (
 
             FROM
             ${MAIN_SCHEMA_NAME}.checklist_template ct
-            LEFT JOIN ${MAIN_SCHEMA_NAME}.status s ON s.rid = ct.status_rid
-            LEFT JOIN ${MAIN_SCHEMA_NAME}.user uc ON uc.rid = ct.created_by
-            LEFT JOIN ${MAIN_SCHEMA_NAME}.user um ON um.rid = ct.modified_by
+  COUNT(pt.rid) AS total_tasks,
+  COUNT(ats.rid) AS total_technical_summaries,
+  primary_contact.key_contact_name AS project_point_of_contact,
+  primary_contact.key_contact_email AS project_point_of_contact_email
               WHERE
     (ct.r_number ILIKE '${searchValue}' OR ct.checklist_name ILIKE '${searchValue}')
     ${joinedConditions}

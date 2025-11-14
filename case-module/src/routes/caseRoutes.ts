@@ -207,4 +207,9 @@ routes.post(
   checkUserStatusMiddleware("NA"),
   controller.caseController.listTaskAttachments
 )
+routes.get(
+  "/reviewProjects/:accountRid/:caseRid",
+  checkUserStatusMiddleware("projects_view_edit"),
+  controller.caseController.getReviewProjects
+)
 export default routes;

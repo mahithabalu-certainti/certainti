@@ -92,8 +92,6 @@ const createCaseTeamSchema = Joi.object({
 });
 
 const listCaseTeamSchema = Joi.object({
-  account_rid: Joi.string().required(),
-  case_rid: Joi.string().required(),
   page: Joi.string().optional().pattern(/^[0-9]+$/),
   limit: Joi.string().optional().pattern(/^[0-9]+$/),
   filters: Joi.string().default("{}"),

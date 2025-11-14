@@ -224,6 +224,17 @@ listTaskLevelAttachment (data : any) : Promise<{
     statusCodeValue: string;
     data: any[];
 }>
+getReviewProjects( 
+  data: any, 
+  filters: Record<string, any>,
+  userId:string,apiType:string,
+  accountRid: string, caseRid: string): Promise<{
+  statusCode: number;
+  message: string;
+  errorMessage?: string;
+  data?: { reviewProjects: any ,count: number};
+}>;
+
 }
 
 export interface ICaseManagementService {
