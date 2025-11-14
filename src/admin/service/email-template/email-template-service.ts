@@ -172,8 +172,8 @@ export const ExportEmailTemplateList = async (
   }
 };
 
-// Email PlaceHolders
-export const getEmailPlaceHolderUrl = (): string => {
+// Email Placeholders
+export const getEmailPlaceholderUrl = (): string => {
   return `/api/caseManagement/emailPlaceHolders`;
 };
 
@@ -181,7 +181,7 @@ export const fetchEmailPlaceholder =
   async (): Promise<EmailPlaceholderResponse> => {
     try {
       const { data } = await caseServiceApi.get<EmailPlaceholderResponse>(
-        getEmailPlaceHolderUrl()
+        getEmailPlaceholderUrl()
       );
       return data;
     } catch (error) {
@@ -200,8 +200,8 @@ export const useGetEmailPlaceholder = () => {
   });
 };
 
-// Category PlaceHolders
-export const getCategoryPlaceHolderUrl = (categoryId: string): string => {
+// Category Placeholders
+export const getCategoryPlaceholderUrl = (categoryId: string): string => {
   return `/api/caseManagement/categoryPlaceHolders/${categoryId}`;
 };
 
@@ -210,7 +210,7 @@ export const fetchCategoryPlaceholder = async (
 ): Promise<CategoryPlaceholderResponse> => {
   try {
     const { data } = await caseServiceApi.get<CategoryPlaceholderResponse>(
-      getCategoryPlaceHolderUrl(categoryId)
+      getCategoryPlaceholderUrl(categoryId)
     );
     return data;
   } catch (error) {
