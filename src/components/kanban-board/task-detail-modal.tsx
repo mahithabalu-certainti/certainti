@@ -464,7 +464,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              fontSize: '10px',
+                              fontSize: '9px',
                               fontWeight: '600',
                               color: 'white',
                             }}
@@ -527,7 +527,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            fontSize: '10px',
+                            fontSize: '8px',
                             fontWeight: '600',
                             color: 'white',
                           }}
@@ -1302,6 +1302,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                       className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 text-white'
                       style={{
                         backgroundColor: task.assignee?.color || '#999',
+                        fontSize: '8px',
                       }}
                     >
                       {task.assignee?.initials || '?'}
@@ -1367,7 +1368,10 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                         key={activity.id || idx}
                         className='flex gap-3 pb-3 border-b border-gray-200 last:border-b-0'
                       >
-                        <div className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 bg-amber-500 text-white'>
+                        <div
+                          className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 bg-amber-500 text-white'
+                          style={{ fontSize: '8px' }}
+                        >
                           {activity.user
                             .split(' ')
                             .map((n) => n[0])
@@ -1534,7 +1538,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                fontSize: '10px',
+                                fontSize: '8px',
                                 fontWeight: '600',
                                 color: 'white',
                               }}
@@ -1580,7 +1584,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                   >
                     <div
                       className='w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold cursor-pointer text-white border-2 border-white shadow-md transition-all duration-300 ease-in-out group-hover:shadow-xl group-hover:border-blue-200'
-                      style={{ backgroundColor: collab.color }}
+                      style={{ backgroundColor: collab.color, fontSize: '8px' }}
                     >
                       {collab.initials}
                       <button

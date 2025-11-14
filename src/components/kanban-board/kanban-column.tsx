@@ -2,11 +2,16 @@ import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import type { KanbanColumnProps, TaskCard } from './types';
 import { useDroppable } from '@dnd-kit/core';
-import { AddIcon, ChevronDownIcon } from '../../assets';
+import { AddIcon, CloseIcon, CalendarIcon } from '../../assets';
 import {
   SortableContext,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
+import { MenuItem, Select, type SelectChangeEvent } from '@mui/material';
+import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
+import TextButton from '../button/text-button';
 import TaskCardComponent from './task-card';
 
 interface ExtendedKanbanColumnProps extends KanbanColumnProps {
@@ -22,30 +27,21 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
   isCreateTaskDisabled,
   isCreateTaskHide,
   onAddTask,
-  onRenameColumn,
-  onDeleteColumn,
-  onEditTask,
   onTaskClick,
   isDragable = false,
   isDragablebetweenBoards = false,
   statusData,
-  statusOptions, // New prop for active/inactive status
+  statusOptions,
   priorityData,
   onTaskUpdate,
-  // onFetchTaskDetails,
 }) => {
-  const [isAddingTaskAtTop, setIsAddingTaskAtTop] = useState(false);
   const [isAddingTaskAtBottom, setIsAddingTaskAtBottom] = useState(false);
-  const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newBottomTaskTitle, setNewBottomTaskTitle] = useState('');
-  const [, setIsHoveringHeader] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isRenamingColumn, setIsRenamingColumn] = useState(false);
-  const [columnName, setColumnName] = useState(column.milestone_name);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [selectedStatus, setSelectedStatus] = useState('To Do');
+  const [selectedPriority, setSelectedPriority] = useState('');
+  const [startDate, setStartDate] = useState<dayjs.Dayjs | null>(null);
+  const [endDate, setEndDate] = useState<dayjs.Dayjs | null>(null);
   const bottomInputRef = useRef<HTMLInputElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const columnNameRef = useRef<HTMLInputElement>(null);
 
   const { setNodeRef } = useDroppable({
     id: column.rid,
@@ -53,82 +49,19 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
   });
 
   useEffect(() => {
-    if (isAddingTaskAtTop && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [isAddingTaskAtTop]);
-
-  useEffect(() => {
     if (isAddingTaskAtBottom && bottomInputRef.current) {
       bottomInputRef.current.focus();
     }
   }, [isAddingTaskAtBottom]);
 
-  useEffect(() => {
-    if (isRenamingColumn && columnNameRef.current) {
-      columnNameRef.current.focus();
-      columnNameRef.current.select();
-    }
-  }, [isRenamingColumn]);
-
-  useEffect(() => {
-    setColumnName(column.milestone_name);
-  }, [column.milestone_name]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsDropdownOpen(false);
-      }
-    };
-
-    if (isDropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isDropdownOpen]);
-
-  const handleAddTaskAtTop = () => {
-    if (newTaskTitle.trim()) {
-      const newTask: TaskCard = {
-        rid: `task-${Date.now()}`,
-        r_number: `T-${Date.now()}`,
-        task_name: newTaskTitle.trim(),
-        created_by: '',
-        status_rid: '',
-        assigned_to: null,
-        sequence_no: 1,
-        priority_rid: '',
-        task_type_rid: '',
-        effort_in_days: 0,
-        checklists_count: 0,
-        task_description: null,
-        reminder_interval: 0,
-        effective_end_datetime: '',
-        effective_start_datetime: '',
-        case_team_member_role_rid: '',
-        milestone_template_rid: column.rid,
-        priority_name: 'Medium',
-        assigned_to_name: null,
-        case_team_member_role_name: '',
-        task_type_name: '',
-        status_name: 'Active',
-      };
-
-      onAddTask(column.rid, newTask, 'top');
-      setNewTaskTitle('');
-      setIsAddingTaskAtTop(false);
-    }
-  };
-
   const handleAddTaskAtBottom = () => {
-    if (newBottomTaskTitle.trim()) {
+    if (
+      newBottomTaskTitle.trim() &&
+      selectedStatus &&
+      selectedPriority &&
+      startDate &&
+      endDate
+    ) {
       const newTask: TaskCard = {
         rid: `task-${Date.now()}`,
         r_number: `T-${Date.now()}`,
@@ -143,29 +76,26 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
         checklists_count: 0,
         task_description: null,
         reminder_interval: 0,
-        effective_end_datetime: '',
-        effective_start_datetime: '',
+        effective_end_datetime: endDate ? endDate.format('YYYY-MM-DD') : '',
+        effective_start_datetime: startDate
+          ? startDate.format('YYYY-MM-DD')
+          : '',
         case_team_member_role_rid: '',
         milestone_template_rid: column.rid,
-        priority_name: 'Medium',
+        priority_name: selectedPriority,
         assigned_to_name: null,
         case_team_member_role_name: '',
         task_type_name: '',
-        status_name: 'Active',
+        status_name: selectedStatus,
       };
 
       onAddTask(column.rid, newTask, 'bottom');
       setNewBottomTaskTitle('');
+      setSelectedStatus('To Do');
+      setSelectedPriority('');
+      setStartDate(null);
+      setEndDate(null);
       setIsAddingTaskAtBottom(false);
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleAddTaskAtTop();
-    } else if (e.key === 'Escape') {
-      setIsAddingTaskAtTop(false);
-      setNewTaskTitle('');
     }
   };
 
@@ -173,43 +103,25 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
     if (e.key === 'Enter') {
       handleAddTaskAtBottom();
     } else if (e.key === 'Escape') {
-      setIsAddingTaskAtBottom(false);
-      setNewBottomTaskTitle('');
+      handleCancelAddTask();
     }
   };
 
-  const handleRenameColumn = () => {
-    setIsRenamingColumn(true);
-    setIsDropdownOpen(false);
+  const handleCancelAddTask = () => {
+    setIsAddingTaskAtBottom(false);
+    setNewBottomTaskTitle('');
+    setSelectedStatus('');
+    setSelectedPriority('');
+    setStartDate(null);
+    setEndDate(null);
   };
 
-  const handleSaveColumnName = () => {
-    if (
-      columnName.trim() &&
-      columnName.trim() !== column.milestone_name &&
-      onRenameColumn
-    ) {
-      onRenameColumn(column.rid, columnName.trim());
-    } else {
-      setColumnName(column.milestone_name);
-    }
-    setIsRenamingColumn(false);
+  const handleStatusChange = (event: SelectChangeEvent<string>) => {
+    setSelectedStatus(event.target.value);
   };
 
-  const handleColumnNameKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSaveColumnName();
-    } else if (e.key === 'Escape') {
-      setColumnName(column.milestone_name);
-      setIsRenamingColumn(false);
-    }
-  };
-
-  const handleDeleteColumn = () => {
-    if (onDeleteColumn) {
-      onDeleteColumn(column.rid);
-    }
-    setIsDropdownOpen(false);
+  const handlePriorityChange = (event: SelectChangeEvent<string>) => {
+    setSelectedPriority(event.target.value);
   };
 
   return (
@@ -218,31 +130,14 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
       className='bg-[#f5f5f5] rounded-lg p-4 w-80 flex-shrink-0'
       style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
     >
-      <div
-        className='bg-white border border-slate-200 rounded-lg p-3 mb-2 flex items-center justify-between group'
-        onMouseEnter={() => setIsHoveringHeader(true)}
-        onMouseLeave={() => setIsHoveringHeader(false)}
-      >
+      <div className='bg-white border border-slate-200 rounded-lg p-3 mb-2'>
         <div className='flex items-center gap-2'>
-          {isRenamingColumn ? (
-            <input
-              ref={columnNameRef}
-              type='text'
-              value={columnName}
-              onChange={(e) => setColumnName(e.target.value)}
-              onKeyDown={handleColumnNameKeyPress}
-              onBlur={handleSaveColumnName}
-              className='bg-white text-slate-800 text-[13px] font-semibold px-2 py-1 rounded border border-slate-300 focus:border-blue-500 focus:outline-none min-w-0'
-              style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
-            />
-          ) : (
-            <h2
-              className='text-slate-800 text-[13px] font-semibold'
-              style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
-            >
-              {column.milestone_name}
-            </h2>
-          )}
+          <h2
+            className='text-slate-800 text-[13px] font-semibold'
+            style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
+          >
+            {column.milestone_name}
+          </h2>
           {showTaskCount && (
             <span
               className='bg-slate-100 text-slate-600 px-2 py-1 rounded-full text-[13px]'
@@ -252,77 +147,7 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
             </span>
           )}
         </div>
-
-        <div className='flex items-center gap-1'>
-          {!isCreateTaskHide && (
-            <button
-              onClick={() => setIsAddingTaskAtTop(true)}
-              disabled={isCreateTaskDisabled}
-              className={`opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 rounded hover:bg-slate-100 ${
-                isCreateTaskDisabled ? 'cursor-not-allowed' : 'cursor-pointer'
-              }`}
-              title='Add Task'
-            >
-              <AddIcon
-                size={16}
-                className='text-slate-500 hover:text-slate-700'
-              />
-            </button>
-          )}
-
-          {!isCreateTaskHide && (
-            <div className='relative' ref={dropdownRef}>
-              <button
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className='opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 rounded hover:bg-slate-100 cursor-pointer'
-                title='More options'
-              >
-                <ChevronDownIcon
-                  size={16}
-                  className='text-slate-500 hover:text-slate-700'
-                />
-              </button>
-
-              {isDropdownOpen && (
-                <div className='absolute right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-10 min-w-[140px]'>
-                  <button
-                    onClick={handleRenameColumn}
-                    className='w-full text-left px-3 py-2 text-[13px] text-slate-700 hover:bg-slate-100 transition-colors'
-                  >
-                    Rename Section
-                  </button>
-                  <button
-                    onClick={handleDeleteColumn}
-                    className='w-full text-left px-3 py-2 text-[13px] text-red-600 hover:bg-red-50 transition-colors'
-                  >
-                    Delete Section
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
       </div>
-
-      {isAddingTaskAtTop && (
-        <div className='mb-2'>
-          <input
-            ref={inputRef}
-            type='text'
-            value={newTaskTitle}
-            onChange={(e) => setNewTaskTitle(e.target.value)}
-            onKeyDown={handleKeyPress}
-            onBlur={() => {
-              if (!newTaskTitle.trim()) {
-                setIsAddingTaskAtTop(false);
-              }
-            }}
-            placeholder='Enter task name'
-            className='w-full p-3 bg-white text-slate-800 rounded-lg border border-slate-300 focus:border-blue-500 focus:outline-none text-[13px] placeholder-slate-500'
-            style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
-          />
-        </div>
-      )}
 
       <SortableContext
         items={column.tasks.map((t) => t.rid)}
@@ -337,7 +162,6 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
               taskData={taskCard}
               showCommentCount={showCommentCount}
               showProfileIndicator={showProfileIndicator}
-              onEditTask={onEditTask}
               onTaskClick={onTaskClick}
               isDragable={isDragable}
               isDragablebetweenBoards={isDragablebetweenBoards}
@@ -345,29 +169,299 @@ const KanbanColumn: React.FC<ExtendedKanbanColumnProps> = ({
               statusOptions={statusOptions}
               priorityData={priorityData}
               onTaskUpdate={onTaskUpdate}
-              // onFetchTaskDetails={onFetchTaskDetails}
             />
           ))}
         </div>
       </SortableContext>
 
       {isAddingTaskAtBottom && (
-        <div className='mb-2'>
+        <div className='mb-2 bg-white border border-slate-300 rounded-lg p-3'>
           <input
             ref={bottomInputRef}
             type='text'
             value={newBottomTaskTitle}
             onChange={(e) => setNewBottomTaskTitle(e.target.value)}
             onKeyDown={handleBottomKeyPress}
-            onBlur={() => {
-              if (!newBottomTaskTitle.trim()) {
-                setIsAddingTaskAtBottom(false);
-              }
-            }}
             placeholder='Enter task name'
-            className='w-full p-3 bg-white text-slate-800 rounded-lg border border-slate-300 focus:border-blue-500 focus:outline-none text-[13px] placeholder-slate-500'
-            style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
+            className='w-full p-2 bg-white text-slate-800 rounded text-[13px] placeholder-slate-500 mb-3'
+            style={{
+              fontFamily: "'Mulish', 'Lexend', sans-serif",
+              fontSize: '13px',
+              border: '1px solid #CBD6E2',
+            }}
           />
+
+          <div className='space-y-3 mb-3'>
+            {/* Status and Priority in one row */}
+            <div className='flex gap-2'>
+              <div className='flex-1'>
+                <label
+                  className='text-[13px] text-gray-600 block mb-1'
+                  style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
+                >
+                  Status
+                </label>
+                <Select
+                  value={selectedStatus}
+                  onChange={handleStatusChange}
+                  displayEmpty
+                  fullWidth
+                  size='small'
+                  sx={{
+                    height: '32px',
+                    fontSize: '13px',
+                    fontFamily: "'Mulish', 'Lexend', sans-serif",
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      border: '1px solid #CBD6E2',
+                      borderRadius: '2px',
+                    },
+                    '& .MuiOutlinedInput-root': {
+                      fontSize: '13px',
+                      fontFamily: "'Mulish', 'Lexend', sans-serif",
+                    },
+                    '& .MuiSelect-select': {
+                      fontSize: '13px',
+                      fontFamily: "'Mulish', 'Lexend', sans-serif",
+                      color: selectedStatus ? 'black' : '#7D98B6',
+                    },
+                  }}
+                  renderValue={(value) =>
+                    value ? (
+                      value
+                    ) : (
+                      <span style={{ color: '#7D98B6' }}>Choose Status</span>
+                    )
+                  }
+                >
+                  {statusData?.map((status) => (
+                    <MenuItem
+                      key={status.id}
+                      value={status.name}
+                      sx={{
+                        fontSize: '13px',
+                        fontFamily: "'Mulish', 'Lexend', sans-serif",
+                      }}
+                    >
+                      {status.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </div>
+
+              <div className='flex-1'>
+                <label
+                  className='text-[13px] text-gray-600 block mb-1'
+                  style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
+                >
+                  Priority
+                </label>
+                <Select
+                  value={selectedPriority}
+                  onChange={handlePriorityChange}
+                  displayEmpty
+                  fullWidth
+                  size='small'
+                  sx={{
+                    height: '32px',
+                    fontSize: '13px',
+                    fontFamily: "'Mulish', 'Lexend', sans-serif",
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      border: '1px solid #CBD6E2',
+                      borderRadius: '2px',
+                    },
+                    '& .MuiOutlinedInput-root': {
+                      fontSize: '13px',
+                      fontFamily: "'Mulish', 'Lexend', sans-serif",
+                    },
+                    '& .MuiSelect-select': {
+                      fontSize: '13px',
+                      fontFamily: "'Mulish', 'Lexend', sans-serif",
+                      color: selectedPriority ? 'black' : '#7D98B6',
+                    },
+                  }}
+                  renderValue={(value) =>
+                    value ? (
+                      value
+                    ) : (
+                      <span style={{ color: '#7D98B6' }}>Choose Priority</span>
+                    )
+                  }
+                >
+                  {priorityData?.map((priority) => (
+                    <MenuItem
+                      key={priority.id}
+                      value={priority.name}
+                      sx={{
+                        fontSize: '13px',
+                        fontFamily: "'Mulish', 'Lexend', sans-serif",
+                      }}
+                    >
+                      {priority.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </div>
+            </div>
+
+            {/* Start Date in one row */}
+            <div className='flex gap-2'>
+              <div className='flex-1'>
+                <label
+                  className='text-[13px] text-gray-600 block mb-1'
+                  style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
+                >
+                  Start Date
+                </label>
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <DatePicker
+                    value={startDate}
+                    onChange={(newValue) => setStartDate(newValue)}
+                    format='YYYY-MMM-DD'
+                    slots={{
+                      openPickerIcon: () => (
+                        <CalendarIcon className='w-4 h-4' />
+                      ),
+                      clearIcon: () => <CloseIcon className='w-2.5 h-2.5' />,
+                    }}
+                    slotProps={{
+                      field: { clearable: true },
+                      textField: {
+                        fullWidth: true,
+                        size: 'small',
+                        sx: {
+                          '& .MuiOutlinedInput-root': {
+                            height: '32px',
+                            borderRadius: '2px',
+                            '& input': {
+                              fontWeight: 400,
+                              fontSize: '13px',
+                              lineHeight: '21px',
+                              pl: '11px',
+                              fontFamily: "'Mulish', 'Lexend', sans-serif",
+                              color: 'black !important',
+                              WebkitTextFillColor: 'black !important',
+                            },
+                            '&:hover .MuiOutlinedInput-notchedOutline': {
+                              border: '1px solid #CBD6E2',
+                            },
+                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                              border: '2px solid #60A5FA',
+                            },
+                          },
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            border: '1px solid #CBD6E2',
+                            borderRadius: '2px',
+                          },
+                        },
+                      },
+                    }}
+                  />
+                </LocalizationProvider>
+              </div>
+            </div>
+
+            {/* End Date in one row */}
+            <div className='flex gap-2'>
+              <div className='flex-1'>
+                <label
+                  className='text-[13px] text-gray-600 block mb-1'
+                  style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
+                >
+                  End Date
+                </label>
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <DatePicker
+                    value={endDate}
+                    onChange={(newValue) => setEndDate(newValue)}
+                    format='YYYY-MMM-DD'
+                    slots={{
+                      openPickerIcon: () => (
+                        <CalendarIcon className='w-4 h-4' />
+                      ),
+                      clearIcon: () => <CloseIcon className='w-2.5 h-2.5' />,
+                    }}
+                    slotProps={{
+                      field: { clearable: true },
+                      textField: {
+                        fullWidth: true,
+                        size: 'small',
+                        sx: {
+                          '& .MuiOutlinedInput-root': {
+                            height: '32px',
+                            borderRadius: '2px',
+                            '& input': {
+                              fontWeight: 400,
+                              fontSize: '13px',
+                              lineHeight: '21px',
+                              pl: '11px',
+                              fontFamily: "'Mulish', 'Lexend', sans-serif",
+                              color: 'black !important',
+                              WebkitTextFillColor: 'black !important',
+                            },
+                            '&:hover .MuiOutlinedInput-notchedOutline': {
+                              border: '1px solid #CBD6E2',
+                            },
+                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                              border: '2px solid #60A5FA',
+                            },
+                          },
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            border: '1px solid #CBD6E2',
+                            borderRadius: '2px',
+                          },
+                        },
+                      },
+                    }}
+                  />
+                </LocalizationProvider>
+              </div>
+            </div>
+          </div>
+
+          <div className='flex gap-2 justify-end'>
+            <TextButton
+              onClick={handleCancelAddTask}
+              label='Cancel'
+              sx={{
+                fontFamily: "'Mulish', 'Lexend', sans-serif",
+                fontSize: '13px',
+              }}
+            />
+            <TextButton
+              onClick={handleAddTaskAtBottom}
+              disabled={
+                !newBottomTaskTitle.trim() ||
+                !selectedStatus ||
+                !selectedPriority ||
+                !startDate ||
+                !endDate
+              }
+              label='Save Task'
+              sx={{
+                fontFamily: "'Mulish', 'Lexend', sans-serif",
+                fontSize: '13px',
+                backgroundColor:
+                  newBottomTaskTitle.trim() &&
+                  selectedStatus &&
+                  selectedPriority &&
+                  startDate &&
+                  endDate
+                    ? '#2563EB'
+                    : '#9CA3AF',
+                paddingX: '10px',
+                '&:hover': {
+                  backgroundColor:
+                    newBottomTaskTitle.trim() &&
+                    selectedStatus &&
+                    selectedPriority &&
+                    startDate &&
+                    endDate
+                      ? '#1D4ED8'
+                      : '#9CA3AF',
+                },
+              }}
+            />
+          </div>
         </div>
       )}
 

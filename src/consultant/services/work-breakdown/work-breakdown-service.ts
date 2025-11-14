@@ -87,13 +87,38 @@ export interface TaskDetailResponse {
   sequence_no?: number;
 }
 
-/**
- * Fetch task details from API and transform to Task interface
- * @param accountId - Account ID
- * @param caseId - Case ID
- * @param taskId - Task ID (rid)
- * @returns Task object or null if not found
- */
+// Helper function to generate initials from name
+const generateInitials = (name: string): string => {
+  return name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+};
+
+// Helper function to generate a color based on name (consistent for same name)
+const generateColorFromName = (name: string): string => {
+  const colors = [
+    '#3B82F6', // Blue
+    '#10B981', // Green
+    '#F59E0B', // Amber
+    '#EF4444', // Red
+    '#8B5CF6', // Purple
+    '#EC4899', // Pink
+    '#06B6D4', // Cyan
+    '#F97316', // Orange
+  ];
+
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = (hash << 5) - hash + name.charCodeAt(i);
+    hash = hash & hash; // Convert to 32bit integer
+  }
+
+  return colors[Math.abs(hash) % colors.length];
+};
+
 export const getTaskDetail = async (
   accountId: string,
   caseId: string,
@@ -101,17 +126,20 @@ export const getTaskDetail = async (
 ): Promise<Task | null> => {
   console.log('account Id : ', accountId);
   console.log('case Id : ', caseId);
-  // TODO: Remove mock data and uncomment API implementation when backend is ready
-  // MOCK DATA - Remove this section and uncomment the API call below
+
+  // MOCK DATA
+  const assigneeName = 'John Doe';
+  const collaboratorNames = ['Jane Smith', 'Mike Johnson'];
+
   const mockTask: Task = {
     id: taskId,
     title: 'Schedule Team Meetings internally',
     status: 'In Progress' as const,
     priority: 'Medium' as const,
     assignee: {
-      name: 'John Doe',
-      initials: 'JD',
-      color: '#3B82F6',
+      name: assigneeName,
+      initials: generateInitials(assigneeName),
+      color: generateColorFromName(assigneeName),
     },
     description: 'Reviewing the projects which are added to Cases',
     commentCount: 2,
@@ -123,10 +151,11 @@ export const getTaskDetail = async (
       { id: '4', text: 'Test audio/video', completed: false },
     ],
     tags: ['Meeting', 'Internal'],
-    collaborators: [
-      { name: 'Jane Smith', initials: 'JS', color: '#10B981' },
-      { name: 'Mike Johnson', initials: 'MJ', color: '#F59E0B' },
-    ],
+    collaborators: collaboratorNames.map((name) => ({
+      name,
+      initials: generateInitials(name),
+      color: generateColorFromName(name),
+    })),
     startDate: new Date('2025-11-05'),
     endDate: new Date('2025-11-08'),
     attachments: ['agenda.pdf', 'minutes.docx'],
@@ -150,7 +179,7 @@ export const getTaskDetail = async (
 
   return mockTask;
 
-  /* API Implementation 
+  /* COMMENTED OUT - API Implementation (uncomment when backend is ready)
   try {
     const url = getTaskDetailURL(accountId, caseId, taskId);
     const response = await caseServiceApi.get<TaskDetailResponse>(url);
@@ -161,6 +190,19 @@ export const getTaskDetail = async (
 
     // Transform API response to Task interface
     const apiTask = response.data;
+    
+    // Generate initials and color from assignee name
+    const assigneeName = apiTask.assigned_to_name || 'Unassigned';
+    const assigneeInitials = generateInitials(assigneeName);
+    const assigneeColor = generateColorFromName(assigneeName);
+    
+    // Generate initials and colors for collaborators
+    const collaborators = (apiTask.collaborators || []).map((collab) => ({
+      name: collab.name,
+      initials: generateInitials(collab.name),
+      color: generateColorFromName(collab.name),
+    }));
+    
     const task: Task = {
       id: apiTask.rid,
       title: apiTask.task_name,
@@ -169,24 +211,22 @@ export const getTaskDetail = async (
         | 'In Progress'
         | 'Done',
       priority: (apiTask.priority_name || 'Medium') as
+        | 'Lowest'
         | 'Low'
         | 'Medium'
-        | 'High',
+        | 'High'
+        | 'Highest',
       assignee: {
-        name: apiTask.assigned_to_name || 'Unassigned',
-        initials: (apiTask.assigned_to_name || 'U')
-          .split(' ')
-          .map((n) => n[0])
-          .join('')
-          .toUpperCase(),
-        color: '#3B82F6',
+        name: assigneeName,
+        initials: assigneeInitials,
+        color: assigneeColor,
       },
       description: apiTask.task_description,
       commentCount: 0,
       createdAt: apiTask.created_at ? new Date(apiTask.created_at) : new Date(),
       checklist: apiTask.checklist_items || [],
       tags: apiTask.tags || [],
-      collaborators: apiTask.collaborators || [],
+      collaborators,
       startDate: apiTask.effective_start_datetime
         ? new Date(apiTask.effective_start_datetime)
         : undefined,

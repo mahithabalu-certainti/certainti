@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect } from 'react';
 import type { TaskCardProps, TaskCard } from './types';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -16,20 +16,11 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
   taskData,
   showCommentCount,
   showProfileIndicator,
-  onEditTask,
   onTaskClick,
-  // statusData, // Removed unused prop
   statusOptions,
-  // priorityData, // Removed unused prop - using hardcoded priority colors
-  // onTaskUpdate,
   isDragable = false,
   isDragablebetweenBoards = false,
-  // onFetchTaskDetails,
 }) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editTitle, setEditTitle] = useState(taskData?.task_name || '');
-  const inputRef = useRef<HTMLInputElement>(null);
-
   const {
     attributes,
     listeners,
@@ -50,15 +41,8 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
   };
 
   useEffect(() => {
-    if (isEditing && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
-    }
-  }, [isEditing]);
-
-  useEffect(() => {
     if (taskData) {
-      setEditTitle(taskData.task_name);
+      // Perform any necessary side effects when taskData changes
     }
   }, [taskData]);
 
@@ -100,31 +84,6 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
     );
   };
 
-  const handleSaveEdit = () => {
-    if (
-      editTitle.trim() &&
-      taskData &&
-      editTitle.trim() !== taskData.task_name &&
-      onEditTask
-    ) {
-      onEditTask(taskId, editTitle.trim());
-    } else if (taskData) {
-      setEditTitle(taskData.task_name);
-    }
-    setIsEditing(false);
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSaveEdit();
-    } else if (e.key === 'Escape') {
-      if (taskData) {
-        setEditTitle(taskData.task_name);
-      }
-      setIsEditing(false);
-    }
-  };
-
   if (!taskData) {
     return (
       <div
@@ -140,8 +99,8 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
     );
   }
 
-  const statusColor = getColor('status', taskData.status_name);
-  const priorityColor = getColor('priority', taskData.priority_name);
+  const statusColor = getColor('status', taskData.task_status_name ?? ' ');
+  const priorityColor = getColor('priority', taskData.priority_name ?? ' ');
 
   return (
     <div
@@ -156,42 +115,13 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
     >
       <div className='flex items-center gap-1 mb-3'>
         <div className='w-2 h-2 bg-slate-300 rounded-full flex-shrink-0'></div>
-        <div className='flex-1 flex items-center justify-between'>
-          {isEditing ? (
-            <input
-              ref={inputRef}
-              type='text'
-              value={editTitle}
-              onChange={(e) => setEditTitle(e.target.value)}
-              onKeyDown={handleKeyPress}
-              onBlur={handleSaveEdit}
-              className='flex-1 bg-white text-slate-800 text-[13px] font-medium px-2 py-1 rounded border border-slate-300 focus:border-blue-500 focus:outline-none'
-              style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
-            />
-          ) : (
-            <h3
-              className='text-slate-800 text-[13px] font-medium leading-relaxed flex-1'
-              style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
-            >
-              {taskData.task_name}
-            </h3>
-          )}
-
-          {!isEditing && onEditTask && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsEditing(true);
-              }}
-              className='opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 rounded hover:bg-slate-200 ml-2'
-              title='Edit task'
-            >
-              <CommentIcon
-                size={14}
-                className='text-slate-500 hover:text-slate-700'
-              />
-            </button>
-          )}
+        <div className='flex-1'>
+          <h3
+            className='text-slate-800 text-[13px] font-medium leading-relaxed'
+            style={{ fontFamily: "'Mulish', 'Lexend', sans-serif" }}
+          >
+            {taskData.task_name}
+          </h3>
         </div>
       </div>
 
@@ -206,7 +136,7 @@ const TaskCardComponent: React.FC<ExtendedTaskCardProps> = ({
             fontSize: '13px',
           }}
         >
-          {taskData.status_name}
+          {taskData.task_status_name}
         </div>
 
         <div

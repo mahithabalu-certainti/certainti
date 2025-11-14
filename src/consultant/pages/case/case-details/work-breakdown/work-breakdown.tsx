@@ -187,8 +187,8 @@ const WorkBreakDown = () => {
               <KanbanBoard
                 data={kanbanData?.data || []}
                 onFetchTaskDetails={handleFetchTaskDetails}
-                isCreateTaskDisabled={true}
-                isCreateTaskHide={true}
+                // isCreateTaskDisabled={false}
+                // isCreateTaskHide={false}
                 showCommentCount={true}
                 showTaskCount={true}
                 showProfileIndicator={true}

@@ -65,6 +65,7 @@ export interface TaskCard {
   case_team_member_role_name: string;
   task_type_name: string;
   status_name: string;
+  task_status_name?: string;
 }
 
 export interface KanbanColumn {
