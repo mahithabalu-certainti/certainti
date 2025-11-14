@@ -200,7 +200,13 @@ export const getAllProjectListColumns = (
       placeholder: '',
       options: fiscalYears,
     },
-    conditionallyEdit: [{ key: 'account_status_name', matchValue: ['Active'] }],
+    conditionallyEdit: [
+      { key: 'account_status_name', matchValue: ['Active'] },
+      {
+        key: 'is_project_exists' as keyof Project,
+        matchValue: false,
+      },
+    ],
   },
   {
     id: 'classification_name',

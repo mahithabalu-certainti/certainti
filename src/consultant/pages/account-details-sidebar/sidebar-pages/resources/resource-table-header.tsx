@@ -69,7 +69,8 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
                   value === 'cost' ||
                   value === 'skill' ||
                   value === 'attachments' ||
-                  value === 'notes') &&
+                  value === 'notes' ||
+                  value === 'checklists') &&
                   resourceNumber}
               </div>
             </div>

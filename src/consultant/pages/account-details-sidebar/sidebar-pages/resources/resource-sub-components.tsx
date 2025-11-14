@@ -22,7 +22,8 @@ import { AttachmentList } from '../../../../types/attachment';
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
 import ResourceNotesList from './resource-notes/resource-notes-list';
-import { NotesList } from '../../../../types';
+import { ChecklistList, NotesList } from '../../../../types';
+import { ResourceChecklist } from './resource-checklist';
 
 interface SubcomponentProps {
   tabMenus: TabMenus[];
@@ -59,6 +60,11 @@ interface SubcomponentProps {
   setNotesOrderBy: (field: keyof NotesList) => void;
   refreshAttachments?: number;
   refreshNotes?: number;
+  checklistsOrder: 'ASC' | 'DESC';
+  setChecklistsOrder: (order: 'ASC' | 'DESC') => void;
+  checklistsOrderBy: string;
+  setChecklistsOrderBy: (field: keyof ChecklistList) => void;
+  refreshChecklists?: number;
   resourceInActive: boolean;
   setResourceInActive: (value: boolean) => void;
   columnAnchorEl: HTMLButtonElement | null;
@@ -106,6 +112,11 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
   setNotesOrderBy,
   refreshAttachments,
   refreshNotes,
+  checklistsOrder,
+  setChecklistsOrder,
+  checklistsOrderBy,
+  setChecklistsOrderBy,
+  refreshChecklists,
   resourceInActive,
   setResourceInActive,
   columnAnchorEl,
@@ -350,6 +361,29 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
               orderBy={notesOrderBy}
               setOrderBy={setNotesOrderBy}
               refreshNotes={refreshNotes}
+              setCount={setCount}
+              resourceInActive={resourceInActive}
+              setColumnAnchorEl={setColumnAnchorEl}
+              columnAnchorEl={columnAnchorEl}
+              searchValue={searchValue}
+              resourceNumber={resource?.data?.resourceDetails?.r_number || ''}
+            />
+          </Box>
+        )}
+        {value === 'checklists' && (
+          <Box sx={{ width: '100%', overflowX: 'auto' }}>
+            <ResourceChecklist
+              accountDetails={accountDetails}
+              fiscalYear={fiscalYearValue}
+              appliedFilters={appliedFilters}
+              resourceRid={resourceId}
+              setCurrentPage={setCurrentPage}
+              currentPage={currentPage}
+              order={checklistsOrder}
+              setOrder={setChecklistsOrder}
+              orderBy={checklistsOrderBy}
+              setOrderBy={setChecklistsOrderBy}
+              refreshChecklist={refreshChecklists}
               setCount={setCount}
               resourceInActive={resourceInActive}
               setColumnAnchorEl={setColumnAnchorEl}

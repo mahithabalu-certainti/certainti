@@ -7,10 +7,12 @@ import {
 } from 'react-router-dom';
 import {
   ExportAssignedList,
+  ExportCaseTaskList,
   useCaseDetails,
 } from '../../../services/cases/case-service';
 import {
   CaseAssignedExportParams,
+  ChecklistListExportParams,
   ExportType,
   MenuItem,
   NotesListExportParams,
@@ -20,7 +22,12 @@ import {
   AllModules,
   AllPermissions,
 } from '../../../../common-service';
-import { InfoSection, PageHeader, SideMenuPanel } from '../../../../components';
+import {
+  InfoSection,
+  PageHeader,
+  SideMenuPanel,
+  EmailModal,
+} from '../../../../components';
 import {
   AccountDetailsIcon,
   ActivitiesIcon,
@@ -52,9 +59,18 @@ import { AttachmentsListExportParams } from '../../../types/attachment';
 import { useSelector } from 'react-redux';
 import { Attachments } from './case-attachments';
 import { exportAttachmentsData } from '../../../services/attachments/attachments-service';
+import Setting from './settings/setting';
+import { ExportChecklistList } from '../../../services/checklist/checklist-service';
+import { Checklist } from './checklist';
 
 export const CaseDetails = () => {
   const navigate = useNavigate();
+  const { email: userEmail, name: userName } = useSelector(
+    (state: RootState) => state.auth
+  );
+  console.log(userEmail);
+  console.log(userName);
+
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const { caseId } = useParams();
@@ -90,6 +106,7 @@ export const CaseDetails = () => {
   });
 
   const noteView = searchParams.get('note_id');
+  const checklistView = searchParams.get('checklist_id');
   const accountInActive =
     caseData?.account_status_name?.toLowerCase() !== 'active';
   const [caseProjectParams, setCaseProjectParams] =
@@ -104,6 +121,17 @@ export const CaseDetails = () => {
       case_rid: caseId ?? '',
       account_id: accountId ?? '',
     });
+  const [caseTaskParams, setCaseTaskParams] = useState({
+    sort: 'task_name',
+    sort_by: 'ASC' as 'ASC' | 'DESC',
+    filter: {},
+    timezone: '',
+    page: 1,
+    limit: 10,
+    search: '',
+    case_rid: caseId ?? '',
+    account_id: accountId ?? '',
+  });
   const fiscalYear = caseData?.fiscal_year ?? 0;
   const [attachmentParams, setAttachmentParams] =
     useState<AttachmentsListExportParams>({
@@ -111,6 +139,14 @@ export const CaseDetails = () => {
       sortOrder: 'ASC',
       filters: {},
     });
+
+  const [checklistParams, setChecklistParams] =
+    useState<ChecklistListExportParams>({
+      sortBy: 'r_number',
+      sortOrder: 'ASC',
+      filters: {},
+    });
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     const list = searchParams.get('list');
@@ -128,20 +164,6 @@ export const CaseDetails = () => {
     }
   }, [location.state, searchParams]);
   const list = searchParams.get('list');
-  // const checkExport = () => {
-  //   if (list === 'caseProjects' && !isAssignProject) {
-  //     return false;
-  //   } else {
-  //     return true;
-  //   }
-  // };
-
-  // const handleExport = () => {
-  //   if (list !== 'caseProjects') {
-  //     return;
-  //   }
-  //   ExportAssignedList(caseProjectParams);
-  // };
 
   // Permissions management
   const caseIsEnable = checkPermission(modules, AllModules.CASES);
@@ -160,11 +182,19 @@ export const CaseDetails = () => {
     AllPermissions.NOTES_EXPORT
   );
 
+  const isChecklistsExportEnable = checkPermission(
+    permission,
+    AllPermissions.CHECKLIST_EXPORT
+  );
+
   const handleExport = (exportType: ExportType) => {
     if (
       searchParams.get('list') !== 'attachments' &&
       searchParams.get('list') !== 'notes' &&
-      searchParams.get('list') !== 'caseProjects'
+      searchParams.get('list') !== 'checklist' &&
+      searchParams.get('list') !== 'caseProjects' &&
+      searchParams.get('list') !== 'workBreakdown' &&
+      searchParams.get('tab') !== 'case_task'
     ) {
       return;
     }
@@ -190,8 +220,20 @@ export const CaseDetails = () => {
         ...attachmentParams,
         ...attachmentPayload,
       });
+    } else if (exportType === 'checklist') {
+      const checklistPayload = {
+        accountRid: accountId,
+        entityId: caseId,
+        attachmentLevel: 'case',
+      };
+      ExportChecklistList('checklist', {
+        ...checklistParams,
+        ...checklistPayload,
+      });
     } else if (list === 'caseProjects') {
       ExportAssignedList(caseProjectParams);
+    } else if (exportType === 'case_task') {
+      ExportCaseTaskList(caseTaskParams);
     }
   };
 
@@ -209,7 +251,11 @@ export const CaseDetails = () => {
       return !isAttachmentExportEnable;
     } else if (list === 'notes' && !noteView) {
       return !isNotesExportEnable;
+    } else if (list === 'checklist' && !checklistView) {
+      return !isChecklistsExportEnable;
     } else if (list === 'caseProjects' && !isAssignProject && !projectDetails) {
+      return false;
+    } else if (searchParams.get('tab') === 'case_task') {
       return false;
     } else {
       return true;
@@ -237,18 +283,66 @@ export const CaseDetails = () => {
     console.log('Settings clicked');
   };
 
+  const handleDraftEmail = () => {
+    setShowModal(true);
+  };
+
+  const activityMenuItems = [
+    { label: 'Create Task', onClick: () => console.log('Task') },
+    { label: 'Draft Email', onClick: handleDraftEmail },
+    { label: 'Schedule Meeting', onClick: () => console.log('Meeting') },
+    { label: 'Log a call', onClick: () => console.log('Call') },
+  ];
+
+  // Mock data for email modal
+  const mockData = {
+    userName: 'John Doe',
+    userEmail: 'john.doe@example.com',
+    templates: [
+      {
+        id: '1',
+        subject: 'Greetings',
+        name: 'Welcome Email Template',
+        content: 'Dear recipient,<br><br>Welcome to our platform!',
+      },
+      {
+        id: '2',
+        subject: 'Follow up',
+        name: 'Follow-up Template',
+        content:
+          'Hi there,<br><br>Just following up on our previous conversation.',
+      },
+      {
+        id: '3',
+        subject: 'Meeting Scheduled',
+        name: 'Meeting Invitation',
+        content: 'Hello,<br><br>I would like to invite you to a meeting.',
+      },
+    ],
+  };
+
   const renderContent = () => {
     switch (activeKey) {
       case 'workBreakdown':
         return (
           <div className='w-full pr-4 pl-2 py-2'>
-            <WorkBreakDown />
+            <WorkBreakDown
+              caseId={caseId}
+              setExportType={setExportType}
+              setCaseTaskParams={(params: Record<string, unknown>) =>
+                setCaseTaskParams((prev) => ({
+                  ...prev,
+                  ...params,
+                }))
+              }
+              activityMenuItems={activityMenuItems}
+            />
           </div>
         );
       case 'caseTeam':
         return (
           <div className='w-full pr-4 pl-2 py-2'>
-            <CaseTeam />
+            <CaseTeam activityMenuItems={activityMenuItems} />
           </div>
         );
       case 'caseProjects':
@@ -279,6 +373,17 @@ export const CaseDetails = () => {
             setAttachmentParams={setAttachmentParams}
           />
         );
+      case 'settings':
+        return <Setting />;
+      case 'checklist':
+        return (
+          <Checklist
+            setExportType={setExportType}
+            setChecklistParams={setChecklistParams}
+            accountInActive={accountInActive}
+            caseDetails={caseData}
+          />
+        );
       default:
         return (
           <div className='flex items-center justify-center h-full'>
@@ -293,28 +398,28 @@ export const CaseDetails = () => {
       {
         name: 'Work Breakdown',
         key: 'workBreakdown',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS, // ADD PERMISSION FOR CASES
+        id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
         icon: ProjectsSideIcon,
       },
       {
         name: 'Financial Workings',
         key: 'financialWorkings',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS, // ADD PERMISSION FOR CASES
+        id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
         icon: FinancialIcon,
       },
       {
         name: 'Case Review',
         key: 'caseReview',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS, // ADD PERMISSION FOR CASES
+        id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
         icon: CasesIcon,
       },
       {
         name: 'Case Team',
         key: 'caseTeam',
-        id: AllMenus.FINANCIAL_HIGHLIGHTS, // ADD PERMISSION FOR CASES
+        id: AllMenus.FINANCIAL_HIGHLIGHTS,
         disabled: false,
         icon: CasesIcon,
       },
@@ -396,7 +501,7 @@ export const CaseDetails = () => {
         icon: AttachmentsSideIcon,
       },
       {
-        name: 'Checklist',
+        name: 'Checklists',
         key: 'checklist',
         id: AllMenus.CHECKLISTS,
         disabled: false,
@@ -493,6 +598,13 @@ export const CaseDetails = () => {
           <Suspense fallback={null}>{renderContent()}</Suspense>
         </div>
       </div>
+      {showModal && (
+        <EmailModal
+          onClose={() => setShowModal(false)}
+          data={mockData}
+          userData={{ name: userName || '', email: userEmail || '' }}
+        />
+      )}
     </div>
   );
 };

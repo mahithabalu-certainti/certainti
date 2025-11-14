@@ -522,7 +522,10 @@ export type ExportType =
   | 'resource_notes'
   | 'notes'
   | 'cases'
-  | 'cases_projects';
+  | 'checklist'
+  | 'resource_checklist'
+  | 'cases_projects'
+  | 'case_task';
 
 export type FinancialSummaryFlag = 'all' | 'rd_qualified';
 
@@ -550,4 +553,11 @@ export interface FinancialStateProps {
   accountId: string;
   countryId: string;
   fiscalYear: string;
+}
+
+export interface ActivityMenuItem {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  hide?: boolean;
 }

@@ -179,6 +179,14 @@ export interface CaseFormPayload {
   statutory_submission_date: string;
 }
 
+export interface updateCaseJurisdictionPayload {
+  case_rid: string;
+  account_rid: string;
+  is_federal_level: boolean;
+  is_state_level: boolean;
+  states: string[];
+}
+
 export interface CreateCaseApiResponse {
   statusCode: number;
   statusCodeValue: string;
@@ -200,6 +208,20 @@ export interface CaseListExportParams {
   isGlobal?: boolean;
   search?: string;
 }
+export interface CaseTaskExportParams {
+  page: number;
+  limit: number;
+  sort: string;
+  sort_by: 'ASC' | 'DESC';
+  filter?: object;
+  account_rid?: string;
+  case_rid?: string;
+  fiscal_year?: number;
+  search?: string;
+  timezone?: string;
+  account_id?: string;
+}
+
 export interface CaseAssignedExportParams {
   page: number;
   limit: number;

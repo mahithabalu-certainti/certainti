@@ -31,12 +31,14 @@ export const getResourceCostColumns = (
   permissionMap: Record<string, { read: boolean; edit: boolean }>,
   accountInActive: boolean,
   handleAttachmentClick?: (rowId: string) => void,
-  handleCreateNote?: (rowId: string) => void,
+  handleCreateNote?: (row: ResourceCostList) => void,
+  handleCreateChecklist?: (row: ResourceCostList) => void,
   resourceInActive?: boolean,
   attachmentCreateEnable?: boolean,
   handleGetFiscalYear?: (year: string) => void,
   fiscalDate?: FormFiscalDateType,
-  isNoteCreateEnable?: boolean
+  isNoteCreateEnable?: boolean,
+  isChecklistCreateEnable?: boolean
 ): ListTableColumn<ResourceCostList>[] => [
   {
     id: 'fiscal_year',
@@ -502,7 +504,26 @@ export const getResourceCostColumns = (
         label='Add'
         disabled={accountInActive ? accountInActive : resourceInActive}
         sx={{ width: '45px', minWidth: '45px', maxWidth: '45px' }}
-        onClick={() => handleCreateNote?.(row.rid ?? '')}
+        onClick={() => handleCreateNote?.(row)}
+      />
+    ),
+  },
+  {
+    id: 'checklists',
+    sortId: 'checklists',
+    label: 'Checklists',
+    width: 80,
+    sortable: false,
+    hide: !isChecklistCreateEnable,
+    sx: {
+      textAlign: 'center',
+    },
+    render: (row) => (
+      <TextButton
+        label='Add'
+        disabled={accountInActive ? accountInActive : resourceInActive}
+        sx={{ width: '45px', minWidth: '45px', maxWidth: '45px' }}
+        onClick={() => handleCreateChecklist?.(row)}
       />
     ),
   },

@@ -57,6 +57,7 @@ import {
   AccountDetailsResponse,
   AccountFieldsApiResponse,
   CaseListExportParams,
+  ChecklistListExportParams,
   ExportType,
   MenuItem,
   NotesListExportParams,
@@ -93,6 +94,7 @@ import { BUTTON_STYLES } from '../../../admin/pages/manage-user-detail/styles';
 import { useToast } from '../../../hooks';
 import { ExportNotesList } from '../../services/notes/notes-service';
 import { ExportCaseList } from '../../services/cases/case-service';
+import { ExportChecklistList } from '../../services/checklist/checklist-service';
 
 export const AccountDetails = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -120,6 +122,7 @@ export const AccountDetails = () => {
   const interactionRID = searchParams.get('interaction_rid');
   const interactionsView = !!interactionId || !!interactionRID;
   const noteView = searchParams.get('note_id');
+  const checklistView = searchParams.get('checklist_id');
 
   // Permission Mangement
   const accountIsEnable = checkPermission(modules, AllModules.ACCOUNTS);
@@ -164,6 +167,11 @@ export const AccountDetails = () => {
   const isNotesExportEnable = checkPermission(
     permission,
     AllPermissions.NOTES_EXPORT
+  );
+
+  const isChecklistsExportEnable = checkPermission(
+    permission,
+    AllPermissions.CHECKLIST_EXPORT
   );
 
   const isCasesExportEnable = checkPermission(
@@ -308,6 +316,14 @@ export const AccountDetails = () => {
     fiscalYear: convertedFiscalYear,
   });
 
+  const [checklistParams, setChecklistParams] =
+    useState<ChecklistListExportParams>({
+      sortBy: 'r_number',
+      sortOrder: 'ASC',
+      filters: {},
+      fiscalYear: convertedFiscalYear,
+    });
+
   const [casesParams, setCasesParams] = useState<CaseListExportParams>({
     sortBy: 'r_number',
     sortOrder: 'ASC',
@@ -339,6 +355,7 @@ export const AccountDetails = () => {
       searchParams.get('list') !== 'projects' &&
       searchParams.get('list') !== 'attachments' &&
       searchParams.get('list') !== 'notes' &&
+      searchParams.get('list') !== 'checklist' &&
       searchParams.get('list') !== 'cases' &&
       searchParams.get('list') !== 'imports' &&
       searchParams.get('list') !== 'financial' &&
@@ -402,6 +419,19 @@ export const AccountDetails = () => {
       }),
     };
 
+    const checklistsPayload = {
+      accountRid: accountid || rNumber,
+      entityId: exportType === 'checklist' ? accountid || rNumber : resourceRid,
+      attachmentLevel: exportType === 'checklist' ? 'account' : 'resource',
+      ...(exportType === 'resource_checklist' && {
+        sortBy: tableParams.sortBy,
+        sortOrder: tableParams.sortOrder as 'ASC' | 'DESC' | undefined,
+        fiscalYear: convertedFiscalYear,
+        filters: filter,
+        search,
+      }),
+    };
+
     const financialPayload = {
       accountNumber: accountDetailsForEdit?.accountById?.r_number,
       accountRid: accountid,
@@ -427,6 +457,14 @@ export const AccountDetails = () => {
       });
     } else if (exportType === 'notes' || exportType === 'resource_notes') {
       ExportNotesList('notes', { ...notesParams, ...notesPayload });
+    } else if (
+      exportType === 'checklist' ||
+      exportType === 'resource_checklist'
+    ) {
+      ExportChecklistList('checklist', {
+        ...checklistParams,
+        ...checklistsPayload,
+      });
     } else if (exportType === 'imports') {
       exportImportsData(importsParams);
     } else if (exportType === 'cases') {
@@ -570,6 +608,10 @@ export const AccountDetails = () => {
       return !isAttachmentExportEnable;
     } else if (list === 'resources' && tab === 'notes' && !noteView) {
       return !isNotesExportEnable;
+    } else if (list === 'resources' && tab === 'checklists' && !checklistView) {
+      return !isChecklistsExportEnable;
+    } else if (list === 'checklist' && !checklistView) {
+      return !isChecklistsExportEnable;
     } else if (list === 'projects') {
       return !isProjectExportEnable;
     } else if (list === 'attachments') {
@@ -740,7 +782,14 @@ export const AccountDetails = () => {
           />
         );
       case 'checklist':
-        return <Checklist />;
+        return (
+          <Checklist
+            setExportType={setExportType}
+            setChecklistParams={setChecklistParams}
+            accountInActive={accountInActive}
+            accountDetails={{ ...data?.data } as accountDetailsProps}
+          />
+        );
       case 'timesheet':
         return (
           <Timesheet
@@ -850,7 +899,7 @@ export const AccountDetails = () => {
         icon: AttachmentsSideIcon,
       },
       {
-        name: 'Checklist',
+        name: 'Checklists',
         key: 'checklist',
         id: AllMenus.CHECKLISTS,
         disabled: disable,

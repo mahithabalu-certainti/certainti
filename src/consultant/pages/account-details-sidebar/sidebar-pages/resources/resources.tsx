@@ -8,7 +8,12 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom';
-import { NOTES_CREATE, RESOURCE, RESOURCE_CREATE } from '../../../../../routes';
+import {
+  CHECKLIST_CREATE,
+  NOTES_CREATE,
+  RESOURCE,
+  RESOURCE_CREATE,
+} from '../../../../../routes';
 import { RootState } from '../../../../../store/store';
 import {
   useGetResourceType,
@@ -128,6 +133,12 @@ const tabs: TabMenus[] = [
     hide: false,
     id: AllPermissions.NOTES_VIEW_EDIT,
   },
+  {
+    label: 'Checklists',
+    value: 'checklists',
+    hide: false,
+    id: AllPermissions.CHECKLIST_VIEW_EDIT,
+  },
 ];
 
 const Resource: React.FC<ResourceProps> = ({
@@ -193,6 +204,14 @@ const Resource: React.FC<ResourceProps> = ({
   const [notesOrder, setNotesOrder] = useState<'ASC' | 'DESC'>('ASC');
   const [notesOrderBy, setNotesOrderBy] = useState<string>('r_number');
 
+  //Checklist
+  const [refreshChecklists, setRefreshChecklists] = useState<number>(
+    Date.now()
+  );
+  const [checklistsOrder, setChecklistsOrder] = useState<'ASC' | 'DESC'>('ASC');
+  const [checklistsOrderBy, setChecklistsOrderBy] =
+    useState<string>('r_number');
+
   const [columnAnchorEl, setColumnAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
   const isModalOpen = Boolean(columnAnchorEl);
@@ -216,6 +235,8 @@ const Resource: React.FC<ResourceProps> = ({
   const activeMenuPath = searchParams.get('activeMenu') || '';
   const noteId = searchParams.get('note_id');
   const noteViewDetails = !!noteId;
+  const checklistId = searchParams.get('checklist_id') || '';
+  const checklistDetails = !!checklistId;
 
   // Permission Mangement
   const isAccountResourceFieldsEditable = useMemo(
@@ -399,6 +420,7 @@ const Resource: React.FC<ResourceProps> = ({
     searchParams.set('tab', newValue);
     searchParams.delete('attachment_entity');
     searchParams.delete('note_id');
+    searchParams.delete('checklist_id');
     searchParams.delete('origin');
     navigate({ search: searchParams.toString() }, { replace: true });
     setCurrentPage(0);
@@ -508,6 +530,8 @@ const Resource: React.FC<ResourceProps> = ({
       return true;
     } else if (value === 'notes') {
       return true;
+    } else if (value === 'checklists') {
+      return true;
     }
     return accountInActive;
   };
@@ -533,6 +557,11 @@ const Resource: React.FC<ResourceProps> = ({
     AllPermissions.NOTES_CREATE
   );
 
+  const isChecklistCreateEnable = checkPermission(
+    permission || [],
+    AllPermissions.CHECKLIST_CREATE
+  );
+
   const handleBackClick = () => {
     if (source === 'timesheet') {
       const timesheetId = searchParams.get('timesheet_id');
@@ -552,6 +581,7 @@ const Resource: React.FC<ResourceProps> = ({
       searchParams.delete('attachment_entity');
       searchParams.delete('tab');
       searchParams.delete('note_id');
+      searchParams.delete('checklist_id');
       searchParams.delete('origin');
       navigate(
         {
@@ -584,6 +614,22 @@ const Resource: React.FC<ResourceProps> = ({
     navigate(`${path}?${queryParams.toString()}`);
   };
 
+  const handleCreateChecklist = () => {
+    const accountId = accountid ?? '';
+    const resourceId = searchParams.get('res_id');
+    const path = generatePath(CHECKLIST_CREATE, {
+      module: 'account',
+    });
+    const queryParams = new URLSearchParams({
+      accountId,
+      entityLevel: 'resource',
+      entityId: resourceId || '',
+      source: `Resource > ${resourceNumber}`,
+      ...(!activeMenuPath ? {} : { activeMenu: activeMenuPath }),
+    });
+    navigate(`${path}?${queryParams.toString()}`);
+  };
+
   const headerButtons = [
     {
       label: 'Add Attachment',
@@ -599,6 +645,14 @@ const Resource: React.FC<ResourceProps> = ({
       onClick: () => handleCreateNote(),
       sx: { ...BUTTON_STYLES, width: '80px', minWidth: '80px' },
       hide: value !== 'details' || !isNoteCreateEnable,
+      disabled: accountInActive ? accountInActive : resourceInActive,
+    },
+    {
+      label: 'Add Checklist',
+      variant: 'outlined' as const,
+      onClick: () => handleCreateChecklist(),
+      sx: { ...BUTTON_STYLES, width: '105px', minWidth: '105px' },
+      hide: value !== 'details' || !isChecklistCreateEnable,
       disabled: accountInActive ? accountInActive : resourceInActive,
     },
     {
@@ -620,7 +674,11 @@ const Resource: React.FC<ResourceProps> = ({
       variant: 'outlined' as const,
       onClick: handleColumnVisibility,
       sx: { ...BUTTON_STYLES, width: '125px', minWidth: '125px' },
-      hide: value === 'details' || noteViewDetails || !!attachmentEntity,
+      hide:
+        value === 'details' ||
+        noteViewDetails ||
+        checklistDetails ||
+        !!attachmentEntity,
       disabled: false,
     },
     {
@@ -721,6 +779,10 @@ const Resource: React.FC<ResourceProps> = ({
       updatedParams.sortBy = notesOrderBy;
       updatedParams.sortOrder = notesOrder;
       setExportType?.('resource_notes');
+    } else if (value === 'checklists') {
+      updatedParams.sortBy = checklistsOrderBy;
+      updatedParams.sortOrder = checklistsOrder;
+      setExportType?.('resource_checklist');
     } else {
       updatedParams.sortBy = sortField;
       updatedParams.sortOrder = sortOrder;
@@ -749,6 +811,8 @@ const Resource: React.FC<ResourceProps> = ({
     notesOrderBy,
     notesOrder,
     searchText,
+    checklistsOrderBy,
+    checklistsOrder,
   ]);
 
   const handlePageChange = (newPage: number) => {
@@ -813,6 +877,8 @@ const Resource: React.FC<ResourceProps> = ({
       setRefreshAttachments(Date.now());
     } else if (value === 'notes') {
       setRefreshNotes(Date.now());
+    } else if (value === 'checklists') {
+      setRefreshChecklists(Date.now());
     } else {
       setRefreshTrigger(Date.now()); // Toggle the refreshTrigger to force re-fetch
     }
@@ -847,6 +913,11 @@ const Resource: React.FC<ResourceProps> = ({
         isSortByEmpty ? 'ASC' : (sortOrder.toUpperCase() as 'ASC' | 'DESC')
       );
       setNotesOrderBy(apiSortBy);
+    } else if (value === 'checklists') {
+      setChecklistsOrder(
+        isSortByEmpty ? 'ASC' : (sortOrder.toUpperCase() as 'ASC' | 'DESC')
+      );
+      setChecklistsOrderBy(apiSortBy);
     } else {
       setSortOrder(isSortByEmpty ? 'ASC' : apiOrder);
       setSortField(apiSortBy);
@@ -973,7 +1044,10 @@ const Resource: React.FC<ResourceProps> = ({
           isResoureceOverviewHide
             ? false
             : isResourceViewAllEnable
-              ? showUploads || noteViewDetails || !!attachmentEntity
+              ? showUploads ||
+                noteViewDetails ||
+                checklistDetails ||
+                !!attachmentEntity
                 ? false
                 : filterVisibility
               : false
@@ -981,7 +1055,12 @@ const Resource: React.FC<ResourceProps> = ({
         handleFilter={handleFilter}
         setCurrentPage={setCurrentPage}
         showRefresh={
-          showUploads || noteViewDetails || !!attachmentEntity ? false : true
+          showUploads ||
+          noteViewDetails ||
+          checklistDetails ||
+          !!attachmentEntity
+            ? false
+            : true
         }
         onRefreshClick={onRefreshClick}
         handleSorting={handleSorting}
@@ -990,7 +1069,10 @@ const Resource: React.FC<ResourceProps> = ({
         fieldOptions={fieldOptions}
         handleFilterChange={handleCategory}
         showSearch={
-          value === 'details' || noteViewDetails || !!attachmentEntity
+          value === 'details' ||
+          noteViewDetails ||
+          checklistDetails ||
+          !!attachmentEntity
             ? false
             : true
         }
@@ -1023,7 +1105,7 @@ const Resource: React.FC<ResourceProps> = ({
               onBackClick={handleBackClick}
               iconBg='#7785ff'
               bgType={showBackArrow ? 'react' : 'circle'}
-              showCount={noteViewDetails ? false : true}
+              showCount={noteViewDetails || checklistDetails ? false : true}
             />
 
             {!viewResourceList && value && (
@@ -1061,6 +1143,11 @@ const Resource: React.FC<ResourceProps> = ({
                 setNotesOrderBy={setNotesOrderBy}
                 refreshAttachments={refreshAttachments}
                 refreshNotes={refreshNotes}
+                checklistsOrder={checklistsOrder}
+                setChecklistsOrder={setChecklistsOrder}
+                checklistsOrderBy={checklistsOrderBy}
+                setChecklistsOrderBy={setChecklistsOrderBy}
+                refreshChecklists={refreshChecklists}
                 setCount={setCount}
                 resourceInActive={resourceInActive}
                 setResourceInActive={setResourceInActive}

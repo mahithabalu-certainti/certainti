@@ -77,7 +77,7 @@ const ListTable = <T extends RowData>({
   conditionMenuItems,
   // State
   loading = false,
-  loadindRowCount,
+  loadingRowCount,
   error,
   // Pagination
   rowsPerPageOptions = [5, 10, 25, 50, 100],
@@ -1005,7 +1005,11 @@ const ListTable = <T extends RowData>({
                                       actionMenuItems?.length > 0 &&
                                       isAvailableAction
                                     ? '50px'
-                                    : '0px',
+                                    : selectable &&
+                                        actionMenuItems.length === 0 &&
+                                        !isAvailableAction
+                                      ? '32px'
+                                      : '0px',
                           }
                         : {}),
                     }}
@@ -1036,7 +1040,11 @@ const ListTable = <T extends RowData>({
                                       actionMenuItems?.length > 0 &&
                                       isAvailableAction
                                     ? '50px'
-                                    : '0px',
+                                    : selectable &&
+                                        actionMenuItems.length === 0 &&
+                                        !isAvailableAction
+                                      ? '32px'
+                                      : '0px',
                           }
                         : {}),
                     }}
@@ -1082,7 +1090,7 @@ const ListTable = <T extends RowData>({
             {loading && (
               <TableSkeleton
                 rowsPerPage={
-                  loadindRowCount ||
+                  loadingRowCount ||
                   (component === 'account'
                     ? 20
                     : rowsPerPage > 20
@@ -1433,20 +1441,28 @@ const ListTable = <T extends RowData>({
                                 ? column.sx(row)
                                 : column.sx || {}),
                               zIndex: column.sticky ? 6 : 'auto',
-                              left:
-                                selectable &&
-                                actionMenuItems?.length > 0 &&
-                                isAvailableAction
-                                  ? '82px'
-                                  : selectable &&
-                                      actionMenuItems?.length &&
-                                      !isAvailableAction
-                                    ? '32px'
-                                    : !selectable &&
-                                        actionMenuItems?.length > 0 &&
-                                        isAvailableAction
-                                      ? '50px'
-                                      : '0px',
+                              ...(column.sticky
+                                ? {
+                                    left:
+                                      selectable &&
+                                      actionMenuItems?.length > 0 &&
+                                      isAvailableAction
+                                        ? '82px'
+                                        : selectable &&
+                                            actionMenuItems?.length &&
+                                            !isAvailableAction
+                                          ? '32px'
+                                          : !selectable &&
+                                              actionMenuItems?.length > 0 &&
+                                              isAvailableAction
+                                            ? '50px'
+                                            : selectable &&
+                                                actionMenuItems.length === 0 &&
+                                                !isAvailableAction
+                                              ? '32px'
+                                              : '0px',
+                                  }
+                                : {}),
                               padding: isEditing
                                 ? '0px 0px !important'
                                 : '0px 8px !important',
