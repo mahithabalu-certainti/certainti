@@ -348,6 +348,7 @@ export const CaseDetails = () => {
           <CaseInteractions
             accountInActive={false}
             isSendInteraction={false}
+            CaseDetails={caseData || null}
             loading={false}
             setInteractionsParams={setInteractionsParams}
           />

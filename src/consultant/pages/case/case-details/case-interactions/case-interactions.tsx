@@ -1,4 +1,9 @@
-import { generatePath, useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  generatePath,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 import {
   AllModules,
   AllPermissions,
@@ -10,6 +15,7 @@ import {
 } from '../../../../../common-service';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
+  CaseDetails,
   InteractionList,
   InteractionListExportParams,
   StatusTypeEnum,
@@ -23,7 +29,10 @@ import {
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import { checkPermission, getDisableReason } from '../../../../../common-utils';
-import { INTERACTIONS_CREATE, INTERACTIONS_EDIT } from '../../../../../routes';
+import {
+  CASE_INTERACTIONS_CREATE,
+  CASE_INTERACTIONS_EDIT,
+} from '../../../../../routes';
 import {
   ActionItem,
   ShowHideTableColumn,
@@ -33,8 +42,6 @@ import {
   EditIcon,
   InteractionDetailIcon,
 } from '../../../../../assets';
-import { mockProjectDetails } from '../../../../mockdata/project-list';
-import { NewProjectData } from '../../../../types/project';
 import { getProjectInteractionListModelColumns } from './modelColumns';
 import { getCaseInteractionListColumns } from './columns';
 import {
@@ -88,6 +95,7 @@ interface InteractionsProps {
   >;
   isSendInteraction: boolean;
   loading: boolean;
+  CaseDetails: CaseDetails | null;
 }
 
 const CaseInteractions: React.FC<InteractionsProps> = ({
@@ -96,9 +104,13 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
   setInteractionsParams,
   isSendInteraction,
   loading,
+  CaseDetails,
 }) => {
-  // const { caseid } = useParams();
+  const { caseId } = useParams();
   const [searchParams] = useSearchParams();
+  console.log(CaseDetails, 'CaseDetails');
+  const accountName = CaseDetails?.account_name || '';
+
   const navigate = useNavigate();
   const accountId = searchParams.get('accountID') || '';
   const [appliedFilters, setAppliedFilters] = useState<
@@ -160,23 +172,8 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
     (state: RootState) => state.permission
   );
 
-  const projectDetails = mockProjectDetails as unknown as NewProjectData;
-  const projectid = 'D001-551d36b6-7d41-43b4-a242-95ac37404744';
-
-  const projectData = {
-    project_code: projectDetails?.project_code || '',
-    project_name: projectDetails?.project_name || '',
-    fiscal_year: projectDetails?.fiscal_year || '',
-    account_name: projectDetails?.account_name || '',
-    account_rid: projectDetails?.account_rid || '',
-    project_rid: projectDetails?.project_rid || '',
-    project_fiscal_rid:
-      projectDetails?.project_fiscal_rid ||
-      projectid ||
-      projectDetails?.rid ||
-      '',
-  };
-  const fiscalYear = Number(projectDetails?.fiscal_year);
+  // const fiscalYear = Number(projectDetails?.fiscal_year);
+  const { fiscalYear } = useSelector((state: RootState) => state.account);
 
   const { data, isLoading, isError, refetch } = useInteractionList(
     {
@@ -185,16 +182,11 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
       sort: sortField,
       sort_by: sortBy,
       filters: appliedFilters,
-      project_rid: projectDetails?.project_rid || '',
-      project_fiscal_rid:
-        projectDetails?.project_fiscal_rid ||
-        projectid ||
-        projectDetails?.rid ||
-        '',
-      fiscal_year: fiscalYear,
+      fiscal_year: Number(fiscalYear),
       account_rid: accountId,
-      flag: 'project',
+      flag: 'case',
       search: searchText,
+      case_rid: caseId || '',
     },
     !viewDetails && !viewInteractionHistory && !viewInteractionAttachment,
     refreshInteractions
@@ -211,15 +203,15 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
       sort: modelTableParms.sort,
       sort_by: modelTableParms.sort_by,
       filters: modelTableParms.filter,
-      fiscal_year: fiscalYear,
+      fiscal_year: Number(fiscalYear),
       account_rid: accountId,
       flag: 'project',
-      project_rid: projectDetails?.project_rid || '',
-      project_fiscal_rid:
-        projectDetails?.project_fiscal_rid ||
-        projectid ||
-        projectDetails?.rid ||
-        '',
+      // project_rid: projectDetails?.project_rid || '',
+      // project_fiscal_rid:
+      //   projectDetails?.project_fiscal_rid ||
+      //   projectid ||
+      //   projectDetails?.rid ||
+      //   '',
       reminder_specific_list: true,
     },
     reminderModalOpen,
@@ -400,26 +392,29 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
   };
 
   const handleCreate = () => {
-    const path = generatePath(INTERACTIONS_CREATE, {
-      module: 'project',
+    const path = generatePath(CASE_INTERACTIONS_CREATE, {
+      module: 'case',
     });
     const queryParams = new URLSearchParams({
       accountId,
-      source: 'project',
-      projectDetails: JSON.stringify(projectData),
+      source: 'case',
+      caseId: caseId || '',
+      accountName: accountName,
+      // projectDetails: JSON.stringify(projectData),
     });
     navigate(`${path}?${queryParams.toString()}`);
   };
 
   const handleEdit = (row: InteractionList) => {
-    const path = generatePath(INTERACTIONS_EDIT, {
+    const path = generatePath(CASE_INTERACTIONS_EDIT, {
       module: 'project',
       interactionId: row.rid,
     });
     const queryParams = new URLSearchParams({
       accountId,
       source: 'project',
-      projectDetails: JSON.stringify(projectData),
+      accountName: accountName,
+      // projectDetails: JSON.stringify(projectData),
       project_fiscal_rid: row.project_fiscal_rid || '',
     });
     navigate(`${path}?${queryParams.toString()}`);
@@ -752,7 +747,7 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
           <InteractionDetails
             accountInActive={accountInActive}
             handleBackClick={handleBackClick}
-            projectDetails={projectDetails}
+            // projectDetails={projectDetails}
             isSendInteraction={isSendInteraction}
           />
         ) : viewInteractionHistory ? (

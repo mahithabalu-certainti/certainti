@@ -229,6 +229,7 @@ export interface InteractionListURLParams {
   attachment_count?: number | string | null;
   search?: string;
   reminder_specific_list?: boolean;
+  case_rid?: string;
 }
 
 export interface InteractionTemplatePayload {
@@ -342,6 +343,21 @@ export interface InteractionDetailsResponse {
   statusMessage: string;
   data: {
     interactionDetails: InteractionDetails;
+  };
+}
+export interface InteractionProjectKeyContacts {
+  project_rid: string;
+  project_code: string;
+  project_name: string | null;
+  key_contact_name: string;
+  key_contact_email: string;
+}
+export interface InteractionKeyContactResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    keyContacts: InteractionProjectKeyContacts[];
   };
 }
 

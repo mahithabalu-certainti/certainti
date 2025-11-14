@@ -23,23 +23,25 @@ import { InteractionDetailIcon } from '../../../../../../assets';
 import DetailsSectionSkeleton from '../../../../../../components/skeleton-component/detailsskeleton';
 import { Typography } from '@mui/material';
 import { InteractionQuestions } from '../../../../../../components';
-import { NewProjectData } from '../../../../../types/project';
+import { useProjectDetail } from '../../../../../services/project';
 
 interface InteractionDetailsProps {
   accountInActive: boolean;
   handleBackClick: () => void;
-  projectDetails: NewProjectData | null;
+  // projectDetails: NewProjectData | null;
   isSendInteraction: boolean;
 }
 
 const InteractionDetails: React.FC<InteractionDetailsProps> = ({
   accountInActive,
   handleBackClick,
-  projectDetails,
+  // projectDetails,
   isSendInteraction,
 }) => {
   // const { projectid } = useParams();
+
   const projectid = 'D001-551d36b6-7d41-43b4-a242-95ac37404744';
+
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const accountId = searchParams.get('accountID') || '';
@@ -54,7 +56,8 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
     interactionId,
     projectFiscalRid as string
   );
-
+  const { data: projectDetails, isLoading: projectDetailsLoading } =
+    useProjectDetail(accountId, projectFiscalRid || '');
   const interactionFieldsEditable = useMemo(
     () =>
       permission
@@ -300,7 +303,7 @@ const InteractionDetails: React.FC<InteractionDetailsProps> = ({
           className='rounded-tl-[2px] h-[40px] rounded-tr-[2px]'
           buttons={headerButtons}
         />
-        {isLoading ? (
+        {isLoading && projectDetailsLoading ? (
           <DetailsSectionSkeleton className='p-0 m-0' />
         ) : error ? (
           <div className='flex items-center justify-center h-64 p-4'>
