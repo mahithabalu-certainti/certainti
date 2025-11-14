@@ -59,6 +59,7 @@ import { AttachmentsListExportParams } from '../../../types/attachment';
 import { useSelector } from 'react-redux';
 import { Attachments } from './case-attachments';
 import { exportAttachmentsData } from '../../../services/attachments/attachments-service';
+import Setting from './settings/setting';
 import { ExportChecklistList } from '../../../services/checklist/checklist-service';
 import { Checklist } from './checklist';
 
@@ -372,6 +373,8 @@ export const CaseDetails = () => {
             setAttachmentParams={setAttachmentParams}
           />
         );
+      case 'settings':
+        return <Setting />;
       case 'checklist':
         return (
           <Checklist
