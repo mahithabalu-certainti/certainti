@@ -108,7 +108,6 @@ const CaseInteractions: React.FC<InteractionsProps> = ({
 }) => {
   const { caseId } = useParams();
   const [searchParams] = useSearchParams();
-  console.log(CaseDetails, 'CaseDetails');
   const accountName = CaseDetails?.account_name || '';
 
   const navigate = useNavigate();

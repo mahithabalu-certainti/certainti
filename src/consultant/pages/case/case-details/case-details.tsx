@@ -421,7 +421,7 @@ export const CaseDetails = () => {
         icon: InteractionsIcon,
       },
       {
-        name: 'Interactionss',
+        name: 'Interactions',
         key: 'interactions',
         id: AllModules.INTERACTIONS,
         disabled: false,

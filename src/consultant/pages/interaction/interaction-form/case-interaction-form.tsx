@@ -74,11 +74,14 @@ const CaseInteractionForm = () => {
   const { successToast } = useToast();
   const [caseLevelProjectCode, setCaseLevelProjectCode] = useState<string>('');
   const accountName = searchParams.get('accountName');
+
+  const { fiscalYear } = useSelector((state: RootState) => state.account);
+  const { permission } = useSelector((state: RootState) => state.permission);
   const [selectedProject, setSelectedProject] = useState<ProjectDetails>({
     account_name: accountName || '',
     project_code: '',
     project_name: '',
-    fiscal_year: 0,
+    fiscal_year: Number(fiscalYear),
     project_fiscal_rid: '',
     project_rid: '',
     account_rid: '',
@@ -87,7 +90,7 @@ const CaseInteractionForm = () => {
     accountName: accountName || '',
     projectCode: '',
     projectName: '',
-    fiscalYear: 0,
+    fiscalYear: Number(fiscalYear),
     status: '',
     questions: [
       {
@@ -125,9 +128,6 @@ const CaseInteractionForm = () => {
     name: '',
     email: '',
   });
-
-  const { fiscalYear } = useSelector((state: RootState) => state.account);
-  const { permission } = useSelector((state: RootState) => state.permission);
 
   const interactionsViewEditFields = useMemo(
     () =>
@@ -183,7 +183,6 @@ const CaseInteractionForm = () => {
     fiscal_year: Number(fiscalYear),
   });
   const { data: ProjectList } = useInteractionProjectList(accountId, caseId);
-  console.log(ProjectList);
   const interactionData = otherInteractionData;
   useEffect(() => {
     setFormData((prev) => ({
@@ -916,7 +915,6 @@ const CaseInteractionForm = () => {
                         },
                       }}
                       onChange={(e) => {
-                        console.log(e, 'e.target.value');
                         setCaseLevelProjectCode(e.target.value);
                       }}
                     >
