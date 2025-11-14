@@ -1,12 +1,4 @@
-import { KanbanColumn, User, Task } from './types';
-
-export const mockUserData: User[] = [
-  { id: '1', name: 'John Doe', initials: 'JD', color: '#3B82F6' },
-  { id: '2', name: 'Jane Smith', initials: 'JS', color: '#10B981' },
-  { id: '3', name: 'Mike Johnson', initials: 'MJ', color: '#F59E0B' },
-  { id: '4', name: 'Sarah Wilson', initials: 'SW', color: '#EF4444' },
-  { id: '5', name: 'David Brown', initials: 'DB', color: '#8B5CF6' },
-];
+import { KanbanColumn, Task } from './types';
 
 // Separate mock data for complete task details
 export const mockTaskDetails: Record<string, Task> = {

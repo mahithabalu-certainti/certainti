@@ -1,4 +1,4 @@
-import { Assignee, User, Task } from './types';
+import { Assignee, User, Task, UserOption } from './types';
 
 export const generateInitials = (name: string): string => {
   if (!name) return 'U';
@@ -47,6 +47,15 @@ export const enrichUser = (user: User): User => {
     ...user,
     initials: user.initials || generateInitials(user.name),
     color: user.color || generateColorFromName(user.name),
+  };
+};
+
+export const enrichUserOption = (userOption: UserOption): User => {
+  return {
+    id: userOption.rid,
+    name: userOption.name,
+    initials: generateInitials(userOption.name),
+    color: generateColorFromName(userOption.name),
   };
 };
 

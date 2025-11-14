@@ -6,9 +6,9 @@ import { ResourceTabs } from '../../../account-details-sidebar/sidebar-pages/res
 import { AllPermissions } from '../../../../../common-service';
 import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import KanbanBoard from '../../../../../components/kanban-board/kanban-board';
-import { mockUserData } from '../../../../../components/kanban-board/mock-data';
 import { useGetWorkBreakdownList } from '../../../../../hooks/use-work-breakdown';
 import { getTaskDetail } from '../../../../services/work-breakdown/work-breakdown-service';
+import { useGetUserOptions } from '../../../../services/case-team/case-team-service';
 
 const ConfigTabs: ResourceTabs[] = [
   {
@@ -37,16 +37,8 @@ const WorkBreakDown = () => {
     isLoading,
     isError,
   } = useGetWorkBreakdownList(accountId || '', caseId || '');
-  // const status = useGetStatus();
-
-  // const statusOptions = useMemo(
-  //   () =>
-  //     status.data?.data?.status.map((status) => ({
-  //       label: status.status_name,
-  //       value: status.rid,
-  //     })) || [],
-  //   [status.data?.data?.status]
-  // );
+  
+  const userOptionsQuery = useGetUserOptions(accountId || '');
 
   const tabParam = searchParams.get('tab') || 'milestone';
   const [appliedFilters, setAppliedFilters] = useState<
@@ -187,18 +179,15 @@ const WorkBreakDown = () => {
               <KanbanBoard
                 data={kanbanData?.data || []}
                 onFetchTaskDetails={handleFetchTaskDetails}
-                // isCreateTaskDisabled={false}
-                // isCreateTaskHide={false}
                 showCommentCount={true}
                 showTaskCount={true}
                 showProfileIndicator={true}
                 isDragable={true}
-                isDragablebetweenBoards={true}
                 isLoading={isLoading}
                 statusData={statusData}
                 priorityData={priorityData}
                 tagData={tagData}
-                userData={mockUserData}
+                userData={userOptionsQuery.data || []}
               />
             )}
           </>

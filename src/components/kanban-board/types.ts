@@ -104,6 +104,13 @@ export interface FieldDisabled {
   checklist?: boolean;
 }
 
+export interface UserOption {
+  rid: string;
+  name: string;
+  email?: string;
+  status?: string;
+}
+
 export interface KanbanBoardProps {
   data: KanbanColumn[];
   isCreateTaskDisabled?: boolean;
@@ -115,7 +122,7 @@ export interface KanbanBoardProps {
   statusOptions?: StatusOption[]; // New prop for active/inactive status
   priorityData?: Array<{ id: string; name: string; color: string }>;
   tagData?: Array<{ id: string; name: string; color: string }>;
-  userData?: User[];
+  userData?: UserOption[];
   isDragable?: boolean;
   isDragablebetweenBoards?: boolean;
   onFetchTaskDetails?: (taskId: string) => Promise<Task | null>;
@@ -168,7 +175,7 @@ export interface TaskDetailModalProps {
   statusOptions?: StatusOption[]; // New prop for active/inactive status
   priorityData?: Array<{ id: string; name: string; color: string }>;
   tagData?: Array<{ id: string; name: string; color: string }>;
-  availableUsers?: User[];
+  availableUsers?: UserOption[];
   onFetchTaskDetails?: (taskId: string) => Promise<Task | null>;
   fieldVisibility?: FieldVisibility;
   fieldDisabled?: FieldDisabled;

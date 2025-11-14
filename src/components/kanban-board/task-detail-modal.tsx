@@ -6,7 +6,7 @@ import { CalendarIcon, CloseIcon } from '../../assets';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { enrichTask, enrichUser } from './helper';
+import { enrichTask, enrichUserOption } from './helper';
 
 const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   taskId,
@@ -31,7 +31,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   );
   const [hideCheckedItems, setHideCheckedItems] = useState(false);
 
-  const enrichedUsers = availableUsers.map(enrichUser);
+  const enrichedUsers = availableUsers.map(enrichUserOption);
 
   useEffect(() => {
     const fetchTask = async () => {
