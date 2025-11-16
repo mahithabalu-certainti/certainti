@@ -137,6 +137,18 @@ export interface KanbanBoardProps {
   isDragablebetweenBoards?: boolean;
   onFetchTaskDetails?: (taskId: string) => Promise<Task | null>;
   onFetchTaskActivities?: (taskId: string) => Promise<Activity[]>;
+  onFetchTaskComments?: (taskId: string) => Promise<Comment[]>;
+  onFetchTaskAttachments?: (taskId: string) => Promise<
+    Array<{
+      id?: string;
+      fileName: string;
+      filePath?: string;
+      fileSize?: number;
+      fileType?: string;
+      uploadedBy: string;
+      uploadedDate: string;
+    }>
+  >;
   fieldVisibility?: FieldVisibility;
   fieldDisabled?: FieldDisabled;
   isLoading?: boolean;
@@ -190,6 +202,17 @@ export interface TaskDetailModalProps {
   onFetchTaskDetails?: (taskId: string) => Promise<Task | null>;
   onFetchTaskActivities?: (taskId: string) => Promise<Activity[]>;
   onFetchTaskComments?: (taskId: string) => Promise<Comment[]>;
+  onFetchTaskAttachments?: (taskId: string) => Promise<
+    Array<{
+      id?: string;
+      fileName: string;
+      filePath?: string;
+      fileSize?: number;
+      fileType?: string;
+      uploadedBy: string;
+      uploadedDate: string;
+    }>
+  >;
   fieldVisibility?: FieldVisibility;
   fieldDisabled?: FieldDisabled;
 }

@@ -158,7 +158,7 @@ export const getTaskDetail = async (
     })),
     startDate: new Date('2025-11-05'),
     endDate: new Date('2025-11-08'),
-    attachments: ['agenda.pdf', 'minutes.docx'],
+    attachments: [],
     commentAttachments: [],
     activities: [
       {

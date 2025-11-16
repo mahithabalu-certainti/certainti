@@ -46,15 +46,113 @@ export interface CaseTaskApiResponse {
   message: string;
 }
 
+// Task Comments Types
+export interface TaskCommentsListParams {
+  case_rid: string;
+  account_rid: string;
+  task_rid: string;
+  page: number;
+  limit: number;
+}
+
+export interface TaskComment {
+  id?: string;
+  comment_rid?: string;
+  user: string;
+  user_name?: string;
+  text: string;
+  comment_text?: string;
+  date: string;
+  created_date?: string;
+  initials?: string;
+  color?: string;
+  attachments?: string[];
+  user_avatar_color?: string;
+  [key: string]: unknown;
+}
+
+export interface TaskCommentsApiResponse {
+  data: {
+    total_result: number;
+    data: TaskComment[];
+    totalRecords?: number;
+    currentPage?: number;
+    totalPages?: number;
+  };
+  status: string;
+  message: string;
+}
+
+// Task Attachments Types
+export interface TaskAttachmentsListParams {
+  case_rid: string;
+  account_rid: string;
+  task_rid: string;
+  page: number;
+  limit: number;
+}
+
+export interface TaskAttachment {
+  id?: string;
+  attachment_rid?: string;
+  file_name: string;
+  file_path?: string;
+  file_size?: number;
+  file_type?: string;
+  uploaded_by?: string;
+  uploaded_by_name?: string;
+  uploaded_date?: string;
+  created_date?: string;
+  [key: string]: unknown;
+}
+
+export interface TaskAttachmentsApiResponse {
+  data: {
+    total_result: number;
+    data: TaskAttachment[];
+    totalRecords?: number;
+    currentPage?: number;
+    totalPages?: number;
+  };
+  status: string;
+  message: string;
+}
+
 // Case Task URL
 export const getCaseTaskListUrl = () => '/api/cases/task/list';
 export const getCaseTaskExportUrl = () => '/api/cases/task/export';
+export const getTaskCommentsListUrl = () => '/api/cases/task/comments/list';
+export const getTaskAttachmentsListUrl = () =>
+  '/api/cases/task/attachments/list';
+
 // Fetch Case Task List
 export const fetchCaseTaskList = async (
   params: CaseTaskListParams
 ): Promise<CaseTaskApiResponse> => {
   const { data } = await caseServiceApi.post<CaseTaskApiResponse>(
     getCaseTaskListUrl(),
+    params
+  );
+  return data;
+};
+
+// Fetch Task Comments List
+export const fetchTaskCommentsList = async (
+  params: TaskCommentsListParams
+): Promise<TaskCommentsApiResponse> => {
+  const { data } = await caseServiceApi.post<TaskCommentsApiResponse>(
+    getTaskCommentsListUrl(),
+    params
+  );
+  return data;
+};
+
+// Fetch Task Attachments List
+export const fetchTaskAttachmentsList = async (
+  params: TaskAttachmentsListParams
+): Promise<TaskAttachmentsApiResponse> => {
+  const { data } = await caseServiceApi.post<TaskAttachmentsApiResponse>(
+    getTaskAttachmentsListUrl(),
     params
   );
   return data;
@@ -76,6 +174,56 @@ export const useGetCaseTaskList = (
     gcTime: 0, // Immediately remove from cache
     retry: 0,
     enabled: !!(params.case_rid && params.account_rid),
+    ...options,
+  });
+};
+
+// Custom Hook for Task Comments
+export const useGetTaskCommentsList = (
+  params: TaskCommentsListParams,
+  options?: {
+    onSuccess?: (data: TaskCommentsApiResponse) => void;
+    onError?: (error: Error) => void;
+    enabled?: boolean;
+  }
+) => {
+  return useQuery<TaskCommentsApiResponse, Error>({
+    queryKey: ['taskComments', params],
+    queryFn: () => fetchTaskCommentsList(params),
+    staleTime: 0,
+    gcTime: 0,
+    retry: 0,
+    enabled: !!(
+      params.case_rid &&
+      params.account_rid &&
+      params.task_rid &&
+      options?.enabled !== false
+    ),
+    ...options,
+  });
+};
+
+// Custom Hook for Task Attachments
+export const useGetTaskAttachmentsList = (
+  params: TaskAttachmentsListParams,
+  options?: {
+    onSuccess?: (data: TaskAttachmentsApiResponse) => void;
+    onError?: (error: Error) => void;
+    enabled?: boolean;
+  }
+) => {
+  return useQuery<TaskAttachmentsApiResponse, Error>({
+    queryKey: ['taskAttachments', params],
+    queryFn: () => fetchTaskAttachmentsList(params),
+    staleTime: 0,
+    gcTime: 0,
+    retry: 0,
+    enabled: !!(
+      params.case_rid &&
+      params.account_rid &&
+      params.task_rid &&
+      options?.enabled !== false
+    ),
     ...options,
   });
 };

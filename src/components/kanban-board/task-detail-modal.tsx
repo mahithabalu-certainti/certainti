@@ -6,7 +6,17 @@ import { CalendarIcon, CloseIcon } from '../../assets';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { enrichTask, enrichUserOption } from './helper';
+import {
+  enrichTask,
+  enrichUserOption,
+  generateInitials,
+  generateColorFromName,
+} from './helper';
+import {
+  fetchTaskCommentsList,
+  TaskCommentsListParams,
+  TaskComment,
+} from '../../consultant/services/case-task/case-task-service';
 
 const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   taskId,
@@ -20,12 +30,24 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   onFetchTaskDetails,
   onFetchTaskActivities,
   onFetchTaskComments,
+  onFetchTaskAttachments,
   fieldVisibility = {},
   fieldDisabled = {},
 }) => {
   const [task, setTask] = useState<Task | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [comments, setComments] = useState<Comment[]>([]);
+  const [taskAttachments, setTaskAttachments] = useState<
+    Array<{
+      id?: string;
+      fileName: string;
+      filePath?: string;
+      fileSize?: number;
+      fileType?: string;
+      uploadedBy: string;
+      uploadedDate: string;
+    }>
+  >([]);
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedTask, setEditedTask] = useState<Task | null>(null);
@@ -36,6 +58,9 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   const [hideCheckedItems, setHideCheckedItems] = useState(false);
   const activitiesFetchedRef = useRef<string | null>(null);
   const commentsFetchedRef = useRef<string | null>(null);
+  const attachmentsFetchedRef = useRef<string | null>(null);
+  const caseRidRef = useRef<string | null>(null);
+  const accountRidRef = useRef<string | null>(null);
 
   const enrichedUsers = availableUsers.map(enrichUserOption);
 
@@ -125,36 +150,81 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   // Fetch comments separately - with deduplication
   useEffect(() => {
     const fetchComments = async () => {
-      if (!taskId || !onFetchTaskComments) {
-        console.warn('Missing taskId or onFetchTaskComments:', {
-          taskId,
-          hasCallback: !!onFetchTaskComments,
-        });
+      if (taskId && onFetchTaskComments) {
+        if (commentsFetchedRef.current === taskId) {
+          return;
+        }
+        commentsFetchedRef.current = taskId;
+        try {
+          const fetchedComments = await onFetchTaskComments(taskId);
+
+          if (fetchedComments && Array.isArray(fetchedComments)) {
+            const transformedComments: Comment[] = (
+              fetchedComments as TaskComment[]
+            ).map((comment) => {
+              const userName = comment.user || comment.user_name || '';
+              return {
+                id: comment.id || comment.comment_rid,
+                user: userName,
+                text: comment.text || comment.comment_text || '',
+                date:
+                  comment.date ||
+                  comment.created_date ||
+                  new Date().toISOString(),
+                initials: generateInitials(userName),
+                color: generateColorFromName(userName),
+                attachments: comment.attachments,
+              };
+            });
+            setComments(transformedComments);
+          } else {
+            setComments([]);
+          }
+        } catch (error) {
+          console.error('Error fetching task comments:', error);
+          setComments([]);
+        }
+        return;
+      }
+      if (!taskId || !caseRidRef.current || !accountRidRef.current) {
         setComments([]);
         return;
       }
-
-      // Prevent duplicate calls using ref
       if (commentsFetchedRef.current === taskId) {
-        console.log('Comments already fetched for taskId:', taskId);
         return;
       }
-
-      console.log('Fetching comments for taskId:', taskId);
       commentsFetchedRef.current = taskId;
 
       try {
-        const fetchedComments = await onFetchTaskComments(taskId);
-        console.log('Fetched comments:', fetchedComments);
+        const params: TaskCommentsListParams = {
+          case_rid: caseRidRef.current,
+          account_rid: accountRidRef.current,
+          task_rid: taskId,
+          page: 1,
+          limit: 100,
+        };
 
-        if (fetchedComments && Array.isArray(fetchedComments)) {
-          setComments(fetchedComments);
-          console.log(
-            'Comments set successfully, count:',
-            fetchedComments.length
+        const response = await fetchTaskCommentsList(params);
+        if (response?.data?.data && Array.isArray(response.data.data)) {
+          const transformedComments: Comment[] = response.data.data.map(
+            (comment: TaskComment) => {
+              const userName = comment.user || comment.user_name || '';
+              return {
+                id: comment.id || comment.comment_rid,
+                user: userName,
+                text: comment.text || comment.comment_text || '',
+                date:
+                  comment.date ||
+                  comment.created_date ||
+                  new Date().toISOString(),
+                initials: generateInitials(userName),
+                color: generateColorFromName(userName),
+                attachments: comment.attachments,
+              };
+            }
           );
+          setComments(transformedComments);
         } else {
-          console.warn('Comments response is not an array:', fetchedComments);
           setComments([]);
         }
       } catch (error) {
@@ -166,7 +236,40 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     if (isOpen && taskId) {
       fetchComments();
     }
-  }, [taskId, isOpen, onFetchTaskComments]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [taskId, isOpen]);
+
+  useEffect(() => {
+    const fetchAttachments = async () => {
+      if (!taskId || !onFetchTaskAttachments) {
+        setTaskAttachments([]);
+        return;
+      }
+
+      if (attachmentsFetchedRef.current === taskId) {
+        return;
+      }
+      attachmentsFetchedRef.current = taskId;
+
+      try {
+        const fetchedAttachments = await onFetchTaskAttachments(taskId);
+
+        if (fetchedAttachments && Array.isArray(fetchedAttachments)) {
+          setTaskAttachments(fetchedAttachments);
+        } else {
+          setTaskAttachments([]);
+        }
+      } catch (error) {
+        console.error('Error fetching task attachments:', error);
+        setTaskAttachments([]);
+      }
+    };
+
+    if (isOpen && taskId) {
+      fetchAttachments();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [taskId, isOpen]);
 
   if (!isOpen || !taskId) return null;
 
@@ -1395,6 +1498,31 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                     </div>
                   ))}
                 </div>
+              )}
+              {taskAttachments && taskAttachments.length > 0 ? (
+                <div className='mt-4'>
+                  <div className='space-y-2'>
+                    {taskAttachments.map((attachment, idx) => (
+                      <div
+                        key={attachment.id || idx}
+                        className='text-xs text-gray-600 bg-gray-50 p-3 rounded flex items-center gap-2 border border-gray-200'
+                      >
+                        <span>📎</span>
+                        <div className='flex-1'>
+                          <p className='font-medium text-gray-700'>
+                            {attachment.fileName}
+                          </p>
+                          <p className='text-gray-500 text-xs mt-1'>
+                            Uploaded by {attachment.uploadedBy} on{' '}
+                            {attachment.uploadedDate}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <></>
               )}
             </div>
           )}

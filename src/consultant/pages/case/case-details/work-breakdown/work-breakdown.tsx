@@ -12,6 +12,11 @@ import {
   fetchTaskActivities,
 } from '../../../../services/work-breakdown/work-breakdown-service';
 import {
+  fetchTaskCommentsList,
+  TaskComment,
+  fetchTaskAttachmentsList,
+} from '../../../../services/case-task/case-task-service';
+import {
   useGetUserOptions,
   useGetTagOptions,
 } from '../../../../services/case-team/case-team-service';
@@ -225,6 +230,92 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
     [accountId, caseId]
   );
 
+  const handleFetchTaskComments = useCallback(
+    async (taskId: string) => {
+      if (!accountId || !caseId) {
+        return [];
+      }
+
+      try {
+        const commentsResponse = await fetchTaskCommentsList({
+          account_rid: accountId,
+          case_rid: caseId,
+          task_rid: taskId,
+          page: 1,
+          limit: 100,
+        });
+
+        const transformedComments = (commentsResponse?.data?.data || []).map(
+          (comment: TaskComment) => ({
+            id: comment.id || comment.comment_rid,
+            user: comment.user || comment.user_name || 'Unknown',
+            text: comment.text || comment.comment_text || '',
+            date: new Date(
+              comment.date || comment.created_date || new Date()
+            ).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
+            attachments: comment.attachments,
+          })
+        );
+
+        return transformedComments;
+      } catch (error) {
+        console.error('Failed to fetch task comments:', error);
+        return [];
+      }
+    },
+    [accountId, caseId]
+  );
+
+  const handleFetchTaskAttachments = useCallback(
+    async (taskId: string) => {
+      if (!accountId || !caseId) {
+        return [];
+      }
+
+      try {
+        const attachmentsResponse = await fetchTaskAttachmentsList({
+          account_rid: accountId,
+          case_rid: caseId,
+          task_rid: taskId,
+          page: 1,
+          limit: 100,
+        });
+
+        const transformedAttachments = (
+          attachmentsResponse?.data?.data || []
+        ).map((attachment) => ({
+          id: attachment.id || attachment.attachment_rid,
+          fileName: attachment.file_name,
+          filePath: attachment.file_path,
+          fileSize: attachment.file_size,
+          fileType: attachment.file_type,
+          uploadedBy:
+            attachment.uploaded_by || attachment.uploaded_by_name || 'Unknown',
+          uploadedDate: new Date(
+            attachment.uploaded_date || attachment.created_date || new Date()
+          ).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
+        }));
+        return transformedAttachments;
+      } catch (error) {
+        console.error('Failed to fetch task attachments:', error);
+        return [];
+      }
+    },
+    [accountId, caseId]
+  );
+
   return (
     <>
       <SectionTabPanel
@@ -282,6 +373,8 @@ const WorkBreakDown: React.FC<WorkBreakDownProps> = ({
                 data={kanbanData?.data || []}
                 onFetchTaskDetails={handleFetchTaskDetails}
                 onFetchTaskActivities={handleFetchTaskActivities}
+                onFetchTaskComments={handleFetchTaskComments}
+                onFetchTaskAttachments={handleFetchTaskAttachments}
                 showCommentCount={true}
                 showTaskCount={true}
                 showProfileIndicator={true}
